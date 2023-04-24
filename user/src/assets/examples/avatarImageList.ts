@@ -1,0 +1,17 @@
+export default [
+  new URL('@/assets/images/avatars/avatar-1.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-2.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-3.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-4.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-5.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-6.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-7.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-8.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-9.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-10.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-11.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-12.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-13.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-14.png',import.meta.url).href,
+  new URL('@/assets/images/avatars/avatar-15.png',import.meta.url).href,
+]
