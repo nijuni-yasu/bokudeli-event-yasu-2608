@@ -10,6 +10,7 @@ const router = createRouter({
   ],
 })
 
+console.log(...setupLayouts(routes))
 // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
 
 export default router
