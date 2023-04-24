@@ -17,42 +17,42 @@ import contents from '@/assets/examples/mainContents'
         cols="12"
         class="content"
       >
-      <VCard color="text-center cursor-pointer">
-        <router-link :to="`/community/${content.communityId}/events/${content.eventId}`">
-          <div class="image">
-            <VImg
-              cover
-              class="mx-auto"
-              aspect-ratio="1.91"
-              :src="content.mainImage"
-            />
-          </div>
-        </router-link>
-        <VCardTitle class="justify-center pb-3 title">
-          {{ content.title }}
-        </VCardTitle>
-        <VCardText class="text-left pb-8">
-          {{ content.desc }}
-        </VCardText>
-        <VCardText class="text-left pb-2">
-          【主催者】 {{ content.community }}
-        </VCardText>
-        <VCardText class="text-left pb-2">
-          【注文期限】{{ content.orderDate }}
-        </VCardText>
-        <VCardText class="text-left pb-2">
-          【開催日時】{{ content.eventDate }}
-        </VCardText>
-        <VCardText class="text-left pb-2">
-          【開催場所】{{ content.place }}
-        </VCardText>
-        <VCardText class="text-left pb-2">
-          【お店】 {{ content.shop }}
-        </VCardText>
-        <VCardText class="text-left pb-8">
-          【最大人数】{{ content.max }}
-        </VCardText>
-      </VCard>
+      <router-link :to="`/community/${content.communityId}/events/${content.eventId}`">
+        <VCard color="text-center cursor-pointer">
+            <div class="image">
+              <VImg
+                cover
+                class="mx-auto"
+                aspect-ratio="1.91"
+                :src="content.mainImage"
+              />
+            </div>
+          <VCardTitle class="justify-center pb-3 title">
+            {{ content.title }}
+          </VCardTitle>
+          <VCardText class="text-left pb-8">
+            {{ content.desc }}
+          </VCardText>
+          <VCardText class="text-left pb-2">
+            【主催者】 {{ content.community }}
+          </VCardText>
+          <VCardText class="text-left pb-2">
+            【注文期限】{{ content.orderDate }}
+          </VCardText>
+          <VCardText class="text-left pb-2">
+            【開催日時】{{ content.eventDate }}
+          </VCardText>
+          <VCardText class="text-left pb-2">
+            【開催場所】{{ content.place }}
+          </VCardText>
+          <VCardText class="text-left pb-2">
+            【お店】 {{ content.shop }}
+          </VCardText>
+          <VCardText class="text-left pb-8">
+            【最大人数】{{ content.max }}
+          </VCardText>
+        </VCard>
+      </router-link>
     </VCol>
     </VRow>
     <!-- <VCard
