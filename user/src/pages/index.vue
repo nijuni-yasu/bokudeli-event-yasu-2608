@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import topLogo from '@/assets/images/bokudeli/bokudeli_top.png'
-import contents from '@/assets/sample_data'
+import topLogo from '@/assets/images/bokudeli/bokudeli_top4.png'
+import contents from '@/assets/examples/mainContents'
 </script>
 
 <template>
   <div>
     <VCard class="d-flex align-center justify-center text-center mb-10" flat>
-      <v-img :src="topLogo"></v-img>
+      <v-img :src="topLogo"/>
     </VCard>
     <VRow class="mb-2">
       <VCol
@@ -18,7 +18,7 @@ import contents from '@/assets/sample_data'
         class="content"
       >
       <VCard color="text-center cursor-pointer">
-        <router-link to="/events/1">
+        <router-link :to="`/community/${content.communityId}/events/${content.eventId}`">
           <div class="image">
             <VImg
               cover

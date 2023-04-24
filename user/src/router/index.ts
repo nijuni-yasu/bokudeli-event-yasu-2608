@@ -8,9 +8,14 @@ const router = createRouter({
   routes: [
     ...setupLayouts(routes),
   ],
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition
+    }
+    return { top: 0 }
+  }
 })
 
-console.log(...setupLayouts(routes))
 // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
 
 export default router

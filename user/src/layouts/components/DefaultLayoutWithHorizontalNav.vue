@@ -5,7 +5,6 @@ import { themeConfig } from '@themeConfig'
 
 // Components
 import Footer from '@/layouts/components/Footer.vue'
-import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
 import { HorizontalNavLayout } from '@layouts'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'

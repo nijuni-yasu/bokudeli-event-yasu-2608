@@ -1,6 +1,7 @@
 export default [
   {
-    id: 1,
+    communityId: '33lab',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_33lab.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -14,7 +15,8 @@ export default [
     max: '20名',
   },
   {
-    id: 2,
+    communityId: 'sutaha',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_sutaha.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -28,7 +30,8 @@ export default [
     max: '20名',
   },
   {
-    id: 3,
+    communityId: 'mirailab',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_mirailab.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -42,7 +45,8 @@ export default [
     max: '25名',
   },
   {
-    id: 4,
+    communityId: 'saai',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_saai.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -56,7 +60,8 @@ export default [
     max: '15名',
   },
   {
-    id: 5,
+    communityId: 'ship',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_ship.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -70,7 +75,8 @@ export default [
     max: '20名',
   },
   {
-    id: 6,
+    communityId: 'rokugo',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_rokugo.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -84,7 +90,8 @@ export default [
     max: '10名',
   },
   {
-    id: 7,
+    communityId: 'qws',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_qws.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -98,7 +105,8 @@ export default [
     max: '25名',
   },
   {
-    id: 8,
+    communityId: 'andwork',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_andwork.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -112,7 +120,8 @@ export default [
     max: '30名',
   },
   {
-    id: 9,
+    communityId: '100banch',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_100banch.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -126,7 +135,8 @@ export default [
     max: '30名',
   },
   {
-    id: 10,
+    communityId: 'ipark',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_ipark.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -140,7 +150,8 @@ export default [
     max: '15名',
   },
   {
-    id: 11,
+    communityId: 'fuse',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_fuse.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -154,7 +165,8 @@ export default [
     max: '15名',
   },
   {
-    id: 12,
+    communityId: 'mishima',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_mishima.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -168,7 +180,8 @@ export default [
     max: '25名',
   },
   {
-    id: 13,
+    communityId: 'nakamachi',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_nakamachi.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -182,7 +195,8 @@ export default [
     max: '25名',
   },
   {
-    id: 14,
+    communityId: 'niino',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_niino.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -196,7 +210,8 @@ export default [
     max: '25名',
   },
   {
-    id: 15,
+    communityId: 'seesaw',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/community_seesaw.png',import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
@@ -210,7 +225,8 @@ export default [
     max: '20名',
   },
   {
-    id: 16,
+    communityId: 'dmmmake',
+    eventId: 4,
     mainImage: new URL('@/assets/images/bokudeli/event_ex_01.png',import.meta.url).href,
     category: 'sales-automation',
     characterSize: '400',
@@ -224,7 +240,8 @@ export default [
     max: '10名',
   },
   {
-    id: 17,
+    communityId: 'dmmmake',
+    eventId: 3,
     mainImage: new URL('@/assets/images/bokudeli/event_ex_02.png',import.meta.url).href,
     category: 'marketing-automation',
     characterSize: '400',
@@ -238,7 +255,8 @@ export default [
     max: '10名',
   },
   {
-    id: 18,
+    communityId: 'dmmmake',
+    eventId: 2,
     mainImage: new URL('@/assets/images/bokudeli/event_ex_03.png',import.meta.url).href,
     category: 'api-questions',
     characterSize: '400',
@@ -252,7 +270,8 @@ export default [
     max: '10名',
   },
   {
-    id: 19,
+    communityId: 'dmmmake',
+    eventId: 1,
     mainImage: new URL('@/assets/images/bokudeli/event_ex_04.png',import.meta.url).href,
     category: 'email-marketing',
     characterSize: '400',
