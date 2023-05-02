@@ -18,4 +18,8 @@ module.exports = {
   },
   plugins: ['@typescript-eslint', 'vue'],
   root: true,
+  ignorePatterns: ['.eslintrc.js'],
+  rules: {
+    'vue/multi-word-component-names': 'off',
+  }
 }
