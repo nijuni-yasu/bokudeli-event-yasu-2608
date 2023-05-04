@@ -8,7 +8,8 @@
     "preview": "vite preview --port 5050",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint src/ -c .eslintrc.js --fix --rulesdir eslint-internal-rules/ --ext .ts,.js,.vue,.tsx,.jsx",
-    "build:icons": "tsc -b src/@iconify && node src/@iconify/build-icons.js"
+    "build:icons": "tsc -b src/@iconify && node src/@iconify/build-icons.js",
+    "prettier": "prettier -w ."
   },
   "dependencies": {
     "@casl/ability": "^6.2.0",

@@ -1,0 +1,10 @@
+.firebase
+.vscode
+dist
+eslint-internal-rules
+node_modules
+public
+src/@*
+.eslintrc-auto-import.json
+*.d.ts
+firebase.json
