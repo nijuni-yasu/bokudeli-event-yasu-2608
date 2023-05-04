@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useRoute,useRouter } from 'vue-router'
+import memberList from '@/assets/examples/memberList'
+import eventList from '@/assets/examples/eventList'
 
 const route = useRoute()
 const router = useRouter()
-const goToEvents = (eventId: string) => {
+const goToEvents = (eventId: number) => {
   const path = route.path.endsWith('/')
     ? `${route.path}events/${eventId}`
     : `${route.path}/events/${eventId}`
@@ -12,175 +14,6 @@ const goToEvents = (eventId: string) => {
 const communityImage = new URL('@/assets/images/bokudeli/community_dmmmakeakiba.png',import.meta.url).href
 const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png',import.meta.url).href
 
-const memberList = [
-  {
-    id: 1,
-    avatar: new URL('@/assets/images/avatars/avatar-4.png',import.meta.url).href,
-    name: 'Sato hanako',
-  },
-  {
-    id: 2,
-    avatar: new URL('@/assets/images/avatars/avatar-8.png',import.meta.url).href,
-    name: 'Greezman',
-  },
-  {
-    id: 3,
-    avatar: new URL('@/assets/images/avatars/avatar-7.png',import.meta.url).href,
-    name: 'Tanaka Ao',
-  },
-  {
-    id: 4,
-    avatar: new URL('@/assets/images/avatars/avatar-3.png',import.meta.url).href,
-    name: 'Mitoma',
-  },
-  {
-    id: 5,
-    avatar: new URL('@/assets/images/avatars/avatar-2.png',import.meta.url).href,
-    name: 'Keisuke Honda',
-  },
-  {
-    id: 6,
-    avatar: new URL('@/assets/images/avatars/avatar-1.png',import.meta.url).href,
-    name: 'Naohero',
-  },
-  {
-    id: 7,
-    avatar: new URL('@/assets/images/avatars/avatar-4.png',import.meta.url).href,
-    name: 'Moriyasu kantoku',
-  },
-  {
-    id: 8,
-    avatar: new URL('@/assets/images/avatars/avatar-8.png',import.meta.url).href,
-    name: 'Messi',
-  },
-  {
-    id: 9,
-    avatar: new URL('@/assets/images/avatars/avatar-7.png',import.meta.url).href,
-    name: 'Christiano Ronald',
-  },
-  {
-    id: 10,
-    avatar: new URL('@/assets/images/avatars/avatar-3.png',import.meta.url).href,
-    name: 'Zlatan',
-  },
-  {
-    id: 11,
-    avatar: new URL('@/assets/images/avatars/avatar-2.png',import.meta.url).href,
-    name: 'Yamada',
-  },
-  {
-    id: 12,
-    avatar: new URL('@/assets/images/avatars/avatar-1.png',import.meta.url).href,
-    name: 'Yasukawa Naohiro',
-  },
-]
-
-const eventList = [
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_01.png',import.meta.url).href,
-    category: 'sales-automation',
-    characterSize: '400',
-    title: '8周年祭り ランチ会👩🏻‍💻',
-    desc: 'There is perhaps no better demonstration of the folly of image of our tiny world.',
-    community: 'DMM.make AKIBA',
-    shop: 'トゥッカーノグリル',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_02.png',import.meta.url).href,
-    category: 'marketing-automation',
-    characterSize: '400',
-    title: 'つながる交流会 🚀',
-    desc: 'Look again at that dot. That’s here. That’s home. That’s us. On it everyone you love.',
-    shop: '御徒町天ぷら・天正',
-    community: 'DMM.make AKIBA',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_03.png',import.meta.url).href,
-    category: 'api-questions',
-    characterSize: '400',
-    title: '第30回 ぼくデリ会 😋',
-    desc: 'Every hero and coward, every creator and destroyer of civilization.',
-    community: 'DMM.make AKIBA',
-    shop: 'トゥッカーノグリル',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_04.png',import.meta.url).href,
-    category: 'email-marketing',
-    characterSize: '400',
-    title: '会員勉強会 🎮',
-    desc: 'There is perhaps no better demonstration of the folly of human conceits.',
-    community: 'DMM.make AKIBA',
-    shop: '御徒町天ぷら・天正',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_02.png',import.meta.url).href,
-    category: 'personalization',
-    characterSize: '400',
-    title: 'つながる交流会 🤩',
-    desc: 'It has been said that astronomy is a humbling and character experience.',
-    community: 'DMM.make AKIBA',
-    shop: '御徒町天ぷら・天正',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_01.png',import.meta.url).href,
-    category: 'demand-generation',
-    characterSize: '400',
-    title: '8周年祭り ランチ会 🤟🏻',
-    desc: 'Competent means we will never take anything for granted.',
-    community: 'DMM.make AKIBA',
-    shop: '御徒町天ぷら・天正',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_01.png',import.meta.url).href,
-    category: 'demand-generation',
-    characterSize: '400',
-    title: '8周年祭り ランチ会 🤟🏻',
-    desc: 'Competent means we will never take anything for granted.',
-    community: 'DMM.make AKIBA',
-    shop: '御徒町天ぷら・天正',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-  {
-    character: new URL('@/assets/images/bokudeli/event_ex_01.png',import.meta.url).href,
-    category: 'demand-generation',
-    characterSize: '400',
-    title: '8周年祭り ランチ会 🤟🏻',
-    desc: 'Competent means we will never take anything for granted.',
-    shop: '御徒町天ぷら・天正',
-    community: 'DMM.make AKIBA',
-    orderDate: '2022/12/14(水曜日) 23:00',
-    eventDate: '2022/12/15(木曜日) 13:00',
-    place: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F DMM.makeAKIBA',
-    max: '10名',
-  },
-]
 </script>
 <template>
   <section>
@@ -238,7 +71,7 @@ const eventList = [
               </v-card-title>
               <v-list class="pt-0">
                 <v-list-item v-for="(data,index) in memberList" :key="index" class="d-flex align-center px-0">
-                  <!--<router-link :to="{ name: 'user',params: { userId: data.id } }" class="text--primary cursor-pointer text-decoration-none">-->
+                  <router-link :to="`/users/${data.id}`" class="text--primary cursor-pointer text-decoration-none">
                     <v-row>
                       <v-list-item><v-avatar :image="data.avatar"/></v-list-item>
                       <div class="d-flex align-center flex-wrap flex-grow-1">
@@ -246,7 +79,7 @@ const eventList = [
                         <v-spacer />
                       </div>
                     </v-row>
-                  <!--</router-link>-->
+                  </router-link>
                 </v-list-item>
               </v-list>
             </v-card>
@@ -255,7 +88,7 @@ const eventList = [
           <v-col md="8" sm="8" cols="12">
             <v-row>
               <v-col v-for="(event,index) in eventList" :key="index" md="6" sm="6" cols="12">
-                <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(index.toString())">
+                <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.id)">
                   <v-img :src="event.character" aspect-ratio="2" />
                   <v-card-title class="justify-center text-h5 pb-3">
                     {{ event.title }}

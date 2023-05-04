@@ -115,11 +115,10 @@ const covidImage = new URL('@/assets/images/bokudeli/covid19.png',import.meta.ur
                     class="d-flex justify-start px-0 pt-2 pb-0"
                     cols="3"
                   >
-                    <!--
                     <router-link
-                      :to="{ name: 'apps-user-view',params: { id: data.id } }"
+                      :to="`/users/${data.id}`"
                       class="text--primary cursor-pointer text-decoration-none"
-                    > -->
+                    >
                       <v-row
                         class="ma-1"
                       >
@@ -137,7 +136,7 @@ const covidImage = new URL('@/assets/images/bokudeli/covid19.png',import.meta.ur
                           </div>
                         </div>
                       </v-row>
-                    <!--</router-link> -->
+                    </router-link>
                   </v-col>
                 </v-row>
               </v-card-text>
