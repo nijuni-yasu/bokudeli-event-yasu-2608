@@ -36,7 +36,7 @@ export default defineConfig({
       vueTemplate: true,
       eslintrc: {
         enabled: true,
-      }
+      },
     }),
 
     DefineOptions(),
@@ -53,7 +53,7 @@ export default defineConfig({
       '@configured-variables': fileURLToPath(new URL('./src/styles/variables/_template.scss', import.meta.url)),
       '@axios': fileURLToPath(new URL('./src/plugins/axios', import.meta.url)),
       '@validators': fileURLToPath(new URL('./src/@core/utils/validators', import.meta.url)),
-      'apexcharts': fileURLToPath(new URL('node_modules/apexcharts-clevision', import.meta.url)),
+      apexcharts: fileURLToPath(new URL('node_modules/apexcharts-clevision', import.meta.url)),
     },
   },
   build: {
@@ -61,8 +61,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['vuetify'],
-    entries: [
-      './src/**/*.vue',
-    ],
+    entries: ['./src/**/*.vue'],
   },
 })

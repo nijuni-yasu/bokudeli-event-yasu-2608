@@ -25,7 +25,8 @@ const authThemeImg = useGenerateImageVariant(
   authV2LoginIllustrationDark,
   authV2LoginIllustrationBorderedLight,
   authV2LoginIllustrationBorderedDark,
-  true)
+  true
+)
 
 const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
 </script>
@@ -41,63 +42,28 @@ const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
       </h1>
     </div>
 
-    <VRow
-      no-gutters
-      class="auth-wrapper"
-    >
-      <VCol
-        md="8"
-        class="d-none d-md-flex align-center justify-center position-relative"
-      >
-        <div
-          class="d-flex align-center justify-center w-100 pa-10 pe-0"
-        >
-          <VImg
-            max-width="768px"
-            :src="authThemeImg"
-            class="auth-illustration"
-          />
+    <VRow no-gutters class="auth-wrapper">
+      <VCol md="8" class="d-none d-md-flex align-center justify-center position-relative">
+        <div class="d-flex align-center justify-center w-100 pa-10 pe-0">
+          <VImg max-width="768px" :src="authThemeImg" class="auth-illustration" />
         </div>
 
-        <VImg
-          :width="276"
-          :src="tree"
-          class="auth-footer-start-tree"
-        />
-        <VImg
-          class="auth-footer-mask"
-          :src="authThemeMask"
-        />
+        <VImg :width="276" :src="tree" class="auth-footer-start-tree" />
+        <VImg class="auth-footer-mask" :src="authThemeMask" />
       </VCol>
 
-      <VCol
-        cols="12"
-        md="4"
-        class="auth-card-v2 d-flex align-center justify-center"
-      >
-        <VCard
-          flat
-          :max-width="500"
-          class="mt-12 mt-sm-0 pa-4"
-        >
+      <VCol cols="12" md="4" class="auth-card-v2 d-flex align-center justify-center">
+        <VCard flat :max-width="500" class="mt-12 mt-sm-0 pa-4">
           <VCardText>
-            <h5 class="text-h5 font-weight-medium mb-1">
-              Welcome to {{ themeConfig.app.title }}! 👋🏻
-            </h5>
-            <p class="mb-0">
-              Please sign-in to your account and start the adventure
-            </p>
+            <h5 class="text-h5 font-weight-medium mb-1">Welcome to {{ themeConfig.app.title }}! 👋🏻</h5>
+            <p class="mb-0">Please sign-in to your account and start the adventure</p>
           </VCardText>
           <VCardText>
             <VForm @submit.prevent="() => {}">
               <VRow>
                 <!-- email -->
                 <VCol cols="12">
-                  <VTextField
-                    v-model="form.email"
-                    label="Email"
-                    type="email"
-                  />
+                  <VTextField v-model="form.email" label="Email" type="email" />
                 </VCol>
 
                 <!-- password -->
@@ -111,54 +77,27 @@ const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
                   />
 
                   <div class="d-flex align-center flex-wrap justify-space-between mt-1 mb-4">
-                    <VCheckbox
-                      v-model="form.remember"
-                      label="Remember me"
-                    />
-                    <a
-                      class="text-primary ms-2 mb-1"
-                      href="#"
-                    >
-                      Forgot Password?
-                    </a>
+                    <VCheckbox v-model="form.remember" label="Remember me" />
+                    <a class="text-primary ms-2 mb-1" href="#"> Forgot Password? </a>
                   </div>
 
-                  <VBtn
-                    block
-                    type="submit"
-                  >
-                    Login
-                  </VBtn>
+                  <VBtn block type="submit"> Login </VBtn>
                 </VCol>
 
                 <!-- create account -->
-                <VCol
-                  cols="12"
-                  class="text-center text-base"
-                >
+                <VCol cols="12" class="text-center text-base">
                   <span>New on our platform?</span>
-                  <a
-                    class="text-primary ms-2"
-                    href="#"
-                  >
-                    Create an account
-                  </a>
+                  <a class="text-primary ms-2" href="#"> Create an account </a>
                 </VCol>
 
-                <VCol
-                  cols="12"
-                  class="d-flex align-center"
-                >
+                <VCol cols="12" class="d-flex align-center">
                   <VDivider />
                   <span class="mx-4">or</span>
                   <VDivider />
                 </VCol>
 
                 <!-- auth providers -->
-                <VCol
-                  cols="12"
-                  class="text-center"
-                >
+                <VCol cols="12" class="text-center">
                   <AuthProvider />
                 </VCol>
               </VRow>
@@ -171,7 +110,7 @@ const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
 </template>
 
 <style lang="scss">
-@use "@core/scss/template/pages/page-auth.scss";
+@use '@core/scss/template/pages/page-auth.scss';
 </style>
 
 <route lang="yaml">

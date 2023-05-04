@@ -3,7 +3,11 @@ import { useTheme } from 'vuetify'
 import { useThemeConfig } from '@core/composable/useThemeConfig'
 import { hexToRgb } from '@layouts/utils'
 
-const { syncInitialLoaderTheme, syncVuetifyThemeWithTheme: syncConfigThemeWithVuetifyTheme, isAppRtl } = useThemeConfig()
+const {
+  syncInitialLoaderTheme,
+  syncVuetifyThemeWithTheme: syncConfigThemeWithVuetifyTheme,
+  isAppRtl,
+} = useThemeConfig()
 
 const { global } = useTheme()
 

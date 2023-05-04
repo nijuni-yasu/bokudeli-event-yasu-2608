@@ -5,8 +5,8 @@ import { VIcon } from 'vuetify/components'
 import logo from '@/assets/images/bokudeli/bokudeli_logo_ja_wide.png'
 
 import { defineThemeConfig } from '@core'
-import { RouteTransitions,Skins } from '@core/enums'
-import { AppContentLayoutNav,ContentWidth,FooterType,NavbarType } from '@layouts/enums'
+import { RouteTransitions, Skins } from '@core/enums'
+import { AppContentLayoutNav, ContentWidth, FooterType, NavbarType } from '@layouts/enums'
 
 export const { themeConfig, layoutConfig } = defineThemeConfig({
   app: {

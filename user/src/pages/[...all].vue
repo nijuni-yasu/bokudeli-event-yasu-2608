@@ -18,35 +18,19 @@ const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
 
     <!-- 👉 Image -->
     <div class="misc-avatar w-100 text-center">
-      <VImg
-        :src="misc404"
-        alt="Coming Soon"
-        :max-width="800"
-        class="mx-auto"
-      />
-      <VBtn
-        to="/"
-        class="mt-10"
-      >
-        Back to Home
-      </VBtn>
+      <VImg :src="misc404" alt="Coming Soon" :max-width="800" class="mx-auto" />
+      <VBtn to="/" class="mt-10"> Back to Home </VBtn>
     </div>
 
     <!-- 👉 Footer -->
-    <VImg
-      :src="tree"
-      class="misc-footer-tree d-none d-md-block"
-    />
+    <VImg :src="tree" class="misc-footer-tree d-none d-md-block" />
 
-    <VImg
-      :src="authThemeMask"
-      class="misc-footer-img d-none d-md-block"
-    />
+    <VImg :src="authThemeMask" class="misc-footer-img d-none d-md-block" />
   </div>
 </template>
 
 <style lang="scss">
-@use "@core/scss/template/pages/misc.scss";
+@use '@core/scss/template/pages/misc.scss';
 
 .misc-footer-tree {
   inline-size: 15.625rem;

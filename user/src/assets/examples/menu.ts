@@ -1,6 +1,6 @@
 export default [
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_01.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_01.jpg', import.meta.url).href,
     category: 'sales-automation',
     characterSize: '400',
     menu: 'チキンガレット丼',
@@ -9,7 +9,7 @@ export default [
     price: '1200',
   },
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_02.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_02.jpg', import.meta.url).href,
     category: 'marketing-automation',
     characterSize: '400',
     menu: 'メガ丼',
@@ -18,7 +18,7 @@ export default [
     price: '1500',
   },
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_03.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_03.jpg', import.meta.url).href,
     category: 'api-questions',
     characterSize: '400',
     menu: 'ローストポーク丼',
@@ -27,7 +27,7 @@ export default [
     price: '800',
   },
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_04.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_04.jpg', import.meta.url).href,
     category: 'email-marketing',
     characterSize: '400',
     menu: '豚バラ丼',
@@ -36,7 +36,7 @@ export default [
     price: '800',
   },
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_05.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_05.jpg', import.meta.url).href,
     category: 'personalization',
     characterSize: '400',
     menu: '牛ステーキ丼',
@@ -45,7 +45,7 @@ export default [
     price: '1000',
   },
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_06.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_06.jpg', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     menu: '牛スジ煮込み丼',
@@ -54,7 +54,7 @@ export default [
     price: '1100',
   },
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_01.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_01.jpg', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     menu: 'チキンガレット丼',
@@ -63,7 +63,7 @@ export default [
     price: '1000',
   },
   {
-    menuImage: new URL('@/assets/images/bokudeli/menu_ex_01.jpg',import.meta.url).href,
+    menuImage: new URL('@/assets/images/bokudeli/menu_ex_01.jpg', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     menu: 'チキンガレット丼',

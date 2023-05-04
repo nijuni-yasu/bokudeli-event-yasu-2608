@@ -2,7 +2,7 @@ export default [
   {
     communityId: '33lab',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_33lab.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_33lab.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: '3x3 Lab ランチ会 😋',
@@ -17,7 +17,7 @@ export default [
   {
     communityId: 'sutaha',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_sutaha.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_sutaha.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'スタハランチ会🏢',
@@ -32,7 +32,7 @@ export default [
   {
     communityId: 'mirailab',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_mirailab.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_mirailab.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'MIRAI LAB PALETTE ランチ会😘',
@@ -47,7 +47,7 @@ export default [
   {
     communityId: 'saai',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_saai.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_saai.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'SAAI Wonder Working Community 交流会✨',
@@ -62,7 +62,7 @@ export default [
   {
     communityId: 'ship',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_ship.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_ship.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'SHIP 品川産業支援交流会 🛳',
@@ -77,7 +77,7 @@ export default [
   {
     communityId: 'rokugo',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_rokugo.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_rokugo.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: '六郷ベース交流会 🛠',
@@ -92,7 +92,7 @@ export default [
   {
     communityId: 'qws',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_qws.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_qws.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'SHIBUYA QWS ランチ会🍱',
@@ -107,7 +107,7 @@ export default [
   {
     communityId: 'andwork',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_andwork.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_andwork.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'andwork渋谷夜会 🎵',
@@ -122,7 +122,7 @@ export default [
   {
     communityId: '100banch',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_100banch.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_100banch.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: '100banch交流会 ✌️',
@@ -137,7 +137,7 @@ export default [
   {
     communityId: 'ipark',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_ipark.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_ipark.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: '湘南アイパーク ランチ交流会🏥',
@@ -152,7 +152,7 @@ export default [
   {
     communityId: 'fuse',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_fuse.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_fuse.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'FUSE ランチ交流会 👨‍👩‍👧',
@@ -167,7 +167,7 @@ export default [
   {
     communityId: 'mishima',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_mishima.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_mishima.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'みしま未来研究所 交流会 🎈',
@@ -182,7 +182,7 @@ export default [
   {
     communityId: 'nakamachi',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_nakamachi.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_nakamachi.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: '中富良野町 まちなかオフィス ランチ会🧀',
@@ -197,7 +197,7 @@ export default [
   {
     communityId: 'niino',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_niino.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_niino.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'NINNOランチ会🍚',
@@ -212,7 +212,7 @@ export default [
   {
     communityId: 'seesaw',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/community_seesaw.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/community_seesaw.png', import.meta.url).href,
     category: 'demand-generation',
     characterSize: '400',
     title: 'seesaw ランチ会😊',
@@ -227,7 +227,7 @@ export default [
   {
     communityId: 'dmmmake',
     eventId: 4,
-    mainImage: new URL('@/assets/images/bokudeli/event_ex_01.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/event_ex_01.png', import.meta.url).href,
     category: 'sales-automation',
     characterSize: '400',
     title: '8周年祭り ランチ会👩🏻‍💻',
@@ -242,7 +242,7 @@ export default [
   {
     communityId: 'dmmmake',
     eventId: 3,
-    mainImage: new URL('@/assets/images/bokudeli/event_ex_02.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/event_ex_02.png', import.meta.url).href,
     category: 'marketing-automation',
     characterSize: '400',
     title: 'つながる交流会 🚀',
@@ -257,7 +257,7 @@ export default [
   {
     communityId: 'dmmmake',
     eventId: 2,
-    mainImage: new URL('@/assets/images/bokudeli/event_ex_03.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/event_ex_03.png', import.meta.url).href,
     category: 'api-questions',
     characterSize: '400',
     title: '第30回 ぼくデリ会 😋',
@@ -272,7 +272,7 @@ export default [
   {
     communityId: 'dmmmake',
     eventId: 1,
-    mainImage: new URL('@/assets/images/bokudeli/event_ex_04.png',import.meta.url).href,
+    mainImage: new URL('@/assets/images/bokudeli/event_ex_04.png', import.meta.url).href,
     category: 'email-marketing',
     characterSize: '400',
     title: '会員勉強会 🎮',

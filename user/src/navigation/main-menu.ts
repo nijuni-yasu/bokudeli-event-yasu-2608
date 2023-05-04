@@ -8,9 +8,7 @@ export default [
         title: 'TOP',
         to: 'index',
       },
-      { title: 'コミュニティ',
-        to: 'index',
-      },
+      { title: 'コミュニティ', to: 'index' },
       {
         title: 'マイページ',
         to: 'index',
@@ -18,8 +16,8 @@ export default [
       {
         title: 'イベント作成',
         to: 'index',
-      }
-    ]
+      },
+    ],
   },
   {
     title: 'Second page',

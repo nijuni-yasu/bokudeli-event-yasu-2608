@@ -5,7 +5,9 @@ import { useThemeConfig } from '@core/composable/useThemeConfig'
 // @layouts plugin
 import { AppContentLayoutNav } from '@layouts/enums'
 
-const DefaultLayoutWithHorizontalNav = defineAsyncComponent(() => import('./components/DefaultLayoutWithHorizontalNav.vue'))
+const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
+  () => import('./components/DefaultLayoutWithHorizontalNav.vue')
+)
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(() => import('./components/DefaultLayoutWithVerticalNav.vue'))
 
 const { width: windowWidth } = useWindowSize()
@@ -31,5 +33,5 @@ injectSkinClasses()
 
 <style lang="scss">
 // As we are using `layouts` plugin we need its styles to be imported
-@use "@layouts/styles/default-layout";
+@use '@layouts/styles/default-layout';
 </style>

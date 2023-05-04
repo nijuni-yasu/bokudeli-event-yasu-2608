@@ -39,7 +39,11 @@ const suggestionGroups: SuggestionGroup[] = [
       { icon: 'mdi-calendar', title: 'Calendar', url: { name: 'apps-calendar' } },
       { icon: 'mdi-file-plus-outline', title: 'Invoice Add', url: { name: 'apps-invoice-add' } },
       { icon: 'mdi-currency-usd', title: 'Pricing', url: { name: 'pages-pricing' } },
-      { icon: 'mdi-account-cog-outline', title: 'Account Settings', url: { name: 'pages-account-settings-tab', params: { tab: 'account' } } },
+      {
+        icon: 'mdi-account-cog-outline',
+        title: 'Account Settings',
+        url: { name: 'pages-account-settings-tab', params: { tab: 'account' } },
+      },
     ],
   },
   {
@@ -87,13 +91,15 @@ const router = useRouter()
 
 // 👉 fetch search result API
 watchEffect(() => {
-  axios.get('/app-bar/search', {
-    params: {
-      q: searchQuery.value,
-    },
-  }).then(response => {
-    searchResult.value = response.data
-  })
+  axios
+    .get('/app-bar/search', {
+      params: {
+        q: searchQuery.value,
+      },
+    })
+    .then((response) => {
+      searchResult.value = response.data
+    })
 })
 
 // 👉 redirect the selected page
@@ -114,22 +120,11 @@ const LazyAppBarSearch = defineAsyncComponent(() => import('@core/components/App
     @click="isAppSearchBarVisible = !isAppSearchBarVisible"
   >
     <!-- 👉 Search Trigger button -->
-    <VBtn
-      icon
-      variant="text"
-      color="default"
-      size="small"
-    >
-      <VIcon
-        icon="mdi-magnify"
-        size="24"
-      />
+    <VBtn icon variant="text" color="default" size="small">
+      <VIcon icon="mdi-magnify" size="24" />
     </VBtn>
 
-    <span
-      v-if="appContentLayoutNav === 'vertical'"
-      class="d-none d-md-flex align-center text-disabled"
-    >
+    <span v-if="appContentLayoutNav === 'vertical'" class="d-none d-md-flex align-center text-disabled">
       <span class="me-3">Search</span>
       <span class="meta-key">&#8984;K</span>
     </span>
@@ -165,7 +160,7 @@ const LazyAppBarSearch = defineAsyncComponent(() => import('@core/components/App
 </template>
 
 <style lang="scss" scoped>
-@use "@styles/variables/_vuetify.scss";
+@use '@styles/variables/_vuetify.scss';
 
 .meta-key {
   border: thin solid rgba(var(--v-border-color), var(--v-border-opacity));

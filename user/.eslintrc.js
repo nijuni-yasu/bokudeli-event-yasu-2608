@@ -21,5 +21,5 @@ module.exports = {
   ignorePatterns: ['.eslintrc.js'],
   rules: {
     'vue/multi-word-component-names': 'off',
-  }
+  },
 }

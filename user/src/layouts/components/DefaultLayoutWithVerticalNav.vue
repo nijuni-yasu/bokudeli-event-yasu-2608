@@ -14,9 +14,7 @@ const { width: windowWidth } = useWindowSize()
 </script>
 
 <template>
-  <VerticalNavLayout
-    :nav-items="navItems"
-  >
+  <VerticalNavLayout :nav-items="navItems">
     <!-- 👉 navbar -->
     <template #navbar="{ toggleVerticalOverlayNavActive }">
       <div class="d-flex h-100 align-center">
@@ -29,10 +27,7 @@ const { width: windowWidth } = useWindowSize()
           size="small"
           @click="toggleVerticalOverlayNavActive(true)"
         >
-          <VIcon
-            icon="mdi-menu"
-            size="24"
-          />
+          <VIcon icon="mdi-menu" size="24" />
         </VBtn>
 
         <!-- <NavbarThemeSwitcher /> -->
@@ -45,10 +40,7 @@ const { width: windowWidth } = useWindowSize()
 
     <!-- 👉 Pages -->
     <RouterView v-slot="{ Component }">
-      <Transition
-        :name="appRouteTransition"
-        mode="out-in"
-      >
+      <Transition :name="appRouteTransition" mode="out-in">
         <Component :is="Component" />
       </Transition>
     </RouterView>
