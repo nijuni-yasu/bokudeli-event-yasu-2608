@@ -928,9 +928,9 @@
   integrity sha512-C2KHSinc9cFUTcGYxRSIj7cBYNSroce+1d2Wa+HKVHguVv4kQuEvm/oPxJpTLXqFjNLfxyxVac7Zd4U0znjFtg==
 
 "@fullcalendar/list@^6.1.6":
-  version "6.1.6"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/list/-/list-6.1.6.tgz#5684e929f0d59aa0e85e65c0492f34170db9a3a1"
-  integrity sha512-1zWDrVqQxQl/DLHIhLtig1iz/Gnh7hyOe4gEHSg169Om/+wYf8MRgFy8bGBqIFP2eS3Rk7mY3HVLvrkBxmR+wg==
+  version "6.1.7"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/list/-/list-6.1.7.tgz#27d1b11984c9e4fc66da9a71b2429d38c427be94"
+  integrity sha512-Fl6jGKylhrk+g/RCISsv66vzpzjCFhd4r3nUDeHTAAE375OYGlVPKpH67YaKxpMrofj82JLIzS3JEzyQBZo0Cg==
 
 "@fullcalendar/timegrid@^6.1.6":
   version "6.1.6"
