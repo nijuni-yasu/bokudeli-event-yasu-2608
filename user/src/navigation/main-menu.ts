@@ -1,27 +1,12 @@
 export default [
   {
-    title: 'Home',
-    // to: { name: 'index' },
-    icon: { icon: 'mdi-home-outline' },
-    children: [
-      {
-        title: 'TOP',
-        to: 'index',
-      },
-      { title: 'コミュニティ', to: 'index' },
-      {
-        title: 'マイページ',
-        to: 'index',
-      },
-      {
-        title: 'イベント作成',
-        to: 'index',
-      },
-    ],
+    title: 'コミュニティ',
+    to: { path: '/community' },
+    icon: { icon: 'mdi-file-document-outline' },
   },
   {
-    title: 'Second page',
-    to: { name: 'second-page' },
-    icon: { icon: 'mdi-file-document-outline' },
+    title: 'マイページ',
+    to: { path: '/users/me' },
+    icon: { icon: 'mdi-account-outline' },
   },
 ]
