@@ -12,8 +12,8 @@ updates:
     open-pull-requests-limit: 10
     versioning-strategy: "lockfile-only"
     reviewers:
-      - "nijuni-yasu"
       - "yokochie"
+      - "nijuni-yasu"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
