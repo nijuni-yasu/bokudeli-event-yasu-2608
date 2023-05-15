@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { getAuth, signInWithPopup, FacebookAuthProvider } from "firebase/auth"
+import { getAuth, signInWithPopup, FacebookAuthProvider, signInWithRedirect } from 'firebase/auth'
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    required: true
-  }
-});
+    required: true,
+  },
+})
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -14,32 +14,47 @@ const emit = defineEmits<{
 
 const dialog = computed({
   get: () => props.modelValue,
-  set: val => emit('update:modelValue', val)
+  set: (val) => emit('update:modelValue', val),
 })
 
 const closeDialog = () => {
   dialog.value = false
 }
 
-const handleFacebookLonin = async () => {
+const provider = new FacebookAuthProvider()
+provider.addScope('public_profile')
+provider.setCustomParameters({
+  'display': 'popup'
+})
+
+const handleFacebookLogin = async () => {
   try {
-    const result = await signInWithPopup(getAuth(), new FacebookAuthProvider());
-    const user = result.user;
-      const credential = FacebookAuthProvider.credentialFromResult(result);
-      const accessToken = credential?.accessToken;
-      console.log({result, credential, accessToken})
-      closeDialog()
+    const result = await signInWithPopup(getAuth(), new FacebookAuthProvider())
+    const user = result.user
+    const credential = FacebookAuthProvider.credentialFromResult(result)
+    const accessToken = credential?.accessToken
+    console.log({ result, credential, accessToken })
+    closeDialog()
   } catch (error: any) {
-      // Handle Errors here.
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      // The email of the user's account used.
-      const email = error.email;
-      // The AuthCredential type that was used.
-      const credential = FacebookAuthProvider.credentialFromError(error);
-      console.error({ error })
-      closeDialog()
-    }
+    // Handle Errors here.
+    const errorCode = error.code
+    const errorMessage = error.message
+    // The email of the user's account used.
+    const email = error.email
+    // The AuthCredential type that was used.
+    const credential = FacebookAuthProvider.credentialFromError(error)
+    console.error({ error })
+    closeDialog()
+  }
+}
+
+const handleFacebookLogin2 = async () => {
+  try {
+    const auth = getAuth();
+    await signInWithRedirect(auth, new FacebookAuthProvider());
+  } catch (error: any) {
+    console.error({ error });
+  }
 }
 </script>
 
@@ -53,7 +68,7 @@ const handleFacebookLonin = async () => {
         <v-container>
           <v-row>
             <v-col class="d-flex justify-center">
-              <button id="facebook-button" @click="handleFacebookLonin">
+              <button id="facebook-button" @click="handleFacebookLogin2">
                 <span class="button-inner-text">Continue with Facebook</span>
               </button>
             </v-col>
@@ -73,7 +88,7 @@ const handleFacebookLonin = async () => {
   width: 345px;
   height: 54px;
 
-  background: #1877F2;
+  background: #1877f2;
   border-radius: 10px;
 }
 
@@ -83,6 +98,6 @@ const handleFacebookLonin = async () => {
   font-weight: 700;
   font-size: 20px;
   line-height: 23px;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 </style>
