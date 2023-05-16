@@ -1,9 +1,13 @@
 <script lang="ts" setup>
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+
 import { useSkins } from '@core/composable/useSkins'
 import { useThemeConfig } from '@core/composable/useThemeConfig'
 
 // @layouts plugin
 import { AppContentLayoutNav } from '@layouts/enums'
+
+import { CurrentUser, useStoreCurrentUser } from '@/stores/currentUser'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('./components/DefaultLayoutWithHorizontalNav.vue')
@@ -20,6 +24,15 @@ switchToVerticalNavOnLtOverlayNavBreakpoint(windowWidth)
 const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
+
+onAuthStateChanged(getAuth(), (user) => {
+  const store = useStoreCurrentUser()
+  if (user) {
+    store.update(user as CurrentUser)
+  } else {
+    store.$reset()
+  }
+})
 </script>
 
 <template>
