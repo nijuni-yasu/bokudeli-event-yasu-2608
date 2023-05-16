@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getAuth, signInWithPopup, FacebookAuthProvider, signInWithRedirect } from 'firebase/auth'
+import { getAuth, signInWithPopup, FacebookAuthProvider } from 'firebase/auth'
 
 const props = defineProps({
   modelValue: {
@@ -33,8 +33,7 @@ const handleFacebookLogin = async () => {
     const user = result.user
     const credential = FacebookAuthProvider.credentialFromResult(result)
     const accessToken = credential?.accessToken
-    console.log({ result, credential, accessToken })
-    closeDialog()
+    // console.log({ result, credential, accessToken })
   } catch (error: any) {
     // Handle Errors here.
     const errorCode = error.code
@@ -43,17 +42,9 @@ const handleFacebookLogin = async () => {
     const email = error.email
     // The AuthCredential type that was used.
     const credential = FacebookAuthProvider.credentialFromError(error)
-    console.error({ error })
+    // console.error({ error })
+  } finally {
     closeDialog()
-  }
-}
-
-const handleFacebookLogin2 = async () => {
-  try {
-    const auth = getAuth();
-    await signInWithRedirect(auth, new FacebookAuthProvider());
-  } catch (error: any) {
-    console.error({ error });
   }
 }
 </script>
@@ -68,7 +59,7 @@ const handleFacebookLogin2 = async () => {
         <v-container>
           <v-row>
             <v-col class="d-flex justify-center">
-              <button id="facebook-button" @click="handleFacebookLogin2">
+              <button id="facebook-button" @click="handleFacebookLogin">
                 <span class="button-inner-text">Continue with Facebook</span>
               </button>
             </v-col>
