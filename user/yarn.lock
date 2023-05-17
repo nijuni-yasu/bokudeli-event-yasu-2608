@@ -6996,12 +6996,12 @@ pify@^2.3.0:
   integrity sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==
 
 pinia@^2.0.24:
-  version "2.0.36"
-  resolved "https://registry.yarnpkg.com/pinia/-/pinia-2.0.36.tgz#65130f3b94cc7fe25156308634010fab893dff24"
-  integrity sha512-4UKApwjlmJH+VuHKgA+zQMddcCb3ezYnyewQ9NVrsDqZ/j9dMv5+rh+1r48whKNdpFkZAWVxhBp5ewYaYX9JcQ==
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/pinia/-/pinia-2.1.1.tgz#542c6bb8a7c27b342082f431bccd6124b63c5b55"
+  integrity sha512-Y2CgpcUtD8Ogdvo5LW5g20ykSZgnVDMgTSZFr40EvO6HB8axQk+0lHa1UrRah9wworFaxjovwRlY/wRICWj/KQ==
   dependencies:
     "@vue/devtools-api" "^6.5.0"
-    vue-demi "*"
+    vue-demi ">=0.14.2"
 
 pkg-dir@^4.1.0:
   version "4.2.0"
@@ -9031,10 +9031,10 @@ vm2@^3.9.17:
     acorn "^8.7.0"
     acorn-walk "^8.2.0"
 
-vue-demi@*, vue-demi@>=0.14.0:
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/vue-demi/-/vue-demi-0.14.0.tgz#dcfd9a9cf9bb62ada1582ec9042372cf67ca6190"
-  integrity sha512-gt58r2ogsNQeVoQ3EhoUAvUsH9xviydl0dWJj7dabBC/2L4uBId7ujtCwDRD0JhkGsV1i0CtfLAeyYKBht9oWg==
+vue-demi@>=0.14.0, vue-demi@>=0.14.2:
+  version "0.14.3"
+  resolved "https://registry.yarnpkg.com/vue-demi/-/vue-demi-0.14.3.tgz#5c7375527ad32580a7d8d28ee322bc059dbc1b99"
+  integrity sha512-aknytzARm7U20nMhvOdfa5IRiS+oyATtd55s3fICsT7wEtN/qoOiOINsNsNJjeZCOsPNOGS4p1yDOwH9cTxgjg==
 
 vue-eslint-parser@^9.3.0:
   version "9.3.0"
