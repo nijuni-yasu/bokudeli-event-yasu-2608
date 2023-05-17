@@ -940,9 +940,9 @@
     "@fullcalendar/daygrid" "~6.1.7"
 
 "@fullcalendar/vue3@^6.1.6":
-  version "6.1.6"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/vue3/-/vue3-6.1.6.tgz#2f6f8a9c6f91476216ba1de8deecb13d92b44fa4"
-  integrity sha512-2/tq8p6C6QZyciI1xDCU8lOIu64xoULgvq0YHcxJhxkqTxVk3rFdLbhtKNqzasmRZV3dRLwBXv7aaBsOpwFJsQ==
+  version "6.1.7"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/vue3/-/vue3-6.1.7.tgz#7b7cc338e9e652d736ca62ea87783b407b1e2d46"
+  integrity sha512-GGLY9eYF7ahlZkOX7gtRmgZVgVX6B6/01ZH9LSce8bQo/3F0OsnuXdwXaQGMGY6PzJ0ZDcCTcouQjsvmedZJDg==
 
 "@gar/promisify@^1.1.3":
   version "1.1.3"
