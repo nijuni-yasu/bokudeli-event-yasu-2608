@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
+import { collectionGroup, query, where, getDocs, QuerySnapshot } from 'firebase/firestore'
+
+import { db } from '@/firebase'
 import memberList from '@/assets/examples/memberList'
 import eventList from '@/assets/examples/eventList'
 
@@ -9,6 +12,7 @@ const goToEvents = (eventId: number) => {
   const path = route.path.endsWith('/') ? `${route.path}events/${eventId}` : `${route.path}/events/${eventId}`
   router.push({ path })
 }
+
 const communityImage = new URL('@/assets/images/bokudeli/community_dmmmakeakiba.png', import.meta.url).href
 const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', import.meta.url).href
 </script>
