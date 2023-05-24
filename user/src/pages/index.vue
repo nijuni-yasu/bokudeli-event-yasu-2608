@@ -14,9 +14,7 @@ import { format } from 'date-fns'
 import { db } from '@/firebase'
 import topLogo from '@/assets/images/bokudeli/bokudeli_top4.png'
 
-// 日付順で取りたかったが orderBy が使えないので一旦コメントアウト
-// const allEvents = query(collectionGroup(db, 'events'), orderBy('event_start_datetime', 'desc'))
-const allEvents = query(collectionGroup(db, 'events'))
+const allEvents = query(collectionGroup(db, 'events'), orderBy('event_start_datetime', 'desc'))
 
 type Event = {
   communityId: string
