@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { DocumentData, Timestamp } from 'firebase/firestore'
 import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
+import PartnerMenu from './partnerMenu'
 
 export const dateString = (date: Date | null): string => {
   if (!date) return ''
@@ -73,5 +74,24 @@ export const convertDocumentDataToCommunity = (documentData: DocumentData): Boku
       instagram: community_sns_instagram ?? '',
       twitter: community_sns_twitter ?? '',
     },
+  }
+}
+
+export const convertDocumentDataToMenu = (
+  partnerId: string,
+  documentId: string,
+  documentData: DocumentData
+): PartnerMenu => {
+  const { menu_name, menu_price, menu_image_url, menu_description, created_at, updated_at } = documentData
+
+  return {
+    id: documentId,
+    partnerId,
+    name: menu_name ?? '',
+    price: menu_price ?? 0,
+    imageUrl: menu_image_url ?? '',
+    description: menu_description ?? '',
+    createdAt: created_at ? (created_at as Timestamp).toDate() : null,
+    updatedAt: updated_at ? (updated_at as Timestamp).toDate() : null,
   }
 }

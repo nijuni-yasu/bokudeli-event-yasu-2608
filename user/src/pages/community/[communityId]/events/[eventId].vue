@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import menuContents from '@/assets/examples/menu'
 import memberList from '@/assets/examples/memberList'
 import { db } from '@/firebase'
 import { collection, collectionGroup, getDocs, query, where } from 'firebase/firestore'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateString, convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
+import {
+  dateString,
+  convertDocumentDataToCommunity,
+  convertDocumentDataToEvent,
+  convertDocumentDataToMenu,
+} from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import PartnerMenu from '@/schemes/partnerMenu'
 
 const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
 
@@ -21,10 +26,12 @@ const eventDb = query(
   where('event_id', '==', props.eventId)
 )
 const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
+const partnerDb = collection(db, 'partners')
 
 const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
+  menus: [] as PartnerMenu[],
   isLoading: true,
 })
 
@@ -35,6 +42,10 @@ onMounted(async () => {
   if (eventData) {
     const event = convertDocumentDataToEvent(eventData)
     state.event = event
+
+    const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
+    const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
+    state.menus = menus
   }
   if (communityData) {
     const community = convertDocumentDataToCommunity(communityData)
@@ -129,20 +140,19 @@ onMounted(async () => {
             </v-col>
           </v-row>
         </v-card>
-        <!-- kb search content -->
         <v-row>
-          <v-col v-for="item in menuContents" :key="item.menuImage" md="4" sm="6" cols="12">
+          <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
             <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
-              <v-img :src="item.menuImage" aspect-ratio="1"></v-img>
+              <v-img :src="menu.imageUrl" aspect-ratio="1"></v-img>
 
               <!-- title -->
               <v-card-title class="justify-center pb-3">
-                {{ item.menu }}
+                {{ menu.name }}
               </v-card-title>
               <v-card-text class="text-left pb-8">
-                {{ item.desc }}
+                {{ menu.description }}
               </v-card-text>
-              <v-card-text class="text-right text-h6 pb-2"> ¥ {{ item.price }} </v-card-text>
+              <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
               <v-btn target="blank" color="primary" rounded outlined class="my-3">
                 <!--
                 <event-cart-modal
@@ -155,7 +165,7 @@ onMounted(async () => {
           </v-col>
 
           <!-- no result found -->
-          <v-col v-show="!menuContents.length" cols="12" class="text-center">
+          <v-col v-show="!state.menus.length" cols="12" class="text-center">
             <h4 class="mt-4">Search result not found!!</h4>
           </v-col>
         </v-row>
