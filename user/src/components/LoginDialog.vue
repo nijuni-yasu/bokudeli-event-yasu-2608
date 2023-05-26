@@ -24,7 +24,7 @@ const closeDialog = () => {
 const provider = new FacebookAuthProvider()
 provider.addScope('public_profile')
 provider.setCustomParameters({
-  'display': 'popup'
+  display: 'popup',
 })
 
 const handleFacebookLogin = async () => {
