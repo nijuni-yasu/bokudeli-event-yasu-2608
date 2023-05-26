@@ -1,49 +1,72 @@
 <script setup lang="ts">
-import mainContents from '@/assets/examples/mainContents'
 import menuContents from '@/assets/examples/menu'
 import memberList from '@/assets/examples/memberList'
+import { db } from '@/firebase'
+import { collection, collectionGroup, getDocs, query, where } from 'firebase/firestore'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { dateString, convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
+import BokudeliCommunity from '@/schemes/bokudeliCommunity'
+
+const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
 
 type Props = {
   communityId: string
   eventId: string
 }
-
 const props = defineProps<Props>()
-const shopInfo = mainContents.find((content) => {
-  return content.communityId === props.communityId && String(content.eventId) === props.eventId
+
+const eventDb = query(
+  collectionGroup(db, 'events'),
+  where('community_account', '==', props.communityId),
+  where('event_id', '==', props.eventId)
+)
+const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
+
+const state = reactive({
+  event: {} as BokudeliEvent,
+  community: {} as BokudeliCommunity,
+  isLoading: true,
 })
 
-const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', import.meta.url).href
-const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
+onMounted(async () => {
+  const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
+  const eventData = eventSnapshot.docs.shift()?.data()
+  const communityData = communitySnapshot.docs.shift()?.data()
+  if (eventData) {
+    const event = convertDocumentDataToEvent(eventData)
+    state.event = event
+  }
+  if (communityData) {
+    const community = convertDocumentDataToCommunity(communityData)
+    state.community = community
+  }
+  state.isLoading = false
+})
 </script>
 
 <template>
-  <section id="knowledge-base">
-    <!-- seach banner  -->
-    <v-row class="justify-center">
+  <section>
+    <v-row v-if="state.isLoading === false" class="justify-center">
       <v-col md="9" sm="9" cols="12">
         <v-card flat class="align-center justify-center text-center my-10 pa-10">
           <v-row>
             <v-col>
-              <v-img class="ma-0" cover aspect-ratio="1.91" :src="shopInfo?.mainImage"> </v-img>
+              <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl"> </v-img>
             </v-col>
           </v-row>
           <v-row>
             <v-col>
               <v-card-title class="justify-center text-h4 font-weight-semibold pb-10">
-                {{ shopInfo?.title }}
+                {{ state.event.eventName }}
               </v-card-title>
-              <v-card-text
-                class="text-left pb-5 cursor-pointer text-decoration-none"
-                @click="$router.push(`/community/${shopInfo?.communityId}`)"
-              >
+              <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
                 <router-link
-                  :to="`/community/${shopInfo?.communityId}`"
+                  :to="`/community/${state.event.communityAccount}`"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
                   <v-row class="ma-1">
                     <v-img
-                      :src="communityLogo"
+                      :src="state.community.communityIconImageUrl"
                       style="border-radius: 10px; width: 75px; height: 75px"
                       aspect-ratio="1"
                       cover
@@ -52,19 +75,23 @@ const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.u
                     <div class="ml-2">
                       <div style="font-size: 14px">【主催者】</div>
                       <div style="font-size: 24px">
-                        {{ shopInfo?.community }}
+                        {{ state.event.communityName }}
                       </div>
                     </div>
                   </v-row>
                 </router-link>
               </v-card-text>
-              <v-card-text class="text-left pb-5"> 【開催場所】{{ shopInfo?.place }} </v-card-text>
-              <v-card-text class="text-left pb-5"> 【注文期限】{{ shopInfo?.orderDate }} </v-card-text>
-              <v-card-text class="text-left pb-5"> 【開催日時】{{ shopInfo?.eventDate }} </v-card-text>
-              <v-card-text class="text-left pb-5"> 【お店】{{ shopInfo?.shop }} </v-card-text>
+              <v-card-text class="text-left pb-5"> 【開催場所】{{ state.event.eventAddress }} </v-card-text>
+              <v-card-text class="text-left pb-5">
+                【注文期限】{{ dateString(state.event.eventDeadline) }}
+              </v-card-text>
+              <v-card-text class="text-left pb-5">
+                【開催日時】{{ dateString(state.event.eventStartDatetime) }}
+              </v-card-text>
+              <v-card-text class="text-left pb-5"> 【お店】{{ state.event.shopName }} </v-card-text>
               <v-card-text class="text-left pb-5">
                 【開催内容】<br />
-                {{ shopInfo?.desc }}
+                {{ state.event.eventDescription }}
               </v-card-text>
               <v-card-text class="text-left pb-5">
                 【コロナ感染対策】
@@ -74,7 +101,7 @@ const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.u
                   </v-col>
                 </v-row>
               </v-card-text>
-              <v-card-text class="text-left pb-5"> 【最大人数】{{ shopInfo?.max }} </v-card-text>
+              <v-card-text class="text-left pb-5"> 【最大人数】{{ state.event.eventMaxPeople }} </v-card-text>
               <v-card-text class="text-left pb-10">
                 【参加者】
                 <v-row>
@@ -132,6 +159,11 @@ const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.u
             <h4 class="mt-4">Search result not found!!</h4>
           </v-col>
         </v-row>
+      </v-col>
+    </v-row>
+    <v-row v-else class="justify-center">
+      <v-col cols="12" class="text-center">
+        <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
   </section>
