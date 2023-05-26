@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { collectionGroup, query, where, getDocs, QuerySnapshot } from 'firebase/firestore'
 
-import { db } from '@/firebase'
 import memberList from '@/assets/examples/memberList'
 import eventList from '@/assets/examples/eventList'
 
