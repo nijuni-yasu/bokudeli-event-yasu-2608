@@ -11,6 +11,7 @@ import {
 } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
+import EventCartDialog from '@/components/EventCartDialog.vue'
 
 const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
 
@@ -53,6 +54,14 @@ onMounted(async () => {
   }
   state.isLoading = false
 })
+
+const isDialogOpen = ref(false)
+const selectedMenu = ref(null as PartnerMenu | null)
+
+const selectMenu = (menu: PartnerMenu) => {
+  selectedMenu.value = menu
+  isDialogOpen.value = true
+}
 </script>
 
 <template>
@@ -153,14 +162,13 @@ onMounted(async () => {
                 {{ menu.description }}
               </v-card-text>
               <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
-              <v-btn target="blank" color="primary" rounded outlined class="my-3">
-                <!--
-                <event-cart-modal
-                card_title="カートの追加"
-                :menu="item"
-              ></event-cart-modal>
-              -->
-              </v-btn>
+              <v-row class="justify-center">
+                <v-col class="text-center">
+                  <v-btn class="mt-2 mb-2" x-large color="primary" rounded outlined @click="selectMenu(menu)">
+                    カートの追加
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-card>
           </v-col>
 
@@ -176,6 +184,7 @@ onMounted(async () => {
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
+    <event-cart-dialog v-model="isDialogOpen" :menu="selectedMenu"></event-cart-dialog>
   </section>
 </template>
 <style lang="scss" scoped></style>

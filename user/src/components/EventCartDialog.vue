@@ -1,0 +1,57 @@
+<script setup lang="ts">
+import PartnerMenu from '@/schemes/partnerMenu'
+
+const props = defineProps<{
+  modelValue: boolean
+  menu: PartnerMenu
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
+}>()
+
+const isOpen = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+})
+
+const countOptions = Array.from({ length: 10 }, (_, i) => i + 1)
+const closeDialog = () => {
+  isOpen.value = false
+}
+</script>
+
+<template>
+  <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog()">
+    <v-card class="pa-sm-10 px-5 py-1 text-center">
+      <v-img class="mx-5" :src="menu.imageUrl" aspect-ratio="1"></v-img>
+      <v-card-title class="text-left text-h4 pb-3">
+        {{ menu.name }}
+      </v-card-title>
+      <v-card-text class="text-left pb-2">
+        {{ menu.description }}
+      </v-card-text>
+      <v-card-text class="text-right text-h4 pb-5"> ¥ {{ menu.price }} </v-card-text>
+      <v-row class="mx-3 mb-2">
+        <v-select :items="countOptions" dense outlined filled label="個数"></v-select>
+      </v-row>
+      <v-row class="mx-3 my-2">
+        <v-textarea outlined dense rows="1" label="注記を追加"></v-textarea>
+      </v-row>
+      <v-row class="mx-3 my-2">
+        <v-col class="justify-center pa-0">
+          <v-btn width="100%" height="57" rounded outlined color="primary" @click="closeDialog()">
+            カートに追加する
+          </v-btn>
+        </v-col>
+      </v-row>
+      <v-row class="mx-3 mt-2">
+        <v-col class="justify-center pa-0">
+          <v-btn width="100%" height="57" rounded outlined color="secondary" @click="closeDialog()">閉じる</v-btn>
+        </v-col>
+      </v-row>
+    </v-card>
+  </v-dialog>
+</template>
+
+<style lang="scss" scoped></style>
