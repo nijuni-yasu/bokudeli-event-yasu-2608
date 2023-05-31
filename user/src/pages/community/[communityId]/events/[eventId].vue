@@ -71,7 +71,7 @@ const selectMenu = (menu: PartnerMenu) => {
         <v-card flat class="align-center justify-center text-center my-10 pa-10">
           <v-row>
             <v-col>
-              <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl"> </v-img>
+              <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
             </v-col>
           </v-row>
           <v-row>
@@ -152,7 +152,7 @@ const selectMenu = (menu: PartnerMenu) => {
         <v-row>
           <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
             <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
-              <v-img :src="menu.imageUrl" aspect-ratio="1"></v-img>
+              <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
 
               <!-- title -->
               <v-card-title class="justify-center pb-3">
