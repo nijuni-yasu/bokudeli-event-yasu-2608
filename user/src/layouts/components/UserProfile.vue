@@ -44,7 +44,7 @@ const loginDialog = ref(false)
             <!-- Divider -->
             <v-divider class="my-2" />
 
-            <!-- 👉 Logout -->
+            <!-- 👉 Login -->
             <v-list-item @click="loginDialog = true">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-logout" size="22" />

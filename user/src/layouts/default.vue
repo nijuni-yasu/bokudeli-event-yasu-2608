@@ -8,6 +8,10 @@ import { useThemeConfig } from '@core/composable/useThemeConfig'
 import { AppContentLayoutNav } from '@layouts/enums'
 
 import { CurrentUser, useStoreCurrentUser } from '@/stores/currentUser'
+import { convertFirebaseUserToStoredUser } from '@/schemes/converter'
+import { db } from '@/firebase'
+import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
+import StoredUser, { FirestoredUser } from '@/schemes/storedUser'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('./components/DefaultLayoutWithHorizontalNav.vue')
@@ -25,10 +29,47 @@ const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
 
-onAuthStateChanged(getAuth(), (user) => {
+const convertStoredUserToFirestoredUser = (storedUser: StoredUser): FirestoredUser => {
+  return {
+    user_id: storedUser.userId,
+    user_name: storedUser.userName,
+    user_email: storedUser.userEmail,
+    user_image_url: storedUser.userImageUrl,
+    user_account: storedUser.userAccount,
+    user_description: storedUser.userDescription,
+    user_sns_facebook: storedUser.userSnsFacebook,
+    user_sns_twitter: storedUser.userSnsTwitter,
+    created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
+    updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
+  }
+}
+
+onAuthStateChanged(getAuth(), async (user) => {
   const store = useStoreCurrentUser()
   if (user) {
     store.update(user as CurrentUser)
+
+    const storedUser = convertFirebaseUserToStoredUser(user)
+    const docRef = doc(db, 'users', storedUser.userId)
+    const docSnap = await getDoc(docRef)
+    const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
+    if (docSnap.exists()) {
+      await setDoc(
+        docRef,
+        {
+          user_email: firestoredUser.user_email,
+          user_image_url: firestoredUser.user_image_url,
+          user_sns_facebook: firestoredUser.user_sns_facebook,
+          user_sns_twitter: firestoredUser.user_sns_twitter,
+          updated_at: Timestamp.now(),
+        },
+        { merge: true }
+      )
+    } else {
+      firestoredUser.created_at = Timestamp.now()
+      firestoredUser.updated_at = Timestamp.now()
+      await setDoc(docRef, firestoredUser)
+    }
   } else {
     store.$reset()
   }

@@ -3,6 +3,8 @@ import { DocumentData, Timestamp } from 'firebase/firestore'
 import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import PartnerMenu from './partnerMenu'
+import { FacebookAuthProvider, User } from 'firebase/auth'
+import StoredUser from './storedUser'
 
 export const dateString = (date: Date | null): string => {
   if (!date) return ''
@@ -94,4 +96,33 @@ export const convertDocumentDataToMenu = (
     createdAt: created_at ? (created_at as Timestamp).toDate() : null,
     updatedAt: updated_at ? (updated_at as Timestamp).toDate() : null,
   }
+}
+
+export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser => {
+  const { uid, displayName, email, photoURL, providerData } = firebaseUser
+
+  const user: StoredUser = {
+    userId: uid,
+    userName: displayName ?? '',
+    userEmail: email ?? '',
+    userImageUrl: photoURL ?? '',
+    userAccount: null,
+    userDescription: null,
+    userSnsFacebook: null,
+    userSnsTwitter: null,
+    createdAt: undefined,
+    updatedAt: undefined,
+  }
+
+  providerData.forEach((provider) => {
+    switch (provider.providerId) {
+      case FacebookAuthProvider.PROVIDER_ID:
+        user.userSnsFacebook = provider.uid
+        break
+      default:
+        break
+    }
+  })
+
+  return user
 }
