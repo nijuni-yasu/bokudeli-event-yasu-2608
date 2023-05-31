@@ -1,9 +1,25 @@
 <script setup lang="ts">
 import avatar1 from '@images/avatars/avatar-1.png'
 import LoginDialog from '@/components/LoginDialog.vue'
+import { useStoreCurrentUser } from '@/stores/currentUser'
+import { getAuth, signOut } from 'firebase/auth'
 
-const userId = 'bokudeli'
+const { currentUser } = storeToRefs(useStoreCurrentUser())
+
+const isLogin = computed(() => !!currentUser?.value?.uid)
+const userId = computed(() => currentUser?.value?.uid ?? '')
+
 const loginDialog = ref(false)
+
+const logout = async () => {
+  const auth = getAuth()
+  try {
+    await signOut(auth)
+    console.log('ログアウトしました')
+  } catch (error) {
+    console.error(error)
+  }
+}
 </script>
 
 <template>
@@ -33,11 +49,10 @@ const loginDialog = ref(false)
             <v-divider class="my-2" />
 
             <!-- 👉 Profile -->
-            <v-list-item :to="`/users/${userId}`">
+            <v-list-item v-if="isLogin" :to="`/users/${userId}`">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-account-outline" size="22" />
               </template>
-
               <v-list-item-title>プロフィール</v-list-item-title>
             </v-list-item>
 
@@ -45,7 +60,7 @@ const loginDialog = ref(false)
             <v-divider class="my-2" />
 
             <!-- 👉 Login -->
-            <v-list-item @click="loginDialog = true">
+            <v-list-item v-if="!isLogin" @click="loginDialog = true">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-logout" size="22" />
               </template>
@@ -54,7 +69,7 @@ const loginDialog = ref(false)
             </v-list-item>
 
             <!-- 👉 Logout -->
-            <v-list-item to="/login">
+            <v-list-item v-if="isLogin" @click="logout()">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-logout" size="22" />
               </template>
