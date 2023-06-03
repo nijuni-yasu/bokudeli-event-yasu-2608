@@ -10,7 +10,7 @@ const { storedUser } = storeToRefs(store)
 <template>
   <div id="user-view">
     <v-row justify="center">
-      <v-col cols="auto">
+      <v-col cols="12" md="5" sm="5">
         <user-bio-panel :user-data="storedUser"></user-bio-panel>
       </v-col>
     </v-row>

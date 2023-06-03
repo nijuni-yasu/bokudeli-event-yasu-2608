@@ -29,31 +29,32 @@ const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
             :color="avatar ? '' : 'primary'"
             :class="avatar ? '' : 'v-avatar-light-bg primary--text'"
             size="200"
-            rounded
+            round
             class="mb-4"
           >
             <v-img v-if="avatar" :src="avatar"></v-img>
             <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
           </v-avatar>
-
-          <span class="mb-2">{{ userName }}</span>
-
-          <!-- <v-list>
-            <v-list-item dense class="px-0 mb-n2">
-              <span class="font-weight-medium text-no-wrap me-2">Twitter:</span>
-              <span class="text--secondary">{{ userName }}</span>
-            </v-list-item>
-            <v-list-item dense class="px-0 mb-n2">
-              <span class="font-weight-medium text-no-wrap me-2">Facebook:</span>
-              <span class="text--secondary">{{ userName }}</span>
-            </v-list-item>
-            <v-list-item dense class="px-0 mb-n2">
-              <span class="font-weight-medium text-no-wrap me-2">Instagram:</span>
-              <span class="text--secondary">{{ userName }}</span>
-            </v-list-item>
-          </v-list> -->
         </v-card-title>
-
+        <v-row class="justify-center">        
+          <div class="mb-2 text-h4">{{ userName }}</div>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="auto">
+            <a href="https://twitter.com/" target="_blank">
+              <v-btn icon="mdi-twitter" size="x-large" class="ma-3"></v-btn>
+            </a>
+            <a href="https://facebook.com/" target="_blank">
+              <v-btn icon="mdi-facebook" size="x-large" class="ma-3"></v-btn>
+            </a>
+            <a href="https://instagram.com/" target="_blank">
+              <v-btn icon="mdi-instagram" size="x-large" class="ma-3"></v-btn>
+            </a>
+          </v-col>
+        </v-row>
+        <v-card-text class="text-subtitle-1" style="line-height:30px;">
+          自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介
+        </v-card-text>
         <!-- <v-card-actions class="justify-center">
           <v-btn color="primary" class="me-3" @click="isBioDialogOpen = !isBioDialogOpen"> Edit </v-btn>
         </v-card-actions> -->
