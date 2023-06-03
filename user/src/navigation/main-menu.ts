@@ -2,12 +2,12 @@ export default [
   {
     title: 'イベント',
     to: { path: '/' },
-    icon: { icon: 'mdi-file-document-outline' },
+    icon: { icon: 'mdi-calendar-star' },
   },
   {
     title: 'コミュニティ',
     to: { path: '/community' },
-    icon: { icon: 'mdi-file-document-outline' },
+    icon: { icon: 'mdi-account-group' },
   },
   {
     title: 'マイページ',
