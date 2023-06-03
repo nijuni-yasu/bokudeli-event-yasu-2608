@@ -110,7 +110,7 @@ const addCart = async () => {
 <template>
   <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog()">
     <v-card class="pa-sm-10 px-5 py-1 text-center">
-      <v-img class="mx-5" :src="menu.imageUrl" aspect-ratio="1"></v-img>
+      <v-img :src="menu.imageUrl" class="ma-5" aspect-ratio="1" cover></v-img>
       <v-card-title class="text-left text-h4 pb-3">
         {{ menu.name }}
       </v-card-title>
@@ -124,15 +124,19 @@ const addCart = async () => {
       <v-row class="mx-3 my-2">
         <v-textarea outlined dense rows="1" label="注記を追加"></v-textarea>
       </v-row>
-      <v-row class="mx-3 my-2">
-        <v-col class="justify-center pa-0">
-          <v-btn width="100%" height="57" rounded outlined color="primary" @click="addCart()"> カートに追加する </v-btn>
-        </v-col>
-      </v-row>
-      <v-row class="mx-3 mt-2">
-        <v-col class="justify-center pa-0">
-          <v-btn width="100%" height="57" rounded outlined color="secondary" @click="closeDialog()">閉じる</v-btn>
-        </v-col>
+      <v-row class="justify-center mx-3 my-2">
+        <v-btn class="justify-center mx-3 align-self-center" rounded size="x-large" color="primary" @click="addCart()">
+          カートに追加する
+        </v-btn>
+        <v-btn
+          class="justify-center mx-3 align-self-center"
+          rounded
+          variant="outlined"
+          color="secondary"
+          @click="closeDialog()"
+        >
+          閉じる
+        </v-btn>
       </v-row>
     </v-card>
   </v-dialog>
