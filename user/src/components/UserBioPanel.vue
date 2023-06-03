@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import StoredUser from '@/schemes/storedUser'
 import { useStoreCredential } from '@/stores/credential'
+import UserInfoEditDialog from '@/components/UserInfoEditDialog.vue'
 
 const props = defineProps<{ userData: StoredUser }>()
 const userData = computed(() => props.userData)
@@ -17,6 +18,7 @@ const avatar = computed(() => {
 })
 
 const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
+const isUserInfoEditDialogVisible = ref(false)
 </script>
 
 <template>
@@ -55,13 +57,19 @@ const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
         <v-card-text class="text-subtitle-1" style="line-height:30px;">
           自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介
         </v-card-text>
-        <!-- <v-card-actions class="justify-center">
-          <v-btn color="primary" class="me-3" @click="isBioDialogOpen = !isBioDialogOpen"> Edit </v-btn>
-        </v-card-actions> -->
+        <v-card-actions class="justify-center">
+          <v-btn
+            color="primary"
+            class="me-3"
+            size="large"
+            @click="isUserInfoEditDialogVisible = true"
+          > 編集 </v-btn>
+        </v-card-actions>
       </v-card>
-
       <!-- edit profile dialog data -->
-      <!-- <user-bio-edit :is-bio-dialog-open.sync="isBioDialogOpen" :user-data="userData"></user-bio-edit> -->
+      <user-info-edit-dialog
+        v-model:isDialogVisible="isUserInfoEditDialogVisible"
+      />
     </v-col>
   </v-row>
 </template>
