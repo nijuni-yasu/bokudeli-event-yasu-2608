@@ -26,7 +26,7 @@ import avatarImageList from '@/assets/examples/avatarImageList'
                   <span class="text--primary font-weight-medium"> {{ item.members }} members </span>
                   <div class="v-avatar-group">
                     <v-avatar v-for="i in 8" :key="i" size="40">
-                      <v-img :src="avatarImageList[i % 2]"></v-img>
+                      <v-img :src="avatarImageList[i % 8]"></v-img>
                     </v-avatar>
                   </div>
                 </div>
