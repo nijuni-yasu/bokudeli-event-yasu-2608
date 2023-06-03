@@ -12,6 +12,11 @@ export default [
   {
     title: 'マイページ',
     to: { path: '/mypage' },
-    icon: { icon: 'mdi-account-outline' },
+    icon: { icon: 'mdi-account' },
+  },
+  {
+    title: 'カート',
+    to: { path: '/cart' },
+    icon: { icon: 'mdi-cart-outline' },
   },
 ]
