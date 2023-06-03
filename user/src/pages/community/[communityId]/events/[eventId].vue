@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import memberList from '@/assets/examples/memberList'
 import { db } from '@/firebase'
-import { collection, collectionGroup, getDocs, query, where } from 'firebase/firestore'
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+  collection,
+  collectionGroup,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
   dateString,
@@ -15,11 +23,10 @@ import EventCartDialog from '@/components/EventCartDialog.vue'
 
 const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
 
-type Props = {
+const props = defineProps<{
   communityId: string
   eventId: string
-}
-const props = defineProps<Props>()
+}>()
 
 const eventDb = query(
   collectionGroup(db, 'events'),
@@ -33,14 +40,18 @@ const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
   menus: [] as PartnerMenu[],
+  eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
   isLoading: true,
 })
 
 onMounted(async () => {
   const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
-  const eventData = eventSnapshot.docs.shift()?.data()
-  const communityData = communitySnapshot.docs.shift()?.data()
-  if (eventData) {
+
+  const eventDocumentSnapshot = eventSnapshot.docs.shift()
+  if (eventDocumentSnapshot) {
+    state.eventSnapshot = eventDocumentSnapshot
+
+    const eventData = eventDocumentSnapshot.data()
     const event = convertDocumentDataToEvent(eventData)
     state.event = event
 
@@ -48,6 +59,8 @@ onMounted(async () => {
     const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
     state.menus = menus
   }
+
+  const communityData = communitySnapshot.docs.shift()?.data()
   if (communityData) {
     const community = convertDocumentDataToCommunity(communityData)
     state.community = community
@@ -187,7 +200,11 @@ const selectMenu = (menu: PartnerMenu) => {
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
-    <event-cart-dialog v-model="isDialogOpen" :menu="selectedMenu"></event-cart-dialog>
+    <event-cart-dialog
+      v-model="isDialogOpen"
+      :menu="selectedMenu"
+      :event-snapshot="state.eventSnapshot"
+    ></event-cart-dialog>
   </section>
 </template>
 <style lang="scss" scoped></style>

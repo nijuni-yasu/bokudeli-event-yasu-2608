@@ -126,3 +126,46 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
 
   return user
 }
+
+export const convertDocumentDataToStoredUser = (documentData: DocumentData | undefined): StoredUser => {
+  if (!documentData) {
+    return {
+      userId: '',
+      userName: '',
+      userEmail: '',
+      userImageUrl: '',
+      userAccount: null,
+      userDescription: null,
+      userSnsFacebook: null,
+      userSnsTwitter: null,
+      createdAt: undefined,
+      updatedAt: undefined,
+    }
+  }
+
+  const {
+    user_id,
+    user_name,
+    user_email,
+    user_image_url,
+    user_account,
+    user_description,
+    user_sns_facebook,
+    user_sns_twitter,
+    created_at,
+    updated_at,
+  } = documentData
+
+  return {
+    userId: user_id ?? '',
+    userName: user_name ?? '',
+    userEmail: user_email ?? '',
+    userImageUrl: user_image_url ?? '',
+    userAccount: user_account ?? '',
+    userDescription: user_description ?? '',
+    userSnsFacebook: user_sns_facebook ?? '',
+    userSnsTwitter: user_sns_twitter ?? '',
+    createdAt: created_at ? (created_at as Timestamp).toDate() : undefined,
+    updatedAt: updated_at ? (updated_at as Timestamp).toDate() : undefined,
+  }
+}
