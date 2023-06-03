@@ -67,7 +67,7 @@ const selectMenu = (menu: PartnerMenu) => {
 <template>
   <section>
     <v-row v-if="state.isLoading === false" class="justify-center">
-      <v-col md="9" sm="9" cols="12">
+      <v-col md="8" sm="9" cols="12">
         <v-card flat class="align-center justify-center text-center my-10 pa-10">
           <v-row>
             <v-col>
@@ -92,28 +92,30 @@ const selectMenu = (menu: PartnerMenu) => {
                       cover
                       max-width="75px"
                     />
-                    <div class="ml-2">
-                      <div style="font-size: 14px">【主催者】</div>
-                      <div style="font-size: 24px">
+                    <div class="ml-2 align-self-center">
+                      <div class="my-1" style="font-size: 14px">【主催者】</div>
+                      <div class="my-1" style="font-size: 24px">
                         {{ state.event.communityName }}
                       </div>
                     </div>
                   </v-row>
                 </router-link>
               </v-card-text>
-              <v-card-text class="text-left pb-5"> 【開催場所】{{ state.event.eventAddress }} </v-card-text>
-              <v-card-text class="text-left pb-5">
+              <v-card-text class="text-left pb-8 text-subtitle-1">
+                【開催場所】{{ state.event.eventAddress }}
+              </v-card-text>
+              <v-card-text class="text-left pb-8 text-subtitle-1">
                 【注文期限】{{ dateString(state.event.eventDeadline) }}
               </v-card-text>
-              <v-card-text class="text-left pb-5">
+              <v-card-text class="text-left pb-8 text-subtitle-1">
                 【開催日時】{{ dateString(state.event.eventStartDatetime) }}
               </v-card-text>
-              <v-card-text class="text-left pb-5"> 【お店】{{ state.event.shopName }} </v-card-text>
-              <v-card-text class="text-left pb-5">
+              <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shopName }} </v-card-text>
+              <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 35px">
                 【開催内容】<br />
                 {{ state.event.eventDescription }}
               </v-card-text>
-              <v-card-text class="text-left pb-5">
+              <v-card-text class="text-left pb-8 text-subtitle-1">
                 【コロナ感染対策】
                 <v-row class="justify-center">
                   <v-col class="d-flex child-flex" cols="12">
@@ -121,22 +123,23 @@ const selectMenu = (menu: PartnerMenu) => {
                   </v-col>
                 </v-row>
               </v-card-text>
-              <v-card-text class="text-left pb-5"> 【最大人数】{{ state.event.eventMaxPeople }} </v-card-text>
-              <v-card-text class="text-left pb-10">
-                【参加者】
+              <v-card-text class="text-left pb-8 text-subtitle-1">
+                【最大人数】{{ state.event.eventMaxPeople }} 人
+              </v-card-text>
+              <v-card-text class="text-left pb-10 text-subtitle-1">
                 <v-row>
                   <v-col
                     v-for="data in memberList"
                     :key="data.avatar"
                     class="d-flex justify-start px-0 pt-2 pb-0"
-                    cols="3"
+                    cols="4"
                   >
                     <router-link :to="`/users/${data.id}`" class="text--primary cursor-pointer text-decoration-none">
                       <v-row class="ma-1">
-                        <v-avatar class="ml-2 mt-2" size="50">
-                          <img :src="data.avatar" />
+                        <v-avatar class="ma-1" size="60">
+                          <v-img :src="data.avatar"></v-img>
                         </v-avatar>
-                        <div class="d-flex align-center flex-wrap flex-grow-1 ml-2">
+                        <div class="d-flex align-center ml-1 text-subtitle-1">
                           <div>
                             {{ data.name }}
                           </div>
@@ -151,7 +154,7 @@ const selectMenu = (menu: PartnerMenu) => {
         </v-card>
         <v-row>
           <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
-            <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
+            <v-card class="mb-3 mx-0" color="text-center">
               <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
 
               <!-- title -->
@@ -164,8 +167,8 @@ const selectMenu = (menu: PartnerMenu) => {
               <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
               <v-row class="justify-center">
                 <v-col class="text-center">
-                  <v-btn class="mt-2 mb-2" x-large color="primary" rounded outlined @click="selectMenu(menu)">
-                    カートの追加
+                  <v-btn class="px-5 my-4" color="primary" rounded width="80%" @click="selectMenu(menu)">
+                    カートに追加
                   </v-btn>
                 </v-col>
               </v-row>
