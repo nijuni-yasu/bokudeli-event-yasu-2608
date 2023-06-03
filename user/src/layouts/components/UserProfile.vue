@@ -3,11 +3,23 @@ import avatar1 from '@images/avatars/avatar-1.png'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useStoreCredential } from '@/stores/credential'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
 const userId = computed(() => storedUser?.value?.userId ?? '')
 const isLogin = computed(() => userId.value !== '')
+const userName = computed(() => storedUser?.value?.userName ?? 'ゲスト')
+const avatar = computed(() => {
+  if (storedUser?.value?.userImageUrl) {
+    const store = useStoreCredential()
+    const baseUrl = storedUser.value.userImageUrl + '?width=40&height=40'
+    const accessTokenQuery = store.credential?.accessToken ? '&access_token=' + store.credential.accessToken : ''
+    return baseUrl + accessTokenQuery
+  } else {
+    return avatar1
+  }
+})
 
 const loginDialog = ref(false)
 
@@ -25,7 +37,7 @@ const logout = async () => {
   <div>
     <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
       <v-avatar class="cursor-pointer" color="primary" variant="tonal">
-        <v-img :src="avatar1" />
+        <v-img :src="avatar" />
 
         <!-- SECTION Menu -->
         <v-menu activator="parent" width="230" location="bottom end" offset="14px">
@@ -36,14 +48,13 @@ const logout = async () => {
                 <v-list-item-action start>
                   <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
                     <v-avatar color="primary" variant="tonal">
-                      <v-img :src="avatar1" />
+                      <v-img :src="avatar" />
                     </v-avatar>
                   </v-badge>
                 </v-list-item-action>
               </template>
 
-              <v-list-item-title class="font-weight-medium"> John Doe </v-list-item-title>
-              <v-list-item-subtitle>Admin</v-list-item-subtitle>
+              <v-list-item-title class="font-weight-medium">{{ userName }}</v-list-item-title>
             </v-list-item>
             <v-divider class="my-2" />
 

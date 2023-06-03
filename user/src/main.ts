@@ -7,6 +7,7 @@ import router from '@/router'
 import '@core/scss/template/index.scss'
 import '@styles/styles.scss'
 import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { createApp } from 'vue'
 
 import './firebase'
@@ -17,8 +18,11 @@ loadFonts()
 const app = createApp(App)
 
 // Use plugins
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
+
 app.use(vuetify)
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 app.use(layoutsPlugin)
 

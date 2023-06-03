@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useStoreCredential } from '@/stores/credential'
 import { getAuth, signInWithPopup, FacebookAuthProvider } from 'firebase/auth'
 
 const props = defineProps({
@@ -30,19 +31,14 @@ provider.setCustomParameters({
 const handleFacebookLogin = async () => {
   try {
     const result = await signInWithPopup(getAuth(), new FacebookAuthProvider())
-    const user = result.user
     const credential = FacebookAuthProvider.credentialFromResult(result)
-    const accessToken = credential?.accessToken
-    // console.log({ result, credential, accessToken })
+    if (credential) {
+      const store = useStoreCredential()
+      store.update(credential)
+    }
   } catch (error: any) {
-    // Handle Errors here.
-    const errorCode = error.code
-    const errorMessage = error.message
-    // The email of the user's account used.
-    const email = error.email
-    // The AuthCredential type that was used.
     const credential = FacebookAuthProvider.credentialFromError(error)
-    // console.error({ error })
+    console.error({ error, credential })
   } finally {
     closeDialog()
   }

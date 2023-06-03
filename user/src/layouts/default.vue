@@ -12,6 +12,7 @@ import { db } from '@/firebase'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import StoredUser, { FirestoredUser } from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useStoreCredential } from '@/stores/credential'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('./components/DefaultLayoutWithHorizontalNav.vue')
@@ -78,6 +79,7 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
   } else {
     // ログアウト処理
     store.$reset()
+    useStoreCredential().$reset()
   }
 })
 </script>
