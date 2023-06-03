@@ -6,7 +6,7 @@ export default [
   },
   {
     title: 'マイページ',
-    to: { path: '/users/me' },
+    to: { path: '/mypage' },
     icon: { icon: 'mdi-account-outline' },
   },
 ]

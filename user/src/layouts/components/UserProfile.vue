@@ -59,7 +59,7 @@ const logout = async () => {
             <v-divider class="my-2" />
 
             <!-- 👉 Profile -->
-            <v-list-item v-if="isLogin" :to="`/users/${userId}`">
+            <v-list-item v-if="isLogin" :to="`/mypage`">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-account-outline" size="22" />
               </template>
@@ -67,9 +67,9 @@ const logout = async () => {
             </v-list-item>
 
             <!-- Divider -->
-            <v-divider class="my-2" />
+            <v-divider v-if="isLogin" class="my-2" />
 
-            <!-- 👉 Login -->
+            <!-- 👉 Login, Logout -->
             <v-list-item v-if="!isLogin" @click="loginDialog = true">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-logout" size="22" />
@@ -77,13 +77,10 @@ const logout = async () => {
 
               <v-list-item-title>ログイン</v-list-item-title>
             </v-list-item>
-
-            <!-- 👉 Logout -->
-            <v-list-item v-if="isLogin" @click="logout()">
+            <v-list-item v-else @click="logout()">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-logout" size="22" />
               </template>
-
               <v-list-item-title>ログアウト</v-list-item-title>
             </v-list-item>
           </v-list>
