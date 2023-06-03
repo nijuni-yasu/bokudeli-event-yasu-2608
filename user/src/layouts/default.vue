@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { User, getAuth, onAuthStateChanged } from 'firebase/auth'
 
 import { useSkins } from '@core/composable/useSkins'
 import { useThemeConfig } from '@core/composable/useThemeConfig'
@@ -7,11 +7,11 @@ import { useThemeConfig } from '@core/composable/useThemeConfig'
 // @layouts plugin
 import { AppContentLayoutNav } from '@layouts/enums'
 
-import { CurrentUser, useStoreCurrentUser } from '@/stores/currentUser'
 import { convertFirebaseUserToStoredUser } from '@/schemes/converter'
 import { db } from '@/firebase'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import StoredUser, { FirestoredUser } from '@/schemes/storedUser'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('./components/DefaultLayoutWithHorizontalNav.vue')
@@ -44,16 +44,21 @@ const convertStoredUserToFirestoredUser = (storedUser: StoredUser): FirestoredUs
   }
 }
 
-onAuthStateChanged(getAuth(), async (user) => {
-  const store = useStoreCurrentUser()
+onAuthStateChanged(getAuth(), async (user: User | null) => {
+  const store = useStoreStoredUser()
   if (user) {
-    store.update(user as CurrentUser)
-
+    // ログイン処理
     const storedUser = convertFirebaseUserToStoredUser(user)
+
+    // Pinia に保存
+    store.update(storedUser)
+
+    // Firestore 保存
     const docRef = doc(db, 'users', storedUser.userId)
     const docSnap = await getDoc(docRef)
     const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
     if (docSnap.exists()) {
+      // FIXME: ログインされるごとに更新日時が変わってしまうため同じデータの時は更新しないようにする
       await setDoc(
         docRef,
         {
@@ -71,6 +76,7 @@ onAuthStateChanged(getAuth(), async (user) => {
       await setDoc(docRef, firestoredUser)
     }
   } else {
+    // ログアウト処理
     store.$reset()
   }
 })

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import avatar1 from '@images/avatars/avatar-1.png'
 import LoginDialog from '@/components/LoginDialog.vue'
-import { useStoreCurrentUser } from '@/stores/currentUser'
 import { getAuth, signOut } from 'firebase/auth'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
-const { currentUser } = storeToRefs(useStoreCurrentUser())
+const { storedUser } = storeToRefs(useStoreStoredUser())
 
-const isLogin = computed(() => !!currentUser?.value?.uid)
-const userId = computed(() => currentUser?.value?.uid ?? '')
+const userId = computed(() => storedUser?.value?.userId ?? '')
+const isLogin = computed(() => userId.value !== '')
 
 const loginDialog = ref(false)
 
@@ -15,7 +15,6 @@ const logout = async () => {
   const auth = getAuth()
   try {
     await signOut(auth)
-    console.log('ログアウトしました')
   } catch (error) {
     console.error(error)
   }
