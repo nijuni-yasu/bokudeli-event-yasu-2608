@@ -48,8 +48,8 @@ const handleFacebookLogin = async () => {
 <template>
   <v-dialog v-model="dialog" persistent max-width="600px">
     <v-card>
-      <v-card-title>
-        <span class="text-h5">ログイン</span>
+      <v-card-title class="text-center mt-10">
+        <div class="text-h5 ma-1">Facebookログイン</div>
       </v-card-title>
       <v-card-text>
         <v-container>
@@ -64,7 +64,7 @@ const handleFacebookLogin = async () => {
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn @click="closeDialog">キャンセル</v-btn>
+        <v-btn color="secondary" @click="closeDialog">キャンセル</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

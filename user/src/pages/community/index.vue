@@ -7,14 +7,14 @@ import avatarImageList from '@/assets/examples/avatarImageList'
   <section>
     <v-row class="justify-center">
       <v-col v-for="item in communityList" :key="item.character" md="10" sm="10" cols="10">
-        <v-card class="ma-5" color="text-center cursor-pointer" @click.once="$router.push('community')">
+        <v-card class="ma-2" color="text-center cursor-pointer" @click.once="$router.push('community')">
           <v-row>
             <v-col md="6" sm="6" cols="6" class="pa-0">
               <v-img :src="item.character" style="border-radius: 5px 0px 0px 5px" aspect-ratio="2" cover />
             </v-col>
             <v-col md="6" sm="6" cols="6">
               <!-- title -->
-              <v-card-title class="text-h5 text-left pb-3">
+              <v-card-title class="text-h5 text-left py-3">
                 {{ item.title }}
               </v-card-title>
               <v-card-text class="text-left pb-3">
