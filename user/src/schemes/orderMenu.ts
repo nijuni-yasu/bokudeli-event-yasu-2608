@@ -5,6 +5,7 @@ type OrderMenu = {
   price: number
   imageUrl: string
   count: number
+  note: string
 }
 
 export default OrderMenu

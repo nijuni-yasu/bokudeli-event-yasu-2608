@@ -21,19 +21,28 @@ const isOpen = computed({
 })
 
 const countOptions = Array.from({ length: 10 }, (_, i) => i + 1)
+const selectedCount = ref(null as number | null)
+
+// FIXME: 注記が入力されていた場合、表示させる必要がある
+const orderNote = ref('')
+
 const closeDialog = () => {
+  selectedCount.value = null
+  orderNote.value = ''
   isOpen.value = false
 }
 
 const userStore = useStoreStoredUser()
 
 const addOrder = async () => {
-  if (!userStore.storedUser) {
+  if (!userStore.storedUser || !selectedCount.value) {
     return
   }
 
   const orderDb = collection(props.eventSnapshot.ref, 'orders')
   const orderSnapshot = await getDocs(orderDb)
+
+  const orderCount = selectedCount.value || 0
 
   // 上書きできるオーダーを探す
   const userOrders = orderSnapshot.docs.filter((doc) => {
@@ -54,9 +63,10 @@ const addOrder = async () => {
           name: menu.name,
           price: menu.price,
           imageUrl: menu.imageUrl,
-          count: 1,
+          count: orderCount,
+          note: orderNote.value,
         },
-      ],
+      ] as OrderMenu[],
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     } as OrderItem
@@ -84,7 +94,10 @@ const addOrder = async () => {
 
     if (updateMenu) {
       // すでに注文していた場合はカウントのみ更新して追加
-      updateMenu.count += 1
+      updateMenu.count += orderCount
+      if (orderNote.value) {
+        updateMenu.note = orderNote.value
+      }
       currentMenus.push(updateMenu)
     } else {
       const menu = props.menu
@@ -94,7 +107,8 @@ const addOrder = async () => {
         name: menu.name,
         price: menu.price,
         imageUrl: menu.imageUrl,
-        count: 1,
+        count: orderCount,
+        note: orderNote.value,
       })
     }
     await setDoc(userOrder.ref, { menus: currentMenus, updated_at: Timestamp.now() }, { merge: true })
@@ -119,10 +133,10 @@ const addCart = async () => {
       </v-card-text>
       <v-card-text class="text-right text-h4 pb-5"> ¥ {{ menu.price }} </v-card-text>
       <v-row class="mx-3 mb-2">
-        <v-select :items="countOptions" dense outlined filled label="個数"></v-select>
+        <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>
       </v-row>
       <v-row class="mx-3 my-2">
-        <v-textarea outlined dense rows="1" label="注記を追加"></v-textarea>
+        <v-textarea v-model="orderNote" outlined dense rows="1" label="注記を追加"></v-textarea>
       </v-row>
       <v-row class="justify-center mx-3 my-2">
         <v-btn class="justify-center mx-3 align-self-center" rounded size="x-large" color="primary" @click="addCart()">

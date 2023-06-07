@@ -190,7 +190,7 @@ const selectMenu = (menu: PartnerMenu) => {
 
           <!-- no result found -->
           <v-col v-show="!state.menus.length" cols="12" class="text-center">
-            <h4 class="mt-4">Search result not found!!</h4>
+            <h4 class="mt-4">メニューがありません</h4>
           </v-col>
         </v-row>
       </v-col>
