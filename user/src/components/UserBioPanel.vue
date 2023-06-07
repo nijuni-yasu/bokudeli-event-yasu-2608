@@ -19,7 +19,6 @@ const avatar = computed(() => {
 
 const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
 const userDescription = computed(() => {
-  console.log(userData?.value?.userDescription)
   return userData?.value?.userDescription ?? 'ここに自己紹介文が入ります。'
 })
 const isUserInfoEditDialogVisible = ref(false)

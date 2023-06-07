@@ -4,7 +4,7 @@ import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import PartnerMenu from './partnerMenu'
 import { FacebookAuthProvider, User } from 'firebase/auth'
-import StoredUser from './storedUser'
+import StoredUser, { FirestoredUser } from './storedUser'
 
 export const dateString = (date: Date | null): string => {
   if (!date) return ''
