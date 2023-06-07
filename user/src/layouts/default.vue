@@ -7,10 +7,13 @@ import { useThemeConfig } from '@core/composable/useThemeConfig'
 // @layouts plugin
 import { AppContentLayoutNav } from '@layouts/enums'
 
-import { convertFirebaseUserToStoredUser } from '@/schemes/converter'
+import {
+  convertDocumentDataToStoredUser,
+  convertFirebaseUserToStoredUser,
+  convertStoredUserToFirestoredUser,
+} from '@/schemes/converter'
 import { db } from '@/firebase'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
-import StoredUser, { FirestoredUser } from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 
@@ -30,35 +33,19 @@ const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
 
-const convertStoredUserToFirestoredUser = (storedUser: StoredUser): FirestoredUser => {
-  return {
-    user_id: storedUser.userId,
-    user_name: storedUser.userName,
-    user_email: storedUser.userEmail,
-    user_image_url: storedUser.userImageUrl,
-    user_account: storedUser.userAccount,
-    user_description: storedUser.userDescription,
-    user_sns_facebook: storedUser.userSnsFacebook,
-    user_sns_twitter: storedUser.userSnsTwitter,
-    created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
-    updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
-  }
-}
-
 onAuthStateChanged(getAuth(), async (user: User | null) => {
   const store = useStoreStoredUser()
   if (user) {
     // ログイン処理
     const storedUser = convertFirebaseUserToStoredUser(user)
 
-    // Pinia に保存
-    store.update(storedUser)
-
     // Firestore 保存
     const docRef = doc(db, 'users', storedUser.userId)
     const docSnap = await getDoc(docRef)
     const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
+
     if (docSnap.exists()) {
+      // 既にユーザーが存在する場合は更新
       // FIXME: ログインされるごとに更新日時が変わってしまうため同じデータの時は更新しないようにする
       await setDoc(
         docRef,
@@ -71,10 +58,18 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
         },
         { merge: true }
       )
+
+      // Pinia のデータを更新
+      const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
+      store.update(currentStoredUser)
     } else {
+      // ユーザーが存在しない場合は新規作成
       firestoredUser.created_at = Timestamp.now()
       firestoredUser.updated_at = Timestamp.now()
       await setDoc(docRef, firestoredUser)
+
+      // Pinia に保存
+      store.update(storedUser)
     }
   } else {
     // ログアウト処理

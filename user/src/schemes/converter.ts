@@ -127,6 +127,21 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
   return user
 }
 
+export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): FirestoredUser => {
+  return {
+    user_id: storedUser.userId,
+    user_name: storedUser.userName,
+    user_email: storedUser.userEmail,
+    user_image_url: storedUser.userImageUrl,
+    user_account: storedUser.userAccount,
+    user_description: storedUser.userDescription,
+    user_sns_facebook: storedUser.userSnsFacebook,
+    user_sns_twitter: storedUser.userSnsTwitter,
+    created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
+    updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
+  }
+}
+
 export const convertDocumentDataToStoredUser = (documentData: DocumentData | undefined): StoredUser => {
   if (!documentData) {
     return {

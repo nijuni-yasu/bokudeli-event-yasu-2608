@@ -18,6 +18,10 @@ const avatar = computed(() => {
 })
 
 const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
+const userDescription = computed(() => {
+  console.log(userData?.value?.userDescription)
+  return userData?.value?.userDescription ?? 'ここに自己紹介文が入ります。'
+})
 const isUserInfoEditDialogVisible = ref(false)
 </script>
 
@@ -38,7 +42,7 @@ const isUserInfoEditDialogVisible = ref(false)
             <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
           </v-avatar>
         </v-card-title>
-        <v-row class="justify-center">        
+        <v-row class="justify-center">
           <div class="mb-2 text-h4">{{ userName }}</div>
         </v-row>
         <v-row class="justify-center">
@@ -54,22 +58,15 @@ const isUserInfoEditDialogVisible = ref(false)
             </a>
           </v-col>
         </v-row>
-        <v-card-text class="text-subtitle-1" style="line-height:30px;">
-          自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介・自己紹介
+        <v-card-text class="text-subtitle-1" style="line-height: 30px">
+          {{ userDescription }}
         </v-card-text>
         <v-card-actions class="justify-center">
-          <v-btn
-            color="primary"
-            class="me-3"
-            size="large"
-            @click="isUserInfoEditDialogVisible = true"
-          > 編集 </v-btn>
+          <v-btn color="primary" class="me-3" size="large" @click="isUserInfoEditDialogVisible = true"> 編集 </v-btn>
         </v-card-actions>
       </v-card>
       <!-- edit profile dialog data -->
-      <user-info-edit-dialog
-        v-model:isDialogVisible="isUserInfoEditDialogVisible"
-      />
+      <user-info-edit-dialog v-model:isDialogVisible="isUserInfoEditDialogVisible" />
     </v-col>
   </v-row>
 </template>
