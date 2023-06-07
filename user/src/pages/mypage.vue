@@ -11,7 +11,7 @@ const { storedUser } = storeToRefs(store)
   <div id="user-view">
     <v-row justify="center">
       <v-col cols="12" md="5" sm="5">
-        <user-bio-panel :user-data="storedUser"></user-bio-panel>
+        <user-bio-panel :user-data="storedUser" is-editable></user-bio-panel>
       </v-col>
     </v-row>
   </div>

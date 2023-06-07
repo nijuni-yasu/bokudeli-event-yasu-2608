@@ -1,126 +1,80 @@
 <script setup lang="ts">
-interface UserData {
-  id: number
-  username: string
-}
+import StoredUser from '@/schemes/storedUser'
 
 interface Props {
-  userData: UserData
-  isDialogVisible: boolean
+  modelValue: boolean
+  userData: StoredUser
 }
 
 interface Emit {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'submit', value: UserData): void
-  (e: 'update:isDialogVisible', val: boolean): void
+  (e: 'submit', value: StoredUser): void
 }
-const props = defineProps<Props>()
 
+const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
-const userData = ref<UserData>(structuredClone(toRaw(props.userData)))
+const userDataDraft = ref<StoredUser>(structuredClone(toRaw(props.userData)))
 
 watch(props, () => {
-  userData.value = structuredClone(toRaw(props.userData))
+  userDataDraft.value = structuredClone(toRaw(props.userData))
 })
 
+const dialog = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+})
+
+const closeDialog = () => {
+  dialog.value = false
+}
+
 const onFormSubmit = () => {
-  emit('update:modelValue', false)
-  emit('submit', userData.value)
+  emit('submit', userDataDraft.value)
+  closeDialog()
 }
 
 const onFormReset = () => {
-  userData.value = structuredClone(toRaw(props.userData))
-
-  emit('update:isDialogVisible', false)
-}
-
-const dialogVisibleUpdate = (val: boolean) => {
-  emit('update:isDialogVisible', val)
+  userDataDraft.value = structuredClone(toRaw(props.userData))
+  closeDialog()
 }
 </script>
 
 <template>
-  <VDialog
-    :width="$vuetify.display.smAndDown ? 'auto' : 650 "
-    :model-value="props.isDialogVisible"
-    @update:model-value="dialogVisibleUpdate"
-  >
-    <VCard class="pa-sm-9 pa-5">
-      <VCardItem class="text-center">
-        <VCardTitle class="text-h5">
-          ユーザー情報
-        </VCardTitle>
-      </VCardItem>
+  <v-dialog v-model="dialog" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+    <v-card class="pa-sm-9 pa-5">
+      <v-card-item class="text-center">
+        <v-card-title class="text-h5"> ユーザー情報 </v-card-title>
+      </v-card-item>
 
-      <VCardText>
+      <v-card-text>
         <!-- 👉 Form -->
-        <VForm
-          class="mt-6"
-          @submit.prevent="onFormSubmit"
-        >
-          <VRow>
+        <v-form class="mt-6" @submit.prevent="onFormSubmit">
+          <v-row>
             <!-- 👉 Username -->
-            <VCol
-              cols="12"
-              md="12"
-            >
-              <VTextField
-                label="ユーザー名"
-              />
-            </VCol>
-            <VCol
-              cols="12"
-              md="12"
-            >
-              <VTextField
-                label="Twitter"
-              />
-            </VCol>
-            <VCol
-              cols="12"
-              md="12"
-            >
-              <VTextField
-                label="Facebook"
-              />
-            </VCol>
-            <VCol
-              cols="12"
-              md="12"
-            >
-              <VTextField
-                label="Instagram"
-              />
-            </VCol>
-            <VCol
-              cols="12"
-              md="12"
-            >
-              <VTextarea
-                label="自己紹介文"
-              />
-            </VCol>
+            <v-col cols="12" md="12">
+              <v-text-field v-model="userDataDraft.userName" label="ユーザー名" />
+            </v-col>
+            <v-col cols="12" md="12">
+              <v-text-field v-model="userDataDraft.userSnsTwitter" label="Twitter" />
+            </v-col>
+            <v-col cols="12" md="12">
+              <v-text-field v-model="userDataDraft.userSnsFacebook" label="Facebook" />
+            </v-col>
+            <v-col cols="12" md="12">
+              <v-text-field label="Instagram" />
+            </v-col>
+            <v-col cols="12" md="12">
+              <VTextarea v-model="userDataDraft.userDescription" label="自己紹介文" />
+            </v-col>
             <!-- 👉 Submit and Cancel -->
-            <VCol
-              cols="12"
-              class="d-flex flex-wrap justify-center gap-4"
-            >
-              <VBtn type="submit" rounded>
-                設定
-              </VBtn>
-              <VBtn
-                rounded
-                color="secondary"
-                variant="tonal"
-                @click="onFormReset"
-              >
-                キャンセル
-              </VBtn>
-            </VCol>
-          </VRow>
-        </VForm>
-      </VCardText>
-    </VCard>
-  </VDialog>
+            <v-col cols="12" class="d-flex flex-wrap justify-center gap-4">
+              <v-btn type="submit" rounded> 設定 </v-btn>
+              <v-btn rounded color="secondary" variant="tonal" @click="onFormReset"> キャンセル </v-btn>
+            </v-col>
+          </v-row>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>

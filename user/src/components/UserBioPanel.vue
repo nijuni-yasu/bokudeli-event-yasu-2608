@@ -2,9 +2,14 @@
 import StoredUser from '@/schemes/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import UserInfoEditDialog from '@/components/UserInfoEditDialog.vue'
+import { useStoreStoredUser } from '@/stores/storedUser'
+import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
+import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '@/firebase'
 
-const props = defineProps<{ userData: StoredUser }>()
+const props = defineProps<{ userData: StoredUser; isEditable: boolean | undefined }>()
 const userData = computed(() => props.userData)
+const isEditable = computed(() => props.isEditable ?? false)
 
 const avatar = computed(() => {
   if (userData?.value?.userImageUrl) {
@@ -22,6 +27,30 @@ const userDescription = computed(() => {
   return userData?.value?.userDescription ?? 'ここに自己紹介文が入ります。'
 })
 const isUserInfoEditDialogVisible = ref(false)
+const updateUserData = async (storedUser: StoredUser) => {
+  const store = useStoreStoredUser()
+  store.update(storedUser)
+
+  const docRef = doc(db, 'users', storedUser.userId)
+  const docSnap = await getDoc(docRef)
+  const { user_name, user_sns_twitter, user_sns_facebook, user_description } =
+    convertStoredUserToFirestoredUser(storedUser)
+  if (docSnap.exists()) {
+    await setDoc(
+      docRef,
+      {
+        user_name,
+        user_sns_twitter,
+        user_sns_facebook,
+        user_description,
+        updated_at: Timestamp.now(),
+      },
+      { merge: true }
+    )
+  } else {
+    console.error('ユーザーが存在しません')
+  }
+}
 </script>
 
 <template>
@@ -60,12 +89,12 @@ const isUserInfoEditDialogVisible = ref(false)
         <v-card-text class="text-subtitle-1" style="line-height: 30px">
           {{ userDescription }}
         </v-card-text>
-        <v-card-actions class="justify-center">
+        <v-card-actions v-if="isEditable" class="justify-center">
           <v-btn color="primary" class="me-3" size="large" @click="isUserInfoEditDialogVisible = true"> 編集 </v-btn>
         </v-card-actions>
       </v-card>
       <!-- edit profile dialog data -->
-      <user-info-edit-dialog v-model:isDialogVisible="isUserInfoEditDialogVisible" />
+      <user-info-edit-dialog v-model="isUserInfoEditDialogVisible" :user-data="userData" @submit="updateUserData" />
     </v-col>
   </v-row>
 </template>
