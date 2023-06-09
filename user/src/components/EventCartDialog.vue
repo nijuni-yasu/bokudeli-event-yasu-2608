@@ -38,7 +38,9 @@ const addOrder = async () => {
   if (!userStore.storedUser || !selectedCount.value) {
     return
   }
-  const eventId = props.eventSnapshot.data().event_id as string
+  const eventData = props.eventSnapshot.data()
+  const communityAccount = eventData.community_account as string
+  const eventId = eventData.event_id as string
   const orderDb = collection(props.eventSnapshot.ref, 'orders')
   const orderSnapshot = await getDocs(orderDb)
 
@@ -55,6 +57,7 @@ const addOrder = async () => {
     const menu = props.menu
     const orderItem = {
       user_id: userStore.storedUser.userId,
+      community_account: communityAccount,
       event_id: eventId,
       status: 'in_cart',
       menus: [
