@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import OrderItem from '@/schemes/OrderItem'
+import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -38,7 +38,7 @@ const addOrder = async () => {
   if (!userStore.storedUser || !selectedCount.value) {
     return
   }
-
+  const eventId = props.eventSnapshot.data().event_id as string
   const orderDb = collection(props.eventSnapshot.ref, 'orders')
   const orderSnapshot = await getDocs(orderDb)
 
@@ -55,6 +55,7 @@ const addOrder = async () => {
     const menu = props.menu
     const orderItem = {
       user_id: userStore.storedUser.userId,
+      event_id: eventId,
       status: 'in_cart',
       menus: [
         {

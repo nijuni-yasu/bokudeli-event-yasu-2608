@@ -3,6 +3,7 @@ import OrderMenu from './orderMenu'
 
 type OrderItem = {
   user_id: string
+  event_id: string
   status: 'in_cart' | 'ordered' | 'completed'
   menus: OrderMenu[]
   created_at: Timestamp
