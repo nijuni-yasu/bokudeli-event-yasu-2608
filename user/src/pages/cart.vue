@@ -74,8 +74,18 @@ onMounted(async () => {
               <v-img class="ma-10" cover aspect-ratio="1.91" :src="cart.event.eventCoverUrl" />
             </v-col>
           </v-row>
-          <v-card-text class="text-left pb-8 text-h6"> 【主催者】{{ cart.event.communityName }}</v-card-text>
-          <v-card-text class="text-left pb-8 text-h6"> 【イベント】{{ cart.event.eventName }} </v-card-text>
+          <v-card-text class="text-left pb-8 text-h6">
+            【主催者】
+            <router-link :to="`/community/${cart.event.communityAccount}`">
+              {{ cart.event.communityName }}
+            </router-link>
+          </v-card-text>
+          <v-card-text class="text-left pb-8 text-h6">
+            【イベント】
+            <router-link :to="`/community/${cart.event.communityAccount}/events/${cart.event.eventId}`">
+              {{ cart.event.eventName }}
+            </router-link>
+          </v-card-text>
           <v-card-text class="text-left pb-8 text-h6"> 【開催場所】{{ cart.event.eventAddress }} </v-card-text>
           <v-card-text class="text-left pb-8 text-h6">
             【開催日時】{{ dateString(cart.event.eventStartDatetime) }}
