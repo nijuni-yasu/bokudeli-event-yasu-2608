@@ -11,6 +11,10 @@ export const dateString = (date: Date | null): string => {
   return format(date, 'yyyy-MM-dd HH:mm')
 }
 
+export const priceString = (price: number): string => {
+  return `¥${price.toLocaleString()}`
+}
+
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
   const {
     community_id,

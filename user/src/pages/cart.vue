@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateString, convertDocumentDataToEvent } from '@/schemes/converter'
+import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
@@ -10,7 +10,9 @@ const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 
 type Cart = {
-  orders: OrderItem
+  order: OrderItem
+  subtotals: { [key: string]: number }
+  total: number
   event: BokudeliEvent
 }
 
@@ -47,7 +49,13 @@ onMounted(async () => {
         return []
       }
       const event = convertDocumentDataToEvent(eventSnapshot.docs[0].data())
-      return [{ orders: item, event }]
+
+      const subtotals = {} as { [key: string]: number }
+      item.menus.forEach((menu) => {
+        subtotals[menu.menu_id] = menu.price * menu.count
+      })
+      const total = Object.values(subtotals).reduce((total, current) => total + current)
+      return [{ order: item, event, subtotals, total }]
     })
   )
 
@@ -91,55 +99,14 @@ onMounted(async () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
                     <td>
-                      <v-img
-                        class="ma-1"
-                        height="100"
-                        width="100"
-                        cover
-                        aspect-ratio="1"
-                        src="https://firebasestorage.googleapis.com/v0/b/bokudeli-event-dev.appspot.com/o/Et3UOow7B6gGgxPJ10GL9nEX2AZ2%2Fmenus%2Fmenu_1684056619251.jpeg?alt=media&token=0bc76a09-3cad-440d-881d-68b54a62c19b"
-                      />
+                      <v-img class="ma-1" height="100" width="100" cover aspect-ratio="1" :src="menu.imageUrl" />
                     </td>
-                    <td>カツ丼</td>
-                    <td>¥1,500</td>
-                    <td>2</td>
-                    <td>¥3,000</td>
-                    <td>削除</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <v-img
-                        class="ma-1"
-                        height="100"
-                        width="100"
-                        cover
-                        aspect-ratio="1"
-                        src="https://firebasestorage.googleapis.com/v0/b/bokudeli-event-dev.appspot.com/o/Et3UOow7B6gGgxPJ10GL9nEX2AZ2%2Fmenus%2Fmenu_1684056619251.jpeg?alt=media&token=0bc76a09-3cad-440d-881d-68b54a62c19b"
-                      />
-                    </td>
-                    <td>天丼</td>
-                    <td>¥1,000</td>
-                    <td>1</td>
-                    <td>¥1,000</td>
-                    <td>削除</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <v-img
-                        class="ma-1"
-                        height="100"
-                        width="100"
-                        cover
-                        aspect-ratio="1"
-                        src="https://firebasestorage.googleapis.com/v0/b/bokudeli-event-dev.appspot.com/o/Et3UOow7B6gGgxPJ10GL9nEX2AZ2%2Fmenus%2Fmenu_1684056619251.jpeg?alt=media&token=0bc76a09-3cad-440d-881d-68b54a62c19b"
-                      />
-                    </td>
-                    <td>釜飯丼</td>
-                    <td>¥1,000</td>
-                    <td>1</td>
-                    <td>¥1,000</td>
+                    <td>{{ menu.name }}</td>
+                    <td>{{ priceString(menu.price) }}</td>
+                    <td>{{ menu.count }}</td>
+                    <td>{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
                     <td>削除</td>
                   </tr>
                 </tbody>
@@ -148,7 +115,7 @@ onMounted(async () => {
           </v-row>
           <v-card-text class="text-right">
             <span class="text-right ma-2 text-h5">合計(税込)</span>
-            <span class="text-right ma-2 text-h4"> ¥5,000</span>
+            <span class="text-right ma-2 text-h4">{{ priceString(cart.total) }}</span>
           </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
