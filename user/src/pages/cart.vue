@@ -4,7 +4,7 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
+import { Timestamp, collectionGroup, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
@@ -20,6 +20,20 @@ const state = reactive({
   cartList: [] as Cart[],
   isLoading: true,
 })
+
+const showConfirm = async (cart: Cart) => {
+  const result = confirm('注文を確定しますか？')
+  if (result) {
+    const orderId = cart.order.order_id
+    const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
+    const orderSnapshot = await getDocs(orderRef)
+    const orderDocument = orderSnapshot.docs[0]
+
+    const updated_at = Timestamp.now()
+    await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
+    alert('注文を完了しました')
+  }
+}
 
 onMounted(async () => {
   // カート情報の取得
@@ -66,7 +80,7 @@ onMounted(async () => {
 
 <template>
   <div>
-    <v-row v-if="!state.isLoading" justify="center">
+    <v-row v-if="!state.isLoading && state.cartList.length !== 0" justify="center">
       <v-col v-for="cart in state.cartList" :key="cart.event.eventId" cols="12" md="8" sm="8">
         <v-card class="pa-10 ma-10">
           <v-row>
@@ -129,11 +143,23 @@ onMounted(async () => {
           </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
-              <v-btn class="ma-10 text-h5" color="grey-900" size="x-large" rounded width="500"> 注文を確定する </v-btn>
+              <v-btn
+                class="ma-10 text-h5"
+                color="grey-900"
+                size="x-large"
+                rounded
+                width="500"
+                @click="showConfirm(cart)"
+              >
+                注文を確定する
+              </v-btn>
             </v-col>
           </v-row>
         </v-card>
       </v-col>
+    </v-row>
+    <v-row v-else-if="!state.isLoading">
+      <v-col cols="auto"> まだカートに入っていません </v-col>
     </v-row>
     <v-row v-else justify="center">
       <v-col cols="auto">

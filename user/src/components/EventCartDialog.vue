@@ -77,7 +77,7 @@ const addOrder = async () => {
     const addedDoc = await addDoc(orderDb, orderItem)
 
     // 自動採番されたOrderIDを取得して項目として追加追加
-    await setDoc(addedDoc, { orderid: addedDoc.id }, { merge: true })
+    await setDoc(addedDoc, { order_id: addedDoc.id }, { merge: true })
   } else {
     // 上書き処理
     const userOrder = userOrders.shift()
