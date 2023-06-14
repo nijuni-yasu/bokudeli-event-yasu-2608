@@ -5,6 +5,8 @@ import PartnerMenu from '@/schemes/partnerMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { DocumentData, QueryDocumentSnapshot, Timestamp, addDoc, collection, getDocs, setDoc } from 'firebase/firestore'
 
+import LoginDialog from '@/components/LoginDialog.vue'
+
 const props = defineProps<{
   modelValue: boolean
   menu: PartnerMenu
@@ -119,9 +121,21 @@ const addOrder = async () => {
   }
 }
 
+const isOpenLoginDialog = ref(false)
 const addCart = async () => {
-  await addOrder()
-  closeDialog()
+  if (!selectedCount.value) {
+    alert('個数を選んでください')
+    return
+  }
+  if (!userStore.storedUser) {
+    const result = confirm('ログインしてください')
+    if (result) {
+      isOpenLoginDialog.value = true
+    }
+  } else {
+    await addOrder()
+    closeDialog()
+  }
 }
 </script>
 
@@ -157,6 +171,7 @@ const addCart = async () => {
         </v-btn>
       </v-row>
     </v-card>
+    <login-dialog v-model="isOpenLoginDialog" />
   </v-dialog>
 </template>
 

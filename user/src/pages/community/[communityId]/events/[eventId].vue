@@ -44,6 +44,14 @@ const state = reactive({
   isLoading: true,
 })
 
+const isDialogOpen = ref(false)
+const selectedMenu = ref(null as PartnerMenu | null)
+
+const selectMenu = (menu: PartnerMenu) => {
+  selectedMenu.value = menu
+  isDialogOpen.value = true
+}
+
 onMounted(async () => {
   const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
 
@@ -67,14 +75,6 @@ onMounted(async () => {
   }
   state.isLoading = false
 })
-
-const isDialogOpen = ref(false)
-const selectedMenu = ref(null as PartnerMenu | null)
-
-const selectMenu = (menu: PartnerMenu) => {
-  selectedMenu.value = menu
-  isDialogOpen.value = true
-}
 </script>
 
 <template>
