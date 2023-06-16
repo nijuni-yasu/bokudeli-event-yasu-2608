@@ -156,12 +156,12 @@ const addCart = async () => {
       <v-row class="mx-3 my-2">
         <v-textarea v-model="orderNote" outlined dense rows="1" label="注記を追加"></v-textarea>
       </v-row>
-      <v-row class="justify-center mx-3 my-2">
-        <v-btn class="justify-center mx-3 align-self-center" rounded size="x-large" color="primary" @click="addCart()">
+      <v-row class="justify-center mx-1 my-2">
+        <v-btn class="justify-center mx-1 align-self-center" rounded size="large" color="primary" @click="addCart()">
           カートに追加する
         </v-btn>
         <v-btn
-          class="justify-center mx-3 align-self-center"
+          class="justify-center mx-1 my-2 align-self-center"
           rounded
           variant="outlined"
           color="secondary"

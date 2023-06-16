@@ -81,7 +81,7 @@ onMounted(async () => {
   <section>
     <v-row v-if="state.isLoading === false" class="justify-center">
       <v-col md="8" sm="9" cols="12">
-        <v-card flat class="align-center justify-center text-center my-10 pa-10">
+        <v-card flat class="align-center justify-center text-center my-5 pa-sm-10 pa-xs-1">
           <v-row>
             <v-col>
               <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
@@ -89,7 +89,7 @@ onMounted(async () => {
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 font-weight-semibold pb-10">
+              <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10">
                 {{ state.event.eventName }}
               </v-card-title>
               <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
