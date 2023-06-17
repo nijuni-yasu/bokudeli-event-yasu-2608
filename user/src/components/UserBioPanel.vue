@@ -26,6 +26,30 @@ const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
 const userDescription = computed(() => {
   return userData?.value?.userDescription ?? 'ここに自己紹介文が入ります。'
 })
+const twitterUrl = computed(() => {
+  if (userData?.value?.userSnsTwitter) {
+    return 'https://twitter.com/' + userData.value.userSnsTwitter
+  } else {
+    return undefined
+  }
+})
+
+const facebookUrl = computed(() => {
+  if (userData?.value?.userSnsFacebook) {
+    return 'https://www.facebook.com/' + userData.value.userSnsFacebook
+  } else {
+    return undefined
+  }
+})
+
+const instagramUrl = computed(() => {
+  if (userData?.value?.userSnsInstagram) {
+    return 'https://www.instagram.com/' + userData.value.userSnsInstagram
+  } else {
+    return undefined
+  }
+})
+
 const isUserInfoEditDialogVisible = ref(false)
 const updateUserData = async (storedUser: StoredUser) => {
   const store = useStoreStoredUser()
@@ -76,13 +100,13 @@ const updateUserData = async (storedUser: StoredUser) => {
         </v-row>
         <v-row class="justify-center">
           <v-col cols="auto">
-            <a href="https://twitter.com/" target="_blank">
+            <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
               <v-btn icon="mdi-twitter" size="x-large" class="ma-3"></v-btn>
             </a>
-            <a href="https://facebook.com/" target="_blank">
+            <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
               <v-btn icon="mdi-facebook" size="x-large" class="ma-3"></v-btn>
             </a>
-            <a href="https://instagram.com/" target="_blank">
+            <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
               <v-btn icon="mdi-instagram" size="x-large" class="ma-3"></v-btn>
             </a>
           </v-col>
