@@ -31,7 +31,7 @@ onMounted(async () => {
 <template>
   <div>
     <v-row class="justify-center align-center">
-      <v-col md="10" cols="12" >
+      <v-col md="10" cols="12">
         <v-card class="d-flex align-center justify-center text-center mb-10" flat>
           <v-img :src="topLogo" />
         </v-card>
@@ -47,7 +47,9 @@ onMounted(async () => {
                 </v-card-title>
                 <v-card-text class="text-left pb-2"> 【主催者】 {{ event.communityName }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【注文期限】{{ dateString(event.eventDeadline) }} </v-card-text>
-                <v-card-text class="text-left pb-2"> 【開催日時】{{ dateString(event.eventStartDatetime) }} </v-card-text>
+                <v-card-text class="text-left pb-2">
+                  【開催日時】{{ dateString(event.eventStartDatetime) }}
+                </v-card-text>
                 <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
                 <v-card-text class="text-left pb-8"> 【最大人数】{{ event.eventMaxPeople }} </v-card-text>
