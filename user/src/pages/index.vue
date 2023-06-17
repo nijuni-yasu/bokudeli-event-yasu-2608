@@ -6,6 +6,7 @@ import topLogo from '@/assets/images/bokudeli/bokudeli_top4.png'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateString, convertDocumentDataToEvent } from '@/schemes/converter'
 import avatarImageList from '@/assets/examples/avatarImageList'
+import { getEventPath } from '@/router/utils'
 
 const allEvents = query(collectionGroup(db, 'events'), orderBy('event_start_datetime', 'desc'))
 
@@ -37,7 +38,7 @@ onMounted(async () => {
         </v-card>
         <v-row v-if="state.isLoading === false" class="mb-2">
           <v-col v-for="event in state.eventList" :key="event.eventId" md="4" sm="6" cols="12" class="content">
-            <router-link :to="`/community/${event.communityAccount}/events/${event.eventId}`">
+            <router-link :to="getEventPath(event.communityAccount, event.eventId)">
               <v-card color="text-center cursor-pointer">
                 <div class="image">
                   <VImg cover class="mx-auto" aspect-ratio="1.91" :src="event.eventCoverUrl" />

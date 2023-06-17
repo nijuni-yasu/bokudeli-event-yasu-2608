@@ -10,6 +10,7 @@ import {
   query,
   where,
 } from 'firebase/firestore'
+import { getCommunityPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
   dateString,
@@ -94,7 +95,7 @@ onMounted(async () => {
               </v-card-title>
               <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
                 <router-link
-                  :to="`/community/${state.event.communityAccount}`"
+                  :to="getCommunityPath(state.event.communityAccount)"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
                   <v-row class="ma-1">

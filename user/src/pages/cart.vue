@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
+import { getCommunityPath, getEventPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
@@ -117,13 +118,13 @@ onMounted(async () => {
           </v-row>
           <v-card-text class="text-left pb-sm-8 text-sm-h6">
             【主催者】
-            <router-link :to="`/community/${cart.event.communityAccount}`">
+            <router-link :to="getCommunityPath(cart.event.communityAccount)">
               {{ cart.event.communityName }}
             </router-link>
           </v-card-text>
           <v-card-text class="text-left pb-sm-8 text-sm-h6">
             【イベント】
-            <router-link :to="`/community/${cart.event.communityAccount}/events/${cart.event.eventId}`">
+            <router-link :to="getEventPath(cart.event.communityAccount, cart.event.eventId)">
               {{ cart.event.eventName }}
             </router-link>
           </v-card-text>
