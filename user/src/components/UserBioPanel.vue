@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import StoredUser from '@/schemes/storedUser'
 import { useStoreCredential } from '@/stores/credential'
-import UserInfoEditDialog from '@/components/UserInfoEditDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
+import UserBioEditDialog from './UserBioEditDialog.vue'
 
 const props = defineProps<{ userData: StoredUser; isEditable: boolean | undefined }>()
-const userData = computed(() => props.userData)
+const userData = ref(props.userData)
 const isEditable = computed(() => props.isEditable ?? false)
 
 const avatar = computed(() => {
@@ -50,6 +50,7 @@ const updateUserData = async (storedUser: StoredUser) => {
   } else {
     console.error('ユーザーが存在しません')
   }
+  userData.value = storedUser
 }
 </script>
 
@@ -94,7 +95,7 @@ const updateUserData = async (storedUser: StoredUser) => {
         </v-card-actions>
       </v-card>
       <!-- edit profile dialog data -->
-      <user-info-edit-dialog v-model="isUserInfoEditDialogVisible" :user-data="userData" @submit="updateUserData" />
+      <user-bio-edit-dialog v-model="isUserInfoEditDialogVisible" :user-data="userData" @submit="updateUserData" />
     </v-col>
   </v-row>
 </template>

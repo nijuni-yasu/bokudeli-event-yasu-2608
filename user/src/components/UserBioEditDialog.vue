@@ -62,7 +62,7 @@ const onFormReset = () => {
               <v-text-field v-model="userDataDraft.userSnsFacebook" label="Facebook" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field label="Instagram" />
+              <v-text-field v-model="userDataDraft.userSnsInstagram" label="Instagram" />
             </v-col>
             <v-col cols="12" md="12">
               <VTextarea v-model="userDataDraft.userDescription" label="自己紹介文" />

@@ -114,6 +114,7 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
     userDescription: null,
     userSnsFacebook: null,
     userSnsTwitter: null,
+    userSnsInstagram: null,
     createdAt: undefined,
     updatedAt: undefined,
   }
@@ -141,6 +142,7 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
     user_description: storedUser.userDescription,
     user_sns_facebook: storedUser.userSnsFacebook,
     user_sns_twitter: storedUser.userSnsTwitter,
+    user_sns_instagram: storedUser.userSnsInstagram,
     created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
     updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
   }
@@ -157,6 +159,7 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
       userDescription: null,
       userSnsFacebook: null,
       userSnsTwitter: null,
+      userSnsInstagram: null,
       createdAt: undefined,
       updatedAt: undefined,
     }
@@ -171,6 +174,7 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
     user_description,
     user_sns_facebook,
     user_sns_twitter,
+    user_sns_instagram,
     created_at,
     updated_at,
   } = documentData
@@ -184,6 +188,7 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
     userDescription: user_description ?? '',
     userSnsFacebook: user_sns_facebook ?? '',
     userSnsTwitter: user_sns_twitter ?? '',
+    userSnsInstagram: user_sns_instagram ?? '',
     createdAt: created_at ? (created_at as Timestamp).toDate() : undefined,
     updatedAt: updated_at ? (updated_at as Timestamp).toDate() : undefined,
   }

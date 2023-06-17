@@ -27,7 +27,7 @@ onMounted(async () => {
   <div>
     <v-row v-if="!state.isLoading" justify="center">
       <v-col cols="auto">
-        <user-bio-panel :user-data="state.userData"></user-bio-panel>
+        <user-bio-panel :user-data="state.userData" :is-editable="false"></user-bio-panel>
       </v-col>
     </v-row>
     <v-row v-else justify="center">

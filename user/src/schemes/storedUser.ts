@@ -9,6 +9,7 @@ type StoredUser = {
   userDescription: string | null
   userSnsFacebook: string | null
   userSnsTwitter: string | null
+  userSnsInstagram: string | null
   createdAt: Date | undefined
   updatedAt: Date | undefined
 }
@@ -22,6 +23,7 @@ export type FirestoredUser = {
   user_description: string | null
   user_sns_facebook: string | null
   user_sns_twitter: string | null
+  user_sns_instagram: string | null
   created_at: Timestamp
   updated_at: Timestamp
 }
