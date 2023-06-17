@@ -7,6 +7,8 @@ import { DocumentData, QueryDocumentSnapshot, Timestamp, addDoc, collection, get
 
 import LoginDialog from '@/components/LoginDialog.vue'
 
+const router = useRouter()
+
 const props = defineProps<{
   modelValue: boolean
   menu: PartnerMenu
@@ -28,9 +30,12 @@ const selectedCount = ref(1)
 // FIXME: 注記が入力されていた場合、表示させる必要がある
 const orderNote = ref('')
 
-const closeDialog = () => {
+const closeDialog = (isAddCart: boolean) => {
   selectedCount.value = 1
   orderNote.value = ''
+  if (isAddCart) {
+    router.push('/cart')
+  }
   isOpen.value = false
 }
 
@@ -132,13 +137,13 @@ const addCart = async () => {
     }
   } else {
     await addOrder()
-    closeDialog()
+    closeDialog(true)
   }
 }
 </script>
 
 <template>
-  <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog()">
+  <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog(false)">
     <v-card class="pa-sm-10 px-5 py-1 text-center">
       <v-img :src="menu.imageUrl" class="ma-5" aspect-ratio="1" cover></v-img>
       <v-card-title class="text-left text-h4 pb-3">
@@ -163,7 +168,7 @@ const addCart = async () => {
           rounded
           variant="outlined"
           color="secondary"
-          @click="closeDialog()"
+          @click="closeDialog(false)"
         >
           閉じる
         </v-btn>
