@@ -37,10 +37,10 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
         <v-row>
           <!-- community description -->
           <v-col md="4" sm="4" cols="12">
-            <v-card class="mx-0 pa-8" color="text-center">
+            <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
-              <VImg class="pb-5" style="border-radius: 10px" aspect-ratio="1" :src="communityLogo" />
-              <v-card-title class="justify-center text-h6 pb-5"> DMM.make AKIBA </v-card-title>
+              <VImg style="border-radius: 10px" aspect-ratio="1" :src="communityLogo" />
+              <v-card-title class="justify-center text-h6 pa-5"> DMM.make AKIBA </v-card-title>
               <v-card-text class="text-left pb-3">
                 <a href="https://akiba.dmm.com/" class="text-decoration-none" target="_blank">
                   https://akiba.dmm.com/
@@ -63,20 +63,17 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
               </v-card-text>
 
               <!-- community member -->
-              <v-card-title class="justify-center text-h6"> MEMBER </v-card-title>
-              <v-list class="pt-0">
-                <v-list-item v-for="(data, index) in memberList" :key="index" class="d-flex align-center px-0">
-                  <router-link :to="`/users/${data.id}`" class="text--primary cursor-pointer text-decoration-none">
+              <v-card-title class="justify-center text-h6">MEMBER</v-card-title>
+                <div v-for="(data, index) in memberList" :key="index">
+                  <router-link :to="`/users/${data.id}`">
                     <v-row>
-                      <v-list-item><v-avatar :image="data.avatar" /></v-list-item>
-                      <div class="d-flex align-center flex-wrap flex-grow-1">
-                        <v-list-item-title>{{ data.name }}</v-list-item-title>
-                        <v-spacer />
+                      <div class="d-flex flex-row px-6 py-2">
+                        <v-avatar :image="data.avatar" size="40px" />
+                        <div class="ma-2 text-subtitle-1">{{ data.name }}</div>
                       </div>
                     </v-row>
                   </router-link>
-                </v-list-item>
-              </v-list>
+                </div>
             </v-card>
           </v-col>
           <!-- events -->
@@ -84,7 +81,7 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
             <v-row>
               <v-col v-for="(event, index) in eventList" :key="index" md="6" sm="6" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.id)">
-                  <v-img :src="event.character" aspect-ratio="2" />
+                  <v-img cover aspect-ratio="1.91" :src="event.character"/>
                   <v-card-title class="justify-center text-h5 pb-3">
                     {{ event.title }}
                   </v-card-title>
