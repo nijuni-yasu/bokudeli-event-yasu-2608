@@ -82,73 +82,69 @@ onMounted(async () => {
   <div>
     <v-row v-if="!state.isLoading && state.cartList.length !== 0" justify="center">
       <v-col v-for="cart in state.cartList" :key="cart.event.eventId" cols="12" md="8" sm="8">
-        <v-card class="pa-10 ma-10">
+        <v-card class="pa-sm-5 pa-xs-1 ma-sm-10 ma-xs-1">
           <v-row>
             <v-col class="d-flex align-center">
               <v-img class="ma-10" cover aspect-ratio="1.91" :src="cart.event.eventCoverUrl" />
             </v-col>
           </v-row>
-          <v-card-text class="text-left pb-8 text-h6">
+          <v-card-text class="text-left pb-sm-8 text-sm-h6">
             【主催者】
             <router-link :to="`/community/${cart.event.communityAccount}`">
               {{ cart.event.communityName }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-8 text-h6">
+          <v-card-text class="text-left pb-sm-8 text-sm-h6">
             【イベント】
             <router-link :to="`/community/${cart.event.communityAccount}/events/${cart.event.eventId}`">
               {{ cart.event.eventName }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-8 text-h6"> 【開催場所】{{ cart.event.eventAddress }} </v-card-text>
-          <v-card-text class="text-left pb-8 text-h6">
+          <v-card-text class="text-left pb-sm-8 text-sm-h6"> 【開催場所】{{ cart.event.eventAddress }} </v-card-text>
+          <v-card-text class="text-left pb-sm-8 text-sm-h6">
             【開催日時】{{ dateString(cart.event.eventStartDatetime) }}
           </v-card-text>
-          <v-card-text class="text-left pb-8 text-h6">
+          <v-card-text class="text-left pb-sm-8 text-sm-h6">
             【注文期限】{{ dateString(cart.event.eventDeadline) }}
           </v-card-text>
-          <v-card-text class="text-left pb-8 text-h6"> 【お店】{{ cart.event.shopName }} </v-card-text>
+          <v-card-text class="text-left pb-sm-8 text-sm-h6"> 【お店】{{ cart.event.shopName }} </v-card-text>
 
-          <v-row class="text-center align-center">
+          <v-row class="text-center align-center text-md-body-1 text-caption">
             <v-col cols="12">
               <v-table>
                 <thead>
                   <tr>
-                    <th class="text-center" width="100"></th>
-                    <th class="text-center">メニュー</th>
-                    <th class="text-center">価格</th>
-                    <th class="text-center">個数</th>
-                    <th class="text-center">小計(税込)</th>
-                    <th class="text-center"></th>
+                    <th class="text-center" style="padding:1px;">メニュー</th>
+                    <th class="text-center" style="padding:1px;">個数</th>
+                    <th class="text-center" style="padding:1px;">価格</th>
+                    <th class="text-center" style="padding:1px;">小計</th>
+                    <th class="text-center" style="padding:1px;"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
-                    <td>
-                      <v-img class="ma-1" height="100" width="100" cover aspect-ratio="1" :src="menu.imageUrl" />
-                    </td>
-                    <td>{{ menu.name }}</td>
-                    <td>{{ priceString(menu.price) }}</td>
-                    <td>{{ menu.count }}</td>
-                    <td>{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
-                    <td>削除</td>
+                    <td style="padding:1px;">{{ menu.name }}</td>
+                    <td style="padding:1px;">{{ menu.count }}</td>
+                    <td style="padding:1px;">{{ priceString(menu.price) }}</td>
+                    <td style="padding:1px;">{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
+                    <td style="padding:1px;">削除</td>
                   </tr>
                 </tbody>
               </v-table>
             </v-col>
           </v-row>
           <v-card-text class="text-right">
-            <span class="text-right ma-2 text-h5">合計(税込)</span>
+            <span class="text-right ma-2 text-h5">合計</span>
             <span class="text-right ma-2 text-h4">{{ priceString(cart.total) }}</span>
           </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                class="ma-10 text-h5"
+                class="ma-10 text-h6"
                 color="grey-900"
                 size="x-large"
                 rounded
-                width="500"
+                width="70%"
                 @click="showConfirm(cart)"
               >
                 注文を確定する

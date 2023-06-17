@@ -31,7 +31,7 @@ onMounted(async () => {
 <template>
   <div>
     <v-row class="justify-center align-center">
-      <v-col cols="10">
+      <v-col md="10" cols="12" >
         <v-card class="d-flex align-center justify-center text-center mb-10" flat>
           <v-img :src="topLogo" />
         </v-card>
