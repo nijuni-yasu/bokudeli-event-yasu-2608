@@ -37,12 +37,13 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
   const store = useStoreStoredUser()
   if (user) {
     // ログイン処理
-    const storedUser = convertFirebaseUserToStoredUser(user)
+    const storedUser = await convertFirebaseUserToStoredUser(user)
 
     // Firestore 保存
+    const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
+
     const docRef = doc(db, 'users', storedUser.userId)
     const docSnap = await getDoc(docRef)
-    const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
 
     if (docSnap.exists()) {
       // 既にユーザーが存在する場合は更新
@@ -54,6 +55,7 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
           user_image_url: firestoredUser.user_image_url,
           user_sns_facebook: firestoredUser.user_sns_facebook,
           user_sns_twitter: firestoredUser.user_sns_twitter,
+          user_sns_instagram: firestoredUser.user_sns_instagram,
           updated_at: Timestamp.now(),
         },
         { merge: true }

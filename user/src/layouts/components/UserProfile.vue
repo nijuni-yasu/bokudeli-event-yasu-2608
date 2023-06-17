@@ -3,23 +3,13 @@ import avatar1 from '@images/avatars/avatar-1.png'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { useStoreCredential } from '@/stores/credential'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
 const userId = computed(() => storedUser?.value?.userId ?? '')
 const isLogin = computed(() => userId.value !== '')
 const userName = computed(() => storedUser?.value?.userName ?? 'ゲスト')
-const avatar = computed(() => {
-  if (storedUser?.value?.userImageUrl) {
-    const store = useStoreCredential()
-    const baseUrl = storedUser.value.userImageUrl + '?width=40&height=40'
-    const accessTokenQuery = store.credential?.accessToken ? '&access_token=' + store.credential.accessToken : ''
-    return baseUrl + accessTokenQuery
-  } else {
-    return avatar1
-  }
-})
+const avatar = computed(() => storedUser?.value?.userImageUrl ?? avatar1)
 
 const isOpenLoginDialog = ref(false)
 

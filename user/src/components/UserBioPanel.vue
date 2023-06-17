@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import StoredUser from '@/schemes/storedUser'
-import { useStoreCredential } from '@/stores/credential'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
@@ -11,16 +10,7 @@ const props = defineProps<{ userData: StoredUser; isEditable: boolean | undefine
 const userData = ref(props.userData)
 const isEditable = computed(() => props.isEditable ?? false)
 
-const avatar = computed(() => {
-  if (userData?.value?.userImageUrl) {
-    const store = useStoreCredential()
-    const baseUrl = userData.value.userImageUrl + '?width=200&height=200'
-    const accessTokenQuery = store.credential?.accessToken ? '&access_token=' + store.credential.accessToken : ''
-    return baseUrl + accessTokenQuery
-  } else {
-    return null
-  }
-})
+const avatar = computed(() => userData?.value?.userImageUrl ?? null)
 
 const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
 const userDescription = computed(() => {

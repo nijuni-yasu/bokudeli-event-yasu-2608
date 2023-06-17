@@ -5,6 +5,8 @@ import BokudeliCommunity from './bokudeliCommunity'
 import PartnerMenu from './partnerMenu'
 import { FacebookAuthProvider, User } from 'firebase/auth'
 import StoredUser, { FirestoredUser } from './storedUser'
+import { useStoreCredential } from '@/stores/credential'
+import axios from 'axios'
 
 export const dateString = (date: Date | null): string => {
   if (!date) return ''
@@ -102,7 +104,7 @@ export const convertDocumentDataToMenu = (
   }
 }
 
-export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser => {
+export const convertFirebaseUserToStoredUser = async (firebaseUser: User): Promise<StoredUser> => {
   const { uid, displayName, email, photoURL, providerData } = firebaseUser
 
   const user: StoredUser = {
@@ -119,15 +121,29 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
     updatedAt: undefined,
   }
 
-  providerData.forEach((provider) => {
+  // 各IDプロバイダー毎の処理
+  for (const provider of providerData) {
     switch (provider.providerId) {
       case FacebookAuthProvider.PROVIDER_ID:
-        user.userSnsFacebook = provider.uid
+        {
+          const store = useStoreCredential()
+          if (store.credential) {
+            const imageQueryUrl =
+              photoURL + `?width=200&height=200&redirect=false&access_token=${store.credential.accessToken}`
+            const response = await axios.get(imageQueryUrl)
+
+            let newImageUrl = null
+            if (response.data.data.is_silhouette === false) {
+              newImageUrl = response.data.data.url
+            }
+            user.userImageUrl = newImageUrl
+          }
+        }
         break
       default:
         break
     }
-  })
+  }
 
   return user
 }
