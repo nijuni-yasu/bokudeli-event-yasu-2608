@@ -3,8 +3,9 @@ import { db } from '@/firebase'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
+import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { Timestamp, collectionGroup, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
+import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
@@ -21,10 +22,10 @@ const state = reactive({
   isLoading: true,
 })
 
-const showConfirm = async (cart: Cart) => {
+const showConfirm = async (order: OrderItem) => {
   const result = confirm('注文を確定しますか？')
   if (result) {
-    const orderId = cart.order.order_id
+    const orderId = order.order_id
     const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
     const orderSnapshot = await getDocs(orderRef)
     const orderDocument = orderSnapshot.docs[0]
@@ -35,7 +36,28 @@ const showConfirm = async (cart: Cart) => {
   }
 }
 
-onMounted(async () => {
+const deleteMenuInCart = async (order: OrderItem, menu: OrderMenu) => {
+  const result = confirm('カートから削除しますか？')
+  if (result) {
+    const orderId = order.order_id
+    const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
+    const orderSnapshot = await getDocs(orderRef)
+    const orderDocument = orderSnapshot.docs[0]
+    const currentMenus = orderDocument.data().menus as OrderMenu[]
+    const menus = currentMenus.filter((m) => m.menu_id !== menu.menu_id)
+
+    const updated_at = Timestamp.now()
+    if (menus.length === 0) {
+      deleteDoc(orderDocument.ref)
+    } else {
+      await setDoc(orderDocument.ref, { menus, updated_at }, { merge: true })
+    }
+    alert('カートから削除しました')
+    state.cartList = await loadCartList()
+  }
+}
+
+const loadCartList = async () => {
   // カート情報の取得
   const inCartQuery = query(
     collectionGroup(db, 'orders'),
@@ -73,7 +95,11 @@ onMounted(async () => {
     })
   )
 
-  state.cartList = convertedList.flat()
+  return convertedList.flat()
+}
+
+onMounted(async () => {
+  state.cartList = await loadCartList()
   state.isLoading = false
 })
 </script>
@@ -114,20 +140,22 @@ onMounted(async () => {
               <v-table>
                 <thead>
                   <tr>
-                    <th class="text-center" style="padding:1px;">メニュー</th>
-                    <th class="text-center" style="padding:1px;">個数</th>
-                    <th class="text-center" style="padding:1px;">価格</th>
-                    <th class="text-center" style="padding:1px;">小計</th>
-                    <th class="text-center" style="padding:1px;"></th>
+                    <th class="text-center" style="padding: 1px">メニュー</th>
+                    <th class="text-center" style="padding: 1px">個数</th>
+                    <th class="text-center" style="padding: 1px">価格</th>
+                    <th class="text-center" style="padding: 1px">小計</th>
+                    <th class="text-center" style="padding: 1px"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
-                    <td style="padding:1px;">{{ menu.name }}</td>
-                    <td style="padding:1px;">{{ menu.count }}</td>
-                    <td style="padding:1px;">{{ priceString(menu.price) }}</td>
-                    <td style="padding:1px;">{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
-                    <td style="padding:1px;">削除</td>
+                    <td style="padding: 1px">{{ menu.name }}</td>
+                    <td style="padding: 1px">{{ menu.count }}</td>
+                    <td style="padding: 1px">{{ priceString(menu.price) }}</td>
+                    <td style="padding: 1px">{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
+                    <td style="padding: 1px">
+                      <v-btn variant="text" @click="deleteMenuInCart(cart.order, menu)">削除</v-btn>
+                    </td>
                   </tr>
                 </tbody>
               </v-table>
@@ -145,7 +173,7 @@ onMounted(async () => {
                 size="x-large"
                 rounded
                 width="70%"
-                @click="showConfirm(cart)"
+                @click="showConfirm(cart.order)"
               >
                 注文を確定する
               </v-btn>
