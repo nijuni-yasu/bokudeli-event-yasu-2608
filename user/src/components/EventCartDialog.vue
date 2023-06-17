@@ -23,13 +23,13 @@ const isOpen = computed({
 })
 
 const countOptions = Array.from({ length: 10 }, (_, i) => i + 1)
-const selectedCount = ref(null as number | null)
+const selectedCount = ref(1)
 
 // FIXME: 注記が入力されていた場合、表示させる必要がある
 const orderNote = ref('')
 
 const closeDialog = () => {
-  selectedCount.value = null
+  selectedCount.value = 1
   orderNote.value = ''
   isOpen.value = false
 }
@@ -89,25 +89,23 @@ const addOrder = async () => {
     }
 
     const currentOrder = userOrder.data() as OrderItem
-    const currentMenus = currentOrder.menus as OrderMenu[]
+    const menus = currentOrder.menus as OrderMenu[]
 
-    // 上書き対象のメニューを探して一度取り除く
-    const updateMenu = currentMenus
-      .filter((menu) => {
-        return menu.menu_id === props.menu.id
-      })
-      .shift()
+    // 上書き対象のメニューのインデックスを取得
+    const updateMenuIndex = menus.findIndex((menu) => {
+      return menu.menu_id === props.menu.id
+    })
 
-    if (updateMenu) {
+    if (updateMenuIndex >= 0) {
       // すでに注文していた場合はカウントのみ更新して追加
-      updateMenu.count += orderCount
+      menus[updateMenuIndex].count += orderCount
       if (orderNote.value) {
-        updateMenu.note = orderNote.value
+        menus[updateMenuIndex].note = orderNote.value
       }
-      currentMenus.push(updateMenu)
     } else {
+      // まだ注文していない場合は追加
       const menu = props.menu
-      currentMenus.push({
+      menus.push({
         menu_id: menu.id,
         partner_id: menu.partnerId,
         name: menu.name,
@@ -117,7 +115,7 @@ const addOrder = async () => {
         note: orderNote.value,
       })
     }
-    await setDoc(userOrder.ref, { menus: currentMenus, updated_at: Timestamp.now() }, { merge: true })
+    await setDoc(userOrder.ref, { menus, updated_at: Timestamp.now() }, { merge: true })
   }
 }
 
