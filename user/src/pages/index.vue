@@ -43,7 +43,7 @@ onMounted(async () => {
                 <div class="image">
                   <VImg cover class="mx-auto" aspect-ratio="1.91" :src="event.eventCoverUrl" />
                 </div>
-                <v-card-title class="justify-center pb-3 title text-h5">
+                <v-card-title class="justify-center pb-3 title text-h6">
                   {{ event.eventName }}
                 </v-card-title>
                 <v-card-text class="text-left pb-2"> 【主催者】 {{ event.communityName }} </v-card-text>
@@ -53,13 +53,13 @@ onMounted(async () => {
                 </v-card-text>
                 <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
-                <v-card-text class="text-left pb-8"> 【最大人数】{{ event.eventMaxPeople }} </v-card-text>
+                <v-card-text class="text-left pb-2"> 【定員】{{ event.eventMaxPeople }} 人</v-card-text>
+                <v-card-text class="text-left pb-4"> 【参加者】{{ event.eventMaxPeople }} 人</v-card-text>
                 <!-- Mutual members -->
                 <v-card-text class="position-relative">
-                  <div class="d-flex justify-space-between align-center mt-8">
-                    <span class="text--primary font-weight-medium"> 10 members </span>
-                    <div class="v-avatar-group">
-                      <v-avatar v-for="i in 8" :key="i" size="40">
+                  <div class="d-flex justify-space-between align-center">
+                    <div class="v-avatar-group ml-2">
+                      <v-avatar v-for="i in 10" :key="i" size="40">
                         <v-img :src="avatarImageList[i % 8]"></v-img>
                       </v-avatar>
                     </div>
