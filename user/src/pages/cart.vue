@@ -8,6 +8,7 @@ import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 
+const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 
@@ -35,6 +36,7 @@ const showConfirm = async (order: OrderItem) => {
     await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
     alert('注文を完了しました')
     state.cartList = await loadCartList()
+    router.push(getEventPath(order.community_account, order.event_id))
   }
 }
 
