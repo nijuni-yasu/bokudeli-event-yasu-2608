@@ -118,6 +118,7 @@ export interface NavLink extends NavLinkProps, Partial<AclProperties> {
   badgeContent?: string
   badgeClass?: string
   disable?: boolean
+  loginRequired?: boolean
 }
 
 // 👉 Vertical nav group
@@ -128,6 +129,7 @@ export interface NavGroup extends Partial<AclProperties> {
   badgeClass?: string
   children: (NavLink | NavGroup)[]
   disable?: boolean
+  loginRequired?: boolean
 }
 
 export declare type VerticalNavItems = (NavLink | NavGroup | NavSectionTitle)[]

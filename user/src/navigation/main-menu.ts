@@ -13,10 +13,18 @@ export default [
     title: 'マイページ',
     to: { path: '/mypage' },
     icon: { icon: 'mdi-account' },
+    loginRequired: true,
   },
   {
     title: 'カート',
     to: { path: '/cart' },
     icon: { icon: 'mdi-cart-outline' },
+    loginRequired: true,
   },
+  // {
+  //   title: 'ログイン',
+  //   to: { path: '/login' },
+  //   icon: { icon: 'mdi-login' },
+  //   loginRequired: false,
+  // },
 ]
