@@ -21,7 +21,7 @@ const avatar = computed(() => {
   }
 })
 
-const loginDialog = ref(false)
+const isOpenLoginDialog = ref(false)
 
 const logout = async () => {
   const auth = getAuth()
@@ -70,7 +70,7 @@ const logout = async () => {
             <v-divider v-if="isLogin" class="my-2" />
 
             <!-- 👉 Login, Logout -->
-            <v-list-item v-if="!isLogin" @click="loginDialog = true">
+            <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-logout" size="22" />
               </template>
@@ -88,6 +88,6 @@ const logout = async () => {
         <!-- !SECTION -->
       </v-avatar>
     </v-badge>
-    <login-dialog v-model="loginDialog" />
+    <login-dialog v-model="isOpenLoginDialog" />
   </div>
 </template>

@@ -201,6 +201,7 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <event-cart-dialog
+      v-if="selectedMenu && state.eventSnapshot"
       v-model="isDialogOpen"
       :menu="selectedMenu"
       :event-snapshot="state.eventSnapshot"

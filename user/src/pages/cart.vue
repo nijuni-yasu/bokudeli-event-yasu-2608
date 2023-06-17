@@ -33,6 +33,7 @@ const showConfirm = async (order: OrderItem) => {
     const updated_at = Timestamp.now()
     await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
     alert('注文を完了しました')
+    state.cartList = await loadCartList()
   }
 }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useStoreCredential } from '@/stores/credential'
+import { FirebaseError } from 'firebase/app'
 import { getAuth, signInWithPopup, FacebookAuthProvider } from 'firebase/auth'
 
 const props = defineProps({
@@ -22,21 +23,21 @@ const closeDialog = () => {
   dialog.value = false
 }
 
-const provider = new FacebookAuthProvider()
-provider.addScope('public_profile')
-provider.setCustomParameters({
-  display: 'popup',
-})
-
 const handleFacebookLogin = async () => {
   try {
-    const result = await signInWithPopup(getAuth(), new FacebookAuthProvider())
+    const provider = new FacebookAuthProvider()
+    provider.addScope('public_profile')
+    provider.setCustomParameters({
+      display: 'popup',
+    })
+
+    const result = await signInWithPopup(getAuth(), provider)
     const credential = FacebookAuthProvider.credentialFromResult(result)
     if (credential) {
       const store = useStoreCredential()
       store.update(credential)
     }
-  } catch (error: any) {
+  } catch (error: FirebaseError) {
     const credential = FacebookAuthProvider.credentialFromError(error)
     console.error({ error, credential })
   } finally {
