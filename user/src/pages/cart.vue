@@ -118,26 +118,26 @@ onMounted(async () => {
               <v-img class="ma-10" cover aspect-ratio="1.91" :src="cart.event.eventCoverUrl" />
             </v-col>
           </v-row>
-          <v-card-text class="text-left pb-sm-8 text-sm-h6">
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【主催者】
             <router-link :to="getCommunityPath(cart.event.communityAccount)">
               {{ cart.event.communityName }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-8 text-sm-h6">
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【イベント】
             <router-link :to="getEventPath(cart.event.communityAccount, cart.event.eventId)">
               {{ cart.event.eventName }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-8 text-sm-h6"> 【開催場所】{{ cart.event.eventAddress }} </v-card-text>
-          <v-card-text class="text-left pb-sm-8 text-sm-h6">
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【開催場所】{{ cart.event.eventAddress }} </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【開催日時】{{ dateString(cart.event.eventStartDatetime) }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-8 text-sm-h6">
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【注文期限】{{ dateString(cart.event.eventDeadline) }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-8 text-sm-h6"> 【お店】{{ cart.event.shopName }} </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
 
           <v-row class="text-center align-center text-md-body-1 text-caption">
             <v-col cols="12">
@@ -166,7 +166,7 @@ onMounted(async () => {
             </v-col>
           </v-row>
           <v-card-text class="text-right">
-            <span class="text-right ma-2 text-h5">合計</span>
+            <span class="text-right ma-2 text-h6">合計</span>
             <span class="text-right ma-2 text-h4">{{ priceString(cart.total) }}</span>
           </v-card-text>
           <v-row class="justify-center">
