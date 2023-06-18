@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
@@ -24,7 +25,39 @@ const state = reactive({
   isLoading: true,
 })
 
-const showConfirm = async (order: OrderItem) => {
+const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'> => {
+  const { event } = cart
+
+  if (event.eventDeadline && event.eventDeadline < new Date()) {
+    return 'deadline'
+  }
+
+  const memebers = await loadEventMembers(event.communityAccount, event.eventId)
+  if (memebers.length >= event.eventMaxPeople) {
+    return 'limitPeople'
+  }
+  return true
+}
+
+const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
+  switch (reason) {
+    case 'deadline':
+      alert('注文期限をすぎました。注文確定できません')
+      break
+    case 'limitPeople':
+      alert('定員に達しました。注文確定できません')
+      break
+  }
+}
+
+const showConfirm = async (cart: Cart) => {
+  const order = cart.order
+  const checkResult = await checkCart(cart)
+  if (checkResult !== true) {
+    showDisableAlert(checkResult)
+    return
+  }
+
   const result = confirm('注文を確定しますか？')
   if (result) {
     const orderId = order.order_id
@@ -179,7 +212,7 @@ onMounted(async () => {
                 size="x-large"
                 rounded
                 width="70%"
-                @click="showConfirm(cart.order)"
+                @click="showConfirm(cart)"
               >
                 注文を確定する
               </v-btn>
