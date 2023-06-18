@@ -93,7 +93,7 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
                   <v-card-text class="text-left pb-2"> 【開催日時】{{ event.eventDate }} </v-card-text>
                   <v-card-text class="text-left pb-2"> 【開催場所】{{ event.place }} </v-card-text>
                   <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop }} </v-card-text>
-                  <v-card-text class="text-left pb-8"> 【最大人数】{{ event.max }} </v-card-text>
+                  <v-card-text class="text-left pb-8"> 【定員】{{ event.max }} </v-card-text>
                 </v-card>
               </v-col>
             </v-row>
