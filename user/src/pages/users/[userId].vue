@@ -3,6 +3,7 @@ import UserBioPanel from '@/components/UserBioPanel.vue'
 import { db } from '@/firebase'
 import { convertDocumentDataToStoredUser } from '@/schemes/converter'
 import StoredUser from '@/schemes/storedUser'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 import { doc, getDoc } from 'firebase/firestore'
 
@@ -15,6 +16,8 @@ const state = reactive({
   isLoading: true,
 })
 
+const { storedUser } = storeToRefs(useStoreStoredUser())
+
 onMounted(async () => {
   const userRef = doc(db, 'users', props.userId)
   const userDoc = await getDoc(userRef)
@@ -24,10 +27,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div id="user-view">
     <v-row v-if="!state.isLoading" justify="center">
-      <v-col cols="auto">
-        <user-bio-panel :user-data="state.userData" :is-editable="false"></user-bio-panel>
+      <v-col cols="12" md="5" sm="5">
+        <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId"></user-bio-panel>
       </v-col>
     </v-row>
     <v-row v-else justify="center">
