@@ -150,7 +150,10 @@ onMounted(async () => {
                 </v-row>
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【最大人数】{{ state.event.eventMaxPeople }} 人
+                【定員】{{ state.event.eventMaxPeople }} 人
+              </v-card-text>
+              <v-card-text class="text-left pb-8 text-subtitle-1">
+                【参加人数】{{ state.members.length }} 人
               </v-card-text>
               <v-card-text class="text-left pb-10">
                 <v-row>
