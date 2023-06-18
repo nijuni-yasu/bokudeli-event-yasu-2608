@@ -130,7 +130,9 @@ onMounted(async () => {
               {{ cart.event.eventName }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【開催場所】{{ cart.event.eventAddress }} </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+            【開催場所】{{ cart.event.eventAddress }}
+          </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【開催日時】{{ dateString(cart.event.eventStartDatetime) }}
           </v-card-text>

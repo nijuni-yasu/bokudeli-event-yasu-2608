@@ -64,16 +64,16 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
 
               <!-- community member -->
               <v-card-title class="justify-center text-h6">MEMBER</v-card-title>
-                <div v-for="(data, index) in memberList" :key="index">
-                  <router-link :to="`/users/${data.id}`">
-                    <v-row>
-                      <div class="d-flex flex-row px-6 py-2">
-                        <v-avatar :image="data.avatar" size="40px" />
-                        <div class="ma-2 text-subtitle-1">{{ data.name }}</div>
-                      </div>
-                    </v-row>
-                  </router-link>
-                </div>
+              <div v-for="(data, index) in memberList" :key="index">
+                <router-link :to="`/users/${data.id}`">
+                  <v-row>
+                    <div class="d-flex flex-row px-6 py-2">
+                      <v-avatar :image="data.avatar" size="40px" />
+                      <div class="ma-2 text-subtitle-1">{{ data.name }}</div>
+                    </div>
+                  </v-row>
+                </router-link>
+              </div>
             </v-card>
           </v-col>
           <!-- events -->
@@ -81,7 +81,7 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
             <v-row>
               <v-col v-for="(event, index) in eventList" :key="index" md="6" sm="6" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.id)">
-                  <v-img cover aspect-ratio="1.91" :src="event.character"/>
+                  <v-img cover aspect-ratio="1.91" :src="event.character" />
                   <v-card-title class="justify-center text-h5 pb-3">
                     {{ event.title }}
                   </v-card-title>

@@ -33,7 +33,7 @@ const logout = async () => {
         <v-menu activator="parent" width="230" location="bottom end" offset="14px">
           <v-list>
             <!-- 👉 User Avatar & Name -->
-            <v-list-item v-if="isLogin" >
+            <v-list-item v-if="isLogin">
               <template #prepend>
                 <v-list-item-action start>
                   <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
