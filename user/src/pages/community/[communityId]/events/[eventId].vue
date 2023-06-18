@@ -44,6 +44,7 @@ const state = reactive({
   menus: [] as PartnerMenu[],
   eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
   members: [] as EventMember[],
+  menuDisable: false as false | 'deadline' | 'limitPeople',
   isLoading: true,
 })
 
@@ -55,19 +56,28 @@ const selectMenu = (menu: PartnerMenu) => {
   isDialogOpen.value = true
 }
 
+const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
+  switch (reason) {
+    case 'deadline':
+      alert('注文期限をすぎました。カートに追加できません')
+      break
+    case 'limitPeople':
+      alert('定員に達しました。カートに追加できません')
+      break
+  }
+}
+
 const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData> | undefined) => {
   if (!eventDocumentSnapshot) {
-    return []
+    return undefined
   }
-  state.eventSnapshot = eventDocumentSnapshot
 
   const eventData = eventDocumentSnapshot.data()
   const event = convertDocumentDataToEvent(eventData)
-  state.event = event
 
   const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
   const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
-  return menus
+  return { event, menus }
 }
 
 onMounted(async () => {
@@ -81,12 +91,25 @@ onMounted(async () => {
 
   const eventDocumentSnapshot = eventSnapshot.docs.shift()
 
-  const [menus, members] = await Promise.all([
+  const [eventInfo, members] = await Promise.all([
     loadEventData(eventDocumentSnapshot),
     loadEventMembers(props.communityId, props.eventId),
   ])
-  state.menus = menus
+  if (eventInfo) {
+    state.eventSnapshot = eventDocumentSnapshot
+    state.event = eventInfo.event
+    state.menus = eventInfo.menus
+  }
   state.members = members
+
+  if (state.event.eventDeadline && state.event.eventDeadline < new Date()) {
+    state.menuDisable = 'deadline'
+  } else if (state.members.length >= state.event.eventMaxPeople) {
+    state.menuDisable = 'limitPeople'
+  } else {
+    state.menuDisable = false
+  }
+
   state.isLoading = false
 })
 </script>
@@ -208,7 +231,13 @@ onMounted(async () => {
               <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
               <v-row class="justify-center">
                 <v-col class="text-center">
-                  <v-btn class="px-5 my-4" color="primary" rounded width="80%" @click="selectMenu(menu)">
+                  <v-btn
+                    :class="`px-5 my-4 ${state.menuDisable ? 'disable-menu-button' : ''}`"
+                    color="primary"
+                    rounded
+                    width="80%"
+                    @click="state.menuDisable === false ? selectMenu(menu) : showDisableAlert(state.menuDisable)"
+                  >
                     カートに追加
                   </v-btn>
                 </v-col>
@@ -236,4 +265,8 @@ onMounted(async () => {
     ></event-cart-dialog>
   </section>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.disable-menu-button {
+  opacity: 0.4615384615;
+}
+</style>
