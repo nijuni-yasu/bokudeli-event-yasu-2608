@@ -9,7 +9,7 @@ export async function loadFonts() {
 
   webFontLoader.load({
     google: {
-      families: ['Inter:100,200,300,400,500,600,700&display=swap'],
+      families: ['Inter:100,200,300,400,500,600,700&display=swap', 'Roboto:100,200,300,400,500,600,700&display=swap'],
     },
   })
 }

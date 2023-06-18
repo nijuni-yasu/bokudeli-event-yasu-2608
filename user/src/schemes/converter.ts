@@ -3,7 +3,7 @@ import { DocumentData, Timestamp } from 'firebase/firestore'
 import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import PartnerMenu from './partnerMenu'
-import { FacebookAuthProvider, User } from 'firebase/auth'
+import { FacebookAuthProvider, GoogleAuthProvider, User } from 'firebase/auth'
 import StoredUser, { FirestoredUser } from './storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import axios from 'axios'
@@ -140,6 +140,7 @@ export const convertFirebaseUserToStoredUser = async (firebaseUser: User): Promi
           }
         }
         break
+      case GoogleAuthProvider.PROVIDER_ID:
       default:
         break
     }
