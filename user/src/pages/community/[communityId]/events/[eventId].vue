@@ -5,10 +5,7 @@ import {
   QueryDocumentSnapshot,
   collection,
   collectionGroup,
-  doc,
-  getDoc,
   getDocs,
-  orderBy,
   query,
   where,
 } from 'firebase/firestore'
@@ -23,13 +20,8 @@ import {
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
-
-type Member = {
-  menus: string[]
-  userId: string
-  username: string
-  userImageUrl: string
-}
+import { loadEventMembers } from '@/composable/loadEventMembers'
+import { EventMember } from '@/schemes/EventMember'
 
 const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
 
@@ -46,20 +38,12 @@ const eventDb = query(
 const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
 const partnerDb = collection(db, 'partners')
 
-const memberDb = query(
-  collectionGroup(db, 'orders'),
-  where('community_account', '==', props.communityId),
-  where('event_id', '==', props.eventId),
-  where('status', '==', 'ordered'),
-  orderBy('updated_at', 'asc')
-)
-
 const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
   menus: [] as PartnerMenu[],
   eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
-  members: [] as Member[],
+  members: [] as EventMember[],
   isLoading: true,
 })
 
@@ -71,7 +55,10 @@ const selectMenu = (menu: PartnerMenu) => {
   isDialogOpen.value = true
 }
 
-const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData>) => {
+const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData> | undefined) => {
+  if (!eventDocumentSnapshot) {
+    return []
+  }
   state.eventSnapshot = eventDocumentSnapshot
 
   const eventData = eventDocumentSnapshot.data()
@@ -80,45 +67,11 @@ const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<Docume
 
   const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
   const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
-  state.menus = menus
-}
-
-const loadMembers = async (memberList: { menus: any[]; userId: string }[]) => {
-  const members = [] as Member[]
-  for (const member of memberList) {
-    const menuStrings = member.menus.map((menu: { name: string; count: number }) => `${menu.name}(${menu.count})`)
-    const memberIndex = members.findIndex((m) => m.userId === member.userId)
-    if (memberIndex !== -1) {
-      members[memberIndex].menus = members[memberIndex].menus.concat(menuStrings)
-      continue
-    }
-
-    const userRef = doc(db, 'users', member.userId)
-    const userSnap = await getDoc(userRef)
-    const userData = userSnap.data()
-
-    members.push({
-      menus: menuStrings,
-      userId: member.userId,
-      username: userData?.user_name,
-      userImageUrl: userData?.user_image_url,
-    })
-  }
-
-  return members
+  return menus
 }
 
 onMounted(async () => {
-  const [eventSnapshot, communitySnapshot, memberSnapshot] = await Promise.all([
-    getDocs(eventDb),
-    getDocs(communityDb),
-    getDocs(memberDb),
-  ])
-
-  const eventDocumentSnapshot = eventSnapshot.docs.shift()
-  if (eventDocumentSnapshot) {
-    await loadEventData(eventDocumentSnapshot)
-  }
+  const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
 
   const communityData = communitySnapshot.docs.shift()?.data()
   if (communityData) {
@@ -126,12 +79,14 @@ onMounted(async () => {
     state.community = community
   }
 
-  const memberList = memberSnapshot.docs.map((doc): { menus: any[]; userId: string } => {
-    const { menus, user_id } = doc.data()
-    return { menus, userId: user_id }
-  })
+  const eventDocumentSnapshot = eventSnapshot.docs.shift()
 
-  state.members = await loadMembers(memberList)
+  const [menus, members] = await Promise.all([
+    loadEventData(eventDocumentSnapshot),
+    loadEventMembers(props.communityId, props.eventId),
+  ])
+  state.menus = menus
+  state.members = members
   state.isLoading = false
 })
 </script>
