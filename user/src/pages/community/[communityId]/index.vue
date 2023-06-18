@@ -1,34 +1,75 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { db } from '@/firebase'
+import { collection, collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 
 import memberList from '@/assets/examples/memberList'
-import eventList from '@/assets/examples/eventList'
+import { getEventPath } from '@/router/utils'
+import BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
 
-const route = useRoute()
+const props = defineProps<{
+  communityId: string
+}>()
+
+const state = reactive({
+  community: {} as BokudeliCommunity,
+  links: [] as string[],
+  events: [] as BokudeliEvent[],
+  isLoading: true,
+})
+
 const router = useRouter()
-const goToEvents = (eventId: number) => {
-  const path = route.path.endsWith('/') ? `${route.path}events/${eventId}` : `${route.path}/events/${eventId}`
+const goToEvents = (eventId: string) => {
+  const path = getEventPath(props.communityId, eventId)
   router.push({ path })
 }
 
-const communityImage = new URL('@/assets/images/bokudeli/community_dmmmakeakiba.png', import.meta.url).href
-const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', import.meta.url).href
+const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
+const eventDb = query(
+  collectionGroup(db, 'events'),
+  where('community_account', '==', props.communityId),
+  orderBy('event_start_datetime', 'desc')
+)
+
+onMounted(async () => {
+  const communitySnapshot = await getDocs(communityDb)
+  const communityData = communitySnapshot.docs.shift()?.data()
+  if (communityData) {
+    const community = convertDocumentDataToCommunity(communityData)
+    state.community = community
+
+    const links = [] as string[]
+    community.communitySns.officialsite && links.push(community.communitySns.officialsite)
+    community.communitySns.twitter && links.push(community.communitySns.twitter)
+    community.communitySns.facebook && links.push(community.communitySns.facebook)
+    community.communitySns.instagram && links.push(community.communitySns.instagram)
+    state.links = links
+  }
+
+  const eventSnapshot = await getDocs(eventDb)
+  state.events = eventSnapshot.docs.map((doc) => {
+    return convertDocumentDataToEvent(doc.data())
+  })
+  state.isLoading = false
+})
 </script>
 <template>
   <section>
-    <v-row class="justify-center">
+    <v-row v-if="!state.isLoading" class="justify-center">
       <!-- community main -->
       <v-col cols="12" md="9" sm="9">
         <v-card flat class="align-center justify-center text-center my-10 pa-10">
           <v-row>
             <v-col>
-              <VImg class="ma-0" :src="communityImage" />
+              <VImg class="ma-0" :src="state.community.communityCoverImageUrl" />
             </v-col>
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 pb-3">DMM.make AKIBA</v-card-title>
-              <v-card-text class="text-left pb-8">dummy text</v-card-text>
+              <v-card-title class="justify-center text-h4 pb-3">{{ state.community.communityName }}</v-card-title>
+              <v-card-text class="text-left pb-8">{{ state.community.communityDescription }}</v-card-text>
             </v-col>
           </v-row>
         </v-card>
@@ -39,21 +80,11 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
           <v-col md="4" sm="4" cols="12">
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
-              <VImg style="border-radius: 10px" aspect-ratio="1" :src="communityLogo" />
-              <v-card-title class="justify-center text-h6 pa-5"> DMM.make AKIBA </v-card-title>
-              <v-card-text class="text-left pb-3">
-                <a href="https://akiba.dmm.com/" class="text-decoration-none" target="_blank">
-                  https://akiba.dmm.com/
-                </a>
-              </v-card-text>
-              <v-card-text>
-                <a href="https://twitter.com/dmm_make" class="text-decoration-none" target="_blank">
-                  https://twitter.com/DMM_make_AKIBA
-                </a>
-              </v-card-text>
-              <v-card-text>
-                <a href="https://www.youtube.com/@DMM_make_AKIBA" class="text-decoration-none" target="_blank">
-                  https://www.youtube.com/@DMM_make_AKIBA
+              <v-img style="border-radius: 10px" aspect-ratio="1" :src="state.community.communityIconImageUrl" />
+              <v-card-title class="justify-center text-h6 pa-5">{{ state.community.communityName }} </v-card-title>
+              <v-card-text v-for="link in state.links" :key="link" class="text-left pb-3">
+                <a v-if="link" :href="link" class="text-decoration-none" target="_blank">
+                  {{ link }}
                 </a>
               </v-card-text>
               <v-card-text>
@@ -79,27 +110,30 @@ const communityLogo = new URL('@/assets/images/bokudeli/icon_dmmmakeakiba.png', 
           <!-- events -->
           <v-col md="8" sm="8" cols="12">
             <v-row>
-              <v-col v-for="(event, index) in eventList" :key="index" md="6" sm="6" cols="12">
-                <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.id)">
-                  <v-img cover aspect-ratio="1.91" :src="event.character" />
+              <v-col v-for="event in state.events" :key="event.eventId" md="6" sm="6" cols="12">
+                <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.eventId)">
+                  <v-img cover aspect-ratio="1.91" :src="event.eventCoverUrl" />
                   <v-card-title class="justify-center text-h5 pb-3">
-                    {{ event.title }}
+                    {{ event.eventName }}
                   </v-card-title>
                   <v-card-text class="text-left pb-8">
-                    {{ event.desc }}
+                    {{ event.eventDescription }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【注文期限】{{ event.orderDate }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【開催日時】{{ event.eventDate }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【開催場所】{{ event.place }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop }} </v-card-text>
-                  <v-card-text class="text-left pb-8"> 【定員】{{ event.max }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【主催者】 {{ event.communityName }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【注文期限】{{ event.eventDeadline }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【開催日時】{{ event.eventStartDatetime }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
+                  <v-card-text class="text-left pb-8"> 【定員】{{ event.eventMaxPeople }} </v-card-text>
                 </v-card>
               </v-col>
             </v-row>
           </v-col>
         </v-row>
       </v-col>
+    </v-row>
+    <v-row v-else class="justify-center">
+      <v-progress-circular indeterminate color="primary" />
     </v-row>
   </section>
 </template>
