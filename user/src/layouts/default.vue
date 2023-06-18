@@ -52,10 +52,8 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
         docRef,
         {
           user_email: firestoredUser.user_email,
+          // FIXME: 画像アップロード機能が実装されたら不要
           user_image_url: firestoredUser.user_image_url,
-          user_sns_facebook: firestoredUser.user_sns_facebook,
-          user_sns_twitter: firestoredUser.user_sns_twitter,
-          user_sns_instagram: firestoredUser.user_sns_instagram,
           updated_at: Timestamp.now(),
         },
         { merge: true }
