@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import memberList from '@/assets/examples/memberList'
 import { db } from '@/firebase'
 import {
   DocumentData,
   QueryDocumentSnapshot,
   collection,
   collectionGroup,
+  doc,
+  getDoc,
   getDocs,
+  orderBy,
   query,
   where,
 } from 'firebase/firestore'
@@ -21,6 +23,13 @@ import {
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
+
+type Member = {
+  menus: string[]
+  userId: string
+  username: string
+  userImageUrl: string
+}
 
 const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
 
@@ -37,11 +46,20 @@ const eventDb = query(
 const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
 const partnerDb = collection(db, 'partners')
 
+const memberDb = query(
+  collectionGroup(db, 'orders'),
+  where('community_account', '==', props.communityId),
+  where('event_id', '==', props.eventId),
+  where('status', '==', 'ordered'),
+  orderBy('updated_at', 'asc')
+)
+
 const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
   menus: [] as PartnerMenu[],
   eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
+  members: [] as Member[],
   isLoading: true,
 })
 
@@ -53,20 +71,53 @@ const selectMenu = (menu: PartnerMenu) => {
   isDialogOpen.value = true
 }
 
+const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData>) => {
+  state.eventSnapshot = eventDocumentSnapshot
+
+  const eventData = eventDocumentSnapshot.data()
+  const event = convertDocumentDataToEvent(eventData)
+  state.event = event
+
+  const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
+  const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
+  state.menus = menus
+}
+
+const loadMembers = async (memberList: { menus: any[]; userId: string }[]) => {
+  const members = [] as Member[]
+  for (const member of memberList) {
+    const menuStrings = member.menus.map((menu: { name: string; count: number }) => `${menu.name}(${menu.count})`)
+    const memberIndex = members.findIndex((m) => m.userId === member.userId)
+    if (memberIndex !== -1) {
+      members[memberIndex].menus = members[memberIndex].menus.concat(menuStrings)
+      continue
+    }
+
+    const userRef = doc(db, 'users', member.userId)
+    const userSnap = await getDoc(userRef)
+    const userData = userSnap.data()
+
+    members.push({
+      menus: menuStrings,
+      userId: member.userId,
+      username: userData?.user_name,
+      userImageUrl: userData?.user_image_url,
+    })
+  }
+
+  return members
+}
+
 onMounted(async () => {
-  const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
+  const [eventSnapshot, communitySnapshot, memberSnapshot] = await Promise.all([
+    getDocs(eventDb),
+    getDocs(communityDb),
+    getDocs(memberDb),
+  ])
 
   const eventDocumentSnapshot = eventSnapshot.docs.shift()
   if (eventDocumentSnapshot) {
-    state.eventSnapshot = eventDocumentSnapshot
-
-    const eventData = eventDocumentSnapshot.data()
-    const event = convertDocumentDataToEvent(eventData)
-    state.event = event
-
-    const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
-    const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
-    state.menus = menus
+    await loadEventData(eventDocumentSnapshot)
   }
 
   const communityData = communitySnapshot.docs.shift()?.data()
@@ -74,6 +125,13 @@ onMounted(async () => {
     const community = convertDocumentDataToCommunity(communityData)
     state.community = community
   }
+
+  const memberList = memberSnapshot.docs.map((doc): { menus: any[]; userId: string } => {
+    const { menus, user_id } = doc.data()
+    return { menus, userId: user_id }
+  })
+
+  state.members = await loadMembers(memberList)
   state.isLoading = false
 })
 </script>
@@ -109,7 +167,7 @@ onMounted(async () => {
                     <div class="ml-2 align-self-center">
                       <div class="my-1" style="font-size: 14px">【主催者】</div>
                       <div class="my-1" style="font-size: 24px">
-                        {{ state.event.communityName }}
+                        {{ state.community.communityName }}
                       </div>
                     </div>
                   </v-row>
@@ -142,37 +200,38 @@ onMounted(async () => {
               <v-card-text class="text-left pb-10">
                 <v-row>
                   <v-col
-                    v-for="data in memberList"
-                    :key="data.avatar"
+                    v-for="member in state.members"
+                    :key="member.userId"
                     class="d-flex justify-start pa-2"
                     cols="12"
                     sm="6"
                     md="4"
                   >
-                      <v-row class="ma-0 d-flex align-center">
-                        <router-link :to="`/users/${data.id}`" class="text--primary cursor-pointer text-decoration-none">
-                          <v-avatar class="ma-1" size="60">
-                            <v-img :src="data.avatar"></v-img>
-                          </v-avatar>
-                        </router-link>
-                        <v-col class="ma-0 px-1">
-                          <div class="d-flex align-center text-subtitle-2 font-weight-bold">
-                            <div>
-                              {{ data.name }}
-                            </div>
+                    <v-row class="ma-0 d-flex align-center">
+                      <router-link
+                        :to="`/users/${member.userId}`"
+                        class="text--primary cursor-pointer text-decoration-none"
+                      >
+                        <v-avatar class="ma-1" size="60">
+                          <v-img :src="member.userImageUrl" />
+                        </v-avatar>
+                      </router-link>
+                      <v-col class="ma-0 px-1">
+                        <div class="d-flex align-center text-subtitle-2 font-weight-bold">
+                          <div>
+                            {{ member.username }}
                           </div>
-                          <div class="d-flex align-center" style="font-size:12px; color:gray;">
-                            <div>
-                              日替わり弁当(1)
-                            </div>
-                          </div>
-                          <div class="d-flex align-center" style="font-size:12px; color:gray;">
-                            <div>
-                              サラダ(1)
-                            </div>
-                          </div>
-                        </v-col>
-                      </v-row>
+                        </div>
+                        <div
+                          v-for="menu in member.menus"
+                          :key="menu"
+                          class="d-flex align-center"
+                          style="font-size: 12px; color: gray"
+                        >
+                          <div>{{ menu }}</div>
+                        </div>
+                      </v-col>
+                    </v-row>
                   </v-col>
                 </v-row>
               </v-card-text>
