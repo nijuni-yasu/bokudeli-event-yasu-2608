@@ -125,41 +125,54 @@ onMounted(async () => {
                 【開催日時】{{ dateString(state.event.eventStartDatetime) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shopName }} </v-card-text>
-              <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 35px">
-                【開催内容】<br />
-                {{ state.event.eventDescription }}
+              <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px">
+                【開催内容】{{ state.event.eventDescription }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【コロナ感染対策】
                 <v-row class="justify-center">
                   <v-col class="d-flex child-flex" cols="12">
-                    <v-img class="ma-5" :src="covidImage" />
+                    <v-img class="ma-2" :src="covidImage" />
                   </v-col>
                 </v-row>
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【最大人数】{{ state.event.eventMaxPeople }} 人
               </v-card-text>
-              <v-card-text class="text-left pb-10 text-subtitle-1">
+              <v-card-text class="text-left pb-10">
                 <v-row>
                   <v-col
                     v-for="data in memberList"
                     :key="data.avatar"
-                    class="d-flex justify-start px-0 pt-2 pb-0"
-                    cols="4"
+                    class="d-flex justify-start pa-2"
+                    cols="12"
+                    sm="6"
+                    md="4"
                   >
-                    <router-link :to="`/users/${data.id}`" class="text--primary cursor-pointer text-decoration-none">
-                      <v-row class="ma-1">
-                        <v-avatar class="ma-1" size="60">
-                          <v-img :src="data.avatar"></v-img>
-                        </v-avatar>
-                        <div class="d-flex align-center ml-1 text-subtitle-1">
-                          <div>
-                            {{ data.name }}
+                      <v-row class="ma-0 d-flex align-center">
+                        <router-link :to="`/users/${data.id}`" class="text--primary cursor-pointer text-decoration-none">
+                          <v-avatar class="ma-1" size="60">
+                            <v-img :src="data.avatar"></v-img>
+                          </v-avatar>
+                        </router-link>
+                        <v-col class="ma-0 px-1">
+                          <div class="d-flex align-center text-subtitle-2 font-weight-bold">
+                            <div>
+                              {{ data.name }}
+                            </div>
                           </div>
-                        </div>
+                          <div class="d-flex align-center" style="font-size:12px; color:gray;">
+                            <div>
+                              日替わり弁当(1)
+                            </div>
+                          </div>
+                          <div class="d-flex align-center" style="font-size:12px; color:gray;">
+                            <div>
+                              サラダ(1)
+                            </div>
+                          </div>
+                        </v-col>
                       </v-row>
-                    </router-link>
                   </v-col>
                 </v-row>
               </v-card-text>
