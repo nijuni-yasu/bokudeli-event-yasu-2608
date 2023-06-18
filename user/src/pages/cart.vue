@@ -181,7 +181,7 @@ onMounted(async () => {
                 width="70%"
                 @click="showConfirm(cart.order)"
               >
-                注文を確定する
+                注文してイベントに参加する
               </v-btn>
             </v-col>
           </v-row>
