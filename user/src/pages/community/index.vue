@@ -1,32 +1,52 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { collection, getDocs } from 'firebase/firestore'
-import avatarImageList from '@/assets/examples/avatarImageList'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
+import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
+import { FirestoredUser } from '@/schemes/storedUser'
 
 const router = useRouter()
 const communityDb = collection(db, 'communities')
 
+type CommunityWithMembers = {
+  community: BokudeliCommunity
+  members: FirestoredUser[]
+}
 const state = reactive({
-  communityList: [] as BokudeliCommunity[],
+  communityList: [] as CommunityWithMembers[],
   isLoading: true,
 })
 
 onMounted(async () => {
   const communitySnapshot = await getDocs(communityDb)
-  state.communityList = communitySnapshot.docs.map((doc) => {
-    return convertDocumentDataToCommunity(doc.data())
-  })
+
+  const communityList = [] as CommunityWithMembers[]
+  for (const docSnapshot of communitySnapshot.docs) {
+    const members = await loadCommunityMembers(docSnapshot.ref)
+
+    communityList.push({
+      community: convertDocumentDataToCommunity(docSnapshot.data()),
+      members: members,
+    })
+  }
+
+  state.communityList = communityList
   state.isLoading = false
 })
 </script>
 
 <template>
   <section>
-    <v-row v-if="state.isLoading === false" class="justify-center">
-      <v-col v-for="community in state.communityList" :key="community.communityId" md="10" sm="10" cols="10">
+    <v-row v-if="!state.isLoading" class="justify-center">
+      <v-col
+        v-for="{ community, members } in state.communityList"
+        :key="community.communityId"
+        md="10"
+        sm="10"
+        cols="10"
+      >
         <v-card
           class="ma-2"
           color="text-center cursor-pointer"
@@ -52,10 +72,10 @@ onMounted(async () => {
               <!-- Mutual members -->
               <v-card-text class="position-relative">
                 <div class="d-flex justify-space-between align-center mt-8">
-                  <span class="text--primary font-weight-medium"> 5 members </span>
+                  <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                   <div class="v-avatar-group">
-                    <v-avatar v-for="i in 8" :key="i" size="40">
-                      <v-img :src="avatarImageList[i % 8]"></v-img>
+                    <v-avatar v-for="member in members" :key="member.user_id" size="40">
+                      <v-img v-if="member.user_image_url" :src="member.user_image_url" />
                     </v-avatar>
                   </div>
                 </div>

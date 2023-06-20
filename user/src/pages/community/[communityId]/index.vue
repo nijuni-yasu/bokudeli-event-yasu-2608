@@ -3,11 +3,12 @@ import { useRouter } from 'vue-router'
 import { db } from '@/firebase'
 import { collection, collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 
-import memberList from '@/assets/examples/memberList'
 import { getEventPath } from '@/router/utils'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
+import { FirestoredUser } from '@/schemes/storedUser'
 
 const props = defineProps<{
   communityId: string
@@ -15,6 +16,7 @@ const props = defineProps<{
 
 const state = reactive({
   community: {} as BokudeliCommunity,
+  members: [] as FirestoredUser[],
   links: [] as string[],
   events: [] as BokudeliEvent[],
   isLoading: true,
@@ -34,9 +36,10 @@ const eventDb = query(
 )
 
 onMounted(async () => {
-  const communitySnapshot = await getDocs(communityDb)
-  const communityData = communitySnapshot.docs.shift()?.data()
-  if (communityData) {
+  const communitiesSnapshot = await getDocs(communityDb)
+  const communitySnapshot = communitiesSnapshot.docs.shift()
+  if (communitySnapshot) {
+    const communityData = communitySnapshot.data()
     const community = convertDocumentDataToCommunity(communityData)
     state.community = community
 
@@ -46,6 +49,8 @@ onMounted(async () => {
     community.communitySns.facebook && links.push(community.communitySns.facebook)
     community.communitySns.instagram && links.push(community.communitySns.instagram)
     state.links = links
+
+    state.members = await loadCommunityMembers(communitySnapshot.ref)
   }
 
   const eventSnapshot = await getDocs(eventDb)
@@ -95,12 +100,14 @@ onMounted(async () => {
 
               <!-- community member -->
               <v-card-title class="justify-center text-h6">MEMBER</v-card-title>
-              <div v-for="(data, index) in memberList" :key="index">
-                <router-link :to="`/users/${data.id}`">
+              <div v-for="member in state.members" :key="member.user_id">
+                <router-link :to="`/users/${member.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
-                      <v-avatar :image="data.avatar" size="40px" />
-                      <div class="ma-2 text-subtitle-1">{{ data.name }}</div>
+                      <v-avatar size="40px">
+                        <v-img v-if="member.user_image_url" :src="member.user_image_url" />
+                      </v-avatar>
+                      <div class="ma-2 text-subtitle-1">{{ member.user_name }}</div>
                     </div>
                   </v-row>
                 </router-link>
