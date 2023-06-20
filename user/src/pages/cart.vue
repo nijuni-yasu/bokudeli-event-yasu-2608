@@ -7,7 +7,20 @@ import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/c
 import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
+import {
+  Timestamp,
+  addDoc,
+  collection,
+  collectionGroup,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  setDoc,
+  where,
+} from 'firebase/firestore'
 
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -50,6 +63,28 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
   }
 }
 
+const loadUser = async (userId: string) => {
+  const userRef = doc(db, 'users', userId)
+  const userDocSnap = await getDoc(userRef)
+  return userDocSnap.exists() ? userDocSnap.data() : null
+}
+
+const addCommunityUser = async (order: OrderItem) => {
+  const communityId = order.community_id
+
+  const communityMemberRef = doc(db, 'communities', communityId, 'members', userId.value)
+  const communitySnap = await getDoc(communityMemberRef)
+
+  if (!communitySnap.exists()) {
+    const userDoc = await loadUser(userId.value)
+    if (!userDoc) {
+      return
+    }
+    const communityMemberCollectionRef = collection(db, 'communities', communityId, 'members')
+    await addDoc(communityMemberCollectionRef, userDoc)
+  }
+}
+
 const showConfirm = async (cart: Cart) => {
   const order = cart.order
   const checkResult = await checkCart(cart)
@@ -67,6 +102,7 @@ const showConfirm = async (cart: Cart) => {
 
     const updated_at = Timestamp.now()
     await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
+    await addCommunityUser(order)
     alert('注文を完了しました')
     state.cartList = await loadCartList()
     router.push(getEventPath(order.community_account, order.event_id))
