@@ -3,6 +3,7 @@ import OrderMenu from './orderMenu'
 
 type OrderItem = {
   user_id: string
+  community_id: string
   community_account: string
   event_id: string
   order_id: string
