@@ -6,11 +6,10 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
+import { FirestoredUser } from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import {
   Timestamp,
-  addDoc,
-  collection,
   collectionGroup,
   deleteDoc,
   doc,
@@ -66,23 +65,18 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 const loadUser = async (userId: string) => {
   const userRef = doc(db, 'users', userId)
   const userDocSnap = await getDoc(userRef)
-  return userDocSnap.exists() ? userDocSnap.data() : null
+  return userDocSnap.exists() ? (userDocSnap.data() as FirestoredUser) : null
 }
 
 const addCommunityUser = async (order: OrderItem) => {
   const communityId = order.community_id
-
-  const communityMemberRef = doc(db, 'communities', communityId, 'members', userId.value)
-  const communitySnap = await getDoc(communityMemberRef)
-
-  if (!communitySnap.exists()) {
-    const userDoc = await loadUser(userId.value)
-    if (!userDoc) {
-      return
-    }
-    const communityMemberCollectionRef = collection(db, 'communities', communityId, 'members')
-    await addDoc(communityMemberCollectionRef, userDoc)
+  const userDoc = await loadUser(userId.value)
+  if (!userDoc) {
+    return
   }
+  const membersUserDoc = doc(db, 'communities', communityId, 'members', userDoc.user_id)
+  userDoc.updated_at = Timestamp.now()
+  await setDoc(membersUserDoc, userDoc)
 }
 
 const showConfirm = async (cart: Cart) => {
