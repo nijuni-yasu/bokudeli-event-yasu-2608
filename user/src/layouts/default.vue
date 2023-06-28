@@ -33,6 +33,8 @@ const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
 
+const router = useRouter()
+
 onAuthStateChanged(getAuth(), async (user: User | null) => {
   const store = useStoreStoredUser()
   if (user) {
@@ -70,6 +72,9 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
 
       // Pinia に保存
       store.update(storedUser)
+
+      // 新規ユーザーはマイページに遷移
+      router.push('/mypage')
     }
   } else {
     // ログアウト処理
