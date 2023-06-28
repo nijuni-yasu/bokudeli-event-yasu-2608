@@ -47,13 +47,14 @@ const updateUserData = async (storedUser: StoredUser) => {
 
   const docRef = doc(db, 'users', storedUser.userId)
   const docSnap = await getDoc(docRef)
-  const { user_name, user_sns_twitter, user_sns_facebook, user_description } =
+  const { user_name, user_image_url, user_sns_twitter, user_sns_facebook, user_description } =
     convertStoredUserToFirestoredUser(storedUser)
   if (docSnap.exists()) {
     await setDoc(
       docRef,
       {
         user_name,
+        user_image_url,
         user_sns_twitter,
         user_sns_facebook,
         user_description,
