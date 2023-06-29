@@ -29,6 +29,31 @@ const dialog = computed({
   set: (val) => emit('update:modelValue', val),
 })
 
+const trimInputtedId = (id: string | null, urlPattern: RegExp) => {
+  if (!id) return ''
+  return id.trim().replace(/\/+$/, '').replace(urlPattern, '')
+}
+const twitterId = computed({
+  get: () => userDataDraft.value.userSnsTwitter,
+  set: (val) => {
+    userDataDraft.value.userSnsTwitter = trimInputtedId(val, /^https:\/\/(mobile.)?twitter\.com\//)
+  },
+})
+
+const facebookId = computed({
+  get: () => userDataDraft.value.userSnsFacebook,
+  set: (val) => {
+    userDataDraft.value.userSnsFacebook = trimInputtedId(val, /^https:\/\/www\.facebook\.com\//)
+  },
+})
+
+const instagramId = computed({
+  get: () => userDataDraft.value.userSnsInstagram,
+  set: (val) => {
+    userDataDraft.value.userSnsInstagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
+  },
+})
+
 const readImageFiles = (files: File[]) => {
   if (files.length === 0) return
   userImage.value = files[0]
@@ -79,13 +104,13 @@ const onFormReset = () => {
               <v-text-field v-model="userDataDraft.userName" label="ユーザー名" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field v-model="userDataDraft.userSnsTwitter" label="Twitter" />
+              <v-text-field v-model="twitterId" label="Twitter" prefix="https://twitter.com/" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field v-model="userDataDraft.userSnsFacebook" label="Facebook" />
+              <v-text-field v-model="facebookId" label="Facebook" prefix="https://www.facebook.com/" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field v-model="userDataDraft.userSnsInstagram" label="Instagram" />
+              <v-text-field v-model="instagramId" label="Instagram" prefix="https://www.instagram.com/" />
             </v-col>
             <v-col cols="12" md="12">
               <VTextarea v-model="userDataDraft.userDescription" label="自己紹介文" />
