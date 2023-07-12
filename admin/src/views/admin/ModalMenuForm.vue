@@ -189,7 +189,7 @@
           me.buttonLoading = true
           storage
             .ref()
-            .child(partnerId + '/menus/menu_' + fileName + '.jpeg')
+            .child('partners/' + partnerId + '/menus/menu_' + fileName + '.jpeg')
             .put(this.menu_image_file).then(function (snapshot) {
               snapshot.ref.getDownloadURL().then(function (url) {
                 // console.log(url) // ダウンロードURL取得
@@ -236,7 +236,7 @@
           if (this.menu_image_file) {
             storage
               .ref()
-              .child(partnerId + '/menus/menu_' + fileName + '.jpeg')
+              .child('partners/' + partnerId + '/menus/menu_' + fileName + '.jpeg')
               .put(this.menu_image_file).then(function (snapshot) {
                 snapshot.ref.getDownloadURL().then(function (url) {
                   db

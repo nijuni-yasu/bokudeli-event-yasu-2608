@@ -1466,7 +1466,7 @@
         } else {
           storage
             .ref()
-            .child(partnerId + '/shops/' + shopId + '/shop.jpg')
+            .child('partners/' + partnerId + '/shops/' + shopId + '/shop.jpg')
             .put(this.shop_image_file).then(function (snapshot) {
               snapshot.ref.getDownloadURL().then(function (url) {
                 // console.log(url) // ダウンロードURL
