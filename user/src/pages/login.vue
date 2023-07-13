@@ -14,13 +14,18 @@ import authV2MaskDark from '@images/pages/auth-v2-mask-dark.png'
 import authV2MaskLight from '@images/pages/auth-v2-mask-light.png'
 
 const form = ref({
-  email: '',
+  username: '',
   password: '',
 })
-
 const isPasswordVisible = ref(false)
+
 const cookies = useCookies(['isLogin'])
 const router = useRouter()
+
+const validUserAndPassword = {
+  username: import.meta.env.VITE_LOGIN_USERNAME,
+  password: import.meta.env.VITE_LOGIN_PASSWORD,
+}
 
 const authThemeImg = useGenerateImageVariant(
   authV2LoginIllustrationLight,
@@ -33,10 +38,13 @@ const authThemeImg = useGenerateImageVariant(
 const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
 
 const checkForm = () => {
-  const { email, password } = form.value
+  const { username, password } = form.value
+  const { username: validUsername, password: validPassword } = validUserAndPassword
 
-  if (email === 'hoge' && password == 'fuga') {
-    cookies.set('isLogin', 'true')
+  if (username === validUsername && password === validPassword) {
+    cookies.set('isLogin', 'true', {
+      maxAge: 60 * 60 * 24 * 7, // 1week
+    })
     router.push({ path: '/' })
   } else {
     alert('ユーザー名またはパスワードが違います')
@@ -74,21 +82,21 @@ const checkForm = () => {
           <VCardText>
             <VForm>
               <VRow>
-                <!-- email -->
+                <!-- user -->
                 <VCol cols="12">
-                  <VTextField v-model="form.email" label="Email" type="email" />
+                  <VTextField v-model="form.username" label="ユーザー名" />
                 </VCol>
 
                 <!-- password -->
                 <VCol cols="12">
                   <VTextField
                     v-model="form.password"
-                    label="Password"
+                    label="パスワード"
                     :type="isPasswordVisible ? 'text' : 'password'"
                     :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                     @click:append-inner="isPasswordVisible = !isPasswordVisible"
                   />
-                  <VBtn class="mt-4" block @click="checkForm"> Login </VBtn>
+                  <VBtn class="mt-4" block @click="checkForm">ログイン</VBtn>
                 </VCol>
               </VRow>
             </VForm>
