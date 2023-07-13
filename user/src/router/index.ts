@@ -4,8 +4,6 @@ import routes from '~pages'
 
 import { useCookies } from '@vueuse/integrations/useCookies'
 
-import { canNavigate } from '@layouts/plugins/casl'
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [...setupLayouts(routes)],
