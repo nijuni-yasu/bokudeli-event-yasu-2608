@@ -1,0 +1,6 @@
+[{
+    "origin": ["https://bokudeli-dev.firebaseapp.com/","https://bokudeli-dev.web.app/", "http://localhost:8080"],
+    "responseHeader": ["*"],
+    "method": ["GET"],
+    "maxAgeSeconds": 86400
+}]
