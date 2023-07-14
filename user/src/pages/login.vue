@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import { useGenerateImageVariant } from '@core/composable/useGenerateImageVariant'
 import tree from '@images/pages/tree.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+
+import { useCookies } from '@vueuse/integrations/useCookies'
 
 import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
 import authV2LoginIllustrationBorderedLight from '@images/pages/auth-v2-login-illustration-bordered-light.png'
@@ -13,12 +14,18 @@ import authV2MaskDark from '@images/pages/auth-v2-mask-dark.png'
 import authV2MaskLight from '@images/pages/auth-v2-mask-light.png'
 
 const form = ref({
-  email: '',
+  username: '',
   password: '',
-  remember: false,
 })
-
 const isPasswordVisible = ref(false)
+
+const cookies = useCookies(['isLogin'])
+const router = useRouter()
+
+const validUserAndPassword = {
+  username: import.meta.env.VITE_LOGIN_USERNAME,
+  password: import.meta.env.VITE_LOGIN_PASSWORD,
+}
 
 const authThemeImg = useGenerateImageVariant(
   authV2LoginIllustrationLight,
@@ -29,6 +36,20 @@ const authThemeImg = useGenerateImageVariant(
 )
 
 const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
+
+const checkForm = () => {
+  const { username, password } = form.value
+  const { username: validUsername, password: validPassword } = validUserAndPassword
+
+  if (username === validUsername && password === validPassword) {
+    cookies.set('isLogin', 'true', {
+      maxAge: 60 * 60 * 24 * 7, // 1week
+    })
+    router.push({ path: '/' })
+  } else {
+    alert('ユーザー名またはパスワードが違います')
+  }
+}
 </script>
 
 <template>
@@ -59,46 +80,23 @@ const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
             <p class="mb-0">Please sign-in to your account and start the adventure</p>
           </VCardText>
           <VCardText>
-            <VForm @submit.prevent="() => {}">
+            <VForm>
               <VRow>
-                <!-- email -->
+                <!-- user -->
                 <VCol cols="12">
-                  <VTextField v-model="form.email" label="Email" type="email" />
+                  <VTextField v-model="form.username" label="ユーザー名" />
                 </VCol>
 
                 <!-- password -->
                 <VCol cols="12">
                   <VTextField
                     v-model="form.password"
-                    label="Password"
+                    label="パスワード"
                     :type="isPasswordVisible ? 'text' : 'password'"
                     :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                     @click:append-inner="isPasswordVisible = !isPasswordVisible"
                   />
-
-                  <div class="d-flex align-center flex-wrap justify-space-between mt-1 mb-4">
-                    <VCheckbox v-model="form.remember" label="Remember me" />
-                    <a class="text-primary ms-2 mb-1" href="#"> Forgot Password? </a>
-                  </div>
-
-                  <VBtn block type="submit"> Login </VBtn>
-                </VCol>
-
-                <!-- create account -->
-                <VCol cols="12" class="text-center text-base">
-                  <span>New on our platform?</span>
-                  <a class="text-primary ms-2" href="#"> Create an account </a>
-                </VCol>
-
-                <VCol cols="12" class="d-flex align-center">
-                  <VDivider />
-                  <span class="mx-4">or</span>
-                  <VDivider />
-                </VCol>
-
-                <!-- auth providers -->
-                <VCol cols="12" class="text-center">
-                  <AuthProvider />
+                  <VBtn class="mt-4" block @click="checkForm">ログイン</VBtn>
                 </VCol>
               </VRow>
             </VForm>
