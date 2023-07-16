@@ -7,7 +7,7 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateString, convertDocumentDataToEvent } from '@/schemes/converter'
 import { getEventPath } from '@/router/utils'
 import { EventMember } from '@/schemes/EventMember'
-import { loadEventMembers } from '@/composable/loadEventMembers'
+import { loadEventMembersWithoutMenu } from '@/composable/loadEventMembers'
 
 const state = reactive({
   eventList: [] as BokudeliEvent[],
@@ -32,7 +32,7 @@ onMounted(async () => {
 
   for (const doc of querySnapshot.docs) {
     const event = convertDocumentDataToEvent(doc.data())
-    loadEventMembers(event.communityAccount, event.eventId).then((members) => {
+    loadEventMembersWithoutMenu(event.communityAccount, event.eventId).then((members) => {
       const key = [event.communityAccount, event.eventId].join('/')
       state.membersSet[key] = members
     })
