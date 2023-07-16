@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { collectionGroup, query, getDocs, orderBy } from 'firebase/firestore'
+import { collectionGroup, query, orderBy, getDocsFromCache } from 'firebase/firestore'
 
 import { db } from '@/firebase'
 import topLogo from '@/assets/images/bokudeli/bokudeli_top4.png'
@@ -9,27 +9,34 @@ import { getEventPath } from '@/router/utils'
 import { EventMember } from '@/schemes/EventMember'
 import { loadEventMembers } from '@/composable/loadEventMembers'
 
-const allEvents = query(collectionGroup(db, 'events'), orderBy('event_start_datetime', 'desc'))
-
-type EventWithMembers = {
-  event: BokudeliEvent
-  members: EventMember[]
-}
-
 const state = reactive({
-  eventList: [] as EventWithMembers[],
+  eventList: [] as BokudeliEvent[],
+  membersSet: {} as { [key: string]: EventMember[] },
   isLoading: true,
 })
 
+const getEventKey = (event: BokudeliEvent) => {
+  return [event.communityAccount, event.eventId].join('/')
+}
+
+const getEventMemberKey = (event: BokudeliEvent, memberSet: { [key: string]: EventMember[] }) => {
+  const key = [event.communityAccount, event.eventId].join('/')
+  return memberSet[key] ? key + '/' + memberSet[key].length : key
+}
+
 onMounted(async () => {
   // イベント情報取得
-  const events: EventWithMembers[] = []
-  const querySnapshot = await getDocs(allEvents)
+  const allEvents = query(collectionGroup(db, 'events'), orderBy('event_start_datetime', 'desc'))
+  const events: BokudeliEvent[] = []
+  const querySnapshot = await getDocsFromCache(allEvents)
 
   for (const doc of querySnapshot.docs) {
     const event = convertDocumentDataToEvent(doc.data())
-    const members = await loadEventMembers(event.communityAccount, event.eventId)
-    events.push({ event, members })
+    loadEventMembers(event.communityAccount, event.eventId).then((members) => {
+      const key = [event.communityAccount, event.eventId].join('/')
+      state.membersSet[key] = members
+    })
+    events.push(event)
   }
 
   state.eventList = events
@@ -46,8 +53,8 @@ onMounted(async () => {
         </v-card>
         <v-row v-if="state.isLoading === false" class="mb-2">
           <v-col
-            v-for="{ event, members } in state.eventList"
-            :key="event.eventId"
+            v-for="event in state.eventList"
+            :key="getEventMemberKey(event, state.membersSet)"
             md="4"
             sm="6"
             cols="12"
@@ -69,12 +76,14 @@ onMounted(async () => {
                 <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【定員】{{ event.eventMaxPeople }} 人</v-card-text>
-                <v-card-text class="text-left pb-4"> 【参加者】{{ members.length }} 人</v-card-text>
+                <v-card-text v-if="state.membersSet[getEventKey(event)]" class="text-left pb-4">
+                  【参加者】{{ state.membersSet[getEventKey(event)].length }} 人</v-card-text
+                >
                 <!-- Mutual members -->
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
                     <div class="v-avatar-group ml-2">
-                      <v-avatar v-for="member in members" :key="member.userId" size="40">
+                      <v-avatar v-for="member in state.membersSet[getEventKey(event)]" :key="member.userId" size="40">
                         <v-img :src="member.userImageUrl" />
                       </v-avatar>
                     </div>
