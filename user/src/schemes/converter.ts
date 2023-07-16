@@ -90,7 +90,7 @@ export const convertDocumentDataToMenu = (
   documentId: string,
   documentData: DocumentData
 ): PartnerMenu => {
-  const { menu_name, menu_price, menu_image_url, menu_description, created_at, updated_at } = documentData
+  const { menu_name, menu_price, menu_image_url, menu_description, createdAt, updatedAt } = documentData
 
   return {
     id: documentId,
@@ -99,8 +99,8 @@ export const convertDocumentDataToMenu = (
     price: menu_price ?? 0,
     imageUrl: menu_image_url ?? '',
     description: menu_description ?? '',
-    createdAt: created_at ? (created_at as Timestamp).toDate() : null,
-    updatedAt: updated_at ? (updated_at as Timestamp).toDate() : null,
+    createdAt: createdAt ? (createdAt as Timestamp).toDate() : null,
+    updatedAt: updatedAt ? (updatedAt as Timestamp).toDate() : null,
   }
 }
 
