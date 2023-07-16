@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { collectionGroup, query, orderBy, getDocsFromCache } from 'firebase/firestore'
+import { collectionGroup, query, orderBy, getDocs } from 'firebase/firestore'
 
 import { db } from '@/firebase'
 import topLogo from '@/assets/images/bokudeli/bokudeli_top4.png'
@@ -28,7 +28,7 @@ onMounted(async () => {
   // イベント情報取得
   const allEvents = query(collectionGroup(db, 'events'), orderBy('event_start_datetime', 'desc'))
   const events: BokudeliEvent[] = []
-  const querySnapshot = await getDocsFromCache(allEvents)
+  const querySnapshot = await getDocs(allEvents)
 
   for (const doc of querySnapshot.docs) {
     const event = convertDocumentDataToEvent(doc.data())
