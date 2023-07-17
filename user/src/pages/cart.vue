@@ -8,6 +8,8 @@ import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import StripeCheckout from '@/components/Stripe.vue'
+
 import {
   Timestamp,
   collectionGroup,
@@ -236,6 +238,16 @@ onMounted(async () => {
           </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
+              <div>
+                <StripeCheckout
+                  ref="checkoutRef"
+                  mode="payment"
+                  :pk="publishableKey"
+                  :line-items="lineItems"
+                  :success-url="successURL"
+                  :cancel-url="cancelURL"
+                  @loading="v => loading = v"
+                />
               <v-btn
                 class="ma-10 text-h6"
                 color="grey-900"
@@ -246,6 +258,7 @@ onMounted(async () => {
               >
                 注文してイベントに参加する
               </v-btn>
+            </div>
             </v-col>
           </v-row>
         </v-card>
