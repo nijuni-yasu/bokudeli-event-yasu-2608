@@ -1,17 +1,9 @@
 <script setup lang="ts">
-import { useGenerateImageVariant } from '@core/composable/useGenerateImageVariant'
 import yoroshiku from '@/assets/images/bokudeli/bokudeli_yoroshiku.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
 
 import { useCookies } from '@vueuse/integrations/useCookies'
-
-import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
-import authV2LoginIllustrationBorderedLight from '@images/pages/auth-v2-login-illustration-bordered-light.png'
-import authV2LoginIllustrationDark from '@images/pages/auth-v2-login-illustration-dark.png'
-import authV2LoginIllustrationLight from '@images/pages/auth-v2-login-illustration-light.png'
-import authV2MaskDark from '@images/pages/auth-v2-mask-dark.png'
-import authV2MaskLight from '@images/pages/auth-v2-mask-light.png'
 
 const form = ref({
   username: '',
@@ -20,22 +12,15 @@ const form = ref({
 const isPasswordVisible = ref(false)
 
 const cookies = useCookies(['isLogin'])
+const route = useRoute()
 const router = useRouter()
 
 const validUserAndPassword = {
-  username: import.meta.env.VITE_LOGIN_USERNAME,
-  password: import.meta.env.VITE_LOGIN_PASSWORD,
+  username: import.meta.env.VITE_LOGIN_USERNAME as string,
+  password: import.meta.env.VITE_LOGIN_PASSWORD as string,
 }
 
-const authThemeImg = useGenerateImageVariant(
-  authV2LoginIllustrationLight,
-  authV2LoginIllustrationDark,
-  authV2LoginIllustrationBorderedLight,
-  authV2LoginIllustrationBorderedDark,
-  true
-)
-
-const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
+const redirectPath = route.query.redirect ? (route.query.redirect as string) : '/'
 
 const checkForm = () => {
   const { username, password } = form.value
@@ -45,7 +30,7 @@ const checkForm = () => {
     cookies.set('isLogin', 'true', {
       maxAge: 60 * 60 * 24 * 2, // 2day
     })
-    router.push({ path: '/' })
+    router.push({ path: redirectPath })
   } else {
     alert('ユーザー名またはパスワードが違います')
   }
@@ -62,13 +47,13 @@ const checkForm = () => {
     <VRow no-gutters class="auth-wrapper">
       <VCol md="8" class="d-flex align-center justify-center">
         <div class="d-flex align-center justify-center w-100 mt-10 pt-10">
-          <VImg max-width="400px" :src="yoroshiku"/>
-          <div  width="400px" class="ma-3 text-h6">
-            こんにちは😊<br>
-            いつもぼくデリのご利用をありがうございます。<br>
-            『ぼくデリWEB版』は一般公開前のサービスです。<br>
-            友達に教えたりSNS投稿はまだしないでください。<br>
-            よろしくお願いします！<br>
+          <VImg max-width="400px" :src="yoroshiku" />
+          <div width="400px" class="ma-3 text-h6">
+            こんにちは😊<br />
+            いつもぼくデリのご利用をありがうございます。<br />
+            『ぼくデリWEB版』は一般公開前のサービスです。<br />
+            友達に教えたりSNS投稿はまだしないでください。<br />
+            よろしくお願いします！<br />
           </div>
         </div>
       </VCol>
