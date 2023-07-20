@@ -3,12 +3,9 @@ import { useStoreCredential } from '@/stores/credential'
 import { FirebaseError } from 'firebase/app'
 import { getAuth, signInWithPopup, FacebookAuthProvider, GoogleAuthProvider } from 'firebase/auth'
 
-const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true,
-  },
-})
+const props = defineProps<{
+  modelValue: boolean
+}>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -39,9 +36,13 @@ const handleFacebookLogin = async () => {
       const store = useStoreCredential()
       store.update(credential)
     }
-  } catch (error: FirebaseError) {
-    const credential = FacebookAuthProvider.credentialFromError(error)
-    console.error({ error, credential })
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = FacebookAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+    } else {
+      console.error({ error })
+    }
   } finally {
     closeDialog()
   }
@@ -59,9 +60,13 @@ const handleGoogleLogin = async () => {
       const store = useStoreCredential()
       store.update(credential)
     }
-  } catch (error: FirebaseError) {
-    const credential = GoogleAuthProvider.credentialFromError(error)
-    console.error({ error, credential })
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = GoogleAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+    } else {
+      console.error({ error })
+    }
   } finally {
     closeDialog()
   }
@@ -101,7 +106,7 @@ const handleGoogleLogin = async () => {
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" @click="closeDialog">キャンセル</v-btn>
+        <v-btn color="secondary" @click="closeDialog()">キャンセル</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

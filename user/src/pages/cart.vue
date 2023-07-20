@@ -20,6 +20,7 @@ import {
   setDoc,
   where,
 } from 'firebase/firestore'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -79,49 +80,61 @@ const addCommunityUser = async (order: OrderItem) => {
   await setDoc(membersUserDoc, userDoc)
 }
 
+const openConfirmOrder = ref(false)
+const selectedOrder = ref({} as OrderItem)
+const selectedMenu = ref({} as OrderMenu)
+
+const startOrderProcess = async () => {
+  const order = selectedOrder.value
+  const orderId = order.order_id
+  const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
+  const orderSnapshot = await getDocs(orderRef)
+  const orderDocument = orderSnapshot.docs[0]
+
+  const updated_at = Timestamp.now()
+  await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
+  await addCommunityUser(order)
+  alert('注文を完了しました')
+  state.cartList = await loadCartList()
+  router.push(getEventPath(order.community_account, order.event_id))
+}
+
 const showConfirm = async (cart: Cart) => {
-  const order = cart.order
   const checkResult = await checkCart(cart)
   if (checkResult !== true) {
     showDisableAlert(checkResult)
     return
   }
 
-  const result = confirm('注文を確定しますか？')
-  if (result) {
-    const orderId = order.order_id
-    const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
-    const orderSnapshot = await getDocs(orderRef)
-    const orderDocument = orderSnapshot.docs[0]
+  selectedOrder.value = cart.order
+  openConfirmOrder.value = true
+}
 
-    const updated_at = Timestamp.now()
-    await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
-    await addCommunityUser(order)
-    alert('注文を完了しました')
-    state.cartList = await loadCartList()
-    router.push(getEventPath(order.community_account, order.event_id))
+const openDeleteConfirm = ref(false)
+const startDeleteProcess = async () => {
+  const orderId = selectedOrder.value.order_id
+  const menu = selectedMenu.value
+
+  const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
+  const orderSnapshot = await getDocs(orderRef)
+  const orderDocument = orderSnapshot.docs[0]
+  const currentMenus = orderDocument.data().menus as OrderMenu[]
+  const menus = currentMenus.filter((m) => m.menu_id !== menu.menu_id)
+
+  const updated_at = Timestamp.now()
+  if (menus.length === 0) {
+    deleteDoc(orderDocument.ref)
+  } else {
+    await setDoc(orderDocument.ref, { menus, updated_at }, { merge: true })
   }
+  alert('カートから削除しました')
+  state.cartList = await loadCartList()
 }
 
 const deleteMenuInCart = async (order: OrderItem, menu: OrderMenu) => {
-  const result = confirm('カートから削除しますか？')
-  if (result) {
-    const orderId = order.order_id
-    const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
-    const orderSnapshot = await getDocs(orderRef)
-    const orderDocument = orderSnapshot.docs[0]
-    const currentMenus = orderDocument.data().menus as OrderMenu[]
-    const menus = currentMenus.filter((m) => m.menu_id !== menu.menu_id)
-
-    const updated_at = Timestamp.now()
-    if (menus.length === 0) {
-      deleteDoc(orderDocument.ref)
-    } else {
-      await setDoc(orderDocument.ref, { menus, updated_at }, { merge: true })
-    }
-    alert('カートから削除しました')
-    state.cartList = await loadCartList()
-  }
+  selectedOrder.value = order
+  selectedMenu.value = menu
+  openDeleteConfirm.value = true
 }
 
 const loadCartList = async () => {
@@ -259,6 +272,12 @@ onMounted(async () => {
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
+    <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
+      注文を確定しますか？
+    </confirm-dialog>
+    <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
+      カートから削除しますか？
+    </confirm-dialog>
   </div>
 </template>
 <style lang="scss" scoped></style>
