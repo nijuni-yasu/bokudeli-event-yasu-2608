@@ -28,7 +28,7 @@ const checkForm = () => {
 
   if (username === validUsername && password === validPassword) {
     cookies.set('isLogin', 'true', {
-      maxAge: 60 * 60 * 24 * 2, // 2day
+      maxAge: 60 * 60 * 24 * 7, // 1 week
     })
     router.push({ path: redirectPath })
   } else {
