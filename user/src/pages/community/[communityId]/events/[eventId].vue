@@ -77,6 +77,7 @@ const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<Docume
 
   const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
   const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
+  menus.sort((a, b) =>  (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
   return { event, menus }
 }
 

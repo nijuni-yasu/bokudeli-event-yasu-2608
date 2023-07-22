@@ -1,0 +1,267 @@
+<template>
+  <v-container
+    id="dashboard"
+    fluid
+    tag="section"
+  >
+    <v-row>
+      <v-col
+        cols="12"
+      >
+        <v-btn
+          class="mb-5"
+          color="success"
+          rounded
+          x-large
+          :elevation="5"
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-icon>
+            mdi-food-fork-drink
+          </v-icon>
+          <modal-menu-form
+            justify="start"
+            title="メニューを追加する"
+            card_title="メニューの追加"
+            @menu-added-event="menuView"
+          />
+        </v-btn>
+      </v-col>
+
+      <v-col
+        v-for="(item,key) in menus"
+        :key="key"
+        cols="12"
+        sm="6"
+        md="4"
+      >
+        <base-material-card
+          color="transparent"
+          image
+          hover-reveal
+        >
+          <template v-slot:image>
+            <v-img
+              :src="item.menu_image_url"
+              aspect-ratio="1"
+            >
+              <template v-slot:placeholder>
+                <v-row
+                  class="fill-height ma-0"
+                  align="center"
+                  justify="center"
+                >
+                  <v-progress-circular
+                    indeterminate
+                    color="grey lighten-5"
+                  />
+                </v-row>
+              </template>
+            </v-img>
+          </template>
+
+          <template v-slot:reveal-actions>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ attrs, on }">
+                <v-btn
+                  class="mx-1"
+                  color="white"
+                  :elevation="0"
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  <modal-menu-form
+                    justify="start"
+                    class="success--text"
+                    card_title="メニューの編集"
+                    icon="mdi-pencil"
+                    :menu_id="item.menu_id"
+                    :menu_name="item.menu_name"
+                    :menu_description="item.menu_description"
+                    :menu_price="item.menu_price"
+                    @menu-added-event="menuView"
+                  />
+                </v-btn>
+              </template>
+              <span>編集</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ attrs, on }">
+                <v-btn
+                  v-bind="attrs"
+                  class="mx-1"
+                  color="error"
+                  light
+                  icon
+                  v-on="on"
+                  @click="deleteMenu(item.menu_id)"
+                >
+                  <v-icon class="error--text">
+                    mdi-close
+                  </v-icon>
+                </v-btn>
+              </template>
+              <span>削除</span>
+            </v-tooltip>
+          </template>
+
+          <v-card-title class="display-2 justify-start mt-3 font-weight-light">
+            {{ item.menu_name }}
+          </v-card-title>
+
+          <v-card-text class="body-1 justify-start font-weight-light grey--text">
+            {{ item.menu_description }}
+          </v-card-text>
+          <v-card-text class="display-2 text-right font-weight-light grey--text">
+            ¥{{ item.menu_price }}
+          </v-card-text>
+        </base-material-card>
+      </v-col>
+
+      <v-col
+        cols="12"
+        sm="12"
+        md="4"
+      >
+        <base-material-card
+          color="transparent"
+          image
+          hover-reveal
+        >
+          <template v-slot:image>
+            <v-img
+              src="../../assets/deli_example_02.png"
+              aspect-ratio="1"
+            />
+          </template>
+
+          <template v-slot:reveal-actions>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ attrs, on }">
+                <v-btn
+                  v-bind="attrs"
+                  class="mx-1"
+                  color="success"
+                  light
+                  icon
+                  v-on="on"
+                >
+                  <v-icon class="success--text">
+                    mdi-pencil
+                  </v-icon>
+                </v-btn>
+              </template>
+
+              <span>編集</span>
+            </v-tooltip>
+
+            <v-tooltip bottom>
+              <template v-slot:activator="{ attrs, on }">
+                <v-btn
+                  v-bind="attrs"
+                  class="mx-1"
+                  color="error"
+                  light
+                  icon
+                  v-on="on"
+                >
+                  <v-icon class="error--text">
+                    mdi-close
+                  </v-icon>
+                </v-btn>
+              </template>
+
+              <span>削除</span>
+            </v-tooltip>
+          </template>
+
+          <v-card-title class="display-2 justify-start mt-3 font-weight-light">
+            例) サラダ弁当
+          </v-card-title>
+
+          <v-card-text class="body-1 justify-start font-weight-light grey--text">
+            手間隙かけて作りました、季節のお野菜たっぷりのサラダ弁当です。
+          </v-card-text>
+
+          <v-card-text class="display-2 text-right font-weight-light grey--text">
+            ¥800
+          </v-card-text>
+        </base-material-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+  import firebase from 'firebase/app'
+  import 'firebase/firestore'
+  import 'firebase/auth'
+  import 'firebase/storage'
+
+  const db = firebase.firestore()
+  const partnerId = firebase.auth().currentUser.uid
+
+  export default {
+    name: 'Menu',
+    components: {
+      // ModalMenuForm: () => import('../dashboard/bd-component/ModalMenuForm'),
+      ModalMenuForm: () => import('../admin/ModalMenuForm'),
+    },
+
+    data: () => ({
+      menus: [],
+    }),
+    created () {
+      // データが初期化(created)したら、firestoreから店舗情報を取得して表示
+      this.menuView()
+    },
+    methods: {
+      menuView: function () {
+        this.menus = [] // 呼び出される度に一度空にする
+        db.collection('partners').doc(partnerId).collection('menus').orderBy('updatedAt', 'desc').get().then((snapshot) => {
+          // console.log(snapshot)
+          // console.log(snapshot.size)
+          // console.log(snapshot.empty)
+          // console.log(snapshot.docs)
+          snapshot.forEach((menuDoc) => {
+            // console.log(menuDoc.id, ' => ', JSON.stringify(menuDoc.data()))
+            var menu = { menu_id: '', menu_name: '', menu_description: '', menu_price: 0, menu_image_url: '', is_deleted: '' }
+            menu.is_deleted = menuDoc.data().is_deleted
+            if (!menu.is_deleted) {
+              menu.menu_id = menuDoc.id
+              menu.menu_name = menuDoc.data().menu_name
+              menu.menu_description = menuDoc.data().menu_description
+              menu.menu_price = menuDoc.data().menu_price
+              menu.menu_image_url = menuDoc.data().menu_image_url
+              this.menus.push(menu)
+            }
+          })
+          // console.log(this.menus)
+        })
+      },
+      deleteMenu: function (menuId) {
+        console.log(menuId)
+        var me = this
+        if (confirm('メニューを削除しますか？')) {
+          db
+            .collection('partners')
+            .doc(partnerId)
+            .collection('menus')
+            .doc(menuId)
+            .update({
+              is_deleted: true,
+              deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            }).then(function () {
+              me.menuView()
+            }).catch(function (error) {
+              alert('メニューを削除できませんでした')
+              console.log('error: ' + error)
+            })
+        } else {
+          console.log('キャンセルされました')
+        }
+      },
+    },
+  }
+</script>

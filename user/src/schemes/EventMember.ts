@@ -1,6 +1,7 @@
 export type EventMember = {
-  menus: string[]
+  menus?: string[]
   userId: string
   username: string
   userImageUrl: string
+  updatedAt?: Date
 }
