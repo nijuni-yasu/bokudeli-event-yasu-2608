@@ -52,13 +52,26 @@ const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'>
   return true
 }
 
+const isOpenAlert = ref(false)
+const alertMessage = ref('')
+
+const alertBody = computed({
+  get() {
+    return alertMessage.value
+  },
+  set(val) {
+    alertMessage.value = val
+    isOpenAlert.value = true
+  },
+})
+
 const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
   switch (reason) {
     case 'deadline':
-      alert('注文期限をすぎました。注文確定できません')
+      alertBody.value = '注文期限をすぎました。注文確定できません'
       break
     case 'limitPeople':
-      alert('定員に達しました。注文確定できません')
+      alertBody.value = '定員に達しました。注文確定できません'
       break
   }
 }
@@ -94,7 +107,7 @@ const startOrderProcess = async () => {
   const updated_at = Timestamp.now()
   await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
   await addCommunityUser(order)
-  alert('注文を完了しました')
+  alertBody.value = '注文を完了しました'
   state.cartList = await loadCartList()
   router.push(getEventPath(order.community_account, order.event_id))
 }
@@ -127,7 +140,7 @@ const startDeleteProcess = async () => {
   } else {
     await setDoc(orderDocument.ref, { menus, updated_at }, { merge: true })
   }
-  alert('カートから削除しました')
+  alertBody.value = 'カートから削除しました'
   state.cartList = await loadCartList()
 }
 
@@ -278,6 +291,7 @@ onMounted(async () => {
     <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
       カートから削除しますか？
     </confirm-dialog>
+    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
   </div>
 </template>
 <style lang="scss" scoped></style>

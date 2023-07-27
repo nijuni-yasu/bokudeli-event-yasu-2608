@@ -127,6 +127,7 @@ const addOrder = async () => {
   }
 }
 
+const isOpenAlert = ref(false)
 const isOpenLoginDialog = ref(false)
 const isOpenConfirmDialog = ref(false)
 
@@ -140,7 +141,7 @@ const openLoginDialog = () => {
 
 const addCart = async () => {
   if (!selectedCount.value) {
-    alert('個数を選んでください')
+    isOpenAlert.value = true
     return
   }
   if (!userStore.storedUser) {
@@ -188,6 +189,7 @@ const addCart = async () => {
     <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
       ログインしてください
     </confirm-dialog>
+    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">個数を選んでください</confirm-dialog>
   </v-dialog>
 </template>
 

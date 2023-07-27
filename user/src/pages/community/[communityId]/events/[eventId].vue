@@ -22,6 +22,7 @@ import PartnerMenu from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
 import { loadEventMembers } from '@/composable/loadEventMembers'
 import { EventMember } from '@/schemes/EventMember'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
 
@@ -56,13 +57,26 @@ const selectMenu = (menu: PartnerMenu) => {
   isDialogOpen.value = true
 }
 
+const isOpenAlert = ref(false)
+const alertMessage = ref('')
+
+const alertBody = computed({
+  get() {
+    return alertMessage.value
+  },
+  set(val) {
+    alertMessage.value = val
+    isOpenAlert.value = true
+  },
+})
+
 const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
   switch (reason) {
     case 'deadline':
-      alert('注文期限をすぎました。カートに追加できません')
+      alertBody.value = '注文期限をすぎました。カートに追加できません'
       break
     case 'limitPeople':
-      alert('定員に達しました。カートに追加できません')
+      alertBody.value = '定員に達しました。カートに追加できません'
       break
   }
 }
@@ -267,6 +281,7 @@ onMounted(async () => {
       :menu="selectedMenu"
       :event-snapshot="state.eventSnapshot"
     ></event-cart-dialog>
+    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
   </section>
 </template>
 <style lang="scss" scoped>
