@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
@@ -8,7 +8,9 @@ import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { FirestoredUser } from '@/schemes/storedUser'
 
 const router = useRouter()
-const communityDb = collection(db, 'communities')
+
+// TODO 更新順で並べる
+const communityDb = query(collection(db, 'communities'), where('is_public', '==', true))
 
 type CommunityWithMembers = {
   community: BokudeliCommunity
@@ -25,9 +27,10 @@ onMounted(async () => {
   const communityList = [] as CommunityWithMembers[]
   for (const docSnapshot of communitySnapshot.docs) {
     const members = await loadCommunityMembers(docSnapshot.ref)
+    const community = convertDocumentDataToCommunity(docSnapshot.data())
 
     communityList.push({
-      community: convertDocumentDataToCommunity(docSnapshot.data()),
+      community,
       members: members,
     })
   }

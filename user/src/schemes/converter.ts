@@ -34,6 +34,7 @@ export const convertDocumentDataToEvent = (documentData: DocumentData): Bokudeli
     partner_id,
     shop_id,
     shop_name,
+    is_public,
   } = documentData
 
   return {
@@ -52,6 +53,7 @@ export const convertDocumentDataToEvent = (documentData: DocumentData): Bokudeli
     partnerId: partner_id ?? '',
     shopId: shop_id ?? '',
     shopName: shop_name ?? '',
+    isPublic: is_public ?? false,
   }
 }
 
@@ -67,6 +69,7 @@ export const convertDocumentDataToCommunity = (documentData: DocumentData): Boku
     community_sns_facebook,
     community_sns_instagram,
     community_sns_twitter,
+    is_public,
   } = documentData
 
   return {
@@ -82,6 +85,7 @@ export const convertDocumentDataToCommunity = (documentData: DocumentData): Boku
       instagram: community_sns_instagram ?? '',
       twitter: community_sns_twitter ?? '',
     },
+    isPublic: is_public ?? false,
   }
 }
 
