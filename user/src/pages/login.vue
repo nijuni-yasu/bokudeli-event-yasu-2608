@@ -5,6 +5,8 @@ import { themeConfig } from '@themeConfig'
 
 import { useCookies } from '@vueuse/integrations/useCookies'
 
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+
 const form = ref({
   username: '',
   password: '',
@@ -22,6 +24,8 @@ const validUserAndPassword = {
 
 const redirectPath = route.query.redirect ? (route.query.redirect as string) : '/'
 
+const isOpenAlert = ref(false)
+
 const checkForm = () => {
   const { username, password } = form.value
   const { username: validUsername, password: validPassword } = validUserAndPassword
@@ -32,7 +36,7 @@ const checkForm = () => {
     })
     router.push({ path: redirectPath })
   } else {
-    alert('ユーザー名またはパスワードが違います')
+    isOpenAlert.value = true
   }
 }
 </script>
@@ -87,6 +91,7 @@ const checkForm = () => {
         </VCard>
       </VCol>
     </VRow>
+    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">ユーザー名またはパスワードが違います</confirm-dialog>
   </div>
 </template>
 
