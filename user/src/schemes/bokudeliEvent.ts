@@ -14,6 +14,7 @@ type BokudeliEvent = {
   partnerId: string
   shopId: string
   shopName: string
+  isPublic: boolean
 }
 
 export default BokudeliEvent

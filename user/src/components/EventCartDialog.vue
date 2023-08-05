@@ -6,6 +6,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { DocumentData, QueryDocumentSnapshot, Timestamp, addDoc, collection, getDocs, setDoc } from 'firebase/firestore'
 
 import LoginDialog from '@/components/LoginDialog.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 
@@ -126,17 +127,25 @@ const addOrder = async () => {
   }
 }
 
+const isOpenAlert = ref(false)
 const isOpenLoginDialog = ref(false)
+const isOpenConfirmDialog = ref(false)
+
+const openConfirmDialog = () => {
+  isOpenConfirmDialog.value = true
+}
+
+const openLoginDialog = () => {
+  isOpenLoginDialog.value = true
+}
+
 const addCart = async () => {
   if (!selectedCount.value) {
-    alert('個数を選んでください')
+    isOpenAlert.value = true
     return
   }
   if (!userStore.storedUser) {
-    const result = confirm('ログインしてください')
-    if (result) {
-      isOpenLoginDialog.value = true
-    }
+    openConfirmDialog()
   } else {
     await addOrder()
     closeDialog(true)
@@ -177,6 +186,10 @@ const addCart = async () => {
       </v-row>
     </v-card>
     <login-dialog v-model="isOpenLoginDialog" />
+    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+      ログインしてください
+    </confirm-dialog>
+    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">個数を選んでください</confirm-dialog>
   </v-dialog>
 </template>
 

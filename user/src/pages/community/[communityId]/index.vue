@@ -33,6 +33,7 @@ const communityDb = query(collection(db, 'communities'), where('community_accoun
 const eventDb = query(
   collectionGroup(db, 'events'),
   where('community_account', '==', props.communityId),
+  where('is_public', '==', true),
   orderBy('event_start_datetime', 'desc')
 )
 

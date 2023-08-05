@@ -11,6 +11,7 @@ type BokudeliCommunity = {
     instagram: string
     twitter: string
   }
+  isPublic: boolean
 }
 
 export default BokudeliCommunity
