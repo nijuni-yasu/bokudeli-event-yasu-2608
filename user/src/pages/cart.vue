@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
@@ -8,8 +9,8 @@ import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import StripeCheckout from '@/components/Stripe.vue'
-
+// import StripeCheckout from '@/components/Stripe.vue'
+import { StripeCheckout } from '@vue-stripe/vue-stripe'
 import {
   Timestamp,
   collectionGroup,
@@ -26,6 +27,17 @@ import {
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
+
+const publishableKey = "pk_test_51LIPHwDEKSWmJqGe5YrPNo3Q4WMaPQaeA0TlPVecpUeFsdDHjAKw4Oe8TIouuAghIHDaRCVZvhk3gdM1B43vSCbb00ZN1wHEfI"
+const loading = false;
+const lineItems = [
+        {
+          price: 'price_1NWZtEDEKSWmJqGejQP0T9lj',
+          quantity: 1,
+        },
+      ];
+const checkoutRef = ref()
+const url = "http://localhost:5173/cart"
 
 type Cart = {
   order: OrderItem
@@ -89,20 +101,17 @@ const showConfirm = async (cart: Cart) => {
     return
   }
 
-  const result = confirm('注文を確定しますか？')
-  if (result) {
-    const orderId = order.order_id
-    const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
-    const orderSnapshot = await getDocs(orderRef)
-    const orderDocument = orderSnapshot.docs[0]
+  const orderId = order.order_id
+  const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
+  const orderSnapshot = await getDocs(orderRef)
+  const orderDocument = orderSnapshot.docs[0]
 
-    const updated_at = Timestamp.now()
-    await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
-    await addCommunityUser(order)
-    alert('注文を完了しました')
-    state.cartList = await loadCartList()
-    router.push(getEventPath(order.community_account, order.event_id))
-  }
+  const updated_at = Timestamp.now()
+  await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
+  await addCommunityUser(order);
+  window.location.href = 'https://buy.stripe.com/test_14k8xW7hC99vaI0000';
+  state.cartList = await loadCartList()
+  router.push(getEventPath(order.community_account, order.event_id))
 }
 
 const deleteMenuInCart = async (order: OrderItem, menu: OrderMenu) => {
@@ -241,12 +250,11 @@ onMounted(async () => {
               <div>
                 <StripeCheckout
                   ref="checkoutRef"
-                  mode="payment"
                   :pk="publishableKey"
+                  :successUrl="url"
+                  :cancelUrl="url"
                   :line-items="lineItems"
-                  :success-url="successURL"
-                  :cancel-url="cancelURL"
-                  @loading="v => loading = v"
+                  @loading="(v: any) => loading = v"
                 />
               <v-btn
                 class="ma-10 text-h6"
