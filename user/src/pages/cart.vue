@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
@@ -9,8 +8,7 @@ import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
-// import StripeCheckout from '@/components/Stripe.vue'
-import { StripeCheckout } from '@vue-stripe/vue-stripe'
+import Stripe from 'stripe'
 import {
   Timestamp,
   collectionGroup,
@@ -28,17 +26,8 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
-
-const publishableKey = "pk_test_51LIPHwDEKSWmJqGe5YrPNo3Q4WMaPQaeA0TlPVecpUeFsdDHjAKw4Oe8TIouuAghIHDaRCVZvhk3gdM1B43vSCbb00ZN1wHEfI"
-const loading = false;
-const lineItems = [
-        {
-          price: 'price_1NWZtEDEKSWmJqGejQP0T9lj',
-          quantity: 1,
-        },
-      ];
-const checkoutRef = ref()
-const url = "http://localhost:5173/cart"
+const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
+const stripe = new Stripe(stripeApiKey, {apiVersion: "2022-11-15", maxNetworkRetries: 3})
 
 type Cart = {
   order: OrderItem
@@ -114,6 +103,21 @@ const selectedMenu = ref({} as OrderMenu)
 const startOrderProcess = async () => {
   const order = selectedOrder.value
   const orderId = order.order_id
+  const lineItems = order.menus.map(menu => {
+  return {
+    price_data: {
+      currency: 'jpy',
+      product_data: {
+        name: menu.name,
+        images: [menu.imageUrl]
+      },
+      unit_amount: menu.price,
+    },
+    quantity: menu.count
+  };
+});
+
+
   const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
   const orderSnapshot = await getDocs(orderRef)
   const orderDocument = orderSnapshot.docs[0]
@@ -121,9 +125,20 @@ const startOrderProcess = async () => {
   const updated_at = Timestamp.now()
   await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
   await addCommunityUser(order)
-  alertBody.value = '注文を完了しました'
-  state.cartList = await loadCartList()
-  router.push(getEventPath(order.community_account, order.event_id))
+  try {
+      const session = await stripe.checkout.sessions.create({
+        success_url: "http://localhost:5173/",
+        cancel_url: "http://localhost:5173/",
+        customer_creation: 'if_required',
+        line_items: lineItems,
+        mode: 'payment',
+      });
+      window.location.href = session.url || getEventPath(order.community_account, order.event_id)
+      alertBody.value = '注文を完了しました'
+      state.cartList = await loadCartList()
+      router.push(getEventPath(order.community_account, order.event_id))
+    } catch (err) {
+    }
 }
 
 const showConfirm = async (cart: Cart) => {
@@ -133,18 +148,6 @@ const showConfirm = async (cart: Cart) => {
     return
   }
 
-  const order = selectedOrder.value
-  const orderId = order.order_id
-  const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
-  const orderSnapshot = await getDocs(orderRef)
-  const orderDocument = orderSnapshot.docs[0]
-
-  const updated_at = Timestamp.now()
-  await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
-  await addCommunityUser(order);
-  window.location.href = 'https://buy.stripe.com/test_14k8xW7hC99vaI0000';
-  state.cartList = await loadCartList()
-  router.push(getEventPath(order.community_account, order.event_id))
   selectedOrder.value = cart.order
   openConfirmOrder.value = true
 }
@@ -288,15 +291,6 @@ onMounted(async () => {
           </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
-              <div>
-                <StripeCheckout
-                  ref="checkoutRef"
-                  :pk="publishableKey"
-                  :successUrl="url"
-                  :cancelUrl="url"
-                  :line-items="lineItems"
-                  @loading="(v: any) => loading = v"
-                />
               <v-btn
                 class="ma-10 text-h6"
                 color="grey-900"
@@ -307,7 +301,6 @@ onMounted(async () => {
               >
                 注文してイベントに参加する
               </v-btn>
-            </div>
             </v-col>
           </v-row>
         </v-card>
