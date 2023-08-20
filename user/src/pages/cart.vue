@@ -109,7 +109,10 @@ const startOrderProcess = async () => {
       currency: 'jpy',
       product_data: {
         name: menu.name,
-        images: [menu.imageUrl]
+        images: [menu.imageUrl],
+        metadata: {
+          'partner_id': menu.partner_id
+        },
       },
       unit_amount: menu.price,
     },
@@ -123,8 +126,6 @@ const startOrderProcess = async () => {
   const orderDocument = orderSnapshot.docs[0]
 
   const updated_at = Timestamp.now()
-  await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
-  await addCommunityUser(order)
   try {
       const session = await stripe.checkout.sessions.create({
         success_url: "http://localhost:5173/",
@@ -132,9 +133,15 @@ const startOrderProcess = async () => {
         customer_creation: 'if_required',
         line_items: lineItems,
         mode: 'payment',
+        automatic_tax: {enabled: true},
       });
       window.location.href = session.url || getEventPath(order.community_account, order.event_id)
+
       alertBody.value = '注文を完了しました'
+
+
+      await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
+      await addCommunityUser(order)
       state.cartList = await loadCartList()
       router.push(getEventPath(order.community_account, order.event_id))
     } catch (err) {
