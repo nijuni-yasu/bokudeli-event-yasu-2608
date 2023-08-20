@@ -28,6 +28,7 @@ const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
 const stripe = new Stripe(stripeApiKey, {apiVersion: "2022-11-15", maxNetworkRetries: 3})
+const origin = process.env.NODE_ENV === 'development' ? `http://localhost:5173` : `${import.meta.env.VITE_ORIGIN_HOST}`
 
 type Cart = {
   order: OrderItem
@@ -128,8 +129,8 @@ const startOrderProcess = async () => {
   const updated_at = Timestamp.now()
   try {
       const session = await stripe.checkout.sessions.create({
-        success_url: "http://localhost:5173/",
-        cancel_url: "http://localhost:5173/",
+        success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityId=${order.community_account}`,
+        cancel_url: `${origin}/`,
         customer_creation: 'if_required',
         line_items: lineItems,
         mode: 'payment',
@@ -139,12 +140,13 @@ const startOrderProcess = async () => {
 
       alertBody.value = '注文を完了しました'
 
-
       await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
       await addCommunityUser(order)
       state.cartList = await loadCartList()
       router.push(getEventPath(order.community_account, order.event_id))
+
     } catch (err) {
+      alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'
     }
 }
 
