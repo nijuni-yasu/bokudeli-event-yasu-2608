@@ -44,13 +44,12 @@ const checkForm = () => {
 <template>
   <div>
     <!-- Title and Logo -->
-    <div class="auth-logo d-flex align-start gap-x-3">
-      <VNodeRenderer :nodes="themeConfig.app.logo" />
-    </div>
-
+      <div class="auth-logo align-start gap-x-3">
+        <VNodeRenderer :nodes="themeConfig.app.logo" width="200"/>
+      </div>
     <VRow no-gutters class="auth-wrapper">
       <VCol md="8" class="d-flex align-center justify-center">
-        <div class="d-flex align-center justify-center w-100 mt-10 pt-10">
+        <div class="d-flex align-center justify-center w-100 mt-16 pt-10">
           <VImg max-width="400px" :src="yoroshiku" />
           <div width="400px" class="ma-3 text-h6">
             こんにちは😊<br />
