@@ -141,7 +141,7 @@ onMounted(async () => {
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10">
+              <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10 pre-line">
                 {{ state.event.eventName }}
               </v-card-title>
               <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
@@ -240,7 +240,7 @@ onMounted(async () => {
               <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
 
               <!-- title -->
-              <v-card-title class="justify-center pb-3">
+              <v-card-title class="justify-center pb-3 pre-line">
                 {{ menu.name }}
               </v-card-title>
               <v-card-text class="text-left pb-8">

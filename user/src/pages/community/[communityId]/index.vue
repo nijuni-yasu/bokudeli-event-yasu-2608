@@ -88,7 +88,9 @@ onMounted(async () => {
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
               <v-img style="border-radius: 10px" aspect-ratio="1" :src="state.community.communityIconImageUrl" />
-              <v-card-title class="justify-center text-h6 pa-5">{{ state.community.communityName }} </v-card-title>
+              <v-card-title class="justify-center text-h6 pa-5 pre-line"
+                >{{ state.community.communityName }}
+              </v-card-title>
               <v-card-text v-for="link in state.links" :key="link" class="text-left pb-3">
                 <a v-if="link" :href="link" class="text-decoration-none" target="_blank">
                   {{ link }}
@@ -122,7 +124,7 @@ onMounted(async () => {
               <v-col v-for="event in state.events" :key="event.eventId" md="6" sm="6" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.eventId)">
                   <v-img cover aspect-ratio="1.91" :src="event.eventCoverUrl" />
-                  <v-card-title class="justify-center text-h5 pb-3">
+                  <v-card-title class="justify-center text-h5 pb-3 pre-line">
                     {{ event.eventName }}
                   </v-card-title>
                   <v-card-text class="text-left pb-8">
