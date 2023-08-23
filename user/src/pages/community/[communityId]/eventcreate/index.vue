@@ -1,12 +1,26 @@
 <script setup lang="ts">
-import EventPostcode from '@/components/eventcreate/EventPostcode.vue'
+import EventAddress from '@/components/eventcreate/EventAddress.vue'
 import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventInfo from '@/components/eventcreate/EventInfo.vue'
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { db } from '@/firebase'
+import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
+
+type panelType = 'address' | 'shop' | 'menu' | 'info'
 
 const props = defineProps<{
   communityId: string
 }>()
+
+const state = reactive({
+  event: {} as Partial<BokudeliEvent>,
+})
+
+const panel = ref(['address'] as panelType[])
+
+const address = ref('')
 
 const eventSettingsData = {
   information: {
@@ -22,16 +36,46 @@ const eventSettingsData = {
   },
 }
 
-const panel = ref(['postcode'])
+const fetchData = async () => {
+  const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
+  const communitySnapshot = await getDocs(communityDb)
+  const communityData = communitySnapshot.docs.shift()?.data()
+  if (communityData) {
+    const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communityData)
+    state.event = {
+      communityId,
+      communityAccount,
+      communityName,
+    }
+  }
+}
+
+onBeforeRouteUpdate(async (to, from, next) => {
+  if (to.params.communityId !== from.params.communityId) {
+    await fetchData()
+  }
+  next()
+})
+
+onMounted(async () => {
+  await fetchData()
+})
+
+const submittedAddress = () => {
+  if (!panel.value.find((v) => v === 'shop')) {
+    panel.value.push('shop')
+  }
+  state.event.eventAddress = address.value
+}
 </script>
 
 <template>
   <v-card>
     <v-expansion-panels v-model="panel" multiple>
-      <v-expansion-panel value="postcode">
+      <v-expansion-panel value="address">
         <v-expansion-panel-title>郵便番号</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-postcode :information-data="eventSettingsData.information"></event-postcode>
+          <event-address v-model="address" @submit="submittedAddress" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="shop">
