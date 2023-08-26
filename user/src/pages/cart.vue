@@ -135,15 +135,15 @@ const startOrderProcess = async () => {
         line_items: lineItems,
         mode: 'payment',
         automatic_tax: {enabled: true},
+        metadata: {
+          'eventId': order.event_id,
+          'communityId': order.community_account
+        }
       });
       window.location.href = session.url || getEventPath(order.community_account, order.event_id)
 
-      alertBody.value = '注文を完了しました'
-
       await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
       await addCommunityUser(order)
-      state.cartList = await loadCartList()
-      router.push(getEventPath(order.community_account, order.event_id))
 
     } catch (err) {
       alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'

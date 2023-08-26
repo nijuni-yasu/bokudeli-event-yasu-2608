@@ -5,8 +5,14 @@ require('dotenv').config();
 const env = process.env;
 const stripe = require('stripe')(env.STRIPE_PUBLISHABLE_KEY);
 const stripeWebhookEndpointSecret = env.STRIPE_WEBHOOK_ENDPOINT_SECRET;
+// const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
+// const { getFirestore } = require('firebase-admin/firestore');
 
 const app = express();
+// initializeApp({
+//     credential: applicationDefault(),
+// });
+// const db = getFirestore();
 
 // rawBodyを保存するミドルウェアを追加
 app.use(bodyParser.json({
