@@ -5,9 +5,10 @@ import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventInfo from '@/components/eventcreate/EventInfo.vue'
 import { collection, collectionGroup, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import { convertDocumentDataToCommunity, convertDocumentDataToMenu } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
+import PartnerMenu from '@/schemes/partnerMenu'
 
 type panelType = 'address' | 'shop' | 'menu' | 'info'
 
@@ -18,26 +19,14 @@ const props = defineProps<{
 const state = reactive({
   event: {} as Partial<BokudeliEvent>,
   shops: [] as Shop[],
+  menus: [] as PartnerMenu[],
 })
 
 const panel = ref(['address'] as panelType[])
 
 const address = ref('')
-const isLoadingShop = ref(true)
-
-const eventSettingsData = {
-  information: {
-    postcode: '101-0022',
-    address: '東京都千代田区神田練塀町3 富士ソフト秋葉原ビル12F',
-    shop: '天正',
-    date: '2023-02-02',
-    time: '15:30',
-    title: '第30回 ぼくデリ会',
-    description:
-      'The name’s John Deo. I am a tireless seeker of knowledge, occasional purveyor of wisdom and also, coincidentally, a graphic designer. Algolia helps businesses across industries quickly create relevant 😎, scaLabel 😀, and lightning 😍 fast search and discovery experiences.',
-    community: 'DMM.make AKIBA',
-  },
-}
+const isLoadingShop = ref(false)
+const isLoadingMenu = ref(false)
 
 const fetchData = async () => {
   const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
@@ -54,6 +43,8 @@ const fetchData = async () => {
 }
 
 const fetchShops = async () => {
+  isLoadingShop.value = true
+
   const shopDb = collectionGroup(db, 'shops')
   const shopSnapshot = await getDocs(shopDb)
   const shops = shopSnapshot.docs.map((doc) => {
@@ -61,6 +52,26 @@ const fetchShops = async () => {
   })
   state.shops = shops
   isLoadingShop.value = false
+}
+
+const fetchMenu = async () => {
+  isLoadingMenu.value = true
+
+  const { partnerId } = state.event
+  if (!partnerId) {
+    isLoadingMenu.value = false
+    return
+  }
+  const partnerDb = collection(db, 'partners')
+
+  const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
+
+  const menus = menuSnapshot.docs
+    .map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
+    .sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
+
+  state.menus = menus
+  isLoadingMenu.value = false
 }
 
 onBeforeRouteUpdate(async (to, from, next) => {
@@ -74,19 +85,33 @@ onMounted(async () => {
   await fetchData()
 })
 
-const submittedAddress = () => {
+const submittedAddress = async () => {
   state.event.eventAddress = address.value
-  fetchShops()
+  await fetchShops()
   if (!panel.value.find((v) => v === 'shop')) {
     panel.value.push('shop')
   }
 }
 
-const submittedShop = (shop: Shop) => {
+const submittedShop = async (shop: Shop) => {
   state.event.shopId = shop.shop_id
+  state.event.partnerId = shop.partner_id
+  state.event.shopName = shop.shop_name
+
+  await fetchMenu()
   if (!panel.value.find((v) => v === 'menu')) {
     panel.value.push('menu')
   }
+}
+
+const submittedMenu = () => {
+  if (!panel.value.find((v) => v === 'info')) {
+    panel.value.push('info')
+  }
+}
+
+const submit = (savedEvent: Partial<BokudeliEvent>) => {
+  console.log(savedEvent)
 }
 </script>
 
@@ -108,13 +133,13 @@ const submittedShop = (shop: Shop) => {
       <v-expansion-panel value="menu">
         <v-expansion-panel-title>メニュー</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-menu :information-data="eventSettingsData.information"></event-menu>
+          <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="info">
         <v-expansion-panel-title>イベント情報</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-info :information-data="eventSettingsData.information"></event-info>
+          <event-info :event="state.event" @submit="submit" />
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
