@@ -8,27 +8,18 @@ import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import Stripe from 'stripe'
-import {
-  Timestamp,
-  collectionGroup,
-  deleteDoc,
-  getDocs,
-  orderBy,
-  query,
-  setDoc,
-  where,
-} from 'firebase/firestore'
+import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
-const stripe = new Stripe(stripeApiKey, {apiVersion: "2022-11-15", maxNetworkRetries: 3})
+const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
 let origin = process.env.NODE_ENV === 'development' ? `http://localhost:5173` : `${import.meta.env.VITE_ORIGIN_HOST}`
 
 if (!origin) {
   // in-view対応
-  origin = "https://bokudeli-event-dev.web.app/"
+  origin = 'https://bokudeli-event-dev.web.app/'
 }
 
 type Cart = {
@@ -88,46 +79,44 @@ const selectedMenu = ref({} as OrderMenu)
 const startOrderProcess = async () => {
   const order = selectedOrder.value
   const orderId = order.order_id
-  const lineItems = order.menus.map(menu => {
-  return {
-    price_data: {
-      currency: 'jpy',
-      tax_behavior: 'inclusive',
-      product_data: {
-        name: menu.name,
-        images: [menu.imageUrl],
-        metadata: {
-          'partner_id': menu.partner_id
+  const lineItems = order.menus.map((menu) => {
+    return {
+      price_data: {
+        currency: 'jpy',
+        tax_behavior: 'inclusive',
+        product_data: {
+          name: menu.name,
+          images: [menu.imageUrl],
+          metadata: {
+            partner_id: menu.partner_id,
+          },
         },
+        unit_amount: menu.price,
       },
-      unit_amount: menu.price,
-    },
-    quantity: menu.count
-  };
-});
+      quantity: menu.count,
+    }
+  })
 
   try {
-      const session = await stripe.checkout.sessions.create({
-        success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
-        cancel_url: `${origin}/`,
-        customer_creation: 'if_required',
-        line_items: lineItems,
-        mode: 'payment',
-        payment_method_types: ["card"],
-        metadata: {
-          'eventId': order.event_id,
-          'communityId': order.community_id,
-          'communityAccount':order.community_account,
-          'orderId': orderId,
-          'userId': userId.value
-        }
-      });
-      window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-
-
-    } catch (err) {
-      alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'
-    }
+    const session = await stripe.checkout.sessions.create({
+      success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
+      cancel_url: `${origin}/`,
+      customer_creation: 'if_required',
+      line_items: lineItems,
+      mode: 'payment',
+      payment_method_types: ['card'],
+      metadata: {
+        eventId: order.event_id,
+        communityId: order.community_id,
+        communityAccount: order.community_account,
+        orderId: orderId,
+        userId: userId.value,
+      },
+    })
+    window.location.href = session.url || getEventPath(order.community_account, order.event_id)
+  } catch (err) {
+    alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'
+  }
 }
 
 const showConfirm = async (cart: Cart) => {
