@@ -27,9 +27,9 @@ const stripe = new Stripe(stripeApiKey, {apiVersion: "2022-11-15", maxNetworkRet
 let origin = process.env.NODE_ENV === 'development' ? `http://localhost:5173` : `${import.meta.env.VITE_ORIGIN_HOST}`
 
 if (!origin) {
+  // in-view対応
   origin = "https://bokudeli-event-dev.web.app/"
 }
-
 
 type Cart = {
   order: OrderItem
