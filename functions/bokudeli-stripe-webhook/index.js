@@ -26,14 +26,14 @@ const loadUser = async (userId) => {
     return userDocSnap.exists ? (userDocSnap.data()) : null;
 }
 
-const addCommunityUser = async (communityId, userId) => {
+const addCommunityUser = async (communityAccount, userId) => {
     const userDoc = await loadUser(userId);
 
     if (!userDoc) {
         return;
     }
 
-    const membersUserDoc = db.doc(`communities/${communityId}/members/${userDoc.user_id}`);
+    const membersUserDoc = db.doc(`communities/${communityAccount}/members/${userDoc.user_id}`);
     userDoc.updated_at = Timestamp.now();
     await membersUserDoc.set(userDoc);
 }
@@ -53,11 +53,11 @@ app.post('/', async(request, response) => {
             case 'checkout.session.completed': {
                 const paymentIntent = event.data.object;
                 if (orderDocument && orderDocument.ref) {
-                    await orderDocument.ref.set({ status: 'ordered', updated_at: updated_at }, { merge: true });
+                    await orderDocument.ref.set({ status: 'ordered', updated_at: updated_at, payment_intent: paymentIntent.payment_intent }, { merge: true });
                 } else {
                     console.error('orderDocument or orderDocument.ref is undefined.');
                 }
-                await addCommunityUser(paymentIntent.metadata.communityId, paymentIntent.metadata.userId);
+                await addCommunityUser(paymentIntent.metadata.communityAccount, paymentIntent.metadata.userId);
                 response.json({ paymentIntent });
                 break;
             }

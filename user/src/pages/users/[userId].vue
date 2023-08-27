@@ -25,11 +25,11 @@ const { storedUser } = storeToRefs(useStoreStoredUser())
 let isUserSuccessJoinEventDialogVisible = ref(false)
 
 let eventId: any = null
-let communityId: any = null
+let communityAccount: any = null
 
-if (route.query.eventId && route.query.communityId) {
+if (route.query.eventId && route.query.communityAccount) {
   eventId = route.query.eventId
-  communityId = route.query.communityId
+  communityAccount = route.query.communityAccount
   isUserSuccessJoinEventDialogVisible = ref(true)
 }
 
@@ -45,7 +45,7 @@ onMounted(async () => {
 <template>
   <div id="user-view">
     <user-success-join-event-dialog v-model="isUserSuccessJoinEventDialogVisible" :event-id="eventId"
-      :community-id="communityId"></user-success-join-event-dialog>
+      :community-account="communityAccount"></user-success-join-event-dialog>
     <v-row v-if="!state.isLoading" justify="center">
       <v-col cols="12" md="5" sm="5">
         <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId"></user-bio-panel>
