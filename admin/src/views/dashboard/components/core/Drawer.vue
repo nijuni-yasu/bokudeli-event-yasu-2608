@@ -142,6 +142,11 @@
           to: 'menu',
         },
         {
+          icon: 'mdi-format-list-bulleted',
+          title: 'オプション設定',
+          to: 'option',
+        },
+        {
           icon: 'mdi-bicycle',
           title: '注文一覧',
           to: 'order',

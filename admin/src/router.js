@@ -167,6 +167,18 @@ const router = new Router({
           meta: { requiresAuth: true },
         },
         {
+          name: 'オプション設定',
+          path: 'Option',
+          component: () => import('@/views/admin/Option'),
+          meta: { requiresAuth: true },
+        },
+        {
+          name: 'オプション編集',
+          path: 'OptionEdit',
+          component: () => import('@/views/admin/OptionEdit'),
+          meta: { requiresAuth: true },
+        },
+        {
           name: '注文一覧',
           path: 'ORDER',
           component: () => import('@/views/admin/Order'),
