@@ -22,7 +22,7 @@ import { EventMember } from '@/schemes/EventMember'
 interface Props {
   modelValue: boolean
   eventId: string | null
-  communityId: string | null
+  communityAccount: string | null
 }
 
 interface Emit {
@@ -43,10 +43,10 @@ const closeDialog = () => {
 
 const eventDb = query(
   collectionGroup(db, 'events'),
-  where('community_account', '==', props.communityId),
+  where('community_account', '==', props.communityAccount),
   where('event_id', '==', props.eventId)
 )
-const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
+const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityAccount))
 
 const state = reactive({
   event: {} as BokudeliEvent,

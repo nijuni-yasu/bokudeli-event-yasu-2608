@@ -102,7 +102,7 @@ const startOrderProcess = async () => {
 
   try {
       const session = await stripe.checkout.sessions.create({
-        success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityId=${order.community_account}`,
+        success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
         cancel_url: `${origin}/`,
         customer_creation: 'if_required',
         line_items: lineItems,
@@ -110,7 +110,8 @@ const startOrderProcess = async () => {
         automatic_tax: {enabled: true},
         metadata: {
           'eventId': order.event_id,
-          'communityId': order.community_account,
+          'communityId': order.community_id,
+          'communityAccount':order.community_account,
           'orderId': orderId,
           'userId': userId.value
         }
