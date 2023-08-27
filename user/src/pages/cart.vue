@@ -6,15 +6,12 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
-import { FirestoredUser } from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import Stripe from 'stripe'
 import {
   Timestamp,
   collectionGroup,
   deleteDoc,
-  doc,
-  getDoc,
   getDocs,
   orderBy,
   query,
@@ -23,7 +20,6 @@ import {
 } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
-const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
@@ -80,23 +76,6 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
   }
 }
 
-const loadUser = async (userId: string) => {
-  const userRef = doc(db, 'users', userId)
-  const userDocSnap = await getDoc(userRef)
-  return userDocSnap.exists() ? (userDocSnap.data() as FirestoredUser) : null
-}
-
-const addCommunityUser = async (order: OrderItem) => {
-  const communityId = order.community_id
-  const userDoc = await loadUser(userId.value)
-  if (!userDoc) {
-    return
-  }
-  const membersUserDoc = doc(db, 'communities', communityId, 'members', userDoc.user_id)
-  userDoc.updated_at = Timestamp.now()
-  await setDoc(membersUserDoc, userDoc)
-}
-
 const openConfirmOrder = ref(false)
 const selectedOrder = ref({} as OrderItem)
 const selectedMenu = ref({} as OrderMenu)
@@ -121,12 +100,6 @@ const startOrderProcess = async () => {
   };
 });
 
-
-  const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
-  const orderSnapshot = await getDocs(orderRef)
-  const orderDocument = orderSnapshot.docs[0]
-
-  const updated_at = Timestamp.now()
   try {
       const session = await stripe.checkout.sessions.create({
         success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityId=${order.community_account}`,
@@ -137,13 +110,13 @@ const startOrderProcess = async () => {
         automatic_tax: {enabled: true},
         metadata: {
           'eventId': order.event_id,
-          'communityId': order.community_account
+          'communityId': order.community_account,
+          'orderId': orderId,
+          'userId': userId.value
         }
       });
       window.location.href = session.url || getEventPath(order.community_account, order.event_id)
 
-      await setDoc(orderDocument.ref, { status: 'ordered', updated_at }, { merge: true })
-      await addCommunityUser(order)
 
     } catch (err) {
       alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'

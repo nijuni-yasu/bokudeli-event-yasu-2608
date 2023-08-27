@@ -3,7 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const { initializeApp, applicationDefault } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 
 
 initializeApp({
@@ -23,11 +23,10 @@ const loadUser = async (userId) => {
     const userRef = db.collection('users').doc(userId);
     const userDocSnap = await userRef.get();
 
-    return userDocSnap.exists() ? (userDocSnap.data()) : null;
+    return userDocSnap.exists ? (userDocSnap.data()) : null;
 }
 
-const addCommunityUser = async (community_id, userId) => {
-    const communityId = community_id;
+const addCommunityUser = async (communityId, userId) => {
     const userDoc = await loadUser(userId);
 
     if (!userDoc) {
@@ -36,7 +35,7 @@ const addCommunityUser = async (community_id, userId) => {
 
     const membersUserDoc = db.doc(`communities/${communityId}/members/${userDoc.user_id}`);
     userDoc.updated_at = Timestamp.now();
-    await membersUserDoc.update(userDoc);
+    await membersUserDoc.set(userDoc);
 }
 
 app.post('/', async(request, response) => {
@@ -44,8 +43,8 @@ app.post('/', async(request, response) => {
 
     try {
         const event = stripe.webhooks.constructEvent(request.rawBody, sig, stripeWebhookEndpointSecret);
-
-        const orderRef = db.collectionGroup('orders').where('order_id', '==', event.orderId);
+        const updated_at = Timestamp.now()
+        const orderRef = db.collectionGroup('orders').where('order_id', '==', event.data.object.metadata.orderId);
 
         const orderSnapshot = await orderRef.get();
         const orderDocument = orderSnapshot.docs[0];
@@ -53,15 +52,19 @@ app.post('/', async(request, response) => {
         switch (event.type) {
             case 'checkout.session.completed': {
                 const paymentIntent = event.data.object;
-                await orderDocument.ref.update({ status: 'ordered', updated_at: admin.firestore.Timestamp.now() }, { merge: true });
-                await addCommunityUser(paymentIntent.metadata.community_id, paymentIntent.metadata.userId);
-                response.json({ paymentIntent });
+                if (orderDocument && orderDocument.ref) {
+                    await orderDocument.ref.set({ status: 'ordered', updated_at: updated_at }, { merge: true });
+                } else {
+                    console.error('orderDocument or orderDocument.ref is undefined.');
+                }
+                await addCommunityUser(paymentIntent.metadata.communityId, paymentIntent.metadata.userId);
                 break;
             }
             default:
                 return response.status(400).end();
         }
     } catch (err) {
+        console.log(err)
         return response.status(400).send(`Webhook Error: ${err.message}`);
     }
 });
