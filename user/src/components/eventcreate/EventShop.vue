@@ -40,7 +40,7 @@ const submit = (shop: Shop) => {
                   <v-img :src="item.shop_image_url" cover aspect-ratio="1.91" />
 
                   <!-- title -->
-                  <v-card-title class="justify-center pb-3">
+                  <v-card-title class="justify-center pb-3 pre-line">
                     {{ item.shop_name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-3">
@@ -54,7 +54,7 @@ const submit = (shop: Shop) => {
 
               <!-- no result found -->
               <v-col v-show="!props.shops.length" cols="12" class="text-center">
-                <h4 class="mt-4">Search result not found!!</h4>
+                <h4 class="mt-4">お店が見つかりませんでした</h4>
               </v-col>
             </v-row>
           </v-form>
