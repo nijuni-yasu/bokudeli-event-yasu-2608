@@ -10,11 +10,7 @@ import {
   where,
 } from 'firebase/firestore'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import {
-  dateString,
-  convertDocumentDataToCommunity,
-  convertDocumentDataToEvent
-} from '@/schemes/converter'
+import { dateString, convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { EventMember } from '@/schemes/EventMember'
@@ -30,7 +26,7 @@ interface Emit {
 }
 
 const props = defineProps<Props>()
-  const emit = defineEmits<Emit>()
+const emit = defineEmits<Emit>()
 
 const dialog = computed({
   get: () => props.modelValue,
@@ -79,9 +75,7 @@ onMounted(async () => {
 
   const eventDocumentSnapshot = eventSnapshot.docs.shift()
 
-  const [eventInfo] = await Promise.all([
-    loadEventData(eventDocumentSnapshot),
-  ])
+  const [eventInfo] = await Promise.all([loadEventData(eventDocumentSnapshot)])
   if (eventInfo) {
     state.eventSnapshot = eventDocumentSnapshot
     state.event = eventInfo.event
@@ -89,7 +83,6 @@ onMounted(async () => {
 
   state.isLoading = false
 })
-
 </script>
 
 <template>
@@ -101,7 +94,7 @@ onMounted(async () => {
       <v-card-text>
         <p>下記のイベントに参加いたします。</p>
       </v-card-text>
-      <v-card-title class="justify-center text-sm-h5 text-xs-h6 font-weight-semibold pb-5" style="white-space:pre-line;">
+      <v-card-title class="justify-center text-sm-h5 text-xs-h6 font-weight-semibold pb-5 pre-line">
         {{ state.event.eventName }}
       </v-card-title>
       <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
