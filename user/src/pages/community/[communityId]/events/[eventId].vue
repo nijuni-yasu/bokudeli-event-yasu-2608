@@ -180,14 +180,6 @@ onMounted(async () => {
                 【開催内容】{{ state.event.eventDescription }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【コロナ感染対策】
-                <v-row class="justify-center">
-                  <v-col class="d-flex child-flex" cols="12">
-                    <v-img class="ma-2" :src="covidImage" />
-                  </v-col>
-                </v-row>
-              </v-card-text>
-              <v-card-text class="text-left pb-8 text-subtitle-1">
                 【定員】{{ state.event.eventMaxPeople }} 人
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
