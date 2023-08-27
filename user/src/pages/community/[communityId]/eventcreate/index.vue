@@ -3,10 +3,11 @@ import EventAddress from '@/components/eventcreate/EventAddress.vue'
 import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventInfo from '@/components/eventcreate/EventInfo.vue'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, collectionGroup, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
+import Shop from '@/schemes/shop'
 
 type panelType = 'address' | 'shop' | 'menu' | 'info'
 
@@ -16,11 +17,13 @@ const props = defineProps<{
 
 const state = reactive({
   event: {} as Partial<BokudeliEvent>,
+  shops: [] as Shop[],
 })
 
 const panel = ref(['address'] as panelType[])
 
 const address = ref('')
+const isLoadingShop = ref(true)
 
 const eventSettingsData = {
   information: {
@@ -50,6 +53,16 @@ const fetchData = async () => {
   }
 }
 
+const fetchShops = async () => {
+  const shopDb = collectionGroup(db, 'shops')
+  const shopSnapshot = await getDocs(shopDb)
+  const shops = shopSnapshot.docs.map((doc) => {
+    return doc.data() as Shop
+  })
+  state.shops = shops
+  isLoadingShop.value = false
+}
+
 onBeforeRouteUpdate(async (to, from, next) => {
   if (to.params.communityId !== from.params.communityId) {
     await fetchData()
@@ -62,10 +75,18 @@ onMounted(async () => {
 })
 
 const submittedAddress = () => {
+  state.event.eventAddress = address.value
+  fetchShops()
   if (!panel.value.find((v) => v === 'shop')) {
     panel.value.push('shop')
   }
-  state.event.eventAddress = address.value
+}
+
+const submittedShop = (shop: Shop) => {
+  state.event.shopId = shop.shop_id
+  if (!panel.value.find((v) => v === 'menu')) {
+    panel.value.push('menu')
+  }
 }
 </script>
 
@@ -81,7 +102,7 @@ const submittedAddress = () => {
       <v-expansion-panel value="shop">
         <v-expansion-panel-title>お店</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-shop :information-data="eventSettingsData.information"></event-shop>
+          <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="menu">
