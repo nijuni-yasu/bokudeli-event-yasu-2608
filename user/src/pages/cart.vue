@@ -281,11 +281,11 @@ onMounted(async () => {
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                class="ma-10 text-h6"
+                class="mx-2 my-10 text-lg-h5"
                 color="grey-900"
                 size="x-large"
                 rounded
-                width="70%"
+                width="85%"
                 @click="showConfirm(cart)"
               >
                 注文してイベントに参加する
@@ -304,7 +304,7 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
-      注文を確定しますか？
+      クレジットカード決済の注文に進みますか？
     </confirm-dialog>
     <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
       カートから削除しますか？
