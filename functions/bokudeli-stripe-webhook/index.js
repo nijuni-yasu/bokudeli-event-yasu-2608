@@ -58,6 +58,7 @@ app.post('/', async(request, response) => {
                     console.error('orderDocument or orderDocument.ref is undefined.');
                 }
                 await addCommunityUser(paymentIntent.metadata.communityId, paymentIntent.metadata.userId);
+                response.json({ paymentIntent });
                 break;
             }
             default:
