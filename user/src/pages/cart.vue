@@ -87,6 +87,7 @@ const startOrderProcess = async () => {
   return {
     price_data: {
       currency: 'jpy',
+      tax_behavior: 'inclusive',
       product_data: {
         name: menu.name,
         images: [menu.imageUrl],
@@ -107,7 +108,7 @@ const startOrderProcess = async () => {
         customer_creation: 'if_required',
         line_items: lineItems,
         mode: 'payment',
-        automatic_tax: {enabled: true},
+        payment_method_types: ["card"],
         metadata: {
           'eventId': order.event_id,
           'communityId': order.community_id,
