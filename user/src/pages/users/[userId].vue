@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UserBioPanel from '@/components/UserBioPanel.vue'
+import UserOrderPanel from '@/components/UserOrderPanel.vue'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import { db } from '@/firebase'
 import { convertDocumentDataToStoredUser } from '@/schemes/converter'
@@ -47,8 +48,11 @@ onMounted(async () => {
     <user-success-join-event-dialog v-model="isUserSuccessJoinEventDialogVisible" :event-id="eventId"
       :community-account="communityAccount"></user-success-join-event-dialog>
     <v-row v-if="!state.isLoading" justify="center">
-      <v-col cols="12" md="5" sm="5">
+      <v-col cols="12" md="3" sm="3">
         <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId"></user-bio-panel>
+      </v-col>
+      <v-col cols="12" md="8" sm="8">
+        <user-order-panel></user-order-panel>
       </v-col>
     </v-row>
     <v-row v-else justify="center">
