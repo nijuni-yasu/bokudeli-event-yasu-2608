@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import UserBioPanel from '@/components/UserBioPanel.vue'
+import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import { db } from '@/firebase'
 import { convertDocumentDataToStoredUser } from '@/schemes/converter'
 import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useRoute } from 'vue-router'
 
 import { doc, getDoc } from 'firebase/firestore'
 
+const route = useRoute()
 const props = defineProps<{
   userId: string
 }>()
@@ -16,7 +19,19 @@ const state = reactive({
   isLoading: true,
 })
 
+
+
 const { storedUser } = storeToRefs(useStoreStoredUser())
+let isUserSuccessJoinEventDialogVisible = ref(false)
+
+let eventId: any = null
+let communityId: any = null
+
+if (route.query.eventId && route.query.communityId) {
+  eventId = route.query.eventId
+  communityId = route.query.communityId
+  isUserSuccessJoinEventDialogVisible = ref(true)
+}
 
 onMounted(async () => {
   const userRef = doc(db, 'users', props.userId)
@@ -24,10 +39,13 @@ onMounted(async () => {
   state.userData = convertDocumentDataToStoredUser(userDoc.data())
   state.isLoading = false
 })
+
 </script>
 
 <template>
   <div id="user-view">
+    <user-success-join-event-dialog v-model="isUserSuccessJoinEventDialogVisible" :event-id="eventId"
+      :community-id="communityId"></user-success-join-event-dialog>
     <v-row v-if="!state.isLoading" justify="center">
       <v-col cols="12" md="5" sm="5">
         <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId"></user-bio-panel>
