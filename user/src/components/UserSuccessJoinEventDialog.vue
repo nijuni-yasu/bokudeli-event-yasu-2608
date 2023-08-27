@@ -1,0 +1,115 @@
+<script setup lang="ts">
+import { db } from '@/firebase'
+import {
+  DocumentData,
+  QueryDocumentSnapshot,
+  collection,
+  collectionGroup,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
+import {
+  dateString,
+  convertDocumentDataToCommunity,
+  convertDocumentDataToEvent
+} from '@/schemes/converter'
+import BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import PartnerMenu from '@/schemes/partnerMenu'
+import { EventMember } from '@/schemes/EventMember'
+
+interface Props {
+  modelValue: boolean
+  eventId: string | null
+  communityAccount: string | null
+}
+
+interface Emit {
+  (e: 'update:modelValue', value: boolean): void
+}
+
+const props = defineProps<Props>()
+  const emit = defineEmits<Emit>()
+
+const dialog = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+})
+
+const closeDialog = () => {
+  dialog.value = false
+}
+
+const eventDb = query(
+  collectionGroup(db, 'events'),
+  where('community_account', '==', props.communityAccount),
+  where('event_id', '==', props.eventId)
+)
+const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityAccount))
+
+const state = reactive({
+  event: {} as BokudeliEvent,
+  community: {} as BokudeliCommunity,
+  menus: [] as PartnerMenu[],
+  eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
+  members: [] as EventMember[],
+  menuDisable: false as false | 'deadline' | 'limitPeople',
+  isLoading: true,
+})
+
+const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData> | undefined) => {
+  if (!eventDocumentSnapshot) {
+    return undefined
+  }
+
+  const eventData = eventDocumentSnapshot.data()
+  const event = convertDocumentDataToEvent(eventData)
+  return { event }
+}
+
+onMounted(async () => {
+  const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
+
+  const communityData = communitySnapshot.docs.shift()?.data()
+  if (communityData) {
+    const community = convertDocumentDataToCommunity(communityData)
+    state.community = community
+  }
+
+  const eventDocumentSnapshot = eventSnapshot.docs.shift()
+
+  const [eventInfo] = await Promise.all([
+    loadEventData(eventDocumentSnapshot),
+  ])
+  if (eventInfo) {
+    state.eventSnapshot = eventDocumentSnapshot
+    state.event = eventInfo.event
+  }
+
+  state.isLoading = false
+})
+
+</script>
+
+<template>
+  <v-dialog v-model="dialog" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+    <v-card class="pa-sm-9 pa-5">
+      <v-card-item class="text-center">
+        <v-card-title class="text-h5"> ご飯を注文いたしました。 </v-card-title>
+      </v-card-item>
+
+      <v-card-text>
+        <p>下記のイベントに参加いたします。</p>
+      </v-card-text>
+      <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10">
+                {{ state.event.eventName }}
+      </v-card-title>
+      <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
+      <v-card-text class="text-left pb-8 text-subtitle-1">【開催場所】{{ state.event.eventAddress }}</v-card-text>
+      <v-card-text class="text-left pb-8 text-subtitle-1">【開催日時】{{ dateString(state.event.eventStartDatetime) }}</v-card-text>
+      <v-card-text class="text-left pb-8 text-subtitle-1">【開催内容】{{ state.event.eventDescription }}</v-card-text>
+      <v-btn type="submit" rounded @click="closeDialog"> 確認しました。 </v-btn>
+    </v-card>
+  </v-dialog>
+</template>
