@@ -33,7 +33,7 @@
           md="auto"
         >
           <div class="body-1 font-weight-light pt-6 pt-md-0 text-center">
-            &copy; 2021, nijuni inc.
+            &copy; 2023, nijuni inc.
             <!-- <v-icon size="20">
               mdi-heart
             </v-icon>
