@@ -44,9 +44,9 @@ const checkForm = () => {
 <template>
   <div>
     <!-- Title and Logo -->
-      <div class="auth-logo align-start gap-x-3">
-        <VNodeRenderer :nodes="themeConfig.app.logo" width="200"/>
-      </div>
+    <div class="auth-logo align-start gap-x-3">
+      <VNodeRenderer :nodes="themeConfig.app.logo" width="200" />
+    </div>
     <VRow no-gutters class="auth-wrapper">
       <VCol md="8" class="d-flex align-center justify-center">
         <div class="d-flex align-center justify-center w-100 mt-16 pt-10">

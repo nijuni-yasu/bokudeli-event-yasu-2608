@@ -1,12 +1,21 @@
 <script setup lang="ts">
 const props = defineProps<{
-  informationData: any
+  modelValue: string
 }>()
 
-const optionsLocal = ref(JSON.parse(JSON.stringify(props.informationData)))
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void
+  (e: 'submit'): void
+}>()
 
-const resetForm = () => {
-  optionsLocal.value = JSON.parse(JSON.stringify(props.informationData))
+const state = reactive({
+  postcode: '',
+  address: props.modelValue,
+})
+
+const submitSearch = () => {
+  emit('update:modelValue', state.address)
+  emit('submit')
 }
 </script>
 <template>
@@ -22,7 +31,7 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row class="justify-center">
               <v-col cols="12">
-                <v-text-field v-model="optionsLocal.postcode" outlined dense label="お届け先 郵便番号"></v-text-field>
+                <v-text-field v-model="state.postcode" outlined dense label="お届け先 郵便番号"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
@@ -30,13 +39,13 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row class="justify-center">
               <v-col cols="12">
-                <v-text-field v-model="optionsLocal.address" outlined dense label="お届け先 住所"></v-text-field>
+                <v-text-field v-model="state.address" outlined dense label="お届け先 住所"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
 
           <v-card-text>
-            <v-btn color="primary" class="me-3 mt-3"> 検索する </v-btn>
+            <v-btn color="primary" class="me-3 mt-3" @click="submitSearch"> 検索する </v-btn>
           </v-card-text>
         </v-form>
       </v-card>

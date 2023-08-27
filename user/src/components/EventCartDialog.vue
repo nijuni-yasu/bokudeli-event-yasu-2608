@@ -157,7 +157,7 @@ const addCart = async () => {
   <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog(false)">
     <v-card class="pa-sm-10 px-5 py-1 text-center">
       <v-img :src="menu.imageUrl" class="ma-5" aspect-ratio="1" cover></v-img>
-      <v-card-title class="text-left text-h4 pb-3">
+      <v-card-title class="text-left text-h4 pb-3 pre-line">
         {{ menu.name }}
       </v-card-title>
       <v-card-text class="text-left pb-2">
