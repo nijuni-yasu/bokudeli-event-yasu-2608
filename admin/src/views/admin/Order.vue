@@ -8,7 +8,7 @@
       link="components/simple-tables"
     /> -->
     <div
-      v-if="orders.length==0"
+      v-if="events.length==0"
       class="display-2 my-6 mx-5"
     >
       注文履歴はありません
@@ -16,7 +16,7 @@
     <div v-else>
       <v-row>
         <v-col
-          v-for="(item,key) in orders"
+          v-for="(event,key) in events"
           :key="key"
           cols="12"
           sm="12"
@@ -37,18 +37,36 @@
                     class="primary--text"
                     style="width:100px; font-size:10.5px; padding:0px 8px;"
                   >
-                    注文ID
+                    イベントID
                   </td>
-                  <td>{{ item.order_simple_id }}</td>
+                  <td>{{ event.event_id }}</td>
                 </tr>
                 <tr>
                   <td
                     class="primary--text"
                     style="width:100px; font-size:10.5px; padding:0px 8px;"
                   >
-                    注文日時
+                    イベント名
                   </td>
-                  <td>{{ item.createdAt.toDate().toLocaleString('ja-JP').slice( 0, -3 ) }}</td>
+                  <td>{{ event.event_name }}</td>
+                </tr>
+                <tr>
+                  <td
+                    class="primary--text"
+                    style="width:100px; font-size:10.5px; padding:0px 8px;"
+                  >
+                    イベント開始日時
+                  </td>
+                  <td>{{ event.event_start_datetime.toDate().toLocaleString('ja-JP').slice( 0, -3 ) }}</td>
+                </tr>
+                <tr>
+                  <td
+                    class="primary--text"
+                    style="width:100px; font-size:10.5px; padding:0px 8px;"
+                  >
+                    注文締切日時
+                  </td>
+                  <td>{{ event.event_deadline_datetime.toDate().toLocaleString('ja-JP').slice( 0, -3 ) }}</td>
                 </tr>
                 <tr>
                   <td
@@ -58,9 +76,17 @@
                     配送日時
                   </td>
                   <td>
-                    <span class="display-2">{{ item.order_date.toDate().toLocaleString('ja-JP').slice( 0, -3 ) }}</span><br>
-                    <span style="font-size:9px;">※注文時に前後15分の時間幅を了承いただいています。</span>
+                    ※イベント開始時刻の15分前にはお届けしてください。
                   </td>
+                </tr>
+                <tr>
+                  <td
+                    class="primary--text"
+                    style="width:100px; font-size:10.5px; padding:0px 8px;"
+                  >
+                    開催場所
+                  </td>
+                  <td>{{ event.event_address }}</td>
                 </tr>
               </tbody>
             </v-simple-table>
@@ -74,27 +100,9 @@
                     class="primary--text"
                     style="width:100px; font-size:10.5px; padding:0px 8px;"
                   >
-                    会社名
+                    主催者名
                   </td>
-                  <td
-                    v-if="item.user_companyName"
-                  >
-                    {{ item.user_companyName }}
-                  </td>
-                  <td
-                    v-else
-                  >
-                    −
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    注文者名
-                  </td>
-                  <td>{{ item.user_fullName }}</td>
+                  <td>{{ event.community_name }}</td>
                 </tr>
                 <tr>
                   <td
@@ -106,50 +114,22 @@
                   <td>
                     <a
                       target="_blank"
-                      :href="`tel:${item.user_phone}`"
+                      :href="`tel:${event.community_phone}`"
                     >
-                      {{ item.user_phone }}
+                      {{ event.community_phone }}
                     </a>
-                    <!-- {{ item.user_phone.slice( 0, 3 ) }}-{{ item.user_phone.slice( 3, 7 ) }}-{{ item.user_phone.slice( 7, 11 ) }} -->
                   </td>
                 </tr>
-                <tr
-                  v-if="item.user_address1"
-                >
+                <tr>
                   <td
                     class="primary--text"
                     style="width:100px; font-size:10.5px; padding:0px 8px;"
                   >
-                    配送住所
+                    メールアドレス
                   </td>
-                  <td>
-                    〒{{ item.user_postcode.slice( 0, 3 ) }}-{{ item.user_postcode.slice( -4 ) }}<br>
-                    {{ item.user_address1 }}<br>
-                    {{ item.user_address2 }}<br>
-                    {{ item.user_address3 }}<br>
-                    <a
-                      v-if="item.order_map_url"
-                      target="_blank"
-                      :href="item.order_map_url"
-                    >
-                      GoogleMap
-                    </a>
-                  </td>
+                  <td>{{ event.community_email }}</td>
                 </tr>
-                <tr
-                  v-else-if="item.user_address"
-                >
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    配送住所
-                  </td>
-                  <td>
-                    〒{{ item.user_postcode.slice( 0, 3 ) }}-{{ item.user_postcode.slice( -4 ) }}<br>
-                    {{ item.user_address }}<br>
-                  </td>
-                </tr>
+
                 <tr>
                   <td
                     class="primary--text"
@@ -157,43 +137,7 @@
                   >
                     配送メモ
                   </td>
-                  <td>{{ item.user_memo }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    支払い方法
-                  </td>
-                  <td>{{ item.order_method }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    領収書の有無
-                  </td>
-                  <td>{{ item.user_receipt }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    領収書の宛名
-                  </td>
-                  <td
-                    v-if="item.user_receiptName"
-                  >
-                    {{ item.user_receiptName }}
-                  </td>
-                  <td
-                    v-else
-                  >
-                    −
-                  </td>
+                  <td>{{ event.user_memo }}</td>
                 </tr>
               </tbody>
             </v-simple-table>
@@ -203,48 +147,57 @@
               <thead>
                 <tr>
                   <th class="primary--text">
-                    メニュー
+                    #
                   </th>
                   <th class="primary--text">
                     なまえ
                   </th>
                   <th class="primary--text">
-                    金額
+                    メニュー（金額 x 個数）
+                  </th>
+                  <th class="primary--text">
+                    小計
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="(item,key) in item.order_menus"
+                  v-for="(userOrder,index, key) in event.userOrders"
                   :key="key"
                 >
-                  <td>{{ item.menu_name }}</td>
-                  <td
-                    v-if="item.user_nickName"
-                    style="width:80px;"
-                  >
-                    {{ item.user_nickName }}
-                  </td>
-                  <td
-                    v-else
-                  >
-                    –
-                  </td>
-                  <td>¥{{ item.menu_price }}</td>
-                </tr>
-                <tr>
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ userOrder.userInfo.user_name }}</td>
                   <td>
-                    合計
+                    <div
+                      v-for="(menu,key) in userOrder.menus"
+                      :key="key"
+                    >
+                      <div> {{ menu.name }} （ ¥{{ menu.price }} x {{ menu.count }}個）</div>
+                    </div>
+                  </td>
+                  <td>¥{{ userOrder.subtotal }}</td>
+                </tr>
+              </tbody>
+            </v-simple-table>
+            <v-simple-table
+              class="ma-3"
+            >
+              <tbody>
+                <tr>
+                  <td
+                    class="display-2"
+                  >
+                    決済数: {{ event.userOrders.length }}
                   </td>
                   <td
                     class="display-2"
                   >
-                    {{ item.order_sum_count }}個
+                    メニュー数: {{ event.eventTotalCount }}個
                   </td>
                   <td
                     class="display-2"
                   >
-                    ¥{{ item.order_sum_price }}
+                    合計金額: ¥{{ event.eventTotalPrice }}
                   </td>
                 </tr>
               </tbody>
@@ -265,23 +218,55 @@
   const partnerId = firebase.auth().currentUser.uid
 
   export default {
-    name: 'History',
+    name: 'Orders',
 
     data: () => ({
+      events: [],
       orders: [],
     }),
-    created () {
-      // user情報を取得し、v-modelに表示
-      db.collection('orders').where('partner_id', '==', partnerId).orderBy('order_date', 'desc').get().then((snapshot) => {
-        snapshot.forEach((doc) => {
-          this.orders.push(doc.data())
-        })
-      })
+    created: async function () {
+      this.events = await this.getEvetsOrders()
+      console.log(this.events)
     },
     methods: {
       dateFormat: function (date) {
         const d = Number(date.slice(0, 4)) + '/' + Number(date.slice(5, 7)) + '/' + Number(date.slice(8, 10))
         return d
+      },
+      getEvetsOrders: async function () {
+        return new Promise((resolve, reject) => {
+          const events = []
+          // 全てのイベントから注文店舗のイベントを取得
+          db.collectionGroup('events').where('partner_id', '==', partnerId).get().then((snapshot) => {
+            snapshot.forEach((doc) => {
+              events.push(doc.data())
+            })
+            // イベントの個々の注文情報を追加
+            events.forEach((event) => {
+              event.userOrders = []
+              console.log(event)
+              db.collection('communities').doc(event.community_id).collection('events').doc(event.event_id).collection('orders').where('status', '==', 'ordered').get().then((snapshot) => {
+                event.eventTotalPrice = 0
+                event.eventTotalCount = 0
+                snapshot.forEach((order) => {
+                  const userOrder = order.data()
+                  userOrder.subtotal = 0
+                  userOrder.menus.forEach((menu) => {
+                    userOrder.subtotal += menu.price * menu.count
+                    event.eventTotalPrice += menu.price * menu.count
+                    event.eventTotalCount += menu.count
+                  })
+                  // 個々の注文情報からユーザー名を取得
+                  db.collection('users').doc(userOrder.user_id).get().then((doc) => {
+                    userOrder.userInfo = doc.data()
+                    event.userOrders.push(userOrder)
+                  })
+                })
+              })
+            })
+            resolve(events)
+          })
+        })
       },
     },
   }
