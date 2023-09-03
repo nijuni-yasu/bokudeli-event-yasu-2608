@@ -1208,8 +1208,8 @@
       shop_name: '',
       shop_postcode: '',
       shop_address: '',
-      shop_address_latitude: '',
-      shop_address_longitude: '',
+      shop_address_latitude: 0,
+      shop_address_longitude: 0,
       shop_phone: '',
       shop_url: '',
       shop_url_twitter: '',
@@ -1376,6 +1376,11 @@
           (this.shop_email_sub1 === this.shop_email_sub3 && this.shop_email_sub1.length > 0 && this.shop_email_sub3.length > 0) ||
           (this.shop_email_sub2 === this.shop_email_sub3 && this.shop_email_sub2.length > 0 && this.shop_email_sub3.length > 0)) {
           return alert('同一のサブメールアドレスを設定することはできません')
+        }
+        // Number型に変換
+        if (this.shop_address_latitude || this.shop_address_longitude) {
+          this.shop_address_latitude = Number(this.shop_address_latitude)
+          this.shop_address_longitude = Number(this.shop_address_longitude)
         }
         // shopDocが存在しないときは新規作成set()
         if (!shopDoc) {
