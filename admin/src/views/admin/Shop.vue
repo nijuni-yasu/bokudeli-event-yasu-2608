@@ -655,100 +655,6 @@
           <form @submit.prevent="handleSubmit(validateForm)">
             <base-material-card
               color="success"
-              icon="mdi-qrcode"
-              title="支払い方法（QRコード決済）"
-              class="py-3 px-5"
-            >
-              <v-row
-                justify="center"
-                dense
-              >
-                <v-col
-                  class="text-right body-1 grey--text"
-                  cols="1"
-                />
-                <v-col
-                  cols="9"
-                  sm="8"
-                >
-                  <v-container
-                    class="primary--text"
-                    fluid
-                  >
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="現金"
-                      value="現金"
-                      disabled
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="クレジットカード"
-                      value="クレジットカード"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="PayPay(QRコード決済)"
-                      value="PayPay(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="LINE Pay(QRコード決済)"
-                      value="LINE pay(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="楽天ペイ(QRコード決済)"
-                      value="楽天ペイ(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="d払い(QRコード決済)"
-                      value="d払い(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="メルペイ(QRコード決済)"
-                      value="メルペイ(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="au PAY(QRコード決済)"
-                      value="au PAY(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="ファミペイ(QRコード決済)"
-                      value="ファミペイ(QRコード決済)"
-                    />
-                  </v-container>
-                </v-col>
-              </v-row>
-              <v-card-text
-                class="px-20 my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
-              >
-                ※ 商品のお受け渡し時に選択できるお支払い方法です。配送時にQRコードを表示するアプリや掲示物を持参してください。
-              </v-card-text>
-              <div class="pa-3 text-center">
-                <v-btn
-                  color="success"
-                  default
-                  type="submit"
-                >
-                  保存する
-                </v-btn>
-              </div>
-            </base-material-card>
-          </form>
-        </validation-observer>
-      </v-col>
-
-      <v-col cols="12">
-        <validation-observer v-slot="{ handleSubmit }">
-          <form @submit.prevent="handleSubmit(validateForm)">
-            <base-material-card
-              color="success"
               icon="mdi-clock-time-three-outline"
               title="営業曜日・配送時間"
               class="py-3 px-5"
@@ -1227,7 +1133,7 @@
       shop_deadline_date_array: ['当日', '前日', '2日前', '3日前', '4日前', '5日前'],
       shop_deadline_time_array: ['6:00', '6:15', '6:30', '6:45', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15', '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45', '19:00', '19:15', '19:30', '19:45', '20:00', '20:15', '20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30', '22:45', '23:00', '23:15', '23:30', '23:45', '24:00'],
       shop_margin_time_array: ['10', '15', '20', '30', '40', '50', '60'],
-      shop_order_method: ['現金'],
+      // shop_order_method: ['現金'],
       shop_holidays: [],
       menu: false,
       shopTimeCheck: true,
@@ -1263,10 +1169,6 @@
           this.shop_genre = shopDoc.shop_genre
           // this.shop_range = shopDoc.shop_range
           // this.shop_min_orders = shopDoc.shop_min_orders
-          if (shopDoc.shop_order_method) {
-            // 支払い方法が未登録のときはデフォルトの"現金"のみ
-            this.shop_order_method = shopDoc.shop_order_method
-          }
           if (shopDoc.shop_image_url) {
             // 店舗画像未登録のときはデフォルト画像
             this.shop_image_url = shopDoc.shop_image_url
@@ -1373,7 +1275,6 @@
             // shop_min_orders: this.shop_min_orders,
             shop_range_min_orders: this.shop_range_min_orders,
             shop_time: this.shop_time,
-            shop_order_method: this.shop_order_method,
             shop_holidays: this.shop_holidays,
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
@@ -1413,7 +1314,6 @@
             // shop_min_orders: this.shop_min_orders,
             shop_range_min_orders: this.shop_range_min_orders,
             shop_time: this.shop_time,
-            shop_order_method: this.shop_order_method,
             shop_holidays: this.shop_holidays,
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
