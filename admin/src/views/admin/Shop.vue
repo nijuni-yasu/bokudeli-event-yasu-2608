@@ -199,12 +199,12 @@
                   <validation-provider
                     v-slot="{ errors }"
                     name="店舗紹介文"
-                    rules="required|max:60"
+                    rules="required|max:300"
                   >
                     <v-text-field
                       v-model="shop_description"
                       :error-messages="errors"
-                      hint="店舗紹介文は最大60文字までです"
+                      hint="店舗紹介文は最大300文字までです"
                     />
                   </validation-provider>
                 </v-col>
