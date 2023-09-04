@@ -9,7 +9,7 @@ import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/sc
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { FirestoredUser } from '@/schemes/storedUser'
-import { dateString } from '@/schemes/converter'
+import { dateWithDayOfWeekString } from '@/schemes/converter'
 
 const props = defineProps<{
   communityId: string
@@ -131,10 +131,10 @@ onMounted(async () => {
                     {{ event.eventDescription }}
                   </v-card-text>
                   <v-card-text class="text-left pb-2"> 【主催者】 {{ event.communityName }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【注文期限】{{ dateString(event.eventDeadline) }} </v-card-text>
                   <v-card-text class="text-left pb-2">
-                    【開催日時】{{ dateString(event.eventStartDatetime) }}
+                    【開催日時】{{ dateWithDayOfWeekString(event.eventStartDatetime) }}
                   </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【注文期限】{{ dateWithDayOfWeekString(event.eventDeadline) }} </v-card-text>
                   <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
                   <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
                   <v-card-text class="text-left pb-8"> 【定員】{{ event.eventMaxPeople }} </v-card-text>
