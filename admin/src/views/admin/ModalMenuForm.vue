@@ -192,7 +192,7 @@
                     <validation-provider
                       v-slot="{ errors }"
                       name="1イベントの上限数"
-                      rules="min_value:0|max_value:10000"
+                      rules="min_value:1|max_value:1000"
                     >
                       <v-text-field
                         v-model="menu_max_1event"
@@ -201,6 +201,7 @@
                         label="1イベントの上限数"
                         type="number"
                         hint="1回のイベントにおける注文個数の上限を設定することができます。"
+                        clearable
                       />
                     </validation-provider>
                   </v-col>
@@ -330,7 +331,10 @@
         const me = this
         // menu_priceをnumber型に変換
         me.menu_price = Number(me.menu_price)
-        me.menu_max_1event = Number(me.menu_max_1event)
+        // 上限数が設定されている場合は、Number型に変換
+        if (me.menu_max_1event) {
+          me.menu_max_1event = Number(me.menu_max_1event)
+        }
         // ファイル名は日付
         const fileName = Date.now()
         // 期間限定は開始日と終了日どちらも設定
@@ -376,7 +380,7 @@
                     me.menu_description = null
                     me.menu_price = 0
                     me.menu_image_file = null
-                    me.menu_max_1event = 0
+                    me.menu_max_1event = null
                     me.is_soldout = false
                     me.menu_date_start = ''
                     me.menu_date_end = ''
@@ -428,7 +432,7 @@
                       me.menu_description = null
                       me.menu_price = 0
                       me.menu_image_file = null
-                      me.menu_max_1event = 0
+                      me.menu_max_1event = null
                       me.is_soldout = false
                       me.menu_date_start = ''
                       me.menu_date_end = ''
@@ -469,7 +473,7 @@
                 me.menu_description = null
                 me.menu_price = 0
                 me.menu_image_file = null
-                me.menu_max_1event = 0
+                me.menu_max_1event = null
                 me.is_soldout = false
                 me.menu_date_start = ''
                 me.menu_date_end = ''
