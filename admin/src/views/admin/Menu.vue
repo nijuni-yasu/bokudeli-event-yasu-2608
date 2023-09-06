@@ -82,6 +82,8 @@
                     :menu_price="item.menu_price"
                     :menu_max_1event="item.menu_max_1event"
                     :is_soldout="item.is_soldout"
+                    :menu_date_start="item.menu_date_start"
+                    :menu_date_end="item.menu_date_end"
                     @menu-added-event="menuView"
                   />
                 </v-btn>
@@ -111,23 +113,29 @@
           <v-card-title class="display-2 justify-start mt-3 font-weight-bold pb-2">
             {{ item.menu_name }}
           </v-card-title>
-          <v-card-text class="justify-start font-weight-light pb-5">
+          <v-card-text class="justify-start font-weight-light py-1">
             {{ item.menu_description }}
           </v-card-text>
-          <v-card-text class="font-weight-light py-2">
-            【税込価格】 ¥{{ item.menu_price }}
+          <v-card-text class="display-2 font-weight-light pt-1 pb-10">
+             ¥{{ item.menu_price }}
+          </v-card-text>
+          <v-card-text
+            v-if="item.menu_date_start&&item.menu_date_end"
+            class="py-2 red--text"
+          >
+            【期間限定】{{ item.menu_date_start }}〜{{ item.menu_date_end }}
           </v-card-text>
           <v-card-text
             v-if="item.menu_max_1event"
-            class="font-weight-light py-2"
+            class="font-weight-light py-2 red--text"
           >
-            【上限設定】 {{ item.menu_max_1event }} 個
+            【1イベントの上限数】 {{ item.menu_max_1event }} 個
           </v-card-text>
           <v-card-text
-            v-if="item.menu_max_1event==true"
+            v-if="item.is_soldout==true"
             class="py-2 red--text"
           >
-            【販売設定】売り切れ
+            【売切設定】売り切れ
           </v-card-text>
         </base-material-card>
       </v-col>
