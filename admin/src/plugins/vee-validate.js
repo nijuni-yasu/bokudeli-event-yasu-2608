@@ -31,8 +31,8 @@ Vue.component('validation-observer', ValidationObserver)
 
 // 表示されるメッセージを変更
 ja.messages.digits = '{_field_}は{length}桁の半角数字でなければなりません'
-ja.messages.max_value = '{_field_}は{max}円以下でなければなりません'
-ja.messages.min_value = '{_field_}は{min}円以上でなければなりません'
+ja.messages.max_value = '{_field_}は{max}以下でなければなりません'
+ja.messages.min_value = '{_field_}は{min}以上でなければなりません'
 ja.messages.numeric = '{_field_}は半角数字のみ使用できます'
 
 localize('ja', ja)

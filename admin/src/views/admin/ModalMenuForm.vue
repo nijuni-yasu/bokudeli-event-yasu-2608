@@ -58,7 +58,7 @@
                     <validation-provider
                       v-slot="{ errors }"
                       name="税込価格"
-                      rules="required|min_value:10|max_value:10000"
+                      rules="required|min_value:100|max_value:10000"
                     >
                       <v-text-field
                         v-model="menu_price"
@@ -85,9 +85,41 @@
                       />
                     </validation-provider>
                   </v-col>
+                  <v-col
+                    cols="12"
+                    sm="6"
+                  >
+                    <validation-provider
+                      v-slot="{ errors }"
+                      name="1イベントの上限数"
+                      rules="min_value:0|max_value:10000"
+                    >
+                      <v-text-field
+                        v-model="menu_max_1event"
+                        :error-messages="errors"
+                        label="1イベントの上限数"
+                        type="number"
+                        hint="1回のイベントにおける注文個数の上限を設定することができます。"
+                      />
+                    </validation-provider>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    sm="6"
+                  >
+                    <validation-provider
+                      v-slot="{ errors }"
+                      name="売り切れ設定"
+                    >
+                      <v-switch
+                        v-model="is_soldout"
+                        :error-messages="errors"
+                        :label="`${is_soldout?'売り切れ':'販売中'}`"
+                      />
+                    </validation-provider>
+                  </v-col>
                 </v-row>
               </v-container>
-              <small class="grey--text text--lighten-1">全ての項目を入力のうえ保存してください。</small>
             </v-card-text>
             <v-card-actions>
               <v-spacer />
@@ -161,6 +193,14 @@
         type: String,
         default: '',
       },
+      menu_max_1event: {
+        type: Number,
+        default: 0,
+      },
+      is_soldout: {
+        type: Boolean,
+        default: false,
+      },
     },
     $_veeValidate: {
       validator: 'new',
@@ -176,6 +216,7 @@
         var me = this
         // menu_priceをnumber型に変換
         me.menu_price = Number(me.menu_price)
+        me.menu_max_1event = Number(me.menu_max_1event)
         // ファイル名は日付
         const fileName = Date.now()
         // メニューIDが存在していない場合は新規作成
@@ -204,6 +245,8 @@
                     menu_description: me.menu_description,
                     menu_price: me.menu_price,
                     menu_image_url: url,
+                    menu_max_1event: me.menu_max_1event,
+                    is_soldout: me.is_soldout,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                   }).then(function () {
@@ -212,6 +255,8 @@
                     me.menu_description = null
                     me.menu_price = 0
                     me.menu_image_file = null
+                    me.menu_max_1event = 0
+                    me.is_soldout = false
                     me.dialog = false
                     me.buttonLoading = false
                     // firebaseへのメニュー追加完了したら親コンポーネントのmenuでダウンロードして表示
@@ -249,6 +294,8 @@
                       menu_description: me.menu_description,
                       menu_price: me.menu_price,
                       menu_image_url: url,
+                      menu_max_1event: me.menu_max_1event,
+                      is_soldout: me.is_soldout,
                       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     }).then(function () {
                       alert('メニューを更新しました')
@@ -256,6 +303,8 @@
                       me.menu_description = null
                       me.menu_price = 0
                       me.menu_image_file = null
+                      me.menu_max_1event = 0
+                      me.is_soldout = false
                       me.dialog = false
                       me.buttonLoading = false
                       me.$emit('menu-added-event')
@@ -282,6 +331,8 @@
                 menu_name: me.menu_name,
                 menu_description: me.menu_description,
                 menu_price: me.menu_price,
+                menu_max_1event: me.menu_max_1event,
+                is_soldout: me.is_soldout,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
               }).then(function () {
                 alert('メニューを更新しました')
@@ -289,6 +340,8 @@
                 me.menu_description = null
                 me.menu_price = 0
                 me.menu_image_file = null
+                me.menu_max_1event = 0
+                me.is_soldout = false
                 me.dialog = false
                 me.buttonLoading = false
                 me.$emit('menu-added-event')

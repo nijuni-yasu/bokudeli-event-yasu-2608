@@ -80,6 +80,8 @@
                     :menu_name="item.menu_name"
                     :menu_description="item.menu_description"
                     :menu_price="item.menu_price"
+                    :menu_max_1event="item.menu_max_1event"
+                    :is_soldout="item.is_soldout"
                     @menu-added-event="menuView"
                   />
                 </v-btn>
@@ -205,7 +207,6 @@
   export default {
     name: 'Menu',
     components: {
-      // ModalMenuForm: () => import('../dashboard/bd-component/ModalMenuForm'),
       ModalMenuForm: () => import('../admin/ModalMenuForm'),
     },
 
@@ -213,12 +214,11 @@
       menus: [],
     }),
     created () {
-      // データが初期化(created)したら、firestoreから店舗情報を取得して表示
       this.menuView()
     },
     methods: {
       menuView: function () {
-        this.menus = [] // 呼び出される度に一度空にする
+        this.menus = []
         db.collection('partners').doc(partnerId).collection('menus').orderBy('updatedAt', 'desc').get().then((snapshot) => {
           // console.log(snapshot)
           // console.log(snapshot.size)
@@ -226,18 +226,12 @@
           // console.log(snapshot.docs)
           snapshot.forEach((menuDoc) => {
             // console.log(menuDoc.id, ' => ', JSON.stringify(menuDoc.data()))
-            var menu = { menu_id: '', menu_name: '', menu_description: '', menu_price: 0, menu_image_url: '', is_deleted: '' }
-            menu.is_deleted = menuDoc.data().is_deleted
+            const menu = menuDoc.data()
+            menu.menu_id = menuDoc.id
             if (!menu.is_deleted) {
-              menu.menu_id = menuDoc.id
-              menu.menu_name = menuDoc.data().menu_name
-              menu.menu_description = menuDoc.data().menu_description
-              menu.menu_price = menuDoc.data().menu_price
-              menu.menu_image_url = menuDoc.data().menu_image_url
               this.menus.push(menu)
             }
           })
-          // console.log(this.menus)
         })
       },
       deleteMenu: function (menuId) {
