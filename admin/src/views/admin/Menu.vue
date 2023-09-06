@@ -108,15 +108,26 @@
             </v-tooltip>
           </template>
 
-          <v-card-title class="display-2 justify-start mt-3 font-weight-light">
+          <v-card-title class="display-2 justify-start mt-3 font-weight-bold pb-2">
             {{ item.menu_name }}
           </v-card-title>
-
-          <v-card-text class="body-1 justify-start font-weight-light grey--text">
+          <v-card-text class="justify-start font-weight-light pb-5">
             {{ item.menu_description }}
           </v-card-text>
-          <v-card-text class="display-2 text-right font-weight-light grey--text">
-            ¥{{ item.menu_price }}
+          <v-card-text class="font-weight-light py-2">
+            【税込価格】 ¥{{ item.menu_price }}
+          </v-card-text>
+          <v-card-text
+            v-if="item.menu_max_1event"
+            class="font-weight-light py-2"
+          >
+            【上限設定】 {{ item.menu_max_1event }} 個
+          </v-card-text>
+          <v-card-text
+            v-if="item.menu_max_1event==true"
+            class="py-2 red--text"
+          >
+            【販売設定】売り切れ
           </v-card-text>
         </base-material-card>
       </v-col>
@@ -177,8 +188,7 @@
               <span>削除</span>
             </v-tooltip>
           </template>
-
-          <v-card-title class="display-2 justify-start mt-3 font-weight-light">
+          <v-card-title class="display-2 justify-start mt-3 font-weight-bold">
             例) サラダ弁当
           </v-card-title>
 
