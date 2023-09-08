@@ -3,7 +3,7 @@ import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
+import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -230,10 +230,10 @@ onMounted(async () => {
             【開催場所】{{ cart.event.eventAddress }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催日時】{{ dateString(cart.event.eventStartDatetime) }}
+            【開催日時】{{ dateWithDayOfWeekString(cart.event.eventStartDatetime) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【注文期限】{{ dateString(cart.event.eventDeadline) }}
+            【注文期限】{{ dateWithDayOfWeekString(cart.event.eventDeadline) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
 

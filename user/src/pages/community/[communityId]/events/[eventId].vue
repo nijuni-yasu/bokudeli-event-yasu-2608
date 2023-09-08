@@ -12,7 +12,7 @@ import {
 import { getCommunityPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
-  dateString,
+  dateWithDayOfWeekString,
   convertDocumentDataToCommunity,
   convertDocumentDataToEvent,
   convertDocumentDataToMenu,
@@ -170,10 +170,10 @@ onMounted(async () => {
                 【開催場所】{{ state.event.eventAddress }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【注文期限】{{ dateString(state.event.eventDeadline) }}
+                【開催日時】{{ dateWithDayOfWeekString(state.event.eventStartDatetime) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【開催日時】{{ dateString(state.event.eventStartDatetime) }}
+                【注文期限】{{ dateWithDayOfWeekString(state.event.eventDeadline) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shopName }} </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px">
