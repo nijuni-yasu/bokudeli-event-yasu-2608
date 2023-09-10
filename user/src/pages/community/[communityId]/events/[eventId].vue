@@ -15,16 +15,14 @@ import {
   dateWithDayOfWeekString,
   convertDocumentDataToCommunity,
   convertDocumentDataToEvent,
-  convertDocumentDataToMenu,
 } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
-import { loadEventMembers } from '@/composable/loadEventMembers'
-import { EventMember } from '@/schemes/EventMember'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-
-const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
+import EventMemberList from '@/components/EventMemberList.vue'
+import EventMenuList from '@/components/EventMenuList.vue'
+import { countEventMembers } from '@/composable/countEventMembers'
 
 const props = defineProps<{
   communityId: string
@@ -37,65 +35,22 @@ const eventDb = query(
   where('event_id', '==', props.eventId)
 )
 const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
-const partnerDb = collection(db, 'partners')
 
 const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
-  menus: [] as PartnerMenu[],
   eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
-  members: [] as EventMember[],
-  menuDisable: false as false | 'deadline' | 'limitPeople',
+  currentMemberCount: undefined as number | undefined,
   isLoading: true,
 })
 
-const isDialogOpen = ref(false)
-const selectedMenu = ref(null as PartnerMenu | null)
-
-const selectMenu = (menu: PartnerMenu) => {
-  selectedMenu.value = menu
-  isDialogOpen.value = true
-}
-
-const isOpenAlert = ref(false)
-const alertMessage = ref('')
-
-const alertBody = computed({
-  get() {
-    return alertMessage.value
-  },
-  set(val) {
-    alertMessage.value = val
-    isOpenAlert.value = true
-  },
-})
-
-const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
-  switch (reason) {
-    case 'deadline':
-      alertBody.value = '注文期限をすぎました。カートに追加できません'
-      break
-    case 'limitPeople':
-      alertBody.value = '定員に達しました。カートに追加できません'
-      break
-  }
-}
-
-const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData> | undefined) => {
-  if (!eventDocumentSnapshot) {
-    return undefined
-  }
-
+const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData>) => {
   const eventData = eventDocumentSnapshot.data()
   const event = convertDocumentDataToEvent(eventData)
-
-  const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
-  const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
-  menus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
-  return { event, menus }
+  return event
 }
 
-onMounted(async () => {
+const fetchData = async () => {
   const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
 
   const communityData = communitySnapshot.docs.shift()?.data()
@@ -105,28 +60,46 @@ onMounted(async () => {
   }
 
   const eventDocumentSnapshot = eventSnapshot.docs.shift()
-
-  const [eventInfo, members] = await Promise.all([
-    loadEventData(eventDocumentSnapshot),
-    loadEventMembers(props.communityId, props.eventId),
-  ])
-  if (eventInfo) {
-    state.eventSnapshot = eventDocumentSnapshot
-    state.event = eventInfo.event
-    state.menus = eventInfo.menus
+  if (!eventDocumentSnapshot) {
+    return
   }
-  state.members = members
-
-  if (state.event.eventDeadline && state.event.eventDeadline < new Date()) {
-    state.menuDisable = 'deadline'
-  } else if (state.members.length >= state.event.eventMaxPeople) {
-    state.menuDisable = 'limitPeople'
-  } else {
-    state.menuDisable = false
-  }
+  state.eventSnapshot = eventDocumentSnapshot
+  state.event = await loadEventData(eventDocumentSnapshot)
 
   state.isLoading = false
+  state.currentMemberCount = await countEventMembers(state.event.communityAccount, state.event.eventId)
+}
+
+onBeforeRouteUpdate(async (to, from, next) => {
+  if (to.params.eventId !== from.params.eventId) {
+    await fetchData()
+  }
+  next()
 })
+
+onMounted(async () => {
+  await fetchData()
+})
+
+const selectedMenuState = reactive({
+  menu: null as PartnerMenu | null,
+  isOpen: false,
+})
+
+const updateSelectedMenu = (menu: PartnerMenu) => {
+  selectedMenuState.menu = menu
+  selectedMenuState.isOpen = true
+}
+
+const alertState = reactive({
+  message: '',
+  isOpen: false,
+})
+
+const updateAlert = (message: string) => {
+  alertState.message = message
+  alertState.isOpen = true
+}
 </script>
 
 <template>
@@ -141,6 +114,7 @@ onMounted(async () => {
           </v-row>
           <v-row>
             <v-col>
+              <!-- イベント情報 -->
               <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10 pre-line">
                 {{ state.event.eventName }}
               </v-card-title>
@@ -182,84 +156,20 @@ onMounted(async () => {
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【定員】{{ state.event.eventMaxPeople }} 人
               </v-card-text>
-              <v-card-text class="text-left pb-8 text-subtitle-1">
-                【参加人数】{{ state.members.length }} 人
-              </v-card-text>
-              <v-card-text class="text-left pb-10">
-                <v-row>
-                  <v-col
-                    v-for="member in state.members"
-                    :key="member.userId"
-                    class="d-flex justify-start pa-2"
-                    cols="12"
-                    sm="6"
-                    md="4"
-                  >
-                    <v-row class="ma-0 d-flex align-center">
-                      <router-link
-                        :to="`/users/${member.userId}`"
-                        class="text--primary cursor-pointer text-decoration-none"
-                      >
-                        <v-avatar class="ma-1" size="60">
-                          <v-img :src="member.userImageUrl" />
-                        </v-avatar>
-                      </router-link>
-                      <v-col class="ma-0 px-1">
-                        <div class="d-flex align-center text-subtitle-2 font-weight-bold">
-                          <div>
-                            {{ member.username }}
-                          </div>
-                        </div>
-                        <div
-                          v-for="menu in member.menus"
-                          :key="menu"
-                          class="d-flex align-center"
-                          style="font-size: 12px; color: gray"
-                        >
-                          <div>{{ menu }}</div>
-                        </div>
-                      </v-col>
-                    </v-row>
-                  </v-col>
-                </v-row>
-              </v-card-text>
+              <!-- メンバー情報 -->
+              <event-member-list :community-id="state.event.communityAccount" :event-id="state.event.eventId" />
             </v-col>
           </v-row>
         </v-card>
-        <v-row>
-          <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
-            <v-card class="mb-3 mx-0" color="text-center">
-              <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
-
-              <!-- title -->
-              <v-card-title class="justify-center pb-3 pre-line">
-                {{ menu.name }}
-              </v-card-title>
-              <v-card-text class="text-left pb-8">
-                {{ menu.description }}
-              </v-card-text>
-              <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
-              <v-row class="justify-center">
-                <v-col class="text-center">
-                  <v-btn
-                    :class="`px-5 my-4 ${state.menuDisable ? 'disable-menu-button' : ''}`"
-                    color="primary"
-                    rounded
-                    width="80%"
-                    @click="state.menuDisable === false ? selectMenu(menu) : showDisableAlert(state.menuDisable)"
-                  >
-                    カートに追加
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-col>
-
-          <!-- no result found -->
-          <v-col v-show="!state.menus.length" cols="12" class="text-center">
-            <h4 class="mt-4">メニューがありません</h4>
-          </v-col>
-        </v-row>
+        <!-- メニュ -->
+        <event-menu-list
+          :partner-id="state.event.partnerId"
+          :event-deadline="state.event.eventDeadline"
+          :current-member-count="state.currentMemberCount"
+          :event-max-people="state.event.eventMaxPeople"
+          @select-menu="updateSelectedMenu"
+          @set-alert="updateAlert"
+        />
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">
@@ -268,16 +178,12 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <event-cart-dialog
-      v-if="selectedMenu && state.eventSnapshot"
-      v-model="isDialogOpen"
-      :menu="selectedMenu"
+      v-if="selectedMenuState.menu && state.eventSnapshot"
+      v-model="selectedMenuState.isOpen"
+      :menu="selectedMenuState.menu"
       :event-snapshot="state.eventSnapshot"
     ></event-cart-dialog>
-    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
+    <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
   </section>
 </template>
-<style lang="scss" scoped>
-.disable-menu-button {
-  opacity: 0.4615384615;
-}
-</style>
+<style lang="scss" scoped></style>
