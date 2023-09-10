@@ -195,7 +195,7 @@
                       rules="min_value:1|max_value:1000"
                     >
                       <v-text-field
-                        v-model="menu_max_1event"
+                        v-model="menu_stock_per_event"
                         :error-messages="errors"
                         prepend-icon="mdi-counter"
                         label="1イベントの上限数"
@@ -295,7 +295,7 @@
         type: String,
         default: '',
       },
-      menu_max_1event: {
+      menu_stock_per_event: {
         type: Number,
         default: 0,
       },
@@ -332,8 +332,8 @@
         // menu_priceをnumber型に変換
         me.menu_price = Number(me.menu_price)
         // 上限数が設定されている場合は、Number型に変換
-        if (me.menu_max_1event) {
-          me.menu_max_1event = Number(me.menu_max_1event)
+        if (me.menu_stock_per_event) {
+          me.menu_stock_per_event = Number(me.menu_stock_per_event)
         }
         // ファイル名は日付
         const fileName = Date.now()
@@ -368,7 +368,7 @@
                     menu_description: me.menu_description,
                     menu_price: me.menu_price,
                     menu_image_url: url,
-                    menu_max_1event: me.menu_max_1event,
+                    menu_stock_per_event: me.menu_stock_per_event,
                     is_soldout: me.is_soldout,
                     menu_date_start: me.menu_date_start,
                     menu_date_end: me.menu_date_end,
@@ -380,7 +380,7 @@
                     me.menu_description = null
                     me.menu_price = 0
                     me.menu_image_file = null
-                    me.menu_max_1event = null
+                    me.menu_stock_per_event = null
                     me.is_soldout = false
                     me.menu_date_start = ''
                     me.menu_date_end = ''
@@ -421,7 +421,7 @@
                       menu_description: me.menu_description,
                       menu_price: me.menu_price,
                       menu_image_url: url,
-                      menu_max_1event: me.menu_max_1event,
+                      menu_stock_per_event: me.menu_stock_per_event,
                       is_soldout: me.is_soldout,
                       menu_date_start: me.menu_date_start,
                       menu_date_end: me.menu_date_end,
@@ -432,7 +432,7 @@
                       me.menu_description = null
                       me.menu_price = 0
                       me.menu_image_file = null
-                      me.menu_max_1event = null
+                      me.menu_stock_per_event = null
                       me.is_soldout = false
                       me.menu_date_start = ''
                       me.menu_date_end = ''
@@ -462,7 +462,7 @@
                 menu_name: me.menu_name,
                 menu_description: me.menu_description,
                 menu_price: me.menu_price,
-                menu_max_1event: me.menu_max_1event,
+                menu_stock_per_event: me.menu_stock_per_event,
                 is_soldout: me.is_soldout,
                 menu_date_start: me.menu_date_start,
                 menu_date_end: me.menu_date_end,
@@ -473,7 +473,7 @@
                 me.menu_description = null
                 me.menu_price = 0
                 me.menu_image_file = null
-                me.menu_max_1event = null
+                me.menu_stock_per_event = null
                 me.is_soldout = false
                 me.menu_date_start = ''
                 me.menu_date_end = ''

@@ -80,7 +80,7 @@
                     :menu_name="item.menu_name"
                     :menu_description="item.menu_description"
                     :menu_price="item.menu_price"
-                    :menu_max_1event="item.menu_max_1event"
+                    :menu_stock_per_event="item.menu_stock_per_event"
                     :is_soldout="item.is_soldout"
                     :menu_date_start="item.menu_date_start"
                     :menu_date_end="item.menu_date_end"
@@ -126,10 +126,10 @@
             【期間限定】{{ item.menu_date_start }}〜{{ item.menu_date_end }}
           </v-card-text>
           <v-card-text
-            v-if="item.menu_max_1event"
+            v-if="item.menu_stock_per_event"
             class="font-weight-light py-2 red--text"
           >
-            【1イベントの上限数】 {{ item.menu_max_1event }} 個
+            【1イベントの上限数】 {{ item.menu_stock_per_event }} 個
           </v-card-text>
           <v-card-text
             v-if="item.is_soldout==true"
