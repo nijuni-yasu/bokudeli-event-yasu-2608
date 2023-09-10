@@ -19,9 +19,8 @@ import {
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
-import { loadEventMembers } from '@/composable/loadEventMembers'
-import { EventMember } from '@/schemes/EventMember'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import EventMemberList from '@/components/EventMemberList.vue'
 import EventMenuList from '@/components/EventMenuList.vue'
 
 const props = defineProps<{
@@ -40,8 +39,7 @@ const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
   eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
-  members: [] as EventMember[],
-  menuDisable: false as false | 'deadline' | 'limitPeople',
+  currentMemberCount: undefined as number | undefined,
   isLoading: true,
 })
 
@@ -66,15 +64,6 @@ const fetchData = async () => {
   }
   state.eventSnapshot = eventDocumentSnapshot
   state.event = await loadEventData(eventDocumentSnapshot)
-  state.members = await loadEventMembers(props.communityId, props.eventId)
-
-  if (state.event.eventDeadline && state.event.eventDeadline < new Date()) {
-    state.menuDisable = 'deadline'
-  } else if (state.members.length >= state.event.eventMaxPeople) {
-    state.menuDisable = 'limitPeople'
-  } else {
-    state.menuDisable = false
-  }
 
   state.isLoading = false
 }
@@ -89,6 +78,10 @@ onBeforeRouteUpdate(async (to, from, next) => {
 onMounted(async () => {
   await fetchData()
 })
+
+const updateMembers = (count: number) => {
+  state.currentMemberCount = count
+}
 
 const selectedMenuState = reactive({
   menu: null as PartnerMenu | null,
@@ -166,53 +159,20 @@ const updateAlert = (message: string) => {
                 【定員】{{ state.event.eventMaxPeople }} 人
               </v-card-text>
               <!-- メンバー情報 -->
-              <v-card-text class="text-left pb-8 text-subtitle-1">
-                【参加人数】{{ state.members.length }} 人
-              </v-card-text>
-              <v-card-text class="text-left pb-10">
-                <v-row>
-                  <v-col
-                    v-for="member in state.members"
-                    :key="member.userId"
-                    class="d-flex justify-start pa-2"
-                    cols="12"
-                    sm="6"
-                    md="4"
-                  >
-                    <v-row class="ma-0 d-flex align-center">
-                      <router-link
-                        :to="`/users/${member.userId}`"
-                        class="text--primary cursor-pointer text-decoration-none"
-                      >
-                        <v-avatar class="ma-1" size="60">
-                          <v-img :src="member.userImageUrl" />
-                        </v-avatar>
-                      </router-link>
-                      <v-col class="ma-0 px-1">
-                        <div class="d-flex align-center text-subtitle-2 font-weight-bold">
-                          <div>
-                            {{ member.username }}
-                          </div>
-                        </div>
-                        <div
-                          v-for="menu in member.menus"
-                          :key="menu"
-                          class="d-flex align-center"
-                          style="font-size: 12px; color: gray"
-                        >
-                          <div>{{ menu }}</div>
-                        </div>
-                      </v-col>
-                    </v-row>
-                  </v-col>
-                </v-row>
-              </v-card-text>
+              <event-member-list
+                :community-id="state.event.communityAccount"
+                :event-id="state.event.eventId"
+                @update-members="updateMembers"
+              />
             </v-col>
           </v-row>
         </v-card>
         <!-- メニュ -->
         <event-menu-list
           :partner-id="state.event.partnerId"
+          :event-deadline="state.event.eventDeadline"
+          :current-member-count="state.currentMemberCount"
+          :event-max-people="state.event.eventMaxPeople"
           @select-menu="updateSelectedMenu"
           @set-alert="updateAlert"
         />
