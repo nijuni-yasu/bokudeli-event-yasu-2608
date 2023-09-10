@@ -22,6 +22,7 @@ import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EventMemberList from '@/components/EventMemberList.vue'
 import EventMenuList from '@/components/EventMenuList.vue'
+import { countEventMembers } from '@/composable/countEventMembers'
 
 const props = defineProps<{
   communityId: string
@@ -66,6 +67,7 @@ const fetchData = async () => {
   state.event = await loadEventData(eventDocumentSnapshot)
 
   state.isLoading = false
+  state.currentMemberCount = await countEventMembers(state.event.communityAccount, state.event.eventId)
 }
 
 onBeforeRouteUpdate(async (to, from, next) => {
@@ -78,10 +80,6 @@ onBeforeRouteUpdate(async (to, from, next) => {
 onMounted(async () => {
   await fetchData()
 })
-
-const updateMembers = (count: number) => {
-  state.currentMemberCount = count
-}
 
 const selectedMenuState = reactive({
   menu: null as PartnerMenu | null,
@@ -159,11 +157,7 @@ const updateAlert = (message: string) => {
                 【定員】{{ state.event.eventMaxPeople }} 人
               </v-card-text>
               <!-- メンバー情報 -->
-              <event-member-list
-                :community-id="state.event.communityAccount"
-                :event-id="state.event.eventId"
-                @update-members="updateMembers"
-              />
+              <event-member-list :community-id="state.event.communityAccount" :event-id="state.event.eventId" />
             </v-col>
           </v-row>
         </v-card>
