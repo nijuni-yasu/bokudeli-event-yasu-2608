@@ -76,7 +76,9 @@ onMounted(async () => {
                 <v-card-text class="text-left pb-2">
                   【開催日時】{{ dateWithDayOfWeekString(event.eventStartDatetime) }}
                 </v-card-text>
-                <v-card-text class="text-left pb-2"> 【注文期限】{{ dateWithDayOfWeekString(event.eventDeadline) }} </v-card-text>
+                <v-card-text class="text-left pb-2">
+                  【注文期限】{{ dateWithDayOfWeekString(event.eventDeadline) }}
+                </v-card-text>
                 <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【定員】{{ event.eventMaxPeople }} 人</v-card-text>
