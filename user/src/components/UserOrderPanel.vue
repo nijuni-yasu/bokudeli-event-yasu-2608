@@ -1,26 +1,11 @@
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue';
-import StoredUser from '@/schemes/storedUser'
-import { useStoreStoredUser } from '@/stores/storedUser'
 import { db } from '@/firebase'
-import {
-  collectionGroup,
-  getDocs,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore'
+import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 
 import { getEventPath } from '@/router/utils'
 import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import OrderItem from '@/schemes/orderItem'
-
-// イベントの参加者リストから遷移すると自分のIDをもとに表示してしまう。要リファクタリング
-const { storedUser } = storeToRefs(useStoreStoredUser())
-const userId = computed(() => storedUser.value?.userId ?? '')
-console.log(userId.value)
 
 type Order = {
   order: OrderItem
@@ -29,18 +14,21 @@ type Order = {
   total: number
 }
 
+const props = defineProps<{
+  userId: string
+  showDetail: boolean
+}>()
+
 const state = reactive({
-  // Order型にするとエラーになるのでひとまずany型。要リファクタリング
-  orderList: [] as any[],
+  orderList: [] as Order[],
   isLoading: true,
 })
-
 
 const loadOrderList = async () => {
   // オーダー情報の取得
   const inOrderQuery = query(
     collectionGroup(db, 'orders'),
-    where('user_id', '==', userId.value),
+    where('user_id', '==', props.userId),
     where('status', '==', 'ordered'),
     orderBy('updated_at', 'desc')
   )
@@ -70,18 +58,26 @@ const loadOrderList = async () => {
         subtotals[menu.menu_id] = menu.price * menu.count
       })
       const total = Object.values(subtotals).reduce((total, current) => total + current)
-      return { order: item, event, subtotals, total }
+      return [{ order: item, event, subtotals, total }]
     })
   )
-  return convertedList
+  return convertedList.flat()
 }
-onMounted(async () => {
+
+const fetchData = async () => {
   state.orderList = await loadOrderList()
   console.log(state.orderList)
   state.isLoading = false
+}
+
+onBeforeRouteUpdate(async (to, from, next) => {
+  await fetchData()
+  next()
 })
 
-
+onMounted(async () => {
+  await fetchData()
+})
 </script>
 
 <template>
@@ -93,10 +89,10 @@ onMounted(async () => {
             <v-table class="ma-5">
               <thead>
                 <tr>
-                  <th style="padding: 10px; width:250px">イベント名</th>
-                  <th style="padding: 10px; width:150px">開催日時</th>
-                  <th style="padding: 10px; width:150px">注文内容</th>
-                  <th style="padding: 10px; width:100px">合計金額</th>
+                  <th style="padding: 10px; width: 250px">イベント名</th>
+                  <th style="padding: 10px; width: 150px">開催日時</th>
+                  <th style="padding: 10px; width: 150px">注文内容</th>
+                  <th v-if="props.showDetail" style="padding: 10px; width: 100px">合計金額</th>
                 </tr>
               </thead>
               <tbody>
@@ -108,21 +104,21 @@ onMounted(async () => {
                   </td>
                   <td style="padding: 10px">{{ dateString(item.event.eventStartDatetime) }}</td>
                   <td style="padding: 10px">
-                    <div v-for="menu in item.order.menus" :key="menu.menu_id ">
+                    <div v-for="menu in item.order.menus" :key="menu.menu_id">
                       {{ menu.name }} <small>({{ menu.count }}個)</small>
                     </div>
                   </td>
 
-                  <td style="padding: 10px">{{ priceString(item.total) }}</td>
+                  <td v-if="props.showDetail" style="padding: 10px">{{ priceString(item.total) }}</td>
                 </tr>
               </tbody>
             </v-table>
           </v-col>
         </v-row>
       </v-card>
-      <v-card-title class="my-5" style="font-size:14px; white-space:pre-line;">
-        キャンセルされる場合は運営までお問い合わせください。<br>
-        注文締切後のキャンセルはできませんのでご了承ください。<br>
+      <v-card-title class="my-5" style="font-size: 14px; white-space: pre-line">
+        キャンセルされる場合は運営までお問い合わせください。<br />
+        注文締切後のキャンセルはできませんのでご了承ください。<br />
         連絡先：support@nijuni.jp
       </v-card-title>
     </v-col>
