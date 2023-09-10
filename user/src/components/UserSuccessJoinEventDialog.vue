@@ -10,7 +10,11 @@ import {
   where,
 } from 'firebase/firestore'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateWithDayOfWeekString, convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
+import {
+  dateWithDayOfWeekString,
+  convertDocumentDataToCommunity,
+  convertDocumentDataToEvent,
+} from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { EventMember } from '@/schemes/EventMember'
@@ -99,7 +103,9 @@ onMounted(async () => {
       </v-card-title>
       <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
       <v-card-text class="text-left pb-5">【開催場所】{{ state.event.eventAddress }}</v-card-text>
-      <v-card-text class="text-left pb-5">【開催日時】{{ dateWithDayOfWeekString(state.event.eventStartDatetime) }}</v-card-text>
+      <v-card-text class="text-left pb-5"
+        >【開催日時】{{ dateWithDayOfWeekString(state.event.eventStartDatetime) }}</v-card-text
+      >
       <v-card-text class="text-left pb-5">【開催内容】{{ state.event.eventDescription }}</v-card-text>
       <v-btn type="submit" rounded @click="closeDialog">確認しました</v-btn>
     </v-card>
