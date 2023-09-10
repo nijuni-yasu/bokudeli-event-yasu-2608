@@ -15,7 +15,6 @@ import {
   dateWithDayOfWeekString,
   convertDocumentDataToCommunity,
   convertDocumentDataToEvent,
-  convertDocumentDataToMenu,
 } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
@@ -23,6 +22,7 @@ import EventCartDialog from '@/components/EventCartDialog.vue'
 import { loadEventMembers } from '@/composable/loadEventMembers'
 import { EventMember } from '@/schemes/EventMember'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import EventMenuList from '@/components/EventMenuList.vue'
 
 const props = defineProps<{
   communityId: string
@@ -35,62 +35,20 @@ const eventDb = query(
   where('event_id', '==', props.eventId)
 )
 const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
-const partnerDb = collection(db, 'partners')
 
 const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
-  menus: [] as PartnerMenu[],
   eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
   members: [] as EventMember[],
   menuDisable: false as false | 'deadline' | 'limitPeople',
   isLoading: true,
 })
 
-const isDialogOpen = ref(false)
-const selectedMenu = ref(null as PartnerMenu | null)
-
-const selectMenu = (menu: PartnerMenu) => {
-  selectedMenu.value = menu
-  isDialogOpen.value = true
-}
-
-const isOpenAlert = ref(false)
-const alertMessage = ref('')
-
-const alertBody = computed({
-  get() {
-    return alertMessage.value
-  },
-  set(val) {
-    alertMessage.value = val
-    isOpenAlert.value = true
-  },
-})
-
-const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
-  switch (reason) {
-    case 'deadline':
-      alertBody.value = '注文期限をすぎました。カートに追加できません'
-      break
-    case 'limitPeople':
-      alertBody.value = '定員に達しました。カートに追加できません'
-      break
-  }
-}
-
 const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData>) => {
   const eventData = eventDocumentSnapshot.data()
   const event = convertDocumentDataToEvent(eventData)
   return event
-}
-
-const loadMenuData = async (partnerId: string) => {
-  const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
-  const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
-  menus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
-
-  return menus
 }
 
 const fetchData = async () => {
@@ -108,7 +66,6 @@ const fetchData = async () => {
   }
   state.eventSnapshot = eventDocumentSnapshot
   state.event = await loadEventData(eventDocumentSnapshot)
-  state.menus = await loadMenuData(state.event.partnerId)
   state.members = await loadEventMembers(props.communityId, props.eventId)
 
   if (state.event.eventDeadline && state.event.eventDeadline < new Date()) {
@@ -132,6 +89,26 @@ onBeforeRouteUpdate(async (to, from, next) => {
 onMounted(async () => {
   await fetchData()
 })
+
+const selectedMenuState = reactive({
+  menu: null as PartnerMenu | null,
+  isOpen: false,
+})
+
+const updateSelectedMenu = (menu: PartnerMenu) => {
+  selectedMenuState.menu = menu
+  selectedMenuState.isOpen = true
+}
+
+const alertState = reactive({
+  message: '',
+  isOpen: false,
+})
+
+const updateAlert = (message: string) => {
+  alertState.message = message
+  alertState.isOpen = true
+}
 </script>
 
 <template>
@@ -234,40 +211,11 @@ onMounted(async () => {
           </v-row>
         </v-card>
         <!-- メニュ -->
-        <v-row>
-          <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
-            <v-card class="mb-3 mx-0" color="text-center">
-              <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
-
-              <!-- title -->
-              <v-card-title class="justify-center pb-3 pre-line">
-                {{ menu.name }}
-              </v-card-title>
-              <v-card-text class="text-left pb-8">
-                {{ menu.description }}
-              </v-card-text>
-              <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
-              <v-row class="justify-center">
-                <v-col class="text-center">
-                  <v-btn
-                    :class="`px-5 my-4 ${state.menuDisable ? 'disable-menu-button' : ''}`"
-                    color="primary"
-                    rounded
-                    width="80%"
-                    @click="state.menuDisable === false ? selectMenu(menu) : showDisableAlert(state.menuDisable)"
-                  >
-                    カートに追加
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-card>
-          </v-col>
-
-          <!-- no result found -->
-          <v-col v-show="!state.menus.length" cols="12" class="text-center">
-            <h4 class="mt-4">メニューがありません</h4>
-          </v-col>
-        </v-row>
+        <event-menu-list
+          :partner-id="state.event.partnerId"
+          @select-menu="updateSelectedMenu"
+          @set-alert="updateAlert"
+        />
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">
@@ -276,16 +224,12 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <event-cart-dialog
-      v-if="selectedMenu && state.eventSnapshot"
-      v-model="isDialogOpen"
-      :menu="selectedMenu"
+      v-if="selectedMenuState.menu && state.eventSnapshot"
+      v-model="selectedMenuState.isOpen"
+      :menu="selectedMenuState.menu"
       :event-snapshot="state.eventSnapshot"
     ></event-cart-dialog>
-    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
+    <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
   </section>
 </template>
-<style lang="scss" scoped>
-.disable-menu-button {
-  opacity: 0.4615384615;
-}
-</style>
+<style lang="scss" scoped></style>
