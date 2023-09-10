@@ -3,7 +3,7 @@ import { db } from '@/firebase'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 
 import { getEventPath } from '@/router/utils'
-import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
+import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import OrderItem from '@/schemes/orderItem'
 
@@ -102,7 +102,7 @@ onMounted(async () => {
                       {{ item.event.eventName }}
                     </router-link>
                   </td>
-                  <td style="padding: 10px">{{ dateString(item.event.eventStartDatetime) }}</td>
+                  <td style="padding: 10px">{{ dateWithDayOfWeekString(item.event.eventStartDatetime) }}</td>
                   <td style="padding: 10px">
                     <div v-for="menu in item.order.menus" :key="menu.menu_id">
                       {{ menu.name }} <small>({{ menu.count }}個)</small>
