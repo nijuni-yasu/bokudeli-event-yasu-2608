@@ -23,15 +23,16 @@ const submitSearch = () => {
     <v-col cols="10">
       <v-card flat class="pa-3 mt-2">
         <v-form class="multi-col-validation">
-          <v-card-title>
-            <v-icon size="50" class="text--primary me-3" icon="mdi-chart-timeline-variant" />
-            <span>お届け先郵便番号</span>
+          <v-card-title class="pa-5">
+            <v-icon size="50" class="text--primary me-3" icon="mdi-map-marker" />
+            <span>郵便番号</span>
           </v-card-title>
 
           <v-card-text class="pt-5">
             <v-row class="justify-center">
               <v-col cols="12">
-                <v-text-field v-model="state.postcode" outlined dense label="お届け先 郵便番号"></v-text-field>
+                <v-text-field v-model="state.postcode" outlined dense label="お届け先 郵便番号"
+                ></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>

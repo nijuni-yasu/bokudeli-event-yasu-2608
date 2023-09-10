@@ -34,18 +34,32 @@ const resetForm = () => {
       <v-card flat class="pa-3 mt-2">
         <v-form class="multi-col-validation">
           <v-card-title class="pa-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
-            <span>イベント情報</span>
+            <v-icon size="50" class="text--primary me-3" icon="mdi-phone-classic" />
+            <span>店舗への連絡事項</span>
           </v-card-title>
 
           <v-card-text class="pt-5">
             <v-row class="justify-center">
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="イベント画像"></v-text-field>
+                <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="注文者 氏名"></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="イベントタイトル"></v-text-field>
+                <v-text-field v-model="draftEventData.eventName" outlined dense label="注文者 会社名"></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field v-model="draftEventData.eventName" outlined dense label="注文者 電話番号"></v-text-field>
+              </v-col>
+
+
+              <v-col cols="12">
+                <v-textarea
+                  v-model="draftEventData.eventDescription"
+                  outlined
+                  rows="3"
+                  label="配達場所の注意事項"
+                ></v-textarea>
               </v-col>
 
               <v-col cols="12">
@@ -53,54 +67,15 @@ const resetForm = () => {
                   v-model="draftEventData.eventDescription"
                   outlined
                   rows="3"
-                  label="イベント詳細"
+                  label="イベントの注意事項・相談事項"
                 ></v-textarea>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field outlined dense label="お届け先 郵便番号"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventAddress" outlined dense label="お届け先 住所"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="draftEventData.eventStartDatetime"
-                  outlined
-                  dense
-                  label="開催日時"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="draftEventData.eventStartDatetime"
-                  outlined
-                  dense
-                  label="終了日時"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventDeadline" outlined dense label="注文締切日時"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field outlined dense label="定員"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
 
-          <!-- Activity -->
           <v-card-text>
-            <v-switch hide-details class="mt-0">
-              <template #label>
-                公開イベント
-              </template>
-            </v-switch>
-          </v-card-text>
-          <v-card-text>
-            <v-btn color="primary" class="me-3 mt-3" @click="submit">次へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" @click="submit">上記内容で店舗に予約申請する</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" type="save">下書き保存</v-btn>
             <v-btn outlined class="mt-3" color="secondary" type="reset" @click="resetForm">リセット</v-btn>
           </v-card-text>
         </v-form>
