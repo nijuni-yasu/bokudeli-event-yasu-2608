@@ -24,8 +24,6 @@ import { loadEventMembers } from '@/composable/loadEventMembers'
 import { EventMember } from '@/schemes/EventMember'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
-const covidImage = new URL('@/assets/images/bokudeli/covid19.png', import.meta.url).href
-
 const props = defineProps<{
   communityId: string
   eventId: string
@@ -81,21 +79,21 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
   }
 }
 
-const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData> | undefined) => {
-  if (!eventDocumentSnapshot) {
-    return undefined
-  }
-
+const loadEventData = async (eventDocumentSnapshot: QueryDocumentSnapshot<DocumentData>) => {
   const eventData = eventDocumentSnapshot.data()
   const event = convertDocumentDataToEvent(eventData)
-
-  const menuSnapshot = await getDocs(collection(partnerDb, event.partnerId, 'menus'))
-  const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(event.partnerId, doc.id, doc.data()))
-  menus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
-  return { event, menus }
+  return event
 }
 
-onMounted(async () => {
+const loadMenuData = async (partnerId: string) => {
+  const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
+  const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
+  menus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
+
+  return menus
+}
+
+const fetchData = async () => {
   const [eventSnapshot, communitySnapshot] = await Promise.all([getDocs(eventDb), getDocs(communityDb)])
 
   const communityData = communitySnapshot.docs.shift()?.data()
@@ -105,17 +103,13 @@ onMounted(async () => {
   }
 
   const eventDocumentSnapshot = eventSnapshot.docs.shift()
-
-  const [eventInfo, members] = await Promise.all([
-    loadEventData(eventDocumentSnapshot),
-    loadEventMembers(props.communityId, props.eventId),
-  ])
-  if (eventInfo) {
-    state.eventSnapshot = eventDocumentSnapshot
-    state.event = eventInfo.event
-    state.menus = eventInfo.menus
+  if (!eventDocumentSnapshot) {
+    return
   }
-  state.members = members
+  state.eventSnapshot = eventDocumentSnapshot
+  state.event = await loadEventData(eventDocumentSnapshot)
+  state.menus = await loadMenuData(state.event.partnerId)
+  state.members = await loadEventMembers(props.communityId, props.eventId)
 
   if (state.event.eventDeadline && state.event.eventDeadline < new Date()) {
     state.menuDisable = 'deadline'
@@ -126,6 +120,17 @@ onMounted(async () => {
   }
 
   state.isLoading = false
+}
+
+onBeforeRouteUpdate(async (to, from, next) => {
+  if (to.params.eventId !== from.params.eventId) {
+    await fetchData()
+  }
+  next()
+})
+
+onMounted(async () => {
+  await fetchData()
 })
 </script>
 
@@ -141,6 +146,7 @@ onMounted(async () => {
           </v-row>
           <v-row>
             <v-col>
+              <!-- イベント情報 -->
               <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10 pre-line">
                 {{ state.event.eventName }}
               </v-card-title>
@@ -182,6 +188,7 @@ onMounted(async () => {
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【定員】{{ state.event.eventMaxPeople }} 人
               </v-card-text>
+              <!-- メンバー情報 -->
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【参加人数】{{ state.members.length }} 人
               </v-card-text>
@@ -226,6 +233,7 @@ onMounted(async () => {
             </v-col>
           </v-row>
         </v-card>
+        <!-- メニュ -->
         <v-row>
           <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
             <v-card class="mb-3 mx-0" color="text-center">
