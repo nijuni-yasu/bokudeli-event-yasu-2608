@@ -20,8 +20,6 @@ const state = reactive({
   isLoading: true,
 })
 
-
-
 const { storedUser } = storeToRefs(useStoreStoredUser())
 let isUserSuccessJoinEventDialogVisible = ref(false)
 
@@ -40,13 +38,15 @@ onMounted(async () => {
   state.userData = convertDocumentDataToStoredUser(userDoc.data())
   state.isLoading = false
 })
-
 </script>
 
 <template>
   <div id="user-view">
-    <user-success-join-event-dialog v-model="isUserSuccessJoinEventDialogVisible" :event-id="eventId"
-      :community-account="communityAccount"></user-success-join-event-dialog>
+    <user-success-join-event-dialog
+      v-model="isUserSuccessJoinEventDialogVisible"
+      :event-id="eventId"
+      :community-account="communityAccount"
+    ></user-success-join-event-dialog>
     <v-row v-if="!state.isLoading" justify="center">
       <v-col cols="12" md="3" sm="3">
         <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId"></user-bio-panel>

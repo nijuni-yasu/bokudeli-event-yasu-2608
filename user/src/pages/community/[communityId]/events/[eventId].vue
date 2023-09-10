@@ -12,7 +12,7 @@ import {
 import { getCommunityPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
-  dateString,
+  dateWithDayOfWeekString,
   convertDocumentDataToCommunity,
   convertDocumentDataToEvent,
   convertDocumentDataToMenu,
@@ -141,7 +141,7 @@ onMounted(async () => {
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10">
+              <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10 pre-line">
                 {{ state.event.eventName }}
               </v-card-title>
               <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
@@ -170,22 +170,14 @@ onMounted(async () => {
                 【開催場所】{{ state.event.eventAddress }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【注文期限】{{ dateString(state.event.eventDeadline) }}
+                【開催日時】{{ dateWithDayOfWeekString(state.event.eventStartDatetime) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【開催日時】{{ dateString(state.event.eventStartDatetime) }}
+                【注文期限】{{ dateWithDayOfWeekString(state.event.eventDeadline) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shopName }} </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px">
                 【開催内容】{{ state.event.eventDescription }}
-              </v-card-text>
-              <v-card-text class="text-left pb-8 text-subtitle-1">
-                【コロナ感染対策】
-                <v-row class="justify-center">
-                  <v-col class="d-flex child-flex" cols="12">
-                    <v-img class="ma-2" :src="covidImage" />
-                  </v-col>
-                </v-row>
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【定員】{{ state.event.eventMaxPeople }} 人
@@ -240,7 +232,7 @@ onMounted(async () => {
               <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
 
               <!-- title -->
-              <v-card-title class="justify-center pb-3">
+              <v-card-title class="justify-center pb-3 pre-line">
                 {{ menu.name }}
               </v-card-title>
               <v-card-text class="text-left pb-8">

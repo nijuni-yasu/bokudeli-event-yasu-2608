@@ -10,11 +10,7 @@ import {
   where,
 } from 'firebase/firestore'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import {
-  dateString,
-  convertDocumentDataToCommunity,
-  convertDocumentDataToEvent
-} from '@/schemes/converter'
+import { dateWithDayOfWeekString, convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { EventMember } from '@/schemes/EventMember'
@@ -30,7 +26,7 @@ interface Emit {
 }
 
 const props = defineProps<Props>()
-  const emit = defineEmits<Emit>()
+const emit = defineEmits<Emit>()
 
 const dialog = computed({
   get: () => props.modelValue,
@@ -79,9 +75,7 @@ onMounted(async () => {
 
   const eventDocumentSnapshot = eventSnapshot.docs.shift()
 
-  const [eventInfo] = await Promise.all([
-    loadEventData(eventDocumentSnapshot),
-  ])
+  const [eventInfo] = await Promise.all([loadEventData(eventDocumentSnapshot)])
   if (eventInfo) {
     state.eventSnapshot = eventDocumentSnapshot
     state.event = eventInfo.event
@@ -89,27 +83,25 @@ onMounted(async () => {
 
   state.isLoading = false
 })
-
 </script>
 
 <template>
-  <v-dialog v-model="dialog" :width="$vuetify.display.smAndDown ? 'auto' : 650">
-    <v-card class="pa-sm-9 pa-5">
+  <v-dialog v-model="dialog" :width="$vuetify.display.smAndDown ? 'auto' : 650" persistent>
+    <v-card class="pa-sm-9 pa-5 pre-line">
       <v-card-item class="text-center">
-        <v-card-title class="text-h5"> ご飯を注文いたしました。 </v-card-title>
+        <v-card-title class="text-h4 font-weight-semibold">🍱 注文完了 🍱</v-card-title>
       </v-card-item>
-
       <v-card-text>
         <p>下記のイベントに参加いたします。</p>
       </v-card-text>
-      <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10">
-                {{ state.event.eventName }}
+      <v-card-title class="justify-center text-sm-h5 text-xs-h6 font-weight-semibold pb-5 pre-line">
+        {{ state.event.eventName }}
       </v-card-title>
       <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
-      <v-card-text class="text-left pb-8 text-subtitle-1">【開催場所】{{ state.event.eventAddress }}</v-card-text>
-      <v-card-text class="text-left pb-8 text-subtitle-1">【開催日時】{{ dateString(state.event.eventStartDatetime) }}</v-card-text>
-      <v-card-text class="text-left pb-8 text-subtitle-1">【開催内容】{{ state.event.eventDescription }}</v-card-text>
-      <v-btn type="submit" rounded @click="closeDialog"> 確認しました。 </v-btn>
+      <v-card-text class="text-left pb-5">【開催場所】{{ state.event.eventAddress }}</v-card-text>
+      <v-card-text class="text-left pb-5">【開催日時】{{ dateWithDayOfWeekString(state.event.eventStartDatetime) }}</v-card-text>
+      <v-card-text class="text-left pb-5">【開催内容】{{ state.event.eventDescription }}</v-card-text>
+      <v-btn type="submit" rounded @click="closeDialog">確認しました</v-btn>
     </v-card>
   </v-dialog>
 </template>

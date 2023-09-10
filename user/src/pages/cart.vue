@@ -3,32 +3,23 @@ import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
+import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import Stripe from 'stripe'
-import {
-  Timestamp,
-  collectionGroup,
-  deleteDoc,
-  getDocs,
-  orderBy,
-  query,
-  setDoc,
-  where,
-} from 'firebase/firestore'
+import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
-const stripe = new Stripe(stripeApiKey, {apiVersion: "2022-11-15", maxNetworkRetries: 3})
+const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
 let origin = process.env.NODE_ENV === 'development' ? `http://localhost:5173` : `${import.meta.env.VITE_ORIGIN_HOST}`
 
 if (!origin) {
   // in-view対応
-  origin = "https://bokudeli-event-dev.web.app/"
+  origin = 'https://bokudeli-event-dev.web.app/'
 }
 
 type Cart = {
@@ -88,46 +79,44 @@ const selectedMenu = ref({} as OrderMenu)
 const startOrderProcess = async () => {
   const order = selectedOrder.value
   const orderId = order.order_id
-  const lineItems = order.menus.map(menu => {
-  return {
-    price_data: {
-      currency: 'jpy',
-      tax_behavior: 'inclusive',
-      product_data: {
-        name: menu.name,
-        images: [menu.imageUrl],
-        metadata: {
-          'partner_id': menu.partner_id
+  const lineItems = order.menus.map((menu) => {
+    return {
+      price_data: {
+        currency: 'jpy',
+        tax_behavior: 'inclusive',
+        product_data: {
+          name: menu.name,
+          images: [menu.imageUrl],
+          metadata: {
+            partner_id: menu.partner_id,
+          },
         },
+        unit_amount: menu.price,
       },
-      unit_amount: menu.price,
-    },
-    quantity: menu.count
-  };
-});
+      quantity: menu.count,
+    }
+  })
 
   try {
-      const session = await stripe.checkout.sessions.create({
-        success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
-        cancel_url: `${origin}/`,
-        customer_creation: 'if_required',
-        line_items: lineItems,
-        mode: 'payment',
-        payment_method_types: ["card"],
-        metadata: {
-          'eventId': order.event_id,
-          'communityId': order.community_id,
-          'communityAccount':order.community_account,
-          'orderId': orderId,
-          'userId': userId.value
-        }
-      });
-      window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-
-
-    } catch (err) {
-      alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'
-    }
+    const session = await stripe.checkout.sessions.create({
+      success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
+      cancel_url: `${origin}/`,
+      customer_creation: 'if_required',
+      line_items: lineItems,
+      mode: 'payment',
+      payment_method_types: ['card'],
+      metadata: {
+        eventId: order.event_id,
+        communityId: order.community_id,
+        communityAccount: order.community_account,
+        orderId: orderId,
+        userId: userId.value,
+      },
+    })
+    window.location.href = session.url || getEventPath(order.community_account, order.event_id)
+  } catch (err) {
+    alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'
+  }
 }
 
 const showConfirm = async (cart: Cart) => {
@@ -241,10 +230,10 @@ onMounted(async () => {
             【開催場所】{{ cart.event.eventAddress }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催日時】{{ dateString(cart.event.eventStartDatetime) }}
+            【開催日時】{{ dateWithDayOfWeekString(cart.event.eventStartDatetime) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【注文期限】{{ dateString(cart.event.eventDeadline) }}
+            【注文期限】{{ dateWithDayOfWeekString(cart.event.eventDeadline) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
 
@@ -281,11 +270,11 @@ onMounted(async () => {
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                class="ma-10 text-h6"
+                class="mx-2 my-10 text-lg-h5"
                 color="grey-900"
                 size="x-large"
                 rounded
-                width="70%"
+                width="85%"
                 @click="showConfirm(cart)"
               >
                 注文してイベントに参加する
@@ -304,7 +293,7 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
-      注文を確定しますか？
+      クレジットカード決済の注文に進みますか？
     </confirm-dialog>
     <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
       カートから削除しますか？

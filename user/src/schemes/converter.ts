@@ -13,6 +13,23 @@ export const dateString = (date: Date | null): string => {
   return format(date, 'yyyy-MM-dd HH:mm')
 }
 
+export const dateWithDayOfWeekString = (date: Date | null): string => {
+  if (!date) return ''
+  return formatDateWithDayOfWeek(date)
+}
+function formatDateWithDayOfWeek(date: Date) {
+  const options: any = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    weekday: 'short', // 曜日を短縮形で表示 (例: 金)
+  }
+  const formattedDate = date.toLocaleDateString('ja-JP', options)
+  return formattedDate
+}
+
 export const priceString = (price: number): string => {
   return `¥${price.toLocaleString()}`
 }
