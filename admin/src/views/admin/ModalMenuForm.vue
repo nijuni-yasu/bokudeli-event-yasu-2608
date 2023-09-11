@@ -297,7 +297,7 @@
       },
       menu_stock_per_event: {
         type: Number,
-        default: 0,
+        default: null,
       },
       is_soldout: {
         type: Boolean,

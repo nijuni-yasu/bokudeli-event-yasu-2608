@@ -253,25 +253,15 @@
         })
       },
       deleteMenu: function (menuId) {
-        console.log(menuId)
-        var me = this
+        const me = this
         if (confirm('メニューを削除しますか？')) {
-          db
-            .collection('partners')
-            .doc(partnerId)
-            .collection('menus')
-            .doc(menuId)
-            .update({
-              is_deleted: true,
-              deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            }).then(function () {
-              me.menuView()
-            }).catch(function (error) {
-              alert('メニューを削除できませんでした')
-              console.log('error: ' + error)
-            })
-        } else {
-          console.log('キャンセルされました')
+          db.collection('partners').doc(partnerId).collection('menus').doc(menuId).delete().then(() => {
+            window.alert('メニューを削除しました')
+            me.menuView()
+          }).catch((error) => {
+            window.alert('メニューを削除できませんでした')
+            console.error(error)
+          })
         }
       },
     },
