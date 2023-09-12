@@ -165,6 +165,7 @@ const updateAlert = (message: string) => {
         <event-menu-list
           :partner-id="state.event.partnerId"
           :event-deadline="state.event.eventDeadline"
+          :event-start-datetime="state.event.eventStartDatetime"
           :current-member-count="state.currentMemberCount"
           :event-max-people="state.event.eventMaxPeople"
           @select-menu="updateSelectedMenu"

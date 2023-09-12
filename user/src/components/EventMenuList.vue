@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { convertDocumentDataToMenu } from '@/schemes/converter'
+import { convertDocumentDataToMenu, dateString } from '@/schemes/converter'
 import PartnerMenu from '@/schemes/partnerMenu'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, connectFirestoreEmulator, getDocs } from 'firebase/firestore'
+import { parseISO, compareDesc } from 'date-fns'
 
 const props = defineProps<{
   partnerId: string
   eventDeadline: Date | null
+  eventStartDatetime: Date | null
   currentMemberCount: number | undefined
   eventMaxPeople: number
 }>()
@@ -26,9 +28,23 @@ const partnerDb = collection(db, 'partners')
 const loadMenuData = async (partnerId: string) => {
   const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
   const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
-  menus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
-  return menus
+  // 期間限定メニューをフィルタリング
+  const withinDateMenus = menus.filter(menu => {
+    // 期間設定がない場合はreturn
+    if (!menu.dateStart || !menu.dateEnd){
+      return true
+      // 期間設定がある場合、イベントの日付と比較
+    } else {
+        const eventStartDate = parseISO(dateString(props.eventStartDatetime))
+        const dateStart = parseISO(menu.dateStart)
+        const dateEnd = parseISO(menu.dateEnd)
+        return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
+      }
+  })
+  withinDateMenus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
+
+  return withinDateMenus
 }
 
 const fetchData = async () => {
