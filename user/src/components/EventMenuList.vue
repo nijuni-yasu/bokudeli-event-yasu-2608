@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const state = reactive({
   menus: [] as PartnerMenu[],
-  menuDisable: false as false | 'deadline' | 'limitPeople',
+  menuDisable: false as false | 'deadline' | 'limitPeople' | 'isSoldout',
   isLoading: true,
 })
 
@@ -99,20 +99,20 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'isSoldout') => {
             {{ menu.description }}
           </v-card-text>
           <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
-          <v-row v-if="menu.isSoldout === false" class="justify-center">
+          <v-row v-if="state.menuDisable === false && menu.isSoldout === false" class="justify-center">
             <v-col class="text-center">
               <v-btn
-                :class="`px-5 my-4 ${state.menuDisable ? 'disable-menu-button' : ''}`"
+                class="`px-5 my-4"
                 color="primary"
                 rounded
                 width="80%"
-                @click="state.menuDisable === false ? selectMenu(menu) : showDisableAlert(state.menuDisable)"
+                @click="selectMenu(menu)"
               >
                 カートに追加
               </v-btn>
             </v-col>
           </v-row>
-          <v-row v-else-if="menu.isSoldout === true" class="justify-center">
+          <v-row v-else-if="state.menuDisable === false && menu.isSoldout === true" class="justify-center">
             <v-col class="text-center">
               <v-btn
                 class="px-5 my-4 disable-menu-button"
@@ -122,6 +122,19 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'isSoldout') => {
                 @click="showDisableAlert('isSoldout')"
               >
                 売り切れ
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row v-else-if="state.menuDisable" class="justify-center">
+            <v-col class="text-center">
+              <v-btn
+                class="px-5 my-4 disable-menu-button"
+                color="primary"
+                rounded
+                width="80%"
+                @click="showDisableAlert(state.menuDisable)"
+              >
+                カートに追加
               </v-btn>
             </v-col>
           </v-row>
