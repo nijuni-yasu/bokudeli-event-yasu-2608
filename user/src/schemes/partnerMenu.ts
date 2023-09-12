@@ -7,6 +7,7 @@ type PartnerMenu = {
   description: string
   createdAt: Date | null
   updatedAt: Date | null
+  isSoldout?: boolean
 }
 
 export default PartnerMenu

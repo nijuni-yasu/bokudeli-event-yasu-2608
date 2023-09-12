@@ -70,13 +70,16 @@ const alertBody = computed({
   },
 })
 
-const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
+const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'isSoldout') => {
   switch (reason) {
     case 'deadline':
       alertBody.value = '注文期限をすぎました。カートに追加できません'
       break
     case 'limitPeople':
       alertBody.value = '定員に達しました。カートに追加できません'
+      break
+    case 'isSoldout':
+      alertBody.value = '売り切れました。カートに追加できません'
       break
   }
 }
@@ -96,7 +99,7 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
             {{ menu.description }}
           </v-card-text>
           <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
-          <v-row class="justify-center">
+          <v-row v-if="menu.isSoldout === false" class="justify-center">
             <v-col class="text-center">
               <v-btn
                 :class="`px-5 my-4 ${state.menuDisable ? 'disable-menu-button' : ''}`"
@@ -106,6 +109,19 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
                 @click="state.menuDisable === false ? selectMenu(menu) : showDisableAlert(state.menuDisable)"
               >
                 カートに追加
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row v-else-if="menu.isSoldout === true" class="justify-center">
+            <v-col class="text-center">
+              <v-btn
+                class="px-5 my-4 disable-menu-button"
+                color="error"
+                rounded
+                width="80%"
+                @click="showDisableAlert('isSoldout')"
+              >
+                売り切れ
               </v-btn>
             </v-col>
           </v-row>
@@ -126,6 +142,6 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 </template>
 <style lang="scss" scoped>
 .disable-menu-button {
-  opacity: 0.4615384615;
+  opacity: 0.6;
 }
 </style>
