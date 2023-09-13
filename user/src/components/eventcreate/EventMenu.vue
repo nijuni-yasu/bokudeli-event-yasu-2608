@@ -21,16 +21,16 @@ const submit = () => {
       <v-col cols="10">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
-            <v-card-title class="mt-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-chart-timeline-variant" />
+            <v-card-title class="pa-5">
+              <v-icon size="50" class="text--primary me-3" icon="mdi-food-fork-drink" />
               <span>メニュー</span>
             </v-card-title>
 
             <!-- Activity -->
             <v-row>
-              <v-col v-for="item in props.menus" :key="item.id" md="3" sm="3" cols="12">
+              <v-col v-for="item in props.menus" :key="item.id" md="4" sm="4" cols="12">
                 <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
-                  <v-img :src="item.imageUrl" cover aspect-ratio="1.91" />
+                  <v-img :src="item.imageUrl" cover aspect-ratio="1" />
 
                   <!-- title -->
                   <v-card-title class="justify-center pb-3 pre-line">

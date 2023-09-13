@@ -28,8 +28,8 @@ const submit = (shop: Shop) => {
       <v-col cols="10">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
-            <v-card-title>
-              <v-icon size="50" class="text--primary me-3" icon="mdi-chart-timeline-variant" />
+            <v-card-title class="pa-5">
+              <v-icon size="50" class="text--primary me-3" icon="mdi-store" />
               <span>お店</span>
             </v-card-title>
 
@@ -46,9 +46,9 @@ const submit = (shop: Shop) => {
                   <v-card-text class="text-left pb-3">
                     {{ item.shop_description }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
-                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text>
-                  <v-btn color="primary" class="my-3" @click="submit(item)"> このお店にする </v-btn>
+                  <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
+                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
+                  <v-btn color="primary" class="ma-5" @click="submit(item)"> このお店にする </v-btn>
                 </v-card>
               </v-col>
 

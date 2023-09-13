@@ -3,6 +3,7 @@ import EventAddress from '@/components/eventcreate/EventAddress.vue'
 import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventInfo from '@/components/eventcreate/EventInfo.vue'
+import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
 import { collection, collectionGroup, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { convertDocumentDataToCommunity, convertDocumentDataToMenu } from '@/schemes/converter'
@@ -140,6 +141,12 @@ const submit = (savedEvent: Partial<BokudeliEvent>) => {
         <v-expansion-panel-title>イベント情報</v-expansion-panel-title>
         <v-expansion-panel-text>
           <event-info :event="state.event" @submit="submit" />
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+      <v-expansion-panel value="shopNotice">
+        <v-expansion-panel-title>店舗への連絡事項</v-expansion-panel-title>
+        <v-expansion-panel-text>
+          <event-shop-notice :event="state.event" @submit="submit" />
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
