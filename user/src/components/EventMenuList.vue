@@ -30,17 +30,17 @@ const loadMenuData = async (partnerId: string) => {
   const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
 
   // 期間限定メニューをフィルタリング
-  const withinDateMenus = menus.filter(menu => {
+  const withinDateMenus = menus.filter((menu) => {
     // 期間設定がない場合はreturn
-    if (!menu.dateStart || !menu.dateEnd){
+    if (!menu.dateStart || !menu.dateEnd) {
       return true
       // 期間設定がある場合、イベントの日付と比較
     } else {
-        const eventStartDate = parseISO(dateString(props.eventStartDatetime))
-        const dateStart = parseISO(menu.dateStart)
-        const dateEnd = parseISO(menu.dateEnd)
-        return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
-      }
+      const eventStartDate = parseISO(dateString(props.eventStartDatetime))
+      const dateStart = parseISO(menu.dateStart)
+      const dateEnd = parseISO(menu.dateEnd)
+      return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
+    }
   })
   withinDateMenus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
@@ -117,13 +117,7 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'isSoldout') => {
           <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
           <v-row v-if="state.menuDisable === false && menu.isSoldout === false" class="justify-center">
             <v-col class="text-center">
-              <v-btn
-                class="`px-5 my-4"
-                color="primary"
-                rounded
-                width="80%"
-                @click="selectMenu(menu)"
-              >
+              <v-btn class="`px-5 my-4" color="primary" rounded width="80%" @click="selectMenu(menu)">
                 カートに追加
               </v-btn>
             </v-col>
