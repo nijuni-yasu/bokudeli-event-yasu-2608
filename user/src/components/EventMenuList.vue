@@ -50,26 +50,24 @@ const loadMenuData = async (partnerId: string) => {
 const fetchData = async () => {
   state.menus = await loadMenuData(props.partnerId)
   state.isLoading = false
+
+  if (props.eventDeadline && props.eventDeadline < new Date()) {
+    state.menuDisable = 'deadline'
+  } else if (props.currentMemberCount && props.currentMemberCount >= props.eventMaxPeople) {
+    state.menuDisable = 'limitPeople'
+  } else {
+    state.menuDisable = false
+  }
 }
 
 onBeforeRouteUpdate(async (to, from, next) => {
-  if (to.params.eventId !== from.params.eventId) {
-    await fetchData()
-  }
+  await fetchData()
   next()
 })
 
 onMounted(async () => {
   await fetchData()
 })
-
-if (props.eventDeadline && props.eventDeadline < new Date()) {
-  state.menuDisable = 'deadline'
-} else if (props.currentMemberCount && props.currentMemberCount >= props.eventMaxPeople) {
-  state.menuDisable = 'limitPeople'
-} else {
-  state.menuDisable = false
-}
 
 const selectMenu = (menu: PartnerMenu) => {
   emit('selectMenu', menu)
