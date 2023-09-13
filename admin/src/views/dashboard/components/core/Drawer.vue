@@ -141,6 +141,11 @@
           title: 'メニュー設定',
           to: 'menu',
         },
+        // {
+        //   icon: 'mdi-format-list-bulleted',
+        //   title: 'オプション設定',
+        //   to: 'option',
+        // },
         {
           icon: 'mdi-bicycle',
           title: '注文一覧',
@@ -156,11 +161,11 @@
           title: '店舗マニュアル',
           href: 'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing',
         },
-        {
-          icon: 'mdi-message-alert-outline',
-          title: 'サポートLINE',
-          href: 'https://lin.ee/7VwZjvC',
-        },
+        // {
+        //   icon: 'mdi-message-alert-outline',
+        //   title: 'サポートLINE',
+        //   href: 'https://lin.ee/7VwZjvC',
+        // },
         // {
         //   icon: 'mdi-account',
         //   title: 'アカウント設定',

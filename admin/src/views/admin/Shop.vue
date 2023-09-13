@@ -199,12 +199,12 @@
                   <validation-provider
                     v-slot="{ errors }"
                     name="店舗紹介文"
-                    rules="required|max:60"
+                    rules="required|max:300"
                   >
                     <v-text-field
                       v-model="shop_description"
                       :error-messages="errors"
-                      hint="店舗紹介文は最大60文字までです"
+                      hint="店舗紹介文は最大300文字までです"
                     />
                   </validation-provider>
                 </v-col>
@@ -655,100 +655,6 @@
           <form @submit.prevent="handleSubmit(validateForm)">
             <base-material-card
               color="success"
-              icon="mdi-qrcode"
-              title="支払い方法（QRコード決済）"
-              class="py-3 px-5"
-            >
-              <v-row
-                justify="center"
-                dense
-              >
-                <v-col
-                  class="text-right body-1 grey--text"
-                  cols="1"
-                />
-                <v-col
-                  cols="9"
-                  sm="8"
-                >
-                  <v-container
-                    class="primary--text"
-                    fluid
-                  >
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="現金"
-                      value="現金"
-                      disabled
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="クレジットカード"
-                      value="クレジットカード"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="PayPay(QRコード決済)"
-                      value="PayPay(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="LINE Pay(QRコード決済)"
-                      value="LINE pay(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="楽天ペイ(QRコード決済)"
-                      value="楽天ペイ(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="d払い(QRコード決済)"
-                      value="d払い(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="メルペイ(QRコード決済)"
-                      value="メルペイ(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="au PAY(QRコード決済)"
-                      value="au PAY(QRコード決済)"
-                    />
-                    <v-checkbox
-                      v-model="shop_order_method"
-                      label="ファミペイ(QRコード決済)"
-                      value="ファミペイ(QRコード決済)"
-                    />
-                  </v-container>
-                </v-col>
-              </v-row>
-              <v-card-text
-                class="px-20 my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
-              >
-                ※ 商品のお受け渡し時に選択できるお支払い方法です。配送時にQRコードを表示するアプリや掲示物を持参してください。
-              </v-card-text>
-              <div class="pa-3 text-center">
-                <v-btn
-                  color="success"
-                  default
-                  type="submit"
-                >
-                  保存する
-                </v-btn>
-              </div>
-            </base-material-card>
-          </form>
-        </validation-observer>
-      </v-col>
-
-      <v-col cols="12">
-        <validation-observer v-slot="{ handleSubmit }">
-          <form @submit.prevent="handleSubmit(validateForm)">
-            <base-material-card
-              color="success"
               icon="mdi-clock-time-three-outline"
               title="営業曜日・配送時間"
               class="py-3 px-5"
@@ -908,30 +814,6 @@
                     />
                   </v-col>
                 </v-row> -->
-                <v-row
-                  align="center"
-                >
-                  <v-col
-                    class="text-right body-1 grey--text"
-                    cols="12"
-                    sm="2"
-                  >
-                    お届け時間(分)
-                  </v-col>
-                  <v-col
-                    class="d-flex"
-                    cols="12"
-                    sm="8"
-                  >
-                    <v-select
-                      v-model="shop_time_delivery"
-                      :items="shop_time_delivery_array"
-                      label="お届け時間(分)"
-                      hint="※注文を受けてからお届け完了までの時間。例えば「60」と設定すると、ユーザーは今の時刻から60分後以降のお届け日時を指定して注文することができます。"
-                      persistent-hint
-                    />
-                  </v-col>
-                </v-row>
               </v-container>
               <div class="pa-3 text-center">
                 <v-btn
@@ -1208,8 +1090,8 @@
       shop_name: '',
       shop_postcode: '',
       shop_address: '',
-      shop_address_latitude: '',
-      shop_address_longitude: '',
+      shop_address_latitude: 0,
+      shop_address_longitude: 0,
       shop_phone: '',
       shop_url: '',
       shop_url_twitter: '',
@@ -1239,7 +1121,6 @@
       ],
       shop_deadline_date: '当日',
       shop_deadline_time: '11:00',
-      shop_time_delivery: '60',
       shop_margin_time: '30',
       shop_email: firebase.auth().currentUser.email,
       shop_email_sub1: '',
@@ -1249,11 +1130,10 @@
       shop_range_array: ['', 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 40, 45, 50],
       shop_genre_array: ['弁当', '丼もの', 'おにぎり', '和食', '寿司', '魚介料理', '海鮮料理', '天ぷら', '揚げ物', 'そば', 'うどん', '麺類', 'うなぎ・どじょう・あなご', '焼鳥', '串焼', '鳥料理', 'すき焼き', 'しゃぶしゃぶ', 'おでん', 'お好み焼き', 'たこ焼き', '日本料理', '郷土料理', 'ステーキ', 'ハンバーグ', '鉄板焼き', 'パスタ', 'ピザ', 'ハンバーガー', '洋食', '欧風料理', 'フレンチ', 'イタリアン', 'スペイン料理', '西洋各国料理', '中華料理', '餃子', '肉まん', '中華粥', '中華麺', '韓国料理', '東南アジア料理', '南アジア料理', '西アジア料理', '中南米料理', 'アフリカ料理', 'アジア・エスニック', 'カレーライス', '欧風カレー', 'インドカレー', 'スパイスカレー', 'タイカレー', 'スープカレー', 'カレー', '焼肉', 'ホルモン', 'ジンギスカン', 'ちゃんこ鍋', 'うどんすき', 'もつ鍋', '水炊き', 'ちりとり鍋・てっちゃん鍋', '中国鍋・火鍋', '韓国鍋', 'タイスキ', '鍋', '居酒屋', 'ダイニングバー', '創作料理', 'イノベーティブ・フュージョン', '無国籍料理', 'ファミレス', 'レストラン', '自然食', '薬膳', 'ラーメン', '油そば', '台湾まぜそば', '汁なし担々麺', 'つけ麺', 'カフェ', '喫茶店', 'コーヒー専門店', '紅茶専門店', '中国茶専門店', '日本茶専門店', 'パン', 'サンドイッチ', 'ベーグル', '洋菓子', '和菓子・甘味処', '中華菓子', 'スイーツ', '低糖質', 'キッチンカー', 'キムチ', '焼き芋', 'その他'],
       shop_time_array: ['', '6:00', '6:15', '6:30', '6:45', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15', '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45', '19:00', '19:15', '19:30', '19:45', '20:00', '20:15', '20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30', '22:45', '23:00', '23:15', '23:30', '23:45', '24:00'],
-      shop_deadline_date_array: ['当日', '前日', '前々日', '3日前'],
+      shop_deadline_date_array: ['当日', '前日', '2日前', '3日前', '4日前', '5日前'],
       shop_deadline_time_array: ['6:00', '6:15', '6:30', '6:45', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15', '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45', '19:00', '19:15', '19:30', '19:45', '20:00', '20:15', '20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30', '22:45', '23:00', '23:15', '23:30', '23:45', '24:00'],
       shop_margin_time_array: ['10', '15', '20', '30', '40', '50', '60'],
-      shop_time_delivery_array: ['10', '20', '30', '40', '50', '60', '70', '80', '90', '100', '110', '120', '130', '140', '150', '160', '170', '180'],
-      shop_order_method: ['現金'],
+      // shop_order_method: ['現金'],
       shop_holidays: [],
       menu: false,
       shopTimeCheck: true,
@@ -1289,10 +1169,6 @@
           this.shop_genre = shopDoc.shop_genre
           // this.shop_range = shopDoc.shop_range
           // this.shop_min_orders = shopDoc.shop_min_orders
-          if (shopDoc.shop_order_method) {
-            // 支払い方法が未登録のときはデフォルトの"現金"のみ
-            this.shop_order_method = shopDoc.shop_order_method
-          }
           if (shopDoc.shop_image_url) {
             // 店舗画像未登録のときはデフォルト画像
             this.shop_image_url = shopDoc.shop_image_url
@@ -1324,9 +1200,6 @@
           }
           if (shopDoc.shop_deadline_time) {
             this.shop_deadline_time = shopDoc.shop_deadline_time
-          }
-          if (shopDoc.shop_time_delivery) {
-            this.shop_time_delivery = shopDoc.shop_time_delivery
           }
           if (shopDoc.shop_margin_time) {
             this.shop_margin_time = shopDoc.shop_margin_time
@@ -1377,6 +1250,11 @@
           (this.shop_email_sub2 === this.shop_email_sub3 && this.shop_email_sub2.length > 0 && this.shop_email_sub3.length > 0)) {
           return alert('同一のサブメールアドレスを設定することはできません')
         }
+        // Number型に変換
+        if (this.shop_address_latitude || this.shop_address_longitude) {
+          this.shop_address_latitude = Number(this.shop_address_latitude)
+          this.shop_address_longitude = Number(this.shop_address_longitude)
+        }
         // shopDocが存在しないときは新規作成set()
         if (!shopDoc) {
           db.collection('partners').doc(partnerId).collection('shops').doc(shopId).set({
@@ -1397,13 +1275,11 @@
             // shop_min_orders: this.shop_min_orders,
             shop_range_min_orders: this.shop_range_min_orders,
             shop_time: this.shop_time,
-            shop_order_method: this.shop_order_method,
             shop_holidays: this.shop_holidays,
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
             shop_deadline_date: this.shop_deadline_date,
             shop_deadline_time: this.shop_deadline_time,
-            shop_time_delivery: this.shop_time_delivery,
             shop_margin_time: this.shop_margin_time,
             shop_email_sub1: this.shop_email_sub1,
             shop_email_sub2: this.shop_email_sub2,
@@ -1438,13 +1314,11 @@
             // shop_min_orders: this.shop_min_orders,
             shop_range_min_orders: this.shop_range_min_orders,
             shop_time: this.shop_time,
-            shop_order_method: this.shop_order_method,
             shop_holidays: this.shop_holidays,
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
             shop_deadline_date: this.shop_deadline_date,
             shop_deadline_time: this.shop_deadline_time,
-            shop_time_delivery: this.shop_time_delivery,
             shop_margin_time: this.shop_margin_time,
             shop_email_sub1: this.shop_email_sub1,
             shop_email_sub2: this.shop_email_sub2,

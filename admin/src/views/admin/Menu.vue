@@ -80,6 +80,10 @@
                     :menu_name="item.menu_name"
                     :menu_description="item.menu_description"
                     :menu_price="item.menu_price"
+                    :menu_stock_per_event="item.menu_stock_per_event"
+                    :is_soldout="item.is_soldout"
+                    :menu_date_start="item.menu_date_start"
+                    :menu_date_end="item.menu_date_end"
                     @menu-added-event="menuView"
                   />
                 </v-btn>
@@ -106,15 +110,32 @@
             </v-tooltip>
           </template>
 
-          <v-card-title class="display-2 justify-start mt-3 font-weight-light">
+          <v-card-title class="display-2 justify-start mt-3 font-weight-bold pb-2">
             {{ item.menu_name }}
           </v-card-title>
-
-          <v-card-text class="body-1 justify-start font-weight-light grey--text">
+          <v-card-text class="justify-start font-weight-light py-1">
             {{ item.menu_description }}
           </v-card-text>
-          <v-card-text class="display-2 text-right font-weight-light grey--text">
-            ¥{{ item.menu_price }}
+          <v-card-text class="display-2 font-weight-light pt-1 pb-10">
+             ¥{{ item.menu_price }}
+          </v-card-text>
+          <v-card-text
+            v-if="item.menu_date_start&&item.menu_date_end"
+            class="py-2 red--text"
+          >
+            【期間限定】{{ item.menu_date_start }}〜{{ item.menu_date_end }}
+          </v-card-text>
+          <v-card-text
+            v-if="item.menu_stock_per_event"
+            class="font-weight-light py-2 red--text"
+          >
+            【1イベントの上限数】 {{ item.menu_stock_per_event }} 個
+          </v-card-text>
+          <v-card-text
+            v-if="item.is_soldout==true"
+            class="py-2 red--text"
+          >
+            【売切設定】売り切れ
           </v-card-text>
         </base-material-card>
       </v-col>
@@ -175,8 +196,7 @@
               <span>削除</span>
             </v-tooltip>
           </template>
-
-          <v-card-title class="display-2 justify-start mt-3 font-weight-light">
+          <v-card-title class="display-2 justify-start mt-3 font-weight-bold">
             例) サラダ弁当
           </v-card-title>
 
@@ -205,7 +225,6 @@
   export default {
     name: 'Menu',
     components: {
-      // ModalMenuForm: () => import('../dashboard/bd-component/ModalMenuForm'),
       ModalMenuForm: () => import('../admin/ModalMenuForm'),
     },
 
@@ -213,12 +232,11 @@
       menus: [],
     }),
     created () {
-      // データが初期化(created)したら、firestoreから店舗情報を取得して表示
       this.menuView()
     },
     methods: {
       menuView: function () {
-        this.menus = [] // 呼び出される度に一度空にする
+        this.menus = []
         db.collection('partners').doc(partnerId).collection('menus').orderBy('updatedAt', 'desc').get().then((snapshot) => {
           // console.log(snapshot)
           // console.log(snapshot.size)
@@ -226,40 +244,24 @@
           // console.log(snapshot.docs)
           snapshot.forEach((menuDoc) => {
             // console.log(menuDoc.id, ' => ', JSON.stringify(menuDoc.data()))
-            var menu = { menu_id: '', menu_name: '', menu_description: '', menu_price: 0, menu_image_url: '', is_deleted: '' }
-            menu.is_deleted = menuDoc.data().is_deleted
+            const menu = menuDoc.data()
+            menu.menu_id = menuDoc.id
             if (!menu.is_deleted) {
-              menu.menu_id = menuDoc.id
-              menu.menu_name = menuDoc.data().menu_name
-              menu.menu_description = menuDoc.data().menu_description
-              menu.menu_price = menuDoc.data().menu_price
-              menu.menu_image_url = menuDoc.data().menu_image_url
               this.menus.push(menu)
             }
           })
-          // console.log(this.menus)
         })
       },
       deleteMenu: function (menuId) {
-        console.log(menuId)
-        var me = this
+        const me = this
         if (confirm('メニューを削除しますか？')) {
-          db
-            .collection('partners')
-            .doc(partnerId)
-            .collection('menus')
-            .doc(menuId)
-            .update({
-              is_deleted: true,
-              deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            }).then(function () {
-              me.menuView()
-            }).catch(function (error) {
-              alert('メニューを削除できませんでした')
-              console.log('error: ' + error)
-            })
-        } else {
-          console.log('キャンセルされました')
+          db.collection('partners').doc(partnerId).collection('menus').doc(menuId).delete().then(() => {
+            window.alert('メニューを削除しました')
+            me.menuView()
+          }).catch((error) => {
+            window.alert('メニューを削除できませんでした')
+            console.error(error)
+          })
         }
       },
     },
