@@ -10,7 +10,7 @@ import axios from 'axios'
 
 export const dateString = (date: Date | null): string => {
   if (!date) return ''
-  return format(date, 'yyyy-MM-dd HH:mm')
+  return format(date, 'yyyy-MM-dd')
 }
 
 export const dateWithDayOfWeekString = (date: Date | null): string => {
@@ -111,7 +111,7 @@ export const convertDocumentDataToMenu = (
   documentId: string,
   documentData: DocumentData
 ): PartnerMenu => {
-  const { menu_name, menu_price, menu_image_url, menu_description, createdAt, updatedAt } = documentData
+  const { menu_name, menu_price, menu_image_url, menu_description, createdAt, updatedAt, is_soldout, menu_date_start, menu_date_end } = documentData
 
   return {
     id: documentId,
@@ -122,6 +122,9 @@ export const convertDocumentDataToMenu = (
     description: menu_description ?? '',
     createdAt: createdAt ? (createdAt as Timestamp).toDate() : null,
     updatedAt: updatedAt ? (updatedAt as Timestamp).toDate() : null,
+    isSoldout: is_soldout ?? false,
+    dateStart: menu_date_start ?? '',
+    dateEnd: menu_date_end ?? '',
   }
 }
 

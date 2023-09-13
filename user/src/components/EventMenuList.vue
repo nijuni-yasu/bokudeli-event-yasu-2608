@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { convertDocumentDataToMenu } from '@/schemes/converter'
+import { convertDocumentDataToMenu, dateString } from '@/schemes/converter'
 import PartnerMenu from '@/schemes/partnerMenu'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, connectFirestoreEmulator, getDocs } from 'firebase/firestore'
+import { parseISO, compareDesc } from 'date-fns'
 
 const props = defineProps<{
   partnerId: string
   eventDeadline: Date | null
+  eventStartDatetime: Date | null
   currentMemberCount: number | undefined
   eventMaxPeople: number
 }>()
@@ -18,7 +20,7 @@ const emit = defineEmits<{
 
 const state = reactive({
   menus: [] as PartnerMenu[],
-  menuDisable: false as false | 'deadline' | 'limitPeople',
+  menuDisable: false as false | 'deadline' | 'limitPeople' | 'isSoldout',
   isLoading: true,
 })
 
@@ -26,9 +28,23 @@ const partnerDb = collection(db, 'partners')
 const loadMenuData = async (partnerId: string) => {
   const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
   const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
-  menus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
-  return menus
+  // 期間限定メニューをフィルタリング
+  const withinDateMenus = menus.filter(menu => {
+    // 期間設定がない場合はreturn
+    if (!menu.dateStart || !menu.dateEnd){
+      return true
+      // 期間設定がある場合、イベントの日付と比較
+    } else {
+        const eventStartDate = parseISO(dateString(props.eventStartDatetime))
+        const dateStart = parseISO(menu.dateStart)
+        const dateEnd = parseISO(menu.dateEnd)
+        return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
+      }
+  })
+  withinDateMenus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
+
+  return withinDateMenus
 }
 
 const fetchData = async () => {
@@ -70,13 +86,16 @@ const alertBody = computed({
   },
 })
 
-const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
+const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'isSoldout') => {
   switch (reason) {
     case 'deadline':
       alertBody.value = '注文期限をすぎました。カートに追加できません'
       break
     case 'limitPeople':
       alertBody.value = '定員に達しました。カートに追加できません'
+      break
+    case 'isSoldout':
+      alertBody.value = '売り切れました。カートに追加できません'
       break
   }
 }
@@ -96,14 +115,40 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
             {{ menu.description }}
           </v-card-text>
           <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
-          <v-row class="justify-center">
+          <v-row v-if="state.menuDisable === false && menu.isSoldout === false" class="justify-center">
             <v-col class="text-center">
               <v-btn
-                :class="`px-5 my-4 ${state.menuDisable ? 'disable-menu-button' : ''}`"
+                class="`px-5 my-4"
                 color="primary"
                 rounded
                 width="80%"
-                @click="state.menuDisable === false ? selectMenu(menu) : showDisableAlert(state.menuDisable)"
+                @click="selectMenu(menu)"
+              >
+                カートに追加
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row v-else-if="state.menuDisable === false && menu.isSoldout === true" class="justify-center">
+            <v-col class="text-center">
+              <v-btn
+                class="px-5 my-4 disable-menu-button"
+                color="error"
+                rounded
+                width="80%"
+                @click="showDisableAlert('isSoldout')"
+              >
+                売り切れ
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row v-else-if="state.menuDisable" class="justify-center">
+            <v-col class="text-center">
+              <v-btn
+                class="px-5 my-4 disable-menu-button"
+                color="primary"
+                rounded
+                width="80%"
+                @click="showDisableAlert(state.menuDisable)"
               >
                 カートに追加
               </v-btn>
@@ -126,6 +171,6 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 </template>
 <style lang="scss" scoped>
 .disable-menu-button {
-  opacity: 0.4615384615;
+  opacity: 0.6;
 }
 </style>
