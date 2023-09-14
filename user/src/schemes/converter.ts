@@ -111,7 +111,17 @@ export const convertDocumentDataToMenu = (
   documentId: string,
   documentData: DocumentData
 ): PartnerMenu => {
-  const { menu_name, menu_price, menu_image_url, menu_description, createdAt, updatedAt, is_soldout, menu_date_start, menu_date_end } = documentData
+  const {
+    menu_name,
+    menu_price,
+    menu_image_url,
+    menu_description,
+    createdAt,
+    updatedAt,
+    is_soldout,
+    menu_date_start,
+    menu_date_end,
+  } = documentData
 
   return {
     id: documentId,

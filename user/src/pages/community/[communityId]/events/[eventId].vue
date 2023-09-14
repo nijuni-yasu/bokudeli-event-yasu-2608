@@ -71,9 +71,7 @@ const fetchData = async () => {
 }
 
 onBeforeRouteUpdate(async (to, from, next) => {
-  if (to.params.eventId !== from.params.eventId) {
-    await fetchData()
-  }
+  await fetchData()
   next()
 })
 

@@ -30,7 +30,7 @@ const fetchData = async () => {
 }
 
 onBeforeRouteUpdate(async (to, from, next) => {
-  if (to.params.userId !== from.params.userId) {
+  if (to.params.userId !== from.params.userId || (to.query.eventId && to.query.communityAccount)) {
     await fetchData()
   }
   next()
