@@ -120,7 +120,7 @@ const submit = (savedEvent: Partial<BokudeliEvent>) => {
   <v-card>
     <v-expansion-panels v-model="panel" multiple>
       <v-expansion-panel value="address">
-        <v-expansion-panel-title>郵便番号</v-expansion-panel-title>
+        <v-expansion-panel-title>基本情報</v-expansion-panel-title>
         <v-expansion-panel-text>
           <event-address v-model="address" @submit="submittedAddress" />
         </v-expansion-panel-text>
@@ -138,7 +138,7 @@ const submit = (savedEvent: Partial<BokudeliEvent>) => {
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="info">
-        <v-expansion-panel-title>イベント情報</v-expansion-panel-title>
+        <v-expansion-panel-title>イベント詳細</v-expansion-panel-title>
         <v-expansion-panel-text>
           <event-info :event="state.event" @submit="submit" />
         </v-expansion-panel-text>

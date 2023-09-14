@@ -41,15 +41,23 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row class="justify-center">
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="注文者 氏名"></v-text-field>
+                <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="担当者 氏名"></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="注文者 会社名"></v-text-field>
+                <v-text-field v-model="draftEventData.eventName" outlined dense label="会社名/団体名"></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="注文者 電話番号"></v-text-field>
+                <v-text-field v-model="draftEventData.eventName" outlined dense label="メールアドレス"></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field v-model="draftEventData.eventName" outlined dense label="電話番号（担当者）"></v-text-field>
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field v-model="draftEventData.eventName" outlined dense label="電話番号（会社/団体）"></v-text-field>
               </v-col>
 
 
@@ -58,7 +66,7 @@ const resetForm = () => {
                   v-model="draftEventData.eventDescription"
                   outlined
                   rows="3"
-                  label="配達場所の注意事項"
+                  label="配達受取場所について"
                 ></v-textarea>
               </v-col>
 
@@ -67,7 +75,7 @@ const resetForm = () => {
                   v-model="draftEventData.eventDescription"
                   outlined
                   rows="3"
-                  label="イベントの注意事項・相談事項"
+                  label="イベントやフードの相談事項・連絡事項"
                 ></v-textarea>
               </v-col>
             </v-row>
