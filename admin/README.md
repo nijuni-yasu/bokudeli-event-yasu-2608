@@ -1,4 +1,4 @@
-# ADMIN(店舗管理画面)の開発環境について
+# ADMIN(店舗管理画面)の開発テスト環境について
 
 初回はnpm install
 ```
@@ -47,7 +47,7 @@ firebase deploy --only hosting:admin
 
 # firebase の プロジェクトIDについて
 
-テスト環境： bokudeli-event-test
+開発テスト環境： bokudeli-event-test
 
 本番環境 ：bokudeli-event-dev
 
