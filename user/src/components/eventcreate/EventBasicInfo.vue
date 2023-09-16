@@ -1,27 +1,40 @@
 <script setup lang="ts">
+import cloneDeep from 'lodash/cloneDeep'
+import { BasicInfo, hourList, minutesList } from '@/schemes/eventCreate'
+import { format } from 'date-fns'
+
 const props = defineProps<{
-  modelValue: string
+  modelValue: BasicInfo
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void
+  (e: 'update:modelValue', value: BasicInfo): void
   (e: 'submit'): void
 }>()
 
-const state = reactive({
-  postcode: '',
-  address: props.modelValue,
-  eventName: '',
-  eventStartDate:'',
-  eventStartHour:'',
-  eventStartMinute:'',
-  eventEndDate:'',
-  eventEndHour:'',
-  eventEndMinute:'',
-})
+const state = reactive(cloneDeep(props.modelValue))
+
+const dateString = (date: Date | null) => ( date ? format(date, 'yyyy-MM-dd') : '' )
+const hourString = (date: Date | null) => ( date ? format(date, 'HH') : null )
+const minutesString = (date: Date | null) => ( date ? format(date, 'mm') : null )
+
+const title = ref(state.title)
+const postcode = ref(state.postcode)
+const address = ref(state.address)
+const eventStartDate = ref(dateString(state.startDateTime))
+const eventStartHour = ref(hourString(state.startDateTime))
+const eventStartMinute = ref(minutesString(state.startDateTime))
+const eventEndDate = ref(dateString(state.endDateTime))
+const eventEndHour = ref(hourString(state.endDateTime))
+const eventEndMinute = ref(minutesString(state.endDateTime))
 
 const submitSearch = () => {
-  emit('update:modelValue', state.address)
+  state.title = title.value
+  state.postcode = postcode.value
+  state.address = address.value
+  state.startDateTime = new Date()
+  state.endDateTime = new Date()
+  emit('update:modelValue', state)
   emit('submit')
 }
 </script>
@@ -38,7 +51,7 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="state.eventName" outlined dense label="イベントタイトル"></v-text-field>
+                <v-text-field v-model="title" outlined dense label="イベントタイトル" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -51,11 +64,10 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="3">
-                <v-text-field v-model="state.postcode" outlined dense label="お届け先 郵便番号"
-                ></v-text-field>
+                <v-text-field v-model="postcode" outlined dense label="お届け先 郵便番号" />
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="state.address" outlined dense label="会場住所"></v-text-field>
+                <v-text-field v-model="address" outlined dense label="会場住所" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -63,10 +75,10 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="state.address" outlined dense label="会場名"></v-text-field>
+                <v-text-field v-model="state.address" outlined dense label="会場名" />
               </v-col>
               <v-col cols="6">
-                <v-text-field v-model="state.address" outlined dense label="会場URL"></v-text-field>
+                <v-text-field v-model="state.address" outlined dense label="会場URL" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -80,27 +92,29 @@ const submitSearch = () => {
             <v-row>
               <v-col cols="6">
                 <v-text-field
-                  v-model="state.eventStartDate"
+                  v-model="eventStartDate"
                   outlined
                   dense
                   label="開始日"
-                ></v-text-field>
+                />
               </v-col>
               <v-col cols="3">
-                <v-text-field
-                  v-model="state.eventStartHour"
+                <v-select
+                  v-model="eventStartHour"
+                  :items="hourList"
                   outlined
                   dense
-                  label="時間"
-                ></v-text-field>
+                  label="時"
+                />
               </v-col>
               <v-col cols="3">
-                <v-text-field
-                  v-model="state.eventStartMinute"
+                <v-select
+                  v-model="eventStartMinute"
+                  :items="minutesList"
                   outlined
                   dense
                   label="分"
-                ></v-text-field>
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -109,27 +123,29 @@ const submitSearch = () => {
             <v-row>
               <v-col cols="6">
                 <v-text-field
-                  v-model="state.eventEndDate"
+                  v-model="eventEndDate"
                   outlined
                   dense
                   label="終了日"
                 ></v-text-field>
               </v-col>
               <v-col cols="3">
-                <v-text-field
-                  v-model="state.eventEndHour"
+                <v-select
+                  v-model="eventEndHour"
+                  :items="hourList"
                   outlined
                   dense
-                  label="時間"
-                ></v-text-field>
+                  label="時"
+                />
               </v-col>
               <v-col cols="3">
-                <v-text-field
-                  v-model="state.eventEndMinute"
+                <v-select
+                  v-model="eventEndMinute"
+                  :items="minutesList"
                   outlined
                   dense
                   label="分"
-                ></v-text-field>
+                />
               </v-col>
             </v-row>
           </v-card-text>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import EventAddress from '@/components/eventcreate/EventAddress.vue'
+import EventBasicInfo from '@/components/eventcreate/EventBasicInfo.vue'
 import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
-import EventInfo from '@/components/eventcreate/EventInfo.vue'
+import EventDetail from '@/components/eventcreate/EventDetail.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
 import { collection, collectionGroup, getDocs, query, where } from 'firebase/firestore'
 import { db } from '@/firebase'
@@ -10,6 +10,7 @@ import { convertDocumentDataToCommunity, convertDocumentDataToMenu } from '@/sch
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
+import { BasicInfo } from '@/schemes/eventCreate'
 
 type panelType = 'address' | 'shop' | 'menu' | 'info'
 
@@ -25,7 +26,13 @@ const state = reactive({
 
 const panel = ref(['address'] as panelType[])
 
-const address = ref('')
+const basicInfo = reactive<BasicInfo>({
+  title: '',
+  postcode: '',
+  address: '',
+  startDateTime: null,
+  endDateTime: null,
+})
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
 
@@ -87,7 +94,7 @@ onMounted(async () => {
 })
 
 const submittedAddress = async () => {
-  state.event.eventAddress = address.value
+  // state.event.eventAddress = address.value
   await fetchShops()
   if (!panel.value.find((v) => v === 'shop')) {
     panel.value.push('shop')
@@ -122,7 +129,7 @@ const submit = (savedEvent: Partial<BokudeliEvent>) => {
       <v-expansion-panel value="address">
         <v-expansion-panel-title>基本情報</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-address v-model="address" @submit="submittedAddress" />
+          <event-basic-info v-model="basicInfo" @submit="submittedAddress" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="shop">
@@ -140,7 +147,7 @@ const submit = (savedEvent: Partial<BokudeliEvent>) => {
       <v-expansion-panel value="info">
         <v-expansion-panel-title>イベント詳細</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-info :event="state.event" @submit="submit" />
+          <event-detail :event="state.event" @submit="submit" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="shopNotice">
