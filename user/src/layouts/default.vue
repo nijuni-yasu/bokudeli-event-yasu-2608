@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { GoogleAuthProvider, User, getAuth, getRedirectResult, onAuthStateChanged } from 'firebase/auth'
+import { User, getAuth, onAuthStateChanged } from 'firebase/auth'
 
 import { useSkins } from '@core/composable/useSkins'
 import { useThemeConfig } from '@core/composable/useThemeConfig'
@@ -35,38 +35,17 @@ injectSkinClasses()
 
 const router = useRouter()
 
-const fetchRedirectResult = async () => {
-  try {
-    const result = await getRedirectResult(getAuth())
-    if (result) {
-      const credential = GoogleAuthProvider.credentialFromResult(result)
-      if (credential) {
-        const store = useStoreCredential()
-        store.update(credential)
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching redirect result:', error)
-  }
-}
-
 onAuthStateChanged(getAuth(), async (user: User | null) => {
-  fetchRedirectResult()
-
   const store = useStoreStoredUser()
   if (user) {
     // ログイン処理
     const storedUser = await convertFirebaseUserToStoredUser(user)
 
-    const docRef = doc(db, 'users', storedUser.userId)
-    const docSnap = await getDoc(docRef)
-
-    // Pinia のデータを更新
-    const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
-    store.update(currentStoredUser)
-
     // Firestore 保存
     const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
+
+    const docRef = doc(db, 'users', storedUser.userId)
+    const docSnap = await getDoc(docRef)
 
     if (docSnap.exists()) {
       // 既にユーザーが存在する場合は更新
@@ -79,14 +58,18 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
         },
         { merge: true }
       )
-    } else {
-      // Pinia に保存
-      store.update(storedUser)
 
+      // Pinia のデータを更新
+      const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
+      store.update(currentStoredUser)
+    } else {
       // ユーザーが存在しない場合は新規作成
       firestoredUser.created_at = Timestamp.now()
       firestoredUser.updated_at = Timestamp.now()
       await setDoc(docRef, firestoredUser)
+
+      // Pinia に保存
+      store.update(storedUser)
 
       // 新規ユーザーはマイページに遷移
       router.push('/mypage')

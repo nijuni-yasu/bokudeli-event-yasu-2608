@@ -2,7 +2,7 @@
 import { db } from '@/firebase'
 import { convertDocumentDataToMenu, dateString } from '@/schemes/converter'
 import PartnerMenu from '@/schemes/partnerMenu'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, connectFirestoreEmulator, getDocs } from 'firebase/firestore'
 import { parseISO, compareDesc } from 'date-fns'
 
 const props = defineProps<{
