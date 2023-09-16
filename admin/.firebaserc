@@ -1,0 +1,22 @@
+{
+  "projects": {
+    "default": "bokudeli-event-dev"
+  },
+  "targets": {
+    "bokudeli-event-dev": {
+      "hosting": {
+        "admin": [
+          "bokudeli-event-dev-admin"
+        ]
+      }
+    },
+    "bokudeli-event-test": {
+      "hosting": {
+        "admin": [
+          "bokudeli-event-test-admin"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
