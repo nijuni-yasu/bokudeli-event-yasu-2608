@@ -1,3 +1,66 @@
+# ADMIN(店舗管理画面)の開発環境について
+
+初回はnpm install
+```
+cd admin
+
+npm install
+```
+
+ローカルで立ち上げる。
+```
+cd admin
+
+npm run dev-development
+```
+
+ビルドして開発環境にデプロイする
+```
+cd admin
+
+npm run build-development
+
+firebase use bokudeli-event-test
+
+firebase deploy --only hosting:admin
+```
+
+# ADMIN(店舗管理画面)の本番環境について
+
+ローカルで立ち上げる。
+```
+cd admin
+
+npm run dev-production
+```
+
+ビルドして開発環境にデプロイする
+```
+cd admin
+
+npm run build-production
+
+firebase use bokudeli-event-dev
+
+firebase deploy --only hosting:admin
+```
+
+# firebase の プロジェクトIDについて
+
+テスト環境： bokudeli-event-test
+
+本番環境 ：bokudeli-event-dev
+
+
+
+
+
+
+  
+---
+---
+---
+
 # [Vuetify Material Dashboard PRO](https://www.creative-tim.com/product/vuetify-material-dashboard-pro?ref=vtymdp-readme) [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&logo=twitter)](https://twitter.com/share?url=https%3A%2F%2Fwww.creative-tim.com%2Fvuetify-material-dashboard-pro&text=Vuetify%20Material%20Dashboard%20PRO%20by%20Creative%20Tim&via=CreativeTim&hashtags=vuejs%20%23vuex%20%23vuetify%20%23material)
 
 
