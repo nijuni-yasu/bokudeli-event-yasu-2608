@@ -14,7 +14,7 @@ cd admin
 npm run dev-development
 ```
 
-ビルドして開発環境にデプロイする
+ビルドして開発テスト環境にデプロイする
 ```
 cd admin
 
@@ -34,7 +34,7 @@ cd admin
 npm run dev-production
 ```
 
-ビルドして開発環境にデプロイする
+ビルドして本番環境にデプロイする
 ```
 cd admin
 
