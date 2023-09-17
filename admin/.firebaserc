@@ -1,6 +1,7 @@
 {
   "projects": {
-    "default": "bokudeli-event-dev"
+    "production": "bokudeli-event-dev",
+    "development": "bokudeli-event-test"
   },
   "targets": {
     "bokudeli-event-dev": {

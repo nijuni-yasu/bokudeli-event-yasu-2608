@@ -3,8 +3,10 @@
   "version": "2.1.1",
   "private": true,
   "scripts": {
-    "dev": "npm run build:icons && vite --host",
-    "build": "npm run build:icons && vite build",
+    "dev-development": "npm run build:icons && vite --host -m development",
+    "dev-production": "npm run build:icons && vite --host -m production",
+    "build-development": "npm run build:icons && vite build -m development",
+    "build-production": "npm run build:icons && vite build -m production",
     "preview": "vite preview --port 5050",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint src/ -c .eslintrc.js --fix --rulesdir eslint-internal-rules/ --ext .ts,.js,.vue,.tsx,.jsx",
