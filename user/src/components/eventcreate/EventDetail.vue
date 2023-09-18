@@ -33,65 +33,71 @@ const resetForm = () => {
     <v-col cols="10">
       <v-card flat class="pa-3 mt-2">
         <v-form class="multi-col-validation">
-          <v-card-title class="pa-5">
+          <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
-            <span>イベント情報</span>
+            <span>イベント詳細</span>
           </v-card-title>
 
           <v-card-text class="pt-5">
-            <v-row class="justify-center">
+            <v-row>
               <v-col cols="12">
                 <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="イベント画像"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="イベントタイトル"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-textarea
-                  v-model="draftEventData.eventDescription"
-                  outlined
-                  rows="3"
-                  label="イベント詳細"
-                ></v-textarea>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field outlined dense label="お届け先 郵便番号"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventAddress" outlined dense label="お届け先 住所"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="draftEventData.eventStartDatetime"
-                  outlined
-                  dense
-                  label="開催日時"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="draftEventData.eventStartDatetime"
-                  outlined
-                  dense
-                  label="終了日時"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventDeadline" outlined dense label="注文締切日時"></v-text-field>
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field outlined dense label="定員"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
 
+          <v-card-text class="pt-5">
+            <v-row>
+              <v-col cols="12">
+                <v-textarea
+                  v-model="draftEventData.eventDescription"
+                  outlined
+                  rows="10"
+                  label="イベント詳細"
+                ></v-textarea>
+              </v-col>
+            </v-row>
+          </v-card-text>
+
+          <v-card-text class="pt-5">    
+              <v-row>
+                <v-col cols="6">
+                  <v-text-field
+                    outlined
+                    dense
+                    label="注文締切日時"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="3">
+                  <v-text-field
+                    outlined
+                    dense
+                    label="時間"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="3">
+                  <v-text-field
+                    outlined
+                    dense
+                    label="分"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field outlined dense label="定員数"></v-text-field>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
           <!-- Activity -->
+          <v-card-title class="pt-10 px-5">
+            <v-icon size="50" class="text--primary me-3" icon="mdi-lightbulb-on-outline" />
+            <span>公開設定</span>
+          </v-card-title>
           <v-card-text>
             <v-switch hide-details class="mt-0">
               <template #label>
