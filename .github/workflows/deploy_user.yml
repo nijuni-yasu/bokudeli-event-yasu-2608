@@ -1,0 +1,38 @@
+name: Deploy user
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'user/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./user
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup node
+      uses: actions/setup-node@v3
+      with:
+        node-version-file: ./user/.node-version
+        cache: 'yarn'
+    - name: Generate .env file
+      run: |
+        env_vars=$(echo '${{ secrets.USER_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
+        echo "$env_vars" > .env
+        cat .env >> $GITHUB_ENV
+    - name: Deploy to Firebase
+      run: | 
+        yarn install --frozen-lockfile
+        yarn run build-development
+        # yarn run deploy-development
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
