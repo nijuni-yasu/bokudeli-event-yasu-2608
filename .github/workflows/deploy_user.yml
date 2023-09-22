@@ -24,6 +24,7 @@ jobs:
       with:
         node-version-file: ./user/.node-version
         cache: 'yarn'
+        cache-dependency-path: ./user/yarn.lock
     - name: Generate .env file
       run: |
         env_vars=$(echo '${{ secrets.USER_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
