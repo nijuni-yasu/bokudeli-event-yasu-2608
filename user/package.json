@@ -12,7 +12,8 @@
     "lint": "eslint src/ -c .eslintrc.js --fix --rulesdir eslint-internal-rules/ --ext .ts,.js,.vue,.tsx,.jsx",
     "build:icons": "tsc -b src/@iconify && node src/@iconify/build-icons.js",
     "prettier": "prettier -w .",
-    "deploy": "firebase deploy --only hosting"
+    "deploy-development": "firebase use development && firebase deploy --only hosting:user",
+    "deploy-production": "firebase use production && firebase deploy --only hosting:user"
   },
   "dependencies": {
     "@casl/ability": "^6.2.0",
