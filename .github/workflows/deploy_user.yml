@@ -8,8 +8,13 @@ on:
       - 'user/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -18,7 +23,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
     - name: Setup node
       uses: actions/setup-node@v3
       with:
