@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { loadEventMembers } from '@/composable/loadEventMembers'
-import { db } from '@/firebase'
+import { db, stripeBaseURL } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
@@ -15,12 +15,6 @@ const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
 const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
-let origin = process.env.NODE_ENV === 'development' ? `http://localhost:5173` : `${import.meta.env.VITE_ORIGIN_HOST}`
-
-if (!origin) {
-  // in-view対応
-  origin = 'https://bokudeli-event-dev.web.app/'
-}
 
 type Cart = {
   order: OrderItem
@@ -94,13 +88,13 @@ const startOrderProcess = async () => {
         unit_amount: menu.price,
       },
       quantity: menu.count,
-    }
+    } as Stripe.Checkout.SessionCreateParams.LineItem
   })
 
   try {
     const session = await stripe.checkout.sessions.create({
-      success_url: `${origin}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
-      cancel_url: `${origin}/`,
+      success_url: `${stripeBaseURL}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
+      cancel_url: `${stripeBaseURL}/`,
       customer_creation: 'if_required',
       line_items: lineItems,
       mode: 'payment',
