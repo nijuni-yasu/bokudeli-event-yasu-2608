@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStoreCredential } from '@/stores/credential'
 import { FirebaseError } from 'firebase/app'
-import { getAuth, signInWithPopup, FacebookAuthProvider, GoogleAuthProvider } from 'firebase/auth'
+import { getAuth, signInWithPopup, FacebookAuthProvider, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth'
 
 const props = defineProps<{
   modelValue: boolean
@@ -30,6 +30,7 @@ const handleFacebookLogin = async () => {
       display: 'popup',
     })
 
+    //FIXME - signInWithRedirect を使う
     const result = await signInWithPopup(getAuth(), provider)
     const credential = FacebookAuthProvider.credentialFromResult(result)
     if (credential) {
@@ -54,12 +55,7 @@ const handleGoogleLogin = async () => {
     provider.addScope('profile')
     provider.addScope('openid')
 
-    const result = await signInWithPopup(getAuth(), provider)
-    const credential = GoogleAuthProvider.credentialFromResult(result)
-    if (credential) {
-      const store = useStoreCredential()
-      store.update(credential)
-    }
+    await signInWithRedirect(getAuth(), provider)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
