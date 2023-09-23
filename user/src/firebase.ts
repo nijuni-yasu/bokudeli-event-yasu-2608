@@ -25,3 +25,7 @@ export const storage = getStorage(app)
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 })
+
+export const stripeBaseURL = !import.meta.env.VITE_USE_LOCALHOST
+  ? `https:/${firebaseConfig.authDomain}`
+  : 'http://localhost:5173'
