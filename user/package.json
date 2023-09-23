@@ -3,17 +3,18 @@
   "version": "2.1.1",
   "private": true,
   "scripts": {
-    "dev-development": "npm run build:icons && vite --host -m development",
-    "dev-production": "npm run build:icons && vite --host -m production",
-    "build-development": "npm run build:icons && vite build -m development",
-    "build-production": "npm run build:icons && vite build -m production",
+    "dev-development": "vite -m development",
+    "dev-production": "vite -m production",
+    "build-development": "vite build -m development",
+    "build-production": "vite build -m production",
     "preview": "vite preview --port 5050",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint src/ -c .eslintrc.js --fix --rulesdir eslint-internal-rules/ --ext .ts,.js,.vue,.tsx,.jsx",
     "build:icons": "tsc -b src/@iconify && node src/@iconify/build-icons.js",
     "prettier": "prettier -w .",
     "deploy-development": "firebase use development && firebase deploy --only hosting:user",
-    "deploy-production": "firebase use production && firebase deploy --only hosting:user"
+    "deploy-production": "firebase use production && firebase deploy --only hosting:user",
+    "postinstall": "npm run build:icons"
   },
   "dependencies": {
     "@casl/ability": "^6.2.0",
