@@ -88,7 +88,7 @@ const startOrderProcess = async () => {
         unit_amount: menu.price,
       },
       quantity: menu.count,
-    }
+    } as Stripe.Checkout.SessionCreateParams.LineItem
   })
 
   try {
