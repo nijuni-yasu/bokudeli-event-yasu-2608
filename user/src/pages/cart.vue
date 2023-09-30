@@ -128,6 +128,23 @@ const createCheckoutSession = async (order: OrderItem) => {
   }
 }
 
+const paymentMessage = (event: BokudeliEvent) => {
+  switch (event.paymentDisplay) {
+    case '参加者 事前決済': {
+      return 'クレジットカード決済の注文に進みますか？'
+    }
+    case '参加者 当日払い': {
+      return '支払方法は「参加者による当日払い」です。注文を確定しますか？'
+    }
+    case '主催者支払い': {
+      return '支払方法は「主催者によるお支払い」です。注文を確定しますか？'
+    }
+    default: {
+      return '注文を確定しますか？'
+    }
+  }
+}
+
 const showConfirm = async (cart: Cart) => {
   const checkResult = await checkCart(cart)
   if (checkResult !== true) {
@@ -137,9 +154,7 @@ const showConfirm = async (cart: Cart) => {
 
   selectedOrder.value = cart.order
   selectedCartEvent.value = cart.event
-  confirmDialogMessage.value = cart.event.isPaymentAdvanceByUser
-    ? 'クレジットカード決済の注文に進みますか？'
-    : '注文を確定しますか？'
+  confirmDialogMessage.value = paymentMessage(cart.event)
   openConfirmOrder.value = true
 }
 
