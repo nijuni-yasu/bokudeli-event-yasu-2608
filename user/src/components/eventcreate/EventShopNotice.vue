@@ -53,13 +53,22 @@ const resetForm = () => {
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="電話番号（担当者）"></v-text-field>
+                <v-text-field
+                  v-model="draftEventData.eventName"
+                  outlined
+                  dense
+                  label="電話番号（担当者）"
+                ></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="電話番号（会社/団体）"></v-text-field>
+                <v-text-field
+                  v-model="draftEventData.eventName"
+                  outlined
+                  dense
+                  label="電話番号（会社/団体）"
+                ></v-text-field>
               </v-col>
-
 
               <v-col cols="12">
                 <v-textarea

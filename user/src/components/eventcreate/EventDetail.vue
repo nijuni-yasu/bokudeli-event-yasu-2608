@@ -59,39 +59,27 @@ const resetForm = () => {
             </v-row>
           </v-card-text>
 
-          <v-card-text class="pt-5">    
-              <v-row>
-                <v-col cols="6">
-                  <v-text-field
-                    outlined
-                    dense
-                    label="注文締切日時"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="3">
-                  <v-text-field
-                    outlined
-                    dense
-                    label="時間"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="3">
-                  <v-text-field
-                    outlined
-                    dense
-                    label="分"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
+          <v-card-text class="pt-5">
+            <v-row>
+              <v-col cols="6">
+                <v-text-field outlined dense label="注文締切日時"></v-text-field>
+              </v-col>
+              <v-col cols="3">
+                <v-text-field outlined dense label="時間"></v-text-field>
+              </v-col>
+              <v-col cols="3">
+                <v-text-field outlined dense label="分"></v-text-field>
+              </v-col>
+            </v-row>
+          </v-card-text>
 
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field outlined dense label="定員数"></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
+          <v-card-text class="pt-5">
+            <v-row>
+              <v-col cols="12">
+                <v-text-field outlined dense label="定員数"></v-text-field>
+              </v-col>
+            </v-row>
+          </v-card-text>
 
           <!-- Activity -->
           <v-card-title class="pt-10 px-5">
@@ -100,9 +88,7 @@ const resetForm = () => {
           </v-card-title>
           <v-card-text>
             <v-switch hide-details class="mt-0">
-              <template #label>
-                公開イベント
-              </template>
+              <template #label> 公開イベント </template>
             </v-switch>
           </v-card-text>
           <v-card-text>

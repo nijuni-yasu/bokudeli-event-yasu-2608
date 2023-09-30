@@ -14,9 +14,9 @@ const emit = defineEmits<{
 
 const state = reactive(cloneDeep(props.modelValue))
 
-const dateString = (date: Date | null) => ( date ? format(date, 'yyyy-MM-dd') : '' )
-const hourString = (date: Date | null) => ( date ? format(date, 'HH') : null )
-const minutesString = (date: Date | null) => ( date ? format(date, 'mm') : null )
+const dateString = (date: Date | null) => (date ? format(date, 'yyyy-MM-dd') : '')
+const hourString = (date: Date | null) => (date ? format(date, 'HH') : null)
+const minutesString = (date: Date | null) => (date ? format(date, 'mm') : null)
 
 const title = ref(state.title)
 const postcode = ref(state.postcode)
@@ -60,7 +60,7 @@ const submitSearch = () => {
             <v-icon size="50" class="text--primary me-3" icon="mdi-map-marker" />
             <span>会場</span>
           </v-card-title>
-          
+
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="3">
@@ -91,30 +91,13 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field
-                  v-model="eventStartDate"
-                  outlined
-                  dense
-                  label="開始日"
-                />
+                <v-text-field v-model="eventStartDate" outlined dense label="開始日" />
               </v-col>
               <v-col cols="3">
-                <v-select
-                  v-model="eventStartHour"
-                  :items="hourList"
-                  outlined
-                  dense
-                  label="時"
-                />
+                <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" />
               </v-col>
               <v-col cols="3">
-                <v-select
-                  v-model="eventStartMinute"
-                  :items="minutesList"
-                  outlined
-                  dense
-                  label="分"
-                />
+                <v-select v-model="eventStartMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -122,34 +105,16 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field
-                  v-model="eventEndDate"
-                  outlined
-                  dense
-                  label="終了日"
-                ></v-text-field>
+                <v-text-field v-model="eventEndDate" outlined dense label="終了日"></v-text-field>
               </v-col>
               <v-col cols="3">
-                <v-select
-                  v-model="eventEndHour"
-                  :items="hourList"
-                  outlined
-                  dense
-                  label="時"
-                />
+                <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" />
               </v-col>
               <v-col cols="3">
-                <v-select
-                  v-model="eventEndMinute"
-                  :items="minutesList"
-                  outlined
-                  dense
-                  label="分"
-                />
+                <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
           </v-card-text>
-
 
           <v-card-text>
             <v-btn color="primary" class="me-3 mt-3" @click="submitSearch"> 検索する </v-btn>

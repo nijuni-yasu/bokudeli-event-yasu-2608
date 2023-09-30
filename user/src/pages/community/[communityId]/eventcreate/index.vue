@@ -124,41 +124,41 @@ const router = useRouter()
 const submit = async (savedEvent: Partial<BokudeliEvent>) => {
   console.log(savedEvent)
   const eventItem = {
-      community_id: savedEvent.communityId,
-      community_account: savedEvent.communityAccount,
-      community_name: savedEvent.communityName,
-      event_name: '',
-      event_desc: '',
-      event_cover_url: '',
-      event_address: '',
-      event_deadline_datetime: Timestamp.now(),
-      event_start_datetime: Timestamp.now(),
-      event_end_datetime: Timestamp.now(),
-      event_max_people: 20,
-      shop_name: savedEvent.shopName,
-      shop_id: savedEvent.shopId,
-      partner_id: savedEvent.partnerId,
-      is_public: false,
-      // user_id: '',
-      // user_name: '',
-      // orgnizer_fullname: '',
-      // orgnizer_company: '',
-      // orgnizer_email: '',
-      // orgnizer_phone_personal: '',
-      // orgnizer_phone_company: '',
-      // orgnizer_note_delivery: '',
-      // orgnizer_note_event: '',
-      created_at: Timestamp.now(),
-      updated_at: Timestamp.now(),
-    }
-    
-    if(savedEvent.communityId && savedEvent.communityAccount){      
-      const addedDoc = await addDoc(collection(db, "communities", savedEvent.communityId, "events"), eventItem)
-      // 自動採番されたOrderIDを取得して項目として追加追加
-      await setDoc(addedDoc, { event_id: addedDoc.id }, { merge: true })
-      window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
-      router.push(getEventPath(savedEvent.communityAccount, addedDoc.id))
-    }
+    community_id: savedEvent.communityId,
+    community_account: savedEvent.communityAccount,
+    community_name: savedEvent.communityName,
+    event_name: '',
+    event_desc: '',
+    event_cover_url: '',
+    event_address: '',
+    event_deadline_datetime: Timestamp.now(),
+    event_start_datetime: Timestamp.now(),
+    event_end_datetime: Timestamp.now(),
+    event_max_people: 20,
+    shop_name: savedEvent.shopName,
+    shop_id: savedEvent.shopId,
+    partner_id: savedEvent.partnerId,
+    is_public: false,
+    // user_id: '',
+    // user_name: '',
+    // orgnizer_fullname: '',
+    // orgnizer_company: '',
+    // orgnizer_email: '',
+    // orgnizer_phone_personal: '',
+    // orgnizer_phone_company: '',
+    // orgnizer_note_delivery: '',
+    // orgnizer_note_event: '',
+    created_at: Timestamp.now(),
+    updated_at: Timestamp.now(),
+  }
+
+  if (savedEvent.communityId && savedEvent.communityAccount) {
+    const addedDoc = await addDoc(collection(db, 'communities', savedEvent.communityId, 'events'), eventItem)
+    // 自動採番されたOrderIDを取得して項目として追加追加
+    await setDoc(addedDoc, { event_id: addedDoc.id }, { merge: true })
+    window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
+    router.push(getEventPath(savedEvent.communityAccount, addedDoc.id))
+  }
 }
 </script>
 
