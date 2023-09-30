@@ -176,7 +176,7 @@ const loadCartList = async () => {
     collectionGroup(db, 'orders'),
     where('user_id', '==', userId.value),
     where('status', '==', 'in_cart'),
-    orderBy('updated_at', 'desc')
+    orderBy('updated_at', 'desc'),
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
@@ -190,7 +190,7 @@ const loadCartList = async () => {
       const eventQuery = query(
         collectionGroup(db, 'events'),
         where('community_account', '==', item.community_account),
-        where('event_id', '==', item.event_id)
+        where('event_id', '==', item.event_id),
       )
       const eventSnapshot = await getDocs(eventQuery)
       if (eventSnapshot.docs.length === 0) {
@@ -205,7 +205,7 @@ const loadCartList = async () => {
       })
       const total = Object.values(subtotals).reduce((total, current) => total + current)
       return [{ order: item, event, subtotals, total }]
-    })
+    }),
   )
 
   return convertedList.flat()

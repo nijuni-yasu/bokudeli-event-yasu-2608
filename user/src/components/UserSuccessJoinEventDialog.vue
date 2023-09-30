@@ -44,7 +44,7 @@ const closeDialog = () => {
 const eventDb = query(
   collectionGroup(db, 'events'),
   where('community_account', '==', props.communityAccount),
-  where('event_id', '==', props.eventId)
+  where('event_id', '==', props.eventId),
 )
 const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityAccount))
 

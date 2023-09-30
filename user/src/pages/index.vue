@@ -29,7 +29,7 @@ onMounted(async () => {
   const allEvents = query(
     collectionGroup(db, 'events'),
     where('is_public', '==', true),
-    orderBy('event_start_datetime', 'desc')
+    orderBy('event_start_datetime', 'desc'),
   )
   const events: BokudeliEvent[] = []
   const querySnapshot = await getDocs(allEvents)

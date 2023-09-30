@@ -8,7 +8,7 @@ export const loadEventMembers = async (communityAccount: string, eventId: string
     where('community_account', '==', communityAccount),
     where('event_id', '==', eventId),
     where('status', '==', 'ordered'),
-    orderBy('updated_at', 'asc')
+    orderBy('updated_at', 'asc'),
   )
   const memberSnapshot = await getDocs(memberDb)
 
@@ -49,7 +49,7 @@ export const loadEventMembersWithoutMenu = async (communityAccount: string, even
     where('event_id', '==', eventId),
     where('status', '==', 'ordered'),
     orderBy('user_id', 'asc'),
-    orderBy('updated_at', 'asc')
+    orderBy('updated_at', 'asc'),
   )
 
   const memberSnapshot = await getDocs(memberDb)

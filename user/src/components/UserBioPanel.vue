@@ -61,7 +61,7 @@ const updateUserData = async (storedUser: StoredUser) => {
         user_description,
         updated_at: Timestamp.now(),
       },
-      { merge: true }
+      { merge: true },
     )
   } else {
     console.error('ユーザーが存在しません')

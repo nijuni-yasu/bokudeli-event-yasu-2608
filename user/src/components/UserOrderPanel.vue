@@ -30,7 +30,7 @@ const loadOrderList = async () => {
     collectionGroup(db, 'orders'),
     where('user_id', '==', props.userId),
     where('status', '==', 'ordered'),
-    orderBy('updated_at', 'desc')
+    orderBy('updated_at', 'desc'),
   )
 
   const orderSnapshot = await getDocs(inOrderQuery)
@@ -44,7 +44,7 @@ const loadOrderList = async () => {
       const eventQuery = query(
         collectionGroup(db, 'events'),
         where('community_account', '==', item.community_account),
-        where('event_id', '==', item.event_id)
+        where('event_id', '==', item.event_id),
       )
       const eventSnapshot = await getDocs(eventQuery)
       if (eventSnapshot.docs.length === 0) {
@@ -59,7 +59,7 @@ const loadOrderList = async () => {
       })
       const total = Object.values(subtotals).reduce((total, current) => total + current)
       return [{ order: item, event, subtotals, total }]
-    })
+    }),
   )
   return convertedList.flat()
 }

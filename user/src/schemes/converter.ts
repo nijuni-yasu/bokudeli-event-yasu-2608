@@ -115,7 +115,7 @@ export const convertDocumentDataToCommunity = (documentData: DocumentData): Boku
 export const convertDocumentDataToMenu = (
   partnerId: string,
   documentId: string,
-  documentData: DocumentData
+  documentData: DocumentData,
 ): PartnerMenu => {
   const {
     menu_name,

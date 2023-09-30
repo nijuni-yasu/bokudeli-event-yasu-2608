@@ -7,7 +7,7 @@ export const countEventMembers = async (communityAccount: string, eventId: strin
     where('community_account', '==', communityAccount),
     where('event_id', '==', eventId),
     where('status', '==', 'ordered'),
-    orderBy('user_id', 'asc')
+    orderBy('user_id', 'asc'),
   )
 
   const memberSnapshot = await getDocs(memberDb)
