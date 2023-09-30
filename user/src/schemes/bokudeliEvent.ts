@@ -15,6 +15,15 @@ type BokudeliEvent = {
   shopId: string
   shopName: string
   isPublic: boolean
+  paymentDisplay: string
+  payer: 'user' | 'community'
+  isPaymentAdvanceByUser: boolean
+}
+
+export const defaultPayment = {
+  paymentDisplay: '参加者 当日払い',
+  payer: 'user',
+  isPaymentAdvanceByUser: false,
 }
 
 export default BokudeliEvent
