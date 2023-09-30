@@ -40,7 +40,7 @@ const state = reactive({
   event: {} as BokudeliEvent,
   community: {} as BokudeliCommunity,
   eventSnapshot: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
-  currentMemberCount: undefined as number | undefined,
+  currentMemberCount: 0,
   isLoading: true,
 })
 
@@ -150,6 +150,9 @@ const updateAlert = (message: string) => {
               <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shopName }} </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px">
                 【開催内容】{{ state.event.eventDescription }}
+              </v-card-text>
+              <v-card-text class="text-left pb-8 text-subtitle-1">
+                【支払い方法】{{ state.event.paymentDisplay }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【定員】{{ state.event.eventMaxPeople }} 人
