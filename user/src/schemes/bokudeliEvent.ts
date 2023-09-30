@@ -21,9 +21,9 @@ type BokudeliEvent = {
 }
 
 export const defaultPayment = {
-  paymentDisplay: '参加者 当日払い',
+  paymentDisplay: '参加者 事前決済',
   payer: 'user',
-  isPaymentAdvanceByUser: false,
+  isPaymentAdvanceByUser: true,
 }
 
 export default BokudeliEvent
