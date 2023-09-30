@@ -10,7 +10,9 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import Stripe from 'stripe'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { fixOrder } from '@/composable/fixOrder'
 
+const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
@@ -67,12 +69,25 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 }
 
 const openConfirmOrder = ref(false)
+const confirmDialogMessage = ref('')
 const selectedOrder = ref({} as OrderItem)
+const selectedCartEvent = ref({} as BokudeliEvent)
 const selectedMenu = ref({} as OrderMenu)
 
 const startOrderProcess = async () => {
   const order = selectedOrder.value
-  const orderId = order.order_id
+  const event = selectedCartEvent.value
+
+  if (event.isPaymentAdvanceByUser) {
+    await createCheckoutSession(order)
+  } else {
+    await fixOrder(order)
+    alertBody.value = '注文を完了しました'
+    router.push(getEventPath(order.community_account, order.event_id))
+  }
+}
+
+const createCheckoutSession = async (order: OrderItem) => {
   const lineItems = order.menus.map((menu) => {
     return {
       price_data: {
@@ -103,7 +118,7 @@ const startOrderProcess = async () => {
         eventId: order.event_id,
         communityId: order.community_id,
         communityAccount: order.community_account,
-        orderId: orderId,
+        orderId: order.order_id,
         userId: userId.value,
       },
     })
@@ -121,6 +136,10 @@ const showConfirm = async (cart: Cart) => {
   }
 
   selectedOrder.value = cart.order
+  selectedCartEvent.value = cart.event
+  confirmDialogMessage.value = cart.event.isPaymentAdvanceByUser
+    ? 'クレジットカード決済の注文に進みますか？'
+    : '注文を確定しますか？'
   openConfirmOrder.value = true
 }
 
@@ -229,6 +248,9 @@ onMounted(async () => {
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【注文期限】{{ dateWithDayOfWeekString(cart.event.eventDeadline) }}
           </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+            【支払い方法】{{ cart.event.paymentDisplay }}
+          </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
 
           <v-row class="text-center align-center text-md-body-1 text-caption">
@@ -287,7 +309,7 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
-      クレジットカード決済の注文に進みますか？
+      {{ confirmDialogMessage }}
     </confirm-dialog>
     <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
       カートから削除しますか？
