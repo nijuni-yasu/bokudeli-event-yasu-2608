@@ -1,1 +1,4 @@
-src/@*
+src/@core
+src/@iconify
+src/@layouts
+src/assets
