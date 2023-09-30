@@ -3,8 +3,8 @@
   "version": "2.1.1",
   "private": true,
   "scripts": {
-    "dev-development": "vite -m development",
-    "dev-production": "vite -m production",
+    "dev-development": "VITE_AUTH_DOMAIN=\"bokudeli-event-test.firebaseapp.com\" VITE_USE_LOCALHOST=\"true\" vite -m development",
+    "dev-production": "VITE_AUTH_DOMAIN=\"bokudeli-event-dev.web.app\" VITE_USE_LOCALHOST=\"true\" vite -m production",
     "build-development": "vite build -m development",
     "build-production": "vite build -m production",
     "preview": "vite preview --port 5050",
