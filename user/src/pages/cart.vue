@@ -78,7 +78,7 @@ const startOrderProcess = async () => {
   const order = selectedOrder.value
   const event = selectedCartEvent.value
 
-  if (event.isPaymentAdvanceByUser) {
+  if (event.eventPayment == 'user_advance') {
     await createCheckoutSession(order)
   } else {
     await fixOrder(order)
@@ -129,14 +129,14 @@ const createCheckoutSession = async (order: OrderItem) => {
 }
 
 const paymentMessage = (event: BokudeliEvent) => {
-  switch (event.paymentDisplay) {
-    case '参加者 事前決済': {
+  switch (event.eventPayment) {
+    case 'user_advance': {
       return 'クレジットカード決済の注文に進みますか？'
     }
-    case '参加者 当日払い': {
+    case 'user_on_day': {
       return '支払方法は「参加者による当日払い」です。注文を確定しますか？'
     }
-    case '主催者支払い': {
+    case 'community_bill': {
       return '支払方法は「主催者によるお支払い」です。注文を確定しますか？'
     }
     default: {
@@ -264,7 +264,7 @@ onMounted(async () => {
             【注文期限】{{ dateWithDayOfWeekString(cart.event.eventDeadline) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【支払い方法】{{ cart.event.paymentDisplay }}
+            【支払い方法】{{ cart.event.eventPayment }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
 

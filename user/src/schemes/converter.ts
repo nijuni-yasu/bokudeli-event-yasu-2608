@@ -52,9 +52,9 @@ export const convertDocumentDataToEvent = (documentData: DocumentData): Bokudeli
     shop_id,
     shop_name,
     is_public,
-    payment_display,
-    payer,
-    is_payment_advance_by_user,
+    event_payment,
+    // event_payer,
+    // is_payment_advance_by_user,
   } = documentData
 
   return {
@@ -74,9 +74,9 @@ export const convertDocumentDataToEvent = (documentData: DocumentData): Bokudeli
     shopId: shop_id ?? '',
     shopName: shop_name ?? '',
     isPublic: is_public ?? false,
-    paymentDisplay: payment_display ?? defaultPayment.paymentDisplay,
-    payer: payer ?? defaultPayment.payer,
-    isPaymentAdvanceByUser: is_payment_advance_by_user ?? defaultPayment.isPaymentAdvanceByUser,
+    eventPayment: event_payment ?? defaultPayment.eventPayment,
+    // eventPayer: event_payer ?? defaultPayment.eventPayer,
+    // isPaymentAdvanceByUser: is_payment_advance_by_user ?? defaultPayment.isPaymentAdvanceByUser,
   }
 }
 
