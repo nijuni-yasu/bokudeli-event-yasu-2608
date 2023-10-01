@@ -131,7 +131,7 @@ const createCheckoutSession = async (order: OrderItem) => {
 const paymentMessage = (event: BokudeliEvent) => {
   switch (event.eventPayment) {
     case 'user_advance': {
-      return 'クレジットカード決済の注文に進みますか？'
+      return 'クレジットカードの事前決済に進みますか？'
     }
     case 'user_on_day': {
       return '支払方法は「参加者による当日払い」です。注文を確定しますか？'
@@ -264,7 +264,7 @@ onMounted(async () => {
             【注文期限】{{ dateWithDayOfWeekString(cart.event.eventDeadline) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【支払い方法】{{ cart.event.eventPayment }}
+            【支払い方法】{{ $t(`payment.${cart.event.eventPayment}`) }} <br>
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
 

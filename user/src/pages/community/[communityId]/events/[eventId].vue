@@ -152,7 +152,7 @@ const updateAlert = (message: string) => {
                 【開催内容】{{ state.event.eventDescription }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【支払い方法】{{ state.event.eventPayment }}
+                【支払い方法】{{ $t(`payment.${state.event.eventPayment}`) }}   
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【定員】{{ state.event.eventMaxPeople }} 人
