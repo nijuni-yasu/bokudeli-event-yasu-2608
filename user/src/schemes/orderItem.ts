@@ -6,6 +6,7 @@ type OrderItem = {
   community_id: string
   community_account: string
   event_id: string
+  event_payment: string
   order_id: string
   status: 'in_cart' | 'ordered' | 'completed'
   menus: OrderMenu[]

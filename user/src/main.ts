@@ -9,6 +9,7 @@ import '@styles/styles.scss'
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { createApp } from 'vue'
+import i18n from '@/plugins/i18n'
 
 import './firebase'
 
@@ -25,6 +26,7 @@ app.use(vuetify)
 app.use(pinia)
 app.use(router)
 app.use(layoutsPlugin)
+app.use(i18n)
 
 // Mount vue app
 app.mount('#app')

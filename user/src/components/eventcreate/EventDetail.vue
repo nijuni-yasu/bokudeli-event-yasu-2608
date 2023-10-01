@@ -59,39 +59,27 @@ const resetForm = () => {
             </v-row>
           </v-card-text>
 
-          <v-card-text class="pt-5">    
-              <v-row>
-                <v-col cols="6">
-                  <v-text-field
-                    outlined
-                    dense
-                    label="注文締切日時"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="3">
-                  <v-text-field
-                    outlined
-                    dense
-                    label="時間"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="3">
-                  <v-text-field
-                    outlined
-                    dense
-                    label="分"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
+          <v-card-text class="pt-5">
+            <v-row>
+              <v-col cols="6">
+                <v-text-field outlined dense label="注文締切日時"></v-text-field>
+              </v-col>
+              <v-col cols="3">
+                <v-text-field outlined dense label="時間"></v-text-field>
+              </v-col>
+              <v-col cols="3">
+                <v-text-field outlined dense label="分"></v-text-field>
+              </v-col>
+            </v-row>
+          </v-card-text>
 
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field outlined dense label="定員数"></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
+          <v-card-text class="pt-5">
+            <v-row>
+              <v-col cols="12">
+                <v-text-field outlined dense label="定員数"></v-text-field>
+              </v-col>
+            </v-row>
+          </v-card-text>
 
           <!-- Activity -->
           <v-card-title class="pt-10 px-5">
@@ -100,10 +88,22 @@ const resetForm = () => {
           </v-card-title>
           <v-card-text>
             <v-switch hide-details class="mt-0">
-              <template #label>
-                公開イベント
-              </template>
+              <template #label> 公開イベント </template>
             </v-switch>
+          </v-card-text>
+          <v-card-title class="pt-10 px-5">
+            <v-icon size="50" class="text--primary me-3" icon="mdi-account-credit-card-outline" />
+            <span>支払い設定</span>
+          </v-card-title>
+          <v-card-text>
+            <v-col cols="6">
+              <v-select
+                :items="['user_advance', 'user_on_day', 'community_bill']"
+                hide-details class="mt-0"
+              >
+                <template #label> 支払い設定 </template>
+              </v-select>
+            </v-col>
           </v-card-text>
           <v-card-text>
             <v-btn color="primary" class="me-3 mt-3" @click="submit">次へ</v-btn>

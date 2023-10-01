@@ -10,7 +10,9 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import Stripe from 'stripe'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { fixOrder } from '@/composable/fixOrder'
 
+const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
@@ -67,12 +69,25 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 }
 
 const openConfirmOrder = ref(false)
+const confirmDialogMessage = ref('')
 const selectedOrder = ref({} as OrderItem)
+const selectedCartEvent = ref({} as BokudeliEvent)
 const selectedMenu = ref({} as OrderMenu)
 
 const startOrderProcess = async () => {
   const order = selectedOrder.value
-  const orderId = order.order_id
+  const event = selectedCartEvent.value
+
+  if (event.eventPayment == 'user_advance') {
+    await createCheckoutSession(order)
+  } else {
+    await fixOrder(order)
+    alertBody.value = '注文を完了しました'
+    router.push(getEventPath(order.community_account, order.event_id))
+  }
+}
+
+const createCheckoutSession = async (order: OrderItem) => {
   const lineItems = order.menus.map((menu) => {
     return {
       price_data: {
@@ -101,15 +116,33 @@ const startOrderProcess = async () => {
       payment_method_types: ['card'],
       metadata: {
         eventId: order.event_id,
+        eventPayment: order.event_payment,
         communityId: order.community_id,
         communityAccount: order.community_account,
-        orderId: orderId,
+        orderId: order.order_id,
         userId: userId.value,
       },
     })
     window.location.href = session.url || getEventPath(order.community_account, order.event_id)
   } catch (err) {
     alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'
+  }
+}
+
+const paymentMessage = (event: BokudeliEvent) => {
+  switch (event.eventPayment) {
+    case 'user_advance': {
+      return 'クレジットカードの事前決済に進みますか？'
+    }
+    case 'user_on_day': {
+      return '支払方法は「参加者による当日払い」です。注文を確定しますか？'
+    }
+    case 'community_bill': {
+      return '支払方法は「主催者によるお支払い」です。注文を確定しますか？'
+    }
+    default: {
+      return '注文を確定しますか？'
+    }
   }
 }
 
@@ -121,6 +154,8 @@ const showConfirm = async (cart: Cart) => {
   }
 
   selectedOrder.value = cart.order
+  selectedCartEvent.value = cart.event
+  confirmDialogMessage.value = paymentMessage(cart.event)
   openConfirmOrder.value = true
 }
 
@@ -157,7 +192,7 @@ const loadCartList = async () => {
     collectionGroup(db, 'orders'),
     where('user_id', '==', userId.value),
     where('status', '==', 'in_cart'),
-    orderBy('updated_at', 'desc')
+    orderBy('updated_at', 'desc'),
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
@@ -171,7 +206,7 @@ const loadCartList = async () => {
       const eventQuery = query(
         collectionGroup(db, 'events'),
         where('community_account', '==', item.community_account),
-        where('event_id', '==', item.event_id)
+        where('event_id', '==', item.event_id),
       )
       const eventSnapshot = await getDocs(eventQuery)
       if (eventSnapshot.docs.length === 0) {
@@ -186,7 +221,7 @@ const loadCartList = async () => {
       })
       const total = Object.values(subtotals).reduce((total, current) => total + current)
       return [{ order: item, event, subtotals, total }]
-    })
+    }),
   )
 
   return convertedList.flat()
@@ -228,6 +263,9 @@ onMounted(async () => {
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【注文期限】{{ dateWithDayOfWeekString(cart.event.eventDeadline) }}
+          </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+            【支払い方法】{{ $t(`payment.${cart.event.eventPayment}`) }} <br>
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
 
@@ -287,7 +325,7 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
-      クレジットカード決済の注文に進みますか？
+      {{ confirmDialogMessage }}
     </confirm-dialog>
     <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
       カートから削除しますか？

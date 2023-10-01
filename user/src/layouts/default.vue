@@ -18,7 +18,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
-  () => import('./components/DefaultLayoutWithHorizontalNav.vue')
+  () => import('./components/DefaultLayoutWithHorizontalNav.vue'),
 )
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(() => import('./components/DefaultLayoutWithVerticalNav.vue'))
 
@@ -77,7 +77,7 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
           user_email: firestoredUser.user_email,
           updated_at: Timestamp.now(),
         },
-        { merge: true }
+        { merge: true },
       )
     } else {
       // Pinia に保存

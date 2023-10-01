@@ -130,7 +130,9 @@ const handleGoogleLogin = async () => {
 
 .google-button {
   background: #ffffff;
-  box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.084), 0px 2px 3px rgba(0, 0, 0, 0.168);
+  box-shadow:
+    0px 0px 3px rgba(0, 0, 0, 0.084),
+    0px 2px 3px rgba(0, 0, 0, 0.168);
 
   .button-inner-text {
     font-family: 'Roboto';

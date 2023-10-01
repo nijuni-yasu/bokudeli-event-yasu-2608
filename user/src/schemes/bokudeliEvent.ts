@@ -15,6 +15,15 @@ type BokudeliEvent = {
   shopId: string
   shopName: string
   isPublic: boolean
+  eventPayment: 'user_advance' | 'user_on_day' | 'community_bill'
+  // eventPayer: 'user' | 'community'
+  // isPaymentAdvanceByUser: boolean
+}
+
+export const defaultPayment = {
+  eventPayment: 'user_advance',
+  // eventPayer: 'user',
+  // isPaymentAdvanceByUser: true,
 }
 
 export default BokudeliEvent
