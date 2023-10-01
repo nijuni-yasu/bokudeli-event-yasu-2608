@@ -135,6 +135,7 @@ const submit = async (savedEvent: Partial<BokudeliEvent>) => {
     event_start_datetime: Timestamp.now(),
     event_end_datetime: Timestamp.now(),
     event_max_people: 20,
+    event_payment: 'user_advance',
     shop_name: savedEvent.shopName,
     shop_id: savedEvent.shopId,
     partner_id: savedEvent.partnerId,

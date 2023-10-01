@@ -91,6 +91,20 @@ const resetForm = () => {
               <template #label> 公開イベント </template>
             </v-switch>
           </v-card-text>
+          <v-card-title class="pt-10 px-5">
+            <v-icon size="50" class="text--primary me-3" icon="mdi-account-credit-card-outline" />
+            <span>支払い設定</span>
+          </v-card-title>
+          <v-card-text>
+            <v-col cols="6">
+              <v-select
+                :items="['user_advance', 'user_on_day', 'community_bill']"
+                hide-details class="mt-0"
+              >
+                <template #label> 支払い設定 </template>
+              </v-select>
+            </v-col>
+          </v-card-text>
           <v-card-text>
             <v-btn color="primary" class="me-3 mt-3" @click="submit">次へ</v-btn>
             <v-btn outlined class="mt-3" color="secondary" type="reset" @click="resetForm">リセット</v-btn>
