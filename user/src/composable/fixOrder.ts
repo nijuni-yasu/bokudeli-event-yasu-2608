@@ -26,6 +26,6 @@ export const fixOrder = async (order: OrderItem) => {
   const orderSnapshot = await getDocs(orderRef)
   const orderDocument = orderSnapshot.docs[0]
 
-  await setDoc(orderDocument.ref, { status: 'ordered', updated_at: Timestamp.now() }, { merge: true })
+  await setDoc(orderDocument.ref, { status: 'ordered', updated_at: Timestamp.now(), event_payment:order.event_payment }, { merge: true })
   await addCommunityUser(order.community_id, order.user_id)
 }
