@@ -27,5 +27,5 @@ export const db = initializeFirestore(app, {
 })
 
 export const stripeBaseURL = !import.meta.env.VITE_USE_LOCALHOST
-  ? `https://${firebaseConfig.authDomain}`
+  ? import.meta.env.VITE_ORIGIN_HOST
   : 'http://localhost:5173'
