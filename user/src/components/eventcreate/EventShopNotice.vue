@@ -16,15 +16,16 @@ const submit = () => {
 }
 
 const resetForm = () => {
-  const { eventName, eventDescription, eventAddress, eventStartDatetime, eventDeadline, eventMaxPeople } = props.event
+  const { event_name, event_desc, event_address, event_start_datetime, event_deadline_datetime, event_max_people } =
+    props.event
 
-  console.log(eventAddress)
-  draftEventData.eventName = eventName
-  draftEventData.eventDescription = eventDescription
-  draftEventData.eventAddress = eventAddress
-  draftEventData.eventStartDatetime = eventStartDatetime
-  draftEventData.eventDeadline = eventDeadline
-  draftEventData.eventMaxPeople = eventMaxPeople
+  console.log(event_address)
+  draftEventData.event_name = event_name
+  draftEventData.event_desc = event_desc
+  draftEventData.event_address = event_address
+  draftEventData.event_start_datetime = event_start_datetime
+  draftEventData.event_deadline_datetime = event_deadline_datetime
+  draftEventData.event_max_people = event_max_people
 }
 </script>
 

@@ -16,11 +16,11 @@ const state = reactive({
 })
 
 const getEventKey = (event: BokudeliEvent) => {
-  return [event.communityAccount, event.eventId].join('/')
+  return [event.community_account, event.event_id].join('/')
 }
 
 const getEventMemberKey = (event: BokudeliEvent, memberSet: { [key: string]: EventMember[] }) => {
-  const key = [event.communityAccount, event.eventId].join('/')
+  const key = [event.community_account, event.event_id].join('/')
   return memberSet[key] ? key + '/' + memberSet[key].length : key
 }
 
@@ -36,8 +36,8 @@ onMounted(async () => {
 
   for (const doc of querySnapshot.docs) {
     const event = convertDocumentDataToEvent(doc.data())
-    loadEventMembersWithoutMenu(event.communityAccount, event.eventId).then((members) => {
-      const key = [event.communityAccount, event.eventId].join('/')
+    loadEventMembersWithoutMenu(event.community_account, event.event_id).then((members) => {
+      const key = [event.community_account, event.event_id].join('/')
       state.membersSet[key] = members
     })
     events.push(event)
@@ -64,24 +64,24 @@ onMounted(async () => {
             cols="12"
             class="content"
           >
-            <router-link :to="getEventPath(event.communityAccount, event.eventId)">
+            <router-link :to="getEventPath(event.community_account, event.event_id)">
               <v-card color="text-center cursor-pointer">
                 <div class="image">
-                  <VImg cover class="mx-auto" aspect-ratio="1.91" :src="event.eventCoverUrl" />
+                  <VImg cover class="mx-auto" aspect-ratio="1.91" :src="event.event_cover_url" />
                 </div>
                 <v-card-title class="justify-center pb-3 title text-h6">
-                  {{ event.eventName }}
+                  {{ event.event_name }}
                 </v-card-title>
-                <v-card-text class="text-left pb-2"> 【主催者】 {{ event.communityName }} </v-card-text>
+                <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community_name }} </v-card-text>
                 <v-card-text class="text-left pb-2">
-                  【開催日時】{{ dateWithDayOfWeekString(event.eventStartDatetime) }}
+                  【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}
                 </v-card-text>
                 <v-card-text class="text-left pb-2">
-                  【注文期限】{{ dateWithDayOfWeekString(event.eventDeadline) }}
+                  【注文期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
                 </v-card-text>
-                <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
-                <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
-                <v-card-text class="text-left pb-2"> 【定員】{{ event.eventMaxPeople }} 人</v-card-text>
+                <v-card-text class="text-left pb-2"> 【開催場所】{{ event.event_address }} </v-card-text>
+                <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
+                <v-card-text class="text-left pb-2"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 <v-card-text v-if="state.membersSet[getEventKey(event)]" class="text-left pb-4">
                   【参加者】{{ state.membersSet[getEventKey(event)].length }} 人</v-card-text
                 >

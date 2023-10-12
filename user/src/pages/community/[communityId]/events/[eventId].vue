@@ -67,7 +67,7 @@ const fetchData = async () => {
   state.event = await loadEventData(eventDocumentSnapshot)
 
   state.isLoading = false
-  state.currentMemberCount = await countEventMembers(state.event.communityAccount, state.event.eventId)
+  state.currentMemberCount = await countEventMembers(state.event.community_account, state.event.event_id)
 }
 
 onBeforeRouteUpdate(async (to, from, next) => {
@@ -107,18 +107,18 @@ const updateAlert = (message: string) => {
         <v-card flat class="align-center justify-center text-center my-5 pa-sm-10 pa-xs-1">
           <v-row>
             <v-col>
-              <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
+              <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.event_cover_url" />
             </v-col>
           </v-row>
           <v-row>
             <v-col>
               <!-- イベント情報 -->
               <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10 pre-line">
-                {{ state.event.eventName }}
+                {{ state.event.event_name }}
               </v-card-title>
               <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
                 <router-link
-                  :to="getCommunityPath(state.event.communityAccount)"
+                  :to="getCommunityPath(state.event.community_account)"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
                   <v-row class="ma-1">
@@ -139,36 +139,36 @@ const updateAlert = (message: string) => {
                 </router-link>
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【開催場所】{{ state.event.eventAddress }}
+                【開催場所】{{ state.event.event_address }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【開催日時】{{ dateWithDayOfWeekString(state.event.eventStartDatetime) }}
+                【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【注文期限】{{ dateWithDayOfWeekString(state.event.eventDeadline) }}
+                【注文期限】{{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
               </v-card-text>
-              <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shopName }} </v-card-text>
+              <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shop_name }} </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px">
-                【開催内容】{{ state.event.eventDescription }}
+                【開催内容】{{ state.event.event_desc }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【支払い方法】{{ $t(`payment.${state.event.eventPayment}`) }}   
+                【支払い方法】{{ $t(`payment.${state.event.event_payment}`) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【定員】{{ state.event.eventMaxPeople }} 人
+                【定員】{{ state.event.event_max_people }} 人
               </v-card-text>
               <!-- メンバー情報 -->
-              <event-member-list :community-id="state.event.communityAccount" :event-id="state.event.eventId" />
+              <event-member-list :community-id="state.event.community_account" :event-id="state.event.event_id" />
             </v-col>
           </v-row>
         </v-card>
         <!-- メニュ -->
         <event-menu-list
-          :partner-id="state.event.partnerId"
-          :event-deadline="state.event.eventDeadline"
-          :event-start-datetime="state.event.eventStartDatetime"
+          :partner-id="state.event.partner_id"
+          :event-deadline="state.event.event_deadline_datetime"
+          :event-start-datetime="state.event.event_start_datetime"
           :current-member-count="state.currentMemberCount"
-          :event-max-people="state.event.eventMaxPeople"
+          :event-max-people="state.event.event_max_people"
           @select-menu="updateSelectedMenu"
           @set-alert="updateAlert"
         />

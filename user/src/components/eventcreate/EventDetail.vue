@@ -16,15 +16,16 @@ const submit = () => {
 }
 
 const resetForm = () => {
-  const { eventName, eventDescription, eventAddress, eventStartDatetime, eventDeadline, eventMaxPeople } = props.event
+  const { event_name, event_desc, event_address, event_start_datetime, event_deadline_datetime, event_max_people } =
+    props.event
 
-  console.log(eventAddress)
-  draftEventData.eventName = eventName
-  draftEventData.eventDescription = eventDescription
-  draftEventData.eventAddress = eventAddress
-  draftEventData.eventStartDatetime = eventStartDatetime
-  draftEventData.eventDeadline = eventDeadline
-  draftEventData.eventMaxPeople = eventMaxPeople
+  console.log(event_address)
+  draftEventData.event_name = event_name
+  draftEventData.event_desc = event_desc
+  draftEventData.event_address = event_address
+  draftEventData.event_start_datetime = event_start_datetime
+  draftEventData.event_deadline_datetime = event_deadline_datetime
+  draftEventData.event_max_people = event_max_people
 }
 </script>
 
@@ -41,7 +42,12 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="イベント画像"></v-text-field>
+                <v-text-field
+                  v-model="draftEventData.event_cover_url"
+                  outlined
+                  dense
+                  label="イベント画像"
+                ></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
@@ -49,12 +55,7 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-textarea
-                  v-model="draftEventData.eventDescription"
-                  outlined
-                  rows="10"
-                  label="イベント詳細"
-                ></v-textarea>
+                <v-textarea v-model="draftEventData.event_desc" outlined rows="10" label="イベント詳細"></v-textarea>
               </v-col>
             </v-row>
           </v-card-text>
@@ -97,10 +98,7 @@ const resetForm = () => {
           </v-card-title>
           <v-card-text>
             <v-col cols="6">
-              <v-select
-                :items="['user_advance', 'user_on_day', 'community_bill']"
-                hide-details class="mt-0"
-              >
+              <v-select :items="['user_advance', 'user_on_day', 'community_bill']" hide-details class="mt-0">
                 <template #label> 支払い設定 </template>
               </v-select>
             </v-col>

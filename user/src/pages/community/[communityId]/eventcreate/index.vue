@@ -45,9 +45,9 @@ const fetchData = async () => {
   if (communityData) {
     const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communityData)
     state.event = {
-      communityId,
-      communityAccount,
-      communityName,
+      community_id: communityId,
+      community_account: communityAccount,
+      community_name: communityName,
     }
   }
 }
@@ -67,7 +67,7 @@ const fetchShops = async () => {
 const fetchMenu = async () => {
   isLoadingMenu.value = true
 
-  const { partnerId } = state.event
+  const { partner_id: partnerId } = state.event
   if (!partnerId) {
     isLoadingMenu.value = false
     return
@@ -104,9 +104,9 @@ const submittedAddress = async () => {
 }
 
 const submittedShop = async (shop: Shop) => {
-  state.event.shopId = shop.shop_id
-  state.event.partnerId = shop.partner_id
-  state.event.shopName = shop.shop_name
+  state.event.shop_id = shop.shop_id
+  state.event.partner_id = shop.partner_id
+  state.event.shop_name = shop.shop_name
 
   await fetchMenu()
   if (!panel.value.find((v) => v === 'menu')) {
@@ -124,9 +124,9 @@ const router = useRouter()
 const submit = async (savedEvent: Partial<BokudeliEvent>) => {
   console.log(savedEvent)
   const eventItem = {
-    community_id: savedEvent.communityId,
-    community_account: savedEvent.communityAccount,
-    community_name: savedEvent.communityName,
+    community_id: savedEvent.community_id,
+    community_account: savedEvent.community_account,
+    community_name: savedEvent.community_name,
     event_name: '',
     event_desc: '',
     event_cover_url: '',
@@ -136,9 +136,9 @@ const submit = async (savedEvent: Partial<BokudeliEvent>) => {
     event_end_datetime: Timestamp.now(),
     event_max_people: 20,
     event_payment: 'user_advance',
-    shop_name: savedEvent.shopName,
-    shop_id: savedEvent.shopId,
-    partner_id: savedEvent.partnerId,
+    shop_name: savedEvent.shop_name,
+    shop_id: savedEvent.shop_id,
+    partner_id: savedEvent.partner_id,
     is_public: false,
     // user_id: '',
     // user_name: '',
@@ -153,12 +153,12 @@ const submit = async (savedEvent: Partial<BokudeliEvent>) => {
     updated_at: Timestamp.now(),
   }
 
-  if (savedEvent.communityId && savedEvent.communityAccount) {
-    const addedDoc = await addDoc(collection(db, 'communities', savedEvent.communityId, 'events'), eventItem)
+  if (savedEvent.community_id && savedEvent.community_account) {
+    const addedDoc = await addDoc(collection(db, 'communities', savedEvent.community_id, 'events'), eventItem)
     // 自動採番されたOrderIDを取得して項目として追加追加
     await setDoc(addedDoc, { event_id: addedDoc.id }, { merge: true })
     window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
-    router.push(getEventPath(savedEvent.communityAccount, addedDoc.id))
+    router.push(getEventPath(savedEvent.community_account, addedDoc.id))
   }
 }
 </script>
