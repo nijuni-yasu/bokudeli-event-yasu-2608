@@ -119,7 +119,7 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
     };
 }
 
-async function sendOrderDeadlineMail(start, end) {
+async function sendOrderDeadlineMail(start, end, is_reminder) {
     const promises = [];
     const query = db.collectionGroup('events')
         .where('event_deadline_datetime', '>', new Date(start))
@@ -133,6 +133,7 @@ async function sendOrderDeadlineMail(start, end) {
                     getShopEmails(eventSnapshot),
                     createTemplateDataForOrderDeadline(eventSnapshot)
                 ]);
+                dynamic_template_data.is_reminder = is_reminder;
                 promises.push(sgMail.send({
                     to,
                     from: 'bokudeli@nijuni.jp',
@@ -155,8 +156,11 @@ exports.polling = functions
     .schedule('*/1 * * * *') // .schedule('every 1 minutes')
     .onRun(async (event) => {
         const now = dateFns.parseISO(event.timestamp).getTime();
-        // // 秒を無視しないと誤差で実行できないケースがでてきてしまう
-        const end = Math.trunc(now / 60 / 1000) * 60 * 1000
-        const start = end - (60 * 1000)
-        return sendOrderDeadlineMail(start, end);
+        // 秒を無視しないと誤差で実行できないケースがでてきてしまう
+        const end = Math.trunc(now / 60 / 1000) * 60 * 1000;
+        const start = end - (60 * 1000);
+        return Promise.all([
+            sendOrderDeadlineMail(start, end, false),
+            sendOrderDeadlineMail(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
+        ]);
     });
