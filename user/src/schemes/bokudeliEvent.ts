@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore'
+
 type BokudeliEvent = {
   community_id: string
   community_name: string
@@ -6,11 +8,11 @@ type BokudeliEvent = {
   event_address: string
   event_cover_url: string
   event_desc: string
-  event_deadline_datetime: Date | null
+  event_deadline_datetime: Timestamp | null
   event_max_people: number
   event_name: string
-  event_start_datetime: Date | null
-  event_end_datetime: Date | null
+  event_start_datetime: Timestamp | null
+  event_end_datetime: Timestamp | null
   partner_id: string
   shop_id: string
   shop_name: string

@@ -8,17 +8,17 @@ import StoredUser, { FirestoredUser } from './storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import axios from 'axios'
 
-export const dateString = (date: Date | null): string => {
+export const dateString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
-  return format(date, 'yyyy-MM-dd')
+
+  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  return format(targetDate, 'yyyy-MM-dd')
 }
 
-export const dateWithDayOfWeekString = (date: Date | null): string => {
+export const dateWithDayOfWeekString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
-  return formatDateWithDayOfWeek(date)
-}
-function formatDateWithDayOfWeek(date: Date) {
-  const options: any = {
+
+  const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -26,7 +26,9 @@ function formatDateWithDayOfWeek(date: Date) {
     minute: '2-digit',
     weekday: 'short', // 曜日を短縮形で表示 (例: 金)
   }
-  const formattedDate = date.toLocaleDateString('ja-JP', options)
+
+  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  const formattedDate = targetDate.toLocaleDateString('ja-JP', options)
   return formattedDate
 }
 
@@ -35,23 +37,10 @@ export const priceString = (price: number): string => {
 }
 
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
-  const retData = {
+  return {
     ...createEmptyEvent(),
     ...documentData,
   }
-
-  retData.event_deadline_datetime = documentData.event_deadline_datetime
-    ? (documentData.event_deadline_datetime as Timestamp).toDate()
-    : null
-  retData.event_start_datetime = documentData.event_start_datetime
-    ? (documentData.event_start_datetime as Timestamp).toDate()
-    : null
-
-  retData.event_end_datetime = documentData.event_end_datetime
-    ? (documentData.event_end_datetime as Timestamp).toDate()
-    : null
-
-  return retData
 }
 
 export const convertDocumentDataToCommunity = (documentData: DocumentData): BokudeliCommunity => {
