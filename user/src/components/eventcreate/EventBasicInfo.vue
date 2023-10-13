@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
 import { BasicInfo, hourList, minutesList } from '@/schemes/eventCreate'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 import { clone } from 'lodash'
 
 const props = defineProps<{
@@ -32,11 +32,19 @@ const eventEndHour = ref(hourString(state.endDateTime))
 const eventEndMinute = ref(minutesString(state.endDateTime))
 
 const submitSearch = () => {
+  const startDate = parse(eventStartDate.value, 'yyyy/MM/dd', new Date())
+  startDate.setHours(Number(eventStartHour.value))
+  startDate.setMinutes(Number(eventStartMinute.value))
+
+  const endDate = parse(eventEndDate.value, 'yyyy/MM/dd', new Date())
+  endDate.setHours(Number(eventEndHour.value))
+  endDate.setMinutes(Number(eventEndMinute.value))
+
   state.title = title.value
   state.postcode = postcode.value
   state.address = address.value
-  state.startDateTime = new Date()
-  state.endDateTime = new Date()
+  state.startDateTime = startDate
+  state.endDateTime = endDate
   emit('update:modelValue', state)
   emit('submit', state)
 }
