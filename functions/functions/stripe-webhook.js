@@ -1,14 +1,8 @@
 const functions = require("firebase-functions");
 const express = require('express');
-const bodyParser = require('body-parser');
 require('dotenv').config();
-const { initializeApp, applicationDefault } = require('firebase-admin/app');
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 
-
-initializeApp({
-    credential: applicationDefault(),
-});
 const db = getFirestore();
 
 const env = process.env;
