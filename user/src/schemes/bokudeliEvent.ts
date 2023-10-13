@@ -20,6 +20,14 @@ type BokudeliEvent = {
   event_payment: 'user_advance' | 'user_on_day' | 'community_bill'
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
+  organizer_fullname: string
+  organizer_company: string
+  organizer_phone_personal: string
+  organizer_phone_company: string
+  organizer_email: string
+  organizer_memo: string
+  created_at?: Timestamp
+  updated_at?: Timestamp
 }
 
 export const createEmptyEvent = (): BokudeliEvent => ({
@@ -40,6 +48,12 @@ export const createEmptyEvent = (): BokudeliEvent => ({
   shop_name: '',
   is_public: false,
   event_payment: 'user_advance',
+  organizer_fullname: '',
+  organizer_company: '',
+  organizer_phone_personal: '',
+  organizer_phone_company: '',
+  organizer_email: '',
+  organizer_memo: '',
 })
 
 export default BokudeliEvent

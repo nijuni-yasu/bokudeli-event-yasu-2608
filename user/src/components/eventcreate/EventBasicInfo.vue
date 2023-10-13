@@ -2,6 +2,7 @@
 import cloneDeep from 'lodash/cloneDeep'
 import { BasicInfo, hourList, minutesList } from '@/schemes/eventCreate'
 import { format } from 'date-fns'
+import { clone } from 'lodash'
 
 const props = defineProps<{
   modelValue: BasicInfo
@@ -9,7 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: BasicInfo): void
-  (e: 'submit'): void
+  (e: 'submit', value: BasicInfo): void
 }>()
 
 const state = reactive(cloneDeep(props.modelValue))
@@ -18,9 +19,11 @@ const dateString = (date: Date | null) => (date ? format(date, 'yyyy-MM-dd') : '
 const hourString = (date: Date | null) => (date ? format(date, 'HH') : null)
 const minutesString = (date: Date | null) => (date ? format(date, 'mm') : null)
 
-const title = ref(state.title)
-const postcode = ref(state.postcode)
-const address = ref(state.address)
+const title = ref(clone(state.title))
+const postcode = ref(clone(state.postcode))
+const address = ref(clone(state.address))
+const placeName = ref(clone(state.placeName))
+const placeUrl = ref(clone(state.placeUrl))
 const eventStartDate = ref(dateString(state.startDateTime))
 const eventStartHour = ref(hourString(state.startDateTime))
 const eventStartMinute = ref(minutesString(state.startDateTime))
@@ -35,7 +38,7 @@ const submitSearch = () => {
   state.startDateTime = new Date()
   state.endDateTime = new Date()
   emit('update:modelValue', state)
-  emit('submit')
+  emit('submit', state)
 }
 </script>
 <template>
@@ -75,10 +78,10 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="state.address" outlined dense label="会場名" />
+                <v-text-field v-model="placeName" outlined dense label="会場名" />
               </v-col>
               <v-col cols="6">
-                <v-text-field v-model="state.address" outlined dense label="会場URL" />
+                <v-text-field v-model="placeUrl" outlined dense label="会場URL" />
               </v-col>
             </v-row>
           </v-card-text>
