@@ -79,17 +79,17 @@ const fetchShops = async () => {
 const fetchMenu = async () => {
   isLoadingMenu.value = true
 
-  const { partner_id: partnerId } = state.event
-  if (!partnerId) {
+  const { partner_id } = state.event
+  if (!partner_id) {
     isLoadingMenu.value = false
     return
   }
   const partnerDb = collection(db, 'partners')
 
-  const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
+  const menuSnapshot = await getDocs(collection(partnerDb, partner_id, 'menus'))
 
   const menus = menuSnapshot.docs
-    .map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
+    .map((doc) => convertDocumentDataToMenu(partner_id, doc.id, doc.data()))
     .sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
   state.menus = menus
