@@ -1,5 +1,13 @@
 import { Timestamp } from 'firebase/firestore'
 
+const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者支払い'] as const
+const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
+export type EventPaymentType = (typeof eventPaymentTypes)[number]
+
+export const eventPaymentItems = eventPaymentTypes.map((type, i) => {
+  return { title: eventPaymentLabels[i], value: type }
+})
+
 type BokudeliEvent = {
   community_id: string
   community_name: string
@@ -17,7 +25,7 @@ type BokudeliEvent = {
   shop_id: string
   shop_name: string
   is_public: boolean
-  event_payment: 'user_advance' | 'user_on_day' | 'community_bill'
+  event_payment: EventPaymentType
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
   organizer_fullname: string
