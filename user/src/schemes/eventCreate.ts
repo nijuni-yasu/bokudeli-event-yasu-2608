@@ -1,4 +1,6 @@
 import { format, parse } from 'date-fns'
+import { EventPaymentType } from './bokudeliEvent'
+
 export interface BasicInfo {
   title: string
   postcode: string
@@ -7,6 +9,15 @@ export interface BasicInfo {
   placeUrl: string
   startDateTime: Date | null
   endDateTime: Date | null
+}
+
+export interface EventDetailData {
+  eventCoverUrl: string
+  eventDesc: string
+  eventDeadlineDateTime: Date | null
+  eventMaxPeople: number
+  isPublic: boolean
+  eventPayment: EventPaymentType
 }
 
 export interface ShopNotice {

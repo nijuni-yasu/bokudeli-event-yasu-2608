@@ -10,7 +10,7 @@ import { convertDocumentDataToCommunity, convertDocumentDataToMenu } from '@/sch
 import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
-import { BasicInfo, ShopNotice } from '@/schemes/eventCreate'
+import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
 import { useRouter } from 'vue-router'
 import { getEventPath } from '@/router/utils'
 
@@ -41,6 +41,14 @@ const basicInfo = reactive<BasicInfo>({
 })
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
+const eventDetailData = reactive<EventDetailData>({
+  eventCoverUrl: '',
+  eventDesc: '',
+  eventDeadlineDateTime: null,
+  eventMaxPeople: 0,
+  isPublic: false,
+  eventPayment: 'user_advance',
+})
 const shopNotice = reactive<ShopNotice>({
   organizerFullName: '',
   organizerCompany: '',
@@ -141,12 +149,20 @@ const submittedMenu = () => {
   }
 }
 
-const submittedDetail = () => {
+const submittedDetail = (detail: EventDetailData) => {
+  state.event.event_cover_url = detail.eventCoverUrl
+  state.event.event_desc = detail.eventDesc
+  state.event.event_deadline_datetime = detail.eventDeadlineDateTime
+    ? Timestamp.fromDate(detail.eventDeadlineDateTime)
+    : null
+  state.event.event_max_people = detail.eventMaxPeople
+  state.event.is_public = detail.isPublic
+  state.event.event_payment = detail.eventPayment
+
   if (!panel.value.find((v) => v === 'shopNotice')) {
     panel.value.push('shopNotice')
   }
 }
-
 
 const submitShopNotice = (shopNotice: ShopNotice) => {
   state.event.organizer_fullname = shopNotice.organizerFullName
@@ -202,7 +218,7 @@ const submit = async () => {
       <v-expansion-panel value="info">
         <v-expansion-panel-title>イベント詳細</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-detail :event="state.event" @submit="submittedDetail" />
+          <event-detail v-model="eventDetailData" @submit="submittedDetail" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="shopNotice">
