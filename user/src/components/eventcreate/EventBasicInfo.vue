@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
-import { BasicInfo, hourList, minutesList } from '@/schemes/eventCreate'
-import { format, parse } from 'date-fns'
+import {
+  BasicInfo,
+  hourList,
+  minutesList,
+  dateString,
+  hourString,
+  minutesString,
+  parseDateTimeStrings,
+} from '@/schemes/eventCreate'
 import { clone } from 'lodash'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 
@@ -16,10 +23,6 @@ const emit = defineEmits<{
 
 const state = reactive(cloneDeep(props.modelValue))
 
-const dateString = (date: Date | null) => (date ? format(date, 'yyyy-MM-dd') : '')
-const hourString = (date: Date | null) => (date ? format(date, 'HH') : null)
-const minutesString = (date: Date | null) => (date ? format(date, 'mm') : null)
-
 const title = ref(clone(state.title))
 const postcode = ref(clone(state.postcode))
 const address = ref(clone(state.address))
@@ -33,14 +36,8 @@ const eventEndHour = ref(hourString(state.endDateTime))
 const eventEndMinute = ref(minutesString(state.endDateTime))
 
 const submitSearch = () => {
-  const startDate = parse(eventStartDate.value, 'yyyy-MM-dd', new Date())
-  startDate.setHours(Number(eventStartHour.value))
-  startDate.setMinutes(Number(eventStartMinute.value))
-
-  const endDate = parse(eventEndDate.value, 'yyyy-MM-dd', new Date())
-  endDate.setHours(Number(eventEndHour.value))
-  endDate.setMinutes(Number(eventEndMinute.value))
-
+  const startDate = parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value)
+  const endDate = parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value)
   state.title = title.value
   state.postcode = postcode.value
   state.address = address.value
