@@ -11,6 +11,11 @@ import {
 } from '@/schemes/eventCreate'
 import { clone, cloneDeep } from 'lodash'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
+import { Japanese } from 'flatpickr/dist/l10n/ja'
+
+const pickerConfig = {
+  locale: Japanese,
+}
 
 const props = defineProps<{
   modelValue: EventDetailData
@@ -91,6 +96,7 @@ const resetForm = () => {
               <v-col cols="6">
                 <app-date-time-picker
                   v-model="eventDeadlineDate"
+                  :config="pickerConfig"
                   outlined
                   dense
                   label="注文締切日時"

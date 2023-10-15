@@ -11,6 +11,11 @@ import {
 } from '@/schemes/eventCreate'
 import { clone } from 'lodash'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
+import { Japanese } from 'flatpickr/dist/l10n/ja'
+
+const pickerConfig = {
+  locale: Japanese,
+}
 
 const props = defineProps<{
   modelValue: BasicInfo
@@ -100,7 +105,13 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <app-date-time-picker v-model="eventStartDate" outlined dense label="開始日"></app-date-time-picker>
+                <app-date-time-picker
+                  v-model="eventStartDate"
+                  :config="pickerConfig"
+                  outlined
+                  dense
+                  label="開始日"
+                ></app-date-time-picker>
               </v-col>
               <v-col cols="3">
                 <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" />
@@ -114,7 +125,13 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <app-date-time-picker v-model="eventEndDate" outlined dense label="終了日"></app-date-time-picker>
+                <app-date-time-picker
+                  v-model="eventEndDate"
+                  :config="pickerConfig"
+                  outlined
+                  dense
+                  label="終了日"
+                ></app-date-time-picker>
               </v-col>
               <v-col cols="3">
                 <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" />
