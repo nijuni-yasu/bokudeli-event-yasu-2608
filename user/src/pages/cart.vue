@@ -33,12 +33,12 @@ const state = reactive({
 const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'> => {
   const { event } = cart
 
-  if (event.eventDeadline && event.eventDeadline < new Date()) {
+  if (event.event_deadline_datetime && event.event_deadline_datetime < new Date()) {
     return 'deadline'
   }
 
-  const memebers = await loadEventMembers(event.communityAccount, event.eventId)
-  if (memebers.length >= event.eventMaxPeople) {
+  const memebers = await loadEventMembers(event.community_account, event.event_id)
+  if (memebers.length >= event.event_max_people) {
     return 'limitPeople'
   }
   return true
@@ -78,7 +78,7 @@ const startOrderProcess = async () => {
   const order = selectedOrder.value
   const event = selectedCartEvent.value
 
-  if (event.eventPayment == 'user_advance') {
+  if (event.event_payment == 'user_advance') {
     await createCheckoutSession(order)
   } else {
     await fixOrder(order)
@@ -130,7 +130,7 @@ const createCheckoutSession = async (order: OrderItem) => {
 }
 
 const paymentMessage = (event: BokudeliEvent) => {
-  switch (event.eventPayment) {
+  switch (event.event_payment) {
     case 'user_advance': {
       return 'クレジットカードの事前決済に進みますか？'
     }
@@ -236,38 +236,38 @@ onMounted(async () => {
 <template>
   <div>
     <v-row v-if="!state.isLoading && state.cartList.length !== 0" justify="center">
-      <v-col v-for="cart in state.cartList" :key="cart.event.eventId" cols="12" md="8" sm="8">
+      <v-col v-for="cart in state.cartList" :key="cart.event.event_id" cols="12" md="8" sm="8">
         <v-card class="pa-sm-5 pa-xs-1 ma-sm-10 ma-xs-1">
           <v-row>
             <v-col class="d-flex align-center">
-              <v-img class="ma-10" cover aspect-ratio="1.91" :src="cart.event.eventCoverUrl" />
+              <v-img class="ma-10" cover aspect-ratio="1.91" :src="cart.event.event_cover_url" />
             </v-col>
           </v-row>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【主催者】
-            <router-link :to="getCommunityPath(cart.event.communityAccount)">
-              {{ cart.event.communityName }}
+            <router-link :to="getCommunityPath(cart.event.community_account)">
+              {{ cart.event.community_name }}
             </router-link>
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【イベント】
-            <router-link :to="getEventPath(cart.event.communityAccount, cart.event.eventId)">
-              {{ cart.event.eventName }}
+            <router-link :to="getEventPath(cart.event.community_account, cart.event.event_id)">
+              {{ cart.event.event_name }}
             </router-link>
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催場所】{{ cart.event.eventAddress }}
+            【開催場所】{{ cart.event.event_address }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催日時】{{ dateWithDayOfWeekString(cart.event.eventStartDatetime) }}
+            【開催日時】{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【注文期限】{{ dateWithDayOfWeekString(cart.event.eventDeadline) }}
+            【注文期限】{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【支払い方法】{{ $t(`payment.${cart.event.eventPayment}`) }} <br>
+            【支払い方法】{{ $t(`payment.${cart.event.event_payment}`) }} <br />
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shopName }} </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shop_name }} </v-card-text>
 
           <v-row class="text-center align-center text-md-body-1 text-caption">
             <v-col cols="12">

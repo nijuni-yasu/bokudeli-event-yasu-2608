@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { DocumentData, Timestamp } from 'firebase/firestore'
-import BokudeliEvent, { defaultPayment } from './bokudeliEvent'
+import BokudeliEvent, { createEmptyEvent } from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import PartnerMenu from './partnerMenu'
 import { FacebookAuthProvider, GoogleAuthProvider, User } from 'firebase/auth'
@@ -8,17 +8,17 @@ import StoredUser, { FirestoredUser } from './storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import axios from 'axios'
 
-export const dateString = (date: Date | null): string => {
+export const dateString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
-  return format(date, 'yyyy-MM-dd')
+
+  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  return format(targetDate, 'yyyy-MM-dd')
 }
 
-export const dateWithDayOfWeekString = (date: Date | null): string => {
+export const dateWithDayOfWeekString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
-  return formatDateWithDayOfWeek(date)
-}
-function formatDateWithDayOfWeek(date: Date) {
-  const options: any = {
+
+  const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -26,7 +26,9 @@ function formatDateWithDayOfWeek(date: Date) {
     minute: '2-digit',
     weekday: 'short', // 曜日を短縮形で表示 (例: 金)
   }
-  const formattedDate = date.toLocaleDateString('ja-JP', options)
+
+  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  const formattedDate = targetDate.toLocaleDateString('ja-JP', options)
   return formattedDate
 }
 
@@ -35,48 +37,9 @@ export const priceString = (price: number): string => {
 }
 
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
-  const {
-    community_id,
-    community_name,
-    community_account,
-    event_address,
-    event_cover_url,
-    event_deadline_datetime,
-    event_desc,
-    event_end_datetime,
-    event_id,
-    event_max_people,
-    event_name,
-    event_start_datetime,
-    partner_id,
-    shop_id,
-    shop_name,
-    is_public,
-    event_payment,
-    // event_payer,
-    // is_payment_advance_by_user,
-  } = documentData
-
   return {
-    communityId: community_id ?? '',
-    communityName: community_name ?? '',
-    communityAccount: community_account ?? '',
-    eventId: event_id ?? '',
-    eventAddress: event_address ?? '',
-    eventCoverUrl: event_cover_url ?? '',
-    eventDescription: event_desc ?? '',
-    eventDeadline: event_deadline_datetime ? (event_deadline_datetime as Timestamp).toDate() : null,
-    eventMaxPeople: event_max_people ?? 0,
-    eventName: event_name ?? '',
-    eventStartDatetime: event_start_datetime ? (event_start_datetime as Timestamp).toDate() : null,
-    eventEndDatetime: event_end_datetime ? (event_end_datetime as Timestamp).toDate() : null,
-    partnerId: partner_id ?? '',
-    shopId: shop_id ?? '',
-    shopName: shop_name ?? '',
-    isPublic: is_public ?? false,
-    eventPayment: event_payment ?? defaultPayment.eventPayment,
-    // eventPayer: event_payer ?? defaultPayment.eventPayer,
-    // isPaymentAdvanceByUser: is_payment_advance_by_user ?? defaultPayment.isPaymentAdvanceByUser,
+    ...createEmptyEvent(),
+    ...documentData,
   }
 }
 

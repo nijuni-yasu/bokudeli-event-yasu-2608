@@ -1,30 +1,67 @@
 <script setup lang="ts">
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { eventPaymentItems } from '@/schemes/bokudeliEvent'
+import {
+  EventDetailData,
+  dateString,
+  hourString,
+  minutesString,
+  parseDateTimeStrings,
+  hourList,
+  minutesList,
+} from '@/schemes/eventCreate'
+import { clone, cloneDeep } from 'lodash'
+import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
+import { Japanese } from 'flatpickr/dist/l10n/ja'
+
+const pickerConfig = {
+  locale: Japanese,
+}
 
 const props = defineProps<{
-  event: Partial<BokudeliEvent>
+  modelValue: EventDetailData
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit', value: Partial<BokudeliEvent>): void
+  (e: 'update:modelValue', value: EventDetailData): void
+  (e: 'submit', value: EventDetailData): void
 }>()
 
-const draftEventData = reactive(JSON.parse(JSON.stringify(props.event)) as Partial<BokudeliEvent>)
+const state = reactive(cloneDeep(props.modelValue))
+
+const eventCoverUrl = ref(clone(state.eventCoverUrl))
+const eventDesc = ref(clone(state.eventDesc))
+const eventDeadlineDate = ref(dateString(state.eventDeadlineDateTime))
+const eventDeadlineHour = ref(hourString(state.eventDeadlineDateTime))
+const eventDeadlineMinute = ref(minutesString(state.eventDeadlineDateTime))
+const eventMaxPeople = ref(clone(state.eventMaxPeople))
+const isPublic = ref(clone(state.isPublic))
+const eventPayment = ref(clone(state.eventPayment))
 
 const submit = () => {
-  emit('submit', draftEventData)
+  state.eventCoverUrl = eventCoverUrl.value
+  state.eventDesc = eventDesc.value
+  state.eventDeadlineDateTime = parseDateTimeStrings(
+    eventDeadlineDate.value,
+    eventDeadlineHour.value,
+    eventDeadlineMinute.value,
+  )
+  state.eventMaxPeople = eventMaxPeople.value
+  state.isPublic = isPublic.value
+  state.eventPayment = eventPayment.value
+
+  emit('update:modelValue', state)
+  emit('submit', state)
 }
 
 const resetForm = () => {
-  const { eventName, eventDescription, eventAddress, eventStartDatetime, eventDeadline, eventMaxPeople } = props.event
-
-  console.log(eventAddress)
-  draftEventData.eventName = eventName
-  draftEventData.eventDescription = eventDescription
-  draftEventData.eventAddress = eventAddress
-  draftEventData.eventStartDatetime = eventStartDatetime
-  draftEventData.eventDeadline = eventDeadline
-  draftEventData.eventMaxPeople = eventMaxPeople
+  eventCoverUrl.value = clone(state.eventCoverUrl)
+  eventDesc.value = clone(state.eventDesc)
+  eventDeadlineDate.value = dateString(state.eventDeadlineDateTime)
+  eventDeadlineHour.value = hourString(state.eventDeadlineDateTime)
+  eventDeadlineMinute.value = minutesString(state.eventDeadlineDateTime)
+  eventMaxPeople.value = clone(state.eventMaxPeople)
+  isPublic.value = clone(state.isPublic)
+  eventPayment.value = clone(state.eventPayment)
 }
 </script>
 
@@ -41,7 +78,7 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="イベント画像"></v-text-field>
+                <v-text-field v-model="eventCoverUrl" outlined dense label="イベント画像"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
@@ -49,12 +86,7 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-textarea
-                  v-model="draftEventData.eventDescription"
-                  outlined
-                  rows="10"
-                  label="イベント詳細"
-                ></v-textarea>
+                <v-textarea v-model="eventDesc" outlined rows="10" label="イベント詳細"></v-textarea>
               </v-col>
             </v-row>
           </v-card-text>
@@ -62,13 +94,19 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field outlined dense label="注文締切日時"></v-text-field>
+                <app-date-time-picker
+                  v-model="eventDeadlineDate"
+                  :config="pickerConfig"
+                  outlined
+                  dense
+                  label="注文締切日時"
+                ></app-date-time-picker>
               </v-col>
               <v-col cols="3">
-                <v-text-field outlined dense label="時間"></v-text-field>
+                <v-select v-model="eventDeadlineHour" :items="hourList" outlined dense label="時間"></v-select>
               </v-col>
               <v-col cols="3">
-                <v-text-field outlined dense label="分"></v-text-field>
+                <v-select v-model="eventDeadlineMinute" :items="minutesList" outlined dense label="分"></v-select>
               </v-col>
             </v-row>
           </v-card-text>
@@ -76,7 +114,7 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field outlined dense label="定員数"></v-text-field>
+                <v-text-field v-model="eventMaxPeople" outlined dense label="定員数"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
@@ -87,7 +125,7 @@ const resetForm = () => {
             <span>公開設定</span>
           </v-card-title>
           <v-card-text>
-            <v-switch hide-details class="mt-0">
+            <v-switch v-model="isPublic" hide-details class="mt-0">
               <template #label> 公開イベント </template>
             </v-switch>
           </v-card-text>
@@ -97,10 +135,7 @@ const resetForm = () => {
           </v-card-title>
           <v-card-text>
             <v-col cols="6">
-              <v-select
-                :items="['user_advance', 'user_on_day', 'community_bill']"
-                hide-details class="mt-0"
-              >
+              <v-select v-model="eventPayment" :items="eventPaymentItems" hide-details class="mt-0">
                 <template #label> 支払い設定 </template>
               </v-select>
             </v-col>

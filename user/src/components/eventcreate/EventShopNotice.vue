@@ -1,30 +1,33 @@
 <script setup lang="ts">
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { ShopNotice } from '@/schemes/eventCreate'
+import { cloneDeep } from 'lodash'
 
 const props = defineProps<{
-  event: Partial<BokudeliEvent>
+  modelValue: ShopNotice
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit', value: Partial<BokudeliEvent>): void
+  (e: 'submit', value: ShopNotice): void
 }>()
 
-const draftEventData = reactive(JSON.parse(JSON.stringify(props.event)) as Partial<BokudeliEvent>)
+const state = reactive(cloneDeep(props.modelValue))
+
+const pickUpPlace = ref('')
+const message = ref('')
 
 const submit = () => {
-  emit('submit', draftEventData)
+  state.organizerMemo = [pickUpPlace.value, message.value].join('\n')
+  emit('submit', state)
 }
 
 const resetForm = () => {
-  const { eventName, eventDescription, eventAddress, eventStartDatetime, eventDeadline, eventMaxPeople } = props.event
-
-  console.log(eventAddress)
-  draftEventData.eventName = eventName
-  draftEventData.eventDescription = eventDescription
-  draftEventData.eventAddress = eventAddress
-  draftEventData.eventStartDatetime = eventStartDatetime
-  draftEventData.eventDeadline = eventDeadline
-  draftEventData.eventMaxPeople = eventMaxPeople
+  const prevState = cloneDeep(props.modelValue)
+  state.organizerFullName = prevState.organizerFullName
+  state.organizerCompany = prevState.organizerCompany
+  state.organizerPhonePersonal = prevState.organizerPhonePersonal
+  state.organizerPhoneCompany = prevState.organizerPhoneCompany
+  state.organizerEmail = prevState.organizerEmail
+  state.organizerMemo = prevState.organizerMemo
 }
 </script>
 
@@ -41,20 +44,20 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row class="justify-center">
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventCoverUrl" outlined dense label="担当者 氏名"></v-text-field>
+                <v-text-field v-model="state.organizerFullName" outlined dense label="担当者 氏名"></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="会社名/団体名"></v-text-field>
+                <v-text-field v-model="state.organizerCompany" outlined dense label="会社名/団体名"></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="draftEventData.eventName" outlined dense label="メールアドレス"></v-text-field>
+                <v-text-field v-model="state.organizerEmail" outlined dense label="メールアドレス"></v-text-field>
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="draftEventData.eventName"
+                  v-model="state.organizerPhonePersonal"
                   outlined
                   dense
                   label="電話番号（担当者）"
@@ -63,7 +66,7 @@ const resetForm = () => {
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="draftEventData.eventName"
+                  v-model="state.organizerPhoneCompany"
                   outlined
                   dense
                   label="電話番号（会社/団体）"
@@ -71,17 +74,12 @@ const resetForm = () => {
               </v-col>
 
               <v-col cols="12">
-                <v-textarea
-                  v-model="draftEventData.eventDescription"
-                  outlined
-                  rows="3"
-                  label="配達受取場所について"
-                ></v-textarea>
+                <v-textarea v-model="pickUpPlace" outlined rows="3" label="配達受取場所について"></v-textarea>
               </v-col>
 
               <v-col cols="12">
                 <v-textarea
-                  v-model="draftEventData.eventDescription"
+                  v-model="message"
                   outlined
                   rows="3"
                   label="イベントやフードの相談事項・連絡事項"

@@ -1,7 +1,21 @@
 <script setup lang="ts">
 import cloneDeep from 'lodash/cloneDeep'
-import { BasicInfo, hourList, minutesList } from '@/schemes/eventCreate'
-import { format } from 'date-fns'
+import {
+  BasicInfo,
+  hourList,
+  minutesList,
+  dateString,
+  hourString,
+  minutesString,
+  parseDateTimeStrings,
+} from '@/schemes/eventCreate'
+import { clone } from 'lodash'
+import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
+import { Japanese } from 'flatpickr/dist/l10n/ja'
+
+const pickerConfig = {
+  locale: Japanese,
+}
 
 const props = defineProps<{
   modelValue: BasicInfo
@@ -9,18 +23,16 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: BasicInfo): void
-  (e: 'submit'): void
+  (e: 'submit', value: BasicInfo): void
 }>()
 
 const state = reactive(cloneDeep(props.modelValue))
 
-const dateString = (date: Date | null) => (date ? format(date, 'yyyy-MM-dd') : '')
-const hourString = (date: Date | null) => (date ? format(date, 'HH') : null)
-const minutesString = (date: Date | null) => (date ? format(date, 'mm') : null)
-
-const title = ref(state.title)
-const postcode = ref(state.postcode)
-const address = ref(state.address)
+const title = ref(clone(state.title))
+const postcode = ref(clone(state.postcode))
+const address = ref(clone(state.address))
+const placeName = ref(clone(state.placeName))
+const placeUrl = ref(clone(state.placeUrl))
 const eventStartDate = ref(dateString(state.startDateTime))
 const eventStartHour = ref(hourString(state.startDateTime))
 const eventStartMinute = ref(minutesString(state.startDateTime))
@@ -29,13 +41,15 @@ const eventEndHour = ref(hourString(state.endDateTime))
 const eventEndMinute = ref(minutesString(state.endDateTime))
 
 const submitSearch = () => {
+  const startDate = parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value)
+  const endDate = parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value)
   state.title = title.value
   state.postcode = postcode.value
   state.address = address.value
-  state.startDateTime = new Date()
-  state.endDateTime = new Date()
+  state.startDateTime = startDate
+  state.endDateTime = endDate
   emit('update:modelValue', state)
-  emit('submit')
+  emit('submit', state)
 }
 </script>
 <template>
@@ -75,10 +89,10 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="state.address" outlined dense label="会場名" />
+                <v-text-field v-model="placeName" outlined dense label="会場名" />
               </v-col>
               <v-col cols="6">
-                <v-text-field v-model="state.address" outlined dense label="会場URL" />
+                <v-text-field v-model="placeUrl" outlined dense label="会場URL" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -91,7 +105,13 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="eventStartDate" outlined dense label="開始日" />
+                <app-date-time-picker
+                  v-model="eventStartDate"
+                  :config="pickerConfig"
+                  outlined
+                  dense
+                  label="開始日"
+                ></app-date-time-picker>
               </v-col>
               <v-col cols="3">
                 <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" />
@@ -105,7 +125,13 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="eventEndDate" outlined dense label="終了日"></v-text-field>
+                <app-date-time-picker
+                  v-model="eventEndDate"
+                  :config="pickerConfig"
+                  outlined
+                  dense
+                  label="終了日"
+                ></app-date-time-picker>
               </v-col>
               <v-col cols="3">
                 <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" />

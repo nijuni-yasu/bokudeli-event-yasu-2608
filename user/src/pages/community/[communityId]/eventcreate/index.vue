@@ -7,14 +7,16 @@ import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
 import { collection, collectionGroup, getDocs, query, where, addDoc, setDoc, Timestamp } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { convertDocumentDataToCommunity, convertDocumentDataToMenu } from '@/schemes/converter'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
-import { BasicInfo } from '@/schemes/eventCreate'
+import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
 import { useRouter } from 'vue-router'
 import { getEventPath } from '@/router/utils'
 
-type panelType = 'address' | 'shop' | 'menu' | 'info'
+const router = useRouter()
+
+type panelType = 'address' | 'shop' | 'menu' | 'info' | 'shopNotice'
 
 const props = defineProps<{
   communityId: string
@@ -32,11 +34,29 @@ const basicInfo = reactive<BasicInfo>({
   title: '',
   postcode: '',
   address: '',
+  placeName: '',
+  placeUrl: '',
   startDateTime: null,
   endDateTime: null,
 })
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
+const eventDetailData = reactive<EventDetailData>({
+  eventCoverUrl: '',
+  eventDesc: '',
+  eventDeadlineDateTime: null,
+  eventMaxPeople: 0,
+  isPublic: false,
+  eventPayment: 'user_advance',
+})
+const shopNotice = reactive<ShopNotice>({
+  organizerFullName: '',
+  organizerCompany: '',
+  organizerPhonePersonal: '',
+  organizerPhoneCompany: '',
+  organizerEmail: '',
+  organizerMemo: '',
+})
 
 const fetchData = async () => {
   const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
@@ -45,9 +65,9 @@ const fetchData = async () => {
   if (communityData) {
     const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communityData)
     state.event = {
-      communityId,
-      communityAccount,
-      communityName,
+      community_id: communityId,
+      community_account: communityAccount,
+      community_name: communityName,
     }
   }
 }
@@ -67,17 +87,17 @@ const fetchShops = async () => {
 const fetchMenu = async () => {
   isLoadingMenu.value = true
 
-  const { partnerId } = state.event
-  if (!partnerId) {
+  const { partner_id } = state.event
+  if (!partner_id) {
     isLoadingMenu.value = false
     return
   }
   const partnerDb = collection(db, 'partners')
 
-  const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
+  const menuSnapshot = await getDocs(collection(partnerDb, partner_id, 'menus'))
 
   const menus = menuSnapshot.docs
-    .map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
+    .map((doc) => convertDocumentDataToMenu(partner_id, doc.id, doc.data()))
     .sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
   state.menus = menus
@@ -95,8 +115,17 @@ onMounted(async () => {
   await fetchData()
 })
 
-const submittedAddress = async () => {
-  // state.event.eventAddress = address.value
+const submittedBasicInfo = async (info: BasicInfo) => {
+  state.event.event_name = info.title
+  state.event.event_address = info.address
+  state.event.event_start_datetime = info.startDateTime ? Timestamp.fromDate(info.startDateTime) : null
+  state.event.event_end_datetime = info.endDateTime ? Timestamp.fromDate(info.endDateTime) : null
+
+  //TODO: 以下の項目について確認する
+  // postcode: string
+  // placeName: string
+  // placeUrl: string
+
   await fetchShops()
   if (!panel.value.find((v) => v === 'shop')) {
     panel.value.push('shop')
@@ -104,9 +133,9 @@ const submittedAddress = async () => {
 }
 
 const submittedShop = async (shop: Shop) => {
-  state.event.shopId = shop.shop_id
-  state.event.partnerId = shop.partner_id
-  state.event.shopName = shop.shop_name
+  state.event.shop_id = shop.shop_id
+  state.event.partner_id = shop.partner_id
+  state.event.shop_name = shop.shop_name
 
   await fetchMenu()
   if (!panel.value.find((v) => v === 'menu')) {
@@ -120,45 +149,47 @@ const submittedMenu = () => {
   }
 }
 
-const router = useRouter()
-const submit = async (savedEvent: Partial<BokudeliEvent>) => {
-  console.log(savedEvent)
+const submittedDetail = (detail: EventDetailData) => {
+  state.event.event_cover_url = detail.eventCoverUrl
+  state.event.event_desc = detail.eventDesc
+  state.event.event_deadline_datetime = detail.eventDeadlineDateTime
+    ? Timestamp.fromDate(detail.eventDeadlineDateTime)
+    : null
+  state.event.event_max_people = detail.eventMaxPeople
+  state.event.is_public = detail.isPublic
+  state.event.event_payment = detail.eventPayment
+
+  if (!panel.value.find((v) => v === 'shopNotice')) {
+    panel.value.push('shopNotice')
+  }
+}
+
+const submitShopNotice = (shopNotice: ShopNotice) => {
+  state.event.organizer_fullname = shopNotice.organizerFullName
+  state.event.organizer_company = shopNotice.organizerCompany
+  state.event.organizer_phone_personal = shopNotice.organizerPhonePersonal
+  state.event.organizer_phone_company = shopNotice.organizerPhoneCompany
+  state.event.organizer_email = shopNotice.organizerEmail
+  state.event.organizer_memo = shopNotice.organizerMemo
+
+  submit()
+}
+const submit = async () => {
   const eventItem = {
-    community_id: savedEvent.communityId,
-    community_account: savedEvent.communityAccount,
-    community_name: savedEvent.communityName,
-    event_name: '',
-    event_desc: '',
-    event_cover_url: '',
-    event_address: '',
-    event_deadline_datetime: Timestamp.now(),
-    event_start_datetime: Timestamp.now(),
-    event_end_datetime: Timestamp.now(),
-    event_max_people: 20,
-    event_payment: 'user_advance',
-    shop_name: savedEvent.shopName,
-    shop_id: savedEvent.shopId,
-    partner_id: savedEvent.partnerId,
-    is_public: false,
-    // user_id: '',
-    // user_name: '',
-    // orgnizer_fullname: '',
-    // orgnizer_company: '',
-    // orgnizer_email: '',
-    // orgnizer_phone_personal: '',
-    // orgnizer_phone_company: '',
-    // orgnizer_note_delivery: '',
-    // orgnizer_note_event: '',
-    created_at: Timestamp.now(),
-    updated_at: Timestamp.now(),
+    ...createEmptyEvent(),
+    ...state.event,
+    ...{
+      created_at: Timestamp.now(),
+      updated_at: Timestamp.now(),
+    },
   }
 
-  if (savedEvent.communityId && savedEvent.communityAccount) {
-    const addedDoc = await addDoc(collection(db, 'communities', savedEvent.communityId, 'events'), eventItem)
+  if (eventItem.community_id && eventItem.community_account) {
+    const addedDoc = await addDoc(collection(db, 'communities', eventItem.community_id, 'events'), eventItem)
     // 自動採番されたOrderIDを取得して項目として追加追加
     await setDoc(addedDoc, { event_id: addedDoc.id }, { merge: true })
     window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
-    router.push(getEventPath(savedEvent.communityAccount, addedDoc.id))
+    router.push(getEventPath(eventItem.community_account, addedDoc.id))
   }
 }
 </script>
@@ -169,7 +200,7 @@ const submit = async (savedEvent: Partial<BokudeliEvent>) => {
       <v-expansion-panel value="address">
         <v-expansion-panel-title>基本情報</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-basic-info v-model="basicInfo" @submit="submittedAddress" />
+          <event-basic-info v-model="basicInfo" @submit="submittedBasicInfo" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="shop">
@@ -187,13 +218,13 @@ const submit = async (savedEvent: Partial<BokudeliEvent>) => {
       <v-expansion-panel value="info">
         <v-expansion-panel-title>イベント詳細</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-detail :event="state.event" @submit="submit" />
+          <event-detail v-model="eventDetailData" @submit="submittedDetail" />
         </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel value="shopNotice">
         <v-expansion-panel-title>店舗への連絡事項</v-expansion-panel-title>
         <v-expansion-panel-text>
-          <event-shop-notice :event="state.event" @submit="submit" />
+          <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" />
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
