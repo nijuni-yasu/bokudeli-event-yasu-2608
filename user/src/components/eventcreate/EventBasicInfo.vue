@@ -3,6 +3,7 @@ import cloneDeep from 'lodash/cloneDeep'
 import { BasicInfo, hourList, minutesList } from '@/schemes/eventCreate'
 import { format, parse } from 'date-fns'
 import { clone } from 'lodash'
+import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 
 const props = defineProps<{
   modelValue: BasicInfo
@@ -32,11 +33,11 @@ const eventEndHour = ref(hourString(state.endDateTime))
 const eventEndMinute = ref(minutesString(state.endDateTime))
 
 const submitSearch = () => {
-  const startDate = parse(eventStartDate.value, 'yyyy/MM/dd', new Date())
+  const startDate = parse(eventStartDate.value, 'yyyy-MM-dd', new Date())
   startDate.setHours(Number(eventStartHour.value))
   startDate.setMinutes(Number(eventStartMinute.value))
 
-  const endDate = parse(eventEndDate.value, 'yyyy/MM/dd', new Date())
+  const endDate = parse(eventEndDate.value, 'yyyy-MM-dd', new Date())
   endDate.setHours(Number(eventEndHour.value))
   endDate.setMinutes(Number(eventEndMinute.value))
 
@@ -102,7 +103,7 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="eventStartDate" outlined dense label="開始日" />
+                <app-date-time-picker v-model="eventStartDate" outlined dense label="開始日"></app-date-time-picker>
               </v-col>
               <v-col cols="3">
                 <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" />
@@ -116,7 +117,7 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="eventEndDate" outlined dense label="終了日"></v-text-field>
+                <app-date-time-picker v-model="eventEndDate" outlined dense label="終了日"></app-date-time-picker>
               </v-col>
               <v-col cols="3">
                 <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" />
