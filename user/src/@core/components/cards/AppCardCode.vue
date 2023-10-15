@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import 'prismjs'
 import 'prismjs/themes/prism-tomorrow.css'
+import type { Ref } from 'vue'
 import Prism from 'vue-prism-component'
 
 interface Props {
@@ -20,9 +21,11 @@ const props = withDefaults(defineProps<Props>(), {
   noPadding: false,
 })
 
-const preferredCodeLanguage = useStorage('preferredCodeLanguage', 'ts')
+const preferredCodeLanguage = useStorage('preferredCodeLanguage', 'ts') as unknown as Ref<keyof CodeProp>
 
 const isCodeShown = ref(false)
+
+const { copy, copied } = useClipboard({ source: computed(() => props.code[preferredCodeLanguage.value]) })
 </script>
 
 <template>
@@ -30,11 +33,8 @@ const isCodeShown = ref(false)
     <VCardItem>
       <VCardTitle>{{ props.title }}</VCardTitle>
       <template #append>
-        <VBtn
-          icon
-          size="x-small"
+        <IconBtn
           :color="isCodeShown ? 'primary' : 'default'"
-          variant="text"
           :class="isCodeShown ? '' : 'text-disabled'"
           @click="isCodeShown = !isCodeShown"
         >
@@ -42,7 +42,7 @@ const isCodeShown = ref(false)
             size="20"
             icon="mdi-code-tags"
           />
-        </VBtn>
+        </IconBtn>
       </template>
     </VCardItem>
     <slot v-if="noPadding" />
@@ -86,12 +86,25 @@ const isCodeShown = ref(false)
             </VBtnToggle>
           </div>
 
-          <Prism
-            :key="props.code[preferredCodeLanguage]"
-            :language="props.codeLanguage"
-          >
-            {{ props.code[preferredCodeLanguage] }}
-          </Prism>
+          <div class="position-relative">
+            <Prism
+              :key="props.code[preferredCodeLanguage]"
+              :language="props.codeLanguage"
+              :style="$vuetify.locale.isRtl ? 'text-align: right' : 'text-align: left'"
+            >
+              {{ props.code[preferredCodeLanguage] }}
+            </Prism>
+            <IconBtn
+              class="position-absolute app-card-code-copy-icon"
+              color="white"
+              @click="() => { copy() }"
+            >
+              <VIcon
+                :icon="copied ? 'mdi-check' : 'mdi-content-copy'"
+                size="20"
+              />
+            </IconBtn>
+          </div>
         </VCardText>
       </div>
     </VExpandTransition>
@@ -104,5 +117,10 @@ const isCodeShown = ref(false)
 :not(pre) > code[class*="language-"],
 pre[class*="language-"] {
   border-radius: vuetify.$card-border-radius;
+}
+
+.app-card-code-copy-icon {
+  inset-block-start: 1.2em;
+  inset-inline-end: 0.8em;
 }
 </style>
