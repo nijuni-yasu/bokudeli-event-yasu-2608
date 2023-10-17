@@ -33,7 +33,7 @@ const state = reactive({
 const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'> => {
   const { event } = cart
 
-  if (event.event_deadline_datetime && event.event_deadline_datetime < new Date()) {
+  if (event.event_deadline_datetime && event.event_deadline_datetime.toDate() < new Date()) {
     return 'deadline'
   }
 
