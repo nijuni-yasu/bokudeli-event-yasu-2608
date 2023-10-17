@@ -1,5 +1,20 @@
 const functions = require("firebase-functions");
 const { getFirestore } = require('firebase-admin/firestore');
+const dateFns = require('date-fns');
+const ja = require('date-fns/locale/ja');
+const sgMail = require('@sendgrid/mail');
+
+// 環境変数の方がよいかもしれない
+const DEFAULT_FROM = 'bokudeli@nijuni.jp';
+const DEFAULT_CC = 'support@nijuni.jp';
+const DEFAULT_BCC = 'yasukawa.naohiro@nijuni.jp';
+
+const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
+const DELIVERY_DURATION = 30; // minutes
+
+const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const db = getFirestore();
 
@@ -9,20 +24,48 @@ const db = getFirestore();
  * @returns 日本時間を表示するためのミリ秒
  */
 function convertToJapan(millis) {
+    if (millis == null) {
+        return undefined;
+    }
     // date-fns-tz は単純にタイムゾーンのオフセットを追加した Date を作成するだけなので、今回は単純加算で対応する
     // TODO サマータイムがあるような地域に進出した場合は、何らかの措置を考えなければいけない
     // https://qiita.com/suin/items/296740d22624b530f93a#utc%E3%81%AAdate%E3%82%92asiatokyo%E3%81%AE%E6%97%A5%E6%99%82%E3%81%AB%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88%E3%81%99%E3%82%8B
     return millis + 9 * 60 * 60 * 1000;
 }
 
-const dateFns = require('date-fns');
-const ja = require('date-fns/locale/ja');
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+function convertToDate(millis) {
+    if (millis == null) {
+        return undefined;
+    }
+    return dateFns.format(
+        millis,
+        'yyyy/MM/dd (eee)',
+        { locale: ja }
+    );
+}
 
-// 環境変数の方がよいかもしれない
-const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
-const DELIVERY_DURATION = 30; // minutes
+function convertToDateTime(millis) {
+    if (millis == null) {
+        return undefined;
+    }
+    return dateFns.format(
+        millis,
+        'yyyy/MM/dd (eee) HH:mm',
+        { locale: ja }
+    );
+}
+
+function convertToDuration(startMillis, endMillis) {
+    if (startMillis == null || endMillis == null) {
+        return undefined;
+    }
+    const start = dateFns.format(startMillis, 'yyyy/MM/dd (eee) HH:mm', { locale: ja });
+    const end = dateFns.format(
+        endMillis,
+        'HH:mm'
+    );
+    return `${start}〜${end}`;
+}
 
 function getEventUrl(communityAccount, eventId) {
     return `https://${process.env.EVENT_HOST}/community/${communityAccount}/events/${eventId}`;
@@ -72,32 +115,11 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
     const ordersRef = eventSnapshot.ref.collection('orders');
     const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(ordersRef);
     const eventData = eventSnapshot.data();
-    let date = undefined;
-    let delivery_date = undefined;
-    const event_start_datetime = eventData.event_start_datetime?.toMillis();
-    if (event_start_datetime != null) {
-        const event_start_datetime_japan = convertToJapan(event_start_datetime);
-        date = dateFns.format(event_start_datetime_japan, 'yyyy/MM/dd (eee)', { locale: ja });
-        const delivery_date_start = dateFns.format(
-            event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
-            'yyyy/MM/dd (eee) HH:mm',
-            { locale: ja }
-        );
-        const delivery_date_end = dateFns.format(
-            event_start_datetime_japan,
-            'HH:mm'
-        );
-        delivery_date = `${delivery_date_start}〜${delivery_date_end} （※${DELIVERY_DURATION}分の配達時間をいただいています）`;
-    }
-    let event_deadline_datetime = undefined;
-    const event_deadline_datetime_millis = eventData.event_deadline_datetime?.toMillis();
-    if (event_deadline_datetime_millis != null) {
-        event_deadline_datetime = dateFns.format(
-            convertToJapan(event_deadline_datetime_millis),
-            'yyyy/MM/dd (eee) HH:mm',
-            { locale: ja }
-        );
-    }
+    const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis());
+    const date = convertToDate(event_start_datetime_japan)
+    const deliveryDuration = convertToDuration(event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000, event_start_datetime_japan)
+    const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`;
+    const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
     
     return {
         date,
@@ -136,9 +158,9 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
                 dynamic_template_data.is_reminder = is_reminder;
                 promises.push(sgMail.send({
                     to,
-                    from: 'bokudeli@nijuni.jp',
-                    cc: 'support@nijuni.jp',
-                    bcc: 'yasukawa.naohiro@nijuni.jp',
+                    from: DEFAULT_FROM,
+                    cc: DEFAULT_CC,
+                    bcc: DEFAULT_BCC,
                     templateId: ORDER_DEADLINE_TEMPLATE_ID,
                     dynamic_template_data,
                 }));
@@ -149,6 +171,74 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
     });
     return Promise.all(promises);
 }
+
+async function getUsersFromOrders(ordersRef) {
+    const users = new Set();
+    for (const orderRef of await ordersRef.listDocuments()) {
+        const orderSnapshot = await orderRef.get();
+        users.add(orderSnapshot.get('user_id'));
+    }
+    return users;
+}
+
+async function sendEventInformationMail() {
+    const promises = [];
+    const date = dateFns.format(
+        convertToJapan(new Date().getTime()),
+        'MM/dd',
+        { locale: ja }
+    );
+    const dynamic_template_data = {
+        date,
+        events: []};
+    const query = db.collectionGroup('events')
+        .where('is_public', '==', true)
+        .where('event_deadline_datetime', '>', new Date());
+        // 不等号を含む where がある場合、他のフィールドでソートできない
+        // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
+        // .orderBy('event_start_datetime')
+    const eventsSnapshot = (await query.get()).docs
+        .sort((a, b) => {
+            const aTime = a.get('event_start_datetime');
+            const bTime = b.get('event_start_datetime');
+            return aTime > bTime ? 1 : aTime < bTime ? -1 : 0;
+        });
+    for (const eventSnapshot of eventsSnapshot) {
+        const ordersRef = eventSnapshot.ref.collection('orders');
+        const users = await getUsersFromOrders(ordersRef);
+        if (users.size < eventSnapshot.get('event_max_people')) {
+            const eventData = eventSnapshot.data();
+            const event_datetime = convertToDuration(
+                convertToJapan(eventData.event_start_datetime?.toMillis()),
+                convertToJapan(eventData.event_end_datetime?.toMillis()));
+            const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
+            dynamic_template_data.events.push({
+                event_name: eventData.event_name,
+                event_address: eventData.event_address,
+                event_datetime,
+                event_deadline_datetime,
+                event_desc: eventData.event_desc,
+                event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+                //     organizer_company: eventData.organizer_company,
+            });
+            if (dynamic_template_data.events.length === 5) {
+                break;
+            }
+        }
+    }
+    for (const userRef of await db.collection('users').listDocuments()) {
+        const userSnapshot = await userRef.get();
+        dynamic_template_data.user_name = userSnapshot.get('user_name');
+        promises.push(sgMail.send({
+            to: userSnapshot.get('user_email'),
+            from: DEFAULT_FROM,
+            templateId: EVENT_INFORMATION_TEMPLATE_ID,
+            dynamic_template_data,
+        }))
+        break;
+    }
+}
+ 
 
 exports.polling = functions
     .region('asia-northeast1')
@@ -164,3 +254,13 @@ exports.polling = functions
             sendOrderDeadlineMail(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
         ]);
     });
+
+exports.event_information = functions
+    .region('asia-northeast1')
+    .pubsub
+    .schedule('0 10 * * 1')
+    .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
+    .onRun(() => {
+        return sendEventInformationMail();
+    })
+    
