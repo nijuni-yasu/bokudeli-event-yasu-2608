@@ -4,7 +4,7 @@ import { db, stripeBaseURL } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
-import OrderItem from '@/schemes/orderItem'
+import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import Stripe from 'stripe'
@@ -197,7 +197,7 @@ const loadCartList = async () => {
 
   const cartSnapshot = await getDocs(inCartQuery)
   const orderItems = cartSnapshot.docs.map((doc) => {
-    return doc.data() as OrderItem
+    return { ...createEmptyOrderItem(), ...(doc.data()) }
   })
 
   // イベント情報を引きオーダー情報とくっつける

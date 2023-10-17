@@ -5,7 +5,7 @@ import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firest
 import { getEventPath } from '@/router/utils'
 import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import OrderItem from '@/schemes/orderItem'
+import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
 
 type Order = {
   order: OrderItem
@@ -35,7 +35,7 @@ const loadOrderList = async () => {
 
   const orderSnapshot = await getDocs(inOrderQuery)
   const orderItems = orderSnapshot.docs.map((doc) => {
-    return doc.data() as OrderItem
+    return { ...createEmptyOrderItem(), ...(doc.data()) }
   })
 
   // イベント情報を引きオーダー情報とくっつける
