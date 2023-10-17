@@ -49,8 +49,8 @@ const addOrder = async () => {
   const eventData = props.eventSnapshot.data()
   const communityId = eventData.community_id as string
   const communityAccount = eventData.community_account as string
-  const eventId = eventData.event_id as string
-  const eventPayment = eventData.event_payment as string
+  const event_id = eventData.event_id as string
+  const event_payment = eventData.event_payment as string
   const orderDb = collection(props.eventSnapshot.ref, 'orders')
   const orderSnapshot = await getDocs(orderDb)
 
@@ -69,8 +69,8 @@ const addOrder = async () => {
       user_id: userStore.storedUser.userId,
       community_id: communityId,
       community_account: communityAccount,
-      event_id: eventId,
-      event_payment: eventPayment,
+      event_id,
+      event_payment,
       status: 'in_cart',
       menus: [
         {

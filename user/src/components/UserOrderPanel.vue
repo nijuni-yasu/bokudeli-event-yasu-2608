@@ -96,13 +96,13 @@ onMounted(async () => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in state.orderList" :key="item.event.eventId">
+                <tr v-for="item in state.orderList" :key="item.event.event_id">
                   <td style="padding: 10px">
-                    <router-link :to="getEventPath(item.event.communityAccount, item.event.eventId)">
-                      {{ item.event.eventName }}
+                    <router-link :to="getEventPath(item.event.community_account, item.event.event_id)">
+                      {{ item.event.event_name }}
                     </router-link>
                   </td>
-                  <td style="padding: 10px">{{ dateWithDayOfWeekString(item.event.eventStartDatetime) }}</td>
+                  <td style="padding: 10px">{{ dateWithDayOfWeekString(item.event.event_start_datetime) }}</td>
                   <td style="padding: 10px">
                     <div v-for="menu in item.order.menus" :key="menu.menu_id">
                       {{ menu.name }} <small>({{ menu.count }}個)</small>

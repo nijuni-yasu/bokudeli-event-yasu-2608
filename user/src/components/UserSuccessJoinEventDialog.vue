@@ -99,14 +99,14 @@ onMounted(async () => {
         <p>下記のイベントに参加いたします。</p>
       </v-card-text>
       <v-card-title class="justify-center text-sm-h5 text-xs-h6 font-weight-semibold pb-5 pre-line">
-        {{ state.event.eventName }}
+        {{ state.event.event_name }}
       </v-card-title>
-      <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.eventCoverUrl" />
-      <v-card-text class="text-left pb-5">【開催場所】{{ state.event.eventAddress }}</v-card-text>
+      <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.event_cover_url" />
+      <v-card-text class="text-left pb-5">【開催場所】{{ state.event.event_address }}</v-card-text>
       <v-card-text class="text-left pb-5"
-        >【開催日時】{{ dateWithDayOfWeekString(state.event.eventStartDatetime) }}</v-card-text
+        >【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}</v-card-text
       >
-      <v-card-text class="text-left pb-5">【開催内容】{{ state.event.eventDescription }}</v-card-text>
+      <v-card-text class="text-left pb-5">【開催内容】{{ state.event.event_desc }}</v-card-text>
       <v-btn type="submit" rounded @click="closeDialog">確認しました</v-btn>
     </v-card>
   </v-dialog>

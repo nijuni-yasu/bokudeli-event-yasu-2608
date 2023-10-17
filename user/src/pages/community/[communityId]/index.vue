@@ -121,25 +121,25 @@ onMounted(async () => {
           <!-- events -->
           <v-col md="8" sm="8" cols="12">
             <v-row>
-              <v-col v-for="event in state.events" :key="event.eventId" md="6" sm="6" cols="12">
-                <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.eventId)">
-                  <v-img cover aspect-ratio="1.91" :src="event.eventCoverUrl" />
+              <v-col v-for="event in state.events" :key="event.event_id" md="6" sm="6" cols="12">
+                <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
+                  <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
                   <v-card-title class="justify-center text-h5 pb-3 pre-line">
-                    {{ event.eventName }}
+                    {{ event.event_name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-8">
-                    {{ event.eventDescription }}
+                    {{ event.event_desc }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【主催者】 {{ event.communityName }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community_name }} </v-card-text>
                   <v-card-text class="text-left pb-2">
-                    【開催日時】{{ dateWithDayOfWeekString(event.eventStartDatetime) }}
+                    【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}
                   </v-card-text>
                   <v-card-text class="text-left pb-2">
-                    【注文期限】{{ dateWithDayOfWeekString(event.eventDeadline) }}
+                    【注文期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【開催場所】{{ event.eventAddress }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【お店】 {{ event.shopName }} </v-card-text>
-                  <v-card-text class="text-left pb-8"> 【定員】{{ event.eventMaxPeople }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【開催場所】{{ event.event_address }} </v-card-text>
+                  <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
+                  <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} </v-card-text>
                 </v-card>
               </v-col>
             </v-row>
