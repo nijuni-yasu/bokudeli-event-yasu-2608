@@ -35,7 +35,7 @@ const loadOrderList = async () => {
 
   const orderSnapshot = await getDocs(inOrderQuery)
   const orderItems = orderSnapshot.docs.map((doc) => {
-    return { ...createEmptyOrderItem(), ...(doc.data()) }
+    return { ...createEmptyOrderItem(), ...doc.data() }
   })
 
   // イベント情報を引きオーダー情報とくっつける
@@ -66,7 +66,6 @@ const loadOrderList = async () => {
 
 const fetchData = async () => {
   state.orderList = await loadOrderList()
-  console.log(state.orderList)
   state.isLoading = false
 }
 
