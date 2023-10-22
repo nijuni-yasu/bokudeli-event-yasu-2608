@@ -164,7 +164,7 @@ const submittedDetail = (detail: EventDetailData) => {
   }
 }
 
-const submitShopNotice = (shopNotice: ShopNotice) => {
+const submitShopNotice = async (shopNotice: ShopNotice) => {
   state.event.organizer_fullname = shopNotice.organizerFullName
   state.event.organizer_company = shopNotice.organizerCompany
   state.event.organizer_phone_personal = shopNotice.organizerPhonePersonal
@@ -172,7 +172,7 @@ const submitShopNotice = (shopNotice: ShopNotice) => {
   state.event.organizer_email = shopNotice.organizerEmail
   state.event.organizer_memo = shopNotice.organizerMemo
 
-  submit()
+  await submit()
 }
 const submit = async () => {
   const eventItem = {
