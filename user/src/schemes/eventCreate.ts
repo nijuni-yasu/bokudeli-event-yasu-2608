@@ -18,6 +18,7 @@ export interface EventDetailData {
   eventMaxPeople: number
   isPublic: boolean
   eventPayment: EventPaymentType
+  eventCoverImage: File | null
 }
 
 export interface ShopNotice {
