@@ -79,6 +79,14 @@ onMounted(async () => {
   await fetchData()
 })
 
+const eventStartDate = computed(() => {
+  return state.event.event_start_datetime?.toDate() ?? null
+})
+
+const eventDeadlineDate = computed(() => {
+  return state.event.event_deadline_datetime?.toDate() ?? null
+})
+
 const selectedMenuState = reactive({
   menu: null as PartnerMenu | null,
   isOpen: false,
@@ -148,7 +156,7 @@ const updateAlert = (message: string) => {
                 【注文期限】{{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shop_name }} </v-card-text>
-              <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px">
+              <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px; white-space: pre-line">
                 【開催内容】{{ state.event.event_desc }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
@@ -165,8 +173,8 @@ const updateAlert = (message: string) => {
         <!-- メニュ -->
         <event-menu-list
           :partner-id="state.event.partner_id"
-          :event-deadline="state.event.event_deadline_datetime"
-          :event-start-datetime="state.event.event_start_datetime"
+          :event-deadline="eventDeadlineDate"
+          :event-start-datetime="eventStartDate"
           :current-member-count="state.currentMemberCount"
           :event-max-people="state.event.event_max_people"
           @select-menu="updateSelectedMenu"

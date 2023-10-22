@@ -7,6 +7,7 @@ import { DocumentData, QueryDocumentSnapshot, Timestamp, addDoc, collection, get
 
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { createEmptyEvent } from '@/schemes/bokudeliEvent'
 
 const router = useRouter()
 
@@ -46,11 +47,12 @@ const addOrder = async () => {
   if (!userStore.storedUser || !selectedCount.value) {
     return
   }
-  const eventData = props.eventSnapshot.data()
-  const communityId = eventData.community_id as string
-  const communityAccount = eventData.community_account as string
-  const eventId = eventData.event_id as string
-  const eventPayment = eventData.event_payment as string
+
+  const eventData = { ...createEmptyEvent(), ...props.eventSnapshot.data() }
+  const communityId = eventData.community_id
+  const communityAccount = eventData.community_account
+  const event_id = eventData.event_id
+  const event_payment = eventData.event_payment
   const orderDb = collection(props.eventSnapshot.ref, 'orders')
   const orderSnapshot = await getDocs(orderDb)
 
@@ -69,8 +71,8 @@ const addOrder = async () => {
       user_id: userStore.storedUser.userId,
       community_id: communityId,
       community_account: communityAccount,
-      event_id: eventId,
-      event_payment: eventPayment,
+      event_id,
+      event_payment,
       status: 'in_cart',
       menus: [
         {

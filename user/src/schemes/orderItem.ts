@@ -14,4 +14,17 @@ type OrderItem = {
   updated_at: Timestamp
 }
 
+export const createEmptyOrderItem = (): OrderItem => ({
+  user_id: '',
+  community_id: '',
+  community_account: '',
+  event_id: '',
+  event_payment: '',
+  order_id: '',
+  status: 'in_cart',
+  menus: [],
+  created_at: Timestamp.now(),
+  updated_at: Timestamp.now(),
+})
+
 export default OrderItem
