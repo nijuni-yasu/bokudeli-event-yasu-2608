@@ -28,6 +28,8 @@ const emit = defineEmits<{
 
 const state = reactive(cloneDeep(props.modelValue))
 
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
 const eventCoverUrl = ref(clone(state.eventCoverUrl))
 const eventDesc = ref(clone(state.eventDesc))
 const eventDeadlineDate = ref(dateString(state.eventDeadlineDateTime))
@@ -36,6 +38,27 @@ const eventDeadlineMinute = ref(minutesString(state.eventDeadlineDateTime))
 const eventMaxPeople = ref(clone(state.eventMaxPeople))
 const isPublic = ref(clone(state.isPublic))
 const eventPayment = ref(clone(state.eventPayment))
+const coverImage = ref<File | null>(null)
+
+const onTriggerUpload = () => {
+  fileInputRef.value?.click()
+}
+
+const onFileChange = (event: Event) => {
+  const eventTarget = event.target as HTMLInputElement
+  if (!eventTarget?.files || eventTarget?.files.length === 0) {
+    return
+  }
+  const file = eventTarget.files[0]
+  coverImage.value = file
+}
+
+const coverImageUrl = computed(() => {
+  if (coverImage.value) {
+    return URL.createObjectURL(coverImage.value)
+  }
+  return ''
+})
 
 const submit = () => {
   state.eventCoverUrl = eventCoverUrl.value
@@ -48,6 +71,7 @@ const submit = () => {
   state.eventMaxPeople = eventMaxPeople.value
   state.isPublic = isPublic.value
   state.eventPayment = eventPayment.value
+  state.eventCoverImage = coverImageUrl.value !== '' ? coverImage.value : null
 
   emit('update:modelValue', state)
   emit('submit', state)
@@ -78,7 +102,11 @@ const resetForm = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="eventCoverUrl" outlined dense label="イベント画像"></v-text-field>
+                <div class="v-field image-upload-container" @click="onTriggerUpload">
+                  <input ref="fileInputRef" class="file-input" type="file" @change="onFileChange" />
+                  <v-img v-if="coverImageUrl" :src="coverImageUrl"></v-img>
+                  <div v-else class="placeholder">イベント画像をアップロード<br />1200px X 630px</div>
+                </div>
               </v-col>
             </v-row>
           </v-card-text>
@@ -150,4 +178,25 @@ const resetForm = () => {
   </v-row>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.image-upload-container {
+  .file-input {
+    display: none;
+  }
+
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.91;
+  max-width: 1200px;
+  max-height: 630px;
+  border: 1px solid rgba(118, 118, 118, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.placeholder {
+  text-align: center;
+}
+</style>

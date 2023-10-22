@@ -13,6 +13,7 @@ import PartnerMenu from '@/schemes/partnerMenu'
 import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
 import { useRouter } from 'vue-router'
 import { getEventPath } from '@/router/utils'
+import uploadCoverImage from '@/composable/uploadCoverImage'
 
 const router = useRouter()
 
@@ -26,6 +27,7 @@ const state = reactive({
   event: {} as Partial<BokudeliEvent>,
   shops: [] as Shop[],
   menus: [] as PartnerMenu[],
+  coverImage: null as File | null,
 })
 
 const panel = ref(['address'] as panelType[])
@@ -48,7 +50,9 @@ const eventDetailData = reactive<EventDetailData>({
   eventMaxPeople: 0,
   isPublic: false,
   eventPayment: 'user_advance',
+  eventCoverImage: null,
 })
+
 const shopNotice = reactive<ShopNotice>({
   organizerFullName: '',
   organizerCompany: '',
@@ -158,13 +162,14 @@ const submittedDetail = (detail: EventDetailData) => {
   state.event.event_max_people = detail.eventMaxPeople
   state.event.is_public = detail.isPublic
   state.event.event_payment = detail.eventPayment
+  state.coverImage = detail.eventCoverImage
 
   if (!panel.value.find((v) => v === 'shopNotice')) {
     panel.value.push('shopNotice')
   }
 }
 
-const submitShopNotice = (shopNotice: ShopNotice) => {
+const submitShopNotice = async (shopNotice: ShopNotice) => {
   state.event.organizer_fullname = shopNotice.organizerFullName
   state.event.organizer_company = shopNotice.organizerCompany
   state.event.organizer_phone_personal = shopNotice.organizerPhonePersonal
@@ -172,7 +177,7 @@ const submitShopNotice = (shopNotice: ShopNotice) => {
   state.event.organizer_email = shopNotice.organizerEmail
   state.event.organizer_memo = shopNotice.organizerMemo
 
-  submit()
+  await submit()
 }
 const submit = async () => {
   const eventItem = {
@@ -187,7 +192,12 @@ const submit = async () => {
   if (eventItem.community_id && eventItem.community_account) {
     const addedDoc = await addDoc(collection(db, 'communities', eventItem.community_id, 'events'), eventItem)
     // 自動採番されたOrderIDを取得して項目として追加追加
-    await setDoc(addedDoc, { event_id: addedDoc.id }, { merge: true })
+    const eventId = addedDoc.id
+    const eventCoverUrl = state.coverImage
+      ? await uploadCoverImage(eventItem.community_id, eventId, state.coverImage)
+      : ''
+    await setDoc(addedDoc, { event_id: eventId, event_cover_url: eventCoverUrl }, { merge: true })
+
     window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
     router.push(getEventPath(eventItem.community_account, addedDoc.id))
   }

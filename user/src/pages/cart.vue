@@ -197,7 +197,7 @@ const loadCartList = async () => {
 
   const cartSnapshot = await getDocs(inCartQuery)
   const orderItems = cartSnapshot.docs.map((doc) => {
-    return { ...createEmptyOrderItem(), ...(doc.data()) }
+    return { ...createEmptyOrderItem(), ...doc.data() }
   })
 
   // イベント情報を引きオーダー情報とくっつける
