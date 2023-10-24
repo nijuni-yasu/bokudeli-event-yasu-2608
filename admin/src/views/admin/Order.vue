@@ -35,7 +35,11 @@
               :key="key"
             >
               <td>{{ event.eventId.slice(0, 6) }}</td>
-              <td>{{ event.eventName }}</td>
+              <td>
+                <router-link :to="{ name: 'orderDetail', params: { id: event.eventId } }">
+                  {{ event.eventName }}
+                </router-link>
+              </td>
               <td>{{ millisToDateTimeString(event.eventStartDatetime) }}</td>
               <td>{{ millisToDateTimeString(event.eventDeadlineDatetime) }}</td>
               <td>{{ event.eventAddress }}</td>

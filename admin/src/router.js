@@ -185,6 +185,12 @@ const router = new Router({
           meta: { requiresAuth: true },
         },
         {
+          name: 'orderDetail',
+          path: 'order/:id',
+          component: () => import('@/views/admin/OrderDetail'),
+          meta: { requiresAuth: true },
+        },
+        {
           name: 'AnalyticsOrder',
           path: 'AnalyticsOrder',
           component: () => import('@/views/admin/AnalyticsOrder'),
