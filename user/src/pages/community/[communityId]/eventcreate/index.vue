@@ -34,7 +34,7 @@ const panel = ref(['address'] as panelType[])
 
 const basicInfo = reactive<BasicInfo>({
   title: '',
-  postcode: '',
+  postalcode: '',
   address: '',
   placeName: '',
   placeUrl: '',
@@ -121,14 +121,12 @@ onMounted(async () => {
 
 const submittedBasicInfo = async (info: BasicInfo) => {
   state.event.event_name = info.title
+  state.event.event_postalcode = info.postalcode
   state.event.event_address = info.address
+  state.event.event_place = info.placeName
+  state.event.event_place_url = info.placeUrl
   state.event.event_start_datetime = info.startDateTime ? Timestamp.fromDate(info.startDateTime) : null
   state.event.event_end_datetime = info.endDateTime ? Timestamp.fromDate(info.endDateTime) : null
-
-  //TODO: 以下の項目について確認する
-  // postcode: string
-  // placeName: string
-  // placeUrl: string
 
   await fetchShops()
   if (!panel.value.find((v) => v === 'shop')) {
@@ -184,6 +182,7 @@ const submit = async () => {
     ...createEmptyEvent(),
     ...state.event,
     ...{
+      event_status: 'in_draft',
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     },

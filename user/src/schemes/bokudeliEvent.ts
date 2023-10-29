@@ -8,6 +8,8 @@ export const eventPaymentItems = eventPaymentTypes.map((type, i) => {
   return { title: eventPaymentLabels[i], value: type }
 })
 
+export type EventStatusType = 'in_draft' | 'applying_reservation' | 'accepting_order'
+
 type BokudeliEvent = {
   community_id: string
   community_name: string
@@ -34,6 +36,13 @@ type BokudeliEvent = {
   organizer_phone_company: string
   organizer_email: string
   organizer_memo: string
+
+  event_place: string
+  event_place_url: string
+  event_postalcode: string
+
+  event_status: EventStatusType
+
   created_at?: Timestamp
   updated_at?: Timestamp
 }
@@ -62,6 +71,10 @@ export const createEmptyEvent = (): BokudeliEvent => ({
   organizer_phone_company: '',
   organizer_email: '',
   organizer_memo: '',
+  event_place: '',
+  event_place_url: '',
+  event_postalcode: '',
+  event_status: 'accepting_order',
 })
 
 export default BokudeliEvent
