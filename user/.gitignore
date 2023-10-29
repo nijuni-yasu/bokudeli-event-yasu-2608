@@ -88,3 +88,6 @@ yarn-error.log
 !.yarn/plugins
 !.yarn/sdks
 !.yarn/versions
+
+### user added ###
+env_master_*
