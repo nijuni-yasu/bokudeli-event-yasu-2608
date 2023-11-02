@@ -1,17 +1,10 @@
 const functions = require("firebase-functions");
-const express = require('express');
-require('dotenv').config();
 const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 
 const db = getFirestore();
 
-const env = process.env;
-
-// 秘密鍵を使用してStripeを初期化
-const stripe = require('stripe')(env.STRIPE_SECRET_KEY); 
-const stripeWebhookEndpointSecret = env.STRIPE_WEBHOOK_ENDPOINT_SECRET;
-
-const app = express();
+// Webhook の検証に使用する場合、Secret key は必要ない様子（ただし、公式にかいてあるわけではない）
+const stripe = require('stripe')(); 
 
 const loadUser = async (userId) => {
     const userRef = db.collection('users').doc(userId);
@@ -32,36 +25,30 @@ const addCommunityUser = async (communityId, userId) => {
     await membersUserDoc.set(userDoc);
 }
 
-app.post('/', async(request, response) => {
-    const sig = request.headers['stripe-signature'];
-
+exports.stripe_webhook = functions.region('asia-northeast1').https.onRequest(async (req, res) => {
     try {
-        const event = stripe.webhooks.constructEvent(request.rawBody, sig, stripeWebhookEndpointSecret);
-        const updated_at = Timestamp.now()
-        const orderRef = db.collectionGroup('orders').where('order_id', '==', event.data.object.metadata.orderId);
-
-        const orderSnapshot = await orderRef.get();
-        const orderDocument = orderSnapshot.docs[0];
-
+        const sig = req.headers['stripe-signature'];
+        const event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_ENDPOINT_SECRET);
         switch (event.type) {
             case 'checkout.session.completed': {
+                const updated_at = Timestamp.now()
+                const orderRef = db.collectionGroup('orders').where('order_id', '==', event.data.object.metadata.orderId);
+                const orderSnapshot = await orderRef.get();
+                const orderDocument = orderSnapshot.docs[0];
                 const paymentIntent = event.data.object;
                 if (orderDocument && orderDocument.ref) {
-                    await orderDocument.ref.set({ status: 'ordered', updated_at: updated_at, payment_intent: paymentIntent.payment_intent }, { merge: true });
+                    await orderDocument.ref.set({ status: 'ordered', updated_at, payment_intent: paymentIntent.payment_intent }, { merge: true });
                 } else {
                     console.error('orderDocument or orderDocument.ref is undefined.');
                 }
                 await addCommunityUser(paymentIntent.metadata.communityId, paymentIntent.metadata.userId);
-                response.json({ paymentIntent });
-                break;
+                return res.json({ paymentIntent });
             }
             default:
-                return response.status(400).end();
+                return res.status(400).end();
         }
     } catch (err) {
-        console.log(err)
-        return response.status(400).send(`Webhook Error: ${err.message}`);
+        console.error(err);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 });
-
-exports.stripe_webhook = functions.region('asia-northeast1').https.onRequest(app);
