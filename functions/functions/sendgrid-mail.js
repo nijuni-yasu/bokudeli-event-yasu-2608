@@ -226,6 +226,9 @@ async function sendEventInformationMail() {
             }
         }
     }
+    if (dynamic_template_data.events.length === 0) {
+        return;
+    }
     for (const userRef of await db.collection('users').listDocuments()) {
         const userSnapshot = await userRef.get();
         dynamic_template_data.user_name = userSnapshot.get('user_name');
