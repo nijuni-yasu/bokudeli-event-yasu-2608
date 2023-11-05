@@ -1,5 +1,6 @@
 import { format, parse } from 'date-fns'
 import { EventPaymentType } from './bokudeliEvent'
+import { LatLogLocation } from '@/composable/fetchLocation'
 
 export interface BasicInfo {
   title: string
@@ -9,6 +10,7 @@ export interface BasicInfo {
   placeUrl: string
   startDateTime: Date | null
   endDateTime: Date | null
+  location: LatLogLocation | null
 }
 
 export interface EventDetailData {
