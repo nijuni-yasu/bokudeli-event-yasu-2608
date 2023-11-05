@@ -21,6 +21,7 @@
     "@casl/vue": "^2.2.0",
     "@floating-ui/dom": "^1.2.7",
     "@mdi/font": "^7.0.96",
+    "@turf/distance": "^6.5.0",
     "@vueuse/core": "^10.2.1",
     "@vueuse/integrations": "^10.2.1",
     "@vueuse/math": "^10.1.2",
