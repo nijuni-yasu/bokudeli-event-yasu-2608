@@ -131,12 +131,12 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
         order_count,
         order_total_price,
         event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-        //     organizer_company: eventData.organizer_company,
-        //     organizer_fullname: eventData.organizer_fullname,
-        //     organizer_phone_personal: eventData.organizer_phone_personal,
-        //     organizer_phone_company: eventData.organizer_company,
-        //     organizer_email: eventData.organizer_email,
-        //     organizer_memo: eventData.organizer_memo,
+        organizer_company: eventData.organizer_company,
+        organizer_fullname: eventData.organizer_fullname,
+        organizer_phone_personal: eventData.organizer_phone_personal,
+        organizer_phone_company: eventData.organizer_company,
+        organizer_email: eventData.organizer_email,
+        organizer_memo: eventData.organizer_memo,
         orders,
     };
 }
@@ -219,7 +219,7 @@ async function sendEventInformationMail() {
                 event_deadline_datetime,
                 event_desc: eventData.event_desc,
                 event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-                //     organizer_company: eventData.organizer_company,
+                organizer_company: eventData.organizer_company,
             });
             if (dynamic_template_data.events.length === 5) {
                 break;
