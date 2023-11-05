@@ -12,6 +12,11 @@ type Shop = {
   shop_postcode: string
   shop_address: string
 
+  shop_address_latitude: number
+  shop_address_longitude: number
+
+  shop_range_min_orders: [{ range: number; min_orders: number; label: string }]
+
   createdAt: Timestamp
   updatedAt: Timestamp
 
@@ -48,10 +53,6 @@ type Shop = {
 
   shop_margin_time: string // number？
   shop_order_method: string[]
-  shop_range_min_orders: [{ range: number; min_orders: number; label: string }]
-
-  shop_address_latitude: number
-  shop_address_longitude: string // number？
 */
 }
 

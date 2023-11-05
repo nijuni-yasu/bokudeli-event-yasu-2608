@@ -29,7 +29,7 @@ const emit = defineEmits<{
 const state = reactive(cloneDeep(props.modelValue))
 
 const title = ref(clone(state.title))
-const postcode = ref(clone(state.postcode))
+const postalcode = ref(clone(state.postalcode))
 const address = ref(clone(state.address))
 const placeName = ref(clone(state.placeName))
 const placeUrl = ref(clone(state.placeUrl))
@@ -44,8 +44,10 @@ const submitSearch = () => {
   const startDate = parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value)
   const endDate = parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value)
   state.title = title.value
-  state.postcode = postcode.value
+  state.postalcode = postalcode.value
   state.address = address.value
+  state.placeName = placeName.value
+  state.placeUrl = placeUrl.value
   state.startDateTime = startDate
   state.endDateTime = endDate
   emit('update:modelValue', state)
@@ -78,7 +80,7 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="3">
-                <v-text-field v-model="postcode" outlined dense label="お届け先 郵便番号" />
+                <v-text-field v-model="postalcode" outlined dense label="お届け先 郵便番号" />
               </v-col>
               <v-col cols="12">
                 <v-text-field v-model="address" outlined dense label="会場住所" />

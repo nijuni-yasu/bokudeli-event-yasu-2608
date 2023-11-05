@@ -3,7 +3,7 @@ import { EventPaymentType } from './bokudeliEvent'
 
 export interface BasicInfo {
   title: string
-  postcode: string
+  postalcode: string
   address: string
   placeName: string
   placeUrl: string

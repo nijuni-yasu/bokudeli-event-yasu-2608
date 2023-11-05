@@ -14,6 +14,8 @@ import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
 import { useRouter } from 'vue-router'
 import { getEventPath } from '@/router/utils'
 import uploadCoverImage from '@/composable/uploadCoverImage'
+import { LatLogLocation, calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
+import { maxBy } from 'lodash'
 
 const router = useRouter()
 
@@ -34,7 +36,7 @@ const panel = ref(['address'] as panelType[])
 
 const basicInfo = reactive<BasicInfo>({
   title: '',
-  postcode: '',
+  postalcode: '',
   address: '',
   placeName: '',
   placeUrl: '',
@@ -76,14 +78,24 @@ const fetchData = async () => {
   }
 }
 
-const fetchShops = async () => {
+const fetchShops = async (eventLocation: LatLogLocation) => {
   isLoadingShop.value = true
 
   const shopDb = collectionGroup(db, 'shops')
   const shopSnapshot = await getDocs(shopDb)
-  const shops = shopSnapshot.docs.map((doc) => {
-    return doc.data() as Shop
-  })
+  const shops = shopSnapshot.docs
+    .map((doc) => {
+      return doc.data() as Shop
+    })
+    .filter((shop) => {
+      const shopLocation = {
+        longitude: shop.shop_address_longitude,
+        latitude: shop.shop_address_latitude,
+      }
+      const distance = calculateDistance(eventLocation, shopLocation)
+      const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
+      return maxRange ? distance <= maxRange : false
+    })
   state.shops = shops
   isLoadingShop.value = false
 }
@@ -121,16 +133,15 @@ onMounted(async () => {
 
 const submittedBasicInfo = async (info: BasicInfo) => {
   state.event.event_name = info.title
+  state.event.event_postalcode = info.postalcode
   state.event.event_address = info.address
+  state.event.event_place = info.placeName
+  state.event.event_place_url = info.placeUrl
   state.event.event_start_datetime = info.startDateTime ? Timestamp.fromDate(info.startDateTime) : null
   state.event.event_end_datetime = info.endDateTime ? Timestamp.fromDate(info.endDateTime) : null
 
-  //TODO: 以下の項目について確認する
-  // postcode: string
-  // placeName: string
-  // placeUrl: string
-
-  await fetchShops()
+  const eventLocation = await fetchLocationByPostalcode(info.postalcode)
+  await fetchShops(eventLocation)
   if (!panel.value.find((v) => v === 'shop')) {
     panel.value.push('shop')
   }
@@ -184,6 +195,7 @@ const submit = async () => {
     ...createEmptyEvent(),
     ...state.event,
     ...{
+      event_status: 'in_draft',
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     },
