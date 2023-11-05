@@ -7,7 +7,6 @@ const sgMail = require('@sendgrid/mail');
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = 'bokudeli@nijuni.jp';
 const DEFAULT_CC = 'support@nijuni.jp';
-const DEFAULT_BCC = 'yasukawa.naohiro@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
 const DELIVERY_DURATION = 30; // minutes
@@ -165,7 +164,6 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
                     to,
                     from: DEFAULT_FROM,
                     cc: DEFAULT_CC,
-                    bcc: DEFAULT_BCC,
                     templateId: ORDER_DEADLINE_TEMPLATE_ID,
                     dynamic_template_data,
                 }));
