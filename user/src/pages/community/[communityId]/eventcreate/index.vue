@@ -14,6 +14,8 @@ import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
 import { useRouter } from 'vue-router'
 import { getEventPath } from '@/router/utils'
 import uploadCoverImage from '@/composable/uploadCoverImage'
+import { LatLogLocation, calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
+import { maxBy } from 'lodash'
 
 const router = useRouter()
 
@@ -76,14 +78,24 @@ const fetchData = async () => {
   }
 }
 
-const fetchShops = async () => {
+const fetchShops = async (eventLocation: LatLogLocation) => {
   isLoadingShop.value = true
 
   const shopDb = collectionGroup(db, 'shops')
   const shopSnapshot = await getDocs(shopDb)
-  const shops = shopSnapshot.docs.map((doc) => {
-    return doc.data() as Shop
-  })
+  const shops = shopSnapshot.docs
+    .map((doc) => {
+      return doc.data() as Shop
+    })
+    .filter((shop) => {
+      const shopLocation = {
+        longitude: shop.shop_address_longitude,
+        latitude: shop.shop_address_latitude,
+      }
+      const distance = calculateDistance(eventLocation, shopLocation)
+      const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
+      return maxRange ? distance <= maxRange : false
+    })
   state.shops = shops
   isLoadingShop.value = false
 }
@@ -128,7 +140,8 @@ const submittedBasicInfo = async (info: BasicInfo) => {
   state.event.event_start_datetime = info.startDateTime ? Timestamp.fromDate(info.startDateTime) : null
   state.event.event_end_datetime = info.endDateTime ? Timestamp.fromDate(info.endDateTime) : null
 
-  await fetchShops()
+  const eventLocation = await fetchLocationByPostalcode(info.postalcode)
+  await fetchShops(eventLocation)
   if (!panel.value.find((v) => v === 'shop')) {
     panel.value.push('shop')
   }
