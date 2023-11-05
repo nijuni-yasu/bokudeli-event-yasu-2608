@@ -76,7 +76,12 @@ async function getShopEmails(eventSnapshot) {
     const partnerId = eventSnapshot.get('partner_id');
     const shopsRef = db.collection('partners').doc(partnerId).collection('shops');
     for (const shopRef of await shopsRef.listDocuments()) {
-        emails.push((await shopRef.get()).get('shop_email'));
+        for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
+            const mail = (await shopRef.get()).get(field)
+            if (mail) {
+                emails.push(mail);
+            }
+        }
     }
     return emails;
 }
