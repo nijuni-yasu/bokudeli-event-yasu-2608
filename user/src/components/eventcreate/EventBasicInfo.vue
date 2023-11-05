@@ -12,6 +12,7 @@ import {
 import { clone } from 'lodash'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
+import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
 
 const pickerConfig = {
   locale: Japanese,
@@ -39,6 +40,14 @@ const eventStartMinute = ref(minutesString(state.startDateTime))
 const eventEndDate = ref(dateString(state.endDateTime))
 const eventEndHour = ref(hourString(state.endDateTime))
 const eventEndMinute = ref(minutesString(state.endDateTime))
+const eventLocation = ref(clone(state.location))
+
+const changePostalcode = async () => {
+  console.log(postalcode.value)
+  const location = await fetchLocationByPostalcode(postalcode.value)
+  eventLocation.value = location
+  address.value = location.address
+}
 
 const submitSearch = () => {
   const startDate = parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value)
@@ -50,6 +59,7 @@ const submitSearch = () => {
   state.placeUrl = placeUrl.value
   state.startDateTime = startDate
   state.endDateTime = endDate
+  state.location = eventLocation.value
   emit('update:modelValue', state)
   emit('submit', state)
 }
@@ -80,7 +90,13 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="3">
-                <v-text-field v-model="postalcode" outlined dense label="お届け先 郵便番号" />
+                <v-text-field
+                  v-model="postalcode"
+                  outlined
+                  dense
+                  label="お届け先 郵便番号"
+                  @change="changePostalcode"
+                />
               </v-col>
               <v-col cols="12">
                 <v-text-field v-model="address" outlined dense label="会場住所" />

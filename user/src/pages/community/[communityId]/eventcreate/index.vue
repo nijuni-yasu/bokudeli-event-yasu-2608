@@ -14,7 +14,7 @@ import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
 import { useRouter } from 'vue-router'
 import { getEventPath } from '@/router/utils'
 import uploadCoverImage from '@/composable/uploadCoverImage'
-import { LatLogLocation, calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
+import { LatLogLocation, calculateDistance } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
 
 const router = useRouter()
@@ -42,6 +42,7 @@ const basicInfo = reactive<BasicInfo>({
   placeUrl: '',
   startDateTime: null,
   endDateTime: null,
+  location: null,
 })
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
@@ -140,10 +141,11 @@ const submittedBasicInfo = async (info: BasicInfo) => {
   state.event.event_start_datetime = info.startDateTime ? Timestamp.fromDate(info.startDateTime) : null
   state.event.event_end_datetime = info.endDateTime ? Timestamp.fromDate(info.endDateTime) : null
 
-  const eventLocation = await fetchLocationByPostalcode(info.postalcode)
-  await fetchShops(eventLocation)
-  if (!panel.value.find((v) => v === 'shop')) {
-    panel.value.push('shop')
+  if (info.location) {
+    await fetchShops(info.location)
+    if (!panel.value.find((v) => v === 'shop')) {
+      panel.value.push('shop')
+    }
   }
 }
 
