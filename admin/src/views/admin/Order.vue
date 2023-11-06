@@ -44,7 +44,7 @@
               <td>{{ millisToDateTimeString(event.eventDeadlineDatetime) }}</td>
               <td>{{ event.eventAddress }}</td>
               <td>{{ event.orderCount }}</td>
-              <td>{{ event.orderTotalPrice }}</td>
+              <td>¥{{ event.orderTotalPrice }}</td>
               <td>{{ event.eventStatus }}</td>
             </tr>
           </tbody>
@@ -111,6 +111,7 @@
             eventStartDatetime: eventSnapshot.get('event_start_datetime')?.toMillis(),
             eventDeadlineDatetime: eventSnapshot.get('event_deadline_datetime')?.toMillis(),
             eventAddress: eventSnapshot.get('event_address'),
+            eventStatus: eventSnapshot.get('event_status'),
             orderCount,
             orderTotalPrice,
           })
