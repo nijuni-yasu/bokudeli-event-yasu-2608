@@ -240,9 +240,11 @@ async function sendEventInformationMail() {
             from: DEFAULT_FROM,
             templateId: EVENT_INFORMATION_TEMPLATE_ID,
             dynamic_template_data,
-        }))
-        break;
+        }).catch(err => {
+            console.warn(err);
+        }));
     }
+    return Promise.all(promises);
 }
  
 
