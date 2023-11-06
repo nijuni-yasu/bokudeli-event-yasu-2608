@@ -18,7 +18,14 @@
           <div class="mt-5">
             <p>【イベントID】{{ event.event_id }}</p>
             <p>【イベント名】{{ event.event_name }}</p>
-            <p>【イベントURL】<a :href="getEventUrl(event.community_account, event.event_id)">{{ getEventUrl(event.community_account, event.event_id) }}</a></p>
+            <p>【イベントURL】
+              <a
+                :href="getEventUrl(event.community_account, event.event_id)"
+                target="_blank"
+              >
+                {{ getEventUrl(event.community_account, event.event_id) }}
+              </a>
+            </p>
             <p>【配送日時】{{ millisToDateTimeString(timestampToMillis(event.event_start_datetime, - 30 * 60 * 1000)) }}〜{{ millisToTimeString(timestampToMillis(event.event_start_datetime)) }}</p>
             <p>【注文期限】{{ millisToDateTimeString(timestampToMillis(event.event_deadline_datetime)) }}</p>
             <p>【開催場所】{{ event.event_address }}</p>
