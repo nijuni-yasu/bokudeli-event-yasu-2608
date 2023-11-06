@@ -7,7 +7,6 @@ const sgMail = require('@sendgrid/mail');
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = 'bokudeli@nijuni.jp';
 const DEFAULT_CC = 'support@nijuni.jp';
-const DEFAULT_BCC = 'yasukawa.naohiro@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
 const DELIVERY_DURATION = 30; // minutes
@@ -76,7 +75,12 @@ async function getShopEmails(eventSnapshot) {
     const partnerId = eventSnapshot.get('partner_id');
     const shopsRef = db.collection('partners').doc(partnerId).collection('shops');
     for (const shopRef of await shopsRef.listDocuments()) {
-        emails.push((await shopRef.get()).get('shop_email'));
+        for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
+            const mail = (await shopRef.get()).get(field)
+            if (mail) {
+                emails.push(mail);
+            }
+        }
     }
     return emails;
 }
@@ -131,12 +135,12 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
         order_count,
         order_total_price,
         event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-        //     organizer_company: eventData.organizer_company,
-        //     organizer_fullname: eventData.organizer_fullname,
-        //     organizer_phone_personal: eventData.organizer_phone_personal,
-        //     organizer_phone_company: eventData.organizer_company,
-        //     organizer_email: eventData.organizer_email,
-        //     organizer_memo: eventData.organizer_memo,
+        organizer_company: eventData.organizer_company,
+        organizer_fullname: eventData.organizer_fullname,
+        organizer_phone_personal: eventData.organizer_phone_personal,
+        organizer_phone_company: eventData.organizer_company,
+        organizer_email: eventData.organizer_email,
+        organizer_memo: eventData.organizer_memo,
         orders,
     };
 }
@@ -160,7 +164,6 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
                     to,
                     from: DEFAULT_FROM,
                     cc: DEFAULT_CC,
-                    bcc: DEFAULT_BCC,
                     templateId: ORDER_DEADLINE_TEMPLATE_ID,
                     dynamic_template_data,
                 }));
@@ -219,12 +222,15 @@ async function sendEventInformationMail() {
                 event_deadline_datetime,
                 event_desc: eventData.event_desc,
                 event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-                //     organizer_company: eventData.organizer_company,
+                organizer_company: eventData.organizer_company,
             });
             if (dynamic_template_data.events.length === 5) {
                 break;
             }
         }
+    }
+    if (dynamic_template_data.events.length === 0) {
+        return;
     }
     for (const userRef of await db.collection('users').listDocuments()) {
         const userSnapshot = await userRef.get();
@@ -234,9 +240,11 @@ async function sendEventInformationMail() {
             from: DEFAULT_FROM,
             templateId: EVENT_INFORMATION_TEMPLATE_ID,
             dynamic_template_data,
-        }))
-        break;
+        }).catch(err => {
+            console.warn(err);
+        }));
     }
+    return Promise.all(promises);
 }
  
 
