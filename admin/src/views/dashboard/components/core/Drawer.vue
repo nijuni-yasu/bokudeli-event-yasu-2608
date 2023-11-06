@@ -93,17 +93,17 @@
         {
           icon: 'mdi-storefront-outline',
           title: '店舗設定',
-          to: 'shop',
+          to: '/shop',
         },
         {
           icon: 'mdi-food-fork-drink',
           title: 'メニュー設定',
-          to: 'menu',
+          to: '/menu',
         },
         {
           icon: 'mdi-bicycle',
           title: '注文一覧',
-          to: 'order',
+          to: '/order',
         },
         {
           icon: 'mdi-lightbulb-on-outline',
