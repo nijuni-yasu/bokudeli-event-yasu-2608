@@ -34,18 +34,18 @@
               v-for="(event,key) in selectedEvents"
               :key="key"
             >
-              <td>{{ event.eventId.slice(0, 6) }}</td>
+              <td>{{ event.event_id.slice(0, 6) }}</td>
               <td>
-                <router-link :to="{ name: 'orderDetail', params: { id: event.eventId } }">
-                  {{ event.eventName }}
+                <router-link :to="{ name: 'orderDetail', params: { id: event.event_id } }">
+                  {{ event.event_name }}
                 </router-link>
               </td>
-              <td>{{ millisToDateTimeString(event.eventStartDatetime) }}</td>
-              <td>{{ millisToDateTimeString(event.eventDeadlineDatetime) }}</td>
-              <td>{{ event.eventAddress }}</td>
-              <td>{{ event.orderCount }}</td>
-              <td>¥{{ event.orderTotalPrice }}</td>
-              <td>{{ event.eventStatus }}</td>
+              <td>{{ millisToDateTimeString(event.event_start_datetime) }}</td>
+              <td>{{ millisToDateTimeString(event.event_deadline_datetime) }}</td>
+              <td>{{ event.event_address }}</td>
+              <td>{{ event.orders.length }}</td>
+              <td>¥{{ event.orders.totalPrice }}</td>
+              <td>{{ $t(`event_status/${event.event_status}`) }}</td>
             </tr>
           </tbody>
         </v-simple-table>
@@ -60,26 +60,24 @@
   import 'firebase/firestore'
   import 'firebase/auth'
   import { millisToDateTimeString } from '@/methods/date'
+  import { Event } from '@/models/Event'
+  import { Orders } from '@/models/Orders'
 
   const db = firebase.firestore()
   const partnerId = firebase.auth().currentUser.uid
 
   export default {
-    name: 'Orders',
-
     data: () => ({
       events: [],
-      orders: [],
     }),
     computed: {
       selectedEvents () {
         return Array.from(this.events)
           .sort((a, b) => {
-            return a.eventStartDatetime - b.eventStartDatetime
+            return a.event_start_datetime - b.event_start_datetime
           })
           .filter((event) => {
-            //
-            return true
+            return event.status !== 'in_draft'
           })
       },
     },
@@ -94,27 +92,12 @@
         // initEvents は created() 内で1度きりしか呼んではいけない
         // forEach 内の async は非同期呼び出しになるので、アップデートがかかる場合は排他制御が必要
         eventsSnapshot.forEach(async (eventSnapshot) => {
+          const event = new Event(eventSnapshot)
           const communityId = eventSnapshot.get('community_id')
           const eventId = eventSnapshot.get('event_id')
-          const orders = await db.collection('communities').doc(communityId).collection('events').doc(eventId).collection('orders').where('status', '==', 'ordered').get()
-          let orderCount = 0
-          let orderTotalPrice = 0
-          orders.forEach((order) => {
-            order.get('menus').forEach((menu) => {
-              orderCount += menu.count
-              orderTotalPrice += menu.price * menu.count
-            })
-          })
-          Vue.set(this.events, this.events.length, {
-            eventId,
-            eventName: eventSnapshot.get('event_name'),
-            eventStartDatetime: eventSnapshot.get('event_start_datetime')?.toMillis(),
-            eventDeadlineDatetime: eventSnapshot.get('event_deadline_datetime')?.toMillis(),
-            eventAddress: eventSnapshot.get('event_address'),
-            eventStatus: eventSnapshot.get('event_status'),
-            orderCount,
-            orderTotalPrice,
-          })
+          const ordersSnapshot = await db.collection('communities').doc(communityId).collection('events').doc(eventId).collection('orders').where('status', '==', 'ordered').get()
+          event.orders = new Orders(ordersSnapshot)
+          Vue.set(this.events, this.events.length, event)
         })
       },
     },

@@ -1,2 +1,7 @@
 {
+    "event_status/in_draft": "In draft",
+    "event_status/applying_reservation": "Applying reservation",
+    "event_status/accepting_order": "Accepting order",
+    "event_status/order_closed": "Order closed",
+    "event_status/finished": "Finished"
 }

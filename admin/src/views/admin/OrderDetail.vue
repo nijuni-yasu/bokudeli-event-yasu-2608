@@ -1,5 +1,6 @@
 <template>
   <v-container
+    v-if="event != null"
     id="regular-tables"
     fluid
     tag="section"
@@ -13,21 +14,22 @@
           inline
           icon="mdi-truck"
           class="px-5 py-3"
-          :title="title"
+          :title="$t(`event_status/${event.event_status}`)"
         >
           <div class="mt-5">
             <p>【イベントID】{{ event.event_id }}</p>
             <p>【イベント名】{{ event.event_name }}</p>
-            <p>【イベントURL】
+            <p>
+              【イベントURL】
               <a
-                :href="getEventUrl(event.community_account, event.event_id)"
+                :href="event.url"
                 target="_blank"
               >
-                {{ getEventUrl(event.community_account, event.event_id) }}
+                {{ event.url }}
               </a>
             </p>
-            <p>【配送日時】{{ millisToDateTimeString(timestampToMillis(event.event_start_datetime, - 30 * 60 * 1000)) }}〜{{ millisToTimeString(timestampToMillis(event.event_start_datetime)) }}</p>
-            <p>【注文期限】{{ millisToDateTimeString(timestampToMillis(event.event_deadline_datetime)) }}</p>
+            <p>【配送日時】{{ millisToDateTimeString(event.event_start_datetime - 30 * 60 * 1000) }}〜{{ millisToTimeString(event.event_start_datetime) }}</p>
+            <p>【注文期限】{{ millisToDateTimeString(event.event_deadline_datetime) }}</p>
             <p>【開催場所】{{ event.event_address }}</p>
             <p>【コミュニティ名】{{ event.community_name }}</p>
             <p>【担当者名】{{ event.organizer_fullname }}</p>
@@ -68,8 +70,10 @@
               </form>
             </validation-observer>
           </div>
-          <div v-else-if="event.event_status == 'accepting_order'">
-            <h2 class="mt-10">注文内容</h2>
+          <div v-else-if="event.orders.length !== 0">
+            <h2 class="mt-10">
+              注文内容
+            </h2>
             <v-simple-table>
               <thead>
                 <tr>
@@ -82,18 +86,20 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="(order,key) in orders"
+                  v-for="(order, key) in event.orders"
                   :key="`order-${key}`"
                 >
                   <td>{{ key + 1 }}</td>
-                  <td>{{ order.menu_name }}</td>
-                  <td>¥{{ order.menu_price }}</td>
-                  <td>{{ order.user_name }}</td>
-                  <td>{{ millisToDateTimeString(order.order_datetime) }}</td>
+                  <td>{{ order.name }}</td>
+                  <td>¥{{ order.price }}</td>
+                  <td>{{ order.user.user_name }}</td>
+                  <td>{{ millisToDateTimeString(order.created_at) }}</td>
                 </tr>
               </tbody>
             </v-simple-table>
-            <h2 class="mt-10">メニュー別小計</h2>
+            <h2 class="mt-10">
+              メニュー別小計
+            </h2>
             <v-simple-table>
               <thead>
                 <tr>
@@ -106,18 +112,20 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="(order,key) in ordersTotal"
+                  v-for="(subtotalOrder,key) in event.orders.getSubtotalOrders()"
                   :key="`total-${key}`"
                 >
                   <td>{{ key + 1 }}</td>
-                  <td>{{ order.menu_name }}</td>
-                  <td>{{ order.count }}</td>
-                  <td>¥{{ order.menu_price }}</td>
-                  <td>¥{{ order.menu_price * order.count }}</td>
+                  <td>{{ subtotalOrder.name }}</td>
+                  <td>{{ subtotalOrder.count }}</td>
+                  <td>¥{{ subtotalOrder.price }}</td>
+                  <td>¥{{ subtotalOrder.price * subtotalOrder.count }}</td>
                 </tr>
               </tbody>
             </v-simple-table>
-            <h2 class="mt-10">合計</h2>
+            <h2 class="mt-10">
+              合計
+            </h2>
             <v-simple-table>
               <thead>
                 <tr>
@@ -127,8 +135,8 @@
               </thead>
               <tbody>
                 <tr>
-                  <td><h1>{{ ordersTotal.reduce((sum, o) => sum + o.count, 0) }}</h1></td>
-                  <td><h1>¥{{ ordersTotal.reduce((sum, o) => sum + o.count * o.menu_price, 0) }}</h1></td>
+                  <td><h1>{{ event.orders.length }}</h1></td>
+                  <td><h1>¥{{ event.orders.totalPrice }}</h1></td>
                 </tr>
               </tbody>
             </v-simple-table>
@@ -143,8 +151,9 @@
   import firebase from 'firebase/app'
   import 'firebase/firestore'
   import 'firebase/auth'
-  import { timestampToMillis, millisToDateTimeString, millisToTimeString } from '@/methods/date'
-  import { getEventUrl } from '@/methods/event'
+  import { millisToDateTimeString, millisToTimeString } from '@/methods/date'
+  import { Event } from '@/models/Event'
+  import { Orders } from '@/models/Orders'
 
   const db = firebase.firestore()
 
@@ -152,69 +161,30 @@
   export default {
     data () {
       return {
-        event: {},
-        orders: [],
+        event: null,
         radio01: 0,
         text01: '',
       }
-    },
-    computed: {
-      title () {
-        switch (this.event.event_status) {
-          case 'applying_reservation':
-            return '予約申請中'
-          case 'accepting_order':
-            return '注文受付中'
-          default:
-            return ''
-        }
-      },
-      ordersTotal () {
-        const orders = new Map()
-        this.orders.forEach((order) => {
-          const o = orders.get(order.menu_name)
-          if (o === undefined) {
-            orders.set(order.menu_name, {
-              menu_name: order.menu_name,
-              menu_price: order.menu_price,
-              count: 1,
-            })
-          } else {
-            o.count++
-          }
-        })
-        return Array.from(orders.values())
-      },
     },
     created () {
       this.initEvent()
     },
     methods: {
-      timestampToMillis,
       millisToDateTimeString,
       millisToTimeString,
-      getEventUrl,
       async initEvent () {
         const eventsSnapshot = await db.collectionGroup('events').where('event_id', '==', this.$route.params.id).get()
-        this.event = eventsSnapshot.docs[0].data()
-        const ordersSnapshot = await db.collection('communities').doc(this.event.community_id).collection('events').doc(this.event.event_id).collection('orders').get()
-        // TODO ヘルパー関数に切り出す
-        const orders = []
-        ordersSnapshot.forEach((order) => {
-          orders.push(order.data())
-        })
-        for (const order of orders) {
+        const eventSnapshot = eventsSnapshot.docs[0]
+        const event = new Event(eventSnapshot)
+        const communityId = eventSnapshot.get('community_id')
+        const eventId = eventSnapshot.get('event_id')
+        const ordersSnapshot = await db.collection('communities').doc(communityId).collection('events').doc(eventId).collection('orders').where('status', '==', 'ordered').get()
+        event.orders = new Orders(ordersSnapshot)
+        for (const order of event.orders) {
           const userSnapshot = await db.collection('users').doc(order.user_id).get()
-          for (const menu of order.menus) {
-            Object.assign(order, {
-              menu_name: menu.name,
-              menu_price: menu.price,
-              user_name: userSnapshot.get('user_name'),
-              order_datetime: order.created_at?.toMillis(),
-            })
-          }
+          Object.assign(order, { user: userSnapshot.data() })
         }
-        this.orders = orders
+        this.event = event
       },
       validateForm () {
         console.log(this.radio01)
