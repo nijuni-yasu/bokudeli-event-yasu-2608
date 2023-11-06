@@ -22,7 +22,7 @@
     <v-list-item two-line>
       <v-list-item-content>
         <v-list-item-title class="text-uppercase font-weight-regular display-2">
-          <span class="logo-mini">{{ $t('🧢') }}</span>
+          <span class="logo-mini">🧢</span>
           <span class="logo-normal">ぼくデリ</span>
         </v-list-item-title>
       </v-list-item-content>
@@ -343,27 +343,6 @@
       computedItems () {
         return this.items.map(this.mapItem)
       },
-      profile () {
-        return {
-          avatar: true,
-          group: '',
-          title: this.$t('avatar'),
-          children: [
-            {
-              href: '',
-              title: this.$t('my-profile'),
-            },
-            {
-              to: '',
-              title: this.$t('edit-profile'),
-            },
-            {
-              to: '',
-              title: this.$t('settings'),
-            },
-          ],
-        }
-      },
     },
 
     watch: {
@@ -390,7 +369,7 @@
         return {
           ...item,
           children: item.children ? item.children.map(this.mapItem) : undefined,
-          title: this.$t(item.title),
+          title: item.title,
         }
       },
       clickLogOut: function () {
