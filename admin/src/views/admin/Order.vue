@@ -1,271 +1,103 @@
 <template>
   <v-container
     id="regular-tables"
+    fluid
     tag="section"
   >
-    <!-- <base-v-component
-      heading="Simple Tables"
-      link="components/simple-tables"
-    /> -->
-    <div
-      v-if="events.length==0"
-      class="display-2 my-6 mx-5"
+    <base-material-card
+      inline
+      icon="mdi-truck"
+      class="px-5 py-3"
     >
-      注文履歴はありません
-    </div>
-    <div v-else>
-      <v-row>
-        <v-col
-          v-for="(event,key) in events"
-          :key="key"
-          cols="12"
-          sm="12"
-          md="6"
-        >
-          <base-material-card
-            inline
-            icon="mdi-bicycle"
-            class="px-5 py-2"
-          >
-            <v-simple-table
-              dense
-              class="my-5"
+      <div
+        v-if="events.length === 0"
+        class="display-2 my-6 mx-5"
+      >
+        注文履歴はありません
+      </div>
+      <div v-else>
+        <v-simple-table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>イベント名</th>
+              <th>開始日時</th>
+              <th>注文期限</th>
+              <th>開催場所</th>
+              <th>注文個数</th>
+              <th>注文金額</th>
+              <th>ステータス</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(event,key) in selectedEvents"
+              :key="key"
             >
-              <tbody>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    イベントID
-                  </td>
-                  <td>{{ event.event_id }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    イベント名
-                  </td>
-                  <td>{{ event.event_name }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    イベント開始日時
-                  </td>
-                  <td>{{ event.event_start_datetime.toDate().toLocaleString('ja-JP').slice( 0, -3 ) }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    注文締切日時
-                  </td>
-                  <td>{{ event.event_deadline_datetime.toDate().toLocaleString('ja-JP').slice( 0, -3 ) }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:12px 8px;"
-                  >
-                    配送日時
-                  </td>
-                  <td>
-                    ※イベント開始時刻の15分前にはお届けしてください。
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    開催場所
-                  </td>
-                  <td>{{ event.event_address }}</td>
-                </tr>
-              </tbody>
-            </v-simple-table>
-            <v-simple-table
-              dense
-              class="my-5"
-            >
-              <tbody>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    主催者名
-                  </td>
-                  <td>{{ event.community_name }}</td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    電話番号
-                  </td>
-                  <td>
-                    <a
-                      target="_blank"
-                      :href="`tel:${event.community_phone}`"
-                    >
-                      {{ event.community_phone }}
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    メールアドレス
-                  </td>
-                  <td>{{ event.community_email }}</td>
-                </tr>
-
-                <tr>
-                  <td
-                    class="primary--text"
-                    style="width:100px; font-size:10.5px; padding:0px 8px;"
-                  >
-                    配送メモ
-                  </td>
-                  <td>{{ event.user_memo }}</td>
-                </tr>
-              </tbody>
-            </v-simple-table>
-            <v-simple-table
-              class="my-5"
-            >
-              <thead>
-                <tr>
-                  <th class="primary--text">
-                    #
-                  </th>
-                  <th class="primary--text">
-                    なまえ
-                  </th>
-                  <th class="primary--text">
-                    メニュー（金額 x 個数）
-                  </th>
-                  <th class="primary--text">
-                    小計
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(userOrder,index, key) in event.userOrders"
-                  :key="key"
-                >
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ userOrder.userInfo.user_name }}</td>
-                  <td>
-                    <div
-                      v-for="(menu,key) in userOrder.menus"
-                      :key="key"
-                    >
-                      <div> {{ menu.name }} （ ¥{{ menu.price }} x {{ menu.count }}個）</div>
-                    </div>
-                  </td>
-                  <td>¥{{ userOrder.subtotal }}</td>
-                </tr>
-              </tbody>
-            </v-simple-table>
-            <v-simple-table
-              class="ma-3"
-            >
-              <tbody>
-                <tr>
-                  <td
-                    class="display-2"
-                  >
-                    決済数: {{ event.userOrders.length }}
-                  </td>
-                  <td
-                    class="display-2"
-                  >
-                    メニュー数: {{ event.eventTotalCount }}個
-                  </td>
-                  <td
-                    class="display-2"
-                  >
-                    合計金額: ¥{{ event.eventTotalPrice }}
-                  </td>
-                </tr>
-              </tbody>
-            </v-simple-table>
-          </base-material-card>
-        </v-col>
-      </v-row>
-    </div>
+              <td>{{ event.event_id.slice(0, 6) }}</td>
+              <td>
+                <router-link :to="{ name: 'orderDetail', params: { id: event.event_id } }">
+                  {{ event.event_name }}
+                </router-link>
+              </td>
+              <td>{{ millisToDateTimeString(event.event_start_datetime) }}</td>
+              <td>{{ millisToDateTimeString(event.event_deadline_datetime) }}</td>
+              <td>{{ event.event_address }}</td>
+              <td>{{ event.orders.length }}</td>
+              <td>¥{{ event.orders.totalPrice }}</td>
+              <td>{{ $t(`event_status/${event.event_status}`) }}</td>
+            </tr>
+          </tbody>
+        </v-simple-table>
+      </div>
+    </base-material-card>
   </v-container>
 </template>
 
 <script>
+  import Vue from 'vue'
   import firebase from 'firebase/app'
   import 'firebase/firestore'
   import 'firebase/auth'
+  import { millisToDateTimeString } from '@/methods/date'
+  import { Event } from '@/models/Event'
+  import { Orders } from '@/models/Orders'
 
   const db = firebase.firestore()
   const partnerId = firebase.auth().currentUser.uid
 
   export default {
-    name: 'Orders',
-
     data: () => ({
       events: [],
-      orders: [],
     }),
-    created: async function () {
-      this.events = await this.getEvetsOrders()
-      console.log(this.events)
+    computed: {
+      selectedEvents () {
+        return Array.from(this.events)
+          .sort((a, b) => {
+            return a.event_start_datetime - b.event_start_datetime
+          })
+          .filter((event) => {
+            return event.status !== 'in_draft'
+          })
+      },
+    },
+    created () {
+      this.initEvents()
     },
     methods: {
-      dateFormat: function (date) {
-        const d = Number(date.slice(0, 4)) + '/' + Number(date.slice(5, 7)) + '/' + Number(date.slice(8, 10))
-        return d
-      },
-      getEvetsOrders: async function () {
-        return new Promise((resolve, reject) => {
-          const events = []
-          // 全てのイベントから注文店舗のイベントを取得
-          db.collectionGroup('events').where('partner_id', '==', partnerId).get().then((snapshot) => {
-            snapshot.forEach((doc) => {
-              events.push(doc.data())
-            })
-            // イベントの個々の注文情報を追加
-            events.forEach((event) => {
-              event.userOrders = []
-              console.log(event)
-              db.collection('communities').doc(event.community_id).collection('events').doc(event.event_id).collection('orders').where('status', '==', 'ordered').get().then((snapshot) => {
-                event.eventTotalPrice = 0
-                event.eventTotalCount = 0
-                snapshot.forEach((order) => {
-                  const userOrder = order.data()
-                  userOrder.subtotal = 0
-                  userOrder.menus.forEach((menu) => {
-                    userOrder.subtotal += menu.price * menu.count
-                    event.eventTotalPrice += menu.price * menu.count
-                    event.eventTotalCount += menu.count
-                  })
-                  // 個々の注文情報からユーザー名を取得
-                  db.collection('users').doc(userOrder.user_id).get().then((doc) => {
-                    userOrder.userInfo = doc.data()
-                    event.userOrders.push(userOrder)
-                  })
-                })
-              })
-            })
-            resolve(events)
-          })
+      millisToDateTimeString,
+      initEvents: async function () {
+        // 全てのイベントから注文店舗のイベントを取得
+        const eventsSnapshot = await db.collectionGroup('events').where('partner_id', '==', partnerId).get()
+        // initEvents は created() 内で1度きりしか呼んではいけない
+        // forEach 内の async は非同期呼び出しになるので、アップデートがかかる場合は排他制御が必要
+        eventsSnapshot.forEach(async (eventSnapshot) => {
+          const event = new Event(eventSnapshot)
+          const communityId = eventSnapshot.get('community_id')
+          const eventId = eventSnapshot.get('event_id')
+          const ordersSnapshot = await db.collection('communities').doc(communityId).collection('events').doc(eventId).collection('orders').where('status', '==', 'ordered').get()
+          event.orders = new Orders(ordersSnapshot)
+          Vue.set(this.events, this.events.length, event)
         })
       },
     },

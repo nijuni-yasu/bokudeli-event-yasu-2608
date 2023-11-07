@@ -7,7 +7,7 @@ Vue.use(Router)
 
 // export default new Router({
 const router = new Router({
-  mode: 'hash',
+  mode: 'history',
   base: process.env.BASE_URL,
   routes: [
     {
@@ -182,6 +182,12 @@ const router = new Router({
           name: '注文一覧',
           path: 'ORDER',
           component: () => import('@/views/admin/Order'),
+          meta: { requiresAuth: true },
+        },
+        {
+          name: 'orderDetail',
+          path: 'order/:id',
+          component: () => import('@/views/admin/OrderDetail'),
           meta: { requiresAuth: true },
         },
         {
