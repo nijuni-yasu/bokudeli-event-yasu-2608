@@ -138,7 +138,7 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
         organizer_company: eventData.organizer_company,
         organizer_fullname: eventData.organizer_fullname,
         organizer_phone_personal: eventData.organizer_phone_personal,
-        organizer_phone_company: eventData.organizer_company,
+        organizer_phone_company: eventData.organizer_phone_company,
         organizer_email: eventData.organizer_email,
         organizer_memo: eventData.organizer_memo,
         orders,
