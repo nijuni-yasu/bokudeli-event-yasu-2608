@@ -92,6 +92,9 @@ async function createOrdersForOrderDeadline(ordersRef) {
     let price = 0;
     for (const orderRef of await ordersRef.listDocuments()) {
         const orderSnapshot = await orderRef.get();
+        if (orderSnapshot.get('status') !== 'ordered') {
+            continue;
+        }
         const userRef = db.collection('users').doc(orderSnapshot.get('user_id'));
         for (const menu of orderSnapshot.get('menus') ?? []) {
             const promise = userRef.get().then(userSnapshot => {
