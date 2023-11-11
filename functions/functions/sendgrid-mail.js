@@ -70,6 +70,13 @@ function getEventUrl(communityAccount, eventId) {
     return `https://${process.env.EVENT_HOST}/community/${communityAccount}/events/${eventId}`;
 }
 
+async function getShop(eventSnapshot) {
+    const shopId = eventSnapshot.get('shop_id');
+    const partnerId = eventSnapshot.get('partner_id');
+    const shopRef = db.collection('partners').doc(partnerId).collection('shops').doc(shopId);
+    return await shopRef.get();
+}
+
 async function getShopEmails(eventSnapshot) {
     const emails = [];
     const partnerId = eventSnapshot.get('partner_id');
