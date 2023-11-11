@@ -83,7 +83,7 @@ const updateUserData = async (storedUser: StoredUser) => {
             round
             class="mb-4"
           >
-            <v-img v-if="avatar" :src="avatar"></v-img>
+            <v-img v-if="avatar" :src="avatar" cover/>
             <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
           </v-avatar>
         </v-card-title>

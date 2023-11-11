@@ -90,7 +90,7 @@ onMounted(async () => {
                   <div class="d-flex justify-space-between align-center">
                     <div class="v-avatar-group ml-2">
                       <v-avatar v-for="member in state.membersSet[getEventKey(event)]" :key="member.userId" size="40">
-                        <v-img :src="member.userImageUrl" />
+                        <v-img :src="member.userImageUrl" cover/>
                       </v-avatar>
                     </div>
                   </div>

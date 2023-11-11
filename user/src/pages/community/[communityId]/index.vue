@@ -109,7 +109,7 @@ onMounted(async () => {
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
                       <v-avatar size="40px">
-                        <v-img v-if="member.user_image_url" :src="member.user_image_url" />
+                        <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
                       </v-avatar>
                       <div class="ma-2 text-subtitle-1">{{ member.user_name }}</div>
                     </div>

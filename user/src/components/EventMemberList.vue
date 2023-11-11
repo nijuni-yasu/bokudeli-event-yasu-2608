@@ -49,7 +49,7 @@ onMounted(async () => {
             <v-row class="ma-0 d-flex align-center">
               <router-link :to="`/users/${member.userId}`" class="text--primary cursor-pointer text-decoration-none">
                 <v-avatar class="ma-1" size="60">
-                  <v-img :src="member.userImageUrl" />
+                  <v-img :src="member.userImageUrl" cover/>
                 </v-avatar>
               </router-link>
               <v-col class="ma-0 px-1">

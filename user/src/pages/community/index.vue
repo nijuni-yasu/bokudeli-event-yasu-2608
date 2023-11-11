@@ -78,7 +78,7 @@ onMounted(async () => {
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                   <div class="v-avatar-group">
                     <v-avatar v-for="member in members" :key="member.user_id" size="40">
-                      <v-img v-if="member.user_image_url" :src="member.user_image_url" />
+                      <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
                     </v-avatar>
                   </div>
                 </div>
