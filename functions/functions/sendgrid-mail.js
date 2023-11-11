@@ -70,26 +70,22 @@ function getEventUrl(communityAccount, eventId) {
     return `https://${process.env.EVENT_HOST}/community/${communityAccount}/events/${eventId}`;
 }
 
-async function getShop(eventSnapshot) {
+async function getShopForEvent(eventSnapshot) {
     const shopId = eventSnapshot.get('shop_id');
     const partnerId = eventSnapshot.get('partner_id');
     const shopRef = db.collection('partners').doc(partnerId).collection('shops').doc(shopId);
     return await shopRef.get();
 }
 
-async function getShopEmails(eventSnapshot) {
-    const emails = [];
-    const partnerId = eventSnapshot.get('partner_id');
-    const shopsRef = db.collection('partners').doc(partnerId).collection('shops');
-    for (const shopRef of await shopsRef.listDocuments()) {
-        for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
-            const mail = (await shopRef.get()).get(field)
-            if (mail) {
-                emails.push(mail);
-            }
+function getShopEmails(shopSnapshot) {
+    const emails = new Set();
+    for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
+        const mail = shopSnapshot.get(field)
+        if (mail != null && mail !== '') {
+            emails.add(mail);
         }
     }
-    return emails;
+    return Array.from(emails);
 }
 
 async function createOrdersForOrderDeadline(ordersRef) {
@@ -164,14 +160,14 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
         try {
             const event_deadline_datetime = eventSnapshot.get('event_deadline_datetime');
             const deadline = event_deadline_datetime?.toMillis() ?? 0;
-                            if (start < deadline && deadline <= end) {
-                const [to, dynamic_template_data] = await Promise.all([
-                    getShopEmails(eventSnapshot),
-                    createTemplateDataForOrderDeadline(eventSnapshot)
+            if (start < deadline && deadline <= end) {
+                const [dynamic_template_data, shopSnapShot] = await Promise.all([
+                    createTemplateDataForOrderDeadline(eventSnapshot),
+                    getShopForEvent(eventSnapshot),
                 ]);
                 dynamic_template_data.is_reminder = is_reminder;
                 promises.push(sgMail.send({
-                    to,
+                    to: getShopEmails(shopSnapShot),
                     from: DEFAULT_FROM,
                     cc: DEFAULT_CC,
                     templateId: ORDER_DEADLINE_TEMPLATE_ID,
