@@ -32,6 +32,20 @@ export const dateWithDayOfWeekString = (date: Timestamp | Date | null): string =
   return formattedDate
 }
 
+export const dateOnlyTimeString = (date: Timestamp | Date | null): string => {
+  if (!date) return ''
+
+  const options: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+  }
+
+  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  const formattedDate = targetDate.toLocaleTimeString('ja-JP', options)
+  return formattedDate
+}
+
+
 export const priceString = (price: number): string => {
   return `¥${price.toLocaleString()}`
 }

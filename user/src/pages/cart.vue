@@ -3,7 +3,7 @@ import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db, stripeBaseURL } from '@/firebase'
 import { getCommunityPath, getEventPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
+import { dateWithDayOfWeekString, dateOnlyTimeString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -259,7 +259,7 @@ onMounted(async () => {
             【開催場所】{{ cart.event.event_address }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催日時】{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}
+            【開催日時】{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{ dateOnlyTimeString(cart.event.event_end_datetime) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【注文期限】{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}

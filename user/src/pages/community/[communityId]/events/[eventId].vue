@@ -13,6 +13,7 @@ import { getCommunityPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
   dateWithDayOfWeekString,
+  dateOnlyTimeString,
   convertDocumentDataToCommunity,
   convertDocumentDataToEvent,
 } from '@/schemes/converter'
@@ -150,7 +151,7 @@ const updateAlert = (message: string) => {
                 【開催場所】{{ state.event.event_address }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
-                【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}
+                【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}〜{{ dateOnlyTimeString(state.event.event_end_datetime) }}
               </v-card-text>
               <v-card-text class="text-left pb-8 text-subtitle-1">
                 【注文期限】{{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
