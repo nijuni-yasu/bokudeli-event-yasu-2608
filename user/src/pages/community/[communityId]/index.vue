@@ -9,7 +9,7 @@ import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/sc
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { FirestoredUser } from '@/schemes/storedUser'
-import { dateWithDayOfWeekString } from '@/schemes/converter'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 
 const props = defineProps<{
   communityId: string
@@ -109,7 +109,7 @@ onMounted(async () => {
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
                       <v-avatar size="40px">
-                        <v-img v-if="member.user_image_url" :src="member.user_image_url" />
+                        <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
                       </v-avatar>
                       <div class="ma-2 text-subtitle-1">{{ member.user_name }}</div>
                     </div>
@@ -132,7 +132,7 @@ onMounted(async () => {
                   </v-card-text>
                   <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community_name }} </v-card-text>
                   <v-card-text class="text-left pb-2">
-                    【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}
+                    【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
                   </v-card-text>
                   <v-card-text class="text-left pb-2">
                     【注文期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}

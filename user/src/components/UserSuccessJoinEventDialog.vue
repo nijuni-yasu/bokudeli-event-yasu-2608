@@ -12,6 +12,7 @@ import {
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
   dateWithDayOfWeekString,
+  dateOnlyTimeString,
   convertDocumentDataToCommunity,
   convertDocumentDataToEvent,
 } from '@/schemes/converter'
@@ -104,7 +105,7 @@ onMounted(async () => {
       <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.event_cover_url" />
       <v-card-text class="text-left pb-5">【開催場所】{{ state.event.event_address }}</v-card-text>
       <v-card-text class="text-left pb-5"
-        >【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}</v-card-text
+        >【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}〜{{ dateOnlyTimeString(state.event.event_end_datetime) }}</v-card-text
       >
       <v-card-text class="text-left pb-5">【開催内容】{{ state.event.event_desc }}</v-card-text>
       <v-btn type="submit" rounded @click="closeDialog">確認しました</v-btn>

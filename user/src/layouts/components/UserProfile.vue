@@ -27,7 +27,7 @@ const logout = async () => {
   <div>
     <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
       <v-avatar class="cursor-pointer">
-        <v-img :src="avatar" />
+        <v-img :src="avatar" cover/>
 
         <!-- SECTION Menu -->
         <v-menu activator="parent" width="230" location="bottom end" offset="14px">
@@ -38,7 +38,7 @@ const logout = async () => {
                 <v-list-item-action start>
                   <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
                     <v-avatar>
-                      <v-img :src="avatar" />
+                      <v-img :src="avatar" cover/>
                     </v-avatar>
                   </v-badge>
                 </v-list-item-action>

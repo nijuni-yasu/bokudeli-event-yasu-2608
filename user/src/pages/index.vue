@@ -4,7 +4,7 @@ import { collectionGroup, query, orderBy, getDocs, where } from 'firebase/firest
 import { db } from '@/firebase'
 import topLogo from '@/assets/images/bokudeli/bokudeli_top4.png'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateWithDayOfWeekString, convertDocumentDataToEvent } from '@/schemes/converter'
+import { dateWithDayOfWeekString, dateOnlyTimeString, convertDocumentDataToEvent } from '@/schemes/converter'
 import { getEventPath } from '@/router/utils'
 import { EventMember } from '@/schemes/EventMember'
 import { loadEventMembersWithoutMenu } from '@/composable/loadEventMembers'
@@ -74,7 +74,7 @@ onMounted(async () => {
                 </v-card-title>
                 <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community_name }} </v-card-text>
                 <v-card-text class="text-left pb-2">
-                  【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}
+                  【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
                 </v-card-text>
                 <v-card-text class="text-left pb-2">
                   【注文期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
@@ -90,7 +90,7 @@ onMounted(async () => {
                   <div class="d-flex justify-space-between align-center">
                     <div class="v-avatar-group ml-2">
                       <v-avatar v-for="member in state.membersSet[getEventKey(event)]" :key="member.userId" size="40">
-                        <v-img :src="member.userImageUrl" />
+                        <v-img :src="member.userImageUrl" cover/>
                       </v-avatar>
                     </div>
                   </div>
