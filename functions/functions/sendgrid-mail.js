@@ -9,9 +9,14 @@ const DEFAULT_FROM = 'bokudeli@nijuni.jp';
 const DEFAULT_CC = 'support@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
+const APPLYING_ORDER_TEMPLATE_ID = 'd-a0eeb84707604e658dc4aabb38f1b92d';
 const DELIVERY_DURATION = 30; // minutes
 
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
+
+const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7';
+const EVENT_STATUS_IN_DRAFT_ID = 'd-db07a084839741ada6e3ff0f44ac3b41';
+const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -70,19 +75,44 @@ function getEventUrl(communityAccount, eventId) {
     return `https://${process.env.EVENT_HOST}/community/${communityAccount}/events/${eventId}`;
 }
 
-async function getShopEmails(eventSnapshot) {
-    const emails = [];
+function getOrderUrl(eventId) {
+    return `https://${process.env.EVENT_HOST}/order/${eventId}`;
+}
+
+async function getShopForEvent(eventSnapshot) {
+    const shopId = eventSnapshot.get('shop_id');
     const partnerId = eventSnapshot.get('partner_id');
-    const shopsRef = db.collection('partners').doc(partnerId).collection('shops');
-    for (const shopRef of await shopsRef.listDocuments()) {
-        for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
-            const mail = (await shopRef.get()).get(field)
-            if (mail) {
-                emails.push(mail);
-            }
+    const shopRef = db.collection('partners').doc(partnerId).collection('shops').doc(shopId);
+    return await shopRef.get();
+}
+
+function getShopEmails(shopSnapshot) {
+    const emails = new Set();
+    for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
+        const mail = shopSnapshot.get(field)
+        if (mail != null && mail !== '') {
+            emails.add(mail);
         }
     }
-    return emails;
+    return Array.from(emails);
+}
+
+async function getCommunityEmailsForEvent(eventSnapshot) {
+    const emails = new Set();
+    const organizerEmail = eventSnapshot.get('organizer_email');
+    if (organizerEmail != null && organizerEmail !== '') {
+        emails.add(organizerEmail);
+    }
+    const communityId = eventSnapshot.get('community_id');
+    const membersRef = db.collection('communities').doc(communityId).collection('members');
+    const membersSnapshot = await membersRef.get()
+    membersSnapshot.forEach(doc => {
+        const userEmail = doc.get('user_email');
+        if (userEmail != null && userEmail !== '') {
+            emails.add(userEmail);
+        }
+    });
+    return Array.from(emails);
 }
 
 async function createOrdersForOrderDeadline(ordersRef) {
@@ -129,22 +159,15 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
     const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
     
     return {
+        ...eventData,
         date,
         delivery_date,
-        shop_name: eventData.shop_name,
-        event_name: eventData.event_name,
-        event_address: eventData.event_address,
         event_deadline_datetime,
         order_count,
         order_total_price,
         event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-        organizer_company: eventData.organizer_company,
-        organizer_fullname: eventData.organizer_fullname,
-        organizer_phone_personal: eventData.organizer_phone_personal,
-        organizer_phone_company: eventData.organizer_phone_company,
-        organizer_email: eventData.organizer_email,
-        organizer_memo: eventData.organizer_memo,
         orders,
+        order_url: getOrderUrl(eventSnapshot.id),
     };
 }
 
@@ -157,14 +180,14 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
         try {
             const event_deadline_datetime = eventSnapshot.get('event_deadline_datetime');
             const deadline = event_deadline_datetime?.toMillis() ?? 0;
-                            if (start < deadline && deadline <= end) {
-                const [to, dynamic_template_data] = await Promise.all([
-                    getShopEmails(eventSnapshot),
-                    createTemplateDataForOrderDeadline(eventSnapshot)
+            if (start < deadline && deadline <= end) {
+                const [dynamic_template_data, shopSnapShot] = await Promise.all([
+                    createTemplateDataForOrderDeadline(eventSnapshot),
+                    getShopForEvent(eventSnapshot),
                 ]);
                 dynamic_template_data.is_reminder = is_reminder;
                 promises.push(sgMail.send({
-                    to,
+                    to: getShopEmails(shopSnapShot),
                     from: DEFAULT_FROM,
                     cc: DEFAULT_CC,
                     templateId: ORDER_DEADLINE_TEMPLATE_ID,
@@ -176,6 +199,20 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
         }
     });
     return Promise.all(promises);
+}
+
+async function sendApplyingOrderMail(eventSnapshot) {
+    const [dynamic_template_data, shopSnapShot] = await Promise.all([
+        createTemplateDataForOrderDeadline(eventSnapshot),
+        getShopForEvent(eventSnapshot),
+    ]);
+    return sgMail.send({
+        to: getShopEmails(shopSnapShot),
+        from: DEFAULT_FROM,
+        cc: DEFAULT_CC,
+        templateId: APPLYING_ORDER_TEMPLATE_ID,
+        dynamic_template_data,
+    });
 }
 
 async function getUsersFromOrders(ordersRef) {
@@ -249,6 +286,22 @@ async function sendEventInformationMail() {
     }
     return Promise.all(promises);
 }
+
+async function sendEventStatusMail(templateId, eventSnapshot) {
+    const [templateData, shopSnapShot, to] = await Promise.all([
+        createTemplateDataForOrderDeadline(eventSnapshot),
+        getShopForEvent(eventSnapshot),
+        getCommunityEmailsForEvent(eventSnapshot),
+    ]);
+    const dynamic_template_data = {...templateData, ...shopSnapShot.data()}
+    return sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        cc: DEFAULT_CC,
+        templateId,
+        dynamic_template_data,
+    });
+}
  
 
 exports.polling = functions
@@ -275,3 +328,24 @@ exports.event_information = functions
         return sendEventInformationMail();
     })
     
+exports.on_event_changed = functions
+    .region('asia-northeast1')
+    .firestore
+    .document('communities/{communityId}/events/{eventId}')
+    .onUpdate(async (change) => {
+        const conditions = [
+            ['in_draft', 'applying_reservation', sendApplyingOrderMail],
+            ['in_draft', 'applying_reservation', sendEventStatusMail.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)], 
+            ['applying_reservation', 'in_draft', sendEventStatusMail.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
+            ['applying_reservation', 'accepting_order', sendEventStatusMail.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID)],
+        ]
+        const before = change.before;
+        const after = change.after;
+        const promises = [];
+        for (c of conditions) {
+            if (before.get('event_status') === c[0] && after.get('event_status') === c[1]) {
+                promises.push(c[2](after));
+            }
+        }
+        return Promise.all(promises);
+    });
