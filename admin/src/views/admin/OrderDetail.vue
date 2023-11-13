@@ -14,7 +14,7 @@
           inline
           icon="mdi-truck"
           class="px-5 py-3"
-          :title="$t(`event_status/${event.event_status}`)"
+          :title="$t((event.event_status) ? `event_status/${event.event_status.value}` : '')"
         >
           <div class="mt-5">
             <p>【イベントID】{{ event.event_id }}</p>
@@ -39,7 +39,7 @@
             <p>【メールアドレス】{{ event.organizer_email }}</p>
             <p>【配送メモ】{{ event.organizer_memo }}</p>
           </div>
-          <div v-if="event.event_status == 'applying_reservation'">
+          <div v-if="event.event_status != null && event.event_status.value == 'applying_reservation'">
             <validation-observer v-slot="{ handleSubmit }">
               <form @submit.prevent="handleSubmit(validateForm)">
                 <v-radio-group
