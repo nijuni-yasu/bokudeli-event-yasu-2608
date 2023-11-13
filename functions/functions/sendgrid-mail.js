@@ -262,7 +262,9 @@ async function sendEventInformationMail() {
                 event_deadline_datetime,
                 event_desc: eventData.event_desc,
                 event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-                organizer_company: eventData.organizer_company,
+                event_cover_url: eventData.event_cover_url,
+                shop_name: eventData.shop_name,
+                community_name: eventData.community_name,
             });
             if (dynamic_template_data.events.length === 5) {
                 break;
