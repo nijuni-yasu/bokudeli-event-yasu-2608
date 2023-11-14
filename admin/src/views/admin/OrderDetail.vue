@@ -148,6 +148,7 @@
 </template>
 
 <script>
+  import Vue from 'vue'
   import firebase from 'firebase/app'
   import 'firebase/firestore'
   import 'firebase/auth'
@@ -187,8 +188,36 @@
         this.event = event
       },
       validateForm () {
-        console.log(this.radio01)
-        console.log(this.text01)
+        const communityId = this.event.community_id
+        const eventId = this.event.event_id
+        const eventRef = db.collection('communities').doc(communityId).collection('events').doc(eventId)
+        const shopComment = (this.text01 === '') ? null : this.text01
+        let eventStatus = null
+        switch (this.radio01) {
+          case 0:
+            eventStatus = {
+              value: 'accepting_order',
+            }
+            break
+          case 1:
+            eventStatus = {
+              value: 'in_draft',
+            }
+            break
+          default:
+            break
+        }
+        if (eventStatus !== null) {
+          if (shopComment != null) {
+            eventStatus.shop_comment = shopComment
+          }
+          eventRef.update({
+            event_status: eventStatus,
+          })
+          Vue.set(this.event, 'event_status', eventStatus)
+        } else {
+          console.warn('radio01 is invalid')
+        }
       },
     },
   }
