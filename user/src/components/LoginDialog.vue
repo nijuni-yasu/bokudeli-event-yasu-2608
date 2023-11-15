@@ -55,7 +55,10 @@ const handleGoogleLogin = async () => {
     provider.addScope('profile')
     provider.addScope('openid')
 
-    await signInWithRedirect(getAuth(), provider)
+    // FIXME - ドメイン切り替えたらsignInWithRedirect を使う。現状はRedirectだとスマホでログインできなくなる
+    // await signInWithRedirect(getAuth(), provider)
+    await signInWithPopup(getAuth(), provider)
+
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
