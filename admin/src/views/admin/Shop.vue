@@ -293,6 +293,23 @@
                   />
                 </v-col>
               </v-row>
+              <v-row
+                align="center"
+                dense
+              >
+                <v-col
+                  class="text-right body-1 grey--text"
+                  cols="3"
+                >
+                  公開
+                </v-col>
+                <v-col
+                  cols="9"
+                  sm="8"
+                >
+                  <v-switch v-model="is_open" />
+                </v-col>
+              </v-row>
 
               <div class="pa-3 text-center">
                 <v-btn
@@ -1135,6 +1152,7 @@
       shop_margin_time_array: ['10', '15', '20', '30', '40', '50', '60'],
       // shop_order_method: ['現金'],
       shop_holidays: [],
+      is_open: false,
       menu: false,
       shopTimeCheck: true,
       shopRangeCheck: true,
@@ -1213,6 +1231,7 @@
           if (shopDoc.shop_email_sub3) {
             this.shop_email_sub3 = shopDoc.shop_email_sub3
           }
+          this.is_open = shopDoc.is_open ?? true
         } else {
           console.log('店舗情報未登録なのでshopIdをローカルで新規発行')
           shopId = firebase.firestore().collection('partners').doc(partnerId).collection('shops').doc().id
@@ -1285,6 +1304,7 @@
             shop_email_sub2: this.shop_email_sub2,
             shop_email_sub3: this.shop_email_sub3,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(), // 新規作成日時
+            is_open: this.is_open,
           }).then(function () {
             // 新規作成後にshopDocにデータを入れる。画像登録できるように
             db.collection('partners').doc(partnerId).collection('shops').doc(shopId).get().then((doc) => {
@@ -1324,6 +1344,7 @@
             shop_email_sub2: this.shop_email_sub2,
             shop_email_sub3: this.shop_email_sub3,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(), // 更新日時
+            is_open: this.is_open,
           }).then(function () {
             alert('店舗情報を更新しました')
           }).catch(function (error) {
