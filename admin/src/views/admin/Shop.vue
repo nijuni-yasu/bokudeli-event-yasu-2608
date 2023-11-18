@@ -293,24 +293,6 @@
                   />
                 </v-col>
               </v-row>
-              <v-row
-                align="center"
-                dense
-              >
-                <v-col
-                  class="text-right body-1 grey--text"
-                  cols="3"
-                >
-                  公開
-                </v-col>
-                <v-col
-                  cols="9"
-                  sm="8"
-                >
-                  <v-switch v-model="is_open" />
-                </v-col>
-              </v-row>
-
               <div class="pa-3 text-center">
                 <v-btn
                   color="success"
@@ -1044,6 +1026,66 @@
                 ※サブメールアドレスを設定すると注文メールが配信されるようになります。<br>
                 ※サブメールアドレスの入力ミスには十分ご注意ください。
               </v-card-text>
+              <div class="pa-3 text-center">
+                <v-btn
+                  color="success"
+                  default
+                  type="submit"
+                >
+                  保存する
+                </v-btn>
+              </div>
+            </base-material-card>
+          </form>
+        </validation-observer>
+      </v-col>
+
+      <v-col cols="12">
+        <validation-observer v-slot="{ handleSubmit }">
+          <form @submit.prevent="handleSubmit(validateForm)">
+            <base-material-card
+              color="success"
+              icon="mdi-storefront-outline"
+              title="開店設定"
+              class="py-3 px-5"
+            >
+              <v-row
+                align="center"
+                dense
+              >
+                <v-col
+                  class="text-right body-1 grey--text"
+                  cols="3"
+                >
+                  開店設定
+                </v-col>
+                <v-col
+                  cols="9"
+                  sm="8"
+                >
+                  <v-switch
+                    v-model="is_open"
+                    :label="`${is_open?'開店(OPEN)':'閉店(CLOSE)'}`"
+                  />
+                </v-col>
+              </v-row>
+              <v-row
+                justify="center"
+              >
+                <v-col
+                  cols="6"
+                >
+                  <v-card-text
+                    class="mb-3 mx-20 text-body-2 primary--text"
+                  >
+                    ※「開店」とすると、ユーザーからの予約や注文が可能になります。<br>
+                    ※「閉店」とすると、非公開となり、新規の予約は入りません。<br>
+                    ※ すべての設定が完了したら「開店」として「保存」してください。<br>
+                    ※ サポートチームが確認したのちに、店舗が公開されます。
+                  </v-card-text>
+                </v-col>
+              </v-row>
+
               <div class="pa-3 text-center">
                 <v-btn
                   color="success"
