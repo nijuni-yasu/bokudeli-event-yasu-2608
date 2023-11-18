@@ -345,7 +345,7 @@ exports.on_event_changed = functions
         const after = change.after;
         const promises = [];
         for (c of conditions) {
-            if (before.get('event_status') === c[0] && after.get('event_status') === c[1]) {
+            if (before.get('event_status')?.value === c[0] && after.get('event_status')?.value === c[1]) {
                 promises.push(c[2](after));
             }
         }

@@ -45,7 +45,7 @@
               <td>{{ event.event_address }}</td>
               <td>{{ event.orders.length }}</td>
               <td>¥{{ event.orders.totalPrice }}</td>
-              <td>{{ $t(`event_status/${event.event_status}`) }}</td>
+              <td>{{ $t((event.event_status) ? `event_status/${event.event_status.value}` : '') }}</td>
             </tr>
           </tbody>
         </v-simple-table>
@@ -77,7 +77,7 @@
             return a.event_start_datetime - b.event_start_datetime
           })
           .filter((event) => {
-            return event.status !== 'in_draft'
+            return event.event_status?.value !== 'in_draft'
           })
       },
     },

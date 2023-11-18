@@ -11,12 +11,16 @@ export class Event {
       get: () => {
         const now = new Date().getTime()
         if (this.event_start_datetime < now) {
-          return 'finished'
+          return { value: 'finished' }
         } else if (this.event_deadline_datetime < now) {
-          return 'order_closed'
+          return { value: 'order_closed' }
         } else {
-          return this.#eventRawStatus
+          // event_status が string だった仕様の時もあったので、その対応
+          return (typeof this.#eventRawStatus === 'string') ? { value: this.#eventRawStatus } : this.#eventRawStatus
         }
+      },
+      set: (value) => {
+        this.#eventRawStatus = value
       },
     })
   }
