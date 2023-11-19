@@ -304,7 +304,18 @@ async function sendEventStatusMail(templateId, eventSnapshot) {
         dynamic_template_data,
     });
 }
- 
+
+async function sendShop(shopSnapshot) {
+    const shopName = shopSnapshot.get('shop_name'); 
+    const subject =  `${shopName}の公開設定が変更されました`;
+    const text = `${shopName}${(shopSnapshot.get('is_open') ? 'が公開設定にしました' : 'が非公開設定にしました')}`
+    return sgMail.send({
+        to: DEFAULT_CC,
+        from: DEFAULT_FROM,
+        subject,
+        text,
+    });
+}
 
 exports.polling = functions
     .region('asia-northeast1')
@@ -348,6 +359,20 @@ exports.on_event_changed = functions
             if (before.get('event_status')?.value === c[0] && after.get('event_status')?.value === c[1]) {
                 promises.push(c[2](after));
             }
+        }
+        return Promise.all(promises);
+    });
+
+exports.on_shop_changed = functions
+    .region('asia-northeast1')
+    .firestore
+    .document('partners/{partnerId}/shops/{shopId}')
+    .onWrite(async (change) => {
+        const before = change.before;
+        const after = change.after;
+        const promises = [];
+        if (after.get('is_open') != null && before.get('is_open') !== after.get('is_open')) {
+            promises.push(sendShop(after));
         }
         return Promise.all(promises);
     });
