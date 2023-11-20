@@ -35,6 +35,7 @@ jobs:
         echo "$env_vars" > .env
     - name: Deploy to Firebase
       run: |
+        npm install
         npm run build-development
         npx firebase use bokudeli-event-test
         npx firebase deploy --only hosting:admin
