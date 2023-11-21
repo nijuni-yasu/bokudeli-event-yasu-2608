@@ -308,7 +308,7 @@ async function sendEventStatusMail(templateId, eventSnapshot) {
 async function sendShopOpenMail(shopSnapshot) {
     const shopName = shopSnapshot.get('shop_name'); 
     const isOpen = shopSnapshot.get('is_open') ? '開店（OPEN）' : '閉店（CLOSE）';
-    const subject =  `${shopName}の公開設定が変更されました`;
+    const subject =  `${shopName}の開店設定が変更されました`;
     // TODO これ以上複雑になるようなら、テンプレートを使う
     const text = `${shopName}の開店設定が『${isOpen}』になりました\n\n` +
         `【店舗名】${shopName}\n` +
