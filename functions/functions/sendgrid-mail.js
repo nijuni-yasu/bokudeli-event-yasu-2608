@@ -305,10 +305,16 @@ async function sendEventStatusMail(templateId, eventSnapshot) {
     });
 }
 
-async function sendShop(shopSnapshot) {
+async function sendShopOpenMail(shopSnapshot) {
     const shopName = shopSnapshot.get('shop_name'); 
+    const isOpen = shopSnapshot.get('is_open') ? '開店（OPEN）' : '閉店（CLOSE）';
     const subject =  `${shopName}の公開設定が変更されました`;
-    const text = `${shopName}${(shopSnapshot.get('is_open') ? 'が公開設定にしました' : 'が非公開設定にしました')}`
+    // TODO これ以上複雑になるようなら、テンプレートを使う
+    const text = `${shopName}の開店設定が『${isOpen}』になりました\n\n` +
+        `【店舗名】${shopName}\n` +
+        `【店舗住所】${shopSnapshot.get('shop_address')}\n` +
+        `【PartnerID】${shopSnapshot.get('partner_id')}\n` +
+        `【開店設定】${isOpen}`
     return sgMail.send({
         to: DEFAULT_CC,
         from: DEFAULT_FROM,
@@ -372,7 +378,7 @@ exports.on_shop_changed = functions
         const after = change.after;
         const promises = [];
         if (after.get('is_open') != null && before.get('is_open') !== after.get('is_open')) {
-            promises.push(sendShop(after));
+            promises.push(sendShopOpenMail(after));
         }
         return Promise.all(promises);
     });
