@@ -218,6 +218,10 @@
         } else {
           console.warn('radio01 is invalid')
         }
+        if (eventStatus.value === 'in_draft') {
+          alert('主催者に変更依頼を送信しました。')
+          this.$router.push({name: '注文一覧'})
+        }
       },
     },
   }
