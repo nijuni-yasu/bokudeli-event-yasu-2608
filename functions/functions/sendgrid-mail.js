@@ -76,7 +76,7 @@ function getEventUrl(communityAccount, eventId) {
 }
 
 function getOrderUrl(eventId) {
-    return `https://${process.env.EVENT_HOST}/order/${eventId}`;
+    return `https://${process.env.ADMIN_HOST}/order/${eventId}`;
 }
 
 async function getShopForEvent(eventSnapshot) {
