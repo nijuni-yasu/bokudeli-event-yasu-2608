@@ -47,25 +47,25 @@
                   column
                 >
                   <v-radio
-                    label="予約を受け付ける"
+                    label="予約内容を承認し、注文受付を開始する"
                     :value="0"
                   />
                   <v-radio
-                    label="予約内容の変更を依頼する"
+                    label="予約内容を否認し、予約内容の変更を依頼する"
                     :value="1"
                   />
                 </v-radio-group>
                 <v-text-field
                   v-model="text01"
                   outlined
-                  :placeholder="(radio01 === 0) ? 'ご予約ありがとうございます。' : 'この時間は予約がいっぱいのため、日程の変更をお願いできますでしょうか。'"
+                  :placeholder="(radio01 === 0) ? '例)ご予約ありがとうございます。' : '例)この時間は予約がいっぱいのため、日程の変更をお願いできますでしょうか。'"
                 />
                 <v-btn
                   color="success"
                   default
                   type="submit"
                 >
-                  主催者に送信する
+                  主催者にメールを送信する
                 </v-btn>
               </form>
             </validation-observer>
@@ -193,16 +193,19 @@
         const eventRef = db.collection('communities').doc(communityId).collection('events').doc(eventId)
         const shopComment = (this.text01 === '') ? null : this.text01
         let eventStatus = null
+        let confirmMessage = '' 
         switch (this.radio01) {
           case 0:
             eventStatus = {
               value: 'accepting_order',
             }
+            confirmMessage = '予約内容を承認し、注文受付を開始しますか？\n(主催者にメールが送信されます)'
             break
           case 1:
             eventStatus = {
               value: 'in_draft',
             }
+            confirmMessage = '予約内容を否認し、予約内容の変更を依頼しますか？\n(主催者にメールが送信されます)'
             break
           default:
             break
@@ -211,12 +214,26 @@
           if (shopComment != null) {
             eventStatus.shop_comment = shopComment
           }
-          eventRef.update({
-            event_status: eventStatus,
-          })
-          Vue.set(this.event, 'event_status', eventStatus)
         } else {
           console.warn('radio01 is invalid')
+        }
+        if (eventStatus.value === 'accepting_order') {
+          if (confirm(confirmMessage)) {
+            eventRef.update({
+              event_status: eventStatus,
+            })
+            Vue.set(this.event, 'event_status', eventStatus)
+            alert('主催者に予約内容を承諾を送信し、注文の受付を開始しました。')
+          }
+        } else if (eventStatus.value === 'in_draft') {
+          if (confirm(confirmMessage)) {
+            eventRef.update({
+              event_status: eventStatus,
+            })
+            Vue.set(this.event, 'event_status', eventStatus)
+            alert('主催者に変更依頼を送信しました。')
+            this.$router.push({name: '注文一覧'})
+          }
         }
       },
     },
