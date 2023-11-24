@@ -20,7 +20,6 @@ type Shop = {
   createdAt: Timestamp
   updatedAt: Timestamp
 
-  /*
   shop_genre: string
   shop_time: [
     {
@@ -33,7 +32,7 @@ type Shop = {
       time_end2: string
     }
   ]
-
+/*
   shop_holidays: any[]
 
   shop_phone: string
