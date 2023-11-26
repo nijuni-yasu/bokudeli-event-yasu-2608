@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "public": "dist",
+    "target": "admin",
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
