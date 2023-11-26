@@ -1,7 +1,7 @@
 {
   "hosting": {
     "public": "dist",
-    "target": "admin",
+    "target": "manager",
     "rewrites": [
       {
         "source": "**",

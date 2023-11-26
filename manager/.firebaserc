@@ -6,15 +6,15 @@
   "targets": {
     "bokudeli-event-dev": {
       "hosting": {
-        "admin": [
-          "bokudeli-event-dev-admin"
+        "manager": [
+          "bokudeli-event-dev-manager"
         ]
       }
     },
     "bokudeli-event-test": {
       "hosting": {
-        "admin": [
-          "bokudeli-event-test-admin"
+        "manager": [
+          "bokudeli-event-test-manager"
         ]
       }
     }
