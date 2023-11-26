@@ -6,7 +6,7 @@
   >
     <base-material-card
       inline
-      icon="mdi-clipboard-text"
+      icon="mdi-storefront-outline"
       title="店舗一覧"
       class="px-5 py-3"
     >
@@ -33,7 +33,7 @@
             <th class="primary--text px-1">
               電話番号
             </th>
-            <th class="primary--text px-1 table1">
+            <th class="primary--text px-1 table2">
               メールアドレス
             </th>
             <th class="primary--text px-1">
@@ -78,7 +78,7 @@
               {{ item.shop_address_longitude }}
             </td>
             <td class="px-1">{{ item.shop_phone }}</td>
-            <td class="px-1 table1">
+            <td class="px-1 table2">
               {{ item.shop_email }}<br>
               {{ item.shop_email_sub1 }}<br>
               {{ item.shop_email_sub2 }}<br>

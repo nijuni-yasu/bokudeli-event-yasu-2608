@@ -30,10 +30,10 @@
             <th class="primary--text px-1 table1">
               開催場所
             </th>
-            <th class="primary--text px-1">
+            <th class="primary--text px-1 table1">
               開催日時
             </th>
-            <th class="primary--text px-1">
+            <th class="primary--text px-1 table1">
               注文締切
             </th>
             <th class="primary--text px-1">
@@ -45,11 +45,11 @@
             <th class="primary--text px-1 table2">
               公開/限定公開
             </th>
-            <th class="primary--text px-1">
+            <th class="primary--text px-1 table1">
               会社名<br>
               担当者名
             </th>
-            <th class="primary--text px-1">
+            <th class="primary--text px-1 table1">
               電話番号(会社)<br>
               電話番号(個人)<br>
               email
@@ -83,19 +83,19 @@
               {{ event.event_postalcode }}<br>
               {{ event.event_address }}
             </td>
-            <td class="px-1">
+            <td class="px-1 table1">
               {{ millisToDateTimeString(event.event_start_datetime) }}<br>
               ~{{ millisToDateTimeString(event.event_end_datetime) }}
             </td>
-            <td class="px-1">{{ millisToDateTimeString(event.event_deadline_datetime) }}</td>
+            <td class="px-1 table1">{{ millisToDateTimeString(event.event_deadline_datetime) }}</td>
             <td class="px-1">{{ event.event_max_people }}</td>
             <td class="px-1">{{ event.event_payment }}</td>
             <td class="px-1 table2">{{ $t((event.is_public) ? '一般公開' : '限定公開') }}</td>
-            <td class="px-1">
+            <td class="px-1 table1">
                 {{ event.organizer_company }}<br>
                 {{ event.organizer_fullname }}
             </td>
-            <td class="px-1">
+            <td class="px-1 table1">
                 [会社]{{ event.organizer_phone_company }}<br>
                 [個人]{{ event.organizer_phone_personal }}<br>
                 [Email]{{ event.organizer_email }}
