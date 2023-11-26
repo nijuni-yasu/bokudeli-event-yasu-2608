@@ -22,8 +22,8 @@
     <v-list-item two-line>
       <v-list-item-content>
         <v-list-item-title class="text-uppercase font-weight-regular display-2">
-          <span class="logo-mini">🧢</span>
-          <span class="logo-normal">ぼくデリ</span>
+          <span class="logo-mini">🏢</span>
+          <span class="logo-normal">運営マネージャー</span>
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>

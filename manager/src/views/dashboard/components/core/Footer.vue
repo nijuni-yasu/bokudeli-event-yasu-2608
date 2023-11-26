@@ -48,26 +48,6 @@
     data: () => ({
       links: [
         {
-          href: 'https://bokudeli.jp/',
-          text: 'ぼくデリ（公式サイト）',
-        },
-        {
-          href: 'https://www.notion.so/6ebc3a56ad9f4ca795e7f16f1031033d',
-          text: '利用規約',
-        },
-        {
-          href: 'https://www.notion.so/809020481eb74ce4bc8f1b6286979e82',
-          text: 'プライバシーポリシー',
-        },
-        {
-          href: 'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing',
-          text: '店舗マニュアル',
-        },
-        {
-          href: 'https://lin.ee/7VwZjvC',
-          text: 'サポートLINE',
-        },
-        {
           href: 'http://nijuni.jp/',
           text: '運営会社',
         },

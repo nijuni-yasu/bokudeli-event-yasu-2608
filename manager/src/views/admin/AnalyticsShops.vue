@@ -166,7 +166,9 @@
       // サポートのメール以外でのログインは許可しない
       const loginEmail = firebase.auth().currentUser.email
       if(loginEmail !== 'support+admin@nijuni.jp'){
-        this.$router.push('/')
+        firebase.auth().signOut().then(() => {
+          this.$router.push('/pages/login')
+        })
       }
       const self = this
       db.collectionGroup('shops').get().then((snapshot) => {
