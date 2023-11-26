@@ -116,9 +116,8 @@ onMounted(async () => {
         </v-row>
       </v-card>
       <v-card-title class="my-5" style="font-size: 14px; white-space: pre-line">
-        キャンセルされる場合は運営までお問い合わせください。<br />
+        キャンセルされる場合はサポートまで<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>ください。<br />
         注文締切後のキャンセルはできませんのでご了承ください。<br />
-        連絡先：support@nijuni.jp
       </v-card-title>
     </v-col>
   </v-row>

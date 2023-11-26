@@ -52,11 +52,15 @@ const checkForm = () => {
         <div class="d-flex align-center justify-center w-100 mt-16 pt-10">
           <VImg max-width="400px" :src="yoroshiku" />
           <div width="400px" class="ma-3 text-h6">
-            こんにちは😊<br />
-            いつもぼくデリのご利用をありがうございます。<br />
-            『ぼくデリWEB版』は一般公開前のサービスです。<br />
-            友達に教えたりSNS投稿はまだしないでください。<br />
-            よろしくお願いします！<br />
+            <div class="ma-3 text-subtitle-1">
+              いつもぼくデリをご利用いただきありがとうございます🙇<br />
+            </div>
+            <div class="ma-3 text-subtitle-1">
+              ※『ぼくデリWEB版』は一般公開前のため、SNS投稿はお控えください。<br />
+              ※LINEやMessengerなどのアプリ内ブラウザは現在利用いただけません。<br />
+              ※ChromeやSafariなどのデフォルトブラウザをご利用ください。<br />
+              ※不明点やご意見ございましたら<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>いただきますようお願いします。<br />
+            </div>
           </div>
         </div>
       </VCol>

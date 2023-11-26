@@ -1,22 +1,11 @@
 <template>
-  <div class="h-100 d-flex align-center justify-space-between">
-    <!-- 👉 Footer: left content -->
+  <div class="h-100 d-flex justify-end">
     <span class="d-flex align-center">
       &copy;
       {{ new Date().getFullYear() }}
-      Made With
-      <VIcon icon="mdi-heart-outline" color="error" size="1.25rem" class="mx-1" />
-      By <a href="https://nijuni.jp/" target="_blank" rel="noopener noreferrer" class="text-primary ms-1">nijuni</a>
-    </span>
-    <!-- 👉 Footer: right content -->
-    <span class="d-md-flex gap-x-4 text-primary d-none">
-      <a href="https://themeselection.com/license/" target="noopener noreferrer">License</a>
-      <a href="https://themeselection.com/" target="noopener noreferrer">More Themes</a>
-      <a
-        href="https://demos.themeselection.com/materio-vuetify-vuejs-admin-template/documentation/"
-        target="noopener noreferrer"
-        >Documentation</a
-      >
+      nijuni inc.
+      <a href="https://nijuni.jp/" target="_blank" rel="noopener noreferrer" class="ma-2">運営会社</a>
+      <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="noopener noreferrer" class="ma-2">お問い合わせ</a>
     </span>
   </div>
 </template>
