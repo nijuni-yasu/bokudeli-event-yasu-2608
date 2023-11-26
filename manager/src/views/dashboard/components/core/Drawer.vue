@@ -91,12 +91,12 @@
         {
           icon: 'mdi-storefront-outline',
           title: '店舗一覧',
-          to: '/analyticsShops',
+          to: '/ShopList',
         },
         {
           icon: 'mdi-calendar',
           title: 'イベント一覧',
-          to: '/eventList',
+          to: '/EventList',
         },
       ],
     }),
