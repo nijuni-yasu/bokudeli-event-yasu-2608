@@ -55,7 +55,7 @@
       <v-divider class="mb-2" />
 
       <div class="username my-4 ml-4">
-        {{ shop_name }} <br>
+        運営アカウント<br>
         {{ shop_email }} <br>
       </div>
     </v-list>
@@ -82,7 +82,6 @@
       },
     },
     data: () => ({
-      shop_name: '−',
       shop_email: firebase.auth().currentUser.email,
       items: [
         {
@@ -129,19 +128,13 @@
       },
     },
     created () {
-      
-      db.collection('partners').doc(partnerId).collection('shops').get().then((snapshot) => {
-        snapshot.forEach((doc) => {
-          shopDoc = doc.data()
+      const loginEmail = firebase.auth().currentUser.email
+      if(loginEmail !== 'support+admin@nijuni.jp'){
+        firebase.auth().signOut().then(() => {
+          window.alert('不正なログインのためログアウトします')
+          this.$router.push('/pages/login')
         })
-        if (shopDoc) {
-          if (shopDoc.shop_name) {
-            this.shop_name = shopDoc.shop_name
-          }
-        } else {
-          console.log('店舗名なし')
-        }
-      })
+      }
     },
     methods: {
       clickLogOut: function () {

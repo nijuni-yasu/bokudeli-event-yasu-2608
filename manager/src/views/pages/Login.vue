@@ -16,7 +16,7 @@
           <template v-slot:heading>
             <div class="text-center">
               <h1 class="display-2 font-weight-bold my-1">
-                ぼくデリ 店舗管理画面
+                運営マネージャー
               </h1>
             </div>
           </template>
@@ -85,8 +85,15 @@
       logIn: function () {
         firebase.auth().signInWithEmailAndPassword(this.username, this.password).then(
           user => {
-            // alert('Success!')
-            this.$router.push('/')
+            const loginEmail = firebase.auth().currentUser.email
+            if(loginEmail !== 'support+admin@nijuni.jp'){
+              firebase.auth().signOut().then(() => {
+                window.alert('不正なログインです')
+                this.$router.push('/pages/login')
+              })
+            } else {
+              this.$router.push('/')
+            }
           },
           err => {
             console.log(err)
