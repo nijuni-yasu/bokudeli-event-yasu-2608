@@ -40,7 +40,6 @@
 
       <template v-for="(item, i) in items">
         <base-item
-          :key="`item-${i}`"
           :item="item"
         />
       </template>
@@ -94,21 +93,11 @@
           title: '店舗一覧',
           to: '/analyticsShops',
         },
-        // {
-        //   icon: 'mdi-food-fork-drink',
-        //   title: 'メニュー設定',
-        //   to: '/menu',
-        // },
-        // {
-        //   icon: 'mdi-bicycle',
-        //   title: '注文一覧',
-        //   to: '/order',
-        // },
-        // {
-        //   icon: 'mdi-lightbulb-on-outline',
-        //   title: '店舗マニュアル',
-        //   href: 'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing',
-        // },
+        {
+          icon: 'mdi-calendar',
+          title: 'イベント一覧',
+          to: '/eventList',
+        },
       ],
     }),
     computed: {
@@ -139,7 +128,6 @@
     methods: {
       clickLogOut: function () {
         firebase.auth().signOut().then(() => {
-          // alert('LogOut!')
           this.$router.push('/pages/login')
         })
       },
