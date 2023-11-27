@@ -32,6 +32,8 @@ type Shop = {
       time_end2: string
     }
   ]
+
+  is_approved: boolean
 /*
   shop_holidays: any[]
 
