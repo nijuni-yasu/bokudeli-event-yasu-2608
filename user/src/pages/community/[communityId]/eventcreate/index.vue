@@ -112,7 +112,7 @@ const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date, en
           (timeStart2 <= eventTimeStart && eventTimeStart <= timeEnd2)
       })
 
-      return isInRange && isInTime && shop.is_approved
+      return isInRange && isInTime && shop.is_approved && shop.is_open
     })
   state.shops = shops
   isLoadingShop.value = false

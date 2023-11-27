@@ -34,6 +34,7 @@ type Shop = {
   ]
 
   is_approved: boolean
+  is_open: boolean
 /*
   shop_holidays: any[]
 
