@@ -36,11 +36,10 @@ exports.stripe_webhook = functions.region('asia-northeast1').https.onRequest(asy
                 const orderSnapshot = await orderRef.get();
                 const orderDocument = orderSnapshot.docs[0];
                 const paymentIntent = event.data.object;
-                if (orderDocument && orderDocument.ref) {
-                    await orderDocument.ref.set({ status: 'ordered', updated_at, payment_intent: paymentIntent.payment_intent }, { merge: true });
-                } else {
-                    console.error('orderDocument or orderDocument.ref is undefined.');
+                if (orderDocument?.ref == null) {
+                    throw new Error('orderDocument or orderDocument.ref is undefined.');
                 }
+                await orderDocument.ref.set({ status: 'ordered', updated_at, payment_intent: paymentIntent.payment_intent }, { merge: true });
                 await addCommunityUser(paymentIntent.metadata.communityId, paymentIntent.metadata.userId);
                 return res.json({ paymentIntent });
             }
