@@ -20,7 +20,6 @@ type Shop = {
   createdAt: Timestamp
   updatedAt: Timestamp
 
-  /*
   shop_genre: string
   shop_time: [
     {
@@ -34,6 +33,9 @@ type Shop = {
     }
   ]
 
+  is_approved: boolean
+  is_open: boolean
+/*
   shop_holidays: any[]
 
   shop_phone: string

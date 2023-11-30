@@ -6,7 +6,7 @@ import EventDetail from '@/components/eventcreate/EventDetail.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
 import { collection, collectionGroup, getDocs, query, where, addDoc, setDoc, Timestamp } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { convertDocumentDataToCommunity, convertDocumentDataToMenu } from '@/schemes/converter'
+import { convertDocumentDataToCommunity, convertDocumentDataToMenu, convertDateToWeekTimestamp, convertShopTimeToWeekTimestamp } from '@/schemes/converter'
 import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
@@ -79,7 +79,7 @@ const fetchData = async () => {
   }
 }
 
-const fetchShops = async (eventLocation: LatLogLocation) => {
+const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date, endDateTime: Date) => {
   isLoadingShop.value = true
 
   const shopDb = collectionGroup(db, 'shops')
@@ -89,13 +89,30 @@ const fetchShops = async (eventLocation: LatLogLocation) => {
       return doc.data() as Shop
     })
     .filter((shop) => {
+      // check distance
       const shopLocation = {
         longitude: shop.shop_address_longitude,
         latitude: shop.shop_address_latitude,
       }
       const distance = calculateDistance(eventLocation, shopLocation)
       const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
-      return maxRange ? distance <= maxRange : false
+      const isInRange = maxRange ? distance <= maxRange : false
+
+      // check time
+      const eventTimeStart = convertDateToWeekTimestamp(startDateTime)
+      const isInTime = shop.shop_time.some((shopTime, dayOfWeek) => {
+        if (!shopTime.is_open) {
+          return false
+        }
+        const timeStart = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start)
+        const timeEnd = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end)
+        const timeStart2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start2)
+        const timeEnd2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end2)
+        return (timeStart <= eventTimeStart && eventTimeStart <= timeEnd) ||
+          (timeStart2 <= eventTimeStart && eventTimeStart <= timeEnd2)
+      })
+
+      return isInRange && isInTime && shop.is_approved && shop.is_open
     })
   state.shops = shops
   isLoadingShop.value = false
@@ -141,10 +158,16 @@ const submittedBasicInfo = async (info: BasicInfo) => {
   state.event.event_start_datetime = info.startDateTime ? Timestamp.fromDate(info.startDateTime) : null
   state.event.event_end_datetime = info.endDateTime ? Timestamp.fromDate(info.endDateTime) : null
 
-  if (info.location) {
-    await fetchShops(info.location)
-    if (!panel.value.find((v) => v === 'shop')) {
-      panel.value.push('shop')
+  // TODO validation で検索ボタンを無効化する
+  if (info.location && info.startDateTime != null && info.endDateTime != null) {
+    // Invalid Date を判定するために getTime() の NaN をチェックする
+    const startDateTime = info.startDateTime.getTime()
+    const endDateTime = info.endDateTime.getTime()
+    if (!Number.isNaN(startDateTime) && !Number.isNaN(endDateTime) && startDateTime < endDateTime) {
+      await fetchShops(info.location, info.startDateTime, info.endDateTime)
+      if (!panel.value.find((v) => v === 'shop')) {
+        panel.value.push('shop')
+      }
     }
   }
 }
