@@ -79,7 +79,7 @@ const fetchData = async () => {
   }
 }
 
-const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date, endDateTime: Date) => {
+const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date) => {
   isLoadingShop.value = true
 
   const shopDb = collectionGroup(db, 'shops')
@@ -164,7 +164,7 @@ const submittedBasicInfo = async (info: BasicInfo) => {
     const startDateTime = info.startDateTime.getTime()
     const endDateTime = info.endDateTime.getTime()
     if (!Number.isNaN(startDateTime) && !Number.isNaN(endDateTime) && startDateTime < endDateTime) {
-      await fetchShops(info.location, info.startDateTime, info.endDateTime)
+      await fetchShops(info.location, info.startDateTime)
       if (!panel.value.find((v) => v === 'shop')) {
         panel.value.push('shop')
       }
