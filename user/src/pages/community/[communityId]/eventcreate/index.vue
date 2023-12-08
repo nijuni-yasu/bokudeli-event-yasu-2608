@@ -19,8 +19,6 @@ import { maxBy } from 'lodash'
 
 const router = useRouter()
 
-type panelType = 'address' | 'shop' | 'menu' | 'info' | 'shopNotice'
-
 const props = defineProps<{
   communityId: string
 }>()
@@ -32,7 +30,7 @@ const state = reactive({
   coverImage: null as File | null,
 })
 
-const panel = ref(['address'] as panelType[])
+const stepper = ref(1)
 
 const basicInfo = reactive<BasicInfo>({
   title: '',
@@ -149,27 +147,30 @@ onMounted(async () => {
   await fetchData()
 })
 
-const submittedBasicInfo = async (info: BasicInfo) => {
-  state.event.event_name = info.title
-  state.event.event_postalcode = info.postalcode
-  state.event.event_address = info.address
-  state.event.event_place = info.placeName
-  state.event.event_place_url = info.placeUrl
-  state.event.event_start_datetime = info.startDateTime ? Timestamp.fromDate(info.startDateTime) : null
-  state.event.event_end_datetime = info.endDateTime ? Timestamp.fromDate(info.endDateTime) : null
-
-  // TODO validation で検索ボタンを無効化する
-  if (info.location && info.startDateTime != null && info.endDateTime != null) {
+const basicInfoValidation = computed(() => {
+  if (basicInfo.location && basicInfo.startDateTime != null && basicInfo.endDateTime != null) {
     // Invalid Date を判定するために getTime() の NaN をチェックする
-    const startDateTime = info.startDateTime.getTime()
-    const endDateTime = info.endDateTime.getTime()
+    const startDateTime = basicInfo.startDateTime.getTime()
+    const endDateTime = basicInfo.endDateTime.getTime()
     if (!Number.isNaN(startDateTime) && !Number.isNaN(endDateTime) && startDateTime < endDateTime) {
-      await fetchShops(info.location, info.startDateTime)
-      if (!panel.value.find((v) => v === 'shop')) {
-        panel.value.push('shop')
-      }
+      return true;
     }
   }
+  return false;
+})
+
+const submittedBasicInfo = async () => {
+  state.event.event_name = basicInfo.title
+  state.event.event_postalcode = basicInfo.postalcode
+  state.event.event_address = basicInfo.address
+  state.event.event_place = basicInfo.placeName
+  state.event.event_place_url = basicInfo.placeUrl
+  state.event.event_start_datetime = basicInfo.startDateTime ? Timestamp.fromDate(basicInfo.startDateTime) : null
+  state.event.event_end_datetime = basicInfo.endDateTime ? Timestamp.fromDate(basicInfo.endDateTime) : null
+
+  await fetchShops(basicInfo.location as LatLogLocation, basicInfo.startDateTime as Date)
+  // NEXT ボタンを使用する場合はいらない
+  // stepper.value++
 }
 
 const submittedShop = async (shop: Shop) => {
@@ -178,15 +179,11 @@ const submittedShop = async (shop: Shop) => {
   state.event.shop_name = shop.shop_name
 
   await fetchMenu()
-  if (!panel.value.find((v) => v === 'menu')) {
-    panel.value.push('menu')
-  }
+  stepper.value++
 }
 
 const submittedMenu = () => {
-  if (!panel.value.find((v) => v === 'info')) {
-    panel.value.push('info')
-  }
+  stepper.value++
 }
 
 const submittedDetail = (detail: EventDetailData) => {
@@ -200,9 +197,7 @@ const submittedDetail = (detail: EventDetailData) => {
   state.event.event_payment = detail.eventPayment
   state.coverImage = detail.eventCoverImage
 
-  if (!panel.value.find((v) => v === 'shopNotice')) {
-    panel.value.push('shopNotice')
-  }
+  stepper.value++
 }
 
 const submitShopNotice = async (shopNotice: ShopNotice) => {
@@ -239,43 +234,57 @@ const submit = async () => {
     router.push(getEventPath(eventItem.community_account, addedDoc.id))
   }
 }
+
+const stepperItems = computed(() => [
+  {
+    title: '基本情報',
+    disabled: basicInfoValidation.value ? 'prev' : true,
+    next: submittedBasicInfo,
+  },
+  {
+    title: 'お店',
+    disabled: 'next'
+  },
+  {
+    title: 'メニュー',
+    disabled: 'next'
+  },
+  {
+    title: 'イベント詳細',
+    disabled: 'next'
+  },
+  {
+    title: '店舗への連絡事項',
+    disabled: 'next'
+  },
+])
 </script>
 
 <template>
-  <v-card>
-    <v-expansion-panels v-model="panel" multiple>
-      <v-expansion-panel value="address">
-        <v-expansion-panel-title>基本情報</v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <event-basic-info v-model="basicInfo" @submit="submittedBasicInfo" />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel value="shop">
-        <v-expansion-panel-title>お店</v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel value="menu">
-        <v-expansion-panel-title>メニュー</v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel value="info">
-        <v-expansion-panel-title>イベント詳細</v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <event-detail v-model="eventDetailData" @submit="submittedDetail" />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel value="shopNotice">
-        <v-expansion-panel-title>店舗への連絡事項</v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-    </v-expansion-panels>
-  </v-card>
+  <v-stepper v-model="stepper" :items="stepperItems">
+    <template #[`item.1`]>
+        <event-basic-info v-model="basicInfo" />
+    </template>  
+    <template #[`item.2`]>
+        <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" />
+    </template>
+    <template #[`item.3`]>
+        <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" />
+    </template>
+    <template #[`item.4`]>
+        <event-detail v-model="eventDetailData" @submit="submittedDetail" />
+    </template>
+    <template #[`item.5`]>
+        <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" />
+    </template>
+    <template #actions="{ prev, next }">
+      <v-stepper-actions
+        color="primary"
+        :disabled="stepperItems[stepper - 1].disabled"
+        @click:prev="prev"
+        @click:next="stepperItems[stepper - 1].next?.()?.then(next)" />
+    </template>
+  </v-stepper>
 </template>
 
 <style lang="scss" scoped></style>

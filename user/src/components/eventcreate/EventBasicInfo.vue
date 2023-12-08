@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import cloneDeep from 'lodash/cloneDeep'
 import {
   BasicInfo,
   hourList,
@@ -9,7 +8,6 @@ import {
   minutesString,
   parseDateTimeStrings,
 } from '@/schemes/eventCreate'
-import { clone } from 'lodash'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
 import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
@@ -24,44 +22,31 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: BasicInfo): void
-  (e: 'submit', value: BasicInfo): void
 }>()
 
-const state = reactive(cloneDeep(props.modelValue))
+const state = reactive(props.modelValue)
+const eventStartDate = ref(dateString(props.modelValue.startDateTime))
+const eventStartHour = ref(hourString(props.modelValue.startDateTime))
+const eventStartMinute = ref(minutesString(props.modelValue.startDateTime))
+const eventEndDate = ref(dateString(props.modelValue.endDateTime))
+const eventEndHour = ref(hourString(props.modelValue.endDateTime))
+const eventEndMinute = ref(minutesString(props.modelValue.endDateTime))
 
-const title = ref(clone(state.title))
-const postalcode = ref(clone(state.postalcode))
-const address = ref(clone(state.address))
-const placeName = ref(clone(state.placeName))
-const placeUrl = ref(clone(state.placeUrl))
-const eventStartDate = ref(dateString(state.startDateTime))
-const eventStartHour = ref(hourString(state.startDateTime))
-const eventStartMinute = ref(minutesString(state.startDateTime))
-const eventEndDate = ref(dateString(state.endDateTime))
-const eventEndHour = ref(hourString(state.endDateTime))
-const eventEndMinute = ref(minutesString(state.endDateTime))
-const eventLocation = ref(clone(state.location))
+watch(state, () => emit('update:modelValue', state))
+
+watchEffect(() => {
+  state.startDateTime = eventStartDate.value == null || eventStartHour.value == null || eventStartMinute.value == null
+    ? null
+    : parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value)
+  state.endDateTime = eventEndDate.value == null || eventEndHour.value == null || eventEndMinute.value == null
+    ? null
+    : parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value)
+})
 
 const changePostalcode = async () => {
-  console.log(postalcode.value)
-  const location = await fetchLocationByPostalcode(postalcode.value)
-  eventLocation.value = location
-  address.value = location.address
-}
-
-const submitSearch = () => {
-  const startDate = parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value)
-  const endDate = parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value)
-  state.title = title.value
-  state.postalcode = postalcode.value
-  state.address = address.value
-  state.placeName = placeName.value
-  state.placeUrl = placeUrl.value
-  state.startDateTime = startDate
-  state.endDateTime = endDate
-  state.location = eventLocation.value
-  emit('update:modelValue', state)
-  emit('submit', state)
+  const location = await fetchLocationByPostalcode(state.postalcode)
+  state.location = location
+  state.address = location.address ?? ''
 }
 </script>
 <template>
@@ -77,7 +62,7 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="title" outlined dense label="イベントタイトル" />
+                <v-text-field v-model="state.title" outlined dense label="イベントタイトル" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -91,7 +76,7 @@ const submitSearch = () => {
             <v-row>
               <v-col cols="3">
                 <v-text-field
-                  v-model="postalcode"
+                  v-model.lazy="state.postalcode"
                   outlined
                   dense
                   label="お届け先 郵便番号"
@@ -99,7 +84,7 @@ const submitSearch = () => {
                 />
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="address" outlined dense label="会場住所" />
+                <v-text-field v-model="state.address" outlined dense label="会場住所" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -107,10 +92,10 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="6">
-                <v-text-field v-model="placeName" outlined dense label="会場名" />
+                <v-text-field v-model="state.placeName" outlined dense label="会場名" />
               </v-col>
               <v-col cols="6">
-                <v-text-field v-model="placeUrl" outlined dense label="会場URL" />
+                <v-text-field v-model="state.placeUrl" outlined dense label="会場URL" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -158,10 +143,6 @@ const submitSearch = () => {
                 <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
-          </v-card-text>
-
-          <v-card-text>
-            <v-btn color="primary" class="me-3 mt-3" @click="submitSearch"> 検索する </v-btn>
           </v-card-text>
         </v-form>
       </v-card>
