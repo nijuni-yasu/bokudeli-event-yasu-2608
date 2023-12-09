@@ -75,8 +75,8 @@ onMounted(async () => {
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 pb-3">{{ state.community.communityName }}</v-card-title>
-              <v-card-text class="text-left pb-8">{{ state.community.communityDescription }}</v-card-text>
+              <v-card-title class="justify-center text-h4 pb-6">{{ state.community.communityName }}</v-card-title>
+              <v-card-text class="text-left text-subtitle-1 pb-6">{{ state.community.communityDescription }}</v-card-text>
             </v-col>
           </v-row>
         </v-card>
@@ -128,9 +128,6 @@ onMounted(async () => {
                   <v-card-title class="justify-center text-h5 pb-3 pre-line">
                     {{ event.event_name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-8">
-                    {{ event.event_desc }}
-                  </v-card-text>
                   <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community_name }} </v-card-text>
                   <v-card-text class="text-left pb-2">
                     【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
@@ -140,7 +137,7 @@ onMounted(async () => {
                   </v-card-text>
                   <v-card-text class="text-left pb-2"> 【開催場所】{{ event.event_address }} </v-card-text>
                   <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
-                  <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} </v-card-text>
+                  <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 </v-card>
               </v-col>
             </v-row>
