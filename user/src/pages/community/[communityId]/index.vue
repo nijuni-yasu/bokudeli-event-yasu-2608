@@ -96,11 +96,12 @@ onMounted(async () => {
                   {{ link }}
                 </a>
               </v-card-text>
+              <!-- TODO。問い合わせ機能を実装する。専用のフォームを作ってつくってコミュマネのメールアドレスに送信する。
               <v-card-text>
-                <a href="https://akiba.dmm.com/form/contact" class="text-decoration-none" target="_blank">
+                <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" class="text-decoration-none" target="_blank">
                   問い合わせ
                 </a>
-              </v-card-text>
+              </v-card-text> -->
 
               <!-- community member -->
               <v-card-title class="justify-center text-h6">MEMBER</v-card-title>
