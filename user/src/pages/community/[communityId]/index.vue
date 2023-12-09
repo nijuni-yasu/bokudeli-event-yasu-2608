@@ -4,6 +4,7 @@ import { db } from '@/firebase'
 import { collection, collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 
 import { getEventPath } from '@/router/utils'
+import { getEventCreatePath } from '@/router/utils'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
@@ -139,6 +140,20 @@ onMounted(async () => {
                   <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
                   <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 </v-card>
+              </v-col>
+            </v-row>
+            <v-row class="justify-center">
+              <v-col class="text-center">
+                <v-btn
+                  class="mx-2 my-10 text-lg-h5"
+                  color="primary"
+                  size="x-large"
+                  rounded
+                  width="85%"
+                  :to="getEventCreatePath(state.community.communityAccount)"
+                >
+                  イベントページを新規作成する
+                </v-btn>
               </v-col>
             </v-row>
           </v-col>
