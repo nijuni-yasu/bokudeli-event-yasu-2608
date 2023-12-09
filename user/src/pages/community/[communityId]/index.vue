@@ -9,6 +9,7 @@ import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
+import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 
@@ -19,6 +20,7 @@ const props = defineProps<{
 const state = reactive({
   community: {} as BokudeliCommunity,
   members: [] as FirestoredUser[],
+  managers: [] as FirestoredUser[],
   links: [] as string[],
   events: [] as BokudeliEvent[],
   isLoading: true,
@@ -54,6 +56,7 @@ onMounted(async () => {
     state.links = links
 
     state.members = await loadCommunityMembers(communitySnapshot.ref)
+    state.managers = await loadCommunityManagers(communitySnapshot.ref)
   }
 
   const eventSnapshot = await getDocs(eventDb)
@@ -89,8 +92,8 @@ onMounted(async () => {
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
               <v-img style="border-radius: 10px" aspect-ratio="1" :src="state.community.communityIconImageUrl" />
-              <v-card-title class="justify-center text-h6 pa-5 pre-line"
-                >{{ state.community.communityName }}
+              <v-card-title class="justify-center text-h5 py-5 pre-line">
+                {{ state.community.communityName }}
               </v-card-title>
               <v-card-text v-for="link in state.links" :key="link" class="text-left pb-3">
                 <a v-if="link" :href="link" class="text-decoration-none" target="_blank">
@@ -103,9 +106,23 @@ onMounted(async () => {
                   問い合わせ
                 </a>
               </v-card-text> -->
+              <!-- community manager -->
+              <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">MANAGER</v-card-title>
+              <div v-for="manager in state.managers" :key="manager.user_id">
+                <router-link :to="`/users/${manager.user_id}`">
+                  <v-row>
+                    <div class="d-flex flex-row px-6 py-2">
+                      <v-avatar size="40px">
+                        <v-img v-if="manager.user_image_url" :src="manager.user_image_url" cover/>
+                      </v-avatar>
+                      <div class="ma-2 text-subtitle-1">{{ manager.user_name }}</div>
+                    </div>
+                  </v-row>
+                </router-link>
+              </div>
 
               <!-- community member -->
-              <v-card-title class="justify-center text-h6">MEMBER</v-card-title>
+              <v-card-title class="justify-center text-h6 mt-7">MEMBER</v-card-title>
               <div v-for="member in state.members" :key="member.user_id">
                 <router-link :to="`/users/${member.user_id}`">
                   <v-row>
