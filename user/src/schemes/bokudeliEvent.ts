@@ -8,7 +8,10 @@ export const eventPaymentItems = eventPaymentTypes.map((type, i) => {
   return { title: eventPaymentLabels[i], value: type }
 })
 
-export type EventStatusType = 'in_draft' | 'applying_reservation' | 'accepting_order'
+export type EventStatusType = {
+  value: 'in_draft' | 'applying_reservation' | 'accepting_order'
+  shop_comment: string
+}
 
 type BokudeliEvent = {
   community_id: string
@@ -74,7 +77,7 @@ export const createEmptyEvent = (): BokudeliEvent => ({
   event_place: '',
   event_place_url: '',
   event_postalcode: '',
-  event_status: 'accepting_order',
+  event_status: { value: 'accepting_order', shop_comment:'-' }
 })
 
 export default BokudeliEvent

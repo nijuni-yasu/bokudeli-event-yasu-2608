@@ -3,5 +3,10 @@
     "user_advance": "参加者 事前決済 💳",
     "user_on_day": "参加者 当日払い 💸",
     "community_bill": "主催者支払い 💰"
+  },
+  "event_status": {
+    "in_draft": "下書き",
+    "applying_reservation": "予約申請中",
+    "accepting_order": "注文受付中"
   }
 }

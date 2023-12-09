@@ -147,6 +147,9 @@ onMounted(async () => {
               <v-col v-for="event in state.events" :key="event.event_id" md="6" sm="6" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
                   <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
+                  <v-chip class="ma-2" color="primary" elevated flat>
+                    {{ $t(`event_status.${event.event_status.value}`) }}
+                  </v-chip>
                   <v-card-title class="justify-center text-h5 pb-3 pre-line">
                     {{ event.event_name }}
                   </v-card-title>
@@ -161,6 +164,21 @@ onMounted(async () => {
                   <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
                   <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 </v-card>
+                <v-row
+                  v-if="event.event_status.value===`in_draft`&&state.isManager"
+                  class="justify-end my-2 mr-1"
+                >
+                  <v-btn
+                    color="black"
+                    rounded
+                    :to="getEventCreatePath(state.community.communityAccount)"
+                  >
+                  <v-icon>
+                    mdi-pencil
+                  </v-icon>
+                    イベント編集
+                  </v-btn>
+                </v-row>
               </v-col>
             </v-row>
             <v-row v-if="state.isManager" class="justify-center">
@@ -173,7 +191,10 @@ onMounted(async () => {
                   width="85%"
                   :to="getEventCreatePath(state.community.communityAccount)"
                 >
-                  イベントページを新規作成する
+                  <v-icon>
+                    mdi-pencil
+                  </v-icon>
+                  イベントを新規作成する
                 </v-btn>
               </v-col>
             </v-row>
