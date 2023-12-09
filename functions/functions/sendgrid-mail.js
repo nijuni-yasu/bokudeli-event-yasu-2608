@@ -13,6 +13,8 @@ const APPLYING_ORDER_TEMPLATE_ID = 'd-a0eeb84707604e658dc4aabb38f1b92d';
 const DELIVERY_DURATION = 30; // minutes
 
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
+// 環境変数の方がよいかもしれない
+const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345;
 
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7';
 const EVENT_STATUS_IN_DRAFT_ID = 'd-db07a084839741ada6e3ff0f44ac3b41';
@@ -282,6 +284,9 @@ async function sendEventInformationMail() {
             from: DEFAULT_FROM,
             templateId: EVENT_INFORMATION_TEMPLATE_ID,
             dynamic_template_data,
+            asm: {
+                groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
+            }
         }).catch(err => {
             console.warn(err);
         }));
