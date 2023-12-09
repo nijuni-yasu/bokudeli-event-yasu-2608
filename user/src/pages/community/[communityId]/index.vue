@@ -10,6 +10,7 @@ import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/sc
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
+import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 
@@ -24,6 +25,7 @@ const state = reactive({
   links: [] as string[],
   events: [] as BokudeliEvent[],
   isLoading: true,
+  isManager: false,
 })
 
 const router = useRouter()
@@ -57,6 +59,8 @@ onMounted(async () => {
 
     state.members = await loadCommunityMembers(communitySnapshot.ref)
     state.managers = await loadCommunityManagers(communitySnapshot.ref)
+    // ログインしてるユーザーがコミュニティマネージャーかどうかチェック
+    state.isManager = await checkCommunityManager(communitySnapshot.ref)
   }
 
   const eventSnapshot = await getDocs(eventDb)
@@ -159,7 +163,7 @@ onMounted(async () => {
                 </v-card>
               </v-col>
             </v-row>
-            <v-row class="justify-center">
+            <v-row v-if="state.isManager" class="justify-center">
               <v-col class="text-center">
                 <v-btn
                   class="mx-2 my-10 text-lg-h5"
