@@ -82,16 +82,6 @@ const back = () => {
   emit('back')
 }
 
-const resetForm = () => {
-  eventCoverUrl.value = clone(state.eventCoverUrl)
-  eventDesc.value = clone(state.eventDesc)
-  eventDeadlineDate.value = dateString(state.eventDeadlineDateTime)
-  eventDeadlineHour.value = hourString(state.eventDeadlineDateTime)
-  eventDeadlineMinute.value = minutesString(state.eventDeadlineDateTime)
-  eventMaxPeople.value = clone(state.eventMaxPeople)
-  isPublic.value = clone(state.isPublic)
-  eventPayment.value = clone(state.eventPayment)
-}
 </script>
 
 <template>
@@ -176,7 +166,6 @@ const resetForm = () => {
           <v-card-text class="text-center mt-10">
             <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
             <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="submit">次へ</v-btn>
-            <v-btn outlined class="mt-3" color="secondary" type="reset" @click="resetForm">リセット</v-btn>
           </v-card-text>
         </v-form>
       </v-card>

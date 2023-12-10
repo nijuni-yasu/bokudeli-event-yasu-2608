@@ -24,6 +24,7 @@ const back = () => {
   emit('back')
 }
 
+// TODO:「この画面の値リセットでなくイベント作成全ての値をリセットする。リセットしますか？のアラートつき」の仕様にする。
 const resetForm = () => {
   const prevState = cloneDeep(props.modelValue)
   state.organizerFullName = prevState.organizerFullName
