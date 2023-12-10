@@ -147,6 +147,7 @@ onMounted(async () => {
   await fetchData()
 })
 
+// TODO:このバリデーションの関数、効いていないので後で対応
 const basicInfoValidation = computed(() => {
   if (basicInfo.location && basicInfo.startDateTime != null && basicInfo.endDateTime != null) {
     // Invalid Date を判定するために getTime() の NaN をチェックする
@@ -170,7 +171,7 @@ const submittedBasicInfo = async () => {
 
   await fetchShops(basicInfo.location as LatLogLocation, basicInfo.startDateTime as Date)
   // NEXT ボタンを使用する場合はいらない
-  // stepper.value++
+  stepper.value++
 }
 
 const submittedShop = async (shop: Shop) => {
@@ -235,54 +236,45 @@ const submit = async () => {
   }
 }
 
+const backStepper = () => {
+  stepper.value--
+}
+
 const stepperItems = computed(() => [
   {
     title: '基本情報',
-    disabled: basicInfoValidation.value ? 'prev' : true,
-    next: submittedBasicInfo,
   },
   {
     title: 'お店',
-    disabled: 'next'
   },
   {
     title: 'メニュー',
-    disabled: 'next'
   },
   {
     title: 'イベント詳細',
-    disabled: 'next'
   },
   {
     title: '店舗への連絡事項',
-    disabled: 'next'
   },
 ])
 </script>
 
 <template>
-  <v-stepper v-model="stepper" :items="stepperItems">
+  <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
-        <event-basic-info v-model="basicInfo" />
+        <event-basic-info v-model="basicInfo" @submit="submittedBasicInfo"/>
     </template>  
     <template #[`item.2`]>
-        <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" />
+        <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" @back="backStepper"/>
     </template>
     <template #[`item.3`]>
-        <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" />
+        <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" @back="backStepper"/>
     </template>
     <template #[`item.4`]>
-        <event-detail v-model="eventDetailData" @submit="submittedDetail" />
+        <event-detail v-model="eventDetailData" @submit="submittedDetail" @back="backStepper"/>
     </template>
     <template #[`item.5`]>
-        <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" />
-    </template>
-    <template #actions="{ prev, next }">
-      <v-stepper-actions
-        color="primary"
-        :disabled="stepperItems[stepper - 1].disabled"
-        @click:prev="prev"
-        @click:next="stepperItems[stepper - 1].next?.()?.then(next)" />
+        <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" @back="backStepper"/>
     </template>
   </v-stepper>
 </template>

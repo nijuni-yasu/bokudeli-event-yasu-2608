@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'submit', value: Shop): void
+  (e: 'back'): void
 }>()
 
 const displayShops = computed(() => {
@@ -19,6 +20,9 @@ const displayShops = computed(() => {
 
 const submit = (shop: Shop) => {
   emit('submit', shop)
+}
+const back = () => {
+  emit('back')
 }
 </script>
 
@@ -48,7 +52,9 @@ const submit = (shop: Shop) => {
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
-                  <v-btn color="primary" class="ma-5" @click="submit(item)"> このお店にする </v-btn>
+                  <v-btn color="primary" class="ma-5" size="large" append-icon="mdi-chevron-right" @click="submit(item)">
+                    このお店にする
+                  </v-btn>
                 </v-card>
               </v-col>
 
@@ -57,6 +63,9 @@ const submit = (shop: Shop) => {
                 <h4 class="mt-4">お店が見つかりませんでした</h4>
               </v-col>
             </v-row>
+            <v-card-text class="text-center mt-10">
+              <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
+            </v-card-text>
           </v-form>
         </v-card>
       </v-col>

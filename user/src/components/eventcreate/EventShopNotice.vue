@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'submit', value: ShopNotice): void
+  (e: 'back'): void
 }>()
 
 const state = reactive(cloneDeep(props.modelValue))
@@ -18,6 +19,9 @@ const message = ref('')
 const submit = () => {
   state.organizerMemo = [pickUpPlace.value, message.value].join('\n')
   emit('submit', state)
+}
+const back = () => {
+  emit('back')
 }
 
 const resetForm = () => {
@@ -88,10 +92,11 @@ const resetForm = () => {
             </v-row>
           </v-card-text>
 
-          <v-card-text>
-            <v-btn color="primary" class="me-3 mt-3" @click="submit">上記内容で店舗に予約申請する</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" type="save">下書き保存</v-btn>
-            <v-btn outlined class="mt-3" color="secondary" type="reset" @click="resetForm">リセット</v-btn>
+          <v-card-text class="text-center mt-10">
+            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" @click="submit">上記内容で店舗に予約申請する</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" variant="outlined" type="save">下書き保存</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" variant="outlined" type="reset" @click="resetForm">リセット</v-btn>
           </v-card-text>
         </v-form>
       </v-card>

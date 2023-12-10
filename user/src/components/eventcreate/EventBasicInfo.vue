@@ -22,7 +22,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: BasicInfo): void
+  (e: 'submit'): void
 }>()
+
+const submit = () => {
+  emit('submit')
+}
 
 const state = reactive(props.modelValue)
 const eventStartDate = ref(dateString(props.modelValue.startDateTime))
@@ -143,6 +148,9 @@ const changePostalcode = async () => {
                 <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
+          </v-card-text>
+          <v-card-text class="text-center mt-10">
+            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="submit">次へ</v-btn>
           </v-card-text>
         </v-form>
       </v-card>

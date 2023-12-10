@@ -24,6 +24,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: EventDetailData): void
   (e: 'submit', value: EventDetailData): void
+  (e: 'back'): void
 }>()
 
 const state = reactive(cloneDeep(props.modelValue))
@@ -75,6 +76,10 @@ const submit = () => {
 
   emit('update:modelValue', state)
   emit('submit', state)
+}
+
+const back = () => {
+  emit('back')
 }
 
 const resetForm = () => {
@@ -168,8 +173,9 @@ const resetForm = () => {
               </v-select>
             </v-col>
           </v-card-text>
-          <v-card-text>
-            <v-btn color="primary" class="me-3 mt-3" @click="submit">次へ</v-btn>
+          <v-card-text class="text-center mt-10">
+            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="submit">次へ</v-btn>
             <v-btn outlined class="mt-3" color="secondary" type="reset" @click="resetForm">リセット</v-btn>
           </v-card-text>
         </v-form>
