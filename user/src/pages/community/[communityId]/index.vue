@@ -2,17 +2,14 @@
 import { useRouter } from 'vue-router'
 import { db } from '@/firebase'
 import { collection, collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
-
-import { getEventPath } from '@/router/utils'
-import { getEventCreatePath } from '@/router/utils'
+import { getEventPath, getEventCreatePath } from '@/router/utils'
+import { dateWithDayOfWeekString, dateOnlyTimeString ,convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import { FirestoredUser } from '@/schemes/storedUser'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 
 const props = defineProps<{
   communityId: string
@@ -25,7 +22,7 @@ const state = reactive({
   links: [] as string[],
   events: [] as BokudeliEvent[],
   isLoading: true,
-  isManager: false,
+  isCommunityManager: false,
 })
 
 const router = useRouter()
@@ -60,7 +57,7 @@ onMounted(async () => {
     state.members = await loadCommunityMembers(communitySnapshot.ref)
     state.managers = await loadCommunityManagers(communitySnapshot.ref)
     // ログインしてるユーザーがコミュニティマネージャーかどうかチェック
-    state.isManager = await checkCommunityManager(communitySnapshot.ref)
+    state.isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
   }
 
   const eventSnapshot = await getDocs(eventDb)
@@ -165,7 +162,7 @@ onMounted(async () => {
                   <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 </v-card>
                 <v-row
-                  v-if="event.event_status.value===`in_draft`&&state.isManager"
+                  v-if="event.event_status.value===`in_draft`&&state.isCommunityManager"
                   class="justify-end my-2 mr-1"
                 >
                   <v-btn
@@ -181,7 +178,7 @@ onMounted(async () => {
                 </v-row>
               </v-col>
             </v-row>
-            <v-row v-if="state.isManager" class="justify-center">
+            <v-row v-if="state.isCommunityManager" class="justify-center">
               <v-col class="text-center">
                 <v-btn
                   class="mx-2 my-10 text-lg-h5"
