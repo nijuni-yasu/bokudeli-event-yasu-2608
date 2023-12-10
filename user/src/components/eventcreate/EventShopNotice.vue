@@ -24,16 +24,6 @@ const back = () => {
   emit('back')
 }
 
-// TODO:「この画面の値リセットでなくイベント作成全ての値をリセットする。リセットしますか？のアラートつき」の仕様にする。
-const resetForm = () => {
-  const prevState = cloneDeep(props.modelValue)
-  state.organizerFullName = prevState.organizerFullName
-  state.organizerCompany = prevState.organizerCompany
-  state.organizerPhonePersonal = prevState.organizerPhonePersonal
-  state.organizerPhoneCompany = prevState.organizerPhoneCompany
-  state.organizerEmail = prevState.organizerEmail
-  state.organizerMemo = prevState.organizerMemo
-}
 </script>
 
 <template>
@@ -95,9 +85,10 @@ const resetForm = () => {
 
           <v-card-text class="text-center mt-10">
             <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" size="large" @click="submit">上記内容で店舗に予約申請する</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" variant="outlined" type="save">下書き保存</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" variant="outlined" type="reset" @click="resetForm">リセット</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="submit">下書き保存してプレビューを見る</v-btn>
+          </v-card-text>
+          <v-card-text class="text-center">
+            <v-btn color="grey-900" class="me-3 mt-3" size="x-large" prepend-icon="mdi-email">店舗に予約申請メールを送信する</v-btn>
           </v-card-text>
         </v-form>
       </v-card>
