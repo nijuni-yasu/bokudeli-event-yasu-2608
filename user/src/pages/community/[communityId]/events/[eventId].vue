@@ -142,7 +142,7 @@ const updateAlert = (message: string) => {
       </v-row>
       <v-row class="justify-center">
         <v-col md="8" sm="9" cols="12">
-          <v-card flat class="align-center justify-center text-center my-1 pa-sm-10 pa-xs-1">
+          <v-card flat class="align-center justify-center text-center mt-1 mb-5 pa-sm-10 pa-xs-1">
             <v-row>
               <v-col>
                 <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.event_cover_url" />
