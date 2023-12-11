@@ -8,7 +8,7 @@ export default new Vuex.Store({
     barColor: 'rgba(0, 0, 0, .8), rgba(0, 0, 0, .8)',
     barImage: 'https://demos.creative-tim.com/material-dashboard-pro/assets/img/sidebar-1.jpg',
     drawer: null,
-    option_id: '',
+    partner_id: '',
   },
   mutations: {
     SET_BAR_IMAGE (state, payload) {
@@ -20,8 +20,8 @@ export default new Vuex.Store({
     SET_SCRIM (state, payload) {
       state.barColor = payload
     },
-    SET_OPTION_ID (state, payload) {
-      state.option_id = payload
+    SET_PARTNER_ID (state, payload) {
+      state.partner_id = payload
     },
   },
   actions: {
