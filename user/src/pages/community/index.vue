@@ -34,6 +34,8 @@ onMounted(async () => {
       members: members,
     })
   }
+  // コミュニティの並び順をメンバー準に入れ替え
+  communityList.sort((a,b) => b.members.length - a.members.length)
 
   state.communityList = communityList
   state.isLoading = false
