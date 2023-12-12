@@ -33,13 +33,15 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 
 const eventCoverUrl = ref(clone(state.eventCoverUrl))
 const eventDesc = ref(clone(state.eventDesc))
-const eventDeadlineDate = ref(dateString(state.eventDeadlineDateTime))
-const eventDeadlineHour = ref(hourString(state.eventDeadlineDateTime))
-const eventDeadlineMinute = ref(minutesString(state.eventDeadlineDateTime))
 const eventMaxPeople = ref(clone(state.eventMaxPeople))
 const isPublic = ref(clone(state.isPublic))
 const eventPayment = ref(clone(state.eventPayment))
 const coverImage = ref<File | null>(null)
+
+// Reactive にしない
+const eventDeadlineDate = dateString(state.eventDeadlineDateTime)
+const eventDeadlineHour = hourString(state.eventDeadlineDateTime)
+const eventDeadlineMinute = minutesString(state.eventDeadlineDateTime)
 
 const onTriggerUpload = () => {
   fileInputRef.value?.click()
@@ -65,9 +67,9 @@ const submit = () => {
   state.eventCoverUrl = eventCoverUrl.value
   state.eventDesc = eventDesc.value
   state.eventDeadlineDateTime = parseDateTimeStrings(
-    eventDeadlineDate.value,
-    eventDeadlineHour.value,
-    eventDeadlineMinute.value,
+    eventDeadlineDate,
+    eventDeadlineHour,
+    eventDeadlineMinute,
   )
   state.eventMaxPeople = eventMaxPeople.value
   state.isPublic = isPublic.value
@@ -118,18 +120,19 @@ const back = () => {
             <v-row>
               <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
-                  v-model="eventDeadlineDate"
+                  :model-value="eventDeadlineDate"
                   :config="pickerConfig"
                   outlined
                   dense
                   label="注文締切日時"
+                  :readonly="true"
                 ></app-date-time-picker>
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventDeadlineHour" :items="hourList" outlined dense label="時間"></v-select>
+                <v-select :model-value="eventDeadlineHour" :items="hourList" outlined dense label="時間" :readonly="true"></v-select>
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventDeadlineMinute" :items="minutesList" outlined dense label="分"></v-select>
+                <v-select :model-value="eventDeadlineMinute" :items="minutesList" outlined dense label="分" :readonly="true"></v-select>
               </v-col>
             </v-row>
           </v-card-text>

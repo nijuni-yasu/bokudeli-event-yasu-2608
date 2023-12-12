@@ -173,6 +173,18 @@ const submittedShop = async (shop: Shop) => {
   state.event.partner_id = shop.partner_id
   state.event.shop_name = shop.shop_name
 
+  // 注文締め切り日時を計算
+  const startDateTime = state.event.event_start_datetime?.toDate()
+  if (startDateTime == null) {
+    throw new Error('startDateTime is null')
+  }
+  startDateTime.setDate(startDateTime.getDate() - shop.shop_deadline_datetime.days_before)
+  // UTC なので必ず Date Object にしてから使う
+  const deadLineTime = new Date(shop.shop_deadline_datetime.time)
+  startDateTime.setHours(deadLineTime.getHours())
+  startDateTime.setMinutes(deadLineTime.getMinutes())
+  eventDetailData.eventDeadlineDateTime = startDateTime
+
   await fetchMenu()
   stepper.value++
 }
