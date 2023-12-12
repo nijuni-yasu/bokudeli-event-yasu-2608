@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { collection, getDocs, query, where } from 'firebase/firestore'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import { convertDocumentDataToCommunity, convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
@@ -28,13 +28,15 @@ onMounted(async () => {
   for (const docSnapshot of communitySnapshot.docs) {
     const members = await loadCommunityMembers(docSnapshot.ref)
     const community = convertDocumentDataToCommunity(docSnapshot.data())
+    // コミュニティ説明文が一定文字数を超えたら末尾を「...」にする
+    community.communityDescription = convertTruncateText(community.communityDescription, 250)
 
     communityList.push({
       community,
       members: members,
     })
   }
-  // コミュニティの並び順をメンバー準に入れ替え
+  // コミュニティの並び順をメンバーの多い順に並び替え
   communityList.sort((a,b) => b.members.length - a.members.length)
 
   state.communityList = communityList

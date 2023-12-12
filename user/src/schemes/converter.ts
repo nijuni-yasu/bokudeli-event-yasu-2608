@@ -245,3 +245,11 @@ export const convertShopTimeToWeekTimestamp = (dayOfWeek: number, timeString: st
     hour * 60 * 60 * 1000 +
     minute * 60 * 1000
 }
+
+export const convertTruncateText = (text: string, maxLength: number): string => {
+  if (text.length > maxLength) {
+    return text.substring(0, maxLength - 3) + '...';
+  } else {
+    return text;
+  }
+}
