@@ -50,6 +50,9 @@ const back = () => {
                   <v-card-text class="text-left pb-3">
                     {{ item.shop_description }}
                   </v-card-text>
+                  <v-card-text class="text-right">
+                    {{ $t('order_deadline') }}： {{ $t('days_before', item.shop_deadline_datetime.days_before) }} {{ $d(item.shop_deadline_datetime.time, 'time') }}
+                  </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
                   <v-btn color="primary" class="ma-5" size="large" append-icon="mdi-chevron-right" @click="submit(item)">
