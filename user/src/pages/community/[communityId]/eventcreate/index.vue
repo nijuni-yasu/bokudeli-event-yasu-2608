@@ -154,19 +154,6 @@ onMounted(async () => {
   await fetchData()
 })
 
-// TODO:このバリデーションの関数、効いていないので後で対応
-const basicInfoValidation = computed(() => {
-  if (basicInfo.location && basicInfo.startDateTime != null && basicInfo.endDateTime != null) {
-    // Invalid Date を判定するために getTime() の NaN をチェックする
-    const startDateTime = basicInfo.startDateTime.getTime()
-    const endDateTime = basicInfo.endDateTime.getTime()
-    if (!Number.isNaN(startDateTime) && !Number.isNaN(endDateTime) && startDateTime < endDateTime) {
-      return true
-    }
-  }
-  return false
-})
-
 const submittedBasicInfo = async () => {
   state.event.event_name = basicInfo.title
   state.event.event_postalcode = basicInfo.postalcode

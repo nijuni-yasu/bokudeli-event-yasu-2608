@@ -53,6 +53,18 @@ const changePostalcode = async () => {
   state.location = location
   state.address = location.address ?? ''
 }
+
+const submitValidation = computed(() => {
+  if (state.location && state.startDateTime != null && state.endDateTime != null) {
+    // Invalid Date を判定するために getTime() の NaN をチェックする
+    const startDateTime = state.startDateTime.getTime()
+    const endDateTime = state.endDateTime.getTime()
+    if (!Number.isNaN(startDateTime) && !Number.isNaN(endDateTime) && startDateTime < endDateTime) {
+      return true;
+    }
+  }
+  return false;
+})
 </script>
 <template>
   <v-row class="justify-center">
@@ -150,7 +162,7 @@ const changePostalcode = async () => {
             </v-row>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="submit">次へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" :disabled="!submitValidation" @click="submit">次へ</v-btn>
           </v-card-text>
         </v-form>
       </v-card>
