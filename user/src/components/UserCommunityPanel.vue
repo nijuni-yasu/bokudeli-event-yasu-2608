@@ -12,6 +12,7 @@ const router = useRouter()
 const props = defineProps<{
   userId: string,
   type: string,
+  isLoginUser: boolean,
 }>()
 
 // TODO 更新順で並べる
@@ -109,7 +110,7 @@ onMounted(async () => {
       <v-col v-show="!state.communityList.length" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
-      <v-row v-show="props.type===`managers`" class="justify-center">
+      <v-row v-show="props.type===`managers`&&props.isLoginUser" class="justify-center">
         <v-col class="text-center">
           <v-btn
             class="mx-2 my-10 text-lg-h5"

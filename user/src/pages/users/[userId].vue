@@ -70,7 +70,7 @@ if (route.query.eventId && route.query.communityAccount) {
           <v-tabs v-model="state.tabs">
             <v-tab value="0">
               <v-icon start>
-                mdi-calendar
+                mdi-calendar-star
               </v-icon>
               イベント
             </v-tab>
@@ -82,7 +82,7 @@ if (route.query.eventId && route.query.communityAccount) {
             </v-tab>
             <v-tab value="2">
               <v-icon start>
-                mdi-pencil
+                mdi-heart
               </v-icon>
               管理コミュニティ
             </v-tab>
@@ -99,14 +99,14 @@ if (route.query.eventId && route.query.communityAccount) {
               <v-col
                 cols="12" md="12" sm="12"
               >
-                <user-community-panel :user-id="props.userId" type="members"/>
+                <user-community-panel :user-id="props.userId" type="members" :is-login-user="storedUser?.userId === props.userId"/>
               </v-col>
             </v-window-item>
             <v-window-item value="2">
               <v-col
                 cols="12" md="12" sm="12"
               >
-                <user-community-panel :user-id="props.userId" type="managers"/>
+                <user-community-panel :user-id="props.userId" type="managers" :is-login-user="storedUser?.userId === props.userId"/>
               </v-col>
             </v-window-item>
           </v-window>
