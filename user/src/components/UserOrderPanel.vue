@@ -121,7 +121,7 @@ onMounted(async () => {
       </v-card-title>
     </v-col>
     <!-- no result found -->
-    <v-col v-elese-if="!state.orderList.length" cols="12" class="text-center">
+    <v-col v-else-if="!state.orderList.length" cols="12" class="text-center">
       <h4 class="mt-4">Search result not found!!</h4>
     </v-col>
 

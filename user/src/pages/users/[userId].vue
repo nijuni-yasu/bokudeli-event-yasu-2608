@@ -63,11 +63,11 @@ if (route.query.eventId && route.query.communityAccount) {
     ></user-success-join-event-dialog>
 
     <v-row v-if="!state.isLoading" justify="center">
-      <v-col cols="12" md="3" sm="3">
+      <v-col cols="12" sm="8" md="3">
         <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId" />
       </v-col>
-        <v-col>
-          <v-tabs  v-model="state.tabs">
+        <v-col cols="12" sm="8" md="9">
+          <v-tabs v-model="state.tabs">
             <v-tab value="0">
               <v-icon start>
                 mdi-calendar
