@@ -88,7 +88,9 @@ const updateUserData = async (storedUser: StoredUser) => {
           </v-avatar>
         </v-card-title>
         <v-row class="justify-center">
-          <div class="mb-2 text-h4">{{ userName }}</div>
+          <v-card-text>
+          <div class="mb-2 text-h4 text-center">{{ userName }}</div>
+          </v-card-text>
         </v-row>
         <v-row class="justify-center">
           <v-col cols="auto">
@@ -107,7 +109,9 @@ const updateUserData = async (storedUser: StoredUser) => {
           {{ userDescription }}
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
-          <v-btn color="primary" class="me-3" size="large" @click="isUserInfoEditDialogVisible = true"> 編集 </v-btn>
+          <v-btn color="primary" class="me-3" size="large" prepend-icon="mdi-pencil" @click="isUserInfoEditDialogVisible = true">
+            編集
+          </v-btn>
         </v-card-actions>
       </v-card>
       <!-- edit profile dialog data -->
