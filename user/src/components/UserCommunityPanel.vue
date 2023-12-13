@@ -29,6 +29,7 @@ const state = reactive({
 onMounted(async () => {
   const communitySnapshot = await getDocs(communityDb)
   const communityList = [] as CommunityWithMembers[]
+  // TODO: 全てのコミュニティの全ての参加者情報を取得して速度重たいので要修正
   for (const docSnapshot of communitySnapshot.docs) {
     // 参加中のコミュニティと管理しているコミュニティを出し分ける
     if (props.type==="members") {
@@ -108,6 +109,24 @@ onMounted(async () => {
       <v-col v-show="!state.communityList.length" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
+      <v-row v-show="props.type===`managers`" class="justify-center">
+        <v-col class="text-center">
+          <v-btn
+            class="mx-2 my-10 text-lg-h5"
+            color="grey-900"
+            size="x-large"
+            rounded
+            width="60%"
+            href="https://forms.gle/z9L88Dq7vDKwbvxMA"
+            target="_blank"
+          >
+            <v-icon start>
+              mdi-plus-circle
+            </v-icon>
+            コミュニティをつくる
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-row>
     <v-row v-else class="justify-center">
       <v-col cols="auto">
