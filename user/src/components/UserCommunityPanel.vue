@@ -116,7 +116,7 @@ onMounted(async () => {
             color="grey-900"
             size="x-large"
             rounded
-            width="60%"
+            width="70%"
             href="https://forms.gle/z9L88Dq7vDKwbvxMA"
             target="_blank"
           >

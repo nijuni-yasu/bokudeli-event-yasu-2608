@@ -81,7 +81,7 @@ onMounted(async () => {
 
 <template>
   <v-row class="user-order-panel">
-    <v-col cols="12">
+    <v-col v-if="state.orderList.length" cols="12">
       <v-card class="pt-5">
         <v-row>
           <v-col cols="12">
@@ -120,6 +120,11 @@ onMounted(async () => {
         注文締切後のキャンセルはできませんのでご了承ください。<br />
       </v-card-title>
     </v-col>
+    <!-- no result found -->
+    <v-col v-elese-if="!state.orderList.length" cols="12" class="text-center">
+      <h4 class="mt-4">Search result not found!!</h4>
+    </v-col>
+
   </v-row>
 </template>
 
