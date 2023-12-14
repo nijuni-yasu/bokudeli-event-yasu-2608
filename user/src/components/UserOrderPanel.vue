@@ -80,8 +80,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <v-row class="user-order-panel">
-    <v-col cols="12">
+  <v-row v-if="!state.isLoading" class="justify-center">
+    <v-col v-if="state.orderList.length" cols="12">
       <v-card class="pt-5">
         <v-row>
           <v-col cols="12">
@@ -119,6 +119,15 @@ onMounted(async () => {
         キャンセルされる場合はサポートまで<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>ください。<br />
         注文締切後のキャンセルはできませんのでご了承ください。<br />
       </v-card-title>
+    </v-col>
+    <!-- no result found -->
+    <v-col v-else-if="!state.orderList.length" cols="12" class="text-center">
+      <h4 class="mt-4">Search result not found!!</h4>
+    </v-col>
+  </v-row>
+  <v-row v-else class="justify-center">
+    <v-col cols="auto">
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </v-col>
   </v-row>
 </template>
