@@ -22,7 +22,7 @@ const back = () => {
 <template>
   <section>
     <v-row v-if="!props.loading" class="justify-center">
-      <v-col cols="10">
+      <v-col cols="12" sm="12" md="9">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
             <v-card-title class="pa-5">

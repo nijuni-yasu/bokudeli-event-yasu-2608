@@ -28,8 +28,8 @@ const back = () => {
 
 <template>
   <v-row class="justify-center">
-    <v-col cols="10">
-      <v-card flat class="pa-3 mt-2">
+    <v-col cols="12" sm="12" md="9" class="px-0">
+      <v-card flat class="mt-2">
         <v-form class="multi-col-validation">
           <v-card-title class="pa-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-phone-classic" />
@@ -85,10 +85,10 @@ const back = () => {
 
           <v-card-text class="text-center mt-10">
             <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="submit">下書き保存してプレビューを見る</v-btn>
+            <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="submit">下書きをプレビューする</v-btn>
           </v-card-text>
-          <v-card-text class="text-center">
-            <v-btn color="grey-900" class="me-3 mt-3" size="x-large" prepend-icon="mdi-email">店舗に予約申請メールを送信する</v-btn>
+          <v-card-text class="text-center mx-0">
+            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email">店舗に予約申請メールする</v-btn>
           </v-card-text>
         </v-form>
       </v-card>
