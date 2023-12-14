@@ -86,8 +86,8 @@ const back = () => {
 
 <template>
   <v-row class="justify-center">
-    <v-col cols="10">
-      <v-card flat class="pa-3 mt-2">
+    <v-col cols="12" sm="12" md="9" class="px-0">
+      <v-card flat class="mt-2">
         <v-form class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
@@ -116,7 +116,7 @@ const back = () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
                   v-model="eventDeadlineDate"
                   :config="pickerConfig"
@@ -125,10 +125,10 @@ const back = () => {
                   label="注文締切日時"
                 ></app-date-time-picker>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventDeadlineHour" :items="hourList" outlined dense label="時間"></v-select>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventDeadlineMinute" :items="minutesList" outlined dense label="分"></v-select>
               </v-col>
             </v-row>
@@ -157,7 +157,7 @@ const back = () => {
             <span>支払い設定</span>
           </v-card-title>
           <v-card-text>
-            <v-col cols="6">
+            <v-col cols="12" sm="12" md="6">
               <v-select v-model="eventPayment" :items="eventPaymentItems" hide-details class="mt-0">
                 <template #label> 支払い設定 </template>
               </v-select>

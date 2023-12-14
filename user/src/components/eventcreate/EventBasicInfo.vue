@@ -56,8 +56,8 @@ const changePostalcode = async () => {
 </script>
 <template>
   <v-row class="justify-center">
-    <v-col cols="10">
-      <v-card flat class="pa-3 mt-2">
+    <v-col cols="12" sm="12" md="9" class="px-0">
+      <v-card flat class="mt-3">
         <v-form class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
@@ -79,7 +79,7 @@ const changePostalcode = async () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="3">
+              <v-col cols="12" sm="12" md="3">
                 <v-text-field
                   v-model.lazy="state.postalcode"
                   outlined
@@ -96,10 +96,10 @@ const changePostalcode = async () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <v-text-field v-model="state.placeName" outlined dense label="会場名" />
               </v-col>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <v-text-field v-model="state.placeUrl" outlined dense label="会場URL" />
               </v-col>
             </v-row>
@@ -112,7 +112,7 @@ const changePostalcode = async () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
                   v-model="eventStartDate"
                   :config="pickerConfig"
@@ -121,10 +121,10 @@ const changePostalcode = async () => {
                   label="開始日"
                 ></app-date-time-picker>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" />
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventStartMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
@@ -132,7 +132,7 @@ const changePostalcode = async () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
                   v-model="eventEndDate"
                   :config="pickerConfig"
@@ -141,10 +141,10 @@ const changePostalcode = async () => {
                   label="終了日"
                 ></app-date-time-picker>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" />
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
