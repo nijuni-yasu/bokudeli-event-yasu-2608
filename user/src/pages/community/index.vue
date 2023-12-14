@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { collection, getDocs, query, where } from 'firebase/firestore'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import { convertDocumentDataToCommunity, convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
@@ -28,12 +28,16 @@ onMounted(async () => {
   for (const docSnapshot of communitySnapshot.docs) {
     const members = await loadCommunityMembers(docSnapshot.ref)
     const community = convertDocumentDataToCommunity(docSnapshot.data())
+    // コミュニティ説明文が一定文字数を超えたら末尾を「...」にする
+    community.communityDescription = convertTruncateText(community.communityDescription, 250)
 
     communityList.push({
       community,
       members: members,
     })
   }
+  // コミュニティの並び順をメンバーの多い順に並び替え
+  communityList.sort((a,b) => b.members.length - a.members.length)
 
   state.communityList = communityList
   state.isLoading = false
@@ -47,24 +51,24 @@ onMounted(async () => {
         v-for="{ community, members } in state.communityList"
         :key="community.communityId"
         md="10"
-        sm="10"
-        cols="10"
+        sm="12"
+        cols="12"
       >
         <v-card
-          class="ma-2"
+          class="ma-1"
           color="text-center cursor-pointer"
           @click="router.push(getCommunityPath(community.communityAccount))"
         >
           <v-row>
-            <v-col md="6" sm="6" cols="6" class="pa-0">
+            <v-col md="6" sm="12" cols="12" class="pa-0">
               <v-img
                 :src="community.communityCoverImageUrl"
                 style="border-radius: 5px 0px 0px 5px"
-                aspect-ratio="2"
+                aspect-ratio="1.91"
                 cover
               />
             </v-col>
-            <v-col md="6" sm="6" cols="6">
+            <v-col md="6" sm="12" cols="12">
               <!-- title -->
               <v-card-title class="text-h5 text-left py-3">
                 {{ community.communityName }}
