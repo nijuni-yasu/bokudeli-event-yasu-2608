@@ -41,6 +41,7 @@ const handleFacebookLogin = async () => {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
       console.error({ error, credential })
+      window.alert('Facebookログインできませんでした')
     } else {
       console.error({ error })
     }
@@ -63,6 +64,7 @@ const handleGoogleLogin = async () => {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
       console.error({ error, credential })
+      window.alert('Googleログインできませんでした')
     } else {
       console.error({ error })
     }
@@ -90,15 +92,22 @@ const handleGoogleLogin = async () => {
         </v-container>
       </v-card-text>
       <v-card-title v-if="loginProvider === 'google'" class="text-center mt-10">
-        <div class="text-h5 ma-1">Googleログイン</div>
+        <div class="text-h5 ma-1">ログイン</div>
       </v-card-title>
       <v-card-text v-if="loginProvider === 'google'">
         <v-container>
           <v-row>
             <v-col class="d-flex justify-center">
-              <button class="google-button login-button" @click="handleGoogleLogin">
-                <span class="button-inner-text">Continue with Google</span>
-              </button>
+              <v-btn class="login-button facebook-button" prepend-icon="mdi-facebook" color="#1877f2" @click="handleFacebookLogin">
+                <span>Login with </span><span class="button-inner-text">Facebook</span>
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col class="d-flex justify-center">
+              <v-btn class="login-button google-button" prepend-icon="mdi-google" color="grey-900" @click="handleGoogleLogin">
+                <span>Login with </span><span class="button-inner-text">Google</span>
+              </v-btn>
             </v-col>
           </v-row>
         </v-container>
@@ -115,13 +124,12 @@ const handleGoogleLogin = async () => {
 .login-button {
   width: 345px;
   height: 54px;
-
   border-radius: 10px;
 }
 
 .facebook-button {
-  background: #1877f2;
   .button-inner-text {
+    margin-left: 5px;
     font-family: 'Helvetica';
     font-style: normal;
     font-weight: 700;
@@ -132,19 +140,14 @@ const handleGoogleLogin = async () => {
 }
 
 .google-button {
-  background: #ffffff;
-  box-shadow:
-    0px 0px 3px rgba(0, 0, 0, 0.084),
-    0px 2px 3px rgba(0, 0, 0, 0.168);
-
   .button-inner-text {
+    margin-left: 5px;
     font-family: 'Roboto';
     font-style: normal;
-    font-weight: 500;
+    font-weight: 700;
     font-size: 20px;
     line-height: 23px;
-
-    color: rgba(0, 0, 0, 0.54);
+    color: #ffffff;
   }
 }
 </style>
