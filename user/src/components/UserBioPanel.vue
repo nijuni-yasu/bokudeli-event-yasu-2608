@@ -105,7 +105,7 @@ const updateUserData = async (storedUser: StoredUser) => {
             </a>
           </v-col>
         </v-row>
-        <v-card-text v-linkify class="text-subtitle-1" style="line-height: 30px">
+        <v-card-text v-linkify class="text-subtitle-1" style="line-height: 30px; white-space: pre-line">
           {{ userDescription }}
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
