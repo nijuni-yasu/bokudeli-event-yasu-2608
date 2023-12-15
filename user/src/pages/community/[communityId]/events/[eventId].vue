@@ -142,7 +142,7 @@ const updateAlert = (message: string) => {
       </v-row>
       <v-row class="justify-center">
         <v-col md="8" sm="9" cols="12">
-          <v-card flat class="align-center justify-center text-center mt-1 mb-5 pa-sm-10 pa-xs-1">
+          <v-card flat class="align-center justify-center mt-1 mb-5 pa-sm-10 pa-xs-1">
             <v-row>
               <v-col>
                 <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.event_cover_url" />
@@ -151,7 +151,7 @@ const updateAlert = (message: string) => {
             <v-row>
               <v-col>
                 <!-- イベント情報 -->
-                <v-card-title class="justify-center text-sm-h4 text-xs-h5 font-weight-semibold pb-10 pre-line">
+                <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-10 pre-line">
                   {{ state.event.event_name }}
                 </v-card-title>
                 <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
@@ -167,34 +167,56 @@ const updateAlert = (message: string) => {
                         cover
                         max-width="75px"
                       />
-                      <div class="ml-2 align-self-center">
-                        <div class="my-1" style="font-size: 14px">【主催者】</div>
-                        <div class="my-1" style="font-size: 24px">
+                      <div class="ml-3 align-self-center">
+                        <div class="mb-2" style="font-size: 14px">【主催者】</div>
+                        <div class="my-2" style="font-size: 20px">
                           {{ state.community.communityName }}
                         </div>
                       </div>
                     </v-row>
                   </router-link>
                 </v-card-text>
-                <v-card-text class="text-left pb-8 text-subtitle-1">
-                  【開催場所】{{ state.event.event_address }}
+                <v-card-text class="event-item">
+                  【開催日時】
                 </v-card-text>
-                <v-card-text class="text-left pb-8 text-subtitle-1">
-                  【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}〜{{ dateOnlyTimeString(state.event.event_end_datetime) }}
+                <v-card-text class="event-content">
+                  {{ dateWithDayOfWeekString(state.event.event_start_datetime) }}〜{{ dateOnlyTimeString(state.event.event_end_datetime) }}
                 </v-card-text>
-                <v-card-text class="text-left pb-8 text-subtitle-1">
-                  【注文期限】{{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
+                <v-card-text class="event-item">
+                  【注文期限】
                 </v-card-text>
-                <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shop_name }} </v-card-text>
-                <v-card-text v-linkify class="text-left pb-8 text-subtitle-1" style="line-height: 32px; white-space: pre-line">
+                <v-card-text class="event-content">
+                  {{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
+                </v-card-text>
+                <v-card-text class="event-item">
+                  【お店】
+                </v-card-text>
+                <v-card-text class="event-content">
+                  {{ state.event.shop_name }}
+                </v-card-text>
+                <v-card-text class="event-item">
+                  【開催場所】
+                </v-card-text>
+                <v-card-text class="event-content">
+                  {{ state.event.event_address }}
+                </v-card-text>
+                <v-card-text class="event-item">
                   【開催内容】
-                    {{ state.event.event_desc }}
                 </v-card-text>
-                <v-card-text class="text-left pb-8 text-subtitle-1">
-                  【支払い方法】{{ $t(`payment.${state.event.event_payment}`) }}
+                <v-card-text v-linkify class="event-content">
+                  {{ state.event.event_desc }}
                 </v-card-text>
-                <v-card-text class="text-left pb-8 text-subtitle-1">
-                  【定員】{{ state.event.event_max_people }} 人
+                <v-card-text class="event-item2">
+                  【支払い方法】
+                  <span class="event-content">
+                  {{ $t(`payment.${state.event.event_payment}`) }}
+                  </span>
+                </v-card-text>
+                <v-card-text class="event-item2">
+                  【定員】
+                  <span class="event-content">
+                    {{ state.event.event_max_people }} 人
+                  </span>                
                 </v-card-text>
                 <!-- メンバー情報 -->
                 <event-member-list :community-id="state.event.community_account" :event-id="state.event.event_id" />
@@ -228,4 +250,22 @@ const updateAlert = (message: string) => {
     <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
   </section>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+  .event-item{
+    font-size: 14px;
+    padding-bottom: 2px;
+    font-weight: 600;
+  }
+  .event-item2{
+    font-size: 14px;
+    padding-bottom: 20px;
+    font-weight: 600;
+  }
+  .event-content{
+    font-size: 18px;
+    padding-bottom: 20px;
+    font-weight: 400;
+    line-height: 32px;
+    white-space: pre-line;
+  }
+</style>
