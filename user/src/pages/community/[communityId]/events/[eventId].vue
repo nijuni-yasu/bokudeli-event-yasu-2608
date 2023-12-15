@@ -198,13 +198,19 @@ const updateAlert = (message: string) => {
                   【開催場所】
                 </v-card-text>
                 <v-card-text class="event-content">
-                  {{ state.event.event_address }}<br>
+                  {{ state.event.event_address }}
+                  <a
+                    :href="`https://www.google.co.jp/maps/search/${state.event.event_address} ${state.event.event_place}`"
+                    target="_blank"
+                  >
+                    <v-icon>mdi-map-marker-radius</v-icon>
+                  </a>
                   <div v-if="state.event.event_place_url&&state.event.event_place">
+                    {{ state.event.event_place }}
                     <a
                       :href="state.event.event_place_url"
                       target="_blank">
-                      {{ state.event.event_place }}
-                      <v-icon size="xsmall">
+                      <v-icon size="small">
                         mdi-open-in-new
                       </v-icon>
                     </a>
