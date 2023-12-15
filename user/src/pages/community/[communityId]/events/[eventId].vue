@@ -186,8 +186,9 @@ const updateAlert = (message: string) => {
                   【注文期限】{{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
                 </v-card-text>
                 <v-card-text class="text-left pb-8 text-subtitle-1"> 【お店】{{ state.event.shop_name }} </v-card-text>
-                <v-card-text class="text-left pb-8 text-subtitle-1" style="line-height: 32px; white-space: pre-line">
-                  【開催内容】{{ state.event.event_desc }}
+                <v-card-text v-linkify class="text-left pb-8 text-subtitle-1" style="line-height: 32px; white-space: pre-line">
+                  【開催内容】
+                    {{ state.event.event_desc }}
                 </v-card-text>
                 <v-card-text class="text-left pb-8 text-subtitle-1">
                   【支払い方法】{{ $t(`payment.${state.event.event_payment}`) }}

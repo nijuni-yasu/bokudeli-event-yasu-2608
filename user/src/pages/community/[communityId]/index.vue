@@ -81,7 +81,9 @@ onMounted(async () => {
           <v-row>
             <v-col>
               <v-card-title class="justify-center text-h4 pb-6">{{ state.community.communityName }}</v-card-title>
-              <v-card-text class="text-left text-subtitle-1 pb-6">{{ state.community.communityDescription }}</v-card-text>
+              <v-card-text v-linkify class="text-left text-subtitle-1 pb-6">
+                {{ state.community.communityDescription }}
+              </v-card-text>
             </v-col>
           </v-row>
         </v-card>
