@@ -183,18 +183,6 @@ const updateAlert = (message: string) => {
                   {{ dateWithDayOfWeekString(state.event.event_start_datetime) }}〜{{ dateOnlyTimeString(state.event.event_end_datetime) }}
                 </v-card-text>
                 <v-card-text class="event-item">
-                  【注文期限】
-                </v-card-text>
-                <v-card-text class="event-content">
-                  {{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
-                </v-card-text>
-                <v-card-text class="event-item">
-                  【お店】
-                </v-card-text>
-                <v-card-text class="event-content">
-                  {{ state.event.shop_name }}
-                </v-card-text>
-                <v-card-text class="event-item">
                   【開催場所】
                 </v-card-text>
                 <v-card-text class="event-content">
@@ -226,19 +214,31 @@ const updateAlert = (message: string) => {
                   {{ state.event.event_desc }}
                 </v-card-text>
                 <v-card-text class="event-item2">
+                  【お店】
+                  <span class="event-content">
+                    {{ state.event.shop_name }}
+                  </span>
+                </v-card-text>
+                <v-card-text class="event-item2">
+                  【注文期限】
+                  <span class="event-content">
+                    {{ dateWithDayOfWeekString(state.event.event_deadline_datetime) }}
+                  </span>
+                </v-card-text>
+                <v-card-text class="event-item2">
                   【支払い方法】
                   <span class="event-content">
                   {{ $t(`payment.${state.event.event_payment}`) }}
                   </span>
                 </v-card-text>
-                <v-card-text class="event-item2">
+                <!-- <v-card-text class="event-item2">
                   【定員】
                   <span class="event-content">
                     {{ state.event.event_max_people }} 人
                   </span>                
-                </v-card-text>
+                </v-card-text> -->
                 <!-- メンバー情報 -->
-                <event-member-list :community-id="state.event.community_account" :event-id="state.event.event_id" />
+                <event-member-list :community-id="state.event.community_account" :event-id="state.event.event_id" :event-max-people="state.event.event_max_people"/>
               </v-col>
             </v-row>
           </v-card>
@@ -277,12 +277,12 @@ const updateAlert = (message: string) => {
   }
   .event-item2{
     font-size: 14px;
-    padding-bottom: 20px;
+    padding-bottom: 16px;
     font-weight: 600;
   }
   .event-content{
     font-size: 18px;
-    padding-bottom: 20px;
+    padding-bottom: 16px;
     font-weight: 400;
     line-height: 32px;
     white-space: pre-line;

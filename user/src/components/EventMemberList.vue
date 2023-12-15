@@ -6,6 +6,7 @@ import { loadEventMembers } from '@/composable/loadEventMembers'
 const props = defineProps<{
   communityId: string
   eventId: string
+  eventMaxPeople: number
 }>()
 
 const emit = defineEmits<{
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 const state = reactive({
   members: [] as EventMember[],
   isLoading: true,
+  event_max_people: props.eventMaxPeople as number,
 })
 
 const fetchData = async () => {
@@ -38,7 +40,7 @@ onMounted(async () => {
       <v-card-text class="event-item">
         【参加者】
         <span class="event-content">
-          <td>{{ state.members.length }} 人</td>
+          {{ state.members.length }} 人 / {{ state.event_max_people }} 人
         </span>
       </v-card-text>
       <v-card-text class="text-left pb-10">
