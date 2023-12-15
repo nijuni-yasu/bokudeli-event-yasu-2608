@@ -167,7 +167,7 @@ const updateAlert = (message: string) => {
                         cover
                         max-width="75px"
                       />
-                      <div class="ml-3 align-self-center">
+                      <div class="ml-2 align-self-center">
                         <div class="mb-2" style="font-size: 14px">【主催者】</div>
                         <div class="my-2" style="font-size: 20px">
                           {{ state.community.communityName }}
@@ -198,7 +198,20 @@ const updateAlert = (message: string) => {
                   【開催場所】
                 </v-card-text>
                 <v-card-text class="event-content">
-                  {{ state.event.event_address }}
+                  {{ state.event.event_address }}<br>
+                  <div v-if="state.event.event_place_url&&state.event.event_place">
+                    <a
+                      :href="state.event.event_place_url"
+                      target="_blank">
+                      {{ state.event.event_place }}
+                      <v-icon size="xsmall">
+                        mdi-open-in-new
+                      </v-icon>
+                    </a>
+                  </div>
+                  <div v-else-if="!state.event.event_place_url&&state.event.event_place">
+                    {{ state.event.event_place }}
+                  </div>
                 </v-card-text>
                 <v-card-text class="event-item">
                   【開催内容】
