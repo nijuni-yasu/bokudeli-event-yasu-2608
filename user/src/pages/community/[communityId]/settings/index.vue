@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, query, where, setDoc, getDoc, doc, Timestamp } from 'firebase/firestore'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import uploadCoverImage from '@/composable/uploadCoverImage'
+import { getCommunityPath } from '@/router/utils'
+const router = useRouter()
 
 const props = defineProps<{
   communityId: string
@@ -14,6 +17,8 @@ const state = reactive({
   isLoading: true,
   isCommunityManager: false,
   links: [] as string[],
+  coverImageFile: null as File | null,
+  iconImageFile: null as File | null,
 })
 
 const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
@@ -23,8 +28,6 @@ onMounted(async () => {
   const communitySnapshot = communitiesSnapshot.docs.shift()
   if (communitySnapshot) {
     const communityData = communitySnapshot.data()
-    console.log(communityData)
-    // state.community = communityData
     const community = convertDocumentDataToCommunity(communityData)
     state.community = community
     state.isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
@@ -45,8 +48,8 @@ const onFileChangeCover = (event: Event) => {
     return
   }
   const file = eventTarget.files[0]
+  state.coverImageFile = file
   state.community.communityCoverImageUrl = URL.createObjectURL(file)
-  console.log(state.community.communityCoverImageUrl)
 }
 const onFileChangeIcon = (event: Event) => {
   const eventTarget = event.target as HTMLInputElement
@@ -54,14 +57,49 @@ const onFileChangeIcon = (event: Event) => {
     return
   }
   const file = eventTarget.files[0]
+  state.iconImageFile = file
   state.community.communityIconImageUrl = URL.createObjectURL(file)
-  console.log(state.community.communityIconImageUrl)
 }
 
-const submit = () => {
-
+const submit = async () => {
+    const docRef = doc(db, 'communities', state.community.communityId)
+    const docSnap = await getDoc(docRef)
+    if (docSnap.exists()) {
+      // カバー画像を追加
+      if (state.coverImageFile) {
+        const communityCoverUrl = await uploadCoverImage(state.community.communityId, '', state.coverImageFile)
+        await setDoc(docRef, { community_cover_image_url: communityCoverUrl }, { merge: true })
+      }
+      // アイコン画像を追加
+      if (state.iconImageFile) {
+        const communityIconUrl = await uploadCoverImage(state.community.communityId, '', state.iconImageFile)
+        await setDoc(docRef, { community_icon_image_url: communityIconUrl }, { merge: true })
+      }
+      // その他項目を追加
+      await setDoc(
+        docRef,
+        {
+          community_name: state.community.communityName,
+          community_desc: state.community.communityDescription,
+          community_sns_facebook: state.community.communitySns.facebook,
+          community_sns_twitter: state.community.communitySns.twitter,
+          community_sns_instagram: state.community.communitySns.instagram,
+          community_sns_officialsite: state.community.communitySns.officialsite,
+          is_public: state.community.isPublic,
+          updated_at: Timestamp.now(),
+        },
+        { merge: true },
+      )
+    } else {
+      console.error('コミュニティが存在しません')
+    }
+    window.alert("コミュニティ情報を更新しました")
+    router.push(getCommunityPath(state.community.communityAccount))
 }
 
+const cancel = () => {
+  router.push(getCommunityPath(state.community.communityAccount))
+}
 
 
 </script>
@@ -181,7 +219,7 @@ const submit = () => {
             </v-switch>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" @click="">キャンセル</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" @click="cancel">キャンセル</v-btn>
             <v-btn color="primary" class="me-3 mt-3" size="large" @click="submit">設定</v-btn>
           </v-card-text>
         </v-form>
@@ -201,6 +239,7 @@ const submit = () => {
 
   position: relative;
   width: 100%;
+  aspect-ratio: 1.91;
   max-width: 1200px;
   max-height: 630px;
   border: 1px solid rgba(118, 118, 118, 0.38);
@@ -217,6 +256,7 @@ const submit = () => {
 
   position: relative;
   width: 100%;
+  aspect-ratio: 1;
   max-width: 250px;
   max-height: 250px;
   border: 1px solid rgba(118, 118, 118, 0.38);

@@ -10,10 +10,11 @@ const rebuildFilename = (filename: string) => {
 
 const uploadCoverImage = async (communityId: string, eventId: string, file: File) => {
   const filename = rebuildFilename(file.name)
-  const eventStorageRef = storageRef(storage, `communities/${communityId}/events/${eventId}/${filename}`)
-
+  const uploadStorageRef = eventId.length>0
+    ? storageRef(storage, `communities/${communityId}/events/${eventId}/${filename}`)
+    : storageRef(storage, `communities/${communityId}/community/${filename}`)
   try {
-    const snapshot = await uploadBytes(eventStorageRef, file)
+    const snapshot = await uploadBytes(uploadStorageRef, file)
     const url = await getDownloadURL(snapshot.ref)
     return url
   } catch (error) {
