@@ -6,14 +6,19 @@ import EventDetail from '@/components/eventcreate/EventDetail.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
 import { collection, collectionGroup, getDocs, query, where, addDoc, setDoc, Timestamp } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { convertDocumentDataToCommunity, convertDocumentDataToMenu, convertDateToWeekTimestamp, convertShopTimeToWeekTimestamp } from '@/schemes/converter'
+import {
+  convertDocumentDataToCommunity,
+  convertDocumentDataToMenu,
+  convertDateToWeekTimestamp,
+  convertShopTimeToWeekTimestamp,
+} from '@/schemes/converter'
 import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
 import { useRouter } from 'vue-router'
 import { getEventPath } from '@/router/utils'
-import uploadCoverImage from '@/composable/uploadCoverImage'
+import { uploadEventImage } from '@/composable/uploadImage'
 import { LatLogLocation, calculateDistance } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
 
@@ -106,8 +111,10 @@ const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date) =>
         const timeEnd = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end)
         const timeStart2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start2)
         const timeEnd2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end2)
-        return (timeStart <= eventTimeStart && eventTimeStart <= timeEnd) ||
+        return (
+          (timeStart <= eventTimeStart && eventTimeStart <= timeEnd) ||
           (timeStart2 <= eventTimeStart && eventTimeStart <= timeEnd2)
+        )
       })
 
       return isInRange && isInTime && shop.is_approved && shop.is_open
@@ -154,10 +161,10 @@ const basicInfoValidation = computed(() => {
     const startDateTime = basicInfo.startDateTime.getTime()
     const endDateTime = basicInfo.endDateTime.getTime()
     if (!Number.isNaN(startDateTime) && !Number.isNaN(endDateTime) && startDateTime < endDateTime) {
-      return true;
+      return true
     }
   }
-  return false;
+  return false
 })
 
 const submittedBasicInfo = async () => {
@@ -227,7 +234,7 @@ const submit = async () => {
     // 自動採番されたOrderIDを取得して項目として追加追加
     const eventId = addedDoc.id
     const eventCoverUrl = state.coverImage
-      ? await uploadCoverImage(eventItem.community_id, eventId, state.coverImage)
+      ? await uploadEventImage(eventItem.community_id, eventId, state.coverImage)
       : ''
     await setDoc(addedDoc, { event_id: eventId, event_cover_url: eventCoverUrl }, { merge: true })
 
@@ -262,19 +269,19 @@ const stepperItems = computed(() => [
 <template>
   <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
-        <event-basic-info v-model="basicInfo" @submit="submittedBasicInfo"/>
-    </template>  
+      <event-basic-info v-model="basicInfo" @submit="submittedBasicInfo" />
+    </template>
     <template #[`item.2`]>
-        <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" @back="backStepper"/>
+      <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" @back="backStepper" />
     </template>
     <template #[`item.3`]>
-        <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" @back="backStepper"/>
+      <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" @back="backStepper" />
     </template>
     <template #[`item.4`]>
-        <event-detail v-model="eventDetailData" @submit="submittedDetail" @back="backStepper"/>
+      <event-detail v-model="eventDetailData" @submit="submittedDetail" @back="backStepper" />
     </template>
     <template #[`item.5`]>
-        <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" @back="backStepper"/>
+      <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" @back="backStepper" />
     </template>
   </v-stepper>
 </template>
