@@ -75,7 +75,7 @@ onMounted(async () => {
         <v-card flat class="align-center justify-center text-center my-10 pa-10">
           <v-row>
             <v-col>
-              <VImg class="ma-0" :src="state.community.communityCoverImageUrl" />
+              <VImg class="ma-0" aspect-ratio="1.91" cover :src="state.community.communityCoverImageUrl" />
             </v-col>
           </v-row>
           <v-row>
@@ -94,7 +94,7 @@ onMounted(async () => {
           <v-col md="4" sm="4" cols="12">
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
-              <v-img style="border-radius: 10px" aspect-ratio="1" :src="state.community.communityIconImageUrl" />
+              <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="state.community.communityIconImageUrl" />
               <v-card-title class="justify-center text-h5 py-5 pre-line">
                 {{ state.community.communityName }}
               </v-card-title>
