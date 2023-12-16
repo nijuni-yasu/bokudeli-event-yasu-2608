@@ -113,9 +113,10 @@ onMounted(async () => {
             <v-btn
               class="mx-1 mb-1 mt-0"
               color="grey-900"
+              elevation="10"
               rounded
               target="_blank"
-              prepend-icon="mdi-plus-circle"
+              prepend-icon="mdi-pencil-box-outline"
               @click="router.push(getEventCreatePath(community.communityAccount))"
             >
               イベント新規作成
@@ -123,6 +124,7 @@ onMounted(async () => {
             <v-btn
               class="mx-1 mb-1 mt-0"
               color="grey-900"
+              elevation="10"
               rounded
               target="_blank"
               prepend-icon="mdi-cog"
@@ -141,10 +143,11 @@ onMounted(async () => {
         <v-col class="text-center">
           <v-btn
             class="my-10"
-            color="grey-900"
+            color="white"
+            elevation="10"
             size="large"
             rounded
-            prepend-icon="mdi-pencil-box-outline"
+            prepend-icon="mdi-heart"
             href="https://forms.gle/z9L88Dq7vDKwbvxMA"
             target="_blank"
           >

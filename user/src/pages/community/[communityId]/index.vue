@@ -168,13 +168,12 @@ onMounted(async () => {
                   class="justify-end my-2 mr-1"
                 >
                   <v-btn
-                    color="black"
+                    color="grey-900"
+                    elevation="10"
                     rounded
+                    prepend-icon="mdi-pencil-box-outline"
                     :to="getEventCreatePath(state.community.communityAccount)"
                   >
-                  <v-icon>
-                    mdi-pencil
-                  </v-icon>
                     イベント編集
                   </v-btn>
                 </v-row>
@@ -184,15 +183,14 @@ onMounted(async () => {
               <v-col class="text-center">
                 <v-btn
                   class="mx-2 my-10 text-lg-h5"
-                  color="primary"
+                  color="grey-900"
+                  elevation="10"
                   size="x-large"
                   rounded
                   width="85%"
+                  prepend-icon="mdi-pencil-box-outline"
                   :to="getEventCreatePath(state.community.communityAccount)"
                 >
-                  <v-icon>
-                    mdi-pencil
-                  </v-icon>
                   イベントを新規作成する
                 </v-btn>
               </v-col>
