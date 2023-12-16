@@ -3,7 +3,7 @@ import { db } from '@/firebase'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { convertDocumentDataToCommunity, convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { getCommunityPath } from '@/router/utils'
+import { getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
 import { FirestoredUser } from '@/schemes/storedUser'
@@ -73,7 +73,7 @@ onMounted(async () => {
         cols="12"
       >
         <v-card
-          class="ma-2"
+          class="mx-2 mt-2 mb-1"
           color="text-center cursor-pointer"
           @click="router.push(getCommunityPath(community.communityAccount))"
         >
@@ -108,8 +108,31 @@ onMounted(async () => {
             </v-col>
           </v-row>
         </v-card>
+        <div v-if="props.type===`managers`&&props.isLoginUser" class="justify-center">
+          <v-col class="text-right">
+            <v-btn
+              class="mx-1 mb-1 mt-0"
+              color="grey-900"
+              rounded
+              target="_blank"
+              prepend-icon="mdi-plus-circle"
+              @click="router.push(getEventCreatePath(community.communityAccount))"
+            >
+              イベント新規作成
+            </v-btn>
+            <v-btn
+              class="mx-1 mb-1 mt-0"
+              color="grey-900"
+              rounded
+              target="_blank"
+              prepend-icon="mdi-cog"
+              @click="router.push(getCommunitySettingsPath(community.communityAccount))"
+            >
+              コミュニティ設定
+            </v-btn>
+          </v-col>
+        </div>
       </v-col>
-
       <!-- no result found -->
       <v-col v-show="!state.communityList.length" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
@@ -117,18 +140,15 @@ onMounted(async () => {
       <v-row v-show="props.type===`managers`&&props.isLoginUser" class="justify-center">
         <v-col class="text-center">
           <v-btn
-            class="mx-2 my-10 text-lg-h5"
+            class="my-10"
             color="grey-900"
-            size="x-large"
+            size="large"
             rounded
-            width="75%"
+            prepend-icon="mdi-pencil-box-outline"
             href="https://forms.gle/z9L88Dq7vDKwbvxMA"
             target="_blank"
           >
-            <v-icon start>
-              mdi-plus-circle
-            </v-icon>
-            コミュニティをつくる
+            コミュニティを新規申請する
           </v-btn>
         </v-col>
       </v-row>
