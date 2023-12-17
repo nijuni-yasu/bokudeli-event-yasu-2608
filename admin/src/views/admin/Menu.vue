@@ -34,7 +34,7 @@
         :key="key"
         cols="12"
         sm="6"
-        md="4"
+        md="3"
       >
         <base-material-card
           color="transparent"
@@ -142,8 +142,8 @@
 
       <v-col
         cols="12"
-        sm="12"
-        md="4"
+        sm="6"
+        md="3"
       >
         <base-material-card
           color="transparent"
