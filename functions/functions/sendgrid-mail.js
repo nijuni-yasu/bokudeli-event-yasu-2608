@@ -106,9 +106,9 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
         emails.add(organizerEmail);
     }
     const communityId = eventSnapshot.get('community_id');
-    const adminsRef = db.collection('communities').doc(communityId).collection('admins');
-    const adminsSnapshot = await adminsRef.get()
-    adminsSnapshot.forEach(doc => {
+    const managersRef = db.collection('communities').doc(communityId).collection('managers');
+    const managersSnapshot = await managersRef.get()
+    managersSnapshot.forEach(doc => {
         const userEmail = doc.get('user_email');
         if (userEmail != null && userEmail !== '') {
             emails.add(userEmail);
