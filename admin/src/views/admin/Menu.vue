@@ -220,7 +220,7 @@
   import 'firebase/storage'
 
   const db = firebase.firestore()
-  const partnerId = firebase.auth().currentUser.uid
+  let partnerId = ''
 
   export default {
     name: 'Menu',
@@ -232,18 +232,14 @@
       menus: [],
     }),
     created () {
+      partnerId = firebase.auth().currentUser.uid
       this.menuView()
     },
     methods: {
       menuView: function () {
         this.menus = []
         db.collection('partners').doc(partnerId).collection('menus').orderBy('updatedAt', 'desc').get().then((snapshot) => {
-          // console.log(snapshot)
-          // console.log(snapshot.size)
-          // console.log(snapshot.empty)
-          // console.log(snapshot.docs)
           snapshot.forEach((menuDoc) => {
-            // console.log(menuDoc.id, ' => ', JSON.stringify(menuDoc.data()))
             const menu = menuDoc.data()
             menu.menu_id = menuDoc.id
             if (!menu.is_deleted) {

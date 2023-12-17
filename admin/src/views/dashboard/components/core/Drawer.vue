@@ -40,7 +40,6 @@
 
       <template v-for="(item, i) in items">
         <base-item
-          :key="`item-${i}`"
           :item="item"
         />
       </template>
@@ -55,8 +54,8 @@
       <v-divider class="mb-2" />
 
       <div class="username my-4 ml-4">
-        {{ shop_name }} <br>
-        {{ shop_email }} <br>
+        {{ shopDoc.shop_name }} <br>
+        {{ partner_email }} <br>
       </div>
     </v-list>
   </v-navigation-drawer>
@@ -71,8 +70,6 @@
   import 'firebase/auth'
   import 'firebase/firestore'
   const db = firebase.firestore()
-  const partnerId = firebase.auth().currentUser.uid
-  let shopDoc = ''
 
   export default {
     props: {
@@ -82,8 +79,9 @@
       },
     },
     data: () => ({
-      shop_name: '−',
-      shop_email: firebase.auth().currentUser.email,
+      partner_email: '',
+      partner_id: '',
+      shopDoc: {},
       items: [
         {
           icon: 'mdi-home',
@@ -129,21 +127,20 @@
       },
     },
     created () {
-      db.collection('partners').doc(partnerId).collection('shops').get().then((snapshot) => {
+      this.partner_id = firebase.auth().currentUser.uid
+      this.partner_email = firebase.auth().currentUser.email
+      db.collection('partners').doc(this.partner_id).collection('shops').get().then((snapshot) => {
         snapshot.forEach((doc) => {
-          shopDoc = doc.data()
+            this.shopDoc = doc.data()
         })
-        if (shopDoc) {
-          if (shopDoc.shop_name) {
-            this.shop_name = shopDoc.shop_name
-          }
-        } else {
-          console.log('店舗名なし')
-        }
       })
     },
     methods: {
       clickLogOut: function () {
+        // this.shop_name = ''
+        this.shopDoc = {}
+        this.partner_email = ''
+        this.partner_id = ''
         firebase.auth().signOut().then(() => {
           // alert('LogOut!')
           this.$router.push('/pages/login')

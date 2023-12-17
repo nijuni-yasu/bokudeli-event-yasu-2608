@@ -960,15 +960,13 @@
   import { fetchLocationByPostalcode } from '@/methods/fetchLocation'
 
   const db = firebase.firestore()
-  const partnerId = firebase.auth().currentUser.uid
   const storage = firebase.storage()
+  let partnerId = ''
   let shopId = '' // shopのドキュメントID。docがなかったら発行する。
   let shopDoc = '' // firebaseから読み込んだ値をグローバルに代入できる変数
 
-
   export default {
-    name: 'DashboardFormsValidationForms',
-
+    name: 'Shop',
     $_veeValidate: {
       validator: 'new',
     },
@@ -1029,7 +1027,7 @@
     }),
 
     created () {
-
+      partnerId = firebase.auth().currentUser.uid
       db.collection('partners').doc(partnerId).collection('shops').get().then((snapshot) => {
         snapshot.forEach((doc) => {
           shopDoc = doc.data()
