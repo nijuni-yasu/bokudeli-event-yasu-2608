@@ -70,14 +70,7 @@
             <td
               class="py-5"
             >
-              店舗設定 と メニュー設定 が完了したら
-              <a
-                :href="'https://line.me/R/ti/p/%40547chcok'"
-                target="_blank"
-              >
-                サポートLINE
-              </a>
-              もしくはメールやお電話にてご連絡ください👍<br>
+              店舗設定 と メニュー設定 が完了したらメールやお電話にてご連絡ください👍<br>
               （MAIL : support@nijuni.jp / TEL : 050-3580-5122）
             </td>
           </tr>
@@ -87,9 +80,8 @@
               class="py-5"
             >
               サポートスタッフから「テスト注文」を行います！<br>
-              １）店舗の電話番号に「自動音声電話」が鳴るかどうか📞<br>
-              ２）メールアドレス、サブメールアドレスに「注文メール」が届くかどうか📩<br>
-              の2点をご確認ください。テスト注文をご確認いただきましたら店舗を公開いたします🙌
+              メールアドレス、サブメールアドレスに「注文メール」が届くかどうか📩<br>
+              をご確認ください。テスト注文をご確認いただきましたら店舗を公開いたします🙌
             </td>
           </tr>
           <tr>
@@ -98,22 +90,21 @@
               class="py-5"
             >
               公開後、お客さまからのご注文が入ったら<br>
-              「自動音声電話」→「注文メール」→「
+              「注文メール」→「
               <router-link to="/order">
                 注文一覧画面
               </router-link>
               」にて注文内容をご確認ください。<br>
               ご注文いただいた商品を、指定のお届け先住所、指定のお届け時刻に、店舗配送にてデリバリー🚲<br>
               <br>
-              ※ デリバリーの出発前に
+              ※ 配送前に
               <a
                 :href="'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing'"
                 target="_blank"
               >
                 店舗マニュアル
               </a>
-              は必ずご一読くださいますようお願いいたします。<br>
-              ※ 代金は商品受け渡し時に「現金」もしくは「QRコード決済」でお受け取りください💰<br>
+              を必ずご一読くださいますようお願いいたします。<br>
               ※ 商品の容器に注文した方の「なまえ(ニックネーム)」を書いてください✏️<br>
               ※ 大口注文を受けましたら感謝の気持ちの「おまけ」をつけてください☺️🍱
             </td>
@@ -123,14 +114,7 @@
             <td
               class="py-5"
             >
-              ご不明点などありましたら
-              <a
-                :href="'https://line.me/R/ti/p/%40547chcok'"
-                target="_blank"
-              >
-                サポートLINE
-              </a>
-              もしくはメールや電話にてお気軽にご連絡ください👍<br>
+              ご不明点などありましたらメールや電話にてお気軽にご連絡ください👍<br>
               （MAIL : support@nijuni.jp / TEL : 050-3580-5122）
             </td>
           </tr>
@@ -140,7 +124,7 @@
 
     <div class="py-3" />
 
-    <base-material-card
+    <!-- <base-material-card
       inline
       icon="mdi-note-text-outline"
       title="NEWS"
@@ -192,28 +176,8 @@
               </a>
             </td>
           </tr>
-          <!-- <tr>
-            <td>2020/11/1</td>
-            <td>DMM.makeAKIBAにてユーザーテストを開始！</td>
-          </tr> -->
-          <!-- <tr>
-            <td>2020/9/10</td>
-            <td>ニュースサイトに「△△△△△△△△」の記事が掲載されました。</td>
-          </tr> -->
-          <!-- <tr>
-            <td>2020/10/22</td>
-            <td>
-              <a
-                :href="'https://bokudeli.studio.design'"
-                target="_blank"
-              >
-                ぼくデリ
-              </a>
-              をリリースしました！
-            </td>
-          </tr> -->
         </tbody>
       </v-simple-table>
-    </base-material-card>
+    </base-material-card> -->
   </v-container>
 </template>
