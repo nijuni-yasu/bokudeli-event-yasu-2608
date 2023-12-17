@@ -52,16 +52,12 @@
     data: () => ({
       links: [
         {
-          href: 'https://bokudeli.studio.design/',
+          href: 'https://bokudeli.jp/',
           text: 'ぼくデリ',
         },
         {
           href: 'http://nijuni.jp/',
           text: '運営会社',
-        },
-        {
-          href: 'https://lin.ee/7VwZjvC',
-          text: 'サポートLINE',
         },
       ],
     }),
