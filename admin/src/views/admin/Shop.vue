@@ -4,10 +4,6 @@
     fluid
     tag="section"
   >
-    <!-- <base-v-component
-      heading="Forms"
-      link="components/forms"
-    /> -->
     <v-row>
       <v-col cols="12">
         <validation-observer v-slot="{ handleSubmit }">
@@ -70,15 +66,6 @@
                       :error-messages="errors"
                       @change="fetchLocation(shop_postcode)"
                     />
-                    <!-- <v-text-field
-                      v-else
-                      v-model="shop_postcode"
-                      :error-messages="errors"
-                      readonly
-                      filled
-                      color="secondary"
-                      hint="店舗住所の変更・修正はサポートチームまでご連絡ください。"
-                    /> -->
                   </validation-provider>
                 </v-col>
               </v-row>
@@ -106,15 +93,6 @@
                       v-model="shop_address"
                       :error-messages="errors"
                     />
-                    <!-- <v-text-field
-                      v-else
-                      v-model="shop_address"
-                      :error-messages="errors"
-                      readonly
-                      filled
-                      color="secondary"
-                      hint="店舗住所の変更・修正はサポートチームまでご連絡ください。"
-                    /> -->
                   </validation-provider>
                 </v-col>
               </v-row>
@@ -142,15 +120,6 @@
                       v-model="shop_phone"
                       :error-messages="errors"
                     />
-                    <!-- <v-text-field
-                      v-else
-                      v-model="shop_phone"
-                      :error-messages="errors"
-                      readonly
-                      filled
-                      color="secondary"
-                      hint="電話番号の変更・修正はサポートチームまでご連絡ください。"
-                    /> -->
                   </validation-provider>
                 </v-col>
               </v-row>
@@ -667,8 +636,9 @@
                       label="締切時刻"
                     />
                   </v-col>
-                </v-row>
-                <!-- <v-row
+                </v-row>                
+                <!-- TODO: 今後、店舗ごとに自由に持たせるかも？
+                <v-row
                   align="center"
                 >
                   <v-col
@@ -995,28 +965,6 @@
   let shopId = '' // shopのドキュメントID。docがなかったら発行する。
   let shopDoc = '' // firebaseから読み込んだ値をグローバルに代入できる変数
 
-  // firestoreのデータ取得手順方法
-  // https://www.wakuwakubank.com/posts/723-firebase-firestore-query/
-  // (async () => {
-  //   const db = firebase.firestore()
-  //   const partner_uid = firebase.auth().currentUser.uid
-  //   const postRef = db.collection('partners').doc(partner_uid).collection('shops').doc('shop001')
-  //   const postDoc = await postRef.get()
-  //   if (postDoc) {
-  //     console.log(firebase.auth().currentUser.email)
-  //     console.log(firebase.auth().currentUser.uid)
-  //     console.log(postDoc)
-  //     console.log(postDoc.exists) //ture
-  //     console.log(postDoc.id)
-  //     console.log(postDoc.data()) //docの全データオブジェクト
-  //     console.log(postDoc.data().shop_name) // shop_nameを.dataから取得
-  //     console.log(postDoc.get('shop_name')) // shop_nameを.get(引数)で取得
-  //     // console.log(firebase.firestore().collection('partners').doc(partner_uid).collection('shops').doc('shop001').get().data())
-  //     // 直接.get().data をつなげてもdataはとれない。awaitで非同期に.getでデータ取得完了後にdata()で表示する。.then()する
-  //   } else {
-  //     console.log('No such document!')
-  //   }
-  // })()
 
   export default {
     name: 'DashboardFormsValidationForms',
@@ -1081,25 +1029,13 @@
     }),
 
     created () {
-      // console.log('partnerId: ' + partnerId)
-      // console.log(firebase.auth().currentUser.email)
 
-      // まずshopIDをsnapshot.getで取得する
       db.collection('partners').doc(partnerId).collection('shops').get().then((snapshot) => {
-        // console.log(snapshot)
-        // console.log(snapshot.size)
-        // console.log(snapshot.empty)
-        // console.log(snapshot.docs)
-        // console.log(typeof (snapshot))
         snapshot.forEach((doc) => {
-          // console.log(doc.id, ' => ', JSON.stringify(doc.data()))
           shopDoc = doc.data()
-          // console.log(shopDoc)
           shopId = doc.id
-          // console.log('shopID: ' + shopId)
         })
         if (shopDoc) {
-          // dbに店舗情報が存在したら、v-modelでバインディングしてるformに値を代入
           this.shop_name = shopDoc.shop_name
           this.shop_postcode = shopDoc.shop_postcode
           this.shop_address = shopDoc.shop_address
@@ -1107,8 +1043,6 @@
           this.shop_url = shopDoc.shop_url
           this.shop_description = shopDoc.shop_description
           this.shop_genre = shopDoc.shop_genre
-          // this.shop_range = shopDoc.shop_range
-          // this.shop_min_orders = shopDoc.shop_min_orders
           if (shopDoc.shop_image_url) {
             // 店舗画像未登録のときはデフォルト画像
             this.shop_image_url = shopDoc.shop_image_url
@@ -1160,13 +1094,6 @@
           console.log('shopId: ' + shopId)
         }
       })
-
-      // 店舗画像をダウンロードして表示。thisのスコープ外なので変数meに代入
-      // var me = this
-      // storage.ref().child(partnerId + '/shops/shop001.jpg').getDownloadURL().then(function (url) {
-      //   console.log('url:' + url) // ダウンロードURL
-      //   me.shop_image_src = url
-      // })
     },
 
     methods: {
@@ -1230,9 +1157,7 @@
           }).then(function () {
             // 新規作成後にshopDocにデータを入れる。画像登録できるように
             db.collection('partners').doc(partnerId).collection('shops').doc(shopId).get().then((doc) => {
-              // console.log(doc.id, ' => ', JSON.stringify(doc.data()))
               shopDoc = doc.data()
-              // console.log(shopDoc)
             })
             alert('店舗情報を新規作成しました')
           }).catch(function (error) {
@@ -1383,14 +1308,6 @@
             return
           }
         }
-        // this.shop_range_min_orders.forEach(item => {
-        //   console.log(typeof (item.range))
-        //   console.log(item.range)
-        //   console.log(typeof (item.min_orders))
-        //   console.log(item.min_orders)
-        //   console.log(typeof (item.label))
-        //   console.log(item.label)
-        // })
       },
       fetchLocation: async function(postalcode) {
         const location = await fetchLocationByPostalcode(postalcode)
