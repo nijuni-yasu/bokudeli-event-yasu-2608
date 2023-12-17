@@ -68,6 +68,7 @@
                     <v-text-field
                       v-model="shop_postcode"
                       :error-messages="errors"
+                      @change="fetchLocation(shop_postcode)"
                     />
                     <!-- <v-text-field
                       v-else
@@ -374,110 +375,6 @@
         </validation-observer>
       </v-col>
 
-      <!-- <v-col cols="12">
-        <validation-observer v-slot="{ handleSubmit }">
-          <form @submit.prevent="handleSubmit(validateForm)">
-            <base-material-card
-              color="success"
-              icon="mdi-bicycle"
-              title="配送距離"
-              class="py-3 px-5"
-            >
-              <v-row
-                align="center"
-                dense
-              >
-                <v-col
-                  class="text-right body-1 grey--text"
-                  cols="3"
-                >
-                  注文最小個数
-                </v-col>
-
-                <v-col
-                  cols="8"
-                  sm="8"
-                >
-                  <validation-provider
-                    v-slot="{ errors }"
-                    name="配送最少個数"
-                    rules="required"
-                  >
-                    <v-select
-                      v-model="shop_min_orders"
-                      :error-messages="errors"
-                      :items="shop_min_orders_array"
-                    />
-                  </validation-provider>
-                </v-col>
-              </v-row>
-
-              <v-row
-                align="center"
-                dense
-              >
-                <v-col
-                  class="text-right body-1 grey--text"
-                  cols="3"
-                >
-                  配送距離(半径km)
-                </v-col>
-                <v-col
-                  cols="8"
-                  sm="8"
-                >
-                  <validation-provider
-                    v-slot="{ errors }"
-                    rules="required"
-                    name="配送距離"
-                  >
-                    <v-select
-                      v-model="shop_range"
-                      :items="shop_range_array"
-                      :error-messages="errors"
-                    />
-                  </validation-provider>
-                </v-col>
-              </v-row>
-              <v-card-text
-                class="my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
-              >
-                ※配送距離（半径km）は
-                <a
-                  href="https://maps.multisoup.co.jp/exsample/geometry/circle.html"
-                  target="_blank"
-                >
-                  こちらのサイト
-                </a>
-                を参考にしてご検討ください。<br>
-              </v-card-text>
-              <v-card-text class="px-0 pb-0 text-center">
-                <v-sheet>
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d193595.15831228695!2d-74.11976206978034!3d40.697663747508045!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew+York%2C+NY!5e0!3m2!1sen!2sus!4v1566158235149!5m2!1sen!2sus"
-                    width="70%"
-                    height="300"
-                    frameborder="0"
-                    style="border:0"
-                    allowfullscreen
-                  />
-                </v-sheet>
-              </v-card-text>
-              <div class="pa-3 text-center">
-                <v-btn
-                  color="success"
-                  default
-                  type="submit"
-                >
-                  保存する
-                </v-btn>
-              </div>
-            </base-material-card>
-          </form>
-        </validation-observer>
-      </v-col> -->
-
       <v-col cols="12">
         <validation-observer v-slot="{ handleSubmit }">
           <form @submit.prevent="handleSubmit(validateForm)">
@@ -512,6 +409,7 @@
                     <v-text-field
                       v-model="shop_address_latitude"
                       placeholder="(例) 35.1234567"
+                      readonly
                       :error-messages="errors"
                     />
                   </validation-provider>
@@ -537,33 +435,23 @@
                     <v-text-field
                       v-model="shop_address_longitude"
                       placeholder="(例) 139.1234567"
+                      readonly
                       :error-messages="errors"
                     />
                   </validation-provider>
                 </v-col>
               </v-row>
               <v-card-text
-                class="my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
+                class="my-3 text-center text-body-1 font-weight-light"
               >
-                ※配送中心地は
-                <a
-                  href="https://maps.multisoup.co.jp/exsample/geometry/circle.html"
-                  target="_blank"
+                ※配送中心地は、店舗の郵便番号
+                <span
+                  class="text-h3"
                 >
-                  こちらのサイト
-                </a>
-                で「同士円の中心」から「緯度」と「経度」を取得し、値を入力してください。<br>
+                  {{ shop_postcode }}
+                </span>
+                をもとに自動算出しています。
               </v-card-text>
-              <div class="pa-3 text-center">
-                <v-btn
-                  color="success"
-                  default
-                  type="submit"
-                >
-                  保存する
-                </v-btn>
-              </div>
             </base-material-card>
           </form>
         </validation-observer>
@@ -621,19 +509,10 @@
                 </v-row>
               </v-container>
               <v-card-text
-                class="px-20 my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
+                class="px-20 my-3 text-center text-body-1 font-weight-light"
               >
                 ※「配送距離」と「注文最小個数」は複数設定することができます。<br>
-                ※「設定1: 0.5km 3個」「設定2:  1km 5個」「設定3:  2km 10個」のように小さい値から設定してください。<br>
-                ※「配送距離」は
-                <a
-                  href="https://maps.multisoup.co.jp/exsample/geometry/circle.html"
-                  target="_blank"
-                >
-                  こちらのサイト
-                </a>
-                を参考にして半径(km)の値を決めて入力してください。
+                ※【設定1】5km 5個 【設定2】10km 7個 【設定3】15km 10個のように小さい値から設定してください。<br>
               </v-card-text>
               <div class="pa-3 text-center">
                 <v-btn
@@ -1108,6 +987,7 @@
   import 'firebase/firestore'
   import 'firebase/auth'
   import 'firebase/storage'
+  import { fetchLocationByPostalcode } from '@/methods/fetchLocation'
 
   const db = firebase.firestore()
   const partnerId = firebase.auth().currentUser.uid
@@ -1512,6 +1392,12 @@
         //   console.log(item.label)
         // })
       },
+      fetchLocation: async function(postalcode) {
+        const location = await fetchLocationByPostalcode(postalcode)
+        this.shop_address_longitude = location.longitude
+        this.shop_address_latitude = location.latitude
+        this.shop_address = location.address
+      }
     },
   }
 </script>
