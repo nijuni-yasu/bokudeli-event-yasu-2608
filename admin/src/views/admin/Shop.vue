@@ -4,10 +4,6 @@
     fluid
     tag="section"
   >
-    <!-- <base-v-component
-      heading="Forms"
-      link="components/forms"
-    /> -->
     <v-row>
       <v-col cols="12">
         <validation-observer v-slot="{ handleSubmit }">
@@ -68,16 +64,8 @@
                     <v-text-field
                       v-model="shop_postcode"
                       :error-messages="errors"
+                      @change="fetchLocation(shop_postcode)"
                     />
-                    <!-- <v-text-field
-                      v-else
-                      v-model="shop_postcode"
-                      :error-messages="errors"
-                      readonly
-                      filled
-                      color="secondary"
-                      hint="店舗住所の変更・修正はサポートチームまでご連絡ください。"
-                    /> -->
                   </validation-provider>
                 </v-col>
               </v-row>
@@ -105,15 +93,6 @@
                       v-model="shop_address"
                       :error-messages="errors"
                     />
-                    <!-- <v-text-field
-                      v-else
-                      v-model="shop_address"
-                      :error-messages="errors"
-                      readonly
-                      filled
-                      color="secondary"
-                      hint="店舗住所の変更・修正はサポートチームまでご連絡ください。"
-                    /> -->
                   </validation-provider>
                 </v-col>
               </v-row>
@@ -141,15 +120,6 @@
                       v-model="shop_phone"
                       :error-messages="errors"
                     />
-                    <!-- <v-text-field
-                      v-else
-                      v-model="shop_phone"
-                      :error-messages="errors"
-                      readonly
-                      filled
-                      color="secondary"
-                      hint="電話番号の変更・修正はサポートチームまでご連絡ください。"
-                    /> -->
                   </validation-provider>
                 </v-col>
               </v-row>
@@ -374,110 +344,6 @@
         </validation-observer>
       </v-col>
 
-      <!-- <v-col cols="12">
-        <validation-observer v-slot="{ handleSubmit }">
-          <form @submit.prevent="handleSubmit(validateForm)">
-            <base-material-card
-              color="success"
-              icon="mdi-bicycle"
-              title="配送距離"
-              class="py-3 px-5"
-            >
-              <v-row
-                align="center"
-                dense
-              >
-                <v-col
-                  class="text-right body-1 grey--text"
-                  cols="3"
-                >
-                  注文最小個数
-                </v-col>
-
-                <v-col
-                  cols="8"
-                  sm="8"
-                >
-                  <validation-provider
-                    v-slot="{ errors }"
-                    name="配送最少個数"
-                    rules="required"
-                  >
-                    <v-select
-                      v-model="shop_min_orders"
-                      :error-messages="errors"
-                      :items="shop_min_orders_array"
-                    />
-                  </validation-provider>
-                </v-col>
-              </v-row>
-
-              <v-row
-                align="center"
-                dense
-              >
-                <v-col
-                  class="text-right body-1 grey--text"
-                  cols="3"
-                >
-                  配送距離(半径km)
-                </v-col>
-                <v-col
-                  cols="8"
-                  sm="8"
-                >
-                  <validation-provider
-                    v-slot="{ errors }"
-                    rules="required"
-                    name="配送距離"
-                  >
-                    <v-select
-                      v-model="shop_range"
-                      :items="shop_range_array"
-                      :error-messages="errors"
-                    />
-                  </validation-provider>
-                </v-col>
-              </v-row>
-              <v-card-text
-                class="my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
-              >
-                ※配送距離（半径km）は
-                <a
-                  href="https://maps.multisoup.co.jp/exsample/geometry/circle.html"
-                  target="_blank"
-                >
-                  こちらのサイト
-                </a>
-                を参考にしてご検討ください。<br>
-              </v-card-text>
-              <v-card-text class="px-0 pb-0 text-center">
-                <v-sheet>
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d193595.15831228695!2d-74.11976206978034!3d40.697663747508045!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew+York%2C+NY!5e0!3m2!1sen!2sus!4v1566158235149!5m2!1sen!2sus"
-                    width="70%"
-                    height="300"
-                    frameborder="0"
-                    style="border:0"
-                    allowfullscreen
-                  />
-                </v-sheet>
-              </v-card-text>
-              <div class="pa-3 text-center">
-                <v-btn
-                  color="success"
-                  default
-                  type="submit"
-                >
-                  保存する
-                </v-btn>
-              </div>
-            </base-material-card>
-          </form>
-        </validation-observer>
-      </v-col> -->
-
       <v-col cols="12">
         <validation-observer v-slot="{ handleSubmit }">
           <form @submit.prevent="handleSubmit(validateForm)">
@@ -512,6 +378,7 @@
                     <v-text-field
                       v-model="shop_address_latitude"
                       placeholder="(例) 35.1234567"
+                      readonly
                       :error-messages="errors"
                     />
                   </validation-provider>
@@ -537,33 +404,23 @@
                     <v-text-field
                       v-model="shop_address_longitude"
                       placeholder="(例) 139.1234567"
+                      readonly
                       :error-messages="errors"
                     />
                   </validation-provider>
                 </v-col>
               </v-row>
               <v-card-text
-                class="my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
+                class="my-3 text-center text-body-1 font-weight-light"
               >
-                ※配送中心地は
-                <a
-                  href="https://maps.multisoup.co.jp/exsample/geometry/circle.html"
-                  target="_blank"
+                ※配送中心地は、店舗の郵便番号
+                <span
+                  class="text-h3"
                 >
-                  こちらのサイト
-                </a>
-                で「同士円の中心」から「緯度」と「経度」を取得し、値を入力してください。<br>
+                  {{ shop_postcode }}
+                </span>
+                をもとに自動算出しています。
               </v-card-text>
-              <div class="pa-3 text-center">
-                <v-btn
-                  color="success"
-                  default
-                  type="submit"
-                >
-                  保存する
-                </v-btn>
-              </div>
             </base-material-card>
           </form>
         </validation-observer>
@@ -621,19 +478,10 @@
                 </v-row>
               </v-container>
               <v-card-text
-                class="px-20 my-3 text-center text-body-2 font-weight-light"
-                style="color:#9E9E9E;"
+                class="px-20 my-3 text-center text-body-1 font-weight-light"
               >
                 ※「配送距離」と「注文最小個数」は複数設定することができます。<br>
-                ※「設定1: 0.5km 3個」「設定2:  1km 5個」「設定3:  2km 10個」のように小さい値から設定してください。<br>
-                ※「配送距離」は
-                <a
-                  href="https://maps.multisoup.co.jp/exsample/geometry/circle.html"
-                  target="_blank"
-                >
-                  こちらのサイト
-                </a>
-                を参考にして半径(km)の値を決めて入力してください。
+                ※【設定1】5km 5個 【設定2】10km 7個 【設定3】15km 10個のように小さい値から設定してください。<br>
               </v-card-text>
               <div class="pa-3 text-center">
                 <v-btn
@@ -788,8 +636,9 @@
                       label="締切時刻"
                     />
                   </v-col>
-                </v-row>
-                <!-- <v-row
+                </v-row>                
+                <!-- TODO: 今後、店舗ごとに自由に持たせるかも？
+                <v-row
                   align="center"
                 >
                   <v-col
@@ -1108,39 +957,16 @@
   import 'firebase/firestore'
   import 'firebase/auth'
   import 'firebase/storage'
+  import { fetchLocationByPostalcode } from '@/methods/fetchLocation'
 
   const db = firebase.firestore()
-  const partnerId = firebase.auth().currentUser.uid
   const storage = firebase.storage()
+  let partnerId = ''
   let shopId = '' // shopのドキュメントID。docがなかったら発行する。
   let shopDoc = '' // firebaseから読み込んだ値をグローバルに代入できる変数
 
-  // firestoreのデータ取得手順方法
-  // https://www.wakuwakubank.com/posts/723-firebase-firestore-query/
-  // (async () => {
-  //   const db = firebase.firestore()
-  //   const partner_uid = firebase.auth().currentUser.uid
-  //   const postRef = db.collection('partners').doc(partner_uid).collection('shops').doc('shop001')
-  //   const postDoc = await postRef.get()
-  //   if (postDoc) {
-  //     console.log(firebase.auth().currentUser.email)
-  //     console.log(firebase.auth().currentUser.uid)
-  //     console.log(postDoc)
-  //     console.log(postDoc.exists) //ture
-  //     console.log(postDoc.id)
-  //     console.log(postDoc.data()) //docの全データオブジェクト
-  //     console.log(postDoc.data().shop_name) // shop_nameを.dataから取得
-  //     console.log(postDoc.get('shop_name')) // shop_nameを.get(引数)で取得
-  //     // console.log(firebase.firestore().collection('partners').doc(partner_uid).collection('shops').doc('shop001').get().data())
-  //     // 直接.get().data をつなげてもdataはとれない。awaitで非同期に.getでデータ取得完了後にdata()で表示する。.then()する
-  //   } else {
-  //     console.log('No such document!')
-  //   }
-  // })()
-
   export default {
-    name: 'DashboardFormsValidationForms',
-
+    name: 'Shop',
     $_veeValidate: {
       validator: 'new',
     },
@@ -1201,25 +1027,13 @@
     }),
 
     created () {
-      // console.log('partnerId: ' + partnerId)
-      // console.log(firebase.auth().currentUser.email)
-
-      // まずshopIDをsnapshot.getで取得する
+      partnerId = firebase.auth().currentUser.uid
       db.collection('partners').doc(partnerId).collection('shops').get().then((snapshot) => {
-        // console.log(snapshot)
-        // console.log(snapshot.size)
-        // console.log(snapshot.empty)
-        // console.log(snapshot.docs)
-        // console.log(typeof (snapshot))
         snapshot.forEach((doc) => {
-          // console.log(doc.id, ' => ', JSON.stringify(doc.data()))
           shopDoc = doc.data()
-          // console.log(shopDoc)
           shopId = doc.id
-          // console.log('shopID: ' + shopId)
         })
         if (shopDoc) {
-          // dbに店舗情報が存在したら、v-modelでバインディングしてるformに値を代入
           this.shop_name = shopDoc.shop_name
           this.shop_postcode = shopDoc.shop_postcode
           this.shop_address = shopDoc.shop_address
@@ -1227,8 +1041,6 @@
           this.shop_url = shopDoc.shop_url
           this.shop_description = shopDoc.shop_description
           this.shop_genre = shopDoc.shop_genre
-          // this.shop_range = shopDoc.shop_range
-          // this.shop_min_orders = shopDoc.shop_min_orders
           if (shopDoc.shop_image_url) {
             // 店舗画像未登録のときはデフォルト画像
             this.shop_image_url = shopDoc.shop_image_url
@@ -1280,13 +1092,6 @@
           console.log('shopId: ' + shopId)
         }
       })
-
-      // 店舗画像をダウンロードして表示。thisのスコープ外なので変数meに代入
-      // var me = this
-      // storage.ref().child(partnerId + '/shops/shop001.jpg').getDownloadURL().then(function (url) {
-      //   console.log('url:' + url) // ダウンロードURL
-      //   me.shop_image_src = url
-      // })
     },
 
     methods: {
@@ -1350,9 +1155,7 @@
           }).then(function () {
             // 新規作成後にshopDocにデータを入れる。画像登録できるように
             db.collection('partners').doc(partnerId).collection('shops').doc(shopId).get().then((doc) => {
-              // console.log(doc.id, ' => ', JSON.stringify(doc.data()))
               shopDoc = doc.data()
-              // console.log(shopDoc)
             })
             alert('店舗情報を新規作成しました')
           }).catch(function (error) {
@@ -1503,15 +1306,13 @@
             return
           }
         }
-        // this.shop_range_min_orders.forEach(item => {
-        //   console.log(typeof (item.range))
-        //   console.log(item.range)
-        //   console.log(typeof (item.min_orders))
-        //   console.log(item.min_orders)
-        //   console.log(typeof (item.label))
-        //   console.log(item.label)
-        // })
       },
+      fetchLocation: async function(postalcode) {
+        const location = await fetchLocationByPostalcode(postalcode)
+        this.shop_address_longitude = location.longitude
+        this.shop_address_latitude = location.latitude
+        this.shop_address = location.address
+      }
     },
   }
 </script>

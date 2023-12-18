@@ -64,7 +64,7 @@
   import { Orders } from '@/models/Orders'
 
   const db = firebase.firestore()
-  const partnerId = firebase.auth().currentUser.uid
+  let partnerId = ''
 
   export default {
     data: () => ({
@@ -82,6 +82,7 @@
       },
     },
     created () {
+      partnerId = firebase.auth().currentUser.uid
       this.initEvents()
     },
     methods: {
