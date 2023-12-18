@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { collection, getDocs, query, where } from 'firebase/firestore'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import { convertDocumentDataToCommunity, convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
@@ -37,19 +37,23 @@ onMounted(async () => {
       const members = await loadCommunityMembers(docSnapshot.ref)
       if (members.some(member => member.user_id === props.userId)) {
         const community = convertDocumentDataToCommunity(docSnapshot.data())
+        community.communityDescription = convertTruncateText(community.communityDescription, 100)
         communityList.push({
           community,
           members: members,
         })
+        communityList.sort((a,b) => b.members.length - a.members.length)
       }    
     } else if(props.type==="managers"){
       const members = await loadCommunityManagers(docSnapshot.ref)
       if (members.some(member => member.user_id === props.userId)) {
         const community = convertDocumentDataToCommunity(docSnapshot.data())
+        community.communityDescription = convertTruncateText(community.communityDescription, 100)
         communityList.push({
           community,
           members: members,
         })
+        communityList.sort((a,b) => b.members.length - a.members.length)
       }
     }
   }

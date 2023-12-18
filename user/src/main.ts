@@ -18,6 +18,15 @@ loadFonts()
 // Create vue app
 const app = createApp(App)
 
+// リンクを生成するカスタムディレクティブ<v-linkfy>
+app.directive('linkify', {
+    mounted(el) {
+        let text = el.textContent
+        let replacedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>')
+        el.innerHTML = replacedText
+    }
+})
+
 // Use plugins
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
