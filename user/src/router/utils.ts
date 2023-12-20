@@ -9,4 +9,4 @@ export const getCommunityPath = (communityAccount: string) => `/community/${comm
 export const getCommunitySettingsPath = (communityAccount: string) => `/community/${communityAccount}/settings`
 export const getEventPath = (communityAccount: string, eventId: string) =>
   `/community/${communityAccount}/events/${eventId}`
-export const getEventCreatePath = (communityAccount: string) => `/community/${communityAccount}/eventcreate`
+export const getEventCreatePath = (communityAccount: string) => `/community/${communityAccount}/events/create`
