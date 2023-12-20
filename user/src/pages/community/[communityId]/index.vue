@@ -10,6 +10,7 @@ import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import { FirestoredUser } from '@/schemes/storedUser'
+import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 
 const props = defineProps<{
   communityId: string
@@ -39,6 +40,11 @@ const eventDb = query(
   orderBy('event_start_datetime', 'desc'),
 )
 
+const isContactDialogVisible = ref(false)
+const showContactDialog = () => {
+  isContactDialogVisible.value = true
+};
+
 onMounted(async () => {
   const communitiesSnapshot = await getDocs(communityDb)
   const communitySnapshot = communitiesSnapshot.docs.shift()
@@ -66,6 +72,7 @@ onMounted(async () => {
   })
   state.isLoading = false
 })
+
 </script>
 <template>
   <section>
@@ -103,12 +110,20 @@ onMounted(async () => {
                   {{ link }}
                 </a>
               </v-card-text>
-              <!-- TODO。問い合わせ機能を実装する。専用のフォームを作ってつくってコミュマネのメールアドレスに送信する。
-              <v-card-text>
-                <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" class="text-decoration-none" target="_blank">
-                  問い合わせ
-                </a>
-              </v-card-text> -->
+              <v-col>
+                <v-btn
+                  class="ma-1"
+                  variant="outlined"
+                  rounded
+                  prepend-icon="mdi-email"
+                  color="primary"
+                  width="100%"
+                  @click="showContactDialog"
+                >
+                  お問い合わせ
+                </v-btn>
+                <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName"/>
+              </v-col>
               <!-- community manager -->
               <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">MANAGER</v-card-title>
               <div v-for="manager in state.managers" :key="manager.user_id">
