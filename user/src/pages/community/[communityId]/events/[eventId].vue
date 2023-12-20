@@ -27,6 +27,7 @@ import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EventMemberList from '@/components/EventMemberList.vue'
 import EventMenuList from '@/components/EventMenuList.vue'
+import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import { countEventMembers } from '@/composable/countEventMembers'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
 
@@ -79,6 +80,11 @@ const fetchData = async () => {
   const communitySnapshotRef = doc(db, 'communities', state.community.communityId)
   state.isCommunityManager = await checkCommunityManager(communitySnapshotRef)
 }
+
+const isContactDialogVisible = ref(false)
+const showContactDialog = () => {
+  isContactDialogVisible.value = true
+};
 
 onBeforeRouteUpdate(async (to, from, next) => {
   await fetchData()
@@ -154,28 +160,6 @@ const updateAlert = (message: string) => {
                 <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-10 pre-line">
                   {{ state.event.event_name }}
                 </v-card-title>
-                <v-card-text class="text-left pb-5 cursor-pointer text-decoration-none">
-                  <router-link
-                    :to="getCommunityPath(state.event.community_account)"
-                    class="text--primary cursor-pointer text-decoration-none"
-                  >
-                    <v-row class="ma-1">
-                      <v-img
-                        :src="state.community.communityIconImageUrl"
-                        style="border-radius: 10px; width: 75px; height: 75px"
-                        aspect-ratio="1"
-                        cover
-                        max-width="75px"
-                      />
-                      <div class="ml-2 align-self-center">
-                        <div class="mb-2" style="font-size: 14px">【主催者】</div>
-                        <div class="my-2" style="font-size: 20px">
-                          {{ state.community.communityName }}
-                        </div>
-                      </div>
-                    </v-row>
-                  </router-link>
-                </v-card-text>
                 <v-card-text class="event-item">
                   【開催日時】
                 </v-card-text>
@@ -239,6 +223,43 @@ const updateAlert = (message: string) => {
                 </v-card-text> -->
                 <!-- メンバー情報 -->
                 <event-member-list :community-id="state.event.community_account" :event-id="state.event.event_id" :event-max-people="state.event.event_max_people"/>
+                <v-card-text >
+                  <v-row align-self-center>
+                      <v-row class="ma-1">
+                        <router-link
+                          :to="getCommunityPath(state.event.community_account)"
+                        >                 
+                          <v-img
+                            :src="state.community.communityIconImageUrl"
+                            style="border-radius: 10px; width: 100px; height: 100px"
+                            aspect-ratio="1"
+                            cover
+                            max-width="100px"
+                          />
+                        </router-link>
+                        <div class="ml-2 align-self-end">
+                          <router-link
+                            :to="getCommunityPath(state.event.community_account)"
+                            class="text--primary cursor-pointer text-decoration-none"
+                          >
+                            <div class="ma-1" style="font-size: 12px">【主 催 者】</div>
+                            <div class="ma-1" style="font-size: 18px">{{ state.community.communityName }}</div>
+                          </router-link>
+                          <v-btn
+                            class="ma-1"
+                            variant="outlined"
+                            rounded
+                            prepend-icon="mdi-email"
+                            @click="showContactDialog"
+                          >
+                            主催者に連絡
+                          </v-btn>
+                          <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName"/>
+                        </div>
+                      </v-row>
+                  </v-row>
+                </v-card-text>
+             
               </v-col>
             </v-row>
           </v-card>
