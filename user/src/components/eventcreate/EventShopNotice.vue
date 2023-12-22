@@ -1,29 +1,23 @@
 <script setup lang="ts">
-import { ShopNotice } from '@/schemes/eventCreate'
-import { cloneDeep } from 'lodash'
+import type BokudeliEvent from '@/schemes/bokudeliEvent'
 
 const props = defineProps<{
-  modelValue: ShopNotice
+  modelValue: Partial<BokudeliEvent>
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit', value: ShopNotice): void
+  (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
+  (e: 'submit'): void
   (e: 'back'): void
 }>()
 
-const state = reactive(cloneDeep(props.modelValue))
+const event = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
 
 const pickUpPlace = ref('')
 const message = ref('')
-
-const submit = () => {
-  state.organizerMemo = [pickUpPlace.value, message.value].join('\n')
-  emit('submit', state)
-}
-const back = () => {
-  emit('back')
-}
-
 </script>
 
 <template>
@@ -39,20 +33,20 @@ const back = () => {
           <v-card-text class="pt-5">
             <v-row class="justify-center">
               <v-col cols="12">
-                <v-text-field v-model="state.organizerFullName" outlined dense label="担当者 氏名"></v-text-field>
+                <v-text-field v-model="event.organizer_fullname" outlined dense label="担当者 氏名"></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="state.organizerCompany" outlined dense label="会社名/団体名"></v-text-field>
+                <v-text-field v-model="event.organizer_company" outlined dense label="会社名/団体名"></v-text-field>
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="state.organizerEmail" outlined dense label="メールアドレス"></v-text-field>
+                <v-text-field v-model="event.organizer_email" outlined dense label="メールアドレス"></v-text-field>
               </v-col>
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.organizerPhonePersonal"
+                  v-model="event.organizer_phone_personal"
                   outlined
                   dense
                   label="電話番号（担当者）"
@@ -61,7 +55,7 @@ const back = () => {
 
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.organizerPhoneCompany"
+                  v-model="event.organizer_phone_company"
                   outlined
                   dense
                   label="電話番号（会社/団体）"
@@ -84,8 +78,8 @@ const back = () => {
           </v-card-text>
 
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
-            <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="submit">下書きをプレビューする</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
+            <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="emit('submit')">下書きをプレビューする</v-btn>
           </v-card-text>
           <v-card-text class="text-center mx-0">
             <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email">店舗に予約申請メールする</v-btn>

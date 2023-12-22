@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { eventPaymentItems } from '@/schemes/bokudeliEvent'
+import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
 import {
-  EventDetailData,
   dateString,
   hourString,
   minutesString,
-  parseDateTimeStrings,
   hourList,
   minutesList,
 } from '@/schemes/eventCreate'
-import { clone, cloneDeep } from 'lodash'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
 
@@ -18,72 +15,48 @@ const pickerConfig = {
 }
 
 const props = defineProps<{
-  modelValue: EventDetailData
+  modelValue: Partial<BokudeliEvent>
+  coverImage: File | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: EventDetailData): void
-  (e: 'submit', value: EventDetailData): void
+  (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
+  (e: 'update:coverImage', value: File | null): void
+  (e: 'submit'): void
   (e: 'back'): void
 }>()
 
-const state = reactive(cloneDeep(props.modelValue))
+const event = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const coverUrl = computed(() => {
+  if (props.coverImage) {
+    return URL.createObjectURL(props.coverImage)
+  }
+  return event.value.event_cover_url
+})
 
-const eventCoverUrl = ref(clone(state.eventCoverUrl))
-const eventDesc = ref(clone(state.eventDesc))
-const eventMaxPeople = ref(clone(state.eventMaxPeople))
-const isPublic = ref(clone(state.isPublic))
-const eventPayment = ref(clone(state.eventPayment))
-const coverImage = ref<File | null>(null)
-
-// Reactive にしない
-const eventDeadlineDate = dateString(state.eventDeadlineDateTime)
-const eventDeadlineHour = hourString(state.eventDeadlineDateTime)
-const eventDeadlineMinute = minutesString(state.eventDeadlineDateTime)
+const eventDeadlineDate = computed(() => dateString(props.modelValue.event_deadline_datetime?.toDate() ?? null))
+const eventDeadlineHour = computed(() => hourString(props.modelValue.event_deadline_datetime?.toDate() ?? null))
+const eventDeadlineMinute = computed(() => minutesString(props.modelValue.event_deadline_datetime?.toDate() ?? null))
 
 const onTriggerUpload = () => {
   fileInputRef.value?.click()
 }
 
-const onFileChange = (event: Event) => {
-  const eventTarget = event.target as HTMLInputElement
+const onFileChange = (e: Event) => {
+  const eventTarget = e.target as HTMLInputElement
   if (!eventTarget?.files || eventTarget?.files.length === 0) {
     return
   }
   const file = eventTarget.files[0]
-  coverImage.value = file
-}
-
-const coverImageUrl = computed(() => {
-  if (coverImage.value) {
-    return URL.createObjectURL(coverImage.value)
+  if (file) {
+    emit('update:coverImage', file)
   }
-  return ''
-})
-
-const submit = () => {
-  state.eventCoverUrl = eventCoverUrl.value
-  state.eventDesc = eventDesc.value
-  state.eventDeadlineDateTime = parseDateTimeStrings(
-    eventDeadlineDate,
-    eventDeadlineHour,
-    eventDeadlineMinute,
-  )
-  state.eventMaxPeople = eventMaxPeople.value
-  state.isPublic = isPublic.value
-  state.eventPayment = eventPayment.value
-  state.eventCoverImage = coverImageUrl.value !== '' ? coverImage.value : null
-
-  emit('update:modelValue', state)
-  emit('submit', state)
 }
-
-const back = () => {
-  emit('back')
-}
-
 </script>
 
 <template>
@@ -101,7 +74,7 @@ const back = () => {
               <v-col cols="12">
                 <div class="v-field image-upload-container" @click="onTriggerUpload">
                   <input ref="fileInputRef" class="file-input" type="file" @change="onFileChange" />
-                  <v-img v-if="coverImageUrl" :src="coverImageUrl"></v-img>
+                  <v-img v-if="coverUrl" :src="coverUrl"></v-img>
                   <div v-else class="placeholder">イベント画像をアップロード<br />1200px X 630px</div>
                 </div>
               </v-col>
@@ -111,7 +84,7 @@ const back = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-textarea v-model="eventDesc" outlined rows="10" label="イベント詳細"></v-textarea>
+                <v-textarea v-model="event.event_desc" outlined rows="10" label="イベント詳細"></v-textarea>
               </v-col>
             </v-row>
           </v-card-text>
@@ -140,7 +113,7 @@ const back = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="eventMaxPeople" outlined dense label="定員数"></v-text-field>
+                <v-text-field v-model.number="event.event_max_people" outlined dense label="定員数"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
@@ -151,7 +124,7 @@ const back = () => {
             <span>公開設定</span>
           </v-card-title>
           <v-card-text>
-            <v-switch v-model="isPublic" hide-details class="mt-0">
+            <v-switch v-model="event.is_public" hide-details class="mt-0">
               <template #label> 公開イベント </template>
             </v-switch>
           </v-card-text>
@@ -161,14 +134,14 @@ const back = () => {
           </v-card-title>
           <v-card-text>
             <v-col cols="12" sm="12" md="6">
-              <v-select v-model="eventPayment" :items="eventPaymentItems" hide-details class="mt-0">
+              <v-select v-model="event.event_payment" :items="eventPaymentItems" hide-details class="mt-0">
                 <template #label> 支払い設定 </template>
               </v-select>
             </v-col>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="submit">次へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="emit('submit')">次へ</v-btn>
           </v-card-text>
         </v-form>
       </v-card>

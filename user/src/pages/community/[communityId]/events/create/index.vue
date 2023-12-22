@@ -4,9 +4,10 @@ import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventDetail from '@/components/eventcreate/EventDetail.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
-import { collection, collectionGroup, getDocs, query, where, addDoc, setDoc, Timestamp } from 'firebase/firestore'
+import { collection, doc, collectionGroup, getDocs, query, where, addDoc, setDoc, Timestamp, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import {
+  convertDocumentDataToEvent,
   convertDocumentDataToCommunity,
   convertDocumentDataToMenu,
   convertDateToWeekTimestamp,
@@ -15,79 +16,65 @@ import {
 import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
-import { BasicInfo, ShopNotice, EventDetailData } from '@/schemes/eventCreate'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { getEventPath } from '@/router/utils'
 import { uploadEventImage } from '@/composable/uploadImage'
 import { LatLogLocation, calculateDistance } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
 
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps<{
   communityId: string
 }>()
 
-const state = reactive({
-  event: {} as Partial<BokudeliEvent>,
-  shops: [] as Shop[],
-  menus: [] as PartnerMenu[],
-  coverImage: null as File | null,
-})
+const eventId = route.query.id as string | null
+
+const event = ref({} as Partial<BokudeliEvent>)
+const eventLocation = ref<LatLogLocation | null>(null)
+const shops = ref<Shop[]>([])
+const menus = ref<PartnerMenu[]>([])
+const coverImage = ref<File | null>(null)
 
 const stepper = ref(1)
 
-const basicInfo = reactive<BasicInfo>({
-  title: '',
-  postalcode: '',
-  address: '',
-  placeName: '',
-  placeUrl: '',
-  startDateTime: null,
-  endDateTime: null,
-  location: null,
-})
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
-const eventDetailData = reactive<EventDetailData>({
-  eventCoverUrl: '',
-  eventDesc: '',
-  eventDeadlineDateTime: null,
-  eventMaxPeople: 0,
-  isPublic: false,
-  eventPayment: 'user_advance',
-  eventCoverImage: null,
-})
-
-const shopNotice = reactive<ShopNotice>({
-  organizerFullName: '',
-  organizerCompany: '',
-  organizerPhonePersonal: '',
-  organizerPhoneCompany: '',
-  organizerEmail: '',
-  organizerMemo: '',
-})
 
 const fetchData = async () => {
   const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
-  const communitySnapshot = await getDocs(communityDb)
-  const communityData = communitySnapshot.docs.shift()?.data()
-  if (communityData) {
+  const promises = [getDocs(communityDb)]
+  if (eventId != null) {
+    const eventDb = query(collectionGroup(db, 'events'), where('event_id', '==', eventId))
+    promises.push(getDocs(eventDb))
+  }
+  const [communityData, eventData] = await Promise.all(promises)
+    .then((results) => [results[0]?.docs?.shift()?.data(), results[1]?.docs?.shift()?.data()])
+  if (eventData != null) {
+    event.value = convertDocumentDataToEvent(eventData)
+  }
+  if (communityData != null) {
     const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communityData)
-    state.event = {
-      community_id: communityId,
-      community_account: communityAccount,
-      community_name: communityName,
-    }
+    event.value.community_id = communityId
+    event.value.community_name = communityName
+    event.value.community_account = communityAccount
   }
 }
 
-const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date) => {
+const fetchShops = async () => {
+  const startDateTime =  event.value.event_start_datetime?.toDate()
+  const location = eventLocation.value
+  if (location == null || startDateTime == null) {
+    shops.value = []
+    return 
+  }
+
   isLoadingShop.value = true
 
   const shopDb = collectionGroup(db, 'shops')
   const shopSnapshot = await getDocs(shopDb)
-  const shops = shopSnapshot.docs
+  shops.value = shopSnapshot.docs
     .map((doc) => {
       return doc.data() as Shop
     })
@@ -97,7 +84,7 @@ const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date) =>
         longitude: shop.shop_address_longitude,
         latitude: shop.shop_address_latitude,
       }
-      const distance = calculateDistance(eventLocation, shopLocation)
+      const distance = calculateDistance(location, shopLocation)
       const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
       const isInRange = maxRange ? distance <= maxRange : false
 
@@ -119,27 +106,24 @@ const fetchShops = async (eventLocation: LatLogLocation, startDateTime: Date) =>
 
       return isInRange && isInTime && shop.is_approved && shop.is_open
     })
-  state.shops = shops
   isLoadingShop.value = false
 }
 
 const fetchMenu = async () => {
-  isLoadingMenu.value = true
-
-  const { partner_id } = state.event
+  const { partner_id } = event.value
   if (!partner_id) {
-    isLoadingMenu.value = false
     return
   }
+
+  isLoadingMenu.value = true
   const partnerDb = collection(db, 'partners')
 
   const menuSnapshot = await getDocs(collection(partnerDb, partner_id, 'menus'))
 
-  const menus = menuSnapshot.docs
+  menus.value = menuSnapshot.docs
     .map((doc) => convertDocumentDataToMenu(partner_id, doc.id, doc.data()))
     .sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
-  state.menus = menus
   isLoadingMenu.value = false
 }
 
@@ -154,96 +138,47 @@ onMounted(async () => {
   await fetchData()
 })
 
-const submittedBasicInfo = async () => {
-  state.event.event_name = basicInfo.title
-  state.event.event_postalcode = basicInfo.postalcode
-  state.event.event_address = basicInfo.address
-  state.event.event_place = basicInfo.placeName
-  state.event.event_place_url = basicInfo.placeUrl
-  state.event.event_start_datetime = basicInfo.startDateTime ? Timestamp.fromDate(basicInfo.startDateTime) : null
-  state.event.event_end_datetime = basicInfo.endDateTime ? Timestamp.fromDate(basicInfo.endDateTime) : null
-
-  await fetchShops(basicInfo.location as LatLogLocation, basicInfo.startDateTime as Date)
-  // NEXT ボタンを使用する場合はいらない
-  stepper.value++
-}
-
-const submittedShop = async (shop: Shop) => {
-  state.event.shop_id = shop.shop_id
-  state.event.partner_id = shop.partner_id
-  state.event.shop_name = shop.shop_name
-
-  // 注文締め切り日時を計算
-  const startDateTime = state.event.event_start_datetime?.toDate()
-  if (startDateTime == null) {
-    throw new Error('startDateTime is null')
-  }
-  startDateTime.setDate(startDateTime.getDate() - shop.shop_deadline_datetime.days_before)
-  // UTC なので必ず Date Object にしてから使う
-  const deadLineTime = new Date(shop.shop_deadline_datetime.time)
-  startDateTime.setHours(deadLineTime.getHours())
-  startDateTime.setMinutes(deadLineTime.getMinutes())
-  eventDetailData.eventDeadlineDateTime = startDateTime
-
-  await fetchMenu()
-  stepper.value++
-}
-
-const submittedMenu = () => {
-  stepper.value++
-}
-
-const submittedDetail = (detail: EventDetailData) => {
-  state.event.event_cover_url = detail.eventCoverUrl
-  state.event.event_desc = detail.eventDesc
-  state.event.event_deadline_datetime = detail.eventDeadlineDateTime
-    ? Timestamp.fromDate(detail.eventDeadlineDateTime)
-    : null
-  state.event.event_max_people = detail.eventMaxPeople
-  state.event.is_public = detail.isPublic
-  state.event.event_payment = detail.eventPayment
-  state.coverImage = detail.eventCoverImage
-
-  stepper.value++
-}
-
-const submitShopNotice = async (shopNotice: ShopNotice) => {
-  state.event.organizer_fullname = shopNotice.organizerFullName
-  state.event.organizer_company = shopNotice.organizerCompany
-  state.event.organizer_phone_personal = shopNotice.organizerPhonePersonal
-  state.event.organizer_phone_company = shopNotice.organizerPhoneCompany
-  state.event.organizer_email = shopNotice.organizerEmail
-  state.event.organizer_memo = shopNotice.organizerMemo
-
-  await submit()
-}
 const submit = async () => {
-  const eventItem = {
-    ...createEmptyEvent(),
-    ...state.event,
-    ...{
-      event_status: 'in_draft',
-      created_at: Timestamp.now(),
-      updated_at: Timestamp.now(),
-    },
+  if (eventId == null) {
+    // 新規作成
+    const eventItem = {
+      ...createEmptyEvent(),
+      ...event.value,
+      ...{
+        event_status: { value: 'in_draft'},
+        created_at: Timestamp.now(),
+        updated_at: Timestamp.now(),
+      },
+    }
+
+    if (eventItem.community_id && eventItem.community_account) {
+      const addedDoc = await addDoc(collection(db, 'communities', eventItem.community_id, 'events'), eventItem)
+      const eventCoverUrl = coverImage.value
+        ? await uploadEventImage(eventItem.community_id, addedDoc.id, coverImage.value)
+        : ''
+      await setDoc(addedDoc, { event_id: addedDoc.id, event_cover_url: eventCoverUrl }, { merge: true })
+
+      window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
+      router.push(getEventPath(eventItem.community_account, addedDoc.id))
+    }
+  } else {
+    // 更新
+    const eventItem = {
+      ...event.value,
+      ...{
+        updated_at: Timestamp.now(),
+      },
+    }
+    if (eventItem.community_id && eventItem.community_account) {
+      if (coverImage.value) {
+        eventItem.event_cover_url = (await uploadEventImage(eventItem.community_id, eventId, coverImage.value)) ?? ''
+      }
+      await updateDoc(doc(db, 'communities', eventItem.community_id, 'events', eventId), eventItem)
+
+      window.alert(`イベントID： ${eventId} のイベントを更新しました`)
+      router.push(getEventPath(eventItem.community_account, eventId))
+    }
   }
-
-  if (eventItem.community_id && eventItem.community_account) {
-    const addedDoc = await addDoc(collection(db, 'communities', eventItem.community_id, 'events'), eventItem)
-    // 自動採番されたOrderIDを取得して項目として追加追加
-    const eventId = addedDoc.id
-    const eventCoverUrl = state.coverImage
-      ? await uploadEventImage(eventItem.community_id, eventId, state.coverImage)
-      : ''
-    await setDoc(addedDoc, { event_id: eventId, event_cover_url: eventCoverUrl }, { merge: true })
-
-    window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
-    router.push(getEventPath(eventItem.community_account, addedDoc.id))
-  }
-}
-
-const backStepper = () => {
-  stepper.value--
 }
 
 const stepperItems = computed(() => [
@@ -268,19 +203,19 @@ const stepperItems = computed(() => [
 <template>
   <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
-      <event-basic-info v-model="basicInfo" @submit="submittedBasicInfo" />
+      <event-basic-info v-model="event" v-model:location="eventLocation" @submit="fetchShops(); stepper++" />
     </template>
     <template #[`item.2`]>
-      <event-shop :shops="state.shops" :loading="isLoadingShop" @submit="submittedShop" @back="backStepper" />
+      <event-shop v-model="event" :shops="shops" :loading="isLoadingShop" @submit="fetchMenu(); stepper++" @back="stepper--" />
     </template>
     <template #[`item.3`]>
-      <event-menu :menus="state.menus" :loading="isLoadingMenu" @submit="submittedMenu" @back="backStepper" />
+      <event-menu :menus="menus" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />
     </template>
     <template #[`item.4`]>
-      <event-detail v-model="eventDetailData" @submit="submittedDetail" @back="backStepper" />
+      <event-detail v-model="event" v-model:cover-image="coverImage" @submit="stepper++" @back="stepper--" />
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="shopNotice" @submit="submitShopNotice" @back="backStepper" />
+      <event-shop-notice v-model="event" @submit="submit" @back="stepper--" />
     </template>
   </v-stepper>
 </template>

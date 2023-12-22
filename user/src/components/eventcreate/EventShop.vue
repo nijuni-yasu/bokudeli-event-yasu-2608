@@ -1,15 +1,24 @@
 <script setup lang="ts">
+import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
+import { Timestamp } from 'firebase/firestore'
 
 const props = defineProps<{
   shops: Shop[]
+  modelValue: Partial<BokudeliEvent>
   loading: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit', value: Shop): void
+  (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
+  (e: 'submit'): void
   (e: 'back'): void
 }>()
+
+const event = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
 
 const displayShops = computed(() => {
   return props.shops.map((shop) => {
@@ -19,8 +28,25 @@ const displayShops = computed(() => {
 })
 
 const submit = (shop: Shop) => {
-  emit('submit', shop)
+  event.value.shop_id = shop.shop_id
+  event.value.partner_id = shop.partner_id
+  event.value.shop_name = shop.shop_name
+
+  // 注文締め切り日時を計算
+  const startDateTime = event.value.event_start_datetime?.toDate()
+  if (startDateTime == null) {
+    throw new Error('startDateTime is null')
+  }
+  startDateTime.setDate(startDateTime.getDate() - shop.shop_deadline_datetime.days_before)
+  // UTC なので必ず Date Object にしてから使う
+  const deadLineTime = new Date(shop.shop_deadline_datetime.time)
+  startDateTime.setHours(deadLineTime.getHours())
+  startDateTime.setMinutes(deadLineTime.getMinutes())
+  event.value.event_deadline_datetime = Timestamp.fromDate(startDateTime)
+
+  emit('submit')
 }
+
 const back = () => {
   emit('back')
 }
