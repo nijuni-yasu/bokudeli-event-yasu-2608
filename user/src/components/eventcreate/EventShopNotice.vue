@@ -8,6 +8,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
   (e: 'submit'): void
+  (e: 'confirm'): void
   (e: 'back'): void
 }>()
 
@@ -82,7 +83,7 @@ const message = ref('')
             <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="emit('submit')">下書きをプレビューする</v-btn>
           </v-card-text>
           <v-card-text class="text-center mx-0">
-            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email">店舗に予約申請メールする</v-btn>
+            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email" @click="emit('confirm')">店舗に予約申請メールする</v-btn>
           </v-card-text>
         </v-form>
       </v-card>

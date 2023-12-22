@@ -138,7 +138,10 @@ onMounted(async () => {
   await fetchData()
 })
 
-const submit = async () => {
+const saveDraft = async () => {
+  if (!event.value.community_id) {
+    return null
+  }
   if (eventId == null) {
     // 新規作成
     const eventItem = {
@@ -151,16 +154,12 @@ const submit = async () => {
       },
     }
 
-    if (eventItem.community_id && eventItem.community_account) {
-      const addedDoc = await addDoc(collection(db, 'communities', eventItem.community_id, 'events'), eventItem)
-      const eventCoverUrl = coverImage.value
-        ? await uploadEventImage(eventItem.community_id, addedDoc.id, coverImage.value)
-        : ''
-      await setDoc(addedDoc, { event_id: addedDoc.id, event_cover_url: eventCoverUrl }, { merge: true })
-
-      window.alert(`イベントID： ${addedDoc.id} のイベントを新規作成しました`)
-      router.push(getEventPath(eventItem.community_account, addedDoc.id))
-    }
+    const addedDoc = await addDoc(collection(db, 'communities', eventItem.community_id, 'events'), eventItem)
+    const eventCoverUrl = coverImage.value
+      ? await uploadEventImage(eventItem.community_id, addedDoc.id, coverImage.value)
+      : ''
+    await setDoc(addedDoc, { event_id: addedDoc.id, event_cover_url: eventCoverUrl }, { merge: true })
+    return addedDoc.id
   } else {
     // 更新
     const eventItem = {
@@ -169,16 +168,36 @@ const submit = async () => {
         updated_at: Timestamp.now(),
       },
     }
-    if (eventItem.community_id && eventItem.community_account) {
-      if (coverImage.value) {
-        eventItem.event_cover_url = (await uploadEventImage(eventItem.community_id, eventId, coverImage.value)) ?? ''
-      }
-      await updateDoc(doc(db, 'communities', eventItem.community_id, 'events', eventId), eventItem)
-
-      window.alert(`イベントID： ${eventId} のイベントを更新しました`)
-      router.push(getEventPath(eventItem.community_account, eventId))
+    if (coverImage.value) {
+      eventItem.event_cover_url = (await uploadEventImage(event.value.community_id, eventId, coverImage.value)) ?? ''
     }
+    await updateDoc(doc(db, 'communities', event.value.community_id, 'events', eventId), eventItem)
+    return eventId
   }
+}
+
+const sumbmit = async () => {
+  const newEventId = await saveDraft()
+  if (newEventId == null || !event.value.community_account) {
+    return
+  }
+  if (eventId == null) {
+    window.alert(`イベントID： ${eventId} のイベントを新規作成しました`)
+  } else {
+    window.alert(`イベントID： ${eventId} のイベントを更新しました`)
+  }
+  router.push(getEventPath(event.value.community_account, newEventId))
+}
+
+const confirm = async () => {
+  const newEventId = await saveDraft()
+  if (newEventId == null || !event.value.community_id || !event.value.community_account) {
+    return
+  }
+  await updateDoc(doc(db, 'communities', event.value.community_id, 'events', newEventId), {
+    event_status: { value: 'applying_reservation' },
+  })
+  router.push(getEventPath(event.value.community_account, newEventId))
 }
 
 const stepperItems = computed(() => [
@@ -215,7 +234,7 @@ const stepperItems = computed(() => [
       <event-detail v-model="event" v-model:cover-image="coverImage" @submit="stepper++" @back="stepper--" />
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="event" @submit="submit" @back="stepper--" />
+      <event-shop-notice v-model="event" @submit="sumbmit" @confirm="confirm" @back="stepper--" />
     </template>
   </v-stepper>
 </template>
