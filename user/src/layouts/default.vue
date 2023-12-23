@@ -33,8 +33,6 @@ const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
 
-const router = useRouter()
-
 const fetchRedirectResult = async () => {
   try {
     const result = await getRedirectResult(getAuth())
