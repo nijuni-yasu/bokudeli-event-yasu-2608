@@ -172,7 +172,7 @@ onMounted(async () => {
                     elevation="10"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="getEventCreatePath(state.community.communityAccount)"
+                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id} }"
                   >
                     イベント編集
                   </v-btn>

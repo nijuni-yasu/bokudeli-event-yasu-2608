@@ -133,7 +133,7 @@ const updateAlert = (message: string) => {
               class="ml-2"
               rounded
               prepend-icon="mdi-pencil"
-              :to="getEventCreatePath(state.community.communityAccount)"
+              :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: props.eventId} }"
             >
               イベント編集
             </v-btn>
