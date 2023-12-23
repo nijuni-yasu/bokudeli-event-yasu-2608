@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStoreCredential } from '@/stores/credential'
 import { FirebaseError } from 'firebase/app'
-import { getAuth, signInWithPopup, FacebookAuthProvider, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth'
+import { getAuth, signInWithPopup, FacebookAuthProvider, GoogleAuthProvider } from 'firebase/auth'
 
 const props = defineProps<{
   modelValue: boolean
@@ -22,16 +22,21 @@ const closeDialog = () => {
   dialog.value = false
 }
 
+const getFacebookCredential = async () => {
+  const provider = new FacebookAuthProvider()
+  provider.addScope('public_profile')
+  provider.setCustomParameters({
+    display: 'popup',
+  })
+
+  //FIXME - signInWithRedirect を使う
+  const result = await signInWithPopup(getAuth(), provider)
+  return result
+}
+
 const handleFacebookLogin = async () => {
   try {
-    const provider = new FacebookAuthProvider()
-    provider.addScope('public_profile')
-    provider.setCustomParameters({
-      display: 'popup',
-    })
-
-    //FIXME - signInWithRedirect を使う
-    const result = await signInWithPopup(getAuth(), provider)
+    const result = await getFacebookCredential()
     const credential = FacebookAuthProvider.credentialFromResult(result)
     if (credential) {
       const store = useStoreCredential()
@@ -41,7 +46,14 @@ const handleFacebookLogin = async () => {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
       console.error({ error, credential })
-      window.alert('Facebookログインできませんでした')
+      if (credential && error.code === 'auth/account-exists-with-different-credential') {
+        //TODO すでに登録されているときアカウントリンクをさせたい
+        // const googleUser = await getGoogleCredential()
+        // linkWithCredential(googleUser.user, credential)
+        window.alert('Googleアカウントですでに登録されています')
+      } else {
+        window.alert('Facebookログインできませんでした')
+      }
     } else {
       console.error({ error })
     }
@@ -50,21 +62,32 @@ const handleFacebookLogin = async () => {
   }
 }
 
+const getGoogleCredential = async () => {
+  const provider = new GoogleAuthProvider()
+  provider.addScope('profile')
+  provider.addScope('openid')
+
+  // FIXME - ドメイン切り替えたらsignInWithRedirect を使う。現状はRedirectだとスマホでログインできなくなる
+  // await signInWithRedirect(getAuth(), provider)
+  const result = await signInWithPopup(getAuth(), provider)
+  return result
+}
+
 const handleGoogleLogin = async () => {
   try {
-    const provider = new GoogleAuthProvider()
-    provider.addScope('profile')
-    provider.addScope('openid')
-
-    // FIXME - ドメイン切り替えたらsignInWithRedirect を使う。現状はRedirectだとスマホでログインできなくなる
-    // await signInWithRedirect(getAuth(), provider)
-    await signInWithPopup(getAuth(), provider)
-
+    getGoogleCredential()
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
       console.error({ error, credential })
-      window.alert('Googleログインできませんでした')
+      if (credential && error.code === 'auth/account-exists-with-different-credential') {
+        //TODO すでに登録されているときアカウントリンクをさせたい
+        // const facebookUser = await getFacebookCredential()
+        // linkWithCredential(facebookUser.user, credential)
+        window.alert('Facebookアカウントですでに登録されています')
+      } else {
+        window.alert('Googleログインできませんでした')
+      }
     } else {
       console.error({ error })
     }
