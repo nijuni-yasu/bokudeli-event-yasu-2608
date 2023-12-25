@@ -33,8 +33,6 @@ const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
 
-const router = useRouter()
-
 const fetchRedirectResult = async () => {
   try {
     const result = await getRedirectResult(getAuth())
@@ -87,9 +85,6 @@ onAuthStateChanged(getAuth(), async (user: User | null) => {
       firestoredUser.created_at = Timestamp.now()
       firestoredUser.updated_at = Timestamp.now()
       await setDoc(docRef, firestoredUser)
-
-      // 新規ユーザーはマイページに遷移
-      router.push('/mypage')
     }
   } else {
     // ログアウト処理
