@@ -123,7 +123,7 @@ async function getCommunityEmails(communityId) {
     const emails = new Set();
     const managersRef = db.collection('communities').doc(communityId).collection('managers');
     const managersSnapshot = await managersRef.get()
-    if (managersSnapshot.length>0) {        
+    if (!managersSnapshot.empty) {
         managersSnapshot.forEach(doc => {
             const userEmail = doc.get('user_email');
             if (userEmail != null && userEmail !== '') {
@@ -426,6 +426,11 @@ exports.community_contact = functions
     .region('asia-northeast1')
     .https
     .onCall((data, context) => {
-        return sendCommunityContactMail(COMMUNITY_CONTACT_ID, data)
+        if (context.auth) {
+            return sendCommunityContactMail(COMMUNITY_CONTACT_ID, data);
+        } else {
+            console.log('community_contact Auth Error')
+            throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error');
+        }
     })
       
