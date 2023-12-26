@@ -281,11 +281,10 @@ const openLoginDialog = () => {
           </v-card>
           <!-- メニュ -->
           <event-menu-list
-            :partner-id="state.event.partner_id"
             :event-deadline="eventDeadlineDate"
             :event-start-datetime="eventStartDate"
             :current-member-count="state.currentMemberCount"
-            :event-max-people="state.event.event_max_people"
+            :event="state.event"
             @select-menu="updateSelectedMenu"
             @set-alert="updateAlert"
           />
