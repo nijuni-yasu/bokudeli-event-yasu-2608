@@ -11,6 +11,9 @@ import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import { FirestoredUser } from '@/schemes/storedUser'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import LoginDialog from '@/components/LoginDialog.vue'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const props = defineProps<{
   communityId: string
@@ -40,10 +43,22 @@ const eventDb = query(
   orderBy('event_start_datetime', 'desc'),
 )
 
-const isContactDialogVisible = ref(false)
-const showContactDialog = () => {
-  isContactDialogVisible.value = true
-};
+const isOpenContactDialogVisible = ref(false)
+const isOpenConfirmDialog = ref(false)
+const isOpenLoginDialog = ref(false)
+
+// コミュニティへの問い合わせはログイン必須
+const userStore = useStoreStoredUser()
+const openContactDialog = () => {
+  if(!userStore.storedUser){
+    isOpenConfirmDialog.value = true
+  } else {
+    isOpenContactDialogVisible.value = true
+  }
+}
+const openLoginDialog = () => {
+  isOpenLoginDialog.value = true
+}
 
 onMounted(async () => {
   const communitiesSnapshot = await getDocs(communityDb)
@@ -118,11 +133,15 @@ onMounted(async () => {
                   prepend-icon="mdi-email"
                   color="primary"
                   width="100%"
-                  @click="showContactDialog"
+                  @click="openContactDialog"
                 >
                   お問い合わせ
                 </v-btn>
-                <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
+                <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
+                <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+                  ログインした後にお問い合わせしてください。
+                </confirm-dialog>
+                <login-dialog v-model="isOpenLoginDialog" />
               </v-col>
               <!-- community manager -->
               <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">MANAGER</v-card-title>

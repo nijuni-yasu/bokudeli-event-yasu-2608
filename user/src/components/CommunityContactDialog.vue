@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
-import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
 
 
@@ -28,14 +27,10 @@ const closeDialog = () => {
 const state = reactive({
   mailTitle: '' as string,
   mailMessage: '' as string,
-  userData: {} as StoredUser,
 })
 
-// TODO:ログインしていない時は送信させない。「ログインしてください」を表示する。
-const { storedUser } = storeToRefs(useStoreStoredUser())
-const userId = computed(() => storedUser?.value?.userId ?? '')
-const userName = computed(() => storedUser?.value?.userName ?? 'ゲスト')
-const userEmail = computed(() => storedUser?.value?.userEmail ?? '')
+
+const userStore = useStoreStoredUser()
 
 const onFormSubmit = async () => {
   const communityContact = httpsCallable(functions, 'community_contact',)
@@ -44,10 +39,10 @@ const onFormSubmit = async () => {
     community_name: props.communityName,
     mail_title: state.mailTitle,
     mail_message: state.mailMessage,
-    user_id: userId.value,
-    user_name: userName.value,
-    user_email: userEmail.value,
-    user_profile_url: `${import.meta.env.VITE_ORIGIN_HOST}/users/${userId.value}`,
+    user_id: userStore.storedUser?.userId,
+    user_name: userStore.storedUser?.userName,
+    user_email: userStore.storedUser?.userEmail,
+    user_profile_url: `${import.meta.env.VITE_ORIGIN_HOST}/users/${userStore.storedUser?.userId}`,
   }).then((res) => {
     window.alert('送信完了しました')
     console.log(res)

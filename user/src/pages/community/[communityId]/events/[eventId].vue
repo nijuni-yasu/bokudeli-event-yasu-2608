@@ -30,6 +30,8 @@ import EventMenuList from '@/components/EventMenuList.vue'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import { countEventMembers } from '@/composable/countEventMembers'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
+import LoginDialog from '@/components/LoginDialog.vue'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const props = defineProps<{
   communityId: string
@@ -81,10 +83,6 @@ const fetchData = async () => {
   state.isCommunityManager = await checkCommunityManager(communitySnapshotRef)
 }
 
-const isContactDialogVisible = ref(false)
-const showContactDialog = () => {
-  isContactDialogVisible.value = true
-};
 
 onBeforeRouteUpdate(async (to, from, next) => {
   await fetchData()
@@ -122,6 +120,24 @@ const updateAlert = (message: string) => {
   alertState.message = message
   alertState.isOpen = true
 }
+
+const isOpenContactDialogVisible = ref(false)
+const isOpenConfirmDialog = ref(false)
+const isOpenLoginDialog = ref(false)
+
+// コミュニティへの問い合わせはログイン必須
+const userStore = useStoreStoredUser()
+const openContactDialog = () => {
+  if(!userStore.storedUser){
+    isOpenConfirmDialog.value = true
+  } else {
+    isOpenContactDialogVisible.value = true
+  }
+}
+const openLoginDialog = () => {
+  isOpenLoginDialog.value = true
+}
+
 </script>
 
 <template>
@@ -250,11 +266,11 @@ const updateAlert = (message: string) => {
                             variant="outlined"
                             rounded
                             prepend-icon="mdi-email"
-                            @click="showContactDialog"
+                            @click="openContactDialog"
                           >
                             主催者に連絡
                           </v-btn>
-                          <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
+                          <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
                         </div>
                       </v-row>
                   </v-row>
@@ -288,6 +304,10 @@ const updateAlert = (message: string) => {
       :event-snapshot="state.eventSnapshot"
     ></event-cart-dialog>
     <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
+    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+      ログインした後に主催者に連絡してください。
+    </confirm-dialog>
+    <login-dialog v-model="isOpenLoginDialog" />
   </section>
 </template>
 <style lang="scss" scoped>
