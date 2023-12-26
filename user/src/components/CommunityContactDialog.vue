@@ -27,12 +27,14 @@ const closeDialog = () => {
 const state = reactive({
   mailTitle: '' as string,
   mailMessage: '' as string,
+  isSending: false as boolean
 })
 
 
 const userStore = useStoreStoredUser()
 
 const onFormSubmit = async () => {
+  state.isSending = true
   const communityContact = httpsCallable(functions, 'community_contact',)
   communityContact({
     community_id: props.communityId,
@@ -42,13 +44,17 @@ const onFormSubmit = async () => {
     user_id: userStore.storedUser?.userId,
     user_name: userStore.storedUser?.userName,
     user_email: userStore.storedUser?.userEmail,
-    user_profile_url: `${import.meta.env.VITE_ORIGIN_HOST}/users/${userStore.storedUser?.userId}`,
+    user_profile_url: `${import.meta.env.VITE_ORIGIN_HOST}users/${userStore.storedUser?.userId}`,
   }).then((res) => {
     window.alert('送信完了しました')
+    state.isSending = false
+    state.mailTitle = ''
+    state.mailMessage = ''
     console.log(res)
     closeDialog()
   }).catch(function (error) {
     window.alert('送信失敗しました')
+    state.isSending = false
     console.log(error)
     closeDialog()
   })
@@ -80,8 +86,9 @@ const onFormSubmit = async () => {
             </v-col>
             <!-- 👉 Submit and Cancel -->
             <v-col cols="12" class="d-flex flex-wrap justify-center gap-4">
-              <v-btn v-if="state.mailTitle&&state.mailMessage" type="submit" rounded> メッセージ送信 </v-btn>
-              <v-btn v-else rounded disabled> メッセージ送信 </v-btn>
+              <v-btn :disabled="state.isSending || !(state.mailTitle&&state.mailMessage)" type="submit" rounded>
+                メッセージ送信
+              </v-btn>
               <v-btn rounded color="secondary" variant="tonal" @click="closeDialog"> キャンセル </v-btn>
             </v-col>
           </v-row>
