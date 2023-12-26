@@ -4,6 +4,7 @@ import { getAnalytics } from 'firebase/analytics'
 import { getAuth } from 'firebase/auth'
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
+import { getFunctions } from 'firebase/functions'
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -25,6 +26,7 @@ export const storage = getStorage(app)
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 })
+export const functions = getFunctions(app, 'asia-northeast1')
 
 export const stripeBaseURL = !import.meta.env.VITE_USE_LOCALHOST
   ? import.meta.env.VITE_ORIGIN_HOST

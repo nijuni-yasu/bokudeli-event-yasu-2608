@@ -122,7 +122,7 @@ onMounted(async () => {
                 >
                   お問い合わせ
                 </v-btn>
-                <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName"/>
+                <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
               </v-col>
               <!-- community manager -->
               <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">MANAGER</v-card-title>

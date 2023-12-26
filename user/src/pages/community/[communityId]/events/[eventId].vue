@@ -254,7 +254,7 @@ const updateAlert = (message: string) => {
                           >
                             主催者に連絡
                           </v-btn>
-                          <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName"/>
+                          <community-contact-dialog v-model="isContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
                         </div>
                       </v-row>
                   </v-row>
