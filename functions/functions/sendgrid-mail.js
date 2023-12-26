@@ -430,6 +430,8 @@ exports.community_contact = functions
             return sendCommunityContactMail(COMMUNITY_CONTACT_ID, data);
         } else {
             console.log('community_contact Auth Error')
+            console.log(data)
+            console.log(context)
             throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error');
         }
     })
