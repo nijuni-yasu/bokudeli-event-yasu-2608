@@ -82,8 +82,12 @@ onMounted(async () => {
   }
 
   const eventSnapshot = await getDocs(eventDb)
-  state.events = eventSnapshot.docs.map((doc) => {
-    return convertDocumentDataToEvent(doc.data())
+  state.events = eventSnapshot.docs.flatMap((doc) => {
+    const event = convertDocumentDataToEvent(doc.data())
+    if (!state.isCommunityManager && event.event_status.value !== 'accepting_order') {
+      return []
+    }
+    return event
   })
   state.isLoading = false
 })
