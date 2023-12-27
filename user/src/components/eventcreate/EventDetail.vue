@@ -113,7 +113,7 @@ const onFileChange = (e: Event) => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model.number="event.event_max_people" outlined dense label="定員数"></v-text-field>
+                <v-text-field v-model.number="event.event_max_people" type="number" outlined dense label="定員数"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
