@@ -91,10 +91,7 @@ onMounted(async () => {
       return []
     }
     // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
-    console.log(!state.isCommunityManager && !state.isCommunityMember)
-    console.log((!state.isCommunityManager && !state.isCommunityMember) && event.is_public == false)
     if ((!state.isCommunityManager && !state.isCommunityMember) && event.is_public == false) {
-      console.log(!state.isCommunityManager && !state.isCommunityMember)
       return []
     }
     return event
@@ -216,13 +213,26 @@ onMounted(async () => {
                   class="justify-end my-2 mr-1"
                 >
                   <v-btn
-                    color="grey-900"
-                    elevation="10"
+                    class="ml-1"
+                    color="white"
+                    elevation="5"
+                    size="small"
+                    rounded
+                    prepend-icon="mdi-email"
+                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id, step:4} }"
+                  >
+                    予約
+                  </v-btn>                
+                  <v-btn
+                    class="ml-1"
+                    color="white"
+                    elevation="5"
+                    size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
                     :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id} }"
                   >
-                    イベント編集
+                    編集
                   </v-btn>
                 </v-row>
               </v-col>

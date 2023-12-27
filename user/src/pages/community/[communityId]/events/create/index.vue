@@ -38,6 +38,11 @@ const menus = ref<PartnerMenu[]>([])
 const coverImage = ref<File | null>(null)
 
 const stepper = ref(1)
+const stepQuery = route.query.step as number | null
+// クエリに値があればステッパーを移動
+if (stepQuery) {
+  stepper.value = stepQuery
+}
 
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
