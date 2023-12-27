@@ -17,8 +17,6 @@ const event = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const pickUpPlace = ref('')
-const message = ref('')
 </script>
 
 <template>
@@ -64,17 +62,9 @@ const message = ref('')
               </v-col>
 
               <v-col cols="12">
-                <v-textarea v-model="pickUpPlace" outlined rows="3" label="配達受取場所について"></v-textarea>
+                <v-textarea v-model="event.organizer_memo" outlined rows="3" label="配達受取場所について"></v-textarea>
               </v-col>
 
-              <v-col cols="12">
-                <v-textarea
-                  v-model="message"
-                  outlined
-                  rows="3"
-                  label="イベントやフードの相談事項・連絡事項"
-                ></v-textarea>
-              </v-col>
             </v-row>
           </v-card-text>
 
