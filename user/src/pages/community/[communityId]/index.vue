@@ -148,7 +148,7 @@ onMounted(async () => {
                 <login-dialog v-model="isOpenLoginDialog" />
               </v-col>
               <!-- community manager -->
-              <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">MANAGER</v-card-title>
+              <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">コミュニケーター</v-card-title>
               <div v-for="manager in state.managers" :key="manager.user_id">
                 <router-link :to="`/users/${manager.user_id}`">
                   <v-row>
@@ -163,7 +163,7 @@ onMounted(async () => {
               </div>
 
               <!-- community member -->
-              <v-card-title class="justify-center text-h6 mt-7">MEMBER</v-card-title>
+              <v-card-title class="justify-center text-h6 mt-7">メンバー</v-card-title>
               <div v-for="member in state.members" :key="member.user_id">
                 <router-link :to="`/users/${member.user_id}`">
                   <v-row>
