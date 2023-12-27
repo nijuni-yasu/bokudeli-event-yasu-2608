@@ -9,6 +9,7 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
+import { checkCommunityMember } from '@/composable/checkCommunityMember'
 import { FirestoredUser } from '@/schemes/storedUser'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -27,6 +28,7 @@ const state = reactive({
   events: [] as BokudeliEvent[],
   isLoading: true,
   isCommunityManager: false,
+  isCommunityMember: false,
 })
 
 const router = useRouter()
@@ -39,7 +41,6 @@ const communityDb = query(collection(db, 'communities'), where('community_accoun
 const eventDb = query(
   collectionGroup(db, 'events'),
   where('community_account', '==', props.communityId),
-  where('is_public', '==', true),
   orderBy('event_start_datetime', 'desc'),
 )
 
@@ -79,12 +80,21 @@ onMounted(async () => {
     state.managers = await loadCommunityManagers(communitySnapshot.ref)
     // ログインしてるユーザーがコミュニティマネージャーかどうかチェック
     state.isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
+    state.isCommunityMember = await checkCommunityMember(communitySnapshot.ref)
   }
 
   const eventSnapshot = await getDocs(eventDb)
   state.events = eventSnapshot.docs.flatMap((doc) => {
     const event = convertDocumentDataToEvent(doc.data())
+    // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
     if (!state.isCommunityManager && event.event_status.value !== 'accepting_order') {
+      return []
+    }
+    // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
+    console.log(!state.isCommunityManager && !state.isCommunityMember)
+    console.log((!state.isCommunityManager && !state.isCommunityMember) && event.is_public == false)
+    if ((!state.isCommunityManager && !state.isCommunityMember) && event.is_public == false) {
+      console.log(!state.isCommunityManager && !state.isCommunityMember)
       return []
     }
     return event
