@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { DocumentData, Timestamp } from 'firebase/firestore'
-import BokudeliEvent, { createEmptyEvent } from './bokudeliEvent'
+import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import PartnerMenu from './partnerMenu'
 import { FacebookAuthProvider, GoogleAuthProvider, User } from 'firebase/auth'
@@ -51,10 +51,7 @@ export const priceString = (price: number): string => {
 }
 
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
-  return {
-    ...createEmptyEvent(),
-    ...documentData,
-  }
+  return new BokudeliEvent(documentData)
 }
 
 export const convertDocumentDataToCommunity = (documentData: DocumentData): BokudeliCommunity => {
