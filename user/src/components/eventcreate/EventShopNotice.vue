@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const props = defineProps<{
   modelValue: Partial<BokudeliEvent>
@@ -8,7 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
   (e: 'submit'): void
-  (e: 'confirm'): void
+  (e: 'sendReserveMail'): void
   (e: 'back'): void
 }>()
 
@@ -17,8 +18,14 @@ const event = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const pickUpPlace = ref('')
-const message = ref('')
+const isOpenConfirmDialog = ref(false)
+const openConfirmDialog = () => {
+  isOpenConfirmDialog.value = true
+}
+const sendReserveMail = () => {
+  emit('sendReserveMail')
+}
+
 </script>
 
 <template>
@@ -64,27 +71,22 @@ const message = ref('')
               </v-col>
 
               <v-col cols="12">
-                <v-textarea v-model="pickUpPlace" outlined rows="3" label="配達受取場所について"></v-textarea>
+                <v-textarea v-model="event.organizer_memo" outlined rows="3" label="配達受取場所について"></v-textarea>
               </v-col>
 
-              <v-col cols="12">
-                <v-textarea
-                  v-model="message"
-                  outlined
-                  rows="3"
-                  label="イベントやフードの相談事項・連絡事項"
-                ></v-textarea>
-              </v-col>
             </v-row>
           </v-card-text>
 
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
             <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="emit('submit')">下書きをプレビューする</v-btn>
           </v-card-text>
           <v-card-text class="text-center mx-0">
-            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email" @click="emit('confirm')">店舗に予約申請メールする</v-btn>
+            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email" @click="openConfirmDialog">店舗に予約申請メールする</v-btn>
           </v-card-text>
+          <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'予約申請する'" :ok-click="sendReserveMail">
+            {{ event.shop_name }} に予約申請メールをしますか？
+          </confirm-dialog>
         </v-form>
       </v-card>
     </v-col>

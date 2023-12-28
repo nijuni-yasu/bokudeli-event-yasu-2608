@@ -146,19 +146,33 @@ const openLoginDialog = () => {
       <v-row class="justify-center mt-5 mr-1">
         <v-col md="8" sm="9" cols="12">
           <v-row class="justify-end align-center">
-            <v-chip color="primary">
-              {{ $t(`event_status.${state.event.event_status.value}`) }}
-            </v-chip>
             <v-btn
               v-if="state.event.event_status.value===`in_draft`&&state.isCommunityManager"
-              color="black"
-              class="ml-2"
+              color="white"
+              class="mr-2"
+              size="large"
+              elevation="5"
               rounded
-              prepend-icon="mdi-pencil"
+              prepend-icon="mdi-email"
+              :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: props.eventId, step: 4} }"
+            >
+              店舗へ予約申請
+            </v-btn>
+            <v-btn
+              v-if="state.event.event_status.value===`in_draft`&&state.isCommunityManager"
+              color="white"
+              class="mr-2"
+              size="large"
+              elevation="5"
+              rounded
+              prepend-icon="mdi-pencil-box-outline"
               :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: props.eventId} }"
             >
               イベント編集
             </v-btn>
+            <v-chip color="primary" size="large">
+              {{ $t(`event_status.${state.event.event_status.value}`) }}
+            </v-chip>
           </v-row>
         </v-col>
       </v-row>
