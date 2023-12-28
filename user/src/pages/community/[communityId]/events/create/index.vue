@@ -4,7 +4,6 @@ import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventDetail from '@/components/eventcreate/EventDetail.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { collection, doc, collectionGroup, getDocs, query, where, addDoc, setDoc, Timestamp, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import {
@@ -47,7 +46,6 @@ if (stepQuery) {
 
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
-const isOpenConfirmDialog = ref(false)
 
 const fetchData = async () => {
   const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
@@ -206,9 +204,6 @@ const sendReserveMail = async () => {
   })
   router.push(getEventPath(event.value.community_account, newEventId))
 }
-const openConfirmDialog = () => {
-  isOpenConfirmDialog.value = true
-}
 
 const stepperItems = computed(() => [
   {
@@ -244,12 +239,9 @@ const stepperItems = computed(() => [
       <event-detail v-model="event" v-model:cover-image="coverImage" @submit="stepper++" @back="stepper--" />
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="event" @submit="sumbmit" @confirm="openConfirmDialog" @back="stepper--" />
+      <event-shop-notice v-model="event" @submit="sumbmit" @sendReserveMail="sendReserveMail" @back="stepper--" />
     </template>
   </v-stepper>
-  <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'予約申請する'" :ok-click="sendReserveMail">
-    {{ event.shop_name }} に予約申請メールをしますか？
-  </confirm-dialog>
 </template>
 
 <style lang="scss" scoped></style>

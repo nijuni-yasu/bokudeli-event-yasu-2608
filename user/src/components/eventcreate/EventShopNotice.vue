@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const props = defineProps<{
   modelValue: Partial<BokudeliEvent>
@@ -8,7 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
   (e: 'submit'): void
-  (e: 'confirm'): void
+  (e: 'sendReserveMail'): void
   (e: 'back'): void
 }>()
 
@@ -16,6 +17,14 @@ const event = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+
+const isOpenConfirmDialog = ref(false)
+const openConfirmDialog = () => {
+  isOpenConfirmDialog.value = true
+}
+const sendReserveMail = () => {
+  emit('sendReserveMail')
+}
 
 </script>
 
@@ -73,8 +82,11 @@ const event = computed({
             <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="emit('submit')">下書きをプレビューする</v-btn>
           </v-card-text>
           <v-card-text class="text-center mx-0">
-            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email" @click="emit('confirm')">店舗に予約申請メールする</v-btn>
+            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email" @click="openConfirmDialog">店舗に予約申請メールする</v-btn>
           </v-card-text>
+          <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'予約申請する'" :ok-click="sendReserveMail">
+            {{ event.shop_name }} に予約申請メールをしますか？
+          </confirm-dialog>
         </v-form>
       </v-card>
     </v-col>

@@ -172,7 +172,7 @@ const openLoginDialog = () => {
             </v-btn>
             <v-chip color="primary" size="large">
               {{ $t(`event_status.${state.event.event_status.value}`) }}
-            </v-chip>            
+            </v-chip>
           </v-row>
         </v-col>
       </v-row>
