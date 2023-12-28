@@ -9,7 +9,7 @@
     "applying_reservation": "予約申請中",
     "accepting_order": "注文受付中",
     "order_closed": "注文締切済",
-    "finished": "完了"
+    "finished": "イベント終了"
   },
   "order_deadline": "注文期限",
   "days_before": "当日 | 前日 | {n}日前"
