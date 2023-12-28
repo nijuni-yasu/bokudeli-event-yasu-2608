@@ -7,6 +7,7 @@ const sgMail = require('@sendgrid/mail');
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = 'bokudeli@nijuni.jp';
 const DEFAULT_CC = 'support@nijuni.jp';
+const DEFAULT_TO = 'support+to@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
 const APPLYING_ORDER_TEMPLATE_ID = 'd-a0eeb84707604e658dc4aabb38f1b92d';
@@ -19,6 +20,7 @@ const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345;
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7';
 const EVENT_STATUS_IN_DRAFT_ID = 'd-db07a084839741ada6e3ff0f44ac3b41';
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c';
+const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -106,15 +108,35 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
         emails.add(organizerEmail);
     }
     const communityId = eventSnapshot.get('community_id');
-    const adminsRef = db.collection('communities').doc(communityId).collection('admins');
-    const adminsSnapshot = await adminsRef.get()
-    adminsSnapshot.forEach(doc => {
+    const managersRef = db.collection('communities').doc(communityId).collection('managers');
+    const managersSnapshot = await managersRef.get()
+    managersSnapshot.forEach(doc => {
         const userEmail = doc.get('user_email');
         if (userEmail != null && userEmail !== '') {
             emails.add(userEmail);
         }
     });
     return Array.from(emails);
+}
+
+async function getCommunityEmails(communityId) {
+    const emails = new Set();
+    const managersRef = db.collection('communities').doc(communityId).collection('managers');
+    const managersSnapshot = await managersRef.get()
+    if (!managersSnapshot.empty) {
+        managersSnapshot.forEach(doc => {
+            const userEmail = doc.get('user_email');
+            if (userEmail != null && userEmail !== '') {
+                emails.add(userEmail);
+            }
+        });
+        return Array.from(emails);
+    } else {
+        // コミュマネがいない場合はTOを別メールに。TOとCCが同じだとエラーになる
+        emails.add(DEFAULT_TO);
+        console.log(emails)
+        return Array.from(emails);
+    }
 }
 
 async function createOrdersForOrderDeadline(ordersRef) {
@@ -328,6 +350,18 @@ async function sendShopOpenMail(shopSnapshot) {
     });
 }
 
+async function sendCommunityContactMail(templateId, data) {
+    const to =  await getCommunityEmails(data.community_id)
+    const dynamic_template_data = data
+    return sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        cc: DEFAULT_CC,
+        templateId,
+        dynamic_template_data,
+    });
+}
+
 exports.polling = functions
     .region('asia-northeast1')
     .pubsub
@@ -387,3 +421,18 @@ exports.on_shop_changed = functions
         }
         return Promise.all(promises);
     });
+
+exports.community_contact = functions
+    .region('asia-northeast1')
+    .https
+    .onCall((data, context) => {
+        if (context.auth) {
+            return sendCommunityContactMail(COMMUNITY_CONTACT_ID, data);
+        } else {
+            console.log('community_contact Auth Error')
+            console.log(data)
+            console.log(context)
+            throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error');
+        }
+    })
+      

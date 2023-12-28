@@ -12,4 +12,14 @@ export default createI18n({
   locale: 'ja',
   fallbackLocale: 'ja',
   messages,
+  // TODO messages 同様、別ファイルに切り出す
+  datetimeFormats: {
+    ja: {
+      time: {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+      },
+    }
+  }
 })

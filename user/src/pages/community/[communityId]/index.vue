@@ -2,14 +2,19 @@
 import { useRouter } from 'vue-router'
 import { db } from '@/firebase'
 import { collection, collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
-
-import { getEventPath } from '@/router/utils'
+import { getEventPath, getEventCreatePath } from '@/router/utils'
+import { dateWithDayOfWeekString, dateOnlyTimeString ,convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
+import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
+import { checkCommunityManager } from '@/composable/checkCommunityManager'
+import { checkCommunityMember } from '@/composable/checkCommunityMember'
 import { FirestoredUser } from '@/schemes/storedUser'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
+import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import LoginDialog from '@/components/LoginDialog.vue'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const props = defineProps<{
   communityId: string
@@ -18,9 +23,12 @@ const props = defineProps<{
 const state = reactive({
   community: {} as BokudeliCommunity,
   members: [] as FirestoredUser[],
+  managers: [] as FirestoredUser[],
   links: [] as string[],
   events: [] as BokudeliEvent[],
   isLoading: true,
+  isCommunityManager: false,
+  isCommunityMember: false,
 })
 
 const router = useRouter()
@@ -33,9 +41,25 @@ const communityDb = query(collection(db, 'communities'), where('community_accoun
 const eventDb = query(
   collectionGroup(db, 'events'),
   where('community_account', '==', props.communityId),
-  where('is_public', '==', true),
   orderBy('event_start_datetime', 'desc'),
 )
+
+const isOpenContactDialogVisible = ref(false)
+const isOpenConfirmDialog = ref(false)
+const isOpenLoginDialog = ref(false)
+
+// コミュニティへの問い合わせはログイン必須
+const userStore = useStoreStoredUser()
+const openContactDialog = () => {
+  if(!userStore.storedUser){
+    isOpenConfirmDialog.value = true
+  } else {
+    isOpenContactDialogVisible.value = true
+  }
+}
+const openLoginDialog = () => {
+  isOpenLoginDialog.value = true
+}
 
 onMounted(async () => {
   const communitiesSnapshot = await getDocs(communityDb)
@@ -53,14 +77,28 @@ onMounted(async () => {
     state.links = links
 
     state.members = await loadCommunityMembers(communitySnapshot.ref)
+    state.managers = await loadCommunityManagers(communitySnapshot.ref)
+    // ログインしてるユーザーがコミュニティマネージャーかどうかチェック
+    state.isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
+    state.isCommunityMember = await checkCommunityMember(communitySnapshot.ref)
   }
 
   const eventSnapshot = await getDocs(eventDb)
-  state.events = eventSnapshot.docs.map((doc) => {
-    return convertDocumentDataToEvent(doc.data())
+  state.events = eventSnapshot.docs.flatMap((doc) => {
+    const event = convertDocumentDataToEvent(doc.data())
+    // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
+    if (!state.isCommunityManager && (event.event_status.value == 'in_draft' || event.event_status.value == 'applying_reservation')) {
+      return []
+    }
+    // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
+    if ((!state.isCommunityManager && !state.isCommunityMember) && event.is_public == false) {
+      return []
+    }
+    return event
   })
   state.isLoading = false
 })
+
 </script>
 <template>
   <section>
@@ -70,13 +108,15 @@ onMounted(async () => {
         <v-card flat class="align-center justify-center text-center my-10 pa-10">
           <v-row>
             <v-col>
-              <VImg class="ma-0" :src="state.community.communityCoverImageUrl" />
+              <VImg class="ma-0" aspect-ratio="1.91" cover :src="state.community.communityCoverImageUrl" />
             </v-col>
           </v-row>
           <v-row>
             <v-col>
               <v-card-title class="justify-center text-h4 pb-6">{{ state.community.communityName }}</v-card-title>
-              <v-card-text class="text-left text-subtitle-1 pb-6">{{ state.community.communityDescription }}</v-card-text>
+              <v-card-text v-linkify class="text-left text-subtitle-1 pb-6">
+                {{ state.community.communityDescription }}
+              </v-card-text>
             </v-col>
           </v-row>
         </v-card>
@@ -87,24 +127,50 @@ onMounted(async () => {
           <v-col md="4" sm="4" cols="12">
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
-              <v-img style="border-radius: 10px" aspect-ratio="1" :src="state.community.communityIconImageUrl" />
-              <v-card-title class="justify-center text-h6 pa-5 pre-line"
-                >{{ state.community.communityName }}
+              <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="state.community.communityIconImageUrl" />
+              <v-card-title class="justify-center text-h5 py-5 pre-line">
+                {{ state.community.communityName }}
               </v-card-title>
               <v-card-text v-for="link in state.links" :key="link" class="text-left pb-3">
                 <a v-if="link" :href="link" class="text-decoration-none" target="_blank">
                   {{ link }}
                 </a>
               </v-card-text>
-              <!-- TODO。問い合わせ機能を実装する。専用のフォームを作ってつくってコミュマネのメールアドレスに送信する。
-              <v-card-text>
-                <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" class="text-decoration-none" target="_blank">
-                  問い合わせ
-                </a>
-              </v-card-text> -->
+              <v-col>
+                <v-btn
+                  class="ma-1"
+                  variant="outlined"
+                  rounded
+                  prepend-icon="mdi-email"
+                  color="primary"
+                  width="100%"
+                  @click="openContactDialog"
+                >
+                  お問い合わせ
+                </v-btn>
+                <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
+                <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+                  ログインした後にお問い合わせしてください。
+                </confirm-dialog>
+                <login-dialog v-model="isOpenLoginDialog" />
+              </v-col>
+              <!-- community manager -->
+              <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">コミュニケーター</v-card-title>
+              <div v-for="manager in state.managers" :key="manager.user_id">
+                <router-link :to="`/users/${manager.user_id}`">
+                  <v-row>
+                    <div class="d-flex flex-row px-6 py-2">
+                      <v-avatar size="40px">
+                        <v-img v-if="manager.user_image_url" :src="manager.user_image_url" cover/>
+                      </v-avatar>
+                      <div class="ma-2 text-subtitle-1">{{ manager.user_name }}</div>
+                    </div>
+                  </v-row>
+                </router-link>
+              </div>
 
               <!-- community member -->
-              <v-card-title class="justify-center text-h6">MEMBER</v-card-title>
+              <v-card-title class="justify-center text-h6 mt-7">メンバー</v-card-title>
               <div v-for="member in state.members" :key="member.user_id">
                 <router-link :to="`/users/${member.user_id}`">
                   <v-row>
@@ -125,6 +191,9 @@ onMounted(async () => {
               <v-col v-for="event in state.events" :key="event.event_id" md="6" sm="6" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
                   <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
+                  <v-chip class="ma-2" color="primary" elevated flat>
+                    {{ $t(`event_status.${event.event_status.value}`) }}
+                  </v-chip>
                   <v-card-title class="justify-center text-h5 pb-3 pre-line">
                     {{ event.event_name }}
                   </v-card-title>
@@ -139,6 +208,49 @@ onMounted(async () => {
                   <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
                   <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 </v-card>
+                <v-row
+                  v-if="event.event_status.value===`in_draft`&&state.isCommunityManager"
+                  class="justify-end my-2 mr-1"
+                >
+                  <v-btn
+                    class="ml-1"
+                    color="white"
+                    elevation="5"
+                    size="small"
+                    rounded
+                    prepend-icon="mdi-email"
+                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id, step:4} }"
+                  >
+                    予約
+                  </v-btn>                
+                  <v-btn
+                    class="ml-1"
+                    color="white"
+                    elevation="5"
+                    size="small"
+                    rounded
+                    prepend-icon="mdi-pencil-box-outline"
+                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id} }"
+                  >
+                    編集
+                  </v-btn>
+                </v-row>
+              </v-col>
+            </v-row>
+            <v-row v-if="state.isCommunityManager" class="justify-center">
+              <v-col class="text-center">
+                <v-btn
+                  class="mx-2 my-10 text-lg-h5"
+                  color="grey-900"
+                  elevation="10"
+                  size="x-large"
+                  rounded
+                  width="85%"
+                  prepend-icon="mdi-pencil-box-outline"
+                  :to="getEventCreatePath(state.community.communityAccount)"
+                >
+                  イベントを新規作成する
+                </v-btn>
               </v-col>
             </v-row>
           </v-col>

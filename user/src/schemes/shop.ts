@@ -35,6 +35,12 @@ type Shop = {
 
   is_approved: boolean
   is_open: boolean
+
+  shop_deadline_datetime: {
+    days_before: number
+    time: number
+  }
+
 /*
   shop_holidays: any[]
 
@@ -47,9 +53,6 @@ type Shop = {
   shop_url_twitter: string
   shop_url_facebook: string
   shop_url_instagram: string
-
-  shop_deadline_date: string
-  shop_deadline_time: string // 時間（日付なし）なのでいい型があれば
 
   shop_time_delivery: string // number？
 

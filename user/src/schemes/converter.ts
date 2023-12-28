@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { DocumentData, Timestamp } from 'firebase/firestore'
-import BokudeliEvent, { createEmptyEvent } from './bokudeliEvent'
+import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import PartnerMenu from './partnerMenu'
 import { FacebookAuthProvider, GoogleAuthProvider, User } from 'firebase/auth'
@@ -51,10 +51,7 @@ export const priceString = (price: number): string => {
 }
 
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
-  return {
-    ...createEmptyEvent(),
-    ...documentData,
-  }
+  return new BokudeliEvent(documentData)
 }
 
 export const convertDocumentDataToCommunity = (documentData: DocumentData): BokudeliCommunity => {
@@ -244,4 +241,12 @@ export const convertShopTimeToWeekTimestamp = (dayOfWeek: number, timeString: st
   return dayOfWeek * 24 * 60 * 60 * 1000 +
     hour * 60 * 60 * 1000 +
     minute * 60 * 1000
+}
+
+export const convertTruncateText = (text: string, maxLength: number): string => {
+  if (text.length > maxLength) {
+    return text.substring(0, maxLength - 3) + '...';
+  } else {
+    return text;
+  }
 }

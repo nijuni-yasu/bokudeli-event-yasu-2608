@@ -8,17 +8,21 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'submit'): void
+  (e: 'back'): void
 }>()
 
 const submit = () => {
   emit('submit')
+}
+const back = () => {
+  emit('back')
 }
 </script>
 
 <template>
   <section>
     <v-row v-if="!props.loading" class="justify-center">
-      <v-col cols="10">
+      <v-col cols="12" sm="12" md="9">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
             <v-card-title class="pa-5">
@@ -49,8 +53,9 @@ const submit = () => {
               </v-col>
             </v-row>
 
-            <v-card-text>
-              <v-btn color="primary" class="me-3 mt-3" @click="submit">次へ</v-btn>
+            <v-card-text class="text-center mt-10">
+              <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
+              <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="submit">次へ</v-btn>
             </v-card-text>
           </v-form>
         </v-card>

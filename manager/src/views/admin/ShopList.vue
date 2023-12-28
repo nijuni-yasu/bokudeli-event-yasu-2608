@@ -65,6 +65,7 @@
             cols="12"
             sm="12"
             md="6"
+            @click="toMenuPage(item.partner_id)"
           >
             <td class="px-1">{{ key + 1 }}</td>
             <td class="px-1">{{ item.partner_id.slice(0, 6) }}</td>
@@ -152,7 +153,6 @@
 <script>
   import firebase from 'firebase/app'
   import 'firebase/firestore'
-  import 'firebase/auth'
   const db = firebase.firestore()
 
   export default {
@@ -170,6 +170,13 @@
         })
       })
     },
+    methods: {
+      toMenuPage: function (partnerId) {
+        console.log(partnerId)
+        this.$store.commit('SET_PARTNER_ID', partnerId)
+        this.$router.push('ShopList/Menu')
+      },
+    }
   }
 </script>
 <style lang="scss">

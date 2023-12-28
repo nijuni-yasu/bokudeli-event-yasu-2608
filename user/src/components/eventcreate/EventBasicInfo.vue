@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import cloneDeep from 'lodash/cloneDeep'
 import {
-  BasicInfo,
   hourList,
   minutesList,
   dateString,
@@ -9,65 +7,93 @@ import {
   minutesString,
   parseDateTimeStrings,
 } from '@/schemes/eventCreate'
-import { clone } from 'lodash'
+import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
 import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
+import { Timestamp } from 'firebase/firestore'
 
 const pickerConfig = {
   locale: Japanese,
 }
 
 const props = defineProps<{
-  modelValue: BasicInfo
+  modelValue: Partial<BokudeliEvent>
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: BasicInfo): void
-  (e: 'submit', value: BasicInfo): void
+  (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
+  (e: 'submit'): void
 }>()
 
-const state = reactive(cloneDeep(props.modelValue))
-
-const title = ref(clone(state.title))
-const postalcode = ref(clone(state.postalcode))
-const address = ref(clone(state.address))
-const placeName = ref(clone(state.placeName))
-const placeUrl = ref(clone(state.placeUrl))
-const eventStartDate = ref(dateString(state.startDateTime))
-const eventStartHour = ref(hourString(state.startDateTime))
-const eventStartMinute = ref(minutesString(state.startDateTime))
-const eventEndDate = ref(dateString(state.endDateTime))
-const eventEndHour = ref(hourString(state.endDateTime))
-const eventEndMinute = ref(minutesString(state.endDateTime))
-const eventLocation = ref(clone(state.location))
-
-const changePostalcode = async () => {
-  console.log(postalcode.value)
-  const location = await fetchLocationByPostalcode(postalcode.value)
-  eventLocation.value = location
-  address.value = location.address
+const submit = () => {
+  emit('submit')
 }
 
-const submitSearch = () => {
-  const startDate = parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value)
-  const endDate = parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value)
-  state.title = title.value
-  state.postalcode = postalcode.value
-  state.address = address.value
-  state.placeName = placeName.value
-  state.placeUrl = placeUrl.value
-  state.startDateTime = startDate
-  state.endDateTime = endDate
-  state.location = eventLocation.value
-  emit('update:modelValue', state)
-  emit('submit', state)
-}
+const event = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
+
+const _eventStartDate = ref<string | null>(null)
+const eventStartDate = computed({
+  get: () => _eventStartDate.value == null ? dateString(props.modelValue.event_start_datetime?.toDate() ?? null) : _eventStartDate.value,
+  set: (value) => _eventStartDate.value = value
+})
+const _eventStartHour = ref<string | null>(null)
+const eventStartHour = computed({
+  get: () => _eventStartHour.value == null ? hourString(props.modelValue.event_start_datetime?.toDate() ?? null) : _eventStartHour.value,
+  set: (value) => _eventStartHour.value = value
+})
+const _eventStartMinute = ref<string | null>(null)
+const eventStartMinute = computed({
+  get: () => _eventStartMinute.value == null ? minutesString(props.modelValue.event_start_datetime?.toDate() ?? null) : _eventStartMinute.value,
+  set: (value) => _eventStartMinute.value = value
+})
+const _eventEndDate = ref<string | null>(null)
+const eventEndDate = computed({
+  get: () => _eventEndDate.value == null ? dateString(props.modelValue.event_end_datetime?.toDate() ?? null) : _eventEndDate.value,
+  set: (value) => _eventEndDate.value = value
+})
+const _eventEndHour = ref<string | null>(null)
+const eventEndHour = computed({
+  get: () => _eventEndHour.value == null ? hourString(props.modelValue.event_end_datetime?.toDate() ?? null) : _eventEndHour.value,
+  set: (value) => _eventEndHour.value = value
+})
+const _eventEndMinute = ref<string | null>(null)
+const eventEndMinute = computed({
+  get: () => _eventEndMinute.value == null ? minutesString(props.modelValue.event_end_datetime?.toDate() ?? null) : _eventEndMinute.value,
+  set: (value) => _eventEndMinute.value = value
+})
+
+watchEffect(() => {
+  event.value.event_start_datetime = eventStartDate.value == null || eventStartHour.value == null || eventStartMinute.value == null
+    ? null
+    : Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value))
+  event.value.event_end_datetime = eventEndDate.value == null || eventEndHour.value == null || eventEndMinute.value == null
+    ? null
+    : Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value))
+})
+
+watchEffect(async () => {
+  const postalcode = event.value.event_postalcode
+  if (postalcode == null || /^\d{3}-?\d{4}$/.test(postalcode) === false) {
+    return
+  }
+  const location = await fetchLocationByPostalcode(postalcode)
+  event.value.event_address = location.address
+})
+
+const submitValidation = computed(() => event.value.event_postalcode &&
+         event.value.event_start_datetime != null &&
+         event.value.event_end_datetime != null &&
+         event.value.event_start_datetime < event.value.event_end_datetime
+)
 </script>
 <template>
   <v-row class="justify-center">
-    <v-col cols="10">
-      <v-card flat class="pa-3 mt-2">
+    <v-col cols="12" sm="12" md="9" class="px-0">
+      <v-card flat class="mt-3">
         <v-form class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
@@ -77,7 +103,7 @@ const submitSearch = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="title" outlined dense label="イベントタイトル" />
+                <v-text-field v-model="event.event_name" outlined dense label="イベントタイトル" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -89,28 +115,27 @@ const submitSearch = () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="3">
+              <v-col cols="12" sm="12" md="3">
                 <v-text-field
-                  v-model="postalcode"
+                  v-model="event.event_postalcode"
                   outlined
                   dense
                   label="お届け先 郵便番号"
-                  @change="changePostalcode"
                 />
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="address" outlined dense label="会場住所" />
+                <v-text-field v-model="event.event_address" outlined dense label="会場住所" />
               </v-col>
             </v-row>
           </v-card-text>
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="6">
-                <v-text-field v-model="placeName" outlined dense label="会場名" />
+              <v-col cols="12" sm="12" md="6">
+                <v-text-field v-model="event.event_place" outlined dense label="会場名" />
               </v-col>
-              <v-col cols="6">
-                <v-text-field v-model="placeUrl" outlined dense label="会場URL" />
+              <v-col cols="12" sm="12" md="6">
+                <v-text-field v-model="event.event_place_url" outlined dense label="会場URL" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -122,7 +147,7 @@ const submitSearch = () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
                   v-model="eventStartDate"
                   :config="pickerConfig"
@@ -131,10 +156,10 @@ const submitSearch = () => {
                   label="開始日"
                 ></app-date-time-picker>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" />
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventStartMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
@@ -142,7 +167,7 @@ const submitSearch = () => {
 
           <v-card-text class="pt-5">
             <v-row>
-              <v-col cols="6">
+              <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
                   v-model="eventEndDate"
                   :config="pickerConfig"
@@ -151,17 +176,16 @@ const submitSearch = () => {
                   label="終了日"
                 ></app-date-time-picker>
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" />
               </v-col>
-              <v-col cols="3">
+              <v-col cols="6" sm="6" md="3">
                 <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" />
               </v-col>
             </v-row>
           </v-card-text>
-
-          <v-card-text>
-            <v-btn color="primary" class="me-3 mt-3" @click="submitSearch"> 検索する </v-btn>
+          <v-card-text class="text-center mt-10">
+            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" :disabled="!submitValidation" @click="submit">次へ</v-btn>
           </v-card-text>
         </v-form>
       </v-card>
