@@ -1,4 +1,5 @@
-import { Timestamp } from 'firebase/firestore'
+import { DocumentData, Timestamp } from 'firebase/firestore'
+import _ from 'lodash'
 
 const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者支払い'] as const
 const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
@@ -8,76 +9,72 @@ export const eventPaymentItems = eventPaymentTypes.map((type, i) => {
   return { title: eventPaymentLabels[i], value: type }
 })
 
-export type EventStatusType = {
+type RawEventStatusType = {
   value: 'in_draft' | 'applying_reservation' | 'accepting_order'
-  shop_comment: string
+  shop_comment?: string
 }
 
-type BokudeliEvent = {
-  community_id: string
-  community_name: string
-  community_account: string
-  event_id: string
-  event_address: string
-  event_cover_url: string
-  event_desc: string
-  event_deadline_datetime: Timestamp | null
-  event_max_people: number
-  event_name: string
-  event_start_datetime: Timestamp | null
-  event_end_datetime: Timestamp | null
-  partner_id: string
-  shop_id: string
-  shop_name: string
-  is_public: boolean
-  event_payment: EventPaymentType
+export type EventStatusType = Omit<RawEventStatusType, 'value'> & {
+  value: RawEventStatusType['value'] | 'order_closed' | 'finished'
+}
+
+class BokudeliEvent {
+  community_id: string = '';
+  community_name: string = '';
+  community_account: string = '';
+  event_id: string = '';
+  event_address: string = '';
+  event_cover_url: string = '';
+  event_desc: string = '';
+  event_deadline_datetime: Timestamp | null = null;
+  event_max_people: number = 0;
+  event_name: string = '';
+  event_start_datetime: Timestamp | null = null;
+  event_end_datetime: Timestamp | null = null;
+  partner_id: string = '';
+  shop_id: string = '';
+  shop_name: string = '';
+  is_public: boolean = false;
+  event_payment: EventPaymentType = 'user_advance';
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
-  organizer_fullname: string
-  organizer_company: string
-  organizer_phone_personal: string
-  organizer_phone_company: string
-  organizer_email: string
-  organizer_memo: string
+  organizer_fullname: string = '';
+  organizer_company: string = '';
+  organizer_phone_personal: string = '';
+  organizer_phone_company: string = '';
+  organizer_email: string = '';
+  organizer_memo: string = '';
+  event_place: string = '';
+  event_place_url: string = '';
+  event_postalcode: string = '';
 
-  event_place: string
-  event_place_url: string
-  event_postalcode: string
+  created_at: Timestamp = Timestamp.now();
+  updated_at: Timestamp | null = null;
 
-  event_status: EventStatusType
+  raw_event_status: RawEventStatusType = { value: 'in_draft' };
 
-  created_at?: Timestamp
-  updated_at?: Timestamp
+  get event_status(): EventStatusType {
+    const now = new Date()
+    if (this.event_start_datetime != null && this.event_start_datetime.toDate() < now) {
+      return { value: 'finished' }
+    } else if (this.event_deadline_datetime != null && this.event_deadline_datetime.toDate() < now) {
+      return { value: 'order_closed' }
+    } else {
+      // event_status が string だった仕様の時もあったので、その対応
+      return (typeof this.raw_event_status === 'string') ? { value: this.raw_event_status} as EventStatusType : this.raw_event_status
+    }
+  }
+
+  constructor(eventData?: DocumentData) {
+    if (eventData != null) {
+      _.merge(
+        this,
+        _.assign(_.omit(eventData, ['event_status']), { raw_event_status: eventData.event_status })
+      )
+    }
+  }
 }
 
-export const createEmptyEvent = (): BokudeliEvent => ({
-  community_id: '',
-  community_name: '',
-  community_account: '',
-  event_id: '',
-  event_address: '',
-  event_cover_url: '',
-  event_desc: '',
-  event_deadline_datetime: null,
-  event_max_people: 0,
-  event_name: '',
-  event_start_datetime: null,
-  event_end_datetime: null,
-  partner_id: '',
-  shop_id: '',
-  shop_name: '',
-  is_public: false,
-  event_payment: 'user_advance',
-  organizer_fullname: '',
-  organizer_company: '',
-  organizer_phone_personal: '',
-  organizer_phone_company: '',
-  organizer_email: '',
-  organizer_memo: '',
-  event_place: '',
-  event_place_url: '',
-  event_postalcode: '',
-  event_status: { value: 'accepting_order', shop_comment:'-' }
-})
+export const createEmptyEvent = (): BokudeliEvent => new BokudeliEvent()
 
 export default BokudeliEvent
