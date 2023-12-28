@@ -85,7 +85,7 @@ const next = () => {
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
-                  <v-btn v-if="item.shop_id==props.modelValue.shop_id" color="secondary" class="ma-5" size="large" @click="submit(item)">
+                  <v-btn v-if="item.shop_id==props.modelValue.shop_id" color="red" class="ma-5" size="large" @click="submit(item)">
                     選択中
                   </v-btn>
                   <v-btn v-else color="primary" class="ma-5" size="large" append-icon="mdi-chevron-right" @click="submit(item)">
@@ -100,7 +100,7 @@ const next = () => {
               </v-col>
             </v-row>
             <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
+              <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
               <v-btn v-if="props.modelValue.shop_id" color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="next">次へ</v-btn>
             </v-card-text>
           </v-form>
