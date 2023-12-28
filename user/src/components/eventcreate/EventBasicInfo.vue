@@ -10,7 +10,7 @@ import {
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
-import { LatLogLocation, fetchLocationByPostalcode } from '@/composable/fetchLocation'
+import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { Timestamp } from 'firebase/firestore'
 
 const pickerConfig = {
@@ -19,12 +19,10 @@ const pickerConfig = {
 
 const props = defineProps<{
   modelValue: Partial<BokudeliEvent>
-  location: LatLogLocation | null
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
-  (e: 'update:location', value: LatLogLocation): void
   (e: 'submit'): void
 }>()
 
@@ -84,7 +82,6 @@ watchEffect(async () => {
   }
   const location = await fetchLocationByPostalcode(postalcode)
   event.value.event_address = location.address
-  emit('update:location', location)
 })
 
 const submitValidation = computed(() => event.value.event_postalcode &&

@@ -19,7 +19,7 @@ import PartnerMenu from '@/schemes/partnerMenu'
 import { useRouter, useRoute } from 'vue-router'
 import { getEventPath } from '@/router/utils'
 import { uploadEventImage } from '@/composable/uploadImage'
-import { LatLogLocation, calculateDistance } from '@/composable/fetchLocation'
+import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
 
 const router = useRouter()
@@ -32,7 +32,6 @@ const props = defineProps<{
 const eventId = route.query.id as string | null
 
 const event = ref({} as Partial<BokudeliEvent>)
-const eventLocation = ref<LatLogLocation | null>(null)
 const shops = ref<Shop[]>([])
 const menus = ref<PartnerMenu[]>([])
 const coverImage = ref<File | null>(null)
@@ -58,6 +57,8 @@ const fetchData = async () => {
     .then((results) => [results[0]?.docs?.shift()?.data(), results[1]?.docs?.shift()?.data()])
   if (eventData != null) {
     event.value = convertDocumentDataToEvent(eventData)
+    await fetchShops()
+    await fetchMenu()
   }
   if (communityData != null) {
     const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communityData)
@@ -69,7 +70,11 @@ const fetchData = async () => {
 
 const fetchShops = async () => {
   const startDateTime =  event.value.event_start_datetime?.toDate()
-  const location = eventLocation.value
+  const postalcode = event.value.event_postalcode
+  if (postalcode == null || /^\d{3}-?\d{4}$/.test(postalcode) === false) {
+    return
+  }
+  const location = await fetchLocationByPostalcode(postalcode)
   if (location == null || startDateTime == null) {
     shops.value = []
     return 
@@ -227,10 +232,10 @@ const stepperItems = computed(() => [
 <template>
   <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
-      <event-basic-info v-model="event" v-model:location="eventLocation" @submit="fetchShops(); stepper++" />
+      <event-basic-info v-model="event" @submit="fetchShops(); stepper++" />
     </template>
     <template #[`item.2`]>
-      <event-shop v-model="event" :shops="shops" :loading="isLoadingShop" @submit="fetchMenu(); stepper++" @back="stepper--" />
+      <event-shop v-model="event" :shops="shops" :loading="isLoadingShop" @submit="fetchMenu(); stepper++" @next="stepper++" @back="stepper--" />
     </template>
     <template #[`item.3`]>
       <event-menu :menus="menus" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />
