@@ -192,7 +192,7 @@ const sumbmit = async () => {
     return
   }
   if (eventId == null) {
-    window.alert(`イベントID： ${eventId} のイベントを新規作成しました`)
+    window.alert(`イベントID： ${newEventId} のイベントを新規作成しました`)
   } else {
     window.alert(`イベントID： ${eventId} のイベントを更新しました`)
   }
