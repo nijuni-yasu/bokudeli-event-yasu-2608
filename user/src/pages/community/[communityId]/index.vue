@@ -87,7 +87,7 @@ onMounted(async () => {
   state.events = eventSnapshot.docs.flatMap((doc) => {
     const event = convertDocumentDataToEvent(doc.data())
     // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
-    if (!state.isCommunityManager && event.event_status.value !== 'accepting_order') {
+    if (!state.isCommunityManager && (event.event_status.value == 'in_draft' || event.event_status.value == 'applying_reservation')) {
       return []
     }
     // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示

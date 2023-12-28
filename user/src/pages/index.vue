@@ -35,7 +35,7 @@ onMounted(async () => {
 
   state.eventList = querySnapshot.docs.flatMap((doc) => {
     const event = convertDocumentDataToEvent(doc.data())
-    if (event.event_status.value !== 'accepting_order') {
+    if (event.event_status.value == 'in_draft' || event.event_status.value == 'applying_reservation' ) {
       return []
     }
     loadEventMembersWithoutMenu(event.community_account, event.event_id).then((members) => {
