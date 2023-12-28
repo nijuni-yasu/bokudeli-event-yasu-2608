@@ -72,6 +72,14 @@ const onFileChange = (e: Event) => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
+                <v-text-field v-model="event.event_name" outlined dense label="イベントタイトル" />
+              </v-col>
+            </v-row>
+          </v-card-text>
+
+          <v-card-text class="pt-5">
+            <v-row>
+              <v-col cols="12">
                 <div class="v-field image-upload-container" @click="onTriggerUpload">
                   <input ref="fileInputRef" class="file-input" type="file" @change="onFileChange" />
                   <v-img v-if="coverUrl" :src="coverUrl"></v-img>

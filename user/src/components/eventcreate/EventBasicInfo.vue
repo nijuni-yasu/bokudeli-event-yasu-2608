@@ -96,19 +96,6 @@ const submitValidation = computed(() => event.value.event_postalcode &&
       <v-card flat class="mt-3">
         <v-form class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
-            <span>タイトル</span>
-          </v-card-title>
-
-          <v-card-text class="pt-5">
-            <v-row>
-              <v-col cols="12">
-                <v-text-field v-model="event.event_name" outlined dense label="イベントタイトル" />
-              </v-col>
-            </v-row>
-          </v-card-text>
-
-          <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-map-marker" />
             <span>開催場所</span>
           </v-card-title>
