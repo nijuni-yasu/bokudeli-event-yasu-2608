@@ -22,6 +22,7 @@ import { uploadEventImage } from '@/composable/uploadImage'
 import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
+import { postalCodeValidator } from '@/utils/validators'
 
 const router = useRouter()
 const route = useRoute()
@@ -77,7 +78,7 @@ const fetchData = async () => {
 const fetchShops = async () => {
   const startDateTime =  event.value.event_start_datetime?.toDate()
   const postalcode = event.value.event_postalcode
-  if (postalcode == null || /^\d{3}-?\d{4}$/.test(postalcode) === false) {
+  if (postalcode == null || postalCodeValidator(postalcode) !== true) {
     return
   }
   const location = await fetchLocationByPostalcode(postalcode)

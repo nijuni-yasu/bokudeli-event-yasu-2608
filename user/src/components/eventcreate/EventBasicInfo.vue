@@ -12,6 +12,7 @@ import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePic
 import { Japanese } from 'flatpickr/dist/l10n/ja'
 import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { Timestamp } from 'firebase/firestore'
+import { requiredValidator, postalCodeValidator, urlValidator } from '@/utils/validators'
 
 const pickerConfig = {
   locale: Japanese,
@@ -35,66 +36,104 @@ const event = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const _eventStartDate = ref<string | null>(null)
+const isValid = ref(false)
+
+// 新規作成の場合の初期値設定
+if (event.value.event_start_datetime == null) {
+  event.value.event_start_datetime = Timestamp.fromMillis(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) // +7日
+}
+if (event.value.event_end_datetime == null) {
+  event.value.event_end_datetime = Timestamp.fromMillis(event.value.event_start_datetime.toMillis() + 1 * 60 * 60 * 1000) // + 1時間
+}
+
+// app-date-time-picker の v-model がリアクティブではないので強制更新用のキーを用意（おそらく app-date-time-picker のバグ）
+const eventStartDateKey = ref('eventStartDateKey')
 const eventStartDate = computed({
-  get: () => _eventStartDate.value == null ? dateString(props.modelValue.event_start_datetime?.toDate() ?? null) : _eventStartDate.value,
-  set: (value) => _eventStartDate.value = value
+  get: () => dateString(event.value.event_start_datetime?.toDate() ?? null),
+  set: (value) => {
+    const newValue = Timestamp.fromDate(parseDateTimeStrings(value, eventStartHour.value, eventStartMinute.value))
+    updateStartDatetime(newValue)
+  }
 })
-const _eventStartHour = ref<string | null>(null)
 const eventStartHour = computed({
-  get: () => _eventStartHour.value == null ? hourString(props.modelValue.event_start_datetime?.toDate() ?? null) : _eventStartHour.value,
-  set: (value) => _eventStartHour.value = value
+  get: () => hourString(props.modelValue.event_start_datetime?.toDate() ?? null),
+  set: (value) => {
+    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, value, eventStartMinute.value))
+    updateStartDatetime(newValue)
+  }
 })
-const _eventStartMinute = ref<string | null>(null)
 const eventStartMinute = computed({
-  get: () => _eventStartMinute.value == null ? minutesString(props.modelValue.event_start_datetime?.toDate() ?? null) : _eventStartMinute.value,
-  set: (value) => _eventStartMinute.value = value
+  get: () => minutesString(props.modelValue.event_start_datetime?.toDate() ?? null),
+  set: (value) => {
+    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, eventStartHour.value, value))
+    updateStartDatetime(newValue)
+  }
 })
-const _eventEndDate = ref<string | null>(null)
+// app-date-time-picker の v-model がリアクティブではないので強制更新用のキーを用意（おそらく app-date-time-picker のバグ）
+const eventEndDateKey = ref('eventEndDateKey')
 const eventEndDate = computed({
-  get: () => _eventEndDate.value == null ? dateString(props.modelValue.event_end_datetime?.toDate() ?? null) : _eventEndDate.value,
-  set: (value) => _eventEndDate.value = value
+  get: () => dateString(event.value.event_end_datetime?.toDate() ?? null),
+  set: (value) => {
+    const newValue = Timestamp.fromDate(parseDateTimeStrings(value, eventEndHour.value, eventEndMinute.value))
+    updateEndDatetime(newValue)
+  }
 })
-const _eventEndHour = ref<string | null>(null)
 const eventEndHour = computed({
-  get: () => _eventEndHour.value == null ? hourString(props.modelValue.event_end_datetime?.toDate() ?? null) : _eventEndHour.value,
-  set: (value) => _eventEndHour.value = value
+  get: () => hourString(event.value.event_end_datetime?.toDate() ?? null),
+  set: (value) => {
+    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, value, eventEndMinute.value))
+    updateEndDatetime(newValue)
+  }
 })
-const _eventEndMinute = ref<string | null>(null)
 const eventEndMinute = computed({
-  get: () => _eventEndMinute.value == null ? minutesString(props.modelValue.event_end_datetime?.toDate() ?? null) : _eventEndMinute.value,
-  set: (value) => _eventEndMinute.value = value
+  get: () => minutesString(event.value.event_end_datetime?.toDate() ?? null),
+  set: (value) => {
+    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, eventEndHour.value, value))
+    updateEndDatetime(newValue)
+  }
 })
 
-watchEffect(() => {
-  event.value.event_start_datetime = eventStartDate.value == null || eventStartHour.value == null || eventStartMinute.value == null
-    ? null
-    : Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, eventStartHour.value, eventStartMinute.value))
-  event.value.event_end_datetime = eventEndDate.value == null || eventEndHour.value == null || eventEndMinute.value == null
-    ? null
-    : Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, eventEndHour.value, eventEndMinute.value))
-})
+const updateStartDatetime = (newValue: Timestamp) => {
+  if (Timestamp.now() < newValue) {
+    event.value.event_start_datetime = newValue
+  } else {
+    eventStartDateKey.value = `eventStartDateKey${Timestamp.now().toMillis()}}`
+  }
+  // 終了日時の方が開始日時より前になっていたら終了日時を開始日時+1時間にする
+  if (event.value.event_end_datetime == null || newValue >= event.value.event_end_datetime) {
+    event.value.event_end_datetime = Timestamp.fromMillis(newValue.toMillis() + 1 * 60 * 60 * 1000)
+    eventEndDateKey.value = `eventEndDateKey${Timestamp.now().toMillis()}}`
+  }
+}
+
+const updateEndDatetime = (newValue: Timestamp) => {
+  // 30分のイベントとかがあるかも？
+  // 今の所は終了時間が開始時間より後になっていれば良しとする
+  if (event.value.event_start_datetime != null && event.value.event_start_datetime < newValue) {
+    event.value.event_end_datetime = newValue
+  } else {
+    eventEndDateKey.value = `eventEndDateKey${Timestamp.now().toMillis()}}`
+  }
+}
 
 watchEffect(async () => {
   const postalcode = event.value.event_postalcode
-  if (postalcode == null || /^\d{3}-?\d{4}$/.test(postalcode) === false) {
+  if (requiredValidator(postalcode) !== true || postalCodeValidator(postalcode) !== true) {
     return
   }
-  const location = await fetchLocationByPostalcode(postalcode)
+  const location = await fetchLocationByPostalcode(postalcode as string)
+  if (location?.address == null) {
+    return
+  }
   event.value.event_address = location.address
 })
-
-const submitValidation = computed(() => event.value.event_postalcode &&
-         event.value.event_start_datetime != null &&
-         event.value.event_end_datetime != null &&
-         event.value.event_start_datetime < event.value.event_end_datetime
-)
 </script>
+
 <template>
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
       <v-card flat class="mt-3">
-        <v-form class="multi-col-validation">
+        <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-map-marker" />
             <span>開催場所</span>
@@ -108,10 +147,16 @@ const submitValidation = computed(() => event.value.event_postalcode &&
                   outlined
                   dense
                   label="郵便番号"
+                  :rules="[requiredValidator, postalCodeValidator]"
                 />
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="event.event_address" outlined dense label="住所" />
+                <v-text-field
+                  v-model="event.event_address"
+                  outlined
+                  dense
+                  label="住所"
+                  :rules="[requiredValidator]" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -122,7 +167,7 @@ const submitValidation = computed(() => event.value.event_postalcode &&
                 <v-text-field v-model="event.event_place" outlined dense label="会場名" />
               </v-col>
               <v-col cols="12" sm="12" md="6">
-                <v-text-field v-model="event.event_place_url" outlined dense label="会場URL" />
+                <v-text-field v-model="event.event_place_url" outlined dense label="会場URL" :rules="[urlValidator]" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -136,6 +181,7 @@ const submitValidation = computed(() => event.value.event_postalcode &&
             <v-row>
               <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
+                  :key="eventStartDateKey"
                   v-model="eventStartDate"
                   :config="pickerConfig"
                   outlined
@@ -156,6 +202,7 @@ const submitValidation = computed(() => event.value.event_postalcode &&
             <v-row>
               <v-col cols="12" sm="12" md="6">
                 <app-date-time-picker
+                  :key="eventEndDateKey"
                   v-model="eventEndDate"
                   :config="pickerConfig"
                   outlined
@@ -172,7 +219,7 @@ const submitValidation = computed(() => event.value.event_postalcode &&
             </v-row>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" :disabled="!submitValidation" @click="submit">次へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" :disabled="!isValid" @click="submit">次へ</v-btn>
           </v-card-text>
         </v-form>
       </v-card>
