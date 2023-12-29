@@ -143,7 +143,7 @@ const openLoginDialog = () => {
 <template>
   <section>
     <div v-if="state.isLoading === false" class="justify-center">
-      <v-row class="justify-center mt-5 mr-1">
+      <v-row class="justify-center mt-lg-10 mr-1">
         <v-col md="8" sm="9" cols="12">
           <v-row class="justify-end align-center">
             <v-btn
@@ -176,7 +176,7 @@ const openLoginDialog = () => {
       </v-row>
       <v-row class="justify-center">
         <v-col md="8" sm="9" cols="12">
-          <v-card flat class="align-center justify-center mt-1 mb-5 pa-sm-10 pa-xs-1">
+          <v-card class="align-center justify-center mt-1 mb-5 pa-sm-10 pa-xs-1">
             <v-row>
               <v-col>
                 <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.event_cover_url" />
