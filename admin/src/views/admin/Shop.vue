@@ -618,7 +618,7 @@
                     sm="4"
                   >
                     <v-select
-                      v-model="shop_deadline_date"
+                      v-model="shop_deadline_datetime.days_before"
                       :items="shop_deadline_date_array"
                       label="締切日"
                       hint="※注文の締切日時を設定できます"
@@ -631,12 +631,12 @@
                     sm="4"
                   >
                     <v-select
-                      v-model="shop_deadline_time"
+                      v-model="shop_deadline_datetime.time"
                       :items="shop_deadline_time_array"
                       label="締切時刻"
                     />
                   </v-col>
-                </v-row>                
+                </v-row>
                 <!-- TODO: 今後、店舗ごとに自由に持たせるかも？
                 <v-row
                   align="center"
@@ -971,60 +971,68 @@
       validator: 'new',
     },
 
-    data: () => ({
-      shop_name: '',
-      shop_postcode: '',
-      shop_address: '',
-      shop_address_latitude: 0,
-      shop_address_longitude: 0,
-      shop_phone: '',
-      shop_url: '',
-      shop_url_twitter: '',
-      shop_url_facebook: '',
-      shop_url_instagram: '',
-      shop_image_file: '',
-      shop_image_url: require('@/assets/600x450.png'),
-      shop_description: '',
-      shop_genre: '',
-      // shop_range: '',
-      // shop_min_orders: '',
-      shop_time: [
-        { label_en: 'sun', label_ja: '日曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
-        { label_en: 'mon', label_ja: '月曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
-        { label_en: 'tue', label_ja: '火曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
-        { label_en: 'wed', label_ja: '水曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
-        { label_en: 'thu', label_ja: '木曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
-        { label_en: 'fli', label_ja: '金曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
-        { label_en: 'sat', label_ja: '土曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
-      ],
-      shop_range_min_orders: [
-        { label: '設定1', range: '', min_orders: '' },
-        { label: '設定2', range: '', min_orders: '' },
-        { label: '設定3', range: '', min_orders: '' },
-        { label: '設定4', range: '', min_orders: '' },
-        { label: '設定5', range: '', min_orders: '' },
-      ],
-      shop_deadline_date: '当日',
-      shop_deadline_time: '11:00',
-      shop_margin_time: '30',
-      shop_email: firebase.auth().currentUser.email,
-      shop_email_sub1: '',
-      shop_email_sub2: '',
-      shop_email_sub3: '',
-      shop_min_orders_array: ['', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
-      shop_range_array: ['', 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 40, 45, 50],
-      shop_genre_array: ['弁当', '丼もの', 'おにぎり', '和食', '寿司', '魚介料理', '海鮮料理', '天ぷら', '揚げ物', 'そば', 'うどん', '麺類', 'うなぎ・どじょう・あなご', '焼鳥', '串焼', '鳥料理', 'すき焼き', 'しゃぶしゃぶ', 'おでん', 'お好み焼き', 'たこ焼き', '日本料理', '郷土料理', 'ステーキ', 'ハンバーグ', '鉄板焼き', 'パスタ', 'ピザ', 'ハンバーガー', '洋食', '欧風料理', 'フレンチ', 'イタリアン', 'スペイン料理', '西洋各国料理', '中華料理', '餃子', '肉まん', '中華粥', '中華麺', '韓国料理', '東南アジア料理', '南アジア料理', '西アジア料理', '中南米料理', 'アフリカ料理', 'アジア・エスニック', 'カレーライス', '欧風カレー', 'インドカレー', 'スパイスカレー', 'タイカレー', 'スープカレー', 'カレー', '焼肉', 'ホルモン', 'ジンギスカン', 'ちゃんこ鍋', 'うどんすき', 'もつ鍋', '水炊き', 'ちりとり鍋・てっちゃん鍋', '中国鍋・火鍋', '韓国鍋', 'タイスキ', '鍋', '居酒屋', 'ダイニングバー', '創作料理', 'イノベーティブ・フュージョン', '無国籍料理', 'ファミレス', 'レストラン', '自然食', '薬膳', 'ラーメン', '油そば', '台湾まぜそば', '汁なし担々麺', 'つけ麺', 'カフェ', '喫茶店', 'コーヒー専門店', '紅茶専門店', '中国茶専門店', '日本茶専門店', 'パン', 'サンドイッチ', 'ベーグル', '洋菓子', '和菓子・甘味処', '中華菓子', 'スイーツ', '低糖質', 'キッチンカー', 'キムチ', '焼き芋', 'その他'],
-      shop_time_array: ['', '6:00', '6:15', '6:30', '6:45', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15', '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45', '19:00', '19:15', '19:30', '19:45', '20:00', '20:15', '20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30', '22:45', '23:00', '23:15', '23:30', '23:45', '24:00'],
-      shop_deadline_date_array: ['当日', '前日', '2日前', '3日前', '4日前', '5日前'],
-      shop_deadline_time_array: ['6:00', '6:15', '6:30', '6:45', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15', '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45', '19:00', '19:15', '19:30', '19:45', '20:00', '20:15', '20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30', '22:45', '23:00', '23:15', '23:30', '23:45', '24:00'],
-      shop_margin_time_array: ['10', '15', '20', '30', '40', '50', '60'],
-      // shop_order_method: ['現金'],
-      shop_holidays: [],
-      is_open: false,
-      menu: false,
-      shopTimeCheck: true,
-      shopRangeCheck: true,
-    }),
+    data() {
+      return {
+        shop_name: '',
+        shop_postcode: '',
+        shop_address: '',
+        shop_address_latitude: 0,
+        shop_address_longitude: 0,
+        shop_phone: '',
+        shop_url: '',
+        shop_url_twitter: '',
+        shop_url_facebook: '',
+        shop_url_instagram: '',
+        shop_image_file: '',
+        shop_image_url: require('@/assets/600x450.png'),
+        shop_description: '',
+        shop_genre: '',
+        // shop_range: '',
+        // shop_min_orders: '',
+        shop_time: [
+          { label_en: 'sun', label_ja: '日曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
+          { label_en: 'mon', label_ja: '月曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
+          { label_en: 'tue', label_ja: '火曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
+          { label_en: 'wed', label_ja: '水曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
+          { label_en: 'thu', label_ja: '木曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
+          { label_en: 'fli', label_ja: '金曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
+          { label_en: 'sat', label_ja: '土曜日', is_open: false, time_start: '', time_end: '', time_start2: '', time_end2: '' },
+        ],
+        shop_range_min_orders: [
+          { label: '設定1', range: '', min_orders: '' },
+          { label: '設定2', range: '', min_orders: '' },
+          { label: '設定3', range: '', min_orders: '' },
+          { label: '設定4', range: '', min_orders: '' },
+          { label: '設定5', range: '', min_orders: '' },
+        ],
+        shop_deadline_datetime: {
+          days_before: 1,
+          time: new Date(11 * 60 * 60 * 1000).getTime()
+        },
+        shop_email: firebase.auth().currentUser.email,
+        shop_email_sub1: '',
+        shop_email_sub2: '',
+        shop_email_sub3: '',
+        shop_min_orders_array: ['', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+        shop_range_array: ['', 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 40, 45, 50],
+        shop_genre_array: ['弁当', '丼もの', 'おにぎり', '和食', '寿司', '魚介料理', '海鮮料理', '天ぷら', '揚げ物', 'そば', 'うどん', '麺類', 'うなぎ・どじょう・あなご', '焼鳥', '串焼', '鳥料理', 'すき焼き', 'しゃぶしゃぶ', 'おでん', 'お好み焼き', 'たこ焼き', '日本料理', '郷土料理', 'ステーキ', 'ハンバーグ', '鉄板焼き', 'パスタ', 'ピザ', 'ハンバーガー', '洋食', '欧風料理', 'フレンチ', 'イタリアン', 'スペイン料理', '西洋各国料理', '中華料理', '餃子', '肉まん', '中華粥', '中華麺', '韓国料理', '東南アジア料理', '南アジア料理', '西アジア料理', '中南米料理', 'アフリカ料理', 'アジア・エスニック', 'カレーライス', '欧風カレー', 'インドカレー', 'スパイスカレー', 'タイカレー', 'スープカレー', 'カレー', '焼肉', 'ホルモン', 'ジンギスカン', 'ちゃんこ鍋', 'うどんすき', 'もつ鍋', '水炊き', 'ちりとり鍋・てっちゃん鍋', '中国鍋・火鍋', '韓国鍋', 'タイスキ', '鍋', '居酒屋', 'ダイニングバー', '創作料理', 'イノベーティブ・フュージョン', '無国籍料理', 'ファミレス', 'レストラン', '自然食', '薬膳', 'ラーメン', '油そば', '台湾まぜそば', '汁なし担々麺', 'つけ麺', 'カフェ', '喫茶店', 'コーヒー専門店', '紅茶専門店', '中国茶専門店', '日本茶専門店', 'パン', 'サンドイッチ', 'ベーグル', '洋菓子', '和菓子・甘味処', '中華菓子', 'スイーツ', '低糖質', 'キッチンカー', 'キムチ', '焼き芋', 'その他'],
+        shop_time_array: ['', '6:00', '6:15', '6:30', '6:45', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15', '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45', '19:00', '19:15', '19:30', '19:45', '20:00', '20:15', '20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30', '22:45', '23:00', '23:15', '23:30', '23:45', '24:00'],
+        shop_deadline_date_array: [...Array(5)].map((_, i) => ({text: this.$tc('days_before', i + 1), value: i + 1})),
+        shop_deadline_time_array: [...Array(72)].map((_, i) => {
+          const date = new Date(0)
+          date.setHours(6 + Math.floor(i / 4))
+          date.setMinutes((i % 4) * 15)
+          return {text: this.$d(date, 'time'), value: date.getTime()}
+        }),
+        shop_margin_time_array: ['10', '15', '20', '30', '40', '50', '60'],
+        // shop_order_method: ['現金'],
+        shop_holidays: [],
+        is_open: false,
+        menu: false,
+        shopTimeCheck: true,
+        shopRangeCheck: true,
+      }
+    },
 
     created () {
       partnerId = firebase.auth().currentUser.uid
@@ -1067,11 +1075,8 @@
           if (shopDoc.shop_url_instagram) {
             this.shop_url_instagram = shopDoc.shop_url_instagram
           }
-          if (shopDoc.shop_deadline_date) {
-            this.shop_deadline_date = shopDoc.shop_deadline_date
-          }
-          if (shopDoc.shop_deadline_time) {
-            this.shop_deadline_time = shopDoc.shop_deadline_time
+          if (shopDoc.shop_deadline_datetime) {
+            this.shop_deadline_datetime = shopDoc.shop_deadline_datetime
           }
           if (shopDoc.shop_margin_time) {
             this.shop_margin_time = shopDoc.shop_margin_time
@@ -1144,8 +1149,7 @@
             shop_holidays: this.shop_holidays,
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
-            shop_deadline_date: this.shop_deadline_date,
-            shop_deadline_time: this.shop_deadline_time,
+            shop_deadline_datetime: this.shop_deadline_datetime,
             shop_margin_time: this.shop_margin_time,
             shop_email_sub1: this.shop_email_sub1,
             shop_email_sub2: this.shop_email_sub2,
@@ -1182,8 +1186,7 @@
             shop_holidays: this.shop_holidays,
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
-            shop_deadline_date: this.shop_deadline_date,
-            shop_deadline_time: this.shop_deadline_time,
+            shop_deadline_datetime: this.shop_deadline_datetime,
             shop_margin_time: this.shop_margin_time,
             shop_email_sub1: this.shop_email_sub1,
             shop_email_sub2: this.shop_email_sub2,
