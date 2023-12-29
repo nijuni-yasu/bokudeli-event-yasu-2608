@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+    match /databases/{database}/documents {
+        match /partners/{partner_id} {
+            match /shops/{shop} {
+                // 店舗情報はログインした店舗アカウントでないと create/update/deleteできない
+                allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
+                // 店舗情報はログインしなくても、誰でも閲覧できる
+                allow read: if true;
+            }
+            match /menus/{menu} {
+                // メニュー情報はログインした店舗アカウントでないと create/update/deleteできない
+                allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
+                // メニュー情報はログインしなくても、誰でも閲覧できる
+                allow read: if true;
+            }
+            match /options/{option} {
+                // メニュー情報はログインした店舗アカウントでないと create/update/deleteできない
+                allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
+                // メニュー情報はログインしなくても、誰でも閲覧できる
+                allow read: if true;
+            }
+        }
+        match /communities/{community} {
+            allow read: if true;
+            match /events/{event} {
+                // support@nijuni.jpのアカウントはどのイベントも作成できる。
+                allow create, update, delete: if request.auth.uid == '3QotPSenRqVPCZnT82fGCLh5EmG3'
+                allow read: if true;
+                match /orders/{order} {
+                    allow create, update, delete: if request.auth != null
+                    allow read: if true;
+                }
+            }
+            match /members/{member} {
+                allow create, update: if request.auth != null && request.auth.uid == request.resource.data.user_id
+                allow read: if true;
+            }
+        }
+        match /users/{user_id} {
+            // ユーザー情報はログインユーザーでないと create/update/deleteできない
+            allow write: if request.auth != null && request.auth.uid == user_id
+            // ユーザー情報はログインユーザーでないと readできない
+            allow read: if request.auth != null && request.auth.uid == user_id
+        }
+        match /{document=**} {
+            allow read: if true
+        }
+    }
+}
