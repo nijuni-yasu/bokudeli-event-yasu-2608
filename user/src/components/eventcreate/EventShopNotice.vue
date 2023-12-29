@@ -82,7 +82,16 @@ const sendReserveMail = () => {
             <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="emit('submit')">下書きをプレビューする</v-btn>
           </v-card-text>
           <v-card-text class="text-center mx-0">
-            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email" @click="openConfirmDialog">店舗に予約申請メールする</v-btn>
+            <v-btn
+              v-if="event.event_id"
+              color="grey-900"
+              class="mt-3"
+              size="large"
+              prepend-icon="mdi-email"
+              @click="openConfirmDialog"
+            >
+              店舗に予約申請メールする
+            </v-btn>
           </v-card-text>
           <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'予約申請する'" :ok-click="sendReserveMail">
             {{ event.shop_name }} に予約申請メールをしますか？
