@@ -27,6 +27,8 @@ service cloud.firestore {
                 // コミュマネorサポートアカウントはイベントの作成・更新ができる
                 allow create, update: if isManager();
                 allow create, update: if request.auth.uid == '3QotPSenRqVPCZnT82fGCLh5EmG3' || request.auth.uid == 'yHOr7eaWWYPHLjPx3H0gZ5nfyWJ2'
+                // 予約承認・予約却下などイベントステータスを店舗が変更できる
+                allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
                 match /orders/{order} {
                     allow create, update, delete: if request.auth != null
                 }
