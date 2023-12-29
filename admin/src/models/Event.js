@@ -10,7 +10,7 @@ export class Event {
     Object.defineProperty(this, 'event_status', {
       get: () => {
         const now = new Date().getTime()
-        if (this.event_start_datetime < now) {
+        if (this.event_end_datetime < now) {
           return { value: 'finished' }
         } else if (this.event_deadline_datetime < now) {
           return { value: 'order_closed' }

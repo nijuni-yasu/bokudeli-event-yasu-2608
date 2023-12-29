@@ -55,7 +55,7 @@ class BokudeliEvent {
 
   get event_status(): EventStatusType {
     const now = new Date()
-    if (this.event_start_datetime != null && this.event_start_datetime.toDate() < now) {
+    if (this.event_end_datetime != null && this.event_end_datetime.toDate() < now) {
       return { value: 'finished' }
     } else if (this.event_deadline_datetime != null && this.event_deadline_datetime.toDate() < now) {
       return { value: 'order_closed' }
