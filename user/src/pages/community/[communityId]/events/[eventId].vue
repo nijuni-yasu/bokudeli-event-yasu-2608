@@ -149,8 +149,7 @@ const openLoginDialog = () => {
             <v-btn
               v-if="state.event.event_status.value===`in_draft`&&state.isCommunityManager"
               color="white"
-              class="mr-2"
-              size="large"
+              class="mr-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-email"
@@ -161,8 +160,7 @@ const openLoginDialog = () => {
             <v-btn
               v-if="state.event.event_status.value===`in_draft`&&state.isCommunityManager"
               color="white"
-              class="mr-2"
-              size="large"
+              class="mr-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-pencil-box-outline"

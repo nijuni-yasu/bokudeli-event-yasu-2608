@@ -241,7 +241,7 @@ onMounted(async () => {
               <v-col class="text-center">
                 <v-btn
                   class="mx-2 my-10 text-lg-h5"
-                  color="grey-900"
+                  color="white"
                   elevation="10"
                   size="x-large"
                   rounded

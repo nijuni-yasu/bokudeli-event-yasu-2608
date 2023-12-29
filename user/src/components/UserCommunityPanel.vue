@@ -112,8 +112,9 @@ onMounted(async () => {
           <v-col class="text-right">
             <v-btn
               class="mx-1 mb-1 mt-0"
-              color="grey-900"
-              elevation="10"
+              color="white"
+              elevation="5"
+              size="small"
               rounded
               target="_blank"
               prepend-icon="mdi-pencil-box-outline"
@@ -123,8 +124,9 @@ onMounted(async () => {
             </v-btn>
             <v-btn
               class="mx-1 mb-1 mt-0"
-              color="grey-900"
-              elevation="10"
+              color="white"
+              elevation="5"
+              size="small"
               rounded
               target="_blank"
               prepend-icon="mdi-cog"
