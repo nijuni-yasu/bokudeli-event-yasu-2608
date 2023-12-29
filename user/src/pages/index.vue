@@ -31,19 +31,20 @@ onMounted(async () => {
     where('is_public', '==', true),
     orderBy('event_start_datetime', 'desc'),
   )
-  const events: BokudeliEvent[] = []
   const querySnapshot = await getDocs(allEvents)
 
-  for (const doc of querySnapshot.docs) {
+  state.eventList = querySnapshot.docs.flatMap((doc) => {
     const event = convertDocumentDataToEvent(doc.data())
+    if (event.event_status.value == 'in_draft' || event.event_status.value == 'applying_reservation' ) {
+      return []
+    }
     loadEventMembersWithoutMenu(event.community_account, event.event_id).then((members) => {
       const key = [event.community_account, event.event_id].join('/')
       state.membersSet[key] = members
     })
-    events.push(event)
-  }
+    return event
+  })
 
-  state.eventList = events
   state.isLoading = false
 })
 </script>

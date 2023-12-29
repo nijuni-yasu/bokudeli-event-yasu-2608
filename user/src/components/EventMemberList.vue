@@ -6,6 +6,7 @@ import { loadEventMembers } from '@/composable/loadEventMembers'
 const props = defineProps<{
   communityId: string
   eventId: string
+  eventMaxPeople: number
 }>()
 
 const emit = defineEmits<{
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 const state = reactive({
   members: [] as EventMember[],
   isLoading: true,
+  event_max_people: props.eventMaxPeople as number,
 })
 
 const fetchData = async () => {
@@ -35,7 +37,12 @@ onMounted(async () => {
 <template>
   <section>
     <div v-if="!state.isLoading">
-      <v-card-text class="text-left pt-0 pb-8 text-subtitle-1"> 【参加人数】{{ state.members.length }} 人 </v-card-text>
+      <v-card-text class="event-item">
+        【参加者】
+        <span class="event-content">
+          {{ state.members.length }} 人 / {{ state.event_max_people }} 人
+        </span>
+      </v-card-text>
       <v-card-text class="text-left pb-10">
         <v-row>
           <v-col
@@ -72,9 +79,23 @@ onMounted(async () => {
         </v-row>
       </v-card-text>
     </div>
-    <div v-else>
+    <div v-else class="text-center">
       <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </div>
   </section>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+  .event-item{
+    font-size: 14px;
+    padding-top: 0px;
+    padding-bottom: 20px;
+    font-weight: 600;
+  }
+  .event-content{
+    font-size: 18px;
+    padding-bottom: 20px;
+    font-weight: 400;
+    line-height: 32px;
+    white-space: pre-line;
+  }
+</style>

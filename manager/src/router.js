@@ -44,6 +44,12 @@ const router = new Router({
           component: () => import('@/views/admin/EventList'),
           meta: { requiresAuth: true },
         },
+        {
+          name: 'Menu',
+          path: 'ShopList/Menu',
+          component: () => import('@/views/admin/Menu'),
+          meta: { requiresAuth: true },
+        },
       ],
     },
     {

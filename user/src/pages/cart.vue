@@ -214,6 +214,9 @@ const loadCartList = async () => {
         return []
       }
       const event = convertDocumentDataToEvent(eventSnapshot.docs[0].data())
+      if (event.event_status.value !== 'accepting_order') {
+        return []
+      }
 
       const subtotals = {} as { [key: string]: number }
       item.menus.forEach((menu) => {
