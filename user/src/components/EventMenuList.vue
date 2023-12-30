@@ -2,15 +2,15 @@
 import { db } from '@/firebase'
 import { convertDocumentDataToMenu, dateString } from '@/schemes/converter'
 import PartnerMenu from '@/schemes/partnerMenu'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { collection, getDocs } from 'firebase/firestore'
 import { parseISO, compareDesc } from 'date-fns'
 
 const props = defineProps<{
-  partnerId: string
   eventDeadline: Date | null
   eventStartDatetime: Date | null
   currentMemberCount: number | undefined
-  eventMaxPeople: number
+  event: BokudeliEvent
 }>()
 
 const emit = defineEmits<{
@@ -20,7 +20,7 @@ const emit = defineEmits<{
 
 const state = reactive({
   menus: [] as PartnerMenu[],
-  menuDisable: false as false | 'deadline' | 'limitPeople' | 'isSoldout',
+  menuDisable: false as false | 'notAcceptingOrder' | 'deadline' | 'limitPeople' | 'isSoldout',
   isLoading: true,
 })
 
@@ -48,12 +48,14 @@ const loadMenuData = async (partnerId: string) => {
 }
 
 const fetchData = async () => {
-  state.menus = await loadMenuData(props.partnerId)
+  state.menus = await loadMenuData(props.event.partner_id)
   state.isLoading = false
 
-  if (props.eventDeadline && props.eventDeadline < new Date()) {
+  if (props.event.event_status.value !== 'accepting_order') {
+    state.menuDisable = 'notAcceptingOrder'
+  } else if (props.eventDeadline && props.eventDeadline < new Date()) {
     state.menuDisable = 'deadline'
-  } else if (props.currentMemberCount && props.currentMemberCount >= props.eventMaxPeople) {
+  } else if (props.currentMemberCount && props.currentMemberCount >= props.event.event_max_people) {
     state.menuDisable = 'limitPeople'
   } else {
     state.menuDisable = false
@@ -84,8 +86,11 @@ const alertBody = computed({
   },
 })
 
-const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'isSoldout') => {
+const showDisableAlert = (reason: 'notAcceptingOrder' | 'deadline' | 'limitPeople' | 'isSoldout') => {
   switch (reason) {
+    case 'notAcceptingOrder':
+      alertBody.value = '注文受付開始前はカートに追加できません'
+      break
     case 'deadline':
       alertBody.value = '注文期限をすぎました。カートに追加できません'
       break

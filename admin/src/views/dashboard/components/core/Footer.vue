@@ -64,10 +64,6 @@
           text: '店舗マニュアル',
         },
         {
-          href: 'https://lin.ee/7VwZjvC',
-          text: 'サポートLINE',
-        },
-        {
           href: 'http://nijuni.jp/',
           text: '運営会社',
         },

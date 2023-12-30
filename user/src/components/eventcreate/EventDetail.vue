@@ -113,7 +113,7 @@ const onFileChange = (e: Event) => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model.number="event.event_max_people" outlined dense label="定員数"></v-text-field>
+                <v-text-field v-model.number="event.event_max_people" type="number" outlined dense label="定員数"></v-text-field>
               </v-col>
             </v-row>
           </v-card-text>
@@ -140,7 +140,7 @@ const onFileChange = (e: Event) => {
             </v-col>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
             <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="emit('submit')">次へ</v-btn>
           </v-card-text>
         </v-form>
