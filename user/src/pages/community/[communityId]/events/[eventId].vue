@@ -145,7 +145,10 @@ const openLoginDialog = () => {
     <div v-if="state.isLoading === false" class="justify-center">
       <v-row class="justify-center mt-lg-10 mr-1">
         <v-col md="8" sm="9" cols="12">
-          <v-row class="justify-end align-center">
+          <v-row class="justify-start align-center">
+            <v-chip class="ml-3" color="primary" size="large">
+              {{ $t(`event_status.${state.event.event_status.value}`) }}
+            </v-chip>
             <v-btn
               v-if="state.event.event_status.value===`in_draft`&&state.isCommunityManager"
               color="white"
@@ -179,9 +182,6 @@ const openLoginDialog = () => {
             >
               イベント編集
             </v-btn>
-            <v-chip color="primary" size="large">
-              {{ $t(`event_status.${state.event.event_status.value}`) }}
-            </v-chip>
           </v-row>
         </v-col>
       </v-row>
@@ -196,9 +196,52 @@ const openLoginDialog = () => {
             <v-row>
               <v-col>
                 <!-- イベント情報 -->
-                <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-10 pre-line">
+                <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-4 pre-line">
                   {{ state.event.event_name }}
                 </v-card-title>
+                <v-card-text class="event-item text-right px-0 ma-1">
+                  <v-btn
+                    class="ml-1"
+                    icon="mdi-alpha-x-circle"
+                    color="grey-900"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    href="https://twitter.com/share?ref_src=twsrc%5Etfw"
+                    target="_blank"
+                  ></v-btn>
+                  <v-btn
+                    class="ml-1"
+                    icon="mdi-facebook"
+                    color="#1877F2"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fbokudeliver.com%2F&amp;src=sdkpreparse"
+                    target="_blank"
+                  ></v-btn>
+                  <v-btn
+                    class="ml-1"
+                    icon="mdi-alpha-l-circle"
+                    color="#06c755"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    href="https://social-plugins.line.me/lineit/share?url=https%3A%2F%2Fbokudeliver.com%2F"
+                    target="_blank"
+                  ></v-btn>
+                  <v-btn
+                    class="mx-1"
+                    icon="mdi-link-variant"
+                    color="grey-900"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    target="_blank"
+                  ></v-btn>
+
+                </v-card-text>
+
                 <v-card-text class="event-item">
                   【開催日時】
                 </v-card-text>
