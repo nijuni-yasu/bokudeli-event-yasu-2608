@@ -17,10 +17,11 @@ import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { useRouter, useRoute } from 'vue-router'
-import { getEventPath } from '@/router/utils'
+import { getEventPath, getCommunityPath } from '@/router/utils'
 import { uploadEventImage } from '@/composable/uploadImage'
 import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
+import { checkCommunityManager } from '@/composable/checkCommunityManager'
 
 const router = useRouter()
 const route = useRoute()
@@ -53,18 +54,23 @@ const fetchData = async () => {
     const eventDb = query(collectionGroup(db, 'events'), where('event_id', '==', eventId))
     promises.push(getDocs(eventDb))
   }
-  const [communityData, eventData] = await Promise.all(promises)
-    .then((results) => [results[0]?.docs?.shift()?.data(), results[1]?.docs?.shift()?.data()])
+  const [communitySnapshot, eventData] = await Promise.all(promises)
+    .then((results) => [results[0]?.docs?.shift(), results[1]?.docs?.shift()?.data()])
   if (eventData != null) {
     event.value = convertDocumentDataToEvent(eventData)
     await fetchShops()
     await fetchMenu()
   }
-  if (communityData != null) {
-    const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communityData)
+  if (communitySnapshot != null) {
+    const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communitySnapshot.data())
     event.value.community_id = communityId
     event.value.community_name = communityName
     event.value.community_account = communityAccount
+    const isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
+    if (!isCommunityManager) {
+      window.alert('コミュニティ管理者ではありません')
+      router.push(getCommunityPath(communityAccount))
+    }
   }
 }
 
