@@ -44,27 +44,28 @@ export const loginUser = async (user: User) => {
   const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
   store.update(currentStoredUser)
 
-  // Firestore 保存
-  const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
+  if (!docSnap.exists()) {
+    // ユーザーが存在しない場合は新規作成
+    const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
+    firestoredUser.created_at = Timestamp.now()
+    firestoredUser.updated_at = Timestamp.now()
+    await setDoc(docRef, firestoredUser)
 
-  if (docSnap.exists()) {
-    // 既にユーザーが存在する場合は更新
-    // FIXME: ログインされるごとに更新日時が変わってしまうため同じデータの時は更新しないようにする
+    // Pinia に保存
+    store.update(storedUser)
+  } else if (currentStoredUser.userEmail === storedUser.userEmail) {
+    // 既にユーザーが存在しメールアドレスが変更されている場合は更新する
     await setDoc(
       docRef,
       {
-        user_email: firestoredUser.user_email,
+        user_email: storedUser.userEmail,
         updated_at: Timestamp.now(),
       },
       { merge: true },
     )
-  } else {
-    // Pinia に保存
-    store.update(storedUser)
 
-    // ユーザーが存在しない場合は新規作成
-    firestoredUser.created_at = Timestamp.now()
-    firestoredUser.updated_at = Timestamp.now()
-    await setDoc(docRef, firestoredUser)
+    // Pinia に保存
+    const updatedStoredUser = { ...currentStoredUser, userEmail: storedUser.userEmail }
+    store.update(updatedStoredUser)
   }
 }
