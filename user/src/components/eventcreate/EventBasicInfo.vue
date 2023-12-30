@@ -110,7 +110,7 @@ const submitValidation = computed(() => event.value.event_postalcode &&
 
           <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-map-marker" />
-            <span>会場</span>
+            <span>開催場所</span>
           </v-card-title>
 
           <v-card-text class="pt-5">
@@ -120,11 +120,11 @@ const submitValidation = computed(() => event.value.event_postalcode &&
                   v-model="event.event_postalcode"
                   outlined
                   dense
-                  label="お届け先 郵便番号"
+                  label="郵便番号"
                 />
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="event.event_address" outlined dense label="会場住所" />
+                <v-text-field v-model="event.event_address" outlined dense label="住所" />
               </v-col>
             </v-row>
           </v-card-text>
