@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 import { useStoreCredential } from '@/stores/credential'
 import { FirebaseError } from 'firebase/app'
 import { getAuth, signInWithPopup, FacebookAuthProvider, GoogleAuthProvider } from 'firebase/auth'
@@ -30,18 +31,14 @@ const getFacebookCredential = async () => {
   })
 
   //FIXME - signInWithRedirect を使う
-  const result = await signInWithPopup(getAuth(), provider)
-  return result
+  return await signInWithPopup(getAuth(), provider)
 }
 
 const handleFacebookLogin = async () => {
   try {
-    const result = await getFacebookCredential()
-    const credential = FacebookAuthProvider.credentialFromResult(result)
-    if (credential) {
-      const store = useStoreCredential()
-      store.update(credential)
-    }
+    const userCredential = await getFacebookCredential()
+    updateCredentialFromUserCredential(userCredential)
+    loginUser(userCredential.user)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
@@ -69,13 +66,14 @@ const getGoogleCredential = async () => {
 
   // FIXME - ドメイン切り替えたらsignInWithRedirect を使う。現状はRedirectだとスマホでログインできなくなる
   // await signInWithRedirect(getAuth(), provider)
-  const result = await signInWithPopup(getAuth(), provider)
-  return result
+  return await signInWithPopup(getAuth(), provider)
 }
 
 const handleGoogleLogin = async () => {
   try {
-    getGoogleCredential()
+    const userCredential = await getGoogleCredential()
+    updateCredentialFromUserCredential(userCredential)
+    loginUser(userCredential.user)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
@@ -121,14 +119,24 @@ const handleGoogleLogin = async () => {
         <v-container>
           <v-row>
             <v-col class="d-flex justify-center">
-              <v-btn class="login-button facebook-button" prepend-icon="mdi-facebook" color="#1877f2" @click="handleFacebookLogin">
+              <v-btn
+                class="login-button facebook-button"
+                prepend-icon="mdi-facebook"
+                color="#1877f2"
+                @click="handleFacebookLogin"
+              >
                 <span>Login with </span><span class="button-inner-text">Facebook</span>
               </v-btn>
             </v-col>
           </v-row>
           <v-row>
             <v-col class="d-flex justify-center">
-              <v-btn class="login-button google-button" prepend-icon="mdi-google" color="grey-900" @click="handleGoogleLogin">
+              <v-btn
+                class="login-button google-button"
+                prepend-icon="mdi-google"
+                color="grey-900"
+                @click="handleGoogleLogin"
+              >
                 <span>Login with </span><span class="button-inner-text">Google</span>
               </v-btn>
             </v-col>
