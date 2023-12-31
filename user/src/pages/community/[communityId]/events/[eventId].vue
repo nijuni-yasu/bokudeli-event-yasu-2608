@@ -32,6 +32,7 @@ import { countEventMembers } from '@/composable/countEventMembers'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { shareSnsButton } from '@/composable/shareSnsButton'
 
 const props = defineProps<{
   communityId: string
@@ -138,37 +139,6 @@ const openLoginDialog = () => {
   isOpenLoginDialog.value = true
 }
 
-const twitterShareUrl = () => {
-  const baseUrl = 'https://twitter.com/intent/tweet'
-  const text =  encodeURIComponent(`${state.event.event_name}\n【主催】${state.event.community_name}\n【日時】${dateWithDayOfWeekString(state.event.event_start_datetime)}〜\n【お店】${state.event.shop_name}\n #孤食を団欒に #食事でつながる #shokujii \n`)
-  const eventUrl = encodeURIComponent(state.event.url)
-  const openUrl  = `${baseUrl}?text=${text}&url=${eventUrl}`
-  window.open(openUrl, '_blank', 'width=800,height=500')
-}
-const facebookShareUrl = () => {
-  const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
-  const eventUrl = encodeURIComponent(state.event.url)
-  const openUrl  = `${baseUrl}?&u=${eventUrl}`
-  window.open(openUrl, '_blank', 'width=800,height=500')
-}
-const lineShareUrl = () => {
-  const baseUrl = 'https://social-plugins.line.me/lineit/share'
-  const eventUrl = encodeURIComponent(state.event.url)
-  const openUrl  = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
-  window.open(openUrl, '_blank', 'width=800,height=500')
-}
-
-const copyShareUrl = () => {
-  const text =  `${state.event.event_name}\n【主催】${state.event.community_name}\n【日時】${dateWithDayOfWeekString(state.event.event_start_datetime)}〜\n【お店】${state.event.shop_name}\n【注文ページ】${state.event.url}\n#孤食を団欒に #食事でつながる #shokujii \n`
-  navigator.clipboard.writeText(text)
-    .then(() => {
-        alert('リンクをコピーしました')
-    })
-    .catch(err => {
-        console.error('コピー失敗: ', err)
-    })
-}
-
 </script>
 
 <template>
@@ -238,7 +208,7 @@ const copyShareUrl = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="twitterShareUrl"
+                    @click="shareSnsButton('twitter', state.event)"
                   ></v-btn>
                   <v-btn
                     class="ml-1"
@@ -247,7 +217,7 @@ const copyShareUrl = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="facebookShareUrl"
+                    @click="shareSnsButton('facebook', state.event)"
                   ></v-btn>
                   <v-btn
                     class="ml-1"
@@ -256,7 +226,7 @@ const copyShareUrl = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="lineShareUrl"
+                    @click="shareSnsButton('line', state.event)"
                   ></v-btn>
                   <v-btn
                     class="mx-1"
@@ -265,9 +235,8 @@ const copyShareUrl = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="copyShareUrl"
+                    @click="shareSnsButton('copy', state.event)"                    
                   ></v-btn>
-
                 </v-card-text>
 
                 <v-card-text class="event-item">
