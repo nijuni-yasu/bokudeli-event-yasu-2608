@@ -145,7 +145,7 @@ export const convertFirebaseUserToStoredUser = async (firebaseUser: User): Promi
             break
           }
           const imageQueryUrl =
-            photoURL + `?width=200&height=200&redirect=false&access_token=${store.credential.accessToken}`
+            photoURL + `?width=500&height=500&redirect=false&access_token=${store.credential.accessToken}`
           const response = await axios.get(imageQueryUrl)
           user.userImageUrl = !response.data.data.is_silhouette ? response.data.data.url : null
         }
