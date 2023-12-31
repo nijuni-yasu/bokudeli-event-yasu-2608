@@ -19,6 +19,7 @@ import {
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { EventMember } from '@/schemes/EventMember'
+import { shareSnsButton } from '@/composable/shareSnsButton'
 
 interface Props {
   modelValue: boolean
@@ -96,19 +97,56 @@ onMounted(async () => {
       <v-card-item class="text-center">
         <v-card-title class="text-h4 font-weight-semibold">🍱 注文完了 🍱</v-card-title>
       </v-card-item>
-      <v-card-text>
-        <p>下記のイベントに参加いたします。</p>
+      <v-card-text class="text-center px-0 mt-5">
+        イベントへの参加申し込みが完了しました。<br>SNSにシェアして食事の輪を広げましょう！
       </v-card-text>
-      <v-card-title class="justify-center text-sm-h5 text-xs-h6 font-weight-semibold pb-5 pre-line">
-        {{ state.event.event_name }}
-      </v-card-title>
+      <v-card-text class="text-center px-0 mb-5">
+        <v-btn
+          class="ml-1"
+          icon="mdi-alpha-x-circle"
+          color="grey-900"
+          size="x-large"
+          density="compact"
+          variant="text"
+          @click="shareSnsButton('twitter', state.event)"
+        ></v-btn>
+        <v-btn
+          class="ml-1"
+          icon="mdi-facebook"
+          color="#1877F2"
+          size="x-large"
+          density="compact"
+          variant="text"
+          @click="shareSnsButton('facebook', state.event)"
+        ></v-btn>
+        <v-btn
+          class="ml-1"
+          icon="mdi-alpha-l-circle"
+          color="#06c755"
+          size="x-large"
+          density="compact"
+          variant="text"
+          @click="shareSnsButton('line', state.event)"
+        ></v-btn>
+        <v-btn
+          class="mx-1"
+          icon="mdi-link-variant"
+          color="grey-900"
+          size="x-large"
+          density="compact"
+          variant="text"
+          @click="shareSnsButton('copy', state.event)"
+        ></v-btn>
+      </v-card-text>
       <v-img class="ma-0" cover aspect-ratio="1.91" :src="state.event.event_cover_url" />
-      <v-card-text class="text-left pb-5">【開催場所】{{ state.event.event_address }}</v-card-text>
-      <v-card-text class="text-left pb-5"
-        >【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}〜{{ dateOnlyTimeString(state.event.event_end_datetime) }}</v-card-text
-      >
-      <v-card-text class="text-left pb-5">【開催内容】{{ state.event.event_desc }}</v-card-text>
-      <v-btn type="submit" rounded @click="closeDialog">確認しました</v-btn>
+      <v-card-text class="text-left pb-3">【イベント】{{ state.event.event_name }}</v-card-text>
+      <v-card-text class="text-left pb-3">【主 催 者】{{ state.event.community_name }}</v-card-text>
+      <v-card-text class="text-left pb-3">【開催日時】{{ dateWithDayOfWeekString(state.event.event_start_datetime) }}〜{{ dateOnlyTimeString(state.event.event_end_datetime) }}</v-card-text>
+      <v-card-text class="text-left pb-3">【開催場所】{{ state.event.event_address }} {{ state.event.event_place }}</v-card-text>
+      <v-card-text class="text-left pb-3">【開催内容】{{ state.event.event_desc }}</v-card-text>
+      <v-card-text class="text-center">
+        <v-btn color="grey-600" rounded variant="outlined" @click="closeDialog">閉じる</v-btn>
+      </v-card-text>
     </v-card>
   </v-dialog>
 </template>
