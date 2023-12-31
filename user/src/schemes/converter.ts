@@ -141,6 +141,7 @@ export const convertFirebaseUserToStoredUser = async (firebaseUser: User): Promi
         {
           const store = useStoreCredential()
           if (!store.credential) {
+            user.userImageUrl = null
             break
           }
           const imageQueryUrl =

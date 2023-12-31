@@ -53,19 +53,27 @@ export const loginUser = async (user: User) => {
 
     // Pinia に保存
     store.update(storedUser)
-  } else if (currentStoredUser.userEmail === storedUser.userEmail) {
-    // 既にユーザーが存在しメールアドレスが変更されている場合は更新する
-    await setDoc(
-      docRef,
-      {
-        user_email: storedUser.userEmail,
-        updated_at: Timestamp.now(),
-      },
-      { merge: true },
-    )
+  } else {
+    if (currentStoredUser.userEmail !== storedUser.userEmail || !currentStoredUser.userImageUrl) {
+      // 既にユーザーが存在しメールアドレスが変更されている場合は更新する
+      // 画像がない場合も更新する
+      await setDoc(
+        docRef,
+        {
+          user_email: storedUser.userEmail,
+          user_image_url: storedUser.userImageUrl,
+          updated_at: Timestamp.now(),
+        },
+        { merge: true },
+      )
 
-    // Pinia に保存
-    const updatedStoredUser = { ...currentStoredUser, userEmail: storedUser.userEmail }
-    store.update(updatedStoredUser)
+      // Pinia に保存
+      const updatedStoredUser = {
+        ...currentStoredUser,
+        userEmail: storedUser.userEmail,
+        userImageUrl: storedUser.userImageUrl,
+      }
+      store.update(updatedStoredUser)
+    }
   }
 }
