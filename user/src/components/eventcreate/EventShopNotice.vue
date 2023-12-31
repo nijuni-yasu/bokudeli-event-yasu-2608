@@ -81,11 +81,26 @@ const sendReserveMail = () => {
             <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
             <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" @click="emit('submit')">下書きをプレビューする</v-btn>
           </v-card-text>
-          <v-card-text class="text-center mx-0">
-            <v-btn color="grey-900" class="mt-3" size="large" prepend-icon="mdi-email" @click="openConfirmDialog">店舗に予約申請メールする</v-btn>
+          <v-card-text class="text-center mx-0 px-0">
+            <v-btn
+              v-if="event.event_id"
+              color="grey-900"
+              class="mt-3"
+              size="x-large"
+              prepend-icon="mdi-email"
+              @click="openConfirmDialog"
+            >
+              店舗に予約申請する
+            </v-btn>
           </v-card-text>
           <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'予約申請する'" :ok-click="sendReserveMail">
-            {{ event.shop_name }} に予約申請メールをしますか？
+            {{ event.shop_name }} に予約申請のメールを送信しますか？<br>
+            <v-card-text class="text-subtitle pb-0">
+            ・店舗から予約承認されると、注文や告知ができるようになります。<br>
+            ・予約が却下された場合は、別店舗などに変更して再度予約してください。<br>
+            ・予約申請をすると「店舗」「開催場所」「開催日時」は変更できません。<br>
+            ・以上確認の上、予約申請を行ってください。
+            </v-card-text>
           </confirm-dialog>
         </v-form>
       </v-card>

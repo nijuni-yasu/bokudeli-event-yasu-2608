@@ -105,7 +105,7 @@ onMounted(async () => {
     <v-row v-if="!state.isLoading" class="justify-center">
       <!-- community main -->
       <v-col cols="12" md="9" sm="9">
-        <v-card flat class="align-center justify-center text-center my-10 pa-10">
+        <v-card flat class="align-center justify-center text-center my-10 pa-md-16 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
               <VImg class="ma-0" aspect-ratio="1.91" cover :src="state.community.communityCoverImageUrl" />
@@ -124,7 +124,7 @@ onMounted(async () => {
         <!-- community event list -->
         <v-row>
           <!-- community description -->
-          <v-col md="4" sm="4" cols="12">
+          <v-col md="4" sm="6" cols="12">
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
               <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="state.community.communityIconImageUrl" />
@@ -186,9 +186,9 @@ onMounted(async () => {
             </v-card>
           </v-col>
           <!-- events -->
-          <v-col md="8" sm="8" cols="12">
+          <v-col md="8" sm="6" cols="12">
             <v-row>
-              <v-col v-for="event in state.events" :key="event.event_id" md="6" sm="6" cols="12">
+              <v-col v-for="event in state.events" :key="event.event_id" md="6" sm="12" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
                   <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
                   <v-chip class="ma-2" color="primary" elevated flat>
@@ -241,8 +241,8 @@ onMounted(async () => {
               <v-col class="text-center">
                 <v-btn
                   class="mx-2 my-10 text-lg-h5"
-                  color="grey-900"
-                  elevation="10"
+                  color="white"
+                  elevation="5"
                   size="x-large"
                   rounded
                   width="85%"

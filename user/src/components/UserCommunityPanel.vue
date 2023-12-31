@@ -78,15 +78,15 @@ onMounted(async () => {
           @click="router.push(getCommunityPath(community.communityAccount))"
         >
           <v-row>
-            <v-col md="6" sm="6" cols="6" class="pa-0">
+            <v-col md="6" sm="12" cols="12" class="pa-0">
               <v-img
                 :src="community.communityCoverImageUrl"
                 style="border-radius: 5px 0px 0px 5px"
-                aspect-ratio="2"
+                aspect-ratio="1.91"
                 cover
               />
             </v-col>
-            <v-col md="6" sm="6" cols="6">
+            <v-col md="6" sm="12" cols="12">
               <!-- title -->
               <v-card-title class="text-h5 text-left py-3">
                 {{ community.communityName }}
@@ -112,8 +112,9 @@ onMounted(async () => {
           <v-col class="text-right">
             <v-btn
               class="mx-1 mb-1 mt-0"
-              color="grey-900"
-              elevation="10"
+              color="white"
+              elevation="5"
+              size="small"
               rounded
               target="_blank"
               prepend-icon="mdi-pencil-box-outline"
@@ -123,8 +124,9 @@ onMounted(async () => {
             </v-btn>
             <v-btn
               class="mx-1 mb-1 mt-0"
-              color="grey-900"
-              elevation="10"
+              color="white"
+              elevation="5"
+              size="small"
               rounded
               target="_blank"
               prepend-icon="mdi-cog"

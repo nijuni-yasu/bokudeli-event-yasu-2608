@@ -31,6 +31,10 @@ onMounted(async () => {
     const community = convertDocumentDataToCommunity(communityData)
     state.community = community
     state.isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
+    if (!state.isCommunityManager) {
+      window.alert('コミュニティ管理者ではありません')
+      router.push(getCommunityPath(state.community.communityAccount))
+    }
   }
   state.isLoading = false
 })

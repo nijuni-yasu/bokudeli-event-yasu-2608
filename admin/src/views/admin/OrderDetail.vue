@@ -51,7 +51,7 @@
                     :value="0"
                   />
                   <v-radio
-                    label="予約内容を否認し、予約内容の変更を依頼する"
+                    label="予約内容を却下し、予約内容の変更を依頼する"
                     :value="1"
                   />
                 </v-radio-group>
