@@ -13,7 +13,7 @@ import {
 import {
   getCommunityPath,
   getEventCreatePath
- } from '@/router/utils'
+} from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
   dateWithDayOfWeekString,
@@ -138,6 +138,14 @@ const openLoginDialog = () => {
   isOpenLoginDialog.value = true
 }
 
+const twitterShareUrl = () => {
+  const baseUrl = 'https://twitter.com/intent/tweet'
+  const text =  encodeURIComponent(`${state.event.event_name}\n【主催】${state.event.community_name}\n【日時】${dateWithDayOfWeekString(state.event.event_start_datetime)}〜\n【お店】${state.event.shop_name}\n #孤食を団欒に #食事でつながる #shokujii \n`)
+  const eventUrl = encodeURIComponent(state.event.url)
+  const openUrl  = `${baseUrl}?text=${text}&url=${eventUrl}`
+  window.open(openUrl, '_blank', 'width=800,height=500')
+}
+
 </script>
 
 <template>
@@ -207,8 +215,7 @@ const openLoginDialog = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    href="https://twitter.com/share?ref_src=twsrc%5Etfw"
-                    target="_blank"
+                    @click="twitterShareUrl"
                   ></v-btn>
                   <v-btn
                     class="ml-1"

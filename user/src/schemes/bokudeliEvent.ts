@@ -73,6 +73,10 @@ class BokudeliEvent {
       )
     }
   }
+  get url () {
+    const host = import.meta.env.VITE_ORIGIN_HOST
+    return `${host}community/${this.community_account}/events/${this.event_id}`
+  }
 }
 
 export const createEmptyEvent = (): BokudeliEvent => new BokudeliEvent()
