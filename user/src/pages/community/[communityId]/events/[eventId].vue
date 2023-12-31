@@ -145,6 +145,29 @@ const twitterShareUrl = () => {
   const openUrl  = `${baseUrl}?text=${text}&url=${eventUrl}`
   window.open(openUrl, '_blank', 'width=800,height=500')
 }
+const facebookShareUrl = () => {
+  const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
+  const eventUrl = encodeURIComponent(state.event.url)
+  const openUrl  = `${baseUrl}?&u=${eventUrl}`
+  window.open(openUrl, '_blank', 'width=800,height=500')
+}
+const lineShareUrl = () => {
+  const baseUrl = 'https://social-plugins.line.me/lineit/share'
+  const eventUrl = encodeURIComponent(state.event.url)
+  const openUrl  = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
+  window.open(openUrl, '_blank', 'width=800,height=500')
+}
+
+const copyShareUrl = () => {
+  const text =  `${state.event.event_name}\n【主催】${state.event.community_name}\n【日時】${dateWithDayOfWeekString(state.event.event_start_datetime)}〜\n【お店】${state.event.shop_name}\n【注文ページ】${state.event.url}\n#孤食を団欒に #食事でつながる #shokujii \n`
+  navigator.clipboard.writeText(text)
+    .then(() => {
+        alert('リンクをコピーしました')
+    })
+    .catch(err => {
+        console.error('コピー失敗: ', err)
+    })
+}
 
 </script>
 
@@ -224,8 +247,7 @@ const twitterShareUrl = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fbokudeliver.com%2F&amp;src=sdkpreparse"
-                    target="_blank"
+                    @click="facebookShareUrl"
                   ></v-btn>
                   <v-btn
                     class="ml-1"
@@ -234,8 +256,7 @@ const twitterShareUrl = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    href="https://social-plugins.line.me/lineit/share?url=https%3A%2F%2Fbokudeliver.com%2F"
-                    target="_blank"
+                    @click="lineShareUrl"
                   ></v-btn>
                   <v-btn
                     class="mx-1"
@@ -244,7 +265,7 @@ const twitterShareUrl = () => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    target="_blank"
+                    @click="copyShareUrl"
                   ></v-btn>
 
                 </v-card-text>
