@@ -39,6 +39,29 @@ onMounted(async () => {
   state.isLoading = false
 })
 
+const trimInputtedId = (id: string | null, urlPattern: RegExp) => {
+  if (!id) return ''
+  return id.trim().replace(/\/+$/, '').replace(urlPattern, '')
+}
+const twitterId = computed({
+  get: () => state.community.communitySns.twitter,
+  set: (val) => {
+    state.community.communitySns.twitter = trimInputtedId(val, /^https:\/\/(mobile.)?twitter\.com\//)
+  },
+})
+const facebookId = computed({
+  get: () => state.community.communitySns.facebook,
+  set: (val) => {
+    state.community.communitySns.facebook = trimInputtedId(val, /^https:\/\/www\.facebook\.com\//)
+  },
+})
+const instagramId = computed({
+  get: () =>  state.community.communitySns.instagram,
+  set: (val) => {
+    state.community.communitySns.instagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
+  },
+})
+
 const iconFileInputRef = ref<HTMLInputElement | null>(null)
 const coverFileInputRef = ref<HTMLInputElement | null>(null)
 
@@ -207,10 +230,11 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communitySns.facebook"
+                  v-model="facebookId"
                   outlined
                   dense
                   label="facebook"
+                  prefix="https://www.facebook.com/"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -220,10 +244,11 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communitySns.twitter"
+                  v-model="twitterId"
                   outlined
                   dense
                   label="X(Twitter)"
+                  prefix="https://x.com/"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -233,10 +258,11 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communitySns.instagram"
+                  v-model="instagramId"
                   outlined
                   dense
                   label="Instagram"
+                  prefix="https://www.instagram.com/"
                 ></v-text-field>
               </v-col>
             </v-row>
