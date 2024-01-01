@@ -71,9 +71,9 @@ onMounted(async () => {
 
     const links = [] as string[]
     community.communitySns.officialsite && links.push(community.communitySns.officialsite)
-    community.communitySns.twitter && links.push(community.communitySns.twitter)
-    community.communitySns.facebook && links.push(community.communitySns.facebook)
-    community.communitySns.instagram && links.push(community.communitySns.instagram)
+    community.communitySns.twitter && links.push(`https://twitter.com/${community.communitySns.twitter}`)
+    community.communitySns.facebook && links.push(`https://www.facebook.com/${community.communitySns.facebook}`)
+    community.communitySns.instagram && links.push(`https://www.instagram.com/${community.communitySns.instagram}`)
     state.links = links
 
     state.members = await loadCommunityMembers(communitySnapshot.ref)
