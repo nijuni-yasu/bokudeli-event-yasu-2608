@@ -122,7 +122,7 @@ watchEffect(async () => {
     return
   }
   const location = await fetchLocationByPostalcode(postalcode as string)
-  if (location?.address == null) {
+  if (location?.address == null || (event.value.event_address?.startsWith(location.address) ?? false)) {
     return
   }
   event.value.event_address = location.address
