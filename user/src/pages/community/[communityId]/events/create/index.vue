@@ -250,7 +250,7 @@ const stepperItems = computed(() => [
       <event-detail v-model="event" v-model:cover-image="coverImage" @submit="stepper++" @back="stepper--" />
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="event" @submit="sumbmit" @sendReserveMail="sendReserveMail" @back="stepper--" />
+      <event-shop-notice v-model="event" @submit="sumbmit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
     </template>
   </v-stepper>
 </template>
