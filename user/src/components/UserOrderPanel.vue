@@ -6,6 +6,7 @@ import { getEventPath } from '@/router/utils'
 import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 type Order = {
   order: OrderItem
@@ -77,6 +78,18 @@ onBeforeRouteUpdate(async (to, from, next) => {
 onMounted(async () => {
   await fetchData()
 })
+
+const isOpenConfirmDialog = ref(false)
+const cancelEvent = ref('')
+const cancelPrice = ref('')
+const cancelConfirmDialog  = async (item: any) => {
+  isOpenConfirmDialog.value = true
+  cancelEvent.value = item.event.event_name
+  cancelPrice.value = priceString(item.total)
+}
+const startCancelProcess = () => {
+  window.alert('キャンセルを開始します')
+}
 </script>
 
 <template>
@@ -88,10 +101,11 @@ onMounted(async () => {
             <v-table class="ma-5">
               <thead>
                 <tr>
-                  <th style="padding: 10px; width: 250px">イベント名</th>
+                  <th style="padding: 10px; width: 350px">イベント名</th>
                   <th style="padding: 10px; width: 150px">開催日時</th>
-                  <th style="padding: 10px; width: 150px">注文内容</th>
-                  <th v-if="props.showDetail" style="padding: 10px; width: 100px">合計金額</th>
+                  <th style="padding: 10px; width: 250px">注文内容</th>
+                  <th v-if="props.showDetail" style="padding: 10px; width: 100px" class="text-center">合計金額</th>
+                  <th v-if="props.showDetail" style="padding: 0px; width: 30px"></th>
                 </tr>
               </thead>
               <tbody>
@@ -101,14 +115,27 @@ onMounted(async () => {
                       {{ item.event.event_name }}
                     </router-link>
                   </td>
-                  <td style="padding: 10px">{{ dateWithDayOfWeekString(item.event.event_start_datetime) }}</td>
+                  <td style="padding: 10px">{{ dateWithDayOfWeekString(item.event.event_start_datetime) }}~</td>
                   <td style="padding: 10px">
                     <div v-for="menu in item.order.menus" :key="menu.menu_id">
                       {{ menu.name }} <small>({{ menu.count }}個)</small>
                     </div>
                   </td>
-
-                  <td v-if="props.showDetail" style="padding: 10px">{{ priceString(item.total) }}</td>
+                  <td v-if="props.showDetail" style="padding: 10px" class="text-center">{{ priceString(item.total) }}</td>
+                  <td style="padding: 3px" class="text-center">
+                    <v-btn
+                      v-if="props.showDetail && (item.event.event_deadline_datetime && item.event.event_deadline_datetime.seconds > Date.now() / 1000)"
+                      color="white"
+                      size="small"
+                      rounded
+                      elevation="5"
+                      @click="cancelConfirmDialog(item)"
+                    >
+                      <v-icon>
+                        mdi-credit-card-refund
+                      </v-icon>
+                    </v-btn>
+                  </td>
                 </tr>
               </tbody>
             </v-table>
@@ -119,6 +146,20 @@ onMounted(async () => {
         キャンセルされる場合はサポートまで<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>ください。<br />
         注文締切後のキャンセルはできませんのでご了承ください。<br />
       </v-card-title>
+      <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'キャンセルする'" :cancel-text="'閉じる'" :ok-click="startCancelProcess">
+        <v-card-text class="text-center py-10 text-h6">
+          キャンセル
+        </v-card-text>
+        <v-card-text class="py-5 text-h7" style="line-height: 2rem">
+          【イベント名】 {{ cancelEvent }}<br>
+          【返金額】 {{ cancelPrice }}<br>
+        </v-card-text>
+        <v-card-text class="py-5" style="line-height: 2rem">
+        注文及びイベント参加をキャンセルしますか？<br>
+        キャンセルは、イベントの注文期限まで実行可能です。<br>
+        キャンセル実行後、返金が明細書に表示されるまで5～10日かかります。<br>
+        </v-card-text>
+      </confirm-dialog>
     </v-col>
     <!-- no result found -->
     <v-col v-else-if="!state.orderList.length" cols="12" class="text-center">
