@@ -19,3 +19,10 @@ export const postalCodeValidator = (value: string | null | undefined) => {
   }
   return /^\d{7}$/.test(value as string) || '郵便番号は7桁の数字で入力してください'
 }
+
+export const positiveIntegerValidator = (value: string | null | undefined) => {
+  if (isEmpty(value)) {
+    return true
+  }
+  return /^\d+$/.test(value as string) || '正の整数を入力してください'
+}

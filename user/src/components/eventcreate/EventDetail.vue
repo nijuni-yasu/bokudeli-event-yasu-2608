@@ -9,6 +9,7 @@ import {
 } from '@/schemes/eventCreate'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
+import { requiredValidator, positiveIntegerValidator } from '@/utils/validators'
 
 const pickerConfig = {
   locale: Japanese,
@@ -26,36 +27,43 @@ const emit = defineEmits<{
   (e: 'back'): void
 }>()
 
+const isFormValid = ref(true)
+const isValid= computed(() => {
+  return isFormValid.value && coverUrl.value != null
+})
+
 const event = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
-const fileInputRef = ref<HTMLInputElement | null>(null)
-const coverUrl = computed(() => {
-  if (props.coverImage) {
-    return URL.createObjectURL(props.coverImage)
+if (event.value.event_max_people == null) {
+  event.value.event_max_people = 25
+}
+
+event.value.event_payment = 'user_advance'
+
+const coverImage = computed<File[]>({
+  get: () => props.coverImage ? [props.coverImage] : [],
+  set: (value) => emit('update:coverImage', value[0] ?? null)
+})
+
+const coverUrl = computed<string | null>(() => {
+  const ci = coverImage.value?.[0]
+  if (ci != null) {
+    return URL.createObjectURL(ci)
+  } else {
+    return event.value.event_cover_url ?? null
   }
-  return event.value.event_cover_url
 })
 
 const eventDeadlineDate = computed(() => dateString(props.modelValue.event_deadline_datetime?.toDate() ?? null))
 const eventDeadlineHour = computed(() => hourString(props.modelValue.event_deadline_datetime?.toDate() ?? null))
 const eventDeadlineMinute = computed(() => minutesString(props.modelValue.event_deadline_datetime?.toDate() ?? null))
 
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const onTriggerUpload = () => {
   fileInputRef.value?.click()
-}
-
-const onFileChange = (e: Event) => {
-  const eventTarget = e.target as HTMLInputElement
-  if (!eventTarget?.files || eventTarget?.files.length === 0) {
-    return
-  }
-  const file = eventTarget.files[0]
-  if (file) {
-    emit('update:coverImage', file)
-  }
 }
 </script>
 
@@ -63,7 +71,7 @@ const onFileChange = (e: Event) => {
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
       <v-card flat class="mt-2">
-        <v-form class="multi-col-validation">
+        <v-form v-model="isFormValid" class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
             <span>イベント詳細</span>
@@ -72,7 +80,7 @@ const onFileChange = (e: Event) => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="event.event_name" outlined dense label="イベントタイトル" />
+                <v-text-field v-model="event.event_name" outlined dense label="イベントタイトル" :rules="[requiredValidator]" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -81,8 +89,8 @@ const onFileChange = (e: Event) => {
             <v-row>
               <v-col cols="12">
                 <div class="v-field image-upload-container" @click="onTriggerUpload">
-                  <input ref="fileInputRef" class="file-input" type="file" @change="onFileChange" />
-                  <v-img v-if="coverUrl" :src="coverUrl"></v-img>
+                  <v-file-input ref="fileInputRef" v-model="coverImage" class="file-input" />
+                  <v-img v-if="coverUrl" :src="coverUrl" />
                   <div v-else class="placeholder">イベント画像をアップロード<br />1200px X 630px</div>
                 </div>
               </v-col>
@@ -92,7 +100,7 @@ const onFileChange = (e: Event) => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-textarea v-model="event.event_desc" outlined rows="10" label="イベント詳細"></v-textarea>
+                <v-textarea v-model="event.event_desc" outlined rows="10" label="イベント詳細" :rules="[requiredValidator]" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -121,7 +129,14 @@ const onFileChange = (e: Event) => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model.number="event.event_max_people" type="number" outlined dense label="定員数"></v-text-field>
+                <v-text-field
+                  v-model.number="event.event_max_people"
+                  type="number"
+                  outlined
+                  dense
+                  label="定員数"
+                  :rules="[requiredValidator, positiveIntegerValidator]"
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -142,14 +157,14 @@ const onFileChange = (e: Event) => {
           </v-card-title>
           <v-card-text>
             <v-col cols="12" sm="12" md="6">
-              <v-select v-model="event.event_payment" :items="eventPaymentItems" hide-details class="mt-0">
+              <v-select v-model="event.event_payment" :disabled="true" :items="eventPaymentItems" hide-details class="mt-0" :rules="[requiredValidator]">
                 <template #label> 支払い設定 </template>
               </v-select>
             </v-col>
           </v-card-text>
           <v-card-text class="text-center mt-10">
             <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="emit('submit')">次へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" :disabled="!isValid" @click="emit('submit')">次へ</v-btn>
           </v-card-text>
         </v-form>
       </v-card>
