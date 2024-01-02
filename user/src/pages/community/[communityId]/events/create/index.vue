@@ -13,7 +13,7 @@ import {
   convertDateToWeekTimestamp,
   convertShopTimeToWeekTimestamp,
 } from '@/schemes/converter'
-import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
+import { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { useRouter, useRoute } from 'vue-router'
@@ -33,7 +33,7 @@ const props = defineProps<{
 
 const eventId = route.query.id as string | null
 
-const event = ref({} as Partial<BokudeliEvent>)
+const event = ref(createEmptyEvent())
 const shops = ref<Shop[]>([])
 const menus = ref<PartnerMenu[]>([])
 const coverImage = ref<File | null>(null)
@@ -162,7 +162,6 @@ const saveDraft = async () => {
   if (eventId == null) {
     // 新規作成
     const eventItem = {
-      ...createEmptyEvent(),
       ...event.value,
       ...{
         event_status: { value: 'in_draft'},

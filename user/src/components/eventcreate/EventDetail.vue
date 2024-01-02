@@ -16,12 +16,12 @@ const pickerConfig = {
 }
 
 const props = defineProps<{
-  modelValue: Partial<BokudeliEvent>
+  modelValue: BokudeliEvent
   coverImage: File | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
+  (e: 'update:modelValue', value: BokudeliEvent): void
   (e: 'update:coverImage', value: File | null): void
   (e: 'submit'): void
   (e: 'back'): void

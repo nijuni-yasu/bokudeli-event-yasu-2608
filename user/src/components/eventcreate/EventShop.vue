@@ -5,12 +5,12 @@ import { Timestamp } from 'firebase/firestore'
 
 const props = defineProps<{
   shops: Shop[]
-  modelValue: Partial<BokudeliEvent>
+  modelValue: BokudeliEvent
   loading: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
+  (e: 'update:modelValue', value: BokudeliEvent): void
   (e: 'submit'): void
   (e: 'back'): void
   (e: 'next'): void
@@ -85,10 +85,10 @@ const next = () => {
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
-                  <v-btn v-if="item.shop_id==props.modelValue.shop_id" color="red" class="ma-5" size="large" @click="submit(item)">
+                  <v-btn v-if="item.shop_id==props.modelValue.shop_id" color="red" class="ma-5" size="large" :disabled="event.event_status.value !== 'in_draft'" @click="submit(item)">
                     選択中
                   </v-btn>
-                  <v-btn v-else color="primary" class="ma-5" size="large" append-icon="mdi-chevron-right" @click="submit(item)">
+                  <v-btn v-else color="primary" class="ma-5" size="large" append-icon="mdi-chevron-right" :disabled="event.event_status.value !== 'in_draft'" @click="submit(item)">
                     このお店にする
                   </v-btn>
                 </v-card>

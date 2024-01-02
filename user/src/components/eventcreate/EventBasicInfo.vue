@@ -19,11 +19,11 @@ const pickerConfig = {
 }
 
 const props = defineProps<{
-  modelValue: Partial<BokudeliEvent>
+  modelValue: BokudeliEvent
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: Partial<BokudeliEvent>): void
+  (e: 'update:modelValue', value: BokudeliEvent): void
   (e: 'submit'): void
 }>()
 
@@ -148,6 +148,7 @@ watchEffect(async () => {
                   dense
                   label="郵便番号"
                   :rules="[requiredValidator, postalCodeValidator]"
+                  :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
               <v-col cols="12">
@@ -156,7 +157,9 @@ watchEffect(async () => {
                   outlined
                   dense
                   label="住所"
-                  :rules="[requiredValidator]" />
+                  :rules="[requiredValidator]"
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -164,10 +167,17 @@ watchEffect(async () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12" sm="12" md="6">
-                <v-text-field v-model="event.event_place" outlined dense label="会場名" />
+                <v-text-field v-model="event.event_place" outlined dense label="会場名" :readonly="event.event_status.value !== 'in_draft'" />
               </v-col>
               <v-col cols="12" sm="12" md="6">
-                <v-text-field v-model="event.event_place_url" outlined dense label="会場URL" :rules="[urlValidator]" />
+                <v-text-field
+                  v-model="event.event_place_url"
+                  outlined
+                  dense
+                  label="会場URL"
+                  :rules="[urlValidator]"
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -187,13 +197,14 @@ watchEffect(async () => {
                   outlined
                   dense
                   label="開始日"
-                ></app-date-time-picker>
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" />
+                <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" :readonly="event.event_status.value !== 'in_draft'" />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventStartMinute" :items="minutesList" outlined dense label="分" />
+                <v-select v-model="eventStartMinute" :items="minutesList" outlined dense label="分" :readonly="event.event_status.value !== 'in_draft'" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -208,13 +219,14 @@ watchEffect(async () => {
                   outlined
                   dense
                   label="終了日"
-                ></app-date-time-picker>
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" />
+                <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" :readonly="event.event_status.value !== 'in_draft'" />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" />
+                <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" :readonly="event.event_status.value !== 'in_draft'" />
               </v-col>
             </v-row>
           </v-card-text>
