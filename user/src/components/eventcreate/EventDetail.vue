@@ -37,7 +37,7 @@ const event = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-if (event.value.event_max_people == null) {
+if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 

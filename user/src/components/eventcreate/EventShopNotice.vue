@@ -42,7 +42,7 @@ const sendReserveMail = () => {
       <v-card flat class="mt-2">
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pa-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-phone-classic" />
+            <v-icon size="50" class="text--primary me-3" icon="mdi-email" />
             <span>店舗への連絡事項</span>
           </v-card-title>
 
@@ -88,7 +88,7 @@ const sendReserveMail = () => {
                   outlined rows="3"
                   label="配達受取場所について"
                   :rules="[requiredValidator]"
-                  placeholder="XXXXビルに付きましたら、搬入口からOOFまでお上がりください。&#x0a;到着したらお電話くください。よろしくお願いします。"
+                  placeholder="XXXXビルに付きましたら、搬入口からOOFまでお上がりください。&#x0a;到着したらお電話ください。よろしくお願いします。"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
