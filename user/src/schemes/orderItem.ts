@@ -8,7 +8,7 @@ type OrderItem = {
   event_id: string
   event_payment: string
   order_id: string
-  status: 'in_cart' | 'ordered' | 'completed'
+  status: 'in_cart' | 'ordered' | 'canceled'
   menus: OrderMenu[]
   created_at: Timestamp
   updated_at: Timestamp

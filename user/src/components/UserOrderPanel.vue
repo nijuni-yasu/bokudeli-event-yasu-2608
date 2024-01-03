@@ -33,7 +33,6 @@ const loadOrderList = async () => {
   const inOrderQuery = query(
     collectionGroup(db, 'orders'),
     where('user_id', '==', props.userId),
-    where('status', '==', 'ordered'),
     orderBy('updated_at', 'desc'),
   )
 
@@ -41,10 +40,11 @@ const loadOrderList = async () => {
   const orderItems = orderSnapshot.docs.map((doc) => {
     return { ...createEmptyOrderItem(), ...doc.data() }
   })
+  const filteredOrderItems = orderItems.filter(item => item.status == 'ordered' || item.status == 'canceled')
 
   // イベント情報を引きオーダー情報とくっつける
   const convertedList = await Promise.all(
-    orderItems.map(async (item) => {
+    filteredOrderItems.map(async (item) => {
       const eventQuery = query(
         collectionGroup(db, 'events'),
         where('community_account', '==', item.community_account),
@@ -140,9 +140,9 @@ const startCancelProcess = () => {
                     </div>
                   </td>
                   <td v-if="props.showDetail" style="padding: 10px" class="text-center">{{ priceString(item.total) }}</td>
-                  <td style="padding: 3px" class="text-center">
+                  <td v-if="props.showDetail" style="padding: 3px" class="text-center">
                     <v-btn
-                      v-if="props.showDetail && (item.event.event_deadline_datetime && item.event.event_deadline_datetime.seconds > Date.now() / 1000)"
+                      v-if="props.showDetail && (item.order.status=='ordered' && item.event.event_deadline_datetime && item.event.event_deadline_datetime?.seconds > Date.now()/1000)"
                       color="white"
                       icon="mdi-cash-off"
                       size="large"
@@ -151,6 +151,12 @@ const startCancelProcess = () => {
                       @click="cancelConfirmDialog(item)"
                     >
                     </v-btn>
+                    <div
+                      v-else-if="props.showDetail && item.order.status=='canceled'"
+                      style="font-size:10px;"
+                    >
+                      キャンセル済
+                    </div>
                   </td>
                 </tr>
               </tbody>
