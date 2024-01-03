@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
-
+import { functions } from '@/firebase'
+import { httpsCallable } from 'firebase/functions';
 import { getEventPath } from '@/router/utils'
 import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
@@ -82,14 +83,31 @@ onMounted(async () => {
 const isOpenConfirmDialog = ref(false)
 const cancelEvent = ref('')
 const cancelPrice = ref('')
+let cancelPaymentId = ''
+let cancelOrderId = ''
+
 const cancelConfirmDialog  = async (item: any) => {
   isOpenConfirmDialog.value = true
   cancelEvent.value = item.event.event_name
   cancelPrice.value = priceString(item.total)
+  cancelPaymentId = item.order.payment_id
+  cancelOrderId = item.order.order_id
 }
+
+const stripeRefunds = httpsCallable(functions, 'stripe_refunds');
 const startCancelProcess = () => {
   window.alert('キャンセルを開始します')
+  stripeRefunds({ paymentId: cancelPaymentId, orderId: cancelOrderId })
+    .then((result) => {
+      console.log((result as any).data.refundId)
+      window.alert('キャンセルが完了しました')
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+      window.alert('キャンセルに失敗しました')
+    });
 }
+
 </script>
 
 <template>
