@@ -98,7 +98,8 @@ const sendReserveMail = () => {
 
           <v-card-text class="text-center mt-10">
             <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
-            <v-btn color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" :disabled="!isValid" @click="emit('submit')">下書きをプレビューする</v-btn>
+            <v-btn v-if="!event.event_id" color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" :disabled="!isValid" @click="emit('submit')">下書きをプレビューする</v-btn>
+            <v-btn v-else color="primary" class="mt-3" size="large" prepend-icon="mdi-calendar-plus" :disabled="!isValid" @click="emit('submit')">イベントを保存する</v-btn>
           </v-card-text>
           <v-card-text class="text-center mx-0 px-0">
             <v-btn
