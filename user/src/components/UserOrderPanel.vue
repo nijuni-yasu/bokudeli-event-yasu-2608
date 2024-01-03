@@ -8,6 +8,9 @@ import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
+import { useRoute } from 'vue-router'
+const route = useRoute()
 
 type Order = {
   order: OrderItem
@@ -82,14 +85,15 @@ onMounted(async () => {
   await fetchData()
 })
 
-const isOpenConfirmDialog = ref(false)
+// 注文のキャンセル処理
+const isOpenCancelConfirmDialog = ref(false)
 const isOpenCancelProsessDialog = ref(false)
 const isOpenCancelCompleteDialog = ref(false)
 const cancelEvent = ref('')
 const cancelPrice = ref('')
 
 const cancelConfirmDialog  = async (item: any) => {
-  isOpenConfirmDialog.value = true
+  isOpenCancelConfirmDialog.value = true
   cancelEvent.value = item.event.event_name
   cancelPrice.value = priceString(item.total)
   state.cancelPaymentIntent = item.order.payment_intent
@@ -111,9 +115,24 @@ const startCancelProcess = async () => {
     });
 }
 
+// Stripeからのリダイレクトでイベントに参加した場合の処理
+const joinEventId = ref('')
+const communityAccount = ref('')
+const isUserSuccessJoinEventDialogVisible = ref(false)
+if (route.query.eventId && route.query.communityAccount) {
+  joinEventId.value = route.query.eventId as string
+  communityAccount.value = route.query.communityAccount as string
+  isUserSuccessJoinEventDialogVisible.value = true
+}
 </script>
 
 <template>
+  <user-success-join-event-dialog
+    v-model="isUserSuccessJoinEventDialogVisible"
+    :event-id="joinEventId"
+    :community-account="communityAccount"
+    @click="fetchData"
+  ></user-success-join-event-dialog>
   <v-row v-if="!state.isLoading" class="justify-center">
     <v-col v-if="state.orderList.length" cols="12">
       <v-card class="pt-5">
@@ -171,7 +190,7 @@ const startCancelProcess = async () => {
         キャンセルされる場合はサポートまで<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>ください。<br />
         注文締切後のキャンセルはできませんのでご了承ください。<br />
       </v-card-title>
-      <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'キャンセルを実行する'" :cancel-text="'閉じる'" :ok-click="startCancelProcess">
+      <confirm-dialog v-model="isOpenCancelConfirmDialog" :is-confirm="true" :ok-text="'キャンセルを実行する'" :cancel-text="'閉じる'" :ok-click="startCancelProcess">
         <v-card-text class="text-center py-10 text-h6">
           キャンセル
         </v-card-text>
