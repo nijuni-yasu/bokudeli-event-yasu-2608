@@ -29,7 +29,7 @@ const emit = defineEmits<{
 
 const isFormValid = ref(true)
 const isValid= computed(() => {
-  return isFormValid.value && coverUrl.value != null
+  return isFormValid.value && coverUrl.value != ''
 })
 
 const event = computed({
