@@ -83,6 +83,8 @@ onMounted(async () => {
 })
 
 const isOpenConfirmDialog = ref(false)
+const isOpenCancelProsessDialog = ref(false)
+const isOpenCancelCompleteDialog = ref(false)
 const cancelEvent = ref('')
 const cancelPrice = ref('')
 
@@ -95,12 +97,13 @@ const cancelConfirmDialog  = async (item: any) => {
 }
 
 const stripeRefunds = httpsCallable(functions, 'stripe_refunds');
-const startCancelProcess = () => {
-  window.alert('キャンセルを開始します')
+const startCancelProcess = async () => {
+  isOpenCancelProsessDialog.value = true
   stripeRefunds({ paymentIntent: state.cancelPaymentIntent, orderId: state.cancelOrderId })
     .then((result) => {
-      console.log((result as any).data.refund_id)
-      window.alert('キャンセルが完了しました')
+      fetchData()
+      isOpenCancelProsessDialog.value = false
+      isOpenCancelCompleteDialog.value = true
     })
     .catch((error) => {
       console.error('Error:', error);
@@ -144,7 +147,7 @@ const startCancelProcess = () => {
                     <v-btn
                       v-if="props.showDetail && (item.order.status=='ordered' && item.event.event_deadline_datetime && item.event.event_deadline_datetime?.seconds > Date.now()/1000)"
                       color="white"
-                      icon="mdi-cash-off"
+                      icon="mdi-calendar-remove"
                       size="large"
                       density="compact"
                      elevation="5"
@@ -180,6 +183,16 @@ const startCancelProcess = () => {
         注文及びイベント参加をキャンセルしますか？<br>
         キャンセルは、イベントの注文期限まで実行可能です。<br>
         キャンセル実行後、返金が明細書に表示されるまで5～10日かかります。<br>
+        </v-card-text>
+      </confirm-dialog>
+      <confirm-dialog v-model="isOpenCancelProsessDialog">
+        <v-card-text class="text-center py-10 text-h6">
+          キャセル処理中...
+        </v-card-text>
+      </confirm-dialog>
+      <confirm-dialog v-model="isOpenCancelCompleteDialog">
+        <v-card-text class="text-center py-10 text-h6">
+          キャセルが完了しました
         </v-card-text>
       </confirm-dialog>
     </v-col>
