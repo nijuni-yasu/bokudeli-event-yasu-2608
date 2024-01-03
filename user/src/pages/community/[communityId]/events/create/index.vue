@@ -23,6 +23,7 @@ import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetch
 import { maxBy } from 'lodash'
 import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import { postalCodeValidator } from '@/utils/validators'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -151,7 +152,10 @@ onBeforeRouteUpdate(async (to, from, next) => {
   next()
 })
 
+const isOpenContactDialogVisible = ref(false)
+
 onMounted(async () => {
+  isOpenContactDialogVisible.value = true
   await fetchData()
 })
 
@@ -252,6 +256,25 @@ const stepperItems = computed(() => [
     <template #[`item.5`]>
       <event-shop-notice v-model="event" @submit="sumbmit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
     </template>
+    <div>
+      <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
+        <v-card-text class="text-center py-10 text-h6">
+          イベントの作成・編集について
+        </v-card-text>        
+        <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
+          ・「開催場所」「開催日時」を入力後、対応可能なお店を選択してイベント内容や注文情報を入力してください。<br>
+          ・「下書き保存」をしプレビューを確認したらお店に「予約申請」してください。<br>
+          ・店舗から予約申請の承認をいただいたら、注文を開始することができます。<br>
+          ・店舗から予約申請が却下された場合、店舗や日時などを変更して再度予約申請してください。<br>
+          <br>
+          ・予約申請後「店舗」「開催場所」「開催日時」などの変更はできません。<br>
+          ・予約申請後「イベントタイトル」「イベント詳細」「イベント画像」は編集可能です。<br>
+          <br>
+          ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> をご確認ください。<br>
+          ・ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br>
+        </v-card-text>
+      </confirm-dialog>
+    </div>
   </v-stepper>
 </template>
 
