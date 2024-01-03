@@ -114,13 +114,15 @@ const sendReserveMail = () => {
               店舗に予約申請する
             </v-btn>
           </v-card-text>
-          <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'予約申請する'" :ok-click="sendReserveMail">
-            {{ event.shop_name }} に予約申請のメールを送信しますか？<br>
-            <v-card-text class="text-subtitle pb-0">
-            ・店舗から予約承認されると、注文や告知ができるようになります。<br>
-            ・予約が却下された場合は、別店舗などに変更して再度予約してください。<br>
-            ・予約申請をすると「店舗」「開催場所」「開催日時」は変更できません。<br>
-            ・以上確認の上、予約申請を行ってください。
+          <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'予約申請メールを送信する'" :ok-click="sendReserveMail" max-width="650px">
+            <v-card-text class="text-center py-10 text-h6">
+              {{ event.shop_name }} に予約申請メールを送信しますか？<br>
+            </v-card-text>
+            <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
+            ・店舗から予約が承認されると、注文や告知ができるようになります。<br>
+            ・予約が却下された場合は、店舗や日時などを変更して再度予約申請をしてください。<br>
+            ・予約申請をすると、「店舗」「開催場所」「開催日時」の変更はできません。<br>
+            ・以上を確認の上、予約申請を行ってください。
             </v-card-text>
           </confirm-dialog>
         </v-form>
