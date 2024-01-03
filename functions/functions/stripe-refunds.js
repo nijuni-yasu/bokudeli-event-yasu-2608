@@ -10,24 +10,22 @@ exports.stripe_refunds = functions
     .https
     .onCall(async(data, context) => {
         console.log(data)
-        console.log(context)
         // 認証情報のチェック
         if (!context.auth) {
             throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.')
         }
         try {
-            const paymentId = data.paymentId
-            const orderId = data.orderId
-            const refund = await stripe.refunds.create({ payment_intent: paymentId })
+            const refund = await stripe.refunds.create({ payment_intent: data.paymentIntent })
+            const canceled_at = Timestamp.now()
             const updated_at = Timestamp.now()
-            const orderRef = db.collectionGroup('orders').where('order_id', '==', orderId)
+            const orderRef = db.collectionGroup('orders').where('order_id', '==', data.orderId)
             const orderSnapshot = await orderRef.get()
             const orderDocument = orderSnapshot.docs[0]
             if (orderDocument?.ref == null) {
                 throw new Error('orderDocument or orderDocument.ref is undefined.')
             }
-            await orderDocument.ref.set({ status: 'ordered', updated_at, refundId: refund.id }, { merge: true })
-            return { refundId: refund.id }
+            await orderDocument.ref.set({ status: 'canceled', updated_at, canceled_at, refund_id: refund.id }, { merge: true })
+            return { refund_id: refund.id }
         } catch (error) {
             throw new functions.https.HttpsError('unknown', error.message)
         }

@@ -24,6 +24,8 @@ const props = defineProps<{
 const state = reactive({
   orderList: [] as Order[],
   isLoading: true,
+  cancelOrderId: '' as string,
+  cancelPaymentIntent: '' as string,
 })
 
 const loadOrderList = async () => {
@@ -83,23 +85,21 @@ onMounted(async () => {
 const isOpenConfirmDialog = ref(false)
 const cancelEvent = ref('')
 const cancelPrice = ref('')
-let cancelPaymentId = ''
-let cancelOrderId = ''
 
 const cancelConfirmDialog  = async (item: any) => {
   isOpenConfirmDialog.value = true
   cancelEvent.value = item.event.event_name
   cancelPrice.value = priceString(item.total)
-  cancelPaymentId = item.order.payment_id
-  cancelOrderId = item.order.order_id
+  state.cancelPaymentIntent = item.order.payment_intent
+  state.cancelOrderId = item.order.order_id
 }
 
 const stripeRefunds = httpsCallable(functions, 'stripe_refunds');
 const startCancelProcess = () => {
   window.alert('キャンセルを開始します')
-  stripeRefunds({ paymentId: cancelPaymentId, orderId: cancelOrderId })
+  stripeRefunds({ paymentIntent: state.cancelPaymentIntent, orderId: state.cancelOrderId })
     .then((result) => {
-      console.log((result as any).data.refundId)
+      console.log((result as any).data.refund_id)
       window.alert('キャンセルが完了しました')
     })
     .catch((error) => {
@@ -123,7 +123,7 @@ const startCancelProcess = () => {
                   <th style="padding: 10px; width: 150px">開催日時</th>
                   <th style="padding: 10px; width: 250px">注文内容</th>
                   <th v-if="props.showDetail" style="padding: 10px; width: 100px" class="text-center">合計金額</th>
-                  <th v-if="props.showDetail" style="padding: 0px; width: 30px"></th>
+                  <th v-if="props.showDetail" style="padding: 0px; width: 80px" class="text-center">キャンセル</th>
                 </tr>
               </thead>
               <tbody>
@@ -144,14 +144,12 @@ const startCancelProcess = () => {
                     <v-btn
                       v-if="props.showDetail && (item.event.event_deadline_datetime && item.event.event_deadline_datetime.seconds > Date.now() / 1000)"
                       color="white"
-                      size="small"
-                      rounded
-                      elevation="5"
+                      icon="mdi-cash-off"
+                      size="large"
+                      density="compact"
+                     elevation="5"
                       @click="cancelConfirmDialog(item)"
                     >
-                      <v-icon>
-                        mdi-credit-card-refund
-                      </v-icon>
                     </v-btn>
                   </td>
                 </tr>
@@ -164,7 +162,7 @@ const startCancelProcess = () => {
         キャンセルされる場合はサポートまで<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>ください。<br />
         注文締切後のキャンセルはできませんのでご了承ください。<br />
       </v-card-title>
-      <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'キャンセルする'" :cancel-text="'閉じる'" :ok-click="startCancelProcess">
+      <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-text="'キャンセルを実行する'" :cancel-text="'閉じる'" :ok-click="startCancelProcess">
         <v-card-text class="text-center py-10 text-h6">
           キャンセル
         </v-card-text>
