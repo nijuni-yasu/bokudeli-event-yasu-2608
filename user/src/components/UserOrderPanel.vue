@@ -190,11 +190,11 @@ if (route.query.eventId && route.query.communityAccount) {
         キャンセルされる場合はサポートまで<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>ください。<br />
         注文締切後のキャンセルはできませんのでご了承ください。<br />
       </v-card-title>
-      <confirm-dialog v-model="isOpenCancelConfirmDialog" :is-confirm="true" :ok-text="'キャンセルを実行する'" :cancel-text="'閉じる'" :ok-click="startCancelProcess">
+      <confirm-dialog v-model="isOpenCancelConfirmDialog" :is-confirm="true" :ok-text="'キャンセルを実行する'" :cancel-text="'キャンセルしない'" :ok-click="startCancelProcess">
         <v-card-text class="text-center py-10 text-h6">
           キャンセル
         </v-card-text>
-        <v-card-text class="py-5 text-h7" style="line-height: 2rem">
+        <v-card-text class="py-5 text-h6" style="line-height: 2rem">
           【イベント名】 {{ cancelEvent }}<br>
           【返金額】 {{ cancelPrice }}<br>
         </v-card-text>
@@ -202,6 +202,7 @@ if (route.query.eventId && route.query.communityAccount) {
         注文及びイベント参加をキャンセルしますか？<br>
         キャンセルは、イベントの注文期限まで実行可能です。<br>
         キャンセル実行後、返金が明細書に表示されるまで5～10日かかります。<br>
+        キャンセルは、取り消しできませんのでご注意ください。
         </v-card-text>
       </confirm-dialog>
       <confirm-dialog v-model="isOpenCancelProsessDialog">
