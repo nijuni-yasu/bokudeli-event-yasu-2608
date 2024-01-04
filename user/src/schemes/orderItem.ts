@@ -12,6 +12,7 @@ type OrderItem = {
   menus: OrderMenu[]
   created_at: Timestamp
   updated_at: Timestamp
+  carted_at: Timestamp
 }
 
 export const createEmptyOrderItem = (): OrderItem => ({
@@ -25,6 +26,7 @@ export const createEmptyOrderItem = (): OrderItem => ({
   menus: [],
   created_at: Timestamp.now(),
   updated_at: Timestamp.now(),
+  carted_at: Timestamp.now(),
 })
 
 export default OrderItem

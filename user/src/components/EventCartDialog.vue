@@ -87,6 +87,7 @@ const addOrder = async () => {
       ] as OrderMenu[],
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
+      carted_at: Timestamp.now(),
     } as OrderItem
     const addedDoc = await addDoc(orderDb, orderItem)
 
@@ -127,7 +128,7 @@ const addOrder = async () => {
         note: orderNote.value,
       })
     }
-    await setDoc(userOrder.ref, { menus, updated_at: Timestamp.now() }, { merge: true })
+    await setDoc(userOrder.ref, { menus, updated_at: Timestamp.now(), carted_at: Timestamp.now() }, { merge: true })
   }
 }
 
