@@ -7,6 +7,7 @@ const props = defineProps<{
   cancelText?: string
   okClick?: () => void
   cancelClick?: () => void | Promise<void>
+  maxWidth?: string
 }>()
 
 const emit = defineEmits<{
@@ -38,7 +39,7 @@ const clickCancelHandler = () => {
 </script>
 
 <template>
-  <v-dialog v-model="dialog" persistent max-width="600px">
+  <v-dialog v-model="dialog" persistent :max-width="props.maxWidth ? props.maxWidth : '600px'">
     <v-card>
       <v-card-title v-if="props.title">{{ props.title }}</v-card-title>
       <v-card-text><slot></slot></v-card-text>

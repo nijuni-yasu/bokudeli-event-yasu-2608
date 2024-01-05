@@ -209,10 +209,11 @@ onMounted(async () => {
                   <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 </v-card>
                 <v-row
-                  v-if="event.event_status.value===`in_draft`&&state.isCommunityManager"
+                  v-if="state.isCommunityManager"
                   class="justify-end my-2 mr-1"
                 >
                   <v-btn
+                    v-if="event.event_status.value===`in_draft`"
                     class="ml-1"
                     color="white"
                     elevation="5"
@@ -224,6 +225,7 @@ onMounted(async () => {
                     予約
                   </v-btn>                
                   <v-btn
+                    v-if="event.event_status.value===`in_draft`"
                     class="ml-1"
                     color="white"
                     elevation="5"
@@ -234,6 +236,18 @@ onMounted(async () => {
                   >
                     編集
                   </v-btn>
+                  <v-btn
+                    v-if="event.event_status.value=='applying_reservation'||event.event_status.value=='accepting_order'||event.event_status.value=='order_closed'"
+                    class="ml-1"
+                    color="white"
+                    elevation="5"
+                    size="small"
+                    rounded
+                    prepend-icon="mdi-pencil-box-outline"
+                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id, step:3} }"
+                  >
+                    編集
+                  </v-btn>                  
                 </v-row>
               </v-col>
             </v-row>

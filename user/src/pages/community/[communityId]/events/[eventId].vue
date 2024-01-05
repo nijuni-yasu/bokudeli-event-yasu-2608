@@ -158,13 +158,24 @@ const openLoginDialog = () => {
               店舗へ予約申請
             </v-btn>
             <v-btn
-              v-if="state.event.event_status.value===`in_draft`&&state.isCommunityManager"
+              v-if="state.event.event_status.value==`in_draft`&&state.isCommunityManager"
               color="white"
               class="mr-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-pencil-box-outline"
               :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: props.eventId} }"
+            >
+              イベント編集
+            </v-btn>
+            <v-btn
+              v-if="(state.event.event_status.value=='applying_reservation'||state.event.event_status.value=='accepting_order'||state.event.event_status.value=='order_closed')&&state.isCommunityManager"
+              color="white"
+              class="mr-2 my-1"
+              elevation="5"
+              rounded
+              prepend-icon="mdi-pencil-box-outline"
+              :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: props.eventId, step: 3} }"
             >
               イベント編集
             </v-btn>
