@@ -2,16 +2,12 @@
 import UserBioPanel from '@/components/UserBioPanel.vue'
 import UserOrderPanel from '@/components/UserOrderPanel.vue'
 import UserCommunityPanel from '@/components/UserCommunityPanel.vue'
-import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import { db } from '@/firebase'
 import { convertDocumentDataToStoredUser } from '@/schemes/converter'
 import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { useRoute } from 'vue-router'
-
 import { doc, getDoc } from 'firebase/firestore'
 
-const route = useRoute()
 const props = defineProps<{
   userId: string
 }>()
@@ -42,26 +38,10 @@ onMounted(async () => {
   await fetchData()
 })
 
-// Stripeからのリダイレクトでイベントに参加した場合の処理
-const eventId = ref('')
-const communityAccount = ref('')
-const isUserSuccessJoinEventDialogVisible = ref(false)
-
-if (route.query.eventId && route.query.communityAccount) {
-  eventId.value = route.query.eventId as string
-  communityAccount.value = route.query.communityAccount as string
-  isUserSuccessJoinEventDialogVisible.value = true
-}
 </script>
 
 <template>
   <div id="user-view">
-    <user-success-join-event-dialog
-      v-model="isUserSuccessJoinEventDialogVisible"
-      :event-id="eventId"
-      :community-account="communityAccount"
-    ></user-success-join-event-dialog>
-
     <v-row v-if="!state.isLoading" justify="center">
       <v-col cols="12" sm="8" md="3">
         <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId" />

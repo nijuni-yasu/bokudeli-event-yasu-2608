@@ -1,5 +1,14 @@
 <script lang="ts" setup>
-import { GoogleAuthProvider, User, getAuth, getRedirectResult, onAuthStateChanged } from 'firebase/auth'
+import {
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  OAuthCredential,
+  User,
+  UserCredential,
+  getAuth,
+  getRedirectResult,
+  onAuthStateChanged,
+} from 'firebase/auth'
 
 import { useSkins } from '@core/composable/useSkins'
 import { useThemeConfig } from '@core/composable/useThemeConfig'
@@ -7,15 +16,9 @@ import { useThemeConfig } from '@core/composable/useThemeConfig'
 // @layouts plugin
 import { AppContentLayoutNav } from '@layouts/enums'
 
-import {
-  convertDocumentDataToStoredUser,
-  convertFirebaseUserToStoredUser,
-  convertStoredUserToFirestoredUser,
-} from '@/schemes/converter'
-import { db } from '@/firebase'
-import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
+import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('./components/DefaultLayoutWithHorizontalNav.vue'),
@@ -33,63 +36,24 @@ const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
 
-const fetchRedirectResult = async () => {
-  try {
-    const result = await getRedirectResult(getAuth())
-    if (result) {
-      const credential = GoogleAuthProvider.credentialFromResult(result)
-      if (credential) {
-        const store = useStoreCredential()
-        store.update(credential)
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching redirect result:', error)
-  }
-}
-
 onAuthStateChanged(getAuth(), async (user: User | null) => {
-  fetchRedirectResult()
-
-  const store = useStoreStoredUser()
-  if (user) {
-    // ログイン処理
-    const storedUser = await convertFirebaseUserToStoredUser(user)
-
-    const docRef = doc(db, 'users', storedUser.userId)
-    const docSnap = await getDoc(docRef)
-
-    // Pinia のデータを更新
-    const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
-    store.update(currentStoredUser)
-
-    // Firestore 保存
-    const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
-
-    if (docSnap.exists()) {
-      // 既にユーザーが存在する場合は更新
-      // FIXME: ログインされるごとに更新日時が変わってしまうため同じデータの時は更新しないようにする
-      await setDoc(
-        docRef,
-        {
-          user_email: firestoredUser.user_email,
-          updated_at: Timestamp.now(),
-        },
-        { merge: true },
-      )
-    } else {
-      // Pinia に保存
-      store.update(storedUser)
-
-      // ユーザーが存在しない場合は新規作成
-      firestoredUser.created_at = Timestamp.now()
-      firestoredUser.updated_at = Timestamp.now()
-      await setDoc(docRef, firestoredUser)
-    }
-  } else {
+  // リダイレクト結果を取得
+  const userCredential = await getRedirectResult(getAuth())
+  if (!userCredential && !user) {
     // ログアウト処理
+    const store = useStoreStoredUser()
     store.$reset()
     useStoreCredential().$reset()
+    return
+  }
+  if (!userCredential && user) {
+    // ログイン済みのユーザーの処理
+    await loginUser(user)
+  }
+  if (userCredential) {
+    // リダイレクトでのログイン処理
+    await updateCredentialFromUserCredential(userCredential)
+    await loginUser(user || userCredential.user)
   }
 })
 </script>

@@ -45,7 +45,6 @@ export const dateOnlyTimeString = (date: Timestamp | Date | null): string => {
   return formattedDate
 }
 
-
 export const priceString = (price: number): string => {
   return `¥${price.toLocaleString()}`
 }
@@ -141,17 +140,14 @@ export const convertFirebaseUserToStoredUser = async (firebaseUser: User): Promi
       case FacebookAuthProvider.PROVIDER_ID:
         {
           const store = useStoreCredential()
-          if (store.credential) {
-            const imageQueryUrl =
-              photoURL + `?width=200&height=200&redirect=false&access_token=${store.credential.accessToken}`
-            const response = await axios.get(imageQueryUrl)
-
-            let newImageUrl = null
-            if (response.data.data.is_silhouette === false) {
-              newImageUrl = response.data.data.url
-            }
-            user.userImageUrl = newImageUrl
+          if (!store.credential) {
+            user.userImageUrl = null
+            break
           }
+          const imageQueryUrl =
+            photoURL + `?width=500&height=500&redirect=false&access_token=${store.credential.accessToken}`
+          const response = await axios.get(imageQueryUrl)
+          user.userImageUrl = !response.data.data.is_silhouette ? response.data.data.url : null
         }
         break
       case GoogleAuthProvider.PROVIDER_ID:
@@ -226,27 +222,27 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
 }
 
 export const convertDateToWeekTimestamp = (date: Date): number => {
-  return date.getDay() * 24 * 60 * 60 * 1000 +
+  return (
+    date.getDay() * 24 * 60 * 60 * 1000 +
     date.getHours() * 60 * 60 * 1000 +
     date.getMinutes() * 60 * 1000 +
     date.getSeconds() * 1000 +
     date.getMilliseconds()
+  )
 }
 
 export const convertShopTimeToWeekTimestamp = (dayOfWeek: number, timeString: string): number => {
-  const [ hour, minute ] = timeString.split(':').map((value) => parseInt(value))
+  const [hour, minute] = timeString.split(':').map((value) => parseInt(value))
   if (Number.isNaN(hour) || Number.isNaN(minute)) {
     return NaN
   }
-  return dayOfWeek * 24 * 60 * 60 * 1000 +
-    hour * 60 * 60 * 1000 +
-    minute * 60 * 1000
+  return dayOfWeek * 24 * 60 * 60 * 1000 + hour * 60 * 60 * 1000 + minute * 60 * 1000
 }
 
 export const convertTruncateText = (text: string, maxLength: number): string => {
   if (text.length > maxLength) {
-    return text.substring(0, maxLength - 3) + '...';
+    return text.substring(0, maxLength - 3) + '...'
   } else {
-    return text;
+    return text
   }
 }
