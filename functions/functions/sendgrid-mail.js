@@ -6,7 +6,7 @@ const sgMail = require('@sendgrid/mail');
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = 'bokudeli@nijuni.jp';
-const DEFAULT_CC = 'support@nijuni.jp';
+const DEFAULT_CC = 'support+cc@nijuni.jp';
 const DEFAULT_TO = 'support+to@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
