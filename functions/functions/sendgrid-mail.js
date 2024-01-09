@@ -94,7 +94,7 @@ function getShopEmails(shopSnapshot) {
     const emails = new Set();
     for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
         const mail = shopSnapshot.get(field)
-        if (mail != null && mail !== '') {
+        if (mail != null && mail !== '' && !emails.includes(mail)) {
             emails.add(mail);
         }
     }
@@ -112,7 +112,8 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
     const managersSnapshot = await managersRef.get()
     managersSnapshot.forEach(doc => {
         const userEmail = doc.get('user_email');
-        if (userEmail != null && userEmail !== '') {
+        // すでに追加済みのメールアドレスは追加しない
+        if (userEmail != null && userEmail !== '' && !emails.includes(userEmail)) {
             emails.add(userEmail);
         }
     });
@@ -126,13 +127,14 @@ async function getCommunityEmails(communityId) {
     if (!managersSnapshot.empty) {
         managersSnapshot.forEach(doc => {
             const userEmail = doc.get('user_email');
-            if (userEmail != null && userEmail !== '') {
+            // すでに追加済みのメールアドレスは追加しない
+            if (userEmail != null && userEmail !== '' && !emails.includes(userEmail)) {
                 emails.add(userEmail);
             }
         });
         return Array.from(emails);
     } else {
-        // コミュマネがいない場合はTOを別メールに。TOとCCが同じだとエラーになる
+        // コミュマネがいない場合はsupport+to@nijuni.jpに送信
         emails.add(DEFAULT_TO);
         console.log(emails)
         return Array.from(emails);
