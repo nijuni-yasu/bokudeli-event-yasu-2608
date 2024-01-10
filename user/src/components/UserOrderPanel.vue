@@ -7,6 +7,7 @@ import { getEventPath } from '@/router/utils'
 import { dateWithDayOfWeekString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
+import { fixCancelOrder } from '@/composable/fixOrder'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import { useRoute } from 'vue-router'
@@ -27,8 +28,6 @@ const props = defineProps<{
 const state = reactive({
   orderList: [] as Order[],
   isLoading: true,
-  cancelOrderId: '' as string,
-  cancelPaymentIntent: '' as string,
 })
 
 const loadOrderList = async () => {
@@ -91,28 +90,38 @@ const isOpenCancelProsessDialog = ref(false)
 const isOpenCancelCompleteDialog = ref(false)
 const cancelEvent = ref('')
 const cancelPrice = ref('')
+const cancelOrder = ref({} as OrderItem)
 
 const cancelConfirmDialog  = async (item: any) => {
   isOpenCancelConfirmDialog.value = true
   cancelEvent.value = item.event.event_name
   cancelPrice.value = priceString(item.total)
-  state.cancelPaymentIntent = item.order.payment_intent
-  state.cancelOrderId = item.order.order_id
+  cancelOrder.value = item.order
 }
 
 const stripeRefunds = httpsCallable(functions, 'stripe_refunds');
 const startCancelProcess = async () => {
   isOpenCancelProsessDialog.value = true
-  stripeRefunds({ paymentIntent: state.cancelPaymentIntent, orderId: state.cancelOrderId })
-    .then((result) => {
-      fetchData()
-      isOpenCancelProsessDialog.value = false
-      isOpenCancelCompleteDialog.value = true
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      window.alert('キャンセルに失敗しました')
-    });
+  const order = cancelOrder.value
+  // user_advance はstripeの支払いの場合
+  if (order.event_payment == 'user_advance' && order.payment_intent){
+    stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
+      .then((result) => {
+        fetchData()
+        isOpenCancelProsessDialog.value = false
+        isOpenCancelCompleteDialog.value = true
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        window.alert('キャンセルに失敗しました')
+      });
+  // それ以外は事前決済してないのでStripeの返金処理はなし
+  } else if (order.event_payment == 'user_on_day' || order.event_payment == 'community_bill' ) {
+    fixCancelOrder(order)
+    fetchData()
+    isOpenCancelProsessDialog.value = false
+    isOpenCancelCompleteDialog.value = true
+  }
 }
 
 // Stripeからのリダイレクトでイベントに参加した場合の処理

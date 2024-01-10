@@ -28,8 +28,21 @@ export const fixOrder = async (order: OrderItem) => {
 
   await setDoc(
     orderDocument.ref,
-    { status: 'ordered', updated_at: Timestamp.now(), event_payment: order.event_payment },
+    { status: 'ordered', ordered_at: Timestamp.now(), updated_at: Timestamp.now(), event_payment: order.event_payment },
     { merge: true },
   )
   await addCommunityUser(order.community_id, order.user_id)
+}
+
+export const fixCancelOrder = async (order: OrderItem) => {
+  const orderId = order.order_id
+  const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
+  const orderSnapshot = await getDocs(orderRef)
+  const orderDocument = orderSnapshot.docs[0]
+
+  await setDoc(
+    orderDocument.ref,
+    { status: 'canceled', canceled_at: Timestamp.now(), updated_at: Timestamp.now()},
+    { merge: true },
+  )
 }
