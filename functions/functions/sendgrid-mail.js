@@ -267,6 +267,7 @@ async function sendEventInformationMail() {
         events: []};
     const query = db.collectionGroup('events')
         .where('is_public', '==', true)
+        .where('event_status.value', '==', 'accepting_order')
         .where('event_deadline_datetime', '>', new Date());
         // 不等号を含む where がある場合、他のフィールドでソートできない
         // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
