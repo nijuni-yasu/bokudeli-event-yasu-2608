@@ -94,7 +94,7 @@ function getShopEmails(shopSnapshot) {
     const emails = new Set();
     for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
         const mail = shopSnapshot.get(field)
-        if (mail != null && mail !== '' && !emails.includes(mail)) {
+        if (mail != null && mail !== '') {
             emails.add(mail);
         }
     }
@@ -113,7 +113,7 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
     managersSnapshot.forEach(doc => {
         const userEmail = doc.get('user_email');
         // すでに追加済みのメールアドレスは追加しない
-        if (userEmail != null && userEmail !== '' && !emails.includes(userEmail)) {
+        if (userEmail != null && userEmail !== '') {
             emails.add(userEmail);
         }
     });
@@ -128,7 +128,7 @@ async function getCommunityEmails(communityId) {
         managersSnapshot.forEach(doc => {
             const userEmail = doc.get('user_email');
             // すでに追加済みのメールアドレスは追加しない
-            if (userEmail != null && userEmail !== '' && !emails.includes(userEmail)) {
+            if (userEmail != null && userEmail !== '') {
                 emails.add(userEmail);
             }
         });
@@ -204,6 +204,11 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
         .where('event_deadline_datetime', '<=', new Date(end));
     (await query.get()).forEach(async (eventSnapshot) => {
         try {
+            const event_status = eventSnapshot.get('event_status');
+            if (event_status?.value !== 'accepting_order') {
+                console.log('予約受付中ではないのでメール送信しない')
+                return;
+            }
             const event_deadline_datetime = eventSnapshot.get('event_deadline_datetime');
             const deadline = event_deadline_datetime?.toMillis() ?? 0;
             if (start < deadline && deadline <= end) {
