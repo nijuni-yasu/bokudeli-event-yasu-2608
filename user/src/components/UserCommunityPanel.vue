@@ -1,72 +1,56 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { collection, getDocs, query, where } from 'firebase/firestore'
-import { convertDocumentDataToCommunity, convertTruncateText } from '@/schemes/converter'
+import { doc, where } from 'firebase/firestore'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
-import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
-import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
-import { FirestoredUser } from '@/schemes/storedUser'
+import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
+import { CommunityMember } from '@/schemes/communityMember'
 
 const router = useRouter()
 const props = defineProps<{
   userId: string,
-  type: string,
+  type: 'members' | 'managers',
   isLoginUser: boolean,
 }>()
-
-// TODO 更新順で並べる
-const communityDb = query(collection(db, 'communities'), where('is_public', '==', true))
-
 type CommunityWithMembers = {
   community: BokudeliCommunity
-  members: FirestoredUser[]
+  members: CommunityMember[]
 }
-const state = reactive({
-  communityList: [] as CommunityWithMembers[],
-  isLoading: true,
-})
 
-onMounted(async () => {
-  const communitySnapshot = await getDocs(communityDb)
-  const communityList = [] as CommunityWithMembers[]
-  // TODO: 全てのコミュニティの全ての参加者情報を取得して速度重たいので要修正
-  for (const docSnapshot of communitySnapshot.docs) {
-    // 参加中のコミュニティと管理しているコミュニティを出し分ける
-    if (props.type==="members") {
-      const members = await loadCommunityMembers(docSnapshot.ref)
-      if (members.some(member => member.user_id === props.userId)) {
-        const community = convertDocumentDataToCommunity(docSnapshot.data())
-        community.communityDescription = convertTruncateText(community.communityDescription, 100)
-        communityList.push({
-          community,
-          members: members,
-        })
-        communityList.sort((a,b) => b.members.length - a.members.length)
-      }    
-    } else if(props.type==="managers"){
-      const members = await loadCommunityManagers(docSnapshot.ref)
-      if (members.some(member => member.user_id === props.userId)) {
-        const community = convertDocumentDataToCommunity(docSnapshot.data())
-        community.communityDescription = convertTruncateText(community.communityDescription, 100)
-        communityList.push({
-          community,
-          members: members,
-        })
-        communityList.sort((a,b) => b.members.length - a.members.length)
-      }
+const communitiesStore = useCommunitiesStore() as CommunitiesStore
+
+communitiesStore.filters = [
+  where('is_public', '==', true),
+  where('members', 'array-contains', doc(db, 'users', props.userId)),
+]
+
+const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.communityStores ?? [])
+  .flatMap((communityStore) => {
+    if (communityStore.community == null) {
+      return []
     }
-  }
-  state.communityList = communityList
-  state.isLoading = false
-})
+    if (props.type === 'managers') {
+      return communityStore.members?.some((member) => member.user_id === props.userId && member.roles.includes('manager')) ? {
+        community: communityStore.community,
+        members: communityStore.members,
+      } : []
+    } else {
+      return communityStore.members?.some((member) => member.user_id === props.userId) ? {
+        community: communityStore.community,
+        members: communityStore.members,
+      } : []
+    }
+  })
+)
+
+const isLoading = computed(() => communitiesStore.communityStores == null)
 </script>
 
 <template>
   <section>
-    <v-row v-if="!state.isLoading" class="justify-center">
+    <v-row v-if="!isLoading" class="justify-center">
       <v-col
-        v-for="{ community, members } in state.communityList"
+        v-for="{ community, members } in communityList"
         :key="community.communityId"
         md="12"
         sm="12"
@@ -138,7 +122,7 @@ onMounted(async () => {
         </div>
       </v-col>
       <!-- no result found -->
-      <v-col v-show="!state.communityList.length" cols="12" class="text-center">
+      <v-col v-show="!communityList.length" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
       <v-row v-show="props.type===`managers`&&props.isLoginUser" class="justify-center">

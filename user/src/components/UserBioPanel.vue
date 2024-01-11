@@ -1,54 +1,54 @@
 <script setup lang="ts">
-import StoredUser from '@/schemes/storedUser'
+// import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { FirestoredUser } from '@/schemes/storedUser'
 import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import UserBioEditDialog from './UserBioEditDialog.vue'
 
-const props = defineProps<{ userData: StoredUser; isEditable: boolean | undefined }>()
+const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
 const userData = ref(props.userData)
 const isEditable = computed(() => props.isEditable ?? false)
 
-const avatar = computed(() => userData?.value?.userImageUrl ?? null)
+const avatar = computed(() => userData?.value?.user_image_url ?? null)
 
-const userName = computed(() => userData?.value?.userName ?? 'ゲスト')
+const userName = computed(() => userData?.value?.user_name ?? 'ゲスト')
 const userDescription = computed(() => {
-  return userData?.value?.userDescription ?? 'ここに自己紹介文が入ります。'
+  return userData?.value?.user_description ?? 'ここに自己紹介文が入ります。'
 })
 const twitterUrl = computed(() => {
-  if (userData?.value?.userSnsTwitter) {
-    return 'https://twitter.com/' + userData.value.userSnsTwitter
+  if (userData?.value?.user_sns_twitter) {
+    return 'https://twitter.com/' + userData.value.user_sns_twitter
   } else {
     return undefined
   }
 })
 
 const facebookUrl = computed(() => {
-  if (userData?.value?.userSnsFacebook) {
-    return 'https://www.facebook.com/' + userData.value.userSnsFacebook
+  if (userData?.value?.user_sns_facebook) {
+    return 'https://www.facebook.com/' + userData.value.user_sns_facebook
   } else {
     return undefined
   }
 })
 
 const instagramUrl = computed(() => {
-  if (userData?.value?.userSnsInstagram) {
-    return 'https://www.instagram.com/' + userData.value.userSnsInstagram
+  if (userData?.value?.user_sns_instagram) {
+    return 'https://www.instagram.com/' + userData.value.user_sns_instagram
   } else {
     return undefined
   }
 })
 
 const isUserInfoEditDialogVisible = ref(false)
-const updateUserData = async (storedUser: StoredUser) => {
+const updateUserData = async (user: FirestoredUser) => {
   const store = useStoreStoredUser()
-  store.update(storedUser)
+  store.update(user)
 
-  const docRef = doc(db, 'users', storedUser.userId)
+  const docRef = doc(db, 'users', user.user_id)
   const docSnap = await getDoc(docRef)
-  const { user_name, user_image_url, user_sns_twitter, user_sns_facebook, user_sns_instagram, user_description } =
-    convertStoredUserToFirestoredUser(storedUser)
+  const { user_name, user_image_url, user_sns_twitter, user_sns_facebook, user_sns_instagram, user_description } = user
   if (docSnap.exists()) {
     await setDoc(
       docRef,
@@ -66,7 +66,7 @@ const updateUserData = async (storedUser: StoredUser) => {
   } else {
     console.error('ユーザーが存在しません')
   }
-  userData.value = storedUser
+  userData.value = user
 }
 </script>
 

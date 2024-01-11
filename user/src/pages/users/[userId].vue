@@ -2,52 +2,27 @@
 import UserBioPanel from '@/components/UserBioPanel.vue'
 import UserOrderPanel from '@/components/UserOrderPanel.vue'
 import UserCommunityPanel from '@/components/UserCommunityPanel.vue'
-import { db } from '@/firebase'
-import { convertDocumentDataToStoredUser } from '@/schemes/converter'
-import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { doc, getDoc } from 'firebase/firestore'
+import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{
   userId: string
 }>()
 
-const state = reactive({
-  userData: {} as StoredUser,
-  isLoading: true,
-  tabs: null,
-})
-
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
-const fetchData = async () => {
-  const userRef = doc(db, 'users', props.userId)
-  const userDoc = await getDoc(userRef)
-  state.userData = convertDocumentDataToStoredUser(userDoc.data())
-  state.isLoading = false
-}
-
-onBeforeRouteUpdate(async (to, from, next) => {
-  if (to.params.userId !== from.params.userId || (to.query.eventId && to.query.communityAccount)) {
-    await fetchData()
-  }
-  next()
-})
-
-onMounted(async () => {
-  await fetchData()
-})
-
+const userData = computed(() => useUserStore(props.userId).user)
+const tabs = ref(null)
 </script>
 
 <template>
   <div id="user-view">
-    <v-row v-if="!state.isLoading" justify="center">
+    <v-row v-if="userData != null" justify="center">
       <v-col cols="12" sm="8" md="3">
-        <user-bio-panel :user-data="state.userData" :is-editable="storedUser?.userId === props.userId" />
+        <user-bio-panel :user-data="userData" :is-editable="userData?.user_id === props.userId" />
       </v-col>
         <v-col cols="12" sm="8" md="9">
-          <v-tabs v-model="state.tabs">
+          <v-tabs v-model="tabs">
             <v-tab value="0">
               <v-icon start>
                 mdi-calendar-star
@@ -67,7 +42,7 @@ onMounted(async () => {
               管理コミュニティ
             </v-tab>
           </v-tabs>
-          <v-window v-model="state.tabs">
+          <v-window v-model="tabs">
             <v-window-item value="0">
               <v-col
                 cols="12" md="12" sm="12"
