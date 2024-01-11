@@ -6,7 +6,7 @@ const sgMail = require('@sendgrid/mail');
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = 'bokudeli@nijuni.jp';
-const DEFAULT_CC = 'support@nijuni.jp';
+const DEFAULT_CC = 'support+cc@nijuni.jp';
 const DEFAULT_TO = 'support+to@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
@@ -112,6 +112,7 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
     const managersSnapshot = await managersRef.get()
     managersSnapshot.forEach(doc => {
         const userEmail = doc.get('user_email');
+        // すでに追加済みのメールアドレスは追加しない
         if (userEmail != null && userEmail !== '') {
             emails.add(userEmail);
         }
@@ -126,13 +127,14 @@ async function getCommunityEmails(communityId) {
     if (!managersSnapshot.empty) {
         managersSnapshot.forEach(doc => {
             const userEmail = doc.get('user_email');
+            // すでに追加済みのメールアドレスは追加しない
             if (userEmail != null && userEmail !== '') {
                 emails.add(userEmail);
             }
         });
         return Array.from(emails);
     } else {
-        // コミュマネがいない場合はTOを別メールに。TOとCCが同じだとエラーになる
+        // コミュマネがいない場合はsupport+to@nijuni.jpに送信
         emails.add(DEFAULT_TO);
         console.log(emails)
         return Array.from(emails);
@@ -202,6 +204,11 @@ async function sendOrderDeadlineMail(start, end, is_reminder) {
         .where('event_deadline_datetime', '<=', new Date(end));
     (await query.get()).forEach(async (eventSnapshot) => {
         try {
+            const event_status = eventSnapshot.get('event_status');
+            if (event_status?.value !== 'accepting_order') {
+                console.log('予約受付中ではないのでメール送信しない')
+                return;
+            }
             const event_deadline_datetime = eventSnapshot.get('event_deadline_datetime');
             const deadline = event_deadline_datetime?.toMillis() ?? 0;
             if (start < deadline && deadline <= end) {
@@ -260,6 +267,7 @@ async function sendEventInformationMail() {
         events: []};
     const query = db.collectionGroup('events')
         .where('is_public', '==', true)
+        .where('event_status.value', '==', 'accepting_order')
         .where('event_deadline_datetime', '>', new Date());
         // 不等号を含む where がある場合、他のフィールドでソートできない
         // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations

@@ -1,48 +1,49 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { db } from '@/firebase'
-import { collection, collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 import { getEventPath, getEventCreatePath } from '@/router/utils'
-import { dateWithDayOfWeekString, dateOnlyTimeString ,convertDocumentDataToCommunity, convertDocumentDataToEvent } from '@/schemes/converter'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
-import { loadCommunityManagers } from '@/composable/loadCommunityManagers'
-import { checkCommunityManager } from '@/composable/checkCommunityManager'
-import { checkCommunityMember } from '@/composable/checkCommunityMember'
-import { FirestoredUser } from '@/schemes/storedUser'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
 
 const props = defineProps<{
   communityId: string
 }>()
+const router = useRouter()
 
-const state = reactive({
-  community: {} as BokudeliCommunity,
-  members: [] as FirestoredUser[],
-  managers: [] as FirestoredUser[],
-  links: [] as string[],
-  events: [] as BokudeliEvent[],
-  isLoading: true,
-  isCommunityManager: false,
-  isCommunityMember: false,
+const communityStore = useCommunityStore(props.communityId) as CommunityStore
+
+const isManager = ref(false)
+communityStore.isManager().then((result) => {
+  isManager.value = result
 })
 
-const router = useRouter()
+const events = computed(() => {
+  const isManager = communityStore.isManager
+  const isMember = communityStore.isMember
+  return communityStore.events?.flatMap((event) => {
+    // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
+    if (!isManager && (event.event_status.value == 'in_draft' || event.event_status.value == 'applying_reservation')) {
+      return []
+    }
+    // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
+    if (!isManager && !isMember && event.is_public == false) {
+      return []
+    }
+    return event
+  }) ?? []
+})
+
+const state = reactive({
+  links: [] as string[],
+})
+
 const goToEvents = (eventId: string) => {
   const path = getEventPath(props.communityId, eventId)
   router.push({ path })
 }
-
-const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
-const eventDb = query(
-  collectionGroup(db, 'events'),
-  where('community_account', '==', props.communityId),
-  orderBy('event_start_datetime', 'desc'),
-)
 
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
@@ -60,62 +61,23 @@ const openContactDialog = () => {
 const openLoginDialog = () => {
   isOpenLoginDialog.value = true
 }
-
-onMounted(async () => {
-  const communitiesSnapshot = await getDocs(communityDb)
-  const communitySnapshot = communitiesSnapshot.docs.shift()
-  if (communitySnapshot) {
-    const communityData = communitySnapshot.data()
-    const community = convertDocumentDataToCommunity(communityData)
-    state.community = community
-
-    const links = [] as string[]
-    community.communitySns.officialsite && links.push(community.communitySns.officialsite)
-    community.communitySns.twitter && links.push(community.communitySns.twitter)
-    community.communitySns.facebook && links.push(community.communitySns.facebook)
-    community.communitySns.instagram && links.push(community.communitySns.instagram)
-    state.links = links
-
-    state.members = await loadCommunityMembers(communitySnapshot.ref)
-    state.managers = await loadCommunityManagers(communitySnapshot.ref)
-    // ログインしてるユーザーがコミュニティマネージャーかどうかチェック
-    state.isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
-    state.isCommunityMember = await checkCommunityMember(communitySnapshot.ref)
-  }
-
-  const eventSnapshot = await getDocs(eventDb)
-  state.events = eventSnapshot.docs.flatMap((doc) => {
-    const event = convertDocumentDataToEvent(doc.data())
-    // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
-    if (!state.isCommunityManager && (event.event_status.value == 'in_draft' || event.event_status.value == 'applying_reservation')) {
-      return []
-    }
-    // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
-    if ((!state.isCommunityManager && !state.isCommunityMember) && event.is_public == false) {
-      return []
-    }
-    return event
-  })
-  state.isLoading = false
-})
-
 </script>
 <template>
   <section>
-    <v-row v-if="!state.isLoading" class="justify-center">
+    <v-row v-if="communityStore.community != null" class="justify-center">
       <!-- community main -->
       <v-col cols="12" md="9" sm="9">
         <v-card flat class="align-center justify-center text-center my-10 pa-md-16 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
-              <VImg class="ma-0" aspect-ratio="1.91" cover :src="state.community.communityCoverImageUrl" />
+              <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.communityCoverImageUrl" />
             </v-col>
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 pb-6">{{ state.community.communityName }}</v-card-title>
+              <v-card-title class="justify-center text-h4 pb-6">{{ communityStore.community.communityName }}</v-card-title>
               <v-card-text v-linkify class="text-left text-subtitle-1 pb-6">
-                {{ state.community.communityDescription }}
+                {{ communityStore.community.communityDescription }}
               </v-card-text>
             </v-col>
           </v-row>
@@ -127,9 +89,9 @@ onMounted(async () => {
           <v-col md="4" sm="6" cols="12">
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
-              <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="state.community.communityIconImageUrl" />
+              <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="communityStore.community.communityIconImageUrl" />
               <v-card-title class="justify-center text-h5 py-5 pre-line">
-                {{ state.community.communityName }}
+                {{ communityStore.community.communityName }}
               </v-card-title>
               <v-card-text v-for="link in state.links" :key="link" class="text-left pb-3">
                 <a v-if="link" :href="link" class="text-decoration-none" target="_blank">
@@ -148,15 +110,15 @@ onMounted(async () => {
                 >
                   お問い合わせ
                 </v-btn>
-                <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="state.community.communityName" :community-id="state.community.communityId"/>
+                <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="communityStore.community.communityName" :community-id="communityStore.community.communityId"/>
                 <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
                   ログインした後にお問い合わせしてください。
                 </confirm-dialog>
                 <login-dialog v-model="isOpenLoginDialog" />
               </v-col>
               <!-- community manager -->
-              <v-card-title v-if="state.managers.length>0" class="justify-center text-h6 mt-10">コミュニケーター</v-card-title>
-              <div v-for="manager in state.managers" :key="manager.user_id">
+              <v-card-title v-if="communityStore.managers?.length ?? 0 > 0" class="justify-center text-h6 mt-10">コミュニケーター</v-card-title>
+              <div v-for="manager in communityStore.managers" :key="manager.user_id">
                 <router-link :to="`/users/${manager.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
@@ -171,7 +133,7 @@ onMounted(async () => {
 
               <!-- community member -->
               <v-card-title class="justify-center text-h6 mt-7">メンバー</v-card-title>
-              <div v-for="member in state.members" :key="member.user_id">
+              <div v-for="member in communityStore.members" :key="member.user_id">
                 <router-link :to="`/users/${member.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
@@ -188,7 +150,7 @@ onMounted(async () => {
           <!-- events -->
           <v-col md="8" sm="6" cols="12">
             <v-row>
-              <v-col v-for="event in state.events" :key="event.event_id" md="6" sm="12" cols="12">
+              <v-col v-for="event in events" :key="event.event_id" md="6" sm="12" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
                   <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
                   <v-chip class="ma-2" color="primary" elevated flat>
@@ -209,7 +171,7 @@ onMounted(async () => {
                   <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
                 </v-card>
                 <v-row
-                  v-if="state.isCommunityManager"
+                  v-if="isManager"
                   class="justify-end my-2 mr-1"
                 >
                   <v-btn
@@ -220,7 +182,7 @@ onMounted(async () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-email"
-                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id, step:4} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: event.event_id, step:4} }"
                   >
                     予約
                   </v-btn>                
@@ -232,7 +194,7 @@ onMounted(async () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: event.event_id} }"
                   >
                     編集
                   </v-btn>
@@ -244,14 +206,14 @@ onMounted(async () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="{ path: getEventCreatePath(state.community.communityAccount), query: { id: event.event_id, step:3} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: event.event_id, step:3} }"
                   >
                     編集
                   </v-btn>                  
                 </v-row>
               </v-col>
             </v-row>
-            <v-row v-if="state.isCommunityManager" class="justify-center">
+            <v-row v-if="isManager" class="justify-center">
               <v-col class="text-center">
                 <v-btn
                   class="mx-2 my-10 text-lg-h5"
@@ -261,7 +223,7 @@ onMounted(async () => {
                   rounded
                   width="85%"
                   prepend-icon="mdi-pencil-box-outline"
-                  :to="getEventCreatePath(state.community.communityAccount)"
+                  :to="getEventCreatePath(communityStore.community.communityAccount)"
                 >
                   イベントを新規作成する
                 </v-btn>
