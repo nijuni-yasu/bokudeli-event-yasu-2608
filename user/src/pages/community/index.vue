@@ -1,54 +1,40 @@
 <script setup lang="ts">
-import { db } from '@/firebase'
-import { collection, getDocs, query, where } from 'firebase/firestore'
-import { convertDocumentDataToCommunity, convertTruncateText } from '@/schemes/converter'
+import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
-import { loadCommunityMembers } from '@/composable/loadCommunityMembers'
 import { FirestoredUser } from '@/schemes/storedUser'
-
-const router = useRouter()
-
-// TODO 更新順で並べる
-const communityDb = query(collection(db, 'communities'), where('is_public', '==', true))
+import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
 
 type CommunityWithMembers = {
   community: BokudeliCommunity
   members: FirestoredUser[]
 }
-const state = reactive({
-  communityList: [] as CommunityWithMembers[],
-  isLoading: true,
-})
 
-onMounted(async () => {
-  const communitySnapshot = await getDocs(communityDb)
+const router = useRouter()
 
-  const communityList = [] as CommunityWithMembers[]
-  for (const docSnapshot of communitySnapshot.docs) {
-    const members = await loadCommunityMembers(docSnapshot.ref)
-    const community = convertDocumentDataToCommunity(docSnapshot.data())
-    // コミュニティ説明文が一定文字数を超えたら末尾を「...」にする
-    community.communityDescription = convertTruncateText(community.communityDescription, 250)
+const communitiesStore = useCommunitiesStore() as CommunitiesStore
 
-    communityList.push({
-      community,
-      members: members,
+const isLoading = computed(() => 
+  communitiesStore.communityStores == null ||
+  Array.from(communitiesStore.communityStores.values()).every((communityStore) => communityStore.community == null || communityStore.members == null)
+)
+
+const communityList = computed<CommunityWithMembers[]>(() => {
+  const list = (communitiesStore.communityStores ?? [])
+    .flatMap((communityStore) => (communityStore.community == null || communityStore.members == null) ? [] : {
+      community: communityStore.community,
+      members: communityStore.members,
     })
-  }
-  // コミュニティの並び順をメンバーの多い順に並び替え
-  communityList.sort((a,b) => b.members.length - a.members.length)
-
-  state.communityList = communityList
-  state.isLoading = false
+  list.sort((a, b) => b.members.length - a.members.length)
+  return list
 })
 </script>
 
 <template>
   <section>
-    <v-row v-if="!state.isLoading" class="justify-center">
+    <v-row v-if="!isLoading" class="justify-center">
       <v-col
-        v-for="{ community, members } in state.communityList"
+        v-for="{ community, members } in communityList"
         :key="community.communityId"
         md="10"
         sm="12"
@@ -74,7 +60,7 @@ onMounted(async () => {
                 {{ community.communityName }}
               </v-card-title>
               <v-card-text class="text-left pb-3">
-                {{ community.communityDescription }}
+                {{ convertTruncateText(community.communityDescription, 250) }}
               </v-card-text>
               <!-- Mutual members -->
               <v-card-text class="position-relative">
@@ -93,7 +79,7 @@ onMounted(async () => {
       </v-col>
 
       <!-- no result found -->
-      <v-col v-show="!state.communityList.length" cols="12" class="text-center">
+      <v-col v-show="!communityList.length" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
     </v-row>

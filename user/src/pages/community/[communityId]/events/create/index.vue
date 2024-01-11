@@ -1,27 +1,26 @@
 <script setup lang="ts">
+import { isEmpty } from '@/@core/utils'
 import EventBasicInfo from '@/components/eventcreate/EventBasicInfo.vue'
 import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventDetail from '@/components/eventcreate/EventDetail.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
-import { collection, doc, collectionGroup, getDocs, query, where, addDoc, setDoc, Timestamp, updateDoc } from 'firebase/firestore'
+import { collection, doc, collectionGroup, getDocs, updateDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import {
-  convertDocumentDataToEvent,
-  convertDocumentDataToCommunity,
   convertDocumentDataToMenu,
   convertDateToWeekTimestamp,
   convertShopTimeToWeekTimestamp,
 } from '@/schemes/converter'
-import { createEmptyEvent } from '@/schemes/bokudeliEvent'
+import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
+import { useEventsStore, useEventStore, type EventsStore, type EventStore } from '@/stores/event'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { useRouter, useRoute } from 'vue-router'
 import { getEventPath, getCommunityPath } from '@/router/utils'
-import { uploadEventImage } from '@/composable/uploadImage'
 import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
-import { checkCommunityManager } from '@/composable/checkCommunityManager'
 import { postalCodeValidator } from '@/utils/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
@@ -34,52 +33,53 @@ const props = defineProps<{
 
 const eventId = route.query.id as string | null
 
-const event = ref(createEmptyEvent())
+const eventsStore = useEventsStore() as EventsStore
+const communityStore = useCommunityStore(props.communityId) as CommunityStore
+
+const isOpenContactDialogVisible = ref(true)
+
+const _event = ref(createEmptyEvent())
+const event = computed<BokudeliEvent | null>({
+  get: () => {
+    if (eventId != null) {
+      const eventStore = useEventStore(eventId) as EventStore
+
+      return eventStore.event
+    } else {
+      return _event.value
+    }
+  },
+  set: (value) => {
+    if (value == null) {
+      return
+    }
+    if (eventId != null) {
+      const eventStore = useEventStore(eventId) as EventStore
+      eventStore.event = value
+    } else {
+      _event.value = value
+    }
+  },
+})
 const shops = ref<Shop[]>([])
 const menus = ref<PartnerMenu[]>([])
 const coverImage = ref<File | null>(null)
 
-const stepper = ref(1)
-const stepQuery = route.query.step as number | null
-// クエリに値があればステッパーを移動
-if (stepQuery) {
-  stepper.value = stepQuery
-}
+// @ts-expect-error parseInt can take no string params, then return NaN
+const stepQuery = Number.parseInt(route.query.step)
+const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
 
-const fetchData = async () => {
-  const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
-  const promises = [getDocs(communityDb)]
-  if (eventId != null) {
-    const eventDb = query(collectionGroup(db, 'events'), where('event_id', '==', eventId))
-    promises.push(getDocs(eventDb))
+// Fetch Shops
+watch([()=> event.value?.event_start_datetime, () => event.value?.event_postalcode], async () => {
+  if (event.value == null) {
+    return
   }
-  const [communitySnapshot, eventData] = await Promise.all(promises)
-    .then((results) => [results[0]?.docs?.shift(), results[1]?.docs?.shift()?.data()])
-  if (eventData != null) {
-    event.value = convertDocumentDataToEvent(eventData)
-    await fetchShops()
-    await fetchMenu()
-  }
-  if (communitySnapshot != null) {
-    const { communityId, communityName, communityAccount } = convertDocumentDataToCommunity(communitySnapshot.data())
-    event.value.community_id = communityId
-    event.value.community_name = communityName
-    event.value.community_account = communityAccount
-    const isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
-    if (!isCommunityManager) {
-      window.alert('コミュニティ管理者ではありません')
-      router.push(getCommunityPath(communityAccount))
-    }
-  }
-}
-
-const fetchShops = async () => {
   const startDateTime =  event.value.event_start_datetime?.toDate()
   const postalcode = event.value.event_postalcode
-  if (postalcode == null || postalCodeValidator(postalcode) !== true) {
+  if (isEmpty(postalcode) || postalCodeValidator(postalcode) !== true) {
     return
   }
   const location = await fetchLocationByPostalcode(postalcode)
@@ -125,10 +125,11 @@ const fetchShops = async () => {
       return isInRange && isInTime && shop.is_approved && shop.is_open
     })
   isLoadingShop.value = false
-}
+}, { immediate: true })
 
-const fetchMenu = async () => {
-  const { partner_id } = event.value
+// Fetch Menus
+watch(() => event.value?.partner_id, async () => {
+  const partner_id = event.value?.partner_id
   if (!partner_id) {
     return
   }
@@ -143,81 +144,54 @@ const fetchMenu = async () => {
     .sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
   isLoadingMenu.value = false
-}
-
-onBeforeRouteUpdate(async (to, from, next) => {
-  if (to.params.communityId !== from.params.communityId) {
-    await fetchData()
-  }
-  next()
-})
-
-const isOpenContactDialogVisible = ref(false)
+}, { immediate: true })
 
 onMounted(async () => {
-  isOpenContactDialogVisible.value = true
-  await fetchData()
+  if (!await communityStore.isManager()) {
+    window.alert('コミュニティ管理者ではありません')
+    router.push(getCommunityPath(props.communityId))
+  }
 })
 
-const saveDraft = async () => {
-  if (!event.value.community_id) {
+const saveDraft = async (): Promise<BokudeliEvent | null> => {
+  const communityId = communityStore.community?.communityId
+  if (event.value == null || communityId == null) {
     return null
   }
   if (eventId == null) {
     // 新規作成
-    const eventItem = {
-      ...event.value,
-      ...{
-        event_status: { value: 'in_draft'},
-        created_at: Timestamp.now(),
-        updated_at: Timestamp.now(),
-      },
-    }
-
-    const addedDoc = await addDoc(collection(db, 'communities', eventItem.community_id, 'events'), eventItem)
-    const eventCoverUrl = coverImage.value
-      ? await uploadEventImage(eventItem.community_id, addedDoc.id, coverImage.value)
-      : ''
-    await setDoc(addedDoc, { event_id: addedDoc.id, event_cover_url: eventCoverUrl }, { merge: true })
-    return addedDoc.id
+    return await eventsStore.addEvent(communityId, event.value, coverImage.value ?? undefined)
   } else {
     // 更新
-    const eventItem = {
-      ...event.value,
-      ...{
-        updated_at: Timestamp.now(),
-      },
-    }
-    if (coverImage.value) {
-      eventItem.event_cover_url = (await uploadEventImage(event.value.community_id, eventId, coverImage.value)) ?? ''
-    }
-    await updateDoc(doc(db, 'communities', event.value.community_id, 'events', eventId), eventItem)
-    return eventId
+    const eventStore = useEventStore(eventId) as EventStore
+    await eventStore.updateEvent(event.value, coverImage.value ?? undefined)
+    return event.value
   }
 }
 
 const sumbmit = async () => {
-  const newEventId = await saveDraft()
-  if (newEventId == null || !event.value.community_account) {
+  const event = await saveDraft()
+  if (event?.event_id == null || event?.community_account == null) {
+    console.warn('Coud not save event')
     return
   }
   if (eventId == null) {
-    window.alert(`イベントID： ${newEventId} のイベントを新規作成しました`)
+    window.alert(`イベントID： ${event.event_id} のイベントを新規作成しました`)
   } else {
     window.alert(`イベントID： ${eventId} のイベントを更新しました`)
   }
-  router.push(getEventPath(event.value.community_account, newEventId))
+  router.push(getEventPath(event.community_account, event.event_id))
 }
 
 const sendReserveMail = async () => {
-  const newEventId = await saveDraft()
-  if (newEventId == null || !event.value.community_id || !event.value.community_account) {
+  const event = await saveDraft()
+  if (event?.event_id == null || event?.community_id || event?.community_account) {
     return
   }
-  await updateDoc(doc(db, 'communities', event.value.community_id, 'events', newEventId), {
+  await updateDoc(doc(db, 'communities', event.community_id, 'events', event.event_id), {
     event_status: { value: 'applying_reservation' },
   })
-  router.push(getEventPath(event.value.community_account, newEventId))
+  router.push(getEventPath(event.community_account, event.event_id))
 }
 
 const stepperItems = computed(() => [
@@ -240,12 +214,12 @@ const stepperItems = computed(() => [
 </script>
 
 <template>
-  <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
+  <v-stepper v-if="event" v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
-      <event-basic-info v-model="event" @submit="fetchShops(); stepper++" />
+      <event-basic-info v-model="event" @submit="stepper++" />
     </template>
     <template #[`item.2`]>
-      <event-shop v-model="event" :shops="shops" :loading="isLoadingShop" @submit="fetchMenu(); stepper++" @next="stepper++" @back="stepper--" />
+      <event-shop v-model="event" :shops="shops" :loading="isLoadingShop" @submit="stepper++" @next="stepper++" @back="stepper--" />
     </template>
     <template #[`item.3`]>
       <event-menu :menus="menus" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />

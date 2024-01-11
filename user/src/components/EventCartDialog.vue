@@ -2,24 +2,26 @@
 import OrderItem from '@/schemes/orderItem'
 import OrderMenu from '@/schemes/orderMenu'
 import PartnerMenu from '@/schemes/partnerMenu'
+import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { DocumentData, QueryDocumentSnapshot, Timestamp, addDoc, collection, getDocs, setDoc } from 'firebase/firestore'
+import { Timestamp } from 'firebase/firestore'
 
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { createEmptyEvent } from '@/schemes/bokudeliEvent'
 
 const router = useRouter()
 
 const props = defineProps<{
   modelValue: boolean
   menu: PartnerMenu
-  eventSnapshot: QueryDocumentSnapshot<DocumentData>
+  eventId: string
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
+
+const eventStore = useEventStore(props.eventId) as EventStore
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -44,27 +46,25 @@ const closeDialog = (isAddCart: boolean) => {
 const userStore = useStoreStoredUser()
 
 const addOrder = async () => {
-  if (!userStore.storedUser || !selectedCount.value) {
+  if (!userStore.storedUser || !selectedCount.value || eventStore.event == null) {
     return
   }
 
-  const eventData = { ...createEmptyEvent(), ...props.eventSnapshot.data() }
-  const communityId = eventData.community_id
-  const communityAccount = eventData.community_account
-  const event_id = eventData.event_id
-  const event_payment = eventData.event_payment
-  const orderDb = collection(props.eventSnapshot.ref, 'orders')
-  const orderSnapshot = await getDocs(orderDb)
-
+  const communityId = eventStore.event.community_id
+  const communityAccount = eventStore.event.community_account
+  const event_id = eventStore.event.event_id
+  const event_payment = eventStore.event.event_payment
+  
   const orderCount = selectedCount.value || 0
 
   // 上書きできるオーダーを探す
-  const userOrders = orderSnapshot.docs.filter((doc) => {
-    const data = doc.data() as OrderItem
-    return data.status === 'in_cart' && data.user_id === userStore.storedUser?.userId
-  })
+  const userOrders = eventStore.orders?.filter((order: OrderItem) => {
+    return order.status === 'in_cart' && order.user_id === userStore.storedUser?.userId
+  }) ?? []
 
-  if (userOrders.length === 0) {
+  const userOrder = userOrders[0]
+
+  if (userOrder == null) {
     // 追加処理
     const menu = props.menu
     const orderItem = {
@@ -89,20 +89,10 @@ const addOrder = async () => {
       updated_at: Timestamp.now(),
       carted_at: Timestamp.now(),
     } as OrderItem
-    const addedDoc = await addDoc(orderDb, orderItem)
-
-    // 自動採番されたOrderIDを取得して項目として追加追加
-    await setDoc(addedDoc, { order_id: addedDoc.id }, { merge: true })
+    await eventStore.addOrder(orderItem)
   } else {
     // 上書き処理
-    const userOrder = userOrders.shift()
-    if (!userOrder) {
-      console.error('userOrder is undefined')
-      return
-    }
-
-    const currentOrder = userOrder.data() as OrderItem
-    const menus = currentOrder.menus as OrderMenu[]
+    const menus = userOrder.menus as OrderMenu[]
 
     // 上書き対象のメニューのインデックスを取得
     const updateMenuIndex = menus.findIndex((menu) => {
@@ -128,7 +118,7 @@ const addOrder = async () => {
         note: orderNote.value,
       })
     }
-    await setDoc(userOrder.ref, { menus, updated_at: Timestamp.now(), carted_at: Timestamp.now() }, { merge: true })
+    await eventStore.updateOrder(userOrder.order_id, { menus, updated_at: Timestamp.now(), carted_at: Timestamp.now() })
   }
 }
 
