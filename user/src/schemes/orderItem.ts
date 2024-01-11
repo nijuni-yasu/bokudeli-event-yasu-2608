@@ -13,6 +13,7 @@ type OrderItem = {
   created_at: Timestamp
   updated_at: Timestamp
   carted_at: Timestamp
+  payment_intent?: '',
 }
 
 export const createEmptyOrderItem = (): OrderItem => ({
