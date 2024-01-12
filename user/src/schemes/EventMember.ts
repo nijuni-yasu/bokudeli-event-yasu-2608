@@ -1,7 +1,8 @@
+import OrderItem from './orderItem'
+import { UserStore } from '@/stores/user'
+
 export type EventMember = {
-  menus?: string[]
-  userId: string
-  username: string
-  userImageUrl: string
-  updatedAt?: Date
+  userId: string,
+  orders: OrderItem[]
+  userStore: UserStore
 }

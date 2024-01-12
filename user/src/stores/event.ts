@@ -75,22 +75,18 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
     })
 
     const members = computed<EventMember[] | null>(() =>
-      Array.from(new Set(orders.value?.map((order) => order.user_id)))?.flatMap((userId) => {
-        const store = useUserStore(userId) as UserStore
-        return store.exists ? {
-          menus: [],
+      Array.from(orders.value?.reduce((eventMembersMap, order) => {
+        const userId = order.user_id
+        const userStore = useUserStore(userId) as UserStore
+        const eventMember = eventMembersMap.get(userId) ?? {
           userId,
-          username: store.user?.user_name ?? '',
-          userImageUrl: store.user?.user_image_url ?? '',
-          updatedAt: store.user?.updated_at?.toDate(),
-        } : {
-          // TODO 退会したユーザーの扱い方を考える
-          menus: [],
-          userId,
-          username: '退会したメンバー',
-          userImageUrl: ''
+          orders: [] as OrderItem[],
+          userStore,
         }
-      })
+        eventMember.orders.push(order)
+        eventMembersMap.set(userId, eventMember)
+        return eventMembersMap
+      }, new Map<string, EventMember>())?.values() ?? [])
     )
 
     const updateEvent = async (data: Partial<BokudeliEvent>, coverImage?: File) => {

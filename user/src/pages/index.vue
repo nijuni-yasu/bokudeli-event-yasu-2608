@@ -72,7 +72,7 @@ const getEventKey = (event: BokudeliEvent) => {
                   <div class="d-flex justify-space-between align-center">
                     <div class="v-avatar-group ml-2">
                       <v-avatar v-for="member in eventStore.members ?? []" :key="member.userId" size="40">
-                        <v-img :src="member.userImageUrl" cover/>
+                        <v-img :src="member.userStore.user?.user_image_url" cover/>
                       </v-avatar>
                     </div>
                   </div>
