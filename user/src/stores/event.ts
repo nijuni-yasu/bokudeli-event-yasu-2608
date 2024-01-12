@@ -34,6 +34,7 @@ type EventStoreState = {
 type EventStoreGetters = {
   orders: Ref<OrderItem[] | null>,
   members: Ref<EventMember[] | null>,
+  orderConfiremedMembers: Ref<EventMember[] | null>,
 } 
 
 type EventStoreAction = {
@@ -87,6 +88,10 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
         eventMembersMap.set(userId, eventMember)
         return eventMembersMap
       }, new Map<string, EventMember>())?.values() ?? [])
+    )
+
+    const orderConfiremedMembers = computed<EventMember[] | null>(() =>
+      members.value?.filter((member) => member.orders.some((order) => order.status === 'ordered')) ?? null
     )
 
     const updateEvent = async (data: Partial<BokudeliEvent>, coverImage?: File) => {
@@ -177,6 +182,7 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
       event,
       orders,
       members,
+      orderConfiremedMembers,
       updateEvent,
       addOrder,
       updateOrder,

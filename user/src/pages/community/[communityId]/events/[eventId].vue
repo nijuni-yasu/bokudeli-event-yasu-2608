@@ -33,7 +33,7 @@ communityStore.isManager().then((result) => {
 })
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
-const members = computed(() => eventStore.members ?? [])
+const members = computed(() => eventStore.orderConfiremedMembers ?? [])
 
 const eventStartDate = computed(() => {
   return event.value?.event_start_datetime?.toDate() ?? null
