@@ -17,10 +17,10 @@ type _EventStore = Omit<EventStore, 'event'> & {
 
 const eventStoreList = computed<_EventStore[]>(() => 
   (eventsStore.eventStores ?? []).flatMap((eventStore) => {
-    if (eventStore.event != null) {
-      return eventStore as _EventStore
-    } else {
+    if (eventStore.event == null || eventStore.event.event_status.value === 'in_draft' || eventStore.event.event_status.value === 'applying_reservation') {
       return []
+    } else {
+      return eventStore as _EventStore
     }
   })
 )
