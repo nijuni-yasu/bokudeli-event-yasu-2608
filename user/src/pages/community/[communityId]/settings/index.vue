@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { collection, getDocs, query, where, setDoc, getDoc, doc, Timestamp } from 'firebase/firestore'
+import { setDoc, getDoc, doc, Timestamp } from 'firebase/firestore'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { checkCommunityManager } from '@/composable/checkCommunityManager'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import { uploadCommunityImage } from '@/composable/uploadImage'
 import { getCommunityPath } from '@/router/utils'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
+
 const router = useRouter()
 
 const props = defineProps<{
@@ -13,30 +13,20 @@ const props = defineProps<{
 }>()
 
 const state = reactive({
-  community: {} as BokudeliCommunity,
-  isLoading: true,
-  isCommunityManager: false,
-  links: [] as string[],
   coverImageFile: null as File | null,
   iconImageFile: null as File | null,
 })
 
-const communityDb = query(collection(db, 'communities'), where('community_account', '==', props.communityId))
+const communityStore = useCommunityStore(props.communityId) as CommunityStore
+const community = computed(() => communityStore.community ?? {} as BokudeliCommunity)
+const isLoading = computed(() => communityStore.community == null)
 
 onMounted(async () => {
-  const communitiesSnapshot = await getDocs(communityDb)
-  const communitySnapshot = communitiesSnapshot.docs.shift()
-  if (communitySnapshot) {
-    const communityData = communitySnapshot.data()
-    const community = convertDocumentDataToCommunity(communityData)
-    state.community = community
-    state.isCommunityManager = await checkCommunityManager(communitySnapshot.ref)
-    if (!state.isCommunityManager) {
-      window.alert('コミュニティ管理者ではありません')
-      router.push(getCommunityPath(state.community.communityAccount))
-    }
+  const roles = await communityStore.getCurrentUserRoles()
+  if (roles == null || !roles.includes('manager')) {
+    window.alert('コミュニティ管理者ではありません')
+    router.push(getCommunityPath(props.communityId))
   }
-  state.isLoading = false
 })
 
 const iconFileInputRef = ref<HTMLInputElement | null>(null)
@@ -56,7 +46,7 @@ const onCoverFileChange = (event: Event) => {
   }
   const file = eventTarget.files[0]
   state.coverImageFile = file
-  state.community.communityCoverImageUrl = URL.createObjectURL(file)
+  community.value.communityCoverImageUrl = URL.createObjectURL(file)
 }
 const onIconFileChange = (event: Event) => {
   const eventTarget = event.target as HTMLInputElement
@@ -65,34 +55,34 @@ const onIconFileChange = (event: Event) => {
   }
   const file = eventTarget.files[0]
   state.iconImageFile = file
-  state.community.communityIconImageUrl = URL.createObjectURL(file)
+  community.value.communityIconImageUrl = URL.createObjectURL(file)
 }
 
 const submit = async () => {
-  const docRef = doc(db, 'communities', state.community.communityId)
+  const docRef = doc(db, 'communities', community.value.communityId)
   const docSnap = await getDoc(docRef)
   if (docSnap.exists()) {
     // カバー画像を追加
     if (state.coverImageFile) {
-      const communityCoverUrl = await uploadCommunityImage(state.community.communityId, state.coverImageFile)
+      const communityCoverUrl = await uploadCommunityImage(community.value.communityId, state.coverImageFile)
       await setDoc(docRef, { community_cover_image_url: communityCoverUrl }, { merge: true })
     }
     // アイコン画像を追加
     if (state.iconImageFile) {
-      const communityIconUrl = await uploadCommunityImage(state.community.communityId, state.iconImageFile)
+      const communityIconUrl = await uploadCommunityImage(community.value.communityId, state.iconImageFile)
       await setDoc(docRef, { community_icon_image_url: communityIconUrl }, { merge: true })
     }
     // その他項目を追加
     await setDoc(
       docRef,
       {
-        community_name: state.community.communityName,
-        community_desc: state.community.communityDescription,
-        community_sns_facebook: state.community.communitySns.facebook,
-        community_sns_twitter: state.community.communitySns.twitter,
-        community_sns_instagram: state.community.communitySns.instagram,
-        community_sns_officialsite: state.community.communitySns.officialsite,
-        is_public: state.community.isPublic,
+        community_name: community.value.communityName,
+        community_desc: community.value.communityDescription,
+        community_sns_facebook: community.value.communitySns.facebook,
+        community_sns_twitter: community.value.communitySns.twitter,
+        community_sns_instagram: community.value.communitySns.instagram,
+        community_sns_officialsite: community.value.communitySns.officialsite,
+        is_public: community.value.isPublic,
         updated_at: Timestamp.now(),
       },
       { merge: true },
@@ -101,16 +91,16 @@ const submit = async () => {
     console.error('コミュニティが存在しません')
   }
   window.alert('コミュニティ情報を更新しました')
-  router.push(getCommunityPath(state.community.communityAccount))
+  router.push(getCommunityPath(community.value.communityAccount))
 }
 
 const cancel = () => {
-  router.push(getCommunityPath(state.community.communityAccount))
+  router.push(getCommunityPath(community.value.communityAccount))
 }
 </script>
 
 <template>
-  <v-row v-if="!state.isLoading" class="justify-center">
+  <v-row v-if="!isLoading" class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
       <v-card flat class="mt-2">
         <v-form class="multi-col-validation">
@@ -123,7 +113,7 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communityAccount"
+                  v-model="community.communityAccount"
                   outlined
                   dense
                   readonly
@@ -137,7 +127,7 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communityName"
+                  v-model="community.communityName"
                   outlined
                   dense
                   label="コミュニティ名"
@@ -150,7 +140,7 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-textarea
-                  v-model="state.community.communityDescription"
+                  v-model="community.communityDescription"
                   outlined
                   rows="10"
                   label="コミュニティ説明文"
@@ -170,8 +160,8 @@ const cancel = () => {
                 <div class="v-field icon-upload-container" @click="onIconTriggerUpload">
                   <input ref="iconFileInputRef" class="file-input" type="file" @change="onIconFileChange" />
                   <v-img
-                    v-if="state.community.communityIconImageUrl"
-                    :src="state.community.communityIconImageUrl"
+                    v-if="community.communityIconImageUrl"
+                    :src="community.communityIconImageUrl"
                     cover
                     aspect-ratio="1"
                   ></v-img>
@@ -187,8 +177,8 @@ const cancel = () => {
                 <div class="v-field image-upload-container" @click="onCoverTriggerUpload">
                   <input ref="coverFileInputRef" class="file-input" type="file" @change="onCoverFileChange" />
                   <v-img
-                    v-if="state.community.communityCoverImageUrl"
-                    :src="state.community.communityCoverImageUrl"
+                    v-if="community.communityCoverImageUrl"
+                    :src="community.communityCoverImageUrl"
                     cover
                     aspect-ratio="1.91"
                   ></v-img>
@@ -207,7 +197,7 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communitySns.facebook"
+                  v-model="community.communitySns.facebook"
                   outlined
                   dense
                   label="facebook"
@@ -220,7 +210,7 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communitySns.twitter"
+                  v-model="community.communitySns.twitter"
                   outlined
                   dense
                   label="X(Twitter)"
@@ -233,7 +223,7 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communitySns.instagram"
+                  v-model="community.communitySns.instagram"
                   outlined
                   dense
                   label="Instagram"
@@ -246,7 +236,7 @@ const cancel = () => {
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  v-model="state.community.communitySns.officialsite"
+                  v-model="community.communitySns.officialsite"
                   outlined
                   dense
                   label="公式サイト"
@@ -261,7 +251,7 @@ const cancel = () => {
             <span>公開設定</span>
           </v-card-title>
           <v-card-text>
-            <v-switch v-model="state.community.isPublic" hide-details class="mt-0">
+            <v-switch v-model="community.isPublic" hide-details class="mt-0">
               <template #label> 公開コミュニティ </template>
             </v-switch>
           </v-card-text>

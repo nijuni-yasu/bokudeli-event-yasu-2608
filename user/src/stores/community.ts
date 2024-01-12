@@ -1,6 +1,8 @@
+import _ from 'lodash'
 import { db } from '@/firebase'
 import {
   collection,
+  doc,
   getDocs,
   getDoc,
   updateDoc,
@@ -16,34 +18,32 @@ import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import { StateTree, Store } from 'pinia'
 import BokudeliCommunity from "@/schemes/bokudeliCommunity"
 import { FirestoredUser } from '@/schemes/storedUser'
+import { CommunityMember } from '@/schemes/communityMember'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { useUserStore, type UserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
-import { checkCommunityManager } from '@/composable/checkCommunityManager'
-import { checkCommunityMember } from '@/composable/checkCommunityMember'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
-type ComunityStoreState = {
+type CommunityStoreState = {
   community: Ref<BokudeliCommunity | null>,
 } & StateTree
 
 type CommunityGetters = {
-  members: Ref<FirestoredUser[] | null>,
-  managers: Ref<FirestoredUser[] | null>,
+  members: Ref<CommunityMember[] | null>,
   events: Ref<BokudeliEvent[] | null>,
 }
 
-type ComunityStoreAction = {
+type CommunityStoreAction = {
   updateComunity: (data: Partial<BokudeliCommunity>) => Promise<void>,
   subscribe: () => Promise<void>,
   unsubscribe: () => void,
-  isManager: () => Promise<boolean>,
-  isMember: () => Promise<boolean>,
+  getCurrentUserRoles: () => Promise<string[] | null>,
 }
 
-export type CommunityStore = Store<string, ComunityStoreState, CommunityGetters, ComunityStoreAction>
+export type CommunityStore = Store<string, CommunityStoreState, CommunityGetters, CommunityStoreAction>
 
 export const useCommunityStore = (communityAccount: string) => {
-  const store = defineStore<string, ComunityStoreState & CommunityGetters & ComunityStoreAction>(`/comunities/${communityAccount}`, () => {
+  const store = defineStore<string, CommunityStoreState & CommunityGetters & CommunityStoreAction>(`/comunities/${communityAccount}`, () => {
     const initialValues = reactive<{
       communityRef: DocumentReference | null
     }>({
@@ -51,31 +51,15 @@ export const useCommunityStore = (communityAccount: string) => {
     })
     const exists = ref<boolean | null>(null)
     const community = ref<BokudeliCommunity | null>(null)
-    const memberStores = ref<Map<string, UserStore> | null>(null)
-    const managerStores = ref<Map<string, UserStore> | null>(null)
+    const memberStores = ref<CommunityMemberStore[] | null>(null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
 
-    const members = computed<FirestoredUser[] | null>(() => {
-      const communityRef = toRaw(initialValues.communityRef)
-      if (communityRef != null) {
-        subscribeMembers(communityRef)
-      }
+    const members = computed<CommunityMember[] | null>(() => {
       if (memberStores.value == null) {
         return null
       }
       const stores = Array.from(memberStores.value.values())
-      return stores.flatMap((store) => !store.exists || store.user == null ? [] : store.user as FirestoredUser)
-    })
-    const managers = computed<FirestoredUser[] | null>(() => {
-      const communityRef = toRaw(initialValues.communityRef)
-      if (communityRef != null) {
-        subscribeManagers(communityRef)
-      }
-      if (managerStores.value == null) {
-        return null
-      }
-      const stores = Array.from(managerStores.value.values())
-      return stores.flatMap((store) => !store.exists || store.user == null ? [] : store.user as FirestoredUser)
+      return stores.flatMap((store) => !store.exists || store.member == null ? [] : store.member as CommunityMember)
     })
     const events = computed<BokudeliEvent[] | null>(() => {
       const communityRef = toRaw(initialValues.communityRef)
@@ -102,61 +86,12 @@ export const useCommunityStore = (communityAccount: string) => {
 
     let unsubscribeCommunity: Unsubscribe | null = null
     const subscribeCommunity = (communityRef: DocumentReference) => {
-      getDoc(communityRef).then((documentSnapshot) => exists.value = documentSnapshot.exists())
       if (unsubscribeCommunity == null) {
         unsubscribeCommunity = onSnapshot(communityRef, (doc: DocumentSnapshot) => {
+          exists.value = doc.exists()
           const data = doc.data()
           community.value = data ? convertDocumentDataToCommunity(data) : null
-        })
-      }
-    }
-
-    let unsubscribeMembers: Unsubscribe | null = null
-    const subscribeMembers = (communityRef: DocumentReference) => {
-      const membersRef = collection(communityRef, 'members')
-      if (memberStores.value == null) {
-        getDocs(membersRef).then((querySnapshot) => {
-          if (querySnapshot.empty) {
-            memberStores.value = new Map()
-          }
-        })
-      }
-      if (unsubscribeMembers == null) {
-        unsubscribeMembers = onSnapshot(membersRef, (querySnapshot) => {
-          querySnapshot.docs.forEach((doc) => {
-            const userId = doc.get('user_id')
-            if (userId == null) {
-              return
-            }
-            const stores = memberStores.value || new Map()
-            stores.set(userId, useUserStore(userId) as UserStore)
-            memberStores.value = stores
-          })
-        })
-      }
-    }
-
-    let unsubscribeManagers: Unsubscribe | null = null
-    const subscribeManagers = (communityRef: DocumentReference) => {
-      const managersRef = collection(communityRef, 'managers')
-      if (managerStores.value == null) {
-        getDocs(managersRef).then((querySnapshot) => {
-          if (querySnapshot.empty) {
-            managerStores.value = new Map()
-          }
-        })
-      }
-      if (unsubscribeManagers == null) {
-        unsubscribeManagers = onSnapshot(managersRef, (querySnapshot) => {
-          querySnapshot.docs.forEach((doc) => {
-            const userId = doc.get('user_id')
-            if (userId == null) {
-              return
-            }
-            const stores = managerStores.value || new Map()
-            stores.set(userId, useUserStore(userId) as UserStore)
-            managerStores.value = stores
-          })
+          memberStores.value = data?.members?.map((member: DocumentReference) => useCommunityMemberStore(communityRef.id, member.id)) ?? []
         })
       }
     }
@@ -164,15 +99,9 @@ export const useCommunityStore = (communityAccount: string) => {
     let unsubscribeEvents: Unsubscribe | null = null
     const subscribeEvents = (communityRef: DocumentReference) => {
       const eventsRef = collection(communityRef, 'events')
-      if (eventStores.value == null) {
-        getDocs(eventsRef).then((querySnapshot) => {
-          if (querySnapshot.empty) {
-            eventStores.value = new Map()
-          }
-        })
-      }
       if (unsubscribeEvents == null) {
         unsubscribeEvents = onSnapshot(eventsRef, (querySnapshot) => {
+          eventStores.value = new Map()
           querySnapshot.docs.forEach((doc) => {
             const eventId = doc.id
             const stores = eventStores.value || new Map()
@@ -191,56 +120,106 @@ export const useCommunityStore = (communityAccount: string) => {
         if (communityRef != null) {
           subscribeCommunity(communityRef)
           // 他の Store は遅延評価なので、以下を呼ぶ必要はない
-          // subscribeMembers(communityRef)
-          // subscribeManagers(communityRef)
           // subscribeEvents(communityRef)
         }
       })
 
     subscribe()
 
-    const isManager = async () => {
+    const getCurrentUserRoles = async () => {
       // 外部スコープの communityRef は習得前の可能性があるので、ここでは使用せず、再度取得する
       const querySnapshot = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
       const communityRef = querySnapshot.docs[0]?.ref
-      if (communityRef == null) {
-        return false
+      const userId = useStoreStoredUser().storedUser?.userId
+      if (communityRef == null || userId == null) {
+        return null
       }
-      return checkCommunityManager(communityRef)
-    }
-
-    const isMember = async () => {
-      // 外部スコープの communityRef は習得前の可能性があるので、ここでは使用せず、再度取得する
-      const querySnapshot = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
-      const communityRef = querySnapshot.docs[0]?.ref
-      if (communityRef == null) {
-        return false
+      const memberRef = doc(communityRef, 'members', userId)
+      const member = await getDoc(memberRef)
+      const roles = new Set<string>(member.data()?.roles)
+      // ログインユーザーがサポートアカウントの場合、コミュニティマネージャーの権限を持つ
+      if (userId === import.meta.env.VITE_SUPPORT_ACCOUNT_USER_ID as string) {
+        roles.add('manager')
       }
-      return checkCommunityMember(communityRef)
+      return Array.from(roles)
     }
 
     return {
       community,
       members,
-      managers,
       events,
       updateComunity,
       subscribe,
       unsubscribe: () => {
         unsubscribeCommunity?.()
         unsubscribeCommunity = null
-        unsubscribeMembers?.()
-        unsubscribeMembers = null
-        unsubscribeManagers?.()
-        unsubscribeManagers = null
         unsubscribeEvents?.()
         unsubscribeEvents = null
       },
-      isManager,
-      isMember,
+      getCurrentUserRoles,
     }
   })
   return store()
+}
+
+type CommunityMemberStoreGetter = {
+  exists: Ref<boolean | null>,
+  member: Ref<CommunityMember | null>,
+}
+
+type CommunityMemberStoreAction = {
+  subscribe: () => Promise<void>,
+  unsubscribe: () => void,
+}
+
+type CommunityMemberStore = Store<string, StateTree, CommunityMemberStoreGetter, CommunityMemberStoreAction>
+
+const useCommunityMemberStore = (communityId: string, memberId: string) => {
+  const store = defineStore(`/comunities/${communityId}/members/${memberId}`, () => {
+    const memberRef: DocumentReference = doc(db, 'communities', communityId, 'members', memberId)
+    const userStore = useUserStore(memberId)
+
+    const _exists = ref<boolean | null>(null)
+    const _member = ref<Omit<CommunityMember, keyof FirestoredUser> | null>(null)
+
+    const exists = computed<boolean | null>(() => {
+      if (_exists.value == null || userStore.exists == null) {
+        return null
+      }
+      return _exists.value && userStore.exists
+    })
+    const member = computed<CommunityMember | null>(() => {
+      if (_member.value == null || userStore.user == null) {
+        return null
+      }
+      // CAUTION: _.merge is mutable function
+      return _.merge({}, userStore.user, _member.value)
+    })
+
+    let unsubscribeMember: Unsubscribe | null = null
+    const subscribe = () => {
+      if (unsubscribeMember == null) {
+        unsubscribeMember = onSnapshot(memberRef, (memberSnapshot) => {
+          _exists.value = memberSnapshot.exists()
+          const data = memberSnapshot.data()
+          _member.value = data ? data as Omit<CommunityMember, keyof FirestoredUser> : null
+        })
+      }
+    }
+
+    subscribe()
+
+    return {
+      exists,
+      member,
+      subscribe,
+      unsubscribe: () => {
+        unsubscribeMember?.()
+        unsubscribeMember = null
+      }
+    }
+  })
+  return store()  
 }
 
 type CommunitiesStoreState = {
