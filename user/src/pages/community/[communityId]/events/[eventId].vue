@@ -1,12 +1,6 @@
 <script setup lang="ts">
-import {
-  getCommunityPath,
-  getEventCreatePath
- } from '@/router/utils'
-import {
-  dateWithDayOfWeekString,
-  dateOnlyTimeString,
-} from '@/schemes/converter'
+import { getCommunityPath, getEventCreatePath } from '@/router/utils'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import PartnerMenu from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -18,6 +12,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
+import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
 
 const props = defineProps<{
   communityId: string
@@ -66,11 +61,12 @@ const updateAlert = (message: string) => {
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
+const isOpenCalendarAddDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
 const userStore = useStoreStoredUser()
 const openContactDialog = () => {
-  if(!userStore.storedUser){
+  if (!userStore.storedUser) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true
@@ -80,6 +76,9 @@ const openLoginDialog = () => {
   isOpenLoginDialog.value = true
 }
 
+const openCalendarAddDialog = () => {
+  isOpenCalendarAddDialog.value = true
+}
 </script>
 
 <template>
@@ -89,35 +88,49 @@ const openLoginDialog = () => {
         <v-col md="8" sm="9" cols="12">
           <v-row class="justify-end align-center">
             <v-btn
-              v-if="event.event_status.value===`in_draft`&&isManager"
+              v-if="event.event_status.value === `in_draft` && isManager"
               color="white"
               class="mr-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-email"
-              :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: props.eventId, step: 4} }"
+              :to="{
+                path: getEventCreatePath(communityStore.community.communityAccount),
+                query: { id: props.eventId, step: 4 },
+              }"
             >
               店舗へ予約申請
             </v-btn>
             <v-btn
-              v-if="event.event_status.value==`in_draft`&&isManager"
+              v-if="event.event_status.value == `in_draft` && isManager"
               color="white"
               class="mr-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-pencil-box-outline"
-              :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: props.eventId} }"
+              :to="{
+                path: getEventCreatePath(communityStore.community.communityAccount),
+                query: { id: props.eventId },
+              }"
             >
               イベント編集
             </v-btn>
             <v-btn
-              v-if="(event.event_status.value=='applying_reservation'||event.event_status.value=='accepting_order'||event.event_status.value=='order_closed')&&isManager"
+              v-if="
+                (event.event_status.value == 'applying_reservation' ||
+                  event.event_status.value == 'accepting_order' ||
+                  event.event_status.value == 'order_closed') &&
+                isManager
+              "
               color="white"
               class="mr-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-pencil-box-outline"
-              :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: props.eventId, step: 3} }"
+              :to="{
+                path: getEventCreatePath(communityStore.community.communityAccount),
+                query: { id: props.eventId, step: 3 },
+              }"
             >
               イベント編集
             </v-btn>
@@ -141,15 +154,16 @@ const openLoginDialog = () => {
                 <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-10 pre-line">
                   {{ event.event_name }}
                 </v-card-title>
-                <v-card-text class="event-item">
-                  【開催日時】
-                </v-card-text>
+                <v-card-text class="event-item"> 【開催日時】 </v-card-text>
                 <v-card-text class="event-content">
-                  {{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
+                  {{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
+                    dateOnlyTimeString(event.event_end_datetime)
+                  }}
+                  <a @click="openCalendarAddDialog"
+                    ><button><v-icon>mdi-calendar-plus</v-icon></button></a
+                  >
                 </v-card-text>
-                <v-card-text class="event-item">
-                  【開催場所】
-                </v-card-text>
+                <v-card-text class="event-item"> 【開催場所】 </v-card-text>
                 <v-card-text class="event-content">
                   {{ event.event_address }}
                   <a
@@ -158,23 +172,17 @@ const openLoginDialog = () => {
                   >
                     <v-icon>mdi-map-marker-radius</v-icon>
                   </a>
-                  <div v-if="event.event_place_url&&event.event_place">
+                  <div v-if="event.event_place_url && event.event_place">
                     {{ event.event_place }}
-                    <a
-                      :href="event.event_place_url"
-                      target="_blank">
-                      <v-icon size="small">
-                        mdi-open-in-new
-                      </v-icon>
+                    <a :href="event.event_place_url" target="_blank">
+                      <v-icon size="small"> mdi-open-in-new </v-icon>
                     </a>
                   </div>
-                  <div v-else-if="!event.event_place_url&&event.event_place">
+                  <div v-else-if="!event.event_place_url && event.event_place">
                     {{ event.event_place }}
                   </div>
                 </v-card-text>
-                <v-card-text class="event-item">
-                  【開催内容】
-                </v-card-text>
+                <v-card-text class="event-item"> 【開催内容】 </v-card-text>
                 <v-card-text v-linkify class="event-content">
                   {{ event.event_desc }}
                 </v-card-text>
@@ -193,7 +201,7 @@ const openLoginDialog = () => {
                 <v-card-text class="event-item2">
                   【支払い方法】
                   <span class="event-content">
-                  {{ $t(`payment.${event.event_payment}`) }}
+                    {{ $t(`payment.${event.event_payment}`) }}
                   </span>
                 </v-card-text>
                 <!-- <v-card-text class="event-item2">
@@ -203,44 +211,45 @@ const openLoginDialog = () => {
                   </span>                
                 </v-card-text> -->
                 <!-- メンバー情報 -->
-                <event-member-list :members="members" :event-max-people="event.event_max_people"/>
-                <v-card-text >
+                <event-member-list :members="members" :event-max-people="event.event_max_people" />
+                <v-card-text>
                   <v-row align-self-center>
-                      <v-row class="ma-1">
+                    <v-row class="ma-1">
+                      <router-link :to="getCommunityPath(event.community_account)">
+                        <v-img
+                          :src="communityStore.community.communityIconImageUrl"
+                          style="border-radius: 10px; width: 100px; height: 100px"
+                          aspect-ratio="1"
+                          cover
+                          max-width="100px"
+                        />
+                      </router-link>
+                      <div class="ml-2 align-self-end">
                         <router-link
                           :to="getCommunityPath(event.community_account)"
-                        >                 
-                          <v-img
-                            :src="communityStore.community.communityIconImageUrl"
-                            style="border-radius: 10px; width: 100px; height: 100px"
-                            aspect-ratio="1"
-                            cover
-                            max-width="100px"
-                          />
+                          class="text--primary cursor-pointer text-decoration-none"
+                        >
+                          <div class="ma-1" style="font-size: 12px">【主 催 者】</div>
+                          <div class="ma-1" style="font-size: 18px">{{ communityStore.community.communityName }}</div>
                         </router-link>
-                        <div class="ml-2 align-self-end">
-                          <router-link
-                            :to="getCommunityPath(event.community_account)"
-                            class="text--primary cursor-pointer text-decoration-none"
-                          >
-                            <div class="ma-1" style="font-size: 12px">【主 催 者】</div>
-                            <div class="ma-1" style="font-size: 18px">{{ communityStore.community.communityName }}</div>
-                          </router-link>
-                          <v-btn
-                            class="ma-1"
-                            variant="outlined"
-                            rounded
-                            prepend-icon="mdi-email"
-                            @click="openContactDialog"
-                          >
-                            主催者に連絡
-                          </v-btn>
-                          <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="communityStore.community.communityName" :community-id="communityStore.community.communityId"/>
-                        </div>
-                      </v-row>
+                        <v-btn
+                          class="ma-1"
+                          variant="outlined"
+                          rounded
+                          prepend-icon="mdi-email"
+                          @click="openContactDialog"
+                        >
+                          主催者に連絡
+                        </v-btn>
+                        <community-contact-dialog
+                          v-model="isOpenContactDialogVisible"
+                          :community-name="communityStore.community.communityName"
+                          :community-id="communityStore.community.communityId"
+                        />
+                      </div>
+                    </v-row>
                   </v-row>
                 </v-card-text>
-             
               </v-col>
             </v-row>
           </v-card>
@@ -272,24 +281,25 @@ const openLoginDialog = () => {
       ログインした後に主催者に連絡してください。
     </confirm-dialog>
     <login-dialog v-model="isOpenLoginDialog" />
+    <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event" />
   </section>
 </template>
 <style lang="scss" scoped>
-  .event-item{
-    font-size: 14px;
-    padding-bottom: 2px;
-    font-weight: 600;
-  }
-  .event-item2{
-    font-size: 14px;
-    padding-bottom: 16px;
-    font-weight: 600;
-  }
-  .event-content{
-    font-size: 18px;
-    padding-bottom: 16px;
-    font-weight: 400;
-    line-height: 32px;
-    white-space: pre-line;
-  }
+.event-item {
+  font-size: 14px;
+  padding-bottom: 2px;
+  font-weight: 600;
+}
+.event-item2 {
+  font-size: 14px;
+  padding-bottom: 16px;
+  font-weight: 600;
+}
+.event-content {
+  font-size: 18px;
+  padding-bottom: 16px;
+  font-weight: 400;
+  line-height: 32px;
+  white-space: pre-line;
+}
 </style>
