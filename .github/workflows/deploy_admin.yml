@@ -33,10 +33,13 @@ jobs:
       run: |
         env_vars=$(echo '${{ secrets.ADMIN_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
         echo "$env_vars" > .env
-    - name: Deploy to Firebase
+    - name: Build
       run: |
         npm install
         npm run build-development
+    - name: Deploy to Firebase
+      working-directory: .
+      run: |
         npx firebase use bokudeli-event-test
         npx firebase deploy --only hosting:admin
       env:

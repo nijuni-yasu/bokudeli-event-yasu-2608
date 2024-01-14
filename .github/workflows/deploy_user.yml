@@ -33,10 +33,14 @@ jobs:
       run: |
         env_vars=$(echo '${{ secrets.USER_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
         echo "$env_vars" > .env
-    - name: Deploy to Firebase
+    - name: Build
       run: | 
         yarn install --frozen-lockfile
         yarn run build-development
-        yarn run deploy-development
+    - name: Deploy
+      working-directory: .
+      run: |
+        npx firebase use bokudeli-event-test
+        npx firebase deploy --only hosting:user
       env:
         FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
