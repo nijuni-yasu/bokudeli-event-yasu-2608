@@ -20,16 +20,19 @@ communityStore.isManager().then((result) => {
   isManager.value = result
 })
 
+const isMember = ref(false)
+communityStore.isMember().then((result) => {
+  isMember.value = result
+})
+
 const events = computed(() => {
-  const isManager = communityStore.isManager
-  const isMember = communityStore.isMember
   return communityStore.events?.flatMap((event) => {
     // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
-    if (!isManager && (event.event_status.value == 'in_draft' || event.event_status.value == 'applying_reservation')) {
+    if (isManager.value === false && (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')) {
       return []
     }
     // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
-    if (!isManager && !isMember && event.is_public == false) {
+    if (isManager.value === false && isMember.value === false && event.is_public === false) {
       return []
     }
     return event

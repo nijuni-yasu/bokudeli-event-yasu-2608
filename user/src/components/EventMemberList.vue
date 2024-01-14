@@ -27,22 +27,22 @@ defineProps<{
           <v-row class="ma-0 d-flex align-center">
             <router-link :to="`/users/${member.userId}`" class="text--primary cursor-pointer text-decoration-none">
               <v-avatar class="ma-1" size="60">
-                <v-img :src="member.userImageUrl" cover/>
+                <v-img :src="member.userStore.user?.user_image_url" cover/>
               </v-avatar>
             </router-link>
             <v-col class="ma-0 px-1">
               <div class="d-flex align-center text-subtitle-2 font-weight-bold">
                 <div>
-                  {{ member.username }}
+                  {{ member.userStore.user?.user_name }}
                 </div>
               </div>
               <div
-                v-for="menu in member.menus"
-                :key="menu"
+                v-for="menu in member.orders.flatMap(order => (order.status === 'ordered') ? order.menus : [])"
+                :key="menu.menu_id"
                 class="d-flex align-center"
                 style="font-size: 12px; color: gray"
               >
-                <div>{{ menu }}</div>
+                <div>{{ menu.name }}({{ menu.count }})</div>
               </div>
             </v-col>
           </v-row>

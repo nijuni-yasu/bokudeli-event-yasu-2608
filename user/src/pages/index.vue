@@ -17,10 +17,10 @@ type _EventStore = Omit<EventStore, 'event'> & {
 
 const eventStoreList = computed<_EventStore[]>(() => 
   (eventsStore.eventStores ?? []).flatMap((eventStore) => {
-    if (eventStore.event != null) {
-      return eventStore as _EventStore
-    } else {
+    if (eventStore.event == null || eventStore.event.event_status.value === 'in_draft' || eventStore.event.event_status.value === 'applying_reservation') {
       return []
+    } else {
+      return eventStore as _EventStore
     }
   })
 )
@@ -65,14 +65,14 @@ const getEventKey = (event: BokudeliEvent) => {
                 <v-card-text class="text-left pb-2"> 【お店】 {{ eventStore.event.shop_name }} </v-card-text>
                 <v-card-text class="text-left pb-2"> 【定員】{{ eventStore.event.event_max_people }} 人</v-card-text>
                 <v-card-text class="text-left pb-4">
-                  【参加者】{{ eventStore.members?.length ?? 0 }} 人
+                  【参加者】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人
                 </v-card-text>
                 <!-- Mutual members -->
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
                     <div class="v-avatar-group ml-2">
-                      <v-avatar v-for="member in eventStore.members ?? []" :key="member.userId" size="40">
-                        <v-img :src="member.userImageUrl" cover/>
+                      <v-avatar v-for="member in eventStore.orderConfiremedMembers ?? []" :key="member.userId" size="40">
+                        <v-img :src="member.userStore.user?.user_image_url" cover/>
                       </v-avatar>
                     </div>
                   </div>
