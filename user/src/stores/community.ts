@@ -10,6 +10,7 @@ import {
   type DocumentReference,
   type Unsubscribe,
   type DocumentSnapshot,
+  type QueryConstraint,
 } from 'firebase/firestore'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import { StateTree, Store } from 'pinia'
@@ -243,7 +244,9 @@ export const useCommunityStore = (communityAccount: string) => {
 }
 
 type CommunitiesStoreState = {
-  publicOnly: Ref<boolean>
+  // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
+  // パフォーマンスにも影響する設定なので、ここではあえて外に出す
+  filters: Ref<QueryConstraint[] | null>
 } & StateTree
 
 type CommunitiesStoreGetters = {
@@ -253,23 +256,15 @@ type CommunitiesStoreGetters = {
 export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters>
 
 export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters>('/communities', () => {
-  const publicOnly = ref(true)
   const _communityStores = ref<CommunityStore[] | null>(null)
+  const filters = ref<QueryConstraint[] | null>(null)
 
   let unsubscribe: Unsubscribe | null = null
   const subscribe = () => {
-    // TODO updated_at がないコミュニティがあるので、現在は orderBy が使えない
-    // const q = query(collection(db, 'communities'), orderBy('updated_at', 'desc'))
+    _communityStores.value = null
     // TODO ページネーション
-    const q = publicOnly.value ? query(
-      collection(db, 'communities'),
-      where('is_public', '==', true),
-    ) : query( 
-      collection(db, 'communities'),
-    )
-    if (unsubscribe != null) {
-      unsubscribe()
-    }
+    const q = query(collection(db, 'communities'), ...(filters.value ?? []))
+    unsubscribe?.()
     unsubscribe = onSnapshot(q, (querySnapshot) => {
       _communityStores.value = querySnapshot.docs.map((doc) => {
         const communityAccount = doc.get('community_account')
@@ -285,13 +280,17 @@ export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & C
     return _communityStores.value
   })
 
-  watch(publicOnly, () => {
-    _communityStores.value = null
-    subscribe()
+  watch(filters, (newValue, oldValue) => {
+    const arrayLength = Math.max(newValue?.length ?? 0, oldValue?.length ?? 0);
+    if ([...Array(arrayLength)].some((__, i) => {
+      return !_.isEqual(newValue?.[i], oldValue?.[i])
+    })) {
+      subscribe()
+    }
   })
 
   return {
-    publicOnly,
+    filters,
     communityStores,
   }
 })
