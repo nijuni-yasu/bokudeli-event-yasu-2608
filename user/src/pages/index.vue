@@ -4,8 +4,13 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
+import { where, orderBy } from 'firebase/firestore'
 
 const eventsStore = useEventsStore() as EventsStore
+eventsStore.filters = [
+  where('is_public', '==', true),
+  orderBy('event_start_datetime', 'desc')
+]
 
 const isLoading = computed(() => {
   return eventsStore.eventStores == null

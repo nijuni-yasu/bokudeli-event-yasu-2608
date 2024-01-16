@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { db } from '@/firebase'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
@@ -11,7 +12,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   onSnapshot,
   Timestamp,
   DocumentReference,
@@ -19,6 +19,7 @@ import {
   type Unsubscribe,
   type DocumentSnapshot,
   type QueryDocumentSnapshot,
+  type QueryConstraint,
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
 import { convertDocumentDataToEvent } from '@/schemes/converter'
@@ -196,7 +197,9 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
 }
 
 type EventsStoreState = {
-  publicOnly: Ref<boolean>
+  // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
+  // パフォーマンスにも影響する設定なので、ここではあえて外に出す
+  filters: Ref<QueryConstraint[] | null>
 } & StateTree
 
 type EventsStoreGetters = {
@@ -210,23 +213,14 @@ type EventsStoreAction = {
 export type EventsStore = Store<'/events', EventsStoreState, EventsStoreGetters, EventsStoreAction>
 
 export const useEventsStore = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction> ('/events', () => {
-  const publicOnly = ref<boolean>(true)
   const _eventStores = ref<EventStore[] | null>(null)
+  const filters = ref<QueryConstraint[] | null>(null)
 
   let unsubscribe: Unsubscribe | null = null
   const subscribe = () => {
     // TODO ページネーション
-    const q = publicOnly.value ? query(
-      collectionGroup(db, 'events'),
-      where('is_public', '==', true),
-      orderBy('event_start_datetime', 'desc')
-    ) : query( 
-      collectionGroup(db, 'events'),
-      orderBy('event_start_datetime', 'desc')
-    )
-    if (unsubscribe != null) {
-      unsubscribe()
-    }
+    const q = query(collectionGroup(db, 'events'), ...(filters.value ?? []))
+    unsubscribe?.()
     unsubscribe = onSnapshot(q, (querySnapshot) => {
       _eventStores.value = querySnapshot.docs.map((doc) => useEventStore(doc.ref) as EventStore)
     })
@@ -239,10 +233,14 @@ export const useEventsStore = defineStore<string, EventsStoreState & EventsStore
     return _eventStores.value
   })
 
-  watch(publicOnly, () => {
-    _eventStores.value = null
-    subscribe() 
-  }, { immediate: true })
+  watch(filters, (newValue, oldValue) => {
+    const arrayLength = Math.max(newValue?.length ?? 0, oldValue?.length ?? 0);
+    if ([...Array(arrayLength)].some((__, i) => {
+      return !_.isEqual(newValue?.[i], oldValue?.[i])
+    })) {
+      subscribe()
+    }
+  })
 
   const addEvent = async (community_id: string, data: Partial<BokudeliEvent>, coverImage?: File | string): Promise<BokudeliEvent> => {
     const communityRef = doc(db, 'communities', community_id)
@@ -272,7 +270,7 @@ export const useEventsStore = defineStore<string, EventsStoreState & EventsStore
   }
 
   return {
-    publicOnly,
+    filters,
     eventStores,
     addEvent,
   }
