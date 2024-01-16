@@ -76,8 +76,8 @@ const getEventKey = (event: BokudeliEvent) => {
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
                     <div class="v-avatar-group ml-2">
-                      <v-avatar v-for="member in eventStore.orderConfiremedMembers ?? []" :key="member.userId" size="40">
-                        <v-img :src="member.userStore.user?.user_image_url" cover/>
+                      <v-avatar v-for="member in eventStore.orderConfiremedMembers ?? []" :key="member.user_id" size="40">
+                        <v-img :src="member.user_image_url" cover/>
                       </v-avatar>
                     </div>
                   </div>

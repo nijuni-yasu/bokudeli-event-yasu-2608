@@ -1,11 +1,9 @@
 import { db } from '@/firebase'
 import {
   doc,
-  getDoc,
   updateDoc,
   onSnapshot,
   DocumentReference,
-  DocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
 import { StateTree, Store } from 'pinia';
@@ -37,11 +35,10 @@ export const useUserStore = (userId: string): UserStore => {
 
     let unsubscribeUser: Unsubscribe | null = null
     const subscribe = () => {
-      getDoc(userRef).then((DocumentSnapshot) => exists.value = DocumentSnapshot.exists())
       if (unsubscribeUser == null) {
-        unsubscribeUser = onSnapshot(userRef, (doc: DocumentSnapshot) => {
-          const data = doc.data()
-          user.value = data ? data as FirestoredUser : null
+        unsubscribeUser = onSnapshot(userRef, (userSnapshot) => {
+          exists.value = userSnapshot.exists()
+          user.value = userSnapshot.data() as FirestoredUser ?? null
         })
       }
     }

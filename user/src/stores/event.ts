@@ -18,7 +18,6 @@ import {
   type DocumentData,
   type Unsubscribe,
   type DocumentSnapshot,
-  type QueryDocumentSnapshot,
   type QueryConstraint,
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
@@ -63,33 +62,23 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
   const store = defineStore<string, EventStoreState & EventStoreGetters & EventStoreAction> (`/events/${initialValues.eventId}`, () => {
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(null)
+    const _members = ref<{ userStore: UserStore; orders: OrderItem[]}[] | null>(null)
 
-    const ordersSnapshot = ref<QueryDocumentSnapshot[] | null>(null)
-    const orders = computed<OrderItem[] | null>(() => {
+    const orders = computed<OrderItem[] | null>(() => _members.value?.flatMap((member) => member.orders) ?? null)
+
+    const members = computed<EventMember[] | null>(() => {      
       const eventRef = toRaw(initialValues.eventRef)
       if (eventRef != null) {
         subscribeOrders(eventRef)
       }
-      if (ordersSnapshot.value == null) {
-        return null
-      }
-      return ordersSnapshot.value.map((doc) => doc.data() as OrderItem)  // TODO このキャストは雑なので、ちゃんと処理する
-    })
-
-    const members = computed<EventMember[] | null>(() =>
-      Array.from(orders.value?.reduce((eventMembersMap, order) => {
-        const userId = order.user_id
-        const userStore = useUserStore(userId) as UserStore
-        const eventMember = eventMembersMap.get(userId) ?? {
-          userId,
-          orders: [] as OrderItem[],
-          userStore,
+      return _members.value?.flatMap((member) => {
+        if (member.userStore.exists == null && member.userStore.user == null) {
+          return []
         }
-        eventMember.orders.push(order)
-        eventMembersMap.set(userId, eventMember)
-        return eventMembersMap
-      }, new Map<string, EventMember>())?.values() ?? [])
-    )
+        // CAUTION: _.merge is mutable function
+        return _.merge({}, member.userStore.user, { orders: member.orders })
+      }) ?? null
+    })
 
     const orderConfiremedMembers = computed<EventMember[] | null>(() =>
       members.value?.filter((member) => member.orders.some((order) => order.status === 'ordered')) ?? null
@@ -121,19 +110,19 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
     }
 
     const updateOrder = async (id: string, data: Partial<OrderItem>): Promise<void> => {
-      const order = ordersSnapshot.value?.find((order) => order.id === id)
-      if (order == null) {
-        console.warn('order is null')
+      if (initialValues.eventRef == null) {
+        console.warn('eventRef is null')
         return
       }
-      await updateDoc(order.ref, data)
+      const orderRef = doc(initialValues.eventRef, 'orders', id)
+      await updateDoc(orderRef, data)
     }
 
     let unsubscribeEvent: Unsubscribe | null = null
     const subscribeEvent = (eventRef: DocumentReference) => {
-      getDoc(eventRef).then((documentSnapshot) => exists.value = documentSnapshot.exists())
       if (unsubscribeEvent == null) {
         unsubscribeEvent = onSnapshot(eventRef, (doc: DocumentSnapshot) => {
+          exists.value = doc.exists()
           const data = doc.data()
           event.value = data ? convertDocumentDataToEvent(data) : null
         })
@@ -142,16 +131,23 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
     let unsubscribeOrders: Unsubscribe | null = null
     const subscribeOrders = (eventRef: DocumentReference) => {
       const ordersRef = collection(eventRef, 'orders')
-      if (ordersSnapshot.value == null) {
-        getDocs(ordersRef).then((querySnapshot) => {
-          if (querySnapshot.empty) {
-            ordersSnapshot.value = []
-          }
-        })
-      }
       if (unsubscribeOrders == null) {
-        unsubscribeOrders = onSnapshot(ordersRef, (querySnapshot) => {
-          ordersSnapshot.value = querySnapshot.docs
+        unsubscribeOrders = onSnapshot(ordersRef, (ordersSnapshot) => {
+          if (ordersSnapshot.empty) {
+            _members.value = []
+          } else {
+            _members.value = Array.from(ordersSnapshot.docs.reduce((map, orderSnapshot) => {
+              const userId = orderSnapshot.get('user_id')
+              const userStore = useUserStore(userId) as UserStore
+              const item = map.get(userId) ?? {
+                userStore,
+                orders: [] as OrderItem[],
+              }
+              item.orders.push(orderSnapshot.data() as OrderItem) // TODO このキャストは雑なので、ちゃんと処理する
+              map.set(userId, item)
+              return map
+            }, new Map()).values())
+          }
         })
       }
     }

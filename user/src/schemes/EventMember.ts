@@ -1,8 +1,6 @@
 import OrderItem from './orderItem'
-import { UserStore } from '@/stores/user'
+import { FirestoredUser } from './storedUser'
 
-export type EventMember = {
-  userId: string,
+export type EventMember = FirestoredUser & {
   orders: OrderItem[]
-  userStore: UserStore
 }
