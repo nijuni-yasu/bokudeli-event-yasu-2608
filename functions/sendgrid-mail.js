@@ -101,44 +101,44 @@ function getShopEmails(shopSnapshot) {
     return Array.from(emails);
 }
 
-async function getCommunityEmailsForEvent(eventSnapshot) {
+async function getCommunityManagerEmailsSet(communityId) {
+    // 重複するメールアドレスは追加しない
     const emails = new Set();
+    const membersRef = db.collection('communities').doc(communityId).collection('members');
+    const membersSnapshot = await membersRef.get();
+    await Promise.all(membersSnapshot.docs.map(async (member) => {
+        const roles = member.get('roles')
+        if (roles == null || !(roles instanceof Array) && !roles.includes('manager')) {
+            return;
+        }
+        const userRef = db.collection('users').doc(member.id);
+        const userSnapshot = await userRef.get();
+        const userEmail = userSnapshot.get('user_email');
+        if (userEmail != null && userEmail !== '') {
+            emails.add(userEmail);
+        }
+    }));
+    return emails;
+}
+
+async function getCommunityEmailsForEvent(eventSnapshot) {
+    const communityId = eventSnapshot.ref.parent.parent.id;
+    const emails = await getCommunityManagerEmailsSet(communityId);
+
     const organizerEmail = eventSnapshot.get('organizer_email');
     if (organizerEmail != null && organizerEmail !== '') {
         emails.add(organizerEmail);
     }
-    const communityId = eventSnapshot.get('community_id');
-    const managersRef = db.collection('communities').doc(communityId).collection('managers');
-    const managersSnapshot = await managersRef.get()
-    managersSnapshot.forEach(doc => {
-        const userEmail = doc.get('user_email');
-        // すでに追加済みのメールアドレスは追加しない
-        if (userEmail != null && userEmail !== '') {
-            emails.add(userEmail);
-        }
-    });
     return Array.from(emails);
 }
 
 async function getCommunityEmails(communityId) {
-    const emails = new Set();
-    const managersRef = db.collection('communities').doc(communityId).collection('managers');
-    const managersSnapshot = await managersRef.get()
-    if (!managersSnapshot.empty) {
-        managersSnapshot.forEach(doc => {
-            const userEmail = doc.get('user_email');
-            // すでに追加済みのメールアドレスは追加しない
-            if (userEmail != null && userEmail !== '') {
-                emails.add(userEmail);
-            }
-        });
-        return Array.from(emails);
-    } else {
+    const emails = await getCommunityManagerEmailsSet(communityId);
+    if (emails.size === 0) {
         // コミュマネがいない場合はsupport+to@nijuni.jpに送信
         emails.add(DEFAULT_TO);
-        console.log(emails)
-        return Array.from(emails);
     }
+    return Array.from(emails);
 }
 
 async function createOrdersForOrderDeadline(ordersRef) {
