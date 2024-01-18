@@ -4,8 +4,13 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
+import { where, orderBy } from 'firebase/firestore'
 
 const eventsStore = useEventsStore() as EventsStore
+eventsStore.filters = [
+  where('is_public', '==', true),
+  orderBy('event_start_datetime', 'desc')
+]
 
 const isLoading = computed(() => {
   return eventsStore.eventStores == null
@@ -71,8 +76,8 @@ const getEventKey = (event: BokudeliEvent) => {
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
                     <div class="v-avatar-group ml-2">
-                      <v-avatar v-for="member in eventStore.orderConfiremedMembers ?? []" :key="member.userId" size="40">
-                        <v-img :src="member.userStore.user?.user_image_url" cover/>
+                      <v-avatar v-for="member in eventStore.orderConfiremedMembers ?? []" :key="member.user_id" size="40">
+                        <v-img :src="member.user_image_url" cover/>
                       </v-avatar>
                     </div>
                   </div>

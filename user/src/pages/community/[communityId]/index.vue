@@ -15,14 +15,11 @@ const router = useRouter()
 
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
-const isManager = ref(false)
-communityStore.isManager().then((result) => {
-  isManager.value = result
-})
-
 const isMember = ref(false)
-communityStore.isMember().then((result) => {
-  isMember.value = result
+const isManager = ref(false)
+communityStore.getCurrentUserRoles().then((roles) => {
+  isMember.value = roles != null
+  isManager.value = roles?.includes('manager') ?? false
 })
 
 const events = computed(() => {
@@ -120,8 +117,8 @@ const openLoginDialog = () => {
                 <login-dialog v-model="isOpenLoginDialog" />
               </v-col>
               <!-- community manager -->
-              <v-card-title v-if="communityStore.managers?.length ?? 0 > 0" class="justify-center text-h6 mt-10">コミュニケーター</v-card-title>
-              <div v-for="manager in communityStore.managers" :key="manager.user_id">
+              <v-card-title v-if="communityStore.members?.some(m => m.roles.includes('manager'))" class="justify-center text-h6 mt-10">コミュニケーター</v-card-title>
+              <div v-for="manager in communityStore.members?.filter(m => m.roles.includes('manager'))" :key="manager.user_id">
                 <router-link :to="`/users/${manager.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">

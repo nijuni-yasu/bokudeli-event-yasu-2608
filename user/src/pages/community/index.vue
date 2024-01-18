@@ -4,6 +4,7 @@ import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
+import { where } from 'firebase/firestore'
 
 type CommunityWithMembers = {
   community: BokudeliCommunity
@@ -13,6 +14,9 @@ type CommunityWithMembers = {
 const router = useRouter()
 
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
+communitiesStore.filters = [
+  where('is_public', '==', true),
+]
 
 const isLoading = computed(() => 
   communitiesStore.communityStores == null ||

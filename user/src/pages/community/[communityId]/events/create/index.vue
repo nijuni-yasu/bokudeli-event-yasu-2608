@@ -147,7 +147,8 @@ watch(() => event.value?.partner_id, async () => {
 }, { immediate: true })
 
 onMounted(async () => {
-  if (!await communityStore.isManager()) {
+  const roles = await communityStore.getCurrentUserRoles()
+  if (roles == null || !roles.includes('manager')) {
     window.alert('コミュニティ管理者ではありません')
     router.push(getCommunityPath(props.communityId))
   }

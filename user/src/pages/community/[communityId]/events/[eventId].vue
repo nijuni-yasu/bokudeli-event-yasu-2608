@@ -23,8 +23,8 @@ const eventStore = useEventStore(props.eventId) as EventStore
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
 const isManager = ref(false)
-communityStore.isManager().then((result) => {
-  isManager.value = result
+communityStore.getCurrentUserRoles().then((roles) => {
+  isManager.value = roles?.includes('manager') ?? false
 })
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)

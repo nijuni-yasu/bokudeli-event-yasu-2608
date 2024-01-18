@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import StoredUser from '@/schemes/storedUser'
+// import StoredUser from '@/schemes/storedUser'
+import { FirestoredUser } from '@/schemes/storedUser'
 import { storage } from '@/firebase'
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
 
 interface Props {
   modelValue: boolean
-  userData: StoredUser
+  userData: FirestoredUser
 }
 
 interface Emit {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'submit', value: StoredUser): void
+  (e: 'submit', value: FirestoredUser): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
-const userDataDraft = ref<StoredUser>(structuredClone(toRaw(props.userData)))
+const userDataDraft = ref<FirestoredUser>(structuredClone(toRaw(props.userData)))
 const userImage = ref<File | null>(null)
 const userStorageRef = storageRef(storage, 'users')
 
@@ -34,23 +35,23 @@ const trimInputtedId = (id: string | null, urlPattern: RegExp) => {
   return id.trim().replace(/\/+$/, '').replace(urlPattern, '')
 }
 const twitterId = computed({
-  get: () => userDataDraft.value.userSnsTwitter,
+  get: () => userDataDraft.value.user_sns_twitter,
   set: (val) => {
-    userDataDraft.value.userSnsTwitter = trimInputtedId(val, /^https:\/\/(mobile.)?twitter\.com\//)
+    userDataDraft.value.user_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?twitter\.com\//)
   },
 })
 
 const facebookId = computed({
-  get: () => userDataDraft.value.userSnsFacebook,
+  get: () => userDataDraft.value.user_sns_facebook,
   set: (val) => {
-    userDataDraft.value.userSnsFacebook = trimInputtedId(val, /^https:\/\/www\.facebook\.com\//)
+    userDataDraft.value.user_sns_facebook = trimInputtedId(val, /^https:\/\/www\.facebook\.com\//)
   },
 })
 
 const instagramId = computed({
-  get: () => userDataDraft.value.userSnsInstagram,
+  get: () => userDataDraft.value.user_sns_instagram,
   set: (val) => {
-    userDataDraft.value.userSnsInstagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
+    userDataDraft.value.user_sns_instagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
   },
 })
 
@@ -65,13 +66,13 @@ const closeDialog = () => {
 
 const onFormSubmit = async () => {
   if (userImage.value) {
-    const filepath = `${userDataDraft.value.userId}/${userImage.value.name}`
+    const filepath = `${userDataDraft.value.user_id}/${userImage.value.name}`
     const imageStorageRef = storageRef(userStorageRef, filepath)
 
     try {
       const snapshot = await uploadBytes(imageStorageRef, userImage.value)
       const url = await getDownloadURL(snapshot.ref)
-      userDataDraft.value.userImageUrl = url
+      userDataDraft.value.user_image_url = url
     } catch (error) {
       console.error(error)
     }
@@ -101,7 +102,7 @@ const onFormReset = () => {
               <v-file-input accept="image/*" label="アイコン" @update:model-value="readImageFiles" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field v-model="userDataDraft.userName" label="ユーザー名" />
+              <v-text-field v-model="userDataDraft.user_name" label="ユーザー名" />
             </v-col>
             <v-col cols="12" md="12">
               <v-text-field v-model="twitterId" label="Twitter" prefix="https://twitter.com/" />
@@ -113,7 +114,7 @@ const onFormReset = () => {
               <v-text-field v-model="instagramId" label="Instagram" prefix="https://www.instagram.com/" />
             </v-col>
             <v-col cols="12" md="12">
-              <VTextarea v-model="userDataDraft.userDescription" label="自己紹介文" />
+              <VTextarea v-model="userDataDraft.user_description" label="自己紹介文" />
             </v-col>
             <!-- 👉 Submit and Cancel -->
             <v-col cols="12" class="d-flex flex-wrap justify-center gap-4">
