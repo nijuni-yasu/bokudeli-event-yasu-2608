@@ -12,7 +12,7 @@ import {
   convertDateToWeekTimestamp,
   convertShopTimeToWeekTimestamp,
 } from '@/schemes/converter'
-import BokudeliEvent, { createEmptyEvent } from '@/schemes/bokudeliEvent'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
 import Shop from '@/schemes/shop'
 import PartnerMenu from '@/schemes/partnerMenu'
 import { useEventsStore, useEventStore, type EventsStore, type EventStore } from '@/stores/event'
@@ -38,7 +38,7 @@ const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
 const isOpenContactDialogVisible = ref(true)
 
-const _event = ref(createEmptyEvent())
+const _event = ref(new BokudeliEvent())
 const event = computed<BokudeliEvent | null>({
   get: () => {
     if (eventId != null) {

@@ -38,7 +38,7 @@ type EventStoreGetters = {
 } 
 
 type EventStoreAction = {
-  updateEvent: (data: Partial<BokudeliEvent>, coverImage?: File) => Promise<void>,
+  updateEvent: (data: BokudeliEvent, coverImage?: File) => Promise<void>,
   addOrder: (data: Partial<OrderItem>) => Promise<DocumentReference | null>,
   updateOrder: (id: string, data: Partial<OrderItem>) => Promise<void>,
   subscribe: () => Promise<void>,
@@ -94,7 +94,7 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
       members.value?.filter((member) => member.orders.some((order) => order.status === 'ordered')) ?? null
     )
 
-    const updateEvent = async (data: Partial<BokudeliEvent>, coverImage?: File) => {
+    const updateEvent = async (data: BokudeliEvent, coverImage?: File) => {
       const eventRef = toRaw(initialValues.eventRef)
       const communityId = eventRef?.parent?.parent?.id
       if (eventRef == null || communityId == null) {
@@ -105,10 +105,7 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
       if (coverImage) {
         data.event_cover_url = (await uploadEventImage(communityId, initialValues.eventId, coverImage)) ?? ''
       }
-      return await updateDoc(eventRef, {
-        // firebase は純粋なオブジェクトしか受け付けないので、data を unwrap する
-        ...data
-      })
+      return await updateDoc(eventRef, data.convertToDocumentData())
     }
 
     const addOrder = async (data: Partial<OrderItem>): Promise<DocumentReference | null> => {

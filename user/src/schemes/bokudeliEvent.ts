@@ -73,8 +73,13 @@ class BokudeliEvent {
       )
     }
   }
-}
 
-export const createEmptyEvent = (): BokudeliEvent => new BokudeliEvent()
+  convertToDocumentData(): DocumentData {
+    const result = {
+      event_status: this.raw_event_status,
+    }
+    return _.merge(result, _.omit(this, ['raw_event_status']))
+  }
+}
 
 export default BokudeliEvent
