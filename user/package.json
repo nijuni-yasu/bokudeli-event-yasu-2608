@@ -74,7 +74,6 @@
     "eslint-plugin-sonarjs": "^0.21.0",
     "eslint-plugin-unicorn": "^48.0.1",
     "eslint-plugin-vue": "^9.10.0",
-    "firebase-tools": "^12.6.1",
     "lodash": "^4.17.21",
     "postcss-html": "^1.5.0",
     "prettier": "^3.0.3",

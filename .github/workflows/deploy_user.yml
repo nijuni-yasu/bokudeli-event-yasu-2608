@@ -37,10 +37,13 @@ jobs:
       run: | 
         yarn install --frozen-lockfile
         yarn run build-development
+    - name: Install Firebase CLI
+      working-directory: .  
+      run: yarn global add firebase-tools
     - name: Deploy
       working-directory: .
       run: |
-        yarn firebase use bokudeli-event-test
-        yarn firebase deploy --only hosting:user
+        firebase use bokudeli-event-test
+        firebase deploy --only hosting:user
       env:
         FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
