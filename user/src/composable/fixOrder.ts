@@ -10,12 +10,15 @@ const loadUser = async (userId: string) => {
 }
 
 const addCommunityUser = async (communityId: string, userId: string) => {
-  const userDoc = (await loadUser(userId)) as FirestoredUser | undefined
-  if (!userDoc) {
+  const user = (await loadUser(userId)) as FirestoredUser | undefined
+  if (!user) {
     return
   }
 
-  userDoc.updated_at = Timestamp.now()
+  const userDoc = {
+    created_at: Timestamp.now(),
+    updated_at: Timestamp.now(),
+  }
   const memberUserDoc = doc(db, 'communities', communityId, 'members', userId)
   setDoc(memberUserDoc, userDoc, { merge: true })
 }
