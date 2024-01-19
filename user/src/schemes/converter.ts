@@ -175,6 +175,22 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
   }
 }
 
+export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser): StoredUser => {
+  return {
+    userId: firestoredUser.user_id,
+    userName: firestoredUser.user_name,
+    userEmail: firestoredUser.user_email,
+    userImageUrl: firestoredUser.user_image_url,
+    userAccount: firestoredUser.user_account,
+    userDescription: firestoredUser.user_description,
+    userSnsFacebook: firestoredUser.user_sns_facebook,
+    userSnsTwitter: firestoredUser.user_sns_twitter,
+    userSnsInstagram: firestoredUser.user_sns_instagram,
+    createdAt: firestoredUser.created_at.toDate(),
+    updatedAt: firestoredUser.updated_at.toDate(),
+  }
+}
+
 export const convertDocumentDataToStoredUser = (documentData: DocumentData | undefined): StoredUser => {
   if (!documentData) {
     return {

@@ -2,7 +2,7 @@
 // import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { FirestoredUser } from '@/schemes/storedUser'
-import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
+import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import UserBioEditDialog from './UserBioEditDialog.vue'
@@ -44,7 +44,7 @@ const instagramUrl = computed(() => {
 const isUserInfoEditDialogVisible = ref(false)
 const updateUserData = async (user: FirestoredUser) => {
   const store = useStoreStoredUser()
-  store.update(user)
+  store.update(convertFirestoredUserToStoredUser(user))
 
   const docRef = doc(db, 'users', user.user_id)
   const docSnap = await getDoc(docRef)
