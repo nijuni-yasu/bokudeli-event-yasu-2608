@@ -18,7 +18,7 @@ import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import { StateTree, Store } from 'pinia'
 import BokudeliCommunity from "@/schemes/bokudeliCommunity"
 import { FirestoredUser } from '@/schemes/storedUser'
-import { CommunityMember } from '@/schemes/communityMember'
+import { CommunityMember, convertCommunityMemberToDocumentData } from '@/schemes/communityMember'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
@@ -193,7 +193,7 @@ const useCommunityMemberStore = (communityId: string, memberId: string) => {
         return null
       }
       // CAUTION: _.merge is mutable function
-      return _.merge({}, userStore.user, _member.value)
+      return _.merge({}, userStore.user, convertCommunityMemberToDocumentData(_member.value))
     })
 
     let unsubscribeMember: Unsubscribe | null = null
