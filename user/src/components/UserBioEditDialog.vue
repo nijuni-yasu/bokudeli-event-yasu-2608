@@ -17,13 +17,9 @@ interface Emit {
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
-const userDataDraft = ref<FirestoredUser>(structuredClone(toRaw(props.userData)))
+const userDataDraft = ref<FirestoredUser>({...props.userData})
 const userImage = ref<File | null>(null)
 const userStorageRef = storageRef(storage, 'users')
-
-watch(props, () => {
-  userDataDraft.value = structuredClone(toRaw(props.userData))
-})
 
 const dialog = computed({
   get: () => props.modelValue,
@@ -78,12 +74,11 @@ const onFormSubmit = async () => {
     }
   }
 
-  emit('submit', userDataDraft.value)
+  emit('submit', { ...userDataDraft.value })
   closeDialog()
 }
 
 const onFormReset = () => {
-  userDataDraft.value = structuredClone(toRaw(props.userData))
   closeDialog()
 }
 </script>

@@ -19,7 +19,7 @@ const tabs = ref(null)
   <div id="user-view">
     <v-row v-if="userData != null" justify="center">
       <v-col cols="12" sm="8" md="3">
-        <user-bio-panel :user-data="userData" :is-editable="userData?.user_id === props.userId" />
+        <user-bio-panel :user-data="userData" :is-editable="storedUser?.userId === props.userId" />
       </v-col>
         <v-col cols="12" sm="8" md="9">
           <v-tabs v-model="tabs">

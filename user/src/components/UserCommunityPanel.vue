@@ -30,7 +30,7 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
       return []
     }
     if (props.type === 'managers') {
-      return communityStore.members?.some((member) => member.user_id === props.userId && member.roles.includes('manager')) ? {
+      return communityStore.members?.some((member) => member.user_id === props.userId && (member.roles?.includes('manager') ?? false)) ? {
         community: communityStore.community,
         members: communityStore.members,
       } : []
