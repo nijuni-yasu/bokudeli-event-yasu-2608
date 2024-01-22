@@ -65,9 +65,19 @@
             cols="12"
             sm="12"
             md="6"
-            @click="toMenuPage(item.partner_id)"
           >
-            <td class="px-1">{{ key + 1 }}</td>
+            <td class="px-1">
+              <v-btn
+                color="primary"
+                small
+                @click="toMenuPage(item.partner_id)"
+              >
+              <v-icon>
+                mdi-storefront-outline
+              </v-icon>
+                詳細
+              </v-btn>
+            </td>
             <td class="px-1">{{ item.partner_id.slice(0, 6) }}</td>
             <td class="px-1 table1">{{ item.shop_name }}</td>
             <td class="px-1 table1">
