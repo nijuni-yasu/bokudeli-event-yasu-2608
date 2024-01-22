@@ -139,8 +139,14 @@
             </td>
             <td class="px-1">
                 {{ item.createdAt.toDate().getFullYear() + '/' + (Number(item.createdAt.toDate().getMonth()) + 1) + '/' +item.createdAt.toDate().getDate() }}<br>
-                {{ item.createdAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}</td>
-            <td></td>
+                {{ item.createdAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}
+            </td>
+            <td>
+              <div v-if="item.updatedAt">
+              {{ item.updatedAt.toDate().getFullYear() + '/' + (Number(item.updatedAt.toDate().getMonth()) + 1) + '/' +item.updatedAt.toDate().getDate() }}<br>
+              {{ item.updatedAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}
+              </div>
+            </td>
             <td class="px-1 table1">
               <v-switch
                 v-model="item.is_open"
@@ -194,6 +200,6 @@
   width:150px;
 }
 .table2{
-  width:270px;
+  width:200px;
 }
 </style>
