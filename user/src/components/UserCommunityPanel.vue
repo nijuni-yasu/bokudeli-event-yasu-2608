@@ -3,7 +3,7 @@ import { db } from '@/firebase'
 import { doc, where } from 'firebase/firestore'
 import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
+import { getCommunityCreatePath, getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
 import { CommunityMember } from '@/schemes/communityMember'
 
@@ -135,8 +135,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
             size="large"
             rounded
             prepend-icon="mdi-heart"
-            href="https://forms.gle/z9L88Dq7vDKwbvxMA"
-            target="_blank"
+            @click="router.push(getCommunityCreatePath())"
           >
             コミュニティを新規申請する
           </v-btn>

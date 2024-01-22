@@ -6,28 +6,34 @@ import { uploadCommunityImage } from '@/composable/uploadImage'
 import { getCommunityPath } from '@/router/utils'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 
+const route = useRoute()
 const router = useRouter()
 
-const props = defineProps<{
-  communityId: string
-}>()
+const communityAccount = route.query.id as string | null
 
 const state = reactive({
   coverImageFile: null as File | null,
   iconImageFile: null as File | null,
 })
 
-const communityStore = useCommunityStore(props.communityId) as CommunityStore
-const community = computed(() => communityStore.community ?? {} as BokudeliCommunity)
-const isLoading = computed(() => communityStore.community == null)
+let community: Ref<BokudeliCommunity>;
+let isLoading: Ref<boolean>;
+if (communityAccount != null) {
+  const communityStore = useCommunityStore(communityAccount) as CommunityStore
+  community = computed(() => communityStore.community ?? {} as BokudeliCommunity)
+  isLoading = computed(() => communityStore.community == null)
+} else {
+  community = ref({communitySns:{}} as BokudeliCommunity)
+  isLoading = ref(false)
+}
 
-onMounted(async () => {
-  const roles = await communityStore.getCurrentUserRoles()
-  if (roles == null || !roles.includes('manager')) {
-    window.alert('コミュニティ管理者ではありません')
-    router.push(getCommunityPath(props.communityId))
-  }
-})
+// onMounted(async () => {
+//   const roles = await communityStore.getCurrentUserRoles()
+//   if (roles == null || !roles.includes('manager')) {
+//     window.alert('コミュニティ管理者ではありません')
+//     router.push(getCommunityPath(communityAccount))
+//   }
+// })
 
 const iconFileInputRef = ref<HTMLInputElement | null>(null)
 const coverFileInputRef = ref<HTMLInputElement | null>(null)
