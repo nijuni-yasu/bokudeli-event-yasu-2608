@@ -151,12 +151,12 @@
               <v-switch
                 v-model="item.is_open"
                 :label="`${item.is_open?'開店(OPEN)':'閉店(CLOSE)'}`"
-                readonly
+                @change="changeShopStatus(item)"
               />
               <v-switch
                 v-model="item.is_approved"
                 :label="`${item.is_approved?'運営承認済':'未承認'}`"
-                readonly
+                @change="changeShopStatus(item)"
               />
             </td>
           </tr>
@@ -191,6 +191,18 @@
         console.log(partnerId)
         this.$store.commit('SET_PARTNER_ID', partnerId)
         this.$router.push('ShopList/Menu')
+      },
+      changeShopStatus: function (item) {
+        db.collection('partners').doc(item.partner_id).collection('shops').doc(item.shop_id).set({
+          is_open: item.is_open,
+          is_approved: item.is_approved
+        }, { merge: true }).then(() => {
+          window.alert('開店設定/承認設定を変更しました')
+          console.log('Document successfully written!')
+        }).catch((error) => {
+          window.alert('開店設定/承認設定を変更できませんでした')
+          console.error('Error writing document: ', error)
+        })
       },
     }
   }
