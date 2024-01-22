@@ -637,31 +637,6 @@
                     />
                   </v-col>
                 </v-row>
-                <!-- TODO: 今後、店舗ごとに自由に持たせるかも？
-                <v-row
-                  align="center"
-                >
-                  <v-col
-                    class="text-right body-1 grey--text"
-                    cols="12"
-                    sm="2"
-                  >
-                    配送時間幅
-                  </v-col>
-                  <v-col
-                    class="d-flex"
-                    cols="12"
-                    sm="8"
-                  >
-                    <v-select
-                      v-model="shop_margin_time"
-                      :items="shop_margin_time_array"
-                      label="配送時間幅(分)"
-                      hint="※15分の設定で [12:00〜12:15配送予定]、30分の設定で [12:00〜12:30配送予定] と配送時間に幅を持たせることができます"
-                      persistent-hint
-                    />
-                  </v-col>
-                </v-row> -->
               </v-container>
               <div class="pa-3 text-center">
                 <v-btn
@@ -1024,7 +999,6 @@
           date.setMinutes((i % 4) * 15)
           return {text: this.$d(date, 'time'), value: date.getTime()}
         }),
-        shop_margin_time_array: ['10', '15', '20', '30', '40', '50', '60'],
         // shop_order_method: ['現金'],
         shop_holidays: [],
         is_open: false,
@@ -1077,9 +1051,6 @@
           }
           if (shopDoc.shop_deadline_datetime) {
             this.shop_deadline_datetime = shopDoc.shop_deadline_datetime
-          }
-          if (shopDoc.shop_margin_time) {
-            this.shop_margin_time = shopDoc.shop_margin_time
           }
           if (shopDoc.shop_email_sub1) {
             this.shop_email_sub1 = shopDoc.shop_email_sub1
@@ -1150,7 +1121,6 @@
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
             shop_deadline_datetime: this.shop_deadline_datetime,
-            shop_margin_time: this.shop_margin_time,
             shop_email_sub1: this.shop_email_sub1,
             shop_email_sub2: this.shop_email_sub2,
             shop_email_sub3: this.shop_email_sub3,
@@ -1187,7 +1157,6 @@
             shop_address_latitude: this.shop_address_latitude,
             shop_address_longitude: this.shop_address_longitude,
             shop_deadline_datetime: this.shop_deadline_datetime,
-            shop_margin_time: this.shop_margin_time,
             shop_email_sub1: this.shop_email_sub1,
             shop_email_sub2: this.shop_email_sub2,
             shop_email_sub3: this.shop_email_sub3,
