@@ -76,11 +76,11 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
                 {{ community.communityName }}
               </v-card-title>
               <v-card-text class="text-left pb-3">
-                {{ convertTruncateText(community.communityDescription, 250) }}
+                {{ convertTruncateText(community.communityDescription, 100) }}
               </v-card-text>
               <!-- Mutual members -->
               <v-card-text class="position-relative">
-                <div class="d-flex justify-space-between align-center mt-8">
+                <div class="d-flex justify-space-between align-center mt-5">
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                   <div class="v-avatar-group">
                     <v-avatar v-for="member in members" :key="member.user_id" size="40">
