@@ -5,6 +5,8 @@ service cloud.firestore {
             match /shops/{shop} {
                 // 店舗情報はログインした店舗アカウントでないと create/update/deleteできない
                 allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
+                // support+admin@nijuni.jp アカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
+                allow create, update, delete: if request.auth.uid == 'B8xjaF1ftWWr3bCQpmPzmxJ9uQt2' || request.auth.uid == '5XjlhVfryCYErPmMIJ1YX6xEzC62'
             }
             match /menus/{menu} {
                 // メニュー情報はログインした店舗アカウントでないと create/update/deleteできない

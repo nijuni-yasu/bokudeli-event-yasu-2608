@@ -65,9 +65,19 @@
             cols="12"
             sm="12"
             md="6"
-            @click="toMenuPage(item.partner_id)"
           >
-            <td class="px-1">{{ key + 1 }}</td>
+            <td class="px-1">
+              <v-btn
+                color="primary"
+                small
+                @click="toMenuPage(item.partner_id)"
+              >
+              <v-icon>
+                mdi-storefront-outline
+              </v-icon>
+                詳細
+              </v-btn>
+            </td>
             <td class="px-1">{{ item.partner_id.slice(0, 6) }}</td>
             <td class="px-1 table1">{{ item.shop_name }}</td>
             <td class="px-1 table1">
@@ -129,18 +139,24 @@
             </td>
             <td class="px-1">
                 {{ item.createdAt.toDate().getFullYear() + '/' + (Number(item.createdAt.toDate().getMonth()) + 1) + '/' +item.createdAt.toDate().getDate() }}<br>
-                {{ item.createdAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}</td>
-            <td></td>
+                {{ item.createdAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}
+            </td>
+            <td>
+              <div v-if="item.updatedAt">
+              {{ item.updatedAt.toDate().getFullYear() + '/' + (Number(item.updatedAt.toDate().getMonth()) + 1) + '/' +item.updatedAt.toDate().getDate() }}<br>
+              {{ item.updatedAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}
+              </div>
+            </td>
             <td class="px-1 table1">
               <v-switch
                 v-model="item.is_open"
                 :label="`${item.is_open?'開店(OPEN)':'閉店(CLOSE)'}`"
-                readonly
+                @change="changeShopStatus(item)"
               />
               <v-switch
                 v-model="item.is_approved"
                 :label="`${item.is_approved?'運営承認済':'未承認'}`"
-                readonly
+                @change="changeShopStatus(item)"
               />
             </td>
           </tr>
@@ -176,6 +192,18 @@
         this.$store.commit('SET_PARTNER_ID', partnerId)
         this.$router.push('ShopList/Menu')
       },
+      changeShopStatus: function (item) {
+        db.collection('partners').doc(item.partner_id).collection('shops').doc(item.shop_id).set({
+          is_open: item.is_open,
+          is_approved: item.is_approved
+        }, { merge: true }).then(() => {
+          window.alert('開店設定/承認設定を変更しました')
+          console.log('Document successfully written!')
+        }).catch((error) => {
+          window.alert('開店設定/承認設定を変更できませんでした')
+          console.error('Error writing document: ', error)
+        })
+      },
     }
   }
 </script>
@@ -184,6 +212,6 @@
   width:150px;
 }
 .table2{
-  width:270px;
+  width:200px;
 }
 </style>

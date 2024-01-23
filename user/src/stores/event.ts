@@ -86,7 +86,7 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
 
     const updateEvent = async (data: BokudeliEvent, coverImage?: File) => {
       const eventRef = toRaw(initialValues.eventRef)
-      const communityId = eventRef?.parent?.parent?.id
+      const communityId = eventRef?.parent?.parent?.id ?? data.community_id
       if (eventRef == null || communityId == null) {
         console.warn(`These values must be set. eventRef: ${eventRef} communityId: ${communityId}`)
         return
