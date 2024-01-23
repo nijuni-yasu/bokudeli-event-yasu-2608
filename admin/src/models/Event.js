@@ -3,6 +3,7 @@ export class Event {
 
   constructor (eventSnapshot) {
     Object.assign(this, eventSnapshot.data())
+    this.event_end_datetime = eventSnapshot.get('event_end_datetime')?.toMillis()
     this.event_start_datetime = eventSnapshot.get('event_start_datetime')?.toMillis()
     this.event_deadline_datetime = eventSnapshot.get('event_deadline_datetime')?.toMillis()
 
