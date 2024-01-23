@@ -5,7 +5,7 @@ import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventDetail from '@/components/eventcreate/EventDetail.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
-import { collection, doc, collectionGroup, getDocs, updateDoc } from 'firebase/firestore'
+import { collection, collectionGroup, getDocs } from 'firebase/firestore'
 import { db } from '@/firebase'
 import {
   convertDocumentDataToMenu,
@@ -186,12 +186,13 @@ const sumbmit = async () => {
 
 const sendReserveMail = async () => {
   const event = await saveDraft()
-  if (event?.event_id == null || event?.community_id || event?.community_account) {
+  if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
+    console.warn('The event doesn\'t have enough information.', event)
     return
   }
-  await updateDoc(doc(db, 'communities', event.community_id, 'events', event.event_id), {
-    event_status: { value: 'applying_reservation' },
-  })
+  event.event_status = { value: 'applying_reservation' }
+  const eventStore = useEventStore(event.event_id) as EventStore
+  await eventStore.updateEvent(event)
   router.push(getEventPath(event.community_account, event.event_id))
 }
 

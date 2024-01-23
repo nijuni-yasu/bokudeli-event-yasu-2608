@@ -65,6 +65,10 @@ class BokudeliEvent {
     }
   }
 
+  set event_status(value: RawEventStatusType) {
+    this.raw_event_status.value = value.value
+  }
+
   constructor(eventData?: DocumentData) {
     if (eventData != null) {
       _.merge(

@@ -8,6 +8,9 @@ import { db } from '@/firebase'
 import UserBioEditDialog from './UserBioEditDialog.vue'
 
 const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
+
+const storedUserStore = useStoreStoredUser()
+
 const userData = ref(props.userData)
 const isEditable = computed(() => props.isEditable ?? false)
 
@@ -15,7 +18,8 @@ const avatar = computed(() => userData?.value?.user_image_url ?? null)
 
 const userName = computed(() => userData?.value?.user_name ?? 'ゲスト')
 const userDescription = computed(() => {
-  return userData?.value?.user_description ?? 'ここに自己紹介文が入ります。'
+  return userData.value?.user_description ||
+    ((storedUserStore.storedUser?.userId !== userData.value?.user_id) ? '' : 'ここに自己紹介文が入ります。')
 })
 const twitterUrl = computed(() => {
   if (userData?.value?.user_sns_twitter) {
@@ -43,8 +47,7 @@ const instagramUrl = computed(() => {
 
 const isUserInfoEditDialogVisible = ref(false)
 const updateUserData = async (user: FirestoredUser) => {
-  const store = useStoreStoredUser()
-  store.update(convertFirestoredUserToStoredUser(user))
+  storedUserStore.update(convertFirestoredUserToStoredUser(user))
 
   const docRef = doc(db, 'users', user.user_id)
   const docSnap = await getDoc(docRef)

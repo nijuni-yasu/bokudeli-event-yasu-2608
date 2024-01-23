@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { doc, where } from 'firebase/firestore'
+import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
@@ -20,7 +21,6 @@ type CommunityWithMembers = {
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
 
 communitiesStore.filters = [
-  where('is_public', '==', true),
   where('members', 'array-contains', doc(db, 'users', props.userId)),
 ]
 
@@ -40,7 +40,7 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
         members: communityStore.members,
       } : []
     }
-  })
+  }).sort((a, b) => b.members.length - a.members.length)
 )
 
 const isLoading = computed(() => communitiesStore.communityStores == null)
@@ -76,11 +76,11 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
                 {{ community.communityName }}
               </v-card-title>
               <v-card-text class="text-left pb-3">
-                {{ community.communityDescription }}
+                {{ convertTruncateText(community.communityDescription, 100) }}
               </v-card-text>
               <!-- Mutual members -->
               <v-card-text class="position-relative">
-                <div class="d-flex justify-space-between align-center mt-8">
+                <div class="d-flex justify-space-between align-center mt-5">
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                   <div class="v-avatar-group">
                     <v-avatar v-for="member in members" :key="member.user_id" size="40">
