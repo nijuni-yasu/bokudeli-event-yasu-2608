@@ -384,14 +384,14 @@ exports.polling = functions
         ]);
     });
 
-exports.event_information = functions
-    .region('asia-northeast1')
-    .pubsub
-    .schedule('0 10 * * 1')
-    .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
-    .onRun(() => {
-        return sendEventInformationMail();
-    })
+// exports.event_information = functions
+//     .region('asia-northeast1')
+//     .pubsub
+//     .schedule('0 10 * * 1')
+//     .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
+//     .onRun(() => {
+//         return sendEventInformationMail();
+//     })
     
 exports.on_event_changed = functions
     .region('asia-northeast1')
