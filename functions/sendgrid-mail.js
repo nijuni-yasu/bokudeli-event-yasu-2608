@@ -108,14 +108,13 @@ async function getCommunityManagerEmailsSet(communityId) {
     const membersSnapshot = await membersRef.get();
     await Promise.all(membersSnapshot.docs.map(async (member) => {
         const roles = member.get('roles')
-        if (roles == null || !(roles instanceof Array) && !roles.includes('manager')) {
-            return;
-        }
-        const userRef = db.collection('users').doc(member.id);
-        const userSnapshot = await userRef.get();
-        const userEmail = userSnapshot.get('user_email');
-        if (userEmail != null && userEmail !== '') {
-            emails.add(userEmail);
+        if ((roles instanceof Array) && roles.includes('manager')) {
+            const userRef = db.collection('users').doc(member.id);
+            const userSnapshot = await userRef.get();
+            const userEmail = userSnapshot.get('user_email');
+            if (userEmail != null && userEmail !== '') {
+                emails.add(userEmail);
+            }
         }
     }));
     return emails;
