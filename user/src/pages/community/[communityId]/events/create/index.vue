@@ -31,33 +31,31 @@ const props = defineProps<{
   communityId: string
 }>()
 
-const eventId = route.query.id as string | null
+const eventId = ref(route.query.id as string | null)
 
 const eventsStore = useEventsStore() as EventsStore
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
 const isOpenContactDialogVisible = ref(true)
 
-const _event = ref(new BokudeliEvent())
 const event = computed<BokudeliEvent | null>({
   get: () => {
-    if (eventId != null) {
-      const eventStore = useEventStore(eventId) as EventStore
-
+    if (eventId.value != null) {
+      const eventStore = useEventStore(eventId.value) as EventStore
       return eventStore.event
     } else {
-      return _event.value
+      return eventsStore.eventDraft
     }
   },
   set: (value) => {
     if (value == null) {
       return
     }
-    if (eventId != null) {
-      const eventStore = useEventStore(eventId) as EventStore
+    if (eventId.value != null) {
+      const eventStore = useEventStore(eventId.value) as EventStore
       eventStore.event = value
     } else {
-      _event.value = value
+      eventsStore.eventDraft = value
     }
   },
 })
@@ -159,13 +157,25 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   if (event.value == null || communityId == null) {
     return null
   }
-  if (eventId == null) {
+  if (eventId.value == null) {
     // 新規作成
-    return await eventsStore.addEvent(communityId, event.value, coverImage.value ?? undefined)
+    event.value.community_id = communityId
+    const newEvent = await eventsStore.createNewEventFromDraft(communityId)
+    const eventStore = useEventStore(newEvent.event_id) as EventStore
+    if (coverImage.value != null) {
+      await eventStore.updateCoverImage(coverImage.value)
+    }
+    eventsStore.eventDraft = new BokudeliEvent()
+    // 現在の仕様だと直後にページ遷移するので、eventId を更新する必要はないが、今後のために残しておく
+    eventId.value = newEvent.event_id
+    return newEvent
   } else {
     // 更新
-    const eventStore = useEventStore(eventId) as EventStore
-    await eventStore.updateEvent(event.value, coverImage.value ?? undefined)
+    const eventStore = useEventStore(eventId.value) as EventStore
+    await eventStore.updateEvent(event.value)
+    if (coverImage.value != null) {
+      await eventStore.updateCoverImage(coverImage.value)
+    }
     return event.value
   }
 }
@@ -176,10 +186,10 @@ const sumbmit = async () => {
     console.warn('Coud not save event')
     return
   }
-  if (eventId == null) {
+  if (route.query.id == null) {
     window.alert(`イベントID： ${event.event_id} のイベントを新規作成しました`)
   } else {
-    window.alert(`イベントID： ${eventId} のイベントを更新しました`)
+    window.alert(`イベントID： ${event.event_id} のイベントを更新しました`)
   }
   router.push(getEventPath(event.community_account, event.event_id))
 }

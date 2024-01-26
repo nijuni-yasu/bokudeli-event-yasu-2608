@@ -46,7 +46,8 @@ type EventStoreGetters = {
 }
 
 type EventStoreAction = {
-  updateEvent: (data: BokudeliEvent, coverImage?: File) => Promise<void>,
+  updateEvent: (data: BokudeliEvent) => Promise<void>,
+  updateCoverImage: (coverImage: File) => Promise<void>,
   addOrder: (data: Partial<OrderItem>) => Promise<DocumentReference | null>,
   updateOrder: (id: string, data: Partial<OrderItem>) => Promise<void>,
   subscribe: () => Promise<void>,
@@ -107,7 +108,7 @@ export const useEventStore = (eventId: string) => {
       members.value?.filter((member) => member.orders.some((order) => order.status === 'ordered')) ?? null
     )
 
-    const updateEvent = async (data: BokudeliEvent, coverImage?: File) => {
+    const updateEvent = async (data: BokudeliEvent) => {
       const eventRef = await getEventRef()
       const communityId = eventRef.parent?.parent?.id ?? data.community_id
       if (communityId == null) {
@@ -115,10 +116,21 @@ export const useEventStore = (eventId: string) => {
         return
       }
       data.updated_at = Timestamp.now()
-      if (coverImage) {
-        data.event_cover_url = (await uploadEventImage(communityId, eventId, coverImage)) ?? ''
-      }
       return await updateDoc(eventRef, data.convertToDocumentData())
+    }
+
+    const updateCoverImage = async (coverImage: File) => {
+      const eventRef = await getEventRef()
+      const communityId = eventRef.parent?.parent?.id
+      if (communityId == null) {
+        console.warn(`These values must be set. eventRef: ${eventRef} communityId: ${communityId}`)
+        return
+      }
+      const data = {
+        updated_at: Timestamp.now(),
+        event_cover_url: (await uploadEventImage(communityId, eventId, coverImage)) ?? ''
+      }
+      return await updateDoc(eventRef, data)
     }
 
     const addOrder = async (data: Partial<OrderItem>): Promise<DocumentReference | null> => {
@@ -203,6 +215,7 @@ export const useEventStore = (eventId: string) => {
       members,
       orderConfiremedMembers,
       updateEvent,
+      updateCoverImage,
       addOrder,
       updateOrder,
       subscribe,
@@ -216,6 +229,7 @@ type EventsStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
   filters: Ref<QueryConstraint[] | null>
+  eventDraft: Ref<BokudeliEvent>
 } & StateTree
 
 type EventsStoreGetters = {
@@ -223,13 +237,14 @@ type EventsStoreGetters = {
 }
 
 type EventsStoreAction = {
-  addEvent: (communityId: string, data: Partial<BokudeliEvent>, coverImage?: File | string) => Promise<BokudeliEvent>,
+  createNewEventFromDraft: (communityId: string) => Promise<BokudeliEvent>,
 }
 
 export type EventsStore = Store<'/events', EventsStoreState, EventsStoreGetters, EventsStoreAction>
 
 export const useEventsStore = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction> ('/events', () => {
   const _eventStores = ref<EventStore[] | null>(null)
+  const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
   const filters = ref<QueryConstraint[] | null>(null)
 
   let unsubscribe: Unsubscribe | null = null
@@ -258,36 +273,29 @@ export const useEventsStore = defineStore<string, EventsStoreState & EventsStore
     }
   })
 
-  const addEvent = async (community_id: string, data: Partial<BokudeliEvent>, coverImage?: File | string): Promise<BokudeliEvent> => {
+  const createNewEventFromDraft = async (community_id: string): Promise<BokudeliEvent> => {
     const communityRef = doc(db, 'communities', community_id)
     const community = await getDoc(communityRef)
     if (!community.exists()) {
       throw new Error(`community ${community_id} does not exists`)
     }
-    const addedDoc = await addDoc(collection(communityRef, 'events'), {
-      // firebase は純粋なオブジェクトしか受け付けないので、data を unwrap する
-      ...data,
+    const newEventRef = doc(collection(communityRef, 'events'))
+    await setDoc(newEventRef, {
+      ...eventDraft.value.convertToDocumentData(),
+      event_id: newEventRef.id,
       community_id,
       community_name: community.get('community_name'),
       community_account: community.get('community_account'),
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     })
-    let eventCoverUrl
-    if (coverImage == null) {
-      eventCoverUrl = ''
-    } else if (coverImage instanceof File) {
-      eventCoverUrl = await uploadEventImage(community_id, addedDoc.id, coverImage)
-    } else {
-      eventCoverUrl = coverImage
-    }
-    await setDoc(addedDoc, { event_id: addedDoc.id, event_cover_url: eventCoverUrl }, { merge: true })
-    return convertDocumentDataToEvent((await getDoc(addedDoc)).data() as DocumentData)
+    return convertDocumentDataToEvent((await getDoc(newEventRef)).data() as DocumentData)
   }
 
   return {
     filters,
     eventStores,
-    addEvent,
+    eventDraft,
+    createNewEventFromDraft,
   }
 })
