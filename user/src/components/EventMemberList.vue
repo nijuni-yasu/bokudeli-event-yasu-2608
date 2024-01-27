@@ -48,6 +48,7 @@ defineProps<{
           </router-link>
         </v-col>
       </v-row>
+      <slot></slot>
     </v-card-text>
   </section>
 </template>
