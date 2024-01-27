@@ -18,9 +18,13 @@ service cloud.firestore {
             }
         }
         match /communities/{community} {
+            // コミュニティはログインユーザーなら申請可能
+            allow create: if request.auth != null
             // コミュマネかを判定する関数
             function isManager() {
-                return request.auth != null && exists(/databases/$(database)/documents/communities/$(community)/managers/$(request.auth.uid));
+                return request.auth != null &&
+                       exists(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)) &&
+                       "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles ;
             }
             allow update: if isManager();
             // support@nijuni.jpのアカウントは全て更新可。本番環境と開発環境のuser_idが異なるので両方設定
@@ -36,7 +40,7 @@ service cloud.firestore {
                 }
             }
             match /members/{member} {
-                allow create, update: if request.auth != null && request.auth.uid == request.resource.data.user_id
+                allow create, update: if request.auth != null && request.auth.uid == request.resource.id
             }
             // TODO：コミュマネの招待機能。現状はconsoleからのみ作成可能
             // match /managers/{manager} {

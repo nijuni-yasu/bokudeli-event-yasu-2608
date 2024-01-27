@@ -2,6 +2,14 @@ import _ from 'lodash'
 import type { DocumentData, DocumentReference, Timestamp } from "firebase/firestore"
 
 class BokudeliCommunity {
+  community_status: 'applying' | 'accepted' = 'applying';
+  community_manager_fullname: string = '';
+  community_company: string = '';
+  community_postalcode: string = '';
+  community_address: string = '';
+  community_phone: string = '';
+  community_email: string = '';
+  community_use_purpose: string = '';
   community_id: string = '';
   community_name: string = '';
   community_account: string = '';
