@@ -153,7 +153,7 @@ onMounted(async () => {
 })
 
 const saveDraft = async (): Promise<BokudeliEvent | null> => {
-  const communityId = communityStore.community?.communityId
+  const communityId = communityStore.community?.community_id
   if (event.value == null || communityId == null) {
     return null
   }
