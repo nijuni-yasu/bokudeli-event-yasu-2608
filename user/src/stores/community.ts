@@ -190,6 +190,10 @@ export const useCommunityStore = (communityAccount: string) => {
       subscribe,
       unsubscribe,
       getCurrentUserRoles,
+      $reset: () => {
+        unsubscribe()
+        subscribe()
+      }
     }
   })
   return store()

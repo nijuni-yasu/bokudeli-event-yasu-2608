@@ -152,6 +152,15 @@ onMounted(async () => {
   }
 })
 
+onUnmounted(() => {
+  if (eventId.value != null) {
+    const eventStore = useEventStore(eventId.value) as EventStore
+    eventStore.$reset()
+  } else {
+    eventsStore.$reset()
+  }
+})
+
 const saveDraft = async (): Promise<BokudeliEvent | null> => {
   const communityId = communityStore.community?.community_id
   if (event.value == null || communityId == null) {

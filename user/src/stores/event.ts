@@ -220,6 +220,10 @@ export const useEventStore = (eventId: string) => {
       updateOrder,
       subscribe,
       unsubscribe,
+      $reset: () => {
+        unsubscribe()
+        subscribe()
+      },
     }
   })
   return store()
@@ -297,5 +301,11 @@ export const useEventsStore = defineStore<string, EventsStoreState & EventsStore
     eventStores,
     eventDraft,
     createNewEventFromDraft,
+    $reset: () => {
+      eventDraft.value = new BokudeliEvent()
+      filters.value = null
+      unsubscribe?.()
+      unsubscribe = null
+    },
   }
 })
