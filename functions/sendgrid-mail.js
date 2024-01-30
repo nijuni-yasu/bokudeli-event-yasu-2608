@@ -357,6 +357,23 @@ async function sendShopOpenMail(shopSnapshot) {
     });
 }
 
+async function sendNewCommunityRequestMail(communitySnapshot) {
+    const communityId = communitySnapshot.id;
+    const communityName = communitySnapshot.get('community_name');
+    const communityAccount = communitySnapshot.get('community_account');
+    // TODO これ以上複雑になるようなら、テンプレートを使う
+    const subject = `${communityName}の新規コミュニティ登録リクエストがありました`;
+    const text = `【ID】${communityId}\n` +
+        `【コミュニティ名】${communityName}\n` +
+        `【コミュニティアカウント】${communityAccount}`
+    return sgMail.send({
+        to: DEFAULT_TO,
+        from: DEFAULT_FROM,
+        subject,
+        text,
+    })
+}
+
 async function sendCommunityContactMail(templateId, data) {
     const to =  await getCommunityEmails(data.community_id)
     const dynamic_template_data = data
@@ -429,6 +446,14 @@ exports.on_shop_changed = functions
         return Promise.all(promises);
     });
 
+exports.community_added = functions
+    .region('asia-northeast1')
+    .firestore
+    .document('communities/{communityId}')
+    .onCreate(async (snapshot) => {
+        return sendNewCommunityRequestMail(snapshot);
+    })
+    
 exports.community_contact = functions
     .region('asia-northeast1')
     .https
