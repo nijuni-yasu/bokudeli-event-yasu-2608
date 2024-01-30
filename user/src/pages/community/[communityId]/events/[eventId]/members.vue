@@ -22,8 +22,15 @@ const members = computed(() => eventStore.orderConfiremedMembers?.sort((a, b) =>
 <template>
   <section>
     <div v-if="event != null && communityStore.community != null" class="justify-center">
-      <v-row>
-        <v-col v-for="member in members" :key="member.user_id" cols="2">
+      <v-row class="ma-0 pa-0">
+        <v-col
+          v-for="member in members"
+          :key="member.user_id"
+          md="3"
+          sm="3"
+          cols="12"
+          class="ma-0 pa-0"
+        >
           <event-member-card :member="member" />
         </v-col>
       </v-row>

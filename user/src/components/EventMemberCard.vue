@@ -21,17 +21,17 @@ const userDescription = computed(() => props.member.user_description ?? '')
 </script>
 
 <template>
-  <v-container>
-    <v-card class="pt-10">
+  <v-container class="pa-3">
+    <v-card class="pt-5">
       <v-card-title class="d-flex align-center flex-column">
         <v-avatar
             :color="avatar ? '' : 'primary'"
             :class="avatar ? '' : 'v-avatar-light-bg primary--text'"
-            size="100%"
+            size="50%"
             round
             class="mb-4"
           >
-          <v-img v-if="avatar" :src="avatar" cover/>
+          <v-img v-if="avatar" aspect-ratio="1" :src="avatar" cover/>
           <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
         </v-avatar>
         <v-row class="justify-center">
@@ -57,6 +57,19 @@ const userDescription = computed(() => props.member.user_description ?? '')
       </v-card-subtitle>
       <v-card-text v-linkify class="text-subtitle-1" style="line-height: 30px; white-space: pre-line">
         {{ userDescription }}
+      </v-card-text>
+      <v-card-text class="text-center">
+        <router-link :to="`/users/${member.user_id}`">
+          <v-btn
+            class="ma-1"
+            variant="outlined"
+            size="x-small"
+            rounded
+            prepend-icon="mdi-account"
+          >
+            プロフィール
+          </v-btn>
+        </router-link>
       </v-card-text>
     </v-card>
   </v-container>

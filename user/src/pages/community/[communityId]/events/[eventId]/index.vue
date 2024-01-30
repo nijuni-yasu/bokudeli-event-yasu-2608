@@ -217,7 +217,7 @@ const openCalendarAddDialog = () => {
                 <event-member-list :members="members" :event-max-people="event.event_max_people">
                   <v-row class="d-flex align-center">
                     <v-spacer/>
-                    <v-col cols="auto">
+                    <v-col v-if="members.length>0" cols="auto">
                       <router-link :to="{ path: `${eventId}/members` }" append>メンバー詳細一覧</router-link>
                     </v-col>
                   </v-row>
