@@ -16,6 +16,7 @@ const router = useRouter()
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
 communitiesStore.filters = [
   where('is_public', '==', true),
+  where('is_approved', '==', true)
 ]
 
 const isLoading = computed(() => 
