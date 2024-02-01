@@ -2,7 +2,7 @@ import _ from 'lodash'
 import type { DocumentData, DocumentReference, Timestamp } from "firebase/firestore"
 
 class BokudeliCommunity {
-  community_status: 'applying' | 'accepted' = 'applying';
+  is_approved: boolean = false;
   community_manager_fullname: string = '';
   community_company: string = '';
   community_postalcode: string = '';
@@ -27,10 +27,7 @@ class BokudeliCommunity {
 
   constructor(communityData?: DocumentData) {
     if (communityData != null) {
-      _.merge(this, communityData, {
-        // 過去の community_status が設定されていないデータは全て accepted とする
-        community_status: communityData.community_status ?? 'accepted',
-      })
+      _.merge(this, communityData)
     }
   }
 

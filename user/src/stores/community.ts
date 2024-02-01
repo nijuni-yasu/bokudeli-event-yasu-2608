@@ -364,7 +364,7 @@ export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & C
     await setDoc(newCommunityRef, {
       ...communityDraft.value.convertToDocumentData(),
       community_id: newCommunityRef.id,
-      community_status: 'applying',
+      is_approved: false,
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     })
