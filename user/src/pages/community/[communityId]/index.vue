@@ -69,6 +69,7 @@ const openLoginDialog = () => {
       <v-col cols="12" md="9" sm="9">
         <v-row v-if="isManager" class="justify-end align-center mt-lg-5">
           <v-btn
+            v-if="communityStore.community.is_approved"
             class="mx-2"
             color="white"
             elevation="5"

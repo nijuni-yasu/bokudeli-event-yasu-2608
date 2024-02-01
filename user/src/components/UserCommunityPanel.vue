@@ -96,6 +96,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
         <div v-if="props.type===`managers`&&props.isLoginUser" class="justify-center">
           <v-col class="text-right">
             <v-btn
+              v-if="community.is_approved === true"
               class="mx-1 mb-1 mt-0"
               color="white"
               elevation="5"
