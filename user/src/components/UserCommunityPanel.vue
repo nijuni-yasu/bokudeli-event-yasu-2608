@@ -134,10 +134,10 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
             elevation="10"
             size="large"
             rounded
-            prepend-icon="mdi-heart"
+            prepend-icon="mdi-heart-outline"
             @click="router.push(getCommunityCreatePath())"
           >
-            コミュニティを新規申請する
+            コミュニティを作る
           </v-btn>
         </v-col>
       </v-row>

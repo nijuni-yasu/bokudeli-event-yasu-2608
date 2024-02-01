@@ -53,7 +53,29 @@ const logout = async () => {
               <template #prepend>
                 <v-icon class="me-2" icon="mdi-account-outline" size="22" />
               </template>
-              <v-list-item-title>プロフィール</v-list-item-title>
+              <v-list-item-title>マイページ</v-list-item-title>
+            </v-list-item>
+
+            <!-- Divider -->
+            <v-divider v-if="isLogin" class="my-2" />
+
+            <!-- 👉 cart -->
+            <v-list-item v-if="isLogin" :to="`/cart`">
+              <template #prepend>
+                <v-icon class="me-2" icon="mdi-cart-outline" size="22" />
+              </template>
+              <v-list-item-title>カート</v-list-item-title>
+            </v-list-item>
+
+            <!-- Divider -->
+            <v-divider v-if="isLogin" class="my-2" />
+
+            <!-- 👉 コミュニティ新規作成 -->
+            <v-list-item v-if="isLogin" :to="`/community/setup`">
+              <template #prepend>
+                <v-icon class="me-2" icon="mdi-heart-outline" size="22" />
+              </template>
+              <v-list-item-title>コミュニティを作る</v-list-item-title>
             </v-list-item>
 
             <!-- Divider -->
