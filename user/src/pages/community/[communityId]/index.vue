@@ -88,6 +88,9 @@ const openLoginDialog = () => {
           >
             コミュニティ設定
           </v-btn>
+          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large">
+            申請中
+          </v-chip>
         </v-row>
         <v-card flat class="align-center justify-center text-center my-8 pa-md-16 pa-sm-8 pa-xs-0">
           <v-row>
