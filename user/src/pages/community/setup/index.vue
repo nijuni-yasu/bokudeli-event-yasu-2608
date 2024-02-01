@@ -151,7 +151,7 @@ const checkAccountExists = async (event: Event) => {
           <v-form v-model="isValid" class="multi-col-validation">
             <v-card-title class="pt-10 px-5">
               <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
-              <span>{{ (communityAccount == null) ? 'コミュニティ申請' : 'コミュニティ設定' }}</span>
+              <span>コミュニティ設定</span>
             </v-card-title>
 
             <v-card-text class="pt-5">
@@ -186,6 +186,125 @@ const checkAccountExists = async (event: Event) => {
                     outlined
                     dense
                     label="コミュニティ名"
+                    :rules="[requiredValidator]"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-textarea
+                    v-model="community.community_desc"
+                    outlined
+                    rows="10"
+                    label="コミュニティ説明文"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <v-card-title class="pt-10 px-5">
+              <v-icon size="50" class="text--primary me-3" icon="mdi-image" />
+              <span>画像設定</span>
+            </v-card-title>
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <div class="v-field icon-upload-container" @click="onIconTriggerUpload">
+                    <v-file-input ref="iconFileInputRef" v-model="iconImageFile" class="file-input"  />
+                    <v-img
+                      v-if="iconImageUrl != null"
+                      :src="iconImageUrl"
+                      cover
+                      aspect-ratio="1" />
+                    <div v-else class="placeholder">アイコンをアップロード<br />300px X 300px</div>
+                  </div>
+                </v-col>
+              </v-row>
+              <span>※コミュニティのアイコン画像を設定してください（推奨サイズ：300x300px）</span>
+            </v-card-text>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <div class="v-field image-upload-container" @click="onCoverTriggerUpload">
+                    <v-file-input ref="coverFileInputRef" v-model="coverImageFile" class="file-input" />
+                    <v-img
+                      v-if="coverImageUrl != null"
+                      :src="coverImageUrl"
+                      cover
+                      aspect-ratio="1.91" />
+                    <div v-else class="placeholder">カバー画像をアップロード<br />1200px X 630px</div>
+                  </div>
+                </v-col>
+              </v-row>
+              <span>※コミュニティのカバー画像を設定してください（推奨サイズ：1200x630px）</span>
+            </v-card-text>
+
+            <v-card-title class="pt-10 px-5">
+              <v-icon size="50" class="text--primary me-3" icon="mdi-web" />
+              <span>SNS設定</span>
+            </v-card-title>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field v-model="community.community_sns_facebook" outlined dense label="facebook"></v-text-field>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field v-model="community.community_sns_twitter" outlined dense label="X(Twitter)"></v-text-field>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field v-model="community.community_sns_instagram" outlined dense label="Instagram"></v-text-field>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field v-model="community.community_sns_officialsite" outlined dense label="公式サイト"></v-text-field>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <!-- Activity -->
+            <v-card-title v-if="communityAccount != null" class="pt-10 px-5">
+              <v-icon size="50" class="text--primary me-3" icon="mdi-lightbulb-on-outline" />
+              <span>公開設定</span>
+            </v-card-title>
+            <v-card-text v-if="communityAccount != null">
+              <v-switch v-model="community.is_public" hide-details class="mt-0">
+                <template #label> 公開コミュニティ </template>
+              </v-switch>
+            </v-card-text>
+            <v-card-title class="pt-10 pl-5">
+              <v-icon size="50" class="text--primary me-3" icon="mdi-account-outline" />
+              <span>運営者情報</span>
+            </v-card-title>
+            <v-card-text class="px-5 pb-10">
+              <span>※運営者情報は、コミュニティページに表示されません</span>
+            </v-card-text>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="community.community_manager_fullname"
+                    outlined
+                    dense
+                    label="運営者氏名"
                     :rules="[requiredValidator]"
                   />
                 </v-col>
@@ -267,112 +386,13 @@ const checkAccountExists = async (event: Event) => {
                 <v-col cols="12">
                   <v-textarea
                     v-model="community.community_use_purpose"
-                    outlined rows="3"
+                    outlined rows="4"
                     label="利用目的"
                     :rules="[requiredValidator]"
                   />
                 </v-col>
               </v-row>
             </v-card-text>
-
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <v-textarea
-                    v-model="community.community_desc"
-                    outlined
-                    rows="10"
-                    label="コミュニティ説明文"
-                  />
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-title class="pt-10 px-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-image" />
-              <span>画像設定</span>
-            </v-card-title>
-
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <div class="v-field icon-upload-container" @click="onIconTriggerUpload">
-                    <v-file-input ref="iconFileInputRef" v-model="iconImageFile" class="file-input"  />
-                    <v-img
-                      v-if="iconImageUrl != null"
-                      :src="iconImageUrl"
-                      cover
-                      aspect-ratio="1" />
-                    <div v-else class="placeholder">アイコンをアップロード<br />300px X 300px</div>
-                  </div>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <div class="v-field image-upload-container" @click="onCoverTriggerUpload">
-                    <v-file-input ref="coverFileInputRef" v-model="coverImageFile" class="file-input" />
-                    <v-img
-                      v-if="coverImageUrl != null"
-                      :src="coverImageUrl"
-                      cover
-                      aspect-ratio="1.91" />
-                    <div v-else class="placeholder">カバー画像をアップロード<br />1200px X 630px</div>
-                  </div>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-title class="pt-10 px-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-web" />
-              <span>SNS設定</span>
-            </v-card-title>
-
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field v-model="community.community_sns_facebook" outlined dense label="facebook"></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field v-model="community.community_sns_twitter" outlined dense label="X(Twitter)"></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field v-model="community.community_sns_instagram" outlined dense label="Instagram"></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <v-card-text class="pt-5">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field v-model="community.community_sns_officialsite" outlined dense label="公式サイト"></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-text>
-
-            <!-- Activity -->
-            <v-card-title v-if="communityAccount != null" class="pt-10 px-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-lightbulb-on-outline" />
-              <span>公開設定</span>
-            </v-card-title>
-            <v-card-text v-if="communityAccount != null">
-              <v-switch v-model="community.is_public" hide-details class="mt-0">
-                <template #label> 公開コミュニティ </template>
-              </v-switch>
-            </v-card-text>
-
             <v-card-text v-if="communityAccount != null" class="text-center mt-10">
               <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" @click="cancel">キャンセル</v-btn>
               <v-btn :disabled="!isValid" color="primary" class="me-3 mt-3" size="large" @click="submit">設定</v-btn>
@@ -387,7 +407,7 @@ const checkAccountExists = async (event: Event) => {
                 prepend-icon="mdi-email"
                 @click="isOpenConfirmDialog = true"
               >
-                申請する
+                コミュニティ利用を申請する
               </v-btn>
             </v-card-text>
           </v-form>
