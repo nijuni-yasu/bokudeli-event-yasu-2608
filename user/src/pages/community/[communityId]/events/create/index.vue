@@ -144,6 +144,13 @@ watch(() => event.value?.partner_id, async () => {
   isLoadingMenu.value = false
 }, { immediate: true })
 
+watch(() => communityStore.community?.is_approved, (is_approved) => {
+  if (is_approved === false) {
+    window.alert('コミュニティが承認されていません')
+    router.push(getCommunityPath(props.communityId))
+  }
+}, { immediate: true })
+
 onMounted(async () => {
   const roles = await communityStore.getCurrentUserRoles()
   if (roles == null || !roles.includes('manager')) {

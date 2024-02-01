@@ -31,7 +31,7 @@ service cloud.firestore {
             allow update: if request.auth.uid == '3QotPSenRqVPCZnT82fGCLh5EmG3' || request.auth.uid == 'yHOr7eaWWYPHLjPx3H0gZ5nfyWJ2'
             match /events/{event} {
                 // コミュマネorサポートアカウントはイベントの作成・更新ができる
-                allow create, update: if isManager();
+                allow create, update: if isManager() && get(/databases/$(database)/documents/communities/$(community)).data.is_approved;
                 allow create, update: if request.auth.uid == '3QotPSenRqVPCZnT82fGCLh5EmG3' || request.auth.uid == 'yHOr7eaWWYPHLjPx3H0gZ5nfyWJ2'
                 // 予約承認・予約却下などイベントステータスを店舗が変更できる
                 allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
