@@ -20,7 +20,7 @@ class BokudeliCommunity {
   community_sns_twitter: string = '';
   community_sns_instagram: string = '';
   community_sns_officialsite: string = '';
-  is_public: boolean = false;
+  is_public: boolean = true;
   updated_at: Timestamp | null = null;
 
   members?: DocumentReference[] = [];
