@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { getEventPath, getEventCreatePath } from '@/router/utils'
+import { getEventPath, getEventCreatePath, getCommunitySettingsPath } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -67,7 +67,29 @@ const openLoginDialog = () => {
     <v-row v-if="communityStore.community != null" class="justify-center">
       <!-- community main -->
       <v-col cols="12" md="9" sm="9">
-        <v-card flat class="align-center justify-center text-center my-10 pa-md-16 pa-sm-8 pa-xs-0">
+        <v-row v-if="isManager" class="justify-end align-center mt-lg-5">
+          <v-btn
+            class="mx-2"
+            color="white"
+            elevation="5"
+            rounded
+            prepend-icon="mdi-pencil-box-outline"
+            :to="getEventCreatePath(communityStore.community.community_account)"
+          >
+            イベント新規作成
+          </v-btn>
+          <v-btn
+            class="mx-2"
+            color="white"
+            elevation="5"
+            rounded
+            prepend-icon="mdi-cog"
+            :to="getCommunitySettingsPath(communityStore.community.community_account)"
+          >
+            コミュニティ設定
+          </v-btn>
+        </v-row>
+        <v-card flat class="align-center justify-center text-center my-8 pa-md-16 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
               <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.community_cover_image_url" />
@@ -211,22 +233,6 @@ const openLoginDialog = () => {
                     編集
                   </v-btn>                  
                 </v-row>
-              </v-col>
-            </v-row>
-            <v-row v-if="isManager" class="justify-center">
-              <v-col class="text-center">
-                <v-btn
-                  class="mx-2 my-10 text-lg-h5"
-                  color="white"
-                  elevation="5"
-                  size="x-large"
-                  rounded
-                  width="85%"
-                  prepend-icon="mdi-pencil-box-outline"
-                  :to="getEventCreatePath(communityStore.community.community_account)"
-                >
-                  イベントを新規作成する
-                </v-btn>
               </v-col>
             </v-row>
           </v-col>
