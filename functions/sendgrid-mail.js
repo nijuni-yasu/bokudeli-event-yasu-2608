@@ -75,6 +75,10 @@ function convertToDuration(startMillis, endMillis) {
     return `${start}〜${end}`;
 }
 
+function getCommunityUrl(communityAccount) {
+    return `https://${process.env.EVENT_HOST}/community/${communityAccount}`;
+}
+
 function getEventUrl(communityAccount, eventId) {
     return `https://${process.env.EVENT_HOST}/community/${communityAccount}/events/${eventId}`;
 }
@@ -362,10 +366,11 @@ async function sendNewCommunityRequestMail(communitySnapshot) {
     const communityName = communitySnapshot.get('community_name');
     const communityAccount = communitySnapshot.get('community_account');
     // TODO これ以上複雑になるようなら、テンプレートを使う
-    const subject = `${communityName}の新規コミュニティ登録リクエストがありました`;
-    const text = `【ID】${communityId}\n` +
-        `【コミュニティ名】${communityName}\n` +
-        `【コミュニティアカウント】${communityAccount}`
+    const subject = `「${communityName}」コミュニティが新規申請されました`;
+    const text = `【ID】 ${communityId}\n` +
+        `【コミュニティ名】 ${communityName}\n` +
+        `【コミュニティアカウント】 ${communityAccount}\n` +
+        `【コミュニティページURL】 ${getCommunityUrl(communityAccount)}`
     return sgMail.send({
         to: DEFAULT_TO,
         from: DEFAULT_FROM,
