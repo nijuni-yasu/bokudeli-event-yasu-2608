@@ -1,8 +1,8 @@
-const functions = require("firebase-functions");
-const { getFirestore } = require('firebase-admin/firestore');
-const dateFns = require('date-fns');
-const ja = require('date-fns/locale/ja');
-const sgMail = require('@sendgrid/mail');
+import functions from 'firebase-functions';
+import { getFirestore } from 'firebase-admin/firestore';
+import * as dateFns from 'date-fns';
+import ja from 'date-fns/locale/ja';
+import sgMail from '@sendgrid/mail';
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = 'bokudeli@nijuni.jp';
@@ -391,7 +391,7 @@ async function sendCommunityContactMail(templateId, data) {
     });
 }
 
-exports.polling = functions
+export const polling = functions
     .region('asia-northeast1')
     .pubsub
     .schedule('*/1 * * * *') // .schedule('every 1 minutes')
@@ -406,16 +406,16 @@ exports.polling = functions
         ]);
     });
 
-// exports.event_information = functions
-//     .region('asia-northeast1')
-//     .pubsub
-//     .schedule('0 10 * * 1')
-//     .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
-//     .onRun(() => {
-//         return sendEventInformationMail();
-//     })
-    
-exports.on_event_changed = functions
+export const event_information = functions
+    .region('asia-northeast1')
+    .pubsub
+    .schedule('0 10 * * 1')
+    .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
+    .onRun(() => {
+        return sendEventInformationMail();
+    })
+
+export const on_event_changed = functions
     .region('asia-northeast1')
     .firestore
     .document('communities/{communityId}/events/{eventId}')
@@ -437,7 +437,7 @@ exports.on_event_changed = functions
         return Promise.all(promises);
     });
 
-exports.on_shop_changed = functions
+export const on_shop_changed = functions
     .region('asia-northeast1')
     .firestore
     .document('partners/{partnerId}/shops/{shopId}')
@@ -451,15 +451,15 @@ exports.on_shop_changed = functions
         return Promise.all(promises);
     });
 
-exports.community_added = functions
+export const community_added = functions
     .region('asia-northeast1')
     .firestore
     .document('communities/{communityId}')
     .onCreate(async (snapshot) => {
         return sendNewCommunityRequestMail(snapshot);
     })
-    
-exports.community_contact = functions
+
+export const community_contact = functions
     .region('asia-northeast1')
     .https
     .onCall((data, context) => {

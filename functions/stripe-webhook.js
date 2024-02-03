@@ -1,10 +1,11 @@
-const functions = require("firebase-functions");
-const { getFirestore, Timestamp } = require('firebase-admin/firestore');
+import functions from 'firebase-functions';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import _stripe from 'stripe';
 
 const db = getFirestore();
 
 // Webhook の検証に使用する場合、Secret key は必要ない様子（ただし、公式にかいてあるわけではない）
-const stripe = require('stripe')(); 
+const stripe = _stripe(); 
 
 const loadUser = async (userId) => {
     const userRef = db.collection('users').doc(userId);
@@ -24,7 +25,7 @@ const addCommunityUser = async (communityId, userId) => {
     await membersUserDoc.set({ updated_at: Timestamp.now() }, {merge: true});
 }
 
-exports.stripe_webhook = functions.region('asia-northeast1').https.onRequest(async (req, res) => {
+export const stripe_webhook = functions.region('asia-northeast1').https.onRequest(async (req, res) => {
     try {
         const sig = req.headers['stripe-signature'];
         const event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_ENDPOINT_SECRET);
