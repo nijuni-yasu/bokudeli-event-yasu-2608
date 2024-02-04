@@ -1,5 +1,5 @@
 import functions from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
 import ja from 'date-fns/locale/ja';
 import sgMail from '@sendgrid/mail';
@@ -261,7 +261,7 @@ async function getUsersFromOrders(ordersRef) {
 async function sendEventInformationMail() {
     const promises = [];
     const date = dateFns.format(
-        convertToJapan(new Date().getTime()),
+        convertToJapan(Date.now()),
         'MM/dd',
         { locale: ja }
     );
@@ -271,7 +271,7 @@ async function sendEventInformationMail() {
     const query = db.collectionGroup('events')
         .where('is_public', '==', true)
         .where('event_status.value', '==', 'accepting_order')
-        .where('event_deadline_datetime', '>', new Date());
+        .where('event_deadline_datetime', '>', Timestamp.fromMillis(Date.now()));
         // 不等号を含む where がある場合、他のフィールドでソートできない
         // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
         // .orderBy('event_start_datetime')
