@@ -20,12 +20,12 @@ const instagramUrl = computed(
 )
 const userDescription = computed(() => props.member.user_description ?? '')
 
-const descriptionCharacterLimit = 32
+const descriptionCharacterLimit = 38
 </script>
 
 <template>
   <v-container class="pa-3">
-    <v-card class="pt-5">
+    <v-card class="pt-8">
       <v-card-title class="d-flex align-center flex-column">
         <v-avatar
             :color="avatar ? '' : 'primary'"
@@ -39,7 +39,7 @@ const descriptionCharacterLimit = 32
         </v-avatar>
         <v-row class="justify-center">
           <v-col>
-            <span class="mb-2 text-h6 text-center text-wrap">{{ userName }}</span>
+            <span class="mb-2 text-h5 text-center text-wrap">{{ userName }}</span>
           </v-col>
         </v-row>
       </v-card-title>
@@ -47,18 +47,18 @@ const descriptionCharacterLimit = 32
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn icon="mdi-twitter" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-twitter" class="ma-3"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn icon="mdi-facebook" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-facebook" class="ma-3"></v-btn>
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn icon="mdi-instagram" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-instagram" class="ma-3"></v-btn>
             </a>
           </v-col>
         </v-row>
       </v-card-subtitle>
-      <v-card-text v-linkify class="text-subtitle-1 description">
+      <v-card-text v-linkify class="text-subtitle-2 description">
         {{ convertTruncateText(userDescription, descriptionCharacterLimit) }}
       </v-card-text>
       <v-card-text class="text-center">
@@ -82,10 +82,10 @@ const descriptionCharacterLimit = 32
 @import 'src/styles/variables/_vuetify.scss';
 
 .sns-buttons {
-  height: 104px;
+  height: 60px;
 }
 .description {
-  line-height: 30px;
+  line-height: 24px;
   white-space: normal;
   text-overflow: ellipsis;
   overflow: hidden;

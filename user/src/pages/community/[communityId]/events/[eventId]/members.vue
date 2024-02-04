@@ -26,10 +26,11 @@ const members = computed(() => eventStore.orderConfiremedMembers?.sort((a, b) =>
         <v-col
           v-for="member in members"
           :key="member.user_id"
-          md="3"
-          sm="3"
-          cols="12"
           class="ma-0 pa-0"
+          lg="3"
+          md="4"
+          sm="6"
+          cols="12"
         >
           <event-member-card :member="member" />
         </v-col>

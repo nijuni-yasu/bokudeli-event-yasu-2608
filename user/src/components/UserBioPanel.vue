@@ -66,7 +66,7 @@ const updateUserData = async (user: FirestoredUser) => {
   <v-row class="user-bio-panel">
     <!-- user profile -->
     <v-col cols="12">
-      <v-card class="pt-10">
+      <v-card class="pt-8">
         <v-card-title class="d-flex align-center flex-column">
           <v-avatar
             :color="avatar ? '' : 'primary'"
@@ -79,21 +79,19 @@ const updateUserData = async (user: FirestoredUser) => {
             <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
           </v-avatar>
         </v-card-title>
-        <v-row class="justify-center">
           <v-card-text>
-          <div class="mb-2 text-h4 text-center">{{ userName }}</div>
+          <div class="text-h5 text-center">{{ userName }}</div>
           </v-card-text>
-        </v-row>
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn icon="mdi-twitter" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-twitter" size="large" class="ma-3"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn icon="mdi-facebook" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-facebook" size="large" class="ma-3"></v-btn>
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn icon="mdi-instagram" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-instagram" size="large" class="ma-3"></v-btn>
             </a>
           </v-col>
         </v-row>
