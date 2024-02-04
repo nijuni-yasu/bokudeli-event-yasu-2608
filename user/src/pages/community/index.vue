@@ -69,7 +69,7 @@ const communityList = computed<CommunityWithMembers[]>(() => {
               <v-spacer/>
               <!-- Mutual members -->
               <v-card-text class="mt-auto">
-                <div class="my-2">
+                <div class="mb-2">
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                 </div>
                 <div v-if="members" class="v-avatar-group">
