@@ -78,7 +78,7 @@ const descriptionCharacterLimit = 18
                 <!-- Mutual members -->
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
-                    <div class="v-avatar-group">
+                    <div v-if="eventStore.orderConfiremedMembers" class="v-avatar-group">
                       <v-avatar v-for="member in eventStore.orderConfiremedMembers.slice(0, 12) ?? []" :key="member.user_id" size="40">
                         <v-img :src="member.user_image_url" cover/>
                       </v-avatar>
