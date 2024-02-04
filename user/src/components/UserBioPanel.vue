@@ -6,6 +6,7 @@ import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import UserBioEditDialog from './UserBioEditDialog.vue'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
 
 const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
 
@@ -21,29 +22,17 @@ const userDescription = computed(() => {
   return userData.value?.user_description ||
     ((storedUserStore.storedUser?.userId !== userData.value?.user_id) ? '' : 'ここに自己紹介文が入ります。')
 })
-const twitterUrl = computed(() => {
-  if (userData?.value?.user_sns_twitter) {
-    return 'https://twitter.com/' + userData.value.user_sns_twitter
-  } else {
-    return undefined
-  }
-})
+const twitterUrl = computed(() => (
+  userData?.value?.user_sns_twitter ? buildTwitterUrl(userData.value.user_sns_twitter) : undefined 
+))
 
-const facebookUrl = computed(() => {
-  if (userData?.value?.user_sns_facebook) {
-    return 'https://www.facebook.com/' + userData.value.user_sns_facebook
-  } else {
-    return undefined
-  }
-})
+const facebookUrl = computed(() => (
+  userData?.value?.user_sns_facebook ? buildFacebookUrl(userData.value.user_sns_facebook) : undefined
+))
 
-const instagramUrl = computed(() => {
-  if (userData?.value?.user_sns_instagram) {
-    return 'https://www.instagram.com/' + userData.value.user_sns_instagram
-  } else {
-    return undefined
-  }
-})
+const instagramUrl = computed(() => (
+  userData?.value?.user_sns_instagram ? buildInstagramUrl(userData.value.user_sns_instagram) : undefined
+))
 
 const isUserInfoEditDialogVisible = ref(false)
 const updateUserData = async (user: FirestoredUser) => {
@@ -77,7 +66,7 @@ const updateUserData = async (user: FirestoredUser) => {
   <v-row class="user-bio-panel">
     <!-- user profile -->
     <v-col cols="12">
-      <v-card class="pt-10">
+      <v-card class="pt-8">
         <v-card-title class="d-flex align-center flex-column">
           <v-avatar
             :color="avatar ? '' : 'primary'"
@@ -90,21 +79,19 @@ const updateUserData = async (user: FirestoredUser) => {
             <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
           </v-avatar>
         </v-card-title>
-        <v-row class="justify-center">
           <v-card-text>
-          <div class="mb-2 text-h4 text-center">{{ userName }}</div>
+          <div class="text-h5 text-center">{{ userName }}</div>
           </v-card-text>
-        </v-row>
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn icon="mdi-twitter" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-twitter" size="large" class="ma-3"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn icon="mdi-facebook" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-facebook" size="large" class="ma-3"></v-btn>
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn icon="mdi-instagram" size="x-large" class="ma-3"></v-btn>
+              <v-btn icon="mdi-instagram" size="large" class="ma-3"></v-btn>
             </a>
           </v-col>
         </v-row>
