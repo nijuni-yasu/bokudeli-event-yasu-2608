@@ -9,7 +9,6 @@ import {
 import { StateTree, Store } from 'pinia';
 import { FirestoredUser } from '@/schemes/storedUser'
 
-
 type UserStoreState = {
   exists: Ref<boolean | null>,
   user: Ref<FirestoredUser | null>,
@@ -17,20 +16,20 @@ type UserStoreState = {
 
 type UserStoreAction = {
   updateUser: (data: Partial<FirestoredUser>) => Promise<void>,
-  subscribe: () => Promise<void>,
+  subscribe: () => void,
   unsubscribe: () => void,
 }
 
 export type UserStore = Store<string, UserStoreState, Record<string, never>, UserStoreAction>
 
-export const useUserStore = (userId: string): UserStore => {
-  const store = defineStore<string, UserStoreState>(`/users/${userId}`, () => {
+export const useUserStore = (userId: string) => {
+  const store = defineStore<string, UserStoreState & UserStoreAction>(`/users/${userId}`, () => {
     const userRef: DocumentReference = doc(db, 'users', userId)
     const exists = ref<boolean | null>(null)
     const user = ref<FirestoredUser | null>(null)
 
     const updateUser = async (data: Partial<FirestoredUser>) => {
-      return await updateDoc(userRef, data)
+      await updateDoc(userRef, data)
     }
 
     let unsubscribeUser: Unsubscribe | null = null
@@ -56,5 +55,5 @@ export const useUserStore = (userId: string): UserStore => {
       }
     }
   })
-  return store() as UserStore
+  return store()
 }
