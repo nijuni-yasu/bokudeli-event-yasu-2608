@@ -265,7 +265,7 @@ async function sendEventInformationMail() {
         'MM/dd',
         { locale: ja }
     );
-    const dynamic_template_data = {
+    const _dynamic_template_data = {
         date,
         events: []};
     const query = db.collectionGroup('events')
@@ -290,7 +290,7 @@ async function sendEventInformationMail() {
                 convertToJapan(eventData.event_start_datetime?.toMillis()),
                 convertToJapan(eventData.event_end_datetime?.toMillis()));
             const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
-            dynamic_template_data.events.push({
+            _dynamic_template_data.events.push({
                 event_name: eventData.event_name,
                 event_address: eventData.event_address,
                 event_datetime,
@@ -301,17 +301,20 @@ async function sendEventInformationMail() {
                 shop_name: eventData.shop_name,
                 community_name: eventData.community_name,
             });
-            if (dynamic_template_data.events.length === 5) {
+            if (_dynamic_template_data.events.length === 5) {
                 break;
             }
         }
     }
-    if (dynamic_template_data.events.length === 0) {
+    if (_dynamic_template_data.events.length === 0) {
         return;
     }
     for (const userRef of await db.collection('users').listDocuments()) {
         const userSnapshot = await userRef.get();
-        dynamic_template_data.user_name = userSnapshot.get('user_name');
+        const dynamic_template_data = {
+          ..._dynamic_template_data,
+          user_name: userSnapshot.get('user_name')
+        };
         promises.push(sgMail.send({
             to: userSnapshot.get('user_email'),
             from: DEFAULT_FROM,
