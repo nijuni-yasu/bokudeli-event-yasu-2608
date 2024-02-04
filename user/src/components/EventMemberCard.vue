@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
 import { EventMember } from '@/schemes/EventMember'
+import { convertTruncateText} from '@/schemes/converter'
 
 const props = defineProps<{
   member: EventMember
@@ -18,6 +19,8 @@ const instagramUrl = computed(
   () => props.member.user_sns_instagram ? buildInstagramUrl(props.member.user_sns_instagram) : null
 )
 const userDescription = computed(() => props.member.user_description ?? '')
+
+const descriptionCharacterLimit = 32
 </script>
 
 <template>
@@ -40,7 +43,7 @@ const userDescription = computed(() => props.member.user_description ?? '')
           </v-col>
         </v-row>
       </v-card-title>
-      <v-card-subtitle>
+      <v-card-subtitle class="sns-buttons">
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
@@ -55,8 +58,8 @@ const userDescription = computed(() => props.member.user_description ?? '')
           </v-col>
         </v-row>
       </v-card-subtitle>
-      <v-card-text v-linkify class="text-subtitle-1" style="line-height: 30px; white-space: pre-line">
-        {{ userDescription }}
+      <v-card-text v-linkify class="text-subtitle-1 description">
+        {{ convertTruncateText(userDescription, descriptionCharacterLimit) }}
       </v-card-text>
       <v-card-text class="text-center">
         <router-link :to="`/users/${member.user_id}`">
@@ -76,4 +79,17 @@ const userDescription = computed(() => props.member.user_description ?? '')
 </template>
 
 <style scoped lang="scss">
+@import 'src/styles/variables/_vuetify.scss';
+
+.sns-buttons {
+  height: 104px;
+}
+.description {
+  line-height: 30px;
+  white-space: normal;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  height: calc(30px * 2 + $card-text-padding * 2);
+  max-height: calc(30px * 2 + $card-text-padding * 2);
+}
 </style>
