@@ -195,10 +195,6 @@ if (route.query.eventId && route.query.communityAccount) {
           </v-col>
         </v-row>
       </v-card>
-      <v-card-title class="my-5" style="font-size: 14px; white-space: pre-line">
-        キャンセルされる場合はサポートまで<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>ください。<br />
-        注文締切後のキャンセルはできませんのでご了承ください。<br />
-      </v-card-title>
       <confirm-dialog v-model="isOpenCancelConfirmDialog" :is-confirm="true" :ok-text="'キャンセルを実行する'" :cancel-text="'キャンセルしない'" :ok-click="startCancelProcess">
         <v-card-text class="text-center py-10 text-h6">
           キャンセル
