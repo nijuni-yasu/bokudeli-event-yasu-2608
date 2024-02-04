@@ -117,7 +117,7 @@ const openLoginDialog = () => {
                 <login-dialog v-model="isOpenLoginDialog" />
               </v-col>
               <!-- community manager -->
-              <v-card-title v-if="communityStore.members?.some(m => m.roles?.includes('manager') ?? false)" class="justify-center text-h6 mt-10">コミュニケーター</v-card-title>
+              <v-card-title v-if="communityStore.members?.some(m => m.roles?.includes('manager') ?? false)" class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
               <div v-for="manager in communityStore.members?.filter(m => m.roles?.includes('manager') ?? false)" :key="manager.user_id">
                 <router-link :to="`/users/${manager.user_id}`">
                   <v-row>
@@ -132,7 +132,7 @@ const openLoginDialog = () => {
               </div>
 
               <!-- community member -->
-              <v-card-title class="justify-center text-h6 mt-7">メンバー</v-card-title>
+              <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
               <div v-for="member in communityStore.members" :key="member.user_id">
                 <router-link :to="`/users/${member.user_id}`">
                   <v-row>

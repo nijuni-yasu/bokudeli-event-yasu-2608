@@ -5,6 +5,7 @@ import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter
 import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
 import { where, orderBy } from 'firebase/firestore'
+import { convertTruncateText} from '@/schemes/converter'
 
 const eventsStore = useEventsStore() as EventsStore
 eventsStore.filters = [
@@ -33,6 +34,8 @@ const eventStoreList = computed<_EventStore[]>(() =>
 const getEventKey = (event: BokudeliEvent) => {
   return [event.community_account, event.event_id].join('/')
 }
+const descriptionCharacterLimit = 18
+
 </script>
 
 <template>
@@ -64,19 +67,19 @@ const getEventKey = (event: BokudeliEvent) => {
                   【開催日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{ dateOnlyTimeString(eventStore.event.event_end_datetime) }}
                 </v-card-text>
                 <v-card-text class="text-left pb-2">
-                  【注文期限】{{ dateWithDayOfWeekString(eventStore.event.event_deadline_datetime) }}
+                  【開催場所】{{ convertTruncateText(eventStore.event.event_address, descriptionCharacterLimit) }}
                 </v-card-text>
-                <v-card-text class="text-left pb-2"> 【開催場所】{{ eventStore.event.event_address }} </v-card-text>
-                <v-card-text class="text-left pb-2"> 【お店】 {{ eventStore.event.shop_name }} </v-card-text>
-                <v-card-text class="text-left pb-2"> 【定員】{{ eventStore.event.event_max_people }} 人</v-card-text>
+                <v-card-text class="text-left pb-2">
+                  【お店】{{ eventStore.event.shop_name }}
+                </v-card-text>
                 <v-card-text class="text-left pb-4">
                   【参加者】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人
                 </v-card-text>
                 <!-- Mutual members -->
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
-                    <div class="v-avatar-group ml-2">
-                      <v-avatar v-for="member in eventStore.orderConfiremedMembers ?? []" :key="member.user_id" size="40">
+                    <div v-if="eventStore.orderConfiremedMembers" class="v-avatar-group">
+                      <v-avatar v-for="member in eventStore.orderConfiremedMembers.slice(0, 12) ?? []" :key="member.user_id" size="40">
                         <v-img :src="member.user_image_url" cover/>
                       </v-avatar>
                     </div>

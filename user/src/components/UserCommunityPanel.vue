@@ -70,7 +70,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
                 cover
               />
             </v-col>
-            <v-col md="6" sm="12" cols="12">
+            <v-col md="6" sm="12" cols="12" class="d-flex flex-column">
               <!-- title -->
               <v-card-title class="text-h5 text-left py-3">
                 {{ community.communityName }}
@@ -78,15 +78,16 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
               <v-card-text class="text-left pb-3">
                 {{ convertTruncateText(community.communityDescription, 100) }}
               </v-card-text>
+              <v-spacer/>
               <!-- Mutual members -->
-              <v-card-text class="position-relative">
-                <div class="d-flex justify-space-between align-center mt-5">
+              <v-card-text class="mt-auto">
+                <div class="my-2">
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
-                  <div class="v-avatar-group">
-                    <v-avatar v-for="member in members" :key="member.user_id" size="40">
-                      <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
-                    </v-avatar>
-                  </div>
+                </div>
+                <div v-if="members" class="v-avatar-group">
+                  <v-avatar v-for="member in members.slice(0,17) ?? []" :key="member.user_id" size="40">
+                    <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
+                  </v-avatar>
                 </div>
               </v-card-text>
             </v-col>
