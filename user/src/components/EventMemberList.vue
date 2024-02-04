@@ -24,28 +24,28 @@ defineProps<{
           sm="6"
           md="4"
         >
-          <v-row class="ma-0 d-flex align-center">
-            <router-link :to="`/users/${member.user_id}`" class="text--primary cursor-pointer text-decoration-none">
+          <router-link :to="`/users/${member.user_id}`" class="text--primary cursor-pointer text-decoration-none d-flex align-center">
+            <v-row class="ma-0 d-flex align-center">
               <v-avatar class="ma-1" size="60">
                 <v-img :src="member.user_image_url" cover/>
               </v-avatar>
-            </router-link>
-            <v-col class="ma-0 px-1">
-              <div class="d-flex align-center text-subtitle-2 font-weight-bold">
-                <div>
-                  {{ member.user_name }}
+              <v-col class="ma-0 px-1">
+                <div class="d-flex align-center text-subtitle-2 font-weight-bold">
+                  <div>
+                    {{ member.user_name }}
+                  </div>
                 </div>
-              </div>
-              <div
-                v-for="menu in member.orders.flatMap(order => (order.status === 'ordered') ? order.menus : [])"
-                :key="menu.menu_id"
-                class="d-flex align-center"
-                style="font-size: 12px; color: gray"
-              >
-                <div>{{ menu.name }}({{ menu.count }})</div>
-              </div>
-            </v-col>
-          </v-row>
+                <div
+                  v-for="menu in member.orders.flatMap(order => (order.status === 'ordered') ? order.menus : [])"
+                  :key="menu.menu_id"
+                  class="d-flex align-center"
+                  style="font-size: 12px; color: gray"
+                >
+                  <div>{{ menu.name }}({{ menu.count }})</div>
+                </div>
+              </v-col>
+            </v-row>
+          </router-link>
         </v-col>
       </v-row>
     </v-card-text>
