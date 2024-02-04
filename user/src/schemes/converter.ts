@@ -132,7 +132,7 @@ export const convertFirebaseUserToStoredUser = async (firebaseUser: User): Promi
 }
 
 export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): FirestoredUser => {
-  return {
+  return new FirestoredUser({
     user_id: storedUser.userId,
     user_name: storedUser.userName,
     user_email: storedUser.userEmail,
@@ -144,7 +144,7 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
     user_sns_instagram: storedUser.userSnsInstagram,
     created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
     updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
-  }
+  })
 }
 
 export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser): StoredUser => {

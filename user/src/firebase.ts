@@ -43,8 +43,11 @@ if (import.meta.env.VITE_FIRESTORE_EMULATOR_HOST != null) {
   connectFirestoreEmulator(db, host, Number.parseInt(port, 10))
 }
 
+let FIREBASE_STORAGE_BASE_URL = 'https://firebasestorage.googleapis.com/v0/'
 if (import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST != null) {
   const [host, port] = import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST.split(':')
   console.info('connectStorageEmulator', host, port)
   connectStorageEmulator(storage, host, Number.parseInt(port, 10))
+  FIREBASE_STORAGE_BASE_URL = `http://${host}:${port}/v0/`
 }
+export { FIREBASE_STORAGE_BASE_URL }

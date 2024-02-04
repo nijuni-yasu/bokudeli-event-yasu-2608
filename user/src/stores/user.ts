@@ -33,7 +33,7 @@ export const useUserStore = (userId: string) => {
     const user = ref<FirestoredUser | null>(null)
 
     const updateUser = async (data: FirestoredUser) => {
-      await updateDoc(userRef, data)
+      await updateDoc(userRef, data.convertToDocumentData())
     }
 
     const uploadUserImage = async (file: File) => {
@@ -73,7 +73,7 @@ export const useUserStore = (userId: string) => {
       if (unsubscribeUser == null) {
         unsubscribeUser = onSnapshot(userRef, (userSnapshot) => {
           exists.value = userSnapshot.exists()
-          user.value = exists.value ? userSnapshot.data() as FirestoredUser : null
+          user.value = exists.value ? new FirestoredUser(userSnapshot.data()) : null
         })
       }
     }

@@ -1,19 +1,17 @@
 <script setup lang="ts">
-// import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import UserBioEditDialog from './UserBioEditDialog.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
 
 const storedUserStore = useStoreStoredUser()
 
 const isEditable = computed(() => props.isEditable ?? false)
-
-const avatar = computed(() => props.userData.user_image_url ?? null)
 
 const userName = computed(() => props.userData.user_name ?? 'ゲスト')
 const userDescription = computed(() => {
@@ -54,17 +52,8 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
     <!-- user profile -->
     <v-col cols="12">
       <v-card class="pt-8">
-        <v-card-title class="d-flex align-center flex-column">
-          <v-avatar
-            :color="avatar ? '' : 'primary'"
-            :class="avatar ? '' : 'v-avatar-light-bg primary--text'"
-            size="200"
-            round
-            class="mb-4"
-          >
-            <v-img v-if="avatar" :src="avatar" cover/>
-            <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
-          </v-avatar>
+        <v-card-title class="d-flex align-center flex-column mb-4">
+          <UserAvatar :user="userData" :size="200" />
         </v-card-title>
           <v-card-text>
           <div class="text-h5 text-center">{{ userName }}</div>

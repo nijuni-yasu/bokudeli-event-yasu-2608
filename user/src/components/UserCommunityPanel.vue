@@ -6,6 +6,7 @@ import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityCreatePath, getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
 import { CommunityMember } from '@/schemes/communityMember'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const router = useRouter()
 const props = defineProps<{
@@ -85,9 +86,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                 </div>
                 <div v-if="members" class="v-avatar-group">
-                  <v-avatar v-for="member in members.slice(0,17) ?? []" :key="member.user_id" size="40">
-                    <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
-                  </v-avatar>
+                  <UserAvatar v-for="member in members.slice(0,17) ?? []" :key="member.user_id" :user="member" :size="40"/>
                 </div>
               </v-card-text>
             </v-col>

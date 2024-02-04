@@ -6,6 +6,7 @@ import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
 import { where, orderBy } from 'firebase/firestore'
 import { convertTruncateText} from '@/schemes/converter'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const eventsStore = useEventsStore() as EventsStore
 eventsStore.filters = [
@@ -21,7 +22,7 @@ type _EventStore = Omit<EventStore, 'event'> & {
   event: BokudeliEvent
 }
 
-const eventStoreList = computed<_EventStore[]>(() => 
+const eventStoreList = computed<_EventStore[]>(() =>
   (eventsStore.eventStores ?? []).flatMap((eventStore) => {
     if (eventStore.event == null || eventStore.event.event_status.value === 'in_draft' || eventStore.event.event_status.value === 'applying_reservation') {
       return []
@@ -79,9 +80,7 @@ const descriptionCharacterLimit = 18
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
                     <div v-if="eventStore.orderConfiremedMembers" class="v-avatar-group">
-                      <v-avatar v-for="member in eventStore.orderConfiremedMembers.slice(0, 12) ?? []" :key="member.user_id" size="40">
-                        <v-img :src="member.user_image_url" cover/>
-                      </v-avatar>
+                      <UserAvatar v-for="member in eventStore.orderConfiremedMembers.slice(0, 12) ?? []" :key="member.user_id" :user="member" :size="40" />
                     </div>
                   </div>
                 </v-card-text>

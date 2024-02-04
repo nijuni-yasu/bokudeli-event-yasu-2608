@@ -2,12 +2,12 @@
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
 import { EventMember } from '@/schemes/EventMember'
 import { convertTruncateText} from '@/schemes/converter'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const props = defineProps<{
   member: EventMember
 }>()
 
-const avatar = computed(() => props.member.user_image_url)
 const userName = computed(() => props.member.user_name ?? 'ゲスト')
 const twitterUrl = computed(
   () => props.member.user_sns_twitter ? buildTwitterUrl(props.member.user_sns_twitter) : null
@@ -26,17 +26,8 @@ const descriptionCharacterLimit = 38
 <template>
   <v-container class="pa-3">
     <v-card class="pt-8">
-      <v-card-title class="d-flex align-center flex-column">
-        <v-avatar
-            :color="avatar ? '' : 'primary'"
-            :class="avatar ? '' : 'v-avatar-light-bg primary--text'"
-            size="50%"
-            round
-            class="mb-4"
-          >
-          <v-img v-if="avatar" aspect-ratio="1" :src="avatar" cover/>
-          <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
-        </v-avatar>
+      <v-card-title class="d-flex align-center flex-column" >
+        <UserAvatar :user="member" :size="150"/>
         <v-row class="justify-center">
           <v-col>
             <span class="mb-2 text-h5 text-center text-wrap">{{ userName }}</span>

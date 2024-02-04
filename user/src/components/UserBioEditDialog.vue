@@ -15,7 +15,7 @@ interface Emit {
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
-const userDataDraft = ref<FirestoredUser>(_.cloneDeep(props.userData))
+const userDataDraft = ref<FirestoredUser>(new FirestoredUser(_.cloneDeep(props.userData)))
 const userImage = ref<File | undefined>(undefined)
 
 const dialog = computed({
@@ -59,12 +59,12 @@ const closeDialog = () => {
 }
 
 const onFormSubmit = async () => {
-  emit('submit', toRaw(userDataDraft.value), userImage.value)
+  emit('submit', userDataDraft.value, userImage.value)
   closeDialog()
 }
 
 const onFormReset = () => {
-  userDataDraft.value = _.cloneDeep(props.userData)
+  userDataDraft.value = new FirestoredUser(_.cloneDeep(props.userData))
   closeDialog()
 }
 </script>

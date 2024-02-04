@@ -1,4 +1,6 @@
-import { Timestamp } from 'firebase/firestore'
+import { DocumentData, Timestamp } from 'firebase/firestore'
+import _ from 'lodash'
+import { buildThumbnailsLinks, type ThumbnailLinks} from '@/composable/buildThumbnailsLinks'
 
 type StoredUser = {
   userId: string
@@ -14,18 +16,37 @@ type StoredUser = {
   updatedAt: Date | undefined
 }
 
-export type FirestoredUser = {
-  user_id: string
-  user_name: string
-  user_email: string
-  user_image_url: string | null
-  user_account: string | null
-  user_description: string | null
-  user_sns_facebook: string | null
-  user_sns_twitter: string | null
-  user_sns_instagram: string | null
-  created_at: Timestamp
-  updated_at: Timestamp
+export class FirestoredUser {
+  user_id: string = ''
+  user_name: string = ''
+  user_email: string = ''
+  user_image_url: string | null = null
+  user_account: string | null = null
+  user_description: string | null = null
+  user_sns_facebook: string | null = null
+  user_sns_twitter: string | null = null
+  user_sns_instagram: string | null = null
+  created_at: Timestamp | null = null
+  updated_at: Timestamp | null = null
+  user_thumb_image_urls: ThumbnailLinks | null = null
+
+  constructor(data?: DocumentData) {
+    if (data != null) {
+      _.merge(this, data)
+      
+      if (data?.user_id != null && data?.user_image_url != null) {
+        try {
+          this.user_thumb_image_urls = buildThumbnailsLinks(data.user_id, new URL(data.user_image_url))
+        } catch {
+          // Do nothing
+        }
+      }
+    }
+  }
+
+  convertToDocumentData(): DocumentData {
+    return _.omit(this, ['user_thumb_image_urls'])
+  }
 }
 
 export default StoredUser
