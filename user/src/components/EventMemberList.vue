@@ -41,7 +41,14 @@ defineProps<{
                   class="d-flex align-center"
                   style="font-size: 12px; color: gray"
                 >
-                  <div>{{ menu.name }}({{ menu.count }})</div>
+                  <div>
+                    <span>
+                      {{ menu.name }}
+                    </span>
+                    <span v-if="menu.count>1">
+                      （{{ menu.count }}個）
+                    </span>
+                  </div>
                 </div>
               </v-col>
             </v-row>
