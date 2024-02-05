@@ -15,12 +15,8 @@ const addCommunityUser = async (communityId: string, userId: string) => {
     return
   }
 
-  const userDoc = {
-    created_at: Timestamp.now(),
-    updated_at: Timestamp.now(),
-  }
   const memberUserDoc = doc(db, 'communities', communityId, 'members', userId)
-  setDoc(memberUserDoc, userDoc, { merge: true })
+  setDoc(memberUserDoc, { updated_at: Timestamp.now() }, { merge: true })
 }
 
 export const fixOrder = async (order: OrderItem) => {

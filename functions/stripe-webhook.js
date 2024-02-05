@@ -21,8 +21,7 @@ const addCommunityUser = async (communityId, userId) => {
     }
 
     const membersUserDoc = db.doc(`communities/${communityId}/members/${userDoc.user_id}`);
-    userDoc.updated_at = Timestamp.now();
-    await membersUserDoc.set(userDoc);
+    await membersUserDoc.set({ updated_at: Timestamp.now() }, {merge: true});
 }
 
 exports.stripe_webhook = functions.region('asia-northeast1').https.onRequest(async (req, res) => {
