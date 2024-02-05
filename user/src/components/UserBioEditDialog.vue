@@ -1,8 +1,6 @@
 <script setup lang="ts">
-// import StoredUser from '@/schemes/storedUser'
 import { FirestoredUser } from '@/schemes/storedUser'
-import { storage } from '@/firebase'
-import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
+import _ from 'lodash'
 
 interface Props {
   modelValue: boolean
@@ -11,15 +9,14 @@ interface Props {
 
 interface Emit {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'submit', value: FirestoredUser): void
+  (e: 'submit', value: FirestoredUser, image?: File): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
-const userDataDraft = ref<FirestoredUser>({...props.userData})
-const userImage = ref<File | null>(null)
-const userStorageRef = storageRef(storage, 'users')
+const userDataDraft = ref<FirestoredUser>(_.cloneDeep(props.userData))
+const userImage = ref<File | undefined>(undefined)
 
 const dialog = computed({
   get: () => props.modelValue,
@@ -57,28 +54,17 @@ const readImageFiles = (files: File[]) => {
 }
 
 const closeDialog = () => {
+  userImage.value = undefined
   dialog.value = false
 }
 
 const onFormSubmit = async () => {
-  if (userImage.value) {
-    const filepath = `${userDataDraft.value.user_id}/${userImage.value.name}`
-    const imageStorageRef = storageRef(userStorageRef, filepath)
-
-    try {
-      const snapshot = await uploadBytes(imageStorageRef, userImage.value)
-      const url = await getDownloadURL(snapshot.ref)
-      userDataDraft.value.user_image_url = url
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  emit('submit', { ...userDataDraft.value })
+  emit('submit', toRaw(userDataDraft.value), userImage.value)
   closeDialog()
 }
 
 const onFormReset = () => {
+  userDataDraft.value = _.cloneDeep(props.userData)
   closeDialog()
 }
 </script>
