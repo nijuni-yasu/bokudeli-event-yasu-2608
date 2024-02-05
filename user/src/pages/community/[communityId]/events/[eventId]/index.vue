@@ -214,7 +214,19 @@ const openCalendarAddDialog = () => {
                   </span>                
                 </v-card-text> -->
                 <!-- メンバー情報 -->
-                <event-member-list :members="members" :event-max-people="event.event_max_people" />
+                <event-member-list :members="members" :event-max-people="event.event_max_people">
+                  <v-row>
+                    <v-spacer/>
+                    <v-col v-if="members.length>0" cols="auto">
+                      <router-link :to="{ path: `${eventId}/members` }">
+                        <div class="d-flex align-end">
+                          <v-icon size="large">mdi-account-group</v-icon>
+                          <span class="ml-2" style="font-size: 16px">参加者一覧</span>
+                        </div>
+                      </router-link>
+                    </v-col>
+                  </v-row>
+                </event-member-list>
                 <v-card-text>
                   <v-row align-self-center>
                     <v-row class="ma-1">
@@ -299,7 +311,7 @@ const openCalendarAddDialog = () => {
   font-weight: 600;
 }
 .event-content {
-  font-size: 18px;
+  font-size: 16px;
   padding-bottom: 16px;
   font-weight: 400;
   line-height: 32px;
