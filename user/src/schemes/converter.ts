@@ -54,35 +54,7 @@ export const convertDocumentDataToEvent = (documentData: DocumentData): Bokudeli
 }
 
 export const convertDocumentDataToCommunity = (documentData: DocumentData): BokudeliCommunity => {
-  const {
-    community_id,
-    community_name,
-    community_account,
-    community_cover_image_url,
-    community_icon_image_url,
-    community_desc,
-    community_sns_officialsite,
-    community_sns_facebook,
-    community_sns_instagram,
-    community_sns_twitter,
-    is_public,
-  } = documentData
-
-  return {
-    communityId: community_id ?? '',
-    communityName: community_name ?? '',
-    communityAccount: community_account ?? '',
-    communityCoverImageUrl: community_cover_image_url ?? '',
-    communityIconImageUrl: community_icon_image_url ?? '',
-    communityDescription: community_desc ?? '',
-    communitySns: {
-      officialsite: community_sns_officialsite ?? '',
-      facebook: community_sns_facebook ?? '',
-      instagram: community_sns_instagram ?? '',
-      twitter: community_sns_twitter ?? '',
-    },
-    isPublic: is_public ?? false,
-  }
+  return new BokudeliCommunity(documentData)
 }
 
 export const convertDocumentDataToMenu = (

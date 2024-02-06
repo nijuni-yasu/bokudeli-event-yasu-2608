@@ -3,7 +3,7 @@ import { db } from '@/firebase'
 import { doc, where } from 'firebase/firestore'
 import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
+import { getCommunityCreatePath, getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
 import { CommunityMember } from '@/schemes/communityMember'
 
@@ -51,7 +51,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
     <v-row v-if="!isLoading" class="justify-center">
       <v-col
         v-for="{ community, members } in communityList"
-        :key="community.communityId"
+        :key="community.community_id"
         md="12"
         sm="12"
         cols="12"
@@ -59,12 +59,12 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
         <v-card
           class="mx-2 mt-2 mb-1"
           color="text-center cursor-pointer"
-          @click="router.push(getCommunityPath(community.communityAccount))"
+          @click="router.push(getCommunityPath(community.community_account))"
         >
           <v-row>
             <v-col md="6" sm="12" cols="12" class="pa-0">
               <v-img
-                :src="community.communityCoverImageUrl"
+                :src="community.community_cover_image_url"
                 style="border-radius: 5px 0px 0px 5px"
                 aspect-ratio="1.91"
                 cover
@@ -73,10 +73,10 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
             <v-col md="6" sm="12" cols="12" class="d-flex flex-column">
               <!-- title -->
               <v-card-title class="text-h5 text-left py-3">
-                {{ community.communityName }}
+                {{ community.community_name }}
               </v-card-title>
               <v-card-text class="text-left pb-3">
-                {{ convertTruncateText(community.communityDescription, 100) }}
+                {{ convertTruncateText(community.community_desc, 100) }}
               </v-card-text>
               <v-spacer/>
               <!-- Mutual members -->
@@ -96,6 +96,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
         <div v-if="props.type===`managers`&&props.isLoginUser" class="justify-center">
           <v-col class="text-right">
             <v-btn
+              v-if="community.is_approved === true"
               class="mx-1 mb-1 mt-0"
               color="white"
               elevation="5"
@@ -103,7 +104,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
               rounded
               target="_blank"
               prepend-icon="mdi-pencil-box-outline"
-              @click="router.push(getEventCreatePath(community.communityAccount))"
+              @click="router.push(getEventCreatePath(community.community_account))"
             >
               イベント新規作成
             </v-btn>
@@ -115,7 +116,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
               rounded
               target="_blank"
               prepend-icon="mdi-cog"
-              @click="router.push(getCommunitySettingsPath(community.communityAccount))"
+              @click="router.push(getCommunitySettingsPath(community.community_account))"
             >
               コミュニティ設定
             </v-btn>
@@ -134,11 +135,10 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
             elevation="10"
             size="large"
             rounded
-            prepend-icon="mdi-heart"
-            href="https://forms.gle/z9L88Dq7vDKwbvxMA"
-            target="_blank"
+            prepend-icon="mdi-heart-outline"
+            @click="router.push(getCommunityCreatePath())"
           >
-            コミュニティを新規申請する
+            コミュニティを作る
           </v-btn>
         </v-col>
       </v-row>

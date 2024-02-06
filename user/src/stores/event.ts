@@ -27,6 +27,14 @@ import OrderItem from '@/schemes/orderItem'
 import { EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
 
+const EVENT_TYPE_EVENT_REF_UPDATED = 'onEventRefUpdated'
+
+class EventRefUpdatedEvent extends Event {
+  constructor(public eventRef: DocumentReference) {
+    super(EVENT_TYPE_EVENT_REF_UPDATED)
+  }
+}
+
 type EventStoreState = {
   event: Ref<BokudeliEvent | null>,
 } & StateTree
@@ -35,10 +43,11 @@ type EventStoreGetters = {
   orders: Ref<OrderItem[] | null>,
   members: Ref<EventMember[] | null>,
   orderConfiremedMembers: Ref<EventMember[] | null>,
-} 
+}
 
 type EventStoreAction = {
-  updateEvent: (data: BokudeliEvent, coverImage?: File) => Promise<void>,
+  updateEvent: (data: BokudeliEvent) => Promise<void>,
+  updateCoverImage: (coverImage: File) => Promise<void>,
   addOrder: (data: Partial<OrderItem>) => Promise<DocumentReference | null>,
   updateOrder: (id: string, data: Partial<OrderItem>) => Promise<void>,
   subscribe: () => Promise<void>,
@@ -47,30 +56,45 @@ type EventStoreAction = {
 
 export type EventStore = Store<string, EventStoreState, EventStoreGetters, EventStoreAction>
 
-export const useEventStore = (eventIdentifire: string | DocumentReference) => {
-  const initialValues = reactive<{
-    eventId: string;
-    eventRef: DocumentReference | null;
-  }>(eventIdentifire instanceof DocumentReference ? {
-    eventId: eventIdentifire.id,
-    eventRef: eventIdentifire,
-  } : {
-    eventId: eventIdentifire,
-    eventRef: null,
-  })
-
-  const store = defineStore<string, EventStoreState & EventStoreGetters & EventStoreAction> (`/events/${initialValues.eventId}`, () => {
+export const useEventStore = (eventId: string) => {
+  const store = defineStore<string, EventStoreState & EventStoreGetters & EventStoreAction> (`/events/${eventId}`, () => {
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(null)
     const _members = ref<{ userStore: UserStore; orders: OrderItem[]}[] | null>(null)
 
+    const _eventRef = ref<DocumentReference | null>(null)
+    watch(_eventRef, (newValue) => {
+      if (newValue == null) {
+        throw new Error('_eventRef can be null just as the initial value.')
+      }
+      document.dispatchEvent(new EventRefUpdatedEvent(newValue))
+    }, { immediate: false })
+
+    const getEventRef = async (): Promise<DocumentReference> => {
+      return new Promise((resolve, reject) => {
+        if (_eventRef.value == null) {
+          const listener = (event: Event) => {
+            document.removeEventListener(EVENT_TYPE_EVENT_REF_UPDATED, listener)
+            resolve((event as EventRefUpdatedEvent).eventRef)
+          }
+          document.addEventListener(EVENT_TYPE_EVENT_REF_UPDATED, listener)
+          // Timeout
+          window.setTimeout(() => {
+            document.removeEventListener(EVENT_TYPE_EVENT_REF_UPDATED, listener)
+            reject(new Error('getEventRef timeout'))
+          }, 5000)
+        } else {
+          resolve(toRaw(_eventRef.value))
+        }
+      })
+    }
+
     const orders = computed<OrderItem[] | null>(() => _members.value?.flatMap((member) => member.orders) ?? null)
 
-    const members = computed<EventMember[] | null>(() => {      
-      const eventRef = toRaw(initialValues.eventRef)
-      if (eventRef != null) {
+    const members = computed<EventMember[] | null>(() => {
+      getEventRef().then((eventRef) => {
         subscribeOrders(eventRef)
-      }
+      })
       return _members.value?.flatMap((member) => {
         if (member.userStore.exists == null && member.userStore.user == null) {
           return []
@@ -84,37 +108,41 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
       members.value?.filter((member) => member.orders.some((order) => order.status === 'ordered')) ?? null
     )
 
-    const updateEvent = async (data: BokudeliEvent, coverImage?: File) => {
-      const eventRef = toRaw(initialValues.eventRef)
-      const communityId = eventRef?.parent?.parent?.id ?? data.community_id
-      if (eventRef == null || communityId == null) {
+    const updateEvent = async (data: BokudeliEvent) => {
+      const eventRef = await getEventRef()
+      const communityId = eventRef.parent?.parent?.id ?? data.community_id
+      if (communityId == null) {
         console.warn(`These values must be set. eventRef: ${eventRef} communityId: ${communityId}`)
         return
       }
       data.updated_at = Timestamp.now()
-      if (coverImage) {
-        data.event_cover_url = (await uploadEventImage(communityId, initialValues.eventId, coverImage)) ?? ''
-      }
       return await updateDoc(eventRef, data.convertToDocumentData())
     }
 
-    const addOrder = async (data: Partial<OrderItem>): Promise<DocumentReference | null> => {
-      const eventRef = toRaw(initialValues.eventRef)
-      if (eventRef == null) {
-        console.warn('eventRef is null')
-        return null
+    const updateCoverImage = async (coverImage: File) => {
+      const eventRef = await getEventRef()
+      const communityId = eventRef.parent?.parent?.id
+      if (communityId == null) {
+        console.warn(`These values must be set. eventRef: ${eventRef} communityId: ${communityId}`)
+        return
       }
+      const data = {
+        updated_at: Timestamp.now(),
+        event_cover_url: (await uploadEventImage(communityId, eventId, coverImage)) ?? ''
+      }
+      return await updateDoc(eventRef, data)
+    }
+
+    const addOrder = async (data: Partial<OrderItem>): Promise<DocumentReference | null> => {
+      const eventRef = await getEventRef()
       const addedDoc = await addDoc(collection(eventRef, 'orders'), data)
       await setDoc(addedDoc, { order_id: addedDoc.id }, { merge: true })
       return addedDoc
     }
 
     const updateOrder = async (id: string, data: Partial<OrderItem>): Promise<void> => {
-      if (initialValues.eventRef == null) {
-        console.warn('eventRef is null')
-        return
-      }
-      const orderRef = doc(initialValues.eventRef, 'orders', id)
+      const eventRef = await getEventRef()
+      const orderRef = doc(eventRef, 'orders', id)
       await updateDoc(orderRef, data)
     }
 
@@ -152,25 +180,34 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
       }
     }
 
-    const subscribe = () => getDocs(query(collectionGroup(db, 'events'), where('event_id', '==', initialValues.eventId)))
+    let retry = 0
+    const subscribe = () => getDocs(query(collectionGroup(db, 'events'), where('event_id', '==', eventId)))
       .then((querySnapshot) => {
-        initialValues.eventRef = querySnapshot.docs[0]?.ref
-        // firestore は内部の値に直接アクセスするので、toRaw で unwrap しておかないといけない
-        const eventRef = toRaw(initialValues.eventRef)
-        if (eventRef != null) {
-          subscribeEvent(eventRef)
-          // 遅延評価なので以下を呼ぶ必要はない
-          // subscribeOrders(eventRef)
+        const eventRef = querySnapshot.docs[0]?.ref
+        if (eventRef == null) {
+          if (retry++ < 10) {
+            console.warn(`The event "${eventId}" does not exist. It may not have been created yet. It will retry in 500 ms.`)
+            window.setTimeout(subscribe, 500)
+            return
+          }
+          throw new Error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
         }
+        retry = 0
+        _eventRef.value = eventRef
+        subscribeEvent(eventRef)
+        // 遅延評価なので以下を呼ぶ必要はない
+        // subscribeOrders(eventRef)
       })
-    
-    if (eventIdentifire instanceof DocumentReference) {
-      subscribeEvent(eventIdentifire)
-      // 遅延評価なので以下を呼ぶ必要はない
-      // subscribeOrders(eventIdentifire)
-    } else {
-      subscribe()
+
+    const unsubscribe = () => {
+      retry = 0
+      unsubscribeEvent?.()
+      unsubscribeEvent = null
+      unsubscribeOrders?.()
+      unsubscribeOrders = null
     }
+
+    subscribe()
 
     return {
       event,
@@ -178,15 +215,15 @@ export const useEventStore = (eventIdentifire: string | DocumentReference) => {
       members,
       orderConfiremedMembers,
       updateEvent,
+      updateCoverImage,
       addOrder,
       updateOrder,
       subscribe,
-      unsubscribe: () => {
-        unsubscribeEvent?.()
-        unsubscribeEvent = null
-        unsubscribeOrders?.()
-        unsubscribeOrders = null
-      }
+      unsubscribe,
+      $reset: () => {
+        unsubscribe()
+        subscribe()
+      },
     }
   })
   return store()
@@ -196,6 +233,7 @@ type EventsStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
   filters: Ref<QueryConstraint[] | null>
+  eventDraft: Ref<BokudeliEvent>
 } & StateTree
 
 type EventsStoreGetters = {
@@ -203,13 +241,14 @@ type EventsStoreGetters = {
 }
 
 type EventsStoreAction = {
-  addEvent: (communityId: string, data: Partial<BokudeliEvent>, coverImage?: File | string) => Promise<BokudeliEvent>,
+  createNewEventFromDraft: (communityId: string) => Promise<BokudeliEvent>,
 }
 
 export type EventsStore = Store<'/events', EventsStoreState, EventsStoreGetters, EventsStoreAction>
 
 export const useEventsStore = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction> ('/events', () => {
   const _eventStores = ref<EventStore[] | null>(null)
+  const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
   const filters = ref<QueryConstraint[] | null>(null)
 
   let unsubscribe: Unsubscribe | null = null
@@ -218,7 +257,7 @@ export const useEventsStore = defineStore<string, EventsStoreState & EventsStore
     const q = query(collectionGroup(db, 'events'), ...(filters.value ?? []))
     unsubscribe?.()
     unsubscribe = onSnapshot(q, (querySnapshot) => {
-      _eventStores.value = querySnapshot.docs.map((doc) => useEventStore(doc.ref) as EventStore)
+      _eventStores.value = querySnapshot.docs.map((doc) => useEventStore(doc.id) as EventStore)
     })
   }
 
@@ -238,36 +277,35 @@ export const useEventsStore = defineStore<string, EventsStoreState & EventsStore
     }
   })
 
-  const addEvent = async (community_id: string, data: Partial<BokudeliEvent>, coverImage?: File | string): Promise<BokudeliEvent> => {
+  const createNewEventFromDraft = async (community_id: string): Promise<BokudeliEvent> => {
     const communityRef = doc(db, 'communities', community_id)
     const community = await getDoc(communityRef)
     if (!community.exists()) {
       throw new Error(`community ${community_id} does not exists`)
     }
-    const addedDoc = await addDoc(collection(communityRef, 'events'), {
-      // firebase は純粋なオブジェクトしか受け付けないので、data を unwrap する
-      ...data,
+    const newEventRef = doc(collection(communityRef, 'events'))
+    await setDoc(newEventRef, {
+      ...eventDraft.value.convertToDocumentData(),
+      event_id: newEventRef.id,
       community_id,
       community_name: community.get('community_name'),
       community_account: community.get('community_account'),
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     })
-    let eventCoverUrl
-    if (coverImage == null) {
-      eventCoverUrl = ''
-    } else if (coverImage instanceof File) {
-      eventCoverUrl = await uploadEventImage(community_id, addedDoc.id, coverImage)
-    } else {
-      eventCoverUrl = coverImage
-    }
-    await setDoc(addedDoc, { event_id: addedDoc.id, event_cover_url: eventCoverUrl }, { merge: true })
-    return convertDocumentDataToEvent((await getDoc(addedDoc)).data() as DocumentData)
+    return convertDocumentDataToEvent((await getDoc(newEventRef)).data() as DocumentData)
   }
 
   return {
     filters,
     eventStores,
-    addEvent,
+    eventDraft,
+    createNewEventFromDraft,
+    $reset: () => {
+      eventDraft.value = new BokudeliEvent()
+      filters.value = null
+      unsubscribe?.()
+      unsubscribe = null
+    },
   }
 })
