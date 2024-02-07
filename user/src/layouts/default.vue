@@ -1,24 +1,9 @@
 <script lang="ts" setup>
-import {
-  FacebookAuthProvider,
-  GoogleAuthProvider,
-  OAuthCredential,
-  User,
-  UserCredential,
-  getAuth,
-  getRedirectResult,
-  onAuthStateChanged,
-} from 'firebase/auth'
-
 import { useSkins } from '@core/composable/useSkins'
 import { useThemeConfig } from '@core/composable/useThemeConfig'
 
 // @layouts plugin
 import { AppContentLayoutNav } from '@layouts/enums'
-
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useStoreCredential } from '@/stores/credential'
-import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('./components/DefaultLayoutWithHorizontalNav.vue'),
@@ -35,27 +20,6 @@ switchToVerticalNavOnLtOverlayNavBreakpoint(windowWidth)
 const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
-
-onAuthStateChanged(getAuth(), async (user: User | null) => {
-  // リダイレクト結果を取得
-  const userCredential = await getRedirectResult(getAuth())
-  if (!userCredential && !user) {
-    // ログアウト処理
-    const store = useStoreStoredUser()
-    store.$reset()
-    useStoreCredential().$reset()
-    return
-  }
-  if (!userCredential && user) {
-    // ログイン済みのユーザーの処理
-    await loginUser(user)
-  }
-  if (userCredential) {
-    // リダイレクトでのログイン処理
-    await updateCredentialFromUserCredential(userCredential)
-    await loginUser(user || userCredential.user)
-  }
-})
 </script>
 
 <template>
