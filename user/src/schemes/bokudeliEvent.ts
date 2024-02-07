@@ -34,7 +34,7 @@ class BokudeliEvent {
   partner_id: string = '';
   shop_id: string = '';
   shop_name: string = '';
-  is_public: boolean = false;
+  is_public: boolean = true;
   event_payment: EventPaymentType = 'user_advance';
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
