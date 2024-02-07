@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { requiredValidator, phoneValidator } from '@/utils/validators'
+import { requiredValidator, phoneValidator, emailValidator } from '@/utils/validators'
 import { useStoreStoredUser } from '@/stores/storedUser'
 
 const props = defineProps<{
@@ -57,7 +57,7 @@ const sendReserveMail = () => {
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="event.organizer_email" outlined dense label="メールアドレス" :rules="[requiredValidator]" :readonly="event.event_status.value !== 'in_draft'" />
+                <v-text-field v-model="event.organizer_email" outlined dense label="メールアドレス" :rules="[requiredValidator, emailValidator]" :readonly="event.event_status.value !== 'in_draft'" />
               </v-col>
 
               <v-col cols="12">

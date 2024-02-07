@@ -52,3 +52,16 @@ export const phoneValidator = (value: string | null | undefined) => {
     '有効な電話番号を入力してください'
   )
 }
+
+/**
+ * メールアドレスのバリデーション
+ * 
+ * @param value 
+ * @returns boolean | string if it's invalid, return error message
+ */
+export const emailValidator = (value: string | null | undefined) => {
+  if (isEmpty(value)) {
+    return true
+  }
+  return /^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/.test(value as string) || '有効なメールアドレスを入力してください'
+}

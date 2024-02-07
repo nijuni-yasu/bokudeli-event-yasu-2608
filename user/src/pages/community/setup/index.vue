@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCommunityPath } from '@/router/utils'
 import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
-import { requiredValidator, postalCodeValidator, phoneValidator } from '@/utils/validators'
+import { requiredValidator, postalCodeValidator, phoneValidator, emailValidator } from '@/utils/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 
@@ -375,7 +375,7 @@ const checkAccountExists = async (event: Event) => {
                     outlined
                     dense
                     label="メールアドレス"
-                    :rules="[requiredValidator]"
+                    :rules="[requiredValidator, emailValidator]"
                   />
                 </v-col>
               </v-row>
