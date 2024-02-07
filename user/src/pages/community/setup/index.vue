@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCommunityPath } from '@/router/utils'
 import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
-import { requiredValidator, postalCodeValidator, phoneValidator, emailValidator } from '@/utils/validators'
+import { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } from '@/utils/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 
@@ -127,13 +127,13 @@ const cancel = () => {
 
 const accountFieldRef = ref();
 const isCheckingAccount = ref(false)
-const isValidAccount = ref<true | string>(true)
+const isValidSameAccount = ref<true | string>(true)
 const checkAccountExists = async (event: Event) => {
   isCheckingAccount.value = true
   try {
     const target = event.target as HTMLInputElement
     const community = await communitiesStore.getCommunityData(target.value)
-    isValidAccount.value = community == null || 'このアカウント名は既に使用されています'
+    isValidSameAccount.value = community == null || 'このアカウント名は既に使用されています'
     nextTick(() => {
       accountFieldRef.value.validate()
     })
@@ -171,7 +171,7 @@ const checkAccountExists = async (event: Event) => {
                     outlined
                     dense
                     :loading="isCheckingAccount"
-                    :rules="[requiredValidator, isValidAccount]"
+                    :rules="[requiredValidator, isValidSameAccount, accountValidator]"
                     label="アカウント"
                     @blur="checkAccountExists" />
                 </v-col>
