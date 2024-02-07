@@ -219,6 +219,7 @@ const sendReserveMail = async () => {
   event.event_status = { value: 'applying_reservation' }
   const eventStore = useEventStore(event.event_id) as EventStore
   await eventStore.updateEvent(event)
+  window.alert(`「${event.shop_name}」に予約申請しました。店舗からの予約承認をお待ちください。`)
   router.push(getEventPath(event.community_account, event.event_id))
 }
 
