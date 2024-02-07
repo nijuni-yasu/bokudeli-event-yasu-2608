@@ -203,9 +203,9 @@ const sumbmit = async () => {
     return
   }
   if (route.query.id == null) {
-    window.alert(`イベントID： ${event.event_id} のイベントを新規作成しました`)
+    window.alert(`「${event.event_name}」のイベントを新規作成しました`)
   } else {
-    window.alert(`イベントID： ${event.event_id} のイベントを更新しました`)
+    window.alert(`「${event.event_name} 」のイベントを更新しました`)
   }
   router.push(getEventPath(event.community_account, event.event_id))
 }
