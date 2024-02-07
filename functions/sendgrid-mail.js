@@ -27,7 +27,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const db = getFirestore();
 
 /**
- * 
+ *
  * @param {number} millis UNIX Time （ミリ秒）
  * @returns 日本時間を表示するためのミリ秒
  */
@@ -186,7 +186,7 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
     const deliveryDuration = convertToDuration(event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000, event_start_datetime_japan)
     const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`;
     const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
-    
+
     return {
         ...eventData,
         date,
@@ -347,7 +347,7 @@ async function sendEventStatusMail(templateId, eventSnapshot) {
 }
 
 async function sendShopOpenMail(shopSnapshot) {
-    const shopName = shopSnapshot.get('shop_name'); 
+    const shopName = shopSnapshot.get('shop_name');
     const isOpen = shopSnapshot.get('is_open') ? '開店（OPEN）' : '閉店（CLOSE）';
     const subject =  `${shopName}の開店設定が変更されました`;
     // TODO これ以上複雑になるようなら、テンプレートを使う
@@ -425,14 +425,14 @@ export const on_event_changed = functions
     .onUpdate(async (change) => {
         const conditions = [
             ['in_draft', 'applying_reservation', sendApplyingOrderMail],
-            ['in_draft', 'applying_reservation', sendEventStatusMail.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)], 
+            ['in_draft', 'applying_reservation', sendEventStatusMail.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)],
             ['applying_reservation', 'in_draft', sendEventStatusMail.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
             ['applying_reservation', 'accepting_order', sendEventStatusMail.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID)],
         ]
         const before = change.before;
         const after = change.after;
         const promises = [];
-        for (c of conditions) {
+        for (const c of conditions) {
             if (before.get('event_status')?.value === c[0] && after.get('event_status')?.value === c[1]) {
                 promises.push(c[2](after));
             }
@@ -475,4 +475,3 @@ export const community_contact = functions
             throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error');
         }
     })
-      
