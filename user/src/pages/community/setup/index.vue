@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCommunityPath } from '@/router/utils'
 import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
-import { requiredValidator, postalCodeValidator, phoneValidator } from '@/utils/validators'
+import { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } from '@/utils/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 
@@ -127,13 +127,13 @@ const cancel = () => {
 
 const accountFieldRef = ref();
 const isCheckingAccount = ref(false)
-const isValidAccount = ref<true | string>(true)
+const isValidSameAccount = ref<true | string>(true)
 const checkAccountExists = async (event: Event) => {
   isCheckingAccount.value = true
   try {
     const target = event.target as HTMLInputElement
     const community = await communitiesStore.getCommunityData(target.value)
-    isValidAccount.value = community == null || 'このアカウント名は既に使用されています'
+    isValidSameAccount.value = community == null || 'このアカウント名は既に使用されています'
     nextTick(() => {
       accountFieldRef.value.validate()
     })
@@ -171,7 +171,7 @@ const checkAccountExists = async (event: Event) => {
                     outlined
                     dense
                     :loading="isCheckingAccount"
-                    :rules="[requiredValidator, isValidAccount]"
+                    :rules="[requiredValidator, isValidSameAccount, accountValidator]"
                     label="アカウント"
                     @blur="checkAccountExists" />
                 </v-col>
@@ -375,7 +375,7 @@ const checkAccountExists = async (event: Event) => {
                     outlined
                     dense
                     label="メールアドレス"
-                    :rules="[requiredValidator]"
+                    :rules="[requiredValidator, emailValidator]"
                   />
                 </v-col>
               </v-row>
@@ -423,7 +423,11 @@ const checkAccountExists = async (event: Event) => {
         新規コミュニティ申請メールを送信しますか？<br>
       </v-card-text>
       <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
-        ・ 所々注意点を記載
+        ・コミュニティ利用申請後、運営チームにて内容確認させていただきます。<br>
+        ・コミュニティ利用承認後、イベントページ作成などの機能が利用可能となります。<br>
+        <br>
+        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> をご確認ください。<br>
+        ・ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br>
       </v-card-text>
     </confirm-dialog>    
   </div>

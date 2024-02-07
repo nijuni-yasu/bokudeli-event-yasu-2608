@@ -208,7 +208,7 @@ const openLoginDialog = () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-email"
-                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:4} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:5} }"
                   >
                     予約
                   </v-btn>                
@@ -232,7 +232,7 @@ const openLoginDialog = () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:3} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:4} }"
                   >
                     編集
                   </v-btn>                  

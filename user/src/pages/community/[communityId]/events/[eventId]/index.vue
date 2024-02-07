@@ -99,7 +99,7 @@ const openCalendarAddDialog = () => {
               prepend-icon="mdi-email"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
-                query: { id: props.eventId, step: 4 },
+                query: { id: props.eventId, step: 5 },
               }"
             >
               店舗へ予約申請
@@ -132,7 +132,7 @@ const openCalendarAddDialog = () => {
               prepend-icon="mdi-pencil-box-outline"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
-                query: { id: props.eventId, step: 3 },
+                query: { id: props.eventId, step: 4 },
               }"
             >
               イベント編集
