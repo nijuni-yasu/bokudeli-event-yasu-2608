@@ -57,7 +57,7 @@ const sendReserveMail = () => {
               </v-col>
 
               <v-col cols="12">
-                <v-text-field v-model="event.organizer_email" outlined dense label="メールアドレス" :rules="[requiredValidator]" :readonly="true" />
+                <v-text-field v-model="event.organizer_email" outlined dense label="メールアドレス" :rules="[requiredValidator]" :readonly="event.event_status.value !== 'in_draft'" />
               </v-col>
 
               <v-col cols="12">
