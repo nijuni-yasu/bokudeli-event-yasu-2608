@@ -423,7 +423,11 @@ const checkAccountExists = async (event: Event) => {
         新規コミュニティ申請メールを送信しますか？<br>
       </v-card-text>
       <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
-        ・ 所々注意点を記載
+        ・コミュニティ利用申請後、運営チームにて内容確認させていただきます。<br>
+        ・コミュニティ利用承認後、イベントページ作成などの機能が利用可能となります。<br>
+        <br>
+        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> をご確認ください。<br>
+        ・ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br>
       </v-card-text>
     </confirm-dialog>    
   </div>
