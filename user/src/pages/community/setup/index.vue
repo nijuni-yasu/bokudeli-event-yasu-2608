@@ -76,6 +76,32 @@ const iconImageUrl = computed(() => {
   }
 })
 
+const trimInputtedId = (id: string | undefined, urlPattern: RegExp) => {
+  if (!id) return ''
+  return id.trim().replace(/\/+$/, '').replace(urlPattern, '')
+}
+const twitterId = computed({
+  get: () => community.value?.community_sns_twitter,
+  set: (val) => {
+    if (community.value == null) return
+    community.value.community_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?twitter\.com\//)
+  },
+})
+const facebookId = computed({
+  get: () => community.value?.community_sns_facebook,
+  set: (val) => {
+    if (community.value == null) return
+    community.value.community_sns_facebook = trimInputtedId(val, /^https:\/\/www\.facebook\.com\//)
+  },
+})
+const instagramId = computed({
+  get: () =>  community.value?.community_sns_instagram,
+  set: (val) => {
+    if (community.value == null) return
+    community.value.community_sns_instagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
+  },
+})
+
 const iconFileInputRef = ref<HTMLInputElement>()
 const coverFileInputRef = ref<HTMLInputElement>()
 const onIconTriggerUpload = () => {
@@ -176,7 +202,7 @@ const checkAccountExists = async (event: Event) => {
                     @blur="checkAccountExists" />
                 </v-col>
               </v-row>
-            </v-card-text>            
+            </v-card-text>
 
             <v-card-text class="pt-5">
               <v-row>
@@ -250,7 +276,7 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <v-text-field v-model="community.community_sns_facebook" outlined dense label="facebook"></v-text-field>
+                  <v-text-field v-model="facebookId" outlined dense label="facebook" prefix="https://www.facebook.com/"></v-text-field>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -258,7 +284,7 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <v-text-field v-model="community.community_sns_twitter" outlined dense label="X(Twitter)"></v-text-field>
+                  <v-text-field v-model="twitterId" outlined dense label="X(Twitter)" prefix="https://x.com/"></v-text-field>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -266,7 +292,7 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <v-text-field v-model="community.community_sns_instagram" outlined dense label="Instagram"></v-text-field>
+                  <v-text-field v-model="instagramId" outlined dense label="Instagram" prefix="https://www.instagram.com/"></v-text-field>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -429,7 +455,7 @@ const checkAccountExists = async (event: Event) => {
         ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> をご確認ください。<br>
         ・ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br>
       </v-card-text>
-    </confirm-dialog>    
+    </confirm-dialog>
   </div>
 </template>
 
