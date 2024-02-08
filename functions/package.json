@@ -6,21 +6,26 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "cross-env TZ=UTC firebase emulators:exec --only firestore 'vitest --run'"
   },
   "engines": {
     "node": "18"
   },
+  "type": "module",
   "main": "index.js",
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
-    "date-fns": "^2.30.0",
+    "date-fns": "^3.3.1",
     "firebase-admin": "^11.10.1",
-    "firebase-functions": "^4.3.1",
+    "firebase-functions": "^4.6.0",
     "stripe": "^13.2.0"
   },
   "devDependencies": {
-    "firebase-functions-test": "^3.1.0"
+    "cross-env": "^7.0.3",
+    "firebase-functions-test": "^3.1.1",
+    "firebase-tools": "^13.1.0",
+    "vitest": "^1.2.2"
   },
   "private": true
 }
