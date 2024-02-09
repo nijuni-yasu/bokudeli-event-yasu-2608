@@ -69,8 +69,8 @@ export const useCommunityStore = (communityAccount: string) => {
       if (newValue == null) {
         throw new Error('_communityRef can be null just as the initial value.')
       }
-      document.dispatchEvent(new CommunityRefUpdatedEvent(newValue))
-    })
+      document.dispatchEvent(new CommunityRefUpdatedEvent(toRaw(newValue)))
+    }, { immediate: false })
 
     const getCommunityRef = async (): Promise<DocumentReference> => {
       return new Promise((resolve, reject) => {

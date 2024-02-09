@@ -67,7 +67,7 @@ export const useEventStore = (eventId: string) => {
       if (newValue == null) {
         throw new Error('_eventRef can be null just as the initial value.')
       }
-      document.dispatchEvent(new EventRefUpdatedEvent(newValue))
+      document.dispatchEvent(new EventRefUpdatedEvent(toRaw(newValue)))
     }, { immediate: false })
 
     const getEventRef = async (): Promise<DocumentReference> => {
