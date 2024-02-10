@@ -10,15 +10,20 @@ export default [
     icon: { icon: 'mdi-account-group' },
   },
   {
+    title: 'コミュニティを作る',
+    to: { path: '/community/setup' },
+    icon: { icon: 'mdi-heart-outline' },
+  },
+  {
+    title: 'shokujiiって？',
+    href: 'https://shokujii.studio.site/',
+    target: '_blank',
+    icon: { icon: 'mdi-lightbulb-on-outline' },
+  },
+  {
     title: 'カート',
     to: { path: '/cart' },
     icon: { icon: 'mdi-cart-outline' },
-    loginRequired: true,
-  },
-  {
-    title: 'マイページ',
-    to: { path: '/mypage' },
-    icon: { icon: 'mdi-account-outline' },
     loginRequired: true,
   },
   // {

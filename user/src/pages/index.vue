@@ -42,9 +42,11 @@ const descriptionCharacterLimit = 18
   <div>
     <v-row class="justify-center align-center">
       <v-col md="10" cols="12">
-        <v-card class="d-flex align-center justify-center text-center mb-5" flat>
-          <v-img :src="topLogo" />
-        </v-card>
+        <a href="https://shokujii.studio.site/" target="_blank">
+          <v-card class="d-flex align-center justify-center text-center mb-5" flat>
+            <v-img :src="topLogo" />
+          </v-card>
+        </a>
         <v-row v-if="isLoading === false" class="mb-2">
           <v-col
             v-for="eventStore in eventStoreList"
