@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import topLogo from '@/assets/images/bokudeli/bokudeli_top4.png'
+import topLogo from '@/assets/images/shokujii/shokujii_logo_cover.png'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
 import { where, orderBy } from 'firebase/firestore'
-import { convertTruncateText} from '@/schemes/converter'
+import { convertTruncateText } from '@/schemes/converter'
 
 const eventsStore = useEventsStore() as EventsStore
-eventsStore.filters = [
-  where('is_public', '==', true),
-  orderBy('event_start_datetime', 'desc')
-]
+eventsStore.filters = [where('is_public', '==', true), orderBy('event_start_datetime', 'desc')]
 
 const isLoading = computed(() => {
   return eventsStore.eventStores == null
@@ -21,28 +18,31 @@ type _EventStore = Omit<EventStore, 'event'> & {
   event: BokudeliEvent
 }
 
-const eventStoreList = computed<_EventStore[]>(() => 
+const eventStoreList = computed<_EventStore[]>(() =>
   (eventsStore.eventStores ?? []).flatMap((eventStore) => {
-    if (eventStore.event == null || eventStore.event.event_status.value === 'in_draft' || eventStore.event.event_status.value === 'applying_reservation') {
+    if (
+      eventStore.event == null ||
+      eventStore.event.event_status.value === 'in_draft' ||
+      eventStore.event.event_status.value === 'applying_reservation'
+    ) {
       return []
     } else {
       return eventStore as _EventStore
     }
-  })
+  }),
 )
 
 const getEventKey = (event: BokudeliEvent) => {
   return [event.community_account, event.event_id].join('/')
 }
 const descriptionCharacterLimit = 18
-
 </script>
 
 <template>
   <div>
     <v-row class="justify-center align-center">
       <v-col md="10" cols="12">
-        <v-card class="d-flex align-center justify-center text-center mb-10" flat>
+        <v-card class="d-flex align-center justify-center text-center mb-5" flat>
           <v-img :src="topLogo" />
         </v-card>
         <v-row v-if="isLoading === false" class="mb-2">
@@ -79,8 +79,12 @@ const descriptionCharacterLimit = 18
                 <v-card-text class="position-relative">
                   <div class="d-flex justify-space-between align-center">
                     <div v-if="eventStore.orderConfiremedMembers" class="v-avatar-group">
-                      <v-avatar v-for="member in eventStore.orderConfiremedMembers.slice(0, 12) ?? []" :key="member.user_id" size="40">
-                        <v-img :src="member.user_image_url" cover/>
+                      <v-avatar
+                        v-for="member in eventStore.orderConfiremedMembers.slice(0, 12) ?? []"
+                        :key="member.user_id"
+                        size="40"
+                      >
+                        <v-img :src="member.user_image_url" cover />
                       </v-avatar>
                     </div>
                   </div>

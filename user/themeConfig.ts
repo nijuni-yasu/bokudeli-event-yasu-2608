@@ -2,7 +2,7 @@ import { breakpointsVuetify } from '@vueuse/core'
 
 import { VIcon } from 'vuetify/components'
 
-import logo from '@/assets/images/bokudeli/bokudeli_logo_ja_wide.png'
+import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
 
 import { defineThemeConfig } from '@core'
 import { RouteTransitions, Skins } from '@core/enums'
