@@ -37,9 +37,9 @@ const tabs = ref(null)
             </v-tab>
             <v-tab value="2">
               <v-icon start>
-                mdi-heart
+                mdi-heart-outline
               </v-icon>
-              管理コミュニティ
+              運営コミュニティ
             </v-tab>
           </v-tabs>
           <v-window v-model="tabs">

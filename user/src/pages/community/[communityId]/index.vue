@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { getEventPath, getEventCreatePath } from '@/router/utils'
+import { getEventPath, getEventCreatePath, getCommunitySettingsPath } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -67,17 +67,43 @@ const openLoginDialog = () => {
     <v-row v-if="communityStore.community != null" class="justify-center">
       <!-- community main -->
       <v-col cols="12" md="9" sm="9">
-        <v-card flat class="align-center justify-center text-center my-10 pa-md-16 pa-sm-8 pa-xs-0">
+        <v-row v-if="isManager" class="justify-end align-center mt-lg-5">
+          <v-btn
+            v-if="communityStore.community.is_approved"
+            class="mx-2"
+            color="white"
+            elevation="5"
+            rounded
+            prepend-icon="mdi-pencil-box-outline"
+            :to="getEventCreatePath(communityStore.community.community_account)"
+          >
+            イベント新規作成
+          </v-btn>
+          <v-btn
+            class="mx-2"
+            color="white"
+            elevation="5"
+            rounded
+            prepend-icon="mdi-cog"
+            :to="getCommunitySettingsPath(communityStore.community.community_account)"
+          >
+            コミュニティ設定
+          </v-btn>
+          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large">
+            申請中
+          </v-chip>
+        </v-row>
+        <v-card flat class="align-center justify-center text-center my-8 pa-md-16 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
-              <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.communityCoverImageUrl" />
+              <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.community_cover_image_url" />
             </v-col>
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 pb-6">{{ communityStore.community.communityName }}</v-card-title>
+              <v-card-title class="justify-center text-h4 pb-6">{{ communityStore.community.community_name }}</v-card-title>
               <v-card-text v-linkify class="text-left text-subtitle-1 pb-6">
-                {{ communityStore.community.communityDescription }}
+                {{ communityStore.community.community_desc }}
               </v-card-text>
             </v-col>
           </v-row>
@@ -89,9 +115,9 @@ const openLoginDialog = () => {
           <v-col md="4" sm="6" cols="12">
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
-              <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="communityStore.community.communityIconImageUrl" />
+              <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="communityStore.community.community_icon_image_url" />
               <v-card-title class="justify-center text-h5 py-5 pre-line">
-                {{ communityStore.community.communityName }}
+                {{ communityStore.community.community_name }}
               </v-card-title>
               <v-card-text v-for="link in state.links" :key="link" class="text-left pb-3">
                 <a v-if="link" :href="link" class="text-decoration-none" target="_blank">
@@ -110,7 +136,7 @@ const openLoginDialog = () => {
                 >
                   お問い合わせ
                 </v-btn>
-                <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="communityStore.community.communityName" :community-id="communityStore.community.communityId"/>
+                <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="communityStore.community.community_name" :community-id="communityStore.community.community_id"/>
                 <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
                   ログインした後にお問い合わせしてください。
                 </confirm-dialog>
@@ -182,7 +208,7 @@ const openLoginDialog = () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-email"
-                    :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: event.event_id, step:4} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:5} }"
                   >
                     予約
                   </v-btn>                
@@ -194,7 +220,7 @@ const openLoginDialog = () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: event.event_id} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id} }"
                   >
                     編集
                   </v-btn>
@@ -206,27 +232,11 @@ const openLoginDialog = () => {
                     size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="{ path: getEventCreatePath(communityStore.community.communityAccount), query: { id: event.event_id, step:3} }"
+                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:4} }"
                   >
                     編集
                   </v-btn>                  
                 </v-row>
-              </v-col>
-            </v-row>
-            <v-row v-if="isManager" class="justify-center">
-              <v-col class="text-center">
-                <v-btn
-                  class="mx-2 my-10 text-lg-h5"
-                  color="white"
-                  elevation="5"
-                  size="x-large"
-                  rounded
-                  width="85%"
-                  prepend-icon="mdi-pencil-box-outline"
-                  :to="getEventCreatePath(communityStore.community.communityAccount)"
-                >
-                  イベントを新規作成する
-                </v-btn>
               </v-col>
             </v-row>
           </v-col>

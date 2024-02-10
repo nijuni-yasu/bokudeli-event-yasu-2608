@@ -1,11 +1,12 @@
-const functions = require("firebase-functions")
-const { getFirestore, Timestamp } = require('firebase-admin/firestore')
+import functions from 'firebase-functions';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import _stripe from 'stripe';
 
 const db = getFirestore()
 
-const stripe = require('stripe')(process.env.STRIPE_API_SECRET_KEY)
+const stripe = _stripe(process.env.STRIPE_API_SECRET_KEY)
 
-exports.stripe_refunds = functions
+export const stripe_refunds = functions
     .region('asia-northeast1')
     .https
     .onCall(async(data, context) => {

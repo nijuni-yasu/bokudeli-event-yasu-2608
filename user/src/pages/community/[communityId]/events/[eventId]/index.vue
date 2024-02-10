@@ -98,8 +98,8 @@ const openCalendarAddDialog = () => {
               rounded
               prepend-icon="mdi-email"
               :to="{
-                path: getEventCreatePath(communityStore.community.communityAccount),
-                query: { id: props.eventId, step: 4 },
+                path: getEventCreatePath(communityStore.community.community_account),
+                query: { id: props.eventId, step: 5 },
               }"
             >
               店舗へ予約申請
@@ -112,7 +112,7 @@ const openCalendarAddDialog = () => {
               rounded
               prepend-icon="mdi-pencil-box-outline"
               :to="{
-                path: getEventCreatePath(communityStore.community.communityAccount),
+                path: getEventCreatePath(communityStore.community.community_account),
                 query: { id: props.eventId },
               }"
             >
@@ -131,8 +131,8 @@ const openCalendarAddDialog = () => {
               rounded
               prepend-icon="mdi-pencil-box-outline"
               :to="{
-                path: getEventCreatePath(communityStore.community.communityAccount),
-                query: { id: props.eventId, step: 3 },
+                path: getEventCreatePath(communityStore.community.community_account),
+                query: { id: props.eventId, step: 4 },
               }"
             >
               イベント編集
@@ -232,7 +232,7 @@ const openCalendarAddDialog = () => {
                     <v-row class="ma-1">
                       <router-link :to="getCommunityPath(event.community_account)">
                         <v-img
-                          :src="communityStore.community.communityIconImageUrl"
+                          :src="communityStore.community.community_icon_image_url"
                           style="border-radius: 10px; width: 100px; height: 100px"
                           aspect-ratio="1"
                           cover
@@ -245,7 +245,7 @@ const openCalendarAddDialog = () => {
                           class="text--primary cursor-pointer text-decoration-none"
                         >
                           <div class="ma-1" style="font-size: 12px">【主 催 者】</div>
-                          <div class="ma-1" style="font-size: 18px">{{ communityStore.community.communityName }}</div>
+                          <div class="ma-1" style="font-size: 18px">{{ communityStore.community.community_name }}</div>
                         </router-link>
                         <v-btn
                           class="ma-1"
@@ -258,8 +258,8 @@ const openCalendarAddDialog = () => {
                         </v-btn>
                         <community-contact-dialog
                           v-model="isOpenContactDialogVisible"
-                          :community-name="communityStore.community.communityName"
-                          :community-id="communityStore.community.communityId"
+                          :community-name="communityStore.community.community_name"
+                          :community-id="communityStore.community.community_id"
                         />
                       </div>
                     </v-row>

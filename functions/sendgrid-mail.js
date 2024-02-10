@@ -1,8 +1,8 @@
-const functions = require("firebase-functions");
-const { getFirestore } = require('firebase-admin/firestore');
-const dateFns = require('date-fns');
-const ja = require('date-fns/locale/ja');
-const sgMail = require('@sendgrid/mail');
+import functions from 'firebase-functions';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import * as dateFns from 'date-fns';
+import ja from 'date-fns/locale/ja';
+import sgMail from '@sendgrid/mail';
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = 'bokudeli@nijuni.jp';
@@ -27,7 +27,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const db = getFirestore();
 
 /**
- * 
+ *
  * @param {number} millis UNIX Time （ミリ秒）
  * @returns 日本時間を表示するためのミリ秒
  */
@@ -73,6 +73,10 @@ function convertToDuration(startMillis, endMillis) {
         'HH:mm'
     );
     return `${start}〜${end}`;
+}
+
+function getCommunityUrl(communityAccount) {
+    return `https://${process.env.EVENT_HOST}/community/${communityAccount}`;
 }
 
 function getEventUrl(communityAccount, eventId) {
@@ -182,7 +186,7 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
     const deliveryDuration = convertToDuration(event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000, event_start_datetime_japan)
     const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`;
     const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
-    
+
     return {
         ...eventData,
         date,
@@ -257,17 +261,17 @@ async function getUsersFromOrders(ordersRef) {
 async function sendEventInformationMail() {
     const promises = [];
     const date = dateFns.format(
-        convertToJapan(new Date().getTime()),
+        convertToJapan(Date.now()),
         'MM/dd',
         { locale: ja }
     );
-    const dynamic_template_data = {
+    const _dynamic_template_data = {
         date,
         events: []};
     const query = db.collectionGroup('events')
         .where('is_public', '==', true)
         .where('event_status.value', '==', 'accepting_order')
-        .where('event_deadline_datetime', '>', new Date());
+        .where('event_deadline_datetime', '>', Timestamp.fromMillis(Date.now()));
         // 不等号を含む where がある場合、他のフィールドでソートできない
         // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
         // .orderBy('event_start_datetime')
@@ -286,7 +290,7 @@ async function sendEventInformationMail() {
                 convertToJapan(eventData.event_start_datetime?.toMillis()),
                 convertToJapan(eventData.event_end_datetime?.toMillis()));
             const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
-            dynamic_template_data.events.push({
+            _dynamic_template_data.events.push({
                 event_name: eventData.event_name,
                 event_address: eventData.event_address,
                 event_datetime,
@@ -297,17 +301,20 @@ async function sendEventInformationMail() {
                 shop_name: eventData.shop_name,
                 community_name: eventData.community_name,
             });
-            if (dynamic_template_data.events.length === 5) {
+            if (_dynamic_template_data.events.length === 5) {
                 break;
             }
         }
     }
-    if (dynamic_template_data.events.length === 0) {
+    if (_dynamic_template_data.events.length === 0) {
         return;
     }
     for (const userRef of await db.collection('users').listDocuments()) {
         const userSnapshot = await userRef.get();
-        dynamic_template_data.user_name = userSnapshot.get('user_name');
+        const dynamic_template_data = {
+          ..._dynamic_template_data,
+          user_name: userSnapshot.get('user_name')
+        };
         promises.push(sgMail.send({
             to: userSnapshot.get('user_email'),
             from: DEFAULT_FROM,
@@ -340,7 +347,7 @@ async function sendEventStatusMail(templateId, eventSnapshot) {
 }
 
 async function sendShopOpenMail(shopSnapshot) {
-    const shopName = shopSnapshot.get('shop_name'); 
+    const shopName = shopSnapshot.get('shop_name');
     const isOpen = shopSnapshot.get('is_open') ? '開店（OPEN）' : '閉店（CLOSE）';
     const subject =  `${shopName}の開店設定が変更されました`;
     // TODO これ以上複雑になるようなら、テンプレートを使う
@@ -357,6 +364,24 @@ async function sendShopOpenMail(shopSnapshot) {
     });
 }
 
+async function sendNewCommunityRequestMail(communitySnapshot) {
+    const communityId = communitySnapshot.id;
+    const communityName = communitySnapshot.get('community_name');
+    const communityAccount = communitySnapshot.get('community_account');
+    // TODO これ以上複雑になるようなら、テンプレートを使う
+    const subject = `「${communityName}」コミュニティが新規申請されました`;
+    const text = `【ID】 ${communityId}\n` +
+        `【コミュニティ名】 ${communityName}\n` +
+        `【コミュニティアカウント】 ${communityAccount}\n` +
+        `【コミュニティページURL】 ${getCommunityUrl(communityAccount)}`
+    return sgMail.send({
+        to: DEFAULT_TO,
+        from: DEFAULT_FROM,
+        subject,
+        text,
+    })
+}
+
 async function sendCommunityContactMail(templateId, data) {
     const to =  await getCommunityEmails(data.community_id)
     const dynamic_template_data = data
@@ -369,7 +394,7 @@ async function sendCommunityContactMail(templateId, data) {
     });
 }
 
-exports.polling = functions
+export const polling = functions
     .region('asia-northeast1')
     .pubsub
     .schedule('*/1 * * * *') // .schedule('every 1 minutes')
@@ -384,30 +409,30 @@ exports.polling = functions
         ]);
     });
 
-// exports.event_information = functions
-//     .region('asia-northeast1')
-//     .pubsub
-//     .schedule('0 10 * * 1')
-//     .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
-//     .onRun(() => {
-//         return sendEventInformationMail();
-//     })
-    
-exports.on_event_changed = functions
+export const event_information = functions
+    .region('asia-northeast1')
+    .pubsub
+    .schedule('0 10 * * 1')
+    .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
+    .onRun(() => {
+        return sendEventInformationMail();
+    })
+
+export const on_event_changed = functions
     .region('asia-northeast1')
     .firestore
     .document('communities/{communityId}/events/{eventId}')
     .onUpdate(async (change) => {
         const conditions = [
             ['in_draft', 'applying_reservation', sendApplyingOrderMail],
-            ['in_draft', 'applying_reservation', sendEventStatusMail.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)], 
+            ['in_draft', 'applying_reservation', sendEventStatusMail.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)],
             ['applying_reservation', 'in_draft', sendEventStatusMail.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
             ['applying_reservation', 'accepting_order', sendEventStatusMail.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID)],
         ]
         const before = change.before;
         const after = change.after;
         const promises = [];
-        for (c of conditions) {
+        for (const c of conditions) {
             if (before.get('event_status')?.value === c[0] && after.get('event_status')?.value === c[1]) {
                 promises.push(c[2](after));
             }
@@ -415,7 +440,7 @@ exports.on_event_changed = functions
         return Promise.all(promises);
     });
 
-exports.on_shop_changed = functions
+export const on_shop_changed = functions
     .region('asia-northeast1')
     .firestore
     .document('partners/{partnerId}/shops/{shopId}')
@@ -429,7 +454,15 @@ exports.on_shop_changed = functions
         return Promise.all(promises);
     });
 
-exports.community_contact = functions
+export const community_added = functions
+    .region('asia-northeast1')
+    .firestore
+    .document('communities/{communityId}')
+    .onCreate(async (snapshot) => {
+        return sendNewCommunityRequestMail(snapshot);
+    })
+
+export const community_contact = functions
     .region('asia-northeast1')
     .https
     .onCall((data, context) => {
@@ -442,4 +475,3 @@ exports.community_contact = functions
             throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error');
         }
     })
-      

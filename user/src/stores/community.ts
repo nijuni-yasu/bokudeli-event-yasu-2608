@@ -9,10 +9,13 @@ import {
   query,
   where,
   onSnapshot,
+  Timestamp,
+  type DocumentData,
   type DocumentReference,
   type Unsubscribe,
   type DocumentSnapshot,
   type QueryConstraint,
+  setDoc,
 } from 'firebase/firestore'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import { StateTree, Store } from 'pinia'
@@ -23,6 +26,15 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { uploadCommunityImage } from '@/composable/uploadImage'
+
+const EVENT_TYPE_COMMUNITY_REF_UPDATED = 'onCommunityRefUpdated'
+
+class CommunityRefUpdatedEvent extends Event {
+  constructor(public communityRef: DocumentReference) {
+    super(EVENT_TYPE_COMMUNITY_REF_UPDATED)
+  }
+}
 
 type CommunityStoreState = {
   community: Ref<BokudeliCommunity | null>,
@@ -34,7 +46,9 @@ type CommunityGetters = {
 }
 
 type CommunityStoreAction = {
-  updateComunity: (data: Partial<BokudeliCommunity>) => Promise<void>,
+  updateComunity: (data: BokudeliCommunity) => Promise<void>,
+  updateCoverImage: (coverImage: File) => Promise<void>,
+  updateIconImage: (iconImage: File) => Promise<void>,
   subscribe: () => Promise<void>,
   unsubscribe: () => void,
   getCurrentUserRoles: () => Promise<string[] | null>,
@@ -43,16 +57,38 @@ type CommunityStoreAction = {
 export type CommunityStore = Store<string, CommunityStoreState, CommunityGetters, CommunityStoreAction>
 
 export const useCommunityStore = (communityAccount: string) => {
-  const store = defineStore<string, CommunityStoreState & CommunityGetters & CommunityStoreAction>(`/comunities/${communityAccount}`, () => {
-    const initialValues = reactive<{
-      communityRef: DocumentReference | null
-    }>({
-      communityRef: null,
-    })
+  // store の Identifier が firestore の path と異なるのは危険だが、この store 内に閉じている場合は問題ないはず
+  const store = defineStore<string, CommunityStoreState & CommunityGetters & CommunityStoreAction>(`/communities/${communityAccount}`, () => {
     const exists = ref<boolean | null>(null)
     const community = ref<BokudeliCommunity | null>(null)
     const memberStores = ref<CommunityMemberStore[] | null>(null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
+
+    const _communityRef = ref<DocumentReference | null>(null)
+    watch(_communityRef, (newValue) => {
+      if (newValue == null) {
+        throw new Error('_communityRef can be null just as the initial value.')
+      }
+      document.dispatchEvent(new CommunityRefUpdatedEvent(toRaw(newValue)))
+    }, { immediate: false })
+
+    const getCommunityRef = async (): Promise<DocumentReference> => {
+      return new Promise((resolve, reject) => {
+        if (_communityRef.value == null) {
+          const listener = (event: Event) => {
+            document.removeEventListener(EVENT_TYPE_COMMUNITY_REF_UPDATED, listener)
+            resolve((event as CommunityRefUpdatedEvent).communityRef)
+          }
+          document.addEventListener(EVENT_TYPE_COMMUNITY_REF_UPDATED, listener)
+          window.setTimeout(() => {
+            document.removeEventListener(EVENT_TYPE_COMMUNITY_REF_UPDATED, listener)
+            reject(new Error('getCommunityRef timeout'))
+          }, 5000)
+        } else {
+          resolve(toRaw(_communityRef.value))
+        }
+      })
+    }
 
     const members = computed<CommunityMember[] | null>(() => {
       if (memberStores.value == null) {
@@ -62,10 +98,9 @@ export const useCommunityStore = (communityAccount: string) => {
       return stores.flatMap((store) => !store.exists || store.member == null ? [] : store.member as CommunityMember)
     })
     const events = computed<BokudeliEvent[] | null>(() => {
-      const communityRef = toRaw(initialValues.communityRef)
-      if (communityRef != null) {
+      getCommunityRef().then((communityRef) => {
         subscribeEvents(communityRef)
-      }
+      })
       if (eventStores.value == null) {
         return null
       }
@@ -75,11 +110,29 @@ export const useCommunityStore = (communityAccount: string) => {
         .sort((a, b) => (b.event_start_datetime?.toMillis() ?? 0) - (a.event_start_datetime?.toMillis() ?? 0))
     })
 
-    const updateComunity = async (data: Partial<BokudeliCommunity>): Promise<void> => {
-      const communityRef = toRaw(initialValues.communityRef)
-      if (communityRef == null) {
-        console.warn('communityRef is null')
-        return
+    const updateComunity = async (data: BokudeliCommunity) => {
+      const communityRef = await getCommunityRef()
+      const updateData = _.omit(data.convertToDocumentData(), ['community_cover_image_url', 'community_icon_image_url'])
+      updateData.updated_at = Timestamp.now()
+      await updateDoc(communityRef, updateData)
+    }
+
+    const updateCoverImage = async (file: File) => {
+      const communityRef = await getCommunityRef()
+      const community_cover_image_url = await uploadCommunityImage(communityRef.id, file)
+      const data = {
+        updated_at: Timestamp.now(),
+        community_cover_image_url,
+      }
+      await updateDoc(communityRef, data)
+    }
+
+    const updateIconImage = async (file: File) => {
+      const communityRef = await getCommunityRef()
+      const community_icon_image_url = await uploadCommunityImage(communityRef.id, file)
+      const data = {
+        updated_at: Timestamp.now(),
+        community_icon_image_url,
       }
       await updateDoc(communityRef, data)
     }
@@ -112,24 +165,37 @@ export const useCommunityStore = (communityAccount: string) => {
       }
     }
 
+    let retry = 0
     const subscribe = () => getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
       .then((querySnapshot) => {
-        initialValues.communityRef = querySnapshot.docs[0]?.ref
-        // firestore は内部の値に直接アクセスするので、toRaw で unwrap しておかないといけない
-        const communityRef = toRaw(initialValues.communityRef)
-        if (communityRef != null) {
-          subscribeCommunity(communityRef)
-          // 他の Store は遅延評価なので、以下を呼ぶ必要はない
-          // subscribeEvents(communityRef)
+        const communityRef = querySnapshot.docs[0]?.ref
+        if (communityRef == null) {
+          if (retry++ < 10) {
+            console.warn(`The community "${communityAccount}" does not exist. It may not have been created yet. It will retry in 500 ms.`)
+            window.setTimeout(subscribe, 500)
+            return
+          }
+          throw new Error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
         }
+        retry = 0
+        _communityRef.value = communityRef
+        subscribeCommunity(communityRef)
+        // 他の Store は遅延評価なので、以下を呼ぶ必要はない
+        // subscribeEvents(communityRef)
       })
+
+    const unsubscribe = () => {
+      retry = 0
+      unsubscribeCommunity?.()
+      unsubscribeCommunity = null
+      unsubscribeEvents?.()
+      unsubscribeEvents = null
+    }
 
     subscribe()
 
     const getCurrentUserRoles = async () => {
-      // 外部スコープの communityRef は習得前の可能性があるので、ここでは使用せず、再度取得する
-      const querySnapshot = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
-      const communityRef = querySnapshot.docs[0]?.ref
+      const communityRef = await getCommunityRef()
       const userId = useStoreStoredUser().storedUser?.userId
       if (communityRef == null || userId == null) {
         return null
@@ -149,14 +215,15 @@ export const useCommunityStore = (communityAccount: string) => {
       members,
       events,
       updateComunity,
+      updateCoverImage,
+      updateIconImage,
       subscribe,
-      unsubscribe: () => {
-        unsubscribeCommunity?.()
-        unsubscribeCommunity = null
-        unsubscribeEvents?.()
-        unsubscribeEvents = null
-      },
+      unsubscribe,
       getCurrentUserRoles,
+      $reset: () => {
+        unsubscribe()
+        subscribe()
+      }
     }
   })
   return store()
@@ -219,23 +286,30 @@ const useCommunityMemberStore = (communityId: string, memberId: string) => {
       }
     }
   })
-  return store()  
+  return store()
 }
 
 type CommunitiesStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
-  filters: Ref<QueryConstraint[] | null>
+  filters: Ref<QueryConstraint[] | null>,
+  communityDraft: Ref<BokudeliCommunity>,
 } & StateTree
 
 type CommunitiesStoreGetters = {
   communityStores: Ref<CommunityStore[] | null>,
 }
 
-export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters>
+type CommunitiesStoreAction = {
+  getCommunityData: (communityAccount: string) => Promise<DocumentData | null>,
+  createNewCommunityFromDraft: () => Promise<BokudeliCommunity>,
+}
 
-export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters>('/communities', () => {
+export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters, CommunitiesStoreAction>
+
+export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters & CommunitiesStoreAction>('/communities', () => {
   const _communityStores = ref<CommunityStore[] | null>(null)
+  const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
   const filters = ref<QueryConstraint[] | null>(null)
 
   let unsubscribe: Unsubscribe | null = null
@@ -249,7 +323,7 @@ export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & C
         const communityAccount = doc.get('community_account')
         return useCommunityStore(communityAccount) as CommunityStore
       })
-    })  
+    })
   }
 
   const communityStores = computed<CommunityStore[] | null>(() => {
@@ -268,8 +342,51 @@ export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & C
     }
   })
 
+  const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> => {
+    const duplicatedCommunity = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
+    if (duplicatedCommunity.empty) {
+      return null
+    } else {
+      return duplicatedCommunity.docs[0].data()
+    }
+  }
+
+  const createNewCommunityFromDraft = async () => {
+    const c = await getCommunityData(communityDraft.value.community_account)
+    if (c != null) {
+      throw new Error(`community ${communityDraft.value.community_account} already exists`)
+    }
+    const userId = useStoreStoredUser().storedUser?.userId
+    if (userId == null) {
+      throw new Error('user is not logged in')
+    }
+    const newCommunityRef = doc(collection(db, 'communities'))
+    await setDoc(newCommunityRef, {
+      ...communityDraft.value.convertToDocumentData(),
+      community_id: newCommunityRef.id,
+      is_approved: false,
+      created_at: Timestamp.now(),
+      updated_at: Timestamp.now(),
+    })
+    await setDoc(doc(newCommunityRef, 'members', userId), {
+      roles: ['manager'],
+      created_at: Timestamp.now(),
+      updated_at: Timestamp.now(),
+    })
+    return convertDocumentDataToCommunity((await getDoc(newCommunityRef)).data() as DocumentData)
+  }
+
   return {
     filters,
+    communityDraft,
     communityStores,
+    getCommunityData,
+    createNewCommunityFromDraft,
+    $reset: () => {
+      communityDraft.value = new BokudeliCommunity()
+      filters.value = null
+      unsubscribe?.()
+      unsubscribe = null
+    },
   }
 })

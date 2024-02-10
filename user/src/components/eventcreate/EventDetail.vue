@@ -28,13 +28,13 @@ const emit = defineEmits<{
 }>()
 
 const isFormValid = ref(true)
-const isValid= computed(() => {
+const isValid = computed(() => {
   return isFormValid.value && coverUrl.value != ''
 })
 
 const event = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: (value) => emit('update:modelValue', value),
 })
 
 if (event.value.event_max_people == 0) {
@@ -44,8 +44,8 @@ if (event.value.event_max_people == 0) {
 event.value.event_payment = 'user_advance'
 
 const coverImage = computed<File[]>({
-  get: () => props.coverImage ? [props.coverImage] : [],
-  set: (value) => emit('update:coverImage', value[0] ?? null)
+  get: () => (props.coverImage ? [props.coverImage] : []),
+  set: (value) => emit('update:coverImage', value[0] ?? null),
 })
 
 const coverUrl = computed<string | null>(() => {
@@ -80,7 +80,13 @@ const onTriggerUpload = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="event.event_name" outlined dense label="イベントタイトル" :rules="[requiredValidator]" />
+                <v-text-field
+                  v-model="event.event_name"
+                  outlined
+                  dense
+                  label="イベントタイトル"
+                  :rules="[requiredValidator]"
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -100,7 +106,13 @@ const onTriggerUpload = () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12">
-                <v-textarea v-model="event.event_desc" outlined rows="10" label="イベント詳細" :rules="[requiredValidator]" />
+                <v-textarea
+                  v-model="event.event_desc"
+                  outlined
+                  rows="10"
+                  label="イベント詳細"
+                  :rules="[requiredValidator]"
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -118,10 +130,24 @@ const onTriggerUpload = () => {
                 ></app-date-time-picker>
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select :model-value="eventDeadlineHour" :items="hourList" outlined dense label="時間" :readonly="true"></v-select>
+                <v-select
+                  :model-value="eventDeadlineHour"
+                  :items="hourList"
+                  outlined
+                  dense
+                  label="時間"
+                  :readonly="true"
+                ></v-select>
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select :model-value="eventDeadlineMinute" :items="minutesList" outlined dense label="分" :readonly="true"></v-select>
+                <v-select
+                  :model-value="eventDeadlineMinute"
+                  :items="minutesList"
+                  outlined
+                  dense
+                  label="分"
+                  :readonly="true"
+                ></v-select>
               </v-col>
             </v-row>
           </v-card-text>
@@ -148,8 +174,15 @@ const onTriggerUpload = () => {
           </v-card-title>
           <v-card-text>
             <v-switch v-model="event.is_public" hide-details class="mt-0">
-              <template #label> 公開イベント </template>
+              <template v-slot:label>
+                <span v-if="event.is_public">公開イベント</span>
+                <span v-else>限定公開イベント</span>
+              </template>
             </v-switch>
+            <div>
+              <span v-if="event.is_public">※「公開イベント」はTOPページに一覧表示されます。</span>
+              <span v-else>※「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。</span>
+            </div>
           </v-card-text>
           <v-card-title class="pt-10 px-5">
             <v-icon size="50" class="text--primary me-3" icon="mdi-account-credit-card-outline" />
@@ -157,14 +190,31 @@ const onTriggerUpload = () => {
           </v-card-title>
           <v-card-text>
             <v-col cols="12" sm="12" md="6">
-              <v-select v-model="event.event_payment" :disabled="true" :items="eventPaymentItems" hide-details class="mt-0" :rules="[requiredValidator]">
+              <v-select
+                v-model="event.event_payment"
+                :disabled="true"
+                :items="eventPaymentItems"
+                hide-details
+                class="mt-0"
+                :rules="[requiredValidator]"
+              >
                 <template #label> 支払い設定 </template>
               </v-select>
             </v-col>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')">前へ</v-btn>
-            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" :disabled="!isValid" @click="emit('submit')">次へ</v-btn>
+            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')"
+              >前へ</v-btn
+            >
+            <v-btn
+              color="primary"
+              class="me-3 mt-3"
+              size="large"
+              append-icon="mdi-chevron-right"
+              :disabled="!isValid"
+              @click="emit('submit')"
+              >次へ</v-btn
+            >
           </v-card-text>
         </v-form>
       </v-card>

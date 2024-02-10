@@ -1,15 +1,20 @@
-const { initializeApp, applicationDefault } = require('firebase-admin/app');
+import { initializeApp, applicationDefault } from 'firebase-admin/app';
 
 initializeApp({
     credential: applicationDefault(),
 });
 
-exports.stripe_webhook = require('./stripe-webhook').stripe_webhook;
-exports.stripe_refunds = require('./stripe-refunds').stripe_refunds;
-exports.polling = require('./sendgrid-mail').polling;
-// exports.event_information = require('./sendgrid-mail').event_information;
-exports.on_event_changed = require('./sendgrid-mail').on_event_changed;
-exports.on_shop_changed = require('./sendgrid-mail').on_shop_changed;
-exports.community_contact = require('./sendgrid-mail').community_contact;
-exports.create_community_members = require('./community-members').create_community_members;
-exports.delete_community_members = require('./community-members').delete_community_members;
+export const { stripe_webhook } = await import('./stripe-webhook.js');
+export const { stripe_refunds } = await import('./stripe-refunds.js');
+export const { 
+    polling,
+    // event_information,
+    on_event_changed,
+    on_shop_changed,
+    community_added,
+    community_contact
+} = await import('./sendgrid-mail.js');
+export const {
+    create_community_members,
+    delete_community_members
+} = await import('./community-members.js');

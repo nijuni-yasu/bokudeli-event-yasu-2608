@@ -1,5 +1,5 @@
-const functions = require("firebase-functions");
-const { getFirestore } = require('firebase-admin/firestore');
+import functions from 'firebase-functions';
+import { getFirestore } from 'firebase-admin/firestore';
 const db = getFirestore();
 
 const update_community_members = (_, context) =>
@@ -11,13 +11,13 @@ const update_community_members = (_, context) =>
         transaction.update(communityRef, { members });
     });
 
-exports.create_community_members = functions
+export const create_community_members = functions
     .region('asia-northeast1')
     .firestore
     .document('communities/{communityId}/members/{userId}')
     .onCreate(update_community_members);
 
-exports.delete_community_members = functions
+export const delete_community_members = functions
     .region('asia-northeast1')
     .firestore
     .document('communities/{communityId}/members/{userId}')
