@@ -13,6 +13,7 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
+import { shareSnsButton } from '@/composable/shareSnsButton'
 
 const props = defineProps<{
   communityId: string
@@ -28,7 +29,7 @@ communityStore.getCurrentUserRoles().then((roles) => {
 })
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
-const members = computed(() => eventStore.orderConfiremedMembers?.sort((a, b) => 
+const members = computed(() => eventStore.orderConfiremedMembers?.sort((a, b) =>
   a.orders.reduce((max, order) => Math.max(max, order.status !== 'ordered' ? 0 : order.updated_at.toMillis()), 0) -
   b.orders.reduce((max, order) => Math.max(max, order.status !== 'ordered' ? 0 : order.updated_at.toMillis()), 0)
 ) ?? [])
@@ -89,7 +90,10 @@ const openCalendarAddDialog = () => {
     <div v-if="event != null && communityStore.community != null" class="justify-center">
       <v-row class="justify-center mt-lg-10 mr-1">
         <v-col md="8" sm="9" cols="12">
-          <v-row class="justify-end align-center">
+          <v-row class="justify-start align-center">
+            <v-chip class="ml-3" color="primary" size="large">
+              {{ $t(`event_status.${event.event_status.value}`) }}
+            </v-chip>
             <v-btn
               v-if="event.event_status.value === `in_draft` && isManager"
               color="white"
@@ -137,9 +141,6 @@ const openCalendarAddDialog = () => {
             >
               イベント編集
             </v-btn>
-            <v-chip color="primary" size="large">
-              {{ $t(`event_status.${event.event_status.value}`) }}
-            </v-chip>
           </v-row>
         </v-col>
       </v-row>
@@ -154,9 +155,47 @@ const openCalendarAddDialog = () => {
             <v-row>
               <v-col>
                 <!-- イベント情報 -->
-                <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-10 pre-line">
+                <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-4 pre-line">
                   {{ event.event_name }}
                 </v-card-title>
+                <v-card-text class="event-item text-right px-0 ma-1">
+                  <v-btn
+                    class="ml-1"
+                    icon="mdi-alpha-x-circle"
+                    color="grey-900"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    @click="shareSnsButton('twitter', event)"
+                  ></v-btn>
+                  <v-btn
+                    class="ml-1"
+                    icon="mdi-facebook"
+                    color="#1877F2"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    @click="shareSnsButton('facebook', event)"
+                  ></v-btn>
+                  <v-btn
+                    class="ml-1"
+                    icon="mdi-alpha-l-circle"
+                    color="#06c755"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    @click="shareSnsButton('line', event)"
+                  ></v-btn>
+                  <v-btn
+                    class="mx-1"
+                    icon="mdi-link-variant"
+                    color="grey-900"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    @click="shareSnsButton('copy', event)"
+                  ></v-btn>
+                </v-card-text>
                 <v-card-text class="event-item"> 【開催日時】 </v-card-text>
                 <v-card-text class="event-content">
                   {{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
@@ -211,7 +250,7 @@ const openCalendarAddDialog = () => {
                   【定員】
                   <span class="event-content">
                     {{ event.event_max_people }} 人
-                  </span>                
+                  </span>
                 </v-card-text> -->
                 <!-- メンバー情報 -->
                 <event-member-list :members="members" :event-max-people="event.event_max_people">

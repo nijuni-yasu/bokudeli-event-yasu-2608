@@ -208,7 +208,7 @@
                   class="text-right body-1 grey--text"
                   cols="3"
                 >
-                  Twitter URL
+                  X(Twitter) URL
                 </v-col>
                 <v-col
                   cols="9"
@@ -216,8 +216,9 @@
                 >
                   <v-text-field
                     v-model="shop_url_twitter"
-                    type="url"
-                    hint="TwitterアカウントのURLを入力してください"
+                    hint="X(旧Twitter)アカウントを入力してください"
+                    prefix="https://twitter.com/"
+                    @change="trimTwitterUrl"
                   />
                 </v-col>
               </v-row>
@@ -237,8 +238,9 @@
                 >
                   <v-text-field
                     v-model="shop_url_facebook"
-                    type="url"
-                    hint="FacebookページのURLを入力してください"
+                    hint="Facebookページのアカウントを入力してください"
+                    prefix="https://www.facebook.com/"
+                    @change="trimFacebookUrl"
                   />
                 </v-col>
               </v-row>
@@ -257,9 +259,10 @@
                   sm="8"
                 >
                   <v-text-field
-                    v-model="shop_url_instagram"
-                    type="url"
-                    hint="InstagramアカウントのURLを入力してください"
+                  v-model="shop_url_instagram"
+                    hint="Instagramアカウントを入力してください"
+                    prefix="https://www.instagram.com/"
+                    @change="trimInstagramUrl"
                   />
                 </v-col>
               </v-row>
@@ -1284,7 +1287,16 @@
         this.shop_address_longitude = location.longitude
         this.shop_address_latitude = location.latitude
         this.shop_address = location.address
-      }
+      },
+      trimTwitterUrl() {
+        this.shop_url_twitter = this.shop_url_twitter.replace(/https?:\/\/(mobile.)?twitter\.com\//, '');
+      },
+      trimFacebookUrl() {
+        this.shop_url_facebook = this.shop_url_facebook.replace(/https?:\/\/(www\.)?facebook\.com\//, '')
+      },
+      trimInstagramUrl() {
+        this.shop_url_instagram = this.shop_url_instagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '');
+      },
     },
   }
 </script>
