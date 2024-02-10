@@ -23,6 +23,7 @@ communityStore.getCurrentUserRoles().then((roles) => {
 })
 
 const events = computed(() => {
+  // 読み込み中は null として扱う
   return communityStore.events?.flatMap((event) => {
     // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
     if (isManager.value === false && (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')) {
@@ -33,7 +34,7 @@ const events = computed(() => {
       return []
     }
     return event
-  }) ?? []
+  })
 })
 
 const state = reactive({
@@ -136,11 +137,6 @@ const openLoginDialog = () => {
                 >
                   お問い合わせ
                 </v-btn>
-                <community-contact-dialog v-model="isOpenContactDialogVisible" :community-name="communityStore.community.community_name" :community-id="communityStore.community.community_id"/>
-                <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
-                  ログインした後にお問い合わせしてください。
-                </confirm-dialog>
-                <login-dialog v-model="isOpenLoginDialog" />
               </v-col>
               <!-- community manager -->
               <v-card-title v-if="communityStore.members?.some(m => m.roles?.includes('manager') ?? false)" class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
@@ -175,7 +171,7 @@ const openLoginDialog = () => {
           </v-col>
           <!-- events -->
           <v-col md="8" sm="6" cols="12">
-            <v-row>
+            <v-row v-if="events != null">
               <v-col v-for="event in events" :key="event.event_id" md="6" sm="12" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
                   <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
@@ -239,6 +235,9 @@ const openLoginDialog = () => {
                 </v-row>
               </v-col>
             </v-row>
+            <v-row v-else class="justify-center">
+              <v-progress-circular indeterminate color="primary" />
+            </v-row>
           </v-col>
         </v-row>
       </v-col>
@@ -246,6 +245,11 @@ const openLoginDialog = () => {
     <v-row v-else class="justify-center">
       <v-progress-circular indeterminate color="primary" />
     </v-row>
+    <community-contact-dialog v-if="communityStore.community" v-model="isOpenContactDialogVisible" :community-name="communityStore.community.community_name" :community-id="communityStore.community.community_id"/>
+    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+      ログインした後にお問い合わせしてください。
+    </confirm-dialog>
+    <login-dialog v-model="isOpenLoginDialog" />
   </section>
 </template>
 <style lang="scss" scoped></style>
