@@ -29,6 +29,16 @@
           "destination": "/index.html"
         }
       ]
+    },
+    {
+      "public": "user/dist",
+      "target": "launch",
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
     }
   ],
   "functions": [
