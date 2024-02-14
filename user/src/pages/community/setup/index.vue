@@ -4,6 +4,7 @@ import { useCommunityStore, useCommunitiesStore, type CommunityStore, type Commu
 import { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } from '@/utils/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const router = useRouter()
 const route = useRoute()
@@ -56,6 +57,13 @@ onUnmounted(() => {
     communitiesStore.$reset()
   }
 })
+
+watch (() => useStoreStoredUser().storedUser, (storedUser) => {
+  if (storedUser == null) {
+    window.alert('ログインしてください')
+    router.push('/')
+  }
+}, { immediate: true })
 
 const coverImageFile = ref<File[] | null>(null)
 const iconImageFile = ref<File[] | null>(null)
@@ -176,7 +184,7 @@ const checkAccountExists = async (event: Event) => {
                     @blur="checkAccountExists" />
                 </v-col>
               </v-row>
-            </v-card-text>            
+            </v-card-text>
 
             <v-card-text class="pt-5">
               <v-row>
@@ -429,7 +437,7 @@ const checkAccountExists = async (event: Event) => {
         ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> をご確認ください。<br>
         ・ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br>
       </v-card-text>
-    </confirm-dialog>    
+    </confirm-dialog>
   </div>
 </template>
 
