@@ -15,6 +15,7 @@ import LoginDialog from '@/components/LoginDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useStoreStoredUser()
 
 const communityAccount = ref<string | null>(route.query.id as string | null)
 
@@ -134,13 +135,24 @@ const submit = async () => {
     if (iconImageFile.value?.[0] != null) {
       await communityStore.updateIconImage(iconImageFile.value?.[0])
     }
-    window.alert('コミュニティ申請メールを送信しました')
+    window.alert('コミュニティ資料申請メールを送信しました')
     // communityAccount を設定したので、communitiesStore.$reset() は onUnmounted 内で実行されないことに注意
     communitiesStore.$reset()
   }
   router.push(getCommunityPath(communityAccount.value))
 }
 
+const loginCheck = () => {
+  // ログインしていない場合はログインダイアログを表示
+  if (userStore.storedUser == null) {
+    window.alert('コミュニティの利用申請は、ログインした後に行ってください。')
+    isOpenLoginDialog.value = true
+    return
+  // ログインしている場合は確認ダイアログを表示
+  } else {
+    isOpenConfirmDialog.value = true
+  }
+}
 const cancel = () => {
   if (community.value != null) {
     router.push(getCommunityPath(community.value.community_account))
@@ -465,7 +477,7 @@ const checkAccountExists = async (event: Event) => {
                 class="mt-3"
                 size="x-large"
                 prepend-icon="mdi-email"
-                @click="isOpenConfirmDialog = true"
+                @click="loginCheck()"
               >
                 コミュニティ利用を申請する
               </v-btn>
@@ -480,11 +492,11 @@ const checkAccountExists = async (event: Event) => {
     <confirm-dialog
       v-model="isOpenConfirmDialog"
       :is-confirm="true"
-      :ok-text="'申請メールを送信する'"
+      :ok-text="'利用申請メールを送信する'"
       :ok-click="submit"
       max-width="650px"
     >
-      <v-card-text class="text-center py-10 text-h6"> 新規コミュニティ申請メールを送信しますか？<br /> </v-card-text>
+      <v-card-text class="text-center py-10 text-h6"> コミュニティ利用申請メールを送信しますか？<br /> </v-card-text>
       <v-card-text class="text-subtitle pb-0" style="line-height: 1.8rem">
         ・コミュニティの利用申請は、ログイン後に行ってください。<br />
         ・コミュニティ利用申請後、運営チームにて内容確認させていただきます。<br />
