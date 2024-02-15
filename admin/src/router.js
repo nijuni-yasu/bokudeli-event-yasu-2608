@@ -144,7 +144,7 @@ const router = new Router({
         // },
         // Root level
         {
-          name: '店舗管理画面',
+          name: 'HOME',
           path: '',
           component: () => import('@/views/admin/Home'),
           meta: { requiresAuth: true },

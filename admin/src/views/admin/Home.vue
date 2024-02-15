@@ -4,16 +4,28 @@
     fluid
     tag="section"
   >
-    <!-- <base-v-component
-      heading="Simple Tables"
-      link="components/simple-tables"
-    /> -->
+    <base-material-card
+      inline
+      icon="mdi-heart"
+      title="shokujiiについて"
+      class="px-5 py-3 my-10"
+    >
+      <div class="ma-10 display-1" style="line-height: 2.0;">
+        2024年2月22日をもちまして
+        「コミュニティフードデリバリーぼくデリ」は<b>「食事でつながるshokujii」</b>に生まれ変わりました。<br>
+        「孤食を減らし、団欒を増やす」をミッションに掲げ、人と人を食事でつないでいくサービスづくりに、邁進してまいります。<br>
+        変わらぬご愛顧をいただきますようお願いいたします。<br>
+        <br>
+        <a :href="'https://shokujii.jp/'" target="_blank">shokujii公式サイト</a><br>
+        <a :href="'https://about.shokujii.jp/'" target="_blank">shokujiiって？</a><br>
+      </div>
+    </base-material-card>
 
     <base-material-card
       inline
       icon="mdi-check-outline"
       title="店舗公開 TODOリスト"
-      class="px-5 py-3"
+      class="px-5 py-3 my-10"
     >
       <v-simple-table>
         <thead>
@@ -39,7 +51,7 @@
               >
                 店舗マニュアル
               </a>
-              を一読し、設定方法やデリバリーの流れをチェック👀✅
+              を一読し「設定方法」や「注文受付」「配送」の流れをチェック👀✅
             </td>
           </tr>
           <tr>
@@ -50,7 +62,7 @@
               <router-link to="/shop">
                 店舗設定画面
               </router-link>
-              で「店舗情報」「最小注文個数」「配送距離」「営業曜日・時間」「お届け時間」「支払方法」「サブメールアドレス」などを入力して、店舗設定を完了させてください✍
+              で「店舗情報」「最小注文個数」「配送距離」「営業曜日・時間」「お届け時間」「メールアドレス」などを入力して、店舗設定をしてください✍
             </td>
           </tr>
           <tr>
@@ -62,7 +74,6 @@
                 メニュー設定画面
               </router-link>
               で「メニュー名称」「メニュー説明文」「メニュー価格」「メニュー画像」を入力して追加🍔🍛🍜<br>
-              ※メニューの価格は「店頭価格」「税込価格」にてお願いいたします。
             </td>
           </tr>
           <tr>
@@ -70,43 +81,9 @@
             <td
               class="py-5"
             >
-              店舗設定 と メニュー設定 が完了したらメールやお電話にてご連絡ください👍<br>
-              （MAIL : support@nijuni.jp / TEL : 050-3580-5122）
-            </td>
-          </tr>
-          <tr>
-            <td>STEP4</td>
-            <td
-              class="py-5"
-            >
-              サポートスタッフから「テスト注文」を行います！<br>
-              メールアドレス、サブメールアドレスに「注文メール」が届くかどうか📩<br>
-              をご確認ください。テスト注文をご確認いただきましたら店舗を公開いたします🙌
-            </td>
-          </tr>
-          <tr>
-            <td>STEP5</td>
-            <td
-              class="py-5"
-            >
-              公開後、お客さまからのご注文が入ったら<br>
-              「注文メール」→「
-              <router-link to="/order">
-                注文一覧画面
-              </router-link>
-              」にて注文内容をご確認ください。<br>
-              ご注文いただいた商品を、指定のお届け先住所、指定のお届け時刻に、店舗配送にてデリバリー🚲<br>
-              <br>
-              ※ 配送前に
-              <a
-                :href="'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing'"
-                target="_blank"
-              >
-                店舗マニュアル
-              </a>
-              を必ずご一読くださいますようお願いいたします。<br>
-              ※ 商品の容器に注文した方の「なまえ(ニックネーム)」を書いてください✏️<br>
-              ※ 大口注文を受けましたら感謝の気持ちの「おまけ」をつけてください☺️🍱
+              店舗設定 と メニュー設定 が完了したら「開店設定」で「開店」に設定してください。<br>
+              「開店設定」にしていただくと、サポートチームにメールにて通知が入ります。<br>
+              内容確認後、公開完了！お客さまからのご注文をお待ちください。
             </td>
           </tr>
           <tr>
@@ -114,15 +91,13 @@
             <td
               class="py-5"
             >
-              ご不明点などありましたらメールや電話にてお気軽にご連絡ください👍<br>
-              （MAIL : support@nijuni.jp / TEL : 050-3580-5122）
+              ご不明点などありましたらメールにてお気軽にご連絡ください👍<br>
+              （メールアドレス : support@nijuni.jp ）
             </td>
           </tr>
         </tbody>
       </v-simple-table>
     </base-material-card>
-
-    <div class="py-3" />
 
     <!-- <base-material-card
       inline
