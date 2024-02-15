@@ -115,6 +115,9 @@ const handleGoogleLogin = async () => {
       <v-card-title v-if="loginProvider === 'google'" class="text-center mt-10">
         <div class="text-h5 ma-1">ログイン</div>
       </v-card-title>
+      <v-card-text class="text-caption text-center mx-10">
+        <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">プライバシーポリシー</a>に同意してログインする
+      </v-card-text>
       <v-card-text v-if="loginProvider === 'google'">
         <v-container>
           <v-row>
