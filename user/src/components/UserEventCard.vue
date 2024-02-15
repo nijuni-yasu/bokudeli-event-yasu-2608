@@ -37,7 +37,7 @@ const cancelClick = () => {
 }
 </script>
 <template>
-  <router-link :to="getEventPath(event.community_account, event.event_id)">
+  <router-link :to="getEventPath(event.community_account, event.event_id)" @click.native.prevent>
   <v-container class="pa-0">
     <v-card class="pa-0">
       <v-img cover class="ma-0 pa-0" aspect-ratio="1.91" :src="event.event_cover_url"></v-img>
@@ -61,7 +61,7 @@ const cancelClick = () => {
         <v-row v-if="isShowDetail" justify="end">
           <v-spacer></v-spacer>
           <v-col v-if="isShowCancelButton" class="d-flex justify-end">
-            <v-btn variant="outlined" color="secondary" size="x-small" @click="cancelClick"
+            <v-btn variant="outlined" color="secondary" size="x-small" @click.prevent="cancelClick"
               >参加注文をキャンセルする</v-btn
             >
           </v-col>
