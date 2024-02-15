@@ -19,7 +19,7 @@ type UserStoreState = {
 
 type UserStoreAction = {
   updateUser: (data: FirestoredUser) => Promise<void>,
-  uploadUserImage: (file: File) => Promise<void>,
+  uploadUserImage: (file: File | Blob) => Promise<void>,
   subscribe: () => void,
   unsubscribe: () => void,
 }
@@ -36,12 +36,17 @@ export const useUserStore = (userId: string) => {
       await updateDoc(userRef, data.convertToDocumentData())
     }
 
-    const uploadUserImage = async (file: File) => {
-      const ext = file.name.split('.').pop()
+    const uploadUserImage = async (file: File | Blob) => {
+      let ext: string = ''
+      if (file instanceof File) {
+        const _ext = file.name.split('.').pop()
+        ext = _ext ? '.' + _ext : ''
+      }
       const stem = `avatar_${format(Date.now(), 'yyyyMMddHHmmss')}`
-      const filepath = `/users/${userId}/${stem}.${ext}`
+      const filepath = `/users/${userId}/${stem}${ext}`
       const imageRef = storageRef(storage, filepath)
-      const snapshot = await uploadBytes(imageRef, file)
+      const contentType = file.type != null && file.type !== '' ? file.type : 'image/*'
+      const snapshot = await uploadBytes(imageRef, file, { contentType })
       const metadata = await getMetadata(snapshot.ref)
       const user_image_url = `gs://${metadata.bucket}/${metadata.fullPath}`
       // 画像のサイズ変換が終わるまで待つ
@@ -53,7 +58,7 @@ export const useUserStore = (userId: string) => {
         try {
           await Promise.all(
             ['small', 'medium', 'large'].map(async size => {
-              const resizedImageRef = storageRef(storage, `/users/${userId}/${stem}_thumb_${size}.${ext}`)
+              const resizedImageRef = storageRef(storage, `/users/${userId}/${stem}_thumb_${size}${ext}`)
               await getMetadata(resizedImageRef)
             }))
           break
