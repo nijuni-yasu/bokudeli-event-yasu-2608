@@ -173,7 +173,20 @@ const checkAccountExists = async (event: Event) => {
       <v-col cols="12" sm="12" md="9" class="px-0">
         <v-card flat class="mt-2">
           <v-form v-model="isValid" class="multi-col-validation">
-            <v-card-title class="pt-10 px-5">
+            <v-row>
+              <v-col cols="12" class="text-right">
+                <v-btn
+                  color="primary"
+                  class="me-3 mt-3"
+                  icon="mdi-help-circle-outline"
+                  size="x-large"
+                  density="compact"
+                  variant="text"
+                  @click="isOpenNewCommunityDialog = true"
+                />
+              </v-col>
+            </v-row>
+            <v-card-title class="px-5">
               <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
               <span>コミュニティ設定</span>
             </v-card-title>
