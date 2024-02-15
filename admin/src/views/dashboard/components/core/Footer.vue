@@ -48,24 +48,35 @@
     data: () => ({
       links: [
         {
-          href: 'https://bokudeli.jp/',
-          text: 'ぼくデリ（公式サイト）',
+          href: "https://shokujii.jp/",
+          text: "食事でつながるshokujii"
         },
         {
-          href: 'https://www.notion.so/6ebc3a56ad9f4ca795e7f16f1031033d',
-          text: '利用規約',
+          href: "https://about.shokujii.jp/",
+          text: "shokujiiって？"
         },
         {
-          href: 'https://www.notion.so/809020481eb74ce4bc8f1b6286979e82',
-          text: 'プライバシーポリシー',
+          href: "https://bokudeli.jp/",
+          text: "旧ぼくデリ"
         },
         {
-          href: 'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing',
-          text: '店舗マニュアル',
+          href:
+            "https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c",
+          text: "利用規約"
         },
         {
-          href: 'http://nijuni.jp/',
-          text: '運営会社',
+          href:
+            "https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b",
+          text: "プライバシーポリシー"
+        },
+        {
+          href:
+            "https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing",
+          text: "店舗マニュアル"
+        },
+        {
+          href: "http://nijuni.jp/",
+          text: "運営会社"
         },
 
       ],

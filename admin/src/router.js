@@ -144,7 +144,7 @@ const router = new Router({
         // },
         // Root level
         {
-          name: 'ぼくデリ店舗管理画面',
+          name: '店舗管理画面',
           path: '',
           component: () => import('@/views/admin/Home'),
           meta: { requiresAuth: true },

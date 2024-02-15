@@ -21,9 +21,15 @@
 
     <v-list-item two-line>
       <v-list-item-content>
-        <v-list-item-title class="text-uppercase font-weight-regular display-2">
-          <span class="logo-mini">🧢</span>
-          <span class="logo-normal">ぼくデリ</span>
+        <v-list-item-title class="font-weight-regular">
+          <div class="display-3">
+            <span class="logo-mini">❤️</span>
+            <span class="logo-normal">shokujii</span>
+          </div>
+          <div class="display-1">
+            <span class="logo-mini">😋</span>
+            <span class="logo-normal">（旧ぼくデリ）</span>
+          </div>
         </v-list-item-title>
       </v-list-item-content>
     </v-list-item>
