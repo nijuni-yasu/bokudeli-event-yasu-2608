@@ -1,9 +1,9 @@
-name: Deploy admin
+name: Deploy admin for production
 
 on:
   push:
     branches:
-      - main
+      - production
     paths:
       - 'admin/**'
   workflow_dispatch:
@@ -31,19 +31,23 @@ jobs:
         cache-dependency-path: ./admin/package-lock.json
     - name: Generate .env file
       run: |
-        env_vars=$(echo '${{ secrets.ADMIN_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
+        env_vars=$(echo '${{ secrets.ADMIN_PRODUCTION_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
         echo "$env_vars" > .env
     - name: Build
       run: |
         npm install
-        npm run build-development
+        npm run build-production
     - name: Install Firebase CLI
-      working-directory: .  
+      working-directory: .
       run: npm install -g "firebase-tools@^12"
+    # FIREBASE_TOKEN is deprecated, so use GOOGLE_APPLICATION_CREDENTIALS
     - name: Deploy to Firebase
       working-directory: .
+      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
       run: |
-        firebase use bokudeli-event-test
+        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_B4302AA7CF39 }}' > $GOOGLE_APPLICATION_CREDENTIALS
+        firebase use bokudeli-event-dev
         firebase deploy --only hosting:admin
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        rm $GOOGLE_APPLICATION_CREDENTIALS
+

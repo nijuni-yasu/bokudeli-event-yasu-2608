@@ -1,11 +1,11 @@
-name: Deploy functions to development
+name: Deploy manager for development
 
 on:
   push:
     branches:
       - development
     paths:
-      - 'functions/**'
+      - 'manager/**'
   workflow_dispatch:
 
 concurrency:
@@ -13,33 +13,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    timeout-minutes: 5
+  build-and-deploy:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
-        working-directory: ./functions
+        working-directory: ./manager
     steps:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Setup node
       uses: actions/setup-node@v4
       with:
-        node-version-file: ./functions/.node-version
-        cache: 'yarn'
-        cache-dependency-path: ./functions/yarn.lock
-    - name: Install dependencies
+        node-version-file: ./manager/.node-version
+        cache: 'npm'
+        cache-dependency-path: ./manager/package-lock.json
+    - name: Build
       run: |
-        yarn install --frozen-lockfile
+        npm install
+        npm run build-development
     - name: Install Firebase CLI
       working-directory: .
-      run: yarn global add firebase-tools
-    - name: Generate .env file
-      run: |
-        env_vars=$(echo '${{ secrets.FUNCTIONS_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
-        echo "$env_vars" > .env
-    # FIREBASE_TOKEN is deprecated, so use GOOGLE_APPLICATION_CREDENTIALS
+      run: npm install -g "firebase-tools@^12"
     - name: Deploy to Firebase
       working-directory: .
       # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
@@ -47,5 +43,5 @@ jobs:
         export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
         echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_0A848B24CEDF }}' > $GOOGLE_APPLICATION_CREDENTIALS
         firebase use bokudeli-event-test
-        firebase deploy --only functions
+        firebase deploy --only hosting:manager
         rm $GOOGLE_APPLICATION_CREDENTIALS

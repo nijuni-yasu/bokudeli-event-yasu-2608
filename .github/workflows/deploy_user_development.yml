@@ -1,11 +1,11 @@
-name: Deploy functions to production
+name: Deploy user to development
 
 on:
   push:
     branches:
-      - production
+      - development
     paths:
-      - 'functions/**'
+      - 'user/**'
   workflow_dispatch:
 
 concurrency:
@@ -13,22 +13,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-and-deploy:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
-        working-directory: ./functions
+        working-directory: ./user
     steps:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Setup node
       uses: actions/setup-node@v4
       with:
-        node-version-file: ./functions/.node-version
+        node-version-file: ./user/.node-version
         cache: 'yarn'
-        cache-dependency-path: ./functions/yarn.lock
+        cache-dependency-path: ./user/yarn.lock
     - name: Install dependencies
       run: |
         yarn install --frozen-lockfile
@@ -37,15 +37,17 @@ jobs:
       run: yarn global add firebase-tools
     - name: Generate .env file
       run: |
-        env_vars=$(echo '${{ secrets.FUNCTIONS_PRODUCTION_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
+        env_vars=$(echo '${{ secrets.USER_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
         echo "$env_vars" > .env
-    # FIREBASE_TOKEN is deprecated, so use GOOGLE_APPLICATION_CREDENTIALS
+    - name: Build
+      run: |
+        yarn run build-development
     - name: Deploy to Firebase
       working-directory: .
       # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
       run: |
         export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
-        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_B4302AA7CF39 }}' > $GOOGLE_APPLICATION_CREDENTIALS
-        firebase use bokudeli-event-dev
-        firebase deploy --only functions
+        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_0A848B24CEDF }}' > $GOOGLE_APPLICATION_CREDENTIALS
+        firebase use bokudeli-event-test
+        firebase deploy --only hosting:user
         rm $GOOGLE_APPLICATION_CREDENTIALS
