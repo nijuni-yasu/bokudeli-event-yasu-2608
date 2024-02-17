@@ -1,9 +1,9 @@
-name: Deploy user
+name: Deploy user to production
 
 on:
   push:
     branches:
-      - main
+      - production
     paths:
       - 'user/**'
   workflow_dispatch:
@@ -29,21 +29,25 @@ jobs:
         node-version-file: ./user/.node-version
         cache: 'yarn'
         cache-dependency-path: ./user/yarn.lock
+    - name: Install dependencies
+      run: |
+        yarn install --frozen-lockfile
+    - name: Install Firebase CLI
+      working-directory: .
+      run: yarn global add firebase-tools
     - name: Generate .env file
       run: |
-        env_vars=$(echo '${{ secrets.USER_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
+        env_vars=$(echo '${{ secrets.USER_PRODUCTION_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
         echo "$env_vars" > .env
     - name: Build
-      run: | 
-        yarn install --frozen-lockfile
-        yarn run build-development
-    - name: Install Firebase CLI
-      working-directory: .  
-      run: yarn global add firebase-tools
-    - name: Deploy
-      working-directory: .
       run: |
-        firebase use bokudeli-event-test
+        yarn run build-production
+    - name: Deploy to Firebase
+      working-directory: .
+      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
+      run: |
+        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_B4302AA7CF39 }}' > $GOOGLE_APPLICATION_CREDENTIALS
+        firebase use bokudeli-event-dev
         firebase deploy --only hosting:user
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        rm $GOOGLE_APPLICATION_CREDENTIALS
