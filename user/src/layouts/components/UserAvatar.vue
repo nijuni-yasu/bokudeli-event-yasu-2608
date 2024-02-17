@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { FirestoredUser } from '@/schemes/storedUser';
+import { type VAvatar } from 'vuetify/lib/components/index.mjs';
 import avatar1 from '@images/avatars/default_profile.jpeg'
 
 const props = defineProps<{ user: FirestoredUser | null, size?: number }>()
@@ -18,7 +19,7 @@ const avatar = computed(() => hasError.value || props.user == null ? avatar1 :
   avatar1
 )
 
-const avatarElement = ref(null)
+const avatarElement = ref<VAvatar>(null)
 const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
 
@@ -32,8 +33,8 @@ const resizeObserver = new ResizeObserver((entries) => {
 
 onMounted(async () => {
   await nextTick()
-  if (avatarElement.value != null) {
-    resizeObserver.observe(avatarElement.value)
+  if (avatarElement.value?.$el != null) {
+    resizeObserver.observe(avatarElement.value.$el)
   }
 })
 
@@ -43,10 +44,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="avatarElement">
-    <v-avatar :size="size">
-      <v-img :src="avatar" cover @error="hasError = true"/>
-      <slot />
-    </v-avatar>
-  </div>
+  <v-avatar ref="avatarElement" :size="size">
+    <v-img :src="avatar" cover @error="hasError = true"/>
+    <slot />
+  </v-avatar>
 </template>
