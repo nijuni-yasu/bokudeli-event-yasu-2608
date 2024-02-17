@@ -9,13 +9,13 @@ import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 type CommunityWithMembers = {
   community: BokudeliCommunity
-  members: FirestoredUser[]
+  members: (FirestoredUser | null)[]
 }
 
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
 communitiesStore.filters = [
   where('is_public', '==', true),
-  where('is_approved', '==', true)
+  where('is_approved', '==', true),
 ]
 
 const isLoading = computed(() =>
@@ -25,9 +25,9 @@ const isLoading = computed(() =>
 
 const communityList = computed<CommunityWithMembers[]>(() => {
   const list = (communitiesStore.communityStores ?? [])
-    .flatMap((communityStore) => (communityStore.community == null || communityStore.members == null) ? [] : {
+    .flatMap((communityStore) => (communityStore.community == null) ? [] : {
       community: communityStore.community,
-      members: communityStore.members,
+      members: communityStore.members ?? [],
     })
   // list.sort((a, b) => b.members.length - a.members.length)
   return list
@@ -73,7 +73,12 @@ const communityList = computed<CommunityWithMembers[]>(() => {
                     <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                   </div>
                   <div v-if="members" class="v-avatar-group">
-                    <UserAvatar v-for="member in members.slice(0,19) ?? []" :key="member.user_id" :user="member" :size="40" />
+                    <UserAvatar
+                      v-for="(member, i) in members.slice(0,19) ?? []"
+                      :key="member?.user_id ?? `${community.community_name}_avatar_${i}`"
+                      :user="member"
+                      :size="40"
+                    />
                   </div>
                 </v-card-text>
               </v-col>

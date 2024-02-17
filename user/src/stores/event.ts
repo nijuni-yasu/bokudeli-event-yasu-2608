@@ -15,9 +15,9 @@ import {
   onSnapshot,
   Timestamp,
   DocumentReference,
+  DocumentSnapshot,
   type DocumentData,
   type Unsubscribe,
-  type DocumentSnapshot,
   type QueryConstraint,
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
@@ -27,11 +27,9 @@ import OrderItem from '@/schemes/orderItem'
 import { EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
 
-const EVENT_TYPE_EVENT_REF_UPDATED = 'onEventRefUpdated'
-
 class EventRefUpdatedEvent extends Event {
-  constructor(public eventRef: DocumentReference) {
-    super(EVENT_TYPE_EVENT_REF_UPDATED)
+  constructor(type: string, public eventRef: DocumentReference) {
+    super(type)
   }
 }
 
@@ -56,18 +54,36 @@ type EventStoreAction = {
 
 export type EventStore = Store<string, EventStoreState, EventStoreGetters, EventStoreAction>
 
-export const useEventStore = (eventId: string) => {
+export const useEventStore = (terget: string | DocumentSnapshot) => {
+  let eventId: string
+  if (terget instanceof DocumentSnapshot) {
+    eventId = terget.id
+  } else {
+    eventId = terget
+  }
   const store = defineStore<string, EventStoreState & EventStoreGetters & EventStoreAction> (`/events/${eventId}`, () => {
+    const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(null)
     const _members = ref<{ userStore: UserStore; orders: OrderItem[]}[] | null>(null)
-
     const _eventRef = ref<DocumentReference | null>(null)
+
+    const onEventUpdated = (doc: DocumentSnapshot) => {
+      exists.value = doc.exists()
+      const data = doc.data()
+      event.value = data ? convertDocumentDataToEvent(data) : null
+      _eventRef.value = doc.ref
+    }
+
+    if (terget instanceof DocumentSnapshot) {
+      onEventUpdated(terget)
+    }
+
     watch(_eventRef, (newValue) => {
       if (newValue == null) {
         throw new Error('_eventRef can be null just as the initial value.')
       }
-      document.dispatchEvent(new EventRefUpdatedEvent(toRaw(newValue)))
+      document.dispatchEvent(new EventRefUpdatedEvent(EVENT_TYPE_EVENT_REF_UPDATED, toRaw(newValue)))
     }, { immediate: false })
 
     const getEventRef = async (): Promise<DocumentReference> => {
@@ -149,11 +165,7 @@ export const useEventStore = (eventId: string) => {
     let unsubscribeEvent: Unsubscribe | null = null
     const subscribeEvent = (eventRef: DocumentReference) => {
       if (unsubscribeEvent == null) {
-        unsubscribeEvent = onSnapshot(eventRef, (doc: DocumentSnapshot) => {
-          exists.value = doc.exists()
-          const data = doc.data()
-          event.value = data ? convertDocumentDataToEvent(data) : null
-        })
+        unsubscribeEvent = onSnapshot(eventRef, onEventUpdated)
       }
     }
     let unsubscribeOrders: Unsubscribe | null = null
@@ -207,7 +219,11 @@ export const useEventStore = (eventId: string) => {
       unsubscribeOrders = null
     }
 
-    subscribe()
+    if (_eventRef.value == null) {
+      subscribe()
+    } else {
+      subscribeEvent(toRaw(_eventRef.value))
+    }
 
     return {
       event,
@@ -257,7 +273,7 @@ export const useEventsStore = defineStore<string, EventsStoreState & EventsStore
     const q = query(collectionGroup(db, 'events'), ...(filters.value ?? []))
     unsubscribe?.()
     unsubscribe = onSnapshot(q, (querySnapshot) => {
-      _eventStores.value = querySnapshot.docs.map((doc) => useEventStore(doc.id) as EventStore)
+      _eventStores.value = querySnapshot.docs.map((doc) => useEventStore(doc) as EventStore)
     })
   }
 
