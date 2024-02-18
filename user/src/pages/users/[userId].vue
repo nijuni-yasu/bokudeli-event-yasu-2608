@@ -11,15 +11,15 @@ const props = defineProps<{
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
-const userData = computed(() => useUserStore(props.userId).user)
+const { user } = storeToRefs(useUserStore(props.userId))
 const tabs = ref(null)
 </script>
 
 <template>
   <div id="user-view">
-    <v-row v-if="userData != null" justify="center">
+    <v-row v-if="user != null" justify="center">
       <v-col cols="12" sm="8" md="3">
-        <user-bio-panel :user-data="userData" :is-editable="storedUser?.userId === props.userId" />
+        <user-bio-panel :user-data="user" :is-editable="storedUser?.userId === props.userId" />
       </v-col>
         <v-col cols="12" sm="8" md="9">
           <v-tabs v-model="tabs">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { EventMember } from '@/schemes/EventMember'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 defineProps<{
   members: EventMember[]
@@ -26,9 +27,7 @@ defineProps<{
         >
           <router-link :to="`/users/${member.user_id}`" class="text--primary cursor-pointer text-decoration-none d-flex align-center">
             <v-row class="ma-0 d-flex align-center">
-              <v-avatar class="ma-1" size="60">
-                <v-img :src="member.user_image_url" cover/>
-              </v-avatar>
+              <UserAvatar :user="member" :size="60" />
               <v-col class="ma-0 px-1">
                 <div class="d-flex align-center text-subtitle-2 font-weight-bold">
                   <div>

@@ -7,6 +7,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const props = defineProps<{
   communityId: string
@@ -144,9 +145,7 @@ const openLoginDialog = () => {
                 <router-link :to="`/users/${manager.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
-                      <v-avatar size="40px">
-                        <v-img v-if="manager.user_image_url" :src="manager.user_image_url" cover/>
-                      </v-avatar>
+                      <UserAvatar :user="manager" :size="40" />
                       <div class="ma-2 text-subtitle-1">{{ manager.user_name }}</div>
                     </div>
                   </v-row>
@@ -159,9 +158,7 @@ const openLoginDialog = () => {
                 <router-link :to="`/users/${member.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
-                      <v-avatar size="40px">
-                        <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
-                      </v-avatar>
+                      <UserAvatar :user="member" :size="40" />
                       <div class="ma-2 text-subtitle-1">{{ member.user_name }}</div>
                     </div>
                   </v-row>

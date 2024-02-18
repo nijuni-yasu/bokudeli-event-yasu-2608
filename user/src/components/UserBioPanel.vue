@@ -1,64 +1,49 @@
 <script setup lang="ts">
-// import StoredUser from '@/schemes/storedUser'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useUserStore, type UserStore } from '@/stores/user'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
-import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '@/firebase'
 import UserBioEditDialog from './UserBioEditDialog.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
 
 const storedUserStore = useStoreStoredUser()
 
-const userData = ref(props.userData)
 const isEditable = computed(() => props.isEditable ?? false)
 
-const avatar = computed(() => userData?.value?.user_image_url ?? null)
-
-const userName = computed(() => userData?.value?.user_name ?? 'ゲスト')
+const userName = computed(() => props.userData.user_name ?? 'ゲスト')
 const userDescription = computed(() => {
-  return userData.value?.user_description ||
-    ((storedUserStore.storedUser?.userId !== userData.value?.user_id) ? '' : 'ここに自己紹介文が入ります。')
+  return props.userData.user_description ||
+    ((storedUserStore.storedUser?.userId !== props.userData.user_id) ? '' : 'ここに自己紹介文が入ります。')
 })
 const twitterUrl = computed(() => (
-  userData?.value?.user_sns_twitter ? buildTwitterUrl(userData.value.user_sns_twitter) : undefined 
+  props.userData.user_sns_twitter ? buildTwitterUrl(props.userData.user_sns_twitter) : undefined
 ))
 
 const facebookUrl = computed(() => (
-  userData?.value?.user_sns_facebook ? buildFacebookUrl(userData.value.user_sns_facebook) : undefined
+  props.userData?.user_sns_facebook ? buildFacebookUrl(props.userData.user_sns_facebook) : undefined
 ))
 
 const instagramUrl = computed(() => (
-  userData?.value?.user_sns_instagram ? buildInstagramUrl(userData.value.user_sns_instagram) : undefined
+  props.userData?.user_sns_instagram ? buildInstagramUrl(props.userData.user_sns_instagram) : undefined
 ))
 
 const isUserInfoEditDialogVisible = ref(false)
-const updateUserData = async (user: FirestoredUser) => {
+const updateUserData = async (user: FirestoredUser, image?: File) => {
   storedUserStore.update(convertFirestoredUserToStoredUser(user))
 
-  const docRef = doc(db, 'users', user.user_id)
-  const docSnap = await getDoc(docRef)
-  const { user_name, user_image_url, user_sns_twitter, user_sns_facebook, user_sns_instagram, user_description } = user
-  if (docSnap.exists()) {
-    await setDoc(
-      docRef,
-      {
-        user_name,
-        user_image_url,
-        user_sns_twitter,
-        user_sns_facebook,
-        user_sns_instagram,
-        user_description,
-        updated_at: Timestamp.now(),
-      },
-      { merge: true },
-    )
-  } else {
-    console.error('ユーザーが存在しません')
+  const userStore = useUserStore(props.userData.user_id) as UserStore
+  await userStore.updateUser(user)
+  if (image != null) {
+    try {
+      await userStore.uploadUserImage(image)
+    } catch (err) {
+      console.error(err)
+      window.alert('画像のアップロードに失敗しました')
+    }
   }
-  userData.value = user
 }
 </script>
 
@@ -67,17 +52,8 @@ const updateUserData = async (user: FirestoredUser) => {
     <!-- user profile -->
     <v-col cols="12">
       <v-card class="pt-8">
-        <v-card-title class="d-flex align-center flex-column">
-          <v-avatar
-            :color="avatar ? '' : 'primary'"
-            :class="avatar ? '' : 'v-avatar-light-bg primary--text'"
-            size="200"
-            round
-            class="mb-4"
-          >
-            <v-img v-if="avatar" :src="avatar" cover/>
-            <span v-else class="font-weight-semibold text-5xl">{{ userName }}</span>
-          </v-avatar>
+        <v-card-title class="d-flex align-center flex-column mb-4">
+          <UserAvatar :user="userData" :size="200" />
         </v-card-title>
           <v-card-text>
           <div class="text-h5 text-center">{{ userName }}</div>

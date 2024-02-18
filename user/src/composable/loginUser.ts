@@ -49,7 +49,7 @@ export const loginUser = async (user: User) => {
     const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
     firestoredUser.created_at = Timestamp.now()
     firestoredUser.updated_at = Timestamp.now()
-    await setDoc(docRef, firestoredUser)
+    await setDoc(docRef, firestoredUser.convertToDocumentData())
 
     // Pinia に保存
     store.update(storedUser)

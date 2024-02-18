@@ -8,7 +8,9 @@ import {
 } from 'firebase/firestore'
 import { StateTree, Store } from 'pinia';
 import { FirestoredUser } from '@/schemes/storedUser'
-
+import { storage } from '@/firebase'
+import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
+import { format } from 'date-fns'
 
 type UserStoreState = {
   exists: Ref<boolean | null>,
@@ -16,21 +18,54 @@ type UserStoreState = {
 } & StateTree;
 
 type UserStoreAction = {
-  updateUser: (data: Partial<FirestoredUser>) => Promise<void>,
-  subscribe: () => Promise<void>,
+  updateUser: (data: FirestoredUser) => Promise<void>,
+  uploadUserImage: (file: File) => Promise<void>,
+  subscribe: () => void,
   unsubscribe: () => void,
 }
 
 export type UserStore = Store<string, UserStoreState, Record<string, never>, UserStoreAction>
 
-export const useUserStore = (userId: string): UserStore => {
-  const store = defineStore<string, UserStoreState>(`/users/${userId}`, () => {
+export const useUserStore = (userId: string) => {
+  const store = defineStore<string, UserStoreState & UserStoreAction>(`/users/${userId}`, () => {
     const userRef: DocumentReference = doc(db, 'users', userId)
     const exists = ref<boolean | null>(null)
     const user = ref<FirestoredUser | null>(null)
 
-    const updateUser = async (data: Partial<FirestoredUser>) => {
-      return await updateDoc(userRef, data)
+    const updateUser = async (data: FirestoredUser) => {
+      await updateDoc(userRef, data.convertToDocumentData())
+    }
+
+    const uploadUserImage = async (file: File) => {
+      const ext = file.name.split('.').pop()
+      const stem = `avatar_${format(Date.now(), 'yyyyMMddHHmmss')}`
+      const filepath = `/users/${userId}/${stem}.${ext}`
+      const imageRef = storageRef(storage, filepath)
+      const snapshot = await uploadBytes(imageRef, file)
+      const metadata = await getMetadata(snapshot.ref)
+      const user_image_url = `gs://${metadata.bucket}/${metadata.fullPath}`
+      // 画像のサイズ変換が終わるまで待つ
+      // ポーリングはあまり良い方法ではないが、リサイズ完了を検知する方法がないため
+      let retry = 0
+      const MAX_RETRY = 30 // 3秒
+      for (; retry < MAX_RETRY; retry++) {
+        await new Promise(resolve => window.setTimeout(resolve, 100))
+        try {
+          await Promise.all(
+            ['small', 'medium', 'large'].map(async size => {
+              const resizedImageRef = storageRef(storage, `/users/${userId}/${stem}_thumb_${size}.${ext}`)
+              await getMetadata(resizedImageRef)
+            }))
+          break
+        } catch {
+          // Do nothing
+        }
+      }
+      if (retry === MAX_RETRY) {
+        throw new Error('Failed to resize image')
+      }
+
+      await updateDoc(userRef, { user_image_url })
     }
 
     let unsubscribeUser: Unsubscribe | null = null
@@ -38,7 +73,7 @@ export const useUserStore = (userId: string): UserStore => {
       if (unsubscribeUser == null) {
         unsubscribeUser = onSnapshot(userRef, (userSnapshot) => {
           exists.value = userSnapshot.exists()
-          user.value = userSnapshot.data() as FirestoredUser ?? null
+          user.value = exists.value ? new FirestoredUser(userSnapshot.data()) : null
         })
       }
     }
@@ -49,6 +84,7 @@ export const useUserStore = (userId: string): UserStore => {
       exists,
       user,
       updateUser,
+      uploadUserImage,
       subscribe,
       unsubscribe: () => {
         unsubscribeUser?.()
@@ -56,5 +92,5 @@ export const useUserStore = (userId: string): UserStore => {
       }
     }
   })
-  return store() as UserStore
+  return store()
 }

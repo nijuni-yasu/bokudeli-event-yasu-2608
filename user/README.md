@@ -1,35 +1,35 @@
-# vue
-
-This template should help get you started developing with Vue 3 in Vite.
-
-## Recommended IDE Setup
-
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates.
-
-However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can run `Volar: Switch TS Plugin on/off` from VSCode command palette.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
 ## Project Setup
 
 ```sh
-npm install
+yarn install
 ```
 
 ### Compile and Hot-Reload for Development
 
 ```sh
-npm run dev
+yarn dev-development
 ```
 
 ### Type-Check, Compile and Minify for Production
 
 ```sh
-npm run build
+npm build-production
+```
+
+## Debug with the Emulator
+Emulator を適切にスタートさせておく
+
+https://firebase.google.com/docs/emulator-suite
+
+```
+firebase emulators:start --import=../snapshot
+```
+
+`VITE_FIRESTORE_EMULATOR_HOST`, `VITE_FIREBASE_STORAGE_EMULATOR_HOST`, `VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST` を設定した後、 アプリケーションを起動すると Emulator に接続する。
+（今の所、Authentication に関してはリアル環境に接続しにいくので注意）
+```
+export VITE_FIRESTORE_EMULATOR_HOST='localhost:8080'
+export VITE_FIREBASE_STORAGE_EMULATOR_HOST='localhost:9199'
+export VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST='localhost:5001'
+yarn dev-development
 ```

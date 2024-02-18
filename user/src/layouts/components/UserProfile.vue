@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import avatar1 from '@images/avatars/default_profile.jpeg'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useUserStore, type UserStore } from '@/stores/user'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
-const userId = computed(() => storedUser?.value?.userId ?? '')
-const isLogin = computed(() => userId.value !== '')
-const userName = computed(() => storedUser?.value?.userName ?? 'ゲスト')
-const avatar = computed(() => storedUser?.value?.userImageUrl ?? avatar1)
+const isLogin = computed(() => storedUser.value?.userId != null)
+const user = computed(() => {
+  const userId = storedUser.value?.userId
+  return userId == null ? null : (useUserStore(userId) as UserStore).user
+})
 
 const isOpenLoginDialog = ref(false)
 
@@ -26,8 +28,7 @@ const logout = async () => {
 <template>
   <div>
     <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
-      <v-avatar class="cursor-pointer">
-        <v-img :src="avatar" cover/>
+      <UserAvatar :user="user" class="cursor-pointer">
 
         <!-- SECTION Menu -->
         <v-menu activator="parent" width="230" location="bottom end" offset="14px">
@@ -37,14 +38,12 @@ const logout = async () => {
               <template #prepend>
                 <v-list-item-action start>
                   <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
-                    <v-avatar>
-                      <v-img :src="avatar" cover/>
-                    </v-avatar>
+                    <UserAvatar :user="user" />
                   </v-badge>
                 </v-list-item-action>
               </template>
 
-              <v-list-item-title class="font-weight-medium">{{ userName }}</v-list-item-title>
+              <v-list-item-title class="font-weight-medium">{{ user?.user_name }}</v-list-item-title>
             </v-list-item>
             <v-divider v-if="isLogin" class="my-2" />
 
@@ -88,7 +87,7 @@ const logout = async () => {
           </v-list>
         </v-menu>
         <!-- !SECTION -->
-      </v-avatar>
+      </UserAvatar>
     </v-badge>
     <login-dialog v-model="isOpenLoginDialog" />
   </div>

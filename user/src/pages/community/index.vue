@@ -5,6 +5,7 @@ import { getCommunityPath } from '@/router/utils'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
 import { where } from 'firebase/firestore'
+import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 type CommunityWithMembers = {
   community: BokudeliCommunity
@@ -74,9 +75,7 @@ const communityList = computed<CommunityWithMembers[]>(() => {
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                 </div>
                 <div v-if="members" class="v-avatar-group">
-                  <v-avatar v-for="member in members.slice(0,19) ?? []" :key="member.user_id" size="40">
-                    <v-img v-if="member.user_image_url" :src="member.user_image_url" cover/>
-                  </v-avatar>
+                  <UserAvatar v-for="member in members.slice(0,19) ?? []" :key="member.user_id" :user="member" :size="40" />
                 </div>
               </v-card-text>
             </v-col>
