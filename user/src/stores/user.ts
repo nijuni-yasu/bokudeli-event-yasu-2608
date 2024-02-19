@@ -52,7 +52,7 @@ export const useUserStore = (userId: string) => {
       // 画像のサイズ変換が終わるまで待つ
       // ポーリングはあまり良い方法ではないが、リサイズ完了を検知する方法がないため
       let retry = 0
-      const MAX_RETRY = 200 // 3秒
+      const MAX_RETRY = 200 // 20秒
       for (; retry < MAX_RETRY; retry++) {
         await new Promise(resolve => window.setTimeout(resolve, 100))
         try {
