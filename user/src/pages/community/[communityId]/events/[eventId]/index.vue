@@ -14,6 +14,10 @@ import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
 import { shareSnsButton } from '@/composable/shareSnsButton'
+import ShowDialog from '@/components/ShowDialog.vue'
+import VueQrious from 'vue-qrious'
+
+const qrcodeSize = 300
 
 const props = defineProps<{
   communityId: string
@@ -66,6 +70,7 @@ const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
 const isOpenCalendarAddDialog = ref(false)
+const isShowQrCode = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
 const userStore = useStoreStoredUser()
@@ -82,6 +87,10 @@ const openLoginDialog = () => {
 
 const openCalendarAddDialog = () => {
   isOpenCalendarAddDialog.value = true
+}
+
+const showQrCode = () => {
+  isShowQrCode.value = true
 }
 </script>
 
@@ -185,6 +194,15 @@ const openCalendarAddDialog = () => {
                     density="compact"
                     variant="text"
                     @click="shareSnsButton('line', event)"
+                  ></v-btn>
+                  <v-btn
+                    class="ml-1"
+                    icon="mdi-qrcode"
+                    color="grey-900"
+                    size="x-large"
+                    density="compact"
+                    variant="text"
+                    @click="showQrCode()"
                   ></v-btn>
                   <v-btn
                     class="mx-1"
@@ -335,7 +353,12 @@ const openCalendarAddDialog = () => {
       ログインした後に主催者に連絡してください。
     </confirm-dialog>
     <login-dialog v-model="isOpenLoginDialog" />
-    <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event" />
+    <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
+    <show-dialog v-model="isShowQrCode">
+      <div class="d-flex flex-row justify-center">
+        <vue-qrious :value="event?.url" :size="qrcodeSize" />
+      </div>
+    </show-dialog>
   </section>
 </template>
 <style lang="scss" scoped>
