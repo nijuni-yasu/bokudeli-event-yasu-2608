@@ -2,6 +2,11 @@ import { DocumentData, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 import { buildThumbnailsLinks, type ThumbnailLinks} from '@/composable/buildThumbnailsLinks'
 
+/**
+ * StoredUser は getAuth().user から id のみ取得し、 currentUser の ID のみを持つ type とする。
+ * 他の情報は FirestoredUser で保持することとする。
+ * TODO: userId 以外のプロパティを削除する
+ */
 type StoredUser = {
   userId: string
   userName: string
@@ -33,7 +38,7 @@ export class FirestoredUser {
   constructor(data?: DocumentData) {
     if (data != null) {
       _.merge(this, data)
-      
+
       if (data?.user_id != null && data?.user_image_url != null) {
         try {
           this.user_thumb_image_urls = buildThumbnailsLinks(data.user_id, new URL(data.user_image_url))

@@ -6,6 +6,8 @@ import {
 } from '@/schemes/converter'
 import { useStoreCredential } from '@/stores/credential'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useUserStore, type UserStore } from '@/stores/user'
+import axios from 'axios'
 import { FacebookAuthProvider, GoogleAuthProvider, OAuthCredential, User, UserCredential } from 'firebase/auth'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 
@@ -35,7 +37,7 @@ export const updateCredentialFromUserCredential = async (redirectResult: UserCre
 export const loginUser = async (user: User) => {
   // ログイン処理
   const store = useStoreStoredUser()
-  const storedUser = await convertFirebaseUserToStoredUser(user)
+  const storedUser = convertFirebaseUserToStoredUser(user)
 
   const docRef = doc(db, 'users', storedUser.userId)
   const docSnap = await getDoc(docRef)
@@ -74,6 +76,41 @@ export const loginUser = async (user: User) => {
         userImageUrl: storedUser.userImageUrl,
       }
       store.update(updatedStoredUser)
+    }
+  }
+
+  // Facebook Login の場合は、画像を Storage にアップロードする
+  // ただし、Facebook Login の度に画像を Storage にアップロードするわけにはいかないので、
+  // 既存の画像がない場合のみ
+  if (currentStoredUser.userImageUrl == null || currentStoredUser.userImageUrl === '') {
+    for (const provider of user.providerData) {
+      switch (provider.providerId) {
+        case FacebookAuthProvider.PROVIDER_ID:
+          {
+            const credentialStore = useStoreCredential()
+            if (!credentialStore.credential) {
+              break
+            }
+            const imageQueryUrl =
+              user.photoURL + `?width=500&height=500&redirect=false&access_token=${credentialStore.credential.accessToken}`
+            // ログインに影響が出ないよう、非同期で画像を取得する
+            axios.get(imageQueryUrl).then(async response => {
+              const imageUrl = !response.data.data.is_silhouette ? response.data.data.url : null
+              if (imageUrl == null) {
+                return
+              }
+              const response2 = await axios.get(imageUrl, {
+                responseType: 'blob'
+              })
+              const blob = response2.data;
+              const userStore = useUserStore(storedUser.userId) as UserStore
+              await userStore.uploadUserImage(blob)
+            })
+          }
+          break
+        default:
+          break
+      }
     }
   }
 }
