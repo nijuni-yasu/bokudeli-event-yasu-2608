@@ -34,7 +34,10 @@ const selectedCount = ref(1)
 // FIXME: 注記が入力されていた場合、表示させる必要がある
 const orderNote = ref('')
 
+const isAddingOrder = ref(false)
+
 const closeDialog = (isAddCart: boolean) => {
+  isAddingOrder.value = false
   selectedCount.value = 1
   orderNote.value = ''
   if (isAddCart) {
@@ -142,6 +145,7 @@ const addCart = async () => {
   if (!userStore.storedUser) {
     openConfirmDialog()
   } else {
+    isAddingOrder.value = true
     await addOrder()
     closeDialog(true)
   }
@@ -166,7 +170,7 @@ const addCart = async () => {
         <v-textarea v-model="orderNote" outlined dense rows="1" label="注記を追加"></v-textarea>
       </v-row>
       <v-row class="justify-center mx-1 my-2">
-        <v-btn class="justify-center mx-1 align-self-center" rounded size="large" color="primary" @click="addCart()">
+        <v-btn class="justify-center mx-1 align-self-center" rounded size="large" color="primary" :loading="isAddingOrder" @click="addCart()">
           カートに追加する
         </v-btn>
         <v-btn
