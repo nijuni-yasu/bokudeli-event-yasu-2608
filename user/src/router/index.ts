@@ -55,4 +55,13 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
 
 onAuthStateChanged(getAuth(), checkUser)
 
+// Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
+router.beforeEach(async () => {
+  try {
+    await waitAdminAuthentication();
+  } catch {
+    // Do nothing
+  }
+})
+
 export default router
