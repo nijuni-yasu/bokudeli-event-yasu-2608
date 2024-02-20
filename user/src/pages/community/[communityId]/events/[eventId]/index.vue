@@ -355,9 +355,15 @@ const showQrCode = () => {
     <login-dialog v-model="isOpenLoginDialog" />
     <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
     <show-dialog v-model="isShowQrCode">
-      <div class="d-flex flex-row justify-center">
+      <v-card class="justify-center text-center" elevation="0">
+        <v-card-text>
+          {{ event?.event_name }}
+        </v-card-text>
+        <v-card-text>
+          {{ event && dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ event && dateOnlyTimeString(event.event_end_datetime) }}
+        </v-card-text>
         <vue-qrious :value="event?.url" :size="qrcodeSize" />
-      </div>
+      </v-card>
     </show-dialog>
   </section>
 </template>
