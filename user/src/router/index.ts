@@ -11,8 +11,6 @@ import { setupLayouts } from 'virtual:generated-layouts'
 import { createRouter, createWebHistory } from 'vue-router'
 import routes from '~pages'
 
-import { useCookies } from '@vueuse/integrations/useCookies'
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [...setupLayouts(routes)],
@@ -56,22 +54,5 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
 }
 
 onAuthStateChanged(getAuth(), checkUser)
-
-// Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
-router.beforeEach(async (to) => {
-  const cookies = useCookies(['isLogin'])
-  const isLogin = cookies.get('isLogin')
-  if (!isLogin && to.path !== '/login') {
-    router.replace({
-      path: '/login',
-      query: { redirect: to.fullPath !== '/' ? to.fullPath : undefined }
-    });
-  }
-  try {
-    await waitAdminAuthentication();
-  } catch {
-    // Do nothing
-  }
-})
 
 export default router
