@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'url'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
@@ -57,6 +58,13 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 5000,
+    rollupOptions: {
+      input: {
+        // index.html だと firebase hosting で function が動かないので _index.html に変更
+        // TODO もっと良い方法を探す
+        "index": resolve(__dirname, '_index.html'),
+      },
+    }
   },
   optimizeDeps: {
     exclude: ['vuetify'],
