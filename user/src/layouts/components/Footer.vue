@@ -24,7 +24,7 @@
         プライバシーポリシー
       </a>
       <a href="https://bit.ly/3S3L8Sv" target="_blank" rel="noopener noreferrer" class="footer-text">
-        コミュニティマニュアル
+        コミュニティガイド
       </a>
       <br />
       <a

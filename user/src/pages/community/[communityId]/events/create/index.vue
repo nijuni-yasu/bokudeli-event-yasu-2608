@@ -273,7 +273,7 @@ const stepperItems = computed(() => [
           ・予約申請後、「店舗」「開催場所」「開催日時」などの変更はできません。<br>
           ・予約申請後、「イベントタイトル」「イベント詳細」「イベント画像」の編集は可能です。<br>
           <br>
-          ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> をご確認ください。<br>
+          ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> をご確認ください。<br>
           ・ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br>
         </v-card-text>
       </confirm-dialog>

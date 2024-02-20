@@ -513,7 +513,7 @@ const checkAccountExists = async (event: Event) => {
         ・コミュニティ利用申請後、運営チームにて内容確認させていただきます。<br />
         ・コミュニティ利用承認後、イベントページ作成などの機能が利用可能となります。<br />
         <br />
-        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> および
+        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および
         <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a>
         をご確認ください。<br />
         ・ご不明点ありましたらサポートまで
@@ -536,7 +536,7 @@ const checkAccountExists = async (event: Event) => {
         ・また、反社会的勢力等であるか、反社会的勢力等との何らかの交流若しくは関与を行っていると当社が判断した場合もアカウント停止とさせていただきます。<br />
         ・健全なコミュニティ運営を目指し、ご理解とご協力をお願いいたします。<br />
         <br />
-        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティマニュアル</a> および
+        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および
         <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a>
         をご確認ください。<br />
         ・ご不明点ありましたらサポートまで
