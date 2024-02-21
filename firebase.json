@@ -26,17 +26,18 @@
       "rewrites": [
         {
           "source": "**",
-          "function": "retrieve_index"
+          "function": "retrieve_index",
+          "region": "asia-northeast1"
         }
       ]
     },
     {
-      "public": "user/dist",
-      "target": "launch",
-      "rewrites": [
+      "target": "user_old",
+      "redirects": [
         {
-          "source": "**",
-          "function": "retrieve_index"
+          "regex": "(.*)",
+          "destination": "https://shokujii.jp/:1",
+          "type": 301
         }
       ]
     }
