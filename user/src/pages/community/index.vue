@@ -20,7 +20,7 @@ communitiesStore.filters = [
   where('is_approved', '==', true)
 ]
 
-const isLoading = computed(() => 
+const isLoading = computed(() =>
   communitiesStore.communityStores == null ||
   Array.from(communitiesStore.communityStores.values()).every((communityStore) => communityStore.community == null || communityStore.members == null)
 )
@@ -31,7 +31,7 @@ const communityList = computed<CommunityWithMembers[]>(() => {
       community: communityStore.community,
       members: communityStore.members,
     })
-  list.sort((a, b) => b.members.length - a.members.length)
+  // list.sort((a, b) => b.members.length - a.members.length)
   return list
 })
 </script>
