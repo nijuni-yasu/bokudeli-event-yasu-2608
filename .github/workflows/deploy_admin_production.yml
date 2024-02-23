@@ -46,7 +46,7 @@ jobs:
       # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
       run: |
         export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
-        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_B4302AA7CF39 }}' > $GOOGLE_APPLICATION_CREDENTIALS
+        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_736E27344811 }}' > $GOOGLE_APPLICATION_CREDENTIALS
         firebase use bokudeli-event-dev
         firebase deploy --only hosting:admin
         rm $GOOGLE_APPLICATION_CREDENTIALS
