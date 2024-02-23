@@ -12,8 +12,6 @@ type CommunityWithMembers = {
   members: FirestoredUser[]
 }
 
-const router = useRouter()
-
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
 communitiesStore.filters = [
   where('is_public', '==', true),
@@ -46,41 +44,42 @@ const communityList = computed<CommunityWithMembers[]>(() => {
         sm="12"
         cols="12"
       >
-        <v-card
-          class="ma-1"
-          color="text-center cursor-pointer"
-          @click="router.push(getCommunityPath(community.community_account))"
-        >
-          <v-row>
-            <v-col md="6" sm="12" cols="12" class="pa-0">
-              <v-img
-                :src="community.community_cover_image_url"
-                style="border-radius: 5px 0px 0px 5px"
-                aspect-ratio="1.91"
-                cover
-              />
-            </v-col>
-            <v-col md="6" sm="12" cols="12" class="d-flex flex-column">
-              <!-- title -->
-              <v-card-title class="text-h5 text-left py-3">
-                {{ community.community_name }}
-              </v-card-title>
-              <v-card-text class="text-left pb-3">
-                {{ convertTruncateText(community.community_desc, 250) }}
-              </v-card-text>
-              <v-spacer/>
-              <!-- Mutual members -->
-              <v-card-text class="mt-auto">
-                <div class="mb-2">
-                  <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
-                </div>
-                <div v-if="members" class="v-avatar-group">
-                  <UserAvatar v-for="member in members.slice(0,19) ?? []" :key="member.user_id" :user="member" :size="40" />
-                </div>
-              </v-card-text>
-            </v-col>
-          </v-row>
-        </v-card>
+        <router-link :to="getCommunityPath(community.community_account)">
+          <v-card
+            class="ma-1"
+            color="text-center cursor-pointer"
+          >
+            <v-row>
+              <v-col md="6" sm="12" cols="12" class="pa-0">
+                <v-img
+                  :src="community.community_cover_image_url"
+                  style="border-radius: 5px 0px 0px 5px"
+                  aspect-ratio="1.91"
+                  cover
+                />
+              </v-col>
+              <v-col md="6" sm="12" cols="12" class="d-flex flex-column">
+                <!-- title -->
+                <v-card-title class="text-h5 text-left py-3">
+                  {{ community.community_name }}
+                </v-card-title>
+                <v-card-text class="text-left pb-3">
+                  {{ convertTruncateText(community.community_desc, 250) }}
+                </v-card-text>
+                <v-spacer/>
+                <!-- Mutual members -->
+                <v-card-text class="mt-auto">
+                  <div class="mb-2">
+                    <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
+                  </div>
+                  <div v-if="members" class="v-avatar-group">
+                    <UserAvatar v-for="member in members.slice(0,19) ?? []" :key="member.user_id" :user="member" :size="40" />
+                  </div>
+                </v-card-text>
+              </v-col>
+            </v-row>
+          </v-card>
+        </router-link>
       </v-col>
 
       <!-- no result found -->
