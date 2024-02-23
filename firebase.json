@@ -25,9 +25,13 @@
       "target": "user",
       "rewrites": [
         {
-          "source": "**",
-          "function": "retrieve_index",
+          "source": "/community/**/events/**",
+          "function": "replace_ogp_tags",
           "region": "asia-northeast1"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
         }
       ]
     },
