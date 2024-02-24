@@ -45,6 +45,8 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
 )
 
 const isLoading = computed(() => communitiesStore.communityStores == null)
+
+const isSearchResultEmpty = computed(() => communitiesStore.communityStores?.length === 0)
 </script>
 
 <template>
@@ -123,7 +125,7 @@ const isLoading = computed(() => communitiesStore.communityStores == null)
         </div>
       </v-col>
       <!-- no result found -->
-      <v-col v-show="!communityList.length" cols="12" class="text-center">
+      <v-col v-show="isSearchResultEmpty" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
       <v-row v-show="props.type===`managers`&&props.isLoginUser" class="justify-center">
