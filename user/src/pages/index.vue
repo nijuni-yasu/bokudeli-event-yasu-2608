@@ -5,7 +5,6 @@ import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter
 import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
 import { where, orderBy } from 'firebase/firestore'
-import { convertTruncateText } from '@/schemes/converter'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const eventsStore = useEventsStore() as EventsStore
@@ -36,7 +35,7 @@ const eventStoreList = computed<_EventStore[]>(() =>
 const getEventKey = (event: BokudeliEvent) => {
   return [event.community_account, event.event_id].join('/')
 }
-const descriptionCharacterLimit = 18
+
 </script>
 
 <template>
@@ -62,24 +61,29 @@ const descriptionCharacterLimit = 18
                 <div class="image">
                   <VImg cover class="mx-auto" aspect-ratio="1.91" :src="eventStore.event.event_cover_url" />
                 </div>
-                <v-card-title class="justify-center pb-3 title text-h6">
+                <v-chip class="mt-2 ml-3" color="primary" size="small">
+                  {{ $t(`event_status.${eventStore.event.event_status.value}`) }}
+                </v-chip>
+                <v-card-title class="justify-center px-3 pb-2 text-h6 font-weight-bold">
                   {{ eventStore.event.event_name }}
                 </v-card-title>
-                <v-card-text class="text-left pb-2"> 【主催者】 {{ eventStore.event.community_name }} </v-card-text>
-                <v-card-text class="text-left pb-2">
-                  【開催日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{ dateOnlyTimeString(eventStore.event.event_end_datetime) }}
-                </v-card-text>
-                <v-card-text class="text-left pb-2">
-                  【開催場所】{{ convertTruncateText(eventStore.event.event_address, descriptionCharacterLimit) }}
-                </v-card-text>
-                <v-card-text class="text-left pb-2">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                  【主催】{{ eventStore.event.community_name }}
+                </v-card-title>
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                  【日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{ dateOnlyTimeString(eventStore.event.event_end_datetime) }}
+                </v-card-title>
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                  【場所】{{ eventStore.event.event_address }}
+                </v-card-title>
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
                   【お店】{{ eventStore.event.shop_name }}
-                </v-card-text>
-                <v-card-text class="text-left pb-4">
-                  【参加者】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人
-                </v-card-text>
+                </v-card-title>
+                <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2">
+                  【参加】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人 / {{ eventStore.event.event_max_people }} 人
+                </v-card-title>
                 <!-- Mutual members -->
-                <v-card-text class="position-relative">
+                <v-card-text class="position-relative px-3">
                   <div class="d-flex justify-space-between align-center">
                     <div v-if="eventStore.orderConfiremedMembers" class="v-avatar-group">
                       <UserAvatar
