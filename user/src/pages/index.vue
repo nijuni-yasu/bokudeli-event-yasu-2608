@@ -64,22 +64,22 @@ const getEventKey = (event: BokudeliEvent) => {
                 <v-chip class="mt-2 ml-3" color="primary" size="small">
                   {{ $t(`event_status.${eventStore.event.event_status.value}`) }}
                 </v-chip>
-                <v-card-title class="justify-center px-3 pb-2 text-h6 font-weight-bold">
+                <v-card-title class="justify-center px-3 py-1" style="font-size:16px; font-weight:600;">
                   {{ eventStore.event.event_name }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
                   【主催】{{ eventStore.event.community_name }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
                   【日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{ dateOnlyTimeString(eventStore.event.event_end_datetime) }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
                   【場所】{{ eventStore.event.event_address }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
                   【お店】{{ eventStore.event.shop_name }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2">
+                <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2" style="line-height:1.75rem;">
                   【参加】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人 / {{ eventStore.event.event_max_people }} 人
                 </v-card-title>
                 <!-- Mutual members -->
