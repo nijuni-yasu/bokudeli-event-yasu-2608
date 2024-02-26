@@ -26,7 +26,7 @@ communityStore.getCurrentUserRoles().then((roles) => {
 const events = computed(() => {
   // 読み込み中は null として扱う
   return communityStore.events?.flatMap((event) => {
-    // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
+    // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
     if (isManager.value === false && (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')) {
       return []
     }
