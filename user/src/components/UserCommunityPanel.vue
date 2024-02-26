@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 type CommunityWithMembers = {
   community: BokudeliCommunity
-  members: CommunityMember[]
+  members: (CommunityMember | null)[]
 }
 
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
@@ -31,12 +31,12 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
       return []
     }
     if (props.type === 'managers') {
-      return communityStore.members?.some((member) => member.user_id === props.userId && (member.roles?.includes('manager') ?? false)) ? {
+      return communityStore.members?.some((member) => member?.user_id === props.userId && (member?.roles?.includes('manager') ?? false)) ? {
         community: communityStore.community,
         members: communityStore.members,
       } : []
     } else {
-      return communityStore.members?.some((member) => member.user_id === props.userId) ? {
+      return communityStore.members?.some((member) => member?.user_id === props.userId) ? {
         community: communityStore.community,
         members: communityStore.members,
       } : []
@@ -88,7 +88,12 @@ const isSearchResultEmpty = computed(() => communitiesStore.communityStores?.len
                   <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                 </div>
                 <div v-if="members" class="v-avatar-group">
-                  <UserAvatar v-for="member in members.slice(0,17) ?? []" :key="member.user_id" :user="member" :size="40"/>
+                  <UserAvatar
+                    v-for="(member, i) in members.slice(0,17) ?? []"
+                    :key="member?.user_id ?? `${community.community_name}_avatar_${i}`"
+                    :user="member"
+                    :size="40"
+                  />
                 </div>
               </v-card-text>
             </v-col>
