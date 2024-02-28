@@ -13,9 +13,9 @@ const eventStore = useEventStore(props.eventId) as EventStore
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
-const members = computed(() => eventStore.orderConfiremedMembers?.sort((a, b) => 
-  a.orders.reduce((max, order) => Math.max(max, order.status !== 'ordered' ? 0 : order.updated_at.toMillis()), 0) -
-  b.orders.reduce((max, order) => Math.max(max, order.status !== 'ordered' ? 0 : order.updated_at.toMillis()), 0)
+const members = computed(() => eventStore.members?.sort((a, b) =>
+  a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
+  b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0)
 ) ?? [])
 
 </script>

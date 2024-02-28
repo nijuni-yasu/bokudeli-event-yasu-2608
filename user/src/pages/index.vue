@@ -117,14 +117,14 @@ onUnmounted(() => {
                   【お店】{{ eventStore.event.shop_name }}
                 </v-card-title>
                 <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2" style="line-height:1.75rem;">
-                  【参加】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人 / {{ eventStore.event.event_max_people }} 人
+                  【参加】{{ eventStore.members?.length ?? 0 }} 人 / {{ eventStore.event.event_max_people }} 人
                 </v-card-title>
                 <!-- Mutual members -->
                 <v-card-text class="position-relative px-3">
                   <div class="d-flex justify-space-between align-center">
-                    <div v-if="eventStore.orderConfiremedMembers" class="v-avatar-group">
+                    <div v-if="eventStore.members" class="v-avatar-group">
                       <UserAvatar
-                        v-for="member in eventStore.orderConfiremedMembers.slice(0, 12) ?? []"
+                        v-for="member in eventStore.members.slice(0, 12) ?? []"
                         :key="member.user_id"
                         :user="member"
                         :size="40"

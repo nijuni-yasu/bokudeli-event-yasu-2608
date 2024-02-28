@@ -1,4 +1,4 @@
-import { DocumentData, Timestamp } from 'firebase/firestore'
+import { DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 
 const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者支払い'] as const
@@ -47,6 +47,8 @@ class BokudeliEvent {
   event_place: string = '';
   event_place_url: string = '';
   event_postalcode: string = '';
+  members: DocumentReference[] = [];
+  event_num_members: number = 0;
 
   created_at: Timestamp = Timestamp.now();
   updated_at: Timestamp | null = null;
@@ -82,7 +84,12 @@ class BokudeliEvent {
     const result = {
       event_status: this.raw_event_status,
     }
-    return _.merge(result, _.omit(this, ['raw_event_status']))
+    return _.merge(result, _.omit(this, [
+      'raw_event_status',
+      // functions で計算するので含めない
+      'members',
+      'event_num_members'
+    ]))
   }
 
   get url () {
