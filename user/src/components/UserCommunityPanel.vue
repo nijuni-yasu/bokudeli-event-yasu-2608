@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { doc, where } from 'firebase/firestore'
+import { doc, orderBy, where } from 'firebase/firestore'
 import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityCreatePath, getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
@@ -23,6 +23,7 @@ const communitiesStore = useCommunitiesStore() as CommunitiesStore
 
 communitiesStore.filters = [
   where('members', 'array-contains', doc(db, 'users', props.userId)),
+  orderBy('community_num_members', 'desc'),
 ]
 
 const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.communityStores ?? [])
@@ -41,7 +42,7 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
         members: communityStore.members,
       } : []
     }
-  }).sort((a, b) => b.members.length - a.members.length)
+  })
 )
 
 const isLoading = computed(() => communitiesStore.communityStores == null)

@@ -3,12 +3,13 @@ import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
-import { where } from 'firebase/firestore'
+import { orderBy, where } from 'firebase/firestore'
 
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
 communitiesStore.filters = [
   where('is_public', '==', true),
   where('is_approved', '==', true),
+  orderBy('community_num_members', 'desc'),
 ]
 
 const isLoading = computed(() =>
