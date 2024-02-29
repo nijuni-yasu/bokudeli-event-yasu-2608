@@ -48,11 +48,6 @@
           to: '/',
         },
         // {
-        //   icon: 'mdi-bicycle',
-        //   text: 'ぼくデリ',
-        //   to: 'https://bokudeli.studio.design/',
-        // },
-        // {
         //   icon: 'mdi-account-multiple-plus',
         //   text: 'Register',
         //   to: '/pages/register',

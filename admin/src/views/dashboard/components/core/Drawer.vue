@@ -23,7 +23,7 @@
       <v-list-item-content>
         <v-list-item-title class="font-weight-regular">
           <div class="display-3">
-            <span class="logo-mini">❤️</span>
+            <span class="logo-mini">💚</span>
             <span class="logo-normal">shokujii</span>
           </div>
           <div class="display-1">
@@ -112,7 +112,7 @@
         {
           icon: 'mdi-lightbulb-on-outline',
           title: '店舗マニュアル',
-          href: 'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing',
+          href: 'https://bit.ly/4bFRS0E',
         },
       ],
     }),

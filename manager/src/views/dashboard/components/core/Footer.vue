@@ -48,6 +48,10 @@
     data: () => ({
       links: [
         {
+          href: 'https://shokujii.jp/',
+          text: '食事でつながるshokujii',
+        },
+        {
           href: 'http://nijuni.jp/',
           text: '運営会社',
         },
