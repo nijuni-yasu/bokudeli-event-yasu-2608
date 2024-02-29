@@ -10,7 +10,7 @@ import { AppContentLayoutNav, ContentWidth, FooterType, NavbarType } from '@layo
 
 export const { themeConfig, layoutConfig } = defineThemeConfig({
   app: {
-    title: 'ぼくデリ',
+    title: 'shokujii',
 
     logo: h('img', { src: logo, class: 'logo' }),
 

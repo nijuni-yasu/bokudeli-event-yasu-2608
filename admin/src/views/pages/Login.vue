@@ -16,7 +16,7 @@
           <template v-slot:heading>
             <div class="text-center">
               <h1 class="display-2 font-weight-bold my-1">
-                ぼくデリ 店舗管理画面
+                shokujii 店舗管理画面
               </h1>
             </div>
           </template>

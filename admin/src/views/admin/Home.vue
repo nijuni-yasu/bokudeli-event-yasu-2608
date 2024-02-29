@@ -11,7 +11,6 @@
       class="px-5 py-3 my-10"
     >
       <div class="ma-10 display-1" style="line-height: 2.0;">
-        2024年2月22日をもちまして
         「コミュニティフードデリバリーぼくデリ」は<b>「食事でつながるshokujii」</b>に生まれ変わりました。<br>
         「孤食を減らし、団欒を増やす」をミッションに掲げ、人と人を食事でつないでいくサービスづくりに、邁進してまいります。<br>
         変わらぬご愛顧をいただきますようお願いいたします。<br>
@@ -46,7 +45,7 @@
               class="py-5"
             >
               <a
-                :href="'https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing'"
+                :href="'https://bit.ly/4bFRS0E'"
                 target="_blank"
               >
                 店舗マニュアル
