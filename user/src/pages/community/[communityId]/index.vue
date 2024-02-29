@@ -26,7 +26,7 @@ communityStore.getCurrentUserRoles().then((roles) => {
 const events = computed(() => {
   // 読み込み中は null として扱う
   return communityStore.events?.flatMap((event) => {
-    // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
+    // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
     if (isManager.value === false && (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')) {
       return []
     }
@@ -172,22 +172,23 @@ const openLoginDialog = () => {
               <v-col v-for="event in events" :key="event.event_id" md="6" sm="12" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
                   <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
-                  <v-chip class="ma-2" color="primary" elevated flat>
+                  <v-chip class="mt-2 ml-2" size="small" color="primary" elevated flat>
                     {{ $t(`event_status.${event.event_status.value}`) }}
                   </v-chip>
-                  <v-card-title class="justify-center text-h5 pb-3 pre-line">
+                  <v-card-title class="justify-center text-h6 pb-3 px-2">
                     {{ event.event_name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community_name }} </v-card-text>
-                  <v-card-text class="text-left pb-2">
-                    【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
+                  <v-card-text class="text-left pb-2 px-2">
+                    【日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-2">
-                    【注文期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
+                  <v-card-text class="text-left pb-2 px-2">
+                    【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【開催場所】{{ event.event_address }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
-                  <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
+                  <v-card-text class="text-left pb-2 px-2"> 【場所】{{ event.event_address }} </v-card-text>
+                  <v-card-text class="text-left pb-2 px-2"> 【お店】 {{ event.shop_name }} </v-card-text>
+                  <v-card-text class="text-left pb-5 px-2 ">
+                    【定員】{{ event.event_max_people }} 人
+                  </v-card-text>
                 </v-card>
                 <v-row
                   v-if="isManager"
