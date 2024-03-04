@@ -11,8 +11,8 @@ const buildCalendarLink = (event: BokudeliEvent | null, type: CalendarType) => {
     start: event.event_start_datetime?.toDate(),
     end: event.event_end_datetime?.toDate() ?? undefined,
     location: event.event_address ?? undefined,
-    description: event.event_desc ?? undefined,
-    url: window.location.href,
+    description: `URL: ${event.url}`,
+    url: event.url,
   }
 
   switch (type) {
