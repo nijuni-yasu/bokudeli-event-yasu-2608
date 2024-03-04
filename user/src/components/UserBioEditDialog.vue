@@ -86,13 +86,13 @@ const onFormReset = () => {
               <v-text-field v-model="userDataDraft.user_name" label="ユーザー名" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field v-model="twitterId" label="X（旧Twitter）" hint="Xのユーザー名を入力してください（例：shokujii_jp）" />
+              <v-text-field v-model="twitterId" label="X（旧Twitter）" prefix="@" hint="Xのユーザー名を入力してください（例：shokujii_jp）" />
             </v-col>
             <v-col cols="12" md="12">
               <v-text-field v-model="facebookId" label="Facebook" hint="Facebookユーザー名を入力してください（URLの末尾部分、例：shokujii_jp）" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field v-model="instagramId" label="Instagram" hint="Instagramユーザー名を入力してください（例：shokujii_jp）" />
+              <v-text-field v-model="instagramId" label="Instagram" prefix="@" hint="Instagramユーザー名を入力してください（例：shokujii_jp）" />
             </v-col>
             <v-col cols="12" md="12">
               <VTextarea v-model="userDataDraft.user_description" label="自己紹介文" />
