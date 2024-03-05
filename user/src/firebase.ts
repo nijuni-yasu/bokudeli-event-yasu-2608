@@ -2,7 +2,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAnalytics } from 'firebase/analytics'
 import { getAuth } from 'firebase/auth'
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator  } from 'firebase/firestore'
+import { connectFirestoreEmulator, getFirestore  } from 'firebase/firestore'
 import { getStorage, connectStorageEmulator } from 'firebase/storage'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions'
 
@@ -23,9 +23,7 @@ const app = initializeApp(firebaseConfig)
 getAnalytics(app)
 getAuth(app)
 export const storage = getStorage(app)
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-})
+export const db = getFirestore(app)
 export const functions = getFunctions(app, 'asia-northeast1')
 if (import.meta.env.VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST != null) {
   const [host, port] = import.meta.env.VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST.split(':')
