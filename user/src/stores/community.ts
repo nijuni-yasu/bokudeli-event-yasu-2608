@@ -11,11 +11,15 @@ import {
   onSnapshot,
   Timestamp,
   DocumentSnapshot,
+  setDoc,
+  getCountFromServer,
+  QueryDocumentSnapshot,
+  startAfter,
+  limit,
   type DocumentData,
   type DocumentReference,
   type Unsubscribe,
   type QueryConstraint,
-  setDoc,
 } from 'firebase/firestore'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import { StateTree, Store } from 'pinia'
@@ -27,6 +31,8 @@ import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { uploadCommunityImage } from '@/composable/uploadImage'
+import { checkFiltersEquivalent } from '@/utils/tools'
+import { TaskExecutor } from '@/utils/executors'
 
 class CommunityRefUpdatedEvent extends Event {
   constructor(type: string, public communityRef: DocumentReference) {
@@ -305,11 +311,16 @@ const useCommunityMemberStore = (communityId: string, memberId: string) => {
   return store()
 }
 
+const pagenationExecutor = new TaskExecutor(1)
+
+const PAGE_SIZE = 5
+
 type CommunitiesStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
   filters: Ref<QueryConstraint[] | null>,
   communityDraft: Ref<BokudeliCommunity>,
+  totalCount: Ref<number | null>,
 } & StateTree
 
 type CommunitiesStoreGetters = {
@@ -317,91 +328,109 @@ type CommunitiesStoreGetters = {
 }
 
 type CommunitiesStoreAction = {
+  reload: () => void,
+  next: () => void,
   getCommunityData: (communityAccount: string) => Promise<DocumentData | null>,
   createNewCommunityFromDraft: () => Promise<BokudeliCommunity>,
 }
 
 export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters, CommunitiesStoreAction>
 
-export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters & CommunitiesStoreAction>('/communities', () => {
-  const _communityStores = ref<CommunityStore[] | null>(null)
-  const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
-  const filters = ref<QueryConstraint[] | null>(null)
+export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) => {
+  const store = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters & CommunitiesStoreAction>('/communities', () => {
+    const communityStores = ref<CommunityStore[] | null>(null)
+    const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
+    const filters = ref<QueryConstraint[] | null>(null)
+    const totalCount = ref<number | null>(null)
 
-  let unsubscribe: Unsubscribe | null = null
-  const subscribe = () => {
-    _communityStores.value = null
-    // TODO ページネーション
-    const q = query(collection(db, 'communities'), ...(filters.value ?? []))
-    unsubscribe?.()
-    unsubscribe = onSnapshot(q, (querySnapshot) => {
-      _communityStores.value = querySnapshot.docs.map((doc) => {
-        return useCommunityStore(doc) as CommunityStore
+    const communitySnapshot: QueryDocumentSnapshot[] = []
+
+    const next = () => {
+      if (pagenationExecutor.totalTaskLength > 0) {
+        return
+      }
+      pagenationExecutor.addTask(async () => {
+        if (totalCount.value == null) {
+          const q = query(collection(db, 'communities'),
+            ...(filters.value ?? []),
+          )
+          totalCount.value = (await getCountFromServer(q)).data().count
+        }
+        const lastVisibleDocument = communitySnapshot[communitySnapshot.length - 1]
+        const q = query(collection(db, 'communities'),
+          ...(filters.value ?? []),
+          ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
+          limit(PAGE_SIZE))
+        const querySnapshot = await getDocs(q)
+        communitySnapshot.push(...querySnapshot.docs)
+        communityStores.value = communitySnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
       })
-    })
-  }
-
-  const communityStores = computed<CommunityStore[] | null>(() => {
-    if (unsubscribe == null) {
-      subscribe()
     }
-    return _communityStores.value
+
+    const reload = () => {
+      communitySnapshot.splice(0) // clear
+      totalCount.value = null
+      next()
+    }
+
+    watch(filters, (newValue, oldValue) => {
+      if (!checkFiltersEquivalent(newValue ?? [], oldValue ?? [])) {
+        reload()
+      }
+    })
+
+    const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> => {
+      const duplicatedCommunity = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
+      if (duplicatedCommunity.empty) {
+        return null
+      } else {
+        return duplicatedCommunity.docs[0].data()
+      }
+    }
+
+    const createNewCommunityFromDraft = async () => {
+      const c = await getCommunityData(communityDraft.value.community_account)
+      if (c != null) {
+        throw new Error(`community ${communityDraft.value.community_account} already exists`)
+      }
+      const userId = useStoreStoredUser().storedUser?.userId
+      if (userId == null) {
+        throw new Error('user is not logged in')
+      }
+      const newCommunityRef = doc(collection(db, 'communities'))
+      await setDoc(newCommunityRef, {
+        ...communityDraft.value.convertToDocumentData(),
+        community_id: newCommunityRef.id,
+        is_approved: false,
+        created_at: Timestamp.now(),
+        updated_at: Timestamp.now(),
+      })
+      await setDoc(doc(newCommunityRef, 'members', userId), {
+        roles: ['manager'],
+        created_at: Timestamp.now(),
+        updated_at: Timestamp.now(),
+      })
+      return convertDocumentDataToCommunity((await getDoc(newCommunityRef)).data() as DocumentData)
+    }
+
+    return {
+      filters,
+      totalCount,
+      communityDraft,
+      communityStores,
+      reload,
+      next,
+      getCommunityData,
+      createNewCommunityFromDraft,
+      $reset: () => {
+        communityDraft.value = new BokudeliCommunity()
+        filters.value = null
+      },
+    }
   })
-
-  watch(filters, (newValue, oldValue) => {
-    const arrayLength = Math.max(newValue?.length ?? 0, oldValue?.length ?? 0);
-    if ([...Array(arrayLength)].some((__, i) => {
-      return !_.isEqual(newValue?.[i], oldValue?.[i])
-    })) {
-      subscribe()
-    }
-  })
-
-  const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> => {
-    const duplicatedCommunity = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
-    if (duplicatedCommunity.empty) {
-      return null
-    } else {
-      return duplicatedCommunity.docs[0].data()
-    }
+  const instance = store()
+  if (filters != null && !checkFiltersEquivalent(filters, instance.filters ?? [])) {
+    instance.filters = filters
   }
-
-  const createNewCommunityFromDraft = async () => {
-    const c = await getCommunityData(communityDraft.value.community_account)
-    if (c != null) {
-      throw new Error(`community ${communityDraft.value.community_account} already exists`)
-    }
-    const userId = useStoreStoredUser().storedUser?.userId
-    if (userId == null) {
-      throw new Error('user is not logged in')
-    }
-    const newCommunityRef = doc(collection(db, 'communities'))
-    await setDoc(newCommunityRef, {
-      ...communityDraft.value.convertToDocumentData(),
-      community_id: newCommunityRef.id,
-      is_approved: false,
-      created_at: Timestamp.now(),
-      updated_at: Timestamp.now(),
-    })
-    await setDoc(doc(newCommunityRef, 'members', userId), {
-      roles: ['manager'],
-      created_at: Timestamp.now(),
-      updated_at: Timestamp.now(),
-    })
-    return convertDocumentDataToCommunity((await getDoc(newCommunityRef)).data() as DocumentData)
-  }
-
-  return {
-    filters,
-    communityDraft,
-    communityStores,
-    getCommunityData,
-    createNewCommunityFromDraft,
-    $reset: () => {
-      communityDraft.value = new BokudeliCommunity()
-      filters.value = null
-      unsubscribe?.()
-      unsubscribe = null
-    },
-  }
-})
+  return instance
+}

@@ -19,12 +19,21 @@ type CommunityWithMembers = {
   members: (CommunityMember | null)[]
 }
 
-const communitiesStore = useCommunitiesStore() as CommunitiesStore
+const loadingElement = ref()
+let observer: IntersectionObserver
+let isVisible = false
 
-communitiesStore.filters = [
+const hasMore = computed(() => {
+  if (communitiesStore.totalCount == null || communitiesStore.communityStores?.length == null) {
+    return true
+  }
+  return communitiesStore.communityStores.length < communitiesStore.totalCount
+})
+
+const communitiesStore = useCommunitiesStore([
   where('members', 'array-contains', doc(db, 'users', props.userId)),
   orderBy('community_num_members', 'desc'),
-]
+]) as CommunitiesStore
 
 const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.communityStores ?? [])
   .flatMap((communityStore) => {
@@ -45,14 +54,40 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
   })
 )
 
-const isLoading = computed(() => communitiesStore.communityStores == null)
+watch(communityList, () => {
+  if (isVisible) {
+    communitiesStore.next()
+  }
+})
 
-const isSearchResultEmpty = computed(() => communitiesStore.communityStores?.length === 0)
+onMounted(() => {
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        isVisible = true
+        communitiesStore.next()
+      } else {
+        isVisible = false
+      }
+    });
+  }, {
+    // オプションでroot、rootMargin、thresholdを設定可能
+    threshold: 0.1 // 10%の部分が見えたらトリガー
+  });
+
+  if (loadingElement.value?.$el != null) {
+    observer.observe(loadingElement.value.$el);
+  }
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+})
 </script>
 
 <template>
   <section>
-    <v-row v-if="!isLoading" class="justify-center">
+    <v-row class="justify-center">
       <v-col
         v-for="{ community, members } in communityList"
         :key="community.community_id"
@@ -131,7 +166,7 @@ const isSearchResultEmpty = computed(() => communitiesStore.communityStores?.len
         </div>
       </v-col>
       <!-- no result found -->
-      <v-col v-show="isSearchResultEmpty" cols="12" class="text-center">
+      <v-col v-show="communitiesStore.communityStores?.length === 0" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
       <v-row v-show="props.type===`managers`&&props.isLoginUser" class="justify-center">
@@ -150,9 +185,9 @@ const isSearchResultEmpty = computed(() => communitiesStore.communityStores?.len
         </v-col>
       </v-row>
     </v-row>
-    <v-row v-else class="justify-center">
+    <v-row v-if="hasMore" class="justify-center">
       <v-col cols="auto">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+        <v-progress-circular ref="loadingElement" indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
   </section>
