@@ -6,16 +6,27 @@ import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
 import { where, orderBy } from 'firebase/firestore'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
+import { useDisplay } from 'vuetify'
+
+const display = useDisplay()
 
 const loadingElement = ref()
 let observer: IntersectionObserver
 let isVisible = false
 
+const numOfColumns = computed(() => {
+  switch (display.name.value) {
+    case 'xs': return 1
+    case 'sm': return 2
+    default: return 3
+  }
+})
+
 const eventsStore = useEventsStore([
   where('is_public', '==', true),
   where('event_status.value', '==', 'accepting_order'),
   orderBy('event_start_datetime', 'desc')
-]) as EventsStore
+], numOfColumns.value) as EventsStore
 
 const hasMore = computed(() => {
   if (eventsStore.totalCount == null || eventsStore.eventStores?.length == null) {
@@ -49,6 +60,10 @@ watch(eventStoreList, () => {
     eventsStore.next()
   }
 })
+
+watch(numOfColumns, (num) => {
+  eventsStore.setPageSize(num * 3)
+}, { immediate: true })
 
 onMounted(() => {
   observer = new IntersectionObserver((entries) => {
@@ -85,6 +100,7 @@ onUnmounted(() => {
           </v-card>
         </a>
         <v-row class="mb-2">
+          <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
           <v-col
             v-for="eventStore in eventStoreList"
             :key="getEventKey(eventStore.event)"

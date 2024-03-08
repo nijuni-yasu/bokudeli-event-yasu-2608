@@ -313,8 +313,6 @@ const useCommunityMemberStore = (communityId: string, memberId: string) => {
 
 const pagenationExecutor = new TaskExecutor(1)
 
-const PAGE_SIZE = 5
-
 type CommunitiesStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
@@ -330,13 +328,14 @@ type CommunitiesStoreGetters = {
 type CommunitiesStoreAction = {
   reload: () => void,
   next: () => void,
+  setPageSize: (size: number) => void,
   getCommunityData: (communityAccount: string) => Promise<DocumentData | null>,
   createNewCommunityFromDraft: () => Promise<BokudeliCommunity>,
 }
 
 export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters, CommunitiesStoreAction>
 
-export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) => {
+export const useCommunitiesStore = (filters: QueryConstraint[] | null = null, pageSize = 5) => {
   const store = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters & CommunitiesStoreAction>('/communities', () => {
     const communityStores = ref<CommunityStore[] | null>(null)
     const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
@@ -344,6 +343,10 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
     const totalCount = ref<number | null>(null)
 
     const communitySnapshot: QueryDocumentSnapshot[] = []
+
+    const setPageSize = (size: number) => {
+      pageSize = size
+    }
 
     const next = () => {
       if (pagenationExecutor.totalTaskLength > 0) {
@@ -360,7 +363,7 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
         const q = query(collection(db, 'communities'),
           ...(filters.value ?? []),
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-          limit(PAGE_SIZE))
+          limit(pageSize))
         const querySnapshot = await getDocs(q)
         communitySnapshot.push(...querySnapshot.docs)
         communityStores.value = communitySnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
@@ -420,6 +423,7 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
       communityStores,
       reload,
       next,
+      setPageSize,
       getCommunityData,
       createNewCommunityFromDraft,
       $reset: () => {

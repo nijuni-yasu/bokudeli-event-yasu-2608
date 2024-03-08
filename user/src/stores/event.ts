@@ -260,8 +260,6 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
 
 const pagenationExecutor = new TaskExecutor(1)
 
-const PAGE_SIZE = 9
-
 type EventsStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
@@ -277,12 +275,13 @@ type EventsStoreGetters = {
 type EventsStoreAction = {
   reload: () => void,
   next: () => void,
+  setPageSize: (size: number) => void,
   createNewEventFromDraft: (communityId: string) => Promise<BokudeliEvent>,
 }
 
 export type EventsStore = Store<'/events', EventsStoreState, EventsStoreGetters, EventsStoreAction>
 
-export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
+export const useEventsStore = (filters: QueryConstraint[] | null = null, pageSize: number = 3) => {
   const store = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction> ('/events', () => {
     const eventStores = ref<EventStore[] | null>(null)
     const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
@@ -290,6 +289,10 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
     const totalCount = ref<number | null>(null)
 
     const eventsSnapsthot: QueryDocumentSnapshot[] = []
+
+    const setPageSize = (size: number) => {
+      pageSize = size
+    }
 
     const next = () => {
       if (pagenationExecutor.totalTaskLength > 0) {
@@ -306,7 +309,7 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
         const q =  query(collectionGroup(db, 'events'),
           ...(filters.value ?? []),
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-          limit(PAGE_SIZE))
+          limit(pageSize))
         const querySnapshot = await getDocs(q)
         eventsSnapsthot.push(...querySnapshot.docs)
         eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
@@ -351,6 +354,7 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
       eventDraft,
       reload,
       next,
+      setPageSize,
       createNewEventFromDraft,
       $reset: () => {
         eventDraft.value = new BokudeliEvent()
