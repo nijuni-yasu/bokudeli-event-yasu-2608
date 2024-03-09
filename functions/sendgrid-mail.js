@@ -5,7 +5,7 @@ import ja from 'date-fns/locale/ja';
 import sgMail from '@sendgrid/mail';
 
 // 環境変数の方がよいかもしれない
-const DEFAULT_FROM = 'bokudeli@nijuni.jp';
+const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>';
 const DEFAULT_CC = 'support+cc@nijuni.jp';
 const DEFAULT_TO = 'support+to@nijuni.jp';
 
@@ -301,7 +301,7 @@ async function sendEventInformationMail() {
                 shop_name: eventData.shop_name,
                 community_name: eventData.community_name,
             });
-            if (_dynamic_template_data.events.length === 5) {
+            if (_dynamic_template_data.events.length === 3) {
                 break;
             }
         }
@@ -328,6 +328,20 @@ async function sendEventInformationMail() {
         }));
     }
     return Promise.all(promises);
+    // エミュレータからのテストメール
+    // const dynamic_template_data = {
+    //     ..._dynamic_template_data,
+    //     user_name: 'テストユーザー'
+    //   };
+    // sgMail.send({
+    //     to: 'yasukawa.naohiro+test@nijuni.jp',
+    //     from: DEFAULT_FROM,
+    //     templateId: EVENT_INFORMATION_TEMPLATE_ID,
+    //     dynamic_template_data,
+    //     asm: {
+    //         groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
+    //     }
+    // });
 }
 
 async function sendEventStatusMail(templateId, eventSnapshot) {
