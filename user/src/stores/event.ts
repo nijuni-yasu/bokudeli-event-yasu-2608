@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { db } from '@/firebase'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
@@ -31,7 +30,6 @@ import OrderItem from '@/schemes/orderItem'
 import { EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
 import { TaskExecutor } from '@/utils/executors'
-import { FirestoredUser } from '@/schemes/storedUser'
 import { checkFiltersEquivalent } from '@/utils/tools'
 
 class EventRefUpdatedEvent extends Event {
@@ -77,7 +75,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
     const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(null)
-    const orders = ref<OrderItem[] | null>(null)
+    const _orders = ref<OrderItem[] | null>(null)
     const _members = ref<{user_id: string, store: UserStore}[] | null>(null)
     const _eventRef = ref<DocumentReference | null>(null)
 
@@ -122,35 +120,35 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       })
     }
 
-    const members = computed<EventMember [] | null>(() => {
+    const orders = computed<OrderItem[] | null>(() => {
       getEventRef().then((eventRef) => {
-        // members に紐付いて orders を取得している箇所があるので、ここは残すが
-        // 本来は orders が必要ではない場合には、subscribeOrders は呼ばないようにするのが望ましい
-        // TODO: members ではなく orders で遅延評価するようにする
         subscribeOrders(eventRef)
       })
-      const _orders = orders.value
-      return _members.value?.flatMap((member) => {
-        if (member.store.exists == false) {
-          return []
-        }
-        const orders = _orders?.filter(order => order.user_id === member.user_id ) ?? []
-        if (member.store.user == null) {
-          // TODO 雑なキャストを修正する
-          return {
-            user_id: member.user_id,
-            orders
-          } as EventMember
-        }
-        // CAUTION: _.merge is mutable function
-        return _.merge({},
-          member.store.user as FirestoredUser,
-          {
-            orders
-          }
-        )
-      }) ?? null
+      return _orders.value
     })
+
+    const members = computed<EventMember [] | null>(() => _members.value?.flatMap((member) => {
+      if (member.store.exists === false) {
+        return []
+      }
+      const target = _orders.value?.filter(order => order.user_id === member.user_id ) ?? [] as OrderItem[]
+      const orders = new Proxy(target, {
+        get: (target, prop, receiver) => {
+          getEventRef().then((eventRef) => {
+            subscribeOrders(eventRef)
+          })
+          return Reflect.get(target, prop, receiver)
+        }
+      })
+      // TODO 雑なキャストを修正する
+      return (member.store.user == null) ? {
+        user_id: member.user_id,
+        orders
+      } as EventMember : {
+        ...member.store.user,
+        orders
+      }
+    }) ?? null)
 
     const updateEvent = async (data: BokudeliEvent) => {
       const eventRef = await getEventRef()
@@ -198,10 +196,10 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
     }
     let unsubscribeOrders: Unsubscribe | null = null
     const subscribeOrders = (eventRef: DocumentReference) => {
-      const ordersRef = collection(eventRef, 'orders')
       if (unsubscribeOrders == null) {
+        const ordersRef = collection(eventRef, 'orders')
         unsubscribeOrders = onSnapshot(ordersRef, (ordersSnapshot) => {
-          orders.value = ordersSnapshot.docs.map(o => o.data() as OrderItem)  // TODO このキャストは雑なので、ちゃんと処理する
+          _orders.value = ordersSnapshot.docs.map(o => o.data() as OrderItem)  // TODO このキャストは雑なので、ちゃんと処理する
         })
       }
     }
