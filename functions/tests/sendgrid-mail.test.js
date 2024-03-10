@@ -56,7 +56,7 @@ describe('event_information のテスト', () => {
 
     // assert
     const expected = {
-      from: 'bokudeli@nijuni.jp',
+      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
       templateId: 'd-32df61e4ef334bf4a3a6071096679864',
       asm: {
         groupId: 25345,
@@ -112,7 +112,7 @@ describe('community_added のテスト', () => {
     expect(sgMail.send).toHaveBeenCalledOnce();
     expect(sgMail.send).toHaveBeenCalledWith({
       to: 'support+to@nijuni.jp',
-      from: 'bokudeli@nijuni.jp',
+      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
       subject: '「ぼくデリ」コミュニティが新規申請されました',
       text: '【ID】 5oxesNeS5dO078qABR98\n' +
         '【コミュニティ名】 ぼくデリ\n' +
