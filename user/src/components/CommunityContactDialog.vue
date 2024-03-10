@@ -86,7 +86,7 @@ const onFormSubmit = async () => {
             </v-col>
             <!-- 👉 Submit and Cancel -->
             <v-col cols="12" class="d-flex flex-wrap justify-center gap-4">
-              <v-btn :disabled="state.isSending || !(state.mailTitle&&state.mailMessage)" type="submit" rounded>
+              <v-btn :disabled="state.isSending || !(state.mailTitle&&state.mailMessage)" :loading="state.isSending" type="submit" rounded>
                 メッセージ送信
               </v-btn>
               <v-btn rounded color="secondary" variant="tonal" @click="closeDialog"> キャンセル </v-btn>
