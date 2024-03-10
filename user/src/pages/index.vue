@@ -5,14 +5,23 @@ import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter
 import { getEventPath } from '@/router/utils'
 import { useEventsStore, type EventsStore, type EventStore } from '@/stores/event'
 import { where, orderBy } from 'firebase/firestore'
-import { convertTruncateText } from '@/schemes/converter'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
-const eventsStore = useEventsStore() as EventsStore
-eventsStore.filters = [where('is_public', '==', true), orderBy('event_start_datetime', 'desc')]
+const loadingElement = ref()
+let observer: IntersectionObserver
+let isVisible = false
 
-const isLoading = computed(() => {
-  return eventsStore.eventStores == null
+const eventsStore = useEventsStore([
+  where('is_public', '==', true),
+  where('event_status.value', '==', 'accepting_order'),
+  orderBy('event_start_datetime', 'desc')
+]) as EventsStore
+
+const hasMore = computed(() => {
+  if (eventsStore.totalCount == null || eventsStore.eventStores?.length == null) {
+    return true
+  }
+  return (eventsStore.eventStores.length) < eventsStore.totalCount
 })
 
 type _EventStore = Omit<EventStore, 'event'> & {
@@ -22,9 +31,7 @@ type _EventStore = Omit<EventStore, 'event'> & {
 const eventStoreList = computed<_EventStore[]>(() =>
   (eventsStore.eventStores ?? []).flatMap((eventStore) => {
     if (
-      eventStore.event == null ||
-      eventStore.event.event_status.value === 'in_draft' ||
-      eventStore.event.event_status.value === 'applying_reservation'
+      eventStore.event == null
     ) {
       return []
     } else {
@@ -36,7 +43,36 @@ const eventStoreList = computed<_EventStore[]>(() =>
 const getEventKey = (event: BokudeliEvent) => {
   return [event.community_account, event.event_id].join('/')
 }
-const descriptionCharacterLimit = 18
+
+watch(eventStoreList, () => {
+  if (isVisible) {
+    eventsStore.next()
+  }
+})
+
+onMounted(() => {
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        isVisible = true
+        eventsStore.next()
+      } else {
+        isVisible = false
+      }
+    });
+  }, {
+    // オプションでroot、rootMargin、thresholdを設定可能
+    threshold: 0.1 // 10%の部分が見えたらトリガー
+  });
+
+  if (loadingElement.value?.$el != null) {
+    observer.observe(loadingElement.value.$el);
+  }
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+})
 </script>
 
 <template>
@@ -48,7 +84,7 @@ const descriptionCharacterLimit = 18
             <v-img :src="topLogo" />
           </v-card>
         </a>
-        <v-row v-if="isLoading === false" class="mb-2">
+        <v-row class="mb-2">
           <v-col
             v-for="eventStore in eventStoreList"
             :key="getEventKey(eventStore.event)"
@@ -62,24 +98,29 @@ const descriptionCharacterLimit = 18
                 <div class="image">
                   <VImg cover class="mx-auto" aspect-ratio="1.91" :src="eventStore.event.event_cover_url" />
                 </div>
-                <v-card-title class="justify-center pb-3 title text-h6">
+                <v-chip class="mt-2 ml-3" color="primary" size="small">
+                  {{ $t(`event_status.${eventStore.event.event_status.value}`) }}
+                </v-chip>
+                <v-card-title class="justify-center px-3 py-1" style="font-size:16px; font-weight:600;">
                   {{ eventStore.event.event_name }}
                 </v-card-title>
-                <v-card-text class="text-left pb-2"> 【主催者】 {{ eventStore.event.community_name }} </v-card-text>
-                <v-card-text class="text-left pb-2">
-                  【開催日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{ dateOnlyTimeString(eventStore.event.event_end_datetime) }}
-                </v-card-text>
-                <v-card-text class="text-left pb-2">
-                  【開催場所】{{ convertTruncateText(eventStore.event.event_address, descriptionCharacterLimit) }}
-                </v-card-text>
-                <v-card-text class="text-left pb-2">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
+                  【主催】{{ eventStore.event.community_name }}
+                </v-card-title>
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
+                  【日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{ dateOnlyTimeString(eventStore.event.event_end_datetime) }}
+                </v-card-title>
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
+                  【場所】{{ eventStore.event.event_address }}
+                </v-card-title>
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
                   【お店】{{ eventStore.event.shop_name }}
-                </v-card-text>
-                <v-card-text class="text-left pb-4">
-                  【参加者】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人
-                </v-card-text>
+                </v-card-title>
+                <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2" style="line-height:1.75rem;">
+                  【参加】{{ eventStore.orderConfiremedMembers?.length ?? 0 }} 人 / {{ eventStore.event.event_max_people }} 人
+                </v-card-title>
                 <!-- Mutual members -->
-                <v-card-text class="position-relative">
+                <v-card-text class="position-relative px-3">
                   <div class="d-flex justify-space-between align-center">
                     <div v-if="eventStore.orderConfiremedMembers" class="v-avatar-group">
                       <UserAvatar
@@ -94,10 +135,8 @@ const descriptionCharacterLimit = 18
               </v-card>
             </router-link>
           </v-col>
-        </v-row>
-        <v-row v-else>
-          <v-col cols="12" class="text-center">
-            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+          <v-col v-if="hasMore" cols="12" class="text-center">
+            <v-progress-circular ref="loadingElement" indeterminate color="primary"></v-progress-circular>
           </v-col>
         </v-row>
       </v-col>

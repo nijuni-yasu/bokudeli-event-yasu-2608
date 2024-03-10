@@ -19,7 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const state = reactive({
-  menus: [] as PartnerMenu[],
+  menus: null as PartnerMenu[] | null,
   menuDisable: false as false | 'notAcceptingOrder' | 'deadline' | 'limitPeople' | 'isSoldout',
   isLoading: true,
 })
@@ -105,7 +105,7 @@ const showDisableAlert = (reason: 'notAcceptingOrder' | 'deadline' | 'limitPeopl
 </script>
 <template>
   <section>
-    <v-row v-if="!state.isLoading && props.currentMemberCount !== undefined">
+    <v-row v-if="!state.isLoading && props.currentMemberCount !== undefined && state.menus !== null">
       <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
         <v-card class="mb-3 mx-0" color="text-center">
           <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
@@ -155,7 +155,7 @@ const showDisableAlert = (reason: 'notAcceptingOrder' | 'deadline' | 'limitPeopl
       </v-col>
 
       <!-- no result found -->
-      <v-col v-show="!state.menus.length" cols="12" class="text-center">
+      <v-col v-show="state.menus !== null &&  state.menus.length === 0" cols="12" class="text-center">
         <h4 class="mt-4">メニューがありません</h4>
       </v-col>
     </v-row>

@@ -26,7 +26,7 @@ communityStore.getCurrentUserRoles().then((roles) => {
 const events = computed(() => {
   // 読み込み中は null として扱う
   return communityStore.events?.flatMap((event) => {
-    // 「コミュマネでない」かつ「注文受付中でない」場合は非表示
+    // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
     if (isManager.value === false && (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')) {
       return []
     }
@@ -140,9 +140,9 @@ const openLoginDialog = () => {
                 </v-btn>
               </v-col>
               <!-- community manager -->
-              <v-card-title v-if="communityStore.members?.some(m => m.roles?.includes('manager') ?? false)" class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
-              <div v-for="manager in communityStore.members?.filter(m => m.roles?.includes('manager') ?? false)" :key="manager.user_id">
-                <router-link :to="`/users/${manager.user_id}`">
+              <v-card-title v-if="communityStore.members?.some(m => m?.roles?.includes('manager') ?? false)" class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
+              <div v-for="(manager, i) in communityStore.members?.filter(m => m?.roles?.includes('manager') ?? false)" :key="manager?.user_id ?? `manager_${i}`">
+                <router-link v-if="manager != null" :to="`/users/${manager.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
                       <UserAvatar :user="manager" :size="40" />
@@ -154,12 +154,12 @@ const openLoginDialog = () => {
 
               <!-- community member -->
               <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
-              <div v-for="member in communityStore.members" :key="member.user_id">
-                <router-link :to="`/users/${member.user_id}`">
+              <div v-for="(member, i) in communityStore.members" :key="member?.user_id ?? `member_${i}`">
+                <router-link :to="`/users/${member?.user_id}`">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
                       <UserAvatar :user="member" :size="40" />
-                      <div class="ma-2 text-subtitle-1">{{ member.user_name }}</div>
+                      <div class="ma-2 text-subtitle-1">{{ member?.user_name }}</div>
                     </div>
                   </v-row>
                 </router-link>
@@ -172,22 +172,23 @@ const openLoginDialog = () => {
               <v-col v-for="event in events" :key="event.event_id" md="6" sm="12" cols="12">
                 <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
                   <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
-                  <v-chip class="ma-2" color="primary" elevated flat>
+                  <v-chip class="mt-2 ml-2" size="small" color="primary" elevated flat>
                     {{ $t(`event_status.${event.event_status.value}`) }}
                   </v-chip>
-                  <v-card-title class="justify-center text-h5 pb-3 pre-line">
+                  <v-card-title class="justify-center text-h6 pb-3 px-2">
                     {{ event.event_name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-2"> 【主催者】 {{ event.community_name }} </v-card-text>
-                  <v-card-text class="text-left pb-2">
-                    【開催日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
+                  <v-card-text class="text-left pb-2 px-2">
+                    【日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-2">
-                    【注文期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
+                  <v-card-text class="text-left pb-2 px-2">
+                    【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
                   </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【開催場所】{{ event.event_address }} </v-card-text>
-                  <v-card-text class="text-left pb-2"> 【お店】 {{ event.shop_name }} </v-card-text>
-                  <v-card-text class="text-left pb-8"> 【定員】{{ event.event_max_people }} 人</v-card-text>
+                  <v-card-text class="text-left pb-2 px-2"> 【場所】{{ event.event_address }} </v-card-text>
+                  <v-card-text class="text-left pb-2 px-2"> 【お店】 {{ event.shop_name }} </v-card-text>
+                  <v-card-text class="text-left pb-5 px-2 ">
+                    【定員】{{ event.event_max_people }} 人
+                  </v-card-text>
                 </v-card>
                 <v-row
                   v-if="isManager"
@@ -204,7 +205,7 @@ const openLoginDialog = () => {
                     :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:5} }"
                   >
                     予約
-                  </v-btn>                
+                  </v-btn>
                   <v-btn
                     v-if="event.event_status.value===`in_draft`"
                     class="ml-1"
@@ -228,7 +229,7 @@ const openLoginDialog = () => {
                     :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:4} }"
                   >
                     編集
-                  </v-btn>                  
+                  </v-btn>
                 </v-row>
               </v-col>
             </v-row>

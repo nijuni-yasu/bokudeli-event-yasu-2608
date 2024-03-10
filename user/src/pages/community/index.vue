@@ -2,35 +2,23 @@
 import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
-import { FirestoredUser } from '@/schemes/storedUser'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
 import { where } from 'firebase/firestore'
-import UserAvatar from '@/layouts/components/UserAvatar.vue'
-
-type CommunityWithMembers = {
-  community: BokudeliCommunity
-  members: FirestoredUser[]
-}
 
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
 communitiesStore.filters = [
   where('is_public', '==', true),
-  where('is_approved', '==', true)
+  where('is_approved', '==', true),
 ]
 
 const isLoading = computed(() =>
   communitiesStore.communityStores == null ||
-  Array.from(communitiesStore.communityStores.values()).every((communityStore) => communityStore.community == null || communityStore.members == null)
+  Array.from(communitiesStore.communityStores.values()).every((communityStore) => communityStore.community == null)
 )
 
-const communityList = computed<CommunityWithMembers[]>(() => {
-  const list = (communitiesStore.communityStores ?? [])
-    .flatMap((communityStore) => (communityStore.community == null || communityStore.members == null) ? [] : {
-      community: communityStore.community,
-      members: communityStore.members,
-    })
-  // list.sort((a, b) => b.members.length - a.members.length)
-  return list
+const communityList = computed<BokudeliCommunity[]>(() => {
+  return (communitiesStore.communityStores ?? [])
+    .flatMap((communityStore) => (communityStore.community == null) ? [] : communityStore.community)
 })
 </script>
 
@@ -38,7 +26,7 @@ const communityList = computed<CommunityWithMembers[]>(() => {
   <section>
     <v-row v-if="!isLoading" class="justify-center">
       <v-col
-        v-for="{ community, members } in communityList"
+        v-for=" community in communityList"
         :key="community.community_id"
         md="10"
         sm="12"
@@ -68,14 +56,19 @@ const communityList = computed<CommunityWithMembers[]>(() => {
                 </v-card-text>
                 <v-spacer/>
                 <!-- Mutual members -->
-                <v-card-text class="mt-auto">
+                <!-- <v-card-text class="mt-auto">
                   <div class="mb-2">
                     <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
                   </div>
                   <div v-if="members" class="v-avatar-group">
-                    <UserAvatar v-for="member in members.slice(0,19) ?? []" :key="member.user_id" :user="member" :size="40" />
+                    <UserAvatar
+                      v-for="(member, i) in members.slice(0,19) ?? []"
+                      :key="member?.user_id ?? `${community.community_name}_avatar_${i}`"
+                      :user="member"
+                      :size="40"
+                    />
                   </div>
-                </v-card-text>
+                </v-card-text> -->
               </v-col>
             </v-row>
           </v-card>

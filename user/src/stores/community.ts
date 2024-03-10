@@ -10,10 +10,10 @@ import {
   where,
   onSnapshot,
   Timestamp,
+  DocumentSnapshot,
   type DocumentData,
   type DocumentReference,
   type Unsubscribe,
-  type DocumentSnapshot,
   type QueryConstraint,
   setDoc,
 } from 'firebase/firestore'
@@ -28,11 +28,9 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { uploadCommunityImage } from '@/composable/uploadImage'
 
-const EVENT_TYPE_COMMUNITY_REF_UPDATED = 'onCommunityRefUpdated'
-
 class CommunityRefUpdatedEvent extends Event {
-  constructor(public communityRef: DocumentReference) {
-    super(EVENT_TYPE_COMMUNITY_REF_UPDATED)
+  constructor(type: string, public communityRef: DocumentReference) {
+    super(type)
   }
 }
 
@@ -41,7 +39,7 @@ type CommunityStoreState = {
 } & StateTree
 
 type CommunityGetters = {
-  members: Ref<CommunityMember[] | null>,
+  members: Ref<(CommunityMember | null)[] | null>,
   events: Ref<BokudeliEvent[] | null>,
 }
 
@@ -56,20 +54,37 @@ type CommunityStoreAction = {
 
 export type CommunityStore = Store<string, CommunityStoreState, CommunityGetters, CommunityStoreAction>
 
-export const useCommunityStore = (communityAccount: string) => {
+export const useCommunityStore = (target: string | DocumentSnapshot) => {
+  let communityAccount: string
+  if (target instanceof DocumentSnapshot) {
+    communityAccount = target.get('community_account')
+  } else {
+    communityAccount = target
+  }
   // store の Identifier が firestore の path と異なるのは危険だが、この store 内に閉じている場合は問題ないはず
   const store = defineStore<string, CommunityStoreState & CommunityGetters & CommunityStoreAction>(`/communities/${communityAccount}`, () => {
+    const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${communityAccount}`
     const exists = ref<boolean | null>(null)
     const community = ref<BokudeliCommunity | null>(null)
-    const memberStores = ref<CommunityMemberStore[] | null>(null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
+    const _communityRef = ref<DocumentReference | null>((target instanceof DocumentSnapshot) ? target.ref : null)
 
-    const _communityRef = ref<DocumentReference | null>(null)
+    const onCommunityUpdated = (doc: DocumentSnapshot) => {
+      exists.value = doc.exists()
+      const data = doc.data()
+      community.value = data ? convertDocumentDataToCommunity(data) : null
+      _communityRef.value = doc.ref
+    }
+
+    if (target instanceof DocumentSnapshot) {
+      onCommunityUpdated(target)
+    }
+
     watch(_communityRef, (newValue) => {
       if (newValue == null) {
         throw new Error('_communityRef can be null just as the initial value.')
       }
-      document.dispatchEvent(new CommunityRefUpdatedEvent(toRaw(newValue)))
+      document.dispatchEvent(new CommunityRefUpdatedEvent(EVENT_TYPE_COMMUNITY_REF_UPDATED, toRaw(newValue)))
     }, { immediate: false })
 
     const getCommunityRef = async (): Promise<DocumentReference> => {
@@ -90,12 +105,14 @@ export const useCommunityStore = (communityAccount: string) => {
       })
     }
 
-    const members = computed<CommunityMember[] | null>(() => {
-      if (memberStores.value == null) {
+    const members = computed<(CommunityMember | null)[] | null>(() => {
+      if (community.value == null ||  _communityRef.value == null) {
         return null
       }
-      const stores = Array.from(memberStores.value.values())
-      return stores.flatMap((store) => !store.exists || store.member == null ? [] : store.member as CommunityMember)
+      const communityId = _communityRef.value.id
+      const stores = community.value.members?.map((member: DocumentReference) =>
+        useCommunityMemberStore(communityId, member.id) as CommunityMemberStore) ?? []
+      return stores.map((store) => !store.exists || store.member == null ? null : store.member as CommunityMember)
     })
     const events = computed<BokudeliEvent[] | null>(() => {
       getCommunityRef().then((communityRef) => {
@@ -140,12 +157,7 @@ export const useCommunityStore = (communityAccount: string) => {
     let unsubscribeCommunity: Unsubscribe | null = null
     const subscribeCommunity = (communityRef: DocumentReference) => {
       if (unsubscribeCommunity == null) {
-        unsubscribeCommunity = onSnapshot(communityRef, (doc: DocumentSnapshot) => {
-          exists.value = doc.exists()
-          const data = doc.data()
-          community.value = data ? convertDocumentDataToCommunity(data) : null
-          memberStores.value = data?.members?.map((member: DocumentReference) => useCommunityMemberStore(communityRef.id, member.id)) ?? []
-        })
+        unsubscribeCommunity = onSnapshot(communityRef, onCommunityUpdated)
       }
     }
 
@@ -192,7 +204,11 @@ export const useCommunityStore = (communityAccount: string) => {
       unsubscribeEvents = null
     }
 
-    subscribe()
+    if (_communityRef.value == null) {
+      subscribe()
+    } else {
+      subscribeCommunity(toRaw(_communityRef.value))
+    }
 
     const getCurrentUserRoles = async () => {
       const communityRef = await getCommunityRef()
@@ -320,8 +336,7 @@ export const useCommunitiesStore = defineStore<string, CommunitiesStoreState & C
     unsubscribe?.()
     unsubscribe = onSnapshot(q, (querySnapshot) => {
       _communityStores.value = querySnapshot.docs.map((doc) => {
-        const communityAccount = doc.get('community_account')
-        return useCommunityStore(communityAccount) as CommunityStore
+        return useCommunityStore(doc) as CommunityStore
       })
     })
   }

@@ -1,16 +1,15 @@
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateWithDayOfWeekString } from '@/schemes/converter'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 
 export const shareSnsButton = async (snsType: string, event: BokudeliEvent) => {
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter') {
     const baseUrl = 'https://twitter.com/intent/tweet'
+    const hashtags = encodeURIComponent('食事でつながる,shokujii');
     const text = encodeURIComponent(
-      `<<ひとことコメント>>\n\n📝${event.event_name}\n📍${event.community_name}\n🗓️${dateWithDayOfWeekString(
-        event.event_start_datetime,
-      )}~\n👩‍🍳${event.shop_name}\n #食事でつながる #shokujii #ショクジー \n`,
+      `${event.event_name}\n🗓️${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}\n📍${event.event_address}\n👩‍🍳${event.shop_name}\n🎟`,
     )
-    const openUrl = `${baseUrl}?text=${text}&url=${eventUrl}`
+    const openUrl = `${baseUrl}?text=${text}&url=${eventUrl}&hashtags=${hashtags}`
     window.open(openUrl, '_blank', 'width=800,height=500')
   } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
@@ -21,9 +20,7 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent) => {
     const openUrl = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
     window.open(openUrl, '_blank', 'width=800,height=500')
   } else if (snsType === 'copy') {
-    const text = `📝${event.event_name}\n📍${event.community_name}\n🗓️${dateWithDayOfWeekString(
-      event.event_start_datetime,
-    )}~\n👩‍🍳${event.shop_name}\n🍔${event.url}\n#食事でつながる #shokujii #ショクジー \n`
+    const text = `${event.event_name}\n🙋‍♀️${event.community_name}\n🗓️${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}\n📍${event.event_address}\n👩‍🍳${event.shop_name}\n🎟${event.url}?openExternalBrowser=1\n#食事でつながる #shokujii\n`
     navigator.clipboard
       .writeText(text)
       .then(() => {

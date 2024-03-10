@@ -29,6 +29,10 @@ jobs:
         node-version-file: ./manager/.node-version
         cache: 'npm'
         cache-dependency-path: ./manager/package-lock.json
+    - name: Generate .env file
+      run: |
+        env_vars=$(echo '${{ secrets.MANAGER_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
+        echo "$env_vars" > .env
     - name: Build
       run: |
         npm install

@@ -71,7 +71,7 @@
         },
         {
           href:
-            "https://drive.google.com/drive/folders/1R40T-y5WqHRZu5ANILIQxgagqoBTlgSr?usp=sharing",
+            "https://bit.ly/4bFRS0E",
           text: "店舗マニュアル"
         },
         {

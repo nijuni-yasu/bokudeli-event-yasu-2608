@@ -52,8 +52,8 @@
     data: () => ({
       links: [
         {
-          href: 'https://bokudeli.jp/',
-          text: 'ぼくデリ',
+          href: 'https://shokujii.jp/',
+          text: '食事でつながるshokujii',
         },
         {
           href: 'http://nijuni.jp/',

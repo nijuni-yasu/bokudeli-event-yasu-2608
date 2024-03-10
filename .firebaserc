@@ -13,10 +13,10 @@
           "bokudeli-event-dev-manager"
         ],
         "user": [
-          "bokudeli-event-dev-launch"
-        ],
-        "user_old": [
           "bokudeli-event-dev"
+        ],
+        "launch": [
+          "bokudeli-event-dev-launch"
         ]
       }
     },
@@ -29,6 +29,9 @@
           "bokudeli-event-test-manager"
         ],
         "user": [
+          "bokudeli-event-test"
+        ],
+        "launch": [
           "bokudeli-event-test-launch"
         ]
       }

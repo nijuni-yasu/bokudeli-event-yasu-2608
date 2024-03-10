@@ -12,12 +12,16 @@ import {
   updateDoc,
   query,
   where,
+  limit,
+  startAfter,
   onSnapshot,
   Timestamp,
   DocumentReference,
+  DocumentSnapshot,
+  getCountFromServer,
+  type QueryDocumentSnapshot,
   type DocumentData,
   type Unsubscribe,
-  type DocumentSnapshot,
   type QueryConstraint,
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
@@ -26,12 +30,11 @@ import { Store, StateTree } from 'pinia'
 import OrderItem from '@/schemes/orderItem'
 import { EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
-
-const EVENT_TYPE_EVENT_REF_UPDATED = 'onEventRefUpdated'
+import { TaskExecutor } from '@/utils/executors'
 
 class EventRefUpdatedEvent extends Event {
-  constructor(public eventRef: DocumentReference) {
-    super(EVENT_TYPE_EVENT_REF_UPDATED)
+  constructor(type: string, public eventRef: DocumentReference) {
+    super(type)
   }
 }
 
@@ -56,18 +59,36 @@ type EventStoreAction = {
 
 export type EventStore = Store<string, EventStoreState, EventStoreGetters, EventStoreAction>
 
-export const useEventStore = (eventId: string) => {
+export const useEventStore = (terget: string | DocumentSnapshot) => {
+  let eventId: string
+  if (terget instanceof DocumentSnapshot) {
+    eventId = terget.id
+  } else {
+    eventId = terget
+  }
   const store = defineStore<string, EventStoreState & EventStoreGetters & EventStoreAction> (`/events/${eventId}`, () => {
+    const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(null)
     const _members = ref<{ userStore: UserStore; orders: OrderItem[]}[] | null>(null)
-
     const _eventRef = ref<DocumentReference | null>(null)
+
+    const onEventUpdated = (doc: DocumentSnapshot) => {
+      exists.value = doc.exists()
+      const data = doc.data()
+      event.value = data ? convertDocumentDataToEvent(data) : null
+      _eventRef.value = doc.ref
+    }
+
+    if (terget instanceof DocumentSnapshot) {
+      onEventUpdated(terget)
+    }
+
     watch(_eventRef, (newValue) => {
       if (newValue == null) {
         throw new Error('_eventRef can be null just as the initial value.')
       }
-      document.dispatchEvent(new EventRefUpdatedEvent(toRaw(newValue)))
+      document.dispatchEvent(new EventRefUpdatedEvent(EVENT_TYPE_EVENT_REF_UPDATED, toRaw(newValue)))
     }, { immediate: false })
 
     const getEventRef = async (): Promise<DocumentReference> => {
@@ -149,11 +170,7 @@ export const useEventStore = (eventId: string) => {
     let unsubscribeEvent: Unsubscribe | null = null
     const subscribeEvent = (eventRef: DocumentReference) => {
       if (unsubscribeEvent == null) {
-        unsubscribeEvent = onSnapshot(eventRef, (doc: DocumentSnapshot) => {
-          exists.value = doc.exists()
-          const data = doc.data()
-          event.value = data ? convertDocumentDataToEvent(data) : null
-        })
+        unsubscribeEvent = onSnapshot(eventRef, onEventUpdated)
       }
     }
     let unsubscribeOrders: Unsubscribe | null = null
@@ -207,7 +224,11 @@ export const useEventStore = (eventId: string) => {
       unsubscribeOrders = null
     }
 
-    subscribe()
+    if (_eventRef.value == null) {
+      subscribe()
+    } else {
+      subscribeEvent(toRaw(_eventRef.value))
+    }
 
     return {
       event,
@@ -229,11 +250,16 @@ export const useEventStore = (eventId: string) => {
   return store()
 }
 
+const pagenationExecutor = new TaskExecutor(1)
+
+const PAGE_SIZE = 9
+
 type EventsStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
   filters: Ref<QueryConstraint[] | null>
-  eventDraft: Ref<BokudeliEvent>
+  eventDraft: Ref<BokudeliEvent>,
+  totalCount: Ref<number | null>,
 } & StateTree
 
 type EventsStoreGetters = {
@@ -241,71 +267,97 @@ type EventsStoreGetters = {
 }
 
 type EventsStoreAction = {
+  reload: () => void,
+  next: () => void,
   createNewEventFromDraft: (communityId: string) => Promise<BokudeliEvent>,
 }
 
 export type EventsStore = Store<'/events', EventsStoreState, EventsStoreGetters, EventsStoreAction>
 
-export const useEventsStore = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction> ('/events', () => {
-  const _eventStores = ref<EventStore[] | null>(null)
-  const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
-  const filters = ref<QueryConstraint[] | null>(null)
+const checkFiltersEquivalent = (a: QueryConstraint[], b: QueryConstraint[]) => {
+  const arrayLength = Math.max(a.length, b.length);
+  return !([...Array(arrayLength)].some((__, i) => !_.isEqual(a[i], b[i])))
+}
 
-  let unsubscribe: Unsubscribe | null = null
-  const subscribe = () => {
-    // TODO ページネーション
-    const q = query(collectionGroup(db, 'events'), ...(filters.value ?? []))
-    unsubscribe?.()
-    unsubscribe = onSnapshot(q, (querySnapshot) => {
-      _eventStores.value = querySnapshot.docs.map((doc) => useEventStore(doc.id) as EventStore)
+export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
+  const store = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction> ('/events', () => {
+    const eventStores = ref<EventStore[] | null>(null)
+    const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
+    const filters = ref<QueryConstraint[] | null>(null)
+    const totalCount = ref<number | null>(null)
+
+    const eventsSnapsthot: QueryDocumentSnapshot[] = []
+
+    const next = () => {
+      if (pagenationExecutor.totalTaskLength > 0) {
+        return
+      }
+      pagenationExecutor.addTask(async () => {
+        if (totalCount.value == null) {
+          const q = query(collectionGroup(db, 'events'),
+            ...(filters.value ?? []),
+          )
+          totalCount.value = (await getCountFromServer(q)).data().count
+        }
+        const lastVisibleDocument = eventsSnapsthot[eventsSnapsthot.length - 1]
+        const q =  query(collectionGroup(db, 'events'),
+          ...(filters.value ?? []),
+          ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
+          limit(PAGE_SIZE))
+        const querySnapshot = await getDocs(q)
+        eventsSnapsthot.push(...querySnapshot.docs)
+        eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
+      })
+    }
+
+    const reload = () => {
+      eventsSnapsthot.splice(0) // clear
+      totalCount.value = null
+      next()
+    }
+
+    watch(filters, (newValue, oldValue) => {
+      if (!checkFiltersEquivalent(newValue ?? [], oldValue ?? [])) {
+        reload()
+      }
     })
-  }
 
-  const eventStores = computed<EventStore[] | null>(() => {
-    if (unsubscribe == null) {
-      subscribe()
+    const createNewEventFromDraft = async (community_id: string): Promise<BokudeliEvent> => {
+      const communityRef = doc(db, 'communities', community_id)
+      const community = await getDoc(communityRef)
+      if (!community.exists()) {
+        throw new Error(`community ${community_id} does not exists`)
+      }
+      const newEventRef = doc(collection(communityRef, 'events'))
+      await setDoc(newEventRef, {
+        ...eventDraft.value.convertToDocumentData(),
+        event_id: newEventRef.id,
+        community_id,
+        community_name: community.get('community_name'),
+        community_account: community.get('community_account'),
+        created_at: Timestamp.now(),
+        updated_at: Timestamp.now(),
+      })
+      return convertDocumentDataToEvent((await getDoc(newEventRef)).data() as DocumentData)
     }
-    return _eventStores.value
+
+    return {
+      filters,
+      totalCount,
+      eventStores,
+      eventDraft,
+      reload,
+      next,
+      createNewEventFromDraft,
+      $reset: () => {
+        eventDraft.value = new BokudeliEvent()
+        filters.value = null
+      },
+    }
   })
-
-  watch(filters, (newValue, oldValue) => {
-    const arrayLength = Math.max(newValue?.length ?? 0, oldValue?.length ?? 0);
-    if ([...Array(arrayLength)].some((__, i) => {
-      return !_.isEqual(newValue?.[i], oldValue?.[i])
-    })) {
-      subscribe()
-    }
-  })
-
-  const createNewEventFromDraft = async (community_id: string): Promise<BokudeliEvent> => {
-    const communityRef = doc(db, 'communities', community_id)
-    const community = await getDoc(communityRef)
-    if (!community.exists()) {
-      throw new Error(`community ${community_id} does not exists`)
-    }
-    const newEventRef = doc(collection(communityRef, 'events'))
-    await setDoc(newEventRef, {
-      ...eventDraft.value.convertToDocumentData(),
-      event_id: newEventRef.id,
-      community_id,
-      community_name: community.get('community_name'),
-      community_account: community.get('community_account'),
-      created_at: Timestamp.now(),
-      updated_at: Timestamp.now(),
-    })
-    return convertDocumentDataToEvent((await getDoc(newEventRef)).data() as DocumentData)
+  const instance = store()
+  if (filters != null && !checkFiltersEquivalent(filters, instance.filters ?? [])) {
+    instance.filters = filters
   }
-
-  return {
-    filters,
-    eventStores,
-    eventDraft,
-    createNewEventFromDraft,
-    $reset: () => {
-      eventDraft.value = new BokudeliEvent()
-      filters.value = null
-      unsubscribe?.()
-      unsubscribe = null
-    },
-  }
-})
+  return instance
+}

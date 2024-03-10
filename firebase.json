@@ -36,12 +36,17 @@
       ]
     },
     {
-      "target": "user_old",
-      "redirects": [
+      "public": "user/dist",
+      "target": "launch",
+      "rewrites": [
         {
-          "regex": "(.*)",
-          "destination": "https://shokujii.jp/:1",
-          "type": 301
+          "source": "/community/**/events/**",
+          "function": "replace_ogp_tags",
+          "region": "asia-northeast1"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
         }
       ]
     }
