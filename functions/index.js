@@ -11,7 +11,7 @@ export const { stripe_webhook } = await import('./stripe-webhook.js');
 export const { stripe_refunds } = await import('./stripe-refunds.js');
 export const {
   polling,
-  // event_information,
+  event_information,
   on_event_changed,
   on_shop_changed,
   community_added,
