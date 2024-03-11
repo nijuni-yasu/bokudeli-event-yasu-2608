@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
-import { useStoreCredential } from '@/stores/credential'
 import { FirebaseError } from 'firebase/app'
-import { getAuth, signInWithPopup, FacebookAuthProvider, GoogleAuthProvider } from 'firebase/auth'
+import {
+  getAuth,
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  signInWithRedirect,
+  signInWithPopup,
+  AuthProvider,
+  linkWithCredential,
+} from 'firebase/auth'
 
 const props = defineProps<{
   modelValue: boolean
@@ -14,6 +20,8 @@ const emit = defineEmits<{
 
 const loginProvider = 'google' as 'facebook' | 'google'
 
+const isEnableLinkWithCredential = false
+
 const dialog = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
@@ -23,30 +31,58 @@ const closeDialog = () => {
   dialog.value = false
 }
 
-const getFacebookCredential = async () => {
-  const provider = new FacebookAuthProvider()
-  provider.addScope('public_profile')
-  provider.setCustomParameters({
-    display: 'popup',
-  })
+const signInByProviderService = async (providerService: 'Facebook' | 'Google') => {
+  let provider: FacebookAuthProvider | GoogleAuthProvider | null = null
 
-  //FIXME - signInWithRedirect を使う
+  switch (providerService) {
+    case 'Facebook':
+      provider = new FacebookAuthProvider()
+      provider.addScope('public_profile')
+      break
+    case 'Google':
+      provider = new GoogleAuthProvider()
+      provider.addScope('profile')
+      provider.addScope('openid')
+      break
+  }
+
+  await signInWithRedirect(getAuth(), provider)
+}
+
+const getCredentialWithPopup = async (providerService: 'Facebook' | 'Google') => {
+  let provider: FacebookAuthProvider | GoogleAuthProvider | null = null
+
+  switch (providerService) {
+    case 'Facebook':
+      provider = new FacebookAuthProvider()
+      provider.addScope('public_profile')
+      provider.setCustomParameters({
+        display: 'popup',
+      })
+      break
+    case 'Google':
+      provider = new GoogleAuthProvider()
+      provider.addScope('profile')
+      provider.addScope('openid')
+      break
+  }
+
   return await signInWithPopup(getAuth(), provider)
 }
 
 const handleFacebookLogin = async () => {
   try {
-    const userCredential = await getFacebookCredential()
-    updateCredentialFromUserCredential(userCredential)
-    loginUser(userCredential.user)
+    await signInByProviderService('Facebook')
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
       console.error({ error, credential })
       if (credential && error.code === 'auth/account-exists-with-different-credential') {
         //TODO すでに登録されているときアカウントリンクをさせたい
-        // const googleUser = await getGoogleCredential()
-        // linkWithCredential(googleUser.user, credential)
+        if (isEnableLinkWithCredential) {
+          const googleUser = await getCredentialWithPopup('Google')
+          linkWithCredential(googleUser.user, credential)
+        }
         window.alert('Googleアカウントですでに登録されています')
       } else {
         window.alert('Facebookログインできませんでした')
@@ -59,29 +95,19 @@ const handleFacebookLogin = async () => {
   }
 }
 
-const getGoogleCredential = async () => {
-  const provider = new GoogleAuthProvider()
-  provider.addScope('profile')
-  provider.addScope('openid')
-
-  // FIXME - ドメイン切り替えたらsignInWithRedirect を使う。現状はRedirectだとスマホでログインできなくなる
-  // await signInWithRedirect(getAuth(), provider)
-  return await signInWithPopup(getAuth(), provider)
-}
-
 const handleGoogleLogin = async () => {
   try {
-    const userCredential = await getGoogleCredential()
-    updateCredentialFromUserCredential(userCredential)
-    loginUser(userCredential.user)
+    await signInByProviderService('Google')
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
       console.error({ error, credential })
       if (credential && error.code === 'auth/account-exists-with-different-credential') {
         //TODO すでに登録されているときアカウントリンクをさせたい
-        // const facebookUser = await getFacebookCredential()
-        // linkWithCredential(facebookUser.user, credential)
+        if (isEnableLinkWithCredential) {
+          const facebookUser = await getCredentialWithPopup('Facebook')
+          linkWithCredential(facebookUser.user, credential)
+        }
         window.alert('Facebookアカウントですでに登録されています')
       } else {
         window.alert('Googleログインできませんでした')
