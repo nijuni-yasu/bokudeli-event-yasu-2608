@@ -24,8 +24,9 @@ const event = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-// 下書き中にプロフィール更新の可能性も考慮して、編集時も値を更新する
-event.value.organizer_email = storedUserStore.storedUser?.userEmail ?? ''
+if (event.value.organizer_email === '' && event.value.event_status.value === 'in_draft') {
+  event.value.organizer_email = storedUserStore.storedUser?.userEmail ?? ''
+}
 
 const isOpenConfirmDialog = ref(false)
 const openConfirmDialog = () => {
