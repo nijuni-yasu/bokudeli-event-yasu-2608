@@ -289,7 +289,7 @@ const checkAccountExists = async (event: Event) => {
               <v-row>
                 <v-col cols="12">
                   <div class="v-field icon-upload-container" @click="onIconTriggerUpload">
-                    <v-file-input ref="iconFileInputRef" v-model="iconImageFile" class="file-input"  />
+                    <v-file-input ref="iconFileInputRef" v-model="iconImageFile" class="file-input" :rules="[requiredValidator]" />
                     <v-img
                       v-if="iconImageUrl != null"
                       :src="iconImageUrl"
@@ -299,14 +299,22 @@ const checkAccountExists = async (event: Event) => {
                   </div>
                 </v-col>
               </v-row>
-              <span>※コミュニティのアイコン画像を設定してください（推奨サイズ：300x300px）</span>
+              <!-- TODO: 独自実装は問題を起こす可能性があるため、Vuetify の機能で実現できないか確認する -->
+              <div v-if="iconImageFile == null" class="v-input--error">
+                <div class="v-input--error v-input__details">
+                  <div class="v-messages" role="alert" aria-live="polite">
+                    <div class="v-messages__message">必須項目です</div>
+                  </div>
+                </div>
+              </div>
+              <div>※コミュニティのアイコン画像を設定してください（推奨サイズ：300x300px）</div>
             </v-card-text>
 
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
                   <div class="v-field image-upload-container" @click="onCoverTriggerUpload">
-                    <v-file-input ref="coverFileInputRef" v-model="coverImageFile" class="file-input" />
+                    <v-file-input ref="coverFileInputRef" v-model="coverImageFile" class="file-input" :rules="[requiredValidator]" />
                     <v-img
                       v-if="coverImageUrl != null"
                       :src="coverImageUrl"
@@ -316,7 +324,15 @@ const checkAccountExists = async (event: Event) => {
                   </div>
                 </v-col>
               </v-row>
-              <span>※コミュニティのカバー画像を設定してください（推奨サイズ：1200x630px）</span>
+              <!-- TODO: 独自実装は問題を起こす可能性があるため、Vuetify の機能で実現できないか確認する -->
+              <div v-if="coverImageFile == null" class="v-input--error">
+                <div class="v-input--error v-input__details">
+                  <div class="v-messages" role="alert" aria-live="polite">
+                    <div class="v-messages__message">必須項目です</div>
+                  </div>
+                </div>
+              </div>
+              <div>※コミュニティのカバー画像を設定してください（推奨サイズ：1200x630px）</div>
             </v-card-text>
 
             <v-card-title class="pt-10 px-5">
