@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { db } from '@/firebase'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
@@ -31,6 +30,7 @@ import OrderItem from '@/schemes/orderItem'
 import { EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
 import { TaskExecutor } from '@/utils/executors'
+import { checkFiltersEquivalent } from '@/utils/tools'
 
 class EventRefUpdatedEvent extends Event {
   constructor(type: string, public eventRef: DocumentReference) {
@@ -40,12 +40,17 @@ class EventRefUpdatedEvent extends Event {
 
 type EventStoreState = {
   event: Ref<BokudeliEvent | null>,
+  /**
+   * 未注文のものを含む注文リスト
+   */
+  orders: Ref<OrderItem[] | null>,
 } & StateTree
 
 type EventStoreGetters = {
-  orders: Ref<OrderItem[] | null>,
+  /**
+   * 注文済みユーザーのみのリスト
+   */
   members: Ref<EventMember[] | null>,
-  orderConfiremedMembers: Ref<EventMember[] | null>,
 }
 
 type EventStoreAction = {
@@ -70,7 +75,8 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
     const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(null)
-    const _members = ref<{ userStore: UserStore; orders: OrderItem[]}[] | null>(null)
+    const _orders = ref<OrderItem[] | null>(null)
+    const _members = ref<{user_id: string, store: UserStore}[] | null>(null)
     const _eventRef = ref<DocumentReference | null>(null)
 
     const onEventUpdated = (doc: DocumentSnapshot) => {
@@ -78,6 +84,10 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       const data = doc.data()
       event.value = data ? convertDocumentDataToEvent(data) : null
       _eventRef.value = doc.ref
+      _members.value = data?.members?.map((memberRef: DocumentReference) => ({
+        user_id: memberRef.id,
+        store: useUserStore(memberRef.id)
+      })) ?? null
     }
 
     if (terget instanceof DocumentSnapshot) {
@@ -110,24 +120,35 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       })
     }
 
-    const orders = computed<OrderItem[] | null>(() => _members.value?.flatMap((member) => member.orders) ?? null)
-
-    const members = computed<EventMember[] | null>(() => {
+    const orders = computed<OrderItem[] | null>(() => {
       getEventRef().then((eventRef) => {
         subscribeOrders(eventRef)
       })
-      return _members.value?.flatMap((member) => {
-        if (member.userStore.exists == null && member.userStore.user == null) {
-          return []
-        }
-        // CAUTION: _.merge is mutable function
-        return _.merge({}, member.userStore.user, { orders: member.orders })
-      }) ?? null
+      return _orders.value
     })
 
-    const orderConfiremedMembers = computed<EventMember[] | null>(() =>
-      members.value?.filter((member) => member.orders.some((order) => order.status === 'ordered')) ?? null
-    )
+    const members = computed<EventMember [] | null>(() => _members.value?.flatMap((member) => {
+      if (member.store.exists === false) {
+        return []
+      }
+      const target = _orders.value?.filter(order => order.user_id === member.user_id ) ?? [] as OrderItem[]
+      const orders = new Proxy(target, {
+        get: (target, prop, receiver) => {
+          getEventRef().then((eventRef) => {
+            subscribeOrders(eventRef)
+          })
+          return Reflect.get(target, prop, receiver)
+        }
+      })
+      // TODO 雑なキャストを修正する
+      return (member.store.user == null) ? {
+        user_id: member.user_id,
+        orders
+      } as EventMember : {
+        ...member.store.user,
+        orders
+      }
+    }) ?? null)
 
     const updateEvent = async (data: BokudeliEvent) => {
       const eventRef = await getEventRef()
@@ -175,24 +196,10 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
     }
     let unsubscribeOrders: Unsubscribe | null = null
     const subscribeOrders = (eventRef: DocumentReference) => {
-      const ordersRef = collection(eventRef, 'orders')
       if (unsubscribeOrders == null) {
+        const ordersRef = collection(eventRef, 'orders')
         unsubscribeOrders = onSnapshot(ordersRef, (ordersSnapshot) => {
-          if (ordersSnapshot.empty) {
-            _members.value = []
-          } else {
-            _members.value = Array.from(ordersSnapshot.docs.reduce((map, orderSnapshot) => {
-              const userId = orderSnapshot.get('user_id')
-              const userStore = useUserStore(userId) as UserStore
-              const item = map.get(userId) ?? {
-                userStore,
-                orders: [] as OrderItem[],
-              }
-              item.orders.push(orderSnapshot.data() as OrderItem) // TODO このキャストは雑なので、ちゃんと処理する
-              map.set(userId, item)
-              return map
-            }, new Map()).values())
-          }
+          _orders.value = ordersSnapshot.docs.map(o => o.data() as OrderItem)  // TODO このキャストは雑なので、ちゃんと処理する
         })
       }
     }
@@ -234,7 +241,6 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       event,
       orders,
       members,
-      orderConfiremedMembers,
       updateEvent,
       updateCoverImage,
       addOrder,
@@ -252,8 +258,6 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
 
 const pagenationExecutor = new TaskExecutor(1)
 
-const PAGE_SIZE = 9
-
 type EventsStoreState = {
   // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
   // パフォーマンスにも影響する設定なので、ここではあえて外に出す
@@ -269,17 +273,13 @@ type EventsStoreGetters = {
 type EventsStoreAction = {
   reload: () => void,
   next: () => void,
+  setPageSize: (size: number) => void,
   createNewEventFromDraft: (communityId: string) => Promise<BokudeliEvent>,
 }
 
 export type EventsStore = Store<'/events', EventsStoreState, EventsStoreGetters, EventsStoreAction>
 
-const checkFiltersEquivalent = (a: QueryConstraint[], b: QueryConstraint[]) => {
-  const arrayLength = Math.max(a.length, b.length);
-  return !([...Array(arrayLength)].some((__, i) => !_.isEqual(a[i], b[i])))
-}
-
-export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
+export const useEventsStore = (filters: QueryConstraint[] | null = null, pageSize: number = 3) => {
   const store = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction> ('/events', () => {
     const eventStores = ref<EventStore[] | null>(null)
     const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
@@ -287,6 +287,10 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
     const totalCount = ref<number | null>(null)
 
     const eventsSnapsthot: QueryDocumentSnapshot[] = []
+
+    const setPageSize = (size: number) => {
+      pageSize = size
+    }
 
     const next = () => {
       if (pagenationExecutor.totalTaskLength > 0) {
@@ -303,7 +307,7 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
         const q =  query(collectionGroup(db, 'events'),
           ...(filters.value ?? []),
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-          limit(PAGE_SIZE))
+          limit(pageSize))
         const querySnapshot = await getDocs(q)
         eventsSnapsthot.push(...querySnapshot.docs)
         eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
@@ -348,6 +352,7 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null) => {
       eventDraft,
       reload,
       next,
+      setPageSize,
       createNewEventFromDraft,
       $reset: () => {
         eventDraft.value = new BokudeliEvent()

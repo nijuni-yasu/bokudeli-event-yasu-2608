@@ -3,28 +3,64 @@ import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
-import { where } from 'firebase/firestore'
+import { orderBy, where } from 'firebase/firestore'
 
-const communitiesStore = useCommunitiesStore() as CommunitiesStore
-communitiesStore.filters = [
+const loadingElement = ref()
+let observer: IntersectionObserver
+let isVisible = false
+
+const communitiesStore = useCommunitiesStore([
   where('is_public', '==', true),
   where('is_approved', '==', true),
-]
+  orderBy('community_num_members', 'desc'),
+]) as CommunitiesStore
 
-const isLoading = computed(() =>
-  communitiesStore.communityStores == null ||
-  Array.from(communitiesStore.communityStores.values()).every((communityStore) => communityStore.community == null)
-)
+const hasMore = computed(() => {
+  if (communitiesStore.totalCount == null || communitiesStore.communityStores?.length == null) {
+    return true
+  }
+  return communitiesStore.communityStores.length < communitiesStore.totalCount
+})
 
 const communityList = computed<BokudeliCommunity[]>(() => {
   return (communitiesStore.communityStores ?? [])
     .flatMap((communityStore) => (communityStore.community == null) ? [] : communityStore.community)
 })
+
+watch(communityList, () => {
+  if (isVisible) {
+    communitiesStore.next()
+  }
+})
+
+onMounted(() => {
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        isVisible = true
+        communitiesStore.next()
+      } else {
+        isVisible = false
+      }
+    });
+  }, {
+    // オプションでroot、rootMargin、thresholdを設定可能
+    threshold: 0.1 // 10%の部分が見えたらトリガー
+  });
+
+  if (loadingElement.value?.$el != null) {
+    observer.observe(loadingElement.value.$el);
+  }
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+})
 </script>
 
 <template>
   <section>
-    <v-row v-if="!isLoading" class="justify-center">
+    <v-row class="justify-center">
       <v-col
         v-for=" community in communityList"
         :key="community.community_id"
@@ -80,9 +116,9 @@ const communityList = computed<BokudeliCommunity[]>(() => {
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
     </v-row>
-    <v-row v-else class="justify-center">
+    <v-row v-if="hasMore" class="justify-center">
       <v-col cols="auto">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+        <v-progress-circular ref="loadingElement" indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
   </section>

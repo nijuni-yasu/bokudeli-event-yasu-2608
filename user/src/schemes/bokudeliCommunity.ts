@@ -23,7 +23,8 @@ class BokudeliCommunity {
   is_public: boolean = true;
   updated_at: Timestamp | null = null;
 
-  members?: DocumentReference[] = [];
+  members: DocumentReference[] = [];
+  community_num_members: number = 0;
 
   constructor(communityData?: DocumentData) {
     if (communityData != null) {
@@ -32,7 +33,11 @@ class BokudeliCommunity {
   }
 
   convertToDocumentData(): DocumentData {
-    return _.merge({}, this)
+    return _.omit(this, [
+      // functions で計算するので含めない
+      'members',
+      'community_num_members'
+    ])
   }
 }
 

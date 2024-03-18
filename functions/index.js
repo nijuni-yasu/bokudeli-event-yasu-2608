@@ -22,5 +22,8 @@ export const {
   delete_community_members
 } = await import('./community-members.js');
 export const {
+  create_event_members
+} = await import('./event-members.js');
+export const {
   on_object_finalized
 } = await import('./storage-image.js');
