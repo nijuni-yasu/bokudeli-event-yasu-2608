@@ -27,3 +27,6 @@ export const {
 export const {
   on_object_finalized
 } = await import('./storage-image.js');
+export const {
+  scheduled_firestore_export
+} = await import('./backup.js');
