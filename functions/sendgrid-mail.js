@@ -258,23 +258,23 @@ async function getUsersFromOrders(ordersRef) {
     return users;
 }
 
-async function sendEventInformationMail() {
-    const promises = [];
+async function createTemplateDataForEventInformation(targetDateTimeMillis) {
     const date = dateFns.format(
-        convertToJapan(Date.now()),
+        convertToJapan(targetDateTimeMillis),
         'MM/dd',
         { locale: ja }
     );
     const _dynamic_template_data = {
         date,
-        events: []};
+        events: []
+    };
     const query = db.collectionGroup('events')
         .where('is_public', '==', true)
         .where('event_status.value', '==', 'accepting_order')
-        .where('event_deadline_datetime', '>', Timestamp.fromMillis(Date.now()));
-        // 不等号を含む where がある場合、他のフィールドでソートできない
-        // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
-        // .orderBy('event_start_datetime')
+        .where('event_deadline_datetime', '>', Timestamp.fromMillis(targetDateTimeMillis));
+    // 不等号を含む where がある場合、他のフィールドでソートできない
+    // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
+    // .orderBy('event_start_datetime')
     const eventsSnapshot = (await query.get()).docs
         .sort((a, b) => {
             const aTime = a.get('event_start_datetime');
@@ -306,14 +306,21 @@ async function sendEventInformationMail() {
             }
         }
     }
+    return _dynamic_template_data;
+}
+
+async function sendEventInformationMail() {
+    const nowDateTimeMillis = Date.now();
+    const _dynamic_template_data = await createTemplateDataForEventInformation(nowDateTimeMillis);
     if (_dynamic_template_data.events.length === 0) {
         return;
     }
+    const promises = [];
     for (const userRef of await db.collection('users').listDocuments()) {
         const userSnapshot = await userRef.get();
         const dynamic_template_data = {
-          ..._dynamic_template_data,
-          user_name: userSnapshot.get('user_name')
+            ..._dynamic_template_data,
+            user_name: userSnapshot.get('user_name')
         };
         promises.push(sgMail.send({
             to: userSnapshot.get('user_email'),
@@ -342,6 +349,32 @@ async function sendEventInformationMail() {
     //         groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
     //     }
     // });
+}
+
+async function sendEventInformationMailPreview() {
+    const tomorrowDateTimeMillis = Date.now() + 24 * 60 * 60 * 1000;
+    const _dynamic_template_data = await createTemplateDataForEventInformation(tomorrowDateTimeMillis);
+    if (_dynamic_template_data.events.length === 0) {
+        return sgMail.send({
+            to: DEFAULT_TO,
+            from: DEFAULT_FROM,
+            subject: '【プレビュー】明日のイベント情報について',
+            text: '明日送信予定のイベント予定はありません'
+        });
+    }
+    const dynamic_template_data = {
+        ..._dynamic_template_data,
+        user_name: 'テストユーザー',
+    };
+    return sgMail.send({
+        to: DEFAULT_TO,
+        from: DEFAULT_FROM,
+        templateId: EVENT_INFORMATION_TEMPLATE_ID,
+        dynamic_template_data,
+        asm: {
+            groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
+        }
+    })
 }
 
 async function sendEventStatusMail(templateId, eventSnapshot) {
@@ -431,6 +464,16 @@ export const event_information = functions
     .onRun(() => {
         return sendEventInformationMail();
     })
+
+export const event_information_preview = functions
+    .region('asia-northeast1')
+    .pubsub
+    .schedule('0 10 * * 0')
+    .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
+    .onRun(() => {
+        return sendEventInformationMailPreview();
+    })
+
 
 export const on_event_changed = functions
     .region('asia-northeast1')
