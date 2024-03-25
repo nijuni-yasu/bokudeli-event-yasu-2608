@@ -25,7 +25,7 @@ export const replace_ogp_tags = functions
     };
     try {
       // Event ページの場合は title 等を上書き
-      if (paths[1] === 'community' && paths[3] === 'events') {
+      if (paths[1] === 'c' && paths[3] === 'e') {
         const eventId = paths[4];
         const event = await db.collectionGroup('events').where('event_id', '==', eventId).get()
         if (event.size === 0) {
