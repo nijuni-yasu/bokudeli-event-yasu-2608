@@ -1,17 +1,19 @@
+import { getHomePath, getCommunityCreatePath, getCommunityListPath } from '@/router/utils'
+
 export default [
   {
     title: 'イベント',
-    to: { path: '/' },
+    to: { path: getHomePath() },
     icon: { icon: 'mdi-calendar-star' },
   },
   {
     title: 'コミュニティ',
-    to: { path: '/community' },
+    to: { path: getCommunityListPath() },
     icon: { icon: 'mdi-account-group' },
   },
   {
     title: 'コミュニティを作る',
-    to: { path: '/community/setup' },
+    to: { path: getCommunityCreatePath() },
     icon: { icon: 'mdi-heart-outline' },
   },
   {
