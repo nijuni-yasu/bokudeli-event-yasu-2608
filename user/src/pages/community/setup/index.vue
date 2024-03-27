@@ -100,6 +100,8 @@ const iconImageUrl = computed(() => {
     return community.value?.community_icon_image_url ?? null
   }
 })
+const coverImageValidator = (value: File[] | null) => coverImageUrl.value != null && coverImageUrl.value !== '' || requiredValidator(value)
+const iconImageValidator = (value: File[] | null) => iconImageUrl.value != null && iconImageUrl.value !== '' || requiredValidator(value)
 
 const trimInputtedId = (id: string | undefined, urlPattern: RegExp) => {
   if (!id) return ''
@@ -161,7 +163,7 @@ const submit = async () => {
     if (iconImageFile.value?.[0] != null) {
       await communityStore.updateIconImage(iconImageFile.value?.[0])
     }
-    window.alert('コミュニティ資料申請メールを送信しました')
+    window.alert('コミュニティ利用申請メールを送信しました。承認されるのをお待ちください。')
     // communityAccount を設定したので、communitiesStore.$reset() は onUnmounted 内で実行されないことに注意
     communitiesStore.$reset()
   }
@@ -289,7 +291,7 @@ const checkAccountExists = async (event: Event) => {
               <v-row>
                 <v-col cols="12">
                   <div class="v-field icon-upload-container" @click="onIconTriggerUpload">
-                    <v-file-input ref="iconFileInputRef" v-model="iconImageFile" class="file-input" :rules="[requiredValidator]" />
+                    <v-file-input ref="iconFileInputRef" v-model="iconImageFile" class="file-input" :rules="[iconImageValidator]" />
                     <v-img
                       v-if="iconImageUrl != null"
                       :src="iconImageUrl"
@@ -300,7 +302,7 @@ const checkAccountExists = async (event: Event) => {
                 </v-col>
               </v-row>
               <!-- TODO: 独自実装は問題を起こす可能性があるため、Vuetify の機能で実現できないか確認する -->
-              <div v-if="iconImageFile == null" class="v-input--error">
+              <div v-if="iconImageValidator(iconImageFile) !== true" class="v-input--error">
                 <div class="v-input--error v-input__details">
                   <div class="v-messages" role="alert" aria-live="polite">
                     <div class="v-messages__message">必須項目です</div>
@@ -314,7 +316,7 @@ const checkAccountExists = async (event: Event) => {
               <v-row>
                 <v-col cols="12">
                   <div class="v-field image-upload-container" @click="onCoverTriggerUpload">
-                    <v-file-input ref="coverFileInputRef" v-model="coverImageFile" class="file-input" :rules="[requiredValidator]" />
+                    <v-file-input ref="coverFileInputRef" v-model="coverImageFile" class="file-input" :rules="[coverImageValidator]" />
                     <v-img
                       v-if="coverImageUrl != null"
                       :src="coverImageUrl"
@@ -325,7 +327,7 @@ const checkAccountExists = async (event: Event) => {
                 </v-col>
               </v-row>
               <!-- TODO: 独自実装は問題を起こす可能性があるため、Vuetify の機能で実現できないか確認する -->
-              <div v-if="coverImageFile == null" class="v-input--error">
+              <div v-if="coverImageValidator(coverImageFile) !== true" class="v-input--error">
                 <div class="v-input--error v-input__details">
                   <div class="v-messages" role="alert" aria-live="polite">
                     <div class="v-messages__message">必須項目です</div>
