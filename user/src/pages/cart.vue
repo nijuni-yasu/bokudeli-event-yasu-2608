@@ -243,7 +243,7 @@ onMounted(async () => {
         <v-card class="pa-sm-5 pa-xs-1 ma-sm-10 ma-xs-1">
           <v-row>
             <v-col class="d-flex align-center">
-              <v-img class="ma-10" cover aspect-ratio="1.91" :src="cart.event.event_cover_url" />
+              <v-img class="ma-5" cover aspect-ratio="1.91" :src="cart.event.event_cover_url" />
             </v-col>
           </v-row>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
@@ -277,7 +277,7 @@ onMounted(async () => {
               <v-table>
                 <thead>
                   <tr>
-                    <th class="text-center" style="padding: 1px">メニュー</th>
+                    <th class="text-center" style="padding: 2px">メニュー</th>
                     <th class="text-center" style="padding: 1px">個数</th>
                     <th class="text-center" style="padding: 1px">価格</th>
                     <th class="text-center" style="padding: 1px">小計</th>
@@ -288,10 +288,14 @@ onMounted(async () => {
                   <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
                     <td style="padding: 1px">{{ menu.name }}</td>
                     <td style="padding: 1px">{{ menu.count }}</td>
-                    <td style="padding: 1px">{{ priceString(menu.price) }}</td>
-                    <td style="padding: 1px">{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
+                    <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
+                    <td style="padding: 1px">¥{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
                     <td style="padding: 1px">
-                      <v-btn variant="text" @click="deleteMenuInCart(cart.order, menu)">削除</v-btn>
+                      <v-btn
+                        icon="mdi-trash-can"
+                        variant="text"
+                        @click="deleteMenuInCart(cart.order, menu)">
+                      </v-btn>
                     </td>
                   </tr>
                 </tbody>
@@ -300,6 +304,7 @@ onMounted(async () => {
           </v-row>
           <v-card-text class="text-right">
             <span class="text-right ma-2 text-h6">合計</span>
+            <span class="text-right my-2 ml-2 text-h6">¥</span>
             <span class="text-right ma-2 text-h4">{{ priceString(cart.total) }}</span>
           </v-card-text>
           <v-row class="justify-center">
@@ -309,6 +314,7 @@ onMounted(async () => {
                 color="grey-900"
                 size="x-large"
                 rounded
+                elevation="7"
                 width="85%"
                 @click="showConfirm(cart)"
               >
@@ -319,8 +325,8 @@ onMounted(async () => {
         </v-card>
       </v-col>
     </v-row>
-    <v-row v-else-if="!state.isLoading">
-      <v-col cols="auto"> まだカートに入っていません </v-col>
+    <v-row justify="center" v-else-if="!state.isLoading">
+      <v-col cols="auto" class="my-5" style="font-size:18px;"> カートに商品はありません。</v-col>
     </v-row>
     <v-row v-else justify="center">
       <v-col cols="auto">
