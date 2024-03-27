@@ -74,7 +74,7 @@ onMounted(async () => {
             {{ menu.description }}
           </v-card-text>
           <v-card-text class="text-right pb-2">
-            <span style="font-size:16px; color: #3A3541DE;">¥ </span>
+            <span style="font-size:14px; color: #3A3541DE;">¥ </span>
             <span style="font-size:20px; color: #3A3541DE;">{{ priceString(menu.price) }}</span>
           </v-card-text>
           <v-row class="justify-center">

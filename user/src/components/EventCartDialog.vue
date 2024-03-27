@@ -164,7 +164,7 @@ const addCart = async () => {
         {{ menu.description }}
       </v-card-text>
       <v-card-text class="text-right pb-5">
-        <span style="font-size:20px; color: #3A3541DE;">¥ </span>
+        <span style="font-size:18px; color: #3A3541DE;">¥ </span>
         <span style="font-size:30px; color: #3A3541DE;">{{ priceString(menu.price) }}</span>
       </v-card-text>      
       <v-row class="mx-3 mb-2">
