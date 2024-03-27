@@ -29,7 +29,7 @@ const isOpen = computed({
   set: (val) => emit('update:modelValue', val),
 })
 
-const countOptions = Array.from({ length: 10 }, (_, i) => i + 1)
+const countOptions = Array.from({ length: 5 }, (_, i) => i + 1)
 const selectedCount = ref(1)
 
 // FIXME: 注記が入力されていた場合、表示させる必要がある
