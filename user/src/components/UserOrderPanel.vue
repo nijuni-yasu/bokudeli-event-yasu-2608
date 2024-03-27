@@ -179,7 +179,7 @@ if (route.query.eventId && route.query.communityAccount) {
     <v-card-text class="text-center py-10 text-h6"> キャンセル </v-card-text>
     <v-card-text class="py-5 text-h6" style="line-height: 2rem">
       【イベント名】 {{ cancelEvent }}<br />
-      【返金額】 {{ cancelPrice }}<br />
+      【返金額】 ¥{{ cancelPrice }}<br />
     </v-card-text>
     <v-card-text class="py-5" style="line-height: 2rem">
       注文及びイベント参加をキャンセルしますか？<br />

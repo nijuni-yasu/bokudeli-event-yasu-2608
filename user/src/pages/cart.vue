@@ -288,8 +288,8 @@ onMounted(async () => {
                   <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
                     <td style="padding: 1px">{{ menu.name }}</td>
                     <td style="padding: 1px">{{ menu.count }}</td>
-                    <td style="padding: 1px">{{ priceString(menu.price) }}</td>
-                    <td style="padding: 1px">{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
+                    <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
+                    <td style="padding: 1px">¥{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
                     <td style="padding: 1px">
                       <v-btn variant="text" @click="deleteMenuInCart(cart.order, menu)">削除</v-btn>
                     </td>
@@ -300,6 +300,7 @@ onMounted(async () => {
           </v-row>
           <v-card-text class="text-right">
             <span class="text-right ma-2 text-h6">合計</span>
+            <span class="text-right my-2 ml-2 text-h6">¥</span>
             <span class="text-right ma-2 text-h4">{{ priceString(cart.total) }}</span>
           </v-card-text>
           <v-row class="justify-center">

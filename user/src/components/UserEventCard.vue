@@ -56,7 +56,7 @@ const cancelClick = () => {
           {{ menu.name }} <span class="text-caption">({{ menu.count }}個)</span>
         </div>
       </v-card-text>
-      <v-card-text class="px-3 pb-5"> 【注文金額】{{ priceString(eventTotal) }} </v-card-text>
+      <v-card-text class="px-3 pb-5"> 【注文金額】¥{{ priceString(eventTotal) }} </v-card-text>
       <v-card-text>
         <v-row v-if="isShowDetail" justify="end">
           <v-spacer></v-spacer>

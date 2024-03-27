@@ -8,6 +8,7 @@ import { Timestamp } from 'firebase/firestore'
 
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { priceString } from '@/schemes/converter'
 
 const router = useRouter()
 
@@ -156,13 +157,16 @@ const addCart = async () => {
   <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog(false)">
     <v-card class="pa-sm-10 px-5 py-1 text-center">
       <v-img :src="menu.imageUrl" class="ma-5" aspect-ratio="1" cover></v-img>
-      <v-card-title class="text-left text-h4 pb-3 pre-line">
+      <v-card-title class="text-left text-h5 py-2 pre-line">
         {{ menu.name }}
       </v-card-title>
-      <v-card-text class="text-left pb-2">
+      <v-card-text class="text-left py-2">
         {{ menu.description }}
       </v-card-text>
-      <v-card-text class="text-right text-h4 pb-5"> ¥ {{ menu.price }} </v-card-text>
+      <v-card-text class="text-right pb-5">
+        <span style="font-size:20px; color: #3A3541DE;">¥ </span>
+        <span style="font-size:30px; color: #3A3541DE;">{{ priceString(menu.price) }}</span>
+      </v-card-text>      
       <v-row class="mx-3 mb-2">
         <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>
       </v-row>

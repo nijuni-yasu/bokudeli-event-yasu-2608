@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { convertDocumentDataToMenu, dateString } from '@/schemes/converter'
+import { convertDocumentDataToMenu, dateString, priceString } from '@/schemes/converter'
 import PartnerMenu from '@/schemes/partnerMenu'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { collection, getDocs } from 'firebase/firestore'
@@ -73,7 +73,10 @@ onMounted(async () => {
           <v-card-text class="text-left pb-8">
             {{ menu.description }}
           </v-card-text>
-          <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
+          <v-card-text class="text-right pb-2">
+            <span style="font-size:16px; color: #3A3541DE;">¥ </span>
+            <span style="font-size:20px; color: #3A3541DE;">{{ priceString(menu.price) }}</span>
+          </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn

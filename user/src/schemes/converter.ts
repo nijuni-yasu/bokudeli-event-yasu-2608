@@ -44,7 +44,7 @@ export const dateOnlyTimeString = (date: Timestamp | Date | null): string => {
 }
 
 export const priceString = (price: number): string => {
-  return `¥${price.toLocaleString()}`
+  return `${price.toLocaleString()}`
 }
 
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
