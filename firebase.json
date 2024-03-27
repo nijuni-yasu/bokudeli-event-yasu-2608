@@ -34,21 +34,6 @@
           "destination": "/index.html"
         }
       ]
-    },
-    {
-      "public": "user/dist",
-      "target": "launch",
-      "rewrites": [
-        {
-          "source": "/community/**/events/**",
-          "function": "replace_ogp_tags",
-          "region": "asia-northeast1"
-        },
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ]
     }
   ],
   "functions": [

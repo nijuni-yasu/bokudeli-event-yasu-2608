@@ -49,5 +49,5 @@ jobs:
         export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
         echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_736E27344811 }}' > $GOOGLE_APPLICATION_CREDENTIALS
         firebase use bokudeli-event-dev
-        firebase deploy --only hosting:user,hosting:launch
+        firebase deploy --only hosting:user
         rm $GOOGLE_APPLICATION_CREDENTIALS

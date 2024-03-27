@@ -14,9 +14,6 @@
         ],
         "user": [
           "bokudeli-event-dev"
-        ],
-        "launch": [
-          "bokudeli-event-dev-launch"
         ]
       }
     },
@@ -30,9 +27,6 @@
         ],
         "user": [
           "bokudeli-event-test"
-        ],
-        "launch": [
-          "bokudeli-event-test-launch"
         ]
       }
     }
