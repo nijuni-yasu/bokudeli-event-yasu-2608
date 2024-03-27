@@ -124,8 +124,8 @@ const showQrCode = () => {
     <div v-if="event != null && communityStore.community != null" class="justify-center">
       <v-row class="justify-center mt-lg-10 mr-1">
         <v-col md="8" sm="9" cols="12">
-          <v-row class="justify-start align-center">
-            <v-chip class="ml-3" color="primary" size="large">
+          <v-row class="justify-end align-center">
+            <v-chip class="mr-3" color="primary" size="large">
               {{ $t(`event_status.${event.event_status.value}`) }}
             </v-chip>
             <v-btn
@@ -145,7 +145,7 @@ const showQrCode = () => {
             <v-btn
               v-if="event.event_status.value == `in_draft` && isManager"
               color="white"
-              class="mr-2 my-1"
+              class="my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-pencil-box-outline"
@@ -164,7 +164,7 @@ const showQrCode = () => {
                 isManager
               "
               color="white"
-              class="mr-2 my-1"
+              class="my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-pencil-box-outline"
@@ -189,7 +189,7 @@ const showQrCode = () => {
             <v-row>
               <v-col>
                 <!-- イベント情報 -->
-                <v-card-title class="text-sm-h4 text-xs-h5 font-weight-bold pb-4 pre-line">
+                <v-card-title class="py-0 text-sm-h4 text-xs-h5 font-weight-bold pb-4 pre-line" style="line-height:1.3;">
                   {{ event.event_name }}
                 </v-card-title>
                 <v-card-text class="event-item text-right px-0 ma-1">
@@ -303,7 +303,7 @@ const showQrCode = () => {
                       <router-link :to="{ path: `${eventId}/members` }">
                         <div class="d-flex align-end">
                           <v-icon size="large">mdi-account-group</v-icon>
-                          <span class="ml-2" style="font-size: 16px">参加者一覧</span>
+                          <span class="ml-2" style="font-size: 18px">参加者一覧</span>
                         </div>
                       </router-link>
                     </v-col>
