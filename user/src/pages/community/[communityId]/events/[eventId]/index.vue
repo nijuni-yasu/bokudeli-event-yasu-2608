@@ -16,6 +16,7 @@ import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
 import { shareSnsButton } from '@/composable/shareSnsButton'
 import ShowDialog from '@/components/ShowDialog.vue'
 import VueQrious from 'vue-qrious'
+import { useI18n } from 'vue-i18n'
 
 const qrcodeSize = 300
 
@@ -23,6 +24,8 @@ const props = defineProps<{
   communityId: string
   eventId: string
 }>()
+
+const { t: $t } = useI18n()
 
 const eventStore = useEventStore(props.eventId) as EventStore
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
@@ -38,12 +41,27 @@ const members = computed(() => eventStore.members?.sort((a, b) =>
   b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0)
 ) ?? [])
 
-const eventStartDate = computed(() => {
-  return event.value?.event_start_datetime?.toDate() ?? null
-})
+type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
 
-const eventDeadlineDate = computed(() => {
-  return event.value?.event_deadline_datetime?.toDate() ?? null
+const menuDisabled = computed<MenuDisabledReason | false | null>(() => {
+  if (event.value == null) {
+    return null
+  }
+  switch (event.value.event_status.value) {
+    case 'finished':
+      return 'finished'
+    case 'order_closed':
+      return 'order_closed'
+    case 'accepting_order':
+      if (event.value.event_num_members >= event.value.event_max_people) {
+        return 'limit_people'
+      } else {
+        return false
+      }
+    case 'in_draft':
+    case 'applying_reservation':
+      return 'not_accepting_order'
+  }
 })
 
 const selectedMenuState = reactive({
@@ -51,19 +69,26 @@ const selectedMenuState = reactive({
   isOpen: false,
 })
 
-const updateSelectedMenu = (menu: PartnerMenu) => {
-  selectedMenuState.menu = menu
-  selectedMenuState.isOpen = true
-}
-
 const alertState = reactive({
   message: '',
   isOpen: false,
 })
 
-const updateAlert = (message: string) => {
-  alertState.message = message
-  alertState.isOpen = true
+const selectMenu = (menu: PartnerMenu) => {
+  const disabledReason = menu.isSoldout ? 'sold_out' : menuDisabled.value
+  if (disabledReason == null) {
+    return
+  }
+  if (menuDisabled.value === 'finished') {
+    alertState.message = $t(`menu_disabled_reason.finished`)
+    alertState.isOpen = true
+  } else if (disabledReason === false) {
+    selectedMenuState.menu = menu
+    selectedMenuState.isOpen = true
+  } else {
+    alertState.message = $t(`menu_disabled_reason.${disabledReason}`)
+    alertState.isOpen = true
+  }
 }
 
 const isOpenContactDialogVisible = ref(false)
@@ -327,12 +352,9 @@ const showQrCode = () => {
           </v-card>
           <!-- メニュ -->
           <event-menu-list
-            :event-deadline="eventDeadlineDate"
-            :event-start-datetime="eventStartDate"
-            :current-member-count="members.length"
             :event="event"
-            @select-menu="updateSelectedMenu"
-            @set-alert="updateAlert"
+            :disabled="menuDisabled !== false"
+            @select-menu="selectMenu"
           />
         </v-col>
       </v-row>

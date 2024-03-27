@@ -7,21 +7,19 @@ import { collection, getDocs } from 'firebase/firestore'
 import { parseISO, compareDesc } from 'date-fns'
 
 const props = defineProps<{
-  eventDeadline: Date | null
-  eventStartDatetime: Date | null
-  currentMemberCount: number | undefined
   event: BokudeliEvent
+  disabled: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'selectMenu', menu: PartnerMenu): void
-  (e: 'setAlert', message: string): void
 }>()
 
-const state = reactive({
-  menus: null as PartnerMenu[] | null,
-  menuDisable: false as false | 'notAcceptingOrder' | 'deadline' | 'limitPeople' | 'isSoldout',
-  isLoading: true,
+const menus = ref<PartnerMenu[] | null>(null)
+const isLoading = ref(true)
+
+const eventStartDatetime = computed(() => {
+  return props.event.event_start_datetime?.toDate() ?? null
 })
 
 const partnerDb = collection(db, 'partners')
@@ -36,7 +34,7 @@ const loadMenuData = async (partnerId: string) => {
       return true
       // 期間設定がある場合、イベントの日付と比較
     } else {
-      const eventStartDate = parseISO(dateString(props.eventStartDatetime))
+      const eventStartDate = parseISO(dateString(eventStartDatetime.value))
       const dateStart = parseISO(menu.dateStart)
       const dateEnd = parseISO(menu.dateEnd)
       return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
@@ -48,18 +46,8 @@ const loadMenuData = async (partnerId: string) => {
 }
 
 const fetchData = async () => {
-  state.menus = await loadMenuData(props.event.partner_id)
-  state.isLoading = false
-
-  if (props.event.event_status.value !== 'accepting_order') {
-    state.menuDisable = 'notAcceptingOrder'
-  } else if (props.eventDeadline && props.eventDeadline < new Date()) {
-    state.menuDisable = 'deadline'
-  } else if (props.currentMemberCount && props.currentMemberCount >= props.event.event_max_people) {
-    state.menuDisable = 'limitPeople'
-  } else {
-    state.menuDisable = false
-  }
+  menus.value = await loadMenuData(props.event.partner_id)
+  isLoading.value = false
 }
 
 onBeforeRouteUpdate(async (to, from, next) => {
@@ -70,43 +58,11 @@ onBeforeRouteUpdate(async (to, from, next) => {
 onMounted(async () => {
   await fetchData()
 })
-
-const selectMenu = (menu: PartnerMenu) => {
-  emit('selectMenu', menu)
-}
-
-const alertMessage = ref('')
-const alertBody = computed({
-  get() {
-    return alertMessage.value
-  },
-  set(val) {
-    alertMessage.value = val
-    emit('setAlert', val)
-  },
-})
-
-const showDisableAlert = (reason: 'notAcceptingOrder' | 'deadline' | 'limitPeople' | 'isSoldout') => {
-  switch (reason) {
-    case 'notAcceptingOrder':
-      alertBody.value = '注文受付開始前はカートに追加できません'
-      break
-    case 'deadline':
-      alertBody.value = '注文期限をすぎました。カートに追加できません'
-      break
-    case 'limitPeople':
-      alertBody.value = '定員に達しました。カートに追加できません'
-      break
-    case 'isSoldout':
-      alertBody.value = '売り切れました。カートに追加できません'
-      break
-  }
-}
 </script>
 <template>
   <section>
-    <v-row v-if="!state.isLoading && props.currentMemberCount !== undefined && state.menus !== null">
-      <v-col v-for="menu in state.menus" :key="menu.id" md="4" sm="6" cols="12">
+    <v-row v-if="!isLoading && menus !== null">
+      <v-col v-for="menu in menus" :key="menu.id" md="4" sm="6" cols="12">
         <v-card class="mb-3 mx-0" color="text-center">
           <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
 
@@ -118,36 +74,15 @@ const showDisableAlert = (reason: 'notAcceptingOrder' | 'deadline' | 'limitPeopl
             {{ menu.description }}
           </v-card-text>
           <v-card-text class="text-right text-h6 pb-2"> ¥ {{ menu.price }} </v-card-text>
-          <v-row v-if="state.menuDisable === false && menu.isSoldout === false" class="justify-center">
-            <v-col class="text-center">
-              <v-btn class="`px-5 my-4" color="primary" rounded width="80%" @click="selectMenu(menu)">
-                カートに追加
-              </v-btn>
-            </v-col>
-          </v-row>
-          <v-row v-else-if="state.menuDisable === false && menu.isSoldout === true" class="justify-center">
+          <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                class="px-5 my-4 disable-menu-button"
-                color="error"
-                rounded
-                width="80%"
-                @click="showDisableAlert('isSoldout')"
-              >
-                売り切れ
-              </v-btn>
-            </v-col>
-          </v-row>
-          <v-row v-else-if="state.menuDisable" class="justify-center">
-            <v-col class="text-center">
-              <v-btn
-                class="px-5 my-4 disable-menu-button"
+                class="px-5 my-4"
+                :class="{ 'disable-menu-button': disabled || menu.isSoldout === true }"
                 color="primary"
-                rounded
-                width="80%"
-                @click="showDisableAlert(state.menuDisable)"
+                rounded width="80%" @click="emit('selectMenu', menu)"
               >
-                カートに追加
+                {{ menu.isSoldout === true ? '売り切れ' : 'カートに追加' }}
               </v-btn>
             </v-col>
           </v-row>
@@ -155,7 +90,7 @@ const showDisableAlert = (reason: 'notAcceptingOrder' | 'deadline' | 'limitPeopl
       </v-col>
 
       <!-- no result found -->
-      <v-col v-show="state.menus !== null &&  state.menus.length === 0" cols="12" class="text-center">
+      <v-col v-show="menus !== null &&  menus.length === 0" cols="12" class="text-center">
         <h4 class="mt-4">メニューがありません</h4>
       </v-col>
     </v-row>
