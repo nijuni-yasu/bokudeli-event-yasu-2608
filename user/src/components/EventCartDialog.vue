@@ -171,7 +171,7 @@ const addCart = async () => {
       </v-row>
       <v-row class="justify-center mx-1 my-2">
         <v-btn class="justify-center mx-1 align-self-center" rounded size="large" color="primary" :loading="isAddingOrder" @click="addCart()">
-          カートに追加する
+          カートに追加
         </v-btn>
         <v-btn
           class="justify-center mx-1 my-2 align-self-center"

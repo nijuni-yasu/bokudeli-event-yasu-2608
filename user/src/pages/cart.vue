@@ -309,6 +309,7 @@ onMounted(async () => {
                 color="grey-900"
                 size="x-large"
                 rounded
+                elevation="7"
                 width="85%"
                 @click="showConfirm(cart)"
               >
