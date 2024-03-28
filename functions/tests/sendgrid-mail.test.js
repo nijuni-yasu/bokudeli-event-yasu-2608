@@ -70,7 +70,7 @@ describe('event_information のテスト', () => {
             event_datetime: '2024/01/18 (木) 11:00〜13:00',
             event_deadline_datetime: '2024/01/16 (火) 11:00',
             event_desc: '2nd event description',
-            event_url: 'https://undefined/community/undefined/events/2ndEvent',
+            event_url: 'https://undefined/c/undefined/e/2ndEvent',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/2nd.png',
             shop_name: '2nd shop',
             community_name: 'ぼくデリ2'
@@ -81,7 +81,7 @@ describe('event_information のテスト', () => {
             event_datetime: '2024/02/02 (金) 17:00〜20:00',
             event_deadline_datetime: '2024/01/25 (木) 14:00',
             event_desc: '3rd event description',
-            event_url: 'https://undefined/community/undefined/events/3rdEvent',
+            event_url: 'https://undefined/c/undefined/e/3rdEvent',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/3rd.png',
             shop_name: '3rd shop',
             community_name: 'ぼくデリ3'
@@ -117,7 +117,7 @@ describe('community_added のテスト', () => {
       text: '【ID】 5oxesNeS5dO078qABR98\n' +
         '【コミュニティ名】 ぼくデリ\n' +
         '【コミュニティアカウント】 bokudeli\n' +
-        '【コミュニティページURL】 https://undefined/community/bokudeli',
+        '【コミュニティページURL】 https://undefined/c/bokudeli',
     });
   });
 })
