@@ -76,11 +76,11 @@ function convertToDuration(startMillis, endMillis) {
 }
 
 function getCommunityUrl(communityAccount) {
-    return `https://${process.env.EVENT_HOST}/community/${communityAccount}`;
+    return `https://${process.env.EVENT_HOST}/c/${communityAccount}`;
 }
 
 function getEventUrl(communityAccount, eventId) {
-    return `https://${process.env.EVENT_HOST}/community/${communityAccount}/events/${eventId}`;
+    return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}`;
 }
 
 function getOrderUrl(eventId) {

@@ -29,7 +29,6 @@ const logout = async () => {
   <div>
     <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
       <UserAvatar :user="user" class="cursor-pointer">
-
         <!-- SECTION Menu -->
         <v-menu activator="parent" width="230" location="bottom end" offset="14px">
           <v-list>
@@ -65,7 +64,6 @@ const logout = async () => {
               </template>
               <v-list-item-title>カート</v-list-item-title>
             </v-list-item>
-
 
             <!-- Divider -->
             <v-divider v-if="isLogin" class="my-2" />
