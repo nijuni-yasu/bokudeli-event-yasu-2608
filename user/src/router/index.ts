@@ -134,6 +134,10 @@ router.beforeEach((to) => {
     paths[3] = 'e'
     redirect = true
   }
+  if (paths[1] === 'c' && paths[2] !== paths[2]?.toLowerCase()) {
+    paths[2] = paths[2]?.toLowerCase()
+    redirect = true
+  }
   if (redirect) {
     return {
       path: paths.join('/'),
