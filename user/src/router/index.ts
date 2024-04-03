@@ -115,4 +115,31 @@ router.beforeEach(async () => {
   }
 })
 
+router.beforeEach((to) => {
+  const paths = to.path.split('/')
+  let redirect = false
+  if (paths[1] === 'community') {
+    if (paths[2]) {
+      paths[1] = 'c'
+    } else {
+      paths[1] = 'communitylist'
+    }
+    redirect = true
+  }
+  if (paths[1] === 'users') {
+    paths[1] = 'u'
+    redirect = true
+  }
+  if (paths[3] === 'events') {
+    paths[3] = 'e'
+    redirect = true
+  }
+  if (redirect) {
+    return {
+      path: paths.join('/'),
+      query: to.query,
+    }
+  }
+})
+
 export default router
