@@ -15,6 +15,7 @@ const DELIVERY_DURATION = 30; // minutes
 
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098';
+const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d';
 // 環境変数の方がよいかもしれない
 const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345;
 
@@ -267,6 +268,35 @@ async function sendOrderDeadlineMailToMembers(start, end) {
     }));
 }
 
+async function sendEventConcludedMail(start, end) {
+    const events = await (db.collectionGroup('events')
+        .where('event_end_datetime', '>', Timestamp.fromMillis(start))
+        .where('event_end_datetime', '<=', Timestamp.fromMillis(end))
+        .where('event_status.value', '==', 'accepting_order')).get();
+    return Promise.all(events.docs.map(async (eventSnapshot) => {
+        const eventData = eventSnapshot.data();
+        const dynamic_template_data = {
+            date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+            event_name: eventData.event_name,
+            event_cover_url: eventData.event_cover_url,
+            event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+            is_public: eventData.is_public
+        }
+        try {
+            await Promise.all((await getEventMemberEmails(eventSnapshot)).map(async (to) => {
+                await sgMail.send({
+                    to,
+                    from: DEFAULT_FROM,
+                    templateId: EVENT_SURVEY_TEMPLATE_ID,
+                    dynamic_template_data,
+                })
+            }));
+        } catch (err) {
+            console.warn(err);
+        }
+    }));
+}
+
 async function sendApplyingOrderMail(eventSnapshot) {
     const [dynamic_template_data, shopSnapShot] = await Promise.all([
         createTemplateDataForOrderDeadline(eventSnapshot),
@@ -486,6 +516,7 @@ export const polling = functions
             sendOrderDeadlineMailToShop(start, end, false),
             sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
             sendOrderDeadlineMailToMembers(start, end),
+            sendEventConcludedMail(start, end),
         ]);
     });
 

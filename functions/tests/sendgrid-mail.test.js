@@ -347,4 +347,29 @@ describe('polling のテスト', async () => {
       expect(sgMail.send).toHaveBeenCalledWith(expect.objectContaining(expectForMember));
     }
   })
+
+  test('NonPublic イベントの終了時にアンケートメールを送信', async () => {
+    const polling = functionsTest.wrap((await import('../sendgrid-mail')).polling);
+    await polling({
+      timestamp: '2024-01-27T20:00:00Z'
+    });
+
+    const expectForMember = {
+      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      templateId: 'd-6ad8131506164c2f864155182c63de2d',
+      dynamic_template_data: {
+        date: '2024/01/28 (日)',
+        event_name: 'no public event',
+        event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/no-public.png',
+        event_url: 'https://undefined/c/undefined/e/NonPublicEvent',
+        is_public: false,
+      },
+    };
+
+    expect(sgMail.send).toHaveBeenCalledTimes(2);
+    for (const to of ['ichiro@test.com', 'jiro@test.com']) {
+      expectForMember.to = to;
+      expect(sgMail.send).toHaveBeenCalledWith(expect.objectContaining(expectForMember));
+    }
+  })
 })

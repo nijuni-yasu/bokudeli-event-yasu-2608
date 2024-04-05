@@ -154,6 +154,9 @@ export const event_information_default = {
         'order1': {
             user_id: 'user1',
         },
+        'order2': {
+            user_id: 'user2',
+        },
     },
     'users': {
         'user1': {
