@@ -200,39 +200,29 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
     };
 }
 
-async function sendOrderDeadlineMail(start, end, is_reminder) {
-    const promises = [];
-    const query = db.collectionGroup('events')
-        .where('event_deadline_datetime', '>', new Date(start))
-        .where('event_deadline_datetime', '<=', new Date(end));
-    (await query.get()).forEach(async (eventSnapshot) => {
+async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
+    const events = await (db.collectionGroup('events')
+        .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
+        .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
+        .where('event_status.value', '==', 'accepting_order')).get();
+    return Promise.all(events.docs.map(async (eventSnapshot) => {
         try {
-            const event_status = eventSnapshot.get('event_status');
-            if (event_status?.value !== 'accepting_order') {
-                console.log('予約受付中ではないのでメール送信しない')
-                return;
-            }
-            const event_deadline_datetime = eventSnapshot.get('event_deadline_datetime');
-            const deadline = event_deadline_datetime?.toMillis() ?? 0;
-            if (start < deadline && deadline <= end) {
-                const [dynamic_template_data, shopSnapShot] = await Promise.all([
-                    createTemplateDataForOrderDeadline(eventSnapshot),
-                    getShopForEvent(eventSnapshot),
-                ]);
-                dynamic_template_data.is_reminder = is_reminder;
-                promises.push(sgMail.send({
-                    to: getShopEmails(shopSnapShot),
-                    from: DEFAULT_FROM,
-                    cc: DEFAULT_CC,
-                    templateId: ORDER_DEADLINE_TEMPLATE_ID,
-                    dynamic_template_data,
-                }));
-            }
+            const [dynamic_template_data, shopSnapShot] = await Promise.all([
+                createTemplateDataForOrderDeadline(eventSnapshot),
+                getShopForEvent(eventSnapshot),
+            ]);
+            dynamic_template_data.is_reminder = is_reminder;
+            await sgMail.send({
+                to: getShopEmails(shopSnapShot),
+                from: DEFAULT_FROM,
+                cc: DEFAULT_CC,
+                templateId: ORDER_DEADLINE_TEMPLATE_ID,
+                dynamic_template_data,
+            });
         } catch (err) {
             console.warn(err);
         }
-    });
-    return Promise.all(promises);
+    }));
 }
 
 async function sendApplyingOrderMail(eventSnapshot) {
@@ -451,8 +441,8 @@ export const polling = functions
         const end = Math.trunc(now / 60 / 1000) * 60 * 1000;
         const start = end - (60 * 1000);
         return Promise.all([
-            sendOrderDeadlineMail(start, end, false),
-            sendOrderDeadlineMail(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
+            sendOrderDeadlineMailToShop(start, end, false),
+            sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
         ]);
     });
 
