@@ -16,6 +16,7 @@ const DELIVERY_DURATION = 30; // minutes
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098';
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d';
+const ORDER_COMNPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f';
 // 環境変数の方がよいかもしれない
 const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345;
 
@@ -503,6 +504,29 @@ async function sendCommunityContactMail(templateId, data) {
     });
 }
 
+async function sendOrderComletionMail(eventRef, userId) {
+    const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()]);
+    const eventData = eventSnapshot.data();
+    const dynamic_template_data = {
+        date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+        event_datetime: convertToDuration(convertToJapan(eventData.event_start_datetime?.toMillis()), convertToJapan(eventData.event_end_datetime?.toMillis())),
+        event_name: eventData.event_name,
+        event_cover_url: eventData.event_cover_url,
+        community_name: eventData.community_name,
+        event_address: eventData.event_address,
+        shop_name: eventData.shop_name,
+        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+        is_public: eventData.is_public
+    }
+    return sgMail.send({
+        to: userSnapshot.get('user_email'),
+        from: DEFAULT_FROM,
+        cc: DEFAULT_CC,
+        templateId: ORDER_COMNPLETION_TEMPLATE_ID,
+        dynamic_template_data,
+    });
+}
+
 export const polling = functions
     .region('asia-northeast1')
     .pubsub
@@ -573,6 +597,19 @@ export const on_shop_changed = functions
             promises.push(sendShopOpenMail(after));
         }
         return Promise.all(promises);
+    });
+
+export const on_order_changed = functions
+    .region('asia-northeast1')
+    .firestore
+    .document('communities/{communityId}/events/{eventId}/orders/{orderId}')
+    .onWrite(async (change) => {
+        const before = change.before;
+        const after = change.after;
+        if (before.get('status') !== after.get('status') && after.get('status') === 'ordered') {
+            const userId = after.get('user_id');
+            return sendOrderComletionMail(after.ref.parent.parent, userId);
+        }
     });
 
 export const community_added = functions

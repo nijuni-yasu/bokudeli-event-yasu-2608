@@ -373,3 +373,46 @@ describe('polling のテスト', async () => {
     }
   })
 })
+
+describe('on_order_changed のテスト', () => {
+  beforeAll(async () => {
+    await initializeDb((await import('./sendgrid-mail.data')).event_information_default);
+  })
+
+  afterAll(async () => {
+    await functionsTest.firestore.clearFirestoreData({
+      projectId,
+    });
+  })
+
+  test('新規注文時にユーザーにメールが送信される', async () => {
+    const on_order_changed = functionsTest.wrap((await import('../sendgrid-mail')).on_order_changed);
+    const before = functionsTest.firestore.makeDocumentSnapshot(null,
+      'communities/5oxesNeS5dO078qABR98/events/FullCapacityEvent/orders/order1');
+    const after = functionsTest.firestore.makeDocumentSnapshot({
+      status: 'ordered',
+      user_id: 'user1',
+    }, 'communities/5oxesNeS5dO078qABR98/events/FullCapacityEvent/orders/order1');
+    await on_order_changed({before, after});
+
+    expect(sgMail.send)
+      .toHaveBeenCalledTimes(1)
+      .toHaveBeenCalledWith({
+        to: 'ichiro@test.com',
+        cc: 'support+cc@nijuni.jp',
+        from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+        templateId: 'd-b94849438f2642a29973670f3d79809f',
+        dynamic_template_data: {
+          date: '2024/01/29 (月)',
+          event_datetime: '2024/01/29 (月) 03:00〜05:00',
+          event_name: 'full capacity event',
+          event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/full-capacity.png',
+          community_name: 'ぼくデリFull',
+          event_address: '東京都渋谷区F',
+          shop_name: 'Shop 11',
+          event_url: 'https://undefined/c/undefined/e/FullCapacityEvent',
+          is_public: true
+        },
+      });
+  });
+})
