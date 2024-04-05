@@ -286,8 +286,7 @@ describe('polling のテスト', async () => {
       timestamp: '2024-01-16T02:00:00Z'
     })
 
-    expect(sgMail.send).toHaveBeenCalledTimes(1);
-    expect(sgMail.send).toHaveBeenCalledWith({
+    const expectForShop = {
       to: ['main@mail.com', 'sub1@mail.com', 'sub2@mail.com', 'sub3@mail.com'],
       from: '食事でつながるshokujii<shokujii@nijuni.jp>',
       cc: 'support+cc@nijuni.jp',
@@ -323,7 +322,29 @@ describe('polling のテスト', async () => {
         partner_id: 'partner2',
         shop_id: 'shop22',
         shop_name: 'Shop 22',
+      }
+    };
+    const expectForMember = {
+      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      templateId: 'd-2fea06c315a240d2becd864b54f38098',
+      dynamic_template_data: {
+        date: '2024/01/18 (木)',
+        event_datetime: "2024/01/18 (木) 11:00〜13:00",
+        event_name: '2nd event',
+        event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/2nd.png',
+        community_name: 'ぼくデリ2',
+        event_address: '東京都渋谷区2',
+        shop_name: 'Shop 22',
+        event_url: 'https://undefined/c/undefined/e/2ndEvent',
       },
-    })
+    };
+
+    // Assert
+    expect(sgMail.send).toHaveBeenCalledTimes(4);
+    expect(sgMail.send).toHaveBeenCalledWith(expect.objectContaining(expectForShop));
+    for (const to of ['ichiro@test.com', 'jiro@test.com','sab@test.com']) {
+      expectForMember.to = to;
+      expect(sgMail.send).toHaveBeenCalledWith(expect.objectContaining(expectForMember));
+    }
   })
 })
