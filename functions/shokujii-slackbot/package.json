@@ -1,0 +1,10 @@
+{
+  "name": "shokujii-slackbot",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@slack/bolt": "^3.17.1"
+  }
+}
