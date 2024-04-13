@@ -3,7 +3,7 @@
 // import "firebase/firestore";
 
 const { initializeApp } = require('firebase/app');
-const { getFirestore, collection, doc, addDoc, setDoc, getDoc, deleteDoc } = require('firebase/firestore');
+const { getFirestore, collection, doc, setDoc, getDoc, deleteDoc, query, where, getDocs } = require('firebase/firestore');
 const { App, LogLevel } = require('@slack/bolt');
 
 require('dotenv').config();
@@ -38,7 +38,7 @@ const database = {
     const slackBotSnap = await getDoc(slackBotDocRef)
     const { oauth_data } = slackBotSnap.data()
     const data = JSON.parse(oauth_data)
-    console.log('get', data);
+    console.debug('get', data);
     return data;
   },
   delete: async (key) => {
@@ -96,20 +96,40 @@ const app = new App({
       }
       throw new Error('Failed to delete installation');
     },
-  },
-  installerOptions: {
-    // If this is true, /slack/install redirects installers to the Slack authorize URL
-    // without rendering the web page with "Add to Slack" button.
-    // This flag is available in @slack/bolt v3.7 or higher
-    // directInstall: true,
   }
 });
 
-app.command('/shokujii', async ({ command, ack, respond }) => {
+const getSlackId = (payload) => {
+  if (payload.is_enterprise_install && payload.enterprise_id !== undefined) {
+    return payload.enterprise_id;
+  }
+  return payload.team_id;
+}
+
+app.command('/shokujii', async ({ command, ack, respond, payload }) => {
+  console.debug('command', command);
   // コマンドリクエストを確認
   await ack();
 
-  await respond(`こんにちは ${command.user_name} さん！`);
+  // 入力データからコミュニティアカウントを取得
+  const communityAccount = command.text.split(' ')[0];
+
+  // Firestore のコミュニティを取得
+  const communitiesRef = collection(db, 'communities');
+  const communityQuery = query(communitiesRef, where('community_account', '==', communityAccount));
+  const querySnapshot = await getDocs(communityQuery);
+  if (querySnapshot.empty) {
+    await respond(`コミュニティ ${communityAccount} は存在しません`);
+    return;
+  }
+  const communityData = querySnapshot.docs[0].data();
+  console.debug('communityData', communityData);
+
+  //TODO コミュニティに slack の情報を追加する
+  console.debug('slack id', getSlackId(payload));
+
+  //Botで表示する文言を設定
+  await respond(`${communityData.community_name} を登録しました！`);
 });
 
 (async () => {
