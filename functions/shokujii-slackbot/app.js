@@ -8,36 +8,14 @@ const { App, LogLevel } = require('@slack/bolt');
 
 require('dotenv').config();
 
-function removeUndefinedValues(obj) {
-  // 配列の場合、再帰的にこの関数を各要素に適用
-  if (Array.isArray(obj)) {
-    return obj
-      .map(v => removeUndefinedValues(v))
-      .filter(v => v !== undefined); // 配列からundefinedを削除
-  }
-  // オブジェクトの場合、キーをイテレートしundefinedでない値のみを新しいオブジェクトにコピー
-  else if (typeof obj === 'object' && obj !== null) {
-    const newObj = {};
-    Object.keys(obj).forEach(key => {
-      const value = obj[key];
-      if (value !== undefined) { // undefinedでない値だけを新しいオブジェクトに追加
-        newObj[key] = removeUndefinedValues(value); // 再帰的に適用
-      }
-    });
-    return newObj;
-  }
-  // 配列でもオブジェクトでもない場合、値をそのまま返す（基本的なデータ型）
-  return obj;
-}
-
 const firebaseConfig = {
-  apiKey: process.env.VITE_API_KEY,
-  authDomain: process.env.VITE_AUTH_DOMAIN,
-  projectId: process.env.VITE_PROJECT_ID,
-  storageBucket: process.env.VITE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VITE_MESSAGE_SENDER_ID,
-  appId: process.env.VITE_APP_ID,
-  measurementId: process.env.VITE_MEASUREMENT_ID,
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGE_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
 }
 
 // Initialize Firebase
@@ -47,15 +25,21 @@ const slackBotsRef = collection(db, 'slackbots')
 
 const database = {
   set: async (key, data) => {
-    const cleanedData = removeUndefinedValues(data)
-    console.debug('set', key, cleanedData);
-    await setDoc(doc(db, 'slackbots', key), cleanedData)
+    const encodedData = JSON.stringify(data)
+    console.debug('set', key, encodedData);
+
+    // undefined の項目を削除するために parse する
+    const decodedData = JSON.parse(encodedData);
+
+    await setDoc(doc(db, 'slackbots', key), { oauth_data: encodedData, incoming_webhook: decodedData.incomingWebhook })
   },
   get: async (key) => {
     const slackBotDocRef = doc(slackBotsRef, key)
     const slackBotSnap = await getDoc(slackBotDocRef)
-    console.log('get', slackBotSnap.data());
-    return slackBotSnap.data()
+    const { oauth_data } = slackBotSnap.data()
+    const data = JSON.parse(oauth_data)
+    console.log('get', data);
+    return data;
   },
   delete: async (key) => {
     console.debug('delete', key);
