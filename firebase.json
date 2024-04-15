@@ -58,7 +58,7 @@
         },
         {
           "source": "/community",
-          "destination": "/c",
+          "destination": "/communitylist",
           "type": 301
         }
       ]

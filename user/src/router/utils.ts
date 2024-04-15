@@ -6,7 +6,7 @@
 export const isUserLoggedIn = () => !!(localStorage.getItem('userData') && localStorage.getItem('accessToken'))
 
 export const getHomePath = () => '/'
-export const getCommunityListPath = () => '/c'
+export const getCommunityListPath = () => '/communitylist'
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
 export const getCommunitySettingsPath = (communityAccount: string) => `/c/setup?id=${communityAccount}`
 export const getCommunityCreatePath = () => `/c/setup`
