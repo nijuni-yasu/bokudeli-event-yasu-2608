@@ -78,7 +78,7 @@ describe('event_information のテスト', () => {
             event_desc: '2nd event description',
             event_url: 'https://undefined/c/undefined/e/2ndEvent',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/2nd.png',
-            shop_name: '2nd shop',
+            shop_name: 'Shop 22',
             community_name: 'ぼくデリ2'
           },
           {
@@ -89,7 +89,7 @@ describe('event_information のテスト', () => {
             event_desc: '3rd event description',
             event_url: 'https://undefined/c/undefined/e/3rdEvent',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/3rd.png',
-            shop_name: '3rd shop',
+            shop_name: 'Shop 21',
             community_name: 'ぼくデリ3'
           },
         ],
@@ -143,7 +143,7 @@ describe('event_information のテスト', () => {
             event_desc: '2nd event description',
             event_url: 'https://undefined/c/undefined/e/2ndEvent',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/2nd.png',
-            shop_name: '2nd shop',
+            shop_name: 'Shop 22',
             community_name: 'ぼくデリ2'
           },
           {
@@ -154,7 +154,7 @@ describe('event_information のテスト', () => {
             event_desc: '3rd event description',
             event_url: 'https://undefined/c/undefined/e/3rdEvent',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/3rd.png',
-            shop_name: '3rd shop',
+            shop_name: 'Shop 21',
             community_name: 'ぼくデリ3'
           },
         ],
@@ -204,4 +204,126 @@ describe('community_added のテスト', () => {
         '【コミュニティページURL】 https://undefined/c/bokudeli',
     });
   });
+})
+
+describe('polling のテスト', async () => {
+  beforeAll(async () => {
+    await initializeDb((await import('./sendgrid-mail.data')).event_information_default);
+  })
+
+  afterAll(async () => {
+    await functionsTest.firestore.clearFirestoreData({
+      projectId,
+    });
+  })
+
+  test('注文締切時ではない場合何もしない', async () => {
+    const polling = functionsTest.wrap((await import('../sendgrid-mail')).polling)
+    await polling({
+      timestamp: '2024-01-16T03:00:00Z'
+    })
+    expect(sgMail.send).toHaveBeenCalledTimes(0);
+  })
+
+  test('in_draft の時は何もしない', async () => {
+    const polling = functionsTest.wrap((await import('../sendgrid-mail')).polling)
+    await polling({
+      timestamp: '2024-01-28T18:00:00Z'
+    })
+    expect(sgMail.send).toHaveBeenCalledTimes(0);
+  })
+
+  test('2nd event の注文締め切り1日前にメールを送信', async () => {
+    const polling = functionsTest.wrap((await import('../sendgrid-mail')).polling)
+    await polling({
+      timestamp: '2024-01-15T02:00:00Z'
+    })
+
+    expect(sgMail.send).toHaveBeenCalledTimes(1);
+    expect(sgMail.send).toHaveBeenCalledWith({
+      to: ['main@mail.com', 'sub1@mail.com', 'sub2@mail.com', 'sub3@mail.com'],
+      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      cc: 'support+cc@nijuni.jp',
+      templateId: 'd-8609b6a7b1514595ae68d18532331e0e',
+      dynamic_template_data: {
+        community_name: 'ぼくデリ2',
+        date: '2024/01/18 (木)',
+        delivery_date: '2024/01/18 (木) 10:30〜11:00 （※30分の配達時間をいただいています）',
+        event_address: '東京都渋谷区2',
+        event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/2nd.png',
+        event_deadline_datetime: '2024/01/16 (火) 11:00',
+        event_desc: '2nd event description',
+        event_end_datetime: {
+          '_nanoseconds': 0,
+          '_seconds': 1705550400,
+        },
+        event_max_people: 10,
+        event_name: '2nd event',
+        event_start_datetime: {
+          '_nanoseconds': 0,
+          '_seconds': 1705543200,
+        },
+        event_status: {
+          value: 'accepting_order',
+        },
+        event_url: 'https://undefined/c/undefined/e/2ndEvent',
+        is_public: true,
+        is_reminder: true,
+        order_count: 0,
+        order_total_price: 0,
+        order_url: 'https://undefined/order/2ndEvent',
+        orders: [],
+        partner_id: 'partner2',
+        shop_id: 'shop22',
+        shop_name: 'Shop 22',
+      },
+    })
+  })
+
+  test('2nd event の注文締め切り時にメールを送信', async () => {
+    const polling = functionsTest.wrap((await import('../sendgrid-mail')).polling)
+    await polling({
+      timestamp: '2024-01-16T02:00:00Z'
+    })
+
+    expect(sgMail.send).toHaveBeenCalledTimes(1);
+    expect(sgMail.send).toHaveBeenCalledWith({
+      to: ['main@mail.com', 'sub1@mail.com', 'sub2@mail.com', 'sub3@mail.com'],
+      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      cc: 'support+cc@nijuni.jp',
+      templateId: 'd-8609b6a7b1514595ae68d18532331e0e',
+      dynamic_template_data: {
+        community_name: 'ぼくデリ2',
+        date: '2024/01/18 (木)',
+        delivery_date: '2024/01/18 (木) 10:30〜11:00 （※30分の配達時間をいただいています）',
+        event_address: '東京都渋谷区2',
+        event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/2nd.png',
+        event_deadline_datetime: '2024/01/16 (火) 11:00',
+        event_desc: '2nd event description',
+        event_end_datetime: {
+          '_nanoseconds': 0,
+          '_seconds': 1705550400,
+        },
+        event_max_people: 10,
+        event_name: '2nd event',
+        event_start_datetime: {
+          '_nanoseconds': 0,
+          '_seconds': 1705543200,
+        },
+        event_status: {
+          value: 'accepting_order',
+        },
+        event_url: 'https://undefined/c/undefined/e/2ndEvent',
+        is_public: true,
+        is_reminder: false,
+        order_count: 0,
+        order_total_price: 0,
+        order_url: 'https://undefined/order/2ndEvent',
+        orders: [],
+        partner_id: 'partner2',
+        shop_id: 'shop22',
+        shop_name: 'Shop 22',
+      },
+    })
+  })
 })
