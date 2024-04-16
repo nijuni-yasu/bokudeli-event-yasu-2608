@@ -104,6 +104,17 @@ describe('event_information のテスト', () => {
     });
   })
 
+  test('イベント開催情報件数が0の場合、メール送信を行わない', async () => {
+    // vi.useFakeTimers() の使用や Date constructor の mock 化は firestore の動作を変えてしまうため、
+    // このテストでは使えない。現在時刻を取得する際は、`Date.now()` を使用すること。
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-03-01T01:00:00Z').getTime());
+
+    const event_information = functionsTest.wrap((await import('../sendgrid-mail')).event_information);
+    await event_information();
+
+    expect(sgMail.send).toHaveBeenCalledTimes(0);
+  })
+
   test('イベント開催情報のプレビューが正しく運営のみに送信される', async () => {
     // vi.useFakeTimers() の使用や Date constructor の mock 化は firestore の動作を変えてしまうため、
     // このテストでは使えない。現在時刻を取得する際は、`Date.now()` を使用すること。
