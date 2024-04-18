@@ -30,3 +30,6 @@ export const {
 export const {
   scheduled_firestore_export
 } = await import('./backup.js');
+export const {
+  slackbot
+} = await import('./shokujii-slackbot/app.js');
