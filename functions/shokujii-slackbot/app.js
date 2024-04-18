@@ -1,27 +1,18 @@
-// import firebase from "firebase/compat/app";
-// Required for side-effects
-// import "firebase/firestore";
+const { onRequest } = require('firebase-functions/v2/https');
 
-const { initializeApp } = require('firebase/app');
-const { getFirestore, collection, doc, setDoc, getDoc, deleteDoc, query, where, getDocs } = require('firebase/firestore');
+const { initializeApp, applicationDefault } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+
 const { App, LogLevel } = require('@slack/bolt');
 
 require('dotenv').config();
 
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGE_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
-}
+initializeApp({
+  credential: applicationDefault(),
+});
 
-// Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig)
-const db = getFirestore(firebaseApp);
-const slackBotsRef = collection(db, 'slackbots')
+const db = getFirestore();
+const slackBotsRef = db.collection('slackbots')
 
 const database = {
   set: async (key, data) => {
@@ -31,11 +22,11 @@ const database = {
     // undefined の項目を削除するために parse する
     const decodedData = JSON.parse(encodedData);
 
-    await setDoc(doc(db, 'slackbots', key), { oauth_data: encodedData, incoming_webhook: decodedData.incomingWebhook })
+    await slackBotsRef.doc(key).set({ oauth_data: encodedData, incoming_webhook: decodedData.incomingWebhook })
   },
   get: async (key) => {
-    const slackBotDocRef = doc(slackBotsRef, key)
-    const slackBotSnap = await getDoc(slackBotDocRef)
+    const slackBotDocRef = slackBotsRef.doc(key)
+    const slackBotSnap = await slackBotDocRef.get()
     const { oauth_data } = slackBotSnap.data()
     const data = JSON.parse(oauth_data)
     console.debug('get', data);
@@ -43,7 +34,7 @@ const database = {
   },
   delete: async (key) => {
     console.debug('delete', key);
-    await deleteDoc(doc(slackBotsRef, key))
+    await slackBotsRef.doc(key).delete()
   }
 };
 
@@ -115,9 +106,9 @@ app.command('/shokujii', async ({ command, ack, respond, payload }) => {
   const communityAccount = command.text.split(' ')[0];
 
   // Firestore のコミュニティを取得
-  const communitiesRef = collection(db, 'communities');
-  const communityQuery = query(communitiesRef, where('community_account', '==', communityAccount));
-  const querySnapshot = await getDocs(communityQuery);
+  const communitiesRef = db.collection('communities');
+  const communityQuery = communitiesRef.where('community_account', '==', communityAccount);
+  const querySnapshot = await communityQuery.get();
   if (querySnapshot.empty) {
     await respond(`コミュニティ ${communityAccount} は存在しません`);
     return;
@@ -132,9 +123,12 @@ app.command('/shokujii', async ({ command, ack, respond, payload }) => {
   await respond(`${communityData.community_name} を登録しました！`);
 });
 
-(async () => {
-  // アプリを起動します
-  await app.start(process.env.PORT || 3000);
+const slackbot = onRequest(app);
+module.exports = { slackbot };
 
-  console.log('⚡️ Bolt app is running!');
-})();
+// (async () => {
+//   // アプリを起動します
+//   await app.start(process.env.PORT || 3000);
+
+//   console.log('⚡️ Bolt app is running!');
+// })();
