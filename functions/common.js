@@ -8,6 +8,7 @@ const db = getFirestore();
 
 export const replace_ogp_tags = functions
   .region('asia-northeast1')
+  .runWith({ memory: '1GB'})
   .https
   .onRequest(async (req, res) => {
     const site = `${req.protocol}://${req.headers['x-forwarded-host']}`;
