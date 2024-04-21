@@ -32,7 +32,7 @@ const database = {
 };
 
 const expressReceiver = new ExpressReceiver({
-  logLevel: LogLevel.DEBUG,
+  // logLevel: LogLevel.DEBUG,
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   clientId: process.env.SLACK_CLIENT_ID,
   clientSecret: process.env.SLACK_CLIENT_SECRET,
@@ -137,10 +137,3 @@ export const slackbot = onRequest({
   },
   expressReceiver.app
 );
-
-// (async () => {
-//   // アプリを起動します
-//   await app.start(process.env.PORT || 3000);
-
-//   console.log('⚡️ Bolt app is running!');
-// })();
