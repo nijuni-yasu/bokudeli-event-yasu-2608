@@ -2,7 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import bolt from '@slack/bolt';
-const { App, LogLevel } = bolt;
+const { App, LogLevel, ExpressReceiver } = bolt;
 
 const db = getFirestore();
 const slackBotsRef = db.collection('slackbots')
@@ -31,8 +31,7 @@ const database = {
   }
 };
 
-// ボットトークンとソケットモードハンドラーを使ってアプリを初期化します
-const app = new App({
+const expressReceiver = new ExpressReceiver({
   logLevel: LogLevel.DEBUG,
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   clientId: process.env.SLACK_CLIENT_ID,
@@ -80,7 +79,13 @@ const app = new App({
       }
       throw new Error('Failed to delete installation');
     },
-  }
+  },
+  processBeforeResponse: true,
+})
+// ボットトークンとソケットモードハンドラーを使ってアプリを初期化します
+const app = new App({
+  receiver: expressReceiver,
+  processBeforeResponse: true,
 });
 
 const getSlackId = (payload) => {
@@ -116,7 +121,11 @@ app.command('/shokujii', async ({ command, ack, respond, payload }) => {
   await respond(`${communityData.community_name} を登録しました！`);
 });
 
-export const slackbot = onRequest(app);
+export const slackbot = onRequest({
+    region: 'asia-northeast1',
+  },
+  expressReceiver.app
+);
 
 // (async () => {
 //   // アプリを起動します
