@@ -1,5 +1,4 @@
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import 'dotenv/config' // cf. https://github.com/firebase/firebase-tools/issues/6499
 
 initializeApp({
   credential: applicationDefault(),
@@ -31,6 +30,3 @@ export const {
 export const {
   scheduled_firestore_export
 } = await import('./backup.js');
-export const {
-  slackbot
-} = await import('./shokujii-slackbot/app.js');
