@@ -9,24 +9,24 @@ const slackBotsRef = db.collection('slackbots')
 
 const database = {
   set: async (key, data) => {
+    console.debug('set: ', key, data)
     const encodedData = JSON.stringify(data)
-    console.debug('set', key, encodedData);
+    const incomingWebhook = data.incomingWebhook
 
-    // undefined の項目を削除するために parse する
-    const decodedData = JSON.parse(encodedData);
-
-    await slackBotsRef.doc(key).set({ oauth_data: encodedData, incoming_webhook: decodedData.incomingWebhook })
+    const docRef = slackBotsRef.doc(key)
+    await docRef.set({ oauth_data: encodedData })
+    await docRef.collection('channels').doc(incomingWebhook.channelId).set(incomingWebhook)
   },
   get: async (key) => {
     const slackBotDocRef = slackBotsRef.doc(key)
     const slackBotSnap = await slackBotDocRef.get()
     const { oauth_data } = slackBotSnap.data()
     const data = JSON.parse(oauth_data)
-    console.debug('get', data);
+    console.debug('get: ', key, data);
     return data;
   },
   delete: async (key) => {
-    console.debug('delete', key);
+    console.debug('delete: ', key);
     await slackBotsRef.doc(key).delete()
   }
 };
@@ -88,14 +88,13 @@ const app = new App({
   processBeforeResponse: true,
 });
 
-const getSlackId = (payload) => {
-  if (payload.is_enterprise_install && payload.enterprise_id !== undefined) {
-    return payload.enterprise_id;
-  }
-  return payload.team_id;
+const makeBotKey = (command) => {
+  const slackId = (command.is_enterprise_install && command.enterprise_id !== undefined) ? command.enterprise_id : command.team_id;
+  const channel_id = command.channel_id
+  return `slack-${slackId}-${channel_id}`
 }
 
-app.command('/shokujii', async ({ command, ack, respond, payload }) => {
+app.command('/shokujii', async ({ command, ack, respond }) => {
   console.debug('command', command);
   // コマンドリクエストを確認
   await ack();
@@ -111,11 +110,23 @@ app.command('/shokujii', async ({ command, ack, respond, payload }) => {
     await respond(`コミュニティ ${communityAccount} は存在しません`);
     return;
   }
-  const communityData = querySnapshot.docs[0].data();
-  console.debug('communityData', communityData);
 
-  //TODO コミュニティに slack の情報を追加する
-  console.debug('slack id', getSlackId(payload));
+  // SlackBot を登録
+  const targetQueryDocumentSnapshot = querySnapshot.docs[0];
+  const communityDocRef = targetQueryDocumentSnapshot.ref;
+  const communityBotsRef = communityDocRef.collection('bots');
+  communityBotsRef.doc(makeBotKey(command)).set({
+    type: 'slack',
+    team_id: command.team_id,
+    team_domain: command.team_domain,
+    channel_id: command.channel_id,
+    channel_name: command.channel_name,
+    is_enterprise_install: command.is_enterprise_install,
+    enterprise_id: command.enterprise_id ?? ''
+  });
+
+  // コミュニティ情報を取得
+  const communityData = targetQueryDocumentSnapshot.data();
 
   //Botで表示する文言を設定
   await respond(`${communityData.community_name} を登録しました！`);
