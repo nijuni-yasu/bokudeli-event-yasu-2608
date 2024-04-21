@@ -1,15 +1,8 @@
-const { onRequest } = require('firebase-functions/v2/https');
+import { onRequest } from 'firebase-functions/v2/https';
+import { getFirestore } from 'firebase-admin/firestore';
 
-const { initializeApp, applicationDefault } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
-
-const { App, LogLevel } = require('@slack/bolt');
-
-require('dotenv').config();
-
-initializeApp({
-  credential: applicationDefault(),
-});
+import bolt from '@slack/bolt';
+const { App, LogLevel } = bolt;
 
 const db = getFirestore();
 const slackBotsRef = db.collection('slackbots')
@@ -123,8 +116,7 @@ app.command('/shokujii', async ({ command, ack, respond, payload }) => {
   await respond(`${communityData.community_name} を登録しました！`);
 });
 
-const slackbot = onRequest(app);
-module.exports = { slackbot };
+export const slackbot = onRequest(app);
 
 // (async () => {
 //   // アプリを起動します

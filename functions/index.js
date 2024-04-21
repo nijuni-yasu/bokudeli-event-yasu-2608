@@ -1,4 +1,5 @@
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
+import 'dotenv/config' // cf. https://github.com/firebase/firebase-tools/issues/6499
 
 initializeApp({
   credential: applicationDefault(),
