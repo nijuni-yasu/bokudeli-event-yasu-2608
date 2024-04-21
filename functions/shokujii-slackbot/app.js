@@ -1,8 +1,16 @@
+import 'dotenv/config' // cf. https://github.com/firebase/firebase-tools/issues/6499
+
 import { onRequest } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import bolt from '@slack/bolt';
 const { App, LogLevel, ExpressReceiver } = bolt;
+
+import { initializeApp, applicationDefault } from 'firebase-admin/app';
+
+initializeApp({
+  credential: applicationDefault(),
+});
 
 const db = getFirestore();
 const slackBotsRef = db.collection('slackbots')
