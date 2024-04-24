@@ -29,6 +29,9 @@ const { t: $t } = useI18n()
 
 const eventStore = useEventStore(props.eventId) as EventStore
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
+const menuNavigation = ref(true)
+const menuListRef = ref()
+let menuListObserver: IntersectionObserver | null = null
 
 const isManager = ref(false)
 communityStore.getCurrentUserRoles().then((roles) => {
@@ -117,6 +120,40 @@ const openCalendarAddDialog = () => {
 const showQrCode = () => {
   isShowQrCode.value = true
 }
+
+const scrollToMenu = () => {
+  // Vuetify では scrollIntoView が使えないらしい
+  // menuList.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const top =  menuListRef.value?.$el?.offsetTop
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
+watch(menuListRef, () => {
+  const target = menuListRef.value?.$el
+  if (target == null) {
+    return
+  }
+  menuListObserver?.disconnect()
+  menuListObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        menuNavigation.value = false
+      } else {
+        menuNavigation.value = true
+      }
+    });
+  }, {
+    // オプションでroot、rootMargin、thresholdを設定可能
+    threshold: 0
+  });
+
+  menuListObserver.observe(target)
+})
+
+onUnmounted(() => {
+  menuListObserver?.disconnect()
+  menuListObserver = null
+})
 </script>
 
 <template>
@@ -352,6 +389,7 @@ const showQrCode = () => {
           </v-card>
           <!-- メニュ -->
           <event-menu-list
+            ref="menuListRef"
             :event="event"
             :disabled="menuDisabled !== false"
             @select-menu="selectMenu"
@@ -387,6 +425,21 @@ const showQrCode = () => {
         <vue-qrious :value="event?.url" :size="qrcodeSize" />
       </v-card>
     </show-dialog>
+    <v-navigation-drawer
+      v-model="menuNavigation"
+      location="bottom"
+      permanent
+      style="height: 40px; z-index: 100;"
+    >
+      <v-btn
+        style="font-size:18px;"
+        color="primary"
+        width="100%"
+        @click="scrollToMenu"
+      >
+        注文して参加する
+      </v-btn>
+    </v-navigation-drawer>
   </section>
 </template>
 <style lang="scss" scoped>
