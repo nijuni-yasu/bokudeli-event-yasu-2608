@@ -10,6 +10,10 @@ import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 import { CommunityMember } from '@/schemes/communityMember'
+import { functions } from '@/firebase'
+import { httpsCallable } from 'firebase/functions'
+
+const send_invitaion_email_for_community_manager = httpsCallable(functions, 'send_invitaion_email_for_community_manager');
 
 const props = defineProps<{
   communityId: string
@@ -52,6 +56,11 @@ const goToEvents = (eventId: string) => {
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
+const isOpenEmailDailog = ref(false)
+const isOpenMessageDailog = ref(false)
+
+const invitationEmail = ref('')
+const message = ref('')
 
 // コミュニティへの問い合わせはログイン必須
 const userStore = useStoreStoredUser()
@@ -64,6 +73,18 @@ const openContactDialog = () => {
 }
 const openLoginDialog = () => {
   isOpenLoginDialog.value = true
+}
+const inviteManager = async () => {
+  const communityId = communityStore.community?.community_id
+  try {
+    await send_invitaion_email_for_community_manager({ communityId, 'email': invitationEmail.value })
+    message.value = '招待メールを送信しました'
+    isOpenMessageDailog.value = true
+  } catch (error) {
+    console.error(error)
+    message.value = '招待メールの送信に失敗しました'
+    isOpenMessageDailog.value = true
+  }
 }
 </script>
 <template>
@@ -139,6 +160,18 @@ const openLoginDialog = () => {
                   @click="openContactDialog"
                 >
                   お問い合わせ
+                </v-btn>
+              </v-col>
+              <v-col v-if="isManager">
+                <v-btn
+                  class="ma-1"
+                  variant="outlined"
+                  rounded
+                  color="primary"
+                  width="100%"
+                  @click="isOpenEmailDailog = true"
+                >
+                  管理者を招待する
                 </v-btn>
               </v-col>
               <!-- community manager -->
@@ -254,6 +287,20 @@ const openLoginDialog = () => {
       ログインした後にお問い合わせしてください。
     </confirm-dialog>
     <login-dialog v-model="isOpenLoginDialog" />
+    <confirm-dialog v-model="isOpenEmailDailog" :is-confirm="true" :ok-click="inviteManager">
+      <div class="mt-4 mb-8">
+        招待メールの宛先を入力してください<br />
+      </div>  
+      <v-text-field
+        v-model="invitationEmail"
+        outlined
+        dense
+        label="メールアドレス"
+      />
+    </confirm-dialog>
+    <confirm-dialog v-model="isOpenMessageDailog" :is-confirm="false">
+      {{ message }}
+    </confirm-dialog>
   </section>
 </template>
 <style lang="scss" scoped></style>
