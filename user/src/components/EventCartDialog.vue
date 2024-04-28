@@ -58,7 +58,7 @@ const addOrder = async () => {
   const communityAccount = eventStore.event.community_account
   const event_id = eventStore.event.event_id
   const event_payment = eventStore.event.event_payment
-  
+
   const orderCount = selectedCount.value || 0
 
   // 上書きできるオーダーを探す
@@ -166,13 +166,15 @@ const addCart = async () => {
       <v-card-text class="text-right pb-5">
         <span style="font-size:18px; color: #3A3541DE;">¥ </span>
         <span style="font-size:30px; color: #3A3541DE;">{{ priceString(menu.price) }}</span>
-      </v-card-text>      
+      </v-card-text>
       <v-row class="mx-3 mb-2">
         <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>
       </v-row>
+      <!--
       <v-row class="mx-3 my-2">
         <v-textarea v-model="orderNote" outlined dense rows="1" label="注記を追加"></v-textarea>
       </v-row>
+      -->
       <v-row class="justify-center mx-1 my-2">
         <v-btn class="justify-center mx-1 align-self-center" rounded size="large" color="primary" :loading="isAddingOrder" @click="addCart()">
           カートに追加

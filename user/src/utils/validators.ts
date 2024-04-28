@@ -68,7 +68,7 @@ export const emailValidator = (value: string | null | undefined) => {
 
 /**
  * アカウント入力のバリデーション
- * アカウントの長さは5文字以上15文字以内。アカウントに使えるのは、英数字、アンダースコア（_）のみです。
+ * アカウントの長さは5文字以上15文字以内。アカウントに使えるのは、英小文字・数字・アンダースコア（_）のみです。
  *
  * @param value
  * @returns boolean | string if it's invalid, return error message
@@ -77,5 +77,5 @@ export const accountValidator = (value: string | null | undefined) => {
   if (isEmpty(value)) {
     return true
   }
-  return /^[a-zA-Z0-9_]{5,15}$/.test(value as string) || 'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英数字」と「アンダースコア」のみです。'
+  return /^[a-z0-9_]{5,15}$/.test(value as string) || 'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英小文字・数字・アンダースコア」のみです。'
 }
