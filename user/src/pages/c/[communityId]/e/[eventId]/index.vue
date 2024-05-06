@@ -426,19 +426,30 @@ onUnmounted(() => {
       </v-card>
     </show-dialog>
     <v-navigation-drawer
+     v-if="event?.event_status.value === `accepting_order`"
       v-model="menuNavigation"
       location="bottom"
       permanent
-      style="height: 40px; z-index: 100;"
+      border="0"
+      color="#FFFFFF00"
+      style="height: 60px; z-index: 100; text-align: center;"
     >
-      <v-btn
-        style="font-size:18px;"
-        color="primary"
-        width="100%"
-        @click="scrollToMenu"
-      >
-        注文して参加する
-      </v-btn>
+      <v-row class="justify-center">
+        <v-col md="8" sm="9" cols="12">
+          <v-btn
+            class="text-md-h6"
+            size="large"
+            rounded
+            elevation="20"
+            prepend-icon="mdi-food-fork-drink"
+            color="primary"
+            width="90%"
+            @click="scrollToMenu"
+          >
+            食事を注文してイベントに参加する
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-navigation-drawer>
   </section>
 </template>

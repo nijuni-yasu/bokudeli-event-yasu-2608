@@ -316,9 +316,10 @@ onMounted(async () => {
                 rounded
                 elevation="7"
                 width="85%"
+                prepend-icon="mdi-check-outline"
                 @click="showConfirm(cart)"
               >
-                注文してイベントに参加する
+                事前注文してイベントに参加する
               </v-btn>
             </v-col>
           </v-row>
