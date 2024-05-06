@@ -163,7 +163,7 @@ const submit = async () => {
     if (iconImageFile.value?.[0] != null) {
       await communityStore.updateIconImage(iconImageFile.value?.[0])
     }
-    window.alert('コミュニティ利用申請メールを送信しました。承認されるのをお待ちください。')
+    window.alert('コミュニティ新規作成メールを送信しました。承認されるのをお待ちください。')
     // communityAccount を設定したので、communitiesStore.$reset() は onUnmounted 内で実行されないことに注意
     communitiesStore.$reset()
   }
@@ -173,7 +173,7 @@ const submit = async () => {
 const loginCheck = () => {
   // ログインしていない場合はログインダイアログを表示
   if (userStore.storedUser == null) {
-    window.alert('コミュニティの利用申請は、ログインした後に行ってください。')
+    window.alert('コミュニティの新規作成は、ログインした後に行ってください。')
     isOpenLoginDialog.value = true
     return
   // ログインしている場合は確認ダイアログを表示
@@ -309,7 +309,7 @@ const checkAccountExists = async (event: Event) => {
                   </div>
                 </div>
               </div>
-              <div>※コミュニティのアイコン画像を設定してください（推奨サイズ：300x300px）</div>
+              <div>※アイコン画像を設定してください（推奨サイズ：300x300px）</div>
             </v-card-text>
 
             <v-card-text class="pt-5">
@@ -334,7 +334,7 @@ const checkAccountExists = async (event: Event) => {
                   </div>
                 </div>
               </div>
-              <div>※コミュニティのカバー画像を設定してください（推奨サイズ：1200x630px）</div>
+              <div>※カバー画像を設定してください（推奨サイズ：1200x630px）</div>
             </v-card-text>
 
             <v-card-title class="pt-10 px-5">
@@ -505,10 +505,10 @@ const checkAccountExists = async (event: Event) => {
                 color="grey-900"
                 class="mt-3"
                 size="x-large"
-                prepend-icon="mdi-email"
+                prepend-icon="mdi-plus"
                 @click="loginCheck()"
               >
-                コミュニティ利用を申請する
+                コミュニティを新規作成する
               </v-btn>
             </v-card-text>
           </v-form>
@@ -521,14 +521,14 @@ const checkAccountExists = async (event: Event) => {
     <confirm-dialog
       v-model="isOpenConfirmDialog"
       :is-confirm="true"
-      :ok-text="'利用申請メールを送信する'"
+      :ok-text="'コミュニティを新規作成する'"
       :ok-click="submit"
       max-width="650px"
     >
-      <v-card-text class="text-center py-10 text-h6"> コミュニティ利用申請メールを送信しますか？<br /> </v-card-text>
+      <v-card-text class="text-center py-10 text-h6"> コミュニティを新規作成しますか？<br /> </v-card-text>
       <v-card-text class="text-subtitle pb-0" style="line-height: 1.8rem">
-        ・コミュニティの利用申請は、ログイン後に行ってください。<br />
-        ・コミュニティ利用申請後、運営チームにて内容確認させていただきます。<br />
+        ・コミュニティの作成は、ログイン後に行ってください。<br />
+        ・コミュニティ作成後、運営チームにて内容確認させていただきます。<br />
         ・コミュニティ利用承認後、イベントページ作成などの機能が利用可能となります。<br />
         <br />
         ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および
@@ -539,13 +539,14 @@ const checkAccountExists = async (event: Event) => {
       </v-card-text>
     </confirm-dialog>
     <confirm-dialog v-model="isOpenNewCommunityDialog" :ok-text="'OK'" max-width="800px">
-      <v-card-text class="text-center mt-6 text-h6"> コミュニティの利用申請について </v-card-text>
+      <v-card-text class="text-center mt-6 text-h6"> コミュニティの新規作成について </v-card-text>
       <v-card-text class="text-subtitle" style="line-height: 1.8rem">
-        ・コミュニティの利用申請は、ログイン後に行ってください。<br />
-        ・「アカウント」「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」など必要事項を記載の上、コミュニティの利用申請を進めてください。<br />
+        ・コミュニティの新規作成は、ログイン後に行ってください。<br />
+        ・「アカウント」「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」など入力してください。<br />
+        ・「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」は設定変更可能です。<br />
         ・コミュニティの「運営者情報」「利用目的」などについては、コミュニティページには表示されません。<br />
-        ・コミュニティの利用申請後、運営チームにて申請内容を確認させていただきます。<br />
-        ・コミュニティ利用の承認後、イベント作成などの機能が利用可能となります。<br />
+        ・新規作成後、運営チームにて作成内容を確認させていただきます。<br />
+        ・運営チームによる承認後、イベント作成などの機能が利用可能となります。<br />
       </v-card-text>
       <v-card-text class="text-center mt-6 text-h6"> 禁止事項について </v-card-text>
       <v-card-text class="text-subtitle" style="line-height: 1.8rem">
