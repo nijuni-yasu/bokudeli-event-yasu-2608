@@ -1,8 +1,33 @@
 <script setup lang="ts">
-
+import { db } from '@/firebase'
+import { doc, orderBy, where } from 'firebase/firestore'
 import { getCommunityCreatePath } from '@/router/utils'
-const router = useRouter()
+import { type CommunitiesStore, useCommunitiesStore } from '@/stores/community'
+import { getAuth } from 'firebase/auth'
+import { getEventCreatePath } from '@/router/utils'
+import LoginDialog from '@/components/LoginDialog.vue'
 
+const router = useRouter()
+const userId = getAuth().currentUser?.uid
+const isLoginDialogOpened = ref(false)
+
+if (userId == null) {
+  isLoginDialogOpened.value = true
+}
+const communitiesStore = (userId == null) ? null : useCommunitiesStore([
+  where('members', 'array-contains', doc(db, 'users', userId)),
+  orderBy('community_num_members', 'desc'),
+]) as CommunitiesStore
+
+const communities = computed(() => communitiesStore?.communityStores?.flatMap(
+  (communityStore) => {
+    if (communityStore.members?.some(m => m?.roles?.includes('manager')) === true) {
+      return communityStore.community ?? []
+    } else {
+      return []
+    }
+  }
+) ?? [])
 </script>
 
 <template>
@@ -18,52 +43,23 @@ const router = useRouter()
         </v-card-text>
 
         <v-divider class="my-2" />
-
-        <v-row class="ma-2">
-          <img
-            src="https://firebasestorage.googleapis.com/v0/b/bokudeli-event-dev.appspot.com/o/communities%2FIwZWeVICJf3OcwwoH7b8%2F%E3%81%BB%E3%82%99%E3%81%8F%E3%83%86%E3%82%99%E3%83%AA_logo_icon.png?alt=media&token=1737bb76-c8b9-4ae3-a7c8-49e4ee9dcace"
-            style="border-radius: 5px 5px 5px 5px"
-            width="50"
-            height="50"
-            aspect-ratio="1"
-            cover
-            class="ma-2"
-          />
-          <div class="ma-3 text-h6 text-left align-self-center">
-            コミュニティ名
-          </div>
-        </v-row>
-        <v-divider class="my-2" />
-        <v-row class="ma-2">
-          <img
-            src="https://firebasestorage.googleapis.com/v0/b/bokudeli-event-dev.appspot.com/o/communities%2Fd4TT2QD4b35SWnb58yWO%2Fcommunity%2F240120_shokujii_%E5%AE%89%E5%B7%9D-1711595223981.png?alt=media&token=28226e7c-e030-4f61-b2df-ef636fab7afc"
-            style="border-radius: 5px 5px 5px 5px"
-            width="50"
-            height="50"
-            aspect-ratio="1"
-            cover
-            class="ma-2"
-          />
-          <div class="ma-2 text-h6 text-left align-self-center">
-            コミュニティ名
-          </div>
-        <v-divider class="my-2" />
-        </v-row>
-        <v-row class="ma-2">
-          <img
-            src="https://firebasestorage.googleapis.com/v0/b/bokudeli-event-test.appspot.com/o/communities%2FInEfJQCGTykSSxkfOPeM%2Fevents%2FbL0Z7Aa7cyFok1ndmuHp%2FDSC07526-1709961161000.JPG?alt=media&token=914b2f1f-1699-4401-984b-3fd8ffbb0776"
-            style="border-radius: 5px 5px 5px 5px"
-            width="50"
-            height="50"
-            aspect-ratio="1"
-            cover
-            class="ma-2"
-          />
-          <div class="ma-2 text-h6 text-left align-self-center">
-            コミュニティ名
-          </div>
-        </v-row>
-        <v-divider class="my-2" />              
+        <div v-for="community of communities" :key="community.community_account">
+          <router-link :to="getEventCreatePath(community.community_account)">
+            <v-row class="ma-2">
+              <div class="ma-2" style="width: 50px; height: 50px;">
+                <v-img
+                  :src="community.community_icon_image_url"
+                  style="border-radius: 5px 5px 5px 5px"
+                  cover
+                />
+              </div>
+              <div class="ma-3 text-h6 text-left align-self-center">
+                {{ community.community_name }}
+              </div>
+            </v-row>
+          </router-link>
+          <v-divider class="my-2" />
+        </div>
         <v-row class="ma-2 text-center justify-center">
           <v-btn
             class="ma-3 text-h6 text-center justify-center"
@@ -77,6 +73,7 @@ const router = useRouter()
         </v-row>
       </v-card>
     </v-col>
+    <login-dialog v-model="isLoginDialogOpened" />
   </v-row>
 </template>
 <style lang="scss" scoped></style>
