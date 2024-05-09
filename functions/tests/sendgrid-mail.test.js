@@ -399,7 +399,6 @@ describe('on_order_changed のテスト', () => {
       .toHaveBeenCalledTimes(1)
       .toHaveBeenCalledWith({
         to: 'ichiro@test.com',
-        cc: 'support+cc@nijuni.jp',
         from: '食事でつながるshokujii<shokujii@nijuni.jp>',
         templateId: 'd-b94849438f2642a29973670f3d79809f',
         dynamic_template_data: {
