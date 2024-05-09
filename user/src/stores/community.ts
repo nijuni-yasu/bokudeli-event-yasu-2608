@@ -328,15 +328,16 @@ type CommunitiesStoreGetters = {
 type CommunitiesStoreAction = {
   reload: () => void,
   next: () => void,
-  setPageSize: (size: number) => void,
+  setPageSize: (size: number | null) => void,
   getCommunityData: (communityAccount: string) => Promise<DocumentData | null>,
   createNewCommunityFromDraft: () => Promise<BokudeliCommunity>,
 }
 
 export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters, CommunitiesStoreAction>
 
-export const useCommunitiesStore = (filters: QueryConstraint[] | null = null, pageSize = 5) => {
+export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) => {
   const store = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters & CommunitiesStoreAction>('/communities', () => {
+    let pageSize: number | null = 5
     const communityStores = ref<CommunityStore[] | null>(null)
     const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
     const filters = ref<QueryConstraint[] | null>(null)
@@ -344,7 +345,7 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null, pa
 
     const communitySnapshot: QueryDocumentSnapshot[] = []
 
-    const setPageSize = (size: number) => {
+    const setPageSize = (size: number | null) => {
       pageSize = size
     }
 
@@ -363,7 +364,7 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null, pa
         const q = query(collection(db, 'communities'),
           ...(filters.value ?? []),
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-          limit(pageSize))
+          ...(pageSize == null ? [] : [limit(pageSize)]))
         const querySnapshot = await getDocs(q)
         communitySnapshot.push(...querySnapshot.docs)
         communityStores.value = communitySnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)

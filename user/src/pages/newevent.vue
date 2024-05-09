@@ -18,6 +18,7 @@ const communitiesStore = (userId == null) ? null : useCommunitiesStore([
   where('members', 'array-contains', doc(db, 'users', userId)),
   orderBy('community_num_members', 'desc'),
 ]) as CommunitiesStore
+communitiesStore?.setPageSize(null)
 
 const communities = computed(() => communitiesStore?.communityStores?.flatMap(
   (communityStore) => {
