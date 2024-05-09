@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db, stripeBaseURL } from '@/firebase'
-import { getCommunityPath, getEventPath } from '@/router/utils'
+import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
@@ -108,7 +108,7 @@ const createCheckoutSession = async (order: OrderItem) => {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      success_url: `${stripeBaseURL}/users/${userId.value}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
+      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
       cancel_url: `${stripeBaseURL}/`,
       customer_creation: 'if_required',
       line_items: lineItems,
