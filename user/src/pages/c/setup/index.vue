@@ -11,17 +11,14 @@ import {
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import LoginDialog from '@/components/LoginDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useStoreStoredUser()
 
 const communityAccount = ref<string | null>(route.query.id as string | null)
 
 const isValid = ref(false)
 const isOpenConfirmDialog = ref(false)
-const isOpenLoginDialog = ref(false)
 const isOpenNewCommunityDialog = ref(false)
 
 const communitiesStore = useCommunitiesStore() as CommunitiesStore
@@ -75,8 +72,7 @@ watch(
   () => useStoreStoredUser().storedUser,
   (storedUser) => {
     if (storedUser == null) {
-      isOpenLoginDialog.value = true
-      // router.push('/')
+      router.push('/')
     }
   },
   { immediate: true },
@@ -170,17 +166,6 @@ const submit = async () => {
   router.push(getCommunityPath(communityAccount.value))
 }
 
-const loginCheck = () => {
-  // ログインしていない場合はログインダイアログを表示
-  if (userStore.storedUser == null) {
-    window.alert('コミュニティの新規作成は、ログインした後に行ってください。')
-    isOpenLoginDialog.value = true
-    return
-  // ログインしている場合は確認ダイアログを表示
-  } else {
-    isOpenConfirmDialog.value = true
-  }
-}
 const cancel = () => {
   if (community.value != null) {
     router.push(getCommunityPath(community.value.community_account))
@@ -506,7 +491,7 @@ const checkAccountExists = async (event: Event) => {
                 class="mt-3"
                 size="x-large"
                 prepend-icon="mdi-plus"
-                @click="loginCheck()"
+                @click="isOpenConfirmDialog = true"
               >
                 コミュニティを新規作成する
               </v-btn>
@@ -527,7 +512,6 @@ const checkAccountExists = async (event: Event) => {
     >
       <v-card-text class="text-center py-10 text-h6"> コミュニティを新規作成しますか？<br /> </v-card-text>
       <v-card-text class="text-subtitle pb-0" style="line-height: 1.8rem">
-        ・コミュニティの作成は、ログイン後に行ってください。<br />
         ・コミュニティ作成後、運営チームにて内容確認させていただきます。<br />
         ・コミュニティ利用承認後、イベントページ作成などの機能が利用可能となります。<br />
         <br />
@@ -541,7 +525,6 @@ const checkAccountExists = async (event: Event) => {
     <confirm-dialog v-model="isOpenNewCommunityDialog" :ok-text="'OK'" max-width="800px">
       <v-card-text class="text-center mt-6 text-h6"> コミュニティの新規作成について </v-card-text>
       <v-card-text class="text-subtitle" style="line-height: 1.8rem">
-        ・コミュニティの新規作成は、ログイン後に行ってください。<br />
         ・「アカウント」「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」など入力してください。<br />
         ・「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」は設定変更可能です。<br />
         ・コミュニティの「運営者情報」「利用目的」などについては、コミュニティページには表示されません。<br />
@@ -562,7 +545,6 @@ const checkAccountExists = async (event: Event) => {
         <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
       </v-card-text>
     </confirm-dialog>
-    <login-dialog v-model="isOpenLoginDialog" />
   </div>
 </template>
 
