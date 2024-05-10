@@ -6,14 +6,13 @@ import { type CommunitiesStore, useCommunitiesStore } from '@/stores/community'
 import { getAuth } from 'firebase/auth'
 import { getEventCreatePath } from '@/router/utils'
 import LoginDialog from '@/components/LoginDialog.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const userId = getAuth().currentUser?.uid
+const isLoginConfirmDialogOpened = ref(false)
 const isLoginDialogOpened = ref(false)
 
-if (userId == null) {
-  isLoginDialogOpened.value = true
-}
 const communitiesStore = (userId == null) ? null : useCommunitiesStore([
   where('members', 'array-contains', doc(db, 'users', userId)),
   orderBy('community_num_members', 'desc'),
@@ -29,6 +28,14 @@ const communities = computed(() => communitiesStore?.communityStores?.flatMap(
     }
   }
 ) ?? [])
+
+const createCommunity = () => {
+  if (userId == null) {
+    isLoginConfirmDialogOpened.value = true
+  } else {
+    router.push(getCommunityCreatePath())
+  }
+}
 </script>
 
 <template>
@@ -67,14 +74,21 @@ const communities = computed(() => communitiesStore?.communityStores?.flatMap(
             variant="text"
             color="primary"
             prepend-icon="mdi-plus"
-            @click="router.push(getCommunityCreatePath())"
+            @click="createCommunity"
           >
             コミュニティを新規作成する
           </v-btn>
         </v-row>
       </v-card>
     </v-col>
-    <login-dialog v-model="isLoginDialogOpened" />
+    <confirm-dialog
+      v-model="isLoginConfirmDialogOpened"
+      :is-confirm="false"
+      @click="isLoginDialogOpened = true; isLoginConfirmDialogOpened = false;"
+    >
+      ログインしてください
+    </confirm-dialog>
+    <login-dialog v-model="isLoginDialogOpened" />    
   </v-row>
 </template>
 <style lang="scss" scoped></style>
