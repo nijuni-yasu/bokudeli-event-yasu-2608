@@ -430,6 +430,7 @@ onUnmounted(() => {
       v-model="menuNavigation"
       location="bottom"
       permanent
+      touchless
       border="0"
       color="#FFFFFF00"
       style="height: 60px; z-index: 100; text-align: center;"
