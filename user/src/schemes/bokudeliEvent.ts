@@ -1,3 +1,4 @@
+import { getEventPath } from '@/router/utils'
 import { DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 
@@ -94,7 +95,8 @@ class BokudeliEvent {
 
   get url () {
     const host = import.meta.env.VITE_ORIGIN_HOST
-    return `${host}community/${this.community_account}/events/${this.event_id}`
+    const path = getEventPath(this.community_account, this.event_id)
+    return `${host}${path}`
   }
 }
 

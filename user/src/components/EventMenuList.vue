@@ -80,12 +80,13 @@ onMounted(async () => {
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                style="font-size:18px;"
+                style="font-size:16px;"
                 class="px-5 my-4"
                 :class="{ 'disable-menu-button': disabled || menu.isSoldout === true }"
                 color="primary"
                 rounded
                 elevation="7"
+                prepend-icon="mdi-food-fork-drink"
                 width="80%" @click="emit('selectMenu', menu)"
               >
                 {{ menu.isSoldout === true ? '売り切れ' : '注文して参加する' }}

@@ -27,6 +27,6 @@ export class Event {
   }
 
   get url () {
-    return `https://${process.env.VUE_APP_EVENT_HOST}/community/${this.community_account}/events/${this.event_id}`
+    return `https://${process.env.VUE_APP_EVENT_HOST}/c/${this.community_account}/e/${this.event_id}`
   }
 }

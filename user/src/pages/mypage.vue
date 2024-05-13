@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { getUserPath } from '@/router/utils'
 import { useStoreStoredUser } from '@/stores/storedUser'
 
 const router = useRouter()
 
 const storedUser = useStoreStoredUser().storedUser
 if (storedUser) {
-  router.replace(`/users/${storedUser?.userId}`)
+  router.replace(getUserPath(storedUser?.userId))
 } else {
   router.replace('/')
 }

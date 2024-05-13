@@ -8,6 +8,8 @@ import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
+import { getUserPath } from '@/router/utils'
+import { CommunityMember } from '@/schemes/communityMember'
 
 const props = defineProps<{
   communityId: string
@@ -140,29 +142,33 @@ const openLoginDialog = () => {
                 </v-btn>
               </v-col>
               <!-- community manager -->
-              <v-card-title v-if="communityStore.members?.some(m => m?.roles?.includes('manager') ?? false)" class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
-              <div v-for="(manager, i) in communityStore.members?.filter(m => m?.roles?.includes('manager') ?? false)" :key="manager?.user_id ?? `manager_${i}`">
-                <router-link v-if="manager != null" :to="`/users/${manager.user_id}`">
-                  <v-row>
-                    <div class="d-flex flex-row px-6 py-2">
-                      <UserAvatar :user="manager" :size="40" />
-                      <div class="ma-2 text-subtitle-1">{{ manager.user_name }}</div>
-                    </div>
-                  </v-row>
-                </router-link>
+              <div v-if="communityStore.members?.some(m => m?.roles?.includes('manager') ?? false)">
+                <v-card-title class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
+                <div v-for="manager in (communityStore.members.filter(m => m?.roles?.includes('manager') ?? false) as CommunityMember[])" :key="manager.user_id">
+                  <router-link :to="getUserPath(manager.user_id)">
+                    <v-row>
+                      <div class="d-flex flex-row px-6 py-2">
+                        <UserAvatar :user="manager" :size="40" />
+                        <div class="ma-2 text-subtitle-1">{{ manager.user_name }}</div>
+                      </div>
+                    </v-row>
+                  </router-link>
+                </div>
               </div>
 
               <!-- community member -->
-              <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
-              <div v-for="(member, i) in communityStore.members" :key="member?.user_id ?? `member_${i}`">
-                <router-link :to="`/users/${member?.user_id}`">
-                  <v-row>
-                    <div class="d-flex flex-row px-6 py-2">
-                      <UserAvatar :user="member" :size="40" />
-                      <div class="ma-2 text-subtitle-1">{{ member?.user_name }}</div>
-                    </div>
-                  </v-row>
-                </router-link>
+              <div v-if="communityStore.members != null">
+                <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
+                <div v-for="member in (communityStore.members.filter(m => m != null) as CommunityMember[])" :key="member.user_id">
+                  <router-link :to="getUserPath(member.user_id)">
+                    <v-row>
+                      <div class="d-flex flex-row px-6 py-2">
+                        <UserAvatar :user="member" :size="40" />
+                        <div class="ma-2 text-subtitle-1">{{ member.user_name }}</div>
+                      </div>
+                    </v-row>
+                  </router-link>
+                </div>
               </div>
             </v-card>
           </v-col>

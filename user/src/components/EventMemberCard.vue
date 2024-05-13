@@ -3,6 +3,7 @@ import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composab
 import { EventMember } from '@/schemes/EventMember'
 import { convertTruncateText} from '@/schemes/converter'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
+import { getUserPath } from '@/router/utils'
 
 const props = defineProps<{
   member: EventMember
@@ -53,7 +54,7 @@ const descriptionCharacterLimit = 38
         {{ convertTruncateText(userDescription, descriptionCharacterLimit) }}
       </v-card-text>
       <v-card-text class="text-center">
-        <router-link :to="`/users/${member.user_id}`">
+        <router-link :to="getUserPath(member.user_id)">
           <v-btn
             class="ma-1"
             variant="outlined"

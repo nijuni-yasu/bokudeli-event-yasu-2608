@@ -23,15 +23,43 @@
     {
       "public": "user/dist",
       "target": "user",
+      "headers": [
+        {
+          "source": "/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=3600"
+            }
+          ]
+        }
+      ],
       "rewrites": [
         {
-          "source": "/community/**/events/**",
+          "source": "/c/**/e/**",
           "function": "replace_ogp_tags",
           "region": "asia-northeast1"
         },
         {
           "source": "**",
           "destination": "/index.html"
+        }
+      ],
+      "redirects": [
+        {
+          "source": "/community/:communityId/events/:eventId",
+          "destination": "/c/:communityId/e/:eventId",
+          "type": 301
+        },
+        {
+          "source": "/community/:communityId",
+          "destination": "/c/:communityId",
+          "type": 301
+        },
+        {
+          "source": "/community",
+          "destination": "/communitylist",
+          "type": 301
         }
       ]
     }

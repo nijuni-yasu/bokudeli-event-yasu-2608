@@ -15,8 +15,10 @@ export const event_information_default = {
             event_desc: '1st event description',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/1st.png',
             event_max_people: 10,
-            shop_name: '1st shop',
             community_name: 'ぼくデリ1',
+            partner_id: 'partner1',
+            shop_id: 'shop11',
+            shop_name: 'Shop 11',
         },
         '3rdEvent': {
             is_public: true,
@@ -31,8 +33,10 @@ export const event_information_default = {
             event_desc: '3rd event description',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/3rd.png',
             event_max_people: 3,
-            shop_name: '3rd shop',
             community_name: 'ぼくデリ3',
+            partner_id: 'partner2',
+            shop_id: 'shop21',
+            shop_name: 'Shop 21',
         },
         'NonPublicEvent': {
             is_public: false,
@@ -49,6 +53,9 @@ export const event_information_default = {
             event_max_people: 10,
             shop_name: 'no public shop',
             community_name: 'ぼくデリ∞',
+            partner_id: 'partner2',
+            shop_id: 'shop22',
+            shop_name: 'Shop 22',
         },
         'FullCapacityEvent': {
             is_public: true,
@@ -63,8 +70,10 @@ export const event_information_default = {
             event_desc: 'full capacity event description',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/full-capacity.png',
             event_max_people: 1,
-            shop_name: 'full capacity shop',
             community_name: 'ぼくデリFull',
+            partner_id: 'partner1',
+            shop_id: 'shop11',
+            shop_name: 'Shop 11',
         },
         'InDraftEvent': {
             is_public: true,
@@ -79,8 +88,10 @@ export const event_information_default = {
             event_desc: 'in draft event description',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/in-draft.png',
             event_max_people: 10,
-            shop_name: 'in draft shop',
             community_name: 'ぼくデリDraft',
+            partner_id: 'partner1',
+            shop_id: 'shop12',
+            shop_name: 'Shop 12',
         },
         '2ndEvent': {
             is_public: true,
@@ -95,8 +106,10 @@ export const event_information_default = {
             event_desc: '2nd event description',
             event_cover_url: 'https://firebasestorage.googleapis.com/v0/b/test.appspot.com/2nd.png',
             event_max_people: 10,
-            shop_name: '2nd shop',
             community_name: 'ぼくデリ2',
+            partner_id: 'partner2',
+            shop_id: 'shop22',
+            shop_name: 'Shop 22',
         },
     },
     'communities/5oxesNeS5dO078qABR98/events/1stEvent/orders': {
@@ -141,6 +154,9 @@ export const event_information_default = {
         'order1': {
             user_id: 'user1',
         },
+        'order2': {
+            user_id: 'user2',
+        },
     },
     'users': {
         'user1': {
@@ -154,6 +170,26 @@ export const event_information_default = {
         'user3': {
             user_name: 'Saburo',
             user_email: 'sab@test.com',
+        }
+    },
+    'partners/partner1/shops': {
+        'shop11': {
+            'shop_name': 'Shop 11',
+        },
+        'shop12': {
+            'shop_name': 'Shop 12',
+        }
+    },
+    'partners/partner2/shops': {
+        'shop21': {
+            'shop_name': 'Shop 21',
+        },
+        'shop22': {
+            'shop_name': 'Shop 22',
+            'shop_email': 'main@mail.com',
+            'shop_email_sub1': 'sub1@mail.com',
+            'shop_email_sub2': 'sub2@mail.com',
+            'shop_email_sub3': 'sub3@mail.com'
         }
     }
 }

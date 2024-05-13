@@ -5,8 +5,11 @@
  */
 export const isUserLoggedIn = () => !!(localStorage.getItem('userData') && localStorage.getItem('accessToken'))
 
-export const getCommunityPath = (communityAccount: string) => `/community/${communityAccount}`
-export const getCommunitySettingsPath = (communityAccount: string) => `/community/setup?id=${communityAccount}`
-export const getCommunityCreatePath = () => `/community/setup`
-export const getEventPath = (communityAccount: string, eventId: string) => `/community/${communityAccount}/events/${eventId}`
-export const getEventCreatePath = (communityAccount: string) => `/community/${communityAccount}/events/create`
+export const getHomePath = () => '/'
+export const getCommunityListPath = () => '/communitylist'
+export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
+export const getCommunitySettingsPath = (communityAccount: string) => `/c/setup?id=${communityAccount}`
+export const getCommunityCreatePath = () => `/c/setup`
+export const getEventPath = (communityAccount: string, eventId: string) => `/c/${communityAccount}/e/${eventId}`
+export const getEventCreatePath = (communityAccount: string) => `/c/${communityAccount}/e/create`
+export const getUserPath = (userId: string) => `/u/${userId}`
