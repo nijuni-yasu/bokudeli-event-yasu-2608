@@ -21,7 +21,7 @@ communitiesStore?.setPageSize(null)
 
 const communities = computed(() => communitiesStore?.communityStores?.flatMap(
   (communityStore) => {
-    if (communityStore.members?.some(m => m?.roles?.includes('manager')) === true) {
+    if (communityStore.members?.some(m => m?.user_id === userId && m?.roles?.includes('manager')) === true) {
       return communityStore.community ?? []
     } else {
       return []
