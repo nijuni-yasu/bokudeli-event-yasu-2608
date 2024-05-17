@@ -3,6 +3,7 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { CommunityStore, useCommunityStore } from '@/stores/community'
 import { EventStore, useEventStore } from '@/stores/event'
 import EventMemberCard from '@/components/EventMemberCard.vue'
+import { getEventPath } from '@/router/utils'
 
 const props = defineProps<{
   communityId: string
@@ -22,6 +23,16 @@ const members = computed(() => eventStore.members?.sort((a, b) =>
 <template>
   <section>
     <div v-if="event != null && communityStore.community != null" class="justify-center">
+      <v-btn
+        class="ma-1"
+        color="primary"
+        variant="text"
+        size="large"
+        prepend-icon="mdi-arrow-left-bold"
+        @click="() => $router.push(getEventPath(props.communityId, props.eventId))"
+      >
+        イベントページ
+      </v-btn>
       <v-row class="ma-0 pa-0">
         <v-col
           v-for="member in members"
