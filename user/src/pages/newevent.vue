@@ -40,37 +40,43 @@ const createCommunity = () => {
 
 <template>
   <v-row justify="center">
-    <v-col cols="12" sm="12" md="6">
+    <v-col cols="12" sm="12" md="7">
       <v-card class="text-center ma-md-10 pa-md-10">
         <v-card-title class="text-h5 my-3 font-weight-bold">
           イベント作成
         </v-card-title>
         <v-card-text class="my-3">
           イベントを作成するコミュニティを選択してください。<br>
-          またはコミュニティを新規作成することもできます。
+          コミュニティは新規作成することもできます。
         </v-card-text>
 
-        <v-divider class="my-2" />
-        <div v-for="community of communities" :key="community.community_account">
-          <router-link :to="getEventCreatePath(community.community_account)">
-            <v-row class="ma-2">
-              <div class="ma-2" style="width: 50px; height: 50px;">
-                <v-img
-                  :src="community.community_icon_image_url"
-                  style="border-radius: 5px 5px 5px 5px"
-                  cover
-                />
-              </div>
-              <div class="ma-3 text-h6 text-left align-self-center">
-                {{ community.community_name }}
-              </div>
-            </v-row>
-          </router-link>
-          <v-divider class="my-2" />
-        </div>
+        <v-col v-if="communities?.length>0">
+          <v-divider class="my-2" />          
+          <div v-for="community of communities" :key="community.community_account">
+            <router-link :to="getEventCreatePath(community.community_account)">
+              <v-row class="ma-2">
+                <div class="ma-2" style="width: 50px; height: 50px;">
+                  <v-img
+                    :src="community.community_icon_image_url"
+                    style="border-radius: 5px 5px 5px 5px"
+                    cover
+                    aspect-ratio="1"
+                  />
+                </div>
+                <div class="ma-3 text-body-1 text-md-h6 text-left align-self-center">
+                  {{ community.community_name }}
+                </div>
+              </v-row>
+            </router-link>
+            <v-divider class="my-2" />
+          </div>
+        </v-col>
+        <v-col v-else class="justify-center ma-5">
+          <v-progress-circular indeterminate color="primary"></v-progress-circular>
+        </v-col>
         <v-row class="ma-2 text-center justify-center">
           <v-btn
-            class="ma-3 text-h6 text-center justify-center"
+            class="ma-3 text-h6 text-sm-body-1 text-center justify-center"
             variant="text"
             color="primary"
             prepend-icon="mdi-plus"
