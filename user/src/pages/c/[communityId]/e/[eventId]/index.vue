@@ -159,16 +159,23 @@ onUnmounted(() => {
 <template>
   <section>
     <div v-if="event != null && communityStore.community != null" class="justify-center">
-      <v-row class="justify-center mt-lg-10 mr-1">
+      <v-row class="justify-center mt-lg-10">
         <v-col md="8" sm="9" cols="12">
-          <v-row class="justify-end align-center">
-            <v-chip class="mr-3" color="primary" size="large">
+          <v-row class="justify-space-between align-center my-0 py-0">
+            <v-btn
+              icon="mdi-home"
+              size="x-large"
+              variant="text"
+              to="/"
+            />
+            <v-spacer/>
+            <v-chip class="" color="primary" size="large">
               {{ $t(`event_status.${event.event_status.value}`) }}
             </v-chip>
             <v-btn
               v-if="event.event_status.value === `in_draft` && isManager"
               color="white"
-              class="mr-2 my-1"
+              class="ml-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-email"
@@ -182,7 +189,7 @@ onUnmounted(() => {
             <v-btn
               v-if="event.event_status.value == `in_draft` && isManager"
               color="white"
-              class="my-1"
+              class="ml-2 my-1"
               elevation="5"
               rounded
               prepend-icon="mdi-pencil-box-outline"
@@ -216,8 +223,8 @@ onUnmounted(() => {
         </v-col>
       </v-row>
       <v-row class="justify-center">
-        <v-col md="8" sm="9" cols="12">
-          <v-card class="align-center justify-center mt-1 mb-5 pa-sm-10 pa-xs-1">
+        <v-col md="8" sm="9" cols="12" class="mt-0 pt-0 px-0">
+          <v-card class="align-center justify-center mt-0 mb-4 pa-sm-10 pa-xs-1">
             <v-row>
               <v-col>
                 <v-img class="ma-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
@@ -441,7 +448,7 @@ onUnmounted(() => {
             class="text-md-h6"
             size="large"
             rounded
-            elevation="20"
+            elevation="10"
             prepend-icon="mdi-food-fork-drink"
             color="primary"
             width="90%"
