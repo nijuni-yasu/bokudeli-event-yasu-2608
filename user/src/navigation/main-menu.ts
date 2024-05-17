@@ -2,12 +2,17 @@ import { getHomePath, getNewEventPath, getCommunityListPath } from '@/router/uti
 
 export default [
   {
-    title: 'イベント一覧',
+    title: 'イベント参加',
     to: { path: getHomePath() },
     icon: { icon: 'mdi-calendar-heart' },
   },
   {
-    title: 'コミュニティ一覧',
+    title: 'イベント作成',
+    to: { path: getNewEventPath() },
+    icon: { icon: 'mdi-calendar-plus' },
+  },
+  {
+    title: 'コミュニティ',
     to: { path: getCommunityListPath() },
     icon: { icon: 'mdi-account-group' },
   },
@@ -16,11 +21,6 @@ export default [
     href: 'https://shokujii.studio.site/',
     target: '_blank',
     icon: { icon: 'mdi-food-fork-drink' },
-  },
-  {
-    title: 'イベント作成',
-    to: { path: getNewEventPath() },
-    icon: { icon: 'mdi-calendar-plus' },
   },
   // {
   //   title: 'ログイン',
