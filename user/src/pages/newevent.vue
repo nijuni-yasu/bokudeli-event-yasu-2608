@@ -12,14 +12,17 @@ const router = useRouter()
 const userId = getAuth().currentUser?.uid
 const isLoginConfirmDialogOpened = ref(false)
 const isLoginDialogOpened = ref(false)
+const loadingElement = ref()
+let observer: IntersectionObserver
+let isVisible = false
 
 const communitiesStore = (userId == null) ? null : useCommunitiesStore([
   where('members', 'array-contains', doc(db, 'users', userId)),
   orderBy('community_num_members', 'desc'),
 ]) as CommunitiesStore
-communitiesStore?.setPageSize(null)
+communitiesStore?.setPageSize(5)
 
-const communities = computed(() => communitiesStore?.communityStores?.flatMap(
+const communityList = computed(() => communitiesStore?.communityStores?.flatMap(
   (communityStore) => {
     if (communityStore.members?.some(m => m?.user_id === userId && m?.roles?.includes('manager')) === true) {
       return communityStore.community ?? []
@@ -29,6 +32,17 @@ const communities = computed(() => communitiesStore?.communityStores?.flatMap(
   }
 ) ?? [])
 
+const hasMore = computed(() => {
+  if (communitiesStore == null) {
+    return false
+  }
+  if (communitiesStore.totalCount == null || communitiesStore.communityStores?.length == null) {
+    return true
+  }
+  return communitiesStore.communityStores.length < communitiesStore.totalCount
+})
+
+
 const createCommunity = () => {
   if (userId == null) {
     isLoginConfirmDialogOpened.value = true
@@ -36,6 +50,36 @@ const createCommunity = () => {
     router.push(getCommunityCreatePath())
   }
 }
+
+watch(communityList, () => {
+  if (isVisible) {
+    communitiesStore?.next()
+  }
+})
+
+onMounted(() => {
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        isVisible = true
+        communitiesStore?.next()
+      } else {
+        isVisible = false
+      }
+    });
+  }, {
+    // オプションでroot、rootMargin、thresholdを設定可能
+    threshold: 0.1 // 10%の部分が見えたらトリガー
+  });
+
+  if (loadingElement.value?.$el != null) {
+    observer.observe(loadingElement.value.$el);
+  }
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
+})
 </script>
 
 <template>
@@ -51,9 +95,9 @@ const createCommunity = () => {
           イベントとコミュニティは無料で作成いただけます。
         </v-card-text>
 
-        <v-col v-if="communities?.length>0">
+        <v-col>
           <v-divider class="my-2" />          
-          <div v-for="community of communities" :key="community.community_account">
+          <div v-for="community of communityList" :key="community.community_account">
             <router-link :to="getEventCreatePath(community.community_account)">
               <v-row class="ma-2">
                 <div class="ma-2" style="width: 50px; height: 50px;">
@@ -71,9 +115,11 @@ const createCommunity = () => {
             </router-link>
             <v-divider class="my-2" />
           </div>
-        </v-col>
-        <v-col v-else class="justify-center ma-5">
-          <v-progress-circular indeterminate color="primary"></v-progress-circular>
+          <div v-if="hasMore">
+            <v-row class="ma-2 justify-center">
+              <v-progress-circular ref="loadingElement" indeterminate color="primary"></v-progress-circular>
+            </v-row>
+          </div>
         </v-col>
         <v-row class="ma-2 text-center justify-center">
           <v-btn
