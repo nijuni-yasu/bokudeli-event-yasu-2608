@@ -268,7 +268,7 @@ onUnmounted(() => {
                   ></v-btn>
                   <v-btn
                     class="mx-1"
-                    icon="mdi-link-variant"
+                    icon="mdi-content-copy"
                     color="grey-900"
                     size="x-large"
                     density="compact"
