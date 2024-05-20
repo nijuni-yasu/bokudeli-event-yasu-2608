@@ -56,6 +56,9 @@
       <a href="https://nijuni.jp/" target="_blank" rel="noopener noreferrer" class="footer-text"> 運営会社 </a>
     </span>
   </div>
+  <div class="text-center footer-text">
+    令和２年度補正ものづくり補助金により作成
+  </div>
   <div class="mb-3 text-center">
     &copy;
     {{ new Date().getFullYear() }}
