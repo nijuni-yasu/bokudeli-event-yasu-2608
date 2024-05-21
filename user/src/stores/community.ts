@@ -31,7 +31,6 @@ import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { uploadCommunityImage } from '@/composable/uploadImage'
-import { checkFiltersEquivalent } from '@/utils/tools'
 import { TaskExecutor } from '@/utils/executors'
 
 class CommunityRefUpdatedEvent extends Event {
@@ -374,17 +373,13 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
     }
 
     const reload = () => {
+      console.info('CommunitiesStore reload')
       communitiesSnapshot.splice(0) // clear
       totalCount.value = null
       next()
     }
 
-    watch(filters, (newValue, oldValue) => {
-      if (!checkFiltersEquivalent(newValue ?? [], oldValue ?? [])) {
-        reload()
-      }
-    })
-
+    watch(filters, reload)
     const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> => {
       const duplicatedCommunity = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
       if (duplicatedCommunity.empty) {
@@ -436,8 +431,6 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
     }
   })
   const instance = store()
-  if (filters != null && !checkFiltersEquivalent(filters, instance.filters ?? [])) {
-    instance.filters = filters
-  }
+  instance.filters = filters
   return instance
 }
