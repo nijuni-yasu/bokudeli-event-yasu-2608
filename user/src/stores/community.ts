@@ -343,7 +343,7 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
     const filters = ref<QueryConstraint[] | null>(null)
     const totalCount = ref<number | null>(null)
 
-    const communitySnapshot: QueryDocumentSnapshot[] = []
+    const communitiesSnapshot: QueryDocumentSnapshot[] = []
 
     const setPageSize = (size: number | null) => {
       pageSize = size
@@ -360,21 +360,21 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
           )
           totalCount.value = (await getCountFromServer(q)).data().count
         }
-        const lastVisibleDocument = communitySnapshot[communitySnapshot.length - 1]
+        const lastVisibleDocument = communitiesSnapshot[communitiesSnapshot.length - 1]
         const q = query(collection(db, 'communities'),
           ...(filters.value ?? []),
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
           ...(pageSize == null ? [] : [limit(pageSize)]))
         const querySnapshot = await getDocs(q)
         nextTick(() => {
-          communitySnapshot.push(...querySnapshot.docs)
-          communityStores.value = communitySnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
+          communitiesSnapshot.push(...querySnapshot.docs)
+          communityStores.value = communitiesSnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
         })
       })
     }
 
     const reload = () => {
-      communitySnapshot.splice(0) // clear
+      communitiesSnapshot.splice(0) // clear
       totalCount.value = null
       next()
     }
