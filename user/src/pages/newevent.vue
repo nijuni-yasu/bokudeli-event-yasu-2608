@@ -14,7 +14,7 @@ const isLoginConfirmDialogOpened = ref(false)
 const isLoginDialogOpened = ref(false)
 const loadingElement = ref()
 let observer: IntersectionObserver
-let isVisible = false
+let isVisible = true
 
 const communitiesStore = (userId == null) ? null : useCommunitiesStore([
   where('members', 'array-contains', doc(db, 'users', userId)),

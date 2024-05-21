@@ -366,8 +366,10 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
           ...(pageSize == null ? [] : [limit(pageSize)]))
         const querySnapshot = await getDocs(q)
-        communitySnapshot.push(...querySnapshot.docs)
-        communityStores.value = communitySnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
+        nextTick(() => {
+          communitySnapshot.push(...querySnapshot.docs)
+          communityStores.value = communitySnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
+        })
       })
     }
 

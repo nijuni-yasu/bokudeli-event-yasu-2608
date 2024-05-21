@@ -309,8 +309,10 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null, pageSiz
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
           limit(pageSize))
         const querySnapshot = await getDocs(q)
-        eventsSnapsthot.push(...querySnapshot.docs)
-        eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
+        nextTick(() => {
+          eventsSnapsthot.push(...querySnapshot.docs)
+          eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
+        })
       })
     }
 
