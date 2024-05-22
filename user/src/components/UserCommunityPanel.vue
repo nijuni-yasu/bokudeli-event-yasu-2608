@@ -55,7 +55,7 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
   })
 )
 
-watch(communityList, () => {
+watch(() => communitiesStore.communityStores, () => {
   if (isVisible) {
     communitiesStore.next()
   }

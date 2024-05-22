@@ -51,7 +51,7 @@ const createCommunity = () => {
   }
 }
 
-watch(communityList, () => {
+watch(() => communitiesStore?.communityStores, () => {
   if (isVisible) {
     communitiesStore?.next()
   }
