@@ -14,6 +14,7 @@ const communitiesStore = useCommunitiesStore([
   where('is_approved', '==', true),
   orderBy('community_num_members', 'desc'),
 ]) as CommunitiesStore
+communitiesStore.setPageSize(5)
 
 const hasMore = computed(() => {
   if (communitiesStore.totalCount == null || communitiesStore.communityStores?.length == null) {

@@ -21,20 +21,23 @@ const instagramUrl = computed(
 )
 const userDescription = computed(() => props.member.user_description ?? '')
 
-const descriptionCharacterLimit = 38
+const descriptionCharacterLimit = 120
 </script>
 
 <template>
   <v-container class="pa-3">
     <v-card class="pt-8">
-      <v-card-title class="d-flex align-center flex-column" >
+      <v-card-title class="d-flex align-center flex-column">
         <UserAvatar :user="member" :size="150"/>
         <v-row class="justify-center">
-          <v-col>
-            <span class="mb-2 text-h5 text-center text-wrap">{{ userName }}</span>
+          <v-col class="mt-3">
+            <span class="text-h5 text-center text-wrap">{{ userName }}</span>
           </v-col>
         </v-row>
       </v-card-title>
+      <v-card-text v-linkify class="text-caption description py-1 px-5">
+        {{ convertTruncateText(userDescription, descriptionCharacterLimit) }}
+      </v-card-text>
       <v-card-subtitle class="sns-buttons">
         <v-row class="justify-center">
           <v-col cols="auto">
@@ -50,19 +53,16 @@ const descriptionCharacterLimit = 38
           </v-col>
         </v-row>
       </v-card-subtitle>
-      <v-card-text v-linkify class="text-subtitle-2 description">
-        {{ convertTruncateText(userDescription, descriptionCharacterLimit) }}
-      </v-card-text>
-      <v-card-text class="text-center">
+      <v-card-text class="text-center pt-1">
         <router-link :to="getUserPath(member.user_id)">
           <v-btn
-            class="ma-1"
+            class="ma-2"
             variant="outlined"
-            size="x-small"
+            size="small"
             rounded
             prepend-icon="mdi-account"
           >
-            プロフィール
+            プロフィール詳細
           </v-btn>
         </router-link>
       </v-card-text>

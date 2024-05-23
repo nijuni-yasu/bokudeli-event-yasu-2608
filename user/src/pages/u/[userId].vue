@@ -25,7 +25,7 @@ const tabs = ref(null)
           <v-tabs v-model="tabs">
             <v-tab value="0">
               <v-icon start>
-                mdi-calendar-star
+                mdi-calendar-heart
               </v-icon>
               参加イベント
             </v-tab>

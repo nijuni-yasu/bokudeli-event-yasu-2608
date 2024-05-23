@@ -34,6 +34,7 @@ const communitiesStore = useCommunitiesStore([
   where('members', 'array-contains', doc(db, 'users', props.userId)),
   orderBy('community_num_members', 'desc'),
 ]) as CommunitiesStore
+communitiesStore.setPageSize(5)
 
 const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.communityStores ?? [])
   .flatMap((communityStore) => {
@@ -54,7 +55,7 @@ const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.c
   })
 )
 
-watch(communityList, () => {
+watch(() => communitiesStore.communityStores, () => {
   if (isVisible) {
     communitiesStore.next()
   }

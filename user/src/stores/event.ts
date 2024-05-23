@@ -30,7 +30,6 @@ import OrderItem from '@/schemes/orderItem'
 import { EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
 import { TaskExecutor } from '@/utils/executors'
-import { checkFiltersEquivalent } from '@/utils/tools'
 
 class EventRefUpdatedEvent extends Event {
   constructor(type: string, public eventRef: DocumentReference) {
@@ -309,22 +308,21 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null, pageSiz
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
           limit(pageSize))
         const querySnapshot = await getDocs(q)
-        eventsSnapsthot.push(...querySnapshot.docs)
-        eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
+        nextTick(() => {
+          eventsSnapsthot.push(...querySnapshot.docs)
+          eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
+        })
       })
     }
 
     const reload = () => {
+      console.info('EvntsStore reload')
       eventsSnapsthot.splice(0) // clear
       totalCount.value = null
       next()
     }
 
-    watch(filters, (newValue, oldValue) => {
-      if (!checkFiltersEquivalent(newValue ?? [], oldValue ?? [])) {
-        reload()
-      }
-    })
+    watch(filters, reload)
 
     const createNewEventFromDraft = async (community_id: string): Promise<BokudeliEvent> => {
       const communityRef = doc(db, 'communities', community_id)
@@ -361,8 +359,6 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null, pageSiz
     }
   })
   const instance = store()
-  if (filters != null && !checkFiltersEquivalent(filters, instance.filters ?? [])) {
-    instance.filters = filters
-  }
+  instance.filters = filters
   return instance
 }

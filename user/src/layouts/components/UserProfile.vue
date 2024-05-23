@@ -68,6 +68,17 @@ const logout = async () => {
             <!-- Divider -->
             <v-divider v-if="isLogin" class="my-2" />
 
+            <!-- 👉 cart -->
+            <v-list-item v-if="isLogin" :to="`/newevent`">
+              <template #prepend>
+                <v-icon class="me-2" icon="mdi-calendar-plus" size="22" />
+              </template>
+              <v-list-item-title>イベント作成</v-list-item-title>
+            </v-list-item>
+
+            <!-- Divider -->
+            <v-divider v-if="isLogin" class="my-2" />
+
             <!-- 👉 Login, Logout -->
             <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
               <template #prepend>

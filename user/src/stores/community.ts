@@ -31,7 +31,6 @@ import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { uploadCommunityImage } from '@/composable/uploadImage'
-import { checkFiltersEquivalent } from '@/utils/tools'
 import { TaskExecutor } from '@/utils/executors'
 
 class CommunityRefUpdatedEvent extends Event {
@@ -328,23 +327,24 @@ type CommunitiesStoreGetters = {
 type CommunitiesStoreAction = {
   reload: () => void,
   next: () => void,
-  setPageSize: (size: number) => void,
+  setPageSize: (size: number | null) => void,
   getCommunityData: (communityAccount: string) => Promise<DocumentData | null>,
   createNewCommunityFromDraft: () => Promise<BokudeliCommunity>,
 }
 
 export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters, CommunitiesStoreAction>
 
-export const useCommunitiesStore = (filters: QueryConstraint[] | null = null, pageSize = 5) => {
+export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) => {
   const store = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters & CommunitiesStoreAction>('/communities', () => {
+    let pageSize: number | null = 5
     const communityStores = ref<CommunityStore[] | null>(null)
     const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
     const filters = ref<QueryConstraint[] | null>(null)
     const totalCount = ref<number | null>(null)
 
-    const communitySnapshot: QueryDocumentSnapshot[] = []
+    const communitiesSnapshot: QueryDocumentSnapshot[] = []
 
-    const setPageSize = (size: number) => {
+    const setPageSize = (size: number | null) => {
       pageSize = size
     }
 
@@ -359,29 +359,27 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null, pa
           )
           totalCount.value = (await getCountFromServer(q)).data().count
         }
-        const lastVisibleDocument = communitySnapshot[communitySnapshot.length - 1]
+        const lastVisibleDocument = communitiesSnapshot[communitiesSnapshot.length - 1]
         const q = query(collection(db, 'communities'),
           ...(filters.value ?? []),
           ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-          limit(pageSize))
+          ...(pageSize == null ? [] : [limit(pageSize)]))
         const querySnapshot = await getDocs(q)
-        communitySnapshot.push(...querySnapshot.docs)
-        communityStores.value = communitySnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
+        nextTick(() => {
+          communitiesSnapshot.push(...querySnapshot.docs)
+          communityStores.value = communitiesSnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
+        })
       })
     }
 
     const reload = () => {
-      communitySnapshot.splice(0) // clear
+      console.info('CommunitiesStore reload')
+      communitiesSnapshot.splice(0) // clear
       totalCount.value = null
       next()
     }
 
-    watch(filters, (newValue, oldValue) => {
-      if (!checkFiltersEquivalent(newValue ?? [], oldValue ?? [])) {
-        reload()
-      }
-    })
-
+    watch(filters, reload)
     const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> => {
       const duplicatedCommunity = await getDocs(query(collection(db, 'communities'), where('community_account', '==', communityAccount)))
       if (duplicatedCommunity.empty) {
@@ -433,8 +431,6 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null, pa
     }
   })
   const instance = store()
-  if (filters != null && !checkFiltersEquivalent(filters, instance.filters ?? [])) {
-    instance.filters = filters
-  }
+  instance.filters = filters
   return instance
 }
