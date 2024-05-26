@@ -6,6 +6,8 @@ import { event } from 'firebase-functions/v1/analytics'
 
 const db = getFirestore();
 
+const notSend = false;
+
 const makeNotificationOrderMessage = (eventName, beforeDays) => {
   return beforeDays > 0
     ? `${eventName} の食事会が注文期限${beforeDays}日前となりました。忘れずに注文しよう！`
@@ -31,6 +33,13 @@ const sendSlackMessage = async (slackBotData, message) => {
     channel: channelId,
     text: message,
   }
+
+  if (notSend) {
+    const message = JSON.stringify(slackMessage)
+    console.log({ url,  message })
+    return;
+  }
+
   await fetch(url, {
     method: 'POST',
     headers: {
@@ -142,3 +151,22 @@ export const eventNotification = functions
     ]);
   });
 
+export const notificationTest = functions
+.region('asia-northeast1')
+.https
+.onRequest(async (req, res) => { 
+  const botDataList = await getCommunityBots('5oxesNeS5dO078qABR98');
+  console.debug(botDataList);
+
+  const eventName = 'テストイベント';
+  Promise.all(botDataList.map(async (botData) => {
+    await sendSlackMessage(botData, makeNotificationOrderMessage(eventName, 3));
+  }))
+
+  const now = Date.now();
+  const end = Math.trunc(now / 60 / 1000) * 60 * 1000;
+  const start = end - (60 * 1000);
+
+  // notificationOrder(start, end, 3);
+  res.send('ok');
+});
