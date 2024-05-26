@@ -7,8 +7,6 @@ initializeApp({
 });
 
 export const { slackbot } = await import('./app.js');
-export const { eventNotification } = await import('./event-notification.js');
-
-// TODO 以下の関数を実装する
-// 注文参加	「OOOさんが、XXXXの食事会で、△△△を注文したよ！」
-// ドキュメント更新
+// export const { eventNotification } = await import('./event-notification.js');
+export const { eventNotification, notificationTest } = await import('./event-notification.js');
+export const { orderNotification } = await import('./order-notification.js');
