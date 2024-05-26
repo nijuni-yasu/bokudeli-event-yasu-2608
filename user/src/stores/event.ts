@@ -318,6 +318,7 @@ export const useEventsStore = (filters: QueryConstraint[] | null = null, pageSiz
     const reload = () => {
       console.info('EvntsStore reload')
       eventsSnapsthot.splice(0) // clear
+      eventStores.value = null
       totalCount.value = null
       next()
     }

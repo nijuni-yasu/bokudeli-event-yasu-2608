@@ -375,6 +375,7 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
     const reload = () => {
       console.info('CommunitiesStore reload')
       communitiesSnapshot.splice(0) // clear
+      communityStores.value = null
       totalCount.value = null
       next()
     }
