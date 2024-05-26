@@ -80,6 +80,9 @@ const expressReceiver = new ExpressReceiver({
       throw new Error('Failed to delete installation');
     },
   },
+  installerOptions: {
+    directInstall: true
+  },
   processBeforeResponse: true,
 })
 // ボットトークンとソケットモードハンドラーを使ってアプリを初期化します
