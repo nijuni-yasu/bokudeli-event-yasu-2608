@@ -39,15 +39,11 @@ const sendSlackMessage = async (slackBotData, message) => {
 const send_ordered_message = async (orderSnapshot, eventRef) => {
   const communityRef = eventRef.parent.parent;
 
-  const communitySnapshot = await communityRef.get();
-  console.log(communitySnapshot.data());
-
   const communityBotSnapshot = await communityRef.collection('bots').get();
   if (communityBotSnapshot.empty) {
     console.log('No bots found');
     return;
   }
-  console.log(communityBotSnapshot.docs);
   const botDataList = communityBotSnapshot.docs.map(doc => doc.data());
 
   const userId = orderSnapshot.get('user_id');
