@@ -1,10 +1,15 @@
-import { getHomePath, getCommunityCreatePath, getCommunityListPath } from '@/router/utils'
+import { getHomePath, getNewEventPath, getCommunityListPath } from '@/router/utils'
 
 export default [
   {
-    title: 'イベント',
+    title: 'イベント参加',
     to: { path: getHomePath() },
-    icon: { icon: 'mdi-calendar-star' },
+    icon: { icon: 'mdi-calendar-heart' },
+  },
+  {
+    title: 'イベント作成',
+    to: { path: getNewEventPath() },
+    icon: { icon: 'mdi-calendar-plus' },
   },
   {
     title: 'コミュニティ',
@@ -12,21 +17,10 @@ export default [
     icon: { icon: 'mdi-account-group' },
   },
   {
-    title: 'コミュニティを作る',
-    to: { path: getCommunityCreatePath() },
-    icon: { icon: 'mdi-heart-outline' },
-  },
-  {
     title: 'shokujiiって？',
     href: 'https://shokujii.studio.site/',
     target: '_blank',
-    icon: { icon: 'mdi-lightbulb-on-outline' },
-  },
-  {
-    title: 'カート',
-    to: { path: '/cart' },
-    icon: { icon: 'mdi-cart-outline' },
-    loginRequired: true,
+    icon: { icon: 'mdi-food-fork-drink' },
   },
   // {
   //   title: 'ログイン',

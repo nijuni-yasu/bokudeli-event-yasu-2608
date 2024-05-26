@@ -2,6 +2,7 @@
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { getUserPath } from '@/router/utils'
 
 
 interface Props {
@@ -35,29 +36,38 @@ const userStore = useStoreStoredUser()
 
 const onFormSubmit = async () => {
   state.isSending = true
-  const communityContact = httpsCallable(functions, 'community_contact',)
-  communityContact({
-    community_id: props.communityId,
-    community_name: props.communityName,
-    mail_title: state.mailTitle,
-    mail_message: state.mailMessage,
-    user_id: userStore.storedUser?.userId,
-    user_name: userStore.storedUser?.userName,
-    user_email: userStore.storedUser?.userEmail,
-    user_profile_url: `${import.meta.env.VITE_ORIGIN_HOST}users/${userStore.storedUser?.userId}`,
-  }).then((res) => {
-    window.alert('送信完了しました')
+  try {
+    const userId = userStore.storedUser?.userId
+    if (userId != null) {
+      const communityContact = httpsCallable(functions, 'community_contact',)
+      const host = import.meta.env.VITE_ORIGIN_HOST
+      const path = getUserPath(userId)
+      try {
+        const res = await communityContact({
+          community_id: props.communityId,
+          community_name: props.communityName,
+          mail_title: state.mailTitle,
+          mail_message: state.mailMessage,
+          user_id: userStore.storedUser?.userId,
+          user_name: userStore.storedUser?.userName,
+          user_email: userStore.storedUser?.userEmail,
+          user_profile_url: `${host}${path}`,
+        })
+        console.log(res)
+        window.alert('送信完了しました')
+        return
+      } catch (error) {
+        console.log(error)
+        // Fall through
+      }
+    }
+    window.alert('送信失敗しました')
+  } finally {
     state.isSending = false
     state.mailTitle = ''
     state.mailMessage = ''
-    console.log(res)
     closeDialog()
-  }).catch(function (error) {
-    window.alert('送信失敗しました')
-    state.isSending = false
-    console.log(error)
-    closeDialog()
-  })
+  }
 }
 
 </script>

@@ -1,8 +1,10 @@
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
+import { initializeFirestore } from 'firebase-admin/firestore';
 
-initializeApp({
+const app = initializeApp({
   credential: applicationDefault(),
 });
+initializeFirestore(app, { preferRest: true })
 
 export const {
   replace_ogp_tags

@@ -521,7 +521,6 @@ async function sendOrderComletionMail(eventRef, userId) {
     return sgMail.send({
         to: userSnapshot.get('user_email'),
         from: DEFAULT_FROM,
-        cc: DEFAULT_CC,
         templateId: ORDER_COMNPLETION_TEMPLATE_ID,
         dynamic_template_data,
     });

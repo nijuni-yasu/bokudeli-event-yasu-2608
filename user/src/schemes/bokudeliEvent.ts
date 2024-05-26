@@ -1,3 +1,4 @@
+import { getEventPath } from '@/router/utils'
 import { DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 
@@ -55,16 +56,27 @@ class BokudeliEvent {
 
   raw_event_status: RawEventStatusType = { value: 'in_draft' };
 
+  /**
+   * event_status を時間によって更新する getter
+   * @returns {EventStatusType}
+   * 
+   * admin, manager にも同等のコードが存在するので注意
+   * TODO TypeScript にで共通化する
+   */
   get event_status(): EventStatusType {
-    const now = new Date()
-    if (this.event_end_datetime != null && this.event_end_datetime.toDate() < now) {
-      return { value: 'finished' }
-    } else if (this.event_deadline_datetime != null && this.event_deadline_datetime.toDate() < now) {
-      return { value: 'order_closed' }
-    } else {
-      // event_status が string だった仕様の時もあったので、その対応
-      return (typeof this.raw_event_status === 'string') ? { value: this.raw_event_status} as EventStatusType : this.raw_event_status
+    // event_status が string だった仕様の時もあったので、その対応
+    const rawStatus = (typeof this.raw_event_status === 'string') ? { value: this.raw_event_status } : this.raw_event_status
+    const event_end_datetime = this.event_end_datetime?.toMillis()
+    const event_deadline_datetime = this.event_deadline_datetime?.toMillis()
+    if (rawStatus.value === 'accepting_order' && event_end_datetime != null && event_deadline_datetime != null) {
+      const now = new Date().getTime()
+      if (event_end_datetime < now) {
+        return { value: 'finished' }
+      } else if (event_deadline_datetime < now) {
+        return { value: 'order_closed' }
+      }
     }
+    return rawStatus
   }
 
   set event_status(value: RawEventStatusType) {
@@ -94,7 +106,8 @@ class BokudeliEvent {
 
   get url () {
     const host = import.meta.env.VITE_ORIGIN_HOST
-    return `${host}community/${this.community_account}/events/${this.event_id}`
+    const path = getEventPath(this.community_account, this.event_id)
+    return `${host}${path}`
   }
 }
 

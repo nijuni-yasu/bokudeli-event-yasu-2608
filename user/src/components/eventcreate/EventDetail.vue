@@ -41,8 +41,6 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
-event.value.event_payment = 'user_advance'
-
 const coverImage = computed<File[]>({
   get: () => (props.coverImage ? [props.coverImage] : []),
   set: (value) => emit('update:coverImage', value[0] ?? null),

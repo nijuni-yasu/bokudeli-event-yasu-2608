@@ -62,8 +62,8 @@ onMounted(async () => {
 <template>
   <section>
     <v-row v-if="!isLoading && menus !== null">
-      <v-col v-for="menu in menus" :key="menu.id" md="4" sm="6" cols="12">
-        <v-card class="mb-3 mx-0" color="text-center">
+      <v-col v-for="menu in menus" :key="menu.id" md="4" sm="6" cols="12" class="pa-3">
+        <v-card class="mb-1" color="text-center">
           <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
 
           <!-- title -->
@@ -80,13 +80,14 @@ onMounted(async () => {
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                style="font-size:18px;"
-                class="px-5 my-4"
+                style="font-size:16px;"
+                class="mt-2 mb-5"
                 :class="{ 'disable-menu-button': disabled || menu.isSoldout === true }"
                 color="primary"
                 rounded
-                elevation="7"
-                width="80%" @click="emit('selectMenu', menu)"
+                elevation="5"
+                prepend-icon="mdi-food-fork-drink"
+                @click="emit('selectMenu', menu)"
               >
                 {{ menu.isSoldout === true ? '売り切れ' : '注文して参加する' }}
               </v-btn>
