@@ -1,8 +1,6 @@
 import functions from 'firebase-functions';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
-import ja from 'date-fns/locale/ja';
-import { event } from 'firebase-functions/v1/analytics'
 
 const db = getFirestore();
 
