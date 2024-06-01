@@ -114,6 +114,8 @@ app.command('/shokujii', async ({ command, ack, respond }) => {
     return;
   }
 
+  const botRef = db.collection('slackbots').doc(command.team_id).collection('channels').doc(command.channel_id)
+
   // SlackBot を登録
   const targetQueryDocumentSnapshot = querySnapshot.docs[0];
   const communityDocRef = targetQueryDocumentSnapshot.ref;
@@ -125,7 +127,8 @@ app.command('/shokujii', async ({ command, ack, respond }) => {
     channel_id: command.channel_id,
     channel_name: command.channel_name,
     is_enterprise_install: command.is_enterprise_install,
-    enterprise_id: command.enterprise_id ?? ''
+    enterprise_id: command.enterprise_id ?? '',
+    reference: botRef,
   });
 
   // コミュニティ情報を取得

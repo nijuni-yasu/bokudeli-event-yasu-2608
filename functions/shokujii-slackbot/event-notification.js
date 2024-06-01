@@ -1,10 +1,9 @@
 import functions from 'firebase-functions';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
+import { getCommunityBots, sendMessage } from './utils/bot-utils.js';
 
 const db = getFirestore();
-
-const notSend = false;
 
 const makeNotificationOrderMessage = (eventName, beforeDays) => {
   return beforeDays > 0
@@ -18,38 +17,6 @@ const makeEventStartMessage = (eventName, minutes) => {
 
 const makeEventEndMessage = (eventName) => {
   return `${eventName} の食事会が終了しました。次回開催をお楽しみに！`
-}
-
-const sendSlackMessage = async (slackBotData, message) => {
-  const teamId = (slackBotData.is_enterprise_install && slackBotData.enterprise_id !== '')
-    ? slackBotData.enterprise_id
-    : slackBotData.team_id;
-  const channelId = slackBotData.channel_id;
-  const botDoc = await db.collection('slackbots').doc(teamId).collection('channels').doc(channelId).get();
-  const url = botDoc.data().url;
-  const slackMessage = {
-    channel: channelId,
-    text: message,
-  }
-
-  if (notSend) {
-    const message = JSON.stringify(slackMessage)
-    console.log({ url,  message })
-    return;
-  }
-
-  await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(slackMessage)
-  });
-}
-
-const getCommunityBots = async (communityId) => {
-  const bots = await db.collection('communities').doc(communityId).collection('bots').get();
-  return bots.docs.map(bot => bot.data());
 }
 
 const notificationOrder = async (start, end, beforeDays) => {
@@ -68,14 +35,9 @@ const notificationOrder = async (start, end, beforeDays) => {
     const eventData = eventSnapshot.data();
     const eventName = eventData.event_name;
 
-    const bots = await getCommunityBots(eventData.community_id);
+    const bots = await getCommunityBots(db, eventData.community_id);
     Promise.all(bots.map(async (botData) => {
-      switch (botData.type) {
-        case 'slack':
-          await sendSlackMessage(botData, makeNotificationOrderMessage(eventName, beforeDays));
-        default:
-          break;
-      }
+      await sendMessage(botData, makeNotificationOrderMessage(eventName, beforeDays));
     }));
   }));
 }
@@ -94,14 +56,9 @@ const notificationEventStart = async (start, end, beforeMinutes) => {
     const eventData = eventSnapshot.data();
     const eventName = eventData.event_name;
 
-    const bots = await getCommunityBots(eventData.community_id);
+    const bots = await getCommunityBots(db, eventData.community_id);
     Promise.all(bots.map(async (botData) => {
-      switch (botData.type) {
-        case 'slack':
-          await sendSlackMessage(botData, makeEventStartMessage(eventName, beforeMinutes));
-        default:
-          break;
-      }
+      await sendMessage(botData, makeEventStartMessage(eventName, beforeMinutes));
     }));
   }));
 }
@@ -118,14 +75,9 @@ const notificationEventEnd = async (start, end) => {
     const eventData = eventSnapshot.data();
     const eventName = eventData.event_name;
 
-    const bots = await getCommunityBots(eventData.community_id);
+    const bots = await getCommunityBots(db, eventData.community_id);
     Promise.all(bots.map(async (botData) => {
-      switch (botData.type) {
-        case 'slack':
-          await sendSlackMessage(botData, makeEventEndMessage(eventName));
-        default:
-          break;
-      }
+      await sendMessage(botData, makeEventEndMessage(eventName));
     }));
   }));
 
@@ -153,12 +105,12 @@ export const notificationTest = functions
 .region('asia-northeast1')
 .https
 .onRequest(async (req, res) => { 
-  const botDataList = await getCommunityBots('5oxesNeS5dO078qABR98');
+  const botDataList = await getCommunityBots(db, 'IskZzL1mOKkGwNlh3BOE');
   console.debug(botDataList);
 
   const eventName = 'テストイベント';
   Promise.all(botDataList.map(async (botData) => {
-    await sendSlackMessage(botData, makeNotificationOrderMessage(eventName, 3));
+    await sendMessage(botData, makeNotificationOrderMessage(eventName, 3));
   }))
 
   const now = Date.now();
