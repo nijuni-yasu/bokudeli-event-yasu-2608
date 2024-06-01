@@ -137,6 +137,7 @@ app.command('/shokujii', async ({ command, ack, respond }) => {
 
 export const slackbot = onRequest({
     region: 'asia-northeast1',
+    invoker: 'public',
   },
   expressReceiver.app
 );
