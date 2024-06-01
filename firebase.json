@@ -3,6 +3,10 @@
     {
       "public": "admin/dist",
       "target": "admin",
+      "ignore": [
+        "**/.*",
+        "**/node_modules/**"
+      ],
       "rewrites": [
         {
           "source": "**",
@@ -13,6 +17,10 @@
     {
       "public": "manager/dist",
       "target": "manager",
+      "ignore": [
+        "**/.*",
+        "**/node_modules/**"
+      ],
       "rewrites": [
         {
           "source": "**",
@@ -23,6 +31,10 @@
     {
       "public": "user/dist",
       "target": "user",
+      "ignore": [
+        "**/.*",
+        "**/node_modules/**"
+      ],
       "headers": [
         {
           "source": "/**",
@@ -72,7 +84,8 @@
         "node_modules",
         ".git",
         "firebase-debug.log",
-        "firebase-debug.*.log"
+        "firebase-debug.*.log",
+        "*.local"
       ]
     },
     {
@@ -87,9 +100,28 @@
     }
   ],
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
   }
 }
