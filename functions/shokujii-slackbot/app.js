@@ -91,6 +91,10 @@ const app = new App({
   processBeforeResponse: true,
 });
 
+const getBotRef = async (command) => {
+  return db.collection('slackbots').doc(command.team_id).collection('channels').doc(command.channel_id);
+}
+
 const makeBotKey = (command) => {
   const slackId = (command.is_enterprise_install && command.enterprise_id !== undefined) ? command.enterprise_id : command.team_id;
   const channel_id = command.channel_id
@@ -98,12 +102,19 @@ const makeBotKey = (command) => {
 }
 
 app.command('/shokujii', async ({ command, ack, respond }) => {
-  console.debug('command', command);
   // コマンドリクエストを確認
   await ack();
 
-  // 入力データからコミュニティアカウントを取得
-  const communityAccount = command.text.split(' ')[0];
+  // 入力データからサブコマンド、コミュニティアカウントを取得
+  const [subCommand, communityAccount] = command.text.split(' ');
+  switch (subCommand) {
+    case 'add':
+    case 'remove':
+      break;
+    default:
+      await respond(`コマンドが不正です`);
+      return;
+  }
 
   // Firestore のコミュニティを取得
   const communitiesRef = db.collection('communities');
@@ -113,29 +124,34 @@ app.command('/shokujii', async ({ command, ack, respond }) => {
     await respond(`コミュニティ ${communityAccount} は存在しません`);
     return;
   }
-
-  const botRef = db.collection('slackbots').doc(command.team_id).collection('channels').doc(command.channel_id)
-
-  // SlackBot を登録
+  
   const targetQueryDocumentSnapshot = querySnapshot.docs[0];
-  const communityDocRef = targetQueryDocumentSnapshot.ref;
-  const communityBotsRef = communityDocRef.collection('bots');
-  communityBotsRef.doc(makeBotKey(command)).set({
-    type: 'slack',
-    team_id: command.team_id,
-    team_domain: command.team_domain,
-    channel_id: command.channel_id,
-    channel_name: command.channel_name,
-    is_enterprise_install: command.is_enterprise_install,
-    enterprise_id: command.enterprise_id ?? '',
-    reference: botRef,
-  });
+  const communityBotsRef = targetQueryDocumentSnapshot.ref.collection('bots');
 
-  // コミュニティ情報を取得
-  const communityData = targetQueryDocumentSnapshot.data();
+  // コミュニティ名を取得
+  const communityName = targetQueryDocumentSnapshot.data().community_name;
 
-  //Botで表示する文言を設定
-  await respond(`${communityData.community_name} を登録しました！`);
+  // bot の reference を取得
+  const botRef = await getBotRef(command);
+
+  // bot 情報を登録・削除する
+  const botKey = makeBotKey(command);
+  switch (subCommand) {
+    case 'add':
+      await communityBotsRef.doc(botKey).set({
+        type: 'slack',
+        reference: botRef,
+      });
+      await respond(`コミュニティ ${communityName} を登録しました！`);
+      break;
+    case 'remove':
+      await communityBotsRef.doc(botKey).delete();
+      await respond(`コミュニティ ${communityName} を削除しました！`);
+      break;
+    default:
+      await respond(`コマンドが不正です`);
+      break;
+  }
 });
 
 export const slackbot = onRequest({
