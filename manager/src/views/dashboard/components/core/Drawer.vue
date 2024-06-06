@@ -98,6 +98,11 @@
           title: 'イベント一覧',
           to: '/EventList',
         },
+        {
+          icon: 'mdi-account-group',
+          title: 'コミュニティ一覧',
+          to: '/CommunityList',
+        },
       ],
     }),
     computed: {
