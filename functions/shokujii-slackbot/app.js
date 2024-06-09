@@ -133,6 +133,10 @@ app.command('/shokujii', async ({ command, ack, respond }) => {
 
   // bot の reference を取得
   const botRef = await getBotRef(command);
+  if (!((await botRef.get()).exists)) {
+    await respond('このチャンネルにはボットが登録されていません');
+    return;
+  }
 
   // bot 情報を登録・削除する
   const botKey = makeBotKey(command);
