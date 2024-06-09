@@ -101,22 +101,3 @@ export const eventNotification = functions
     ]);
   });
 
-export const notificationTest = functions
-.region('asia-northeast1')
-.https
-.onRequest(async (req, res) => { 
-  const botDataList = await getCommunityBots(db, 'IskZzL1mOKkGwNlh3BOE');
-  console.debug(botDataList);
-
-  const eventName = 'テストイベント';
-  Promise.all(botDataList.map(async (botData) => {
-    await sendMessage(botData, makeNotificationOrderMessage(eventName, 3));
-  }))
-
-  const now = Date.now();
-  const end = Math.trunc(now / 60 / 1000) * 60 * 1000;
-  const start = end - (60 * 1000);
-
-  // notificationOrder(start, end, 3);
-  res.send('ok');
-});
