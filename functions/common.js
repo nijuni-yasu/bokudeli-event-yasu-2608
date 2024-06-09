@@ -13,6 +13,17 @@ export const replace_ogp_tags = functions
   .onRequest(async (req, res) => {
     const site = `${req.protocol}://${req.headers['x-forwarded-host']}`;
     const paths = req.path.split('/');
+    // 短縮前のパスにアクセスしてきた場合は変換する
+    if (paths[1] === 'community') {
+      paths[1] = 'c';
+    }
+    if (paths[3] === 'events') {
+      paths[3] = 'e';
+    }
+    // Community 名に大文字を許可していた時代のリクエストに対応
+    paths[2] = paths[2].toLowerCase();
+    const path = paths.join('/');
+
     const response = await fetch(`${site}/index.html`);
     if (!response.ok) {
       res.status(500).send('Could not retrieve index.html');
@@ -21,7 +32,7 @@ export const replace_ogp_tags = functions
 
     const context = {
       site,
-      url: `${site}${req.path}`,
+      url: `${site}${path}`,
       image: `${site}/shokujii_ogp.png`,
     };
     try {

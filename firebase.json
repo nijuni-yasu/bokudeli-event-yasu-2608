@@ -35,17 +35,6 @@
         "**/.*",
         "**/node_modules/**"
       ],
-      "headers": [
-        {
-          "source": "/**",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "max-age=3600"
-            }
-          ]
-        }
-      ],
       "rewrites": [
         {
           "source": "/c/**/e/**",
@@ -55,23 +44,6 @@
         {
           "source": "**",
           "destination": "/index.html"
-        }
-      ],
-      "redirects": [
-        {
-          "source": "/community/:communityId/events/:eventId",
-          "destination": "/c/:communityId/e/:eventId",
-          "type": 301
-        },
-        {
-          "source": "/community/:communityId",
-          "destination": "/c/:communityId",
-          "type": 301
-        },
-        {
-          "source": "/community",
-          "destination": "/communitylist",
-          "type": 301
         }
       ]
     }
