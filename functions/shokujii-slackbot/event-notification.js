@@ -1,22 +1,22 @@
 import functions from 'firebase-functions';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
-import { getCommunityBots, sendMessage } from './utils/bot-utils.js';
+import { getCommunityBots, sendMessage, getEventUrl } from './utils/bot-utils.js';
 
 const db = getFirestore();
 
-const makeNotificationOrderMessage = (eventName, beforeDays) => {
+const makeNotificationOrderMessage = (eventName, beforeDays, eventUrl) => {
   return beforeDays > 0
-    ? `${eventName} の食事会が注文期限${beforeDays}日前となりました。忘れずに注文しよう！`
-    : `${eventName} の食事会が注文が確定しました。参加者はこちらのみなさんです。当日をお楽しみに！`
+    ? `${eventName} の食事会が注文期限${beforeDays}日前となりました。忘れずに注文しよう！ <${eventUrl}|詳細はこちら>`
+    : `${eventName} の食事会が注文が確定しました。参加者はこちらのみなさんです。当日をお楽しみに！ <${eventUrl}|詳細はこちら>`
 }
 
-const makeEventStartMessage = (eventName, minutes) => {
-  return `${eventName} の食事会が開始${minutes}分前になりました。`
+const makeEventStartMessage = (eventName, minutes, eventUrl) => {
+  return `${eventName} の食事会が開始${minutes}分前になりました。 <${eventUrl}|詳細はこちら>`
 }
 
-const makeEventEndMessage = (eventName) => {
-  return `${eventName} の食事会が終了しました。次回開催をお楽しみに！`
+const makeEventEndMessage = (eventName, eventUrl) => {
+  return `${eventName} の食事会が終了しました。次回開催をお楽しみに！ <${eventUrl}|詳細はこちら>`
 }
 
 const notificationOrder = async (start, end, beforeDays) => {
@@ -34,10 +34,11 @@ const notificationOrder = async (start, end, beforeDays) => {
   Promise.all(events.docs.map(async (eventSnapshot) => {
     const eventData = eventSnapshot.data();
     const eventName = eventData.event_name;
+    const eventUrl = getEventUrl(eventData.community_account, eventData.event_id);
 
     const bots = await getCommunityBots(db, eventData.community_id);
     Promise.all(bots.map(async (botData) => {
-      await sendMessage(botData, makeNotificationOrderMessage(eventName, beforeDays));
+      await sendMessage(botData, makeNotificationOrderMessage(eventName, beforeDays, eventUrl));
     }));
   }));
 }
@@ -55,10 +56,11 @@ const notificationEventStart = async (start, end, beforeMinutes) => {
   Promise.all(events.docs.map(async (eventSnapshot) => {
     const eventData = eventSnapshot.data();
     const eventName = eventData.event_name;
+    const eventUrl = getEventUrl(eventData.community_account, eventData.event_id);
 
     const bots = await getCommunityBots(db, eventData.community_id);
     Promise.all(bots.map(async (botData) => {
-      await sendMessage(botData, makeEventStartMessage(eventName, beforeMinutes));
+      await sendMessage(botData, makeEventStartMessage(eventName, beforeMinutes, eventUrl));
     }));
   }));
 }
@@ -74,10 +76,11 @@ const notificationEventEnd = async (start, end) => {
   Promise.all(events.docs.map(async (eventSnapshot) => {
     const eventData = eventSnapshot.data();
     const eventName = eventData.event_name;
+    const eventUrl = getEventUrl(eventData.community_account, eventData.event_id);
 
     const bots = await getCommunityBots(db, eventData.community_id);
     Promise.all(bots.map(async (botData) => {
-      await sendMessage(botData, makeEventEndMessage(eventName));
+      await sendMessage(botData, makeEventEndMessage(eventName, eventUrl));
     }));
   }));
 

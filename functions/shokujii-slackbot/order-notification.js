@@ -1,6 +1,6 @@
 import functions from 'firebase-functions';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { getCommunityBots, sendMessage } from './utils/bot-utils.js';
+import { sendMessage, getEventUrl } from './utils/bot-utils.js';
 
 const db = getFirestore();
 
@@ -23,13 +23,15 @@ const sendOrderedMessage = async (orderSnapshot, eventRef) => {
     db.collection('users').doc(userId).get(),
   ]);
 
-  const eventName = eventSnapshot.get('event_name');
+  const eventData = eventSnapshot.data();
+  const eventName = eventData.event_name;
+  const eventUrl = getEventUrl(eventData.community_account, eventData.event_id);
   const userName = userSnapshot.get('user_name');
   const orderMenu = orderSnapshot.get('menus').at(-1);
 
   const botDataList = communityBotSnapshot.docs.map(doc => doc.data());
   Promise.all(botDataList.map(async (botData) => {
-    await sendMessage(botData, `${userName} さんが、${eventName} で、${orderMenu['name']} を注文したよ！`);
+    await sendMessage(botData, `${userName} さんが、${eventName} で、${orderMenu['name']} を注文したよ！ <${eventUrl}|詳細はこちら>`);
   }));
 }
 

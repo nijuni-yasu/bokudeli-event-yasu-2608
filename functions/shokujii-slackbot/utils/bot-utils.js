@@ -36,3 +36,7 @@ export const getCommunityBots = async (db, communityId) => {
   const bots = await db.collection('communities').doc(communityId).collection('bots').get();
   return bots.docs.map(bot => bot.data());
 }
+
+export const getEventUrl = (communityAccount, eventId) => {
+  return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}`;
+}
