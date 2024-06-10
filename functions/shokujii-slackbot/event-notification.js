@@ -7,16 +7,16 @@ const db = getFirestore();
 
 const makeNotificationOrderMessage = (eventName, beforeDays, eventUrl) => {
   return beforeDays > 0
-    ? `${eventName} の食事会が注文期限${beforeDays}日前となりました。忘れずに注文しよう！ <${eventUrl}|詳細はこちら>`
-    : `${eventName} の食事会が注文が確定しました。参加者はこちらのみなさんです。当日をお楽しみに！ <${eventUrl}|詳細はこちら>`
+    ? `<${eventUrl}|${eventName}> の食事会が注文期限${beforeDays}日前となりました。忘れずに注文しよう！`
+    : `<${eventUrl}|${eventName}> の食事会が注文が確定しました。参加者はこちらのみなさんです。当日をお楽しみに！`
 }
 
 const makeEventStartMessage = (eventName, minutes, eventUrl) => {
-  return `${eventName} の食事会が開始${minutes}分前になりました。 <${eventUrl}|詳細はこちら>`
+  return `<${eventUrl}|${eventName}> の食事会が開始${minutes}分前になりました。`
 }
 
 const makeEventEndMessage = (eventName, eventUrl) => {
-  return `${eventName} の食事会が終了しました。次回開催をお楽しみに！ <${eventUrl}|詳細はこちら>`
+  return `<${eventUrl}|${eventName}> の食事会が終了しました。次回開催をお楽しみに！`
 }
 
 const notificationOrder = async (start, end, beforeDays) => {

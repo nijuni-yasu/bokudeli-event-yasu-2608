@@ -31,7 +31,7 @@ const sendOrderedMessage = async (orderSnapshot, eventRef) => {
 
   const botDataList = communityBotSnapshot.docs.map(doc => doc.data());
   Promise.all(botDataList.map(async (botData) => {
-    await sendMessage(botData, `${userName} さんが、${eventName} で、${orderMenu['name']} を注文したよ！ <${eventUrl}|詳細はこちら>`);
+    await sendMessage(botData, `${userName} さんが、 <${eventUrl}|${eventName}> で、${orderMenu['name']} を注文したよ！`);
   }));
 }
 
