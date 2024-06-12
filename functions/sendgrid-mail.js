@@ -3,6 +3,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
 import ja from 'date-fns/locale/ja';
 import sgMail from '@sendgrid/mail';
+import { convertTruncateText } from './utils/converter.js';
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>';
@@ -358,7 +359,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
                 event_address: eventData.event_address,
                 event_datetime,
                 event_deadline_datetime,
-                event_desc: eventData.event_desc,
+                event_desc: convertTruncateText(eventData.event_desc, 250),
                 event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
                 event_cover_url: eventData.event_cover_url,
                 shop_name: eventData.shop_name,
