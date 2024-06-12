@@ -547,7 +547,7 @@ export const polling = functions
 export const event_information = functions
     .region('asia-northeast1')
     .pubsub
-    .schedule('0 10 * * 1')
+    .schedule('0 18 * * 0') // 日曜日の18時
     .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
     .onRun(() => {
         return sendEventInformationMail();
@@ -556,7 +556,7 @@ export const event_information = functions
 export const event_information_preview = functions
     .region('asia-northeast1')
     .pubsub
-    .schedule('0 10 * * 0')
+    .schedule('0 18 * * 6') // 土曜日の18時
     .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
     .onRun(() => {
         return sendEventInformationMailPreview();
