@@ -28,9 +28,7 @@ jobs:
       with:
         node-version-file: ./functions/.node-version
         cache: 'yarn'
-        cache-dependency-path: |
-          ./functions/yarn.lock
-          ./functions/shokujii-slackbot/yarn.lock
+        cache-dependency-path: ./functions/yarn.lock
     - name: Install dependencies
       run: |
         yarn install --frozen-lockfile
@@ -40,15 +38,6 @@ jobs:
     - name: Generate .env file
       run: |
         env_vars=$(echo '${{ secrets.FUNCTIONS_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
-        echo "$env_vars" > .env
-    - name: Install Dependencies for shokujii-slackbot
-      working-directory: ./functions/shokujii-slackbot
-      run: |
-        yarn install --frozen-lockfile
-    - name: Generate .env file to shokujii-slackbot
-      working-directory: ./functions/shokujii-slackbot
-      run: |
-        env_vars=$(echo '${{ secrets.FUNCTIONS_SLACKBOT_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
         echo "$env_vars" > .env
     # FIREBASE_TOKEN is deprecated, so use GOOGLE_APPLICATION_CREDENTIALS
     - name: Deploy to Firebase

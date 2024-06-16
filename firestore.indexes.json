@@ -115,20 +115,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "event_start_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "event_status.value",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "is_public",
           "order": "ASCENDING"
         },
