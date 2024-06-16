@@ -9,3 +9,12 @@ export const convertToOgpString = (inputString) => {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+// TODO 共通化
+export const convertTruncateText = (text, maxLength) => {
+  if (text.length > maxLength) {
+    return text.substring(0, maxLength) + '...'
+  } else {
+    return text
+  }
+}

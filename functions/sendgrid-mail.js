@@ -3,6 +3,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
 import ja from 'date-fns/locale/ja';
 import sgMail from '@sendgrid/mail';
+import { convertTruncateText } from './utils/converter.js';
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>';
@@ -358,7 +359,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
                 event_address: eventData.event_address,
                 event_datetime,
                 event_deadline_datetime,
-                event_desc: eventData.event_desc,
+                event_desc: convertTruncateText(eventData.event_desc, 250),
                 event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
                 event_cover_url: eventData.event_cover_url,
                 shop_name: eventData.shop_name,
@@ -546,7 +547,7 @@ export const polling = functions
 export const event_information = functions
     .region('asia-northeast1')
     .pubsub
-    .schedule('0 10 * * 1')
+    .schedule('0 18 * * 0') // 日曜日の18時
     .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
     .onRun(() => {
         return sendEventInformationMail();
@@ -555,7 +556,7 @@ export const event_information = functions
 export const event_information_preview = functions
     .region('asia-northeast1')
     .pubsub
-    .schedule('0 10 * * 0')
+    .schedule('0 18 * * 6') // 土曜日の18時
     .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
     .onRun(() => {
         return sendEventInformationMailPreview();
