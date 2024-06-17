@@ -1,0 +1,19 @@
+export default {
+  'ok': 'OK',
+  'cancel': 'Cancel',
+  'payment': {
+    'user_advance': '参加者 事前決済 💳',
+    'user_on_day': '参加者 当日払い 💸',
+    'community_bill': '主催者支払い 💰'
+  },
+  'event_status': {
+    'in_draft': '下書き',
+    'applying_reservation': '予約申請中',
+    'accepting_order': '参加受付中',
+    'order_closed': '参加締切済',
+    'finished': 'イベント終了'
+  },
+  'order_deadline': '注文期限',
+  'days_before': '当日 | 前日 | {n}日前',
+  'hoge': 'ほげ',
+}

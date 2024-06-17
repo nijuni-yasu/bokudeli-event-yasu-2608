@@ -1,9 +1,2 @@
-import 'vue-router'
-
-declare module 'vue-router' {
-  interface RouteMeta {
-    action?: string
-    subject?: string
-    layoutWrapperClasses?: string
-  }
-}
+/// <reference types="vite/client" />
+/// <reference types="unplugin-vue-router/client" />
