@@ -46,7 +46,11 @@ const signInByProviderService = async (providerService: 'Facebook' | 'Google') =
       break
   }
 
-  await signInWithRedirect(getAuth(), provider)
+  if (import.meta.env.DEV) {
+    await signInWithPopup(getAuth(), provider)
+  } else {
+    await signInWithRedirect(getAuth(), provider)
+  }
 }
 
 const getCredentialWithPopup = async (providerService: 'Facebook' | 'Google') => {
