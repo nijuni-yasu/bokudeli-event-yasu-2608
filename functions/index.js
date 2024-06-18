@@ -35,6 +35,6 @@ export const {
   scheduled_firestore_export
 } = await import('./backup.js');
 export const {
-  send_invitaion_email_for_community_manager,
+  get_invitaion_url_for_community_manager,
   accept_invitation_for_community_manager
 } = await import('./community-manager.js');

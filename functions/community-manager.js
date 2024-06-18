@@ -1,17 +1,11 @@
 import functions from 'firebase-functions';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import sgMail from '@sendgrid/mail';
-
-// TODO 環境変数にして一元管理する
-const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>';
 
 const EXPIRED_TIME = 1000 * 60 * 60 * 24; // 24 hours
 
 const db = getFirestore();
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-export const send_invitaion_email_for_community_manager = functions
+export const get_invitaion_url_for_community_manager = functions
     .region('asia-northeast1')
     .https
     .onCall(async (data, context) => {
@@ -20,9 +14,8 @@ export const send_invitaion_email_for_community_manager = functions
     throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
   }
   const communityId = data.communityId;
-  const invitee_email = data.email;
-  if (communityId == null || invitee_email == null) {
-    throw new functions.https.HttpsError('invalid-argument', 'The function must be called with the arguments "communityId" and "email".');
+  if (communityId == null) {
+    throw new functions.https.HttpsError('invalid-argument', 'The function must be called with the arguments "communityId."');
   }
   const communityRef = db.collection('communities').doc(communityId);
   const isManager = (await communityRef.collection('members').doc(uid).get()).get('roles')?.includes('manager') ?? false;
@@ -33,24 +26,13 @@ export const send_invitaion_email_for_community_manager = functions
   const inviteRef = await communityRef.collection('invites').add({
     has_token_been_redeemed: false,
     inviter_id: uid,
-    invitee_email: data.email,
     created_at: now,
     updated_at: now,
   });
   const communityAccount = (await communityRef.get()).get('community_account');
   // TODO URL の生成は共通化する
   const url = `https://${process.env.EVENT_HOST}/c/${communityAccount}/invites?t=${inviteRef.id}`;
-  // TODO これ以上複雑になるようなら、テンプレートを使う
-  const subject = `Shokujii コミュニティ ${communityAccount} への管理者招待`;
-  const text = `Shokujii コミュニティ ${communityAccount} の管理者として招待されました。\n` +
-      '承諾する場合は以下のリンクをクリックしてください。\n\n' +
-      url;
-  return sgMail.send({
-      to: invitee_email,
-      from: DEFAULT_FROM,
-      subject,
-      text,
-  });
+  return url;
 });
 
 export const accept_invitation_for_community_manager = functions
