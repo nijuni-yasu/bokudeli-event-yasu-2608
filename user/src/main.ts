@@ -13,14 +13,8 @@ import '@/firebase'
 
 const app = createApp(defineAsyncComponent(() => import('./App.vue')))
 
-// TODO 共通化
-// リンクを生成するカスタムディレクティブ<v-linkfy>
-app.directive('linkify', {
-  mounted(el) {
-    const text = el.textContent
-    const replacedText = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>')
-    el.innerHTML = replacedText
-  }
+import('@/directives/linkify').then((m) => {
+  app.directive('linkify', m.default)
 })
 
 Promise.all([
