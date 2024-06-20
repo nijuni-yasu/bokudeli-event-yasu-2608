@@ -25,7 +25,7 @@ export interface LayoutConfig {
   }
   verticalNav: {
     isVerticalNavCollapsed: boolean
-    defaultNavItemIconProps: unknown
+    defaultNavItemIconProps: any
   }
   horizontalNav: {
     type: typeof HorizontalNavType[keyof typeof HorizontalNavType]
