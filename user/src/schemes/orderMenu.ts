@@ -1,4 +1,4 @@
-type OrderMenu = {
+export type OrderMenu = {
   menu_id: string
   partner_id: string
   name: string
@@ -7,5 +7,3 @@ type OrderMenu = {
   count: number
   note: string
 }
-
-export default OrderMenu

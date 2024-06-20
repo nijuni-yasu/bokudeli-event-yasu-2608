@@ -1,5 +1,5 @@
 import { db } from '@/firebase'
-import OrderItem from '@/schemes/orderItem'
+import { type OrderItem } from '@/schemes/orderItem'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { Timestamp, collectionGroup, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 

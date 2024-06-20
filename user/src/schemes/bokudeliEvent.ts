@@ -1,5 +1,5 @@
 import { getEventPath } from '@/router/utils'
-import { DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
+import { type DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 
 const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者支払い'] as const

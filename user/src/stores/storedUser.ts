@@ -1,4 +1,4 @@
-import StoredUser from '@/schemes/storedUser'
+import { type StoredUser } from '@/schemes/storedUser'
 import { defineStore } from 'pinia'
 
 export const useStoreStoredUser = defineStore('storedUser', {

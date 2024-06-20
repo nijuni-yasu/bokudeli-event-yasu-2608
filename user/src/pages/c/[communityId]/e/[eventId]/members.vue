@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { CommunityStore, useCommunityStore } from '@/stores/community'
-import { EventStore, useEventStore } from '@/stores/event'
+import { type CommunityStore, useCommunityStore } from '@/stores/community'
+import { type EventStore, useEventStore } from '@/stores/event'
 import EventMemberCard from '@/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 

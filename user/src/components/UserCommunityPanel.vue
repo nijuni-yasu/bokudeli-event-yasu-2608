@@ -5,7 +5,7 @@ import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityCreatePath, getCommunityPath, getCommunitySettingsPath, getEventCreatePath } from '@/router/utils'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
-import { CommunityMember } from '@/schemes/communityMember'
+import { type CommunityMember } from '@/schemes/communityMember'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
 
 const router = useRouter()

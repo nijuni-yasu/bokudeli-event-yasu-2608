@@ -5,7 +5,7 @@ import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { priceString, convertDocumentDataToEvent } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import OrderItem, { createEmptyOrderItem } from '@/schemes/orderItem'
+import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
 import { fixCancelOrder } from '@/composable/fixOrder'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
@@ -115,7 +115,7 @@ const startCancelProcess = async () => {
   // user_advance はstripeの支払いの場合
   if (order.event_payment == 'user_advance' && order.payment_intent) {
     stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
-      .then((result) => {
+      .then(() => {
         fetchData()
         isOpenCancelProsessDialog.value = false
         isOpenCancelCompleteDialog.value = true

@@ -8,7 +8,7 @@ import { useStoreCredential } from '@/stores/credential'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import axios from 'axios'
-import { FacebookAuthProvider, GoogleAuthProvider, OAuthCredential, User, UserCredential } from 'firebase/auth'
+import { FacebookAuthProvider, GoogleAuthProvider, OAuthCredential, type User, type UserCredential } from 'firebase/auth'
 import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 
 export const updateCredentialFromUserCredential = async (redirectResult: UserCredential) => {

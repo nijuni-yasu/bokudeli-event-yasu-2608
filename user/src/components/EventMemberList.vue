@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EventMember } from '@/schemes/EventMember'
+import { type EventMember } from '@/schemes/EventMember'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 

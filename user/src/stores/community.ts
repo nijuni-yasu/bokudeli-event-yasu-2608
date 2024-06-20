@@ -1,3 +1,4 @@
+import { type Ref } from 'vue'
 import _ from 'lodash'
 import { db } from '@/firebase'
 import {
@@ -22,10 +23,10 @@ import {
   type QueryConstraint,
 } from 'firebase/firestore'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
-import { StateTree, Store } from 'pinia'
+import type { StateTree, Store } from 'pinia'
 import BokudeliCommunity from "@/schemes/bokudeliCommunity"
 import { FirestoredUser } from '@/schemes/storedUser'
-import { CommunityMember, convertCommunityMemberToDocumentData } from '@/schemes/communityMember'
+import { type CommunityMember, convertCommunityMemberToDocumentData } from '@/schemes/communityMember'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'

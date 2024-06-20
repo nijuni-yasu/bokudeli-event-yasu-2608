@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
-import OrderMenu from './orderMenu'
+import { type OrderMenu } from './orderMenu'
 
-type OrderItem = {
+export type OrderItem = {
   user_id: string
   community_id: string
   community_account: string
@@ -29,5 +29,3 @@ export const createEmptyOrderItem = (): OrderItem => ({
   updated_at: Timestamp.now(),
   carted_at: Timestamp.now(),
 })
-
-export default OrderItem

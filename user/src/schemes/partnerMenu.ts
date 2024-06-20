@@ -1,4 +1,4 @@
-type PartnerMenu = {
+export type PartnerMenu = {
   id: string
   partnerId: string
   name: string
@@ -11,5 +11,3 @@ type PartnerMenu = {
   dateStart?: string
   dateEnd?: string
 }
-
-export default PartnerMenu

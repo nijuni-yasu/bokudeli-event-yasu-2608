@@ -6,7 +6,6 @@ import {
   GoogleAuthProvider,
   signInWithRedirect,
   signInWithPopup,
-  AuthProvider,
   linkWithCredential,
 } from 'firebase/auth'
 

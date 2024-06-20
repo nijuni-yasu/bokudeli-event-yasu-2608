@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
-import { EventMember } from '@/schemes/EventMember'
+import { type EventMember } from '@/schemes/EventMember'
 import { convertTruncateText} from '@/schemes/converter'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'

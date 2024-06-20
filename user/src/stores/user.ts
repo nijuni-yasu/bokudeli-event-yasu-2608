@@ -1,3 +1,4 @@
+import { type Ref } from 'vue'
 import { db } from '@/firebase'
 import {
   doc,
@@ -6,7 +7,7 @@ import {
   DocumentReference,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { StateTree, Store } from 'pinia';
+import type { StateTree, Store } from 'pinia';
 import { FirestoredUser } from '@/schemes/storedUser'
 import { storage } from '@/firebase'
 import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'

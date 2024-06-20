@@ -48,7 +48,8 @@ const instagramId = computed({
   },
 })
 
-const readImageFiles = (files: File[]) => {
+const readImageFiles = (files: File | File[]) => {
+  if (files instanceof File) files = [files]
   if (files.length === 0) return
   userImage.value = files[0]
 }

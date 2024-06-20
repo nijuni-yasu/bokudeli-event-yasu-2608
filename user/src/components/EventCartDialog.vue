@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import OrderItem from '@/schemes/orderItem'
-import OrderMenu from '@/schemes/orderMenu'
-import PartnerMenu from '@/schemes/partnerMenu'
+import { type OrderItem } from '@/schemes/orderItem'
+import { type OrderMenu } from '@/schemes/orderMenu'
+import { type PartnerMenu } from '@/schemes/partnerMenu'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { Timestamp } from 'firebase/firestore'

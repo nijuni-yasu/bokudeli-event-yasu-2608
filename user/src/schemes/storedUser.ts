@@ -1,4 +1,4 @@
-import { DocumentData, Timestamp } from 'firebase/firestore'
+import { type DocumentData, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 import { buildThumbnailsLinks, type ThumbnailLinks} from '@/composable/buildThumbnailsLinks'
 
@@ -7,7 +7,7 @@ import { buildThumbnailsLinks, type ThumbnailLinks} from '@/composable/buildThum
  * 他の情報は FirestoredUser で保持することとする。
  * TODO: userId 以外のプロパティを削除する
  */
-type StoredUser = {
+export type StoredUser = {
   userId: string
   userName: string
   userEmail: string
@@ -53,5 +53,3 @@ export class FirestoredUser {
     return _.omit(this, ['user_thumb_image_urls'])
   }
 }
-
-export default StoredUser

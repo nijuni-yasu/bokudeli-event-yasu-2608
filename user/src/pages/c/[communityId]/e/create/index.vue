@@ -13,8 +13,8 @@ import {
   convertShopTimeToWeekTimestamp,
 } from '@/schemes/converter'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import Shop from '@/schemes/shop'
-import PartnerMenu from '@/schemes/partnerMenu'
+import { type Shop } from '@/schemes/shop'
+import { type PartnerMenu } from '@/schemes/partnerMenu'
 import { useEventsStore, useEventStore, type EventsStore, type EventStore } from '@/stores/event'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { useRouter, useRoute } from 'vue-router'

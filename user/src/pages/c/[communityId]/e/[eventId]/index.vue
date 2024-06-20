@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCommunityPath, getEventCreatePath } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import PartnerMenu from '@/schemes/partnerMenu'
+import { type PartnerMenu } from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EventMemberList from '@/components/EventMemberList.vue'
@@ -429,7 +429,7 @@ onUnmounted(() => {
         <v-card-text>
           {{ event && dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ event && dateOnlyTimeString(event.event_end_datetime) }}
         </v-card-text>
-        <vue-qrious :value="event?.url" :size="qrcodeSize" />
+        <vue-qrious :value="event?.url ?? ''" :size="qrcodeSize" />
       </v-card>
     </show-dialog>
     <v-navigation-drawer

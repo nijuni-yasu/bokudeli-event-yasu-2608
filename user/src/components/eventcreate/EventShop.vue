@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import Shop from '@/schemes/shop'
+import { type Shop } from '@/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
 
 const props = defineProps<{

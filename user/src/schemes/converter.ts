@@ -1,10 +1,10 @@
 import { format } from 'date-fns'
-import { DocumentData, Timestamp } from 'firebase/firestore'
+import { type DocumentData, Timestamp } from 'firebase/firestore'
 import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
-import PartnerMenu from './partnerMenu'
-import { User } from 'firebase/auth'
-import StoredUser, { FirestoredUser } from './storedUser'
+import { type PartnerMenu } from './partnerMenu'
+import { type User } from 'firebase/auth'
+import { type StoredUser, FirestoredUser } from './storedUser'
 
 export const dateString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
@@ -134,8 +134,8 @@ export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser
     userSnsFacebook: firestoredUser.user_sns_facebook,
     userSnsTwitter: firestoredUser.user_sns_twitter,
     userSnsInstagram: firestoredUser.user_sns_instagram,
-    createdAt: firestoredUser.created_at.toDate(),
-    updatedAt: firestoredUser.updated_at.toDate(),
+    createdAt: firestoredUser.created_at?.toDate(),
+    updatedAt: firestoredUser.updated_at?.toDate(),
   }
 }
 

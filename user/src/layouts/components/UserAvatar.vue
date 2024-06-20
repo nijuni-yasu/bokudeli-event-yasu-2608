@@ -19,7 +19,7 @@ const avatar = computed(() => hasError.value || props.user == null ? avatar1 :
   avatar1
 )
 
-const avatarElement = ref<VAvatar>(null)
+const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
 

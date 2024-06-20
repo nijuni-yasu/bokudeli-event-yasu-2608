@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import PartnerMenu from '@/schemes/partnerMenu'
+import { type PartnerMenu } from '@/schemes/partnerMenu'
 
 const props = defineProps<{
   menus: PartnerMenu[]

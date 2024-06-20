@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { convertDocumentDataToMenu, dateString, priceString } from '@/schemes/converter'
-import PartnerMenu from '@/schemes/partnerMenu'
+import { type PartnerMenu } from '@/schemes/partnerMenu'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { collection, getDocs } from 'firebase/firestore'
 import { parseISO, compareDesc } from 'date-fns'

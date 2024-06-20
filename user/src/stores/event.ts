@@ -1,3 +1,4 @@
+import { type Ref } from 'vue'
 import { db } from '@/firebase'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
@@ -25,9 +26,9 @@ import {
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
 import { convertDocumentDataToEvent } from '@/schemes/converter'
-import { Store, StateTree } from 'pinia'
-import OrderItem from '@/schemes/orderItem'
-import { EventMember } from '@/schemes/EventMember'
+import type { Store, StateTree } from 'pinia'
+import { type OrderItem } from '@/schemes/orderItem'
+import { type EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
 import { TaskExecutor } from '@/utils/executors'
 

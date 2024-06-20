@@ -9,7 +9,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import UserAvatar from '@/layouts/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
-import { CommunityMember } from '@/schemes/communityMember'
+import { type CommunityMember } from '@/schemes/communityMember'
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 

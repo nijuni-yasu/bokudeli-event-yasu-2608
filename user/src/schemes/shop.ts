@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore'
 
-type Shop = {
+export type Shop = {
   shop_id: string
   shop_name: string
   shop_image_url: string
@@ -60,5 +60,3 @@ type Shop = {
   shop_order_method: string[]
 */
 }
-
-export default Shop

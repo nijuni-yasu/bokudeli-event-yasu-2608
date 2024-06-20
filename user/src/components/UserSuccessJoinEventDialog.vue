@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import {
-  DocumentData,
+  type DocumentData,
   QueryDocumentSnapshot,
   collection,
   collectionGroup,
@@ -17,8 +17,8 @@ import {
   convertDocumentDataToEvent,
 } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import PartnerMenu from '@/schemes/partnerMenu'
-import { EventMember } from '@/schemes/EventMember'
+import { type PartnerMenu } from '@/schemes/partnerMenu'
+import { type EventMember } from '@/schemes/EventMember'
 import { shareSnsButton } from '@/composable/shareSnsButton'
 
 interface Props {

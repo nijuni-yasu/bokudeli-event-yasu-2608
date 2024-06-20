@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import OrderItem from '@/schemes/orderItem'
-import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@/schemes/converter'
+import { type OrderItem } from '@/schemes/orderItem'
+import { dateWithDayOfWeekString, priceString } from '@/schemes/converter'
 import { getEventPath } from '@/router/utils'
 
 type Order = {
