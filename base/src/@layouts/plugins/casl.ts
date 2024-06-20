@@ -1,4 +1,4 @@
-import { useAbility } from '@casl/vue'
+// import { useAbility } from '@casl/vue'
 import type { RouteLocationNormalized } from 'vue-router'
 import type { NavGroup } from '@layouts/types'
 
@@ -12,17 +12,18 @@ import type { NavGroup } from '@layouts/types'
  * @param {string} action CASL Actions // https://casl.js.org/v4/en/guide/intro#basics
  * @param {string} subject CASL Subject // https://casl.js.org/v4/en/guide/intro#basics
  */
-export const can = (action: string | undefined, subject: string | undefined) => {
-  const vm = getCurrentInstance()
+// export const can = (action: string | undefined, subject: string | undefined) => {
+//   const vm = getCurrentInstance()
 
-  if (!vm)
-    return false
+//   if (!vm)
+//     return false
 
-  const localCan = vm.proxy && '$can' in vm.proxy
+//   const localCan = vm.proxy && '$can' in vm.proxy
 
-  // @ts-expect-error We will get TS error in below line because we aren't using $can in component instance
-  return localCan ? vm.proxy?.$can(action, subject) : true
-}
+//   // @ts-expect-error We will get TS error in below line because we aren't using $can in component instance
+//   return localCan ? vm.proxy?.$can(action, subject) : true
+// }
+export const can = (action: string | undefined, subject: string | undefined) => true
 
 /**
  * Check if user can view item based on it's ability
@@ -40,9 +41,9 @@ export const canViewNavMenuGroup = (item: NavGroup) => {
   return can(item.action, item.subject) && hasAnyVisibleChild
 }
 
-export const canNavigate = (to: RouteLocationNormalized) => {
-  const ability = useAbility()
+// export const canNavigate = (to: RouteLocationNormalized) => {
+//   const ability = useAbility()
 
-  // @ts-expect-error We should allow passing string | undefined to can because for admin ability we omit defining action & subject
-  return to.matched.some(route => ability.can(route.meta.action, route.meta.subject))
-}
+//   // @ts-expect-error We should allow passing string | undefined to can because for admin ability we omit defining action & subject
+//   return to.matched.some(route => ability.can(route.meta.action, route.meta.subject))
+// }
