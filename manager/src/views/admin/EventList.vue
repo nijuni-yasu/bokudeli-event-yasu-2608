@@ -40,6 +40,9 @@
               定員
             </th>
             <th class="primary--text px-1">
+              参加数
+            </th>
+            <th class="primary--text px-1">
               支払い
             </th>
             <th class="primary--text px-1 table2">
@@ -47,14 +50,10 @@
             </th>
             <th class="primary--text px-1 table1">
               会社名<br>
-              担当者名
-            </th>
-            <th class="primary--text px-1 table1">
+              担当者名<br>
               電話番号(会社)<br>
               電話番号(個人)<br>
-              email
-            </th>
-            <th class="primary--text px-1 table1">
+              email<br>
               配送メモ
             </th>
             <th class="primary--text px-1 table2">
@@ -68,7 +67,7 @@
             v-for="(event,key) in selectedEvents"
             :key="key"
           >
-            <td class="px-1">{{ key + 1 }}</td>
+            <td class="px-1">{{ selectedEvents.length - key }}</td>
             <td class="px-1 table1">{{ event.community_name }}</td>
             <td class="px-1 table1">
               <a
@@ -81,7 +80,13 @@
             <td class="px-1 table1">{{ event.shop_name }}</td>
             <td class="px-1 table1">
               {{ event.event_postalcode }}<br>
-              {{ event.event_address }}
+              {{ event.event_address }}<br>
+              <br>
+              <a
+                :href="event.event_place_url"
+              >
+                {{ event.event_place }}
+              </a>
             </td>
             <td class="px-1 table1">
               {{ millisToDateTimeString(event.event_start_datetime) }}<br>
@@ -89,18 +94,19 @@
             </td>
             <td class="px-1 table1">{{ millisToDateTimeString(event.event_deadline_datetime) }}</td>
             <td class="px-1">{{ event.event_max_people }}</td>
+            <td class="px-1">
+              {{ event.members ? event.members.length : 0}}
+            </td>
             <td class="px-1">{{ event.event_payment }}</td>
             <td class="px-1 table2">{{ $t((event.is_public) ? '一般公開' : '限定公開') }}</td>
             <td class="px-1 table1">
-                {{ event.organizer_company }}<br>
-                {{ event.organizer_fullname }}
+              [会社名] {{ event.organizer_company }}<br>
+              [担当者名] {{ event.organizer_fullname }}                
+              [電話番号(会社)] {{ event.organizer_phone_company }}<br>
+              [電話番号(個人)] {{ event.organizer_phone_personal }}<br>
+              [Email] {{ event.organizer_email }}<br>
+              [メモ] {{ event.organizer_memo }}
             </td>
-            <td class="px-1 table1">
-                [会社]{{ event.organizer_phone_company }}<br>
-                [個人]{{ event.organizer_phone_personal }}<br>
-                [Email]{{ event.organizer_email }}
-            </td>
-            <td class="px-1 table1">{{ event.organizer_memo }}</td>
             <td class="px-1 table2">{{ $t((event.event_status) ? `event_status/${event.event_status.value}` : '') }}</td>
           </tr>
         </tbody>

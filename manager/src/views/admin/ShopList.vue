@@ -21,34 +21,27 @@
             <th class="primary--text px-1">
               PARTNER ID
             </th>
-            <th class="primary--text px-1 table1">
+            <th class="primary--text px-1">
               店舗名
             </th>
-            <th class="primary--text px-1 table1">
+            <th class="primary--text px-1">
               店舗住所
             </th>
             <th class="primary--text px-1">
-              緯度・軽度
-            </th>
-            <th class="primary--text px-1">
-              電話番号
-            </th>
-            <th class="primary--text px-1 table2">
+              電話番号<br>
               メールアドレス
             </th>
             <th class="primary--text px-1">
               注文締切
             </th>
-            <th class="primary--text px-1 table1">
+            <th class="primary--text px-1">
               距離と個数
             </th>
-            <th class="primary--text px-1 table2">
+            <th class="primary--text px-1">
               注文可能時間
             </th>
             <th class="primary--text px-1">
-              作成日
-            </th>
-            <th class="primary--text px-1">
+              作成日<br>
               更新日
             </th>
             <th class="primary--text table1">
@@ -67,29 +60,24 @@
             md="6"
           >
             <td class="px-1">
-              <v-btn
-                color="primary"
-                small
-                @click="toMenuPage(item.partner_id)"
-              >
-              <v-icon>
-                mdi-storefront-outline
-              </v-icon>
-                詳細
-              </v-btn>
+              {{ shops.length - key }}
             </td>
             <td class="px-1">{{ item.partner_id.slice(0, 6) }}</td>
-            <td class="px-1 table1">{{ item.shop_name }}</td>
-            <td class="px-1 table1">
-              〒{{ item.shop_postcode }}<br>
-              {{ item.shop_address }}
+            <td class="px-1 table2">
+              <a
+                color="primary"
+                @click="toMenuPage(item.partner_id)"
+              >
+                {{ item.shop_name }}
+              </a>
             </td>
             <td class="px-1">
-              {{ item.shop_address_latitude }}<br>
-              {{ item.shop_address_longitude }}
+              〒{{ item.shop_postcode }}<br>
+              {{ item.shop_address }}<br>
             </td>
-            <td class="px-1">{{ item.shop_phone }}</td>
-            <td class="px-1 table2">
+            <td class="px-1">
+              {{ item.shop_phone }}<br>
+              <br>
               {{ item.shop_email }}<br>
               {{ item.shop_email_sub1 }}<br>
               {{ item.shop_email_sub2 }}<br>
@@ -138,11 +126,12 @@
               </div>
             </td>
             <td class="px-1">
+              [作成日]
                 {{ item.createdAt.toDate().getFullYear() + '/' + (Number(item.createdAt.toDate().getMonth()) + 1) + '/' +item.createdAt.toDate().getDate() }}<br>
-                {{ item.createdAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}
-            </td>
-            <td>
+                {{ item.createdAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}<br>
+                <br>
               <div v-if="item.updatedAt">
+              [更新日]
               {{ item.updatedAt.toDate().getFullYear() + '/' + (Number(item.updatedAt.toDate().getMonth()) + 1) + '/' +item.updatedAt.toDate().getDate() }}<br>
               {{ item.updatedAt.toDate().toLocaleString('ja-JP').slice( -8 ).slice( 0, 5 ) }}
               </div>
@@ -180,7 +169,7 @@
     }),
     created () {
       const self = this
-      db.collectionGroup('shops').get().then((snapshot) => {
+      db.collectionGroup('shops').orderBy('createdAt','desc').get().then((snapshot) => {
         snapshot.forEach((doc) => {
           self.shops.push(doc.data())
         })

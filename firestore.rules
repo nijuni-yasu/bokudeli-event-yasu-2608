@@ -18,6 +18,8 @@ service cloud.firestore {
             }
         }
         match /communities/{community} {
+		    // support+admin@nijuni.jp アカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
+            allow update: if request.auth.uid == 'B8xjaF1ftWWr3bCQpmPzmxJ9uQt2' || request.auth.uid == '5XjlhVfryCYErPmMIJ1YX6xEzC62'
             // コミュニティはログインユーザーなら申請可能
             allow create: if request.auth != null
             // コミュマネかを判定する関数
