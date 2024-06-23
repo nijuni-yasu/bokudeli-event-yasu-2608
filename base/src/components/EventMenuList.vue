@@ -5,6 +5,7 @@ import { type PartnerMenu } from '@/schemes/partnerMenu'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { collection, getDocs } from 'firebase/firestore'
 import { parseISO, compareDesc } from 'date-fns'
+import { mdiFoodForkDrink } from '@mdi/js'
 
 const props = defineProps<{
   event: BokudeliEvent
@@ -86,7 +87,7 @@ onMounted(async () => {
                 color="primary"
                 rounded
                 elevation="5"
-                prepend-icon="mdi-food-fork-drink"
+                :prepend-icon="mdiFoodForkDrink"
                 @click="emit('selectMenu', menu)"
               >
                 {{ menu.isSoldout === true ? '売り切れ' : '注文して参加する' }}

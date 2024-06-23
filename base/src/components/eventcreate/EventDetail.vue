@@ -4,6 +4,13 @@ import { dateString, hourString, minutesString, hourList, minutesList } from '@/
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
 import { requiredValidator, positiveIntegerValidator } from '@/utils/validators'
+import {
+  mdiChevronLeft,
+  mdiListBoxOutline,
+  mdiLightbulbOnOutline,
+  mdiAccountCreditCardOutline,
+  mdiChevronRight,
+} from '@mdi/js'
 
 const pickerConfig = {
   locale: Japanese,
@@ -65,7 +72,7 @@ const onTriggerUpload = () => {
       <v-card flat class="mt-2">
         <v-form v-model="isFormValid" class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
+            <v-icon size="50" class="text--primary me-3" :icon="mdiListBoxOutline" />
             <span>イベント詳細</span>
           </v-card-title>
 
@@ -161,7 +168,7 @@ const onTriggerUpload = () => {
 
           <!-- Activity -->
           <v-card-title class="pt-10 px-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-lightbulb-on-outline" />
+            <v-icon size="50" class="text--primary me-3" :icon="mdiLightbulbOnOutline" />
             <span>公開設定</span>
           </v-card-title>
           <v-card-text>
@@ -177,7 +184,7 @@ const onTriggerUpload = () => {
             </div>
           </v-card-text>
           <v-card-title class="pt-10 px-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-account-credit-card-outline" />
+            <v-icon size="50" class="text--primary me-3" :icon="mdiAccountCreditCardOutline" />
             <span>支払い設定</span>
           </v-card-title>
           <v-card-text>
@@ -195,18 +202,19 @@ const onTriggerUpload = () => {
             </v-col>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')"
-              >前へ</v-btn
-            >
+            <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="emit('back')">
+              前へ
+            </v-btn>
             <v-btn
               color="primary"
               class="me-3 mt-3"
               size="large"
-              append-icon="mdi-chevron-right"
+              :append-icon="mdiChevronRight"
               :disabled="!isValid"
               @click="emit('submit')"
-              >次へ</v-btn
             >
+              次へ
+            </v-btn>
           </v-card-text>
         </v-form>
       </v-card>

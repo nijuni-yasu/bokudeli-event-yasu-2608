@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { type PartnerMenu } from '@/schemes/partnerMenu'
+import { mdiChevronLeft, mdiFoodForkDrink, mdiChevronRight } from '@mdi/js'
 
 const props = defineProps<{
   menus: PartnerMenu[]
@@ -26,7 +27,7 @@ const back = () => {
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
             <v-card-title class="pa-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-food-fork-drink" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiFoodForkDrink" />
               <span>メニュー</span>
             </v-card-title>
 
@@ -54,10 +55,10 @@ const back = () => {
             </v-row>
 
             <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="back"
+              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back"
                 >前へ</v-btn
               >
-              <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="submit"
+              <v-btn color="primary" class="me-3 mt-3" size="large" :append-icon="mdiChevronRight" @click="submit"
                 >次へ</v-btn
               >
             </v-card-text>

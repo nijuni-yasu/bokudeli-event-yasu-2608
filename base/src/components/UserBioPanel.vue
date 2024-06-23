@@ -6,6 +6,7 @@ import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import UserBioEditDialog from './UserBioEditDialog.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
 import UserAvatar from '@/components/UserAvatar.vue'
+import { mdiPencil, mdiTwitter, mdiFacebook, mdiInstagram } from '@mdi/js'
 
 const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
 
@@ -63,13 +64,13 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn icon="mdi-twitter" size="large" class="ma-3"></v-btn>
+              <v-btn :icon="mdiTwitter" size="large" class="ma-3"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn icon="mdi-facebook" size="large" class="ma-3"></v-btn>
+              <v-btn :icon="mdiFacebook" size="large" class="ma-3"></v-btn>
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn icon="mdi-instagram" size="large" class="ma-3"></v-btn>
+              <v-btn :icon="mdiInstagram" size="large" class="ma-3"></v-btn>
             </a>
           </v-col>
         </v-row>
@@ -81,7 +82,7 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
             color="primary"
             class="me-3"
             size="large"
-            prepend-icon="mdi-pencil"
+            :prepend-icon="mdiPencil"
             @click="isUserInfoEditDialogVisible = true"
           >
             編集

@@ -9,30 +9,24 @@ import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n'
 import defaults from './defaults'
 import { themes } from '@/themes'
 import { getI18n } from '@/plugins/i18n/index'
-import type { IconProps, IconSet } from 'vuetify'
-import { Icon } from '@iconify/vue'
 
 // Icons
-// import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
-export const iconify: IconSet = {
-  // @ts-expect-error IconProps is a valid parameter
-  component: (props: IconProps) => h(Icon, props),
-}
+import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 
 export default function (app: App) {
   const vuetify = createVuetify({
     aliases: {
       IconBtn: VBtn,
+      // ...aliases,
     },
     components,
     directives,
     defaults,
     icons: {
-      defaultSet: 'iconify',
-      // aliases,
+      defaultSet: 'mdi',
+      aliases,
       sets: {
-        // mdi,
-        iconify,
+        mdi,
       },
     },
     theme: { themes },

@@ -12,6 +12,7 @@ import { getUserPath } from '@/router/utils'
 import { type CommunityMember } from '@/schemes/communityMember'
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
+import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 
 const get_invitaion_url_for_community_manager = httpsCallable(functions, 'get_invitaion_url_for_community_manager')
 
@@ -121,7 +122,7 @@ const inviteManager = async () => {
             color="white"
             elevation="5"
             rounded
-            prepend-icon="mdi-pencil-box-outline"
+            :prepend-icon="mdiPencilBoxOutline"
             :to="getEventCreatePath(communityStore.community.community_account)"
           >
             イベント新規作成
@@ -131,7 +132,7 @@ const inviteManager = async () => {
             color="white"
             elevation="5"
             rounded
-            prepend-icon="mdi-cog"
+            :prepend-icon="mdiCog"
             :to="getCommunitySettingsPath(communityStore.community.community_account)"
           >
             コミュニティ設定
@@ -181,7 +182,7 @@ const inviteManager = async () => {
                   class="ma-1"
                   variant="outlined"
                   rounded
-                  prepend-icon="mdi-email"
+                  :prepend-icon="mdiEmail"
                   color="primary"
                   width="100%"
                   @click="openContactDialog"
@@ -272,7 +273,7 @@ const inviteManager = async () => {
                     elevation="5"
                     size="small"
                     rounded
-                    prepend-icon="mdi-email"
+                    :prepend-icon="mdiEmail"
                     :to="{
                       path: getEventCreatePath(communityStore.community.community_account),
                       query: { id: event.event_id, step: 5 },
@@ -287,7 +288,7 @@ const inviteManager = async () => {
                     elevation="5"
                     size="small"
                     rounded
-                    prepend-icon="mdi-pencil-box-outline"
+                    :prepend-icon="mdiPencilBoxOutline"
                     :to="{
                       path: getEventCreatePath(communityStore.community.community_account),
                       query: { id: event.event_id },
@@ -306,7 +307,7 @@ const inviteManager = async () => {
                     elevation="5"
                     size="small"
                     rounded
-                    prepend-icon="mdi-pencil-box-outline"
+                    :prepend-icon="mdiPencilBoxOutline"
                     :to="{
                       path: getEventCreatePath(communityStore.community.community_account),
                       query: { id: event.event_id, step: 4 },

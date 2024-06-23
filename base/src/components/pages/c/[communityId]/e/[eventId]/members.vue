@@ -4,6 +4,7 @@ import { type CommunityStore, useCommunityStore } from '@/stores/community'
 import { type EventStore, useEventStore } from '@/stores/event'
 import EventMemberCard from '@/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
+import { mdiArrowLeftBold } from '@mdi/js'
 
 const props = defineProps<{
   communityId: string
@@ -31,7 +32,7 @@ const members = computed(
         color="primary"
         variant="text"
         size="large"
-        prepend-icon="mdi-arrow-left-bold"
+        :prepend-icon="mdiArrowLeftBold"
         @click="() => $router.push(getEventPath(props.communityId, props.eventId))"
       >
         イベントページ

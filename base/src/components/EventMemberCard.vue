@@ -4,6 +4,7 @@ import { type EventMember } from '@/schemes/EventMember'
 import { convertTruncateText } from '@/schemes/converter'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
+import { mdiAccount, mdiTwitter, mdiFacebook, mdiInstagram } from '@mdi/js'
 
 const props = defineProps<{
   member: EventMember
@@ -42,20 +43,20 @@ const descriptionCharacterLimit = 120
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn icon="mdi-twitter" class="ma-3"></v-btn>
+              <v-btn :icon="mdiTwitter" class="ma-3"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn icon="mdi-facebook" class="ma-3"></v-btn>
+              <v-btn :icon="mdiFacebook" class="ma-3"></v-btn>
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn icon="mdi-instagram" class="ma-3"></v-btn>
+              <v-btn :icon="mdiInstagram" class="ma-3"></v-btn>
             </a>
           </v-col>
         </v-row>
       </v-card-subtitle>
       <v-card-text class="text-center pt-1">
         <router-link :to="getUserPath(member.user_id)">
-          <v-btn class="ma-2" variant="outlined" size="small" rounded prepend-icon="mdi-account">
+          <v-btn class="ma-2" variant="outlined" size="small" rounded :prepend-icon="mdiAccount">
             プロフィール詳細
           </v-btn>
         </router-link>

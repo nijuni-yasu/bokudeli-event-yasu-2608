@@ -2,6 +2,7 @@
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type Shop } from '@/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
+import { mdiChevronLeft, mdiStore, mdiChevronRight } from '@mdi/js'
 
 const props = defineProps<{
   shops: Shop[]
@@ -63,7 +64,7 @@ const next = () => {
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
             <v-card-title class="pa-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-store" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiStore" />
               <span>お店</span>
             </v-card-title>
 
@@ -105,7 +106,7 @@ const next = () => {
                     color="primary"
                     class="ma-5"
                     size="large"
-                    append-icon="mdi-chevron-right"
+                    :append-icon="mdiChevronRight"
                     :disabled="event.event_status.value !== 'in_draft'"
                     @click="submit(item)"
                   >
@@ -120,7 +121,7 @@ const next = () => {
               </v-col>
             </v-row>
             <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="back"
+              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back"
                 >前へ</v-btn
               >
               <v-btn
@@ -128,7 +129,7 @@ const next = () => {
                 color="primary"
                 class="me-3 mt-3"
                 size="large"
-                append-icon="mdi-chevron-right"
+                :append-icon="mdiChevronRight"
                 @click="next"
                 >次へ</v-btn
               >

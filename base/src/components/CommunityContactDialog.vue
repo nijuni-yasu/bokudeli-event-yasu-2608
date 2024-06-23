@@ -3,6 +3,7 @@ import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { getUserPath } from '@/router/utils'
+import { mdiEmail } from '@mdi/js'
 
 interface Props {
   modelValue: boolean
@@ -73,7 +74,7 @@ const onFormSubmit = async () => {
   <v-dialog v-model="dialog" :width="$vuetify.display.smAndDown ? 'auto' : 650" persistent>
     <v-card class="pa-sm-9 pa-5 text-center">
       <v-card-title class="text-h5">
-        <v-icon start> mdi-email </v-icon>
+        <v-icon start :icon="mdiEmail" />
         お問い合わせ
       </v-card-title>
       <v-card-text> 送信先：{{ props.communityName }} にメールにて問い合わせます。 </v-card-text>

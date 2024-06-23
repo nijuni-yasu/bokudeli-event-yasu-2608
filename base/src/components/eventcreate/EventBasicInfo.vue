@@ -13,6 +13,7 @@ import { Japanese } from 'flatpickr/dist/l10n/ja'
 import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { Timestamp } from 'firebase/firestore'
 import { requiredValidator, postalCodeValidator, urlValidator } from '@/utils/validators'
+import { mdiMapMarker, mdiCalendar, mdiChevronRight } from '@mdi/js'
 
 const pickerConfig = {
   locale: Japanese,
@@ -137,7 +138,7 @@ watchEffect(async () => {
       <v-card flat class="mt-3">
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-map-marker" />
+            <v-icon size="50" class="text--primary me-3" :icon="mdiMapMarker" />
             <span>開催場所</span>
           </v-card-title>
 
@@ -191,7 +192,7 @@ watchEffect(async () => {
           </v-card-text>
 
           <v-card-title class="pt-10 px-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-calendar" />
+            <v-icon size="50" class="text--primary me-3" :icon="mdiCalendar" />
             <span>開催日時</span>
           </v-card-title>
 
@@ -271,7 +272,7 @@ watchEffect(async () => {
               color="primary"
               class="me-3 mt-3"
               size="large"
-              append-icon="mdi-chevron-right"
+              :append-icon="mdiChevronRight"
               :disabled="!isValid"
               @click="submit"
               >次へ</v-btn

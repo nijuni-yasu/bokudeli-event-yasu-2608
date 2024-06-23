@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.5",
-    "@mdi/font": "^7.0.96",
     "@turf/distance": "^7.0.0",
     "@vueuse/core": "^10.11.0",
     "axios": "^1.4.0",
@@ -39,8 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",
-    "@iconify-json/mdi": "^1.1.35",
-    "@iconify/vue": "^4.1.1",
+    "@mdi/js": "^7.4.47",
     "@tsconfig/node20": "^20.1.4",
     "@types/lodash": "^4.17.5",
     "@types/node": "^20.12.5",

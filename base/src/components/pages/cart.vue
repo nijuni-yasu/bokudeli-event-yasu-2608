@@ -16,6 +16,7 @@ import Stripe from 'stripe'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { fixOrder } from '@/composable/fixOrder'
+import { mdiCheckOutline, mdiTrashCan } from '@mdi/js'
 
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -298,7 +299,7 @@ onMounted(async () => {
                     <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
                     <td style="padding: 1px">¥{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
                     <td style="padding: 1px">
-                      <v-btn icon="mdi-trash-can" variant="text" @click="deleteMenuInCart(cart.order, menu)"> </v-btn>
+                      <v-btn :icon="mdiTrashCan" variant="text" @click="deleteMenuInCart(cart.order, menu)"> </v-btn>
                     </td>
                   </tr>
                 </tbody>
@@ -319,7 +320,7 @@ onMounted(async () => {
                 rounded
                 elevation="7"
                 width="85%"
-                prepend-icon="mdi-check-outline"
+                :prepend-icon="mdiCheckOutline"
                 @click="showConfirm(cart)"
               >
                 事前注文してイベントに参加する

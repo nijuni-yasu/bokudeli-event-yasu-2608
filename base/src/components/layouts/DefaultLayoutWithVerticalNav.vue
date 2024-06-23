@@ -8,6 +8,7 @@ import UserProfile from './UserProfile.vue'
 
 // @layouts plugin
 import { VerticalNavLayout } from '@layouts'
+import { mdiMenu } from '@mdi/js'
 
 const { t: $t } = useI18n()
 const navItems = getNavItems($t)
@@ -35,7 +36,7 @@ watch(
     <template #navbar="{ toggleVerticalOverlayNavActive }">
       <div class="d-flex h-100 align-center">
         <IconBtn id="vertical-nav-toggle-btn" class="ms-n2 d-lg-none" @click="toggleVerticalOverlayNavActive(true)">
-          <VIcon icon="mdi-menu" />
+          <VIcon :icon="mdiMenu" />
         </IconBtn>
 
         <VSpacer />

@@ -7,6 +7,7 @@ import { getAuth } from 'firebase/auth'
 import { getEventCreatePath } from '@/router/utils'
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { mdiPlus } from '@mdi/js'
 
 const router = useRouter()
 const userId = getAuth().currentUser?.uid
@@ -133,7 +134,7 @@ onUnmounted(() => {
             class="ma-3 text-h6 text-sm-body-1 text-center justify-center"
             variant="text"
             color="primary"
-            prepend-icon="mdi-plus"
+            :prepend-icon="mdiPlus"
             @click="createCommunity"
           >
             コミュニティを新規作成する

@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore'
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { priceString } from '@/schemes/converter'
+import { mdiCart } from '@mdi/js'
 
 const router = useRouter()
 
@@ -181,7 +182,7 @@ const addCart = async () => {
           class="justify-center mx-1 align-self-center"
           rounded
           color="primary"
-          prepend-icon="mdi-cart"
+          :prepend-icon="mdiCart"
           :loading="isAddingOrder"
           @click="addCart()"
         >

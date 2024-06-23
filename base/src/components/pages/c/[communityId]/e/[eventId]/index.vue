@@ -17,6 +17,21 @@ import { shareSnsButton } from '@/composable/shareSnsButton'
 import ShowDialog from '@/components/ShowDialog.vue'
 import VueQrious from 'vue-qrious'
 import { useI18n } from 'vue-i18n'
+import {
+  mdiEmail,
+  mdiPencilBoxOutline,
+  mdiFoodForkDrink,
+  mdiHome,
+  mdiAlphaXCircle,
+  mdiFacebook,
+  mdiAlphaLCircle,
+  mdiQrcode,
+  mdiContentCopy,
+  mdiCalendarPlus,
+  mdiMapMarkerRadius,
+  mdiOpenInNew,
+  mdiAccountGroup,
+} from '@mdi/js'
 
 const qrcodeSize = 300
 
@@ -169,7 +184,7 @@ onUnmounted(() => {
       <v-row class="justify-center mt-lg-10">
         <v-col md="8" sm="9" cols="12">
           <v-row class="justify-space-between align-center my-0 py-0">
-            <v-btn icon="mdi-home" size="x-large" variant="text" to="/" />
+            <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
             <v-spacer />
             <v-chip class="" color="primary" size="large">
               {{ $t(`event_status.${event.event_status.value}`) }}
@@ -180,7 +195,7 @@ onUnmounted(() => {
               class="ml-2 my-1"
               elevation="5"
               rounded
-              prepend-icon="mdi-email"
+              :prepend-icon="mdiEmail"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
                 query: { id: props.eventId, step: 5 },
@@ -194,7 +209,7 @@ onUnmounted(() => {
               class="ml-2 my-1"
               elevation="5"
               rounded
-              prepend-icon="mdi-pencil-box-outline"
+              :prepend-icon="mdiPencilBoxOutline"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
                 query: { id: props.eventId },
@@ -213,7 +228,7 @@ onUnmounted(() => {
               class="my-1"
               elevation="5"
               rounded
-              prepend-icon="mdi-pencil-box-outline"
+              :prepend-icon="mdiPencilBoxOutline"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
                 query: { id: props.eventId, step: 4 },
@@ -244,7 +259,7 @@ onUnmounted(() => {
                 <v-card-text class="event-item text-right px-0 ma-1">
                   <v-btn
                     class="ml-1"
-                    icon="mdi-alpha-x-circle"
+                    :icon="mdiAlphaXCircle"
                     color="grey-900"
                     size="x-large"
                     density="compact"
@@ -253,7 +268,7 @@ onUnmounted(() => {
                   ></v-btn>
                   <v-btn
                     class="ml-1"
-                    icon="mdi-facebook"
+                    :icon="mdiFacebook"
                     color="#1877F2"
                     size="x-large"
                     density="compact"
@@ -262,7 +277,7 @@ onUnmounted(() => {
                   ></v-btn>
                   <v-btn
                     class="ml-1"
-                    icon="mdi-alpha-l-circle"
+                    :icon="mdiAlphaLCircle"
                     color="#06c755"
                     size="x-large"
                     density="compact"
@@ -271,7 +286,7 @@ onUnmounted(() => {
                   ></v-btn>
                   <v-btn
                     class="ml-1"
-                    icon="mdi-qrcode"
+                    :icon="mdiQrcode"
                     color="grey-900"
                     size="x-large"
                     density="compact"
@@ -280,7 +295,7 @@ onUnmounted(() => {
                   ></v-btn>
                   <v-btn
                     class="mx-1"
-                    icon="mdi-content-copy"
+                    :icon="mdiContentCopy"
                     color="grey-900"
                     size="x-large"
                     density="compact"
@@ -293,9 +308,9 @@ onUnmounted(() => {
                   {{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
                     dateOnlyTimeString(event.event_end_datetime)
                   }}
-                  <a @click="openCalendarAddDialog"
-                    ><button><v-icon>mdi-calendar-plus</v-icon></button></a
-                  >
+                  <a @click="openCalendarAddDialog">
+                    <button><v-icon :icon="mdiCalendarPlus" /></button>
+                  </a>
                 </v-card-text>
                 <v-card-text class="event-item"> 【開催場所】 </v-card-text>
                 <v-card-text class="event-content">
@@ -304,12 +319,12 @@ onUnmounted(() => {
                     :href="`https://www.google.co.jp/maps/search/${event.event_address} ${event.event_place}`"
                     target="_blank"
                   >
-                    <v-icon>mdi-map-marker-radius</v-icon>
+                    <v-icon :icon="mdiMapMarkerRadius" />
                   </a>
                   <div v-if="event.event_place_url && event.event_place">
                     {{ event.event_place }}
                     <a :href="event.event_place_url" target="_blank">
-                      <v-icon size="small"> mdi-open-in-new </v-icon>
+                      <v-icon size="small" :icon="mdiOpenInNew" />
                     </a>
                   </div>
                   <div v-else-if="!event.event_place_url && event.event_place">
@@ -351,7 +366,7 @@ onUnmounted(() => {
                     <v-col v-if="members.length > 0" cols="auto">
                       <router-link :to="{ path: `${eventId}/members` }">
                         <div class="d-flex align-end">
-                          <v-icon size="large">mdi-account-group</v-icon>
+                          <v-icon size="large" :icon="mdiAccountGroup" />
                           <span class="ml-2" style="font-size: 18px">参加者一覧</span>
                         </div>
                       </router-link>
@@ -382,7 +397,7 @@ onUnmounted(() => {
                           class="ma-1"
                           variant="outlined"
                           rounded
-                          prepend-icon="mdi-email"
+                          :prepend-icon="mdiEmail"
                           @click="openContactDialog"
                         >
                           主催者に連絡
@@ -456,7 +471,7 @@ onUnmounted(() => {
             size="large"
             rounded
             elevation="10"
-            prepend-icon="mdi-food-fork-drink"
+            :prepend-icon="mdiFoodForkDrink"
             color="primary"
             width="90%"
             @click="scrollToMenu"

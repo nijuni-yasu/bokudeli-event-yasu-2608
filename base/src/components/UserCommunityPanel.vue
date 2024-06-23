@@ -7,6 +7,7 @@ import { getCommunityCreatePath, getCommunityPath, getCommunitySettingsPath, get
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
 import { type CommunityMember } from '@/schemes/communityMember'
 import UserAvatar from '@/components/UserAvatar.vue'
+import { mdiPencilBoxOutline, mdiCog, mdiHeartOutline } from '@mdi/js'
 
 const router = useRouter()
 const props = defineProps<{
@@ -152,7 +153,7 @@ onUnmounted(() => {
               size="small"
               rounded
               target="_blank"
-              prepend-icon="mdi-pencil-box-outline"
+              :prepend-icon="mdiPencilBoxOutline"
               @click="router.push(getEventCreatePath(community.community_account))"
             >
               イベント新規作成
@@ -164,7 +165,7 @@ onUnmounted(() => {
               size="small"
               rounded
               target="_blank"
-              prepend-icon="mdi-cog"
+              :prepend-icon="mdiCog"
               @click="router.push(getCommunitySettingsPath(community.community_account))"
             >
               コミュニティ設定
@@ -184,7 +185,7 @@ onUnmounted(() => {
             elevation="10"
             size="large"
             rounded
-            prepend-icon="mdi-heart-outline"
+            :prepend-icon="mdiHeartOutline"
             @click="router.push(getCommunityCreatePath())"
           >
             コミュニティを作る

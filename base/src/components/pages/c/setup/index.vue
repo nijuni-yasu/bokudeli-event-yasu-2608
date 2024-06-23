@@ -11,6 +11,7 @@ import {
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { mdiPlus, mdiHelpCircleOutline, mdiListBoxOutline, mdiImage, mdiWeb, mdiLightbulbOnOutline, mdiAccountOutline } from '@mdi/js'
 
 const router = useRouter()
 const route = useRoute()
@@ -205,7 +206,7 @@ const checkAccountExists = async (event: Event) => {
                 <v-btn
                   color="primary"
                   class="me-3 mt-3"
-                  icon="mdi-help-circle-outline"
+                  :icon="mdiHelpCircleOutline"
                   size="x-large"
                   density="compact"
                   variant="text"
@@ -214,7 +215,7 @@ const checkAccountExists = async (event: Event) => {
               </v-col>
             </v-row>
             <v-card-title class="px-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-list-box-outline" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiListBoxOutline" />
               <span>コミュニティ設定</span>
             </v-card-title>
 
@@ -266,7 +267,7 @@ const checkAccountExists = async (event: Event) => {
             </v-card-text>
 
             <v-card-title class="pt-10 px-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-image" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiImage" />
               <span>画像設定</span>
             </v-card-title>
             <v-card-text class="pt-5">
@@ -322,7 +323,7 @@ const checkAccountExists = async (event: Event) => {
             </v-card-text>
 
             <v-card-title class="pt-10 px-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-web" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
               <span>SNS設定</span>
             </v-card-title>
 
@@ -383,7 +384,7 @@ const checkAccountExists = async (event: Event) => {
 
             <!-- Activity -->
             <v-card-title v-if="communityAccount != null" class="pt-10 px-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-lightbulb-on-outline" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiLightbulbOnOutline" />
               <span>公開設定</span>
             </v-card-title>
             <v-card-text v-if="communityAccount != null">
@@ -392,7 +393,7 @@ const checkAccountExists = async (event: Event) => {
               </v-switch>
             </v-card-text>
             <v-card-title class="pt-10 pl-5">
-              <v-icon size="50" class="text--primary me-3" icon="mdi-account-outline" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiAccountOutline" />
               <span>運営者情報</span>
             </v-card-title>
             <v-card-text class="px-5 pb-10">
@@ -509,7 +510,7 @@ const checkAccountExists = async (event: Event) => {
                 color="grey-900"
                 class="mt-3"
                 size="x-large"
-                prepend-icon="mdi-plus"
+                :prepend-icon="mdiPlus"
                 @click="isOpenConfirmDialog = true"
               >
                 コミュニティを新規作成する

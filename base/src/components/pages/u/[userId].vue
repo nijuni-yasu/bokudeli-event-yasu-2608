@@ -4,6 +4,7 @@ import UserOrderPanel from '@/components/UserOrderPanel.vue'
 import UserCommunityPanel from '@/components/UserCommunityPanel.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore } from '@/stores/user'
+import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
 
 const props = defineProps<{
   userId: string
@@ -24,15 +25,15 @@ const tabs = ref(null)
       <v-col cols="12" sm="8" md="9">
         <v-tabs v-model="tabs">
           <v-tab value="0">
-            <v-icon start> mdi-calendar-heart </v-icon>
+            <v-icon start :icon="mdiCalendarHeart" />
             参加イベント
           </v-tab>
           <v-tab value="1">
-            <v-icon start> mdi-account-group </v-icon>
+            <v-icon start :icon="mdiAccountGroup" />
             参加コミュニティ
           </v-tab>
           <v-tab value="2">
-            <v-icon start> mdi-heart-outline </v-icon>
+            <v-icon start :icon="mdiHeartOutline" />
             運営コミュニティ
           </v-tab>
         </v-tabs>

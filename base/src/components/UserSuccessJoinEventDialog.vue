@@ -20,6 +20,7 @@ import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import { type EventMember } from '@/schemes/EventMember'
 import { shareSnsButton } from '@/composable/shareSnsButton'
+import { mdiAlphaXCircle, mdiFacebook, mdiAlphaLCircle, mdiLinkVariant } from '@mdi/js'
 
 interface Props {
   modelValue: boolean
@@ -114,7 +115,7 @@ onMounted(async () => {
       <v-card-text class="text-center px-0 mb-5">
         <v-btn
           class="ml-1"
-          icon="mdi-alpha-x-circle"
+          :icon="mdiAlphaXCircle"
           color="grey-900"
           size="x-large"
           density="compact"
@@ -123,7 +124,7 @@ onMounted(async () => {
         ></v-btn>
         <v-btn
           class="ml-1"
-          icon="mdi-facebook"
+          :icon="mdiFacebook"
           color="#1877F2"
           size="x-large"
           density="compact"
@@ -132,7 +133,7 @@ onMounted(async () => {
         ></v-btn>
         <v-btn
           class="ml-1"
-          icon="mdi-alpha-l-circle"
+          :icon="mdiAlphaLCircle"
           color="#06c755"
           size="x-large"
           density="compact"
@@ -141,7 +142,7 @@ onMounted(async () => {
         ></v-btn>
         <v-btn
           class="mx-1"
-          icon="mdi-link-variant"
+          :icon="mdiLinkVariant"
           color="grey-900"
           size="x-large"
           density="compact"

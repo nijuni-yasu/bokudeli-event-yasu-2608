@@ -4,6 +4,7 @@ import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
+import { mdiAccountOutline, mdiCartOutline, mdiCalendarPlus, mdiLogout } from '@mdi/js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -49,7 +50,7 @@ const logout = async () => {
             <!-- 👉 Profile -->
             <v-list-item v-if="isLogin" :to="`/mypage`">
               <template #prepend>
-                <v-icon class="me-2" icon="mdi-account-outline" size="22" />
+                <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
               </template>
               <v-list-item-title>マイページ</v-list-item-title>
             </v-list-item>
@@ -60,7 +61,7 @@ const logout = async () => {
             <!-- 👉 cart -->
             <v-list-item v-if="isLogin" :to="`/cart`">
               <template #prepend>
-                <v-icon class="me-2" icon="mdi-cart-outline" size="22" />
+                <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
               </template>
               <v-list-item-title>カート</v-list-item-title>
             </v-list-item>
@@ -71,7 +72,7 @@ const logout = async () => {
             <!-- 👉 cart -->
             <v-list-item v-if="isLogin" :to="`/newevent`">
               <template #prepend>
-                <v-icon class="me-2" icon="mdi-calendar-plus" size="22" />
+                <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
               </template>
               <v-list-item-title>イベント作成</v-list-item-title>
             </v-list-item>
@@ -82,14 +83,14 @@ const logout = async () => {
             <!-- 👉 Login, Logout -->
             <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
               <template #prepend>
-                <v-icon class="me-2" icon="mdi-logout" size="22" />
+                <v-icon class="me-2" :icon="mdiLogout" size="22" />
               </template>
 
               <v-list-item-title>ログイン</v-list-item-title>
             </v-list-item>
             <v-list-item v-else @click="logout()">
               <template #prepend>
-                <v-icon class="me-2" icon="mdi-logout" size="22" />
+                <v-icon class="me-2" :icon="mdiLogout" size="22" />
               </template>
               <v-list-item-title>ログアウト</v-list-item-title>
             </v-list-item>

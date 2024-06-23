@@ -8,6 +8,7 @@ import {
   signInWithPopup,
   linkWithCredential,
 } from 'firebase/auth'
+import { mdiFacebook, mdiGoogle } from '@mdi/js'
 
 const props = defineProps<{
   modelValue: boolean
@@ -163,7 +164,7 @@ const handleGoogleLogin = async () => {
             <v-col class="d-flex justify-center">
               <v-btn
                 class="login-button facebook-button"
-                prepend-icon="mdi-facebook"
+                :prepend-icon="mdiFacebook"
                 color="#1877f2"
                 @click="handleFacebookLogin"
               >
@@ -175,7 +176,7 @@ const handleGoogleLogin = async () => {
             <v-col class="d-flex justify-center">
               <v-btn
                 class="login-button google-button"
-                prepend-icon="mdi-google"
+                :prepend-icon="mdiGoogle"
                 color="grey-900"
                 @click="handleGoogleLogin"
               >

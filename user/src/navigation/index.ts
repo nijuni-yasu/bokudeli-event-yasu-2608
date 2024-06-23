@@ -1,29 +1,30 @@
 import type { NavLink, NavGroup } from '@layouts/types'
 import type { ComposerTranslation } from 'vue-i18n'
 import { getHomePath, getNewEventPath, getCommunityListPath } from '@/router/utils'
+import { mdiCalendarHeart, mdiCalendarPlus, mdiAccountGroup, mdiFoodForkDrink } from '@mdi/js'
 
 export const getNavItems = ($t: ComposerTranslation): (NavLink | NavGroup)[] => {
   return [
     {
       title: 'イベント参加',
       to: { path: getHomePath() },
-      icon: { icon: 'mdi-calendar-heart' },
+      icon: { icon: mdiCalendarHeart },
     },
     {
       title: 'イベント作成',
       to: { path: getNewEventPath() },
-      icon: { icon: 'mdi-calendar-plus' },
+      icon: { icon: mdiCalendarPlus },
     },
     {
       title: 'コミュニティ',
       to: { path: getCommunityListPath() },
-      icon: { icon: 'mdi-account-group' },
+      icon: { icon: mdiAccountGroup },
     },
     {
       title: 'shokujiiって？',
       href: 'https://shokujii.studio.site/',
       target: '_blank',
-      icon: { icon: 'mdi-food-fork-drink' },
+      icon: { icon: mdiFoodForkDrink },
     },
   ]
 }

@@ -3,6 +3,7 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { requiredValidator, phoneValidator, emailValidator } from '@/utils/validators'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { mdiChevronLeft, mdiCalendarPlus, mdiEmail } from '@mdi/js'
 
 const props = defineProps<{
   modelValue: BokudeliEvent
@@ -43,7 +44,7 @@ const sendReserveMail = () => {
       <v-card flat class="mt-2">
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pa-5">
-            <v-icon size="50" class="text--primary me-3" icon="mdi-email" />
+            <v-icon size="50" class="text--primary me-3" :icon="mdiEmail" />
             <span>店舗への連絡事項</span>
           </v-card-title>
 
@@ -119,7 +120,7 @@ const sendReserveMail = () => {
           </v-card-text>
 
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="emit('back')"
+            <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="emit('back')"
               >前へ</v-btn
             >
             <v-btn
@@ -127,7 +128,7 @@ const sendReserveMail = () => {
               color="primary"
               class="mt-3"
               size="large"
-              prepend-icon="mdi-calendar-plus"
+              :prepend-icon="mdiCalendarPlus"
               :disabled="!isValid"
               @click="emit('submit')"
               >下書きをプレビューする</v-btn
@@ -137,7 +138,7 @@ const sendReserveMail = () => {
               color="primary"
               class="mt-3"
               size="large"
-              prepend-icon="mdi-calendar-plus"
+              :prepend-icon="mdiCalendarPlus"
               :disabled="!isValid"
               @click="emit('submit')"
               >イベントを保存する</v-btn
@@ -150,7 +151,7 @@ const sendReserveMail = () => {
               color="grey-900"
               class="mt-3"
               size="x-large"
-              prepend-icon="mdi-email"
+              :prepend-icon="mdiEmail"
               @click="openConfirmDialog"
             >
               店舗に予約申請する
