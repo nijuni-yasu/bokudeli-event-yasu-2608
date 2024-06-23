@@ -96,8 +96,10 @@ const iconImageUrl = computed(() => {
     return community.value?.community_icon_image_url ?? null
   }
 })
-const coverImageValidator = (value: File[] | null) => coverImageUrl.value != null && coverImageUrl.value !== '' || requiredValidator(value)
-const iconImageValidator = (value: File[] | null) => iconImageUrl.value != null && iconImageUrl.value !== '' || requiredValidator(value)
+const coverImageValidator = (value: File[] | null) =>
+  (coverImageUrl.value != null && coverImageUrl.value !== '') || requiredValidator(value)
+const iconImageValidator = (value: File[] | null) =>
+  (iconImageUrl.value != null && iconImageUrl.value !== '') || requiredValidator(value)
 
 const trimInputtedId = (id: string | undefined, urlPattern: RegExp) => {
   if (!id) return ''
@@ -118,7 +120,7 @@ const facebookId = computed({
   },
 })
 const instagramId = computed({
-  get: () =>  community.value?.community_sns_instagram,
+  get: () => community.value?.community_sns_instagram,
   set: (val) => {
     if (community.value == null) return
     community.value.community_sns_instagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
@@ -258,12 +260,7 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <v-textarea
-                    v-model="community.community_desc"
-                    outlined
-                    rows="10"
-                    label="コミュニティ説明文"
-                  />
+                  <v-textarea v-model="community.community_desc" outlined rows="10" label="コミュニティ説明文" />
                 </v-col>
               </v-row>
             </v-card-text>
@@ -276,12 +273,13 @@ const checkAccountExists = async (event: Event) => {
               <v-row>
                 <v-col cols="12">
                   <div class="v-field icon-upload-container" @click="onIconTriggerUpload">
-                    <v-file-input ref="iconFileInputRef" v-model="iconImageFile" class="file-input" :rules="[iconImageValidator]" />
-                    <v-img
-                      v-if="iconImageUrl != null"
-                      :src="iconImageUrl"
-                      cover
-                      aspect-ratio="1" />
+                    <v-file-input
+                      ref="iconFileInputRef"
+                      v-model="iconImageFile"
+                      class="file-input"
+                      :rules="[iconImageValidator]"
+                    />
+                    <v-img v-if="iconImageUrl != null" :src="iconImageUrl" cover aspect-ratio="1" />
                     <div v-else class="placeholder">アイコンをアップロード<br />300px X 300px</div>
                   </div>
                 </v-col>
@@ -301,12 +299,13 @@ const checkAccountExists = async (event: Event) => {
               <v-row>
                 <v-col cols="12">
                   <div class="v-field image-upload-container" @click="onCoverTriggerUpload">
-                    <v-file-input ref="coverFileInputRef" v-model="coverImageFile" class="file-input" :rules="[coverImageValidator]" />
-                    <v-img
-                      v-if="coverImageUrl != null"
-                      :src="coverImageUrl"
-                      cover
-                      aspect-ratio="1.91" />
+                    <v-file-input
+                      ref="coverFileInputRef"
+                      v-model="coverImageFile"
+                      class="file-input"
+                      :rules="[coverImageValidator]"
+                    />
+                    <v-img v-if="coverImageUrl != null" :src="coverImageUrl" cover aspect-ratio="1.91" />
                     <div v-else class="placeholder">カバー画像をアップロード<br />1200px X 630px</div>
                   </div>
                 </v-col>
@@ -330,7 +329,13 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <v-text-field v-model="facebookId" outlined dense label="facebook" prefix="https://www.facebook.com/"></v-text-field>
+                  <v-text-field
+                    v-model="facebookId"
+                    outlined
+                    dense
+                    label="facebook"
+                    prefix="https://www.facebook.com/"
+                  ></v-text-field>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -338,7 +343,13 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <v-text-field v-model="twitterId" outlined dense label="X(Twitter)" prefix="https://x.com/"></v-text-field>
+                  <v-text-field
+                    v-model="twitterId"
+                    outlined
+                    dense
+                    label="X(Twitter)"
+                    prefix="https://x.com/"
+                  ></v-text-field>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -346,7 +357,13 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <v-text-field v-model="instagramId" outlined dense label="Instagram" prefix="https://www.instagram.com/"></v-text-field>
+                  <v-text-field
+                    v-model="instagramId"
+                    outlined
+                    dense
+                    label="Instagram"
+                    prefix="https://www.instagram.com/"
+                  ></v-text-field>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -480,7 +497,9 @@ const checkAccountExists = async (event: Event) => {
               </v-row>
             </v-card-text>
             <v-card-text v-if="communityAccount != null" class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" @click="cancel">キャンセル</v-btn>
+              <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" @click="cancel"
+                >キャンセル</v-btn
+              >
               <v-btn :disabled="!isValid" color="primary" class="me-3 mt-3" size="large" @click="submit">設定</v-btn>
             </v-card-text>
 

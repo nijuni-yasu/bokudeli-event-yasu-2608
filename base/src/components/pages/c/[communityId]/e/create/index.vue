@@ -70,85 +70,97 @@ const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
 
 // Fetch Shops
-watch([()=> event.value?.event_start_datetime, () => event.value?.event_postalcode], async () => {
-  if (event.value == null) {
-    return
-  }
-  const startDateTime =  event.value.event_start_datetime?.toDate()
-  const postalcode = event.value.event_postalcode
-  if (isEmpty(postalcode) || postalCodeValidator(postalcode) !== true) {
-    return
-  }
-  const location = await fetchLocationByPostalcode(postalcode)
-  if (location == null || startDateTime == null) {
-    shops.value = []
-    return 
-  }
+watch(
+  [() => event.value?.event_start_datetime, () => event.value?.event_postalcode],
+  async () => {
+    if (event.value == null) {
+      return
+    }
+    const startDateTime = event.value.event_start_datetime?.toDate()
+    const postalcode = event.value.event_postalcode
+    if (isEmpty(postalcode) || postalCodeValidator(postalcode) !== true) {
+      return
+    }
+    const location = await fetchLocationByPostalcode(postalcode)
+    if (location == null || startDateTime == null) {
+      shops.value = []
+      return
+    }
 
-  isLoadingShop.value = true
+    isLoadingShop.value = true
 
-  const shopDb = collectionGroup(db, 'shops')
-  const shopSnapshot = await getDocs(shopDb)
-  shops.value = shopSnapshot.docs
-    .map((doc) => {
-      return doc.data() as Shop
-    })
-    .filter((shop) => {
-      // check distance
-      const shopLocation = {
-        longitude: shop.shop_address_longitude,
-        latitude: shop.shop_address_latitude,
-      }
-      const distance = calculateDistance(location, shopLocation)
-      const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
-      const isInRange = maxRange ? distance <= maxRange : false
-
-      // check time
-      const eventTimeStart = convertDateToWeekTimestamp(startDateTime)
-      const isInTime = shop.shop_time.some((shopTime, dayOfWeek) => {
-        if (!shopTime.is_open) {
-          return false
-        }
-        const timeStart = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start)
-        const timeEnd = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end)
-        const timeStart2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start2)
-        const timeEnd2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end2)
-        return (
-          (timeStart <= eventTimeStart && eventTimeStart <= timeEnd) ||
-          (timeStart2 <= eventTimeStart && eventTimeStart <= timeEnd2)
-        )
+    const shopDb = collectionGroup(db, 'shops')
+    const shopSnapshot = await getDocs(shopDb)
+    shops.value = shopSnapshot.docs
+      .map((doc) => {
+        return doc.data() as Shop
       })
+      .filter((shop) => {
+        // check distance
+        const shopLocation = {
+          longitude: shop.shop_address_longitude,
+          latitude: shop.shop_address_latitude,
+        }
+        const distance = calculateDistance(location, shopLocation)
+        const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
+        const isInRange = maxRange ? distance <= maxRange : false
 
-      return isInRange && isInTime && shop.is_approved && shop.is_open
-    })
-  isLoadingShop.value = false
-}, { immediate: true })
+        // check time
+        const eventTimeStart = convertDateToWeekTimestamp(startDateTime)
+        const isInTime = shop.shop_time.some((shopTime, dayOfWeek) => {
+          if (!shopTime.is_open) {
+            return false
+          }
+          const timeStart = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start)
+          const timeEnd = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end)
+          const timeStart2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start2)
+          const timeEnd2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end2)
+          return (
+            (timeStart <= eventTimeStart && eventTimeStart <= timeEnd) ||
+            (timeStart2 <= eventTimeStart && eventTimeStart <= timeEnd2)
+          )
+        })
+
+        return isInRange && isInTime && shop.is_approved && shop.is_open
+      })
+    isLoadingShop.value = false
+  },
+  { immediate: true },
+)
 
 // Fetch Menus
-watch(() => event.value?.partner_id, async () => {
-  const partner_id = event.value?.partner_id
-  if (!partner_id) {
-    return
-  }
+watch(
+  () => event.value?.partner_id,
+  async () => {
+    const partner_id = event.value?.partner_id
+    if (!partner_id) {
+      return
+    }
 
-  isLoadingMenu.value = true
-  const partnerDb = collection(db, 'partners')
+    isLoadingMenu.value = true
+    const partnerDb = collection(db, 'partners')
 
-  const menuSnapshot = await getDocs(collection(partnerDb, partner_id, 'menus'))
+    const menuSnapshot = await getDocs(collection(partnerDb, partner_id, 'menus'))
 
-  menus.value = menuSnapshot.docs
-    .map((doc) => convertDocumentDataToMenu(partner_id, doc.id, doc.data()))
-    .sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
+    menus.value = menuSnapshot.docs
+      .map((doc) => convertDocumentDataToMenu(partner_id, doc.id, doc.data()))
+      .sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
 
-  isLoadingMenu.value = false
-}, { immediate: true })
+    isLoadingMenu.value = false
+  },
+  { immediate: true },
+)
 
-watch(() => communityStore.community?.is_approved, (is_approved) => {
-  if (is_approved === false) {
-    window.alert('コミュニティが承認されていません')
-    router.push(getCommunityPath(props.communityId))
-  }
-}, { immediate: true })
+watch(
+  () => communityStore.community?.is_approved,
+  (is_approved) => {
+    if (is_approved === false) {
+      window.alert('コミュニティが承認されていません')
+      router.push(getCommunityPath(props.communityId))
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(async () => {
   const roles = await communityStore.getCurrentUserRoles()
@@ -212,7 +224,7 @@ const sumbmit = async () => {
 const sendReserveMail = async () => {
   const event = await saveDraft()
   if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
-    console.warn('The event doesn\'t have enough information.', event)
+    console.warn("The event doesn't have enough information.", event)
     return
   }
   event.event_status = { value: 'applying_reservation' }
@@ -247,7 +259,14 @@ const stepperItems = computed(() => [
       <event-basic-info v-model="event" @submit="stepper++" />
     </template>
     <template #[`item.2`]>
-      <event-shop v-model="event" :shops="shops" :loading="isLoadingShop" @submit="stepper++" @next="stepper++" @back="stepper--" />
+      <event-shop
+        v-model="event"
+        :shops="shops"
+        :loading="isLoadingShop"
+        @submit="stepper++"
+        @next="stepper++"
+        @back="stepper--"
+      />
     </template>
     <template #[`item.3`]>
       <event-menu :menus="menus" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />
@@ -260,20 +279,19 @@ const stepperItems = computed(() => [
     </template>
     <div>
       <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
-        <v-card-text class="text-center py-10 text-h6">
-          イベントの作成・編集について
-        </v-card-text>        
+        <v-card-text class="text-center py-10 text-h6"> イベントの作成・編集について </v-card-text>
         <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
-          ・「開催場所」「開催日時」を入力後、対応可能な店舗を選択してイベント内容や注文情報を入力してください。<br>
-          ・下書き保存をし、プレビューの確認後、店舗に予約申請をしてください。<br>
-          ・店舗から予約申請の承認を受けたら、注文を開始することができます。<br>
-          ・店舗から予約申請が却下された場合、店舗や日時などを変更して再度予約申請をしてください。<br>
-          <br>
-          ・予約申請後、「店舗」「開催場所」「開催日時」などの変更はできません。<br>
-          ・予約申請後、「イベントタイトル」「イベント詳細」「イベント画像」の編集は可能です。<br>
-          <br>
-          ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> をご確認ください。<br>
-          ・ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br>
+          ・「開催場所」「開催日時」を入力後、対応可能な店舗を選択してイベント内容や注文情報を入力してください。<br />
+          ・下書き保存をし、プレビューの確認後、店舗に予約申請をしてください。<br />
+          ・店舗から予約申請の承認を受けたら、注文を開始することができます。<br />
+          ・店舗から予約申請が却下された場合、店舗や日時などを変更して再度予約申請をしてください。<br />
+          <br />
+          ・予約申請後、「店舗」「開催場所」「開催日時」などの変更はできません。<br />
+          ・予約申請後、「イベントタイトル」「イベント詳細」「イベント画像」の編集は可能です。<br />
+          <br />
+          ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> をご確認ください。<br />
+          ・ご不明点ありましたらサポートまで
+          <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
         </v-card-text>
       </confirm-dialog>
     </div>

@@ -15,20 +15,22 @@ const isEditable = computed(() => props.isEditable ?? false)
 
 const userName = computed(() => props.userData.user_name ?? 'ゲスト')
 const userDescription = computed(() => {
-  return props.userData.user_description ||
-    ((storedUserStore.storedUser?.userId !== props.userData.user_id) ? '' : 'ここに自己紹介文が入ります。')
+  return (
+    props.userData.user_description ||
+    (storedUserStore.storedUser?.userId !== props.userData.user_id ? '' : 'ここに自己紹介文が入ります。')
+  )
 })
-const twitterUrl = computed(() => (
-  props.userData.user_sns_twitter ? buildTwitterUrl(props.userData.user_sns_twitter) : undefined
-))
+const twitterUrl = computed(() =>
+  props.userData.user_sns_twitter ? buildTwitterUrl(props.userData.user_sns_twitter) : undefined,
+)
 
-const facebookUrl = computed(() => (
-  props.userData?.user_sns_facebook ? buildFacebookUrl(props.userData.user_sns_facebook) : undefined
-))
+const facebookUrl = computed(() =>
+  props.userData?.user_sns_facebook ? buildFacebookUrl(props.userData.user_sns_facebook) : undefined,
+)
 
-const instagramUrl = computed(() => (
-  props.userData?.user_sns_instagram ? buildInstagramUrl(props.userData.user_sns_instagram) : undefined
-))
+const instagramUrl = computed(() =>
+  props.userData?.user_sns_instagram ? buildInstagramUrl(props.userData.user_sns_instagram) : undefined,
+)
 
 const isUserInfoEditDialogVisible = ref(false)
 const updateUserData = async (user: FirestoredUser, image?: File) => {
@@ -55,9 +57,9 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
         <v-card-title class="d-flex align-center flex-column mb-4">
           <UserAvatar :user="userData" :size="200" />
         </v-card-title>
-          <v-card-text>
+        <v-card-text>
           <div class="text-h5 text-center">{{ userName }}</div>
-          </v-card-text>
+        </v-card-text>
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
@@ -75,7 +77,13 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
           {{ userDescription }}
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
-          <v-btn color="primary" class="me-3" size="large" prepend-icon="mdi-pencil" @click="isUserInfoEditDialogVisible = true">
+          <v-btn
+            color="primary"
+            class="me-3"
+            size="large"
+            prepend-icon="mdi-pencil"
+            @click="isUserInfoEditDialogVisible = true"
+          >
             編集
           </v-btn>
         </v-card-actions>

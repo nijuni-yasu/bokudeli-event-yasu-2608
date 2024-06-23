@@ -10,9 +10,9 @@ import UserAvatar from '@/components/UserAvatar.vue'
 
 const router = useRouter()
 const props = defineProps<{
-  userId: string,
-  type: 'members' | 'managers',
-  isLoginUser: boolean,
+  userId: string
+  type: 'members' | 'managers'
+  isLoginUser: boolean
 }>()
 type CommunityWithMembers = {
   community: BokudeliCommunity
@@ -36,66 +36,72 @@ const communitiesStore = useCommunitiesStore([
 ]) as CommunitiesStore
 communitiesStore.setPageSize(5)
 
-const communityList = computed<CommunityWithMembers[]>(() => (communitiesStore.communityStores ?? [])
-  .flatMap((communityStore) => {
+const communityList = computed<CommunityWithMembers[]>(() =>
+  (communitiesStore.communityStores ?? []).flatMap((communityStore) => {
     if (communityStore.community == null) {
       return []
     }
     if (props.type === 'managers') {
-      return communityStore.members?.some((member) => member?.user_id === props.userId && (member?.roles?.includes('manager') ?? false)) ? {
-        community: communityStore.community,
-        members: communityStore.members,
-      } : []
+      return communityStore.members?.some(
+        (member) => member?.user_id === props.userId && (member?.roles?.includes('manager') ?? false),
+      )
+        ? {
+            community: communityStore.community,
+            members: communityStore.members,
+          }
+        : []
     } else {
-      return communityStore.members?.some((member) => member?.user_id === props.userId) ? {
-        community: communityStore.community,
-        members: communityStore.members,
-      } : []
+      return communityStore.members?.some((member) => member?.user_id === props.userId)
+        ? {
+            community: communityStore.community,
+            members: communityStore.members,
+          }
+        : []
     }
-  })
+  }),
 )
 
-watch(() => communitiesStore.communityStores, () => {
-  if (isVisible) {
-    communitiesStore.next()
+watch(
+  () => communitiesStore.communityStores,
+  () => {
+    if (isVisible) {
+      communitiesStore.next()
+    }
+  },
+)
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          isVisible = true
+          communitiesStore.next()
+        } else {
+          isVisible = false
+        }
+      })
+    },
+    {
+      // オプションでroot、rootMargin、thresholdを設定可能
+      threshold: 0.1, // 10%の部分が見えたらトリガー
+    },
+  )
+
+  if (loadingElement.value?.$el != null) {
+    observer.observe(loadingElement.value.$el)
   }
 })
 
-onMounted(() => {
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        isVisible = true
-        communitiesStore.next()
-      } else {
-        isVisible = false
-      }
-    });
-  }, {
-    // オプションでroot、rootMargin、thresholdを設定可能
-    threshold: 0.1 // 10%の部分が見えたらトリガー
-  });
-
-  if (loadingElement.value?.$el != null) {
-    observer.observe(loadingElement.value.$el);
-  }
-});
-
 onUnmounted(() => {
-  observer?.disconnect();
+  observer?.disconnect()
 })
 </script>
 
 <template>
   <section>
     <v-row class="justify-center">
-      <v-col
-        v-for="{ community, members } in communityList"
-        :key="community.community_id"
-        md="12"
-        sm="12"
-        cols="12"
-      >
+      <v-col v-for="{ community, members } in communityList" :key="community.community_id" md="12" sm="12" cols="12">
         <v-card
           class="mx-2 mt-2 mb-1"
           color="text-center cursor-pointer"
@@ -118,7 +124,7 @@ onUnmounted(() => {
               <v-card-text class="text-left pb-3">
                 {{ convertTruncateText(community.community_desc, 100) }}
               </v-card-text>
-              <v-spacer/>
+              <v-spacer />
               <!-- Mutual members -->
               <v-card-text class="mt-auto">
                 <div class="my-2">
@@ -126,7 +132,7 @@ onUnmounted(() => {
                 </div>
                 <div v-if="members" class="v-avatar-group">
                   <UserAvatar
-                    v-for="(member, i) in members.slice(0,17) ?? []"
+                    v-for="(member, i) in members.slice(0, 17) ?? []"
                     :key="member?.user_id ?? `${community.community_name}_avatar_${i}`"
                     :user="member"
                     :size="40"
@@ -136,7 +142,7 @@ onUnmounted(() => {
             </v-col>
           </v-row>
         </v-card>
-        <div v-if="props.type===`managers`&&props.isLoginUser" class="justify-center">
+        <div v-if="props.type === `managers` && props.isLoginUser" class="justify-center">
           <v-col class="text-right">
             <v-btn
               v-if="community.is_approved === true"
@@ -170,7 +176,7 @@ onUnmounted(() => {
       <v-col v-show="communitiesStore.communityStores?.length === 0" cols="12" class="text-center">
         <h4 class="mt-4">Search result not found!!</h4>
       </v-col>
-      <v-row v-show="props.type===`managers`&&props.isLoginUser" class="justify-center">
+      <v-row v-show="props.type === `managers` && props.isLoginUser" class="justify-center">
         <v-col class="text-center">
           <v-btn
             class="my-10"

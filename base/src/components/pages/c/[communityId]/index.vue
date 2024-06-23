@@ -33,7 +33,10 @@ const events = computed(() => {
   // 読み込み中は null として扱う
   return communityStore.events?.flatMap((event) => {
     // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
-    if (isManager.value === false && (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')) {
+    if (
+      isManager.value === false &&
+      (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')
+    ) {
       return []
     }
     // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
@@ -66,7 +69,7 @@ const isUrlLoading = ref(false)
 // コミュニティへの問い合わせはログイン必須
 const userStore = useStoreStoredUser()
 const openContactDialog = () => {
-  if(!userStore.storedUser){
+  if (!userStore.storedUser) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true
@@ -133,9 +136,7 @@ const inviteManager = async () => {
           >
             コミュニティ設定
           </v-btn>
-          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large">
-            申請中
-          </v-chip>
+          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large"> 申請中 </v-chip>
         </v-row>
         <v-card flat class="align-center justify-center text-center my-8 pa-md-16 pa-sm-8 pa-xs-0">
           <v-row>
@@ -145,7 +146,9 @@ const inviteManager = async () => {
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 pb-6">{{ communityStore.community.community_name }}</v-card-title>
+              <v-card-title class="justify-center text-h4 pb-6">{{
+                communityStore.community.community_name
+              }}</v-card-title>
               <v-card-text v-linkify class="text-left text-subtitle-1 pb-6">
                 {{ communityStore.community.community_desc }}
               </v-card-text>
@@ -159,7 +162,12 @@ const inviteManager = async () => {
           <v-col md="4" sm="6" cols="12">
             <v-card class="pa-5" color="text-center">
               <!-- community title and links -->
-              <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="communityStore.community.community_icon_image_url" />
+              <v-img
+                style="border-radius: 10px"
+                aspect-ratio="1"
+                cover
+                :src="communityStore.community.community_icon_image_url"
+              />
               <v-card-title class="justify-center text-h5 py-5 pre-line">
                 {{ communityStore.community.community_name }}
               </v-card-title>
@@ -194,9 +202,14 @@ const inviteManager = async () => {
                 </v-btn>
               </v-col>
               <!-- community manager -->
-              <div v-if="communityStore.members?.some(m => m?.roles?.includes('manager') ?? false)">
+              <div v-if="communityStore.members?.some((m) => m?.roles?.includes('manager') ?? false)">
                 <v-card-title class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
-                <div v-for="manager in (communityStore.members.filter(m => m?.roles?.includes('manager') ?? false) as CommunityMember[])" :key="manager.user_id">
+                <div
+                  v-for="manager in communityStore.members.filter(
+                    (m) => m?.roles?.includes('manager') ?? false,
+                  ) as CommunityMember[]"
+                  :key="manager.user_id"
+                >
                   <router-link :to="getUserPath(manager.user_id)">
                     <v-row>
                       <div class="d-flex flex-row px-6 py-2">
@@ -211,7 +224,10 @@ const inviteManager = async () => {
               <!-- community member -->
               <div v-if="communityStore.members != null">
                 <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
-                <div v-for="member in (communityStore.members.filter(m => m != null) as CommunityMember[])" :key="member.user_id">
+                <div
+                  v-for="member in communityStore.members.filter((m) => m != null) as CommunityMember[]"
+                  :key="member.user_id"
+                >
                   <router-link :to="getUserPath(member.user_id)">
                     <v-row>
                       <div class="d-flex flex-row px-6 py-2">
@@ -237,54 +253,64 @@ const inviteManager = async () => {
                     {{ event.event_name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-2 px-2">
-                    【日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ dateOnlyTimeString(event.event_end_datetime) }}
+                    【日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
+                      dateOnlyTimeString(event.event_end_datetime)
+                    }}
                   </v-card-text>
                   <v-card-text class="text-left pb-2 px-2">
                     【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
                   </v-card-text>
                   <v-card-text class="text-left pb-2 px-2"> 【場所】{{ event.event_address }} </v-card-text>
                   <v-card-text class="text-left pb-2 px-2"> 【お店】 {{ event.shop_name }} </v-card-text>
-                  <v-card-text class="text-left pb-5 px-2 ">
-                    【定員】{{ event.event_max_people }} 人
-                  </v-card-text>
+                  <v-card-text class="text-left pb-5 px-2"> 【定員】{{ event.event_max_people }} 人 </v-card-text>
                 </v-card>
-                <v-row
-                  v-if="isManager"
-                  class="justify-end my-2 mr-1"
-                >
+                <v-row v-if="isManager" class="justify-end my-2 mr-1">
                   <v-btn
-                    v-if="event.event_status.value===`in_draft`"
+                    v-if="event.event_status.value === `in_draft`"
                     class="ml-1"
                     color="white"
                     elevation="5"
                     size="small"
                     rounded
                     prepend-icon="mdi-email"
-                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:5} }"
+                    :to="{
+                      path: getEventCreatePath(communityStore.community.community_account),
+                      query: { id: event.event_id, step: 5 },
+                    }"
                   >
                     予約
                   </v-btn>
                   <v-btn
-                    v-if="event.event_status.value===`in_draft`"
+                    v-if="event.event_status.value === `in_draft`"
                     class="ml-1"
                     color="white"
                     elevation="5"
                     size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id} }"
+                    :to="{
+                      path: getEventCreatePath(communityStore.community.community_account),
+                      query: { id: event.event_id },
+                    }"
                   >
                     編集
                   </v-btn>
                   <v-btn
-                    v-if="event.event_status.value=='applying_reservation'||event.event_status.value=='accepting_order'||event.event_status.value=='order_closed'"
+                    v-if="
+                      event.event_status.value == 'applying_reservation' ||
+                      event.event_status.value == 'accepting_order' ||
+                      event.event_status.value == 'order_closed'
+                    "
                     class="ml-1"
                     color="white"
                     elevation="5"
                     size="small"
                     rounded
                     prepend-icon="mdi-pencil-box-outline"
-                    :to="{ path: getEventCreatePath(communityStore.community.community_account), query: { id: event.event_id, step:4} }"
+                    :to="{
+                      path: getEventCreatePath(communityStore.community.community_account),
+                      query: { id: event.event_id, step: 4 },
+                    }"
                   >
                     編集
                   </v-btn>
@@ -301,7 +327,12 @@ const inviteManager = async () => {
     <v-row v-else class="justify-center">
       <v-progress-circular indeterminate color="primary" />
     </v-row>
-    <community-contact-dialog v-if="communityStore.community" v-model="isOpenContactDialogVisible" :community-name="communityStore.community.community_name" :community-id="communityStore.community.community_id"/>
+    <community-contact-dialog
+      v-if="communityStore.community"
+      v-model="isOpenContactDialogVisible"
+      :community-name="communityStore.community.community_name"
+      :community-id="communityStore.community.community_id"
+    />
     <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
       ログインした後にお問い合わせしてください。
     </confirm-dialog>

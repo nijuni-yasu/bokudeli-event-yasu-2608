@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
 import { type EventMember } from '@/schemes/EventMember'
-import { convertTruncateText} from '@/schemes/converter'
+import { convertTruncateText } from '@/schemes/converter'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 
@@ -10,14 +10,14 @@ const props = defineProps<{
 }>()
 
 const userName = computed(() => props.member.user_name ?? 'ゲスト')
-const twitterUrl = computed(
-  () => props.member.user_sns_twitter ? buildTwitterUrl(props.member.user_sns_twitter) : null
+const twitterUrl = computed(() =>
+  props.member.user_sns_twitter ? buildTwitterUrl(props.member.user_sns_twitter) : null,
 )
-const facebookUrl = computed(
-  () => props.member.user_sns_facebook ? buildFacebookUrl(props.member.user_sns_facebook) : null
-) 
-const instagramUrl = computed(
-  () => props.member.user_sns_instagram ? buildInstagramUrl(props.member.user_sns_instagram) : null
+const facebookUrl = computed(() =>
+  props.member.user_sns_facebook ? buildFacebookUrl(props.member.user_sns_facebook) : null,
+)
+const instagramUrl = computed(() =>
+  props.member.user_sns_instagram ? buildInstagramUrl(props.member.user_sns_instagram) : null,
 )
 const userDescription = computed(() => props.member.user_description ?? '')
 
@@ -28,7 +28,7 @@ const descriptionCharacterLimit = 120
   <v-container class="pa-3">
     <v-card class="pt-8">
       <v-card-title class="d-flex align-center flex-column">
-        <UserAvatar :user="member" :size="150"/>
+        <UserAvatar :user="member" :size="150" />
         <v-row class="justify-center">
           <v-col class="mt-3">
             <span class="text-h5 text-center text-wrap">{{ userName }}</span>
@@ -55,13 +55,7 @@ const descriptionCharacterLimit = 120
       </v-card-subtitle>
       <v-card-text class="text-center pt-1">
         <router-link :to="getUserPath(member.user_id)">
-          <v-btn
-            class="ma-2"
-            variant="outlined"
-            size="small"
-            rounded
-            prepend-icon="mdi-account"
-          >
+          <v-btn class="ma-2" variant="outlined" size="small" rounded prepend-icon="mdi-account">
             プロフィール詳細
           </v-btn>
         </router-link>

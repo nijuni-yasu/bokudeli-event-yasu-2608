@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const event = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: (value) => emit('update:modelValue', value),
 })
 
 const displayShops = computed(() => {
@@ -70,7 +70,11 @@ const next = () => {
             <!-- Activity -->
             <v-row>
               <v-col v-for="item in displayShops" :key="item.shop_id" md="4" sm="4" cols="12">
-                <v-card :class="{ 'select-border': item.partner_id==props.modelValue.partner_id }" class="mb-3 mx-0" color="text-center cursor-pointer">
+                <v-card
+                  :class="{ 'select-border': item.partner_id == props.modelValue.partner_id }"
+                  class="mb-3 mx-0"
+                  color="text-center cursor-pointer"
+                >
                   <v-img :src="item.shop_image_url" cover aspect-ratio="1.91" />
 
                   <!-- title -->
@@ -81,14 +85,30 @@ const next = () => {
                     {{ item.shop_description }}
                   </v-card-text>
                   <v-card-text class="text-right">
-                    {{ $t('order_deadline') }}： {{ $t('days_before', item.shop_deadline_datetime.days_before) }} {{ $d(item.shop_deadline_datetime.time, 'time') }}
+                    {{ $t('order_deadline') }}： {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
+                    {{ $d(item.shop_deadline_datetime.time, 'time') }}
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
-                  <v-btn v-if="item.shop_id==props.modelValue.shop_id" color="red" class="ma-5" size="large" :disabled="event.event_status.value !== 'in_draft'" @click="submit(item)">
+                  <v-btn
+                    v-if="item.shop_id == props.modelValue.shop_id"
+                    color="red"
+                    class="ma-5"
+                    size="large"
+                    :disabled="event.event_status.value !== 'in_draft'"
+                    @click="submit(item)"
+                  >
                     選択中
                   </v-btn>
-                  <v-btn v-else color="primary" class="ma-5" size="large" append-icon="mdi-chevron-right" :disabled="event.event_status.value !== 'in_draft'" @click="submit(item)">
+                  <v-btn
+                    v-else
+                    color="primary"
+                    class="ma-5"
+                    size="large"
+                    append-icon="mdi-chevron-right"
+                    :disabled="event.event_status.value !== 'in_draft'"
+                    @click="submit(item)"
+                  >
                     このお店にする
                   </v-btn>
                 </v-card>
@@ -100,8 +120,18 @@ const next = () => {
               </v-col>
             </v-row>
             <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="back">前へ</v-btn>
-              <v-btn v-if="props.modelValue.shop_id" color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" @click="next">次へ</v-btn>
+              <v-btn color="primary" class="me-3 mt-3" size="large" prepend-icon="mdi-chevron-left" @click="back"
+                >前へ</v-btn
+              >
+              <v-btn
+                v-if="props.modelValue.shop_id"
+                color="primary"
+                class="me-3 mt-3"
+                size="large"
+                append-icon="mdi-chevron-right"
+                @click="next"
+                >次へ</v-btn
+              >
             </v-card-text>
           </v-form>
         </v-card>
@@ -115,7 +145,7 @@ const next = () => {
   </section>
 </template>
 <style lang="scss" scoped>
-  .select-border {
-    border: 5px solid #FF4C51;
-  }
+.select-border {
+  border: 5px solid #ff4c51;
+}
 </style>

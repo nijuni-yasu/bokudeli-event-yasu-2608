@@ -11,7 +11,7 @@ export const requiredValidator = (value: unknown) => {
 export const urlValidator = (value: unknown) => {
   return typeof _urlValidator(value) !== 'string' || 'URLの形式が正しくありません'
 }
-  
+
 export const postalCodeValidator = (value: string | null | undefined) => {
   if (isEmpty(value)) {
     return true
@@ -28,8 +28,8 @@ export const positiveIntegerValidator = (value: string | null | undefined) => {
 
 /**
  * 電話番号のバリデーション
- * 
- * @param value 
+ *
+ * @param value
  * @returns boolean | string if it's invalid, return error message
  * @see https://akinov.hatenablog.com/entry/2017/05/31/194421
  */
@@ -37,7 +37,7 @@ export const phoneValidator = (value: string | null | undefined) => {
   if (isEmpty(value)) {
     return true
   }
-  return (  
+  return (
     // 市外局番ありパターン
     /^0(\d{1}[-(]?\d{4}|\d{2}[-(]?\d{3}|\d{3}[-(]?\d{2}|\d{4}[-(]?\d{1})[-)]?\d{4}$/.test(value as string) ||
     // // 市外局番なしパターン
@@ -54,8 +54,8 @@ export const phoneValidator = (value: string | null | undefined) => {
 
 /**
  * メールアドレスのバリデーション
- * 
- * @param value 
+ *
+ * @param value
  * @returns boolean | string if it's invalid, return error message
  */
 export const emailValidator = (value: string | null | undefined) => {
@@ -76,5 +76,8 @@ export const accountValidator = (value: string | null | undefined) => {
   if (isEmpty(value)) {
     return true
   }
-  return /^[a-z0-9_]{5,15}$/.test(value as string) || 'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英小文字・数字・アンダースコア」のみです。'
+  return (
+    /^[a-z0-9_]{5,15}$/.test(value as string) ||
+    'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英小文字・数字・アンダースコア」のみです。'
+  )
 }

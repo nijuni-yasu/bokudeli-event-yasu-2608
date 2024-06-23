@@ -41,7 +41,7 @@ export const fixCancelOrder = async (order: OrderItem) => {
 
   await setDoc(
     orderDocument.ref,
-    { status: 'canceled', canceled_at: Timestamp.now(), updated_at: Timestamp.now()},
+    { status: 'canceled', canceled_at: Timestamp.now(), updated_at: Timestamp.now() },
     { merge: true },
   )
 }

@@ -16,23 +16,29 @@ let isVisible = false
 
 const numOfColumns = computed(() => {
   switch (display.name.value) {
-    case 'xs': return 1
-    case 'sm': return 2
-    default: return 3
+    case 'xs':
+      return 1
+    case 'sm':
+      return 2
+    default:
+      return 3
   }
 })
 
-const eventsStore = useEventsStore([
-  where('is_public', '==', true),
-  where('event_status.value', '==', 'accepting_order'),
-  orderBy('event_start_datetime', 'desc')
-], numOfColumns.value) as EventsStore
+const eventsStore = useEventsStore(
+  [
+    where('is_public', '==', true),
+    where('event_status.value', '==', 'accepting_order'),
+    orderBy('event_start_datetime', 'desc'),
+  ],
+  numOfColumns.value,
+) as EventsStore
 
 const hasMore = computed(() => {
   if (eventsStore.totalCount == null || eventsStore.eventStores?.length == null) {
     return true
   }
-  return (eventsStore.eventStores.length) < eventsStore.totalCount
+  return eventsStore.eventStores.length < eventsStore.totalCount
 })
 
 type _EventStore = Omit<EventStore, 'event'> & {
@@ -41,9 +47,7 @@ type _EventStore = Omit<EventStore, 'event'> & {
 
 const eventStoreList = computed<_EventStore[]>(() =>
   (eventsStore.eventStores ?? []).flatMap((eventStore) => {
-    if (
-      eventStore.event == null
-    ) {
+    if (eventStore.event == null) {
       return []
     } else {
       return eventStore as _EventStore
@@ -61,32 +65,39 @@ watch(eventStoreList, () => {
   }
 })
 
-watch(numOfColumns, (num) => {
-  eventsStore.setPageSize(num * 3)
-}, { immediate: true })
+watch(
+  numOfColumns,
+  (num) => {
+    eventsStore.setPageSize(num * 3)
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        isVisible = true
-        eventsStore.next()
-      } else {
-        isVisible = false
-      }
-    });
-  }, {
-    // オプションでroot、rootMargin、thresholdを設定可能
-    threshold: 0.1 // 10%の部分が見えたらトリガー
-  });
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          isVisible = true
+          eventsStore.next()
+        } else {
+          isVisible = false
+        }
+      })
+    },
+    {
+      // オプションでroot、rootMargin、thresholdを設定可能
+      threshold: 0.1, // 10%の部分が見えたらトリガー
+    },
+  )
 
   if (loadingElement.value?.$el != null) {
-    observer.observe(loadingElement.value.$el);
+    observer.observe(loadingElement.value.$el)
   }
-});
+})
 
 onUnmounted(() => {
-  observer?.disconnect();
+  observer?.disconnect()
 })
 </script>
 
@@ -117,22 +128,24 @@ onUnmounted(() => {
                 <v-chip class="mt-2 ml-3" color="primary" size="small">
                   {{ $t(`event_status.${eventStore.event.event_status.value}`) }}
                 </v-chip>
-                <v-card-title class="justify-center px-3 py-1" style="font-size:16px; font-weight:600;">
+                <v-card-title class="justify-center px-3 py-1" style="font-size: 16px; font-weight: 600">
                   {{ eventStore.event.event_name }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
                   【主催】{{ eventStore.event.community_name }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
-                  【日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{ dateOnlyTimeString(eventStore.event.event_end_datetime) }}
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
+                  【日時】{{ dateWithDayOfWeekString(eventStore.event.event_start_datetime) }}〜{{
+                    dateOnlyTimeString(eventStore.event.event_end_datetime)
+                  }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
                   【場所】{{ eventStore.event.event_address }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height:1.75rem;">
+                <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
                   【お店】{{ eventStore.event.shop_name }}
                 </v-card-title>
-                <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2" style="line-height:1.75rem;">
+                <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2" style="line-height: 1.75rem">
                   【参加】{{ eventStore.members?.length ?? 0 }} 人 / {{ eventStore.event.event_max_people }} 人
                 </v-card-title>
                 <!-- Mutual members -->

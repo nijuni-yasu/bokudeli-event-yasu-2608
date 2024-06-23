@@ -39,10 +39,14 @@ communityStore.getCurrentUserRoles().then((roles) => {
 })
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
-const members = computed(() => eventStore.members?.sort((a, b) =>
-  a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-  b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0)
-) ?? [])
+const members = computed(
+  () =>
+    eventStore.members?.sort(
+      (a, b) =>
+        a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
+        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
+    ) ?? [],
+)
 
 type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
 
@@ -124,7 +128,7 @@ const showQrCode = () => {
 const scrollToMenu = () => {
   // Vuetify では scrollIntoView が使えないらしい
   // menuList.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  const top =  menuListRef.value?.$el?.offsetTop
+  const top = menuListRef.value?.$el?.offsetTop
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
@@ -134,18 +138,21 @@ watch(menuListRef, () => {
     return
   }
   menuListObserver?.disconnect()
-  menuListObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        menuNavigation.value = false
-      } else {
-        menuNavigation.value = true
-      }
-    });
-  }, {
-    // オプションでroot、rootMargin、thresholdを設定可能
-    threshold: 0
-  });
+  menuListObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          menuNavigation.value = false
+        } else {
+          menuNavigation.value = true
+        }
+      })
+    },
+    {
+      // オプションでroot、rootMargin、thresholdを設定可能
+      threshold: 0,
+    },
+  )
 
   menuListObserver.observe(target)
 })
@@ -162,13 +169,8 @@ onUnmounted(() => {
       <v-row class="justify-center mt-lg-10">
         <v-col md="8" sm="9" cols="12">
           <v-row class="justify-space-between align-center my-0 py-0">
-            <v-btn
-              icon="mdi-home"
-              size="x-large"
-              variant="text"
-              to="/"
-            />
-            <v-spacer/>
+            <v-btn icon="mdi-home" size="x-large" variant="text" to="/" />
+            <v-spacer />
             <v-chip class="" color="primary" size="large">
               {{ $t(`event_status.${event.event_status.value}`) }}
             </v-chip>
@@ -233,7 +235,10 @@ onUnmounted(() => {
             <v-row>
               <v-col>
                 <!-- イベント情報 -->
-                <v-card-title class="py-0 text-sm-h4 text-xs-h5 font-weight-bold pb-4 pre-line" style="line-height:1.3;">
+                <v-card-title
+                  class="py-0 text-sm-h4 text-xs-h5 font-weight-bold pb-4 pre-line"
+                  style="line-height: 1.3"
+                >
                   {{ event.event_name }}
                 </v-card-title>
                 <v-card-text class="event-item text-right px-0 ma-1">
@@ -342,8 +347,8 @@ onUnmounted(() => {
                 <!-- メンバー情報 -->
                 <event-member-list :members="members" :event-max-people="event.event_max_people">
                   <v-row>
-                    <v-spacer/>
-                    <v-col v-if="members.length>0" cols="auto">
+                    <v-spacer />
+                    <v-col v-if="members.length > 0" cols="auto">
                       <router-link :to="{ path: `${eventId}/members` }">
                         <div class="d-flex align-end">
                           <v-icon size="large">mdi-account-group</v-icon>
@@ -427,20 +432,22 @@ onUnmounted(() => {
           {{ event?.event_name }}
         </v-card-text>
         <v-card-text>
-          {{ event && dateWithDayOfWeekString(event.event_start_datetime) }}〜{{ event && dateOnlyTimeString(event.event_end_datetime) }}
+          {{ event && dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
+            event && dateOnlyTimeString(event.event_end_datetime)
+          }}
         </v-card-text>
         <vue-qrious :value="event?.url ?? ''" :size="qrcodeSize" />
       </v-card>
     </show-dialog>
     <v-navigation-drawer
-     v-if="event?.event_status.value === `accepting_order`"
+      v-if="event?.event_status.value === `accepting_order`"
       v-model="menuNavigation"
       location="bottom"
       permanent
       touchless
       border="0"
       color="#FFFFFF00"
-      style="height: 60px; z-index: 100; text-align: center;"
+      style="height: 60px; z-index: 100; text-align: center"
     >
       <v-row class="justify-center">
         <v-col md="8" sm="9" cols="12">

@@ -74,13 +74,13 @@ onMounted(async () => {
             {{ menu.description }}
           </v-card-text>
           <v-card-text class="text-right pb-2">
-            <span style="font-size:14px; color: #3A3541DE;">¥ </span>
-            <span style="font-size:20px; color: #3A3541DE;">{{ priceString(menu.price) }}</span>
+            <span style="font-size: 14px; color: #3a3541de">¥ </span>
+            <span style="font-size: 20px; color: #3a3541de">{{ priceString(menu.price) }}</span>
           </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                style="font-size:16px;"
+                style="font-size: 16px"
                 class="mt-2 mb-5"
                 :class="{ 'disable-menu-button': disabled || menu.isSoldout === true }"
                 color="primary"
@@ -97,7 +97,7 @@ onMounted(async () => {
       </v-col>
 
       <!-- no result found -->
-      <v-col v-show="menus !== null &&  menus.length === 0" cols="12" class="text-center">
+      <v-col v-show="menus !== null && menus.length === 0" cols="12" class="text-center">
         <h4 class="mt-4">メニューがありません</h4>
       </v-col>
     </v-row>

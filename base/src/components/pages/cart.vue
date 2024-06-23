@@ -3,7 +3,12 @@ import { loadEventMembers } from '@/composable/loadEventMembers'
 import { db, stripeBaseURL } from '@/firebase'
 import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateWithDayOfWeekString, dateOnlyTimeString, priceString, convertDocumentDataToEvent } from '@/schemes/converter'
+import {
+  dateWithDayOfWeekString,
+  dateOnlyTimeString,
+  priceString,
+  convertDocumentDataToEvent,
+} from '@/schemes/converter'
 import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
 import { type OrderMenu } from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -262,7 +267,9 @@ onMounted(async () => {
             【開催場所】{{ cart.event.event_address }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催日時】{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{ dateOnlyTimeString(cart.event.event_end_datetime) }}
+            【開催日時】{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{
+              dateOnlyTimeString(cart.event.event_end_datetime)
+            }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【注文期限】{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
@@ -291,11 +298,7 @@ onMounted(async () => {
                     <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
                     <td style="padding: 1px">¥{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
                     <td style="padding: 1px">
-                      <v-btn
-                        icon="mdi-trash-can"
-                        variant="text"
-                        @click="deleteMenuInCart(cart.order, menu)">
-                      </v-btn>
+                      <v-btn icon="mdi-trash-can" variant="text" @click="deleteMenuInCart(cart.order, menu)"> </v-btn>
                     </td>
                   </tr>
                 </tbody>
@@ -327,7 +330,7 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <v-row justify="center" v-else-if="!state.isLoading">
-      <v-col cols="auto" class="my-5" style="font-size:18px;"> カートに商品はありません。</v-col>
+      <v-col cols="auto" class="my-5" style="font-size: 18px"> カートに商品はありません。</v-col>
     </v-row>
     <v-row v-else justify="center">
       <v-col cols="auto">

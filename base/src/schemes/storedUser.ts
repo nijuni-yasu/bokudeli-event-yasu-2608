@@ -1,6 +1,6 @@
 import { type DocumentData, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
-import { buildThumbnailsLinks, type ThumbnailLinks} from '@/composable/buildThumbnailsLinks'
+import { buildThumbnailsLinks, type ThumbnailLinks } from '@/composable/buildThumbnailsLinks'
 
 /**
  * StoredUser は getAuth().user から id のみ取得し、 currentUser の ID のみを持つ type とする。

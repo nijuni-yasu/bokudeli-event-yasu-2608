@@ -1,10 +1,10 @@
-import { FIREBASE_STORAGE_BASE_URL } from "@/firebase"
+import { FIREBASE_STORAGE_BASE_URL } from '@/firebase'
 
 type Sizes = 'large' | 'medium' | 'small'
-export type ThumbnailLinks = {[K in Sizes]: string}
+export type ThumbnailLinks = { [K in Sizes]: string }
 
 const SIZE_LIST: {
-  name: Sizes,
+  name: Sizes
   value: number
 }[] = [
   {
@@ -18,7 +18,7 @@ const SIZE_LIST: {
   {
     name: 'small',
     value: 50,
-  }
+  },
 ]
 
 export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks | null => {
@@ -27,8 +27,11 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       const hostname = url.href.match(/^gs:\/\/([^/]+)(\/.*)$/)?.[1]
       const base = url.pathname.split('/').pop()?.split('.')
       const imageName = base?.[0]
-      const ext = ((base?.length ?? 0) > 1) ? '.' + base?.slice(1)?.join('.') : ''
-      result[size.name] = `${FIREBASE_STORAGE_BASE_URL}b/${hostname}/o/` + encodeURIComponent(`users/${userId}/${imageName}_thumb_${size.name}${ext}`) + '?alt=media'
+      const ext = (base?.length ?? 0) > 1 ? '.' + base?.slice(1)?.join('.') : ''
+      result[size.name] =
+        `${FIREBASE_STORAGE_BASE_URL}b/${hostname}/o/` +
+        encodeURIComponent(`users/${userId}/${imageName}_thumb_${size.name}${ext}`) +
+        '?alt=media'
       return result
     }, {} as ThumbnailLinks)
   } else if (url.hostname === 'lh3.googleusercontent.com') {
@@ -37,7 +40,7 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       result[size.name] = url.href
       return result
     }, {} as ThumbnailLinks)
-  }/* else if (url.hostname === 'platform-lookaside.fbsbx.com') {
+  } /* else if (url.hostname === 'platform-lookaside.fbsbx.com') {
     return SIZE_LIST.reduce((result, size) => {
       url.searchParams.set('width', size.value.toString())
       url.searchParams.set('height', size.value.toString())

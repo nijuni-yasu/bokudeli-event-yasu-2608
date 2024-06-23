@@ -62,9 +62,10 @@ const addOrder = async () => {
   const orderCount = selectedCount.value || 0
 
   // 上書きできるオーダーを探す
-  const userOrders = eventStore.orders?.filter((order: OrderItem) => {
-    return order.status === 'in_cart' && order.user_id === userStore.storedUser?.userId
-  }) ?? []
+  const userOrders =
+    eventStore.orders?.filter((order: OrderItem) => {
+      return order.status === 'in_cart' && order.user_id === userStore.storedUser?.userId
+    }) ?? []
 
   const userOrder = userOrders[0]
 
@@ -164,8 +165,8 @@ const addCart = async () => {
         {{ menu.description }}
       </v-card-text>
       <v-card-text class="text-right pb-5">
-        <span style="font-size:18px; color: #3A3541DE;">¥ </span>
-        <span style="font-size:30px; color: #3A3541DE;">{{ priceString(menu.price) }}</span>
+        <span style="font-size: 18px; color: #3a3541de">¥ </span>
+        <span style="font-size: 30px; color: #3a3541de">{{ priceString(menu.price) }}</span>
       </v-card-text>
       <v-row class="mx-3 mb-2">
         <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>
@@ -182,7 +183,8 @@ const addCart = async () => {
           color="primary"
           prepend-icon="mdi-cart"
           :loading="isAddingOrder"
-          @click="addCart()">
+          @click="addCart()"
+        >
           カートに追加
         </v-btn>
         <v-btn

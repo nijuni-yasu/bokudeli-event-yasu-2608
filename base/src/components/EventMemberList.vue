@@ -12,9 +12,7 @@ defineProps<{
   <section>
     <v-card-text class="event-item">
       【参加者】
-      <span class="event-content">
-        {{ members.length }} 人 / {{ eventMaxPeople }} 人
-      </span>
+      <span class="event-content"> {{ members.length }} 人 / {{ eventMaxPeople }} 人 </span>
     </v-card-text>
     <v-card-text class="text-left pb-10">
       <v-row>
@@ -26,7 +24,10 @@ defineProps<{
           sm="6"
           md="4"
         >
-          <router-link :to="getUserPath(member.user_id)" class="text--primary cursor-pointer text-decoration-none d-flex align-center">
+          <router-link
+            :to="getUserPath(member.user_id)"
+            class="text--primary cursor-pointer text-decoration-none d-flex align-center"
+          >
             <v-row class="ma-0 d-flex align-center">
               <UserAvatar :user="member" :size="60" />
               <v-col class="ma-0 px-1">
@@ -36,7 +37,7 @@ defineProps<{
                   </div>
                 </div>
                 <div
-                  v-for="menu in member.orders.flatMap(order => (order.status === 'ordered') ? order.menus : [])"
+                  v-for="menu in member.orders.flatMap((order) => (order.status === 'ordered' ? order.menus : []))"
                   :key="menu.menu_id"
                   class="d-flex align-center"
                   style="font-size: 12px; color: gray"
@@ -45,9 +46,7 @@ defineProps<{
                     <span>
                       {{ menu.name }}
                     </span>
-                    <span v-if="menu.count>1">
-                      （{{ menu.count }}個）
-                    </span>
+                    <span v-if="menu.count > 1"> （{{ menu.count }}個） </span>
                   </div>
                 </div>
               </v-col>
@@ -60,17 +59,17 @@ defineProps<{
   </section>
 </template>
 <style lang="scss" scoped>
-  .event-item{
-    font-size: 14px;
-    padding-top: 0px;
-    padding-bottom: 20px;
-    font-weight: 600;
-  }
-  .event-content{
-    font-size: 18px;
-    padding-bottom: 20px;
-    font-weight: 400;
-    line-height: 32px;
-    white-space: pre-line;
-  }
+.event-item {
+  font-size: 14px;
+  padding-top: 0px;
+  padding-bottom: 20px;
+  font-weight: 600;
+}
+.event-content {
+  font-size: 18px;
+  padding-bottom: 20px;
+  font-weight: 400;
+  line-height: 32px;
+  white-space: pre-line;
+}
 </style>

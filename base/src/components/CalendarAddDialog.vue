@@ -39,12 +39,22 @@ const closeDialog = () => {
         <v-container>
           <v-row>
             <v-col class="d-flex justify-center">
-              <v-btn class="add-button" color="grey-900" variant="outlined" rounded :href="googleCalendarLink" target="_blank">Google カレンダー</v-btn>
+              <v-btn
+                class="add-button"
+                color="grey-900"
+                variant="outlined"
+                rounded
+                :href="googleCalendarLink"
+                target="_blank"
+                >Google カレンダー</v-btn
+              >
             </v-col>
           </v-row>
           <v-row>
             <v-col class="d-flex justify-center">
-              <v-btn class="add-button" color="grey-900" variant="outlined" rounded :href="icsLink" target="_blank">カレンダーアプリ</v-btn>
+              <v-btn class="add-button" color="grey-900" variant="outlined" rounded :href="icsLink" target="_blank"
+                >カレンダーアプリ</v-btn
+              >
             </v-col>
           </v-row>
         </v-container>

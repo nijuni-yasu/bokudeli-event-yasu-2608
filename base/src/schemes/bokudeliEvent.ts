@@ -20,52 +20,53 @@ export type EventStatusType = Omit<RawEventStatusType, 'value'> & {
 }
 
 class BokudeliEvent {
-  community_id: string = '';
-  community_name: string = '';
-  community_account: string = '';
-  event_id: string = '';
-  event_address: string = '';
-  event_cover_url: string = '';
-  event_desc: string = '';
-  event_deadline_datetime: Timestamp | null = null;
-  event_max_people: number = 0;
-  event_name: string = '';
-  event_start_datetime: Timestamp | null = null;
-  event_end_datetime: Timestamp | null = null;
-  partner_id: string = '';
-  shop_id: string = '';
-  shop_name: string = '';
-  is_public: boolean = true;
-  event_payment: EventPaymentType = 'user_advance';
+  community_id: string = ''
+  community_name: string = ''
+  community_account: string = ''
+  event_id: string = ''
+  event_address: string = ''
+  event_cover_url: string = ''
+  event_desc: string = ''
+  event_deadline_datetime: Timestamp | null = null
+  event_max_people: number = 0
+  event_name: string = ''
+  event_start_datetime: Timestamp | null = null
+  event_end_datetime: Timestamp | null = null
+  partner_id: string = ''
+  shop_id: string = ''
+  shop_name: string = ''
+  is_public: boolean = true
+  event_payment: EventPaymentType = 'user_advance'
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
-  organizer_fullname: string = '';
-  organizer_company: string = '';
-  organizer_phone_personal: string = '';
-  organizer_phone_company: string = '';
-  organizer_email: string = '';
-  organizer_memo: string = '';
-  event_place: string = '';
-  event_place_url: string = '';
-  event_postalcode: string = '';
-  members: DocumentReference[] = [];
-  event_num_members: number = 0;
+  organizer_fullname: string = ''
+  organizer_company: string = ''
+  organizer_phone_personal: string = ''
+  organizer_phone_company: string = ''
+  organizer_email: string = ''
+  organizer_memo: string = ''
+  event_place: string = ''
+  event_place_url: string = ''
+  event_postalcode: string = ''
+  members: DocumentReference[] = []
+  event_num_members: number = 0
 
-  created_at: Timestamp = Timestamp.now();
-  updated_at: Timestamp | null = null;
+  created_at: Timestamp = Timestamp.now()
+  updated_at: Timestamp | null = null
 
-  raw_event_status: RawEventStatusType = { value: 'in_draft' };
+  raw_event_status: RawEventStatusType = { value: 'in_draft' }
 
   /**
    * event_status を時間によって更新する getter
    * @returns {EventStatusType}
-   * 
+   *
    * admin, manager にも同等のコードが存在するので注意
    * TODO TypeScript にで共通化する
    */
   get event_status(): EventStatusType {
     // event_status が string だった仕様の時もあったので、その対応
-    const rawStatus = (typeof this.raw_event_status === 'string') ? { value: this.raw_event_status } : this.raw_event_status
+    const rawStatus =
+      typeof this.raw_event_status === 'string' ? { value: this.raw_event_status } : this.raw_event_status
     const event_end_datetime = this.event_end_datetime?.toMillis()
     const event_deadline_datetime = this.event_deadline_datetime?.toMillis()
     if (rawStatus.value === 'accepting_order' && event_end_datetime != null && event_deadline_datetime != null) {
@@ -85,10 +86,7 @@ class BokudeliEvent {
 
   constructor(eventData?: DocumentData) {
     if (eventData != null) {
-      _.merge(
-        this,
-        _.assign(_.omit(eventData, ['event_status']), { raw_event_status: eventData.event_status })
-      )
+      _.merge(this, _.assign(_.omit(eventData, ['event_status']), { raw_event_status: eventData.event_status }))
     }
   }
 
@@ -96,15 +94,18 @@ class BokudeliEvent {
     const result = {
       event_status: this.raw_event_status,
     }
-    return _.merge(result, _.omit(this, [
-      'raw_event_status',
-      // functions で計算するので含めない
-      'members',
-      'event_num_members'
-    ]))
+    return _.merge(
+      result,
+      _.omit(this, [
+        'raw_event_status',
+        // functions で計算するので含めない
+        'members',
+        'event_num_members',
+      ]),
+    )
   }
 
-  get url () {
+  get url() {
     const host = import.meta.env.VITE_ORIGIN_HOST
     const path = getEventPath(this.community_account, this.event_id)
     return `${host}${path}`

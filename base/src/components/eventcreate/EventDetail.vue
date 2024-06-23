@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
-import {
-  dateString,
-  hourString,
-  minutesString,
-  hourList,
-  minutesList,
-} from '@/schemes/eventCreate'
+import { dateString, hourString, minutesString, hourList, minutesList } from '@/schemes/eventCreate'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
 import { requiredValidator, positiveIntegerValidator } from '@/utils/validators'

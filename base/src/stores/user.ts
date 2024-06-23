@@ -1,28 +1,22 @@
 import { type Ref } from 'vue'
 import { db } from '@/firebase'
-import {
-  doc,
-  updateDoc,
-  onSnapshot,
-  DocumentReference,
-  type Unsubscribe,
-} from 'firebase/firestore'
-import type { StateTree, Store } from 'pinia';
+import { doc, updateDoc, onSnapshot, DocumentReference, type Unsubscribe } from 'firebase/firestore'
+import type { StateTree, Store } from 'pinia'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { storage } from '@/firebase'
 import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
 import { format } from 'date-fns'
 
 type UserStoreState = {
-  exists: Ref<boolean | null>,
-  user: Ref<FirestoredUser | null>,
-} & StateTree;
+  exists: Ref<boolean | null>
+  user: Ref<FirestoredUser | null>
+} & StateTree
 
 type UserStoreAction = {
-  updateUser: (data: FirestoredUser) => Promise<void>,
-  uploadUserImage: (file: File | Blob) => Promise<void>,
-  subscribe: () => void,
-  unsubscribe: () => void,
+  updateUser: (data: FirestoredUser) => Promise<void>
+  uploadUserImage: (file: File | Blob) => Promise<void>
+  subscribe: () => void
+  unsubscribe: () => void
 }
 
 export type UserStore = Store<string, UserStoreState, Record<string, never>, UserStoreAction>
@@ -55,13 +49,14 @@ export const useUserStore = (userId: string) => {
       let retry = 0
       const MAX_RETRY = 200 // 20秒
       for (; retry < MAX_RETRY; retry++) {
-        await new Promise(resolve => window.setTimeout(resolve, 100))
+        await new Promise((resolve) => window.setTimeout(resolve, 100))
         try {
           await Promise.all(
-            ['small', 'medium', 'large'].map(async size => {
+            ['small', 'medium', 'large'].map(async (size) => {
               const resizedImageRef = storageRef(storage, `/users/${userId}/${stem}_thumb_${size}${ext}`)
               await getMetadata(resizedImageRef)
-            }))
+            }),
+          )
           break
         } catch {
           // Do nothing
@@ -95,7 +90,7 @@ export const useUserStore = (userId: string) => {
       unsubscribe: () => {
         unsubscribeUser?.()
         unsubscribeUser = null
-      }
+      },
     }
   })
   return store()

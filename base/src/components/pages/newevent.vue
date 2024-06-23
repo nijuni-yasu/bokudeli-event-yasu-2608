@@ -16,21 +16,25 @@ const loadingElement = ref()
 let observer: IntersectionObserver
 let isVisible = true
 
-const communitiesStore = (userId == null) ? null : useCommunitiesStore([
-  where('members', 'array-contains', doc(db, 'users', userId)),
-  orderBy('community_num_members', 'desc'),
-]) as CommunitiesStore
+const communitiesStore =
+  userId == null
+    ? null
+    : (useCommunitiesStore([
+        where('members', 'array-contains', doc(db, 'users', userId)),
+        orderBy('community_num_members', 'desc'),
+      ]) as CommunitiesStore)
 communitiesStore?.setPageSize(10)
 
-const communityList = computed(() => communitiesStore?.communityStores?.flatMap(
-  (communityStore) => {
-    if (communityStore.members?.some(m => m?.user_id === userId && m?.roles?.includes('manager')) === true) {
-      return communityStore.community ?? []
-    } else {
-      return []
-    }
-  }
-) ?? [])
+const communityList = computed(
+  () =>
+    communitiesStore?.communityStores?.flatMap((communityStore) => {
+      if (communityStore.members?.some((m) => m?.user_id === userId && m?.roles?.includes('manager')) === true) {
+        return communityStore.community ?? []
+      } else {
+        return []
+      }
+    }) ?? [],
+)
 
 const hasMore = computed(() => {
   if (communitiesStore == null) {
@@ -42,7 +46,6 @@ const hasMore = computed(() => {
   return communitiesStore.communityStores.length < communitiesStore.totalCount
 })
 
-
 const createCommunity = () => {
   if (userId == null) {
     isLoginConfirmDialogOpened.value = true
@@ -51,34 +54,40 @@ const createCommunity = () => {
   }
 }
 
-watch(() => communitiesStore?.communityStores, () => {
-  if (isVisible) {
-    communitiesStore?.next()
+watch(
+  () => communitiesStore?.communityStores,
+  () => {
+    if (isVisible) {
+      communitiesStore?.next()
+    }
+  },
+)
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          isVisible = true
+          communitiesStore?.next()
+        } else {
+          isVisible = false
+        }
+      })
+    },
+    {
+      // オプションでroot、rootMargin、thresholdを設定可能
+      threshold: 0.1, // 10%の部分が見えたらトリガー
+    },
+  )
+
+  if (loadingElement.value?.$el != null) {
+    observer.observe(loadingElement.value.$el)
   }
 })
 
-onMounted(() => {
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        isVisible = true
-        communitiesStore?.next()
-      } else {
-        isVisible = false
-      }
-    });
-  }, {
-    // オプションでroot、rootMargin、thresholdを設定可能
-    threshold: 0.1 // 10%の部分が見えたらトリガー
-  });
-
-  if (loadingElement.value?.$el != null) {
-    observer.observe(loadingElement.value.$el);
-  }
-});
-
 onUnmounted(() => {
-  observer?.disconnect();
+  observer?.disconnect()
 })
 </script>
 
@@ -86,21 +95,19 @@ onUnmounted(() => {
   <v-row justify="center">
     <v-col cols="12" sm="12" md="7" class="pa-1">
       <v-card class="text-center ma-md-10 pa-md-10">
-        <v-card-title class="text-h5 mt-5 font-weight-bold">
-          イベント作成
-        </v-card-title>
+        <v-card-title class="text-h5 mt-5 font-weight-bold"> イベント作成 </v-card-title>
         <v-card-text class="my-3 pa-0 text-caption text-md-body-2">
-          イベントを作成するコミュニティを選択してください。<br>
-          コミュニティがない場合は新規作成してください。<br>
+          イベントを作成するコミュニティを選択してください。<br />
+          コミュニティがない場合は新規作成してください。<br />
           イベントとコミュニティは無料で作成いただけます。
         </v-card-text>
 
         <v-col>
-          <v-divider class="my-2" />          
+          <v-divider class="my-2" />
           <div v-for="community of communityList" :key="community.community_account">
             <router-link :to="getEventCreatePath(community.community_account)">
               <v-row class="ma-2">
-                <div class="ma-2" style="width: 50px; height: 50px;">
+                <div class="ma-2" style="width: 50px; height: 50px">
                   <v-img
                     :src="community.community_icon_image_url"
                     style="border-radius: 5px 5px 5px 5px"
@@ -137,11 +144,11 @@ onUnmounted(() => {
     <confirm-dialog
       v-model="isLoginConfirmDialogOpened"
       :is-confirm="false"
-      @click="isLoginDialogOpened = true; isLoginConfirmDialogOpened = false;"
+      @click="(isLoginDialogOpened = true), (isLoginConfirmDialogOpened = false)"
     >
       ログインしてください
     </confirm-dialog>
-    <login-dialog v-model="isLoginDialogOpened" />    
+    <login-dialog v-model="isLoginDialogOpened" />
   </v-row>
 </template>
 <style lang="scss" scoped></style>

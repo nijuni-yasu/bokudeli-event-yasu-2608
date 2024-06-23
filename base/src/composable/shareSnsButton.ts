@@ -5,7 +5,7 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent) => {
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter') {
     const baseUrl = 'https://twitter.com/intent/tweet'
-    const hashtags = encodeURIComponent('食事でつながる,shokujii');
+    const hashtags = encodeURIComponent('食事でつながる,shokujii')
     const text = encodeURIComponent(
       `${event.event_name}\n🗓️${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}\n📍${event.event_address}\n👩‍🍳${event.shop_name}\n🎟`,
     )

@@ -18,7 +18,7 @@ export const loadEventMembers = async (communityAccount: string, eventId: string
     const { menus, user_id } = doc.data()
     return { menus, userId: user_id }
   })
-  
+
   return memberList
 
   // const members: EventMember[] = []

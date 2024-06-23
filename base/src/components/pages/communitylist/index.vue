@@ -24,8 +24,9 @@ const hasMore = computed(() => {
 })
 
 const communityList = computed<BokudeliCommunity[]>(() => {
-  return (communitiesStore.communityStores ?? [])
-    .flatMap((communityStore) => (communityStore.community == null) ? [] : communityStore.community)
+  return (communitiesStore.communityStores ?? []).flatMap((communityStore) =>
+    communityStore.community == null ? [] : communityStore.community,
+  )
 })
 
 watch(communityList, () => {
@@ -35,45 +36,39 @@ watch(communityList, () => {
 })
 
 onMounted(() => {
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        isVisible = true
-        communitiesStore.next()
-      } else {
-        isVisible = false
-      }
-    });
-  }, {
-    // オプションでroot、rootMargin、thresholdを設定可能
-    threshold: 0.1 // 10%の部分が見えたらトリガー
-  });
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          isVisible = true
+          communitiesStore.next()
+        } else {
+          isVisible = false
+        }
+      })
+    },
+    {
+      // オプションでroot、rootMargin、thresholdを設定可能
+      threshold: 0.1, // 10%の部分が見えたらトリガー
+    },
+  )
 
   if (loadingElement.value?.$el != null) {
-    observer.observe(loadingElement.value.$el);
+    observer.observe(loadingElement.value.$el)
   }
-});
+})
 
 onUnmounted(() => {
-  observer?.disconnect();
+  observer?.disconnect()
 })
 </script>
 
 <template>
   <section>
     <v-row class="justify-center">
-      <v-col
-        v-for=" community in communityList"
-        :key="community.community_id"
-        md="10"
-        sm="12"
-        cols="12"
-      >
+      <v-col v-for="community in communityList" :key="community.community_id" md="10" sm="12" cols="12">
         <router-link :to="getCommunityPath(community.community_account)">
-          <v-card
-            class="ma-1"
-            color="text-center cursor-pointer"
-          >
+          <v-card class="ma-1" color="text-center cursor-pointer">
             <v-row>
               <v-col md="6" sm="12" cols="12" class="pa-0">
                 <v-img
@@ -91,7 +86,7 @@ onUnmounted(() => {
                 <v-card-text class="text-left pb-3">
                   {{ convertTruncateText(community.community_desc, 250) }}
                 </v-card-text>
-                <v-spacer/>
+                <v-spacer />
                 <!-- Mutual members -->
                 <!-- <v-card-text class="mt-auto">
                   <div class="mb-2">

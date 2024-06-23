@@ -33,7 +33,7 @@ const submit = () => {
 
 const event = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: (value) => emit('update:modelValue', value),
 })
 
 const isValid = ref(false)
@@ -43,7 +43,9 @@ if (event.value.event_start_datetime == null) {
   event.value.event_start_datetime = Timestamp.fromMillis(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) // +7日
 }
 if (event.value.event_end_datetime == null) {
-  event.value.event_end_datetime = Timestamp.fromMillis(event.value.event_start_datetime.toMillis() + 1 * 60 * 60 * 1000) // + 1時間
+  event.value.event_end_datetime = Timestamp.fromMillis(
+    event.value.event_start_datetime.toMillis() + 1 * 60 * 60 * 1000,
+  ) // + 1時間
 }
 
 // app-date-time-picker の v-model がリアクティブではないので強制更新用のキーを用意（おそらく app-date-time-picker のバグ）
@@ -53,21 +55,21 @@ const eventStartDate = computed({
   set: (value) => {
     const newValue = Timestamp.fromDate(parseDateTimeStrings(value, eventStartHour.value, eventStartMinute.value))
     updateStartDatetime(newValue)
-  }
+  },
 })
 const eventStartHour = computed({
   get: () => hourString(props.modelValue.event_start_datetime?.toDate() ?? null),
   set: (value) => {
     const newValue = Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, value, eventStartMinute.value))
     updateStartDatetime(newValue)
-  }
+  },
 })
 const eventStartMinute = computed({
   get: () => minutesString(props.modelValue.event_start_datetime?.toDate() ?? null),
   set: (value) => {
     const newValue = Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, eventStartHour.value, value))
     updateStartDatetime(newValue)
-  }
+  },
 })
 // app-date-time-picker の v-model がリアクティブではないので強制更新用のキーを用意（おそらく app-date-time-picker のバグ）
 const eventEndDateKey = ref('eventEndDateKey')
@@ -76,21 +78,21 @@ const eventEndDate = computed({
   set: (value) => {
     const newValue = Timestamp.fromDate(parseDateTimeStrings(value, eventEndHour.value, eventEndMinute.value))
     updateEndDatetime(newValue)
-  }
+  },
 })
 const eventEndHour = computed({
   get: () => hourString(event.value.event_end_datetime?.toDate() ?? null),
   set: (value) => {
     const newValue = Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, value, eventEndMinute.value))
     updateEndDatetime(newValue)
-  }
+  },
 })
 const eventEndMinute = computed({
   get: () => minutesString(event.value.event_end_datetime?.toDate() ?? null),
   set: (value) => {
     const newValue = Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, eventEndHour.value, value))
     updateEndDatetime(newValue)
-  }
+  },
 })
 
 const updateStartDatetime = (newValue: Timestamp) => {
@@ -167,7 +169,13 @@ watchEffect(async () => {
           <v-card-text class="pt-5">
             <v-row>
               <v-col cols="12" sm="12" md="6">
-                <v-text-field v-model="event.event_place" outlined dense label="会場名" :readonly="event.event_status.value !== 'in_draft'" />
+                <v-text-field
+                  v-model="event.event_place"
+                  outlined
+                  dense
+                  label="会場名"
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
               <v-col cols="12" sm="12" md="6">
                 <v-text-field
@@ -201,10 +209,24 @@ watchEffect(async () => {
                 />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventStartHour" :items="hourList" outlined dense label="時" :readonly="event.event_status.value !== 'in_draft'" />
+                <v-select
+                  v-model="eventStartHour"
+                  :items="hourList"
+                  outlined
+                  dense
+                  label="時"
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventStartMinute" :items="minutesList" outlined dense label="分" :readonly="event.event_status.value !== 'in_draft'" />
+                <v-select
+                  v-model="eventStartMinute"
+                  :items="minutesList"
+                  outlined
+                  dense
+                  label="分"
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
             </v-row>
           </v-card-text>
@@ -223,15 +245,37 @@ watchEffect(async () => {
                 />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventEndHour" :items="hourList" outlined dense label="時" :readonly="event.event_status.value !== 'in_draft'" />
+                <v-select
+                  v-model="eventEndHour"
+                  :items="hourList"
+                  outlined
+                  dense
+                  label="時"
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
               <v-col cols="6" sm="6" md="3">
-                <v-select v-model="eventEndMinute" :items="minutesList" outlined dense label="分" :readonly="event.event_status.value !== 'in_draft'" />
+                <v-select
+                  v-model="eventEndMinute"
+                  :items="minutesList"
+                  outlined
+                  dense
+                  label="分"
+                  :readonly="event.event_status.value !== 'in_draft'"
+                />
               </v-col>
             </v-row>
           </v-card-text>
           <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" append-icon="mdi-chevron-right" :disabled="!isValid" @click="submit">次へ</v-btn>
+            <v-btn
+              color="primary"
+              class="me-3 mt-3"
+              size="large"
+              append-icon="mdi-chevron-right"
+              :disabled="!isValid"
+              @click="submit"
+              >次へ</v-btn
+            >
           </v-card-text>
         </v-form>
       </v-card>

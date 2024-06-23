@@ -30,7 +30,7 @@ export type Shop = {
       time_end: string
       time_start2: string
       time_end2: string
-    }
+    },
   ]
 
   is_approved: boolean
@@ -41,7 +41,7 @@ export type Shop = {
     time: number
   }
 
-/*
+  /*
   shop_holidays: any[]
 
   shop_phone: string
