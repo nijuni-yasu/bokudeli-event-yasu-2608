@@ -6,6 +6,7 @@ import { AppContentLayoutNav } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
 import UserProfile from '@/componentsLocal/UserProfile.vue'
 import Footer from '@/componentsLocal/Footer.vue'
+import { useNavItems } from '@/navigation'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -13,6 +14,8 @@ const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(
   () => import('@/components/layouts/DefaultLayoutWithVerticalNav.vue'),
 )
+
+const navItems = useNavItems()
 
 const configStore = useConfigStore()
 // ℹ️ This will switch to vertical nav when define breakpoint is reached when in horizontal nav layout
@@ -27,6 +30,7 @@ injectSkinClasses()
 <template>
   <Component
     v-bind="layoutAttrs"
+    :nav-items="navItems"
     :is="
       configStore.appContentLayoutNav === AppContentLayoutNav.Vertical
         ? DefaultLayoutWithVerticalNav

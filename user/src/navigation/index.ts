@@ -1,9 +1,9 @@
 import type { NavLink, NavGroup } from '@layouts/types'
-import type { ComposerTranslation } from 'vue-i18n'
 import { getHomePath, getNewEventPath, getCommunityListPath } from '@/router/utils'
 import { mdiCalendarHeart, mdiCalendarPlus, mdiAccountGroup, mdiFoodForkDrink } from '@mdi/js'
 
-export const getNavItems = ($t: ComposerTranslation): (NavLink | NavGroup)[] => {
+export const useNavItems = (): (NavLink | NavGroup)[] => {
+  // const { t: $t } = useI18n()
   return [
     {
       title: 'イベント参加',

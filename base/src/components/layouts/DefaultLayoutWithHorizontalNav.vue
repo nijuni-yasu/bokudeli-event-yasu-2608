@@ -1,15 +1,16 @@
 <script lang="ts" setup>
-import { useI18n } from 'vue-i18n'
-import { getNavItems } from '@/navigation'
-
 import { themeConfig } from '@themeConfig'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 
-// Components
 import { HorizontalNavLayout } from '@layouts'
+import type { HorizontalNavItems } from '@/@layouts/types'
 
-const { t: $t } = useI18n()
-const navItems = getNavItems($t)
+defineProps({
+  navItems: {
+    type: Array as PropType<HorizontalNavItems>,
+    required: true,
+  },
+})
 
 // SECTION: Loading Indicator
 const isFallbackStateActive = ref(false)

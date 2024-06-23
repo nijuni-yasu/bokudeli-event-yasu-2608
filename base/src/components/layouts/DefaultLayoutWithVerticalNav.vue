@@ -1,13 +1,14 @@
 <script lang="ts" setup>
-import { useI18n } from 'vue-i18n'
-import { getNavItems } from '@/navigation'
-
-// @layouts plugin
 import { VerticalNavLayout } from '@layouts'
+import type { VerticalNavItems } from '@layouts/types'
 import { mdiMenu } from '@mdi/js'
 
-const { t: $t } = useI18n()
-const navItems = getNavItems($t)
+defineProps({
+  navItems: {
+    type: Array as PropType<VerticalNavItems>,
+    required: true,
+  },
+})
 
 // SECTION: Loading Indicator
 const isFallbackStateActive = ref(false)
