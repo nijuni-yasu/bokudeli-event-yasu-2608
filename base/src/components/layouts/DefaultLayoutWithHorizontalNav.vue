@@ -6,8 +6,6 @@ import { themeConfig } from '@themeConfig'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 
 // Components
-import Footer from './Footer.vue'
-import UserProfile from './UserProfile.vue'
 import { HorizontalNavLayout } from '@layouts'
 
 const { t: $t } = useI18n()
@@ -37,9 +35,10 @@ watch(
       <RouterLink to="/" class="d-flex align-start gap-x-4">
         <VNodeRenderer :nodes="themeConfig.app.logo" />
       </RouterLink>
+
       <VSpacer />
 
-      <UserProfile />
+      <slot name="navbar-icons"></slot>
     </template>
 
     <!-- 👉 Pages -->
@@ -51,7 +50,7 @@ watch(
 
     <!-- 👉 Footer -->
     <template #footer>
-      <Footer />
+      <slot name="footer"></slot>
     </template>
   </HorizontalNavLayout>
 </template>

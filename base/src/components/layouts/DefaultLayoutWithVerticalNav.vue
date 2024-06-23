@@ -2,10 +2,6 @@
 import { useI18n } from 'vue-i18n'
 import { getNavItems } from '@/navigation'
 
-// Components
-import Footer from './Footer.vue'
-import UserProfile from './UserProfile.vue'
-
 // @layouts plugin
 import { VerticalNavLayout } from '@layouts'
 import { mdiMenu } from '@mdi/js'
@@ -41,7 +37,7 @@ watch(
 
         <VSpacer />
 
-        <UserProfile />
+        <slot name="navbar-icons"></slot>
       </div>
     </template>
 
@@ -54,7 +50,7 @@ watch(
 
     <!-- 👉 Footer -->
     <template #footer>
-      <Footer />
+      <slot name="footer"></slot>
     </template>
   </VerticalNavLayout>
 </template>

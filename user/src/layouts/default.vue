@@ -4,6 +4,8 @@ import { useConfigStore } from '@core/stores/config'
 import { useSkins } from '@core/composable/useSkins'
 import { AppContentLayoutNav } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
+import UserProfile from '@/componentsLocal/UserProfile.vue'
+import Footer from '@/componentsLocal/Footer.vue'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -30,7 +32,14 @@ injectSkinClasses()
         ? DefaultLayoutWithVerticalNav
         : DefaultLayoutWithHorizontalNav
     "
-  />
+  >
+    <template #navbar-icons>
+      <UserProfile />
+    </template>
+    <template #footer>
+      <Footer />
+    </template>
+  </Component>
 </template>
 
 <style lang="scss">
