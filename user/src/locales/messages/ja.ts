@@ -2,6 +2,12 @@ import { ja } from 'vuetify/lib/locale/index.mjs'
 
 export default {
   '$vuetify': ja,
+  'navigation': {
+    'home': 'イベント参加',
+    'new_event': 'イベント作成',
+    'community': 'コミュニティ',
+    'about': 'shokujiiって？'
+  },
   'menu_disabled_reason': {
     'finished': 'イベントが終了したため、カートに追加できません',
     'order_closed': '注文期限をすぎました。カートに追加できません',
