@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import { getCommunityPath } from '@/router/utils'
 import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
-import {
-  requiredValidator,
-  postalCodeValidator,
-  phoneValidator,
-  emailValidator,
-  accountValidator,
-} from '@/utils/validators'
+import { useValidators } from '@/composable/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { mdiPlus, mdiHelpCircleOutline, mdiListBoxOutline, mdiImage, mdiWeb, mdiLightbulbOnOutline, mdiAccountOutline } from '@mdi/js'
+import {
+  mdiPlus,
+  mdiHelpCircleOutline,
+  mdiListBoxOutline,
+  mdiImage,
+  mdiWeb,
+  mdiLightbulbOnOutline,
+  mdiAccountOutline,
+} from '@mdi/js'
 
 const router = useRouter()
 const route = useRoute()
+
+const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
 const communityAccount = ref<string | null>(route.query.id as string | null)
 

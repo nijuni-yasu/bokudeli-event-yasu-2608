@@ -3,7 +3,7 @@ import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
 import { dateString, hourString, minutesString, hourList, minutesList } from '@/schemes/eventCreate'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
 import { Japanese } from 'flatpickr/dist/l10n/ja'
-import { requiredValidator, positiveIntegerValidator } from '@/utils/validators'
+import { useValidators } from '@/composable/validators'
 import {
   mdiChevronLeft,
   mdiListBoxOutline,
@@ -27,6 +27,8 @@ const emit = defineEmits<{
   (e: 'submit'): void
   (e: 'back'): void
 }>()
+
+const { requiredValidator, positiveIntegerValidator } = useValidators()
 
 const isFormValid = ref(true)
 const isValid = computed(() => {

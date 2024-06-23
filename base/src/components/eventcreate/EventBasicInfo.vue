@@ -12,7 +12,7 @@ import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePic
 import { Japanese } from 'flatpickr/dist/l10n/ja'
 import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { Timestamp } from 'firebase/firestore'
-import { requiredValidator, postalCodeValidator, urlValidator } from '@/utils/validators'
+import { useValidators } from '@/composable/validators'
 import { mdiMapMarker, mdiCalendar, mdiChevronRight } from '@mdi/js'
 
 const pickerConfig = {
@@ -27,6 +27,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: BokudeliEvent): void
   (e: 'submit'): void
 }>()
+
+const { requiredValidator, postalCodeValidator, urlValidator } = useValidators()
 
 const submit = () => {
   emit('submit')

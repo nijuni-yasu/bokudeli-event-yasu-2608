@@ -20,7 +20,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { getEventPath, getCommunityPath } from '@/router/utils'
 import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
-import { postalCodeValidator } from '@/utils/validators'
+import { useValidators } from '@/composable/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
@@ -29,6 +29,8 @@ const route = useRoute()
 const props = defineProps<{
   communityId: string
 }>()
+
+const { postalCodeValidator } = useValidators()
 
 const eventId = ref(route.query.id as string | null)
 

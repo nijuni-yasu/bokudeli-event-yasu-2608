@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { requiredValidator, phoneValidator, emailValidator } from '@/utils/validators'
+import { useValidators } from '@/composable/validators'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { mdiChevronLeft, mdiCalendarPlus, mdiEmail } from '@mdi/js'
 
@@ -15,6 +15,8 @@ const emit = defineEmits<{
   (e: 'sendReserveMail'): void
   (e: 'back'): void
 }>()
+
+const { requiredValidator, phoneValidator, emailValidator } = useValidators()
 
 const storedUserStore = useStoreStoredUser()
 
