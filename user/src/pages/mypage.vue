@@ -1,18 +1,7 @@
 <script setup lang="ts">
-import { getUserPath } from '@/router/utils'
-import { useStoreStoredUser } from '@/stores/storedUser'
-
-const router = useRouter()
-
-const storedUser = useStoreStoredUser().storedUser
-if (storedUser) {
-  router.replace(getUserPath(storedUser?.userId))
-} else {
-  router.replace('/')
-}
+import Mypage from '@/components/pages/mypage.vue'
 </script>
 
 <template>
-  <div></div>
+  <Mypage />
 </template>
-<style lang="scss" scoped></style>

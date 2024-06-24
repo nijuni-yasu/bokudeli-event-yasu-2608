@@ -1,30 +1,17 @@
 import {
   type User,
+  type UserCredential,
   getAuth,
   getRedirectResult,
   onAuthStateChanged,
-  UserCredential,
   FacebookAuthProvider,
   GoogleAuthProvider,
 } from 'firebase/auth'
+import { FirebaseError } from 'firebase/app'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
-import { setupLayouts } from 'virtual:generated-layouts'
-import { createRouter, createWebHistory } from 'vue-router'
-import routes from '~pages'
-import { FirebaseError } from 'firebase/app'
-
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [...setupLayouts(routes)],
-  scrollBehavior: (to, from, savedPosition) => {
-    if (savedPosition) {
-      return savedPosition
-    }
-    return { top: 0 }
-  },
-})
+import type { Router } from 'vue-router'
 
 const checkUser = async (user: User | null) => {
   // リダイレクト結果を取得
@@ -106,44 +93,44 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
 
 onAuthStateChanged(getAuth(), checkUser)
 
-// Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
-router.beforeEach(async () => {
-  try {
-    await waitAdminAuthentication()
-  } catch {
-    // Do nothing
-  }
-})
-
-router.beforeEach((to) => {
-  const paths = to.path.split('/')
-  let redirect = false
-  if (paths[1] === 'community') {
-    if (paths[2]) {
-      paths[1] = 'c'
-    } else {
-      paths[1] = 'communitylist'
+export const setupRouter = (router: Router) => {
+  // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
+  router.beforeEach(async () => {
+    try {
+      await waitAdminAuthentication()
+    } catch {
+      // Do nothing
     }
-    redirect = true
-  }
-  if (paths[1] === 'users') {
-    paths[1] = 'u'
-    redirect = true
-  }
-  if (paths[3] === 'events') {
-    paths[3] = 'e'
-    redirect = true
-  }
-  if (paths[1] === 'c' && paths[2] !== paths[2]?.toLowerCase()) {
-    paths[2] = paths[2]?.toLowerCase()
-    redirect = true
-  }
-  if (redirect) {
-    return {
-      path: paths.join('/'),
-      query: to.query,
-    }
-  }
-})
+  })
 
-export default router
+  router.beforeEach((to) => {
+    const paths = to.path.split('/')
+    let redirect = false
+    if (paths[1] === 'community') {
+      if (paths[2]) {
+        paths[1] = 'c'
+      } else {
+        paths[1] = 'communitylist'
+      }
+      redirect = true
+    }
+    if (paths[1] === 'users') {
+      paths[1] = 'u'
+      redirect = true
+    }
+    if (paths[3] === 'events') {
+      paths[3] = 'e'
+      redirect = true
+    }
+    if (paths[1] === 'c' && paths[2] !== paths[2]?.toLowerCase()) {
+      paths[2] = paths[2]?.toLowerCase()
+      redirect = true
+    }
+    if (redirect) {
+      return {
+        path: paths.join('/'),
+        query: to.query,
+      }
+    }
+  })
+}

@@ -1,21 +1,26 @@
 <script lang="ts" setup>
+import { defineAsyncComponent } from 'vue'
+import { useConfigStore } from '@core/stores/config'
 import { useSkins } from '@core/composable/useSkins'
-import { useThemeConfig } from '@core/composable/useThemeConfig'
-
-// @layouts plugin
 import { AppContentLayoutNav } from '@layouts/enums'
+import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
+import UserProfile from '@/componentsLocal/UserProfile.vue'
+import Footer from '@/componentsLocal/Footer.vue'
+import { useNavItems } from '@/navigation'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
-  () => import('./components/DefaultLayoutWithHorizontalNav.vue'),
+  () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
 )
-const DefaultLayoutWithVerticalNav = defineAsyncComponent(() => import('./components/DefaultLayoutWithVerticalNav.vue'))
+const DefaultLayoutWithVerticalNav = defineAsyncComponent(
+  () => import('@/components/layouts/DefaultLayoutWithVerticalNav.vue'),
+)
 
-const { width: windowWidth } = useWindowSize()
-const { appContentLayoutNav, switchToVerticalNavOnLtOverlayNavBreakpoint } = useThemeConfig()
+const navItems = useNavItems()
 
+const configStore = useConfigStore()
 // ℹ️ This will switch to vertical nav when define breakpoint is reached when in horizontal nav layout
 // Remove below composable usage if you are not using horizontal nav layout in your app
-switchToVerticalNavOnLtOverlayNavBreakpoint(windowWidth)
+switchToVerticalNavOnLtOverlayNavBreakpoint()
 
 const { layoutAttrs, injectSkinClasses } = useSkins()
 
@@ -23,12 +28,22 @@ injectSkinClasses()
 </script>
 
 <template>
-  <template v-if="appContentLayoutNav === AppContentLayoutNav.Vertical">
-    <DefaultLayoutWithVerticalNav v-bind="layoutAttrs" />
-  </template>
-  <template v-else>
-    <DefaultLayoutWithHorizontalNav v-bind="layoutAttrs" />
-  </template>
+  <Component
+    v-bind="layoutAttrs"
+    :nav-items="navItems"
+    :is="
+      configStore.appContentLayoutNav === AppContentLayoutNav.Vertical
+        ? DefaultLayoutWithVerticalNav
+        : DefaultLayoutWithHorizontalNav
+    "
+  >
+    <template #navbar-icons>
+      <UserProfile />
+    </template>
+    <template #footer>
+      <Footer />
+    </template>
+  </Component>
 </template>
 
 <style lang="scss">
