@@ -1,8 +1,8 @@
 export default {
   dark: false,
   colors: {
-    'primary': '#1AC662',
-    'primary-darken-1': '#14994C',
+    'primary': '#CCB00D',
+    'primary-darken-1': '#B59D10',
     'on-primary': '#fff',
     'secondary': '#8A8D93',
     'secondary-darken-1': '#7C7F84',
