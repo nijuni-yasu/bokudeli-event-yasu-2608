@@ -1,0 +1,5 @@
+// @layouts/components/HorizontalNavLayout.vue の component css で z-index が 1 にベタ書きされている
+// 外部から上書きするには !important を使うしかない
+.layout-wrapper.layout-nav-type-horizontal .layout-navbar-and-nav-container {
+  z-index: 1001 !important;
+}
