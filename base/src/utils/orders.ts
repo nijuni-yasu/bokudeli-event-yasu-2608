@@ -1,4 +1,5 @@
-import type OrderItem from '@/schemes/orderItem'
+import type { OrderItem } from '@/schemes/orderItem'
+import type { OrderMenu } from '@/schemes/orderMenu'
 
 export const ordersCount = (orders: OrderItem[]) =>
   orders.reduce((acc: number, order) => {
@@ -19,3 +20,15 @@ export const ordersTotalPrice = (orders: OrderItem[]) =>
       return acc
     }
   }, 0)
+
+export const getSubtotalsOfOrders = (orders: OrderItem[]): OrderMenu[] => {
+  const subtotals = new Map()
+  orders.forEach((order) => {
+    order.menus.forEach((menu: OrderMenu) => {
+      const m = { ...menu }
+      m.count = (subtotals.get(menu.menu_id)?.count ?? 0) + menu.count
+      subtotals.set(menu.menu_id, m)
+    })
+  })
+  return Array.from(subtotals.values())
+}

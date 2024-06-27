@@ -56,4 +56,36 @@ export default {
       'ステータス'
     ]
   },
+  'order_detail': {
+    'event_id': '【イベントID】 {0}',
+    'event_name': '【イベント名】 {0}',
+    'event_url': '【イベントURL】 {0}',
+    'event_date': '【配送日時】 {0} 〜 {1}',
+    'order_limit': '【注文期限】 {0}',
+    'event_address': '【開催場所】 {0}',
+    'community_name': '【コミュニティ名】 {0}',
+    'organizer_fullname': '【担当者名】 {0}',
+    'organizer_company': '【会社名】 {0}',
+    'organizer_phone_personal': '【電話番号(個人)】 {0}',
+    'organizer_phone_company': '【電話番号(会社)】 {0}',
+    'organizer_email': '【メールアドレス】 {0}',
+    'organizer_memo': '【配送メモ】 {0}',
+    'accept_order': '予約内容を承認し、注文受付を開始する',
+    'decline_order': '予約内容を却下し、予約内容の変更を依頼する',
+    'accept_order_sample': '例)ご予約ありがとうございます。',
+    'decline_order_sample': '例)この時間は予約がいっぱいのため、日程の変更をお願いできますでしょうか。',
+    'send_email': '主催者にメールを送信する',
+    'order_detail': '注文内容',
+    'menu_name': 'メニュー名',
+    'menu_price': '金額',
+    'user_name': '名前',
+    'order_date': '注文日時',
+    'subtotal': 'メニュー別小計',
+    'order_count': '個数',
+    'unit_price': '単価',
+    'subtotal_price': '小計',
+    'total': '合計',
+    'total_count': '合計個数',
+    'total_price': '合計金額'
+  }
 }

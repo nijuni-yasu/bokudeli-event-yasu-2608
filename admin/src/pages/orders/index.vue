@@ -5,6 +5,7 @@ import { useEventsStore, type EventsStore } from '@/stores/event'
 import { orderBy, where } from 'firebase/firestore'
 import { ordersCount, ordersTotalPrice } from '@/utils/orders'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import { getOrderDetailPath } from '@/navigation/utils'
 
 const eventsStore = useEventsStore(
   [
@@ -43,7 +44,7 @@ const events = computed(
                 <tr>
                   <td>{{ event.event_id.slice(0, 6) }}</td>
                   <td>
-                    <router-link :to="{ path: '' }">
+                    <router-link :to="{ path: getOrderDetailPath(event.event_id) }">
                       {{ event.event_name }}
                     </router-link>
                   </td>
