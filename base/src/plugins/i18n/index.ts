@@ -26,7 +26,7 @@ const messages = _.merge(messages1, messages2)
 
 const datetimeFormats1 = Object.fromEntries(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Object.entries(import.meta.glob<{ default: any }>('../../datetimeFormats/*.ts', { eager: true })).flatMap(
+  Object.entries(import.meta.glob<{ default: any }>('../../locales/datetimeFormats/*.ts', { eager: true })).flatMap(
     ([key, value]) => {
       const fileName = /.*\/locales\/datetimeFormats\/(.+)\.ts/.exec(key)?.[1]
       return fileName == null ? [] : [[fileName, value.default]]
