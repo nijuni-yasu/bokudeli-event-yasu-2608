@@ -33,3 +33,29 @@ export const uploadCommunityImage = async (communityId: string, file: File) => {
   }
   return null
 }
+
+export const uploadShopImage = async (partnerId: string, shopId: string, file: File) => {
+  const filename = rebuildFilename(file.name)
+  const uploadStorageRef = storageRef(storage, `partners/${partnerId}/shops/${shopId}/${filename}`)
+  try {
+    const snapshot = await uploadBytes(uploadStorageRef, file)
+    const url = await getDownloadURL(snapshot.ref)
+    return url
+  } catch (error) {
+    console.error(error)
+  }
+  return null
+}
+
+export const uploadMenuImage = async (partnerId: string, menuId: string, file: File) => {
+  const filename = rebuildFilename(file.name)
+  const uploadStorageRef = storageRef(storage, `partners/${partnerId}/menus/${menuId}/${filename}`)
+  try {
+    const snapshot = await uploadBytes(uploadStorageRef, file)
+    const url = await getDownloadURL(snapshot.ref)
+    return url
+  } catch (error) {
+    console.error(error)
+  }
+  return null
+}
