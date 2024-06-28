@@ -43,6 +43,50 @@ export default {
            （メールアドレス : support@nijuni.jp ）`]
     ]
   },
+  'shop': {
+    'submit': '保存する',
+    'saved': '保存しました',
+    'save_error': '保存できませんでした',
+    'info': '店舗情報',
+    'name': '店舗名',
+    'genre': 'カテゴリ',
+    'description': '店舗紹介文',
+    'url': '店舗情報URL',
+    'url_hint': '店舗公式HPまたは食べログなどのURLを入力してください',
+    'url_twitter': 'X(Twitter) URL',
+    'url_twitter_hint': 'X(旧Twitter)アカウントを入力してください',
+    'url_facebook': 'Facebook URL',
+    'url_facebook_hint': 'Facebookページのアカウントを入力してください',
+    'url_instagram': 'Instagram URL',
+    'url_instagram_hint': 'Instagramアカウントを入力してください',
+    'image': '店舗画像',
+    'image_hint': '※画像サイズは600x450推奨です',
+    'base_point': '配送中心地',
+    'base_point_hint': '※配送中心地は、店舗の郵便番号<span class="text-h3">{0}</span>をもとに自動算出しています',
+    'range_min_orders': '配送距離＆注文最小個数',
+    'range': '配送距離(半径km)',
+    'min_orders': '注文最小個数',
+    'range_min_orders_hint': `※「配送距離」と「注文最小個数」は複数設定することができます。<br />
+                              ※【設定1】5km 5個 【設定2】10km 7個 【設定3】15km 10個のように小さい値から設定してください。`,
+    'time': '営業曜日・配送時間',
+    'time_start': '開始時刻（第{0}部）',
+    'time_end': '終了時刻（第{0}部）',
+    'deadline_datetime': '注文締切日時',
+    'deadline_date': '締切日',
+    'deadline_time': '締切時刻',
+    'deadline_hint': '※注文の締切日時を設定できます',
+    'email_sub': 'サブメールアドレス',
+    'email_sub_n': 'サブメールアドレス{0}',
+    'email_sub_hint': `※サブメールアドレスを設定すると注文メールが配信されるようになります。<br />
+                       ※サブメールアドレスの入力ミスには十分ご注意ください。`,
+    'is_open': '開店設定',
+    'label_open': '開店(OPEN)',
+    'label_close': '閉店(CLOSE)',
+    'is_open_hint': `※「開店」とすると、ユーザーからの予約や注文が可能になります。<br />
+                     ※「閉店」とすると、非公開となり、新規の予約は入りません。<br />
+                     ※ すべての設定が完了したら「開店」として「保存」してください。<br />
+                     ※ サポートチームが確認したのちに、店舗が公開されます。`
+  },
   'orders': {
     'title': '注文一覧',
     'table_header': [
