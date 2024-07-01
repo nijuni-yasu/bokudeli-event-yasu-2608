@@ -94,11 +94,11 @@ const onFormSubmit = async () => {
                 :disabled="state.isSending || !(state.mailTitle && state.mailMessage)"
                 :loading="state.isSending"
                 type="submit"
-                rounded
+                rounded="pill"
               >
                 メッセージ送信
               </v-btn>
-              <v-btn rounded color="secondary" variant="tonal" @click="closeDialog"> キャンセル </v-btn>
+              <v-btn rounded="pill" color="secondary" variant="tonal" @click="closeDialog"> キャンセル </v-btn>
             </v-col>
           </v-row>
         </v-form>

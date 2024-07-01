@@ -85,7 +85,7 @@ onMounted(async () => {
                 class="mt-2 mb-5"
                 :class="{ 'disable-menu-button': disabled || menu.isSoldout === true }"
                 color="primary"
-                rounded
+                rounded="pill"
                 elevation="5"
                 :prepend-icon="mdiFoodForkDrink"
                 @click="emit('selectMenu', menu)"

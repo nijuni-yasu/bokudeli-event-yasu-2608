@@ -43,7 +43,7 @@ const closeDialog = () => {
                 class="add-button"
                 color="grey-900"
                 variant="outlined"
-                rounded
+                rounded="pill"
                 :href="googleCalendarLink"
                 target="_blank"
                 >Google カレンダー</v-btn

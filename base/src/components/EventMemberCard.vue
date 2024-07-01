@@ -56,7 +56,7 @@ const descriptionCharacterLimit = 120
       </v-card-subtitle>
       <v-card-text class="text-center pt-1">
         <router-link :to="getUserPath(member.user_id)">
-          <v-btn class="ma-2" variant="outlined" size="small" rounded :prepend-icon="mdiAccount">
+          <v-btn class="ma-2" variant="outlined" size="small" rounded="pill" :prepend-icon="mdiAccount">
             プロフィール詳細
           </v-btn>
         </router-link>

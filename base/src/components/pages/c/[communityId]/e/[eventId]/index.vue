@@ -194,7 +194,7 @@ onUnmounted(() => {
               color="white"
               class="ml-2 my-1"
               elevation="5"
-              rounded
+              rounded="pill"
               :prepend-icon="mdiEmail"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
@@ -208,7 +208,7 @@ onUnmounted(() => {
               color="white"
               class="ml-2 my-1"
               elevation="5"
-              rounded
+              rounded="pill"
               :prepend-icon="mdiPencilBoxOutline"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
@@ -227,7 +227,7 @@ onUnmounted(() => {
               color="white"
               class="my-1"
               elevation="5"
-              rounded
+              rounded="pill"
               :prepend-icon="mdiPencilBoxOutline"
               :to="{
                 path: getEventCreatePath(communityStore.community.community_account),
@@ -396,7 +396,7 @@ onUnmounted(() => {
                         <v-btn
                           class="ma-1"
                           variant="outlined"
-                          rounded
+                          rounded="pill"
                           :prepend-icon="mdiEmail"
                           @click="openContactDialog"
                         >
@@ -469,7 +469,7 @@ onUnmounted(() => {
           <v-btn
             class="text-md-h6"
             size="large"
-            rounded
+            rounded="pill"
             elevation="10"
             :prepend-icon="mdiFoodForkDrink"
             color="primary"

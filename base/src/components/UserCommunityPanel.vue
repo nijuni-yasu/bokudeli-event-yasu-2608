@@ -151,7 +151,7 @@ onUnmounted(() => {
               color="white"
               elevation="5"
               size="small"
-              rounded
+              rounded="pill"
               target="_blank"
               :prepend-icon="mdiPencilBoxOutline"
               @click="router.push(getEventCreatePath(community.community_account))"
@@ -163,7 +163,7 @@ onUnmounted(() => {
               color="white"
               elevation="5"
               size="small"
-              rounded
+              rounded="pill"
               target="_blank"
               :prepend-icon="mdiCog"
               @click="router.push(getCommunitySettingsPath(community.community_account))"
@@ -184,7 +184,7 @@ onUnmounted(() => {
             color="white"
             elevation="10"
             size="large"
-            rounded
+            rounded="pill"
             :prepend-icon="mdiHeartOutline"
             @click="router.push(getCommunityCreatePath())"
           >

@@ -114,8 +114,8 @@ const onFormReset = () => {
             </v-col>
             <!-- 👉 Submit and Cancel -->
             <v-col cols="12" class="d-flex flex-wrap justify-center gap-4">
-              <v-btn type="submit" rounded> 設定 </v-btn>
-              <v-btn rounded color="secondary" variant="tonal" @click="onFormReset"> キャンセル </v-btn>
+              <v-btn type="submit" rounded="pill"> 設定 </v-btn>
+              <v-btn rounded="pill" color="secondary" variant="tonal" @click="onFormReset"> キャンセル </v-btn>
             </v-col>
           </v-row>
         </v-form>

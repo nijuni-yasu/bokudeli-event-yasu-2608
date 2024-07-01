@@ -180,7 +180,7 @@ const addCart = async () => {
       <v-row class="justify-center mx-1 my-2">
         <v-btn
           class="justify-center mx-1 align-self-center"
-          rounded
+          rounded="pill"
           color="primary"
           :prepend-icon="mdiCart"
           :loading="isAddingOrder"
@@ -190,7 +190,7 @@ const addCart = async () => {
         </v-btn>
         <v-btn
           class="justify-center mx-1 my-2 align-self-center"
-          rounded
+          rounded="pill"
           size="small"
           variant="outlined"
           color="secondary"

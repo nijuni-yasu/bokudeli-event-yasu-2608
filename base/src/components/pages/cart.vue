@@ -317,7 +317,7 @@ onMounted(async () => {
                 class="mx-2 my-10 text-lg-h5"
                 color="grey-900"
                 size="x-large"
-                rounded
+                rounded="pill"
                 elevation="7"
                 width="85%"
                 :prepend-icon="mdiCheckOutline"

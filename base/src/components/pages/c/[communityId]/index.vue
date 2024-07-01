@@ -121,7 +121,7 @@ const inviteManager = async () => {
             class="mx-2"
             color="white"
             elevation="5"
-            rounded
+            rounded="pill"
             :prepend-icon="mdiPencilBoxOutline"
             :to="getEventCreatePath(communityStore.community.community_account)"
           >
@@ -131,7 +131,7 @@ const inviteManager = async () => {
             class="mx-2"
             color="white"
             elevation="5"
-            rounded
+            rounded="pill"
             :prepend-icon="mdiCog"
             :to="getCommunitySettingsPath(communityStore.community.community_account)"
           >
@@ -180,7 +180,7 @@ const inviteManager = async () => {
               <v-col>
                 <v-btn
                   variant="outlined"
-                  rounded
+                  rounded="pill"
                   :prepend-icon="mdiEmail"
                   color="primary"
                   width="100%"
@@ -264,7 +264,7 @@ const inviteManager = async () => {
                     color="white"
                     elevation="5"
                     size="small"
-                    rounded
+                    rounded="pill"
                     :prepend-icon="mdiEmail"
                     :to="{
                       path: getEventCreatePath(communityStore.community.community_account),
@@ -279,7 +279,7 @@ const inviteManager = async () => {
                     color="white"
                     elevation="5"
                     size="small"
-                    rounded
+                    rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
                     :to="{
                       path: getEventCreatePath(communityStore.community.community_account),
@@ -298,7 +298,7 @@ const inviteManager = async () => {
                     color="white"
                     elevation="5"
                     size="small"
-                    rounded
+                    rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
                     :to="{
                       path: getEventCreatePath(communityStore.community.community_account),

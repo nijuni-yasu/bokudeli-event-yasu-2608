@@ -166,7 +166,7 @@ onMounted(async () => {
         <v-card-text class="text-left text-subtitle-2 pb-1 px-0">🎟 {{ state.event.url }}</v-card-text>
         <v-card-text class="text-left text-subtitle-2 pb-1 px-0">#食事でつながる #shokujii</v-card-text>
         <v-card-text class="text-center">
-          <v-btn class="mt-5" size="x-small" color="grey-600" rounded variant="outlined" @click="closeDialog"
+          <v-btn class="mt-5" size="x-small" color="grey-600" rounded="pill" variant="outlined" @click="closeDialog"
             >閉じる</v-btn
           >
         </v-card-text>
