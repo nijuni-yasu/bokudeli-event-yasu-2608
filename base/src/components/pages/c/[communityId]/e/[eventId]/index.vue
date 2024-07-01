@@ -464,7 +464,7 @@ onUnmounted(() => {
       color="#FFFFFF00"
       style="height: 60px; z-index: 100; text-align: center"
     >
-      <v-row class="justify-center">
+      <v-row class="justify-center mb-2">
         <v-col md="8" sm="9" cols="12">
           <v-btn
             class="text-md-h6"
