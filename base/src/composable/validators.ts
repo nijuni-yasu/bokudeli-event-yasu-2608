@@ -12,6 +12,14 @@ export const useValidators = () => {
 
   const urlValidator = (value: unknown) => typeof _urlValidator(value) !== 'string' || $t('validator.url')
 
+  const maxLengthValidator = (value: unknown, maxLength: number) => {
+    if (isEmpty(value)) {
+      return true
+    }
+
+    return String(value).length <= maxLength || $t('validator.max_length', [maxLength])
+  }
+
   const postalCodeValidator = (value: string | null | undefined) => {
     if (isEmpty(value)) {
       return true
@@ -84,6 +92,7 @@ export const useValidators = () => {
   return {
     requiredValidator,
     urlValidator,
+    maxLengthValidator,
     postalCodeValidator,
     positiveIntegerValidator,
     phoneValidator,
