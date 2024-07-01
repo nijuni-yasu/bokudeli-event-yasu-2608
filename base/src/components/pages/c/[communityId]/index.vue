@@ -179,7 +179,6 @@ const inviteManager = async () => {
               </v-card-text>
               <v-col>
                 <v-btn
-                  class="ma-1"
                   variant="outlined"
                   rounded
                   :prepend-icon="mdiEmail"
@@ -191,14 +190,7 @@ const inviteManager = async () => {
                 </v-btn>
               </v-col>
               <v-col v-if="isManager">
-                <v-btn
-                  class="ma-1"
-                  variant="outlined"
-                  rounded
-                  color="primary"
-                  width="100%"
-                  @click="isOpenInvitationDailog = true"
-                >
+                <v-btn variant="outlined" rounded color="primary" width="100%" @click="isOpenInvitationDailog = true">
                   管理者を招待する
                 </v-btn>
               </v-col>
