@@ -183,10 +183,10 @@ onUnmounted(() => {
     <div v-if="event != null && communityStore.community != null" class="justify-center">
       <v-row class="justify-center mt-lg-10">
         <v-col md="8" sm="9" cols="12">
-          <v-row class="justify-space-between align-center my-0 py-0">
+          <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
             <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
             <v-spacer />
-            <v-chip class="" color="primary" size="large">
+            <v-chip color="primary" size="large">
               {{ $t(`event_status.${event.event_status.value}`) }}
             </v-chip>
             <v-btn
