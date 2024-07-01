@@ -1,6 +1,18 @@
 export default {
   'ok': 'OK',
   'cancel': 'Cancel',
+  'day_of_week': [
+    '日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'
+  ],
+  'day_of_week_short': [
+    '日', '月', '火', '水', '木', '金', '土'
+  ],
+  'address': '住所',
+  'postal_code': '郵便番号',
+  'phone_number': '電話番号',
+  'email': 'メールアドレス',
+  'latitude': '緯度',
+  'longitude': '経度',
   'payment': {
     'user_advance': '参加者 事前決済 💳',
     'user_on_day': '参加者 当日払い 💸',
