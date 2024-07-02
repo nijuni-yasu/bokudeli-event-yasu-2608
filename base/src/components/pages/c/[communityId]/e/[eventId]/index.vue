@@ -467,7 +467,7 @@ onUnmounted(() => {
       <v-row class="justify-center mb-2">
         <v-col md="8" sm="9" cols="12">
           <v-btn
-            class="text-md-h6"
+            class="text-h5"
             size="large"
             rounded="pill"
             elevation="10"
