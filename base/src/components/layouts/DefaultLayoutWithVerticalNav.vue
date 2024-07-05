@@ -22,7 +22,7 @@ watch(
 
     if (!isFallbackStateActive.value && refLoadingIndicator.value) refLoadingIndicator.value.resolveHandle()
   },
-  { immediate: true },
+  { immediate: true }
 )
 // !SECTION
 </script>
@@ -46,6 +46,13 @@ watch(
     <RouterView v-slot="{ Component }">
       <Suspense :timeout="0" @fallback="isFallbackStateActive = true" @resolve="isFallbackStateActive = false">
         <Component :is="Component" />
+        <template #fallback>
+          <div class="loading">
+            <div class="effect-1 effects"></div>
+            <div class="effect-2 effects"></div>
+            <div class="effect-3 effects"></div>
+          </div>
+        </template>
       </Suspense>
     </RouterView>
 
