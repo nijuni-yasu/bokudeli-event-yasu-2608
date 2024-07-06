@@ -114,15 +114,19 @@ const addOrder = async () => {
     } else {
       // まだ注文していない場合は追加
       const menu = props.menu
-      menus.push({
-        menu_id: menu.id,
-        partner_id: menu.partnerId,
-        name: menu.name,
-        price: menu.price,
-        imageUrl: menu.imageUrl,
-        count: orderCount,
-        note: orderNote.value,
-      })
+      if (menu.id == null) {
+        console.error('menu.id is null')
+      } else {
+        menus.push({
+          menu_id: menu.id,
+          partner_id: menu.partnerId,
+          name: menu.name,
+          price: menu.price,
+          imageUrl: menu.imageUrl,
+          count: orderCount,
+          note: orderNote.value,
+        })
+      }
     }
     await eventStore.updateOrder(userOrder.order_id, { menus, updated_at: Timestamp.now(), carted_at: Timestamp.now() })
   }
@@ -158,7 +162,7 @@ const addCart = async () => {
 <template>
   <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog(false)">
     <v-card class="pa-sm-10 px-5 py-1 text-center">
-      <v-img :src="menu.imageUrl" class="ma-5" aspect-ratio="1" cover></v-img>
+      <v-img :src="menu.imageUrl ?? undefined" class="ma-5" aspect-ratio="1" cover></v-img>
       <v-card-title class="text-left text-h5 py-2 pre-line">
         {{ menu.name }}
       </v-card-title>
