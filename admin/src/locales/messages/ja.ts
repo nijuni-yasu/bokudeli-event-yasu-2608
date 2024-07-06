@@ -87,6 +87,19 @@ export default {
                      ※ すべての設定が完了したら「開店」として「保存」してください。<br />
                      ※ サポートチームが確認したのちに、店舗が公開されます。`
   },
+  'menu': {
+    'add': 'メニューの追加',
+    'edit': 'メニューの編集',
+    'delete_confirm': 'メニューを削除しますか？',
+    'saved': 'メニューを保存しました',
+    'save_error': '保存できませんでした',
+    'deleted': 'メニューを削除しました',
+    'delete_error': '削除できませんでした',
+    'example': {
+      'name': '例）サラダ弁当',
+      'description': '手間隙かけて作りました、季節のお野菜たっぷりのサラダ弁当です。'
+    }
+  },
   'orders': {
     'title': '注文一覧',
     'table_header': [
@@ -131,5 +144,19 @@ export default {
     'total': '合計',
     'total_count': '合計個数',
     'total_price': '合計金額'
+  },
+  'menu_edit_card': {
+    'name': 'メニュー名称',
+    'description': '説明文',
+    'price': '税込価格',
+    'image': 'メニュー画像',
+    'image_hint': '※画像サイズは600x600推奨です',
+    'sold_out': '売り切れ',
+    'in_stock': '販売中',
+    'limited_edition': '期間限定',
+    'date_start': '期間限定・開始日',
+    'date_end': '期間限定・終了日',
+    'close': '閉じる',
+    'submit': '保存する'
   }
 }
