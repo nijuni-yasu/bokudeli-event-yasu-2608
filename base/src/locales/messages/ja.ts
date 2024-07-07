@@ -25,6 +25,7 @@ export default {
   'validator': {
     'required': '必須項目です',
     'url': 'URLの形式が正しくありません',
+    'between': '{0} から {1} の間の値を入力してください',
     'max_length': '{0}文字以下で入力してください',
     'postal_code': '郵便番号は7桁の数字で入力してください',
     'positive_integer': '正の整数を入力してください',

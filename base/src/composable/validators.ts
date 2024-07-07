@@ -2,7 +2,11 @@
  * 多くは '@/@core/utils/validators' に実装されているが、日本語に変換するためにここに実装する
  */
 import { useI18n } from 'vue-i18n'
-import { requiredValidator as _requiredValidator, urlValidator as _urlValidator } from '@core/utils/validators'
+import {
+  requiredValidator as _requiredValidator,
+  urlValidator as _urlValidator,
+  betweenValidator as _betweenValidator,
+} from '@core/utils/validators'
 
 export const useValidators = () => {
   const { t: $t } = useI18n()
@@ -11,6 +15,9 @@ export const useValidators = () => {
     typeof _requiredValidator(value) !== 'string' || $t('validator.required')
 
   const urlValidator = (value: unknown) => typeof _urlValidator(value) !== 'string' || $t('validator.url')
+
+  const betweenValidator = (value: unknown, min: number, max: number) =>
+    typeof _betweenValidator(value, min, max) !== 'string' || $t('validator.between', [min, max])
 
   const maxLengthValidator = (value: unknown, maxLength: number) => {
     if (isEmpty(value)) {
@@ -92,6 +99,7 @@ export const useValidators = () => {
   return {
     requiredValidator,
     urlValidator,
+    betweenValidator,
     maxLengthValidator,
     postalCodeValidator,
     positiveIntegerValidator,
