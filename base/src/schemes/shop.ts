@@ -157,5 +157,6 @@ export class Shop {
     public shop_email_sub1: string = '',
     public shop_email_sub2: string = '',
     public shop_email_sub3: string = '',
+    public community_account?: string,
   ) {}
 }

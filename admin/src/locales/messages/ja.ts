@@ -18,7 +18,8 @@ export default {
     'shop': '店舗設定',
     'menu': 'メニュー設定',
     'order': '注文一覧',
-    'manual': '店舗マニュアル'
+    'manual': '店舗マニュアル',
+    'community': 'コミュニティ設定',
   },
   'forgot_password_dialog': {
     'title': 'パスワードの再設定',
@@ -158,5 +159,36 @@ export default {
     'date_end': '期間限定・終了日',
     'close': '閉じる',
     'submit': '保存する'
+  },
+  'community': {
+    'submit': '設定',
+    'create': 'コミュニティを新規作成する',
+    'create_confirm_dialog': {
+      'title': 'コミュニティを新規作成しますか？',
+      'message': `<ul><li>コミュニティ作成後、イベントページ作成などの機能が利用可能となります。</li>
+                      <li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a> をご確認ください。</li>
+                      <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。</li></ul>`,
+      'submit': 'コミュニティを新規作成する'
+    },
+    'new_community_dialog': {
+      'title1': 'コミュニティの新規作成について',
+      'message1': `<ul><li>「アカウント」「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」など入力してください。</li>
+                       <li>コミュニティの「運営者情報」「利用目的」などについては、コミュニティページには表示されません。</li>
+                       <li>コミュニティ作成後、イベント作成などの機能が利用可能となります。</li></ul>`,
+      'title2': '禁止事項について',
+      'message2': `<ul><li>マルチ商法、ネットワークビジネス、宗教活動等の勧誘、過度な営業行為は禁止です。</li>
+                       <li>報告を受け次第、アカウント停止とさせていただきます。</li>
+                       <li>また、反社会的勢力等であるか、反社会的勢力等との何らかの交流若しくは関与を行っていると当社が判断した場合もアカウント停止とさせていただきます。</li>
+                       <li>健全なコミュニティ運営を目指し、ご理解とご協力をお願いいたします。</li></ul>
+                       <br />
+                    <ul><li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a> をご確認ください。</li>
+                        <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。</li></ul>`,
+    },
+    'added': 'コミュニティ新規作成メールを送信しました。承認されるのをお待ちください。',
+    'saved': 'コミュニティ情報を更新しました',
+    'error': 'エラーが発生しました',
+  },
+  'alert': {
+    'make_shop': '先に店舗情報を登録してください',
   }
 }
