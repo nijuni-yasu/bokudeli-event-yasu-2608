@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Please use `v-dialog` directly
+ */
 const props = defineProps<{
   modelValue: boolean
   isConfirm?: boolean
