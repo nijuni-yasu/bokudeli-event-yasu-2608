@@ -277,6 +277,20 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "updated_at",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "user_id",
           "order": "ASCENDING"
         }
