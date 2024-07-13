@@ -26,6 +26,8 @@ const EVENT_STATUS_IN_DRAFT_ID = 'd-db07a084839741ada6e3ff0f44ac3b41';
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c';
 const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433';
 
+const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de';
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const db = getFirestore();
@@ -527,6 +529,41 @@ async function sendOrderComletionMail(eventRef, userId) {
     });
 }
 
+async function sendInCartNotification(start, end) {
+    const notifyTime = 24 * 60 * 60 * 1000; // 1日
+    const orderSnapshot = await (db.collectionGroup('orders')
+        .where('status', '==', 'in_cart')
+        .where('updated_at', '>', Timestamp.fromMillis(start - notifyTime))
+        .where('updated_at', '<=', Timestamp.fromMillis(end - notifyTime))).get();
+    Promise.all(orderSnapshot.docs.map(async (orderDoc) => {
+        const order = orderDoc.data();
+        const userId = order.user_id;
+        const [eventSnapshot, userSnapshot] = await Promise.all([orderDoc.ref.parent.parent.get(), db.collection('users').doc(userId).get()]);
+        const eventData = eventSnapshot.data();
+        const userData = userSnapshot.data();
+        return sgMail.send(buildInCartNotificationMail(eventData, userData));
+    }));
+}
+
+function buildInCartNotificationMail(eventData, userData) {
+    return {
+        to: userData.user_email,
+        from: DEFAULT_FROM,
+        templateId: IN_CART_NOTIFICATION_ID,
+        dynamic_template_data: {
+            date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+            event_datetime: convertToDuration(convertToJapan(eventData.event_start_datetime?.toMillis()), convertToJapan(eventData.event_end_datetime?.toMillis())),
+            event_name: eventData.event_name,
+            event_cover_url: eventData.event_cover_url,
+            community_name: eventData.community_name,
+            event_address: eventData.event_address,
+            shop_name: eventData.shop_name,
+            event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+            is_public: eventData.is_public
+        }
+    };
+}
+
 export const polling = functions
     .region('asia-northeast1')
     .pubsub
@@ -541,6 +578,7 @@ export const polling = functions
             sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
             sendOrderDeadlineMailToMembers(start, end),
             sendEventConcludedMail(start, end),
+            sendInCartNotification(start, end),
         ]);
     });
 
