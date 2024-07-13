@@ -539,13 +539,33 @@ async function sendInCartNotification(start, end) {
         const order = orderDoc.data();
         const userId = order.user_id;
         const [eventSnapshot, userSnapshot] = await Promise.all([orderDoc.ref.parent.parent.get(), db.collection('users').doc(userId).get()]);
-        const eventData = eventSnapshot.data();
         const userData = userSnapshot.data();
-        return sgMail.send(buildInCartNotificationMail(eventData, userData));
+        return sgMail.send(buildInCartNotificationMail(eventSnapshot, userData));
     }));
 }
 
-function buildInCartNotificationMail(eventData, userData) {
+async function sendInCartEventDeadlineNotification(start, end) {
+    const notifyTime = 24 * 60 * 60 * 1000; // 1日
+    const events = await (db.collectionGroup('events')
+        .where('event_deadline_datetime', '>', Timestamp.fromMillis(start - notifyTime))
+        .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end - notifyTime))
+        .where('event_status.value', '==', 'accepting_order')).get();
+
+    Promise.all(events.docs.map(async (eventSnapshot) => {
+        const eventData = eventSnapshot.data();
+        const ordersSnapshot = await eventSnapshot.ref.collection('orders').get();
+        Promise.all(ordersSnapshot.docs
+            .filter(orderSnapshot => orderSnapshot.get('status') === 'in_cart')
+            .map(async (orderSnapshot) => {
+                const orderData = orderSnapshot.data();
+                const userSnapshot = await db.collection('users').doc(orderData.user_id).get();
+                return sgMail.send(buildInCartNotificationMail(eventSnapshot, userSnapshot.data()));
+            }));
+    }));
+}
+
+function buildInCartNotificationMail(eventSnapshot, userData) {
+    const eventData = eventSnapshot.data();
     return {
         to: userData.user_email,
         from: DEFAULT_FROM,
@@ -579,6 +599,7 @@ export const polling = functions
             sendOrderDeadlineMailToMembers(start, end),
             sendEventConcludedMail(start, end),
             sendInCartNotification(start, end),
+            sendInCartEventDeadlineNotification(start, end),
         ]);
     });
 
