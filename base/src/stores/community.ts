@@ -1,6 +1,7 @@
 import { type Ref } from 'vue'
 import _ from 'lodash'
 import { db } from '@/firebase'
+import { getAuth } from 'firebase/auth'
 import {
   collection,
   doc,
@@ -419,7 +420,7 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
         if (c != null) {
           throw new Error(`community ${communityDraft.value.community_account} already exists`)
         }
-        const userId = useStoreStoredUser().storedUser?.userId
+        const userId = getAuth().currentUser?.uid
         if (userId == null) {
           throw new Error('user is not logged in')
         }
