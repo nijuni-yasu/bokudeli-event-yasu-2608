@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Use ./EventDetailCard.vue instead
+ */
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
 import { dateString, hourString, minutesString, hourList, minutesList } from '@/schemes/eventCreate'
 import AppDateTimePicker from '@core/components/app-form-elements/AppDateTimePicker.vue'
