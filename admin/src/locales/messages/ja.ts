@@ -20,6 +20,7 @@ export default {
     'order': '注文一覧',
     'manual': '店舗マニュアル',
     'community': 'コミュニティ設定',
+    'event': 'イベント編集',
   },
   'forgot_password_dialog': {
     'title': 'パスワードの再設定',

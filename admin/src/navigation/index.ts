@@ -1,6 +1,14 @@
 import type { HorizontalNavItems, VerticalNavItems } from '@layouts/types'
-import { getCommunityPath, getMenuPath, getOrderPath, getShopPath } from './utils'
-import { mdiHome, mdiStore, mdiFoodForkDrink, mdiBicycle, mdiLightbulbOnOutline, mdiAccountGroup } from '@mdi/js'
+import { getCommunityPath, getEventPath, getMenuPath, getOrderPath, getShopPath } from './utils'
+import {
+  mdiHome,
+  mdiStore,
+  mdiFoodForkDrink,
+  mdiBicycle,
+  mdiLightbulbOnOutline,
+  mdiAccountGroup,
+  mdiCalendarHeart,
+} from '@mdi/js'
 
 export const useNavItems = (): HorizontalNavItems | VerticalNavItems => {
   const { t: $t } = useI18n()
@@ -29,6 +37,11 @@ export const useNavItems = (): HorizontalNavItems | VerticalNavItems => {
       title: $t('navigation.community'),
       to: { path: getCommunityPath() },
       icon: { icon: mdiAccountGroup },
+    },
+    {
+      title: $t('navigation.event'),
+      to: { path: getEventPath() },
+      icon: { icon: mdiCalendarHeart },
     },
     {
       title: $t('navigation.manual'),
