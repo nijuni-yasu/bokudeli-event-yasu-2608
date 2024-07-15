@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Use ./EventBasicInfoCard.vue instead
+ */
 import {
   hourList,
   minutesList,

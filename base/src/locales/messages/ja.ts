@@ -41,6 +41,16 @@ export default {
     'shop': '【お店】{0}',
     'participants': '【参加】{0}人 / {1}人',
   },
+  'event_basic_info': {
+    'place': '開催場所',
+    'place_name': '会場名',
+    'place_url': '会場URL',
+    'date': '開催日時',
+    'start_date': '開始日',
+    'end_date': '終了日',
+    'hour': '時',
+    'minute': '分',
+  },
   'validator': {
     'required': '必須項目です',
     'url': 'URLの形式が正しくありません',
