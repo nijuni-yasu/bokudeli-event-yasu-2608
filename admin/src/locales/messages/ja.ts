@@ -189,7 +189,15 @@ export default {
     'saved': 'コミュニティ情報を更新しました',
     'error': 'エラーが発生しました',
   },
+  'event': {
+    'create': '作成',
+    'update': '更新',
+    'created': 'イベントを作成しました',
+    'updated': 'イベントを更新しました',
+    'error': 'エラーが発生しました',
+  },
   'alert': {
     'make_shop': '先に店舗情報を登録してください',
+    'make_community_account': '先にコミュニティアカウントを作成してください',
   }
 }
