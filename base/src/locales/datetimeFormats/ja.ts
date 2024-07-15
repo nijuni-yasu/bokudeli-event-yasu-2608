@@ -4,6 +4,18 @@ export default {
     'month': 'numeric',
     'day': 'numeric',
   },
+  'date_weekday_short': {
+    'year': 'numeric',
+    'month': 'numeric',
+    'day': 'numeric',
+    'weekday': 'short',
+  },
+  'date_weekday_long': {
+    'year': 'numeric',
+    'month': 'numeric',
+    'day': 'numeric',
+    'weekday': 'long',
+  },
   'time': {
     'hour': 'numeric',
     'minute': 'numeric',

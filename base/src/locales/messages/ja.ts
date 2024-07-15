@@ -34,6 +34,13 @@ export default {
     'limit_people': '定員に達しました。カートに追加できません',
     'sold_out': '売り切れました。カートに追加できません'
   },
+  'event_card': {
+    'community_name': '【主催】{0}',
+    'date': '【日時】{0}〜{1}',
+    'place': '【場所】{0}',
+    'shop': '【お店】{0}',
+    'participants': '【参加】{0}人 / {1}人',
+  },
   'validator': {
     'required': '必須項目です',
     'url': 'URLの形式が正しくありません',
