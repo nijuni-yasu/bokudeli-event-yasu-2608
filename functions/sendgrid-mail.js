@@ -552,7 +552,6 @@ async function sendInCartEventDeadlineNotification(start, end) {
         .where('event_status.value', '==', 'accepting_order')).get();
 
     Promise.all(events.docs.map(async (eventSnapshot) => {
-        const eventData = eventSnapshot.data();
         const ordersSnapshot = await eventSnapshot.ref.collection('orders').get();
         Promise.all(ordersSnapshot.docs
             .filter(orderSnapshot => orderSnapshot.get('status') === 'in_cart')
@@ -579,7 +578,7 @@ function buildInCartNotificationMail(eventSnapshot, userData) {
             event_address: eventData.event_address,
             shop_name: eventData.shop_name,
             event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-            is_public: eventData.is_public
+            event_deadline_datetime: convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
         }
     };
 }
