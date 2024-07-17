@@ -18,6 +18,7 @@ const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098';
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d';
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f';
+const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7';
 // 環境変数の方がよいかもしれない
 const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345;
 
@@ -91,6 +92,10 @@ function getEventUrl(communityAccount, eventId) {
 
 function getOrderUrl(eventId) {
     return `https://${process.env.ADMIN_HOST}/order/${eventId}`;
+}
+
+function getUserUrl(userId) {
+    return `https://${process.env.EVENT_HOST}/u/${userId}`
 }
 
 async function getShopForEvent(eventSnapshot) {
@@ -529,6 +534,28 @@ async function sendOrderCompletionMail(eventRef, userId) {
     });
 }
 
+async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
+    const eventRef = orderSnapshot.ref.parent.parent;
+    const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()]);
+    const eventData = eventSnapshot.data();
+    const userData = userSnapshot.data();
+
+    const dynamic_template_data = {
+        date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+        event_name: eventData.event_name,
+        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+        user_name: userData.user_name,
+        user_url: getUserUrl(userData.user_id),
+    }
+    return sgMail.send({
+        to: eventData.organizer_email,
+        from: DEFAULT_FROM,
+        templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
+        dynamic_template_data,
+    });
+
+}
+
 async function sendInCartNotification(start, end) {
     const notifyTime = 24 * 60 * 60 * 1000; // 1日
     const orderSnapshot = await (db.collectionGroup('orders')
@@ -664,10 +691,13 @@ export const on_order_changed = functions
     .onWrite(async (change) => {
         const before = change.before;
         const after = change.after;
+        const promises = [];
         if (before.get('status') !== after.get('status') && after.get('status') === 'ordered') {
             const userId = after.get('user_id');
-            return sendOrderCompletionMail(after.ref.parent.parent, userId);
+            promises.push(sendOrderCompletionMail(after.ref.parent.parent, userId));
+            promises.push(sendOrderCompletionMailForOrganizer(after, userId));
         }
+        return Promise.all(promises);
     });
 
 export const community_added = functions
