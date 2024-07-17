@@ -17,7 +17,7 @@ const DELIVERY_DURATION = 30; // minutes
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098';
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d';
-const ORDER_COMNPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f';
+const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f';
 // 環境変数の方がよいかもしれない
 const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345;
 
@@ -507,7 +507,7 @@ async function sendCommunityContactMail(templateId, data) {
     });
 }
 
-async function sendOrderComletionMail(eventRef, userId) {
+async function sendOrderCompletionMail(eventRef, userId) {
     const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()]);
     const eventData = eventSnapshot.data();
     const dynamic_template_data = {
@@ -524,7 +524,7 @@ async function sendOrderComletionMail(eventRef, userId) {
     return sgMail.send({
         to: userSnapshot.get('user_email'),
         from: DEFAULT_FROM,
-        templateId: ORDER_COMNPLETION_TEMPLATE_ID,
+        templateId: ORDER_COMPLETION_TEMPLATE_ID,
         dynamic_template_data,
     });
 }
@@ -666,7 +666,7 @@ export const on_order_changed = functions
         const after = change.after;
         if (before.get('status') !== after.get('status') && after.get('status') === 'ordered') {
             const userId = after.get('user_id');
-            return sendOrderComletionMail(after.ref.parent.parent, userId);
+            return sendOrderCompletionMail(after.ref.parent.parent, userId);
         }
     });
 
