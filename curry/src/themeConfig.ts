@@ -3,7 +3,7 @@ import { VIcon } from 'vuetify/components/VIcon'
 import { defineThemeConfig } from '@core'
 import { Skins } from '@core/enums'
 
-import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
+import logo from '@/assets/images/curry/curry_logo_wide.png'
 
 import { AppContentLayoutNav, ContentWidth, FooterType, NavbarType } from '@layouts/enums'
 export const { themeConfig, layoutConfig } = defineThemeConfig({
