@@ -3,7 +3,6 @@ import { VProgressCircular } from 'vuetify/components'
 
 let observer: IntersectionObserver | null = null
 const loadingElement = ref<typeof VProgressCircular | undefined>()
-const isVisible = ref(false)
 
 defineOptions({
   inheritAttrs: false,
@@ -20,8 +19,22 @@ const emits = defineEmits<{
 
 const hasMore = computed(() => props.totalCount > props.loadedCount)
 
+const isElementInViewport = (el: HTMLElement | undefined) => {
+  if (el == null) {
+    return false
+  }
+
+  const rect = el.getBoundingClientRect()
+  return (
+    rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+    0 <= rect.bottom &&
+    rect.left <= (window.innerWidth || document.documentElement.clientWidth) &&
+    0 <= rect.right
+  )
+}
+
 const nextLoad = () => {
-  if (isVisible.value && hasMore.value) {
+  if (hasMore.value && isElementInViewport(loadingElement.value?.$el)) {
     emits('load')
   }
 }
@@ -47,8 +60,9 @@ watch(loadingElement, (newValue) => {
     observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          isVisible.value = entry.isIntersecting
-          nextLoad()
+          if (entry.isIntersecting) {
+            nextLoad()
+          }
         })
       },
       {
@@ -67,5 +81,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-progress-circular v-if="hasMore" ref="loadingElement" indeterminate color="primary" />
+  <v-progress-circular v-show="hasMore" ref="loadingElement" indeterminate color="primary" />
 </template>
