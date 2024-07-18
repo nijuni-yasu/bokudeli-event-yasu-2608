@@ -540,6 +540,8 @@ async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
     const eventData = eventSnapshot.data();
     const userData = userSnapshot.data();
 
+    const to = await getCommunityEmailsForEvent(eventSnapshot);
+
     const dynamic_template_data = {
         date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
         event_name: eventData.event_name,
@@ -548,7 +550,7 @@ async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
         user_url: getUserUrl(userData.user_id),
     }
     return sgMail.send({
-        to: eventData.organizer_email,
+        to,
         from: DEFAULT_FROM,
         templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
         dynamic_template_data,
