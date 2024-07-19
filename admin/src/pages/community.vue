@@ -66,6 +66,7 @@ const getCommunity = async () =>
       communitiesStore.communityDraft.community_address = shop.shop_address
       communitiesStore.communityDraft.community_phone = shop.shop_phone
       communitiesStore.communityDraft.community_email = shop.shop_email
+      communitiesStore.communityDraft.is_approved = true
       resolve(communitiesStore.communityDraft)
     } else {
       watch(

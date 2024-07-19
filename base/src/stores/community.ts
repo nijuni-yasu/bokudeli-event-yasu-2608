@@ -436,7 +436,6 @@ export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) =>
         await setDoc(newCommunityRef, {
           ...communityDraft.value.convertToDocumentData(),
           community_id: newCommunityRef.id,
-          is_approved: false,
           created_at: Timestamp.now(),
           updated_at: Timestamp.now(),
         })
