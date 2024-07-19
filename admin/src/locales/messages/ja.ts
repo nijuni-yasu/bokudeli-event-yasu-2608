@@ -195,6 +195,7 @@ export default {
     'created': 'イベントを作成しました',
     'updated': 'イベントを更新しました',
     'error': 'エラーが発生しました',
+    'new': 'イベント作成する'
   },
   'alert': {
     'make_shop': '先に店舗情報を登録してください',

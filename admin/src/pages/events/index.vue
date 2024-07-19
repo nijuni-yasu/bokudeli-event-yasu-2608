@@ -6,7 +6,6 @@ import { useEventsStore, type EventsStore } from '@/stores/event'
 import { getCommunityPath, getShopPath } from '@/navigation/utils'
 import type { Shop } from '@/schemes/shop'
 import EventCard from '@/components/EventCard.vue'
-import { mdiPlus } from '@mdi/js'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
 
@@ -100,7 +99,7 @@ const fab = () => {
       </v-row>
     </v-col>
   </v-row>
-  <v-fab size="large" :icon="mdiPlus" @click="fab" />
+  <v-btn class="fab" size="large" @click="fab">{{ $t('event.new') }}</v-btn>
 </template>
 
 <style scoped lang="scss">
@@ -110,7 +109,7 @@ const fab = () => {
   min-height: 300px;
 }
 
-.v-fab {
+.fab {
   position: fixed;
   bottom: 80px;
   right: 80px;
