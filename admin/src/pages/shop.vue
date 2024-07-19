@@ -186,7 +186,7 @@ const submit = async () => {
               dense
               :label="$t('shop.url_twitter')"
               :hint="$t('shop.url_twitter_hint')"
-              prefix="https://twitter.com/"
+              prefix="https://x.com/"
             />
           </v-card-text>
           <v-card-text>
