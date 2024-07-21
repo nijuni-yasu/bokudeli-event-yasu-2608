@@ -93,7 +93,7 @@ if (route.query.id != null) {
   _event.partner_id = partnerId
   _event.shop_id = shop.shop_id!
   _event.shop_name = shop.shop_name
-  _event.event_status = { value: 'accepting_order' }
+  _event.event_status = { value: 'in_draft' }
 }
 
 const event = ref<BokudeliEvent>(_event)
@@ -160,8 +160,13 @@ onUnmounted(() => {
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
       <v-form v-model="isValid">
-        <EventBasicInfoCard v-model="event" />
-        <EventDetailCard v-model="event" v-model:cover-image="coverImage" :subdomainTags="community.subdomain_tags" />
+        <EventBasicInfoCard v-model="event" :readonly="event.event_status.value !== 'in_draft'" />
+        <EventDetailCard
+          v-model="event"
+          v-model:coverImage="coverImage"
+          :readonlyDeadline="event.event_status.value !== 'in_draft'"
+          :subdomainTags="community.subdomain_tags"
+        />
         <v-card-text class="text-center mt-10">
           <v-btn color="primary" size="large" :disabled="!isValid" :loading="isLoading" @click="submit">
             {{ event.event_id == '' ? $t('event.create') : $t('event.update') }}
