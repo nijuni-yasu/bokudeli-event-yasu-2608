@@ -11,6 +11,7 @@ const DEFAULT_CC = 'support+cc@nijuni.jp';
 const DEFAULT_TO = 'support+to@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
+const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f';
 const APPLYING_ORDER_TEMPLATE_ID = 'd-a0eeb84707604e658dc4aabb38f1b92d';
 const DELIVERY_DURATION = 30; // minutes
 
@@ -237,6 +238,47 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
                 from: DEFAULT_FROM,
                 cc: DEFAULT_CC,
                 templateId: ORDER_DEADLINE_TEMPLATE_ID,
+                dynamic_template_data,
+            });
+        } catch (err) {
+            console.warn(err);
+        }
+    }));
+}
+
+async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
+    const ordersRef = eventSnapshot.ref.collection('orders');
+    const [order_count, _, orders] = await createOrdersForOrderDeadline(ordersRef);
+    const eventData = eventSnapshot.data();
+    const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis());
+    const date = convertToDate(event_start_datetime_japan)
+    const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
+
+    return {
+        ...eventData,
+        date,
+        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+        event_deadline_datetime,
+        order_count,
+        orders,
+    }
+}
+
+async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
+    const events = await (db.collectionGroup('events')
+        .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
+        .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
+        .where('event_status.value', '==', 'accepting_order')).get();
+
+    return Promise.all(events.docs.map(async (eventSnapshot) => {
+        try {
+            const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot);
+            dynamic_template_data.is_reminder = is_reminder;
+            await sgMail.send({
+                to: await getCommunityEmailsForEvent(eventSnapshot),
+                from: DEFAULT_FROM,
+                cc: DEFAULT_CC,
+                templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
                 dynamic_template_data,
             });
         } catch (err) {
@@ -623,7 +665,9 @@ export const polling = functions
         const start = end - (60 * 1000);
         return Promise.all([
             sendOrderDeadlineMailToShop(start, end, false),
-            sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
+            sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true), // 1日前告知
+            sendOrderDeadlineMailToOrganizers(start, end, false),
+            sendOrderDeadlineMailToOrganizers(start + 3 * 24 * 60 * 60 * 1000, end + 3 * 24 * 60 * 60 * 1000, true), // 3日前告知
             sendOrderDeadlineMailToMembers(start, end),
             sendEventConcludedMail(start, end),
             sendInCartNotification(start, end),
