@@ -28,7 +28,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
   <v-card flat class="mt-2">
     <v-card-title class="pt-10 px-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiListBoxOutline" />
-      <span>イベント詳細</span>
+      {{ $t('event_detail.title') }}
     </v-card-title>
 
     <v-card-text class="pt-5">
@@ -38,7 +38,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             v-model="event.event_name"
             outlined
             dense
-            label="イベントタイトル"
+            :label="$t('event_detail.event_name')"
             :rules="[requiredValidator]"
             :readonly="readonly"
           />
@@ -56,7 +56,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             :readonly="readonly"
             @fileSelected="(f) => (coverImage = f)"
           >
-            <template #placeholder>イベント画像 1200px X 630px</template>
+            <template #placeholder>{{ $t('event_detail.event_cover_url') }}</template>
           </ImageInput>
         </v-col>
       </v-row>
@@ -69,7 +69,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             v-model="event.event_desc"
             outlined
             rows="10"
-            label="イベント詳細"
+            :label="$t('event_detail.event_desc')"
             :rules="[requiredValidator]"
             :readonly="readonly"
           />
@@ -80,7 +80,12 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
     <v-card-text class="pt-5">
       <v-row>
         <v-col cols="12" sm="12" md="6">
-          <DateInput label="注文締切日時" v-model="eventDeadlineDate" :readonly="true" :clearable="false" />
+          <DateInput
+            :label="$t('event_detail.deadline_date')"
+            v-model="eventDeadlineDate"
+            :readonly="true"
+            :clearable="false"
+          />
         </v-col>
         <v-col cols="6" sm="6" md="3">
           <v-select
@@ -88,7 +93,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             :items="hourList"
             outlined
             dense
-            label="時間"
+            :label="$t('event_detail.deadline_hour')"
             :readonly="true"
           ></v-select>
         </v-col>
@@ -98,7 +103,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             :items="minutesList"
             outlined
             dense
-            label="分"
+            :label="$t('event_detail.deadline_minute')"
             :readonly="true"
           ></v-select>
         </v-col>
@@ -113,7 +118,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             type="number"
             outlined
             dense
-            label="定員数"
+            :label="$t('event_detail.event_max_people')"
             :rules="[requiredValidator, positiveIntegerValidator]"
             :readonly="readonly"
           />
@@ -124,23 +129,23 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
     <!-- Activity -->
     <v-card-title class="pt-10 px-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiLightbulbOnOutline" />
-      <span>公開設定</span>
+      {{ $t('event_detail.activity') }}
     </v-card-title>
     <v-card-text>
       <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="readonly">
         <template v-slot:label>
-          <span v-if="event.is_public">公開イベント</span>
-          <span v-else>限定公開イベント</span>
+          <span v-if="event.is_public">{{ $t('event_detail.public') }}</span>
+          <span v-else>{{ $t('event_detail.private') }}</span>
         </template>
       </v-switch>
       <div>
-        <span v-if="event.is_public">※「公開イベント」はTOPページに一覧表示されます。</span>
-        <span v-else>※「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。</span>
+        <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
+        <span v-else>{{ $t('event_detail.private_desc') }}</span>
       </div>
     </v-card-text>
     <v-card-title class="pt-10 px-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountCreditCardOutline" />
-      <span>支払い設定</span>
+      {{ $t('event_detail.payment') }}
     </v-card-title>
     <v-card-text>
       <v-col cols="12" sm="12" md="6">
@@ -152,27 +157,10 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
           class="mt-0"
           :rules="[requiredValidator]"
         >
-          <template #label> 支払い設定 </template>
+          <template #label> {{ $t('event_detail.payment') }} </template>
         </v-select>
       </v-col>
     </v-card-text>
     <slot />
   </v-card>
 </template>
-
-<style lang="scss" scoped>
-.image-upload-container {
-  width: 100%;
-  aspect-ratio: 1.91;
-  max-width: 1200px;
-  max-height: 630px;
-  //   display: flex;
-  //   align-items: center;
-  //   justify-content: center;
-  //   cursor: pointer;
-}
-
-// .placeholder {
-//   text-align: center;
-// }
-</style>
