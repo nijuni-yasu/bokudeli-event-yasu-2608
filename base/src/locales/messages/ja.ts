@@ -23,7 +23,8 @@ export default {
     'applying_reservation': '予約申請中',
     'accepting_order': '参加受付中',
     'order_closed': '参加締切済',
-    'finished': 'イベント終了'
+    'finished': 'イベント終了',
+    'full': '満席',
   },
   'order_deadline': '注文期限',
   'days_before': '当日 | 前日 | {n}日前',

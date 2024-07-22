@@ -16,7 +16,7 @@ type RawEventStatusType = {
 }
 
 export type EventStatusType = Omit<RawEventStatusType, 'value'> & {
-  value: RawEventStatusType['value'] | 'order_closed' | 'finished'
+  value: RawEventStatusType['value'] | 'order_closed' | 'finished' | 'full'
 }
 
 class BokudeliEvent {
@@ -75,6 +75,8 @@ class BokudeliEvent {
         return { value: 'finished' }
       } else if (event_deadline_datetime < now) {
         return { value: 'order_closed' }
+      } else if (this.event_num_members >= this.event_max_people) {
+        return { value: 'full' }
       }
     }
     return rawStatus

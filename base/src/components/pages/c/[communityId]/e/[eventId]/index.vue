@@ -74,15 +74,13 @@ const menuDisabled = computed<MenuDisabledReason | false | null>(() => {
       return 'finished'
     case 'order_closed':
       return 'order_closed'
-    case 'accepting_order':
-      if (event.value.event_num_members >= event.value.event_max_people) {
-        return 'limit_people'
-      } else {
-        return false
-      }
+    case 'full':
+      return 'limit_people'
     case 'in_draft':
     case 'applying_reservation':
       return 'not_accepting_order'
+    case 'accepting_order':
+      return false
   }
 })
 
@@ -204,7 +202,7 @@ onUnmounted(() => {
               店舗へ予約申請
             </v-btn>
             <v-btn
-              v-if="event.event_status.value == `in_draft` && isManager"
+              v-if="(event.event_status.value == 'in_draft' || event.event_status.value == 'full') && isManager"
               color="white"
               class="ml-2 my-1"
               elevation="5"
