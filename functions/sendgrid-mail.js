@@ -11,13 +11,15 @@ const DEFAULT_CC = 'support+cc@nijuni.jp';
 const DEFAULT_TO = 'support+to@nijuni.jp';
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e';
+const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f';
 const APPLYING_ORDER_TEMPLATE_ID = 'd-a0eeb84707604e658dc4aabb38f1b92d';
 const DELIVERY_DURATION = 30; // minutes
 
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864';
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098';
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d';
-const ORDER_COMNPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f';
+const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f';
+const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7';
 // 環境変数の方がよいかもしれない
 const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345;
 
@@ -91,6 +93,10 @@ function getEventUrl(communityAccount, eventId) {
 
 function getOrderUrl(eventId) {
     return `https://${process.env.ADMIN_HOST}/order/${eventId}`;
+}
+
+function getUserUrl(userId) {
+    return `https://${process.env.EVENT_HOST}/u/${userId}`
 }
 
 async function getShopForEvent(eventSnapshot) {
@@ -232,6 +238,47 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
                 from: DEFAULT_FROM,
                 cc: DEFAULT_CC,
                 templateId: ORDER_DEADLINE_TEMPLATE_ID,
+                dynamic_template_data,
+            });
+        } catch (err) {
+            console.warn(err);
+        }
+    }));
+}
+
+async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
+    const ordersRef = eventSnapshot.ref.collection('orders');
+    const [order_count, _, orders] = await createOrdersForOrderDeadline(ordersRef);
+    const eventData = eventSnapshot.data();
+    const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis());
+    const date = convertToDate(event_start_datetime_japan)
+    const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()));
+
+    return {
+        ...eventData,
+        date,
+        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+        event_deadline_datetime,
+        order_count,
+        orders,
+    }
+}
+
+async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
+    const events = await (db.collectionGroup('events')
+        .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
+        .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
+        .where('event_status.value', '==', 'accepting_order')).get();
+
+    return Promise.all(events.docs.map(async (eventSnapshot) => {
+        try {
+            const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot);
+            dynamic_template_data.is_reminder = is_reminder;
+            await sgMail.send({
+                to: await getCommunityEmailsForEvent(eventSnapshot),
+                from: DEFAULT_FROM,
+                cc: DEFAULT_CC,
+                templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
                 dynamic_template_data,
             });
         } catch (err) {
@@ -507,7 +554,7 @@ async function sendCommunityContactMail(templateId, data) {
     });
 }
 
-async function sendOrderComletionMail(eventRef, userId) {
+async function sendOrderCompletionMail(eventRef, userId) {
     const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()]);
     const eventData = eventSnapshot.data();
     const dynamic_template_data = {
@@ -524,9 +571,33 @@ async function sendOrderComletionMail(eventRef, userId) {
     return sgMail.send({
         to: userSnapshot.get('user_email'),
         from: DEFAULT_FROM,
-        templateId: ORDER_COMNPLETION_TEMPLATE_ID,
+        templateId: ORDER_COMPLETION_TEMPLATE_ID,
         dynamic_template_data,
     });
+}
+
+async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
+    const eventRef = orderSnapshot.ref.parent.parent;
+    const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()]);
+    const eventData = eventSnapshot.data();
+    const userData = userSnapshot.data();
+
+    const to = await getCommunityEmailsForEvent(eventSnapshot);
+
+    const dynamic_template_data = {
+        date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+        event_name: eventData.event_name,
+        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+        user_name: userData.user_name,
+        user_url: getUserUrl(userData.user_id),
+    }
+    return sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
+        dynamic_template_data,
+    });
+
 }
 
 async function sendInCartNotification(start, end) {
@@ -594,7 +665,9 @@ export const polling = functions
         const start = end - (60 * 1000);
         return Promise.all([
             sendOrderDeadlineMailToShop(start, end, false),
-            sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true),
+            sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true), // 1日前告知
+            sendOrderDeadlineMailToOrganizers(start, end, false),
+            sendOrderDeadlineMailToOrganizers(start + 3 * 24 * 60 * 60 * 1000, end + 3 * 24 * 60 * 60 * 1000, true), // 3日前告知
             sendOrderDeadlineMailToMembers(start, end),
             sendEventConcludedMail(start, end),
             sendInCartNotification(start, end),
@@ -664,10 +737,13 @@ export const on_order_changed = functions
     .onWrite(async (change) => {
         const before = change.before;
         const after = change.after;
+        const promises = [];
         if (before.get('status') !== after.get('status') && after.get('status') === 'ordered') {
             const userId = after.get('user_id');
-            return sendOrderComletionMail(after.ref.parent.parent, userId);
+            promises.push(sendOrderCompletionMail(after.ref.parent.parent, userId));
+            promises.push(sendOrderCompletionMailForOrganizer(after, userId));
         }
+        return Promise.all(promises);
     });
 
 export const community_added = functions
