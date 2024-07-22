@@ -67,6 +67,7 @@ export default {
     'public_desc': '※「公開イベント」はTOPページに一覧表示されます。',
     'private_desc': '※「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。',
     'payment': '支払い設定',
+    'error_max_people': 'すでに{0}人の予約が入っています'
   },
   'validator': {
     'required': '必須項目です',

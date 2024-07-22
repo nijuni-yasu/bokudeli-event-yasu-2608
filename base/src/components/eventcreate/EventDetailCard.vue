@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
 import { dateString, hourString, minutesString, hourList, minutesList } from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
@@ -10,10 +11,18 @@ defineProps<{
   readonly?: boolean | null
 }>()
 
+const { t: $t } = useI18n()
+
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
 
 const { requiredValidator, positiveIntegerValidator } = useValidators()
+const maxPeopleValidator = (v: number) => {
+  if (v < event.value.event_num_members) {
+    return $t('event_detail.error_max_people', [event.value.event_num_members])
+  }
+  return true
+}
 
 if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
@@ -119,7 +128,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             outlined
             dense
             :label="$t('event_detail.event_max_people')"
-            :rules="[requiredValidator, positiveIntegerValidator]"
+            :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
             :readonly="readonly"
           />
         </v-col>

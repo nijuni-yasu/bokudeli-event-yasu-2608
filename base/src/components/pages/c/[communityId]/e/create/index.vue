@@ -2,7 +2,7 @@
 import EventBasicInfo from '@/components/eventcreate/EventBasicInfo.vue'
 import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
-import EventDetail from '@/components/eventcreate/EventDetail.vue'
+import EventDetailCard from '@/components/eventcreate/EventDetailCard.vue'
 import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
 import { collection, collectionGroup, getDocs } from 'firebase/firestore'
 import { db } from '@/firebase'
@@ -22,6 +22,7 @@ import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetch
 import { maxBy } from 'lodash'
 import { useValidators } from '@/composable/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
 const router = useRouter()
 const route = useRoute()
@@ -33,6 +34,8 @@ const props = defineProps<{
 const { postalCodeValidator } = useValidators()
 
 const eventId = ref(route.query.id as string | null)
+
+const isValid4 = ref(false)
 
 const eventsStore = useEventsStore() as EventsStore
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
@@ -274,7 +277,25 @@ const stepperItems = computed(() => [
       <event-menu :menus="menus" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />
     </template>
     <template #[`item.4`]>
-      <event-detail v-model="event" v-model:cover-image="coverImage" @submit="stepper++" @back="stepper--" />
+      <v-form v-model="isValid4">
+        <event-detail-card v-model="event" v-model:cover-image="coverImage">
+          <v-card-text class="text-center mt-10">
+            <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
+              前へ
+            </v-btn>
+            <v-btn
+              color="primary"
+              class="me-3 mt-3"
+              size="large"
+              :append-icon="mdiChevronRight"
+              :disabled="!isValid4"
+              @click="stepper++"
+            >
+              次へ
+            </v-btn>
+          </v-card-text>
+        </event-detail-card>
+      </v-form>
     </template>
     <template #[`item.5`]>
       <event-shop-notice v-model="event" @submit="sumbmit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
