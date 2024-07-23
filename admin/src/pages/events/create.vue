@@ -161,7 +161,7 @@ onUnmounted(() => {
     <v-col cols="12" sm="12" md="9" class="px-0">
       <v-form v-model="isValid">
         <EventBasicInfoCard v-model="event" />
-        <EventDetailCard v-model="event" v-model:cover-image="coverImage" />
+        <EventDetailCard v-model="event" v-model:cover-image="coverImage" :subdomainTags="community.subdomain_tags" />
         <v-card-text class="text-center mt-10">
           <v-btn color="primary" size="large" :disabled="!isValid" :loading="isLoading" @click="submit">
             {{ event.event_id == '' ? $t('event.create') : $t('event.update') }}
