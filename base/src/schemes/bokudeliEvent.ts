@@ -50,6 +50,7 @@ class BokudeliEvent {
   event_postalcode: string = ''
   members: DocumentReference[] = []
   event_num_members: number = 0
+  subdomain_tags: string[] = []
 
   created_at: Timestamp = Timestamp.now()
   updated_at: Timestamp | null = null

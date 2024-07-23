@@ -7,9 +7,15 @@ import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline }
 import ImageInput from '../ImageInput.vue'
 import DateInput from '../DateInput.vue'
 
-defineProps<{
-  readonly?: boolean | null
-}>()
+withDefaults(
+  defineProps<{
+    readonly?: boolean
+    subdomainTags?: string[]
+  }>(),
+  {
+    readonly: false,
+  },
+)
 
 const { t: $t } = useI18n()
 
@@ -51,6 +57,18 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             :rules="[requiredValidator]"
             :readonly="readonly"
           />
+        </v-col>
+      </v-row>
+    </v-card-text>
+
+    <v-card-text v-if="subdomainTags != null && subdomainTags.length !== 0" class="pt-5">
+      <v-row>
+        <v-col cols="12">
+          <v-text-field outlined dense label="Tags" :readonly="true" :active="true">
+            <v-chip-group v-model="event.subdomain_tags" selected-class="text-primary" multiple>
+              <v-chip v-for="tag in subdomainTags" :key="tag" :text="$t(`subdomain_tags.${tag}`)" :value="tag" />
+            </v-chip-group>
+          </v-text-field>
         </v-col>
       </v-row>
     </v-card-text>

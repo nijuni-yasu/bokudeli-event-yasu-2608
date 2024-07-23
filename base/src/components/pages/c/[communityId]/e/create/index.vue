@@ -278,7 +278,11 @@ const stepperItems = computed(() => [
     </template>
     <template #[`item.4`]>
       <v-form v-model="isValid4">
-        <event-detail-card v-model="event" v-model:cover-image="coverImage">
+        <event-detail-card
+          v-model="event"
+          v-model:cover-image="coverImage"
+          :subdomain-tags="communityStore.community?.subdomain_tags"
+        >
           <v-card-text class="text-center mt-10">
             <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
               前へ

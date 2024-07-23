@@ -22,6 +22,7 @@ class BokudeliCommunity {
   community_sns_officialsite: string = ''
   is_public: boolean = true
   updated_at: Timestamp | null = null
+  subdomain_tags: string[] = []
 
   members: DocumentReference[] = []
   community_num_members: number = 0
