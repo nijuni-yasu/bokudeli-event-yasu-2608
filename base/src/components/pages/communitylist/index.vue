@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Use ../CommunityCard.vue instead
+ */
 import { convertTruncateText } from '@/schemes/converter'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { getCommunityPath } from '@/router/utils'
