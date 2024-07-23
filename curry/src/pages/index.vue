@@ -24,6 +24,7 @@ const eventsStore = useEventsStore(
   [
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
+    where('subdomain_tags', 'array-contains', 'kanda-curry'),
     orderBy('event_start_datetime', 'desc'),
   ],
   numOfColumns.value,

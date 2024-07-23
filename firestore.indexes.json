@@ -33,6 +33,28 @@
       ]
     },
     {
+      "collectionGroup": "communities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "subdomain_tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "is_approved",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "community_num_members",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "events",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
@@ -174,6 +196,28 @@
       "collectionGroup": "events",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "subdomain_tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "is_public",
           "order": "ASCENDING"
