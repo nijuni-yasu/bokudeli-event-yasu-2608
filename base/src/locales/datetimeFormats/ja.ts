@@ -29,4 +29,22 @@ export default {
     'minute': 'numeric',
     'hour12': false,
   },
+  'datetime_weekday_short': {
+    'year': 'numeric',
+    'month': 'numeric',
+    'day': 'numeric',
+    'hour': 'numeric',
+    'minute': 'numeric',
+    'hour12': false,
+    'weekday': 'short',
+  },
+  'datetime_weekday_long': {
+    'year': 'numeric',
+    'month': 'numeric',
+    'day': 'numeric',
+    'hour': 'numeric',
+    'minute': 'numeric',
+    'hour12': false,
+    'weekday': 'long',
+  },
 }
