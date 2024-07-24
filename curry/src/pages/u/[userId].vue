@@ -1,10 +1,57 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import UserDetails from '@/components/pages/u/[userId].vue'
+import UserBioPanel from '@/components/UserBioPanel.vue'
+import UserOrderPanel from '@/components/UserOrderPanel.vue'
+import UserCommunityPanel from '@/components/UserCommunityPanel.vue'
+import { useStoreStoredUser } from '@/stores/storedUser'
+import { useUserStore } from '@/stores/user'
+import { mdiCalendarHeart, mdiAccountGroup } from '@mdi/js'
 
 const userId = useRoute().params.userId as string
+
+const { storedUser } = storeToRefs(useStoreStoredUser())
+
+const { user } = storeToRefs(useUserStore(userId))
+const tabs = ref(null)
 </script>
 
 <template>
-  <UserDetails :user-id="userId" />
+  <div id="user-view">
+    <v-row v-if="user != null" justify="center">
+      <v-col cols="12" sm="8" md="3">
+        <user-bio-panel :user-data="user" :is-editable="storedUser?.userId === userId" />
+      </v-col>
+      <v-col cols="12" sm="8" md="9">
+        <v-tabs v-model="tabs">
+          <v-tab value="0">
+            <v-icon start :icon="mdiCalendarHeart" />
+            参加イベント
+          </v-tab>
+          <v-tab value="1">
+            <v-icon start :icon="mdiAccountGroup" />
+            参加コミュニティ
+          </v-tab>
+        </v-tabs>
+        <v-window v-model="tabs">
+          <v-window-item value="0">
+            <v-col cols="12" md="12" sm="12">
+              <user-order-panel :user-id="userId" :show-detail="storedUser?.userId === userId" />
+            </v-col>
+          </v-window-item>
+          <v-window-item value="1">
+            <v-col cols="12" md="12" sm="12">
+              <user-community-panel :user-id="userId" type="members" :is-login-user="storedUser?.userId === userId" />
+            </v-col>
+          </v-window-item>
+        </v-window>
+      </v-col>
+    </v-row>
+
+    <v-row v-else justify="center">
+      <v-col cols="auto">
+        <v-progress-circular indeterminate color="primary" />
+      </v-col>
+    </v-row>
+  </div>
 </template>
+<style lang="scss" scoped></style>
