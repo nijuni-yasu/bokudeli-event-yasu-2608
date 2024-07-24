@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Use ./UserEventCard2.vue directly
+ */
 import { db } from '@/firebase'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 import { functions } from '@/firebase'
