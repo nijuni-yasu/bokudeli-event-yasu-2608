@@ -126,11 +126,19 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
           return null
         }
         const communityId = _communityRef.value.id
-        const stores =
-          community.value.members?.map(
-            (member: DocumentReference) => useCommunityMemberStore(communityId, member.id) as CommunityMemberStore,
-          ) ?? []
-        return stores.map((store) => (!store.exists || store.member == null ? null : (store.member as CommunityMember)))
+        return (
+          community.value.members?.flatMap((doc: DocumentReference) => {
+            const memberStore = useCommunityMemberStore(communityId, doc.id) as CommunityMemberStore
+            const member = memberStore.member
+            if (!memberStore.exists || member == null) {
+              return null
+            }
+            // ショップアカウントかどうかを簡単に確認する方法がないので、イベントから判定する
+            // TODO リファクタリング
+            const isShopAccount = events.value?.some((event) => event.partner_id === member.user_id) ?? true
+            return isShopAccount ? [] : (member as CommunityMember)
+          }) ?? []
+        )
       })
       const events = computed<BokudeliEvent[] | null>(() => {
         getCommunityRef().then((communityRef) => {
