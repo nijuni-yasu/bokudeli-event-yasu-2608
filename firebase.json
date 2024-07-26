@@ -3,10 +3,7 @@
     {
       "public": "admin/dist",
       "target": "admin",
-      "ignore": [
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["**/.*", "**/node_modules/**"],
       "rewrites": [
         {
           "source": "**",
@@ -17,10 +14,7 @@
     {
       "public": "manager/dist",
       "target": "manager",
-      "ignore": [
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["**/.*", "**/node_modules/**"],
       "rewrites": [
         {
           "source": "**",
@@ -31,10 +25,23 @@
     {
       "public": "user/dist",
       "target": "user",
-      "ignore": [
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "ignore": ["**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/c/**/e/**",
+          "function": "replace_ogp_tags",
+          "region": "asia-northeast1"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "public": "curry/dist",
+      "target": "curry",
+      "ignore": ["**/.*", "**/node_modules/**"],
       "rewrites": [
         {
           "source": "/c/**/e/**",
