@@ -1,0 +1,36 @@
+name: Deploy firestore to development
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'firestore.rules'
+      - 'firestore.indexes.json'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: .
+    steps:
+    - name: Install Firebase CLI
+      run: curl -sL https://firebase.tools | bash
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Deploy to Firebase
+      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
+      run: |
+        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}' > $GOOGLE_APPLICATION_CREDENTIALS
+        firebase use bokudeli-event-test
+        firebase deploy --only firestore --force
+        rm $GOOGLE_APPLICATION_CREDENTIALS
