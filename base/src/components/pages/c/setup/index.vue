@@ -14,6 +14,7 @@ import {
   mdiLightbulbOnOutline,
   mdiAccountOutline,
 } from '@mdi/js'
+import ImageInput from '@/components/ImageInput.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -83,28 +84,8 @@ watch(
   { immediate: true },
 )
 
-const coverImageFile = ref<File[] | null>(null)
-const iconImageFile = ref<File[] | null>(null)
-const coverImageUrl = computed(() => {
-  const ci = coverImageFile.value?.[0]
-  if (ci != null) {
-    return URL.createObjectURL(ci)
-  } else {
-    return community.value?.community_cover_image_url ?? null
-  }
-})
-const iconImageUrl = computed(() => {
-  const ii = iconImageFile.value?.[0]
-  if (ii != null) {
-    return URL.createObjectURL(ii)
-  } else {
-    return community.value?.community_icon_image_url ?? null
-  }
-})
-const coverImageValidator = (value: File[] | null) =>
-  (coverImageUrl.value != null && coverImageUrl.value !== '') || requiredValidator(value)
-const iconImageValidator = (value: File[] | null) =>
-  (iconImageUrl.value != null && iconImageUrl.value !== '') || requiredValidator(value)
+const coverImageFile = ref<File | null>(null)
+const iconImageFile = ref<File | null>(null)
 
 const trimInputtedId = (id: string | undefined, urlPattern: RegExp) => {
   if (!id) return ''
@@ -132,15 +113,6 @@ const instagramId = computed({
   },
 })
 
-const iconFileInputRef = ref<HTMLInputElement>()
-const coverFileInputRef = ref<HTMLInputElement>()
-const onIconTriggerUpload = () => {
-  iconFileInputRef.value?.click()
-}
-const onCoverTriggerUpload = () => {
-  coverFileInputRef.value?.click()
-}
-
 const submit = async () => {
   if (community.value == null) {
     console.warn('community is null')
@@ -149,22 +121,22 @@ const submit = async () => {
   if (communityAccount.value != null) {
     const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
     await communityStore.updateComunity(community.value)
-    if (coverImageFile.value?.[0] != null) {
-      await communityStore.updateCoverImage(coverImageFile.value?.[0])
+    if (coverImageFile.value != null) {
+      await communityStore.updateCoverImage(coverImageFile.value)
     }
-    if (iconImageFile.value?.[0] != null) {
-      await communityStore.updateIconImage(iconImageFile.value?.[0])
+    if (iconImageFile.value != null) {
+      await communityStore.updateIconImage(iconImageFile.value)
     }
     window.alert('コミュニティ情報を更新しました')
   } else {
     const community = await communitiesStore.createNewCommunityFromDraft()
     communityAccount.value = community.community_account
     const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
-    if (coverImageFile.value?.[0] != null) {
-      await communityStore.updateCoverImage(coverImageFile.value?.[0])
+    if (coverImageFile.value != null) {
+      await communityStore.updateCoverImage(coverImageFile.value)
     }
-    if (iconImageFile.value?.[0] != null) {
-      await communityStore.updateIconImage(iconImageFile.value?.[0])
+    if (iconImageFile.value != null) {
+      await communityStore.updateIconImage(iconImageFile.value)
     }
     window.alert('コミュニティ新規作成メールを送信しました。承認されるのをお待ちください。')
     // communityAccount を設定したので、communitiesStore.$reset() は onUnmounted 内で実行されないことに注意
@@ -277,53 +249,29 @@ const checkAccountExists = async (event: Event) => {
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <div class="v-field icon-upload-container" @click="onIconTriggerUpload">
-                    <v-file-input
-                      ref="iconFileInputRef"
-                      v-model="iconImageFile"
-                      class="file-input"
-                      :rules="[iconImageValidator]"
-                    />
-                    <v-img v-if="iconImageUrl != null" :src="iconImageUrl" cover aspect-ratio="1" />
-                    <div v-else class="placeholder">アイコンをアップロード<br />300px X 300px</div>
-                  </div>
+                  <ImageInput
+                    :url="community.community_icon_image_url ?? undefined"
+                    :rules="[requiredValidator]"
+                    style="min-width: 100px; min-height: 100px"
+                    @file-selected="(f: File | null) => (iconImageFile = f)"
+                  />
+                  ※アイコン画像を設定してください（推奨サイズ：300x300px）
                 </v-col>
               </v-row>
-              <!-- TODO: 独自実装は問題を起こす可能性があるため、Vuetify の機能で実現できないか確認する -->
-              <div v-if="iconImageValidator(iconImageFile) !== true" class="v-input--error">
-                <div class="v-input--error v-input__details">
-                  <div class="v-messages" role="alert" aria-live="polite">
-                    <div class="v-messages__message">必須項目です</div>
-                  </div>
-                </div>
-              </div>
-              <div>※アイコン画像を設定してください（推奨サイズ：300x300px）</div>
             </v-card-text>
 
             <v-card-text class="pt-5">
               <v-row>
                 <v-col cols="12">
-                  <div class="v-field image-upload-container" @click="onCoverTriggerUpload">
-                    <v-file-input
-                      ref="coverFileInputRef"
-                      v-model="coverImageFile"
-                      class="file-input"
-                      :rules="[coverImageValidator]"
-                    />
-                    <v-img v-if="coverImageUrl != null" :src="coverImageUrl" cover aspect-ratio="1.91" />
-                    <div v-else class="placeholder">カバー画像をアップロード<br />1200px X 630px</div>
-                  </div>
+                  <ImageInput
+                    :url="community.community_cover_image_url ?? undefined"
+                    :rules="[requiredValidator]"
+                    style="min-width: 300px; min-height: 150px"
+                    @fileSelected="(f: File | null) => (coverImageFile = f)"
+                  />
+                  ※カバー画像を設定してください（推奨サイズ：1200x630px）
                 </v-col>
               </v-row>
-              <!-- TODO: 独自実装は問題を起こす可能性があるため、Vuetify の機能で実現できないか確認する -->
-              <div v-if="coverImageValidator(coverImageFile) !== true" class="v-input--error">
-                <div class="v-input--error v-input__details">
-                  <div class="v-messages" role="alert" aria-live="polite">
-                    <div class="v-messages__message">必須項目です</div>
-                  </div>
-                </div>
-              </div>
-              <div>※カバー画像を設定してください（推奨サイズ：1200x630px）</div>
             </v-card-text>
 
             <v-card-title class="pt-10 px-5">
