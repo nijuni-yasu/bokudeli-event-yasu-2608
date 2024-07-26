@@ -53,7 +53,7 @@ const onIconTriggerUpload = () => {
       @click="onIconTriggerUpload"
       v-bind="$attrs"
     >
-      <v-file-input ref="fileInputRef" v-model="imageFile" class="file-input" />
+      <v-file-input ref="fileInputRef" v-model="imageFile" class="file-input" accept="image/*" />
       <v-img v-if="iconImageUrl != null" :src="iconImageUrl" width="auto" height="auto" />
       <slot v-else name="placeholder"></slot>
     </div>
