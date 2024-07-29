@@ -3,3 +3,13 @@
 .layout-wrapper.layout-nav-type-horizontal .layout-navbar-and-nav-container {
   z-index: 1001 !important;
 }
+
+// Vuetify のバグらしく、Safari で .v-btn__prepend, .v-btn__append が width: 300px になってしまう
+// これを抑制するために暫定的に以下を指定する
+// TODO Vuetify のバージョンを上げたら不要になるかもしれないので確認する
+.v-btn__prepend {
+  width: 16px;
+}
+.v-btn__append {
+  width: 16px;
+}
