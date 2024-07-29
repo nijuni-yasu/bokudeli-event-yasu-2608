@@ -39,7 +39,14 @@ const cancelOperatingOrder = ref<OrderItem | null>(null)
 // オーダー情報の取得
 // TODO: 直接 firebase を叩くべきではないので、store を使えるようにする
 const fetchOrders = async () =>
-  getDocs(query(collectionGroup(db, 'orders'), where('user_id', '==', userId), orderBy('updated_at', 'desc')))
+  getDocs(
+    query(
+      collectionGroup(db, 'orders'),
+      where('user_id', '==', userId),
+      where('status', '!=', 'in_cart'),
+      orderBy('updated_at', 'desc'),
+    ),
+  )
 const orderSnapshots = ref(await fetchOrders())
 const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() => {
   return orderSnapshots.value.docs.flatMap((orderSnapshot) => {
