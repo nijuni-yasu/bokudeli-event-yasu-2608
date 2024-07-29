@@ -331,6 +331,29 @@
   ],
   "fieldOverrides": [
     {
+      "collectionGroup": "communities",
+      "fieldPath": "created_at",
+      "ttl": false,
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
       "collectionGroup": "events",
       "fieldPath": "event_deadline_datetime",
       "ttl": false,
@@ -514,6 +537,29 @@
         },
         {
           "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "shops",
+      "fieldPath": "createdAt",
+      "ttl": false,
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
           "queryScope": "COLLECTION_GROUP"
         }
       ]
