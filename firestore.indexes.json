@@ -215,6 +215,24 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "community_account",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "subdomain_tags",
+          "arrayConfig": "CONTAINS"
+        },
+        {
           "fieldPath": "event_status.value",
           "order": "ASCENDING"
         },
