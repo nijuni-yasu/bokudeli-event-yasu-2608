@@ -5,6 +5,7 @@ import { initializeFirestore } from 'firebase-admin/firestore';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
 import ja from 'date-fns/locale/ja';
+import { promises as fs } from 'fs';
 import { messagingApi } from '@line/bot-sdk';
 const { MessagingApiClient } = messagingApi;
 
@@ -163,11 +164,11 @@ function buildEventContent(event) {
   }
 }
 
-const buildMessage = (message_data) => {
+const buildMessage = (message_data, altText) => {
   let eventMessages = message_data.events.map(event => buildEventContent(event));
   return {
     "type": "flex",
-    "altText": "[テスト]イベントのお知らせ",
+    "altText": altText,
     "contents": {
       "type": "carousel",
       "contents": eventMessages
@@ -175,15 +176,34 @@ const buildMessage = (message_data) => {
   }
 }
 
+const buildNoticeMessage = async () => {
+  try {
+    // ファイルの内容を文字列として読み込む
+    const jsonString = await fs.readFile('./notice_message.json', 'utf8');
+    // 文字列をオブジェクトに変換
+    const { text } = JSON.parse(jsonString);
+    return text;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // ファイルが存在しない場合は空文字列を返す
+      return "";
+    } else {
+      // その他のエラーはそのまま再スロー
+      throw error;
+    }
+  }
+}
+
 const broadcastEventMessage = async (message_data) => {
-  const message = buildMessage(message_data);
+  const notice = await buildNoticeMessage();
+  const message = buildMessage(message_data, notice);
   console.debug({ count: message_data.count });
   console.debug(JSON.stringify(message));
   const client = new MessagingApiClient({
     channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
   });
   await client.broadcast({
-    messages: [message]
+    messages: notice ? [ { type: "text", text: notice }, message] : [message],
   });
 }
 
