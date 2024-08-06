@@ -124,8 +124,11 @@ watch(
   },
 )
 
-const submit = async () => {
+const submit = async (apply: boolean) => {
   isLoading.value = true
+  if (apply) {
+    event.value.event_status = { value: 'applying_to_admin' }
+  }
   try {
     if (route.query.id != null) {
       const eventStore = useEventStore(route.query.id as string) as EventStore
@@ -167,9 +170,27 @@ onUnmounted(() => {
           :readonlyDeadline="event.event_status.value !== 'in_draft'"
           :subdomainTags="community.subdomain_tags"
         />
-        <v-card-text class="text-center mt-10">
-          <v-btn color="primary" size="large" :disabled="!isValid" :loading="isLoading" @click="submit">
-            {{ event.event_id == '' ? $t('event.create') : $t('event.update') }}
+        <v-card-text class="text-end mt-10">
+          <v-btn
+            color="primary"
+            size="large"
+            variant="tonal"
+            :disabled="!isValid"
+            :loading="isLoading"
+            @click="submit(false)"
+          >
+            {{ event.event_id == '' ? $t('event.save_draft') : $t('event.update') }}
+          </v-btn>
+          <v-btn
+            v-if="event.event_status.value === 'in_draft'"
+            class="ml-4"
+            color="primary"
+            size="large"
+            :disabled="!isValid"
+            :loading="isLoading"
+            @click="submit(true)"
+          >
+            {{ $t('event.apply') }}
           </v-btn>
         </v-card-text>
       </v-form>

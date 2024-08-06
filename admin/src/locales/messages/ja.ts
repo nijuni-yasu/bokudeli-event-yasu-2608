@@ -190,8 +190,9 @@ export default {
     'error': 'エラーが発生しました',
   },
   'event': {
-    'create': '作成',
+    'save_draft': '下書き保存',
     'update': '更新',
+    'apply': '申請する',
     'created': 'イベントを作成しました',
     'updated': 'イベントを更新しました',
     'error': 'エラーが発生しました',
