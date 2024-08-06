@@ -11,7 +11,7 @@ export const eventPaymentItems = eventPaymentTypes.map((type, i) => {
 })
 
 type RawEventStatusType = {
-  value: 'in_draft' | 'applying_reservation' | 'accepting_order'
+  value: 'in_draft' | 'applying_reservation' | 'applying_to_admin' | 'accepting_order'
   shop_comment?: string
 }
 

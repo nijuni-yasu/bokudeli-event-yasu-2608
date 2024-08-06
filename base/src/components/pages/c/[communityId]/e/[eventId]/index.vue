@@ -65,7 +65,7 @@ const members = computed(
 
 type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
 
-const menuDisabled = computed<MenuDisabledReason | false | null>(() => {
+const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
   if (event.value == null) {
     return null
   }
@@ -78,6 +78,7 @@ const menuDisabled = computed<MenuDisabledReason | false | null>(() => {
       return 'limit_people'
     case 'in_draft':
     case 'applying_reservation':
+    case 'applying_to_admin':
       return 'not_accepting_order'
     case 'accepting_order':
       return false

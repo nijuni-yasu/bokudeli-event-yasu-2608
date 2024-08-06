@@ -21,6 +21,7 @@ export default {
   'event_status': {
     'in_draft': '下書き',
     'applying_reservation': '予約申請中',
+    'applying_to_admin': '申請中',
     'accepting_order': '参加受付中',
     'order_closed': '参加締切済',
     'finished': 'イベント終了',
