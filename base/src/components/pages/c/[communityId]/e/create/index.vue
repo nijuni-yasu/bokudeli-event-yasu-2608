@@ -278,27 +278,31 @@ const stepperItems = computed(() => [
     </template>
     <template #[`item.4`]>
       <v-form v-model="isValid4">
-        <event-detail-card
-          v-model="event"
-          v-model:cover-image="coverImage"
-          :subdomain-tags="communityStore.community?.subdomain_tags"
-        >
-          <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
-              前へ
-            </v-btn>
-            <v-btn
-              color="primary"
-              class="me-3 mt-3"
-              size="large"
-              :append-icon="mdiChevronRight"
-              :disabled="!isValid4"
-              @click="stepper++"
+        <v-row class="justify-center">
+          <v-col cols="12" sm="12" md="9">
+            <event-detail-card
+              v-model="event"
+              v-model:cover-image="coverImage"
+              :subdomain-tags="communityStore.community?.subdomain_tags"
             >
-              次へ
-            </v-btn>
-          </v-card-text>
-        </event-detail-card>
+              <v-card-text class="text-center mt-10">
+                <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
+                  前へ
+                </v-btn>
+                <v-btn
+                  color="primary"
+                  class="me-3 mt-3"
+                  size="large"
+                  :append-icon="mdiChevronRight"
+                  :disabled="!isValid4"
+                  @click="stepper++"
+                >
+                  次へ
+                </v-btn>
+              </v-card-text>
+            </event-detail-card>
+          </v-col>
+        </v-row>
       </v-form>
     </template>
     <template #[`item.5`]>
