@@ -1,4 +1,5 @@
 ## メール送信
+
 Event Page が存在するホストを `EVENT_HOST` として環境変数に登録が必要です。
 
 [SendGrid](https://mc.sendgrid.com/) を利用してメールを送る。

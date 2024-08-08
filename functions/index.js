@@ -1,16 +1,14 @@
-import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import { initializeFirestore } from 'firebase-admin/firestore';
+import { initializeApp, applicationDefault } from 'firebase-admin/app'
+import { initializeFirestore } from 'firebase-admin/firestore'
 
 const app = initializeApp({
   credential: applicationDefault(),
-});
+})
 initializeFirestore(app, { preferRest: true })
 
-export const {
-  replace_ogp_tags
-} = await import('./common.js');
-export const { stripe_webhook } = await import('./stripe-webhook.js');
-export const { stripe_refunds } = await import('./stripe-refunds.js');
+export const { replace_ogp_tags } = await import('./common.js')
+export const { stripe_webhook } = await import('./stripe-webhook.js')
+export const { stripe_refunds } = await import('./stripe-refunds.js')
 export const {
   polling,
   event_information,
@@ -19,22 +17,12 @@ export const {
   on_shop_changed,
   on_order_changed,
   community_added,
-  community_contact
-} = await import('./sendgrid-mail.js');
-export const {
-  create_community_members,
-  delete_community_members
-} = await import('./community-members.js');
-export const {
-  create_event_members
-} = await import('./event-members.js');
-export const {
-  on_object_finalized
-} = await import('./storage-image.js');
-export const {
-  scheduled_firestore_export
-} = await import('./backup.js');
-export const {
-  get_invitaion_url_for_community_manager,
-  accept_invitation_for_community_manager
-} = await import('./community-manager.js');
+  community_contact,
+} = await import('./sendgrid-mail.js')
+export const { create_community_members, delete_community_members } = await import('./community-members.js')
+export const { create_event_members } = await import('./event-members.js')
+export const { on_object_finalized } = await import('./storage-image.js')
+export const { scheduled_firestore_export } = await import('./backup.js')
+export const { get_invitaion_url_for_community_manager, accept_invitation_for_community_manager } = await import(
+  './community-manager.js'
+)

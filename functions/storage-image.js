@@ -6,9 +6,9 @@ import sharp from 'sharp'
 const storage = getStorage()
 
 const USER_THUMBNAILS = {
-  'small': 50,
-  'medium': 100,
-  'large': 500,
+  small: 50,
+  medium: 100,
+  large: 500,
 }
 
 const uploadThumbnails = async (object, thumbs) => {
@@ -16,10 +16,14 @@ const uploadThumbnails = async (object, thumbs) => {
   const imagePath = object.name
   const imageExt = path.extname(imagePath)
   const imageName = path.basename(imagePath, imageExt)
-  const imageBuffer = (await bucket.file(imagePath).download()
-    .catch(() => {
-      // imageBuffer will be null, so we do not need to handle the error
-    }))[0]
+  const imageBuffer = (
+    await bucket
+      .file(imagePath)
+      .download()
+      .catch(() => {
+        // imageBuffer will be null, so we do not need to handle the error
+      })
+  )[0]
   if (imageBuffer == null) {
     console.error('file not found')
     return
@@ -46,14 +50,13 @@ const uploadThumbnails = async (object, thumbs) => {
           contentType: object.contentType,
         },
       })
-    })
+    }),
   )
 }
 
 export const on_object_finalized = functions
   .region('asia-northeast1')
-  .storage
-  .object()
+  .storage.object()
   .onFinalize(async (object) => {
     const contentType = object.contentType
     if (!contentType.startsWith('image/')) {
