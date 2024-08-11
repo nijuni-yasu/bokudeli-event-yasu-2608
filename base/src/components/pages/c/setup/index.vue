@@ -113,6 +113,14 @@ const instagramId = computed({
   },
 })
 
+const hashTag = computed({
+  get: () => community.value?.community_sns_hash_tag,
+  set: (val) => {
+    if (community.value == null) return
+    community.value.community_sns_hash_tag = trimInputtedId(val, /^#\//)
+  },
+})
+
 const submit = async () => {
   if (community.value == null) {
     console.warn('community is null')
@@ -329,6 +337,20 @@ const checkAccountExists = async (event: Event) => {
                     outlined
                     dense
                     label="公式サイト"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+            </v-card-text>
+
+            <v-card-text class="pt-5">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="hashTag"
+                    outlined
+                    dense
+                    label="ハッシュタグ"
+                    prefix="#"
                   ></v-text-field>
                 </v-col>
               </v-row>
