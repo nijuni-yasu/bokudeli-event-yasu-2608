@@ -61,7 +61,7 @@ function convertToDateTime(millis) {
 }
 
 function getEventUrl(communityAccount, eventId) {
-  return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}`;
+  return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}?openExternalBrowser=1`;
 }
 
 function buildEventContent(event) {
