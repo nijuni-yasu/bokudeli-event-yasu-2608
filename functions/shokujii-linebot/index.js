@@ -229,7 +229,7 @@ async function broadcastEventConcludedMessage() {
       continue;
     }
 
-    if (message_data.events.length <= EVENT_LIMIT) {
+    if (message_data.events.length < EVENT_LIMIT) {
       const eventData = eventSnapshot.data();
       const event_datetime = convertToDuration(
           convertToJapan(eventData.event_start_datetime?.toMillis()),
