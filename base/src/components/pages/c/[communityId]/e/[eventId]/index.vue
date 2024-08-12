@@ -22,7 +22,6 @@ import {
   mdiPencilBoxOutline,
   mdiFoodForkDrink,
   mdiHome,
-  mdiAlphaXCircle,
   mdiFacebook,
   mdiAlphaLCircle,
   mdiQrcode,
@@ -32,6 +31,7 @@ import {
   mdiOpenInNew,
   mdiAccountGroup,
 } from '@mdi/js'
+import XIcon from '@/icons/x'
 
 const qrcodeSize = 300
 
@@ -261,7 +261,7 @@ onUnmounted(() => {
                 <v-card-text class="event-item text-right px-0 ma-1">
                   <v-btn
                     class="ml-1"
-                    :icon="mdiAlphaXCircle"
+                    :icon="XIcon"
                     color="grey-900"
                     size="x-large"
                     density="compact"
