@@ -115,7 +115,7 @@ const checkAccountExists = async (value: string) => {
             <ImageInput
               :url="community.community_icon_image_url ?? undefined"
               :rules="[requiredValidator]"
-              style="min-width: 100px; min-height: 100px"
+              style="width: auto; max-width: min(100%, 300px); aspect-ratio: 1/1"
               @fileSelected="(f) => (iconImageFile = f)"
             />
             {{ $t('community_edit.community_icon_image_hint') }}
@@ -129,7 +129,8 @@ const checkAccountExists = async (value: string) => {
             <ImageInput
               :url="community.community_cover_image_url ?? undefined"
               :rules="[requiredValidator]"
-              style="min-width: 300px; min-height: 150px"
+              style="width: 100%; aspect-ratio: 120/63"
+              :cover="true"
               @fileSelected="(f) => (coverImageFile = f)"
             />
             {{ $t('community_edit.community_cover_image_hint') }}
