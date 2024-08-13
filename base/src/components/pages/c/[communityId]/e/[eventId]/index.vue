@@ -23,7 +23,6 @@ import {
   mdiFoodForkDrink,
   mdiHome,
   mdiFacebook,
-  mdiAlphaLCircle,
   mdiQrcode,
   mdiContentCopy,
   mdiCalendarPlus,
@@ -32,6 +31,7 @@ import {
   mdiAccountGroup,
 } from '@mdi/js'
 import XIcon from '@/icons/x'
+import LineIcon from '@/icons/line'
 
 const qrcodeSize = 300
 
@@ -59,8 +59,8 @@ const members = computed(
     eventStore.members?.sort(
       (a, b) =>
         a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
-    ) ?? [],
+        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0)
+    ) ?? []
 )
 
 type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
@@ -165,7 +165,7 @@ watch(menuListRef, () => {
     {
       // オプションでroot、rootMargin、thresholdを設定可能
       threshold: 0,
-    },
+    }
   )
 
   menuListObserver.observe(target)
@@ -279,7 +279,7 @@ onUnmounted(() => {
                   ></v-btn>
                   <v-btn
                     class="ml-1"
-                    :icon="mdiAlphaLCircle"
+                    :icon="LineIcon"
                     color="#06c755"
                     size="x-large"
                     density="compact"
