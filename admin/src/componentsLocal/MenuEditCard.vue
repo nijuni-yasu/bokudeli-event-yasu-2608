@@ -57,6 +57,8 @@ const price = computed({
             <ImageInput
               :url="menu.imageUrl ?? undefined"
               @file-selected="(f) => (imageFile = f)"
+              style="width: auto; max-width: min(600px, 100%); aspect-ratio: 1/1"
+              :cover="true"
               :rules="[requiredValidator]"
             />
             {{ $t('menu_edit_card.image_hint') }}
