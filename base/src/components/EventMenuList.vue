@@ -68,7 +68,7 @@ onMounted(async () => {
           <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
 
           <!-- title -->
-          <v-card-title class="justify-center pb-3 pre-line">
+          <v-card-title class="justify-center pb-3 text-wrap">
             {{ menu.name }}
           </v-card-title>
           <v-card-text class="text-left pb-8">
