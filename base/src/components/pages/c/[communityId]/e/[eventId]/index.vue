@@ -250,7 +250,7 @@ onUnmounted(() => {
               <v-col>
                 <!-- イベント情報 -->
                 <v-card-title
-                  class="py-0 text-sm-h4 text-xs-h5 font-weight-bold pb-4 pre-line"
+                  class="py-0 text-sm-h4 text-xs-h5 font-weight-bold pb-4 text-wrap"
                   style="line-height: 1.3"
                 >
                   {{ event.event_name }}
