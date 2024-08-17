@@ -77,13 +77,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
       <v-row>
         <v-col cols="12">
           <ImageInput
-            style="
-              min-width: 360px;
-              min-height: 189px;
-              max-width: min(100%, 1200px);
-              max-height: 630px;
-              aspect-ratio: 120/63;
-            "
+            style="width: 100%; aspect-ratio: 120/63"
             :url="event.event_cover_url"
             :rules="[requiredValidator]"
             :readonly="readonly"
