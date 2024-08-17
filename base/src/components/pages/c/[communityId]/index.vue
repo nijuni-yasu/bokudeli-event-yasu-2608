@@ -136,7 +136,7 @@ const inviteManager = async () => {
           </v-btn>
           <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large"> 申請中 </v-chip>
         </v-row>
-        <v-card flat class="align-center justify-center text-center my-8 pa-md-16 pa-sm-8 pa-xs-0">
+        <v-card flat class="align-center justify-center text-center my-8 pa-md-12 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
               <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.community_cover_image_url" />
@@ -144,10 +144,10 @@ const inviteManager = async () => {
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 pb-6">{{
+              <v-card-title class="justify-center text-h3 pb-6 text-wrap">{{
                 communityStore.community.community_name
               }}</v-card-title>
-              <v-card-text v-linkify class="text-left text-subtitle-1 pb-6">
+              <v-card-text v-linkify class="text-left pb-6">
                 {{ communityStore.community.community_desc }}
               </v-card-text>
             </v-col>
@@ -178,17 +178,17 @@ const inviteManager = async () => {
                   <v-card-title class="justify-center text-h6 pb-3 px-2">
                     {{ event.event_name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-2 px-2">
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
                     【日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
                       dateOnlyTimeString(event.event_end_datetime)
                     }}
-                  </v-card-text>
-                  <v-card-text class="text-left pb-2 px-2">
+                  </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
                     【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
-                  </v-card-text>
-                  <v-card-text class="text-left pb-2 px-2"> 【場所】{{ event.event_address }} </v-card-text>
-                  <v-card-text class="text-left pb-2 px-2"> 【お店】 {{ event.shop_name }} </v-card-text>
-                  <v-card-text class="text-left pb-5 px-2"> 【定員】{{ event.event_max_people }} 人 </v-card-text>
+                  </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2"> 【場所】{{ event.event_address }} </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2"> 【お店】 {{ event.shop_name }} </v-card-title>
+                  <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2"> 【定員】{{ event.event_max_people }} 人 </v-card-title>
                 </v-card>
                 <v-row v-if="isManager" class="justify-end my-2 mr-1">
                   <v-btn
