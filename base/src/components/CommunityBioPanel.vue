@@ -4,7 +4,7 @@ import { type CommunityMember } from '@/schemes/communityMember'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
-import { mdiEmail, mdiTwitter, mdiFacebook, mdiInstagram } from '@mdi/js'
+import { mdiEmail, mdiLink, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{
   community: BokudeliCommunity
@@ -31,6 +31,11 @@ const facebookUrl = computed(() =>
 const instagramUrl = computed(() =>
   props.community.community_sns_instagram ? buildInstagramUrl(props.community.community_sns_instagram) : undefined,
 )
+
+const officialsiteUrl = computed(() =>
+  props.community.community_sns_officialsite ? props.community.community_sns_officialsite : undefined,
+)
+
 </script>
 
 <template>
@@ -38,36 +43,49 @@ const instagramUrl = computed(() =>
     <v-card class="pa-5" color="text-center">
       <!-- community title and links -->
       <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="community.community_icon_image_url" />
-      <v-card-title class="justify-center text-h5 py-5 pre-line">
+      <v-card-title class="justify-center text-h4 px-1 py-4 text-wrap">
         {{ community.community_name }}
       </v-card-title>
-      <v-row class="justify-center">
+      <v-row class="justify-center pb-3">
         <v-col cols="auto">
           <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-            <v-btn :icon="mdiTwitter" size="large" class="ma-3"></v-btn>
+            <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
           </a>
           <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-            <v-btn :icon="mdiFacebook" size="large" class="ma-3"></v-btn>
+            <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
           </a>
           <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-            <v-btn :icon="mdiInstagram" size="large" class="ma-3"></v-btn>
+            <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
           </a>
+          <a v-if="officialsiteUrl" :href="officialsiteUrl" target="_blank">
+            <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
+          </a>
+
         </v-col>
       </v-row>
       <v-col>
         <v-btn
           variant="outlined"
           rounded="pill"
-          :prepend-icon="mdiEmail"
+          size="small"
           color="primary"
           width="100%"
+          :prepend-icon="mdiEmail"
           @click="emit('clickContact')"
         >
           お問い合わせ
         </v-btn>
       </v-col>
       <v-col :v-if="props.isManager">
-        <v-btn variant="outlined" rounded color="primary" width="100%" @click="emit('clickContact')">
+        <v-btn
+          variant="outlined"
+          rounded="pill"
+          size="small"
+          color="primary"
+          width="100%"
+          :prepend-icon="mdiLink"
+          @click="emit('clickContact')"
+        >
           管理者を招待する
         </v-btn>
       </v-col>
