@@ -252,6 +252,7 @@ const checkAccountExists = async (event: Event) => {
                   <ImageInput
                     :url="community.community_icon_image_url ?? undefined"
                     :rules="[requiredValidator]"
+                    :cover="true"
                     style="min-width: 100px; min-height: 100px; max-width: 300px; max-height: 300px; aspect-ratio: 1/1"
                     @file-selected="(f: File | null) => (iconImageFile = f)"
                   />
