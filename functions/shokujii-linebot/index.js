@@ -61,7 +61,7 @@ function convertToDateTime(millis) {
 }
 
 function getEventUrl(communityAccount, eventId) {
-  return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}`;
+  return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}?openExternalBrowser=1`;
 }
 
 function buildEventContent(event) {
@@ -229,7 +229,7 @@ async function broadcastEventConcludedMessage() {
       continue;
     }
 
-    if (message_data.events.length <= EVENT_LIMIT) {
+    if (message_data.events.length < EVENT_LIMIT) {
       const eventData = eventSnapshot.data();
       const event_datetime = convertToDuration(
           convertToJapan(eventData.event_start_datetime?.toMillis()),
