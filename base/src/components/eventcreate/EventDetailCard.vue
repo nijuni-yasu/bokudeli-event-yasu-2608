@@ -37,6 +37,19 @@ if (event.value.event_max_people == 0) {
 const eventDeadlineDate = computed(() => dateString(event.value.event_deadline_datetime?.toDate() ?? null))
 const eventDeadlineHour = computed(() => hourString(event.value.event_deadline_datetime?.toDate() ?? null))
 const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadline_datetime?.toDate() ?? null))
+
+const trimHashTag = (hashTag: string | undefined) => {
+  if (!hashTag) return ''
+  return hashTag.trim().replace(/^#/, '')
+}
+
+const hashTag = computed({
+  get: () => event.value?.event_sns_hash_tag,
+  set: (val) => {
+    if (event.value == null) return
+    event.value.event_sns_hash_tag = trimHashTag(val)
+  },
+})
 </script>
 
 <template>
@@ -149,6 +162,20 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             :label="$t('event_detail.event_max_people')"
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
             :readonly="readonly"
+          />
+        </v-col>
+      </v-row>
+    </v-card-text>
+
+    <v-card-text class="pt-5">
+      <v-row>
+        <v-col cols="12">
+          <v-text-field
+            v-model="hashTag"
+            outlined
+            dense
+            :label="$t('event_detail.hash_tag')"
+            prefix="#"
           />
         </v-col>
       </v-row>

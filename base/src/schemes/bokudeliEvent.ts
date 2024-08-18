@@ -51,6 +51,7 @@ class BokudeliEvent {
   members: DocumentReference[] = []
   event_num_members: number = 0
   subdomain_tags: string[] = []
+  event_sns_hash_tag: string = ''
 
   created_at: Timestamp = Timestamp.now()
   updated_at: Timestamp | null = null
