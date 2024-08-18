@@ -30,7 +30,7 @@ const trimInputtedId = (id: string | null, urlPattern: RegExp) => {
 const twitterId = computed({
   get: () => userDataDraft.value.user_sns_twitter,
   set: (val) => {
-    userDataDraft.value.user_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?twitter\.com\//)
+    userDataDraft.value.user_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?(x|twitter)\.com\//)
   },
 })
 
