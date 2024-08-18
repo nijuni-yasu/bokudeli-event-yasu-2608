@@ -6,9 +6,9 @@ import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
 
 // 環境変数の方がよいかもしれない
-const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>'
+const DEFAULT_FROM = '食事でつながる「shokujii」<shokujii@nijuni.jp>'
 const DEFAULT_TO = 'support+to@nijuni.jp'
-const SUPPORT_MAIL = 'support+cc@nijuni.jp'
+const SUPPORT_MAIL = 'shokujiiサポート<support+cc@nijuni.jp>'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
