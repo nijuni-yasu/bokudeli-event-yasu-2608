@@ -35,7 +35,7 @@ const orderList = computed(() => {
   if (props.showDetail) {
     return state.orderList
   } else {
-    return state.orderList.filter((order) => order.order.status !== 'canceled')
+    return state.orderList.filter((order) => order.order.status !== 'canceled' && order.event.is_public)
   }
 })
 
