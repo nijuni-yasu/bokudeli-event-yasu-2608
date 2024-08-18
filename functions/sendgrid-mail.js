@@ -284,27 +284,28 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
     .where('event_status.value', '==', 'accepting_order')
     .get()
 
-  return Promise.all(
-    events.docs.map(async (eventSnapshot) => {
-      try {
-        const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
-        dynamic_template_data.is_reminder = is_reminder
-        const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
-        await Promise.all(
-          communityEmails.map(async (to) => {
-            await sgMail.send({
-              to,
-              from: DEFAULT_FROM,
-              templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
-              dynamic_template_data,
-            })
-          }),
-        )
-      } catch (err) {
-        console.warn(err)
-      }
-    }),
-  )
+  const promises = []
+  await events.docs.forEach(async (eventSnapshot) => {
+    try {
+      const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
+      dynamic_template_data.is_reminder = is_reminder
+      const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
+      communityEmails
+        .map(async (to) => {
+          await sgMail.send({
+            to,
+            from: DEFAULT_FROM,
+            templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
+            dynamic_template_data,
+          })
+        })
+        .forEach((promise) => promises.push(promise))
+    } catch (err) {
+      console.warn(err)
+    }
+  })
+
+  return Promise.all(promises)
 }
 
 async function sendOrderDeadlineMailToMembers(start, end) {
