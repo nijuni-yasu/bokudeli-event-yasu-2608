@@ -253,7 +253,7 @@ const checkAccountExists = async (event: Event) => {
                     :url="community.community_icon_image_url ?? undefined"
                     :rules="[requiredValidator]"
                     :cover="true"
-                    style="min-width: 100px; min-height: 100px; max-width: 300px; max-height: 300px; aspect-ratio: 1/1"
+                    style="width: auto; max-width: min(100%, 300px); aspect-ratio: 1/1"
                     @file-selected="(f: File | null) => (iconImageFile = f)"
                   />
                   ※アイコン画像を設定してください（推奨サイズ：300x300px）
@@ -267,13 +267,7 @@ const checkAccountExists = async (event: Event) => {
                   <ImageInput
                     :url="community.community_cover_image_url ?? undefined"
                     :rules="[requiredValidator]"
-                    style="
-                      min-width: 300px;
-                      min-height: 150px;
-                      max-width: min(100%, 1200px);
-                      max-height: 630px;
-                      aspect-ratio: 120/63;
-                    "
+                    style="width: 100%; aspect-ratio: 120/63"
                     :cover="true"
                     @fileSelected="(f: File | null) => (coverImageFile = f)"
                   />
