@@ -13,6 +13,7 @@ import { type CommunityMember } from '@/schemes/communityMember'
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
+import CommunityBioPanel from '@/components/CommunityBioPanel.vue'
 
 const get_invitaion_url_for_community_manager = httpsCallable(functions, 'get_invitaion_url_for_community_manager')
 
@@ -46,10 +47,6 @@ const events = computed(() => {
     }
     return event
   })
-})
-
-const state = reactive({
-  links: [] as string[],
 })
 
 const goToEvents = (eventId: string) => {
@@ -139,7 +136,7 @@ const inviteManager = async () => {
           </v-btn>
           <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large"> 申請中 </v-chip>
         </v-row>
-        <v-card flat class="align-center justify-center text-center my-8 pa-md-16 pa-sm-8 pa-xs-0">
+        <v-card flat class="align-center justify-center text-center my-8 pa-md-12 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
               <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.community_cover_image_url" />
@@ -147,10 +144,10 @@ const inviteManager = async () => {
           </v-row>
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h4 pb-6">{{
+              <v-card-title class="justify-center text-h3 pb-6 text-wrap">{{
                 communityStore.community.community_name
               }}</v-card-title>
-              <v-card-text v-linkify class="text-left text-subtitle-1 pb-6">
+              <v-card-text v-linkify class="text-left pb-6">
                 {{ communityStore.community.community_desc }}
               </v-card-text>
             </v-col>
@@ -161,77 +158,13 @@ const inviteManager = async () => {
         <v-row>
           <!-- community description -->
           <v-col md="4" sm="6" cols="12">
-            <v-card class="pa-5" color="text-center">
-              <!-- community title and links -->
-              <v-img
-                style="border-radius: 10px"
-                aspect-ratio="1"
-                cover
-                :src="communityStore.community.community_icon_image_url"
-              />
-              <v-card-title class="justify-center text-h5 py-5 pre-line">
-                {{ communityStore.community.community_name }}
-              </v-card-title>
-              <v-card-text v-for="link in state.links" :key="link" class="text-left pb-3">
-                <a v-if="link" :href="link" class="text-decoration-none" target="_blank">
-                  {{ link }}
-                </a>
-              </v-card-text>
-              <v-col>
-                <v-btn
-                  variant="outlined"
-                  rounded="pill"
-                  :prepend-icon="mdiEmail"
-                  color="primary"
-                  width="100%"
-                  @click="openContactDialog"
-                >
-                  お問い合わせ
-                </v-btn>
-              </v-col>
-              <v-col v-if="isManager">
-                <v-btn variant="outlined" rounded color="primary" width="100%" @click="isOpenInvitationDailog = true">
-                  管理者を招待する
-                </v-btn>
-              </v-col>
-              <!-- community manager -->
-              <div v-if="communityStore.members?.some((m) => m?.roles?.includes('manager') ?? false)">
-                <v-card-title class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
-                <div
-                  v-for="manager in communityStore.members.filter(
-                    (m) => m?.roles?.includes('manager') ?? false,
-                  ) as CommunityMember[]"
-                  :key="manager.user_id"
-                >
-                  <router-link :to="getUserPath(manager.user_id)">
-                    <v-row>
-                      <div class="d-flex flex-row px-6 py-2">
-                        <UserAvatar :user="manager" :size="40" />
-                        <div class="ma-2 text-subtitle-1">{{ manager.user_name }}</div>
-                      </div>
-                    </v-row>
-                  </router-link>
-                </div>
-              </div>
-
-              <!-- community member -->
-              <div v-if="communityStore.members != null">
-                <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
-                <div
-                  v-for="member in communityStore.members.filter((m) => m != null) as CommunityMember[]"
-                  :key="member.user_id"
-                >
-                  <router-link :to="getUserPath(member.user_id)">
-                    <v-row>
-                      <div class="d-flex flex-row px-6 py-2">
-                        <UserAvatar :user="member" :size="40" />
-                        <div class="ma-2 text-subtitle-1">{{ member.user_name }}</div>
-                      </div>
-                    </v-row>
-                  </router-link>
-                </div>
-              </div>
-            </v-card>
+            <community-bio-panel
+              :community="communityStore.community"
+              :members="communityStore.members"
+              :is-manager="isManager"
+              @click-contact="openContactDialog"
+              @click-invitation="() => (isOpenInvitationDailog = true)"
+            />
           </v-col>
           <!-- events -->
           <v-col md="8" sm="6" cols="12">
@@ -245,17 +178,17 @@ const inviteManager = async () => {
                   <v-card-title class="justify-center text-h6 pb-3 px-2">
                     {{ event.event_name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-2 px-2">
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
                     【日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
                       dateOnlyTimeString(event.event_end_datetime)
                     }}
-                  </v-card-text>
-                  <v-card-text class="text-left pb-2 px-2">
+                  </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
                     【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
-                  </v-card-text>
-                  <v-card-text class="text-left pb-2 px-2"> 【場所】{{ event.event_address }} </v-card-text>
-                  <v-card-text class="text-left pb-2 px-2"> 【お店】 {{ event.shop_name }} </v-card-text>
-                  <v-card-text class="text-left pb-5 px-2"> 【定員】{{ event.event_max_people }} 人 </v-card-text>
+                  </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2"> 【場所】{{ event.event_address }} </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2"> 【お店】 {{ event.shop_name }} </v-card-title>
+                  <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2"> 【定員】{{ event.event_max_people }} 人 </v-card-title>
                 </v-card>
                 <v-row v-if="isManager" class="justify-end my-2 mr-1">
                   <v-btn
