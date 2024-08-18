@@ -77,10 +77,11 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
       <v-row>
         <v-col cols="12">
           <ImageInput
-            style="min-width: 360px; min-height: 189px"
+            style="width: 100%; aspect-ratio: 120/63"
             :url="event.event_cover_url"
             :rules="[requiredValidator]"
             :readonly="readonly"
+            :cover="true"
             @fileSelected="(f) => (coverImage = f)"
           >
             <template #placeholder>{{ $t('event_detail.event_cover_url') }}</template>

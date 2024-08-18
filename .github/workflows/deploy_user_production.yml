@@ -6,6 +6,7 @@ on:
       - production
     paths:
       - 'user/**'
+      - 'base/**'
   workflow_dispatch:
 
 concurrency:

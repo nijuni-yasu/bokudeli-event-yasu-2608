@@ -255,14 +255,24 @@ async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis())
   const date = convertToDate(event_start_datetime_japan)
   const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
+  const deliveryDuration = convertToDuration(
+    event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
+    event_start_datetime_japan,
+  )
+  const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
+
+  const shopSnapshot = await getShopForEvent(eventSnapshot)
+  const shopData = shopSnapshot.data()
 
   return {
+    ...shopData,
     ...eventData,
     date,
     event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
     event_deadline_datetime,
     order_count,
     orders,
+    delivery_date,
   }
 }
 

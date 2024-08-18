@@ -72,13 +72,16 @@ export const useValidators = () => {
    *
    * @param value
    * @returns boolean | string if it's invalid, return error message
-   * @see https://stackoverflow.com/a/5503271
+   * @see https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s01.html
    */
   const emailValidator = (value: string | null | undefined) => {
     if (isEmpty(value)) {
       return true
     }
-    return /^[\w-]+(\.[\w-]+)*(\+[\w-]+)?@[\w-]+\.[\w-]{2,4}$/.test(value as string) || $t('validator.email')
+    return (
+      /^[\w!#$%&'*+/=?`{|}~^-]+(\.[\w!#$%&'*+/=?`{|}~^-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,6}$/.test(value as string) ||
+      $t('validator.email')
+    )
   }
 
   /**
