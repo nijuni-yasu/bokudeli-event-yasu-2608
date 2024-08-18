@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { getCommunityPath } from '@/router/utils'
 import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
-import { useValidators } from '@/composable/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useStoreStoredUser } from '@/stores/storedUser'
