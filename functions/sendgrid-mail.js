@@ -9,7 +9,7 @@ import { convertTruncateText } from './utils/converter.js'
 const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>'
 const DEFAULT_CC = 'support+cc@nijuni.jp'
 const DEFAULT_TO = 'support+to@nijuni.jp'
-const NOREPLY_FROM = 'noreply@nijuni.jp'
+const NOREPLY_TO = 'noreply@nijuni.jp'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
@@ -291,8 +291,8 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
         const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
         dynamic_template_data.is_reminder = is_reminder
         await sgMail.send({
-          to: NOREPLY_FROM,
-          from: NOREPLY_FROM,
+          to: NOREPLY_TO,
+          from: DEFAULT_FROM,
           cc: DEFAULT_CC,
           bcc: await getCommunityEmailsForEvent(eventSnapshot), 
           templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
@@ -527,16 +527,17 @@ async function sendEventInformationMailPreview() {
 }
 
 async function sendEventStatusMail(templateId, eventSnapshot) {
-  const [templateData, shopSnapShot, to] = await Promise.all([
+  const [templateData, shopSnapShot, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(eventSnapshot),
     getShopForEvent(eventSnapshot),
     getCommunityEmailsForEvent(eventSnapshot),
   ])
   const dynamic_template_data = { ...templateData, ...shopSnapShot.data() }
   return sgMail.send({
-    to,
+    to: NOREPLY_TO,
     from: DEFAULT_FROM,
     cc: DEFAULT_CC,
+    bcc: emails,
     templateId,
     dynamic_template_data,
   })
@@ -581,12 +582,13 @@ async function sendNewCommunityRequestMail(communitySnapshot) {
 }
 
 async function sendCommunityContactMail(templateId, data) {
-  const to = await getCommunityEmails(data.community_id)
+  const emails = await getCommunityEmails(data.community_id)
   const dynamic_template_data = data
   return sgMail.send({
-    to,
+    to: NOREPLY_TO,
     from: DEFAULT_FROM,
     cc: DEFAULT_CC,
+    bcc: emails,
     templateId,
     dynamic_template_data,
   })
@@ -633,8 +635,8 @@ async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
     user_url: getUserUrl(userData.user_id),
   }
   return sgMail.send({
-    to: NOREPLY_FROM,
-    from: NOREPLY_FROM,
+    to: NOREPLY_TO,
+    from: DEFAULT_FROM,
     bcc: emails,
     templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
     dynamic_template_data,
