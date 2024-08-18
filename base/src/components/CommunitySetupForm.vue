@@ -64,7 +64,7 @@ const twitterId = computed({
   get: () => community.value?.community_sns_twitter,
   set: (val) => {
     if (community.value == null) return
-    community.value.community_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?twitter\.com\//)
+    community.value.community_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?(x|twitter)\.com\//)
   },
 })
 const facebookId = computed({
