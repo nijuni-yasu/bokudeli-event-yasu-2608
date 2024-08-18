@@ -9,6 +9,7 @@ import { convertTruncateText } from './utils/converter.js'
 const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>'
 const DEFAULT_CC = 'support+cc@nijuni.jp'
 const DEFAULT_TO = 'support+to@nijuni.jp'
+const NOREPLY_FROM = 'noreply@nijuni.jp'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
@@ -290,9 +291,10 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
         const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
         dynamic_template_data.is_reminder = is_reminder
         await sgMail.send({
-          to: await getCommunityEmailsForEvent(eventSnapshot),
-          from: DEFAULT_FROM,
+          to: NOREPLY_FROM,
+          from: NOREPLY_FROM,
           cc: DEFAULT_CC,
+          bcc: await getCommunityEmailsForEvent(eventSnapshot), 
           templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
           dynamic_template_data,
         })
@@ -621,7 +623,7 @@ async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
   const eventData = eventSnapshot.data()
   const userData = userSnapshot.data()
 
-  const to = await getCommunityEmailsForEvent(eventSnapshot)
+  const emails = await getCommunityEmailsForEvent(eventSnapshot)
 
   const dynamic_template_data = {
     date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
@@ -631,8 +633,9 @@ async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
     user_url: getUserUrl(userData.user_id),
   }
   return sgMail.send({
-    to,
-    from: DEFAULT_FROM,
+    to: NOREPLY_FROM,
+    from: NOREPLY_FROM,
+    bcc: emails,
     templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
     dynamic_template_data,
   })
