@@ -7,9 +7,8 @@ import { convertTruncateText } from './utils/converter.js'
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>'
-const DEFAULT_CC = 'support+cc@nijuni.jp'
 const DEFAULT_TO = 'support+to@nijuni.jp'
-const NOREPLY_TO = 'noreply@nijuni.jp'
+const SUPPORT_MAIL = 'support+cc@nijuni.jp'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
@@ -156,7 +155,7 @@ async function getCommunityEmails(communityId) {
   const emails = await getCommunityManagerEmailsSet(communityId)
   if (emails.size === 0) {
     // コミュマネがいない場合はsupport+to@nijuni.jpに送信
-    emails.add(DEFAULT_TO)
+    emails.add(SUPPORT_MAIL)
   }
   return Array.from(emails)
 }
@@ -238,7 +237,7 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
         await sgMail.send({
           to: getShopEmails(shopSnapShot),
           from: DEFAULT_FROM,
-          cc: DEFAULT_CC,
+          cc: SUPPORT_MAIL,
           templateId: ORDER_DEADLINE_TEMPLATE_ID,
           dynamic_template_data,
         })
@@ -290,14 +289,17 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
       try {
         const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
         dynamic_template_data.is_reminder = is_reminder
-        await sgMail.send({
-          to: NOREPLY_TO,
-          from: DEFAULT_FROM,
-          cc: DEFAULT_CC,
-          bcc: await getCommunityEmailsForEvent(eventSnapshot),
-          templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
-          dynamic_template_data,
-        })
+        const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
+        await Promise.all(
+          communityEmails.map(async (to) => {
+            await sgMail.send({
+              to,
+              from: DEFAULT_FROM,
+              templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
+              dynamic_template_data,
+            })
+          }),
+        )
       } catch (err) {
         console.warn(err)
       }
@@ -389,7 +391,7 @@ async function sendApplyingOrderMailToShop(eventSnapshot) {
   return sgMail.send({
     to: getShopEmails(shopSnapShot),
     from: DEFAULT_FROM,
-    cc: DEFAULT_CC,
+    cc: SUPPORT_MAIL,
     templateId: APPLYING_ORDER_TEMPLATE_ID,
     dynamic_template_data,
   })
@@ -526,21 +528,28 @@ async function sendEventInformationMailPreview() {
   })
 }
 
-async function sendEventStatusMailToOrganizers(templateId, eventSnapshot) {
+async function sendEventStatusMailToOrganizers(templateId, eventSnapshot, addSupport) {
   const [templateData, shopSnapShot, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(eventSnapshot),
     getShopForEvent(eventSnapshot),
     getCommunityEmailsForEvent(eventSnapshot),
   ])
   const dynamic_template_data = { ...templateData, ...shopSnapShot.data() }
-  return sgMail.send({
-    to: NOREPLY_TO,
-    from: DEFAULT_FROM,
-    cc: DEFAULT_CC,
-    bcc: emails,
-    templateId,
-    dynamic_template_data,
-  })
+
+  if (addSupport && !emails.includes(SUPPORT_MAIL)) {
+    emails.push(SUPPORT_MAIL)
+  }
+
+  return Promise.all(
+    emails.map(async (to) => {
+      await sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId,
+        dynamic_template_data,
+      })
+    }),
+  )
 }
 
 async function sendShopOpenMailToSupport(shopSnapshot) {
@@ -555,7 +564,7 @@ async function sendShopOpenMailToSupport(shopSnapshot) {
     `【PartnerID】${shopSnapshot.get('partner_id')}\n` +
     `【開店設定】${isOpen}`
   return sgMail.send({
-    to: DEFAULT_CC,
+    to: SUPPORT_MAIL,
     from: DEFAULT_FROM,
     subject,
     text,
@@ -584,14 +593,19 @@ async function sendNewCommunityRequestMailToSupport(communitySnapshot) {
 async function sendCommunityContactMailToOrganizers(templateId, data) {
   const emails = await getCommunityEmails(data.community_id)
   const dynamic_template_data = data
-  return sgMail.send({
-    to: NOREPLY_TO,
-    from: DEFAULT_FROM,
-    cc: DEFAULT_CC,
-    bcc: emails,
-    templateId,
-    dynamic_template_data,
-  })
+  if (!emails.includes(SUPPORT_MAIL)) {
+    emails.push(SUPPORT_MAIL)
+  }
+  return Promise.all(
+    emails.map(async (to) => {
+      await sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId,
+        dynamic_template_data,
+      })
+    }),
+  )
 }
 
 async function sendOrderCompletionMailToMember(eventRef, userId) {
@@ -634,13 +648,16 @@ async function sendOrderCompletionMailToOrganizers(orderSnapshot, userId) {
     user_name: userData.user_name,
     user_url: getUserUrl(userData.user_id),
   }
-  return sgMail.send({
-    to: NOREPLY_TO,
-    from: DEFAULT_FROM,
-    bcc: emails,
-    templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
-    dynamic_template_data,
-  })
+  return Promise.all(
+    emails.map(async (to) => {
+      await sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
+        dynamic_template_data,
+      })
+    }),
+  )
 }
 
 async function sendInCartNotificationToMember(start, end) {
@@ -758,13 +775,13 @@ export const on_event_changed = functions
       [
         'in_draft',
         'applying_reservation',
-        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID),
+        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID, false),
       ],
-      ['applying_reservation', 'in_draft', sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
+      ['applying_reservation', 'in_draft', sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_IN_DRAFT_ID, true)],
       [
         'applying_reservation',
         'accepting_order',
-        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID),
+        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID, true),
       ],
     ]
     const before = change.before
