@@ -42,6 +42,10 @@ const communityList = computed<CommunityWithMembers[]>(() =>
     if (communityStore.community == null) {
       return []
     }
+    // ログインユーザーでない場合、非公開コミュニティは表示しない
+    if (!props.isLoginUser && !communityStore.community.is_public) {
+      return []
+    }
     if (props.type === 'managers') {
       return communityStore.members?.some(
         (member) => member?.user_id === props.userId && (member?.roles?.includes('manager') ?? false),
