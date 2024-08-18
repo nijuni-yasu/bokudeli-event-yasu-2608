@@ -170,7 +170,8 @@ const hashTag = computed({
               <ImageInput
                 :url="community.community_icon_image_url ?? undefined"
                 :rules="[requiredValidator]"
-                style="min-width: 100px; min-height: 100px"
+                :cover="true"
+                style="width: auto; max-width: min(100%, 300px); aspect-ratio: 1/1"
                 @file-selected="(f: File | null) => (iconImageFile = f)"
               />
               ※アイコン画像を設定してください（推奨サイズ：300x300px）
@@ -184,7 +185,8 @@ const hashTag = computed({
               <ImageInput
                 :url="community.community_cover_image_url ?? undefined"
                 :rules="[requiredValidator]"
-                style="min-width: 300px; min-height: 150px"
+                style="width: 100%; aspect-ratio: 120/63"
+                :cover="true"
                 @fileSelected="(f: File | null) => (coverImageFile = f)"
               />
               ※カバー画像を設定してください（推奨サイズ：1200x630px）

@@ -50,6 +50,15 @@ jobs:
       run: |
         env_vars=$(echo '${{ secrets.FUNCTIONS_SLACKBOT_PRODUCTION_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
         echo "$env_vars" > .env
+    - name: Install Dependencies for shokujii-linebot
+      working-directory: ./functions/shokujii-linebot
+      run: |
+        yarn install --frozen-lockfile
+    - name: Generate .env file to shokujii-linebot
+      working-directory: ./functions/shokujii-linebot
+      run: |
+        env_vars=$(echo '${{ secrets.FUNCTIONS_LINEBOT_PRODUCTION_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
+        echo "$env_vars" > .env
     # FIREBASE_TOKEN is deprecated, so use GOOGLE_APPLICATION_CREDENTIALS
     - name: Deploy to Firebase
       working-directory: .
