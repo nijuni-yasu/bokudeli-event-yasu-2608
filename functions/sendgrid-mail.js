@@ -526,7 +526,7 @@ async function sendEventInformationMailPreview() {
   })
 }
 
-async function sendEventStatusMail(templateId, eventSnapshot) {
+async function sendEventStatusMailForOrganizer(templateId, eventSnapshot) {
   const [templateData, shopSnapShot, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(eventSnapshot),
     getShopForEvent(eventSnapshot),
@@ -755,9 +755,9 @@ export const on_event_changed = functions
   .onUpdate(async (change) => {
     const conditions = [
       ['in_draft', 'applying_reservation', sendApplyingOrderMail],
-      ['in_draft', 'applying_reservation', sendEventStatusMail.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)],
-      ['applying_reservation', 'in_draft', sendEventStatusMail.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
-      ['applying_reservation', 'accepting_order', sendEventStatusMail.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID)],
+      ['in_draft', 'applying_reservation', sendEventStatusMailForOrganizer.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)],
+      ['applying_reservation', 'in_draft', sendEventStatusMailForOrganizer.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
+      ['applying_reservation', 'accepting_order', sendEventStatusMailForOrganizer.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID)],
     ]
     const before = change.before
     const after = change.after
