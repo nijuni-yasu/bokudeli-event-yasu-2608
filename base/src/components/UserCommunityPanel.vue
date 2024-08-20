@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Use ./CommunityCard.vue directly
+ */
 import { db } from '@/firebase'
 import { doc, orderBy, where } from 'firebase/firestore'
 import { convertTruncateText } from '@/schemes/converter'

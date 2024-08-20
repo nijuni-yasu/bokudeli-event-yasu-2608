@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Use ./UserEventCard2.vue instead
+ */
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type OrderItem } from '@/schemes/orderItem'
 import { dateWithDayOfWeekString, priceString } from '@/schemes/converter'
