@@ -294,7 +294,7 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
           to: NOREPLY_TO,
           from: DEFAULT_FROM,
           cc: DEFAULT_CC,
-          bcc: await getCommunityEmailsForEvent(eventSnapshot), 
+          bcc: await getCommunityEmailsForEvent(eventSnapshot),
           templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
           dynamic_template_data,
         })
@@ -755,9 +755,17 @@ export const on_event_changed = functions
   .onUpdate(async (change) => {
     const conditions = [
       ['in_draft', 'applying_reservation', sendApplyingOrderMailToShop],
-      ['in_draft', 'applying_reservation', sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)],
+      [
+        'in_draft',
+        'applying_reservation',
+        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID),
+      ],
       ['applying_reservation', 'in_draft', sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
-      ['applying_reservation', 'accepting_order', sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID)],
+      [
+        'applying_reservation',
+        'accepting_order',
+        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID),
+      ],
     ]
     const before = change.before
     const after = change.after
