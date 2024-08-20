@@ -20,7 +20,7 @@ export default {
     'order': '注文一覧',
     'manual': '店舗マニュアル',
     'community': 'コミュニティ設定',
-    'event': 'イベント編集',
+    'event': '店舗主催イベント',
   },
   'forgot_password_dialog': {
     'title': 'パスワードの再設定',
@@ -196,7 +196,7 @@ export default {
     'created': 'イベントを作成しました',
     'updated': 'イベントを更新しました',
     'error': 'エラーが発生しました',
-    'new': 'イベント作成する'
+    'new': '店舗主催のイベントを作成する'
   },
   'alert': {
     'make_shop': '先に店舗情報を登録してください',
