@@ -2,9 +2,31 @@
 import { getAuth, signOut } from 'firebase/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiLogout } from '@mdi/js'
+import { usePartnerStore } from '@/stores/partner'
+
+const auth = getAuth()
+const name = ref<string | null>(null)
+
+auth.onAuthStateChanged((user) => {
+  if (user != null) {
+    const partnerStore = usePartnerStore(user.uid)
+    if (partnerStore.shops != null) {
+      name.value = partnerStore.shops[0]?.shop_name ?? null
+    } else {
+      watchOnce(storeToRefs(partnerStore).shops, (shops) => {
+        if (shops?.[0]?.shop_name != null) {
+          name.value = shops[0].shop_name
+        } else {
+          name.value = null
+        }
+      })
+    }
+  } else {
+    name.value = null
+  }
+})
 
 const logout = async () => {
-  const auth = getAuth()
   try {
     await signOut(auth)
   } catch (error) {
@@ -15,7 +37,7 @@ const logout = async () => {
 
 <template>
   <div>
-    <UserAvatar :user="null" class="cursor-pointer">
+    <UserAvatar :user="name" class="cursor-pointer">
       <v-menu activator="parent" width="230" location="bottom end" offset="14px">
         <v-list>
           <v-list-item @click="logout()">
