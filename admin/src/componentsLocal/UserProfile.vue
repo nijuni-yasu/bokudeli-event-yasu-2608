@@ -37,6 +37,7 @@ const logout = async () => {
 
 <template>
   <div>
+    <span class="me-4">{{ name }}</span>
     <UserAvatar :user="name" class="cursor-pointer">
       <v-menu activator="parent" width="230" location="bottom end" offset="14px">
         <v-list>
