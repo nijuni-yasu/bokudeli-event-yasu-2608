@@ -26,14 +26,14 @@ const events = computed(
 
 <template>
   <v-row class="justify-center">
-    <v-col cols="12" sm="12" md="9" class="px-0">
+    <v-col cols="12" class="px-0">
       <v-card flat class="mt-2">
         <template v-slot:title>
           <v-icon size="40" class="text--primary me-3" :icon="mdiTruckOutline" />
           <span>{{ $t('orders.title') }}</span>
         </template>
         <template v-slot:text>
-          <v-table>
+          <v-table style="font-size: small">
             <thead>
               <tr>
                 <th v-for="s of $tm('orders.table_header')" :key="`header_${s}`">{{ s }}</th>
