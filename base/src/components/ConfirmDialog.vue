@@ -44,8 +44,8 @@ const clickCancelHandler = () => {
 
 <template>
   <v-dialog v-model="dialog" persistent :max-width="props.maxWidth ? props.maxWidth : '600px'">
-    <v-card>
-      <v-card-title v-if="props.title">{{ props.title }}</v-card-title>
+    <v-card class="pa-1">
+      <v-card-title>{{ props.title }}</v-card-title>
       <v-card-text><slot></slot></v-card-text>
       <v-card-actions>
         <v-spacer />
