@@ -529,7 +529,7 @@ async function sendEventInformationMailPreview() {
   })
 }
 
-async function sendEventStatusMailToOrganizers(templateId, eventSnapshot, addSupport) {
+async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnapshot) {
   const [templateData, shopSnapShot, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(eventSnapshot),
     getShopForEvent(eventSnapshot),
