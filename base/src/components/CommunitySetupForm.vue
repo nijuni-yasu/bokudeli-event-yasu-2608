@@ -52,7 +52,8 @@ const checkAccountExists = async (event: Event) => {
 
 const trimInputtedId = (id: string | undefined, urlPattern: RegExp) => {
   if (!id) return ''
-  return id.trim().replace(/\/+$/, '').replace(urlPattern, '')
+  const trimmedId = id.trim().replace(/\/+$/, '').replace(urlPattern, '')
+  return trimmedId.endsWith('/') ? trimmedId.slice(0, -1) : trimmedId
 }
 
 const trimHashTag = (hashTag: string | undefined) => {
