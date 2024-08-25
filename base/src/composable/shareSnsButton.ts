@@ -11,18 +11,17 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent | nul
   const communityTwitterAccount = communityStore.community?.community_sns_twitter ?? ''
 
   const eventUrl = encodeURIComponent(event.url)
+  const hashTagText = event.event_sns_hash_tag ? `#${event.event_sns_hash_tag} ` : ''
   if (snsType === 'twitter') {
-    const hashTagText = event.event_sns_hash_tag ? `${event.event_sns_hash_tag},shokujii` : 'shokujii'
     const startDate = dateWithDayOfWeekString(event.event_start_datetime)
     const endTime = dateOnlyTimeString(event.event_end_datetime)
-    const community = event.community_name + (communityTwitterAccount ? ` a@${communityTwitterAccount}` : '')
+    const community = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
 
     const baseUrl = 'https://twitter.com/intent/tweet'
-    const hashtags = encodeURIComponent(hashTagText)
     const text = encodeURIComponent(
-      `${event.event_name}\n🗓️${startDate}~${endTime}\n🙋‍♀️${community}\n👩‍🍳${event.shop_name}\n🎟`,
+      `🌟${event.event_name}\n📅${startDate}~${endTime}\n👥${community}\n🍱${event.shop_name}\n${hashTagText}#shokujii \n\n👇申し込みはこちら👇\n`,
     )
-    const openUrl = `${baseUrl}?text=${text}&url=${eventUrl}&hashtags=${hashtags}`
+    const openUrl = `${baseUrl}?text=${text}&url=${eventUrl}`
     window.open(openUrl, '_blank', 'width=800,height=500')
   } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
@@ -33,7 +32,7 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent | nul
     const openUrl = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
     window.open(openUrl, '_blank', 'width=800,height=500')
   } else if (snsType === 'copy') {
-    const text = `${event.event_name}\n🙋‍♀️${event.community_name}\n🗓️${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}\n📍${event.event_address}\n👩‍🍳${event.shop_name}\n🎟${event.url}?openExternalBrowser=1\n#食事でつながる #shokujii\n`
+    const text = `🌟${event.event_name}\n👥${event.community_name}\n📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}\n⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}ﾏﾃﾞ\n📍${event.event_address}\n🍱${event.shop_name}\n${hashTagText}#shokujii\n\n👇申し込みはコチラから👇\n${event.url}?openExternalBrowser=1`
     navigator.clipboard
       .writeText(text)
       .then(() => {
