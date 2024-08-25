@@ -7,10 +7,11 @@ import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline }
 import ImageInput from '../ImageInput.vue'
 import DateInput from '../DateInput.vue'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     readonly?: boolean
     subdomainTags?: string[]
+    defaultHashTag?: string
   }>(),
   {
     readonly: false,
@@ -33,6 +34,8 @@ const maxPeopleValidator = (v: number) => {
 if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
+
+event.value.event_sns_hash_tag = props.defaultHashTag ?? ''
 
 const eventDeadlineDate = computed(() => dateString(event.value.event_deadline_datetime?.toDate() ?? null))
 const eventDeadlineHour = computed(() => hourString(event.value.event_deadline_datetime?.toDate() ?? null))
@@ -68,13 +71,13 @@ const hashTag = computed({
             dense
             :label="$t('event_detail.event_name')"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
     </v-card-text>
 
-    <v-card-text v-if="subdomainTags != null && subdomainTags.length !== 0" class="pt-5">
+    <v-card-text v-if="props.subdomainTags != null && props.subdomainTags.length !== 0" class="pt-5">
       <v-row>
         <v-col cols="12">
           <v-text-field outlined dense label="Tags" :readonly="true" :active="true">
@@ -93,7 +96,7 @@ const hashTag = computed({
             style="width: 100%; aspect-ratio: 120/63"
             :url="event.event_cover_url"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
             :cover="true"
             @fileSelected="(f) => (coverImage = f)"
           >
@@ -112,7 +115,7 @@ const hashTag = computed({
             rows="10"
             :label="$t('event_detail.event_desc')"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
@@ -161,7 +164,7 @@ const hashTag = computed({
             dense
             :label="$t('event_detail.event_max_people')"
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
@@ -181,7 +184,7 @@ const hashTag = computed({
       {{ $t('event_detail.activity') }}
     </v-card-title>
     <v-card-text>
-      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="readonly">
+      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="props.readonly">
         <template v-slot:label>
           <span v-if="event.is_public">{{ $t('event_detail.public') }}</span>
           <span v-else>{{ $t('event_detail.private') }}</span>
