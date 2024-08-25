@@ -1,0 +1,11 @@
+.firebase
+.vscode
+dist
+node_modules
+public
+src/@*
+*.d.ts
+firebase.json
+src/locales/**/*.ts
+src/themes/light.ts
+src/themes/dark.ts

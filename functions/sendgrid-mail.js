@@ -6,9 +6,9 @@ import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
 
 // 環境変数の方がよいかもしれない
-const DEFAULT_FROM = '食事でつながるshokujii<shokujii@nijuni.jp>'
-const DEFAULT_CC = 'support+cc@nijuni.jp'
+const DEFAULT_FROM = '食事でつながる「shokujii」<shokujii@nijuni.jp>'
 const DEFAULT_TO = 'support+to@nijuni.jp'
+const SUPPORT_MAIL = 'shokujiiサポート<support+cc@nijuni.jp>'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
@@ -155,7 +155,7 @@ async function getCommunityEmails(communityId) {
   const emails = await getCommunityManagerEmailsSet(communityId)
   if (emails.size === 0) {
     // コミュマネがいない場合はsupport+to@nijuni.jpに送信
-    emails.add(DEFAULT_TO)
+    emails.add(SUPPORT_MAIL)
   }
   return Array.from(emails)
 }
@@ -237,7 +237,7 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
         await sgMail.send({
           to: getShopEmails(shopSnapShot),
           from: DEFAULT_FROM,
-          cc: DEFAULT_CC,
+          cc: SUPPORT_MAIL,
           templateId: ORDER_DEADLINE_TEMPLATE_ID,
           dynamic_template_data,
         })
@@ -284,23 +284,28 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
     .where('event_status.value', '==', 'accepting_order')
     .get()
 
-  return Promise.all(
-    events.docs.map(async (eventSnapshot) => {
-      try {
-        const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
-        dynamic_template_data.is_reminder = is_reminder
-        await sgMail.send({
-          to: await getCommunityEmailsForEvent(eventSnapshot),
-          from: DEFAULT_FROM,
-          cc: DEFAULT_CC,
-          templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
-          dynamic_template_data,
+  const promises = []
+  await events.docs.forEach(async (eventSnapshot) => {
+    try {
+      const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
+      dynamic_template_data.is_reminder = is_reminder
+      const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
+      communityEmails
+        .map(async (to) => {
+          await sgMail.send({
+            to,
+            from: DEFAULT_FROM,
+            templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
+            dynamic_template_data,
+          })
         })
-      } catch (err) {
-        console.warn(err)
-      }
-    }),
-  )
+        .forEach((promise) => promises.push(promise))
+    } catch (err) {
+      console.warn(err)
+    }
+  })
+
+  return Promise.all(promises)
 }
 
 async function sendOrderDeadlineMailToMembers(start, end) {
@@ -344,7 +349,7 @@ async function sendOrderDeadlineMailToMembers(start, end) {
   )
 }
 
-async function sendEventConcludedMail(start, end) {
+async function sendEventConcludedMailToMembers(start, end) {
   const events = await db
     .collectionGroup('events')
     .where('event_end_datetime', '>', Timestamp.fromMillis(start))
@@ -379,7 +384,7 @@ async function sendEventConcludedMail(start, end) {
   )
 }
 
-async function sendApplyingOrderMail(eventSnapshot) {
+async function sendApplyingOrderMailToShop(eventSnapshot) {
   const [dynamic_template_data, shopSnapShot] = await Promise.all([
     createTemplateDataForOrderDeadline(eventSnapshot),
     getShopForEvent(eventSnapshot),
@@ -387,7 +392,7 @@ async function sendApplyingOrderMail(eventSnapshot) {
   return sgMail.send({
     to: getShopEmails(shopSnapShot),
     from: DEFAULT_FROM,
-    cc: DEFAULT_CC,
+    cc: SUPPORT_MAIL,
     templateId: APPLYING_ORDER_TEMPLATE_ID,
     dynamic_template_data,
   })
@@ -524,23 +529,31 @@ async function sendEventInformationMailPreview() {
   })
 }
 
-async function sendEventStatusMail(templateId, eventSnapshot) {
-  const [templateData, shopSnapShot, to] = await Promise.all([
+async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnapshot) {
+  const [templateData, shopSnapShot, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(eventSnapshot),
     getShopForEvent(eventSnapshot),
     getCommunityEmailsForEvent(eventSnapshot),
   ])
   const dynamic_template_data = { ...templateData, ...shopSnapShot.data() }
-  return sgMail.send({
-    to,
-    from: DEFAULT_FROM,
-    cc: DEFAULT_CC,
-    templateId,
-    dynamic_template_data,
-  })
+
+  if (addSupport && !emails.includes(SUPPORT_MAIL)) {
+    emails.push(SUPPORT_MAIL)
+  }
+
+  return Promise.all(
+    emails.map(async (to) => {
+      await sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId,
+        dynamic_template_data,
+      })
+    }),
+  )
 }
 
-async function sendShopOpenMail(shopSnapshot) {
+async function sendShopOpenMailToSupport(shopSnapshot) {
   const shopName = shopSnapshot.get('shop_name')
   const isOpen = shopSnapshot.get('is_open') ? '開店（OPEN）' : '閉店（CLOSE）'
   const subject = `${shopName}の開店設定が変更されました`
@@ -552,14 +565,14 @@ async function sendShopOpenMail(shopSnapshot) {
     `【PartnerID】${shopSnapshot.get('partner_id')}\n` +
     `【開店設定】${isOpen}`
   return sgMail.send({
-    to: DEFAULT_CC,
+    to: SUPPORT_MAIL,
     from: DEFAULT_FROM,
     subject,
     text,
   })
 }
 
-async function sendNewCommunityRequestMail(communitySnapshot) {
+async function sendNewCommunityRequestMailToSupport(communitySnapshot) {
   const communityId = communitySnapshot.id
   const communityName = communitySnapshot.get('community_name')
   const communityAccount = communitySnapshot.get('community_account')
@@ -578,19 +591,25 @@ async function sendNewCommunityRequestMail(communitySnapshot) {
   })
 }
 
-async function sendCommunityContactMail(templateId, data) {
-  const to = await getCommunityEmails(data.community_id)
+async function sendCommunityContactMailToOrganizers(templateId, data) {
+  const emails = await getCommunityEmails(data.community_id)
   const dynamic_template_data = data
-  return sgMail.send({
-    to,
-    from: DEFAULT_FROM,
-    cc: DEFAULT_CC,
-    templateId,
-    dynamic_template_data,
-  })
+  if (!emails.includes(SUPPORT_MAIL)) {
+    emails.push(SUPPORT_MAIL)
+  }
+  return Promise.all(
+    emails.map(async (to) => {
+      await sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId,
+        dynamic_template_data,
+      })
+    }),
+  )
 }
 
-async function sendOrderCompletionMail(eventRef, userId) {
+async function sendOrderCompletionMailToMember(eventRef, userId) {
   const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
   const eventData = eventSnapshot.data()
   const dynamic_template_data = {
@@ -615,13 +634,13 @@ async function sendOrderCompletionMail(eventRef, userId) {
   })
 }
 
-async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
+async function sendOrderCompletionMailToOrganizers(orderSnapshot, userId) {
   const eventRef = orderSnapshot.ref.parent.parent
   const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
   const eventData = eventSnapshot.data()
   const userData = userSnapshot.data()
 
-  const to = await getCommunityEmailsForEvent(eventSnapshot)
+  const emails = await getCommunityEmailsForEvent(eventSnapshot)
 
   const dynamic_template_data = {
     date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
@@ -630,15 +649,19 @@ async function sendOrderCompletionMailForOrganizer(orderSnapshot, userId) {
     user_name: userData.user_name,
     user_url: getUserUrl(userData.user_id),
   }
-  return sgMail.send({
-    to,
-    from: DEFAULT_FROM,
-    templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
-    dynamic_template_data,
-  })
+  return Promise.all(
+    emails.map(async (to) => {
+      await sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
+        dynamic_template_data,
+      })
+    }),
+  )
 }
 
-async function sendInCartNotification(start, end) {
+async function sendInCartNotificationToMember(start, end) {
   const notifyTime = 24 * 60 * 60 * 1000 // 1日
   const orderSnapshot = await db
     .collectionGroup('orders')
@@ -660,7 +683,7 @@ async function sendInCartNotification(start, end) {
   )
 }
 
-async function sendInCartEventDeadlineNotification(start, end) {
+async function sendInCartEventDeadlineNotificationToMember(start, end) {
   const notifyTime = 24 * 60 * 60 * 1000 // 1日
   const events = await db
     .collectionGroup('events')
@@ -722,9 +745,9 @@ export const polling = functions
       sendOrderDeadlineMailToOrganizers(start, end, false),
       sendOrderDeadlineMailToOrganizers(start + 3 * 24 * 60 * 60 * 1000, end + 3 * 24 * 60 * 60 * 1000, true), // 3日前告知
       sendOrderDeadlineMailToMembers(start, end),
-      sendEventConcludedMail(start, end),
-      sendInCartNotification(start, end),
-      sendInCartEventDeadlineNotification(start, end),
+      sendEventConcludedMailToMembers(start, end),
+      sendInCartNotificationToMember(start, end),
+      sendInCartEventDeadlineNotificationToMember(start, end),
     ])
   })
 
@@ -749,10 +772,18 @@ export const on_event_changed = functions
   .firestore.document('communities/{communityId}/events/{eventId}')
   .onUpdate(async (change) => {
     const conditions = [
-      ['in_draft', 'applying_reservation', sendApplyingOrderMail],
-      ['in_draft', 'applying_reservation', sendEventStatusMail.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID)],
-      ['applying_reservation', 'in_draft', sendEventStatusMail.bind(null, EVENT_STATUS_IN_DRAFT_ID)],
-      ['applying_reservation', 'accepting_order', sendEventStatusMail.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID)],
+      ['in_draft', 'applying_reservation', sendApplyingOrderMailToShop],
+      [
+        'in_draft',
+        'applying_reservation',
+        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID, false),
+      ],
+      ['applying_reservation', 'in_draft', sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_IN_DRAFT_ID, true)],
+      [
+        'applying_reservation',
+        'accepting_order',
+        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID, true),
+      ],
     ]
     const before = change.before
     const after = change.after
@@ -773,7 +804,7 @@ export const on_shop_changed = functions
     const after = change.after
     const promises = []
     if (after.get('is_open') != null && before.get('is_open') !== after.get('is_open')) {
-      promises.push(sendShopOpenMail(after))
+      promises.push(sendShopOpenMailToSupport(after))
     }
     return Promise.all(promises)
   })
@@ -787,8 +818,8 @@ export const on_order_changed = functions
     const promises = []
     if (before.get('status') !== after.get('status') && after.get('status') === 'ordered') {
       const userId = after.get('user_id')
-      promises.push(sendOrderCompletionMail(after.ref.parent.parent, userId))
-      promises.push(sendOrderCompletionMailForOrganizer(after, userId))
+      promises.push(sendOrderCompletionMailToMember(after.ref.parent.parent, userId))
+      promises.push(sendOrderCompletionMailToOrganizers(after, userId))
     }
     return Promise.all(promises)
   })
@@ -797,12 +828,12 @@ export const community_added = functions
   .region('asia-northeast1')
   .firestore.document('communities/{communityId}')
   .onCreate(async (snapshot) => {
-    return sendNewCommunityRequestMail(snapshot)
+    return sendNewCommunityRequestMailToSupport(snapshot)
   })
 
 export const community_contact = functions.region('asia-northeast1').https.onCall((data, context) => {
   if (context.auth) {
-    return sendCommunityContactMail(COMMUNITY_CONTACT_ID, data)
+    return sendCommunityContactMailToOrganizers(COMMUNITY_CONTACT_ID, data)
   } else {
     console.log('community_contact Auth Error')
     console.log(data)

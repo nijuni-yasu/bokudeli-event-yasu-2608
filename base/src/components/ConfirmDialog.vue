@@ -44,19 +44,17 @@ const clickCancelHandler = () => {
 
 <template>
   <v-dialog v-model="dialog" persistent :max-width="props.maxWidth ? props.maxWidth : '600px'">
-    <div>
-      <v-card>
-        <v-card-title v-if="props.title">{{ props.title }}</v-card-title>
-        <v-card-text><slot></slot></v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn v-if="props.isConfirm" color="secondary" @click="clickCancelHandler()">
-            {{ props.cancelText ?? 'キャンセル' }}
-          </v-btn>
-          <v-btn color="primary" @click="clickOkHandler()">{{ props.okText ?? 'OK' }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </div>
+    <v-card class="pa-1">
+      <v-card-title>{{ props.title }}</v-card-title>
+      <v-card-text><slot></slot></v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn v-if="props.isConfirm" color="secondary" @click="clickCancelHandler()">
+          {{ props.cancelText ?? 'キャンセル' }}
+        </v-btn>
+        <v-btn color="primary" @click="clickOkHandler()">{{ props.okText ?? 'OK' }}</v-btn>
+      </v-card-actions>
+    </v-card>
   </v-dialog>
 </template>
 

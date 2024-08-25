@@ -24,8 +24,8 @@ defineProps<{ event: BokudeliEvent; members?: EventMember[] }>()
       <template v-if="event.event_start_datetime != null && event.event_end_datetime != null">
         {{
           $t('event_card.date', [
-            $d(event.event_start_datetime.toDate(), 'date_weekday_short'),
-            $d(event.event_end_datetime.toDate(), 'date_weekday_short'),
+            $d(event.event_start_datetime.toDate(), 'datetime_weekday_short'),
+            $d(event.event_end_datetime.toDate(), 'time'),
           ])
         }}
       </template>
