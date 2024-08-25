@@ -170,13 +170,7 @@ const hashTag = computed({
     <v-card-text class="pt-5">
       <v-row>
         <v-col cols="12">
-          <v-text-field
-            v-model="hashTag"
-            outlined
-            dense
-            :label="$t('event_detail.hash_tag')"
-            prefix="#"
-          />
+          <v-text-field v-model="hashTag" outlined dense :label="$t('event_detail.hash_tag')" prefix="#" />
         </v-col>
       </v-row>
     </v-card-text>

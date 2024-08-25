@@ -35,7 +35,6 @@ const instagramUrl = computed(() =>
 const officialSiteUrl = computed(() =>
   props.community.community_sns_officialsite ? props.community.community_sns_officialsite : undefined,
 )
-
 </script>
 
 <template>
@@ -59,7 +58,6 @@ const officialSiteUrl = computed(() =>
         <a v-if="officialSiteUrl" :href="officialSiteUrl" target="_blank">
           <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
         </a>
-
       </v-col>
     </v-row>
     <v-col>

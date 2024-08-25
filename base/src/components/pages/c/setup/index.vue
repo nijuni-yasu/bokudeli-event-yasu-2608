@@ -125,10 +125,11 @@ const cancel = () => {
           v-model:icon-image-file="iconImageFile"
           :community-account="communityAccount"
           :communities-store="communitiesStore"
-          @openNewCommunityDialog = "isOpenNewCommunityDialog = true"
-          @openConfirmDialog = "isOpenConfirmDialog = true"
+          @openNewCommunityDialog="isOpenNewCommunityDialog = true"
+          @openConfirmDialog="isOpenConfirmDialog = true"
           @submit="submit"
-          @cancel="cancel"></community-setup-form>
+          @cancel="cancel"
+        ></community-setup-form>
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">

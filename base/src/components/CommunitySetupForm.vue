@@ -215,13 +215,7 @@ const hashTag = computed({
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
-              v-model="twitterId"
-              outlined
-              dense
-              label="X(Twitter)"
-              prefix="https://x.com/"
-            ></v-text-field>
+            <v-text-field v-model="twitterId" outlined dense label="X(Twitter)" prefix="https://x.com/"></v-text-field>
           </v-col>
         </v-row>
       </v-card-text>
@@ -380,9 +374,7 @@ const hashTag = computed({
         <v-btn color="primary" class="me-3 mt-3" size="large" variant="outlined" @click="emit('cancel')"
           >キャンセル</v-btn
         >
-        <v-btn :disabled="!isValid" color="primary" class="me-3 mt-3" size="large" @click="emit('submit')"
-          >設定</v-btn
-        >
+        <v-btn :disabled="!isValid" color="primary" class="me-3 mt-3" size="large" @click="emit('submit')">設定</v-btn>
       </v-card-text>
 
       <v-card-text v-else class="text-center mx-0 px-0">
