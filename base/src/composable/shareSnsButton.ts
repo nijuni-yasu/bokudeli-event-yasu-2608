@@ -1,15 +1,26 @@
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
 
-export const shareSnsButton = async (snsType: string, event: BokudeliEvent) => {
+export const shareSnsButton = async (snsType: string, event: BokudeliEvent | null) => {
+  if (event == null) {
+    return
+  }
+
+  const communityStore = useCommunityStore(event.community_account) as CommunityStore
+  const communityTwitterAccount = communityStore.community?.community_sns_twitter ?? ''
+
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter') {
     const hashTagText = event.event_sns_hash_tag ? `${event.event_sns_hash_tag},shokujii` : 'shokujii'
+    const startDate = dateWithDayOfWeekString(event.event_start_datetime)
+    const endTime = dateOnlyTimeString(event.event_end_datetime)
+    const community = event.community_name + (communityTwitterAccount ? ` a@${communityTwitterAccount}` : '')
 
     const baseUrl = 'https://twitter.com/intent/tweet'
     const hashtags = encodeURIComponent(hashTagText)
     const text = encodeURIComponent(
-      `${event.event_name}\n🗓️${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}\n📍${event.event_address}\n👩‍🍳${event.shop_name}\n🎟`,
+      `${event.event_name}\n🗓️${startDate}~${endTime}\n🙋‍♀️${community}\n👩‍🍳${event.shop_name}\n🎟`,
     )
     const openUrl = `${baseUrl}?text=${text}&url=${eventUrl}&hashtags=${hashtags}`
     window.open(openUrl, '_blank', 'width=800,height=500')
