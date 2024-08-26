@@ -173,6 +173,28 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "event_num_members",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "event_deadline_datetime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "event_start_datetime",
           "order": "ASCENDING"
         },
