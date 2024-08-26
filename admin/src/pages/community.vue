@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@/stores/partner'
-import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { useCommunityListStore } from '@/stores/communityList'
 import { Shop } from '@/schemes/shop'
 import CommunityEdit from '@/components/CommunityEdit.vue'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
@@ -50,31 +51,31 @@ const communityAccount = ref<string>(
     '',
 )
 
-const communitiesStore = useCommunitiesStore() as CommunitiesStore
-const communityExists = ref<boolean>((await communitiesStore.getCommunityData(communityAccount.value)) != null)
+const communityListStore = useCommunityListStore()
+const communityExists = ref<boolean>((await communityListStore.getCommunityData(communityAccount.value)) != null)
 const getCommunity = async () =>
   await new Promise<BokudeliCommunity>((resolve) => {
     if (!communityExists.value) {
-      communitiesStore.communityDraft.community_account = communityAccount.value
-      communitiesStore.communityDraft.community_name = shop.shop_name
-      communitiesStore.communityDraft.community_desc = shop.shop_description
-      communitiesStore.communityDraft.community_sns_facebook = shop.shop_url_facebook
-      communitiesStore.communityDraft.community_sns_twitter = shop.shop_url_twitter
-      communitiesStore.communityDraft.community_sns_instagram = shop.shop_url_instagram
-      communitiesStore.communityDraft.community_sns_officialsite = shop.shop_url
-      communitiesStore.communityDraft.community_postalcode = shop.shop_postcode
-      communitiesStore.communityDraft.community_address = shop.shop_address
-      communitiesStore.communityDraft.community_phone = shop.shop_phone
-      communitiesStore.communityDraft.community_email = ''
-      communitiesStore.communityDraft.is_approved = true
-      resolve(communitiesStore.communityDraft)
+      communityListStore.communityDraft.community_account = communityAccount.value
+      communityListStore.communityDraft.community_name = shop.shop_name
+      communityListStore.communityDraft.community_desc = shop.shop_description
+      communityListStore.communityDraft.community_sns_facebook = shop.shop_url_facebook
+      communityListStore.communityDraft.community_sns_twitter = shop.shop_url_twitter
+      communityListStore.communityDraft.community_sns_instagram = shop.shop_url_instagram
+      communityListStore.communityDraft.community_sns_officialsite = shop.shop_url
+      communityListStore.communityDraft.community_postalcode = shop.shop_postcode
+      communityListStore.communityDraft.community_address = shop.shop_address
+      communityListStore.communityDraft.community_phone = shop.shop_phone
+      communityListStore.communityDraft.community_email = ''
+      communityListStore.communityDraft.is_approved = true
+      resolve(communityListStore.communityDraft)
     } else {
       watch(
         () => (useCommunityStore(communityAccount.value) as CommunityStore).community,
         (value) => {
           if (value != null) {
-            Object.assign(communitiesStore.communityDraft, toRaw(value))
-            resolve(communitiesStore.communityDraft)
+            Object.assign(communityListStore.communityDraft, toRaw(value))
+            resolve(communityListStore.communityDraft)
             stop()
           }
         },
@@ -91,7 +92,7 @@ watch(
       communityExists.value = false
     } else {
       communityAccount.value = value
-      communityExists.value = (await communitiesStore.getCommunityData(value)) != null
+      communityExists.value = (await communityListStore.getCommunityData(value)) != null
     }
     community.value = await getCommunity()
   },
@@ -132,7 +133,7 @@ const createConfirmDialog = ref(false)
 const coverImageFile = ref<File | null>(null)
 const iconImageFile = ref<File | null>(null)
 const validateNewAccount = async (value: string) => {
-  const community = await communitiesStore.getCommunityData(value)
+  const community = await communityListStore.getCommunityData(value)
   return community == null
 }
 
@@ -150,7 +151,7 @@ const submit = async () => {
       }
       Object.assign(notification, { message: $t('community.saved'), color: 'success' })
     } else {
-      const community = await communitiesStore.createNewCommunityFromDraft()
+      const community = await communityListStore.createNewCommunityFromDraft()
       const communityStore = useCommunityStore(community.community_account) as CommunityStore
       if (coverImageFile.value != null) {
         await communityStore.updateCoverImage(coverImageFile.value)
@@ -161,7 +162,7 @@ const submit = async () => {
       shop.community_account = community.community_account
       await partnerStore.updateShop(shop)
       Object.assign(notification, { message: $t('community.added'), color: 'success' })
-      communitiesStore.$reset()
+      communityListStore.$reset()
     }
   } catch (err) {
     console.error(err)
@@ -176,7 +177,7 @@ onUnmounted(() => {
     const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
     communityStore.$reset()
   } else {
-    communitiesStore.$reset()
+    communityListStore.$reset()
   }
 })
 </script>

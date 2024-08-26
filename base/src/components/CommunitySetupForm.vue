@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useValidators } from '@/composable/validators'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { type CommunitiesStore } from '@/stores/community'
+import { type CommunityListStore } from '@/stores/communityList'
 import ImageInput from '@/components/ImageInput.vue'
 import {
   mdiPlus,
@@ -21,7 +21,7 @@ const iconImageFile = defineModel<File | null>('iconImageFile', { required: true
 
 const props = defineProps<{
   communityAccount: string | null
-  communitiesStore: CommunitiesStore
+  communityListStore: CommunityListStore
 }>()
 
 const emit = defineEmits<{
@@ -40,7 +40,7 @@ const checkAccountExists = async (event: Event) => {
   isCheckingAccount.value = true
   try {
     const target = event.target as HTMLInputElement
-    const community = await props.communitiesStore.getCommunityData(target.value)
+    const community = await props.communityListStore.getCommunityData(target.value)
     isValidSameAccount.value = community == null || 'このアカウント名は既に使用されています'
     nextTick(() => {
       accountFieldRef.value.validate()
@@ -270,7 +270,9 @@ const hashTag = computed({
         </v-switch>
         <div>
           <span v-if="community.is_public">※「公開コミュニティ」はコミュニティ一覧ページに表示されます。</span>
-          <span v-else>※「限定公開コミュニティ」はコミュニティ一覧ページに表示されず、URLを知る人だけが閲覧できます。</span>
+          <span v-else
+            >※「限定公開コミュニティ」はコミュニティ一覧ページに表示されず、URLを知る人だけが閲覧できます。</span
+          >
         </div>
       </v-card-text>
       <v-card-title class="pt-10 pl-5">

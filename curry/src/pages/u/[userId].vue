@@ -6,7 +6,7 @@ import UserBioPanel from '@/components/UserBioPanel.vue'
 import UserEventCard from '@/components/UserEventCard.vue'
 import CommunityCard from '@/components/CommunityCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
+import { useCommunityListStore } from '@/stores/communityList'
 import { useUserStore } from '@/stores/user'
 import { mdiCalendarHeart, mdiAccountGroup } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
@@ -63,16 +63,15 @@ const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() =>
   })
 })
 
-const communitiesStore = useCommunitiesStore([
+const communityListStore = useCommunityListStore([
   where('members', 'array-contains', doc(db, 'users', userId)),
   // 'array-contains' は1つしか指定できないので、後で filter する
   // where('subdomain_tags', 'array-contains', 'kanda-curry'),
   orderBy('community_num_members', 'desc'),
-]) as CommunitiesStore
-communitiesStore.setPageSize(5)
+], 5)
 
 const memberCommunities = computed(() =>
-  (communitiesStore.communityStores ?? []).flatMap((communityStore) => {
+  (communityListStore.communityStores ?? []).flatMap((communityStore) => {
     if (communityStore.community == null || !communityStore.community.subdomain_tags.includes('kanda-curry')) {
       return []
     }
@@ -165,9 +164,9 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
           <v-row class="justify-center">
             <v-col cols="auto">
               <IncrementalLoader
-                :loaded-count="communitiesStore.communityStores?.length ?? 0"
-                :total-count="communitiesStore.totalCount ?? 0"
-                @load="communitiesStore.next()"
+                :loaded-count="communityListStore.communityStores?.length ?? 0"
+                :total-count="communityListStore.totalCount ?? 0"
+                @load="communityListStore.next()"
               />
             </v-col>
           </v-row>

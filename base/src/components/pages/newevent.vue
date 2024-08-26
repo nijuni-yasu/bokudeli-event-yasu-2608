@@ -2,7 +2,7 @@
 import { db } from '@/firebase'
 import { doc, orderBy, where } from 'firebase/firestore'
 import { getCommunityCreatePath } from '@/router/utils'
-import { type CommunitiesStore, useCommunitiesStore } from '@/stores/community'
+import { useCommunityListStore } from '@/stores/communityList'
 import { getAuth } from 'firebase/auth'
 import { getEventCreatePath } from '@/router/utils'
 import LoginDialog from '@/components/LoginDialog.vue'
@@ -17,18 +17,17 @@ const loadingElement = ref()
 let observer: IntersectionObserver
 let isVisible = true
 
-const communitiesStore =
+const communityListStore =
   userId == null
     ? null
-    : (useCommunitiesStore([
-        where('members', 'array-contains', doc(db, 'users', userId)),
-        orderBy('community_num_members', 'desc'),
-      ]) as CommunitiesStore)
-communitiesStore?.setPageSize(10)
+    : useCommunityListStore(
+        [where('members', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+        10,
+      )
 
 const communityList = computed(
   () =>
-    communitiesStore?.communityStores?.flatMap((communityStore) => {
+    communityListStore?.communityStores?.flatMap((communityStore) => {
       if (communityStore.members?.some((m) => m?.user_id === userId && m?.roles?.includes('manager')) === true) {
         return communityStore.community ?? []
       } else {
@@ -38,13 +37,13 @@ const communityList = computed(
 )
 
 const hasMore = computed(() => {
-  if (communitiesStore == null) {
+  if (communityListStore == null) {
     return false
   }
-  if (communitiesStore.totalCount == null || communitiesStore.communityStores?.length == null) {
+  if (communityListStore.totalCount == null || communityListStore.communityStores?.length == null) {
     return true
   }
-  return communitiesStore.communityStores.length < communitiesStore.totalCount
+  return communityListStore.communityStores.length < communityListStore.totalCount
 })
 
 const createCommunity = () => {
@@ -56,10 +55,10 @@ const createCommunity = () => {
 }
 
 watch(
-  () => communitiesStore?.communityStores,
+  () => communityListStore?.communityStores,
   () => {
     if (isVisible) {
-      communitiesStore?.next()
+      communityListStore?.next()
     }
   },
 )
@@ -70,7 +69,7 @@ onMounted(() => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           isVisible = true
-          communitiesStore?.next()
+          communityListStore?.next()
         } else {
           isVisible = false
         }

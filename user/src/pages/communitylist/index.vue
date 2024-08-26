@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import { getCommunityPath } from '@/router/utils'
-import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
+import { useCommunityListStore } from '@/stores/communityList'
 import { orderBy, where } from 'firebase/firestore'
 import CommunityCard from '@/components/CommunityCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 
-const communitiesStore = useCommunitiesStore([
-  where('is_public', '==', true),
-  where('is_approved', '==', true),
-  orderBy('community_num_members', 'desc'),
-]) as CommunitiesStore
-communitiesStore.setPageSize(5)
+const communityListStore = useCommunityListStore(
+  [where('is_public', '==', true), where('is_approved', '==', true), orderBy('community_num_members', 'desc')],
+  5,
+)
 
 const communities = computed(() => {
   return (
-    communitiesStore.communityStores?.flatMap((communityStore) =>
+    communityListStore.communityStores?.flatMap((communityStore) =>
       communityStore.community == null ? [] : communityStore.community,
     ) ?? []
   )
@@ -33,9 +31,9 @@ const communities = computed(() => {
     <v-col cols="auto">
       <IncrementalLoader
         class="my-5"
-        :total-count="communitiesStore.totalCount ?? 0"
+        :total-count="communityListStore.totalCount ?? 0"
         :loaded-count="communities?.length ?? 0"
-        @load="communitiesStore.next()"
+        @load="communityListStore.next()"
       />
     </v-col>
   </v-row>
