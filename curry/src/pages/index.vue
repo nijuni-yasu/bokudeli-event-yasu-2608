@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import topLogo from '@/assets/images/curry/curry_logo_cover.png'
 import { getEventPath } from '@/router/utils'
-import { useEventsStore, type EventsStore } from '@/stores/event'
+import { useEventListStore } from '@/stores/eventList'
 import { where, orderBy } from 'firebase/firestore'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
@@ -20,7 +20,7 @@ const numOfColumns = computed(() => {
   }
 })
 
-const eventsStore = useEventsStore(
+const eventListStore = useEventListStore(
   [
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
@@ -28,11 +28,11 @@ const eventsStore = useEventsStore(
     orderBy('event_start_datetime', 'desc'),
   ],
   numOfColumns.value,
-) as EventsStore
+)
 
 const events = computed(
   () =>
-    eventsStore.eventStores?.flatMap((s) => {
+    eventListStore.eventStores?.flatMap((s) => {
       if (s.event == null) {
         return []
       }
@@ -60,9 +60,9 @@ const events = computed(
       <v-row>
         <v-col cols="12" class="text-center">
           <IncrementalLoader
-            :total-count="eventsStore.totalCount ?? 0"
-            :loaded-count="eventsStore.eventStores?.length ?? 0"
-            @load="eventsStore.next()"
+            :total-count="eventListStore.totalCount ?? 0"
+            :loaded-count="eventListStore.eventStores?.length ?? 0"
+            @load="eventListStore.next()"
           />
         </v-col>
       </v-row>
