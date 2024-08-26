@@ -65,40 +65,40 @@ export default {
     private_desc: '※「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
     error_max_people: 'すでに{0}人の予約が入っています',
-    hash_tag: 'ハッシュタグ',
   },
-  'user_event_card': {
-    'community_name': '【主催者】{0}',
-    'event_start_datetime': '【開催日時】{0} 〜',
-    'event_address': '【開催場所】{0}',
-    'shop_name': '【お店】{0}',
-    'menu': '【注文内容】',
-    'menu_item': '{0} <span class="text-caption">({1}個)</span>',
-    'total_price': '【注文金額】{0}',
-    'cancel_order': '参加注文をキャンセルする',
-    'canceled': 'キャンセル済み',
-    'cancel_dialog': {
-      'title': 'キャンセル',
-      'event_name': '【イベント名】 {0}',
-      'refund': '【返金額】 {0}',
-      'description': `注文及びイベント参加をキャンセルしますか？<br />
+  user_event_card: {
+    community_name: '【主催者】{0}',
+    event_start_datetime: '【開催日時】{0} 〜',
+    event_address: '【開催場所】{0}',
+    shop_name: '【お店】{0}',
+    menu: '【注文内容】',
+    menu_item: '{0} <span class="text-caption">({1}個)</span>',
+    total_price: '【注文金額】{0}',
+    cancel_order: '参加注文をキャンセルする',
+    canceled: 'キャンセル済み',
+    cancel_dialog: {
+      title: 'キャンセル',
+      event_name: '【イベント名】 {0}',
+      refund: '【返金額】 {0}',
+      description: `注文及びイベント参加をキャンセルしますか？<br />
                       キャンセルは、イベントの注文期限まで実行可能です。<br />
                       キャンセル実行後、返金が明細書に表示されるまで5～10日かかります。<br />
                       キャンセルは、取り消しできませんのでご注意ください。`,
-      'not_cancel': 'キャンセルしない',
-      'submit': 'キャンセルを実行する',
-    }
+      not_cancel: 'キャンセルしない',
+      submit: 'キャンセルを実行する',
+    },
   },
-  'validator': {
-    'required': '必須項目です',
-    'url': 'URLの形式が正しくありません',
-    'between': '{0} から {1} の間の値を入力してください',
-    'max_length': '{0}文字以下で入力してください',
-    'postal_code': '郵便番号は7桁の数字で入力してください',
-    'positive_integer': '正の整数を入力してください',
-    'phone': '有効な電話番号を入力してください',
-    'email': '有効なメールアドレスを入力してください',
-    'account': 'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英小文字・数字・アンダースコア」のみです。'
+  validator: {
+    required: '必須項目です',
+    url: 'URLの形式が正しくありません',
+    between: '{0} から {1} の間の値を入力してください',
+    max_length: '{0}文字以下で入力してください',
+    postal_code: '郵便番号は7桁の数字で入力してください',
+    positive_integer: '正の整数を入力してください',
+    phone: '有効な電話番号を入力してください',
+    email: '有効なメールアドレスを入力してください',
+    account:
+      'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英小文字・数字・アンダースコア」のみです。',
   },
   subdomain_tags: {
     // Domain 名には _ が使えないので注意

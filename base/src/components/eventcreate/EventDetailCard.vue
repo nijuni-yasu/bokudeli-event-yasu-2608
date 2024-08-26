@@ -11,7 +11,6 @@ const props = withDefaults(
   defineProps<{
     readonly?: boolean
     subdomainTags?: string[]
-    defaultHashTag?: string
   }>(),
   {
     readonly: false,
@@ -35,24 +34,9 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
-event.value.event_sns_hash_tag = props.defaultHashTag ?? ''
-
 const eventDeadlineDate = computed(() => dateString(event.value.event_deadline_datetime?.toDate() ?? null))
 const eventDeadlineHour = computed(() => hourString(event.value.event_deadline_datetime?.toDate() ?? null))
 const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadline_datetime?.toDate() ?? null))
-
-const trimHashTag = (hashTag: string | undefined) => {
-  if (!hashTag) return ''
-  return hashTag.trim().replace(/^#/, '')
-}
-
-const hashTag = computed({
-  get: () => event.value?.event_sns_hash_tag,
-  set: (val) => {
-    if (event.value == null) return
-    event.value.event_sns_hash_tag = trimHashTag(val)
-  },
-})
 </script>
 
 <template>
@@ -166,14 +150,6 @@ const hashTag = computed({
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
             :readonly="props.readonly"
           />
-        </v-col>
-      </v-row>
-    </v-card-text>
-
-    <v-card-text class="pt-5">
-      <v-row>
-        <v-col cols="12">
-          <v-text-field v-model="hashTag" outlined dense :label="$t('event_detail.hash_tag')" prefix="#" />
         </v-col>
       </v-row>
     </v-card-text>

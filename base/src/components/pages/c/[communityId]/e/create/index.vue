@@ -284,7 +284,6 @@ const stepperItems = computed(() => [
               v-model="event"
               v-model:cover-image="coverImage"
               :subdomain-tags="communityStore.community?.subdomain_tags"
-              :default-hash-tag="communityStore.community?.community_sns_hash_tag"
             >
               <v-card-text class="text-center mt-10">
                 <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
