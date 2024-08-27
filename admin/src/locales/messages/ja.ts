@@ -105,7 +105,6 @@ export default {
   'orders': {
     'title': '注文一覧',
     'table_header': [
-      'ID',
       'イベント名',
       '開始日時',
       '注文期限',

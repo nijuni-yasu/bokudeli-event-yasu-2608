@@ -42,7 +42,6 @@ const events = computed(
             <tbody>
               <template v-for="{ event, orders } of events" :key="event.event_id">
                 <tr>
-                  <td>{{ event.event_id.slice(0, 6) }}</td>
                   <td>
                     <router-link :to="{ path: getOrderDetailPath(event.event_id) }">
                       {{ event.event_name }}
