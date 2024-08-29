@@ -15,7 +15,7 @@ import ImageInput from '../ImageInput.vue'
 import DateInput from '../DateInput.vue'
 import { Timestamp } from 'firebase/firestore'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     readonly?: boolean
     readonlyDeadline?: boolean
@@ -83,13 +83,13 @@ const eventDeadlineMinute = computed({
             dense
             :label="$t('event_detail.event_name')"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
     </v-card-text>
 
-    <v-card-text v-if="subdomainTags != null && subdomainTags.length !== 0" class="pt-5">
+    <v-card-text v-if="props.subdomainTags != null && props.subdomainTags.length !== 0" class="pt-5">
       <v-row>
         <v-col cols="12">
           <v-text-field outlined dense label="Tags" :readonly="true" :active="true">
@@ -108,7 +108,7 @@ const eventDeadlineMinute = computed({
             style="width: 100%; aspect-ratio: 120/63"
             :url="event.event_cover_url"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
             :cover="true"
             @fileSelected="(f) => (coverImage = f)"
           >
@@ -127,7 +127,7 @@ const eventDeadlineMinute = computed({
             rows="10"
             :label="$t('event_detail.event_desc')"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
@@ -176,7 +176,7 @@ const eventDeadlineMinute = computed({
             dense
             :label="$t('event_detail.event_max_people')"
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
@@ -188,7 +188,7 @@ const eventDeadlineMinute = computed({
       {{ $t('event_detail.activity') }}
     </v-card-title>
     <v-card-text>
-      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="readonly">
+      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="props.readonly">
         <template v-slot:label>
           <span v-if="event.is_public">{{ $t('event_detail.public') }}</span>
           <span v-else>{{ $t('event_detail.private') }}</span>
