@@ -1,0 +1,169 @@
+<script setup lang="ts">
+import { useEventStore, type EventStore } from '@/stores/event'
+import { mdiTruckOutline } from '@mdi/js'
+import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@/utils/orders'
+import { useValidators } from '@/composable/validators'
+
+const eventId = useRoute().params.eventId as string
+
+const eventStore = useEventStore(eventId) as EventStore
+const { requiredValidator } = useValidators()
+
+const isValid = ref(false)
+const radio01 = ref(0)
+const text01 = ref('')
+
+const submit = async () => {
+  const event = eventStore.event
+  if (event == null) {
+    return
+  }
+  event.event_status = {
+    value: radio01.value === 0 ? 'accepting_order' : 'in_draft',
+    shop_comment: text01.value,
+  }
+  await eventStore.updateEvent(event)
+}
+</script>
+
+<template>
+  <v-row class="justify-center">
+    <v-col cols="12" sm="12" md="9" class="px-0">
+      <v-card flat class="mt-2" v-if="eventStore.event != null">
+        <template v-slot:title>
+          <v-icon size="40" class="text--primary me-3" :icon="mdiTruckOutline" />
+          <span>{{ $t(`event_status.${eventStore.event.event_status.value}`) }}</span>
+        </template>
+        <v-card-text>
+          <div class="mt-5">
+            <p>{{ $t('order_detail.event_id', [eventStore.event.event_id]) }}</p>
+            <p>{{ $t('order_detail.event_name', [eventStore.event.event_name]) }}</p>
+            <p v-linkify>{{ $t('order_detail.event_url', [eventStore.event.url]) }}</p>
+            <p>
+              {{
+                $t(
+                  'order_detail.event_date',
+                  eventStore.event.event_start_datetime != null
+                    ? [
+                        $d(eventStore.event.event_start_datetime.toMillis() - 30 * 60 * 1000, 'datetime'),
+                        $d(eventStore.event.event_start_datetime.toMillis(), 'time'),
+                      ]
+                    : [],
+                )
+              }}
+            </p>
+            <p>
+              {{
+                $t(
+                  'order_detail.order_limit',
+                  eventStore.event.event_deadline_datetime != null
+                    ? [$d(eventStore.event.event_deadline_datetime.toDate(), 'datetime')]
+                    : [],
+                )
+              }}
+            </p>
+            <p>{{ $t('order_detail.event_address', [eventStore.event.event_address]) }}</p>
+            <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
+            <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
+            <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>
+            <p>{{ $t('order_detail.organizer_phone_personal', [eventStore.event.organizer_phone_personal]) }}</p>
+            <p>{{ $t('order_detail.organizer_phone_company', [eventStore.event.organizer_phone_company]) }}</p>
+            <p>{{ $t('order_detail.organizer_email', [eventStore.event.organizer_email]) }}</p>
+            <p>{{ $t('order_detail.organizer_memo', [eventStore.event.organizer_memo]) }}</p>
+          </div>
+        </v-card-text>
+        <template v-if="eventStore.event.event_status.value == 'applying_reservation'">
+          <v-form v-model="isValid" @submit.prevent="submit">
+            <v-card-text>
+              <v-radio-group v-model="radio01" column>
+                <v-radio :label="$t('order_detail.accept_order')" :value="0" />
+                <v-radio :label="$t('order_detail.decline_order')" :value="1" />
+              </v-radio-group>
+              <v-text-field
+                v-model="text01"
+                :placeholder="
+                  radio01 === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
+                "
+                :rules="[requiredValidator]"
+              />
+            </v-card-text>
+            <v-card-actions>
+              <v-btn type="submit" block :disabled="!isValid">{{ $t('order_detail.send_email') }}</v-btn>
+            </v-card-actions>
+          </v-form>
+        </template>
+        <v-card-text v-else-if="eventStore.confirmedOrders != null && eventStore.confirmedOrders.length !== 0">
+          <h2 class="mt-10">{{ $t('order_detail.order_detail') }}</h2>
+          <v-table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{{ $t('order_detail.menu_name') }}</th>
+                <th>{{ $t('order_detail.menu_price') }}</th>
+                <th>{{ $t('order_detail.user_name') }}</th>
+                <th>{{ $t('order_detail.order_date') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="({ order, menu }, key) in eventStore.confirmedOrders.flatMap((order) =>
+                  order.menus.flatMap((menu) => [...Array(menu.count)].map(() => ({ order, menu }))),
+                )"
+                :key="`order-${key}`"
+              >
+                <td>{{ key + 1 }}</td>
+                <td>{{ menu.name }}</td>
+                <td>{{ $n(menu.price, 'currency') }}</td>
+                <td>{{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}</td>
+                <td>{{ $d(order.created_at.toDate(), 'datetime') }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+          <h2 class="mt-10">{{ $t('order_detail.subtotal') }}</h2>
+          <v-table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{{ $t('order_detail.menu_name') }}</th>
+                <th>{{ $t('order_detail.order_count') }}</th>
+                <th>{{ $t('order_detail.unit_price') }}</th>
+                <th>{{ $t('order_detail.subtotal_price') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(subtotalOrder, key) in getSubtotalsOfOrders(eventStore.confirmedOrders)"
+                :key="`total-${key}`"
+              >
+                <td>{{ key + 1 }}</td>
+                <td>{{ subtotalOrder.name }}</td>
+                <td>{{ subtotalOrder.count }}</td>
+                <td>{{ $n(subtotalOrder.price, 'currency') }}</td>
+                <td>{{ $n(subtotalOrder.price * subtotalOrder.count, 'currency') }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+          <h2 class="mt-10">{{ $t('order_detail.total') }}</h2>
+          <v-table>
+            <thead>
+              <tr>
+                <th>{{ $t('order_detail.total_count') }}</th>
+                <th>{{ $t('order_detail.total_price') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <h1>{{ ordersCount(eventStore.confirmedOrders) }}</h1>
+                </td>
+                <td>
+                  <h1>{{ $n(ordersTotalPrice(eventStore.confirmedOrders), 'currency') }}</h1>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+</template>

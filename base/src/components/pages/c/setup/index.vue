@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Deprecated
+ * Use `src/components/CommunityEdit.vue` instead
+  */
 import { getCommunityPath } from '@/router/utils'
 import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
 import { useValidators } from '@/composable/validators'

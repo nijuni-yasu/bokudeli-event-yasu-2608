@@ -1,0 +1,33 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "./auto-imports.d.ts"],
+  "exclude": [
+    "src/**/__tests__/*",
+    "src/components/pages/**",
+    "src/components/eventCreate/**",
+    "src/components/CommunityContactDialog.vue",
+    "src/components/EventMemberCard.vue",
+    "src/components/EventMemberList.vue",
+    "src/components/UserCommunityPanel.vue",
+    "src/components/CalendarAddDialog.vue",
+    "src/composable/loginUser.ts",
+    "src/composable/buildCalendarLink.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@themeConfig": ["./src/themeConfig.ts"],
+      "@layouts/*": ["./src/@layouts/*"],
+      "@layouts": ["./src/@layouts"],
+      "@core/*": ["./src/@core/*"],
+      "@core": ["./src/@core"],
+      "@images": ["./src/assets/images"],
+      "@styles/*": ["./src/styles/*"]
+    },
+    "types": ["vite/client", "vite-plugin-vue-layouts/client"]
+  }
+}

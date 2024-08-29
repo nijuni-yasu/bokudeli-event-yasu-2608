@@ -247,6 +247,24 @@
       ]
     },
     {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "partner_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "orders",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

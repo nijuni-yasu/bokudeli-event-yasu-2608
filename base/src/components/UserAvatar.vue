@@ -3,7 +3,7 @@ import { FirestoredUser } from '@/schemes/storedUser'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
 import avatar1 from '@images/avatars/default_profile.jpeg'
 
-const props = defineProps<{ user: FirestoredUser | null; size?: number }>()
+const props = defineProps<{ user: FirestoredUser | string | null; size?: number }>()
 
 const calcAvatarSize = (size: number | undefined) => {
   if (size == null) return 'large'
@@ -13,11 +13,12 @@ const calcAvatarSize = (size: number | undefined) => {
 }
 
 const hasError = ref(false)
-const avatar = computed(() =>
-  hasError.value || props.user == null
-    ? avatar1
-    : props.user.user_thumb_image_urls?.[calcAvatarSize(size.value)] ?? props.user.user_image_url ?? avatar1,
+
+const avatar = computed(
+  // @ts-expect-error
+  () => props.user?.user_thumb_image_urls?.[calcAvatarSize(size.value)] ?? props.user?.user_image_url ?? avatar1,
 )
+const initial = computed(() => (typeof props.user === 'string' ? props.user.slice(0, 1) : undefined))
 
 const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
@@ -44,8 +45,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-avatar ref="avatarElement" :size="size">
-    <v-img :src="avatar" cover @error="hasError = true" />
+  <v-avatar ref="avatarElement" :size="size" :color="initial != null ? 'primary' : 'transparent'">
+    <template v-if="initial != null">{{ initial }}</template>
+    <v-img v-else :src="avatar" cover @error="hasError = true" />
     <slot />
   </v-avatar>
 </template>

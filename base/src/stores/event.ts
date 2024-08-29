@@ -47,6 +47,10 @@ type EventStoreState = {
    * 未注文のものを含む注文リスト
    */
   orders: Ref<OrderItem[] | null>
+  /**
+   * 注文確定済みリスト
+   */
+  confirmedOrders: Ref<OrderItem[] | null>
 } & StateTree
 
 type EventStoreGetters = {
@@ -135,6 +139,13 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
           subscribeOrders(eventRef)
         })
         return _orders.value
+      })
+
+      const confirmedOrders = computed<OrderItem[] | null>(() => {
+        getEventRef().then((eventRef) => {
+          subscribeOrders(eventRef)
+        })
+        return _orders.value?.filter((order) => order.status === 'ordered') ?? null
       })
 
       const members = computed<EventMember[] | null>(
@@ -257,6 +268,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       return {
         event,
         orders,
+        confirmedOrders,
         members,
         updateEvent,
         updateCoverImage,

@@ -398,6 +398,21 @@ async function sendApplyingOrderMailToShop(eventSnapshot) {
   })
 }
 
+async function sendApplyingMailToAdmin(eventSnapshot) {
+  // TODO これ以上複雑になるようなら、テンプレートを使う
+  const subject = `店舗「${eventSnapshot.get('shop_name')}」主催のイベントが申請されました`
+  const text =
+    `【ID】 ${eventSnapshot.ref.id}\n` +
+    `【イベント名】 ${eventSnapshot.get('event_name')}\n` +
+    `【イベントURL】 ${getEventUrl(eventSnapshot.get('community_account'), eventSnapshot.id)}\n`
+  return sgMail.send({
+    to: DEFAULT_TO,
+    from: DEFAULT_FROM,
+    subject,
+    text,
+  })
+}
+
 async function getUsersFromOrders(ordersRef) {
   const users = new Set()
   for (const orderRef of await ordersRef.listDocuments()) {
@@ -770,8 +785,10 @@ export const event_information_preview = functions
 export const on_event_changed = functions
   .region('asia-northeast1')
   .firestore.document('communities/{communityId}/events/{eventId}')
-  .onUpdate(async (change) => {
+  .onWrite(async (change) => {
     const conditions = [
+      ['in_draft', 'applying_to_admin', sendApplyingMailToAdmin],
+      [undefined, 'applying_to_admin', sendApplyingMailToAdmin],
       ['in_draft', 'applying_reservation', sendApplyingOrderMailToShop],
       [
         'in_draft',

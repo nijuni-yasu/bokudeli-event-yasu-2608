@@ -3,7 +3,7 @@ export type OrderMenu = {
   partner_id: string
   name: string
   price: number
-  imageUrl: string
+  imageUrl: string | null
   count: number
   note: string
 }

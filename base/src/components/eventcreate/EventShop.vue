@@ -30,6 +30,10 @@ const displayShops = computed(() => {
 })
 
 const submit = (shop: Shop) => {
+  if (shop.shop_id == null) {
+    console.error('shop_id is null')
+    return
+  }
   event.value.shop_id = shop.shop_id
   event.value.partner_id = shop.partner_id
   event.value.shop_name = shop.shop_name
@@ -70,13 +74,13 @@ const next = () => {
 
             <!-- Activity -->
             <v-row>
-              <v-col v-for="item in displayShops" :key="item.shop_id" md="4" sm="4" cols="12">
+              <v-col v-for="(item, i) of displayShops" :key="`shop_${i}`" md="4" sm="4" cols="12">
                 <v-card
                   :class="{ 'select-border': item.partner_id == props.modelValue.partner_id }"
                   class="mb-3 mx-0"
                   color="text-center cursor-pointer"
                 >
-                  <v-img :src="item.shop_image_url" cover aspect-ratio="1.91" />
+                  <v-img :src="item.shop_image_url ?? undefined" cover aspect-ratio="1.91" />
 
                   <!-- title -->
                   <v-card-title class="justify-center pb-3 pre-line">

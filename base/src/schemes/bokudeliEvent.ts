@@ -84,7 +84,7 @@ class BokudeliEvent {
   }
 
   set event_status(value: RawEventStatusType) {
-    this.raw_event_status.value = value.value
+    this.raw_event_status = value
   }
 
   constructor(eventData?: DocumentData) {

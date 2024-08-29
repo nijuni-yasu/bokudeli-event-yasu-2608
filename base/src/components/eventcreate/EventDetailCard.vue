@@ -1,20 +1,30 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
-import { dateString, hourString, minutesString, hourList, minutesList } from '@/schemes/eventCreate'
+import {
+  dateString,
+  hourString,
+  minutesString,
+  parseDateTimeStrings,
+  hourList,
+  minutesList,
+} from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import ImageInput from '../ImageInput.vue'
 import DateInput from '../DateInput.vue'
+import { Timestamp } from 'firebase/firestore'
 
 withDefaults(
   defineProps<{
     readonly?: boolean
+    readonlyDeadline?: boolean
     subdomainTags?: string[]
   }>(),
   {
     readonly: false,
-  },
+    readonlyDeadline: false,
+  }
 )
 
 const { t: $t } = useI18n()
@@ -34,9 +44,27 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
-const eventDeadlineDate = computed(() => dateString(event.value.event_deadline_datetime?.toDate() ?? null))
-const eventDeadlineHour = computed(() => hourString(event.value.event_deadline_datetime?.toDate() ?? null))
-const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadline_datetime?.toDate() ?? null))
+const eventDeadlineDate = computed({
+  get: () => dateString(event.value.event_deadline_datetime?.toDate() ?? null),
+  set: (value: string) => {
+    const d = parseDateTimeStrings(value, eventDeadlineHour.value, eventDeadlineMinute.value)
+    event.value.event_deadline_datetime = Timestamp.fromDate(d)
+  },
+})
+const eventDeadlineHour = computed({
+  get: () => hourString(event.value.event_deadline_datetime?.toDate() ?? null),
+  set: (value) => {
+    const d = parseDateTimeStrings(eventDeadlineDate.value, value, eventDeadlineMinute.value)
+    event.value.event_deadline_datetime = Timestamp.fromDate(d)
+  },
+})
+const eventDeadlineMinute = computed({
+  get: () => minutesString(event.value.event_deadline_datetime?.toDate() ?? null),
+  set: (value) => {
+    const d = parseDateTimeStrings(eventDeadlineDate.value, eventDeadlineHour.value, value)
+    event.value.event_deadline_datetime = Timestamp.fromDate(d)
+  },
+})
 </script>
 
 <template>
@@ -111,7 +139,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
           <DateInput
             :label="$t('event_detail.deadline_date')"
             v-model="eventDeadlineDate"
-            :readonly="true"
+            :readonly="readonly || readonlyDeadline"
             :clearable="false"
           />
         </v-col>
@@ -122,7 +150,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             outlined
             dense
             :label="$t('event_detail.deadline_hour')"
-            :readonly="true"
+            :readonly="readonly || readonlyDeadline"
           ></v-select>
         </v-col>
         <v-col cols="6" sm="6" md="3">
@@ -132,7 +160,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             outlined
             dense
             :label="$t('event_detail.deadline_minute')"
-            :readonly="true"
+            :readonly="readonly || readonlyDeadline"
           ></v-select>
         </v-col>
       </v-row>

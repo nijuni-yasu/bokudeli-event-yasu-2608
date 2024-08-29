@@ -33,9 +33,9 @@ const back = () => {
 
             <!-- Activity -->
             <v-row>
-              <v-col v-for="item in props.menus" :key="item.id" md="4" sm="4" cols="12">
+              <v-col v-for="(item, i) of props.menus" :key="`menu_${i}`" md="4" sm="4" cols="12">
                 <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
-                  <v-img :src="item.imageUrl" cover aspect-ratio="1" />
+                  <v-img :src="item.imageUrl ?? undefined" cover aspect-ratio="1" />
 
                   <!-- title -->
                   <v-card-title class="justify-center pb-3 pre-line">
