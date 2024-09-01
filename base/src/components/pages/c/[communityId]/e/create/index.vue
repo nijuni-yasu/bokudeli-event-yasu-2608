@@ -228,10 +228,10 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   }
 }
 
-const sumbmit = async () => {
+const submit = async () => {
   const event = await saveDraft()
   if (event?.event_id == null || event?.community_account == null) {
-    console.warn('Coud not save event')
+    console.warn('Could not save event')
     return
   }
   if (route.query.id == null) {
@@ -323,7 +323,7 @@ const stepperItems = computed(() => [
       </v-form>
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="event" @submit="sumbmit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
+      <event-shop-notice v-model="event" @submit="submit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
     </template>
     <div>
       <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
