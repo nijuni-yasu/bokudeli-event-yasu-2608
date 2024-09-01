@@ -74,6 +74,8 @@ const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
 
+const isUpdatedStartTime = ref(false)
+
 // Fetch Shops
 watch(
   [() => event.value?.event_start_datetime, () => event.value?.event_postalcode],
@@ -165,6 +167,20 @@ watch(
     }
   },
   { immediate: true },
+)
+
+// 開始日時が更新されたかどうかを監視
+watch(
+  () => event.value?.event_start_datetime,
+  (newStartDateTime, oldStartDateTime) => {
+    if (!newStartDateTime || !oldStartDateTime) {
+      return
+    }
+    if (!newStartDateTime.isEqual(oldStartDateTime)) {
+      isUpdatedStartTime.value = true
+    }
+  },
+  { immediate: true }
 )
 
 onMounted(async () => {
@@ -268,6 +284,7 @@ const stepperItems = computed(() => [
         v-model="event"
         :shops="shops"
         :loading="isLoadingShop"
+        :is-updated-start-time="isUpdatedStartTime"
         @submit="stepper++"
         @next="stepper++"
         @back="stepper--"
