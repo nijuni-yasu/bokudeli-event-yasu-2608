@@ -25,7 +25,8 @@ const dialog = computed({
 
 const trimInputtedId = (id: string | null, urlPattern: RegExp) => {
   if (!id) return ''
-  return id.trim().replace(/\/+$/, '').replace(urlPattern, '')
+  const trimmedId = id.trim().replace(/\/+$/, '').replace(urlPattern, '')
+  return trimmedId.endsWith('/') ? trimmedId.slice(0, -1) : trimmedId
 }
 const twitterId = computed({
   get: () => userDataDraft.value.user_sns_twitter,
