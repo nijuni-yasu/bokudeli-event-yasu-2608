@@ -6,6 +6,7 @@ export default {
   address: '住所',
   postal_code: '郵便番号',
   phone_number: '電話番号',
+  invoice_number: '適格請求書登録番号',
   email: 'メールアドレス',
   latitude: '緯度',
   longitude: '経度',

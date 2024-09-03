@@ -7,6 +7,7 @@ import {
   mdiClockOutline,
   mdiClockFast,
   mdiEmailMultipleOutline,
+  mdiFileDocumentOutline,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { usePartnerStore } from '@/stores/partner'
@@ -24,7 +25,14 @@ const dayOfWeek = $tm('day_of_week') as {
   [key: number]: string // or whatever the correct type is
 }
 
-const { requiredValidator, postalCodeValidator, phoneValidator, maxLengthValidator, emailValidator } = useValidators()
+const {
+  requiredValidator,
+  postalCodeValidator,
+  phoneValidator,
+  maxLengthValidator,
+  emailValidator,
+  invoiceValidatorJapan,
+} = useValidators()
 
 const makeTimeArray = (start: number, num: number) =>
   [...Array(num)].map((_, i) => {
@@ -97,6 +105,17 @@ watch(
   },
   { immediate: true },
 )
+
+const hasInvoice = computed({
+  get: () => shop.value?.shop_invoice_number != null,
+  set: (value) => {
+    if (value) {
+      shop.value.shop_invoice_number = ''
+    } else {
+      delete shop.value.shop_invoice_number
+    }
+  },
+})
 
 watch(
   () => shop.value?.shop_url_twitter,
@@ -472,6 +491,27 @@ const submit = async () => {
           </v-card-text>
         </v-card>
         <v-card class="my-10" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiFileDocumentOutline" />
+            <span>{{ $t('shop.invoice') }}</span>
+          </template>
+          <v-card-text>
+            <v-switch v-model="hasInvoice" :label="`${hasInvoice ? $t('shop.has_invoice') : $t('shop.no_invoice')}`" />
+            <v-text-field
+              :key="hasInvoice ? 'hasInvoice' : 'noInvoice'"
+              v-model="shop.shop_invoice_number"
+              outlined
+              dense
+              :disabled="!hasInvoice"
+              :label="$t('invoice_number')"
+              :rules="[invoiceValidatorJapan]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+        <v-card class="mt-2" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiStorefrontOutline" />
             <span>{{ $t('shop.is_open') }}</span>
