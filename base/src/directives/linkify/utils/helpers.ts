@@ -1,18 +1,14 @@
 import { LINK_TARGET, REGEX_PATTERN } from './constants.js'
 
 export function findMatchedText(text = '') {
-  return [
-    ...text.matchAll(REGEX_PATTERN.EMAIL_ADDRESS),
-    ...text.matchAll(REGEX_PATTERN.URL),
-    ...text.matchAll(REGEX_PATTERN.PSEUDO_URL),
-  ].flat()
+  return [...text.matchAll(REGEX_PATTERN.EMAIL_ADDRESS), ...text.matchAll(REGEX_PATTERN.URL)].flat()
 }
 
 export function formatText(baseText: string, matchedText: string, options: string) {
   if (matchedText.match(REGEX_PATTERN.EMAIL_ADDRESS) !== null) {
     baseText = _formatEmailText(baseText, matchedText, options)
   }
-  if (matchedText.match(REGEX_PATTERN.URL) !== null || matchedText.match(REGEX_PATTERN.PSEUDO_URL) !== null) {
+  if (matchedText.match(REGEX_PATTERN.URL) !== null) {
     baseText = _formatUrlText(baseText, matchedText, options)
   }
   return baseText
