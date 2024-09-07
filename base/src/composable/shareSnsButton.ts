@@ -12,17 +12,34 @@ const getShopAccount = async (event: BokudeliEvent): Promise<Shop> => {
   return shopDoc.data() as Shop
 }
 
+const getCommunityHashTag = (community: BokudeliCommunity) => {
+  console.log(community.community_sns_hash_tag)
+  if (community.community_sns_hash_tag != '') {
+    return community.community_sns_hash_tag
+  }
+  // 正規表現を使って、ハッシュタグに使えない文字を取り除く
+  // 使用可能な文字: アルファベット, 数字, アンダースコア, ひらがな, カタカナ, 漢字
+  return community.community_name.replace(/[^a-zA-Z0-9_\u3040-\u30FF\u4E00-\u9FFF]/g, '')
+}
+
+const getShopHashTag = (shop: Shop) => {
+  return shop.shop_name.replace(/[^a-zA-Z0-9_\u3040-\u30FF\u4E00-\u9FFF]/g, '')
+}
+
 const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''
   const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
   const shopText = shop.shop_name + (shop.shop_url_twitter ? ` @${shop.shop_url_twitter}` : '')
+
+  const communityHashTag = '#' + getCommunityHashTag(community)
+  const shopHashTag = '#' + getShopHashTag(shop)
 
   const textList = [
     `🌟${event.event_name}`,
     `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
     `👥${communityText}`,
     `🍱${shopText}`,
-    '#shokujii @shokujii_jp',
+    `#shokujii ${communityHashTag} ${shopHashTag}`,
     '',
     '👇申し込みはこちら👇',
   ]
