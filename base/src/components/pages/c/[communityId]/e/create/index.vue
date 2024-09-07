@@ -98,15 +98,19 @@ watch(
     const shopSnapshot = await getDocs(shopDb)
     shops.value = shopSnapshot.docs
       .map((doc) => {
-        return doc.data() as Shop
-      })
-      .filter((shop) => {
-        // check distance
+        const shop = doc.data() as Shop
+
+        // calculate distance
         const shopLocation = {
           longitude: shop.shop_address_longitude,
           latitude: shop.shop_address_latitude,
         }
         const distance = calculateDistance(location, shopLocation)
+        return { ...shop, distance }
+      })
+      .filter((shop) => {
+        // check distance
+        const distance = shop.distance
         const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
         const isInRange = maxRange ? distance <= maxRange : false
 
@@ -128,6 +132,7 @@ watch(
 
         return isInRange && isInTime && shop.is_approved && shop.is_open
       })
+      .sort((a, b) => a.distance - b.distance)
     isLoadingShop.value = false
   },
   { immediate: true },
