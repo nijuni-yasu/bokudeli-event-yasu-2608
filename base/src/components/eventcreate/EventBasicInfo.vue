@@ -47,7 +47,13 @@ const isValid = ref(false)
 
 // 新規作成の場合の初期値設定
 if (event.value.event_start_datetime == null) {
-  event.value.event_start_datetime = Timestamp.fromMillis(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) // +7日
+  var today = new Date()
+  var defaultStartDate = new Date(today)
+  defaultStartDate.setDate(today.getDate() + 14) // +14日
+  defaultStartDate.setHours(12)
+  defaultStartDate.setMinutes(0)
+
+  event.value.event_start_datetime = Timestamp.fromMillis(defaultStartDate.getTime())
 }
 if (event.value.event_end_datetime == null) {
   event.value.event_end_datetime = Timestamp.fromMillis(
