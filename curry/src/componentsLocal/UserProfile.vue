@@ -4,7 +4,7 @@ import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiHelpCircleOutline } from '@mdi/js'
+import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiHelpCircleOutline, mdiEmailHeartOutline } from '@mdi/js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -64,6 +64,17 @@ const logout = async () => {
                 <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
               </template>
               <v-list-item-title>カート</v-list-item-title>
+            </v-list-item>
+
+            <!-- Divider -->
+            <v-divider v-if="isLogin" class="my-2" />
+
+            <!-- 👉 howto -->
+            <v-list-item v-if="isLogin" :href="`https://lin.ee/qCve50t`" target="_blank">
+              <template #prepend>
+                <v-icon class="me-2" :icon="mdiEmailHeartOutline" size="22" />
+              </template>
+              <v-list-item-title>招待状</v-list-item-title>
             </v-list-item>
 
             <!-- Divider -->
