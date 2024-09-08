@@ -39,24 +39,33 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
     `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
     `👥${communityText}`,
     `🍱${shopText}`,
-    `#shokujii ${communityHashTag} ${shopHashTag}`,
     '',
-    '👇申し込みはこちら👇',
+    `${communityHashTag}`,
+    `${shopHashTag}`,
+    `#shokujii`,
+    '',
+    '👇参加はこちらから👇',
   ]
-  return `${textList.join('\n')}\n`
+  return `${textList.join('\n')}`
 }
 
 const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
+  const communityHashTag = '#' + getCommunityHashTag(community)
+  const shopHashTag = '#' + getShopHashTag(shop)
+
   const textList = [
     `🌟${event.event_name}`,
     `👥${event.community_name}`,
     `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
-    `⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}ﾏﾃﾞ`,
+    `⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}ﾏﾃﾞ注文OK`,
     `📍${event.event_address}`,
     `🍱${shop.shop_name}`,
-    '#shokujii',
     '',
-    '👇申し込みはコチラから👇',
+    `${communityHashTag}`,
+    `${shopHashTag}`,
+    `#shokujii`,
+    '',
+    '👇参加はこちらから👇',
     `${event.url}?openExternalBrowser=1`,
   ]
   return `${textList.join('\n')}`
