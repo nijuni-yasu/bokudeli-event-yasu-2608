@@ -116,7 +116,7 @@ const submit = async () => {
   <v-form v-model="isValid" @submit.prevent="submit">
     <v-row class="justify-center">
       <v-col cols="12" sm="12" md="9" class="px-0">
-        <v-card class="mt-2" flat>
+        <v-card class="mb-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiStorefrontOutline" />
             <span>{{ $t('shop.info') }}</span>
@@ -168,7 +168,7 @@ const submit = async () => {
             />
           </v-card-text>
           <v-card-text>
-            <v-text-field
+            <v-textarea
               v-model="shop.shop_description"
               outlined
               dense
@@ -213,7 +213,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiFileImageOutline" />
             <span>{{ $t('shop.image') }}</span>
@@ -232,7 +232,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card v-if="validatedPostalCode != null" class="mt-2" flat>
+        <v-card v-if="validatedPostalCode != null" class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiEarth" />
             <span>{{ $t('shop.base_point') }}</span>
@@ -251,7 +251,7 @@ const submit = async () => {
             <div v-html="$t('shop.base_point_hint', [validatedPostalCode])"></div>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiBicycle" />
             <span>{{ $t('shop.range_min_orders') }}</span>
@@ -285,7 +285,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiClockOutline" />
             <span>{{ $t('shop.time') }}</span>
@@ -344,7 +344,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiClockFast" />
             <span>{{ $t('shop.deadline_datetime') }}</span>
@@ -376,7 +376,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiEmailMultipleOutline" />
             <span>{{ $t('shop.email_sub') }}</span>
@@ -400,7 +400,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiStorefrontOutline" />
             <span>{{ $t('shop.is_open') }}</span>

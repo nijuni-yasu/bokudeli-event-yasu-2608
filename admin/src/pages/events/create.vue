@@ -163,7 +163,7 @@ onUnmounted(() => {
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
       <v-form v-model="isValid">
-        <EventBasicInfoCard v-model="event" :readonly="event.event_status.value !== 'in_draft'" />
+        <EventBasicInfoCard v-model="event" class="my-10" :readonly="event.event_status.value !== 'in_draft'" />
         <EventDetailCard
           v-model="event"
           v-model:coverImage="coverImage"
