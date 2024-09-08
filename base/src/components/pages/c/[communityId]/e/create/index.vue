@@ -74,6 +74,8 @@ const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
 
+const isUpdatedStartTime = ref(false)
+
 // Fetch Shops
 watch(
   [() => event.value?.event_start_datetime, () => event.value?.event_postalcode],
@@ -172,6 +174,20 @@ watch(
   { immediate: true },
 )
 
+// 開始日時が更新されたかどうかを監視
+watch(
+  () => event.value?.event_start_datetime,
+  (newStartDateTime, oldStartDateTime) => {
+    if (!newStartDateTime || !oldStartDateTime) {
+      return
+    }
+    if (!newStartDateTime.isEqual(oldStartDateTime)) {
+      isUpdatedStartTime.value = true
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(async () => {
   const roles = await communityStore.getCurrentUserRoles()
   if (roles == null || !roles.includes('manager')) {
@@ -217,10 +233,10 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   }
 }
 
-const sumbmit = async () => {
+const submit = async () => {
   const event = await saveDraft()
   if (event?.event_id == null || event?.community_account == null) {
-    console.warn('Coud not save event')
+    console.warn('Could not save event')
     return
   }
   if (route.query.id == null) {
@@ -273,6 +289,7 @@ const stepperItems = computed(() => [
         v-model="event"
         :shops="shops"
         :loading="isLoadingShop"
+        :is-updated-start-time="isUpdatedStartTime"
         @submit="stepper++"
         @next="stepper++"
         @back="stepper--"
@@ -311,7 +328,7 @@ const stepperItems = computed(() => [
       </v-form>
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="event" @submit="sumbmit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
+      <event-shop-notice v-model="event" @submit="submit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
     </template>
     <div>
       <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
