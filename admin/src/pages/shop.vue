@@ -259,21 +259,62 @@ const submit = async () => {
           <v-card-text v-for="i in 5" :key="`range_${i}`">
             <v-row v-if="shop.shop_range_min_orders[i - 1]">
               <v-col cols="6">
+                <!-- TODO v-select の items を動的に切り替える UI がここに適しているかは再検討の必要あり -->
                 <v-select
                   v-model="shop.shop_range_min_orders[i - 1].range"
-                  :items="SHOP_RANGE_ARRAY"
+                  :items="
+                    SHOP_RANGE_ARRAY.filter((v) => {
+                      if (v == null) {
+                        return (
+                          shop.shop_range_min_orders[i]?.range == null &&
+                          shop.shop_range_min_orders[i]?.min_orders == null
+                        )
+                      }
+                      return (
+                        v > (shop.shop_range_min_orders[i - 2]?.range ?? 0) &&
+                        v < (shop.shop_range_min_orders[i]?.range ?? Number.MAX_SAFE_INTEGER)
+                      )
+                    })
+                  "
                   outlined
                   dense
                   :label="$t('shop.range')"
+                  :disabled="
+                    i !== 1 &&
+                    (shop.shop_range_min_orders[i - 2]?.range == null ||
+                      shop.shop_range_min_orders[i - 2].range == 30 ||
+                      shop.shop_range_min_orders[i - 2]?.min_orders == null ||
+                      shop.shop_range_min_orders[i - 2].min_orders == 15)
+                  "
                 />
               </v-col>
               <v-col cols="6">
                 <v-select
                   v-model="shop.shop_range_min_orders[i - 1].min_orders"
-                  :items="SHOP_MIN_ORDERS_ARRAY"
+                  :items="
+                    SHOP_MIN_ORDERS_ARRAY.filter((v) => {
+                      if (v == null) {
+                        return (
+                          shop.shop_range_min_orders[i]?.range == null &&
+                          shop.shop_range_min_orders[i]?.min_orders == null
+                        )
+                      }
+                      return (
+                        v > (shop.shop_range_min_orders[i - 2]?.min_orders ?? 0) &&
+                        v < (shop.shop_range_min_orders[i]?.min_orders ?? Number.MAX_SAFE_INTEGER)
+                      )
+                    })
+                  "
                   outlined
                   dense
                   :label="$t('shop.min_orders')"
+                  :disabled="
+                    i !== 1 &&
+                    (shop.shop_range_min_orders[i - 2]?.range == null ||
+                      shop.shop_range_min_orders[i - 2].range == 30 ||
+                      shop.shop_range_min_orders[i - 2]?.min_orders == null ||
+                      shop.shop_range_min_orders[i - 2].min_orders == 15)
+                  "
                 />
               </v-col>
             </v-row>
