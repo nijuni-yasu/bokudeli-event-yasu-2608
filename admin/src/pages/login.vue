@@ -116,14 +116,7 @@ const sendMail = async () => {
                     @click:append-inner="isPasswordVisible = !isPasswordVisible"
                   />
 
-                  <div class="d-flex align-center flex-wrap justify-end my-5 gap-2">
-                    <!-- <v-checkbox v-model="rememberMe" label="Remember me" /> -->
-                    <a @click.prevent="forgotPasswordDialog = true">
-                      {{ $t('login.forgot_password') }}
-                    </a>
-                  </div>
-
-                  <v-btn :disabled="!isValid" :loading="isLoading" block type="submit">
+                  <v-btn class="my-6" :disabled="!isValid" :loading="isLoading" block type="submit">
                     {{ $t('login.submit') }}
                   </v-btn>
                 </v-col>
