@@ -106,9 +106,17 @@ const submit = async () => {
             </thead>
             <tbody>
               <tr
-                v-for="({ order, menu }, key) in eventStore.confirmedOrders.flatMap((order) =>
-                  order.menus.flatMap((menu) => [...Array(menu.count)].map(() => ({ order, menu }))),
-                )"
+                v-for="({ order, menu }, key) in eventStore.confirmedOrders
+                  .flatMap((order) =>
+                    order.menus.flatMap((menu) => [...Array(menu.count)].map(() => ({ order, menu }))),
+                  )
+                  .sort((a, b) =>
+                    a.menu.name === b.menu.name
+                      ? a.order.created_at.toMillis() - b.order.created_at.toMillis()
+                      : a.menu.name > b.menu.name
+                        ? 1
+                        : -1,
+                  )"
                 :key="`order-${key}`"
               >
                 <td>{{ key + 1 }}</td>
