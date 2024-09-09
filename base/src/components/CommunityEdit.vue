@@ -116,6 +116,7 @@ const checkAccountExists = async (value: string) => {
               :url="community.community_icon_image_url ?? undefined"
               :rules="[requiredValidator]"
               style="width: auto; max-width: min(100%, 300px); aspect-ratio: 1/1"
+              :cover="true"
               @fileSelected="(f) => (iconImageFile = f)"
             />
             {{ $t('community_edit.community_icon_image_hint') }}
