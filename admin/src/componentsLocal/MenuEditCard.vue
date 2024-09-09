@@ -88,6 +88,7 @@ const price = computed({
       <v-card-text>
         <v-switch
           v-model="menu.isSoldout"
+          color="#FF0000"
           :label="`${menu.isSoldout ? $t('menu_edit_card.sold_out') : $t('menu_edit_card.in_stock')}`"
         />
       </v-card-text>
