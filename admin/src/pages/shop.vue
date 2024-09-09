@@ -173,7 +173,7 @@ const submit = async () => {
               outlined
               dense
               :label="$t('shop.description')"
-              :rules="[requiredValidator, (v) => maxLengthValidator(v, 300)]"
+              :rules="[requiredValidator, (v: string) => maxLengthValidator(v, 300)]"
             />
           </v-card-text>
           <v-card-text>
