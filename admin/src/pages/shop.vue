@@ -98,6 +98,36 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => shop.value?.shop_url_twitter,
+  (url) => {
+    if (url?.startsWith('https://x.com/') ?? false) {
+      shop.value.shop_url_twitter = url.replace('https://x.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => shop.value?.shop_url_facebook,
+  (url) => {
+    if (url?.startsWith('https://www.facebook.com/') ?? false) {
+      shop.value.shop_url_facebook = url.replace('https://www.facebook.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => shop.value?.shop_url_instagram,
+  (url) => {
+    if (url?.startsWith('https://www.instagram.com/') ?? false) {
+      shop.value.shop_url_instagram = url.replace('https://www.instagram.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
 const submit = async () => {
   isSaving.value = true
   try {

@@ -97,6 +97,36 @@ watch(
   },
 )
 
+watch(
+  () => community.value?.community_sns_twitter,
+  (url) => {
+    if (url?.startsWith('https://x.com/') ?? false) {
+      community.value.community_sns_twitter = url.replace('https://x.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => community.value?.community_sns_facebook,
+  (url) => {
+    if (url?.startsWith('https://www.facebook.com/') ?? false) {
+      community.value.community_sns_facebook = url.replace('https://www.facebook.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => community.value?.community_sns_instagram,
+  (url) => {
+    if (url?.startsWith('https://www.instagram.com/') ?? false) {
+      community.value.community_sns_instagram = url.replace('https://www.instagram.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
 const newCommunityDialog = ref(!communityExists.value)
 const createConfirmDialog = ref(false)
 const coverImageFile = ref<File | null>(null)
