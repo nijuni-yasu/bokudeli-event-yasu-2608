@@ -168,7 +168,7 @@ export default {
       'message': `<ul><li>コミュニティ作成後、イベントページ作成などの機能が利用可能となります。</li>
                       <li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a> をご確認ください。</li>
                       <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。</li></ul>`,
-      'submit': 'コミュニティを新規作成する'
+      'submit': '申請する'
     },
     'new_community_dialog': {
       'title1': 'コミュニティの新規作成について',
