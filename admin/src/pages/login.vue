@@ -5,6 +5,7 @@ import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { useValidators } from '@/composable/validators'
 import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
+import logo from '@/assets/images/shokujii/shokujii_logo_square.webp'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -73,8 +74,8 @@ const sendMail = async () => {
 
     <v-row no-gutters class="auth-wrapper">
       <v-col md="8" class="d-none d-md-flex position-relative">
-        <div class="d-flex align-center justify-end w-100 h-100 pa-10 pe-0">
-          <!-- <img max-width="797" :src="authThemeImg" class="auth-illustration" /> -->
+        <div class="d-flex align-center justify-center w-100 h-100 pa-10 pe-0">
+          <img max-width="797" :src="logo" />
         </div>
       </v-col>
 
@@ -135,23 +136,19 @@ const sendMail = async () => {
     <v-snackbar v-model="snackbar.show" :timeout="5000" :color="snackbar.color" location="top">
       {{ snackbar.message }}
     </v-snackbar>
-    <v-dialog
-      v-model="forgotPasswordDialog"
-      max-width="800px"
-      @ok-click="sendMail"
-    >
-    <v-card>
-      <template #title> {{  $t('forgot_password_dialog.title') }} </template>
-      <template #text>
-        <div class="mb-4">{{ $t('forgot_password_dialog.message') }}</div>
-        <v-text-field v-model="email" :label="$t('login.email_label')" type="email" :rules="[emailValidator]" />
-      </template>
-      <template #actions>
-        <v-spacer></v-spacer>
-        <v-btn @click="forgotPasswordDialog = false">{{ $t('cancel') }}</v-btn>
-        <v-btn variant="tonal" @click="sendMail(), forgotPasswordDialog = false">{{ $t('ok') }}</v-btn>
-      </template>
-    </v-card>
+    <v-dialog v-model="forgotPasswordDialog" max-width="800px" @ok-click="sendMail">
+      <v-card>
+        <template #title> {{ $t('forgot_password_dialog.title') }} </template>
+        <template #text>
+          <div class="mb-4">{{ $t('forgot_password_dialog.message') }}</div>
+          <v-text-field v-model="email" :label="$t('login.email_label')" type="email" :rules="[emailValidator]" />
+        </template>
+        <template #actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="forgotPasswordDialog = false">{{ $t('cancel') }}</v-btn>
+          <v-btn variant="tonal" @click="sendMail(), (forgotPasswordDialog = false)">{{ $t('ok') }}</v-btn>
+        </template>
+      </v-card>
     </v-dialog>
   </div>
 </template>
