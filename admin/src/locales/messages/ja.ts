@@ -189,6 +189,7 @@ export default {
     'error': 'エラーが発生しました',
   },
   'event': {
+    'user_event_page': 'イベントページ',
     'save_draft': '下書き保存',
     'update': '更新',
     'apply': '申請する',

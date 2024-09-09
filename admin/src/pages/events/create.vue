@@ -3,13 +3,14 @@ import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@/stores/partner'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { useEventsStore, type EventsStore, useEventStore, type EventStore } from '@/stores/event'
-import { getCommunityPath, getShopPath } from '@/navigation/utils'
+import { getCommunityPath, getShopPath, getUserEventUrl } from '@/navigation/utils'
 import type { Shop } from '@/schemes/shop'
 import EventDetailCard from '@/components/eventcreate/EventDetailCard.vue'
 import EventBasicInfoCard from '@/components/eventcreate/EventBasicInfoCard.vue'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { Timestamp } from 'firebase/firestore'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import { mdiOpenInNew } from '@mdi/js'
 
 const notification = inject('notification') as Notification
 
@@ -162,6 +163,11 @@ onUnmounted(() => {
 <template>
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
+      <div>
+        <a :href="getUserEventUrl(event.community_account, event.event_id)" target="_blank">
+          {{ $t('event.user_event_page') }} <v-icon :icon="mdiOpenInNew" />
+        </a>
+      </div>
       <v-form v-model="isValid">
         <EventBasicInfoCard v-model="event" class="my-10" :readonly="event.event_status.value !== 'in_draft'" />
         <EventDetailCard
