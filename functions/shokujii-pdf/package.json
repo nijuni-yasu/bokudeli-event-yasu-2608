@@ -1,0 +1,17 @@
+{
+  "name": "shokujii-pdf",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": "18"
+  },
+  "type": "module",
+  "dependencies": {
+    "@adobe/pdfservices-node-sdk": "^3.4.2",
+    "date-fns": "^3.6.0",
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^4.9.0"
+  }
+}
