@@ -1,6 +1,7 @@
 export default {
   ok: 'OK',
   cancel: 'キャンセル',
+  close: '閉じる',
   day_of_week: ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'],
   day_of_week_short: ['日', '月', '火', '水', '木', '金', '土'],
   address: '住所',
@@ -112,6 +113,7 @@ export default {
       not_cancel: 'キャンセルしない',
       submit: 'キャンセルを実行する',
     },
+    download_invoice: '領収書をダウンロードする',
   },
   validator: {
     required: '必須項目です',
@@ -125,6 +127,10 @@ export default {
     account:
       'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英小文字・数字・アンダースコア」のみです。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
+  },
+  invoice_error_card: {
+    title: 'エラーが発生しました',
+    description: 'お手数ですが、サポートにお問い合わせください。',
   },
   subdomain_tags: {
     // Domain 名には _ が使えないので注意

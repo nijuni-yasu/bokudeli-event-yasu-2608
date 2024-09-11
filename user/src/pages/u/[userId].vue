@@ -13,7 +13,7 @@ import { getAuth } from 'firebase/auth'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { createEmptyOrderItem, type OrderItem } from '@/schemes/orderItem'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { getCommunityPath, getEventPath } from '@/router/utils'
+import { getCommunityPath, getEventPath, getInvoicePath } from '@/router/utils'
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { fixCancelOrder } from '@/composable/fixOrder'
@@ -132,6 +132,10 @@ const isUserSuccessJoinEventDialogVisible = ref(false)
 if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
+
+const downloadInvoice = (order: OrderItem) => {
+  window.open(getInvoicePath(order.event_id, order.order_id), '_blank')
+}
 </script>
 
 <template>
@@ -160,7 +164,13 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
             <v-col v-for="{ order, event } in orders" :key="`order_${order.order_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
                 <router-link :to="getEventPath(event.community_account, event.event_id)">
-                  <UserEventCard :order="order" :event="event" :isOwner="isOwner" @cancel="cancel" />
+                  <UserEventCard
+                    :order="order"
+                    :event="event"
+                    :isOwner="isOwner"
+                    @downloadInvoice="downloadInvoice"
+                    @cancel="cancel"
+                  />
                 </router-link>
 
                 <div

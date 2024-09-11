@@ -14,3 +14,4 @@ export const getNewEventPath = () => `/newevent`
 export const getEventPath = (communityAccount: string, eventId: string) => `/c/${communityAccount}/e/${eventId}`
 export const getEventCreatePath = (communityAccount: string) => `/c/${communityAccount}/e/create`
 export const getUserPath = (userId: string) => `/u/${userId}`
+export const getInvoicePath = (eventId: string, orderId: string) => `/invoice?eventId=${eventId}&orderId=${orderId}`
