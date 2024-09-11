@@ -134,7 +134,7 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
             <v-col v-for="{ order, event } in orders" :key="`order_${order.order_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
                 <router-link :to="getEventPath(event.community_account, event.event_id)">
-                  <UserEventCard :order="order" :event="event" :cancelable="isOwner" @cancel="cancel" />
+                  <UserEventCard :order="order" :event="event" :isOwner="isOwner" @cancel="cancel" />
                 </router-link>
 
                 <div

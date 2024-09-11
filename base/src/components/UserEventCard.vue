@@ -5,7 +5,7 @@ import { type OrderItem } from '@/schemes/orderItem'
 const props = defineProps<{
   event: BokudeliEvent
   order: OrderItem
-  cancelable: boolean
+  isOwner: boolean
 }>()
 
 defineEmits<{
@@ -34,8 +34,9 @@ const isShowCanceled = computed(() => props.order.status === 'canceled')
     <v-card-text class="pa-3">{{ $t('user_event_card.community_name', [event.community_name]) }}</v-card-text>
     <v-card-text class="pa-3">
       {{
-        $t('user_event_card.event_start_datetime',
-        [$d(event.event_start_datetime?.toDate() ?? 0, 'datetime_weekday_short')])
+        $t('user_event_card.event_start_datetime', [
+          $d(event.event_start_datetime?.toDate() ?? 0, 'datetime_weekday_short'),
+        ])
       }}
     </v-card-text>
     <v-card-text class="pa-3">{{ $t('user_event_card.event_address', [event.event_address]) }}</v-card-text>
@@ -48,7 +49,7 @@ const isShowCanceled = computed(() => props.order.status === 'canceled')
     </v-card-text>
     <v-card-text class="px-3 pb-5">{{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}</v-card-text>
     <v-card-text>
-      <v-row v-if="cancelable" justify="end">
+      <v-row v-if="isOwner" justify="end">
         <v-spacer></v-spacer>
         <v-col v-if="isShowCancelButton" class="d-flex justify-end">
           <v-btn variant="outlined" color="secondary" size="x-small" @click.prevent="dialog = true">
@@ -72,7 +73,9 @@ const isShowCanceled = computed(() => props.order.status === 'canceled')
       <template #actions>
         <v-spacer />
         <v-btn @click="dialog = false">{{ $t('user_event_card.cancel_dialog.not_cancel') }}</v-btn>
-        <v-btn variant="tonal" @click="$emit('cancel', order), (dialog = false)">{{ $t('user_event_card.cancel_dialog.submit')  }}  </v-btn>
+        <v-btn variant="tonal" @click="$emit('cancel', order), (dialog = false)">
+          {{ $t('user_event_card.cancel_dialog.submit') }}
+        </v-btn>
       </template>
     </v-card>
   </v-dialog>
