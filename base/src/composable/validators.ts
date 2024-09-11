@@ -99,6 +99,13 @@ export const useValidators = () => {
     return /^[a-z0-9_]{5,15}$/.test(value as string) || $t('validator.account')
   }
 
+  const invoiceValidatorJapan = (value: string | null | undefined) => {
+    if (isEmpty(value)) {
+      return true
+    }
+    return /^T[0-9]{13}$/.test(value as string) || $t('validator.invoice_japan')
+  }
+
   return {
     requiredValidator,
     urlValidator,
@@ -109,5 +116,6 @@ export const useValidators = () => {
     phoneValidator,
     emailValidator,
     accountValidator,
+    invoiceValidatorJapan,
   }
 }
