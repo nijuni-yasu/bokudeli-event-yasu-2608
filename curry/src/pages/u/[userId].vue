@@ -55,6 +55,9 @@ const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() =>
     if (event == null || !event.subdomain_tags.includes('kanda-curry')) {
       return []
     }
+    if (!isOwner.value && !event.is_public) {
+      return []
+    }
     const order = { ...createEmptyOrderItem(), ...orderSnapshot.data() } as OrderItem
     return { order, event }
   })
