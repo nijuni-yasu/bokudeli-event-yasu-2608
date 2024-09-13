@@ -179,8 +179,6 @@ onUnmounted(() => {
   if (eventId.value != null) {
     const eventStore = useEventStore(eventId.value) as EventStore
     eventStore.$reset()
-  } else {
-    eventsStore.$reset()
   }
 })
 
