@@ -1,4 +1,4 @@
-import { BokudeliCommunity } from '@/schemes/bokudeliCommunity'
+import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { db } from '@/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
@@ -75,14 +75,17 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent | nul
   if (event == null) {
     return
   }
-
   const communityStore = useCommunityStore(event.community_account) as CommunityStore
+  const community = communityStore.community
+  if (community == null) {
+    return
+  }
   const shop = await getShopAccount(event)
 
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter') {
     const baseUrl = 'https://twitter.com/intent/tweet'
-    const text = encodeURIComponent(getXPostText(event, communityStore.community, shop))
+    const text = encodeURIComponent(getXPostText(event, community, shop))
     const openUrl = `${baseUrl}?text=${text}&url=${eventUrl}`
     window.open(openUrl, '_blank', 'width=800,height=500')
   } else if (snsType === 'facebook') {
@@ -94,7 +97,7 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent | nul
     const openUrl = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
     window.open(openUrl, '_blank', 'width=800,height=500')
   } else if (snsType === 'copy') {
-    const text = getCopyText(event, communityStore.community, shop)
+    const text = getCopyText(event, community, shop)
     navigator.clipboard
       .writeText(text)
       .then(() => {
