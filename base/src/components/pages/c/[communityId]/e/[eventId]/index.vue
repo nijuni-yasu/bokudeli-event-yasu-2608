@@ -185,6 +185,9 @@ onUnmounted(() => {
           <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
             <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
             <v-spacer />
+            <v-chip v-if="!event.is_public" color="primary" size="large">
+              {{ $t('private_event') }}
+            </v-chip>
             <v-chip color="primary" size="large">
               {{ $t(`event_status.${event.event_status.value}`) }}
             </v-chip>

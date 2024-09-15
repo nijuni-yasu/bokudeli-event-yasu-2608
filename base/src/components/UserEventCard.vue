@@ -28,6 +28,12 @@ const isShowCanceled = computed(() => props.order.status === 'canceled')
 <template>
   <v-card class="pa-0">
     <v-img cover class="ma-0 pa-0" aspect-ratio="1.91" :src="event.event_cover_url"></v-img>
+    <v-chip class="mt-2 ml-3" color="primary" size="small">
+      {{ $t(`event_status.${event.event_status.value}`) }}
+    </v-chip>
+    <v-chip v-if="!event.is_public" class="mt-2 ml-3" color="primary" size="small">
+      {{ $t('private_event') }}
+    </v-chip>
     <v-card-title class="justify-center pb-3 title text-h6">
       {{ event.event_name }}
     </v-card-title>
