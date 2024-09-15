@@ -4,7 +4,7 @@ import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiAccountOutline, mdiCartOutline, mdiCalendarPlus, mdiLogout } from '@mdi/js'
+import { mdiAccountOutline, mdiCartOutline, mdiCalendarPlus, mdiLogout, mdiHelpCircleOutline, mdiAlphaLCircle, mdiEmailHeartOutline } from '@mdi/js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -75,6 +75,28 @@ const logout = async () => {
                 <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
               </template>
               <v-list-item-title>イベント作成</v-list-item-title>
+            </v-list-item>
+
+            <!-- Divider -->
+            <v-divider v-if="isLogin" class="my-2" />
+
+            <!-- 👉 howto -->
+            <v-list-item v-if="isLogin" :href="`https://lin.ee/SaL9aeE`" target="_blank">
+              <template #prepend>
+                <v-icon class="me-2" :icon="mdiEmailHeartOutline" size="22" />
+              </template>
+              <v-list-item-title>招待状</v-list-item-title>
+            </v-list-item>
+
+            <!-- Divider -->
+            <v-divider v-if="isLogin" class="my-2" />
+
+            <!-- 👉 howto -->
+            <v-list-item v-if="isLogin" :href="`https://about.shokujii.jp/howto`" target="_blank">
+              <template #prepend>
+                <v-icon class="me-2" :icon="mdiHelpCircleOutline" size="22" />
+              </template>
+              <v-list-item-title>ヘルプ</v-list-item-title>
             </v-list-item>
 
             <!-- Divider -->

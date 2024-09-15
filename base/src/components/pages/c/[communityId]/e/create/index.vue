@@ -74,6 +74,8 @@ const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
 
+const isUpdatedStartTime = ref(false)
+
 // Fetch Shops
 watch(
   [() => event.value?.event_start_datetime, () => event.value?.event_postalcode],
@@ -98,15 +100,19 @@ watch(
     const shopSnapshot = await getDocs(shopDb)
     shops.value = shopSnapshot.docs
       .map((doc) => {
-        return doc.data() as Shop
-      })
-      .filter((shop) => {
-        // check distance
+        const shop = doc.data() as Shop
+
+        // calculate distance
         const shopLocation = {
           longitude: shop.shop_address_longitude,
           latitude: shop.shop_address_latitude,
         }
         const distance = calculateDistance(location, shopLocation)
+        return { ...shop, distance }
+      })
+      .filter((shop) => {
+        // check distance
+        const distance = shop.distance
         const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
         const isInRange = maxRange ? distance <= maxRange : false
 
@@ -128,6 +134,7 @@ watch(
 
         return isInRange && isInTime && shop.is_approved && shop.is_open
       })
+      .sort((a, b) => a.distance - b.distance)
     isLoadingShop.value = false
   },
   { immediate: true },
@@ -165,6 +172,20 @@ watch(
     }
   },
   { immediate: true },
+)
+
+// 開始日時が更新されたかどうかを監視
+watch(
+  () => event.value?.event_start_datetime,
+  (newStartDateTime, oldStartDateTime) => {
+    if (!newStartDateTime || !oldStartDateTime) {
+      return
+    }
+    if (!newStartDateTime.isEqual(oldStartDateTime)) {
+      isUpdatedStartTime.value = true
+    }
+  },
+  { immediate: true }
 )
 
 onMounted(async () => {
@@ -212,10 +233,10 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   }
 }
 
-const sumbmit = async () => {
+const submit = async () => {
   const event = await saveDraft()
   if (event?.event_id == null || event?.community_account == null) {
-    console.warn('Coud not save event')
+    console.warn('Could not save event')
     return
   }
   if (route.query.id == null) {
@@ -268,6 +289,7 @@ const stepperItems = computed(() => [
         v-model="event"
         :shops="shops"
         :loading="isLoadingShop"
+        :is-updated-start-time="isUpdatedStartTime"
         @submit="stepper++"
         @next="stepper++"
         @back="stepper--"
@@ -306,7 +328,7 @@ const stepperItems = computed(() => [
       </v-form>
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="event" @submit="sumbmit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
+      <event-shop-notice v-model="event" @submit="submit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
     </template>
     <div>
       <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">

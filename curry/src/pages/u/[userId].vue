@@ -3,7 +3,7 @@ import { db } from '@/firebase'
 import { collectionGroup, doc, getDocs, orderBy, query, where } from 'firebase/firestore'
 import { useRoute } from 'vue-router'
 import UserBioPanel from '@/components/UserBioPanel.vue'
-import UserEventCard from '@/components/UserEventCard2.vue'
+import UserEventCard from '@/components/UserEventCard.vue'
 import CommunityCard from '@/components/CommunityCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useCommunitiesStore, type CommunitiesStore } from '@/stores/community'
@@ -53,6 +53,9 @@ const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() =>
     const eventId = orderSnapshot.ref.parent.parent!.id
     const event = (useEventStore(eventId) as EventStore).event
     if (event == null || !event.subdomain_tags.includes('kanda-curry')) {
+      return []
+    }
+    if (!isOwner.value && !event.is_public) {
       return []
     }
     const order = { ...createEmptyOrderItem(), ...orderSnapshot.data() } as OrderItem
@@ -134,7 +137,7 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
             <v-col v-for="{ order, event } in orders" :key="`order_${order.order_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
                 <router-link :to="getEventPath(event.community_account, event.event_id)">
-                  <UserEventCard :order="order" :event="event" :cancelable="isOwner" @cancel="cancel" />
+                  <UserEventCard :order="order" :event="event" :isOwner="isOwner" @cancel="cancel" />
                 </router-link>
 
                 <div

@@ -28,6 +28,14 @@
       </a>
       <br />
       <a
+        href="https://about.shokujii.jp/howto"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="footer-text"
+      >
+        ヘルプ
+      </a>
+      <a
         href="https://nijuni.notion.site/shokujii-FAQ-9be74ae1230a41788f0714f302714989"
         target="_blank"
         rel="noopener noreferrer"
