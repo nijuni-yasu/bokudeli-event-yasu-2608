@@ -1,0 +1,424 @@
+<script setup lang="ts">
+import {
+  mdiStorefrontOutline,
+  mdiFileImageOutline,
+  mdiEarth,
+  mdiBicycle,
+  mdiClockOutline,
+  mdiClockFast,
+  mdiEmailMultipleOutline,
+} from '@mdi/js'
+import { useI18n } from 'vue-i18n'
+import { usePartnerStore } from '@/stores/partner'
+import { useValidators } from '@/composable/validators'
+import { getAuth } from 'firebase/auth'
+import { Shop, GENRE_ARRAY } from '@/schemes/shop'
+import ImageInput from '@/components/ImageInput.vue'
+import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
+import type { Notification } from '@/types'
+
+const notification = inject('notification') as Notification
+
+const { t: $t, tm: $tm, d: $d } = useI18n()
+const dayOfWeek = $tm('day_of_week') as {
+  [key: number]: string // or whatever the correct type is
+}
+
+const { requiredValidator, postalCodeValidator, phoneValidator, maxLengthValidator, emailValidator } = useValidators()
+
+const makeTimeArray = (start: number, num: number) =>
+  [...Array(num)].map((_, i) => {
+    const date = new Date(0)
+    date.setHours(start + Math.floor(i / 4))
+    date.setMinutes((i % 4) * 15)
+    return { title: $d(date, 'time'), value: date.getTime() }
+  })
+
+const SHOP_MIN_ORDERS_ARRAY = [null, ...[...Array(15)].map((_, i) => i + 1)]
+// prettier-ignore
+const SHOP_RANGE_ARRAY = [null, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 40, 45, 50]
+const SHOP_DEADLINE_DATE_ARRAY = [...Array(3)].map((_, i) => ({ title: $t('days_before', i + 1), value: i + 1 }))
+const SHOP_DEADLINE_TIME_ARRAY = makeTimeArray(6, 72)
+const SHOP_TIME_ARRAY = [null, ...makeTimeArray(6, 73)]
+
+const partnerId = getAuth().currentUser?.uid ?? ''
+const partnerStore = usePartnerStore(partnerId)
+
+const shop = ref(
+  await new Promise<Shop>((resolve) => {
+    watch(
+      () => partnerStore.shops,
+      (shops) => {
+        if (shops != null) {
+          if (shops.length === 0) {
+            const shop = new Shop(partnerId)
+            shop.shop_email = getAuth().currentUser?.email ?? ''
+            resolve(shop)
+          } else {
+            resolve(Object.assign({}, toRaw(shops[0])))
+          }
+          stop()
+        }
+      },
+      { immediate: true },
+    )
+  }),
+)
+
+const isSaving = ref(false)
+const imageFile = ref<File | null>(null)
+
+const isValid = ref(false)
+
+const validatedPostalCode = ref<string | null>(null)
+watch(
+  () => shop.value?.shop_postcode,
+  async () => {
+    if (shop.value == null) {
+      return
+    }
+    const postalcode = shop.value.shop_postcode
+    if (requiredValidator(postalcode) !== true || postalCodeValidator(postalcode) !== true) {
+      validatedPostalCode.value = null
+      return
+    }
+    const location = await fetchLocationByPostalcode(postalcode as string)
+    if (location?.address == null) {
+      validatedPostalCode.value = null
+      return
+    }
+    validatedPostalCode.value = postalcode
+    if (shop.value.shop_address?.startsWith(location.address) ?? false) {
+      return
+    }
+    shop.value.shop_address_latitude = location.latitude
+    shop.value.shop_address_longitude = location.longitude
+    shop.value.shop_address = location.address
+  },
+  { immediate: true },
+)
+
+const submit = async () => {
+  isSaving.value = true
+  try {
+    await partnerStore.updateShop(shop.value, imageFile.value ?? undefined)
+    Object.assign(notification, { message: $t('shop.saved'), color: 'success' })
+  } catch (e) {
+    console.error(e)
+    Object.assign(notification, { message: $t('shop.save_error'), color: 'error' })
+  } finally {
+    isSaving.value = false
+  }
+}
+</script>
+
+<template>
+  <v-form v-model="isValid" @submit.prevent="submit">
+    <v-row class="justify-center">
+      <v-col cols="12" sm="12" md="9" class="px-0">
+        <v-card class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiStorefrontOutline" />
+            <span>{{ $t('shop.info') }}</span>
+          </template>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_name"
+              outlined
+              dense
+              :label="$t('shop.name')"
+              :rules="[requiredValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_postcode"
+              outlined
+              dense
+              :label="$t('postal_code')"
+              :rules="[requiredValidator, postalCodeValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_address"
+              outlined
+              dense
+              :label="$t('address')"
+              :rules="[requiredValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_phone"
+              outlined
+              dense
+              :label="$t('phone_number')"
+              :rules="[requiredValidator, phoneValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-select
+              v-model="shop.shop_genre"
+              :items="GENRE_ARRAY"
+              outlined
+              dense
+              :label="$t('shop.genre')"
+              :rules="[requiredValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_description"
+              outlined
+              dense
+              :label="$t('shop.description')"
+              :rules="[requiredValidator, (v) => maxLengthValidator(v, 300)]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field v-model="shop.shop_url" outlined dense :label="$t('shop.url')" :hint="$t('shop.url_hint')" />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_url_twitter"
+              outlined
+              dense
+              :label="$t('shop.url_twitter')"
+              :hint="$t('shop.url_twitter_hint')"
+              prefix="https://x.com/"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_url_facebook"
+              outlined
+              dense
+              :label="$t('shop.url_facebook')"
+              :hint="$t('shop.url_facebook_hint')"
+              prefix="https://www.facebook.com/"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_url_instagram"
+              outlined
+              dense
+              :label="$t('shop.url_instagram')"
+              :hint="$t('shop.url_instagram_hint')"
+              prefix="https://www.instagram.com/"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+        <v-card class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiFileImageOutline" />
+            <span>{{ $t('shop.image') }}</span>
+          </template>
+          <v-card-text>
+            <ImageInput
+              :url="shop.shop_image_url ?? undefined"
+              :rules="[requiredValidator]"
+              style="width: 100%; aspect-ratio: 4/3"
+              :cover="true"
+              @fileSelected="(f) => (imageFile = f)"
+            />
+            {{ $t('shop.image_hint') }}
+          </v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+        <v-card v-if="validatedPostalCode != null" class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiEarth" />
+            <span>{{ $t('shop.base_point') }}</span>
+          </template>
+          <v-card-text>
+            <v-row>
+              <v-col cols="6">
+                <v-text-field v-model="shop.shop_address_latitude" outlined dense readonly :label="$t('latitude')" />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field v-model="shop.shop_address_longitude" outlined dense readonly :label="$t('longitude')" />
+              </v-col>
+            </v-row>
+          </v-card-text>
+          <v-card-text>
+            <div v-html="$t('shop.base_point_hint', [validatedPostalCode])"></div>
+          </v-card-text>
+        </v-card>
+        <v-card class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiBicycle" />
+            <span>{{ $t('shop.range_min_orders') }}</span>
+          </template>
+          <v-card-text v-for="i in 5" :key="`range_${i}`">
+            <v-row v-if="shop.shop_range_min_orders[i - 1]">
+              <v-col cols="6">
+                <v-select
+                  v-model="shop.shop_range_min_orders[i - 1].range"
+                  :items="SHOP_RANGE_ARRAY"
+                  outlined
+                  dense
+                  :label="$t('shop.range')"
+                />
+              </v-col>
+              <v-col cols="6">
+                <v-select
+                  v-model="shop.shop_range_min_orders[i - 1].min_orders"
+                  :items="SHOP_MIN_ORDERS_ARRAY"
+                  outlined
+                  dense
+                  :label="$t('shop.min_orders')"
+                />
+              </v-col>
+            </v-row>
+          </v-card-text>
+          <v-card-text>
+            <div v-html="$t('shop.range_min_orders_hint')"></div>
+          </v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+        <v-card class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiClockOutline" />
+            <span>{{ $t('shop.time') }}</span>
+          </template>
+          <v-card-text v-for="(item, i) of shop.shop_time" :key="`shop_time_${i}`">
+            <v-table>
+              <tr>
+                <td style="padding: 12px"><v-switch v-model="item.is_open" :label="dayOfWeek[i]" /></td>
+                <td style="padding: 12px">
+                  <v-select
+                    v-model="item.time_start"
+                    :disabled="!item.is_open"
+                    :items="SHOP_TIME_ARRAY"
+                    outlined
+                    dense
+                    :label="$t('shop.time_start', ['1'])"
+                  />
+                </td>
+                <td style="padding: 12px">
+                  <v-select
+                    v-model="item.time_end"
+                    :disabled="!item.is_open"
+                    :items="SHOP_TIME_ARRAY"
+                    outlined
+                    dense
+                    :label="$t('shop.time_end', ['1'])"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td></td>
+                <td style="padding: 12px">
+                  <v-select
+                    v-model="item.time_start2"
+                    :disabled="!item.is_open"
+                    :items="SHOP_TIME_ARRAY"
+                    outlined
+                    dense
+                    :label="$t('shop.time_start', ['2'])"
+                  />
+                </td>
+                <td style="padding: 12px">
+                  <v-select
+                    v-model="item.time_end2"
+                    :disabled="!item.is_open"
+                    :items="SHOP_TIME_ARRAY"
+                    outlined
+                    dense
+                    :label="$t('shop.time_end', ['2'])"
+                  />
+                </td>
+              </tr>
+            </v-table>
+          </v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+        <v-card class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiClockFast" />
+            <span>{{ $t('shop.deadline_datetime') }}</span>
+          </template>
+          <v-card-text>
+            <v-row>
+              <v-col cols="6">
+                <v-select
+                  v-model="shop.shop_deadline_datetime.days_before"
+                  :items="SHOP_DEADLINE_DATE_ARRAY"
+                  outlined
+                  dense
+                  :label="$t('shop.deadline_date')"
+                />
+              </v-col>
+              <v-col cols="6">
+                <v-select
+                  v-model="shop.shop_deadline_datetime.time"
+                  :items="SHOP_DEADLINE_TIME_ARRAY"
+                  outlined
+                  dense
+                  :label="$t('shop.deadline_time')"
+                />
+              </v-col>
+            </v-row>
+          </v-card-text>
+          <v-card-text>{{ $t('shop.deadline_hint') }}</v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+        <v-card class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiEmailMultipleOutline" />
+            <span>{{ $t('shop.email_sub') }}</span>
+          </template>
+          <v-card-text>
+            <v-text-field v-model="shop.shop_email" readonly outlined dense :label="$t('email')" />
+          </v-card-text>
+          <v-card-text v-for="i in 3" :key="`sub_email_${i}`">
+            <v-text-field
+              v-model="/* @ts-ignore */ shop[`shop_email_sub${i}`]"
+              outlined
+              dense
+              :label="$t('shop.email_sub_n', [i])"
+              :rules="[emailValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <div v-html="$t('shop.email_sub_hint')"></div>
+          </v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+        <v-card class="mt-2" flat>
+          <template v-slot:title>
+            <v-icon size="40" class="text--primary me-3" :icon="mdiStorefrontOutline" />
+            <span>{{ $t('shop.is_open') }}</span>
+          </template>
+          <v-card-text>
+            <v-switch
+              v-model="shop.is_open"
+              :label="`${shop.is_open ? $t('shop.label_open') : $t('shop.label_close')}`"
+            />
+          </v-card-text>
+          <v-card-text>
+            <div v-html="$t('shop.is_open_hint')"></div>
+          </v-card-text>
+          <v-card-text>
+            <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-form>
+</template>

@@ -63,9 +63,9 @@ onMounted(async () => {
 <template>
   <section>
     <v-row v-if="!isLoading && menus !== null">
-      <v-col v-for="menu in menus" :key="menu.id" md="4" sm="6" cols="12" class="pa-3">
+      <v-col v-for="(menu, i) of menus" :key="`menu_${i}`" md="4" sm="6" cols="12" class="pa-3">
         <v-card class="mb-1" color="text-center">
-          <v-img :src="menu.imageUrl" aspect-ratio="1" cover />
+          <v-img :src="menu.imageUrl ?? undefined" aspect-ratio="1" cover />
 
           <!-- title -->
           <v-card-title class="justify-center pb-3 text-wrap">

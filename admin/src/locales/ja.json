@@ -1,9 +1,0 @@
-{
-    "event_status/in_draft": "下書き",
-    "event_status/applying_reservation": "予約申請中",
-    "event_status/accepting_order": "参加受付中",
-    "event_status/order_closed": "参加締切済",
-    "event_status/finished": "イベント終了",
-    "order_deadline": "注文期限",
-    "days_before": "当日 | 前日 | {n}日前"
-}

@@ -1,20 +1,30 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
-import { dateString, hourString, minutesString, hourList, minutesList } from '@/schemes/eventCreate'
+import {
+  dateString,
+  hourString,
+  minutesString,
+  parseDateTimeStrings,
+  hourList,
+  minutesList,
+} from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import ImageInput from '../ImageInput.vue'
 import DateInput from '../DateInput.vue'
+import { Timestamp } from 'firebase/firestore'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     readonly?: boolean
+    readonlyDeadline?: boolean
     subdomainTags?: string[]
   }>(),
   {
     readonly: false,
-  },
+    readonlyDeadline: false,
+  }
 )
 
 const { t: $t } = useI18n()
@@ -34,9 +44,27 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
-const eventDeadlineDate = computed(() => dateString(event.value.event_deadline_datetime?.toDate() ?? null))
-const eventDeadlineHour = computed(() => hourString(event.value.event_deadline_datetime?.toDate() ?? null))
-const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadline_datetime?.toDate() ?? null))
+const eventDeadlineDate = computed({
+  get: () => dateString(event.value.event_deadline_datetime?.toDate() ?? null),
+  set: (value: string) => {
+    const d = parseDateTimeStrings(value, eventDeadlineHour.value, eventDeadlineMinute.value)
+    event.value.event_deadline_datetime = Timestamp.fromDate(d)
+  },
+})
+const eventDeadlineHour = computed({
+  get: () => hourString(event.value.event_deadline_datetime?.toDate() ?? null),
+  set: (value) => {
+    const d = parseDateTimeStrings(eventDeadlineDate.value, value, eventDeadlineMinute.value)
+    event.value.event_deadline_datetime = Timestamp.fromDate(d)
+  },
+})
+const eventDeadlineMinute = computed({
+  get: () => minutesString(event.value.event_deadline_datetime?.toDate() ?? null),
+  set: (value) => {
+    const d = parseDateTimeStrings(eventDeadlineDate.value, eventDeadlineHour.value, value)
+    event.value.event_deadline_datetime = Timestamp.fromDate(d)
+  },
+})
 </script>
 
 <template>
@@ -55,13 +83,13 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             dense
             :label="$t('event_detail.event_name')"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
     </v-card-text>
 
-    <v-card-text v-if="subdomainTags != null && subdomainTags.length !== 0" class="pt-5">
+    <v-card-text v-if="props.subdomainTags != null && props.subdomainTags.length !== 0" class="pt-5">
       <v-row>
         <v-col cols="12">
           <v-text-field outlined dense label="Tags" :readonly="true" :active="true">
@@ -80,7 +108,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             style="width: 100%; aspect-ratio: 120/63"
             :url="event.event_cover_url"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
             :cover="true"
             @fileSelected="(f) => (coverImage = f)"
           >
@@ -99,7 +127,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             rows="10"
             :label="$t('event_detail.event_desc')"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
@@ -111,7 +139,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
           <DateInput
             :label="$t('event_detail.deadline_date')"
             v-model="eventDeadlineDate"
-            :readonly="true"
+            :readonly="readonly || readonlyDeadline"
             :clearable="false"
           />
         </v-col>
@@ -122,7 +150,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             outlined
             dense
             :label="$t('event_detail.deadline_hour')"
-            :readonly="true"
+            :readonly="readonly || readonlyDeadline"
           ></v-select>
         </v-col>
         <v-col cols="6" sm="6" md="3">
@@ -132,7 +160,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             outlined
             dense
             :label="$t('event_detail.deadline_minute')"
-            :readonly="true"
+            :readonly="readonly || readonlyDeadline"
           ></v-select>
         </v-col>
       </v-row>
@@ -148,7 +176,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
             dense
             :label="$t('event_detail.event_max_people')"
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
-            :readonly="readonly"
+            :readonly="props.readonly"
           />
         </v-col>
       </v-row>
@@ -160,7 +188,7 @@ const eventDeadlineMinute = computed(() => minutesString(event.value.event_deadl
       {{ $t('event_detail.activity') }}
     </v-card-title>
     <v-card-text>
-      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="readonly">
+      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="props.readonly">
         <template v-slot:label>
           <span v-if="event.is_public">{{ $t('event_detail.public') }}</span>
           <span v-else>{{ $t('event_detail.private') }}</span>

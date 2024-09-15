@@ -143,20 +143,14 @@ const handleGoogleLogin = async () => {
         </v-container>
       </v-card-text>
       <v-card-title v-if="loginProvider === 'google'" class="text-center mt-10">
-        <div class="text-h5 ma-1">ログイン</div>
+        <div class="text-h3 ma-1">ログイン</div>
       </v-card-title>
-      <v-card-text class="text-caption text-center py-1">
+      <v-card-text class="text-center py-5">
         <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a>
         および
         <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank"
           >プライバシーポリシー</a
-        >に同意してログインしてください。
-      </v-card-text>
-      <v-card-text class="text-caption text-center py-1">
-        ※Facebook、Messenger、LINEなどのアプリ内ブラウザでログインはできません。
-      </v-card-text>
-      <v-card-text class="text-caption text-center py-1">
-        ※ChromeやSafariなどのブラウザでログインしてください。<br />
+        > に同意してログインしてください。
       </v-card-text>
       <v-card-text v-if="loginProvider === 'google'">
         <v-container>
@@ -185,6 +179,11 @@ const handleGoogleLogin = async () => {
             </v-col>
           </v-row>
         </v-container>
+      </v-card-text>
+      <v-card-text class="text-center py-5" style="font-size:12px; color:#E91E63;">
+        ※注意※<br/>
+        LINE、Messenger、Facebookアプリなどのアプリ内ブラウザでは、ログインができません。<br />
+        ChromeやSafariなどのブラウザからログインしてください。<br />
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>

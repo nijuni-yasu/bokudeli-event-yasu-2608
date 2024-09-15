@@ -7,6 +7,7 @@ import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
 import UserProfile from '@/componentsLocal/UserProfile.vue'
 import Footer from '@/componentsLocal/Footer.vue'
 import { useNavItems } from '@/navigation'
+import type { Notification } from '@/types'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -25,6 +26,22 @@ switchToVerticalNavOnLtOverlayNavBreakpoint()
 const { layoutAttrs, injectSkinClasses } = useSkins()
 
 injectSkinClasses()
+
+const notification = reactive<Notification>({
+  message: undefined,
+  color: undefined,
+})
+provide('notification', notification)
+
+const isNotificationShown = computed({
+  get: () => notification.message !== undefined,
+  set: (value: boolean) => {
+    if (!value) {
+      notification.message = undefined
+      notification.color = undefined
+    }
+  },
+})
 </script>
 
 <template>
@@ -44,6 +61,9 @@ injectSkinClasses()
       <Footer />
     </template>
   </Component>
+  <v-snackbar v-model="isNotificationShown" :color="notification.color">
+    {{ notification.message }}
+  </v-snackbar>
 </template>
 
 <style lang="scss">

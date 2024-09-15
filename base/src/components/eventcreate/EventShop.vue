@@ -8,6 +8,7 @@ const props = defineProps<{
   shops: Shop[]
   modelValue: BokudeliEvent
   loading: boolean
+  isUpdatedStartTime: boolean
 }>()
 
 const emit = defineEmits<{
@@ -29,12 +30,8 @@ const displayShops = computed(() => {
   })
 })
 
-const submit = (shop: Shop) => {
-  event.value.shop_id = shop.shop_id
-  event.value.partner_id = shop.partner_id
-  event.value.shop_name = shop.shop_name
-
-  // 注文締め切り日時を計算
+  // 注文締め切り日時を計算し更新
+  const updateDeadlineDatetime = (shop: Shop) => {
   const startDateTime = event.value.event_start_datetime?.toDate()
   if (startDateTime == null) {
     throw new Error('startDateTime is null')
@@ -45,7 +42,18 @@ const submit = (shop: Shop) => {
   startDateTime.setHours(deadLineTime.getHours())
   startDateTime.setMinutes(deadLineTime.getMinutes())
   event.value.event_deadline_datetime = Timestamp.fromDate(startDateTime)
+}
 
+const submit = (shop: Shop) => {
+  if (shop.shop_id == null) {
+    console.error('shop_id is null')
+    return
+  }
+  event.value.shop_id = shop.shop_id
+  event.value.partner_id = shop.partner_id
+  event.value.shop_name = shop.shop_name
+
+  updateDeadlineDatetime(shop)
   emit('submit')
 }
 
@@ -53,6 +61,13 @@ const back = () => {
   emit('back')
 }
 const next = () => {
+  if (props.isUpdatedStartTime) {
+    const selectedShop = props.shops.filter((shop) => shop.shop_id === event.value.shop_id).shift()
+    if (!selectedShop) {
+      throw new Error('selectedShop is null')
+    }
+    updateDeadlineDatetime(selectedShop)
+  }
   emit('next')
 }
 </script>
@@ -70,13 +85,13 @@ const next = () => {
 
             <!-- Activity -->
             <v-row>
-              <v-col v-for="item in displayShops" :key="item.shop_id" md="4" sm="4" cols="12">
+              <v-col v-for="(item, i) of displayShops" :key="`shop_${i}`" md="4" sm="4" cols="12">
                 <v-card
                   :class="{ 'select-border': item.partner_id == props.modelValue.partner_id }"
                   class="mb-3 mx-0"
                   color="text-center cursor-pointer"
                 >
-                  <v-img :src="item.shop_image_url" cover aspect-ratio="1.91" />
+                  <v-img :src="item.shop_image_url ?? undefined" cover aspect-ratio="1.91" />
 
                   <!-- title -->
                   <v-card-title class="justify-center pb-3 pre-line">

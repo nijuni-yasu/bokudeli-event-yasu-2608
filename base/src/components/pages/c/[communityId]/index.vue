@@ -175,6 +175,9 @@ const inviteManager = async () => {
                   <v-chip class="mt-2 ml-2" size="small" color="primary" elevated flat>
                     {{ $t(`event_status.${event.event_status.value}`) }}
                   </v-chip>
+                  <v-chip v-if="!event.is_public" class="mt-2 ml-2" size="small" color="primary" elevated flat>
+                    {{ $t('private_event') }}
+                  </v-chip>
                   <v-card-title class="justify-center text-h6 pb-3 px-2">
                     {{ event.event_name }}
                   </v-card-title>
