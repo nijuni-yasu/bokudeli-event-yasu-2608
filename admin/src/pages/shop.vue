@@ -36,7 +36,7 @@ const makeTimeArray = (start: number, num: number) =>
 
 const SHOP_MIN_ORDERS_ARRAY = [null, ...[...Array(15)].map((_, i) => i + 1)]
 // prettier-ignore
-const SHOP_RANGE_ARRAY = [null, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 40, 45, 50]
+const SHOP_RANGE_ARRAY = [null, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
 const SHOP_DEADLINE_DATE_ARRAY = [...Array(3)].map((_, i) => ({ title: $t('days_before', i + 1), value: i + 1 }))
 const SHOP_DEADLINE_TIME_ARRAY = makeTimeArray(6, 72)
 const SHOP_TIME_ARRAY = [null, ...makeTimeArray(6, 73)]
@@ -98,6 +98,36 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => shop.value?.shop_url_twitter,
+  (url) => {
+    if (url?.startsWith('https://x.com/') ?? false) {
+      shop.value.shop_url_twitter = url.replace('https://x.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => shop.value?.shop_url_facebook,
+  (url) => {
+    if (url?.startsWith('https://www.facebook.com/') ?? false) {
+      shop.value.shop_url_facebook = url.replace('https://www.facebook.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => shop.value?.shop_url_instagram,
+  (url) => {
+    if (url?.startsWith('https://www.instagram.com/') ?? false) {
+      shop.value.shop_url_instagram = url.replace('https://www.instagram.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
 const submit = async () => {
   isSaving.value = true
   try {
@@ -116,7 +146,7 @@ const submit = async () => {
   <v-form v-model="isValid" @submit.prevent="submit">
     <v-row class="justify-center">
       <v-col cols="12" sm="12" md="9" class="px-0">
-        <v-card class="mt-2" flat>
+        <v-card class="mb-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiStorefrontOutline" />
             <span>{{ $t('shop.info') }}</span>
@@ -168,12 +198,12 @@ const submit = async () => {
             />
           </v-card-text>
           <v-card-text>
-            <v-text-field
+            <v-textarea
               v-model="shop.shop_description"
               outlined
               dense
               :label="$t('shop.description')"
-              :rules="[requiredValidator, (v) => maxLengthValidator(v, 300)]"
+              :rules="[requiredValidator, (v: string) => maxLengthValidator(v, 300)]"
             />
           </v-card-text>
           <v-card-text>
@@ -213,7 +243,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiFileImageOutline" />
             <span>{{ $t('shop.image') }}</span>
@@ -232,7 +262,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card v-if="validatedPostalCode != null" class="mt-2" flat>
+        <v-card v-if="validatedPostalCode != null" class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiEarth" />
             <span>{{ $t('shop.base_point') }}</span>
@@ -251,7 +281,7 @@ const submit = async () => {
             <div v-html="$t('shop.base_point_hint', [validatedPostalCode])"></div>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiBicycle" />
             <span>{{ $t('shop.range_min_orders') }}</span>
@@ -259,21 +289,62 @@ const submit = async () => {
           <v-card-text v-for="i in 5" :key="`range_${i}`">
             <v-row v-if="shop.shop_range_min_orders[i - 1]">
               <v-col cols="6">
+                <!-- TODO v-select の items を動的に切り替える UI がここに適しているかは再検討の必要あり -->
                 <v-select
                   v-model="shop.shop_range_min_orders[i - 1].range"
-                  :items="SHOP_RANGE_ARRAY"
+                  :items="
+                    SHOP_RANGE_ARRAY.filter((v) => {
+                      if (v == null) {
+                        return (
+                          shop.shop_range_min_orders[i]?.range == null &&
+                          shop.shop_range_min_orders[i]?.min_orders == null
+                        )
+                      }
+                      return (
+                        v > (shop.shop_range_min_orders[i - 2]?.range ?? 0) &&
+                        v < (shop.shop_range_min_orders[i]?.range ?? Number.MAX_SAFE_INTEGER)
+                      )
+                    })
+                  "
                   outlined
                   dense
                   :label="$t('shop.range')"
+                  :disabled="
+                    i !== 1 &&
+                    (shop.shop_range_min_orders[i - 2]?.range == null ||
+                      shop.shop_range_min_orders[i - 2].range == 30 ||
+                      shop.shop_range_min_orders[i - 2]?.min_orders == null ||
+                      shop.shop_range_min_orders[i - 2].min_orders == 15)
+                  "
                 />
               </v-col>
               <v-col cols="6">
                 <v-select
                   v-model="shop.shop_range_min_orders[i - 1].min_orders"
-                  :items="SHOP_MIN_ORDERS_ARRAY"
+                  :items="
+                    SHOP_MIN_ORDERS_ARRAY.filter((v) => {
+                      if (v == null) {
+                        return (
+                          shop.shop_range_min_orders[i]?.range == null &&
+                          shop.shop_range_min_orders[i]?.min_orders == null
+                        )
+                      }
+                      return (
+                        v > (shop.shop_range_min_orders[i - 2]?.min_orders ?? 0) &&
+                        v < (shop.shop_range_min_orders[i]?.min_orders ?? Number.MAX_SAFE_INTEGER)
+                      )
+                    })
+                  "
                   outlined
                   dense
                   :label="$t('shop.min_orders')"
+                  :disabled="
+                    i !== 1 &&
+                    (shop.shop_range_min_orders[i - 2]?.range == null ||
+                      shop.shop_range_min_orders[i - 2].range == 30 ||
+                      shop.shop_range_min_orders[i - 2]?.min_orders == null ||
+                      shop.shop_range_min_orders[i - 2].min_orders == 15)
+                  "
                 />
               </v-col>
             </v-row>
@@ -285,7 +356,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiClockOutline" />
             <span>{{ $t('shop.time') }}</span>
@@ -344,7 +415,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiClockFast" />
             <span>{{ $t('shop.deadline_datetime') }}</span>
@@ -376,7 +447,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiEmailMultipleOutline" />
             <span>{{ $t('shop.email_sub') }}</span>
@@ -400,7 +471,7 @@ const submit = async () => {
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
         </v-card>
-        <v-card class="mt-2" flat>
+        <v-card class="my-10" flat>
           <template v-slot:title>
             <v-icon size="40" class="text--primary me-3" :icon="mdiStorefrontOutline" />
             <span>{{ $t('shop.is_open') }}</span>

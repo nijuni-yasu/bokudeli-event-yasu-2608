@@ -65,7 +65,7 @@ const getCommunity = async () =>
       communitiesStore.communityDraft.community_postalcode = shop.shop_postcode
       communitiesStore.communityDraft.community_address = shop.shop_address
       communitiesStore.communityDraft.community_phone = shop.shop_phone
-      communitiesStore.communityDraft.community_email = shop.shop_email
+      communitiesStore.communityDraft.community_email = ''
       communitiesStore.communityDraft.is_approved = true
       resolve(communitiesStore.communityDraft)
     } else {
@@ -95,6 +95,36 @@ watch(
     }
     community.value = await getCommunity()
   },
+)
+
+watch(
+  () => community.value?.community_sns_twitter,
+  (url) => {
+    if (url?.startsWith('https://x.com/') ?? false) {
+      community.value.community_sns_twitter = url.replace('https://x.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => community.value?.community_sns_facebook,
+  (url) => {
+    if (url?.startsWith('https://www.facebook.com/') ?? false) {
+      community.value.community_sns_facebook = url.replace('https://www.facebook.com/', '')
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => community.value?.community_sns_instagram,
+  (url) => {
+    if (url?.startsWith('https://www.instagram.com/') ?? false) {
+      community.value.community_sns_instagram = url.replace('https://www.instagram.com/', '')
+    }
+  },
+  { immediate: true },
 )
 
 const newCommunityDialog = ref(!communityExists.value)
@@ -216,7 +246,9 @@ onUnmounted(() => {
       <template #actions>
         <v-spacer></v-spacer>
         <v-btn @click="createConfirmDialog = false">{{ $t('cancel') }}</v-btn>
-        <v-btn @click="submit(), (createConfirmDialog = false)">{{ $t('submit') }}</v-btn>
+        <v-btn @click="submit(), (createConfirmDialog = false)">
+          {{ $t('community.create_confirm_dialog.submit') }}
+        </v-btn>
       </template>
     </v-card>
   </v-dialog>

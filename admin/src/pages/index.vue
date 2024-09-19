@@ -5,7 +5,7 @@ import { mdiHeartOutline, mdiCheckOutline } from '@mdi/js'
 <template>
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
-      <v-card flat class="mt-2">
+      <v-card flat class="mb-10">
         <template v-slot:title>
           <v-icon size="40" class="text--primary me-3" :icon="mdiHeartOutline" />
           <span>{{ $t('home.title1') }}</span>
@@ -14,7 +14,7 @@ import { mdiHeartOutline, mdiCheckOutline } from '@mdi/js'
           <div v-html="$t('home.message1')"></div>
         </template>
       </v-card>
-      <v-card flat class="mt-2">
+      <v-card flat class="mb-10">
         <template v-slot:title>
           <v-icon size="40" class="text--primary me-3" :icon="mdiCheckOutline" />
           <span>{{ $t('home.title2') }}</span>

@@ -48,7 +48,7 @@ const price = computed({
           v-model="menu.description"
           outlined
           :label="$t('menu_edit_card.description')"
-          :rules="[(v) => maxLengthValidator(v, 140)]"
+          :rules="[(v: string) => maxLengthValidator(v, 140)]"
         />
       </v-card-text>
       <v-card-text>
@@ -69,7 +69,7 @@ const price = computed({
               :prefix="$n(0, 'currency').replace('0', '')"
               v-model.number="price"
               :label="$t('menu_edit_card.price')"
-              :rules="[requiredValidator, (v) => betweenValidator(v, 100, 99999)]"
+              :rules="[requiredValidator, (v: string) => betweenValidator(v, 100, 99999)]"
             />
           </v-col>
         </v-row>
@@ -88,6 +88,7 @@ const price = computed({
       <v-card-text>
         <v-switch
           v-model="menu.isSoldout"
+          color="#FF0000"
           :label="`${menu.isSoldout ? $t('menu_edit_card.sold_out') : $t('menu_edit_card.in_stock')}`"
         />
       </v-card-text>

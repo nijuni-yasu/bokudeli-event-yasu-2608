@@ -77,7 +77,7 @@ example.price = 800
 
 <template>
   <v-row class="justify-center">
-    <v-col cols="12" sm="12" md="9" class="px-0">
+    <v-col cols="12" sm="12" md="12" class="px-0">
       <v-row>
         <v-col v-for="(menu, i) of menus" :key="`item_${i}`" cols="12" sm="6" md="4" lg="3">
           <MenuCard class="menu-card clickable" :menu="menu" @click="openDialog(menu)">

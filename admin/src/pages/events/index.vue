@@ -8,6 +8,9 @@ import type { Shop } from '@/schemes/shop'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
+import {
+  mdiPencilBoxOutline
+} from '@mdi/js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -79,7 +82,7 @@ const fab = () => {
 
 <template>
   <v-row class="justify-center">
-    <v-col cols="12" sm="12" md="9" class="px-0">
+    <v-col cols="12" sm="12" md="12" class="px-0">
       <v-row>
         <v-col v-for="({ event, members }, i) of events" :key="`item_${i}`" cols="12" sm="6" md="4" lg="3">
           <router-link v-if="event != null" :to="{ path: '/events/create', query: { id: event.event_id } }">
@@ -99,7 +102,7 @@ const fab = () => {
       </v-row>
     </v-col>
   </v-row>
-  <v-btn class="fab" size="large" @click="fab">{{ $t('event.new') }}</v-btn>
+  <v-btn class="fab" size="x-large" elevation="12" :prepend-icon="mdiPencilBoxOutline" @click="fab">{{ $t('event.new') }}</v-btn>
 </template>
 
 <style scoped lang="scss">
@@ -112,6 +115,6 @@ const fab = () => {
 .fab {
   position: fixed;
   bottom: 80px;
-  right: 80px;
+  right: 30px;
 }
 </style>
