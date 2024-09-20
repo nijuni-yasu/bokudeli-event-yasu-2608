@@ -19,7 +19,7 @@ export default {
     'menu': 'メニュー設定',
     'order': '注文一覧',
     'manual': '店舗マニュアル',
-    'community': 'コミュニティ設定',
+    'community': '店舗主催設定',
     'event': '店舗主催イベント',
   },
   'forgot_password_dialog': {
@@ -187,6 +187,10 @@ export default {
     'added': 'コミュニティを作成しました。',
     'saved': 'コミュニティ情報を更新しました',
     'error': 'エラーが発生しました',
+  },
+  // Overwrite the default message
+  'community_edit': {
+    'title': '店舗主催設定（コミュニティ設定)'
   },
   'event': {
     'user_event_page': 'イベントページ',
