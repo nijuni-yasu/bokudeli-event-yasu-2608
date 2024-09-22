@@ -76,6 +76,9 @@ const memberCommunities = computed(() =>
     if (communityStore.community == null) {
       return []
     }
+    if (!isOwner.value && !communityStore.community.is_public) {
+      return []
+    }
     return communityStore.members?.some((member) => member?.user_id === userId)
       ? {
           community: communityStore.community,
@@ -88,6 +91,9 @@ const memberCommunities = computed(() =>
 const managerCommunities = computed(() =>
   (communitiesStore.communityStores ?? []).flatMap((communityStore) => {
     if (communityStore.community == null) {
+      return []
+    }
+    if (!isOwner.value && !communityStore.community.is_public) {
       return []
     }
     return communityStore.members?.some((member) => member?.user_id === userId && member?.roles?.includes('manager'))
