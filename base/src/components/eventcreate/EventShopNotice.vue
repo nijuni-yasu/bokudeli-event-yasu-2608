@@ -137,7 +137,8 @@ const submit = () => {
               class="mt-3"
               size="large"
               :prepend-icon="mdiCalendarPlus"
-              :disabled="!isValid || isSubmitting"
+              :disabled="!isValid"
+              :loading="isSubmitting"
               @click="submit"
               >下書きをプレビューする</v-btn
             >
@@ -147,7 +148,8 @@ const submit = () => {
               class="mt-3"
               size="large"
               :prepend-icon="mdiCalendarPlus"
-              :disabled="!isValid || isSubmitting"
+              :disabled="!isValid"
+              :loading="isSubmitting"
               @click="submit"
               >イベントを保存する</v-btn
             >
