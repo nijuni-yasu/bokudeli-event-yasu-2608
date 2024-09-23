@@ -46,7 +46,7 @@ const isShowCanceled = computed(() => props.order.status === 'canceled')
       }}
     </v-card-text>
     <v-card-text class="pa-3">{{ $t('user_event_card.event_address', [event.event_address]) }}</v-card-text>
-    <v-card-text class="pa-3">{{ $t('user_event_card.shop_name', event.shop_name) }}</v-card-text>
+    <v-card-text class="pa-3">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
     <v-card-text class="pa-3">
       {{ $t('user_event_card.menu') }}
       <template v-for="menu in order.menus" :key="menu.menu_id" class="pl-4 pa-0 pb-0 mb-0">
