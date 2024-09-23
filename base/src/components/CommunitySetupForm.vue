@@ -257,11 +257,11 @@ const hashTag = computed({
       </v-card-text>
 
       <!-- Activity -->
-      <v-card-title v-if="communityAccount != null" class="pt-10 px-5">
+      <v-card-title class="pt-10 px-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiLightbulbOnOutline" />
         <span>公開設定</span>
       </v-card-title>
-      <v-card-text v-if="communityAccount != null">
+      <v-card-text>
         <v-switch v-model="community.is_public" hide-details class="mt-0">
           <template #label>
             <span v-if="community.is_public">公開コミュニティ</span>
