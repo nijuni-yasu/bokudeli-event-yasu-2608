@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { FirestoredUser } from '@/schemes/storedUser'
 import _ from 'lodash'
+import SnsTextField from './SnsTextField.vue'
 
 interface Props {
   modelValue: boolean
@@ -21,32 +22,6 @@ const userImage = ref<File | undefined>(undefined)
 const dialog = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
-})
-
-const trimInputtedId = (id: string | null, urlPattern: RegExp) => {
-  if (!id) return ''
-  const trimmedId = id.trim().replace(/\/+$/, '').replace(urlPattern, '')
-  return trimmedId.endsWith('/') ? trimmedId.slice(0, -1) : trimmedId
-}
-const twitterId = computed({
-  get: () => userDataDraft.value.user_sns_twitter,
-  set: (val) => {
-    userDataDraft.value.user_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?(x|twitter)\.com\//)
-  },
-})
-
-const facebookId = computed({
-  get: () => userDataDraft.value.user_sns_facebook,
-  set: (val) => {
-    userDataDraft.value.user_sns_facebook = trimInputtedId(val, /^https:\/\/www\.facebook\.com\//)
-  },
-})
-
-const instagramId = computed({
-  get: () => userDataDraft.value.user_sns_instagram,
-  set: (val) => {
-    userDataDraft.value.user_sns_instagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
-  },
 })
 
 const readImageFiles = (files: File | File[]) => {
@@ -88,26 +63,20 @@ const onFormReset = () => {
               <v-text-field v-model="userDataDraft.user_name" label="ユーザー名" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field
-                v-model="twitterId"
-                label="X（旧Twitter）"
-                prefix="@"
-                hint="Xのユーザー名を入力してください（例：shokujii_jp）"
-              />
+              <SnsTextField v-model="userDataDraft.user_sns_twitter" label="X（旧Twitter）" prefix="https://x.com/" />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field
-                v-model="facebookId"
+              <SnsTextField
+                v-model="userDataDraft.user_sns_facebook"
                 label="Facebook"
-                hint="Facebookユーザー名を入力してください（URLの末尾部分、例：shokujii_jp）"
+                prefix="https://www.facebook.com/"
               />
             </v-col>
             <v-col cols="12" md="12">
-              <v-text-field
-                v-model="instagramId"
+              <SnsTextField
+                v-model="userDataDraft.user_sns_instagram"
                 label="Instagram"
-                prefix="@"
-                hint="Instagramユーザー名を入力してください（例：shokujii_jp）"
+                prefix="https://www.instagram.com/"
               />
             </v-col>
             <v-col cols="12" md="12">

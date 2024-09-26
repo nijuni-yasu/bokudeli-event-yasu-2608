@@ -12,6 +12,7 @@ import {
   mdiLightbulbOnOutline,
   mdiAccountOutline,
 } from '@mdi/js'
+import SnsTextField from './SnsTextField.vue'
 
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
@@ -50,12 +51,6 @@ const checkAccountExists = async (event: Event) => {
   }
 }
 
-const trimInputtedId = (id: string | undefined, urlPattern: RegExp) => {
-  if (!id) return ''
-  const trimmedId = id.trim().replace(/\/+$/, '').replace(urlPattern, '')
-  return trimmedId.endsWith('/') ? trimmedId.slice(0, -1) : trimmedId
-}
-
 const trimHashTag = (hashTag: string | undefined) => {
   if (!hashTag) return ''
   return hashTag.trim().replace(/^#/, '')
@@ -65,21 +60,21 @@ const twitterId = computed({
   get: () => community.value?.community_sns_twitter,
   set: (val) => {
     if (community.value == null) return
-    community.value.community_sns_twitter = trimInputtedId(val, /^https:\/\/(mobile.)?(x|twitter)\.com\//)
+    community.value.community_sns_twitter = val
   },
 })
 const facebookId = computed({
   get: () => community.value?.community_sns_facebook,
   set: (val) => {
     if (community.value == null) return
-    community.value.community_sns_facebook = trimInputtedId(val, /^https:\/\/www\.facebook\.com\//)
+    community.value.community_sns_facebook = val
   },
 })
 const instagramId = computed({
   get: () => community.value?.community_sns_instagram,
   set: (val) => {
     if (community.value == null) return
-    community.value.community_sns_instagram = trimInputtedId(val, /^https:\/\/www\.instagram\.com\//)
+    community.value.community_sns_instagram = val
   },
 })
 
@@ -202,13 +197,7 @@ const hashTag = computed({
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
-              v-model="facebookId"
-              outlined
-              dense
-              label="facebook"
-              prefix="https://www.facebook.com/"
-            ></v-text-field>
+            <SnsTextField v-model="facebookId" outlined dense label="facebook" prefix="https://www.facebook.com/" />
           </v-col>
         </v-row>
       </v-card-text>
@@ -216,7 +205,7 @@ const hashTag = computed({
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field v-model="twitterId" outlined dense label="X(Twitter)" prefix="https://x.com/"></v-text-field>
+            <SnsTextField v-model="twitterId" outlined dense label="X(Twitter)" prefix="https://x.com/" />
           </v-col>
         </v-row>
       </v-card-text>
@@ -224,13 +213,7 @@ const hashTag = computed({
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
-              v-model="instagramId"
-              outlined
-              dense
-              label="Instagram"
-              prefix="https://www.instagram.com/"
-            ></v-text-field>
+            <SnsTextField v-model="instagramId" outlined dense label="Instagram" prefix="https://www.instagram.com/" />
           </v-col>
         </v-row>
       </v-card-text>
