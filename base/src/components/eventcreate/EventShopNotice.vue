@@ -38,6 +38,12 @@ const openConfirmDialog = () => {
 const sendReserveMail = () => {
   emit('sendReserveMail')
 }
+
+const isSubmitting = ref(false)
+const submit = () => {
+  isSubmitting.value = true
+  emit('submit')
+}
 </script>
 
 <template>
@@ -132,7 +138,8 @@ const sendReserveMail = () => {
               size="large"
               :prepend-icon="mdiCalendarPlus"
               :disabled="!isValid"
-              @click="emit('submit')"
+              :loading="isSubmitting"
+              @click="submit"
               >下書きをプレビューする</v-btn
             >
             <v-btn
@@ -142,7 +149,8 @@ const sendReserveMail = () => {
               size="large"
               :prepend-icon="mdiCalendarPlus"
               :disabled="!isValid"
-              @click="emit('submit')"
+              :loading="isSubmitting"
+              @click="submit"
               >イベントを保存する</v-btn
             >
           </v-card-text>
