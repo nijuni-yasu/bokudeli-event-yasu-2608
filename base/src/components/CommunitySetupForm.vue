@@ -257,14 +257,21 @@ const hashTag = computed({
       </v-card-text>
 
       <!-- Activity -->
-      <v-card-title v-if="communityAccount != null" class="pt-10 px-5">
+      <v-card-title class="pt-10 px-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiLightbulbOnOutline" />
         <span>公開設定</span>
       </v-card-title>
-      <v-card-text v-if="communityAccount != null">
+      <v-card-text>
         <v-switch v-model="community.is_public" hide-details class="mt-0">
-          <template #label> 公開コミュニティ </template>
+          <template #label>
+            <span v-if="community.is_public">公開コミュニティ</span>
+            <span v-else>限定公開コミュニティ</span>
+          </template>
         </v-switch>
+        <div>
+          <span v-if="community.is_public">※「公開コミュニティ」はコミュニティ一覧ページに表示されます。</span>
+          <span v-else>※「限定公開コミュニティ」はコミュニティ一覧ページに表示されず、URLを知る人だけが閲覧できます。</span>
+        </div>
       </v-card-text>
       <v-card-title class="pt-10 pl-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiAccountOutline" />
