@@ -6,6 +6,7 @@ import { where, orderBy, Timestamp } from 'firebase/firestore'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
+import { mdiCrownOutline, mdiCalendarHeart, mdiCalendarCheck } from '@mdi/js'
 
 const display = useDisplay()
 
@@ -109,7 +110,12 @@ const next = () => {
       </a>
       <v-row class="mb-2">
         <template v-if="popularEvents.length > 0">
-          <v-col cols="12" class="text-h5"> {{ $t('top.popular_events') }} </v-col>
+          <v-col cols="12" class="text-h4 mt-8 ml-2">
+            <v-row align="center">
+              <v-icon size="40" :icon="mdiCrownOutline" class="mr-1"/>
+              <span>{{ $t('top.popular_events') }}</span>
+            </v-row>
+          </v-col>
           <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
           <v-col
             v-for="{ event, members } in popularEvents"
@@ -123,9 +129,13 @@ const next = () => {
               <EventCard class="event-card" :event="event" :members="members" />
             </router-link>
           </v-col>
-          <v-divider :thickness="6" />
         </template>
-        <v-col cols="12" class="text-h5"> {{ $t('top.upcoming_events') }} </v-col>
+        <v-col cols="12" class="text-h4 mt-10 ml-2">
+          <v-row align="center">
+            <v-icon size="40" :icon="mdiCalendarHeart" class="mr-1"/>
+            <span>{{ $t('top.upcoming_events') }}</span>
+          </v-row>
+        </v-col>
         <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
         <v-col
           v-for="{ event, members } in upcomingEvents"
@@ -142,8 +152,12 @@ const next = () => {
         <template
           v-if="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
         >
-          <v-divider :thickness="6" />
-          <v-col cols="12" class="text-h5"> {{ $t('top.past_events') }} </v-col>
+          <v-col cols="12" class="text-h4 mt-10 ml-2">
+            <v-row align="center">
+              <v-icon size="40" :icon="mdiCalendarCheck" class="mr-1"/>
+              <span>{{ $t('top.past_events') }}</span>
+            </v-row>
+          </v-col>
           <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
           <v-col v-for="{ event, members } in pastEvents" :key="event.event_id" md="4" sm="6" cols="12" class="content">
             <router-link :to="getEventPath(event.community_account, event.event_id)">

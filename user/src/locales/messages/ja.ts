@@ -10,7 +10,7 @@ export default {
   },
   'top': {
     'popular_events': '人気のイベント',
-    'upcoming_events': '開催予定のイベント',
+    'upcoming_events': '参加受付中のイベント',
     'past_events': '終了したイベント',
   },
   'user': {
