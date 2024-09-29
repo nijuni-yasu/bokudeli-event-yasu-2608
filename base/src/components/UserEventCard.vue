@@ -9,6 +9,7 @@ const props = defineProps<{
 }>()
 
 defineEmits<{
+  downloadInvoice: [order: OrderItem]
   cancel: [order: OrderItem]
 }>()
 
@@ -23,6 +24,9 @@ const isShowCancelButton = computed(
     props.event.event_deadline_datetime?.seconds > Date.now() / 1000,
 )
 const isShowCanceled = computed(() => props.order.status === 'canceled')
+const isShowInvoiceButton = computed(
+  () => props.order.status === 'ordered' && props.event.event_payment !== 'community_bill',
+)
 </script>
 
 <template>
@@ -63,6 +67,13 @@ const isShowCanceled = computed(() => props.order.status === 'canceled')
           </v-btn>
         </v-col>
         <v-col v-else-if="isShowCanceled" class="d-flex justify-end">{{ $t('user_event_card.canceled') }} </v-col>
+      </v-row>
+      <v-row v-if="isOwner && isShowInvoiceButton">
+        <v-col class="d-flex justify-end">
+          <v-btn variant="outlined" color="secondary" size="x-small" @click.prevent="$emit('downloadInvoice', order)">
+            {{ $t('user_event_card.download_invoice') }}
+          </v-btn>
+        </v-col>
       </v-row>
     </v-card-text>
   </v-card>

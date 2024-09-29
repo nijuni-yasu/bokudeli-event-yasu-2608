@@ -56,6 +56,7 @@ const shopConverter = {
       shop_email_sub2: shop.shop_email_sub2,
       shop_email_sub3: shop.shop_email_sub3,
       community_account: shop.community_account ?? null,
+      shop_invoice_number: shop.shop_invoice_number ?? null,
     }
   },
   fromFirestore: (snapshot: DocumentSnapshot, options: SnapshotOptions) => {
@@ -92,6 +93,7 @@ const shopConverter = {
       data.shop_email_sub2,
       data.shop_email_sub3,
       data.community_account,
+      data.shop_invoice_number,
     )
   },
 }
