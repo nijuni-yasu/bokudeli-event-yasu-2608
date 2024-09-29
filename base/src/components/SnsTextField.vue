@@ -12,7 +12,7 @@ watch(
       return
     }
     if (v.startsWith(props.prefix)) {
-      model.value = v.replace(props.prefix, '')
+      v = v.replace(props.prefix, '')
     }
     model.value = v.replace(/\/?(\?.+)*$/, '')
   },
