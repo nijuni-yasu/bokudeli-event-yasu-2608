@@ -2,7 +2,7 @@
 import { where, orderBy } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@/stores/partner'
-import { useEventsStore, type EventsStore } from '@/stores/event'
+import { useEventListStore } from '@/stores/eventList'
 import { getCommunityPath, getShopPath } from '@/navigation/utils'
 import type { Shop } from '@/schemes/shop'
 import EventCard from '@/components/EventCard.vue'
@@ -59,14 +59,14 @@ const numOfColumns = computed(() => {
   }
 })
 
-const eventsStore = useEventsStore(
+const eventListStore = useEventListStore(
   [where('community_account', '==', shop.community_account), orderBy('event_start_datetime', 'desc')],
   numOfColumns.value,
-) as EventsStore
+)
 
 const events = computed(
   () =>
-    eventsStore.eventStores?.flatMap((s) => {
+    eventListStore.eventStores?.flatMap((s) => {
       if (s.event == null) {
         return []
       } else {
@@ -94,9 +94,9 @@ const fab = () => {
         <v-col cols="12" class="text-center">
           <IncrementalLoader
             class="my-5"
-            :total-count="eventsStore.totalCount ?? 0"
-            :loaded-count="eventsStore.eventStores?.length ?? 0"
-            @load="eventsStore.next()"
+            :total-count="eventListStore.totalCount ?? 0"
+            :loaded-count="eventListStore.eventStores?.length ?? 0"
+            @load="eventListStore.next()"
           />
         </v-col>
       </v-row>

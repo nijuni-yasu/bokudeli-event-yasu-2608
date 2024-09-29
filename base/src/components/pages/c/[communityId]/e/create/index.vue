@@ -14,7 +14,8 @@ import {
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type Shop } from '@/schemes/shop'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
-import { useEventsStore, useEventStore, type EventsStore, type EventStore } from '@/stores/event'
+import { useEventStore, type EventStore } from '@/stores/event'
+import { useEventListStore } from '@/stores/eventList'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { useRouter, useRoute } from 'vue-router'
 import { getEventPath, getCommunityPath } from '@/router/utils'
@@ -37,7 +38,7 @@ const eventId = ref(route.query.id as string | null)
 
 const isValid4 = ref(false)
 
-const eventsStore = useEventsStore() as EventsStore
+const eventListStore = useEventListStore()
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
 const isOpenContactDialogVisible = ref(true)
@@ -48,7 +49,7 @@ const event = computed<BokudeliEvent | null>({
       const eventStore = useEventStore(eventId.value) as EventStore
       return eventStore.event
     } else {
-      return eventsStore.eventDraft
+      return eventListStore.eventDraft
     }
   },
   set: (value) => {
@@ -59,7 +60,7 @@ const event = computed<BokudeliEvent | null>({
       const eventStore = useEventStore(eventId.value) as EventStore
       eventStore.event = value
     } else {
-      eventsStore.eventDraft = value
+      eventListStore.eventDraft = value
     }
   },
 })
@@ -185,7 +186,7 @@ watch(
       isUpdatedStartTime.value = true
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 onMounted(async () => {
@@ -211,12 +212,12 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   if (eventId.value == null) {
     // 新規作成
     event.value.community_id = communityId
-    const newEvent = await eventsStore.createNewEventFromDraft(communityId)
+    const newEvent = await eventListStore.createNewEventFromDraft(communityId)
     const eventStore = useEventStore(newEvent.event_id) as EventStore
     if (coverImage.value != null) {
       await eventStore.updateCoverImage(coverImage.value)
     }
-    eventsStore.eventDraft = new BokudeliEvent()
+    eventListStore.eventDraft = new BokudeliEvent()
     // 現在の仕様だと直後にページ遷移するので、eventId を更新する必要はないが、今後のために残しておく
     eventId.value = newEvent.event_id
     return newEvent

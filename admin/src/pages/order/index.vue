@@ -1,24 +1,24 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { mdiTruckOutline } from '@mdi/js'
-import { useEventsStore, type EventsStore } from '@/stores/event'
+import { useEventListStore } from '@/stores/eventList'
 import { orderBy, where } from 'firebase/firestore'
 import { ordersCount, ordersTotalPrice } from '@/utils/orders'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { getOrderDetailPath } from '@/navigation/utils'
 
-const eventsStore = useEventsStore(
+const eventListStore = useEventListStore(
   [
     where('partner_id', '==', getAuth().currentUser?.uid),
     where('event_status.value', '!=', 'in_draft'),
     orderBy('event_start_datetime', 'asc'),
   ],
   10,
-) as EventsStore
+)
 
 const events = computed(
   () =>
-    eventsStore.eventStores?.flatMap((eventStore) =>
+    eventListStore.eventStores?.flatMap((eventStore) =>
       eventStore.event != null ? { event: eventStore.event, orders: eventStore.orders ?? [] } : [],
     ) ?? [],
 )
@@ -68,9 +68,9 @@ const events = computed(
               <tr>
                 <td colspan="8" class="text-center">
                   <IncrementalLoader
-                    :total-count="eventsStore.totalCount ?? 0"
-                    :loaded-count="eventsStore.eventStores?.length ?? 0"
-                    @load="eventsStore.next()"
+                    :total-count="eventListStore.totalCount ?? 0"
+                    :loaded-count="eventListStore.eventStores?.length ?? 0"
+                    @load="eventListStore.next()"
                   />
                 </td>
               </tr>

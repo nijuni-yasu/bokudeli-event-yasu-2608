@@ -1,7 +1,6 @@
 import { type Ref } from 'vue'
 import _ from 'lodash'
 import { db } from '@/firebase'
-import { getAuth } from 'firebase/auth'
 import {
   collection,
   doc,
@@ -13,15 +12,8 @@ import {
   onSnapshot,
   Timestamp,
   DocumentSnapshot,
-  setDoc,
-  getCountFromServer,
-  QueryDocumentSnapshot,
-  startAfter,
-  limit,
-  type DocumentData,
   type DocumentReference,
   type Unsubscribe,
-  type QueryConstraint,
 } from 'firebase/firestore'
 import { convertDocumentDataToCommunity } from '@/schemes/converter'
 import type { StateTree, Store } from 'pinia'
@@ -33,7 +25,6 @@ import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { uploadCommunityImage } from '@/composable/uploadImage'
-import { TaskExecutor } from '@/utils/executors'
 
 class CommunityRefUpdatedEvent extends Event {
   constructor(
@@ -337,134 +328,4 @@ const useCommunityMemberStore = (communityId: string, memberId: string) => {
     }
   })
   return store()
-}
-
-const pagenationExecutor = new TaskExecutor(1)
-
-type CommunitiesStoreState = {
-  // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
-  // パフォーマンスにも影響する設定なので、ここではあえて外に出す
-  filters: Ref<QueryConstraint[] | null>
-  communityDraft: Ref<BokudeliCommunity>
-  totalCount: Ref<number | null>
-} & StateTree
-
-type CommunitiesStoreGetters = {
-  communityStores: Ref<CommunityStore[] | null>
-}
-
-type CommunitiesStoreAction = {
-  reload: () => void
-  next: () => void
-  setPageSize: (size: number | null) => void
-  getCommunityData: (communityAccount: string) => Promise<DocumentData | null>
-  createNewCommunityFromDraft: () => Promise<BokudeliCommunity>
-}
-
-export type CommunitiesStore = Store<string, CommunitiesStoreState, CommunitiesStoreGetters, CommunitiesStoreAction>
-
-export const useCommunitiesStore = (filters: QueryConstraint[] | null = null) => {
-  const store = defineStore<string, CommunitiesStoreState & CommunitiesStoreGetters & CommunitiesStoreAction>(
-    '/communities',
-    () => {
-      let pageSize: number | null = 5
-      const communityStores = ref<CommunityStore[] | null>(null)
-      const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
-      const filters = ref<QueryConstraint[] | null>(null)
-      const totalCount = ref<number | null>(null)
-
-      const communitiesSnapshot: QueryDocumentSnapshot[] = []
-
-      const setPageSize = (size: number | null) => {
-        pageSize = size
-      }
-
-      const next = () => {
-        if (pagenationExecutor.totalTaskLength > 0) {
-          return
-        }
-        pagenationExecutor.addTask(async () => {
-          if (totalCount.value == null) {
-            const q = query(collection(db, 'communities'), ...(filters.value ?? []))
-            totalCount.value = (await getCountFromServer(q)).data().count
-          }
-          const lastVisibleDocument = communitiesSnapshot[communitiesSnapshot.length - 1]
-          const q = query(
-            collection(db, 'communities'),
-            ...(filters.value ?? []),
-            ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-            ...(pageSize == null ? [] : [limit(pageSize)]),
-          )
-          const querySnapshot = await getDocs(q)
-          communitiesSnapshot.push(...querySnapshot.docs)
-          window.setTimeout(() => {
-            communityStores.value = communitiesSnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
-          })
-        })
-      }
-
-      const reload = () => {
-        console.info('CommunitiesStore reload')
-        communitiesSnapshot.splice(0) // clear
-        communityStores.value = null
-        totalCount.value = null
-        next()
-      }
-
-      watch(filters, reload)
-      const getCommunityData = async (communityAccount: string): Promise<DocumentData | null> => {
-        const duplicatedCommunity = await getDocs(
-          query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
-        )
-        if (duplicatedCommunity.empty) {
-          return null
-        } else {
-          return duplicatedCommunity.docs[0].data()
-        }
-      }
-
-      const createNewCommunityFromDraft = async () => {
-        const c = await getCommunityData(communityDraft.value.community_account)
-        if (c != null) {
-          throw new Error(`community ${communityDraft.value.community_account} already exists`)
-        }
-        const userId = getAuth().currentUser?.uid
-        if (userId == null) {
-          throw new Error('user is not logged in')
-        }
-        const newCommunityRef = doc(collection(db, 'communities'))
-        await setDoc(newCommunityRef, {
-          ...communityDraft.value.convertToDocumentData(),
-          community_id: newCommunityRef.id,
-          created_at: Timestamp.now(),
-          updated_at: Timestamp.now(),
-        })
-        await setDoc(doc(newCommunityRef, 'members', userId), {
-          roles: ['manager'],
-          created_at: Timestamp.now(),
-          updated_at: Timestamp.now(),
-        })
-        return convertDocumentDataToCommunity((await getDoc(newCommunityRef)).data() as DocumentData)
-      }
-
-      return {
-        filters,
-        totalCount,
-        communityDraft,
-        communityStores,
-        reload,
-        next,
-        setPageSize,
-        getCommunityData,
-        createNewCommunityFromDraft,
-        $reset: () => {
-          communityDraft.value = new BokudeliCommunity()
-          filters.value = null
-        },
-      }
-    },
-  )
-  const instance = store()
-  instance.filters = filters
-  return instance
 }

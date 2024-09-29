@@ -2,9 +2,10 @@
 /**
  * Deprecated
  * Use `src/components/CommunityEdit.vue` instead
-  */
+ */
 import { getCommunityPath } from '@/router/utils'
-import { useCommunityStore, useCommunitiesStore, type CommunityStore, type CommunitiesStore } from '@/stores/community'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { useCommunityListStore } from '@/stores/communityList'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -18,7 +19,7 @@ const communityAccount = ref<string | null>(route.query.id as string | null)
 const isOpenConfirmDialog = ref(false)
 const isOpenNewCommunityDialog = ref(false)
 
-const communitiesStore = useCommunitiesStore() as CommunitiesStore
+const communityListStore = useCommunityListStore()
 
 const community = computed<BokudeliCommunity | null>({
   get: () => {
@@ -26,7 +27,7 @@ const community = computed<BokudeliCommunity | null>({
       const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
       return communityStore.community
     } else {
-      return communitiesStore.communityDraft
+      return communityListStore.communityDraft
     }
   },
   set: (value) => {
@@ -37,7 +38,7 @@ const community = computed<BokudeliCommunity | null>({
       const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
       communityStore.community = value
     } else {
-      communitiesStore.communityDraft = value
+      communityListStore.communityDraft = value
     }
   },
 })
@@ -61,7 +62,7 @@ onUnmounted(() => {
     const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
     communityStore.$reset()
   } else {
-    communitiesStore.$reset()
+    communityListStore.$reset()
   }
 })
 
@@ -94,7 +95,7 @@ const submit = async () => {
     }
     window.alert('コミュニティ情報を更新しました')
   } else {
-    const community = await communitiesStore.createNewCommunityFromDraft()
+    const community = await communityListStore.createNewCommunityFromDraft()
     communityAccount.value = community.community_account
     const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
     if (coverImageFile.value != null) {
@@ -104,8 +105,8 @@ const submit = async () => {
       await communityStore.updateIconImage(iconImageFile.value)
     }
     window.alert('コミュニティ新規作成メールを送信しました。承認されるのをお待ちください。')
-    // communityAccount を設定したので、communitiesStore.$reset() は onUnmounted 内で実行されないことに注意
-    communitiesStore.$reset()
+    // communityAccount を設定したので、communityListStore.$reset() は onUnmounted 内で実行されないことに注意
+    communityListStore.$reset()
   }
   router.push(getCommunityPath(communityAccount.value))
 }
@@ -128,7 +129,7 @@ const cancel = () => {
           v-model:cover-image-file="coverImageFile"
           v-model:icon-image-file="iconImageFile"
           :community-account="communityAccount"
-          :communities-store="communitiesStore"
+          :communityListStore="communityListStore"
           @openNewCommunityDialog="isOpenNewCommunityDialog = true"
           @openConfirmDialog="isOpenConfirmDialog = true"
           @submit="submit"

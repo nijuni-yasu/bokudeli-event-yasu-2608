@@ -8,6 +8,11 @@ export default {
     'community': 'コミュニティ',
     'about': 'shokujiiって？'
   },
+  'top': {
+    'popular_events': '人気のイベント',
+    'upcoming_events': '参加受付中のイベント',
+    'past_events': '終了したイベント',
+  },
   'user': {
     'order_list': '参加イベント',
     'member_community_list': '参加コミュニティ',

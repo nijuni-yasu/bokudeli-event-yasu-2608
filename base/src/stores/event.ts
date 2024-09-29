@@ -6,23 +6,16 @@ import {
   collection,
   collectionGroup,
   getDocs,
-  getDoc,
   addDoc,
   setDoc,
   updateDoc,
   query,
   where,
-  limit,
-  startAfter,
   onSnapshot,
   Timestamp,
   DocumentReference,
   DocumentSnapshot,
-  getCountFromServer,
-  type QueryDocumentSnapshot,
-  type DocumentData,
   type Unsubscribe,
-  type QueryConstraint,
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
 import { convertDocumentDataToEvent } from '@/schemes/converter'
@@ -30,7 +23,6 @@ import type { Store, StateTree } from 'pinia'
 import { type OrderItem } from '@/schemes/orderItem'
 import { type EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
-import { TaskExecutor } from '@/utils/executors'
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -284,113 +276,4 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
     },
   )
   return store()
-}
-
-const pagenationExecutor = new TaskExecutor(1)
-
-type EventsStoreState = {
-  // Firestore の仕様が外に漏れるのは良い実装とは言えないが、
-  // パフォーマンスにも影響する設定なので、ここではあえて外に出す
-  filters: Ref<QueryConstraint[] | null>
-  eventDraft: Ref<BokudeliEvent>
-  totalCount: Ref<number | null>
-} & StateTree
-
-type EventsStoreGetters = {
-  eventStores: Ref<EventStore[] | null>
-}
-
-type EventsStoreAction = {
-  reload: () => void
-  next: () => void
-  setPageSize: (size: number) => void
-  createNewEventFromDraft: (communityId: string) => Promise<BokudeliEvent>
-}
-
-export type EventsStore = Store<'/events', EventsStoreState, EventsStoreGetters, EventsStoreAction>
-
-export const useEventsStore = (filters: QueryConstraint[] | null = null, pageSize: number = 3) => {
-  const store = defineStore<string, EventsStoreState & EventsStoreGetters & EventsStoreAction>('/events', () => {
-    const eventStores = ref<EventStore[] | null>(null)
-    const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
-    const filters = ref<QueryConstraint[] | null>(null)
-    const totalCount = ref<number | null>(null)
-
-    const eventsSnapsthot: QueryDocumentSnapshot[] = []
-
-    const setPageSize = (size: number) => {
-      pageSize = size
-    }
-
-    const next = () => {
-      if (pagenationExecutor.totalTaskLength > 0) {
-        return
-      }
-      pagenationExecutor.addTask(async () => {
-        if (totalCount.value == null) {
-          const q = query(collectionGroup(db, 'events'), ...(filters.value ?? []))
-          totalCount.value = (await getCountFromServer(q)).data().count
-        }
-        const lastVisibleDocument = eventsSnapsthot[eventsSnapsthot.length - 1]
-        const q = query(
-          collectionGroup(db, 'events'),
-          ...(filters.value ?? []),
-          ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-          limit(pageSize),
-        )
-        const querySnapshot = await getDocs(q)
-        eventsSnapsthot.push(...querySnapshot.docs)
-        window.setTimeout(() => {
-          eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
-        })
-      })
-    }
-
-    const reload = () => {
-      console.info('EvntsStore reload')
-      eventsSnapsthot.splice(0) // clear
-      eventStores.value = null
-      totalCount.value = null
-      next()
-    }
-
-    watch(filters, reload)
-
-    const createNewEventFromDraft = async (community_id: string): Promise<BokudeliEvent> => {
-      const communityRef = doc(db, 'communities', community_id)
-      const community = await getDoc(communityRef)
-      if (!community.exists()) {
-        throw new Error(`community ${community_id} does not exists`)
-      }
-      const newEventRef = doc(collection(communityRef, 'events'))
-      await setDoc(newEventRef, {
-        ...eventDraft.value.convertToDocumentData(),
-        event_id: newEventRef.id,
-        community_id,
-        community_name: community.get('community_name'),
-        community_account: community.get('community_account'),
-        created_at: Timestamp.now(),
-        updated_at: Timestamp.now(),
-      })
-      return convertDocumentDataToEvent((await getDoc(newEventRef)).data() as DocumentData)
-    }
-
-    return {
-      filters,
-      totalCount,
-      eventStores,
-      eventDraft,
-      reload,
-      next,
-      setPageSize,
-      createNewEventFromDraft,
-      $reset: () => {
-        eventDraft.value = new BokudeliEvent()
-        filters.value = null
-      },
-    }
-  })
-  const instance = store()
-  instance.filters = filters
-  return instance
 }

@@ -2,8 +2,9 @@
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@/stores/partner'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useEventsStore, type EventsStore, useEventStore, type EventStore } from '@/stores/event'
 import { getCommunityPath, getShopPath, getUserEventUrl } from '@/navigation/utils'
+import { useEventStore, type EventStore } from '@/stores/event'
+import { useEventListStore } from '@/stores/eventList'
 import type { Shop } from '@/schemes/shop'
 import EventDetailCard from '@/components/eventcreate/EventDetailCard.vue'
 import EventBasicInfoCard from '@/components/eventcreate/EventBasicInfoCard.vue'
@@ -20,7 +21,7 @@ const { t: $t } = useI18n()
 
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
-const eventsStore = useEventsStore() as EventsStore
+const eventListStore = useEventListStore()
 
 const shop = await new Promise<Shop | null>((resolve) => {
   watch(
@@ -83,7 +84,7 @@ if (route.query.id != null) {
     )
   })
 } else {
-  _event = eventsStore.eventDraft
+  _event = eventListStore.eventDraft
   _event.community_account = communityAccount
   _event.community_id = communityId
   _event.community_name = communityName
@@ -139,7 +140,7 @@ const submit = async (apply: boolean) => {
       }
       Object.assign(notification, { message: $t('event.updated'), color: 'success' })
     } else {
-      const newEvent = await eventsStore.createNewEventFromDraft(communityId)
+      const newEvent = await eventListStore.createNewEventFromDraft(communityId)
       const eventStore = useEventStore(newEvent.event_id) as EventStore
       if (coverImage.value != null) {
         await eventStore.updateCoverImage(coverImage.value)
@@ -156,7 +157,7 @@ const submit = async (apply: boolean) => {
 }
 
 onUnmounted(() => {
-  eventsStore.$reset()
+  eventListStore.$reset()
 })
 </script>
 
