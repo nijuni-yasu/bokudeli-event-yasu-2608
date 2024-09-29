@@ -702,8 +702,8 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
   const notifyTime = 24 * 60 * 60 * 1000 // 1日
   const events = await db
     .collectionGroup('events')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start - notifyTime))
-    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end - notifyTime))
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start + notifyTime))
+    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end + notifyTime))
     .where('event_status.value', '==', 'accepting_order')
     .get()
 
@@ -717,9 +717,9 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
             const orderData = orderSnapshot.data()
             const userSnapshot = await db.collection('users').doc(orderData.user_id).get()
             return sgMail.send(buildInCartNotificationMail(eventSnapshot, userSnapshot.data()))
-          }),
+          })
       )
-    }),
+    })
   )
 }
 
@@ -733,7 +733,7 @@ function buildInCartNotificationMail(eventSnapshot, userData) {
       date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
       event_datetime: convertToDuration(
         convertToJapan(eventData.event_start_datetime?.toMillis()),
-        convertToJapan(eventData.event_end_datetime?.toMillis()),
+        convertToJapan(eventData.event_end_datetime?.toMillis())
       ),
       event_name: eventData.event_name,
       event_cover_url: eventData.event_cover_url,
