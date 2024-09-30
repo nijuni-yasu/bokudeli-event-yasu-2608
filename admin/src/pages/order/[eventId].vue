@@ -45,7 +45,7 @@ const submit = async () => {
                   'order_detail.event_date',
                   eventStore.event.event_start_datetime != null
                     ? [
-                        $d(eventStore.event.event_start_datetime.toMillis() - 30 * 60 * 1000, 'datetime'),
+                        $d(eventStore.event.event_start_datetime.toMillis() - 30 * 60 * 1000, 'datetime_weekday_short'),
                         $d(eventStore.event.event_start_datetime.toMillis(), 'time'),
                       ]
                     : [],
@@ -57,7 +57,7 @@ const submit = async () => {
                 $t(
                   'order_detail.order_limit',
                   eventStore.event.event_deadline_datetime != null
-                    ? [$d(eventStore.event.event_deadline_datetime.toDate(), 'datetime')]
+                    ? [$d(eventStore.event.event_deadline_datetime.toDate(), 'datetime_weekday_short')]
                     : [],
                 )
               }}
