@@ -3,10 +3,43 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { mdiTruckOutline } from '@mdi/js'
 import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@/utils/orders'
 import { useValidators } from '@/composable/validators'
+import { getAuth } from 'firebase/auth'
+import { usePartnerStore } from '@/stores/partner'
+import type { Shop } from '@/schemes/shop'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
 
 const eventId = useRoute().params.eventId as string
-
 const eventStore = useEventStore(eventId) as EventStore
+const partnerId = getAuth().currentUser!.uid
+const partnerStore = usePartnerStore(partnerId)
+
+const [event, shop] = await Promise.all([
+  new Promise<BokudeliEvent>((resolve) => {
+    watch(
+      () => eventStore.event,
+      (event) => {
+        if (event != null) {
+          resolve(event)
+          stop()
+        }
+      },
+      { immediate: true },
+    )
+  }),
+  new Promise<Shop>((resolve) => {
+    watch(
+      () => partnerStore.shops,
+      (shops) => {
+        if (shops != null && shops.length !== 0) {
+          resolve(shops[0])
+          stop()
+        }
+      },
+      { immediate: true },
+    )
+  }),
+])
+
 const { requiredValidator } = useValidators()
 
 const isValid = ref(false)
@@ -14,16 +47,16 @@ const radio01 = ref(0)
 const text01 = ref('')
 
 const submit = async () => {
-  const event = eventStore.event
-  if (event == null) {
-    return
-  }
   event.event_status = {
     value: radio01.value === 0 ? 'accepting_order' : 'in_draft',
     shop_comment: text01.value,
   }
   await eventStore.updateEvent(event)
 }
+
+const isOwner = computed(() => {
+  return event.community_account === shop.community_account
+})
 </script>
 
 <template>
@@ -64,12 +97,14 @@ const submit = async () => {
             </p>
             <p>{{ $t('order_detail.event_address', [eventStore.event.event_address]) }}</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
-            <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
-            <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>
-            <p>{{ $t('order_detail.organizer_phone_personal', [eventStore.event.organizer_phone_personal]) }}</p>
-            <p>{{ $t('order_detail.organizer_phone_company', [eventStore.event.organizer_phone_company]) }}</p>
-            <p>{{ $t('order_detail.organizer_email', [eventStore.event.organizer_email]) }}</p>
-            <p>{{ $t('order_detail.organizer_memo', [eventStore.event.organizer_memo]) }}</p>
+            <template v-if="!isOwner">
+              <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
+              <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>
+              <p>{{ $t('order_detail.organizer_phone_personal', [eventStore.event.organizer_phone_personal]) }}</p>
+              <p>{{ $t('order_detail.organizer_phone_company', [eventStore.event.organizer_phone_company]) }}</p>
+              <p>{{ $t('order_detail.organizer_email', [eventStore.event.organizer_email]) }}</p>
+              <p>{{ $t('order_detail.organizer_memo', [eventStore.event.organizer_memo]) }}</p>
+            </template>
           </div>
         </v-card-text>
         <template v-if="eventStore.event.event_status.value == 'applying_reservation'">
