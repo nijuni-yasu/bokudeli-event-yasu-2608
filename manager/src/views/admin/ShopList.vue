@@ -83,7 +83,10 @@
               {{ item.shop_email_sub2 }}<br>
               {{ item.shop_email_sub3 }}
             </td>
-            <td>{{ item.shop_deadline_date }} {{ item.shop_deadline_time }}</td>
+            <td>
+              {{ item.shop_deadline_datetime.days_before }}日前<br>
+              {{ item.shop_deadlineTime }}<br>
+            </td>
             <td  class="px-1 table1">
               <div v-if="item.shop_range_min_orders[0].range">
                 [設定1] {{ item.shop_range_min_orders[0].range }}km  {{ item.shop_range_min_orders[0].min_orders }}個<br>
@@ -171,7 +174,11 @@
       const self = this
       db.collectionGroup('shops').orderBy('createdAt','desc').get().then((snapshot) => {
         snapshot.forEach((doc) => {
-          self.shops.push(doc.data())
+          const shopData = doc.data()
+          let h = Math.floor(doc.data().shop_deadline_datetime.time/3600000) + 9
+          let m = Math.floor(doc.data().shop_deadline_datetime.time/60000 % 60)
+          shopData.shop_deadlineTime = h + ':' + ( '00' + m ).slice( -2 )
+          self.shops.push(shopData)
         })
       })
     },
