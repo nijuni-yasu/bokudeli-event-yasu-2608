@@ -53,7 +53,7 @@
       links: [
         {
           href: 'https://shokujii.jp/',
-          text: '食事でつながるshokujii',
+          text: '食事でつながる「shokujii」',
         },
         {
           href: 'http://nijuni.jp/',

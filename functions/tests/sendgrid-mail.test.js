@@ -62,7 +62,7 @@ describe('event_information のテスト', () => {
 
     // assert
     const expected = {
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       templateId: 'd-32df61e4ef334bf4a3a6071096679864',
       asm: {
         groupId: 25345,
@@ -129,7 +129,7 @@ describe('event_information のテスト', () => {
 
     // assert
     const expected = {
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       to: 'support+to@nijuni.jp',
       templateId: 'd-32df61e4ef334bf4a3a6071096679864',
       asm: {
@@ -180,7 +180,7 @@ describe('event_information のテスト', () => {
     expect(sgMail.send).toHaveBeenCalledOnce()
     expect(sgMail.send).toHaveBeenCalled({
       to: 'support+to@nijuni.jp',
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       subject: '【プレビュー】明日のイベント情報について',
       text: '明日送信予定のイベント予定はありません',
     })
@@ -203,7 +203,7 @@ describe('community_added のテスト', () => {
     expect(sgMail.send).toHaveBeenCalledOnce()
     expect(sgMail.send).toHaveBeenCalledWith({
       to: 'support+to@nijuni.jp',
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       subject: '「ぼくデリ」コミュニティが新規申請されました',
       text:
         '【ID】 5oxesNeS5dO078qABR98\n' +
@@ -250,7 +250,7 @@ describe('polling のテスト', async () => {
     expect(sgMail.send).toHaveBeenCalledTimes(1)
     expect(sgMail.send).toHaveBeenCalledWith({
       to: ['main@mail.com', 'sub1@mail.com', 'sub2@mail.com', 'sub3@mail.com'],
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       cc: 'support+cc@nijuni.jp',
       templateId: 'd-8609b6a7b1514595ae68d18532331e0e',
       dynamic_template_data: {
@@ -296,7 +296,7 @@ describe('polling のテスト', async () => {
 
     const expectForShop = {
       to: ['main@mail.com', 'sub1@mail.com', 'sub2@mail.com', 'sub3@mail.com'],
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       cc: 'support+cc@nijuni.jp',
       templateId: 'd-8609b6a7b1514595ae68d18532331e0e',
       dynamic_template_data: {
@@ -333,7 +333,7 @@ describe('polling のテスト', async () => {
       },
     }
     const expectForMember = {
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       templateId: 'd-2fea06c315a240d2becd864b54f38098',
       dynamic_template_data: {
         date: '2024/01/18 (木)',
@@ -363,7 +363,7 @@ describe('polling のテスト', async () => {
     })
 
     const expectForMember = {
-      from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
       templateId: 'd-6ad8131506164c2f864155182c63de2d',
       dynamic_template_data: {
         date: '2024/01/28 (日)',
@@ -412,7 +412,7 @@ describe('on_order_changed のテスト', () => {
       .toHaveBeenCalledTimes(1)
       .toHaveBeenCalledWith({
         to: 'ichiro@test.com',
-        from: '食事でつながるshokujii<shokujii@nijuni.jp>',
+        from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
         templateId: 'd-b94849438f2642a29973670f3d79809f',
         dynamic_template_data: {
           date: '2024/01/29 (月)',
