@@ -33,16 +33,28 @@ export default {
                  変わらぬご愛顧をいただきますようお願いいたします。</p>
                  <p><a href="https://shokujii.jp" target="_blank">shokujii公式サイト</a><br />
                  <a href="https://about.shokujii.jp" target="_blank">shokujiiって？</a></p>`,
-    'title2': '店舗公開 TODOリスト',
+    'title2': 'TODOリスト',
     'todo_list': [
-      ['STEP.0', '<a href="https://bit.ly/4bFRS0E" target="_blank">店舗マニュアル</a> を一読し「設定方法」や「注文受付」「配送」の流れをチェック👀✅'],
-      ['STEP.1', '<a href="/shop">店舗設定画面</a> で「店舗情報」「最小注文個数」「配送距離」「営業曜日・時間」「お届け時間」「メールアドレス」などを入力して、店舗設定をしてください✍'],
-      ['STEP.2', '<a href="/menu">メニュー設定画面</a> で「メニュー名称」「メニュー説明文」「メニュー価格」「メニュー画像」を入力して追加🍔🍛🍜'],
-      ['STEP.3', `店舗設定 と メニュー設定 が完了したら「開店設定」で「開店」に設定してください。<br />
-                「開店設定」にしていただくと、サポートチームにメールにて通知が入ります。<br />
-                内容確認後、公開完了！お客さまからのご注文をお待ちください。`],
-      ['', `ご不明点などありましたらメールにてお気軽にご連絡ください👍<br />
-           （メールアドレス : support@nijuni.jp ）`]
+      ['STEP①', '<a href="https://bit.ly/4bFRS0E" target="_blank">店舗マニュアル</a> を一読し「設定方法」や「注文受付」「配送」の流れをチェック📗'],
+      ['STEP②', '<a href="https://form.run/@shokujii-entry" target="blank">店舗掲載申し込みフォーム</a> にて「飲食店営業許可証」や「銀行口座」などを入力して送信💻'],
+      ['STEP③', '<a href="/shop">店舗設定画面</a> で「店舗情報」「注文最小個数」「配送距離」「営業曜日・時間」「注文締切日時」「メールアドレス」などを入力して、店舗設定をしてください💻'],
+      ['STEP④', '<a href="/menu">メニュー設定画面</a> で「メニュー名」「メニュー説明文」「メニュー価格」「メニュー画像」を入力して追加🍱'],
+      ['STEP⑤', `全ての設定 が完了したら <a href="/shop">店舗設定画面</a> の「開店設定」にて「開店」にしてください。<br />
+                サポートチームにて内容の確認ができ次第、公開完了🎉 主催者さまからのご予約をお待ちください。`],
+      ['STEP⑥', `ランチ会や食事会の主催者さまから予約申請メールが届いたら <a href="/order">注文一覧画面</a> にて内容を確認。<br />
+                「予約承認」もしくは「予約却下」を選択してメールを送信📩`],
+      ['STEP⑦', `「注文締切日時」になりましたら、注文個数や内容が確定！<br />
+                デリバリーやテイクアウトにて、お客様に商品をお届けください 🚲 🛵 🚚💨<br />
+                お弁当箱への「お名前」と「メニュー名」の記載もお忘れなく🍱✍`],
+      ['連絡先', `ご不明点などありましたらメールや電話にて、サポートチームまでお気軽にご連絡ください。<br />
+           📩 メールアドレス : support@nijuni.jp<br />
+           📞 電話番号 : 050-1721-5838`],
+      ['SNS', `SNSも更新中！ぜひフォローしてください💬<br />
+      <a href="https://x.com/shokujii_jp" target="blank">X(旧Twitter)</a>　
+      <a href="https://www.instagram.com/shokujii_jp/" target="blank">Instagram</a>　
+      <a href="https://www.facebook.com/shokujii" target="blank">Facebook</a>　
+      <a href="https://note.com/shokujii" target="blank">note</a>
+      `]
     ]
   },
   'shop': {

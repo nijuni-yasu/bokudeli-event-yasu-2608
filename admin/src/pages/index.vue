@@ -22,7 +22,7 @@ import { mdiHeartOutline, mdiCheckOutline } from '@mdi/js'
         <template v-slot:text>
           <v-table>
             <tbody>
-              <tr v-for="(step, i) of $tm('home.todo_list')" :key="`todo_${i}`">
+              <tr v-for="(step, i) of $tm('home.todo_list')" :key="`todo_${i}`" height="80px">
                 <td v-html="step[0]"></td>
                 <td v-html="step[1]"></td>
               </tr>
