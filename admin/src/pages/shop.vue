@@ -498,6 +498,7 @@ const submit = async () => {
           <v-card-text>
             <v-switch v-model="hasInvoice" :label="`${hasInvoice ? $t('shop.has_invoice') : $t('shop.no_invoice')}`" />
             <v-text-field
+              class="mt-3"
               :key="hasInvoice ? 'hasInvoice' : 'noInvoice'"
               v-model="shop.shop_invoice_number"
               outlined
