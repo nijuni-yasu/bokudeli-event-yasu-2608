@@ -29,7 +29,7 @@ export default {
   'home': {
     'title1': 'shokujiiについて',
     'message1': `<p>コミュニティフードデリバリー「ぼくデリ」は、<b>食事でつながる「shokujii」</b>に生まれ変わりました。<br />
-                <b>「孤食を減らし、団欒を増やす」</b>をミッションに掲げ、人と人を食事でつないでいくサービスづくりに、邁進してまいります。<br />
+                <b>「孤食を減らし、団欒を増やす」</b>をミッションに掲げ、人と人を食事でつなぐサービスづくりに、邁進してまいります。<br />
                  変わらぬご愛顧をいただきますようお願いいたします。</p>
                  <p><a href="https://shokujii.jp" target="_blank">shokujii公式サイト</a><br />
                  <a href="https://about.shokujii.jp" target="_blank">shokujiiって？</a></p>`,
