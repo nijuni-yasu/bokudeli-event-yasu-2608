@@ -123,7 +123,19 @@ const isOwner = computed(() => {
               />
             </v-card-text>
             <v-card-actions>
-              <v-btn type="submit" block :disabled="!isValid">{{ $t('order_detail.send_email') }}</v-btn>
+              <v-col class="text-center">
+                <v-btn
+                  class="px-3"
+                  size="large"
+                  type="submit"
+                  variant="outlined"
+                  color="primary"
+                  rounded="pill"
+                  :disabled="!isValid"
+                >
+                  {{ $t('order_detail.send_email') }}
+                </v-btn>
+              </v-col>
             </v-card-actions>
           </v-form>
         </template>
