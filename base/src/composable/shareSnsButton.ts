@@ -22,17 +22,12 @@ const getCommunityHashTag = (community: BokudeliCommunity) => {
   return community.community_name.replace(/[^a-zA-Z0-9_\u3040-\u30FF\u4E00-\u9FFF]/g, '')
 }
 
-const getShopHashTag = (shop: Shop) => {
-  return shop.shop_name.replace(/[^a-zA-Z0-9_\u3040-\u30FF\u4E00-\u9FFF]/g, '')
-}
-
 const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''
   const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
   const shopText = shop.shop_name + (shop.shop_url_twitter ? ` @${shop.shop_url_twitter}` : '')
 
   const communityHashTag = '#' + getCommunityHashTag(community)
-  const shopHashTag = '#' + getShopHashTag(shop)
 
   const textList = [
     `🌟${event.event_name}`,
@@ -40,33 +35,29 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
     `👥${communityText}`,
     `🍱${shopText}`,
     '',
-    `${communityHashTag}`,
-    `${shopHashTag}`,
-    `#shokujii`,
+    '👇参加はコチラから👇',
+    `${event.url}`,
     '',
-    '👇参加はこちらから👇',
+    `${communityHashTag} #shokujii`,
   ]
   return `${textList.join('\n')}`
 }
 
 const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityHashTag = '#' + getCommunityHashTag(community)
-  const shopHashTag = '#' + getShopHashTag(shop)
 
   const textList = [
     `🌟${event.event_name}`,
-    `👥${event.community_name}`,
     `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
-    `⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}ﾏﾃﾞ注文OK`,
+    `⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}に注文締切`,
     `📍${event.event_address}`,
+    `👥${event.community_name}`,
     `🍱${shop.shop_name}`,
     '',
-    `${communityHashTag}`,
-    `${shopHashTag}`,
-    `#shokujii`,
-    '',
-    '👇参加はこちらから👇',
+    '👇参加はコチラから👇',
     `${event.url}?openExternalBrowser=1`,
+    '',
+    `${communityHashTag} #shokujii`,
   ]
   return `${textList.join('\n')}`
 }
@@ -86,7 +77,7 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent | nul
   if (snsType === 'twitter') {
     const baseUrl = 'https://twitter.com/intent/tweet'
     const text = encodeURIComponent(getXPostText(event, community, shop))
-    const openUrl = `${baseUrl}?text=${text}&url=${eventUrl}`
+    const openUrl = `${baseUrl}?text=${text}`
     window.open(openUrl, '_blank', 'width=800,height=500')
   } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
