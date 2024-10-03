@@ -70,7 +70,7 @@ const makeMetaTags = (context) => `<meta property="og:title" content="${context.
 <meta property="og:description" content="${context.description}">
 <meta property="og:url" content="${context.url}">
 <meta property="og:type" content="article">
-<meta property="og:site_name" content="食事でつながるshokujii">
+<meta property="og:site_name" content="食事でつながる「shokujii」">
 <meta name="twitter:site" content="${context.site}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${context.title}">
