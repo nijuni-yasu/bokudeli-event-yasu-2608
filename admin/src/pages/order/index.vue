@@ -48,12 +48,16 @@ const events = computed(
                     </router-link>
                   </td>
                   <td>
-                    {{ event.event_start_datetime != null ? $d(event.event_start_datetime.toDate(), 'datetime') : '' }}
+                    {{
+                      event.event_start_datetime != null
+                        ? $d(event.event_start_datetime.toDate(), 'datetime_weekday_short')
+                        : ''
+                    }}
                   </td>
                   <td>
                     {{
                       event?.event_deadline_datetime != null
-                        ? $d(event.event_deadline_datetime.toDate(), 'datetime')
+                        ? $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short')
                         : ''
                     }}
                   </td>
