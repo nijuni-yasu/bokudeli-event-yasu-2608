@@ -12,9 +12,11 @@ watch(
       return
     }
     if (v.startsWith(props.prefix)) {
-      v = v.replace(props.prefix, '')
+      model.value = v.replace(props.prefix, '')
     }
-    model.value = v.replace(/\/?(\?.+)*$/, '')
+    // query は facebook 等で必要なケースがあるので、削除しない
+    // https://github.com/nijuniinc/bokudeli-event-new/pull/511#issuecomment-2391223765
+    // model.value = v.replace(/\/?(\?.+)*$/, '')
   },
   { immediate: true },
 )
