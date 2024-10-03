@@ -7,43 +7,43 @@
 </script>
 
 <template>
-  <div class="mt-15 mb-10 text-center">
+  <div class="mt-15 mb-5 text-center">
     <div class="my-2 text-center">
-      <span class="align-center my-5 text-h6">
-      ＼FOLLOW US／
+      <span class="align-center text-h5">
+        💚 FOLLOW US 💚
       </span>
     </div>
     <table align="center" style="margin: auto;">
         <tr>
           <td style="padding: 0 10px;">
             <a href="https://x.com/shokujii_jp" target="_blank">
-              <img :src="X" alt="X" style="width: 50px; height: 50px; border-radius: 20%;">
+              <img :src="X" alt="X" style="width: 45px; height: 45px; border-radius: 20%;">
             </a>
           </td>
           <td style="padding: 0 10px;">
             <a href="https://facebook.com/shokujii" target="_blank">
-              <img :src="facebook" alt="Facebook" style="width: 50px; height: 50px; border-radius: 20%;">
+              <img :src="facebook" alt="Facebook" style="width: 45px; height: 45px; border-radius: 20%;">
             </a>
           </td>
           <td style="padding: 0 10px;">
             <a href="https://instagram.com/shokujii_jp" target="_blank">
-              <img :src="instagram" alt="Instagram" style="width: 50px; height: 50px; border-radius: 20%;">
+              <img :src="instagram" alt="Instagram" style="width: 45px; height: 45px; border-radius: 20%;">
             </a>
           </td>
           <td style="padding: 0 10px;">
             <a href="https://note.com/shokujii/" target="_blank">
-              <img :src="note" alt="note" style="width: 50px; height: 50px; border-radius: 20%;">
+              <img :src="note" alt="note" style="width: 45px; height: 45px; border-radius: 20%;">
             </a>
           </td>
           <td style="padding: 0 10px;">
             <a href="https://lin.ee/0FEi1kbV/" target="_blank">
-              <img :src="line" alt="LINE" style="width: 50px; height: 50px; border-radius: 20%;">
+              <img :src="line" alt="LINE" style="width: 45px; height: 45px; border-radius: 20%;">
             </a>
           </td>
         </tr>
     </table>
   </div>
-  <div class="my-2 text-center">
+  <div class="my-5 text-center">
     <span class="align-center">
       <a href="https://shokujii.studio.site/" target="_blank" rel="noopener noreferrer" class="footer-text">
         shokujiiって？
@@ -101,8 +101,8 @@
       <a href="https://nijuni.jp/" target="_blank" rel="noopener noreferrer" class="footer-text"> 運営会社 </a>
     </span>
   </div>
-  <div class="text-center footer-text" style="font-size:9px;">令和２年度補正ものづくり補助金により作成</div>
-  <div class="mb-3 text-center">
+  <div class="text-center" style="font-size:9px;">令和２年度補正ものづくり補助金により作成</div>
+  <div class="mb-3 text-center" style="font-size:16px;">
     &copy;
     {{ new Date().getFullYear() }}
     nijuni inc.
