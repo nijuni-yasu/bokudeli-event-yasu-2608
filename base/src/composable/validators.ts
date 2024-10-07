@@ -79,7 +79,7 @@ export const useValidators = () => {
       return true
     }
     return (
-      /^[\w!#$%&'*+/=?`{|}~^-]+(\.[\w!#$%&'*+/=?`{|}~^-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,6}$/.test(value as string) ||
+      /^[\w!#$%&'*+/=?`{|}~^-]+(\.[\w!#$%&'*+/=?`{|}~^-]+)*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/.test(value as string) ||
       $t('validator.email')
     )
   }
