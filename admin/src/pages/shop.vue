@@ -505,7 +505,7 @@ const submit = async () => {
               dense
               :disabled="!hasInvoice"
               :label="$t('invoice_number')"
-              :rules="[invoiceValidatorJapan]"
+              :rules="[invoiceValidatorJapan, hasInvoice ? requiredValidator : null]"
             />
           </v-card-text>
           <v-card-text>
