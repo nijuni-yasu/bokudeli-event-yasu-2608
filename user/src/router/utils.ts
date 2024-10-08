@@ -15,3 +15,4 @@ export const getEventCreatePath = (communityAccount: string) => `/c/${communityA
 export const getUserPath = (userId: string) => `/u/${userId}`
 export const getInvoicePath = () => `/invoice`
 export const getManagePath = () => `/manage`
+export const getManageEventListPath = (communityAccount: string) => `/manage/community/${communityAccount}`

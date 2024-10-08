@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import NewEvent from '@/components/pages/newevent.vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+router.push('/manage/community')
 </script>
-
-<template>
-  <NewEvent />
-</template>

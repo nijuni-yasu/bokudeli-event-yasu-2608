@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// Deprecated
 import { db } from '@/firebase'
 import { doc, orderBy, where } from 'firebase/firestore'
 import { getCommunityCreatePath } from '@/router/utils'

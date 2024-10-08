@@ -25,4 +25,7 @@ export default {
     'canceled': 'キャンセルしました',
     'cancel_failed': 'キャンセルに失敗しました',
   },
+  'manage': {
+    'new_community': 'コミュニティ作成',
+  }
 }
