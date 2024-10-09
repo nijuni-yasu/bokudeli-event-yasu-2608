@@ -4,6 +4,7 @@ import { useValidators } from '@/composable/validators'
 import ImageInput from '@/components/ImageInput.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { mdiListBoxOutline, mdiImage, mdiWeb, mdiLightbulbOnOutline, mdiAccountOutline } from '@mdi/js'
+import SnsTextField from './SnsTextField.vue'
 
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
@@ -147,13 +148,13 @@ const checkAccountExists = async (value: string) => {
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
+            <SnsTextField
               v-model="community.community_sns_facebook"
               outlined
               dense
               :label="$t('community_edit.facebook')"
               prefix="https://www.facebook.com/"
-            ></v-text-field>
+            />
           </v-col>
         </v-row>
       </v-card-text>
@@ -161,13 +162,13 @@ const checkAccountExists = async (value: string) => {
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
+            <SnsTextField
               v-model="community.community_sns_twitter"
               outlined
               dense
               :label="$t('community_edit.twitter')"
               prefix="https://x.com/"
-            ></v-text-field>
+            />
           </v-col>
         </v-row>
       </v-card-text>
@@ -175,13 +176,13 @@ const checkAccountExists = async (value: string) => {
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
+            <SnsTextField
               v-model="community.community_sns_instagram"
               outlined
               dense
               :label="$t('community_edit.instagram')"
               prefix="https://www.instagram.com/"
-            ></v-text-field>
+            />
           </v-col>
         </v-row>
       </v-card-text>
