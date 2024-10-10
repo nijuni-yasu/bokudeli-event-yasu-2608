@@ -6,6 +6,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiCalendarPlus, mdiLogout, mdiYoutube } from '@mdi/js'
 import LineIcon from '@/icons/line'
+import { getManagePath } from '@/router/utils'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -70,7 +71,7 @@ const logout = async () => {
           <v-divider v-if="isLogin" class="my-2" />
 
           <!-- 👉 cart -->
-          <v-list-item v-if="isLogin" :to="`/newevent`">
+          <v-list-item v-if="isLogin" :to="getManagePath()">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
             </template>
