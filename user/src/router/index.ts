@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   FacebookAuthProvider,
   GoogleAuthProvider,
+  type Unsubscribe,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -100,6 +101,26 @@ export const setupRouter = (router: Router) => {
       await waitAdminAuthentication()
     } catch {
       // Do nothing
+    }
+  })
+
+  let unsubscribeAuthStateChanged: Unsubscribe | null
+  router.beforeEach((to) => {
+    unsubscribeAuthStateChanged?.()
+    const paths = to.path.split('/')
+    if (paths[1] === 'manage') {
+      if (getAuth().currentUser?.uid == null) {
+        return {
+          path: '/login',
+          query: { redirect: to.fullPath, ...to.query },
+        }
+      } else {
+        unsubscribeAuthStateChanged = onAuthStateChanged(getAuth(), (user) => {
+          if (user == null) {
+            router.push('/login')
+          }
+        })
+      }
     }
   })
 
