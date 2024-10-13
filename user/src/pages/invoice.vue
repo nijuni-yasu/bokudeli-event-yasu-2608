@@ -1,28 +1,17 @@
 <script setup lang="ts">
-import Invoice from '@/components/Invoice.vue'
-
-const route = useRoute()
-
-// ネストされたディレクトリだと layout: blank 指定が効かないので、ルートディレクトリに配置し、
-// query で eventId と orderId を受け取る
+// ネストされたディレクトリだと layout: blank 指定が効かないので、ルートディレクトリに配置。
 // TODO 要調査: ネストされたディレクトリで layout: blank が効かない理由
-const eventId = route.query.eventId as string
-const orderId = route.query.orderId as string
-
-const onGenerated = (pdf: Blob) => {
-  // https://stackoverflow.com/questions/74128322/using-window-open-in-an-async-function-in-firefox-and-safari
-  // この問題で window.open が使えないので、代わりに window.location.href を使う
-  window.location.href = window.URL.createObjectURL(pdf)
-}
-
-const onError = (err: Error) => {
-  console.error(err)
-  window.close()
-}
+//
+// ここで window.location.href により PDF を表示する予定だったが、
+// このページを離れると Blob が garbage collection の対象になるため、PDF のダウンロードが出来ない。
+// https://stackoverflow.com/a/44780122
+// そのため、このページではローディング画面のみを表示する。
 </script>
 
 <template>
-  <Invoice :eventId="eventId" :orderId="orderId" @generated="onGenerated" @error="onError" />
+  <div class="loading">
+    <v-progress-circular indeterminate color="primary" />
+  </div>
 </template>
 
 <route lang="yaml">

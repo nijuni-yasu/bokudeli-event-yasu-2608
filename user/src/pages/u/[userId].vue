@@ -20,6 +20,7 @@ import { fixCancelOrder } from '@/composable/fixOrder'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getCommunityCreatePath, getEventCreatePath, getCommunitySettingsPath } from '@/router/utils'
+import { getInvoicePdf } from '@/utils/invoice'
 
 const route = useRoute()
 const router = useRouter()
@@ -133,8 +134,10 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const downloadInvoice = (order: OrderItem) => {
-  window.open(getInvoicePath(order.event_id, order.order_id), '_blank')
+const downloadInvoice = async (order: OrderItem) => {
+  const w = window.open(getInvoicePath(), '_blank')
+  const pdf = await getInvoicePdf(order.event_id, order.order_id)
+  w!.location.href = window.URL.createObjectURL(pdf)
 }
 </script>
 
