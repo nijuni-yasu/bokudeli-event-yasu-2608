@@ -92,7 +92,7 @@ export const shareSnsButton = async (snsType: string, event: BokudeliEvent | nul
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        alert('詳細をコピーしました')
+        alert('クリップボードにコピーしました')
       })
       .catch((err) => {
         console.error('コピー失敗: ', err)
