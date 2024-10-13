@@ -19,6 +19,7 @@ import { httpsCallable } from 'firebase/functions'
 import { fixCancelOrder } from '@/composable/fixOrder'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import type { CommunityMember } from '@/schemes/communityMember'
+import { getInvoicePdf } from '@/utils/invoice'
 
 const route = useRoute()
 const userId = route.params.userId as string
@@ -63,12 +64,15 @@ const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() =>
   })
 })
 
-const communityListStore = useCommunityListStore([
-  where('members', 'array-contains', doc(db, 'users', userId)),
-  // 'array-contains' は1つしか指定できないので、後で filter する
-  // where('subdomain_tags', 'array-contains', 'kanda-curry'),
-  orderBy('community_num_members', 'desc'),
-], 5)
+const communityListStore = useCommunityListStore(
+  [
+    where('members', 'array-contains', doc(db, 'users', userId)),
+    // 'array-contains' は1つしか指定できないので、後で filter する
+    // where('subdomain_tags', 'array-contains', 'kanda-curry'),
+    orderBy('community_num_members', 'desc'),
+  ],
+  5,
+)
 
 const memberCommunities = computed(() =>
   (communityListStore.communityStores ?? []).flatMap((communityStore) => {
@@ -113,8 +117,10 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const downloadInvoice = (order: OrderItem) => {
-  window.open(getInvoicePath(order.event_id, order.order_id), '_blank')
+const downloadInvoice = async (order: OrderItem) => {
+  const w = window.open(getInvoicePath(), '_blank')
+  const pdf = await getInvoicePdf(order.event_id, order.order_id)
+  w!.location.href = window.URL.createObjectURL(pdf)
 }
 </script>
 
