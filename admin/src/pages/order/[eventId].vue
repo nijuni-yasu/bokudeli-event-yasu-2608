@@ -8,10 +8,13 @@ import { usePartnerStore } from '@/stores/partner'
 import type { Shop } from '@/schemes/shop'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 
+const { t: $t } = useI18n()
 const eventId = useRoute().params.eventId as string
 const eventStore = useEventStore(eventId) as EventStore
 const partnerId = getAuth().currentUser!.uid
 const partnerStore = usePartnerStore(partnerId)
+
+const notification = inject('notification') as Notification
 
 const [event, shop] = await Promise.all([
   new Promise<BokudeliEvent>((resolve) => {
@@ -43,15 +46,19 @@ const [event, shop] = await Promise.all([
 const { requiredValidator } = useValidators()
 
 const isValid = ref(false)
+const isLoading = ref(false)
 const radio01 = ref(0)
 const text01 = ref('')
 
 const submit = async () => {
+  isLoading.value = true
   event.event_status = {
     value: radio01.value === 0 ? 'accepting_order' : 'in_draft',
     shop_comment: text01.value,
   }
   await eventStore.updateEvent(event)
+  isLoading.value = false
+  Object.assign(notification, { message: $t('order_detail.email_sent'), color: 'success' })
 }
 
 const isOwner = computed(() => {
@@ -132,6 +139,7 @@ const isOwner = computed(() => {
                   color="primary"
                   rounded="pill"
                   :disabled="!isValid"
+                  :loading="isLoading"
                 >
                   {{ $t('order_detail.send_email') }}
                 </v-btn>
