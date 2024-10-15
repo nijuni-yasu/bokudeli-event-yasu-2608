@@ -4,7 +4,18 @@ import type { DocumentReference, DocumentSnapshot, SnapshotOptions, Unsubscribe 
 import { Shop } from '@/schemes/shop'
 import { PartnerMenu } from '@/schemes/partnerMenu'
 import { defineStore } from 'pinia'
-import { collection, doc, getFirestore, onSnapshot, Timestamp, setDoc, addDoc, deleteDoc } from 'firebase/firestore'
+import {
+  collection,
+  doc,
+  getFirestore,
+  onSnapshot,
+  Timestamp,
+  setDoc,
+  addDoc,
+  deleteDoc,
+  query,
+  orderBy,
+} from 'firebase/firestore'
 import { uploadMenuImage, uploadShopImage } from '@/composable/uploadImage'
 
 // 暫定的な措置
@@ -176,7 +187,7 @@ export const usePartnerStore = (partnerId: string): PartnerStore => {
       const subscribeMenus = () => {
         if (unsubscribeMenus == null) {
           unsubscribeMenus = onSnapshot(
-            collection(partnerRef, 'menus').withConverter(menuConverter),
+            query(collection(partnerRef, 'menus'), orderBy('updatedAt', 'desc')).withConverter(menuConverter),
             (menusSnapshot) => {
               _menus.value = menusSnapshot.docs.map((menuDoc) => menuDoc.data() as PartnerMenu)
             },
