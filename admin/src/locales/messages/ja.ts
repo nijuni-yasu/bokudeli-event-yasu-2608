@@ -161,7 +161,8 @@ export default {
     'subtotal_price': '小計',
     'total': '合計',
     'total_count': '合計個数',
-    'total_price': '合計金額'
+    'total_price': '合計金額',
+    'email_sent': 'メールを送信しました',
   },
   'menu_edit_card': {
     'name': 'メニュー名称',
