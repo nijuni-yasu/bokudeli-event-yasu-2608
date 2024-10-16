@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/* Deprecated 
+   Use the components like `user/src/pages/c/[communityId]/e/[eventId]/index.vue` instead.
+*/
 import { getCommunityPath, getEventCreatePath } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import { type PartnerMenu } from '@/schemes/partnerMenu'

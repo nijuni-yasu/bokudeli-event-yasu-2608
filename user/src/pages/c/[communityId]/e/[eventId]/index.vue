@@ -1,11 +1,234 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import EventDetails from '@/components/pages/c/[communityId]/e/[eventId]/index.vue'
+import { getEventCreatePath } from '@/router/utils'
+import { type PartnerMenu } from '@/schemes/partnerMenu'
+import EventCartDialog from '@/components/EventCartDialog.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import EventMenuList from '@/components/EventMenuList.vue'
+import { useEventStore, type EventStore } from '@/stores/event'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { useI18n } from 'vue-i18n'
+import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
+import EventDetailsCard from '@/components/EventDetailsCard.vue'
 
 const communityId = useRoute().params.communityId as string
 const eventId = useRoute().params.eventId as string
+
+const { t: $t } = useI18n()
+
+const eventStore = useEventStore(eventId) as EventStore
+const communityStore = useCommunityStore(communityId) as CommunityStore
+const menuNavigation = ref(true)
+const menuListRef = ref()
+let menuListObserver: IntersectionObserver | null = null
+
+const isManager = ref(false)
+communityStore.getCurrentUserRoles().then((roles) => {
+  isManager.value = roles?.includes('manager') ?? false
+})
+
+const event = computed<BokudeliEvent | null>(() => eventStore.event)
+
+type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
+
+const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
+  if (event.value == null) {
+    return null
+  }
+  switch (event.value.event_status.value) {
+    case 'finished':
+      return 'finished'
+    case 'order_closed':
+      return 'order_closed'
+    case 'full':
+      return 'limit_people'
+    case 'in_draft':
+    case 'applying_reservation':
+    case 'applying_to_admin':
+      return 'not_accepting_order'
+    case 'accepting_order':
+      return false
+  }
+})
+
+const selectedMenuState = reactive({
+  menu: null as PartnerMenu | null,
+  isOpen: false,
+})
+
+const alertState = reactive({
+  message: '',
+  isOpen: false,
+})
+
+const selectMenu = (menu: PartnerMenu) => {
+  const disabledReason = menu.isSoldout ? 'sold_out' : menuDisabled.value
+  if (disabledReason == null) {
+    return
+  }
+  if (menuDisabled.value === 'finished') {
+    alertState.message = $t(`menu_disabled_reason.finished`)
+    alertState.isOpen = true
+  } else if (disabledReason === false) {
+    selectedMenuState.menu = menu
+    selectedMenuState.isOpen = true
+  } else {
+    alertState.message = $t(`menu_disabled_reason.${disabledReason}`)
+    alertState.isOpen = true
+  }
+}
+
+const scrollToMenu = () => {
+  // Vuetify では scrollIntoView が使えないらしい
+  // menuList.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const top = menuListRef.value?.$el?.offsetTop
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
+watch(menuListRef, () => {
+  const target = menuListRef.value?.$el
+  if (target == null) {
+    return
+  }
+  menuListObserver?.disconnect()
+  menuListObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          menuNavigation.value = false
+        } else {
+          menuNavigation.value = true
+        }
+      })
+    },
+    {
+      // オプションでroot、rootMargin、thresholdを設定可能
+      threshold: 0,
+    },
+  )
+
+  menuListObserver.observe(target)
+})
+
+onUnmounted(() => {
+  menuListObserver?.disconnect()
+  menuListObserver = null
+})
 </script>
 
 <template>
-  <EventDetails :community-id="communityId" :event-id="eventId" />
+  <div v-if="event != null && communityStore.community != null" class="justify-center">
+    <v-row class="justify-center mt-lg-10">
+      <v-col md="8" sm="9" cols="12">
+        <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
+          <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
+          <v-spacer />
+          <v-chip v-if="!event.is_public" color="primary" size="large">
+            {{ $t('private_event') }}
+          </v-chip>
+          <v-chip color="primary" size="large">
+            {{ $t(`event_status.${event.event_status.value}`) }}
+          </v-chip>
+          <v-btn
+            v-if="event.event_status.value === `in_draft` && isManager"
+            color="white"
+            class="ml-2 my-1"
+            elevation="5"
+            rounded="pill"
+            :prepend-icon="mdiEmail"
+            :to="{
+              path: getEventCreatePath(communityStore.community.community_account),
+              query: { id: eventId, step: 5 },
+            }"
+          >
+            店舗へ予約申請
+          </v-btn>
+          <v-btn
+            v-if="(event.event_status.value == 'in_draft' || event.event_status.value == 'full') && isManager"
+            color="white"
+            class="ml-2 my-1"
+            elevation="5"
+            rounded="pill"
+            :prepend-icon="mdiPencilBoxOutline"
+            :to="{
+              path: getEventCreatePath(communityStore.community.community_account),
+              query: { id: eventId },
+            }"
+          >
+            イベント編集
+          </v-btn>
+          <v-btn
+            v-if="
+              (event.event_status.value == 'applying_reservation' ||
+                event.event_status.value == 'accepting_order' ||
+                event.event_status.value == 'order_closed') &&
+              isManager
+            "
+            color="white"
+            class="my-1"
+            elevation="5"
+            rounded="pill"
+            :prepend-icon="mdiPencilBoxOutline"
+            :to="{
+              path: getEventCreatePath(communityStore.community.community_account),
+              query: { id: eventId, step: 4 },
+            }"
+          >
+            イベント編集
+          </v-btn>
+        </v-row>
+      </v-col>
+    </v-row>
+    <v-row class="justify-center">
+      <v-col md="8" sm="9" cols="12" class="mt-0 pt-0 px-0">
+        <EventDetailsCard :event="event" :community="communityStore.community" />
+        <!-- メニュ -->
+        <event-menu-list
+          ref="menuListRef"
+          :event="event"
+          :disabled="menuDisabled !== false"
+          @select-menu="selectMenu"
+        />
+      </v-col>
+    </v-row>
+  </div>
+  <div v-else class="justify-center">
+    <v-col cols="12" class="text-center">
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    </v-col>
+  </div>
+  <event-cart-dialog
+    v-if="selectedMenuState.menu && event != null"
+    v-model="selectedMenuState.isOpen"
+    :menu="selectedMenuState.menu"
+    :event-id="event.event_id"
+  ></event-cart-dialog>
+  <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
+  <v-navigation-drawer
+    v-if="event?.event_status.value === `accepting_order`"
+    v-model="menuNavigation"
+    location="bottom"
+    permanent
+    touchless
+    border="0"
+    color="#FFFFFF00"
+    style="height: 60px; z-index: 100; text-align: center"
+  >
+    <v-row class="justify-center mb-2">
+      <v-col md="8" sm="9" cols="12">
+        <v-btn
+          class="text-h5"
+          size="large"
+          rounded="pill"
+          elevation="10"
+          :prepend-icon="mdiFoodForkDrink"
+          color="primary"
+          width="90%"
+          @click="scrollToMenu"
+        >
+          食事を注文してイベントに参加する
+        </v-btn>
+      </v-col>
+    </v-row>
+  </v-navigation-drawer>
 </template>
