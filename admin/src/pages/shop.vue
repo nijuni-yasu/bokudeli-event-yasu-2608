@@ -56,7 +56,7 @@ const SHOP_RANGE_ARRAY = (() => {
 })()
 const SHOP_DEADLINE_DATE_ARRAY = [...Array(3)].map((_, i) => ({ title: $t('days_before', i + 1), value: i + 1 }))
 const SHOP_DEADLINE_TIME_ARRAY = makeTimeArray(6, 72)
-const SHOP_TIME_ARRAY = [null, ...makeTimeArray(6, 73)]
+const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 73)]
 
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
