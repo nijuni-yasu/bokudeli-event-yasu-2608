@@ -90,18 +90,23 @@
         },
         {
           icon: 'mdi-storefront-outline',
-          title: '店舗一覧',
+          title: '飲食店',
           to: '/ShopList',
         },
         {
           icon: 'mdi-calendar',
-          title: 'イベント一覧',
+          title: 'イベント',
           to: '/EventList',
         },
         {
           icon: 'mdi-account-group',
-          title: 'コミュニティ一覧',
+          title: 'コミュニティ',
           to: '/CommunityList',
+        },
+        {
+          icon: 'mdi-account',
+          title: 'ユーザー',
+          to: '/UserList',
         },
       ],
     }),
