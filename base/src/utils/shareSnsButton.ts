@@ -1,16 +1,7 @@
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { db } from '@/firebase'
-import { doc, getDoc } from 'firebase/firestore'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import type { Shop } from '@/schemes/shop'
-
-const getShopAccount = async (event: BokudeliEvent): Promise<Shop> => {
-  const shopDocRef = doc(db, 'partners', event.partner_id, 'shops', event.shop_id)
-  const shopDoc = await getDoc(shopDocRef)
-  return shopDoc.data() as Shop
-}
 
 const getCommunityHashTag = (community: BokudeliCommunity) => {
   console.log(community.community_sns_hash_tag)
@@ -62,17 +53,12 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: S
   return `${textList.join('\n')}`
 }
 
-export const shareSnsButton = async (snsType: string, event: BokudeliEvent | null) => {
-  if (event == null) {
-    return
-  }
-  const communityStore = useCommunityStore(event.community_account) as CommunityStore
-  const community = communityStore.community
-  if (community == null) {
-    return
-  }
-  const shop = await getShopAccount(event)
-
+export const shareSnsButton = async (
+  snsType: 'twitter' | 'facebook' | 'line' | 'copy',
+  event: BokudeliEvent,
+  community: BokudeliCommunity,
+  shop: Shop,
+) => {
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter') {
     const baseUrl = 'https://twitter.com/intent/tweet'
