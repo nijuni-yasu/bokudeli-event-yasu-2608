@@ -6,7 +6,7 @@ import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useCommunityStore } from '@/stores/community'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
-import { shareSnsButton } from '@/composable/shareSnsButton'
+import { shareSnsButton } from '@/utils/shareSnsButton'
 
 const props = defineProps<{
   eventId: string

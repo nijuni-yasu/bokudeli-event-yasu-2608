@@ -16,7 +16,7 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
-import { shareSnsButton } from '@/composable/shareSnsButton'
+import { shareSnsButton } from '@/utils/shareSnsButton'
 import ShowDialog from '@/components/ShowDialog.vue'
 import VueQrious from 'vue-qrious'
 import { useI18n } from 'vue-i18n'
@@ -35,6 +35,8 @@ import {
 } from '@mdi/js'
 import XIcon from '@/icons/x'
 import LineIcon from '@/icons/line'
+import { usePartnerStore } from '@/stores/partner'
+import type { Shop } from '@/schemes/shop'
 
 const qrcodeSize = 300
 
@@ -147,6 +149,23 @@ const scrollToMenu = () => {
   // menuList.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const top = menuListRef.value?.$el?.offsetTop
   window.scrollTo({ top, behavior: 'smooth' })
+}
+
+const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
+  const partnerStore = usePartnerStore(event.value!.partner_id)
+  const shop = await new Promise<Shop | undefined>((resolve) => {
+    watch(
+      () => partnerStore.shops,
+      (shops) => {
+        if (shops != null) {
+          resolve(shops[0])
+          stop()
+        }
+      },
+      { immediate: true },
+    )
+  })
+  await shareSnsButton(type, event.value!, communityStore.community!, shop!)
 }
 
 watch(menuListRef, () => {
@@ -269,7 +288,7 @@ onUnmounted(() => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="shareSnsButton('twitter', event)"
+                    @click="onShareSnsButtonClicked('twitter')"
                   ></v-btn>
                   <v-btn
                     class="ml-1"
@@ -278,7 +297,7 @@ onUnmounted(() => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="shareSnsButton('facebook', event)"
+                    @click="onShareSnsButtonClicked('facebook')"
                   ></v-btn>
                   <v-btn
                     class="ml-1"
@@ -287,7 +306,7 @@ onUnmounted(() => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="shareSnsButton('line', event)"
+                    @click="onShareSnsButtonClicked('line')"
                   ></v-btn>
                   <v-btn
                     class="ml-1"
@@ -305,7 +324,7 @@ onUnmounted(() => {
                     size="x-large"
                     density="compact"
                     variant="text"
-                    @click="shareSnsButton('copy', event)"
+                    @click="onShareSnsButtonClicked('copy')"
                   ></v-btn>
                 </v-card-text>
                 <v-card-text class="event-item"> 【開催日時】 </v-card-text>
