@@ -295,7 +295,7 @@ const stepperItems = computed(() => [
       />
     </template>
     <template #[`item.3`]>
-      <event-menu :menus="menus" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />
+      <event-menu :menus="menus" :event="event" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />
     </template>
     <template #[`item.4`]>
       <v-form v-model="isValid4">

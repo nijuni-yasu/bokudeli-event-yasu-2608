@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { type PartnerMenu } from '@/schemes/partnerMenu'
+import { dateString, priceString } from '@/schemes/converter'
 import { mdiChevronLeft, mdiFoodForkDrink, mdiChevronRight } from '@mdi/js'
+import { parseISO, compareDesc } from 'date-fns'
+import type BokudeliEvent from '@/schemes/bokudeliEvent'
 
 const props = defineProps<{
   menus: PartnerMenu[]
+  event: BokudeliEvent
   loading: boolean
 }>()
 
@@ -18,6 +22,17 @@ const submit = () => {
 const back = () => {
   emit('back')
 }
+
+const filteredMenu = computed(() => props.menus.filter((menu) => {
+  if (!menu.dateStart || !menu.dateEnd) {
+    return true
+  } else {
+    const eventStartDate = parseISO(dateString(props.event.event_start_datetime?.toDate() ?? null))
+    const dateStart = parseISO(menu.dateStart)
+    const dateEnd = parseISO(menu.dateEnd)
+    return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
+  }
+}))
 </script>
 
 <template>
@@ -33,7 +48,7 @@ const back = () => {
 
             <!-- Activity -->
             <v-row>
-              <v-col v-for="(item, i) of props.menus" :key="`menu_${i}`" md="4" sm="4" cols="12">
+              <v-col v-for="(item, i) of filteredMenu" :key="`menu_${i}`" md="4" sm="4" cols="12">
                 <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
                   <v-img :src="item.imageUrl ?? undefined" cover aspect-ratio="1" />
 
@@ -44,7 +59,7 @@ const back = () => {
                   <v-card-text class="text-left pb-8">
                     {{ item.description }}
                   </v-card-text>
-                  <v-card-text class="text-right text-h6 pb-2"> ¥ {{ item.price }} </v-card-text>
+                  <v-card-text class="text-right text-h6 pb-2"> ¥ {{ priceString(item.price) }} </v-card-text>
                 </v-card>
               </v-col>
 
