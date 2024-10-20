@@ -3,18 +3,18 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useValidators } from '@/composable/validators'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { mdiChevronLeft, mdiCalendarPlus, mdiEmail } from '@mdi/js'
-
-const props = defineProps<{
-  modelValue: BokudeliEvent
-}>()
+import { mdiChevronLeft, mdiCalendarPlus, mdiStorefrontOutline, mdiEmail, mdiCalendar } from '@mdi/js'
+import { dateString, hourString, minutesString } from '@/schemes/eventCreate'
+import type { Shop } from '@/schemes/shop'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: BokudeliEvent): void
   (e: 'submit'): void
   (e: 'sendReserveMail'): void
   (e: 'back'): void
 }>()
+
+const event = defineModel<BokudeliEvent>({ required: true })
+const shop = defineModel<Shop | null>('shop', { required: true })
 
 const { requiredValidator, phoneValidator, emailValidator } = useValidators()
 
@@ -22,10 +22,18 @@ const storedUserStore = useStoreStoredUser()
 
 const isValid = ref(false)
 
-const event = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
+const eventStartDatetime = computed(() => event.value.event_start_datetime?.toDate() ?? new Date())
+
+const pickUpStartDatetime = computed(() => {
+  const pickUpStartDate = new Date(eventStartDatetime.value)
+  pickUpStartDate.setMinutes(pickUpStartDate.getMinutes() - 30)
+  return pickUpStartDate
 })
+
+const pickUpStartDateTime = computed(
+  () =>
+    `${dateString(pickUpStartDatetime.value)} ${hourString(pickUpStartDatetime.value)}:${minutesString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
+)
 
 if (event.value.organizer_email === '' && event.value.event_status.value === 'in_draft') {
   event.value.organizer_email = storedUserStore.storedUser?.userEmail ?? ''
@@ -49,6 +57,36 @@ const submit = () => {
 <template>
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="9" class="px-0">
+      <v-card-title class="pa-5">
+        <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
+        <span>店舗情報</span>
+      </v-card-title>
+      <v-card-text class="pt-5">
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field outlined dense readonly label="店舗名" v-model="event.shop_name" />
+          </v-col>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field outlined dense readonly label="緊急連絡先" :model-value="shop.shop_phone" />
+          </v-col>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field
+              :model-value="pickUpStartDateTime"
+              label="受取時間"
+              :prepend-inner-icon="mdiCalendar"
+              :readonly="true"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-col>
+  </v-row>
+  <v-row class="justify-center">
+    <v-col cols="12" sm="12" md="9" class="px-0">
       <v-card flat class="mt-2">
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pa-5">
@@ -68,7 +106,9 @@ const submit = () => {
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
+            </v-row>
 
+            <v-row class="justify-center">
               <v-col cols="12">
                 <v-text-field
                   v-model="event.organizer_company"
@@ -79,7 +119,9 @@ const submit = () => {
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
+            </v-row>
 
+            <v-row class="justify-center">
               <v-col cols="12">
                 <v-text-field
                   v-model="event.organizer_email"
@@ -90,7 +132,9 @@ const submit = () => {
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
+            </v-row>
 
+            <v-row class="justify-center">
               <v-col cols="12">
                 <v-text-field
                   v-model="event.organizer_phone_personal"
@@ -101,7 +145,9 @@ const submit = () => {
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
+            </v-row>
 
+            <v-row class="justify-center">
               <v-col cols="12">
                 <v-text-field
                   v-model="event.organizer_phone_company"
@@ -112,7 +158,9 @@ const submit = () => {
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
+            </v-row>
 
+            <v-row class="justify-center">
               <v-col cols="12">
                 <v-textarea
                   v-model="event.organizer_memo"
