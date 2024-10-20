@@ -2,7 +2,7 @@
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type Shop } from '@/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
-import { mdiChevronLeft, mdiStore, mdiChevronRight } from '@mdi/js'
+import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight } from '@mdi/js'
 
 const props = defineProps<{
   shops: Shop[]
@@ -79,7 +79,7 @@ const next = () => {
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
             <v-card-title class="pa-5">
-              <v-icon size="50" class="text--primary me-3" :icon="mdiStore" />
+              <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
               <span>お店</span>
             </v-card-title>
 
