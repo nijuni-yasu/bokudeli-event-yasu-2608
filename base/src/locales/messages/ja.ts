@@ -92,6 +92,30 @@ export default {
     payment: '支払い設定',
     error_max_people: 'すでに{0}人の予約が入っています',
   },
+  shop_notice: {
+    info_title: '店舗情報',
+    shop_name: '店舗名',
+    shop_phone: '緊急連絡先',
+    pick_up_time: '受取日時',
+    notice_title: '店舗への連絡事項',
+    organizer_name: '担当者 氏名',
+    organizer_company: '会社名/団体名',
+    organizer_email: 'メールアドレス',
+    organizer_phone_personal: '電話番号（担当者）',
+    organizer_phone_company: '電話番号（会社/団体）',
+    organizer_memo: '配達受取場所について',
+    organizer_memo_placeholder:
+      'XXXXビルに付きましたら、搬入口からOOFまでお上がりください。&#x0a;到着したらお電話ください。よろしくお願いします。',
+    preview_draft: '下書きをプレビューする',
+    save_event: 'イベントを保存する',
+    send_reserve_mail: '店舗に予約申請する',
+    send_reserve_mail_ok: '予約申請メールを送信する',
+    confirm_send_reserve_mail: '{0} に予約申請メールを送信しますか？<br />',
+    confirm_send_reserve_mail_desc: `・店舗から予約が承認されると、注文や告知ができるようになります。<br />
+    ・予約が却下された場合は、店舗や日時などを変更して再度予約申請をしてください。<br />
+    ・予約申請をすると、「店舗」「開催場所」「開催日時」の変更はできません。<br />
+    ・以上を確認の上、予約申請を行ってください。`,
+  },
   user_event_card: {
     community_name: '【主催者】{0}',
     event_start_datetime: '【開催日時】{0} 〜',

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useValidators } from '@/composable/validators'
@@ -15,6 +16,8 @@ const emit = defineEmits<{
 
 const event = defineModel<BokudeliEvent>({ required: true })
 const shop = defineModel<Shop | null>('shop', { required: true })
+
+const { t: $t } = useI18n()
 
 const { requiredValidator, phoneValidator, emailValidator } = useValidators()
 
@@ -35,6 +38,7 @@ const pickUpStartDateTime = computed(
     `${dateString(pickUpStartDatetime.value)} ${hourString(pickUpStartDatetime.value)}:${minutesString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
 )
 
+const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
 if (event.value.organizer_email === '' && event.value.event_status.value === 'in_draft') {
   event.value.organizer_email = storedUserStore.storedUser?.userEmail ?? ''
 }
@@ -59,24 +63,24 @@ const submit = () => {
     <v-col cols="12" sm="12" md="9" class="px-0">
       <v-card-title class="pa-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
-        <span>店舗情報</span>
+        <span>{{ $t('shop_notice.info_title') }}</span>
       </v-card-title>
       <v-card-text class="pt-5">
         <v-row class="justify-center">
           <v-col cols="12">
-            <v-text-field outlined dense readonly label="店舗名" v-model="event.shop_name" />
+            <v-text-field outlined dense readonly :label="$t('shop_notice.shop_name')" v-model="event.shop_name" />
           </v-col>
         </v-row>
         <v-row class="justify-center">
           <v-col cols="12">
-            <v-text-field outlined dense readonly label="緊急連絡先" :model-value="shop.shop_phone" />
+            <v-text-field outlined dense readonly :label="$t('shop_notice.shop_phone')" :model-value="shop_phone" />
           </v-col>
         </v-row>
         <v-row class="justify-center">
           <v-col cols="12">
             <v-text-field
               :model-value="pickUpStartDateTime"
-              label="受取時間"
+              :label="$t('shop_notice.pick_up_time')"
               :prepend-inner-icon="mdiCalendar"
               :readonly="true"
             />
@@ -91,7 +95,7 @@ const submit = () => {
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pa-5">
             <v-icon size="50" class="text--primary me-3" :icon="mdiEmail" />
-            <span>店舗への連絡事項</span>
+            <span>{{ $t('shop_notice.notice_title') }}</span>
           </v-card-title>
 
           <v-card-text class="pt-5">
@@ -101,7 +105,7 @@ const submit = () => {
                   v-model="event.organizer_fullname"
                   outlined
                   dense
-                  label="担当者 氏名"
+                  :label="$t('shop_notice.organizer_name')"
                   :rules="[requiredValidator]"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
@@ -114,7 +118,7 @@ const submit = () => {
                   v-model="event.organizer_company"
                   outlined
                   dense
-                  label="会社名/団体名"
+                  :label="$t('shop_notice.organizer_company')"
                   :rules="[requiredValidator]"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
@@ -127,7 +131,7 @@ const submit = () => {
                   v-model="event.organizer_email"
                   outlined
                   dense
-                  label="メールアドレス"
+                  :label="$t('shop_notice.organizer_email')"
                   :rules="[requiredValidator, emailValidator]"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
@@ -140,7 +144,7 @@ const submit = () => {
                   v-model="event.organizer_phone_personal"
                   outlined
                   dense
-                  label="電話番号（担当者）"
+                  :label="$t('shop_notice.organizer_phone_personal')"
                   :rules="[requiredValidator, phoneValidator]"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
@@ -153,7 +157,7 @@ const submit = () => {
                   v-model="event.organizer_phone_company"
                   outlined
                   dense
-                  label="電話番号（会社/団体）"
+                  :label="$t('shop_notice.organizer_phone_company')"
                   :rules="[phoneValidator]"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
@@ -166,9 +170,9 @@ const submit = () => {
                   v-model="event.organizer_memo"
                   outlined
                   rows="3"
-                  label="配達受取場所について"
+                  :label="$t('shop_notice.organizer_memo')"
                   :rules="[requiredValidator]"
-                  placeholder="XXXXビルに付きましたら、搬入口からOOFまでお上がりください。&#x0a;到着したらお電話ください。よろしくお願いします。"
+                  :placeholder="$t('shop_notice.organizer_memo_placeholder')"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
@@ -188,7 +192,7 @@ const submit = () => {
               :disabled="!isValid"
               :loading="isSubmitting"
               @click="submit"
-              >下書きをプレビューする</v-btn
+              >{{ $t('shop_notice.preview_draft') }}</v-btn
             >
             <v-btn
               v-else
@@ -199,7 +203,7 @@ const submit = () => {
               :disabled="!isValid"
               :loading="isSubmitting"
               @click="submit"
-              >イベントを保存する</v-btn
+              >{{ $t('shop_notice.save_event') }}</v-btn
             >
           </v-card-text>
           <v-card-text class="text-center mx-0 px-0">
@@ -212,24 +216,21 @@ const submit = () => {
               :prepend-icon="mdiEmail"
               @click="openConfirmDialog"
             >
-              店舗に予約申請する
+              {{ $t('shop_notice.send_reserve_mail') }}
             </v-btn>
           </v-card-text>
           <confirm-dialog
             v-model="isOpenConfirmDialog"
             :is-confirm="true"
-            :ok-text="'予約申請メールを送信する'"
+            :ok-text="$t('shop_notice.send_reserve_mail_ok')"
             :ok-click="sendReserveMail"
             max-width="650px"
           >
             <v-card-text class="text-center py-10 text-h6">
-              {{ event.shop_name }} に予約申請メールを送信しますか？<br />
+              <div v-html="$t('shop_notice.confirm_send_reserve_mail', [event.shop_name])" />
             </v-card-text>
             <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
-              ・店舗から予約が承認されると、注文や告知ができるようになります。<br />
-              ・予約が却下された場合は、店舗や日時などを変更して再度予約申請をしてください。<br />
-              ・予約申請をすると、「店舗」「開催場所」「開催日時」の変更はできません。<br />
-              ・以上を確認の上、予約申請を行ってください。
+              <div v-html="$t('shop_notice.confirm_send_reserve_mail_desc')" />
             </v-card-text>
           </confirm-dialog>
         </v-form>
