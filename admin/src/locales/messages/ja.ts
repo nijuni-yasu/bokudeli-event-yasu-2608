@@ -126,6 +126,7 @@ export default {
       '開始日時',
       '注文期限',
       '開催場所',
+      '定員数',
       '注文個数',
       '注文金額',
       'ステータス'
@@ -138,6 +139,7 @@ export default {
     'event_date': '【配送日時】 {0} 〜 {1}',
     'order_limit': '【注文期限】 {0}',
     'event_address': '【開催場所】 {0}',
+    'event_max_people': '【定員数】 {0}',
     'community_name': '【コミュニティ名】 {0}',
     'organizer_fullname': '【担当者名】 {0}',
     'organizer_company': '【会社名】 {0}',

@@ -103,6 +103,7 @@ const isOwner = computed(() => {
               }}
             </p>
             <p>{{ $t('order_detail.event_address', [eventStore.event.event_address]) }}</p>
+            <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}人</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
             <template v-if="!isOwner">
               <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
