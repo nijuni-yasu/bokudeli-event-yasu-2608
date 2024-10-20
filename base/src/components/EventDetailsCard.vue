@@ -75,6 +75,7 @@ const showQrCode = () => {
 }
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
+  const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(props.event.partner_id)
   const shop = await new Promise<Shop | undefined>((resolve) => {
     watch(
@@ -88,7 +89,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
       { immediate: true },
     )
   })
-  await shareSnsButton(type, props.event, props.community, shop!)
+  await shareSnsButton(type, props.event, props.community, shop!, _window)
 }
 </script>
 

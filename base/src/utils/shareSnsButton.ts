@@ -58,21 +58,24 @@ export const shareSnsButton = async (
   event: BokudeliEvent,
   community: BokudeliCommunity,
   shop: Shop,
+  // pop-up block を防ぐため、先に window を開いておく
+  // TODO copy 等動作の異なる処理を一関数にまとめるのは本来良くないので、修正する
+  _window?: Window,
 ) => {
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter') {
     const baseUrl = 'https://twitter.com/intent/tweet'
     const text = encodeURIComponent(getXPostText(event, community, shop))
     const openUrl = `${baseUrl}?text=${text}`
-    window.open(openUrl, '_blank', 'width=800,height=500')
+    _window!.location.href = openUrl
   } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
     const openUrl = `${baseUrl}?&u=${eventUrl}`
-    window.open(openUrl, '_blank', 'width=800,height=500')
+    _window!.location.href = openUrl
   } else if (snsType === 'line') {
     const baseUrl = 'https://social-plugins.line.me/lineit/share'
     const openUrl = `${baseUrl}?&url=${eventUrl}?openExternalBrowser=1`
-    window.open(openUrl, '_blank', 'width=800,height=500')
+    _window!.location.href = openUrl
   } else if (snsType === 'copy') {
     const text = getCopyText(event, community, shop)
     navigator.clipboard

@@ -21,6 +21,7 @@ const communityStore = useCommunityStore(props.communityAccount)
 const event = computed(() => eventStore.event)
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'copy', event: BokudeliEvent) => {
+  const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(event.partner_id)
   const [community, shop] = await Promise.all([
     new Promise<BokudeliCommunity>((resolve) => {
@@ -48,7 +49,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'copy', event: Bokudeli
       )
     }),
   ])
-  await shareSnsButton(type, event, community, shop!)
+  await shareSnsButton(type, event, community, shop!, _window)
 }
 </script>
 
