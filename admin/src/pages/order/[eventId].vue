@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventStore, type EventStore } from '@/stores/event'
-import { mdiTruckOutline } from '@mdi/js'
+import { mdiTruckOutline, mdiMapMarkerRadius } from '@mdi/js'
 import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@/utils/orders'
 import { useValidators } from '@/composable/validators'
 import { getAuth } from 'firebase/auth'
@@ -76,7 +76,6 @@ const isOwner = computed(() => {
         </template>
         <v-card-text>
           <div class="mt-5">
-            <p>{{ $t('order_detail.event_id', [eventStore.event.event_id]) }}</p>
             <p>{{ $t('order_detail.event_name', [eventStore.event.event_name]) }}</p>
             <p v-linkify>{{ $t('order_detail.event_url', [eventStore.event.url]) }}</p>
             <p>
@@ -102,7 +101,15 @@ const isOwner = computed(() => {
                 )
               }}
             </p>
-            <p>{{ $t('order_detail.event_address', [eventStore.event.event_address]) }}</p>
+            <p>
+              {{ $t('order_detail.event_address', [eventStore.event.event_address]) }}
+              <a
+                :href="`https://www.google.co.jp/maps/search/${eventStore.event.event_address} ${eventStore.event.event_place}`"
+                target="_blank"
+              >
+                <v-icon :icon="mdiMapMarkerRadius" />
+              </a>
+            </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}人</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
             <template v-if="!isOwner">
@@ -149,7 +156,7 @@ const isOwner = computed(() => {
           </v-form>
         </template>
         <v-card-text v-else-if="eventStore.confirmedOrders != null && eventStore.confirmedOrders.length !== 0">
-          <h2 class="mt-10">{{ $t('order_detail.order_detail') }}</h2>
+          <h2 class="mt-10 mb-1">{{ $t('order_detail.order_detail') }}</h2>
           <v-table>
             <thead>
               <tr>
@@ -183,7 +190,7 @@ const isOwner = computed(() => {
               </tr>
             </tbody>
           </v-table>
-          <h2 class="mt-10">{{ $t('order_detail.subtotal') }}</h2>
+          <h2 class="mt-10 mb-1">{{ $t('order_detail.subtotal') }}</h2>
           <v-table>
             <thead>
               <tr>
@@ -207,7 +214,7 @@ const isOwner = computed(() => {
               </tr>
             </tbody>
           </v-table>
-          <h2 class="mt-10">{{ $t('order_detail.total') }}</h2>
+          <h2 class="mt-10 mb-1">{{ $t('order_detail.total') }}</h2>
           <v-table>
             <thead>
               <tr>
