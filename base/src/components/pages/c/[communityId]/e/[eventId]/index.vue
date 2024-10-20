@@ -64,8 +64,8 @@ const members = computed(
     eventStore.members?.sort(
       (a, b) =>
         a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0)
-    ) ?? []
+        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
+    ) ?? [],
 )
 
 type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
@@ -152,6 +152,7 @@ const scrollToMenu = () => {
 }
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
+  const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(event.value!.partner_id)
   const shop = await new Promise<Shop | undefined>((resolve) => {
     watch(
@@ -165,7 +166,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
       { immediate: true },
     )
   })
-  await shareSnsButton(type, event.value!, communityStore.community!, shop!)
+  await shareSnsButton(type, event.value!, communityStore.community!, shop!, _window)
 }
 
 watch(menuListRef, () => {
@@ -187,7 +188,7 @@ watch(menuListRef, () => {
     {
       // オプションでroot、rootMargin、thresholdを設定可能
       threshold: 0,
-    }
+    },
   )
 
   menuListObserver.observe(target)
