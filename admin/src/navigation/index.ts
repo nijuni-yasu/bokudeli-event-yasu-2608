@@ -2,7 +2,7 @@ import type { HorizontalNavItems, VerticalNavItems } from '@layouts/types'
 import { getCommunityPath, getEventPath, getMenuPath, getOrderPath, getShopPath } from './utils'
 import {
   mdiHome,
-  mdiStore,
+  mdiStorefrontOutline,
   mdiFoodForkDrink,
   mdiBicycle,
   mdiLightbulbOnOutline,
@@ -21,7 +21,7 @@ export const useNavItems = (): HorizontalNavItems | VerticalNavItems => {
     {
       title: $t('navigation.shop'),
       to: { path: getShopPath() },
-      icon: { icon: mdiStore },
+      icon: { icon: mdiStorefrontOutline },
     },
     {
       title: $t('navigation.menu'),
