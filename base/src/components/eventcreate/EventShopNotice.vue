@@ -4,8 +4,9 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useValidators } from '@/composable/validators'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { mdiChevronLeft, mdiCalendarPlus, mdiStorefrontOutline, mdiEmail, mdiCalendar } from '@mdi/js'
-import { dateString, hourString, minutesString } from '@/schemes/eventCreate'
+import { mdiChevronLeft, mdiCalendarPlus, mdiStorefrontOutline, mdiEmailOutline, mdiCalendar } from '@mdi/js'
+import { hourString, minutesString } from '@/schemes/eventCreate'
+import { dateWithDayOfWeekString } from '@/schemes/converter'
 import type { Shop } from '@/schemes/shop'
 
 const emit = defineEmits<{
@@ -35,10 +36,11 @@ const pickUpStartDatetime = computed(() => {
 
 const pickUpStartDateTime = computed(
   () =>
-    `${dateString(pickUpStartDatetime.value)} ${hourString(pickUpStartDatetime.value)}:${minutesString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
+    `${dateWithDayOfWeekString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
 )
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
+const shop_address = computed(() => (shop.value !== null ? shop.value.shop_address : ''))
 if (event.value.organizer_email === '' && event.value.event_status.value === 'in_draft') {
   event.value.organizer_email = storedUserStore.storedUser?.userEmail ?? ''
 }
@@ -65,24 +67,37 @@ const submit = () => {
         <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
         <span>{{ $t('shop_notice.info_title') }}</span>
       </v-card-title>
-      <v-card-text class="pt-5">
+      <v-card-text class="pt-2">
         <v-row class="justify-center">
           <v-col cols="12">
-            <v-text-field outlined dense readonly :label="$t('shop_notice.shop_name')" v-model="event.shop_name" />
-          </v-col>
-        </v-row>
-        <v-row class="justify-center">
-          <v-col cols="12">
-            <v-text-field outlined dense readonly :label="$t('shop_notice.shop_phone')" :model-value="shop_phone" />
+            <v-text-field
+              v-model="event.shop_name"
+              :label="$t('shop_notice.shop_name')"
+              dense
+              readonly
+              variant="solo-filled"
+              />
           </v-col>
         </v-row>
         <v-row class="justify-center">
           <v-col cols="12">
             <v-text-field
-              :model-value="pickUpStartDateTime"
-              :label="$t('shop_notice.pick_up_time')"
-              :prepend-inner-icon="mdiCalendar"
-              :readonly="true"
+              :model-value="shop_address"
+              :label="$t('shop_notice.shop_address')"
+              dense
+              readonly
+              variant="solo-filled"
+            />
+          </v-col>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field
+              :model-value="shop_phone"
+              :label="$t('shop_notice.shop_phone')"
+              dense
+              readonly
+              variant="solo-filled"
             />
           </v-col>
         </v-row>
@@ -94,11 +109,11 @@ const submit = () => {
       <v-card flat class="mt-2">
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pa-5">
-            <v-icon size="50" class="text--primary me-3" :icon="mdiEmail" />
+            <v-icon size="50" class="text--primary me-3" :icon="mdiEmailOutline" />
             <span>{{ $t('shop_notice.notice_title') }}</span>
           </v-card-title>
 
-          <v-card-text class="pt-5">
+          <v-card-text class="pt-2">
             <v-row class="justify-center">
               <v-col cols="12">
                 <v-text-field
@@ -163,7 +178,18 @@ const submit = () => {
                 />
               </v-col>
             </v-row>
-
+            <v-row class="justify-center">
+              <v-col cols="12">
+                <v-text-field
+                  :model-value="pickUpStartDateTime"
+                  :label="$t('shop_notice.pick_up_time')"
+                  :prepend-inner-icon="mdiCalendar"
+                  :readonly="true"
+                  variant="solo-filled"
+                  :hint="$t('shop_notice.pick_up_time_hint')"
+                />
+              </v-col>
+            </v-row>
             <v-row class="justify-center">
               <v-col cols="12">
                 <v-textarea

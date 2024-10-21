@@ -114,6 +114,9 @@ const eventDeadlineMinute = computed({
           >
             <template #placeholder>{{ $t('event_detail.event_cover_url') }}</template>
           </ImageInput>
+          <div class="my-2 text-subtitle-2">
+            <span>{{ $t('event_detail.event_cover_url_hint') }}</span>
+          </div>
         </v-col>
       </v-row>
     </v-card-text>
@@ -124,8 +127,9 @@ const eventDeadlineMinute = computed({
           <v-textarea
             v-model="event.event_desc"
             outlined
-            rows="10"
+            rows="15"
             :label="$t('event_detail.event_desc')"
+            :hint="$t('event_detail.event_desc_hint')"
             :rules="[requiredValidator]"
             :readonly="props.readonly"
           />
@@ -177,6 +181,7 @@ const eventDeadlineMinute = computed({
             :label="$t('event_detail.event_max_people')"
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
             :readonly="props.readonly"
+            :hint="$t('event_detail.event_max_people_hint')"
           />
         </v-col>
       </v-row>
@@ -194,7 +199,7 @@ const eventDeadlineMinute = computed({
           <span v-else>{{ $t('event_detail.private') }}</span>
         </template>
       </v-switch>
-      <div>
+      <div class="mt-2 text-subtitle-2">
         <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
         <span v-else>{{ $t('event_detail.private_desc') }}</span>
       </div>
@@ -207,7 +212,8 @@ const eventDeadlineMinute = computed({
       <v-col cols="12" sm="12" md="6">
         <v-select
           v-model="event.event_payment"
-          :disabled="true"
+          variant="solo-filled"
+          readonly
           :items="eventPaymentItems"
           hide-details
           class="mt-0"
@@ -216,6 +222,9 @@ const eventDeadlineMinute = computed({
           <template #label> {{ $t('event_detail.payment') }} </template>
         </v-select>
       </v-col>
+      <div class="mt-2 text-subtitle-2">
+        <span>{{ $t('event_detail.payment_hint') }}</span>
+      </div>
     </v-card-text>
     <slot />
   </v-card>

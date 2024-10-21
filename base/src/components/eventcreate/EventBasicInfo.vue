@@ -201,6 +201,9 @@ watchEffect(async () => {
                 />
               </v-col>
             </v-row>
+            <div class="mt-2 text-subtitle-2">
+              <span>{{ $t('event_basic_info.place_hint') }}</span>
+            </div>
           </v-card-text>
 
           <v-card-title class="pt-10 px-5">
@@ -278,6 +281,9 @@ watchEffect(async () => {
                 />
               </v-col>
             </v-row>
+            <div class="mt-2 text-subtitle-2">
+              <span>{{ $t('event_basic_info.date_hint') }}</span>
+            </div>
           </v-card-text>
           <v-card-text class="text-center mt-10">
             <v-btn
