@@ -27,6 +27,7 @@ export default {
   },
   'manage': {
     'new_community': 'コミュニティ作成',
+    'new_event': 'イベント作成',
     'community': {
       'tabs': {
         'events': 'イベント',
