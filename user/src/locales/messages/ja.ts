@@ -27,5 +27,13 @@ export default {
   },
   'manage': {
     'new_community': 'コミュニティ作成',
+    'community': {
+      'tabs': {
+        'events': 'イベント',
+        'member': 'メンバー',
+        'letter': 'レター',
+        'settings': '設定',
+      }
+    }
   }
 }

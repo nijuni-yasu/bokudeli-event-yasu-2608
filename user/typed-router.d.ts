@@ -30,6 +30,8 @@ declare module 'vue-router/auto-routes' {
     '/invoice': RouteRecordInfo<'/invoice', '/invoice', Record<never, never>, Record<never, never>>,
     '/manage/': RouteRecordInfo<'/manage/', '/manage', Record<never, never>, Record<never, never>>,
     '/manage/community/': RouteRecordInfo<'/manage/community/', '/manage/community', Record<never, never>, Record<never, never>>,
+    '/manage/community/[communityAccount]/': RouteRecordInfo<'/manage/community/[communityAccount]/', '/manage/community/:communityAccount', { communityAccount: ParamValue<true> }, { communityAccount: ParamValue<false> }>,
+    '/manage/community/[communityAccount]/[tab]': RouteRecordInfo<'/manage/community/[communityAccount]/[tab]', '/manage/community/:communityAccount/:tab', { communityAccount: ParamValue<true>, tab: ParamValue<true> }, { communityAccount: ParamValue<false>, tab: ParamValue<false> }>,
     '/mypage': RouteRecordInfo<'/mypage', '/mypage', Record<never, never>, Record<never, never>>,
     '/u/[userId]': RouteRecordInfo<'/u/[userId]', '/u/:userId', { userId: ParamValue<true> }, { userId: ParamValue<false> }>,
   }
