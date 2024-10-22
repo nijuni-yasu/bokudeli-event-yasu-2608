@@ -34,7 +34,8 @@ const eventStartDatetime = computed(() =>
   event.value.event_start_datetime?.toDate() ?? null
 )
 const pickUpStartDatetime = computed(() => {
-  const pickUpStartDate = new Date(eventStartDatetime.value)
+  const pickUpStartDate = eventStartDatetime.value ? new Date(eventStartDatetime.value) : new Date();
+
   pickUpStartDate.setMinutes(pickUpStartDate.getMinutes() - 30)
   return pickUpStartDate
 })
@@ -290,7 +291,7 @@ const submit = () => {
               color="grey-900"
               class="mt-3"
               size="x-large"
-              :prepend-icon="mdiEmail"
+              :prepend-icon="mdiEmailOutline"
               @click="openConfirmDialog"
             >
               {{ $t('shop_notice.send_reserve_mail') }}
