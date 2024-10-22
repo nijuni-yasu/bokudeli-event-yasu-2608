@@ -25,6 +25,7 @@ declare module 'vue-router/auto-routes' {
     '/c/[communityId]/invites': RouteRecordInfo<'/c/[communityId]/invites', '/c/:communityId/invites', { communityId: ParamValue<true> }, { communityId: ParamValue<false> }>,
     '/cart': RouteRecordInfo<'/cart', '/cart', Record<never, never>, Record<never, never>>,
     '/communitylist/': RouteRecordInfo<'/communitylist/', '/communitylist', Record<never, never>, Record<never, never>>,
+    '/invoice': RouteRecordInfo<'/invoice', '/invoice', Record<never, never>, Record<never, never>>,
     '/mypage': RouteRecordInfo<'/mypage', '/mypage', Record<never, never>, Record<never, never>>,
     '/u/[userId]': RouteRecordInfo<'/u/[userId]', '/u/:userId', { userId: ParamValue<true> }, { userId: ParamValue<false> }>,
   }
