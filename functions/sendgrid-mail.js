@@ -417,6 +417,9 @@ async function getUsersFromOrders(ordersRef) {
   const users = new Set()
   for (const orderRef of await ordersRef.listDocuments()) {
     const orderSnapshot = await orderRef.get()
+    if (orderSnapshot.get('status') !== 'ordered') {
+      continue
+    }
     users.add(orderSnapshot.get('user_id'))
   }
   return users
