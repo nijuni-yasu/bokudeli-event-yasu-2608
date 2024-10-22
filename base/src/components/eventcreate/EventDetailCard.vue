@@ -1,29 +1,17 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
-import {
-  dateString,
-  hourString,
-  minutesString,
-  parseDateTimeStrings,
-  hourList,
-  minutesList,
-} from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import ImageInput from '../ImageInput.vue'
-import DateInput from '../DateInput.vue'
-import { Timestamp } from 'firebase/firestore'
 
 const props = withDefaults(
   defineProps<{
     readonly?: boolean
-    readonlyDeadline?: boolean
     subdomainTags?: string[]
   }>(),
   {
     readonly: false,
-    readonlyDeadline: false,
   }
 )
 
@@ -43,29 +31,6 @@ const maxPeopleValidator = (v: number) => {
 if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
-
-// TODO：店舗主催時にだけ表示・変更できるようにする
-// const eventDeadlineDate = computed({
-//   get: () => dateString(event.value.event_deadline_datetime?.toDate() ?? null),
-//   set: (value: string) => {
-//     const d = parseDateTimeStrings(value, eventDeadlineHour.value, eventDeadlineMinute.value)
-//     event.value.event_deadline_datetime = Timestamp.fromDate(d)
-//   },
-// })
-// const eventDeadlineHour = computed({
-//   get: () => hourString(event.value.event_deadline_datetime?.toDate() ?? null),
-//   set: (value) => {
-//     const d = parseDateTimeStrings(eventDeadlineDate.value, value, eventDeadlineMinute.value)
-//     event.value.event_deadline_datetime = Timestamp.fromDate(d)
-//   },
-// })
-// const eventDeadlineMinute = computed({
-//   get: () => minutesString(event.value.event_deadline_datetime?.toDate() ?? null),
-//   set: (value) => {
-//     const d = parseDateTimeStrings(eventDeadlineDate.value, eventDeadlineHour.value, value)
-//     event.value.event_deadline_datetime = Timestamp.fromDate(d)
-//   },
-// })
 
 </script>
 
@@ -138,40 +103,6 @@ if (event.value.event_max_people == 0) {
         </v-col>
       </v-row>
     </v-card-text>
-
-    <!-- TODO：店舗主催時にだけ表示・変更できるようにする -->
-    <!-- <v-card-text class="pt-5">
-      <v-row>
-        <v-col cols="12" sm="12" md="6">
-          <DateInput
-            :label="$t('event_detail.deadline_date')"
-            v-model="eventDeadlineDate"
-            :readonly="readonly || readonlyDeadline"
-            :clearable="false"
-          />
-        </v-col>
-        <v-col cols="6" sm="6" md="3">
-          <v-select
-            :model-value="eventDeadlineHour"
-            :items="hourList"
-            outlined
-            dense
-            :label="$t('event_detail.deadline_hour')"
-            :readonly="readonly || readonlyDeadline"
-          ></v-select>
-        </v-col>
-        <v-col cols="6" sm="6" md="3">
-          <v-select
-            :model-value="eventDeadlineMinute"
-            :items="minutesList"
-            outlined
-            dense
-            :label="$t('event_detail.deadline_minute')"
-            :readonly="readonly || readonlyDeadline"
-          ></v-select>
-        </v-col>
-      </v-row>
-    </v-card-text> -->
 
     <v-card-text class="mt-3">
       <v-row>
