@@ -44,27 +44,29 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
-const eventDeadlineDate = computed({
-  get: () => dateString(event.value.event_deadline_datetime?.toDate() ?? null),
-  set: (value: string) => {
-    const d = parseDateTimeStrings(value, eventDeadlineHour.value, eventDeadlineMinute.value)
-    event.value.event_deadline_datetime = Timestamp.fromDate(d)
-  },
-})
-const eventDeadlineHour = computed({
-  get: () => hourString(event.value.event_deadline_datetime?.toDate() ?? null),
-  set: (value) => {
-    const d = parseDateTimeStrings(eventDeadlineDate.value, value, eventDeadlineMinute.value)
-    event.value.event_deadline_datetime = Timestamp.fromDate(d)
-  },
-})
-const eventDeadlineMinute = computed({
-  get: () => minutesString(event.value.event_deadline_datetime?.toDate() ?? null),
-  set: (value) => {
-    const d = parseDateTimeStrings(eventDeadlineDate.value, eventDeadlineHour.value, value)
-    event.value.event_deadline_datetime = Timestamp.fromDate(d)
-  },
-})
+// TODO：店舗主催時にだけ表示・変更できるようにする
+// const eventDeadlineDate = computed({
+//   get: () => dateString(event.value.event_deadline_datetime?.toDate() ?? null),
+//   set: (value: string) => {
+//     const d = parseDateTimeStrings(value, eventDeadlineHour.value, eventDeadlineMinute.value)
+//     event.value.event_deadline_datetime = Timestamp.fromDate(d)
+//   },
+// })
+// const eventDeadlineHour = computed({
+//   get: () => hourString(event.value.event_deadline_datetime?.toDate() ?? null),
+//   set: (value) => {
+//     const d = parseDateTimeStrings(eventDeadlineDate.value, value, eventDeadlineMinute.value)
+//     event.value.event_deadline_datetime = Timestamp.fromDate(d)
+//   },
+// })
+// const eventDeadlineMinute = computed({
+//   get: () => minutesString(event.value.event_deadline_datetime?.toDate() ?? null),
+//   set: (value) => {
+//     const d = parseDateTimeStrings(eventDeadlineDate.value, eventDeadlineHour.value, value)
+//     event.value.event_deadline_datetime = Timestamp.fromDate(d)
+//   },
+// })
+
 </script>
 
 <template>
@@ -137,7 +139,8 @@ const eventDeadlineMinute = computed({
       </v-row>
     </v-card-text>
 
-    <v-card-text class="pt-5">
+    <!-- TODO：店舗主催時にだけ表示・変更できるようにする -->
+    <!-- <v-card-text class="pt-5">
       <v-row>
         <v-col cols="12" sm="12" md="6">
           <DateInput
@@ -168,9 +171,9 @@ const eventDeadlineMinute = computed({
           ></v-select>
         </v-col>
       </v-row>
-    </v-card-text>
+    </v-card-text> -->
 
-    <v-card-text class="pt-5">
+    <v-card-text class="mt-3">
       <v-row>
         <v-col cols="12">
           <v-text-field
@@ -223,7 +226,7 @@ const eventDeadlineMinute = computed({
         </v-select>
       </v-col>
       <div class="mt-2 text-subtitle-2">
-        <span>{{ $t('event_detail.payment_hint') }}</span>
+        <span v-html="$t('event_detail.payment_hint')" />
       </div>
     </v-card-text>
     <slot />

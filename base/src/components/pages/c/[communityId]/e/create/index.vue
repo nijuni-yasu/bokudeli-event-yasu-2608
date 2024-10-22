@@ -267,10 +267,10 @@ const sendReserveMail = async () => {
 
 const stepperItems = computed(() => [
   {
-    title: '基本情報',
+    title: '開催概要',
   },
   {
-    title: 'お店',
+    title: '店舗選択',
   },
   {
     title: 'メニュー',
@@ -279,7 +279,7 @@ const stepperItems = computed(() => [
     title: 'イベント詳細',
   },
   {
-    title: '店舗への連絡事項',
+    title: '予約申請',
   },
 ])
 </script>
@@ -306,7 +306,7 @@ const stepperItems = computed(() => [
     <template #[`item.4`]>
       <v-form v-model="isValid4">
         <v-row class="justify-center">
-          <v-col cols="12" sm="12" md="9">
+          <v-col cols="12" sm="12" md="8">
             <event-detail-card
               v-model="event"
               v-model:cover-image="coverImage"

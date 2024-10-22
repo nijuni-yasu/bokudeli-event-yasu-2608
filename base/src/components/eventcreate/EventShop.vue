@@ -97,11 +97,11 @@ const next = () => {
                   <v-card-title class="justify-center pb-3 pre-line">
                     {{ item.shop_name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-3">
+                  <v-card-text class="text-left pb-3 text-subtitle-2">
                     {{ item.shop_description }}
                   </v-card-text>
-                  <v-card-text class="text-right">
-                    {{ $t('order_deadline') }}： {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
+                  <v-card-text class="text-right text-subtitle-2">
+                    【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
                     {{ $d(item.shop_deadline_datetime.time, 'time') }}
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
