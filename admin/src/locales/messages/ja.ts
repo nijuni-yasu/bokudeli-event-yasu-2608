@@ -166,6 +166,11 @@ export default {
     'total_price': '合計金額',
     'email_sent': 'メールを送信しました',
   },
+  'menu_card': {
+    'sold_out': '売り切れ',
+    'in_stock': '販売中',
+    'limited_edition': '販売期間',
+  },
   'menu_edit_card': {
     'name': 'メニュー名称',
     'description': '説明文',
@@ -174,9 +179,9 @@ export default {
     'image_hint': '※画像サイズは600x600推奨です',
     'sold_out': '売り切れ',
     'in_stock': '販売中',
-    'limited_edition': '期間限定',
-    'date_start': '期間限定・開始日',
-    'date_end': '期間限定・終了日',
+    'limited_edition': '販売期間',
+    'date_start': '開始日',
+    'date_end': '終了日',
     'close': '閉じる',
     'submit': '保存する'
   },
