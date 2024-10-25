@@ -142,11 +142,16 @@ watchEffect(async () => {
   }
   event.value.event_address = location.address
 })
+
+const textFieldVariant = computed(() => {
+  return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled';
+})
+
 </script>
 
 <template>
   <v-row class="justify-center">
-    <v-col cols="12" sm="12" md="9" class="px-0">
+    <v-col cols="12" sm="12" md="8" class="px-0">
       <v-card flat class="mt-3">
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pt-10 px-5">
@@ -159,7 +164,7 @@ watchEffect(async () => {
               <v-col cols="12" sm="12" md="3">
                 <v-text-field
                   v-model="event.event_postalcode"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="郵便番号"
                   :rules="[requiredValidator, postalCodeValidator]"
@@ -169,7 +174,7 @@ watchEffect(async () => {
               <v-col cols="12">
                 <v-text-field
                   v-model="event.event_address"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="住所"
                   :rules="[requiredValidator]"
@@ -184,23 +189,24 @@ watchEffect(async () => {
               <v-col cols="12" sm="12" md="6">
                 <v-text-field
                   v-model="event.event_place"
-                  outlined
+                  variant="outlined"
                   dense
                   label="会場名"
-                  :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
               <v-col cols="12" sm="12" md="6">
                 <v-text-field
                   v-model="event.event_place_url"
-                  outlined
+                  variant="outlined"
                   dense
                   label="会場URL"
                   :rules="[urlValidator]"
-                  :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
             </v-row>
+            <div class="mt-2 text-subtitle-2">
+              <span>{{ $t('event_basic_info.place_hint') }}</span>
+            </div>
           </v-card-text>
 
           <v-card-title class="pt-10 px-5">
@@ -215,7 +221,7 @@ watchEffect(async () => {
                   :key="eventStartDateKey"
                   v-model="eventStartDate"
                   :config="pickerConfig"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="開始日"
                   :readonly="event.event_status.value !== 'in_draft'"
@@ -225,7 +231,7 @@ watchEffect(async () => {
                 <v-select
                   v-model="eventStartHour"
                   :items="hourList"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="時"
                   :readonly="event.event_status.value !== 'in_draft'"
@@ -235,7 +241,7 @@ watchEffect(async () => {
                 <v-select
                   v-model="eventStartMinute"
                   :items="minutesList"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="分"
                   :readonly="event.event_status.value !== 'in_draft'"
@@ -251,7 +257,7 @@ watchEffect(async () => {
                   :key="eventEndDateKey"
                   v-model="eventEndDate"
                   :config="pickerConfig"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="終了日"
                   :readonly="event.event_status.value !== 'in_draft'"
@@ -261,7 +267,7 @@ watchEffect(async () => {
                 <v-select
                   v-model="eventEndHour"
                   :items="hourList"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="時"
                   :readonly="event.event_status.value !== 'in_draft'"
@@ -271,13 +277,16 @@ watchEffect(async () => {
                 <v-select
                   v-model="eventEndMinute"
                   :items="minutesList"
-                  outlined
+                  :variant="textFieldVariant"
                   dense
                   label="分"
                   :readonly="event.event_status.value !== 'in_draft'"
                 />
               </v-col>
             </v-row>
+            <div class="mt-2 text-subtitle-2">
+              <span>{{ $t('event_basic_info.date_hint') }}</span>
+            </div>
           </v-card-text>
           <v-card-text class="text-center mt-10">
             <v-btn

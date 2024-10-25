@@ -1,29 +1,17 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
-import {
-  dateString,
-  hourString,
-  minutesString,
-  parseDateTimeStrings,
-  hourList,
-  minutesList,
-} from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import ImageInput from '../ImageInput.vue'
-import DateInput from '../DateInput.vue'
-import { Timestamp } from 'firebase/firestore'
 
 const props = withDefaults(
   defineProps<{
     readonly?: boolean
-    readonlyDeadline?: boolean
     subdomainTags?: string[]
   }>(),
   {
     readonly: false,
-    readonlyDeadline: false,
   }
 )
 
@@ -44,27 +32,6 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
-const eventDeadlineDate = computed({
-  get: () => dateString(event.value.event_deadline_datetime?.toDate() ?? null),
-  set: (value: string) => {
-    const d = parseDateTimeStrings(value, eventDeadlineHour.value, eventDeadlineMinute.value)
-    event.value.event_deadline_datetime = Timestamp.fromDate(d)
-  },
-})
-const eventDeadlineHour = computed({
-  get: () => hourString(event.value.event_deadline_datetime?.toDate() ?? null),
-  set: (value) => {
-    const d = parseDateTimeStrings(eventDeadlineDate.value, value, eventDeadlineMinute.value)
-    event.value.event_deadline_datetime = Timestamp.fromDate(d)
-  },
-})
-const eventDeadlineMinute = computed({
-  get: () => minutesString(event.value.event_deadline_datetime?.toDate() ?? null),
-  set: (value) => {
-    const d = parseDateTimeStrings(eventDeadlineDate.value, eventDeadlineHour.value, value)
-    event.value.event_deadline_datetime = Timestamp.fromDate(d)
-  },
-})
 </script>
 
 <template>
@@ -114,6 +81,9 @@ const eventDeadlineMinute = computed({
           >
             <template #placeholder>{{ $t('event_detail.event_cover_url') }}</template>
           </ImageInput>
+          <div class="my-2 text-subtitle-2">
+            <span>{{ $t('event_detail.event_cover_url_hint') }}</span>
+          </div>
         </v-col>
       </v-row>
     </v-card-text>
@@ -124,8 +94,9 @@ const eventDeadlineMinute = computed({
           <v-textarea
             v-model="event.event_desc"
             outlined
-            rows="10"
+            rows="15"
             :label="$t('event_detail.event_desc')"
+            :hint="$t('event_detail.event_desc_hint')"
             :rules="[requiredValidator]"
             :readonly="props.readonly"
           />
@@ -133,40 +104,7 @@ const eventDeadlineMinute = computed({
       </v-row>
     </v-card-text>
 
-    <v-card-text class="pt-5">
-      <v-row>
-        <v-col cols="12" sm="12" md="6">
-          <DateInput
-            :label="$t('event_detail.deadline_date')"
-            v-model="eventDeadlineDate"
-            :readonly="readonly || readonlyDeadline"
-            :clearable="false"
-          />
-        </v-col>
-        <v-col cols="6" sm="6" md="3">
-          <v-select
-            :model-value="eventDeadlineHour"
-            :items="hourList"
-            outlined
-            dense
-            :label="$t('event_detail.deadline_hour')"
-            :readonly="readonly || readonlyDeadline"
-          ></v-select>
-        </v-col>
-        <v-col cols="6" sm="6" md="3">
-          <v-select
-            :model-value="eventDeadlineMinute"
-            :items="minutesList"
-            outlined
-            dense
-            :label="$t('event_detail.deadline_minute')"
-            :readonly="readonly || readonlyDeadline"
-          ></v-select>
-        </v-col>
-      </v-row>
-    </v-card-text>
-
-    <v-card-text class="pt-5">
+    <v-card-text class="mt-3">
       <v-row>
         <v-col cols="12">
           <v-text-field
@@ -177,6 +115,7 @@ const eventDeadlineMinute = computed({
             :label="$t('event_detail.event_max_people')"
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
             :readonly="props.readonly"
+            :hint="$t('event_detail.event_max_people_hint')"
           />
         </v-col>
       </v-row>
@@ -194,7 +133,7 @@ const eventDeadlineMinute = computed({
           <span v-else>{{ $t('event_detail.private') }}</span>
         </template>
       </v-switch>
-      <div>
+      <div class="mt-2 text-subtitle-2">
         <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
         <span v-else>{{ $t('event_detail.private_desc') }}</span>
       </div>
@@ -207,7 +146,8 @@ const eventDeadlineMinute = computed({
       <v-col cols="12" sm="12" md="6">
         <v-select
           v-model="event.event_payment"
-          :disabled="true"
+          variant="solo-filled"
+          readonly
           :items="eventPaymentItems"
           hide-details
           class="mt-0"
@@ -216,6 +156,9 @@ const eventDeadlineMinute = computed({
           <template #label> {{ $t('event_detail.payment') }} </template>
         </v-select>
       </v-col>
+      <div class="mt-2 text-subtitle-2">
+        <span v-html="$t('event_detail.payment_hint')" />
+      </div>
     </v-card-text>
     <slot />
   </v-card>

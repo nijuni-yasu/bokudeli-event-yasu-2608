@@ -53,13 +53,13 @@ const filteredMenu = computed(() => props.menus.filter((menu) => {
                   <v-img :src="item.imageUrl ?? undefined" cover aspect-ratio="1" />
 
                   <!-- title -->
-                  <v-card-title class="justify-center pb-3 pre-line">
+                  <v-card-title class="justify-center pb-3 text-wrap">
                     {{ item.name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-8">
                     {{ item.description }}
                   </v-card-text>
-                  <v-card-text class="text-right text-h6 pb-2"> ¥ {{ priceString(item.price) }} </v-card-text>
+                  <v-card-text class="text-right text-h5 pb-5"> ¥ {{ priceString(item.price) }} </v-card-text>
                 </v-card>
               </v-col>
 

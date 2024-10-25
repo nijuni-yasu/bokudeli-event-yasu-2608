@@ -67,6 +67,12 @@ const event = computed<BokudeliEvent | null>({
 const shops = ref<Shop[]>([])
 const menus = ref<PartnerMenu[]>([])
 const coverImage = ref<File | null>(null)
+const selectedShop = computed((): Shop | null => {
+  if (event.value == null) {
+    return null
+  }
+  return shops.value.find((shop) => shop.shop_id === event.value?.shop_id) ?? null
+})
 
 // @ts-expect-error parseInt can take no string params, then return NaN
 const stepQuery = Number.parseInt(route.query.step)
@@ -261,10 +267,10 @@ const sendReserveMail = async () => {
 
 const stepperItems = computed(() => [
   {
-    title: '基本情報',
+    title: '開催概要',
   },
   {
-    title: 'お店',
+    title: '店舗選択',
   },
   {
     title: 'メニュー',
@@ -273,7 +279,7 @@ const stepperItems = computed(() => [
     title: 'イベント詳細',
   },
   {
-    title: '店舗への連絡事項',
+    title: '予約申請',
   },
 ])
 </script>
@@ -300,7 +306,7 @@ const stepperItems = computed(() => [
     <template #[`item.4`]>
       <v-form v-model="isValid4">
         <v-row class="justify-center">
-          <v-col cols="12" sm="12" md="9">
+          <v-col cols="12" sm="12" md="8">
             <event-detail-card
               v-model="event"
               v-model:cover-image="coverImage"
@@ -327,7 +333,13 @@ const stepperItems = computed(() => [
       </v-form>
     </template>
     <template #[`item.5`]>
-      <event-shop-notice v-model="event" @submit="submit" @send-reserve-mail="sendReserveMail" @back="stepper--" />
+      <event-shop-notice
+        v-model="event"
+        v-model:shop="selectedShop"
+        @submit="submit"
+        @send-reserve-mail="sendReserveMail"
+        @back="stepper--"
+      />
     </template>
     <div>
       <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
