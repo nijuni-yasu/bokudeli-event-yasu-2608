@@ -62,9 +62,9 @@ const events = computed(
                     }}
                   </td>
                   <td>{{ event.event_address }}</td>
-                  <td>{{ event.event_max_people }} 人</td>
-                  <td class="text-right">{{ ordersCount(orders) }} 個</td>
-                  <td class="text-right">{{ $n(ordersTotalPrice(orders), 'currency') }}</td>
+                  <td class="text-center">{{ event.event_max_people }} {{ $t('order_detail.event_max_people_unit') }}</td>
+                  <td class="text-center">{{ ordersCount(orders) }} {{ $t('order_detail.order_count_unit') }}</td>
+                  <td class="text-center">{{ $n(ordersTotalPrice(orders), 'currency') }}</td>
                   <td>
                     {{ $t(`event_status.${event.event_status.value}`) }}
                   </td>
