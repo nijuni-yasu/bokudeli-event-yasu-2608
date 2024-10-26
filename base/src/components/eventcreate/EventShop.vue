@@ -94,15 +94,18 @@ const next = () => {
                   <v-img :src="item.shop_image_url ?? undefined" cover aspect-ratio="1.91" />
 
                   <!-- title -->
-                  <v-card-title class="justify-center pb-3 pre-line">
+                  <v-card-title class="justify-center pb-3 text-wrap">
                     {{ item.shop_name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-3 text-subtitle-2">
                     {{ item.shop_description }}
                   </v-card-text>
-                  <v-card-text class="text-right text-subtitle-2">
+                  <v-card-text class="text-right text-subtitle-2 pb-2">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
                     {{ $d(item.shop_deadline_datetime.time, 'time') }}
+                  </v-card-text>
+                  <v-card-text class="text-right text-subtitle-2 pb-2">
+                    【{{ $t('shop_range_min_orders') }}】{{ item.shop_range_min_orders[item.rangeIndex].min_orders }} {{ $t('shop_range_min_orders_unit') }}
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->

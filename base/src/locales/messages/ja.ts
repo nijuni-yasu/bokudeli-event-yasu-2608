@@ -27,6 +27,8 @@ export default {
   },
   private_event: 'URL限定公開',
   order_deadline: '注文期限',
+  shop_range_min_orders: '注文の目安',
+  shop_range_min_orders_unit: '個以上',
   days_before: '当日 | 前日 | {n}日前',
   menu_disabled_reason: {
     finished: 'イベントが終了したため、カートに追加できません',
@@ -76,6 +78,10 @@ export default {
     hour: '時',
     minute: '分',
     date_hint:"※店舗への予約申請後「開催日時」は変更はできませんのでご注意ください。",
+  },
+  event_shop: {
+    shop_range_min_orders: '注文の目安',
+    shop_range_min_orders_unit: '個以上',
   },
   event_detail: {
     title: 'イベント詳細',
