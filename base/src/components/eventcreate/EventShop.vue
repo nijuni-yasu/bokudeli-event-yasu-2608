@@ -3,6 +3,7 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type Shop } from '@/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
 import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight } from '@mdi/js'
+import { convertTruncateText } from '@/schemes/converter'
 
 const props = defineProps<{
   shops: Shop[]
@@ -88,48 +89,52 @@ const next = () => {
               <v-col v-for="(item, i) of displayShops" :key="`shop_${i}`" md="4" sm="4" cols="12">
                 <v-card
                   :class="{ 'select-border': item.partner_id == props.modelValue.partner_id }"
-                  class="mb-3 mx-0"
+                  class="mb-3 mx-0  d-flex flex-column"
                   color="text-center cursor-pointer"
+                  height="400px"
                 >
                   <v-img :src="item.shop_image_url ?? undefined" cover aspect-ratio="1.91" />
 
                   <!-- title -->
-                  <v-card-title class="justify-center pb-3 text-wrap">
+                  <v-card-title class="justify-center pb-3">
                     {{ item.shop_name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-3 text-subtitle-2">
-                    {{ item.shop_description }}
+                    {{ convertTruncateText(item.shop_description, 40) }}
                   </v-card-text>
-                  <v-card-text class="text-right text-subtitle-2 pb-2">
+                  <v-card-text class="text-right text-subtitle-2 pb-1">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
                     {{ $d(item.shop_deadline_datetime.time, 'time') }}
                   </v-card-text>
-                  <v-card-text class="text-right text-subtitle-2 pb-2">
+                  <v-card-text class="text-right text-subtitle-2 pb-1">
                     【{{ $t('shop_range_min_orders') }}】{{ item.shop_range_min_orders[item.rangeIndex].min_orders }} {{ $t('shop_range_min_orders_unit') }}
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
-                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
-                  <v-btn
-                    v-if="item.shop_id == props.modelValue.shop_id"
-                    color="red"
-                    class="ma-5"
-                    size="large"
-                    :disabled="event.event_status.value !== 'in_draft'"
-                    @click="submit(item)"
-                  >
-                    選択中
-                  </v-btn>
-                  <v-btn
-                    v-else
-                    color="primary"
-                    class="ma-5"
-                    size="large"
-                    :append-icon="mdiChevronRight"
-                    :disabled="event.event_status.value !== 'in_draft'"
-                    @click="submit(item)"
-                  >
-                    このお店にする
-                  </v-btn>
+                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->                  
+                  <v-spacer/>
+                  <div class="text-center">
+                    <v-btn
+                      v-if="item.shop_id == props.modelValue.shop_id"
+                      color="red"
+                      class="ma-5"
+                      size="large"
+                      elevation="5"
+                      :disabled="event.event_status.value !== 'in_draft'"
+                      @click="submit(item)"
+                    >
+                      選択中
+                    </v-btn>
+                    <v-btn
+                      v-else
+                      color="primary"
+                      class="ma-5"
+                      :append-icon="mdiChevronRight"
+                      :disabled="event.event_status.value !== 'in_draft'"
+                      @click="submit(item)"
+                    >
+                      このお店にする
+                    </v-btn>
+                  </div>
                 </v-card>
               </v-col>
 
