@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import { dateString, priceString } from '@/schemes/converter'
-import { mdiChevronLeft, mdiFoodForkDrink, mdiChevronRight } from '@mdi/js'
+import { mdiChevronLeft, mdiFoodForkDrink, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
 import { parseISO, compareDesc } from 'date-fns'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import type { Shop } from '@/schemes/shop'
 
 const props = defineProps<{
   menus: PartnerMenu[]
@@ -22,6 +23,8 @@ const submit = () => {
 const back = () => {
   emit('back')
 }
+const shop = defineModel<Shop | null>('shop', { required: true })
+const shop_description = computed(() => (shop.value !== null ? shop.value.shop_description : ''))
 
 const filteredMenu = computed(() => props.menus.filter((menu) => {
   if (!menu.dateStart || !menu.dateEnd) {
@@ -41,12 +44,13 @@ const filteredMenu = computed(() => props.menus.filter((menu) => {
       <v-col cols="12" sm="12" md="9">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
-            <v-card-title class="pa-5">
-              <v-icon size="50" class="text--primary me-3" :icon="mdiFoodForkDrink" />
-              <span>メニュー</span>
-            </v-card-title>
-
-            <!-- Activity -->
+            <v-card-text class="text-h3">
+              <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
+              {{ event.shop_name }}
+            </v-card-text>
+            <v-card-text class="mb-5">
+              {{ shop_description }}
+            </v-card-text>
             <v-row>
               <v-col v-for="(item, i) of filteredMenu" :key="`menu_${i}`" md="4" sm="4" cols="12">
                 <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
@@ -56,7 +60,7 @@ const filteredMenu = computed(() => props.menus.filter((menu) => {
                   <v-card-title class="justify-center pb-3 text-wrap">
                     {{ item.name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-8">
+                  <v-card-text class="text-left text-subtitle-2 pb-8">
                     {{ item.description }}
                   </v-card-text>
                   <v-card-text class="text-right text-h5 pb-5"> ¥ {{ priceString(item.price) }} </v-card-text>
