@@ -123,6 +123,7 @@ export class Shop {
       { range: null, min_orders: null },
       { range: null, min_orders: null },
     ],
+    public min_orders_on_spot: number = 30,
     public createdAt: Timestamp = Timestamp.now(),
     public updatedAt: Timestamp = Timestamp.now(),
     public shop_genre: (typeof GENRE_ARRAY)[number] = 'その他',

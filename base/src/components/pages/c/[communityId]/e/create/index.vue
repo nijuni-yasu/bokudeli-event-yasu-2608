@@ -116,10 +116,12 @@ watch(
         }
         const distance = calculateDistance(location, shopLocation)
         // 最小注文個数の配列の何番目かを取得
-        const rangeIndex = shop.shop_range_min_orders.findIndex((order) => order.range >= distance)
-        // 最小注文個数（注文の目安）を取得
-        const minOrders = shop.shop_range_min_orders[rangeIndex]?.min_orders
-        return { ...shop, distance, rangeIndex, minOrders }
+        const rangeIndex = shop.shop_range_min_orders.findIndex(
+          (order) => order?.range != null && order.range >= distance
+        )
+        // 最小注文個数（注文の目安）を取得。値がない場合は30に設定
+        const min_orders_on_spot = shop.shop_range_min_orders[rangeIndex]?.min_orders ?? 30
+        return { ...shop, distance, min_orders_on_spot }
       })
       .filter((shop) => {
         // check distance
@@ -145,7 +147,7 @@ watch(
 
         return isInRange && isInTime && shop.is_approved && shop.is_open
       })
-      .sort((a, b) => a.minOrders - b.minOrders)
+      .sort((a, b) => a.min_orders_on_spot - b.min_orders_on_spot)
     isLoadingShop.value = false
   },
   { immediate: true },

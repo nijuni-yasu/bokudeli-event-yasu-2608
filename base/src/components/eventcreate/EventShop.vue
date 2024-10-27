@@ -107,7 +107,7 @@ const next = () => {
                     {{ $d(item.shop_deadline_datetime.time, 'time') }}
                   </v-card-text>
                   <v-card-text class="text-right text-subtitle-2 pb-1">
-                    【{{ $t('shop_range_min_orders') }}】{{ item.shop_range_min_orders[item.rangeIndex].min_orders }} {{ $t('shop_range_min_orders_unit') }}
+                    【{{ $t('shop_range_min_orders') }}】{{ item.min_orders_on_spot }} {{ $t('shop_range_min_orders_unit') }}
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->                  
