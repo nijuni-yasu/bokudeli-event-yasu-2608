@@ -83,6 +83,8 @@ export default {
     event_postalcode_desc: ' で注文できるお店',
     shop_range_min_orders: '注文の目安',
     shop_range_min_orders_unit: '個以上',
+    button_selected: '選択中',
+    button_check_menu: 'メニューをみる',
   },
   event_detail: {
     title: 'イベント詳細',
@@ -91,7 +93,7 @@ export default {
     event_cover_url_hint: '※イベントカバー画像の推奨サイズは、1200 x 630ピクセル です。',
     event_desc: '開催内容',
     event_desc_hint: '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
-    deadline_date: '注文締切日時',
+    deadline_date: '注文期限',
     deadline_hour: '時間',
     deadline_minute: '分',
     event_max_people: '定員数',
@@ -111,11 +113,11 @@ export default {
     shop_name: '店舗名',
     shop_address: '店舗住所',
     shop_phone: '店舗電話番号',
-    date_title: '開催日時・受取日時・注文締切日時',
+    date_title: '開催日時・受取日時・注文期限',
     event_date: '開催日時',
     event_date_hint: '※開催日時の変更は「開催概要」画面で設定してください。',
-    deadline_date: '注文締切日時',
-    deadline_date_hint: '※注文締切日時まで、参加者は個別に注文やキャンセルを行うことができます。',
+    deadline_date: '注文期限',
+    deadline_date_hint: '※注文期限まで、イベント参加者は個別に「注文」と「キャンセル」を行うことができます。',
     pick_up_time: '商品の受取日時',
     pick_up_time_hint: '※商品は「イベント開始時刻30分前 〜 イベント開始時刻」の間でお受け取りください。',
     notice_title: '店舗への連絡事項',
@@ -182,4 +184,9 @@ export default {
     // Domain 名には _ が使えないので注意
     'kanda-curry': '神田カレーグランプリ',
   },
+  hint_dialog: {
+    deadline:`注文期限まで参加者は個別に「注文」と「キャンセル」を行うことができます。<br />
+                    注文期限を過ぎると注文内容が確定し、参加者は「注文」および「キャンセル」を行うことができなくなります。`,
+    min_orders:'イベントの注文個数が「注文の目安」に達しない場合、イベント主催者に配送料をご請求させていただく場合がございます。あらかじめご了承ください。'
+  }
 }

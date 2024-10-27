@@ -2,8 +2,9 @@
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type Shop } from '@/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
-import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight } from '@mdi/js'
+import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
 import { convertTruncateText, postalcodeString } from '@/schemes/converter'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const props = defineProps<{
   shops: Shop[]
@@ -71,6 +72,9 @@ const next = () => {
   }
   emit('next')
 }
+const isOpenMinOrdersDialog = ref(false)
+const isOpenDeadlineDialog = ref(false)
+
 </script>
 
 <template>
@@ -101,12 +105,30 @@ const next = () => {
                   <v-card-text class="text-left pb-3 text-subtitle-2">
                     {{ convertTruncateText(item.shop_description, 40) }}
                   </v-card-text>
-                  <v-card-text class="text-right text-subtitle-2 pb-1">
+                  <v-card-text class="text-left text-subtitle-2 pb-1">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
                     {{ $d(item.shop_deadline_datetime.time, 'time') }}
+                    <v-btn
+                      color="primary"
+                      class="ma-0"
+                      :icon="mdiHelpCircleOutline"
+                      size="small"
+                      density="compact"
+                      variant="text"
+                      @click="isOpenDeadlineDialog=true"
+                    />
                   </v-card-text>
-                  <v-card-text class="text-right text-subtitle-2 pb-1">
+                  <v-card-text class="text-left text-subtitle-2 pb-1">
                     【{{ $t('shop_range_min_orders') }}】{{ item.min_orders_on_spot }} {{ $t('shop_range_min_orders_unit') }}
+                    <v-btn
+                      color="primary"
+                      class="ma-0"
+                      :icon="mdiHelpCircleOutline"
+                      size="small"
+                      density="compact"
+                      variant="text"
+                      @click="isOpenMinOrdersDialog=true"
+                    />
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
                   <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->                  
@@ -115,23 +137,23 @@ const next = () => {
                     <v-btn
                       v-if="item.shop_id == props.modelValue.shop_id"
                       color="red"
-                      class="ma-5"
+                      class="ma-3"
                       size="large"
                       elevation="5"
                       :disabled="event.event_status.value !== 'in_draft'"
                       @click="submit(item)"
                     >
-                      選択中
+                    {{ $t('event_shop.button_selected') }}
                     </v-btn>
                     <v-btn
                       v-else
                       color="primary"
-                      class="ma-5"
+                      class="ma-3"
                       :append-icon="mdiChevronRight"
                       :disabled="event.event_status.value !== 'in_draft'"
                       @click="submit(item)"
                     >
-                      このお店にする
+                      {{ $t('event_shop.button_check_menu') }}
                     </v-btn>
                   </div>
                 </v-card>
@@ -165,6 +187,12 @@ const next = () => {
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
+    <confirm-dialog v-model="isOpenDeadlineDialog" :is-confirm="false">
+      <div v-html="$t('hint_dialog.deadline')"></div>
+    </confirm-dialog>
+    <confirm-dialog v-model="isOpenMinOrdersDialog" :is-confirm="false">
+      {{ $t('hint_dialog.min_orders') }}
+    </confirm-dialog>
   </section>
 </template>
 <style lang="scss" scoped>
