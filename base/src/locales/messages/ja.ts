@@ -80,6 +80,7 @@ export default {
     date_hint:"※店舗への予約申請後「開催日時」は変更はできませんのでご注意ください。",
   },
   event_shop: {
+    event_postalcode_desc: ' で注文できるお店',
     shop_range_min_orders: '注文の目安',
     shop_range_min_orders_unit: '個以上',
   },

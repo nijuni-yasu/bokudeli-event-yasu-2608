@@ -44,11 +44,11 @@ const filteredMenu = computed(() => props.menus.filter((menu) => {
       <v-col cols="12" sm="12" md="9">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
-            <v-card-text class="text-h3">
+            <v-card-title class="text-h4">
               <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
               {{ event.shop_name }}
-            </v-card-text>
-            <v-card-text class="mb-5">
+            </v-card-title>
+            <v-card-text>
               {{ shop_description }}
             </v-card-text>
             <v-row>

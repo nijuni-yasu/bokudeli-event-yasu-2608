@@ -3,7 +3,7 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type Shop } from '@/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
 import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight } from '@mdi/js'
-import { convertTruncateText } from '@/schemes/converter'
+import { convertTruncateText, postalcodeString } from '@/schemes/converter'
 
 const props = defineProps<{
   shops: Shop[]
@@ -79,12 +79,11 @@ const next = () => {
       <v-col cols="12" sm="12" md="9">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
-            <v-card-title class="pa-5">
+            <v-card-title class="pa-3 text-h5 text-wrap">
               <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
-              <span>お店</span>
+              <span>{{ postalcodeString(event.event_postalcode) }}</span>
+              <span>{{ $t('event_shop.event_postalcode_desc') }}</span>
             </v-card-title>
-
-            <!-- Activity -->
             <v-row>
               <v-col v-for="(item, i) of displayShops" :key="`shop_${i}`" md="4" sm="4" cols="12">
                 <v-card

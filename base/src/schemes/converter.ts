@@ -47,6 +47,11 @@ export const priceString = (price: number): string => {
   return `${price.toLocaleString()}`
 }
 
+export const postalcodeString = (postalCode: string): string => {
+  // 郵便番号を「〒XXX-XXXX」の形式に変換
+  return `〒${postalCode.slice(0, 3)}-${postalCode.slice(3)}`;
+}
+
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
   return new BokudeliEvent(documentData)
 }
