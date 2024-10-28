@@ -121,6 +121,7 @@ export default {
   },
   'orders': {
     'title': '注文一覧',
+    'order_count': '{0} 個',
     'table_header': [
       'イベント名',
       '開始日時',
@@ -160,7 +161,6 @@ export default {
     'order_date': '注文日時',
     'subtotal': 'メニュー別小計',
     'order_count': '個数',
-    'order_count_unit': '個',
     'unit_price': '単価',
     'subtotal_price': '小計',
     'total': '合計',
@@ -171,7 +171,7 @@ export default {
   'menu_card': {
     'sold_out': '売り切れ',
     'in_stock': '販売中',
-    'limited_edition': '販売期間',
+    'limited_edition': '【販売期間】{0}〜{1}',
   },
   'menu_edit_card': {
     'name': 'メニュー名称',

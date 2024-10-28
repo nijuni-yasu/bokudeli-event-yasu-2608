@@ -21,7 +21,7 @@ defineProps({
       {{ menu.description }}
     </v-card-text>
     <v-card-text v-if="menu.dateStart && menu.dateEnd" class="py-2">
-      <span class="sold-out">【{{ $t('menu_card.limited_edition')}}】{{ menu.dateStart }}〜{{ menu.dateEnd }}</span>
+      <span class="sold-out">{{$t('menu_card.limited_edition',[menu.dateStart, menu.dateEnd])}}</span>
     </v-card-text>
     <v-card-text v-if="menu.isSoldout" class="py-2">
       <span class="sold-out">{{ $t('menu_card.sold_out') }}</span>
