@@ -110,7 +110,7 @@ const isOwner = computed(() => {
                 <v-icon :icon="mdiMapMarkerRadius" />
               </a>
             </p>
-            <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}{{ $t('order_detail.event_max_people_unit') }}</p>
+            <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
             <template v-if="!isOwner">
               <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>

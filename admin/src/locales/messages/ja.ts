@@ -122,6 +122,7 @@ export default {
   'orders': {
     'title': '注文一覧',
     'order_count': '{0} 個',
+    'event_max_people': '{0} 人',
     'table_header': [
       'イベント名',
       '開始日時',
@@ -140,8 +141,7 @@ export default {
     'event_date': '【配送日時】 {0} 〜 {1}',
     'order_limit': '【注文期限】 {0}',
     'event_address': '【開催場所】 {0}',
-    'event_max_people': '【定員数】 {0}',
-    'event_max_people_unit': '人',
+    'event_max_people': '【定員数】 {0} 人',
     'community_name': '【コミュニティ名】 {0}',
     'organizer_fullname': '【担当者名】 {0}',
     'organizer_company': '【会社名】 {0}',
