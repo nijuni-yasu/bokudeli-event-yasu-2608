@@ -52,9 +52,9 @@ export default {
            📩 メールアドレス : support@nijuni.jp<br />
            📞 電話番号 : 050-1721-5838`],
       ['SNS', `SNSも更新中！ぜひフォローしてください💬<br />
-      <a href="https://x.com/shokujii_jp" target="blank">X(旧Twitter)</a>　
-      <a href="https://www.instagram.com/shokujii_jp/" target="blank">Instagram</a>　
-      <a href="https://www.facebook.com/shokujii" target="blank">Facebook</a>　
+      <a href="https://x.com/shokujii_jp" target="blank">X(旧Twitter)</a>
+      <a href="https://www.instagram.com/shokujii_jp/" target="blank">Instagram</a>
+      <a href="https://www.facebook.com/shokujii" target="blank">Facebook</a>
       <a href="https://note.com/shokujii" target="blank">note</a>
       `]
     ]
