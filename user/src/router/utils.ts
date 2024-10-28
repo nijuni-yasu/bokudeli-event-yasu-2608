@@ -16,3 +16,4 @@ export const getUserPath = (userId: string) => `/u/${userId}`
 export const getInvoicePath = () => `/invoice`
 export const getManagePath = () => `/manage`
 export const getManageEventListPath = (communityAccount: string) => `/manage/community/${communityAccount}`
+export const getManageEventPath = (eventId: string) => `/manage/event/${eventId}`

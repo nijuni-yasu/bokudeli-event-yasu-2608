@@ -28,12 +28,30 @@ export default {
   'manage': {
     'new_community': 'コミュニティ作成',
     'new_event': 'イベント作成',
+    'new_letter': 'レター作成',
     'community': {
       'tabs': {
         'events': 'イベント',
         'member': 'メンバー',
         'letter': 'レター',
         'settings': '設定',
+      }
+    },
+    'letter': {
+      'type_select_dialog': {
+        'top': 'メッセージの種類を選択してください',
+        'event': 'イベントに関するメッセージ',
+        'event_description': 'イベント開催を案内したい時や、イベント参加予定者にメッセージを送りたい時など、イベントに関するメッセージを送信する時に選択してください。',
+        'community': 'コミュニティに関するメッセージ',
+        'community_description': '特定のイベントに関連しないメッセージを送信する時に選択してください。',
+        'type': {
+          'normal': '通常',
+          'important': '重要',
+          'warning': '警告',
+        },
+      },
+      'event_dialog': {
+        'top': 'メッセージに関連するイベントを選択してください',
       }
     }
   }
