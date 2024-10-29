@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { PartnerMenu } from '@/schemes/partnerMenu'
+import { useI18n } from 'vue-i18n'
 
 defineProps({
   menu: {
@@ -13,18 +14,22 @@ defineProps({
   <v-card class="card">
     <v-img :src="menu.imageUrl ?? undefined" cover aspect-ratio="1" />
 
-    <!-- title -->
-    <v-card-title class="my-1">
+    <v-card-title class="text-h5 py-3 text-wrap">
       {{ menu.name }}
     </v-card-title>
-    <v-card-text class="my-1 py-0">
+    <v-card-text class="py-2">
       {{ menu.description }}
+    </v-card-text>
+    <v-card-text v-if="menu.dateStart && menu.dateEnd" class="py-2">
+      <span class="sold-out">{{$t('menu_card.limited_edition',[menu.dateStart, menu.dateEnd])}}</span>
+    </v-card-text>
+    <v-card-text v-if="menu.isSoldout" class="py-2">
+      <span class="sold-out">{{ $t('menu_card.sold_out') }}</span>
     </v-card-text>
     <div class="spacer" />
     <v-card-text class="d-flex">
-      <span v-if="menu.isSoldout" class="sold-out">売り切れ</span>
       <v-spacer />
-      <span class="text-h6">{{ $n(menu.price, 'currency') }}</span>
+      <span class="text-h4">{{ $n(menu.price, 'currency') }}</span>
     </v-card-text>
     <slot></slot>
   </v-card>

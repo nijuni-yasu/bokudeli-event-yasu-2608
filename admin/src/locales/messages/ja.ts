@@ -52,9 +52,9 @@ export default {
            📩 メールアドレス : support@nijuni.jp<br />
            📞 電話番号 : 050-1721-5838`],
       ['SNS', `SNSも更新中！ぜひフォローしてください💬<br />
-      <a href="https://x.com/shokujii_jp" target="blank">X(旧Twitter)</a>　
-      <a href="https://www.instagram.com/shokujii_jp/" target="blank">Instagram</a>　
-      <a href="https://www.facebook.com/shokujii" target="blank">Facebook</a>　
+      <a href="https://x.com/shokujii_jp" target="blank">X(旧Twitter)</a>
+      <a href="https://www.instagram.com/shokujii_jp/" target="blank">Instagram</a>
+      <a href="https://www.facebook.com/shokujii" target="blank">Facebook</a>
       <a href="https://note.com/shokujii" target="blank">note</a>
       `]
     ]
@@ -121,11 +121,14 @@ export default {
   },
   'orders': {
     'title': '注文一覧',
+    'order_count': '{0} 個',
+    'event_max_people': '{0} 人',
     'table_header': [
       'イベント名',
       '開始日時',
       '注文期限',
       '開催場所',
+      '定員数',
       '注文個数',
       '注文金額',
       'ステータス'
@@ -138,6 +141,7 @@ export default {
     'event_date': '【配送日時】 {0} 〜 {1}',
     'order_limit': '【注文期限】 {0}',
     'event_address': '【開催場所】 {0}',
+    'event_max_people': '【定員数】 {0} 人',
     'community_name': '【コミュニティ名】 {0}',
     'organizer_fullname': '【担当者名】 {0}',
     'organizer_company': '【会社名】 {0}',
@@ -164,6 +168,11 @@ export default {
     'total_price': '合計金額',
     'email_sent': 'メールを送信しました',
   },
+  'menu_card': {
+    'sold_out': '売り切れ',
+    'in_stock': '販売中',
+    'limited_edition': '【販売期間】{0}〜{1}',
+  },
   'menu_edit_card': {
     'name': 'メニュー名称',
     'description': '説明文',
@@ -172,9 +181,9 @@ export default {
     'image_hint': '※画像サイズは600x600推奨です',
     'sold_out': '売り切れ',
     'in_stock': '販売中',
-    'limited_edition': '期間限定',
-    'date_start': '期間限定・開始日',
-    'date_end': '期間限定・終了日',
+    'limited_edition': '販売期間',
+    'date_start': '開始日',
+    'date_end': '終了日',
     'close': '閉じる',
     'submit': '保存する'
   },
