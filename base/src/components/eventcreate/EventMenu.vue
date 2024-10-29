@@ -7,6 +7,7 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import type { Shop } from '@/schemes/shop'
 
 const props = defineProps<{
+  shop: Shop | null
   menus: PartnerMenu[]
   event: BokudeliEvent
   loading: boolean
@@ -23,8 +24,6 @@ const submit = () => {
 const back = () => {
   emit('back')
 }
-const shop = defineModel<Shop | null>('shop', { required: true })
-const shop_description = computed(() => (shop.value !== null ? shop.value.shop_description : ''))
 
 const filteredMenu = computed(() => props.menus.filter((menu) => {
   if (!menu.dateStart || !menu.dateEnd) {
@@ -49,7 +48,7 @@ const filteredMenu = computed(() => props.menus.filter((menu) => {
               {{ event.shop_name }}
             </v-card-title>
             <v-card-text>
-              {{ shop_description }}
+              {{ shop?.shop_description }}
             </v-card-text>
             <v-row>
               <v-col v-for="(item, i) of filteredMenu" :key="`menu_${i}`" md="4" sm="4" cols="12">
