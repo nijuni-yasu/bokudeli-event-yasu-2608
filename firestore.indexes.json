@@ -313,6 +313,20 @@
       ]
     },
     {
+      "collectionGroup": "letters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "community_account",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "letter_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "orders",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
