@@ -2,7 +2,9 @@
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { type Shop } from '@/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
-import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight } from '@mdi/js'
+import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
+import { convertTruncateText, postalcodeString } from '@/schemes/converter'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const props = defineProps<{
   shops: Shop[]
@@ -70,6 +72,9 @@ const next = () => {
   }
   emit('next')
 }
+const isOpenMinOrdersDialog = ref(false)
+const isOpenDeadlineDialog = ref(false)
+
 </script>
 
 <template>
@@ -78,55 +83,79 @@ const next = () => {
       <v-col cols="12" sm="12" md="9">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
-            <v-card-title class="pa-5">
+            <v-card-title class="pa-3 text-h5 text-wrap">
               <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
-              <span>お店</span>
+              <span>{{ postalcodeString(event.event_postalcode) }}</span>
+              <span>{{ $t('event_shop.event_postalcode_desc') }}</span>
             </v-card-title>
-
-            <!-- Activity -->
             <v-row>
               <v-col v-for="(item, i) of displayShops" :key="`shop_${i}`" md="4" sm="4" cols="12">
                 <v-card
                   :class="{ 'select-border': item.partner_id == props.modelValue.partner_id }"
-                  class="mb-3 mx-0"
+                  class="mb-3 mx-0  d-flex flex-column"
                   color="text-center cursor-pointer"
+                  height="400px"
                 >
                   <v-img :src="item.shop_image_url ?? undefined" cover aspect-ratio="1.91" />
 
                   <!-- title -->
-                  <v-card-title class="justify-center pb-3 pre-line">
+                  <v-card-title class="justify-center pb-3">
                     {{ item.shop_name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-3 text-subtitle-2">
-                    {{ item.shop_description }}
+                    {{ convertTruncateText(item.shop_description, 40) }}
                   </v-card-text>
-                  <v-card-text class="text-right text-subtitle-2">
+                  <v-card-text class="text-left text-subtitle-2 pb-1">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
                     {{ $d(item.shop_deadline_datetime.time, 'time') }}
+                    <v-btn
+                      color="primary"
+                      class="ma-0"
+                      :icon="mdiHelpCircleOutline"
+                      size="small"
+                      density="compact"
+                      variant="text"
+                      @click="isOpenDeadlineDialog=true"
+                    />
+                  </v-card-text>
+                  <v-card-text class="text-left text-subtitle-2 pb-1">
+                    【{{ $t('shop_range_min_orders') }}】{{ item.min_orders_on_spot }} {{ $t('shop_range_min_orders_unit') }}
+                    <v-btn
+                      color="primary"
+                      class="ma-0"
+                      :icon="mdiHelpCircleOutline"
+                      size="small"
+                      density="compact"
+                      variant="text"
+                      @click="isOpenMinOrdersDialog=true"
+                    />
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
-                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
-                  <v-btn
-                    v-if="item.shop_id == props.modelValue.shop_id"
-                    color="red"
-                    class="ma-5"
-                    size="large"
-                    :disabled="event.event_status.value !== 'in_draft'"
-                    @click="submit(item)"
-                  >
-                    選択中
-                  </v-btn>
-                  <v-btn
-                    v-else
-                    color="primary"
-                    class="ma-5"
-                    size="large"
-                    :append-icon="mdiChevronRight"
-                    :disabled="event.event_status.value !== 'in_draft'"
-                    @click="submit(item)"
-                  >
-                    このお店にする
-                  </v-btn>
+                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->                  
+                  <v-spacer/>
+                  <div class="text-center">
+                    <v-btn
+                      v-if="item.shop_id == props.modelValue.shop_id"
+                      color="red"
+                      class="ma-3"
+                      size="large"
+                      elevation="5"
+                      :disabled="event.event_status.value !== 'in_draft'"
+                      @click="submit(item)"
+                    >
+                    {{ $t('event_shop.button_selected') }}
+                    </v-btn>
+                    <v-btn
+                      v-else
+                      color="primary"
+                      class="ma-3"
+                      :append-icon="mdiChevronRight"
+                      :disabled="event.event_status.value !== 'in_draft'"
+                      @click="submit(item)"
+                    >
+                      {{ $t('event_shop.button_check_menu') }}
+                    </v-btn>
+                  </div>
                 </v-card>
               </v-col>
 
@@ -158,6 +187,12 @@ const next = () => {
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
+    <confirm-dialog v-model="isOpenDeadlineDialog" :is-confirm="false">
+      <div v-html="$t('hint_dialog.deadline')"></div>
+    </confirm-dialog>
+    <confirm-dialog v-model="isOpenMinOrdersDialog" :is-confirm="false">
+      {{ $t('hint_dialog.min_orders') }}
+    </confirm-dialog>
   </section>
 </template>
 <style lang="scss" scoped>
