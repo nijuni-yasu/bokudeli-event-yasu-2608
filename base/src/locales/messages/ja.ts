@@ -279,4 +279,24 @@ export default {
            <br />
            詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客について」</a> も参考にしてください👍`,
   },
+  letter_status: {
+    draft: '下書き',
+    timed: '配信予約中',
+    sent: '配信済',
+  },
+  letter_type: {
+    community: 'コミュニティメンバー',
+    event_participant: 'イベント参加者',
+    event_non_participant: 'イベント未参加者',
+  },
+  letter_card: {
+    updated_at: '【更新日時】 {0}',
+    sent_at: '【配信日時】 {0}',
+    scheduled_at: '【配信予定日時】 {0}',
+    type: '【配信先】 {0}（{1}人）',
+    event_name: '【イベント名】 {0}',
+    copy: 'コピー',
+    delete: '削除',
+    edit: '編集',
+  }
 }
