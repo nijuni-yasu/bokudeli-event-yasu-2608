@@ -1,6 +1,6 @@
 import type { NavLink, NavGroup } from '@layouts/types'
-import { getHomePath, getManagePath, getCommunityListPath } from '@/router/utils'
-import { mdiCalendarHeart, mdiCalendarPlus, mdiAccountGroup, mdiNote, mdiHeart } from '@mdi/js'
+import { getHomePath, getCommunityListPath } from '@/router/utils'
+import { mdiCalendarHeart, mdiAccountGroup, mdiNote, mdiHeart } from '@mdi/js'
 import XIcon from '@/icons/x'
 
 export const useNavItems = (): (NavLink | NavGroup)[] => {
@@ -10,11 +10,6 @@ export const useNavItems = (): (NavLink | NavGroup)[] => {
       title: $t('navigation.home'),
       to: { path: getHomePath() },
       icon: { icon: mdiCalendarHeart },
-    },
-    {
-      title: $t('navigation.new_event'),
-      to: { path: getManagePath() },
-      icon: { icon: mdiCalendarPlus },
     },
     {
       title: $t('navigation.community'),

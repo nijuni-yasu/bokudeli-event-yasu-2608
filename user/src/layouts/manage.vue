@@ -6,9 +6,8 @@ import { AppContentLayoutNav } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
 import UserProfile from '@/componentsLocal/UserProfile.vue'
 import Footer from '@/componentsLocal/Footer.vue'
-import { useNavItems } from '@/navigation'
+import { useNavItems } from '@/navigation/manage'
 import type { Notification } from '@/types'
-import { getManagePath } from '@/router/utils'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -20,7 +19,8 @@ const DefaultLayoutWithVerticalNav = defineAsyncComponent(
 const navItems = useNavItems()
 
 const configStore = useConfigStore()
-configStore.appContentLayoutNav = AppContentLayoutNav.Horizontal
+configStore.appContentLayoutNav = AppContentLayoutNav.Vertical
+
 // ℹ️ This will switch to vertical nav when define breakpoint is reached when in horizontal nav layout
 // Remove below composable usage if you are not using horizontal nav layout in your app
 switchToVerticalNavOnLtOverlayNavBreakpoint()
@@ -57,7 +57,7 @@ const isNotificationShown = computed({
     "
   >
     <template #navbar-icons>
-      <v-btn class="me-4" :href="getManagePath()" target="_blank"> {{ $t('navigation.new_event') }}</v-btn>
+      <v-btn class="me-4" href="/" target="_blank"> {{ $t('navigation.home') }}</v-btn>
       <UserProfile />
     </template>
     <template #footer>

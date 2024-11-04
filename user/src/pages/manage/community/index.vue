@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getManageEventListPath } from '@/router/utils'
+import { getManageCommunityPath } from '@/router/utils'
 import { useCommunityListStore } from '@/stores/communityList'
 import { doc, orderBy, where } from 'firebase/firestore'
 import CommunityCard from '@/components/CommunityCard.vue'
@@ -40,8 +40,8 @@ const communities = computed(() => {
   </v-row>
   <v-row class="justify-center">
     <v-col v-for="community in communities" :key="community.community_id" md="10" sm="12" cols="12">
-      <router-link :to="getManageEventListPath(community.community_account)">
-        <CommunityCard :community="community" />
+      <router-link :to="getManageCommunityPath(community.community_account)">
+        <CommunityCard :community="community" :text-length="150" />
       </router-link>
     </v-col>
   </v-row>
@@ -56,3 +56,8 @@ const communities = computed(() => {
     </v-col>
   </v-row>
 </template>
+
+<route lang="yaml">
+meta:
+  layout: manage
+</route>
