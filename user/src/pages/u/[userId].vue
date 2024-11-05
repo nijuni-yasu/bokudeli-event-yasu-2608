@@ -194,7 +194,7 @@ const downloadInvoice = async (order: OrderItem) => {
               cols="12"
             >
               <router-link :to="getCommunityPath(community.community_account)">
-                <CommunityCard :community="community" :members="members" />
+                <CommunityCard :community="community" :members="members" :textLength="60" />
               </router-link>
             </v-col>
           </v-row>
@@ -216,7 +216,7 @@ const downloadInvoice = async (order: OrderItem) => {
               cols="12"
             >
               <router-link :to="getCommunityPath(community.community_account)">
-                <CommunityCard :community="community" :members="members" />
+                <CommunityCard :community="community" :members="members" :textLength="60" />
               </router-link>
               <div v-if="isOwner" class="text-right">
                 <v-btn

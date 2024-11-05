@@ -7,7 +7,9 @@ import type { CommunityMember } from '../schemes/communityMember'
 defineProps<{
   community: BokudeliCommunity
   members?: CommunityMember[]
+  textLength: number
 }>()
+
 </script>
 
 <template>
@@ -29,7 +31,7 @@ defineProps<{
           {{ community.community_name }}
         </v-card-title>
         <v-card-text class="text-left pb-3">
-          {{ convertTruncateText(community.community_desc, 250) }}
+          {{ convertTruncateText(community.community_desc, textLength) }}
         </v-card-text>
         <v-spacer />
         <!-- Mutual members -->
