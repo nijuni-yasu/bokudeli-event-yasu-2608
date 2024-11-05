@@ -4,7 +4,7 @@ import {
   mdiHome,
   mdiStorefrontOutline,
   mdiFoodForkDrink,
-  mdiBicycle,
+  mdiTruckOutline,
   mdiLightbulbOnOutline,
   mdiAccountGroup,
   mdiCalendarHeart,
@@ -31,7 +31,7 @@ export const useNavItems = (): HorizontalNavItems | VerticalNavItems => {
     {
       title: $t('navigation.order'),
       to: { path: getOrderPath() },
-      icon: { icon: mdiBicycle },
+      icon: { icon: mdiTruckOutline },
     },
     {
       title: $t('navigation.community'),
