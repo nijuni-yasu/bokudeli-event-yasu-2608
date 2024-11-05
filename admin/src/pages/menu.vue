@@ -98,7 +98,7 @@ example.price = 800
             class="menu-card clickable d-flex justify-center align-center"
             @click="openDialog(new PartnerMenu(partnerId))"
           >
-            <v-icon size="48" :icon="mdiPlus" />
+            <v-icon size="64" :icon="mdiPlus" />
           </v-card>
         </v-col>
       </v-row>
