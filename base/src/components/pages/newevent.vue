@@ -95,9 +95,9 @@ onUnmounted(() => {
   <v-row justify="center">
     <v-col cols="12" sm="12" md="7" class="pa-1">
       <v-card class="text-center ma-md-10 pa-md-10">
-        <v-card-title class="text-h5 mt-5 font-weight-bold"> イベント作成 </v-card-title>
+        <v-card-title class="text-h5 mt-5 font-weight-bold"> イベント開催 </v-card-title>
         <v-card-text class="my-3 pa-0 text-caption text-md-body-2">
-          イベントを作成するコミュニティを選択してください。<br />
+          イベントを開催するコミュニティを選択してください。<br />
           コミュニティがない場合は新規作成してください。<br />
           イベントとコミュニティは無料で作成いただけます。
         </v-card-text>
