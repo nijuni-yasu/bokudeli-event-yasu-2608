@@ -44,7 +44,7 @@ const makeTimeArray = (start: number, num: number) =>
 
 const SHOP_MIN_ORDERS_ARRAY_MAX = 30
 const SHOP_MIN_ORDERS_ARRAY = [null, ...[...Array(SHOP_MIN_ORDERS_ARRAY_MAX)].map((_, i) => i + 1)]
-const SHOP_RANGE_ARRAY_MAX = 30
+const SHOP_RANGE_ARRAY_MAX = 50
 const SHOP_RANGE_ARRAY = (() => {
   const array: (number | null)[] = [null]
   let i = 0.5
