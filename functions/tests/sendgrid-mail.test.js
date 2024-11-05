@@ -208,7 +208,7 @@ describe('community_added のテスト', () => {
       text:
         '【ID】 5oxesNeS5dO078qABR98\n' +
         '【コミュニティ名】 ぼくデリ\n' +
-        '【コミュニティアカウント】 bokudeli\n' +
+        '【コミュニティID】 bokudeli\n' +
         '【コミュニティページURL】 https://undefined/c/bokudeli',
     })
   })

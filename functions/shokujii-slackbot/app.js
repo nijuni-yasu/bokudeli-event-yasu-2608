@@ -105,7 +105,7 @@ app.command('/shokujii', async ({ command, ack, respond }) => {
   // コマンドリクエストを確認
   await ack();
 
-  // 入力データからサブコマンド、コミュニティアカウントを取得
+  // 入力データからサブコマンド、コミュニティIDを取得
   const [subCommand, communityAccount] = command.text.split(' ');
   switch (subCommand) {
     case 'add':
