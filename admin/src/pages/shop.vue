@@ -280,7 +280,7 @@ const submit = async () => {
             <ImageInput
               :url="shop.shop_image_url ?? undefined"
               :rules="[requiredValidator]"
-              style="width: 100%; aspect-ratio: 4/3"
+              style="width: 100%; aspect-ratio: 120/63"
               :cover="true"
               @fileSelected="(f) => (imageFile = f)"
             />

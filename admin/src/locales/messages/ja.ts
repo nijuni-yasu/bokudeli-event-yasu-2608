@@ -76,7 +76,7 @@ export default {
     'url_instagram': 'Instagram URL',
     'url_instagram_hint': 'Instagramアカウントを入力してください',
     'image': '店舗画像',
-    'image_hint': '※画像サイズは600x450推奨です',
+    'image_hint': '※店舗画像の推奨サイズは600x315pxです',
     'base_point': '配送中心地',
     'base_point_hint': '※配送中心地は、店舗の郵便番号<span class="text-h3">{0}</span>をもとに自動算出しています',
     'range_min_orders': '配送距離＆注文最小個数',
