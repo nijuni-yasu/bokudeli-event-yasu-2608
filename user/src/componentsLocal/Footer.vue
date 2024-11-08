@@ -8,9 +8,9 @@
 
 <template>
   <div class="mt-15 mb-5 text-center">
-    <div class="my-2 text-center">
-      <span class="align-center text-h5">
-        💚 FOLLOW US 💚
+    <div class="my-5 text-center">
+      <span class="align-center">
+        ＼最新情報はSNSをチェック／
       </span>
     </div>
     <table align="center" style="margin: auto;">
