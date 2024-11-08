@@ -11,7 +11,7 @@ const eventListStore = useEventListStore(
   [
     where('partner_id', '==', getAuth().currentUser?.uid),
     where('event_status.value', '!=', 'in_draft'),
-    orderBy('event_start_datetime', 'asc'),
+    orderBy('event_start_datetime', 'desc'),
   ],
   10,
 )

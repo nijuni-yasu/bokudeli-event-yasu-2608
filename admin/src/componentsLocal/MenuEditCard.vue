@@ -32,8 +32,24 @@ const price = computed({
   <v-form v-model="isValid" @submit.prevent="$emit('save', menu, imageFile)">
     <v-card class="pa-4">
       <template #title>
-        <slot name="title" />
+        <div class="text-h4">
+          <slot name="title" />
+        </div>
       </template>
+      <v-card-text>
+        <v-row justify="center">
+          <v-col cols="7">
+            <ImageInput
+              :url="menu.imageUrl ?? undefined"
+              @file-selected="(f) => (imageFile = f)"
+              style="width: auto; max-width: min(600px, 100%); aspect-ratio: 1/1"
+              :cover="true"
+              :rules="[requiredValidator]"
+            />
+            {{ $t('menu_edit_card.image_hint') }}
+          </v-col>
+        </v-row>
+      </v-card-text>
       <v-card-text>
         <v-text-field
           v-model="menu.name"
@@ -53,17 +69,7 @@ const price = computed({
       </v-card-text>
       <v-card-text>
         <v-row>
-          <v-col cols="6">
-            <ImageInput
-              :url="menu.imageUrl ?? undefined"
-              @file-selected="(f) => (imageFile = f)"
-              style="width: auto; max-width: min(600px, 100%); aspect-ratio: 1/1"
-              :cover="true"
-              :rules="[requiredValidator]"
-            />
-            {{ $t('menu_edit_card.image_hint') }}
-          </v-col>
-          <v-col cols="6" class="d-flex align-end">
+          <v-col cols="12">
             <v-text-field
               type="number"
               :prefix="$n(0, 'currency').replace('0', '')"

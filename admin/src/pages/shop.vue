@@ -44,7 +44,7 @@ const makeTimeArray = (start: number, num: number) =>
 
 const SHOP_MIN_ORDERS_ARRAY_MAX = 30
 const SHOP_MIN_ORDERS_ARRAY = [null, ...[...Array(SHOP_MIN_ORDERS_ARRAY_MAX)].map((_, i) => i + 1)]
-const SHOP_RANGE_ARRAY_MAX = 30
+const SHOP_RANGE_ARRAY_MAX = 50
 const SHOP_RANGE_ARRAY = (() => {
   const array: (number | null)[] = [null]
   let i = 0.5
@@ -276,11 +276,11 @@ const submit = async () => {
             <v-icon size="40" class="text--primary me-3" :icon="mdiFileImageOutline" />
             <span>{{ $t('shop.image') }}</span>
           </template>
-          <v-card-text>
+          <v-card-text class="hint-text">
             <ImageInput
               :url="shop.shop_image_url ?? undefined"
               :rules="[requiredValidator]"
-              style="width: 100%; aspect-ratio: 4/3"
+              style="width: 100%; aspect-ratio: 120/63"
               :cover="true"
               @fileSelected="(f) => (imageFile = f)"
             />
@@ -305,7 +305,7 @@ const submit = async () => {
               </v-col>
             </v-row>
           </v-card-text>
-          <v-card-text>
+          <v-card-text class="hint-text">
             <div v-html="$t('shop.base_point_hint', [validatedPostalCode])"></div>
           </v-card-text>
         </v-card>
@@ -377,7 +377,7 @@ const submit = async () => {
               </v-col>
             </v-row>
           </v-card-text>
-          <v-card-text>
+          <v-card-text class="hint-text">
             <div v-html="$t('shop.range_min_orders_hint')"></div>
           </v-card-text>
           <v-card-text>
@@ -439,6 +439,9 @@ const submit = async () => {
               </tr>
             </v-table>
           </v-card-text>
+          <v-card-text class="hint-text">
+            <div v-html="$t('shop.time_hint')"></div>
+          </v-card-text>
           <v-card-text>
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
@@ -470,7 +473,9 @@ const submit = async () => {
               </v-col>
             </v-row>
           </v-card-text>
-          <v-card-text>{{ $t('shop.deadline_hint') }}</v-card-text>
+          <v-card-text class="hint-text">
+            <div v-html="$t('shop.deadline_hint')"></div>
+          </v-card-text>
           <v-card-text>
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
@@ -492,7 +497,7 @@ const submit = async () => {
               :rules="[emailValidator]"
             />
           </v-card-text>
-          <v-card-text>
+          <v-card-text class="hint-text">
             <div v-html="$t('shop.email_sub_hint')"></div>
           </v-card-text>
           <v-card-text>
@@ -517,6 +522,9 @@ const submit = async () => {
               :rules="hasInvoice ? [invoiceValidatorJapan, requiredValidator] : [invoiceValidatorJapan]"
             />
           </v-card-text>
+          <v-card-text class="hint-text">
+            <div v-html="$t('shop.invoice_hint')"></div>
+          </v-card-text>
           <v-card-text>
             <v-btn type="submit" :disabled="!isValid" :loading="isSaving">{{ $t('shop.submit') }}</v-btn>
           </v-card-text>
@@ -532,7 +540,7 @@ const submit = async () => {
               :label="`${shop.is_open ? $t('shop.label_open') : $t('shop.label_close')}`"
             />
           </v-card-text>
-          <v-card-text>
+          <v-card-text class="hint-text">
             <div v-html="$t('shop.is_open_hint')"></div>
           </v-card-text>
           <v-card-text>
@@ -543,3 +551,10 @@ const submit = async () => {
     </v-row>
   </v-form>
 </template>
+<style lang="css" scoped>
+.hint-text {
+  font-size: 13px;
+  margin-left: 10px;
+  margin-bottom: 10px;
+}
+</style>

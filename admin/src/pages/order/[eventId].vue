@@ -48,7 +48,13 @@ const { requiredValidator } = useValidators()
 const isValid = ref(false)
 const isLoading = ref(false)
 const radio01 = ref(0)
-const text01 = ref('')
+const text01 = ref($t('order_detail.accept_order_sample'))
+
+watch(radio01, (newValue) => {
+  text01.value = newValue === 0
+    ? $t('order_detail.accept_order_sample')
+    : $t('order_detail.decline_order_sample');
+});
 
 const submit = async () => {
   isLoading.value = true
@@ -125,12 +131,20 @@ const isOwner = computed(() => {
         <template v-if="eventStore.event.event_status.value == 'applying_reservation'">
           <v-form v-model="isValid" @submit.prevent="submit">
             <v-card-text>
-              <v-radio-group v-model="radio01" column>
+              <p>
+                {{ $t('order_detail.accept_or_decline') }}
+              </p>
+              <v-radio-group v-model="radio01" column class="ml-5">
                 <v-radio :label="$t('order_detail.accept_order')" :value="0" />
                 <v-radio :label="$t('order_detail.decline_order')" :value="1" />
               </v-radio-group>
-              <v-text-field
+              <p class="mt-8">
+                {{ $t('order_detail.send_email_message') }}
+              </p>
+              <v-textarea
                 v-model="text01"
+                rows="2"
+                class="ml-5"
                 :placeholder="
                   radio01 === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
                 "
@@ -143,6 +157,7 @@ const isOwner = computed(() => {
                   class="px-3"
                   size="large"
                   type="submit"
+                  elevation="3"
                   variant="outlined"
                   color="primary"
                   rounded="pill"
