@@ -46,8 +46,8 @@ export default {
   },
   community_edit: {
     title: 'コミュニティ設定',
-    account: 'アカウント',
-    account_readonly: 'アカウント（readonly）',
+    account: 'コミュニティID',
+    account_readonly: 'コミュニティID（ReadOnly）',
     community_name: 'コミュニティ名',
     community_description: 'コミュニティ説明',
     image_setting: '画像設定',
@@ -65,7 +65,7 @@ export default {
     manager_name: '運営者氏名',
     company_name: '会社名・団体名',
     use_purpose: '利用目的',
-    validator_account_exists: 'このアカウント名は既に使用されています',
+    validator_account_exists: 'このアカウントIDは既に使用されています',
   },
   event_basic_info: {
     place: '開催場所',
@@ -173,7 +173,7 @@ export default {
     phone: '有効な電話番号を入力してください',
     email: '有効なメールアドレスを入力してください',
     account:
-      'アカウントは5文字以上15文字以内にしてください。アカウントに使えるのは「英小文字・数字・アンダースコア」のみです。',
+      '5文字以上15文字以内のコミュニティIDを入力してください。コミュニティIDに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティIDは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
   },
   invoice_error_card: {

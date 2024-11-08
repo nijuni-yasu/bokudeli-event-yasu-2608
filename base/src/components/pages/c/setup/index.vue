@@ -162,7 +162,7 @@ const cancel = () => {
     <confirm-dialog v-model="isOpenNewCommunityDialog" :ok-text="'OK'" max-width="800px">
       <v-card-text class="text-center mt-6 text-h6"> コミュニティの新規作成について </v-card-text>
       <v-card-text class="text-subtitle" style="line-height: 1.8rem">
-        ・「アカウント」「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」など入力してください。<br />
+        ・「コミュニティID」「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」など入力してください。<br />
         ・コミュニティの「運営者情報」「利用目的」などについては、コミュニティページには表示されません。<br />
         ・新規作成後、運営チームにて作成内容を確認させていただきます。<br />
         ・運営チームによる承認後、イベント作成などの機能が利用可能となります。<br />

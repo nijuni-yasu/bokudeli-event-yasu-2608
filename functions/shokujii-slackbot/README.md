@@ -20,6 +20,6 @@ firebase functions の URL を確認し、`Slash Commands` と`OAuth & Permissio
 スラッシュコマンドでコミュニティの追加・削除を行う
 
 - コミュニティの追加
-  - `/shokujii add [コミュニティアカウント]`
+  - `/shokujii add [コミュニティID]`
 - コミュニティの削除
-  - `/shokujii remove [コミュニティアカウント]`
+  - `/shokujii remove [コミュニティID]`

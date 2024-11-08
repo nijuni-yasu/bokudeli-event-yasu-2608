@@ -599,7 +599,7 @@ async function sendNewCommunityRequestMailToSupport(communitySnapshot) {
   const text =
     `【ID】 ${communityId}\n` +
     `【コミュニティ名】 ${communityName}\n` +
-    `【コミュニティアカウント】 ${communityAccount}\n` +
+    `【コミュニティID】 ${communityAccount}\n` +
     `【コミュニティページURL】 ${getCommunityUrl(communityAccount)}`
   return sgMail.send({
     to: DEFAULT_TO,
