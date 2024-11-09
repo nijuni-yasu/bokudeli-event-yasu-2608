@@ -28,100 +28,98 @@ const logout = async () => {
 </script>
 
 <template>
-  <div>
-    <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
-      <UserAvatar :user="user" class="cursor-pointer">
-        <!-- SECTION Menu -->
-        <v-menu activator="parent" width="230" location="bottom end" offset="14px">
-          <v-list>
-            <!-- 👉 User Avatar & Name -->
-            <v-list-item v-if="isLogin">
-              <template #prepend>
-                <v-list-item-action start>
-                  <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
-                    <UserAvatar :user="user" />
-                  </v-badge>
-                </v-list-item-action>
-              </template>
+  <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
+    <UserAvatar :user="user" class="cursor-pointer">
+      <!-- SECTION Menu -->
+      <v-menu activator="parent" width="230" location="bottom end" offset="14px">
+        <v-list>
+          <!-- 👉 User Avatar & Name -->
+          <v-list-item v-if="isLogin">
+            <template #prepend>
+              <v-list-item-action start>
+                <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
+                  <UserAvatar :user="user" />
+                </v-badge>
+              </v-list-item-action>
+            </template>
 
-              <v-list-item-title class="font-weight-medium">{{ user?.user_name }}</v-list-item-title>
-            </v-list-item>
-            <v-divider v-if="isLogin" class="my-2" />
+            <v-list-item-title class="font-weight-medium">{{ user?.user_name }}</v-list-item-title>
+          </v-list-item>
+          <v-divider v-if="isLogin" class="my-2" />
 
-            <!-- 👉 Profile -->
-            <v-list-item v-if="isLogin" :to="`/mypage`">
-              <template #prepend>
-                <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
-              </template>
-              <v-list-item-title>マイページ</v-list-item-title>
-            </v-list-item>
+          <!-- 👉 Profile -->
+          <v-list-item v-if="isLogin" :to="`/mypage`">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
+            </template>
+            <v-list-item-title>マイページ</v-list-item-title>
+          </v-list-item>
 
-            <!-- Divider -->
-            <v-divider v-if="isLogin" class="my-2" />
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
 
-            <!-- 👉 cart -->
-            <v-list-item v-if="isLogin" :to="`/cart`">
-              <template #prepend>
-                <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
-              </template>
-              <v-list-item-title>カート</v-list-item-title>
-            </v-list-item>
+          <!-- 👉 cart -->
+          <v-list-item v-if="isLogin" :to="`/cart`">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
+            </template>
+            <v-list-item-title>カート</v-list-item-title>
+          </v-list-item>
 
-            <!-- Divider -->
-            <v-divider v-if="isLogin" class="my-2" />
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
 
-            <!-- 👉 cart -->
-            <v-list-item v-if="isLogin" :to="`/newevent`">
-              <template #prepend>
-                <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
-              </template>
-              <v-list-item-title>イベント開催</v-list-item-title>
-            </v-list-item>
+          <!-- 👉 cart -->
+          <v-list-item v-if="isLogin" :to="`/newevent`">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
+            </template>
+            <v-list-item-title>イベント開催</v-list-item-title>
+          </v-list-item>
 
-            <!-- Divider -->
-            <v-divider v-if="isLogin" class="my-2" />
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
 
-            <!-- 👉 howto -->
-            <v-list-item v-if="isLogin" :href="`https://lin.ee/SaL9aeE`" target="_blank">
-              <template #prepend>
-                <v-icon class="me-2" :icon="LineIcon" size="22" />
-              </template>
-              <v-list-item-title>LINE友だち追加</v-list-item-title>
-            </v-list-item>
+          <!-- 👉 howto -->
+          <v-list-item v-if="isLogin" :href="`https://lin.ee/SaL9aeE`" target="_blank">
+            <template #prepend>
+              <v-icon class="me-2" :icon="LineIcon" size="22" />
+            </template>
+            <v-list-item-title>LINE友だち追加</v-list-item-title>
+          </v-list-item>
 
-            <!-- Divider -->
-            <v-divider v-if="isLogin" class="my-2" />
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
 
-            <!-- 👉 howto -->
-            <v-list-item v-if="isLogin" :href="`https://about.shokujii.jp/howto`" target="_blank">
-              <template #prepend>
-                <v-icon class="me-2" :icon="mdiYoutube" size="22" />
-              </template>
-              <v-list-item-title>使い方動画</v-list-item-title>
-            </v-list-item>
+          <!-- 👉 howto -->
+          <v-list-item v-if="isLogin" :href="`https://about.shokujii.jp/howto`" target="_blank">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiYoutube" size="22" />
+            </template>
+            <v-list-item-title>使い方動画</v-list-item-title>
+          </v-list-item>
 
-            <!-- Divider -->
-            <v-divider v-if="isLogin" class="my-2" />
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
 
-            <!-- 👉 Login, Logout -->
-            <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
-              <template #prepend>
-                <v-icon class="me-2" :icon="mdiLogout" size="22" />
-              </template>
+          <!-- 👉 Login, Logout -->
+          <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiLogout" size="22" />
+            </template>
 
-              <v-list-item-title>ログイン</v-list-item-title>
-            </v-list-item>
-            <v-list-item v-else @click="logout()">
-              <template #prepend>
-                <v-icon class="me-2" :icon="mdiLogout" size="22" />
-              </template>
-              <v-list-item-title>ログアウト</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-        <!-- !SECTION -->
-      </UserAvatar>
-    </v-badge>
-    <login-dialog v-model="isOpenLoginDialog" />
-  </div>
+            <v-list-item-title>ログイン</v-list-item-title>
+          </v-list-item>
+          <v-list-item v-else @click="logout()">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiLogout" size="22" />
+            </template>
+            <v-list-item-title>ログアウト</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <!-- !SECTION -->
+    </UserAvatar>
+  </v-badge>
+  <login-dialog v-model="isOpenLoginDialog" />
 </template>
