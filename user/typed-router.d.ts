@@ -33,6 +33,8 @@ declare module 'vue-router/auto-routes' {
     '/manage/community/[communityAccount]/': RouteRecordInfo<'/manage/community/[communityAccount]/', '/manage/community/:communityAccount', { communityAccount: ParamValue<true> }, { communityAccount: ParamValue<false> }>,
     '/manage/community/[communityAccount]/[tab]': RouteRecordInfo<'/manage/community/[communityAccount]/[tab]', '/manage/community/:communityAccount/:tab', { communityAccount: ParamValue<true>, tab: ParamValue<true> }, { communityAccount: ParamValue<false>, tab: ParamValue<false> }>,
     '/manage/event/': RouteRecordInfo<'/manage/event/', '/manage/event', Record<never, never>, Record<never, never>>,
+    '/manage/event/[eventId]/': RouteRecordInfo<'/manage/event/[eventId]/', '/manage/event/:eventId', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
+    '/manage/event/[eventId]/[tab]': RouteRecordInfo<'/manage/event/[eventId]/[tab]', '/manage/event/:eventId/:tab', { eventId: ParamValue<true>, tab: ParamValue<true> }, { eventId: ParamValue<false>, tab: ParamValue<false> }>,
     '/mypage': RouteRecordInfo<'/mypage', '/mypage', Record<never, never>, Record<never, never>>,
     '/u/[userId]': RouteRecordInfo<'/u/[userId]', '/u/:userId', { userId: ParamValue<true> }, { userId: ParamValue<false> }>,
   }

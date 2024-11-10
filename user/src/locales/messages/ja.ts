@@ -40,6 +40,13 @@ export default {
         'settings': '設定',
       }
     },
+    'event': {
+      'tabs': {
+        'settings': '概要',
+        'member': '参加者',
+        'letter': 'レター',
+      }
+    },
     'letter': {
       'type_select_dialog': {
         'top': 'メッセージの種類を選択してください',
