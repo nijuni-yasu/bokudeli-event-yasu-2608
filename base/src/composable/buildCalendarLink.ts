@@ -15,7 +15,7 @@ const buildCalendarLink = (event: BokudeliEvent | null, type: CalendarType) => {
     `👥${event.community_name}`,
     `🍱${event.shop_name}`,
     '',
-    `最新情報はコチラから：`,
+    `最新情報はこちら：`,
     `${event.url}`,
     '',
     `${event.event_desc}`,
