@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiContentCopy, mdiChat, mdiCloseCircle, mdiMagnify } from '@mdi/js'
+import { mdiContentCopy, mdiCloseCircle, mdiMagnify, mdiSend } from '@mdi/js'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useEventStore } from '@/stores/event'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
@@ -20,7 +20,7 @@ const communityStore = useCommunityStore(props.communityAccount)
 
 const event = computed(() => eventStore.event)
 
-const onShareSnsButtonClicked = async (type: 'twitter' | 'copy', event: BokudeliEvent) => {
+const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event: BokudeliEvent) => {
   const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(event.partner_id)
   const [community, shop] = await Promise.all([
@@ -56,10 +56,9 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'copy', event: Bokudeli
 <template>
   <v-dialog v-model="model" :width="$vuetify.display.smAndDown ? 'auto' : 650" persistent>
     <v-card v-if="event != null" class="px-sm-15 py-sm-9 pa-2 pre-line">
-      <v-card-title class="text-center text-h3 py-5">注文完了🎉</v-card-title>
-      <v-card-text class="text-center text-h6 px-0 pt-3 pb-1"> 参加申し込みが完了しました！<br /> </v-card-text>
-      <v-card-text class="text-center text-h6 px-0 pt-1 pb-3">
-        SNSにシェアして食事でつながっていこう👍<br />
+      <v-card-title class="text-center text-h3">注文完了🎉</v-card-title>
+      <v-card-text class="text-center text-h5 px-0 py-3">
+        参加申し込みが完了しました！
       </v-card-text>
       <div class="mx-4">
         <v-img class="mx-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
@@ -86,11 +85,11 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'copy', event: Bokudeli
               class="ma-2"
               size="x-large"
               color="grey-900"
-              :append-icon="mdiChat"
+              :append-icon="mdiSend"
               rounded="pill"
-              @click="onShareSnsButtonClicked('twitter', event)"
+              @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
             >
-              Xに投稿して友だちを誘う
+             X で参加予定をシェアする
             </v-btn>
           </v-card-text>
         </v-row>
