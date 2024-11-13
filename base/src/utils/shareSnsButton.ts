@@ -13,6 +13,25 @@ const getCommunityHashTag = (community: BokudeliCommunity) => {
   return community.community_name.replace(/[^a-zA-Z0-9_\u3040-\u30FF\u4E00-\u9FFF]/g, '')
 }
 
+const getXPostTextAfterOrder = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
+  const communityTwitterAccount = community.community_sns_twitter ?? ''
+  const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
+  const shopText = shop.shop_name + (shop.shop_url_twitter ? ` @${shop.shop_url_twitter}` : '')
+
+  const communityHashTag = '#' + getCommunityHashTag(community)
+
+  const textList = [
+    `${event.event_name} に参加します✋`,
+    '',
+    `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
+    `👥${communityText}`,
+    `🍱${shopText}`,
+    `${communityHashTag} #shokujii`,
+    `${event.url}`,
+  ]
+  return `${textList.join('\n')}`
+}
+
 const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''
   const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
@@ -21,15 +40,13 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
   const communityHashTag = '#' + getCommunityHashTag(community)
 
   const textList = [
-    `🌟${event.event_name}`,
+    `${event.event_name}`,
+    '',
     `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
     `👥${communityText}`,
     `🍱${shopText}`,
-    '',
-    '👇参加はコチラから👇',
-    `${event.url}`,
-    '',
     `${communityHashTag} #shokujii`,
+    `${event.url}`,
   ]
   return `${textList.join('\n')}`
 }
@@ -38,7 +55,8 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: S
   const communityHashTag = '#' + getCommunityHashTag(community)
 
   const textList = [
-    `🌟${event.event_name}`,
+    `${event.event_name}`,
+    '',
     `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
     `⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}に注文締切`,
     `📍${event.event_address}`,
@@ -54,7 +72,7 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: S
 }
 
 export const shareSnsButton = async (
-  snsType: 'twitter' | 'facebook' | 'line' | 'copy',
+  snsType: 'twitter' | 'facebook' | 'line' | 'copy' | 'twitterAfterOrder',
   event: BokudeliEvent,
   community: BokudeliCommunity,
   shop: Shop,
@@ -64,8 +82,13 @@ export const shareSnsButton = async (
 ) => {
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter') {
-    const baseUrl = 'https://twitter.com/intent/tweet'
+    const baseUrl = 'https://x.com/intent/post'
     const text = encodeURIComponent(getXPostText(event, community, shop))
+    const openUrl = `${baseUrl}?text=${text}`
+    _window!.location.href = openUrl
+  } else if (snsType === 'twitterAfterOrder') {
+    const baseUrl = 'https://x.com/intent/post'
+    const text = encodeURIComponent(getXPostTextAfterOrder(event, community, shop))
     const openUrl = `${baseUrl}?text=${text}`
     _window!.location.href = openUrl
   } else if (snsType === 'facebook') {
