@@ -17,6 +17,7 @@ import { type PartnerMenu } from '@/schemes/partnerMenu'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useEventListStore } from '@/stores/eventList'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { useStoreStoredUser } from '@/stores/storedUser'
 import { useRouter, useRoute } from 'vue-router'
 import { getEventPath, getCommunityPath } from '@/router/utils'
 import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
@@ -73,6 +74,10 @@ const selectedShop = computed((): Shop | null => {
   }
   return shops.value.find((shop) => shop.shop_id === event.value?.shop_id) ?? null
 })
+
+// 作成・更新のユーザーID取得
+const userStore = useStoreStoredUser()
+const handleUserId = userStore.storedUser?.userId ?? ''
 
 // @ts-expect-error parseInt can take no string params, then return NaN
 const stepQuery = Number.parseInt(route.query.step)
@@ -224,6 +229,8 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   if (eventId.value == null) {
     // 新規作成
     event.value.community_id = communityId
+    event.value.created_by = handleUserId
+    event.value.updated_by = handleUserId
     const newEvent = await eventListStore.createNewEventFromDraft(communityId)
     const eventStore = useEventStore(newEvent.event_id) as EventStore
     if (coverImage.value != null) {
@@ -235,6 +242,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
     return newEvent
   } else {
     // 更新
+    event.value.updated_by = handleUserId
     const eventStore = useEventStore(eventId.value) as EventStore
     await eventStore.updateEvent(event.value)
     if (coverImage.value != null) {
