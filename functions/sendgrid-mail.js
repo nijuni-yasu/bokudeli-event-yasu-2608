@@ -15,7 +15,7 @@ const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024
 const APPLYING_ORDER_TEMPLATE_ID = 'd-a0eeb84707604e658dc4aabb38f1b92d'
 const DELIVERY_DURATION = 30 // minutes
 
-const EVENT_INFORMATION_TEMPLATE_ID = 'd-32df61e4ef334bf4a3a6071096679864'
+const EVENT_INFORMATION_TEMPLATE_ID = 'd-797deb1c54984007baadd1926ee974a2'
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098'
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d'
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
@@ -467,7 +467,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
         shop_name: eventData.shop_name,
         community_name: eventData.community_name,
       })
-      if (_dynamic_template_data.events.length === 3) {
+      if (_dynamic_template_data.events.length === 5) {
         break
       }
     }
