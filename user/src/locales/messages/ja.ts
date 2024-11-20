@@ -52,6 +52,25 @@ export default {
       },
       'event_dialog': {
         'top': 'メッセージに関連するイベントを選択してください',
+      },
+      'edit': {
+        'new': 'メッセージ新規作成',
+        'edit': 'メッセージ編集',
+        'to': '宛先',
+        'to_community': 'コミュニティメンバー全体',
+        'to_event_participant': 'イベント参加者',
+        'to_event_non_participant': 'イベント未登録者',
+        'number_of_people': '（{0}）人',
+        'deliver_datetime': '配信日時',
+        'deliver_now': '今すぐ配信',
+        'subject': '件名',
+        'message': 'メッセージ',
+        'add_event_description': 'イベント内容を追加する',
+        'event_description': 'イベント内容',
+        'submit_reserve': '予約',
+        'submit_now': '送信',
+        'save_draft': '下書き保存',
+        'to_draft': '下書きに戻す',
       }
     }
   }
