@@ -1,31 +1,8 @@
 import functions from 'firebase-functions'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import _ from 'lodash'
 
 const db = getFirestore()
-
-/**
- * 再帰的にオブジェクトや配列を比較する関数
- */
-function deepEqual(obj1, obj2) {
-  if (obj1 === obj2) return true
-
-  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
-    return false
-  }
-
-  const keys1 = Object.keys(obj1)
-  const keys2 = Object.keys(obj2)
-
-  if (keys1.length !== keys2.length) return false
-
-  for (const key of keys1) {
-    if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
-      return false
-    }
-  }
-
-  return true
-}
 
 /**
  * 差分を計算する関数
@@ -46,16 +23,7 @@ const calculateDifferences = (before, after) => {
   for (const key in { ...before, ...after }) {
     const beforeValue = before[key]
     const afterValue = after[key]
-    if (beforeValue instanceof Timestamp && afterValue instanceof Timestamp) {
-      if (!beforeValue.isEqual(afterValue)) {
-        differences[key] = afterValue
-      }
-    } else if (typeof beforeValue === 'object' && typeof afterValue === 'object') {
-      // オブジェクトや配列の深い比較
-      if (!deepEqual(beforeValue, afterValue)) {
-        differences[key] = afterValue
-      }
-    } else if (beforeValue !== afterValue) {
+    if (!_.isEqual(beforeValue, afterValue)) {
       differences[key] = afterValue
     }
   }
