@@ -12,7 +12,8 @@ const SUPPORT_MAIL = 'shokujiiサポート<support+cc@nijuni.jp>'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
-const APPLYING_ORDER_TEMPLATE_ID = 'd-a0eeb84707604e658dc4aabb38f1b92d'
+const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // 開発バージョンに変更
+const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
 
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-797deb1c54984007baadd1926ee974a2'
@@ -124,7 +125,7 @@ async function getCommunityManagerEmailsSet(communityId) {
           emails.add(userEmail)
         }
       }
-    }),
+    })
   )
   return emails
 }
@@ -147,7 +148,7 @@ async function getEventMemberEmails(eventSnapshot) {
       const userRef = db.collection('users').doc(userId)
       const userSnapshot = await userRef.get()
       return userSnapshot.get('user_email')
-    }),
+    })
   )
 }
 
@@ -201,7 +202,7 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
   const date = convertToDate(event_start_datetime_japan)
   const deliveryDuration = convertToDuration(
     event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime_japan,
+    event_start_datetime_japan
   )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
   const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
@@ -244,7 +245,7 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
       } catch (err) {
         console.warn(err)
       }
-    }),
+    })
   )
 }
 
@@ -257,7 +258,7 @@ async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
   const deliveryDuration = convertToDuration(
     event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime_japan,
+    event_start_datetime_japan
   )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
 
@@ -322,7 +323,7 @@ async function sendOrderDeadlineMailToMembers(start, end) {
         date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
         event_datetime: convertToDuration(
           convertToJapan(eventData.event_start_datetime?.toMillis()),
-          convertToJapan(eventData.event_end_datetime?.toMillis()),
+          convertToJapan(eventData.event_end_datetime?.toMillis())
         ),
         event_name: eventData.event_name,
         event_cover_url: eventData.event_cover_url,
@@ -333,19 +334,21 @@ async function sendOrderDeadlineMailToMembers(start, end) {
       }
       try {
         await Promise.all(
-          (await getEventMemberEmails(eventSnapshot)).map(async (to) => {
+          (
+            await getEventMemberEmails(eventSnapshot)
+          ).map(async (to) => {
             await sgMail.send({
               to,
               from: DEFAULT_FROM,
               templateId: EVENT_CONFIRMATION_TEMPLATE_ID,
               dynamic_template_data,
             })
-          }),
+          })
         )
       } catch (err) {
         console.warn(err)
       }
-    }),
+    })
   )
 }
 
@@ -368,19 +371,21 @@ async function sendEventConcludedMailToMembers(start, end) {
       }
       try {
         await Promise.all(
-          (await getEventMemberEmails(eventSnapshot)).map(async (to) => {
+          (
+            await getEventMemberEmails(eventSnapshot)
+          ).map(async (to) => {
             await sgMail.send({
               to,
               from: DEFAULT_FROM,
               templateId: EVENT_SURVEY_TEMPLATE_ID,
               dynamic_template_data,
             })
-          }),
+          })
         )
       } catch (err) {
         console.warn(err)
       }
-    }),
+    })
   )
 }
 
@@ -396,6 +401,47 @@ async function sendApplyingOrderMailToShop(eventSnapshot) {
     templateId: APPLYING_ORDER_TEMPLATE_ID,
     dynamic_template_data,
   })
+}
+
+async function sendApplyingOrderRemindMailToShop(start, end) {
+  const nowDateTimeMillis = Date.now()
+  const events = await db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'applying_reservation')
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
+    .get()
+
+  const sendMailPromises = events.docs
+    .map(async (eventSnapshot) => {
+      let updated_at = null
+
+      // applying_reservation に変更したログで一番新しいものを取得
+      const logsSnapshot = await eventSnapshot.ref.collection('logs').orderBy('updated_at', 'desc').get()
+      for (const logSnapshot of logsSnapshot.docs) {
+        if (logSnapshot.get('event_status.value') == 'applying_reservation') {
+          updated_at = logSnapshot.get('updated_at')
+          break
+        }
+      }
+
+      if (updated_at != null && updated_at.toMillis() > start && updated_at.toMillis() <= end) {
+        const [dynamic_template_data, shopSnapShot] = await Promise.all([
+          createTemplateDataForOrderDeadline(eventSnapshot),
+          getShopForEvent(eventSnapshot),
+        ])
+        dynamic_template_data['is_reminder'] = true
+        return sgMail.send({
+          to: getShopEmails(shopSnapShot),
+          from: DEFAULT_FROM,
+          cc: SUPPORT_MAIL,
+          templateId: APPLYING_ORDER_TEMPLATE_ID,
+          dynamic_template_data,
+        })
+      }
+      return null
+    })
+    .filter((promise) => promise != null)
+  return Promise.all(sendMailPromises)
 }
 
 async function sendApplyingMailToAdmin(eventSnapshot) {
@@ -453,7 +499,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
       const eventData = eventSnapshot.data()
       const event_datetime = convertToDuration(
         convertToJapan(eventData.event_start_datetime?.toMillis()),
-        convertToJapan(eventData.event_end_datetime?.toMillis()),
+        convertToJapan(eventData.event_end_datetime?.toMillis())
       )
       const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
       _dynamic_template_data.events.push({
@@ -501,7 +547,7 @@ async function sendEventInformationMail() {
         })
         .catch((err) => {
           console.warn(err)
-        }),
+        })
     )
   }
   return Promise.all(promises)
@@ -567,7 +613,7 @@ async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnap
         templateId,
         dynamic_template_data,
       })
-    }),
+    })
   )
 }
 
@@ -623,7 +669,7 @@ async function sendCommunityContactMailToOrganizers(templateId, data) {
         templateId,
         dynamic_template_data,
       })
-    }),
+    })
   )
 }
 
@@ -634,7 +680,7 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
     date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
     event_datetime: convertToDuration(
       convertToJapan(eventData.event_start_datetime?.toMillis()),
-      convertToJapan(eventData.event_end_datetime?.toMillis()),
+      convertToJapan(eventData.event_end_datetime?.toMillis())
     ),
     event_name: eventData.event_name,
     event_cover_url: eventData.event_cover_url,
@@ -675,7 +721,7 @@ async function sendOrderCompletionMailToOrganizers(orderSnapshot, userId) {
         templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
         dynamic_template_data,
       })
-    }),
+    })
   )
 }
 
@@ -697,7 +743,7 @@ async function sendInCartNotificationToMember(start, end) {
       ])
       const userData = userSnapshot.data()
       return sgMail.send(buildInCartNotificationMail(eventSnapshot, userData))
-    }),
+    })
   )
 }
 
@@ -757,15 +803,18 @@ export const polling = functions
     // 秒を無視しないと誤差で実行できないケースがでてきてしまう
     const end = Math.trunc(now / 60 / 1000) * 60 * 1000
     const start = end - 60 * 1000
+    const one_day_millis = 24 * 60 * 60 * 1000
     return Promise.all([
       sendOrderDeadlineMailToShop(start, end, false),
-      sendOrderDeadlineMailToShop(start + 24 * 60 * 60 * 1000, end + 24 * 60 * 60 * 1000, true), // 1日前告知
+      sendOrderDeadlineMailToShop(start + one_day_millis, end + one_day_millis, true), // 1日前告知
       sendOrderDeadlineMailToOrganizers(start, end, false),
-      sendOrderDeadlineMailToOrganizers(start + 3 * 24 * 60 * 60 * 1000, end + 3 * 24 * 60 * 60 * 1000, true), // 3日前告知
+      sendOrderDeadlineMailToOrganizers(start + 3 * one_day_millis, end + 3 * one_day_millis, true), // 3日前告知
       sendOrderDeadlineMailToMembers(start, end),
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
+      sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis), // 1日後通知
+      sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis), // 2日後通知
     ])
   })
 
