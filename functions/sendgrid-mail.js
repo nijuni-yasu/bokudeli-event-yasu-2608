@@ -425,7 +425,7 @@ async function sendApplyingOrderMailToShop(eventSnapshot) {
   })
 }
 
-async function sendApplyingOrderRemindMailToShop(start, end) {
+async function sendApplyingOrderRemindMailToShop(start, end, isReject) {
   const nowDateTimeMillis = Date.now()
   const events = await db
     .collectionGroup('events')
@@ -442,12 +442,12 @@ async function sendApplyingOrderRemindMailToShop(start, end) {
           createTemplateDataForApplyingOrder(eventSnapshot, updatedAt),
           getShopForEvent(eventSnapshot),
         ])
-        dynamic_template_data['is_reminder'] = true
+        const templateId = isReject ? REJECT_ORDER_TEMPLATE_ID : APPLYING_ORDER_TEMPLATE_ID
         return sgMail.send({
           to: getShopEmails(shopSnapShot),
           from: DEFAULT_FROM,
           cc: SUPPORT_MAIL,
-          templateId: APPLYING_ORDER_TEMPLATE_ID,
+          templateId,
           dynamic_template_data,
         })
       }
@@ -826,8 +826,9 @@ export const polling = functions
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
-      sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis), // 1日後通知
-      sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis), // 2日後通知
+      sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis, false), // 1日後通知
+      sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis, false), // 2日後通知
+      sendApplyingOrderRemindMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
     ])
   })
 
