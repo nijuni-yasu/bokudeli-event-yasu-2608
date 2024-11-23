@@ -389,9 +389,31 @@ async function sendEventConcludedMailToMembers(start, end) {
   )
 }
 
+async function getLastUpdatedEventStatus(eventSnapshot, status) {
+  const logsSnapshot = await eventSnapshot.ref.collection('logs').orderBy('updated_at', 'desc').get()
+  for (const logSnapshot of logsSnapshot.docs) {
+    if (logSnapshot.get('event_status.value') === status) {
+      return logSnapshot.get('updated_at')
+    }
+  }
+  return null
+}
+
+async function createTemplateDataForApplyingOrder(eventSnapshot, updatedAt) {
+  const limitTimeMills = updatedAt.toMillis() + 3 * 24 * 60 * 60 * 1000
+
+  const dynamic_template_data = await createTemplateDataForOrderDeadline(eventSnapshot)
+  return {
+    ...dynamic_template_data,
+    approve_deadline_datetime: convertToDate(convertToJapan(limitTimeMills)),
+  }
+}
+
 async function sendApplyingOrderMailToShop(eventSnapshot) {
+  const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
+
   const [dynamic_template_data, shopSnapShot] = await Promise.all([
-    createTemplateDataForOrderDeadline(eventSnapshot),
+    createTemplateDataForApplyingOrder(eventSnapshot, updatedAt),
     getShopForEvent(eventSnapshot),
   ])
   return sgMail.send({
@@ -413,20 +435,11 @@ async function sendApplyingOrderRemindMailToShop(start, end) {
 
   const sendMailPromises = events.docs
     .map(async (eventSnapshot) => {
-      let updated_at = null
-
       // applying_reservation に変更したログで一番新しいものを取得
-      const logsSnapshot = await eventSnapshot.ref.collection('logs').orderBy('updated_at', 'desc').get()
-      for (const logSnapshot of logsSnapshot.docs) {
-        if (logSnapshot.get('event_status.value') == 'applying_reservation') {
-          updated_at = logSnapshot.get('updated_at')
-          break
-        }
-      }
-
-      if (updated_at != null && updated_at.toMillis() > start && updated_at.toMillis() <= end) {
+      const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
+      if (updatedAt != null && updatedAt.toMillis() > start && updatedAt.toMillis() <= end) {
         const [dynamic_template_data, shopSnapShot] = await Promise.all([
-          createTemplateDataForOrderDeadline(eventSnapshot),
+          createTemplateDataForApplyingOrder(eventSnapshot, updatedAt),
           getShopForEvent(eventSnapshot),
         ])
         dynamic_template_data['is_reminder'] = true
