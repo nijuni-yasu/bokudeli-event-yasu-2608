@@ -40,3 +40,7 @@ export const getCommunityBots = async (db, communityId) => {
 export const getEventUrl = (communityAccount, eventId) => {
   return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}`;
 }
+
+export const getUserUrl = (userId) => {
+  return `https://${process.env.EVENT_HOST}/u/${userId}`;
+}
