@@ -442,6 +442,7 @@ async function sendApplyingOrderRemindMailToShop(start, end, isReject) {
           createTemplateDataForApplyingOrder(eventSnapshot, updatedAt),
           getShopForEvent(eventSnapshot),
         ])
+        dynamic_template_data.is_reminder = true
         const templateId = isReject ? REJECT_ORDER_TEMPLATE_ID : APPLYING_ORDER_TEMPLATE_ID
         return sgMail.send({
           to: getShopEmails(shopSnapShot),
