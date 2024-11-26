@@ -7,7 +7,9 @@ import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@/stores/partner'
 import type { Shop } from '@/schemes/shop'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { getOrderPath } from '@/navigation/utils'
 
+const router = useRouter()
 const { t: $t } = useI18n()
 const eventId = useRoute().params.eventId as string
 const eventStore = useEventStore(eventId) as EventStore
@@ -42,6 +44,12 @@ const [event, shop] = await Promise.all([
     )
   }),
 ])
+
+if (event.partner_id !== partnerId) {
+  window.alert($t('alert.invalid_account'))
+  router.push(getOrderPath())
+  throw new Error()
+}
 
 const { requiredValidator } = useValidators()
 

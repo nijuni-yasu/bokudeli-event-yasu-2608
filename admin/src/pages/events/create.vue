@@ -2,7 +2,7 @@
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@/stores/partner'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { getCommunityPath, getShopPath, getUserEventUrl } from '@/navigation/utils'
+import { getCommunityPath, getShopPath, getEventPath, getUserEventUrl } from '@/navigation/utils'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useEventListStore } from '@/stores/eventList'
 import type { Shop } from '@/schemes/shop'
@@ -83,6 +83,11 @@ if (route.query.id != null) {
       { immediate: true },
     )
   })
+  if (eventStore.event?.community_account !== communityAccount) {
+    window.alert($t('alert.invalid_account'))
+    router.push(getEventPath())
+    throw new Error()
+  }
 } else {
   _event = eventListStore.eventDraft
   _event.community_account = communityAccount
