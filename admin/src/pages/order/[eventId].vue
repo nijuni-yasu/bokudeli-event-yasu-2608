@@ -51,10 +51,8 @@ const radio01 = ref(0)
 const text01 = ref($t('order_detail.accept_order_sample'))
 
 watch(radio01, (newValue) => {
-  text01.value = newValue === 0
-    ? $t('order_detail.accept_order_sample')
-    : $t('order_detail.decline_order_sample');
-});
+  text01.value = newValue === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
+})
 
 const submit = async () => {
   isLoading.value = true
