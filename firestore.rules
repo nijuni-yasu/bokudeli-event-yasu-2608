@@ -48,6 +48,9 @@ service cloud.firestore {
             match /invites/{document=**} {
                 allow read, write: if false
             }
+            match /letters/{letter} {
+                allow read, write: if isManager()
+            }
         }
         match /users/{user_id} {
             // ユーザー情報はログインユーザーでないと create/update/deleteできない
