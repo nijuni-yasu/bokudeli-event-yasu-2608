@@ -705,8 +705,8 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
   const notifyTime = 24 * 60 * 60 * 1000 // 1日
   const events = await db
     .collectionGroup('events')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start - notifyTime))
-    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end - notifyTime))
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start + notifyTime))
+    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end + notifyTime))
     .where('event_status.value', '==', 'accepting_order')
     .get()
 
