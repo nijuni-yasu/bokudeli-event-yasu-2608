@@ -7,7 +7,9 @@ import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@/stores/partner'
 import type { Shop } from '@/schemes/shop'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { getOrderPath } from '@/navigation/utils'
 
+const router = useRouter()
 const { t: $t } = useI18n()
 const eventId = useRoute().params.eventId as string
 const eventStore = useEventStore(eventId) as EventStore
@@ -43,6 +45,12 @@ const [event, shop] = await Promise.all([
   }),
 ])
 
+if (event.partner_id !== partnerId) {
+  window.alert($t('alert.invalid_account'))
+  router.push(getOrderPath())
+  throw new Error()
+}
+
 const { requiredValidator } = useValidators()
 
 const isValid = ref(false)
@@ -51,10 +59,8 @@ const radio01 = ref(0)
 const text01 = ref($t('order_detail.accept_order_sample'))
 
 watch(radio01, (newValue) => {
-  text01.value = newValue === 0
-    ? $t('order_detail.accept_order_sample')
-    : $t('order_detail.decline_order_sample');
-});
+  text01.value = newValue === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
+})
 
 const submit = async () => {
   isLoading.value = true
