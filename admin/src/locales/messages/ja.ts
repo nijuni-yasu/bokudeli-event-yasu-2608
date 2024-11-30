@@ -243,6 +243,6 @@ export default {
   'alert': {
     'make_shop': '先に店舗情報を登録してください',
     'make_community_account': '先にコミュニティを作成してください',
-    'invalid_account': '別アカウントでログインしています。ログインし直してください。',
+    'invalid_account': '別店舗のアカウントでログインしています。正しいアカウントでログインしなおした上で、改めてご確認ください。',
   }
 }
