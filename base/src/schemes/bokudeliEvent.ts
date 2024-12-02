@@ -53,7 +53,9 @@ class BokudeliEvent {
   subdomain_tags: string[] = []
 
   created_at: Timestamp = Timestamp.now()
+  created_by: string = ''
   updated_at: Timestamp | null = null
+  updated_by: string = ''
 
   raw_event_status: RawEventStatusType = { value: 'in_draft' }
 

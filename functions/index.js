@@ -26,3 +26,4 @@ export const { scheduled_firestore_export } = await import('./backup.js')
 export const { get_invitaion_url_for_community_manager, accept_invitation_for_community_manager } = await import(
   './community-manager.js'
 )
+export const { log_event_status } = await import('./event-logging.js')
