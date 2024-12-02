@@ -4,6 +4,9 @@
 yarn install
 ```
 
+`.env.development` or `.env.production` を適切に準備する。
+内容については管理者に要問い合わせ。
+
 ### Compile and Hot-Reload for Development
 
 ```sh
