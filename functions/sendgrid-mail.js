@@ -125,7 +125,7 @@ async function getCommunityManagerEmailsSet(communityId) {
           emails.add(userEmail)
         }
       }
-    })
+    }),
   )
   return emails
 }
@@ -148,7 +148,7 @@ async function getEventMemberEmails(eventSnapshot) {
       const userRef = db.collection('users').doc(userId)
       const userSnapshot = await userRef.get()
       return userSnapshot.get('user_email')
-    })
+    }),
   )
 }
 
@@ -202,7 +202,7 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
   const date = convertToDate(event_start_datetime_japan)
   const deliveryDuration = convertToDuration(
     event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime_japan
+    event_start_datetime_japan,
   )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
   const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
@@ -245,7 +245,7 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
       } catch (err) {
         console.warn(err)
       }
-    })
+    }),
   )
 }
 
@@ -258,7 +258,7 @@ async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
   const deliveryDuration = convertToDuration(
     event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime_japan
+    event_start_datetime_japan,
   )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
 
@@ -323,7 +323,7 @@ async function sendOrderDeadlineMailToMembers(start, end) {
         date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
         event_datetime: convertToDuration(
           convertToJapan(eventData.event_start_datetime?.toMillis()),
-          convertToJapan(eventData.event_end_datetime?.toMillis())
+          convertToJapan(eventData.event_end_datetime?.toMillis()),
         ),
         event_name: eventData.event_name,
         event_cover_url: eventData.event_cover_url,
@@ -334,21 +334,19 @@ async function sendOrderDeadlineMailToMembers(start, end) {
       }
       try {
         await Promise.all(
-          (
-            await getEventMemberEmails(eventSnapshot)
-          ).map(async (to) => {
+          (await getEventMemberEmails(eventSnapshot)).map(async (to) => {
             await sgMail.send({
               to,
               from: DEFAULT_FROM,
               templateId: EVENT_CONFIRMATION_TEMPLATE_ID,
               dynamic_template_data,
             })
-          })
+          }),
         )
       } catch (err) {
         console.warn(err)
       }
-    })
+    }),
   )
 }
 
@@ -371,21 +369,19 @@ async function sendEventConcludedMailToMembers(start, end) {
       }
       try {
         await Promise.all(
-          (
-            await getEventMemberEmails(eventSnapshot)
-          ).map(async (to) => {
+          (await getEventMemberEmails(eventSnapshot)).map(async (to) => {
             await sgMail.send({
               to,
               from: DEFAULT_FROM,
               templateId: EVENT_SURVEY_TEMPLATE_ID,
               dynamic_template_data,
             })
-          })
+          }),
         )
       } catch (err) {
         console.warn(err)
       }
-    })
+    }),
   )
 }
 
@@ -513,7 +509,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
       const eventData = eventSnapshot.data()
       const event_datetime = convertToDuration(
         convertToJapan(eventData.event_start_datetime?.toMillis()),
-        convertToJapan(eventData.event_end_datetime?.toMillis())
+        convertToJapan(eventData.event_end_datetime?.toMillis()),
       )
       const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
       _dynamic_template_data.events.push({
@@ -565,7 +561,7 @@ async function sendEventInformationMail() {
         })
         .catch((err) => {
           console.warn(err)
-        })
+        }),
     )
   }
   return Promise.all(promises)
@@ -631,7 +627,7 @@ async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnap
         templateId,
         dynamic_template_data,
       })
-    })
+    }),
   )
 }
 
@@ -687,7 +683,7 @@ async function sendCommunityContactMailToOrganizers(templateId, data) {
         templateId,
         dynamic_template_data,
       })
-    })
+    }),
   )
 }
 
@@ -698,7 +694,7 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
     date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
     event_datetime: convertToDuration(
       convertToJapan(eventData.event_start_datetime?.toMillis()),
-      convertToJapan(eventData.event_end_datetime?.toMillis())
+      convertToJapan(eventData.event_end_datetime?.toMillis()),
     ),
     event_name: eventData.event_name,
     event_cover_url: eventData.event_cover_url,
@@ -739,7 +735,7 @@ async function sendOrderCompletionMailToOrganizers(orderSnapshot, userId) {
         templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
         dynamic_template_data,
       })
-    })
+    }),
   )
 }
 
@@ -761,7 +757,7 @@ async function sendInCartNotificationToMember(start, end) {
       ])
       const userData = userSnapshot.data()
       return sgMail.send(buildInCartNotificationMail(eventSnapshot, userData))
-    })
+    }),
   )
 }
 
@@ -784,9 +780,9 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
             const orderData = orderSnapshot.data()
             const userSnapshot = await db.collection('users').doc(orderData.user_id).get()
             return sgMail.send(buildInCartNotificationMail(eventSnapshot, userSnapshot.data()))
-          })
+          }),
       )
-    })
+    }),
   )
 }
 
@@ -800,7 +796,7 @@ function buildInCartNotificationMail(eventSnapshot, userData) {
       date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
       event_datetime: convertToDuration(
         convertToJapan(eventData.event_start_datetime?.toMillis()),
-        convertToJapan(eventData.event_end_datetime?.toMillis())
+        convertToJapan(eventData.event_end_datetime?.toMillis()),
       ),
       event_name: eventData.event_name,
       event_cover_url: eventData.event_cover_url,
