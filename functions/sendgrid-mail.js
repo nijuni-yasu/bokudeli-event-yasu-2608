@@ -548,10 +548,14 @@ async function sendEventInformationMail() {
       ..._dynamic_template_data,
       user_name: userSnapshot.get('user_name'),
     }
+    const userEmail = userSnapshot.get('user_email')
+    if (!userEmail) {
+      continue
+    }
     promises.push(
       sgMail
         .send({
-          to: userSnapshot.get('user_email'),
+          to: userEmail,
           from: DEFAULT_FROM,
           templateId: EVENT_INFORMATION_TEMPLATE_ID,
           dynamic_template_data,
@@ -835,6 +839,7 @@ export const polling = functions
 
 export const event_information = functions
   .region('asia-northeast1')
+  .runWith({ timeoutSeconds: 540, memory: '1GB' })
   .pubsub.schedule('0 18 * * 0') // 日曜日の18時
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
   .onRun(() => {
@@ -843,6 +848,7 @@ export const event_information = functions
 
 export const event_information_preview = functions
   .region('asia-northeast1')
+  .runWith({ timeoutSeconds: 540, memory: '1GB' })
   .pubsub.schedule('0 18 * * 6') // 土曜日の18時
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
   .onRun(() => {
