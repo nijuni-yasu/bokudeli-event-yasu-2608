@@ -1,5 +1,46 @@
 <script setup lang="ts">
+import { functions } from '@/firebase'
+import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
+
+const router = useRouter()
+
+const isLoading = ref(false)
+
+const isValid = ref(false)
+const email = ref('')
+
+const generatePassCode = (): string => {
+  // 1～999999のランダムな整数を生成し、6桁にゼロ埋め
+  return Math.floor(1 + Math.random() * 999999)
+      .toString()
+      .padStart(6, '0');
+}
+
+const submit = async () => {
+  isLoading.value = true
+  try {
+    const userEmail = email.value
+    if (!userEmail) {
+      throw new Error('Email is required')
+    }
+
+    const passCode = generatePassCode()
+
+    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user");
+    await createOrUpdateUser({ user_email: userEmail, pass_code: passCode });
+
+    const sendPassCode = httpsCallable(functions, "send_pass_code");
+    await sendPassCode({ user_email: userEmail, pass_code: passCode });
+
+    router.push('/pass-code')
+  } catch (error) {
+    console.warn("Error sending pass code:", error);
+  } finally {
+    isLoading.value = false
+  }
+}
+
 </script>
 
 <template>
@@ -11,25 +52,26 @@ import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
         <p class="">以下からログインまたは新規登録してください。</p>
       </div>
 
-      <v-form>
+      <v-form v-model="isValid" @submit.prevent="submit">
         <div class="field-container mb-4">
           <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
-          <v-text-field placeholder="example@example.com"/>
+          <v-text-field placeholder="example@example.com" v-model="email"/>
         </div>
 
-        <v-btn block size="large" color="grey-900" class="mb-10">
+        <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
           メールアドレスで続ける
         </v-btn>
-        <v-btn block size="large" color="grey-900" class="mb-4">
-          Xでログイン
-        </v-btn>
-        <v-btn block size="large" color="grey-900" class="mb-4">
-          Facebookでログイン
-        </v-btn>
-        <v-btn block size="large" color="grey-900">
-          Googleでログイン
-        </v-btn>
       </v-form>
+
+      <v-btn class="mb-4" size="large" color="grey-900" block>
+        Xでログイン
+      </v-btn>
+      <v-btn class="mb-4" size="large" color="grey-900" block>
+        Facebookでログイン
+      </v-btn>
+      <v-btn class="mb-4" size="large" color="grey-900" block>
+        Googleでログイン
+      </v-btn>
     </v-sheet>
   </div>
 </template>
