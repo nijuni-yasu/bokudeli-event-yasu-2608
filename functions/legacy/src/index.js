@@ -19,6 +19,7 @@ export const {
   community_added,
   community_contact,
   send_email,
+  send_pass_code
 } = await import('./sendgrid-mail.js')
 export const { on_write_community_members } = await import('./community-members.js')
 export const { create_event_members } = await import('./event-members.js')
