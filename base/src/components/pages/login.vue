@@ -33,7 +33,12 @@ const submit = async () => {
     const sendPassCode = httpsCallable(functions, "send_pass_code");
     await sendPassCode({ user_email: userEmail, pass_code: passCode });
 
-    router.push('/pass-code')
+    router.push({
+      path: '/pass-code',
+      query: {
+        email: userEmail,
+      }
+    })
   } catch (error) {
     console.warn("Error sending pass code:", error);
   } finally {
@@ -44,36 +49,46 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="d-flex flex-column align-center justify-center">
-    <v-sheet class="rounded-lg w-33 py-14 px-12">
-      <div class="text-center mb-10">
-        <img :src="logo" alt="shokuji logo" />
-        <h2 class="my-3 text-h3 font-weight-bold">shokujiへようこそ</h2>
-        <p class="">以下からログインまたは新規登録してください。</p>
-      </div>
+  <v-container>
+    <v-row justify="center" class="mt-16">
+      <v-col md="5">
+        <v-sheet class="rounded-lg py-14 px-12">
+          <v-container>
+            <v-row justify="center" >
+              <v-img max-height="150" max-width="300" :src="logo"></v-img>
+            </v-row>
+            <v-row justify="center">
+              <h1 class="my-3 text-h3 font-weight-bold">shokujiへようこそ</h1>
+            </v-row>
+            <v-row justify="center">
+              <p>以下からログインまたは新規登録してください。</p>
+            </v-row>
+          </v-container>
 
-      <v-form v-model="isValid" @submit.prevent="submit">
-        <div class="field-container mb-4">
-          <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
-          <v-text-field placeholder="example@example.com" v-model="email"/>
-        </div>
+          <v-form v-model="isValid" @submit.prevent="submit">
+            <v-container class=" mb-4">
+              <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
+              <v-text-field placeholder="example@example.com" v-model="email"/>
+            </v-container>
 
-        <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
-          メールアドレスで続ける
-        </v-btn>
-      </v-form>
+            <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
+              メールアドレスで続ける
+            </v-btn>
+          </v-form>
 
-      <v-btn class="mb-4" size="large" color="grey-900" block>
-        Xでログイン
-      </v-btn>
-      <v-btn class="mb-4" size="large" color="grey-900" block>
-        Facebookでログイン
-      </v-btn>
-      <v-btn class="mb-4" size="large" color="grey-900" block>
-        Googleでログイン
-      </v-btn>
-    </v-sheet>
-  </div>
+          <v-btn class="mb-4" size="large" color="grey-900" block>
+            Xでログイン
+          </v-btn>
+          <v-btn class="mb-4" size="large" color="grey-900" block>
+            Facebookでログイン
+          </v-btn>
+          <v-btn class="mb-4" size="large" color="grey-900" block>
+            Googleでログイン
+          </v-btn>
+        </v-sheet>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <style scoped lang="scss">
