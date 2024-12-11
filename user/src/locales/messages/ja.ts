@@ -48,6 +48,10 @@ export default {
       },
       'edit': 'イベント編集',
     },
+    'member': {
+      'manager': '管理者',
+      'member': 'メンバー',
+    },
     'letter': {
       'type_select_dialog': {
         'top': 'メッセージの種類を選択してください',
