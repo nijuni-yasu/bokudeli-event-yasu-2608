@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { functions } from '@/firebase'
-import { httpsCallable } from 'firebase/functions'
+import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
+// TODO: 開発用。後ほど削除すること
+connectFunctionsEmulator(functions, 'localhost', 5001);
 
 const router = useRouter()
 const route = useRoute()
@@ -30,13 +32,13 @@ const reSendPassCode = async () => {
   isLoading.value = true
   try {
     const userEmail = email.value
-    const passCode = generatePassCode()
+    const reGeneratePassCode = generatePassCode()
 
     const createOrUpdateUser = httpsCallable(functions, "create_or_update_user");
-    await createOrUpdateUser({ user_email: userEmail, pass_code: passCode });
+    await createOrUpdateUser({ user_email: userEmail, pass_code: reGeneratePassCode });
 
     const sendPassCode = httpsCallable(functions, "send_pass_code");
-    await sendPassCode({ user_email: userEmail, pass_code: passCode });
+    await sendPassCode({ user_email: userEmail, pass_code: reGeneratePassCode });
   } catch (error) {
     console.warn("Error resending pass code:", error);
   } finally {
@@ -48,14 +50,16 @@ const submit = async () => {
   isValid.value = true
   try {
     const userEmail = email.value
-    const passCode = passCode.value
 
     const verifyPassCode = httpsCallable(functions, "verify_pass_code")
-    const isVerified = await verifyPassCode({ user_email: userEmail, pass_code: passCode })
+    const customToken = await verifyPassCode({ user_email: userEmail, pass_code: passCode.value })
 
-    if (!isVerified) {
+    if (!customToken) {
       return isError.value = true
     }
+
+    console.log(customToken);
+    return true;
 
     // TODO: カスタムトークンログイン(ログインで、user_name、user_image_url、user_descriptoinが引ければ下記判定関数が不要)
 
