@@ -14,20 +14,29 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
       const userDoc = userSnapshot.docs[0]
       await userDoc.ref.update({
         pass_code: pass_code,
+        verified_at: null,
         update_at: Timestamp.now()
       });
       console.log(`ユーザー ${user_email} にパスコードが追加されました。`)
+      return { is_new: true }
     } else {
       // ユーザーが存在しない場合、新規にユーザーを作成
-      // TODO: usersの他のカラムについて確認
       await db.collection('users').add({
+        user_name: '',
         user_email: user_email,
+        user_image_url: '',
+        user_account: null,
+        user_description: null,
+        user_sns_facebook: null,
+        user_sns_twitter: null,
+        user_sns_instagram: null,
         pass_code: pass_code,
+        verified_at: null,
         created_at: Timestamp.now(),
         update_at: Timestamp.now()
       });
       console.log(`新規ユーザー ${user_email} が作成され、パスコードが保存されました。`)
-      // TODO: 新規か既存アカウントかをbooleanで返す
+      return false
     }
   } catch (error) {
     console.error('エラーが発生しました: ', error)
