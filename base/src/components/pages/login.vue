@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { functions } from '@/firebase'
-import { httpsCallable } from 'firebase/functions'
+import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
-
+connectFunctionsEmulator(functions, 'localhost', 5001);
 const router = useRouter()
 
 const isLoading = ref(false)
@@ -14,7 +14,7 @@ const generatePassCode = (): string => {
   // 1～999999のランダムな整数を生成し、6桁にゼロ埋め
   return Math.floor(1 + Math.random() * 999999)
       .toString()
-      .padStart(6, '0');
+      .padStart(6, '0')
 }
 
 const submit = async () => {
@@ -27,20 +27,21 @@ const submit = async () => {
 
     const passCode = generatePassCode()
 
-    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user");
-    await createOrUpdateUser({ user_email: userEmail, pass_code: passCode });
+    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+    const { data } = await createOrUpdateUser({ user_email: userEmail, pass_code: passCode })
 
-    const sendPassCode = httpsCallable(functions, "send_pass_code");
-    await sendPassCode({ user_email: userEmail, pass_code: passCode });
+    const sendPassCode = httpsCallable(functions, "send_pass_code")
+    await sendPassCode({ user_email: userEmail, pass_code: passCode })
 
     router.push({
       path: '/pass-code',
       query: {
         email: userEmail,
+        new: Number(data.is_new),
       }
     })
   } catch (error) {
-    console.warn("Error sending pass code:", error);
+    console.warn("Error sending pass code:", error)
   } finally {
     isLoading.value = false
   }
