@@ -29,4 +29,4 @@ export const { get_invitaion_url_for_community_manager, accept_invitation_for_co
   './community-manager.js'
 )
 export const { log_event_status } = await import('./event-logging.js')
-export const { create_or_update_user } = await import('./users.js')
+export const { create_or_update_user, verify_pass_code } = await import('./users.js')
