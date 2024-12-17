@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
+import {db, functions} from '@/firebase'
 import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
+import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
+import {collection, getDocs, query, where} from "firebase/firestore";
 // TODO: 開発用。後ほど削除すること
 connectFunctionsEmulator(functions, 'localhost', 5001);
+
 
 const router = useRouter()
 const route = useRoute()
@@ -52,24 +55,34 @@ const submit = async () => {
     const userEmail = email.value
 
     const verifyPassCode = httpsCallable(functions, "verify_pass_code")
-    const customToken = await verifyPassCode({ user_email: userEmail, pass_code: passCode.value })
+    const result = await verifyPassCode({ user_email: userEmail, pass_code: passCode.value })
+
+    const customToken = result.data as string
 
     if (!customToken) {
       return isError.value = true
     }
 
-    console.log(customToken);
-    return true;
+    await signInWithCustomToken(getAuth(), customToken)
 
-    // TODO: カスタムトークンログイン(ログインで、user_name、user_image_url、user_descriptoinが引ければ下記判定関数が不要)
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("user_email", "==", userEmail))
 
-    const userProfileExists = httpsCallable(functions, "user_profile_exists")
-    const isProfileExists = await userProfileExists({ user_email: userEmail })
-    if(isProfileExists) {
-      router.push('/profile/setup')
-    } else {
-      router.push('/register/complete')
+    const querySnapshot = await getDocs(q)
 
+    if (!querySnapshot.empty) {
+      // TODO: 型指定、おそらく既にどこかでされているからそれを当て込む
+      const user = [];
+      querySnapshot.forEach((doc) => {
+        user.push({ id: doc.id, ...doc.data() })
+      });
+
+      const isProfileCompleted = user.user_name && user.user_description && user.user_image_url
+      if(isProfileCompleted) {
+        router.push('/register/complete')
+      } else {
+        router.push('/profile/setup')
+      }
     }
   } catch (error) {
     console.warn("Error sending pass code:", error);
