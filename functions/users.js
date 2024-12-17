@@ -46,8 +46,6 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
 export const verify_pass_code = functions.region('asia-northeast1').https.onCall(async (data) => {
   try {
     const { user_email, pass_code } = data
-    // TODO: 検証用。削除すること
-    console.log('user_email', user_email, 'pass_code', pass_code)
 
     const userSnapshot = await db.collection('users').where('user_email', '==', user_email).get()
     if (!userSnapshot.empty) {
@@ -59,18 +57,14 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
         throw new functions.https.HttpsError('invalid-argument', 'Pass code does not match.')
       }
 
-      const currentDate = new Date()
       await userDoc.ref.update({
         pass_code: null,
-        verified_at: currentDate
+        verified_at: Timestamp.now()
       })
 
       const userId = userDoc.data().user_id
-      // TODO: 検証用。削除すること
-      console.log('userId', userId)
-      const customToken = await getAuth().createCustomToken(userId)
 
-      return { customToken }
+      return await getAuth().createCustomToken(userId)
     } else {
       throw new functions.https.HttpsError('not-found', 'User not found.')
     }
