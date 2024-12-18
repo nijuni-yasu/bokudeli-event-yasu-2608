@@ -1066,3 +1066,31 @@ export const community_contact = functions.region('asia-northeast1').https.onCal
     throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error')
   }
 })
+
+export const send_email = functions.region('asia-northeast1').https.onCall(async (data, context) => {
+  if (!context.auth) {
+    console.warn('send_email Auth Error', data, context)
+    throw new functions.https.HttpsError('permission-denied', 'AuthError')
+  }
+  const { toUid, subject, text } = data
+  if (toUid == null || subject == null || text == null) {
+    console.warn('send_email Invalid Argument Error', data, context)
+    throw new functions.https.HttpsError('invalid-argument', 'Required data is missing')
+  }
+  const [fromUser, toUser] = await Promise.all([
+    db.collection('users').doc(context.auth.uid).get(),
+    db.collection('users').doc(toUid).get(),
+  ])
+  const from = fromUser.get('user_email')
+  const to = toUser.get('user_email')
+  if (from == null || to == null) {
+    console.warn(`send_email user_email is null\nfrom: ${from}\nto: ${to}`)
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid email address')
+  }
+  return sgMail.send({
+    to,
+    from,
+    subject,
+    text,
+  })
+})

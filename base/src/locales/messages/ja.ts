@@ -9,6 +9,8 @@ export default {
   phone_number: '電話番号',
   invoice_number: '適格請求書登録番号',
   email: 'メールアドレス',
+  email_subject: '件名',
+  email_message: 'メッセージ',
   latitude: '緯度',
   longitude: '経度',
   payment: {
@@ -298,5 +300,10 @@ export default {
     copy: 'コピー',
     delete: '削除',
     edit: '編集',
+  },
+  email_dialog: {
+    title: 'メール送信',
+    send_to: '送信先: {0}',
+    send: '送信',
   }
 }
