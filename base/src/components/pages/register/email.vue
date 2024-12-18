@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { functions } from '@/firebase'
 import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
-import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
+import logo from "@/assets/images/shokujii/shokujii_logo_wide.png";
 import {generatePassCode} from "@/utils/generatePassCode";
-// TODO: 開発用
+
+// TODO: 開発用。後ほど削除すること
 connectFunctionsEmulator(functions, 'localhost', 5001);
+
 const router = useRouter()
 
 const isLoading = ref(false)
 
 const isValid = ref(false)
 const email = ref('')
-
-// TODO: ソーシャルログインで新規アカウントか既存アカウントかの判定方法を検討（）
 
 const submit = async () => {
   isLoading.value = true
@@ -24,8 +24,7 @@ const submit = async () => {
 
     const passCode = generatePassCode()
 
-    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
-    const { data } = await createOrUpdateUser({ user_email: userEmail, pass_code: passCode })
+    // TODO: ログイン済みuserに対してemail登録
 
     const sendPassCode = httpsCallable(functions, "send_pass_code")
     await sendPassCode({ user_email: userEmail, pass_code: passCode })
@@ -34,7 +33,7 @@ const submit = async () => {
       path: '/pass-code',
       query: {
         email: userEmail,
-        new: Number(data.is_new),
+        // new: Number() TODO: ログイン済みuserから新規か既存を取得して渡す
       }
     })
   } catch (error) {
@@ -43,7 +42,6 @@ const submit = async () => {
     isLoading.value = false
   }
 }
-
 </script>
 
 <template>
@@ -56,10 +54,10 @@ const submit = async () => {
               <v-img max-height="150" max-width="300" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
-              <h1 class="my-3 text-h3 font-weight-bold">shokujiへようこそ</h1>
+              <h1 class="my-3 text-h3 font-weight-bold">メールアドレス登録</h1>
             </v-row>
             <v-row justify="center">
-              <p>以下からログインまたは新規登録してください。</p>
+              <p>メールアドレスを登録してください。</p>
             </v-row>
           </v-container>
 
@@ -70,19 +68,9 @@ const submit = async () => {
             </v-container>
 
             <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
-              メールアドレスで続ける
+              送信
             </v-btn>
           </v-form>
-
-          <v-btn class="mb-4" size="large" color="grey-900" block>
-            Xでログイン
-          </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block>
-            Facebookでログイン
-          </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block>
-            Googleでログイン
-          </v-btn>
         </v-sheet>
       </v-col>
     </v-row>
@@ -90,6 +78,5 @@ const submit = async () => {
 </template>
 
 <style scoped lang="scss">
-
 
 </style>
