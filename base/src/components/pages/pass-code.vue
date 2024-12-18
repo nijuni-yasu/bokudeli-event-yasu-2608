@@ -4,6 +4,7 @@ import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
 import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
 import {collection, getDocs, query, where} from "firebase/firestore";
+import {generatePassCode} from "@/utils/generatePassCode";
 // TODO: 開発用。後ほど削除すること
 connectFunctionsEmulator(functions, 'localhost', 5001);
 
@@ -23,13 +24,6 @@ watch(passCode, async (newValue) => {
     await submit();
   }
 });
-
-const generatePassCode = (): string => {
-  // 1～999999のランダムな整数を生成し、6桁にゼロ埋め
-  return Math.floor(1 + Math.random() * 999999)
-      .toString()
-      .padStart(6, '0');
-}
 
 const reSendPassCode = async () => {
   isLoading.value = true
