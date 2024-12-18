@@ -6,7 +6,9 @@ export default {
     'home': 'イベント参加',
     'new_event': 'イベント開催',
     'community': 'コミュニティ',
-    'about': 'shokujiiって？'
+    'about': 'shokujiiって？',
+    'magagine': 'マガジン',
+    'x': '#最新情報',
   },
   'top': {
     'popular_events': '人気のイベント',
