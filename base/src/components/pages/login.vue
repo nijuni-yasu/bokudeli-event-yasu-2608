@@ -2,6 +2,7 @@
 import { functions } from '@/firebase'
 import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
+import {generatePassCode} from "@/utils/generatePassCode";
 // TODO: 開発用
 connectFunctionsEmulator(functions, 'localhost', 5001);
 const router = useRouter()
@@ -10,13 +11,6 @@ const isLoading = ref(false)
 
 const isValid = ref(false)
 const email = ref('')
-
-const generatePassCode = (): string => {
-  // 1～999999のランダムな整数を生成し、6桁にゼロ埋め
-  return Math.floor(1 + Math.random() * 999999)
-      .toString()
-      .padStart(6, '0')
-}
 
 const submit = async () => {
   isLoading.value = true
