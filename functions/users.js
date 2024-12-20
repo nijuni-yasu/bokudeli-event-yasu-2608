@@ -36,7 +36,7 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
         update_at: Timestamp.now()
       });
       console.log(`新規ユーザー ${user_email} が作成され、パスコードが保存されました。`)
-      return false
+      return { is_new: false }
     }
   } catch (error) {
     console.error('エラーが発生しました: ', error)
