@@ -71,11 +71,16 @@ const submit = async () => {
         user.push({ id: doc.id, ...doc.data() })
       });
 
-      const isProfileCompleted = user.user_name && user.user_description && user.user_image_url
+      const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
       if(isProfileCompleted) {
-        router.push('/register/complete')
+        // TODO: 元いたページに遷移
       } else {
-        router.push('/profile/setup')
+        router.push({
+          path: '/register/complete',
+          query: {
+            new: Number(route.query.isNew),
+          }
+        })
       }
     }
   } catch (error) {
@@ -106,10 +111,10 @@ const submit = async () => {
 
           <v-otp-input autofocus :disabled="isLoading" :loading="isValid" :error="isError" :focus-all="isError" v-model="passCode"/>
 
-          <v-btn size="large" color="gray-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="reSendPassCode">
+          <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="reSendPassCode">
             コードを再送信する
           </v-btn>
-          <v-btn size="large" color="gray-900" variant="text" block :disabled="isValid" :loading="isLoading" to="/login">
+          <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" to="/login">
             ログイン画面へ戻る
           </v-btn>
         </v-sheet>
