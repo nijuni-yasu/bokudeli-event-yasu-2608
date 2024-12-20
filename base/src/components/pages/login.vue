@@ -5,6 +5,16 @@ import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
 import {generatePassCode} from "@/utils/generatePassCode";
 // TODO: 開発用
 connectFunctionsEmulator(functions, 'localhost', 5001);
+
+type CreateUserRequest = {
+  user_email: string
+  pass_code: string
+}
+
+type CreateUserResponse = {
+  is_new: boolean
+}
+
 const router = useRouter()
 
 const isLoading = ref(false)
@@ -24,7 +34,7 @@ const submit = async () => {
 
     const passCode = generatePassCode()
 
-    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+    const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, "create_or_update_user")
     const { data } = await createOrUpdateUser({ user_email: userEmail, pass_code: passCode })
 
     const sendPassCode = httpsCallable(functions, "send_pass_code")
