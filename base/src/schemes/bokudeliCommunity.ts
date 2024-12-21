@@ -2,7 +2,7 @@ import _ from 'lodash'
 import type { DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 
 class BokudeliCommunity {
-  is_approved: boolean = false
+  is_approved: boolean = true
   community_manager_fullname: string = ''
   community_company: string = ''
   community_postalcode: string = ''

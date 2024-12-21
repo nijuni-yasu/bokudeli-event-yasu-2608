@@ -11,6 +11,9 @@ import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import CommunitySetupForm from '@/components/CommunitySetupForm.vue'
 
+import { useI18n } from 'vue-i18n'
+const { t: $t } = useI18n()
+
 const router = useRouter()
 const route = useRoute()
 
@@ -143,42 +146,29 @@ const cancel = () => {
     <confirm-dialog
       v-model="isOpenConfirmDialog"
       :is-confirm="true"
-      :ok-text="'コミュニティを新規作成する'"
+      :ok-text="$t('community_create_confirm.ok_text')"
       :ok-click="submit"
       max-width="650px"
     >
-      <v-card-text class="text-center py-10 text-h6"> コミュニティを新規作成しますか？<br /> </v-card-text>
-      <v-card-text class="text-subtitle pb-0" style="line-height: 1.8rem">
-        ・コミュニティ作成後、運営チームにて内容確認させていただきます。<br />
-        ・コミュニティ利用承認後、イベントページ作成などの機能が利用可能となります。<br />
-        <br />
-        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および
-        <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a>
-        をご確認ください。<br />
-        ・ご不明点ありましたらサポートまで
-        <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
+      <v-card-text class="text-center mt-5 text-h4">
+        {{ $t('community_create_confirm.title') }}
+      </v-card-text>
+      <v-card-text class="text-subtitle mt-5" style="line-height: 1.8rem">
+        <div v-html="$t('community_create_confirm.desc')" />
       </v-card-text>
     </confirm-dialog>
     <confirm-dialog v-model="isOpenNewCommunityDialog" :ok-text="'OK'" max-width="800px">
-      <v-card-text class="text-center mt-6 text-h6"> コミュニティの新規作成について </v-card-text>
-      <v-card-text class="text-subtitle" style="line-height: 1.8rem">
-        ・「コミュニティID」「コミュニティ名」「コミュニティ詳細」「カバー画像」「アイコン画像」など入力してください。<br />
-        ・コミュニティの「運営者情報」「利用目的」などについては、コミュニティページには表示されません。<br />
-        ・新規作成後、運営チームにて作成内容を確認させていただきます。<br />
-        ・運営チームによる承認後、イベント作成などの機能が利用可能となります。<br />
+      <v-card-text class="text-center mt-10 text-h4">
+        {{ $t('community_create_modal.community.title') }}
       </v-card-text>
-      <v-card-text class="text-center mt-6 text-h6"> 禁止事項について </v-card-text>
       <v-card-text class="text-subtitle" style="line-height: 1.8rem">
-        ・マルチ商法、ネットワークビジネス、宗教活動等の勧誘、過度な営業行為は禁止です。<br />
-        ・報告を受け次第、アカウント停止とさせていただきます。<br />
-        ・また、反社会的勢力等であるか、反社会的勢力等との何らかの交流若しくは関与を行っていると当社が判断した場合もアカウント停止とさせていただきます。<br />
-        ・健全なコミュニティ運営を目指し、ご理解とご協力をお願いいたします。<br />
-        <br />
-        ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および
-        <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a>
-        をご確認ください。<br />
-        ・ご不明点ありましたらサポートまで
-        <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
+        <div v-html="$t('community_create_modal.community.desc')" />
+      </v-card-text>
+      <v-card-text class="text-center mt-10 text-h4">
+        {{ $t('community_create_modal.prohibited.title') }}
+      </v-card-text>
+      <v-card-text class="text-subtitle" style="line-height: 1.8rem">
+        <div v-html="$t('community_create_modal.prohibited.desc')" />
       </v-card-text>
     </confirm-dialog>
   </div>
