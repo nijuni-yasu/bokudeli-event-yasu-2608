@@ -25,7 +25,7 @@ const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347
 const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345
 
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7'
-const EVENT_STATUS_IN_DRAFT_ID = 'd-db07a084839741ada6e3ff0f44ac3b41'
+const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
 const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
 
@@ -421,7 +421,7 @@ async function sendApplyingOrderMailToShop(eventSnapshot) {
   })
 }
 
-async function sendApplyingOrderRemindMailToShop(start, end, isReject) {
+async function sendApplyingOrderRemindMailToShop(start, end) {
   const nowDateTimeMillis = Date.now()
   const events = await db
     .collectionGroup('events')
@@ -439,18 +439,51 @@ async function sendApplyingOrderRemindMailToShop(start, end, isReject) {
           getShopForEvent(eventSnapshot),
         ])
         dynamic_template_data.is_reminder = true
-        const templateId = isReject ? REJECT_ORDER_TEMPLATE_ID : APPLYING_ORDER_TEMPLATE_ID
         return sgMail.send({
           to: getShopEmails(shopSnapShot),
           from: DEFAULT_FROM,
           cc: SUPPORT_MAIL,
-          templateId,
+          templateId: APPLYING_ORDER_TEMPLATE_ID,
           dynamic_template_data,
         })
       }
       return null
     })
     .filter((promise) => promise != null)
+  return Promise.all(sendMailPromises)
+}
+
+async function sendRejectOrderMailToShop(start, end) {
+  const nowDateTimeMillis = Date.now()
+  const events = await db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'applying_reservation')
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
+    .get()
+
+    const sendMailPromises = events.docs
+      .map(async (eventSnapshot) => {
+        // applying_reservation に変更したログで一番新しいものを取得
+        const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
+        if (updatedAt == null || updatedAt.toMillis() <= start || updatedAt.toMillis() > end) {
+          return null;
+        }
+        eventSnapshot.ref.update({ 'event_status.value': 'in_draft' })
+
+        const [dynamic_template_data, shopSnapShot] = await Promise.all([
+          createTemplateDataForOrderDeadline(eventSnapshot),
+          getShopForEvent(eventSnapshot),
+        ])
+        return sgMail.send({
+          to: getShopEmails(shopSnapShot),
+          from: DEFAULT_FROM,
+          cc: SUPPORT_MAIL,
+          templateId: REJECT_ORDER_TEMPLATE_ID,
+          dynamic_template_data,
+        })
+      })
+      .filter((promise) => promise != null)
+
   return Promise.all(sendMailPromises)
 }
 
@@ -830,7 +863,7 @@ export const polling = functions
       sendInCartEventDeadlineNotificationToMember(start, end),
       sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis, false), // 1日後通知
       sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis, false), // 2日後通知
-      sendApplyingOrderRemindMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
+      sendRejectOrderMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
     ])
   })
 
