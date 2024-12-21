@@ -780,7 +780,8 @@ async function sendInCartNotificationToMember(start, end) {
     .where('updated_at', '>', Timestamp.fromMillis(start - notifyTime))
     .where('updated_at', '<=', Timestamp.fromMillis(end - notifyTime))
     .get()
-  Promise.all(
+
+  const notificationDataList = await Promise.all(
     orderSnapshot.docs.map(async (orderDoc) => {
       const order = orderDoc.data()
       const userId = order.user_id
@@ -789,6 +790,18 @@ async function sendInCartNotificationToMember(start, end) {
         db.collection('users').doc(userId).get(),
       ])
       const userData = userSnapshot.data()
+      return { eventSnapshot, userData }
+    })
+  )
+
+  const filteredNotificationDataList = notificationDataList.filter((notificationData) => {
+    const deadlineTimestamp = notificationData.eventSnapshot.get('event_deadline_datetime')
+    return start < deadlineTimestamp.toMillis()
+  })
+
+  Promise.all(
+    filteredNotificationDataList.map(async (notificationData) => {
+      const { eventSnapshot, userData } = notificationData
       return sgMail.send(buildInCartNotificationMail(eventSnapshot, userData))
     }),
   )
