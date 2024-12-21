@@ -26,6 +26,9 @@ import { useValidators } from '@/composable/validators'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
+import { useI18n } from 'vue-i18n'
+const { t: $t } = useI18n()
+
 const router = useRouter()
 const route = useRoute()
 
@@ -357,19 +360,11 @@ const stepperItems = computed(() => [
     </template>
     <div>
       <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
-        <v-card-text class="text-center py-10 text-h6"> イベントの作成・編集について </v-card-text>
-        <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
-          ・「開催場所」「開催日時」を入力後、対応可能な店舗を選択してイベント内容や注文情報を入力してください。<br />
-          ・下書き保存をし、プレビューの確認後、店舗に予約申請をしてください。<br />
-          ・店舗から予約申請の承認を受けたら、注文を開始することができます。<br />
-          ・店舗から予約申請が却下された場合、店舗や日時などを変更して再度予約申請をしてください。<br />
-          <br />
-          ・予約申請後、「店舗」「開催場所」「開催日時」などの変更はできません。<br />
-          ・予約申請後、「イベントタイトル」「イベント詳細」「イベント画像」の編集は可能です。<br />
-          <br />
-          ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> をご確認ください。<br />
-          ・ご不明点ありましたらサポートまで
-          <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
+        <v-card-text class="text-center py-10 text-h4">
+          {{ $t('event_create_modal.title') }}
+        </v-card-text>
+        <v-card-text class="pb-0" style="line-height: 2.0rem">
+          <div v-html="$t('event_create_modal.desc')" />
         </v-card-text>
       </confirm-dialog>
     </div>
