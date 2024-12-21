@@ -1,6 +1,7 @@
 import type { NavLink, NavGroup } from '@layouts/types'
 import { getHomePath, getNewEventPath, getCommunityListPath } from '@/router/utils'
-import { mdiCalendarHeart, mdiCalendarPlus, mdiAccountGroup, mdiFoodForkDrink } from '@mdi/js'
+import { mdiCalendarHeart, mdiCalendarPlus, mdiAccountGroup, mdiFoodForkDrink, mdiNote, mdiHeart } from '@mdi/js'
+import XIcon from '@/icons/x'
 
 export const useNavItems = (): (NavLink | NavGroup)[] => {
   const { t: $t } = useI18n()
@@ -21,10 +22,22 @@ export const useNavItems = (): (NavLink | NavGroup)[] => {
       icon: { icon: mdiAccountGroup },
     },
     {
-      title: $t('navigation.about'),
-      href: 'https://shokujii.studio.site/',
+      title: $t('navigation.magagine'),
+      href: 'https://note.com/shokujii/m/mc65c92109f2b',
       target: '_blank',
-      icon: { icon: mdiFoodForkDrink },
+      icon: { icon: mdiNote },
+    },
+    {
+      title: $t('navigation.x'),
+      href: 'https://x.com/search?q=%23shokujii&src=typed_query&f=live',
+      target: '_blank',
+      icon: { icon: XIcon },
+    },
+    {
+      title: $t('navigation.about'),
+      href: 'https://about.shokujii.jp/',
+      target: '_blank',
+      icon: { icon: mdiHeart },
     },
   ]
 }
