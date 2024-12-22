@@ -5,6 +5,7 @@ import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
 import {collection, getDocs, query, where} from "firebase/firestore";
 import {generatePassCode} from "@/utils/generatePassCode";
+import {FirestoredUser} from "@/schemes/storedUser";
 
 
 const router = useRouter()
@@ -47,7 +48,7 @@ const submit = async () => {
     const userEmail = email.value
 
     const verifyPassCode = httpsCallable(functions, "verify_pass_code")
-    const result = await verifyPassCode({ user_email: userEmail, pass_code: passCode.value })
+    const result = await verifyPassCode({ user_email: userEmail, user_pass_code: passCode.value })
 
     const customToken = result.data as string
 
@@ -63,11 +64,11 @@ const submit = async () => {
     const querySnapshot = await getDocs(q)
 
     if (!querySnapshot.empty) {
-      // TODO: 型指定、おそらく既にどこかでされているからそれを当て込む
-      const user = [];
+      const user: FirestoredUser[] = [];
       querySnapshot.forEach((doc) => {
-        user.push({ id: doc.id, ...doc.data() })
-      });
+        const firestoredUser = new FirestoredUser(doc.data());
+        user.push(firestoredUser)
+      })
 
       const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
       if(isProfileCompleted) {
