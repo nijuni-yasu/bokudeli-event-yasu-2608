@@ -40,7 +40,14 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       result[size.name] = url.href
       return result
     }, {} as ThumbnailLinks)
-  } /* else if (url.hostname === 'platform-lookaside.fbsbx.com') {
+  } else {
+    return SIZE_LIST.reduce((result, size) => {
+      url.pathname = url.pathname.split('=')[0] + '=' + `s${size.value}-c`
+      result[size.name] = url.href
+      return result
+    }, {} as ThumbnailLinks)
+  }
+  /* else if (url.hostname === 'platform-lookaside.fbsbx.com') {
     return SIZE_LIST.reduce((result, size) => {
       url.searchParams.set('width', size.value.toString())
       url.searchParams.set('height', size.value.toString())
