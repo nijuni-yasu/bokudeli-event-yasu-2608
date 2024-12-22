@@ -1188,14 +1188,14 @@ export const send_email = functions.region('asia-northeast1').https.onCall(async
 })
 
 export const send_pass_code = functions.region('asia-northeast1').https.onCall(async (data) => {
-  const { user_email, pass_code } = data
+  const { user_email, user_pass_code } = data
 
   if (!user_email) {
     throw new functions.https.HttpsError("invalid-argument", "user_email is required.")
   }
 
-  if (!pass_code) {
-    throw new functions.https.HttpsError("invalid-argument", "pass_code is required.")
+  if (!user_pass_code) {
+    throw new functions.https.HttpsError("invalid-argument", "user_pass_code is required.")
   }
 
   try {
@@ -1204,7 +1204,7 @@ export const send_pass_code = functions.region('asia-northeast1').https.onCall(a
       from: DEFAULT_FROM,
       templateId: USER_PASS_CODE,
       dynamic_template_data : {
-        user_pass_code: pass_code,
+        user_pass_code: user_pass_code,
       }
     })
 
