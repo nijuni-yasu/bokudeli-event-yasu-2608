@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import {db, functions} from '@/firebase'
-import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
+import {httpsCallable} from 'firebase/functions'
 import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
 import {collection, getDocs, query, where} from "firebase/firestore";
 import {generatePassCode} from "@/utils/generatePassCode";
-// TODO: 開発用。後ほど削除すること
-connectFunctionsEmulator(functions, 'localhost', 5001);
 
 
 const router = useRouter()
@@ -78,7 +76,7 @@ const submit = async () => {
         router.push({
           path: '/register/complete',
           query: {
-            new: Number(route.query.isNew),
+            new: Number(route.query.new),
           }
         })
       }
