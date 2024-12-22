@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
-import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
-import logo from "@/assets/images/shokujii/shokujii_logo_wide.png";
-import {generatePassCode} from "@/utils/generatePassCode";
 import XIcon from '@/icons/x'
 import AppleIcon from '@/icons/apple.vue'
 import FacebookIcon from '@/icons/facebook.vue'
 import GoogleIcon from '@/icons/google.vue'
+import { useStoreStoredUser } from '@/stores/storedUser'
+import { useUserStore, type UserStore } from '@/stores/user'
+import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
+import {FirestoredUser} from "@/schemes/storedUser"
+import UserAvatar from '@/components/UserAvatar.vue'
+import {buildThumbnailsLinks} from '@/composable/buildThumbnailsLinks'
+import type { VForm } from 'vuetify/components'
 
 
-// TODO: 開発用。後ほど削除すること
-connectFunctionsEmulator(functions, 'localhost', 5001);
+const storedUserStore = useStoreStoredUser()
+const { storedUser } = storeToRefs(useStoreStoredUser())
+const user = computed(() => {
+  const userId = storedUser.value?.userId
+  return userId == null ? null : (useUserStore(userId) as UserStore).user
+})
 
 const router = useRouter()
 const route = useRoute()
@@ -21,22 +28,33 @@ const isValid = ref(false)
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const userImage = ref<File | undefined>(undefined)
-const imageUrl = ref<string | null>(null)
-
-const userUrl = ref("");
-const userName = ref("");
-const twitterUrl = ref("");
-const facebookUrl = ref("");
-const instagramUrl = ref("");
-const websiteUrl = ref("");
-const bio = ref("");
-
-const email = ref("")
+const email = ref<string>(user.value?.user_email ?? "")
 
 const isNew = computed(() => {
   const value = route.query.new
   return value === '1' ? 1 : 0
 })
+
+// バリデーション関連 ここから
+const rules = {
+  required: (v: string) => !!v || "この項目は必須です。",
+}
+
+const imageError = ref("")
+
+const validateImage = () => {
+  if (!user.value?.user_image_url && !userImage.value) {
+    imageError.value = "プロフィール画像を選択してください。"
+    return false
+  } else {
+    imageError.value = ""
+    return true
+  }
+}
+
+watch(userImage, validateImage)
+// バリデーション関連 ここまで
+
 
 // 画像ファイル選択処理
 const triggerFileInput = (): void => {
@@ -48,16 +66,37 @@ const readImageFiles = (files: File | File[]) => {
   if (files.length === 0) return
   const file = files[0]
   userImage.value = file
-  imageUrl.value = URL.createObjectURL(file)
+
+  const firestoredUser = user.value as FirestoredUser
+  firestoredUser.user_thumb_image_urls = buildThumbnailsLinks(firestoredUser.user_id, new URL(URL.createObjectURL(file)))
 }
 
 
-const profileSubmit = () => {
-  // TODO: UserBioPanel.vue, UserBioEditDialog.vueを参考にuserStore.uploadUserImageを使用してアップロード
+const profileSubmit = async () => {
   try {
     isLoading.value = true
     isValid.value = true
 
+    if (!validateImage()) return
+
+    const firestoredUser = user.value as FirestoredUser
+    const image = userImage.value
+
+    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
+
+    const userStore = useUserStore(firestoredUser.user_id) as UserStore
+    await userStore.updateUser(firestoredUser)
+    if (image != null) {
+      try {
+        await userStore.uploadUserImage(image)
+      } catch (err) {
+        console.error(err)
+        window.alert('画像のアップロードに失敗しました')
+      }
+    }
+
+    // TODO: 元いたページに遷移
+    router.push('/')
   } catch (error) {
     console.warn("Error profile submit:", error);
   } finally {
@@ -71,8 +110,7 @@ const emailSubmit = () => {
     isLoading.value = true
     isValid.value = true
 
-    const userEmail = email.value
-    // TODO: user idからemailを保存する処理
+    // TODO: user idからemailのみ更新する処理
   } catch (error) {
     console.warn("Error email submit:", error);
   } finally {
@@ -80,89 +118,86 @@ const emailSubmit = () => {
     isValid.value = false
   }
 }
-
 </script>
 
 <template>
-  <v-container>
+  <v-container v-if="user != null">
     <v-row justify="center" class="mt-16">
       <v-col md="6" class="">
         <v-sheet class="rounded-lg py-14 px-16">
           <h1 class="text-center">プロフィール設定</h1>
 
           <v-sheet class="d-flex justify-center align-center mt-4 mb-12" style="position: relative;">
-            <v-avatar
-                size="140"
-                color="grey-500"
-                @click="triggerFileInput"
-                style="cursor: pointer"
-            >
-              <img
-                  v-if="imageUrl"
-                  :src="imageUrl"
-                  alt="プロフィール画像"
-                  class="avatar-img"
-              />
-            </v-avatar>
+            <UserAvatar :user="user" :size="140" @click="triggerFileInput"/>
             <span class="edit-text text-primary" @click="triggerFileInput">編集</span>
+          </v-sheet>
+          <p v-if="imageError !== ''" class="text-center text-error font-weight-bold">{{imageError}}</p>
 
+          <v-form ref="form" v-model="isValid" @submit.prevent="profileSubmit">
             <!-- ファイル選択 -->
             <v-file-input class="d-none" accept="image/*" label="プロフィール画像" ref="fileInput" @update:model-value="readImageFiles" />
-          </v-sheet>
 
-          <v-form v-model="isValid" @submit.prevent="profileSubmit">
             <v-sheet class="d-flex flex-column ga-7 mb-16" >
               <v-text-field
-                  v-model="userUrl"
                   label="ユーザーURL"
+                  v-model="user.user_url_path"
                   prefix="https://shokuiji.jp/u/"
                   variant="outlined"
                   hide-details
+                  :disabled="isLoading"
               />
 
               <v-text-field
                   label="ユーザー名"
-                  v-model="userName"
+                  v-model="user.user_name"
                   variant="outlined"
+                  :disabled="isLoading"
+                  :rules="[rules.required]"
               />
             </v-sheet>
 
             <v-sheet class="d-flex flex-column ga-7">
               <v-text-field
                   label="X (Twitter)"
-                  v-model="twitterUrl"
+                  v-model="user.user_sns_twitter"
                   prefix="https://x.com/"
                   variant="outlined"
                   hide-details
+                  :disabled="isLoading"
               />
 
               <v-text-field
                   label="Facebook"
-                  v-model="facebookUrl"
+                  v-model="user.user_sns_facebook"
                   prefix="https://facebook.com/"
                   variant="outlined"
                   hide-details
+                  :disabled="isLoading"
               />
 
               <v-text-field
                   label="Instagram"
-                  v-model="instagramUrl"
+                  v-model="user.user_sns_instagram"
                   prefix="https://instagram.com/"
                   variant="outlined"
                   hide-details
+                  :disabled="isLoading"
               />
 
               <v-text-field
                   label="WEBサイト"
-                  v-model="websiteUrl"
+                  v-model="user.user_sns_website"
                   variant="outlined"
+                  :disabled="isLoading"
               />
 
               <v-textarea
                   label="自己紹介文"
-                  v-model="bio"
+                  v-model="user.user_description"
                   rows="4"
                   variant="outlined"
+                  :disabled="isLoading"
+                  :rules="[rules.required]"
               />
 
               <v-row justify="center">
@@ -183,9 +218,9 @@ const emailSubmit = () => {
             <v-text-field
                 class=" my-12"
                 label="メールアドレス"
-                v-model="userName"
+                v-model="email"
                 variant="outlined"
-                :disabled="isValid"
+                :disabled="isLoading"
             />
             <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">変更する</v-btn>
           </v-form>
