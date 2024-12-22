@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { functions } from '@/firebase'
-import {connectFunctionsEmulator, httpsCallable} from 'firebase/functions'
+import {httpsCallable} from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo_wide.png'
 import {generatePassCode} from "@/utils/generatePassCode";
-// TODO: 開発用
-connectFunctionsEmulator(functions, 'localhost', 5001);
 
 type CreateUserRequest = {
   user_email: string
