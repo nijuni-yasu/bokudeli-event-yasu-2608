@@ -9,8 +9,15 @@ import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
 import {FirestoredUser} from "@/schemes/storedUser"
 import UserAvatar from '@/components/UserAvatar.vue'
 import {buildThumbnailsLinks} from '@/composable/buildThumbnailsLinks'
-import type { VForm } from 'vuetify/components'
-
+import {
+  getAuth,
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  TwitterAuthProvider,
+  linkWithPopup,
+  linkWithRedirect
+} from "firebase/auth";
+import {FirebaseError} from "firebase/app";
 
 const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -118,6 +125,86 @@ const emailSubmit = () => {
     isValid.value = false
   }
 }
+
+const linkByProviderService = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
+  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
+
+  switch (providerService) {
+    case 'Facebook':
+      provider = new FacebookAuthProvider()
+      provider.addScope('email')
+      provider.addScope('public_profile')
+      break
+    case 'Google':
+      provider = new GoogleAuthProvider()
+      provider.addScope('profile')
+      provider.addScope('openid')
+      break
+    case 'Twitter':
+      provider = new TwitterAuthProvider()
+      break
+  }
+
+  const user = getAuth().currentUser
+  if (!user) return
+
+  if (import.meta.env.DEV) {
+    await linkWithPopup(user, provider);
+  } else {
+    await linkWithRedirect(user, provider)
+  }
+}
+
+const handleFacebookLink = async () => {
+  try {
+    await linkByProviderService('Facebook')
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = FacebookAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+    } else {
+      console.error({ error })
+    }
+  }
+}
+
+const handleGoogleLoginLink = async () => {
+  try {
+    await linkByProviderService('Google')
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = FacebookAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+    } else {
+      console.error({ error })
+    }
+  }
+}
+
+const handleTwitterLoginLink = async () => {
+  try {
+    await linkByProviderService('Twitter')
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = FacebookAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+    } else {
+      console.error({ error })
+    }
+  }
+}
+
+// リンク済みプロバイダーを配列に
+const linkedProviders = computed(() => {
+  const user = getAuth().currentUser
+  if (user) {
+    return  user.providerData.map(
+        (info) => info.providerId
+    );
+  } else {
+    return [];
+  }
+})
 </script>
 
 <template>
@@ -237,7 +324,8 @@ const emailSubmit = () => {
             <label class="align-center">
               <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>Google
             </label>
-            <v-btn variant="outlined" color="grey-500">連携する</v-btn>
+            <v-btn v-if="!linkedProviders.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">連携する</v-btn>
+            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
           </div>
 
           <hr>
@@ -246,7 +334,8 @@ const emailSubmit = () => {
             <label class="align-center">
               <v-icon :icon="AppleIcon" size="x-large" class="me-4"/>Apple
             </label>
-            <v-btn variant="outlined" color="grey-500">連携する</v-btn>
+            <v-btn v-if="!linkedProviders.includes('apple.com')" variant="outlined" color="grey-500" width="100">連携する</v-btn>
+            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
           </div>
 
           <hr>
@@ -255,7 +344,8 @@ const emailSubmit = () => {
             <label class="align-center">
               <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>Facebook
             </label>
-            <v-btn variant="outlined" color="grey-500">連携する</v-btn>
+            <v-btn v-if="!linkedProviders.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">連携する</v-btn>
+            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
           </div>
 
           <hr>
@@ -264,7 +354,8 @@ const emailSubmit = () => {
             <label class="align-center">
               <v-icon :icon="XIcon" size="x-large" class="me-3"/>Twitter
             </label>
-            <v-btn variant="outlined" color="grey-500">連携する</v-btn>
+            <v-btn v-if="!linkedProviders.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">連携する</v-btn>
+            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
           </div>
         </v-sheet>
       </v-col>
