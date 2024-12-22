@@ -14,9 +14,12 @@ export type StoredUser = {
   userImageUrl: string | null
   userAccount: string | null
   userDescription: string | null
+  userUrlPath: string | null
   userSnsFacebook: string | null
   userSnsTwitter: string | null
   userSnsInstagram: string | null
+  userSnsWebsite: string | null
+  userPassCode: string | null
   createdAt: Date | undefined
   updatedAt: Date | undefined
 }
@@ -27,9 +30,12 @@ export class FirestoredUser {
   user_image_url: string | null = null
   user_account: string | null = null
   user_description: string | null = null
+  user_url_path: string | null = null
   user_sns_facebook: string | null = null
   user_sns_twitter: string | null = null
   user_sns_instagram: string | null = null
+  user_sns_website: string | null = null
+  user_pass_code: string | null = null
   created_at: Timestamp | null = null
   updated_at: Timestamp | null = null
   user_thumb_image_urls: ThumbnailLinks | null = null
