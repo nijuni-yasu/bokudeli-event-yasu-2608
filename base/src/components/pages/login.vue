@@ -6,7 +6,7 @@ import {generatePassCode} from "@/utils/generatePassCode";
 
 type CreateUserRequest = {
   user_email: string
-  pass_code: string
+  user_pass_code: string
 }
 
 type CreateUserResponse = {
@@ -33,10 +33,10 @@ const submit = async () => {
     const passCode = generatePassCode()
 
     const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, "create_or_update_user")
-    const { data } = await createOrUpdateUser({ user_email: userEmail, pass_code: passCode })
+    const { data } = await createOrUpdateUser({ user_email: userEmail, user_pass_code: passCode })
 
     const sendPassCode = httpsCallable(functions, "send_pass_code")
-    await sendPassCode({ user_email: userEmail, pass_code: passCode })
+    await sendPassCode({ user_email: userEmail, user_pass_code: passCode })
 
     router.push({
       path: '/pass-code',

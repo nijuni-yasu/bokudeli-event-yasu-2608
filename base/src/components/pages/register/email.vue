@@ -34,7 +34,7 @@ const submit = async () => {
     await userStore.updateUser(firestoredUser)
 
     const sendPassCode = httpsCallable(functions, "send_pass_code")
-    await sendPassCode({ user_email: firestoredUser.user_email, pass_code: passCode })
+    await sendPassCode({ user_email: firestoredUser.user_email, user_pass_code: passCode })
 
     router.push({
       path: '/pass-code',
