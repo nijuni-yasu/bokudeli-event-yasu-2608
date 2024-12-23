@@ -4,6 +4,7 @@ import * as dateFns from 'date-fns'
 import ja from 'date-fns/locale/ja'
 import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
+import { makeIcsUrl } from './make-ics-url.js'
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = '食事でつながる「shokujii」<shokujii@nijuni.jp>'
@@ -461,28 +462,28 @@ async function sendRejectOrderMailToShop(start, end) {
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
     .get()
 
-    const sendMailPromises = events.docs
-      .map(async (eventSnapshot) => {
-        // applying_reservation に変更したログで一番新しいものを取得
-        const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
-        if (updatedAt == null || updatedAt.toMillis() <= start || updatedAt.toMillis() > end) {
-          return null;
-        }
-        eventSnapshot.ref.update({ 'event_status.value': 'in_draft' })
+  const sendMailPromises = events.docs
+    .map(async (eventSnapshot) => {
+      // applying_reservation に変更したログで一番新しいものを取得
+      const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
+      if (updatedAt == null || updatedAt.toMillis() <= start || updatedAt.toMillis() > end) {
+        return null
+      }
+      eventSnapshot.ref.update({ 'event_status.value': 'in_draft' })
 
-        const [dynamic_template_data, shopSnapShot] = await Promise.all([
-          createTemplateDataForOrderDeadline(eventSnapshot),
-          getShopForEvent(eventSnapshot),
-        ])
-        return sgMail.send({
-          to: getShopEmails(shopSnapShot),
-          from: DEFAULT_FROM,
-          cc: SUPPORT_MAIL,
-          templateId: REJECT_ORDER_TEMPLATE_ID,
-          dynamic_template_data,
-        })
+      const [dynamic_template_data, shopSnapShot] = await Promise.all([
+        createTemplateDataForOrderDeadline(eventSnapshot),
+        getShopForEvent(eventSnapshot),
+      ])
+      return sgMail.send({
+        to: getShopEmails(shopSnapShot),
+        from: DEFAULT_FROM,
+        cc: SUPPORT_MAIL,
+        templateId: REJECT_ORDER_TEMPLATE_ID,
+        dynamic_template_data,
       })
-      .filter((promise) => promise != null)
+    })
+    .filter((promise) => promise != null)
 
   return Promise.all(sendMailPromises)
 }
@@ -737,11 +738,21 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
     event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
     is_public: eventData.is_public,
   }
+  const icsUrl = makeIcsUrl(eventData)
+  const icsContent = decodeURIComponent(icsUrl.replace('data:text/calendar;charset=utf8,', ''))
   return sgMail.send({
     to: userSnapshot.get('user_email'),
     from: DEFAULT_FROM,
     templateId: ORDER_COMPLETION_TEMPLATE_ID,
     dynamic_template_data,
+    attachments: [
+      {
+        content: Buffer.from(icsContent, 'utf-8').toString('base64'),
+        filename: 'invite.ics',
+        type: 'text/calendar',
+        disposition: 'attachment',
+      },
+    ],
   })
 }
 

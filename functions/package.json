@@ -16,6 +16,7 @@
   "main": "index.js",
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
+    "calendar-link": "^2.7.0",
     "date-fns": "^3.3.1",
     "firebase-admin": "^11.10.1",
     "firebase-functions": "^4.8.0",
