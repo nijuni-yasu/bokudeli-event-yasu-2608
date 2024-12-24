@@ -18,6 +18,8 @@ import {
   linkWithRedirect
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
+import {useValidators} from "@/composable/validators";
+const { requiredValidator, noReservedCharsValidator } = useValidators()
 
 const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -41,11 +43,6 @@ const isNew = computed(() => {
   const value = route.query.new
   return value === '1' ? 1 : 0
 })
-
-// バリデーション関連 ここから
-const rules = {
-  required: (v: string) => !!v || "この項目は必須です。",
-}
 
 const imageError = ref("")
 
@@ -205,6 +202,8 @@ const linkedProviders = computed(() => {
     return [];
   }
 })
+console.log(getAuth().currentUser?.providerData)
+// TODO: 前の画面でTwitter or Facebookを選択したかで、初期値を変更する（userの相当する項目が空であれば）
 </script>
 
 <template>
@@ -230,8 +229,8 @@ const linkedProviders = computed(() => {
                   v-model="user.user_url_path"
                   prefix="https://shokuiji.jp/u/"
                   variant="outlined"
-                  hide-details
                   :disabled="isLoading"
+                  :rules="[noReservedCharsValidator]"
               />
 
               <v-text-field
@@ -239,7 +238,7 @@ const linkedProviders = computed(() => {
                   v-model="user.user_name"
                   variant="outlined"
                   :disabled="isLoading"
-                  :rules="[rules.required]"
+                  :rules="[requiredValidator]"
               />
             </v-sheet>
 
@@ -284,7 +283,7 @@ const linkedProviders = computed(() => {
                   rows="4"
                   variant="outlined"
                   :disabled="isLoading"
-                  :rules="[rules.required]"
+                  :rules="[requiredValidator]"
               />
 
               <v-row justify="center">

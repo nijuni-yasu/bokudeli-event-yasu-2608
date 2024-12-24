@@ -106,6 +106,14 @@ export const useValidators = () => {
     return /^T[0-9]{13}$/.test(value as string) || $t('validator.invoice_japan')
   }
 
+  const noReservedCharsValidator =  (value: string  | null | undefined) => {
+    if (isEmpty(value)) {
+      return true
+    }
+    const reservedChars = /[%{}|^[\]:?#/@`!$'()*+,;=\\]/;
+    return !reservedChars.test(value as string) || $t('validator.reserved_chars');
+  }
+
   return {
     requiredValidator,
     urlValidator,
@@ -117,5 +125,6 @@ export const useValidators = () => {
     emailValidator,
     accountValidator,
     invoiceValidatorJapan,
+    noReservedCharsValidator
   }
 }
