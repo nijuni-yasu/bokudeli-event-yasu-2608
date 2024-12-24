@@ -26,7 +26,7 @@ const submit = async () => {
   try {
     const firestoredUser = user.value as FirestoredUser
     const passCode = generatePassCode()
-    firestoredUser.pass_code = passCode
+    firestoredUser.user_pass_code = passCode
 
     storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
 
