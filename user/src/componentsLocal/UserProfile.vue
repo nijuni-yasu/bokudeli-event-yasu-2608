@@ -5,6 +5,9 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline  } from '@mdi/js'
+import LineIcon from '@/icons/line'
+import userAccessiblePaths from "@/composable/userAccessiblePaths";
+import { getManagePath } from '@/router/utils'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -14,12 +17,18 @@ const user = computed(() => {
   return userId == null ? null : (useUserStore(userId) as UserStore).user
 })
 
+const route = useRoute()
+const router = useRouter()
+
 const isOpenLoginDialog = ref(false)
 
 const logout = async () => {
   const auth = getAuth()
   try {
     await signOut(auth)
+
+    // ログインが必要なページにいる場合トップページに遷移
+    if (userAccessiblePaths.includes(route.path)) router.replace('/')
   } catch (error) {
     console.error(error)
   }
