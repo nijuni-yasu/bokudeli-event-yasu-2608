@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { collectionGroup, doc, getDocs, orderBy, query, where } from 'firebase/firestore'
-import { useRoute } from 'vue-router'
+import { collectionGroup, doc, getDocs, orderBy, query, where, limit, collection } from 'firebase/firestore'
+import { useRoute, useRouter } from 'vue-router'
 import UserBioPanel from '@/components/UserBioPanel.vue'
 import UserEventCard from '@/components/UserEventCard.vue'
 import CommunityCard from '@/components/CommunityCard.vue'
@@ -22,7 +22,37 @@ import type { CommunityMember } from '@/schemes/communityMember'
 import { getInvoicePdf } from '@/utils/invoice'
 
 const route = useRoute()
-const userId = route.params.userId as string
+const router = useRouter()
+const id = route.params.userId as string
+
+const userIdRef = ref('')
+const fetchUser = async (identifier: string) => {
+  const userCollection = collection(db, "users")
+  const queryById = query(userCollection, where("user_id", "==", identifier), limit(1))
+  const queryByUrlPath = query(userCollection, where("user_url_path", "==", identifier), limit(1))
+
+  try {
+    const [queryByIdSnapshot, queryByUrlPathSnapshot] = await Promise.all([
+      getDocs(queryById),
+      getDocs(queryByUrlPath),
+    ])
+
+    if (!queryByIdSnapshot.empty) {
+      userIdRef.value = queryByIdSnapshot.docs[0].data().user_id
+    } else if (!queryByUrlPathSnapshot.empty) {
+      userIdRef.value = queryByUrlPathSnapshot.docs[0].data().user_id
+    } else {
+      userIdRef.value = ''
+    }
+  } catch (error) {
+    userIdRef.value = ''
+  }
+}
+await fetchUser(id)
+const userId = userIdRef.value as string
+
+if (userId === '') router.replace('/')
+
 
 const notification = inject('notification') as Notification
 
