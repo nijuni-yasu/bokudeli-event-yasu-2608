@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { getEventPath, getEventCreatePath, getCommunitySettingsPath } from '@/router/utils'
+import { getEventPath, getEventCreatePath, getCommunitySettingsPath, getEventEditPath } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -189,9 +189,15 @@ const inviteManager = async () => {
                   <v-card-title class="text-left px-3 py-0 text-subtitle-2">
                     【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
                   </v-card-title>
-                  <v-card-title class="text-left px-3 py-0 text-subtitle-2"> 【場所】{{ event.event_address }} </v-card-title>
-                  <v-card-title class="text-left px-3 py-0 text-subtitle-2"> 【お店】 {{ event.shop_name }} </v-card-title>
-                  <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2"> 【定員】{{ event.event_max_people }} 人 </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                    【場所】{{ event.event_address }}
+                  </v-card-title>
+                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
+                    【お店】 {{ event.shop_name }}
+                  </v-card-title>
+                  <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2">
+                    【定員】{{ event.event_max_people }} 人
+                  </v-card-title>
                 </v-card>
                 <v-row v-if="isManager" class="justify-end my-2 mr-1">
                   <v-btn
@@ -203,8 +209,7 @@ const inviteManager = async () => {
                     rounded="pill"
                     :prepend-icon="mdiEmail"
                     :to="{
-                      path: getEventCreatePath(communityStore.community.community_account),
-                      query: { id: event.event_id, step: 5 },
+                      path: getEventEditPath(event.event_id),
                     }"
                   >
                     予約
@@ -218,8 +223,7 @@ const inviteManager = async () => {
                     rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
                     :to="{
-                      path: getEventCreatePath(communityStore.community.community_account),
-                      query: { id: event.event_id },
+                      path: getEventEditPath(event.event_id),
                     }"
                   >
                     編集
@@ -238,8 +242,7 @@ const inviteManager = async () => {
                     rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
                     :to="{
-                      path: getEventCreatePath(communityStore.community.community_account),
-                      query: { id: event.event_id, step: 4 },
+                      path: getEventEditPath(event.event_id),
                     }"
                   >
                     編集

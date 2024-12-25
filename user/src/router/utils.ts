@@ -11,9 +11,10 @@ export const getCommunityPath = (communityAccount: string) => `/c/${communityAcc
 export const getCommunitySettingsPath = (communityAccount: string) => `/c/setup?id=${communityAccount}`
 export const getCommunityCreatePath = () => `/c/setup`
 export const getEventPath = (communityAccount: string, eventId: string) => `/c/${communityAccount}/e/${eventId}`
-export const getEventCreatePath = (communityAccount: string) => `/c/${communityAccount}/e/create`
 export const getUserPath = (userId: string) => `/u/${userId}`
 export const getInvoicePath = () => `/invoice`
+export const getEventCreatePath = (communityAccount: string) => `/manage/community/${communityAccount}/newevent`
+export const getEventEditPath = (eventId: string) => `/manage/event/${eventId}/settings`
 export const getManagePath = () => `/manage`
 export const getManageCommunityListPath = () => '/manage/community'
 export const getManageEventListPath = () => '/manage/event'

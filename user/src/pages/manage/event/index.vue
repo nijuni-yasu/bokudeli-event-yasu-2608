@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { getManageEventPath } from '@/router/utils'
+import { getEventCreatePath, getManageEventPath } from '@/router/utils'
 import { useCommunityStore } from '@/stores/community'
 import { useCommunityListStore, type CommunityListStore } from '@/stores/communityList'
 import { getAuth } from 'firebase/auth'
@@ -11,6 +11,7 @@ import { useDisplay } from 'vuetify'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 
+const router = useRouter()
 const display = useDisplay()
 
 const numOfColumns = computed(() => {
@@ -96,7 +97,9 @@ const events = computed(() => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-btn variant="outlined" :prepend-icon="mdiPlus">{{ $t('manage.new_event') }}</v-btn>
+      <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">{{
+        $t('manage.new_event')
+      }}</v-btn>
     </v-col>
   </v-row>
   <v-row class="mb-2">

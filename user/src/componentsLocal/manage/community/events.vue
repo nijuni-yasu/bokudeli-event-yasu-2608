@@ -5,9 +5,12 @@ import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
 import { mdiPlus } from '@mdi/js'
-import { getManageEventPath } from '@/router/utils'
+import { getEventCreatePath, getManageEventPath } from '@/router/utils'
 
-const communityAccount = useRoute().params.communityAccount as string
+const route = useRoute()
+const router = useRouter()
+
+const communityAccount = route.params.communityAccount as string
 
 const display = useDisplay()
 
@@ -44,7 +47,9 @@ const events = computed(
   <v-container>
     <v-row>
       <v-col cols="12">
-        <v-btn variant="outlined" :prepend-icon="mdiPlus"> {{ $t('manage.new_event') }} </v-btn>
+        <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">
+          {{ $t('manage.new_event') }}
+        </v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">

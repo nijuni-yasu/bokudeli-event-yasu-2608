@@ -2,7 +2,7 @@
 /* Deprecated 
    Use the components like `user/src/pages/c/[communityId]/e/[eventId]/index.vue` instead.
 */
-import { getCommunityPath, getEventCreatePath } from '@/router/utils'
+import { getCommunityPath, getEventEditPath } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
@@ -222,8 +222,7 @@ onUnmounted(() => {
               rounded="pill"
               :prepend-icon="mdiEmail"
               :to="{
-                path: getEventCreatePath(communityStore.community.community_account),
-                query: { id: props.eventId, step: 5 },
+                path: getEventEditPath(props.eventId),
               }"
             >
               店舗へ予約申請
@@ -236,8 +235,7 @@ onUnmounted(() => {
               rounded="pill"
               :prepend-icon="mdiPencilBoxOutline"
               :to="{
-                path: getEventCreatePath(communityStore.community.community_account),
-                query: { id: props.eventId },
+                path: getEventEditPath(props.eventId),
               }"
             >
               イベント編集
@@ -255,8 +253,7 @@ onUnmounted(() => {
               rounded="pill"
               :prepend-icon="mdiPencilBoxOutline"
               :to="{
-                path: getEventCreatePath(communityStore.community.community_account),
-                query: { id: props.eventId, step: 4 },
+                path: getEventEditPath(props.eventId),
               }"
             >
               イベント編集

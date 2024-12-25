@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getEventCreatePath } from '@/router/utils'
+import { getEventEditPath } from '@/router/utils'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -194,8 +194,7 @@ onUnmounted(() => {
             rounded="pill"
             :prepend-icon="mdiEmail"
             :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId, step: 5 },
+              path: getEventEditPath(eventId),
             }"
           >
             店舗へ予約申請
@@ -208,8 +207,7 @@ onUnmounted(() => {
             rounded="pill"
             :prepend-icon="mdiPencilBoxOutline"
             :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId },
+              path: getEventEditPath(eventId),
             }"
           >
             イベント編集
@@ -227,8 +225,7 @@ onUnmounted(() => {
             rounded="pill"
             :prepend-icon="mdiPencilBoxOutline"
             :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId, step: 4 },
+              path: getEventEditPath(eventId),
             }"
           >
             イベント編集
