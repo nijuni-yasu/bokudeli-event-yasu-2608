@@ -13,6 +13,7 @@ type CreateUserResponse = {
   is_new: boolean
 }
 
+const route = useRoute()
 const router = useRouter()
 
 const isLoading = ref(false)
@@ -43,6 +44,7 @@ const submit = async () => {
       query: {
         email: userEmail,
         new: Number(data.is_new),
+        redirect: route.query.redirect,
       }
     })
   } catch (error) {

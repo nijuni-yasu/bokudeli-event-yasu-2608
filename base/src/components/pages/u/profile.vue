@@ -79,9 +79,6 @@ const readImageFiles = (files: File | File[]) => {
 const profileSubmit = async () => {
   try {
     isLoading.value = true
-    isValid.value = true
-
-    if (!validateImage()) return
 
     const firestoredUser = user.value as FirestoredUser
     const image = userImage.value
@@ -99,27 +96,27 @@ const profileSubmit = async () => {
       }
     }
 
-    // TODO: 元いたページに遷移
-    router.push('/')
+    if (route.query.redirect) {
+      router.push(route.query.redirect as string)
+    } else {
+      router.push('/')
+    }
   } catch (error) {
     console.warn("Error profile submit:", error);
   } finally {
     isLoading.value = false
-    isValid.value = false
   }
 }
 
 const emailSubmit = () => {
   try {
     isLoading.value = true
-    isValid.value = true
 
     // TODO: user idからemailのみ更新する処理
   } catch (error) {
     console.warn("Error email submit:", error);
   } finally {
     isLoading.value = false
-    isValid.value = false
   }
 }
 
