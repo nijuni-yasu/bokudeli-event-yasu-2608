@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import LoginDialog from '@/components/LoginDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
@@ -20,7 +19,14 @@ const user = computed(() => {
 const route = useRoute()
 const router = useRouter()
 
-const isOpenLoginDialog = ref(false)
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.path
+    }
+  })
+}
 
 const logout = async () => {
   const auth = getAuth()
@@ -111,7 +117,7 @@ const logout = async () => {
           <v-divider v-if="isLogin" class="my-2" />
 
           <!-- 👉 Login, Logout -->
-          <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
+          <v-list-item v-if="!isLogin" @click="login">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiLogout" size="22" />
             </template>
@@ -129,5 +135,4 @@ const logout = async () => {
       <!-- !SECTION -->
     </UserAvatar>
   </v-badge>
-  <login-dialog v-model="isOpenLoginDialog" />
 </template>
