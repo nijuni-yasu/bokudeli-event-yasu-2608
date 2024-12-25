@@ -20,6 +20,7 @@ import {
 import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
 const { requiredValidator, noReservedCharsValidator } = useValidators()
+import type { VForm } from 'vuetify';
 
 const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -35,6 +36,7 @@ const isLoading = ref(false)
 
 const isValid = ref(false)
 
+const form = ref<VForm | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null)
 const userImage = ref<File | undefined>(undefined)
 const email = ref<string>(user.value?.user_email ?? "")
@@ -46,6 +48,7 @@ const isNew = computed(() => {
 
 const imageError = ref("")
 
+// バリデーション関連 ここから
 const validateImage = () => {
   if (!user.value?.user_image_url && !userImage.value) {
     imageError.value = "プロフィール画像を選択してください。"
@@ -77,6 +80,12 @@ const readImageFiles = (files: File | File[]) => {
 
 
 const profileSubmit = async () => {
+  if (!isValid.value || !validateImage()) {
+    validateImage()
+    form.value?.validate()
+    return
+  }
+
   try {
     isLoading.value = true
 
