@@ -21,11 +21,18 @@ import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
 const { requiredValidator, noReservedCharsValidator } = useValidators()
 import type { VForm } from 'vuetify';
+import {db} from "@/firebase";
+import { doc, updateDoc, getDoc } from 'firebase/firestore'
+import {
+  convertDocumentDataToStoredUser,
+} from '@/schemes/converter'
 
 const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(useStoreStoredUser())
+const email = ref<string>("")
 const user = computed(() => {
   const userId = storedUser.value?.userId
+  email.value = storedUser.value?.userEmail
   return userId == null ? null : (useUserStore(userId) as UserStore).user
 })
 
@@ -39,7 +46,6 @@ const isValid = ref(false)
 const form = ref<VForm | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null)
 const userImage = ref<File | undefined>(undefined)
-const email = ref<string>(user.value?.user_email ?? "")
 
 const isNew = computed(() => {
   const value = route.query.new
@@ -117,11 +123,21 @@ const profileSubmit = async () => {
   }
 }
 
-const emailSubmit = () => {
+const emailSubmit = async () => {
   try {
     isLoading.value = true
 
-    // TODO: user idからemailのみ更新する処理
+    const userRef = doc(db, 'users', user.value.user_id)
+    await updateDoc(userRef, {
+      user_email: email.value,
+    })
+
+    const userSnap = await getDoc(userRef)
+
+    // Pinia のデータを更新
+    const currentStoredUser = convertDocumentDataToStoredUser(userSnap.data())
+
+    storedUserStore.update(currentStoredUser)
   } catch (error) {
     console.warn("Error email submit:", error);
   } finally {
