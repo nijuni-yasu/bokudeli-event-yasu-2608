@@ -41,6 +41,7 @@ const submit = async () => {
       query: {
         email: firestoredUser.user_email,
         new: Number(route.query.new),
+        redirect: route.query.redirect,
       }
     })
   } catch (error) {

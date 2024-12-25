@@ -6,7 +6,13 @@ const route = useRoute()
 const titleLabel = ref('')
 const descriptionLabel = ref('')
 const selfButtonLabel = ref('')
-const profileLink = ref('')
+const profileLink = {
+  path: '/u/profile',
+  query: {
+    new: Number(route.query.new),
+    redirect: route.query.redirect,
+  }
+}
 
 const isNew = computed(() => {
   const value = route.query.new
@@ -17,17 +23,15 @@ if (isNew.value === 1) {
   titleLabel.value = 'アカウント登録完了'
   descriptionLabel.value = 'shokujiiのアカウントの登録が完了しました 🎉\nSNSアカウント連携して、プロフィールを登録しましょう。'
   selfButtonLabel.value = '自分でプロフィールを登録する'
-  profileLink.value = '/u/profile?new=1'
 } else {
   titleLabel.value = 'プロフィール登録'
   descriptionLabel.value = 'プロフィールが登録されていません。\nSNSアカウントと連携して、プロフィール登録を完了させよう👍'
   selfButtonLabel.value = '自分でプロフィールを入力する'
-  profileLink.value = '/u/profile?new=0'
 }
 
-// TODO: X連携
+// TODO: X連携、Xを選択したことをprofileに伝達する
 
-// TODO: Facebook連携
+// TODO: Facebook連携、Facebookを選択したことをprofileに伝達する
 </script>
 
 <template>
