@@ -33,7 +33,6 @@ const instagramUrl = computed(() =>
   props.userData?.user_sns_instagram ? buildInstagramUrl(props.userData.user_sns_instagram) : undefined,
 )
 
-const isUserInfoEditDialogVisible = ref(false)
 const updateUserData = async (user: FirestoredUser, image?: File) => {
   storedUserStore.update(convertFirestoredUserToStoredUser(user, storedUserStore.storedUser?.userEmail ?? ''))
 
@@ -83,14 +82,12 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
             class="me-3"
             size="large"
             :prepend-icon="mdiPencil"
-            @click="isUserInfoEditDialogVisible = true"
+            to="/u/profile"
           >
             編集
           </v-btn>
         </v-card-actions>
       </v-card>
-      <!-- edit profile dialog data -->
-      <user-bio-edit-dialog v-model="isUserInfoEditDialogVisible" :user-data="userData" @submit="updateUserData" />
     </v-col>
   </v-row>
 </template>
