@@ -20,3 +20,5 @@ export const getInvoicePath = () => `/invoice`
 // TODO: パスを動的に生成できる仕組みを作る
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getEventEditPath = (eventId: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getManageCommunitySettingsPath = (communityAccount: string) => ''

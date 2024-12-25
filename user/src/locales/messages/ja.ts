@@ -94,6 +94,10 @@ export default {
         'save_draft': '下書き保存',
         'to_draft': '下書きに戻す',
       }
+    },
+    'settings': {
+      'submit': '設定',
+      'saved': '保存しました',
     }
   }
 }

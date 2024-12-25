@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { getEventPath, getEventCreatePath, getCommunitySettingsPath, getEventEditPath } from '@/router/utils'
+import { getEventPath, getEventCreatePath, getManageCommunitySettingsPath, getEventEditPath } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -130,7 +130,7 @@ const inviteManager = async () => {
             elevation="5"
             rounded="pill"
             :prepend-icon="mdiCog"
-            :to="getCommunitySettingsPath(communityStore.community.community_account)"
+            :to="getManageCommunitySettingsPath(communityStore.community.community_account)"
           >
             コミュニティ設定
           </v-btn>
