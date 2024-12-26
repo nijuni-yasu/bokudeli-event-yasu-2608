@@ -34,6 +34,9 @@ const calculateDifferences = (before, after) => {
 const write_log = async (communityId, eventId, differences, updated_by) => {
   const logRef = db.collection(`communities/${communityId}/events/${eventId}/logs`)
   differences['updated_by'] = updated_by
+  if (!differences['updated_at']) {
+    differences['updated_at'] = Timestamp.now()
+  }
   await logRef.add(differences)
 }
 
