@@ -52,11 +52,15 @@ const submit = async () => {
 
     const customToken = result.data as string
 
+    // TODO: Twitter or Facebookならカスタムトークンは使用しない？
+    // TODO: functionsでfirebase authのIDのメールアドレスを埋める処理は出来ないか？出来なければID変更メールの類をユーザーにメールで送信する必要がある。
     if (!customToken) {
       return isError.value = true
     }
 
     await signInWithCustomToken(getAuth(), customToken)
+
+    // TODO: fetchSignInMethodsForEmailを使用してアカウントリンクを行う
 
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("user_email", "==", userEmail))
@@ -74,13 +78,23 @@ const submit = async () => {
       if(isProfileCompleted) {
         router.push(route.query.redirect)
       } else {
-        router.push({
-          path: '/register/complete',
-          query: {
-            new: Number(route.query.new),
-            redirect: route.query.redirect,
-          }
-        })
+        if (route.query.type === 'facebook' || route.query.type === 'twitter') {
+          router.push({
+            path: '/u/profile',
+            query: {
+              new: Number(route.query.new),
+              redirect: route.query.redirect,
+            }
+          })
+        } else {
+          router.push({
+            path: '/register/complete',
+            query: {
+              new: Number(route.query.new),
+              redirect: route.query.redirect,
+            }
+          })
+        }
       }
     }
   } catch (error) {
