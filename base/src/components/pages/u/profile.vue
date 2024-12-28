@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import XIcon from '@/icons/x'
-import AppleIcon from '@/icons/apple.vue'
 import FacebookIcon from '@/icons/facebook.vue'
 import GoogleIcon from '@/icons/google.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -346,17 +345,7 @@ console.log(getAuth().currentUser?.providerData)
               <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>Google
             </label>
             <v-btn v-if="!linkedProviders.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
-          </div>
-
-          <hr>
-
-          <div class="d-flex justify-space-between align-center my-8">
-            <label class="align-center">
-              <v-icon :icon="AppleIcon" size="x-large" class="me-4"/>Apple
-            </label>
-            <v-btn v-if="!linkedProviders.includes('apple.com')" variant="outlined" color="grey-500" width="100">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
+            <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
           </div>
 
           <hr>
@@ -366,7 +355,7 @@ console.log(getAuth().currentUser?.providerData)
               <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>Facebook
             </label>
             <v-btn v-if="!linkedProviders.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
+            <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
           </div>
 
           <hr>
@@ -376,7 +365,7 @@ console.log(getAuth().currentUser?.providerData)
               <v-icon :icon="XIcon" size="x-large" class="me-3"/>Twitter
             </label>
             <v-btn v-if="!linkedProviders.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" class="pointer-events-none">連携中</v-btn>
+            <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
           </div>
         </v-sheet>
       </v-col>
@@ -397,6 +386,10 @@ console.log(getAuth().currentUser?.providerData)
   right: 140px;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.cursor-none {
+  cursor: none;
 }
 
 @media (max-width: 600px) {
