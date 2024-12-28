@@ -11,7 +11,7 @@ export default {
     'x': '#最新情報',
     'manage_event': 'イベント管理',
     'manage_community': 'コミュニティ管理',
-    'guide': 'ガイド',
+    'guide': 'コミュニティガイド',
   },
   'top': {
     'popular_events': '人気のイベント',
