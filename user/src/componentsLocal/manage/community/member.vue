@@ -34,7 +34,7 @@ const clickContact = (member: CommunityMember) => {
 <template>
   <v-container>
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="10" sm="10" cols="12">
         <v-table>
           <tbody>
             <tr v-for="(member, i) of members" :key="member.user_id">

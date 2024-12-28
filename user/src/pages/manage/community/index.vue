@@ -35,9 +35,9 @@ const communities = computed(() => {
 </script>
 
 <template>
-  <v-row>
-    <v-col cols="12">
-      <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getManageNewCommunityPath())">
+  <v-row class="justify-center">
+    <v-col md="10" sm="12" cols="12">
+      <v-btn variant="outlined" size="large" :prepend-icon="mdiPlus" @click="router.push(getManageNewCommunityPath())">
         {{ $t('manage.new_community') }}
       </v-btn>
     </v-col>

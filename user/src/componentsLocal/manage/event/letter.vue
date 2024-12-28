@@ -97,14 +97,14 @@ const onCopyClick = async (letter: Letter) => {
 <template>
   <v-container v-if="selectedLetter == null">
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="9" sm="9" cols="12">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push({ query: { letterId: '' } })">
           {{ $t('manage.new_letter') }}
         </v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12" v-for="letter of letters" :key="letter!.letter_id">
+      <v-col md="9" sm="9" cols="12" v-for="letter of letters" :key="letter!.letter_id">
         <LetterCard
           :letter="letter"
           @edit="onEditClick(letter)"

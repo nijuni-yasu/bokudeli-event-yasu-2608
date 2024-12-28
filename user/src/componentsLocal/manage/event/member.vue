@@ -53,7 +53,7 @@ const clickContact = (member: EventMember) => {
 <template>
   <v-container>
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="10" sm="10" cols="12">
         <v-col cols="12" class="text-h4">
           <v-row> {{ $t('manage.member.ordered') }} </v-row>
         </v-col>
@@ -114,7 +114,7 @@ const clickContact = (member: EventMember) => {
       </v-col>
     </v-row>
     <v-row class="justify-center" v-if="cartOrders.length !== 0">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="10" sm="10" cols="12">
         <v-col cols="12" class="text-h4">
           <v-row> {{ $t('manage.member.in_cart') }} </v-row>
         </v-col>
