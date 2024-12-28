@@ -34,8 +34,8 @@ const openInNew = (url: string) => {
 <template>
   <v-row v-if="community != null">
     <v-col cols="12">
-      <div style="display: flex; align-items: center; justify-content: flex-start">
-        <v-img class="icon" :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 30px" />
+      <div class="text-h3" style="display: flex; align-items: center; justify-content: flex-start">
+        <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 30px" />
         {{ community?.community_name }}
         <v-btn variant="plain" :icon="mdiOpenInNew" @click="openInNew(getCommunityPath(communityAccount))" />
       </div>
@@ -63,8 +63,9 @@ const openInNew = (url: string) => {
 
 <style scoped lang="scss">
 .icon {
-  height: 128px;
+  height: 100px;
   aspect-ratio: 1/1;
+  border-radius: 10%;
 }
 </style>
 

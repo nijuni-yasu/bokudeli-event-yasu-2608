@@ -8,6 +8,8 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { useI18n } from 'vue-i18n'
 import { getEventPath } from '@/router/utils'
 import { mdiOpenInNew } from '@mdi/js'
+import { useCommunityStore } from '@/stores/community'
+import { getManageCommunityPath } from '@/router/utils'
 
 const { t: $t } = useI18n()
 
@@ -21,6 +23,16 @@ const event = computed(() => eventStore.event)
 
 const tab = ref<Tabs>(tabs.find((t) => t === tabName) ?? tabs[0])
 
+
+// コミュニティストアの取得
+const communityStore = computed(() => {
+  if (eventStore?.event?.community_account) {
+    return useCommunityStore(eventStore.event.community_account)
+  }
+  return null
+})
+const community = computed(() => communityStore.value?.community)
+
 const components = tabs.map((tab) => ({
   value: tab,
   text: $t(`manage.event.tabs.${tab}`),
@@ -32,12 +44,23 @@ const openInNew = (url: string) => {
 </script>
 
 <template>
+  <v-row v-if="community != null" class="py-0">
+    <v-col cols="12" class="py-0">
+      <router-link :to="getManageCommunityPath(community.community_account)">
+        <div class="text-h6" style="display: flex; align-items: center; justify-content: flex-start">
+          <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 5px" />
+          {{ community?.community_name }}
+        </div>
+      </router-link>
+    </v-col>
+  </v-row>
   <v-row v-if="event != null">
-    <v-col cols="12">
-      <div style="display: flex; align-items: center; justify-content: flex-start">
+    <v-col cols="12" class="py-0">
+      <div class="text-h5" style="display: flex; align-items: center; justify-content: flex-start">
         {{ event.event_name }}
         <v-btn
           variant="plain"
+          size="large"
           :icon="mdiOpenInNew"
           @click="openInNew(getEventPath(event.community_account, eventId))"
         />
@@ -66,8 +89,9 @@ const openInNew = (url: string) => {
 
 <style scoped lang="scss">
 .icon {
-  height: 128px;
+  height: 30px;
   aspect-ratio: 1/1;
+  border-radius: 10%;
 }
 </style>
 

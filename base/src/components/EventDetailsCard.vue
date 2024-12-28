@@ -226,7 +226,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
               <router-link :to="getCommunityPath(event.community_account)">
                 <v-img
                   :src="community.community_icon_image_url"
-                  style="border-radius: 10px; width: 100px; height: 100px"
+                  style="border-radius: 10%; width: 100px; height: 100px"
                   aspect-ratio="1"
                   cover
                   max-width="100px"
