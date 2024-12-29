@@ -1,4 +1,4 @@
-import { ics } from 'calendar-link'
+import { createEvent } from 'ics'
 import { Timestamp } from 'firebase-admin/firestore'
 
 const dateWithDayOfWeekString = (date) => {
@@ -31,8 +31,12 @@ const dateOnlyTimeString = (date) => {
   return formattedDate
 }
 
-export const makeIcsUrl = (event) => {
-  if (!event) return null
+export const makeIcs = async (event) => {
+  if (!event) {
+    return null
+  }
+
+  const eventUrl = `https://${process.env.EVENT_HOST}/c/${event.community_account}/e/${event.event_id}`
 
   const textList = [
     `${event.event_name}`,
@@ -43,17 +47,35 @@ export const makeIcsUrl = (event) => {
     `🍱${event.shop_name}`,
     '',
     `最新情報はこちら：`,
-    `${event.url}`,
+    `${eventUrl}`,
     '',
     `${event.event_desc}`,
   ]
 
-  return ics({
-    title: event.event_name ?? '',
-    start: event.event_start_datetime?.toDate(),
-    end: event.event_end_datetime?.toDate() ?? undefined,
-    location: event.event_address ?? undefined,
+  const icsEvent = {
+    start: event.event_start_datetime.toMillis(),
+    end: event.event_end_datetime.toMillis(),
+    title: event.event_name,
     description: textList.join('\n'),
-    url: event.url,
+    location: event.event_address,
+    url: eventUrl,
+    status: 'CONFIRMED',
+    uid: `${event.event_id}@shokujii.jp`,
+    method: 'REQUEST',
+    sequence: 0,
+    organizer: { name: 'shokujiiサポート', email: 'support@nijuni.jp' },
+    attendees: [
+      { name: event.organizer_fullname, email: event.organizer_email, partstat: 'ACCEPTED', role: 'REQ-PARTICIPANT' },
+    ],
+  }
+
+  return await new Promise((resolve, reject) => {
+    createEvent(icsEvent, (error, value) => {
+      if (error) {
+        reject(error)
+      }
+      console.log(value)
+      resolve(value)
+    })
   })
 }

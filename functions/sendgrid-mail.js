@@ -4,7 +4,7 @@ import * as dateFns from 'date-fns'
 import ja from 'date-fns/locale/ja'
 import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
-import { makeIcsUrl } from './make-ics-url.js'
+import { makeIcs } from './make-ics-url.js'
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = '食事でつながる「shokujii」<shokujii@nijuni.jp>'
@@ -738,8 +738,7 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
     event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
     is_public: eventData.is_public,
   }
-  const icsUrl = makeIcsUrl(eventData)
-  const icsContent = decodeURIComponent(icsUrl.replace('data:text/calendar;charset=utf8,', ''))
+  const icsContent = await makeIcs(eventData)
   return sgMail.send({
     to: userSnapshot.get('user_email'),
     from: DEFAULT_FROM,
