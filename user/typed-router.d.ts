@@ -23,7 +23,6 @@ declare module 'vue-router/auto-routes' {
     '/c/[communityId]/e/[eventId]/': RouteRecordInfo<'/c/[communityId]/e/[eventId]/', '/c/:communityId/e/:eventId', { communityId: ParamValue<true>, eventId: ParamValue<true> }, { communityId: ParamValue<false>, eventId: ParamValue<false> }>,
     '/c/[communityId]/e/[eventId]/members': RouteRecordInfo<'/c/[communityId]/e/[eventId]/members', '/c/:communityId/e/:eventId/members', { communityId: ParamValue<true>, eventId: ParamValue<true> }, { communityId: ParamValue<false>, eventId: ParamValue<false> }>,
     '/c/[communityId]/invites': RouteRecordInfo<'/c/[communityId]/invites', '/c/:communityId/invites', { communityId: ParamValue<true> }, { communityId: ParamValue<false> }>,
-    '/c/setup/': RouteRecordInfo<'/c/setup/', '/c/setup', Record<never, never>, Record<never, never>>,
     '/cart': RouteRecordInfo<'/cart', '/cart', Record<never, never>, Record<never, never>>,
     '/communitylist/': RouteRecordInfo<'/communitylist/', '/communitylist', Record<never, never>, Record<never, never>>,
     '/invoice': RouteRecordInfo<'/invoice', '/invoice', Record<never, never>, Record<never, never>>,
@@ -35,6 +34,7 @@ declare module 'vue-router/auto-routes' {
     '/manage/event/': RouteRecordInfo<'/manage/event/', '/manage/event', Record<never, never>, Record<never, never>>,
     '/manage/event/[eventId]/': RouteRecordInfo<'/manage/event/[eventId]/', '/manage/event/:eventId', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     '/manage/event/[eventId]/[tab]': RouteRecordInfo<'/manage/event/[eventId]/[tab]', '/manage/event/:eventId/:tab', { eventId: ParamValue<true>, tab: ParamValue<true> }, { eventId: ParamValue<false>, tab: ParamValue<false> }>,
+    '/manage/newcommunity': RouteRecordInfo<'/manage/newcommunity', '/manage/newcommunity', Record<never, never>, Record<never, never>>,
     '/mypage': RouteRecordInfo<'/mypage', '/mypage', Record<never, never>, Record<never, never>>,
     '/u/[userId]': RouteRecordInfo<'/u/[userId]', '/u/:userId', { userId: ParamValue<true> }, { userId: ParamValue<false> }>,
   }

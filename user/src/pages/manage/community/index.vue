@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getManageCommunityPath } from '@/router/utils'
+import { getManageCommunityPath, getManageNewCommunityPath } from '@/router/utils'
 import { useCommunityListStore } from '@/stores/communityList'
 import { doc, orderBy, where } from 'firebase/firestore'
 import CommunityCard from '@/components/CommunityCard.vue'
@@ -7,6 +7,8 @@ import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { mdiPlus } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
 import { db } from '@/firebase'
+
+const router = useRouter()
 
 const userId = getAuth().currentUser?.uid
 if (userId == null) {
@@ -35,7 +37,9 @@ const communities = computed(() => {
 <template>
   <v-row>
     <v-col cols="12">
-      <v-btn variant="outlined" :prepend-icon="mdiPlus"> {{ $t('manage.new_community') }} </v-btn>
+      <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getManageNewCommunityPath())">
+        {{ $t('manage.new_community') }}
+      </v-btn>
     </v-col>
   </v-row>
   <v-row class="justify-center">

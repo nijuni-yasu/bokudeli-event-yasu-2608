@@ -98,6 +98,11 @@ export default {
     'settings': {
       'submit': '設定',
       'saved': '保存しました',
+    },
+    'newcommunity': {
+      'submit': '作成',
+      'added': '作成しました',
+      'error': '作成に失敗しました',
     }
   }
 }

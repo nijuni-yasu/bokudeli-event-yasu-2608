@@ -8,13 +8,13 @@ export const isUserLoggedIn = () => !!(localStorage.getItem('userData') && local
 export const getHomePath = () => '/'
 export const getCommunityListPath = () => '/communitylist'
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
-export const getCommunityCreatePath = () => `/c/setup`
 export const getEventPath = (communityAccount: string, eventId: string) => `/c/${communityAccount}/e/${eventId}`
 export const getUserPath = (userId: string) => `/u/${userId}`
 export const getInvoicePath = () => `/invoice`
 export const getEventCreatePath = (communityAccount: string) => `/manage/community/${communityAccount}/newevent`
 export const getEventEditPath = (eventId: string) => `/manage/event/${eventId}/settings`
 export const getManagePath = () => `/manage`
+export const getManageNewCommunityPath = () => `/manage/newcommunity`
 export const getManageCommunitySettingsPath = (communityAccount: string) =>
   `/manage/community/${communityAccount}/settings`
 export const getManageCommunityListPath = () => '/manage/community'
