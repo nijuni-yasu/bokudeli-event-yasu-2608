@@ -74,7 +74,6 @@ export const makeIcs = async (event) => {
       if (error) {
         reject(error)
       }
-      console.log(value)
       resolve(value)
     })
   })
