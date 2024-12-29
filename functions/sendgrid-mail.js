@@ -4,7 +4,7 @@ import * as dateFns from 'date-fns'
 import ja from 'date-fns/locale/ja'
 import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
-import { makeIcs } from './make-ics-url.js'
+import { makeIcs } from './make-ics.js'
 
 // 環境変数の方がよいかもしれない
 const DEFAULT_FROM = '食事でつながる「shokujii」<shokujii@nijuni.jp>'
