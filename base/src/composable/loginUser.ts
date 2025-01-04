@@ -11,6 +11,7 @@ import axios from 'axios'
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
+  TwitterAuthProvider,
   OAuthCredential,
   type User,
   type UserCredential,
@@ -91,13 +92,8 @@ export const loginUser = async (user: User) => {
       switch (provider.providerId) {
         case FacebookAuthProvider.PROVIDER_ID:
           {
-            const credentialStore = useStoreCredential()
-            if (!credentialStore.credential) {
-              break
-            }
             const imageQueryUrl =
-              user.photoURL +
-              `?width=500&height=500&redirect=false&access_token=${credentialStore.credential.accessToken}`
+              user.photoURL + `?width=500&height=500&redirect=false`
             // ログインに影響が出ないよう、非同期で画像を取得する
             axios.get(imageQueryUrl).then(async (response) => {
               const imageUrl = !response.data.data.is_silhouette ? response.data.data.url : null
@@ -111,6 +107,21 @@ export const loginUser = async (user: User) => {
               const userStore = useUserStore(storedUser.userId) as UserStore
               await userStore.uploadUserImage(blob)
             })
+          }
+          break
+        case TwitterAuthProvider.PROVIDER_ID:
+          {
+            // photoURLを加工してオリジナル画像を取得出来るURLに成形
+            const splitPhotoURL = user.photoURL?.split('_') as string[]
+            const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1];
+
+            // blobに変換
+            const response = await axios.get(photoURL, { responseType: "blob" });
+            const blob = response.data;
+
+            // 保存
+            const userStore = useUserStore(storedUser.userId) as UserStore
+            await userStore.uploadUserImage(blob)
           }
           break
         default:
