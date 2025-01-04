@@ -14,7 +14,8 @@ import {
   GoogleAuthProvider,
   TwitterAuthProvider,
   linkWithPopup,
-  linkWithRedirect
+  linkWithRedirect,
+  type User
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
@@ -26,12 +27,27 @@ import {
   convertDocumentDataToStoredUser,
 } from '@/schemes/converter'
 
+const auth = getAuth();
+
 const storedUserStore = useStoreStoredUser()
-const { storedUser } = storeToRefs(useStoreStoredUser())
+const { storedUser } = storeToRefs(storedUserStore)
 const email = ref<string>("")
+const linkedProviderData = ref<string[]>([]);
+
+const updateProviderData = (user: User | null) => {
+  linkedProviderData.value = user
+      ? user.providerData.map((info) => info.providerId)
+      : [];
+};
+
+// 初期化（現在のユーザー情報を取得）
+if (auth.currentUser) {
+  updateProviderData(auth.currentUser);
+}
+
 const user = computed(() => {
   const userId = storedUser.value?.userId
-  email.value = storedUser.value?.userEmail
+  email.value = storedUser.value?.userEmail as string
   return userId == null ? null : (useUserStore(userId) as UserStore).user
 })
 
@@ -126,7 +142,7 @@ const emailSubmit = async () => {
   try {
     isLoading.value = true
 
-    const userRef = doc(db, 'users', user.value.user_id)
+    const userRef = doc(db, 'users', user.value?.user_id as string)
     await updateDoc(userRef, {
       user_email: email.value,
     })
@@ -171,6 +187,12 @@ const linkByProviderService = async (providerService: 'Facebook' | 'Google' | 'T
   } else {
     await linkWithRedirect(user, provider)
   }
+
+  // ユーザー情報を再取得して更新
+  if (auth.currentUser) {
+    await auth.currentUser.reload();
+    updateProviderData(auth.currentUser);
+  }
 }
 
 const handleFacebookLink = async () => {
@@ -191,7 +213,7 @@ const handleGoogleLoginLink = async () => {
     await linkByProviderService('Google')
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const credential = FacebookAuthProvider.credentialFromError(error)
+      const credential = GoogleAuthProvider.credentialFromError(error)
       console.error({ error, credential })
     } else {
       console.error({ error })
@@ -204,27 +226,13 @@ const handleTwitterLoginLink = async () => {
     await linkByProviderService('Twitter')
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const credential = FacebookAuthProvider.credentialFromError(error)
+      const credential = TwitterAuthProvider.credentialFromError(error)
       console.error({ error, credential })
     } else {
       console.error({ error })
     }
   }
 }
-
-// リンク済みプロバイダーを配列に
-const linkedProviders = computed(() => {
-  const user = getAuth().currentUser
-  if (user) {
-    return  user.providerData.map(
-        (info) => info.providerId
-    );
-  } else {
-    return [];
-  }
-})
-console.log(getAuth().currentUser?.providerData)
-// TODO: 前の画面でTwitter or Facebookを選択したかで、初期値を変更する（userの相当する項目が空であれば）
 </script>
 
 <template>
@@ -344,7 +352,7 @@ console.log(getAuth().currentUser?.providerData)
             <label class="align-center">
               <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>Google
             </label>
-            <v-btn v-if="!linkedProviders.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">連携する</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">連携する</v-btn>
             <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
           </div>
 
@@ -354,7 +362,7 @@ console.log(getAuth().currentUser?.providerData)
             <label class="align-center">
               <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>Facebook
             </label>
-            <v-btn v-if="!linkedProviders.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">連携する</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">連携する</v-btn>
             <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
           </div>
 
@@ -364,7 +372,7 @@ console.log(getAuth().currentUser?.providerData)
             <label class="align-center">
               <v-icon :icon="XIcon" size="x-large" class="me-3"/>Twitter
             </label>
-            <v-btn v-if="!linkedProviders.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">連携する</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">連携する</v-btn>
             <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
           </div>
         </v-sheet>
