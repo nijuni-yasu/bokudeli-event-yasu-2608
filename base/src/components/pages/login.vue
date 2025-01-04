@@ -68,10 +68,6 @@ const submit = async () => {
   }
 }
 
-const loginProvider = 'google' as 'facebook' | 'google'
-
-const isEnableLinkWithCredential = false
-
 const signInByProviderService = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 
@@ -138,7 +134,6 @@ const handleTwitterLogin = async () => {
         query: {
           new: Number(isNewUser),
           redirect: route.query.redirect,
-          type: 'Twitter'
         }
       })
     }
@@ -185,7 +180,6 @@ const handleFacebookLogin = async () => {
         query: {
           new: Number(isNewUser),
           redirect: route.query.redirect,
-          type: 'Facebook'
         }
       })
     }
