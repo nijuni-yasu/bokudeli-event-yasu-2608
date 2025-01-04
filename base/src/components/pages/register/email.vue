@@ -42,7 +42,6 @@ const submit = async () => {
         email: firestoredUser.user_email,
         new: Number(route.query.new),
         redirect: route.query.redirect,
-        type: route.query.type,
       }
     })
   } catch (error) {
