@@ -76,25 +76,17 @@ const submit = async () => {
 
       const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
       if(isProfileCompleted) {
+        // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
         router.push(route.query.redirect)
       } else {
-        if (route.query.type === 'facebook' || route.query.type === 'twitter') {
-          router.push({
-            path: '/u/profile',
-            query: {
-              new: Number(route.query.new),
-              redirect: route.query.redirect,
-            }
-          })
-        } else {
-          router.push({
-            path: '/register/complete',
-            query: {
-              new: Number(route.query.new),
-              redirect: route.query.redirect,
-            }
-          })
-        }
+        // プロフィール入力方法の選択ページに遷移
+        router.push({
+          path: '/register/complete',
+          query: {
+            new: Number(route.query.new),
+            redirect: route.query.redirect,
+          }
+        })
       }
     }
   } catch (error) {
