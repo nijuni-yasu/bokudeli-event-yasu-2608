@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   FacebookAuthProvider,
   GoogleAuthProvider,
+  TwitterAuthProvider,
   type Unsubscribe,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
@@ -31,13 +32,16 @@ const checkUser = async (user: User | null) => {
       const tokenResponse = error.customData?._tokenResponse as { providerId: string }
       const providerId = tokenResponse.providerId
 
-      let providerService: 'Facebook' | 'Google' | null = null
+      let providerService: 'Facebook' | 'Google' | 'Twitter' | null = null
       switch (providerId) {
         case FacebookAuthProvider.PROVIDER_ID:
           providerService = 'Facebook'
           break
         case GoogleAuthProvider.PROVIDER_ID:
           providerService = 'Google'
+          break
+        case TwitterAuthProvider.PROVIDER_ID:
+          providerService = 'Twitter'
           break
       }
 
@@ -48,6 +52,9 @@ const checkUser = async (user: User | null) => {
             break
           case 'Google':
             window.alert('Facebookアカウントですでに登録されています')
+            break
+          case 'Twitter':
+            window.alert('Twitterアカウントですでに登録されています')
             break
           default:
             window.alert('他のアカウントですでに登録されています')
@@ -60,6 +67,9 @@ const checkUser = async (user: User | null) => {
             break
           case 'Google':
             window.alert('Googleログインできませんでした')
+            break
+          case 'Twitter':
+            window.alert('Twitterログインできませんでした')
             break
           default:
             window.alert('ログインできませんでした')
