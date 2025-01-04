@@ -152,7 +152,7 @@ const handleTwitterLogin = async () => {
     }
 
     router.push({
-      path: '/u/profile',
+      path: '/register/complete',
       query: {
         new: Number(isNewUser),
         redirect: route.query.redirect,
@@ -160,18 +160,9 @@ const handleTwitterLogin = async () => {
     })
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const credential = FacebookAuthProvider.credentialFromError(error)
+      const credential = TwitterAuthProvider.credentialFromError(error)
       console.error({ error, credential })
-      if (credential && error.code === 'auth/account-exists-with-different-credential') {
-        //TODO すでに登録されているときアカウントリンクをさせたい
-        if (isEnableLinkWithCredential) {
-          const googleUser = await getCredentialWithPopup('Google')
-          linkWithCredential(googleUser.user, credential)
-        }
-        window.alert('Googleアカウントですでに登録されています')
-      } else {
-        window.alert('Facebookログインできませんでした')
-      }
+      window.alert('Xログインできませんでした')
     } else {
       console.error({ error })
     }
@@ -208,7 +199,7 @@ const handleFacebookLogin = async () => {
     }
 
     router.push({
-      path: '/u/profile',
+      path: '/register/complete',
       query: {
         new: Number(isNewUser),
         redirect: route.query.redirect,
@@ -217,18 +208,8 @@ const handleFacebookLogin = async () => {
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
-      console.error('error, credential', error, credential)
-      console.error('{ error, credential }', { error, credential })
-      if (credential && error.code === 'auth/account-exists-with-different-credential') {
-        //TODO すでに登録されているときアカウントリンクをさせたい
-        if (isEnableLinkWithCredential) {
-          const googleUser = await getCredentialWithPopup('Google')
-          linkWithCredential(googleUser.user, credential)
-        }
-        window.alert('Googleアカウントですでに登録されています')
-      } else {
-        window.alert('Facebookログインできませんでした')
-      }
+      console.error({ error, credential })
+      window.alert('Facebookログインできませんでした')
     } else {
       console.error({ error })
     }
@@ -263,16 +244,7 @@ const handleGoogleLogin = async () => {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
       console.error({ error, credential })
-      if (credential && error.code === 'auth/account-exists-with-different-credential') {
-        //TODO すでに登録されているときアカウントリンクをさせたい
-        if (isEnableLinkWithCredential) {
-          const facebookUser = await getCredentialWithPopup('Facebook')
-          linkWithCredential(facebookUser.user, credential)
-        }
-        window.alert('Facebookアカウントですでに登録されています')
-      } else {
-        window.alert('Googleログインできませんでした')
-      }
+      window.alert('Googleログインできませんでした')
     } else {
       console.error({ error })
     }
