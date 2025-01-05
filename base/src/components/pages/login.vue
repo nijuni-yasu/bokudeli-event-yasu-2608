@@ -12,7 +12,8 @@ import {
   signInWithRedirect,
   signInWithPopup,
   linkWithCredential,
-  getAdditionalUserInfo
+  getAdditionalUserInfo,
+  type UserCredential,
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
@@ -88,79 +89,47 @@ const signInByProviderService = async (providerService: 'Facebook' | 'Google' | 
   }
 
   if (import.meta.env.DEV) {
-    return  await signInWithPopup(getAuth(), provider)
+    return await signInWithPopup(getAuth(), provider)
   } else {
     return await signInWithRedirect(getAuth(), provider)
   }
 }
 
-const getCredentialWithPopup = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'Facebook':
-      provider = new FacebookAuthProvider()
-      provider.addScope('public_profile')
-      provider.addScope('email')
-      provider.setCustomParameters({
-        display: 'popup',
-      })
-      break
-    case 'Google':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'Twitter':
-      provider = new TwitterAuthProvider()
-      break
-  }
-
-  return await signInWithPopup(getAuth(), provider)
-}
-
 const handleTwitterLogin = async () => {
   try {
     const userCredential = await signInByProviderService('Twitter')
-    const additionalUserInfo = getAdditionalUserInfo(userCredential)
-    const isNewUser = additionalUserInfo?.isNewUser;
-
-    const docRef = doc(db, 'users', userCredential.user.uid)
-    const docSnap = await getDoc(docRef)
-    const storedUser = convertDocumentDataToStoredUser(docSnap.data())
-
-    if (!storedUser.userEmail) {
-      router.push({
-        path: '/register/email',
-        query: {
-          new: Number(isNewUser),
-          redirect: route.query.redirect,
-        }
-      })
-    }
-
-    if (storedUser.userName && storedUser.userDescription && storedUser.userImageUrl) {
-      if (route.query.redirect) {
-        return router.push(route.query.redirect as string)
-      } else {
-        return router.push('/')
-      }
-    }
-
-    router.push({
-      path: '/register/complete',
-      query: {
-        new: Number(isNewUser),
-        redirect: route.query.redirect,
-      }
-    })
+    await transitionJudge(userCredential)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = TwitterAuthProvider.credentialFromError(error)
       console.error({ error, credential })
-      window.alert('Xログインできませんでした')
+
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        let userCredential
+        switch (error?.customData?._tokenResponse?.verifiedProvider[0]) {
+          case 'google.com':
+            userCredential = await signInByProviderService('Google')
+            break
+          case 'facebook.com':
+            userCredential = await signInByProviderService('Facebook')
+            break
+          case 'Twitter.com':
+            userCredential = await signInByProviderService('Twitter')
+            break
+        }
+
+        if (!userCredential || !credential) return window.alert('Xログインできませんでした')
+
+        await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
+          await transitionJudge(userCredential)
+        }).catch((error) => {
+          console.error(error)
+          window.alert('Xログインできませんでした')
+        });
+      }
     } else {
       console.error({ error })
+      window.alert('Xログインできませんでした')
     }
   }
 }
@@ -168,45 +137,38 @@ const handleTwitterLogin = async () => {
 const handleFacebookLogin = async () => {
   try {
     const userCredential = await signInByProviderService('Facebook')
-    const additionalUserInfo = getAdditionalUserInfo(userCredential)
-    const isNewUser = additionalUserInfo?.isNewUser;
-
-    const docRef = doc(db, 'users', userCredential.user.uid)
-    const docSnap = await getDoc(docRef)
-    const storedUser = convertDocumentDataToStoredUser(docSnap.data())
-
-    if (!storedUser.userEmail) {
-      router.push({
-        path: '/register/email',
-        query: {
-          new: Number(isNewUser),
-          redirect: route.query.redirect,
-        }
-      })
-    }
-
-    if (storedUser.userName && storedUser.userDescription && storedUser.userImageUrl) {
-      if (route.query.redirect) {
-        router.push(route.query.redirect as string)
-      } else {
-        router.push('/')
-      }
-    }
-
-    router.push({
-      path: '/register/complete',
-      query: {
-        new: Number(isNewUser),
-        redirect: route.query.redirect,
-      }
-    })
+    await transitionJudge(userCredential)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
       console.error({ error, credential })
-      window.alert('Facebookログインできませんでした')
+
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        let userCredential
+        switch (error?.customData?._tokenResponse?.verifiedProvider[0]) {
+          case 'google.com':
+            userCredential = await signInByProviderService('Google')
+            break
+          case 'facebook.com':
+            userCredential = await signInByProviderService('Facebook')
+            break
+          case 'Twitter.com':
+            userCredential = await signInByProviderService('Twitter')
+            break
+        }
+
+        if (!userCredential || !credential) return window.alert('Facebookログインできませんでした')
+
+        await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
+          await transitionJudge(userCredential)
+        }).catch((error) => {
+          console.error(error)
+          window.alert('Facebookログインできませんでした')
+        });
+      }
     } else {
       console.error({ error })
+      window.alert('Facebookログインできませんでした')
     }
   }
 }
@@ -214,36 +176,78 @@ const handleFacebookLogin = async () => {
 const handleGoogleLogin = async () => {
   try {
     const userCredential = await signInByProviderService('Google')
-    const isNewUser = getAdditionalUserInfo(userCredential)?.isNewUser;
+    await transitionJudge(userCredential)
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = GoogleAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
 
-    const docRef = doc(db, 'users', userCredential.user.uid)
-    const docSnap = await getDoc(docRef)
-    const storedUser = convertDocumentDataToStoredUser(docSnap.data())
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        let userCredential
+        switch (error?.customData?._tokenResponse?.verifiedProvider[0]) {
+          case 'google.com':
+            userCredential = await signInByProviderService('Google')
+            break
+          case 'facebook.com':
+            userCredential = await signInByProviderService('Facebook')
+            break
+          case 'Twitter.com':
+            userCredential = await signInByProviderService('Twitter')
+            break
+        }
 
-    if (storedUser.userName && storedUser.userDescription && storedUser.userImageUrl) {
-      if (route.query.redirect) {
-        return router.push(route.query.redirect as string)
-      } else {
-        return router.push('/')
+        if (!userCredential || !credential) return window.alert('Googleログインできませんでした')
+
+        await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
+          await transitionJudge(userCredential)
+        }).catch((error) => {
+          console.error(error)
+          window.alert('Googleログインできませんでした')
+        });
       }
-    }
 
+    } else {
+      console.error({ error })
+    }
+  }
+}
+
+const transitionJudge = async (userCredential: UserCredential) => {
+  const additionalUserInfo = getAdditionalUserInfo(userCredential)
+  const isNewUser = additionalUserInfo?.isNewUser;
+
+  const docRef = doc(db, 'users', userCredential.user.uid)
+  const docSnap = await getDoc(docRef)
+  const storedUser = convertDocumentDataToStoredUser(docSnap.data())
+
+  // メールアドレスが無ければ、メールアドレス設定へ
+  if (!storedUser.userEmail) {
     router.push({
-      path: '/register/complete',
+      path: '/register/email',
       query: {
         new: Number(isNewUser),
         redirect: route.query.redirect,
       }
     })
-  } catch (error) {
-    if (error instanceof FirebaseError) {
-      const credential = GoogleAuthProvider.credentialFromError(error)
-      console.error({ error, credential })
-      window.alert('Googleログインできませんでした')
+  }
+
+  // プロフィールが埋まっていれば、元いたページへ
+  if (storedUser.userName && storedUser.userDescription && storedUser.userImageUrl) {
+    if (route.query.redirect) {
+      router.push(route.query.redirect as string)
     } else {
-      console.error({ error })
+      router.push('/')
     }
   }
+
+  // プロフィールが埋まっていなければ、登録完了（プロフィール登録誘導）へ
+  router.push({
+    path: '/register/complete',
+    query: {
+      new: Number(isNewUser),
+      redirect: route.query.redirect,
+    }
+  })
 }
 
 </script>
