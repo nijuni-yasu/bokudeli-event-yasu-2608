@@ -97,5 +97,23 @@ export const update_email  = functions.region('asia-northeast1').https.onCall(as
   }
 })
 
+export const get_custom_token  = functions.region('asia-northeast1').https.onCall(async (data) => {
+  try {
+    const { user_email } = data
+
+    const userSnapshot = await db.collection('users').where('user_email', '==', user_email).get()
+    if (!userSnapshot.empty) {
+      const userDoc = userSnapshot.docs[0]
+      const userId = userDoc.data().user_id
+
+      return await getAuth().createCustomToken(userId)
+    } else {
+      throw new functions.https.HttpsError('not-found', 'User not found.')
+    }
+  } catch (error) {
+    console.error('エラーが発生しました: ', error)
+    throw new functions.https.HttpsError('internal', 'An unexpected error occurred.')
+  }
+})
 
 const generateFirestoreUserId = () => uuidv4().replace(/-/g, '').substring(0, 28);
