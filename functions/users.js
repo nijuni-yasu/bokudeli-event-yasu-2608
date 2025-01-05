@@ -67,6 +67,9 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
 
       const userId = userDoc.data().user_id
 
+      // カスタムトークンアカウントにメールアドレスを設定
+      await getAuth().updateUser(userId, { email: user_email })
+
       return await getAuth().createCustomToken(userId)
     } else {
       throw new functions.https.HttpsError('not-found', 'User not found.')
