@@ -82,7 +82,7 @@ export default {
         'to_community': 'コミュニティメンバー全体',
         'to_event_participant': 'イベント参加者',
         'to_event_non_participant': 'イベント未登録者',
-        'number_of_people': '（{0}）人',
+        'number_of_people': '（{0}人）',
         'deliver_datetime': '配信日時',
         'deliver_now': '今すぐ配信',
         'subject': '件名',
