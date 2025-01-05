@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {db, functions} from '@/firebase'
 import {httpsCallable} from 'firebase/functions'
-import { getAuth, signInWithCustomToken } from 'firebase/auth'
+import { getAuth, signInWithCustomToken, updateEmail } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import {collection, getDocs, query, where} from "firebase/firestore";
 import {generatePassCode} from "@/utils/generatePassCode";
@@ -30,11 +30,11 @@ const reSendPassCode = async () => {
     const userEmail = email.value
     const reGeneratePassCode = generatePassCode()
 
-    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user");
-    await createOrUpdateUser({ user_email: userEmail, pass_code: reGeneratePassCode });
+    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+    await createOrUpdateUser({ user_email: userEmail, user_pass_code: reGeneratePassCode })
 
-    const sendPassCode = httpsCallable(functions, "send_pass_code");
-    await sendPassCode({ user_email: userEmail, pass_code: reGeneratePassCode });
+    const sendPassCode = httpsCallable(functions, "send_pass_code")
+    await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
   } catch (error) {
     console.warn("Error resending pass code:", error);
   } finally {
@@ -52,14 +52,15 @@ const submit = async () => {
 
     const customToken = result.data as string
 
-    // TODO: Twitter or Facebookならカスタムトークンは使用しない？
-    // TODO: functionsでfirebase authのIDのメールアドレスを埋める処理は出来ないか？出来なければID変更メールの類をユーザーにメールで送信する必要がある。
     if (!customToken) {
       return isError.value = true
     }
 
-    await signInWithCustomToken(getAuth(), customToken)
-
+    const userCredential = await signInWithCustomToken(getAuth(), customToken)
+    if (!userCredential.user.email) {
+      const updateEmail = httpsCallable(functions, "update_email")
+      await updateEmail({ user_email: userEmail })
+    }
     // TODO: fetchSignInMethodsForEmailを使用してアカウントリンクを行う
 
     const usersRef = collection(db, "users");
@@ -77,7 +78,7 @@ const submit = async () => {
       const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
       if(isProfileCompleted) {
         // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
-        router.push(route.query.redirect)
+        router.push(route.query.redirect as string)
       } else {
         // プロフィール入力方法の選択ページに遷移
         router.push({
