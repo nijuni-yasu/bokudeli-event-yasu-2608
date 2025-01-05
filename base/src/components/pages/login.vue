@@ -14,6 +14,7 @@ import {
   linkWithCredential,
   getAdditionalUserInfo,
   type UserCredential,
+  signInWithCustomToken
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
@@ -106,16 +107,26 @@ const handleTwitterLogin = async () => {
 
       if (error.code === 'auth/account-exists-with-different-credential') {
         let userCredential
-        switch (error?.customData?._tokenResponse?.verifiedProvider[0]) {
-          case 'google.com':
-            userCredential = await signInByProviderService('Google')
-            break
-          case 'facebook.com':
-            userCredential = await signInByProviderService('Facebook')
-            break
-          case 'Twitter.com':
-            userCredential = await signInByProviderService('Twitter')
-            break
+        const verifiedProvider = error?.customData?._tokenResponse?.verifiedProvider
+        // カスタムトークンログインを行い、メールアドレスが既に存在している場合
+        if (!verifiedProvider) {
+          const getCustomToken = httpsCallable(functions, "get_custom_token")
+          const result = await getCustomToken({ user_email: error?.customData?.email })
+          const customToken = result.data as string
+
+          userCredential = await signInWithCustomToken(getAuth(), customToken)
+        } else {
+          switch (verifiedProvider[0]) {
+            case 'google.com':
+              userCredential = await signInByProviderService('Google')
+              break
+            case 'facebook.com':
+              userCredential = await signInByProviderService('Facebook')
+              break
+            case 'Twitter.com':
+              userCredential = await signInByProviderService('Twitter')
+              break
+          }
         }
 
         if (!userCredential || !credential) return window.alert('Xログインできませんでした')
@@ -145,16 +156,26 @@ const handleFacebookLogin = async () => {
 
       if (error.code === 'auth/account-exists-with-different-credential') {
         let userCredential
-        switch (error?.customData?._tokenResponse?.verifiedProvider[0]) {
-          case 'google.com':
-            userCredential = await signInByProviderService('Google')
-            break
-          case 'facebook.com':
-            userCredential = await signInByProviderService('Facebook')
-            break
-          case 'Twitter.com':
-            userCredential = await signInByProviderService('Twitter')
-            break
+        const verifiedProvider = error?.customData?._tokenResponse?.verifiedProvider
+        // カスタムトークンログインを行い、メールアドレスが既に存在している場合
+        if (!verifiedProvider) {
+          const getCustomToken = httpsCallable(functions, "get_custom_token")
+          const result = await getCustomToken({ user_email: error?.customData?.email })
+          const customToken = result.data as string
+
+          userCredential = await signInWithCustomToken(getAuth(), customToken)
+        } else {
+          switch (verifiedProvider[0]) {
+            case 'google.com':
+              userCredential = await signInByProviderService('Google')
+              break
+            case 'facebook.com':
+              userCredential = await signInByProviderService('Facebook')
+              break
+            case 'Twitter.com':
+              userCredential = await signInByProviderService('Twitter')
+              break
+          }
         }
 
         if (!userCredential || !credential) return window.alert('Facebookログインできませんでした')
@@ -184,16 +205,26 @@ const handleGoogleLogin = async () => {
 
       if (error.code === 'auth/account-exists-with-different-credential') {
         let userCredential
-        switch (error?.customData?._tokenResponse?.verifiedProvider[0]) {
-          case 'google.com':
-            userCredential = await signInByProviderService('Google')
-            break
-          case 'facebook.com':
-            userCredential = await signInByProviderService('Facebook')
-            break
-          case 'Twitter.com':
-            userCredential = await signInByProviderService('Twitter')
-            break
+        const verifiedProvider = error?.customData?._tokenResponse?.verifiedProvider
+        // カスタムトークンログインを行い、メールアドレスが既に存在している場合
+        if (!verifiedProvider) {
+          const getCustomToken = httpsCallable(functions, "get_custom_token")
+          const result = await getCustomToken({ user_email: error?.customData?.email })
+          const customToken = result.data as string
+
+          userCredential = await signInWithCustomToken(getAuth(), customToken)
+        } else {
+          switch (verifiedProvider[0]) {
+            case 'google.com':
+              userCredential = await signInByProviderService('Google')
+              break
+            case 'facebook.com':
+              userCredential = await signInByProviderService('Facebook')
+              break
+            case 'Twitter.com':
+              userCredential = await signInByProviderService('Twitter')
+              break
+          }
         }
 
         if (!userCredential || !credential) return window.alert('Googleログインできませんでした')
@@ -272,7 +303,7 @@ const transitionJudge = async (userCredential: UserCredential) => {
           <v-form v-model="isValid" @submit.prevent="submit">
             <v-container class=" mb-4">
               <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
-              <v-text-field placeholder="example@example.com" v-model="email" :rules="[requiredValidator, emailValidator]"/>
+              <v-text-field placeholder="example@example.com" v-model="email" autofocus :rules="[requiredValidator, emailValidator]"/>
             </v-container>
 
             <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
