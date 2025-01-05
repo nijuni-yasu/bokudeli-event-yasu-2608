@@ -87,13 +87,16 @@ export const loginUser = async (user: User) => {
   // Facebook Login の場合は、画像を Storage にアップロードする
   // ただし、Facebook Login の度に画像を Storage にアップロードするわけにはいかないので、
   // 既存の画像がない場合のみ
+  // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
   if (currentStoredUser.userImageUrl == null || currentStoredUser.userImageUrl === '') {
     for (const provider of user.providerData) {
       switch (provider.providerId) {
         case FacebookAuthProvider.PROVIDER_ID:
           {
-            const imageQueryUrl =
-              user.photoURL + `?width=500&height=500&redirect=false`
+            const providerData = user.providerData.find((info) => {
+              return info.providerId === FacebookAuthProvider.PROVIDER_ID
+            })
+            const imageQueryUrl = providerData?.photoURL + `?width=500&height=500&redirect=false`
             // ログインに影響が出ないよう、非同期で画像を取得する
             axios.get(imageQueryUrl).then(async (response) => {
               const imageUrl = !response.data.data.is_silhouette ? response.data.data.url : null
@@ -111,8 +114,11 @@ export const loginUser = async (user: User) => {
           break
         case TwitterAuthProvider.PROVIDER_ID:
           {
+            const providerData = user.providerData.find((info) => {
+              return info.providerId === TwitterAuthProvider.PROVIDER_ID
+            })
             // photoURLを加工してオリジナル画像を取得出来るURLに成形
-            const splitPhotoURL = user.photoURL?.split('_') as string[]
+            const splitPhotoURL = providerData?.photoURL?.split('_') as string[]
             const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1];
 
             // blobに変換
