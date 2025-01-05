@@ -17,6 +17,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import {convertDocumentDataToStoredUser} from "@/schemes/converter";
+import {useValidators} from "@/composable/validators";
 
 type CreateUserRequest = {
   user_email: string
@@ -35,7 +36,7 @@ const isLoading = ref(false)
 const isValid = ref(false)
 const email = ref('')
 
-// TODO: ソーシャルログインで新規アカウントか既存アカウントかの判定方法を検討（）
+const { requiredValidator, emailValidator } = useValidators()
 
 const submit = async () => {
   isLoading.value = true
@@ -267,7 +268,7 @@ const handleGoogleLogin = async () => {
           <v-form v-model="isValid" @submit.prevent="submit">
             <v-container class=" mb-4">
               <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
-              <v-text-field placeholder="example@example.com" v-model="email"/>
+              <v-text-field placeholder="example@example.com" v-model="email" :rules="[requiredValidator, emailValidator]"/>
             </v-container>
 
             <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
