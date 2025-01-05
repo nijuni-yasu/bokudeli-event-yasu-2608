@@ -19,7 +19,7 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
         updated_at: Timestamp.now()
       });
       console.log(`ユーザー ${user_email} にパスコードが追加されました。`)
-      return { is_new: true }
+      return { is_new: false }
     } else {
       // ユーザーが存在しない場合、新規にユーザーを作成
       const userId = generateFirestoreUserId()
@@ -39,7 +39,7 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
         updated_at: Timestamp.now()
       });
       console.log(`新規ユーザー ${user_email} が作成され、パスコードが保存されました。`)
-      return { is_new: false }
+      return { is_new: true }
     }
   } catch (error) {
     console.error('エラーが発生しました: ', error)
@@ -67,9 +67,6 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
 
       const userId = userDoc.data().user_id
 
-      // カスタムトークンアカウントにメールアドレスを設定
-      await getAuth().updateUser(userId, { email: user_email })
-
       return await getAuth().createCustomToken(userId)
     } else {
       throw new functions.https.HttpsError('not-found', 'User not found.')
@@ -79,5 +76,26 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
     throw new functions.https.HttpsError('internal', 'An unexpected error occurred.')
   }
 })
+
+export const update_email  = functions.region('asia-northeast1').https.onCall(async (data) => {
+  try {
+    const { user_email } = data
+
+    const userSnapshot = await db.collection('users').where('user_email', '==', user_email).get()
+    if (!userSnapshot.empty) {
+      const userDoc = userSnapshot.docs[0]
+      const userId = userDoc.data().user_id
+
+      // カスタムトークンアカウントにメールアドレスを設定
+      await getAuth().updateUser(userId, { email: user_email }).catch(error => console.log(error))
+    } else {
+      throw new functions.https.HttpsError('not-found', 'User not found.')
+    }
+  } catch (error) {
+    console.error('エラーが発生しました: ', error)
+    throw new functions.https.HttpsError('internal', 'An unexpected error occurred.')
+  }
+})
+
 
 const generateFirestoreUserId = () => uuidv4().replace(/-/g, '').substring(0, 28);
