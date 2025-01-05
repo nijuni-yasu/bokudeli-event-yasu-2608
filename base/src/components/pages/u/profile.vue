@@ -339,7 +339,9 @@ const handleTwitterLoginLink = async () => {
                 :disabled="isLoading"
                 :rules="[requiredValidator, emailValidator]"
             />
-            <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">変更する</v-btn>
+            <v-row justify="center">
+              <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">変更する</v-btn>
+            </v-row>
           </v-form>
         </v-sheet>
       </v-col>
