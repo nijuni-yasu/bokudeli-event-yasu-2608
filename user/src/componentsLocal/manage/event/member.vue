@@ -27,9 +27,21 @@ const orders = computed<Array<[OrderItem, EventMember]>>(
       return member != null ? [[order, member]] : []
     }) ?? [],
 )
-const orderedOrders = computed(() => orders.value.filter(([order]) => order.status === 'ordered'))
-const cartOrders = computed(() => orders.value.filter(([order]) => order.status === 'in_cart'))
-const canceledOrders = computed(() => orders.value.filter(([order]) => order.status === 'canceled'))
+const orderedOrders = computed(() =>
+  orders.value
+    .filter(([order]) => order.status === 'ordered')
+    .sort(([a], [b]) => a.updated_at.toMillis() - b.updated_at.toMillis()),
+)
+const cartOrders = computed(() =>
+  orders.value
+    .filter(([order]) => order.status === 'in_cart')
+    .sort(([a], [b]) => a.carted_at.toMillis() - b.carted_at.toMillis()),
+)
+const canceledOrders = computed(() =>
+  orders.value
+    .filter(([order]) => order.status === 'canceled')
+    .sort(([a], [b]) => (a.canceled_at?.toMillis() ?? 0) - (b.canceled_at?.toMillis() ?? 0)),
+)
 const getMenuString = (menus: OrderMenu[]) =>
   menus
     .map((menu) => (menu.count > 1 ? $t('manage.member.multi_order', [menu.name, menu.count]) : menu.name))
@@ -157,7 +169,7 @@ const clickContact = (member: EventMember) => {
                 </v-btn>
               </td>
               <td>{{ getMenuString(order.menus) }}</td>
-              <td>{{ $d(order.updated_at.toDate(), 'datetime') }}</td>
+              <td>{{ $d(order.carted_at.toDate(), 'datetime') }}</td>
               <td>
                 <v-btn
                   v-if="canSendEmail && !isEmpty(member.user_email) && member.user_id !== userStore.user?.user_id"
