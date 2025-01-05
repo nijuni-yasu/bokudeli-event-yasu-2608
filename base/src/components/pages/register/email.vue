@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
-import logo from "@/assets/images/shokujii/shokujii_logo_wide.png";
+import logo from "@/assets/images/shokujii/shokujii_logo.png";
 import {generatePassCode} from "@/utils/generatePassCode";
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
@@ -59,7 +59,7 @@ const submit = async () => {
         <v-sheet class="rounded-lg py-14 px-12">
           <v-container>
             <v-row justify="center" >
-              <v-img max-height="150" max-width="300" :src="logo"></v-img>
+              <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
               <h1 class="my-3 text-h3 font-weight-bold">メールアドレス登録</h1>
