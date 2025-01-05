@@ -33,6 +33,10 @@ const user = computed(() => {
   const userId = storedUser.value?.userId
   return userId == null ? null : (useUserStore(userId) as UserStore).user
 })
+watchEffect(() => {
+  // 初期化
+  user.value
+})
 const currentUser: User | null = getAuth().currentUser
 
 const route = useRoute()
