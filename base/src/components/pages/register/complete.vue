@@ -162,39 +162,6 @@ const handleTwitterLink = async () => {
     }
   }
 }
-
-const handleFacebookLink = async () => {
-  try {
-    if (!currentUser) throw new Error('currentUser is null')
-    console.log('currentUser', currentUser)
-    const userCredential = await linkByProviderService(currentUser, 'Facebook')
-    const additionalUserInfo = getAdditionalUserInfo(userCredential)
-
-    if (additionalUserInfo === null) return
-    console.log('additionalUserInfo', additionalUserInfo)
-    // TODO: 取得したパラメタをUserへ保存
-    // そもそも名前と画像位しか情報が取得出来ない為、要相談
-    router.push(profileLink)
-  } catch (error) {
-    if (error instanceof FirebaseError) {
-      if (error.code === 'auth/credential-already-in-use') router.push(profileLink)
-      if (!currentUser) throw new Error('currentUser is null')
-
-      const provider = new TwitterAuthProvider()
-      await reauthenticateWithPopup(currentUser, provider).then(async (result) => {
-        const additionalUserInfo = getAdditionalUserInfo(result);
-
-        if (!additionalUserInfo) return
-        // TODO: 取得したパラメタをUserへ保存
-      })
-
-      const credential = FacebookAuthProvider.credentialFromError(error)
-      console.error({ error, credential })
-    } else {
-      console.error({ error })
-    }
-  }
-}
 </script>
 
 <template>
@@ -218,9 +185,6 @@ const handleFacebookLink = async () => {
 
           <v-btn class="mb-4" size="large" color="grey-900" block @click="handleTwitterLink">
             X と連携してプロフィール登録
-          </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block @click="handleFacebookLink">
-            Facebookと連携してプロフィール登録
           </v-btn>
           <v-btn class="mb-4" size="large" color="grey-900" block :to="profileLink">
             {{ selfButtonLabel }}
