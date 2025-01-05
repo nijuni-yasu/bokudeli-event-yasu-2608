@@ -14,7 +14,12 @@ const communityAccount = route.params.communityAccount as string
 
 const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
 const communityStore = useCommunityStore(communityAccount) as CommunityStore
-const members = computed(() => communityStore.members?.flatMap((member) => member ?? []) ?? [])
+const members = computed(
+  () =>
+    communityStore.members
+      ?.flatMap((member) => member ?? [])
+      ?.sort((a, b) => (a.roles?.includes('manager') ? -1 : b.roles?.includes('manager') ? 1 : 0)) ?? [],
+)
 const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
 const targetMember = ref<CommunityMember | null>(null)
