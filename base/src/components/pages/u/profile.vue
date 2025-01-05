@@ -19,7 +19,6 @@ import {
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
-const { requiredValidator, noReservedCharsValidator } = useValidators()
 import type { VForm } from 'vuetify';
 import {db} from "@/firebase";
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
@@ -66,6 +65,8 @@ const isNew = computed(() => {
   const value = route.query.new
   return value === '1' ? 1 : 0
 })
+
+const { requiredValidator, noReservedCharsValidator, emailValidator } = useValidators()
 
 const imageError = ref("")
 
@@ -326,7 +327,7 @@ const handleTwitterLoginLink = async () => {
 
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
       <v-col md="6" class="">
-        <v-sheet class="rounded-lg py-14 px-16 text-center">
+        <v-sheet class="rounded-lg py-14 px-16">
           <h1 class="text-center">メールアドレス</h1>
 
           <v-form v-model="isValid" @submit.prevent="emailSubmit">
@@ -336,6 +337,7 @@ const handleTwitterLoginLink = async () => {
                 v-model="email"
                 variant="outlined"
                 :disabled="isLoading"
+                :rules="[requiredValidator, emailValidator]"
             />
             <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">変更する</v-btn>
           </v-form>
