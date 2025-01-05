@@ -9,6 +9,7 @@ import { useEventStore } from '@/stores/event'
 import { useLetterListStore } from '@/stores/letterList'
 import { Timestamp } from 'firebase/firestore'
 import { useLetterStore } from '@/stores/letter'
+import { getManageCommunityPath } from '@/router/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -92,6 +93,13 @@ const onCopyClick = async (letter: Letter) => {
   router.push({ query: { letterId } })
   letterListStore.reload()
 }
+const onUpdated = (letter: Letter) => {
+  if (letter.letter_type === 'community') {
+    router.push(getManageCommunityPath(event.community_account) + '/letter')
+  } else {
+    router.push({ query: {} })
+  }
+}
 </script>
 
 <template>
@@ -127,7 +135,7 @@ const onCopyClick = async (letter: Letter) => {
   <v-container v-else>
     <v-row class="justify-center">
       <v-col md="8" sm="9" cols="12">
-        <LetterEdit :letter="selectedLetter" />
+        <LetterEdit :letter="selectedLetter" @update:letter="onUpdated" />
       </v-col>
     </v-row>
   </v-container>

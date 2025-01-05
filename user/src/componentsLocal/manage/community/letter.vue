@@ -132,7 +132,7 @@ const onCopyClick = async (letter: Letter) => {
   <v-container v-else>
     <v-row class="justify-center">
       <v-col md="8" sm="9" cols="12">
-        <LetterEdit :letter="selectedLetter" />
+        <LetterEdit :letter="selectedLetter" @update:letter="router.push({ query: {} })" />
       </v-col>
     </v-row>
   </v-container>

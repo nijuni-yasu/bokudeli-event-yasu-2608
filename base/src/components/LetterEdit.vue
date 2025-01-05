@@ -23,6 +23,10 @@ const props = defineProps<{
   letter: Letter
 }>()
 
+const emit = defineEmits<{
+  (e: 'update:letter', letter: Letter): void
+}>()
+
 const _letter = ref<Letter>(_.clone(toRaw(props.letter)))
 
 const letterListStore = useLetterListStore(props.letter.community_account)
@@ -66,7 +70,7 @@ const submit = async () => {
     await letterListStore.updateLetter(toRaw(_letter.value))
   }
   letterListStore.reload()
-  router.push({ query: {} })
+  emit('update:letter', toRaw(_letter.value))
 }
 const save = async () => {
   _letter.value.status = 'draft'
@@ -76,7 +80,7 @@ const save = async () => {
     await letterListStore.updateLetter(toRaw(_letter.value))
   }
   letterListStore.reload()
-  router.push({ query: {} })
+  emit('update:letter', toRaw(_letter.value))
 }
 </script>
 
