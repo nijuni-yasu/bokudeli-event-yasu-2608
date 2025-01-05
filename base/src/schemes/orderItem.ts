@@ -14,6 +14,7 @@ export type OrderItem = {
   updated_at: Timestamp
   carted_at: Timestamp
   payment_intent?: ''
+  canceled_at?: Timestamp
 }
 
 export const createEmptyOrderItem = (): OrderItem => ({

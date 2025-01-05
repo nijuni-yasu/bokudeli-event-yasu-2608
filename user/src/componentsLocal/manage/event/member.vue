@@ -29,6 +29,7 @@ const orders = computed<Array<[OrderItem, EventMember]>>(
 )
 const orderedOrders = computed(() => orders.value.filter(([order]) => order.status === 'ordered'))
 const cartOrders = computed(() => orders.value.filter(([order]) => order.status === 'in_cart'))
+const canceledOrders = computed(() => orders.value.filter(([order]) => order.status === 'canceled'))
 const getMenuString = (menus: OrderMenu[]) =>
   menus
     .map((menu) => (menu.count > 1 ? $t('manage.member.multi_order', [menu.name, menu.count]) : menu.name))
@@ -157,6 +158,63 @@ const clickContact = (member: EventMember) => {
               </td>
               <td>{{ getMenuString(order.menus) }}</td>
               <td>{{ $d(order.updated_at.toDate(), 'datetime') }}</td>
+              <td>
+                <v-btn
+                  v-if="canSendEmail && !isEmpty(member.user_email) && member.user_id !== userStore.user?.user_id"
+                  :icon="mdiEmail"
+                  variant="text"
+                  @click="clickContact(member)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </v-col>
+    </v-row>
+    <v-row class="justify-center" v-if="canceledOrders.length !== 0">
+      <v-col md="10" sm="10" cols="12">
+        <v-col cols="12" class="text-h4">
+          <v-row> {{ $t('manage.member.canceled') }} </v-row>
+        </v-col>
+        <v-table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ $t('manage.member.name') }}</th>
+              <th></th>
+              <th>{{ $t('manage.member.order') }}</th>
+              <th>{{ $t('manage.member.canceled_date') }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="([order, member], i) of canceledOrders" :key="order.order_id">
+              <td>{{ i + 1 }}</td>
+              <td style="display: flex; align-items: center; gap: 12px">
+                <UserAvatar :user="member" style="height: 80%"></UserAvatar>
+                <div>{{ member.user_name }}</div>
+              </td>
+              <td>
+                <v-btn
+                  :class="{ hidden: member.user_sns_facebook == null }"
+                  :icon="mdiFacebook"
+                  color="#1877F2"
+                  density="compact"
+                  variant="text"
+                />
+                <v-btn
+                  :class="{ hidden: member.user_sns_twitter == null }"
+                  :icon="XIcon"
+                  color="grey-900"
+                  density="compact"
+                  variant="text"
+                />
+                <v-btn :class="{ hidden: member.user_sns_instagram == null }" density="compact" variant="text" icon="">
+                  <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
+                </v-btn>
+              </td>
+              <td>{{ getMenuString(order.menus) }}</td>
+              <td>{{ order.canceled_at != null ? $d(order.canceled_at.toDate(), 'datetime') : '' }}</td>
               <td>
                 <v-btn
                   v-if="canSendEmail && !isEmpty(member.user_email) && member.user_id !== userStore.user?.user_id"

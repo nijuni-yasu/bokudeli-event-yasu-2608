@@ -53,11 +53,13 @@ export default {
       'member': 'メンバー',
       'ordered': '注文済',
       'in_cart': 'カート追加中',
+      'canceled': 'キャンセル',
       'name': '名前',
       'order': '注文内容',
       'order_date': '注文日時',
       'in_cart_date': 'カート追加日時',
       'multi_order': '{0} ({1}個)',
+      'canceled_date': 'キャンセル日時',
     },
     'letter': {
       'type_select_dialog': {
