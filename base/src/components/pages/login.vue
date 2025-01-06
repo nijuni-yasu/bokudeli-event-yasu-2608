@@ -245,6 +245,7 @@ const handleGoogleLogin = async () => {
 
 const transitionJudge = async (userCredential: UserCredential) => {
   const additionalUserInfo = getAdditionalUserInfo(userCredential)
+  const email = additionalUserInfo.profile.email
   const isNewUser = additionalUserInfo?.isNewUser;
 
   const docRef = doc(db, 'users', userCredential.user.uid)
@@ -252,11 +253,31 @@ const transitionJudge = async (userCredential: UserCredential) => {
   const storedUser = convertDocumentDataToStoredUser(docSnap.data())
 
   // メールアドレスが無ければ、メールアドレス設定へ
-  if (storedUser.userEmail === "" || !storedUser.verifiedAt) {
+  if (email === "" || !email) {
     return  router.push({
       path: '/register/email',
       query: {
         new: Number(isNewUser),
+        redirect: route.query.redirect,
+      }
+    })
+  }
+
+  // google以外のプロバイダでverifiedAtがnullならパスコード認証を行う
+  if (!storedUser.verifiedAt && additionalUserInfo.providerId !== 'google.com') {
+    const passCode = generatePassCode()
+
+    const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, "create_or_update_user")
+    const { data } = await createOrUpdateUser({ user_email: email, user_pass_code: passCode })
+
+    const sendPassCode = httpsCallable(functions, "send_pass_code")
+    await sendPassCode({ user_email: email, user_pass_code: passCode })
+
+    return router.push({
+      path: '/pass-code',
+      query: {
+        email: email,
+        new: Number(Number(data.is_new)),
         redirect: route.query.redirect,
       }
     })
