@@ -108,6 +108,7 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
     userSnsInstagram: null,
     userSnsWebsite: null,
     userPassCode: null,
+    verifiedAt: null,
     createdAt: undefined,
     updatedAt: undefined,
   }
@@ -129,6 +130,7 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
     user_sns_instagram: storedUser.userSnsInstagram,
     user_sns_website: storedUser.userSnsWebsite,
     user_pass_code: storedUser.userPassCode,
+    verified_at: storedUser.verifiedAt,
     created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
     updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
   })
@@ -148,6 +150,7 @@ export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser
     userSnsInstagram: firestoredUser.user_sns_instagram,
     userSnsWebsite: firestoredUser.user_sns_website,
     userPassCode: firestoredUser.user_pass_code,
+    verifiedAt: firestoredUser.verified_at?.toDate() || null,
     createdAt: firestoredUser.created_at?.toDate(),
     updatedAt: firestoredUser.updated_at?.toDate(),
   }
@@ -168,6 +171,7 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
       userSnsInstagram: null,
       userSnsWebsite: null,
       userPassCode: null,
+      verifiedAt: undefined,
       createdAt: undefined,
       updatedAt: undefined,
     }
@@ -186,6 +190,7 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
     user_sns_instagram,
     user_sns_website,
     user_pass_code,
+    verified_at,
     created_at,
     updated_at,
   } = documentData
@@ -203,6 +208,7 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
     userSnsInstagram: user_sns_instagram ?? '',
     userSnsWebsite: user_sns_website ?? '',
     userPassCode: user_pass_code ?? '',
+    verifiedAt: verified_at ? (verified_at as Timestamp).toDate() : undefined,
     createdAt: created_at ? (created_at as Timestamp).toDate() : undefined,
     updatedAt: updated_at ? (updated_at as Timestamp).toDate() : undefined,
   }

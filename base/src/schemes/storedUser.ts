@@ -20,6 +20,7 @@ export type StoredUser = {
   userSnsInstagram: string | null
   userSnsWebsite: string | null
   userPassCode: string | null
+  verifiedAt: Date | null
   createdAt: Date | undefined
   updatedAt: Date | undefined
 }
@@ -37,6 +38,7 @@ export class FirestoredUser {
   user_sns_instagram: string | null = null
   user_sns_website: string | null = null
   user_pass_code: string | null = null
+  verified_at: Timestamp | null = null
   created_at: Timestamp | null = null
   updated_at: Timestamp | null = null
   user_thumb_image_urls: ThumbnailLinks | null = null
