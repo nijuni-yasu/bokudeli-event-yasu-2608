@@ -79,14 +79,14 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
 
 export const update_email  = functions.region('asia-northeast1').https.onCall(async (data) => {
   try {
-    const { user_email } = data
+    const { user_email, before_user_email } = data
 
-    const userSnapshot = await db.collection('users').where('user_email', '==', user_email).get()
+    const userSnapshot = await db.collection('users').where('user_email', '==', before_user_email).get()
     if (!userSnapshot.empty) {
       const userDoc = userSnapshot.docs[0]
       const userId = userDoc.data().user_id
 
-      // カスタムトークンアカウントにメールアドレスを設定
+      // 管理者権限でメールアドレスを設定
       await getAuth().updateUser(userId, { email: user_email }).catch(error => console.log(error))
     } else {
       throw new functions.https.HttpsError('not-found', 'User not found.')
