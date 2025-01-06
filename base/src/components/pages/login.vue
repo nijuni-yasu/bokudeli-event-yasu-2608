@@ -252,8 +252,8 @@ const transitionJudge = async (userCredential: UserCredential) => {
   const storedUser = convertDocumentDataToStoredUser(docSnap.data())
 
   // メールアドレスが無ければ、メールアドレス設定へ
-  if (!storedUser.userEmail) {
-    router.push({
+  if (storedUser.userEmail === "" || !storedUser.verifiedAt) {
+    return  router.push({
       path: '/register/email',
       query: {
         new: Number(isNewUser),
@@ -265,14 +265,14 @@ const transitionJudge = async (userCredential: UserCredential) => {
   // プロフィールが埋まっていれば、元いたページへ
   if (storedUser.userName && storedUser.userDescription && storedUser.userImageUrl) {
     if (route.query.redirect) {
-      router.push(route.query.redirect as string)
+      return router.push(route.query.redirect as string)
     } else {
-      router.push('/')
+      return router.push('/')
     }
   }
 
   // プロフィールが埋まっていなければ、登録完了（プロフィール登録誘導）へ
-  router.push({
+  return router.push({
     path: '/register/complete',
     query: {
       new: Number(isNewUser),
