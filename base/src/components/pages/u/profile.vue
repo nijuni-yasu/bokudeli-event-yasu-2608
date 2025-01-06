@@ -15,16 +15,17 @@ import {
   TwitterAuthProvider,
   linkWithPopup,
   linkWithRedirect,
-  type User
+  type User,
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
 import type { VForm } from 'vuetify';
-import {db} from "@/firebase";
+import { db, functions } from "@/firebase";
 import { doc, updateDoc, getDoc } from 'firebase/firestore'
 import {
   convertDocumentDataToStoredUser,
 } from '@/schemes/converter'
+import { httpsCallable } from 'firebase/functions'
 
 const auth = getAuth();
 
@@ -143,9 +144,16 @@ const emailSubmit = async () => {
   try {
     isLoading.value = true
 
+    const currentUser = auth.currentUser
+    if (!currentUser) return
+
+    const updateEmail = httpsCallable(functions, "update_email")
+    await updateEmail({ user_email: email.value, before_user_email: currentUser.email })
+
     const userRef = doc(db, 'users', user.value?.user_id as string)
     await updateDoc(userRef, {
       user_email: email.value,
+      verified_at: null,
     })
 
     const userSnap = await getDoc(userRef)
