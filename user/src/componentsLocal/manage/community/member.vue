@@ -4,12 +4,13 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import EmailDialog from '@/components/EmailDialog.vue'
-import { mdiEmail } from '@mdi/js'
+import { mdiFacebook, mdiEmail } from '@mdi/js'
+import XIcon from '@/icons/x'
+import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getAuth } from 'firebase/auth'
 
 const route = useRoute()
-const router = useRouter()
 const communityAccount = route.params.communityAccount as string
 
 const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
@@ -44,13 +45,38 @@ const clickContact = (member: CommunityMember) => {
           <tbody>
             <tr v-for="(member, i) of members" :key="member.user_id">
               <td>{{ i + 1 }}</td>
-              <!-- RouterLink はレイアウトを壊してしまうので @click でリンク指定する -->
-              <td
-                style="display: flex; align-items: center; gap: 12px; cursor: pointer"
-                @click="router.push(getUserPath(member.user_id))"
-              >
-                <UserAvatar :user="member" style="height: 80%"></UserAvatar>
-                {{ member.user_name }}
+              <td class="minimum-cell">
+                <router-link :to="getUserPath(member.user_id)">
+                  <UserAvatar :user="member"></UserAvatar>
+                </router-link>
+              </td>
+              <td>
+                <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
+                  {{ member.user_name }}
+                </router-link>
+              </td>
+              <td class="minimum-cell">
+                <v-btn
+                  :class="{ hidden: member.user_sns_facebook == null }"
+                  :icon="mdiFacebook"
+                  color="#1877F2"
+                  density="compact"
+                  variant="text"
+                />
+              </td>
+              <td class="minimum-cell">
+                <v-btn
+                  :class="{ hidden: member.user_sns_twitter == null }"
+                  :icon="XIcon"
+                  color="grey-900"
+                  density="compact"
+                  variant="text"
+                />
+              </td>
+              <td class="minimum-cell">
+                <v-btn :class="{ hidden: member.user_sns_instagram == null }" density="compact" variant="text" icon="">
+                  <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
+                </v-btn>
               </td>
               <td>
                 {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
@@ -71,3 +97,14 @@ const clickContact = (member: CommunityMember) => {
   </v-container>
   <EmailDialog v-if="targetMember != null" v-model="isEmailDialogOpen" :toUser="targetMember" />
 </template>
+
+<style scoped>
+.hidden {
+  visibility: hidden; /* サイズは保持されるが内容は非表示 */
+}
+
+.minimum-cell {
+  width: 1px;
+  padding: 0 !important;
+}
+</style>
