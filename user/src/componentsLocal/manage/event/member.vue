@@ -14,7 +14,6 @@ import { getAuth } from 'firebase/auth'
 
 const { t: $t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const eventId = route.params.eventId as string
 
 const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
@@ -74,8 +73,8 @@ const clickContact = (member: EventMember) => {
           <thead>
             <tr>
               <th>#</th>
-              <th>{{ $t('manage.member.name') }}</th>
-              <th></th>
+              <th colspan="2">{{ $t('manage.member.name') }}</th>
+              <th colspan="3"></th>
               <th>{{ $t('manage.member.order') }}</th>
               <th>{{ $t('manage.member.order_date') }}</th>
               <th></th>
@@ -84,30 +83,36 @@ const clickContact = (member: EventMember) => {
           <tbody>
             <tr v-for="([order, member], i) of orderedOrders" :key="order.order_id">
               <td>{{ i + 1 }}</td>
-              <!-- RouterLink はレイアウトを壊してしまうので @click でリンク指定する -->
-              <td
-                style="display: flex; align-items: center; gap: 12px; cursor: pointer"
-                @click="router.push(getUserPath(member.user_id))"
-              >
-                <UserAvatar :user="member" style="height: 80%"></UserAvatar>
-                <div>{{ member.user_name }}</div>
+              <td class="minimum-cell">
+                <router-link :to="getUserPath(member.user_id)">
+                  <UserAvatar :user="member"></UserAvatar>
+                </router-link>
               </td>
               <td>
+                <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
+                  {{ member.user_name }}
+                </router-link>
+              </td>
+              <td class="minimum-cell">
                 <v-btn
-                  :class="{ hidden: member.user_sns_facebook == null }"
+                  v-if="member.user_sns_facebook != null"
                   :icon="mdiFacebook"
                   color="#1877F2"
                   density="compact"
                   variant="text"
                 />
+              </td>
+              <td class="minimum-cell">
                 <v-btn
-                  :class="{ hidden: member.user_sns_twitter == null }"
+                  v-if="member.user_sns_twitter != null"
                   :icon="XIcon"
                   color="grey-900"
                   density="compact"
                   variant="text"
                 />
-                <v-btn :class="{ hidden: member.user_sns_instagram == null }" density="compact" variant="text" icon="">
+              </td>
+              <td class="minimum-cell">
+                <v-btn v-if="member.user_sns_instagram != null" density="compact" variant="text" icon="">
                   <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                 </v-btn>
               </td>
@@ -135,8 +140,8 @@ const clickContact = (member: EventMember) => {
           <thead>
             <tr>
               <th>#</th>
-              <th>{{ $t('manage.member.name') }}</th>
-              <th></th>
+              <th colspan="2">{{ $t('manage.member.name') }}</th>
+              <th colspan="3"></th>
               <th>{{ $t('manage.member.order') }}</th>
               <th>{{ $t('manage.member.in_cart_date') }}</th>
               <th></th>
@@ -145,11 +150,17 @@ const clickContact = (member: EventMember) => {
           <tbody>
             <tr v-for="([order, member], i) of cartOrders" :key="order.order_id">
               <td>{{ i + 1 }}</td>
-              <td style="display: flex; align-items: center; gap: 12px">
-                <UserAvatar :user="member" style="height: 80%"></UserAvatar>
-                <div>{{ member.user_name }}</div>
+              <td class="minimum-cell">
+                <router-link :to="getUserPath(member.user_id)">
+                  <UserAvatar :user="member"></UserAvatar>
+                </router-link>
               </td>
               <td>
+                <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
+                  {{ member.user_name }}
+                </router-link>
+              </td>
+              <td class="minimum-cell">
                 <v-btn
                   :class="{ hidden: member.user_sns_facebook == null }"
                   :icon="mdiFacebook"
@@ -157,6 +168,8 @@ const clickContact = (member: EventMember) => {
                   density="compact"
                   variant="text"
                 />
+              </td>
+              <td class="minimum-cell">
                 <v-btn
                   :class="{ hidden: member.user_sns_twitter == null }"
                   :icon="XIcon"
@@ -164,6 +177,8 @@ const clickContact = (member: EventMember) => {
                   density="compact"
                   variant="text"
                 />
+              </td>
+              <td class="minimum-cell">
                 <v-btn :class="{ hidden: member.user_sns_instagram == null }" density="compact" variant="text" icon="">
                   <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                 </v-btn>
@@ -192,8 +207,8 @@ const clickContact = (member: EventMember) => {
           <thead>
             <tr>
               <th>#</th>
-              <th>{{ $t('manage.member.name') }}</th>
-              <th></th>
+              <th colspan="2">{{ $t('manage.member.name') }}</th>
+              <th colspan="3"></th>
               <th>{{ $t('manage.member.order') }}</th>
               <th>{{ $t('manage.member.canceled_date') }}</th>
               <th></th>
@@ -202,11 +217,17 @@ const clickContact = (member: EventMember) => {
           <tbody>
             <tr v-for="([order, member], i) of canceledOrders" :key="order.order_id">
               <td>{{ i + 1 }}</td>
-              <td style="display: flex; align-items: center; gap: 12px">
-                <UserAvatar :user="member" style="height: 80%"></UserAvatar>
-                <div>{{ member.user_name }}</div>
+              <td class="minimum-cell">
+                <router-link :to="getUserPath(member.user_id)">
+                  <UserAvatar :user="member"></UserAvatar>
+                </router-link>
               </td>
               <td>
+                <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
+                  {{ member.user_name }}
+                </router-link>
+              </td>
+              <td class="minimum-cell">
                 <v-btn
                   :class="{ hidden: member.user_sns_facebook == null }"
                   :icon="mdiFacebook"
@@ -214,6 +235,8 @@ const clickContact = (member: EventMember) => {
                   density="compact"
                   variant="text"
                 />
+              </td>
+              <td class="minimum-cell">
                 <v-btn
                   :class="{ hidden: member.user_sns_twitter == null }"
                   :icon="XIcon"
@@ -221,6 +244,8 @@ const clickContact = (member: EventMember) => {
                   density="compact"
                   variant="text"
                 />
+              </td>
+              <td class="minimum-cell">
                 <v-btn :class="{ hidden: member.user_sns_instagram == null }" density="compact" variant="text" icon="">
                   <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                 </v-btn>
@@ -247,5 +272,10 @@ const clickContact = (member: EventMember) => {
 <style scoped>
 .hidden {
   visibility: hidden; /* サイズは保持されるが内容は非表示 */
+}
+
+.minimum-cell {
+  width: 1px;
+  padding: 0 !important;
 }
 </style>
