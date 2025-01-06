@@ -59,9 +59,8 @@ const submit = async () => {
     const userCredential = await signInWithCustomToken(getAuth(), customToken)
     if (!userCredential.user.email) {
       const updateEmail = httpsCallable(functions, "update_email")
-      await updateEmail({ user_email: userEmail })
+      await updateEmail({ user_email: userEmail, before_user_email: userEmail })
     }
-    // TODO: fetchSignInMethodsForEmailを使用してアカウントリンクを行う
 
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("user_email", "==", userEmail))
