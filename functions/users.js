@@ -15,7 +15,6 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
       const userDoc = userSnapshot.docs[0]
       await userDoc.ref.update({
         user_pass_code: user_pass_code,
-        verified_at: null,
         updated_at: Timestamp.now()
       });
       console.log(`ユーザー ${user_email} にパスコードが追加されました。`)
