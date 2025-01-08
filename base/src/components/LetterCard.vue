@@ -39,6 +39,7 @@ const numberOfTargets = computed(() => {
       return null
   }
 })
+const deleteConfirmationDialog = ref(false)
 </script>
 
 <template>
@@ -67,9 +68,28 @@ const numberOfTargets = computed(() => {
         {{ $t('letter_card.edit') }}
       </v-btn>
       <v-btn variant="outlined" @click="$emit('copy')">{{ $t('letter_card.copy') }}</v-btn>
-      <v-btn v-if="letter.status !== 'sent'" variant="outlined" @click="$emit('delete')">
+      <v-btn v-if="letter.status !== 'sent'" variant="outlined" @click="deleteConfirmationDialog = true">
         {{ $t('letter_card.delete') }}
       </v-btn>
     </template>
   </v-card>
+  <v-dialog v-model="deleteConfirmationDialog" max-width="600px">
+    <v-card>
+      <v-card-title>
+        {{ $t('letter_card.dialog.title') }}
+      </v-card-title>
+      <v-card-text>
+        {{ $t('letter_card.dialog.description') }}
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn variant="text" @click="deleteConfirmationDialog = false">
+          {{ $t('cancel') }}
+        </v-btn>
+        <v-btn variant="tonal" @click="$emit('delete')">
+          {{ $t('letter_card.dialog.submit') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
