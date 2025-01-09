@@ -13,7 +13,7 @@ import { getManageCommunityPath } from '@/router/utils'
 
 const { t: $t } = useI18n()
 
-const tabs = ['settings', 'member', 'letter'] as const
+const tabs = ['overview', 'member', 'letter', 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const eventId = useRoute().params.eventId as string
@@ -22,7 +22,6 @@ const eventStore = useEventStore(eventId) as EventStore
 const event = computed(() => eventStore.event)
 
 const tab = ref<Tabs>(tabs.find((t) => t === tabName) ?? tabs[0])
-
 
 // コミュニティストアの取得
 const communityStore = computed(() => {
