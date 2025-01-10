@@ -9,6 +9,7 @@ import XIcon from '@/icons/x'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getAuth } from 'firebase/auth'
+import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/buildSnsLinks'
 
 const route = useRoute()
 const communityAccount = route.params.communityAccount as string
@@ -34,6 +35,9 @@ const isEmailDialogOpen = computed({
 })
 const clickContact = (member: CommunityMember) => {
   targetMember.value = member
+}
+const openNewLink = (url: string) => {
+  window.open(url, '_blank')
 }
 </script>
 
@@ -62,6 +66,7 @@ const clickContact = (member: CommunityMember) => {
                   color="#1877F2"
                   density="compact"
                   variant="text"
+                  @click="openNewLink(buildFacebookUrl(member.user_sns_facebook!))"
                 />
               </td>
               <td class="minimum-cell">
@@ -71,10 +76,17 @@ const clickContact = (member: CommunityMember) => {
                   color="grey-900"
                   density="compact"
                   variant="text"
+                  @click="openNewLink(buildTwitterUrl(member.user_sns_twitter!))"
                 />
               </td>
               <td class="minimum-cell">
-                <v-btn :class="{ hidden: member.user_sns_instagram == null }" density="compact" variant="text" icon="">
+                <v-btn
+                  :class="{ hidden: member.user_sns_instagram == null }"
+                  density="compact"
+                  variant="text"
+                  icon=""
+                  @click="openNewLink(buildInstagramUrl(member.user_sns_instagram!))"
+                >
                   <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                 </v-btn>
               </td>

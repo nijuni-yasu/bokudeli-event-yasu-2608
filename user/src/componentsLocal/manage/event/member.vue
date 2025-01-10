@@ -11,6 +11,7 @@ import type { OrderItem } from '@/schemes/orderItem'
 import type { EventMember } from '@/schemes/EventMember'
 import type { OrderMenu } from '@/schemes/orderMenu'
 import { getAuth } from 'firebase/auth'
+import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/buildSnsLinks'
 
 const { t: $t } = useI18n()
 const route = useRoute()
@@ -60,6 +61,9 @@ const isEmailDialogOpen = computed({
 const clickContact = (member: EventMember) => {
   targetMember.value = member
 }
+const openNewLink = (url: string) => {
+  window.open(url, '_blank')
+}
 </script>
 
 <template>
@@ -100,6 +104,7 @@ const clickContact = (member: EventMember) => {
                   color="#1877F2"
                   density="compact"
                   variant="text"
+                  @click="openNewLink(buildFacebookUrl(member.user_sns_facebook))"
                 />
               </td>
               <td class="minimum-cell">
@@ -109,10 +114,17 @@ const clickContact = (member: EventMember) => {
                   color="grey-900"
                   density="compact"
                   variant="text"
+                  @click="openNewLink(buildTwitterUrl(member.user_sns_twitter))"
                 />
               </td>
               <td class="minimum-cell">
-                <v-btn v-if="member.user_sns_instagram != null" density="compact" variant="text" icon="">
+                <v-btn
+                  v-if="member.user_sns_instagram != null"
+                  density="compact"
+                  variant="text"
+                  icon=""
+                  @click="openNewLink(buildInstagramUrl(member.user_sns_instagram))"
+                >
                   <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                 </v-btn>
               </td>
