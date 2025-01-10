@@ -3,7 +3,7 @@ import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { type CommunityMember } from '@/schemes/communityMember'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import { mdiEmail, mdiLink, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{

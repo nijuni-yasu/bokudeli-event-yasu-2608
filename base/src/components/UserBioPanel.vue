@@ -4,7 +4,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import UserBioEditDialog from './UserBioEditDialog.vue'
-import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/composable/buildSnsLinks'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiPencil, mdiTwitter, mdiFacebook, mdiInstagram } from '@mdi/js'
 
