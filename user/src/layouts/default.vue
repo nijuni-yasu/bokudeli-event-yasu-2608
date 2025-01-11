@@ -71,7 +71,7 @@ getAuth().onAuthStateChanged((user) => {
       <Footer />
     </template>
   </Component>
-  <v-snackbar v-model="isNotificationShown" :color="notification.color">
+  <v-snackbar v-model="isNotificationShown" :color="notification.color" class="pre-line">
     {{ notification.message }}
   </v-snackbar>
 </template>
