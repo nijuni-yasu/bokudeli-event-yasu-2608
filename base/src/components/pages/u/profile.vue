@@ -16,6 +16,8 @@ import {
   linkWithPopup,
   linkWithRedirect,
   type User,
+  updateEmail,
+  signInWithCustomToken
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
@@ -26,8 +28,10 @@ import {
   convertDocumentDataToStoredUser,
 } from '@/schemes/converter'
 import { httpsCallable } from 'firebase/functions'
+import {convertFirebaseUserToStoredUser} from "@/schemes/converter";
 
-const auth = getAuth();
+const auth = getAuth()
+const currentUser = auth.currentUser;
 
 const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(storedUserStore)
@@ -41,13 +45,13 @@ const updateProviderData = (user: User | null) => {
 };
 
 // 初期化（現在のユーザー情報を取得）
-if (auth.currentUser) {
-  updateProviderData(auth.currentUser);
+if (currentUser) {
+  updateProviderData(currentUser);
+  email.value = currentUser.email as string;
 }
 
 const user = computed(() => {
   const userId = storedUser.value?.userId
-  email.value = storedUser.value?.userEmail as string
   return userId == null ? null : (useUserStore(userId) as UserStore).user
 })
 
@@ -70,6 +74,9 @@ const isNew = computed(() => {
 const { requiredValidator, noReservedCharsValidator, emailValidator } = useValidators()
 
 const imageError = ref("")
+
+const notification = inject('notification') as Notification
+const { t: $t } = useI18n()
 
 // バリデーション関連 ここから
 const validateImage = () => {
@@ -143,25 +150,53 @@ const profileSubmit = async () => {
 const emailSubmit = async () => {
   try {
     isLoading.value = true
+    let isError = false
 
-    const currentUser = auth.currentUser
-    if (!currentUser) return
-
-    const updateEmail = httpsCallable(functions, "update_email")
-    await updateEmail({ user_email: email.value, before_user_email: currentUser.email })
-
+    const userEmail = email.value
     const userRef = doc(db, 'users', user.value?.user_id as string)
-    await updateDoc(userRef, {
-      user_email: email.value,
-      verified_at: null,
+
+    await updateEmail(currentUser as User, userEmail).then(async () => {
+      await updateDoc(userRef, {
+        user_email: userEmail,
+        verified_at: null,
+      })
+    }).catch(async (error) => {
+      console.error(error)
+      if (error.code === 'auth/requires-recent-login') {
+        const getCustomToken = httpsCallable(functions, "get_custom_token")
+        const result = await getCustomToken({ user_email: currentUser?.email })
+        const customToken = result.data as string
+
+        await signInWithCustomToken(auth, customToken).then(async (userCredential) => {
+          await updateEmail(userCredential.user as User, userEmail).then(async () => {
+            await updateDoc(userRef, {
+              user_email: userEmail,
+              verified_at: null,
+            })
+          }).catch((error) => {
+            // 基本的にこのスコープのエラーが出る想定は無い
+            console.error(error)
+            isError = true
+          })
+        })
+      } else if (error.code === 'auth/email-already-in-use') {
+        isError = true
+        return Object.assign(notification, { message: $t('user.exists_email'), color: 'error' })
+      }
     })
 
-    const userSnap = await getDoc(userRef)
+    if (isError) return
+
+    const storedUser = convertFirebaseUserToStoredUser(currentUser as User)
+
+    const docRef = doc(db, 'users', storedUser.userId)
+    const docSnap = await getDoc(docRef)
 
     // Pinia のデータを更新
-    const currentStoredUser = convertDocumentDataToStoredUser(userSnap.data())
-
+    const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
     storedUserStore.update(currentStoredUser)
+
+    return Object.assign(notification, { message: $t('user.update_email'), color: 'success' })
   } catch (error) {
     console.warn("Error email submit:", error);
   } finally {
