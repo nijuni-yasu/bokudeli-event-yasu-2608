@@ -76,29 +76,11 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
   }
 })
 
-export const update_email  = functions.region('asia-northeast1').https.onCall(async (data) => {
-  try {
-    const { user_email, before_user_email } = data
-
-    const userSnapshot = await db.collection('users').where('user_email', '==', before_user_email).get()
-    if (!userSnapshot.empty) {
-      const userDoc = userSnapshot.docs[0]
-      const userId = userDoc.data().user_id
-
-      // 管理者権限でメールアドレスを設定
-      await getAuth().updateUser(userId, { email: user_email }).catch(error => console.log(error))
-    } else {
-      throw new functions.https.HttpsError('not-found', 'User not found.')
-    }
-  } catch (error) {
-    console.error('エラーが発生しました: ', error)
-    throw new functions.https.HttpsError('internal', 'An unexpected error occurred.')
-  }
-})
-
 export const get_custom_token  = functions.region('asia-northeast1').https.onCall(async (data) => {
   try {
     const { user_email } = data
+
+    console.log('user_email', user_email)
 
     const userSnapshot = await db.collection('users').where('user_email', '==', user_email).get()
     if (!userSnapshot.empty) {
