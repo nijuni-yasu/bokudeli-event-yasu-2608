@@ -13,6 +13,10 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 import type { Router } from 'vue-router'
+import { useEventStore, type EventStore } from '@/stores/event'
+import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { getManageCommunityListPath } from './utils'
 
 const checkUser = async (user: User | null) => {
   // リダイレクト結果を取得
@@ -152,6 +156,54 @@ export const setupRouter = (router: Router) => {
         path: paths.join('/'),
         query: to.query,
       }
+    }
+  })
+
+  router.beforeEach(async (to) => {
+    let communityAccount: string | null = null
+    if (to.path.startsWith('/manage/event/')) {
+      const eventId = to.params.eventId as string
+      const eventStore = useEventStore(eventId) as EventStore
+      const event = await new Promise<BokudeliEvent>((resolve) => {
+        watch(
+          () => eventStore.event,
+          (event) => {
+            if (event != null) {
+              resolve(event)
+            }
+          },
+          { immediate: true },
+        )
+      })
+      communityAccount = event.community_account
+    } else if (to.path.startsWith('/manage/community/')) {
+      communityAccount = to.params.communityAccount as string
+    }
+
+    if (communityAccount != null) {
+      const communityStore = useCommunityStore(communityAccount) as CommunityStore
+      const canView = await new Promise<boolean>((resolve) => {
+        watch(
+          () => [communityStore.community, communityStore.members],
+          () => {
+            const community = communityStore.community
+            const members = communityStore.members
+            if (
+              community != null &&
+              members != null &&
+              members.length === community.community_num_members &&
+              !members.includes(null)
+            ) {
+              const canView = members.some(
+                (member) => member?.user_id === getAuth().currentUser?.uid && member?.roles?.includes('manager'),
+              )
+              resolve(canView)
+            }
+          },
+          { immediate: true },
+        )
+      })
+      return canView ? true : { path: getManageCommunityListPath() }
     }
   })
 }
