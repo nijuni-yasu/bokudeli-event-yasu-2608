@@ -324,7 +324,7 @@ const transitionJudge = async (userCredential: UserCredential) => {
           <v-form v-model="isValid" @submit.prevent="submit">
             <v-container class=" mb-4">
               <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
-              <v-text-field placeholder="example@example.com" v-model="email" autofocus :rules="[requiredValidator, emailValidator]"/>
+              <v-text-field placeholder="example@example.com" v-model="email" :rules="[requiredValidator, emailValidator]"/>
             </v-container>
 
             <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
