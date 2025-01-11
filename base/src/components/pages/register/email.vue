@@ -7,6 +7,10 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import {FirestoredUser} from "../../../schemes/storedUser";
 import {convertFirestoredUserToStoredUser} from "../../../schemes/converter";
+import { getAuth, updateEmail, signInWithCustomToken, type User } from "firebase/auth";
+
+const auth = getAuth()
+const currentUser = auth.currentUser;
 
 const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -21,10 +25,37 @@ const router = useRouter()
 const isLoading = ref(false)
 const isValid = ref(false)
 
+const notification = inject('notification') as Notification
+const { t: $t } = useI18n()
+
 const submit = async () => {
   isLoading.value = true
   try {
     const firestoredUser = user.value as FirestoredUser
+    let isError = false
+
+    // Facebook or Twitterにメールアドレスの登録がない場合、firebase authのIDが空になるため、updateEmailで設定する。
+    await updateEmail(currentUser as User, firestoredUser.user_email).catch(async (error) => {
+      if (error.code === 'auth/requires-recent-login') {
+        const getCustomToken = httpsCallable(functions, "get_custom_token")
+        const result = await getCustomToken({ user_email: firestoredUser.user_email })
+        const customToken = result.data as string
+
+        await signInWithCustomToken(auth, customToken).then(async (userCredential) => {
+          await updateEmail(userCredential.user as User, firestoredUser.user_email).catch((error) => console.error(error))
+        }).catch((error) => {
+          // 基本的にこのスコープのエラーが出る想定は無い
+          isError = true
+          console.error(error)
+        })
+      } else if (error.code === 'auth/email-already-in-use') {
+        isError = true
+        Object.assign(notification, { message: $t('user.exists_email'), color: 'error' })
+      }
+    })
+
+    if (isError) return
+
     const passCode = generatePassCode()
     firestoredUser.user_pass_code = passCode
 

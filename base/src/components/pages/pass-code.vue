@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {db, functions} from '@/firebase'
 import {httpsCallable} from 'firebase/functions'
-import { getAuth, signInWithCustomToken, updateEmail } from 'firebase/auth'
+import { getAuth, signInWithCustomToken, updateEmail, type User } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import {collection, getDocs, query, where} from "firebase/firestore";
 import {generatePassCode} from "@/utils/generatePassCode";
@@ -56,11 +56,10 @@ const submit = async () => {
       return isError.value = true
     }
 
-    const userCredential = await signInWithCustomToken(getAuth(), customToken)
-    if (!userCredential.user.email) {
-      const updateEmail = httpsCallable(functions, "update_email")
-      await updateEmail({ user_email: userEmail, before_user_email: userEmail })
-    }
+    // メールアドレスログインの場合、初回はfirebase authのIDが必ず空になるため、updateEmailで設定する。
+    await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
+      await updateEmail(userCredential.user as User, userEmail).catch((error) => console.error(error))
+    })
 
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("user_email", "==", userEmail))
