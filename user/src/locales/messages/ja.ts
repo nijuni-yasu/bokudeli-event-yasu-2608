@@ -28,6 +28,8 @@ export default {
     'community_create': 'コミュニティを作る',
     'canceled': 'キャンセルしました',
     'cancel_failed': 'キャンセルに失敗しました',
+    'exists_email': '登録済みのメールアドレスです。\n他のメールアドレスを入力いただくか、登録済みメールアドレスのアカウントでログインしてください。',
+    'update_email': 'メールアドレスを変更しました。',
   },
   'manage': {
     'new_community': 'コミュニティ新規作成',
