@@ -10,6 +10,7 @@ import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/buildSnsLinks'
+import { downloadCsv } from '@/utils/downloadCsv'
 
 const route = useRoute()
 const communityAccount = route.params.communityAccount as string
@@ -39,10 +40,27 @@ const clickContact = (member: CommunityMember) => {
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
 }
+const downloadCsvFile = () => {
+  let csv = '"name","x","facebook","instagram"\n'
+  for (const member of members.value) {
+    csv +=
+      `"${member.user_name}",` +
+      `"${member.user_sns_twitter == null ? '' : buildTwitterUrl(member.user_sns_twitter)}",` +
+      `"${member.user_sns_facebook == null ? '' : buildFacebookUrl(member.user_sns_facebook)}",` +
+      `"${member.user_sns_instagram == null ? '' : buildInstagramUrl(member.user_sns_instagram)}",` +
+      `"${member.user_description ?? ''}"\n`
+  }
+  downloadCsv('member.csv', csv)
+}
 </script>
 
 <template>
   <v-container>
+    <v-row class="justify-center">
+      <v-col md="10" sm="10" cols="12" class="d-flex justify-end">
+        <v-btn variant="outlined" @click="downloadCsvFile">{{ $t('manage.member.csv_download') }}</v-btn>
+      </v-col>
+    </v-row>
     <v-row class="justify-center">
       <v-col md="10" sm="10" cols="12">
         <v-table>
