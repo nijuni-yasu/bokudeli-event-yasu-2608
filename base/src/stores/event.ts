@@ -13,6 +13,7 @@ import {
   where,
   onSnapshot,
   Timestamp,
+  deleteDoc,
   DocumentReference,
   DocumentSnapshot,
   type Unsubscribe,
@@ -57,6 +58,7 @@ type EventStoreAction = {
   updateCoverImage: (coverImage: File) => Promise<void>
   addOrder: (data: Partial<OrderItem>) => Promise<DocumentReference | null>
   updateOrder: (id: string, data: Partial<OrderItem>) => Promise<void>
+  deleteEvent: () => Promise<void>
   subscribe: () => Promise<void>
   unsubscribe: () => void
 }
@@ -206,6 +208,10 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         await updateDoc(orderRef, data)
       }
 
+      const deleteEvent = async (): Promise<void> => {
+        return deleteDoc(await getEventRef())
+      }
+
       let unsubscribeEvent: Unsubscribe | null = null
       const subscribeEvent = (eventRef: DocumentReference) => {
         if (unsubscribeEvent == null) {
@@ -266,6 +272,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         updateCoverImage,
         addOrder,
         updateOrder,
+        deleteEvent,
         subscribe,
         unsubscribe,
         $reset: () => {

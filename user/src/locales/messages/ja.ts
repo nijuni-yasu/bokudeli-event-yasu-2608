@@ -48,6 +48,12 @@ export default {
         'settings': '設定',
       },
       'edit': 'イベント編集',
+      'delete': 'イベント削除',
+      'dialog': {
+        'title': 'イベント削除',
+        'description': '本当に削除しますか？この操作は取り消せません。',
+        'submit': '削除',
+      }
     },
     'member': {
       'manager': '管理者',
