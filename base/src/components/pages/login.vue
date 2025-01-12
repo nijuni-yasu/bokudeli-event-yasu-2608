@@ -256,7 +256,7 @@ const handleGoogleLogin = async () => {
 
 const transitionJudge = async (userCredential: UserCredential) => {
   const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
-  const email = additionalUserInfo?.profile?.email as string
+  const email = userCredential.user.email ?? additionalUserInfo?.profile?.email as string
   const isNewUser = additionalUserInfo?.isNewUser;
 
   const docRef = doc(db, 'users', userCredential.user.uid)
