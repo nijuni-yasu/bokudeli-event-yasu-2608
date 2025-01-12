@@ -9,6 +9,7 @@ import {
   linkWithRedirect,
   getAdditionalUserInfo,
   reauthenticateWithPopup,
+  reauthenticateWithRedirect,
   type User
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
@@ -27,6 +28,22 @@ type ProfileLink = {
   }
 }
 
+const auth = getAuth()
+const currentUser = auth.currentUser;
+
+const linkedProviderData = ref<string[]>([]);
+
+const updateProviderData = (user: User | null) => {
+  linkedProviderData.value = user
+      ? user.providerData.map((info) => info.providerId)
+      : [];
+};
+
+// 初期化（現在のユーザー情報を取得）
+if (currentUser) {
+  updateProviderData(currentUser);
+}
+
 const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(storedUserStore)
 const user = computed(() => {
@@ -37,7 +54,6 @@ watchEffect(() => {
   // 初期化
   user.value
 })
-const currentUser: User | null = getAuth().currentUser
 
 const route = useRoute()
 const router = useRouter()
@@ -97,10 +113,41 @@ const linkByProviderService = async (user: User , providerService: 'Facebook' | 
   }
 }
 
+const reauthenticateByProviderService = async (user: User , providerService: 'Facebook' | 'Google' | 'Twitter') => {
+  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
+
+  switch (providerService) {
+    case 'Facebook':
+      provider = new FacebookAuthProvider()
+      provider.addScope('email')
+      provider.addScope('public_profile')
+      break
+    case 'Google':
+      provider = new GoogleAuthProvider()
+      provider.addScope('profile')
+      provider.addScope('openid')
+      break
+    case 'Twitter':
+      provider = new TwitterAuthProvider()
+      break
+  }
+
+  if (import.meta.env.DEV) {
+    return await reauthenticateWithPopup(user, provider);
+  } else {
+    return await reauthenticateWithRedirect(user, provider)
+  }
+}
+
 const handleTwitterLink = async () => {
   try {
     if (!currentUser) throw new Error('currentUser is null')
-    const userCredential = await linkByProviderService(currentUser, 'Twitter')
+    let userCredential
+    if (linkedProviderData.value.includes('twitter.com')) {
+      userCredential = await reauthenticateByProviderService(currentUser, 'Twitter')
+    } else {
+      userCredential = await linkByProviderService(currentUser, 'Twitter')
+    }
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
 
     if (additionalUserInfo === null) return
@@ -134,40 +181,6 @@ const handleTwitterLink = async () => {
       if (error.code === 'auth/credential-already-in-use') {
         return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
       }
-
-      if (!currentUser) throw new Error('currentUser is null')
-
-      const provider = new TwitterAuthProvider()
-      await reauthenticateWithPopup(currentUser, provider).then(async (result) => {
-        const additionalUserInfo = getAdditionalUserInfo(result);
-
-        if (!additionalUserInfo) return
-        const firestoredUser = user.value as FirestoredUser
-        firestoredUser.user_name = additionalUserInfo.profile?.name as string | ""
-        firestoredUser.user_description = additionalUserInfo.profile?.description as string | null
-        firestoredUser.user_url_path = additionalUserInfo.username as string | null
-        firestoredUser.user_sns_twitter = additionalUserInfo.username as string | null
-
-        storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
-
-        const userStore = useUserStore(firestoredUser.user_id) as UserStore
-        await userStore.updateUser(firestoredUser)
-
-        const photoUrl = additionalUserInfo.profile?.profile_image_url_https as string
-        const splitPhotoURL = photoUrl.split('_') as string[]
-        const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1];
-
-        // blobに変換
-        const response = await axios.get(photoURL, { responseType: "blob" });
-        const blob = response.data;
-
-        // 画像保存
-        await userStore.uploadUserImage(blob)
-        router.push(profileLink)
-      })
-      .catch((error) => {
-        console.error("再認証時エラー", error);
-      });
     } else {
       console.error({ error })
     }
