@@ -144,13 +144,14 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
 
 async function getEventMemberEmails(eventSnapshot) {
   const usersSet = await getUsersFromOrders(eventSnapshot.ref.collection('orders'))
-  return await Promise.all(
+  const emails = await Promise.all(
     Array.from(usersSet).map(async (userId) => {
       const userRef = db.collection('users').doc(userId)
       const userSnapshot = await userRef.get()
       return userSnapshot.get('user_email')
     }),
   )
+  return emails.filter((email) => email != null && email !== '')
 }
 
 async function getCommunityEmails(communityId) {
@@ -393,7 +394,7 @@ async function getLastUpdatedEventStatus(eventSnapshot, status) {
       return logSnapshot.get('updated_at')
     }
   }
-  return null
+  return Timestamp.now()
 }
 
 async function createTemplateDataForApplyingOrder(eventSnapshot, updatedAt) {
@@ -801,7 +802,7 @@ async function sendInCartNotificationToMember(start, end) {
       ])
       const userData = userSnapshot.data()
       return { eventSnapshot, userData }
-    })
+    }),
   )
 
   const filteredNotificationDataList = notificationDataList.filter((notificationData) => {
@@ -826,18 +827,30 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
     .where('event_status.value', '==', 'accepting_order')
     .get()
 
-  Promise.all(
+  // user_email が設定されている場合のみメールコンテンツを生成する
+  const mailContentList = []
+  await Promise.all(
     events.docs.map(async (eventSnapshot) => {
       const ordersSnapshot = await eventSnapshot.ref.collection('orders').get()
-      Promise.all(
+      return await Promise.all(
         ordersSnapshot.docs
           .filter((orderSnapshot) => orderSnapshot.get('status') === 'in_cart')
           .map(async (orderSnapshot) => {
             const orderData = orderSnapshot.data()
             const userSnapshot = await db.collection('users').doc(orderData.user_id).get()
-            return sgMail.send(buildInCartNotificationMail(eventSnapshot, userSnapshot.data()))
+            const userData = userSnapshot.data()
+            if (userData.user_email == null || userData.user_email === '') {
+              return
+            }
+            mailContentList.push(buildInCartNotificationMail(eventSnapshot, userData))
           }),
       )
+    }),
+  )
+
+  return Promise.all(
+    mailContentList.map(async (mailContent) => {
+      sgMail.send(mailContent)
     }),
   )
 }
