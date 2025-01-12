@@ -14,7 +14,8 @@ import {
   linkWithCredential,
   getAdditionalUserInfo,
   type UserCredential,
-  signInWithCustomToken
+  signInWithCustomToken,
+  type AdditionalUserInfo
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
@@ -28,6 +29,13 @@ type CreateUserRequest = {
 
 type CreateUserResponse = {
   is_new: boolean
+}
+
+type CustomData = {
+  email: string
+  _tokenResponse?: {
+    verifiedProvider?: string[];
+  };
 }
 
 const route = useRoute()
@@ -107,11 +115,12 @@ const handleTwitterLogin = async () => {
 
       if (error.code === 'auth/account-exists-with-different-credential') {
         let userCredential
-        const verifiedProvider = error?.customData?._tokenResponse?.verifiedProvider
+        const customData = error?.customData as CustomData
+        const verifiedProvider = customData?._tokenResponse?.verifiedProvider
         // カスタムトークンログインを行い、メールアドレスが既に存在している場合
         if (!verifiedProvider) {
           const getCustomToken = httpsCallable(functions, "get_custom_token")
-          const result = await getCustomToken({ user_email: error?.customData?.email })
+          const result = await getCustomToken({ user_email: customData?.email })
           const customToken = result.data as string
 
           userCredential = await signInWithCustomToken(getAuth(), customToken)
@@ -156,11 +165,12 @@ const handleFacebookLogin = async () => {
 
       if (error.code === 'auth/account-exists-with-different-credential') {
         let userCredential
-        const verifiedProvider = error?.customData?._tokenResponse?.verifiedProvider
+        const customData = error?.customData as CustomData
+        const verifiedProvider = customData?._tokenResponse?.verifiedProvider
         // カスタムトークンログインを行い、メールアドレスが既に存在している場合
         if (!verifiedProvider) {
           const getCustomToken = httpsCallable(functions, "get_custom_token")
-          const result = await getCustomToken({ user_email: error?.customData?.email })
+          const result = await getCustomToken({ user_email: customData?.email })
           const customToken = result.data as string
 
           userCredential = await signInWithCustomToken(getAuth(), customToken)
@@ -205,11 +215,12 @@ const handleGoogleLogin = async () => {
 
       if (error.code === 'auth/account-exists-with-different-credential') {
         let userCredential
-        const verifiedProvider = error?.customData?._tokenResponse?.verifiedProvider
+        const customData = error?.customData as CustomData
+        const verifiedProvider = customData?._tokenResponse?.verifiedProvider
         // カスタムトークンログインを行い、メールアドレスが既に存在している場合
         if (!verifiedProvider) {
           const getCustomToken = httpsCallable(functions, "get_custom_token")
-          const result = await getCustomToken({ user_email: error?.customData?.email })
+          const result = await getCustomToken({ user_email: customData?.email })
           const customToken = result.data as string
 
           userCredential = await signInWithCustomToken(getAuth(), customToken)
@@ -244,8 +255,8 @@ const handleGoogleLogin = async () => {
 }
 
 const transitionJudge = async (userCredential: UserCredential) => {
-  const additionalUserInfo = getAdditionalUserInfo(userCredential)
-  const email = additionalUserInfo.profile.email
+  const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+  const email = additionalUserInfo?.profile?.email as string
   const isNewUser = additionalUserInfo?.isNewUser;
 
   const docRef = doc(db, 'users', userCredential.user.uid)
