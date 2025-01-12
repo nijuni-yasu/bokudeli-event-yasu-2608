@@ -91,6 +91,30 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   })
   await shareSnsButton(type, props.event, props.community, shop!, _window)
 }
+
+const isRichTextEventDesc = computed(() => {
+  return props.event.event_desc.includes('<p>')
+})
+
+const iframeRef = ref<HTMLIFrameElement | null>(null)
+// iframeの高さを調整する関数
+const adjustIframeHeight = (): void => {
+  const iframe = iframeRef.value
+  if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
+    const doc = iframe.contentDocument
+    const bodyHeight = doc.body.scrollHeight
+    const htmlHeight = doc.documentElement.scrollHeight
+
+    // body と html の高さの大きい方を使用
+    const finalHeight = Math.max(bodyHeight, htmlHeight)
+
+    iframe.style.height = `${finalHeight}px`
+  }
+}
+
+onMounted(() => {
+  adjustIframeHeight()
+})
 </script>
 
 <template>
@@ -179,9 +203,18 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
           </div>
         </v-card-text>
         <v-card-text class="event-item"> 【開催内容】 </v-card-text>
-        <v-card-text v-linkify class="event-content">
-          {{ event.event_desc }}
-        </v-card-text>
+        <div>
+          <iframe
+            v-if="isRichTextEventDesc"
+            :srcdoc="event.event_desc"
+            ref="iframeRef"
+            @load="adjustIframeHeight"
+            class="event-content"
+          />
+          <v-card-text v-else v-linkify class="event-content">
+            {{ event.event_desc }}
+          </v-card-text>
+        </div>
         <v-card-text class="event-item2">
           【お店】
           <span class="event-content">
@@ -297,5 +330,20 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   font-weight: 400;
   line-height: 32px;
   white-space: pre-line;
+}
+
+iframe {
+  width: 100%;
+  border: none;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+iframe.event-content {
+  padding-top: 0;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-bottom: 0;
 }
 </style>
