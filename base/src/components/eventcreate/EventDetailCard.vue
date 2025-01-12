@@ -15,7 +15,7 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-  }
+  },
 )
 
 const { t: $t } = useI18n()
@@ -36,7 +36,6 @@ if (event.value.event_max_people == 0) {
 }
 
 const tinymceInit = { language: 'ja', menubar: 'edit view insert format', disabled: props.readonly }
-
 </script>
 
 <template>
@@ -96,11 +95,7 @@ const tinymceInit = { language: 'ja', menubar: 'edit view insert format', disabl
     <v-card-text class="pt-5">
       <v-row>
         <v-col cols="12">
-          <Editor
-            v-model="event.event_desc"
-            :api-key="tinymceApiKey"
-            :init="tinymceInit"
-          />
+          <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
           <!-- <v-textarea
             v-model="event.event_desc"
             outlined
