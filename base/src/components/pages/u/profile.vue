@@ -295,9 +295,11 @@ const handleTwitterLoginLink = async () => {
         <v-sheet class="rounded-lg py-14 px-16">
           <h1 class="text-center">プロフィール設定</h1>
 
-          <v-sheet class="d-flex justify-center align-center mt-4 mb-12" style="position: relative;">
-            <UserAvatar :user="user" :size="140" @click="triggerFileInput"/>
-            <span class="edit-text text-primary" @click="triggerFileInput">編集</span>
+          <v-sheet class="d-flex justify-center mt-4 mb-12">
+            <div style="position: relative;">
+              <UserAvatar :user="user" :size="140" @click="triggerFileInput"/>
+              <span class="edit-text text-primary" @click="triggerFileInput">編集</span>
+            </div>
           </v-sheet>
           <p v-if="imageError !== ''" class="text-center text-error font-weight-bold">{{imageError}}</p>
 
@@ -447,24 +449,12 @@ const handleTwitterLoginLink = async () => {
 .edit-text {
   position: absolute;
   bottom: -5px;
-  right: 140px;
+  right: 0;
   text-decoration: underline;
   cursor: pointer;
 }
 
 .cursor-none {
   cursor: none;
-}
-
-@media (max-width: 600px) {
-  .edit-text {
-    right: 40px;
-  }
-}
-
-@media (max-width: 400px) {
-  .edit-text {
-    right: 20px;
-  }
 }
 </style>
