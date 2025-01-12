@@ -246,6 +246,9 @@ const handleFacebookLink = async () => {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
       console.error({ error, credential })
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'Facebook'}), color: 'error' })
+      }
     } else {
       console.error({ error })
     }
@@ -259,6 +262,9 @@ const handleGoogleLoginLink = async () => {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
       console.error({ error, credential })
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'Google'}), color: 'error' })
+      }
     } else {
       console.error({ error })
     }
@@ -272,6 +278,9 @@ const handleTwitterLoginLink = async () => {
     if (error instanceof FirebaseError) {
       const credential = TwitterAuthProvider.credentialFromError(error)
       console.error({ error, credential })
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+      }
     } else {
       console.error({ error })
     }

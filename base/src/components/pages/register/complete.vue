@@ -14,7 +14,7 @@ import {
 import {FirebaseError} from "firebase/app";
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
-import {FirestoredUser, type StoredUser} from "@/schemes/storedUser"
+import {FirestoredUser} from "@/schemes/storedUser"
 import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
 import axios from 'axios'
 
@@ -41,6 +41,9 @@ const currentUser: User | null = getAuth().currentUser
 
 const route = useRoute()
 const router = useRouter()
+
+const notification = inject('notification') as Notification
+const { t: $t } = useI18n()
 
 const titleLabel = ref('')
 const descriptionLabel = ref('')
@@ -127,6 +130,10 @@ const handleTwitterLink = async () => {
     if (error instanceof FirebaseError) {
       const credential = TwitterAuthProvider.credentialFromError(error)
       console.error({ error, credential })
+
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+      }
 
       if (!currentUser) throw new Error('currentUser is null')
 
