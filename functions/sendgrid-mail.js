@@ -410,7 +410,8 @@ async function sendApplyingOrderMailToShop(eventSnapshot) {
   const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
 
   const [dynamic_template_data, shopSnapShot] = await Promise.all([
-    createTemplateDataForApplyingOrder(eventSnapshot, updatedAt),
+    // ログ機能導入前のイベントには updatedAt がないため、その場合は現在時刻を使用する
+    createTemplateDataForApplyingOrder(eventSnapshot, updatedAt ? updatedAt : Timestamp.now()),
     getShopForEvent(eventSnapshot),
   ])
   return sgMail.send({
