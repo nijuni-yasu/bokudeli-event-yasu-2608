@@ -1,9 +1,8 @@
 import {initializeApp, applicationDefault, cert} from 'firebase-admin/app'
 import { initializeFirestore } from 'firebase-admin/firestore'
 
+// TODO: STG、本番環境でのcredential設定
 const app = initializeApp({
-  // credential: applicationDefault(),
-  // TODO: envで指定するとロードが間に合っていないのかfailする。要相談
   credential: cert('./bokudeli-event-test-c43e086151e2.json'),
 })
 initializeFirestore(app, { preferRest: true })
