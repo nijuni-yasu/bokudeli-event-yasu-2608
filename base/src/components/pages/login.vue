@@ -9,8 +9,6 @@ import {
   FacebookAuthProvider,
   GoogleAuthProvider,
   TwitterAuthProvider,
-  signInWithRedirect,
-  signInWithPopup,
   linkWithCredential,
   getAdditionalUserInfo,
   type UserCredential,
@@ -21,6 +19,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import {convertDocumentDataToStoredUser} from "@/schemes/converter";
 import {useValidators} from "@/composable/validators";
+import {signInByProviderService} from "@/utils/providerService";
 
 type CreateUserRequest = {
   user_email: string
@@ -76,31 +75,6 @@ const submit = async () => {
     console.warn("Error sending pass code:", error)
   } finally {
     isLoading.value = false
-  }
-}
-
-const signInByProviderService = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'Facebook':
-      provider = new FacebookAuthProvider()
-      provider.addScope('public_profile')
-      break
-    case 'Google':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'Twitter':
-      provider = new TwitterAuthProvider()
-      break
-  }
-
-  if (import.meta.env.DEV) {
-    return await signInWithPopup(getAuth(), provider)
-  } else {
-    return await signInWithRedirect(getAuth(), provider)
   }
 }
 

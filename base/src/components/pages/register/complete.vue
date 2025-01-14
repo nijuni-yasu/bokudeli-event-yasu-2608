@@ -2,14 +2,8 @@
 import logo from "@/assets/images/shokujii/shokujii_logo.png";
 import {
   getAuth,
-  FacebookAuthProvider,
-  GoogleAuthProvider,
   TwitterAuthProvider,
-  linkWithPopup,
-  linkWithRedirect,
   getAdditionalUserInfo,
-  reauthenticateWithPopup,
-  reauthenticateWithRedirect,
   type User
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
@@ -18,6 +12,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import {FirestoredUser} from "@/schemes/storedUser"
 import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
 import axios from 'axios'
+import {linkByProviderService, reauthenticateByProviderService} from "@/utils/providerService";
 
 
 type ProfileLink = {
@@ -85,58 +80,6 @@ if (isNew.value === 1) {
   titleLabel.value = 'プロフィール登録'
   descriptionLabel.value = 'プロフィールが登録されていません。\nSNSアカウントと連携して、プロフィール登録を完了させよう👍'
   selfButtonLabel.value = '自分でプロフィールを入力する'
-}
-
-const linkByProviderService = async (user: User , providerService: 'Facebook' | 'Google' | 'Twitter') => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'Facebook':
-      provider = new FacebookAuthProvider()
-      provider.addScope('email')
-      provider.addScope('public_profile')
-      break
-    case 'Google':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'Twitter':
-      provider = new TwitterAuthProvider()
-      break
-  }
-
-  if (import.meta.env.DEV) {
-    return await linkWithPopup(user, provider);
-  } else {
-    return await linkWithRedirect(user, provider)
-  }
-}
-
-const reauthenticateByProviderService = async (user: User , providerService: 'Facebook' | 'Google' | 'Twitter') => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'Facebook':
-      provider = new FacebookAuthProvider()
-      provider.addScope('email')
-      provider.addScope('public_profile')
-      break
-    case 'Google':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'Twitter':
-      provider = new TwitterAuthProvider()
-      break
-  }
-
-  if (import.meta.env.DEV) {
-    return await reauthenticateWithPopup(user, provider);
-  } else {
-    return await reauthenticateWithRedirect(user, provider)
-  }
 }
 
 const handleTwitterLink = async () => {

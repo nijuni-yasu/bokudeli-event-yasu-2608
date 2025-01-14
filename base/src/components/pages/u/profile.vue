@@ -13,8 +13,6 @@ import {
   FacebookAuthProvider,
   GoogleAuthProvider,
   TwitterAuthProvider,
-  linkWithPopup,
-  linkWithRedirect,
   type User,
   updateEmail,
   signInWithCustomToken
@@ -29,6 +27,7 @@ import {
 } from '@/schemes/converter'
 import { httpsCallable } from 'firebase/functions'
 import {convertFirebaseUserToStoredUser} from "@/schemes/converter";
+import {linkByProviderService} from "@/utils/providerService";
 
 const auth = getAuth()
 const currentUser = auth.currentUser;
@@ -204,44 +203,14 @@ const emailSubmit = async () => {
   }
 }
 
-const linkByProviderService = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'Facebook':
-      provider = new FacebookAuthProvider()
-      provider.addScope('email')
-      provider.addScope('public_profile')
-      break
-    case 'Google':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'Twitter':
-      provider = new TwitterAuthProvider()
-      break
-  }
-
-  const user = getAuth().currentUser
-  if (!user) return
-
-  if (import.meta.env.DEV) {
-    await linkWithPopup(user, provider);
-  } else {
-    await linkWithRedirect(user, provider)
-  }
-
-  // ユーザー情報を再取得して更新
-  if (auth.currentUser) {
-    await auth.currentUser.reload();
-    updateProviderData(auth.currentUser);
-  }
-}
-
 const handleFacebookLink = async () => {
   try {
-    await linkByProviderService('Facebook')
+    await linkByProviderService(currentUser as User, 'Facebook')
+    // ユーザー情報を再取得して更新
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      updateProviderData(auth.currentUser);
+    }
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
@@ -257,7 +226,12 @@ const handleFacebookLink = async () => {
 
 const handleGoogleLoginLink = async () => {
   try {
-    await linkByProviderService('Google')
+    await linkByProviderService(currentUser as User, 'Google')
+    // ユーザー情報を再取得して更新
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      updateProviderData(auth.currentUser);
+    }
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
@@ -273,7 +247,12 @@ const handleGoogleLoginLink = async () => {
 
 const handleTwitterLoginLink = async () => {
   try {
-    await linkByProviderService('Twitter')
+    await linkByProviderService(currentUser as User, 'Twitter')
+    // ユーザー情報を再取得して更新
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      updateProviderData(auth.currentUser);
+    }
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = TwitterAuthProvider.credentialFromError(error)
