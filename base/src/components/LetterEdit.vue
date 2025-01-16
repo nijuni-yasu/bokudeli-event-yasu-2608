@@ -130,30 +130,29 @@ const save = async () => {
           <span class="text-h5"></span>
           <v-radio-group v-model="isScheduled">
             <v-radio :value="false" :label="$t('manage.letter.edit.deliver_now')" />
-            <v-radio :value="true" class="picker">
-              <template #label>
-                <div class="schedule">
-                  <DateInput v-model="scheduledDate" :clearable="false" :disabled="!isScheduled" />
-                  <v-select
-                    v-model="scheduledHour"
-                    :items="hourList"
-                    :label="$t('event_basic_info.hour')"
-                    :disabled="!isScheduled"
-                    outlined
-                    dense
-                  />
-                  <v-select
-                    v-model="scheduledMinute"
-                    :items="minutesList"
-                    :label="$t('event_basic_info.minute')"
-                    :disabled="!isScheduled"
-                    outlined
-                    dense
-                  />
-                  UTC +9:00
-                </div>
-              </template>
-            </v-radio>
+            <div class="d-flex align-center">
+              <v-radio :value="true" style="flex: 0; margin-right: 0; gap: 0" />
+              <div class="schedule">
+                <DateInput v-model="scheduledDate" :clearable="false" :disabled="!isScheduled" />
+                <v-select
+                  v-model="scheduledHour"
+                  :items="hourList"
+                  :label="$t('event_basic_info.hour')"
+                  :disabled="!isScheduled"
+                  outlined
+                  dense
+                />
+                <v-select
+                  v-model="scheduledMinute"
+                  :items="minutesList"
+                  :label="$t('event_basic_info.minute')"
+                  :disabled="!isScheduled"
+                  outlined
+                  dense
+                />
+                UTC +9:00
+              </div>
+            </div>
           </v-radio-group>
         </v-col>
       </v-row>
@@ -205,6 +204,5 @@ const save = async () => {
   justify-content: space-between;
   width: 100%;
   gap: 10px;
-  padding: 12px;
 }
 </style>
