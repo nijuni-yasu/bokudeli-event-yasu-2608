@@ -55,7 +55,14 @@ watch(
     }
   },
 )
-
+watch(
+  () => route.query.copy,
+  (copy) => {
+    if (copy === undefined) {
+      selectedLetter.value = null
+    }
+  },
+)
 const dialogType = ref(-1)
 const letterTypeSelectDialog = computed({
   get: () => dialogType.value >= 0,
@@ -93,9 +100,12 @@ const onCopyClick = async (letter: Letter) => {
   delete newLetter.letter_id
   delete newLetter.scheduled_at
   delete newLetter.sent_at
-  const letterId = await letterListStore.addLetter(newLetter)
-  letterListStore.reload()
-  router.push({ query: { letterId } })
+  selectedLetter.value = newLetter
+  router.push({ query: { copy: null } })
+}
+const onUpdated = () => {
+  selectedLetter.value = null
+  router.push({ query: {} })
 }
 </script>
 
@@ -132,7 +142,7 @@ const onCopyClick = async (letter: Letter) => {
   <v-container v-else>
     <v-row class="justify-center">
       <v-col md="8" sm="9" cols="12">
-        <LetterEdit :letter="selectedLetter" @update:letter="router.push({ query: {} })" />
+        <LetterEdit :letter="selectedLetter" @update:letter="onUpdated" />
       </v-col>
     </v-row>
   </v-container>

@@ -74,6 +74,14 @@ watch(
     }
   },
 )
+watch(
+  () => route.query.copy,
+  (copy) => {
+    if (copy === undefined) {
+      selectedLetter.value = null
+    }
+  },
+)
 const onEditClick = (letter: Letter) => {
   router.push({ query: { letterId: letter.letter_id } })
 }
@@ -89,11 +97,11 @@ const onCopyClick = async (letter: Letter) => {
   delete newLetter.letter_id
   delete newLetter.scheduled_at
   delete newLetter.sent_at
-  const letterId = await letterListStore.addLetter(newLetter)
-  router.push({ query: { letterId } })
-  letterListStore.reload()
+  selectedLetter.value = newLetter
+  router.push({ query: { copy: null } })
 }
 const onUpdated = (letter: Letter) => {
+  selectedLetter.value = null
   if (letter.letter_type === 'community') {
     router.push(getManageCommunityPath(event.community_account) + '/letter')
   } else {
