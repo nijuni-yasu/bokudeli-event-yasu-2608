@@ -44,7 +44,7 @@ defineProps<{ event: BokudeliEvent; members?: EventMember[] }>()
       <v-card-text class="position-relative px-3">
         <div class="d-flex justify-space-between align-center">
           <div class="v-avatar-group">
-            <UserAvatar v-for="member in members.slice(0, 12) ?? []" :key="member.user_id" :user="member" :size="40" />
+            <UserAvatar v-for="member in members.slice(0, 10) ?? []" :key="member.user_id" :user="member" :size="46" />
           </div>
         </div>
       </v-card-text>
