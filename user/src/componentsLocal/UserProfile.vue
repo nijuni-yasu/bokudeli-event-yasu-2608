@@ -5,7 +5,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline  } from '@mdi/js'
 import LineIcon from '@/icons/line'
-import userAccessiblePaths from "@/composable/userAccessiblePaths";
+import userAccessiblePaths from "@/utils/userAccessiblePaths";
 import { getManagePath } from '@/router/utils'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())

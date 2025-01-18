@@ -14,6 +14,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 import type { Router } from 'vue-router'
+import userAccessiblePaths from "@/utils/userAccessiblePaths";
 import userAccessiblePaths from "@/composable/userAccessiblePaths";
 import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
