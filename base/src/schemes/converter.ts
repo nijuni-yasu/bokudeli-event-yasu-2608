@@ -189,7 +189,7 @@ export const convertDocumentDataToStoredUser = (
     userSnsInstagram: user_sns_instagram ?? '',
     userSnsWebsite: user_sns_website ?? '',
     userPassCode: user_pass_code ?? '',
-    verifiedAt: verified_at ? (verified_at as Timestamp).toDate() : undefined,
+    verifiedAt: verified_at ? (verified_at as Timestamp).toDate() : null,
     createdAt: created_at ? (created_at as Timestamp).toDate() : undefined,
     updatedAt: updated_at ? (updated_at as Timestamp).toDate() : undefined,
   }
