@@ -394,7 +394,7 @@ async function getLastUpdatedEventStatus(eventSnapshot, status) {
       return logSnapshot.get('updated_at')
     }
   }
-  return Timestamp.now()
+  return null
 }
 
 async function createTemplateDataForApplyingOrder(eventSnapshot, updatedAt) {
