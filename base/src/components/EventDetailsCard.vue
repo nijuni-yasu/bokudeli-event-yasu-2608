@@ -26,6 +26,7 @@ import XIcon from '@/icons/x'
 import LineIcon from '@/icons/line'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
+import eventDetailStyle from '@/utils/eventDetailStyle'
 
 const qrcodeSize = 300
 
@@ -94,6 +95,10 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
 
 const isRichTextEventDesc = computed(() => {
   return props.event.event_desc.includes('<p>')
+})
+
+const iframeContent = computed(() => {
+  return `<html><header><style>${eventDetailStyle}</style></header><body>${props.event.event_desc}</body></html>`
 })
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
@@ -206,7 +211,7 @@ onMounted(() => {
         <div>
           <iframe
             v-if="isRichTextEventDesc"
-            :srcdoc="event.event_desc"
+            :srcdoc="iframeContent"
             ref="iframeRef"
             @load="adjustIframeHeight"
             class="event-content"

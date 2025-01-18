@@ -5,6 +5,7 @@ import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
+import eventDetailStyle from '@/utils/eventDetailStyle'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -35,7 +36,17 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
-const tinymceInit = { language: 'ja', menubar: 'edit view insert format', disabled: props.readonly }
+const tinymceInit = {
+  language: 'ja',
+  plugins: 'table lists link autolink',
+  menubar: 'edit view insert format',
+  removed_menuitems: 'codeformat fontfamily styles',
+  toolbar: 'undo redo styles bold italic alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link',
+  statusbar: false,
+  link_default_target: '_blank',
+  disabled: props.readonly,
+  content_style: eventDetailStyle
+}
 </script>
 
 <template>
@@ -96,15 +107,6 @@ const tinymceInit = { language: 'ja', menubar: 'edit view insert format', disabl
       <v-row>
         <v-col cols="12">
           <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
-          <!-- <v-textarea
-            v-model="event.event_desc"
-            outlined
-            rows="15"
-            :label="$t('event_detail.event_desc')"
-            :hint="$t('event_detail.event_desc_hint')"
-            :rules="[requiredValidator]"
-            :readonly="props.readonly"
-          /> -->
         </v-col>
       </v-row>
     </v-card-text>
