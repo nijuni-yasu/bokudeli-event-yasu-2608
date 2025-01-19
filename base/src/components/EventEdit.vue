@@ -50,13 +50,14 @@ const communityStore = useCommunityStore(props.communityAccount) as CommunitySto
 
 const isOpenContactDialogVisible = ref(props.eventId == null)
 
+const _event = ref(new BokudeliEvent())
 const event = computed<BokudeliEvent | null>({
   get: () => {
     if (props.eventId != null) {
       const eventStore = useEventStore(props.eventId) as EventStore
       return eventStore.event
     } else {
-      return eventListStore.eventDraft
+      return _event.value
     }
   },
   set: (value) => {
@@ -67,7 +68,7 @@ const event = computed<BokudeliEvent | null>({
       const eventStore = useEventStore(props.eventId) as EventStore
       eventStore.event = value
     } else {
-      eventListStore.eventDraft = value
+      _event.value = value
     }
   },
 })
@@ -237,12 +238,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
     event.value.community_id = communityId
     event.value.created_by = handleUserId
     event.value.updated_by = handleUserId
-    const newEvent = await eventListStore.createNewEventFromDraft(communityId)
-    const eventStore = useEventStore(newEvent.event_id) as EventStore
-    if (coverImage.value != null) {
-      await eventStore.updateCoverImage(coverImage.value)
-    }
-    eventListStore.eventDraft = new BokudeliEvent()
+    const newEvent = await eventListStore.createNewEvent(event.value, coverImage.value)
     return newEvent
   } else {
     // 更新
