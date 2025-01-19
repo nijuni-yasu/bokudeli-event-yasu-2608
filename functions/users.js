@@ -17,7 +17,6 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
         user_pass_code: user_pass_code,
         updated_at: Timestamp.now()
       });
-      console.log(`ユーザー ${user_email} にパスコードが追加されました。`)
       return { is_new: false }
     } else {
       // ユーザーが存在しない場合、新規にユーザーを作成
@@ -29,15 +28,16 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
         user_image_url: null,
         user_account: null,
         user_description: null,
+        user_url_path: null,
         user_sns_facebook: null,
         user_sns_twitter: null,
         user_sns_instagram: null,
+        user_sns_website: null,
         user_pass_code: user_pass_code,
         verified_at: null,
         created_at: Timestamp.now(),
         updated_at: Timestamp.now()
       });
-      console.log(`新規ユーザー ${user_email} が作成され、パスコードが保存されました。`)
       return { is_new: true }
     }
   } catch (error) {
@@ -79,8 +79,6 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
 export const get_custom_token  = functions.region('asia-northeast1').https.onCall(async (data) => {
   try {
     const { user_email } = data
-
-    console.log('user_email', user_email)
 
     const userSnapshot = await db.collection('users').where('user_email', '==', user_email).get()
     if (!userSnapshot.empty) {
