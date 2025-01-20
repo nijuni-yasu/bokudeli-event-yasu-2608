@@ -45,7 +45,7 @@ export default {
     participants: '【参加】{0}人 / {1}人',
   },
   event_create_modal: {
-    title:  'イベントを作成しよう！',
+    title: 'イベントを作成しよう！',
     desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
           ✅ イベントカバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> をご活用ください🎨<br />
           ✅ 誰でも参加可能な<b>「公開」</b> or 参加者を限定する<b>「URL限定公開」</b>を選べます<br />
@@ -65,15 +65,15 @@ export default {
   },
   community_create_modal: {
     community: {
-      title:  'コミュニティの作成について',
+      title: 'コミュニティの作成について',
       desc: `・「コミュニティID」「コミュニティ名」「説明文」「画像」など入力してください。<br />
             ・「運営者情報」「利用目的」などについては、コミュニティページなどで公開はされません。<br />
             ・新規作成後、shokujiiサポートにて内容を確認させていただきます。<br />
             ・コミュニティ作成後、イベントを作成することができるようになります。<br />
             `,
     },
-    prohibited:{
-      title:  '禁止事項について',
+    prohibited: {
+      title: '禁止事項について',
       desc: `・マルチ商法、ネットワークビジネス、宗教活動等の勧誘など、過度な営業行為は禁止です。<br />
             ・報告を受け次第、アカウント停止とさせていただきます。<br />
             ・また、反社会的勢力等であるか、反社会的勢力等との何らかの交流若しくは関与を行っていると当社が判断した場合もアカウント停止とさせていただきます。<br />
@@ -87,8 +87,8 @@ export default {
     },
   },
   community_create_confirm: {
-      title:  'コミュニティを作成しますか？',
-      desc: `・コミュニティ作成後、イベントを作成できるようになります。<br />
+    title: 'コミュニティを作成しますか？',
+    desc: `・コミュニティ作成後、イベントを作成できるようになります。<br />
             ・shokujiiサポートにて入力内容を確認し、利用規約に違反していた場合、アカウントを停止させていただきます。<br />
             ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および
             <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a>
@@ -96,7 +96,7 @@ export default {
             ・ご不明点ありましたらサポートまで
             <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
             `,
-      ok_text:'コミュニティを新規作成する',
+    ok_text: 'コミュニティを新規作成する',
   },
   community_edit: {
     title: 'コミュニティ設定',
@@ -125,13 +125,13 @@ export default {
     place: '開催場所',
     place_name: '会場名',
     place_url: '会場URL',
-    place_hint:"※店舗への予約申請後「郵便番号」「住所」の変更はできませんのでご注意ください。",
+    place_hint: '※店舗への予約申請後「郵便番号」「住所」の変更はできませんのでご注意ください。',
     date: '開催日時',
     start_date: '開始日',
     end_date: '終了日',
     hour: '時',
     minute: '分',
-    date_hint:"※店舗への予約申請後「開催日時」は変更はできませんのでご注意ください。",
+    date_hint: '※店舗への予約申請後「開催日時」は変更はできませんのでご注意ください。',
   },
   event_shop: {
     event_postalcode_desc: ' で注文できるお店',
@@ -146,7 +146,8 @@ export default {
     event_cover_url: 'イベントカバー画像',
     event_cover_url_hint: '※イベントカバー画像の推奨サイズは、1200 x 630ピクセル です。',
     event_desc: '開催内容',
-    event_desc_hint: '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
+    event_desc_hint:
+      '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
     deadline_date: '注文期限',
     deadline_hour: '時間',
     deadline_minute: '分',
@@ -239,8 +240,13 @@ export default {
     'kanda-curry': '神田カレーグランプリ',
   },
   hint_dialog: {
-    deadline:`注文期限まで参加者は個別に「注文」と「キャンセル」を行うことができます。<br />
+    deadline: `注文期限まで参加者は個別に「注文」と「キャンセル」を行うことができます。<br />
                     注文期限を過ぎると注文内容が確定し、参加者は「注文」および「キャンセル」を行うことができなくなります。`,
-    min_orders:'イベントの注文個数が「注文の目安」に達しない場合、イベント主催者に配送料をご請求させていただく場合がございます。あらかじめご了承ください。'
-  }
+    min_orders:
+      'イベントの注文個数が「注文の目安」に達しない場合、イベント主催者に配送料をご請求させていただく場合がございます。あらかじめご了承ください。',
+  },
+  event_few_members_notice_modal: {
+    desc: `参加者が3人以上になると、shokujiiのトップページにもイベントが表示されるようになります。<br />
+    お友だちを食事会にお誘いしてイベントを盛り上げよう🎉`,
+  },
 }

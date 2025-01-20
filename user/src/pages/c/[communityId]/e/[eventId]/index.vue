@@ -85,6 +85,24 @@ const scrollToMenu = () => {
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
+const showNotice = ref(null as boolean | null)
+const isShowNotice = computed({
+  get: () =>  {
+    if (showNotice.value === null) {
+      if (event.value != null) {
+        return event.value.event_num_members < 3 && event.value.is_public && isManager.value
+      } else {
+        return false
+      }
+    } else {
+      return showNotice.value
+    }
+  },
+  set: (val) => {
+    showNotice.value = val
+  },
+})
+
 watch(menuListRef, () => {
   const target = menuListRef.value?.$el
   if (target == null) {
@@ -204,6 +222,17 @@ onUnmounted(() => {
     :event-id="event.event_id"
   ></event-cart-dialog>
   <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
+  <v-dialog v-model="isShowNotice" persistent max-width='600px'>
+    <v-card class="pa-1">
+      <v-card-text  class="pb-0" style="line-height: 2.0rem">
+        <div v-html="$t('event_few_members_notice_modal.desc')"></div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="primary" @click="isShowNotice = false">OK</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
   <v-navigation-drawer
     v-if="event?.event_status.value === `accepting_order`"
     v-model="menuNavigation"
