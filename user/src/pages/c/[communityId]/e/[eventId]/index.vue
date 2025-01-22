@@ -90,7 +90,7 @@ const isShowNotice = computed({
   get: () =>  {
     if (showNotice.value === null) {
       if (event.value != null) {
-        return event.value.event_num_members < 3 && event.value.is_public && isManager.value
+        return event.value.event_num_members < 3 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
       } else {
         return false
       }
@@ -222,17 +222,14 @@ onUnmounted(() => {
     :event-id="event.event_id"
   ></event-cart-dialog>
   <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
-  <v-dialog v-model="isShowNotice" persistent max-width='600px'>
-    <v-card class="pa-1">
-      <v-card-text  class="pb-0" style="line-height: 2.0rem">
-        <div v-html="$t('event_few_members_notice_modal.desc')"></div>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn color="primary" @click="isShowNotice = false">OK</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <confirm-dialog v-model="isShowNotice" :ok-text="'OK'" max-width="700px">
+    <v-card-text class="text-center py-10 text-h4">
+      <div v-html="$t('event_few_members_notice_modal.title')"></div>
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.0rem">
+      <div v-html="$t('event_few_members_notice_modal.desc')"></div>
+    </v-card-text>
+  </confirm-dialog>
   <v-navigation-drawer
     v-if="event?.event_status.value === `accepting_order`"
     v-model="menuNavigation"
