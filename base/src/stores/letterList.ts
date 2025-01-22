@@ -40,7 +40,7 @@ export type LetterListStore = Store<string, LetterListStoreState, LetterListStor
 
 export const useLetterListStore = (communityAccount: string, pageSize: number = 3): LetterListStore => {
   const store = defineStore<string, LetterListStoreState & LetterListStoreGetters & LetterListStoreAction>(
-    `letterList/${pageSize}`,
+    `letterList/${communityAccount}/${pageSize}`,
     () => {
       const pagenationExecutor = new TaskExecutor(1)
       const letterStores = ref<LetterStore[] | null>(null)
