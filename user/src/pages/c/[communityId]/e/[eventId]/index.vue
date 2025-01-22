@@ -85,21 +85,60 @@ const scrollToMenu = () => {
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
-const showNotice = ref(null as boolean | null)
-const isShowNotice = computed({
+// 下書き中の主催者向けモーダル表示
+const draftNotice = ref(null as boolean | null)
+const isDraftNotice = computed({
   get: () =>  {
-    if (showNotice.value === null) {
+    if (draftNotice.value === null) {
+      if (event.value != null) {
+        return isManager.value && event.value.event_status.value === 'in_draft'
+      } else {
+        return false
+      }
+    } else {
+      return draftNotice.value
+    }
+  },
+  set: (val) => {
+    draftNotice.value = val
+  },
+})
+
+// 予約申請中の主催者向けモーダル表示
+const applyingNotice = ref(null as boolean | null)
+const isApplyingNotice = computed({
+  get: () =>  {
+    if (applyingNotice.value === null) {
+      if (event.value != null) {
+        return isManager.value && event.value.event_status.value === 'applying_reservation'
+      } else {
+        return false
+      }
+    } else {
+      return applyingNotice.value
+    }
+  },
+  set: (val) => {
+    applyingNotice.value = val
+  },
+})
+
+// 参加者3人未満時の主催者向けモーダル表示
+const fewMemberNotice = ref(null as boolean | null)
+const isFewMemberNotice = computed({
+  get: () =>  {
+    if (fewMemberNotice.value === null) {
       if (event.value != null) {
         return event.value.event_num_members < 3 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
       } else {
         return false
       }
     } else {
-      return showNotice.value
+      return fewMemberNotice.value
     }
   },
   set: (val) => {
-    showNotice.value = val
+    fewMemberNotice.value = val
   },
 })
 
@@ -222,7 +261,23 @@ onUnmounted(() => {
     :event-id="event.event_id"
   ></event-cart-dialog>
   <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
-  <confirm-dialog v-model="isShowNotice" :ok-text="'OK'" max-width="700px">
+  <confirm-dialog v-model="isDraftNotice" :ok-text="'OK'" max-width="700px">
+    <v-card-text class="text-center py-10 text-h4">
+      <div v-html="$t('event_draft_notice_modal.title')"></div>
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.0rem">
+      <div v-html="$t('event_draft_notice_modal.desc')"></div>
+    </v-card-text>
+  </confirm-dialog>
+  <confirm-dialog v-model="isApplyingNotice" :ok-text="'OK'" max-width="700px">
+    <v-card-text class="text-center py-10 text-h4">
+      <div v-html="$t('event_applying_notice_modal.title')"></div>
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.0rem">
+      <div v-html="$t('event_applying_notice_modal.desc')"></div>
+    </v-card-text>
+  </confirm-dialog>
+  <confirm-dialog v-model="isFewMemberNotice" :ok-text="'OK'" max-width="700px">
     <v-card-text class="text-center py-10 text-h4">
       <div v-html="$t('event_few_members_notice_modal.title')"></div>
     </v-card-text>
