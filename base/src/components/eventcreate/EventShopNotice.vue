@@ -302,12 +302,12 @@ const submit = () => {
             :is-confirm="true"
             :ok-text="$t('shop_notice.send_reserve_mail_ok')"
             :ok-click="sendReserveMail"
-            max-width="650px"
+            max-width="700px"
           >
-            <v-card-text class="text-center py-10 text-h6">
+            <v-card-text class="text-center py-10 text-h5">
               <div v-html="$t('shop_notice.confirm_send_reserve_mail', [event.shop_name])" />
             </v-card-text>
-            <v-card-text class="text-subtitle pb-0" style="line-height: 1.5rem">
+            <v-card-text class="pb-0" style="line-height: 2.0rem">
               <div v-html="$t('shop_notice.confirm_send_reserve_mail_desc')" />
             </v-card-text>
           </confirm-dialog>
