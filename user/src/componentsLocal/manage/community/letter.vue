@@ -147,7 +147,7 @@ const onUpdated = () => {
     </v-row>
   </v-container>
   <v-dialog v-model="letterTypeSelectDialog" max-width="600px">
-    <v-card>
+    <v-card class="pa-5">
       <v-card-title>{{ $t('manage.new_letter') }}</v-card-title>
       <v-card-text>
         <v-window v-model="dialogType">

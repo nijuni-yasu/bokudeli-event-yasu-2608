@@ -43,7 +43,7 @@ const deleteConfirmationDialog = ref(false)
 </script>
 
 <template>
-  <v-card class="text-start">
+  <v-card class="text-start pa-2">
     <v-chip class="mt-2 ml-3" color="primary" size="small">
       {{ $t(`letter_status.${letter.status}`) }}
     </v-chip>
@@ -74,7 +74,7 @@ const deleteConfirmationDialog = ref(false)
     </template>
   </v-card>
   <v-dialog v-model="deleteConfirmationDialog" max-width="600px">
-    <v-card>
+    <v-card class="pa-2">
       <v-card-title>
         {{ $t('letter_card.dialog.title') }}
       </v-card-title>
