@@ -4,7 +4,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import EmailDialog from '@/components/EmailDialog.vue'
-import { mdiFacebook, mdiEmail } from '@mdi/js'
+import { mdiFacebook, mdiEmail, mdiDownload } from '@mdi/js'
 import XIcon from '@/icons/x'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { CommunityMember } from '@/schemes/communityMember'
@@ -58,7 +58,9 @@ const downloadCsvFile = () => {
   <v-container>
     <v-row class="justify-center">
       <v-col md="10" sm="10" cols="12" class="d-flex justify-end">
-        <v-btn variant="outlined" @click="downloadCsvFile">{{ $t('manage.member.csv_download') }}</v-btn>
+        <v-btn variant="outlined" :prepend-icon="mdiDownload" @click="downloadCsvFile">
+          {{ $t('manage.member.csv_download') }}
+        </v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">
