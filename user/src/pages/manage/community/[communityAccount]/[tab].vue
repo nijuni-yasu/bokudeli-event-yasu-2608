@@ -7,7 +7,7 @@ definePage({
 import { useCommunityStore } from '@/stores/community'
 import { useI18n } from 'vue-i18n'
 import { getCommunityPath } from '@/router/utils'
-import { mdiOpenInNew } from '@mdi/js'
+import { mdiArrowTopRight } from '@mdi/js'
 
 const { t: $t } = useI18n()
 
@@ -37,7 +37,15 @@ const openInNew = (url: string) => {
       <div class="text-h3" style="display: flex; align-items: center; justify-content: flex-start">
         <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 20px" />
         {{ community?.community_name }}
-        <v-btn variant="plain" :icon="mdiOpenInNew" @click="openInNew(getCommunityPath(communityAccount))" />
+        <v-btn
+          class="ml-3"
+          size="small"
+          variant="outlined"
+          :append-icon="mdiArrowTopRight"
+          @click="openInNew(getCommunityPath(communityAccount))"
+        >
+          コミュニティページ
+        </v-btn>
       </div>
     </v-col>
   </v-row>
