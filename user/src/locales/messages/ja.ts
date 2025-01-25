@@ -29,9 +29,9 @@ export default {
     'cancel_failed': 'キャンセルに失敗しました',
   },
   'manage': {
-    'new_community': 'コミュニティ作成',
-    'new_event': 'イベント作成',
-    'new_letter': 'レター作成',
+    'new_community': 'コミュニティ新規作成',
+    'new_event': 'イベント新規作成',
+    'new_letter': 'レター新規作成',
     'community': {
       'tabs': {
         'events': 'イベント',
@@ -45,7 +45,7 @@ export default {
         'overview': '概要',
         'member': '参加者',
         'letter': 'レター',
-        'settings': '設定',
+        'settings': '編集',
       },
       'edit': 'イベント編集',
       'delete': 'イベント削除',
@@ -73,11 +73,11 @@ export default {
     },
     'letter': {
       'type_select_dialog': {
-        'top': 'メッセージの種類を選択してください',
-        'event': 'イベントに関するメッセージ',
-        'event_description': 'イベント開催を案内したい時や、イベント参加予定者にメッセージを送りたい時など、イベントに関するメッセージを送信する時に選択してください。',
-        'community': 'コミュニティに関するメッセージ',
-        'community_description': '特定のイベントに関連しないメッセージを送信する時に選択してください。',
+        'top': 'イベント参加者やコミュニティメンバーにメールで配信することができます。配信先を選択してください。',
+        'event': 'イベント参加者に配信するレター',
+        'event_description': 'イベント開催を案内したい時や、イベント参加予定者にメールを配信したい時など、イベントに関するメールを配信する時に選択してください。',
+        'community': 'コミュニティメンバーに配信するレター',
+        'community_description': '特定のイベントに関連しないメールをコミュニティ全体に配信する時に選択してください。',
         'type': {
           'normal': '通常',
           'important': '重要',
@@ -85,12 +85,12 @@ export default {
         },
       },
       'event_dialog': {
-        'top': 'メッセージに関連するイベントを選択してください',
+        'top': 'レターを配信するイベントを選択してください',
       },
       'edit': {
-        'new': 'メッセージ新規作成',
-        'edit': 'メッセージ編集',
-        'to': '宛先',
+        'new': 'レター新規作成',
+        'edit': 'レター編集',
+        'to': '配信先',
         'to_community': 'コミュニティメンバー全体',
         'to_event_participant': 'イベント参加者',
         'to_event_non_participant': 'イベント未登録者',
@@ -102,7 +102,7 @@ export default {
         'add_event_description': 'イベント内容を追加する',
         'event_description': 'イベント内容',
         'submit_reserve': '予約',
-        'submit_now': '送信',
+        'submit_now': '配信',
         'save_draft': '下書き保存',
         'to_draft': '下書きに戻す',
       }
