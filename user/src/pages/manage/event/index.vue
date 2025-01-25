@@ -106,7 +106,7 @@ const events = computed(() => {
     <v-col
       v-for="{ event, members } in events"
       :key="`popular_${event.event_id}`"
-      md="4"
+      md="3"
       sm="6"
       cols="12"
       class="content"
