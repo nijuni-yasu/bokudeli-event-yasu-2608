@@ -27,6 +27,8 @@ import LineIcon from '@/icons/line'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
 import eventDetailStyle from '@/utils/eventDetailStyle'
+import TinyMCEViewer from '@/components//TinyMCEViewer.vue'
+import isRichText from '@/utils/isRichText'
 
 const qrcodeSize = 300
 
@@ -94,31 +96,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
 }
 
 const isRichTextEventDesc = computed(() => {
-  return props.event.event_desc.includes('<p>')
-})
-
-const iframeContent = computed(() => {
-  return `<html><header><style>${eventDetailStyle}</style></header><body>${props.event.event_desc}</body></html>`
-})
-
-const iframeRef = ref<HTMLIFrameElement | null>(null)
-// iframeの高さを調整する関数
-const adjustIframeHeight = (): void => {
-  const iframe = iframeRef.value
-  if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
-    const doc = iframe.contentDocument
-    const bodyHeight = doc.body.scrollHeight
-    const htmlHeight = doc.documentElement.scrollHeight
-
-    // body と html の高さの大きい方を使用
-    const finalHeight = Math.max(bodyHeight, htmlHeight)
-
-    iframe.style.height = `${finalHeight}px`
-  }
-}
-
-onMounted(() => {
-  adjustIframeHeight()
+  return isRichText(props.event.event_desc)
 })
 </script>
 
@@ -208,18 +186,16 @@ onMounted(() => {
           </div>
         </v-card-text>
         <v-card-text class="event-item"> 【開催内容】 </v-card-text>
-        <div>
-          <iframe
-            v-if="isRichTextEventDesc"
-            :srcdoc="iframeContent"
-            ref="iframeRef"
-            @load="adjustIframeHeight"
-            class="event-content"
+        <div v-if="isRichTextEventDesc">
+          <tiny-m-c-e-viewer
+            :content="event.event_desc"
+            :style="eventDetailStyle"
+            class="rich-event-content event-content"
           />
-          <v-card-text v-else v-linkify class="event-content">
-            {{ event.event_desc }}
-          </v-card-text>
         </div>
+        <v-card-text v-else v-linkify class="event-content">
+          {{ event.event_desc }}
+        </v-card-text>
         <v-card-text class="event-item2">
           【お店】
           <span class="event-content">
@@ -345,7 +321,7 @@ iframe {
   margin: 0;
 }
 
-iframe.event-content {
+.rich-event-content {
   padding-top: 0;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
