@@ -17,10 +17,10 @@ const numOfColumns = computed(() => {
     case 'sm':
       return 2
     default:
-      return 3
+      return 4
   }
 })
-const numOfPopularColumns = 3
+const numOfPopularColumns = 4
 
 const now = Timestamp.now()
 
@@ -120,7 +120,7 @@ const next = () => {
           <v-col
             v-for="{ event, members } in popularEvents"
             :key="`popular_${event.event_id}`"
-            md="4"
+            md="3"
             sm="6"
             cols="12"
             class="content"
@@ -140,7 +140,7 @@ const next = () => {
         <v-col
           v-for="{ event, members } in upcomingEvents"
           :key="event.event_id"
-          md="4"
+          md="3"
           sm="6"
           cols="12"
           class="content"
@@ -159,7 +159,7 @@ const next = () => {
             </v-row>
           </v-col>
           <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
-          <v-col v-for="{ event, members } in pastEvents" :key="event.event_id" md="4" sm="6" cols="12" class="content">
+          <v-col v-for="{ event, members } in pastEvents" :key="event.event_id" md="3" sm="6" cols="12" class="content">
             <router-link :to="getEventPath(event.community_account, event.event_id)">
               <EventCard class="event-card" :event="event" :members="members" />
             </router-link>
