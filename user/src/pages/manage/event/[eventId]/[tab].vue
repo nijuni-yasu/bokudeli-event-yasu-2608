@@ -7,7 +7,7 @@ definePage({
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useI18n } from 'vue-i18n'
 import { getEventPath } from '@/router/utils'
-import { mdiOpenInNew } from '@mdi/js'
+import { mdiArrowTopRight } from '@mdi/js'
 import { useCommunityStore } from '@/stores/community'
 import { getManageCommunityPath } from '@/router/utils'
 
@@ -44,9 +44,9 @@ const openInNew = (url: string) => {
 
 <template>
   <v-row v-if="community != null" class="py-0">
-    <v-col cols="12" class="py-0">
+    <v-col cols="12" class="py-1">
       <router-link :to="getManageCommunityPath(community.community_account)">
-        <div class="text-h6" style="display: flex; align-items: center; justify-content: flex-start">
+        <div class="text-h5" style="display: flex; align-items: center; justify-content: flex-start">
           <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 5px" />
           {{ community?.community_name }}
         </div>
@@ -55,14 +55,17 @@ const openInNew = (url: string) => {
   </v-row>
   <v-row v-if="event != null">
     <v-col cols="12" class="py-0">
-      <div class="text-h5" style="display: flex; align-items: center; justify-content: flex-start">
+      <div class="text-h4" style="display: flex; align-items: center; justify-content: flex-start">
         {{ event.event_name }}
         <v-btn
-          variant="plain"
-          size="large"
-          :icon="mdiOpenInNew"
+          class="ml-3"
+          variant="outlined"
+          size="small"
+          :append-icon="mdiArrowTopRight"
           @click="openInNew(getEventPath(event.community_account, eventId))"
-        />
+        >
+          イベントページ
+        </v-btn>
       </div>
     </v-col>
   </v-row>
