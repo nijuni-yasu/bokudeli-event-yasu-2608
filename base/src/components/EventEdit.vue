@@ -281,7 +281,7 @@ const sendReserveMail = async () => {
 
 const stepperItems = computed(() => [
   {
-    title: '開催概要',
+    title: '場所・日時',
   },
   {
     title: '店舗選択',
@@ -293,13 +293,13 @@ const stepperItems = computed(() => [
     title: 'イベント詳細',
   },
   {
-    title: '予約申請',
+    title: '店舗への連絡事項',
   },
 ])
 </script>
 
 <template>
-  <v-stepper v-if="event" v-model="stepper" :items="stepperItems" hide-actions>
+  <v-stepper editable v-if="event" v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
       <event-basic-info v-model="event" @submit="stepper++" />
     </template>
