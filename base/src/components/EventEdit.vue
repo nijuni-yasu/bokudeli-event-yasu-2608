@@ -327,7 +327,7 @@ const stepperItems = computed(() => [
     <template #[`item.4`]>
       <v-form v-model="isValid4">
         <v-row class="justify-center">
-          <v-col cols="12" sm="12" md="8">
+          <v-col cols="12" sm="12" md="9">
             <event-detail-card
               v-model="event"
               v-model:cover-image="coverImage"
