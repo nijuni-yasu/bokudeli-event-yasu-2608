@@ -277,7 +277,7 @@ onUnmounted(() => {
       <div v-html="$t('event_applying_notice_modal.desc')"></div>
     </v-card-text>
   </confirm-dialog>
-  <confirm-dialog v-model="isFewMemberNotice" :ok-text="'OK'" max-width="750px">
+  <confirm-dialog v-model="isFewMemberNotice" :ok-text="'OK'" max-width="800px">
     <v-card-text class="text-center py-10 text-h4">
       <div v-html="$t('event_few_members_notice_modal.title')"></div>
     </v-card-text>
