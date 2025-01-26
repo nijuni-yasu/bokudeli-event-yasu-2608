@@ -2,8 +2,24 @@
 import type BokudeliEvent from '../schemes//bokudeliEvent'
 import type { EventMember } from '../schemes/EventMember'
 import UserAvatar from './UserAvatar.vue'
+import { useDisplay } from 'vuetify'
 
 defineProps<{ event: BokudeliEvent; members?: EventMember[] }>()
+
+const display = useDisplay()
+const avatarSize = computed(() => {
+  switch (display.name.value) {
+    case 'xs':
+      return 50
+    case 'sm':
+      return 55
+    case 'md':
+      return 35
+    default:
+      return 39
+  }
+})
+
 </script>
 
 <template>
@@ -44,7 +60,7 @@ defineProps<{ event: BokudeliEvent; members?: EventMember[] }>()
       <v-card-text class="position-relative px-3">
         <div class="d-flex justify-space-between align-center">
           <div class="v-avatar-group">
-            <UserAvatar v-for="member in members.slice(0, 10) ?? []" :key="member.user_id" :user="member" :size="46" />
+            <UserAvatar v-for="member in members.slice(0, 9) ?? []" :key="member.user_id" :user="member" :size="avatarSize" />
           </div>
         </div>
       </v-card-text>
