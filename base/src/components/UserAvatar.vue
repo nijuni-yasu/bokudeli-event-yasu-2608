@@ -24,11 +24,16 @@ const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
 
+// 画面をリサイズした際に適切にサイズを変更する
 const resizeObserver = new ResizeObserver((entries) => {
   const entry = entries[0]
   if (entry) {
     const { width, height } = entry.contentRect
-    elementSize.value = Math.max(width, height)
+    // 一度表示した後、非表示にした場合、は width, hight 共に 0 になり、
+    // その後表示しても ResizeObserver が動作しないので無視する
+    if (width !== 0  && height !== 0) {
+      elementSize.value = Math.max(width, height)
+    }
   }
 })
 
