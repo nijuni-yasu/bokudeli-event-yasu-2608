@@ -34,7 +34,7 @@ const letterListStore = useLetterListStore(event.community_account)
 const letters = computed(
   () =>
     letterListStore.letterStores?.flatMap((ls) =>
-      ls.letter == null || ls.letter.letter_type == 'community' ? [] : ls.letter,
+      ls.letter == null || ls.letter.letter_type == 'community' || ls.letter.event_id !== eventId ? [] : ls.letter,
     ) ?? [],
 )
 
