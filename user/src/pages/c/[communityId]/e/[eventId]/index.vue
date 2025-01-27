@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getEventEditPath } from '@/router/utils'
+import { getEventEditPath, getEventEditShopNoticePath } from '@/router/utils'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -193,9 +193,7 @@ onUnmounted(() => {
             elevation="5"
             rounded="pill"
             :prepend-icon="mdiEmail"
-            :to="{
-              path: getEventEditPath(eventId),
-            }"
+            :to="getEventEditShopNoticePath(eventId)"
           >
             店舗へ予約申請
           </v-btn>

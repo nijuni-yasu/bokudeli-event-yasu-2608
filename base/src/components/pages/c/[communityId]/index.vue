@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { getEventPath, getEventCreatePath, getManageCommunitySettingsPath, getEventEditPath } from '@/router/utils'
+import {
+  getEventPath,
+  getEventEditShopNoticePath,
+  getEventCreatePath,
+  getManageCommunitySettingsPath,
+  getEventEditPath,
+} from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -208,9 +214,7 @@ const inviteManager = async () => {
                     size="small"
                     rounded="pill"
                     :prepend-icon="mdiEmail"
-                    :to="{
-                      path: getEventEditPath(event.event_id),
-                    }"
+                    :to="getEventEditShopNoticePath(event.event_id)"
                   >
                     予約
                   </v-btn>

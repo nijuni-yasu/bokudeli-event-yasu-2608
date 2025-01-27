@@ -22,3 +22,5 @@ export const getInvoicePath = () => `/invoice`
 export const getEventEditPath = (eventId: string) => ''
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getManageCommunitySettingsPath = (communityAccount: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getEventEditShopNoticePath = (eventId: string) => ''
