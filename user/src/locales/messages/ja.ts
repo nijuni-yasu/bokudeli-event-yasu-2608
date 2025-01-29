@@ -63,7 +63,6 @@ export default {
       'canceled': 'キャンセル',
       'name': '名前',
       'order': '注文内容',
-      'multi_order': '{0} ({1}個)',
       'csv_download': 'CSV ダウンロード',
       'date': {
         'ordered': '注文日時',

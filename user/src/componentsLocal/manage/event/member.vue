@@ -20,33 +20,29 @@ const eventId = route.params.eventId as string
 const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
 
 const eventStore = useEventStore(eventId) as EventStore
-const orders = computed<Array<[OrderItem, EventMember]>>(
+const menus = computed<Array<[OrderItem, EventMember, OrderMenu]>>(
   () =>
     eventStore.orders?.flatMap((order) => {
       const member = eventStore.members?.find((m) => m.user_id === order.user_id)
-      return member != null ? [[order, member]] : []
+      return member == null ? [] : order.menus.flatMap((menu) => Array(menu.count).fill([order, member, menu]))
     }) ?? [],
 )
-const orderedOrders = computed(() =>
-  orders.value
+const orderedMenus = computed(() =>
+  menus.value
     .filter(([order]) => order.status === 'ordered')
     .sort(([a], [b]) => a.updated_at.toMillis() - b.updated_at.toMillis()),
 )
-const cartOrders = computed(() =>
-  orders.value
+const cartMenus = computed(() =>
+  menus.value
     .filter(([order]) => order.status === 'in_cart')
     .sort(([a], [b]) => a.carted_at.toMillis() - b.carted_at.toMillis()),
 )
-const canceledOrders = computed(() =>
-  orders.value
+const canceledMenus = computed(() =>
+  menus.value
     .filter(([order]) => order.status === 'canceled')
     .sort(([a], [b]) => (a.canceled_at?.toMillis() ?? 0) - (b.canceled_at?.toMillis() ?? 0)),
 )
-const tables = computed(() => [orderedOrders.value, cartOrders.value, canceledOrders.value])
-const getMenuString = (menus: OrderMenu[]) =>
-  menus
-    .map((menu) => (menu.count > 1 ? $t('manage.member.multi_order', [menu.name, menu.count]) : menu.name))
-    .join(', ')
+const tables = computed(() => [orderedMenus.value, cartMenus.value, canceledMenus.value])
 
 const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
@@ -82,11 +78,11 @@ const getDateString = (order: OrderItem) => {
     <v-row class="justify-center">
       <v-col md="10" sm="12" cols="12">
         <v-card class="pa-10">
-          <template v-for="orders in tables">
-            <v-row v-if="orders.length !== 0" :key="orders[0][0].event_id" class="justify-center">
+          <template v-for="menus in tables">
+            <v-row v-if="menus.length !== 0" :key="menus[0][0].event_id" class="justify-center">
               <v-col md="12" sm="12" cols="12">
                 <v-col cols="12" class="text-h5 font-weight-bold mt-3">
-                  <v-row> {{ $t(`manage.member.${orders[0][0].status}`) }} </v-row>
+                  <v-row> {{ $t(`manage.member.${menus[0][0].status}`) }} </v-row>
                 </v-col>
                 <v-table>
                   <thead>
@@ -95,12 +91,12 @@ const getDateString = (order: OrderItem) => {
                       <th colspan="2">{{ $t('manage.member.name') }}</th>
                       <th colspan="3"></th>
                       <th>{{ $t('manage.member.order') }}</th>
-                      <th>{{ $t(`manage.member.date.${orders[0][0].status}`) }}</th>
+                      <th>{{ $t(`manage.member.date.${menus[0][0].status}`) }}</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="([order, member], i) of orders" :key="order.order_id">
+                    <tr v-for="([order, member, menu], i) of menus" :key="order.order_id">
                       <td>{{ i + 1 }}</td>
                       <td class="minimum-cell">
                         <router-link :to="getUserPath(member.user_id)">
@@ -143,7 +139,7 @@ const getDateString = (order: OrderItem) => {
                           <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                         </v-btn>
                       </td>
-                      <td>{{ getMenuString(order.menus) }}</td>
+                      <td>{{ menu.name }}</td>
                       <td>{{ getDateString(order) }}</td>
                       <td>
                         <v-btn
