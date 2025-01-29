@@ -4,7 +4,7 @@ import EmailDialog from '@/components/EmailDialog.vue'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useUserStore, type UserStore } from '@/stores/user'
 import { getUserPath } from '@/router/utils'
-import { mdiFacebook, mdiEmail } from '@mdi/js'
+import { mdiFacebook, mdiEmail, mdiDownload } from '@mdi/js'
 import XIcon from '@/icons/x'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { OrderItem } from '@/schemes/orderItem'
@@ -12,6 +12,7 @@ import type { EventMember } from '@/schemes/EventMember'
 import type { OrderMenu } from '@/schemes/orderMenu'
 import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/buildSnsLinks'
+import { downloadCsv } from '@/utils/downloadCsv'
 
 const { t: $t, d: $d } = useI18n()
 const route = useRoute()
@@ -71,10 +72,31 @@ const getDateString = (order: OrderItem) => {
       return order.canceled_at == null ? '' : $d(order.canceled_at.toDate(), 'datetime')
   }
 }
+const downloadCsvFile = () => {
+  let csv = '"", "name","x","facebook","instagram","order","date"\n'
+  for (const [order, member, menu] of [...orderedMenus.value, ...cartMenus.value, ...canceledMenus.value]) {
+    csv +=
+      `"${$t(`manage.member.${order.status}`)}",` +
+      `"${member.user_name}",` +
+      `"${member.user_sns_twitter == null ? '' : buildTwitterUrl(member.user_sns_twitter)}",` +
+      `"${member.user_sns_facebook == null ? '' : buildFacebookUrl(member.user_sns_facebook)}",` +
+      `"${member.user_sns_instagram == null ? '' : buildInstagramUrl(member.user_sns_instagram)}",` +
+      `"${menu.name}",` +
+      `"${getDateString(order)}"\n`
+  }
+  downloadCsv('member.csv', csv)
+}
 </script>
 
 <template>
   <v-container>
+    <v-row class="justify-center">
+      <v-col md="10" sm="10" cols="12" class="d-flex justify-end">
+        <v-btn variant="outlined" :prepend-icon="mdiDownload" @click="downloadCsvFile">{{
+          $t('manage.member.csv_download')
+        }}</v-btn>
+      </v-col>
+    </v-row>
     <v-row class="justify-center">
       <v-col md="10" sm="12" cols="12">
         <v-card class="pa-10">
