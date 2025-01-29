@@ -24,3 +24,7 @@ export const getEventEditPath = (eventId: string) => ''
 export const getManageCommunitySettingsPath = (communityAccount: string) => ''
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getEventEditShopNoticePath = (eventId: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getEventEditBasicPath = (eventId: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getEventEditDetailsPath = (eventId: string) => ''

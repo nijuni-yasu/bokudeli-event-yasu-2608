@@ -13,7 +13,9 @@ export const getUserPath = (userId: string) => `/u/${userId}`
 export const getInvoicePath = () => `/invoice`
 export const getEventCreatePath = (communityAccount: string) => `/manage/community/${communityAccount}/newevent`
 export const getEventEditPath = (eventId: string) => `/manage/event/${eventId}/settings`
+export const getEventEditBasicPath = (eventId: string) => `/manage/event/${eventId}/settings?step=1`
 export const getEventEditShopNoticePath = (eventId: string) => `/manage/event/${eventId}/settings?step=5`
+export const getEventEditDetailsPath = (eventId: string) => `/manage/event/${eventId}/settings?step=4`
 export const getManagePath = () => `/manage`
 export const getManageNewCommunityPath = () => `/manage/newcommunity`
 export const getManageCommunitySettingsPath = (communityAccount: string) =>

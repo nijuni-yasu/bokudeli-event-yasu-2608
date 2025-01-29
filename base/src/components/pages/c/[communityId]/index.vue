@@ -5,7 +5,8 @@ import {
   getEventEditShopNoticePath,
   getEventCreatePath,
   getManageCommunitySettingsPath,
-  getEventEditPath,
+  getEventEditBasicPath,
+  getEventEditDetailsPath,
 } from '@/router/utils'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
@@ -219,24 +220,11 @@ const inviteManager = async () => {
                     予約
                   </v-btn>
                   <v-btn
-                    v-if="event.event_status.value === 'in_draft'"
-                    class="ml-1"
-                    color="white"
-                    elevation="5"
-                    size="small"
-                    rounded="pill"
-                    :prepend-icon="mdiPencilBoxOutline"
-                    :to="{
-                      path: getEventEditPath(event.event_id),
-                    }"
-                  >
-                    編集
-                  </v-btn>
-                  <v-btn
                     v-if="
-                      event.event_status.value == 'applying_reservation' ||
-                      event.event_status.value == 'accepting_order' ||
-                      event.event_status.value == 'order_closed' ||
+                      event.event_status.value === 'in_draft' ||
+                      event.event_status.value === 'applying_reservation' ||
+                      event.event_status.value === 'accepting_order' ||
+                      event.event_status.value === 'order_closed' ||
                       event.event_status.value === 'full'
                     "
                     class="ml-1"
@@ -245,9 +233,11 @@ const inviteManager = async () => {
                     size="small"
                     rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
-                    :to="{
-                      path: getEventEditPath(event.event_id),
-                    }"
+                    :to="
+                      event.event_status.value === 'in_draft'
+                        ? getEventEditBasicPath(event.event_id)
+                        : getEventEditDetailsPath(event.event_id)
+                    "
                   >
                     編集
                   </v-btn>
