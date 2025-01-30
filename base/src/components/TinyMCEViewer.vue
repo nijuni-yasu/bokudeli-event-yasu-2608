@@ -1,6 +1,10 @@
 <script setup lang="ts">
 const props = defineProps<{ content: string; style?: string }>()
 
+const isRichText = computed(() => {
+  return props.content.includes('<p>')
+})
+
 const iframeContent = computed(() => {
   return `
     <!DOCTYPE html>
@@ -37,9 +41,8 @@ onMounted(() => {
 })
 </script>
 <template>
-  <div>
-    <iframe :srcdoc="iframeContent" ref="iframeRef" @load="adjustIframeHeight" />
-  </div>
+  <iframe v-if=isRichText :srcdoc="iframeContent" ref="iframeRef" @load="adjustIframeHeight" />
+  <slot v-else name="planeText"><p>{{ props.content }}</p></slot>
 </template>
 <style lang="scss" scoped>
 iframe {

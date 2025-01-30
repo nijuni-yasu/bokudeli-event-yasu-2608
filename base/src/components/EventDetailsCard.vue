@@ -28,7 +28,6 @@ import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
 import eventDetailStyle from '@/utils/eventDetailStyle'
 import TinyMCEViewer from '@/components//TinyMCEViewer.vue'
-import isRichText from '@/utils/isRichText'
 
 const qrcodeSize = 300
 
@@ -94,10 +93,6 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   })
   await shareSnsButton(type, props.event, props.community, shop!, _window)
 }
-
-const isRichTextEventDesc = computed(() => {
-  return isRichText(props.event.event_desc)
-})
 </script>
 
 <template>
@@ -186,16 +181,17 @@ const isRichTextEventDesc = computed(() => {
           </div>
         </v-card-text>
         <v-card-text class="event-item"> 【開催内容】 </v-card-text>
-        <div v-if="isRichTextEventDesc">
-          <tiny-m-c-e-viewer
-            :content="event.event_desc"
-            :style="eventDetailStyle"
-            class="rich-event-content event-content"
-          />
-        </div>
-        <v-card-text v-else v-linkify class="event-content">
-          {{ event.event_desc }}
-        </v-card-text>
+        <tiny-m-c-e-viewer
+          :content="event.event_desc"
+          :style="eventDetailStyle"
+          class="rich-event-content event-content"
+        >
+          <template #planeText>
+            <v-card-text class="event-content">
+              {{ event.event_desc }}
+            </v-card-text>
+          </template>
+        </tiny-m-c-e-viewer>
         <v-card-text class="event-item2">
           【お店】
           <span class="event-content">
