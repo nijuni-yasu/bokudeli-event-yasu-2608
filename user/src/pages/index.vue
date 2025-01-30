@@ -64,7 +64,7 @@ const upcomingEventListStore = useEventListStore(
 const upcomingEvents =
   computed(() =>
     upcomingEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 3) {
+      if (s.event == null || s.event.event_num_members < 2) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
@@ -84,7 +84,7 @@ const pastEventListStore = useEventListStore(
 const pastEvents =
   computed(() =>
     pastEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 3) {
+      if (s.event == null || s.event.event_num_members < 2) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
