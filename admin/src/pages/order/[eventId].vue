@@ -8,6 +8,8 @@ import { usePartnerStore } from '@/stores/partner'
 import type { Shop } from '@/schemes/shop'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { getOrderPath } from '@/navigation/utils'
+import { getNamesSheetPath } from '@/router/utils'
+import { getNamesSheetPdf } from '@/utils/namesSheet'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -76,6 +78,13 @@ const submit = async () => {
 const isOwner = computed(() => {
   return event.community_account === shop.community_account
 })
+
+// [お名前]を印刷 ボタンの実装 
+const downloadNamesSheet = async () => {
+  const w = window.open(getNamesSheetPath(), '_blank')
+  const pdf = await getNamesSheetPdf(eventId)
+  w!.location.href = window.URL.createObjectURL(pdf)
+}
 </script>
 
 <template>
@@ -124,6 +133,7 @@ const isOwner = computed(() => {
             </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
+            <v-btn @click="downloadNamesSheet">{{ $t('order_detail.names_sheet_print_button') }}</v-btn>
             <template v-if="!isOwner">
               <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
               <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>

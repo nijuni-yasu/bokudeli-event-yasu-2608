@@ -178,6 +178,7 @@ export default {
     'total_count': '合計個数',
     'total_price': '合計金額',
     'email_sent': 'メールを送信しました',
+    'names_sheet_print_button': '[お名前]を印刷',
   },
   'menu_card': {
     'sold_out': '売り切れ',
