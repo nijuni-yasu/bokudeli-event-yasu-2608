@@ -28,6 +28,9 @@ export const updateCredentialFromUserCredential = async (redirectResult: UserCre
       case GoogleAuthProvider.PROVIDER_ID:
         credential = GoogleAuthProvider.credentialFromResult(redirectResult)
         break
+      case TwitterAuthProvider.PROVIDER_ID:
+        credential = TwitterAuthProvider.credentialFromResult(redirectResult)
+        break
       default:
         console.error('Unknown providerId:', redirectResult.providerId)
         return
