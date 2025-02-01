@@ -106,7 +106,7 @@ const handleTwitterLogin = async () => {
             case 'facebook.com':
               userCredential = await signInByProviderService('Facebook')
               break
-            case 'Twitter.com':
+            case 'twitter.com':
               userCredential = await signInByProviderService('Twitter')
               break
           }
@@ -156,7 +156,7 @@ const handleFacebookLogin = async () => {
             case 'facebook.com':
               userCredential = await signInByProviderService('Facebook')
               break
-            case 'Twitter.com':
+            case 'twitter.com':
               userCredential = await signInByProviderService('Twitter')
               break
           }
@@ -206,7 +206,7 @@ const handleGoogleLogin = async () => {
             case 'facebook.com':
               userCredential = await signInByProviderService('Facebook')
               break
-            case 'Twitter.com':
+            case 'twitter.com':
               userCredential = await signInByProviderService('Twitter')
               break
           }
