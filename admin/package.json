@@ -18,6 +18,7 @@
     "@floating-ui/dom": "^1.6.5",
     "@turf/distance": "^7.0.0",
     "@vueuse/core": "^10.11.0",
+    "axios": "^1.7.9",
     "cookie-es": "^1.1.0",
     "date-fns": "^3.6.0",
     "destr": "^2.0.3",
