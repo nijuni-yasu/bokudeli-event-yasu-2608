@@ -4,6 +4,7 @@ import {
   getAuth,
   getRedirectResult,
   onAuthStateChanged,
+  getAdditionalUserInfo,
   FacebookAuthProvider,
   GoogleAuthProvider,
   TwitterAuthProvider,
@@ -20,12 +21,20 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getManageCommunityListPath } from './utils'
+import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 
 const checkUser = async (user: User | null) => {
   // リダイレクト結果を取得
   let userCredential: UserCredential | null = null
   try {
     userCredential = await getRedirectResult(getAuth())
+    if (userCredential) {
+      const additionalUserInfo = getAdditionalUserInfo(userCredential)
+      if (additionalUserInfo) {
+        useStoreUserAdditionalInfo().update(additionalUserInfo)
+      }
+    }
+
   } catch (error) {
     if (error instanceof FirebaseError) {
       const tokenResponse = error.customData?._tokenResponse as { providerId: string }
