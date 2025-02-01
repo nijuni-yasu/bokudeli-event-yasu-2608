@@ -20,6 +20,8 @@ import { db } from '@/firebase'
 import {convertDocumentDataToStoredUser} from "@/schemes/converter";
 import {useValidators} from "@/composable/validators";
 import {signInByProviderService} from "@/utils/providerService";
+import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
+import {useStoreUserCredential} from "@/stores/userCredential";
 
 type CreateUserRequest = {
   user_email: string
@@ -81,7 +83,8 @@ const submit = async () => {
 const handleTwitterLogin = async () => {
   try {
     const userCredential = await signInByProviderService('Twitter')
-    await transitionJudge(userCredential)
+    const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+    await transitionJudge(userCredential, additionalUserInfo)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = TwitterAuthProvider.credentialFromError(error)
@@ -115,7 +118,8 @@ const handleTwitterLogin = async () => {
         if (!userCredential || !credential) return window.alert('Xログインできませんでした')
 
         await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
-          await transitionJudge(userCredential)
+          const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+          await transitionJudge(userCredential, additionalUserInfo)
         }).catch((error) => {
           console.error(error)
           window.alert('Xログインできませんでした')
@@ -131,7 +135,8 @@ const handleTwitterLogin = async () => {
 const handleFacebookLogin = async () => {
   try {
     const userCredential = await signInByProviderService('Facebook')
-    await transitionJudge(userCredential)
+    const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+    await transitionJudge(userCredential, additionalUserInfo)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
@@ -165,7 +170,8 @@ const handleFacebookLogin = async () => {
         if (!userCredential || !credential) return window.alert('Facebookログインできませんでした')
 
         await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
-          await transitionJudge(userCredential)
+          const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+          await transitionJudge(userCredential, additionalUserInfo)
         }).catch((error) => {
           console.error(error)
           window.alert('Facebookログインできませんでした')
@@ -181,7 +187,8 @@ const handleFacebookLogin = async () => {
 const handleGoogleLogin = async () => {
   try {
     const userCredential = await signInByProviderService('Google')
-    await transitionJudge(userCredential)
+    const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+    await transitionJudge(userCredential, additionalUserInfo)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
@@ -215,7 +222,8 @@ const handleGoogleLogin = async () => {
         if (!userCredential || !credential) return window.alert('Googleログインできませんでした')
 
         await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
-          await transitionJudge(userCredential)
+          const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+          await transitionJudge(userCredential, additionalUserInfo)
         }).catch((error) => {
           console.error(error)
           window.alert('Googleログインできませんでした')
@@ -228,14 +236,15 @@ const handleGoogleLogin = async () => {
   }
 }
 
-const transitionJudge = async (userCredential: UserCredential) => {
-  const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+const transitionJudge = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
   const email = userCredential.user.email ?? additionalUserInfo?.profile?.email as string
   const isNewUser = additionalUserInfo?.isNewUser;
 
   const docRef = doc(db, 'users', userCredential.user.uid)
   const docSnap = await getDoc(docRef)
   const storedUser = convertDocumentDataToStoredUser(docSnap.data())
+
+  useStoreUserAdditionalInfo().reset()
 
   // メールアドレスが無ければ、メールアドレス設定へ
   if (email === "" || !email) {
@@ -287,6 +296,22 @@ const transitionJudge = async (userCredential: UserCredential) => {
   })
 }
 
+onMounted(async () => {
+  const userCredential = useStoreUserCredential().userCredential
+  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
+  if (userCredential !== undefined && additionalUserInfo !== null) {
+    try {
+      isLoading.value = true
+      await transitionJudge(userCredential, additionalUserInfo)
+    } catch (error) {
+      console.error(error)
+      isLoading.value = false
+    } finally {
+      isLoading.value = false
+    }
+  }
+})
+
 </script>
 
 <template>
@@ -317,13 +342,13 @@ const transitionJudge = async (userCredential: UserCredential) => {
             </v-btn>
           </v-form>
 
-          <v-btn class="mb-4" size="large" color="grey-900" block @click="handleTwitterLogin">
+          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleTwitterLogin">
             Xでログイン
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block @click="handleFacebookLogin">
+          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleFacebookLogin">
             Facebookでログイン
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block @click="handleGoogleLogin">
+          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleGoogleLogin">
             Googleでログイン
           </v-btn>
         </v-sheet>
