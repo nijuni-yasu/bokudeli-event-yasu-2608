@@ -4,7 +4,8 @@ import {
   getAuth,
   TwitterAuthProvider,
   getAdditionalUserInfo,
-  type User
+  type User,
+  type AdditionalUserInfo
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import { useStoreStoredUser } from '@/stores/storedUser'
@@ -13,7 +14,7 @@ import {FirestoredUser} from "@/schemes/storedUser"
 import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
 import axios from 'axios'
 import {linkByProviderService, reauthenticateByProviderService} from "@/utils/providerService";
-
+import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 
 type ProfileLink = {
   path: string,
@@ -39,17 +40,6 @@ if (currentUser) {
   updateProviderData(currentUser);
 }
 
-const storedUserStore = useStoreStoredUser()
-const { storedUser } = storeToRefs(storedUserStore)
-const user = computed(() => {
-  const userId = storedUser.value?.userId
-  return userId == null ? null : (useUserStore(userId) as UserStore).user
-})
-watchEffect(() => {
-  // 初期化
-  user.value
-})
-
 const route = useRoute()
 const router = useRouter()
 
@@ -66,6 +56,8 @@ const profileLink: ProfileLink = {
     redirect: route.query.redirect as string,
   }
 }
+
+const isLoading = ref(false)
 
 const isNew = computed(() => {
   const value = route.query.new
@@ -84,6 +76,7 @@ if (isNew.value === 1) {
 
 const handleTwitterLink = async () => {
   try {
+    isLoading.value = true
     if (!currentUser) throw new Error('currentUser is null')
     let userCredential
     if (linkedProviderData.value.includes('twitter.com')) {
@@ -94,12 +87,66 @@ const handleTwitterLink = async () => {
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
 
     if (additionalUserInfo === null) return
-    const firestoredUser = user.value as FirestoredUser
+
+    await setTwitterProfile(additionalUserInfo)
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = TwitterAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+      }
+    } else {
+      console.error({ error })
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(async () => {
+  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
+  if (additionalUserInfo === null) return
+
+  try {
+    isLoading.value = true
+    await setTwitterProfile(additionalUserInfo)
+  } catch (error) {
+    console.error(error)
+    isLoading.value = false
+  } finally {
+    isLoading.value = false
+  }
+
+})
+
+const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
+  const storedUserStore = useStoreStoredUser()
+  const { storedUser } = storeToRefs(storedUserStore)
+  const userId = storedUser.value?.userId
+  if (userId) {
+    const userStore = useUserStore(userId) as UserStore
+    await new Promise<void>((resolve) => {
+      let unwatch: (() => void) | null = null
+
+      unwatch = watch(
+          () => userStore.user,
+          (newUser) => {
+            if (newUser) {
+              if (unwatch) unwatch()
+              resolve();
+            }
+          },
+          { immediate: true }
+      );
+    });
+
+    const firestoredUser = userStore.user as FirestoredUser
     firestoredUser.user_name = additionalUserInfo.profile?.name as string | ""
     firestoredUser.user_description = additionalUserInfo.profile?.description as string | null
     firestoredUser.user_url_path = additionalUserInfo.username as string | null
     firestoredUser.user_sns_twitter = additionalUserInfo.username as string | null
-    const userStore = useUserStore(firestoredUser.user_id) as UserStore
     await userStore.updateUser(firestoredUser)
 
     const photoUrl = additionalUserInfo.profile?.profile_image_url_https as string
@@ -116,19 +163,9 @@ const handleTwitterLink = async () => {
     storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
 
     router.push(profileLink)
-  } catch (error) {
-    if (error instanceof FirebaseError) {
-      const credential = TwitterAuthProvider.credentialFromError(error)
-      console.error({ error, credential })
-
-      if (error.code === 'auth/credential-already-in-use') {
-        return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
-      }
-    } else {
-      console.error({ error })
-    }
   }
 }
+
 </script>
 
 <template>
@@ -150,10 +187,10 @@ const handleTwitterLink = async () => {
             </v-row>
           </v-container>
 
-          <v-btn class="mb-4" size="large" color="grey-900" block @click="handleTwitterLink">
+          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleTwitterLink">
             X と連携してプロフィール登録
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block :to="profileLink">
+          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" :to="profileLink">
             {{ selfButtonLabel }}
           </v-btn>
         </v-sheet>
