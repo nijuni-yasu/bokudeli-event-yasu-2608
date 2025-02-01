@@ -118,7 +118,6 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-
 })
 
 const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
@@ -161,6 +160,8 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
     await userStore.uploadUserImage(blob)
 
     storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
+    // 明示的に削除
+    useStoreUserAdditionalInfo().$reset()
 
     router.push(profileLink)
   }

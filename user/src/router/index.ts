@@ -22,6 +22,7 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getManageCommunityListPath } from './utils'
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
+import {useStoreUserCredential} from "@/stores/userCredential";
 
 const checkUser = async (user: User | null) => {
   // リダイレクト結果を取得
@@ -102,6 +103,7 @@ const checkUser = async (user: User | null) => {
   }
   if (userCredential) {
     // リダイレクトでのログイン処理
+    useStoreUserCredential().update(userCredential)
     await updateCredentialFromUserCredential(userCredential)
     await loginUser(user || userCredential.user)
   }
@@ -135,7 +137,6 @@ export const setupRouter = (router: Router) => {
 
     if (userAccessiblePaths.includes(to.path) && !storedUserStore.storedUser) router.replace('/')
 
-    if (to.path === '/login' && storedUserStore.storedUser) router.replace('/')
   })
 
   let unsubscribeAuthStateChanged: Unsubscribe | null
