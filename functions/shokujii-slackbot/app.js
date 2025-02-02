@@ -101,7 +101,8 @@ const makeBotKey = (command) => {
   return `slack-${slackId}-${channel_id}`
 }
 
-app.command('/shokujii', async ({ command, ack, respond }) => {
+const commandName = process.env.SLACK_COMMAND_NAME || 'shokujii';
+app.command(`/${commandName}`, async ({ command, ack, respond }) => {
   // コマンドリクエストを確認
   await ack();
 
