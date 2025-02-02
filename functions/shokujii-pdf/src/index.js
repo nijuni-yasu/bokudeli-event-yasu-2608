@@ -68,12 +68,8 @@ export const downloadImageFromGCS = async (gsUrl) => {
 // 写真URLの妥当性をチェックし、必要に応じてBase64エンコードする関数を修正
 const isValidPhotoUrl = async (url) => {
 
-  // console.log('typeof url', typeof url)
-  // console.log('url', url)
   // gs://形式のURLをHTTP(S)リンクに変換
   if (url && typeof url === 'string' && url.startsWith('gs://')) {
-    console.log('gs://形式のURL**************************************')
-    console.log('url', url)
 
     // GCSから画像をダウンロード
     const imageBuffer = await downloadImageFromGCS(url);
