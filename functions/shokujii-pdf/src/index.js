@@ -2,6 +2,7 @@ import path from 'path'
 import { initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
+import { getStorage } from 'firebase-admin/storage'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { setGlobalOptions } from 'firebase-functions/v2/options'
 import { defineString } from 'firebase-functions/params'
@@ -16,6 +17,7 @@ setGlobalOptions({ region: 'asia-northeast1' })
 
 initializeApp()
 const db = getFirestore()
+const storage = getStorage();
 
 const convertDateToId = (date) => {
   return format(date, 'yyyyMMddHHmmss')
@@ -47,6 +49,22 @@ const getBlankProfileBase64 = () => {
   return `data:image/jpeg;base64,${blankProfile.toString('base64')}`
 }
 
+// GCSから画像をダウンロードする関数
+export const downloadImageFromGCS = async (gsUrl) => {
+  const bucketName = gsUrl.split('/')[2]; // バケット名を取得
+  const filePath = gsUrl.split('/').slice(3).join('/'); // ファイルパスを取得
+  const bucket = storage.bucket(bucketName);
+  
+  try {
+    const file = bucket.file(filePath);
+    const [imageBuffer] = await file.download();
+    return imageBuffer;
+  } catch (error) {
+    console.error('Error downloading image from GCS:', error);
+    return null; // エラーが発生した場合はnullを返す
+  }
+};
+
 // 写真URLの妥当性をチェックし、必要に応じてBase64エンコードする関数を修正
 const isValidPhotoUrl = async (url) => {
 
@@ -57,10 +75,20 @@ const isValidPhotoUrl = async (url) => {
     console.log('gs://形式のURL**************************************')
     console.log('url', url)
 
-    const httpUrl = url.replace('gs://', 'https://storage.googleapis.com/');
-    url = httpUrl; // 変換したURLを使用
+    // GCSから画像をダウンロード
+    const imageBuffer = await downloadImageFromGCS(url);
+    if (imageBuffer == null) {
+      return getDefaultProfileBase64(); // 画像が取得できない場合はデフォルト画像を返す
+    }
+
+    // 画像をリサイズ（例: 幅を300pxに設定）
+    const resizedBuffer = await sharp(imageBuffer)
+      .resize({ width: 300 }) // 幅を300pxにリサイズ
+      .toBuffer();
+
+    return `data:image/jpeg;base64,${resizedBuffer.toString('base64')}`;
   }
-  
+
   if (!url || typeof url !== 'string' || !url.startsWith('https://')) return getDefaultProfileBase64();
   
   try {
