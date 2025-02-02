@@ -82,6 +82,11 @@ const events = computed(() => {
 </script>
 
 <template>
+  <v-row v-if="communityList && communityList.length === 0">
+    <v-col cols="12" class="text-h5">
+      <div v-html="$t('manage.event.no_community')" />
+    </v-col>
+  </v-row>
   <v-row v-if="communityAccount != null">
     <v-col cols="12" class="buttons">
       <v-menu v-if="community != null && communityList != null">
