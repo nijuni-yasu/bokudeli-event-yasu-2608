@@ -42,7 +42,7 @@ const checkAccountExists = async (event: Event) => {
   try {
     const target = event.target as HTMLInputElement
     const community = await props.communityListStore.getCommunityData(target.value)
-    isValidSameAccount.value = community == null || 'このコミュニティIDは既に使用されています'
+    isValidSameAccount.value = community == null || 'このコミュニティURLは既に使用されています'
     nextTick(() => {
       accountFieldRef.value.validate()
     })
@@ -117,7 +117,7 @@ const hashTag = computed({
               outlined
               dense
               readonly
-              label="コミュニティID（ReadOnly）"
+              label="コミュニティURL（ReadOnly）"
             />
             <v-text-field
               v-else
@@ -127,7 +127,7 @@ const hashTag = computed({
               dense
               :loading="isCheckingAccount"
               :rules="[requiredValidator, isValidSameAccount, accountValidator]"
-              label="コミュニティID"
+              label="コミュニティURL"
               @blur="checkAccountExists"
             />
           </v-col>

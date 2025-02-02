@@ -96,7 +96,7 @@ export default {
   community_create_modal: {
     community: {
       title: 'コミュニティの作成について',
-      desc: `・「コミュニティID」「コミュニティ名」「説明文」「画像」など入力してください。<br />
+      desc: `・「コミュニティURL」「コミュニティ名」「説明文」「画像」など入力してください。<br />
             ・「運営者情報」「利用目的」などについては、コミュニティページなどで公開はされません。<br />
             ・新規作成後、shokujiiサポートにて内容を確認させていただきます。<br />
             ・コミュニティ作成後、イベントを作成することができるようになります。<br />
@@ -130,8 +130,8 @@ export default {
   },
   community_edit: {
     title: 'コミュニティ設定',
-    account: 'コミュニティID',
-    account_readonly: 'コミュニティID（ReadOnly）',
+    account: 'コミュニティURL',
+    account_readonly: 'コミュニティURL（ReadOnly）',
     community_name: 'コミュニティ名',
     community_description: 'コミュニティ説明',
     image_setting: '画像設定',
@@ -258,7 +258,7 @@ export default {
     phone: '有効な電話番号を入力してください',
     email: '有効なメールアドレスを入力してください',
     account:
-      '5文字以上15文字以内のコミュニティIDを入力してください。コミュニティIDに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティIDは変更できませんのでご注意ください。',
+      '5文字以上15文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
   },
   invoice_error_card: {
