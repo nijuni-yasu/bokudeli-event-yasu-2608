@@ -35,7 +35,7 @@ export default {
                  <a href="https://about.shokujii.jp" target="_blank">shokujiiって？</a></p>`,
     'title2': 'TODOリスト',
     'todo_list': [
-      ['STEP(1)', '<a href="https://bit.ly/4bFRS0E" target="_blank">店舗マニュアル</a> を一読し「設定方法」や「注文受付」「配送」の流れをチェック📗'],
+      ['STEP(1)', '<a href="https://bit.ly/4fYBbiJ" target="_blank">店舗マニュアル</a> を一読し「設定方法」や「注文受付」「配送」の流れをチェック📗'],
       ['STEP(2)', '<a href="https://form.run/@shokujii-entry" target="blank">店舗掲載申し込みフォーム</a> にて「飲食店営業許可証」や「銀行口座」などを入力して送信💻'],
       ['STEP(3)', '<a href="/shop">店舗設定画面</a> で「店舗情報」「注文最小個数」「配送距離」「営業曜日・時間」「注文期限」「メールアドレス」などを入力して、店舗設定をしてください💻'],
       ['STEP(4)', '<a href="/menu">メニュー設定画面</a> で「メニュー名」「メニュー説明文」「メニュー価格」「メニュー画像」を入力して追加🍱'],
