@@ -36,6 +36,12 @@ const communities = computed(() => {
 
 const isOpenNewCommunityDialog = ref(false)
 
+onMounted(() => {
+  if (communities.value.length === 0) {
+    isOpenNewCommunityDialog.value = true
+  }
+})
+
 </script>
 
 <template>
