@@ -9,6 +9,7 @@ import Footer from '@/componentsLocal/Footer.vue'
 import { useNavItems } from '@/navigation'
 import type { Notification } from '@/types'
 import { getManagePath } from '@/router/utils'
+import { getAuth, type User } from 'firebase/auth'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -44,6 +45,10 @@ const isNotificationShown = computed({
     }
   },
 })
+const currentUser = ref<User | null>(null)
+getAuth().onAuthStateChanged((user) => {
+  currentUser.value = user
+})
 </script>
 
 <template>
@@ -57,7 +62,9 @@ const isNotificationShown = computed({
     "
   >
     <template #navbar-icons>
-      <v-btn class="me-4" :href="getManagePath()" target="_blank"> {{ $t('navigation.new_event') }}</v-btn>
+      <v-btn v-if="currentUser != null" class="me-4" :href="getManagePath()" target="_blank">
+        {{ $t('navigation.new_event') }}
+      </v-btn>
       <UserProfile />
     </template>
     <template #footer>
