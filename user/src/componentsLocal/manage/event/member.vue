@@ -73,7 +73,7 @@ const getDateString = (order: OrderItem) => {
   }
 }
 const downloadCsvFile = () => {
-  let csv = '"", "name","x","facebook","instagram","order","date"\n'
+  let csv = '"Status","UserName","X","Facebook","Instagram","Order","Date"\n'
   for (const [order, member, menu] of [...orderedMenus.value, ...cartMenus.value, ...canceledMenus.value]) {
     csv +=
       `"${$t(`manage.member.${order.status}`)}",` +
@@ -84,7 +84,7 @@ const downloadCsvFile = () => {
       `"${menu.name}",` +
       `"${getDateString(order)}"\n`
   }
-  downloadCsv('member.csv', csv)
+  downloadCsv('event_member.csv', csv)
 }
 </script>
 

@@ -41,7 +41,7 @@ const openNewLink = (url: string) => {
   window.open(url, '_blank')
 }
 const downloadCsvFile = () => {
-  let csv = '"name","x","facebook","instagram"\n'
+  let csv = '"UserName","X","Facebook","Instagram","UserProfile"\n'
   for (const member of members.value) {
     csv +=
       `"${member.user_name}",` +
@@ -50,7 +50,7 @@ const downloadCsvFile = () => {
       `"${member.user_sns_instagram == null ? '' : buildInstagramUrl(member.user_sns_instagram)}",` +
       `"${member.user_description ?? ''}"\n`
   }
-  downloadCsv('member.csv', csv)
+  downloadCsv('community_member.csv', csv)
 }
 </script>
 
