@@ -13,7 +13,7 @@ import { getManageCommunityPath } from '@/router/utils'
 
 const { t: $t } = useI18n()
 
-const tabs = ['overview', 'member', 'letter', 'settings'] as const
+const tabs = ['overview', 'member', /*'letter',*/ 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const eventId = useRoute().params.eventId as string
