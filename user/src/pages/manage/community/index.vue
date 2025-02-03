@@ -36,21 +36,38 @@ const communities = computed(() => {
 
 const isOpenNewCommunityDialog = ref(false)
 
-onMounted(() => {
-  if (communities.value.length === 0) {
+watch(communities, (communities) => {
+  const isReady =
+    communityListStore.communityStores?.every(
+      (communityStore) =>
+        communityStore.community != null &&
+        communityStore.members != null &&
+        communityStore.members.length !== 0 &&
+        communityStore.members.every((member) => member?.roles != null),
+    ) ?? false
+  if (
+    isReady &&
+    communityListStore.totalCount === communityListStore.communityStores?.length &&
+    communities.length === 0
+  ) {
     isOpenNewCommunityDialog.value = true
   }
 })
-
 </script>
 
 <template>
   <v-row class="justify-center">
     <v-col md="10" sm="12" cols="12">
-      <v-btn class="mr-2" variant="outlined" size="large" :prepend-icon="mdiPlus" @click="router.push(getManageNewCommunityPath())">
+      <v-btn
+        class="mr-2"
+        variant="outlined"
+        size="large"
+        :prepend-icon="mdiPlus"
+        @click="router.push(getManageNewCommunityPath())"
+      >
         {{ $t('manage.new_community') }}
       </v-btn>
-      <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true"/>
+      <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
     </v-col>
   </v-row>
   <v-row class="justify-center">
