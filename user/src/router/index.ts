@@ -186,6 +186,10 @@ export const setupRouter = (router: Router) => {
         watch(
           () => [communityStore.community, communityStore.members],
           () => {
+            if (getAuth().currentUser?.uid === (import.meta.env.VITE_SUPPORT_ACCOUNT_USER_ID as string)) {
+              resolve(true)
+              return
+            }
             const community = communityStore.community
             const members = communityStore.members
             if (community != null && members != null && members.length === community.community_num_members) {
