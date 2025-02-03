@@ -115,13 +115,12 @@ export const setupRouter = (router: Router) => {
     if (paths[1] === 'manage') {
       if (getAuth().currentUser?.uid == null) {
         return {
-          path: '/login',
-          query: { redirect: to.fullPath, ...to.query },
+          path: '/',
         }
       } else {
         unsubscribeAuthStateChanged = onAuthStateChanged(getAuth(), (user) => {
           if (user == null) {
-            router.push('/login')
+            router.push('/')
           }
         })
       }
