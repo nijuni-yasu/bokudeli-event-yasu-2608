@@ -11,7 +11,8 @@ export default {
     'x': '#最新情報',
     'manage_event': 'イベント管理',
     'manage_community': 'コミュニティ管理',
-    'guide': 'コミュニティガイド',
+    'guide_top': 'コミュニティガイド',
+    'guide_announce': '告知・集客について',
   },
   'top': {
     'popular_events': '人気のイベント',
@@ -53,7 +54,9 @@ export default {
         'title': 'イベント削除',
         'description': '本当に削除しますか？この操作は取り消せません。',
         'submit': '削除',
-      }
+      },
+      'no_community': `コミュニティがありません。<br />
+                      コミュニティを作成してください。`,
     },
     'member': {
       'manager': '管理者',

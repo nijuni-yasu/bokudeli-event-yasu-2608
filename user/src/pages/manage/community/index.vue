@@ -4,9 +4,10 @@ import { useCommunityListStore } from '@/stores/communityList'
 import { doc, orderBy, where } from 'firebase/firestore'
 import CommunityCard from '@/components/CommunityCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import { mdiPlus } from '@mdi/js'
+import { mdiPlus, mdiHelp } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
 import { db } from '@/firebase'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 
@@ -32,14 +33,41 @@ const communities = computed(() => {
     }) ?? []
   )
 })
+
+const isOpenNewCommunityDialog = ref(false)
+
+watch(communities, (communities) => {
+  const isReady =
+    communityListStore.communityStores?.every(
+      (communityStore) =>
+        communityStore.community != null &&
+        communityStore.members != null &&
+        communityStore.members.length !== 0 &&
+        communityStore.members.every((member) => member?.roles != null),
+    ) ?? false
+  if (
+    isReady &&
+    communityListStore.totalCount === communityListStore.communityStores?.length &&
+    communities.length === 0
+  ) {
+    isOpenNewCommunityDialog.value = true
+  }
+})
 </script>
 
 <template>
   <v-row class="justify-center">
     <v-col md="10" sm="12" cols="12">
-      <v-btn variant="outlined" size="large" :prepend-icon="mdiPlus" @click="router.push(getManageNewCommunityPath())">
+      <v-btn
+        class="mr-2"
+        variant="outlined"
+        size="large"
+        :prepend-icon="mdiPlus"
+        @click="router.push(getManageNewCommunityPath())"
+      >
         {{ $t('manage.new_community') }}
       </v-btn>
+      <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
     </v-col>
   </v-row>
   <v-row class="justify-center">
@@ -59,6 +87,16 @@ const communities = computed(() => {
       />
     </v-col>
   </v-row>
+  <div>
+    <confirm-dialog v-model="isOpenNewCommunityDialog" :ok-text="'OK'" max-width="800px">
+      <v-card-text class="text-center my-2 text-h4">
+        {{ $t('community_new_modal.community.title') }}
+      </v-card-text>
+      <v-card-text class="text-subtitle" style="line-height: 1.6rem">
+        <div v-html="$t('community_new_modal.community.desc')" />
+      </v-card-text>
+    </confirm-dialog>
+  </div>
 </template>
 
 <route lang="yaml">
