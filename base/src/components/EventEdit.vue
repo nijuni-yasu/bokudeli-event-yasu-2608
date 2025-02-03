@@ -299,7 +299,7 @@ const stepperItems = computed(() => [
 </script>
 
 <template>
-  <v-stepper editable v-if="event" v-model="stepper" :items="stepperItems" hide-actions>
+  <v-stepper v-if="event" v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
       <event-basic-info v-model="event" @submit="stepper++" />
     </template>
