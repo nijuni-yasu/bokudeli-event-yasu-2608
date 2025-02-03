@@ -99,7 +99,10 @@ const downloadCsvFile = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col md="10" sm="12" cols="12">
-        <v-card class="pa-10">
+        <v-card v-if="orderedMenus.length + cartMenus.length + canceledMenus.length === 0" class="pa-10">
+          {{ $t('manage.member.no_member') }}
+        </v-card>
+        <v-card v-else class="pa-10">
           <template v-for="menus in tables">
             <v-row v-if="menus.length !== 0" :key="menus[0][0].event_id" class="justify-center">
               <v-col md="12" sm="12" cols="12">

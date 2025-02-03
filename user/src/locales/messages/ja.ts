@@ -58,6 +58,7 @@ export default {
     'member': {
       'manager': '管理者',
       'member': 'メンバー',
+      'no_member': '参加者がいません',
       'ordered': '注文済',
       'in_cart': 'カート追加中',
       'canceled': 'キャンセル',
