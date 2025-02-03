@@ -57,14 +57,14 @@ const downloadCsvFile = () => {
 <template>
   <v-container>
     <v-row class="justify-center">
-      <v-col md="10" sm="10" cols="12" class="d-flex justify-end">
+      <v-col md="12" sm="12" cols="12" class="d-flex justify-end">
         <v-btn variant="outlined" :prepend-icon="mdiDownload" @click="downloadCsvFile">
           {{ $t('manage.member.csv_download') }}
         </v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">
-      <v-col md="10" sm="10" cols="12">
+      <v-col md="12" sm="12" cols="12">
         <v-card class="pa-5">
           <v-row class="justify-center">
             <v-col md="12" sm="12" cols="12">
@@ -113,10 +113,10 @@ const downloadCsvFile = () => {
                         <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                       </v-btn>
                     </td>
-                    <td>
+                    <td class="text-center">
                       {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
                     </td>
-                    <td>
+                    <td class="text-center">
                       <v-btn
                         v-if="canSendEmail && !isEmpty(member.user_email) && member.user_id !== userStore.user?.user_id"
                         :icon="mdiEmail"
