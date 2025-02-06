@@ -9,6 +9,8 @@ export default {
   phone_number: '電話番号',
   invoice_number: '適格請求書登録番号',
   email: 'メールアドレス',
+  email_subject: '件名',
+  email_message: 'メッセージ',
   latitude: '緯度',
   longitude: '経度',
   payment: {
@@ -66,10 +68,35 @@ export default {
           <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
           `,
   },
+  community_new_modal: {
+    community: {
+      title: 'コミュニティを作成しよう🎉',
+      desc: `<b>📝 まずはコミュニティを作ろう！</b><br />
+            コミュニティを作成すると、食事会のイベントを作成できるようになります。<br />
+            <br />
+            <b>👩‍🍳 デリバリーでも、イートインでも</b><br />
+            お食事はお店からデリバリーで配送いただけるのでどんな場所でも開催可能。<br />
+            もしくはイートインでお店の中でも実施いただけます。<br />
+            <br />
+            <b>📢 多様な告知・集客機能も</b><br />
+            SNS投稿、QRコード、SlackApp、チラシなどを使って食事会への告知・集客もお気軽に。<br />           
+            <br />
+            <b>🏢 社内交流などのクローズドな食事会にも</b><br />
+            「URL限定公開」や「主催者 請求書払い」を設定することで、クローズドなお食事会も。<br />
+            食事代を会社負担で実施する「社内交流会」にもご活用いただけます。<br />
+            <br />
+            <b>🙋‍♀️ チームで協力体制も</b><br />
+            複数人のメンバーをコミュニティ管理者として追加することができます。<br />
+            <br />
+            <b>💸 全ての機能を無料で</b><br />
+            主催者のみなさまはあらゆる機能を無料でご利用いただくことができます。<br />
+            `,
+    },
+  },
   community_create_modal: {
     community: {
       title: 'コミュニティの作成について',
-      desc: `・「コミュニティID」「コミュニティ名」「説明文」「画像」など入力してください。<br />
+      desc: `・「コミュニティURL」「コミュニティ名」「説明文」「画像」など入力してください。<br />
             ・「運営者情報」「利用目的」などについては、コミュニティページなどで公開はされません。<br />
             ・新規作成後、shokujiiサポートにて内容を確認させていただきます。<br />
             ・コミュニティ作成後、イベントを作成することができるようになります。<br />
@@ -103,8 +130,8 @@ export default {
   },
   community_edit: {
     title: 'コミュニティ設定',
-    account: 'コミュニティID',
-    account_readonly: 'コミュニティID（ReadOnly）',
+    account: 'コミュニティURL',
+    account_readonly: 'コミュニティURL（ReadOnly）',
     community_name: 'コミュニティ名',
     community_description: 'コミュニティ説明',
     image_setting: '画像設定',
@@ -231,7 +258,7 @@ export default {
     phone: '有効な電話番号を入力してください',
     email: '有効なメールアドレスを入力してください',
     account:
-      '5文字以上15文字以内のコミュニティIDを入力してください。コミュニティIDに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティIDは変更できませんのでご注意ください。',
+      '5文字以上15文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
   },
   invoice_error_card: {
@@ -279,4 +306,34 @@ export default {
            <br />
            詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客について」</a> も参考にしてください👍`,
   },
+  letter_status: {
+    draft: '下書き',
+    timed: '配信予約中',
+    sent: '配信済',
+  },
+  letter_type: {
+    community: 'コミュニティメンバー',
+    event_participant: 'イベント参加者',
+    event_non_participant: 'イベント未参加者',
+  },
+  letter_card: {
+    updated_at: '【更新日時】 {0}',
+    sent_at: '【配信日時】 {0}',
+    scheduled_at: '【配信予定日時】 {0}',
+    type: '【配信先】 {0}（{1}人）',
+    event_name: '【イベント名】 {0}',
+    copy: 'コピー',
+    delete: '削除',
+    edit: '編集',
+    dialog: {
+      title: '本当に削除しますか？',
+      description: 'この操作は元に戻すことができません。',
+      submit: '削除'
+    }
+  },
+  email_dialog: {
+    title: 'メール送信',
+    send_to: '送信先: {0}',
+    send: '送信',
+  }
 }

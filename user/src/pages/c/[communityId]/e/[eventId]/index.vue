@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getEventCreatePath } from '@/router/utils'
+import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -193,43 +193,28 @@ onUnmounted(() => {
             elevation="5"
             rounded="pill"
             :prepend-icon="mdiEmail"
-            :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId, step: 5 },
-            }"
+            :to="getEventEditShopNoticePath(eventId)"
           >
             店舗へ予約申請
           </v-btn>
           <v-btn
-            v-if="(event.event_status.value == 'in_draft' || event.event_status.value == 'full') && isManager"
+            v-if="
+              (event.event_status.value === 'in_draft' ||
+                event.event_status.value === 'full' ||
+                event.event_status.value === 'applying_reservation' ||
+                event.event_status.value === 'accepting_order') &&
+              isManager
+            "
             color="white"
             class="ml-2 my-1"
             elevation="5"
             rounded="pill"
             :prepend-icon="mdiPencilBoxOutline"
-            :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId },
-            }"
-          >
-            イベント編集
-          </v-btn>
-          <v-btn
-            v-if="
-              (event.event_status.value == 'applying_reservation' ||
-                event.event_status.value == 'accepting_order' ||
-                event.event_status.value == 'order_closed') &&
-              isManager
+            :to="
+              event.event_status.value === 'in_draft'
+                ? getEventEditBasicPath(eventId)
+                : getEventEditDetailsPath(eventId)
             "
-            color="white"
-            class="my-1"
-            elevation="5"
-            rounded="pill"
-            :prepend-icon="mdiPencilBoxOutline"
-            :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId, step: 4 },
-            }"
           >
             イベント編集
           </v-btn>

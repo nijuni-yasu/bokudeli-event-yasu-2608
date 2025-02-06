@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
 import { collectionGroup, doc, getDocs, orderBy, query, where } from 'firebase/firestore'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import UserBioPanel from '@/components/UserBioPanel.vue'
 import UserEventCard from '@/components/UserEventCard.vue'
 import CommunityCard from '@/components/CommunityCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useCommunityListStore } from '@/stores/communityList'
 import { useUserStore } from '@/stores/user'
-import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline, mdiPencilBoxOutline, mdiCog } from '@mdi/js'
+import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { createEmptyOrderItem, type OrderItem } from '@/schemes/orderItem'
@@ -19,11 +19,9 @@ import { httpsCallable } from 'firebase/functions'
 import { fixCancelOrder } from '@/composable/fixOrder'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import type { CommunityMember } from '@/schemes/communityMember'
-import { getCommunityCreatePath, getEventCreatePath, getCommunitySettingsPath } from '@/router/utils'
 import { getInvoicePdf } from '@/utils/invoice'
 
 const route = useRoute()
-const router = useRouter()
 const userId = route.params.userId as string
 
 const notification = inject('notification') as Notification
@@ -218,33 +216,6 @@ const downloadInvoice = async (order: OrderItem) => {
               <router-link :to="getCommunityPath(community.community_account)">
                 <CommunityCard :community="community" :members="members" :textLength="60" />
               </router-link>
-              <div v-if="isOwner" class="text-right">
-                <v-btn
-                  v-if="community.is_approved === true"
-                  class="mx-1 mb-1 mt-0"
-                  color="white"
-                  elevation="5"
-                  size="small"
-                  rounded="pill"
-                  target="_blank"
-                  :prepend-icon="mdiPencilBoxOutline"
-                  @click="router.push(getEventCreatePath(community.community_account))"
-                >
-                  {{ $t('user.event_create') }}
-                </v-btn>
-                <v-btn
-                  class="mx-1 mb-1 mt-0"
-                  color="white"
-                  elevation="5"
-                  size="small"
-                  rounded="pill"
-                  target="_blank"
-                  :prepend-icon="mdiCog"
-                  @click="router.push(getCommunitySettingsPath(community.community_account))"
-                >
-                  {{ $t('user.community_settings') }}
-                </v-btn>
-              </div>
             </v-col>
           </v-row>
           <v-row class="justify-center">
@@ -254,21 +225,6 @@ const downloadInvoice = async (order: OrderItem) => {
                 :total-count="communityListStore.totalCount ?? 0"
                 @load="communityListStore.next()"
               />
-            </v-col>
-          </v-row>
-          <v-row v-if="isOwner" class="justify-center">
-            <v-col class="text-center">
-              <v-btn
-                class="my-10"
-                color="white"
-                elevation="10"
-                size="large"
-                rounded="pill"
-                :prepend-icon="mdiHeartOutline"
-                @click="router.push(getCommunityCreatePath())"
-              >
-                {{ $t('user.community_create') }}
-              </v-btn>
             </v-col>
           </v-row>
         </v-window-item>

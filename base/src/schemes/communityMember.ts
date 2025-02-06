@@ -8,5 +8,5 @@ export type CommunityMember = FirestoredUser & {
 
 // TODO: CommunityMember のメソッドとして実装したほうが使い勝手は良さそう
 export const convertCommunityMemberToDocumentData = (member: Partial<CommunityMember>): DocumentData => {
-  return _.pick(member, 'roles')
+  return { roles: _.get(member, 'roles', []) }
 }

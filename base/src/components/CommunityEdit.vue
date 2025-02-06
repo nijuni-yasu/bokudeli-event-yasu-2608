@@ -15,7 +15,7 @@ const coverImageFile = defineModel<File | null>('coverImageFile', { required: tr
 const iconImageFile = defineModel<File | null>('iconImageFile', { required: true })
 const props = defineProps<{
   /**
-   * 新規コミュニティIDのバリデーション関数
+   * 新規コミュニティURLのバリデーション関数
    * この関数が設定されていない場合、編集モードとして扱われ community_account は readonly になります
    */
   validateNewAccount?: (account: string) => Promise<boolean>
@@ -68,6 +68,7 @@ const checkAccountExists = async (value: string) => {
             <v-text-field
               ref="accountFieldRef"
               v-model="community.community_account"
+              prefix="shokujii.jp/c/"
               outlined
               dense
               :readonly="!isNew"
