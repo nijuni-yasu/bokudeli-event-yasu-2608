@@ -117,7 +117,7 @@ const downloadCsvFile = () => {
                       <th colspan="3"></th>
                       <th>{{ $t('manage.member.order') }}</th>
                       <th>{{ $t(`manage.member.date.${menus[0][0].status}`) }}</th>
-                      <th></th>
+                      <!-- <th></th> -->
                     </tr>
                   </thead>
                   <tbody>
@@ -166,6 +166,7 @@ const downloadCsvFile = () => {
                       </td>
                       <td>{{ menu.name }}</td>
                       <td>{{ getDateString(order) }}</td>
+                      <!--
                       <td>
                         <v-btn
                           v-if="
@@ -176,6 +177,7 @@ const downloadCsvFile = () => {
                           @click="clickContact(member)"
                         />
                       </td>
+                      -->
                     </tr>
                   </tbody>
                 </v-table>

@@ -116,6 +116,7 @@ const downloadCsvFile = () => {
                     <td class="text-center">
                       {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
                     </td>
+                    <!--
                     <td class="text-center">
                       <v-btn
                         v-if="canSendEmail && !isEmpty(member.user_email) && member.user_id !== userStore.user?.user_id"
@@ -124,6 +125,7 @@ const downloadCsvFile = () => {
                         @click="clickContact(member)"
                       />
                     </td>
+                    -->
                   </tr>
                 </tbody>
               </v-table>
