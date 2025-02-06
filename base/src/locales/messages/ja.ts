@@ -174,7 +174,8 @@ export default {
     title: 'イベント詳細',
     event_name: 'イベントタイトル',
     event_cover_url: 'イベントカバー画像',
-    event_cover_url_hint: '※イベントカバー画像の推奨サイズは、1200 x 630ピクセル です。',
+    event_cover_url_hint: '※カバー画像の推奨サイズは、1200 x 630ピクセル です。',
+    event_cover_template: '※カバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> もご活用ください🎨',
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
