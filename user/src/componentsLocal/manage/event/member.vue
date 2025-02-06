@@ -73,7 +73,7 @@ const getDateString = (order: OrderItem) => {
   }
 }
 const downloadCsvFile = () => {
-  let csv = '"", "name","x","facebook","instagram","order","date"\n'
+  let csv = '"Status","UserName","X","Facebook","Instagram","Order","Date"\n'
   for (const [order, member, menu] of [...orderedMenus.value, ...cartMenus.value, ...canceledMenus.value]) {
     csv +=
       `"${$t(`manage.member.${order.status}`)}",` +
@@ -84,21 +84,21 @@ const downloadCsvFile = () => {
       `"${menu.name}",` +
       `"${getDateString(order)}"\n`
   }
-  downloadCsv('member.csv', csv)
+  downloadCsv('event_member.csv', csv)
 }
 </script>
 
 <template>
   <v-container>
     <v-row class="justify-center">
-      <v-col md="10" sm="10" cols="12" class="d-flex justify-end">
+      <v-col md="12" sm="12" cols="12" class="d-flex justify-end">
         <v-btn variant="outlined" :prepend-icon="mdiDownload" @click="downloadCsvFile">{{
           $t('manage.member.csv_download')
         }}</v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">
-      <v-col md="10" sm="12" cols="12">
+      <v-col md="12" sm="12" cols="12">
         <v-card v-if="orderedMenus.length + cartMenus.length + canceledMenus.length === 0" class="pa-10">
           {{ $t('manage.member.no_member') }}
         </v-card>
