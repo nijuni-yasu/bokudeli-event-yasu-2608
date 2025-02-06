@@ -58,16 +58,23 @@ watch(communities, (communities) => {
 <template>
   <v-row class="justify-center">
     <v-col md="10" sm="12" cols="12">
-      <v-btn
-        class="mr-2"
-        variant="outlined"
-        size="large"
-        :prepend-icon="mdiPlus"
-        @click="router.push(getManageNewCommunityPath())"
-      >
-        {{ $t('manage.new_community') }}
-      </v-btn>
-      <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
+      <v-row class="pa-3 align-center">
+        <v-btn
+          class="mr-2"
+          variant="outlined"
+          size="large"
+          :prepend-icon="mdiPlus"
+          @click="router.push(getManageNewCommunityPath())"
+        >
+          {{ $t('manage.new_community') }}
+        </v-btn>
+        <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
+      </v-row>
+      <v-row v-show="communityListStore && communityListStore.totalCount === communityListStore.communityStores?.length && communities.length === 0" class="mt-5">
+        <v-col class="text-h5">
+          <div v-html="$t('manage.event.no_community')" />
+        </v-col>
+      </v-row>
     </v-col>
   </v-row>
   <v-row class="justify-center">
