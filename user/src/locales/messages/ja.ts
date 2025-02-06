@@ -12,7 +12,7 @@ export default {
     'manage_event': 'イベント管理',
     'manage_community': 'コミュニティ管理',
     'guide_top': 'コミュニティガイド',
-    'guide_announce': '告知・集客について',
+    'guide_announce': '告知・集客のコツ',
   },
   'top': {
     'popular_events': '人気のイベント',

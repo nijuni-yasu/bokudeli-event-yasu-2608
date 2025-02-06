@@ -305,7 +305,7 @@ export default {
            ③さらに <b>SNS投稿・ダイレクトメッセージ・チラシ</b>などを駆使して、告知・集客してください📢<br />
 
            <br />
-           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客について」</a> も参考にしてください👍`,
+           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください👍`,
   },
   letter_status: {
     draft: '下書き',
