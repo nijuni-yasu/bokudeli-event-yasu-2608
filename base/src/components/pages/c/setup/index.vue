@@ -107,7 +107,7 @@ const submit = async () => {
     if (iconImageFile.value != null) {
       await communityStore.updateIconImage(iconImageFile.value)
     }
-    window.alert('コミュニティ新規作成メールを送信しました。承認されるのをお待ちください。')
+    window.alert('コミュニティを新規作成しました')
     // communityAccount を設定したので、communityListStore.$reset() は onUnmounted 内で実行されないことに注意
     communityListStore.$reset()
   }
