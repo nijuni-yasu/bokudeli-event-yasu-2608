@@ -151,7 +151,7 @@ const textFieldVariant = computed(() => {
 
 <template>
   <v-row class="justify-center">
-    <v-col cols="12" sm="12" md="8" class="px-0">
+    <v-col cols="12" sm="12" md="10" class="px-0">
       <v-card flat class="mt-3">
         <v-form v-model="isValid" class="multi-col-validation">
           <v-card-title class="pt-10 px-5">

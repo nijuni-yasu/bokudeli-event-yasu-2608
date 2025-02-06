@@ -23,7 +23,6 @@ import { TaskExecutor } from '@/utils/executors'
 import { useEventStore, type EventStore } from './event'
 
 type EventListStoreState = {
-  eventDraft: Ref<BokudeliEvent>
   totalCount: Ref<number | null>
 } & StateTree
 
@@ -34,7 +33,7 @@ type EventListStoreGetters = {
 type EventListStoreAction = {
   reload: () => void
   next: () => void
-  createNewEventFromDraft: (communityId: string) => Promise<BokudeliEvent>
+  createNewEvent: (event: BokudeliEvent, coverImage?: File | null) => Promise<BokudeliEvent>
 }
 
 export type EventListStore = Store<string, EventListStoreState, EventListStoreGetters, EventListStoreAction>
@@ -45,7 +44,6 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
     () => {
       const pagenationExecutor = new TaskExecutor(1)
       const eventStores = ref<EventStore[] | null>(null)
-      const eventDraft = ref<BokudeliEvent>(new BokudeliEvent())
       const totalCount = ref<number | null>(null)
 
       const eventsSnapsthot: QueryDocumentSnapshot[] = []
@@ -81,22 +79,25 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
         next()
       }
 
-      const createNewEventFromDraft = async (community_id: string): Promise<BokudeliEvent> => {
-        const communityRef = doc(db, 'communities', community_id)
+      const createNewEvent = async (event: BokudeliEvent, coverImage?: File | null): Promise<BokudeliEvent> => {
+        const communityRef = doc(db, 'communities', event.community_id)
         const community = await getDoc(communityRef)
         if (!community.exists()) {
-          throw new Error(`community ${community_id} does not exists`)
+          throw new Error(`community ${event.community_id} does not exists`)
         }
         const newEventRef = doc(collection(communityRef, 'events'))
         await setDoc(newEventRef, {
-          ...eventDraft.value.convertToDocumentData(),
+          ...event,
           event_id: newEventRef.id,
-          community_id,
           community_name: community.get('community_name'),
           community_account: community.get('community_account'),
           created_at: Timestamp.now(),
           updated_at: Timestamp.now(),
         })
+        if (coverImage != null) {
+          const eventStore = useEventStore(newEventRef.id) as EventStore
+          await eventStore.updateCoverImage(coverImage)
+        }
         return convertDocumentDataToEvent((await getDoc(newEventRef)).data() as DocumentData)
       }
 
@@ -105,13 +106,9 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
       return {
         totalCount,
         eventStores,
-        eventDraft,
         reload,
         next,
-        createNewEventFromDraft,
-        $reset: () => {
-          eventDraft.value = new BokudeliEvent()
-        },
+        createNewEvent,
       }
     },
   )

@@ -18,8 +18,8 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { useEventListStore } from '@/stores/eventList'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { useRouter, useRoute } from 'vue-router'
-import { getEventPath, getCommunityPath } from '@/router/utils'
+import { useRouter } from 'vue-router'
+import { getCommunityPath } from '@/router/utils'
 import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
 import { maxBy } from 'lodash'
 import { useValidators } from '@/composable/validators'
@@ -30,41 +30,45 @@ import { useI18n } from 'vue-i18n'
 const { t: $t } = useI18n()
 
 const router = useRouter()
-const route = useRoute()
 
 const props = defineProps<{
-  communityId: string
+  communityAccount: string
+  eventId?: string
+  step?: string
+}>()
+
+const emits = defineEmits<{
+  updated: [id: string]
 }>()
 
 const { postalCodeValidator } = useValidators()
 
-const eventId = ref(route.query.id as string | null)
-
 const isValid4 = ref(false)
 
 const eventListStore = useEventListStore()
-const communityStore = useCommunityStore(props.communityId) as CommunityStore
+const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
 
-const isOpenContactDialogVisible = ref(true)
+const isOpenContactDialogVisible = ref(props.eventId == null)
 
+const _event = ref(new BokudeliEvent())
 const event = computed<BokudeliEvent | null>({
   get: () => {
-    if (eventId.value != null) {
-      const eventStore = useEventStore(eventId.value) as EventStore
+    if (props.eventId != null) {
+      const eventStore = useEventStore(props.eventId) as EventStore
       return eventStore.event
     } else {
-      return eventListStore.eventDraft
+      return _event.value
     }
   },
   set: (value) => {
     if (value == null) {
       return
     }
-    if (eventId.value != null) {
-      const eventStore = useEventStore(eventId.value) as EventStore
+    if (props.eventId != null) {
+      const eventStore = useEventStore(props.eventId) as EventStore
       eventStore.event = value
     } else {
-      eventListStore.eventDraft = value
+      _event.value = value
     }
   },
 })
@@ -83,7 +87,7 @@ const userStore = useStoreStoredUser()
 const handleUserId = userStore.storedUser?.userId ?? ''
 
 // @ts-expect-error parseInt can take no string params, then return NaN
-const stepQuery = Number.parseInt(route.query.step)
+const stepQuery = Number.parseInt(props.step)
 const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 
 const isLoadingShop = ref(false)
@@ -125,7 +129,7 @@ watch(
         const distance = calculateDistance(location, shopLocation)
         // 最小注文個数の配列の何番目かを取得
         const rangeIndex = shop.shop_range_min_orders.findIndex(
-          (order) => order?.range != null && order.range >= distance
+          (order) => order?.range != null && order.range >= distance,
         )
         // 最小注文個数（注文の目安）を取得。値がない場合は30に設定
         const min_orders_on_spot = shop.shop_range_min_orders[rangeIndex]?.min_orders ?? 30
@@ -189,7 +193,7 @@ watch(
   (is_approved) => {
     if (is_approved === false) {
       window.alert('コミュニティが承認されていません')
-      router.push(getCommunityPath(props.communityId))
+      router.push(getCommunityPath(props.communityAccount))
     }
   },
   { immediate: true },
@@ -213,13 +217,13 @@ onMounted(async () => {
   const roles = await communityStore.getCurrentUserRoles()
   if (roles == null || !roles.includes('manager')) {
     window.alert('コミュニティ運営者ではありません')
-    router.push(getCommunityPath(props.communityId))
+    router.push(getCommunityPath(props.communityAccount))
   }
 })
 
 onUnmounted(() => {
-  if (eventId.value != null) {
-    const eventStore = useEventStore(eventId.value) as EventStore
+  if (props.eventId != null) {
+    const eventStore = useEventStore(props.eventId) as EventStore
     eventStore.$reset()
   }
 })
@@ -229,24 +233,17 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   if (event.value == null || communityId == null) {
     return null
   }
-  if (eventId.value == null) {
+  if (props.eventId == null) {
     // 新規作成
     event.value.community_id = communityId
     event.value.created_by = handleUserId
     event.value.updated_by = handleUserId
-    const newEvent = await eventListStore.createNewEventFromDraft(communityId)
-    const eventStore = useEventStore(newEvent.event_id) as EventStore
-    if (coverImage.value != null) {
-      await eventStore.updateCoverImage(coverImage.value)
-    }
-    eventListStore.eventDraft = new BokudeliEvent()
-    // 現在の仕様だと直後にページ遷移するので、eventId を更新する必要はないが、今後のために残しておく
-    eventId.value = newEvent.event_id
+    const newEvent = await eventListStore.createNewEvent(event.value, coverImage.value)
     return newEvent
   } else {
     // 更新
     event.value.updated_by = handleUserId
-    const eventStore = useEventStore(eventId.value) as EventStore
+    const eventStore = useEventStore(props.eventId) as EventStore
     await eventStore.updateEvent(event.value)
     if (coverImage.value != null) {
       await eventStore.updateCoverImage(coverImage.value)
@@ -261,12 +258,12 @@ const submit = async () => {
     console.warn('Could not save event')
     return
   }
-  if (route.query.id == null) {
+  if (event?.event_id == null) {
     window.alert(`「${event.event_name}」のイベントを新規作成しました`)
   } else {
     window.alert(`「${event.event_name} 」のイベントを更新しました`)
   }
-  router.push(getEventPath(event.community_account, event.event_id))
+  emits('updated', event.event_id)
 }
 
 const sendReserveMail = async () => {
@@ -279,12 +276,12 @@ const sendReserveMail = async () => {
   const eventStore = useEventStore(event.event_id) as EventStore
   await eventStore.updateEvent(event)
   window.alert(`「${event.shop_name}」に予約申請しました。店舗からの予約承認をお待ちください。`)
-  router.push(getEventPath(event.community_account, event.event_id))
+  emits('updated', event.event_id)
 }
 
 const stepperItems = computed(() => [
   {
-    title: '開催概要',
+    title: '場所・日時',
   },
   {
     title: '店舗選択',
@@ -296,7 +293,7 @@ const stepperItems = computed(() => [
     title: 'イベント詳細',
   },
   {
-    title: '予約申請',
+    title: '店舗への連絡事項',
   },
 ])
 </script>
@@ -318,12 +315,19 @@ const stepperItems = computed(() => [
       />
     </template>
     <template #[`item.3`]>
-      <event-menu :menus="menus" :event="event" :shop="selectedShop" :loading="isLoadingMenu" @submit="stepper++" @back="stepper--" />
+      <event-menu
+        :menus="menus"
+        :event="event"
+        :shop="selectedShop"
+        :loading="isLoadingMenu"
+        @submit="stepper++"
+        @back="stepper--"
+      />
     </template>
     <template #[`item.4`]>
       <v-form v-model="isValid4">
         <v-row class="justify-center">
-          <v-col cols="12" sm="12" md="8">
+          <v-col cols="12" sm="12" md="9">
             <event-detail-card
               v-model="event"
               v-model:cover-image="coverImage"
@@ -358,17 +362,15 @@ const stepperItems = computed(() => [
         @back="stepper--"
       />
     </template>
-    <div>
-      <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
-        <v-card-text class="text-center py-10 text-h4">
-          {{ $t('event_create_modal.title') }}
-        </v-card-text>
-        <v-card-text class="pb-0" style="line-height: 2.0rem">
-          <div v-html="$t('event_create_modal.desc')" />
-        </v-card-text>
-      </confirm-dialog>
-    </div>
   </v-stepper>
+  <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('event_create_modal.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2rem">
+      <div v-html="$t('event_create_modal.desc')" />
+    </v-card-text>
+  </confirm-dialog>
 </template>
 
 <style lang="scss" scoped></style>

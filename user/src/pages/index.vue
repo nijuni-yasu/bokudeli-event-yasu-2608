@@ -37,7 +37,7 @@ const popularEventListStore = useEventListStore(
 const popularEvents = computed(() => {
   const events =
     popularEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 5) {
+      if (s.event == null || s.event.event_num_members < 3) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }

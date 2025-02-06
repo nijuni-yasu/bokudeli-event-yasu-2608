@@ -45,7 +45,7 @@ export const useNavItems = (): HorizontalNavItems | VerticalNavItems => {
     },
     {
       title: $t('navigation.manual'),
-      href: 'https://bit.ly/4bFRS0E',
+      href: 'https://bit.ly/4fYBbiJ',
       target: '_blank',
       icon: { icon: mdiLightbulbOnOutline },
     },

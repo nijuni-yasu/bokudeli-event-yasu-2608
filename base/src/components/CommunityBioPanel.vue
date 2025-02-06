@@ -40,7 +40,7 @@ const officialSiteUrl = computed(() =>
 <template>
   <v-card class="pa-5" color="text-center">
     <!-- community title and links -->
-    <v-img style="border-radius: 10px" aspect-ratio="1" cover :src="community.community_icon_image_url" />
+    <v-img style="border-radius: 10%" aspect-ratio="1" cover :src="community.community_icon_image_url" />
     <v-card-title class="justify-center text-h4 px-1 py-4 text-wrap">
       {{ community.community_name }}
     </v-card-title>

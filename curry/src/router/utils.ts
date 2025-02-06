@@ -15,3 +15,16 @@ export const getEventPath = (communityAccount: string, eventId: string) => `/c/$
 export const getEventCreatePath = (communityAccount: string) => `/c/${communityAccount}/e/create`
 export const getUserPath = (userId: string) => `/u/${userId}`
 export const getInvoicePath = () => `/invoice`
+
+// manage 機能は curry には無いが、ビルドを通すための stubs
+// TODO: パスを動的に生成できる仕組みを作る
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getEventEditPath = (eventId: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getManageCommunitySettingsPath = (communityAccount: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getEventEditShopNoticePath = (eventId: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getEventEditBasicPath = (eventId: string) => ''
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getEventEditDetailsPath = (eventId: string) => ''

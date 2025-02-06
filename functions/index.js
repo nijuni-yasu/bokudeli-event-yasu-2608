@@ -18,6 +18,7 @@ export const {
   on_order_changed,
   community_added,
   community_contact,
+  send_email,
 } = await import('./sendgrid-mail.js')
 export const { create_community_members, delete_community_members } = await import('./community-members.js')
 export const { create_event_members } = await import('./event-members.js')
