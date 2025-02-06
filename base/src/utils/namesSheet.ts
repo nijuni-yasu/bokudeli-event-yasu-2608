@@ -3,7 +3,6 @@ import { getAuth } from 'firebase/auth'
 export const getNamesSheetPdf = async (eventId: string): Promise<Blob> => {
   const token = await getAuth().currentUser!.getIdToken()
   const data = await fetch(
-    //  `http://127.0.0.1:5001/bokudeli-event-test/asia-northeast1/namesSheet/${eventId}`,
     `https://asia-northeast1-${import.meta.env.VITE_PROJECT_ID}.cloudfunctions.net/namesSheet/${eventId}`,
     {
       method: 'GET',

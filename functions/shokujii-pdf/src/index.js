@@ -51,8 +51,8 @@ const getBlankProfileBase64 = () => {
 
 // GCSから画像をダウンロードする関数
 export const downloadImageFromGCS = async (gsUrl) => {
-  const bucketName = gsUrl.split('/')[2]; // バケット名を取得
-  const filePath = gsUrl.split('/').slice(3).join('/'); // ファイルパスを取得
+  const bucketName = gsUrl.split('/')[2];
+  const filePath = gsUrl.split('/').slice(3).join('/');
   const bucket = storage.bucket(bucketName);
   
   try {
@@ -68,18 +68,17 @@ export const downloadImageFromGCS = async (gsUrl) => {
 // 写真URLの妥当性をチェックし、必要に応じてBase64エンコードする関数を修正
 const isValidPhotoUrl = async (url) => {
 
-  // gs://形式のURLをHTTP(S)リンクに変換
+  // gs://形式のURLの場合の処理
   if (url && typeof url === 'string' && url.startsWith('gs://')) {
-
     // GCSから画像をダウンロード
     const imageBuffer = await downloadImageFromGCS(url);
     if (imageBuffer == null) {
-      return getDefaultProfileBase64(); // 画像が取得できない場合はデフォルト画像を返す
+      return getDefaultProfileBase64();
     }
 
     // 画像をリサイズ（例: 幅を300pxに設定）
     const resizedBuffer = await sharp(imageBuffer)
-      .resize({ width: 300 }) // 幅を300pxにリサイズ
+      .resize({ width: 300 })
       .toBuffer();
 
     return `data:image/jpeg;base64,${resizedBuffer.toString('base64')}`;
@@ -93,7 +92,7 @@ const isValidPhotoUrl = async (url) => {
     
     // 画像をリサイズ（例: 幅を300pxに設定）
     const resizedBuffer = await sharp(photoBuffer)
-      .resize({ width: 300 }) // 幅を300pxにリサイズ
+      .resize({ width: 300 })
       .toBuffer();
 
     return `data:image/jpeg;base64,${resizedBuffer.toString('base64')}`;
@@ -299,6 +298,6 @@ const createTemplateData = (filteredValidNames) => {
     }
     templateData.d.push(group)
   }
-  // console.log(templateData)
+
   return templateData
 }
