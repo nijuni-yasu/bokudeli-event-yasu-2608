@@ -61,23 +61,23 @@ const logout = async () => {
           </v-list-item>
           <v-divider v-if="isLogin" class="my-2" />
 
-          <!-- 👉 Profile -->
-          <v-list-item v-if="isLogin" :to="`/mypage`">
+          <!-- 👉 cart -->
+          <v-list-item v-if="isLogin" :to="`/cart`">
             <template #prepend>
-              <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
+              <v-icon class="me-2" :icon="mdiCart" size="22" />
             </template>
-            <v-list-item-title>マイページ</v-list-item-title>
+            <v-list-item-title>カート</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
-          <!-- 👉 cart -->
-          <v-list-item v-if="isLogin" :to="`/cart`">
+          <!-- 👉 mypage -->
+          <v-list-item v-if="isLogin" :to="`/mypage`">
             <template #prepend>
-              <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
+              <v-icon class="me-2" :icon="mdiAccount" size="22" />
             </template>
-            <v-list-item-title>カート</v-list-item-title>
+            <v-list-item-title>マイページ</v-list-item-title>
           </v-list-item>
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
@@ -88,6 +88,27 @@ const logout = async () => {
               <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
             </template>
             <v-list-item-title>お問い合わせ</v-list-item-title>
+
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
+
+          <!-- 👉 cart -->
+          <v-list-item v-if="isLogin" :to="getManagePath()">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
+            </template>
+            <v-list-item-title>イベント開催</v-list-item-title>
+          </v-list-item>
+
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
+
+          <!-- 👉 profile -->
+          <v-list-item v-if="isLogin" :to="`/u/profile`">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiCog" size="22" />
+            </template>
+            <v-list-item-title>設定</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
