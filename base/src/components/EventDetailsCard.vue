@@ -3,7 +3,6 @@ import { getCommunityPath } from '@/router/utils'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EventMemberList from '@/components/EventMemberList.vue'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
-import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
@@ -28,6 +27,8 @@ import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
 import eventDetailStyle from '@/utils/eventDetailStyle'
 import TinyMCEViewer from '@/components//TinyMCEViewer.vue'
+
+const router = useRouter()
 
 const qrcodeSize = 300
 
@@ -63,9 +64,6 @@ const openContactDialog = () => {
   } else {
     isOpenContactDialogVisible.value = true
   }
-}
-const openLoginDialog = () => {
-  isOpenLoginDialog.value = true
 }
 
 const openCalendarAddDialog = () => {
@@ -271,10 +269,13 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
       </v-col>
     </v-row>
   </v-card>
-  <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+  <confirm-dialog
+    v-model="isOpenConfirmDialog"
+    :is-confirm="false"
+    @click="(router.push('/login'))"
+  >
     ログインした後に主催者に連絡してください。
   </confirm-dialog>
-  <login-dialog v-model="isOpenLoginDialog" />
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
   <show-dialog v-model="isShowQrCode">
     <v-card class="justify-center text-center" elevation="0">
