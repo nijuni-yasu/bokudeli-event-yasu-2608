@@ -6,7 +6,7 @@ import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import UserBioEditDialog from './UserBioEditDialog.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiPencil, mdiTwitter, mdiFacebook, mdiInstagram } from '@mdi/js'
+import { mdiTwitter, mdiFacebook, mdiInstagram, mdiCog } from '@mdi/js'
 
 const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
 
@@ -79,12 +79,12 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
         <v-card-actions v-if="isEditable" class="justify-center">
           <v-btn
             color="primary"
-            class="me-3"
-            size="large"
-            :prepend-icon="mdiPencil"
+            class="mb-3"
+            size="x-large"
+            :prepend-icon="mdiCog"
             to="/u/profile"
           >
-            編集
+            設定
           </v-btn>
         </v-card-actions>
       </v-card>
