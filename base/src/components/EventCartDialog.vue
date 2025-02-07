@@ -6,7 +6,6 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { Timestamp } from 'firebase/firestore'
 
-import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { priceString } from '@/schemes/converter'
 import { mdiCart } from '@mdi/js'
@@ -133,15 +132,10 @@ const addOrder = async () => {
 }
 
 const isOpenAlert = ref(false)
-const isOpenLoginDialog = ref(false)
 const isOpenConfirmDialog = ref(false)
 
 const openConfirmDialog = () => {
   isOpenConfirmDialog.value = true
-}
-
-const openLoginDialog = () => {
-  isOpenLoginDialog.value = true
 }
 
 const addCart = async () => {
@@ -204,8 +198,11 @@ const addCart = async () => {
         </v-btn>
       </v-row>
     </v-card>
-    <login-dialog v-model="isOpenLoginDialog" />
-    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+    <confirm-dialog
+      v-model="isOpenConfirmDialog"
+      :is-confirm="false"
+      @click="router.push('/login')"
+    >
       ログインしてください
     </confirm-dialog>
     <confirm-dialog v-model="isOpenAlert" :is-confirm="false">個数を選んでください</confirm-dialog>
