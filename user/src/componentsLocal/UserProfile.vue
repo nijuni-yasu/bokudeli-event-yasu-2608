@@ -3,7 +3,7 @@ import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiAccountOutline, mdiCartOutline, mdiCalendarPlus, mdiLogout, mdiYoutube } from '@mdi/js'
+import {mdiAccount, mdiCart, mdiLogout, mdiCog, mdiCalendarPlus} from '@mdi/js'
 import LineIcon from '@/icons/line'
 import userAccessiblePaths from "@/utils/userAccessiblePaths";
 import { getManagePath } from '@/router/utils'
@@ -61,23 +61,23 @@ const logout = async () => {
           </v-list-item>
           <v-divider v-if="isLogin" class="my-2" />
 
-          <!-- 👉 Profile -->
-          <v-list-item v-if="isLogin" :to="`/mypage`">
+          <!-- 👉 cart -->
+          <v-list-item v-if="isLogin" :to="`/cart`">
             <template #prepend>
-              <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
+              <v-icon class="me-2" :icon="mdiCart" size="22" />
             </template>
-            <v-list-item-title>マイページ</v-list-item-title>
+            <v-list-item-title>カート</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
-          <!-- 👉 cart -->
-          <v-list-item v-if="isLogin" :to="`/cart`">
+          <!-- 👉 mypage -->
+          <v-list-item v-if="isLogin" :to="`/mypage`">
             <template #prepend>
-              <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
+              <v-icon class="me-2" :icon="mdiAccount" size="22" />
             </template>
-            <v-list-item-title>カート</v-list-item-title>
+            <v-list-item-title>マイページ</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
@@ -94,27 +94,17 @@ const logout = async () => {
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
-          <!-- 👉 howto -->
-          <v-list-item v-if="isLogin" :href="`https://lin.ee/SaL9aeE`" target="_blank">
+          <!-- 👉 profile -->
+          <v-list-item v-if="isLogin" :to="`/u/profile`">
             <template #prepend>
-              <v-icon class="me-2" :icon="LineIcon" size="22" />
+              <v-icon class="me-2" :icon="mdiCog" size="22" />
             </template>
-            <v-list-item-title>LINE友だち追加</v-list-item-title>
+            <v-list-item-title>設定</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
-          <!-- 👉 howto -->
-          <v-list-item v-if="isLogin" :href="`https://about.shokujii.jp/howto`" target="_blank">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiYoutube" size="22" />
-            </template>
-            <v-list-item-title>使い方動画</v-list-item-title>
-          </v-list-item>
-
-          <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
 
           <!-- 👉 Login, Logout -->
           <v-list-item v-if="!isLogin" @click="login">
