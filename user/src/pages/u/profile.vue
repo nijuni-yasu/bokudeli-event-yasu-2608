@@ -28,6 +28,7 @@ import {
 import { httpsCallable } from 'firebase/functions'
 import {convertFirebaseUserToStoredUser} from "@/schemes/converter";
 import {linkByProviderService} from "@/utils/providerService";
+import { mdiUpload } from '@mdi/js'
 
 const auth = getAuth()
 const currentUser = auth.currentUser;
@@ -268,16 +269,16 @@ const handleTwitterLoginLink = async () => {
 </script>
 
 <template>
-  <v-container v-if="user != null">
-    <v-row justify="center" class="mt-16">
-      <v-col md="6" class="">
-        <v-sheet class="rounded-lg py-14 px-16">
-          <h1 class="text-center">プロフィール設定</h1>
+  <v-container v-if="user != null" class="px-1">
+    <v-row justify="center" class="mt-1 mt-md-16 px-1">
+      <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
+        <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
+          <div class="text-center text-h3 font-weight-bold">プロフィール設定</div>
 
           <v-sheet class="d-flex justify-center mt-4 mb-12">
             <div style="position: relative;">
               <UserAvatar :user="user" :size="140" @click="triggerFileInput"/>
-              <span class="edit-text text-primary" @click="triggerFileInput">編集</span>
+              <v-btn :icon="mdiUpload" size="small" variant="flat" class="edit-text" @click="triggerFileInput"></v-btn>
             </div>
           </v-sheet>
           <p v-if="imageError !== ''" class="text-center text-error font-weight-bold">{{imageError}}</p>
@@ -343,7 +344,7 @@ const handleTwitterLoginLink = async () => {
               <v-textarea
                   label="自己紹介文"
                   v-model="user.user_description"
-                  rows="4"
+                  rows="5"
                   variant="outlined"
                   :disabled="isLoading"
                   :rules="[requiredValidator]"
@@ -359,9 +360,9 @@ const handleTwitterLoginLink = async () => {
     </v-row>
 
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
-      <v-col md="6" class="">
+      <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-16">
-          <h1 class="text-center">メールアドレス</h1>
+          <div class="text-center text-h3 font-weight-bold">メールアドレス</div>
 
           <v-form v-model="isValid" @submit.prevent="emailSubmit">
             <v-text-field
@@ -373,7 +374,7 @@ const handleTwitterLoginLink = async () => {
                 :rules="[requiredValidator, emailValidator]"
             />
             <v-row justify="center">
-              <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">変更する</v-btn>
+              <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">設定を変更する</v-btn>
             </v-row>
           </v-form>
         </v-sheet>
@@ -381,9 +382,9 @@ const handleTwitterLoginLink = async () => {
     </v-row>
 
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
-      <v-col md="6" class="">
+      <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-16">
-          <h1 class="text-center">SNSアカウント連携</h1>
+          <div class="text-center text-h3 font-weight-bold">アカウント連携</div>
 
           <div class="d-flex justify-space-between align-center my-8">
             <label class="align-center">
