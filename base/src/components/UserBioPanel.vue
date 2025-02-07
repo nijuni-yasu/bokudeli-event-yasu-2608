@@ -6,7 +6,7 @@ import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import UserBioEditDialog from './UserBioEditDialog.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiTwitter, mdiFacebook, mdiInstagram, mdiCog } from '@mdi/js'
+import { mdiTwitter, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
 
@@ -31,6 +31,10 @@ const facebookUrl = computed(() =>
 
 const instagramUrl = computed(() =>
   props.userData?.user_sns_instagram ? buildInstagramUrl(props.userData.user_sns_instagram) : undefined,
+)
+
+const websiteUrl = computed(() =>
+  props.userData?.user_sns_website ? props.userData.user_sns_website : undefined,
 )
 
 const updateUserData = async (user: FirestoredUser, image?: File) => {
@@ -63,13 +67,16 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn :icon="mdiTwitter" size="large" class="ma-3"></v-btn>
+              <v-btn :icon="mdiTwitter" class="ma-2"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn :icon="mdiFacebook" size="large" class="ma-3"></v-btn>
+              <v-btn :icon="mdiFacebook" class="ma-2"></v-btn>
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn :icon="mdiInstagram" size="large" class="ma-3"></v-btn>
+              <v-btn :icon="mdiInstagram" class="ma-2"></v-btn>
+            </a>
+            <a v-if="websiteUrl" :href="websiteUrl" target="_blank">
+              <v-btn :icon="mdiWeb" class="ma-2"></v-btn>
             </a>
           </v-col>
         </v-row>
