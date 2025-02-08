@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import topLogo from '@/assets/images/shokujii/shokujii_logo_cover.png'
-import carouselLine from '@/assets/images/shokujii/carousel_line.png'
-import carouselNote from '@/assets/images/shokujii/carousel_note.png'
 import { getEventPath } from '@/router/utils'
 import { useEventListStore } from '@/stores/eventList'
+import TopCarousel from '@/components/TopCarousel.vue'
 import { where, orderBy, Timestamp } from 'firebase/firestore'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
@@ -100,62 +98,12 @@ const next = () => {
     pastEventListStore.next()
   }
 }
-function openUrl(url) {
-  window.open(url, '_blank')
-}
 </script>
 
 <template>
   <v-row class="justify-center align-center">
     <v-col md="10" cols="12">
-      <v-card>
-        <v-carousel
-          cycle
-          height="250"
-          hide-delimiter-background
-          :show-arrows="true"
-        >
-        <template v-slot:prev="{ props }">
-          <v-btn
-            color="#EEEEEE"
-            size="large"
-            :icon="mdiChevronLeft"
-            variant="text"
-            @click="props.onClick"
-          ></v-btn>
-        </template>
-        <template v-slot:next="{ props }">
-          <v-btn
-            color="#EEEEEE"
-            size="large"
-            :icon="mdiChevronRight"
-            variant="text"
-            @click="props.onClick"
-          ></v-btn>
-        </template>
-          <v-carousel-item
-            cover
-            hide-delimiter
-            class="clickable-item"
-            :src="topLogo"
-            @click="openUrl('https://about.shokujii.jp/')"
-          ></v-carousel-item>
-          <v-carousel-item
-            cover
-            hide-delimiter
-            class="clickable-item"
-            :src="carouselLine"
-            @click="openUrl('https://page.line.me/468evdkp?oat_content=url&openQrModal=true')"
-          ></v-carousel-item>
-          <v-carousel-item
-            cover
-            hide-delimiter
-            class="clickable-item"
-            :src="carouselNote"
-            @click="openUrl('https://note.com/shokujii/m/mc65c92109f2b')"
-          ></v-carousel-item>
-        </v-carousel>   
-      </v-card>
+      <TopCarousel />
       <v-row class="mb-2">
         <template v-if="popularEvents.length > 0">
           <v-col cols="12" class="text-h4 mt-8 ml-2">
