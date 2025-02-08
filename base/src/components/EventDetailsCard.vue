@@ -102,88 +102,137 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   <v-card class="align-center justify-center mt-0 mb-4 pa-sm-10 pa-xs-1">
     <v-row>
       <v-col>
-        <v-img class="ma-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
+        <v-img class="ma-0 pa-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
       </v-col>
     </v-row>
     <v-row>
       <v-col>
         <!-- イベント情報 -->
-        <v-card-title class="py-0 text-sm-h4 text-xs-h5 font-weight-bold pb-4 text-wrap" style="line-height: 1.3">
+        <v-card-title class="py-0 text-sm-h2 text-h5 font-weight-black text-wrap" style="line-height: 1.3">
           {{ event.event_name }}
         </v-card-title>
         <v-card-text class="event-item text-right px-0 ma-1">
           <v-btn
-            class="ml-1"
+            class="ml-3"
             :icon="XIcon"
+            elevation="2"
             color="grey-900"
-            size="x-large"
+            size="large"
             density="compact"
             variant="text"
             @click="onShareSnsButtonClicked('twitter')"
           ></v-btn>
           <v-btn
-            class="ml-1"
+            class="ml-3"
             :icon="mdiFacebook"
+            elevation="2"
             color="#1877F2"
-            size="x-large"
+            size="large"
             density="compact"
             variant="text"
             @click="onShareSnsButtonClicked('facebook')"
           ></v-btn>
           <v-btn
-            class="ml-1"
+            class="ml-3"
             :icon="LineIcon"
+            elevation="2"
             color="#06c755"
-            size="x-large"
+            size="large"
             density="compact"
             variant="text"
             @click="onShareSnsButtonClicked('line')"
           ></v-btn>
           <v-btn
-            class="ml-1"
+            class="ml-3"
             :icon="mdiQrcode"
+            elevation="2"
             color="grey-900"
-            size="x-large"
+            size="large"
             density="compact"
             variant="text"
             @click="showQrCode()"
           ></v-btn>
           <v-btn
-            class="mx-1"
+            class="mx-3"
             :icon="mdiContentCopy"
+            elevation="2"
             color="grey-900"
-            size="x-large"
+            size="large"
             density="compact"
             variant="text"
             @click="onShareSnsButtonClicked('copy')"
           ></v-btn>
         </v-card-text>
-        <v-card-text class="event-item"> 【開催日時】 </v-card-text>
-        <v-card-text class="event-content">
-          {{ $d(event.event_start_datetime!.toDate(), 'datetime_weekday_short') }}
-          〜
-          {{ $d(event.event_end_datetime!.toDate(), 'time') }}
-          <a @click="openCalendarAddDialog">
-            <button><v-icon :icon="mdiCalendarPlus" /></button>
-          </a>
-        </v-card-text>
-        <v-card-text class="event-item"> 【開催場所】 </v-card-text>
-        <v-card-text class="event-content">
-          {{ event.event_address }}
-          <a :href="`https://www.google.co.jp/maps/search/${event.event_address} ${event.event_place}`" target="_blank">
-            <v-icon :icon="mdiMapMarkerRadius" />
-          </a>
-          <div v-if="event.event_place_url && event.event_place">
-            {{ event.event_place }}
-            <a :href="event.event_place_url" target="_blank">
-              <v-icon size="small" :icon="mdiOpenInNew" />
-            </a>
-          </div>
-          <div v-else-if="!event.event_place_url && event.event_place">
-            {{ event.event_place }}
-          </div>
-        </v-card-text>
-        <v-card-text class="event-item"> 【開催内容】 </v-card-text>
+        <v-card-text class="text-h4 font-weight-black mt-5 pb-3">概要</v-card-text>
+        <v-divider class="custom-divider pt-1" />
+        <v-table class="custom-table mx-5 my-3" density="compact">
+          <tbody>
+            <tr>
+              <td>📅 開催日時</td>
+              <td>
+                {{ $d(event.event_start_datetime!.toDate(), 'datetime_weekday_short') }}
+                〜
+                {{ $d(event.event_end_datetime!.toDate(), 'time') }}
+                <a @click="openCalendarAddDialog">
+                  <button><v-icon :icon="mdiCalendarPlus" /></button>
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td>📍 開催場所</td>
+              <td>
+                <div>
+                  {{ event.event_address }}
+                  <a :href="`https://www.google.co.jp/maps/search/${event.event_address} ${event.event_place}`" target="_blank">
+                    <v-icon :icon="mdiMapMarkerRadius" />
+                  </a>
+                </div>
+                <div>
+                  <div v-if="event.event_place_url && event.event_place">
+                    {{ event.event_place }}
+                    <a :href="event.event_place_url" target="_blank">
+                      <v-icon size="small" :icon="mdiOpenInNew" />
+                    </a>
+                  </div>
+                  <div v-else-if="!event.event_place_url && event.event_place">
+                    {{ event.event_place }}
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>👩‍🍳 食事の提供</td>
+              <td>{{ event.shop_name }}</td>
+            </tr>
+            <tr>
+              <td>💰 支払い方法</td>
+              <td> {{ $t(`payment.${event.event_payment}`) }}</td>
+            </tr>
+            <tr>
+              <td>⏳ 注文期限</td>
+              <td>{{ $d(event.event_deadline_datetime!.toDate(), 'datetime_weekday_short') }}</td>
+            </tr>
+            <tr>
+              <td>↩️ キャンセル</td>
+              <td>
+                注文期限までキャンセル可
+                <span>
+                  <v-btn
+                    :icon="mdiHelpCircleOutline"
+                    class="pa-0"
+                    color="primary"
+                    density="compact"
+                    variant="text"
+                    @click="isOpenCancelpolicyDialog = true"
+                  >
+                  </v-btn>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+        <v-card-text class="text-h4 font-weight-black mt-10 pb-3">開催内容</v-card-text>
+        <v-divider class="custom-divider pt-2" />
         <tiny-m-c-e-viewer
           :content="event.event_desc"
           :style="eventDetailStyle"
@@ -195,59 +244,26 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             </v-card-text>
           </template>
         </tiny-m-c-e-viewer>
-        <v-card-text class="event-item2">
-          【お店】
-          <span class="event-content">
-            {{ event.shop_name }}
-          </span>
-        </v-card-text>
-        <v-card-text class="event-item2">
-          【支払い方法】
-          <span class="event-content">
-            {{ $t(`payment.${event.event_payment}`) }}
-          </span>
-        </v-card-text>
-        <v-card-text class="event-item2">
-          【注文期限】
-          <span class="event-content">
-            {{ $d(event.event_deadline_datetime!.toDate(), 'datetime_weekday_short') }}
-          </span>
-        </v-card-text>
-        <v-card-text class="event-item2 d-flex align-center">
-          <div class="d-flex flex-column align-center">【キャンセル】</div>
-          <div class="event-content d-flex flex-column align-center">注文期限までキャンセル可</div>
-          <div class="d-flex flex-column align-center">
-            <v-btn
-              :icon="mdiHelpCircleOutline"
-              class="pa-0"
-              color="primary"
-              density="compact"
-              variant="text"
-              @click="isOpenCancelpolicyDialog = true"
-            >
-            </v-btn>
-          </div>
-        </v-card-text>
-        <!-- <v-card-text class="event-item2">
-                  【定員】
-                  <span class="event-content">
-                    {{ event.event_max_people }} 人
-                  </span>
-                </v-card-text> -->
-        <!-- メンバー情報 -->
-        <event-member-list :members="members" :event-max-people="event.event_max_people">
-          <v-row>
-            <v-spacer />
-            <v-col v-if="members.length > 0" cols="auto">
-              <router-link :to="{ path: `${event.event_id}/members` }">
-                <div class="d-flex align-end">
-                  <v-icon size="large" :icon="mdiAccountGroup" />
-                  <span class="ml-2" style="font-size: 18px">参加者一覧</span>
-                </div>
-              </router-link>
-            </v-col>
-          </v-row>
-        </event-member-list>
+
+        <v-row class="mt-10 px-4 d-flex align-center">
+          <v-card-text class="text-h4 font-weight-black pb-3">
+          参加者
+          <span class="text-h5"> {{ members.length }}  / {{ event.event_max_people}}  </span>
+          </v-card-text>
+          <v-spacer />
+          <v-col v-if="members.length > 0" cols="auto">
+            <router-link :to="{ path: `${event.event_id}/members` }">
+              <div class="d-flex align-end">
+                <v-icon size="large" :icon="mdiAccountGroup" />
+                <span class="ml-2" style="font-size: 16px">参加者プロフィール</span>
+              </div>
+            </router-link>
+          </v-col>
+        </v-row>
+        <v-divider class="custom-divider mt-2" />
+
+        <event-member-list :members="members" :event-max-people="event.event_max_people" class="mt-4 mb-8" />
+
         <v-card-text>
           <v-row align-self-center>
             <v-row class="ma-1">
@@ -310,20 +326,11 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   </show-dialog>
 </template>
 <style lang="scss" scoped>
-.event-item {
-  font-size: 14px;
-  padding-bottom: 2px;
-  font-weight: 600;
-}
-.event-item2 {
-  font-size: 14px;
-  padding-bottom: 10px;
-  font-weight: 600;
-}
 .event-content {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
   line-height: 32px;
+  padding-bottom: 0px;
   white-space: pre-line;
 }
 
@@ -340,5 +347,26 @@ iframe {
   padding-left: 1.25rem;
   padding-right: 1.25rem;
   padding-bottom: 0;
+}
+.custom-divider {
+  width: 100%;
+  margin: 0 auto;
+  border-color: #333;
+}
+.custom-table td:first-child {
+  width: 18%;  /* 1列目の幅を設定 */
+  // font-weight: bold;
+  white-space: nowrap;
+  font-size: 15px;
+}
+.custom-table {
+  border-collapse: collapse;
+  width: 90%;
+  font-size: 15px;
+}
+.custom-table td {
+  padding: 6px !important;
+  border: 0px none !important;
+  // vertical-align: top;
 }
 </style>
