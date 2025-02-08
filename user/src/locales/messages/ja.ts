@@ -112,12 +112,16 @@ export default {
       }
     },
     'slack': {
-      'description': `shokujii の SlackAppを追加して、コミュニティをさらに盛り上げよう✨<br/>
-                      SlackAppについて詳しくは こちら をご参照ください。`,
-      'step1': `ステップ① shokujii のSlackAppをワークスペース及びチャンネルにインストール`,
-      'step2': `ステップ②  SlackAppを追加したチャンネルで、以下コマンドを送信！`,
-      'step3': `ステップ③ 設定完了🎉<br/>「参加者の注文通知」「注文期限のリマインド」「イベント開始のリマインド」などがSlackのチャンネルで通知されるようになります。`,
-      'step4': `ステップ④ 設定解除する場合は、以下コマンドを送信してください`,
+      'title': 'Slack通知設定',
+      'description': `shokujii の SlackAppを追加して、コミュニティをさらに盛り上げよう！<br/>
+                      設定することで「参加者の注文の通知」「注文期限のリマインド」「イベント開始のリマインド」等の通知を受け取ることができます。<br/>
+                      参加への盛り上がりを自然に共有することができ、告知集客やイベント運営がよりスムーズになります👍<br/>
+                      SlackAppについて詳しくは <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit#slide=id.g2e7a4494cae_0_0" target="_blank">こちら</a> をご参照ください。`,
+      'setup': '設定方法',
+      'step1': `<b>ステップ①</b> shokujii のSlackAppをワークスペース及びチャンネルにインストール`,
+      'step2': `<b>ステップ②</b> SlackAppを追加したSlackチャンネルで、以下コマンドを送信！`,
+      'step3': `<b>ステップ③</b> 設定完了🎉<br/>「参加者の注文通知」「注文期限のリマインド」「イベント開始のリマインド」などがSlackチャンネルで通知されるようになります。`,
+      'step4': `<b>ステップ④</b> 設定を解除したい場合は、以下コマンドをSlackチャンネルに送信してください`,
       'copy': '📝コピー',
     },
     'settings': {

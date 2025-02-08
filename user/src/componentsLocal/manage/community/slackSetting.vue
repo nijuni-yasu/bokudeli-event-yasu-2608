@@ -38,13 +38,20 @@ const copyRemoveCommand = () => {
   <v-container>
     <v-card class="pa-12">
       <v-row>
-        <v-card-title class="pl-2">Slack通知設定</v-card-title>
+        <v-card-title class="pl-2">
+          {{ $t('manage.slack.title') }}
+        </v-card-title>
       </v-row>
       <v-row class="description">
         <v-card-text class="pa-0 pl-2"><div v-html="$t('manage.slack.description')" /></v-card-text>
       </v-row>
       <v-row>
-        <v-card-text>
+        <v-card-title class="pl-2 mt-10">
+          {{ $t('manage.slack.setup') }}
+        </v-card-title>
+      </v-row>
+      <v-row>
+        <v-card-text class="mt-2">
           <v-row><div v-html="$t('manage.slack.step1')" /></v-row>
           <v-row
             ><a :href="slackInstallUrl" target="_blank" class="text-none">{{ slackInstallUrl }}</a></v-row
@@ -52,7 +59,7 @@ const copyRemoveCommand = () => {
         </v-card-text>
       </v-row>
       <v-row>
-        <v-card-text>
+        <v-card-text class="mt-4">
           <v-row
             ><v-col class="pa-0"><div v-html="$t('manage.slack.step2')" /></v-col
           ></v-row>
@@ -66,15 +73,15 @@ const copyRemoveCommand = () => {
               }}</v-btn></v-col
             >
           </v-row>
-        </v-card-text>
+        </v-card-text class="mt-4">
       </v-row>
       <v-row>
-        <v-card-text class="pa-0 pl-2">
+        <v-card-text class="pa-0 pl-2 mt-4">
           <div v-html="$t('manage.slack.step3')" />
         </v-card-text>
       </v-row>
       <v-row>
-        <v-card-text>
+        <v-card-text class="mt-4">
           <v-row
             ><v-col class="pa-0"><div v-html="$t('manage.slack.step4')" /></v-col
           ></v-row>
