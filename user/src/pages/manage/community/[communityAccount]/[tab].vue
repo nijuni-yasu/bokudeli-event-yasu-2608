@@ -11,7 +11,7 @@ import { mdiArrowTopRight } from '@mdi/js'
 
 const { t: $t } = useI18n()
 
-const tabs = ['events', 'member', /*'letter',*/ 'settings'] as const
+const tabs = ['events', 'member', /*'letter',*/ 'slackSetting', 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const communityAccount = useRoute().params.communityAccount as string

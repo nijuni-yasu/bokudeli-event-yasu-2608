@@ -38,6 +38,7 @@ export default {
         'events': 'イベント',
         'member': 'メンバー',
         'letter': 'レター',
+        'slackSetting': 'Slack',
         'settings': '設定',
       }
     },
