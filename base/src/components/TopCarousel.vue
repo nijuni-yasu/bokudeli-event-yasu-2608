@@ -52,7 +52,7 @@ onMounted(async () => {
   <v-card>
     <v-carousel
       cycle
-      height="250"
+      height="auto"
       hide-delimiter-background
       :show-arrows="true"
     >
@@ -77,7 +77,7 @@ onMounted(async () => {
       <v-carousel-item
         cover
         hide-delimiter
-        class="clickable-item"
+        class="clickable-item carousel-item"
         :src="defaultImage"
         @click="onOpenUrl('https://about.shokujii.jp/')"
       />
@@ -86,6 +86,7 @@ onMounted(async () => {
         cover
         hide-delimiter
         :class="{ 'clickable-item': carousel.link_url }"
+        class="carousel-item"
         :src="carousel.image_url"
         @click="carousel.link_url && onOpenUrl(carousel.link_url)"
       />
@@ -96,5 +97,10 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .clickable-item {
   cursor: pointer;
+}
+.carousel-item {
+  aspect-ratio: 5 / 1; /* 5:1 の縦横比 */
+  width: 100%;
+  object-fit: cover;
 }
 </style>
