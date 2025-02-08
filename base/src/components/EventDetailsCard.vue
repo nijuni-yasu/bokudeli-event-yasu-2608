@@ -26,6 +26,8 @@ import XIcon from '@/icons/x'
 import LineIcon from '@/icons/line'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
+import eventDetailStyle from '@/utils/eventDetailStyle'
+import TinyMCEViewer from '@/components//TinyMCEViewer.vue'
 
 const qrcodeSize = 300
 
@@ -179,9 +181,17 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
           </div>
         </v-card-text>
         <v-card-text class="event-item"> 【開催内容】 </v-card-text>
-        <v-card-text v-linkify class="event-content">
-          {{ event.event_desc }}
-        </v-card-text>
+        <tiny-m-c-e-viewer
+          :content="event.event_desc"
+          :style="eventDetailStyle"
+          class="rich-event-content event-content"
+        >
+          <template #planeText>
+            <v-card-text class="event-content">
+              {{ event.event_desc }}
+            </v-card-text>
+          </template>
+        </tiny-m-c-e-viewer>
         <v-card-text class="event-item2">
           【お店】
           <span class="event-content">
@@ -297,5 +307,20 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   font-weight: 400;
   line-height: 32px;
   white-space: pre-line;
+}
+
+iframe {
+  width: 100%;
+  border: none;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.rich-event-content {
+  padding-top: 0;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-bottom: 0;
 }
 </style>

@@ -3,7 +3,11 @@ import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
+import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
+import eventDetailStyle from '@/utils/eventDetailStyle'
+
+const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
 const props = withDefaults(
   defineProps<{
@@ -12,7 +16,7 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-  }
+  },
 )
 
 const { t: $t } = useI18n()
@@ -32,6 +36,18 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
+const tinymceInit = {
+  language: 'ja',
+  plugins: 'table lists link autolink',
+  menubar: 'edit view insert format',
+  removed_menuitems: 'codeformat fontfamily styles',
+  toolbar: 'undo redo styles bold italic alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link',
+  link_default_target: '_blank',
+  disabled: props.readonly,
+  content_style: eventDetailStyle,
+  elementpath: false,
+  branding: false
+}
 </script>
 
 <template>
@@ -91,15 +107,7 @@ if (event.value.event_max_people == 0) {
     <v-card-text class="pt-5">
       <v-row>
         <v-col cols="12">
-          <v-textarea
-            v-model="event.event_desc"
-            outlined
-            rows="15"
-            :label="$t('event_detail.event_desc')"
-            :hint="$t('event_detail.event_desc_hint')"
-            :rules="[requiredValidator]"
-            :readonly="props.readonly"
-          />
+          <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
         </v-col>
       </v-row>
     </v-card-text>
