@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { slackBotFunctionBaseURL } from '@/firebase'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 
 const { t: $t } = useI18n()
@@ -22,9 +23,7 @@ const copyString = (command: string) => {
     .catch((err) => console.error('コピー失敗: ', err))
 }
 
-const copyInstallUrl = () => {
-  copyString('https://slackbot-joizgx24xa-an.a.run.app/slack/install')
-}
+const slackInstallUrl = `${slackBotFunctionBaseURL}/install`
 
 const copyAddCommand = () => {
   copyString(communityAddCommand.value)
@@ -48,9 +47,7 @@ const copyRemoveCommand = () => {
         <v-card-text>
           <v-row><div v-html="$t('manage.slack.step1')" /></v-row>
           <v-row
-            ><a href="https://slackbot-joizgx24xa-an.a.run.app/slack/install" target="_blank" class="text-none"
-              >https://slackbot-joizgx24xa-an.a.run.app/slack/install</a
-            ></v-row
+            ><a :href="slackInstallUrl" target="_blank" class="text-none">{{ slackInstallUrl }}</a></v-row
           >
         </v-card-text>
       </v-row>
