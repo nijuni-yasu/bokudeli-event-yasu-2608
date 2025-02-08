@@ -42,10 +42,11 @@ const tinymceInit = {
   menubar: 'edit view insert format',
   removed_menuitems: 'codeformat fontfamily styles',
   toolbar: 'undo redo styles bold italic alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link',
-  statusbar: false,
   link_default_target: '_blank',
   disabled: props.readonly,
-  content_style: eventDetailStyle
+  content_style: eventDetailStyle,
+  elementpath: false,
+  branding: false
 }
 </script>
 
