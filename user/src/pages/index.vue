@@ -6,7 +6,7 @@ import { where, orderBy, Timestamp } from 'firebase/firestore'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
-import { mdiCrownOutline, mdiCalendarHeart, mdiCalendarCheck, mdiChevronLeft, mdiChevronRight } from '@mdi/js'
+import { mdiCrownOutline, mdiCalendarHeart, mdiCalendarCheck } from '@mdi/js'
 
 const display = useDisplay()
 
