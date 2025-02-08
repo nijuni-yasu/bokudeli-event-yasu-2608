@@ -39,14 +39,32 @@ if (event.value.event_max_people == 0) {
 const tinymceInit = {
   language: 'ja',
   plugins: 'table lists link autolink',
-  menubar: 'edit view insert format',
+  menubar: 'edit insert format',
+  menu: {
+    edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
+    insert: { title: 'Insert', items: 'image link inserttable hr' },
+    format: {
+      title: 'Format',
+      items: 'bold italic underline strikethrough styles forecolor  | language | removeformat',
+    },
+  },
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo styles bold italic alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link',
+  toolbar: 'undo redo styles bold italic | bullist numlist | table link',
+  style_formats: [
+    { title: 'Text', format: 'p' },
+    { title: 'Headings', format: 'h3' },
+    { title: 'Bold', format: 'bold' },
+    { title: 'Italic', format: 'italic' },
+    { title: 'Underline', format: 'underline' },
+    { title: 'Strikethrough', format: 'strikethrough' },
+  ],
+  link_title: false,
   link_default_target: '_blank',
+  link_target_list: false,
   disabled: props.readonly,
   content_style: eventDetailStyle,
   elementpath: false,
-  branding: false
+  branding: false,
 }
 </script>
 
