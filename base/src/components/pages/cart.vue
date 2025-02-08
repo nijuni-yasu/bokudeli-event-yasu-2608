@@ -16,7 +16,7 @@ import Stripe from 'stripe'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { fixOrder } from '@/composable/fixOrder'
-import { mdiCheckOutline, mdiTrashCan } from '@mdi/js'
+import { mdiCheckOutline, mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
@@ -236,6 +236,9 @@ const loadCartList = async () => {
   return convertedList.flat()
 }
 
+const isOpenCancelpolicyDialog = ref(false)
+
+
 onMounted(async () => {
   state.cartList = await loadCartList()
   state.isLoading = false
@@ -277,6 +280,24 @@ onMounted(async () => {
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【支払い方法】{{ $t(`payment.${cart.event.event_payment}`) }} <br />
+          </v-card-text>
+          <v-card-text class="event-item2 d-flex align-center">
+            <div class="d-flex flex-column align-center">
+            【キャンセル】
+            </div>
+            <div class="event-content d-flex flex-column align-center">
+              注文期限までキャンセル可
+            </div>
+            <div class="d-flex flex-column align-center">
+              <v-btn
+                :icon="mdiHelpCircleOutline"
+                color="primary"
+                density="compact"
+                variant="text"
+                @click="isOpenCancelpolicyDialog = true"
+              >
+              </v-btn>
+            </div>
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shop_name }} </v-card-text>
 
@@ -338,6 +359,14 @@ onMounted(async () => {
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
+    <confirm-dialog v-model="isOpenCancelpolicyDialog" :is-confirm="false">
+      <v-card-text class="text-center py-10 text-h4">
+        {{ $t('event_details.cancelpolicy_modal.title') }}
+      </v-card-text>
+      <v-card-text class="pb-0" style="line-height: 2rem">
+        <div v-html="$t('event_details.cancelpolicy_modal.desc')" />
+      </v-card-text>
+    </confirm-dialog>
     <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
       {{ confirmDialogMessage }}
     </confirm-dialog>
