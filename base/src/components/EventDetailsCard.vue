@@ -21,6 +21,7 @@ import {
   mdiMapMarkerRadius,
   mdiOpenInNew,
   mdiAccountGroup,
+  mdiHelpCircleOutline,
 } from '@mdi/js'
 import XIcon from '@/icons/x'
 import LineIcon from '@/icons/line'
@@ -54,6 +55,7 @@ const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
 const isOpenCalendarAddDialog = ref(false)
 const isShowQrCode = ref(false)
+const isOpenCancelpolicyDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
 const userStore = useStoreStoredUser()
@@ -199,16 +201,35 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
           </span>
         </v-card-text>
         <v-card-text class="event-item2">
+          【支払い方法】
+          <span class="event-content">
+            {{ $t(`payment.${event.event_payment}`) }}
+          </span>
+        </v-card-text>
+        <v-card-text class="event-item2">
           【注文期限】
           <span class="event-content">
             {{ $d(event.event_deadline_datetime!.toDate(), 'datetime_weekday_short') }}
           </span>
         </v-card-text>
-        <v-card-text class="event-item2">
-          【支払い方法】
-          <span class="event-content">
-            {{ $t(`payment.${event.event_payment}`) }}
-          </span>
+        <v-card-text class="event-item2 d-flex align-center">
+          <div class="d-flex flex-column align-center">
+          【キャンセル】
+          </div>
+          <div class="event-content d-flex flex-column align-center">
+            注文期限までキャンセル可
+          </div>
+          <div class="d-flex flex-column align-center">
+            <v-btn
+              :icon="mdiHelpCircleOutline"
+              class="pa-0"
+              color="primary"
+              density="compact"
+              variant="text"
+              @click="isOpenCancelpolicyDialog = true"
+            >
+            </v-btn>
+          </div>
         </v-card-text>
         <!-- <v-card-text class="event-item2">
                   【定員】
@@ -271,6 +292,14 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
       </v-col>
     </v-row>
   </v-card>
+  <confirm-dialog v-model="isOpenCancelpolicyDialog" :is-confirm="false">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('event_details.cancelpolicy_modal.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2rem">
+      <div v-html="$t('event_details.cancelpolicy_modal.desc')" />
+    </v-card-text>
+  </confirm-dialog>
   <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
     ログインした後に主催者に連絡してください。
   </confirm-dialog>
@@ -298,12 +327,11 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
 }
 .event-item2 {
   font-size: 14px;
-  padding-bottom: 16px;
+  padding-bottom: 10px;
   font-weight: 600;
 }
 .event-content {
   font-size: 16px;
-  padding-bottom: 16px;
   font-weight: 400;
   line-height: 32px;
   white-space: pre-line;

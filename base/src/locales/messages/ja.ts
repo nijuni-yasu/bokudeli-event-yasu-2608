@@ -46,6 +46,15 @@ export default {
     shop: '【お店】{0}',
     participants: '【参加】{0}人 / {1}人',
   },
+  event_details: {
+    cancelpolicy_modal:{
+      title:'キャンセルポリシー',
+      desc:`注文期限まで：キャンセル料金 0%<br />
+      注文期限以降：キャンセル料金 100%<br />
+      <br />
+      注文期限内であれば <a href="https://shokujii.jp/mypage" target="_blank">マイページ</a> にてご自身でキャンセルを行うことができます。注文期限後、キャンセルはできませんのでご了承ください。`,
+    },
+  },
   event_create_modal: {
     title: 'イベントを作成しよう',
     desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
