@@ -1,35 +1,37 @@
 <script setup lang="ts">
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import CommunityEdit from '@/components/CommunityEdit.vue'
 
-const notification = inject('notification') as Notification
 const { t: $t } = useI18n()
 
 const communityAccount = useRoute().params.communityAccount as string
 const communityStore = useCommunityStore(communityAccount) as CommunityStore
-const community = computed({
-  get: () => communityStore.community,
-  set: (value) => {
-    communityStore.community = value
-  },
+const communityNameForSlack = computed(() => {
+  const community = communityStore.community
+  return `${community?.community_account}-${community?.community_id}`
 })
-const coverImageFile = ref<File | null>(null)
-const iconImageFile = ref<File | null>(null)
-const isLoading = ref(false)
-const submit = async () => {
-  isLoading.value = true
-  try {
-    await communityStore.updateComunity(community.value!)
-    if (coverImageFile.value != null) {
-      await communityStore.updateCoverImage(coverImageFile.value)
-    }
-    if (iconImageFile.value != null) {
-      await communityStore.updateIconImage(iconImageFile.value)
-    }
-    Object.assign(notification, { message: $t('manage.settings.saved'), color: 'success' })
-  } finally {
-    isLoading.value = false
-  }
+
+const communityAddCommand = computed(() => `/shokujiii add ${communityNameForSlack.value}`)
+const communityRemoveCommand = computed(() => `/shokujiii remove ${communityNameForSlack.value}`)
+
+const copyString = (command: string) => {
+  navigator.clipboard
+    .writeText(command)
+    .then(() => {
+      alert('クリップボードにコピーしました')
+    })
+    .catch((err) => console.error('コピー失敗: ', err))
+}
+
+const copyInstallUrl = () => {
+  copyString('https://slackbot-joizgx24xa-an.a.run.app/slack/install')
+}
+
+const copyAddCommand = () => {
+  copyString(communityAddCommand.value)
+}
+
+const copyRemoveCommand = () => {
+  copyString(communityRemoveCommand.value)
 }
 </script>
 
@@ -40,38 +42,54 @@ const submit = async () => {
         <v-card-title class="pl-2">Slack通知設定</v-card-title>
       </v-row>
       <v-row class="description">
-          <v-card-text>
-            <v-row><v-col class="pa-0">shokujii の SlackAppを追加して、コミュニティをさらに盛り上げよう✨</v-col></v-row>
-            <v-row><v-col class="pa-0">SlackAppについて詳しくは こちら をご参照ください。</v-col></v-row>
-          </v-card-text>
+        <v-card-text class="pa-0 pl-2"><div v-html="$t('manage.slack.description')" /></v-card-text>
       </v-row>
       <v-row>
         <v-card-text>
-          <v-row><v-col class="pa-0">ステップ① shokujii のSlackAppをワークスペース及びチャンネルにインストール</v-col></v-row>
-          <v-row><v-col class="pa-0">https://slackbot-joizgx24xa-an.a.run.app/slack/install</v-col></v-row>
+          <v-row><div v-html="$t('manage.slack.step1')" /></v-row>
+          <v-row
+            ><a href="https://slackbot-joizgx24xa-an.a.run.app/slack/install" target="_blank" class="text-none"
+              >https://slackbot-joizgx24xa-an.a.run.app/slack/install</a
+            ></v-row
+          >
         </v-card-text>
       </v-row>
       <v-row>
         <v-card-text>
-          <v-row><v-col class="pa-0">ステップ②  SlackAppを追加したチャンネルで、以下コマンドを送信！</v-col></v-row>
-          <v-row>
-            <v-col cols="8" class="pa-0"><v-text-field>/shokujiii add community-XXXXXXXXXXXXXXXX</v-text-field></v-col>
-            <v-col cols="4" class="pa-0 pl-4"><v-btn variant="text">📝コピー</v-btn></v-col>
+          <v-row
+            ><v-col class="pa-0"><div v-html="$t('manage.slack.step2')" /></v-col
+          ></v-row>
+          <v-row class="align-center">
+            <v-col cols="8" class="pa-0"
+              ><v-text-field readonly>{{ communityAddCommand }}</v-text-field></v-col
+            >
+            <v-col cols="4" class="pa-0 pl-4"
+              ><v-btn variant="text" color="on-surface" slim class="text-none" @click="copyAddCommand">{{
+                $t('manage.slack.copy')
+              }}</v-btn></v-col
+            >
           </v-row>
         </v-card-text>
       </v-row>
       <v-row>
-        <v-card-text>
-          <v-row><v-col class="pa-0">ステップ③ 設定完了🎉</v-col></v-row>
-          <v-row><v-col cols="10" class="pa-0">「参加者の注文通知」「注文期限のリマインド」「イベント開始のリマインド」などがSlackのチャンネルで通知されるようになります。</v-col></v-row>
+        <v-card-text class="pa-0 pl-2">
+          <div v-html="$t('manage.slack.step3')" />
         </v-card-text>
       </v-row>
       <v-row>
         <v-card-text>
-          <v-row><v-col class="pa-0">ステップ④ 設定解除する場合は、以下コマンドを送信してください</v-col></v-row>
-          <v-row>
-            <v-col cols="8" class="pa-0"><v-text-field>/shokujiii remove community-XXXXXXXXXXXXXXXX</v-text-field></v-col>
-            <v-col cols="4" class="pa-0 pl-4"><v-btn  variant="text">📝コピー</v-btn></v-col>
+          <v-row
+            ><v-col class="pa-0"><div v-html="$t('manage.slack.step4')" /></v-col
+          ></v-row>
+          <v-row class="align-center">
+            <v-col cols="8" class="pa-0"
+              ><v-text-field readonly>{{ communityRemoveCommand }}</v-text-field></v-col
+            >
+            <v-col cols="4" class="pa-0 pl-4"
+              ><v-btn variant="text" color="on-surface" slim class="text-none" @click="copyRemoveCommand">{{
+                $t('manage.slack.copy')
+              }}</v-btn></v-col
+            >
           </v-row>
         </v-card-text>
       </v-row>
