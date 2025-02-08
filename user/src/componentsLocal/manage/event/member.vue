@@ -13,6 +13,7 @@ import type { OrderMenu } from '@/schemes/orderMenu'
 import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/buildSnsLinks'
 import { downloadCsv } from '@/utils/downloadCsv'
+import type { FirestoredUser } from '@/schemes/storedUser'
 
 const { t: $t, d: $d } = useI18n()
 const route = useRoute()
@@ -21,11 +22,11 @@ const eventId = route.params.eventId as string
 const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
 
 const eventStore = useEventStore(eventId) as EventStore
-const menus = computed<Array<[OrderItem, EventMember, OrderMenu]>>(
+const menus = computed<Array<[OrderItem, FirestoredUser, OrderMenu]>>(
   () =>
     eventStore.orders?.flatMap((order) => {
-      const member = eventStore.members?.find((m) => m.user_id === order.user_id)
-      return member == null ? [] : order.menus.flatMap((menu) => Array(menu.count).fill([order, member, menu]))
+      const user = (useUserStore(order.user_id) as UserStore).user
+      return user == null ? [] : order.menus.flatMap((menu) => Array(menu.count).fill([order, user, menu]))
     }) ?? [],
 )
 const orderedMenus = computed(() =>
