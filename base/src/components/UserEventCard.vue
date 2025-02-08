@@ -25,7 +25,7 @@ const isShowCancelButton = computed(
 )
 const isShowCanceled = computed(() => props.order.status === 'canceled')
 const isShowInvoiceButton = computed(
-  () => props.order.status === 'ordered' && props.event.event_payment !== 'community_bill',
+  () => props.order.status === 'ordered' && props.order.event_payment !== 'community_bill',
 )
 </script>
 
@@ -38,39 +38,46 @@ const isShowInvoiceButton = computed(
     <v-chip v-if="!event.is_public" class="mt-2 ml-3" color="primary" size="small">
       {{ $t('private_event') }}
     </v-chip>
-    <v-card-title class="justify-center pb-3 title text-h6">
+    <v-card-title class="justify-center pb-1 title text-h5">
       {{ event.event_name }}
     </v-card-title>
-    <v-card-text class="pa-3">{{ $t('user_event_card.community_name', [event.community_name]) }}</v-card-text>
-    <v-card-text class="pa-3">
+    <v-card-text class="py-1 px-2 event-card">
+      {{ $t('user_event_card.community_name', [event.community_name]) }}
+    </v-card-text>
+    <v-card-text class="py-1 px-2 event-card">
       {{
         $t('user_event_card.event_start_datetime', [
           $d(event.event_start_datetime?.toDate() ?? 0, 'datetime_weekday_short'),
         ])
       }}
     </v-card-text>
-    <v-card-text class="pa-3">{{ $t('user_event_card.event_address', [event.event_address]) }}</v-card-text>
-    <v-card-text class="pa-3">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
-    <v-card-text class="pa-3">
+    <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.event_address', [event.event_address]) }}</v-card-text>
+    <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
+    <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.event_payment', [$t(`payment.${order.event_payment}`)]) }}</v-card-text>
+    <v-card-text class="py-1 px-2 event-card">
       {{ $t('user_event_card.menu') }}
-      <template v-for="menu in order.menus" :key="menu.menu_id" class="pl-4 pa-0 pb-0 mb-0">
-        <div v-html="$t('user_event_card.menu_item', [menu.name, menu.count])" />
-      </template>
+      <div class="ml-3">
+        <template v-for="menu in order.menus" :key="menu.menu_id">
+          <div v-html="$t('user_event_card.menu_item', [menu.name, menu.count])" />
+        </template>
+        </div>
     </v-card-text>
-    <v-card-text class="px-3 pb-5">{{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}</v-card-text>
+    <v-card-text class="px-2 pt-1 pb-4 event-card">
+      {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
+    </v-card-text>
     <v-card-text>
       <v-row v-if="isOwner" justify="end">
         <v-spacer></v-spacer>
-        <v-col v-if="isShowCancelButton" class="d-flex justify-end">
-          <v-btn variant="outlined" color="secondary" size="x-small" @click.prevent="dialog = true">
+        <v-col v-if="isShowCancelButton" class="d-flex justify-end pa-1">
+          <v-btn variant="outlined" rounded="pill" color="secondary" size="small" @click.prevent="dialog = true">
             {{ $t('user_event_card.cancel_order') }}
           </v-btn>
         </v-col>
         <v-col v-else-if="isShowCanceled" class="d-flex justify-end">{{ $t('user_event_card.canceled') }} </v-col>
       </v-row>
       <v-row v-if="isOwner && isShowInvoiceButton">
-        <v-col class="d-flex justify-end">
-          <v-btn variant="outlined" color="secondary" size="x-small" @click.prevent="$emit('downloadInvoice', order)">
+        <v-col class="d-flex justify-end pa-1">
+          <v-btn variant="outlined" rounded="pill" color="secondary" size="small" @click.prevent="$emit('downloadInvoice', order)">
             {{ $t('user_event_card.download_invoice') }}
           </v-btn>
         </v-col>
@@ -97,3 +104,8 @@ const isShowInvoiceButton = computed(
     </v-card>
   </v-dialog>
 </template>
+<style lang="scss" scoped>
+.event-card {
+  font-size: 13px;
+}
+</style>

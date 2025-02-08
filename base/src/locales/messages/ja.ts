@@ -227,13 +227,14 @@ export default {
     ・予約が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   user_event_card: {
-    community_name: '【主催者】{0}',
-    event_start_datetime: '【開催日時】{0} 〜',
-    event_address: '【開催場所】{0}',
+    community_name: '【主催】{0}',
+    event_start_datetime: '【日時】{0} 〜',
+    event_address: '【場所】{0}',
     shop_name: '【お店】{0}',
     menu: '【注文内容】',
     menu_item: '{0} <span class="text-caption">({1}個)</span>',
     total_price: '【注文金額】{0}',
+    event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
     cancel_dialog: {
