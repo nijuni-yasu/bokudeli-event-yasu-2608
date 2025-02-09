@@ -70,16 +70,16 @@ export default {
   },
   community_new_modal: {
     community: {
-      title: 'コミュニティを作成しよう🎉',
-      desc: `<b>📝 まずはコミュニティを作ろう！</b><br />
+      title: 'コミュニティを立ち上げよう🌱',
+      desc: `<b>📝 まずはコミュニティを作成</b><br />
             コミュニティを作成すると、食事会のイベントを作成できるようになります。<br />
             <br />
             <b>👩‍🍳 デリバリーでも、イートインでも</b><br />
-            お食事はお店からデリバリーで配送いただけるのでどんな場所でも開催可能。<br />
+            食事はお店からデリバリーで配送いただけるのでどんな場所でも開催可能。<br />
             もしくはイートインでお店の中でも実施いただけます。<br />
             <br />
             <b>📢 多様な告知・集客機能も</b><br />
-            SNS投稿、QRコード、SlackApp、チラシなどを使って食事会への告知・集客もお気軽に。<br />           
+            SNS投稿、QRコード、SlackApp、チラシなどを使って食事会への告知・集客もお気軽に！<br />
             <br />
             <b>🏢 社内交流などのクローズドな食事会にも</b><br />
             「URL限定公開」や「主催者 請求書払い」を設定することで、クローズドなお食事会も。<br />
@@ -89,7 +89,7 @@ export default {
             複数人のメンバーをコミュニティ管理者として追加することができます。<br />
             <br />
             <b>💸 全ての機能を無料で</b><br />
-            主催者のみなさまはあらゆる機能を無料でご利用いただくことができます。<br />
+            主催者のみなさまは、あらゆる機能を無料でご利用いただくことができます。<br />
             `,
     },
   },
@@ -174,7 +174,8 @@ export default {
     title: 'イベント詳細',
     event_name: 'イベントタイトル',
     event_cover_url: 'イベントカバー画像',
-    event_cover_url_hint: '※イベントカバー画像の推奨サイズは、1200 x 630ピクセル です。',
+    event_cover_url_hint: '※カバー画像の推奨サイズは、1200 x 630ピクセル です。',
+    event_cover_template: '※カバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> もご活用ください🎨',
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
@@ -304,7 +305,7 @@ export default {
            ③さらに <b>SNS投稿・ダイレクトメッセージ・チラシ</b>などを駆使して、告知・集客してください📢<br />
 
            <br />
-           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客について」</a> も参考にしてください👍`,
+           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください👍`,
   },
   letter_status: {
     draft: '下書き',

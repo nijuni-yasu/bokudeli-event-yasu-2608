@@ -46,16 +46,21 @@ const events = computed(
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12">
+      <v-col cols="12" class="py-0">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">
           {{ $t('manage.new_event') }}
         </v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">
-      <v-col cols="12" sm="12" md="12" class="px-0">
+      <v-col cols="12" sm="12" md="12">
+        <v-row v-show="eventListStore.eventStores?.length === 0">
+          <v-col cols="12" class="text-h5">
+            <div v-html="$t('manage.event.no_events')" />
+          </v-col>
+        </v-row>
         <v-row>
-          <v-col v-for="({ event, members }, i) of events" :key="`item_${i}`" cols="12" sm="6" md="4" lg="3">
+          <v-col v-for="({ event, members }, i) of events" :key="`item_${i}`" cols="12" sm="6" md="4" lg="3" class="py-0">
             <router-link v-if="event != null" :to="{ path: getManageEventPath(event.event_id) }">
               <EventCard class="event-card" :event="event" :members="members" />
             </router-link>

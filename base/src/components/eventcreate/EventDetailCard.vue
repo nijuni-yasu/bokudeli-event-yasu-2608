@@ -115,8 +115,11 @@ const tinymceInit = {
           >
             <template #placeholder>{{ $t('event_detail.event_cover_url') }}</template>
           </ImageInput>
-          <div class="my-2 text-subtitle-2">
+          <div class="mt-2 text-subtitle-2">
             <span>{{ $t('event_detail.event_cover_url_hint') }}</span>
+          </div>
+          <div class="my-1 text-subtitle-2">
+            <div v-html="$t('event_detail.event_cover_template')"></div>
           </div>
         </v-col>
       </v-row>

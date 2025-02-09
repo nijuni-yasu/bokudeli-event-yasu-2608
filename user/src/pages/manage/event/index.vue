@@ -83,7 +83,7 @@ const events = computed(() => {
 
 <template>
   <v-row v-if="communityList && communityList.length === 0">
-    <v-col cols="12" class="text-h5">
+    <v-col cols="12" class="text-h5 ml-15">
       <div v-html="$t('manage.event.no_community')" />
     </v-col>
   </v-row>
@@ -105,6 +105,11 @@ const events = computed(() => {
       <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">{{
         $t('manage.new_event')
       }}</v-btn>
+    </v-col>
+  </v-row>
+  <v-row v-show="eventListStore.eventStores?.length === 0 && communityList && communityList.length > 0">
+    <v-col cols="12" class="text-h5">
+      <div v-html="$t('manage.event.no_events')" />
     </v-col>
   </v-row>
   <v-row class="mb-2">
