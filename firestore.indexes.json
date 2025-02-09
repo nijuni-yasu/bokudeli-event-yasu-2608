@@ -304,11 +304,11 @@
         },
         {
           "fieldPath": "event_start_datetime",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "event_status.value",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
