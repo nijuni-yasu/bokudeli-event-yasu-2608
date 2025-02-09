@@ -64,42 +64,43 @@ const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() =>
   })
 })
 
-const communityListStore = useCommunityListStore(
+const memberCommunityListStore = useCommunityListStore(
   [where('members', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
   5,
 )
 
+const managerCommunityListStore = useCommunityListStore(
+  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  5,
+)
+
 const memberCommunities = computed(() =>
-  (communityListStore.communityStores ?? []).flatMap((communityStore) => {
-    if (communityStore.community == null) {
+  (memberCommunityListStore.communityStores ?? []).flatMap((communityStore) => {
+    if (communityStore.community == null || communityStore.members == null) {
       return []
     }
     if (!isOwner.value && !communityStore.community.is_public) {
       return []
     }
-    return communityStore.members?.some((member) => member?.user_id === userId)
-      ? {
-          community: communityStore.community,
-          members: communityStore.members.filter((m) => m != null) as CommunityMember[],
-        }
-      : []
+    return {
+      community: communityStore.community,
+      members: communityStore.members.filter((m) => m != null) as CommunityMember[],
+    }
   }),
 )
 
 const managerCommunities = computed(() =>
-  (communityListStore.communityStores ?? []).flatMap((communityStore) => {
-    if (communityStore.community == null) {
+  (managerCommunityListStore.communityStores ?? []).flatMap((communityStore) => {
+    if (communityStore.community == null || communityStore.members == null) {
       return []
     }
     if (!isOwner.value && !communityStore.community.is_public) {
       return []
     }
-    return communityStore.members?.some((member) => member?.user_id === userId && member?.roles?.includes('manager'))
-      ? {
-          community: communityStore.community,
-          members: communityStore.members.filter((m) => m != null) as CommunityMember[],
-        }
-      : []
+    return {
+      community: communityStore.community,
+      members: communityStore.members.filter((m) => m != null) as CommunityMember[],
+    }
   }),
 )
 
@@ -199,9 +200,9 @@ const downloadInvoice = async (order: OrderItem) => {
           <v-row class="justify-center">
             <v-col cols="auto">
               <IncrementalLoader
-                :loaded-count="communityListStore.communityStores?.length ?? 0"
-                :total-count="communityListStore.totalCount ?? 0"
-                @load="communityListStore.next()"
+                :loaded-count="memberCommunityListStore.communityStores?.length ?? 0"
+                :total-count="memberCommunityListStore.totalCount ?? 0"
+                @load="memberCommunityListStore.next()"
               />
             </v-col>
           </v-row>
@@ -221,9 +222,9 @@ const downloadInvoice = async (order: OrderItem) => {
           <v-row class="justify-center">
             <v-col cols="auto">
               <IncrementalLoader
-                :loaded-count="communityListStore.communityStores?.length ?? 0"
-                :total-count="communityListStore.totalCount ?? 0"
-                @load="communityListStore.next()"
+                :loaded-count="managerCommunityListStore.communityStores?.length ?? 0"
+                :total-count="managerCommunityListStore.totalCount ?? 0"
+                @load="managerCommunityListStore.next()"
               />
             </v-col>
           </v-row>
