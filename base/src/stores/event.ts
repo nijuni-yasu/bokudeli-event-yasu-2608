@@ -223,7 +223,12 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         if (unsubscribeOrders == null) {
           const ordersRef = collection(eventRef, 'orders')
           unsubscribeOrders = onSnapshot(ordersRef, (ordersSnapshot) => {
-            _orders.value = ordersSnapshot.docs.map((o) => o.data() as OrderItem) // TODO このキャストは雑なので、ちゃんと処理する
+            _orders.value = ordersSnapshot.docs.map((o) => {
+              const order = o.data() as OrderItem // TODO このキャストは雑なので、ちゃんと処理する
+              // https://github.com/nijuniinc/bokudeli-event-new/issues/729
+              order.carted_at = order.carted_at ?? order.created_at
+              return order
+            })
           })
         }
       }
