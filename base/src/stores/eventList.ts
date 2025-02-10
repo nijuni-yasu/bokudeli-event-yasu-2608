@@ -87,7 +87,7 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
         }
         const newEventRef = doc(collection(communityRef, 'events'))
         await setDoc(newEventRef, {
-          ...event,
+          ...event.convertToDocumentData(),
           event_id: newEventRef.id,
           community_name: community.get('community_name'),
           community_account: community.get('community_account'),
