@@ -163,12 +163,16 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             @click="onShareSnsButtonClicked('copy')"
           ></v-btn>
         </v-card-text>
-        <v-card-text class="text-h4 font-weight-black mt-5 pb-3">概要</v-card-text>
+        <v-card-text class="text-h4 font-weight-black mt-5 pb-3">
+          {{ $t('event_details.overview') }}
+        </v-card-text>
         <v-divider class="custom-divider pt-1" />
         <v-table class="custom-table mx-5 my-3" density="compact">
           <tbody>
             <tr>
-              <td>📅 開催日時</td>
+              <td>
+                {{ $t('event_details.date') }}
+              </td>
               <td>
                 {{ $d(event.event_start_datetime!.toDate(), 'datetime_weekday_short') }}
                 〜
@@ -179,7 +183,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
               </td>
             </tr>
             <tr>
-              <td>📍 開催場所</td>
+              <td>{{ $t('event_details.place') }}</td>
               <td>
                 <div>
                   {{ event.event_address }}
@@ -201,21 +205,21 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
               </td>
             </tr>
             <tr>
-              <td>👩‍🍳 食事の提供</td>
+              <td>{{ $t('event_details.shop') }}</td>
               <td>{{ event.shop_name }}</td>
             </tr>
             <tr>
-              <td>💰 支払い方法</td>
+              <td>{{ $t('event_details.payment') }}</td>
               <td> {{ $t(`payment.${event.event_payment}`) }}</td>
             </tr>
             <tr>
-              <td>⏳ 注文期限</td>
+              <td>{{ $t('event_details.deadline') }}</td>
               <td>{{ $d(event.event_deadline_datetime!.toDate(), 'datetime_weekday_short') }}</td>
             </tr>
             <tr>
-              <td>↩️ キャンセル</td>
+              <td>{{ $t('event_details.cancel') }}</td>
               <td>
-                注文期限までキャンセル可
+                {{ $t('event_details.cancel_until_deadline') }}
                 <span>
                   <v-btn
                     :icon="mdiHelpCircleOutline"
@@ -231,7 +235,9 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             </tr>
           </tbody>
         </v-table>
-        <v-card-text class="text-h4 font-weight-black mt-10 pb-3">開催内容</v-card-text>
+        <v-card-text class="text-h4 font-weight-black mt-10 pb-3">
+          {{ $t('event_details.event_details') }}
+        </v-card-text>
         <v-divider class="custom-divider pt-2" />
         <tiny-m-c-e-viewer
           :content="event.event_desc"
@@ -247,7 +253,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
 
         <v-row class="mt-10 px-4 d-flex align-center">
           <v-card-text class="text-h4 font-weight-black pb-3">
-          参加者
+            {{ $t('event_details.participants') }}
           <span class="text-h5"> {{ members.length }}  / {{ event.event_max_people}}  </span>
           </v-card-text>
           <v-spacer />
@@ -255,7 +261,9 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             <router-link :to="{ path: `${event.event_id}/members` }">
               <div class="d-flex align-end">
                 <v-icon size="large" :icon="mdiAccountGroup" />
-                <span class="ml-2" style="font-size: 16px">参加者プロフィール</span>
+                <span class="ml-2" style="font-size: 16px">
+                  {{ $t('event_details.participants_profile') }}
+                </span>
               </div>
             </router-link>
           </v-col>
@@ -281,7 +289,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
                   :to="getCommunityPath(event.community_account)"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
-                  <div class="ma-1" style="font-size: 12px">【主 催 者】</div>
+                  <div class="ma-1" style="font-size: 12px">{{ $t('event_details.organizer') }}</div>
                   <div class="ma-1" style="font-size: 18px">{{ community.community_name }}</div>
                 </router-link>
                 <v-btn
@@ -291,7 +299,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
                   :prepend-icon="mdiEmail"
                   @click="openContactDialog"
                 >
-                  主催者に連絡
+                 {{ $t('event_details.contact_organizer') }}
                 </v-btn>
                 <community-contact-dialog
                   v-model="isOpenContactDialogVisible"
@@ -307,7 +315,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   </v-card>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
   <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
-    ログインした後に主催者に連絡してください。
+    {{ $t('event_details.contact_organizer_after_login') }}
   </confirm-dialog>
   <login-dialog v-model="isOpenLoginDialog" />
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />

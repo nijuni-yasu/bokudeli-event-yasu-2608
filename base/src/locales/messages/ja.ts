@@ -46,6 +46,22 @@ export default {
     shop: '【お店】{0}',
     participants: '【参加】{0}人 / {1}人',
   },
+  event_details: {
+    overview: '概要',
+    date: '📅 開催日時',
+    place: '📍 開催場所',
+    shop: '👩‍🍳 食事の提供',
+    payment: '💰 支払い方法',
+    deadline: '⏳ 注文期限',
+    cancel: '↩️ キャンセル',
+    cancel_until_deadline: '注文期限までキャンセル可',
+    event_details: '開催内容',
+    participants: '参加者',
+    participants_profile: '参加者プロフィール',
+    organizer: '【主催者】',
+    contact_organizer: '主催者に連絡',
+    contact_organizer_after_login: 'ログインした後に主催者に連絡してください。',
+  },
   event_create_modal: {
     title: 'イベントを作成しよう',
     desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
