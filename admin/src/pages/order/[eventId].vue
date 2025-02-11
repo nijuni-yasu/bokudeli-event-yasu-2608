@@ -133,7 +133,6 @@ const downloadNamesSheet = async () => {
             </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
-            <v-btn @click="downloadNamesSheet">{{ $t('order_detail.names_sheet_print_button') }}</v-btn>
             <template v-if="!isOwner">
               <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
               <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>
@@ -187,6 +186,8 @@ const downloadNamesSheet = async () => {
           </v-form>
         </template>
         <v-card-text v-else-if="eventStore.confirmedOrders != null && eventStore.confirmedOrders.length !== 0">
+          <v-btn variant="outlined" @click="downloadNamesSheet">{{ $t('order_detail.names_sheet_print_button') }}</v-btn>
+          <div class="text-subtitle-2 ma-2" v-html="$t('order_detail.names_sheet_print_button_desc')" />
           <h2 class="mt-10 mb-1">{{ $t('order_detail.order_detail') }}</h2>
           <v-table>
             <thead>
