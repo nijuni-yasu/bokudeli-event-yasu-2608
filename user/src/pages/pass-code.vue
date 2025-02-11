@@ -24,6 +24,15 @@ watch(passCode, async (newValue) => {
   }
 });
 
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.query.redirect as string
+    }
+  })
+}
+
 const reSendPassCode = async () => {
   isLoading.value = true
   try {
@@ -119,7 +128,7 @@ const submit = async () => {
           <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="reSendPassCode">
             コードを再送信する
           </v-btn>
-          <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" to="/login">
+          <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="login">
             ログイン画面へ戻る
           </v-btn>
         </v-sheet>

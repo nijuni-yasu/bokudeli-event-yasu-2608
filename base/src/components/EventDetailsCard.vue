@@ -30,6 +30,8 @@ import { usePartnerStore } from '@/stores/partner'
 import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
 
 const router = useRouter()
+const route = useRoute()
+
 
 const qrcodeSize = 300
 
@@ -74,6 +76,15 @@ const openCalendarAddDialog = () => {
 
 const showQrCode = () => {
   isShowQrCode.value = true
+}
+
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.path
+    }
+  })
 }
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
@@ -332,7 +343,7 @@ const isShowMember = computed(() =>
     </v-row>
   </v-card>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
-  <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+  <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="false" :ok-click="login">
     {{ $t('event_details.contact_community_after_login') }}
   </confirm-dialog>
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
