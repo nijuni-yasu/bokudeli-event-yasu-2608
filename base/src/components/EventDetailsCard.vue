@@ -289,7 +289,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
                   :to="getCommunityPath(event.community_account)"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
-                  <div class="ma-1" style="font-size: 12px">{{ $t('event_details.organizer') }}</div>
+                  <div class="ma-1" style="font-size: 12px">{{ $t('event_details.community_name') }}</div>
                   <div class="ma-1" style="font-size: 18px">{{ community.community_name }}</div>
                 </router-link>
                 <v-btn
@@ -299,7 +299,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
                   :prepend-icon="mdiEmail"
                   @click="openContactDialog"
                 >
-                 {{ $t('event_details.contact_organizer') }}
+                 {{ $t('event_details.contact_community') }}
                 </v-btn>
                 <community-contact-dialog
                   v-model="isOpenContactDialogVisible"
@@ -315,7 +315,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   </v-card>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
   <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
-    {{ $t('event_details.contact_organizer_after_login') }}
+    {{ $t('event_details.contact_community_after_login') }}
   </confirm-dialog>
   <login-dialog v-model="isOpenLoginDialog" />
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
