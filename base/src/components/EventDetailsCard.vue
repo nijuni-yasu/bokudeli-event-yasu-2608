@@ -29,6 +29,8 @@ import eventDetailStyle from '@/utils/eventDetailStyle'
 import TinyMCEViewer from '@/components//TinyMCEViewer.vue'
 
 const router = useRouter()
+const route = useRoute()
+
 
 const qrcodeSize = 300
 
@@ -72,6 +74,15 @@ const openCalendarAddDialog = () => {
 
 const showQrCode = () => {
   isShowQrCode.value = true
+}
+
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.path
+    }
+  })
 }
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
@@ -272,7 +283,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   <confirm-dialog
     v-model="isOpenConfirmDialog"
     :is-confirm="false"
-    @click="(router.push('/login'))"
+    @click="login"
   >
     ログインした後に主催者に連絡してください。
   </confirm-dialog>

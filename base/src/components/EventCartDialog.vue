@@ -11,6 +11,7 @@ import { priceString } from '@/schemes/converter'
 import { mdiCart } from '@mdi/js'
 
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps<{
   modelValue: boolean
@@ -48,6 +49,15 @@ const closeDialog = (isAddCart: boolean) => {
 }
 
 const userStore = useStoreStoredUser()
+
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.path
+    }
+  })
+}
 
 const addOrder = async () => {
   if (!userStore.storedUser || !selectedCount.value || eventStore.event == null) {
@@ -201,7 +211,7 @@ const addCart = async () => {
     <confirm-dialog
       v-model="isOpenConfirmDialog"
       :is-confirm="false"
-      @click="router.push('/login')"
+      @click="login"
     >
       ログインしてください
     </confirm-dialog>
