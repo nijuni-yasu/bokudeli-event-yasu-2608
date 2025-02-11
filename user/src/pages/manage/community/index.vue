@@ -68,7 +68,7 @@ watch(communities, (communities) => {
         </v-btn>
         <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
       </v-row>
-      <v-row v-show="communityListStore.totalCount === communityListStore.communityStores?.length && communities.length === 0" class="mt-5">
+      <v-row v-if="communityListStore.totalCount === 0" class="mt-5">
         <v-col class="text-h5">
           <div v-html="$t('manage.event.no_community')" />
         </v-col>
