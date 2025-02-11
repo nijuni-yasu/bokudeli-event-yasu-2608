@@ -88,3 +88,27 @@ export const reauthenticateByProviderService = async (user: User , providerServi
     return await reauthenticateWithRedirect(user, provider)
   }
 }
+
+export const getCredentialWithPopup = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
+  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
+
+  switch (providerService) {
+    case 'Facebook':
+      provider = new FacebookAuthProvider()
+      provider.addScope('public_profile')
+      provider.setCustomParameters({
+        display: 'popup',
+      })
+      break
+    case 'Google':
+      provider = new GoogleAuthProvider()
+      provider.addScope('profile')
+      provider.addScope('openid')
+      break
+    case 'Twitter':
+      provider = new TwitterAuthProvider()
+      break
+  }
+
+  return await signInWithPopup(getAuth(), provider)
+}

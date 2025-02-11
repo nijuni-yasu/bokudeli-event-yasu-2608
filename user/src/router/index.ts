@@ -5,9 +5,6 @@ import {
   getRedirectResult,
   onAuthStateChanged,
   getAdditionalUserInfo,
-  FacebookAuthProvider,
-  GoogleAuthProvider,
-  TwitterAuthProvider,
   type Unsubscribe,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
@@ -16,13 +13,13 @@ import { useStoreCredential } from '@/stores/credential'
 import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 import type { Router } from 'vue-router'
 import userAccessiblePaths from "@/utils/userAccessiblePaths";
-import userAccessiblePaths from "@/composable/userAccessiblePaths";
 import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getManageCommunityListPath } from './utils'
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 import {useStoreUserCredential} from "@/stores/userCredential";
+import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
 
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 
@@ -40,53 +37,7 @@ const checkUser = async (user: User | null) => {
 
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const tokenResponse = error.customData?._tokenResponse as { providerId: string }
-      const providerId = tokenResponse.providerId
-
-      let providerService: 'Facebook' | 'Google' | 'Twitter' | null = null
-      switch (providerId) {
-        case FacebookAuthProvider.PROVIDER_ID:
-          providerService = 'Facebook'
-          break
-        case GoogleAuthProvider.PROVIDER_ID:
-          providerService = 'Google'
-          break
-        case TwitterAuthProvider.PROVIDER_ID:
-          providerService = 'Twitter'
-          break
-      }
-
-      if (error.code === 'auth/account-exists-with-different-credential') {
-        switch (providerService) {
-          case 'Facebook':
-            window.alert('Googleアカウントですでに登録されています')
-            break
-          case 'Google':
-            window.alert('Facebookアカウントですでに登録されています')
-            break
-          case 'Twitter':
-            window.alert('Twitterアカウントですでに登録されています')
-            break
-          default:
-            window.alert('他のアカウントですでに登録されています')
-            break
-        }
-      } else {
-        switch (providerService) {
-          case 'Facebook':
-            window.alert('Facebookログインできませんでした')
-            break
-          case 'Google':
-            window.alert('Googleログインできませんでした')
-            break
-          case 'Twitter':
-            window.alert('Twitterログインできませんでした')
-            break
-          default:
-            window.alert('ログインできませんでした')
-            break
-        }
-      }
+      useStoreFirebaseAuthError().update(error)
     } else {
       window.alert('ログインに失敗しました')
       console.error('Error fetching redirect result:', { error })
