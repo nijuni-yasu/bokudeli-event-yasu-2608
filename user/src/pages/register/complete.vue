@@ -161,7 +161,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
     storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
     // 明示的に削除
-    useStoreUserAdditionalInfo().$reset()
+    useStoreUserAdditionalInfo().reset()
 
     router.push(profileLink)
   }

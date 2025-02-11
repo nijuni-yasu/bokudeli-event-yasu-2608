@@ -19,9 +19,10 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase'
 import {convertDocumentDataToStoredUser} from "@/schemes/converter";
 import {useValidators} from "@/composable/validators";
-import {signInByProviderService} from "@/utils/providerService";
+import {getCredentialWithPopup, signInByProviderService} from "@/utils/providerService";
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 import {useStoreUserCredential} from "@/stores/userCredential";
+import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
 
 type CreateUserRequest = {
   user_email: string
@@ -245,6 +246,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   const storedUser = convertDocumentDataToStoredUser(docSnap.data())
 
   useStoreUserAdditionalInfo().reset()
+  useStoreFirebaseAuthError().reset()
 
   // メールアドレスが無ければ、メールアドレス設定へ
   if (email === "" || !email) {
@@ -299,6 +301,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
 onMounted(async () => {
   const userCredential = useStoreUserCredential().userCredential
   const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
+  const error = useStoreFirebaseAuthError().error
   if (userCredential !== undefined && additionalUserInfo !== null) {
     try {
       isLoading.value = true
@@ -309,6 +312,62 @@ onMounted(async () => {
     } finally {
       isLoading.value = false
     }
+  } else if (error && error.code === 'auth/account-exists-with-different-credential') {
+    const tokenResponse = error.customData?._tokenResponse as { providerId: string }
+    const providerId = tokenResponse.providerId
+
+    let providerService: 'Facebook' | 'Google' | 'Twitter' | null = null
+    let credential = null
+    switch (providerId) {
+      case FacebookAuthProvider.PROVIDER_ID:
+        providerService = 'Facebook'
+        credential = FacebookAuthProvider.credentialFromError(error)
+        break
+      case GoogleAuthProvider.PROVIDER_ID:
+        providerService = 'Google'
+        credential = GoogleAuthProvider.credentialFromError(error)
+        break
+      case TwitterAuthProvider.PROVIDER_ID:
+        providerService = 'Twitter'
+        credential = TwitterAuthProvider.credentialFromError(error)
+        break
+    }
+    console.error({ error, credential })
+
+
+    let userCredential
+    const customData = error?.customData as CustomData
+    const verifiedProvider = customData?._tokenResponse?.verifiedProvider
+    // カスタムトークンログインを行い、メールアドレスが既に存在している場合
+    if (!verifiedProvider) {
+      const getCustomToken = httpsCallable(functions, "get_custom_token")
+      const result = await getCustomToken({ user_email: customData?.email })
+      const customToken = result.data as string
+
+      userCredential = await signInWithCustomToken(getAuth(), customToken)
+    } else {
+      switch (verifiedProvider[0]) {
+        case 'google.com':
+          userCredential = await getCredentialWithPopup('Google')
+          break
+        case 'facebook.com':
+          userCredential = await getCredentialWithPopup('Facebook')
+          break
+        case 'twitter.com':
+          userCredential = await getCredentialWithPopup('Twitter')
+          break
+      }
+    }
+
+    if (!userCredential || !credential) return window.alert(`${providerService}ログインできませんでした`)
+
+    await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
+      const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+      await transitionJudge(userCredential, additionalUserInfo)
+    }).catch((error) => {
+      console.error(error)
+      window.alert(`${providerService}ログインできませんでした`)
+    });
   }
 })
 
