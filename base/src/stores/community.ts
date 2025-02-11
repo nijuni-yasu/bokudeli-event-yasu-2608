@@ -116,18 +116,18 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
         if (community.value == null || _communityRef.value == null) {
           return null
         }
-        const communityId = _communityRef.value.id
         return (
           community.value.members?.flatMap((doc: DocumentReference) => {
-            const memberStore = useCommunityMemberStore(communityId, doc.id) as CommunityMemberStore
-            const member = memberStore.member
-            if (!memberStore.exists || member == null) {
+            const userStore = useUserStore(doc.id)
+            if (userStore.exists == null) {
               return null
             }
-            // ショップアカウントかどうかを簡単に確認する方法がないので、イベントから判定する
-            // TODO リファクタリング
-            const isShopAccount = events.value?.some((event) => event.partner_id === member.user_id) ?? true
-            return isShopAccount ? [] : (member as CommunityMember)
+            const roles = []
+            if (community.value?.managers.find((manager) => manager.id === doc.id) != null) {
+              roles.push('manager')
+            }
+            // CAUTION: _.merge is mutable function
+            return _.merge({}, userStore.user, { roles })
           }) ?? []
         )
       })
@@ -267,65 +267,5 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
       }
     },
   )
-  return store()
-}
-
-type CommunityMemberStoreGetter = {
-  exists: Ref<boolean | null>
-  member: Ref<CommunityMember | null>
-}
-
-type CommunityMemberStoreAction = {
-  subscribe: () => Promise<void>
-  unsubscribe: () => void
-}
-
-type CommunityMemberStore = Store<string, StateTree, CommunityMemberStoreGetter, CommunityMemberStoreAction>
-
-const useCommunityMemberStore = (communityId: string, memberId: string) => {
-  const store = defineStore(`/comunities/${communityId}/members/${memberId}`, () => {
-    const memberRef: DocumentReference = doc(db, 'communities', communityId, 'members', memberId)
-    const userStore = useUserStore(memberId)
-
-    const _exists = ref<boolean | null>(null)
-    const _member = ref<Omit<CommunityMember, keyof FirestoredUser> | null>(null)
-
-    const exists = computed<boolean | null>(() => {
-      if (_exists.value == null || userStore.exists == null) {
-        return null
-      }
-      return _exists.value && userStore.exists
-    })
-    const member = computed<CommunityMember | null>(() => {
-      if (_member.value == null || userStore.user == null) {
-        return null
-      }
-      // CAUTION: _.merge is mutable function
-      return _.merge({}, userStore.user, convertCommunityMemberToDocumentData(_member.value))
-    })
-
-    let unsubscribeMember: Unsubscribe | null = null
-    const subscribe = () => {
-      if (unsubscribeMember == null) {
-        unsubscribeMember = onSnapshot(memberRef, (memberSnapshot) => {
-          _exists.value = memberSnapshot.exists()
-          const data = memberSnapshot.data()
-          _member.value = data ? (data as Omit<CommunityMember, keyof FirestoredUser>) : null
-        })
-      }
-    }
-
-    subscribe()
-
-    return {
-      exists,
-      member,
-      subscribe,
-      unsubscribe: () => {
-        unsubscribeMember?.()
-        unsubscribeMember = null
-      },
-    }
-  })
   return store()
 }

@@ -17,7 +17,7 @@ if (userId == null) {
 }
 
 const communityListStore = useCommunityListStore(
-  [where('members', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
   10,
 )
 
@@ -27,9 +27,7 @@ const communities = computed(() => {
       if (communityStore.community == null || communityStore.members == null) {
         return []
       }
-      return communityStore.members.some((member) => member?.user_id === userId && member?.roles?.includes('manager'))
-        ? communityStore.community
-        : []
+      return communityStore.community
     }) ?? []
   )
 })

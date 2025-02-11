@@ -23,6 +23,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "managers",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "community_num_members",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "communities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "members",
           "arrayConfig": "CONTAINS"
         },

@@ -8,9 +8,13 @@ const update_community_members = (_, context) =>
     const membersRef = communityRef.collection('members')
     const membersSnapshot = await transaction.get(membersRef)
     const members = membersSnapshot.docs.map((member) => db.collection('users').doc(member.id))
+    const managers = membersSnapshot.docs.flatMap((member) =>
+      member.get('roles').includes('manager') ? db.collection('users').doc(member.id) : [],
+    )
     transaction.update(communityRef, {
       community_num_members: members.length,
       members,
+      managers,
     })
   })
 

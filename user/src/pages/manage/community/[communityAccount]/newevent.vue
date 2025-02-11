@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import EventEdit from '@/components/EventEdit.vue'
 import { getManageEventPath } from '@/router/utils'
+import { useEventListStore } from '@/stores/eventList'
 
 const route = useRoute()
 const router = useRouter()
@@ -8,6 +9,7 @@ const router = useRouter()
 const communityAccount = route.params.communityAccount as string
 
 const updated = (eventId: string) => {
+  useEventListStore().reload()
   router.push(getManageEventPath(eventId))
 }
 </script>
