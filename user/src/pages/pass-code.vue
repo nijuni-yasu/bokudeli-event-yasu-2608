@@ -11,6 +11,8 @@ import {FirestoredUser} from "@/schemes/storedUser";
 const router = useRouter()
 const route = useRoute()
 
+const { t: $t } = useI18n()
+
 const isLoading = ref(false)
 const isValid = ref(false)
 const isError = ref(false)
@@ -116,20 +118,20 @@ const submit = async () => {
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
-              <h1 class="my-3 text-h3 font-weight-bold">パスコードを入力</h1>
+              <h1 class="my-3 text-h3 font-weight-bold">{{ $t('passcode.enter_passcode') }}</h1>
             </v-row>
             <v-row justify="center">
-              <p>{{email}}に送信した6桁のコードを入力してください。</p>
+              <p>{{ $t('passcode.enter_passcode', {email: email}) }}</p>
             </v-row>
           </v-container>
 
           <v-otp-input autofocus :disabled="isLoading" :loading="isValid" :error="isError" :focus-all="isError" v-model="passCode"/>
 
           <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="reSendPassCode">
-            コードを再送信する
+            {{ $t('passcode.resend') }}
           </v-btn>
           <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="login">
-            ログイン画面へ戻る
+            {{ $t('passcode.back') }}
           </v-btn>
         </v-sheet>
       </v-col>

@@ -65,13 +65,13 @@ const isNew = computed(() => {
 })
 
 if (isNew.value === 1) {
-  titleLabel.value = 'アカウント登録完了'
-  descriptionLabel.value = 'shokujiiのアカウントの登録が完了しました 🎉\nSNSアカウント連携して、プロフィールを登録しましょう。'
-  selfButtonLabel.value = '自分でプロフィールを登録する'
+  titleLabel.value = $t('complete.new_user_title')
+  descriptionLabel.value = $t('complete.new_user_description')
+  selfButtonLabel.value = $t('complete.new_user_selfButton')
 } else {
-  titleLabel.value = 'プロフィール登録'
-  descriptionLabel.value = 'プロフィールが登録されていません。\nSNSアカウントと連携して、プロフィール登録を完了させよう👍'
-  selfButtonLabel.value = '自分でプロフィールを入力する'
+  titleLabel.value = $t('complete.exists_user_title')
+  descriptionLabel.value = $t('complete.exists_user_description')
+  selfButtonLabel.value = $t('complete.exists_user_selfButton')
 }
 
 const handleTwitterLink = async () => {
@@ -189,7 +189,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
           </v-container>
 
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleTwitterLink">
-            X と連携してプロフィール登録
+           {{ $t('complete.profile_registration_X') }}
           </v-btn>
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" :to="profileLink">
             {{ selfButtonLabel }}

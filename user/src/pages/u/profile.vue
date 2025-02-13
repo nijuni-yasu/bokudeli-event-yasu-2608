@@ -82,7 +82,7 @@ const { t: $t } = useI18n()
 // バリデーション関連 ここから
 const validateImage = () => {
   if (!user.value?.user_image_url && !userImage.value) {
-    imageError.value = "プロフィール画像を選択してください。"
+    imageError.value = $t('profile.choice_profile_image')
     return false
   } else {
     imageError.value = ""
@@ -132,7 +132,7 @@ const profileSubmit = async () => {
         await userStore.uploadUserImage(image)
       } catch (err) {
         console.error(err)
-        window.alert('画像のアップロードに失敗しました')
+        window.alert($t('profile.fail_image_upload'))
       }
     }
 
@@ -292,7 +292,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
     <v-row justify="center" class="mt-1 mt-md-16 px-1">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
-          <div class="text-center text-h3 font-weight-bold">プロフィール設定</div>
+          <div class="text-center text-h3 font-weight-bold">{{ $t('profile.profile_settings') }}</div>
 
           <v-sheet class="d-flex justify-center mt-4 mb-12">
             <div style="position: relative;">
@@ -304,11 +304,11 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
 
           <v-form ref="form" v-model="isValid" @submit.prevent="profileSubmit">
             <!-- ファイル選択 -->
-            <v-file-input class="d-none" accept="image/*" label="プロフィール画像" ref="fileInput" @update:model-value="readImageFiles" />
+            <v-file-input class="d-none" accept="image/*" ref="fileInput" @update:model-value="readImageFiles" />
 
             <v-sheet class="d-flex flex-column ga-7 mb-16" >
               <v-text-field
-                  label="ユーザーURL"
+                  :label="$t('profile.user_account')"
                   v-model="user.user_account"
                   prefix="https://shokuiji.jp/u/"
                   variant="outlined"
@@ -317,7 +317,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
               />
 
               <v-text-field
-                  label="ユーザー名"
+                  :label="$t('profile.user_name')"
                   v-model="user.user_name"
                   variant="outlined"
                   :disabled="isLoading"
@@ -327,7 +327,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
 
             <v-sheet class="d-flex flex-column ga-7">
               <v-text-field
-                  label="X (Twitter)"
+                  :label="$t('profile.user_sns_twitter')"
                   v-model="user.user_sns_twitter"
                   prefix="https://x.com/"
                   variant="outlined"
@@ -336,7 +336,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
               />
 
               <v-text-field
-                  label="Facebook"
+                  :label="$t('profile.user_sns_facebook')"
                   v-model="user.user_sns_facebook"
                   prefix="https://facebook.com/"
                   variant="outlined"
@@ -345,7 +345,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
               />
 
               <v-text-field
-                  label="Instagram"
+                  :label="$t('profile.user_sns_instagram')"
                   v-model="user.user_sns_instagram"
                   prefix="https://instagram.com/"
                   variant="outlined"
@@ -354,14 +354,14 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
               />
 
               <v-text-field
-                  label="WEBサイト"
+                  :label="$t('profile.user_sns_website')"
                   v-model="user.user_sns_website"
                   variant="outlined"
                   :disabled="isLoading"
               />
 
               <v-textarea
-                  label="自己紹介文"
+                  :label="$t('profile.user_description')"
                   v-model="user.user_description"
                   rows="5"
                   variant="outlined"
@@ -370,7 +370,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
               />
 
               <v-row justify="center">
-                <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">設定を変更する</v-btn>
+                <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
               </v-row>
             </v-sheet>
           </v-form>
@@ -381,19 +381,19 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-16">
-          <div class="text-center text-h3 font-weight-bold">メールアドレス</div>
+          <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
 
           <v-form v-model="isValid" @submit.prevent="emailSubmit">
             <v-text-field
                 class=" my-12"
-                label="メールアドレス"
+                :label="$t('profile.change_settings')"
                 v-model="email"
                 variant="outlined"
                 :disabled="isLoading"
                 :rules="[requiredValidator, emailValidator]"
             />
             <v-row justify="center">
-              <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">設定を変更する</v-btn>
+              <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
             </v-row>
           </v-form>
         </v-sheet>
@@ -403,34 +403,34 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-16">
-          <div class="text-center text-h3 font-weight-bold">アカウント連携</div>
+          <div class="text-center text-h3 font-weight-bold">{{ $t('profile.account_linkage') }}</div>
 
           <div class="d-flex justify-space-between align-center my-8">
             <label class="align-center">
-              <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>Google
+              <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>{{ $t('profile.google') }}
             </label>
-            <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('google.com')">連携中</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">{{ $t('profile.linkage') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
 
           <hr>
 
           <div class="d-flex justify-space-between align-center my-8">
             <label class="align-center">
-              <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>Facebook
+              <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>{{ $t('profile.facebook') }}
             </label>
-            <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('facebook.com')">連携中</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">{{ $t('profile.linkage') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
 
           <hr>
 
           <div class="d-flex justify-space-between align-center my-8">
             <label class="align-center">
-              <v-icon :icon="XIcon" size="x-large" class="me-3"/>Twitter
+              <v-icon :icon="XIcon" size="x-large" class="me-3"/>{{ $t('profile.twitter') }}
             </label>
-            <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('twitter.com')">連携中</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">{{ $t('profile.linkage') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
         </v-sheet>
       </v-col>

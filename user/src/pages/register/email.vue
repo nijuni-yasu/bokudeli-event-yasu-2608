@@ -93,21 +93,21 @@ const submit = async () => {
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
-              <h1 class="my-3 text-h3 font-weight-bold">メールアドレス登録</h1>
+              <h1 class="my-3 text-h3 font-weight-bold">{{ $t('email.register_email') }}</h1>
             </v-row>
             <v-row justify="center">
-              <p>メールアドレスを登録してください。</p>
+              <p>{{ $t('email.register_email_description') }}</p>
             </v-row>
           </v-container>
 
           <v-form v-model="isValid" @submit.prevent="submit">
             <v-container class=" mb-4">
-              <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
+              <label class="field-label" style="font-size: 12px; font-weight: bold;">{{ $t('email.email') }}</label>
               <v-text-field placeholder="example@example.com" v-model="user.user_email"/>
             </v-container>
 
             <v-btn class="mb-10" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
-              送信
+              {{ $t('email.send') }}
             </v-btn>
           </v-form>
         </v-sheet>
