@@ -43,6 +43,8 @@ type CustomData = {
 const route = useRoute()
 const router = useRouter()
 
+const { t: $t } = useI18n()
+
 const isLoading = ref(false)
 
 const isValid = ref(false)
@@ -116,19 +118,19 @@ const handleTwitterLogin = async () => {
           }
         }
 
-        if (!userCredential || !credential) return window.alert('Xログインできませんでした')
+        if (!userCredential || !credential) return window.alert($t('login.login_fail', {snsName: 'X'}))
 
         await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
           const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
           await transitionJudge(userCredential, additionalUserInfo)
         }).catch((error) => {
           console.error(error)
-          window.alert('Xログインできませんでした')
+          window.alert($t('login.login_fail', {snsName: 'X'}))
         });
       }
     } else {
       console.error({ error })
-      window.alert('Xログインできませんでした')
+      window.alert($t('login.login_fail', {snsName: 'X'}))
     }
   }
 }
@@ -168,19 +170,19 @@ const handleFacebookLogin = async () => {
           }
         }
 
-        if (!userCredential || !credential) return window.alert('Facebookログインできませんでした')
+        if (!userCredential || !credential) return window.alert($t('login.login_fail', {snsName: 'Facebook'}))
 
         await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
           const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
           await transitionJudge(userCredential, additionalUserInfo)
         }).catch((error) => {
           console.error(error)
-          window.alert('Facebookログインできませんでした')
+          window.alert($t('login.login_fail', {snsName: 'Facebook'}))
         });
       }
     } else {
       console.error({ error })
-      window.alert('Facebookログインできませんでした')
+      window.alert($t('login.login_fail', {snsName: 'Facebook'}))
     }
   }
 }
@@ -220,19 +222,20 @@ const handleGoogleLogin = async () => {
           }
         }
 
-        if (!userCredential || !credential) return window.alert('Googleログインできませんでした')
+        if (!userCredential || !credential) return window.alert($t('login.login_fail', {snsName: 'Google'}))
 
         await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
           const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
           await transitionJudge(userCredential, additionalUserInfo)
         }).catch((error) => {
           console.error(error)
-          window.alert('Googleログインできませんでした')
+          window.alert($t('login.login_fail', {snsName: 'Google'}))
         });
       }
 
     } else {
       console.error({ error })
+      window.alert($t('login.login_fail', {snsName: 'Google'}))
     }
   }
 }
@@ -359,14 +362,14 @@ onMounted(async () => {
       }
     }
 
-    if (!userCredential || !credential) return window.alert(`${providerService}ログインできませんでした`)
+    if (!userCredential || !credential) return window.alert($t('login.login_fail', {snsName: providerService}))
 
     await linkWithCredential(userCredential.user, credential).then(async (userCredential) => {
       const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
       await transitionJudge(userCredential, additionalUserInfo)
     }).catch((error) => {
       console.error(error)
-      window.alert(`${providerService}ログインできませんでした`)
+      window.alert($t('login.login_fail', {snsName: providerService}))
     });
   }
 })
@@ -383,32 +386,32 @@ onMounted(async () => {
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
-              <div class="my-3 text-h3 font-weight-bold">shokujiiへようこそ</div>
+              <div class="my-3 text-h3 font-weight-bold">{{ $t('login.welcome') }}</div>
             </v-row>
             <v-row justify="center">
-              <p>以下からログインまたは新規登録してください</p>
+              <p>{{ $t('login.please_login_or_register_below') }}</p>
             </v-row>
           </v-container>
 
           <v-form v-model="isValid" @submit.prevent="submit">
             <v-container class="mb-4 pa-0">
-              <label class="field-label" style="font-size: 12px; font-weight: bold;">メールアドレス</label>
+              <label class="field-label" style="font-size: 12px; font-weight: bold;">{{ $t('login.email') }}</label>
               <v-text-field placeholder="example@example.com" v-model="email" :rules="[requiredValidator, emailValidator]"/>
             </v-container>
 
             <v-btn class="mb-12" size="large" color="grey-900" block :disabled="!isValid" :loading="isLoading" type="submit">
-              メールアドレスで続ける
+              {{ $t('login.continue_email') }}
             </v-btn>
           </v-form>
 
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleTwitterLogin">
-            Xでログイン
+            {{ $t('login.sns_login', {snsName: 'X'}) }}
           </v-btn>
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleFacebookLogin">
-            Facebookでログイン
+            {{ $t('login.sns_login', {snsName: 'Facebook'}) }}
           </v-btn>
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleGoogleLogin">
-            Googleでログイン
+            {{ $t('login.sns_login', {snsName: 'Google'}) }}
           </v-btn>
         </v-sheet>
       </v-col>
