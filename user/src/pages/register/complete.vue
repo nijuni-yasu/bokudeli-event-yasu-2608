@@ -144,7 +144,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
     const firestoredUser = userStore.user as FirestoredUser
     firestoredUser.user_name = additionalUserInfo.profile?.name as string | ""
     firestoredUser.user_description = additionalUserInfo.profile?.description as string | null
-    firestoredUser.user_url_path = additionalUserInfo.username as string | null
+    firestoredUser.user_account = additionalUserInfo.username as string | null
     firestoredUser.user_sns_twitter = additionalUserInfo.username as string | null
     await userStore.updateUser(firestoredUser)
 

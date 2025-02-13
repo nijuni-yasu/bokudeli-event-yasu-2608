@@ -28,7 +28,6 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
         user_image_url: null,
         user_account: null,
         user_description: null,
-        user_url_path: null,
         user_sns_facebook: null,
         user_sns_twitter: null,
         user_sns_instagram: null,

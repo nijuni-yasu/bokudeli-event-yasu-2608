@@ -29,7 +29,7 @@ const userIdRef = ref('')
 const fetchUser = async (identifier: string) => {
   const userCollection = collection(db, "users")
   const queryById = query(userCollection, where("user_id", "==", identifier), limit(1))
-  const queryByUrlPath = query(userCollection, where("user_url_path", "==", identifier), limit(1))
+  const queryByUrlPath = query(userCollection, where("user_account", "==", identifier), limit(1))
 
   try {
     const [queryByIdSnapshot, queryByUrlPathSnapshot] = await Promise.all([
