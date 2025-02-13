@@ -13,6 +13,7 @@ import {
   FacebookAuthProvider,
   GoogleAuthProvider,
   TwitterAuthProvider,
+  unlink,
   type User,
   updateEmail,
   signInWithCustomToken
@@ -266,6 +267,24 @@ const handleTwitterLoginLink = async () => {
     }
   }
 }
+
+const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter.com') => {
+  try {
+    isLoading.value = true
+
+    if (auth.currentUser) {
+      await unlink(auth.currentUser, providerId)
+      // ユーザー情報を再取得して更新
+      await auth.currentUser.reload();
+      updateProviderData(auth.currentUser);
+    }
+  } catch (error) {
+    console.error(error)
+  } finally {
+    isLoading.value = false
+  }
+
+}
 </script>
 
 <template>
@@ -391,7 +410,7 @@ const handleTwitterLoginLink = async () => {
               <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>Google
             </label>
             <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('google.com')">連携中</v-btn>
           </div>
 
           <hr>
@@ -401,7 +420,7 @@ const handleTwitterLoginLink = async () => {
               <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>Facebook
             </label>
             <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('facebook.com')">連携中</v-btn>
           </div>
 
           <hr>
@@ -411,7 +430,7 @@ const handleTwitterLoginLink = async () => {
               <v-icon :icon="XIcon" size="x-large" class="me-3"/>Twitter
             </label>
             <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">連携する</v-btn>
-            <v-btn v-else color="grey-900" width="100" class="cursor-none">連携中</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('twitter.com')">連携中</v-btn>
           </div>
         </v-sheet>
       </v-col>
