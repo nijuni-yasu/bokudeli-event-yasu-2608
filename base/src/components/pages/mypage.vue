@@ -6,7 +6,7 @@ const router = useRouter()
 
 const storedUser = useStoreStoredUser().storedUser
 if (storedUser) {
-  router.replace(getUserPath(storedUser.userUrlPath || storedUser.userId))
+  router.replace(getUserPath(storedUser.userAccount || storedUser.userId))
 } else {
   router.replace('/')
 }

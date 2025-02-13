@@ -309,7 +309,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
             <v-sheet class="d-flex flex-column ga-7 mb-16" >
               <v-text-field
                   label="ユーザーURL"
-                  v-model="user.user_url_path"
+                  v-model="user.user_account"
                   prefix="https://shokuiji.jp/u/"
                   variant="outlined"
                   :disabled="isLoading"

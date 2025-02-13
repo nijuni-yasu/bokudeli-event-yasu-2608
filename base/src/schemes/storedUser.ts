@@ -14,7 +14,6 @@ export type StoredUser = {
   userImageUrl: string | null
   userAccount: string | null
   userDescription: string | null
-  userUrlPath: string | null
   userSnsFacebook: string | null
   userSnsTwitter: string | null
   userSnsInstagram: string | null
@@ -32,7 +31,6 @@ export class FirestoredUser {
   user_image_url: string | null = null
   user_account: string | null = null
   user_description: string | null = null
-  user_url_path: string | null = null
   user_sns_facebook: string | null = null
   user_sns_twitter: string | null = null
   user_sns_instagram: string | null = null
