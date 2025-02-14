@@ -4,7 +4,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import EmailDialog from '@/components/EmailDialog.vue'
-import { mdiFacebook, mdiEmail, mdiDownload } from '@mdi/js'
+import { mdiFacebook, mdiEmail, mdiDownload, mdiAccountPlusOutline, mdiAccountRemoveOutline } from '@mdi/js'
 import XIcon from '@/icons/x'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { CommunityMember } from '@/schemes/communityMember'
@@ -25,17 +25,34 @@ const members = computed(
 )
 const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
-const targetMember = ref<CommunityMember | null>(null)
+const emailTargetMember = ref<CommunityMember | null>(null)
 const isEmailDialogOpen = computed({
-  get: () => targetMember.value != null,
+  get: () => emailTargetMember.value != null,
   set: (val) => {
     if (!val) {
-      targetMember.value = null
+      emailTargetMember.value = null
+    }
+  },
+})
+const addTargetMember = ref<CommunityMember | null>(null)
+const removeTargetMember = ref<CommunityMember | null>(null)
+const isModifyAccountDialogOpen = computed({
+  get: () => addTargetMember.value != null || removeTargetMember.value != null,
+  set: (val) => {
+    if (!val) {
+      addTargetMember.value = null
+      removeTargetMember.value = null
     }
   },
 })
 const clickContact = (member: CommunityMember) => {
-  targetMember.value = member
+  emailTargetMember.value = member
+}
+const addAccount = (member: CommunityMember) => {
+  communityStore.addRole(member.user_id, 'manager')
+}
+const removeAccount = (member: CommunityMember) => {
+  communityStore.removeRole(member.user_id, 'manager')
 }
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
@@ -116,6 +133,17 @@ const downloadCsvFile = () => {
                     <td class="text-center">
                       {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
                     </td>
+                    <td class="text-center">
+                      <template v-if="member.user_id !== userStore.user?.user_id">
+                        <v-btn
+                          v-if="member.roles?.includes('manager')"
+                          :icon="mdiAccountRemoveOutline"
+                          variant="text"
+                          @click="removeTargetMember = member"
+                        />
+                        <v-btn v-else :icon="mdiAccountPlusOutline" variant="text" @click="addTargetMember = member" />
+                      </template>
+                    </td>
                     <!--
                     <td class="text-center">
                       <v-btn
@@ -135,7 +163,41 @@ const downloadCsvFile = () => {
       </v-col>
     </v-row>
   </v-container>
-  <EmailDialog v-if="targetMember != null" v-model="isEmailDialogOpen" :toUser="targetMember" />
+  <EmailDialog v-if="emailTargetMember != null" v-model="isEmailDialogOpen" :toUser="emailTargetMember" />
+  <v-dialog v-model="isModifyAccountDialogOpen" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+    <v-card v-if="addTargetMember != null" class="px-2 py-4">
+      <v-card-title>
+        {{ $t('manage.member.add_manager_dialog.title', [addTargetMember.user_name]) }}
+      </v-card-title>
+      <v-card-text>
+        <div v-html="$t('manage.member.add_manager_dialog.description', [addTargetMember.user_name])" />
+      </v-card-text>
+      <v-card-actions>
+        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+          {{ $t('cancel') }}
+        </v-btn>
+        <v-btn type="submit" @click="addAccount(addTargetMember)">
+          {{ $t('manage.member.add_manager_dialog.submit') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+    <v-card v-if="removeTargetMember != null" class="px-2 py-4">
+      <v-card-title>
+        {{ $t('manage.member.remove_manager_dialog.title', [removeTargetMember.user_name]) }}
+      </v-card-title>
+      <v-card-text>
+        <div v-html="$t('manage.member.remove_manager_dialog.description', [removeTargetMember.user_name])" />
+      </v-card-text>
+      <v-card-actions>
+        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+          {{ $t('cancel') }}
+        </v-btn>
+        <v-btn type="submit" @click="removeAccount(removeTargetMember)">
+          {{ $t('manage.member.remove_manager_dialog.submit') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>

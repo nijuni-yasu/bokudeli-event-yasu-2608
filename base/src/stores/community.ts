@@ -48,6 +48,8 @@ type CommunityStoreAction = {
   updateComunity: (data: BokudeliCommunity) => Promise<void>
   updateCoverImage: (coverImage: File) => Promise<void>
   updateIconImage: (iconImage: File) => Promise<void>
+  addRole: (userId: string, role: string) => Promise<void>
+  removeRole: (userId: string, role: string) => Promise<void>
   subscribe: () => Promise<void>
   unsubscribe: () => void
   getCurrentUserRoles: () => Promise<string[] | null>
@@ -250,6 +252,22 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
         return Array.from(roles)
       }
 
+      const addRole = async (userId: string, role: string) => {
+        const communityRef = await getCommunityRef()
+        const memberRef = doc(communityRef, 'members', userId)
+        const memberDoc = await getDoc(memberRef)
+        const roles = Array.from(new Set(memberDoc.data()?.roles).add(role))
+        await updateDoc(memberRef, { roles })
+      }
+
+      const removeRole = async (userId: string, role: string) => {
+        const communityRef = await getCommunityRef()
+        const memberRef = doc(communityRef, 'members', userId)
+        const memberDoc = await getDoc(memberRef)
+        const roles = memberDoc.data()?.roles?.filter((r: string) => r !== role)
+        await updateDoc(memberRef, { roles })
+      }
+
       return {
         community,
         members,
@@ -257,6 +275,8 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
         updateComunity,
         updateCoverImage,
         updateIconImage,
+        addRole,
+        removeRole,
         subscribe,
         unsubscribe,
         getCurrentUserRoles,
