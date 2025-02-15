@@ -46,9 +46,9 @@ export default {
         'overview': '概要',
         'member': '参加者',
         'letter': 'レター',
-        'settings': '編集',
+        'settings': '設定',
       },
-      'edit': 'イベント編集',
+      'edit': 'イベント設定',
       'delete': 'イベント削除',
       'dialog': {
         'title': 'イベント削除',

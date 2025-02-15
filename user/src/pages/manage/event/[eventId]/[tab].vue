@@ -43,15 +43,20 @@ const openInNew = (url: string) => {
 </script>
 
 <template>
-  <v-row v-if="community != null" class="py-0">
-    <v-col cols="12" class="py-1">
-      <router-link :to="getManageCommunityPath(community.community_account)">
-        <div class="text-h5" style="display: flex; align-items: center; justify-content: flex-start">
-          <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 5px" />
-          {{ community?.community_name }}
-        </div>
-      </router-link>
-    </v-col>
+  <v-row v-if="community != null" class="py-2">
+    <router-link :to="getManageCommunityPath(community.community_account)">
+      <div class="text-h5 ml-3" style="display: flex; align-items: center; justify-content: flex-start; color:#1AC662">
+        <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 5px" />
+      </div>
+    </router-link>
+      <v-btn
+        class="px-0"
+        variant="text"
+        size="small"
+        :to="getManageCommunityPath(community.community_account)"
+      >
+      {{ community?.community_name }} >
+    </v-btn>
   </v-row>
   <v-row v-if="event != null">
     <v-col cols="12" class="py-0">

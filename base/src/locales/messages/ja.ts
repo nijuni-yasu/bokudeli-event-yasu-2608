@@ -47,7 +47,7 @@ export default {
     participants: '【参加】{0}人 / {1}人',
   },
   event_create_modal: {
-    title: 'イベントを作成/編集しよう',
+    title: 'イベントを作成しよう',
     desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
           ✅ イベントカバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> をご活用ください🎨<br />
           ✅ 誰でも参加可能な<b>「公開」</b> or 参加者を限定する<b>「URL限定公開」</b>を選べます<br />
@@ -131,7 +131,7 @@ export default {
   community_edit: {
     title: 'コミュニティ設定',
     account: 'コミュニティURL',
-    account_readonly: 'コミュニティURL（ReadOnly）',
+    account_readonly: 'コミュニティURL（変更不可）',
     community_name: 'コミュニティ名',
     community_description: 'コミュニティ説明',
     image_setting: '画像設定',
