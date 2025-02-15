@@ -131,7 +131,7 @@ export default {
   community_edit: {
     title: 'コミュニティ設定',
     account: 'コミュニティURL',
-    account_readonly: 'コミュニティURL（ReadOnly）',
+    account_readonly: 'コミュニティURL（変更不可）',
     community_name: 'コミュニティ名',
     community_description: 'コミュニティ説明',
     image_setting: '画像設定',
