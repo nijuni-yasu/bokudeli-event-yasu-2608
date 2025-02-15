@@ -27,7 +27,7 @@ const numOfColumns = computed(() => {
 
 const userId = getAuth().currentUser!.uid
 const communityListStore = useCommunityListStore(
-  [where('members', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
   5,
 ) as CommunityListStore
 
@@ -38,11 +38,7 @@ const communityList = computed(() => {
   if (communityListStore.communityStores.length !== communityListStore.totalCount) {
     communityListStore.next()
   }
-  return communityListStore.communityStores.flatMap((communityStore) => {
-    return communityStore?.members?.some((member) => member?.user_id === userId && member?.roles?.includes('manager'))
-      ? communityStore.community ?? []
-      : []
-  })
+  return communityListStore.communityStores.flatMap((communityStore) => communityStore.community ?? [])
 })
 
 const communityAccount = ref<string | null>(communityList.value?.[0]?.community_account ?? null)
@@ -69,20 +65,19 @@ const eventListStore = computed(() =>
   ),
 )
 
-const events = computed(() => {
-  return (
+const events = computed(
+  () =>
     eventListStore.value.eventStores?.flatMap((s) => {
       if (s.event == null) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
-    }) ?? []
-  )
-})
+    }) ?? [],
+)
 </script>
 
 <template>
-  <v-row v-if="communityList && communityList.length === 0">
+  <v-row v-if="communityListStore.totalCount === 0">
     <v-col cols="12" class="text-h5 ml-15">
       <div v-html="$t('manage.event.no_community')" />
     </v-col>
@@ -107,7 +102,7 @@ const events = computed(() => {
       }}</v-btn>
     </v-col>
   </v-row>
-  <v-row v-show="eventListStore.eventStores?.length === 0 && communityList && communityList.length > 0">
+  <v-row v-if="communityAccount != null && eventListStore.totalCount === 0">
     <v-col cols="12" class="text-h5">
       <div v-html="$t('manage.event.no_events')" />
     </v-col>
