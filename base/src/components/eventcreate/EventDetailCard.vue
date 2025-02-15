@@ -49,7 +49,7 @@ const tinymceInit = {
     },
   },
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo styles bold italic | bullist numlist | table link',
+  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | table link',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },
@@ -65,6 +65,14 @@ const tinymceInit = {
   content_style: eventDetailStyle,
   elementpath: false,
   branding: false,
+  setup: (editor: any) => {
+    editor.ui.registry.addButton('heading', {
+      text: '見出し',
+      onAction: () => {
+        editor.execCommand('FormatBlock', false, 'h3')
+      },
+    })
+  },
 }
 </script>
 
