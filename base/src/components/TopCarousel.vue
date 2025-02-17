@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import topLogo from '@/assets/images/shokujii/shokujii_logo_cover.png'
+import topLogo from '@/assets/images/shokujii/shokujii_logo_cover.gif'
 import { TopCarousel } from '@/schemes/topCarousel'
 import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 import { db } from '../firebase'
