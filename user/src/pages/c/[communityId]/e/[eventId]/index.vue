@@ -129,7 +129,7 @@ const isFewMemberNotice = computed({
   get: () =>  {
     if (fewMemberNotice.value === null) {
       if (event.value != null) {
-        return event.value.event_num_members < 3 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
+        return event.value.event_num_members < 2 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
       } else {
         return false
       }
