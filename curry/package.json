@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.5",
+    "@tinymce/tinymce-vue": "^6",
     "@turf/distance": "^7.0.0",
     "@vueuse/core": "^10.11.0",
     "axios": "^1.4.0",
