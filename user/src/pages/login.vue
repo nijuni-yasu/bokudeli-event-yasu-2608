@@ -251,8 +251,8 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   useStoreUserAdditionalInfo().reset()
   useStoreFirebaseAuthError().reset()
 
-  // メールアドレスが無ければ、メールアドレス設定へ
-  if (email === "" || !email) {
+  // メールアドレスが無いか、twitter, facebookで新規登録したユーザーはメールアドレス設定へ
+  if ((email === "" || !email) || (isNewUser && (userCredential.providerId === 'twitter.com' || userCredential.providerId === 'facebook.com'))) {
     return  router.push({
       path: '/register/email',
       query: {

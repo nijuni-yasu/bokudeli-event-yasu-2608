@@ -40,7 +40,6 @@ declare module 'vue-router/auto-routes' {
     '/manage/event/[eventId]/invoice': RouteRecordInfo<'/manage/event/[eventId]/invoice', '/manage/event/:eventId/invoice', { eventId: ParamValue<true> }, { eventId: ParamValue<false> }>,
     '/manage/newcommunity': RouteRecordInfo<'/manage/newcommunity', '/manage/newcommunity', Record<never, never>, Record<never, never>>,
     '/mypage': RouteRecordInfo<'/mypage', '/mypage', Record<never, never>, Record<never, never>>,
-    '/newevent': RouteRecordInfo<'/newevent', '/newevent', Record<never, never>, Record<never, never>>,
     '/pass-code': RouteRecordInfo<'/pass-code', '/pass-code', Record<never, never>, Record<never, never>>,
     '/register/complete': RouteRecordInfo<'/register/complete', '/register/complete', Record<never, never>, Record<never, never>>,
     '/register/email': RouteRecordInfo<'/register/email', '/register/email', Record<never, never>, Record<never, never>>,
