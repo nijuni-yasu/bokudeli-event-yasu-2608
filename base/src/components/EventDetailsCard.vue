@@ -3,6 +3,7 @@ import { getCommunityPath } from '@/router/utils'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EventMemberList from '@/components/EventMemberList.vue'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
+import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useEventStore, type EventStore } from '@/stores/event'
@@ -213,12 +214,8 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
           </span>
         </v-card-text>
         <v-card-text class="event-item2 d-flex align-center">
-          <div class="d-flex flex-column align-center">
-          【キャンセル】
-          </div>
-          <div class="event-content d-flex flex-column align-center">
-            注文期限までキャンセル可
-          </div>
+          <div class="d-flex flex-column align-center">【キャンセル】</div>
+          <div class="event-content d-flex flex-column align-center">注文期限までキャンセル可</div>
           <div class="d-flex flex-column align-center">
             <v-btn
               :icon="mdiHelpCircleOutline"
@@ -292,14 +289,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
       </v-col>
     </v-row>
   </v-card>
-  <confirm-dialog v-model="isOpenCancelpolicyDialog" :is-confirm="false">
-    <v-card-text class="text-center py-10 text-h4">
-      {{ $t('event_details.cancelpolicy_modal.title') }}
-    </v-card-text>
-    <v-card-text class="pb-0" style="line-height: 2rem">
-      <div v-html="$t('event_details.cancelpolicy_modal.desc')" />
-    </v-card-text>
-  </confirm-dialog>
+  <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
   <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
     ログインした後に主催者に連絡してください。
   </confirm-dialog>
