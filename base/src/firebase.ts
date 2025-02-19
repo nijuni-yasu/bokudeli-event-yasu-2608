@@ -48,9 +48,4 @@ if (import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST != null) {
   connectStorageEmulator(storage, host, Number.parseInt(port, 10))
   FIREBASE_STORAGE_BASE_URL = `http://${host}:${port}/v0/`
 }
-
-const slackBotFunctionBaseUrl = import.meta.env.VITE_SLACK_BOT_FUNCTION_URL
-  ? import.meta.env.VITE_SLACK_BOT_FUNCTION_URL
-  : 'http://localhost:5001'
-export const slackBotFunctionBaseURL = `${slackBotFunctionBaseUrl}/slack`
 export { FIREBASE_STORAGE_BASE_URL }
