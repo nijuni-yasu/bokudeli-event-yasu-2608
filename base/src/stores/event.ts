@@ -209,7 +209,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       }
 
       const deleteEvent = async (): Promise<void> => {
-        return deleteDoc(await getEventRef())
+        return updateDoc(await getEventRef(), { is_deleted: true })
       }
 
       let unsubscribeEvent: Unsubscribe | null = null
