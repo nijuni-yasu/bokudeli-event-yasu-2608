@@ -32,8 +32,9 @@ const submit = async () => {
       await communityStore.updateIconImage(iconImageFile.value)
     }
     Object.assign(notification, { message: $t('manage.newcommunity.added'), color: 'success' })
-    communityListStore.reload()
-    router.push(getManageCommunityPath(community.community_account))
+    // communityListStore.reload()
+    // router.push(getManageCommunityPath(community.community_account))
+    window.location.href = getManageCommunityPath(community.community_account)
   } catch (err) {
     console.error(err)
     Object.assign(notification, { message: $t('manage.newcommunity.error'), color: 'error' })
