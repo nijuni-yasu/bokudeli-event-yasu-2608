@@ -251,27 +251,27 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
           </template>
         </tiny-m-c-e-viewer>
 
-        <v-row class="mt-10 px-4 d-flex align-center">
-          <v-card-text class="text-h4 font-weight-black pb-3">
-            {{ $t('event_details.participants') }}
-          <span class="text-h5"> {{ members.length }}  / {{ event.event_max_people}}  </span>
-          </v-card-text>
-          <v-spacer />
-          <v-col v-if="members.length > 0" cols="auto">
-            <router-link :to="{ path: `${event.event_id}/members` }">
-              <div class="d-flex align-end">
-                <v-icon size="large" :icon="mdiAccountGroup" />
-                <span class="ml-2" style="font-size: 16px">
-                  {{ $t('event_details.participants_profile') }}
-                </span>
-              </div>
-            </router-link>
-          </v-col>
-        </v-row>
-        <v-divider class="custom-divider mt-2" />
-
-        <event-member-list :members="members" :event-max-people="event.event_max_people" class="mt-4 mb-8" />
-
+        <div v-if="members.length > 0">
+          <v-row class="mt-10 px-4 d-flex align-center">
+            <v-card-text class="text-h4 font-weight-black pb-3">
+              {{ $t('event_details.participants') }}
+            <span class="text-h5"> {{ members.length }}  / {{ event.event_max_people}}  </span>
+            </v-card-text>
+            <v-spacer />
+            <v-col cols="auto">
+              <router-link :to="{ path: `${event.event_id}/members` }">
+                <div class="d-flex align-end">
+                  <v-icon size="large" :icon="mdiAccountGroup" />
+                  <span class="ml-2" style="font-size: 16px">
+                    {{ $t('event_details.participants_profile') }}
+                  </span>
+                </div>
+              </router-link>
+            </v-col>
+          </v-row>
+          <v-divider class="custom-divider mt-2" />
+          <event-member-list :members="members" :event-max-people="event.event_max_people" class="mt-4 mb-8" />
+        </div>
         <v-card-text>
           <v-row align-self-center>
             <v-row class="ma-1">
