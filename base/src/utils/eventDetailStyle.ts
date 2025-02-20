@@ -1,6 +1,7 @@
 const eventDetailStyle = `
   body {
     color: #2E263DB3;
+    font-family: "Inter", sans-serif, -apple-system, blinkmacsystemfont, "Segoe UI", roboto, "Helvetica Neue", arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   }
   h3 {
     margin-top: 24px;
