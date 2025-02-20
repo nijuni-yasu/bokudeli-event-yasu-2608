@@ -976,7 +976,7 @@ export const polling = functions
 export const event_information = functions
   .region('asia-northeast1')
   .runWith({ timeoutSeconds: 540, memory: '1GB' })
-  .pubsub.schedule('0 18 * * 0') // 日曜日の18時
+  .pubsub.schedule('15 10 * * 2') // 火曜日の10時15分
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
   .onRun(() => {
     return sendEventInformationMail()
@@ -985,7 +985,7 @@ export const event_information = functions
 export const event_information_preview = functions
   .region('asia-northeast1')
   .runWith({ timeoutSeconds: 540, memory: '1GB' })
-  .pubsub.schedule('0 18 * * 6') // 土曜日の18時
+  .pubsub.schedule('15 10 * * 1') // 月曜日の10時15分
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
   .onRun(() => {
     return sendEventInformationMailPreview()
