@@ -575,6 +575,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
       _dynamic_template_data.events.push({
         event_name: eventData.event_name,
         event_address: eventData.event_address,
+        event_place: eventData.event_place,
         event_datetime,
         event_deadline_datetime,
         event_desc: convertTruncateText(eventData.event_desc, 250),
@@ -583,7 +584,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
         shop_name: eventData.shop_name,
         community_name: eventData.community_name,
       })
-      if (_dynamic_template_data.events.length === 5) {
+      if (_dynamic_template_data.events.length === 12) {
         break
       }
     }
