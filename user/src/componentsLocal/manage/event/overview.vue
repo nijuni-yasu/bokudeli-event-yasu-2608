@@ -12,8 +12,9 @@ const eventId = route.params.eventId as string
 const eventStore = useEventStore(eventId) as EventStore
 const deleteConfirmationDialog = ref(false)
 const deleteEvent = async () => {
+  const communityAccount = eventStore.event!.community_account
   await eventStore.deleteEvent()
-  window.location.href = getManageCommunityPath(eventStore.event!.community_account)
+  window.location.href = getManageCommunityPath(communityAccount)
   // router.push(getManageEventListPath())
 }
 const openInNew = (url: string) => {
