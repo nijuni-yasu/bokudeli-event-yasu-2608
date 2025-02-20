@@ -46,6 +46,51 @@ export default {
     shop: '【お店】{0}',
     participants: '【参加】{0}人 / {1}人',
   },
+  event_details: {
+    overview: '概要',
+    date: '📅 開催日時',
+    place: '📍 開催場所',
+    shop: '👩‍🍳 食事の提供',
+    payment: '💰 支払い方法',
+    deadline: '⏳ 注文期限',
+    cancel: '↩️ キャンセル',
+    cancel_until_deadline: '注文期限までキャンセル可',
+    event_details: '開催内容',
+    participants: '参加者',
+    participants_profile: '参加者プロフィール',
+    community_name: '【主催者】',
+    contact_community: '主催者に連絡',
+    contact_community_after_login: 'ログインした後に主催者に連絡してください。',
+  },
+  cart: {
+    community_name: '【主催者】',
+    event_name: '【イベント名】',
+    date: '【開催日時】',
+    place: '【開催場所】',
+    shop: '【食事の提供】',
+    payment: '【支払い方法】',
+    deadline: '【注文期限】',
+    cancel: '【キャンセル】',
+    cancel_until_deadline: '注文期限までキャンセル可',
+    menu: 'メニュー',
+    count: '個数',
+    price: '金額',
+    subtotal: '小計',
+    total: '合計',
+    cannot_order_deadline: '注文期限をすぎました。注文確定できません。',
+    cannot_order_limit_people: '定員に達しました。注文確定できません。',
+    order_completed:'注文を完了しました。',
+    payment_failed:'決算処理に失敗しました。管理者にお問い合わせください。',
+    confirm_order_credit_card: 'クレジットカードの事前決済に進みますか？',
+    confirm_order_participant_on_day: '支払方法は「参加者による当日払い」です。注文を確定しますか？',
+    confirm_order_community_bill: '支払方法は「主催者によるお支払い」です。注文を確定しますか？',
+    confirm_order: '注文を確定しますか？',
+    remove_from_cart: 'カートから削除しますか？',
+    removed_from_cart: 'カートから削除しました。',
+    event_not_found: 'イベントが見つかりません。',
+    order_and_attend_event: '注文してイベントに参加する',
+    no_items_in_cart: 'カートに商品はありません。',
+  },
   event_create_modal: {
     title: 'イベントを作成しよう',
     desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
@@ -227,13 +272,14 @@ export default {
     ・予約が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   user_event_card: {
-    community_name: '【主催者】{0}',
-    event_start_datetime: '【開催日時】{0} 〜',
-    event_address: '【開催場所】{0}',
+    community_name: '【主催】{0}',
+    event_start_datetime: '【日時】{0} 〜',
+    event_address: '【場所】{0}',
     shop_name: '【お店】{0}',
     menu: '【注文内容】',
     menu_item: '{0} <span class="text-caption">({1}個)</span>',
     total_price: '【注文金額】{0}',
+    event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
     cancel_dialog: {
@@ -306,6 +352,13 @@ export default {
 
            <br />
            詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください👍`,
+  },
+  cancelpolicy_modal:{
+    title:'キャンセルポリシー',
+    desc:`注文期限まで：キャンセル料金 0%<br />
+    注文期限以降：キャンセル料金 100%<br />
+    <br />
+    注文期限内であれば <a href="https://shokujii.jp/mypage" target="_blank">マイページ</a> にてご自身でキャンセルを行うことができます。注文期限後、キャンセルはできませんのでご了承ください。`,
   },
   letter_status: {
     draft: '下書き',

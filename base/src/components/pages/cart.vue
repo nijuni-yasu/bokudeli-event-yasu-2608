@@ -15,9 +15,12 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import Stripe from 'stripe'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
 import { fixOrder } from '@/composable/fixOrder'
-import { mdiCheckOutline, mdiTrashCan } from '@mdi/js'
+import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
+import { useI18n } from 'vue-i18n'
 
+const { t: $t } = useI18n()
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
@@ -66,10 +69,10 @@ const alertBody = computed({
 const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
   switch (reason) {
     case 'deadline':
-      alertBody.value = '注文期限をすぎました。注文確定できません'
+      alertBody.value = $t('cart.cannot_order_deadline')
       break
     case 'limitPeople':
-      alertBody.value = '定員に達しました。注文確定できません'
+      alertBody.value = $t('cart.cannot_order_limit_people')
       break
   }
 }
@@ -88,7 +91,7 @@ const startOrderProcess = async () => {
     await createCheckoutSession(order)
   } else {
     await fixOrder(order)
-    alertBody.value = '注文を完了しました'
+    alertBody.value = $t('cart.order_completed')
     router.push(getEventPath(order.community_account, order.event_id))
   }
 }
@@ -114,7 +117,9 @@ const createCheckoutSession = async (order: OrderItem) => {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
+      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${
+        order.community_account
+      }`,
       cancel_url: `${stripeBaseURL}/`,
       customer_creation: 'if_required',
       line_items: lineItems,
@@ -131,23 +136,23 @@ const createCheckoutSession = async (order: OrderItem) => {
     })
     window.location.href = session.url || getEventPath(order.community_account, order.event_id)
   } catch (err) {
-    alertBody.value = '決算処理に失敗しました。管理者にお問い合わせください。'
+    alertBody.value = $t('cart.payment_failed')
   }
 }
 
 const paymentMessage = (event: BokudeliEvent) => {
   switch (event.event_payment) {
     case 'user_advance': {
-      return 'クレジットカードの事前決済に進みますか？'
+      return $t('cart.confirm_order_credit_card')
     }
     case 'user_on_day': {
-      return '支払方法は「参加者による当日払い」です。注文を確定しますか？'
+      return $t('cart.confirm_order_participant_on_day')
     }
     case 'community_bill': {
-      return '支払方法は「主催者によるお支払い」です。注文を確定しますか？'
+      return $t('cart.confirm_order_community_bill')
     }
     default: {
-      return '注文を確定しますか？'
+      return $t('cart.confirm_order')
     }
   }
 }
@@ -182,7 +187,7 @@ const startDeleteProcess = async () => {
   } else {
     await setDoc(orderDocument.ref, { menus, updated_at }, { merge: true })
   }
-  alertBody.value = 'カートから削除しました'
+  alertBody.value = $t('cart.removed_from_cart')
   state.cartList = await loadCartList()
 }
 
@@ -198,7 +203,7 @@ const loadCartList = async () => {
     collectionGroup(db, 'orders'),
     where('user_id', '==', userId.value),
     where('status', '==', 'in_cart'),
-    orderBy('updated_at', 'desc'),
+    orderBy('updated_at', 'desc')
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
@@ -212,11 +217,11 @@ const loadCartList = async () => {
       const eventQuery = query(
         collectionGroup(db, 'events'),
         where('community_account', '==', item.community_account),
-        where('event_id', '==', item.event_id),
+        where('event_id', '==', item.event_id)
       )
       const eventSnapshot = await getDocs(eventQuery)
       if (eventSnapshot.docs.length === 0) {
-        console.error('イベントが見つかりませんでした', { item })
+        console.error($t('cart.event_not_found'), { item })
         return []
       }
       const event = convertDocumentDataToEvent(eventSnapshot.docs[0].data())
@@ -230,11 +235,13 @@ const loadCartList = async () => {
       })
       const total = Object.values(subtotals).reduce((total, current) => total + current)
       return [{ order: item, event, subtotals, total }]
-    }),
+    })
   )
 
   return convertedList.flat()
 }
+
+const isOpenCancelpolicyDialog = ref(false)
 
 onMounted(async () => {
   state.cartList = await loadCartList()
@@ -253,42 +260,62 @@ onMounted(async () => {
             </v-col>
           </v-row>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【主催者】
+            {{ $t('cart.community_name') }}
             <router-link :to="getCommunityPath(cart.event.community_account)">
               {{ cart.event.community_name }}
             </router-link>
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【イベント】
+            {{ $t('cart.event_name') }}
             <router-link :to="getEventPath(cart.event.community_account, cart.event.event_id)">
               {{ cart.event.event_name }}
             </router-link>
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催場所】{{ cart.event.event_address }}
+            {{ $t('cart.place') }} {{ cart.event.event_address }} {{ cart.event.event_place }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【開催日時】{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{
+            {{ $t('cart.date') }}{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{
               dateOnlyTimeString(cart.event.event_end_datetime)
             }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【注文期限】{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
+            {{ $t('cart.deadline') }}{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
           </v-card-text>
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
-            【支払い方法】{{ $t(`payment.${cart.event.event_payment}`) }} <br />
+            {{ $t('cart.payment') }}{{ $t(`payment.${cart.event.event_payment}`) }} <br />
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shop_name }} </v-card-text>
+          <v-card-text class="event-item2 d-flex align-center">
+            <div class="d-flex flex-column align-center">
+              {{ $t('cart.cancel') }}
+            </div>
+            <div class="event-content d-flex flex-column align-center">
+              {{ $t('cart.cancel_until_deadline') }}
+            </div>
+            <div class="d-flex flex-column align-center">
+              <v-btn
+                :icon="mdiHelpCircleOutline"
+                color="primary"
+                density="compact"
+                variant="text"
+                @click="isOpenCancelpolicyDialog = true"
+              >
+              </v-btn>
+            </div>
+          </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+            {{ $t('cart.shop') }}{{ cart.event.shop_name }}
+          </v-card-text>
 
           <v-row class="text-center align-center text-md-body-1 text-caption">
             <v-col cols="12">
               <v-table>
                 <thead>
                   <tr>
-                    <th class="text-center" style="padding: 2px">メニュー</th>
-                    <th class="text-center" style="padding: 1px">個数</th>
-                    <th class="text-center" style="padding: 1px">価格</th>
-                    <th class="text-center" style="padding: 1px">小計</th>
+                    <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
+                    <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
+                    <th class="text-center" style="padding: 1px">{{ $t('cart.price') }}</th>
+                    <th class="text-center" style="padding: 1px">{{ $t('cart.subtotal') }}</th>
                     <th class="text-center" style="padding: 1px"></th>
                   </tr>
                 </thead>
@@ -307,23 +334,22 @@ onMounted(async () => {
             </v-col>
           </v-row>
           <v-card-text class="text-right">
-            <span class="text-right ma-2 text-h6">合計</span>
+            <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
             <span class="text-right my-2 ml-2 text-h6">¥</span>
             <span class="text-right ma-2 text-h4">{{ priceString(cart.total) }}</span>
           </v-card-text>
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                class="mx-2 my-10 text-lg-h5"
+                class="my-10 text-md-h4 text-h5"
                 color="grey-900"
                 size="x-large"
                 rounded="pill"
-                elevation="7"
+                elevation="5"
                 width="85%"
-                :prepend-icon="mdiCheckOutline"
                 @click="showConfirm(cart)"
               >
-                事前注文してイベントに参加する
+                {{ $t('cart.order_and_attend_event') }}
               </v-btn>
             </v-col>
           </v-row>
@@ -331,18 +357,19 @@ onMounted(async () => {
       </v-col>
     </v-row>
     <v-row justify="center" v-else-if="!state.isLoading">
-      <v-col cols="auto" class="my-5" style="font-size: 18px"> カートに商品はありません。</v-col>
+      <v-col cols="auto" class="my-5" style="font-size: 18px"> {{ $t('cart.no_items_in_cart') }}</v-col>
     </v-row>
     <v-row v-else justify="center">
       <v-col cols="auto">
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
       </v-col>
     </v-row>
+    <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
     <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
       {{ confirmDialogMessage }}
     </confirm-dialog>
     <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
-      カートから削除しますか？
+      {{ $t('cart.remove_from_cart') }}
     </confirm-dialog>
     <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
   </div>
