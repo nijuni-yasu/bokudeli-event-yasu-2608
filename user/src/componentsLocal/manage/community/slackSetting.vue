@@ -11,8 +11,8 @@ const communityNameForSlack = computed(() => {
   return `${community?.community_account}-${community?.community_id}`
 })
 
-const communityAddCommand = computed(() => `/shokujiii add ${communityNameForSlack.value}`)
-const communityRemoveCommand = computed(() => `/shokujiii remove ${communityNameForSlack.value}`)
+const communityAddCommand = computed(() => `/shokujii add ${communityNameForSlack.value}`)
+const communityRemoveCommand = computed(() => `/shokujii remove ${communityNameForSlack.value}`)
 
 const copyString = (command: string) => {
   navigator.clipboard
@@ -73,7 +73,7 @@ const copyRemoveCommand = () => {
               }}</v-btn></v-col
             >
           </v-row>
-        </v-card-text class="mt-4">
+        </v-card-text>
       </v-row>
       <v-row>
         <v-card-text class="pa-0 pl-2 mt-4">
