@@ -28,8 +28,7 @@ import XIcon from '@/icons/x'
 import LineIcon from '@/icons/line'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
-import eventDetailStyle from '@/utils/eventDetailStyle'
-import TinyMCEViewer from '@/components//TinyMCEViewer.vue'
+import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
 
 const qrcodeSize = 300
 
@@ -108,7 +107,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
     <v-row>
       <v-col>
         <!-- イベント情報 -->
-        <v-card-title class="py-0 text-sm-h2 text-h5 font-weight-black text-wrap" style="line-height: 1.3">
+        <v-card-title class="py-0 text-sm-h3 text-h4 font-weight-black text-wrap" style="line-height: 1.3">
           {{ event.event_name }}
         </v-card-title>
         <v-card-text class="event-item text-right px-0 ma-1">
@@ -187,7 +186,10 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
               <td>
                 <div>
                   {{ event.event_address }}
-                  <a :href="`https://www.google.co.jp/maps/search/${event.event_address} ${event.event_place}`" target="_blank">
+                  <a
+                    :href="`https://www.google.co.jp/maps/search/${event.event_address} ${event.event_place}`"
+                    target="_blank"
+                  >
                     <v-icon :icon="mdiMapMarkerRadius" />
                   </a>
                 </div>
@@ -210,7 +212,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             </tr>
             <tr>
               <td>{{ $t('event_details.payment') }}</td>
-              <td> {{ $t(`payment.${event.event_payment}`) }}</td>
+              <td>{{ $t(`payment.${event.event_payment}`) }}</td>
             </tr>
             <tr>
               <td>{{ $t('event_details.deadline') }}</td>
@@ -235,27 +237,19 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             </tr>
           </tbody>
         </v-table>
-        <v-card-text class="text-h4 font-weight-black mt-10 pb-3">
+        <v-card-text class="text-h4 font-weight-black mt-5 pb-3">
           {{ $t('event_details.event_details') }}
         </v-card-text>
         <v-divider class="custom-divider pt-2" />
-        <tiny-m-c-e-viewer
-          :content="event.event_desc"
-          :style="eventDetailStyle"
-          class="rich-event-content event-content"
-        >
-          <template #planeText>
-            <v-card-text class="event-content">
-              {{ event.event_desc }}
-            </v-card-text>
-          </template>
-        </tiny-m-c-e-viewer>
+        <v-card-text class="pt-0">
+          <tiny-m-c-e-viewer :content="event.event_desc" class="event-content" />
+        </v-card-text>
 
         <div v-if="members.length > 0">
-          <v-row class="mt-10 px-4 d-flex align-center">
+          <v-row class="mt-5 px-4 d-flex align-center">
             <v-card-text class="text-h4 font-weight-black pb-3">
               {{ $t('event_details.participants') }}
-            <span class="text-h5"> {{ members.length }}  / {{ event.event_max_people}}  </span>
+              <span class="text-h5"> {{ members.length }} / {{ event.event_max_people }} </span>
             </v-card-text>
             <v-spacer />
             <v-col cols="auto">
@@ -299,7 +293,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
                   :prepend-icon="mdiEmail"
                   @click="openContactDialog"
                 >
-                 {{ $t('event_details.contact_community') }}
+                  {{ $t('event_details.contact_community') }}
                 </v-btn>
                 <community-contact-dialog
                   v-model="isOpenContactDialogVisible"
@@ -335,11 +329,21 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
 </template>
 <style lang="scss" scoped>
 .event-content {
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 32px;
   padding-bottom: 0px;
-  white-space: pre-line;
+  color: #2e263db3;
+  font-family:
+    'Inter',
+    sans-serif,
+    -apple-system,
+    blinkmacsystemfont,
+    'Segoe UI',
+    roboto,
+    'Helvetica Neue',
+    arial,
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol';
 }
 
 iframe {
@@ -350,19 +354,13 @@ iframe {
   margin: 0;
 }
 
-.rich-event-content {
-  padding-top: 0;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-  padding-bottom: 0;
-}
 .custom-divider {
   width: 100%;
   margin: 0 auto;
   border-color: #333;
 }
 .custom-table td:first-child {
-  width: 18%;  /* 1列目の幅を設定 */
+  width: 18%; /* 1列目の幅を設定 */
   // font-weight: bold;
   white-space: nowrap;
   font-size: 15px;
