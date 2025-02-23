@@ -9,6 +9,7 @@ import {
   getDoc,
   setDoc,
   query,
+  where,
   limit,
   startAfter,
   Timestamp,
@@ -54,12 +55,13 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
         }
         pagenationExecutor.addTask(async () => {
           if (totalCount.value == null) {
-            const q = query(collectionGroup(db, 'events'), ...filters)
+            const q = query(collectionGroup(db, 'events'), where('is_deleted', '==', false), ...filters)
             totalCount.value = (await getCountFromServer(q)).data().count
           }
           const lastVisibleDocument = eventsSnapsthot[eventsSnapsthot.length - 1]
           const q = query(
             collectionGroup(db, 'events'),
+            where('is_deleted', '==', false),
             ...filters,
             ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
             limit(pageSize),
