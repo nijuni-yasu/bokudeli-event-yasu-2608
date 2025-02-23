@@ -28,8 +28,7 @@ import XIcon from '@/icons/x'
 import LineIcon from '@/icons/line'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
-import eventDetailStyle from '@/utils/eventDetailStyle'
-import TinyMCEViewer from '@/components//TinyMCEViewer.vue'
+import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
 
 const qrcodeSize = 300
 
@@ -108,7 +107,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
     <v-row>
       <v-col>
         <!-- イベント情報 -->
-        <v-card-title class="py-0 text-sm-h2 text-h5 font-weight-black text-wrap" style="line-height: 1.3">
+        <v-card-title class="py-0 text-sm-h3 text-h4 font-weight-black text-wrap" style="line-height: 1.3">
           {{ event.event_name }}
         </v-card-title>
         <v-card-text class="event-item text-right px-0 ma-1">
@@ -238,16 +237,16 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             </tr>
           </tbody>
         </v-table>
-        <v-card-text class="text-h4 font-weight-black mt-10 pb-3">
+        <v-card-text class="text-h4 font-weight-black mt-5 pb-3">
           {{ $t('event_details.event_details') }}
         </v-card-text>
         <v-divider class="custom-divider pt-2" />
-        <v-card-text>
+        <v-card-text class="pt-0">
           <tiny-m-c-e-viewer :content="event.event_desc" class="event-content" />
         </v-card-text>
 
         <div v-if="members.length > 0">
-          <v-row class="mt-10 px-4 d-flex align-center">
+          <v-row class="mt-5 px-4 d-flex align-center">
             <v-card-text class="text-h4 font-weight-black pb-3">
               {{ $t('event_details.participants') }}
               <span class="text-h5"> {{ members.length }} / {{ event.event_max_people }} </span>

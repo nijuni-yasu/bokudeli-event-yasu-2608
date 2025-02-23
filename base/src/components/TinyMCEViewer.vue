@@ -7,6 +7,7 @@ const props = defineProps<{ content: string; style?: string }>()
 <style module>
 .tiny-mce-viewer {
   h3 {
+    margin-top: 16px;
     margin-bottom: 8px;
     padding: 0;
     font-size: calc(16px * 1.17);
@@ -17,7 +18,7 @@ const props = defineProps<{ content: string; style?: string }>()
   p,
   ul,
   ol {
-    margin: 0;
+    margin: 8px 0px 8px;
     padding: 0;
     line-height: 2;
     font-size: 16px;
