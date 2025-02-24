@@ -13,7 +13,7 @@ import { getManageCommunityPath } from '@/router/utils'
 
 const { t: $t } = useI18n()
 
-const tabs = ['overview', 'member', /*'letter',*/ 'settings'] as const
+const tabs = ['overview', 'member', 'flyer', /*'letter',*/ 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const eventId = useRoute().params.eventId as string
@@ -45,16 +45,11 @@ const openInNew = (url: string) => {
 <template>
   <v-row v-if="community != null" class="py-2">
     <router-link :to="getManageCommunityPath(community.community_account)">
-      <div class="text-h5 ml-3" style="display: flex; align-items: center; justify-content: flex-start; color:#1AC662">
+      <div class="text-h5 ml-3" style="display: flex; align-items: center; justify-content: flex-start; color: #1ac662">
         <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 5px" />
       </div>
     </router-link>
-      <v-btn
-        class="px-0"
-        variant="text"
-        size="small"
-        :to="getManageCommunityPath(community.community_account)"
-      >
+    <v-btn class="px-0" variant="text" size="small" :to="getManageCommunityPath(community.community_account)">
       {{ community?.community_name }} >
     </v-btn>
   </v-row>
