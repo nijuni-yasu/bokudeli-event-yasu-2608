@@ -36,6 +36,7 @@ class EventRefUpdatedEvent extends Event {
 
 type EventStoreState = {
   event: Ref<BokudeliEvent | null>
+  exists: Ref<boolean | null>
   /**
    * 未注文のものを含む注文リスト
    */
@@ -83,8 +84,11 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       const _eventRef = ref<DocumentReference | null>(null)
 
       const onEventUpdated = (doc: DocumentSnapshot) => {
-        exists.value = doc.exists()
         const data = doc.data()
+        exists.value = data?.is_deleted ? false : doc.exists()
+        if (exists.value === false) {
+          return
+        }
         event.value = data ? convertDocumentDataToEvent(data) : null
         _eventRef.value = doc.ref
         _members.value =
@@ -245,6 +249,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
               window.setTimeout(subscribe, 500)
               return
             }
+            exists.value = false
             throw new Error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
           }
           retry = 0
@@ -270,6 +275,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
 
       return {
         event,
+        exists,
         orders,
         confirmedOrders,
         members,
