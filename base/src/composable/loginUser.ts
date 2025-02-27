@@ -124,13 +124,12 @@ export const loginUser = async (user: User) => {
             const splitPhotoURL = providerData?.photoURL?.split('_') as string[]
             const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1];
 
-            // blobに変換
-            const response = await axios.get(photoURL, { responseType: "blob" });
-            const blob = response.data;
-
-            // 保存
-            const userStore = useUserStore(storedUser.userId) as UserStore
-            await userStore.uploadUserImage(blob)
+            // ログインに影響が出ないよう、非同期で画像を取得する
+            axios.get(photoURL, { responseType: "blob" }).then(async (response) => {
+              const blob = response.data
+              const userStore = useUserStore(storedUser.userId) as UserStore
+              await userStore.uploadUserImage(blob)
+            });
           }
           break
         default:
