@@ -20,7 +20,7 @@ export const {
   community_contact,
   send_email,
 } = await import('./sendgrid-mail.js')
-export const { create_community_members, delete_community_members } = await import('./community-members.js')
+export const { on_write_community_members } = await import('./community-members.js')
 export const { create_event_members } = await import('./event-members.js')
 export const { on_object_finalized } = await import('./storage-image.js')
 export const { scheduled_firestore_export } = await import('./backup.js')

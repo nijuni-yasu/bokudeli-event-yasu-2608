@@ -19,12 +19,7 @@ const update_community_members = (_, context) =>
     })
   })
 
-export const create_community_members = functions
+export const on_write_community_members = functions
   .region('asia-northeast1')
   .firestore.document('communities/{communityId}/members/{userId}')
-  .onCreate(update_community_members)
-
-export const delete_community_members = functions
-  .region('asia-northeast1')
-  .firestore.document('communities/{communityId}/members/{userId}')
-  .onDelete(update_community_members)
+  .onWrite(update_community_members)
