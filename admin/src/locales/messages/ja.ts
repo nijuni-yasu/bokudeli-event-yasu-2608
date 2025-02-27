@@ -178,8 +178,8 @@ export default {
     'total_count': '合計個数',
     'total_price': '合計金額',
     'email_sent': 'メールを送信しました',
-    'names_sheet_print_button': '[お名前]と[メニュー名]をダウンロード',
-    'names_sheet_print_button_desc': '※ [お名前]と[メニュー名]の記載について、詳細は <a href="https://docs.google.com/presentation/d/1TJF92qrL1x8b-k3sYiVtmcOJ4YZNof4l5IYmXJIMQsg/edit#slide=id.g2ffdee5a4fe_13_22" target="_blank">店舗マニュアル</a> を確認ください。',
+    'names_sheet_print_button': '[お名前]をダウンロード',
+    'names_sheet_print_button_desc': '※[お名前]の記載について、詳細は <a href="https://docs.google.com/presentation/d/1TJF92qrL1x8b-k3sYiVtmcOJ4YZNof4l5IYmXJIMQsg/edit#slide=id.g2ffdee5a4fe_13_22" target="_blank">店舗マニュアル</a> を確認ください。',
   },
   'menu_card': {
     'sold_out': '売り切れ',
