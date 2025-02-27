@@ -4,7 +4,6 @@
   "exclude": [
     "src/**/__tests__/*",
     "src/components/pages/**",
-    "src/components/eventCreate/**",
     "src/components/CommunityContactDialog.vue",
     "src/components/EventMemberCard.vue",
     "src/components/EventMemberList.vue",

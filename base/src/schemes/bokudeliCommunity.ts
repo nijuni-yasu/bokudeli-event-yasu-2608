@@ -27,6 +27,7 @@ class BokudeliCommunity {
 
   members: DocumentReference[] = []
   community_num_members: number = 0
+  managers: DocumentReference[] = []
 
   constructor(communityData?: DocumentData) {
     if (communityData != null) {
@@ -39,6 +40,7 @@ class BokudeliCommunity {
       // functions で計算するので含めない
       'members',
       'community_num_members',
+      'managers',
     ])
   }
 }

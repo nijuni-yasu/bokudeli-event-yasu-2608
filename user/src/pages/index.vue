@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import topLogo from '@/assets/images/shokujii/shokujii_logo_cover.png'
 import { getEventPath } from '@/router/utils'
 import { useEventListStore } from '@/stores/eventList'
+import TopCarousel from '@/components/TopCarousel.vue'
 import { where, orderBy, Timestamp } from 'firebase/firestore'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
@@ -37,7 +37,7 @@ const popularEventListStore = useEventListStore(
 const popularEvents = computed(() => {
   const events =
     popularEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 5) {
+      if (s.event == null || s.event.event_num_members < 3) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
@@ -103,11 +103,7 @@ const next = () => {
 <template>
   <v-row class="justify-center align-center">
     <v-col md="10" cols="12">
-      <a href="https://shokujii.studio.site/" target="_blank">
-        <v-card class="d-flex align-center justify-center text-center mb-5" flat>
-          <v-img :src="topLogo" />
-        </v-card>
-      </a>
+      <TopCarousel />
       <v-row class="mb-2">
         <template v-if="popularEvents.length > 0">
           <v-col cols="12" class="text-h4 mt-8 ml-2">

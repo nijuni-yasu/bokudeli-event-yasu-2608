@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getEventCreatePath } from '@/router/utils'
+import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import EventCartDialog from '@/components/EventCartDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -129,7 +129,7 @@ const isFewMemberNotice = computed({
   get: () =>  {
     if (fewMemberNotice.value === null) {
       if (event.value != null) {
-        return event.value.event_num_members < 3 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
+        return event.value.event_num_members < 2 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
       } else {
         return false
       }
@@ -193,43 +193,28 @@ onUnmounted(() => {
             elevation="5"
             rounded="pill"
             :prepend-icon="mdiEmail"
-            :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId, step: 5 },
-            }"
+            :to="getEventEditShopNoticePath(eventId)"
           >
             店舗へ予約申請
           </v-btn>
           <v-btn
-            v-if="(event.event_status.value == 'in_draft' || event.event_status.value == 'full') && isManager"
+            v-if="
+              (event.event_status.value === 'in_draft' ||
+                event.event_status.value === 'full' ||
+                event.event_status.value === 'applying_reservation' ||
+                event.event_status.value === 'accepting_order') &&
+              isManager
+            "
             color="white"
             class="ml-2 my-1"
             elevation="5"
             rounded="pill"
             :prepend-icon="mdiPencilBoxOutline"
-            :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId },
-            }"
-          >
-            イベント編集
-          </v-btn>
-          <v-btn
-            v-if="
-              (event.event_status.value == 'applying_reservation' ||
-                event.event_status.value == 'accepting_order' ||
-                event.event_status.value == 'order_closed') &&
-              isManager
+            :to="
+              event.event_status.value === 'in_draft'
+                ? getEventEditBasicPath(eventId)
+                : getEventEditDetailsPath(eventId)
             "
-            color="white"
-            class="my-1"
-            elevation="5"
-            rounded="pill"
-            :prepend-icon="mdiPencilBoxOutline"
-            :to="{
-              path: getEventCreatePath(communityStore.community.community_account),
-              query: { id: eventId, step: 4 },
-            }"
           >
             イベント編集
           </v-btn>
@@ -293,20 +278,20 @@ onUnmounted(() => {
     touchless
     border="0"
     color="#FFFFFF00"
-    style="height: 60px; z-index: 100; text-align: center"
+    style="height: 70px; z-index: 100; text-align: center"
   >
     <v-row class="justify-center mb-2">
-      <v-col md="8" sm="9" cols="12">
+      <v-col xl="6" lg="8" md="8" sm="9" cols="12">
         <v-btn
-          class="text-h5"
+          class="text-md-h4 text-h5 font-weight-bold"
           size="large"
           rounded="pill"
-          elevation="10"
-          :prepend-icon="mdiFoodForkDrink"
+          elevation="15"
           color="primary"
-          width="90%"
+          width="85%"
           @click="scrollToMenu"
         >
+        <v-icon :icon="mdiFoodForkDrink" class="mr-2"/>
           食事を注文してイベントに参加する
         </v-btn>
       </v-col>

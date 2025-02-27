@@ -85,8 +85,8 @@ export const useValidators = () => {
   }
 
   /**
-   * コミュニティID入力のバリデーション
-   * コミュニティIDの長さは5文字以上15文字以内。コミュニティIDに使えるのは、英小文字・数字・アンダースコア（_）のみです。
+   * コミュニティURL入力のバリデーション
+   * コミュニティURLの長さは5文字以上15文字以内。コミュニティURLに使えるのは、英小文字・数字・アンダースコア（_）のみです。
    *
    * @param value
    * @returns boolean | string if it's invalid, return error message

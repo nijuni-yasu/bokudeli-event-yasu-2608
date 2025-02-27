@@ -23,6 +23,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "managers",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "community_num_members",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "communities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "members",
           "arrayConfig": "CONTAINS"
         },
@@ -77,21 +91,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "event_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_start_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "community_account",
+          "fieldPath": "is_deleted",
           "order": "ASCENDING"
         },
         {
@@ -109,63 +109,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "event_deadline_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "event_status.value",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_end_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "event_status.value",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_start_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "event_status.value",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "is_public",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_deadline_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "event_status.value",
+          "fieldPath": "is_deleted",
           "order": "ASCENDING"
         },
         {
@@ -191,6 +135,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "is_public",
           "order": "ASCENDING"
         },
@@ -213,6 +161,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "is_public",
           "order": "ASCENDING"
         },
@@ -231,83 +183,47 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
-          "fieldPath": "is_public",
+          "fieldPath": "is_deleted",
           "order": "ASCENDING"
         },
-        {
-          "fieldPath": "event_deadline_datetime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "is_public",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_start_datetime",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "subdomain_tags",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "community_account",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "subdomain_tags",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "event_status.value",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "is_public",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "event_start_datetime",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
         {
           "fieldPath": "partner_id",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "event_start_datetime",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "event_status.value",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "letters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "community_account",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "letter_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "letters",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "scheduled_at",
           "order": "ASCENDING"
         }
       ]
@@ -501,80 +417,7 @@
     },
     {
       "collectionGroup": "events",
-      "fieldPath": "event_deadline_datetime",
-      "ttl": false,
-      "indexes": [
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "DESCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "arrayConfig": "CONTAINS",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
       "fieldPath": "event_id",
-      "ttl": false,
-      "indexes": [
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "DESCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "arrayConfig": "CONTAINS",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "fieldPath": "event_start_datetime",
-      "ttl": false,
-      "indexes": [
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "DESCENDING",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "arrayConfig": "CONTAINS",
-          "queryScope": "COLLECTION"
-        },
-        {
-          "order": "ASCENDING",
-          "queryScope": "COLLECTION_GROUP"
-        },
-        {
-          "order": "DESCENDING",
-          "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "fieldPath": "partner_id",
       "ttl": false,
       "indexes": [
         {

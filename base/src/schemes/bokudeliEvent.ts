@@ -57,6 +57,8 @@ class BokudeliEvent {
   updated_at: Timestamp | null = null
   updated_by: string = ''
 
+  is_deleted: boolean = false
+
   raw_event_status: RawEventStatusType = { value: 'in_draft' }
 
   /**

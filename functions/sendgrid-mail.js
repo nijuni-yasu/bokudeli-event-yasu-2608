@@ -110,6 +110,24 @@ function getShopEmails(shopSnapshot) {
   return Array.from(emails)
 }
 
+async function getCommunityMemberEmailsSet(communityId) {
+  // 重複するメールアドレスは追加しない
+  const emails = new Set()
+  const membersRef = db.collection('communities').doc(communityId).collection('members')
+  const membersSnapshot = await membersRef.get()
+  await Promise.all(
+    membersSnapshot.docs.map(async (member) => {
+      const userRef = db.collection('users').doc(member.id)
+      const userSnapshot = await userRef.get()
+      const userEmail = userSnapshot.get('user_email')
+      if (userEmail != null && userEmail !== '') {
+        emails.add(userEmail)
+      }
+    }),
+  )
+  return emails
+}
+
 async function getCommunityManagerEmailsSet(communityId) {
   // 重複するメールアドレスは追加しない
   const emails = new Set()
@@ -142,7 +160,13 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
   return Array.from(emails)
 }
 
-async function getEventMemberEmails(eventSnapshot) {
+async function getEventMemberEmails(eventSnapshotOrId) {
+  let eventSnapshot
+  if (typeof eventSnapshotOrId === 'string') {
+    eventSnapshot = (await db.collectionGroup('events').where('event_id', '==', eventSnapshotOrId).get()).docs[0]
+  } else {
+    eventSnapshot = eventSnapshotOrId
+  }
   const usersSet = await getUsersFromOrders(eventSnapshot.ref.collection('orders'))
   const emails = await Promise.all(
     Array.from(usersSet).map(async (userId) => {
@@ -551,6 +575,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
       _dynamic_template_data.events.push({
         event_name: eventData.event_name,
         event_address: eventData.event_address,
+        event_place: eventData.event_place,
         event_datetime,
         event_deadline_datetime,
         event_desc: convertTruncateText(eventData.event_desc, 250),
@@ -559,7 +584,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
         shop_name: eventData.shop_name,
         community_name: eventData.community_name,
       })
-      if (_dynamic_template_data.events.length === 5) {
+      if (_dynamic_template_data.events.length === 12) {
         break
       }
     }
@@ -856,6 +881,49 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
   )
 }
 
+async function sendLetter(start, end) {
+  return db.runTransaction(async (transaction) => {
+    const letters = await transaction.get(
+      db
+        .collectionGroup('letters')
+        .where('status', '==', 'timed')
+        .where('scheduled_at', '>', Timestamp.fromMillis(start))
+        .where('scheduled_at', '<=', Timestamp.fromMillis(end)),
+    )
+    await Promise.all(
+      letters.docs.map(async (letterDoc) => {
+        const communityAccount = letterDoc.get('community_account')
+        const type = letterDoc.get('letter_type')
+        let emails = []
+        switch (type) {
+          case 'community':
+            emails = Array.from(await getCommunityMemberEmailsSet(communityAccount))
+            break
+          case 'event_participant':
+            const eventId = letterDoc.get('event_id')
+            emails = await getEventMemberEmails(eventId)
+            break
+          case 'event_non_participant':
+            emails = await getCommunityMemberEmailsSet(communityAccount)
+            for (const email of await getEventMemberEmails(eventId)) {
+              emails.delete(email)
+            }
+            break
+        }
+        for (const email of emails) {
+          await sgMail.send({
+            to: email,
+            from: DEFAULT_FROM,
+            subject: letterDoc.get('letter_title'),
+            text: letterDoc.get('letter_content'),
+          })
+        }
+        transaction.update(letterDoc.ref, { status: 'sent', sent_at: Timestamp.now() })
+      }),
+    )
+  })
+}
+
 function buildInCartNotificationMail(eventSnapshot, userData) {
   const eventData = eventSnapshot.data()
   return {
@@ -901,13 +969,14 @@ export const polling = functions
       sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis, false), // 1日後通知
       sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis, false), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
+      sendLetter(start, end),
     ])
   })
 
 export const event_information = functions
   .region('asia-northeast1')
   .runWith({ timeoutSeconds: 540, memory: '1GB' })
-  .pubsub.schedule('0 18 * * 0') // 日曜日の18時
+  .pubsub.schedule('15 10 * * 2') // 火曜日の10時15分
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
   .onRun(() => {
     return sendEventInformationMail()
@@ -916,7 +985,7 @@ export const event_information = functions
 export const event_information_preview = functions
   .region('asia-northeast1')
   .runWith({ timeoutSeconds: 540, memory: '1GB' })
-  .pubsub.schedule('0 18 * * 6') // 土曜日の18時
+  .pubsub.schedule('15 10 * * 1') // 月曜日の10時15分
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
   .onRun(() => {
     return sendEventInformationMailPreview()
@@ -997,4 +1066,32 @@ export const community_contact = functions.region('asia-northeast1').https.onCal
     console.log(context)
     throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error')
   }
+})
+
+export const send_email = functions.region('asia-northeast1').https.onCall(async (data, context) => {
+  if (!context.auth) {
+    console.warn('send_email Auth Error', data, context)
+    throw new functions.https.HttpsError('permission-denied', 'AuthError')
+  }
+  const { toUid, subject, text } = data
+  if (toUid == null || subject == null || text == null) {
+    console.warn('send_email Invalid Argument Error', data, context)
+    throw new functions.https.HttpsError('invalid-argument', 'Required data is missing')
+  }
+  const [fromUser, toUser] = await Promise.all([
+    db.collection('users').doc(context.auth.uid).get(),
+    db.collection('users').doc(toUid).get(),
+  ])
+  const from = fromUser.get('user_email')
+  const to = toUser.get('user_email')
+  if (from == null || to == null) {
+    console.warn(`send_email user_email is null\nfrom: ${from}\nto: ${to}`)
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid email address')
+  }
+  return sgMail.send({
+    to,
+    from,
+    subject,
+    text,
+  })
 })

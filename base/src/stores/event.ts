@@ -13,6 +13,7 @@ import {
   where,
   onSnapshot,
   Timestamp,
+  deleteDoc,
   DocumentReference,
   DocumentSnapshot,
   type Unsubscribe,
@@ -35,6 +36,7 @@ class EventRefUpdatedEvent extends Event {
 
 type EventStoreState = {
   event: Ref<BokudeliEvent | null>
+  exists: Ref<boolean | null>
   /**
    * 未注文のものを含む注文リスト
    */
@@ -57,6 +59,7 @@ type EventStoreAction = {
   updateCoverImage: (coverImage: File) => Promise<void>
   addOrder: (data: Partial<OrderItem>) => Promise<DocumentReference | null>
   updateOrder: (id: string, data: Partial<OrderItem>) => Promise<void>
+  deleteEvent: () => Promise<void>
   subscribe: () => Promise<void>
   unsubscribe: () => void
 }
@@ -81,8 +84,11 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       const _eventRef = ref<DocumentReference | null>(null)
 
       const onEventUpdated = (doc: DocumentSnapshot) => {
-        exists.value = doc.exists()
         const data = doc.data()
+        exists.value = data?.is_deleted ? false : doc.exists()
+        if (exists.value === false) {
+          return
+        }
         event.value = data ? convertDocumentDataToEvent(data) : null
         _eventRef.value = doc.ref
         _members.value =
@@ -206,6 +212,10 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         await updateDoc(orderRef, data)
       }
 
+      const deleteEvent = async (): Promise<void> => {
+        return updateDoc(await getEventRef(), { is_deleted: true })
+      }
+
       let unsubscribeEvent: Unsubscribe | null = null
       const subscribeEvent = (eventRef: DocumentReference) => {
         if (unsubscribeEvent == null) {
@@ -217,7 +227,12 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         if (unsubscribeOrders == null) {
           const ordersRef = collection(eventRef, 'orders')
           unsubscribeOrders = onSnapshot(ordersRef, (ordersSnapshot) => {
-            _orders.value = ordersSnapshot.docs.map((o) => o.data() as OrderItem) // TODO このキャストは雑なので、ちゃんと処理する
+            _orders.value = ordersSnapshot.docs.map((o) => {
+              const order = o.data() as OrderItem // TODO このキャストは雑なので、ちゃんと処理する
+              // https://github.com/nijuniinc/bokudeli-event-new/issues/729
+              order.carted_at = order.carted_at ?? order.created_at
+              return order
+            })
           })
         }
       }
@@ -234,6 +249,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
               window.setTimeout(subscribe, 500)
               return
             }
+            exists.value = false
             throw new Error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
           }
           retry = 0
@@ -259,6 +275,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
 
       return {
         event,
+        exists,
         orders,
         confirmedOrders,
         members,
@@ -266,6 +283,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         updateCoverImage,
         addOrder,
         updateOrder,
+        deleteEvent,
         subscribe,
         unsubscribe,
         $reset: () => {

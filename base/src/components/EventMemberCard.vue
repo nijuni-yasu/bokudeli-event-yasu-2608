@@ -22,46 +22,41 @@ const instagramUrl = computed(() =>
 )
 const userDescription = computed(() => props.member.user_description ?? '')
 
-const descriptionCharacterLimit = 120
+const descriptionCharacterLimit = 50
 </script>
 
 <template>
   <v-container class="pa-3">
-    <v-card class="pt-8">
+    <router-link :to="getUserPath(member.user_id)">
+    <v-card class="pt-3 pb-2">
       <v-card-title class="d-flex align-center flex-column">
         <UserAvatar :user="member" :size="150" />
         <v-row class="justify-center">
-          <v-col class="mt-3">
+          <v-col class="mt-1">
             <span class="text-h5 text-center text-wrap">{{ userName }}</span>
           </v-col>
         </v-row>
       </v-card-title>
-      <v-card-text v-linkify class="text-caption description py-1 px-5">
+      <v-card-text v-linkify class="description py-0 px-5">
         {{ convertTruncateText(userDescription, descriptionCharacterLimit) }}
       </v-card-text>
       <v-card-subtitle class="sns-buttons">
         <v-row class="justify-center">
-          <v-col cols="auto">
+          <v-col cols="auto" class="pa-1">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn :icon="mdiTwitter" class="ma-3"></v-btn>
+              <v-btn :icon="mdiTwitter" size="small" class="ma-2"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
-              <v-btn :icon="mdiFacebook" class="ma-3"></v-btn>
+              <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
-              <v-btn :icon="mdiInstagram" class="ma-3"></v-btn>
+              <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
             </a>
           </v-col>
         </v-row>
       </v-card-subtitle>
-      <v-card-text class="text-center pt-1">
-        <router-link :to="getUserPath(member.user_id)">
-          <v-btn class="ma-2" variant="outlined" size="small" rounded="pill" :prepend-icon="mdiAccount">
-            プロフィール詳細
-          </v-btn>
-        </router-link>
-      </v-card-text>
     </v-card>
+    </router-link>
   </v-container>
 </template>
 
@@ -69,14 +64,15 @@ const descriptionCharacterLimit = 120
 @import 'src/styles/variables/_vuetify.scss';
 
 .sns-buttons {
-  height: 60px;
+  height: 45px;
 }
 .description {
-  line-height: 24px;
+  font-size: 12px;
+  line-height: 20px;
   white-space: normal;
   text-overflow: ellipsis;
   overflow: hidden;
-  height: calc(30px * 2 + $card-text-padding * 2);
-  max-height: calc(30px * 2 + $card-text-padding * 2);
+  height: calc(5px * 2 + $card-text-padding * 2);
+  max-height: calc(5px * 2 + $card-text-padding * 2);
 }
 </style>

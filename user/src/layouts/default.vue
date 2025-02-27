@@ -8,6 +8,8 @@ import UserProfile from '@/componentsLocal/UserProfile.vue'
 import Footer from '@/componentsLocal/Footer.vue'
 import { useNavItems } from '@/navigation'
 import type { Notification } from '@/types'
+import { getManagePath } from '@/router/utils'
+import { getAuth, type User } from 'firebase/auth'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -19,6 +21,7 @@ const DefaultLayoutWithVerticalNav = defineAsyncComponent(
 const navItems = useNavItems()
 
 const configStore = useConfigStore()
+configStore.appContentLayoutNav = AppContentLayoutNav.Horizontal
 // ℹ️ This will switch to vertical nav when define breakpoint is reached when in horizontal nav layout
 // Remove below composable usage if you are not using horizontal nav layout in your app
 switchToVerticalNavOnLtOverlayNavBreakpoint()
@@ -42,6 +45,10 @@ const isNotificationShown = computed({
     }
   },
 })
+const currentUser = ref<User | null>(null)
+getAuth().onAuthStateChanged((user) => {
+  currentUser.value = user
+})
 </script>
 
 <template>
@@ -55,6 +62,9 @@ const isNotificationShown = computed({
     "
   >
     <template #navbar-icons>
+      <v-btn v-if="currentUser != null" class="me-4" :href="getManagePath()">
+        {{ $t('navigation.new_event') }}
+      </v-btn>
       <UserProfile />
     </template>
     <template #footer>

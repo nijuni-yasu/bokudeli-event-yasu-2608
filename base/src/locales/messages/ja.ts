@@ -9,6 +9,8 @@ export default {
   phone_number: '電話番号',
   invoice_number: '適格請求書登録番号',
   email: 'メールアドレス',
+  email_subject: '件名',
+  email_message: 'メッセージ',
   latitude: '緯度',
   longitude: '経度',
   payment: {
@@ -44,8 +46,53 @@ export default {
     shop: '【お店】{0}',
     participants: '【参加】{0}人 / {1}人',
   },
+  event_details: {
+    overview: '概要',
+    date: '📅 開催日時',
+    place: '📍 開催場所',
+    shop: '👩‍🍳 食事の提供',
+    payment: '💰 支払い方法',
+    deadline: '⏳ 注文期限',
+    cancel: '↩️ キャンセル',
+    cancel_until_deadline: '注文期限までキャンセル可',
+    event_details: '開催内容',
+    participants: '参加者',
+    participants_profile: '参加者プロフィール',
+    community_name: '【主催者】',
+    contact_community: '主催者に連絡',
+    contact_community_after_login: 'ログインした後に主催者に連絡してください。',
+  },
+  cart: {
+    community_name: '【主催者】',
+    event_name: '【イベント名】',
+    date: '【開催日時】',
+    place: '【開催場所】',
+    shop: '【食事の提供】',
+    payment: '【支払い方法】',
+    deadline: '【注文期限】',
+    cancel: '【キャンセル】',
+    cancel_until_deadline: '注文期限までキャンセル可',
+    menu: 'メニュー',
+    count: '個数',
+    price: '金額',
+    subtotal: '小計',
+    total: '合計',
+    cannot_order_deadline: '注文期限をすぎました。注文確定できません。',
+    cannot_order_limit_people: '定員に達しました。注文確定できません。',
+    order_completed:'注文を完了しました。',
+    payment_failed:'決算処理に失敗しました。管理者にお問い合わせください。',
+    confirm_order_credit_card: 'クレジットカードの事前決済に進みますか？',
+    confirm_order_participant_on_day: '支払方法は「参加者による当日払い」です。注文を確定しますか？',
+    confirm_order_community_bill: '支払方法は「主催者によるお支払い」です。注文を確定しますか？',
+    confirm_order: '注文を確定しますか？',
+    remove_from_cart: 'カートから削除しますか？',
+    removed_from_cart: 'カートから削除しました。',
+    event_not_found: 'イベントが見つかりません。',
+    order_and_attend_event: '注文してイベントに参加する',
+    no_items_in_cart: 'カートに商品はありません。',
+  },
   event_create_modal: {
-    title: 'イベントを作成/編集しよう',
+    title: 'イベントを作成しよう',
     desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
           ✅ イベントカバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> をご活用ください🎨<br />
           ✅ 誰でも参加可能な<b>「公開」</b> or 参加者を限定する<b>「URL限定公開」</b>を選べます<br />
@@ -66,10 +113,35 @@ export default {
           <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
           `,
   },
+  community_new_modal: {
+    community: {
+      title: 'コミュニティを立ち上げよう🌱',
+      desc: `<b>📝 まずはコミュニティを作成</b><br />
+            コミュニティを作成すると、食事会のイベントを作成できるようになります。<br />
+            <br />
+            <b>👩‍🍳 デリバリーでも、イートインでも</b><br />
+            食事はお店からデリバリーで配送いただけるのでどんな場所でも開催可能。<br />
+            もしくはイートインでお店の中でも実施いただけます。<br />
+            <br />
+            <b>📢 多様な告知・集客機能も</b><br />
+            SNS投稿、QRコード、SlackApp、チラシなどを使って食事会への告知・集客もお気軽に！<br />
+            <br />
+            <b>🏢 社内交流などのクローズドな食事会にも</b><br />
+            「URL限定公開」や「主催者 請求書払い」を設定することで、クローズドなお食事会も。<br />
+            食事代を会社負担で実施する「社内交流会」にもご活用いただけます。<br />
+            <br />
+            <b>🙋‍♀️ チームで協力体制も</b><br />
+            複数人のメンバーをコミュニティ管理者として追加することができます。<br />
+            <br />
+            <b>💸 全ての機能を無料で</b><br />
+            主催者のみなさまは、あらゆる機能を無料でご利用いただくことができます。<br />
+            `,
+    },
+  },
   community_create_modal: {
     community: {
       title: 'コミュニティの作成について',
-      desc: `・「コミュニティID」「コミュニティ名」「説明文」「画像」など入力してください。<br />
+      desc: `・「コミュニティURL」「コミュニティ名」「説明文」「画像」など入力してください。<br />
             ・「運営者情報」「利用目的」などについては、コミュニティページなどで公開はされません。<br />
             ・新規作成後、shokujiiサポートにて内容を確認させていただきます。<br />
             ・コミュニティ作成後、イベントを作成することができるようになります。<br />
@@ -103,8 +175,8 @@ export default {
   },
   community_edit: {
     title: 'コミュニティ設定',
-    account: 'コミュニティID',
-    account_readonly: 'コミュニティID（ReadOnly）',
+    account: 'コミュニティURL',
+    account_readonly: 'コミュニティURL（変更不可）',
     community_name: 'コミュニティ名',
     community_description: 'コミュニティ説明',
     image_setting: '画像設定',
@@ -147,7 +219,8 @@ export default {
     title: 'イベント詳細',
     event_name: 'イベントタイトル',
     event_cover_url: 'イベントカバー画像',
-    event_cover_url_hint: '※イベントカバー画像の推奨サイズは、1200 x 630ピクセル です。',
+    event_cover_url_hint: '※カバー画像の推奨サイズは、1200 x 630ピクセル です。',
+    event_cover_template: '※カバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> もご活用ください🎨',
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
@@ -199,13 +272,14 @@ export default {
     ・予約が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   user_event_card: {
-    community_name: '【主催者】{0}',
-    event_start_datetime: '【開催日時】{0} 〜',
-    event_address: '【開催場所】{0}',
+    community_name: '【主催】{0}',
+    event_start_datetime: '【日時】{0} 〜',
+    event_address: '【場所】{0}',
     shop_name: '【お店】{0}',
     menu: '【注文内容】',
     menu_item: '{0} <span class="text-caption">({1}個)</span>',
     total_price: '【注文金額】{0}',
+    event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
     cancel_dialog: {
@@ -231,7 +305,7 @@ export default {
     phone: '有効な電話番号を入力してください',
     email: '有効なメールアドレスを入力してください',
     account:
-      '5文字以上15文字以内のコミュニティIDを入力してください。コミュニティIDに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティIDは変更できませんのでご注意ください。',
+      '5文字以上15文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
   },
   invoice_error_card: {
@@ -277,6 +351,43 @@ export default {
            ③さらに <b>SNS投稿・ダイレクトメッセージ・チラシ</b>などを駆使して、告知・集客してください📢<br />
 
            <br />
-           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客について」</a> も参考にしてください👍`,
+           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください👍`,
   },
+  cancelpolicy_modal:{
+    title:'キャンセルポリシー',
+    desc:`注文期限まで：キャンセル料金 0%<br />
+    注文期限以降：キャンセル料金 100%<br />
+    <br />
+    注文期限内であれば <a href="https://shokujii.jp/mypage" target="_blank">マイページ</a> にてご自身でキャンセルを行うことができます。注文期限後、キャンセルはできませんのでご了承ください。`,
+  },
+  letter_status: {
+    draft: '下書き',
+    timed: '配信予約中',
+    sent: '配信済',
+  },
+  letter_type: {
+    community: 'コミュニティメンバー',
+    event_participant: 'イベント参加者',
+    event_non_participant: 'イベント未参加者',
+  },
+  letter_card: {
+    updated_at: '【更新日時】 {0}',
+    sent_at: '【配信日時】 {0}',
+    scheduled_at: '【配信予定日時】 {0}',
+    type: '【配信先】 {0}（{1}人）',
+    event_name: '【イベント名】 {0}',
+    copy: 'コピー',
+    delete: '削除',
+    edit: '編集',
+    dialog: {
+      title: '本当に削除しますか？',
+      description: 'この操作は元に戻すことができません。',
+      submit: '削除'
+    }
+  },
+  email_dialog: {
+    title: 'メール送信',
+    send_to: '送信先: {0}',
+    send: '送信',
+  }
 }
