@@ -104,6 +104,11 @@
           to: '/CommunityList',
         },
         {
+          icon: 'mdi-cart',
+          title: '注文',
+          to: '/OrderList',
+        },
+        {
           icon: 'mdi-account',
           title: 'ユーザー',
           to: '/UserList',
