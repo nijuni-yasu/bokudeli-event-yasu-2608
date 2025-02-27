@@ -9,16 +9,10 @@ import { mdiEmail, mdiLink, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb }
 const props = defineProps<{
   community: BokudeliCommunity
   members: (CommunityMember | null)[] | null
-  isManager: boolean
 }>()
 const emit = defineEmits<{
   (e: 'clickContact'): void
-  (e: 'clickInvitation'): void
 }>()
-
-const state = reactive({
-  links: [] as string[],
-})
 
 const twitterUrl = computed(() =>
   props.community.community_sns_twitter ? buildTwitterUrl(props.community.community_sns_twitter) : undefined,
@@ -71,19 +65,6 @@ const officialSiteUrl = computed(() =>
         @click="emit('clickContact')"
       >
         お問い合わせ
-      </v-btn>
-    </v-col>
-    <v-col v-if="props.isManager">
-      <v-btn
-        variant="outlined"
-        rounded="pill"
-        size="small"
-        color="primary"
-        width="100%"
-        :prepend-icon="mdiLink"
-        @click="emit('clickInvitation')"
-      >
-        管理者を招待する
       </v-btn>
     </v-col>
     <!-- community manager -->

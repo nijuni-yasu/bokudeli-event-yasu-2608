@@ -14,15 +14,8 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import UserAvatar from '@/components/UserAvatar.vue'
-import { getUserPath } from '@/router/utils'
-import { type CommunityMember } from '@/schemes/communityMember'
-import { functions } from '@/firebase'
-import { httpsCallable } from 'firebase/functions'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@/components/CommunityBioPanel.vue'
-
-const get_invitaion_url_for_community_manager = httpsCallable(functions, 'get_invitaion_url_for_community_manager')
 
 const props = defineProps<{
   communityId: string
@@ -64,12 +57,6 @@ const goToEvents = (eventId: string) => {
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
-const isOpenInvitationDailog = ref(false)
-const isOpenMessageDailog = ref(false)
-
-const invitationUrl = ref('')
-const message = ref('')
-const isUrlLoading = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
 const userStore = useStoreStoredUser()
@@ -82,36 +69,6 @@ const openContactDialog = () => {
 }
 const openLoginDialog = () => {
   isOpenLoginDialog.value = true
-}
-const inviteManager = async () => {
-  isUrlLoading.value = true
-  try {
-    const communityId = communityStore.community?.community_id
-    const url = await get_invitaion_url_for_community_manager({ communityId })
-    invitationUrl.value = url.data as string
-    // clipboard-write は 今の所 [Blink](https://www.chromium.org/blink/) のみ対応、かつ現時点ではなくても動作するのでコメントアウト
-    // TODO ブラウザの対応状況を見て、適切に対応する
-    // https://developer.mozilla.org/ja/docs/Mozilla/Add-ons/WebExtensions/Interact_with_the_clipboard
-    // https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1245#issuecomment-1522204068
-    // const clipboardPermission = await navigator.permissions.query({ name: 'clipboard-write' })
-    // if (clipboardPermission.state === 'granted' || clipboardPermission.state === 'prompt') {
-    await navigator.clipboard
-      .writeText(url.data as string)
-      .then(() => {
-        message.value = 'クリップボードにコピーしました'
-        isOpenMessageDailog.value = true
-      })
-      .catch((err) => {
-        // URL は表示されていて手動コピーは可能なのでメッセージは表示しない
-        console.warn(err)
-      })
-  } catch (error) {
-    console.error(error)
-    message.value = 'URL の発行に失敗しました'
-    isOpenMessageDailog.value = true
-  } finally {
-    isUrlLoading.value = false
-  }
 }
 </script>
 <template>
@@ -168,9 +125,7 @@ const inviteManager = async () => {
             <community-bio-panel
               :community="communityStore.community"
               :members="communityStore.members"
-              :is-manager="isManager"
               @click-contact="openContactDialog"
-              @click-invitation="() => (isOpenInvitationDailog = true)"
             />
           </v-col>
           <!-- events -->
@@ -264,20 +219,6 @@ const inviteManager = async () => {
       ログインした後にお問い合わせしてください。
     </confirm-dialog>
     <login-dialog v-model="isOpenLoginDialog" />
-    <confirm-dialog v-model="isOpenInvitationDailog" ok-text="閉じる">
-      <div class="mt-4 mb-8">URL を発行して、追加するメンバーに権限を付与します<br /></div>
-      <v-text-field
-        v-model="invitationUrl"
-        outlined
-        dense
-        :readonly="true"
-        label="発行したURLは24時間有効で、利用されると無効になります。"
-      />
-      <v-btn class="mt-4" color="primary" :loading="isUrlLoading" @click="inviteManager">招待URLを発行</v-btn>
-    </confirm-dialog>
-    <confirm-dialog v-model="isOpenMessageDailog" :is-confirm="false">
-      {{ message }}
-    </confirm-dialog>
   </section>
 </template>
 <style lang="scss" scoped></style>
