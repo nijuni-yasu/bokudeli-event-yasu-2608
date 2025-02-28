@@ -29,6 +29,7 @@ const notificationOrder = async (start, end, beforeDays) => {
     .where('event_status.value', '==', 'accepting_order')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(startAddedDays))
     .where('event_deadline_datetime', '<=', Timestamp.fromMillis(endAddedDays))
+    .where('is_deleted', '==', false)
     .get())
 
   Promise.all(events.docs.map(async (eventSnapshot) => {
@@ -51,6 +52,7 @@ const notificationEventStart = async (start, end, beforeMinutes) => {
     .where('event_status.value', '==', 'accepting_order')
     .where('event_start_datetime', '>', Timestamp.fromMillis(startAddedMinutes))
     .where('event_start_datetime', '<=', Timestamp.fromMillis(endAddedMinutes))
+    .where('is_deleted', '==', false)
     .get());
 
   Promise.all(events.docs.map(async (eventSnapshot) => {
@@ -71,6 +73,7 @@ const notificationEventEnd = async (start, end) => {
     .where('event_status.value', '==', 'accepting_order')
     .where('event_end_datetime', '>', Timestamp.fromMillis(start))
     .where('event_end_datetime', '<=', Timestamp.fromMillis(end))
+    .where('is_deleted', '==', false)
     .get());
 
   Promise.all(events.docs.map(async (eventSnapshot) => {
