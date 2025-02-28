@@ -3,7 +3,11 @@ import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
+import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
+import eventDetailStyle from '@/utils/eventDetailStyle'
+
+const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
 const props = withDefaults(
   defineProps<{
@@ -12,7 +16,7 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-  }
+  },
 )
 
 const { t: $t } = useI18n()
@@ -32,6 +36,44 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
+const tinymceInit = {
+  language: 'ja',
+  plugins: 'table lists link autolink',
+  menubar: 'edit insert format',
+  menu: {
+    edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
+    insert: { title: 'Insert', items: 'image link inserttable hr' },
+    format: {
+      title: 'Format',
+      items: 'bold italic underline strikethrough styles forecolor  | language | removeformat',
+    },
+  },
+  removed_menuitems: 'codeformat fontfamily styles',
+  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | table link',
+  style_formats: [
+    { title: 'Text', format: 'p' },
+    { title: 'Headings', format: 'h3' },
+    { title: 'Bold', format: 'bold' },
+    { title: 'Italic', format: 'italic' },
+    { title: 'Underline', format: 'underline' },
+    { title: 'Strikethrough', format: 'strikethrough' },
+  ],
+  link_title: false,
+  link_default_target: '_blank',
+  link_target_list: false,
+  disabled: props.readonly,
+  content_style: eventDetailStyle,
+  elementpath: false,
+  branding: false,
+  setup: (editor: any) => {
+    editor.ui.registry.addButton('heading', {
+      text: '見出し',
+      onAction: () => {
+        editor.execCommand('FormatBlock', false, 'h3')
+      },
+    })
+  },
+}
 </script>
 
 <template>
@@ -81,8 +123,11 @@ if (event.value.event_max_people == 0) {
           >
             <template #placeholder>{{ $t('event_detail.event_cover_url') }}</template>
           </ImageInput>
-          <div class="my-2 text-subtitle-2">
+          <div class="mt-2 text-subtitle-2">
             <span>{{ $t('event_detail.event_cover_url_hint') }}</span>
+          </div>
+          <div class="my-1 text-subtitle-2">
+            <div v-html="$t('event_detail.event_cover_template')"></div>
           </div>
         </v-col>
       </v-row>
@@ -91,15 +136,7 @@ if (event.value.event_max_people == 0) {
     <v-card-text class="pt-5">
       <v-row>
         <v-col cols="12">
-          <v-textarea
-            v-model="event.event_desc"
-            outlined
-            rows="15"
-            :label="$t('event_detail.event_desc')"
-            :hint="$t('event_detail.event_desc_hint')"
-            :rules="[requiredValidator]"
-            :readonly="props.readonly"
-          />
+          <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
         </v-col>
       </v-row>
     </v-card-text>

@@ -16,6 +16,7 @@ jobs:
   build-and-deploy:
     timeout-minutes: 10
     runs-on: ubuntu-latest
+    environment: development
     defaults:
       run:
         shell: bash
@@ -31,8 +32,7 @@ jobs:
         cache-dependency-path: ./manager/package-lock.json
     - name: Generate .env file
       run: |
-        env_vars=$(echo '${{ secrets.MANAGER_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
-        echo "$env_vars" > .env
+        echo '${{ vars.MANAGER_ENV }}' | tr -d '\r' > .env
     - name: Build
       run: |
         npm install

@@ -261,8 +261,8 @@ const createValidNames = async (menuUsers, userMap) => {
   return Promise.all(menuUsers.map(async (menuUser, index) => {
     const photoUrl = userMap[menuUser.userId]?.photo
     return {
-      name: userMap[menuUser.userId]?.userName?.length > 10
-        ? userMap[menuUser.userId]?.userName.slice(0, 10) + '…' 
+      name: userMap[menuUser.userId]?.userName?.length > 14
+        ? userMap[menuUser.userId]?.userName.slice(0, 14)
         : userMap[menuUser.userId]?.userName || '',
       menu: menuUser.menuName.length > 28 
         ? menuUser.menuName.slice(0, 28) + '…' 

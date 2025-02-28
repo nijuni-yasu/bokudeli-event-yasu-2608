@@ -42,7 +42,7 @@ const makeTimeArray = (start: number, num: number) =>
     return { title: $d(date, 'time'), value: date.getTime() }
   })
 
-const SHOP_MIN_ORDERS_ARRAY_MAX = 30
+const SHOP_MIN_ORDERS_ARRAY_MAX = 20
 const SHOP_MIN_ORDERS_ARRAY = [null, ...[...Array(SHOP_MIN_ORDERS_ARRAY_MAX)].map((_, i) => i + 1)]
 const SHOP_RANGE_ARRAY_MAX = 50
 const SHOP_RANGE_ARRAY = (() => {

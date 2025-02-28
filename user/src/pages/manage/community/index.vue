@@ -17,7 +17,7 @@ if (userId == null) {
 }
 
 const communityListStore = useCommunityListStore(
-  [where('members', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
   10,
 )
 
@@ -27,9 +27,7 @@ const communities = computed(() => {
       if (communityStore.community == null || communityStore.members == null) {
         return []
       }
-      return communityStore.members.some((member) => member?.user_id === userId && member?.roles?.includes('manager'))
-        ? communityStore.community
-        : []
+      return communityStore.community
     }) ?? []
   )
 })
@@ -58,16 +56,23 @@ watch(communities, (communities) => {
 <template>
   <v-row class="justify-center">
     <v-col md="10" sm="12" cols="12">
-      <v-btn
-        class="mr-2"
-        variant="outlined"
-        size="large"
-        :prepend-icon="mdiPlus"
-        @click="router.push(getManageNewCommunityPath())"
-      >
-        {{ $t('manage.new_community') }}
-      </v-btn>
-      <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
+      <v-row class="pa-3 align-center">
+        <v-btn
+          class="mr-2"
+          variant="outlined"
+          size="large"
+          :prepend-icon="mdiPlus"
+          @click="router.push(getManageNewCommunityPath())"
+        >
+          {{ $t('manage.new_community') }}
+        </v-btn>
+        <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
+      </v-row>
+      <v-row v-if="communityListStore.totalCount === 0" class="mt-5">
+        <v-col class="text-h5">
+          <div v-html="$t('manage.event.no_community')" />
+        </v-col>
+      </v-row>
     </v-col>
   </v-row>
   <v-row class="justify-center">

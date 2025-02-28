@@ -17,6 +17,7 @@ jobs:
   build-and-deploy:
     timeout-minutes: 5
     runs-on: ubuntu-latest
+    environment: production
     defaults:
       run:
         shell: bash
@@ -38,8 +39,7 @@ jobs:
       run: yarn global add firebase-tools
     - name: Generate .env file
       run: |
-        env_vars=$(echo '${{ secrets.USER_PRODUCTION_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
-        echo "$env_vars" > .env
+        echo '${{ vars.USER_ENV }}' | tr -d '\r' > .env
     - name: Build
       run: |
         yarn run build-production

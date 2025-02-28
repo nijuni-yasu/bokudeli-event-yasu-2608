@@ -11,7 +11,7 @@ import { mdiArrowTopRight } from '@mdi/js'
 
 const { t: $t } = useI18n()
 
-const tabs = ['events', 'member', /*'letter',*/ 'settings'] as const
+const tabs = ['events', 'member', /*'letter',*/ 'slackSetting', 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const communityAccount = useRoute().params.communityAccount as string
@@ -35,7 +35,7 @@ const openInNew = (url: string) => {
   <v-row v-if="community != null">
     <v-col cols="12">
       <div class="text-h3" style="display: flex; align-items: center; justify-content: flex-start">
-        <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 20px" />
+        <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 15px" />
         {{ community?.community_name }}
         <v-btn
           class="ml-3"
@@ -71,7 +71,7 @@ const openInNew = (url: string) => {
 
 <style scoped lang="scss">
 .icon {
-  height: 100px;
+  height: 75px;
   aspect-ratio: 1/1;
   border-radius: 10%;
 }

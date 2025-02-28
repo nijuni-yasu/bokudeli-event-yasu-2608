@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventStore, type EventStore } from '@/stores/event'
 import EventCard from '@/components/EventCard.vue'
-import { getManageEventSettingsPath, getManageEventListPath, getEventPath } from '@/router/utils'
+import { getManageEventSettingsPath, getEventPath, getManageCommunityPath } from '@/router/utils'
 import { mdiPencil, mdiDelete } from '@mdi/js'
 
 const router = useRouter()
@@ -12,8 +12,10 @@ const eventId = route.params.eventId as string
 const eventStore = useEventStore(eventId) as EventStore
 const deleteConfirmationDialog = ref(false)
 const deleteEvent = async () => {
+  const communityAccount = eventStore.event!.community_account
   await eventStore.deleteEvent()
-  router.push(getManageEventListPath())
+  window.location.href = getManageCommunityPath(communityAccount)
+  // router.push(getManageEventListPath())
 }
 const openInNew = (url: string) => {
   window.open(url, '_blank')
@@ -25,11 +27,11 @@ const openInNew = (url: string) => {
     <v-row class="justify-center">
       <v-col v-if="eventStore.event != null" class="justify-center" md="4" sm="6" cols="12">
         <!-- <router-link :to="getEventPath(eventStore.event.community_account, eventStore.event.event_id)"> -->
-          <EventCard
-            :event="eventStore.event"
-            :members="eventStore.members ?? undefined"
-            @click="openInNew(getEventPath(eventStore.event.community_account, eventId))"
-          />
+        <EventCard
+          :event="eventStore.event"
+          :members="eventStore.members ?? undefined"
+          @click="openInNew(getEventPath(eventStore.event.community_account, eventId))"
+        />
         <!-- </router-link> -->
       </v-col>
       <v-col md="4" sm="6" cols="12" class="justify-center">
@@ -45,7 +47,7 @@ const openInNew = (url: string) => {
         </v-row>
         <v-row>
           <v-btn
-            v-if="eventStore.event != null && eventStore.event.event_status.value === 'in_draft'"
+            v-if="eventStore.event?.event_status.value === 'in_draft' && eventStore.confirmedOrders?.length === 0"
             class="ma-3"
             variant="outlined"
             :prepend-icon="mdiDelete"

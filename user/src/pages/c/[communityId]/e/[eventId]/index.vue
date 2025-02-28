@@ -129,7 +129,7 @@ const isFewMemberNotice = computed({
   get: () =>  {
     if (fewMemberNotice.value === null) {
       if (event.value != null) {
-        return event.value.event_num_members < 3 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
+        return event.value.event_num_members < 2 && event.value.is_public && isManager.value && event.value.event_status.value === 'accepting_order'
       } else {
         return false
       }
@@ -278,20 +278,20 @@ onUnmounted(() => {
     touchless
     border="0"
     color="#FFFFFF00"
-    style="height: 60px; z-index: 100; text-align: center"
+    style="height: 70px; z-index: 100; text-align: center"
   >
     <v-row class="justify-center mb-2">
-      <v-col md="8" sm="9" cols="12">
+      <v-col xl="6" lg="8" md="8" sm="9" cols="12">
         <v-btn
-          class="text-h5"
+          class="text-md-h4 text-h5 font-weight-bold"
           size="large"
           rounded="pill"
-          elevation="10"
-          :prepend-icon="mdiFoodForkDrink"
+          elevation="15"
           color="primary"
-          width="90%"
+          width="85%"
           @click="scrollToMenu"
         >
+        <v-icon :icon="mdiFoodForkDrink" class="mr-2"/>
           食事を注文してイベントに参加する
         </v-btn>
       </v-col>
