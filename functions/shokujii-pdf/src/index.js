@@ -76,12 +76,8 @@ const isValidPhotoUrl = async (url) => {
       return getDefaultProfileBase64();
     }
 
-    // 画像をリサイズ（例: 幅を300pxに設定）
-    const resizedBuffer = await sharp(imageBuffer)
-      .resize({ width: 300 })
-      .toBuffer();
-
-    return `data:image/jpeg;base64,${resizedBuffer.toString('base64')}`;
+    const resizedBuffer = await  resizeAndCropImage(imageBuffer, 300, 300) 
+    return resizedBuffer
   }
 
   if (!url || typeof url !== 'string' || !url.startsWith('https://')) return getDefaultProfileBase64();
@@ -90,15 +86,97 @@ const isValidPhotoUrl = async (url) => {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
     const photoBuffer = Buffer.from(response.data);
     
-    // 画像をリサイズ（例: 幅を300pxに設定）
-    const resizedBuffer = await sharp(photoBuffer)
-      .resize({ width: 300 })
-      .toBuffer();
+    const resizedBuffer = await  resizeAndCropImage(photoBuffer, 300, 300) 
+    return resizedBuffer
 
-    return `data:image/jpeg;base64,${resizedBuffer.toString('base64')}`;
   } catch (error) {
     console.error('Error fetching image:', error);
     return getDefaultProfileBase64();
+  }
+};
+
+// 画像をリサイズ・クロップする関数
+const resizeAndCropImage = async (imageBuffer, targetWidth, targetHeight) => {
+  try {
+    // 元の画像のメタデータを取得
+    const metadata = await sharp(imageBuffer).metadata();
+    const originalAspectRatio = metadata.width / metadata.height;
+    const targetAspectRatio = targetWidth / targetHeight;
+
+    let resizeOptions = {};
+    let extractOptions = {};
+
+    if (originalAspectRatio > targetAspectRatio) {
+      // 横長の画像の場合
+      const newHeight = targetHeight;
+      const newWidth = Math.round(newHeight * originalAspectRatio);
+      
+      resizeOptions = {
+        width: newWidth,
+        height: newHeight,
+        fit: 'fill'
+      };
+      
+      // 中央部分を切り抜く
+      const extractX = Math.round((newWidth - targetWidth) / 2);
+      extractOptions = {
+        left: extractX,
+        top: 0,
+        width: targetWidth,
+        height: targetHeight
+      };
+    } else if (originalAspectRatio < targetAspectRatio) {
+      // 縦長の画像の場合
+      const newWidth = targetWidth;
+      const newHeight = Math.round(newWidth / originalAspectRatio);
+      
+      resizeOptions = {
+        width: newWidth,
+        height: newHeight,
+        fit: 'fill'
+      };
+      
+      // 中央部分を切り抜く
+      const extractY = Math.round((newHeight - targetHeight) / 2);
+      extractOptions = {
+        left: 0,
+        top: extractY,
+        width: targetWidth,
+        height: targetHeight
+      };
+    } else {
+      // アスペクト比が同じ場合は単純にリサイズ
+      resizeOptions = {
+        width: targetWidth,
+        height: targetHeight,
+        fit: 'contain',
+        background: { r: 255, g: 255, b: 255, alpha: 1 } // 白背景
+      };
+    }
+
+    // 画像の処理
+    const processedBuffer = await sharp(imageBuffer)
+      .resize(resizeOptions)
+      .extract(extractOptions)
+      .toBuffer();
+
+    return `data:image/jpeg;base64,${processedBuffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Error processing image:', error);
+    // エラー時は元の画像をそのままBase64エンコード
+    try {
+      const simpleResized = await sharp(imageBuffer)
+        .resize(targetWidth, targetHeight, {
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 1 }
+        })
+        .toBuffer();
+      return `data:image/jpeg;base64,${simpleResized.toString('base64')}`;
+    } catch (fallbackError) {
+      console.error('Fallback resize failed:', fallbackError);
+      // 最後の手段として元の画像をそのままBase64エンコード
+      return `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+    }
   }
 };
 
