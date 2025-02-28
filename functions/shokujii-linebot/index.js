@@ -211,12 +211,14 @@ async function broadcastEventConcludedMessage() {
   const nowDateTimeMills = Date.now();
 
   const message_data = { count: 0, events: [] };
-  const query = db.collectionGroup('events')
+  const events = await db.collectionGroup('events')
     .where('is_public', '==', true)
     .where('event_status.value', '==', 'accepting_order')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMills));
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMills))
+    .where('is_deleted', '==', false)
+    .get();
 
-  const eventsSnapshot = (await query.get()).docs
+  const eventsSnapshot = events.docs
     .sort((a, b) => {
       const aTime = a.get('event_start_datetime');
       const bTime = b.get('event_start_datetime');

@@ -252,6 +252,7 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
     .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
     .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
     .get()
   return Promise.all(
     events.docs.map(async (eventSnapshot) => {
@@ -309,6 +310,7 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
     .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
     .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
     .get()
 
   const promises = []
@@ -341,6 +343,7 @@ async function sendOrderDeadlineMailToMembers(start, end) {
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
     .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
     .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
     .get()
   return Promise.all(
     events.docs.map(async (eventSnapshot) => {
@@ -382,6 +385,7 @@ async function sendEventConcludedMailToMembers(start, end) {
     .where('event_end_datetime', '>', Timestamp.fromMillis(start))
     .where('event_end_datetime', '<=', Timestamp.fromMillis(end))
     .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
     .get()
   return Promise.all(
     events.docs.map(async (eventSnapshot) => {
@@ -454,6 +458,7 @@ async function sendApplyingOrderRemindMailToShop(start, end) {
     .collectionGroup('events')
     .where('event_status.value', '==', 'applying_reservation')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
+    .where('is_deleted', '==', false)
     .get()
 
   const sendMailPromises = events.docs
@@ -549,15 +554,17 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
     date,
     events: [],
   }
-  const query = db
+  const events = await db
     .collectionGroup('events')
     .where('is_public', '==', true)
     .where('event_status.value', '==', 'accepting_order')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(targetDateTimeMillis))
+    .where('is_deleted', '==', false)
+    .get()
   // 不等号を含む where がある場合、他のフィールドでソートできない
   // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
   // .orderBy('event_start_datetime')
-  const eventsSnapshot = (await query.get()).docs.sort((a, b) => {
+  const eventsSnapshot = events.docs.sort((a, b) => {
     const aTime = a.get('event_start_datetime')
     const bTime = b.get('event_start_datetime')
     return aTime > bTime ? 1 : aTime < bTime ? -1 : 0
@@ -851,6 +858,7 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(start + notifyTime))
     .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end + notifyTime))
     .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
     .get()
 
   // user_email が設定されている場合のみメールコンテンツを生成する
