@@ -123,6 +123,12 @@ export default {
         'to_draft': '下書きに戻す',
       }
     },
+    'community_manager_invitation': {
+      'title': 'URL を発行して、追加するメンバーに権限を付与します',
+      'description': '発行したURLは1週間有効で、利用されると無効になります。',
+      'generate': '招待URLを発行',
+      'failed': 'URL の発行に失敗しました'
+    },
     'slack': {
       'description': `<b>shokujii の SlackApp を追加</b>すると<br/>
                       <b>「🍽 参加者の注文通知」 「📅 注文期限のリマインド」 「🕛 イベント開始のリマインド」</b>
