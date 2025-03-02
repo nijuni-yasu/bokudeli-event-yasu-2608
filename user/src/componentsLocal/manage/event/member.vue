@@ -107,7 +107,7 @@ const downloadCsvFile = () => {
           <template v-for="menus in tables">
             <v-row v-if="menus.length !== 0" :key="menus[0][0].event_id" class="justify-center">
               <v-col md="12" sm="12" cols="12">
-                <v-col cols="12" class="text-h5 font-weight-bold mt-3">
+                <v-col cols="12" class="text-h5 font-weight-bold mt-4 mb-1">
                   <v-row> {{ $t(`manage.member.${menus[0][0].status}`) }} </v-row>
                 </v-col>
                 <v-table>
@@ -116,6 +116,9 @@ const downloadCsvFile = () => {
                       <th>#</th>
                       <th colspan="2">{{ $t('manage.member.name') }}</th>
                       <th colspan="3"></th>
+                      <th>
+                        <v-spacer/>
+                      </th>
                       <th>{{ $t('manage.member.order') }}</th>
                       <th>{{ $t(`manage.member.date.${menus[0][0].status}`) }}</th>
                       <!-- <th></th> -->
@@ -123,13 +126,13 @@ const downloadCsvFile = () => {
                   </thead>
                   <tbody>
                     <tr v-for="([order, member, menu], i) of menus" :key="order.order_id">
-                      <td>{{ i + 1 }}</td>
+                      <td class="number-cell text-body-2">{{ i + 1 }}</td>
                       <td class="minimum-cell">
                         <router-link :to="getUserPath(member.user_id)">
                           <UserAvatar :user="member"></UserAvatar>
                         </router-link>
                       </td>
-                      <td>
+                      <td class="name-cell">
                         <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
                           {{ member.user_name }}
                         </router-link>
@@ -165,8 +168,15 @@ const downloadCsvFile = () => {
                           <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                         </v-btn>
                       </td>
-                      <td>{{ menu.name }}</td>
-                      <td>{{ getDateString(order) }}</td>
+                      <td>
+                        <v-spacer/>
+                      </td>
+                      <td class="menu-cell text-body-2">
+                        {{ menu.name }}
+                      </td>
+                      <td class="date-cell text-body-2">
+                        {{ getDateString(order) }}
+                      </td>
                       <!--
                       <td>
                         <v-btn
@@ -196,7 +206,18 @@ const downloadCsvFile = () => {
 .hidden {
   visibility: hidden; /* サイズは保持されるが内容は非表示 */
 }
-
+.number-cell {
+  width: 60px;
+}
+.name-cell {
+  width: 250px;
+}
+.menu-cell {
+  width: 300px;
+}
+.date-cell {
+  width: 160px;
+}
 .minimum-cell {
   width: 1px;
   padding: 0 !important;
