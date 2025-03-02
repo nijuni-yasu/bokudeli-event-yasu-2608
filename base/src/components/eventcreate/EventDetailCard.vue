@@ -15,6 +15,7 @@ import { trimHashTag } from '@shokujii/base/utils/hashTag'
 import { uploadEventImage } from '@shokujii/base/composable/uploadImage'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
+const maxImageSize = 600
 
 const props = withDefaults(
   defineProps<{
@@ -94,6 +95,48 @@ const event_sns_hash_tag = computed({
   },
 })
 
+const resizeImage = (blob: Blob, filename: string, maxSize: number): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const reader = new FileReader()
+
+    reader.onload = (e) => {
+      img.src = e.target?.result as string
+    }
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+
+      let { width, height } = img
+
+      if (Math.max(width, height) > maxSize) {
+        if (width > maxSize) {
+          height *= maxSize / width
+          width = maxSize
+        } else {
+          width *= maxSize / height
+          height = maxSize
+        }
+      }
+
+      canvas.width = width
+      canvas.height = height
+      ctx?.drawImage(img, 0, 0, width, height)
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(new File([blob], filename))
+        } else {
+          reject(new Error('リサイズに失敗しました'))
+        }
+      })
+    }
+
+    reader.readAsDataURL(blob)
+  })
+}
+
 // MEMO: 以下で定義されている
 // https://github.com/tinymce/tinymce/blob/56bc9917426d58e526bda4e9c991f6b5bc82443f/modules/tinymce/src/core/main/ts/api/file/BlobCache.ts#L29
 type BlobInfo = {
@@ -111,7 +154,7 @@ type BlobInfo = {
 type ProgressFn = (percent: number) => void
 
 const bodyImageUploadHandler = async (blobInfo: BlobInfo, progress: ProgressFn) => {
-  const file = new File([blobInfo.blob()], blobInfo.filename())
+  const file = await resizeImage(blobInfo.blob(), blobInfo.filename(), maxImageSize)
   // MEMO: コミュニティID、イベントIDがすでに保存されているのを前提とした実装
   const url = await uploadEventImage(event.value.community_id, event.value.event_id, file)
   return url
@@ -155,6 +198,7 @@ const tinymceInit = {
     })
   },
   images_upload_handler: bodyImageUploadHandler,
+  image_description: false,
 }
 </script>
 
