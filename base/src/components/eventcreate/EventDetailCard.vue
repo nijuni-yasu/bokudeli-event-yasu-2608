@@ -12,6 +12,7 @@ import eventDetailStyle from '@shokujii/base/utils/eventDetailStyle'
 import { useCommunityStore } from '@shokujii/base/stores/community'
 import type { CommunityStore } from '@shokujii/base/stores/community'
 import { trimHashTag } from '@shokujii/base/utils/hashTag'
+import { uploadEventImage } from '@shokujii/base/composable/uploadImage'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -93,17 +94,43 @@ const event_sns_hash_tag = computed({
   },
 })
 
+// MEMO: 以下で定義されている
+// https://github.com/tinymce/tinymce/blob/56bc9917426d58e526bda4e9c991f6b5bc82443f/modules/tinymce/src/core/main/ts/api/file/BlobCache.ts#L29
+type BlobInfo = {
+  id: () => string
+  name: () => string
+  filename: () => string
+  blob: () => Blob
+  base64: () => string
+  blobUri: () => string
+  uri: () => string | undefined
+}
+
+// MEMO: 以下で定義されている
+// https://github.com/tinymce/tinymce/blob/56bc9917426d58e526bda4e9c991f6b5bc82443f/modules/tinymce/src/core/main/ts/file/Uploader.ts#L33
+type ProgressFn = (percent: number) => void
+
+const bodyImageUploadHandler = async (blobInfo: BlobInfo, progress: ProgressFn) => {
+  const file = new File([blobInfo.blob()], blobInfo.filename())
+  // MEMO: コミュニティID、イベントIDがすでに保存されているのを前提とした実装
+  const url = await uploadEventImage(event.value.community_id, event.value.event_id, file)
+  return url
+}
+
 const tinymceInit = {
   language: 'ja',
-  plugins: 'lists link autolink',
-  menubar: false,
-  textcolor_map: ['#2E263DB3', '黒', '#FF4C51', '赤'],
-  textcolor_cols: 2,
-  custom_colors: false,
-  color_map_foreground: ['#2E263DB3', '黒', '#FF4C51', '赤'],
-  color_default_foreground: '#2E263DB3',
+  plugins: 'table lists link autolink image',
+  menubar: 'edit insert format',
+  menu: {
+    edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
+    insert: { title: 'Insert', items: 'image link inserttable hr' },
+    format: {
+      title: 'Format',
+      items: 'bold italic underline strikethrough styles forecolor  | language | removeformat',
+    },
+  },
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo heading bold strikethrough forecolor | bullist numlist | link',
+  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | table link | image',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },
@@ -127,6 +154,7 @@ const tinymceInit = {
       },
     })
   },
+  images_upload_handler: bodyImageUploadHandler,
 }
 </script>
 
