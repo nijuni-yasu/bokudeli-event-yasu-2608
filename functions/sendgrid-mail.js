@@ -10,6 +10,7 @@ import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
+const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-4b62170d6e664358a6c183d8e9cfdcda'
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // 開発バージョンに変更
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
@@ -164,6 +165,54 @@ async function getCommunityEmails(communityId) {
   return Array.from(emails)
 }
 
+async function createOrdersForOrderRemind(ordersRef) {
+  const promises = []
+  const orders_by_status = {
+    in_draft: [],
+    ordered: [],
+    cancelled: [],
+  }
+  for (const orderRef of await ordersRef.listDocuments()) {
+    const orderSnapshot = await orderRef.get()
+    const status = orderSnapshot.get('status')
+    let status_desc = ''
+    switch (status) {
+      case 'in_draft':
+        status_desc = 'カート追加中'
+        break
+      case 'ordered':
+        status_desc = '注文済'
+        break
+      case 'cancelled':
+        status_desc = 'キャンセル済'
+        break
+    }
+    const userRef = db.collection('users').doc(orderSnapshot.get('user_id'))
+    for (const menu of orderSnapshot.get('menus') ?? []) {
+      const promise = userRef.get().then((userSnapshot) => {
+        for (let i = 0; i < menu.count; i++) {
+          orders_by_status[status].push({
+            name: userSnapshot.get('user_name'),
+            order: menu.name,
+            price: `¥${menu.price}`,
+            status,
+            status_desc,
+          })
+        }
+      })
+      promises.push(promise)
+    }
+  }
+  await Promise.all(promises)
+  let orders = []
+  for (const status of ['ordered', 'in_draft', 'cancelled']) {
+    orders_by_status[status].sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0))
+    orders = orders.concat(orders_by_status[status])
+  }
+  orders.forEach((order, i) => (order.number = i + 1))
+  return orders
+}
+
 async function createOrdersForOrderDeadline(ordersRef) {
   const promises = []
   const orders = []
@@ -253,6 +302,57 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
   )
 }
 
+async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago) {
+  const ordersRef = eventSnapshot.ref.collection('orders')
+  const orders = await createOrdersForOrderRemind(ordersRef)
+  const eventData = eventSnapshot.data()
+  const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis())
+  const date = convertToDate(event_start_datetime_japan)
+  const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
+
+  return {
+    ...eventData,
+    date,
+    event_days_ago,
+    event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+    event_deadline_datetime,
+    event_start_date: event_start_datetime_japan,
+    orders,
+  }
+}
+
+async function sendOrderRemindMailToOrganizer(start, end, event_days_ago) {
+  const events = await db
+    .collectionGroup('events')
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
+    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
+    .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
+    .get()
+
+  const promises = []
+  await events.docs.forEach(async (eventSnapshot) => {
+    try {
+      const dynamic_template_data = await createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago)
+      const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
+      communityEmails
+        .map(async (to) => {
+          await sgMail.send({
+            to,
+            from: DEFAULT_FROM,
+            templateId: ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID,
+            dynamic_template_data,
+          })
+        })
+        .forEach((promise) => promises.push(promise))
+    } catch (err) {
+      console.warn(err)
+    }
+  })
+
+  return Promise.all(promises)
+}
+
 async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   const ordersRef = eventSnapshot.ref.collection('orders')
   const [order_count, _, orders] = await createOrdersForOrderDeadline(ordersRef)
@@ -281,7 +381,7 @@ async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   }
 }
 
-async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
+async function sendOrderDeadlineMailToOrganizers(start, end) {
   const events = await db
     .collectionGroup('events')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
@@ -294,7 +394,6 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
   await events.docs.forEach(async (eventSnapshot) => {
     try {
       const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
-      dynamic_template_data.is_reminder = is_reminder
       const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
       communityEmails
         .map(async (to) => {
@@ -943,8 +1042,8 @@ export const polling = functions
     return Promise.all([
       sendOrderDeadlineMailToShop(start, end, false),
       sendOrderDeadlineMailToShop(start + one_day_millis, end + one_day_millis, true), // 1日前告知
-      sendOrderDeadlineMailToOrganizers(start, end, false),
-      sendOrderDeadlineMailToOrganizers(start + 3 * one_day_millis, end + 3 * one_day_millis, true), // 3日前告知
+      sendOrderDeadlineMailToOrganizers(start, end),
+      sendOrderRemindMailToOrganizer(start + 3 * one_day_millis, end + 3 * one_day_millis, 3), // 3日前告知
       sendOrderDeadlineMailToMembers(start, end),
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
