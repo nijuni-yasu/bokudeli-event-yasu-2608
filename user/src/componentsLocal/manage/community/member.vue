@@ -4,15 +4,23 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import EmailDialog from '@/components/EmailDialog.vue'
-import { mdiFacebook, mdiEmail, mdiDownload } from '@mdi/js'
+import { mdiFacebook, mdiEmail, mdiDownload, mdiAccountPlusOutline, mdiAccountRemoveOutline, mdiLink } from '@mdi/js'
 import XIcon from '@/icons/x'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/buildSnsLinks'
 import { downloadCsv } from '@/utils/downloadCsv'
+import { functions } from '@/firebase'
+import { httpsCallable } from 'firebase/functions'
 
 const route = useRoute()
+const { t: $t } = useI18n()
+
+const notification = inject('notification') as Notification
+
+const get_invitaion_url_for_community_manager = httpsCallable(functions, 'get_invitaion_url_for_community_manager')
+
 const communityAccount = route.params.communityAccount as string
 
 const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
@@ -25,17 +33,65 @@ const members = computed(
 )
 const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
-const targetMember = ref<CommunityMember | null>(null)
+const emailTargetMember = ref<CommunityMember | null>(null)
 const isEmailDialogOpen = computed({
-  get: () => targetMember.value != null,
+  get: () => emailTargetMember.value != null,
   set: (val) => {
     if (!val) {
-      targetMember.value = null
+      emailTargetMember.value = null
+    }
+  },
+})
+const addTargetMember = ref<CommunityMember | null>(null)
+const removeTargetMember = ref<CommunityMember | null>(null)
+const isModifyAccountDialogOpen = computed({
+  get: () => addTargetMember.value != null || removeTargetMember.value != null,
+  set: (val) => {
+    if (!val) {
+      addTargetMember.value = null
+      removeTargetMember.value = null
     }
   },
 })
 const clickContact = (member: CommunityMember) => {
-  targetMember.value = member
+  emailTargetMember.value = member
+}
+const addAccount = (member: CommunityMember) => {
+  communityStore.addRole(member.user_id, 'manager')
+}
+const removeAccount = (member: CommunityMember) => {
+  communityStore.removeRole(member.user_id, 'manager')
+}
+const isInvitationDailogOpen = ref(false)
+const invitationUrl = ref('')
+const isUrlLoading = ref(false)
+const inviteManager = async () => {
+  isUrlLoading.value = true
+  try {
+    const communityId = communityStore.community?.community_id
+    const url = await get_invitaion_url_for_community_manager({ communityId })
+    invitationUrl.value = url.data as string
+    // clipboard-write は 今の所 [Blink](https://www.chromium.org/blink/) のみ対応、かつ現時点ではなくても動作するのでコメントアウト
+    // TODO ブラウザの対応状況を見て、適切に対応する
+    // https://developer.mozilla.org/ja/docs/Mozilla/Add-ons/WebExtensions/Interact_with_the_clipboard
+    // https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1245#issuecomment-1522204068
+    // const clipboardPermission = await navigator.permissions.query({ name: 'clipboard-write' })
+    // if (clipboardPermission.state === 'granted' || clipboardPermission.state === 'prompt') {
+    await navigator.clipboard
+      .writeText(url.data as string)
+      .then(() => {
+        Object.assign(notification, { message: $t('copied_to_clipboard'), color: 'success' })
+      })
+      .catch((err) => {
+        // URL は表示されていて手動コピーは可能なのでメッセージは表示しない
+        console.warn(err)
+      })
+  } catch (error) {
+    console.error(error)
+    Object.assign(notification, { message: $t('manage.community_manager_invitation.failed'), color: 'error' })
+  } finally {
+    isUrlLoading.value = false
+  }
 }
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
@@ -57,7 +113,10 @@ const downloadCsvFile = () => {
 <template>
   <v-container>
     <v-row class="justify-center">
-      <v-col md="12" sm="12" cols="12" class="d-flex justify-end">
+      <v-col md="12" sm="12" cols="12" style="display: flex; justify-content: flex-end; gap: 10px">
+        <v-btn variant="outlined" :prepend-icon="mdiLink" @click="isInvitationDailogOpen = true">
+          管理者を招待する
+        </v-btn>
         <v-btn variant="outlined" :prepend-icon="mdiDownload" @click="downloadCsvFile">
           {{ $t('manage.member.csv_download') }}
         </v-btn>
@@ -116,6 +175,17 @@ const downloadCsvFile = () => {
                     <td class="text-center">
                       {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
                     </td>
+                    <td class="text-center">
+                      <template v-if="member.user_id !== userStore.user?.user_id">
+                        <v-btn
+                          v-if="member.roles?.includes('manager')"
+                          :icon="mdiAccountRemoveOutline"
+                          variant="text"
+                          @click="removeTargetMember = member"
+                        />
+                        <v-btn v-else :icon="mdiAccountPlusOutline" variant="text" @click="addTargetMember = member" />
+                      </template>
+                    </td>
                     <!--
                     <td class="text-center">
                       <v-btn
@@ -135,7 +205,63 @@ const downloadCsvFile = () => {
       </v-col>
     </v-row>
   </v-container>
-  <EmailDialog v-if="targetMember != null" v-model="isEmailDialogOpen" :toUser="targetMember" />
+  <EmailDialog v-if="emailTargetMember != null" v-model="isEmailDialogOpen" :toUser="emailTargetMember" />
+  <v-dialog v-model="isModifyAccountDialogOpen" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+    <v-card v-if="addTargetMember != null" class="px-2 py-4">
+      <v-card-title>
+        {{ $t('manage.member.add_manager_dialog.title', [addTargetMember.user_name]) }}
+      </v-card-title>
+      <v-card-text>
+        <div v-html="$t('manage.member.add_manager_dialog.description', [addTargetMember.user_name])" />
+      </v-card-text>
+      <v-card-actions>
+        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+          {{ $t('cancel') }}
+        </v-btn>
+        <v-btn type="submit" @click="addAccount(addTargetMember)">
+          {{ $t('manage.member.add_manager_dialog.submit') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+    <v-card v-if="removeTargetMember != null" class="px-2 py-4">
+      <v-card-title>
+        {{ $t('manage.member.remove_manager_dialog.title', [removeTargetMember.user_name]) }}
+      </v-card-title>
+      <v-card-text>
+        <div v-html="$t('manage.member.remove_manager_dialog.description', [removeTargetMember.user_name])" />
+      </v-card-text>
+      <v-card-actions>
+        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+          {{ $t('cancel') }}
+        </v-btn>
+        <v-btn type="submit" @click="removeAccount(removeTargetMember)">
+          {{ $t('manage.member.remove_manager_dialog.submit') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="isInvitationDailogOpen" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+    <v-card class="px-2 py-4">
+      <v-card-title> {{ $t('manage.community_manager_invitation.title') }} </v-card-title>
+      <v-card-text style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px">
+        <v-text-field
+          v-model="invitationUrl"
+          outlined
+          dense
+          :readonly="true"
+          :label="$t('manage.community_manager_invitation.description')"
+        />
+        <v-btn color="primary" :loading="isUrlLoading" @click="inviteManager">
+          {{ $t('manage.community_manager_invitation.generate') }}
+        </v-btn>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn type="cancel" @click="isInvitationDailogOpen = false">
+          {{ $t('close') }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>

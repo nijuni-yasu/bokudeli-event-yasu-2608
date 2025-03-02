@@ -1,7 +1,7 @@
 import functions from 'firebase-functions'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 
-const EXPIRED_TIME = 1000 * 60 * 60 * 24 // 24 hours
+const EXPIRED_TIME = 7 * 1000 * 60 * 60 * 24 // 7 days
 
 const db = getFirestore()
 

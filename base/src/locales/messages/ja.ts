@@ -13,6 +13,7 @@ export default {
   email_message: 'メッセージ',
   latitude: '緯度',
   longitude: '経度',
+  copied_to_clipboard: 'クリップボードにコピーしました',
   payment: {
     user_advance: '参加者 事前決済 💳',
     user_on_day: '参加者 当日払い 💸',
