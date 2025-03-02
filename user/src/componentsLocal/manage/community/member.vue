@@ -124,19 +124,19 @@ const downloadCsvFile = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col md="12" sm="12" cols="12">
-        <v-card class="pa-5">
+        <v-card class="pa-3 pa-md-12">
           <v-row class="justify-center">
             <v-col md="12" sm="12" cols="12">
               <v-table>
                 <tbody>
                   <tr v-for="(member, i) of members" :key="member.user_id">
-                    <td>{{ i + 1 }}</td>
+                    <td class="text-center text-body-2 number-cell">{{ i + 1 }}</td>
                     <td class="minimum-cell">
                       <router-link :to="getUserPath(member.user_id)">
                         <UserAvatar :user="member"></UserAvatar>
                       </router-link>
                     </td>
-                    <td>
+                    <td class="name-cell">
                       <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
                         {{ member.user_name }}
                       </router-link>
@@ -172,18 +172,29 @@ const downloadCsvFile = () => {
                         <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                       </v-btn>
                     </td>
-                    <td class="text-center">
+                    <td>
+                      <v-spacer />
+                    </td>
+                    <td class="text-right role-cell text-body-2">
                       {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center number-cell">
                       <template v-if="member.user_id !== userStore.user?.user_id">
                         <v-btn
                           v-if="member.roles?.includes('manager')"
                           :icon="mdiAccountRemoveOutline"
+                          size="small"
                           variant="text"
+                          color="grey-500"
                           @click="removeTargetMember = member"
                         />
-                        <v-btn v-else :icon="mdiAccountPlusOutline" variant="text" @click="addTargetMember = member" />
+                        <v-btn
+                          v-else
+                          :icon="mdiAccountPlusOutline"
+                          size="small"
+                          variant="text"
+                          @click="addTargetMember = member"
+                        />
                       </template>
                     </td>
                     <!--
@@ -268,7 +279,15 @@ const downloadCsvFile = () => {
 .hidden {
   visibility: hidden; /* サイズは保持されるが内容は非表示 */
 }
-
+.number-cell {
+  width: 60px;
+}
+.name-cell {
+  width: 300px;
+}
+.roll-cell {
+  width: 60px;
+}
 .minimum-cell {
   width: 1px;
   padding: 0 !important;
