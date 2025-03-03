@@ -56,17 +56,29 @@ const isModifyAccountDialogOpen = computed({
 const clickContact = (member: CommunityMember) => {
   emailTargetMember.value = member
 }
-const addAccount = (member: CommunityMember) => {
-  communityStore.addRole(member.user_id, 'manager')
+const isLoading = ref(false)
+const addAccount = async (member: CommunityMember) => {
+  isLoading.value = true
+  try {
+    await communityStore.addRole(member.user_id, 'manager')
+  } finally {
+    addTargetMember.value = null
+    isLoading.value = false
+  }
 }
-const removeAccount = (member: CommunityMember) => {
-  communityStore.removeRole(member.user_id, 'manager')
+const removeAccount = async (member: CommunityMember) => {
+  isLoading.value = true
+  try {
+    await communityStore.removeRole(member.user_id, 'manager')
+  } finally {
+    removeTargetMember.value = null
+    isLoading.value = false
+  }
 }
 const isInvitationDailogOpen = ref(false)
 const invitationUrl = ref('')
-const isUrlLoading = ref(false)
 const inviteManager = async () => {
-  isUrlLoading.value = true
+  isLoading.value = true
   try {
     const communityId = communityStore.community?.community_id
     const url = await get_invitaion_url_for_community_manager({ communityId })
@@ -90,7 +102,7 @@ const inviteManager = async () => {
     console.error(error)
     Object.assign(notification, { message: $t('manage.community_manager_invitation.failed'), color: 'error' })
   } finally {
-    isUrlLoading.value = false
+    isLoading.value = false
   }
 }
 const openNewLink = (url: string) => {
@@ -217,7 +229,7 @@ const downloadCsvFile = () => {
     </v-row>
   </v-container>
   <EmailDialog v-if="emailTargetMember != null" v-model="isEmailDialogOpen" :toUser="emailTargetMember" />
-  <v-dialog v-model="isModifyAccountDialogOpen" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+  <v-dialog v-model="isModifyAccountDialogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
     <v-card v-if="addTargetMember != null" class="px-2 py-4">
       <v-card-title>
         {{ $t('manage.member.add_manager_dialog.title', [addTargetMember.user_name]) }}
@@ -226,10 +238,10 @@ const downloadCsvFile = () => {
         <div v-html="$t('manage.member.add_manager_dialog.description', [addTargetMember.user_name])" />
       </v-card-text>
       <v-card-actions>
-        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+        <v-btn type="cancel" :disabled="isLoading" @click="isModifyAccountDialogOpen = false">
           {{ $t('cancel') }}
         </v-btn>
-        <v-btn type="submit" @click="addAccount(addTargetMember)">
+        <v-btn type="submit" :loading="isLoading" @click="addAccount(addTargetMember)">
           {{ $t('manage.member.add_manager_dialog.submit') }}
         </v-btn>
       </v-card-actions>
@@ -242,16 +254,16 @@ const downloadCsvFile = () => {
         <div v-html="$t('manage.member.remove_manager_dialog.description', [removeTargetMember.user_name])" />
       </v-card-text>
       <v-card-actions>
-        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+        <v-btn type="cancel" :disabled="isLoading" @click="isModifyAccountDialogOpen = false">
           {{ $t('cancel') }}
         </v-btn>
-        <v-btn type="submit" @click="removeAccount(removeTargetMember)">
+        <v-btn type="submit" :loading="isLoading" @click="removeAccount(removeTargetMember)">
           {{ $t('manage.member.remove_manager_dialog.submit') }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-dialog v-model="isInvitationDailogOpen" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+  <v-dialog v-model="isInvitationDailogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
     <v-card class="px-2 py-4">
       <v-card-title> {{ $t('manage.community_manager_invitation.title') }} </v-card-title>
       <v-card-text style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px">
@@ -262,7 +274,7 @@ const downloadCsvFile = () => {
           :readonly="true"
           :label="$t('manage.community_manager_invitation.description')"
         />
-        <v-btn color="primary" :loading="isUrlLoading" @click="inviteManager">
+        <v-btn color="primary" :loading="isLoading" @click="inviteManager">
           {{ $t('manage.community_manager_invitation.generate') }}
         </v-btn>
       </v-card-text>
