@@ -472,6 +472,7 @@ async function sendRejectOrderMailToShop(start, end) {
     .collectionGroup('events')
     .where('event_status.value', '==', 'applying_reservation')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
+    .where('is_deleted', '==', false)
     .get()
 
   const sendMailPromises = events.docs
