@@ -64,6 +64,7 @@ const addAccount = async (member: CommunityMember) => {
   } finally {
     addTargetMember.value = null
     isLoading.value = false
+    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.notification'), color: 'success' })
   }
 }
 const removeAccount = async (member: CommunityMember) => {
@@ -73,6 +74,7 @@ const removeAccount = async (member: CommunityMember) => {
   } finally {
     removeTargetMember.value = null
     isLoading.value = false
+    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.notification'), color: 'success' })
   }
 }
 const isInvitationDailogOpen = ref(false)
