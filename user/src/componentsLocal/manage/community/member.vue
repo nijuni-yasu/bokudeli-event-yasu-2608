@@ -61,20 +61,26 @@ const addAccount = async (member: CommunityMember) => {
   isLoading.value = true
   try {
     await communityStore.addRole(member.user_id, 'manager')
+    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.notification'), color: 'success' })
+  } catch (error) {
+    console.error(error)
+    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.error'), color: 'error' })
   } finally {
     addTargetMember.value = null
     isLoading.value = false
-    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.notification'), color: 'success' })
   }
 }
 const removeAccount = async (member: CommunityMember) => {
   isLoading.value = true
   try {
     await communityStore.removeRole(member.user_id, 'manager')
+    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.notification'), color: 'success' })
+  } catch (error) {
+    console.error(error)
+    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.error'), color: 'error' })
   } finally {
     removeTargetMember.value = null
     isLoading.value = false
-    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.notification'), color: 'success' })
   }
 }
 const isInvitationDailogOpen = ref(false)
