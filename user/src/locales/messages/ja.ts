@@ -80,11 +80,15 @@ export default {
         'title': '{0} を管理者に追加する',
         'description': '{0} をコミュニティ管理者に追加しますか？<br />コミュニティ管理者にすると、コミュニティの管理、イベントの作成・編集・削除などが行えるようになります。',
         'submit': '追加',
+        'notification': 'コミュニティ管理者に追加しました',
+        'error': 'コミュニティ管理者の追加に失敗しました',
       },
       'remove_manager_dialog': {
         'title': '{0} を管理者から解除する',
         'description': '{0} をコミュニティ管理者から解除しますか？<br />コミュニティ管理者でなくなると、コミュニティの管理、イベントの作成・編集・削除などが行えなくなります。',
         'submit': '解除',
+        'notification': 'コミュニティ管理者から解除しました',
+        'error': 'コミュニティ管理者の解除に失敗しました',
       }
     },
     'letter': {
@@ -127,7 +131,7 @@ export default {
       'title': 'URL を発行して、追加するメンバーに権限を付与します',
       'description': '発行したURLは1週間有効で、利用されると無効になります。',
       'generate': '招待URLを発行',
-      'failed': 'URL の発行に失敗しました'
+      'failed': 'URL の発行に失敗しました',
     },
     'slack': {
       'description': `<b>shokujii の SlackApp を追加</b>すると<br/>

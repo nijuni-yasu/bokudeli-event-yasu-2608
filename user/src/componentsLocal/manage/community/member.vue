@@ -56,17 +56,37 @@ const isModifyAccountDialogOpen = computed({
 const clickContact = (member: CommunityMember) => {
   emailTargetMember.value = member
 }
-const addAccount = (member: CommunityMember) => {
-  communityStore.addRole(member.user_id, 'manager')
+const isLoading = ref(false)
+const addAccount = async (member: CommunityMember) => {
+  isLoading.value = true
+  try {
+    await communityStore.addRole(member.user_id, 'manager')
+    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.notification'), color: 'success' })
+  } catch (error) {
+    console.error(error)
+    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.error'), color: 'error' })
+  } finally {
+    addTargetMember.value = null
+    isLoading.value = false
+  }
 }
-const removeAccount = (member: CommunityMember) => {
-  communityStore.removeRole(member.user_id, 'manager')
+const removeAccount = async (member: CommunityMember) => {
+  isLoading.value = true
+  try {
+    await communityStore.removeRole(member.user_id, 'manager')
+    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.notification'), color: 'success' })
+  } catch (error) {
+    console.error(error)
+    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.error'), color: 'error' })
+  } finally {
+    removeTargetMember.value = null
+    isLoading.value = false
+  }
 }
 const isInvitationDailogOpen = ref(false)
 const invitationUrl = ref('')
-const isUrlLoading = ref(false)
 const inviteManager = async () => {
-  isUrlLoading.value = true
+  isLoading.value = true
   try {
     const communityId = communityStore.community?.community_id
     const url = await get_invitaion_url_for_community_manager({ communityId })
@@ -90,7 +110,7 @@ const inviteManager = async () => {
     console.error(error)
     Object.assign(notification, { message: $t('manage.community_manager_invitation.failed'), color: 'error' })
   } finally {
-    isUrlLoading.value = false
+    isLoading.value = false
   }
 }
 const openNewLink = (url: string) => {
@@ -124,19 +144,19 @@ const downloadCsvFile = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col md="12" sm="12" cols="12">
-        <v-card class="pa-5">
+        <v-card class="pa-3 pa-md-12">
           <v-row class="justify-center">
             <v-col md="12" sm="12" cols="12">
               <v-table>
                 <tbody>
                   <tr v-for="(member, i) of members" :key="member.user_id">
-                    <td>{{ i + 1 }}</td>
+                    <td class="text-center text-body-2 number-cell">{{ i + 1 }}</td>
                     <td class="minimum-cell">
                       <router-link :to="getUserPath(member.user_id)">
                         <UserAvatar :user="member"></UserAvatar>
                       </router-link>
                     </td>
-                    <td>
+                    <td class="name-cell">
                       <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
                         {{ member.user_name }}
                       </router-link>
@@ -172,18 +192,29 @@ const downloadCsvFile = () => {
                         <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                       </v-btn>
                     </td>
-                    <td class="text-center">
+                    <td>
+                      <v-spacer />
+                    </td>
+                    <td class="text-right role-cell text-body-2">
                       {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center number-cell">
                       <template v-if="member.user_id !== userStore.user?.user_id">
                         <v-btn
                           v-if="member.roles?.includes('manager')"
                           :icon="mdiAccountRemoveOutline"
+                          size="small"
                           variant="text"
+                          color="grey-500"
                           @click="removeTargetMember = member"
                         />
-                        <v-btn v-else :icon="mdiAccountPlusOutline" variant="text" @click="addTargetMember = member" />
+                        <v-btn
+                          v-else
+                          :icon="mdiAccountPlusOutline"
+                          size="small"
+                          variant="text"
+                          @click="addTargetMember = member"
+                        />
                       </template>
                     </td>
                     <!--
@@ -206,7 +237,7 @@ const downloadCsvFile = () => {
     </v-row>
   </v-container>
   <EmailDialog v-if="emailTargetMember != null" v-model="isEmailDialogOpen" :toUser="emailTargetMember" />
-  <v-dialog v-model="isModifyAccountDialogOpen" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+  <v-dialog v-model="isModifyAccountDialogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
     <v-card v-if="addTargetMember != null" class="px-2 py-4">
       <v-card-title>
         {{ $t('manage.member.add_manager_dialog.title', [addTargetMember.user_name]) }}
@@ -215,10 +246,10 @@ const downloadCsvFile = () => {
         <div v-html="$t('manage.member.add_manager_dialog.description', [addTargetMember.user_name])" />
       </v-card-text>
       <v-card-actions>
-        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+        <v-btn type="cancel" :disabled="isLoading" @click="isModifyAccountDialogOpen = false">
           {{ $t('cancel') }}
         </v-btn>
-        <v-btn type="submit" @click="addAccount(addTargetMember)">
+        <v-btn type="submit" :loading="isLoading" @click="addAccount(addTargetMember)">
           {{ $t('manage.member.add_manager_dialog.submit') }}
         </v-btn>
       </v-card-actions>
@@ -231,16 +262,16 @@ const downloadCsvFile = () => {
         <div v-html="$t('manage.member.remove_manager_dialog.description', [removeTargetMember.user_name])" />
       </v-card-text>
       <v-card-actions>
-        <v-btn type="cancel" @click="isModifyAccountDialogOpen = false">
+        <v-btn type="cancel" :disabled="isLoading" @click="isModifyAccountDialogOpen = false">
           {{ $t('cancel') }}
         </v-btn>
-        <v-btn type="submit" @click="removeAccount(removeTargetMember)">
+        <v-btn type="submit" :loading="isLoading" @click="removeAccount(removeTargetMember)">
           {{ $t('manage.member.remove_manager_dialog.submit') }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-dialog v-model="isInvitationDailogOpen" :width="$vuetify.display.smAndDown ? 'auto' : 650">
+  <v-dialog v-model="isInvitationDailogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
     <v-card class="px-2 py-4">
       <v-card-title> {{ $t('manage.community_manager_invitation.title') }} </v-card-title>
       <v-card-text style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px">
@@ -251,7 +282,7 @@ const downloadCsvFile = () => {
           :readonly="true"
           :label="$t('manage.community_manager_invitation.description')"
         />
-        <v-btn color="primary" :loading="isUrlLoading" @click="inviteManager">
+        <v-btn color="primary" :loading="isLoading" @click="inviteManager">
           {{ $t('manage.community_manager_invitation.generate') }}
         </v-btn>
       </v-card-text>
@@ -268,7 +299,15 @@ const downloadCsvFile = () => {
 .hidden {
   visibility: hidden; /* サイズは保持されるが内容は非表示 */
 }
-
+.number-cell {
+  width: 60px;
+}
+.name-cell {
+  width: 300px;
+}
+.roll-cell {
+  width: 60px;
+}
 .minimum-cell {
   width: 1px;
   padding: 0 !important;
