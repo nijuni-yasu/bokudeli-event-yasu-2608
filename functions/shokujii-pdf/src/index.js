@@ -7,7 +7,7 @@ import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { setGlobalOptions } from 'firebase-functions/v2/options'
 import { defineString } from 'firebase-functions/params'
 import { format } from 'date-fns'
-import { makePdf } from './makePdf.js'
+import { makePdf } from './utils/makePdf.js'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import axios from 'axios'; 
