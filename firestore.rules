@@ -44,7 +44,7 @@ service cloud.firestore {
                 }
             }
             match /members/{member} {
-                allow create, update: if isManager()
+                allow create, update: if isManager() || (request.auth != null && request.auth.uid == request.resource.id)
             }
             // invites は functions 内からのみアクセス可能
             match /invites/{document=**} {
