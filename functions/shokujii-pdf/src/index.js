@@ -37,14 +37,14 @@ const __dirname = path.dirname(__filename)
 
 // default_profile.jpegをBase64エンコードする関数を修正
 const getDefaultProfileBase64 = () => {
-  const defaultProfilePath = path.join(__dirname, 'default_profile.jpeg')
+  const defaultProfilePath = path.join(__dirname, 'assets', 'default_profile.jpeg')
   const defaultProfile = fs.readFileSync(defaultProfilePath)
   return `data:image/jpeg;base64,${defaultProfile.toString('base64')}`
 }
 
 // blank_profile.jpegをBase64エンコードする関数を修正
 const getBlankProfileBase64 = () => {
-  const blankProfilePath = path.join(__dirname, 'blank_profile.jpeg')
+  const blankProfilePath = path.join(__dirname, 'assets', 'blank_profile.jpeg')
   const blankProfile = fs.readFileSync(blankProfilePath)
   return `data:image/jpeg;base64,${blankProfile.toString('base64')}`
 }
