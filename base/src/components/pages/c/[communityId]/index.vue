@@ -109,7 +109,7 @@ const openLoginDialog = () => {
           </v-btn>
           <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large"> 申請中 </v-chip>
         </v-row>
-        <v-card flat class="align-center justify-center text-center my-8 pa-md-12 pa-sm-8 pa-xs-0">
+        <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
               <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.community_cover_image_url" />
@@ -130,7 +130,7 @@ const openLoginDialog = () => {
         <!-- community event list -->
         <v-row>
           <!-- community description -->
-          <v-col md="4" sm="6" cols="12">
+          <v-col md="4" sm="5" cols="12" class="order-2 order-sm-1">
             <community-bio-panel
               :community="communityStore.community"
               :members="communityStore.members"
@@ -138,7 +138,7 @@ const openLoginDialog = () => {
             />
           </v-col>
           <!-- events -->
-          <v-col md="8" sm="6" cols="12">
+          <v-col md="8" sm="7" cols="12" class="order-1 order-sm-2">
             <v-row v-if="events != null">
               <v-col v-for="eventWithMembers in events" :key="eventWithMembers.event.event_id" md="6" sm="12" cols="12">
                 <EventCard
