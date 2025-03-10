@@ -286,7 +286,7 @@ onMounted(async () => {
           <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
             【支払い方法】{{ $t(`payment.${cart.event.event_payment}`) }} <br />
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【お店】{{ cart.event.shop_name }} </v-card-text>
+          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1"> 【食事】{{ cart.event.shop_name }} </v-card-text>
 
           <v-row class="text-center align-center text-md-body-1 text-caption">
             <v-col cols="12">
