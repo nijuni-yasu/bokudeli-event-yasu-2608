@@ -4,7 +4,7 @@ import { type CommunityMember } from '@/schemes/communityMember'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
-import { mdiEmail, mdiLink, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
+import { mdiEmail, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb, mdiCrown, mdiAccountGroup } from '@mdi/js'
 
 const props = defineProps<{
   community: BokudeliCommunity
@@ -64,12 +64,15 @@ const officialSiteUrl = computed(() =>
         :prepend-icon="mdiEmail"
         @click="emit('clickContact')"
       >
-        お問い合わせ
+        {{ $t('community_bio_panel.contact') }}
       </v-btn>
     </v-col>
     <!-- community manager -->
     <div v-if="members?.some((m) => m?.roles?.includes('manager') ?? false)">
-      <v-card-title class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
+      <v-card-title class="justify-center text-h6 mt-7 d-flex align-center text-primary">
+        <v-icon :icon="mdiCrown" size="22" class="mr-1" />
+        {{ $t('community_bio_panel.manager') }}
+      </v-card-title>
       <div
         v-for="manager in members.filter((m) => m?.roles?.includes('manager') ?? false) as CommunityMember[]"
         :key="manager.user_id"
@@ -87,7 +90,10 @@ const officialSiteUrl = computed(() =>
 
     <!-- community member -->
     <div v-if="members != null">
-      <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
+      <v-card-title class="justify-center text-h6 mt-7 d-flex align-center text-primary">
+        <v-icon :icon="mdiAccountGroup" size="22" class="mr-1" />
+        {{ $t('community_bio_panel.member') }}
+      </v-card-title>
       <div v-for="member in members.filter((m) => m != null) as CommunityMember[]" :key="member.user_id">
         <router-link :to="getUserPath(member.user_id)">
           <v-row>

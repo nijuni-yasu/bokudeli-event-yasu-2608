@@ -174,6 +174,11 @@ export default {
             `,
     ok_text: 'コミュニティを新規作成する',
   },
+  community_bio_panel: {
+    contact: 'お問い合わせ',
+    manager: 'Manager',
+    member: 'Member',
+  },
   community_edit: {
     title: 'コミュニティ設定',
     account: 'コミュニティURL',
