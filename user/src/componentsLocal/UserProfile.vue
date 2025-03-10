@@ -65,10 +65,10 @@ const logout = async () => {
             <v-list-item-title>カート</v-list-item-title>
           </v-list-item>
           <!-- Divider -->
-          <v-divider class="my-2" />
+          <v-divider v-if="isLogin" class="my-2" />
 
           <!-- 👉 howto -->
-          <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
+          <v-list-item v-if="isLogin" :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
             </template>
