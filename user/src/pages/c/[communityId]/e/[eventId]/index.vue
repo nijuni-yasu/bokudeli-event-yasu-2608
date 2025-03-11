@@ -10,6 +10,7 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@/components/EventDetailsCard.vue'
+import EventStatusChip from '@/components/EventStatusChip.vue'
 
 const communityId = useRoute().params.communityId as string
 const eventId = useRoute().params.eventId as string
@@ -180,11 +181,9 @@ onUnmounted(() => {
         <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
           <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
           <v-spacer />
+          <EventStatusChip :status="event.event_status.value" size="large"/>
           <v-chip v-if="!event.is_public" color="primary" size="large">
             {{ $t('private_event') }}
-          </v-chip>
-          <v-chip color="primary" size="large">
-            {{ $t(`event_status.${event.event_status.value}`) }}
           </v-chip>
           <v-btn
             v-if="event.event_status.value === `in_draft` && isManager"

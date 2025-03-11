@@ -3,6 +3,7 @@ import type BokudeliEvent from '../schemes//bokudeliEvent'
 import type { EventMember } from '../schemes/EventMember'
 import UserAvatar from './UserAvatar.vue'
 import { useDisplay } from 'vuetify'
+import EventStatusChip from '@/components/EventStatusChip.vue'
 
 defineProps<{ event: BokudeliEvent; members?: EventMember[] }>()
 
@@ -27,9 +28,7 @@ const avatarSize = computed(() => {
     <div>
       <VImg cover class="mx-auto" aspect-ratio="1.91" :src="event.event_cover_url" />
     </div>
-    <v-chip class="mt-2 ml-3" color="primary" size="small">
-      {{ $t(`event_status.${event.event_status.value}`) }}
-    </v-chip>
+    <EventStatusChip :status="event.event_status.value" size="x-small" class="mt-2 ml-2"/>
     <v-card-title class="justify-center px-3 py-1" style="font-size: 16px; font-weight: 600">
       {{ event.event_name }}
     </v-card-title>
