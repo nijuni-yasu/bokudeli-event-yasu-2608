@@ -4,9 +4,7 @@ import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiAccountOutline, mdiCartOutline, mdiCalendarPlus, mdiLogout, mdiYoutube } from '@mdi/js'
-import LineIcon from '@/icons/line'
-import { getManagePath } from '@/router/utils'
+import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline  } from '@mdi/js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -66,38 +64,15 @@ const logout = async () => {
             </template>
             <v-list-item-title>カート</v-list-item-title>
           </v-list-item>
-
-          <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
-
-          <!-- 👉 cart -->
-          <v-list-item v-if="isLogin" :to="getManagePath()">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
-            </template>
-            <v-list-item-title>イベント開催</v-list-item-title>
-          </v-list-item>
-
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
           <!-- 👉 howto -->
-          <v-list-item v-if="isLogin" :href="`https://lin.ee/SaL9aeE`" target="_blank">
+          <v-list-item v-if="isLogin" :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
             <template #prepend>
-              <v-icon class="me-2" :icon="LineIcon" size="22" />
+              <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
             </template>
-            <v-list-item-title>LINE友だち追加</v-list-item-title>
-          </v-list-item>
-
-          <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
-
-          <!-- 👉 howto -->
-          <v-list-item v-if="isLogin" :href="`https://about.shokujii.jp/howto`" target="_blank">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiYoutube" size="22" />
-            </template>
-            <v-list-item-title>使い方動画</v-list-item-title>
+            <v-list-item-title>お問い合わせ</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
