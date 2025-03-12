@@ -44,7 +44,7 @@ export default {
     community_name: '【主催】{0}',
     date: '【日時】{0}〜{1}',
     place: '【場所】{0}',
-    shop: '【お店】{0}',
+    shop: '【食事】{0}',
     participants: '【参加】{0}人 / {1}人',
   },
   event_details: {
@@ -174,6 +174,11 @@ export default {
             `,
     ok_text: 'コミュニティを新規作成する',
   },
+  community_bio_panel: {
+    contact: 'お問い合わせ',
+    manager: 'Manager',
+    member: 'Member',
+  },
   community_edit: {
     title: 'コミュニティ設定',
     account: 'コミュニティURL',
@@ -279,7 +284,7 @@ export default {
     community_name: '【主催】{0}',
     event_start_datetime: '【日時】{0} 〜',
     event_address: '【場所】{0}',
-    shop_name: '【お店】{0}',
+    shop_name: '【食事】{0}',
     menu: '【注文内容】',
     menu_item: '{0} <span class="text-caption">({1}個)</span>',
     total_price: '【注文金額】{0}',

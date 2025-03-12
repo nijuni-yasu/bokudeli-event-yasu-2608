@@ -8,7 +8,6 @@ import {
   getEventEditBasicPath,
   getEventEditDetailsPath,
 } from '@/router/utils'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import LoginDialog from '@/components/LoginDialog.vue'
@@ -16,6 +15,10 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@/components/CommunityBioPanel.vue'
+import EventCard from '@/components/EventCard.vue'
+import { useEventStore, type EventStore } from '@/stores/event'
+import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import type { EventMember } from '@/schemes/EventMember'
 
 const props = defineProps<{
   communityId: string
@@ -31,7 +34,12 @@ communityStore.getCurrentUserRoles().then((roles) => {
   isManager.value = roles?.includes('manager') ?? false
 })
 
-const events = computed(() => {
+type EventWithMembers = {
+  event: BokudeliEvent
+  members: EventMember[]
+}
+
+const events = computed<EventWithMembers[] | null>(() => {
   // 読み込み中は null として扱う
   return communityStore.events?.flatMap((event) => {
     // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
@@ -45,7 +53,8 @@ const events = computed(() => {
     if (isManager.value === false && isMember.value === false && event.is_public === false) {
       return []
     }
-    return event
+    const eventStore = useEventStore(event.event_id) as EventStore
+    return { event, members: eventStore.members ?? [] }
   })
 })
 
@@ -100,7 +109,7 @@ const openLoginDialog = () => {
           </v-btn>
           <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large"> 申請中 </v-chip>
         </v-row>
-        <v-card flat class="align-center justify-center text-center my-8 pa-md-12 pa-sm-8 pa-xs-0">
+        <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
           <v-row>
             <v-col>
               <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.community_cover_image_url" />
@@ -121,7 +130,7 @@ const openLoginDialog = () => {
         <!-- community event list -->
         <v-row>
           <!-- community description -->
-          <v-col md="4" sm="6" cols="12">
+          <v-col md="4" sm="5" cols="12" class="order-2 order-sm-1">
             <community-bio-panel
               :community="communityStore.community"
               :members="communityStore.members"
@@ -129,58 +138,35 @@ const openLoginDialog = () => {
             />
           </v-col>
           <!-- events -->
-          <v-col md="8" sm="6" cols="12">
+          <v-col md="8" sm="7" cols="12" class="order-1 order-sm-2">
             <v-row v-if="events != null">
-              <v-col v-for="event in events" :key="event.event_id" md="6" sm="12" cols="12">
-                <v-card class="mx-0" color="text-color cursor-pointer" @click="goToEvents(event.event_id)">
-                  <v-img cover aspect-ratio="1.91" :src="event.event_cover_url" />
-                  <v-chip class="mt-2 ml-2" size="small" color="primary" elevated flat>
-                    {{ $t(`event_status.${event.event_status.value}`) }}
-                  </v-chip>
-                  <v-chip v-if="!event.is_public" class="mt-2 ml-2" size="small" color="primary" elevated flat>
-                    {{ $t('private_event') }}
-                  </v-chip>
-                  <v-card-title class="justify-center text-h6 pb-3 px-2">
-                    {{ event.event_name }}
-                  </v-card-title>
-                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
-                    【日時】{{ dateWithDayOfWeekString(event.event_start_datetime) }}〜{{
-                      dateOnlyTimeString(event.event_end_datetime)
-                    }}
-                  </v-card-title>
-                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
-                    【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
-                  </v-card-title>
-                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
-                    【場所】{{ event.event_address }}
-                  </v-card-title>
-                  <v-card-title class="text-left px-3 py-0 text-subtitle-2">
-                    【お店】 {{ event.shop_name }}
-                  </v-card-title>
-                  <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2">
-                    【定員】{{ event.event_max_people }} 人
-                  </v-card-title>
-                </v-card>
+              <v-col v-for="eventWithMembers in events" :key="eventWithMembers.event.event_id" md="6" sm="12" cols="12">
+                <EventCard
+                  :event="eventWithMembers.event"
+                  :members="eventWithMembers.members"
+                  class="mx-0 cursor-pointer"
+                  @click="goToEvents(eventWithMembers.event.event_id)"
+                />
                 <v-row v-if="isManager" class="justify-end my-2 mr-1">
                   <v-btn
-                    v-if="event.event_status.value === `in_draft`"
+                    v-if="eventWithMembers.event.event_status.value === `in_draft`"
                     class="ml-1"
                     color="white"
                     elevation="5"
                     size="small"
                     rounded="pill"
                     :prepend-icon="mdiEmail"
-                    :to="getEventEditShopNoticePath(event.event_id)"
+                    :to="getEventEditShopNoticePath(eventWithMembers.event.event_id)"
                   >
                     予約
                   </v-btn>
                   <v-btn
                     v-if="
-                      event.event_status.value === 'in_draft' ||
-                      event.event_status.value === 'applying_reservation' ||
-                      event.event_status.value === 'accepting_order' ||
-                      event.event_status.value === 'order_closed' ||
-                      event.event_status.value === 'full'
+                      eventWithMembers.event.event_status.value === 'in_draft' ||
+                      eventWithMembers.event.event_status.value === 'applying_reservation' ||
+                      eventWithMembers.event.event_status.value === 'accepting_order' ||
+                      eventWithMembers.event.event_status.value === 'order_closed' ||
+                      eventWithMembers.event.event_status.value === 'full'
                     "
                     class="ml-1"
                     color="white"
@@ -189,9 +175,9 @@ const openLoginDialog = () => {
                     rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
                     :to="
-                      event.event_status.value === 'in_draft'
-                        ? getEventEditBasicPath(event.event_id)
-                        : getEventEditDetailsPath(event.event_id)
+                      eventWithMembers.event.event_status.value === 'in_draft'
+                        ? getEventEditBasicPath(eventWithMembers.event.event_id)
+                        : getEventEditDetailsPath(eventWithMembers.event.event_id)
                     "
                   >
                     編集

@@ -358,7 +358,7 @@ onUnmounted(() => {
                   {{ event.event_desc }}
                 </v-card-text>
                 <v-card-text class="event-item2">
-                  【お店】
+                  【食事】
                   <span class="event-content">
                     {{ event.shop_name }}
                   </span>

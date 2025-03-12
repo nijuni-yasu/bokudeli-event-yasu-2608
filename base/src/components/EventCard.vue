@@ -52,18 +52,21 @@ const avatarSize = computed(() => {
     <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
       {{ $t('event_card.shop', [event.shop_name]) }}
     </v-card-title>
-    <template v-if="members != null">
-      <v-card-title class="text-left px-3 pt-0 pb-3 text-subtitle-2" style="line-height: 1.75rem">
-        {{ $t('event_card.participants', [members.length, event.event_max_people]) }}
-      </v-card-title>
-      <!-- Mutual members -->
-      <v-card-text class="position-relative px-3">
-        <div class="d-flex justify-space-between align-center">
-          <div class="v-avatar-group">
-            <UserAvatar v-for="member in members.slice(0, 9) ?? []" :key="member.user_id" :user="member" :size="avatarSize" />
-          </div>
+    <v-card-text class="text-left px-3 pt-0 pb-1 text-subtitle-2" style="line-height: 1.75rem">
+      {{ $t('event_card.participants', [(members ?? []).length, event.event_max_people]) }}
+    </v-card-text>
+    <!-- Mutual members -->
+    <v-card-text class="position-relative px-3 pb-1" style="min-height: 50px">
+      <div class="d-flex justify-space-between align-center">
+        <div class="v-avatar-group">
+          <UserAvatar
+            v-for="member in (members ?? []).slice(0, 9)"
+            :key="member.user_id"
+            :user="member"
+            :size="avatarSize"
+          />
         </div>
-      </v-card-text>
-    </template>
+      </div>
+    </v-card-text>
   </v-card>
 </template>
