@@ -168,25 +168,13 @@ async function getCommunityEmails(communityId) {
 async function createOrdersForOrderRemind(ordersRef) {
   const promises = []
   const orders_by_status = {
-    in_draft: [],
     ordered: [],
+    in_draft: [],
     cancelled: [],
   }
   for (const orderRef of await ordersRef.listDocuments()) {
     const orderSnapshot = await orderRef.get()
     const status = orderSnapshot.get('status')
-    let status_desc = ''
-    switch (status) {
-      case 'in_draft':
-        status_desc = 'カート追加中'
-        break
-      case 'ordered':
-        status_desc = '注文済'
-        break
-      case 'cancelled':
-        status_desc = 'キャンセル済'
-        break
-    }
     const userRef = db.collection('users').doc(orderSnapshot.get('user_id'))
     for (const menu of orderSnapshot.get('menus') ?? []) {
       const promise = userRef.get().then((userSnapshot) => {
@@ -196,7 +184,6 @@ async function createOrdersForOrderRemind(ordersRef) {
             order: menu.name,
             price: `¥${menu.price}`,
             status,
-            status_desc,
           })
         }
       })
@@ -204,13 +191,12 @@ async function createOrdersForOrderRemind(ordersRef) {
     }
   }
   await Promise.all(promises)
-  let orders = []
-  for (const status of ['ordered', 'in_draft', 'cancelled']) {
-    orders_by_status[status].sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0))
-    orders = orders.concat(orders_by_status[status])
+
+  for (const orders of Object.values(orders_by_status)) {
+    orders.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0))
+    orders.forEach((order, i) => (order.number = i + 1))
   }
-  orders.forEach((order, i) => (order.number = i + 1))
-  return orders
+  return orders_by_status
 }
 
 async function createOrdersForOrderDeadline(ordersRef) {
