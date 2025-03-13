@@ -40,8 +40,11 @@ type EventWithMembers = {
 }
 
 const events = computed<EventWithMembers[] | null>(() => {
+  const events = communityStore.events
+  if (!events) return null
+
   // 読み込み中は null として扱う
-  return communityStore.events?.flatMap((event) => {
+  return events.flatMap((event) => {
     // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
     if (
       isManager.value === false &&
