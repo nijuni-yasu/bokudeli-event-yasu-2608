@@ -6,6 +6,7 @@ import slackLogo from '@/assets/images/slack/slack_logo.png'
 import slackImage01 from '@/assets/images/slack/slack_image_01.png'
 import slackImage02 from '@/assets/images/slack/slack_image_02.png'
 import slackImage03 from '@/assets/images/slack/slack_image_03.png'
+import slackImage04 from '@/assets/images/slack/slack_image_04.png'
 
 
 const { t: $t } = useI18n()
@@ -55,10 +56,18 @@ const copyRemoveCommand = () => {
         <v-card-text class="pa-0 pl-2"><div v-html="$t('manage.slack.description')" /></v-card-text>
       </v-row>
       <v-row justify="center">
-        <v-col cols="12" md="10">
+        <v-col cols="12" md="9">
           <v-img
             class="my-3"
             :src="slackImage01"
+          />
+        </v-col>
+      </v-row>
+      <v-row justify="center">
+        <v-col cols="12" md="9">
+          <v-img
+            class="my-3"
+            :src="slackImage04"
           />
         </v-col>
       </v-row>
