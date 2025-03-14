@@ -96,7 +96,7 @@ export const useValidators = () => {
     if (isEmpty(value)) {
       return true
     }
-    return /^[a-z0-9_]{5,15}$/.test(value as string) || $t('validator.account')
+    return /^[a-z0-9_]{3,20}$/.test(value as string) || $t('validator.account')
   }
 
   const invoiceValidatorJapan = (value: string | null | undefined) => {
