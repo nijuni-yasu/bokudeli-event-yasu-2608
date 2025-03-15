@@ -45,44 +45,44 @@ export const loginUser = async (user: User) => {
   const store = useStoreStoredUser()
   const storedUser = convertFirebaseUserToStoredUser(user)
 
-  const docRef = doc(db, 'users', storedUser.userId)
-  const docSnap = await getDoc(docRef)
+  const userSnapShot = await getDoc(doc(db, 'users', storedUser.userId))
+  const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', storedUser.userId))
 
-  // Pinia のデータを更新
-  const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
-  store.update(currentStoredUser)
-
-  if (!docSnap.exists()) {
+  let currentStoredUser
+  if (userSnapShot == null || !userSnapShot.exists()) {
     // ユーザーが存在しない場合は新規作成
     const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
     firestoredUser.created_at = Timestamp.now()
     firestoredUser.updated_at = Timestamp.now()
-    await setDoc(docRef, firestoredUser.convertToDocumentData())
+    await setDoc(userSnapShot.ref, firestoredUser.convertToDocumentData())
+    await setDoc(personalInformationSnapshot.ref, { user_email: storedUser.userEmail })
 
     // Pinia に保存
     store.update(storedUser)
+    currentStoredUser = storedUser
   } else {
+    currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data(), personalInformationSnapshot.data()!)
     if (currentStoredUser.userEmail !== storedUser.userEmail || !currentStoredUser.userImageUrl) {
       // 既にユーザーが存在しメールアドレスが変更されている場合は更新する
       // 画像がない場合も更新する
       await setDoc(
-        docRef,
+        userSnapShot.ref,
         {
-          user_email: storedUser.userEmail,
           user_image_url: storedUser.userImageUrl,
           updated_at: Timestamp.now(),
         },
         { merge: true },
       )
+      await setDoc(personalInformationSnapshot.ref, { user_email: storedUser.userEmail }, { merge: true })
 
       // Pinia に保存
-      const updatedStoredUser = {
+      currentStoredUser = {
         ...currentStoredUser,
         userEmail: storedUser.userEmail,
         userImageUrl: storedUser.userImageUrl,
       }
-      store.update(updatedStoredUser)
     }
+    store.update(currentStoredUser)
   }
 
   // Facebook Login の場合は、画像を Storage にアップロードする
