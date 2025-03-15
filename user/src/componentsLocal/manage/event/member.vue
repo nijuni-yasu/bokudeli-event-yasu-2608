@@ -4,13 +4,13 @@ import EmailDialog from '@/components/EmailDialog.vue'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useUserStore, type UserStore } from '@/stores/user'
 import { getUserPath } from '@/router/utils'
-import { mdiFacebook, mdiEmail, mdiDownload } from '@mdi/js'
+import { mdiFacebook, mdiDownload } from '@mdi/js'
 import XIcon from '@/icons/x'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { OrderItem } from '@/schemes/orderItem'
 import type { EventMember } from '@/schemes/EventMember'
 import type { OrderMenu } from '@/schemes/orderMenu'
-import { getAuth } from 'firebase/auth'
+// import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/buildSnsLinks'
 import { downloadCsv } from '@/utils/downloadCsv'
 import type { FirestoredUser } from '@/schemes/storedUser'
@@ -19,7 +19,7 @@ const { t: $t, d: $d } = useI18n()
 const route = useRoute()
 const eventId = route.params.eventId as string
 
-const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
+// const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
 
 const eventStore = useEventStore(eventId) as EventStore
 const menus = computed<Array<[OrderItem, FirestoredUser, OrderMenu]>>(
@@ -46,7 +46,7 @@ const canceledMenus = computed(() =>
 )
 const tables = computed(() => [orderedMenus.value, cartMenus.value, canceledMenus.value])
 
-const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
+// const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
 const targetMember = ref<EventMember | null>(null)
 const isEmailDialogOpen = computed({
@@ -57,9 +57,9 @@ const isEmailDialogOpen = computed({
     }
   },
 })
-const clickContact = (member: EventMember) => {
-  targetMember.value = member
-}
+// const clickContact = (member: EventMember) => {
+//   targetMember.value = member
+// }
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
 }
@@ -117,7 +117,7 @@ const downloadCsvFile = () => {
                       <th colspan="2">{{ $t('manage.member.name') }}</th>
                       <th colspan="3"></th>
                       <th>
-                        <v-spacer/>
+                        <v-spacer />
                       </th>
                       <th>{{ $t('manage.member.order') }}</th>
                       <th>{{ $t(`manage.member.date.${menus[0][0].status}`) }}</th>
@@ -169,7 +169,7 @@ const downloadCsvFile = () => {
                         </v-btn>
                       </td>
                       <td>
-                        <v-spacer/>
+                        <v-spacer />
                       </td>
                       <td class="menu-cell text-body-2">
                         {{ menu.name }}
