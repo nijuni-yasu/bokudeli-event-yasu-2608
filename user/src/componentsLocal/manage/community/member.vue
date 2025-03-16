@@ -4,7 +4,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import EmailDialog from '@/components/EmailDialog.vue'
-import { mdiFacebook, mdiEmail, mdiDownload, mdiAccountPlusOutline, mdiAccountRemoveOutline, mdiLink } from '@mdi/js'
+import { mdiFacebook, mdiDownload, mdiAccountPlusOutline, mdiAccountRemoveOutline, mdiLink } from '@mdi/js'
 import XIcon from '@/icons/x'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { CommunityMember } from '@/schemes/communityMember'
@@ -31,7 +31,7 @@ const members = computed(
       ?.flatMap((member) => member ?? [])
       ?.sort((a, b) => (a.roles?.includes('manager') ? -1 : b.roles?.includes('manager') ? 1 : 0)) ?? [],
 )
-const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
+// const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
 const emailTargetMember = ref<CommunityMember | null>(null)
 const isEmailDialogOpen = computed({
@@ -53,9 +53,9 @@ const isModifyAccountDialogOpen = computed({
     }
   },
 })
-const clickContact = (member: CommunityMember) => {
-  emailTargetMember.value = member
-}
+// const clickContact = (member: CommunityMember) => {
+//   emailTargetMember.value = member
+// }
 const isLoading = ref(false)
 const addAccount = async (member: CommunityMember) => {
   isLoading.value = true

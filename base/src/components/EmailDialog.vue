@@ -58,7 +58,7 @@ const onFormSubmit = async () => {
         <v-icon start :icon="mdiEmail" />
         {{ $t('email_dialog.title') }}
       </v-card-title>
-      <v-card-text> {{ $t('email_dialog.send_to', [toUser.user_name, toUser.user_email]) }} </v-card-text>
+      <!-- <v-card-text> {{ $t('email_dialog.send_to', [toUser.user_name, toUser.user_email]) }} </v-card-text> -->
 
       <v-card-text>
         <v-form class="mt-6" @submit.prevent="onFormSubmit">

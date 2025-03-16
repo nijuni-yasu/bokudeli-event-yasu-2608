@@ -73,6 +73,12 @@ function convertToDuration(startMillis, endMillis) {
   return `${start}〜${end}`
 }
 
+async function getUserEmail(userId) {
+  const userPersonalInformationRef = db.collection('users_personal_information').doc(userId)
+  const userPersonalInformationSnapshot = await userPersonalInformationRef.get()
+  return userPersonalInformationSnapshot.get('user_email')
+}
+
 async function getShopForEvent(eventSnapshot) {
   const shopId = eventSnapshot.get('shop_id')
   const partnerId = eventSnapshot.get('partner_id')
@@ -98,9 +104,7 @@ async function getCommunityMemberEmailsSet(communityId) {
   const membersSnapshot = await membersRef.get()
   await Promise.all(
     membersSnapshot.docs.map(async (member) => {
-      const userRef = db.collection('users').doc(member.id)
-      const userSnapshot = await userRef.get()
-      const userEmail = userSnapshot.get('user_email')
+      const userEmail = await getUserEmail(member.id)
       if (userEmail != null && userEmail !== '') {
         emails.add(userEmail)
       }
@@ -118,9 +122,7 @@ async function getCommunityManagerEmailsSet(communityId) {
     membersSnapshot.docs.map(async (member) => {
       const roles = member.get('roles')
       if (roles instanceof Array && roles.includes('manager')) {
-        const userRef = db.collection('users').doc(member.id)
-        const userSnapshot = await userRef.get()
-        const userEmail = userSnapshot.get('user_email')
+        const userEmail = await getUserEmail(member.id)
         if (userEmail != null && userEmail !== '') {
           emails.add(userEmail)
         }
@@ -149,13 +151,7 @@ async function getEventMemberEmails(eventSnapshotOrId) {
     eventSnapshot = eventSnapshotOrId
   }
   const usersSet = await getUsersFromOrders(eventSnapshot.ref.collection('orders'))
-  const emails = await Promise.all(
-    Array.from(usersSet).map(async (userId) => {
-      const userRef = db.collection('users').doc(userId)
-      const userSnapshot = await userRef.get()
-      return userSnapshot.get('user_email')
-    }),
-  )
+  const emails = await Promise.all(Array.from(usersSet).map(getUserEmail))
   return emails.filter((email) => email != null && email !== '')
 }
 
@@ -594,14 +590,14 @@ async function sendEventInformationMail() {
       ..._dynamic_template_data,
       user_name: userSnapshot.get('user_name'),
     }
-    const userEmail = userSnapshot.get('user_email')
-    if (!userEmail) {
+    const to = await getUserEmail(userRef.id)
+    if (to == null) {
       continue
     }
     promises.push(
       sgMail
         .send({
-          to: userEmail,
+          to,
           from: DEFAULT_FROM,
           templateId: EVENT_INFORMATION_TEMPLATE_ID,
           dynamic_template_data,
@@ -755,8 +751,9 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
     is_public: eventData.is_public,
   }
   const icsContent = await makeIcs(eventData)
+  const to = await getUserEmail(userId)
   return sgMail.send({
-    to: userSnapshot.get('user_email'),
+    to,
     from: DEFAULT_FROM,
     templateId: ORDER_COMPLETION_TEMPLATE_ID,
     dynamic_template_data,
@@ -807,16 +804,13 @@ async function sendInCartNotificationToMember(start, end) {
     .where('updated_at', '<=', Timestamp.fromMillis(end - notifyTime))
     .get()
 
+  // TODO map と filter をかける時は flatMap を使う
   const notificationDataList = await Promise.all(
     orderSnapshot.docs.map(async (orderDoc) => {
       const order = orderDoc.data()
       const userId = order.user_id
-      const [eventSnapshot, userSnapshot] = await Promise.all([
-        orderDoc.ref.parent.parent.get(),
-        db.collection('users').doc(userId).get(),
-      ])
-      const userData = userSnapshot.data()
-      return { eventSnapshot, userData }
+      const [eventSnapshot, userEmail] = await Promise.all([orderDoc.ref.parent.parent.get(), getUserEmail(userId)])
+      return { eventSnapshot, userEmail }
     }),
   )
 
@@ -827,8 +821,8 @@ async function sendInCartNotificationToMember(start, end) {
 
   Promise.all(
     filteredNotificationDataList.map(async (notificationData) => {
-      const { eventSnapshot, userData } = notificationData
-      return sgMail.send(buildInCartNotificationMail(eventSnapshot, userData))
+      const { eventSnapshot, userEmail } = notificationData
+      return sgMail.send(buildInCartNotificationMail(eventSnapshot, userEmail))
     }),
   )
 }
@@ -853,12 +847,11 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
           .filter((orderSnapshot) => orderSnapshot.get('status') === 'in_cart')
           .map(async (orderSnapshot) => {
             const orderData = orderSnapshot.data()
-            const userSnapshot = await db.collection('users').doc(orderData.user_id).get()
-            const userData = userSnapshot.data()
-            if (userData.user_email == null || userData.user_email === '') {
+            const userEmail = await getUserEmail(orderData.user_id)
+            if (userEmail == null || userEmail === '') {
               return
             }
-            mailContentList.push(buildInCartNotificationMail(eventSnapshot, userData))
+            mailContentList.push(buildInCartNotificationMail(eventSnapshot, userEmail))
           }),
       )
     }),
@@ -914,10 +907,10 @@ async function sendLetter(start, end) {
   })
 }
 
-function buildInCartNotificationMail(eventSnapshot, userData) {
+function buildInCartNotificationMail(eventSnapshot, to) {
   const eventData = eventSnapshot.data()
   return {
-    to: userData.user_email,
+    to,
     from: DEFAULT_FROM,
     templateId: IN_CART_NOTIFICATION_ID,
     dynamic_template_data: {
@@ -1068,12 +1061,7 @@ export const send_email = functions.region('asia-northeast1').https.onCall(async
     console.warn('send_email Invalid Argument Error', data, context)
     throw new functions.https.HttpsError('invalid-argument', 'Required data is missing')
   }
-  const [fromUser, toUser] = await Promise.all([
-    db.collection('users').doc(context.auth.uid).get(),
-    db.collection('users').doc(toUid).get(),
-  ])
-  const from = fromUser.get('user_email')
-  const to = toUser.get('user_email')
+  const [from, to] = await Promise.all([getUserEmail(context.auth.uid), getUserEmail(toUid)])
   if (from == null || to == null) {
     console.warn(`send_email user_email is null\nfrom: ${from}\nto: ${to}`)
     throw new functions.https.HttpsError('invalid-argument', 'Invalid email address')
