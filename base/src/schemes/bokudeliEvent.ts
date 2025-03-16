@@ -2,7 +2,7 @@ import { getEventPath } from '@/router/utils'
 import { type DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 
-const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者支払い'] as const
+const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者 請求書払い'] as const
 const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof eventPaymentTypes)[number]
 
@@ -38,6 +38,8 @@ class BokudeliEvent {
   is_public: boolean = true
   event_payment: EventPaymentType = 'user_advance'
   event_sns_hash_tag: string = ''
+  bill_fullname: string = ''
+  bill_email: string = ''
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
   organizer_fullname: string = ''
