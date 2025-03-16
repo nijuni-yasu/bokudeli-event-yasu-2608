@@ -1023,11 +1023,11 @@ export const polling = functions
     const end = Math.trunc(now / 60 / 1000) * 60 * 1000
     const start = end - 60 * 1000
     const one_day_millis = 24 * 60 * 60 * 1000
-    return Promise.all([
+
+    const promise_list = [
       sendOrderDeadlineMailToShop(start, end, false),
       sendOrderDeadlineMailToShop(start + one_day_millis, end + one_day_millis, true), // 1日前告知
       sendOrderDeadlineMailToOrganizers(start, end),
-      sendOrderRemindMailToOrganizer(start + 3 * one_day_millis, end + 3 * one_day_millis, 3), // 3日前告知
       sendOrderDeadlineMailToMembers(start, end),
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
@@ -1036,7 +1036,15 @@ export const polling = functions
       sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis, false), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
       sendLetter(start, end),
-    ])
+    ]
+
+    // 3, 7, 14, 21, 28日後にリマインドメールを送信
+    const orderRemindToOrganizerDays = [3, 7, 14, 21, 28]
+    orderRemindToOrganizerDays.forEach((day) => {
+      promise_list.push(sendOrderRemindMailToOrganizer(start + day * one_day_millis, end + day * one_day_millis, day))
+    })
+
+    return Promise.all(promise_list)
   })
 
 export const event_information = functions
