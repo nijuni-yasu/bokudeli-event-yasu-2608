@@ -167,11 +167,7 @@ async function getCommunityEmails(communityId) {
 
 async function createOrdersForOrderRemind(ordersRef) {
   const promises = []
-  const orders_by_status = {
-    ordered: [],
-    in_draft: [],
-    cancelled: [],
-  }
+  const orders_by_status = {}
   for (const orderRef of await ordersRef.listDocuments()) {
     const orderSnapshot = await orderRef.get()
     const status = orderSnapshot.get('status')
@@ -179,6 +175,9 @@ async function createOrdersForOrderRemind(ordersRef) {
     for (const menu of orderSnapshot.get('menus') ?? []) {
       const promise = userRef.get().then((userSnapshot) => {
         for (let i = 0; i < menu.count; i++) {
+          if (!orders_by_status[status]) {
+            orders_by_status[status] = []
+          }
           orders_by_status[status].push({
             name: userSnapshot.get('user_name'),
             order: menu.name,
@@ -292,8 +291,7 @@ async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_d
   const ordersRef = eventSnapshot.ref.collection('orders')
   const orders = await createOrdersForOrderRemind(ordersRef)
   const eventData = eventSnapshot.data()
-  const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis())
-  const date = convertToDate(event_start_datetime_japan)
+  const date = convertToDate(convertToDateTime(convertToJapan(eventData.event_start_datetime?.toMillis())))
   const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
 
   return {
@@ -302,7 +300,7 @@ async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_d
     event_days_ago,
     event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
     event_deadline_datetime,
-    event_start_date: event_start_datetime_japan,
+    event_start_datetime: date,
     orders,
   }
 }
