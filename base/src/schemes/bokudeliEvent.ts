@@ -2,13 +2,13 @@ import { getEventPath } from '@/router/utils'
 import { type DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 
-const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者 請求書払い'] as const
-const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
-export type EventPaymentType = (typeof eventPaymentTypes)[number]
+// イベント設定画面で選択できる支払い方法（参加者事前決済/主催者請求書払い）
+export const eventPaymentSelectableTypes = ['user_advance', 'community_bill'] as const
 
-export const eventPaymentItems = eventPaymentTypes.map((type, i) => {
-  return { title: eventPaymentLabels[i], value: type }
-})
+// イベントページで使用されている支払い方法（参加者事前決済/参加者当日払い/主催者請求書払い）
+const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
+
+export type EventPaymentType = (typeof eventPaymentTypes)[number]
 
 type RawEventStatusType = {
   value: 'in_draft' | 'applying_reservation' | 'applying_to_admin' | 'accepting_order'
@@ -119,7 +119,7 @@ class BokudeliEvent {
         // functions で計算するので含めない
         'members',
         'event_num_members',
-      ]),
+      ])
     )
   }
 

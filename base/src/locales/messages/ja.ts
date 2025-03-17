@@ -16,8 +16,8 @@ export default {
   copied_to_clipboard: 'クリップボードにコピーしました',
   payment: {
     user_advance: '参加者 事前決済 💳',
-    user_on_day: '参加者 当日払い 💸',
-    community_bill: '主催者支払い 💰',
+    user_on_day: '参加者 当日払い 💰',
+    community_bill: '主催者 請求書払い 📄',
   },
   event_status: {
     in_draft: '下書き',

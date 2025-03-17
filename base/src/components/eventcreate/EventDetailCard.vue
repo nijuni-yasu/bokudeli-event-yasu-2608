@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
+import BokudeliEvent, { eventPaymentSelectableTypes } from '@/schemes/bokudeliEvent'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import Editor from '@tinymce/tinymce-vue'
@@ -53,6 +53,9 @@ watch(
   { immediate: true },
 )
 
+const eventPaymentSelectableItems = eventPaymentSelectableTypes.map((type) => {
+  return { title: $t(`payment.${type}`), value: type }
+})
 
 const textFieldVariant = computed(() => {
   return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
@@ -246,7 +249,7 @@ const tinymceInit = {
         <v-col cols="12" sm="12" md="6">
           <v-select
             v-model="event.event_payment"
-            :items="eventPaymentItems"
+            :items="eventPaymentSelectableItems"
             :variant="textFieldVariant"
             hide-details
             class="mt-0"
