@@ -193,6 +193,7 @@ export default {
     twitter: 'X(Twitter)',
     instagram: 'Instagram',
     officialsite: '公式サイト',
+    hash_tag: 'ハッシュタグ',
     public_setting: '公開設定',
     public: '公開コミュニティ',
     manager_info: '運営者情報',
