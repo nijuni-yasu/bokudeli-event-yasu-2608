@@ -13,6 +13,7 @@ export default {
     'manage_community': 'コミュニティ管理',
     'guide_top': 'コミュニティガイド',
     'guide_announce': '告知・集客のコツ',
+    'canva_template': 'カバー画像テンプレ',
   },
   'top': {
     'popular_events': '人気のイベント',
