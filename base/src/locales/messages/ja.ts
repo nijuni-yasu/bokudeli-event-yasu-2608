@@ -236,6 +236,8 @@ export default {
     deadline_minute: '分',
     event_max_people: '定員数',
     event_max_people_hint: '※イベント参加できる最大の定員数を設定してください。',
+    event_sns_hash_tag: 'ハッシュタグ',
+    event_sns_hash_tag_hint: '※SNS投稿時のハッシュタグを設定してください。',
     activity: '公開設定',
     public: '公開イベント',
     private: '限定公開イベント',
