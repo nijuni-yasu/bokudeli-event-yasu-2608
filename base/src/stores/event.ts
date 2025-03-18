@@ -1,19 +1,16 @@
 import { type Ref } from 'vue'
-import { db } from '@/firebase'
+import { db, functions } from '@/firebase'
+import { httpsCallable } from 'firebase/functions'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
-  doc,
   collection,
   collectionGroup,
   getDocs,
-  addDoc,
-  setDoc,
   updateDoc,
   query,
   where,
   onSnapshot,
   Timestamp,
-  deleteDoc,
   DocumentReference,
   DocumentSnapshot,
   type Unsubscribe,
@@ -24,6 +21,18 @@ import type { Store, StateTree } from 'pinia'
 import { type OrderItem } from '@/schemes/orderItem'
 import { type EventMember } from '@/schemes/EventMember'
 import { useUserStore, type UserStore } from './user'
+
+const add_order = httpsCallable<Partial<OrderItem>, { order_id: string }>(functions, 'add_order')
+const delete_order = httpsCallable<{ community_id: string; event_id: string; order_id: string; menu_id: string }>(
+  functions,
+  'delete_order',
+)
+const update_order_status = httpsCallable<{
+  community_id: string
+  event_id: string
+  order_id: string
+  status: OrderItem['status']
+}>(functions, 'update_order_status')
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -57,8 +66,12 @@ type EventStoreGetters = {
 type EventStoreAction = {
   updateEvent: (data: BokudeliEvent) => Promise<void>
   updateCoverImage: (coverImage: File) => Promise<void>
-  addOrder: (data: Partial<OrderItem>) => Promise<DocumentReference | null>
-  updateOrder: (id: string, data: Partial<OrderItem>) => Promise<void>
+  addOrder: (data: Partial<OrderItem>) => Promise<string>
+  deleteOrder: (order: { community_id: string; event_id: string; order_id: string }, menu_id: string) => Promise<void>
+  updateOrderStatus: (
+    order: { community_id: string; event_id: string; order_id: string },
+    status: OrderItem['status'],
+  ) => Promise<void>
   deleteEvent: () => Promise<void>
   subscribe: () => Promise<void>
   unsubscribe: () => void
@@ -199,17 +212,23 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         return await updateDoc(eventRef, data)
       }
 
-      const addOrder = async (data: Partial<OrderItem>): Promise<DocumentReference | null> => {
-        const eventRef = await getEventRef()
-        const addedDoc = await addDoc(collection(eventRef, 'orders'), data)
-        await setDoc(addedDoc, { order_id: addedDoc.id }, { merge: true })
-        return addedDoc
+      const addOrder = async (data: Partial<OrderItem>): Promise<string> => {
+        const response = await add_order(data)
+        return response.data.order_id
       }
 
-      const updateOrder = async (id: string, data: Partial<OrderItem>): Promise<void> => {
-        const eventRef = await getEventRef()
-        const orderRef = doc(eventRef, 'orders', id)
-        await updateDoc(orderRef, data)
+      const deleteOrder = async (
+        order: { community_id: string; event_id: string; order_id: string },
+        menu_id: string,
+      ): Promise<void> => {
+        await delete_order({ ...order, menu_id })
+      }
+
+      const updateOrderStatus = async (
+        order: { community_id: string; event_id: string; order_id: string },
+        status: OrderItem['status'],
+      ): Promise<void> => {
+        await update_order_status({ ...order, status })
       }
 
       const deleteEvent = async (): Promise<void> => {
@@ -282,7 +301,8 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         updateEvent,
         updateCoverImage,
         addOrder,
-        updateOrder,
+        deleteOrder,
+        updateOrderStatus,
         deleteEvent,
         subscribe,
         unsubscribe,
