@@ -12,11 +12,11 @@ import {
 import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
 import { type OrderMenu } from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { useEventStore, type EventStore } from '@/stores/event'
 import Stripe from 'stripe'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
-import { fixOrder } from '@/composable/fixOrder'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 
@@ -90,7 +90,8 @@ const startOrderProcess = async () => {
   if (event.event_payment == 'user_advance') {
     await createCheckoutSession(order)
   } else {
-    await fixOrder(order)
+    const eventStore = useEventStore(event.event_id) as EventStore
+    eventStore.updateOrderStatus(order, 'ordered')
     alertBody.value = $t('cart.order_completed')
     router.push(getEventPath(order.community_account, order.event_id))
   }
@@ -172,26 +173,15 @@ const showConfirm = async (cart: Cart) => {
 
 const openDeleteConfirm = ref(false)
 const startDeleteProcess = async () => {
-  const orderId = selectedOrder.value.order_id
-  const menu = selectedMenu.value
-
-  const orderRef = query(collectionGroup(db, 'orders'), where('order_id', '==', orderId))
-  const orderSnapshot = await getDocs(orderRef)
-  const orderDocument = orderSnapshot.docs[0]
-  const currentMenus = orderDocument.data().menus as OrderMenu[]
-  const menus = currentMenus.filter((m) => m.menu_id !== menu.menu_id)
-
-  const updated_at = Timestamp.now()
-  if (menus.length === 0) {
-    deleteDoc(orderDocument.ref)
-  } else {
-    await setDoc(orderDocument.ref, { menus, updated_at }, { merge: true })
-  }
+  const event = selectedCartEvent.value
+  const eventStore = useEventStore(event.event_id) as EventStore
+  await eventStore.deleteOrder(selectedOrder.value, selectedMenu.value.menu_id)
   alertBody.value = $t('cart.removed_from_cart')
   state.cartList = await loadCartList()
 }
 
-const deleteMenuInCart = async (order: OrderItem, menu: OrderMenu) => {
+const deleteMenuInCart = async (event: BokudeliEvent, order: OrderItem, menu: OrderMenu) => {
+  selectedCartEvent.value = event
   selectedOrder.value = order
   selectedMenu.value = menu
   openDeleteConfirm.value = true
@@ -203,7 +193,7 @@ const loadCartList = async () => {
     collectionGroup(db, 'orders'),
     where('user_id', '==', userId.value),
     where('status', '==', 'in_cart'),
-    orderBy('updated_at', 'desc')
+    orderBy('updated_at', 'desc'),
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
@@ -217,7 +207,7 @@ const loadCartList = async () => {
       const eventQuery = query(
         collectionGroup(db, 'events'),
         where('community_account', '==', item.community_account),
-        where('event_id', '==', item.event_id)
+        where('event_id', '==', item.event_id),
       )
       const eventSnapshot = await getDocs(eventQuery)
       if (eventSnapshot.docs.length === 0) {
@@ -235,7 +225,7 @@ const loadCartList = async () => {
       })
       const total = Object.values(subtotals).reduce((total, current) => total + current)
       return [{ order: item, event, subtotals, total }]
-    })
+    }),
   )
 
   return convertedList.flat()
@@ -326,7 +316,8 @@ onMounted(async () => {
                     <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
                     <td style="padding: 1px">¥{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
                     <td style="padding: 1px">
-                      <v-btn :icon="mdiTrashCan" variant="text" @click="deleteMenuInCart(cart.order, menu)"> </v-btn>
+                      <v-btn :icon="mdiTrashCan" variant="text" @click="deleteMenuInCart(cart.event, cart.order, menu)">
+                      </v-btn>
                     </td>
                   </tr>
                 </tbody>
