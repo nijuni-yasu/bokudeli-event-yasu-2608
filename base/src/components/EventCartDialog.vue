@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { type OrderItem } from '@/schemes/orderItem'
-import { type OrderMenu } from '@/schemes/orderMenu'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { Timestamp } from 'firebase/firestore'
 
 import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -39,6 +36,7 @@ const orderNote = ref('')
 const isAddingOrder = ref(false)
 
 const closeDialog = (isAddCart: boolean) => {
+  // TODO 自分で閉じたり、ページ遷移するのではなく、親が処理を選べるようにする
   isAddingOrder.value = false
   selectedCount.value = 1
   orderNote.value = ''
@@ -50,89 +48,47 @@ const closeDialog = (isAddCart: boolean) => {
 
 const userStore = useStoreStoredUser()
 
-const addOrder = async () => {
-  if (!userStore.storedUser || !selectedCount.value || eventStore.event == null) {
+const addCart = async () => {
+  if (userStore.storedUser == null) {
+    openConfirmDialog()
+    return
+  }
+  if (userStore.storedUser == null || eventStore.event == null) {
+    console.warn('userStore.storedUser or eventStore.event is null')
+    return
+  }
+  const menu_id = props.menu.id
+  if (menu_id == null) {
+    console.warn('menu_id is null')
     return
   }
 
-  const communityId = eventStore.event.community_id
-  const communityAccount = eventStore.event.community_account
-  const event_id = eventStore.event.event_id
-  const event_payment = eventStore.event.event_payment
-
-  const orderCount = selectedCount.value || 0
-
-  // 上書きできるオーダーを探す
-  const userOrders =
-    eventStore.orders?.filter((order: OrderItem) => {
-      return order.status === 'in_cart' && order.user_id === userStore.storedUser?.userId
-    }) ?? []
-
-  const userOrder = userOrders[0]
-
-  if (userOrder == null) {
-    // 追加処理
-    const menu = props.menu
+  isAddingOrder.value = true
+  try {
     const orderItem = {
-      user_id: userStore.storedUser.userId,
-      community_id: communityId,
-      community_account: communityAccount,
-      event_id,
-      event_payment,
-      status: 'in_cart',
+      community_id: eventStore.event.community_id,
+      event_id: eventStore.event.event_id,
       menus: [
         {
-          menu_id: menu.id,
-          partner_id: menu.partnerId,
-          name: menu.name,
-          price: menu.price,
-          imageUrl: menu.imageUrl,
-          count: orderCount,
+          menu_id,
+          partner_id: props.menu.partnerId,
+          name: props.menu.name,
+          price: props.menu.price,
+          imageUrl: props.menu.imageUrl,
+          count: selectedCount.value || 0,
           note: orderNote.value,
         },
-      ] as OrderMenu[],
-      created_at: Timestamp.now(),
-      updated_at: Timestamp.now(),
-      carted_at: Timestamp.now(),
-    } as OrderItem
-    await eventStore.addOrder(orderItem)
-  } else {
-    // 上書き処理
-    const menus = userOrder.menus as OrderMenu[]
-
-    // 上書き対象のメニューのインデックスを取得
-    const updateMenuIndex = menus.findIndex((menu) => {
-      return menu.menu_id === props.menu.id
-    })
-
-    if (updateMenuIndex >= 0) {
-      // すでに注文していた場合はカウントのみ更新して追加
-      menus[updateMenuIndex].count += orderCount
-      if (orderNote.value) {
-        menus[updateMenuIndex].note = orderNote.value
-      }
-    } else {
-      // まだ注文していない場合は追加
-      const menu = props.menu
-      if (menu.id == null) {
-        console.error('menu.id is null')
-      } else {
-        menus.push({
-          menu_id: menu.id,
-          partner_id: menu.partnerId,
-          name: menu.name,
-          price: menu.price,
-          imageUrl: menu.imageUrl,
-          count: orderCount,
-          note: orderNote.value,
-        })
-      }
+      ],
     }
-    await eventStore.updateOrder(userOrder.order_id, { menus, updated_at: Timestamp.now(), carted_at: Timestamp.now() })
+    await eventStore.addOrder(orderItem)
+    closeDialog(true)
+  } catch (e) {
+    console.error(e)
+  } finally {
+    isAddingOrder.value = false
   }
 }
 
-const isOpenAlert = ref(false)
 const isOpenLoginDialog = ref(false)
 const isOpenConfirmDialog = ref(false)
 
@@ -142,20 +98,6 @@ const openConfirmDialog = () => {
 
 const openLoginDialog = () => {
   isOpenLoginDialog.value = true
-}
-
-const addCart = async () => {
-  if (!selectedCount.value) {
-    isOpenAlert.value = true
-    return
-  }
-  if (!userStore.storedUser) {
-    openConfirmDialog()
-  } else {
-    isAddingOrder.value = true
-    await addOrder()
-    closeDialog(true)
-  }
 }
 </script>
 
@@ -208,7 +150,6 @@ const addCart = async () => {
     <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
       ログインしてください
     </confirm-dialog>
-    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">個数を選んでください</confirm-dialog>
   </v-dialog>
 </template>
 
