@@ -6,6 +6,8 @@ import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline }
 import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
 import eventDetailStyle from '@/utils/eventDetailStyle'
+import { useCommunityStore } from '@/stores/community'
+import type { CommunityStore } from '@/stores/community'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -23,6 +25,7 @@ const { t: $t } = useI18n()
 
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
+const communityStore = useCommunityStore(event.value.community_account) as CommunityStore
 
 const { requiredValidator, positiveIntegerValidator } = useValidators()
 const maxPeopleValidator = (v: number) => {
