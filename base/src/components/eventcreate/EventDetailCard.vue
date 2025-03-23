@@ -41,18 +41,15 @@ if (event.value.event_max_people == 0) {
 
 const tinymceInit = {
   language: 'ja',
-  plugins: 'table lists link autolink',
-  menubar: 'edit insert format',
-  menu: {
-    edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
-    insert: { title: 'Insert', items: 'image link inserttable hr' },
-    format: {
-      title: 'Format',
-      items: 'bold italic underline strikethrough styles forecolor  | language | removeformat',
-    },
-  },
+  plugins: 'lists link autolink',
+  menubar: false,
+  textcolor_map: ['000000', '黒', 'FF0000', '赤'],
+  textcolor_cols: 2,
+  custom_colors: false,
+  color_map_foreground: ['000000', '黒', 'FF0000', '赤'],
+  color_default_foreground: '000000',
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | table link',
+  toolbar: 'undo redo heading bold strikethrough forecolor | bullist numlist | link',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },
