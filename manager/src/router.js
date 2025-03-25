@@ -51,6 +51,12 @@ const router = new Router({
           meta: { requiresAuth: true },
         },
         {
+          name: 'OrderList',
+          path: 'OrderList',
+          component: () => import('@/views/admin/OrderList'),
+          meta: { requiresAuth: true },
+        },
+        {
           name: 'UserList',
           path: 'UserList',
           component: () => import('@/views/admin/UserList'),

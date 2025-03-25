@@ -491,7 +491,17 @@
           "order": "DESCENDING"
         }
       ]
-    }
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
+      ]
+    }    
   ],
   "fieldOverrides": [
     {
