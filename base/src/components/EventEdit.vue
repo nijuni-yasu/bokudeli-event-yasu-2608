@@ -50,13 +50,25 @@ const communityStore = useCommunityStore(props.communityAccount) as CommunitySto
 
 const isOpenContactDialogVisible = ref(props.eventId == null)
 
-const _event = ref(new BokudeliEvent())
+const _event = ref<BokudeliEvent | null>(null)
 const event = computed<BokudeliEvent | null>({
   get: () => {
     if (props.eventId != null) {
       const eventStore = useEventStore(props.eventId) as EventStore
       return eventStore.event
     } else {
+      if (
+        _event.value == null &&
+        communityStore.community?.community_id != null &&
+        communityStore.community?.community_account != null &&
+        communityStore.community?.community_name != null
+      ) {
+        _event.value = new BokudeliEvent(
+          communityStore.community.community_id,
+          communityStore.community.community_account,
+          communityStore.community.community_name,
+        )
+      }
       return _event.value
     }
   },

@@ -91,9 +91,17 @@ class BokudeliEvent {
     this.raw_event_status = value
   }
 
-  constructor(eventData?: DocumentData) {
-    if (eventData != null) {
-      _.merge(this, _.assign(_.omit(eventData, ['event_status']), { raw_event_status: eventData.event_status }))
+  // community_id, community_account, community_name が入力されていることを保証するため、コンストラクタでチェックする
+  // TODO ランタイムレベルではこのチェックは機能しないため、zod などのバリデーションが本来は必要
+  constructor(eventData: DocumentData)
+  constructor(communityId: string, communityAccount: string, communityName: string)
+  constructor(arg0: DocumentData | string, communityAccount?: string, communityName?: string) {
+    if (typeof arg0 === 'string') {
+      this.community_id = arg0
+      this.community_account = communityAccount!
+      this.community_name = communityName!
+    } else if (arg0 != null) {
+      _.merge(this, _.assign(_.omit(arg0, ['event_status']), { raw_event_status: arg0.event_status }))
     }
   }
 
