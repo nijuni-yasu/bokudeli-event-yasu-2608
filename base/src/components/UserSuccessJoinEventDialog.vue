@@ -57,9 +57,7 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
   <v-dialog v-model="model" :width="$vuetify.display.smAndDown ? 'auto' : 650" persistent>
     <v-card v-if="event != null" class="px-sm-15 py-sm-9 pa-2 pre-line">
       <v-card-title class="text-center text-h3">注文完了🎉</v-card-title>
-      <v-card-text class="text-center text-h5 px-0 py-3">
-        参加申し込みが完了しました！
-      </v-card-text>
+      <v-card-text class="text-center text-h5 px-0 py-3"> 参加申し込みが完了しました！ </v-card-text>
       <div class="mx-4">
         <v-img class="mx-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
         <v-card-text class="text-left pb-1 px-0"
@@ -89,7 +87,7 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
               rounded="pill"
               @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
             >
-             X で参加予定をシェアする
+              X で参加予定をシェアする
             </v-btn>
           </v-card-text>
         </v-row>
