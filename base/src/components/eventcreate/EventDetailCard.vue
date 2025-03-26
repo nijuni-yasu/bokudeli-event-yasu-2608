@@ -8,6 +8,7 @@ import ImageInput from '../ImageInput.vue'
 import eventDetailStyle from '@/utils/eventDetailStyle'
 import { useCommunityStore } from '@/stores/community'
 import type { CommunityStore } from '@/stores/community'
+import { trimHashTag } from '@/utils/hashTag'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -38,6 +39,21 @@ const maxPeopleValidator = (v: number) => {
 if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
+
+// コミュニティのハッシュタグを設定。空の場合はコミュニティのハッシュタグを設定
+if (
+  (event.value.event_sns_hash_tag == null || event.value.event_sns_hash_tag === '') &&
+  communityStore.community?.community_sns_hash_tag != null
+) {
+  event.value.event_sns_hash_tag = communityStore.community.community_sns_hash_tag
+}
+// ハッシュタグの値を監視してトリムする
+const event_sns_hash_tag = computed({
+  get: () => event.value.event_sns_hash_tag,
+  set: (value) => {
+    event.value.event_sns_hash_tag = trimHashTag(value)
+  },
+})
 
 const tinymceInit = {
   language: 'ja',
@@ -153,6 +169,20 @@ const tinymceInit = {
             :rules="[requiredValidator, positiveIntegerValidator, maxPeopleValidator]"
             :readonly="props.readonly"
             :hint="$t('event_detail.event_max_people_hint')"
+          />
+        </v-col>
+      </v-row>
+    </v-card-text>
+    <v-card-text class="mt-3">
+      <v-row>
+        <v-col cols="12">
+          <v-text-field
+            v-model="event_sns_hash_tag"
+            outlined
+            dense
+            prefix="#"
+            :label="$t('event_detail.event_sns_hash_tag')"
+            :hint="$t('event_detail.event_sns_hash_tag_hint')"
           />
         </v-col>
       </v-row>

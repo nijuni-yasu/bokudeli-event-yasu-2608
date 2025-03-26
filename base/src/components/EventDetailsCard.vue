@@ -235,6 +235,21 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
                 </span>
               </td>
             </tr>
+            <tr>
+              <td class="text-small">
+                {{ $t('event_details.sns_hash_tag') }}
+              </td>
+              <td v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''">
+                <a
+                  :href="`https://twitter.com/search?q=%23${event.event_sns_hash_tag}&f=live`"
+                  target="_blank"
+                  class="text-decoration-none"
+                >
+                  #{{ event.event_sns_hash_tag }}
+                </a>
+              </td>
+              <td v-else>ー</td>
+            </tr>
           </tbody>
         </v-table>
         <v-card-text class="text-h4 font-weight-black mt-5 pb-3">
@@ -374,5 +389,8 @@ iframe {
   padding: 6px !important;
   border: 0px none !important;
   // vertical-align: top;
+}
+.text-small {
+  font-size: 14px !important;
 }
 </style>

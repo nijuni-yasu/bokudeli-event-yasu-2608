@@ -5,6 +5,7 @@ import ImageInput from '@/components/ImageInput.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { mdiListBoxOutline, mdiImage, mdiWeb, mdiLightbulbOnOutline, mdiAccountOutline } from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
+import { trimHashTag } from '@/utils/hashTag'
 
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
@@ -23,6 +24,14 @@ const props = defineProps<{
 const isNew = computed(() => props.validateNewAccount != null)
 
 const isValid = ref(false)
+
+// ハッシュタグの値を監視してトリムする
+const community_sns_hash_tag = computed({
+  get: () => community.value.community_sns_hash_tag,
+  set: (value) => {
+    community.value.community_sns_hash_tag = trimHashTag(value)
+  },
+})
 
 const accountFieldRef = ref()
 const isCheckingAccount = ref(false)
@@ -149,13 +158,12 @@ const checkAccountExists = async (value: string) => {
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <SnsTextField
-              v-model="community.community_sns_facebook"
+            <v-text-field
+              v-model="community.community_sns_officialsite"
               outlined
               dense
-              :label="$t('community_edit.facebook')"
-              prefix="https://www.facebook.com/"
-            />
+              :label="$t('community_edit.officialsite')"
+            ></v-text-field>
           </v-col>
         </v-row>
       </v-card-text>
@@ -169,6 +177,20 @@ const checkAccountExists = async (value: string) => {
               dense
               :label="$t('community_edit.twitter')"
               prefix="https://x.com/"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <v-card-text class="pt-5">
+        <v-row>
+          <v-col cols="12">
+            <SnsTextField
+              v-model="community.community_sns_facebook"
+              outlined
+              dense
+              :label="$t('community_edit.facebook')"
+              prefix="https://www.facebook.com/"
             />
           </v-col>
         </v-row>
@@ -192,10 +214,11 @@ const checkAccountExists = async (value: string) => {
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="community.community_sns_officialsite"
+              v-model="community_sns_hash_tag"
               outlined
               dense
-              :label="$t('community_edit.officialsite')"
+              :label="$t('community_edit.hash_tag')"
+              prefix="#"
             ></v-text-field>
           </v-col>
         </v-row>

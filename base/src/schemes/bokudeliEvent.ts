@@ -37,6 +37,7 @@ class BokudeliEvent {
   shop_name: string = ''
   is_public: boolean = true
   event_payment: EventPaymentType = 'user_advance'
+  event_sns_hash_tag: string = ''
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
   organizer_fullname: string = ''
