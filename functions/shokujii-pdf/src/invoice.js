@@ -2,11 +2,9 @@ import path from 'path'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { defineString } from 'firebase-functions/params'
 import { makePdf } from './utils/makePdf.js'
-import { setGlobalOptions } from 'firebase-functions/v2/options'
 import { db, auth } from './firebase.js'
 import { convertDateToId, convertDateToString, convertNumberToCurrency } from './utils/converter.js'
-
-setGlobalOptions({ region: 'asia-northeast1' })
+import './options/index.js'
 
 const CORS = defineString('CORS')
 

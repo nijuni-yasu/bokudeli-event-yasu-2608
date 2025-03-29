@@ -1,6 +1,5 @@
 import path from 'path'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
-import { setGlobalOptions } from 'firebase-functions/v2/options'
 import { defineString } from 'firebase-functions/params'
 import { makePdf } from './utils/makePdf.js'
 import fs from 'fs'
@@ -8,7 +7,7 @@ import { fileURLToPath } from 'url'
 import axios from 'axios'
 import sharp from 'sharp'
 import { db, auth, storage } from './firebase.js'
-setGlobalOptions({ region: 'asia-northeast1' })
+import './options/index.js'
 
 const CORS = defineString('CORS')
 
