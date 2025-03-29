@@ -8,7 +8,7 @@ import './options/index.js'
 
 const CORS = defineString('CORS')
 
-export const invoice = onRequest({ cors: [CORS.value()] }, async (req, res) => {
+export const invoice = onRequest({ cors: [CORS] }, async (req, res) => {
   const authHeader = req.headers.authorization ?? ''
   if (!authHeader.startsWith('JWT ')) {
     throw new HttpsError('unauthenticated', 'JWT token is required')
