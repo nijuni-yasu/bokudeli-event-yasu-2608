@@ -8,6 +8,7 @@ import axios from 'axios'
 import sharp from 'sharp'
 import { db, auth, storage } from './firebase.js'
 import './options/index.js'
+import { getEvent } from './utils/eventUtils.js'
 
 const CORS = defineList('CORS')
 
@@ -163,11 +164,6 @@ const resizeAndCropImage = async (imageBuffer, targetWidth, targetHeight) => {
       return `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
     }
   }
-}
-
-const getEvent = async (transaction, eventId) => {
-  const events = await transaction.get(db.collectionGroup('events').where('event_id', '==', eventId))
-  return events.size === 1 ? events.docs[0] : null
 }
 
 // メニューと注文者情報を取得する関数
