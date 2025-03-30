@@ -29,3 +29,4 @@ export const { get_invitaion_url_for_community_manager, accept_invitation_for_co
 )
 export const { log_event_status } = await import('./event-logging.js')
 export const { add_order, delete_order, update_order_status } = await import('./orders.js')
+export const { make_shop_snapshot_to_event } = await import('./event-snapshot.js')
