@@ -36,7 +36,7 @@ jobs:
         yarn install --frozen-lockfile
     - name: Install Firebase CLI
       working-directory: .
-      run: yarn global add firebase-tools
+      run: yarn global add firebase-tools@13.35.1
     - name: Generate .env file
       run: |
         env_vars=$(echo '${{ secrets.FUNCTIONS_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
