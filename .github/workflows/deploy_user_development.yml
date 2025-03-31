@@ -5,8 +5,8 @@ on:
     branches:
       - development
     paths:
-      - 'user/**'
-      - 'base/**'
+      - "user/**"
+      - "base/**"
   workflow_dispatch:
 
 concurrency:
@@ -23,32 +23,32 @@ jobs:
         shell: bash
         working-directory: ./user
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup node
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: ./user/.node-version
-        cache: 'yarn'
-        cache-dependency-path: ./user/yarn.lock
-    - name: Install dependencies
-      run: |
-        yarn install --frozen-lockfile
-    - name: Install Firebase CLI
-      working-directory: .
-      run: yarn global add firebase-tools
-    - name: Generate .env file
-      run: |
-        echo '${{ vars.USER_ENV }}' | tr -d '\r' > .env
-    - name: Build
-      run: |
-        yarn run build-development
-    - name: Deploy to Firebase
-      working-directory: .
-      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
-      run: |
-        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
-        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}' > $GOOGLE_APPLICATION_CREDENTIALS
-        firebase use bokudeli-event-test
-        firebase deploy --only hosting:user
-        rm $GOOGLE_APPLICATION_CREDENTIALS
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./user/.node-version
+          cache: "yarn"
+          cache-dependency-path: ./user/yarn.lock
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+      - name: Install Firebase CLI
+        working-directory: .
+        run: yarn global add firebase-tools
+      - name: Generate .env file
+        run: |
+          echo '${{ vars.USER_ENV }}' | tr -d '\r' > .env
+      - name: Build
+        run: |
+          yarn run build-development
+      - name: Deploy to Firebase
+        working-directory: .
+        # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+          echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}' > $GOOGLE_APPLICATION_CREDENTIALS
+          firebase use bokudeli-event-test
+          firebase deploy --only hosting:user
+          rm $GOOGLE_APPLICATION_CREDENTIALS

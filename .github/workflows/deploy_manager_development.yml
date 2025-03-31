@@ -5,7 +5,7 @@ on:
     branches:
       - development
     paths:
-      - 'manager/**'
+      - "manager/**"
   workflow_dispatch:
 
 concurrency:
@@ -22,30 +22,30 @@ jobs:
         shell: bash
         working-directory: ./manager
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup node
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: ./manager/.node-version
-        cache: 'npm'
-        cache-dependency-path: ./manager/package-lock.json
-    - name: Generate .env file
-      run: |
-        echo '${{ vars.MANAGER_ENV }}' | tr -d '\r' > .env
-    - name: Build
-      run: |
-        npm install
-        npm run build-development
-    - name: Install Firebase CLI
-      working-directory: .
-      run: npm install -g "firebase-tools@^12"
-    - name: Deploy to Firebase
-      working-directory: .
-      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
-      run: |
-        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
-        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}' > $GOOGLE_APPLICATION_CREDENTIALS
-        firebase use bokudeli-event-test
-        firebase deploy --only hosting:manager
-        rm $GOOGLE_APPLICATION_CREDENTIALS
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./manager/.node-version
+          cache: "npm"
+          cache-dependency-path: ./manager/package-lock.json
+      - name: Generate .env file
+        run: |
+          echo '${{ vars.MANAGER_ENV }}' | tr -d '\r' > .env
+      - name: Build
+        run: |
+          npm install
+          npm run build-development
+      - name: Install Firebase CLI
+        working-directory: .
+        run: npm install -g "firebase-tools@^12"
+      - name: Deploy to Firebase
+        working-directory: .
+        # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+          echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}' > $GOOGLE_APPLICATION_CREDENTIALS
+          firebase use bokudeli-event-test
+          firebase deploy --only hosting:manager
+          rm $GOOGLE_APPLICATION_CREDENTIALS

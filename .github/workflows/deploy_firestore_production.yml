@@ -5,8 +5,8 @@ on:
     branches:
       - production
     paths:
-      - 'firestore.rules'
-      - 'firestore.indexes.json'
+      - "firestore.rules"
+      - "firestore.indexes.json"
   workflow_dispatch:
 
 concurrency:
@@ -22,15 +22,15 @@ jobs:
         shell: bash
         working-directory: .
     steps:
-    - name: Install Firebase CLI
-      run: curl -sL https://firebase.tools | bash
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Deploy to Firebase
-      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
-      run: |
-        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
-        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_736E27344811 }}' > $GOOGLE_APPLICATION_CREDENTIALS
-        firebase use bokudeli-event-dev
-        firebase deploy --only firestore --force
-        rm $GOOGLE_APPLICATION_CREDENTIALS
+      - name: Install Firebase CLI
+        run: curl -sL https://firebase.tools | bash
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Deploy to Firebase
+        # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+          echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_736E27344811 }}' > $GOOGLE_APPLICATION_CREDENTIALS
+          firebase use bokudeli-event-dev
+          firebase deploy --only firestore --force
+          rm $GOOGLE_APPLICATION_CREDENTIALS
