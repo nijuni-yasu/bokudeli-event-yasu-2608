@@ -33,8 +33,22 @@ const flyerSizes = [
     size: 'B6',
   },
 ]
+// HTMLのタグを削除する関数
+const htmlTagDeleteing = (html) => {
+  // <a>タグのリンクテキストを抽出し、リンクを削除
+  let textOnly = html.replace(/<a [^>]*>(.*?)<\/a>/gi, '$1')
+
+  // 残りのHTMLタグを削除
+  textOnly = textOnly.replace(/<[^>]+>/g, '')
+
+  // 不要な空白を削除
+  textOnly = textOnly.replace(/\s+/g, ' ')
+
+  // 前後の空白を削除
+  return textOnly.trim()
+}
 const eventCoverUrl = eventStore.event.event_cover_url
-const eventDesc = eventStore.event.event_desc
+const eventDesc = eventStore.event?.event_desc ? htmlTagDeleteing(eventStore.event.event_desc) : ''
 const homeUrl = window.location.origin
 const eventPath = computed(() => {
   if (!eventStore.event) return ''
