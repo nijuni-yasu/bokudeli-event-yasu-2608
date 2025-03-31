@@ -45,7 +45,7 @@ const notificationOrder = async (start, end, beforeDays) => {
 }
 
 const notificationEventStart = async (start, end, beforeMinutes) => {
-  // 開始時刻15分前	「XXXXX の食事会が開始15分前になりました。」
+  // 開始時刻60分前	「XXXXX の食事会が開始60分前になりました。」
   const startAddedMinutes = start + beforeMinutes * 60 * 1000;
   const endAddedMinutes = end + beforeMinutes  * 60 * 1000;
   const events = await (db.collectionGroup('events')
@@ -102,7 +102,7 @@ export const eventNotification = functions
       notificationOrder(start, end, 3),
       notificationOrder(start, end, 1),
       notificationOrder(start, end, 0),
-      notificationEventStart(start, end, 15),
+      notificationEventStart(start, end, 60),
       notificationEventEnd(start, end),
     ]);
   });
