@@ -34,8 +34,6 @@ jobs:
       - name: Install dependencies
         run: |
           yarn install --frozen-lockfile
-      - name: Install Firebase CLI
-        run: curl -sL https://firebase.tools | bash
       - name: Generate .env file
         run: |
           echo '${{ vars.ADMIN_ENV }}' | tr -d '\r' > .env
@@ -43,11 +41,8 @@ jobs:
         run: |
           yarn run build-development
       - name: Deploy to Firebase
-        working-directory: .
-        # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
-        run: |
-          export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
-          echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}' > $GOOGLE_APPLICATION_CREDENTIALS
-          firebase use bokudeli-event-test
-          firebase deploy --only hosting:admin
-          rm $GOOGLE_APPLICATION_CREDENTIALS
+        uses: ./.github/actions/deploy
+        with:
+          project_id: bokudeli-event-test
+          service_key: "${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}"
+          args: "--only hosting:admin"
