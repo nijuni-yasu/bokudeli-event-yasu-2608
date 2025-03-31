@@ -24,14 +24,6 @@ const flyerSizes = [
     label: 'A5サイズをダウンロード',
     size: 'A5',
   },
-  {
-    label: 'B5サイズをダウンロード',
-    size: 'B5',
-  },
-  {
-    label: 'B6サイズをダウンロード',
-    size: 'B6',
-  },
 ]
 // HTMLのタグを削除する関数
 const htmlTagDeleteing = (html) => {
