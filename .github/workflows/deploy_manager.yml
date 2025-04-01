@@ -52,10 +52,13 @@ jobs:
         run: |
           npm install
           npm run build-${ENVIRONMENT}
+      - name: Install Firebase CLI
+        run: curl -sL https://firebase.tools | bash          
       - name: Deploy to Firebase
-        uses: ./.github/actions/deploy
-        with:
-          firebase_tools_version: "^12"
-          project_id: ${{ vars.PROJECT_ID }}
-          service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          args: "--only hosting:manager"
+        shell: bash
+        run: |
+          export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+          echo '${{ secrets.GCLOUD_SERVICE_KEY }}' > $GOOGLE_APPLICATION_CREDENTIALS
+          firebase use ${{ vars.PROJECT_ID }}
+          firebase deploy --only hosting:manager
+          rm $GOOGLE_APPLICATION_CREDENTIALS
