@@ -16,6 +16,7 @@ jobs:
   deploy:
     timeout-minutes: 5
     runs-on: ubuntu-latest
+    environment: development
     defaults:
       run:
         shell: bash
@@ -68,6 +69,6 @@ jobs:
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
-          project_id: bokudeli-event-test
-          service_key: "${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}"
+          project_id: ${{ vars.PROJECT_ID }}
+          service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
           args: "--only functions"

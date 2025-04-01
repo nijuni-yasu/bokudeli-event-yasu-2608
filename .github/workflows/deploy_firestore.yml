@@ -1,13 +1,22 @@
-name: Deploy firestore to development
+name: Deploy firestore
 
 on:
   push:
     branches:
       - development
+      - production
     paths:
       - "firestore.rules"
       - "firestore.indexes.json"
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - development
+          - production
 
 concurrency:
   group: ${{ github.workflow }}
@@ -17,6 +26,9 @@ jobs:
   deploy:
     timeout-minutes: 5
     runs-on: ubuntu-latest
+    # push のときだけ GITHUB_REF_NAME を使う（workflow_dispatch のときは inputs.environment を使う）
+    # 可読性に欠けるが、うまい手がみつからない
+    environment: ${{ github.event_name == 'push' && (github.ref_name == 'production' && 'production' || github.ref_name == 'development' && 'development') || inputs.environment }}
     defaults:
       run:
         shell: bash
@@ -27,6 +39,6 @@ jobs:
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
-          project_id: bokudeli-event-test
-          service_key: "${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_TEST_03CF59E61D6C }}"
+          project_id: ${{ vars.PROJECT_ID }}
+          service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
           args: "--only firestore:rules"

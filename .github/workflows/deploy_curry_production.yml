@@ -1,4 +1,4 @@
-name: Deploy curry to production
+name: Deploy curry
 
 on:
   push:
@@ -43,6 +43,6 @@ jobs:
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
-          project_id: bokudeli-event-dev
-          service_key: "${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_736E27344811 }}"
+          project_id: ${{ vars.PROJECT_ID }}
+          service_key: "${{ secrets.GCLOUD_SERVICE_KEY }}"
           args: "--only hosting:curry"
