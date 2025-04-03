@@ -26,7 +26,7 @@ const flyerSizes = [
   },
 ]
 // HTMLのタグを削除する関数
-const htmlTagDeleteing = (html) => {
+const htmlTagDeleteing = (html: string) => {
   // <a>タグのリンクテキストを抽出し、リンクを削除
   let textOnly = html.replace(/<a [^>]*>(.*?)<\/a>/gi, '$1')
 
@@ -39,7 +39,7 @@ const htmlTagDeleteing = (html) => {
   // 前後の空白を削除
   return textOnly.trim()
 }
-const eventCoverUrl = eventStore.event.event_cover_url
+const eventCoverUrl = eventStore.event?.event_cover_url
 const eventDesc = eventStore.event?.event_desc ? htmlTagDeleteing(eventStore.event.event_desc) : ''
 const homeUrl = window.location.origin
 const eventPath = computed(() => {
@@ -123,7 +123,10 @@ const downloadFlyer = async (size: string) => {
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  /* -webkit-line-clamp: 4;  */
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  height: 75.8px;
+  width: 504.65px;
 }
 /* HTMLコンテンツのスタイリング */
 :deep(.description-content) {
@@ -138,7 +141,8 @@ const downloadFlyer = async (size: string) => {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4; /* ここで4行に制限 */
+  -webkit-line-clamp: 4; /* 4行に制限 */
+  line-clamp: 4;
 }
 
 :deep(.description-content p) {
@@ -181,15 +185,6 @@ const downloadFlyer = async (size: string) => {
   flex: 0 0 auto;
 }
 
-.event-description {
-  padding: 8px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-  height: 75.8px;
-  width: 504.65px;
-}
 .shop-logo {
   height: 50.73px;
   width: 504.65px;
