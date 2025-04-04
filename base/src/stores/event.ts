@@ -16,10 +16,11 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
-import { convertDocumentDataToEvent } from '@/schemes/converter'
+import { convertDocumentDataToEvent, convertDocumentDataToMenu } from '@/schemes/converter'
 import type { Store, StateTree } from 'pinia'
 import { type OrderItem } from '@/schemes/orderItem'
 import { type EventMember } from '@/schemes/EventMember'
+import type { PartnerMenu } from '@/schemes/partnerMenu'
 import { useUserStore, type UserStore } from './user'
 
 const add_order = httpsCallable<Partial<OrderItem>, { order_id: string }>(functions, 'add_order')
@@ -54,6 +55,7 @@ type EventStoreState = {
    * 注文確定済みリスト
    */
   confirmedOrders: Ref<OrderItem[] | null>
+  menus: Ref<PartnerMenu[] | null>
 } & StateTree
 
 type EventStoreGetters = {
@@ -94,6 +96,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       const event = ref<BokudeliEvent | null>(null)
       const _orders = ref<OrderItem[] | null>(null)
       const _members = ref<{ user_id: string; store: UserStore }[] | null>(null)
+      const _menus = ref<PartnerMenu[] | null>(null)
       const _eventRef = ref<DocumentReference | null>(null)
 
       const onEventUpdated = (doc: DocumentSnapshot) => {
@@ -150,6 +153,13 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
           subscribeOrders(eventRef)
         })
         return _orders.value
+      })
+
+      const menus = computed<PartnerMenu[] | null>(() => {
+        getEventRef().then((eventRef) => {
+          subscribeMenus(eventRef)
+        })
+        return _menus.value
       })
 
       const confirmedOrders = computed<OrderItem[] | null>(() => {
@@ -256,6 +266,19 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         }
       }
 
+      let unsubscribeMenus: Unsubscribe | null = null
+      const subscribeMenus = (eventRef: DocumentReference) => {
+        if (unsubscribeMenus == null) {
+          const menusRef = collection(eventRef, 'menus')
+          unsubscribeMenus = onSnapshot(menusRef, (menusSnapshot) => {
+            const partnerId = event.value?.partner_id
+            if (partnerId != null) {
+              _menus.value = menusSnapshot.docs.map((m) => convertDocumentDataToMenu(partnerId, m.id, m.data()))
+            }
+          })
+        }
+      }
+
       let retry = 0
       const subscribe = () =>
         getDocs(query(collectionGroup(db, 'events'), where('event_id', '==', eventId))).then((querySnapshot) => {
@@ -298,6 +321,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         orders,
         confirmedOrders,
         members,
+        menus,
         updateEvent,
         updateCoverImage,
         addOrder,

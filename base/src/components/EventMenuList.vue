@@ -1,68 +1,20 @@
 <script setup lang="ts">
-import { db } from '@/firebase'
-import { convertDocumentDataToMenu, dateString, priceString } from '@/schemes/converter'
+import { priceString } from '@/schemes/converter'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { collection, getDocs } from 'firebase/firestore'
-import { parseISO, compareDesc } from 'date-fns'
 import { mdiFoodForkDrink } from '@mdi/js'
 
-const props = defineProps<{
-  event: BokudeliEvent
+defineProps<{
+  menus: PartnerMenu[] | null
   disabled: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'selectMenu', menu: PartnerMenu): void
 }>()
-
-const menus = ref<PartnerMenu[] | null>(null)
-const isLoading = ref(true)
-
-const eventStartDatetime = computed(() => {
-  return props.event.event_start_datetime?.toDate() ?? null
-})
-
-const partnerDb = collection(db, 'partners')
-const loadMenuData = async (partnerId: string) => {
-  const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
-  const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
-
-  // 期間限定メニューをフィルタリング
-  const withinDateMenus = menus.filter((menu) => {
-    // 期間設定がない場合はreturn
-    if (!menu.dateStart || !menu.dateEnd) {
-      return true
-      // 期間設定がある場合、イベントの日付と比較
-    } else {
-      const eventStartDate = parseISO(dateString(eventStartDatetime.value))
-      const dateStart = parseISO(menu.dateStart)
-      const dateEnd = parseISO(menu.dateEnd)
-      return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
-    }
-  })
-  withinDateMenus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
-
-  return withinDateMenus
-}
-
-const fetchData = async () => {
-  menus.value = await loadMenuData(props.event.partner_id)
-  isLoading.value = false
-}
-
-onBeforeRouteUpdate(async (to, from, next) => {
-  await fetchData()
-  next()
-})
-
-onMounted(async () => {
-  await fetchData()
-})
 </script>
 <template>
   <section>
-    <v-row v-if="!isLoading && menus !== null">
+    <v-row v-if="menus !== null">
       <v-col v-for="(menu, i) of menus" :key="`menu_${i}`" md="4" sm="6" cols="12" class="pa-3">
         <v-card class="mb-1" color="text-center">
           <v-img :src="menu.imageUrl ?? undefined" aspect-ratio="1" cover />
