@@ -231,7 +231,7 @@ onUnmounted(() => {
         <!-- メニュ -->
         <event-menu-list
           ref="menuListRef"
-          :event="event"
+          :menus="eventStore.menus"
           :disabled="menuDisabled !== false"
           @select-menu="selectMenu"
         />
