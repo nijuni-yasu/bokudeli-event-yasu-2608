@@ -3,6 +3,7 @@ name: Deploy user
 on:
   push:
     branches:
+      - production
       - development
     paths:
       - "user/**"
