@@ -49,7 +49,7 @@ export class FirestoredUser {
   }
 
   convertToDocumentData(): DocumentData {
-    return _.omit(this, ['user_thumb_image_urls'])
+    return _.omit(this, ['user_email', 'user_thumb_image_urls'])
   }
 }
 
