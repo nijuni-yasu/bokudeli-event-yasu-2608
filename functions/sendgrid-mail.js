@@ -10,7 +10,7 @@ import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
-const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-4b62170d6e664358a6c183d8e9cfdcda'
+const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b870616c'
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // 開発バージョンに変更
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
@@ -291,16 +291,18 @@ async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_d
   const ordersRef = eventSnapshot.ref.collection('orders')
   const orders = await createOrdersForOrderRemind(ordersRef)
   const eventData = eventSnapshot.data()
-  const date = convertToDate(convertToDateTime(convertToJapan(eventData.event_start_datetime?.toMillis())))
+  const event_datetime = convertToDuration(
+    convertToJapan(eventData.event_start_datetime?.toMillis()),
+    convertToJapan(eventData.event_end_datetime?.toMillis()),
+  )
   const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
 
   return {
     ...eventData,
-    date,
     event_days_ago,
     event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
     event_deadline_datetime,
-    event_start_datetime: date,
+    event_datetime,
     orders,
   }
 }
