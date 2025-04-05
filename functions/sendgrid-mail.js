@@ -1039,7 +1039,7 @@ export const polling = functions
     ]
 
     // 3, 5, 10, 20, 30, 40, 50, 60日後にリマインドメールを送信
-    const orderRemindToOrganizerDays = [3, 5, 10, 20, 30, 40, 50, 60]
+    const orderRemindToOrganizerDays = [1, 5, 10, 20, 30, 40, 50, 60]
     orderRemindToOrganizerDays.forEach((day) => {
       promise_list.push(sendOrderRemindMailToOrganizer(start + day * one_day_millis, end + day * one_day_millis, day))
     })
