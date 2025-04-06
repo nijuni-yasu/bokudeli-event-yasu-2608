@@ -1,4 +1,4 @@
 import { invoice } from './invoice.js'
-import { namesSheet } from './namesSheet.js'
+import { namesprint } from './namesprint.js'
 
-export { invoice, namesSheet }
+export { invoice, namesprint }
