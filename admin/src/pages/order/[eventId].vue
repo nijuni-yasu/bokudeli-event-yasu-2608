@@ -10,6 +10,7 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { getOrderPath } from '@/navigation/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { useUserStore, type UserStore } from '@/stores/user'
+import { getUserPath } from '@/router/utils'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -207,10 +208,12 @@ const isOwner = computed(() => {
               >
                 <td>{{ key + 1 }}</td>
                 <td>
-                  <div class="d-flex align-center">
-                    <UserAvatar :user="(useUserStore(order.user_id) as UserStore).user" :size="40" class="me-2" />
-                    {{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}
-                  </div>
+                  <router-link :to="getUserPath(order.user_id)" class="name-link">
+                    <div class="d-flex align-center">
+                      <UserAvatar :user="(useUserStore(order.user_id) as UserStore).user" :size="40" class="me-2" />
+                      {{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}
+                    </div>
+                  </router-link>
                 </td>
                 <td>{{ menu.name }}</td>
                 <td>{{ $n(menu.price, 'currency') }}</td>
@@ -272,5 +275,10 @@ tbody {
   tr {
     height: 70px;
   }
+}
+
+.name-link {
+  color: inherit;
+  text-decoration: none;
 }
 </style>
