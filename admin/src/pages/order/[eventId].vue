@@ -8,8 +8,8 @@ import { usePartnerStore } from '@/stores/partner'
 import type { Shop } from '@/schemes/shop'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { getOrderPath } from '@/navigation/utils'
-import { getNamesSheetPath } from '@/router/utils'
-import { getNamesSheetPdf } from '@/utils/namesSheet'
+import { getNamesPrintPath } from '@/router/utils'
+import { getNamesPrintPdf } from '@/utils/namesPrint'
 import { ref } from 'vue'
 
 const router = useRouter()
@@ -81,11 +81,11 @@ const isOwner = computed(() => {
 })
 
 // [お名前]を印刷 ボタンの実装 
-const downloadNamesSheet = async () => {
+const downloadNamesPrint = async () => {
   isLoading.value = true
   try {
-    const w = window.open(getNamesSheetPath(), '_blank')
-    const pdf = await getNamesSheetPdf(eventId) //todo 並び順
+    const w = window.open(getNamesPrintPath(), '_blank')
+    const pdf = await getNamesPrintPdf(eventId) //todo 並び順
     w!.location.href = window.URL.createObjectURL(pdf)
   } catch (error) {
     console.error('Error downloading names sheet:', error)
@@ -194,7 +194,7 @@ const downloadNamesSheet = async () => {
           </v-form>
         </template>
         <v-card-text v-else-if="eventStore.confirmedOrders != null && eventStore.confirmedOrders.length !== 0">
-          <v-btn @click="downloadNamesSheet" :loading="isLoading">{{ $t('order_detail.names_sheet_print_button') }}</v-btn>
+          <v-btn @click="downloadNamesPrint" :loading="isLoading">{{ $t('order_detail.names_sheet_print_button') }}</v-btn>
           <div class="text-subtitle-2 ma-2" v-html="$t('order_detail.names_sheet_print_button_desc')" />
           <h2 class="mt-10 mb-1">{{ $t('order_detail.order_detail') }}</h2>
           <v-table>

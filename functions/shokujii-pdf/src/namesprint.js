@@ -292,5 +292,5 @@ export const namesprint = onRequest({ cors: [CORS] }, async (req, res) => {
 
   // PDFの生成と送信
   res.status(200).setHeader('Content-Type', 'application/pdf')
-  await makePdf(path.join('template', 'namesSheet.docx'), jsonDataForMerge, res)
+  await makePdf(path.join('template', 'namesPrint.docx'), jsonDataForMerge, res)
 })

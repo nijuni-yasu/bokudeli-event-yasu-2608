@@ -1,6 +1,6 @@
 import { getAuth } from 'firebase/auth'
 
-export const getNamesSheetPdf = async (eventId: string): Promise<Blob> => {
+export const getNamesPrintPdf = async (eventId: string): Promise<Blob> => {
   const token = await getAuth().currentUser!.getIdToken()
   const data = await fetch(
     `https://asia-northeast1-${import.meta.env.VITE_PROJECT_ID}.cloudfunctions.net/namesprint/${eventId}`,
