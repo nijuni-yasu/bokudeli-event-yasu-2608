@@ -8,6 +8,8 @@ import { usePartnerStore } from '@/stores/partner'
 import type { Shop } from '@/schemes/shop'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { getOrderPath } from '@/navigation/utils'
+import UserAvatar from '@/components/UserAvatar.vue'
+import { useUserStore, type UserStore } from '@/stores/user'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -177,14 +179,14 @@ const isOwner = computed(() => {
           </v-form>
         </template>
         <v-card-text v-else-if="eventStore.confirmedOrders != null && eventStore.confirmedOrders.length !== 0">
-          <h2 class="mt-10 mb-1">{{ $t('order_detail.order_detail') }}</h2>
+          <h2 class="mt-10 mb-3">{{ $t('order_detail.order_detail') }}</h2>
           <v-table>
             <thead>
               <tr>
                 <th>#</th>
+                <th>{{ $t('order_detail.user_name') }}</th>
                 <th>{{ $t('order_detail.menu_name') }}</th>
                 <th>{{ $t('order_detail.menu_price') }}</th>
-                <th>{{ $t('order_detail.user_name') }}</th>
                 <th>{{ $t('order_detail.order_date') }}</th>
               </tr>
             </thead>
@@ -204,14 +206,19 @@ const isOwner = computed(() => {
                 :key="`order-${key}`"
               >
                 <td>{{ key + 1 }}</td>
+                <td>
+                  <div class="d-flex align-center">
+                    <UserAvatar :user="(useUserStore(order.user_id) as UserStore).user" :size="40" class="me-2" />
+                    {{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}
+                  </div>
+                </td>
                 <td>{{ menu.name }}</td>
                 <td>{{ $n(menu.price, 'currency') }}</td>
-                <td>{{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}</td>
                 <td>{{ $d(order.created_at.toDate(), 'datetime') }}</td>
               </tr>
             </tbody>
           </v-table>
-          <h2 class="mt-10 mb-1">{{ $t('order_detail.subtotal') }}</h2>
+          <h2 class="mt-10 mb-3">{{ $t('order_detail.subtotal') }}</h2>
           <v-table>
             <thead>
               <tr>
@@ -235,7 +242,7 @@ const isOwner = computed(() => {
               </tr>
             </tbody>
           </v-table>
-          <h2 class="mt-10 mb-1">{{ $t('order_detail.total') }}</h2>
+          <h2 class="mt-10 mb-3">{{ $t('order_detail.total') }}</h2>
           <v-table>
             <thead>
               <tr>
@@ -259,3 +266,11 @@ const isOwner = computed(() => {
     </v-col>
   </v-row>
 </template>
+
+<style scoped lang="scss">
+tbody {
+  tr {
+    height: 70px;
+  }
+}
+</style>
