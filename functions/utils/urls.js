@@ -13,3 +13,7 @@ export function getOrderUrl(eventId) {
 export function getUserUrl(userId) {
   return `https://${process.env.EVENT_HOST}/u/${userId}`
 }
+
+export function getManageEventMemberUrl(eventId) {
+  return `https://${process.env.EVENT_HOST}/manage/event/${eventId}/member`
+}
