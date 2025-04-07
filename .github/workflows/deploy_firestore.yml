@@ -41,4 +41,4 @@ jobs:
         with:
           project_id: ${{ vars.PROJECT_ID }}
           service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          args: "--only firestore:rules"
+          args: "--only firestore"
