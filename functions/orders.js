@@ -29,6 +29,7 @@ export const add_order = functions.region('asia-northeast1').https.onCall(async 
       transaction.create(orderRef, {
         user_id,
         created_at: now,
+        carted_at: now,
         updated_at: now,
         community_id: community_id,
         community_account: eventSnapshot.get('community_account'),
