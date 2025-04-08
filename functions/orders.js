@@ -23,12 +23,13 @@ export const add_order = functions.region('asia-northeast1').https.onCall(async 
       )
     ).docs[0]
 
+    const now = Timestamp.now()
     if (pendingOrder == null) {
       const orderRef = eventRef.collection('orders').doc()
       transaction.create(orderRef, {
         user_id,
-        created_at: Timestamp.now(),
-        updated_at: Timestamp.now(),
+        created_at: now,
+        updated_at: now,
         community_id: community_id,
         community_account: eventSnapshot.get('community_account'),
         event_id,
@@ -52,7 +53,7 @@ export const add_order = functions.region('asia-northeast1').https.onCall(async 
       }
       transaction.update(pendingOrder.ref, {
         menus: pendingOrderMenus,
-        updated_at: Timestamp.now(),
+        updated_at: now,
       })
       return {
         order_id: pendingOrder.id,
@@ -123,17 +124,18 @@ export const update_order_status = functions.region('asia-northeast1').https.onC
         `In event payment "user_advance", you cannot change the status to ${data.status}`,
       )
     }
+    const now = Timestamp.now()
     transaction.update(orderSnapshot.ref, {
-      canceled_at: data.status === 'canceled' ? Timestamp.now() : (orderSnapshot.get('canceled_at') ?? null),
-      ordered_at: data.status === 'ordered' ? Timestamp.now() : (orderSnapshot.get('ordered_at') ?? null),
-      updated_at: Timestamp.now(),
+      canceled_at: data.status === 'canceled' ? now : (orderSnapshot.get('canceled_at') ?? null),
+      ordered_at: data.status === 'ordered' ? now : (orderSnapshot.get('ordered_at') ?? null),
+      updated_at: now,
       status: data.status,
     })
     if (data.status === 'ordered') {
       transaction.set(
         db.collection('communities').doc(data.community_id).collection('members').doc(user_id),
         {
-          updated_at: Timestamp.now(),
+          updated_at: now,
         },
         { merge: true },
       )
