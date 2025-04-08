@@ -39,18 +39,20 @@ export const make_shop_snapshot_to_event = onDocumentWritten(
     }
     const beforeStatus = event.data.before?.get('event_status')?.value
     const afterStatus = event.data.after.get('event_status')?.value
-    const beforeStartDatetime = event.data.before?.get('event_start_datetime')?.toMillis()
-    const afterStartDatetime = event.data.after.get('event_start_datetime')?.toMillis()
-    const beforeEndDatetime = event.data.before?.get('event_end_datetime')?.toMillis()
-    const afterEndDatetime = event.data.after.get('event_end_datetime')?.toMillis()
-    if (
-      beforeStatus === afterStatus &&
-      beforeStartDatetime === afterStartDatetime &&
-      beforeEndDatetime === afterEndDatetime
-    ) {
-      return
+    if (beforeStatus === 'accepting_order') {
+      if (afterStatus === 'accepting_order') {
+        // Do nothing
+        return
+      }
+      console.warn(
+        `Event status changed from accepting_order to ${afterStatus}\n` +
+          `Community: ${event.data.after.get('community_id')}, Event: ${event.data.after.id}`,
+      )
+      // Fall through to make menu snapshot
     }
 
+    const afterStartDatetime = event.data.after.get('event_start_datetime')?.toMillis()
+    const beforeEndDatetime = event.data.before?.get('event_end_datetime')?.toMillis()
     const partnerId = event.data.after.get('partner_id')
     const communityId = event.data.after.get('community_id')
     const eventId = event.data.after.id
