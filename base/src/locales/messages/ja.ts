@@ -204,6 +204,10 @@ export default {
     use_purpose: '利用目的',
     validator_account_exists: 'このアカウントIDは既に使用されています',
   },
+  event_edit:{
+    back: '前へ',
+    next: '次へ',
+  },
   event_basic_info: {
     place: '開催場所',
     place_name: '会場名',
