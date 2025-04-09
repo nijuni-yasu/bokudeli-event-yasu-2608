@@ -304,7 +304,7 @@ export default {
     organizer_phone_hint: '※商品受取時に対応できる電話番号をご記載ください。',
     organizer_memo: '配達受取場所について',
     organizer_memo_placeholder:
-      'XXXXビルに付きましたら、搬入口からOOFまでお上がりください。&#x0a;到着したらお電話ください。よろしくお願いします。',
+      'XXXXビルに付きましたら、搬入口からOOFまでお上がりください。到着したらお電話ください。よろしくお願いします。',
     bill_title: '請求先情報',
     bill_fullname: '請求先 担当者名',
     bill_email: '請求先 メールアドレス',
