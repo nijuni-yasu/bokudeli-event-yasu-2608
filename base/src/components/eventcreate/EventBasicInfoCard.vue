@@ -114,7 +114,7 @@ watch(
 </script>
 
 <template>
-  <v-card flat class="mt-3">
+  <v-card flat>
     <v-card-title class="pt-10 px-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiMapMarker" />
       {{ $t('event_basic_info.place') }}
