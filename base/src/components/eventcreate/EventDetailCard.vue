@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
+import BokudeliEvent, { eventPaymentSelectableTypes } from '@/schemes/bokudeliEvent'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import Editor from '@tinymce/tinymce-vue'
@@ -19,7 +19,7 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-  },
+  }
 )
 
 const { t: $t } = useI18n()
@@ -27,6 +27,39 @@ const { t: $t } = useI18n()
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
 const communityStore = useCommunityStore(event.value.community_account) as CommunityStore
+
+const checkBillInfo = () => {
+  if (event.value.event_payment === 'community_bill') {
+    // 値がない場合のみ、コミュニティの請求情報を設定
+    if (!event.value.bill_fullname && communityStore.community?.community_bill_fullname) {
+      event.value.bill_fullname = communityStore.community.community_bill_fullname
+    }
+    if (!event.value.bill_email && communityStore.community?.community_bill_email) {
+      event.value.bill_email = communityStore.community.community_bill_email
+    }
+  }
+  if (event.value.event_payment === 'user_advance') {
+    event.value.bill_fullname = ''
+    event.value.bill_email = ''
+  }
+}
+
+
+watch(
+  () => event.value.event_payment,
+  () => {
+    checkBillInfo()
+  },
+  { immediate: true },
+)
+
+const eventPaymentSelectableItems = eventPaymentSelectableTypes.map((type) => {
+  return { title: $t(`payment.${type}`), value: type }
+})
+
+const textFieldVariant = computed(() => {
+  return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
+})
 
 const { requiredValidator, positiveIntegerValidator } = useValidators()
 const maxPeopleValidator = (v: number) => {
@@ -200,32 +233,67 @@ const tinymceInit = {
           <span v-else>{{ $t('event_detail.private') }}</span>
         </template>
       </v-switch>
-      <div class="mt-2 text-subtitle-2">
+      <div class="mt-2 text-subtitle-1">
         <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
         <span v-else>{{ $t('event_detail.private_desc') }}</span>
       </div>
     </v-card-text>
+
+    <!-- 支払い設定 -->
     <v-card-title class="pt-10 px-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountCreditCardOutline" />
       {{ $t('event_detail.payment') }}
     </v-card-title>
     <v-card-text>
-      <v-col cols="12" sm="12" md="6">
-        <v-select
-          v-model="event.event_payment"
-          variant="solo-filled"
-          readonly
-          :items="eventPaymentItems"
-          hide-details
-          class="mt-0"
-          :rules="[requiredValidator]"
-        >
-          <template #label> {{ $t('event_detail.payment') }} </template>
-        </v-select>
-      </v-col>
-      <div class="mt-2 text-subtitle-2">
-        <span v-html="$t('event_detail.payment_hint')" />
-      </div>
+      <v-row>
+        <v-col cols="12" sm="12" md="6">
+          <v-select
+            v-model="event.event_payment"
+            :items="eventPaymentSelectableItems"
+            :variant="textFieldVariant"
+            hide-details
+            class="mt-0"
+            :rules="[requiredValidator]"
+            :readonly="event.event_status.value !== 'in_draft'"
+          >
+            <template #label> {{ $t('event_detail.payment') }} </template>
+          </v-select>
+        </v-col>
+      </v-row>
+      <template v-if="event.event_payment === 'community_bill'">
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field
+              v-model="event.bill_fullname"
+              :variant="textFieldVariant"
+              dense
+              :label="$t('shop_notice.bill_fullname')"
+              :rules="[requiredValidator]"
+              :readonly="event.event_status.value !== 'in_draft'"
+            />
+          </v-col>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field
+              v-model="event.bill_email"
+              :variant="textFieldVariant"
+              dense
+              :label="$t('shop_notice.bill_email')"
+              :rules="[requiredValidator, emailValidator]"
+              :readonly="event.event_status.value !== 'in_draft'"
+            />
+          </v-col>
+        </v-row>
+        <v-card-text class="text-subtitle-1">
+          <span v-html="$t('event_detail.payment_hint_community_bill')" />
+        </v-card-text>
+      </template>
+      <template v-if="event.event_payment === 'user_advance'">
+        <v-card-text class="text-subtitle-1">
+          <span v-html="$t('event_detail.payment_hint_user_advance')" />
+        </v-card-text>
+      </template>
     </v-card-text>
     <slot />
   </v-card>

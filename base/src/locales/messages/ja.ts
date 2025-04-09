@@ -16,8 +16,8 @@ export default {
   copied_to_clipboard: 'クリップボードにコピーしました',
   payment: {
     user_advance: '参加者 事前決済 💳',
-    user_on_day: '参加者 当日払い 💸',
-    community_bill: '主催者支払い 💰',
+    user_on_day: '参加者 当日払い 💰',
+    community_bill: '主催者 請求書払い 📄',
   },
   event_status: {
     in_draft: '下書き',
@@ -203,6 +203,12 @@ export default {
     company_name: '会社名・団体名',
     use_purpose: '利用目的',
     validator_account_exists: 'このアカウントIDは既に使用されています',
+    bill_info: '請求先情報',
+    bill_info_hint: `「主催者 請求書払い」を利用される場合、請求先を設定してください。<br />
+      「主催者 請求書払い」を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文でき、<br>
+      弊社より主催者様に請求書を発行いたします。請求書のお支払い期限は翌月末日となっております。`,
+    bill_fullname: '請求先 担当者名',
+    bill_email: '請求先 メールアドレス',
   },
   event_edit:{
     back: '前へ',
@@ -246,14 +252,17 @@ export default {
     activity: '公開設定',
     public: '公開イベント',
     private: '限定公開イベント',
-    public_desc: '※「公開イベント」はTOPページに一覧表示されます。',
-    private_desc: '※「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。',
+    public_desc: '「公開イベント」はTOPページに一覧表示されます。',
+    private_desc: '「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
-    payment_hint: `※支払い設定は<b>「参加者 事前決済」</b>と<b>「主催者 請求書払い」</b>の2種類があります。<br />
+    payment_hint_user_advance: `支払い設定は<b>「参加者 事前決済」</b>と<b>「主催者 請求書払い」</b>から選択いただけます。<br />
       <b>「参加者 事前決済」</b>を設定した場合、参加者はクレジットカード決済にて事前にお支払いいただきます。<br />
-      <b>「主催者 請求書払い」</b>を設定した場合、参加者は事前決済を行わずにご注文いただけ、弊社より主催者様に請求書を発行いたします。<br />
-      　尚、請求書のお支払い期限は翌月末日となっております。<br />
-      <b>「主催者 請求書払い」</b>を設定されたい場合は、<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">サポートまでお問い合わせ</a>ください。<br />`,
+      支払い設定は予約申請後、変更できません。`,
+    payment_hint_community_bill: `<b>「主催者 請求書払い」</b>を設定した場合、<br />
+    ・参加者はクレジットカードによる事前決済せずにご注文いただけます。<br />
+    ・イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
+    ・お支払い期限は翌月末日です。<br />
+    ・支払い設定は予約申請後、変更できません。`,
     error_max_people: 'すでに{0}人の予約が入っています',
   },
   shop_notice: {
@@ -278,6 +287,9 @@ export default {
     organizer_memo: '配達受取場所について',
     organizer_memo_placeholder:
       'XXXXビルに付きましたら、搬入口からOOFまでお上がりください。&#x0a;到着したらお電話ください。よろしくお願いします。',
+    bill_title: '請求先情報',
+    bill_fullname: '請求先 担当者名',
+    bill_email: '請求先 メールアドレス',
     preview_draft: '下書きをプレビューする',
     save_event: 'イベントを保存する',
     send_reserve_mail: 'お店に予約申請する',
