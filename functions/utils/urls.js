@@ -17,3 +17,7 @@ export function getUserUrl(userId) {
 export function getManageEventMemberUrl(eventId) {
   return `https://${process.env.EVENT_HOST}/manage/event/${eventId}/member`
 }
+
+export function getManageCommunityUrl(communityAccount) {
+  return `https://${process.env.EVENT_HOST}/manage/${communityAccount}/events`
+}
