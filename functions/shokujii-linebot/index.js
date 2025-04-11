@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import functions from 'firebase-functions';
+import functions from 'firebase-functions/v1'
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { initializeFirestore } from 'firebase-admin/firestore';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';

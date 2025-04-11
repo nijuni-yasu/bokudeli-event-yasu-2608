@@ -1,4 +1,4 @@
-import functions from 'firebase-functions'
+import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import * as dateFns from 'date-fns'
 import ja from 'date-fns/locale/ja'

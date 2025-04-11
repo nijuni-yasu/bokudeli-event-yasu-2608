@@ -1,7 +1,8 @@
 {
   "projects": {
     "production": "bokudeli-event-dev",
-    "development": "bokudeli-event-test"
+    "development": "bokudeli-event-test",
+    "mail": "bokudeli-event-mail"
   },
   "targets": {
     "bokudeli-event-dev": {
@@ -30,6 +31,19 @@
         ],
         "user": [
           "bokudeli-event-test"
+        ]
+      }
+    },
+    "bokudeli-event-mail": {
+      "hosting": {
+        "admin": [
+          "bokudeli-event-mail-admin"
+        ],
+        "manager": [
+          "bokudeli-event-mail-manager"
+        ],
+        "user": [
+          "bokudeli-event-mail"
         ]
       }
     }

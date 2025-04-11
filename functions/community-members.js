@@ -1,4 +1,4 @@
-import functions from 'firebase-functions'
+import functions from 'firebase-functions/v1'
 import { getFirestore } from 'firebase-admin/firestore'
 import sgMail from '@sendgrid/mail'
 import { getCommunityUrl } from './utils/urls.js'
