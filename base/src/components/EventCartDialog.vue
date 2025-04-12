@@ -102,18 +102,18 @@ const openLoginDialog = () => {
 </script>
 
 <template>
-  <v-dialog v-model="isOpen" max-width="550px" @click:outside="closeDialog(false)">
-    <v-card class="pa-sm-10 px-5 py-1 text-center">
-      <v-img :src="menu.imageUrl ?? undefined" class="ma-5" aspect-ratio="1" cover></v-img>
-      <v-card-title class="text-left text-h5 py-2 pre-line">
+  <v-dialog v-model="isOpen" max-width="500px" @click:outside="closeDialog(false)">
+    <v-card class="pa-sm-10 pa-5">
+      <v-img :src="menu.imageUrl ?? undefined" class="ma-3"></v-img>
+      <v-card-title class="text-left text-h4 py-1 text-wrap">
         {{ menu.name }}
       </v-card-title>
       <v-card-text class="text-left py-2">
         {{ menu.description }}
       </v-card-text>
-      <v-card-text class="text-right pb-5">
-        <span style="font-size: 18px; color: #3a3541de">¥ </span>
-        <span style="font-size: 30px; color: #3a3541de">{{ priceString(menu.price) }}</span>
+      <v-card-text class="text-right pb-8">
+        <span class="text-h5">¥ </span>
+        <span class="text-h4">{{ priceString(menu.price) }}</span>
       </v-card-text>
       <v-row class="mx-3 mb-2">
         <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>
@@ -132,7 +132,7 @@ const openLoginDialog = () => {
           :loading="isAddingOrder"
           @click="addCart()"
         >
-          カートに追加
+          {{ $t('cart_dialog.add') }}
         </v-btn>
         <v-btn
           class="justify-center mx-1 my-2 align-self-center"
@@ -142,13 +142,13 @@ const openLoginDialog = () => {
           color="secondary"
           @click="closeDialog(false)"
         >
-          閉じる
+          {{ $t('cart_dialog.close') }}
         </v-btn>
       </v-row>
     </v-card>
     <login-dialog v-model="isOpenLoginDialog" />
     <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
-      ログインしてください
+      {{ $t('cart_dialog.login') }}
     </confirm-dialog>
   </v-dialog>
 </template>
