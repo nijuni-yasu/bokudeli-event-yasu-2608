@@ -118,6 +118,7 @@ const isOpenNewCommunityDialog = ref(false)
               v-model="community.community_name"
               outlined
               dense
+              :hint="$t('community_edit.community_name_hint')"
               :label="$t('community_edit.community_name')"
               :rules="[requiredValidator]"
             />
@@ -130,14 +131,15 @@ const isOpenNewCommunityDialog = ref(false)
             <v-textarea
               v-model="community.community_desc"
               outlined
-              rows="10"
-              :label="$t('community_edit.community_description')"
+              rows="6"
+              :hint="$t('community_edit.community_desc_hint')"
+              :label="$t('community_edit.community_desc')"
             />
           </v-col>
         </v-row>
       </v-card-text>
 
-      <v-card-text class="pt-5">
+      <v-card-text class="mt-5">
         <v-row>
           <v-col cols="12">
             <v-text-field
@@ -146,6 +148,7 @@ const isOpenNewCommunityDialog = ref(false)
               prefix="shokujii.jp/c/"
               outlined
               dense
+              :hint="$t('validator.account')"
               :readonly="!isNew"
               :label="$t(isNew ? 'community_edit.account' : 'community_edit.account_readonly')"
               :loading="isCheckingAccount"
@@ -155,7 +158,7 @@ const isOpenNewCommunityDialog = ref(false)
           </v-col>
         </v-row>
       </v-card-text>
-      <v-card-text class="my-6">
+      <v-card-text class="my-5">
         <v-switch v-model="community.is_public" hide-details>
           <template #label>
             <span v-if="community.is_public">{{ $t('community_edit.public') }}</span>
