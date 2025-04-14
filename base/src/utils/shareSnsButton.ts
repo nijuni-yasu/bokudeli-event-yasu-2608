@@ -15,7 +15,6 @@ const getXPostTextAfterOrder = (event: BokudeliEvent, community: BokudeliCommuni
   const textList = [
     `${event.event_name} に参加します✋`,
     '',
-    '',
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
     `👥主催：${communityText}`,
     `👩‍🍳食事：${shopText}`,
@@ -36,8 +35,7 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
       : '#食事でつながる #shokujii'
 
   const textList = [
-    `${event.event_name}`,
-    '',
+   `${event.event_name} に参加します✋`,
     '',
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
     `👥主催：${communityText}`,
