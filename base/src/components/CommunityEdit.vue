@@ -145,10 +145,21 @@ const isOpenNewCommunityDialog = ref(false)
           </v-col>
         </v-row>
       </v-card-text>
-      <v-card-text>
-        <v-switch v-model="community.is_public" hide-details class="mt-0">
-          <template #label> {{ $t('community_edit.public') }} </template>
+      <v-card-text class="my-6">
+        <v-switch v-model="community.is_public" hide-details>
+          <template #label>
+            <span v-if="community.is_public">{{ $t('community_edit.public') }}</span>
+            <span v-else>{{ $t('community_edit.private') }}</span>
+          </template>
         </v-switch>
+        <div class="text-subtitle-2">
+          <span v-if="community.is_public">
+            <div v-html="$t('community_edit.public_desc')" />
+          </span>
+          <span v-else>
+            <div v-html="$t('community_edit.private_desc')" />
+          </span>
+        </div>
       </v-card-text>
       <v-card-text class="text-center" v-if="isNew">
         <div v-html="$t('community_edit.community_create_next')" />
