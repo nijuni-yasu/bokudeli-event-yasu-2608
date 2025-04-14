@@ -93,6 +93,11 @@ export default {
     order_and_attend_event: '注文してイベントに参加する',
     no_items_in_cart: 'カートに商品はありません。',
   },
+  cart_dialog: {
+    add: 'カートに追加',
+    close: '閉じる',
+    login: 'ログインして注文する',
+  },
   event_create_modal: {
     title: 'イベントを作成しよう',
     desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
