@@ -31,7 +31,7 @@ export default {
     'cancel_failed': 'キャンセルに失敗しました',
   },
   'manage': {
-    'new_community': 'コミュニティ新規作成',
+    'new_community': 'コミュニティ作成',
     'new_event': 'イベント新規作成',
     'new_letter': 'レター新規作成',
     'community': {
@@ -157,11 +157,11 @@ export default {
       'copy': 'コピー',
     },
     'settings': {
-      'submit': '設定',
+      'submit': '設定する',
       'saved': '保存しました',
     },
     'newcommunity': {
-      'submit': '作成',
+      'submit': 'コミュニティを作成する',
       'added': '作成しました',
       'error': '作成に失敗しました',
     }

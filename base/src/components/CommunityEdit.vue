@@ -3,7 +3,12 @@ import { useI18n } from 'vue-i18n'
 import { useValidators } from '@/composable/validators'
 import ImageInput from '@/components/ImageInput.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { mdiListBoxOutline, mdiImage, mdiWeb, mdiLightbulbOnOutline, mdiAccountOutline, mdiAccountCreditCardOutline } from '@mdi/js'
+import {
+  mdiListBoxOutline,
+  mdiWeb,
+  mdiAccountOutline,
+  mdiAccountCreditCardOutline,
+} from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
 import { trimHashTag } from '@/utils/hashTag'
 
@@ -52,7 +57,7 @@ const checkAccountExists = async (value: string) => {
 
 <template>
   <v-form v-model="isValid">
-    <v-card flat class="mt-2">
+    <v-card flat class="mt-2 pa-10">
       <!-- <v-row>
               <v-col cols="12" class="text-right">
                 <v-btn
@@ -66,7 +71,10 @@ const checkAccountExists = async (value: string) => {
                 />
               </v-col>
             </v-row> -->
-      <v-card-title class="px-5">
+      <v-card-title class="px-5 text-h3 font-weight-bold" v-if="isNew">
+        {{ $t('community_edit.create') }}
+      </v-card-title>
+      <v-card-title class="px-5" v-else>
         <v-icon size="50" class="text--primary me-3" :icon="mdiListBoxOutline" />
         {{ $t('community_edit.title') }}
       </v-card-title>
@@ -74,23 +82,33 @@ const checkAccountExists = async (value: string) => {
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
-              ref="accountFieldRef"
-              v-model="community.community_account"
-              prefix="shokujii.jp/c/"
-              outlined
-              dense
-              :readonly="!isNew"
-              :label="$t(isNew ? 'community_edit.account' : 'community_edit.account_readonly')"
-              :loading="isCheckingAccount"
-              :rules="[requiredValidator, isValidSameAccount, accountValidator]"
-              @update:modelValue="checkAccountExists"
+            <ImageInput
+              :url="community.community_cover_image_url ?? undefined"
+              :rules="[requiredValidator]"
+              style="width: 100%; aspect-ratio: 120/63"
+              :cover="true"
+              @fileSelected="(f) => (coverImageFile = f)"
             />
+            {{ $t('community_edit.community_cover_image_hint') }}
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-card-text class="pt-5">
+        <v-row>
+          <v-col cols="12">
+            <ImageInput
+              :url="community.community_icon_image_url ?? undefined"
+              :rules="[requiredValidator]"
+              style="width: auto; max-width: min(100%, 200px); aspect-ratio: 1/1"
+              :cover="true"
+              @fileSelected="(f) => (iconImageFile = f)"
+            />
+            {{ $t('community_edit.community_icon_image_hint') }}
           </v-col>
         </v-row>
       </v-card-text>
 
-      <v-card-text class="pt-5">
+      <v-card-text class="mt-5">
         <v-row>
           <v-col cols="12">
             <v-text-field
@@ -116,40 +134,37 @@ const checkAccountExists = async (value: string) => {
         </v-row>
       </v-card-text>
 
-      <v-card-title class="pt-10 px-5">
-        <v-icon size="50" class="text--primary me-3" :icon="mdiImage" />
-        {{ $t('community_edit.image_setting') }}
-      </v-card-title>
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <ImageInput
-              :url="community.community_icon_image_url ?? undefined"
-              :rules="[requiredValidator]"
-              style="width: auto; max-width: min(100%, 300px); aspect-ratio: 1/1"
-              :cover="true"
-              @fileSelected="(f) => (iconImageFile = f)"
+            <v-text-field
+              ref="accountFieldRef"
+              v-model="community.community_account"
+              prefix="shokujii.jp/c/"
+              outlined
+              dense
+              :readonly="!isNew"
+              :label="$t(isNew ? 'community_edit.account' : 'community_edit.account_readonly')"
+              :loading="isCheckingAccount"
+              :rules="[requiredValidator, isValidSameAccount, accountValidator]"
+              @update:modelValue="checkAccountExists"
             />
-            {{ $t('community_edit.community_icon_image_hint') }}
           </v-col>
         </v-row>
       </v-card-text>
-
-      <v-card-text class="pt-5">
-        <v-row>
-          <v-col cols="12">
-            <ImageInput
-              :url="community.community_cover_image_url ?? undefined"
-              :rules="[requiredValidator]"
-              style="width: 100%; aspect-ratio: 120/63"
-              :cover="true"
-              @fileSelected="(f) => (coverImageFile = f)"
-            />
-            {{ $t('community_edit.community_cover_image_hint') }}
-          </v-col>
-        </v-row>
+      <v-card-text>
+        <v-switch v-model="community.is_public" hide-details class="mt-0">
+          <template #label> {{ $t('community_edit.public') }} </template>
+        </v-switch>
+      </v-card-text>
+      <v-card-text class="text-center" v-if="isNew">
+        <div v-html="$t('community_edit.community_create_next')" />
       </v-card-text>
 
+      <slot :isValid="isValid" />
+    </v-card>
+
+    <v-card flat class="mt-10 pa-10" v-if="!isNew">
       <v-card-title class="pt-10 px-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
         {{ $t('community_edit.sns_setting') }}
@@ -225,15 +240,6 @@ const checkAccountExists = async (value: string) => {
       </v-card-text>
 
       <!-- Activity -->
-      <v-card-title class="pt-10 px-5">
-        <v-icon size="50" class="text--primary me-3" :icon="mdiLightbulbOnOutline" />
-        {{ $t('community_edit.public_setting') }}
-      </v-card-title>
-      <v-card-text>
-        <v-switch v-model="community.is_public" hide-details class="mt-0">
-          <template #label> {{ $t('community_edit.public') }} </template>
-        </v-switch>
-      </v-card-text>
       <v-card-title class="pt-10 pl-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiAccountOutline" />
         {{ $t('community_edit.manager_info') }}
