@@ -75,6 +75,12 @@ const isOpenNewCommunityDialog = ref(false)
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
+            <span class="font-weight-bold">
+              {{ $t('community_edit.community_cover_image') }}
+            </span>
+            <span class="text-subtitle-2 ml-2">
+              {{ $t('community_edit.community_cover_image_hint') }}
+            </span>
             <ImageInput
               :url="community.community_cover_image_url ?? undefined"
               :rules="[requiredValidator]"
@@ -82,13 +88,18 @@ const isOpenNewCommunityDialog = ref(false)
               :cover="true"
               @fileSelected="(f) => (coverImageFile = f)"
             />
-            {{ $t('community_edit.community_cover_image_hint') }}
           </v-col>
         </v-row>
       </v-card-text>
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
+            <span class="font-weight-bold">
+              {{ $t('community_edit.community_icon_image') }}
+            </span>
+            <span class="text-subtitle-2 ml-2">
+              {{ $t('community_edit.community_icon_image_hint') }}
+            </span>
             <ImageInput
               :url="community.community_icon_image_url ?? undefined"
               :rules="[requiredValidator]"
@@ -96,7 +107,6 @@ const isOpenNewCommunityDialog = ref(false)
               :cover="true"
               @fileSelected="(f) => (iconImageFile = f)"
             />
-            {{ $t('community_edit.community_icon_image_hint') }}
           </v-col>
         </v-row>
       </v-card-text>
@@ -161,7 +171,7 @@ const isOpenNewCommunityDialog = ref(false)
           </span>
         </div>
       </v-card-text>
-      <v-card-text class="text-center" v-if="isNew">
+      <v-card-text class="text-center mt-10" v-if="isNew">
         <div v-html="$t('community_edit.community_create_next')" />
       </v-card-text>
 

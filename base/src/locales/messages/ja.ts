@@ -142,6 +142,10 @@ export default {
             <br />
             <b>💸 全ての機能を無料で</b><br />
             主催者のみなさまは、あらゆる機能を無料でご利用いただくことができます。<br />
+            <br />
+            <b>👀 詳しくはガイドを</b><br />
+            <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> もぜひご一読ください。<br />
+            ご不明点やご要望がありましたら、サポートまでお気軽に<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>を！<br />
             `,
     },
   },
@@ -193,9 +197,11 @@ export default {
     community_name: 'コミュニティ名',
     community_description: 'コミュニティ説明',
     image_setting: '画像設定',
-    community_icon_image_hint: `※コミュニティのアイコン画像を設定してください（推奨サイズ：300x300px）`,
-    community_cover_image_hint: `※コミュニティのカバー画像を設定してください（推奨サイズ：1200x630px）`,
-    community_create_next: `コミュニティを作成したら<br>次はイベントをつくってみよう！`,
+    community_cover_image: 'カバー画像',
+    community_cover_image_hint: `※推奨サイズ：1200x630px`,
+    community_icon_image: 'アイコン',
+    community_icon_image_hint: `※推奨サイズ：300x300px`,
+    community_create_next: `コミュニティを作成したら<br>次はイベントをつくってみよう🎉`,
     sns_setting: 'SNS設定',
     facebook: 'Facebook',
     twitter: 'X(Twitter)',
