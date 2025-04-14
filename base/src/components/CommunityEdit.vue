@@ -8,9 +8,11 @@ import {
   mdiWeb,
   mdiAccountOutline,
   mdiAccountCreditCardOutline,
+  mdiHelp,
 } from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
 import { trimHashTag } from '@/utils/hashTag'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
@@ -53,26 +55,17 @@ const checkAccountExists = async (value: string) => {
     isCheckingAccount.value = false
   }
 }
+const isOpenNewCommunityDialog = ref(false)
 </script>
 
 <template>
   <v-form v-model="isValid">
     <v-card flat class="mt-2 pa-10">
-      <!-- <v-row>
-              <v-col cols="12" class="text-right">
-                <v-btn
-                  color="primary"
-                  class="me-3 mt-3"
-                  :icon="mdiHelpCircleOutline"
-                  size="x-large"
-                  density="compact"
-                  variant="text"
-                  @click="isOpenNewCommunityDialog = true"
-                />
-              </v-col>
-            </v-row> -->
       <v-card-title class="px-5 text-h3 font-weight-bold" v-if="isNew">
-        {{ $t('community_edit.create') }}
+        <v-row class="pa-3 align-center">
+          {{ $t('community_edit.create') }}
+          <v-btn class="ml-2" variant="outlined" size="x-small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
+        </v-row>
       </v-card-title>
       <v-card-title class="px-5" v-else>
         <v-icon size="50" class="text--primary me-3" :icon="mdiListBoxOutline" />
@@ -382,4 +375,14 @@ const checkAccountExists = async (value: string) => {
       <slot :isValid="isValid" />
     </v-card>
   </v-form>
+  <div>
+    <confirm-dialog v-model="isOpenNewCommunityDialog" :ok-text="'OK'" max-width="800px">
+      <v-card-text class="text-center my-2 text-h4">
+        {{ $t('community_new_modal.community.title') }}
+      </v-card-text>
+      <v-card-text class="text-subtitle" style="line-height: 1.6rem">
+        <div v-html="$t('community_new_modal.community.desc')" />
+      </v-card-text>
+    </confirm-dialog>
+  </div>
 </template>
