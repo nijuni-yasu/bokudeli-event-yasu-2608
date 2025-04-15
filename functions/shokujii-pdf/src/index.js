@@ -1,4 +1,2 @@
-import { invoice } from './invoice.js'
-import { namesprint } from './namesprint.js'
-
-export { invoice, namesprint }
+export { invoice } from './invoice.js'
+export { namesprint } from './namesprint.js'
