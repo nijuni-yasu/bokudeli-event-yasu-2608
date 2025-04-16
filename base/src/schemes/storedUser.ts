@@ -24,7 +24,6 @@ export type StoredUser = {
 export class FirestoredUser {
   user_id: string = ''
   user_name: string = ''
-  user_email: string = ''
   user_image_url: string | null = null
   user_account: string | null = null
   user_description: string | null = null
@@ -50,6 +49,10 @@ export class FirestoredUser {
   }
 
   convertToDocumentData(): DocumentData {
-    return _.omit(this, ['user_thumb_image_urls'])
+    return _.omit(this, ['user_email', 'user_thumb_image_urls'])
   }
+}
+
+export type FirestoredUserPersonalInformation = {
+  user_email: string
 }

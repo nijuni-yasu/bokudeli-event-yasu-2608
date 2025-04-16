@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import EventBasicInfo from '@/components/eventcreate/EventBasicInfo.vue'
+import EventBasicInfoCard from '@/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@/components/eventcreate/EventShop.vue'
 import EventMenu from '@/components/eventcreate/EventMenu.vue'
 import EventDetailCard from '@/components/eventcreate/EventDetailCard.vue'
@@ -43,6 +43,7 @@ const emits = defineEmits<{
 
 const { postalCodeValidator } = useValidators()
 
+const isValid1 = ref(false)
 const isValid4 = ref(false)
 
 const eventListStore = useEventListStore()
@@ -50,13 +51,25 @@ const communityStore = useCommunityStore(props.communityAccount) as CommunitySto
 
 const isOpenContactDialogVisible = ref(props.eventId == null)
 
-const _event = ref(new BokudeliEvent())
+const _event = ref<BokudeliEvent | null>(null)
 const event = computed<BokudeliEvent | null>({
   get: () => {
     if (props.eventId != null) {
       const eventStore = useEventStore(props.eventId) as EventStore
       return eventStore.event
     } else {
+      if (
+        _event.value == null &&
+        communityStore.community?.community_id != null &&
+        communityStore.community?.community_account != null &&
+        communityStore.community?.community_name != null
+      ) {
+        _event.value = new BokudeliEvent(
+          communityStore.community.community_id,
+          communityStore.community.community_account,
+          communityStore.community.community_name,
+        )
+      }
       return _event.value
     }
   },
@@ -301,7 +314,28 @@ const stepperItems = computed(() => [
 <template>
   <v-stepper v-if="event" v-model="stepper" :items="stepperItems" hide-actions>
     <template #[`item.1`]>
-      <event-basic-info v-model="event" @submit="stepper++" />
+      <v-form v-model="isValid1">
+        <v-row class="justify-center">
+          <v-col cols="12" sm="12" md="9">
+            <event-basic-info-card
+              v-model="event"
+            >
+              <v-card-text class="text-center mt-10">
+                <v-btn
+                  color="primary"
+                  class="me-3 mt-3"
+                  size="large"
+                  :append-icon="mdiChevronRight"
+                  :disabled="!isValid1"
+                  @click="stepper++"
+                >
+                  {{ $t('event_edit.next') }}
+                </v-btn>
+              </v-card-text>
+            </event-basic-info-card>
+          </v-col>
+        </v-row>
+      </v-form>
     </template>
     <template #[`item.2`]>
       <event-shop
@@ -335,7 +369,7 @@ const stepperItems = computed(() => [
             >
               <v-card-text class="text-center mt-10">
                 <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
-                  前へ
+                  {{ $t('event_edit.back') }}
                 </v-btn>
                 <v-btn
                   color="primary"
@@ -345,7 +379,7 @@ const stepperItems = computed(() => [
                   :disabled="!isValid4"
                   @click="stepper++"
                 >
-                  次へ
+                  {{ $t('event_edit.next') }}
                 </v-btn>
               </v-card-text>
             </event-detail-card>

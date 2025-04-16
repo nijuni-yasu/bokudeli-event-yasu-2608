@@ -1,18 +1,16 @@
-import functions from 'firebase-functions'
+import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import * as dateFns from 'date-fns'
 import ja from 'date-fns/locale/ja'
 import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
 import { makeIcs } from './make-ics.js'
-
-// 環境変数の方がよいかもしれない
-const DEFAULT_FROM = '食事でつながる「shokujii」<shokujii@nijuni.jp>'
-const DEFAULT_TO = 'support+to@nijuni.jp'
-const SUPPORT_MAIL = 'shokujiiサポート<support+cc@nijuni.jp>'
+import { getCommunityUrl, getEventUrl, getOrderUrl, getUserUrl, getManageEventMemberUrl } from './utils/urls.js'
+import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
+const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b870616c'
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // 開発バージョンに変更
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
@@ -76,20 +74,10 @@ function convertToDuration(startMillis, endMillis) {
   return `${start}〜${end}`
 }
 
-function getCommunityUrl(communityAccount) {
-  return `https://${process.env.EVENT_HOST}/c/${communityAccount}`
-}
-
-function getEventUrl(communityAccount, eventId) {
-  return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}`
-}
-
-function getOrderUrl(eventId) {
-  return `https://${process.env.ADMIN_HOST}/order/${eventId}`
-}
-
-function getUserUrl(userId) {
-  return `https://${process.env.EVENT_HOST}/u/${userId}`
+async function getUserEmail(userId) {
+  const userPersonalInformationRef = db.collection('users_personal_information').doc(userId)
+  const userPersonalInformationSnapshot = await userPersonalInformationRef.get()
+  return userPersonalInformationSnapshot.get('user_email')
 }
 
 async function getShopForEvent(eventSnapshot) {
@@ -117,9 +105,7 @@ async function getCommunityMemberEmailsSet(communityId) {
   const membersSnapshot = await membersRef.get()
   await Promise.all(
     membersSnapshot.docs.map(async (member) => {
-      const userRef = db.collection('users').doc(member.id)
-      const userSnapshot = await userRef.get()
-      const userEmail = userSnapshot.get('user_email')
+      const userEmail = await getUserEmail(member.id)
       if (userEmail != null && userEmail !== '') {
         emails.add(userEmail)
       }
@@ -137,9 +123,7 @@ async function getCommunityManagerEmailsSet(communityId) {
     membersSnapshot.docs.map(async (member) => {
       const roles = member.get('roles')
       if (roles instanceof Array && roles.includes('manager')) {
-        const userRef = db.collection('users').doc(member.id)
-        const userSnapshot = await userRef.get()
-        const userEmail = userSnapshot.get('user_email')
+        const userEmail = await getUserEmail(member.id)
         if (userEmail != null && userEmail !== '') {
           emails.add(userEmail)
         }
@@ -168,13 +152,7 @@ async function getEventMemberEmails(eventSnapshotOrId) {
     eventSnapshot = eventSnapshotOrId
   }
   const usersSet = await getUsersFromOrders(eventSnapshot.ref.collection('orders'))
-  const emails = await Promise.all(
-    Array.from(usersSet).map(async (userId) => {
-      const userRef = db.collection('users').doc(userId)
-      const userSnapshot = await userRef.get()
-      return userSnapshot.get('user_email')
-    }),
-  )
+  const emails = await Promise.all(Array.from(usersSet).map(getUserEmail))
   return emails.filter((email) => email != null && email !== '')
 }
 
@@ -185,6 +163,39 @@ async function getCommunityEmails(communityId) {
     emails.add(SUPPORT_MAIL)
   }
   return Array.from(emails)
+}
+
+async function createOrdersForOrderRemind(ordersRef) {
+  const promises = []
+  const orders_by_status = {}
+  for (const orderRef of await ordersRef.listDocuments()) {
+    const orderSnapshot = await orderRef.get()
+    const status = orderSnapshot.get('status')
+    const userRef = db.collection('users').doc(orderSnapshot.get('user_id'))
+    for (const menu of orderSnapshot.get('menus') ?? []) {
+      const promise = userRef.get().then((userSnapshot) => {
+        for (let i = 0; i < menu.count; i++) {
+          if (!orders_by_status[status]) {
+            orders_by_status[status] = []
+          }
+          orders_by_status[status].push({
+            name: userSnapshot.get('user_name'),
+            order: menu.name,
+            price: `¥${menu.price}`,
+            status,
+          })
+        }
+      })
+      promises.push(promise)
+    }
+  }
+  await Promise.all(promises)
+
+  for (const orders of Object.values(orders_by_status)) {
+    orders.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0))
+    orders.forEach((order, i) => (order.number = i + 1))
+  }
+  return orders_by_status
 }
 
 async function createOrdersForOrderDeadline(ordersRef) {
@@ -276,6 +287,59 @@ async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
   )
 }
 
+async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago) {
+  const ordersRef = eventSnapshot.ref.collection('orders')
+  const orders = await createOrdersForOrderRemind(ordersRef)
+  const eventData = eventSnapshot.data()
+  const event_datetime = convertToDuration(
+    convertToJapan(eventData.event_start_datetime?.toMillis()),
+    convertToJapan(eventData.event_end_datetime?.toMillis()),
+  )
+  const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
+
+  return {
+    ...eventData,
+    event_days_ago,
+    event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
+    manage_event_member_url: getManageEventMemberUrl(eventSnapshot.id),
+    event_deadline_datetime,
+    event_datetime,
+    orders,
+  }
+}
+
+async function sendOrderRemindMailToOrganizer(start, end, event_days_ago) {
+  const events = await db
+    .collectionGroup('events')
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
+    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
+    .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
+    .get()
+
+  const promises = []
+  await events.docs.forEach(async (eventSnapshot) => {
+    try {
+      const dynamic_template_data = await createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago)
+      const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
+      communityEmails
+        .map(async (to) => {
+          await sgMail.send({
+            to,
+            from: DEFAULT_FROM,
+            templateId: ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID,
+            dynamic_template_data,
+          })
+        })
+        .forEach((promise) => promises.push(promise))
+    } catch (err) {
+      console.warn(err)
+    }
+  })
+
+  return Promise.all(promises)
+}
+
 async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   const ordersRef = eventSnapshot.ref.collection('orders')
   const [order_count, _, orders] = await createOrdersForOrderDeadline(ordersRef)
@@ -304,7 +368,7 @@ async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   }
 }
 
-async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
+async function sendOrderDeadlineMailToOrganizers(start, end) {
   const events = await db
     .collectionGroup('events')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
@@ -317,7 +381,6 @@ async function sendOrderDeadlineMailToOrganizers(start, end, is_reminder) {
   await events.docs.forEach(async (eventSnapshot) => {
     try {
       const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
-      dynamic_template_data.is_reminder = is_reminder
       const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
       communityEmails
         .map(async (to) => {
@@ -491,6 +554,7 @@ async function sendRejectOrderMailToShop(start, end) {
     .collectionGroup('events')
     .where('event_status.value', '==', 'applying_reservation')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
+    .where('is_deleted', '==', false)
     .get()
 
   const sendMailPromises = events.docs
@@ -612,14 +676,14 @@ async function sendEventInformationMail() {
       ..._dynamic_template_data,
       user_name: userSnapshot.get('user_name'),
     }
-    const userEmail = userSnapshot.get('user_email')
-    if (!userEmail) {
+    const to = await getUserEmail(userRef.id)
+    if (to == null) {
       continue
     }
     promises.push(
       sgMail
         .send({
-          to: userEmail,
+          to,
           from: DEFAULT_FROM,
           templateId: EVENT_INFORMATION_TEMPLATE_ID,
           dynamic_template_data,
@@ -773,8 +837,9 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
     is_public: eventData.is_public,
   }
   const icsContent = await makeIcs(eventData)
+  const to = await getUserEmail(userId)
   return sgMail.send({
-    to: userSnapshot.get('user_email'),
+    to,
     from: DEFAULT_FROM,
     templateId: ORDER_COMPLETION_TEMPLATE_ID,
     dynamic_template_data,
@@ -825,16 +890,13 @@ async function sendInCartNotificationToMember(start, end) {
     .where('updated_at', '<=', Timestamp.fromMillis(end - notifyTime))
     .get()
 
+  // TODO map と filter をかける時は flatMap を使う
   const notificationDataList = await Promise.all(
     orderSnapshot.docs.map(async (orderDoc) => {
       const order = orderDoc.data()
       const userId = order.user_id
-      const [eventSnapshot, userSnapshot] = await Promise.all([
-        orderDoc.ref.parent.parent.get(),
-        db.collection('users').doc(userId).get(),
-      ])
-      const userData = userSnapshot.data()
-      return { eventSnapshot, userData }
+      const [eventSnapshot, userEmail] = await Promise.all([orderDoc.ref.parent.parent.get(), getUserEmail(userId)])
+      return { eventSnapshot, userEmail }
     }),
   )
 
@@ -845,8 +907,8 @@ async function sendInCartNotificationToMember(start, end) {
 
   Promise.all(
     filteredNotificationDataList.map(async (notificationData) => {
-      const { eventSnapshot, userData } = notificationData
-      return sgMail.send(buildInCartNotificationMail(eventSnapshot, userData))
+      const { eventSnapshot, userEmail } = notificationData
+      return sgMail.send(buildInCartNotificationMail(eventSnapshot, userEmail))
     }),
   )
 }
@@ -871,12 +933,11 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
           .filter((orderSnapshot) => orderSnapshot.get('status') === 'in_cart')
           .map(async (orderSnapshot) => {
             const orderData = orderSnapshot.data()
-            const userSnapshot = await db.collection('users').doc(orderData.user_id).get()
-            const userData = userSnapshot.data()
-            if (userData.user_email == null || userData.user_email === '') {
+            const userEmail = await getUserEmail(orderData.user_id)
+            if (userEmail == null || userEmail === '') {
               return
             }
-            mailContentList.push(buildInCartNotificationMail(eventSnapshot, userData))
+            mailContentList.push(buildInCartNotificationMail(eventSnapshot, userEmail))
           }),
       )
     }),
@@ -932,10 +993,10 @@ async function sendLetter(start, end) {
   })
 }
 
-function buildInCartNotificationMail(eventSnapshot, userData) {
+function buildInCartNotificationMail(eventSnapshot, to) {
   const eventData = eventSnapshot.data()
   return {
-    to: userData.user_email,
+    to,
     from: DEFAULT_FROM,
     templateId: IN_CART_NOTIFICATION_ID,
     dynamic_template_data: {
@@ -965,11 +1026,11 @@ export const polling = functions
     const end = Math.trunc(now / 60 / 1000) * 60 * 1000
     const start = end - 60 * 1000
     const one_day_millis = 24 * 60 * 60 * 1000
-    return Promise.all([
+
+    const promise_list = [
       sendOrderDeadlineMailToShop(start, end, false),
       sendOrderDeadlineMailToShop(start + one_day_millis, end + one_day_millis, true), // 1日前告知
-      sendOrderDeadlineMailToOrganizers(start, end, false),
-      sendOrderDeadlineMailToOrganizers(start + 3 * one_day_millis, end + 3 * one_day_millis, true), // 3日前告知
+      sendOrderDeadlineMailToOrganizers(start, end),
       sendOrderDeadlineMailToMembers(start, end),
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
@@ -978,7 +1039,15 @@ export const polling = functions
       sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis, false), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
       sendLetter(start, end),
-    ])
+    ]
+
+    // 3, 5, 10, 20, 30, 40, 50, 60日後にリマインドメールを送信
+    const orderRemindToOrganizerDays = [1, 5, 10, 20, 30, 40, 50, 60]
+    orderRemindToOrganizerDays.forEach((day) => {
+      promise_list.push(sendOrderRemindMailToOrganizer(start + day * one_day_millis, end + day * one_day_millis, day))
+    })
+
+    return Promise.all(promise_list)
   })
 
 export const event_information = functions
@@ -1086,12 +1155,7 @@ export const send_email = functions.region('asia-northeast1').https.onCall(async
     console.warn('send_email Invalid Argument Error', data, context)
     throw new functions.https.HttpsError('invalid-argument', 'Required data is missing')
   }
-  const [fromUser, toUser] = await Promise.all([
-    db.collection('users').doc(context.auth.uid).get(),
-    db.collection('users').doc(toUid).get(),
-  ])
-  const from = fromUser.get('user_email')
-  const to = toUser.get('user_email')
+  const [from, to] = await Promise.all([getUserEmail(context.auth.uid), getUserEmail(toUid)])
   if (from == null || to == null) {
     console.warn(`send_email user_email is null\nfrom: ${from}\nto: ${to}`)
     throw new functions.https.HttpsError('invalid-argument', 'Invalid email address')

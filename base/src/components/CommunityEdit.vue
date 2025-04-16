@@ -3,8 +3,9 @@ import { useI18n } from 'vue-i18n'
 import { useValidators } from '@/composable/validators'
 import ImageInput from '@/components/ImageInput.vue'
 import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { mdiListBoxOutline, mdiImage, mdiWeb, mdiLightbulbOnOutline, mdiAccountOutline } from '@mdi/js'
+import { mdiListBoxOutline, mdiImage, mdiWeb, mdiLightbulbOnOutline, mdiAccountOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
+import { trimHashTag } from '@/utils/hashTag'
 
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
@@ -23,6 +24,14 @@ const props = defineProps<{
 const isNew = computed(() => props.validateNewAccount != null)
 
 const isValid = ref(false)
+
+// ハッシュタグの値を監視してトリムする
+const community_sns_hash_tag = computed({
+  get: () => community.value.community_sns_hash_tag,
+  set: (value) => {
+    community.value.community_sns_hash_tag = trimHashTag(value)
+  },
+})
 
 const accountFieldRef = ref()
 const isCheckingAccount = ref(false)
@@ -149,13 +158,12 @@ const checkAccountExists = async (value: string) => {
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <SnsTextField
-              v-model="community.community_sns_facebook"
+            <v-text-field
+              v-model="community.community_sns_officialsite"
               outlined
               dense
-              :label="$t('community_edit.facebook')"
-              prefix="https://www.facebook.com/"
-            />
+              :label="$t('community_edit.officialsite')"
+            ></v-text-field>
           </v-col>
         </v-row>
       </v-card-text>
@@ -169,6 +177,20 @@ const checkAccountExists = async (value: string) => {
               dense
               :label="$t('community_edit.twitter')"
               prefix="https://x.com/"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <v-card-text class="pt-5">
+        <v-row>
+          <v-col cols="12">
+            <SnsTextField
+              v-model="community.community_sns_facebook"
+              outlined
+              dense
+              :label="$t('community_edit.facebook')"
+              prefix="https://www.facebook.com/"
             />
           </v-col>
         </v-row>
@@ -192,10 +214,11 @@ const checkAccountExists = async (value: string) => {
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="community.community_sns_officialsite"
+              v-model="community_sns_hash_tag"
               outlined
               dense
-              :label="$t('community_edit.officialsite')"
+              :label="$t('community_edit.hash_tag')"
+              prefix="#"
             ></v-text-field>
           </v-col>
         </v-row>
@@ -312,6 +335,40 @@ const checkAccountExists = async (value: string) => {
               rows="4"
               :label="$t('community_edit.use_purpose')"
               :rules="[requiredValidator]"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <!-- 請求書情報 -->
+      <v-card-title class="pt-10 pl-5">
+        <v-icon size="50" class="text--primary me-3" :icon="mdiAccountCreditCardOutline" />
+        {{ $t('community_edit.bill_info') }}
+      </v-card-title>
+      <v-card-text class="px-5 pb-10 text-body-2">
+        <div v-html="$t('community_edit.bill_info_hint')" />
+      </v-card-text>
+      <v-card-text class="pt-5">
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              v-model="community.community_bill_fullname"
+              outlined
+              dense
+              :label="$t('community_edit.bill_fullname')"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-card-text class="pt-5">
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              v-model="community.community_bill_email"
+              outlined
+              dense
+              :label="$t('community_edit.bill_email')"
+              :rules="[emailValidator]"
             />
           </v-col>
         </v-row>

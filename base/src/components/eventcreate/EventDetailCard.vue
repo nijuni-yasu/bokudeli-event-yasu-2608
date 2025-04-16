@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import BokudeliEvent, { eventPaymentItems } from '@/schemes/bokudeliEvent'
+import BokudeliEvent, { eventPaymentSelectableTypes } from '@/schemes/bokudeliEvent'
 import { useValidators } from '@/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
 import eventDetailStyle from '@/utils/eventDetailStyle'
+import { useCommunityStore } from '@/stores/community'
+import type { CommunityStore } from '@/stores/community'
+import { trimHashTag } from '@/utils/hashTag'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -16,13 +19,47 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-  },
+  }
 )
 
 const { t: $t } = useI18n()
 
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
+const communityStore = useCommunityStore(event.value.community_account) as CommunityStore
+
+const checkBillInfo = () => {
+  if (event.value.event_payment === 'community_bill') {
+    // 値がない場合のみ、コミュニティの請求情報を設定
+    if (!event.value.bill_fullname && communityStore.community?.community_bill_fullname) {
+      event.value.bill_fullname = communityStore.community.community_bill_fullname
+    }
+    if (!event.value.bill_email && communityStore.community?.community_bill_email) {
+      event.value.bill_email = communityStore.community.community_bill_email
+    }
+  }
+  if (event.value.event_payment === 'user_advance') {
+    event.value.bill_fullname = ''
+    event.value.bill_email = ''
+  }
+}
+
+
+watch(
+  () => event.value.event_payment,
+  () => {
+    checkBillInfo()
+  },
+  { immediate: true },
+)
+
+const eventPaymentSelectableItems = eventPaymentSelectableTypes.map((type) => {
+  return { title: $t(`payment.${type}`), value: type }
+})
+
+const textFieldVariant = computed(() => {
+  return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
+})
 
 const { requiredValidator, positiveIntegerValidator } = useValidators()
 const maxPeopleValidator = (v: number) => {
@@ -36,20 +73,32 @@ if (event.value.event_max_people == 0) {
   event.value.event_max_people = 25
 }
 
+// コミュニティのハッシュタグを設定。空の場合はコミュニティのハッシュタグを設定
+if (
+  (event.value.event_sns_hash_tag == null || event.value.event_sns_hash_tag === '') &&
+  communityStore.community?.community_sns_hash_tag != null
+) {
+  event.value.event_sns_hash_tag = communityStore.community.community_sns_hash_tag
+}
+// ハッシュタグの値を監視してトリムする
+const event_sns_hash_tag = computed({
+  get: () => event.value.event_sns_hash_tag,
+  set: (value) => {
+    event.value.event_sns_hash_tag = trimHashTag(value)
+  },
+})
+
 const tinymceInit = {
   language: 'ja',
-  plugins: 'table lists link autolink',
-  menubar: 'edit insert format',
-  menu: {
-    edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
-    insert: { title: 'Insert', items: 'image link inserttable hr' },
-    format: {
-      title: 'Format',
-      items: 'bold italic underline strikethrough styles forecolor  | language | removeformat',
-    },
-  },
+  plugins: 'lists link autolink',
+  menubar: false,
+  textcolor_map: ['#2E263DB3', '黒', '#FF4C51', '赤'],
+  textcolor_cols: 2,
+  custom_colors: false,
+  color_map_foreground: ['#2E263DB3', '黒', '#FF4C51', '赤'],
+  color_default_foreground: '#2E263DB3',
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | table link',
+  toolbar: 'undo redo heading bold strikethrough forecolor | bullist numlist | link',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },
@@ -157,6 +206,20 @@ const tinymceInit = {
         </v-col>
       </v-row>
     </v-card-text>
+    <v-card-text class="mt-3">
+      <v-row>
+        <v-col cols="12">
+          <v-text-field
+            v-model="event_sns_hash_tag"
+            outlined
+            dense
+            prefix="#"
+            :label="$t('event_detail.event_sns_hash_tag')"
+            :hint="$t('event_detail.event_sns_hash_tag_hint')"
+          />
+        </v-col>
+      </v-row>
+    </v-card-text>
 
     <!-- Activity -->
     <v-card-title class="pt-10 px-5">
@@ -170,32 +233,67 @@ const tinymceInit = {
           <span v-else>{{ $t('event_detail.private') }}</span>
         </template>
       </v-switch>
-      <div class="mt-2 text-subtitle-2">
+      <div class="mt-2 text-subtitle-1">
         <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
         <span v-else>{{ $t('event_detail.private_desc') }}</span>
       </div>
     </v-card-text>
+
+    <!-- 支払い設定 -->
     <v-card-title class="pt-10 px-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountCreditCardOutline" />
       {{ $t('event_detail.payment') }}
     </v-card-title>
     <v-card-text>
-      <v-col cols="12" sm="12" md="6">
-        <v-select
-          v-model="event.event_payment"
-          variant="solo-filled"
-          readonly
-          :items="eventPaymentItems"
-          hide-details
-          class="mt-0"
-          :rules="[requiredValidator]"
-        >
-          <template #label> {{ $t('event_detail.payment') }} </template>
-        </v-select>
-      </v-col>
-      <div class="mt-2 text-subtitle-2">
-        <span v-html="$t('event_detail.payment_hint')" />
-      </div>
+      <v-row>
+        <v-col cols="12" sm="12" md="6">
+          <v-select
+            v-model="event.event_payment"
+            :items="eventPaymentSelectableItems"
+            :variant="textFieldVariant"
+            hide-details
+            class="mt-0"
+            :rules="[requiredValidator]"
+            :readonly="event.event_status.value !== 'in_draft'"
+          >
+            <template #label> {{ $t('event_detail.payment') }} </template>
+          </v-select>
+        </v-col>
+      </v-row>
+      <template v-if="event.event_payment === 'community_bill'">
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field
+              v-model="event.bill_fullname"
+              :variant="textFieldVariant"
+              dense
+              :label="$t('shop_notice.bill_fullname')"
+              :rules="[requiredValidator]"
+              :readonly="event.event_status.value !== 'in_draft'"
+            />
+          </v-col>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="12">
+            <v-text-field
+              v-model="event.bill_email"
+              :variant="textFieldVariant"
+              dense
+              :label="$t('shop_notice.bill_email')"
+              :rules="[requiredValidator, emailValidator]"
+              :readonly="event.event_status.value !== 'in_draft'"
+            />
+          </v-col>
+        </v-row>
+        <v-card-text class="text-subtitle-1">
+          <span v-html="$t('event_detail.payment_hint_community_bill')" />
+        </v-card-text>
+      </template>
+      <template v-if="event.event_payment === 'user_advance'">
+        <v-card-text class="text-subtitle-1">
+          <span v-html="$t('event_detail.payment_hint_user_advance')" />
+        </v-card-text>
+      </template>
     </v-card-text>
     <slot />
   </v-card>

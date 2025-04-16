@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiContentCopy, mdiCloseCircle, mdiMagnify, mdiSend } from '@mdi/js'
+import { mdiContentCopy, mdiCloseCircle, mdiSend } from '@mdi/js'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useEventStore } from '@/stores/event'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
@@ -57,28 +57,34 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
   <v-dialog v-model="model" :width="$vuetify.display.smAndDown ? 'auto' : 650" persistent>
     <v-card v-if="event != null" class="px-sm-15 py-sm-9 pa-2 pre-line">
       <v-card-title class="text-center text-h3">注文完了🎉</v-card-title>
-      <v-card-text class="text-center text-h5 px-0 py-3">
-        参加申し込みが完了しました！
-      </v-card-text>
+      <v-card-text class="text-center text-h5 px-0 py-3"> 参加申し込みが完了しました！ </v-card-text>
       <div class="mx-4">
         <v-img class="mx-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
-        <v-card-text class="text-left pb-1 px-0"
-          >🌟
-          <a :href="event.url" target="_blank">
-            {{ event.event_name }}
-          </a>
+        <v-card-text class="text-left pb-3 px-0 text-h5">
+          {{ event.event_name }}
         </v-card-text>
         <v-card-text class="text-left pb-1 px-0">
-          📅 {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
+          📅 日時： {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
             $d(event.event_end_datetime.toDate(), 'time')
           }}
         </v-card-text>
         <v-card-text class="text-left pb-1 px-0">
-          ⏳ {{ $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short') }} に注文締切
+          ⏳ 期限： {{ $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short') }} に注文締切
         </v-card-text>
-        <v-card-text class="text-left pb-1 px-0">📍 {{ event.event_address }} </v-card-text>
-        <v-card-text class="text-left pb-1 px-0">👥 {{ event.community_name }}</v-card-text>
-        <v-card-text class="text-left pb-1 px-0">🍱 {{ event.shop_name }}</v-card-text>
+        <v-card-text class="text-left pb-1 px-0">
+          📍 場所： {{ event.event_address }} {{ event.event_place }}
+        </v-card-text>
+        <v-card-text class="text-left pb-1 px-0">👥 主催： {{ event.community_name }}</v-card-text>
+        <v-card-text class="text-left pb-1 px-0">👩‍🍳 食事： {{ event.shop_name }}</v-card-text>
+        <v-card-text
+          v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''"
+          class="text-left pb-1 px-0"
+        >
+          #️⃣ ハッシュタグ：
+          <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
+            #{{ event.event_sns_hash_tag }}
+          </a>
+        </v-card-text>
         <v-row>
           <v-card-text class="text-center mt-3">
             <v-btn
@@ -89,23 +95,11 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
               rounded="pill"
               @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
             >
-             X で参加予定をシェアする
+              X で参加予定をシェアする
             </v-btn>
           </v-card-text>
         </v-row>
         <v-card-text class="text-center px-0 py-1">
-          <v-btn
-            :prepend-icon="mdiMagnify"
-            class="mx-1 text-lowercase"
-            size="small"
-            color="grey-600"
-            rounded="pill"
-            variant="text"
-            href="https://x.com/search?q=%23shokujii&src=typed_query&f=live"
-            target="_blank"
-          >
-            #shokujiiを見る
-          </v-btn>
           <v-btn
             :prepend-icon="mdiContentCopy"
             class="mx-1"

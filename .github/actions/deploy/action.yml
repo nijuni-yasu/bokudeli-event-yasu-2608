@@ -1,0 +1,33 @@
+name: Deploy to Firebase
+inputs:
+  firebase_tools_version:
+    description: 'The version of the Firebase CLI to install'
+    required: false
+    default: '13.35.1'
+  project_id:
+    description: 'The Firebase project ID'
+    required: true
+  service_key:
+    description: 'The Firebase service account key'
+    required: true
+  args:
+    description: 'The arguments to pass to the Firebase CLI'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Firebase CLI
+      shell: bash
+      # Standalone binary has some issues with deployment, so we use the npm package
+      # run: curl -sL https://firebase.tools | bash
+      run: npm install -g firebase-tools@${{ inputs.firebase_tools_version }}
+    - name: Deploy to Firebase
+      shell: bash
+      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
+      run: |
+        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
+        echo '${{ inputs.service_key }}' > $GOOGLE_APPLICATION_CREDENTIALS
+        firebase use ${{ inputs.project_id }}
+        firebase deploy ${{ inputs.args }}
+        rm $GOOGLE_APPLICATION_CREDENTIALS

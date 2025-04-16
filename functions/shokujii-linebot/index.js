@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import functions from 'firebase-functions';
+import functions from 'firebase-functions/v1'
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { initializeFirestore } from 'firebase-admin/firestore';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
@@ -261,15 +261,7 @@ export const broadcast_event_message_request = functions
 
 export const line_event_information = functions
   .region('asia-northeast1')
-  .pubsub.schedule('3 21 * * 0') // 日曜日の21時03分
-  .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
-  .onRun(() => {
-    return Promise.all([broadcastEventConcludedMessage()])
-  })
-
-export const line_event_information_wednesday = functions
-  .region('asia-northeast1')
-  .pubsub.schedule('3 9 * * 3') // 水曜日の09時03分
+  .pubsub.schedule('15 12 * * 5') // 金曜日の12時15分
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
   .onRun(() => {
     return Promise.all([broadcastEventConcludedMessage()])

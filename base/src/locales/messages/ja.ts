@@ -13,10 +13,11 @@ export default {
   email_message: 'メッセージ',
   latitude: '緯度',
   longitude: '経度',
+  copied_to_clipboard: 'クリップボードにコピーしました',
   payment: {
     user_advance: '参加者 事前決済 💳',
-    user_on_day: '参加者 当日払い 💸',
-    community_bill: '主催者支払い 💰',
+    user_on_day: '参加者 当日払い 💰',
+    community_bill: '主催者 請求書払い 📄',
   },
   event_status: {
     in_draft: '下書き',
@@ -43,7 +44,7 @@ export default {
     community_name: '【主催】{0}',
     date: '【日時】{0}〜{1}',
     place: '【場所】{0}',
-    shop: '【お店】{0}',
+    shop: '【食事】{0}',
     participants: '【参加】{0}人 / {1}人',
   },
   event_details: {
@@ -53,8 +54,9 @@ export default {
     shop: '👩‍🍳 食事の提供',
     payment: '💰 支払い方法',
     deadline: '⏳ 注文期限',
-    cancel: '↩️ キャンセル',
+    cancel: '🔙 キャンセル',
     cancel_until_deadline: '注文期限までキャンセル可',
+    sns_hash_tag: '#️⃣ ハッシュタグ',
     event_details: '開催内容',
     participants: '参加者',
     participants_profile: '参加者プロフィール',
@@ -90,6 +92,11 @@ export default {
     event_not_found: 'イベントが見つかりません。',
     order_and_attend_event: '注文してイベントに参加する',
     no_items_in_cart: 'カートに商品はありません。',
+  },
+  cart_dialog: {
+    add: 'カートに追加',
+    close: '閉じる',
+    login: 'ログインして注文する',
   },
   event_create_modal: {
     title: 'イベントを作成しよう',
@@ -173,6 +180,11 @@ export default {
             `,
     ok_text: 'コミュニティを新規作成する',
   },
+  community_bio_panel: {
+    contact: 'お問い合わせ',
+    manager: 'Manager',
+    member: 'Member',
+  },
   community_edit: {
     title: 'コミュニティ設定',
     account: 'コミュニティURL',
@@ -187,6 +199,7 @@ export default {
     twitter: 'X(Twitter)',
     instagram: 'Instagram',
     officialsite: '公式サイト',
+    hash_tag: 'ハッシュタグ',
     public_setting: '公開設定',
     public: '公開コミュニティ',
     manager_info: '運営者情報',
@@ -195,6 +208,16 @@ export default {
     company_name: '会社名・団体名',
     use_purpose: '利用目的',
     validator_account_exists: 'このアカウントIDは既に使用されています',
+    bill_info: '請求先情報',
+    bill_info_hint: `「主催者 請求書払い」を利用される場合、請求先を設定してください。<br />
+      「主催者 請求書払い」を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文でき、<br>
+      弊社より主催者様に請求書を発行いたします。請求書のお支払い期限は翌月末日となっております。`,
+    bill_fullname: '請求先 担当者名',
+    bill_email: '請求先 メールアドレス',
+  },
+  event_edit:{
+    back: '前へ',
+    next: '次へ',
   },
   event_basic_info: {
     place: '開催場所',
@@ -229,14 +252,22 @@ export default {
     deadline_minute: '分',
     event_max_people: '定員数',
     event_max_people_hint: '※イベント参加できる最大の定員数を設定してください。',
+    event_sns_hash_tag: 'ハッシュタグ',
+    event_sns_hash_tag_hint: '※SNS投稿時のハッシュタグを設定してください。',
     activity: '公開設定',
     public: '公開イベント',
     private: '限定公開イベント',
-    public_desc: '※「公開イベント」はTOPページに一覧表示されます。',
-    private_desc: '※「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。',
+    public_desc: '「公開イベント」はTOPページに一覧表示されます。',
+    private_desc: '「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
-    payment_hint: `※支払い設定は「参加者 事前決済」と「主催者 請求書払い」があります。<br />
-      「主催者 請求書払い」を設定されたい場合は、サポートまでお問い合わせください。`,
+    payment_hint_user_advance: `支払い設定は<b>「参加者 事前決済」</b>と<b>「主催者 請求書払い」</b>から選択いただけます。<br />
+      <b>「参加者 事前決済」</b>を設定した場合、参加者はクレジットカード決済にて事前にお支払いいただきます。<br />
+      支払い設定は予約申請後、変更できません。`,
+    payment_hint_community_bill: `<b>「主催者 請求書払い」</b>を設定した場合、<br />
+    ・参加者はクレジットカードによる事前決済せずにご注文いただけます。<br />
+    ・イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
+    ・お支払い期限は翌月末日です。<br />
+    ・支払い設定は予約申請後、変更できません。`,
     error_max_people: 'すでに{0}人の予約が入っています',
   },
   shop_notice: {
@@ -261,6 +292,9 @@ export default {
     organizer_memo: '配達受取場所について',
     organizer_memo_placeholder:
       'XXXXビルに付きましたら、搬入口からOOFまでお上がりください。&#x0a;到着したらお電話ください。よろしくお願いします。',
+    bill_title: '請求先情報',
+    bill_fullname: '請求先 担当者名',
+    bill_email: '請求先 メールアドレス',
     preview_draft: '下書きをプレビューする',
     save_event: 'イベントを保存する',
     send_reserve_mail: 'お店に予約申請する',
@@ -275,7 +309,7 @@ export default {
     community_name: '【主催】{0}',
     event_start_datetime: '【日時】{0} 〜',
     event_address: '【場所】{0}',
-    shop_name: '【お店】{0}',
+    shop_name: '【食事】{0}',
     menu: '【注文内容】',
     menu_item: '{0} <span class="text-caption">({1}個)</span>',
     total_price: '【注文金額】{0}',
@@ -305,7 +339,7 @@ export default {
     phone: '有効な電話番号を入力してください',
     email: '有効なメールアドレスを入力してください',
     account:
-      '5文字以上15文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
+      '3文字以上20文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
   },
   invoice_error_card: {

@@ -1,0 +1,63 @@
+name: Deploy user
+
+on:
+  push:
+    branches:
+      - production
+      - development
+    paths:
+      - "user/**"
+      - "base/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - development
+          - production
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    # push のときだけ GITHUB_REF_NAME を使う（workflow_dispatch のときは inputs.environment を使う）
+    # 可読性に欠けるが、うまい手がみつからない
+    environment: ${{ github.event_name == 'push' && (github.ref_name == 'production' && 'production' || github.ref_name == 'development' && 'development') || inputs.environment }}
+    env:
+      # environment の値を動的に取得する方法がないため、再度 env に同じ値を設定する
+      # TODO Reusable workflow 等を使用して二重定義を解消する
+      ENVIRONMENT: ${{ github.event_name == 'push' && (github.ref_name == 'production' && 'production' || github.ref_name == 'development' && 'development') || inputs.environment }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./user
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./user/.node-version
+          cache: "yarn"
+          cache-dependency-path: ./user/yarn.lock
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+      - name: Generate .env file
+        run: |
+          echo '${{ vars.USER_ENV }}' | tr -d '\r' > .env
+      - name: Build
+        run: |
+          yarn run build-${ENVIRONMENT}
+      - name: Deploy to Firebase
+        uses: ./.github/actions/deploy
+        with:
+          project_id: ${{ vars.PROJECT_ID }}
+          service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+          args: "--only hosting:user"

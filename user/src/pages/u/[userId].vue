@@ -16,7 +16,6 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { getCommunityPath, getEventPath, getInvoicePath } from '@/router/utils'
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { fixCancelOrder } from '@/composable/fixOrder'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getInvoicePdf } from '@/utils/invoice'
@@ -115,7 +114,8 @@ const cancel = async (order: OrderItem) => {
       Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
     } else if (order.event_payment == 'user_on_day' || order.event_payment == 'community_bill') {
       // それ以外は事前決済してないのでStripeの返金処理はなし
-      fixCancelOrder(order)
+      const eventStore = useEventStore(order.event_id)
+      eventStore.updateOrderStatus(order, 'canceled')
       orderSnapshots.value = await fetchOrders()
       Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
     }

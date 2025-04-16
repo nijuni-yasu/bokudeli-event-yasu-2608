@@ -13,6 +13,7 @@ export default {
     'manage_community': 'コミュニティ管理',
     'guide_top': 'コミュニティガイド',
     'guide_announce': '告知・集客のコツ',
+    'canva_template': 'カバー画像テンプレ',
   },
   'top': {
     'popular_events': '人気のイベント',
@@ -75,6 +76,20 @@ export default {
         'ordered': '注文日時',
         'in_cart': 'カート追加日時',
         'canceled': 'キャンセル日時',
+      },
+      'add_manager_dialog': {
+        'title': '{0} を管理者に追加する',
+        'description': '{0} をコミュニティ管理者に追加しますか？<br />コミュニティ管理者にすると、コミュニティの管理、イベントの作成・編集・削除などが行えるようになります。',
+        'submit': '追加',
+        'notification': 'コミュニティ管理者に追加しました',
+        'error': 'コミュニティ管理者の追加に失敗しました',
+      },
+      'remove_manager_dialog': {
+        'title': '{0} を管理者から解除する',
+        'description': '{0} をコミュニティ管理者から解除しますか？<br />コミュニティ管理者でなくなると、コミュニティの管理、イベントの作成・編集・削除などが行えなくなります。',
+        'submit': '解除',
+        'notification': 'コミュニティ管理者から解除しました',
+        'error': 'コミュニティ管理者の解除に失敗しました',
       }
     },
     'letter': {
@@ -113,12 +128,19 @@ export default {
         'to_draft': '下書きに戻す',
       }
     },
+    'community_manager_invitation': {
+      'title': 'URL を発行して、追加するメンバーに権限を付与します',
+      'description': '発行したURLは1週間有効で、利用されると無効になります。',
+      'generate': '招待URLを発行',
+      'failed': 'URL の発行に失敗しました',
+    },
     'slack': {
       'description': `<b>shokujii の SlackApp を追加</b>すると<br/>
                       <b>「🍽 参加者の注文通知」 「📅 注文期限のリマインド」 「🕛 イベント開始のリマインド」</b>
                       などの通知をSlackで受け取ることができます。<br/>
                       例えば、参加者の注文通知で<b>「自分も参加してみようかな？」</b>を促したり、注文期限のリマインドで<b>「主催者からの声がけを自動化」</b>できたり、<br/>
-                      食事会への盛り上がりを自然に演出することで、告知・集客やイベント運営をよりスムーズに行うことが可能です。<br/>`,
+                      食事会への盛り上がりを自然に演出することで、告知・集客やイベント運営をよりスムーズに行うことが可能です。<br/>
+                      詳細については <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携について</a> もご確認ください。</b>`,
       'setup': '設定方法',
       'step1': 'STEP1',
       'step1_desc': `下記リンクをクリックして、shokujii の SlackApp をコミュニティのワークスペースにインストール`,
@@ -128,7 +150,7 @@ export default {
       'step3': 'STEP3',
       'step3_desc': `SlackAppを追加したチャンネルを開いて、以下のコマンドを<b>コピーして送信！<b>`,
       'step4': '完了🎉',
-      'step4_desc': `<b>「参加者の注文通知」「注文期限のリマインド」「イベント開始のリマインド」</b><br>
+      'step4_desc': `<b>「参加者の注文通知」「注文期限のリマインド」「参加者確定のお知らせ」「イベント開始のリマインド」「イベント終了のお知らせ」</b><br>
                     などがSlackのチャンネルで通知されるようになります。`,
       'step5': '解除🔓',
       'step5_desc': `設定を解除したい場合は、以下コマンドを設定したチャンネルで送信してください。`,
