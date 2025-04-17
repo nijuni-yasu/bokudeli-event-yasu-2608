@@ -29,6 +29,10 @@ const instagramUrl = computed(() =>
 const officialSiteUrl = computed(() =>
   props.community.community_sns_officialsite ? props.community.community_sns_officialsite : undefined,
 )
+// コミュニティの設定によってはメンバー一覧を非表示にする
+const isShowMember = computed(() =>
+  props.community.is_show_member !== undefined ? props.community.is_show_member : true
+)
 </script>
 
 <template>
@@ -89,7 +93,8 @@ const officialSiteUrl = computed(() =>
     </div>
 
     <!-- community member -->
-    <div v-if="members != null">
+    <!-- コミュニティの設定によってはメンバー一覧を非表示にする -->
+    <div v-if="members !== null && isShowMember === true">
       <v-card-title class="justify-center text-h6 mt-7 d-flex align-center text-primary">
         <v-icon :icon="mdiAccountGroup" size="22" class="mr-1" />
         {{ $t('community_bio_panel.member') }}

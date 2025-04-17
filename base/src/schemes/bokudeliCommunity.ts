@@ -26,6 +26,7 @@ class BokudeliCommunity {
   is_public: boolean = true
   updated_at: Timestamp | null = null
   subdomain_tags: string[] = []
+  is_show_member: boolean = true
 
   members: DocumentReference[] = []
   community_num_members: number = 0
