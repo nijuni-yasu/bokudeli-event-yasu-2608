@@ -60,6 +60,8 @@ export default {
     event_details: '開催内容',
     participants: '参加者',
     participants_profile: '参加者プロフィール',
+    participants_profile_hidden: '※参加者プロフィールは非表示です',
+    order_count: '（{0}個）',
     community_name: '【主催者】',
     contact_community: '主催者に連絡',
     contact_community_after_login: 'ログインした後に主催者に連絡してください。',
