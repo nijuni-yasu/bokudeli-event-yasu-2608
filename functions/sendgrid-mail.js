@@ -5,7 +5,7 @@ import ja from 'date-fns/locale/ja'
 import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
 import { makeIcs } from './make-ics.js'
-import { getCommunityUrl, getEventUrl, getOrderUrl, getUserUrl, getManageEventMemberUrl } from './utils/urls.js'
+import { getCommunityUrl, getEventUrl, getOrderUrl, getUserUrl, getManageEventMemberUrl, getManageCommunityUrl } from './utils/urls.js'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
@@ -27,6 +27,7 @@ const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7
 const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
 const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
+const COMMUNITY_ADD_ID = 'd-d116c6b010214d2b92a2421411a508d2'
 
 const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
 
@@ -782,23 +783,30 @@ async function sendShopOpenMailToSupport(shopSnapshot) {
   })
 }
 
-async function sendNewCommunityRequestMailToSupport(communitySnapshot) {
-  const communityId = communitySnapshot.id
-  const communityName = communitySnapshot.get('community_name')
-  const communityAccount = communitySnapshot.get('community_account')
-  // TODO これ以上複雑になるようなら、テンプレートを使う
-  const subject = `「${communityName}」コミュニティが新規申請されました`
-  const text =
-    `【ID】 ${communityId}\n` +
-    `【コミュニティ名】 ${communityName}\n` +
-    `【コミュニティID】 ${communityAccount}\n` +
-    `【コミュニティページURL】 ${getCommunityUrl(communityAccount)}`
-  return sgMail.send({
-    to: DEFAULT_TO,
-    from: DEFAULT_FROM,
-    subject,
-    text,
-  })
+async function sendCommunityAddedMailToOrganizer(templateId, communitySnapshot) {
+  const emails = await getCommunityEmails(communitySnapshot.id)
+  if (!emails.includes(SUPPORT_MAIL)) {
+    emails.push(SUPPORT_MAIL)
+  }
+  const community_account = communitySnapshot.get('community_account')
+  const community_name = communitySnapshot.get('community_name')
+  const community_url = getCommunityUrl(community_account)
+  const community_manage_url = getManageCommunityUrl(community_account)
+  return Promise.all(
+    emails.map(async (to) => {
+      await sgMail.send({
+        to,
+        from: DEFAULT_FROM,
+        templateId,
+        dynamic_template_data: {
+          community_account,
+          community_name,
+          community_url,
+          community_manage_url,
+        },
+      })
+    }),
+  )
 }
 
 async function sendCommunityContactMailToOrganizers(templateId, data) {
@@ -1131,7 +1139,7 @@ export const community_added = functions
   .region('asia-northeast1')
   .firestore.document('communities/{communityId}')
   .onCreate(async (snapshot) => {
-    return sendNewCommunityRequestMailToSupport(snapshot)
+    return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, snapshot)
   })
 
 export const community_contact = functions.region('asia-northeast1').https.onCall((data, context) => {
