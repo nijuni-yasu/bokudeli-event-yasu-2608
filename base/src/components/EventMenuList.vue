@@ -1,88 +1,41 @@
 <script setup lang="ts">
-import { db } from '@/firebase'
-import { convertDocumentDataToMenu, dateString, priceString } from '@/schemes/converter'
+import { priceString } from '@/schemes/converter'
 import { type PartnerMenu } from '@/schemes/partnerMenu'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { collection, getDocs } from 'firebase/firestore'
-import { parseISO, compareDesc } from 'date-fns'
 import { mdiFoodForkDrink } from '@mdi/js'
 
-const props = defineProps<{
-  event: BokudeliEvent
+defineProps<{
+  menus: PartnerMenu[] | null
   disabled: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'selectMenu', menu: PartnerMenu): void
 }>()
-
-const menus = ref<PartnerMenu[] | null>(null)
-const isLoading = ref(true)
-
-const eventStartDatetime = computed(() => {
-  return props.event.event_start_datetime?.toDate() ?? null
-})
-
-const partnerDb = collection(db, 'partners')
-const loadMenuData = async (partnerId: string) => {
-  const menuSnapshot = await getDocs(collection(partnerDb, partnerId, 'menus'))
-  const menus = menuSnapshot.docs.map((doc) => convertDocumentDataToMenu(partnerId, doc.id, doc.data()))
-
-  // 期間限定メニューをフィルタリング
-  const withinDateMenus = menus.filter((menu) => {
-    // 期間設定がない場合はreturn
-    if (!menu.dateStart || !menu.dateEnd) {
-      return true
-      // 期間設定がある場合、イベントの日付と比較
-    } else {
-      const eventStartDate = parseISO(dateString(eventStartDatetime.value))
-      const dateStart = parseISO(menu.dateStart)
-      const dateEnd = parseISO(menu.dateEnd)
-      return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
-    }
-  })
-  withinDateMenus.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0))
-
-  return withinDateMenus
-}
-
-const fetchData = async () => {
-  menus.value = await loadMenuData(props.event.partner_id)
-  isLoading.value = false
-}
-
-onBeforeRouteUpdate(async (to, from, next) => {
-  await fetchData()
-  next()
-})
-
-onMounted(async () => {
-  await fetchData()
-})
 </script>
 <template>
   <section>
-    <v-row v-if="!isLoading && menus !== null">
+    <v-row v-if="menus !== null">
       <v-col v-for="(menu, i) of menus" :key="`menu_${i}`" md="4" sm="6" cols="12" class="pa-3">
         <v-card class="mb-1" color="text-center">
-          <v-img :src="menu.imageUrl ?? undefined" aspect-ratio="1" cover />
+          <v-row no-gutters>
+            <v-col cols="6" sm="12" class="d-flex">
+              <v-img :src="menu.imageUrl ?? undefined" aspect-ratio="1" cover />
+            </v-col>
 
-          <!-- title -->
-          <v-card-title class="justify-center pb-3 text-wrap">
-            {{ menu.name }}
-          </v-card-title>
-          <v-card-text class="text-left pb-8">
-            {{ menu.description }}
-          </v-card-text>
-          <v-card-text class="text-right pb-2">
-            <span style="font-size: 14px; color: #3a3541de">¥ </span>
-            <span style="font-size: 20px; color: #3a3541de">{{ priceString(menu.price) }}</span>
-          </v-card-text>
-          <v-row class="justify-center">
-            <v-col class="text-center">
+            <v-col cols="6" sm="12" class="pa-2 d-flex flex-column">
+              <v-card-title class="justify-start text-wrap px-1 py-0 pa-sm-1">
+                {{ menu.name }}
+              </v-card-title>
+              <v-card-text class="text-left text-subtitle-2 text-wrap text-sm-no-wrap px-1 py-0 pa-sm-1">
+                {{ menu.description }}
+              </v-card-text>
+              <v-spacer />
+              <v-card-text class="text-right px-1 pt-2 pb-0 pa-sm-1">
+                <span style="font-size: 14px; color: #3a3541de">¥ </span>
+                <span style="font-size: 20px; color: #3a3541de">{{ priceString(menu.price) }}</span>
+              </v-card-text>
               <v-btn
-                style="font-size: 16px"
-                class="mt-2 mb-5"
+                class="menu-button"
                 :class="{ 'disable-menu-button': disabled || menu.isSoldout === true }"
                 color="primary"
                 rounded="pill"
@@ -112,5 +65,26 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .disable-menu-button {
   opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  .menu-button {
+    font-size: 13px !important;
+    height: 30px !important;
+    margin: 10px 10px 5px 10px !important;
+  }
+  .text-sm-no-wrap {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+
+@media (min-width: 601px) {
+  .menu-button {
+    font-size: 14px !important;
+    height: 32px !important;
+    margin: 10px 20px 5px 20px !important;
+  }
 }
 </style>

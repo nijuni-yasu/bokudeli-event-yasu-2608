@@ -249,7 +249,7 @@ const inviteManager = async () => {
                   【期限】{{ dateWithDayOfWeekString(event.event_deadline_datetime) }}
                 </v-card-text>
                 <v-card-text class="text-left pb-2 px-2"> 【場所】{{ event.event_address }} </v-card-text>
-                <v-card-text class="text-left pb-2 px-2"> 【お店】 {{ event.shop_name }} </v-card-text>
+                <v-card-text class="text-left pb-2 px-2"> 【食事】 {{ event.shop_name }} </v-card-text>
                 <v-card-text class="text-left pb-5 px-2"> 【定員】{{ event.event_max_people }} 人 </v-card-text>
               </v-card>
               <v-row v-if="isManager" class="justify-end my-2 mr-1">

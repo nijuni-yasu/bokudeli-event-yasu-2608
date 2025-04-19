@@ -1,29 +1,39 @@
 import { type Ref } from 'vue'
-import { db } from '@/firebase'
+import { db, functions } from '@/firebase'
+import { httpsCallable } from 'firebase/functions'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
-  doc,
   collection,
   collectionGroup,
   getDocs,
-  addDoc,
-  setDoc,
   updateDoc,
   query,
   where,
   onSnapshot,
   Timestamp,
-  deleteDoc,
   DocumentReference,
   DocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
 import { uploadEventImage } from '@/composable/uploadImage'
-import { convertDocumentDataToEvent } from '@/schemes/converter'
+import { convertDocumentDataToEvent, convertDocumentDataToMenu } from '@/schemes/converter'
 import type { Store, StateTree } from 'pinia'
 import { type OrderItem } from '@/schemes/orderItem'
 import { type EventMember } from '@/schemes/EventMember'
+import type { PartnerMenu } from '@/schemes/partnerMenu'
 import { useUserStore, type UserStore } from './user'
+
+const add_order = httpsCallable<Partial<OrderItem>, { order_id: string }>(functions, 'add_order')
+const delete_order = httpsCallable<{ community_id: string; event_id: string; order_id: string; menu_id: string }>(
+  functions,
+  'delete_order',
+)
+const update_order_status = httpsCallable<{
+  community_id: string
+  event_id: string
+  order_id: string
+  status: OrderItem['status']
+}>(functions, 'update_order_status')
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -36,6 +46,7 @@ class EventRefUpdatedEvent extends Event {
 
 type EventStoreState = {
   event: Ref<BokudeliEvent | null>
+  exists: Ref<boolean | null>
   /**
    * 未注文のものを含む注文リスト
    */
@@ -44,6 +55,7 @@ type EventStoreState = {
    * 注文確定済みリスト
    */
   confirmedOrders: Ref<OrderItem[] | null>
+  menus: Ref<PartnerMenu[] | null>
 } & StateTree
 
 type EventStoreGetters = {
@@ -56,8 +68,12 @@ type EventStoreGetters = {
 type EventStoreAction = {
   updateEvent: (data: BokudeliEvent) => Promise<void>
   updateCoverImage: (coverImage: File) => Promise<void>
-  addOrder: (data: Partial<OrderItem>) => Promise<DocumentReference | null>
-  updateOrder: (id: string, data: Partial<OrderItem>) => Promise<void>
+  addOrder: (data: Partial<OrderItem>) => Promise<string>
+  deleteOrder: (order: { community_id: string; event_id: string; order_id: string }, menu_id: string) => Promise<void>
+  updateOrderStatus: (
+    order: { community_id: string; event_id: string; order_id: string },
+    status: OrderItem['status'],
+  ) => Promise<void>
   deleteEvent: () => Promise<void>
   subscribe: () => Promise<void>
   unsubscribe: () => void
@@ -80,11 +96,15 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
       const event = ref<BokudeliEvent | null>(null)
       const _orders = ref<OrderItem[] | null>(null)
       const _members = ref<{ user_id: string; store: UserStore }[] | null>(null)
+      const _menus = ref<PartnerMenu[] | null>(null)
       const _eventRef = ref<DocumentReference | null>(null)
 
       const onEventUpdated = (doc: DocumentSnapshot) => {
-        exists.value = doc.exists()
         const data = doc.data()
+        exists.value = data?.is_deleted ? false : doc.exists()
+        if (exists.value === false) {
+          return
+        }
         event.value = data ? convertDocumentDataToEvent(data) : null
         _eventRef.value = doc.ref
         _members.value =
@@ -133,6 +153,13 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
           subscribeOrders(eventRef)
         })
         return _orders.value
+      })
+
+      const menus = computed<PartnerMenu[] | null>(() => {
+        getEventRef().then((eventRef) => {
+          subscribeMenus(eventRef)
+        })
+        return _menus.value
       })
 
       const confirmedOrders = computed<OrderItem[] | null>(() => {
@@ -195,21 +222,27 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         return await updateDoc(eventRef, data)
       }
 
-      const addOrder = async (data: Partial<OrderItem>): Promise<DocumentReference | null> => {
-        const eventRef = await getEventRef()
-        const addedDoc = await addDoc(collection(eventRef, 'orders'), data)
-        await setDoc(addedDoc, { order_id: addedDoc.id }, { merge: true })
-        return addedDoc
+      const addOrder = async (data: Partial<OrderItem>): Promise<string> => {
+        const response = await add_order(data)
+        return response.data.order_id
       }
 
-      const updateOrder = async (id: string, data: Partial<OrderItem>): Promise<void> => {
-        const eventRef = await getEventRef()
-        const orderRef = doc(eventRef, 'orders', id)
-        await updateDoc(orderRef, data)
+      const deleteOrder = async (
+        order: { community_id: string; event_id: string; order_id: string },
+        menu_id: string,
+      ): Promise<void> => {
+        await delete_order({ ...order, menu_id })
+      }
+
+      const updateOrderStatus = async (
+        order: { community_id: string; event_id: string; order_id: string },
+        status: OrderItem['status'],
+      ): Promise<void> => {
+        await update_order_status({ ...order, status })
       }
 
       const deleteEvent = async (): Promise<void> => {
-        return deleteDoc(await getEventRef())
+        return updateDoc(await getEventRef(), { is_deleted: true })
       }
 
       let unsubscribeEvent: Unsubscribe | null = null
@@ -233,6 +266,19 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         }
       }
 
+      let unsubscribeMenus: Unsubscribe | null = null
+      const subscribeMenus = (eventRef: DocumentReference) => {
+        if (unsubscribeMenus == null) {
+          const menusRef = collection(eventRef, 'menus')
+          unsubscribeMenus = onSnapshot(menusRef, (menusSnapshot) => {
+            const partnerId = event.value?.partner_id
+            if (partnerId != null) {
+              _menus.value = menusSnapshot.docs.map((m) => convertDocumentDataToMenu(partnerId, m.id, m.data()))
+            }
+          })
+        }
+      }
+
       let retry = 0
       const subscribe = () =>
         getDocs(query(collectionGroup(db, 'events'), where('event_id', '==', eventId))).then((querySnapshot) => {
@@ -245,6 +291,7 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
               window.setTimeout(subscribe, 500)
               return
             }
+            exists.value = false
             throw new Error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
           }
           retry = 0
@@ -270,13 +317,16 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
 
       return {
         event,
+        exists,
         orders,
         confirmedOrders,
         members,
+        menus,
         updateEvent,
         updateCoverImage,
         addOrder,
-        updateOrder,
+        deleteOrder,
+        updateOrderStatus,
         deleteEvent,
         subscribe,
         unsubscribe,

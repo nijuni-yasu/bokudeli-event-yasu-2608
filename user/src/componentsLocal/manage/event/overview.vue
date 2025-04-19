@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventStore, type EventStore } from '@/stores/event'
 import EventCard from '@/components/EventCard.vue'
-import { getManageEventSettingsPath, getManageEventListPath, getEventPath } from '@/router/utils'
+import { getManageEventSettingsPath, getEventPath, getManageCommunityPath } from '@/router/utils'
 import { mdiPencil, mdiDelete } from '@mdi/js'
 
 const router = useRouter()
@@ -12,8 +12,10 @@ const eventId = route.params.eventId as string
 const eventStore = useEventStore(eventId) as EventStore
 const deleteConfirmationDialog = ref(false)
 const deleteEvent = async () => {
+  const communityAccount = eventStore.event!.community_account
   await eventStore.deleteEvent()
-  router.push(getManageEventListPath())
+  window.location.href = getManageCommunityPath(communityAccount)
+  // router.push(getManageEventListPath())
 }
 const openInNew = (url: string) => {
   window.open(url, '_blank')

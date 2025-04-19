@@ -40,11 +40,12 @@ service cloud.firestore {
                 // 予約承認・予約却下などイベントステータスを店舗が変更できる
                 allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
                 match /orders/{order} {
-                    allow create, update, delete: if request.auth != null
+                    allow write: if false
                 }
             }
-            match /members/{member} {
-                allow create, update: if request.auth != null && request.auth.uid == request.resource.id
+            match /members/{memberId} {
+                allow create: if isManager() || (request.auth != null && request.auth.uid == memberId)
+                allow update: if isManager()
             }
             // invites は functions 内からのみアクセス可能
             match /invites/{document=**} {
@@ -57,6 +58,10 @@ service cloud.firestore {
         match /users/{user_id} {
             // ユーザー情報はログインユーザーでないと create/update/deleteできない
             allow create, update: if request.auth != null && request.auth.uid == user_id
+        }
+        match /users_personal_information/{user_id} {
+            // 個人情報はログインユーザーでないと read, write できない
+            allow read, write: if request.auth != null && request.auth.uid == user_id
         }
         match /{document=**} {
             allow read: if true

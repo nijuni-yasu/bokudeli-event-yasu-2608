@@ -4,3 +4,5 @@
 
 export const getEventPath = (communityAccount: string, eventId: string) => `/c/${communityAccount}/e/${eventId}`
 export const getUserPath = (userId: string) => `/u/${userId}`
+export const getNamesPrintPath = () => `/namesprint`
+export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`

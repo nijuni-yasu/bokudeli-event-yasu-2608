@@ -2,13 +2,13 @@ import { getEventPath } from '@/router/utils'
 import { type DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
 import _ from 'lodash'
 
-const eventPaymentLabels = ['参加者 事前決済', '参加者 当日払い', '主催者支払い'] as const
-const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
-export type EventPaymentType = (typeof eventPaymentTypes)[number]
+// イベント設定画面で選択できる支払い方法（参加者事前決済/主催者請求書払い）
+export const eventPaymentSelectableTypes = ['user_advance', 'community_bill'] as const
 
-export const eventPaymentItems = eventPaymentTypes.map((type, i) => {
-  return { title: eventPaymentLabels[i], value: type }
-})
+// イベントページで使用されている支払い方法（参加者事前決済/参加者当日払い/主催者請求書払い）
+const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
+
+export type EventPaymentType = (typeof eventPaymentTypes)[number]
 
 type RawEventStatusType = {
   value: 'in_draft' | 'applying_reservation' | 'applying_to_admin' | 'accepting_order'
@@ -37,6 +37,9 @@ class BokudeliEvent {
   shop_name: string = ''
   is_public: boolean = true
   event_payment: EventPaymentType = 'user_advance'
+  event_sns_hash_tag: string = ''
+  bill_fullname: string = ''
+  bill_email: string = ''
   // eventPayer: 'user' | 'community'
   // isPaymentAdvanceByUser: boolean
   organizer_fullname: string = ''
@@ -56,6 +59,8 @@ class BokudeliEvent {
   created_by: string = ''
   updated_at: Timestamp | null = null
   updated_by: string = ''
+
+  is_deleted: boolean = false
 
   raw_event_status: RawEventStatusType = { value: 'in_draft' }
 
@@ -89,9 +94,17 @@ class BokudeliEvent {
     this.raw_event_status = value
   }
 
-  constructor(eventData?: DocumentData) {
-    if (eventData != null) {
-      _.merge(this, _.assign(_.omit(eventData, ['event_status']), { raw_event_status: eventData.event_status }))
+  // community_id, community_account, community_name が入力されていることを保証するため、コンストラクタでチェックする
+  // TODO ランタイムレベルではこのチェックは機能しないため、zod などのバリデーションが本来は必要
+  constructor(eventData: DocumentData)
+  constructor(communityId: string, communityAccount: string, communityName: string)
+  constructor(arg0: DocumentData | string, communityAccount?: string, communityName?: string) {
+    if (typeof arg0 === 'string') {
+      this.community_id = arg0
+      this.community_account = communityAccount!
+      this.community_name = communityName!
+    } else if (arg0 != null) {
+      _.merge(this, _.assign(_.omit(arg0, ['event_status']), { raw_event_status: arg0.event_status }))
     }
   }
 
@@ -106,7 +119,7 @@ class BokudeliEvent {
         // functions で計算するので含めない
         'members',
         'event_num_members',
-      ]),
+      ])
     )
   }
 

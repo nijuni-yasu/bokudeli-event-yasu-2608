@@ -8,6 +8,12 @@ import { usePartnerStore } from '@/stores/partner'
 import type { Shop } from '@/schemes/shop'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { getOrderPath } from '@/navigation/utils'
+import UserAvatar from '@/components/UserAvatar.vue'
+import { useUserStore, type UserStore } from '@/stores/user'
+import { getUserPath } from '@/router/utils'
+import { getNamesPrintPath } from '@/router/utils'
+import { getNamesPrintPdf } from '@/utils/namesPrint'
+import { ref } from 'vue'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -76,6 +82,20 @@ const submit = async () => {
 const isOwner = computed(() => {
   return event.community_account === shop.community_account
 })
+
+// [お名前]を印刷 ボタンの実装
+const downloadNamesPrint = async () => {
+  isLoading.value = true
+  try {
+    const w = window.open(getNamesPrintPath(), '_blank')
+    const pdf = await getNamesPrintPdf(eventId) //todo 並び順
+    w!.location.href = window.URL.createObjectURL(pdf)
+  } catch (error) {
+    console.error('Error downloading names sheet:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -177,14 +197,18 @@ const isOwner = computed(() => {
           </v-form>
         </template>
         <v-card-text v-else-if="eventStore.confirmedOrders != null && eventStore.confirmedOrders.length !== 0">
-          <h2 class="mt-10 mb-1">{{ $t('order_detail.order_detail') }}</h2>
+          <v-btn @click="downloadNamesPrint" :loading="isLoading">{{
+            $t('order_detail.names_sheet_print_button')
+          }}</v-btn>
+          <div class="text-subtitle-2 ma-2" v-html="$t('order_detail.names_sheet_print_button_desc')" />
+          <h2 class="mt-10 mb-3">{{ $t('order_detail.order_detail') }}</h2>
           <v-table>
             <thead>
               <tr>
                 <th>#</th>
+                <th>{{ $t('order_detail.user_name') }}</th>
                 <th>{{ $t('order_detail.menu_name') }}</th>
                 <th>{{ $t('order_detail.menu_price') }}</th>
-                <th>{{ $t('order_detail.user_name') }}</th>
                 <th>{{ $t('order_detail.order_date') }}</th>
               </tr>
             </thead>
@@ -204,14 +228,21 @@ const isOwner = computed(() => {
                 :key="`order-${key}`"
               >
                 <td>{{ key + 1 }}</td>
+                <td>
+                  <router-link :to="getUserPath(order.user_id)" class="name-link">
+                    <div class="d-flex align-center">
+                      <UserAvatar :user="(useUserStore(order.user_id) as UserStore).user" :size="40" class="me-2" />
+                      {{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}
+                    </div>
+                  </router-link>
+                </td>
                 <td>{{ menu.name }}</td>
                 <td>{{ $n(menu.price, 'currency') }}</td>
-                <td>{{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}</td>
                 <td>{{ $d(order.created_at.toDate(), 'datetime') }}</td>
               </tr>
             </tbody>
           </v-table>
-          <h2 class="mt-10 mb-1">{{ $t('order_detail.subtotal') }}</h2>
+          <h2 class="mt-10 mb-3">{{ $t('order_detail.subtotal') }}</h2>
           <v-table>
             <thead>
               <tr>
@@ -235,7 +266,7 @@ const isOwner = computed(() => {
               </tr>
             </tbody>
           </v-table>
-          <h2 class="mt-10 mb-1">{{ $t('order_detail.total') }}</h2>
+          <h2 class="mt-10 mb-3">{{ $t('order_detail.total') }}</h2>
           <v-table>
             <thead>
               <tr>
@@ -259,3 +290,16 @@ const isOwner = computed(() => {
     </v-col>
   </v-row>
 </template>
+
+<style scoped lang="scss">
+tbody {
+  tr {
+    height: 70px;
+  }
+}
+
+.name-link {
+  color: inherit;
+  text-decoration: none;
+}
+</style>

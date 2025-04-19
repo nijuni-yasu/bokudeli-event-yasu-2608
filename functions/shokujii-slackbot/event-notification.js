@@ -1,9 +1,9 @@
-import functions from 'firebase-functions';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
-import * as dateFns from 'date-fns';
-import { getCommunityBots, sendMessage, getEventUrl } from './utils/bot-utils.js';
+import functions from 'firebase-functions/v1'
+import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import * as dateFns from 'date-fns'
+import { getCommunityBots, sendMessage, getEventUrl } from './utils/bot-utils.js'
 
-const db = getFirestore();
+const db = getFirestore()
 
 const makeNotificationOrderMessage = (eventName, beforeDays, eventUrl) => {
   return beforeDays > 0
@@ -23,84 +23,99 @@ const notificationOrder = async (start, end, beforeDays) => {
   // 注文期限3日前	「XXXXX の食事会が注文期限3日前となりました。忘れずに注文しよう！」
   // 注文期限1日前	「XXXXX の食事会が注文期限1日前となりました。忘れずに注文しよう！」
   // 注文期限	「XXXXX の食事会が注文が確定しました。参加者はこちらのみなさんです。当日をお楽しみに！」
-  const startAddedDays = start + beforeDays * 24 * 60 * 60 * 1000;
-  const endAddedDays = end + beforeDays * 24 * 60 * 60 * 1000;
-  const events = await (db.collectionGroup('events')
+  const startAddedDays = start + beforeDays * 24 * 60 * 60 * 1000
+  const endAddedDays = end + beforeDays * 24 * 60 * 60 * 1000
+  const events = await db
+    .collectionGroup('events')
     .where('event_status.value', '==', 'accepting_order')
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(startAddedDays))
     .where('event_deadline_datetime', '<=', Timestamp.fromMillis(endAddedDays))
-    .get())
+    .where('is_deleted', '==', false)
+    .get()
 
-  Promise.all(events.docs.map(async (eventSnapshot) => {
-    const eventData = eventSnapshot.data();
-    const eventName = eventData.event_name;
-    const eventUrl = getEventUrl(eventData.community_account, eventData.event_id);
+  Promise.all(
+    events.docs.map(async (eventSnapshot) => {
+      const eventData = eventSnapshot.data()
+      const eventName = eventData.event_name
+      const eventUrl = getEventUrl(eventData.community_account, eventData.event_id)
 
-    const bots = await getCommunityBots(db, eventData.community_id);
-    Promise.all(bots.map(async (botData) => {
-      await sendMessage(botData, makeNotificationOrderMessage(eventName, beforeDays, eventUrl));
-    }));
-  }));
+      const bots = await getCommunityBots(db, eventData.community_id)
+      Promise.all(
+        bots.map(async (botData) => {
+          await sendMessage(botData, makeNotificationOrderMessage(eventName, beforeDays, eventUrl))
+        }),
+      )
+    }),
+  )
 }
 
 const notificationEventStart = async (start, end, beforeMinutes) => {
-  // 開始時刻15分前	「XXXXX の食事会が開始15分前になりました。」
-  const startAddedMinutes = start + beforeMinutes * 60 * 1000;
-  const endAddedMinutes = end + beforeMinutes  * 60 * 1000;
-  const events = await (db.collectionGroup('events')
+  // 開始時刻60分前	「XXXXX の食事会が開始60分前になりました。」
+  const startAddedMinutes = start + beforeMinutes * 60 * 1000
+  const endAddedMinutes = end + beforeMinutes * 60 * 1000
+  const events = await db
+    .collectionGroup('events')
     .where('event_status.value', '==', 'accepting_order')
     .where('event_start_datetime', '>', Timestamp.fromMillis(startAddedMinutes))
     .where('event_start_datetime', '<=', Timestamp.fromMillis(endAddedMinutes))
-    .get());
+    .where('is_deleted', '==', false)
+    .get()
 
-  Promise.all(events.docs.map(async (eventSnapshot) => {
-    const eventData = eventSnapshot.data();
-    const eventName = eventData.event_name;
-    const eventUrl = getEventUrl(eventData.community_account, eventData.event_id);
+  Promise.all(
+    events.docs.map(async (eventSnapshot) => {
+      const eventData = eventSnapshot.data()
+      const eventName = eventData.event_name
+      const eventUrl = getEventUrl(eventData.community_account, eventData.event_id)
 
-    const bots = await getCommunityBots(db, eventData.community_id);
-    Promise.all(bots.map(async (botData) => {
-      await sendMessage(botData, makeEventStartMessage(eventName, beforeMinutes, eventUrl));
-    }));
-  }));
+      const bots = await getCommunityBots(db, eventData.community_id)
+      Promise.all(
+        bots.map(async (botData) => {
+          await sendMessage(botData, makeEventStartMessage(eventName, beforeMinutes, eventUrl))
+        }),
+      )
+    }),
+  )
 }
 
 const notificationEventEnd = async (start, end) => {
   // 終了時刻	「XXXXX の食事会が終了しました。次回開催をお楽しみに！」
-  const events = await (db.collectionGroup('events')
+  const events = await db
+    .collectionGroup('events')
     .where('event_status.value', '==', 'accepting_order')
     .where('event_end_datetime', '>', Timestamp.fromMillis(start))
     .where('event_end_datetime', '<=', Timestamp.fromMillis(end))
-    .get());
+    .where('is_deleted', '==', false)
+    .get()
 
-  Promise.all(events.docs.map(async (eventSnapshot) => {
-    const eventData = eventSnapshot.data();
-    const eventName = eventData.event_name;
-    const eventUrl = getEventUrl(eventData.community_account, eventData.event_id);
+  Promise.all(
+    events.docs.map(async (eventSnapshot) => {
+      const eventData = eventSnapshot.data()
+      const eventName = eventData.event_name
+      const eventUrl = getEventUrl(eventData.community_account, eventData.event_id)
 
-    const bots = await getCommunityBots(db, eventData.community_id);
-    Promise.all(bots.map(async (botData) => {
-      await sendMessage(botData, makeEventEndMessage(eventName, eventUrl));
-    }));
-  }));
-
+      const bots = await getCommunityBots(db, eventData.community_id)
+      Promise.all(
+        bots.map(async (botData) => {
+          await sendMessage(botData, makeEventEndMessage(eventName, eventUrl))
+        }),
+      )
+    }),
+  )
 }
 
 export const eventNotification = functions
   .region('asia-northeast1')
-  .pubsub
-  .schedule('*/1 * * * *') // .schedule('every 1 minutes')
+  .pubsub.schedule('*/1 * * * *') // .schedule('every 1 minutes')
   .onRun(async (event) => {
-    const now = dateFns.parseISO(event.timestamp).getTime();
+    const now = dateFns.parseISO(event.timestamp).getTime()
     // 秒を無視しないと誤差で実行できないケースがでてきてしまう
-    const end = Math.trunc(now / 60 / 1000) * 60 * 1000;
-    const start = end - (60 * 1000);
+    const end = Math.trunc(now / 60 / 1000) * 60 * 1000
+    const start = end - 60 * 1000
     return Promise.all([
       notificationOrder(start, end, 3),
       notificationOrder(start, end, 1),
       notificationOrder(start, end, 0),
-      notificationEventStart(start, end, 15),
+      notificationEventStart(start, end, 60),
       notificationEventEnd(start, end),
-    ]);
-  });
-
+    ])
+  })

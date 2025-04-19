@@ -10,17 +10,13 @@ defineProps<{
 </script>
 <template>
   <section>
-    <v-card-text class="event-item">
-      【参加者】
-      <span class="event-content"> {{ members.length }} 人 / {{ eventMaxPeople }} 人 </span>
-    </v-card-text>
     <v-card-text class="text-left pb-10">
       <v-row>
         <v-col
           v-for="member in members"
           :key="member.user_id"
           class="d-flex justify-start pa-2"
-          cols="12"
+          cols="6"
           sm="6"
           md="4"
         >
@@ -59,17 +55,4 @@ defineProps<{
   </section>
 </template>
 <style lang="scss" scoped>
-.event-item {
-  font-size: 14px;
-  padding-top: 0px;
-  padding-bottom: 20px;
-  font-weight: 600;
-}
-.event-content {
-  font-size: 18px;
-  padding-bottom: 20px;
-  font-weight: 400;
-  line-height: 32px;
-  white-space: pre-line;
-}
 </style>

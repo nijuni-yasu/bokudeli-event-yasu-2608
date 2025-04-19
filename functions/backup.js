@@ -1,6 +1,6 @@
 // https://firebase.google.com/docs/firestore/solutions/schedule-export
 
-import functions from 'firebase-functions'
+import functions from 'firebase-functions/v1'
 import firestore from '@google-cloud/firestore'
 
 const client = new firestore.v1.FirestoreAdminClient()

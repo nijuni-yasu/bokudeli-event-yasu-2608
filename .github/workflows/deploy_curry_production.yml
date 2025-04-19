@@ -1,12 +1,12 @@
-name: Deploy curry to production
+name: Deploy curry
 
 on:
   push:
     branches:
       - production
     paths:
-      - 'curry/**'
-      - 'base/**'
+      - "curry/**"
+      - "base/**"
   workflow_dispatch:
 
 concurrency:
@@ -17,37 +17,32 @@ jobs:
   build-and-deploy:
     timeout-minutes: 5
     runs-on: ubuntu-latest
+    environment: production
     defaults:
       run:
         shell: bash
         working-directory: ./curry
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup node
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: ./curry/.node-version
-        cache: 'yarn'
-        cache-dependency-path: ./curry/yarn.lock
-    - name: Install dependencies
-      run: |
-        yarn install --frozen-lockfile
-    - name: Install Firebase CLI
-      run: curl -sL https://firebase.tools | bash
-    - name: Generate .env file
-      run: |
-        env_vars=$(echo '${{ secrets.CURRY_PRODUCTION_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
-        echo "$env_vars" > .env
-    - name: Build
-      run: |
-        yarn run build-production
-    - name: Deploy to Firebase
-      working-directory: .
-      # We may use asyncronous jobs to deploy, so we need to use mktemp instead of a fixed path
-      run: |
-        export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
-        echo '${{ secrets.GCLOUD_SERVICE_KEY_BOKUDELI_EVENT_DEV_736E27344811 }}' > $GOOGLE_APPLICATION_CREDENTIALS
-        firebase use bokudeli-event-dev
-        firebase deploy --only hosting:curry
-        rm $GOOGLE_APPLICATION_CREDENTIALS
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./curry/.node-version
+          cache: "yarn"
+          cache-dependency-path: ./curry/yarn.lock
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+      - name: Generate .env file
+        run: |
+          echo '${{ vars.CURRY_ENV }}' | tr -d '\r' > .env
+      - name: Build
+        run: |
+          yarn run build-production
+      - name: Deploy to Firebase
+        uses: ./.github/actions/deploy
+        with:
+          project_id: ${{ vars.PROJECT_ID }}
+          service_key: "${{ secrets.GCLOUD_SERVICE_KEY }}"
+          args: "--only hosting:curry"

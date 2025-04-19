@@ -49,7 +49,7 @@ export const priceString = (price: number): string => {
 
 export const postalcodeString = (postalCode: string): string => {
   // 郵便番号を「〒XXX-XXXX」の形式に変換
-  return `〒${postalCode.slice(0, 3)}-${postalCode.slice(3)}`;
+  return `〒${postalCode.slice(0, 3)}-${postalCode.slice(3)}`
 }
 
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
@@ -119,7 +119,6 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
   return new FirestoredUser({
     user_id: storedUser.userId,
     user_name: storedUser.userName,
-    user_email: storedUser.userEmail,
     user_image_url: storedUser.userImageUrl,
     user_account: storedUser.userAccount,
     user_description: storedUser.userDescription,
@@ -134,11 +133,11 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
   })
 }
 
-export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser): StoredUser => {
+export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser, email: string): StoredUser => {
   return {
     userId: firestoredUser.user_id,
     userName: firestoredUser.user_name,
-    userEmail: firestoredUser.user_email,
+    userEmail: email,
     userImageUrl: firestoredUser.user_image_url,
     userAccount: firestoredUser.user_account,
     userDescription: firestoredUser.user_description,
@@ -153,7 +152,10 @@ export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser
   }
 }
 
-export const convertDocumentDataToStoredUser = (documentData: DocumentData | undefined): StoredUser => {
+export const convertDocumentDataToStoredUser = (
+  documentData: DocumentData,
+  personalInfomationData: DocumentData,
+): StoredUser => {
   if (!documentData) {
     return {
       userId: '',
@@ -176,7 +178,6 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
   const {
     user_id,
     user_name,
-    user_email,
     user_image_url,
     user_account,
     user_description,
@@ -193,7 +194,7 @@ export const convertDocumentDataToStoredUser = (documentData: DocumentData | und
   return {
     userId: user_id ?? '',
     userName: user_name ?? '',
-    userEmail: user_email ?? '',
+    userEmail: personalInfomationData.user_email ?? '',
     userImageUrl: user_image_url ?? null,
     userAccount: user_account ?? '',
     userDescription: user_description ?? '',

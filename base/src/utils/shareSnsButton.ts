@@ -3,31 +3,24 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import type { Shop } from '@/schemes/shop'
 
-const getCommunityHashTag = (community: BokudeliCommunity) => {
-  console.log(community.community_sns_hash_tag)
-  if (community.community_sns_hash_tag != '') {
-    return community.community_sns_hash_tag
-  }
-  // 正規表現を使って、ハッシュタグに使えない文字を取り除く
-  // 使用可能な文字: アルファベット, 数字, アンダースコア, ひらがな, カタカナ, 漢字
-  return community.community_name.replace(/[^a-zA-Z0-9_\u3040-\u30FF\u4E00-\u9FFF]/g, '')
-}
-
 const getXPostTextAfterOrder = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''
   const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
   const shopText = shop.shop_name + (shop.shop_url_twitter ? ` @${shop.shop_url_twitter}` : '')
-
-  const communityHashTag = '#' + getCommunityHashTag(community)
+  const hashTagText =
+    event.event_sns_hash_tag != null && event.event_sns_hash_tag !== ''
+      ? `#${event.event_sns_hash_tag} #shokujii`
+      : '#食事でつながる #shokujii'
 
   const textList = [
     `${event.event_name} に参加します✋`,
     '',
-    `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
-    `👥${communityText}`,
-    `🍱${shopText}`,
-    `${communityHashTag} #shokujii`,
-    `${event.url}`,
+    `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
+    `👥主催：${communityText}`,
+    `👩‍🍳食事：${shopText}`,
+    `👉詳細：${event.url}`,
+    '',
+    `${hashTagText}`,
   ]
   return `${textList.join('\n')}`
 }
@@ -36,37 +29,41 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
   const communityTwitterAccount = community.community_sns_twitter ?? ''
   const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
   const shopText = shop.shop_name + (shop.shop_url_twitter ? ` @${shop.shop_url_twitter}` : '')
-
-  const communityHashTag = '#' + getCommunityHashTag(community)
+  const hashTagText =
+    event.event_sns_hash_tag != null && event.event_sns_hash_tag !== ''
+      ? `#${event.event_sns_hash_tag} #shokujii`
+      : '#食事でつながる #shokujii'
 
   const textList = [
-    `${event.event_name}`,
+   `${event.event_name} に参加します✋`,
     '',
-    `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
-    `👥${communityText}`,
-    `🍱${shopText}`,
-    `${communityHashTag} #shokujii`,
-    `${event.url}`,
+    `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
+    `👥主催：${communityText}`,
+    `👩‍🍳食事：${shopText}`,
+    `👉詳細：${event.url}`,
+    '',
+    `${hashTagText}`,
   ]
   return `${textList.join('\n')}`
 }
 
 const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
-  const communityHashTag = '#' + getCommunityHashTag(community)
+  const hashTagText =
+    event.event_sns_hash_tag != null && event.event_sns_hash_tag !== ''
+      ? `#${event.event_sns_hash_tag} #shokujii`
+      : '#食事でつながる #shokujii'
 
   const textList = [
     `${event.event_name}`,
     '',
-    `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
-    `⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}に注文締切`,
-    `📍${event.event_address}`,
-    `👥${event.community_name}`,
-    `🍱${shop.shop_name}`,
+    `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
+    `⏳期限：${dateWithDayOfWeekString(event.event_deadline_datetime)}に注文締切`,
+    `📍場所：${event.event_address} ${event.event_place}`,
+    `👥主催：${event.community_name}`,
+    `👩‍🍳食事：${shop.shop_name}`,
+    `👉詳細：${event.url}?openExternalBrowser=1`,
     '',
-    '👇参加はコチラから👇',
-    `${event.url}?openExternalBrowser=1`,
-    '',
-    `${communityHashTag} #shokujii`,
+    `${hashTagText}`,
   ]
   return `${textList.join('\n')}`
 }

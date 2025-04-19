@@ -38,7 +38,7 @@ const websiteUrl = computed(() =>
 )
 
 const updateUserData = async (user: FirestoredUser, image?: File) => {
-  storedUserStore.update(convertFirestoredUserToStoredUser(user))
+  storedUserStore.update(convertFirestoredUserToStoredUser(user, storedUserStore.storedUser?.userEmail ?? ''))
 
   const userStore = useUserStore(props.userData.user_id) as UserStore
   await userStore.updateUser(user)

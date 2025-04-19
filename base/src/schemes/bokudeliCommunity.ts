@@ -21,6 +21,8 @@ class BokudeliCommunity {
   community_sns_instagram: string = ''
   community_sns_officialsite: string = ''
   community_sns_hash_tag: string = ''
+  community_bill_fullname: string = ''
+  community_bill_email: string = ''
   is_public: boolean = true
   updated_at: Timestamp | null = null
   subdomain_tags: string[] = []

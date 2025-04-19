@@ -62,7 +62,7 @@ getAuth().onAuthStateChanged((user) => {
     "
   >
     <template #navbar-icons>
-      <v-btn v-if="currentUser != null" class="me-4" :href="getManagePath()" target="_blank">
+      <v-btn v-if="currentUser != null" class="me-4" :href="getManagePath()">
         {{ $t('navigation.new_event') }}
       </v-btn>
       <UserProfile />

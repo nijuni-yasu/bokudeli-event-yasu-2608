@@ -3,10 +3,8 @@ import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import {mdiAccount, mdiCart, mdiLogout, mdiCog, mdiCalendarPlus} from '@mdi/js'
-import LineIcon from '@/icons/line'
+import { mdiAccount, mdiCart, mdiLogout, mdiEmailOutline } from '@mdi/js'
 import userAccessiblePaths from "@/utils/userAccessiblePaths";
-import { getManagePath } from '@/router/utils'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -79,32 +77,19 @@ const logout = async () => {
             </template>
             <v-list-item-title>マイページ</v-list-item-title>
           </v-list-item>
-
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
-          <!-- 👉 cart -->
-          <v-list-item v-if="isLogin" :to="getManagePath()">
+          <!-- 👉 howto -->
+          <v-list-item v-if="isLogin" :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
             <template #prepend>
-              <v-icon class="me-2" :icon="mdiCalendarPlus" size="22" />
+              <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
             </template>
-            <v-list-item-title>イベント開催</v-list-item-title>
+            <v-list-item-title>お問い合わせ</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
-
-          <!-- 👉 profile -->
-          <v-list-item v-if="isLogin" :to="`/u/profile`">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiCog" size="22" />
-            </template>
-            <v-list-item-title>設定</v-list-item-title>
-          </v-list-item>
-
-          <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
-
 
           <!-- 👉 Login, Logout -->
           <v-list-item v-if="!isLogin" @click="login">
