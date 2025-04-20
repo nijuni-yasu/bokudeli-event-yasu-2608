@@ -164,6 +164,9 @@ export default {
       'submit': 'コミュニティを作成する',
       'added': '作成しました',
       'error': '作成に失敗しました',
+    },
+    'invoice': {
+      'error': '請求書の取得に失敗しました',
     }
   }
 }

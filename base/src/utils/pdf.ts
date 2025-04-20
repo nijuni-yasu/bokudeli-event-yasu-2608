@@ -13,3 +13,17 @@ export const getInvoicePdf = async (eventId: string, orderId: string): Promise<B
   )
   return data.blob()
 }
+
+export const getEventBillInvoicePdf = async (eventId: string): Promise<Response> => {
+  const token = await getAuth().currentUser!.getIdToken()
+  const data = await fetch(
+    `https://asia-northeast1-${import.meta.env.VITE_PROJECT_ID}.cloudfunctions.net/communityBillInvoice/${eventId}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `JWT ${token}`,
+      },
+    },
+  )
+  return data
+}
