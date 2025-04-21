@@ -1,6 +1,6 @@
 import path from 'path'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
-import { defineString } from 'firebase-functions/params'
+import { defineList } from 'firebase-functions/params'
 import { makePdf } from './utils/makePdf.js'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
@@ -9,7 +9,7 @@ import sharp from 'sharp'
 import { db, auth, storage } from './firebase.js'
 import './options/index.js'
 
-const CORS = defineString('CORS')
+const CORS = defineList('CORS')
 
 // __dirname を定義
 const __filename = fileURLToPath(import.meta.url)
@@ -261,7 +261,7 @@ const createTemplateData = (filteredValidNames) => {
   return templateData
 }
 
-export const namesprint = onRequest({ cors: [CORS] }, async (req, res) => {
+export const namesprint = onRequest({ cors: CORS }, async (req, res) => {
   const authHeader = req.headers.authorization ?? ''
   if (!authHeader.startsWith('JWT ')) {
     throw new HttpsError('unauthenticated', 'JWT token is required')
