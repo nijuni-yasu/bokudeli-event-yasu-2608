@@ -8,9 +8,9 @@ import CommunityEdit from '@/components/CommunityEdit.vue'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { mdiPlus } from '@mdi/js'
 import { getShopPath } from '@/navigation/utils'
-import type { Notification } from '@/types'
+import { useNotification } from '@/composable/notification'
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -149,7 +149,7 @@ const submit = async () => {
       if (iconImageFile.value != null) {
         await communityStore.updateIconImage(iconImageFile.value)
       }
-      Object.assign(notification, { message: $t('community.saved'), color: 'success' })
+      notification.show($t('community.saved'), 'success')
     } else {
       const community = await communityListStore.createNewCommunityFromDraft()
       const communityStore = useCommunityStore(community.community_account) as CommunityStore
@@ -161,12 +161,12 @@ const submit = async () => {
       }
       shop.community_account = community.community_account
       await partnerStore.updateShop(shop)
-      Object.assign(notification, { message: $t('community.added'), color: 'success' })
+      notification.show($t('community.created'), 'success')
       communityListStore.$reset()
     }
   } catch (err) {
     console.error(err)
-    Object.assign(notification, { message: $t('community.error'), color: 'error' })
+    notification.show($t('community.error'), 'error')
   } finally {
     isLoading.value = false
   }

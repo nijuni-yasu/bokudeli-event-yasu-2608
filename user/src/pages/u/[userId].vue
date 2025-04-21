@@ -19,11 +19,12 @@ import { httpsCallable } from 'firebase/functions'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getInvoicePdf } from '@/utils/invoice'
+import { useNotification } from '@/composable/notification'
 
 const route = useRoute()
 const userId = route.params.userId as string
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 
 const { t: $t } = useI18n()
 
@@ -111,13 +112,13 @@ const cancel = async (order: OrderItem) => {
       const stripeRefunds = httpsCallable(functions, 'stripe_refunds')
       await stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
       orderSnapshots.value = await fetchOrders()
-      Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
+      notification.show($t('user.canceled'), 'success')
     } else if (order.event_payment == 'user_on_day' || order.event_payment == 'community_bill') {
       // それ以外は事前決済してないのでStripeの返金処理はなし
       const eventStore = useEventStore(order.event_id)
       eventStore.updateOrderStatus(order, 'canceled')
       orderSnapshots.value = await fetchOrders()
-      Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
+      notification.show($t('user.canceled'), 'success')
     }
   } catch (error) {
     console.error(error)

@@ -3,9 +3,10 @@ import CommunityEdit from '@/components/CommunityEdit.vue'
 import { getManageCommunityPath } from '@/router/utils'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { useCommunityListStore, type CommunityListStore } from '@/stores/communityList'
+import { useNotification } from '@/composable/notification'
 
 const router = useRouter()
-const notification = inject('notification') as Notification
+const notification = useNotification()
 const { t: $t } = useI18n()
 
 const communityListStore = useCommunityListStore() as CommunityListStore
@@ -31,13 +32,13 @@ const submit = async () => {
     if (iconImageFile.value != null) {
       await communityStore.updateIconImage(iconImageFile.value)
     }
-    Object.assign(notification, { message: $t('manage.newcommunity.added'), color: 'success' })
+    notification.show($t('manage.newcommunity.created'), 'success')
     // communityListStore.reload()
     // router.push(getManageCommunityPath(community.community_account))
     window.location.href = getManageCommunityPath(community.community_account)
   } catch (err) {
     console.error(err)
-    Object.assign(notification, { message: $t('manage.newcommunity.error'), color: 'error' })
+    notification.show($t('manage.newcommunity.error'), 'error')
   } finally {
     isLoading.value = false
   }

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import CommunityEdit from '@/components/CommunityEdit.vue'
+import { useNotification } from '@/composable/notification'
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 const { t: $t } = useI18n()
 
 const communityAccount = useRoute().params.communityAccount as string
@@ -26,7 +27,7 @@ const submit = async () => {
     if (iconImageFile.value != null) {
       await communityStore.updateIconImage(iconImageFile.value)
     }
-    Object.assign(notification, { message: $t('manage.settings.saved'), color: 'success' })
+    notification.show($t('manage.settings.saved'), 'success')
   } finally {
     isLoading.value = false
   }

@@ -13,11 +13,12 @@ import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@/utils/bu
 import { downloadCsv } from '@/utils/downloadCsv'
 import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
+import { useNotification } from '@/composable/notification'
 
 const route = useRoute()
 const { t: $t } = useI18n()
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 
 const get_invitaion_url_for_community_manager = httpsCallable(functions, 'get_invitaion_url_for_community_manager')
 
@@ -61,10 +62,10 @@ const addAccount = async (member: CommunityMember) => {
   isLoading.value = true
   try {
     await communityStore.addRole(member.user_id, 'manager')
-    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.notification'), color: 'success' })
+    notification.show($t('manage.member.add_manager_dialog.notification'), 'success')
   } catch (error) {
     console.error(error)
-    Object.assign(notification, { message: $t('manage.member.add_manager_dialog.error'), color: 'error' })
+    notification.show($t('manage.member.add_manager_dialog.error'), 'error')
   } finally {
     addTargetMember.value = null
     isLoading.value = false
@@ -74,10 +75,10 @@ const removeAccount = async (member: CommunityMember) => {
   isLoading.value = true
   try {
     await communityStore.removeRole(member.user_id, 'manager')
-    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.notification'), color: 'success' })
+    notification.show($t('manage.member.remove_manager_dialog.notification'), 'success')
   } catch (error) {
     console.error(error)
-    Object.assign(notification, { message: $t('manage.member.remove_manager_dialog.error'), color: 'error' })
+    notification.show($t('manage.member.remove_manager_dialog.error'), 'error')
   } finally {
     removeTargetMember.value = null
     isLoading.value = false
@@ -100,7 +101,7 @@ const inviteManager = async () => {
     await navigator.clipboard
       .writeText(url.data as string)
       .then(() => {
-        Object.assign(notification, { message: $t('copied_to_clipboard'), color: 'success' })
+        notification.show($t('copied_to_clipboard'), 'success')
       })
       .catch((err) => {
         // URL は表示されていて手動コピーは可能なのでメッセージは表示しない
@@ -108,7 +109,7 @@ const inviteManager = async () => {
       })
   } catch (error) {
     console.error(error)
-    Object.assign(notification, { message: $t('manage.community_manager_invitation.failed'), color: 'error' })
+    notification.show($t('manage.community_manager_invitation.error'), 'error')
   } finally {
     isLoading.value = false
   }

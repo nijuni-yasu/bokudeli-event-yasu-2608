@@ -16,9 +16,9 @@ import { getAuth } from 'firebase/auth'
 import { Shop, GENRE_ARRAY } from '@/schemes/shop'
 import ImageInput from '@/components/ImageInput.vue'
 import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
-import type { Notification } from '@/types'
+import { useNotification } from '@/composable/notification'
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 
 const { t: $t, tm: $tm, d: $d } = useI18n()
 const dayOfWeek = $tm('day_of_week') as {
@@ -160,10 +160,10 @@ const submit = async () => {
   isSaving.value = true
   try {
     await partnerStore.updateShop(shop.value, imageFile.value ?? undefined)
-    Object.assign(notification, { message: $t('shop.saved'), color: 'success' })
+    notification.show($t('shop.saved'), 'success')
   } catch (e) {
     console.error(e)
-    Object.assign(notification, { message: $t('shop.save_error'), color: 'error' })
+    notification.show($t('shop.save_error'), 'error')
   } finally {
     isSaving.value = false
   }

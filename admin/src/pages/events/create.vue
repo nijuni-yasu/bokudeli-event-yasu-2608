@@ -12,8 +12,9 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { Timestamp } from 'firebase/firestore'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { mdiOpenInNew } from '@mdi/js'
+import { useNotification } from '@/composable/notification'
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 
 const router = useRouter()
 const route = useRoute()
@@ -143,19 +144,19 @@ const submit = async (apply: boolean) => {
       if (coverImage.value != null) {
         await eventStore.updateCoverImage(coverImage.value)
       }
-      Object.assign(notification, { message: $t('event.updated'), color: 'success' })
+      notification.show($t('event.updated'), 'success')
     } else {
       const newEvent = await eventListStore.createNewEventFromDraft(communityId)
       const eventStore = useEventStore(newEvent.event_id) as EventStore
       if (coverImage.value != null) {
         await eventStore.updateCoverImage(coverImage.value)
       }
-      Object.assign(notification, { message: $t('event.created'), color: 'success' })
+      notification.show($t('event.created'), 'success')
     }
     router.push('/events')
   } catch (err) {
     console.error(err)
-    Object.assign(notification, { message: $t('event.error'), color: 'error' })
+    notification.show($t('event.error'), 'error')
   } finally {
     isLoading.value = false
   }

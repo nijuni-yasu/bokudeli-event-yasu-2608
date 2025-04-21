@@ -6,8 +6,9 @@ import { PartnerMenu } from '@/schemes/partnerMenu'
 import MenuEditCard from '@/componentsLocal/MenuEditCard.vue'
 import MenuCard from '@/components/MenuCard.vue'
 import { mdiPlus, mdiClose } from '@mdi/js'
+import { useNotification } from '@/composable/notification'
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 
 const { t: $t } = useI18n()
 
@@ -44,26 +45,26 @@ const openDialog = (menu: PartnerMenu) => {
 const saveMenu = async (menu: PartnerMenu, file?: File) => {
   try {
     await partnerStore.updateMenu(menu, file)
-    Object.assign(notification, { message: $t('menu.saved'), color: 'success' })
+    notification.show($t('menu.saved'), 'success')
   } catch (e) {
     console.error(e)
-    Object.assign(notification, { message: $t('menu.save_error'), color: 'error' })
+    notification.show($t('menu.save_error'), 'error')
   }
 }
 const onDelete = (menu: PartnerMenu) => {
   if (menu.id == null) {
     console.error('menu.id is null')
-    Object.assign(notification, { message: $t('menu.delete_error'), color: 'error' })
+    notification.show($t('menu.delete_error'), 'error')
     return
   }
   const result = window.confirm($t('menu.delete_confirm'))
   if (result) {
     try {
       partnerStore.deleteMenu(menu.id)
-      Object.assign(notification, { message: $t('menu.deleted'), color: 'success' })
+      notification.show($t('menu.deleted'), 'success')
     } catch (e) {
       console.error(e)
-      Object.assign(notification, { message: $t('menu.delete_error'), color: 'error' })
+      notification.show($t('menu.delete_error'), 'error')
     }
   }
 }

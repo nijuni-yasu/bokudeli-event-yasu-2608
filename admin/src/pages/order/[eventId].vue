@@ -14,6 +14,7 @@ import { getUserPath } from '@/router/utils'
 import { getNamesPrintPath } from '@/router/utils'
 import { getNamesPrintPdf } from '@/utils/namesPrint'
 import { ref } from 'vue'
+import { useNotification } from '@/composable/notification'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -22,7 +23,7 @@ const eventStore = useEventStore(eventId) as EventStore
 const partnerId = getAuth().currentUser!.uid
 const partnerStore = usePartnerStore(partnerId)
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 
 const [event, shop] = await Promise.all([
   new Promise<BokudeliEvent>((resolve) => {
@@ -76,7 +77,7 @@ const submit = async () => {
   }
   await eventStore.updateEvent(event)
   isLoading.value = false
-  Object.assign(notification, { message: $t('order_detail.email_sent'), color: 'success' })
+  notification.show($t('order_detail.email_sent'), 'success')
 }
 
 const isOwner = computed(() => {
