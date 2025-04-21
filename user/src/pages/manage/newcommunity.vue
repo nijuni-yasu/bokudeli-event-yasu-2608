@@ -56,7 +56,13 @@ const submit = async () => {
         >
           <template #default="{ isValid }">
             <v-card-text class="text-center mx-0 px-0">
-              <v-btn color="primary" :disabled="!isValid" :loading="isLoading" @click="submit">
+              <v-btn
+                color="primary"
+                size="large"
+                :disabled="!isValid"
+                :loading="isLoading"
+                @click="submit"
+              >
                 {{ $t('manage.newcommunity.submit') }}
               </v-btn>
             </v-card-text>

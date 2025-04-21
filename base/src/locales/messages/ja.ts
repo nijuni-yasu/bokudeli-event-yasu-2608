@@ -142,6 +142,10 @@ export default {
             <br />
             <b>💸 全ての機能を無料で</b><br />
             主催者のみなさまは、あらゆる機能を無料でご利用いただくことができます。<br />
+            <br />
+            <b>👀 詳しくはガイドを</b><br />
+            <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> もぜひご一読ください。<br />
+            ご不明点やご要望がありましたら、サポートまでお気軽に<a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a>を！<br />
             `,
     },
   },
@@ -187,13 +191,19 @@ export default {
   },
   community_edit: {
     title: 'コミュニティ設定',
+    create: 'コミュニティ作成',
     account: 'コミュニティURL',
     account_readonly: 'コミュニティURL（変更不可）',
     community_name: 'コミュニティ名',
-    community_description: 'コミュニティ説明',
+    community_name_hint: 'コミュニティ名を入力してください。イベントページの主催者として表示されます。',
+    community_desc: 'コミュニティ説明',
+    community_desc_hint: 'コミュニティの簡単な説明を入力してください',
     image_setting: '画像設定',
-    community_icon_image_hint: '※アイコン画像を設定してください（推奨サイズ：300x300px）',
-    community_cover_image_hint: '※カバー画像を設定してください（推奨サイズ：1200x630px）',
+    community_cover_image: 'カバー画像',
+    community_cover_image_hint: `※推奨サイズ：1200x630px`,
+    community_icon_image: 'アイコン',
+    community_icon_image_hint: `※推奨サイズ：300x300px`,
+    community_create_next: `コミュニティを作成したら<br>次はイベントをつくってみよう🎉`,
     sns_setting: 'SNS設定',
     facebook: 'Facebook',
     twitter: 'X(Twitter)',
@@ -202,6 +212,9 @@ export default {
     hash_tag: 'ハッシュタグ',
     public_setting: '公開設定',
     public: '公開コミュニティ',
+    private: '限定公開コミュニティ',
+    public_desc: '公開コミュニティは <a href="https://shokujii.jp/communitylist" target="_blank">コミュニティ一覧</a>に表示され、オープンにコミュニティを運営できます。',
+    private_desc: '限定公開コミュニティは <a href="https://shokujii.jp/communitylist" target="_blank">コミュニティ一覧</a>に表示されず、クローズドにコミュニティを運営できます。',
     manager_info: '運営者情報',
     manager_info_hint: '※運営者情報は、コミュニティページに表示されません',
     manager_name: '運営者氏名',
@@ -330,7 +343,7 @@ export default {
     download_invoice: '領収書をダウンロードする',
   },
   validator: {
-    required: '必須項目です',
+    required: '*必須',
     url: 'URLの形式が正しくありません',
     between: '{0} から {1} の間の値を入力してください',
     max_length: '{0}文字以下で入力してください',
