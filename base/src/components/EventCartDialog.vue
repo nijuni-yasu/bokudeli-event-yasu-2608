@@ -57,8 +57,6 @@ const login = () => {
   })
 }
 
-const addOrder = async () => {
-  if (!userStore.storedUser || !selectedCount.value || eventStore.event == null) {
 const addCart = async () => {
   if (userStore.storedUser == null) {
     openConfirmDialog()
@@ -107,9 +105,6 @@ const openConfirmDialog = () => {
   isOpenConfirmDialog.value = true
 }
 
-const openLoginDialog = () => {
-  isOpenLoginDialog.value = true
-}
 </script>
 
 <template>
