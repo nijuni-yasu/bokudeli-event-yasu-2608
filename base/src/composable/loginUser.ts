@@ -75,12 +75,10 @@ export const loginUser = async (user: User) => {
         },
         { merge: true },
       )
-      await setDoc(personalInformationSnapshot.ref, { user_email: storedUser.userEmail }, { merge: true })
 
       // Pinia に保存
       currentStoredUser = {
         ...currentStoredUser,
-        userEmail: storedUser.userEmail,
         userImageUrl: storedUser.userImageUrl,
       }
     }
