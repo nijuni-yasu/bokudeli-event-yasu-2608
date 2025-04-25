@@ -15,7 +15,7 @@ import {
   signInWithCustomToken,
   type AdditionalUserInfo
 } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import {collection, doc, getDoc, getDocs, query, where} from 'firebase/firestore'
 import { db } from '@/firebase'
 import {convertDocumentDataToStoredUser} from "@/schemes/converter";
 import {useValidators} from "@/composable/validators";
@@ -244,9 +244,14 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   const email = userCredential.user.email ?? additionalUserInfo?.profile?.email as string
   const isNewUser = additionalUserInfo?.isNewUser;
 
-  const docRef = doc(db, 'users', userCredential.user.uid)
-  const docSnap = await getDoc(docRef)
-  const storedUser = convertDocumentDataToStoredUser(docSnap.data())
+  if (!userCredential.user.email) return
+  const personalInformationSnapshot = await getDocs(query(
+      collection(db, 'users_personal_information'),
+      where('user_email', '==', email)
+  ))
+  const userSnapShot = await getDoc(doc(db, 'users', personalInformationSnapshot.docs[0].id))
+
+  const storedUser = convertDocumentDataToStoredUser(userSnapShot.data()!, personalInformationSnapshot.docs[0].data()!)
 
   useStoreUserAdditionalInfo().reset()
   useStoreFirebaseAuthError().reset()

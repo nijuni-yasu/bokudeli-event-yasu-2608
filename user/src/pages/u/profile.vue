@@ -22,7 +22,7 @@ import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
 import type { VForm } from 'vuetify/components';
 import { db, functions } from "@/firebase";
-import { doc, updateDoc, getDoc } from 'firebase/firestore'
+import {doc, updateDoc, getDoc, getDocs, query, collection, where} from 'firebase/firestore'
 import {
   convertDocumentDataToStoredUser,
 } from '@/schemes/converter'
@@ -122,8 +122,12 @@ const profileSubmit = async () => {
 
     const firestoredUser = user.value as FirestoredUser
     const image = userImage.value
+    const personalInformationSnapshot = await getDocs(query(
+        collection(db, 'users_personal_information'),
+        where('user_email', '==', email)
+    ))
 
-    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
+    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.docs[0].data().user_email))
 
     const userStore = useUserStore(firestoredUser.user_id) as UserStore
     await userStore.updateUser(firestoredUser)
@@ -190,11 +194,11 @@ const emailSubmit = async () => {
 
     const storedUser = convertFirebaseUserToStoredUser(currentUser as User)
 
-    const docRef = doc(db, 'users', storedUser.userId)
-    const docSnap = await getDoc(docRef)
+    const userSnapShot = await getDoc(doc(db, 'users', storedUser.userId))
+    const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', storedUser.userId))
 
     // Pinia のデータを更新
-    const currentStoredUser = convertDocumentDataToStoredUser(docSnap.data())
+    const currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data()!, personalInformationSnapshot.data()!)
     storedUserStore.update(currentStoredUser)
 
     return Object.assign(notification, { message: $t('user.update_email'), color: 'success' })

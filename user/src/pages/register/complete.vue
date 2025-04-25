@@ -159,7 +159,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
     // 保存
     await userStore.uploadUserImage(blob)
 
-    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser))
+    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, storedUserStore.storedUser?.userEmail ?? ''))
     // 明示的に削除
     useStoreUserAdditionalInfo().reset()
 

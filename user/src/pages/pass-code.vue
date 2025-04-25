@@ -73,7 +73,12 @@ const submit = async () => {
     })
 
     const usersRef = collection(db, "users");
-    const q = query(usersRef, where("user_email", "==", userEmail))
+
+    const personalInformationSnapshot = await getDocs(query(
+        collection(db, 'users_personal_information'),
+        where('user_email', '==', userEmail)
+    ))
+    const q = query(usersRef, where("user_id", "==", personalInformationSnapshot.docs[0].id))
 
     const querySnapshot = await getDocs(q)
 

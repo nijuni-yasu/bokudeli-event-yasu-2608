@@ -156,7 +156,7 @@ export const convertDocumentDataToStoredUser = (
   documentData: DocumentData,
   personalInfomationData: DocumentData,
 ): StoredUser => {
-  if (!documentData) {
+  if (!documentData || !personalInfomationData) {
     return {
       userId: '',
       userName: '',
