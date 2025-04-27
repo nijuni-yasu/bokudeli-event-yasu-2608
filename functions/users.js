@@ -1,4 +1,4 @@
-import functions from 'firebase-functions'
+import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp} from 'firebase-admin/firestore'
 import { getAuth } from 'firebase-admin/auth'
 import { v4 as uuidv4 } from 'uuid';
