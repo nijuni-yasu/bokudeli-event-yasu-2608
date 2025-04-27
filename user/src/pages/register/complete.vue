@@ -10,8 +10,7 @@ import {
 import {FirebaseError} from "firebase/app";
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
-import {FirestoredUser} from "@/schemes/storedUser"
-import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
+import { convertStoredUserToFirestoredUser } from "@/schemes/converter";
 import axios from 'axios'
 import {linkByProviderService, reauthenticateByProviderService} from "@/utils/providerService";
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
@@ -122,31 +121,22 @@ onMounted(async () => {
 
 const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
   const storedUserStore = useStoreStoredUser()
-  const { storedUser } = storeToRefs(storedUserStore)
-  const userId = storedUser.value?.userId
+  const storedUser = storedUserStore.storedUser
+  const userId = storedUser?.userId
   if (userId) {
     const userStore = useUserStore(userId) as UserStore
-    await new Promise<void>((resolve) => {
-      let unwatch: (() => void) | null = null
+    storedUser.userName = additionalUserInfo.profile?.name as string | ""
+    storedUser.userDescription = additionalUserInfo.profile?.description as string | null
+    storedUser.userAccount = additionalUserInfo.username as string | null
+    storedUser.userSnsTwitter = additionalUserInfo.username as string | null
 
-      unwatch = watch(
-          () => userStore.user,
-          (newUser) => {
-            if (newUser) {
-              if (unwatch) unwatch()
-              resolve();
-            }
-          },
-          { immediate: true }
-      );
-    });
+    // 元がnullの場合に、firestoreのレコードに空文字が書かれてしまうため、空文字であればnullに変換する
+    storedUser.userPassCode = storedUser.userPassCode || null
+    storedUser.userSnsFacebook = storedUser.userSnsFacebook || null
+    storedUser.userSnsInstagram = storedUser.userSnsInstagram || null
+    storedUser.userSnsWebsite = storedUser.userSnsWebsite || null
 
-    const firestoredUser = userStore.user as FirestoredUser
-    firestoredUser.user_name = additionalUserInfo.profile?.name as string | ""
-    firestoredUser.user_description = additionalUserInfo.profile?.description as string | null
-    firestoredUser.user_account = additionalUserInfo.username as string | null
-    firestoredUser.user_sns_twitter = additionalUserInfo.username as string | null
-    await userStore.updateUser(firestoredUser)
+    await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
 
     const photoUrl = additionalUserInfo.profile?.profile_image_url_https as string
     const splitPhotoURL = photoUrl.split('_') as string[]
@@ -159,7 +149,8 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
     // 保存
     await userStore.uploadUserImage(blob)
 
-    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, storedUserStore.storedUser?.userEmail ?? ''))
+    storedUserStore.update(storedUser)
+
     // 明示的に削除
     useStoreUserAdditionalInfo().reset()
 
