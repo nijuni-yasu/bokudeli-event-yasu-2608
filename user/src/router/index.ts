@@ -18,6 +18,8 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getManageCommunityListPath } from './utils'
 
+import * as ChannelService from '@channel.io/channel-web-sdk-loader'
+
 const checkUser = async (user: User | null) => {
   // リダイレクト結果を取得
   let userCredential: UserCredential | null = null
@@ -205,6 +207,16 @@ export const setupRouter = (router: Router) => {
         )
       })
       return canView ? true : { path: getManageCommunityListPath() }
+    }
+  })
+
+  // 管理ページ以下にチャネルトークのボタンを表示する
+  router.beforeEach((to) => {
+    const paths = to.path.split('/')
+    if (paths.length > 1 && paths[1] === 'manage') {
+      ChannelService.showChannelButton()
+    } else {
+      ChannelService.hideChannelButton()
     }
   })
 }
