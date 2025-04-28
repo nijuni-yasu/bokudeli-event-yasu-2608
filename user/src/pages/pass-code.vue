@@ -6,6 +6,7 @@ import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import {collection, getDocs, query, where} from "firebase/firestore";
 import {generatePassCode} from "@/utils/generatePassCode";
 import {FirestoredUser} from "@/schemes/storedUser";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 
 const router = useRouter()
@@ -19,6 +20,7 @@ const isError = ref(false)
 
 const email = ref(route.query.email as string)
 const passCode = ref('')
+const isOpenUnMatchPassCodeDialog = ref(false)
 
 watch(passCode, async (newValue) => {
   if (newValue.length === 6) {
@@ -106,6 +108,7 @@ const submit = async () => {
     }
   } catch (error) {
     console.warn("Error sending pass code:", error);
+    isOpenUnMatchPassCodeDialog.value = true
   } finally {
     isValid.value = false
   }
@@ -141,6 +144,12 @@ const submit = async () => {
         </v-sheet>
       </v-col>
     </v-row>
+
+    <confirm-dialog v-model="isOpenUnMatchPassCodeDialog" :is-confirm="false">
+      <v-card-text class="text-center py-10 text-h4">
+        {{ $t('passcode.un_match_passcode') }}
+      </v-card-text>
+    </confirm-dialog>
   </v-container>
 </template>
 
