@@ -158,7 +158,30 @@ const paymentMessage = (event: BokudeliEvent) => {
   }
 }
 
+const openUserParameterConfirm = ref(false)
+const targetUserParameter = ref('')
 const showConfirm = async (cart: Cart) => {
+  // ユーザー名存在チェック
+  if (!storedUser.value?.userName) {
+    targetUserParameter.value = $t('cart.doesnt_exists_user_name')
+    openUserParameterConfirm.value = true
+    return
+  }
+
+  // アイコン存在チェック
+  if (!storedUser.value?.userImageUrl) {
+    targetUserParameter.value = $t('cart.doesnt_exists_user_image')
+    openUserParameterConfirm.value = true
+    return
+  }
+
+  // メールアドレス存在チェック
+  if (!storedUser.value?.userEmail) {
+    targetUserParameter.value = $t('cart.doesnt_exists_user_email')
+    openUserParameterConfirm.value = true
+    return
+  }
+
   const checkResult = await checkCart(cart)
   if (checkResult !== true) {
     showDisableAlert(checkResult)
@@ -363,6 +386,14 @@ onMounted(async () => {
       {{ $t('cart.remove_from_cart') }}
     </confirm-dialog>
     <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
+    <confirm-dialog
+        v-model="openUserParameterConfirm"
+        :is-confirm="true"
+        :ok-click="() => router.push({path: '/u/profile',})"
+        ok-text='設定する'
+    >
+      {{ targetUserParameter }}
+    </confirm-dialog>
   </div>
 </template>
 <style lang="scss" scoped></style>

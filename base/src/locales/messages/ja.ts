@@ -92,6 +92,9 @@ export default {
     event_not_found: 'イベントが見つかりません。',
     order_and_attend_event: '注文してイベントに参加する',
     no_items_in_cart: 'カートに商品はありません。',
+    doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
+    doesnt_exists_user_image: 'アイコンが登録されていません。登録完了後、注文を完了してください',
+    doesnt_exists_user_email: 'メールアドレスが登録されていません。登録完了後、注文を完了してください',
   },
   cart_dialog: {
     add: 'カートに追加',
