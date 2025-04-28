@@ -23,6 +23,7 @@ import {getCredentialWithPopup, signInByProviderService} from "@/utils/providerS
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 import {useStoreUserCredential} from "@/stores/userCredential";
 import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
+import {useStoreStoredUser} from "@/stores/storedUser";
 
 type CreateUserRequest = {
   user_email: string
@@ -244,20 +245,29 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   const email = userCredential.user.email ?? additionalUserInfo?.profile?.email as string
   const isNewUser = additionalUserInfo?.isNewUser;
 
-  if (!userCredential.user.email) return
-  const personalInformationSnapshot = await getDocs(query(
-      collection(db, 'users_personal_information'),
-      where('user_email', '==', email)
-  ))
-  const userSnapShot = await getDoc(doc(db, 'users', personalInformationSnapshot.docs[0].id))
+  const storedUserStore = useStoreStoredUser()
 
-  const storedUser = convertDocumentDataToStoredUser(userSnapShot.data()!, personalInformationSnapshot.docs[0].data()!)
+  await new Promise<void>((resolve) => {
+    let unwatch: (() => void) | null = null
+
+    unwatch = watch(
+        () => storedUserStore.storedUser,
+        (storedUser) => {
+          if (storedUser) {
+            if (unwatch) unwatch()
+            resolve();
+          }
+        },
+        { immediate: true }
+    );
+  });
+  const storedUser = storedUserStore.storedUser
 
   useStoreUserAdditionalInfo().reset()
   useStoreFirebaseAuthError().reset()
 
   // メールアドレスが無いか、twitter, facebookで認証が済んでいない場合はメールアドレス設定へ
-  if ((email === "" || !email) || (storedUser.verifiedAt === null && (userCredential.providerId === 'twitter.com' || userCredential.providerId === 'facebook.com'))) {
+  if ((email === "" || !email) || (storedUser?.verifiedAt === null && (userCredential.providerId === 'twitter.com' || userCredential.providerId === 'facebook.com'))) {
     return  router.push({
       path: '/register/email',
       query: {
@@ -268,7 +278,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   }
 
   // google以外のプロバイダでverifiedAtがnullならパスコード認証を行う
-  if (!storedUser.verifiedAt && additionalUserInfo.providerId !== 'google.com') {
+  if (!storedUser?.verifiedAt && additionalUserInfo.providerId !== 'google.com') {
     const passCode = generatePassCode()
 
     const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, "create_or_update_user")
@@ -288,7 +298,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   }
 
   // プロフィールが埋まっていれば、元いたページへ
-  if (storedUser.userName && storedUser.userDescription && storedUser.userImageUrl) {
+  if (storedUser?.userName && storedUser?.userDescription && storedUser?.userImageUrl) {
     if (route.query.redirect) {
       return router.push(route.query.redirect as string)
     } else {
