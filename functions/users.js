@@ -93,6 +93,9 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
     }
   } catch (error) {
     console.error('エラーが発生しました: ', error)
+    if (error instanceof functions.https.HttpsError) {
+      throw error
+    }
     throw new functions.https.HttpsError('internal', 'An unexpected error occurred.')
   }
 })
@@ -113,6 +116,9 @@ export const get_custom_token  = functions.region('asia-northeast1').https.onCal
     }
   } catch (error) {
     console.error('エラーが発生しました: ', error)
+    if (error instanceof functions.https.HttpsError) {
+      throw error
+    }
     throw new functions.https.HttpsError('internal', 'An unexpected error occurred.')
   }
 })
