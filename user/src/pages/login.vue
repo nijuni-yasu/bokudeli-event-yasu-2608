@@ -47,6 +47,7 @@ const router = useRouter()
 const { t: $t } = useI18n()
 
 const isLoading = ref(false)
+const isDisable = ref(false)
 
 const isValid = ref(false)
 const email = ref('')
@@ -55,6 +56,7 @@ const { requiredValidator, emailValidator } = useValidators()
 
 const submit = async () => {
   isLoading.value = true
+  isDisable.value = true
   try {
     const userEmail = email.value
     if (!userEmail) {
@@ -81,6 +83,7 @@ const submit = async () => {
     console.warn("Error sending pass code:", error)
   } finally {
     isLoading.value = false
+    isDisable.value = false
   }
 }
 
@@ -322,13 +325,13 @@ onMounted(async () => {
   const error = useStoreFirebaseAuthError().error
   if (userCredential !== undefined && additionalUserInfo !== null) {
     try {
-      isLoading.value = true
+      isDisable.value = true
       await transitionJudge(userCredential, additionalUserInfo)
     } catch (error) {
       console.error(error)
-      isLoading.value = false
+      isDisable.value = false
     } finally {
-      isLoading.value = false
+      isDisable.value = false
     }
   } else if (error && error.code === 'auth/account-exists-with-different-credential') {
     const tokenResponse = error.customData?._tokenResponse as { providerId: string }
@@ -419,13 +422,13 @@ onMounted(async () => {
             </v-btn>
           </v-form>
 
-          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleTwitterLogin">
+          <v-btn class="mb-4" size="large" color="grey-900" block :disabled="isDisable" @click="handleTwitterLogin">
             {{ $t('login.sns_login', {snsName: 'X'}) }}
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleFacebookLogin">
+          <v-btn class="mb-4" size="large" color="grey-900" block :disabled="isDisable" @click="handleFacebookLogin">
             {{ $t('login.sns_login', {snsName: 'Facebook'}) }}
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleGoogleLogin">
+          <v-btn class="mb-4" size="large" color="grey-900" block :disabled="isDisable" @click="handleGoogleLogin">
             {{ $t('login.sns_login', {snsName: 'Google'}) }}
           </v-btn>
         </v-sheet>
