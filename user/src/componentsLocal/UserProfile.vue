@@ -10,9 +10,22 @@ import ConfirmDialog from "@/components/ConfirmDialog.vue";
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
 const isLogin = computed(() => storedUser.value?.userId != null)
+const userStore = ref<UserStore | null>(null)
+
+watch(
+    () => storedUser.value?.userId,
+    (userId) => {
+      if (userId != null) {
+        userStore.value = useUserStore(userId) as UserStore
+      } else {
+        userStore.value = null
+      }
+    },
+    { immediate: true }
+)
+
 const user = computed(() => {
-  const userId = storedUser.value?.userId
-  return userId == null ? null : (useUserStore(userId) as UserStore).user
+  return userStore.value?.user ?? null
 })
 
 const route = useRoute()
