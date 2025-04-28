@@ -208,6 +208,7 @@ export default {
     'enter_passcode_description': '{email}に送信した6桁のコードを入力してください',
     'resend': 'コードを再送信する',
     'back': 'ログイン画面へ戻る',
+    'un_match_passcode': 'パスコードの値が間違っています'
   },
   'complete': {
     'new_user_title': 'アカウント登録完了',
