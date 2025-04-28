@@ -124,7 +124,7 @@ const profileSubmit = async () => {
     const image = userImage.value
     const personalInformationSnapshot = await getDocs(query(
         collection(db, 'users_personal_information'),
-        where('user_email', '==', email)
+        where('user_email', '==', email.value)
     ))
 
     storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.docs[0].data().user_email))

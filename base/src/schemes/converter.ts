@@ -156,25 +156,6 @@ export const convertDocumentDataToStoredUser = (
   documentData: DocumentData,
   personalInfomationData: DocumentData,
 ): StoredUser => {
-  if (!documentData || !personalInfomationData) {
-    return {
-      userId: '',
-      userName: '',
-      userEmail: '',
-      userImageUrl: null,
-      userAccount: null,
-      userDescription: null,
-      userSnsFacebook: null,
-      userSnsTwitter: null,
-      userSnsInstagram: null,
-      userSnsWebsite: null,
-      userPassCode: null,
-      verifiedAt: null,
-      createdAt: undefined,
-      updatedAt: undefined,
-    }
-  }
-
   const {
     user_id,
     user_name,

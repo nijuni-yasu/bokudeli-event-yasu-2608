@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
+import {db, functions} from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import logo from "@/assets/images/shokujii/shokujii_logo.png";
 import {generatePassCode} from "@/utils/generatePassCode";
@@ -8,6 +8,7 @@ import { useUserStore, type UserStore } from '@/stores/user'
 import {FirestoredUser} from "@/schemes/storedUser";
 import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
 import { getAuth, updateEmail, signInWithCustomToken, type User } from "firebase/auth";
+import {doc, getDoc, setDoc} from "firebase/firestore";
 
 const auth = getAuth()
 const currentUser = auth.currentUser;
@@ -40,6 +41,9 @@ const submit = async () => {
   isLoading.value = true
   try {
     const firestoredUser = user.value as FirestoredUser
+
+    const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', firestoredUser.user_id))
+    await setDoc(personalInformationSnapshot.ref, { user_email: userEmail.value })
     let isError = false
 
     // Facebook or Twitterにメールアドレスの登録がない場合、firebase authのIDが空になるため、updateEmailで設定する。
