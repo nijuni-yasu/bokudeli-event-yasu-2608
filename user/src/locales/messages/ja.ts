@@ -238,5 +238,7 @@ export default {
     'twitter': 'Twitter',
     'linkage': '連携する',
     'linked': '連携中',
+    'unlink_modal_title' : '連携を解除しますか？',
+    'unlink': '解除'
   }
 }
