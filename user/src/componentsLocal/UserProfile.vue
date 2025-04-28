@@ -7,6 +7,7 @@ import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline  } from '
 import LineIcon from '@/icons/line'
 import userAccessiblePaths from "@/utils/userAccessiblePaths";
 import { getManagePath } from '@/router/utils'
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -26,6 +27,11 @@ const login = () => {
       redirect: route.path
     }
   })
+}
+
+const isOpenLogoutDialog = ref(false)
+const handleLogoutDialog = () => {
+  isOpenLogoutDialog.value = true
 }
 
 const logout = async () => {
@@ -88,6 +94,7 @@ const logout = async () => {
               <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
             </template>
             <v-list-item-title>お問い合わせ</v-list-item-title>
+          </v-list-item>
 
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
@@ -122,7 +129,7 @@ const logout = async () => {
 
             <v-list-item-title>ログイン</v-list-item-title>
           </v-list-item>
-          <v-list-item v-else @click="logout()">
+          <v-list-item v-else @click="handleLogoutDialog()">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiLogout" size="22" />
             </template>
@@ -133,4 +140,9 @@ const logout = async () => {
       <!-- !SECTION -->
     </UserAvatar>
   </v-badge>
+  <confirm-dialog v-model="isOpenLogoutDialog" :is-confirm="true" :ok-text="$t('user_profile.logout')" :ok-click="logout">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('user_profile.logout_modal_title') }}
+    </v-card-text>
+  </confirm-dialog>
 </template>

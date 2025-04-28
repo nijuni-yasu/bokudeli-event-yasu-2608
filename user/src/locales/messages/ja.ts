@@ -241,5 +241,9 @@ export default {
     'linked': '連携中',
     'unlink_modal_title' : '連携を解除しますか？',
     'unlink': '解除'
+  },
+  'user_profile': {
+    'logout': 'ログアウトする',
+    'logout_modal_title': 'ログアウトしますか？'
   }
 }
