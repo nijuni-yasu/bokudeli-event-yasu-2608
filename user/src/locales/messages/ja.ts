@@ -39,6 +39,7 @@ export default {
         'events': 'イベント',
         'member': 'メンバー',
         'letter': 'レター',
+        'invoice': '請求書',
         'slackSetting': 'Slack',
         'settings': '設定',
       }
@@ -164,6 +165,10 @@ export default {
       'submit': 'コミュニティを作成する',
       'added': '作成しました',
       'error': '作成に失敗しました',
+    },
+    'invoice': {
+      'no_invoice': '請求書はまだありません',
+      'error': '請求書の取得に失敗しました',
     }
   }
 }
