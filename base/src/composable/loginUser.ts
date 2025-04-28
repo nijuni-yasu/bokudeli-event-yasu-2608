@@ -90,7 +90,7 @@ export const loginUser = async (user: User) => {
   // ただし、Facebook Login の度に画像を Storage にアップロードするわけにはいかないので、
   // 既存の画像がない場合のみ
   // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
-  if (currentStoredUser.userImageUrl == null || currentStoredUser.userImageUrl === '') {
+  if (currentStoredUser.userImageUrl == null || currentStoredUser.userImageUrl === '' || currentStoredUser.userImageUrl.startsWith("https://graph.facebook.com") || currentStoredUser.userImageUrl.startsWith("https://pbs.twimg.com")) {
     for (const provider of user.providerData) {
       switch (provider.providerId) {
         case FacebookAuthProvider.PROVIDER_ID:
