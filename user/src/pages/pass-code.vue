@@ -129,7 +129,7 @@ const submit = async () => {
               <h1 class="my-3 text-h3 font-weight-bold">{{ $t('passcode.enter_passcode') }}</h1>
             </v-row>
             <v-row justify="center">
-              <p>{{ $t('passcode.enter_passcode', {email: email}) }}</p>
+              <p>{{ $t('passcode.enter_passcode_description', {email: email}) }}</p>
             </v-row>
           </v-container>
 
