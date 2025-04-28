@@ -30,6 +30,7 @@ import { httpsCallable } from 'firebase/functions'
 import {convertFirebaseUserToStoredUser} from "@/schemes/converter";
 import {linkByProviderService} from "@/utils/providerService";
 import { mdiUpload } from '@mdi/js'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const auth = getAuth()
 const currentUser = auth.currentUser;
@@ -62,6 +63,9 @@ const route = useRoute()
 const isLoading = ref(false)
 
 const isValid = ref(false)
+
+const isOpenUnLinkDialog = ref(false)
+const targetUnLinkProvider = ref('')
 
 const form = ref<VForm | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -273,6 +277,12 @@ const handleTwitterLoginLink = async () => {
 }
 
 const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter.com') => {
+  isOpenUnLinkDialog.value = true
+  targetUnLinkProvider.value = providerId as 'google.com' | 'facebook.com' | 'twitter.com'
+}
+
+const confirmUnLink = async (providerId: string) => {
+  if (!providerId) return
   try {
     isLoading.value = true
 
@@ -287,7 +297,6 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
   } finally {
     isLoading.value = false
   }
-
 }
 </script>
 
@@ -439,6 +448,12 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
         </v-sheet>
       </v-col>
     </v-row>
+
+    <confirm-dialog v-model="isOpenUnLinkDialog" :is-confirm="true" :ok-text="$t('profile.unlink')" :ok-click="() => confirmUnLink(targetUnLinkProvider)">
+      <v-card-text class="text-center py-10 text-h4">
+        {{ $t('profile.unlink_modal_title') }}
+      </v-card-text>
+    </confirm-dialog>
   </v-container>
 </template>
 
