@@ -5,7 +5,14 @@ import ja from 'date-fns/locale/ja'
 import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
 import { makeIcs } from './make-ics.js'
-import { getCommunityUrl, getEventUrl, getOrderUrl, getUserUrl, getManageEventMemberUrl, getManageCommunityUrl } from './utils/urls.js'
+import {
+  getCommunityUrl,
+  getEventUrl,
+  getOrderUrl,
+  getUserUrl,
+  getManageEventMemberUrl,
+  getManageCommunityUrl,
+} from './utils/urls.js'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
