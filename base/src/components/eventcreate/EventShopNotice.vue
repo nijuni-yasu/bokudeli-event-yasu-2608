@@ -4,7 +4,15 @@ import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useValidators } from '@/composable/validators'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { mdiChevronLeft, mdiCalendarPlus, mdiStorefrontOutline, mdiEmailOutline, mdiCalendar, mdiHandExtendedOutline, mdiTimerSand } from '@mdi/js'
+import {
+  mdiChevronLeft,
+  mdiCalendarPlus,
+  mdiStorefrontOutline,
+  mdiEmailOutline,
+  mdiCalendar,
+  mdiHandExtendedOutline,
+  mdiTimerSand,
+} from '@mdi/js'
 import { hourString, minutesString } from '@/schemes/eventCreate'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
 import type { Shop } from '@/schemes/shop'
@@ -26,28 +34,24 @@ const storedUserStore = useStoreStoredUser()
 
 const isValid = ref(false)
 
-const eventDateTime = computed(() =>
-`${dateWithDayOfWeekString(event.value.event_start_datetime)} 〜 ${dateOnlyTimeString(event.value.event_end_datetime)}`,
+const eventDateTime = computed(
+  () =>
+    `${dateWithDayOfWeekString(event.value.event_start_datetime)} 〜 ${dateOnlyTimeString(event.value.event_end_datetime)}`,
 )
 
-const eventStartDatetime = computed(() =>
-  event.value.event_start_datetime?.toDate() ?? null
-)
+const eventStartDatetime = computed(() => event.value.event_start_datetime?.toDate() ?? null)
 const pickUpStartDatetime = computed(() => {
-  const pickUpStartDate = eventStartDatetime.value ? new Date(eventStartDatetime.value) : new Date();
+  const pickUpStartDate = eventStartDatetime.value ? new Date(eventStartDatetime.value) : new Date()
 
   pickUpStartDate.setMinutes(pickUpStartDate.getMinutes() - 30)
   return pickUpStartDate
 })
-const pickUpStartDateTime = computed(() =>
-  `${dateWithDayOfWeekString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
+const pickUpStartDateTime = computed(
+  () =>
+    `${dateWithDayOfWeekString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
 )
-const eventDeadlineDate = computed(() =>
-  event.value.event_deadline_datetime?.toDate() ?? null
-)
-const eventDeadlineDateTime = computed(() =>
-  `${dateWithDayOfWeekString(eventDeadlineDate.value)}`
-)
+const eventDeadlineDate = computed(() => event.value.event_deadline_datetime?.toDate() ?? null)
+const eventDeadlineDateTime = computed(() => `${dateWithDayOfWeekString(eventDeadlineDate.value)}`)
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
 const shop_address = computed(() => (shop.value !== null ? shop.value.shop_address : ''))
@@ -56,7 +60,7 @@ if (event.value.organizer_email === '' && event.value.event_status.value === 'in
 }
 
 const textFieldVariant = computed(() => {
-  return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled';
+  return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
 })
 
 const isOpenConfirmDialog = ref(false)
@@ -90,7 +94,7 @@ const submit = () => {
               dense
               readonly
               variant="solo-filled"
-              />
+            />
           </v-col>
         </v-row>
         <v-row class="justify-center">
@@ -307,7 +311,7 @@ const submit = () => {
             <v-card-text class="text-center py-10 text-h5">
               <div v-html="$t('shop_notice.confirm_send_reserve_mail', [event.shop_name])" />
             </v-card-text>
-            <v-card-text class="pb-0" style="line-height: 2.0rem">
+            <v-card-text class="pb-0" style="line-height: 2rem">
               <div v-html="$t('shop_notice.confirm_send_reserve_mail_desc')" />
             </v-card-text>
           </confirm-dialog>
