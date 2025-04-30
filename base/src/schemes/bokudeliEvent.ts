@@ -119,7 +119,7 @@ class BokudeliEvent {
         // functions で計算するので含めない
         'members',
         'event_num_members',
-      ])
+      ]),
     )
   }
 
