@@ -79,9 +79,7 @@ const eventEndMinute = computed({
 const updateStartDatetime = (newValue: Timestamp) => {
   if (Timestamp.now() < newValue) {
     event.value.event_start_datetime = newValue
-  }
-  // 終了日時の方が開始日時より前になっていたら終了日時を開始日時+1時間にする
-  if (event.value.event_end_datetime == null || newValue >= event.value.event_end_datetime) {
+    // 開始日時を変更したら、終了日時も同じ日付に設定
     event.value.event_end_datetime = Timestamp.fromMillis(newValue.toMillis() + 1 * 60 * 60 * 1000)
   }
 }
