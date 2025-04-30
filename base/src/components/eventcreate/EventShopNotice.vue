@@ -55,9 +55,6 @@ const eventDeadlineDateTime = computed(() => `${dateWithDayOfWeekString(eventDea
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
 const shop_address = computed(() => (shop.value !== null ? shop.value.shop_address : ''))
-if (event.value.organizer_email === '' && event.value.event_status.value === 'in_draft') {
-  event.value.organizer_email = storedUserStore.storedUser?.userEmail ?? ''
-}
 
 const textFieldVariant = computed(() => {
   return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'

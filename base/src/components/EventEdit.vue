@@ -58,16 +58,15 @@ const event = computed<BokudeliEvent | null>({
       const eventStore = useEventStore(props.eventId) as EventStore
       return eventStore.event
     } else {
-      if (
-        _event.value == null &&
-        communityStore.community?.community_id != null &&
-        communityStore.community?.community_account != null &&
-        communityStore.community?.community_name != null
-      ) {
+      if (_event.value == null && communityStore.community != null) {
         _event.value = new BokudeliEvent(
           communityStore.community.community_id,
           communityStore.community.community_account,
           communityStore.community.community_name,
+          communityStore.community.community_manager_fullname,
+          communityStore.community.community_company,
+          communityStore.community.community_email,
+          communityStore.community.community_phone,
         )
       }
       return _event.value
