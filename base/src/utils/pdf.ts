@@ -17,7 +17,7 @@ export const getInvoicePdf = async (eventId: string, orderId: string): Promise<B
 export const getEventBillInvoicePdf = async (eventId: string): Promise<Response> => {
   const token = await getAuth().currentUser!.getIdToken()
   const data = await fetch(
-    `https://asia-northeast1-${import.meta.env.VITE_PROJECT_ID}.cloudfunctions.net/communityBillInvoice/${eventId}`,
+    `https://asia-northeast1-${import.meta.env.VITE_PROJECT_ID}.cloudfunctions.net/eventBillInvoice/${eventId}`,
     {
       method: 'GET',
       headers: {
