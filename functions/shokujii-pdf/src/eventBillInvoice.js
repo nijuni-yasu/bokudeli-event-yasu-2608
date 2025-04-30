@@ -1,6 +1,6 @@
 import path from 'path'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
-import { defineString } from 'firebase-functions/params'
+import { defineList } from 'firebase-functions/params'
 import { addMonths } from 'date-fns'
 import { makePdf } from './utils/makePdf.js'
 import { db, auth } from './firebase.js'
@@ -12,9 +12,9 @@ import {
 } from './utils/converter.js'
 import './options/index.js'
 
-const CORS = defineString('CORS')
+const CORS = defineList('CORS')
 
-export const eventBillInvoice = onRequest({ cors: [CORS], timeoutSeconds: 120 }, async (req, res) => {
+export const eventBillInvoice = onRequest({ cors: CORS, timeoutSeconds: 120 }, async (req, res) => {
   const authHeader = req.headers.authorization ?? ''
   if (!authHeader.startsWith('JWT ')) {
     throw new HttpsError('unauthenticated', 'JWT token is required')
