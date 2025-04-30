@@ -14,17 +14,18 @@ import { Timestamp } from 'firebase/firestore'
 import { useValidators } from '@/composable/validators'
 import { mdiMapMarker, mdiCalendar } from '@mdi/js'
 
-defineProps<{
-  readonly?: boolean | null
-}>()
-
 const { requiredValidator, postalCodeValidator, urlValidator } = useValidators()
 
 const event = defineModel<BokudeliEvent>({ required: true })
 
 // 新規作成の場合の初期値設定
 if (event.value.event_start_datetime == null) {
-  event.value.event_start_datetime = Timestamp.fromMillis(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) // +7日
+  const today = new Date()
+  const defaultStartDate = new Date(today)
+  defaultStartDate.setDate(today.getDate() + 14) // +14日
+  defaultStartDate.setHours(12)
+  defaultStartDate.setMinutes(0)
+  event.value.event_start_datetime = Timestamp.fromMillis(defaultStartDate.getTime())
 }
 if (event.value.event_end_datetime == null) {
   event.value.event_end_datetime = Timestamp.fromMillis(
@@ -104,17 +105,13 @@ watchEffect(async () => {
   }
   event.value.event_address = location.address
 })
-
-watch(
-  () => event.value.event_start_datetime,
-  (newValue) => {
-    console.log(newValue)
-  },
-)
+const textFieldVariant = computed(() => {
+  return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
+})
 </script>
 
 <template>
-  <v-card flat>
+  <v-card flat class="mt-3">
     <v-card-title class="pt-10 px-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiMapMarker" />
       {{ $t('event_basic_info.place') }}
@@ -125,21 +122,21 @@ watch(
         <v-col cols="12" sm="12" md="3">
           <v-text-field
             v-model="event.event_postalcode"
-            outlined
+            :variant="textFieldVariant"
             dense
             :label="$t('postal_code')"
             :rules="[requiredValidator, postalCodeValidator]"
-            :readonly="readonly"
+            :readonly="event.event_status.value !== 'in_draft'"
           />
         </v-col>
         <v-col cols="12">
           <v-text-field
             v-model="event.event_address"
-            outlined
+            :variant="textFieldVariant"
             dense
             :label="$t('address')"
             :rules="[requiredValidator]"
-            :readonly="readonly"
+            :readonly="event.event_status.value !== 'in_draft'"
           />
         </v-col>
       </v-row>
@@ -150,23 +147,24 @@ watch(
         <v-col cols="12" sm="12" md="6">
           <v-text-field
             v-model="event.event_place"
-            outlined
+            variant="outlined"
             dense
             :label="$t('event_basic_info.place_name')"
-            :readonly="readonly"
           />
         </v-col>
         <v-col cols="12" sm="12" md="6">
           <v-text-field
             v-model="event.event_place_url"
-            outlined
+            variant="outlined"
             dense
             :label="$t('event_basic_info.place_url')"
             :rules="[urlValidator]"
-            :readonly="readonly"
           />
         </v-col>
       </v-row>
+      <div class="mt-2 text-subtitle-2">
+        <span>{{ $t('event_basic_info.place_hint') }}</span>
+      </div>
     </v-card-text>
 
     <v-card-title class="pt-10 px-5">
@@ -180,7 +178,9 @@ watch(
           <DateInput
             v-model="eventStartDate"
             :label="$t('event_basic_info.start_date')"
-            :readonly="readonly"
+            :variant="textFieldVariant"
+            dense
+            :readonly="event.event_status.value !== 'in_draft'"
             :clearable="false"
           />
         </v-col>
@@ -189,9 +189,9 @@ watch(
             v-model="eventStartHour"
             :items="hourList"
             :label="$t('event_basic_info.hour')"
-            outlined
+            :variant="textFieldVariant"
             dense
-            :readonly="readonly"
+            :readonly="event.event_status.value !== 'in_draft'"
           />
         </v-col>
         <v-col cols="6" sm="6" md="3">
@@ -199,9 +199,9 @@ watch(
             v-model="eventStartMinute"
             :items="minutesList"
             :label="$t('event_basic_info.minute')"
-            outlined
+            :variant="textFieldVariant"
             dense
-            :readonly="readonly"
+            :readonly="event.event_status.value !== 'in_draft'"
           />
         </v-col>
       </v-row>
@@ -213,7 +213,9 @@ watch(
           <DateInput
             v-model="eventEndDate"
             :label="$t('event_basic_info.end_date')"
-            :readonly="readonly"
+            :variant="textFieldVariant"
+            dense
+            :readonly="event.event_status.value !== 'in_draft'"
             :clearable="false"
           />
         </v-col>
@@ -221,10 +223,10 @@ watch(
           <v-select
             v-model="eventEndHour"
             :items="hourList"
+            :variant="textFieldVariant"
             :label="$t('event_basic_info.hour')"
-            outlined
             dense
-            :readonly="readonly"
+            :readonly="event.event_status.value !== 'in_draft'"
           />
         </v-col>
         <v-col cols="6" sm="6" md="3">
@@ -232,9 +234,9 @@ watch(
             v-model="eventEndMinute"
             :items="minutesList"
             :label="$t('event_basic_info.minute')"
-            outlined
+            :variant="textFieldVariant"
             dense
-            :readonly="readonly"
+            :readonly="event.event_status.value !== 'in_draft'"
           />
         </v-col>
       </v-row>
