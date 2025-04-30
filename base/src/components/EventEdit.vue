@@ -317,9 +317,7 @@ const stepperItems = computed(() => [
       <v-form v-model="isValid1">
         <v-row class="justify-center">
           <v-col cols="12" sm="12" md="9">
-            <event-basic-info-card
-              v-model="event"
-            >
+            <event-basic-info-card v-model="event">
               <v-card-text class="text-center mt-10">
                 <v-btn
                   color="primary"
