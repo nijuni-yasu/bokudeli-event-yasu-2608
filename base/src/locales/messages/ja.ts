@@ -449,5 +449,10 @@ export default {
       description: `お探しのページは見つかりませんでした。<br />
                     ページが削除されたか、入力したURLが間違っている可能性があります。`,
     },
+    // 正確には 520 は HTTP ERROR ではないが、Cloudflare が Client Application Error として使用しているのを参考に、ここでは 520 を使用
+    '520': {
+      title: 'Client Application Error',
+      description: '予期しないエラーが発生しました'
+    }
   },
 }
