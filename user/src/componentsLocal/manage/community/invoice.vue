@@ -4,7 +4,7 @@ import { useEventListStore } from '@/stores/eventList'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { mdiFilePdfBox } from '@mdi/js'
 import type { EventStore } from '@/stores/event'
-import { getEventBillInvoicePath } from '@/router/utils'
+import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
 import type { OrderItem } from '@/schemes/orderItem'
 
 const route = useRoute()
@@ -49,18 +49,40 @@ const getPdf = (eventId: string) => {
   <v-container>
     <v-row v-if="eventStores != null">
       <v-col md="12" sm="12" cols="12">
-        <v-card class="pa-5">
+        <v-card class="pa-10 mb-10">
+          <v-row>
+            <v-card-text class="pa-3 title"><div v-html="$t('manage.invoice.title')" /></v-card-text>
+          </v-row>
+          <v-row>
+            <v-card-text class="pa-3 description"><div v-html="$t('manage.invoice.description')" /></v-card-text>
+          </v-row>
+        </v-card>
+        <v-card class="pa-10">
           <v-row v-if="eventListStore.totalCount === eventListStore.eventStores?.length && eventStores.length === 0">
-            <v-col cols="12" class="text-center">{{ $t('manage.invoice.no_invoice') }}</v-col>
+            <v-col cols="12" class="pa-3 text-left">{{ $t('manage.invoice.no_invoice') }}</v-col>
           </v-row>
           <v-row v-else>
             <v-col md="12" sm="12" cols="12">
               <v-table>
+                <thead>
+                  <tr>
+                    <th class="text-left">{{ $t('manage.invoice.date') }}</th>
+                    <th class="text-left">{{ $t('manage.invoice.place') }}</th>
+                    <th class="text-left">{{ $t('manage.invoice.event_name') }}</th>
+                    <th class="text-left">{{ $t('manage.invoice.price') }}</th>
+                    <th class="text-left">{{ $t('manage.invoice.download') }}</th>
+                  </tr>
+                </thead>
                 <tbody>
                   <template v-for="es of eventStores" :key="es.event!.event_id">
                     <tr v-if="es.event != null && es.orders != null">
                       <td>{{ $d(es.event.event_start_datetime!.toDate(), 'date') }}</td>
-                      <td>{{ es.event.event_name }}</td>
+                      <td>{{ es.event.event_address }}</td>
+                      <td>
+                        <router-link :to="getEventPath(es.event.community_account, es.event.event_id)">
+                          {{ es.event.event_name }}
+                        </router-link>
+                      </td>
                       <td>
                         {{ getTotalPrice(es.orders).toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' }) }}
                       </td>
@@ -93,3 +115,21 @@ const getPdf = (eventId: string) => {
     </v-row>
   </v-container>
 </template>
+
+<style scoped>
+.title {
+  font-family: Noto Sans JP;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: left;
+}
+.description {
+  font-family: Noto Sans JP;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 30px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+}
+</style>
