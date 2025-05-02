@@ -11,12 +11,25 @@ const props = defineProps<{
   eventId: string
 }>()
 
-const eventStore = useEventStore(props.eventId) as EventStore
-const communityStore = useCommunityStore(props.communityId) as CommunityStore
-const isShowMember = computed(() =>
-  communityStore.community?.is_show_member !== undefined ? communityStore.community.is_show_member : true
-)
+const router = useRouter()
 
+const communityStore = useCommunityStore(props.communityId) as CommunityStore
+const isShowMember: boolean = await new Promise((resolve) => {
+  watch(
+    () => communityStore.community?.is_show_member,
+    (isShowMember) => {
+      if (isShowMember === false) {
+        router.push('/404')
+      }
+      if (isShowMember != null) {
+        resolve(isShowMember)
+      }
+    },
+    { immediate: true },
+  )
+})
+
+const eventStore = useEventStore(props.eventId) as EventStore
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 const members = computed(
   () =>
@@ -29,7 +42,7 @@ const members = computed(
 </script>
 <template>
   <section>
-    <div v-if="event != null && communityStore.community != null && isShowMember === true" class="justify-center">
+    <div v-if="event != null && isShowMember" class="justify-center">
       <v-btn
         class="ma-1"
         color="primary"
