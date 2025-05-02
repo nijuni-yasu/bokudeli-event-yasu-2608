@@ -19,7 +19,8 @@ const eventStores = computed<EventStore[] | undefined>(() =>
   eventListStore.eventStores?.flatMap((es) => {
     if (
       es.event?.event_payment !== 'community_bill' ||
-      (es.event?.event_start_datetime?.toMillis() ?? Number.MAX_SAFE_INTEGER) > Date.now()
+      es.event?.event_status.value !== 'finished' ||
+      getTotalPrice(es.orders ?? []) === 0
     ) {
       return []
     }
