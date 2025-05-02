@@ -12,6 +12,7 @@ import {
   getUserUrl,
   getManageEventMemberUrl,
   getManageCommunityUrl,
+  getManageEventInvoiceUrl,
 } from './utils/urls.js'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
 
@@ -25,6 +26,7 @@ const DELIVERY_DURATION = 30 // minutes
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-797deb1c54984007baadd1926ee974a2'
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098'
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d'
+const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
 const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7'
 // 環境変数の方がよいかもしれない
@@ -483,6 +485,42 @@ async function sendEventConcludedMailToMembers(start, end) {
         console.warn(err)
       }
     }),
+  )
+}
+
+async function sendInvoiceMailToOrganizers(start, end) {
+  // sendEventConcludedMailToMembers と同じイベントを取得トライを毎分行うことになるので、無駄は多い
+  // TODO polling のロジックの最適化
+  const events = await db
+    .collectionGroup('events')
+    .where('event_end_datetime', '>', Timestamp.fromMillis(start))
+    .where('event_end_datetime', '<=', Timestamp.fromMillis(end))
+    .where('event_status.value', '==', 'accepting_order')
+    // 全く同じ時間に終了するイベントはほぼ存在し得ないので、index を張るのではなく、取得後の filter で絞り込む
+    // .where('event_payment', '==', 'community_bill')
+    .where('is_deleted', '==', false)
+    .get()
+  return Promise.all(
+    events.docs
+      .filter((eventSnapshot) => eventSnapshot.get('event_payment') === 'community_bill')
+      .map(async (eventSnapshot) => {
+        const dynamic_template_data = {
+          community_name: eventSnapshot.get('community_name'),
+          event_name: eventSnapshot.get('event_name'),
+          event_invoice_url: getManageEventInvoiceUrl(eventSnapshot.id),
+        }
+        try {
+          await sgMail.send({
+            to: eventSnapshot.get('organizer_email'),
+            from: DEFAULT_FROM,
+            cc: SUPPORT_MAIL,
+            templateId: EVENT_INVOICE_TEMPLATE_ID,
+            dynamic_template_data,
+          })
+        } catch (err) {
+          console.warn(err)
+        }
+      }),
   )
 }
 
@@ -1048,6 +1086,7 @@ export const polling = functions
       sendOrderDeadlineMailToOrganizers(start, end),
       sendOrderDeadlineMailToMembers(start, end),
       sendEventConcludedMailToMembers(start, end),
+      sendInvoiceMailToOrganizers(start, end),
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
       sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis, false), // 1日後通知
