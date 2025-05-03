@@ -18,7 +18,7 @@ import { functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
 import type { CommunityMember } from '@/schemes/communityMember'
-import { getInvoicePdf } from '@/utils/invoice'
+import { getInvoicePdf } from '@/utils/pdf'
 import { useNotification } from '@/composable/notification'
 
 const route = useRoute()

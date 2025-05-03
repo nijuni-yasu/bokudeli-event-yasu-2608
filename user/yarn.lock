@@ -325,6 +325,11 @@
     "@babel/helper-validator-identifier" "^7.24.7"
     to-fast-properties "^2.0.0"
 
+"@channel.io/channel-web-sdk-loader@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@channel.io/channel-web-sdk-loader/-/channel-web-sdk-loader-2.0.0.tgz#d8bc196222a9b8045af6c8418f7693c466db6100"
+  integrity sha512-Z8DDpf2lAaYr/3aAnwQtxg0L8MYWgi/hhGV8c5/SLCV6Fx5Gssj7mfyHHrCVC315B0icmLYqZsXBlmbf6cN8Jg==
+
 "@esbuild/aix-ppc64@0.20.2":
   version "0.20.2"
   resolved "https://registry.yarnpkg.com/@esbuild/aix-ppc64/-/aix-ppc64-0.20.2.tgz#a70f4ac11c6a1dfc18b8bbb13284155d933b9537"

@@ -39,6 +39,7 @@ export default {
         'events': 'イベント',
         'member': 'メンバー',
         'letter': 'レター',
+        'invoice': '請求書払い',
         'slackSetting': 'Slack',
         'settings': '設定',
       }
@@ -164,6 +165,19 @@ export default {
       'submit': 'コミュニティを作成する',
       'added': '作成しました',
       'error': '作成に失敗しました',
+    },
+    'invoice': {
+      'date': '開催日',
+      'place': '開催場所',
+      'event_name': 'イベント名',
+      'price': '金額',
+      'download': 'ダウンロード',
+      'no_invoice': '請求書はまだありません',
+      'error': '請求書の取得に失敗しました',
+      'title': '「主催者 請求書払い」について',
+      'description': `イベント設定画面で<b>「主催者 請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
+      イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
+      お支払い期限は翌月末日となります。詳細は、<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g353224adc3a_0_0" target="_blank">支払い設定について</a> をご確認ください。`,
     }
   }
 }

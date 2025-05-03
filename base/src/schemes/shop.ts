@@ -117,9 +117,9 @@ export class Shop {
     public shop_address_longitude: number = 139.7528,
     public shop_phone: string = '',
     public shop_range_min_orders: { range: number | null; min_orders: number | null }[] = [
-      { range: null, min_orders: null },
-      { range: null, min_orders: null },
-      { range: null, min_orders: null },
+      { range: 2, min_orders: 4 },
+      { range: 5, min_orders: 6 },
+      { range: 10, min_orders: 8 },
       { range: null, min_orders: null },
       { range: null, min_orders: null },
     ],

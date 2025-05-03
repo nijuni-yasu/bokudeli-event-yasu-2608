@@ -15,6 +15,7 @@
     "format": "find src -follow -type f -regextype posix-egrep -not -regex 'src/(@core|@layouts)/.*' \\( -name '*.ts' -o -name '*.vue' \\) | xargs readlink -f | xargs prettier --write"
   },
   "dependencies": {
+    "@channel.io/channel-web-sdk-loader": "^2.0.0",
     "@floating-ui/dom": "^1.6.5",
     "@tinymce/tinymce-vue": "^6",
     "@turf/distance": "^7.0.0",

@@ -1,14 +1,14 @@
 import path from 'path'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
-import { defineString } from 'firebase-functions/params'
+import { defineList } from 'firebase-functions/params'
 import { makePdf } from './utils/makePdf.js'
 import { db, auth } from './firebase.js'
-import { convertDateToId, convertDateToString, convertNumberToCurrency } from './utils/converter.js'
+import { convertDateToId, convertDateToString, convertNumberToYen } from './utils/converter.js'
 import './options/index.js'
 
-const CORS = defineString('CORS')
+const CORS = defineList('CORS')
 
-export const invoice = onRequest({ cors: [CORS] }, async (req, res) => {
+export const invoice = onRequest({ cors: CORS }, async (req, res) => {
   const authHeader = req.headers.authorization ?? ''
   if (!authHeader.startsWith('JWT ')) {
     throw new HttpsError('unauthenticated', 'JWT token is required')
@@ -63,13 +63,13 @@ export const invoice = onRequest({ cors: [CORS] }, async (req, res) => {
       event: event.data().event_name + ' / お食事代として',
       number,
       orderDate: convertDateToString(date),
-      price: convertNumberToCurrency(price),
+      price: convertNumberToYen(price),
       date: convertDateToString(new Date()),
       shop: shop.data().shop_name,
       invoiceId: shop.data().shop_invoice_number ?? 'なし',
       address: shop.data().shop_address,
-      rawPrice: convertNumberToCurrency(rawPrice),
-      tax: convertNumberToCurrency(tax),
+      rawPrice: convertNumberToYen(rawPrice),
+      tax: convertNumberToYen(tax),
       reissue,
     }
   })

@@ -95,6 +95,10 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
   })
   await shareSnsButton(type, props.event, props.community, shop!, _window)
 }
+// コミュニティの設定によっては参加者一覧を非表示にする
+const isShowMember = computed(() =>
+  props.community.is_show_member !== undefined ? props.community.is_show_member : true
+)
 </script>
 
 <template>
@@ -268,6 +272,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
             </v-card-text>
             <v-spacer />
             <v-col cols="auto">
+              <div v-if="isShowMember === true">
               <router-link :to="{ path: `${event.event_id}/members` }">
                 <div class="d-flex align-end">
                   <v-icon size="large" :icon="mdiAccountGroup" />
@@ -276,10 +281,16 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
                   </span>
                 </div>
               </router-link>
+              </div>
+              <div v-else-if="isShowMember === false">
+                <v-card-text class="text-subtitle-2 text-right pb-3">
+                  {{ $t('event_details.participants_profile_hidden') }}
+                </v-card-text>
+              </div>
             </v-col>
           </v-row>
           <v-divider class="custom-divider mt-2" />
-          <event-member-list :members="members" :event-max-people="event.event_max_people" class="mt-4 mb-8" />
+          <event-member-list :members="members" :event-max-people="event.event_max_people" :is-show-member="isShowMember" class="mt-4 mb-8" />
         </div>
         <v-card-text>
           <v-row align-self-center>
