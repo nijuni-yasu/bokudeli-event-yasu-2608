@@ -68,6 +68,8 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
   const store = defineStore<string, CommunityStoreState & CommunityGetters & CommunityStoreAction>(
     `/communities/${communityAccount}`,
     () => {
+      const router = useRouter()
+
       const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${communityAccount}`
       const exists = ref<boolean | null>(null)
       const community = ref<BokudeliCommunity | null>(null)
@@ -212,7 +214,9 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
                 window.setTimeout(subscribe, 500)
                 return
               }
-              throw new Error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
+              console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
+              router.replace('/404')
+              return
             }
             retry = 0
             _communityRef.value = communityRef
