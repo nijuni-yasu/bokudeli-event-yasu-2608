@@ -83,8 +83,8 @@ export default {
     total: '合計',
     cannot_order_deadline: '注文期限をすぎました。注文確定できません。',
     cannot_order_limit_people: '定員に達しました。注文確定できません。',
-    order_completed:'注文を完了しました。',
-    payment_failed:'決算処理に失敗しました。管理者にお問い合わせください。',
+    order_completed: '注文を完了しました。',
+    payment_failed: '決算処理に失敗しました。管理者にお問い合わせください。',
     confirm_order_credit_card: 'クレジットカードの事前決済に進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
@@ -215,8 +215,10 @@ export default {
     public_setting: '公開設定',
     public: '公開コミュニティ',
     private: '限定公開コミュニティ',
-    public_desc: '公開コミュニティは <a href="https://shokujii.jp/communitylist" target="_blank">コミュニティ一覧</a>に表示され、オープンにコミュニティを運営できます。',
-    private_desc: '限定公開コミュニティは <a href="https://shokujii.jp/communitylist" target="_blank">コミュニティ一覧</a>に表示されず、クローズドにコミュニティを運営できます。',
+    public_desc:
+      '公開コミュニティは <a href="https://shokujii.jp/communitylist" target="_blank">コミュニティ一覧</a>に表示され、オープンにコミュニティを運営できます。',
+    private_desc:
+      '限定公開コミュニティは <a href="https://shokujii.jp/communitylist" target="_blank">コミュニティ一覧</a>に表示されず、クローズドにコミュニティを運営できます。',
     manager_info: '運営者情報',
     manager_info_hint: '※運営者情報は、コミュニティページに表示されません',
     manager_name: '運営者氏名',
@@ -230,7 +232,7 @@ export default {
     bill_fullname: '請求先 担当者名',
     bill_email: '請求先 メールアドレス',
   },
-  event_edit:{
+  event_edit: {
     back: '前へ',
     next: '次へ',
   },
@@ -258,7 +260,8 @@ export default {
     event_name: 'イベントタイトル',
     event_cover_url: 'イベントカバー画像',
     event_cover_url_hint: '※カバー画像の推奨サイズは、1200 x 630ピクセル です。',
-    event_cover_template: '※カバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> もご活用ください🎨',
+    event_cover_template:
+      '※カバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> もご活用ください🎨',
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
@@ -402,9 +405,9 @@ export default {
            <br />
            詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください👍`,
   },
-  cancelpolicy_modal:{
-    title:'キャンセルポリシー',
-    desc:`注文期限まで：キャンセル料金 0%<br />
+  cancelpolicy_modal: {
+    title: 'キャンセルポリシー',
+    desc: `注文期限まで：キャンセル料金 0%<br />
     注文期限以降：キャンセル料金 100%<br />
     <br />
     注文期限内であれば <a href="https://shokujii.jp/mypage" target="_blank">マイページ</a> にてご自身でキャンセルを行うことができます。注文期限後、キャンセルはできませんのでご了承ください。`,
@@ -431,12 +434,12 @@ export default {
     dialog: {
       title: '本当に削除しますか？',
       description: 'この操作は元に戻すことができません。',
-      submit: '削除'
-    }
+      submit: '削除',
+    },
   },
   email_dialog: {
     title: 'メール送信',
     send_to: '送信先: {0}',
     send: '送信',
-  }
+  },
 }
