@@ -1,4 +1,7 @@
 import path from 'path'
+import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
+import { getStorage } from 'firebase-admin/storage'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { defineList } from 'firebase-functions/params'
 import { makePdf } from './utils/makePdf.js'
@@ -6,7 +9,6 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import axios from 'axios'
 import sharp from 'sharp'
-import { db, auth, storage } from './firebase.js'
 import './options/index.js'
 import { getEvent } from './utils/eventUtils.js'
 
@@ -32,6 +34,7 @@ const getBlankProfileBase64 = () => {
 
 // GCSから画像をダウンロードする関数
 export const downloadImageFromGCS = async (gsUrl) => {
+  const storage = getStorage()
   const bucketName = gsUrl.split('/')[2]
   const filePath = gsUrl.split('/').slice(3).join('/')
   const bucket = storage.bucket(bucketName)
@@ -196,6 +199,7 @@ const getMenuUsers = async (transaction, event) => {
 
 // ユーザー情報をマップとして取得する関数
 const getUserMap = async (transaction, menuUsers) => {
+  const db = getFirestore()
   const userIds = new Set(menuUsers.map((menuUser) => menuUser.userId))
   const usersSnapshot = await transaction.get(db.collection('users').where('user_id', 'in', Array.from(userIds)))
 
@@ -264,12 +268,13 @@ export const namesprint = onRequest({ cors: CORS }, async (req, res) => {
   }
 
   const idToken = authHeader.split('JWT ')[1]
-  const decodedToken = await auth.verifyIdToken(idToken)
+  const decodedToken = await getAuth().verifyIdToken(idToken)
   const uid = decodedToken.uid
 
   const [, eventId] = req.path.split('/')
   console.info(`uid: ${uid}, eventId: ${eventId}`)
 
+  const db = getFirestore()
   const jsonDataForMerge = await db.runTransaction(async (transaction) => {
     const event = await getEvent(transaction, eventId)
     if (!event) {

@@ -1,9 +1,10 @@
 import path from 'path'
+import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { defineList } from 'firebase-functions/params'
 import { addMonths } from 'date-fns'
 import { makePdf } from './utils/makePdf.js'
-import { db, auth } from './firebase.js'
 import {
   convertDateToId,
   convertDateToString,
@@ -21,11 +22,12 @@ export const eventBillInvoice = onRequest({ cors: CORS, timeoutSeconds: 120 }, a
   }
 
   const idToken = authHeader.split('JWT ')[1]
-  const decodedToken = await auth.verifyIdToken(idToken)
+  const decodedToken = await getAuth().verifyIdToken(idToken)
   const uid = decodedToken.uid
 
   const [, eventId] = req.path.split('/')
 
+  const db = getFirestore()
   const jsonDataForMerge = await db.runTransaction(async (transaction) => {
     const events = await transaction.get(db.collectionGroup('events').where('event_id', '==', eventId))
     if (events.size !== 1) {

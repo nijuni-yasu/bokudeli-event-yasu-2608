@@ -1,12 +1,12 @@
 import path from 'path'
 import { getAuth } from 'firebase-admin/auth'
+import { getFirestore } from 'firebase-admin/firestore'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { defineList, defineString } from 'firebase-functions/params'
 import { makePdf } from './utils/makePdf.js'
 import axios from 'axios'
 import sharp from 'sharp'
 import QRCode from 'qrcode'
-import { db } from './firebase.js'
 import { getEvent } from './utils/eventUtils.js'
 import { convertHtmlToPlaneText } from './utils/converter.js'
 import './options/index.js'
@@ -147,6 +147,7 @@ export const flyer = onRequest({ cors: CORS }, async (req, res) => {
   const size = req.query.size || 'A4' // デフォルトはA4
   console.info(`uid: ${uid}, eventId: ${eventId}, size: ${size}`)
 
+  const db = getFirestore()
   const jsonDataForMerge = await db.runTransaction(async (transaction) => {
     const event = await getEvent(transaction, eventId)
     if (!event) {
