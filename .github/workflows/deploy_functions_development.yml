@@ -20,22 +20,23 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ./functions
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version-file: ./functions/.node-version
+          node-version-file: ./functions/legacy/.node-version
           cache: "yarn"
           cache-dependency-path: |
-            ./functions/yarn.lock
+            ./functions/legacy/yarn.lock
             ./functions/shokujii-slackbot/yarn.lock
       - name: Install dependencies
+        working-directory: ./functions/legacy
         run: |
           yarn install --frozen-lockfile
       - name: Generate .env file
+        working-directory: ./functions/legacy
         run: |
           env_vars=$(echo '${{ secrets.FUNCTIONS_DEVELOPMENT_ENV_SECRET }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"')
           echo "$env_vars" > .env

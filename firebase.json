@@ -57,8 +57,8 @@
   ],
   "functions": [
     {
-      "source": "functions",
-      "codebase": "default",
+      "source": "functions/legacy",
+      "codebase": "legacy",
       "ignore": [
         "node_modules",
         ".git",
