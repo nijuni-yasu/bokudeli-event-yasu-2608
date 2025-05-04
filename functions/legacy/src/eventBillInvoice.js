@@ -120,7 +120,7 @@ export const eventBillInvoice = onRequest({ cors: CORS, timeoutSeconds: 120 }, a
       number,
       date: convertDateToString(eventEndDatetime),
       companyName: event.get('organizer_company'),
-      companyPersonName: event.get('organizer_fullname'),
+      companyPersonName: event.get('bill_fullname'),
       companyPostalCode: community.get('community_postalcode'),
       companyAddress: community.get('community_address'),
       companyPhoneNumber: community.get('community_phone'),
