@@ -1,4 +1,4 @@
-name: Deploy functions to production
+name: Deploy functions
 
 on:
   push:
