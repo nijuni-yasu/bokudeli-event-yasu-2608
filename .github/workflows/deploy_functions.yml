@@ -1,13 +1,22 @@
-name: Deploy functions to development
+name: Deploy functions to production
 
 on:
   push:
     branches:
+      - production
       - development
     paths:
       - "functions/**"
   workflow_dispatch:
-
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - development
+          - production
+    
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
@@ -16,7 +25,9 @@ jobs:
   deploy:
     timeout-minutes: 5
     runs-on: ubuntu-latest
-    environment: development
+    # push のときだけ GITHUB_REF_NAME を使う（workflow_dispatch のときは inputs.environment を使う）
+    # 可読性に欠けるが、うまい手がみつからない
+    environment: ${{ github.event_name == 'push' && (github.ref_name == 'production' && 'production' || github.ref_name == 'development' && 'development') || inputs.environment }}
     defaults:
       run:
         shell: bash
@@ -27,10 +38,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: ./functions/legacy/.node-version
-          cache: "yarn"
-          cache-dependency-path: |
-            ./functions/legacy/yarn.lock
-            ./functions/shokujii-slackbot/yarn.lock
       - name: Install dependencies
         working-directory: ./functions/legacy
         run: |
