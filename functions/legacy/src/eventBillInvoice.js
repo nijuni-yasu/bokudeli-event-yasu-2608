@@ -12,6 +12,7 @@ import {
   convertNumberToYen,
 } from './utils/converter.js'
 import './options/index.js'
+import { getEventUrl } from './utils/urls.js'
 
 const CORS = defineList('CORS')
 
@@ -140,8 +141,7 @@ export const eventBillInvoice = onRequest({ cors: CORS, timeoutSeconds: 120 }, a
         event.get('event_end_datetime').toDate(),
       ),
       shopName: event.get('shop_name'),
-      // TODO default にマージ後 getEventUrl を使う
-      eventUrl: `https://shokujii.jp/c/${event.get('community_account')}/e/${eventId}`,
+      eventUrl: getEventUrl(event.get('community_account'), eventId),
     }
   })
 
