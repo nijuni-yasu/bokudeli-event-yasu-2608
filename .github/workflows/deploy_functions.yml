@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   deploy:
-    timeout-minutes: 5
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     # push のときだけ GITHUB_REF_NAME を使う（workflow_dispatch のときは inputs.environment を使う）
     # 可読性に欠けるが、うまい手がみつからない
