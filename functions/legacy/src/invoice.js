@@ -4,7 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { defineList } from 'firebase-functions/params'
 import { makePdf } from './utils/makePdf.js'
-import { convertDateToId, convertDateToString, convertNumberToYen } from './utils/converter.js'
+import { convertNumberToYen } from './utils/converter.js'
+import { convertToDate, convertDateToId } from './utils/datetime.js'
 import './options/index.js'
 
 const CORS = defineList('CORS')
@@ -44,7 +45,7 @@ export const invoice = onRequest({ cors: CORS }, async (req, res) => {
     }
 
     const price = order.data()?.menus?.reduce((acc, v) => acc + v.price * v.count, 0)
-    const date = order.data()?.ordered_at?.toDate()
+    const date = order.data()?.ordered_at?.toMillis()
     if (price == null || Number.isNaN(price) || order.data().status !== 'ordered' || date == null) {
       res.status(404).send('Order not found')
       return
@@ -64,9 +65,9 @@ export const invoice = onRequest({ cors: CORS }, async (req, res) => {
     return {
       event: event.data().event_name + ' / お食事代として',
       number,
-      orderDate: convertDateToString(date),
+      orderDate: convertToDate(date),
       price: convertNumberToYen(price),
-      date: convertDateToString(new Date()),
+      date: convertToDate(Date.now()),
       shop: shop.data().shop_name,
       invoiceId: shop.data().shop_invoice_number ?? 'なし',
       address: shop.data().shop_address,

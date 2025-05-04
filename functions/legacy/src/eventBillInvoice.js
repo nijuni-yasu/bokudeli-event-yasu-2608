@@ -3,14 +3,9 @@ import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
 import { onRequest, HttpsError } from 'firebase-functions/v2/https'
 import { defineList } from 'firebase-functions/params'
-import { addMonths } from 'date-fns'
 import { makePdf } from './utils/makePdf.js'
-import {
-  convertDateToId,
-  convertDateToString,
-  convertDateRangeToString,
-  convertNumberToYen,
-} from './utils/converter.js'
+import { convertNumberToYen } from './utils/converter.js'
+import { convertToDate, convertToDuration, convertDateToId, getLastDayOfNextMonth } from './utils/datetime.js'
 import './options/index.js'
 import { getEventUrl } from './utils/urls.js'
 
@@ -103,7 +98,7 @@ export const eventBillInvoice = onRequest({ cors: CORS, timeoutSeconds: 120 }, a
     }
 
     let number = event.get('invoice_number')
-    const eventEndDatetime = event.get('event_end_datetime').toDate()
+    const eventEndDatetime = event.get('event_end_datetime').toMillis()
     if (number == null) {
       number = convertDateToId(eventEndDatetime)
       transaction.update(event.ref, { invoice_number: number })
@@ -119,7 +114,7 @@ export const eventBillInvoice = onRequest({ cors: CORS, timeoutSeconds: 120 }, a
 
     return {
       number,
-      date: convertDateToString(eventEndDatetime),
+      date: convertToDate(eventEndDatetime),
       companyName: event.get('organizer_company'),
       companyPersonName: event.get('bill_fullname'),
       companyPostalCode: community.get('community_postalcode'),
@@ -134,11 +129,11 @@ export const eventBillInvoice = onRequest({ cors: CORS, timeoutSeconds: 120 }, a
       tax10: convertNumberToYen(tax10),
       tax8SubTotal: convertNumberToYen(tax8SubTotal),
       tax8: convertNumberToYen(tax8),
-      deadline: convertDateToString(addMonths(event.get('event_end_datetime').toMillis(), 1)),
+      deadline: convertToDate(getLastDayOfNextMonth(eventEndDatetime).toMillis()),
       eventName: event.get('event_name'),
-      eventDate: convertDateRangeToString(
-        event.get('event_start_datetime').toDate(),
-        event.get('event_end_datetime').toDate(),
+      eventDate: convertToDuration(
+        event.get('event_start_datetime').toMillis(),
+        event.get('event_end_datetime').toMillis(),
       ),
       shopName: event.get('shop_name'),
       eventUrl: getEventUrl(event.get('community_account'), eventId),
