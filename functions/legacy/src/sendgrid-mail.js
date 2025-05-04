@@ -505,15 +505,16 @@ async function sendInvoiceMailToOrganizers(start, end) {
       .filter((eventSnapshot) => eventSnapshot.get('event_payment') === 'community_bill')
       .map(async (eventSnapshot) => {
         const dynamic_template_data = {
-          community_name: eventSnapshot.get('community_name'),
+          company: eventSnapshot.get('organizer_company'),
+          person: eventSnapshot.get('bill_fullname'),
           event_name: eventSnapshot.get('event_name'),
           event_invoice_url: getManageEventInvoiceUrl(eventSnapshot.id),
         }
         try {
           await sgMail.send({
-            to: eventSnapshot.get('organizer_email'),
+            to: eventSnapshot.get('bill_email'),
             from: DEFAULT_FROM,
-            cc: SUPPORT_MAIL,
+            cc: eventSnapshot.get('organizer_email'),
             templateId: EVENT_INVOICE_TEMPLATE_ID,
             dynamic_template_data,
           })
