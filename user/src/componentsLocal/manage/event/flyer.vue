@@ -82,7 +82,7 @@ const downloadFlyer = async (size: string) => {
     </v-row>
     <!-- チラシのプレビュー -->
     <v-row class="justify-center mt-6">
-      <v-col cols="12" md="8">
+      <v-col cols="auto">
         <v-card class="flyer-preview pa-4" style="width: 700px; margin: 0 auto">
           <!-- 1列目: イベントカバー画像 -->
           <div class="event-cover mb-4">
