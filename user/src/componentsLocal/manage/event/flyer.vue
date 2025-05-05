@@ -89,10 +89,10 @@ const downloadFlyer = async (size: string) => {
             <v-img :src="eventCoverUrl" :width="649.48" :height="340.48" cover class="rounded mx-auto" />
           </div>
           <!-- 2列目: QRコードと説明 -->
-          <v-row no-gutters class="mt-2">
+          <v-row no-gutters class="mt-2" align="end">
             <v-col class="qr-code-container">
               <div class="qr-code">
-                <vue-qrious :value="eventPath" :size="126.53" />
+                <vue-qrious :value="eventPath" :size="132" />
               </div>
             </v-col>
             <!-- 右側: 説明文とロゴ -->
@@ -101,7 +101,7 @@ const downloadFlyer = async (size: string) => {
                 <div class="description-content" v-html="eventDesc"></div>
               </div>
               <div class="shop-logo">
-                <v-img :src="flyerLogo" height="50.73" contain />
+                <v-img :src="flyerLogo" height="45.73" contain />
               </div>
             </v-col>
           </v-row>
@@ -169,14 +169,15 @@ const downloadFlyer = async (size: string) => {
 }
 
 .qr-code-container {
-  width: 126.53px;
+  width: 134.53px;
   flex: 0 0 auto;
-  margin-right: 16px;
+  margin-right: 8px;
+  margin-left: 8px;
 }
 
 .qr-code {
-  width: 126.53px;
-  height: 126.53px;
+  width: 131.53px;
+  height: 131.53px;
   overflow: hidden;
 }
 
@@ -186,7 +187,7 @@ const downloadFlyer = async (size: string) => {
 }
 
 .shop-logo {
-  height: 50.73px;
+  height: 44.73px;
   width: 504.65px;
 }
 
