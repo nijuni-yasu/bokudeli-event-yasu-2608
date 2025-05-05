@@ -50,4 +50,4 @@ export function getLastDayOfNextMonth(millis, zone = DEFAULT_TIME_ZONE, locale =
 }
 
 export const convertDateToId = (millis, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) =>
-  DateTime.fromMillis(millis, { zone, locale }).toFormat(date, 'yyyyMMddHHmmss')
+  DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyyMMddHHmmss')
