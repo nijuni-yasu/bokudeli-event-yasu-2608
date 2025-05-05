@@ -86,7 +86,7 @@ const downloadFlyer = async (size: string) => {
         <v-card class="flyer-preview pa-4" style="width: 700px; margin: 0 auto">
           <!-- 1列目: イベントカバー画像 -->
           <div class="event-cover mb-4">
-            <v-img :src="eventCoverUrl" :width="649.48" :height="340.48" cover class="rounded" />
+            <v-img :src="eventCoverUrl" :width="649.48" :height="340.48" cover class="rounded mx-auto" />
           </div>
           <!-- 2列目: QRコードと説明 -->
           <v-row no-gutters class="mt-2">
