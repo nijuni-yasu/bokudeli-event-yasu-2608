@@ -7,12 +7,13 @@ const { t: $t } = useI18n()
 const notification = useNotification()
 
 const eventId = route.params.eventId as string
+const invoiceId = route.query.id as string | undefined
 
 const url = ref<string | null>(null)
 
 ;(async () => {
   try {
-    const response = await getEventBillInvoicePdf(eventId)
+    const response = await getEventBillInvoicePdf(eventId, invoiceId)
     if (response.status !== 200) {
       notification.show($t('manage.invoice.error'), 'error')
     }
