@@ -1,7 +1,6 @@
 import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import * as dateFns from 'date-fns'
-import ja from 'date-fns/locale/ja'
+import { DateTime } from 'luxon'
 import sgMail from '@sendgrid/mail'
 import { convertTruncateText } from './utils/converter.js'
 import { makeIcs } from './make-ics.js'
@@ -15,6 +14,12 @@ import {
   getManageEventInvoiceUrl,
 } from './utils/urls.js'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
+import {
+  convertToDateWeekdayShort,
+  convertToDatetimeWeekdayShort,
+  convertToDuration,
+  convertToJustDate,
+} from './utils/datetime.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
@@ -43,46 +48,6 @@ const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 const db = getFirestore()
-
-/**
- *
- * @param {number} millis UNIX Time （ミリ秒）
- * @returns 日本時間を表示するためのミリ秒
- */
-function convertToJapan(millis) {
-  if (millis == null) {
-    return undefined
-  }
-  // date-fns-tz は単純にタイムゾーンのオフセットを追加した Date を作成するだけなので、今回は単純加算で対応する
-  // TODO サマータイムがあるような地域に進出した場合は、何らかの措置を考えなければいけない
-  // https://qiita.com/suin/items/296740d22624b530f93a#utc%E3%81%AAdate%E3%82%92asiatokyo%E3%81%AE%E6%97%A5%E6%99%82%E3%81%AB%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88%E3%81%99%E3%82%8B
-  return millis + 9 * 60 * 60 * 1000
-}
-
-function convertToDate(millis) {
-  if (millis == null) {
-    return undefined
-  }
-  return dateFns.format(millis, 'yyyy/MM/dd (eee)', { locale: ja })
-}
-
-function convertToDateTime(millis) {
-  if (millis == null) {
-    return undefined
-  }
-  return dateFns.format(millis, 'yyyy/MM/dd (eee) HH:mm', { locale: ja })
-}
-
-function convertToDuration(startMillis, endMillis) {
-  if (startMillis == null || endMillis == null) {
-    return undefined
-  }
-  const start = dateFns.format(startMillis, 'yyyy/MM/dd (eee) HH:mm', {
-    locale: ja,
-  })
-  const end = dateFns.format(endMillis, 'HH:mm')
-  return `${start}〜${end}`
-}
 
 async function getUserEmail(userId) {
   const userPersonalInformationRef = db.collection('users_personal_information').doc(userId)
@@ -245,14 +210,11 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
   const ordersRef = eventSnapshot.ref.collection('orders')
   const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(ordersRef)
   const eventData = eventSnapshot.data()
-  const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis())
-  const date = convertToDate(event_start_datetime_japan)
-  const deliveryDuration = convertToDuration(
-    event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime_japan,
-  )
+  const event_start_datetime = eventData.event_start_datetime?.toMillis()
+  const date = convertToDateWeekdayShort(event_start_datetime)
+  const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
-  const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
+  const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
 
   return {
     ...eventData,
@@ -302,10 +264,10 @@ async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_d
   const orders = await createOrdersForOrderRemind(ordersRef)
   const eventData = eventSnapshot.data()
   const event_datetime = convertToDuration(
-    convertToJapan(eventData.event_start_datetime?.toMillis()),
-    convertToJapan(eventData.event_end_datetime?.toMillis()),
+    eventData.event_start_datetime?.toMillis(),
+    eventData.event_end_datetime?.toMillis(),
   )
-  const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
+  const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
 
   return {
     ...eventData,
@@ -354,13 +316,10 @@ async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
   const ordersRef = eventSnapshot.ref.collection('orders')
   const [order_count, _, orders] = await createOrdersForOrderDeadline(ordersRef)
   const eventData = eventSnapshot.data()
-  const event_start_datetime_japan = convertToJapan(eventData.event_start_datetime?.toMillis())
-  const date = convertToDate(event_start_datetime_japan)
-  const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
-  const deliveryDuration = convertToDuration(
-    event_start_datetime_japan - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime_japan,
-  )
+  const event_start_datetime = eventData.event_start_datetime?.toMillis()
+  const date = convertToDateWeekdayShort(event_start_datetime)
+  const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
+  const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
 
   const shopSnapshot = await getShopForEvent(eventSnapshot)
@@ -422,10 +381,10 @@ async function sendOrderDeadlineMailToMembers(start, end) {
     events.docs.map(async (eventSnapshot) => {
       const eventData = eventSnapshot.data()
       const dynamic_template_data = {
-        date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+        date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
         event_datetime: convertToDuration(
-          convertToJapan(eventData.event_start_datetime?.toMillis()),
-          convertToJapan(eventData.event_end_datetime?.toMillis()),
+          eventData.event_start_datetime?.toMillis(),
+          eventData.event_end_datetime?.toMillis(),
         ),
         event_name: eventData.event_name,
         event_cover_url: eventData.event_cover_url,
@@ -464,7 +423,7 @@ async function sendEventConcludedMailToMembers(start, end) {
     events.docs.map(async (eventSnapshot) => {
       const eventData = eventSnapshot.data()
       const dynamic_template_data = {
-        date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+        date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
         event_name: eventData.event_name,
         event_cover_url: eventData.event_cover_url,
         event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
@@ -541,7 +500,7 @@ async function createTemplateDataForApplyingOrder(eventSnapshot, updatedAt) {
   const dynamic_template_data = await createTemplateDataForOrderDeadline(eventSnapshot)
   return {
     ...dynamic_template_data,
-    approve_deadline_datetime: convertToDate(convertToJapan(limitTimeMills)),
+    approve_deadline_datetime: convertToDateWeekdayShort(limitTimeMills),
   }
 }
 
@@ -658,9 +617,7 @@ async function getUsersFromOrders(ordersRef) {
 }
 
 async function createTemplateDataForEventInformation(targetDateTimeMillis) {
-  const date = dateFns.format(convertToJapan(targetDateTimeMillis), 'MM/dd', {
-    locale: ja,
-  })
+  const date = convertToJustDate(targetDateTimeMillis)
   const _dynamic_template_data = {
     date,
     events: [],
@@ -686,10 +643,10 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
     if (users.size < eventSnapshot.get('event_max_people')) {
       const eventData = eventSnapshot.data()
       const event_datetime = convertToDuration(
-        convertToJapan(eventData.event_start_datetime?.toMillis()),
-        convertToJapan(eventData.event_end_datetime?.toMillis()),
+        eventData.event_start_datetime?.toMillis(),
+        eventData.event_end_datetime?.toMillis(),
       )
-      const event_deadline_datetime = convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis()))
+      const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
       _dynamic_template_data.events.push({
         event_name: eventData.event_name,
         event_address: eventData.event_address,
@@ -877,10 +834,10 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
   const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
   const eventData = eventSnapshot.data()
   const dynamic_template_data = {
-    date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+    date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
     event_datetime: convertToDuration(
-      convertToJapan(eventData.event_start_datetime?.toMillis()),
-      convertToJapan(eventData.event_end_datetime?.toMillis()),
+      eventData.event_start_datetime?.toMillis(),
+      eventData.event_end_datetime?.toMillis(),
     ),
     event_name: eventData.event_name,
     event_cover_url: eventData.event_cover_url,
@@ -917,7 +874,7 @@ async function sendOrderCompletionMailToOrganizers(orderSnapshot, userId) {
   const emails = await getCommunityEmailsForEvent(eventSnapshot)
 
   const dynamic_template_data = {
-    date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+    date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
     event_name: eventData.event_name,
     event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
     user_name: userData.user_name,
@@ -1054,10 +1011,10 @@ function buildInCartNotificationMail(eventSnapshot, to) {
     from: DEFAULT_FROM,
     templateId: IN_CART_NOTIFICATION_ID,
     dynamic_template_data: {
-      date: convertToDate(convertToJapan(eventData.event_start_datetime?.toMillis())),
+      date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
       event_datetime: convertToDuration(
-        convertToJapan(eventData.event_start_datetime?.toMillis()),
-        convertToJapan(eventData.event_end_datetime?.toMillis()),
+        eventData.event_start_datetime?.toMillis(),
+        eventData.event_end_datetime?.toMillis(),
       ),
       event_name: eventData.event_name,
       event_cover_url: eventData.event_cover_url,
@@ -1065,7 +1022,7 @@ function buildInCartNotificationMail(eventSnapshot, to) {
       event_address: eventData.event_address,
       shop_name: eventData.shop_name,
       event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-      event_deadline_datetime: convertToDateTime(convertToJapan(eventData.event_deadline_datetime?.toMillis())),
+      event_deadline_datetime: convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis()),
     },
   }
 }
@@ -1075,7 +1032,7 @@ export const polling = functions
   .runWith({ timeoutSeconds: 540 })
   .pubsub.schedule('*/1 * * * *') // .schedule('every 1 minutes')
   .onRun(async (event) => {
-    const now = dateFns.parseISO(event.timestamp).getTime()
+    const now = DateTime.fromISO(event.timestamp).toMillis()
     // 秒を無視しないと誤差で実行できないケースがでてきてしまう
     const end = Math.trunc(now / 60 / 1000) * 60 * 1000
     const start = end - 60 * 1000
