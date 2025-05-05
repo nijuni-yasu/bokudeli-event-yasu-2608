@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { parseISO, format } from 'date-fns'
+import { Timestamp } from 'firebase/firestore'
 import { PartnerMenu } from '@/schemes/partnerMenu'
 import { useValidators } from '@/composable/validators'
 import ImageInput from '@/components/ImageInput.vue'
@@ -24,6 +26,19 @@ const price = computed({
     if (Number.isInteger(value)) {
       menu.value.price = value
     }
+  },
+})
+
+const dateStart = computed({
+  get: () => (menu.value.dateStart == null ? null : format(menu.value.dateStart.toMillis(), 'yyyy-MM-dd')),
+  set: (value) => {
+    menu.value.dateStart = value == null ? null : Timestamp.fromMillis(parseISO(value).getTime())
+  },
+})
+const dateEnd = computed({
+  get: () => (menu.value.dateEnd == null ? null : format(menu.value.dateEnd.toMillis(), 'yyyy-MM-dd')),
+  set: (value) => {
+    menu.value.dateEnd = value == null ? null : Timestamp.fromMillis(parseISO(value).getTime())
   },
 })
 </script>
@@ -84,10 +99,10 @@ const price = computed({
       <v-card-text>
         <v-row>
           <v-col cols="6">
-            <DateInput v-model="menu.dateStart" :clearable="true" :label="$t('menu_edit_card.date_start')" />
+            <DateInput v-model="dateStart" :clearable="true" :label="$t('menu_edit_card.date_start')" />
           </v-col>
           <v-col cols="6">
-            <DateInput v-model="menu.dateEnd" :clearable="true" :label="$t('menu_edit_card.date_end')" />
+            <DateInput v-model="dateEnd" :clearable="true" :label="$t('menu_edit_card.date_end')" />
           </v-col>
         </v-row>
       </v-card-text>
