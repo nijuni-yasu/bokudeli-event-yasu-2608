@@ -20,6 +20,7 @@ import {
   convertToDuration,
   convertToJustDate,
 } from './utils/datetime.js'
+import { createEventBillInvoice } from './eventBillInvoice.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
@@ -463,22 +464,26 @@ async function sendInvoiceMailToOrganizers(start, end) {
     events.docs
       .filter((eventSnapshot) => eventSnapshot.get('event_payment') === 'community_bill')
       .map(async (eventSnapshot) => {
-        const dynamic_template_data = {
-          company: eventSnapshot.get('organizer_company'),
-          person: eventSnapshot.get('bill_fullname'),
-          event_name: eventSnapshot.get('event_name'),
-          event_invoice_url: getManageEventInvoiceUrl(eventSnapshot.id),
-        }
         try {
+          const communitySnapshot = await db.collection('communities').doc(eventSnapshot.get('community_id')).get()
+          const invoiceId = await createEventBillInvoice(communitySnapshot, eventSnapshot)
+          const dynamic_template_data = {
+            company: eventSnapshot.get('organizer_company'),
+            person: eventSnapshot.get('bill_fullname'),
+            event_name: eventSnapshot.get('event_name'),
+            event_invoice_url: getManageEventInvoiceUrl(eventSnapshot.id, invoiceId),
+          }
+          const to = eventSnapshot.get('bill_email')
+          const cc = eventSnapshot.get('organizer_email')
           await sgMail.send({
-            to: eventSnapshot.get('bill_email'),
+            to,
             from: DEFAULT_FROM,
-            cc: eventSnapshot.get('organizer_email'),
+            cc: to !== cc ? cc : [],
             templateId: EVENT_INVOICE_TEMPLATE_ID,
             dynamic_template_data,
           })
         } catch (err) {
-          console.warn(err)
+          console.warn(JSON.stringify(err))
         }
       }),
   )
