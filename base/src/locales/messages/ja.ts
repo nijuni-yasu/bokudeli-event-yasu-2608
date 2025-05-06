@@ -14,6 +14,7 @@ export default {
   latitude: '緯度',
   longitude: '経度',
   copied_to_clipboard: 'クリップボードにコピーしました',
+  back_to_top: 'トップページに戻る',
   payment: {
     user_advance: '参加者 事前決済 💳',
     user_on_day: '参加者 当日払い 💰',
@@ -441,5 +442,17 @@ export default {
     title: 'メール送信',
     send_to: '送信先: {0}',
     send: '送信',
+  },
+  error: {
+    '404': {
+      title: '404 Not Found',
+      description: `お探しのページは見つかりませんでした。<br />
+                    ページが削除されたか、入力したURLが間違っている可能性があります。`,
+    },
+    // 正確には 520 は HTTP ERROR ではないが、Cloudflare が Client Application Error として使用しているのを参考に、ここでは 520 を使用
+    '520': {
+      title: 'Client Application Error',
+      description: '予期しないエラーが発生しました'
+    }
   },
 }

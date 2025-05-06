@@ -29,3 +29,12 @@ Promise.all([
   }
   app.mount('#app')
 })
+
+// Global error handler
+app.config.errorHandler = (err, instance, info) => {
+  console.error('Global error handler:', { err, instance, info })
+  // TODO エラーの種類によって処理を変える
+  import('@/plugins/router').then(({ router }) => {
+    router.replace('/520')
+  })
+}

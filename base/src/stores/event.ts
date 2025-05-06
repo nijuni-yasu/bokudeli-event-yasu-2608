@@ -91,6 +91,8 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
   const store = defineStore<string, EventStoreState & EventStoreGetters & EventStoreAction>(
     `/events/${eventId}`,
     () => {
+      const router = useRouter()
+
       const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
       const exists = ref<boolean | null>(null)
       const event = ref<BokudeliEvent | null>(null)
@@ -292,7 +294,9 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
               return
             }
             exists.value = false
-            throw new Error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
+            console.error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
+            router.replace('/404')
+            return
           }
           retry = 0
           _eventRef.value = eventRef
