@@ -9,13 +9,14 @@ export interface LatLogLocation {
 }
 
 export const fetchLocationByPostalcode = async (postalCode: string) => {
-  const res = await fetch(`https://geoapi.heartrails.com/api/json?method=searchByPostal&postal=${postalCode}`)
+  const apiKey = import.meta.env.VITE_POSTCODE_API_KEY
+  const res = await fetch(`https://apis.postcode-jp.com/api/v6/postcodes/${postalCode}?apikey=${apiKey}`)
   //TODO エラー処理
   const resJson = await res.json()
-  const location = resJson.response.location[0]
-  const postalcode = location['postal']
-  const address = location['prefecture'] + location['city'] + location['town']
-  return { postalcode, address, longitude: location.x, latitude: location.y } as LatLogLocation
+  const postalData = resJson[0]
+  const postalcode = postalData['postalcode']
+  const address = postalData['allAddress']
+  return { postalcode, address, longitude: postalData['location']['longitude'], latitude: postalData['location']['latitude'] } as LatLogLocation
 }
 
 export const calculateDistance = (location1: LatLogLocation, location2: LatLogLocation) => {
