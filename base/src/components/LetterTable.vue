@@ -111,6 +111,7 @@ const deleteConfirmationDialog = ref(false)
             <td>
               <v-col class="pa-0">
                 <v-btn
+                  v-if="letter.status !== 'sent'"
                   class="my-4"
                   variant="outlined"
                   size="small"
@@ -120,6 +121,7 @@ const deleteConfirmationDialog = ref(false)
                   >{{ $t('letter_table.edit') }}</v-btn
                 >
                 <v-btn
+                  v-if="letter.status !== 'sent'"
                   class="my-4"
                   variant="outlined"
                   size="small"
