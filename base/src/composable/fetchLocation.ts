@@ -11,10 +11,25 @@ export interface LatLogLocation {
 export const fetchLocationByPostalcode = async (postalCode: string) => {
   const apiKey = import.meta.env.VITE_POSTCODE_API_KEY
   const res = await fetch(`https://apis.postcode-jp.com/api/v6/postcodes/${postalCode}?apikey=${apiKey}`)
-  //TODO エラー処理
+  if (res.status !== 200) {
+    console.error('Error fetching postal code data:', res.status, res.statusText)
+    throw new Error('Failed to fetch postal code data') // Added error handling
+  }
+
   const resJson = await res.json()
+  if (!Array.isArray(resJson)) {
+    console.error('Unexpected response format:', resJson)
+    throw new Error('Invalid response format')
+  }
+  if (resJson.length === 0) {
+    return null
+  }
   const postalData = resJson[0]
-  const postalcode = postalData['postalcode']
+  if (!postalData['postcode'] || !postalData['allAddress'] || !postalData['location'] || !postalData['location']['longitude'] || !postalData['location']['latitude']) {
+    console.error('Missing required keys in postal data:', postalData)
+    throw new Error('Invalid postal data format')
+  }
+  const postalcode = postalData['postcode']
   const address = postalData['allAddress']
   return { postalcode, address, longitude: postalData['location']['longitude'], latitude: postalData['location']['latitude'] } as LatLogLocation
 }
