@@ -448,6 +448,7 @@ export default {
     num_targets: '配信数',
     event_name: 'イベント名',
     scheduled_at: '配信日時',
+    updated_at: '更新日時',
     status: 'ステータス',
     edit: '編集',
     delete: '削除',

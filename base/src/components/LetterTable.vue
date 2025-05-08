@@ -89,6 +89,7 @@ const handleDelete = () => {
           <th class="text-left type-cell">{{ $t('letter_table.type') }}</th>
           <th class="text-left target-cell">{{ $t('letter_table.num_targets') }}</th>
           <th class="text-left">{{ $t('letter_table.scheduled_at') }}</th>
+          <th class="text-left">{{ $t('letter_table.updated_at') }}</th>
           <th class="text-left"></th>
         </tr>
       </thead>
@@ -119,6 +120,9 @@ const handleDelete = () => {
             </td>
             <td class="text-body-2">
               {{ letter.scheduled_at ? $d(letter.scheduled_at.toDate(), 'datetime') : '-' }}
+            </td>
+            <td class="text-body-2">
+              {{ letter.updated_at ? $d(letter.updated_at.toDate(), 'datetime') : '-' }}
             </td>
             <td>
               <v-col class="pa-0">
