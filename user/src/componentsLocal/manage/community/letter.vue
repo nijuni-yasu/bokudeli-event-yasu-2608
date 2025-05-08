@@ -3,14 +3,13 @@ import { mdiPlus } from '@mdi/js'
 import { useLetterListStore } from '@/stores/letterList'
 import EventList from '@/components/EventList.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import LetterCard from '@/components/LetterCard.vue'
+import LetterTable from '@/components/LetterTable.vue'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import LetterEdit from '@/components/LetterEdit.vue'
 import type { Letter } from '@/schemes/letter'
 import { Timestamp } from 'firebase/firestore'
 import { useLetterStore } from '@/stores/letter'
 import { getManageEventPath } from '@/router/utils'
-import { convertTruncateText } from '@/schemes/converter'
 
 const route = useRoute()
 const router = useRouter()
@@ -121,68 +120,14 @@ const onUpdated = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col cols="12">
-        <v-card class="pa-8">
-          <v-table>
-            <thead>
-              <tr>
-                <th class="text-left status-cell">{{ $t('letter_table.status') }}</th>
-                <th class="text-left">{{ $t('letter_table.content') }}</th>
-                <th class="text-left">{{ $t('letter_table.type') }}</th>
-                <th class="text-left">{{ $t('letter_table.num_targets') }}</th>
-                <th class="text-left">{{ $t('letter_table.scheduled_at') }}</th>
-                <th class="text-left"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <template v-for="letter of letters" :key="letter!.letter_id">
-                <tr>
-                  <td class="status-cell">
-                    <v-chip class="ma-2" color="primary" size="x-small">
-                      {{ $t(`letter_status.${letter.status}`) }}
-                    </v-chip>
-                  </td>
-                  <td class="py-5 content-cell">
-                    <div class="text-h6 font-weight-bold mb-1">
-                      {{ letter.letter_title }}
-                    </div>
-                    <div class="text-body-2">
-                      {{ convertTruncateText(letter.letter_content, 40) }}
-                    </div>
-                  </td>
-                  <td class="text-body-2">
-                    {{ $t(`letter_type.${letter.letter_type}`) }}<br>
-                    <span v-if="letter.letter_type === 'event_participant' || letter.letter_type === 'event_non_participant'">
-                      [イベント名]
-                    </span>
-                  </td>
-                  <td class="text-body-2">
-                    10
-                  </td>
-                  <td class="text-body-2">
-                    <td>{{ letter.scheduled_at ? $d(letter.scheduled_at.toDate(), 'datetime') : '-' }}</td>
-                  </td>
-                  <td>
-                    <v-btn class="mt-3" variant="outlined" size="small" @click="onEditClick(letter)" >編集</v-btn><br>
-                    <v-btn class="my-2" variant="outlined" size="small" @click="onDeleteClick(letter)" >削除</v-btn><br>
-                    <v-btn class="mb-3" variant="outlined" size="small" @click="onCopyClick(letter)" >コピー</v-btn>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </v-table>
-        </v-card>
-      </v-col>
-    </v-row>
-    <!-- <v-row>
-      <v-col md="9" sm="9" cols="12" v-for="letter of letters" :key="letter!.letter_id">
-        <LetterCard
-          :letter="letter"
-          @edit="onEditClick(letter)"
-          @delete="onDeleteClick(letter)"
-          @copy="onCopyClick(letter)"
+        <LetterTable
+          :letters="letters"
+          @edit="onEditClick"
+          @delete="onDeleteClick"
+          @copy="onCopyClick"
         />
       </v-col>
-    </v-row> -->
+    </v-row>
     <v-row v-show="letters.length ?? 0 !== 0" class="justify-center">
       <v-col md="8" sm="9" cols="12" class="text-center">
         <IncrementalLoader
