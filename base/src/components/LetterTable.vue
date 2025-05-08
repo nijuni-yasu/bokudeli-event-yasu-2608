@@ -4,6 +4,7 @@ import { type Letter } from '../schemes/letter'
 import { convertTruncateText } from '@/schemes/converter'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { getManageEventPath } from '@/router/utils'
+import LetterStatusChip from '@/components/LetterStatusChip.vue'
 
 const props = defineProps<{ letters: Letter[] }>()
 
@@ -45,9 +46,7 @@ const deleteConfirmationDialog = ref(false)
         <template v-for="letter of letters" :key="letter!.letter_id">
           <tr>
             <td class="status-cell">
-              <v-chip class="ma-2" color="primary" size="x-small">
-                {{ $t(`letter_status.${letter.status}`) }}
-              </v-chip>
+              <LetterStatusChip :status="letter.status" size="x-small" class="ma-2"/>
             </td>
             <td class="py-5 content-cell">
               <div class="text-h6 font-weight-bold mb-1">
