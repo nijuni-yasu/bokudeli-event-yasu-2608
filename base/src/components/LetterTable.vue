@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { type Letter } from '../schemes/letter'
 import { convertTruncateText } from '@/schemes/converter'
 import { useEventStore, type EventStore } from '@/stores/event'
+import { getManageEventPath } from '@/router/utils'
 
 const props = defineProps<{ letters: Letter[] }>()
 
@@ -59,7 +60,9 @@ const deleteConfirmationDialog = ref(false)
             <td class="text-body-2">
               {{ $t(`letter_type.${letter.letter_type}`) }}<br />
               <template v-if="letter.event_id && eventStores.get(letter.event_id)?.event">
-                {{ eventStores.get(letter.event_id)?.event?.event_name }}
+                <router-link :to="{ path: getManageEventPath(letter.event_id) }">
+                  {{ eventStores.get(letter.event_id)?.event?.event_name }}
+                </router-link>
               </template>
             </td>
             <td class="text-body-2">
