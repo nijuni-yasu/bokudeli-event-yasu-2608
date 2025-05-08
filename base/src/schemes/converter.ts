@@ -87,8 +87,8 @@ export const convertDocumentDataToMenu = (
     createdAt: createdAt ? (createdAt as Timestamp).toDate() : null,
     updatedAt: updatedAt ? (updatedAt as Timestamp).toDate() : null,
     isSoldout: is_soldout ?? false,
-    dateStart: menu_date_start ?? '',
-    dateEnd: menu_date_end ?? '',
+    dateStart: menu_date_start ?? null,
+    dateEnd: menu_date_end ?? null,
   }
 }
 
