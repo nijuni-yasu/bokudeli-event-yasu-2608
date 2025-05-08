@@ -10,6 +10,9 @@ import type { Letter } from '@/schemes/letter'
 import { Timestamp } from 'firebase/firestore'
 import { useLetterStore } from '@/stores/letter'
 import { getManageEventPath } from '@/router/utils'
+import { useNotification } from '@/composable/notification'
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -88,8 +91,9 @@ const onDialogClick2 = (event: BokudeliEvent) => {
 const onEditClick = (letter: Letter) => {
   router.push({ query: { letterId: letter.letter_id } })
 }
-const onDeleteClick = (letter: Letter) => {
-  letterListStore.deleteLetter(letter.letter_id!)
+const onDeleteClick = async (letter: Letter) => {
+  await letterListStore.deleteLetter(letter.letter_id!)
+  notification.show($t('manage.letter.notification.deleted'), 'success')
 }
 const onCopyClick = async (letter: Letter) => {
   const newLetter: Letter = {

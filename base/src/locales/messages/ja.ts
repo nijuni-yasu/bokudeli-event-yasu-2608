@@ -437,8 +437,8 @@ export default {
     delete: '削除',
     edit: '編集',
     dialog: {
-      title: '本当に削除しますか？',
-      description: 'この操作は元に戻すことができません。',
+      title: 'レター削除',
+      description: '本当に削除しますか？この操作は取り消せません。',
       submit: '削除',
     },
   },

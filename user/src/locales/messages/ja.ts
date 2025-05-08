@@ -129,6 +129,10 @@ export default {
         'submit_now': '今すぐ配信',
         'save_draft': '下書き保存',
         'to_draft': '下書きに戻す',
+      },
+      'notification': {
+        'saved': 'レターを保存しました',
+        'deleted': 'レターを削除しました',
       }
     },
     'community_manager_invitation': {

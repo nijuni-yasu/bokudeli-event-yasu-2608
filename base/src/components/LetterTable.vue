@@ -65,6 +65,18 @@ const getNumberOfTargets = (letter: Letter) => {
 }
 
 const deleteConfirmationDialog = ref(false)
+const letterToDelete = ref<Letter | null>(null)
+const showDeleteConfirmation = (letter: Letter) => {
+  letterToDelete.value = letter
+  deleteConfirmationDialog.value = true
+}
+const handleDelete = () => {
+  if (letterToDelete.value) {
+    emits('delete', letterToDelete.value)
+    deleteConfirmationDialog.value = false
+    letterToDelete.value = null
+  }
+}
 </script>
 
 <template>
@@ -126,7 +138,7 @@ const deleteConfirmationDialog = ref(false)
                   variant="outlined"
                   size="small"
                   :prepend-icon="mdiDelete"
-                  @click="$emit('delete', letter)"
+                  @click="showDeleteConfirmation(letter)"
                   block
                   >{{ $t('letter_table.delete') }}</v-btn
                 >
@@ -159,7 +171,7 @@ const deleteConfirmationDialog = ref(false)
         <v-btn variant="text" @click="deleteConfirmationDialog = false">
           {{ $t('cancel') }}
         </v-btn>
-        <v-btn variant="tonal" @click="$emit('delete')">
+        <v-btn variant="tonal" @click="handleDelete">
           {{ $t('letter_card.dialog.submit') }}
         </v-btn>
       </v-card-actions>
