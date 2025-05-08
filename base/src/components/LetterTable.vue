@@ -6,6 +6,7 @@ import { useEventStore, type EventStore } from '@/stores/event'
 import { getManageEventPath } from '@/router/utils'
 import LetterStatusChip from '@/components/LetterStatusChip.vue'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { mdiPencil, mdiDelete, mdiContentCopy } from '@mdi/js'
 
 const props = defineProps<{ letters: Letter[] }>()
 
@@ -72,9 +73,9 @@ const deleteConfirmationDialog = ref(false)
       <thead>
         <tr>
           <th class="text-left status-cell">{{ $t('letter_table.status') }}</th>
-          <th class="text-left">{{ $t('letter_table.content') }}</th>
-          <th class="text-left">{{ $t('letter_table.type') }}</th>
-          <th class="text-left">{{ $t('letter_table.num_targets') }}</th>
+          <th class="text-left content-cell">{{ $t('letter_table.content') }}</th>
+          <th class="text-left type-cell">{{ $t('letter_table.type') }}</th>
+          <th class="text-left target-cell">{{ $t('letter_table.num_targets') }}</th>
           <th class="text-left">{{ $t('letter_table.scheduled_at') }}</th>
           <th class="text-left"></th>
         </tr>
@@ -83,7 +84,7 @@ const deleteConfirmationDialog = ref(false)
         <template v-for="letter of letters" :key="letter!.letter_id">
           <tr>
             <td class="status-cell">
-              <LetterStatusChip :status="letter.status" size="x-small" class="ma-2"/>
+              <LetterStatusChip :status="letter.status" size="x-small" class="ma-2" />
             </td>
             <td class="py-5 content-cell">
               <div class="text-h6 font-weight-bold mb-1">
@@ -93,7 +94,7 @@ const deleteConfirmationDialog = ref(false)
                 {{ convertTruncateText(letter.letter_content, 40) }}
               </div>
             </td>
-            <td class="text-body-2">
+            <td class="text-body-2 type-cell">
               {{ $t(`letter_type.${letter.letter_type}`) }}<br />
               <template v-if="letter.event_id && eventStores.get(letter.event_id)?.event">
                 <router-link :to="{ path: getManageEventPath(letter.event_id) }">
@@ -101,16 +102,42 @@ const deleteConfirmationDialog = ref(false)
                 </router-link>
               </template>
             </td>
-            <td class="text-body-2">
+            <td class="text-body-2 target-cell">
               {{ getNumberOfTargets(letter) }}
             </td>
             <td class="text-body-2">
-              <td>{{ letter.scheduled_at ? $d(letter.scheduled_at.toDate(), 'datetime') : '-' }}</td>
+              {{ letter.scheduled_at ? $d(letter.scheduled_at.toDate(), 'datetime') : '-' }}
             </td>
             <td>
-              <v-btn class="mt-3" variant="outlined" size="small" @click="$emit('edit', letter)" >編集</v-btn><br>
-              <v-btn class="my-2" variant="outlined" size="small" @click="$emit('delete', letter)" >削除</v-btn><br>
-              <v-btn class="mb-3" variant="outlined" size="small" @click="$emit('copy', letter)" >コピー</v-btn>
+              <v-col class="pa-0">
+                <v-btn
+                  class="my-4"
+                  variant="outlined"
+                  size="small"
+                  :prepend-icon="mdiPencil"
+                  @click="$emit('edit', letter)"
+                  block
+                  >{{ $t('letter_table.edit') }}</v-btn
+                >
+                <v-btn
+                  class="my-4"
+                  variant="outlined"
+                  size="small"
+                  :prepend-icon="mdiDelete"
+                  @click="$emit('delete', letter)"
+                  block
+                  >{{ $t('letter_table.delete') }}</v-btn
+                >
+                <v-btn
+                  class="my-4"
+                  variant="outlined"
+                  size="small"
+                  :prepend-icon="mdiContentCopy"
+                  @click="$emit('copy', letter)"
+                  block
+                  >{{ $t('letter_table.copy') }}</v-btn
+                >
+              </v-col>
             </td>
           </tr>
         </template>
@@ -137,3 +164,19 @@ const deleteConfirmationDialog = ref(false)
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+.status-cell {
+  padding: 0px 10px 0px 10px !important;
+  width: 100px !important;
+}
+.content-cell {
+  width: 350px !important;
+}
+.type-cell {
+  width: 200px !important;
+}
+.target-cell {
+  width: 80px !important;
+}
+</style>

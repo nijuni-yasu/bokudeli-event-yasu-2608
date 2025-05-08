@@ -449,6 +449,9 @@ export default {
     event_name: 'イベント名',
     scheduled_at: '配信日時',
     status: 'ステータス',
+    edit: '編集',
+    delete: '削除',
+    copy: '複製',
   },
   email_dialog: {
     title: 'メール送信',

@@ -187,11 +187,4 @@ const onUpdated = () => {
   font-weight: bold;
   line-height: 2rem;
 }
-.status-cell {
-  padding: 0px 10px 0px 10px !important;
-  width: 50px !important;
-}
-.content-cell {
-  width: 250px !important;
-}
 </style>
