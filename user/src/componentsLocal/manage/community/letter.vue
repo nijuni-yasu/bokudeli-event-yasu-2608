@@ -148,26 +148,26 @@ const onUpdated = () => {
   </v-container>
   <v-dialog v-model="letterTypeSelectDialog" max-width="600px">
     <v-card class="pa-5">
-      <v-card-title>{{ $t('manage.new_letter') }}</v-card-title>
+      <v-card-title class="text-h4 text-center font-weight-bold ma-3">{{ $t('manage.new_letter') }}</v-card-title>
       <v-card-text>
         <v-window v-model="dialogType">
           <v-window-item>
-            {{ $t('manage.letter.type_select_dialog.top') }}
+            <div class="ma-3">{{ $t('manage.letter.type_select_dialog.top') }}</div>
             <v-list class="list-with-borders">
               <v-list-item @click="onDialogClick1('event')">
-                <v-list-item-title>{{ $t('manage.letter.type_select_dialog.event') }}</v-list-item-title>
+                <v-list-item-title class="text-h5 mt-3">{{ $t('manage.letter.type_select_dialog.event') }}</v-list-item-title>
                 <div>
                   {{ $t('manage.letter.type_select_dialog.event_description') }}
                 </div>
               </v-list-item>
               <v-list-item @click="onDialogClick1('community')">
-                <v-list-item-title>{{ $t('manage.letter.type_select_dialog.community') }}</v-list-item-title>
+                <v-list-item-title class="text-h5 mt-3">{{ $t('manage.letter.type_select_dialog.community') }}</v-list-item-title>
                 <div>{{ $t('manage.letter.type_select_dialog.community_description') }}</div>
               </v-list-item>
             </v-list>
           </v-window-item>
           <v-window-item>
-            {{ $t('manage.letter.event_dialog.top') }}
+            <div class="text-center mb-5">{{ $t('manage.letter.event_dialog.top') }}</div>
             <EventList :community-account="communityAccount" @click="onDialogClick2" />
           </v-window-item>
         </v-window>
