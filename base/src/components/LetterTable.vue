@@ -5,6 +5,7 @@ import { convertTruncateText } from '@/schemes/converter'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { getManageEventPath } from '@/router/utils'
 import LetterStatusChip from '@/components/LetterStatusChip.vue'
+import { useCommunityStore, type CommunityStore } from '@/stores/community'
 
 const props = defineProps<{ letters: Letter[] }>()
 
@@ -25,6 +26,42 @@ const eventStores = computed(() => {
   })
   return stores
 })
+
+// 表示用コンポーネントの中で pinia を直接叩くのは望ましくないが、
+// それを避けるためだけに新たなレイヤを作るより、現状ではこの方が良いと判断した
+// より複雑になる場合は、データ構造の変更から検討する必要がある
+const communityStores = computed(() => {
+  const stores = new Map<string, CommunityStore>()
+  props.letters.forEach((letter) => {
+    if (letter.community_account && !stores.has(letter.community_account)) {
+      const store = useCommunityStore(letter.community_account)
+      stores.set(letter.community_account, store as CommunityStore)
+    }
+  })
+  return stores
+})
+
+const getNumberOfTargets = (letter: Letter) => {
+  const communityStore = letter.community_account ? communityStores.value.get(letter.community_account) : null
+  const eventStore = letter.event_id ? eventStores.value.get(letter.event_id) : null
+
+  switch (letter.letter_type) {
+    case 'community':
+      return communityStore?.community?.community_num_members ?? null
+    case 'event_participant':
+      if (eventStore == null) {
+        return null
+      }
+      return eventStore.event?.event_num_members ?? null
+    case 'event_non_participant':
+      if (eventStore?.event == null || communityStore?.community == null) {
+        return null
+      }
+      return communityStore.community.community_num_members - eventStore.event.event_num_members
+    default:
+      return null
+  }
+}
 
 const deleteConfirmationDialog = ref(false)
 </script>
@@ -65,7 +102,7 @@ const deleteConfirmationDialog = ref(false)
               </template>
             </td>
             <td class="text-body-2">
-              10
+              {{ getNumberOfTargets(letter) }}
             </td>
             <td class="text-body-2">
               <td>{{ letter.scheduled_at ? $d(letter.scheduled_at.toDate(), 'datetime') : '-' }}</td>
