@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PartnerMenu } from '@/schemes/partnerMenu'
-import { useI18n } from 'vue-i18n'
+import { convertToDate } from '@/utils/datetime'
 
 defineProps({
   menu: {
@@ -20,8 +20,13 @@ defineProps({
     <v-card-text class="py-2">
       {{ menu.description }}
     </v-card-text>
-    <v-card-text v-if="menu.dateStart && menu.dateEnd" class="py-2">
-      <span class="sold-out">{{$t('menu_card.limited_edition',[menu.dateStart, menu.dateEnd])}}</span>
+    <v-card-text v-if="menu.dateStart != null && menu.dateEnd != null" class="py-2">
+      <span class="limited">{{
+        $t('menu_card.limited_edition', [
+          convertToDate(menu.dateStart.toMillis()),
+          convertToDate(menu.dateEnd.toMillis()),
+        ])
+      }}</span>
     </v-card-text>
     <v-card-text v-if="menu.isSoldout" class="py-2">
       <span class="sold-out">{{ $t('menu_card.sold_out') }}</span>
@@ -46,6 +51,9 @@ defineProps({
   .spacer {
     flex-grow: 1;
   }
+}
+.limited {
+  color: red;
 }
 .sold-out {
   color: red;

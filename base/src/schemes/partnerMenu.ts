@@ -12,6 +12,8 @@
 //   dateEnd?: string
 // }
 
+import type { Timestamp } from 'firebase/firestore'
+
 export class PartnerMenu {
   constructor(
     public partnerId: string,
@@ -23,8 +25,8 @@ export class PartnerMenu {
     public createdAt: Date | null = null,
     public updatedAt: Date | null = null,
     public isSoldout: boolean = false,
-    public dateStart: string | null = null,
-    public dateEnd: string | null = null,
+    public dateStart: Timestamp | null = null,
+    public dateEnd: Timestamp | null = null,
     public stockPerEvent?: number,
   ) {}
 }

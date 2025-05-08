@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { type PartnerMenu } from '@/schemes/partnerMenu'
-import { dateString, priceString } from '@/schemes/converter'
-import { mdiChevronLeft, mdiFoodForkDrink, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
-import { parseISO, compareDesc } from 'date-fns'
+import { priceString } from '@/schemes/converter'
+import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import type { Shop } from '@/schemes/shop'
 
@@ -25,16 +24,18 @@ const back = () => {
   emit('back')
 }
 
-const filteredMenu = computed(() => props.menus.filter((menu) => {
-  if (!menu.dateStart || !menu.dateEnd) {
-    return true
-  } else {
-    const eventStartDate = parseISO(dateString(props.event.event_start_datetime?.toDate() ?? null))
-    const dateStart = parseISO(menu.dateStart)
-    const dateEnd = parseISO(menu.dateEnd)
-    return compareDesc(dateStart, eventStartDate) >= 0 && compareDesc(eventStartDate, dateEnd) >= 0
-  }
-}))
+const filteredMenu = computed(() =>
+  props.menus.filter((menu) => {
+    const eventStartDate = props.event.event_start_datetime?.toMillis()
+    if (menu.dateStart == null || menu.dateEnd == null || eventStartDate == null) {
+      return true
+    } else {
+      const dateStart = menu.dateStart.toMillis()
+      const dateEnd = menu.dateEnd.toMillis()
+      return dateStart <= eventStartDate && eventStartDate <= dateEnd
+    }
+  }),
+)
 </script>
 
 <template>
