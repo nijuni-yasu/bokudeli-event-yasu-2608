@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { type Letter } from '../schemes/letter'
 import { convertTruncateText } from '@/schemes/converter'
-import { ref } from 'vue'
+import { useEventStore, type EventStore } from '@/stores/event'
 
 const props = defineProps<{ letters: Letter[] }>()
 
@@ -11,6 +12,17 @@ const emits = defineEmits<{
   copy: [Letter]
   delete: [Letter]
 }>()
+
+const eventStores = computed(() => {
+  const stores = new Map<string, EventStore>()
+  props.letters.forEach((letter) => {
+    if (letter.event_id && !stores.has(letter.event_id)) {
+      const store = useEventStore(letter.event_id)
+      stores.set(letter.event_id, store as EventStore)
+    }
+  })
+  return stores
+})
 
 const deleteConfirmationDialog = ref(false)
 </script>
@@ -45,10 +57,10 @@ const deleteConfirmationDialog = ref(false)
               </div>
             </td>
             <td class="text-body-2">
-              {{ $t(`letter_type.${letter.letter_type}`) }}<br>
-              <span v-if="letter.letter_type === 'event_participant' || letter.letter_type === 'event_non_participant'">
-                [イベント名]
-              </span>
+              {{ $t(`letter_type.${letter.letter_type}`) }}<br />
+              <template v-if="letter.event_id && eventStores.get(letter.event_id)?.event">
+                {{ eventStores.get(letter.event_id)?.event?.event_name }}
+              </template>
             </td>
             <td class="text-body-2">
               10
