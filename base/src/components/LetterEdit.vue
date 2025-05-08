@@ -87,23 +87,25 @@ const save = async () => {
 <template>
   <v-form v-model="isValid">
     <v-container>
-      <v-card class="pa-15">
+      <v-card class="pa-16">
         <v-row>
           <v-col cols="12">
-            <span class="text-h4">
+            <span class="text-h4 font-weight-bold">
               {{ _letter.letter_id == null ? $t('manage.letter.edit.new') : $t('manage.letter.edit.edit') }}
             </span>
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5">{{ $t('manage.letter.edit.to') }}</span>
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.to') }}</span>
             <v-radio-group v-model="_letter.letter_type">
               <v-radio value="community">
                 <template #label>
                   {{ $t('manage.letter.edit.to_community') }}
                   <template v-if="numCommunityMembers != null">
+                    <span class="text-body-2 ml-1">
                     {{ $t('manage.letter.edit.number_of_people', [numCommunityMembers]) }}
+                    </span>
                   </template>
                 </template>
               </v-radio>
@@ -111,7 +113,9 @@ const save = async () => {
                 <template #label>
                   {{ $t('manage.letter.edit.to_event_participant') }}
                   <template v-if="numEventMembers != null">
+                    <span class="text-body-2 ml-1">
                     {{ $t('manage.letter.edit.number_of_people', [numEventMembers]) }}
+                    </span>
                   </template>
                 </template>
               </v-radio>
@@ -119,7 +123,9 @@ const save = async () => {
                 <template #label>
                   {{ $t('manage.letter.edit.to_event_non_participant') }}
                   <template v-if="numCommunityMembers != null && numEventMembers != null">
+                    <span class="text-body-2 ml-1">
                     {{ $t('manage.letter.edit.number_of_people', [numCommunityMembers - numEventMembers]) }}
+                    </span>
                   </template>
                 </template>
               </v-radio>
@@ -128,7 +134,7 @@ const save = async () => {
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5"></span>
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.deliver_datetime') }}</span>
             <v-radio-group v-model="isScheduled">
               <v-radio :value="false" :label="$t('manage.letter.edit.deliver_now')" />
               <div class="d-flex align-center">
@@ -159,14 +165,14 @@ const save = async () => {
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5">{{ $t('manage.letter.edit.subject') }}</span>
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.subject') }}</span>
             <v-text-field v-model="_letter.letter_title" :rules="[requiredValidator]" />
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5">{{ $t('manage.letter.edit.message') }}</span>
-            <v-textarea v-model="_letter.letter_content" :rules="[requiredValidator]" />
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.message') }}</span>
+            <v-textarea v-model="_letter.letter_content" :rules="[requiredValidator]" auto-grow rows="8"/>
           </v-col>
         </v-row>
         <!-- <v-row v-if="eventStore?.event != null">

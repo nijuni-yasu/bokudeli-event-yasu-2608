@@ -141,7 +141,7 @@ const onUpdated = () => {
   </v-container>
   <v-container v-else>
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="10" sm="10" cols="12">
         <LetterEdit :letter="selectedLetter" @update:letter="onUpdated" />
       </v-col>
     </v-row>
