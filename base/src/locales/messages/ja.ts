@@ -453,6 +453,8 @@ export default {
     edit: '編集',
     delete: '削除',
     copy: '複製',
+    no_letters: `レターはまだありません<br />
+                 レターを作成してコミュニティメンバーやイベント参加者に配信してみよう💌`,
   },
   email_dialog: {
     title: 'メール送信',

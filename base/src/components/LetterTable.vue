@@ -80,7 +80,10 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <v-card class="pa-8">
+  <v-card v-if="letters.length === 0" class="pa-10">
+    <div v-html="$t('letter_table.no_letters')" />
+  </v-card>
+  <v-card v-else class="pa-8">
     <v-table>
       <thead>
         <tr>
