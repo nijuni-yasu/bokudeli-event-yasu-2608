@@ -479,6 +479,7 @@ async function sendInvoiceMailToOrganizers(start, end) {
             to,
             from: DEFAULT_FROM,
             cc: to !== cc ? cc : [],
+            bcc: SUPPORT_MAIL,
             templateId: EVENT_INVOICE_TEMPLATE_ID,
             dynamic_template_data,
           })
