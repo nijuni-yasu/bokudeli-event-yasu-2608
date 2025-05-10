@@ -161,7 +161,9 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
         getEventRef().then((eventRef) => {
           subscribeMenus(eventRef)
         })
-        return _menus.value
+        const sortedMenus =
+          _menus.value?.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0)) ?? null
+        return sortedMenus
       })
 
       const confirmedOrders = computed<OrderItem[] | null>(() => {
