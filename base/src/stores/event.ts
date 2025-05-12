@@ -297,7 +297,8 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
             }
             exists.value = false
             console.error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
-            router.replace('/404')
+            // TODO: マイページ動作しないため、一時的にコメントアウト
+            // router.replace('/404')
             return
           }
           retry = 0

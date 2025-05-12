@@ -215,7 +215,8 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
                 return
               }
               console.error(`The community "${communityAccount}" does not exist. It ceased attempting to retry.`)
-              router.replace('/404')
+              // TODO: マイページ動作しないため、一時的にコメントアウト
+              // router.replace('/404')
               return
             }
             retry = 0
