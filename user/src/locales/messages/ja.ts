@@ -163,8 +163,8 @@ export default {
     },
     'newcommunity': {
       'submit': 'コミュニティを作成する',
-      'added': '作成しました',
-      'error': '作成に失敗しました',
+      'created': 'コミュニティを作成しました',
+      'error': 'コミュニティの作成に失敗しました',
     },
     'invoice': {
       'date': '開催日',
