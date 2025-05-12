@@ -10,7 +10,7 @@
     "test": "cross-env TZ=UTC firebase emulators:exec --only firestore 'vitest --run'"
   },
   "engines": {
-    "node": "22"
+    "node": "20"
   },
   "type": "module",
   "main": "src/index.js",
