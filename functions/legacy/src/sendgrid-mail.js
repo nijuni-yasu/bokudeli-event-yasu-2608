@@ -43,6 +43,7 @@ const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
 const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
 const COMMUNITY_ADD_ID = 'd-d116c6b010214d2b92a2421411a508d2'
+const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 
 const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
 
@@ -980,30 +981,59 @@ async function sendLetter(_, end) {
     )
     await Promise.all(
       letters.docs.map(async (letterDoc) => {
-        const communityAccount = letterDoc.get('community_account')
         const type = letterDoc.get('letter_type')
+        const communityAccount = letterDoc.get('community_account')
+        const communitySnapshot = (await db.collection('communities').where('community_account', '==', communityAccount).get()).docs[0]
+        const communityId = communitySnapshot.id
+        const communityName = communitySnapshot.get('community_name')
+        const communityUrl = getCommunityUrl(communityAccount)
         let emails = []
+
+        // イベントが存在する場合は、イベントの情報を取得
+        let eventName = null
+        let eventUrl = null
+        let eventDate = null
+        if (letterDoc.get('event_id')) {
+          const eventSnapshot = (await db.collectionGroup('events').where('event_id', '==', letterDoc.get('event_id')).get()).docs[0]
+          if (eventSnapshot.exists) {
+            eventName = eventSnapshot.get('event_name')
+            eventUrl = getEventUrl(communityAccount, letterDoc.get('event_id'))
+            eventDate = convertToDateWeekdayShort(eventSnapshot.get('event_start_datetime').toMillis())
+          }
+        }
         switch (type) {
           case 'community':
-            emails = Array.from(await getCommunityMemberEmailsSet(communityAccount))
+            emails = Array.from(await getCommunityMemberEmailsSet(communityId))
             break
           case 'event_participant':
             const eventId = letterDoc.get('event_id')
             emails = await getEventMemberEmails(eventId)
             break
           case 'event_non_participant':
-            emails = await getCommunityMemberEmailsSet(communityAccount)
+            emails = await getCommunityMemberEmailsSet(communityId)
             for (const email of await getEventMemberEmails(eventId)) {
               emails.delete(email)
             }
             break
         }
+        const dynamic_template_data = {
+          community_name: communityName,
+          community_url: communityUrl,
+          event_name: eventName,
+          event_url: eventUrl,
+          event_date: eventDate,
+          letter_title: letterDoc.get('letter_title'),
+          letter_content: letterDoc.get('letter_content'),
+          letter_type: type,
+        }
+        console.log(dynamic_template_data)
         for (const email of emails) {
           await sgMail.send({
             to: email,
             from: DEFAULT_FROM,
             subject: letterDoc.get('letter_title'),
-            text: letterDoc.get('letter_content'),
+            templateId: LETTER_ID,
+            dynamic_template_data,
           })
         }
         transaction.update(letterDoc.ref, { status: 'sent', sent_at: Timestamp.now() })
