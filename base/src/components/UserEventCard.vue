@@ -84,15 +84,21 @@ const isShowInvoiceButton = computed(
       </v-row>
     </v-card-text>
   </v-card>
-  <v-dialog v-model="dialog" :persistent="false" max-width="800px">
+  <v-dialog v-model="dialog" :persistent="false" max-width="600px">
     <v-card>
       <template #title>{{ $t('user_event_card.cancel_dialog.title') }}</template>
       <v-card-text class="text-h6" style="line-height: 2rem">
         {{ $t('user_event_card.cancel_dialog.event_name', [event.event_name]) }}<br />
-        {{ $t('user_event_card.cancel_dialog.refund', [$n(totalPrice, 'currency')]) }}
+        {{ $t('user_event_card.event_payment', [$t(`payment.${order.event_payment}`)]) }}<br />
+        {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
       </v-card-text>
-      <v-card-text class="py-5" style="line-height: 2rem">
-        <div v-html="$t('user_event_card.cancel_dialog.description')" />
+      <v-card-text class="py-5 text-body-2" style="line-height: 1.5rem">
+        <div v-if="order.event_payment === 'user_advance'">
+          <div v-html="$t('user_event_card.cancel_dialog.description_user_advance')" />
+        </div>
+        <div v-else-if="order.event_payment === 'community_bill'">
+          <div v-html="$t('user_event_card.cancel_dialog.description_community_bill')" />
+        </div>
       </v-card-text>
       <template #actions>
         <v-spacer />
