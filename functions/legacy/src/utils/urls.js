@@ -19,7 +19,7 @@ export function getManageEventMemberUrl(eventId) {
 }
 
 export function getManageCommunityUrl(communityAccount) {
-  return `https://${process.env.EVENT_HOST}/manage/${communityAccount}/events`
+  return `https://${process.env.EVENT_HOST}/manage/community/${communityAccount}/events`
 }
 
 export function getManageEventInvoiceUrl(eventId, invoiceId) {
