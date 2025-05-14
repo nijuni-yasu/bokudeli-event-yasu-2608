@@ -57,6 +57,17 @@ async function getUserEmail(userId) {
   return userPersonalInformationSnapshot.get('user_email')
 }
 
+async function getUserEmailWithName(userId) {
+  const [userPersonalInformationRef, userRef] = await Promise.all([
+    db.collection('users_personal_information').doc(userId).get(),
+    db.collection('users').doc(userId).get(),
+  ])
+  return {
+    email: userPersonalInformationRef.get('user_email'),
+    name: userRef.get('user_name'),
+  }
+}
+
 async function getShopForEvent(eventSnapshot) {
   const shopId = eventSnapshot.get('shop_id')
   const partnerId = eventSnapshot.get('partner_id')
@@ -983,53 +994,68 @@ async function sendLetter(_, end) {
       letters.docs.map(async (letterDoc) => {
         const type = letterDoc.get('letter_type')
         const communityAccount = letterDoc.get('community_account')
-        const communitySnapshot = (await db.collection('communities').where('community_account', '==', communityAccount).get()).docs[0]
+        const communitySnapshot = (
+          await db.collection('communities').where('community_account', '==', communityAccount).get()
+        ).docs[0]
         const communityId = communitySnapshot.id
         const communityName = communitySnapshot.get('community_name')
         const communityUrl = getCommunityUrl(communityAccount)
-        let emails = []
+        let userIds = []
 
         // イベントが存在する場合は、イベントの情報を取得
         let eventName = null
         let eventUrl = null
         let eventDate = null
         if (letterDoc.get('event_id')) {
-          const eventSnapshot = (await db.collectionGroup('events').where('event_id', '==', letterDoc.get('event_id')).get()).docs[0]
+          const eventSnapshot = (
+            await db.collectionGroup('events').where('event_id', '==', letterDoc.get('event_id')).get()
+          ).docs[0]
           if (eventSnapshot.exists) {
             eventName = eventSnapshot.get('event_name')
             eventUrl = getEventUrl(communityAccount, letterDoc.get('event_id'))
             eventDate = convertToDateWeekdayShort(eventSnapshot.get('event_start_datetime').toMillis())
           }
         }
+        // TODO UserIdsの取得は関数にするのが良いかも
         switch (type) {
           case 'community':
-            emails = Array.from(await getCommunityMemberEmailsSet(communityId))
+            const membersRef = db.collection('communities').doc(communityId).collection('members')
+            const membersSnapshot = await membersRef.get()
+            userIds = membersSnapshot.docs.map((member) => member.id)
             break
           case 'event_participant':
             const eventId = letterDoc.get('event_id')
-            emails = await getEventMemberEmails(eventId)
+            const ordersRef = db.collectionGroup('orders').where('event_id', '==', eventId).where('status', '==', 'ordered')
+            const ordersSnapshot = await ordersRef.get()
+            userIds = ordersSnapshot.docs.map((order) => order.get('user_id'))
             break
           case 'event_non_participant':
-            emails = await getCommunityMemberEmailsSet(communityId)
-            for (const email of await getEventMemberEmails(eventId)) {
-              emails.delete(email)
-            }
+            const allMembersRef = db.collection('communities').doc(communityId).collection('members')
+            const allMembersSnapshot = await allMembersRef.get()
+            const allMemberIds = allMembersSnapshot.docs.map((member) => member.id)
+            const participantIds = (await ordersRef.get()).docs.map((order) => order.get('user_id'))
+            userIds = allMemberIds.filter((id) => !participantIds.includes(id))
             break
         }
-        const dynamic_template_data = {
-          community_name: communityName,
-          community_url: communityUrl,
-          event_name: eventName,
-          event_url: eventUrl,
-          event_date: eventDate,
-          letter_title: letterDoc.get('letter_title'),
-          letter_content: letterDoc.get('letter_content'),
-          letter_type: type,
-        }
-        console.log(dynamic_template_data)
-        for (const email of emails) {
+
+        const userInfos = await Promise.all(userIds.map(getUserEmailWithName))
+        const validUserInfos = userInfos.filter((info) => info.email != null && info.email !== '')
+
+        for (const userInfo of validUserInfos) {
+          const dynamic_template_data = {
+            community_name: communityName,
+            community_url: communityUrl,
+            event_name: eventName,
+            event_url: eventUrl,
+            event_date: eventDate,
+            letter_title: letterDoc.get('letter_title'),
+            letter_content: letterDoc.get('letter_content'),
+            letter_type: type,
+            user_name: userInfo.name || 'ユーザー',
+          }
+          console.log(dynamic_template_data)
           await sgMail.send({
-            to: email,
+            to: userInfo.email,
             from: DEFAULT_FROM,
             subject: letterDoc.get('letter_title'),
             templateId: LETTER_ID,
