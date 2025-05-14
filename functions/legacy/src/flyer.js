@@ -10,9 +10,9 @@ import QRCode from 'qrcode'
 import { getEvent } from './utils/eventUtils.js'
 import { convertHtmlToPlaneText } from './utils/converter.js'
 import './options/index.js'
+import { getEventUrl } from './utils/urls.js'
 
 const CORS = defineList('CORS')
-const EVENT_HOST = defineString('EVENT_HOST')
 
 // 画像URLからBase64エンコードされた文字列を取得する関数（更新版）
 const getImageAsBase64 = async (url, targetWidth = 1200, targetHeight = 630) => {
@@ -159,7 +159,7 @@ export const flyer = onRequest({ cors: CORS }, async (req, res) => {
 
     const eventCoverUrl = eventData.event_cover_url
     const eventCoverUrlBase64Image = await getImageAsBase64(eventCoverUrl)
-    const eventPath = `${EVENT_HOST}/c/test_f/e/${eventId}`
+    const eventPath = getEventUrl(eventData.community_account, eventId)
     const qrCodeBase64 = await generateQRCodeAsBase64(eventPath)
 
     // PDF生成に必要なデータを整形

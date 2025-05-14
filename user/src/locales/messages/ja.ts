@@ -50,6 +50,7 @@ export default {
         'member': '参加者',
         'letter': 'レター',
         'settings': '設定',
+        'flyer': 'チラシ',
       },
       'edit': 'イベント設定',
       'delete': 'イベント削除',
