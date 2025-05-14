@@ -20,8 +20,9 @@ const sendMessage = async (communitySnapshot, newManagers) => {
 
   const send = async (templateId, manager) => {
     const managerSnapshot = await manager.get()
-    const to = managerSnapshot.get('user_email')
     const user_name = managerSnapshot.get('user_name')
+    const personalInfoSnapshot = await db.collection('users_personal_information').doc(manager.id).get()
+    const to = personalInfoSnapshot.get('user_email')
     if (to != null && to !== '') {
       await sgMail.send({
         to,
