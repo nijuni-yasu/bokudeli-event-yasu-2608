@@ -22,7 +22,7 @@
     "cookie-es": "^1.1.0",
     "date-fns": "^3.6.0",
     "destr": "^2.0.3",
-    "firebase": "~10.6.0",
+    "firebase": "~11.7.1",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-flatpickr-component": "^11.0.5",
