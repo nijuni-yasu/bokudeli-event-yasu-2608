@@ -180,6 +180,10 @@ export default {
       'description': `イベント設定画面で<b>「主催者 請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
       イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
       お支払い期限は翌月末日となります。詳細は、<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g353224adc3a_0_0" target="_blank">支払い設定について</a> をご確認ください。`,
+    },
+    'flyer': {
+      'title': 'QRコード付きのチラシを印刷して、告知・集客に役立てよう！',
+      'description': '微調整もしやすい <a href="https://bit.ly/433wAbb" target="_blank">Canvaのテンプレート</a> もぜひご活用ください🎨',
     }
   }
 }
