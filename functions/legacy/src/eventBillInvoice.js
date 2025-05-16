@@ -112,8 +112,8 @@ export const createEventBillInvoice = async (communitySnapshot, eventSnapshot, w
     item.totalPrice = convertNumberToYen(item.totalPrice)
     item.price = convertNumberToYen(item.price)
   })
-  // 12行に満たない場合は空行を追加
-  for (let i = items.length; i < 12; i++) {
+  // 14行に満たない場合は空行を追加
+  for (let i = items.length; i < 14; i++) {
     items.push({
       name: '',
       count: '',
