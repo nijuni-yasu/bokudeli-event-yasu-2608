@@ -38,7 +38,8 @@ const dateStart = computed({
 const dateEnd = computed({
   get: () => (menu.value.dateEnd == null ? null : format(menu.value.dateEnd.toMillis(), 'yyyy-MM-dd')),
   set: (value) => {
-    menu.value.dateEnd = value == null ? null : Timestamp.fromMillis(parseISO(value).getTime())
+    menu.value.dateEnd =
+      value == null ? null : Timestamp.fromMillis(parseISO(value).getTime() + 24 * 60 * 60 * 1000 - 1)
   },
 })
 </script>
