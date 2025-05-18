@@ -57,6 +57,23 @@
   ],
   "functions": [
     {
+      "source": "functions/default",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        ".gitignore",
+        "src",
+        "tsconfig.*",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ],
+      "predeploy": [
+        "yarn --cwd functions/default lint",
+        "yarn --cwd functions/default build"
+      ]
+    },
+    {
       "source": "functions/legacy",
       "codebase": "legacy",
       "ignore": [

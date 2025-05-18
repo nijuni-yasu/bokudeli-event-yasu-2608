@@ -37,12 +37,20 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version-file: ./functions/legacy/.node-version
+          node-version-file: ./functions/default/.node-version
       - name: Install dependencies
-        working-directory: ./functions/legacy
+        working-directory: ./functions/default
         run: |
           yarn install --frozen-lockfile
       - name: Generate .env file
+        working-directory: ./functions/default
+        run: |
+          echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
+      - name: Install dependencies for legacy
+        working-directory: ./functions/legacy
+        run: |
+          yarn install --frozen-lockfile
+      - name: Generate .env file for legacy
         working-directory: ./functions/legacy
         # secrets は環境変数の書き換えによる事故が頻発したので個々で記述する
         # また、将来的には GCP Secret Manager (defineSecret) を使用し、ここで環境変数に書き出すのはやめる
