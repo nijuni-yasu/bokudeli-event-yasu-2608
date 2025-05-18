@@ -89,6 +89,23 @@ const shopDeadlineTimeArray = computed(() => {
     return SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY
   }
 })
+const shopDeadlineTime = computed({
+  get() {
+    const timeValues = shopDeadlineTimeArray.value.map((item) => item.value)
+    const currentValue = shop.value?.shop_deadline_datetime.time
+    if (currentValue == null || !timeValues.includes(currentValue)) {
+      return Math.min(...timeValues)
+    }
+    return currentValue
+  },
+  set(val) {
+    const values = shopDeadlineTimeArray.value.map((item) => item.value)
+    const setVal = !values.includes(val) ? Math.min(...values) : val
+    if (shop.value && shop.value.shop_deadline_datetime) {
+      shop.value.shop_deadline_datetime.time = setVal
+    }
+  },
+})
 const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 73)]
 
 const partnerId = getAuth().currentUser?.uid ?? ''
@@ -497,7 +514,7 @@ const submit = async () => {
               </v-col>
               <v-col cols="6">
                 <v-select
-                  v-model="shop.shop_deadline_datetime.time"
+                  v-model="shopDeadlineTime"
                   :items="shopDeadlineTimeArray"
                   outlined
                   dense
