@@ -1,0 +1,41 @@
+import { z } from 'zod'
+
+declare const IS_SERVER: boolean
+
+/*
+ * Timestamp が client 用と server 用で異なるため、動的ロードで対応する
+ */
+
+let module: any
+if (IS_SERVER) {
+  module = await import('./firebase.server.js')
+} else {
+  module = await import('./firebase.client.js')
+}
+export type DocumentData = typeof module.DocumentData
+const deleteField = module.deleteField
+const FieldValue = module.FieldValue
+
+export const Timestamp = module.Timestamp
+
+export const TimestampSchema = z
+  .number()
+  .int()
+  .positive()
+  .or(z.instanceof(Timestamp))
+  .transform((value) => (typeof value === 'number' ? Timestamp.fromMillis(value) : value))
+
+export const EpochMillisSchema = z
+  .number()
+  .int()
+  .positive()
+  .or(z.instanceof(Timestamp))
+  .transform((value) => (typeof value === 'number' ? value : value.toMillis()))
+
+export const NonEmptyStringSchema = z.string().transform((value) => {
+  if (value == null || value === '') {
+    return FieldValue.delete != null ? FieldValue.delete() : deleteField()
+  }
+  return value
+})
+export type NonEmptyStringType = z.infer<typeof NonEmptyStringSchema>
