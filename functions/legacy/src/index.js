@@ -35,4 +35,4 @@ export { invoice } from './invoice.js'
 export { namesprint } from './namesprint.js'
 export { eventBillInvoice } from './eventBillInvoice.js'
 export { flyer } from './flyer.js'
-export const { create_or_update_user, verify_pass_code, update_email, get_custom_token } = await import('./users.js')
+export const { create_or_update_user, verify_pass_code, get_custom_token } = await import('./users.js')
