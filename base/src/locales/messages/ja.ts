@@ -207,6 +207,8 @@ export default {
     community_icon_image: 'アイコン',
     community_icon_image_hint: `※推奨サイズ：300x300px`,
     community_create_next: `コミュニティを作成したら<br>次はイベントをつくってみよう🎉`,
+    email_setting: 'メール設定',
+    email_hint: '「問い合わせ先」や「配信するレターの返信先」として、コミュニティのメールアドレスを設定してください。',
     sns_setting: 'SNS設定',
     facebook: 'Facebook',
     twitter: 'X(Twitter)',
