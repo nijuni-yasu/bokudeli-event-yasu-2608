@@ -62,17 +62,17 @@ const downloadFlyer = async (size: string) => {
   <v-container>
     <v-row class="justify-center">
       <div>
-        <div>チラシを印刷してオフラインの告知・集客に役立てよう。</div>
+        <div class="text-center text-h5 mt-4">{{ $t('manage.flyer.title') }}</div>
+        <div v-html="$t('manage.flyer.description')" class="text-center text-h5 mt-2 mb-8"/>
         <v-row class="mt-4" justify="center" no-gutters>
           <v-col cols="auto" class="d-flex flex-nowrap">
             <v-btn
               v-for="size in flyerSizes"
               :key="size.label"
               @click="() => downloadFlyer(size.size)"
-              density="compact"
-              size="small"
-              class="mx-1"
-              style="min-width: auto; padding: 0 8px"
+              class="mx-3"
+              size="large"
+              elevation="6"
             >
               {{ size.label }}
             </v-btn>
