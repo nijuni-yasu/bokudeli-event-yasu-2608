@@ -77,7 +77,7 @@ const isNew = computed(() => {
   return value === '1' ? 1 : 0
 })
 
-const { requiredValidator, noReservedCharsValidator, emailValidator } = useValidators()
+const { requiredValidator, noReservedCharsValidator, emailValidator, urlValidator } = useValidators()
 
 const imageError = ref("")
 
@@ -373,6 +373,7 @@ const confirmUnLink = async (providerId: string) => {
                   v-model="user.user_sns_website"
                   variant="outlined"
                   :disabled="isLoading"
+                  :rules="[urlValidator]"
               />
 
               <v-textarea
