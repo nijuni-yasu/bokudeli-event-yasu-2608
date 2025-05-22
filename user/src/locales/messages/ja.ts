@@ -232,6 +232,7 @@ export default {
     'user_sns_website': 'WEBサイト',
     'user_description': '自己紹介文',
     'change_settings': '設定を変更する',
+    'update_profile': 'プロフィールを変更しました。',
     'email': 'メールアドレス',
     'account_linkage': 'アカウント連携',
     'google': 'Google',

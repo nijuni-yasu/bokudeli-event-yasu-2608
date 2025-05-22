@@ -145,10 +145,10 @@ const profileSubmit = async () => {
       }
     }
 
+    Object.assign(notification, { message: $t('profile.update_profile'), color: 'success' })
+
     if (route.query.redirect) {
       router.push(route.query.redirect as string)
-    } else {
-      router.push('/')
     }
   } catch (error) {
     console.warn("Error profile submit:", error);
