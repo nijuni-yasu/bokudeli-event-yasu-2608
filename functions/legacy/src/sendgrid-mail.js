@@ -1000,6 +1000,7 @@ async function sendLetter(_, end) {
         const communityId = communitySnapshot.id
         const communityName = communitySnapshot.get('community_name')
         const communityUrl = getCommunityUrl(communityAccount)
+        const communityEmail = communitySnapshot.get('community_email') || DEFAULT_FROM
         let userIds = []
 
         // イベントが存在する場合は、イベントの情報を取得
@@ -1056,7 +1057,7 @@ async function sendLetter(_, end) {
           console.log(dynamic_template_data)
           await sgMail.send({
             to: userInfo.email,
-            from: DEFAULT_FROM,
+            from: communityEmail,
             subject: letterDoc.get('letter_title'),
             templateId: LETTER_ID,
             dynamic_template_data,
