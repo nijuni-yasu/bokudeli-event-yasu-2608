@@ -967,13 +967,12 @@ async function sendInCartEventDeadlineNotificationToMember(start, end) {
   )
 }
 
-async function sendLetter(start, end) {
+async function sendLetter(_, end) {
   return db.runTransaction(async (transaction) => {
     const letters = await transaction.get(
       db
         .collectionGroup('letters')
         .where('status', '==', 'timed')
-        .where('scheduled_at', '>', Timestamp.fromMillis(start))
         .where('scheduled_at', '<=', Timestamp.fromMillis(end)),
     )
     await Promise.all(
