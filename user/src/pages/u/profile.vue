@@ -163,12 +163,13 @@ const emailSubmit = async () => {
 
     const userEmail = email.value
     const userRef = doc(db, 'users', user.value?.user_id as string)
+    const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.user_id as string)
 
     await updateEmail(currentUser as User, userEmail).then(async () => {
       await updateDoc(userRef, {
-        user_email: userEmail,
         verified_at: null,
       })
+      await updateDoc(personalInformationSnapshotRef, { user_email: userEmail })
     }).catch(async (error) => {
       console.error(error)
       if (error.code === 'auth/requires-recent-login') {
@@ -179,9 +180,9 @@ const emailSubmit = async () => {
         await signInWithCustomToken(auth, customToken).then(async (userCredential) => {
           await updateEmail(userCredential.user as User, userEmail).then(async () => {
             await updateDoc(userRef, {
-              user_email: userEmail,
               verified_at: null,
             })
+            await updateDoc(personalInformationSnapshotRef, { user_email: userEmail })
           }).catch((error) => {
             // 基本的にこのスコープのエラーが出る想定は無い
             console.error(error)
