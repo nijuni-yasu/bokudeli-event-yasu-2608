@@ -62,7 +62,8 @@ const route = useRoute()
 
 const isLoading = ref(false)
 
-const isValid = ref(false)
+const isValidProfile = ref(false)
+const isValidEmail = ref(false)
 
 const isOpenUnLinkDialog = ref(false)
 const targetUnLinkProvider = ref('')
@@ -115,7 +116,7 @@ const readImageFiles = (files: File | File[]) => {
 
 
 const profileSubmit = async () => {
-  if (!isValid.value || !validateImage()) {
+  if (!isValidProfile.value || !validateImage()) {
     validateImage()
     form.value?.validate()
     return
@@ -316,7 +317,7 @@ const confirmUnLink = async (providerId: string) => {
           </v-sheet>
           <p v-if="imageError !== ''" class="text-center text-error font-weight-bold">{{imageError}}</p>
 
-          <v-form ref="form" v-model="isValid" @submit.prevent="profileSubmit">
+          <v-form ref="form" v-model="isValidProfile" @submit.prevent="profileSubmit">
             <!-- ファイル選択 -->
             <v-file-input class="d-none" accept="image/*" ref="fileInput" @update:model-value="readImageFiles" />
 
@@ -397,7 +398,7 @@ const confirmUnLink = async (providerId: string) => {
         <v-sheet class="rounded-lg py-14 px-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
 
-          <v-form v-model="isValid" @submit.prevent="emailSubmit">
+          <v-form v-model="isValidEmail" @submit.prevent="emailSubmit">
             <v-text-field
                 class=" my-12"
                 :label="$t('profile.change_settings')"
@@ -407,7 +408,7 @@ const confirmUnLink = async (providerId: string) => {
                 :rules="[requiredValidator, emailValidator]"
             />
             <v-row justify="center">
-              <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
+              <v-btn class="rounded-xl" color="primary" :disabled="!isValidEmail" :loading="isLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
             </v-row>
           </v-form>
         </v-sheet>
