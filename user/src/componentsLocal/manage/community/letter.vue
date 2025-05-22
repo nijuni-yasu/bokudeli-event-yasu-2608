@@ -122,6 +122,18 @@ const onUpdated = () => {
         </v-btn>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col md="12" sm="9" cols="12">
+        <v-card class="pa-10">
+          <v-row>
+            <v-card-text class="pa-3 title"><div v-html="$t('manage.letter.hint.title')" /></v-card-text>
+          </v-row>
+          <v-row>
+            <v-card-text class="pa-3 description"><div v-html="$t('manage.letter.hint.description')" /></v-card-text>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
     <v-row class="justify-center">
       <v-col cols="12">
         <LetterTable
@@ -190,5 +202,20 @@ const onUpdated = () => {
 .v-list-item-title {
   font-weight: bold;
   line-height: 2rem;
+}
+.title {
+  font-family: Noto Sans JP;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: left;
+}
+.description {
+  font-family: Noto Sans JP;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 30px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
 }
 </style>
