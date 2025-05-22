@@ -323,20 +323,20 @@ const confirmUnLink = async (providerId: string) => {
 
             <v-sheet class="d-flex flex-column ga-7 mb-16" >
               <v-text-field
+                  :label="$t('profile.user_name')"
+                  v-model="user.user_name"
+                  variant="outlined"
+                  :disabled="isLoading"
+                  :rules="[requiredValidator]"
+              />
+
+              <v-text-field
                   :label="$t('profile.user_account')"
                   v-model="user.user_account"
                   prefix="https://shokuiji.jp/u/"
                   variant="outlined"
                   :disabled="isLoading"
                   :rules="[noReservedCharsValidator]"
-              />
-
-              <v-text-field
-                  :label="$t('profile.user_name')"
-                  v-model="user.user_name"
-                  variant="outlined"
-                  :disabled="isLoading"
-                  :rules="[requiredValidator]"
               />
             </v-sheet>
 
