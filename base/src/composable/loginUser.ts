@@ -65,6 +65,7 @@ export const loginUser = async (user: User) => {
     store.update(storedUser)
     currentStoredUser = storedUser
   } else {
+    currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data(), personalInformationSnapshot.data()!)
     if (!currentStoredUser.userImageUrl) {
       // 画像がない場合更新する
       await setDoc(
