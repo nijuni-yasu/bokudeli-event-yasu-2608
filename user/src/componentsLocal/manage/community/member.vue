@@ -109,7 +109,7 @@ const inviteManager = async () => {
       })
   } catch (error) {
     console.error(error)
-    notification.show($t('manage.community_manager_invitation.error'), 'error')
+    notification.show($t('manage.community_manager_invitation.failed'), 'error')
   } finally {
     isLoading.value = false
   }
