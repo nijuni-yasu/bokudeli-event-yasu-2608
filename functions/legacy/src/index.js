@@ -24,9 +24,6 @@ export const { on_write_community_members } = await import('./community-members.
 export const { create_event_members } = await import('./event-members.js')
 export const { on_object_finalized } = await import('./storage-image.js')
 export const { scheduled_firestore_export } = await import('./backup.js')
-export const { get_invitaion_url_for_community_manager, accept_invitation_for_community_manager } = await import(
-  './community-manager.js'
-)
 export const { log_event_status } = await import('./event-logging.js')
 export const { add_order, delete_order, update_order_status } = await import('./orders.js')
 export const { make_shop_snapshot_to_event } = await import('./event-snapshot.js')

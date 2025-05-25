@@ -71,7 +71,7 @@ export const accept_invitation_for_community_manager = functions
       has_token_been_redeemed: true,
       updated_at: now,
     })
-    const memberRef = inviteRef.parent.parent.collection('members').doc(uid)
+    const memberRef = inviteRef.parent.parent!.collection('members').doc(uid)
     const memberDoc = await memberRef.get()
     if (memberDoc.exists) {
       // 既に存在する場合は roles に 'manager' を追加
