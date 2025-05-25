@@ -89,23 +89,13 @@ const shopDeadlineTimeArray = computed(() => {
     return SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY
   }
 })
-const shopDeadlineTime = computed({
-  get() {
-    const timeValues = shopDeadlineTimeArray.value.map((item) => item.value)
-    const currentValue = shop.value?.shop_deadline_datetime.time
-    if (currentValue == null || !timeValues.includes(currentValue)) {
-      return Math.min(...timeValues)
-    }
-    return currentValue
-  },
-  set(val) {
-    const values = shopDeadlineTimeArray.value.map((item) => item.value)
-    const setVal = !values.includes(val) ? Math.min(...values) : val
-    if (shop.value && shop.value.shop_deadline_datetime) {
-      shop.value.shop_deadline_datetime.time = setVal
-    }
-  },
-})
+const onDeadlineDaysBeforeChange = () => {
+  if (shop.value?.shop_deadline_datetime == null) {
+    return
+  }
+  const timeValues = shopDeadlineTimeArray.value.map((item) => item.value)
+  shop.value.shop_deadline_datetime.time = Math.max(...timeValues)
+}
 const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 73)]
 
 const partnerId = getAuth().currentUser?.uid ?? ''
@@ -510,11 +500,12 @@ const submit = async () => {
                   outlined
                   dense
                   :label="$t('shop.deadline_date')"
+                  @update:modelValue="onDeadlineDaysBeforeChange"
                 />
               </v-col>
               <v-col cols="6">
                 <v-select
-                  v-model="shopDeadlineTime"
+                  v-model="shop.shop_deadline_datetime.time"
                   :items="shopDeadlineTimeArray"
                   outlined
                   dense
