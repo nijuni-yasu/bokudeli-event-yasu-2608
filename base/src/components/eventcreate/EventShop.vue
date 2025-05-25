@@ -32,17 +32,38 @@ const displayShops = computed(() => {
   })
 })
 
+const calculateDeadlineTime = (shop: Shop): number => {
+  const startDateTime = event.value.event_start_datetime?.toDate()
+  if (startDateTime == null) {
+    throw new Error('startDateTime is null')
+  }
+  const daysBefore = shop.shop_deadline_datetime.days_before
+  if (daysBefore == 0) {
+    // 締め切り日時が当日の場合、何時間前に設定する
+    startDateTime.setTime(startDateTime.getTime() - shop.shop_deadline_datetime.time)
+    return startDateTime.getTime()
+  }
+  return shop.shop_deadline_datetime.time
+}
+
 // 注文締め切り日時を計算し更新
 const updateDeadlineDatetime = (shop: Shop) => {
   const startDateTime = event.value.event_start_datetime?.toDate()
   if (startDateTime == null) {
     throw new Error('startDateTime is null')
   }
-  startDateTime.setDate(startDateTime.getDate() - shop.shop_deadline_datetime.days_before)
-  // UTC なので必ず Date Object にしてから使う
-  const deadLineTime = new Date(shop.shop_deadline_datetime.time)
-  startDateTime.setHours(deadLineTime.getHours())
-  startDateTime.setMinutes(deadLineTime.getMinutes())
+  const daysBefore = shop.shop_deadline_datetime.days_before
+  if (daysBefore == 0) {
+    // 締め切り日時が当日の場合、何時間前に設定する
+    startDateTime.setTime(startDateTime.getTime() - shop.shop_deadline_datetime.time)
+  } else {
+    startDateTime.setDate(startDateTime.getDate() - daysBefore)
+
+    // UTC なので必ず Date Object にしてから使う
+    const deadLineTime = new Date(shop.shop_deadline_datetime.time)
+    startDateTime.setHours(deadLineTime.getHours())
+    startDateTime.setMinutes(deadLineTime.getMinutes())
+  }
   event.value.event_deadline_datetime = Timestamp.fromDate(startDateTime)
 }
 
@@ -106,7 +127,7 @@ const isOpenDeadlineDialog = ref(false)
                   </v-card-text>
                   <v-card-text class="text-left text-subtitle-2 pb-1">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
-                    {{ $d(item.shop_deadline_datetime.time, 'time') }}
+                    {{ $d(calculateDeadlineTime(item), 'time') }}
                     <v-btn
                       color="primary"
                       class="ma-0"
