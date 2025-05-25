@@ -32,8 +32,8 @@ const displayShops = computed(() => {
   })
 })
 
-  // 注文締め切り日時を計算し更新
-  const updateDeadlineDatetime = (shop: Shop) => {
+// 注文締め切り日時を計算し更新
+const updateDeadlineDatetime = (shop: Shop) => {
   const startDateTime = event.value.event_start_datetime?.toDate()
   if (startDateTime == null) {
     throw new Error('startDateTime is null')
@@ -74,7 +74,6 @@ const next = () => {
 }
 const isOpenMinOrdersDialog = ref(false)
 const isOpenDeadlineDialog = ref(false)
-
 </script>
 
 <template>
@@ -92,7 +91,7 @@ const isOpenDeadlineDialog = ref(false)
               <v-col v-for="(item, i) of displayShops" :key="`shop_${i}`" md="4" sm="4" cols="12">
                 <v-card
                   :class="{ 'select-border': item.partner_id == props.modelValue.partner_id }"
-                  class="mb-3 mx-0  d-flex flex-column"
+                  class="mb-3 mx-0 d-flex flex-column"
                   color="text-center cursor-pointer"
                   height="400px"
                 >
@@ -115,11 +114,12 @@ const isOpenDeadlineDialog = ref(false)
                       size="small"
                       density="compact"
                       variant="text"
-                      @click="isOpenDeadlineDialog=true"
+                      @click="isOpenDeadlineDialog = true"
                     />
                   </v-card-text>
                   <v-card-text class="text-left text-subtitle-2 pb-1">
-                    【{{ $t('shop_range_min_orders') }}】{{ item.min_orders_on_spot }} {{ $t('shop_range_min_orders_unit') }}
+                    【{{ $t('shop_range_min_orders') }}】{{ item.min_orders_on_spot }}
+                    {{ $t('shop_range_min_orders_unit') }}
                     <v-btn
                       color="primary"
                       class="ma-0"
@@ -127,12 +127,12 @@ const isOpenDeadlineDialog = ref(false)
                       size="small"
                       density="compact"
                       variant="text"
-                      @click="isOpenMinOrdersDialog=true"
+                      @click="isOpenMinOrdersDialog = true"
                     />
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
-                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->                  
-                  <v-spacer/>
+                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
+                  <v-spacer />
                   <div class="text-center">
                     <v-btn
                       v-if="item.shop_id == props.modelValue.shop_id"
@@ -143,7 +143,7 @@ const isOpenDeadlineDialog = ref(false)
                       :disabled="event.event_status.value !== 'in_draft'"
                       @click="submit(item)"
                     >
-                    {{ $t('event_shop.button_selected') }}
+                      {{ $t('event_shop.button_selected') }}
                     </v-btn>
                     <v-btn
                       v-else
