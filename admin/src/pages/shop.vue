@@ -42,7 +42,7 @@ const makeTimeArray = (start: number, num: number) =>
     return { title: $d(date, 'time'), value: date.getTime() }
   })
 
-const makeDeadlineCurrenDaytimeArray = (start: number, num: number) =>
+const makeDeadlineCurrentDaytimeArray = (start: number, num: number) =>
   [...Array(num)]
     .map((_, i) => {
       const date = new Date(0)
