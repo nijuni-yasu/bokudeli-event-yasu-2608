@@ -162,9 +162,15 @@ const emailSubmit = async () => {
     isLoading.value = true
     let isError = false
 
+    // const storedUser = convertFirebaseUserToStoredUser(currentUser as User)
     const userEmail = email.value
     const userRef = doc(db, 'users', user.value?.user_id as string)
     const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.user_id as string)
+
+    if (storedUser.value?.userEmail === userEmail) {
+      isLoading.value = false
+      return Object.assign(notification, { message: $t('profile.not_changed_email'), color: 'warning' })
+    }
 
     await updateEmail(currentUser as User, userEmail).then(async () => {
       await updateDoc(userRef, {
@@ -198,10 +204,8 @@ const emailSubmit = async () => {
 
     if (isError) return
 
-    const storedUser = convertFirebaseUserToStoredUser(currentUser as User)
-
-    const userSnapShot = await getDoc(doc(db, 'users', storedUser.userId))
-    const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', storedUser.userId))
+    const userSnapShot = await getDoc(doc(db, 'users', storedUser.value?.userId as string))
+    const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', storedUser.value?.userId as string))
 
     // Pinia のデータを更新
     const currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data()!, personalInformationSnapshot.data()!)

@@ -234,6 +234,7 @@ export default {
     'change_settings': '設定を変更する',
     'update_profile': 'プロフィールを変更しました。',
     'email': 'メールアドレス',
+    'not_changed_email': 'メールアドレスが変更されていません。',
     'account_linkage': 'アカウント連携',
     'google': 'Google',
     'facebook': 'Facebook',
