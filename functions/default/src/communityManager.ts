@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { getCommunity } from './stores/community.js'
+import { getConfigGlobal } from './stores/config.js'
 
 export const getInvitaionUrlForCommunityManager = onCall(async (request) => {
   const uid = request.auth?.uid
@@ -14,8 +15,10 @@ export const getInvitaionUrlForCommunityManager = onCall(async (request) => {
   if (community === undefined) {
     throw new HttpsError('not-found', 'The community does not exist.')
   }
+  const config = await getConfigGlobal()
+  const isSupport = config?.isSupport(uid) ?? false
   const isManager = community.hasRole(uid, 'manager')
-  if (!isManager) {
+  if (!isSupport && !isManager) {
     throw new HttpsError('permission-denied', 'The function must be called by a manager.')
   }
   return await community.generateInvitationUrlForManager(uid)
