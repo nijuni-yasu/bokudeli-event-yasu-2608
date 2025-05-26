@@ -14,6 +14,7 @@ import { convertStoredUserToFirestoredUser } from "@/schemes/converter";
 import axios from 'axios'
 import {linkByProviderService, reauthenticateByProviderService} from "@/utils/providerService";
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
+import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
 
 type ProfileLink = {
   path: string,
@@ -106,6 +107,24 @@ const handleTwitterLink = async () => {
 
 onMounted(async () => {
   const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
+  const error = useStoreFirebaseAuthError().error
+
+  if (error instanceof FirebaseError) {
+    const credential = TwitterAuthProvider.credentialFromError(error)
+    console.error({ error, credential })
+
+    if (error.code === 'auth/credential-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+    }
+    if (error.code === 'auth/email-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+    }
+  } else {
+    console.error({ error })
+  }
+
   if (additionalUserInfo === null) return
 
   try {
@@ -116,6 +135,7 @@ onMounted(async () => {
     isLoading.value = false
   } finally {
     isLoading.value = false
+    useStoreFirebaseAuthError().reset()
   }
 })
 
@@ -153,6 +173,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
     // 明示的に削除
     useStoreUserAdditionalInfo().reset()
+    useStoreFirebaseAuthError().reset()
 
     router.push(profileLink)
   }

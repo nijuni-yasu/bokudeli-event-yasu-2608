@@ -218,6 +218,7 @@ export default {
     'exists_user_description': 'プロフィールが登録されていません。\nSNSアカウントと連携して、プロフィール登録を完了させよう👍',
     'exists_user_selfButton': '自分でプロフィールを入力する',
     'profile_registration_X': 'X と連携してプロフィール登録',
+    'exists_email': '登録済みのメールアドレスです。\n登録済みメールアドレスのアカウントでログインしてください。',
   },
   'profile': {
     'choice_profile_image': 'プロフィール画像を選択してください。',
