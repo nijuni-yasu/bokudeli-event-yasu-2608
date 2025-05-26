@@ -397,7 +397,7 @@ onMounted(async () => {
 <template>
   <v-container>
     <v-row justify="center" class="mt-5 pa-0">
-      <v-col lg="5" md="6" sm="9" cols="12" class="pa-0">
+      <v-col lg="5" md="6" sm="10" cols="12" class="pa-0">
         <v-sheet class="rounded-lg py-14 px-sm-12 px-5">
           <v-container class="mb-2">
             <v-row justify="center" >
