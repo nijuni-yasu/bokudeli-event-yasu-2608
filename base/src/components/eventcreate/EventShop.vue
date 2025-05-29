@@ -182,13 +182,13 @@ const isOpenDeadlineDialog = ref(false)
 
               <!-- no result found -->
               <v-col v-show="!props.shops.length" cols="12" class="text-center">
-                <h4 class="mt-4">お店が見つかりませんでした</h4>
+                <h4 class="mt-4">{{ $t('event_shop.shop_not_found') }}</h4>
               </v-col>
             </v-row>
             <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back"
-                >前へ</v-btn
-              >
+              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back">{{
+                $t('event_shop.back')
+              }}</v-btn>
               <v-btn
                 v-if="props.modelValue.shop_id"
                 color="primary"
@@ -196,7 +196,7 @@ const isOpenDeadlineDialog = ref(false)
                 size="large"
                 :append-icon="mdiChevronRight"
                 @click="next"
-                >次へ</v-btn
+                >{{ $t('event_shop.next') }}</v-btn
               >
             </v-card-text>
           </v-form>

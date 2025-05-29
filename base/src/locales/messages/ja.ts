@@ -255,6 +255,9 @@ export default {
     shop_range_min_orders_unit: '個以上',
     button_selected: '選択中',
     button_check_menu: 'メニューをみる',
+    shop_not_found: 'お店が見つかりませんでした',
+    back: '前へ',
+    next: '次へ',
   },
   event_detail: {
     title: 'イベント詳細',
