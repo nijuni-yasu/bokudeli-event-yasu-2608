@@ -81,7 +81,7 @@ const SHOP_RANGE_ARRAY = (() => {
 })()
 const SHOP_DEADLINE_DATE_ARRAY = [...Array(4)].map((_, i) => ({ title: $t('days_before', i), value: i }))
 const SHOP_DEADLINE_TIME_ARRAY = makeDeadlineTimeArray(0, 24)
-const SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY = makeDeadlineCurrenDaytimeArray(3, 4)
+const SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY = makeDeadlineCurrentDaytimeArray(3, 4)
 const shopDeadlineTimeArray = computed(() => {
   if (shop.value?.shop_deadline_datetime.days_before > 0) {
     return SHOP_DEADLINE_TIME_ARRAY
