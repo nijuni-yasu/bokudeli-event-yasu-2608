@@ -89,13 +89,19 @@ const shopDeadlineTimeArray = computed(() => {
     return SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY
   }
 })
-const onDeadlineDaysBeforeChange = () => {
-  if (shop.value?.shop_deadline_datetime == null) {
-    return
-  }
-  const timeValues = shopDeadlineTimeArray.value.map((item) => item.value)
-  shop.value.shop_deadline_datetime.time = Math.max(...timeValues)
-}
+
+const deadlineDaysBefore = computed({
+  get: () => shop.value?.shop_deadline_datetime.days_before,
+  set: (value) => {
+    if (shop.value?.shop_deadline_datetime) {
+      shop.value.shop_deadline_datetime.days_before = value
+      // days_beforeが変更されたときに時間を最大値に設定
+      const timeValues = shopDeadlineTimeArray.value.map((item) => item.value)
+      shop.value.shop_deadline_datetime.time = Math.max(...timeValues)
+    }
+  },
+})
+
 const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 73)]
 
 const partnerId = getAuth().currentUser?.uid ?? ''
@@ -495,12 +501,11 @@ const submit = async () => {
             <v-row>
               <v-col cols="6">
                 <v-select
-                  v-model="shop.shop_deadline_datetime.days_before"
+                  v-model="deadlineDaysBefore"
                   :items="SHOP_DEADLINE_DATE_ARRAY"
                   outlined
                   dense
                   :label="$t('shop.deadline_date')"
-                  @update:modelValue="onDeadlineDaysBeforeChange"
                 />
               </v-col>
               <v-col cols="6">
