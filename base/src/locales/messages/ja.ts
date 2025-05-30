@@ -111,10 +111,8 @@ export default {
           ・イベント内容を入力。カバー画像の作成には <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a>をご活用ください🎨<br />
           ・誰でも参加可能な<b>「公開」</b> or 参加者を限定する<b>「URL限定公開」</b>から選択できます👀<br />
           ・支払い方法は<b>「参加者 事前決済」</b>or <b>「主催者 請求書払い」</b>から選択できます💰<br />
-          ・イベント内容が確定したら、お店に<b>「予約申請」</b>しましょう📩<br />
-          ・お店から<b>「予約承認」</b>されたら注文受付開始！まずは運営メンバーで注文しよう💨<br />
-          ・<b>「2人以上」</b>が注文すると、<a href="https://shokujii.jp/" target="_blank">トップページ</a> に表示されます🎉<br />
-          ・<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ生成機能</a>などを駆使して告知・集客しましょう📣<br />
+          ・内容が確定したらお店に<b>「予約申請」</b>。お店から<b>「予約承認」</b>をいただいたら注文受付開始💨<br />
+          ・<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a> などを駆使して告知しよう📣<br />
           ・注文期限になると注文内容が確定し、お店に<b>「自動で発注」</b>されます📩<br />
           ・注文期限までは、注文した参加者はマイページから<b>「キャンセル」</b>が可能です↩️<br />
           ・<b>「注文の目安」</b> の個数を下回ると、配送料をご請求する場合がありますのでご注意ください🚚<br />
@@ -402,18 +400,14 @@ export default {
   event_few_members_notice_modal: {
     title: `イベントを盛り上げよう🎉`,
     desc: `お店から予約承認をいただきました。<br />
-           以下手順で友人知人を食事会に招待して盛り上げていきましょう！<br />
+           以下手順で友人知人を食事会に招待して盛り上げていきましょう。<br />
            <br />
-           ① まずは、<b>「主催者」</b>や<b>「運営メンバー」</b>で早速注文💨💨<br />
-           ②<b>「2人以上」</b>が注文すると、<a href="https://shokujii.jp/" target="_blank">トップページ</a> に表示されます🎉<br />          
-          　・参加者がいない段階においても、不用意に目立つことなく、安心して告知いただけます。<br />
-          　・2人未満の場合も、コミュニティページからは閲覧可能です。<br />
-          　・まずは参加意欲の高い、コミュニティのコアメンバーからお誘いしてみましょう。<br />
-           ③さらに <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ生成機能</a>を駆使して告知・集客しよう📢<br />
-          
-
+           ① まずは、<b>「主催者」</b>や<b>「運営メンバー」</b>で早速注文💨<br />
+           ② 公開設定の場合、どなたかが注文すると <a href="https://shokujii.jp/" target="_blank">shokujiiのトップページ</a> にも表示されます👀<br />
+           ③ <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a>
+           などで告知しよう📢 <br />
            <br />
-           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください👍`,
+           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください。`,
   },
   cancelpolicy_modal: {
     title: 'キャンセルポリシー',

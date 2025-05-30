@@ -134,7 +134,7 @@ const isFewMemberNotice = computed({
     if (fewMemberNotice.value === null) {
       if (event.value != null) {
         return (
-          event.value.event_num_members < 2 &&
+          event.value.event_num_members < 1 &&
           event.value.is_public &&
           isManager.value &&
           event.value.event_status.value === 'accepting_order'
