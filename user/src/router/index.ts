@@ -19,6 +19,8 @@ import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getManageCommunityListPath } from './utils'
 
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
+import { useConfigStore } from '@/stores/config'
+import { FIRESTORE_LOADING } from '@/utils/const'
 
 const checkUser = async (user: User | null) => {
   // リダイレクト結果を取得
@@ -182,12 +184,16 @@ export const setupRouter = (router: Router) => {
     }
 
     if (communityAccount != null) {
+      const configStore = useConfigStore()
       const communityStore = useCommunityStore(communityAccount) as CommunityStore
       const canView = await new Promise<boolean>((resolve) => {
         watch(
-          () => [communityStore.community, communityStore.members],
+          () => [configStore.config, communityStore.community, communityStore.members],
           () => {
-            if (getAuth().currentUser?.uid === (import.meta.env.VITE_SUPPORT_ACCOUNT_USER_ID as string)) {
+            if (
+              configStore.config !== FIRESTORE_LOADING &&
+              configStore.config?.isSupport(getAuth().currentUser?.uid as string) === true
+            ) {
               resolve(true)
               return
             }

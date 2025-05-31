@@ -1,0 +1,1 @@
+export const FIRESTORE_LOADING = Symbol('FIRESTORE_LOADING')

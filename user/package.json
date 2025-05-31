@@ -36,7 +36,8 @@
     "vue-qrious": "^3.1.1",
     "vue-router": "^4.3.0",
     "vue3-perfect-scrollbar": "^1.6.1",
-    "vuetify": "^3.4.6"
+    "vuetify": "^3.4.6",
+    "zod": "^3.25.28"
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",
