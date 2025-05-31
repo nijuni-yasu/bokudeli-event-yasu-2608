@@ -10,7 +10,7 @@ service cloud.firestore {
             allow read: if true
             // 将来的には isSupport() にする可能性もあるが、現状 functions のみ変更可能とする
             allow write: if false
-        },
+        }
         match /partners/{partner_id} {
             match /shops/{shop} {
                 // 店舗情報はログインした店舗アカウントでないと create/update/deleteできない
