@@ -687,7 +687,7 @@ async function sendEventInformationMail() {
       user_name: userSnapshot.get('user_name'),
     }
     const to = await getUserEmail(userRef.id)
-    if (to == null) {
+    if (to == null || to === '') {
       continue
     }
     promises.push(
@@ -855,6 +855,9 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
   }
   const icsContent = await makeIcs(eventData)
   const to = await getUserEmail(userId)
+  if (to == null || to === '') {
+    return
+  }
   return sgMail.send({
     to,
     from: DEFAULT_FROM,
@@ -1173,8 +1176,8 @@ export const send_email = functions.region('asia-northeast1').https.onCall(async
     throw new functions.https.HttpsError('invalid-argument', 'Required data is missing')
   }
   const [from, to] = await Promise.all([getUserEmail(context.auth.uid), getUserEmail(toUid)])
-  if (from == null || to == null) {
-    console.warn(`send_email user_email is null\nfrom: ${from}\nto: ${to}`)
+  if (from == null || from === '' || to == null || to === '') {
+    console.warn(`send_email user_email is null or empty\nfrom: ${from}\nto: ${to}`)
     throw new functions.https.HttpsError('invalid-argument', 'Invalid email address')
   }
   return sgMail.send({
