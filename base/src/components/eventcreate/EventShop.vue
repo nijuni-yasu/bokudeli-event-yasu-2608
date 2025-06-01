@@ -32,17 +32,38 @@ const displayShops = computed(() => {
   })
 })
 
-  // 注文締め切り日時を計算し更新
-  const updateDeadlineDatetime = (shop: Shop) => {
+const calculateDeadlineTime = (shop: Shop): number => {
   const startDateTime = event.value.event_start_datetime?.toDate()
   if (startDateTime == null) {
     throw new Error('startDateTime is null')
   }
-  startDateTime.setDate(startDateTime.getDate() - shop.shop_deadline_datetime.days_before)
-  // UTC なので必ず Date Object にしてから使う
-  const deadLineTime = new Date(shop.shop_deadline_datetime.time)
-  startDateTime.setHours(deadLineTime.getHours())
-  startDateTime.setMinutes(deadLineTime.getMinutes())
+  const daysBefore = shop.shop_deadline_datetime.days_before
+  if (daysBefore == 0) {
+    // 締め切り日時が当日の場合、何時間前に設定する
+    startDateTime.setTime(startDateTime.getTime() - shop.shop_deadline_datetime.time)
+    return startDateTime.getTime()
+  }
+  return shop.shop_deadline_datetime.time
+}
+
+// 注文締め切り日時を計算し更新
+const updateDeadlineDatetime = (shop: Shop) => {
+  const startDateTime = event.value.event_start_datetime?.toDate()
+  if (startDateTime == null) {
+    throw new Error('startDateTime is null')
+  }
+  const daysBefore = shop.shop_deadline_datetime.days_before
+  if (daysBefore == 0) {
+    // 締め切り日時が当日の場合、何時間前に設定する
+    startDateTime.setTime(startDateTime.getTime() - shop.shop_deadline_datetime.time)
+  } else {
+    startDateTime.setDate(startDateTime.getDate() - daysBefore)
+
+    // UTC なので必ず Date Object にしてから使う
+    const deadLineTime = new Date(shop.shop_deadline_datetime.time)
+    startDateTime.setHours(deadLineTime.getHours())
+    startDateTime.setMinutes(deadLineTime.getMinutes())
+  }
   event.value.event_deadline_datetime = Timestamp.fromDate(startDateTime)
 }
 
@@ -74,7 +95,6 @@ const next = () => {
 }
 const isOpenMinOrdersDialog = ref(false)
 const isOpenDeadlineDialog = ref(false)
-
 </script>
 
 <template>
@@ -92,7 +112,7 @@ const isOpenDeadlineDialog = ref(false)
               <v-col v-for="(item, i) of displayShops" :key="`shop_${i}`" md="4" sm="4" cols="12">
                 <v-card
                   :class="{ 'select-border': item.partner_id == props.modelValue.partner_id }"
-                  class="mb-3 mx-0  d-flex flex-column"
+                  class="mb-3 mx-0 d-flex flex-column"
                   color="text-center cursor-pointer"
                   height="400px"
                 >
@@ -107,7 +127,7 @@ const isOpenDeadlineDialog = ref(false)
                   </v-card-text>
                   <v-card-text class="text-left text-subtitle-2 pb-1">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
-                    {{ $d(item.shop_deadline_datetime.time, 'time') }}
+                    {{ $d(calculateDeadlineTime(item), 'time') }}
                     <v-btn
                       color="primary"
                       class="ma-0"
@@ -115,11 +135,12 @@ const isOpenDeadlineDialog = ref(false)
                       size="small"
                       density="compact"
                       variant="text"
-                      @click="isOpenDeadlineDialog=true"
+                      @click="isOpenDeadlineDialog = true"
                     />
                   </v-card-text>
                   <v-card-text class="text-left text-subtitle-2 pb-1">
-                    【{{ $t('shop_range_min_orders') }}】{{ item.min_orders_on_spot }} {{ $t('shop_range_min_orders_unit') }}
+                    【{{ $t('shop_range_min_orders') }}】{{ item.min_orders_on_spot }}
+                    {{ $t('shop_range_min_orders_unit') }}
                     <v-btn
                       color="primary"
                       class="ma-0"
@@ -127,12 +148,12 @@ const isOpenDeadlineDialog = ref(false)
                       size="small"
                       density="compact"
                       variant="text"
-                      @click="isOpenMinOrdersDialog=true"
+                      @click="isOpenMinOrdersDialog = true"
                     />
                   </v-card-text>
                   <!-- <v-card-text class="text-left pb-3"> 曜日：{{ item.week }} </v-card-text>
-                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->                  
-                  <v-spacer/>
+                  <v-card-text class="text-left pb-3"> 時間：{{ item.time }} </v-card-text> -->
+                  <v-spacer />
                   <div class="text-center">
                     <v-btn
                       v-if="item.shop_id == props.modelValue.shop_id"
@@ -143,7 +164,7 @@ const isOpenDeadlineDialog = ref(false)
                       :disabled="event.event_status.value !== 'in_draft'"
                       @click="submit(item)"
                     >
-                    {{ $t('event_shop.button_selected') }}
+                      {{ $t('event_shop.button_selected') }}
                     </v-btn>
                     <v-btn
                       v-else
@@ -161,13 +182,13 @@ const isOpenDeadlineDialog = ref(false)
 
               <!-- no result found -->
               <v-col v-show="!props.shops.length" cols="12" class="text-center">
-                <h4 class="mt-4">お店が見つかりませんでした</h4>
+                <h4 class="mt-4">{{ $t('event_shop.shop_not_found') }}</h4>
               </v-col>
             </v-row>
             <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back"
-                >前へ</v-btn
-              >
+              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back">{{
+                $t('event_shop.back')
+              }}</v-btn>
               <v-btn
                 v-if="props.modelValue.shop_id"
                 color="primary"
@@ -175,7 +196,7 @@ const isOpenDeadlineDialog = ref(false)
                 size="large"
                 :append-icon="mdiChevronRight"
                 @click="next"
-                >次へ</v-btn
+                >{{ $t('event_shop.next') }}</v-btn
               >
             </v-card-text>
           </v-form>

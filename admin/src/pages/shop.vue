@@ -42,6 +42,31 @@ const makeTimeArray = (start: number, num: number) =>
     return { title: $d(date, 'time'), value: date.getTime() }
   })
 
+const makeDeadlineCurrentDaytimeArray = (start: number, num: number) =>
+  [...Array(num)]
+    .map((_, i) => {
+      const date = new Date(0)
+      const hours = start + i
+      date.setHours(hours)
+      date.setMinutes(0)
+      return { title: $t('shop.deadline_before_time', [hours]), value: hours * 60 * 60 * 1000 }
+    })
+    .reverse()
+
+const makeDeadlineTimeArray = (start: number, num: number) => {
+  const timeArray = [...Array(num)].map((_, i) => {
+    const date = new Date(0)
+    date.setHours(start + i)
+    date.setMinutes(0)
+    return { title: $d(date, 'time'), value: date.getTime() }
+  })
+  const endDate = new Date(0)
+  endDate.setHours(start + num - 1)
+  endDate.setMinutes(59)
+  timeArray.push({ title: $d(endDate, 'time'), value: endDate.getTime() })
+  return timeArray.reverse()
+}
+
 const SHOP_MIN_ORDERS_ARRAY_MAX = 20
 const SHOP_MIN_ORDERS_ARRAY = [null, ...[...Array(SHOP_MIN_ORDERS_ARRAY_MAX)].map((_, i) => i + 1)]
 const SHOP_RANGE_ARRAY_MAX = 50
@@ -54,8 +79,29 @@ const SHOP_RANGE_ARRAY = (() => {
   }
   return array
 })()
-const SHOP_DEADLINE_DATE_ARRAY = [...Array(3)].map((_, i) => ({ title: $t('days_before', i + 1), value: i + 1 }))
-const SHOP_DEADLINE_TIME_ARRAY = makeTimeArray(6, 72)
+const SHOP_DEADLINE_DATE_ARRAY = [...Array(4)].map((_, i) => ({ title: $t('days_before', i), value: i }))
+const SHOP_DEADLINE_TIME_ARRAY = makeDeadlineTimeArray(0, 24)
+const SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY = makeDeadlineCurrentDaytimeArray(3, 4)
+const shopDeadlineTimeArray = computed(() => {
+  if (shop.value?.shop_deadline_datetime.days_before > 0) {
+    return SHOP_DEADLINE_TIME_ARRAY
+  } else {
+    return SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY
+  }
+})
+
+const deadlineDaysBefore = computed({
+  get: () => shop.value?.shop_deadline_datetime.days_before,
+  set: (value) => {
+    if (shop.value?.shop_deadline_datetime) {
+      shop.value.shop_deadline_datetime.days_before = value
+      // days_beforeが変更されたときに時間を最大値に設定
+      const timeValues = shopDeadlineTimeArray.value.map((item) => item.value)
+      shop.value.shop_deadline_datetime.time = Math.max(...timeValues)
+    }
+  },
+})
+
 const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 73)]
 
 const partnerId = getAuth().currentUser?.uid ?? ''
@@ -455,7 +501,7 @@ const submit = async () => {
             <v-row>
               <v-col cols="6">
                 <v-select
-                  v-model="shop.shop_deadline_datetime.days_before"
+                  v-model="deadlineDaysBefore"
                   :items="SHOP_DEADLINE_DATE_ARRAY"
                   outlined
                   dense
@@ -465,7 +511,7 @@ const submit = async () => {
               <v-col cols="6">
                 <v-select
                   v-model="shop.shop_deadline_datetime.time"
-                  :items="SHOP_DEADLINE_TIME_ARRAY"
+                  :items="shopDeadlineTimeArray"
                   outlined
                   dense
                   :label="$t('shop.deadline_time')"

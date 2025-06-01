@@ -255,6 +255,9 @@ export default {
     shop_range_min_orders_unit: '個以上',
     button_selected: '選択中',
     button_check_menu: 'メニューをみる',
+    shop_not_found: 'お店が見つかりませんでした',
+    back: '前へ',
+    next: '次へ',
   },
   event_detail: {
     title: 'イベント詳細',
@@ -453,7 +456,7 @@ export default {
     // 正確には 520 は HTTP ERROR ではないが、Cloudflare が Client Application Error として使用しているのを参考に、ここでは 520 を使用
     '520': {
       title: 'Client Application Error',
-      description: '予期しないエラーが発生しました'
-    }
+      description: '予期しないエラーが発生しました',
+    },
   },
 }
