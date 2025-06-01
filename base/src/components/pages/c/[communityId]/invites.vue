@@ -8,7 +8,7 @@ import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { getCommunityPath } from '@/router/utils'
+import { getManageCommunityPath } from '@/router/utils'
 
 const acceptInvitationForCommunityManager = httpsCallable(functions, 'acceptInvitationForCommunityManager')
 
@@ -23,7 +23,7 @@ const isOpenMessageDailog = ref(false)
 const message = ref('')
 
 const redirect = () => {
-  router.push(getCommunityPath(props.communityId))
+  router.push(getManageCommunityPath(props.communityId))
 }
 
 watch(
