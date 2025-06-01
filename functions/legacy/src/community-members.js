@@ -1,7 +1,7 @@
 import functions from 'firebase-functions/v1'
 import { getFirestore } from 'firebase-admin/firestore'
 import sgMail from '@sendgrid/mail'
-import { getCommunityUrl } from './utils/urls.js'
+import { getCommunityUrl, getManageCommunityUrl } from './utils/urls.js'
 import { DEFAULT_FROM } from './utils/mail.js'
 
 const COMMUNITY_MANAGER_ADDED_TEMPLATE_ID = 'd-2a1283b5d17040dfb3805d6b4a0f922e'
@@ -17,6 +17,7 @@ const sendMessage = async (communitySnapshot, newManagers) => {
 
   const community_name = communitySnapshot.get('community_name')
   const community_url = getCommunityUrl(communitySnapshot.get('community_account'))
+  const community_manage_url = getManageCommunityUrl(communitySnapshot.get('community_account'))
 
   const send = async (templateId, manager) => {
     const managerSnapshot = await manager.get()
@@ -32,6 +33,7 @@ const sendMessage = async (communitySnapshot, newManagers) => {
           user_name,
           community_name,
           community_url,
+          community_manage_url,
         },
       })
     }
