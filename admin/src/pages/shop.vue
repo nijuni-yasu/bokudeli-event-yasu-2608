@@ -54,10 +54,10 @@ const makeDeadlineCurrentDaytimeArray = (start: number, num: number) =>
     .reverse()
 
 const makeDeadlineTimeArray = (start: number, num: number) => {
-  const timeArray = [...Array(num)].map((_, i) => {
+  const timeArray = [...Array(num * 4)].map((_, i) => {
     const date = new Date(0)
-    date.setHours(start + i)
-    date.setMinutes(0)
+    date.setHours(start + Math.floor(i / 4))
+    date.setMinutes((i % 4) * 15)
     return { title: $d(date, 'time'), value: date.getTime() }
   })
   const endDate = new Date(0)
