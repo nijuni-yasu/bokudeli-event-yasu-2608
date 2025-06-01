@@ -86,10 +86,10 @@ export const handleOgpRequest = https.onRequest(
 )
 
 const convertToOgpString = (inputString: string): string => {
-  // 文字列から改行を削除
-  const stringWithoutNewLines = inputString.replace(/\n/g, '')
+  // 文字列から改行とHTMLタグを削除
+  const stringWithoutNewLinesAndHtmlTags = inputString.replace(/\n/g, '').replace(/<[^>]*>/g, '')
   // 先頭から100文字を抜き出す
-  const first100Chars = stringWithoutNewLines.substring(0, 100)
+  const first100Chars = stringWithoutNewLinesAndHtmlTags.substring(0, 100)
   // HTMLエンコード（一部）を行う
   return first100Chars.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
