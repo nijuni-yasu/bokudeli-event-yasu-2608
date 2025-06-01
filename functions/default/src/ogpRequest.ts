@@ -1,13 +1,8 @@
 import { pipeline, Readable } from 'stream'
 import express from 'express'
 import { https } from 'firebase-functions/v2'
-import { getFirestore } from 'firebase-admin/firestore'
 import { ReplaceSectionStream } from './utils/ReplaceSectionStream.js'
-
-// Firebase Admin SDKの初期化は、通常、メインのindex.tsで行われるため、ここでは行いません。
-// ここでdbを初期化すると、Functionsのコールドスタート時に毎回初期化される可能性があります。
-// 適切な場所で初期化されたdbインスタンスを使用するか、ここで初期化する場合はシングルトンパターンを検討してください。
-const db = getFirestore()
+import { getEvent } from './stores/event.js'
 
 interface OgpContext {
   site: string
@@ -50,13 +45,13 @@ export const handleOgpRequest = https.onRequest(
     try {
       // Event ページの場合は title 等を上書き
       if (paths[1] === 'c' && paths[3] === 'e') {
-        const eventId = paths[4]
-        const eventSnapshot = await db.collectionGroup('events').where('event_id', '==', eventId).get()
-        if (eventSnapshot.empty) {
-          res.status(404).send('Not Found')
+        const [communityId, eventId] = [paths[2], paths[4]]
+
+        const eventData = await getEvent(communityId, eventId)
+        if (eventData === undefined) {
+          res.status(404).send('Event not found')
           return
         }
-        const eventData = eventSnapshot.docs[0].data()
         context.title = convertToOgpString(eventData.event_name)
         context.description = convertToOgpString(eventData.event_desc)
         context.image = eventData.event_cover_url
