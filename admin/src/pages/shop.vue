@@ -54,10 +54,10 @@ const makeDeadlineCurrentDaytimeArray = (start: number, num: number) =>
     .reverse()
 
 const makeDeadlineTimeArray = (start: number, num: number) => {
-  const timeArray = [...Array(num)].map((_, i) => {
+  const timeArray = [...Array(num * 4)].map((_, i) => {
     const date = new Date(0)
-    date.setHours(start + i)
-    date.setMinutes(0)
+    date.setHours(start + Math.floor(i / 4))
+    date.setMinutes((i % 4) * 15)
     return { title: $d(date, 'time'), value: date.getTime() }
   })
   const endDate = new Date(0)
@@ -80,7 +80,7 @@ const SHOP_RANGE_ARRAY = (() => {
   return array
 })()
 const SHOP_DEADLINE_DATE_ARRAY = [...Array(4)].map((_, i) => ({ title: $t('days_before', i), value: i }))
-const SHOP_DEADLINE_TIME_ARRAY = makeDeadlineTimeArray(0, 24)
+const SHOP_DEADLINE_TIME_ARRAY = makeDeadlineTimeArray(6, 18)
 const SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY = makeDeadlineCurrentDaytimeArray(3, 4)
 const shopDeadlineTimeArray = computed(() => {
   if (shop.value?.shop_deadline_datetime.days_before > 0) {
