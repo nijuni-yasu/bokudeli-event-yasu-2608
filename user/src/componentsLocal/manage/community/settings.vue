@@ -20,7 +20,7 @@ const isLoading = ref(false)
 const submit = async () => {
   isLoading.value = true
   try {
-    await communityStore.updateComunity(community.value!)
+    await communityStore.updateCommunity(community.value!)
     if (coverImageFile.value != null) {
       await communityStore.updateCoverImage(coverImageFile.value)
     }

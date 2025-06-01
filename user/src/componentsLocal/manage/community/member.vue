@@ -20,7 +20,7 @@ const { t: $t } = useI18n()
 
 const notification = useNotification()
 
-const getInvitaionUrlForCommunityManager = httpsCallable(functions, 'getInvitaionUrlForCommunityManager')
+const getInvitationUrlForCommunityManager = httpsCallable(functions, 'getInvitationUrlForCommunityManager')
 
 const communityAccount = route.params.communityAccount as string
 
@@ -90,7 +90,7 @@ const inviteManager = async () => {
   isLoading.value = true
   try {
     const communityId = communityStore.community?.community_id
-    const url = await getInvitaionUrlForCommunityManager({ communityId })
+    const url = await getInvitationUrlForCommunityManager({ communityId })
     invitationUrl.value = url.data as string
     // clipboard-write は 今の所 [Blink](https://www.chromium.org/blink/) のみ対応、かつ現時点ではなくても動作するのでコメントアウト
     // TODO ブラウザの対応状況を見て、適切に対応する

@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import { getCommunity } from './stores/community.js'
 import { getConfigGlobal } from './stores/config.js'
 
-export const getInvitaionUrlForCommunityManager = onCall(async (request) => {
+export const getInvitationUrlForCommunityManager = onCall(async (request) => {
   const uid = request.auth?.uid
   if (uid == null) {
     throw new HttpsError('unauthenticated', 'The function must be called while authenticated.')

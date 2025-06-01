@@ -142,7 +142,7 @@ const submit = async () => {
   try {
     if (communityExists.value) {
       const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
-      await communityStore.updateComunity(community.value)
+      await communityStore.updateCommunity(community.value)
       if (coverImageFile.value != null) {
         await communityStore.updateCoverImage(coverImageFile.value)
       }

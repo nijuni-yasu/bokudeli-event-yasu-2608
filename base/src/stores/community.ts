@@ -46,7 +46,7 @@ type CommunityGetters = {
 }
 
 type CommunityStoreAction = {
-  updateComunity: (data: BokudeliCommunity) => Promise<void>
+  updateCommunity: (data: BokudeliCommunity) => Promise<void>
   updateCoverImage: (coverImage: File) => Promise<void>
   updateIconImage: (iconImage: File) => Promise<void>
   addRole: (userId: string, role: string) => Promise<void>
@@ -149,7 +149,7 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
           .sort((a, b) => (b.event_start_datetime?.toMillis() ?? 0) - (a.event_start_datetime?.toMillis() ?? 0))
       })
 
-      const updateComunity = async (data: BokudeliCommunity) => {
+      const updateCommunity = async (data: BokudeliCommunity) => {
         const communityRef = await getCommunityRef()
         const updateData = _.omit(data.convertToDocumentData(), [
           'community_cover_image_url',
@@ -279,7 +279,7 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
         community,
         members,
         events,
-        updateComunity,
+        updateCommunity,
         updateCoverImage,
         updateIconImage,
         addRole,
