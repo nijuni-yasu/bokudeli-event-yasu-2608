@@ -52,7 +52,9 @@ export class ReplaceSectionStream extends Transform {
     // ストリーム終了時に残りのバッファを処理
     if (this.isReplacing) {
       // 置換中であれば、置換テキストを送信
-      this.push(this.replacementText + this.buffer.split(this.endMarker)[1])
+      const splitBuffer = this.buffer.split(this.endMarker)
+      const suffix = splitBuffer[1] !== undefined ? splitBuffer[1] : ''
+      this.push(this.replacementText + suffix)
     } else {
       this.push(this.buffer)
     }
