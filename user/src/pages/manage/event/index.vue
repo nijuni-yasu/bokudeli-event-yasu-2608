@@ -5,11 +5,12 @@ import { useCommunityStore } from '@/stores/community'
 import { useCommunityListStore, type CommunityListStore } from '@/stores/communityList'
 import { getAuth } from 'firebase/auth'
 import { doc, orderBy, where } from 'firebase/firestore'
-import { mdiMenuDown, mdiPlus } from '@mdi/js'
+import { mdiMenuDown, mdiPlus, mdiHelp } from '@mdi/js'
 import { useEventListStore } from '@/stores/eventList'
 import { useDisplay } from 'vuetify'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const display = useDisplay()
@@ -74,6 +75,8 @@ const events = computed(
       return { event: s.event, members: s.members ?? [] }
     }) ?? [],
 )
+const isOpenEventDialog = ref(false)
+
 </script>
 
 <template>
@@ -100,6 +103,7 @@ const events = computed(
       <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">{{
         $t('manage.new_event')
       }}</v-btn>
+      <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenEventDialog = true" />
     </v-col>
   </v-row>
   <v-row v-if="communityAccount != null && eventListStore.totalCount === 0">
@@ -130,6 +134,14 @@ const events = computed(
       />
     </v-col>
   </v-row>
+  <confirm-dialog v-model="isOpenEventDialog" :ok-text="'OK'" max-width="800px">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('event_create_modal.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
+      <div v-html="$t('event_create_modal.desc')" />
+    </v-card-text>
+  </confirm-dialog>
 </template>
 
 <style lang="scss" scoped>

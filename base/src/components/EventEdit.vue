@@ -398,7 +398,7 @@ const stepperItems = computed(() => [
     <v-card-text class="text-center py-10 text-h4">
       {{ $t('event_create_modal.title') }}
     </v-card-text>
-    <v-card-text class="pb-0" style="line-height: 2rem">
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
       <div v-html="$t('event_create_modal.desc')" />
     </v-card-text>
   </confirm-dialog>
