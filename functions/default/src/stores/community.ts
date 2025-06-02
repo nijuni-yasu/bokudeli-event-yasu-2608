@@ -73,7 +73,7 @@ export class ShokujiiCommunity extends Community {
       .withConverter(communityInviteConverter)
     const inviteRef = invitesCollectionRef.doc()
     const now = Timestamp.now().toMillis()
-    await invitesCollectionRef.add(
+    await inviteRef.set(
       new CommunityInvite(inviteRef.id, {
         has_token_been_redeemed: false,
         inviter_id: uid,
