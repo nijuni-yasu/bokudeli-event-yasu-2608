@@ -6,3 +6,5 @@ export const getEventPath = (communityAccount: string, eventId: string) => `/c/$
 export const getUserPath = (userId: string) => `/u/${userId}`
 export const getNamesPrintPath = () => `/namesprint`
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getManageEventPath = (eventId: string) => ''
