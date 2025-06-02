@@ -102,7 +102,7 @@ const deadlineDaysBefore = computed({
   },
 })
 
-const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 73)]
+const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 72)]
 
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
