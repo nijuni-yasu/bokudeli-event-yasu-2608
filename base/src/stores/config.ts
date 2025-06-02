@@ -59,7 +59,7 @@ export const useConfigStore = (target: ConfigGlobal | undefined = undefined): Co
       const getResolvedConfig = () =>
         new Promise<ConfigGlobal | undefined>((resolve) => {
           watch(
-            _config,
+            config,
             (value) => {
               if (value !== FIRESTORE_LOADING) {
                 resolve(value)
