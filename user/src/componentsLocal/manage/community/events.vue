@@ -4,8 +4,9 @@ import { useEventListStore } from '@/stores/eventList'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
-import { mdiPlus } from '@mdi/js'
+import { mdiPlus, mdiHelp } from '@mdi/js'
 import { getEventCreatePath, getManageEventPath } from '@/router/utils'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -41,15 +42,18 @@ const events = computed(
       }
     }) ?? [],
 )
+const isOpenEventDialog = ref(false)
+
 </script>
 
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12">
+      <v-col cols="12" class="buttons">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">
           {{ $t('manage.new_event') }}
         </v-btn>
+        <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenEventDialog = true" />
       </v-col>
     </v-row>
     <v-row class="justify-center">
@@ -79,6 +83,14 @@ const events = computed(
       </v-col>
     </v-row>
   </v-container>
+  <confirm-dialog v-model="isOpenEventDialog" :ok-text="'OK'" max-width="800px">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('event_create_modal.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
+      <div v-html="$t('event_create_modal.desc')" />
+    </v-card-text>
+  </confirm-dialog>  
 </template>
 
 <style scoped lang="scss">
@@ -86,5 +98,9 @@ const events = computed(
   height: 100%;
   width: 100%;
   min-height: 300px;
+}
+.buttons {
+  display: flex;
+  gap: 16px;
 }
 </style>
