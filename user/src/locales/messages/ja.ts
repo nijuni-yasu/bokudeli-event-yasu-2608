@@ -33,8 +33,8 @@ export default {
   },
   'manage': {
     'new_community': 'コミュニティ作成',
-    'new_event': 'イベント新規作成',
-    'new_letter': 'レター新規作成',
+    'new_event': 'イベント作成',
+    'new_letter': 'レター作成',
     'community': {
       'tabs': {
         'events': 'イベント',
@@ -96,12 +96,18 @@ export default {
       }
     },
     'letter': {
+      'hint': {
+        'title': 'レターを配信しよう💌',
+        'description': `レター機能を使うと「コミュニティメンバー」や「イベント参加者」「イベント未登録者」にメールを配信することができます。<br />
+                        レター配信後に受信者が返信すると、そのメールは［設定］で指定したメールアドレスに届きます。返信先は［設定］タブからご設定ください。<br />
+                        `,
+      },
       'type_select_dialog': {
-        'top': 'イベント参加者やコミュニティメンバーにメールで配信することができます。配信先を選択してください。',
-        'event': 'イベント参加者に配信するレター',
-        'event_description': 'イベント開催を案内したい時や、イベント参加予定者にメールを配信したい時など、イベントに関するメールを配信する時に選択してください。',
-        'community': 'コミュニティメンバーに配信するレター',
-        'community_description': '特定のイベントに関連しないメールをコミュニティ全体に配信する時に選択してください。',
+        'top': '「コミュニティメンバー」や「イベント参加者」「イベント未登録者」にメールで配信することができます。配信先を選択してください。',
+        'event': 'イベント参加者に配信',
+        'event_description': '「イベント参加者」や「イベント未登録者」にメールを配信することができます。',
+        'community': 'コミュニティメンバーに配信',
+        'community_description': 'コミュニティメンバー全体にメールを配信することができます。',
         'type': {
           'normal': '通常',
           'important': '重要',
@@ -112,23 +118,27 @@ export default {
         'top': 'レターを配信するイベントを選択してください',
       },
       'edit': {
-        'new': 'レター新規作成',
+        'new': 'レター作成',
         'edit': 'レター編集',
         'to': '配信先',
         'to_community': 'コミュニティメンバー全体',
         'to_event_participant': 'イベント参加者',
         'to_event_non_participant': 'イベント未登録者',
-        'number_of_people': '（{0}人）',
+        'number_of_people': '（配信先：{0}人）',
         'deliver_datetime': '配信日時',
         'deliver_now': '今すぐ配信',
         'subject': '件名',
         'message': 'メッセージ',
         'add_event_description': 'イベント内容を追加する',
         'event_description': 'イベント内容',
-        'submit_reserve': '予約',
-        'submit_now': '配信',
+        'submit_reserve': '予約配信',
+        'submit_now': '今すぐ配信',
         'save_draft': '下書き保存',
         'to_draft': '下書きに戻す',
+      },
+      'notification': {
+        'saved': 'レターを保存しました',
+        'deleted': 'レターを削除しました',
       }
     },
     'community_manager_invitation': {

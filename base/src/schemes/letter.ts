@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore'
 
 type LetterType = 'community' | 'event_participant' | 'event_non_participant'
+export type LetterStatusType = 'draft' | 'timed' | 'sent'
 
 export type Letter = {
   letter_id?: string
@@ -9,7 +10,7 @@ export type Letter = {
   event_id?: string
   letter_title: string
   letter_content: string
-  status: 'draft' | 'timed' | 'sent'
+  status: LetterStatusType
   updated_at: Timestamp
   scheduled_at?: Timestamp
   sent_at?: Timestamp

@@ -32,7 +32,7 @@ const events = computed(() => {
   <v-list class="list-with-borders">
     <v-list-item v-for="event of events" :key="event.event_id" @click="$emit('click', event)">
       <v-list-item-title>{{ event.event_name }}</v-list-item-title>
-      <div>{{ $d(event.event_start_datetime!.toDate(), 'datetime') }}</div>
+      <div class="text-body-2">{{ $d(event.event_start_datetime!.toDate(), 'datetime') }}</div>
     </v-list-item>
     <v-list-item>
       <IncrementalLoader

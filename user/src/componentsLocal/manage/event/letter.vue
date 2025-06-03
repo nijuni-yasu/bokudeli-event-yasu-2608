@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { mdiPlus } from '@mdi/js'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import LetterCard from '@/components/LetterCard.vue'
+import LetterTable from '@/components/LetterTable.vue'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import LetterEdit from '@/components/LetterEdit.vue'
 import type { Letter } from '@/schemes/letter'
@@ -10,6 +10,9 @@ import { useLetterListStore } from '@/stores/letterList'
 import { Timestamp } from 'firebase/firestore'
 import { useLetterStore } from '@/stores/letter'
 import { getManageCommunityPath } from '@/router/utils'
+import { useNotification } from '@/composable/notification'
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -85,8 +88,9 @@ watch(
 const onEditClick = (letter: Letter) => {
   router.push({ query: { letterId: letter.letter_id } })
 }
-const onDeleteClick = (letter: Letter) => {
-  letterListStore.deleteLetter(letter.letter_id!)
+const onDeleteClick = async (letter: Letter) => {
+  await letterListStore.deleteLetter(letter.letter_id!)
+  notification.show($t('manage.letter.notification.deleted'), 'success')
 }
 const onCopyClick = async (letter: Letter) => {
   const newLetter: Letter = {
@@ -113,19 +117,19 @@ const onUpdated = (letter: Letter) => {
 <template>
   <v-container v-if="selectedLetter == null">
     <v-row class="justify-center">
-      <v-col md="9" sm="9" cols="12">
+      <v-col md="12" sm="9" cols="12">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push({ query: { letterId: '' } })">
           {{ $t('manage.new_letter') }}
         </v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">
-      <v-col md="9" sm="9" cols="12" v-for="letter of letters" :key="letter!.letter_id">
-        <LetterCard
-          :letter="letter"
-          @edit="onEditClick(letter)"
-          @delete="onDeleteClick(letter)"
-          @copy="onCopyClick(letter)"
+      <v-col cols="12">
+        <LetterTable
+          :letters="letters"
+          @edit="onEditClick"
+          @delete="onDeleteClick"
+          @copy="onCopyClick"
         />
       </v-col>
     </v-row>
@@ -142,7 +146,7 @@ const onUpdated = (letter: Letter) => {
   </v-container>
   <v-container v-else>
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="10" sm="10" cols="12">
         <LetterEdit :letter="selectedLetter" @update:letter="onUpdated" />
       </v-col>
     </v-row>

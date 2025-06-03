@@ -15,6 +15,7 @@ import {
   Timestamp,
   updateDoc,
   deleteDoc,
+  orderBy,
 } from 'firebase/firestore'
 import type { StateTree, Store } from 'pinia'
 import { TaskExecutor } from '@/utils/executors'
@@ -70,6 +71,7 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
           const lastVisibleDocument = lettersSnapsthot[lettersSnapsthot.length - 1]
           const q = query(
             await getLetterRef(),
+            orderBy('updated_at', 'desc'),
             ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
             limit(pageSize),
           )

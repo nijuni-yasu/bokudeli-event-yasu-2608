@@ -3,13 +3,16 @@ import { mdiPlus } from '@mdi/js'
 import { useLetterListStore } from '@/stores/letterList'
 import EventList from '@/components/EventList.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import LetterCard from '@/components/LetterCard.vue'
+import LetterTable from '@/components/LetterTable.vue'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import LetterEdit from '@/components/LetterEdit.vue'
 import type { Letter } from '@/schemes/letter'
 import { Timestamp } from 'firebase/firestore'
 import { useLetterStore } from '@/stores/letter'
 import { getManageEventPath } from '@/router/utils'
+import { useNotification } from '@/composable/notification'
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -88,8 +91,9 @@ const onDialogClick2 = (event: BokudeliEvent) => {
 const onEditClick = (letter: Letter) => {
   router.push({ query: { letterId: letter.letter_id } })
 }
-const onDeleteClick = (letter: Letter) => {
-  letterListStore.deleteLetter(letter.letter_id!)
+const onDeleteClick = async (letter: Letter) => {
+  await letterListStore.deleteLetter(letter.letter_id!)
+  notification.show($t('manage.letter.notification.deleted'), 'success')
 }
 const onCopyClick = async (letter: Letter) => {
   const newLetter: Letter = {
@@ -112,19 +116,31 @@ const onUpdated = () => {
 <template>
   <v-container v-if="selectedLetter == null">
     <v-row class="justify-center">
-      <v-col md="9" sm="9" cols="12">
+      <v-col md="12" sm="9" cols="12">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="dialogType = 0">
           {{ $t('manage.new_letter') }}
         </v-btn>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col md="12" sm="9" cols="12">
+        <v-card class="pa-10">
+          <v-row>
+            <v-card-text class="pa-3 title"><div v-html="$t('manage.letter.hint.title')" /></v-card-text>
+          </v-row>
+          <v-row>
+            <v-card-text class="pa-3 description"><div v-html="$t('manage.letter.hint.description')" /></v-card-text>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
     <v-row class="justify-center">
-      <v-col md="9" sm="9" cols="12" v-for="letter of letters" :key="letter!.letter_id">
-        <LetterCard
-          :letter="letter"
-          @edit="onEditClick(letter)"
-          @delete="onDeleteClick(letter)"
-          @copy="onCopyClick(letter)"
+      <v-col cols="12">
+        <LetterTable
+          :letters="letters"
+          @edit="onEditClick"
+          @delete="onDeleteClick"
+          @copy="onCopyClick"
         />
       </v-col>
     </v-row>
@@ -141,33 +157,33 @@ const onUpdated = () => {
   </v-container>
   <v-container v-else>
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="10" sm="10" cols="12">
         <LetterEdit :letter="selectedLetter" @update:letter="onUpdated" />
       </v-col>
     </v-row>
   </v-container>
   <v-dialog v-model="letterTypeSelectDialog" max-width="600px">
     <v-card class="pa-5">
-      <v-card-title>{{ $t('manage.new_letter') }}</v-card-title>
+      <v-card-title class="text-h4 text-center font-weight-bold ma-3">{{ $t('manage.new_letter') }}</v-card-title>
       <v-card-text>
         <v-window v-model="dialogType">
           <v-window-item>
-            {{ $t('manage.letter.type_select_dialog.top') }}
+            <div class="ma-3">{{ $t('manage.letter.type_select_dialog.top') }}</div>
             <v-list class="list-with-borders">
               <v-list-item @click="onDialogClick1('event')">
-                <v-list-item-title>{{ $t('manage.letter.type_select_dialog.event') }}</v-list-item-title>
+                <v-list-item-title class="text-h5 mt-3">{{ $t('manage.letter.type_select_dialog.event') }}</v-list-item-title>
                 <div>
                   {{ $t('manage.letter.type_select_dialog.event_description') }}
                 </div>
               </v-list-item>
               <v-list-item @click="onDialogClick1('community')">
-                <v-list-item-title>{{ $t('manage.letter.type_select_dialog.community') }}</v-list-item-title>
+                <v-list-item-title class="text-h5 mt-3">{{ $t('manage.letter.type_select_dialog.community') }}</v-list-item-title>
                 <div>{{ $t('manage.letter.type_select_dialog.community_description') }}</div>
               </v-list-item>
             </v-list>
           </v-window-item>
           <v-window-item>
-            {{ $t('manage.letter.event_dialog.top') }}
+            <div class="text-center mb-5">{{ $t('manage.letter.event_dialog.top') }}</div>
             <EventList :community-account="communityAccount" @click="onDialogClick2" />
           </v-window-item>
         </v-window>
@@ -186,5 +202,20 @@ const onUpdated = () => {
 .v-list-item-title {
   font-weight: bold;
   line-height: 2rem;
+}
+.title {
+  font-family: Noto Sans JP;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: left;
+}
+.description {
+  font-family: Noto Sans JP;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 30px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
 }
 </style>
