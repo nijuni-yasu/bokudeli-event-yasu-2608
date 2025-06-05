@@ -1041,6 +1041,11 @@ async function sendLetter(_, end) {
 
         const userInfos = await Promise.all(userIds.map(getUserEmailWithName))
         const validUserInfos = userInfos.filter((info) => info.email != null && info.email !== '')
+        // 送信先にサポートアカウントを追加
+        validUserInfos.push({
+          email: SUPPORT_MAIL,
+          name: 'サポートアカウント',
+        })
 
         for (const userInfo of validUserInfos) {
           const dynamic_template_data = {
