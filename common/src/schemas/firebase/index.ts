@@ -1,3 +1,4 @@
+import { getFirestore } from 'firebase-admin/firestore'
 import { z } from 'zod'
 
 declare const IS_SERVER: boolean
@@ -13,8 +14,17 @@ if (IS_SERVER) {
   module = await import('./firebase.client.js')
 }
 export type DocumentData = typeof module.DocumentData
+export const DocumentReference = module.DocumentReference
 const deleteField = module.deleteField
 const FieldValue = module.FieldValue
+
+// この実装はかなり無理矢理なので、DB で DocumentReference を使用するのは避けた方がよいかもしれない
+export let getRefFromPath: (path: string) => typeof DocumentReference
+if (IS_SERVER) {
+  getRefFromPath = (path: string) => module.getFirestore().doc(path)
+} else {
+  getRefFromPath = (path: string) => module.doc(getFirestore(), path)
+}
 
 export const Timestamp = module.Timestamp
 
