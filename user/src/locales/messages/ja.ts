@@ -139,6 +139,10 @@ export default {
       'notification': {
         'saved': 'レターを保存しました',
         'deleted': 'レターを削除しました',
+      },
+      'email_not_set': {
+        title: 'メールアドレス未設定',
+        description: 'レターを送信するには、コミュニティのメールアドレスを設定する必要があります。<br>コミュニティ設定からメールアドレスを設定してください。'
       }
     },
     'community_manager_invitation': {
