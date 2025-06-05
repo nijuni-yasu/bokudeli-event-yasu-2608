@@ -1057,7 +1057,8 @@ async function sendLetter(_, end) {
           console.log(dynamic_template_data)
           await sgMail.send({
             to: userInfo.email,
-            from: communityEmail,
+            from: DEFAULT_FROM,
+            replyTo: communityEmail,
             subject: letterDoc.get('letter_title'),
             templateId: LETTER_ID,
             dynamic_template_data,
