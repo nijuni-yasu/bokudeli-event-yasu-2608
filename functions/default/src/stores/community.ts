@@ -5,14 +5,11 @@ import {
   DocumentData,
   Timestamp,
 } from 'firebase-admin/firestore'
-import { defineString } from 'firebase-functions/params'
 import { HttpsError } from 'firebase-functions/https'
 import { Community } from '../schemas/Community.js'
 import { CommunityMember, CommunityMemberRolesType } from '../schemas/CommunityMember.js'
 import { CommunityInvite } from '../schemas/CommunityInvite.js'
 import { getCommunityInvitationUrl } from '../utils/urls.js'
-
-const EVENT_HOST = defineString('EVENT_HOST')
 
 const EXPIRED_TIME = 7 * 1000 * 60 * 60 * 24 // 7 days
 
@@ -81,7 +78,7 @@ export class ShokujiiCommunity extends Community {
         updated_at: now,
       }),
     )
-    return getCommunityInvitationUrl(EVENT_HOST.value(), this.community_account, inviteRef.id)
+    return getCommunityInvitationUrl(this.community_account, inviteRef.id)
   }
 
   async inviteAsManager(uid: string, token: string): Promise<void> {

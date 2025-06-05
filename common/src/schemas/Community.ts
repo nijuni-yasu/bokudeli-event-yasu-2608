@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
 
 const CommunityDbSchema = z.object({
   // Mandatory
@@ -32,10 +32,14 @@ const CommunityDbSchema = z.object({
   community_bill_email: NonEmptyStringSchema,
 })
 
-// id 以外は デフォルト or オプショナル なので、 Schema は必要ない
+// ほぼ デフォルトなので CommunityAppSchema は（いまのところ）作成しない
 export class Community {
+  // Mandatory
   readonly id: string
   readonly community_id: string
+  updated_at: number
+  created_at: number
+  // Optional
   community_name: string = ''
   community_account: string = ''
   is_public: boolean = true
@@ -59,28 +63,28 @@ export class Community {
   community_sns_hash_tag: string = ''
   community_bill_fullname: string = ''
   community_bill_email: string = ''
-  updated_at: number = Date.now()
-  created_at?: number
 
   constructor(id: string, src: Partial<Community>) {
     Object.assign(this, src)
     this.id = id
     this.community_id = id
+    this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
+    this.updated_at = Date.now()
   }
 
-  private get db() {
+  private getDb() {
     return {
       ...this,
-      created_at: this.created_at ?? Date.now(),
+      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
       updated_at: Date.now(),
     }
   }
 
   isValidForDatabase(): boolean {
-    return CommunityDbSchema.safeParse(this.db).success
+    return CommunityDbSchema.safeParse(this.getDb()).success
   }
 
   toFirestore(): any {
-    return CommunityDbSchema.parse(this.db)
+    return CommunityDbSchema.parse(this.getDb())
   }
 }
