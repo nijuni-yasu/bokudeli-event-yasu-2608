@@ -119,7 +119,7 @@ const onUpdated = () => {
 }
 const isOpenConfirmDialog = ref(false)
 const handleNewLetterClick = () => {
-  if (!community.value?.community_email) {
+  if (community.value?.community_email == null || community.value.community_email === '') {
     isOpenConfirmDialog.value = true
     return
   }
