@@ -11,6 +11,9 @@ import { Timestamp } from 'firebase/firestore'
 import { useLetterStore } from '@/stores/letter'
 import { getManageEventPath } from '@/router/utils'
 import { useNotification } from '@/composable/notification'
+import { useCommunityStore } from '@/stores/community'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+
 const notification = useNotification()
 const { t: $t } = useI18n()
 
@@ -19,6 +22,9 @@ const router = useRouter()
 
 const communityAccount = route.params.communityAccount as string
 const letterId = route.query.letterId as string | undefined
+
+const communityStore = useCommunityStore(communityAccount)
+const community = computed(() => communityStore.community)
 
 const letterListStore = useLetterListStore(communityAccount)
 const letters = computed(() => letterListStore.letterStores?.flatMap((ls) => ls.letter ?? []) ?? [])
@@ -111,13 +117,21 @@ const onUpdated = () => {
   selectedLetter.value = null
   router.push({ query: {} })
 }
+const isOpenConfirmDialog = ref(false)
+const handleNewLetterClick = () => {
+  if (community.value?.community_email == null || community.value.community_email === '') {
+    isOpenConfirmDialog.value = true
+    return
+  }
+  dialogType.value = 0
+}
 </script>
 
 <template>
   <v-container v-if="selectedLetter == null">
     <v-row class="justify-center">
       <v-col md="12" sm="9" cols="12">
-        <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="dialogType = 0">
+        <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
           {{ $t('manage.new_letter') }}
         </v-btn>
       </v-col>
@@ -190,6 +204,14 @@ const onUpdated = () => {
       </v-card-text>
     </v-card>
   </v-dialog>
+  <confirm-dialog v-model="isOpenConfirmDialog" :ok-text="'OK'" max-width="700px">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('manage.letter.email_not_set.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
+      <div v-html="$t('manage.letter.email_not_set.description')" />
+    </v-card-text>
+  </confirm-dialog>
 </template>
 
 <style scoped>

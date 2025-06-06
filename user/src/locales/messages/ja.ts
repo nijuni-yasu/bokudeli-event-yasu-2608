@@ -42,7 +42,7 @@ export default {
         'letter': 'レター',
         'invoice': '請求書払い',
         'slackSetting': 'Slack',
-        'settings': '設定',
+        'settings': 'コミュニティ設定',
       }
     },
     'event': {
@@ -98,8 +98,9 @@ export default {
     'letter': {
       'hint': {
         'title': 'レターを配信しよう💌',
-        'description': `レター機能を使うと「コミュニティメンバー」や「イベント参加者」「イベント未登録者」にメールを配信することができます。<br />
-                        レター配信後に受信者が返信すると、そのメールは［設定］で指定したメールアドレスに届きます。返信先は［設定］タブからご設定ください。<br />
+        'description': `レター機能を使うと<b>「コミュニティメンバー」</b>や<b>「イベント参加者」「イベント未登録者」</b>にメールを配信することができます。<br />
+                        配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。返信先は［コミュニティ設定］タブからご設定ください。<br />
+                        詳細は <a href="https://docs.google.com/presentation/d/1ivQlhaQ9c1RCUsWANcE_huZd9CF1O2OPBn5XTbJv1mw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">レター機能について</a> をご確認ください。<br />
                         `,
       },
       'type_select_dialog': {
@@ -139,6 +140,10 @@ export default {
       'notification': {
         'saved': 'レターを保存しました',
         'deleted': 'レターを削除しました',
+      },
+      'email_not_set': {
+        title: 'メールアドレス未設定',
+        description: 'レターを送信するには、コミュニティのメールアドレスを設定する必要があります。<br>[コミュニティ設定] からメールアドレスを設定してください。'
       }
     },
     'community_manager_invitation': {
