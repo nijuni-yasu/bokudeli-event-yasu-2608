@@ -1,4 +1,4 @@
-import { getFirestore } from 'firebase-admin/firestore'
+
 import { z } from 'zod'
 
 declare const IS_SERVER: boolean
@@ -23,7 +23,7 @@ export let getRefFromPath: (path: string) => typeof DocumentReference
 if (IS_SERVER) {
   getRefFromPath = (path: string) => module.getFirestore().doc(path)
 } else {
-  getRefFromPath = (path: string) => module.doc(getFirestore(), path)
+  getRefFromPath = (path: string) => module.doc(module.getFirestore(), path)
 }
 
 export const Timestamp = module.Timestamp
