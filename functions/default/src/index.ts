@@ -13,5 +13,5 @@ setGlobalOptions({ region: 'asia-northeast1' })
 
 // ES module 形式の import は並列読み込みのため、initializeApp 等の呼び出しが先に行われることを保証できない
 // そのため、ここでは 動的 import を使い、静的 import より後に実行されることを保証する
-export const { getInvitationUrlForCommunityManager, acceptInvitationForCommunityManager, sendTestLetter } =
-  Object.assign({}, ...(await Promise.all([import('./communityManager.js'), import('./letter.js')])))
+export const { getInvitationUrlForCommunityManager, acceptInvitationForCommunityManager, sendTestLetter, handleOgpRequest } =
+  Object.assign({}, ...(await Promise.all([import('./communityManager.js'), import('./letter.js'), import('./ogpRequest.js')])))
