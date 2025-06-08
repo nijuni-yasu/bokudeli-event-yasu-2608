@@ -1,7 +1,7 @@
 import { pipeline, Readable } from 'stream'
 import express from 'express'
 import { https } from 'firebase-functions/v2'
-import { ReplaceSectionStream } from './utils/ReplaceSectionStream.js'
+import { ReplaceSectionStream } from './commonUtils/ReplaceSectionStream.js'
 import { getEvent } from './stores/event.js'
 
 interface OgpContext {
@@ -45,9 +45,9 @@ export const handleOgpRequest = https.onRequest(
     try {
       // Event ページの場合は title 等を上書き
       if (paths[1] === 'c' && paths[3] === 'e') {
-        const [communityId, eventId] = [paths[2], paths[4]]
+        const eventId = paths[4]
 
-        const eventData = await getEvent(communityId, eventId)
+        const eventData = await getEvent(eventId)
         if (eventData === undefined) {
           res.status(404).send('Event not found')
           return
