@@ -108,7 +108,7 @@ const next = () => {
         <template v-if="popularEvents.length > 0">
           <v-col cols="12" class="text-h4 mt-8 ml-2">
             <v-row align="center">
-              <v-icon size="40" :icon="mdiCrownOutline" class="mr-1"/>
+              <v-icon size="40" :icon="mdiCrownOutline" class="mr-1" />
               <span>{{ $t('top.popular_events') }}</span>
             </v-row>
           </v-col>
@@ -128,7 +128,7 @@ const next = () => {
         </template>
         <v-col cols="12" class="text-h4 mt-10 ml-2">
           <v-row align="center">
-            <v-icon size="40" :icon="mdiCalendarHeart" class="mr-1"/>
+            <v-icon size="40" :icon="mdiCalendarHeart" class="mr-1" />
             <span>{{ $t('top.upcoming_events') }}</span>
           </v-row>
         </v-col>
@@ -150,7 +150,7 @@ const next = () => {
         >
           <v-col cols="12" class="text-h4 mt-10 ml-2">
             <v-row align="center">
-              <v-icon size="40" :icon="mdiCalendarCheck" class="mr-1"/>
+              <v-icon size="40" :icon="mdiCalendarCheck" class="mr-1" />
               <span>{{ $t('top.past_events') }}</span>
             </v-row>
           </v-col>
