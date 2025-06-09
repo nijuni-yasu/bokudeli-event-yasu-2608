@@ -136,6 +136,7 @@ export default {
         'submit_now': '今すぐ配信',
         'save_draft': '下書き保存',
         'to_draft': '下書きに戻す',
+        'send_test': 'テスト配信',
       },
       'notification': {
         'saved': 'レターを保存しました',
