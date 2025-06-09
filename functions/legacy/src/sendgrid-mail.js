@@ -1026,9 +1026,10 @@ async function sendLetter(_, end) {
             break
           case 'event_participant':
             const eventId = letterDoc.get('event_id')
-            const ordersRef = db.collectionGroup('orders').where('event_id', '==', eventId).where('status', '==', 'ordered')
+            const ordersRef = db.collectionGroup('orders').where('event_id', '==', eventId)
             const ordersSnapshot = await ordersRef.get()
-            userIds = ordersSnapshot.docs.map((order) => order.get('user_id'))
+            userIds = ordersSnapshot.docs
+              .flatMap(order => order.get('status') === 'ordered' ? [order.get('user_id')] : [])
             break
           case 'event_non_participant':
             const allMembersRef = db.collection('communities').doc(communityId).collection('members')
