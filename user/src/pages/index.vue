@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { getEventPath } from '@/router/utils'
 import { useEventListStore } from '@/stores/eventList'
-import TopCarousel from '@/components/TopCarousel.vue'
+import { useBannersStore } from '@/stores/banner'
+import Banners from '@/components/Banners.vue'
 import { where, orderBy, Timestamp } from 'firebase/firestore'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
@@ -23,6 +24,8 @@ const numOfColumns = computed(() => {
 const numOfPopularColumns = 4
 
 const now = Timestamp.now()
+
+const topBannersStore = useBannersStore('top_banners')
 
 const popularEventListStore = useEventListStore(
   [
@@ -103,7 +106,7 @@ const next = () => {
 <template>
   <v-row class="justify-center align-center">
     <v-col md="10" cols="12">
-      <TopCarousel />
+      <Banners :banners="topBannersStore.banners ?? []" />
       <v-row class="mb-2">
         <template v-if="popularEvents.length > 0">
           <v-col cols="12" class="text-h4 mt-8 ml-2">
