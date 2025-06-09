@@ -26,6 +26,7 @@ const numOfPopularColumns = 4
 const now = Timestamp.now()
 
 const topBannersStore = useBannersStore('top_banners')
+const centerBannersStore = useBannersStore('center_banners')
 
 const popularEventListStore = useEventListStore(
   [
@@ -148,6 +149,16 @@ const next = () => {
             <EventCard class="event-card" :event="event" :members="members" />
           </router-link>
         </v-col>
+      </v-row>
+      <v-row
+        class="justify-center ma-0 mx-md-16 my-md-10"
+        v-show="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
+      >
+        <v-col md="9" sm="12" cols="12" class="mt-0 pt-0 px-0">
+          <Banners :banners="centerBannersStore.banners ?? []" />
+        </v-col>
+      </v-row>
+      <v-row class="mb-2">
         <template
           v-if="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
         >
