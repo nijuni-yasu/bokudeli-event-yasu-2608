@@ -9,16 +9,18 @@ const buildCalendarLink = (event: BokudeliEvent | null, type: CalendarType) => {
 
   const textList = [
     `${event.event_name}`,
-    `📅${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
-    `⏳${dateWithDayOfWeekString(event.event_deadline_datetime)}に注文締切`,
-    `📍${event.event_address}`,
-    `👥${event.community_name}`,
-    `🍱${event.shop_name}`,
     '',
-    `最新情報はこちら：`,
-    `${event.url}`,
+    `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
+    `📍場所：${event.event_address} ${event.event_place}`,
+    `⏳締切：${dateWithDayOfWeekString(event.event_deadline_datetime)} に注文締切`,
+    `👥主催：${event.community_name}`,
+    `👩‍🍳食事：${event.shop_name}`,
+    `👉イベント詳細：${event.url}`,
     '',
-    `${event.event_desc}`,
+    '--------------------------------',
+    '',
+    `${event.event_desc?.slice(0, 1900)}`,
+    '',
   ]
 
   const calendarEvent = {
