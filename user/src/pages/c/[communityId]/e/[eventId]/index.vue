@@ -239,7 +239,7 @@ onUnmounted(() => {
           @select-menu="selectMenu"
         />
       </v-col>
-      <v-col md="6" sm="8" cols="11" class="ma-0 ma-md-16">
+      <v-col md="6" sm="8" cols="11" class="ma-0 mt-md-16">
         <Banners :banners="bannersStore.banners ?? []" />
       </v-col>
     </v-row>

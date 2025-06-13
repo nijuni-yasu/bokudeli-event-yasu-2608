@@ -151,7 +151,7 @@ const next = () => {
         </v-col>
       </v-row>
       <v-row
-        class="justify-center ma-0 mx-md-16 my-md-10"
+        class="justify-center ma-0 mx-md-16 mt-md-10"
         v-show="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
       >
         <v-col md="9" sm="12" cols="12" class="mt-0 pt-0 px-0">
