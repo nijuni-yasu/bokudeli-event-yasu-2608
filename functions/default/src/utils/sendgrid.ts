@@ -2,6 +2,11 @@
  * かつては sendgrid に関わるコードは sendgrid-mail.js にまとめて書かれていたが、
  * メールに関わる機能が増えてきたため、メールとは切り離し、機能毎にファイルを作成し、
  * 共通部分をこのファイルに切り出すことにする。
+ *
+ * このファイルを使用するには、secrets に SENDGRID_API_KEY を指定する必要があります。
+ * ```
+ * secrets: ['SENDGRID_API_KEY'],
+ * ```
  */
 import sgMail from '@sendgrid/mail'
 import type { ClientResponse, MailDataRequired } from '@sendgrid/mail'
