@@ -44,20 +44,25 @@ const generateDynamicTemplateData = async (communityId: string, letterId: string
   }
 }
 
-export const sendTestLetter = onCall(async (request) => {
-  const uid = request.auth?.uid
-  if (uid === undefined) {
-    throw new HttpsError('unauthenticated', 'The function must be called while authenticated.')
-  }
-  const { communityId, letterId } = sendTestLetterRequestSchema.parse(request.data)
-  const to = (await getUserPersonalInformation(uid))?.user_email
-  if (to === undefined) {
-    throw new HttpsError('not-found', 'The user is not valid.')
-  }
-  await sgMail.send({
-    to,
-    from: DEFAULT_FROM,
-    templateId: LETTER_ID,
-    dynamicTemplateData: await generateDynamicTemplateData(communityId, letterId),
-  })
-})
+export const sendTestLetter = onCall(
+  {
+    secrets: ['SENDGRID_API_KEY'],
+  },
+  async (request) => {
+    const uid = request.auth?.uid
+    if (uid === undefined) {
+      throw new HttpsError('unauthenticated', 'The function must be called while authenticated.')
+    }
+    const { communityId, letterId } = sendTestLetterRequestSchema.parse(request.data)
+    const to = (await getUserPersonalInformation(uid))?.user_email
+    if (to === undefined) {
+      throw new HttpsError('not-found', 'The user is not valid.')
+    }
+    await sgMail.send({
+      to,
+      from: DEFAULT_FROM,
+      templateId: LETTER_ID,
+      dynamicTemplateData: await generateDynamicTemplateData(communityId, letterId),
+    })
+  },
+)
