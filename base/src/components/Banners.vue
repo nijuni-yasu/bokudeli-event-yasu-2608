@@ -2,10 +2,20 @@
 import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 import { FIRESTORE_LOADING } from '@/utils/const'
 import { type Banner } from '@/schemas/Banners'
+import { computed } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   banners: typeof FIRESTORE_LOADING | Banner[]
 }>()
+
+const showArrows = computed(() => {
+  // ローディング中は矢印を非表示
+  if (props.banners === FIRESTORE_LOADING){
+    return false
+  }
+  // バナーが2つ以上の場合は矢印を表示
+  return props.banners.length > 1
+})
 
 /**
  * URLを新しいタブで開く関数
@@ -21,7 +31,7 @@ function onOpenUrl(url: string | undefined) {
 
 <template>
   <v-card>
-    <v-carousel cycle height="auto" hide-delimiter-background :show-arrows="true">
+    <v-carousel cycle height="auto" hide-delimiters :show-arrows="showArrows">
       <template v-slot:prev="{ props }">
         <v-btn color="#EEEEEE" size="large" :icon="mdiChevronLeft" variant="text" @click="props.onClick" />
       </template>
