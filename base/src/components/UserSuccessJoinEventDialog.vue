@@ -68,22 +68,22 @@ const openCalendarAddDialog = () => {
         <v-card-text class="text-left pb-3 px-0 text-h5">
           {{ event.event_name }}
         </v-card-text>
-        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">
+        <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.datetime') }} {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
             $d(event.event_end_datetime.toDate(), 'time')
           }}
         </v-card-text>
-        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">
+        <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short')]) }}
         </v-card-text>
-        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">
+        <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.place') }} {{ event.event_address }} {{ event.event_place }}
         </v-card-text>
-        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text>
-        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">{{ $t('success_join_event_dialog.food') }} {{ event.shop_name }}</v-card-text>
+        <v-card-text class="text-description pb-1 px-0">{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text>
+        <v-card-text class="text-description pb-1 px-0">{{ $t('success_join_event_dialog.food') }} {{ event.shop_name }}</v-card-text>
         <v-card-text
           v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''"
-          class="text-subtitle-1 text-left pb-1 px-0"
+          class="text-description pb-1 px-0"
         >
           {{ $t('success_join_event_dialog.hashtag') }}
           <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
@@ -149,5 +149,9 @@ const openCalendarAddDialog = () => {
 <style lang="scss" scoped>
 .text-lowercase {
   text-transform: lowercase;
+}
+.text-description {
+  font-size: 14px !important;
+  text-align: left !important;
 }
 </style>
