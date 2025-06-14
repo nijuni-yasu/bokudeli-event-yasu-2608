@@ -92,8 +92,7 @@ const startOrderProcess = async () => {
   } else {
     const eventStore = useEventStore(event.event_id) as EventStore
     eventStore.updateOrderStatus(order, 'ordered')
-    alertBody.value = $t('cart.order_completed')
-    router.push(getEventPath(order.community_account, order.event_id))
+    router.push(`${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`)
   }
 }
 
