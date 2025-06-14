@@ -35,7 +35,7 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
       : '#食事でつながる #shokujii'
 
   const textList = [
-    `${event.event_name} に参加します✋`,
+   `${event.event_name} に参加します✋`,
     '',
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
     `👥主催：${communityText}`,
@@ -68,20 +68,6 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: S
   return `${textList.join('\n')}`
 }
 
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-}
-
-const getXAppUrl = (text: string) => {
-  const encodedText = encodeURIComponent(text)
-  return `twitter://post?message=${encodedText}`
-}
-
-const getXWebUrl = (text: string) => {
-  const encodedText = encodeURIComponent(text)
-  return `https://x.com/intent/post?text=${encodedText}`
-}
-
 export const shareSnsButton = async (
   snsType: 'twitter' | 'facebook' | 'line' | 'copy' | 'twitterAfterOrder',
   event: BokudeliEvent,
@@ -93,23 +79,11 @@ export const shareSnsButton = async (
 ) => {
   const eventUrl = encodeURIComponent(event.url)
   if (snsType === 'twitter' || snsType === 'twitterAfterOrder') {
-    const text =
-      snsType === 'twitter' ? getXPostText(event, community, shop) : getXPostTextAfterOrder(event, community, shop)
-
-    if (isMobileDevice()) {
-      // モバイルデバイスの場合、Xアプリを開く
-      const appUrl = getXAppUrl(text)
-      _window!.location.href = appUrl
-
-      // アプリがインストールされていない場合のフォールバック
-      setTimeout(() => {
-        _window!.location.href = getXWebUrl(text)
-      }, 2000)
-    } else {
-      // PCの場合、Web版の投稿画面を開く
-      _window!.location.href = getXWebUrl(text)
-    }
-  } else if (snsType === 'facebook') {
+    const baseUrl = 'https://x.com/intent/post'
+    const text = encodeURIComponent(getXPostText(event, community, shop))
+    const openUrl = `${baseUrl}?text=${text}`
+    _window!.location.href = openUrl
+ } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
     const openUrl = `${baseUrl}?&u=${eventUrl}`
     _window!.location.href = openUrl
