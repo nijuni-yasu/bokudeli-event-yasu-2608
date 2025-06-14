@@ -463,6 +463,20 @@ export default {
     send_to: '送信先: {0}',
     send: '送信',
   },
+  success_join_event_dialog: {
+    title: '注文完了🎉',
+    subtitle: '参加申し込みが完了しました！',
+    datetime: '📅 日時：',
+    deadline: '⏳ 期限：{0}に注文締切',
+    place: '📍 場所：',
+    organizer: '👥 主催：',
+    food: '👩‍🍳 食事：',
+    hashtag: '#️⃣ ハッシュタグ：',
+    share_on_x: 'X で参加予定をシェアする',
+    add_to_calendar: 'カレンダーに追加する',
+    copy_text: 'テキストコピー',
+    close: '閉じる'
+  },
   error: {
     '404': {
       title: '404 Not Found',
