@@ -162,7 +162,14 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
           subscribeMenus(eventRef)
         })
         const sortedMenus =
-          _menus.value?.sort((a, b) => (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0)) ?? null
+          _menus.value?.sort((a, b) => {
+            // まず売り切れ状態でソート
+            if (a.isSoldout !== b.isSoldout) {
+              return a.isSoldout ? 1 : -1
+            }
+            // 売り切れ状態が同じ場合は更新日時でソート
+            return (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0)
+          }) ?? null
         return sortedMenus
       })
 
