@@ -6,7 +6,6 @@ const app = initializeApp({
 })
 initializeFirestore(app, { preferRest: true })
 
-export const { replace_ogp_tags } = await import('./common.js')
 export const { stripe_webhook } = await import('./stripe-webhook.js')
 export const { stripe_refunds } = await import('./stripe-refunds.js')
 export const {
