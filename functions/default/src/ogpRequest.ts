@@ -12,7 +12,7 @@ interface OgpContext {
   description?: string
 }
 
-export const handleOgpRequest = https.onRequest(
+export const handleEventOgpRequest = https.onRequest(
   {
     region: 'asia-northeast1',
     memory: '1GiB',
@@ -43,7 +43,7 @@ export const handleOgpRequest = https.onRequest(
       image: `${site}/shokujii_ogp.png`,
     }
     try {
-      // Event ページの場合は title 等を上書き
+      // Event ページの場合のみ処理
       if (paths[1] === 'c' && paths[3] === 'e') {
         const eventId = paths[4]
 
