@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiContentCopy, mdiCloseCircle, mdiSend } from '@mdi/js'
+import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar } from '@mdi/js'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useEventStore } from '@/stores/event'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
@@ -7,6 +7,7 @@ import { useCommunityStore } from '@/stores/community'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/partner'
 import { shareSnsButton } from '@/utils/shareSnsButton'
+import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
 
 const props = defineProps<{
   eventId: string
@@ -51,6 +52,10 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
   ])
   await shareSnsButton(type, event, community, shop!, _window)
 }
+const isOpenCalendarAddDialog = ref(false)
+const openCalendarAddDialog = () => {
+  isOpenCalendarAddDialog.value = true
+}
 </script>
 
 <template>
@@ -63,42 +68,54 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
         <v-card-text class="text-left pb-3 px-0 text-h5">
           {{ event.event_name }}
         </v-card-text>
-        <v-card-text class="text-left pb-1 px-0">
+        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">
           📅 日時： {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
             $d(event.event_end_datetime.toDate(), 'time')
           }}
         </v-card-text>
-        <v-card-text class="text-left pb-1 px-0">
+        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">
           ⏳ 期限： {{ $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short') }} に注文締切
         </v-card-text>
-        <v-card-text class="text-left pb-1 px-0">
+        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">
           📍 場所： {{ event.event_address }} {{ event.event_place }}
         </v-card-text>
-        <v-card-text class="text-left pb-1 px-0">👥 主催： {{ event.community_name }}</v-card-text>
-        <v-card-text class="text-left pb-1 px-0">👩‍🍳 食事： {{ event.shop_name }}</v-card-text>
+        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">👥 主催： {{ event.community_name }}</v-card-text>
+        <v-card-text class="text-subtitle-1 text-left pb-1 px-0">👩‍🍳 食事： {{ event.shop_name }}</v-card-text>
         <v-card-text
           v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''"
-          class="text-left pb-1 px-0"
+          class="text-subtitle-1 text-left pb-1 px-0"
         >
           #️⃣ ハッシュタグ：
           <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
             #{{ event.event_sns_hash_tag }}
           </a>
         </v-card-text>
-        <v-row>
-          <v-card-text class="text-center mt-3">
-            <v-btn
-              class="ma-2"
-              size="x-large"
-              color="grey-900"
-              :append-icon="mdiSend"
-              rounded="pill"
-              @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
-            >
-              X で参加予定をシェアする
-            </v-btn>
-          </v-card-text>
-        </v-row>
+        <v-card-text class="mt-5">
+          <v-row justify="center">
+              <v-btn
+                class="my-2"
+                size="large"
+                color="grey-900"
+                :append-icon="mdiSend"
+                rounded="pill"
+                @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
+              >
+                X で参加予定をシェアする
+              </v-btn>
+          </v-row>
+          <v-row justify="center">
+              <v-btn
+                class="my-2"
+                size="large"
+                color="grey-900"
+                :append-icon="mdiCalendar"
+                rounded="pill"
+                @click="openCalendarAddDialog"
+              >
+                カレンダーに追加する
+              </v-btn>
+          </v-row> 
+        </v-card-text>
         <v-card-text class="text-center px-0 py-1">
           <v-btn
             :prepend-icon="mdiContentCopy"
@@ -126,6 +143,7 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
       </div>
     </v-card>
   </v-dialog>
+  <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
 </template>
 
 <style lang="scss" scoped>
