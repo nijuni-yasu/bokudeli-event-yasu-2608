@@ -15,15 +15,15 @@ import {
   signInWithCustomToken,
   type AdditionalUserInfo
 } from 'firebase/auth'
-import {collection, doc, getDoc, getDocs, query, where} from 'firebase/firestore'
-import { db } from '@/firebase'
-import {convertDocumentDataToStoredUser} from "@/schemes/converter";
+import {convertStoredUserToFirestoredUser} from "@/schemes/converter";
 import {useValidators} from "@/composable/validators";
 import {getCredentialWithPopup, signInByProviderService} from "@/utils/providerService";
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 import {useStoreUserCredential} from "@/stores/userCredential";
 import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
 import {useStoreStoredUser} from "@/stores/storedUser";
+import type {StoredUser} from "@/schemes/storedUser";
+import {type UserStore, useUserStore} from "@/stores/user";
 
 type CreateUserRequest = {
   user_email: string
@@ -264,7 +264,28 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
         { immediate: true }
     );
   });
-  const storedUser = storedUserStore.storedUser
+  const storedUser = storedUserStore.storedUser as StoredUser
+  const userStore = useUserStore(storedUser.userId) as UserStore
+
+  if (isNewUser) {
+    switch (additionalUserInfo.providerId) {
+      case 'facebook.com':
+        storedUser.userSnsFacebook = additionalUserInfo.profile?.name as string
+        storedUserStore.update(storedUser)
+        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+        break
+      case 'twitter.com':
+        storedUser.userSnsTwitter = additionalUserInfo?.username as string
+        storedUserStore.update(storedUser)
+        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+        break
+      case 'google.com':
+        // TODO: userSnsGoogleの保存処理
+        break
+      default:
+        break
+    }
+  }
 
   useStoreUserAdditionalInfo().reset()
   useStoreFirebaseAuthError().reset()

@@ -4,8 +4,8 @@ import FacebookIcon from '@/icons/facebook.vue'
 import GoogleIcon from '@/icons/google.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
-import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
-import {FirestoredUser} from "@/schemes/storedUser"
+import {convertFirestoredUserToStoredUser, convertStoredUserToFirestoredUser} from "@/schemes/converter";
+import {FirestoredUser, type StoredUser} from "@/schemes/storedUser"
 import UserAvatar from '@/components/UserAvatar.vue'
 import {buildThumbnailsLinks} from '@/composable/buildThumbnailsLinks'
 import {
@@ -16,7 +16,7 @@ import {
   unlink,
   type User,
   updateEmail,
-  signInWithCustomToken
+  signInWithCustomToken, type AdditionalUserInfo, getAdditionalUserInfo
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
@@ -27,10 +27,11 @@ import {
   convertDocumentDataToStoredUser,
 } from '@/schemes/converter'
 import { httpsCallable } from 'firebase/functions'
-import {convertFirebaseUserToStoredUser} from "@/schemes/converter";
 import {linkByProviderService} from "@/utils/providerService";
 import { mdiUpload } from '@mdi/js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
+import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
 
 const auth = getAuth()
 const currentUser = auth.currentUser;
@@ -221,7 +222,13 @@ const emailSubmit = async () => {
 
 const handleFacebookLink = async () => {
   try {
-    await linkByProviderService(currentUser as User, 'Facebook')
+    const userCredential = await linkByProviderService(currentUser as User, 'Facebook')
+
+    const additionalUserInfo = getAdditionalUserInfo(userCredential)
+    if (additionalUserInfo) {
+      await setSNSProfile(additionalUserInfo)
+    }
+
     // ユーザー情報を再取得して更新
     if (auth.currentUser) {
       await auth.currentUser.reload();
@@ -234,6 +241,10 @@ const handleFacebookLink = async () => {
       if (error.code === 'auth/credential-already-in-use') {
         return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'Facebook'}), color: 'error' })
       }
+      if (error.code === 'auth/email-already-in-use') {
+        useStoreFirebaseAuthError().reset()
+        return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+      }
     } else {
       console.error({ error })
     }
@@ -242,7 +253,13 @@ const handleFacebookLink = async () => {
 
 const handleGoogleLoginLink = async () => {
   try {
-    await linkByProviderService(currentUser as User, 'Google')
+    const userCredential = await linkByProviderService(currentUser as User, 'Google')
+
+    const additionalUserInfo = getAdditionalUserInfo(userCredential)
+    if (additionalUserInfo) {
+      await setSNSProfile(additionalUserInfo)
+    }
+
     // ユーザー情報を再取得して更新
     if (auth.currentUser) {
       await auth.currentUser.reload();
@@ -255,6 +272,10 @@ const handleGoogleLoginLink = async () => {
       if (error.code === 'auth/credential-already-in-use') {
         return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'Google'}), color: 'error' })
       }
+      if (error.code === 'auth/email-already-in-use') {
+        useStoreFirebaseAuthError().reset()
+        return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+      }
     } else {
       console.error({ error })
     }
@@ -263,7 +284,13 @@ const handleGoogleLoginLink = async () => {
 
 const handleTwitterLoginLink = async () => {
   try {
-    await linkByProviderService(currentUser as User, 'Twitter')
+    const userCredential = await linkByProviderService(currentUser as User, 'Twitter')
+
+    const additionalUserInfo = getAdditionalUserInfo(userCredential)
+    if (additionalUserInfo) {
+      await setSNSProfile(additionalUserInfo)
+    }
+
     // ユーザー情報を再取得して更新
     if (auth.currentUser) {
       await auth.currentUser.reload();
@@ -275,6 +302,10 @@ const handleTwitterLoginLink = async () => {
       console.error({ error, credential })
       if (error.code === 'auth/credential-already-in-use') {
         return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+      }
+      if (error.code === 'auth/email-already-in-use') {
+        useStoreFirebaseAuthError().reset()
+        return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
       }
     } else {
       console.error({ error })
@@ -302,6 +333,58 @@ const confirmUnLink = async (providerId: string) => {
     console.error(error)
   } finally {
     isLoading.value = false
+  }
+}
+
+onMounted(async () => {
+  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
+  const error = useStoreFirebaseAuthError().error
+  if (error instanceof FirebaseError) {
+    const credential = TwitterAuthProvider.credentialFromError(error)
+    console.error({ error, credential })
+
+    if (error.code === 'auth/credential-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+    }
+    if (error.code === 'auth/email-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+    }
+  } else {
+    console.error({ error })
+  }
+
+  if (additionalUserInfo === null) return
+  await setSNSProfile(additionalUserInfo)
+
+  useStoreUserAdditionalInfo().reset()
+})
+
+const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
+  const storedUser = storedUserStore.storedUser as StoredUser
+  const userStore = useUserStore(storedUser.userId) as UserStore
+
+  switch (additionalUserInfo.providerId) {
+    case 'facebook.com':
+      if (storedUser.userSnsFacebook === null || storedUser.userSnsFacebook === "") {
+        storedUser.userSnsFacebook = additionalUserInfo.profile?.name as string
+        storedUserStore.update(storedUser)
+        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+      }
+      break
+    case 'twitter.com':
+      if (storedUser.userSnsTwitter === null || storedUser.userSnsTwitter === "") {
+        storedUser.userSnsTwitter = additionalUserInfo?.username as string
+        storedUserStore.update(storedUser)
+        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+      }
+      break
+    case 'google.com':
+      // TODO: userSnsGoogleの保存処理
+      break
+    default:
+      break
   }
 }
 </script>
