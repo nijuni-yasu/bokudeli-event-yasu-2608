@@ -90,9 +90,13 @@ const startOrderProcess = async () => {
   if (event.event_payment == 'user_advance') {
     await createCheckoutSession(order)
   } else {
-    const eventStore = useEventStore(event.event_id) as EventStore
-    eventStore.updateOrderStatus(order, 'ordered')
-    router.push(`${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`)
+    try {
+      const eventStore = useEventStore(event.event_id) as EventStore
+      await eventStore.updateOrderStatus(order, 'ordered')
+      router.push(`${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`)
+    } catch (error) {
+      alertBody.value = $t('cart.order_failed')
+    }
   }
 }
 
