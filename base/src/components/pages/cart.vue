@@ -17,7 +17,7 @@ import Stripe from 'stripe'
 import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
-import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
+import { mdiTrashCan, mdiHelpCircleOutline, mdiCheckBold } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
@@ -242,40 +242,44 @@ onMounted(async () => {
 <template>
   <div>
     <v-row v-if="!state.isLoading && state.cartList.length !== 0" justify="center">
+      <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
+        <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
+        <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
+      </v-col>
       <v-col v-for="cart in state.cartList" :key="cart.event.event_id" cols="12" md="8" sm="8">
-        <v-card class="pa-sm-5 pa-xs-1 ma-sm-10 ma-xs-1">
+        <v-card class="pa-sm-5 pa-xs-1 ma-sm-5 ma-xs-1">
           <v-row>
             <v-col class="d-flex align-center">
               <v-img class="ma-5" cover aspect-ratio="1.91" :src="cart.event.event_cover_url" />
             </v-col>
           </v-row>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
             {{ $t('cart.community_name') }}
             <router-link :to="getCommunityPath(cart.event.community_account)">
               {{ cart.event.community_name }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
             {{ $t('cart.event_name') }}
             <router-link :to="getEventPath(cart.event.community_account, cart.event.event_id)">
               {{ cart.event.event_name }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
             {{ $t('cart.place') }} {{ cart.event.event_address }} {{ cart.event.event_place }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
             {{ $t('cart.date') }}{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{
               dateOnlyTimeString(cart.event.event_end_datetime)
             }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
             {{ $t('cart.deadline') }}{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+          <v-card-text class="text-left pb-sm-2 text-sm-subtitle-1">
             {{ $t('cart.payment') }}{{ $t(`payment.${cart.event.event_payment}`) }} <br />
           </v-card-text>
-          <v-card-text class="event-item2 d-flex align-center">
+          <v-card-text class="d-flex align-center pb-sm-2 text-sm-subtitle-1">
             <div class="d-flex flex-column align-center">
               {{ $t('cart.cancel') }}
             </div>
@@ -340,6 +344,7 @@ onMounted(async () => {
                 width="85%"
                 @click="showConfirm(cart)"
               >
+                <v-icon :icon="mdiCheckBold" class="mr-2" />
                 {{ $t('cart.order_and_attend_event') }}
               </v-btn>
             </v-col>
