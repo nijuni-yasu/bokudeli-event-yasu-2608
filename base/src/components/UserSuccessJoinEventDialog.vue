@@ -91,7 +91,7 @@ const openCalendarAddDialog = () => {
           </a>
         </v-card-text>
         <v-card-text class="mt-5">
-          <v-row justify="center">
+          <v-row justify="center" v-if="event.is_public">
               <v-btn
                 class="my-2"
                 size="large"
