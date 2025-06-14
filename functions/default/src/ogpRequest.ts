@@ -98,6 +98,10 @@ export const handleCommunityOgpRequest = https.onRequest(
     if (paths[1] === 'community') {
       paths[1] = 'c'
     }
+    if (paths[2] === undefined || paths[2] === '') {
+      res.status(404).send('Invalid path')
+      return
+    }
     // Community 名に大文字を許可していた時代のリクエストに対応
     paths[2] = paths[2].toLowerCase()
     const path = paths.join('/')
