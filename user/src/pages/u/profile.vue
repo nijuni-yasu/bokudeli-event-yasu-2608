@@ -367,18 +367,14 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
-      if (storedUser.userSnsFacebook === null || storedUser.userSnsFacebook === "") {
-        storedUser.userSnsFacebook = additionalUserInfo.profile?.name as string
-        storedUserStore.update(storedUser)
-        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-      }
+      storedUser.userSnsFacebook = storedUser.userSnsFacebook || additionalUserInfo.profile?.name as string
+      storedUserStore.update(storedUser)
+      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'twitter.com':
-      if (storedUser.userSnsTwitter === null || storedUser.userSnsTwitter === "") {
-        storedUser.userSnsTwitter = additionalUserInfo?.username as string
-        storedUserStore.update(storedUser)
-        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-      }
+      storedUser.userSnsTwitter = storedUser.userSnsTwitter || additionalUserInfo?.username as string
+      storedUserStore.update(storedUser)
+      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'google.com':
       // TODO: userSnsGoogleの保存処理

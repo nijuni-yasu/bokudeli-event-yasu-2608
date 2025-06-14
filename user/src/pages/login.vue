@@ -269,18 +269,18 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
 
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
-      if (storedUser.userSnsFacebook === null || storedUser.userSnsFacebook === "") {
-        storedUser.userSnsFacebook = additionalUserInfo.profile?.name as string
-        storedUserStore.update(storedUser)
-        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-      }
+      storedUser.userSnsFacebook = storedUser.userSnsFacebook || additionalUserInfo.profile?.name as string
+      storedUserStore.update(storedUser)
+      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'twitter.com':
-      if (storedUser.userSnsTwitter === null || storedUser.userSnsTwitter === "") {
-        storedUser.userSnsTwitter = additionalUserInfo?.username as string
-        storedUserStore.update(storedUser)
-        await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-      }
+      storedUser.userSnsTwitter = storedUser.userSnsTwitter || additionalUserInfo?.username as string
+      storedUser.userName = storedUser.userName || additionalUserInfo.profile?.name as string
+      storedUser.userDescription = storedUser.userDescription || additionalUserInfo.profile?.description as string | null
+      storedUser.userAccount = storedUser.userAccount || additionalUserInfo.username as string | null
+
+      storedUserStore.update(storedUser)
+      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'google.com':
       // TODO: userSnsGoogleの保存処理
@@ -323,9 +323,21 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     })
   }
 
-  // プロフィールが埋まっていれば、元いたページへ
+  // プロフィールが埋まっていれば
   if (storedUser?.userName && storedUser?.userDescription && storedUser?.userImageUrl) {
-    if (route.query.redirect) {
+    if (isNewUser) {
+      // 初回登録ユーザーならプロフィール設定ページへ
+      return router.push(
+          {
+            path: '/u/profile',
+            query: {
+              new: Number(isNewUser),
+              redirect: route.query.redirect as string,
+            }
+          }
+      )
+    } else if (route.query.redirect) {
+      // 元いたページへ
       return router.push(route.query.redirect as string)
     } else {
       return router.push('/')
