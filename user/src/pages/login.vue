@@ -267,24 +267,26 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   const storedUser = storedUserStore.storedUser as StoredUser
   const userStore = useUserStore(storedUser.userId) as UserStore
 
-  if (isNewUser) {
-    switch (additionalUserInfo.providerId) {
-      case 'facebook.com':
+  switch (additionalUserInfo.providerId) {
+    case 'facebook.com':
+      if (storedUser.userSnsFacebook === null || storedUser.userSnsFacebook === "") {
         storedUser.userSnsFacebook = additionalUserInfo.profile?.name as string
         storedUserStore.update(storedUser)
         await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-        break
-      case 'twitter.com':
+      }
+      break
+    case 'twitter.com':
+      if (storedUser.userSnsTwitter === null || storedUser.userSnsTwitter === "") {
         storedUser.userSnsTwitter = additionalUserInfo?.username as string
         storedUserStore.update(storedUser)
         await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-        break
-      case 'google.com':
-        // TODO: userSnsGoogleの保存処理
-        break
-      default:
-        break
-    }
+      }
+      break
+    case 'google.com':
+      // TODO: userSnsGoogleの保存処理
+      break
+    default:
+      break
   }
 
   useStoreUserAdditionalInfo().reset()
