@@ -7,6 +7,8 @@ import { mdiLogout, mdiEmailOutline, mdiCart, mdiAccount, mdiCalendarPlus, mdiCo
 import userAccessiblePaths from "@/utils/userAccessiblePaths";
 import { getManagePath } from '@/router/utils'
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import { useStoreUserAdditionalInfo } from "@/stores/userAdditionalInfo";
+import { useStoreFirebaseAuthError } from "@/stores/firebaseAuthError";
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -49,6 +51,8 @@ const handleLogoutDialog = () => {
 const logout = async () => {
   const auth = getAuth()
   try {
+    useStoreUserAdditionalInfo().reset()
+    useStoreFirebaseAuthError().reset()
     await signOut(auth)
 
     // ログインが必要なページにいる場合トップページに遷移
