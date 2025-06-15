@@ -81,9 +81,15 @@ const submit = async () => {
   emit('update:letter', toRaw(_letter.value))
 }
 const save = async () => {
-  _letter.value.status = 'draft'
-  await _save()
-  emit('update:letter', toRaw(_letter.value))
+  try {
+    _letter.value.status = 'draft'
+    await _save()
+    emit('update:letter', toRaw(_letter.value))
+    notification.show($t('manage.letter.edit.save_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.save_error'), 'error')
+  }
 }
 const sendTest = async () => {
   try {

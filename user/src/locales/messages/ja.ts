@@ -139,6 +139,8 @@ export default {
         'send_test': 'テスト配信',
         'send_test_success': 'テスト配信しました',
         'send_test_error': 'テスト配信に失敗しました',
+        'save_success': 'レターを保存しました',
+        'save_error': 'レターの保存に失敗しました',
       },
       'notification': {
         'saved': 'レターを保存しました',
