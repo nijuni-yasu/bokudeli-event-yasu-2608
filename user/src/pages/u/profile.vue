@@ -416,7 +416,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <v-text-field
                   :label="$t('profile.user_account')"
                   v-model="user.user_account"
-                  prefix="https://shokuiji.jp/u/"
+                  prefix="shokujii.jp/u/"
                   variant="outlined"
                   :disabled="isLoading"
                   :rules="[noReservedCharsValidator]"
@@ -427,7 +427,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <v-text-field
                   :label="$t('profile.user_sns_twitter')"
                   v-model="user.user_sns_twitter"
-                  prefix="https://x.com/"
+                  prefix="x.com/"
                   variant="outlined"
                   hide-details
                   :disabled="isLoading"
@@ -436,7 +436,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <v-text-field
                   :label="$t('profile.user_sns_facebook')"
                   v-model="user.user_sns_facebook"
-                  prefix="https://facebook.com/"
+                  prefix="facebook.com/"
                   variant="outlined"
                   hide-details
                   :disabled="isLoading"
@@ -445,7 +445,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <v-text-field
                   :label="$t('profile.user_sns_instagram')"
                   v-model="user.user_sns_instagram"
-                  prefix="https://instagram.com/"
+                  prefix="instagram.com/"
                   variant="outlined"
                   hide-details
                   :disabled="isLoading"
