@@ -52,7 +52,7 @@ const copyRemoveCommand = () => {
           />
         </v-col>
       </v-row>
-      <v-row class="description">
+      <v-row>
         <v-card-text class="pa-0 pl-2"><div v-html="$t('manage.slack.description')" /></v-card-text>
       </v-row>
       <v-row justify="center">
@@ -205,19 +205,9 @@ const copyRemoveCommand = () => {
   text-decoration-skip-ink: none;
 }
 
-.v-card-text {
+.v-card-text  {
   font-family: Noto Sans JP;
   font-size: 14px;
-  font-weight: 400;
-  line-height: 32px;
-  text-align: left;
-  text-underline-position: from-font;
-  text-decoration-skip-ink: none;
-}
-
-.description {
-  font-family: Noto Sans JP;
-  font-size: 16px;
   font-weight: 400;
   line-height: 30px;
   text-align: left;

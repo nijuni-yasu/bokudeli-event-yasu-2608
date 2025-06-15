@@ -41,7 +41,7 @@ export default {
         'member': 'メンバー',
         'letter': 'レター',
         'invoice': '請求書払い',
-        'slackSetting': 'Slack',
+        'slackSetting': 'Slack連携',
         'settings': 'コミュニティ設定',
       }
     },
@@ -100,7 +100,7 @@ export default {
         'title': 'レターを配信しよう💌',
         'description': `レター機能を使うと<b>「コミュニティメンバー」</b>や<b>「イベント参加者」「イベント未登録者」</b>にメールを配信することができます。<br />
                         配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。返信先は［コミュニティ設定］タブからご設定ください。<br />
-                        詳細は <a href="https://docs.google.com/presentation/d/1ivQlhaQ9c1RCUsWANcE_huZd9CF1O2OPBn5XTbJv1mw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">レター機能について</a> をご確認ください。<br />
+                        詳細は <a href="https://note.com/preview/n0c961c680fd3?prev_access_key=ced956e93d24fb7689121a8bdb431ebb" target="_blank">レター機能について</a> をご確認ください。<br />
                         `,
       },
       'type_select_dialog': {
@@ -192,7 +192,7 @@ export default {
       'download': 'ダウンロード',
       'no_invoice': '請求書はまだありません',
       'error': '請求書の取得に失敗しました',
-      'title': '「主催者 請求書払い」について',
+      'title': '主催者 請求書払い📃',
       'description': `イベント設定画面で<b>「主催者 請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
       イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
       お支払い期限は翌月末日となります。詳細は、<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g353224adc3a_0_0" target="_blank">支払い設定について</a> をご確認ください。`,
