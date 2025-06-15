@@ -74,11 +74,17 @@ const _save = async () => {
 }
 
 const submit = async () => {
-  const now = Timestamp.now()
-  _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
-  _letter.value.status = 'timed'
-  _save()
-  emit('update:letter', toRaw(_letter.value))
+  try {
+    const now = Timestamp.now()
+    _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
+    _letter.value.status = 'timed'
+    await _save()
+    emit('update:letter', toRaw(_letter.value))
+    notification.show($t('manage.letter.edit.submit_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.submit_error'), 'error')
+  }
 }
 const save = async () => {
   try {
