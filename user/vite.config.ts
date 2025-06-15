@@ -7,6 +7,7 @@ import Layouts from 'vite-plugin-vue-layouts'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import AutoImport from 'unplugin-auto-import/vite'
 import vuetify from 'vite-plugin-vuetify'
+import { VitePWA } from 'vite-plugin-pwa'
 // eslint-disable-next-line
 // @ts-ignore
 import { baseModule } from '../base/vite-plugins/base'
@@ -46,6 +47,48 @@ export default defineConfig({
 
       // ℹ️ Disabled to avoid confusion & accidental usage
       ignore: ['useCookies', 'useStorage'],
+    }),
+
+    // Docs: https://vite-pwa-org.netlify.app/guide/
+    VitePWA({
+      registerType: 'autoUpdate',
+
+      //TODO PWA開発時以外はオフにしたいため環境変数で切り替えられるようにする
+      devOptions: { enabled: true },
+
+      workbox: {
+        navigateFallbackDenylist: [/\/__\/auth/],
+      },
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      manifest: {
+        name: '食事でつながる「shokujii」',
+        short_name: 'shokujii',
+        description: 'shokujii and event Application',
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'pwa-96x96.png',
+            sizes: '96x96',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+        ],
+      },
     }),
   ],
   resolve: {
