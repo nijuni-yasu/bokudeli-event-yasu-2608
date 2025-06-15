@@ -367,7 +367,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
-      storedUser.userSnsFacebook = storedUser.userSnsFacebook || additionalUserInfo.profile?.name as string
+      storedUser.userSnsFacebookName = storedUser.userSnsFacebookName || additionalUserInfo.profile?.name as string
       storedUserStore.update(storedUser)
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
