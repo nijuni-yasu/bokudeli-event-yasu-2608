@@ -16,8 +16,12 @@ import {
 } from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
 import { sendTestLetter } from '@/baseApis/letter.js'
+import { useNotification } from '@/composable/notification'
+import { useI18n } from 'vue-i18n'
 
 const { requiredValidator } = useValidators()
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const props = defineProps<{
   letter: Letter
@@ -82,10 +86,16 @@ const save = async () => {
   emit('update:letter', toRaw(_letter.value))
 }
 const sendTest = async () => {
-  await _save()
-  // ! は本来使うべきではないが、sendTest が呼ばれるケースでは必ず community は存在することが保証されている
-  // TODO store の方で存在を保証する仕組みを用意する
-  await sendTestLetter({ communityId: communityStore.community!.community_id, letterId: _letter.value.letter_id })
+  try {
+    await _save()
+    // ! は本来使うべきではないが、sendTest が呼ばれるケースでは必ず community は存在することが保証されている
+    // TODO store の方で存在を保証する仕組みを用意する
+    await sendTestLetter({ communityId: communityStore.community!.community_id, letterId: _letter.value.letter_id })
+    notification.show($t('manage.letter.edit.send_test_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.send_test_error'), 'error')
+  }
 }
 </script>
 

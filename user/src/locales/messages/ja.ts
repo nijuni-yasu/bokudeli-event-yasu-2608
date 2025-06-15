@@ -137,6 +137,8 @@ export default {
         'save_draft': '下書き保存',
         'to_draft': '下書きに戻す',
         'send_test': 'テスト配信',
+        'send_test_success': 'テスト配信しました',
+        'send_test_error': 'テスト配信に失敗しました',
       },
       'notification': {
         'saved': 'レターを保存しました',
