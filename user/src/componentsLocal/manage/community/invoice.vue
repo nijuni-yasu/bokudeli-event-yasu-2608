@@ -120,13 +120,13 @@ const getPdf = (eventId: string) => {
 <style scoped>
 .title {
   font-family: Noto Sans JP;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   text-align: left;
 }
 .description {
   font-family: Noto Sans JP;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 30px;
   text-align: left;
