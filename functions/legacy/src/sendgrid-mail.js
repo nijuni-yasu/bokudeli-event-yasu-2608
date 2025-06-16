@@ -153,6 +153,44 @@ async function getCommunityEmails(communityId) {
   return Array.from(emails)
 }
 
+//コミュニティユーザーのIDを取得
+async function getCommunityMemberIds(communityId) {
+  try {
+    const communityMembersRef = db.collection('communities').doc(communityId).collection('members')
+    const communityMembersSnapshot = await communityMembersRef.get()
+
+    if (communityMembersSnapshot.empty) {
+      console.warn(`No members found for community: ${communityId}`)
+      return []
+    }
+    return communityMembersSnapshot.docs.map((member) => member.id)
+  } catch (error) {
+    console.error(`Error fetching community members: ${error}`)
+    throw error
+  }
+}
+// イベント参加者のユーザーIDを取得
+async function getParticipantIds(eventId) {
+  try {
+    if (!eventId) {
+      console.warn('No event_id provided')
+      return []
+    }
+    const ordersRef = db.collectionGroup('orders').where('event_id', '==', eventId)
+    const ordersSnapshot = await ordersRef.get()
+    if (ordersSnapshot.empty) {
+      console.warn(`No orders found for event: ${eventId}`)
+      return []
+    }
+    return ordersSnapshot.docs
+      .filter(order => order.get('status') === 'ordered')
+      .map(order => order.get('user_id'))
+  } catch (error) {
+    console.error(`Error fetching event participants: ${error}`)
+    throw error
+  }
+}
+
 async function createOrdersForOrderRemind(ordersRef) {
   const promises = []
   const orders_by_status = {}
@@ -1017,27 +1055,25 @@ async function sendLetter(_, end) {
             eventDate = convertToDateWeekdayShort(eventSnapshot.get('event_start_datetime').toMillis())
           }
         }
-        // TODO UserIdsの取得は関数にするのが良いかも
+
         switch (type) {
           case 'community':
-            const membersRef = db.collection('communities').doc(communityId).collection('members')
-            const membersSnapshot = await membersRef.get()
-            userIds = membersSnapshot.docs.map((member) => member.id)
+            userIds = await getCommunityMemberIds(communityId)
             break
           case 'event_participant':
-            const eventId = letterDoc.get('event_id')
-            const ordersRef = db.collectionGroup('orders').where('event_id', '==', eventId)
-            const ordersSnapshot = await ordersRef.get()
-            userIds = ordersSnapshot.docs
-              .flatMap(order => order.get('status') === 'ordered' ? [order.get('user_id')] : [])
+            userIds = await getParticipantIds(letterDoc.get('event_id'))
             break
-          case 'event_non_participant':
-            const allMembersRef = db.collection('communities').doc(communityId).collection('members')
-            const allMembersSnapshot = await allMembersRef.get()
-            const allMemberIds = allMembersSnapshot.docs.map((member) => member.id)
-            const participantIds = (await ordersRef.get()).docs.map((order) => order.get('user_id'))
-            userIds = allMemberIds.filter((id) => !participantIds.includes(id))
+          case 'event_non_participant': {
+            const [participantIds, communityMemberIds] = await Promise.all([
+              getParticipantIds(letterDoc.get('event_id')),
+              getCommunityMemberIds(communityId)
+            ])
+            userIds = communityMemberIds.filter((id) => !participantIds.includes(id))
             break
+          }
+          default:
+            console.warn(`Unknown letter type: ${type}`)
+            userIds = []
         }
 
         const userInfos = await Promise.all(userIds.map(getUserEmailWithName))
