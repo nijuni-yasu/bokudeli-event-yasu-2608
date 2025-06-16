@@ -42,6 +42,10 @@ const numEventMembers = computed(() => eventStore?.event?.members?.length)
 
 const isValid = ref(false)
 
+const isSubmitDisabled = computed(() => {
+  return !isValid.value || (_letter.value.letter_type === 'event_participant' && numEventMembers.value === 0)
+})
+
 const isScheduled = ref(false)
 const scheduleTime = ref(Timestamp.now())
 
@@ -219,7 +223,7 @@ const sendTest = async () => {
             <v-btn v-if="_letter.status === 'draft'" @click="sendTest" :disabled="!isValid">
               {{ $t('manage.letter.edit.send_test') }}
             </v-btn>
-            <v-btn @click="submit" :disabled="!isValid">
+            <v-btn @click="submit" :disabled="isSubmitDisabled">
               {{ isScheduled ? $t('manage.letter.edit.submit_reserve') : $t('manage.letter.edit.submit_now') }}
             </v-btn>
           </v-col>
