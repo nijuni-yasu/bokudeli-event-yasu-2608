@@ -68,6 +68,8 @@ export default {
     contact_community_after_login: 'ログインした後に主催者に連絡してください。',
   },
   cart: {
+    title: '🛒 カート 🛒',
+    subtitle: '注文を完了してイベント参加をお申し込みください',
     community_name: '【主催者】',
     event_name: '【イベント名】',
     date: '【開催日時】',
@@ -93,7 +95,7 @@ export default {
     remove_from_cart: 'カートから削除しますか？',
     removed_from_cart: 'カートから削除しました。',
     event_not_found: 'イベントが見つかりません。',
-    order_and_attend_event: '注文してイベントに参加する',
+    order_and_attend_event: '注文を完了する',
     no_items_in_cart: 'カートに商品はありません。',
   },
   cart_dialog: {
