@@ -16,8 +16,12 @@ import {
 } from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
 import { sendTestLetter } from '@/baseApis/letter.js'
+import { useNotification } from '@/composable/notification'
+import { useI18n } from 'vue-i18n'
 
 const { requiredValidator } = useValidators()
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const props = defineProps<{
   letter: Letter
@@ -70,22 +74,40 @@ const _save = async () => {
 }
 
 const submit = async () => {
-  const now = Timestamp.now()
-  _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
-  _letter.value.status = 'timed'
-  _save()
-  emit('update:letter', toRaw(_letter.value))
+  try {
+    const now = Timestamp.now()
+    _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
+    _letter.value.status = 'timed'
+    await _save()
+    emit('update:letter', toRaw(_letter.value))
+    notification.show($t('manage.letter.edit.submit_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.submit_error'), 'error')
+  }
 }
 const save = async () => {
-  _letter.value.status = 'draft'
-  await _save()
-  emit('update:letter', toRaw(_letter.value))
+  try {
+    _letter.value.status = 'draft'
+    await _save()
+    emit('update:letter', toRaw(_letter.value))
+    notification.show($t('manage.letter.edit.save_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.save_error'), 'error')
+  }
 }
 const sendTest = async () => {
-  await _save()
-  // ! は本来使うべきではないが、sendTest が呼ばれるケースでは必ず community は存在することが保証されている
-  // TODO store の方で存在を保証する仕組みを用意する
-  await sendTestLetter({ communityId: communityStore.community!.community_id, letterId: _letter.value.letter_id })
+  try {
+    await _save()
+    // ! は本来使うべきではないが、sendTest が呼ばれるケースでは必ず community は存在することが保証されている
+    // TODO store の方で存在を保証する仕組みを用意する
+    await sendTestLetter({ communityId: communityStore.community!.community_id, letterId: _letter.value.letter_id })
+    notification.show($t('manage.letter.edit.send_test_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.send_test_error'), 'error')
+  }
 }
 </script>
 
