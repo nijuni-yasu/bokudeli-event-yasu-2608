@@ -67,6 +67,7 @@ const isValidProfile = ref(false)
 const isValidEmail = ref(false)
 
 const isOpenUnLinkDialog = ref(false)
+const isOpenTwitterLinkDialog = ref(false)
 const targetUnLinkProvider = ref('')
 
 const form = ref<VForm | null>(null);
@@ -469,7 +470,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   hide-details
                   :disabled="!!user.user_sns_twitter"
                   readonly
-                  @click="handleTwitterLoginLink"
+                  @click="() => isOpenTwitterLinkDialog = true"
               />
 
               <v-text-field
@@ -577,6 +578,11 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
       </v-col>
     </v-row>
 
+    <confirm-dialog v-model="isOpenTwitterLinkDialog" :is-confirm="true" :ok-text="$t('profile.linkage')" :ok-click="handleTwitterLoginLink">
+      <v-card-text class="text-center py-10 text-h4">
+        {{ $t('profile.twitter_link_modal_title') }}
+      </v-card-text>
+    </confirm-dialog>
     <confirm-dialog v-model="isOpenUnLinkDialog" :is-confirm="true" :ok-text="$t('profile.unlink')" :ok-click="() => confirmUnLink(targetUnLinkProvider)">
       <v-card-text class="text-center py-10 text-h4">
         {{ $t('profile.unlink_modal_title') }}
