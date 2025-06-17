@@ -396,7 +396,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'twitter.com':
-      storedUser.userSnsTwitter = storedUser.userSnsTwitter || additionalUserInfo?.username as string
+      storedUser.userSnsTwitter = additionalUserInfo?.username as string
       storedUserStore.update(storedUser)
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
@@ -467,7 +467,9 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   prefix="x.com/"
                   variant="outlined"
                   hide-details
-                  :disabled="isLoading"
+                  :disabled="!!user.user_sns_twitter"
+                  readonly
+                  @click="handleTwitterLoginLink"
               />
 
               <v-text-field
