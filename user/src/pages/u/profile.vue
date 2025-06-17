@@ -325,6 +325,30 @@ const confirmUnLink = async (providerId: string) => {
 
     if (auth.currentUser) {
       await unlink(auth.currentUser, providerId)
+
+      const firestoredUser = user.value as FirestoredUser
+      const personalInformationSnapshot = await getDocs(query(
+          collection(db, 'users_personal_information'),
+          where('user_email', '==', email.value)
+      ))
+
+      // 各プロバイダーは連携解除時に関連する値を削除する
+      switch (providerId) {
+        case 'google.com':
+          firestoredUser.user_sns_google = null
+          break
+        case 'facebook.com':
+          firestoredUser.user_sns_facebook_name = null
+          break
+        case 'twitter.com':
+          firestoredUser.user_sns_twitter = null
+          break
+      }
+      storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.docs[0].data().user_email))
+
+      const userStore = useUserStore(firestoredUser.user_id) as UserStore
+      await userStore.updateUser(firestoredUser)
+
       // ユーザー情報を再取得して更新
       await auth.currentUser.reload();
       updateProviderData(auth.currentUser);
