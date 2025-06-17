@@ -224,6 +224,7 @@ export default {
     'choice_profile_image': 'プロフィール画像を選択してください。',
     'fail_image_upload': '画像のアップロードに失敗しました。',
     'profile_settings': 'プロフィール設定',
+    'social_link': 'ソーシャルリンク',
     'profile_image': 'プロフィール画像',
     'user_account': 'ユーザーURL',
     'user_name': 'ユーザー名',

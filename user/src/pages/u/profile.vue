@@ -421,7 +421,18 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   :disabled="isLoading"
                   :rules="[noReservedCharsValidator]"
               />
+
+              <v-textarea
+                  :label="$t('profile.user_description')"
+                  v-model="user.user_description"
+                  rows="5"
+                  variant="outlined"
+                  :disabled="isLoading"
+                  :rules="[requiredValidator]"
+              />
             </v-sheet>
+
+            <div class="text-center text-h3 font-weight-bold pt-16 mt-16 mb-16">{{ $t('profile.social_link') }}</div>
 
             <v-sheet class="d-flex flex-column ga-7">
               <v-text-field
@@ -457,15 +468,6 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   variant="outlined"
                   :disabled="isLoading"
                   :rules="[urlValidator]"
-              />
-
-              <v-textarea
-                  :label="$t('profile.user_description')"
-                  v-model="user.user_description"
-                  rows="5"
-                  variant="outlined"
-                  :disabled="isLoading"
-                  :rules="[requiredValidator]"
               />
 
               <v-row justify="center">
@@ -505,9 +507,13 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.account_linkage') }}</div>
 
           <div class="d-flex justify-space-between align-center my-8">
-            <label class="align-center">
-              <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>{{ $t('profile.google') }}
-            </label>
+            <div class="d-flex flex-column">
+              <label class="align-center">
+                <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>{{ $t('profile.google') }}
+              </label>
+              <label v-if="user.user_sns_google" class="ml-11 font-weight-bold">{{ user.user_sns_google }}</label>
+            </div>
+
             <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">{{ $t('profile.linkage') }}</v-btn>
             <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
@@ -515,9 +521,13 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
           <hr>
 
           <div class="d-flex justify-space-between align-center my-8">
-            <label class="align-center">
-              <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>{{ $t('profile.facebook') }}
-            </label>
+            <div class="d-flex flex-column">
+              <label class="align-center">
+                <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>{{ $t('profile.facebook') }}
+              </label>
+              <label v-if="user.user_sns_facebook_name" class="ml-11 font-weight-bold">{{ user.user_sns_facebook_name }}</label>
+            </div>
+
             <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">{{ $t('profile.linkage') }}</v-btn>
             <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
@@ -525,9 +535,13 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
           <hr>
 
           <div class="d-flex justify-space-between align-center my-8">
-            <label class="align-center">
-              <v-icon :icon="XIcon" size="x-large" class="me-3"/>{{ $t('profile.twitter') }}
-            </label>
+            <div class="d-flex flex-column">
+              <label class="align-center">
+                <v-icon :icon="XIcon" size="x-large" class="me-3"/>{{ $t('profile.twitter') }}
+              </label>
+              <label v-if="user.user_sns_twitter" class="ml-11 font-weight-bold">{{ user.user_sns_twitter }}</label>
+            </div>
+
             <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">{{ $t('profile.linkage') }}</v-btn>
             <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
