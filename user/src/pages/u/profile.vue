@@ -375,7 +375,7 @@ onMounted(async () => {
       useStoreFirebaseAuthError().reset()
       return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
     }
-  } else {
+  } else if (error) {
     console.error({ error })
   }
 
