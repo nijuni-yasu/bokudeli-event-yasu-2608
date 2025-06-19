@@ -9,6 +9,7 @@ export default {
     'about': 'shokujiiって？',
     'magagine': 'マガジン',
     'x': '#最新情報',
+    'manage_top': '主催者画面TOP',
     'manage_event': 'イベント管理',
     'manage_community': 'コミュニティ管理',
     'guide_top': 'コミュニティガイド',
