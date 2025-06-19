@@ -61,6 +61,11 @@ export class ShokujiiCommunity extends Community {
     return members.some((member) => member.id === memberId && member.roles.includes(role))
   }
 
+  async getMembersByRole(role: CommunityMemberRolesType): Promise<CommunityMember[]> {
+    const members = await this.getMembers()
+    return members.filter((member) => member.roles.includes(role))
+  }
+
   async generateInvitationUrlForManager(uid: string): Promise<string> {
     const db = getFirestore()
     const invitesCollectionRef = db
@@ -126,5 +131,5 @@ export const getCommunity = async (communityId: string): Promise<ShokujiiCommuni
   const communityRef = db.collection('communities').doc(communityId).withConverter(communityConverter)
 
   const snapshot = await communityRef.get()
-  return snapshot.exists ? snapshot.data() ?? undefined : undefined
+  return snapshot.exists ? (snapshot.data() ?? undefined) : undefined
 }
