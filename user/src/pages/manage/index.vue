@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ManageTopCard from '@/componentsLocal/ManageTopCard.vue'
-import about from '@/assets/images/manage_top/about_shokujii.png'
 import howto01 from '@/assets/images/manage_top/manage_howto_icon_01.png'
 import howto02 from '@/assets/images/manage_top/manage_howto_icon_02.png'
 import howto03 from '@/assets/images/manage_top/manage_howto_icon_03.png'
@@ -17,77 +16,73 @@ import func05 from '@/assets/images/manage_top/manage_func_icon_05.png'
 import func06 from '@/assets/images/manage_top/manage_func_icon_06.png'
 import func07 from '@/assets/images/manage_top/manage_func_icon_07.png'
 import func08 from '@/assets/images/manage_top/manage_func_icon_08.png'
-import func09 from '@/assets/images/manage_top/manage_func_icon_09.png'
 import price01 from '@/assets/images/manage_top/manage_price_icon_01.png'
 import price02 from '@/assets/images/manage_top/manage_price_icon_02.png'
 import support01 from '@/assets/images/manage_top/manage_support_icon_01.png'
 import support02 from '@/assets/images/manage_top/manage_support_icon_02.png'
 import support03 from '@/assets/images/manage_top/manage_support_icon_03.png'
 
+const { t } = useI18n()
 
 const howtos = [
   {
     stepNumber: '①',
-    title: 'コミュニティを作成',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: 'コミュニティを作成',
+    title: t('manage.top.howto.step1.title'),
+    description: t('manage.top.howto.step1.description'),
+    buttonText: t('manage.top.howto.step1.button'),
     buttonLink: '/manage/newcommunity',
     imageSrc: howto01
   },
   {
     stepNumber: '②',
-    title: 'イベントを下書き作成',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: 'イベントを作成',
+    title: t('manage.top.howto.step2.title'),
+    description: t('manage.top.howto.step2.description'),
+    buttonText: t('manage.top.howto.step2.button'),
     buttonLink: '/manage/event',
     imageSrc: howto02
   },
   {
     stepNumber: '③',
-    title: 'お店に予約申請',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.howto.step3.title'),
+    description: t('manage.top.howto.step3.description'),
+    buttonText: t('manage.top.howto.step3.button'),
     imageSrc: howto03
   },
   {
     stepNumber: '④',
-    title: 'まずは主催者が注文！',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.howto.step4.title'),
+    description: t('manage.top.howto.step4.description'),
+    buttonText: t('manage.top.howto.step4.button'),
     imageSrc: howto04
   },
   {
     stepNumber: '⑤',
-    title: 'SNSやメールで告知',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.howto.step5.title'),
+    description: t('manage.top.howto.step5.description'),
+    buttonText: t('manage.top.howto.step5.button'),
+    buttonHref: 'https://bit.ly/40UmEzA',
     imageSrc: howto05
   },
   {
     stepNumber: '⑥',
-    title: '注文期限で自動発注',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.howto.step6.title'),
+    description: t('manage.top.howto.step6.description'),
+    buttonText: t('manage.top.howto.step6.button'),
     imageSrc: howto06
   },
   {
     stepNumber: '⑦',
-    title: 'お店からデリバリー',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.howto.step7.title'),
+    description: t('manage.top.howto.step7.description'),
+    buttonText: t('manage.top.howto.step7.button'),
     imageSrc: howto07
   },
   {
     stepNumber: '⑧',
-    title: 'いただきます！',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.howto.step8.title'),
+    description: t('manage.top.howto.step8.description'),
+    buttonText: t('manage.top.howto.step8.button'),
+    buttonHref: 'https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_33#slide=id.g2b9c62499c1_0_33',
     imageSrc: howto08
   }
 ]
@@ -95,100 +90,85 @@ const howtos = [
 const functions = [
   {
     stepNumber: '①',
-    title: '参加者 事前決済',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step1.title'),
+    description: t('manage.top.functions.step1.description'),
+    buttonText: t('manage.top.functions.step1.button'),
     imageSrc: func01
   },
   {
     stepNumber: '②',
-    title: '主催者 請求書払い',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step2.title'),
+    description: t('manage.top.functions.step2.description'),
+    buttonText: t('manage.top.functions.step2.button'),
     imageSrc: func02
   },
   {
     stepNumber: '③',
-    title: '公開設定/URL限定公開',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step3.title'),
+    description: t('manage.top.functions.step3.description'),
+    buttonText: t('manage.top.functions.step3.button'),
     imageSrc: func03
   },
   {
     stepNumber: '④',
-    title: '管理者追加/削除',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step4.title'),
+    description: t('manage.top.functions.step4.description'),
+    buttonText: t('manage.top.functions.step4.button'),
     imageSrc: func04
   },
   {
     stepNumber: '⑤',
-    title: 'SNS投稿機能',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step5.title'),
+    description: t('manage.top.functions.step5.description'),
+    buttonText: t('manage.top.functions.step5.button'),
     imageSrc: func05
   },
   {
     stepNumber: '⑥',
-    title: 'レター機能(メール配信)',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step6.title'),
+    description: t('manage.top.functions.step6.description'),
+    buttonText: t('manage.top.functions.step6.button'),
+    buttonHref: 'https://note.com/shokujii/n/n0c961c680fd3',
     imageSrc: func06
   },
   {
     stepNumber: '⑦',
-    title: 'チラシ生成機能',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step7.title'),
+    description: t('manage.top.functions.step7.description'),
+    buttonText: t('manage.top.functions.step7.button'),
+    buttonHref: 'https://bit.ly/433wAbb',
     imageSrc: func07
   },
   {
     stepNumber: '⑧',
-    title: 'Slack連携',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.functions.step8.title'),
+    description: t('manage.top.functions.step8.description'),
+    buttonText: t('manage.top.functions.step8.button'),
+    buttonHref: 'https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit#slide=id.g2e7a4494cae_0_0',
     imageSrc: func08
   },
-  {
-    stepNumber: '⑨',
-    title: 'and so on...',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    imageSrc: func09
-  }
 
 ]
 
 const prices = [
   {
     stepNumber: '①',
-    title: '主催者利用料 無料',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.prices.step1.title'),
+    description: t('manage.top.prices.step1.description'),
+    buttonText: t('manage.top.prices.step1.button'),
     imageSrc: price01
   },
   {
     stepNumber: '②',
-    title: '配送料 無料',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.prices.step2.title'),
+    description: t('manage.top.prices.step2.description'),
+    buttonText: t('manage.top.prices.step2.button'),
     imageSrc: price02
   },
   {
     stepNumber: '③',
-    title: '請求書払い手数料',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.prices.step3.title'),
+    description: t('manage.top.prices.step3.description'),
     imageSrc: func02
   },
 ]
@@ -196,26 +176,25 @@ const prices = [
 const supports = [
   {
     stepNumber: '①',
-    title: 'チャットでサポート',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.supports.step1.title'),
+    description: t('manage.top.supports.step1.description'),
+    buttonText: t('manage.top.supports.step1.button'),
     imageSrc: support01
   },
   {
     stepNumber: '②',
-    title: 'オンラインMTG',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.supports.step2.title'),
+    description: t('manage.top.supports.step2.description'),
+    buttonText: t('manage.top.supports.step2.button'),
+    buttonHref: 'https://app.spirinc.com/t/V4L1T-BBygLMPlpaQZLVl/as/JBl3hjWrljOL70sPAeQCp/confirm',
     imageSrc: support02
   },
   {
     stepNumber: '③',
-    title: '緊急連絡先',
-    description: '説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文・説明文',
-    buttonText: '詳細を見る',
-    buttonHref: 'https://bit.ly/3S3L8Sv',
+    title: t('manage.top.supports.step3.title'),
+    description: t('manage.top.supports.step3.description'),
+    buttonText: t('manage.top.supports.step3.button'),
+    buttonHref: 'tel:05017215838',
     imageSrc: support03
   },
 ]
@@ -229,19 +208,18 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">【shokujiiって？】</span>
+                <span class="text-h2 font-weight-bold">{{ $t('manage.top.about_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
-                  食事でつながる「shokujii」は「イベント集客ツール」に「フードオーダーシステム」を組み合わせたWEBサービスです。<br>
-                  イベント主催者は、注文するお店を選ぶだけで、簡単にイベントのコンテンツを作ることができます。<br>
-                  さらにイベント参加者は、食べたいメニューを選んで事前決済するだけでそのコミュニティの輪に加わることができます。<br>
-                  食のもとに人が集い、人のもとにさらに人が集う。食を通じた出会いの場を作ります。<br>
-                  <a href="https://about.shokujii.jp/" target="_blank">https://about.shokujii.jp/</a>
+                  <div v-html="$t('manage.top.about_description')"/>
+                  <v-btn class="ma-5" color="primary" variant="outlined" href="https://about.shokujii.jp" target="_blank">
+                    {{ $t('manage.top.about_button_01') }}
+                  </v-btn>
+                  <v-btn class="ma-5" color="primary" variant="outlined" href="https://corporate-lp.shokujii.jp/" target="_blank">
+                    {{ $t('manage.top.about_button_02') }}
+                  </v-btn>
                 </span>
-                <div class="text-center d-flex justify-center pa-1">
-                  <v-img width="600px" height="300px" :src="about"/>
-                </div>
               </v-card-text>
             </v-col>
           </v-row>
@@ -250,11 +228,11 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">【イベント開催の流れ】</span>
+                <span class="text-h2 font-weight-bold">{{ $t('manage.top.flow_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
-                  イベント開催の流れをご覧ください。イベント開催の流れをご覧ください。
+                  {{ $t('manage.top.flow_description') }}
                 </span>
               </v-card-text>
             </v-col>
@@ -270,6 +248,7 @@ const supports = [
               :button-text="step?.buttonText"
               :button-link="step?.buttonLink"
               :button-href="step?.buttonHref"
+              :min-height="370"
             />
           </v-row>
         </v-container>
@@ -277,11 +256,11 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">【機能一覧】</span>
+                <span class="text-h2 font-weight-bold">{{ $t('manage.top.function_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
-                  shokujiiでできることをご覧ください。shokujiiでできることをご覧ください。
+                  {{ $t('manage.top.function_description') }}
                 </span>
               </v-card-text>
             </v-col>
@@ -296,6 +275,7 @@ const supports = [
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
               :button-href="step?.buttonHref"
+              :min-height="350"
             />
           </v-row>
         </v-container>
@@ -303,11 +283,11 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">【利用料金】</span>
+                <span class="text-h2 font-weight-bold">{{ $t('manage.top.price_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
-                 基本無料でご利用いただけます。
+                  {{ $t('manage.top.price_description') }}
                 </span>
               </v-card-text>
             </v-col>
@@ -322,6 +302,7 @@ const supports = [
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
               :button-href="step?.buttonHref"
+              :min-height="350"
             />
           </v-row>
         </v-container>
@@ -329,11 +310,11 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">【サポート】</span>
+                <span class="text-h2 font-weight-bold">{{ $t('manage.top.support_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
-                  サポートにご連絡ください。
+                  {{ $t('manage.top.support_description') }}
                 </span>
               </v-card-text>
             </v-col>
@@ -348,6 +329,7 @@ const supports = [
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
               :button-href="step?.buttonHref"
+              :min-height="390"
             />
           </v-row>
         </v-container>
