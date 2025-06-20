@@ -29,7 +29,7 @@
       "rewrites": [
         {
           "source": "/c/**/e/**",
-          "function": "replace_ogp_tags",
+          "function": "handleEventOgpRequest",
           "region": "asia-northeast1"
         },
         {
@@ -45,7 +45,7 @@
       "rewrites": [
         {
           "source": "/c/**/e/**",
-          "function": "replace_ogp_tags",
+          "function": "handleEventOgpRequest",
           "region": "asia-northeast1"
         },
         {
