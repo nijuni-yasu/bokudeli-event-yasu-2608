@@ -11,6 +11,8 @@ import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@/components/EventDetailsCard.vue'
 import EventStatusChip from '@/components/EventStatusChip.vue'
+import Banners from '@/components/Banners.vue'
+import { useBannersStore } from '@/stores/banner'
 
 const communityId = useRoute().params.communityId as string
 const eventId = useRoute().params.eventId as string
@@ -19,6 +21,7 @@ const { t: $t } = useI18n()
 
 const eventStore = useEventStore(eventId) as EventStore
 const communityStore = useCommunityStore(communityId) as CommunityStore
+const bannersStore = useBannersStore('event_banners')
 const menuNavigation = ref(true)
 const menuListRef = ref()
 let menuListObserver: IntersectionObserver | null = null
@@ -235,6 +238,9 @@ onUnmounted(() => {
           :disabled="menuDisabled !== false"
           @select-menu="selectMenu"
         />
+      </v-col>
+      <v-col md="6" sm="8" cols="11" class="ma-0 mt-md-16">
+        <Banners :banners="bannersStore.banners ?? []" />
       </v-col>
     </v-row>
   </div>
