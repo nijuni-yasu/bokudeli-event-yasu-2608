@@ -208,7 +208,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">{{ $t('manage.top.about_title') }}</span>
+                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.about_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -228,7 +228,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">{{ $t('manage.top.flow_title') }}</span>
+                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.flow_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -256,7 +256,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">{{ $t('manage.top.function_title') }}</span>
+                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.function_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -283,7 +283,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">{{ $t('manage.top.price_title') }}</span>
+                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.price_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -310,7 +310,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h2 font-weight-bold">{{ $t('manage.top.support_title') }}</span>
+                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.support_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -342,3 +342,9 @@ const supports = [
 meta:
   layout: manage
 </route>
+<style scoped>
+.v-card-text {
+  padding-right: 5px !important;
+  padding-left: 5px !important;
+}
+</style>
