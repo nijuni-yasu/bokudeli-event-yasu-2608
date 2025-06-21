@@ -104,7 +104,7 @@ const isOpenNewCommunityDialog = ref(false)
             <ImageInput
               :url="community.community_icon_image_url ?? undefined"
               :rules="[requiredValidator]"
-              style="width: auto; max-width: min(100%, 200px); aspect-ratio: 1/1"
+              style="width: auto; max-width: min(100%, 150px); aspect-ratio: 1/1"
               :cover="true"
               @fileSelected="(f) => (iconImageFile = f)"
             />
