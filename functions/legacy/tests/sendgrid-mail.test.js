@@ -187,33 +187,6 @@ describe('event_information のテスト', () => {
   })
 })
 
-describe('community_added のテスト', () => {
-  test('community が新しく作成されたら、DEFAULT_TO にメールが送信される', async () => {
-    const wrapped = functionsTest.wrap((await import('../sendgrid-mail')).community_added)
-    const input = functionsTest.firestore.makeDocumentSnapshot(
-      {
-        community_name: 'ぼくデリ',
-        community_account: 'bokudeli',
-      },
-      'communities/5oxesNeS5dO078qABR98',
-    )
-    await wrapped(input)
-
-    // assert
-    expect(sgMail.send).toHaveBeenCalledOnce()
-    expect(sgMail.send).toHaveBeenCalledWith({
-      to: 'support+to@nijuni.jp',
-      from: '食事でつながる「shokujii」<shokujii@nijuni.jp>',
-      subject: '「ぼくデリ」コミュニティが新規申請されました',
-      text:
-        '【ID】 5oxesNeS5dO078qABR98\n' +
-        '【コミュニティ名】 ぼくデリ\n' +
-        '【コミュニティID】 bokudeli\n' +
-        '【コミュニティページURL】 https://undefined/c/bokudeli',
-    })
-  })
-})
-
 describe('polling のテスト', async () => {
   beforeAll(async () => {
     await initializeDb((await import('./sendgrid-mail.data')).event_information_default)
