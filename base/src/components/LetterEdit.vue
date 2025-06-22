@@ -70,7 +70,8 @@ const scheduledMinute = computed({
 
 const _save = async () => {
   if (_letter.value.letter_id == null) {
-    await letterListStore.addLetter(toRaw(_letter.value))
+    const newLetterId = await letterListStore.addLetter(toRaw(_letter.value))
+    _letter.value.letter_id = newLetterId
   } else {
     await letterListStore.updateLetter(toRaw(_letter.value))
   }
