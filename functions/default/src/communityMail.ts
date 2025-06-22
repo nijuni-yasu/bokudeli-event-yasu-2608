@@ -53,20 +53,20 @@ async function sendCommunityAddedMailToOrganizer(templateId: string, community: 
         to,
         from: DEFAULT_FROM,
         templateId,
-        dynamic_template_data: {
+        dynamicTemplateData: {
           community_account,
           community_name,
           community_url,
           community_manage_url,
         },
-      } as any)
+      })
     }),
   )
 }
 
 async function sendCommunityContactMailToOrganizers(templateId: string, data: any): Promise<void[]> {
   const emails = await getCommunityEmails(data.community_id)
-  const dynamic_template_data = data
+  const dynamicTemplateData = data
   if (!emails.includes(SUPPORT_MAIL)) {
     emails.push(SUPPORT_MAIL)
   }
@@ -76,7 +76,7 @@ async function sendCommunityContactMailToOrganizers(templateId: string, data: an
         to,
         from: DEFAULT_FROM,
         templateId,
-        dynamic_template_data,
+        dynamicTemplateData,
       } as any)
     }),
   )
