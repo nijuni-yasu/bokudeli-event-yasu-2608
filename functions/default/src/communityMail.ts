@@ -1,6 +1,6 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail'
+import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getCommunityUrl, getManageCommunityUrl } from './utils/urls.js'
 import { getCommunity, ShokujiiCommunity } from './stores/community.js'
