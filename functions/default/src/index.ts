@@ -19,7 +19,14 @@ export const {
   sendTestLetter,
   handleEventOgpRequest,
   handleCommunityOgpRequest,
+  communityAdded,
+  communityContact,
 } = Object.assign(
   {},
-  ...(await Promise.all([import('./communityManager.js'), import('./letter.js'), import('./ogpRequest.js')])),
+  ...(await Promise.all([
+    import('./communityManager.js'),
+    import('./letter.js'),
+    import('./ogpRequest.js'),
+    import('./communityMail.js'),
+  ])),
 )

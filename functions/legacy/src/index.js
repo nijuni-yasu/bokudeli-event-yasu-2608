@@ -15,8 +15,6 @@ export const {
   on_event_changed,
   on_shop_changed,
   on_order_changed,
-  community_added,
-  community_contact,
   send_email,
 } = await import('./sendgrid-mail.js')
 export const { on_write_community_members } = await import('./community-members.js')
