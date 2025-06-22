@@ -131,5 +131,5 @@ export const getCommunity = async (communityId: string): Promise<ShokujiiCommuni
   const communityRef = db.collection('communities').doc(communityId).withConverter(communityConverter)
 
   const snapshot = await communityRef.get()
-  return snapshot.exists ? (snapshot.data() ?? undefined) : undefined
+  return snapshot.exists ? snapshot.data() : undefined
 }
