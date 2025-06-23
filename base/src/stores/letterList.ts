@@ -30,7 +30,7 @@ type LetterListStoreState = {
 type LetterListStoreGetters = {}
 
 type LetterListStoreAction = {
-  addLetter: (data: Letter) => Promise<string>
+  addLetter: (data: Letter) => Promise<Letter>
   updateLetter: (data: Letter) => Promise<void>
   deleteLetter: (letterId: string) => Promise<void>
   reload: () => void
@@ -85,12 +85,13 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
 
       const addLetter = async (data: Letter) => {
         const newLetterRef = doc(await getLetterRef())
-        await setDoc(newLetterRef, {
+        const newData: Letter = {
           ...data,
           letter_id: newLetterRef.id,
           updated_at: Timestamp.now(),
-        })
-        return newLetterRef.id
+        }
+        await setDoc(newLetterRef, newData)
+        return newData
       }
 
       const updateLetter = async (data: Letter) => {
