@@ -48,6 +48,7 @@ const isSubmitDisabled = computed(() => {
 
 const isScheduled = ref(false)
 const scheduleTime = ref(Timestamp.now())
+const isTestSending = ref(false)
 
 const scheduledDate = computed({
   get: () => dateString(scheduleTime.value.toDate() ?? null),
@@ -70,7 +71,8 @@ const scheduledMinute = computed({
 
 const _save = async () => {
   if (_letter.value.letter_id == null) {
-    await letterListStore.addLetter(toRaw(_letter.value))
+    const newLetter = await letterListStore.addLetter(toRaw(_letter.value))
+    _letter.value.letter_id = newLetter.letter_id!
   } else {
     await letterListStore.updateLetter(toRaw(_letter.value))
   }
@@ -103,6 +105,7 @@ const save = async () => {
 }
 const sendTest = async () => {
   try {
+    isTestSending.value = true
     await _save()
     // ! は本来使うべきではないが、sendTest が呼ばれるケースでは必ず community は存在することが保証されている
     // TODO store の方で存在を保証する仕組みを用意する
@@ -111,6 +114,8 @@ const sendTest = async () => {
   } catch (e) {
     console.error(e)
     notification.show($t('manage.letter.edit.send_test_error'), 'error')
+  } finally {
+    isTestSending.value = false
   }
 }
 </script>
@@ -220,7 +225,7 @@ const sendTest = async () => {
             <v-btn @click="save" variant="outlined" :disabled="!isValid">
               {{ _letter.status === 'draft' ? $t('manage.letter.edit.save_draft') : $t('manage.letter.edit.to_draft') }}
             </v-btn>
-            <v-btn v-if="_letter.status === 'draft'" @click="sendTest" :disabled="!isValid">
+            <v-btn v-if="_letter.status === 'draft'" @click="sendTest" :disabled="!isValid || isTestSending" :loading="isTestSending">
               {{ $t('manage.letter.edit.send_test') }}
             </v-btn>
             <v-btn @click="submit" :disabled="isSubmitDisabled">

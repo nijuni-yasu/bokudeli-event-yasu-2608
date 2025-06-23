@@ -40,6 +40,7 @@ const generateDynamicTemplateData = async (communityId: string, letterId: string
     letter_title: letter.letter_title,
     letter_content: letter.letter_content,
     letter_type: letter.letter_type,
+    user_name: 'ユーザー名',
     ...eventInfo,
   }
 }
