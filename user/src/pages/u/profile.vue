@@ -5,7 +5,7 @@ import GoogleIcon from '@/icons/google.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import {convertFirestoredUserToStoredUser, convertStoredUserToFirestoredUser} from "@/schemes/converter";
-import {FirestoredUser, type StoredUser} from "@/schemes/storedUser"
+import {FirestoredUser, type FirestoredUserPersonalInformation, type StoredUser} from "@/schemes/storedUser"
 import UserAvatar from '@/components/UserAvatar.vue'
 import {buildThumbnailsLinks} from '@/composable/buildThumbnailsLinks'
 import {
@@ -15,8 +15,8 @@ import {
   TwitterAuthProvider,
   unlink,
   type User,
-  updateEmail,
-  signInWithCustomToken, type AdditionalUserInfo, getAdditionalUserInfo
+  type AdditionalUserInfo,
+  getAdditionalUserInfo,
 } from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
@@ -32,6 +32,7 @@ import { mdiUpload } from '@mdi/js'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
+import {generatePassCode} from "@/utils/generatePassCode";
 
 const auth = getAuth()
 const currentUser = auth.currentUser;
@@ -61,7 +62,9 @@ const user = computed(() => {
 const router = useRouter()
 const route = useRoute()
 
-const isLoading = ref(false)
+const isProfileLoading = ref(false)
+const isEmailLoading = ref(false)
+const isSnsLoading = ref(false)
 
 const isValidProfile = ref(false)
 const isValidEmail = ref(false)
@@ -100,7 +103,6 @@ const validateImage = () => {
 watch(userImage, validateImage)
 // バリデーション関連 ここまで
 
-
 // 画像ファイル選択処理
 const triggerFileInput = (): void => {
   fileInput.value?.click()
@@ -116,7 +118,6 @@ const readImageFiles = (files: File | File[]) => {
   firestoredUser.user_thumb_image_urls = buildThumbnailsLinks(firestoredUser.user_id, new URL(URL.createObjectURL(file)))
 }
 
-
 const profileSubmit = async () => {
   if (!isValidProfile.value || !validateImage()) {
     validateImage()
@@ -125,7 +126,7 @@ const profileSubmit = async () => {
   }
 
   try {
-    isLoading.value = true
+    isProfileLoading.value = true
 
     const firestoredUser = user.value as FirestoredUser
     const image = userImage.value
@@ -134,7 +135,9 @@ const profileSubmit = async () => {
         where('user_email', '==', email.value)
     ))
 
-    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.docs[0].data().user_email))
+    if (!personalInformationSnapshot.docs[0]) return console.error('upi doesn\'t exist')
+
+    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.docs[0].data() as FirestoredUserPersonalInformation))
 
     const userStore = useUserStore(firestoredUser.user_id) as UserStore
     await userStore.updateUser(firestoredUser)
@@ -155,56 +158,36 @@ const profileSubmit = async () => {
   } catch (error) {
     console.warn("Error profile submit:", error);
   } finally {
-    isLoading.value = false
+    isProfileLoading.value = false
   }
 }
 
 const emailSubmit = async () => {
   try {
-    isLoading.value = true
-    let isError = false
+    isEmailLoading.value = true
 
-    // const storedUser = convertFirebaseUserToStoredUser(currentUser as User)
     const userEmail = email.value
     const userRef = doc(db, 'users', user.value?.user_id as string)
     const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.user_id as string)
 
     if (storedUser.value?.userEmail === userEmail) {
-      isLoading.value = false
+      isEmailLoading.value = false
       return Object.assign(notification, { message: $t('profile.not_changed_email'), color: 'warning' })
     }
 
-    await updateEmail(currentUser as User, userEmail).then(async () => {
-      await updateDoc(userRef, {
-        verified_at: null,
-      })
-      await updateDoc(personalInformationSnapshotRef, { user_email: userEmail })
-    }).catch(async (error) => {
-      console.error(error)
-      if (error.code === 'auth/requires-recent-login') {
-        const getCustomToken = httpsCallable(functions, "get_custom_token")
-        const result = await getCustomToken({ user_email: currentUser?.email })
-        const customToken = result.data as string
+    // メールアドレスが既に存在しているかチェック、存在していればreturnする。
+    const existPersonalInformation = await getDocs(query(
+        collection(db, 'users_personal_information'),
+        where('user_email', '==', userEmail)
+    ))
 
-        await signInWithCustomToken(auth, customToken).then(async (userCredential) => {
-          await updateEmail(userCredential.user as User, userEmail).then(async () => {
-            await updateDoc(userRef, {
-              verified_at: null,
-            })
-            await updateDoc(personalInformationSnapshotRef, { user_email: userEmail })
-          }).catch((error) => {
-            // 基本的にこのスコープのエラーが出る想定は無い
-            console.error(error)
-            isError = true
-          })
-        })
-      } else if (error.code === 'auth/email-already-in-use') {
-        isError = true
-        return Object.assign(notification, { message: $t('user.exists_email'), color: 'error' })
-      }
+    if (!existPersonalInformation.empty) {
+      return Object.assign(notification, { message: $t('profile.existEmail'), color: 'warning' })
+    }
+
+    await updateDoc(userRef, {
+      verified_at: null,
     })
-
-    if (isError) return
 
     const userSnapShot = await getDoc(doc(db, 'users', storedUser.value?.userId as string))
     const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', storedUser.value?.userId as string))
@@ -213,16 +196,31 @@ const emailSubmit = async () => {
     const currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data()!, personalInformationSnapshot.data()!)
     storedUserStore.update(currentStoredUser)
 
-    return Object.assign(notification, { message: $t('user.update_email'), color: 'success' })
+    await updateDoc(personalInformationSnapshotRef, { user_email_pending: userEmail })
+
+    const passCode = generatePassCode()
+    const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+    await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: passCode })
+
+    const sendPassCode = httpsCallable(functions, "send_pass_code")
+    await sendPassCode({ user_email: userEmail, user_pass_code: passCode })
+    return router.push({
+      path: '/pass-code',
+      query: {
+        email: userEmail,
+        redirect: route.path,
+      }
+    })
   } catch (error) {
     console.warn("Error email submit:", error);
   } finally {
-    isLoading.value = false
+    isEmailLoading.value = false
   }
 }
 
 const handleFacebookLink = async () => {
   try {
+    isSnsLoading.value = true
     const userCredential = await linkByProviderService(currentUser as User, 'Facebook')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
@@ -249,11 +247,14 @@ const handleFacebookLink = async () => {
     } else {
       console.error({ error })
     }
+  } finally {
+    isSnsLoading.value = false
   }
 }
 
 const handleGoogleLoginLink = async () => {
   try {
+    isSnsLoading.value = true
     const userCredential = await linkByProviderService(currentUser as User, 'Google')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
@@ -280,11 +281,14 @@ const handleGoogleLoginLink = async () => {
     } else {
       console.error({ error })
     }
+  } finally {
+    isSnsLoading.value = false
   }
 }
 
 const handleTwitterLoginLink = async () => {
   try {
+    isSnsLoading.value = true
     const userCredential = await linkByProviderService(currentUser as User, 'Twitter')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
@@ -311,6 +315,8 @@ const handleTwitterLoginLink = async () => {
     } else {
       console.error({ error })
     }
+  } finally {
+    isSnsLoading.value = false
   }
 }
 
@@ -322,7 +328,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
 const confirmUnLink = async (providerId: string) => {
   if (!providerId) return
   try {
-    isLoading.value = true
+    isSnsLoading.value = true
 
     if (auth.currentUser) {
       await unlink(auth.currentUser, providerId)
@@ -345,7 +351,10 @@ const confirmUnLink = async (providerId: string) => {
           firestoredUser.user_sns_twitter = null
           break
       }
-      storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.docs[0].data().user_email))
+
+      if (!personalInformationSnapshot.docs[0]) return console.error('upi doesn\'t exist')
+
+      storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.docs[0].data() as FirestoredUserPersonalInformation))
 
       const userStore = useUserStore(firestoredUser.user_id) as UserStore
       await userStore.updateUser(firestoredUser)
@@ -357,7 +366,7 @@ const confirmUnLink = async (providerId: string) => {
   } catch (error) {
     console.error(error)
   } finally {
-    isLoading.value = false
+    isSnsLoading.value = false
   }
 }
 
@@ -381,7 +390,9 @@ onMounted(async () => {
   }
 
   if (additionalUserInfo === null) return
+  isSnsLoading.value = true
   await setSNSProfile(additionalUserInfo)
+  isSnsLoading.value = false
 
   useStoreUserAdditionalInfo().reset()
 })
@@ -436,7 +447,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   :label="$t('profile.user_name')"
                   v-model="user.user_name"
                   variant="outlined"
-                  :disabled="isLoading"
+                  :disabled="isProfileLoading"
                   :rules="[requiredValidator]"
               />
 
@@ -445,7 +456,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   v-model="user.user_account"
                   prefix="shokujii.jp/u/"
                   variant="outlined"
-                  :disabled="isLoading"
+                  :disabled="isProfileLoading"
                   :rules="[noReservedCharsValidator]"
               />
 
@@ -454,7 +465,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   v-model="user.user_description"
                   rows="5"
                   variant="outlined"
-                  :disabled="isLoading"
+                  :disabled="isProfileLoading"
                   :rules="[requiredValidator]"
               />
             </v-sheet>
@@ -479,7 +490,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   prefix="facebook.com/"
                   variant="outlined"
                   hide-details
-                  :disabled="isLoading"
+                  :disabled="isProfileLoading"
               />
 
               <v-text-field
@@ -488,19 +499,19 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                   prefix="instagram.com/"
                   variant="outlined"
                   hide-details
-                  :disabled="isLoading"
+                  :disabled="isProfileLoading"
               />
 
               <v-text-field
                   :label="$t('profile.user_sns_website')"
                   v-model="user.user_sns_website"
                   variant="outlined"
-                  :disabled="isLoading"
+                  :disabled="isProfileLoading"
                   :rules="[urlValidator]"
               />
 
               <v-row justify="center">
-                <v-btn class="rounded-xl" color="primary" :loading="isLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
+                <v-btn class="rounded-xl" color="primary" :loading="isProfileLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
               </v-row>
             </v-sheet>
           </v-form>
@@ -519,11 +530,11 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                 :label="$t('profile.change_settings')"
                 v-model="email"
                 variant="outlined"
-                :disabled="isLoading"
+                :disabled="isEmailLoading"
                 :rules="[requiredValidator, emailValidator]"
             />
             <v-row justify="center">
-              <v-btn class="rounded-xl" color="primary" :disabled="!isValidEmail" :loading="isLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
+              <v-btn class="rounded-xl" color="primary" :disabled="!isValidEmail" :loading="isEmailLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
             </v-row>
           </v-form>
         </v-sheet>
@@ -544,7 +555,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
             </div>
 
             <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
 
           <hr>
@@ -558,7 +569,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
             </div>
 
             <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
 
           <hr>
@@ -572,7 +583,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
             </div>
 
             <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isLoading" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
         </v-sheet>
       </v-col>

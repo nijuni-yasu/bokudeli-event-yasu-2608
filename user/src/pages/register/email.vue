@@ -5,7 +5,7 @@ import logo from "@/assets/images/shokujii/shokujii_logo.png";
 import {generatePassCode} from "@/utils/generatePassCode";
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
-import {FirestoredUser} from "@/schemes/storedUser";
+import {FirestoredUser, type FirestoredUserPersonalInformation} from "@/schemes/storedUser";
 import {convertFirestoredUserToStoredUser} from "@/schemes/converter";
 import { getAuth, updateEmail, signInWithCustomToken, type User } from "firebase/auth";
 import {doc, getDoc, setDoc} from "firebase/firestore";
@@ -71,7 +71,7 @@ const submit = async () => {
     const passCode = generatePassCode()
     firestoredUser.user_pass_code = passCode
 
-    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, userEmail.value))
+    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.data() as FirestoredUserPersonalInformation))
 
     const userStore = useUserStore(firestoredUser.user_id) as UserStore
     await userStore.updateUser(firestoredUser)

@@ -11,6 +11,7 @@ export type StoredUser = {
   userId: string
   userName: string
   userEmail: string
+  userEmailPending: string | null
   userImageUrl: string | null
   userAccount: string | null
   userDescription: string | null
@@ -65,4 +66,5 @@ export class FirestoredUser {
 
 export type FirestoredUserPersonalInformation = {
   user_email: string
+  user_email_pending: string | null
 }

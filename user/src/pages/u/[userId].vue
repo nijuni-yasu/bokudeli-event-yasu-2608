@@ -20,6 +20,7 @@ import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getInvoicePdf } from '@/utils/pdf'
 import { useNotification } from '@/composable/notification'
+import { useStoreStoredUser } from "@/stores/storedUser";
 
 const route = useRoute()
 const router = useRouter()
@@ -64,6 +65,9 @@ const isOwner = computed(() => {
 })
 
 const { user } = storeToRefs(useUserStore(userId))
+const storedUserStore = useStoreStoredUser()
+const { storedUser } = storeToRefs(storedUserStore)
+const emailPending = storedUser.value?.userEmailPending as string | null
 const tabs = ref(null)
 const cancelOperatingOrder = ref<OrderItem | null>(null)
 
@@ -174,7 +178,7 @@ const downloadInvoice = async (order: OrderItem) => {
 <template>
   <v-row v-if="user != null" justify="center">
     <v-col cols="12" sm="8" md="3">
-      <UserBioPanel :user-data="user" :is-editable="isOwner" />
+      <UserBioPanel :user-data="user" :user-email-pending="emailPending" :is-editable="isOwner" />
     </v-col>
     <v-col cols="12" sm="8" md="9">
       <v-tabs v-model="tabs">

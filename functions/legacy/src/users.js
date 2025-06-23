@@ -7,11 +7,15 @@ const db = getFirestore()
 
 export const create_or_update_user = functions.region('asia-northeast1').https.onCall(async (data) => {
   try {
-    const { user_email, user_pass_code } = data
-    const personalInformationSnapshot = await db
-        .collection('users_personal_information')
-        .where('user_email', '==', user_email)
-        .get()
+    const { user_email, user_pass_code, user_email_pending } = data
+
+    let personalInformationSnapshot
+    if (user_email_pending) {
+      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email_pending', '==', user_email_pending).get()
+    } else {
+      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email', '==', user_email).get()
+
+    }
     const personalInformationId = personalInformationSnapshot.docs[0]?.id
 
     let userSnapshot
@@ -65,9 +69,14 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
 
 export const verify_pass_code = functions.region('asia-northeast1').https.onCall(async (data) => {
   try {
-    const { user_email, user_pass_code } = data
+    const { user_email, user_pass_code, user_email_pending } = data
 
-    const personalInformationSnapshot = await db.collection('users_personal_information').where('user_email', '==', user_email).get()
+    let personalInformationSnapshot
+    if (user_email_pending) {
+      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email_pending', '==', user_email_pending).get()
+    } else {
+      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email', '==', user_email).get()
+    }
     console.log('personalInformationSnapshot', personalInformationSnapshot.docs[0]?.id)
     const userSnapshot = await db.collection('users').where('user_id', '==', personalInformationSnapshot.docs[0].id).get()
     console.log('userSnapshot', userSnapshot.docs[0])

@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { useUserStore, type UserStore } from '@/stores/user'
-import { FirestoredUser } from '@/schemes/storedUser'
-import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
-import UserBioEditDialog from './UserBioEditDialog.vue'
+import {FirestoredUser, type FirestoredUserPersonalInformation} from '@/schemes/storedUser'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiTwitter, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
+import { db } from "@/firebase";
+import {doc, getDoc, Timestamp, updateDoc} from 'firebase/firestore'
+import {generatePassCode} from "@/utils/generatePassCode"
+import {httpsCallable} from 'firebase/functions'
+import { functions } from '@/firebase'
 
-const props = defineProps<{ userData: FirestoredUser; isEditable: boolean | undefined }>()
+const route = useRoute()
+const router = useRouter()
+
+const notification = inject('notification') as Notification
+const { t: $t } = useI18n()
+
+const props = defineProps<{ userData: FirestoredUser; userEmailPending: string | null; isEditable: boolean | undefined }>()
 
 const storedUserStore = useStoreStoredUser()
 
 const isEditable = computed(() => props.isEditable ?? false)
 
 const userName = computed(() => props.userData.user_name ?? 'ゲスト')
+const userEmailPending = ref(props.userEmailPending)
 const userDescription = computed(() => {
   return (
     props.userData.user_description ||
@@ -37,20 +46,39 @@ const websiteUrl = computed(() =>
   props.userData?.user_sns_website ? props.userData.user_sns_website : undefined,
 )
 
-const updateUserData = async (user: FirestoredUser, image?: File) => {
-  storedUserStore.update(convertFirestoredUserToStoredUser(user, storedUserStore.storedUser?.userEmail ?? ''))
+const certificationPendingEmail = async () => {
+  const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', props.userData.user_id as string))
+  const personalInformation = personalInformationSnapshot.data() as FirestoredUserPersonalInformation
+  const userEmail = personalInformation.user_email_pending
 
-  const userStore = useUserStore(props.userData.user_id) as UserStore
-  await userStore.updateUser(user)
-  if (image != null) {
-    try {
-      await userStore.uploadUserImage(image)
-    } catch (err) {
-      console.error(err)
-      window.alert('画像のアップロードに失敗しました')
+  // パスコード再発行
+  const reGeneratePassCode = generatePassCode()
+  const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+  await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
+
+  const sendPassCode = httpsCallable(functions, "send_pass_code")
+  await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
+  return router.push({
+    path: '/pass-code',
+    query: {
+      email: userEmail,
+      redirect: route.path,
     }
-  }
+  })
 }
+
+const cancelPendingEmail = async () => {
+  const userRef = doc(db, 'users', props.userData.user_id)
+  await updateDoc(userRef, {
+    user_pass_code: null,
+    verified_at: Timestamp.now(),
+  })
+  const personalInformationSnapshotRef = doc(db, 'users_personal_information', props.userData?.user_id)
+  await updateDoc(personalInformationSnapshotRef, { user_email_pending: null })
+  userEmailPending.value = null
+  return Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
+}
+
 </script>
 
 <template>
@@ -63,6 +91,17 @@ const updateUserData = async (user: FirestoredUser, image?: File) => {
         </v-card-title>
         <v-card-text>
           <div class="text-h5 text-center">{{ userName }}</div>
+        </v-card-text>
+        <v-card-text v-if="userEmailPending">
+          <div>
+            <span v-html="$t('user.pending_email', {pending_email: userEmailPending})"/>
+            <br>
+            <span style="color: red">{{ $t('user.notice_pending_email') }}</span>
+          </div>
+          <div class="d-flex flex-row justify-center">
+            <v-btn class="ma-2" @click="certificationPendingEmail">{{ $t('user.certification') }}</v-btn>
+            <v-btn class="ma-2" @click="cancelPendingEmail">{{ $t('user.cancel') }}</v-btn>
+          </div>
         </v-card-text>
         <v-row class="justify-center">
           <v-col cols="auto">

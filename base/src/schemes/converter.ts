@@ -4,7 +4,7 @@ import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import { type PartnerMenu } from './partnerMenu'
 import { type User } from 'firebase/auth'
-import { type StoredUser, FirestoredUser } from './storedUser'
+import {type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation} from './storedUser'
 
 export const dateString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
@@ -99,6 +99,7 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
     userId: uid,
     userName: displayName ?? '',
     userEmail: email ?? '',
+    userEmailPending: null,
     userImageUrl: photoURL ?? null,
     userAccount: null,
     userDescription: null,
@@ -137,11 +138,12 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
   })
 }
 
-export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser, email: string): StoredUser => {
+export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser, firestoredUserPersonalInformation: FirestoredUserPersonalInformation): StoredUser => {
   return {
     userId: firestoredUser.user_id,
     userName: firestoredUser.user_name,
-    userEmail: email,
+    userEmail: firestoredUserPersonalInformation.user_email,
+    userEmailPending: firestoredUserPersonalInformation.user_email_pending || null,
     userImageUrl: firestoredUser.user_image_url,
     userAccount: firestoredUser.user_account,
     userDescription: firestoredUser.user_description,
@@ -180,10 +182,13 @@ export const convertDocumentDataToStoredUser = (
     updated_at,
   } = documentData
 
+  const { user_email, user_email_pending } = personalInfomationData
+
   return {
     userId: user_id ?? '',
     userName: user_name ?? '',
-    userEmail: personalInfomationData.user_email ?? '',
+    userEmail: user_email ?? '',
+    userEmailPending: user_email_pending ?? null,
     userImageUrl: user_image_url ?? null,
     userAccount: user_account ?? '',
     userDescription: user_description ?? '',

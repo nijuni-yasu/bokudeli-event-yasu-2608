@@ -33,6 +33,10 @@ export default {
     'exists_email': '登録済みのメールアドレスです。\n他のメールアドレスを入力いただくか、登録済みメールアドレスのアカウントでログインしてください。',
     'update_email': 'メールアドレスを変更しました。',
     'exists_credential': '登録済みの{snsName}アカウントです。\n{snsName}アカウントでログインしてください。',
+    'pending_email': '変更中のメールアドレス<br/>{pending_email}',
+    'notice_pending_email': '※ メールアドレス変更中です。パスコードを認証してください',
+    'certification': '認証する',
+    'cancel': 'キャンセルする',
   },
   'manage': {
     'new_community': 'コミュニティ作成',
@@ -245,7 +249,8 @@ export default {
     'linked': '連携中',
     'twitter_link_modal_title' : 'X連携をしますか？',
     'unlink_modal_title' : '連携を解除しますか？',
-    'unlink': '解除'
+    'unlink': '解除',
+    'existEmail': 'すでに他ユーザーが利用しているメールアドレスです。'
   },
   'user_profile': {
     'logout': 'ログアウトする',
