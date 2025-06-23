@@ -86,6 +86,7 @@ export const communityAdded = onDocumentCreated(
   {
     document: 'communities/{communityId}',
     region: 'asia-northeast1',
+    secrets: ['SENDGRID_API_KEY'],
   },
   async (event) => {
     const community = new ShokujiiCommunity(event.id, event.data!)
@@ -96,6 +97,7 @@ export const communityAdded = onDocumentCreated(
 export const communityContact = onCall(
   {
     region: 'asia-northeast1',
+    secrets: ['SENDGRID_API_KEY'],
   },
   async (request) => {
     if (request.auth) {
