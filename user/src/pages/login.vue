@@ -270,6 +270,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
       storedUser.userSnsFacebookName = storedUser.userSnsFacebookName || additionalUserInfo.profile?.name as string
+
       storedUserStore.update(storedUser)
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
@@ -283,7 +284,10 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'google.com':
-      // TODO: userSnsGoogleの保存処理
+      storedUser.userSnsGoogle = storedUser.userSnsGoogle || additionalUserInfo?.profile?.email as string
+
+      storedUserStore.update(storedUser)
+      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     default:
       break
