@@ -87,7 +87,8 @@ export default {
     cannot_order_deadline: '注文期限をすぎました。注文確定できません。',
     cannot_order_limit_people: '定員に達しました。注文確定できません。',
     order_completed: '注文を完了しました。',
-    payment_failed: '決算処理に失敗しました。管理者にお問い合わせください。',
+    payment_failed: '決済処理に失敗しました。サポートにお問い合わせください。',
+    order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
     confirm_order_credit_card: 'クレジットカードの事前決済に進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
@@ -462,6 +463,20 @@ export default {
     title: 'メール送信',
     send_to: '送信先: {0}',
     send: '送信',
+  },
+  success_join_event_dialog: {
+    title: '注文完了🎉',
+    subtitle: '参加申し込みが完了しました！',
+    datetime: '📅 日時：',
+    deadline: '⏳ 期限：{0}に注文締切',
+    place: '📍 場所：',
+    organizer: '👥 主催：',
+    food: '👩‍🍳 食事：',
+    hashtag: '#️⃣ ハッシュタグ：',
+    share_on_x: 'X で参加予定をシェアする',
+    add_to_calendar: 'カレンダーに追加する',
+    copy_text: 'テキストコピー',
+    close: '閉じる'
   },
   error: {
     '404': {
