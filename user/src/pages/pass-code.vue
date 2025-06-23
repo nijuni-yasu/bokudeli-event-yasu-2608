@@ -119,9 +119,13 @@ const submit = async () => {
         const currentUser = getAuth().currentUser;
         const storedUserStore = useStoreStoredUser()
         const { storedUser } = storeToRefs(storedUserStore)
+        const userRef = doc(db, 'users', storedUser.value?.userId as string)
         const personalInformationSnapshotRef = doc(db, 'users_personal_information', storedUser.value?.userId as string)
 
         await updateEmail(currentUser as User, userEmail).then(async () => {
+          await updateDoc(userRef, {
+            verified_at: Timestamp,
+          })
           await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
         }).catch(async (error) => {
           console.error(error)
@@ -132,6 +136,9 @@ const submit = async () => {
 
             await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
               await updateEmail(userCredential.user as User, userEmail).then(async () => {
+                await updateDoc(userRef, {
+                  verified_at: null,
+                })
                 await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
               }).catch((error) => {
                 // 基本的にこのスコープのエラーが出る想定は無い

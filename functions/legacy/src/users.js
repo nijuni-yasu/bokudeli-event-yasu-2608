@@ -91,8 +91,13 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
 
       await userDoc.ref.update({
         user_pass_code: null,
-        verified_at: Timestamp.now()
       })
+
+      if (!personalInformationSnapshot.docs[0].data().user_email_pending) {
+        await userDoc.ref.update({
+            verified_at: Timestamp.now()
+        })
+      }
 
       const userId = userDoc.data().user_id
 
