@@ -1,5 +1,9 @@
 import _ from 'lodash'
 import type { DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
+import { generateRandomAccount } from '@/utils/generateRandomAccount'
+import {
+  COMMUNITY_DEFAULT_IMAGE_SETS,
+} from '@/utils/defaultImages'
 
 class BokudeliCommunity {
   is_approved: boolean = true
@@ -36,6 +40,24 @@ class BokudeliCommunity {
     if (communityData != null) {
       _.merge(this, communityData)
     }
+  }
+
+  /**
+   * 新規コミュニティ作成用のファクトリーメソッド
+   * デフォルト値を設定したBokudeliCommunityインスタンスを返す
+   */
+  static createNew(): BokudeliCommunity {
+    const community = new BokudeliCommunity()
+
+    // ランダムなインデックスを生成（01~08のセットで同じ値を使用）
+    const randomIndex = Math.floor(Math.random() * COMMUNITY_DEFAULT_IMAGE_SETS.length)
+
+    // デフォルト値を設定
+    community.community_cover_image_url = COMMUNITY_DEFAULT_IMAGE_SETS[randomIndex].cover
+    community.community_icon_image_url = COMMUNITY_DEFAULT_IMAGE_SETS[randomIndex].icon
+    community.community_account = generateRandomAccount()
+
+    return community
   }
 
   convertToDocumentData(): DocumentData {

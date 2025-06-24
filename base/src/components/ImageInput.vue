@@ -54,7 +54,7 @@ const onIconTriggerUpload = () => {
       v-bind="$attrs"
     >
       <v-file-input ref="fileInputRef" v-model="imageFile" class="file-input" accept="image/*" />
-      <v-img v-if="iconImageUrl != null" :src="iconImageUrl" v-bind="$attrs" />
+      <v-img v-if="iconImageUrl != null" :src="iconImageUrl" v-bind="$attrs" class="image-style"/>
       <slot v-else name="placeholder"></slot>
     </div>
     <v-validation :rules="rules" :validation-value="iconImageUrl ?? false">
@@ -86,8 +86,12 @@ const onIconTriggerUpload = () => {
   min-width: 100px;
   min-height: 100px;
   position: relative;
-  border: 1px solid rgba(118, 118, 118, 0.38);
+  border: 1px solid rgba(182, 182, 182, 0.2);
+  border-radius: 8px;
   display: block;
   cursor: pointer;
+}
+.image-style {
+  border-radius: 8px;
 }
 </style>
