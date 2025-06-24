@@ -7,7 +7,7 @@ import {
   DocumentReference,
 } from './firebase/index.js'
 
-const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
+export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
 
 const RAW_EVENT_STATUS_VALUES = ['in_draft', 'applying_reservation', 'applying_to_admin', 'accepting_order'] as const
