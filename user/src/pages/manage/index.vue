@@ -165,12 +165,12 @@ const prices = [
     buttonText: t('manage.top.prices.step2.button'),
     imageSrc: price02
   },
-  {
-    stepNumber: '③',
-    title: t('manage.top.prices.step3.title'),
-    description: t('manage.top.prices.step3.description'),
-    imageSrc: func02
-  },
+  // {
+  //   stepNumber: '③',
+  //   title: t('manage.top.prices.step3.title'),
+  //   description: t('manage.top.prices.step3.description'),
+  //   imageSrc: func02
+  // },
 ]
 
 const supports = [
@@ -208,7 +208,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.about_title') }}</span>
+                <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.about_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -228,7 +228,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.flow_title') }}</span>
+                <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.flow_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -256,7 +256,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.function_title') }}</span>
+                <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.function_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -283,7 +283,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.price_title') }}</span>
+                <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.price_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
@@ -301,7 +301,6 @@ const supports = [
               :description="step.description"
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
-              :button-href="step?.buttonHref"
               :min-height="350"
             />
           </v-row>
@@ -310,7 +309,7 @@ const supports = [
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
-                <span class="text-h4 text-md-h2 font-weight-bold">{{ $t('manage.top.support_title') }}</span>
+                <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.support_title') }}</span>
               </v-card-text>
               <v-card-text>
                 <span class="text-h5">
