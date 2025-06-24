@@ -44,6 +44,8 @@ export default {
       幹事業務がらくらくに。はじめて食事会を企画する方でも安心してお使いいただけます。<br>`,
       'about_button_01': '食事でつながる「shokujii」って？',
       'about_button_02': '社内交流も、営業活動、採用活動も、食事でつながる',
+      'community_list_title': '【コミュニティ】',
+      'community_list_description': 'コミュニティのみんなと食事会をひらこう🎉',
       'flow_title': '【イベント開催の流れ】',
       'flow_description': 'イベントを作成したらすぐに注文開始。お気軽にご利用ください。',
       'function_title': '【機能一覧】',

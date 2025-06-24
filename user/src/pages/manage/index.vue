@@ -22,6 +22,34 @@ import support01 from '@/assets/images/manage_top/manage_support_icon_01.png'
 import support02 from '@/assets/images/manage_top/manage_support_icon_02.png'
 import support03 from '@/assets/images/manage_top/manage_support_icon_03.png'
 
+import { getManageCommunityPath } from '@/router/utils'
+import { useCommunityListStore } from '@/stores/communityList'
+import { doc, orderBy, where } from 'firebase/firestore'
+import CommunityCardMini from '@/components/CommunityCardMini.vue'
+import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import { getAuth } from 'firebase/auth'
+import { db } from '@/firebase'
+
+const userId = getAuth().currentUser?.uid
+if (userId == null) {
+  throw new Error('User is not authenticated')
+}
+
+const communityListStore = useCommunityListStore(
+  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  10,
+)
+const communities = computed(() => {
+  return (
+    communityListStore.communityStores?.flatMap((communityStore) => {
+      if (communityStore.community == null || communityStore.members == null) {
+        return []
+      }
+      return communityStore.community
+    }) ?? []
+  )
+})
+
 const { t } = useI18n()
 
 const howtos = [
@@ -203,7 +231,40 @@ const supports = [
 <template>
   <v-row>
     <v-col cols="12">
-      <v-card class="pa-5">
+    <!-- 管理コミュニテイ一覧 -->
+      <v-card v-if="communityListStore.totalCount != null && communityListStore.totalCount > 0" class="pa-8 mb-10">
+        <v-row class="justify-center text-center">
+          <v-col md="10" sm="12" cols="12">
+            <v-card-text>
+              <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.community_list_title') }}</span>
+            </v-card-text>
+            <v-card-text>
+              <span class="text-h5">
+                {{ $t('manage.top.community_list_description') }}
+              </span>
+            </v-card-text>           
+          </v-col>    
+        </v-row>
+        <v-row class="justify-center ma-0">
+          <v-col v-for="community in communities" :key="community.community_id" md="2" sm="3" cols="6">
+            <router-link :to="getManageCommunityPath(community.community_account)">
+              <CommunityCardMini :community="community"/>
+            </router-link>
+          </v-col>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="auto">
+            <IncrementalLoader
+              class="my-5"
+              :total-count="communityListStore.totalCount ?? Infinity"
+              :loaded-count="communityListStore.communityStores?.length ?? 0"
+              @load="communityListStore.next()"
+            />
+          </v-col>
+        </v-row>
+      </v-card>
+    <!-- shokujii サービス概要 -->
+      <v-card>    
         <v-container class="my-15">
           <v-row class="text-center">
             <v-col cols="12">
