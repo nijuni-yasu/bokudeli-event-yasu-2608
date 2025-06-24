@@ -2,6 +2,21 @@ import { getFirestore, FirestoreDataConverter, QueryDocumentSnapshot, DocumentDa
 import { Event } from '../schemas/Event.js'
 import { getUser, type ShokujiiUser } from './user.js'
 
+class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
+  constructor(private readonly userId?: string) {
+    console.log('ShojukiEventConverter initialized with userId:', userId)
+  }
+  toFirestore(event: ShokujiiEvent): DocumentData {
+    if (this.userId == null) {
+      throw new Error('userId is required')
+    }
+    return event.toFirestore(this.userId)
+  }
+  fromFirestore(snapshot: QueryDocumentSnapshot): ShokujiiEvent {
+    return new ShokujiiEvent(snapshot.id, snapshot.data())
+  }
+}
+
 export class ShokujiiEvent extends Event {
   async getMembers(withPersonalInformation: boolean): Promise<ShokujiiUser[]> {
     const members = await Promise.all(this.members.map(async (id) => getUser(id, withPersonalInformation)))
@@ -16,21 +31,6 @@ export class ShokujiiEvent extends Event {
   removeMember(user: ShokujiiUser | string) {
     const id = typeof user === 'string' ? user : user.id
     super.removeMember(id)
-  }
-}
-
-class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
-  constructor(private readonly userId?: string) {
-    console.log('ShojukiEventConverter initialized with userId:', userId)
-  }
-  toFirestore(event: ShokujiiEvent): DocumentData {
-    if (this.userId == null) {
-      throw new Error('userId is required')
-    }
-    return event.toFirestore(this.userId)
-  }
-  fromFirestore(snapshot: QueryDocumentSnapshot): ShokujiiEvent {
-    return new ShokujiiEvent(snapshot.id, snapshot.data())
   }
 }
 
