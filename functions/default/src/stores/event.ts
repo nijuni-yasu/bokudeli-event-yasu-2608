@@ -7,6 +7,7 @@ import {
 } from 'firebase-admin/firestore'
 import { Event } from '../schemas/Event.js'
 import { EventOrder, EventOrderStatusType } from '../schemas/EventOrder.js'
+import { EventMenu } from '../schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
@@ -30,6 +31,15 @@ class ShokujiiEventOrderConverter implements FirestoreDataConverter<EventOrder> 
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): EventOrder {
     return new EventOrder(snapshot.id, snapshot.data())
+  }
+}
+
+class ShokujiiEventMenuConverter implements FirestoreDataConverter<EventMenu> {
+  toFirestore(order: EventMenu): DocumentData {
+    return order.toFirestore()
+  }
+  fromFirestore(snapshot: QueryDocumentSnapshot): EventMenu {
+    return new EventMenu(snapshot.id, snapshot.data())
   }
 }
 
@@ -76,6 +86,36 @@ export class ShokujiiEvent extends Event {
       await orderRef.set(order, { merge: true })
     } else {
       transaction.set(orderRef, order, { merge: true })
+    }
+  }
+
+  async getMenus(transaction?: Transaction): Promise<EventMenu[]> {
+    const db = getFirestore()
+    const menusRef = db
+      .collection('communities')
+      .doc(this.community_id)
+      .collection('events')
+      .doc(this.id)
+      .collection('menus')
+      .withConverter(new ShokujiiEventMenuConverter())
+    const snapshot = await (transaction === undefined ? menusRef.get() : transaction.get(menusRef))
+    return snapshot.docs.map((doc) => doc.data())
+  }
+
+  async saveMenu(menu: EventMenu, transaction?: Transaction): Promise<void> {
+    const db = getFirestore()
+    const menuRef = db
+      .collection('communities')
+      .doc(this.community_id)
+      .collection('events')
+      .doc(this.id)
+      .collection('menus')
+      .doc(menu.id)
+      .withConverter(new ShokujiiEventMenuConverter())
+    if (transaction === undefined) {
+      await menuRef.set(menu, { merge: true })
+    } else {
+      transaction.set(menuRef, menu, { merge: true })
     }
   }
 
