@@ -34,6 +34,13 @@ import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
 import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
 import {generatePassCode} from "@/utils/generatePassCode";
 
+type CustomData = {
+  email: string
+  _tokenResponse?: {
+    providerId?: string;
+  };
+}
+
 const auth = getAuth()
 const currentUser = auth.currentUser;
 
@@ -418,12 +425,29 @@ onMounted(async () => {
   const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
   const error = useStoreFirebaseAuthError().error
   if (error instanceof FirebaseError) {
-    const credential = TwitterAuthProvider.credentialFromError(error)
+    let credential
+    let snsName
+    const customData = error?.customData as CustomData
+    switch (customData._tokenResponse?.providerId) {
+      case 'google.com':
+        credential = GoogleAuthProvider.credentialFromError(error)
+        snsName = 'Google'
+        break
+      case 'facebook.com':
+        credential = FacebookAuthProvider.credentialFromError(error)
+        snsName = 'Facebook'
+        break
+      case 'twitter.com':
+        credential = TwitterAuthProvider.credentialFromError(error)
+        snsName = 'X'
+        break
+    }
+
     console.error({ error, credential })
 
     if (error.code === 'auth/credential-already-in-use') {
       useStoreFirebaseAuthError().reset()
-      return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+      return Object.assign(notification, { message: $t('user.exists_credential', {snsName: snsName}), color: 'error' })
     }
     if (error.code === 'auth/email-already-in-use') {
       useStoreFirebaseAuthError().reset()
