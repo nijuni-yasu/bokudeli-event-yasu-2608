@@ -240,7 +240,7 @@ const supports = [
               <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.community_list_title') }}</span>
             </v-card-text>
             <v-card-text>
-              <span class="text-h5">
+              <span class="text-h6">
                 {{ $t('manage.top.community_list_description') }}
               </span>
             </v-card-text>           
@@ -284,15 +284,15 @@ const supports = [
         </v-row>
       </v-card>
     <!-- shokujii サービス概要 -->
-      <v-card>    
-        <v-container class="my-15">
+      <v-card class="pa-5 pa-md-8">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.about_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   <div v-html="$t('manage.top.about_description')"/>
                   <v-btn class="ma-5" color="primary" variant="outlined" href="https://about.shokujii.jp" target="_blank">
                     {{ $t('manage.top.about_button_01') }}
@@ -305,20 +305,20 @@ const supports = [
             </v-col>
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.flow_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.flow_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row class="pb-10">
+          <v-row class="pb-10 align-stretch">
             <ManageTopCard
               v-for="step in howtos"
               :key="step.stepNumber"
@@ -329,24 +329,23 @@ const supports = [
               :button-text="step?.buttonText"
               :button-link="step?.buttonLink"
               :button-href="step?.buttonHref"
-              :min-height="370"
             />
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.function_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.function_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row>
+          <v-row class="align-stretch">
             <ManageTopCard
               v-for="step in functions"
               :key="step.stepNumber"
@@ -356,24 +355,23 @@ const supports = [
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
               :button-href="step?.buttonHref"
-              :min-height="350"
             />
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.price_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.price_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row class="justify-center">
+          <v-row class="justify-center align-stretch">
             <ManageTopCard
               v-for="step in prices"
               :key="step.stepNumber"
@@ -382,24 +380,23 @@ const supports = [
               :description="step.description"
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
-              :min-height="350"
             />
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.support_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.support_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row class="justify-center">
+          <v-row class="justify-center align-stretch">
             <ManageTopCard
               v-for="step in supports"
               :key="step.stepNumber"
