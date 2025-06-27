@@ -22,7 +22,7 @@ import {FirebaseError} from "firebase/app";
 import {useValidators} from "@/composable/validators";
 import type { VForm } from 'vuetify/components';
 import { db, functions } from "@/firebase";
-import {doc, updateDoc, getDoc, getDocs, query, collection, where} from 'firebase/firestore'
+import {doc, updateDoc, getDoc, getDocs, query, collection, where, Timestamp} from 'firebase/firestore'
 import {
   convertDocumentDataToStoredUser,
 } from '@/schemes/converter'
@@ -57,6 +57,10 @@ if (currentUser) {
 const user = computed(() => {
   const userId = storedUser.value?.userId
   return userId == null ? null : (useUserStore(userId) as UserStore).user
+})
+
+const userEmailPending = computed(() => {
+  return storedUser.value?.userEmailPending === null ? "" : (storedUser.value?.userEmailPending)
 })
 
 const router = useRouter()
@@ -216,6 +220,46 @@ const emailSubmit = async () => {
   } finally {
     isEmailLoading.value = false
   }
+}
+
+const certificationPendingEmail = async () => {
+  const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', user.value?.user_id as string))
+  const personalInformation = personalInformationSnapshot.data() as FirestoredUserPersonalInformation
+  const userEmail = personalInformation.user_email_pending
+
+  // パスコード再発行
+  const reGeneratePassCode = generatePassCode()
+  const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+  await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
+
+  const sendPassCode = httpsCallable(functions, "send_pass_code")
+  await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
+  return router.push({
+    path: '/pass-code',
+    query: {
+      email: userEmail,
+      redirect: route.path,
+    }
+  })
+}
+
+const cancelPendingEmail = async () => {
+  const userRef = doc(db, 'users', user.value?.user_id as string)
+  await updateDoc(userRef, {
+    user_pass_code: null,
+    verified_at: Timestamp.now(),
+  })
+  const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.user_id as string)
+  await updateDoc(personalInformationSnapshotRef, { user_email_pending: null })
+
+  const userSnapshot = await getDoc(userRef)
+  const userData = userSnapshot.data()
+  const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
+  const personalInformation = personalInformationSnapshot.data()
+
+  const storedUser = convertDocumentDataToStoredUser(userData!, personalInformation!)
+  storedUserStore.update(storedUser)
+  return Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
 }
 
 const handleFacebookLink = async () => {
@@ -523,20 +567,33 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
+          <v-card-text v-if="userEmailPending">
+            <div>
+              <span v-html="$t('profile.pending_email', {pending_email: userEmailPending})"/>
+              <br>
+              <span style="color: red">{{ $t('profile.notice_pending_email') }}</span>
+            </div>
+            <div class="d-flex flex-row justify-center">
+              <v-btn class="ma-2" @click="certificationPendingEmail">{{ $t('profile.certification') }}</v-btn>
+              <v-btn class="ma-2" @click="cancelPendingEmail">{{ $t('profile.cancel') }}</v-btn>
+            </div>
+          </v-card-text>
 
-          <v-form v-model="isValidEmail" @submit.prevent="emailSubmit">
-            <v-text-field
-                class=" my-12"
-                :label="$t('profile.change_settings')"
-                v-model="email"
-                variant="outlined"
-                :disabled="isEmailLoading"
-                :rules="[requiredValidator, emailValidator]"
-            />
-            <v-row justify="center">
-              <v-btn class="rounded-xl" color="primary" :disabled="!isValidEmail" :loading="isEmailLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
-            </v-row>
-          </v-form>
+          <div v-else>
+            <v-form v-model="isValidEmail" @submit.prevent="emailSubmit">
+              <v-text-field
+                  class=" my-12"
+                  :label="$t('profile.change_settings')"
+                  v-model="email"
+                  variant="outlined"
+                  :disabled="isEmailLoading"
+                  :rules="[requiredValidator, emailValidator]"
+              />
+              <v-row justify="center">
+                <v-btn class="rounded-xl" color="primary" :disabled="!isValidEmail" :loading="isEmailLoading" type="submit">{{ $t('profile.change_settings') }}</v-btn>
+              </v-row>
+            </v-form>
+          </div>
         </v-sheet>
       </v-col>
     </v-row>
