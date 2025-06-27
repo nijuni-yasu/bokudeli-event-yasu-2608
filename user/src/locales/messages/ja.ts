@@ -46,6 +46,7 @@ export default {
       'about_button_02': '社内交流も、営業活動、採用活動も、食事でつながる',
       'community_list_title': '【コミュニティ】',
       'community_list_description': 'コミュニティのみんなと食事会をひらこう🎉',
+      'community_create': 'コミュニティ作成',
       'flow_title': '【イベント開催の流れ】',
       'flow_description': 'イベントを作成したらすぐに注文開始。お気軽にご利用ください。',
       'function_title': '【機能一覧】',

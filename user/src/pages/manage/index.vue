@@ -29,6 +29,7 @@ import CommunityCardMini from '@/components/CommunityCardMini.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
 import { getAuth } from 'firebase/auth'
 import { db } from '@/firebase'
+import { mdiPlus } from '@mdi/js'
 
 const userId = getAuth().currentUser?.uid
 if (userId == null) {
@@ -250,6 +251,25 @@ const supports = [
             <router-link :to="getManageCommunityPath(community.community_account)">
               <CommunityCardMini :community="community"/>
             </router-link>
+          </v-col>
+          <v-col class="justify-center align-center d-flex" md="2" sm="3" cols="6">
+            <v-card elevation="0" class="text-center">
+              <v-btn
+                class="my-7"
+                color="primary"
+                size="large"
+                :icon="mdiPlus"
+                rounded="circle"
+                variant="outlined"
+                to="/manage/newcommunity"
+                elevation="0"
+              />
+              <v-card-text class="text-center">
+                <span class="text-subtitle-2">
+                  {{ $t('manage.top.community_create') }}
+                </span>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
         <v-row class="justify-center">

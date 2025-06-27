@@ -23,7 +23,7 @@ defineProps<{
   </v-card>
   <v-row>
     <v-col class="d-flex flex-column">
-      <v-card-title class="text-h5 text-center text-truncate">
+      <v-card-title class="text-h6 text-center text-truncate">
         {{ community.community_name }}
       </v-card-title>
     </v-col>
