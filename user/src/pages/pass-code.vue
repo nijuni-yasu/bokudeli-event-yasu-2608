@@ -124,7 +124,7 @@ const submit = async () => {
 
         await updateEmail(currentUser as User, userEmail).then(async () => {
           await updateDoc(userRef, {
-            verified_at: Timestamp,
+            verified_at: Timestamp.now(),
           })
           await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
         }).catch(async (error) => {
@@ -137,7 +137,7 @@ const submit = async () => {
             await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
               await updateEmail(userCredential.user as User, userEmail).then(async () => {
                 await updateDoc(userRef, {
-                  verified_at: null,
+                  verified_at: Timestamp.now(),
                 })
                 await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
               }).catch((error) => {
