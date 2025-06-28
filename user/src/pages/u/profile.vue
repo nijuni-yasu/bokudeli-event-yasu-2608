@@ -75,6 +75,7 @@ const route = useRoute()
 
 const isProfileLoading = ref(false)
 const isEmailLoading = ref(false)
+const isVerificationLoading = ref(false)
 const isSnsLoading = ref(false)
 
 const isValidProfile = ref(false)
@@ -230,6 +231,7 @@ const emailSubmit = async () => {
 }
 
 const certificationPendingEmail = async () => {
+  isVerificationLoading.value = true
   const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', user.value?.user_id as string))
   const personalInformation = personalInformationSnapshot.data() as FirestoredUserPersonalInformation
   const userEmail = personalInformation.user_email_pending
@@ -598,8 +600,8 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <span style="color: red">{{ $t('profile.notice_pending_email') }}</span>
             </div>
             <div class="d-flex flex-row justify-center">
-              <v-btn class="ma-2" @click="certificationPendingEmail">{{ $t('profile.certification') }}</v-btn>
-              <v-btn class="ma-2" @click="cancelPendingEmail">{{ $t('profile.cancel') }}</v-btn>
+              <v-btn class="ma-2" :loading="isVerificationLoading" @click="certificationPendingEmail">{{ $t('profile.certification') }}</v-btn>
+              <v-btn class="ma-2" :disabled="isVerificationLoading" @click="cancelPendingEmail">{{ $t('profile.cancel') }}</v-btn>
             </div>
           </v-card-text>
 
