@@ -19,7 +19,6 @@ export const { on_object_finalized } = await import('./storage-image.js')
 export const { scheduled_firestore_export } = await import('./backup.js')
 export const { log_event_status } = await import('./event-logging.js')
 export const { add_order, update_order_status } = await import('./orders.js')
-export { invoice } from './invoice.js'
 export { namesprint } from './namesprint.js'
 export { eventBillInvoice } from './eventBillInvoice.js'
 export { flyer } from './flyer.js'
