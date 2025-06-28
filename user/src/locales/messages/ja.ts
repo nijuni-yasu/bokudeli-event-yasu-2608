@@ -32,7 +32,7 @@ export default {
     'cancel_failed': 'キャンセルに失敗しました',
     'exists_email': '登録済みのメールアドレスです。\n他のメールアドレスを入力いただくか、登録済みメールアドレスのアカウントでログインしてください。',
     'update_email': 'メールアドレスを変更しました。',
-    'exists_credential': '登録済みの{snsName}アカウントです。\n{snsName}アカウントでログインしてください。',
+    'exists_credential': 'この{snsName}アカウントは、すでに別のユーザーとして登録されています。\n他のアカウントでお試しください。',
   },
   'manage': {
     'new_community': 'コミュニティ作成',
