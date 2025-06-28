@@ -34,21 +34,18 @@ export class ShokujiiEvent extends Event {
   }
 }
 
-export const getEvent = async (eventId: string): Promise<ShokujiiEvent | undefined> => {
+export const getEvent = async (eventId: string, transaction?: Transaction): Promise<ShokujiiEvent | undefined> => {
   const db = getFirestore()
-  const eventData = await db
+  const eventRef = db
     .collectionGroup('events')
     .where('event_id', '==', eventId)
     .limit(1)
     .withConverter(new ShokujiiEventConverter())
-    .get()
-  if (eventData.empty) {
-    return undefined
-  }
-  return eventData.docs[0].data()
+  const eventData = await (transaction === undefined ? eventRef.get() : transaction.get(eventRef))
+  return eventData.empty ? undefined : eventData.docs[0].data()
 }
 
-export const saveEvent = async (userId: string, event: ShokujiiEvent): Promise<void> => {
+export const saveEvent = async (userId: string, event: ShokujiiEvent, transaction?: Transaction): Promise<void> => {
   const db = getFirestore()
   const eventRef = db
     .collection('communities')
@@ -56,5 +53,9 @@ export const saveEvent = async (userId: string, event: ShokujiiEvent): Promise<v
     .collection('events')
     .doc(event.id)
     .withConverter(new ShokujiiEventConverter(userId))
-  await eventRef.set(event, { merge: true })
+  if (transaction === undefined) {
+    await eventRef.set(event, { merge: true })
+  } else {
+    transaction.set(eventRef, event, { merge: true })
+  }
 }
