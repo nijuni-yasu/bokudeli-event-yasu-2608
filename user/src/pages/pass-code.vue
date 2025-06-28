@@ -152,7 +152,15 @@ const submit = async () => {
       }
 
       const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
-      if(isNew === undefined || isProfileCompleted) {
+      if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
+        router.push({
+          path: '/u/profile',
+          query: {
+            new: Number(isNew),
+            redirect: route.query.redirect,
+          }
+        })
+      } else if(isNew === undefined || isProfileCompleted) {
         // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
         // newが存在しない = メールアドレス変更時の場合
         router.push(route.query.redirect as string)

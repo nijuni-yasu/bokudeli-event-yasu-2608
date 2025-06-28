@@ -322,6 +322,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
       query: {
         email: email,
         new: Number(Number(data.is_new)),
+        sns: additionalUserInfo.providerId,
         redirect: route.query.redirect,
       }
     })
