@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import LoginDialog from '@/components/LoginDialog.vue'
+import HomeButtonDialog from '@/components/HomeButtonDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline  } from '@mdi/js'
+import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown } from '@mdi/js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -15,6 +16,7 @@ const user = computed(() => {
 })
 
 const isOpenLoginDialog = ref(false)
+const isOpenHomeButtonDialog = ref(false)
 
 const logout = async () => {
   const auth = getAuth()
@@ -78,6 +80,17 @@ const logout = async () => {
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
+          <!-- 👉 homebutton -->
+          <v-list-item v-if="isLogin" @click="isOpenHomeButtonDialog = true">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiCellphoneArrowDown" size="22" />
+            </template>
+            <v-list-item-title>ホーム画面に追加</v-list-item-title>
+          </v-list-item>
+
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
+
           <!-- 👉 Login, Logout -->
           <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
             <template #prepend>
@@ -98,4 +111,5 @@ const logout = async () => {
     </UserAvatar>
   </v-badge>
   <login-dialog v-model="isOpenLoginDialog" />
+  <home-button-dialog v-model="isOpenHomeButtonDialog" />
 </template>
