@@ -73,17 +73,17 @@ const userEmailPending = computed(() => {
 const router = useRouter()
 const route = useRoute()
 
-const isProfileLoading = ref(false)
-const isEmailLoading = ref(false)
-const isVerificationLoading = ref(false)
-const isSnsLoading = ref(false)
+const isProfileLoading = ref<boolean>(false)
+const isEmailLoading = ref<boolean>(false)
+const isVerificationLoading = ref<boolean>(false)
+const isSnsLoading = ref<'google.com' | 'facebook.com' | 'twitter.com' | null>(null)
 
-const isValidProfile = ref(false)
-const isValidEmail = ref(false)
+const isValidProfile = ref<boolean>(false)
+const isValidEmail = ref<boolean>(false)
 
-const isOpenUnLinkDialog = ref(false)
-const isOpenTwitterLinkDialog = ref(false)
-const targetUnLinkProvider = ref('')
+const isOpenUnLinkDialog = ref<boolean>(false)
+const isOpenTwitterLinkDialog = ref<boolean>(false)
+const targetUnLinkProvider = ref<string>('')
 
 const form = ref<VForm | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -273,7 +273,7 @@ const cancelPendingEmail = async () => {
 
 const handleFacebookLink = async () => {
   try {
-    isSnsLoading.value = true
+    isSnsLoading.value = 'facebook.com'
     const userCredential = await linkByProviderService(currentUser as User, 'Facebook')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
@@ -301,13 +301,13 @@ const handleFacebookLink = async () => {
       console.error({ error })
     }
   } finally {
-    isSnsLoading.value = false
+    isSnsLoading.value = null
   }
 }
 
 const handleGoogleLoginLink = async () => {
   try {
-    isSnsLoading.value = true
+    isSnsLoading.value = 'google.com'
     const userCredential = await linkByProviderService(currentUser as User, 'Google')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
@@ -335,13 +335,13 @@ const handleGoogleLoginLink = async () => {
       console.error({ error })
     }
   } finally {
-    isSnsLoading.value = false
+    isSnsLoading.value = null
   }
 }
 
 const handleTwitterLoginLink = async () => {
   try {
-    isSnsLoading.value = true
+    isSnsLoading.value = 'twitter.com'
     const userCredential = await linkByProviderService(currentUser as User, 'Twitter')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
@@ -369,7 +369,7 @@ const handleTwitterLoginLink = async () => {
       console.error({ error })
     }
   } finally {
-    isSnsLoading.value = false
+    isSnsLoading.value = null
   }
 }
 
@@ -381,7 +381,7 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
 const confirmUnLink = async (providerId: string) => {
   if (!providerId) return
   try {
-    isSnsLoading.value = true
+    isSnsLoading.value = providerId as 'google.com' | 'facebook.com' | 'twitter.com'
 
     if (auth.currentUser) {
       await unlink(auth.currentUser, providerId)
@@ -419,7 +419,7 @@ const confirmUnLink = async (providerId: string) => {
   } catch (error) {
     console.error(error)
   } finally {
-    isSnsLoading.value = false
+    isSnsLoading.value = null
   }
 }
 
@@ -460,9 +460,9 @@ onMounted(async () => {
   }
 
   if (additionalUserInfo === null) return
-  isSnsLoading.value = true
+  isSnsLoading.value = additionalUserInfo.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
   await setSNSProfile(additionalUserInfo)
-  isSnsLoading.value = false
+  isSnsLoading.value = null
 
   useStoreUserAdditionalInfo().reset()
 })
@@ -637,8 +637,8 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label v-if="user.user_sns_google" class="ml-11 font-weight-bold">{{ user.user_sns_google }}</label>
             </div>
 
-            <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" @click="handleGoogleLoginLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading === 'google.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'" @click="handleGoogleLoginLink">{{ $t('profile.linkage') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading === 'google.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
 
           <hr>
@@ -651,8 +651,8 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label v-if="user.user_sns_facebook_name" class="ml-11 font-weight-bold">{{ user.user_sns_facebook_name }}</label>
             </div>
 
-            <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" @click="handleFacebookLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading ==='facebook.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'facebook.com'" @click="handleFacebookLink">{{ $t('profile.linkage') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading ==='facebook.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'facebook.com'" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
 
           <hr>
@@ -665,8 +665,8 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label v-if="user.user_sns_twitter" class="ml-11 font-weight-bold">{{ user.user_sns_twitter }}</label>
             </div>
 
-            <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" @click="handleTwitterLoginLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
+            <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading === 'twitter.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'" @click="handleTwitterLoginLink">{{ $t('profile.linkage') }}</v-btn>
+            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading === 'twitter.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
           </div>
         </v-sheet>
       </v-col>
