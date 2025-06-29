@@ -14,10 +14,10 @@ import { type OrderMenu } from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useEventStore, type EventStore } from '@/stores/event'
 import Stripe from 'stripe'
-import { Timestamp, collectionGroup, deleteDoc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore'
+import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
-import { mdiTrashCan, mdiHelpCircleOutline, mdiCheckBold } from '@mdi/js'
+import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
@@ -243,46 +243,45 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
     <v-row v-if="!state.isLoading && state.cartList.length !== 0" justify="center">
       <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
         <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
         <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
       </v-col>
       <v-col v-for="cart in state.cartList" :key="cart.event.event_id" cols="12" md="8" sm="8">
-        <v-card class="pa-sm-5 pa-xs-1 ma-sm-5 ma-xs-1">
+        <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
           <v-row>
             <v-col class="d-flex align-center">
               <v-img class="ma-5" cover aspect-ratio="1.91" :src="cart.event.event_cover_url" />
             </v-col>
           </v-row>
-          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
+          <v-card-text class="card-text-style">
             {{ $t('cart.community_name') }}
             <router-link :to="getCommunityPath(cart.event.community_account)">
               {{ cart.event.community_name }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
+          <v-card-text class="card-text-style">
             {{ $t('cart.event_name') }}
             <router-link :to="getEventPath(cart.event.community_account, cart.event.event_id)">
               {{ cart.event.event_name }}
             </router-link>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
+          <v-card-text class="card-text-style">
             {{ $t('cart.place') }} {{ cart.event.event_address }} {{ cart.event.event_place }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
+          <v-card-text class="card-text-style">
             {{ $t('cart.date') }}{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{
               dateOnlyTimeString(cart.event.event_end_datetime)
             }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-3 text-sm-subtitle-1">
+          <v-card-text class="card-text-style">
             {{ $t('cart.deadline') }}{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
           </v-card-text>
-          <v-card-text class="text-left pb-sm-2 text-sm-subtitle-1">
+          <v-card-text class="card-text-style">
             {{ $t('cart.payment') }}{{ $t(`payment.${cart.event.event_payment}`) }} <br />
           </v-card-text>
-          <v-card-text class="d-flex align-center pb-sm-2 text-sm-subtitle-1">
+          <v-card-text class="d-flex align-center card-text-style">
             <div class="d-flex flex-column align-center">
               {{ $t('cart.cancel') }}
             </div>
@@ -300,46 +299,49 @@ onMounted(async () => {
               </v-btn>
             </div>
           </v-card-text>
-          <v-card-text class="text-left pb-sm-5 text-sm-subtitle-1">
+          <v-card-text class="card-text-style">
             {{ $t('cart.shop') }}{{ cart.event.shop_name }}
           </v-card-text>
-
+          <v-card-text class="card-text-style">
+            {{ $t('cart.order_contents') }}
+          </v-card-text>
           <v-row class="text-center align-center text-md-body-1 text-caption">
-            <v-col cols="12">
-              <v-table>
-                <thead>
-                  <tr>
-                    <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
-                    <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
-                    <th class="text-center" style="padding: 1px">{{ $t('cart.price') }}</th>
-                    <th class="text-center" style="padding: 1px">{{ $t('cart.subtotal') }}</th>
-                    <th class="text-center" style="padding: 1px"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
-                    <td style="padding: 1px">{{ menu.name }}</td>
-                    <td style="padding: 1px">{{ menu.count }}</td>
-                    <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
-                    <td style="padding: 1px">¥{{ priceString(cart.subtotals[menu.menu_id]) }}</td>
-                    <td style="padding: 1px">
-                      <v-btn :icon="mdiTrashCan" variant="text" @click="deleteMenuInCart(cart.event, cart.order, menu)">
-                      </v-btn>
-                    </td>
-                  </tr>
-                </tbody>
-              </v-table>
+            <v-col cols="12" class="px-8">
+              <v-card class="pa-0" elevation="1">
+                <v-table>
+                  <thead>
+                    <tr>
+                      <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
+                      <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
+                      <th class="text-center" style="padding: 1px">{{ $t('cart.subtotal') }}</th>
+                      <th class="text-center" style="padding: 1px"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
+                      <td style="padding: 1px">{{ menu.name }}</td>
+                      <td style="padding: 1px">{{ menu.count }}</td>
+                      <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
+                      <td style="padding: 1px">
+                        <v-btn :icon="mdiTrashCan" variant="text" @click="deleteMenuInCart(cart.event, cart.order, menu)">
+                        </v-btn>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+              </v-card>
             </v-col>
           </v-row>
           <v-card-text class="text-right">
             <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
             <span class="text-right my-2 ml-2 text-h6">¥</span>
-            <span class="text-right ma-2 text-h4">{{ priceString(cart.total) }}</span>
+            <span class="text-right ma-2 text-h3 text-md-h2 font-weight-bold">{{ priceString(cart.total) }}</span>
           </v-card-text>
+
           <v-row class="justify-center">
             <v-col class="text-center">
               <v-btn
-                class="my-10 text-md-h4 text-h5"
+                class="my-8 text-md-h4 text-h5"
                 color="grey-900"
                 size="x-large"
                 rounded="pill"
@@ -347,7 +349,6 @@ onMounted(async () => {
                 width="85%"
                 @click="showConfirm(cart)"
               >
-                <v-icon :icon="mdiCheckBold" class="mr-2" />
                 {{ $t('cart.order_and_attend_event') }}
               </v-btn>
             </v-col>
@@ -371,6 +372,31 @@ onMounted(async () => {
       {{ $t('cart.remove_from_cart') }}
     </confirm-dialog>
     <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
-  </div>
 </template>
-<style lang="scss" scoped></style>
+<style scoped>
+.v-table {
+  border: none !important;
+}
+.v-table th,
+.v-table td {
+  border: none !important;
+}
+.v-table thead th {
+  border-bottom: none !important;
+}
+.v-table tbody tr {
+  border-bottom: none !important;
+}
+
+.card-text-style {
+  font-size: 14px !important;
+  padding-bottom: 14px !important;
+}
+
+@media (max-width: 959px) {
+  .card-text-style {
+    font-size: 12px !important;
+    padding-bottom: 12px !important;
+  }
+}
+</style>
