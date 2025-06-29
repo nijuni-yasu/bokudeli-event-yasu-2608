@@ -38,7 +38,7 @@ const onFormSubmit = async () => {
   try {
     const userId = userStore.storedUser?.userId
     if (userId != null) {
-      const communityContact = httpsCallable(functions, 'community_contact')
+      const communityContact = httpsCallable(functions, 'communityContact')
       const host = import.meta.env.VITE_ORIGIN_HOST
       const path = getUserPath(userId)
       try {
