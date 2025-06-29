@@ -33,6 +33,8 @@ type Cart = {
   subtotals: { [key: string]: number }
   total: number
   event: BokudeliEvent
+  xPostEnabled: boolean
+  xPostComment: string
 }
 
 const state = reactive({
@@ -191,6 +193,16 @@ const deleteMenuInCart = async (event: BokudeliEvent, order: OrderItem, menu: Or
   openDeleteConfirm.value = true
 }
 
+const generateDefaultXPostComment = (event: BokudeliEvent) => {
+  const eventUrl = `${window.location.origin}${getEventPath(event.community_account, event.event_id)}`
+  const hashtag = event.event_sns_hash_tag ? `#${event.event_sns_hash_tag} ` : ''
+  return $t('cart.x_post.default_comment', {
+    eventName: event.event_name,
+    eventUrl: eventUrl,
+    hashtag: hashtag
+  })
+}
+
 const loadCartList = async () => {
   // カート情報の取得
   const inCartQuery = query(
@@ -228,7 +240,17 @@ const loadCartList = async () => {
         subtotals[menu.menu_id] = menu.price * menu.count
       })
       const total = Object.values(subtotals).reduce((total, current) => total + current)
-      return [{ order: item, event, subtotals, total }]
+
+      // デフォルトのX投稿設定を各カートに追加
+      const defaultXPostComment = generateDefaultXPostComment(event)
+      return [{
+        order: item,
+        event,
+        subtotals,
+        total,
+        xPostEnabled: true,
+        xPostComment: defaultXPostComment
+      }]
     }),
   )
 
@@ -237,32 +259,8 @@ const loadCartList = async () => {
 
 const isOpenCancelpolicyDialog = ref(false)
 
-// デフォルトでX投稿を有効にする
-// TODO:Cart別の状態にする必要がある
-const xPostEnabled = ref(true)
-
 // TODO:Xアカウント連携の状態を取得する
 const xAccountConnected = ref(true)
-
-// デフォルトのX投稿文言を生成
-const xPostComment = ref('')
-const generateDefaultXPostComment = (event: BokudeliEvent) => {
-  const eventUrl = `${window.location.origin}${getEventPath(event.community_account, event.event_id)}`
-  const hashtag = event.event_sns_hash_tag ? `#${event.event_sns_hash_tag} ` : ''
-  return $t('cart.x_post.default_comment', {
-    eventName: event.event_name,
-    eventUrl: eventUrl,
-    hashtag: hashtag
-  })
-}
-
-// カートリストが更新されたときにデフォルト文言を設定
-// TODO:Cart別の状態にする必要がある
-watch(() => state.cartList, (newCartList) => {
-  if (newCartList.length > 0) {
-    xPostComment.value = generateDefaultXPostComment(newCartList[0].event)
-  }
-}, { immediate: true })
 
 onMounted(async () => {
   state.cartList = await loadCartList()
@@ -378,7 +376,7 @@ onMounted(async () => {
                   </v-card-text>
                   <v-card-text class="card-text-style">
                     <v-checkbox
-                      v-model="xPostEnabled"
+                      v-model="cart.xPostEnabled"
                       class="px-2"
                       color="primary"
                       hide-details
@@ -391,8 +389,8 @@ onMounted(async () => {
                     </v-checkbox>
                   </v-card-text>
                   <v-textarea
-                    v-if="xPostEnabled"
-                    v-model="xPostComment"
+                    v-if="cart.xPostEnabled"
+                    v-model="cart.xPostComment"
                     class="px-5"
                     :placeholder="$t('cart.x_post.comment_placeholder')"
                     :label="$t('cart.x_post.comment_label')"
@@ -419,7 +417,7 @@ onMounted(async () => {
                     </v-btn>
                   </v-card-text>
                     <v-textarea
-                      v-model="xPostComment"
+                      v-model="cart.xPostComment"
                       class="px-5"
                       :placeholder="$t('cart.x_post.comment_placeholder')"
                       :label="$t('cart.x_post.comment_label')"
