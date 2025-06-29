@@ -3,7 +3,7 @@ import express from 'express'
 import { https } from 'firebase-functions/v2'
 import { ReplaceSectionStream } from './commonUtils/ReplaceSectionStream.js'
 import { getEvent } from './stores/event.js'
-import { getCommunity } from './stores/community.js'
+import { getCommunityByAccount } from './stores/community.js'
 
 interface OgpContext {
   site: string
@@ -120,10 +120,10 @@ export const handleCommunityOgpRequest = https.onRequest(
     try {
       // Community ページの場合のみ処理
       if (paths[1] === 'c' && paths.length === 3) {
-        // /c/{communityId} の形式
-        const communityId = paths[2]
+        // /c/{communityAccount} の形式
+        const communityAccount = paths[2]
 
-        const communityData = await getCommunity(communityId)
+        const communityData = await getCommunityByAccount(communityAccount)
         if (communityData === undefined) {
           res.status(404).send('Community not found')
           return
