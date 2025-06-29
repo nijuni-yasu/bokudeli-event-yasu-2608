@@ -42,8 +42,8 @@ const submit = async () => {
   try {
     const firestoredUser = user.value as FirestoredUser
 
-    const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', firestoredUser.user_id))
-    await setDoc(personalInformationSnapshot.ref, { user_email: userEmail.value })
+    const personalInformationRef = doc(db, 'users_personal_information', firestoredUser.user_id);
+    await setDoc(personalInformationRef, { user_email: userEmail.value })
     let isError = false
 
     // Facebook or Twitterにメールアドレスの登録がない場合、firebase authのIDが空になるため、updateEmailで設定する。
@@ -71,7 +71,9 @@ const submit = async () => {
     const passCode = generatePassCode()
     firestoredUser.user_pass_code = passCode
 
-    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformationSnapshot.data() as FirestoredUserPersonalInformation))
+    const personalInformationSnapshot = await getDoc(personalInformationRef)
+    const personalInformation = personalInformationSnapshot.data();
+    storedUserStore.update(convertFirestoredUserToStoredUser(firestoredUser, personalInformation as FirestoredUserPersonalInformation))
 
     const userStore = useUserStore(firestoredUser.user_id) as UserStore
     await userStore.updateUser(firestoredUser)
