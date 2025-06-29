@@ -22,6 +22,35 @@ import support01 from '@/assets/images/manage_top/manage_support_icon_01.png'
 import support02 from '@/assets/images/manage_top/manage_support_icon_02.png'
 import support03 from '@/assets/images/manage_top/manage_support_icon_03.png'
 
+import { getManageCommunityPath } from '@/router/utils'
+import { useCommunityListStore } from '@/stores/communityList'
+import { doc, orderBy, where } from 'firebase/firestore'
+import CommunityCardMini from '@/components/CommunityCardMini.vue'
+import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import { getAuth } from 'firebase/auth'
+import { db } from '@/firebase'
+import { mdiPlus } from '@mdi/js'
+
+const userId = getAuth().currentUser?.uid
+if (userId == null) {
+  throw new Error('User is not authenticated')
+}
+
+const communityListStore = useCommunityListStore(
+  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  10,
+)
+const communities = computed(() => {
+  return (
+    communityListStore.communityStores?.flatMap((communityStore) => {
+      if (communityStore.community == null || communityStore.members == null) {
+        return []
+      }
+      return communityStore.community
+    }) ?? []
+  )
+})
+
 const { t } = useI18n()
 
 const howtos = [
@@ -203,15 +232,67 @@ const supports = [
 <template>
   <v-row>
     <v-col cols="12">
-      <v-card class="pa-5">
-        <v-container class="my-15">
+    <!-- 管理コミュニテイ一覧 -->
+      <v-card v-if="communityListStore.totalCount != null && communityListStore.totalCount > 0" class="pa-8 mb-10">
+        <v-row class="justify-center text-center">
+          <v-col md="10" sm="12" cols="12">
+            <v-card-text>
+              <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.community_list_title') }}</span>
+            </v-card-text>
+            <v-card-text>
+              <span class="text-h6">
+                {{ $t('manage.top.community_list_description') }}
+              </span>
+            </v-card-text>           
+          </v-col>    
+        </v-row>
+        <v-row class="justify-center ma-0">
+          <v-col v-for="community in communities" :key="community.community_id" md="2" sm="3" cols="6">
+            <router-link :to="getManageCommunityPath(community.community_account)">
+              <CommunityCardMini :community="community"/>
+            </router-link>
+          </v-col>
+          <v-col class="justify-center align-center d-flex" md="2" sm="3" cols="6">
+            <v-card elevation="0" class="text-center">
+              <v-btn
+                class="my-7"
+                color="primary"
+                size="large"
+                :icon="mdiPlus"
+                rounded="circle"
+                variant="outlined"
+                to="/manage/newcommunity"
+                elevation="0"
+              />
+              <v-card-text class="text-center">
+                <span class="text-subtitle-2">
+                  {{ $t('manage.top.community_create') }}
+                </span>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row class="justify-center">
+          <v-col cols="auto">
+            <IncrementalLoader
+              class="my-5"
+              :total-count="communityListStore.totalCount ?? Infinity"
+              :loaded-count="communityListStore.communityStores?.length ?? 0"
+              @load="communityListStore.next()"
+            />
+          </v-col>
+        </v-row>
+      </v-card>
+    <!-- shokujii サービス概要 -->
+      <v-card class="pa-5 pa-md-8">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.about_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   <div v-html="$t('manage.top.about_description')"/>
                   <v-btn class="ma-5" color="primary" variant="outlined" href="https://about.shokujii.jp" target="_blank">
                     {{ $t('manage.top.about_button_01') }}
@@ -224,20 +305,20 @@ const supports = [
             </v-col>
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.flow_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.flow_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row class="pb-10">
+          <v-row class="pb-10 align-stretch">
             <ManageTopCard
               v-for="step in howtos"
               :key="step.stepNumber"
@@ -248,24 +329,23 @@ const supports = [
               :button-text="step?.buttonText"
               :button-link="step?.buttonLink"
               :button-href="step?.buttonHref"
-              :min-height="370"
             />
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.function_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.function_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row>
+          <v-row class="align-stretch">
             <ManageTopCard
               v-for="step in functions"
               :key="step.stepNumber"
@@ -275,24 +355,23 @@ const supports = [
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
               :button-href="step?.buttonHref"
-              :min-height="350"
             />
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.price_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.price_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row class="justify-center">
+          <v-row class="justify-center align-stretch">
             <ManageTopCard
               v-for="step in prices"
               :key="step.stepNumber"
@@ -301,24 +380,23 @@ const supports = [
               :description="step.description"
               :image-src="step.imageSrc"
               :button-text="step?.buttonText"
-              :min-height="350"
             />
           </v-row>
         </v-container>
-        <v-container class="my-15">
+        <v-container class="my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
                 <span class="text-h4 text-md-h3 font-weight-bold">{{ $t('manage.top.support_title') }}</span>
               </v-card-text>
               <v-card-text>
-                <span class="text-h5">
+                <span class="text-h6">
                   {{ $t('manage.top.support_description') }}
                 </span>
               </v-card-text>
             </v-col>
           </v-row>
-          <v-row class="justify-center">
+          <v-row class="justify-center align-stretch">
             <ManageTopCard
               v-for="step in supports"
               :key="step.stepNumber"
