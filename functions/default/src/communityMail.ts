@@ -89,8 +89,12 @@ export const communityAdded = onDocumentCreated(
     secrets: ['SENDGRID_API_KEY'],
   },
   async (event) => {
-    const community = new ShokujiiCommunity(event.id, event.data!)
-    return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, community)
+    if (event && event.data) {
+      const community = new ShokujiiCommunity(event.data.id, event.data.data())
+      return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, community)
+    } else {
+      console.error('communityAdded event is undefined')
+    }
   },
 )
 
