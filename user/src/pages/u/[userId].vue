@@ -18,7 +18,6 @@ import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
-import { getInvoicePdf } from '@shokujii/base/utils/pdf.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
@@ -145,9 +144,7 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
 }
 
 const downloadReceipt = async (order: EventOrder) => {
-  const w = window.open(getReceiptPath(), '_blank')
-  const pdf = await getInvoicePdf(order.event_id, order.order_id)
-  w!.location.href = window.URL.createObjectURL(pdf)
+  window.open(getReceiptPath(order.event_id, order.order_id), '_blank')
 }
 </script>
 
