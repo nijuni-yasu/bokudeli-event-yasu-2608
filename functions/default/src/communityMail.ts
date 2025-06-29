@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
@@ -8,6 +9,20 @@ import { getUser } from './stores/user.js'
 
 const COMMUNITY_ADD_ID = 'd-d116c6b010214d2b92a2421411a508d2'
 const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
+
+// See: CommunityContactDialog.vue
+const CommunityContactRequestSchema = z.object({
+  community_id: z.string(),
+  community_name: z.string(),
+  mail_title: z.string(),
+  mail_message: z.string(),
+  user_id: z.string(),
+  user_name: z.string(),
+  user_email: z.string(),
+  user_profile_url: z.string(),
+})
+
+type CommunityContactRequest = z.infer<typeof CommunityContactRequestSchema>
 
 async function getCommunityManagerEmailsSet(communityId: string): Promise<Set<string>> {
   // 重複するメールアドレスは追加しない
@@ -64,7 +79,10 @@ async function sendCommunityAddedMailToOrganizer(templateId: string, community: 
   )
 }
 
-async function sendCommunityContactMailToOrganizers(templateId: string, data: any): Promise<void[]> {
+async function sendCommunityContactMailToOrganizers(
+  templateId: string,
+  data: CommunityContactRequest,
+): Promise<void[]> {
   const emails = await getCommunityEmails(data.community_id)
   const dynamicTemplateData = data
   if (!emails.includes(SUPPORT_MAIL)) {
@@ -75,6 +93,7 @@ async function sendCommunityContactMailToOrganizers(templateId: string, data: an
       await sgMail.send({
         to,
         from: DEFAULT_FROM,
+        replyTo: data.user_email,
         templateId,
         dynamicTemplateData,
       } as any)
@@ -105,7 +124,8 @@ export const communityContact = onCall(
   },
   async (request) => {
     if (request.auth) {
-      return sendCommunityContactMailToOrganizers(COMMUNITY_CONTACT_ID, request.data)
+      const communityContactRequest = CommunityContactRequestSchema.parse(request.data) as CommunityContactRequest
+      return sendCommunityContactMailToOrganizers(COMMUNITY_CONTACT_ID, communityContactRequest)
     } else {
       console.log('community_contact Auth Error')
       console.log(request.data)
