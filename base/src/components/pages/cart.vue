@@ -19,6 +19,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -236,6 +237,33 @@ const loadCartList = async () => {
 
 const isOpenCancelpolicyDialog = ref(false)
 
+// デフォルトでX投稿を有効にする
+// TODO:Cart別の状態にする必要がある
+const xPostEnabled = ref(true)
+
+// TODO:Xアカウント連携の状態を取得する
+const xAccountConnected = ref(true)
+
+// デフォルトのX投稿文言を生成
+const xPostComment = ref('')
+const generateDefaultXPostComment = (event: BokudeliEvent) => {
+  const eventUrl = `${window.location.origin}${getEventPath(event.community_account, event.event_id)}`
+  const hashtag = event.event_sns_hash_tag ? `#${event.event_sns_hash_tag} ` : ''
+  return $t('cart.x_post.default_comment', {
+    eventName: event.event_name,
+    eventUrl: eventUrl,
+    hashtag: hashtag
+  })
+}
+
+// カートリストが更新されたときにデフォルト文言を設定
+// TODO:Cart別の状態にする必要がある
+watch(() => state.cartList, (newCartList) => {
+  if (newCartList.length > 0) {
+    xPostComment.value = generateDefaultXPostComment(newCartList[0].event)
+  }
+}, { immediate: true })
+
 onMounted(async () => {
   state.cartList = await loadCartList()
   state.isLoading = false
@@ -337,6 +365,74 @@ onMounted(async () => {
             <span class="text-right my-2 ml-2 text-h6">¥</span>
             <span class="text-right ma-2 text-h3 text-md-h2 font-weight-bold">{{ priceString(cart.total) }}</span>
           </v-card-text>
+          <!-- X投稿設定 -->
+          <v-row v-if="cart.event.is_public" class="mt-3">
+            <v-col cols="12" class="px-8">
+              <v-card
+                class="x-post-section"
+                elevation="1"
+              >
+                <div v-if="xAccountConnected">
+                  <v-card-text class="card-text-style">
+                    【{{ $t('cart.x_post.title') }}】
+                  </v-card-text>
+                  <v-card-text class="card-text-style">
+                    <v-checkbox
+                      v-model="xPostEnabled"
+                      class="px-2"
+                      color="primary"
+                      hide-details
+                    >
+                      <template #label>
+                        <span class="text-subtitle-1">
+                          {{ $t('cart.x_post.enable_post') }}
+                        </span>
+                      </template>
+                    </v-checkbox>
+                  </v-card-text>
+                  <v-textarea
+                    v-if="xPostEnabled"
+                    v-model="xPostComment"
+                    class="px-5"
+                    :placeholder="$t('cart.x_post.comment_placeholder')"
+                    :label="$t('cart.x_post.comment_label')"
+                    counter="140"
+                    maxlength="140"
+                    rows="3"
+                    variant="outlined"
+                    hide-details="auto"
+                  />
+                </div>
+                <div v-else>
+                  <v-card-text class="card-text-style">
+                    【{{ $t('cart.x_post.title') }}】
+                  </v-card-text>
+                  <v-card-text class="card-text-style">
+                    <v-btn
+                      size="small"
+                      rounded="pill"
+                      class="ma-2"
+                      variant="outlined"
+                      to="/mypage"
+                    >
+                      {{ $t('cart.x_post.connect_x') }}
+                    </v-btn>
+                  </v-card-text>
+                    <v-textarea
+                      v-model="xPostComment"
+                      class="px-5"
+                      :placeholder="$t('cart.x_post.comment_placeholder')"
+                      :label="$t('cart.x_post.comment_label')"
+                      counter="140"
+                      maxlength="140"
+                      rows="3"
+                      variant="outlined"
+                      disabled
+                    />
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
 
           <v-row class="justify-center">
             <v-col class="text-center">
@@ -391,6 +487,11 @@ onMounted(async () => {
 .card-text-style {
   font-size: 14px !important;
   padding-bottom: 14px !important;
+}
+
+.x-post-section {
+  background-color: #fafcfe;
+  border-radius: 8px;
 }
 
 @media (max-width: 959px) {

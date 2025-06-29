@@ -99,6 +99,14 @@ export default {
     event_not_found: 'イベントが見つかりません。',
     order_and_attend_event: '注文を完了する',
     no_items_in_cart: 'カートに商品はありません。',
+    x_post: {
+      title: '参加コメント',
+      enable_post: 'X(Twitter)に投稿する',
+      comment_placeholder: '参加コメントを入力してください',
+      comment_label: '参加コメント',
+      connect_x: 'X(Twitter)と連携設定して投稿する',
+      default_comment: '{eventName} に参加します✋\n{eventUrl}\n{hashtag}#shokujii'
+    }
   },
   cart_dialog: {
     add: 'カートに追加',
