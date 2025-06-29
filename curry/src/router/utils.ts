@@ -9,7 +9,7 @@ export const getHomePath = () => '/'
 export const getCommunityListPath = () => '/communitylist'
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
 export const getUserPath = (userId: string) => `/u/${userId}`
-export const getInvoicePath = () => '/invoice'
+export const getReceiptPath = () => '/receipt'
 // export const getEventCreatePath = (communityAccount: string) => `/manage/community/${communityAccount}/newevent`
 export const getEventEditPath = (eventId: string) => `/manage/event/${eventId}/settings`
 export const getEventEditBasicPath = (eventId: string) => `/manage/event/${eventId}/settings?step=1`
