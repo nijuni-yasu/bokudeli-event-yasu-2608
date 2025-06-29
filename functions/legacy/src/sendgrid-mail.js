@@ -10,7 +10,6 @@ import {
   getOrderUrl,
   getUserUrl,
   getManageEventMemberUrl,
-  getManageCommunityUrl,
   getManageEventInvoiceUrl,
 } from './utils/urls.js'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
@@ -41,8 +40,6 @@ const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7'
 const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
-const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
-const COMMUNITY_ADD_ID = 'd-d116c6b010214d2b92a2421411a508d2'
 const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 
 const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
@@ -84,22 +81,6 @@ function getShopEmails(shopSnapshot) {
     }
   }
   return Array.from(emails)
-}
-
-async function getCommunityMemberEmailsSet(communityId) {
-  // 重複するメールアドレスは追加しない
-  const emails = new Set()
-  const membersRef = db.collection('communities').doc(communityId).collection('members')
-  const membersSnapshot = await membersRef.get()
-  await Promise.all(
-    membersSnapshot.docs.map(async (member) => {
-      const userEmail = await getUserEmail(member.id)
-      if (userEmail != null && userEmail !== '') {
-        emails.add(userEmail)
-      }
-    }),
-  )
-  return emails
 }
 
 async function getCommunityManagerEmailsSet(communityId) {
@@ -182,9 +163,7 @@ async function getParticipantIds(eventId) {
       console.warn(`No orders found for event: ${eventId}`)
       return []
     }
-    return ordersSnapshot.docs
-      .filter(order => order.get('status') === 'ordered')
-      .map(order => order.get('user_id'))
+    return ordersSnapshot.docs.filter((order) => order.get('status') === 'ordered').map((order) => order.get('user_id'))
   } catch (error) {
     console.error(`Error fetching event participants: ${error}`)
     throw error
@@ -842,50 +821,6 @@ async function sendShopOpenMailToSupport(shopSnapshot) {
   })
 }
 
-async function sendCommunityAddedMailToOrganizer(templateId, communitySnapshot) {
-  const emails = await getCommunityEmails(communitySnapshot.id)
-  if (!emails.includes(SUPPORT_MAIL)) {
-    emails.push(SUPPORT_MAIL)
-  }
-  const community_account = communitySnapshot.get('community_account')
-  const community_name = communitySnapshot.get('community_name')
-  const community_url = getCommunityUrl(community_account)
-  const community_manage_url = getManageCommunityUrl(community_account)
-  return Promise.all(
-    emails.map(async (to) => {
-      await sgMail.send({
-        to,
-        from: DEFAULT_FROM,
-        templateId,
-        dynamic_template_data: {
-          community_account,
-          community_name,
-          community_url,
-          community_manage_url,
-        },
-      })
-    }),
-  )
-}
-
-async function sendCommunityContactMailToOrganizers(templateId, data) {
-  const emails = await getCommunityEmails(data.community_id)
-  const dynamic_template_data = data
-  if (!emails.includes(SUPPORT_MAIL)) {
-    emails.push(SUPPORT_MAIL)
-  }
-  return Promise.all(
-    emails.map(async (to) => {
-      await sgMail.send({
-        to,
-        from: DEFAULT_FROM,
-        templateId,
-        dynamic_template_data,
-      })
-    }),
-  )
-}
-
 async function sendOrderCompletionMailToMember(eventRef, userId) {
   const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
   const eventData = eventSnapshot.data()
@@ -1066,7 +1001,7 @@ async function sendLetter(_, end) {
           case 'event_non_participant': {
             const [participantIds, communityMemberIds] = await Promise.all([
               getParticipantIds(letterDoc.get('event_id')),
-              getCommunityMemberIds(communityId)
+              getCommunityMemberIds(communityId),
             ])
             userIds = communityMemberIds.filter((id) => !participantIds.includes(id))
             break
@@ -1246,24 +1181,6 @@ export const on_order_changed = functions
     }
     return Promise.all(promises)
   })
-
-export const community_added = functions
-  .region('asia-northeast1')
-  .firestore.document('communities/{communityId}')
-  .onCreate(async (snapshot) => {
-    return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, snapshot)
-  })
-
-export const community_contact = functions.region('asia-northeast1').https.onCall((data, context) => {
-  if (context.auth) {
-    return sendCommunityContactMailToOrganizers(COMMUNITY_CONTACT_ID, data)
-  } else {
-    console.log('community_contact Auth Error')
-    console.log(data)
-    console.log(context)
-    throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error')
-  }
-})
 
 export const send_email = functions.region('asia-northeast1').https.onCall(async (data, context) => {
   if (!context.auth) {
