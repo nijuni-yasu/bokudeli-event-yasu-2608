@@ -133,3 +133,11 @@ export const getCommunity = async (communityId: string): Promise<ShokujiiCommuni
   const snapshot = await communityRef.get()
   return snapshot.exists ? snapshot.data() : undefined
 }
+
+export const getCommunityByAccount = async (communityAccount: string): Promise<ShokujiiCommunity | undefined> => {
+  const db = getFirestore()
+  const communityRef = db.collection('communities').where('community_account', '==', communityAccount).withConverter(communityConverter)
+
+  const snapshot = await communityRef.get()
+  return snapshot.empty ? undefined : snapshot.docs[0].data()
+}
