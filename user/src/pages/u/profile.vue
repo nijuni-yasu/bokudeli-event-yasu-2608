@@ -629,7 +629,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
         <v-sheet class="rounded-lg py-14 px-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.account_linkage') }}</div>
 
-          <div class="d-flex justify-space-between align-center my-8">
+          <div class="d-flex flex-column flex-md-row justify-space-between align-center my-8">
             <div class="d-flex flex-column">
               <label class="align-center">
                 <v-icon :icon="GoogleIcon" size="x-large" class="me-3"/>{{ $t('profile.google') }}
@@ -637,13 +637,15 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label v-if="user.user_sns_google" class="ml-11 font-weight-bold">{{ user.user_sns_google }}</label>
             </div>
 
-            <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading === 'google.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'" @click="handleGoogleLoginLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading === 'google.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
+            <div class="mt-6 mt-md-0">
+              <v-btn v-if="!linkedProviderData.includes('google.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading === 'google.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'" @click="handleGoogleLoginLink">{{ $t('profile.linkage') }}</v-btn>
+              <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading === 'google.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'" @click="() => handleUnLink('google.com')">{{ $t('profile.linked') }}</v-btn>
+            </div>
           </div>
 
           <hr>
 
-          <div class="d-flex justify-space-between align-center my-8">
+          <div class="d-flex flex-column flex-md-row justify-space-between align-center my-8">
             <div class="d-flex flex-column">
               <label class="align-center">
                 <v-icon :icon="FacebookIcon" size="x-large" class="me-3"/>{{ $t('profile.facebook') }}
@@ -651,13 +653,15 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label v-if="user.user_sns_facebook_name" class="ml-11 font-weight-bold">{{ user.user_sns_facebook_name }}</label>
             </div>
 
-            <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading ==='facebook.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'facebook.com'" @click="handleFacebookLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading ==='facebook.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'facebook.com'" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
+            <div class="mt-6 mt-md-0">
+              <v-btn v-if="!linkedProviderData.includes('facebook.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading ==='facebook.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'facebook.com'" @click="handleFacebookLink">{{ $t('profile.linkage') }}</v-btn>
+              <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading ==='facebook.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'facebook.com'" @click="() => handleUnLink('facebook.com')">{{ $t('profile.linked') }}</v-btn>
+            </div>
           </div>
 
           <hr>
 
-          <div class="d-flex justify-space-between align-center my-8">
+          <div class="d-flex flex-column flex-md-row justify-space-between align-center my-8">
             <div class="d-flex flex-column">
               <label class="align-center">
                 <v-icon :icon="XIcon" size="x-large" class="me-3"/>{{ $t('profile.twitter') }}
@@ -665,8 +669,10 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label v-if="user.user_sns_twitter" class="ml-11 font-weight-bold">{{ user.user_sns_twitter }}</label>
             </div>
 
-            <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading === 'twitter.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'" @click="handleTwitterLoginLink">{{ $t('profile.linkage') }}</v-btn>
-            <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading === 'twitter.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
+            <div class="mt-6 mt-md-0">
+              <v-btn v-if="!linkedProviderData.includes('twitter.com')" variant="outlined" color="grey-500" width="100" :loading="isSnsLoading === 'twitter.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'" @click="handleTwitterLoginLink">{{ $t('profile.linkage') }}</v-btn>
+              <v-btn v-else color="grey-900" width="100" :loading="isSnsLoading === 'twitter.com'" :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'" @click="() => handleUnLink('twitter.com')">{{ $t('profile.linked') }}</v-btn>
+            </div>
           </div>
         </v-sheet>
       </v-col>
