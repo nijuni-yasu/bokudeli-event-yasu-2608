@@ -79,6 +79,7 @@ export default {
     deadline: '【注文期限】',
     cancel: '【キャンセル】',
     cancel_until_deadline: '注文期限までキャンセル可',
+    order_contents: '【注文内容】',
     menu: 'メニュー',
     count: '個数',
     price: '金額',
