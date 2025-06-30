@@ -246,7 +246,7 @@ export default {
     'twitter_link_modal_title' : 'X連携をしますか？',
     'unlink_modal_title' : '連携を解除しますか？',
     'unlink': '解除',
-    'existEmail': 'すでに他ユーザーが利用しているメールアドレスです。',
+    'exist_email': 'すでに他ユーザーが利用しているメールアドレスです。',
     'pending_email': '変更中のメールアドレス<br/>{pending_email}',
     'notice_pending_email': '※ メールアドレス変更中です。パスコードを認証してください',
     'certification': '認証する',
@@ -255,5 +255,12 @@ export default {
   'user_profile': {
     'logout': 'ログアウトする',
     'logout_modal_title': 'ログアウトしますか？'
+  },
+  'auth': {
+    'action': {
+      'title': 'shokujii',
+      'reset_email': 'ログイン用メールアドレスを{currentEmail}から{restoredEmail}に復元しています。<br/>少々お待ちくださいませ。',
+      'notify_reset_email': 'ログイン用メールアドレスを復元しました。'
+    }
   }
 }
