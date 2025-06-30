@@ -4,6 +4,7 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
   Timestamp,
+  Transaction,
 } from 'firebase-admin/firestore'
 import { HttpsError } from 'firebase-functions/https'
 import { Community } from '../schemas/Community.js'
@@ -126,17 +127,23 @@ export class ShokujiiCommunity extends Community {
   }
 }
 
-export const getCommunity = async (communityId: string): Promise<ShokujiiCommunity | undefined> => {
+export const getCommunity = async (
+  communityId: string,
+  transaction?: Transaction,
+): Promise<ShokujiiCommunity | undefined> => {
   const db = getFirestore()
   const communityRef = db.collection('communities').doc(communityId).withConverter(communityConverter)
 
-  const snapshot = await communityRef.get()
-  return snapshot.exists ? snapshot.data() : undefined
+  const snapshot = await (transaction === undefined ? communityRef.get() : transaction.get(communityRef))
+  return snapshot.exists ? (snapshot.data() ?? undefined) : undefined
 }
 
 export const getCommunityByAccount = async (communityAccount: string): Promise<ShokujiiCommunity | undefined> => {
   const db = getFirestore()
-  const communityRef = db.collection('communities').where('community_account', '==', communityAccount).withConverter(communityConverter)
+  const communityRef = db
+    .collection('communities')
+    .where('community_account', '==', communityAccount)
+    .withConverter(communityConverter)
 
   const snapshot = await communityRef.get()
   return snapshot.empty ? undefined : snapshot.docs[0].data()
