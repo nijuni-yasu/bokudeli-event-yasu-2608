@@ -19,6 +19,7 @@
     "@tinymce/tinymce-vue": "^6",
     "@turf/distance": "^7.0.0",
     "@vueuse/core": "^10.11.0",
+    "calendar-link": "^2.6.0",
     "cookie-es": "^1.1.0",
     "date-fns": "^3.6.0",
     "destr": "^2.0.3",
@@ -30,7 +31,8 @@
     "vue-qrious": "^3.1.1",
     "vue-router": "^4.3.0",
     "vue3-perfect-scrollbar": "^1.6.1",
-    "vuetify": "^3.4.6"
+    "vuetify": "^3.4.6",
+    "zod": "^3.25.28"
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",

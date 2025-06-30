@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { mdiPlus } from '@mdi/js'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import LetterCard from '@/components/LetterCard.vue'
+import LetterTable from '@/components/LetterTable.vue'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import LetterEdit from '@/components/LetterEdit.vue'
 import type { Letter } from '@/schemes/letter'
@@ -10,6 +10,12 @@ import { useLetterListStore } from '@/stores/letterList'
 import { Timestamp } from 'firebase/firestore'
 import { useLetterStore } from '@/stores/letter'
 import { getManageCommunityPath } from '@/router/utils'
+import { useNotification } from '@/composable/notification'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useCommunityStore } from '@/stores/community'
+
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -29,6 +35,9 @@ const event: BokudeliEvent = await new Promise((resolve) => {
     { immediate: true },
   )
 })
+
+const communityStore = useCommunityStore(event.community_account)
+const community = computed(() => communityStore.community)
 
 const letterListStore = useLetterListStore(event.community_account)
 const letters = computed(
@@ -85,8 +94,9 @@ watch(
 const onEditClick = (letter: Letter) => {
   router.push({ query: { letterId: letter.letter_id } })
 }
-const onDeleteClick = (letter: Letter) => {
-  letterListStore.deleteLetter(letter.letter_id!)
+const onDeleteClick = async (letter: Letter) => {
+  await letterListStore.deleteLetter(letter.letter_id!)
+  notification.show($t('manage.letter.notification.deleted'), 'success')
 }
 const onCopyClick = async (letter: Letter) => {
   const newLetter: Letter = {
@@ -108,24 +118,34 @@ const onUpdated = (letter: Letter) => {
     router.push({ query: {} })
   }
 }
+const isOpenConfirmDialog = ref(false)
+
+const handleNewLetterClick = () => {
+  if (community.value?.community_email == null || community.value.community_email === '') {
+    isOpenConfirmDialog.value = true
+    return
+  }
+  router.push({ query: { letterId: '' } })
+}
+
 </script>
 
 <template>
   <v-container v-if="selectedLetter == null">
     <v-row class="justify-center">
-      <v-col md="9" sm="9" cols="12">
-        <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push({ query: { letterId: '' } })">
+      <v-col md="12" sm="9" cols="12">
+        <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
           {{ $t('manage.new_letter') }}
         </v-btn>
       </v-col>
     </v-row>
     <v-row class="justify-center">
-      <v-col md="9" sm="9" cols="12" v-for="letter of letters" :key="letter!.letter_id">
-        <LetterCard
-          :letter="letter"
-          @edit="onEditClick(letter)"
-          @delete="onDeleteClick(letter)"
-          @copy="onCopyClick(letter)"
+      <v-col cols="12">
+        <LetterTable
+          :letters="letters"
+          @edit="onEditClick"
+          @delete="onDeleteClick"
+          @copy="onCopyClick"
         />
       </v-col>
     </v-row>
@@ -142,9 +162,17 @@ const onUpdated = (letter: Letter) => {
   </v-container>
   <v-container v-else>
     <v-row class="justify-center">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="10" sm="10" cols="12">
         <LetterEdit :letter="selectedLetter" @update:letter="onUpdated" />
       </v-col>
     </v-row>
   </v-container>
+  <confirm-dialog v-model="isOpenConfirmDialog" :ok-text="'OK'" max-width="700px">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('manage.letter.email_not_set.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
+      <div v-html="$t('manage.letter.email_not_set.description')" />
+    </v-card-text>
+  </confirm-dialog>
 </template>

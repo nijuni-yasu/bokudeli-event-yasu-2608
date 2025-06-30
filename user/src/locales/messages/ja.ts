@@ -9,6 +9,7 @@ export default {
     'about': 'shokujiiって？',
     'magagine': 'マガジン',
     'x': '#最新情報',
+    'manage_top': '管理者TOP',
     'manage_event': 'イベント管理',
     'manage_community': 'コミュニティ管理',
     'guide_top': 'コミュニティガイド',
@@ -36,16 +37,158 @@ export default {
   },
   'manage': {
     'new_community': 'コミュニティ作成',
-    'new_event': 'イベント新規作成',
-    'new_letter': 'レター新規作成',
+    'new_event': 'イベント作成',
+    'new_letter': 'レター作成',
+    'top': {
+      'about_title': '【shokujiiって？】',
+      'about_description': `<b>食事でつながる「shokujii」</b>は<b>『孤食を減らし、団欒を増やす』</b>をミッションに、<br>
+      普段の食事をコミュニケーションや、出会いの場に変えたいと考えうまれたサービスです。<br>
+      shokujiiなら、飲食店選びから、参加者の出欠管理、料理の手配、決済までをひとまとめにできるので、<br>
+      幹事業務がらくらくに。はじめて食事会を企画する方でも安心してお使いいただけます。<br>`,
+      'about_button_01': '食事でつながる「shokujii」って？',
+      'about_button_02': '社内交流も、営業活動、採用活動も、食事でつながる',
+      'community_list_title': '【コミュニティ】',
+      'community_list_description': 'コミュニティのみんなと食事会をひらこう🎉',
+      'community_create': 'コミュニティ作成',
+      'flow_title': '【イベント開催の流れ】',
+      'flow_description': 'イベントを作成したらすぐに注文開始。お気軽にご利用ください。',
+      'function_title': '【機能一覧】',
+      'function_description': 'shokujiiでできること。ご要望に応じて鋭意機能アップデート中です！',
+      'price_title': '【ご利用料金】',
+      'price_description': 'shokujiiは基本無料でご利用いただけます。',
+      'support_title': '【サポート】',
+      'support_description': 'お困りの際はサポートにお気軽にご相談ください。',
+      'howto': {
+        'step1': {
+          'title': 'コミュニティを作成',
+          'description': 'イベント開催にあたって、まずはコミュニティを作成しましょう。コミュニティ名や紹介文を設定し、公開範囲も選択できます。',
+          'button': 'コミュニティを作成'
+        },
+        'step2': {
+          'title': 'イベントを下書き作成',
+          'description': '開催日時を入力して注文可能な飲食店から1つ選択。イベントページのカバー画像は<a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a>を活用ください。',
+          'button': 'イベントを作成'
+        },
+        'step3': {
+          'title': 'お店に予約申請',
+          'description': '支払い方法・公開設定など内容が確定したら、お店に「予約申請」を送信。（飲食店の業態はデリバリー以外にも、一部イートインやテイクアウトも選択可能です）',
+          'button': '詳細を見る'
+        },
+        'step4': {
+          'title': 'まずは主催者が注文！',
+          'description': 'お店が「予約承認」すると注文の受付開始。まずは主催者メンバーから注文を進めましょう！',
+          'button': '詳細を見る'
+        },
+        'step5': {
+          'title': 'SNSやメールで告知',
+          'description': 'メール配信/SNS投稿/DM/QRコード/チラシ生成/Slack連携などを駆使して告知集客をすすめよう！',
+          'button': '告知・集客のコツ'
+        },
+        'step6': {
+          'title': '注文期限で自動発注',
+          'description': '注文期限になると、確定した注文内容をお店に自動発注。締切前であれば参加者はマイページから「キャンセル」することも可能です。',
+          'button': '詳細を見る'
+        },
+        'step7': {
+          'title': 'お店からデリバリー',
+          'description': '指定の日時に、飲食店からご注文のお料理が届きます。お受け取りの際は、登録いただいた携帯電話を手元にご用意のうえ、お待ちください。',
+          'button': '詳細を見る'
+        },
+        'step8': {
+          'title': 'いただきます！',
+          'description': 'みなさん揃ったらいよいよ食事会のスタートです。「いただきます」のかけ声で、楽しいだんらんをお過ごしください。',
+          'button': 'イベント当日の準備'
+        }
+      },
+      'functions': {
+        'step1': {
+          'title': '参加者 事前決済',
+          'description': '参加者は自分が食べたいフードを選んで、クレジットカードで事前決済します。参加確定と同時に決済が完了するため、当日の金銭やり取りが不要になり、スムーズな運営が可能です。',
+          'button': '詳細を見る'
+        },
+        'step2': {
+          'title': '主催者 請求書払い',
+          'description': '企業や団体などがイベントを主催する場合、まとめて後払い（請求書払い）にも対応可能です。イベント終了後に請求書を発行し、翌月末日までに銀行振込にてお支払いいただきます。',
+          'button': '詳細を見る'
+        },
+        'step3': {
+          'title': '公開設定/URL限定公開',
+          'description': 'イベントページの公開範囲を設定できます。全体に公開する「公開設定」のほか、URLを知っている人のみがアクセスできる「限定公開」にも対応しています。',
+          'button': '詳細を見る'
+        },
+        'step4': {
+          'title': '管理者追加/削除',
+          'description': 'コミュニティの管理者を複数人設定できます。運営メンバーの追加・削除がいつでも可能なため、チーム体制での運営にも柔軟に対応できます。',
+          'button': '詳細を見る'
+        },
+        'step5': {
+          'title': 'SNS投稿機能',
+          'description': 'イベント情報をそのままSNSに投稿できる機能です。X（旧Twitter）やFacebookなどで簡単にシェアでき、集客や告知にご活用いただけます。',
+          'button': '詳細を見る'
+        },
+        'step6': {
+          'title': 'レター機能(メール配信)',
+          'description': '参加者やコミュニティメンバーに、メール配信が可能です。注文開始や締切のお知らせ、リマインド連絡などを一斉に送ることができます。',
+          'button': 'レター機能について'
+        },
+        'step7': {
+          'title': 'チラシ生成機能',
+          'description': 'イベント内容からQRコード付きのおしゃれなチラシを自動生成。またCanvaのテンプレートも公開中。チラシの配布や掲示で集客に活用ください。',
+          'button': 'チラシ生成機能について'
+        },
+        'step8': {
+          'title': 'Slack連携',
+          'description': 'Slackと連携することで、注文通知や締切リマインドなどの情報をチャンネルに自動投稿します。コミュニティでの情報共有がよりスムーズになります。',
+          'button': 'Slack連携について'
+        },
+        'step9': {
+          'title': 'and so on...',
+          'description': 'このほかにも、QRコード招待、参加者管理、領収書発行機能など、イベント運営をサポートする機能を順次追加・強化しています。'
+        }
+      },
+      'prices': {
+        'step1': {
+          'title': '主催者利用料 無料',
+          'description': 'イベント主催者の利用料金は無料です。コミュニティの作成、イベント開催、メール配信など、すべての機能を無料でご利用いただけます。',
+          'button': '詳細を見る'
+        },
+        'step2': {
+          'title': '配送料 無料',
+          'description': '大口注文のため配送料は無料です。ただし、店舗ごとに設定された最低注文個数に満たない場合は、配送料をご請求させていただく場合がございます。',
+          'button': '詳細を見る'
+        },
+        'step3': {
+          'title': '請求書払い手数料',
+          'description': '企業・団体による「請求書払い」をご利用の場合、ご利用金額の10％を手数料として頂戴しております。お支払いはイベント終了後に発行される請求書に基づき、翌月末日までに銀行振込にてお支払いいただきます。',
+          'button': '詳細を見る'
+        }
+      },
+      'supports': {
+        'step1': {
+          'title': 'チャットでサポート',
+          'description': 'イベントの準備や操作方法でお困りの際は、チャットサポートをご利用いただけます。画面右下のチャットアイコンからいつでもお気軽にご相談ください。',
+          'button': '詳細を見る'
+        },
+        'step2': {
+          'title': 'オンラインMTG',
+          'description': 'イベントの企画や導入にあたり、オンラインでの個別ミーティングも承っております。ご希望の方は、日程調整フォームよりお気軽にお申し込みください。',
+          'button': '日程調整フォーム'
+        },
+        'step3': {
+          'title': '緊急連絡先',
+          'description': '当日のトラブルや配送に関する緊急対応が必要な場合は、専用の緊急連絡先までご連絡ください。緊急時以外のご連絡はチャットまたはメールをご利用ください。',
+          'button': '050-1721-5838'
+        }
+      }
+    },
     'community': {
       'tabs': {
         'events': 'イベント',
         'member': 'メンバー',
         'letter': 'レター',
         'invoice': '請求書払い',
-        'slackSetting': 'Slack',
-        'settings': '設定',
+        'slackSetting': 'Slack連携',
+        'settings': 'コミュニティ設定',
       }
     },
     'event': {
@@ -99,12 +242,19 @@ export default {
       }
     },
     'letter': {
+      'hint': {
+        'title': 'レターを配信しよう💌',
+        'description': `レター機能を使うと<b>「コミュニティメンバー」</b>や<b>「イベント参加者」「イベント未登録者」</b>にメールを配信することができます。<br />
+                        配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。返信先は［コミュニティ設定］タブからご設定ください。<br />
+                        詳細は <a href="https://note.com/preview/n0c961c680fd3?prev_access_key=ced956e93d24fb7689121a8bdb431ebb" target="_blank">レター機能について</a> をご確認ください。<br />
+                        `,
+      },
       'type_select_dialog': {
-        'top': 'イベント参加者やコミュニティメンバーにメールで配信することができます。配信先を選択してください。',
-        'event': 'イベント参加者に配信するレター',
-        'event_description': 'イベント開催を案内したい時や、イベント参加予定者にメールを配信したい時など、イベントに関するメールを配信する時に選択してください。',
-        'community': 'コミュニティメンバーに配信するレター',
-        'community_description': '特定のイベントに関連しないメールをコミュニティ全体に配信する時に選択してください。',
+        'top': '「コミュニティメンバー」や「イベント参加者」「イベント未登録者」にメールで配信することができます。配信先を選択してください。',
+        'event': 'イベント参加者に配信',
+        'event_description': '「イベント参加者」や「イベント未登録者」にメールを配信することができます。',
+        'community': 'コミュニティメンバーに配信',
+        'community_description': 'コミュニティメンバー全体にメールを配信することができます。',
         'type': {
           'normal': '通常',
           'important': '重要',
@@ -115,23 +265,38 @@ export default {
         'top': 'レターを配信するイベントを選択してください',
       },
       'edit': {
-        'new': 'レター新規作成',
+        'new': 'レター作成',
         'edit': 'レター編集',
         'to': '配信先',
         'to_community': 'コミュニティメンバー全体',
         'to_event_participant': 'イベント参加者',
         'to_event_non_participant': 'イベント未登録者',
-        'number_of_people': '（{0}人）',
+        'number_of_people': '（配信先：{0}人）',
         'deliver_datetime': '配信日時',
         'deliver_now': '今すぐ配信',
         'subject': '件名',
         'message': 'メッセージ',
         'add_event_description': 'イベント内容を追加する',
         'event_description': 'イベント内容',
-        'submit_reserve': '予約',
-        'submit_now': '配信',
+        'submit_reserve': '予約配信',
+        'submit_now': '今すぐ配信',
         'save_draft': '下書き保存',
         'to_draft': '下書きに戻す',
+        'send_test': 'テスト配信',
+        'send_test_success': 'テスト配信しました',
+        'send_test_error': 'テスト配信に失敗しました',
+        'save_success': 'レターを下書き保存しました',
+        'save_error': 'レターの下書き保存に失敗しました',
+        'submit_success': 'レターを配信設定しました',
+        'submit_error': 'レターの配信設定に失敗しました',
+      },
+      'notification': {
+        'saved': 'レターを保存しました',
+        'deleted': 'レターを削除しました',
+      },
+      'email_not_set': {
+        title: 'メールアドレス未設定',
+        description: 'レターを送信するには、コミュニティのメールアドレスを設定する必要があります。<br>[コミュニティ設定] からメールアドレスを設定してください。'
       }
     },
     'community_manager_invitation': {
@@ -179,7 +344,7 @@ export default {
       'download': 'ダウンロード',
       'no_invoice': '請求書はまだありません',
       'error': '請求書の取得に失敗しました',
-      'title': '「主催者 請求書払い」について',
+      'title': '主催者 請求書払い📃',
       'description': `イベント設定画面で<b>「主催者 請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
       イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
       お支払い期限は翌月末日となります。詳細は、<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g353224adc3a_0_0" target="_blank">支払い設定について</a> をご確認ください。`,

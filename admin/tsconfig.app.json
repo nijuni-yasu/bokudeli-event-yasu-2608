@@ -9,9 +9,7 @@
     "src/components/EventMemberList.vue",
     "src/components/EventDetailsCard.vue",
     "src/components/UserCommunityPanel.vue",
-    "src/components/CalendarAddDialog.vue",
-    "src/composable/loginUser.ts",
-    "src/composable/buildCalendarLink.ts"
+    "src/composable/loginUser.ts"
   ],
   "compilerOptions": {
     "composite": true,

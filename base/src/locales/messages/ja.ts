@@ -68,6 +68,8 @@ export default {
     contact_community_after_login: 'ログインした後に主催者に連絡してください。',
   },
   cart: {
+    title: '🛒 カート 🛒',
+    subtitle: '注文を完了してイベント参加をお申し込みください',
     community_name: '【主催者】',
     event_name: '【イベント名】',
     date: '【開催日時】',
@@ -77,6 +79,7 @@ export default {
     deadline: '【注文期限】',
     cancel: '【キャンセル】',
     cancel_until_deadline: '注文期限までキャンセル可',
+    order_contents: '【注文内容】',
     menu: 'メニュー',
     count: '個数',
     price: '金額',
@@ -85,7 +88,8 @@ export default {
     cannot_order_deadline: '注文期限をすぎました。注文確定できません。',
     cannot_order_limit_people: '定員に達しました。注文確定できません。',
     order_completed: '注文を完了しました。',
-    payment_failed: '決算処理に失敗しました。管理者にお問い合わせください。',
+    payment_failed: '決済処理に失敗しました。サポートにお問い合わせください。',
+    order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
     confirm_order_credit_card: 'クレジットカードの事前決済に進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
@@ -93,7 +97,7 @@ export default {
     remove_from_cart: 'カートから削除しますか？',
     removed_from_cart: 'カートから削除しました。',
     event_not_found: 'イベントが見つかりません。',
-    order_and_attend_event: '注文してイベントに参加する',
+    order_and_attend_event: '注文を完了する',
     no_items_in_cart: 'カートに商品はありません。',
     doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
     doesnt_exists_user_image: 'アイコンが登録されていません。登録完了後、注文を完了してください',
@@ -105,24 +109,20 @@ export default {
     login: 'ログインして注文する',
   },
   event_create_modal: {
-    title: 'イベントを作成しよう',
-    desc: `✅ <b>「郵便番号」</b>と<b>「開催日時」</b>を入力すると、注文できるお店が一覧表示👀<br />
-          ✅ イベントカバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> をご活用ください🎨<br />
-          ✅ 誰でも参加可能な<b>「公開」</b> or 参加者を限定する<b>「URL限定公開」</b>を選べます<br />
-          ✅ 参加者が支払う<b>「参加者 事前決済」</b>or<b>「主催者 請求書払い」</b>も選択可能です💰<br />
-          ✅ イベント内容が確定したら、お店に<b>「予約申請」</b>しましょう📩<br />
-          ✅ 予約申請すると<b>「店舗」「開催場所」「開催日時」</b>は変更できないのでご注意ください⚠️<br />
-          ✅ お店から<b>「予約承認」</b>されたら注文受付開始🙌<br />
-          ✅ まずは<b>「主催者」</b>や<b>「運営メンバー」</b>で注文しよう💨<br />
-          ✅ <b>「2人以上」</b>が注文するとshokujiiのトップ画面に表示されるようになります👏<br />
-          ✅ さらに<b>SNS投稿・ダイレクトメッセージ・チラシ</b>などを駆使して告知・集客を進めよう📢<br />
-          ✅ <b>「注文期限」</b> になると注文内容が確定！お店に<b>「自動で発注」</b>されます📩<br />
-          ✅ <b>「注文期限」</b> までの間は、注文された参加者はマイページから<b>「キャンセル」</b>が可能です👌<br />
-          ✅ <b>「注文の目安」</b> の個数を下回ると、配送料をご請求する場合がありますのでご注意ください🚚<br />
-          ✅ 当日フードを受け取って、ランチ会や食事会をお楽しみください🥰🥰🥰<br />
+    title: 'イベントの進め方',
+    desc: `・<b>「郵便番号」</b>と<b>「開催日時」</b>を入力して、デリバリー可能な飲食店から1つ選択📍<br />
+          ・イベント内容を入力。カバー画像の作成には <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a>をご活用ください🎨<br />
+          ・誰でも参加可能な<b>「公開」</b> or 参加者を限定する<b>「URL限定公開」</b>から選択できます👀<br />
+          ・支払い方法は<b>「参加者 事前決済」</b>or <b>「主催者 請求書払い」</b>から選択できます💰<br />
+          ・内容が確定したらお店に<b>「予約申請」</b>。お店から<b>「予約承認」</b>をいただいたら注文受付開始💨<br />
+          ・<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a> などを駆使して告知しよう📣<br />
+          ・注文期限になると注文内容が確定し、お店に<b>「自動で発注」</b>されます📩<br />
+          ・注文期限までは、注文した参加者はマイページから<b>「キャンセル」</b>が可能です↩️<br />
+          ・<b>「注文の目安」</b> の個数を下回ると、配送料をご請求する場合がありますのでご注意ください🚚<br />
+          ・当日フードを受け取って、食事会をお楽しみください😋😋😋<br />
           <br />
-          詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> もご一読ください。<br />
-          ご不明点やご要望がありましたら、サポートまで
+          　詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> や <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_0#slide=id.g2b9c62499c1_0_0" target="_blank">告知・集客のコツ</a> もご一読ください。<br />
+          　ご不明点やご要望がありましたら、サポートまで
           <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
           `,
   },
@@ -210,6 +210,8 @@ export default {
     community_icon_image: 'アイコン',
     community_icon_image_hint: `※推奨サイズ：300x300px`,
     community_create_next: `コミュニティを作成したら<br>次はイベントをつくってみよう🎉`,
+    email_setting: 'メール設定',
+    email_hint: '「問い合わせ先」や「配信するレターの返信先」として、コミュニティのメールアドレスを設定してください。',
     sns_setting: 'SNS設定',
     facebook: 'Facebook',
     twitter: 'X(Twitter)',
@@ -258,6 +260,9 @@ export default {
     shop_range_min_orders_unit: '個以上',
     button_selected: '選択中',
     button_check_menu: 'メニューをみる',
+    shop_not_found: 'お店が見つかりませんでした',
+    back: '前へ',
+    next: '次へ',
   },
   event_detail: {
     title: 'イベント詳細',
@@ -397,19 +402,16 @@ export default {
            ・予約申請が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   event_few_members_notice_modal: {
-    title: `主催イベントを盛り上げよう🎉`,
+    title: `イベントを盛り上げよう🎉`,
     desc: `お店から予約承認をいただきました。<br />
-           以下手順で友人知人を食事会に招待して盛り上げていきましょう！<br />
+           以下手順で友人知人を食事会に招待して盛り上げていきましょう。<br />
            <br />
-           ① まずは、<b>「主催者」</b>や<b>「運営メンバー」</b>で早速注文💨💨<br />
-           ②<b>「2人以上」</b>が注文するとshokujiiのトップ画面にも表示されるようになります☺️☺️<br />
-          　・参加者がいない段階においても、<b>不用意に目立つことなく</b>、安心して告知いただけます。<br />
-          　・2人未満の場合も、<b>コミュニティページからは閲覧可能</b>ですので、ご活用ください。<br />
-          　・まずは参加意欲の高い、<b>コミュニティのコアメンバーからお誘い</b>してみましょう。<br />
-           ③さらに <b>SNS投稿・ダイレクトメッセージ・チラシ</b>などを駆使して、告知・集客してください📢<br />
-
+           ① まずは、<b>「主催者」</b>や<b>「運営メンバー」</b>で早速注文💨<br />
+           ② 公開設定の場合、どなたかが注文すると <a href="https://shokujii.jp/" target="_blank">shokujiiのトップページ</a> にも表示されます👀<br />
+           ③ <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a>
+           などで告知しよう📢 <br />
            <br />
-           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください👍`,
+           詳しくは <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g2b9c62499c1_0_0" target="_blank">コミュニティガイド「告知・集客のコツ」</a> も参考にしてください。`,
   },
   cancelpolicy_modal: {
     title: 'キャンセルポリシー',
@@ -438,15 +440,42 @@ export default {
     delete: '削除',
     edit: '編集',
     dialog: {
-      title: '本当に削除しますか？',
-      description: 'この操作は元に戻すことができません。',
+      title: 'レター削除',
+      description: '本当に削除しますか？この操作は取り消せません。',
       submit: '削除',
     },
+  },
+  letter_table: {
+    content: '配信内容',
+    type: '配信先',
+    num_targets: '配信数',
+    event_name: 'イベント名',
+    scheduled_at: '配信日時',
+    updated_at: '更新日時',
+    status: 'ステータス',
+    edit: '編集',
+    delete: '削除',
+    copy: '複製',
+    no_letters: 'レターはまだありません',
   },
   email_dialog: {
     title: 'メール送信',
     send_to: '送信先: {0}',
     send: '送信',
+  },
+  success_join_event_dialog: {
+    title: '注文完了🎉',
+    subtitle: '参加申し込みが完了しました！',
+    datetime: '📅 日時：',
+    deadline: '⏳ 期限：{0}に注文締切',
+    place: '📍 場所：',
+    organizer: '👥 主催：',
+    food: '👩‍🍳 食事：',
+    hashtag: '#️⃣ ハッシュタグ：',
+    share_on_x: 'X で参加予定をシェアする',
+    add_to_calendar: 'カレンダーに追加する',
+    copy_text: 'テキストコピー',
+    close: '閉じる'
   },
   error: {
     '404': {
@@ -457,7 +486,13 @@ export default {
     // 正確には 520 は HTTP ERROR ではないが、Cloudflare が Client Application Error として使用しているのを参考に、ここでは 520 を使用
     '520': {
       title: 'Client Application Error',
-      description: '予期しないエラーが発生しました'
-    }
+      description: '予期しないエラーが発生しました',
+    },
+  },
+  home_button_dialog: {
+    title: 'ホーム画面に追加',
+    step1: '①ご利用のブラウザから、以下のボタンをタップしてください。',
+    step2: '②「ホーム画面に追加」をタップしてください。',
+    step3: '③ shokujiiにいつでもアクセスできるようになります👍',
   },
 }

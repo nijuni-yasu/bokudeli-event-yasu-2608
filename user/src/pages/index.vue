@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { getEventPath } from '@/router/utils'
 import { useEventListStore } from '@/stores/eventList'
-import TopCarousel from '@/components/TopCarousel.vue'
+import { useBannersStore } from '@/stores/banner'
+import Banners from '@/components/Banners.vue'
 import { where, orderBy, Timestamp } from 'firebase/firestore'
 import EventCard from '@/components/EventCard.vue'
 import IncrementalLoader from '@/components/IncrementalLoader.vue'
@@ -23,6 +24,9 @@ const numOfColumns = computed(() => {
 const numOfPopularColumns = 4
 
 const now = Timestamp.now()
+
+const topBannersStore = useBannersStore('top_banners')
+const centerBannersStore = useBannersStore('center_banners')
 
 const popularEventListStore = useEventListStore(
   [
@@ -64,7 +68,7 @@ const upcomingEventListStore = useEventListStore(
 const upcomingEvents =
   computed(() =>
     upcomingEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 2) {
+      if (s.event == null || s.event.event_num_members < 1) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
@@ -84,7 +88,7 @@ const pastEventListStore = useEventListStore(
 const pastEvents =
   computed(() =>
     pastEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 2) {
+      if (s.event == null || s.event.event_num_members < 1) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
@@ -103,12 +107,12 @@ const next = () => {
 <template>
   <v-row class="justify-center align-center">
     <v-col md="10" cols="12">
-      <TopCarousel />
+      <Banners :banners="topBannersStore.banners ?? []" />
       <v-row class="mb-2">
         <template v-if="popularEvents.length > 0">
           <v-col cols="12" class="text-h4 mt-8 ml-2">
             <v-row align="center">
-              <v-icon size="40" :icon="mdiCrownOutline" class="mr-1"/>
+              <v-icon size="40" :icon="mdiCrownOutline" class="mr-1" />
               <span>{{ $t('top.popular_events') }}</span>
             </v-row>
           </v-col>
@@ -128,7 +132,7 @@ const next = () => {
         </template>
         <v-col cols="12" class="text-h4 mt-10 ml-2">
           <v-row align="center">
-            <v-icon size="40" :icon="mdiCalendarHeart" class="mr-1"/>
+            <v-icon size="40" :icon="mdiCalendarHeart" class="mr-1" />
             <span>{{ $t('top.upcoming_events') }}</span>
           </v-row>
         </v-col>
@@ -145,12 +149,22 @@ const next = () => {
             <EventCard class="event-card" :event="event" :members="members" />
           </router-link>
         </v-col>
+      </v-row>
+      <v-row
+        class="justify-center ma-0 mx-md-16 mt-md-10"
+        v-show="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
+      >
+        <v-col md="9" sm="12" cols="12" class="mt-0 pt-0 px-0">
+          <Banners :banners="centerBannersStore.banners ?? []" />
+        </v-col>
+      </v-row>
+      <v-row class="mb-2">
         <template
           v-if="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
         >
           <v-col cols="12" class="text-h4 mt-10 ml-2">
             <v-row align="center">
-              <v-icon size="40" :icon="mdiCalendarCheck" class="mr-1"/>
+              <v-icon size="40" :icon="mdiCalendarCheck" class="mr-1" />
               <span>{{ $t('top.past_events') }}</span>
             </v-row>
           </v-col>

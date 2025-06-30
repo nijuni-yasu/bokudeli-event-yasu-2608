@@ -29,7 +29,12 @@
       "rewrites": [
         {
           "source": "/c/**/e/**",
-          "function": "replace_ogp_tags",
+          "function": "handleEventOgpRequest",
+          "region": "asia-northeast1"
+        },
+        {
+          "source": "/c/**",
+          "function": "handleCommunityOgpRequest",
           "region": "asia-northeast1"
         },
         {
@@ -45,7 +50,12 @@
       "rewrites": [
         {
           "source": "/c/**/e/**",
-          "function": "replace_ogp_tags",
+          "function": "handleEventOgpRequest",
+          "region": "asia-northeast1"
+        },
+        {
+          "source": "/c/**",
+          "function": "handleCommunityOgpRequest",
           "region": "asia-northeast1"
         },
         {
@@ -56,6 +66,23 @@
     }
   ],
   "functions": [
+    {
+      "source": "functions/default",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        ".gitignore",
+        "src",
+        "tsconfig.*",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ],
+      "predeploy": [
+        "yarn --cwd functions/default lint",
+        "yarn --cwd functions/default build"
+      ]
+    },
     {
       "source": "functions/legacy",
       "codebase": "legacy",

@@ -9,6 +9,7 @@ import {
   mdiAccountOutline,
   mdiAccountCreditCardOutline,
   mdiHelp,
+  mdiEmailOutline,
 } from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
 import { trimHashTag } from '@/utils/hashTag'
@@ -103,7 +104,7 @@ const isOpenNewCommunityDialog = ref(false)
             <ImageInput
               :url="community.community_icon_image_url ?? undefined"
               :rules="[requiredValidator]"
-              style="width: auto; max-width: min(100%, 200px); aspect-ratio: 1/1"
+              style="width: auto; max-width: min(100%, 150px); aspect-ratio: 1/1"
               :cover="true"
               @fileSelected="(f) => (iconImageFile = f)"
             />
@@ -183,6 +184,28 @@ const isOpenNewCommunityDialog = ref(false)
 
     <v-card flat class="mt-10 pa-10" v-if="!isNew">
       <v-card-title class="pt-10 px-5">
+        <v-icon size="50" class="text--primary me-3" :icon="mdiEmailOutline" />
+        {{ $t('community_edit.email_setting') }}
+      </v-card-title>
+      <v-card-text class="px-5 pb-5 text-body-2">
+        {{ $t('community_edit.email_hint') }}
+      </v-card-text>
+
+      <v-card-text class="pt-5">
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              v-model="community.community_email"
+              outlined
+              dense
+              :label="$t('email')"
+              :rules="[requiredValidator, emailValidator]"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <v-card-title class="pt-10 px-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
         {{ $t('community_edit.sns_setting') }}
       </v-card-title>
@@ -261,7 +284,7 @@ const isOpenNewCommunityDialog = ref(false)
         <v-icon size="50" class="text--primary me-3" :icon="mdiAccountOutline" />
         {{ $t('community_edit.manager_info') }}
       </v-card-title>
-      <v-card-text class="px-5 pb-10">
+      <v-card-text class="px-5 pb-10 text-body-2">
         {{ $t('community_edit.manager_info_hint') }}
       </v-card-text>
 
@@ -330,20 +353,6 @@ const isOpenNewCommunityDialog = ref(false)
               dense
               :label="$t('phone_number')"
               :rules="[requiredValidator, phoneValidator]"
-            />
-          </v-col>
-        </v-row>
-      </v-card-text>
-
-      <v-card-text class="pt-5">
-        <v-row>
-          <v-col cols="12">
-            <v-text-field
-              v-model="community.community_email"
-              outlined
-              dense
-              :label="$t('email')"
-              :rules="[requiredValidator, emailValidator]"
             />
           </v-col>
         </v-row>

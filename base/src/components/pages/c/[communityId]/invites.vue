@@ -8,9 +8,9 @@ import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { getCommunityPath } from '@/router/utils'
+import { getManageCommunityPath } from '@/router/utils'
 
-const accept_invitation_for_community_manager = httpsCallable(functions, 'accept_invitation_for_community_manager')
+const acceptInvitationForCommunityManager = httpsCallable(functions, 'acceptInvitationForCommunityManager')
 
 const props = defineProps<{
   communityId: string
@@ -23,7 +23,7 @@ const isOpenMessageDailog = ref(false)
 const message = ref('')
 
 const redirect = () => {
-  router.push(getCommunityPath(props.communityId))
+  router.push(getManageCommunityPath(props.communityId))
 }
 
 watch(
@@ -38,7 +38,7 @@ watch(
     if (communityId == null) {
       return
     }
-    accept_invitation_for_community_manager({ communityId, token: route.query.t })
+    acceptInvitationForCommunityManager({ communityId, token: route.query.t })
       .then(() => {
         message.value = '管理者になりました'
         isOpenMessageDailog.value = true

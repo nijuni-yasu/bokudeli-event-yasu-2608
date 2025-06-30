@@ -1,12 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
     match /databases/{database}/documents {
+        // サポートアカウントかを判定する関数
+        function isSupport() {
+            return request.auth != null &&
+                   request.auth.uid in get(/databases/$(database)/documents/configs/global).data.support_user_ids
+        }
+        match /configs/{config} {
+            allow read: if true
+            // 将来的には isSupport() にする可能性もあるが、現状 functions のみ変更可能とする
+            allow write: if false
+        }
         match /partners/{partner_id} {
             match /shops/{shop} {
                 // 店舗情報はログインした店舗アカウントでないと create/update/deleteできない
                 allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
-                // support+admin@nijuni.jp アカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
-                allow create, update, delete: if request.auth.uid == 'B8xjaF1ftWWr3bCQpmPzmxJ9uQt2' || request.auth.uid == '5XjlhVfryCYErPmMIJ1YX6xEzC62'
+                // サポートアカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
+                allow create, update, delete: if isSupport()
             }
             match /menus/{menu} {
                 // メニュー情報はログインした店舗アカウントでないと create/update/deleteできない
@@ -18,23 +28,20 @@ service cloud.firestore {
             }
         }
         match /communities/{community} {
-		    // support+admin@nijuni.jp アカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
-            allow update: if request.auth.uid == 'B8xjaF1ftWWr3bCQpmPzmxJ9uQt2' || request.auth.uid == '5XjlhVfryCYErPmMIJ1YX6xEzC62'
-            // コミュニティはログインユーザーなら申請可能
-            allow create: if request.auth != null
             // コミュマネかを判定する関数
             function isManager() {
                 return request.auth != null &&
                        exists(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)) &&
-                       "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles ;
+                       "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles
             }
-            allow update: if isManager();
-            // support@nijuni.jpのアカウントは全て更新可。本番環境と開発環境のuser_idが異なるので両方設定
-            allow update: if request.auth.uid == '3QotPSenRqVPCZnT82fGCLh5EmG3' || request.auth.uid == 'yHOr7eaWWYPHLjPx3H0gZ5nfyWJ2'
+            // コミュニティはログインユーザーなら申請可能
+            allow create: if request.auth != null
+            // コミュマネ or サポートアカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
+            allow update: if isSupport() || isManager()
             match /events/{event} {
-                // コミュマネorサポートアカウントはイベントの作成・更新ができる
-                allow create, update: if isManager() && get(/databases/$(database)/documents/communities/$(community)).data.is_approved;
-                allow create, update: if request.auth.uid == '3QotPSenRqVPCZnT82fGCLh5EmG3' || request.auth.uid == 'yHOr7eaWWYPHLjPx3H0gZ5nfyWJ2'
+                // コミュマネ or サポートアカウントはイベントの作成・更新ができる
+                allow create, update: if isSupport()
+                allow create, update: if isManager() && get(/databases/$(database)/documents/communities/$(community)).data.is_approved
                 // コミュマネは下書きイベントの削除ができる
                 allow delete: if isManager() && get(/databases/$(database)/documents/communities/$(community)/events/$(event)).data.event_status.value == 'in_draft'
                 // 予約承認・予約却下などイベントステータスを店舗が変更できる
@@ -44,8 +51,8 @@ service cloud.firestore {
                 }
             }
             match /members/{memberId} {
-                allow create: if isManager() || (request.auth != null && request.auth.uid == memberId)
-                allow update: if isManager()
+                allow create: if isSupport() || isManager() || (request.auth != null && request.auth.uid == memberId)
+                allow update: if isSupport() || isManager()
             }
             // invites は functions 内からのみアクセス可能
             match /invites/{document=**} {

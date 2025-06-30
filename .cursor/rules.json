@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "rules": {
+    "ignore": [
+      "node_modules/**",
+      ".git/**",
+      ".firebase/**",
+      ".github/**",
+      "**/*.log",
+      "**/.DS_Store",
+      "**/firestore-debug.log",
+      "**/ui-debug.log"
+    ],
+    "format": {
+      "typescript": {
+        "semi": true,
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "printWidth": 100,
+        "tabWidth": 2
+      },
+      "javascript": {
+        "semi": true,
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "printWidth": 100,
+        "tabWidth": 2
+      },
+      "json": {
+        "tabWidth": 2
+      }
+    },
+    "lint": {
+      "typescript": {
+        "extends": [
+          "eslint:recommended",
+          "plugin:@typescript-eslint/recommended"
+        ],
+        "rules": {
+          "@typescript-eslint/explicit-function-return-type": "warn",
+          "@typescript-eslint/no-explicit-any": "warn",
+          "@typescript-eslint/no-unused-vars": "error"
+        }
+      },
+      "javascript": {
+        "extends": [
+          "eslint:recommended"
+        ],
+        "rules": {
+          "no-unused-vars": "error",
+          "no-console": "warn"
+        }
+      }
+    },
+    "search": {
+      "exclude": [
+        "node_modules/**",
+        ".git/**",
+        ".firebase/**",
+        ".github/**",
+        "**/*.log",
+        "**/.DS_Store"
+      ]
+    }
+  }
+} 

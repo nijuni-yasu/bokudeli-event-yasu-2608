@@ -10,7 +10,6 @@ import {
   getOrderUrl,
   getUserUrl,
   getManageEventMemberUrl,
-  getManageCommunityUrl,
   getManageEventInvoiceUrl,
 } from './utils/urls.js'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
@@ -41,8 +40,7 @@ const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7'
 const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
-const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
-const COMMUNITY_ADD_ID = 'd-d116c6b010214d2b92a2421411a508d2'
+const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 
 const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
 const USER_PASS_CODE = 'd-84540f5feaf8422484b65bdc2be739fe'
@@ -55,6 +53,17 @@ async function getUserEmail(userId) {
   const userPersonalInformationRef = db.collection('users_personal_information').doc(userId)
   const userPersonalInformationSnapshot = await userPersonalInformationRef.get()
   return userPersonalInformationSnapshot.get('user_email')
+}
+
+async function getUserEmailWithName(userId) {
+  const [userPersonalInformationRef, userRef] = await Promise.all([
+    db.collection('users_personal_information').doc(userId).get(),
+    db.collection('users').doc(userId).get(),
+  ])
+  return {
+    email: userPersonalInformationRef.get('user_email'),
+    name: userRef.get('user_name'),
+  }
 }
 
 async function getShopForEvent(eventSnapshot) {
@@ -73,22 +82,6 @@ function getShopEmails(shopSnapshot) {
     }
   }
   return Array.from(emails)
-}
-
-async function getCommunityMemberEmailsSet(communityId) {
-  // 重複するメールアドレスは追加しない
-  const emails = new Set()
-  const membersRef = db.collection('communities').doc(communityId).collection('members')
-  const membersSnapshot = await membersRef.get()
-  await Promise.all(
-    membersSnapshot.docs.map(async (member) => {
-      const userEmail = await getUserEmail(member.id)
-      if (userEmail != null && userEmail !== '') {
-        emails.add(userEmail)
-      }
-    }),
-  )
-  return emails
 }
 
 async function getCommunityManagerEmailsSet(communityId) {
@@ -140,6 +133,42 @@ async function getCommunityEmails(communityId) {
     emails.add(SUPPORT_MAIL)
   }
   return Array.from(emails)
+}
+
+//コミュニティユーザーのIDを取得
+async function getCommunityMemberIds(communityId) {
+  try {
+    const communityMembersRef = db.collection('communities').doc(communityId).collection('members')
+    const communityMembersSnapshot = await communityMembersRef.get()
+
+    if (communityMembersSnapshot.empty) {
+      console.warn(`No members found for community: ${communityId}`)
+      return []
+    }
+    return communityMembersSnapshot.docs.map((member) => member.id)
+  } catch (error) {
+    console.error(`Error fetching community members: ${error}`)
+    throw error
+  }
+}
+// イベント参加者のユーザーIDを取得
+async function getParticipantIds(eventId) {
+  try {
+    if (!eventId) {
+      console.warn('No event_id provided')
+      return []
+    }
+    const ordersRef = db.collectionGroup('orders').where('event_id', '==', eventId)
+    const ordersSnapshot = await ordersRef.get()
+    if (ordersSnapshot.empty) {
+      console.warn(`No orders found for event: ${eventId}`)
+      return []
+    }
+    return ordersSnapshot.docs.filter((order) => order.get('status') === 'ordered').map((order) => order.get('user_id'))
+  } catch (error) {
+    console.error(`Error fetching event participants: ${error}`)
+    throw error
+  }
 }
 
 async function createOrdersForOrderRemind(ordersRef) {
@@ -688,7 +717,7 @@ async function sendEventInformationMail() {
       user_name: userSnapshot.get('user_name'),
     }
     const to = await getUserEmail(userRef.id)
-    if (to == null) {
+    if (to == null || to === '') {
       continue
     }
     promises.push(
@@ -793,50 +822,6 @@ async function sendShopOpenMailToSupport(shopSnapshot) {
   })
 }
 
-async function sendCommunityAddedMailToOrganizer(templateId, communitySnapshot) {
-  const emails = await getCommunityEmails(communitySnapshot.id)
-  if (!emails.includes(SUPPORT_MAIL)) {
-    emails.push(SUPPORT_MAIL)
-  }
-  const community_account = communitySnapshot.get('community_account')
-  const community_name = communitySnapshot.get('community_name')
-  const community_url = getCommunityUrl(community_account)
-  const community_manage_url = getManageCommunityUrl(community_account)
-  return Promise.all(
-    emails.map(async (to) => {
-      await sgMail.send({
-        to,
-        from: DEFAULT_FROM,
-        templateId,
-        dynamic_template_data: {
-          community_account,
-          community_name,
-          community_url,
-          community_manage_url,
-        },
-      })
-    }),
-  )
-}
-
-async function sendCommunityContactMailToOrganizers(templateId, data) {
-  const emails = await getCommunityEmails(data.community_id)
-  const dynamic_template_data = data
-  if (!emails.includes(SUPPORT_MAIL)) {
-    emails.push(SUPPORT_MAIL)
-  }
-  return Promise.all(
-    emails.map(async (to) => {
-      await sgMail.send({
-        to,
-        from: DEFAULT_FROM,
-        templateId,
-        dynamic_template_data,
-      })
-    }),
-  )
-}
-
 async function sendOrderCompletionMailToMember(eventRef, userId) {
   const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
   const eventData = eventSnapshot.data()
@@ -856,6 +841,9 @@ async function sendOrderCompletionMailToMember(eventRef, userId) {
   }
   const icsContent = await makeIcs(eventData)
   const to = await getUserEmail(userId)
+  if (to == null || to === '') {
+    return
+  }
   return sgMail.send({
     to,
     from: DEFAULT_FROM,
@@ -978,30 +966,80 @@ async function sendLetter(_, end) {
     )
     await Promise.all(
       letters.docs.map(async (letterDoc) => {
-        const communityAccount = letterDoc.get('community_account')
         const type = letterDoc.get('letter_type')
-        let emails = []
+        const communityAccount = letterDoc.get('community_account')
+        const communitySnapshot = (
+          await db.collection('communities').where('community_account', '==', communityAccount).get()
+        ).docs[0]
+        const communityId = communitySnapshot.id
+        const communityName = communitySnapshot.get('community_name')
+        const communityUrl = getCommunityUrl(communityAccount)
+        const communityEmail = communitySnapshot.get('community_email') || DEFAULT_FROM
+        let userIds = []
+
+        // イベントが存在する場合は、イベントの情報を取得
+        let eventName = null
+        let eventUrl = null
+        let eventDate = null
+        if (letterDoc.get('event_id')) {
+          const eventSnapshot = (
+            await db.collectionGroup('events').where('event_id', '==', letterDoc.get('event_id')).get()
+          ).docs[0]
+          if (eventSnapshot.exists) {
+            eventName = eventSnapshot.get('event_name')
+            eventUrl = getEventUrl(communityAccount, letterDoc.get('event_id'))
+            eventDate = convertToDateWeekdayShort(eventSnapshot.get('event_start_datetime').toMillis())
+          }
+        }
+
         switch (type) {
           case 'community':
-            emails = Array.from(await getCommunityMemberEmailsSet(communityAccount))
+            userIds = await getCommunityMemberIds(communityId)
             break
           case 'event_participant':
-            const eventId = letterDoc.get('event_id')
-            emails = await getEventMemberEmails(eventId)
+            userIds = await getParticipantIds(letterDoc.get('event_id'))
             break
-          case 'event_non_participant':
-            emails = await getCommunityMemberEmailsSet(communityAccount)
-            for (const email of await getEventMemberEmails(eventId)) {
-              emails.delete(email)
-            }
+          case 'event_non_participant': {
+            const [participantIds, communityMemberIds] = await Promise.all([
+              getParticipantIds(letterDoc.get('event_id')),
+              getCommunityMemberIds(communityId),
+            ])
+            userIds = communityMemberIds.filter((id) => !participantIds.includes(id))
             break
+          }
+          default:
+            console.warn(`Unknown letter type: ${type}`)
+            userIds = []
         }
-        for (const email of emails) {
+
+        const userInfos = await Promise.all(userIds.map(getUserEmailWithName))
+        const validUserInfos = userInfos.filter((info) => info.email != null && info.email !== '')
+        // 送信先にサポートアカウントを追加
+        validUserInfos.push({
+          email: SUPPORT_MAIL,
+          name: 'サポートアカウント',
+        })
+
+        for (const userInfo of validUserInfos) {
+          const dynamic_template_data = {
+            community_name: communityName,
+            community_url: communityUrl,
+            event_name: eventName,
+            event_url: eventUrl,
+            event_date: eventDate,
+            letter_title: letterDoc.get('letter_title'),
+            letter_content: letterDoc.get('letter_content'),
+            letter_type: type,
+            user_name: userInfo.name || 'ユーザー',
+          }
+          console.log(dynamic_template_data)
           await sgMail.send({
-            to: email,
+            to: userInfo.email,
             from: DEFAULT_FROM,
+            replyTo: communityEmail,
             subject: letterDoc.get('letter_title'),
-            text: letterDoc.get('letter_content'),
+            templateId: LETTER_ID,
+            dynamic_template_data,
           })
         }
         transaction.update(letterDoc.ref, { status: 'sent', sent_at: Timestamp.now() })
@@ -1145,24 +1183,6 @@ export const on_order_changed = functions
     return Promise.all(promises)
   })
 
-export const community_added = functions
-  .region('asia-northeast1')
-  .firestore.document('communities/{communityId}')
-  .onCreate(async (snapshot) => {
-    return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, snapshot)
-  })
-
-export const community_contact = functions.region('asia-northeast1').https.onCall((data, context) => {
-  if (context.auth) {
-    return sendCommunityContactMailToOrganizers(COMMUNITY_CONTACT_ID, data)
-  } else {
-    console.log('community_contact Auth Error')
-    console.log(data)
-    console.log(context)
-    throw new functions.https.HttpsError('permission-denied', 'community_contact Auth Error')
-  }
-})
-
 export const send_email = functions.region('asia-northeast1').https.onCall(async (data, context) => {
   if (!context.auth) {
     console.warn('send_email Auth Error', data, context)
@@ -1174,8 +1194,8 @@ export const send_email = functions.region('asia-northeast1').https.onCall(async
     throw new functions.https.HttpsError('invalid-argument', 'Required data is missing')
   }
   const [from, to] = await Promise.all([getUserEmail(context.auth.uid), getUserEmail(toUid)])
-  if (from == null || to == null) {
-    console.warn(`send_email user_email is null\nfrom: ${from}\nto: ${to}`)
+  if (from == null || from === '' || to == null || to === '') {
+    console.warn(`send_email user_email is null or empty\nfrom: ${from}\nto: ${to}`)
     throw new functions.https.HttpsError('invalid-argument', 'Invalid email address')
   }
   return sgMail.send({

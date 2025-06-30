@@ -23,7 +23,7 @@ import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 const router = useRouter()
 const route = useRoute()
 
-const get_invitaion_url_for_community_manager = httpsCallable(functions, 'get_invitaion_url_for_community_manager')
+const getInvitationUrlForCommunityManager = httpsCallable(functions, 'getInvitationUrlForCommunityManager')
 
 const communityId = route.params.communityId as string
 const communityStore = useCommunityStore(communityId) as CommunityStore
@@ -92,7 +92,7 @@ const inviteManager = async () => {
   isUrlLoading.value = true
   try {
     const communityId = community.value!.community_id
-    const url = await get_invitaion_url_for_community_manager({ communityId })
+    const url = await getInvitationUrlForCommunityManager({ communityId })
     invitationUrl.value = url.data as string
     // clipboard-write は 今の所 [Blink](https://www.chromium.org/blink/) のみ対応、かつ現時点ではなくても動作するのでコメントアウト
     // TODO ブラウザの対応状況を見て、適切に対応する

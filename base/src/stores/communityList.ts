@@ -52,7 +52,7 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
     () => {
       const pagenationExecutor = new TaskExecutor(1)
       const communityStores = ref<CommunityStore[] | null>(null)
-      const communityDraft = ref<BokudeliCommunity>(new BokudeliCommunity())
+      const communityDraft = ref<BokudeliCommunity>(BokudeliCommunity.createNew())
       const totalCount = ref<number | null>(null)
 
       const communitiesSnapshot: QueryDocumentSnapshot[] = []
@@ -135,7 +135,7 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
         getCommunityData,
         createNewCommunityFromDraft,
         $reset: () => {
-          communityDraft.value = new BokudeliCommunity()
+          communityDraft.value = BokudeliCommunity.createNew()
         },
       }
     },

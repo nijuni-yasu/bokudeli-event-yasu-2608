@@ -1,8 +1,10 @@
 # shokujii base
 
-shokujii サイト共通で使用するコンポーネント等をまとめたディレクトリです。
+shokujii サイト(hosting)共通で使用するコンポーネント等をまとめたディレクトリです。
 当初は npm パッケージにするなどして再利用性を高める予定でしたが、[Materio](https://store.vuetifyjs.com/products/materio-vuetify-vuejs-admin-template) が依存関係の動的解決に向いていない構造なので、 ひとまずシンボリックリンクを用いて各アプリに共通項目を提供するものとします。
+`common` は hosting, functions 共通で使用されるモジュールライブラリで、 `base` とは明確に区別すべきです。
 
+> TODO `base` という名前は誤解を招くので変更する
 > TODO 将来的には何らかの方法でモジュール化する
 
 - [src/@core](./src/@core/), [src/@layouts](./src/@layouts/)  

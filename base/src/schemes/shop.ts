@@ -149,7 +149,7 @@ export class Shop {
       time: number
     } = {
       days_before: 1,
-      time: 53100000,
+      time: 53940000,
     },
     public shop_url_facebook: string = '',
     public shop_url_twitter: string = '',

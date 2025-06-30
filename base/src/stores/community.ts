@@ -25,6 +25,7 @@ import { useUserStore } from '@/stores/user'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { uploadCommunityImage } from '@/composable/uploadImage'
+import { useConfigStore } from './config'
 
 class CommunityRefUpdatedEvent extends Event {
   constructor(
@@ -45,7 +46,7 @@ type CommunityGetters = {
 }
 
 type CommunityStoreAction = {
-  updateComunity: (data: BokudeliCommunity) => Promise<void>
+  updateCommunity: (data: BokudeliCommunity) => Promise<void>
   updateCoverImage: (coverImage: File) => Promise<void>
   updateIconImage: (iconImage: File) => Promise<void>
   addRole: (userId: string, role: string) => Promise<void>
@@ -148,7 +149,7 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
           .sort((a, b) => (b.event_start_datetime?.toMillis() ?? 0) - (a.event_start_datetime?.toMillis() ?? 0))
       })
 
-      const updateComunity = async (data: BokudeliCommunity) => {
+      const updateCommunity = async (data: BokudeliCommunity) => {
         const communityRef = await getCommunityRef()
         const updateData = _.omit(data.convertToDocumentData(), [
           'community_cover_image_url',
@@ -251,7 +252,8 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
         const member = await getDoc(memberRef)
         const roles = new Set<string>(member.data()?.roles)
         // ログインユーザーがサポートアカウントの場合、コミュニティマネージャーの権限を持つ
-        if (userId === (import.meta.env.VITE_SUPPORT_ACCOUNT_USER_ID as string)) {
+        const config = await useConfigStore().getResolvedConfig()
+        if (config?.isSupport(userId) === true) {
           roles.add('manager')
         }
         return Array.from(roles)
@@ -277,7 +279,7 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
         community,
         members,
         events,
-        updateComunity,
+        updateCommunity,
         updateCoverImage,
         updateIconImage,
         addRole,

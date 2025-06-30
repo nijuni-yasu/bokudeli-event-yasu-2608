@@ -1,10 +1,15 @@
 import type { NavLink, NavGroup } from '@layouts/types'
-import { getManageCommunityListPath, getManageEventListPath } from '@/router/utils'
-import { mdiCalendarHeart, mdiAccountGroup, mdiFoodForkDrink, mdiHeart, mdiBullhornVariant, mdiPalette, mdiNoteTextOutline } from '@mdi/js'
+import { getManagePath,getManageCommunityListPath, getManageEventListPath } from '@/router/utils'
+import { mdiHome, mdiCalendarHeart, mdiAccountGroup, mdiFoodForkDrink, mdiHeart, mdiBullhornVariant, mdiPalette, mdiNoteTextOutline } from '@mdi/js'
 
 export const useNavItems = (): (NavLink | NavGroup)[] => {
   const { t: $t } = useI18n()
   return [
+    {
+      title: $t('navigation.manage_top'),
+      to: { path: getManagePath() },
+      icon: { icon: mdiHome },
+    },
     {
       title: $t('navigation.manage_community'),
       to: { path: getManageCommunityListPath() },

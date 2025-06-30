@@ -115,6 +115,8 @@ export default {
     'no_invoice': '登録していない',
     'invoice_hint': `※ 適格請求書登録番号を設定してください。<br />
                       ※ 参加者がダウンロードする領収書に適格請求書登録番号が表示されるようになります。`,
+    'deadline_before_time': '開始{0}時間前',
+    'deadline_day_before_time': '前日{0}',
   },
   'menu': {
     'add': 'メニューの追加',

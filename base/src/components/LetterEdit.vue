@@ -15,9 +15,13 @@ import {
   parseDateTimeStrings,
 } from '@/schemes/eventCreate'
 import { useValidators } from '@/composable/validators'
+import { sendTestLetter } from '@/baseApis/letter.js'
+import { useNotification } from '@/composable/notification'
+import { useI18n } from 'vue-i18n'
 
-const router = useRouter()
 const { requiredValidator } = useValidators()
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const props = defineProps<{
   letter: Letter
@@ -38,8 +42,13 @@ const numEventMembers = computed(() => eventStore?.event?.members?.length)
 
 const isValid = ref(false)
 
+const isSubmitDisabled = computed(() => {
+  return !isValid.value || (_letter.value.letter_type === 'event_participant' && numEventMembers.value === 0)
+})
+
 const isScheduled = ref(false)
 const scheduleTime = ref(Timestamp.now())
+const isTestSending = ref(false)
 
 const scheduledDate = computed({
   get: () => dateString(scheduleTime.value.toDate() ?? null),
@@ -60,50 +69,79 @@ const scheduledMinute = computed({
   },
 })
 
-const submit = async () => {
-  const now = Timestamp.now()
-  _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
-  _letter.value.status = 'timed'
+const _save = async () => {
   if (_letter.value.letter_id == null) {
-    await letterListStore.addLetter(toRaw(_letter.value))
+    const newLetter = await letterListStore.addLetter(toRaw(_letter.value))
+    _letter.value.letter_id = newLetter.letter_id!
   } else {
     await letterListStore.updateLetter(toRaw(_letter.value))
   }
   letterListStore.reload()
-  emit('update:letter', toRaw(_letter.value))
+}
+
+const submit = async () => {
+  try {
+    const now = Timestamp.now()
+    _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
+    _letter.value.status = 'timed'
+    await _save()
+    emit('update:letter', toRaw(_letter.value))
+    notification.show($t('manage.letter.edit.submit_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.submit_error'), 'error')
+  }
 }
 const save = async () => {
-  _letter.value.status = 'draft'
-  if (_letter.value.letter_id == null) {
-    await letterListStore.addLetter(toRaw(_letter.value))
-  } else {
-    await letterListStore.updateLetter(toRaw(_letter.value))
+  try {
+    _letter.value.status = 'draft'
+    await _save()
+    emit('update:letter', toRaw(_letter.value))
+    notification.show($t('manage.letter.edit.save_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.save_error'), 'error')
   }
-  letterListStore.reload()
-  emit('update:letter', toRaw(_letter.value))
+}
+const sendTest = async () => {
+  try {
+    isTestSending.value = true
+    await _save()
+    // ! は本来使うべきではないが、sendTest が呼ばれるケースでは必ず community は存在することが保証されている
+    // TODO store の方で存在を保証する仕組みを用意する
+    await sendTestLetter({ communityId: communityStore.community!.community_id, letterId: _letter.value.letter_id })
+    notification.show($t('manage.letter.edit.send_test_success'), 'success')
+  } catch (e) {
+    console.error(e)
+    notification.show($t('manage.letter.edit.send_test_error'), 'error')
+  } finally {
+    isTestSending.value = false
+  }
 }
 </script>
 
 <template>
   <v-form v-model="isValid">
     <v-container>
-      <v-card class="pa-15">
+      <v-card class="pa-16">
         <v-row>
           <v-col cols="12">
-            <span class="text-h4">
+            <span class="text-h4 font-weight-bold">
               {{ _letter.letter_id == null ? $t('manage.letter.edit.new') : $t('manage.letter.edit.edit') }}
             </span>
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5">{{ $t('manage.letter.edit.to') }}</span>
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.to') }}</span>
             <v-radio-group v-model="_letter.letter_type">
               <v-radio value="community">
                 <template #label>
                   {{ $t('manage.letter.edit.to_community') }}
                   <template v-if="numCommunityMembers != null">
-                    {{ $t('manage.letter.edit.number_of_people', [numCommunityMembers]) }}
+                    <span class="text-body-2 ml-1">
+                      {{ $t('manage.letter.edit.number_of_people', [numCommunityMembers]) }}
+                    </span>
                   </template>
                 </template>
               </v-radio>
@@ -111,7 +149,9 @@ const save = async () => {
                 <template #label>
                   {{ $t('manage.letter.edit.to_event_participant') }}
                   <template v-if="numEventMembers != null">
-                    {{ $t('manage.letter.edit.number_of_people', [numEventMembers]) }}
+                    <span class="text-body-2 ml-1">
+                      {{ $t('manage.letter.edit.number_of_people', [numEventMembers]) }}
+                    </span>
                   </template>
                 </template>
               </v-radio>
@@ -119,7 +159,9 @@ const save = async () => {
                 <template #label>
                   {{ $t('manage.letter.edit.to_event_non_participant') }}
                   <template v-if="numCommunityMembers != null && numEventMembers != null">
-                    {{ $t('manage.letter.edit.number_of_people', [numCommunityMembers - numEventMembers]) }}
+                    <span class="text-body-2 ml-1">
+                      {{ $t('manage.letter.edit.number_of_people', [numCommunityMembers - numEventMembers]) }}
+                    </span>
                   </template>
                 </template>
               </v-radio>
@@ -128,7 +170,7 @@ const save = async () => {
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5"></span>
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.deliver_datetime') }}</span>
             <v-radio-group v-model="isScheduled">
               <v-radio :value="false" :label="$t('manage.letter.edit.deliver_now')" />
               <div class="d-flex align-center">
@@ -159,14 +201,14 @@ const save = async () => {
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5">{{ $t('manage.letter.edit.subject') }}</span>
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.subject') }}</span>
             <v-text-field v-model="_letter.letter_title" :rules="[requiredValidator]" />
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="12">
-            <span class="text-h5">{{ $t('manage.letter.edit.message') }}</span>
-            <v-textarea v-model="_letter.letter_content" :rules="[requiredValidator]" />
+            <span class="text-h6 font-weight-bold">{{ $t('manage.letter.edit.message') }}</span>
+            <v-textarea v-model="_letter.letter_content" :rules="[requiredValidator]" auto-grow rows="8" />
           </v-col>
         </v-row>
         <!-- <v-row v-if="eventStore?.event != null">
@@ -183,7 +225,10 @@ const save = async () => {
             <v-btn @click="save" variant="outlined" :disabled="!isValid">
               {{ _letter.status === 'draft' ? $t('manage.letter.edit.save_draft') : $t('manage.letter.edit.to_draft') }}
             </v-btn>
-            <v-btn @click="submit" :disabled="!isValid">
+            <v-btn v-if="_letter.status === 'draft'" @click="sendTest" :disabled="!isValid || isTestSending" :loading="isTestSending">
+              {{ $t('manage.letter.edit.send_test') }}
+            </v-btn>
+            <v-btn @click="submit" :disabled="isSubmitDisabled">
               {{ isScheduled ? $t('manage.letter.edit.submit_reserve') : $t('manage.letter.edit.submit_now') }}
             </v-btn>
           </v-col>

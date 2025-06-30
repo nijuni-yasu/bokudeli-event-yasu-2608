@@ -10,6 +10,9 @@ import vuetify from 'vite-plugin-vuetify'
 // eslint-disable-next-line
 // @ts-ignore
 import { baseModule } from '../base/vite-plugins/base'
+// eslint-disable-next-line
+// @ts-ignore
+import { commonModule } from '../common/vite-plugins/common'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -21,6 +24,7 @@ export default defineConfig({
     vue(),
     process.env.VUE_DEVTOOLS != null ? VueDevTools() : undefined,
     baseModule(__dirname),
+    commonModule(__dirname),
 
     // Docs: https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin
     vuetify({
