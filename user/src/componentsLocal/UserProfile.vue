@@ -8,7 +8,7 @@ import userAccessiblePaths from "@/utils/userAccessiblePaths";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import { useStoreUserAdditionalInfo } from "@/stores/userAdditionalInfo";
 import { useStoreFirebaseAuthError } from "@/stores/firebaseAuthError";
-import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown } from '@mdi/js'
+import {mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog} from '@mdi/js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -30,6 +30,8 @@ watch(
 const user = computed(() => {
   return userStore.value?.user ?? null
 })
+
+const isOpenHomeButtonDialog = ref(false)
 
 const route = useRoute()
 const router = useRouter()
@@ -110,6 +112,17 @@ const logout = async () => {
               <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
             </template>
             <v-list-item-title>お問い合わせ</v-list-item-title>
+          </v-list-item>
+
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
+
+          <!-- 👉 Profile settings -->
+          <v-list-item v-if="isLogin" :to="`/u/profile`">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiCog" size="22" />
+            </template>
+            <v-list-item-title>設定</v-list-item-title>
           </v-list-item>
 
           <!-- Divider -->
