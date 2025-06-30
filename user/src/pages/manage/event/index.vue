@@ -76,7 +76,6 @@ const events = computed(
     }) ?? [],
 )
 const isOpenEventDialog = ref(false)
-
 </script>
 
 <template>

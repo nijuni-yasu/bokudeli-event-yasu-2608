@@ -1,4 +1,4 @@
-import {initializeApp, applicationDefault, cert} from 'firebase-admin/app'
+import { initializeApp, applicationDefault, cert } from 'firebase-admin/app'
 import { initializeFirestore } from 'firebase-admin/firestore'
 
 const app = initializeApp({
@@ -16,7 +16,7 @@ export const {
   on_shop_changed,
   on_order_changed,
   send_email,
-  send_pass_code
+  send_pass_code,
 } = await import('./sendgrid-mail.js')
 export const { on_write_community_members } = await import('./community-members.js')
 export const { create_event_members } = await import('./event-members.js')

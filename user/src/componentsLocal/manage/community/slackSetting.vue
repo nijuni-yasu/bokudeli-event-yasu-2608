@@ -8,7 +8,6 @@ import slackImage02 from '@/assets/images/slack/slack_image_02.png'
 import slackImage03 from '@/assets/images/slack/slack_image_03.png'
 import slackImage04 from '@/assets/images/slack/slack_image_04.png'
 
-
 const { t: $t } = useI18n()
 
 const communityAccount = useRoute().params.communityAccount as string
@@ -46,10 +45,7 @@ const copyRemoveCommand = () => {
     <v-card class="pa-10 mb-10">
       <v-row>
         <v-col cols="8" sm="3" md="2">
-          <v-img
-            class="my-3"
-            :src="slackLogo"
-          />
+          <v-img class="my-3" :src="slackLogo" />
         </v-col>
       </v-row>
       <v-row>
@@ -57,18 +53,12 @@ const copyRemoveCommand = () => {
       </v-row>
       <v-row justify="center">
         <v-col cols="12" md="9">
-          <v-img
-            class="my-3"
-            :src="slackImage01"
-          />
+          <v-img class="my-3" :src="slackImage01" />
         </v-col>
       </v-row>
       <v-row justify="center">
         <v-col cols="12" md="9">
-          <v-img
-            class="my-3"
-            :src="slackImage04"
-          />
+          <v-img class="my-3" :src="slackImage04" />
         </v-col>
       </v-row>
     </v-card>
@@ -89,7 +79,7 @@ const copyRemoveCommand = () => {
             <div v-html="$t('manage.slack.step1_desc')" />
           </v-row>
           <v-row>
-            <a :href="slackInstallUrl" target="_blank" style="font-size:20px; font-weight:bold; ">
+            <a :href="slackInstallUrl" target="_blank" style="font-size: 20px; font-weight: bold">
               {{ slackInstallUrl }}
             </a>
           </v-row>
@@ -107,10 +97,7 @@ const copyRemoveCommand = () => {
           </v-row>
           <v-row>
             <v-col cols="12" md="8">
-              <v-img
-                class="my-3"
-                :src="slackImage02"
-              />
+              <v-img class="my-3" :src="slackImage02" />
             </v-col>
           </v-row>
         </v-card-text>
@@ -130,21 +117,14 @@ const copyRemoveCommand = () => {
               ><v-text-field readonly>{{ communityAddCommand }}</v-text-field></v-col
             >
             <v-col cols="4" class="pa-1 pl-3">
-              <v-btn
-                variant="outlined"
-                :prepend-icon="mdiContentCopy"
-                @click="copyAddCommand"
-              >
-                {{ $t('manage.slack.copy')}}
+              <v-btn variant="outlined" :prepend-icon="mdiContentCopy" @click="copyAddCommand">
+                {{ $t('manage.slack.copy') }}
               </v-btn>
             </v-col>
           </v-row>
           <v-row>
             <v-col cols="12" md="8">
-              <v-img
-                class="my-3"
-                :src="slackImage03"
-              />
+              <v-img class="my-3" :src="slackImage03" />
             </v-col>
           </v-row>
         </v-card-text>
@@ -179,12 +159,8 @@ const copyRemoveCommand = () => {
               ><v-text-field readonly>{{ communityRemoveCommand }}</v-text-field></v-col
             >
             <v-col cols="4" class="pa-1 pl-3">
-              <v-btn
-                variant="outlined"
-                :prepend-icon="mdiContentCopy"
-                @click="copyRemoveCommand"
-              >
-                {{ $t('manage.slack.copy')}}
+              <v-btn variant="outlined" :prepend-icon="mdiContentCopy" @click="copyRemoveCommand">
+                {{ $t('manage.slack.copy') }}
               </v-btn>
             </v-col>
           </v-row>
@@ -205,7 +181,7 @@ const copyRemoveCommand = () => {
   text-decoration-skip-ink: none;
 }
 
-.v-card-text  {
+.v-card-text {
   font-family: Noto Sans JP;
   font-size: 14px;
   font-weight: 400;
@@ -214,7 +190,7 @@ const copyRemoveCommand = () => {
   text-underline-position: from-font;
   text-decoration-skip-ink: none;
 }
-.step-chip{
-  font-size:20px;
+.step-chip {
+  font-size: 20px;
 }
 </style>

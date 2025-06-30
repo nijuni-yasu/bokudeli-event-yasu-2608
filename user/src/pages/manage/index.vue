@@ -60,7 +60,7 @@ const howtos = [
     description: t('manage.top.howto.step1.description'),
     buttonText: t('manage.top.howto.step1.button'),
     buttonLink: '/manage/newcommunity',
-    imageSrc: howto01
+    imageSrc: howto01,
   },
   {
     stepNumber: '②',
@@ -68,21 +68,21 @@ const howtos = [
     description: t('manage.top.howto.step2.description'),
     buttonText: t('manage.top.howto.step2.button'),
     buttonLink: '/manage/event',
-    imageSrc: howto02
+    imageSrc: howto02,
   },
   {
     stepNumber: '③',
     title: t('manage.top.howto.step3.title'),
     description: t('manage.top.howto.step3.description'),
     buttonText: t('manage.top.howto.step3.button'),
-    imageSrc: howto03
+    imageSrc: howto03,
   },
   {
     stepNumber: '④',
     title: t('manage.top.howto.step4.title'),
     description: t('manage.top.howto.step4.description'),
     buttonText: t('manage.top.howto.step4.button'),
-    imageSrc: howto04
+    imageSrc: howto04,
   },
   {
     stepNumber: '⑤',
@@ -90,30 +90,31 @@ const howtos = [
     description: t('manage.top.howto.step5.description'),
     buttonText: t('manage.top.howto.step5.button'),
     buttonHref: 'https://bit.ly/40UmEzA',
-    imageSrc: howto05
+    imageSrc: howto05,
   },
   {
     stepNumber: '⑥',
     title: t('manage.top.howto.step6.title'),
     description: t('manage.top.howto.step6.description'),
     buttonText: t('manage.top.howto.step6.button'),
-    imageSrc: howto06
+    imageSrc: howto06,
   },
   {
     stepNumber: '⑦',
     title: t('manage.top.howto.step7.title'),
     description: t('manage.top.howto.step7.description'),
     buttonText: t('manage.top.howto.step7.button'),
-    imageSrc: howto07
+    imageSrc: howto07,
   },
   {
     stepNumber: '⑧',
     title: t('manage.top.howto.step8.title'),
     description: t('manage.top.howto.step8.description'),
     buttonText: t('manage.top.howto.step8.button'),
-    buttonHref: 'https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_33#slide=id.g2b9c62499c1_0_33',
-    imageSrc: howto08
-  }
+    buttonHref:
+      'https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_33#slide=id.g2b9c62499c1_0_33',
+    imageSrc: howto08,
+  },
 ]
 
 const functions = [
@@ -122,35 +123,35 @@ const functions = [
     title: t('manage.top.functions.step1.title'),
     description: t('manage.top.functions.step1.description'),
     buttonText: t('manage.top.functions.step1.button'),
-    imageSrc: func01
+    imageSrc: func01,
   },
   {
     stepNumber: '②',
     title: t('manage.top.functions.step2.title'),
     description: t('manage.top.functions.step2.description'),
     buttonText: t('manage.top.functions.step2.button'),
-    imageSrc: func02
+    imageSrc: func02,
   },
   {
     stepNumber: '③',
     title: t('manage.top.functions.step3.title'),
     description: t('manage.top.functions.step3.description'),
     buttonText: t('manage.top.functions.step3.button'),
-    imageSrc: func03
+    imageSrc: func03,
   },
   {
     stepNumber: '④',
     title: t('manage.top.functions.step4.title'),
     description: t('manage.top.functions.step4.description'),
     buttonText: t('manage.top.functions.step4.button'),
-    imageSrc: func04
+    imageSrc: func04,
   },
   {
     stepNumber: '⑤',
     title: t('manage.top.functions.step5.title'),
     description: t('manage.top.functions.step5.description'),
     buttonText: t('manage.top.functions.step5.button'),
-    imageSrc: func05
+    imageSrc: func05,
   },
   {
     stepNumber: '⑥',
@@ -158,7 +159,7 @@ const functions = [
     description: t('manage.top.functions.step6.description'),
     buttonText: t('manage.top.functions.step6.button'),
     buttonHref: 'https://note.com/shokujii/n/n0c961c680fd3',
-    imageSrc: func06
+    imageSrc: func06,
   },
   {
     stepNumber: '⑦',
@@ -166,17 +167,17 @@ const functions = [
     description: t('manage.top.functions.step7.description'),
     buttonText: t('manage.top.functions.step7.button'),
     buttonHref: 'https://bit.ly/433wAbb',
-    imageSrc: func07
+    imageSrc: func07,
   },
   {
     stepNumber: '⑧',
     title: t('manage.top.functions.step8.title'),
     description: t('manage.top.functions.step8.description'),
     buttonText: t('manage.top.functions.step8.button'),
-    buttonHref: 'https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit#slide=id.g2e7a4494cae_0_0',
-    imageSrc: func08
+    buttonHref:
+      'https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit#slide=id.g2e7a4494cae_0_0',
+    imageSrc: func08,
   },
-
 ]
 
 const prices = [
@@ -185,14 +186,14 @@ const prices = [
     title: t('manage.top.prices.step1.title'),
     description: t('manage.top.prices.step1.description'),
     buttonText: t('manage.top.prices.step1.button'),
-    imageSrc: price01
+    imageSrc: price01,
   },
   {
     stepNumber: '②',
     title: t('manage.top.prices.step2.title'),
     description: t('manage.top.prices.step2.description'),
     buttonText: t('manage.top.prices.step2.button'),
-    imageSrc: price02
+    imageSrc: price02,
   },
   // {
   //   stepNumber: '③',
@@ -208,7 +209,7 @@ const supports = [
     title: t('manage.top.supports.step1.title'),
     description: t('manage.top.supports.step1.description'),
     buttonText: t('manage.top.supports.step1.button'),
-    imageSrc: support01
+    imageSrc: support01,
   },
   {
     stepNumber: '②',
@@ -216,7 +217,7 @@ const supports = [
     description: t('manage.top.supports.step2.description'),
     buttonText: t('manage.top.supports.step2.button'),
     buttonHref: 'https://app.spirinc.com/t/V4L1T-BBygLMPlpaQZLVl/as/JBl3hjWrljOL70sPAeQCp/confirm',
-    imageSrc: support02
+    imageSrc: support02,
   },
   {
     stepNumber: '③',
@@ -224,7 +225,7 @@ const supports = [
     description: t('manage.top.supports.step3.description'),
     buttonText: t('manage.top.supports.step3.button'),
     buttonHref: 'tel:05017215838',
-    imageSrc: support03
+    imageSrc: support03,
   },
 ]
 </script>
@@ -232,7 +233,7 @@ const supports = [
 <template>
   <v-row>
     <v-col cols="12">
-    <!-- 管理コミュニテイ一覧 -->
+      <!-- 管理コミュニテイ一覧 -->
       <v-card v-if="communityListStore.totalCount != null && communityListStore.totalCount > 0" class="pa-8 mb-10">
         <v-row class="justify-center text-center">
           <v-col md="10" sm="12" cols="12">
@@ -243,13 +244,13 @@ const supports = [
               <span class="text-h6">
                 {{ $t('manage.top.community_list_description') }}
               </span>
-            </v-card-text>           
-          </v-col>    
+            </v-card-text>
+          </v-col>
         </v-row>
         <v-row class="justify-center ma-0">
           <v-col v-for="community in communities" :key="community.community_id" md="2" sm="3" cols="6">
             <router-link :to="getManageCommunityPath(community.community_account)">
-              <CommunityCardMini :community="community"/>
+              <CommunityCardMini :community="community" />
             </router-link>
           </v-col>
           <v-col class="justify-center align-center d-flex" md="2" sm="3" cols="6">
@@ -283,7 +284,7 @@ const supports = [
           </v-col>
         </v-row>
       </v-card>
-    <!-- shokujii サービス概要 -->
+      <!-- shokujii サービス概要 -->
       <v-card class="pa-5 pa-md-8">
         <v-container class="my-10">
           <v-row class="text-center">
@@ -293,11 +294,23 @@ const supports = [
               </v-card-text>
               <v-card-text>
                 <span class="text-h6">
-                  <div v-html="$t('manage.top.about_description')"/>
-                  <v-btn class="ma-5" color="primary" variant="outlined" href="https://about.shokujii.jp" target="_blank">
+                  <div v-html="$t('manage.top.about_description')" />
+                  <v-btn
+                    class="ma-5"
+                    color="primary"
+                    variant="outlined"
+                    href="https://about.shokujii.jp"
+                    target="_blank"
+                  >
                     {{ $t('manage.top.about_button_01') }}
                   </v-btn>
-                  <v-btn class="ma-5" color="primary" variant="outlined" href="https://corporate-lp.shokujii.jp/" target="_blank">
+                  <v-btn
+                    class="ma-5"
+                    color="primary"
+                    variant="outlined"
+                    href="https://corporate-lp.shokujii.jp/"
+                    target="_blank"
+                  >
                     {{ $t('manage.top.about_button_02') }}
                   </v-btn>
                 </span>

@@ -12,14 +12,14 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 import type { Router } from 'vue-router'
-import userAccessiblePaths from "@/utils/userAccessiblePaths";
+import userAccessiblePaths from '@/utils/userAccessiblePaths'
 import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getManageCommunityListPath } from './utils'
-import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
-import {useStoreUserCredential} from "@/stores/userCredential";
-import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
+import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
+import { useStoreUserCredential } from '@/stores/userCredential'
+import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { useConfigStore } from '@/stores/config'
@@ -36,7 +36,6 @@ const checkUser = async (user: User | null) => {
         useStoreUserAdditionalInfo().update(additionalUserInfo)
       }
     }
-
   } catch (error) {
     if (error instanceof FirebaseError) {
       useStoreFirebaseAuthError().update(error)
@@ -87,11 +86,10 @@ export const setupRouter = (router: Router) => {
   })
 
   // ユーザーがログイン済みか否かでリダイレクト
-  router.beforeEach( (to) => {
+  router.beforeEach((to) => {
     const storedUserStore = useStoreStoredUser()
 
     if (userAccessiblePaths.includes(to.path) && !storedUserStore.storedUser) router.replace('/')
-
   })
 
   let unsubscribeAuthStateChanged: Unsubscribe | null

@@ -20,7 +20,7 @@ import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getInvoicePdf } from '@/utils/pdf'
 import { useNotification } from '@/composable/notification'
-import { useStoreStoredUser } from "@/stores/storedUser";
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,15 +28,12 @@ const id = route.params.userId as string
 
 const userIdRef = ref('')
 const fetchUser = async (identifier: string) => {
-  const userCollection = collection(db, "users")
-  const queryById = query(userCollection, where("user_id", "==", identifier), limit(1))
-  const queryByUrlPath = query(userCollection, where("user_account", "==", identifier), limit(1))
+  const userCollection = collection(db, 'users')
+  const queryById = query(userCollection, where('user_id', '==', identifier), limit(1))
+  const queryByUrlPath = query(userCollection, where('user_account', '==', identifier), limit(1))
 
   try {
-    const [queryByIdSnapshot, queryByUrlPathSnapshot] = await Promise.all([
-      getDocs(queryById),
-      getDocs(queryByUrlPath),
-    ])
+    const [queryByIdSnapshot, queryByUrlPathSnapshot] = await Promise.all([getDocs(queryById), getDocs(queryByUrlPath)])
 
     if (!queryByIdSnapshot.empty) {
       userIdRef.value = queryByIdSnapshot.docs[0].data().user_id
@@ -53,7 +50,6 @@ await fetchUser(id)
 const userId = userIdRef.value as string
 
 if (userId === '') router.replace('/')
-
 
 const notification = useNotification()
 

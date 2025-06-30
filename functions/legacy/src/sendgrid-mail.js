@@ -1210,11 +1210,11 @@ export const send_pass_code = functions.region('asia-northeast1').https.onCall(a
   const { user_email, user_pass_code } = data
 
   if (!user_email) {
-    throw new functions.https.HttpsError("invalid-argument", "user_email is required.")
+    throw new functions.https.HttpsError('invalid-argument', 'user_email is required.')
   }
 
   if (!user_pass_code) {
-    throw new functions.https.HttpsError("invalid-argument", "user_pass_code is required.")
+    throw new functions.https.HttpsError('invalid-argument', 'user_pass_code is required.')
   }
 
   try {
@@ -1222,14 +1222,14 @@ export const send_pass_code = functions.region('asia-northeast1').https.onCall(a
       to: user_email,
       from: DEFAULT_FROM,
       templateId: USER_PASS_CODE,
-      dynamic_template_data : {
+      dynamic_template_data: {
         user_pass_code: user_pass_code,
-      }
+      },
     })
 
-    return { message: "Pass code sent and saved successfully!" }
+    return { message: 'Pass code sent and saved successfully!' }
   } catch (error) {
-    console.error("Error in send_pass_code:", error)
-    throw new functions.https.HttpsError("internal", "Failed to send pass code.")
+    console.error('Error in send_pass_code:', error)
+    throw new functions.https.HttpsError('internal', 'Failed to send pass code.')
   }
 })

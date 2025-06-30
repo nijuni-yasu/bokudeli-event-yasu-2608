@@ -1,7 +1,7 @@
 import functions from 'firebase-functions/v1'
-import { getFirestore, Timestamp} from 'firebase-admin/firestore'
+import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { getAuth } from 'firebase-admin/auth'
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'
 
 const db = getFirestore()
 
@@ -11,19 +11,21 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
 
     let personalInformationSnapshot
     if (user_email_pending) {
-      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email_pending', '==', user_email_pending).get()
+      personalInformationSnapshot = await db
+        .collection('users_personal_information')
+        .where('user_email_pending', '==', user_email_pending)
+        .get()
     } else {
-      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email', '==', user_email).get()
-
+      personalInformationSnapshot = await db
+        .collection('users_personal_information')
+        .where('user_email', '==', user_email)
+        .get()
     }
     const personalInformationId = personalInformationSnapshot.docs[0]?.id
 
     let userSnapshot
     if (personalInformationId) {
-      userSnapshot = await db
-          .collection('users')
-          .where('user_id', '==', personalInformationId)
-          .get()
+      userSnapshot = await db.collection('users').where('user_id', '==', personalInformationId).get()
     } else {
       userSnapshot = {
         empty: true,
@@ -35,8 +37,8 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
       const userDoc = userSnapshot.docs[0]
       await userDoc.ref.update({
         user_pass_code: user_pass_code,
-        updated_at: Timestamp.now()
-      });
+        updated_at: Timestamp.now(),
+      })
       return { is_new: false }
     } else {
       // ユーザーが存在しない場合、新規にユーザーを作成
@@ -54,11 +56,11 @@ export const create_or_update_user = functions.region('asia-northeast1').https.o
         user_pass_code: user_pass_code,
         verified_at: null,
         created_at: Timestamp.now(),
-        updated_at: Timestamp.now()
-      });
+        updated_at: Timestamp.now(),
+      })
 
       await db.collection('users_personal_information').doc(userId).set({
-        'user_email': user_email
+        user_email: user_email,
       })
       return { is_new: true }
     }
@@ -73,12 +75,21 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
 
     let personalInformationSnapshot
     if (user_email_pending) {
-      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email_pending', '==', user_email_pending).get()
+      personalInformationSnapshot = await db
+        .collection('users_personal_information')
+        .where('user_email_pending', '==', user_email_pending)
+        .get()
     } else {
-      personalInformationSnapshot = await db.collection('users_personal_information').where('user_email', '==', user_email).get()
+      personalInformationSnapshot = await db
+        .collection('users_personal_information')
+        .where('user_email', '==', user_email)
+        .get()
     }
     console.log('personalInformationSnapshot', personalInformationSnapshot.docs[0]?.id)
-    const userSnapshot = await db.collection('users').where('user_id', '==', personalInformationSnapshot.docs[0].id).get()
+    const userSnapshot = await db
+      .collection('users')
+      .where('user_id', '==', personalInformationSnapshot.docs[0].id)
+      .get()
     console.log('userSnapshot', userSnapshot.docs[0])
     if (!userSnapshot.empty || !personalInformationSnapshot.empty) {
       const userDoc = userSnapshot.docs[0]
@@ -95,7 +106,7 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
 
       if (!personalInformationSnapshot.docs[0].data().user_email_pending) {
         await userDoc.ref.update({
-            verified_at: Timestamp.now()
+          verified_at: Timestamp.now(),
         })
       }
 
@@ -114,12 +125,18 @@ export const verify_pass_code = functions.region('asia-northeast1').https.onCall
   }
 })
 
-export const get_custom_token  = functions.region('asia-northeast1').https.onCall(async (data) => {
+export const get_custom_token = functions.region('asia-northeast1').https.onCall(async (data) => {
   try {
     const { user_email } = data
 
-    const personalInformationSnapshot = await db.collection('users_personal_information').where('user_email', '==', user_email).get()
-    const userSnapshot = await db.collection('users').where('user_id', '==', personalInformationSnapshot.docs[0].id).get()
+    const personalInformationSnapshot = await db
+      .collection('users_personal_information')
+      .where('user_email', '==', user_email)
+      .get()
+    const userSnapshot = await db
+      .collection('users')
+      .where('user_id', '==', personalInformationSnapshot.docs[0].id)
+      .get()
     if (!userSnapshot.empty) {
       const userDoc = userSnapshot.docs[0]
       const userId = userDoc.data().user_id
@@ -137,4 +154,4 @@ export const get_custom_token  = functions.region('asia-northeast1').https.onCal
   }
 })
 
-const generateFirestoreUserId = () => uuidv4().replace(/-/g, '').substring(0, 28);
+const generateFirestoreUserId = () => uuidv4().replace(/-/g, '').substring(0, 28)

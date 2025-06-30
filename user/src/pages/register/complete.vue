@@ -1,43 +1,35 @@
 <script setup lang="ts">
-import logo from "@/assets/images/shokujii/shokujii_logo.png";
-import {
-  getAuth,
-  TwitterAuthProvider,
-  getAdditionalUserInfo,
-  type User,
-  type AdditionalUserInfo
-} from "firebase/auth";
-import {FirebaseError} from "firebase/app";
+import logo from '@/assets/images/shokujii/shokujii_logo.png'
+import { getAuth, TwitterAuthProvider, getAdditionalUserInfo, type User, type AdditionalUserInfo } from 'firebase/auth'
+import { FirebaseError } from 'firebase/app'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
-import { convertStoredUserToFirestoredUser } from "@/schemes/converter";
+import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
 import axios from 'axios'
-import {linkByProviderService, reauthenticateByProviderService} from "@/utils/providerService";
-import {useStoreUserAdditionalInfo} from "@/stores/userAdditionalInfo";
-import {useStoreFirebaseAuthError} from "@/stores/firebaseAuthError";
+import { linkByProviderService, reauthenticateByProviderService } from '@/utils/providerService'
+import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
+import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 
 type ProfileLink = {
-  path: string,
+  path: string
   query: {
-    new: number,
-    redirect: string,
+    new: number
+    redirect: string
   }
 }
 
 const auth = getAuth()
-const currentUser = auth.currentUser;
+const currentUser = auth.currentUser
 
-const linkedProviderData = ref<string[]>([]);
+const linkedProviderData = ref<string[]>([])
 
 const updateProviderData = (user: User | null) => {
-  linkedProviderData.value = user
-      ? user.providerData.map((info) => info.providerId)
-      : [];
-};
+  linkedProviderData.value = user ? user.providerData.map((info) => info.providerId) : []
+}
 
 // 初期化（現在のユーザー情報を取得）
 if (currentUser) {
-  updateProviderData(currentUser);
+  updateProviderData(currentUser)
 }
 
 const route = useRoute()
@@ -54,7 +46,7 @@ const profileLink: ProfileLink = {
   query: {
     new: Number(route.query.new),
     redirect: route.query.redirect as string,
-  }
+  },
 }
 
 const isLoading = ref(false)
@@ -95,7 +87,7 @@ const handleTwitterLink = async () => {
       console.error({ error, credential })
 
       if (error.code === 'auth/credential-already-in-use') {
-        return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+        return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
       }
     } else {
       console.error({ error })
@@ -115,7 +107,7 @@ onMounted(async () => {
 
     if (error.code === 'auth/credential-already-in-use') {
       useStoreFirebaseAuthError().reset()
-      return Object.assign(notification, { message: $t('user.exists_credential', {snsName: 'X'}), color: 'error' })
+      return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
     }
     if (error.code === 'auth/email-already-in-use') {
       useStoreFirebaseAuthError().reset()
@@ -145,7 +137,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
   const userId = storedUser?.userId
   if (userId) {
     const userStore = useUserStore(userId) as UserStore
-    storedUser.userName = additionalUserInfo.profile?.name as string | ""
+    storedUser.userName = additionalUserInfo.profile?.name as string | ''
     storedUser.userDescription = additionalUserInfo.profile?.description as string | null
     storedUser.userAccount = additionalUserInfo.username as string | null
     storedUser.userSnsTwitter = additionalUserInfo.username as string | null
@@ -160,11 +152,11 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
     const photoUrl = additionalUserInfo.profile?.profile_image_url_https as string
     const splitPhotoURL = photoUrl.split('_') as string[]
-    const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1];
+    const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1]
 
     // blobに変換
-    const response = await axios.get(photoURL, { responseType: "blob" });
-    const blob = response.data;
+    const response = await axios.get(photoURL, { responseType: 'blob' })
+    const blob = response.data
 
     // 保存
     await userStore.uploadUserImage(blob)
@@ -178,7 +170,6 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
     router.push(profileLink)
   }
 }
-
 </script>
 
 <template>
@@ -187,7 +178,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
       <v-col md="5">
         <v-sheet class="rounded-lg py-14 px-12">
           <v-container>
-            <v-row justify="center" >
+            <v-row justify="center">
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
@@ -201,7 +192,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
           </v-container>
 
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleTwitterLink">
-           {{ $t('complete.profile_registration_X') }}
+            {{ $t('complete.profile_registration_X') }}
           </v-btn>
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" :to="profileLink">
             {{ selfButtonLabel }}

@@ -1,46 +1,44 @@
 <script setup lang="ts">
-  import facebook from '@/assets/images/sns/sns_facebook.png'
-  import instagram from '@/assets/images/sns/sns_instagram.png'
-  import line from '@/assets/images/sns/sns_line.png'
-  import note from '@/assets/images/sns/sns_note.png'
-  import X from '@/assets/images/sns/sns_x.png'
+import facebook from '@/assets/images/sns/sns_facebook.png'
+import instagram from '@/assets/images/sns/sns_instagram.png'
+import line from '@/assets/images/sns/sns_line.png'
+import note from '@/assets/images/sns/sns_note.png'
+import X from '@/assets/images/sns/sns_x.png'
 </script>
 
 <template>
   <div class="mt-15 mb-5 text-center">
     <div class="my-5 text-center">
-      <span class="align-center">
-        ＼最新情報はSNSをチェック／
-      </span>
+      <span class="align-center"> ＼最新情報はSNSをチェック／ </span>
     </div>
-    <table align="center" style="margin: auto;">
-        <tr>
-          <td style="padding: 0 10px;">
-            <a href="https://x.com/shokujii_jp" target="_blank">
-              <img :src="X" alt="X" style="width: 45px; height: 45px; border-radius: 20%;">
-            </a>
-          </td>
-          <td style="padding: 0 10px;">
-            <a href="https://facebook.com/shokujii" target="_blank">
-              <img :src="facebook" alt="Facebook" style="width: 45px; height: 45px; border-radius: 20%;">
-            </a>
-          </td>
-          <td style="padding: 0 10px;">
-            <a href="https://instagram.com/shokujii_jp" target="_blank">
-              <img :src="instagram" alt="Instagram" style="width: 45px; height: 45px; border-radius: 20%;">
-            </a>
-          </td>
-          <td style="padding: 0 10px;">
-            <a href="https://note.com/shokujii/" target="_blank">
-              <img :src="note" alt="note" style="width: 45px; height: 45px; border-radius: 20%;">
-            </a>
-          </td>
-          <td style="padding: 0 10px;">
-            <a href="https://lin.ee/0FEi1kbV/" target="_blank">
-              <img :src="line" alt="LINE" style="width: 45px; height: 45px; border-radius: 20%;">
-            </a>
-          </td>
-        </tr>
+    <table align="center" style="margin: auto">
+      <tr>
+        <td style="padding: 0 10px">
+          <a href="https://x.com/shokujii_jp" target="_blank">
+            <img :src="X" alt="X" style="width: 45px; height: 45px; border-radius: 20%" />
+          </a>
+        </td>
+        <td style="padding: 0 10px">
+          <a href="https://facebook.com/shokujii" target="_blank">
+            <img :src="facebook" alt="Facebook" style="width: 45px; height: 45px; border-radius: 20%" />
+          </a>
+        </td>
+        <td style="padding: 0 10px">
+          <a href="https://instagram.com/shokujii_jp" target="_blank">
+            <img :src="instagram" alt="Instagram" style="width: 45px; height: 45px; border-radius: 20%" />
+          </a>
+        </td>
+        <td style="padding: 0 10px">
+          <a href="https://note.com/shokujii/" target="_blank">
+            <img :src="note" alt="note" style="width: 45px; height: 45px; border-radius: 20%" />
+          </a>
+        </td>
+        <td style="padding: 0 10px">
+          <a href="https://lin.ee/0FEi1kbV/" target="_blank">
+            <img :src="line" alt="LINE" style="width: 45px; height: 45px; border-radius: 20%" />
+          </a>
+        </td>
+      </tr>
     </table>
   </div>
   <div class="my-5 text-center">
@@ -51,12 +49,7 @@
       <a href="https://shokujii.studio.site/restaurant" target="_blank" rel="noopener noreferrer" class="footer-text">
         飲食店パートナーになる
       </a>
-      <a
-        href="https://about.shokujii.jp/howto"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="footer-text"
-      >
+      <a href="https://about.shokujii.jp/howto" target="_blank" rel="noopener noreferrer" class="footer-text">
         ヘルプ（使い方動画）
       </a>
       <a
@@ -101,8 +94,8 @@
       <a href="https://nijuni.jp/" target="_blank" rel="noopener noreferrer" class="footer-text"> 運営会社 </a>
     </span>
   </div>
-  <div class="text-center" style="font-size:9px;">令和２年度補正ものづくり補助金により作成</div>
-  <div class="mb-3 text-center" style="font-size:16px;">
+  <div class="text-center" style="font-size: 9px">令和２年度補正ものづくり補助金により作成</div>
+  <div class="mb-3 text-center" style="font-size: 16px">
     &copy;
     {{ new Date().getFullYear() }}
     nijuni inc.

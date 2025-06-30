@@ -4,11 +4,11 @@ import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import userAccessiblePaths from "@/utils/userAccessiblePaths";
-import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import { useStoreUserAdditionalInfo } from "@/stores/userAdditionalInfo";
-import { useStoreFirebaseAuthError } from "@/stores/firebaseAuthError";
-import {mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog} from '@mdi/js'
+import userAccessiblePaths from '@/utils/userAccessiblePaths'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
+import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
+import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -16,15 +16,15 @@ const isLogin = computed(() => storedUser.value?.userId != null)
 const userStore = ref<UserStore | null>(null)
 
 watch(
-    () => storedUser.value?.userId,
-    (userId) => {
-      if (userId != null) {
-        userStore.value = useUserStore(userId) as UserStore
-      } else {
-        userStore.value = null
-      }
-    },
-    { immediate: true }
+  () => storedUser.value?.userId,
+  (userId) => {
+    if (userId != null) {
+      userStore.value = useUserStore(userId) as UserStore
+    } else {
+      userStore.value = null
+    }
+  },
+  { immediate: true },
 )
 
 const user = computed(() => {
@@ -40,8 +40,8 @@ const login = () => {
   router.push({
     path: '/login',
     query: {
-      redirect: route.path
-    }
+      redirect: route.path,
+    },
   })
 }
 
@@ -158,7 +158,12 @@ const logout = async () => {
       <!-- !SECTION -->
     </UserAvatar>
   </v-badge>
-  <confirm-dialog v-model="isOpenLogoutDialog" :is-confirm="true" :ok-text="$t('user_profile.logout')" :ok-click="logout">
+  <confirm-dialog
+    v-model="isOpenLogoutDialog"
+    :is-confirm="true"
+    :ok-text="$t('user_profile.logout')"
+    :ok-click="logout"
+  >
     <v-card-text class="text-center py-10 text-h4">
       {{ $t('user_profile.logout_modal_title') }}
     </v-card-text>

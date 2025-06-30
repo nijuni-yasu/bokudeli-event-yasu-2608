@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import {db, functions} from '@/firebase'
-import {httpsCallable} from 'firebase/functions'
+import { db, functions } from '@/firebase'
+import { httpsCallable } from 'firebase/functions'
 import { getAuth, signInWithCustomToken, updateEmail, type User } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import {collection, doc, getDocs, query, where, updateDoc, getDoc, Timestamp} from "firebase/firestore";
-import {generatePassCode} from "@/utils/generatePassCode";
-import {FirestoredUser} from "@/schemes/storedUser";
-import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import {useStoreStoredUser} from "@/stores/storedUser";
-
+import { collection, doc, getDocs, query, where, updateDoc, getDoc, Timestamp } from 'firebase/firestore'
+import { generatePassCode } from '@/utils/generatePassCode'
+import { FirestoredUser } from '@/schemes/storedUser'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const router = useRouter()
 const route = useRoute()
@@ -27,16 +26,16 @@ const isOpenUnMatchPassCodeDialog = ref(false)
 
 watch(passCode, async (newValue) => {
   if (newValue.length === 6) {
-    await submit();
+    await submit()
   }
-});
+})
 
 const login = () => {
   router.push({
     path: '/login',
     query: {
-      redirect: route.query.redirect as string
-    }
+      redirect: route.query.redirect as string,
+    },
   })
 }
 
@@ -47,17 +46,16 @@ const reSendPassCode = async () => {
     const reGeneratePassCode = generatePassCode()
 
     if (isNew === undefined) {
-      const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+      const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
       await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
     } else {
-      const createOrUpdateUser = httpsCallable(functions, "create_or_update_user")
+      const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
       await createOrUpdateUser({ user_email: userEmail, user_pass_code: reGeneratePassCode })
     }
-    const sendPassCode = httpsCallable(functions, "send_pass_code")
+    const sendPassCode = httpsCallable(functions, 'send_pass_code')
     await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
-
   } catch (error) {
-    console.warn("Error resending pass code:", error);
+    console.warn('Error resending pass code:', error)
   } finally {
     isLoading.value = false
   }
@@ -68,7 +66,7 @@ const submit = async () => {
   try {
     const userEmail = email.value
 
-    const verifyPassCode = httpsCallable(functions, "verify_pass_code")
+    const verifyPassCode = httpsCallable(functions, 'verify_pass_code')
     let result
     if (isNew === undefined) {
       result = await verifyPassCode({ user_email_pending: userEmail, user_pass_code: passCode.value })
@@ -79,7 +77,7 @@ const submit = async () => {
     const customToken = result.data as string
 
     if (!customToken) {
-      return isError.value = true
+      return (isError.value = true)
     }
 
     if (isNew !== undefined) {
@@ -89,66 +87,68 @@ const submit = async () => {
       })
     }
 
-    const usersRef = collection(db, "users");
+    const usersRef = collection(db, 'users')
 
     let personalInformationSnapshot
     if (isNew === undefined) {
-      personalInformationSnapshot = await getDocs(query(
-          collection(db, 'users_personal_information'),
-          where('user_email_pending', '==', userEmail)
-      ))
+      personalInformationSnapshot = await getDocs(
+        query(collection(db, 'users_personal_information'), where('user_email_pending', '==', userEmail)),
+      )
     } else {
-      personalInformationSnapshot = await getDocs(query(
-          collection(db, 'users_personal_information'),
-          where('user_email', '==', userEmail)
-      ))
+      personalInformationSnapshot = await getDocs(
+        query(collection(db, 'users_personal_information'), where('user_email', '==', userEmail)),
+      )
     }
 
-    const q = query(usersRef, where("user_id", "==", personalInformationSnapshot.docs[0].id))
+    const q = query(usersRef, where('user_id', '==', personalInformationSnapshot.docs[0].id))
 
     const querySnapshot = await getDocs(q)
 
     if (!querySnapshot.empty) {
-      const user: FirestoredUser[] = [];
+      const user: FirestoredUser[] = []
       querySnapshot.forEach((doc) => {
-        const firestoredUser = new FirestoredUser(doc.data());
+        const firestoredUser = new FirestoredUser(doc.data())
         user.push(firestoredUser)
       })
 
       if (isNew === undefined) {
-        const currentUser = getAuth().currentUser;
+        const currentUser = getAuth().currentUser
         const storedUserStore = useStoreStoredUser()
         const { storedUser } = storeToRefs(storedUserStore)
         const userRef = doc(db, 'users', storedUser.value?.userId as string)
         const personalInformationSnapshotRef = doc(db, 'users_personal_information', storedUser.value?.userId as string)
 
-        await updateEmail(currentUser as User, userEmail).then(async () => {
-          await updateDoc(userRef, {
-            verified_at: Timestamp.now(),
-          })
-          await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
-        }).catch(async (error) => {
-          console.error(error)
-          if (error.code === 'auth/requires-recent-login') {
-            const getCustomToken = httpsCallable(functions, "get_custom_token")
-            const result = await getCustomToken({ user_email: currentUser?.email })
-            const customToken = result.data as string
-
-            await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
-              await updateEmail(userCredential.user as User, userEmail).then(async () => {
-                await updateDoc(userRef, {
-                  verified_at: Timestamp.now(),
-                })
-                await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
-              }).catch((error) => {
-                // 基本的にこのスコープのエラーが出る想定は無い
-                console.error(error)
-              })
+        await updateEmail(currentUser as User, userEmail)
+          .then(async () => {
+            await updateDoc(userRef, {
+              verified_at: Timestamp.now(),
             })
-          } else if (error.code === 'auth/email-already-in-use') {
-            return Object.assign(notification, { message: $t('profile.exists_email'), color: 'error' })
-          }
-        })
+            await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
+          })
+          .catch(async (error) => {
+            console.error(error)
+            if (error.code === 'auth/requires-recent-login') {
+              const getCustomToken = httpsCallable(functions, 'get_custom_token')
+              const result = await getCustomToken({ user_email: currentUser?.email })
+              const customToken = result.data as string
+
+              await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
+                await updateEmail(userCredential.user as User, userEmail)
+                  .then(async () => {
+                    await updateDoc(userRef, {
+                      verified_at: Timestamp.now(),
+                    })
+                    await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
+                  })
+                  .catch((error) => {
+                    // 基本的にこのスコープのエラーが出る想定は無い
+                    console.error(error)
+                  })
+              })
+            } else if (error.code === 'auth/email-already-in-use') {
+              return Object.assign(notification, { message: $t('profile.exists_email'), color: 'error' })
+            }
+          })
       }
 
       const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
@@ -158,9 +158,9 @@ const submit = async () => {
           query: {
             new: Number(isNew),
             redirect: route.query.redirect,
-          }
+          },
         })
-      } else if(isNew === undefined || isProfileCompleted) {
+      } else if (isNew === undefined || isProfileCompleted) {
         // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
         // newが存在しない = メールアドレス変更時の場合
         router.push(route.query.redirect as string)
@@ -171,18 +171,17 @@ const submit = async () => {
           query: {
             new: Number(isNew),
             redirect: route.query.redirect,
-          }
+          },
         })
       }
     }
   } catch (error) {
-    console.warn("Error sending pass code:", error);
+    console.warn('Error sending pass code:', error)
     isOpenUnMatchPassCodeDialog.value = true
   } finally {
     isValid.value = false
   }
 }
-
 </script>
 
 <template>
@@ -191,23 +190,47 @@ const submit = async () => {
       <v-col md="5">
         <v-sheet class="rounded-lg py-14 px-12">
           <v-container>
-            <v-row justify="center" >
+            <v-row justify="center">
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
               <h1 class="my-3 text-h3 font-weight-bold">{{ $t('passcode.enter_passcode') }}</h1>
             </v-row>
             <v-row justify="center">
-              <p>{{ $t('passcode.enter_passcode_description', {email: email}) }}</p>
+              <p>{{ $t('passcode.enter_passcode_description', { email: email }) }}</p>
             </v-row>
           </v-container>
 
-          <v-otp-input autofocus :disabled="isLoading" :loading="isValid" :error="isError" :focus-all="isError" v-model="passCode"/>
+          <v-otp-input
+            autofocus
+            :disabled="isLoading"
+            :loading="isValid"
+            :error="isError"
+            :focus-all="isError"
+            v-model="passCode"
+          />
 
-          <v-btn size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="reSendPassCode">
+          <v-btn
+            size="large"
+            color="grey-900"
+            variant="text"
+            block
+            :disabled="isValid"
+            :loading="isLoading"
+            @click="reSendPassCode"
+          >
             {{ $t('passcode.resend') }}
           </v-btn>
-          <v-btn v-if="route.query.new" size="large" color="grey-900" variant="text" block :disabled="isValid" :loading="isLoading" @click="login">
+          <v-btn
+            v-if="route.query.new"
+            size="large"
+            color="grey-900"
+            variant="text"
+            block
+            :disabled="isValid"
+            :loading="isLoading"
+            @click="login"
+          >
             {{ $t('passcode.back') }}
           </v-btn>
         </v-sheet>
@@ -224,7 +247,6 @@ const submit = async () => {
 
 <style scoped lang="scss">
 .text-btn {
-  color: black!important;
+  color: black !important;
 }
-
 </style>

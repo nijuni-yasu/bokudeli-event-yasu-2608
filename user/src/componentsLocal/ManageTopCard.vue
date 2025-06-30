@@ -19,11 +19,11 @@ defineProps<Props>()
       <v-card-text class="px-0 text-center card-title">
         <span>{{ stepNumber }}{{ title }}</span>
         <div class="text-center d-flex justify-center mt-5">
-          <v-img width="110px" height="110px" :src="imageSrc"/>
+          <v-img width="110px" height="110px" :src="imageSrc" />
         </div>
       </v-card-text>
       <v-card-text class="card-description">
-        <div v-html="description"/>
+        <div v-html="description" />
       </v-card-text>
       <v-card-text class="d-flex justify-center pa-0 mt-auto">
         <v-btn v-if="buttonLink" class="mb-4" color="primary" variant="outlined" :to="buttonLink">
@@ -38,17 +38,15 @@ defineProps<Props>()
 </template>
 <style scoped>
 .card-bg {
-
-  background-color: #FAFCFF;
+  background-color: #fafcff;
   border: 1px solid #e0e0e0;
 }
 .card-title {
-  font-size:17px;
+  font-size: 17px;
   font-weight: bold;
 }
 .card-description {
-  font-size:14px;
+  font-size: 14px;
   line-height: 1.6;
 }
 </style>
-
