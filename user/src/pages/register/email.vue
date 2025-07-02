@@ -46,16 +46,20 @@ const submit = async () => {
     await setDoc(personalInformationRef, { user_email: userEmail.value })
     let isError = false
 
+    const personalInformationSnapshot = await getDoc(personalInformationRef)
+    const personalInformation = personalInformationSnapshot.data() as FirestoredUserPersonalInformation
+    const email = personalInformation.user_email
+
     // Facebook or Twitterにメールアドレスの登録がない場合、firebase authのIDが空になるため、updateEmailで設定する。
-    await updateEmail(currentUser as User, userEmail.value).catch(async (error) => {
+    await updateEmail(currentUser as User, email).catch(async (error) => {
       if (error.code === 'auth/requires-recent-login') {
         const getCustomToken = httpsCallable(functions, 'get_custom_token')
-        const result = await getCustomToken({ user_email: userEmail.value })
+        const result = await getCustomToken({ user_email: email })
         const customToken = result.data as string
 
         await signInWithCustomToken(auth, customToken)
           .then(async (userCredential) => {
-            await updateEmail(userCredential.user as User, userEmail.value).catch((error) => console.error(error))
+            await updateEmail(userCredential.user as User, email).catch((error) => console.error(error))
           })
           .catch((error) => {
             // 基本的にこのスコープのエラーが出る想定は無い
@@ -73,8 +77,6 @@ const submit = async () => {
     const passCode = generatePassCode()
     firestoredUser.user_pass_code = passCode
 
-    const personalInformationSnapshot = await getDoc(personalInformationRef)
-    const personalInformation = personalInformationSnapshot.data()
     storedUserStore.update(
       convertFirestoredUserToStoredUser(firestoredUser, personalInformation as FirestoredUserPersonalInformation),
     )
@@ -83,12 +85,12 @@ const submit = async () => {
     await userStore.updateUser(firestoredUser)
 
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: userEmail.value, user_pass_code: passCode })
+    await sendPassCode({ user_email: email, user_pass_code: passCode })
 
     router.push({
       path: '/pass-code',
       query: {
-        email: userEmail.value,
+        email: email,
         new: Number(route.query.new),
         redirect: route.query.redirect,
       },
