@@ -450,8 +450,8 @@ onMounted(async () => {
             <v-row justify="center">
               <div class="my-3 text-h3 font-weight-bold">{{ $t('login.welcome') }}</div>
             </v-row>
-            <v-row justify="center">
-              <p>{{ $t('login.please_login_or_register_below') }}</p>
+            <v-row justify="center" class="py-5 text-subtitle-1">
+              <div v-html="$t('login.please_login_or_register_below')" />
             </v-row>
           </v-container>
 

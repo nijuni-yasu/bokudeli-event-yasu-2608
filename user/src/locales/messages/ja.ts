@@ -357,7 +357,7 @@ export default {
   'login': {
     'login_fail': '{snsName}ログインできませんでした',
     'welcome': 'shokujiiへようこそ',
-    'please_login_or_register_below': '以下からログインまたは新規登録してください',
+    'please_login_or_register_below': `<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。`,
     'email': 'メールアドレス',
     'continue_email': 'メールアドレスで続ける',
     'sns_login': '{snsName}でログイン',
