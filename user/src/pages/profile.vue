@@ -90,14 +90,35 @@ const isNew = computed(() => {
   return value === '1' ? 1 : 0
 })
 
-const { requiredValidator, noReservedCharsValidator, emailValidator, urlValidator } = useValidators()
-
 const imageError = ref('')
 
 const notification = inject('notification') as Notification
 const { t: $t } = useI18n()
 
 // バリデーション関連 ここから
+const { requiredValidator, emailValidator, urlValidator, accountValidator } = useValidators()
+
+const accountFieldRef = ref()
+const isCheckingAccount = ref(false)
+const isValidSameAccount = ref<true | string>(true)
+
+const validateAccount = async (userAccount: string): Promise<boolean> => {
+  const duplicatedCommunity = await getDocs(query(collection(db, 'users'), where('user_account', '==', userAccount)))
+  return duplicatedCommunity.empty
+}
+
+const checkAccountExists = async (value: string) => {
+  isCheckingAccount.value = true
+  try {
+    isValidSameAccount.value = (await validateAccount(value)) || $t('profile.validator_account_exists')
+    await nextTick(() => {
+      accountFieldRef.value.validate()
+    })
+  } finally {
+    isCheckingAccount.value = false
+  }
+}
+
 const validateImage = () => {
   if (!user.value?.user_image_url && !userImage.value) {
     imageError.value = $t('profile.choice_profile_image')
@@ -550,7 +571,9 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                 prefix="shokujii.jp/u/"
                 variant="outlined"
                 :disabled="isProfileLoading"
-                :rules="[noReservedCharsValidator]"
+                :rules="[isValidSameAccount, accountValidator]"
+                ref="accountFieldRef"
+                @update:modelValue="checkAccountExists"
               />
 
               <v-textarea
