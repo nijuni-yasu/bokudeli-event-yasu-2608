@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@/stores/partner'
+import { usePartnerStore } from '@/stores/_partner'
 import { PartnerMenu } from '@/schemes/partnerMenu'
 import MenuEditCard from '@/componentsLocal/MenuEditCard.vue'
 import MenuCard from '@/components/MenuCard.vue'

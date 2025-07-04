@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { where, orderBy } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/partner'
+import { usePartnerStore } from '@/stores/_partner'
 import { useEventListStore } from '@/stores/eventList'
 import { getCommunityPath, getShopPath } from '@/navigation/utils'
 import type { Shop } from '@/schemes/shop'

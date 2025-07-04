@@ -27,7 +27,7 @@ import {
 import XIcon from '@/icons/x'
 import LineIcon from '@/icons/line'
 import type { Shop } from '@/schemes/shop'
-import { usePartnerStore } from '@/stores/partner'
+import { usePartnerStore } from '@/stores/_partner'
 import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
 
 const qrcodeSize = 300

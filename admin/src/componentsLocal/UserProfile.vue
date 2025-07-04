@@ -2,7 +2,7 @@
 import { getAuth, signOut } from 'firebase/auth'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiLogout } from '@mdi/js'
-import { usePartnerStore } from '@/stores/partner'
+import { usePartnerStore } from '@/stores/_partner'
 
 const auth = getAuth()
 const name = ref<string | null>(null)
