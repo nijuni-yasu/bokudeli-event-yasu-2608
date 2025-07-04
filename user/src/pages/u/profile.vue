@@ -556,8 +556,21 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                 :rules="[requiredValidator]"
               />
             </v-sheet>
+            <v-row justify="center">
+              <v-btn class="rounded-xl" color="primary" :loading="isProfileLoading" type="submit">{{
+                $t('profile.change_settings')
+              }}</v-btn>
+            </v-row>
+          </v-form>
+        </v-sheet>
+      </v-col>
+    </v-row>
+    <v-row v-if="isNew !== 1" justify="center" class="mt-8">
+      <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
+        <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
+          <v-form ref="form" v-model="isValidProfile" @submit.prevent="profileSubmit">
 
-            <div class="text-center text-h3 font-weight-bold pt-16 mt-16 mb-4">{{ $t('profile.social_link') }}</div>
+            <div class="text-center text-h3 font-weight-bold mb-4">{{ $t('profile.social_link') }}</div>
             <div class="text-subtitle-1 mt-3 mb-10" v-html="$t('profile.social_link_description')"/>
 
             <v-sheet class="d-flex flex-column ga-7">
