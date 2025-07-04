@@ -512,24 +512,30 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
 <template>
   <v-container v-if="user != null" class="px-1">
-    <v-row justify="center" class="mt-1 mt-md-16 px-1">
-      <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
-        <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
-          <div class="text-center text-h3 font-weight-bold">{{ $t('profile.profile_settings') }}</div>
+    <v-form ref="form" v-model="isValidProfile" @submit.prevent="profileSubmit">
+      <v-row justify="center" class="mt-1 mt-md-16 px-1">
+        <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
+          <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
+            <div class="text-center text-h3 font-weight-bold">{{ $t('profile.profile_settings') }}</div>
 
-          <v-sheet class="d-flex justify-center mt-4 mb-12">
-            <div style="position: relative">
-              <UserAvatar :user="user" :size="140" @click="triggerFileInput" />
-              <v-btn :icon="mdiUpload" size="small" variant="flat" class="edit-text" @click="triggerFileInput"></v-btn>
-            </div>
-          </v-sheet>
-          <p v-if="imageError !== ''" class="text-center text-error font-weight-bold">{{ imageError }}</p>
+            <v-sheet class="d-flex justify-center mt-4 mb-12">
+              <div style="position: relative">
+                <UserAvatar :user="user" :size="140" @click="triggerFileInput" />
+                <v-btn
+                  :icon="mdiUpload"
+                  size="small"
+                  variant="flat"
+                  class="edit-text"
+                  @click="triggerFileInput"
+                ></v-btn>
+              </div>
+            </v-sheet>
+            <p v-if="imageError !== ''" class="text-center text-error font-weight-bold">{{ imageError }}</p>
 
-          <v-form ref="form" v-model="isValidProfile" @submit.prevent="profileSubmit">
             <!-- ファイル選択 -->
             <v-file-input class="d-none" accept="image/*" ref="fileInput" @update:model-value="readImageFiles" />
 
-            <v-sheet class="d-flex flex-column ga-7 mb-16">
+            <v-sheet class="d-flex flex-column ga-7 mb-12">
               <v-text-field
                 :label="$t('profile.user_name')"
                 v-model="user.user_name"
@@ -561,19 +567,17 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                 $t('profile.change_settings')
               }}</v-btn>
             </v-row>
-          </v-form>
-        </v-sheet>
-      </v-col>
-    </v-row>
-    <v-row v-if="isNew !== 1" justify="center" class="mt-8">
-      <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
-        <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
-          <v-form ref="form" v-model="isValidProfile" @submit.prevent="profileSubmit">
+          </v-sheet>
+        </v-col>
+      </v-row>
 
+      <v-row v-if="isNew !== 1" justify="center" class="mt-8">
+        <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
+          <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
             <div class="text-center text-h3 font-weight-bold mb-4">{{ $t('profile.social_link') }}</div>
-            <div class="text-subtitle-1 mt-3 mb-10" v-html="$t('profile.social_link_description')"/>
+            <div class="text-subtitle-1 mt-3 mb-10" v-html="$t('profile.social_link_description')" />
 
-            <v-sheet class="d-flex flex-column ga-7">
+            <v-sheet class="d-flex flex-column ga-7 mb-12">
               <v-text-field
                 :label="$t('profile.user_sns_twitter')"
                 v-model="user.user_sns_twitter"
@@ -610,17 +614,16 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                 :disabled="isProfileLoading"
                 :rules="[urlValidator]"
               />
-
-              <v-row justify="center">
-                <v-btn class="rounded-xl" color="primary" :loading="isProfileLoading" type="submit">{{
-                  $t('profile.change_settings')
-                }}</v-btn>
-              </v-row>
             </v-sheet>
-          </v-form>
-        </v-sheet>
-      </v-col>
-    </v-row>
+            <v-row justify="center">
+              <v-btn class="rounded-xl" color="primary" :loading="isProfileLoading" type="submit">{{
+                $t('profile.change_settings')
+              }}</v-btn>
+            </v-row>
+          </v-sheet>
+        </v-col>
+      </v-row>
+    </v-form>
 
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
