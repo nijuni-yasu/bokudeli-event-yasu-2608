@@ -557,7 +557,8 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               />
             </v-sheet>
 
-            <div class="text-center text-h3 font-weight-bold pt-16 mt-16 mb-16">{{ $t('profile.social_link') }}</div>
+            <div class="text-center text-h3 font-weight-bold pt-16 mt-16 mb-4">{{ $t('profile.social_link') }}</div>
+            <div class="text-subtitle-1 mt-3 mb-10" v-html="$t('profile.social_link_description')"/>
 
             <v-sheet class="d-flex flex-column ga-7">
               <v-text-field
@@ -610,8 +611,10 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
-        <v-sheet class="rounded-lg py-14 px-16">
+        <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
+          <div class="text-subtitle-1 mt-3 mb-10">{{ $t('profile.email_description') }}</div>
+
           <v-card-text v-if="userEmailPending">
             <div>
               <span v-html="$t('profile.pending_email', { pending_email: userEmailPending })" />
@@ -656,8 +659,9 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
     <v-row v-if="isNew !== 1" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
-        <v-sheet class="rounded-lg py-14 px-16">
+        <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.account_linkage') }}</div>
+          <div class="text-subtitle-1 mt-3 mb-10">{{ $t('profile.account_linkage_description') }}</div>
 
           <div class="d-flex flex-column flex-md-row justify-space-between align-center my-8">
             <div class="d-flex flex-column">
