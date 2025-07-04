@@ -8,6 +8,7 @@ import { generatePassCode } from '@/utils/generatePassCode'
 import { FirestoredUser } from '@/schemes/storedUser'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
+import { getProfile } from '@/router/utils'
 
 const router = useRouter()
 const route = useRoute()
@@ -154,7 +155,7 @@ const submit = async () => {
       const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
       if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
         router.push({
-          path: '/u/profile',
+          path: getProfile(),
           query: {
             new: Number(isNew),
             redirect: route.query.redirect,

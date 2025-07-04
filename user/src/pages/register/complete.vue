@@ -9,6 +9,7 @@ import axios from 'axios'
 import { linkByProviderService, reauthenticateByProviderService } from '@/utils/providerService'
 import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
 import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
+import { getProfile } from '@/router/utils'
 
 type ProfileLink = {
   path: string
@@ -42,7 +43,7 @@ const titleLabel = ref('')
 const descriptionLabel = ref('')
 const selfButtonLabel = ref('')
 const profileLink: ProfileLink = {
-  path: '/u/profile',
+  path: getProfile(),
   query: {
     new: Number(route.query.new),
     redirect: route.query.redirect as string,

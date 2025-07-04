@@ -9,6 +9,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
 import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
+import { getProfile } from '@/router/utils'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -118,7 +119,7 @@ const logout = async () => {
           <v-divider v-if="isLogin" class="my-2" />
 
           <!-- 👉 Profile settings -->
-          <v-list-item v-if="isLogin" :to="`/u/profile`">
+          <v-list-item v-if="isLogin" :to="getProfile()">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiCog" size="22" />
             </template>

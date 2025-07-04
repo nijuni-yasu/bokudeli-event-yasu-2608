@@ -1,1 +1,3 @@
-export default ['/u/profile', '/register/complete', '/register/email']
+import { getProfile } from '@/router/utils'
+
+export default [getProfile(), '/register/complete', '/register/email']

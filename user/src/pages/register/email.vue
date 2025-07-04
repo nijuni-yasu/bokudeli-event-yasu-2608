@@ -9,6 +9,7 @@ import { FirestoredUser, type FirestoredUserPersonalInformation } from '@/scheme
 import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
 import { getAuth, updateEmail, signInWithCustomToken, type User } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { useValidators } from '@/composable/validators'
 
 const auth = getAuth()
 const currentUser = auth.currentUser
@@ -36,6 +37,8 @@ const isValid = ref(false)
 
 const notification = inject('notification') as Notification
 const { t: $t } = useI18n()
+
+const { requiredValidator, emailValidator } = useValidators()
 
 const submit = async () => {
   isLoading.value = true
@@ -123,7 +126,11 @@ const submit = async () => {
           <v-form v-model="isValid" @submit.prevent="submit">
             <v-container class="mb-4">
               <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('email.email') }}</label>
-              <v-text-field placeholder="example@example.com" v-model="userEmail" />
+              <v-text-field
+                placeholder="example@example.com"
+                v-model="userEmail"
+                :rules="[requiredValidator, emailValidator]"
+              />
             </v-container>
 
             <v-btn
