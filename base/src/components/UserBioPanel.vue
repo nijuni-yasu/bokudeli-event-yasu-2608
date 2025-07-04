@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { useStoreStoredUser } from '@/stores/storedUser'
-import {FirestoredUser} from '@/schemes/storedUser'
+import { FirestoredUser } from '@/schemes/storedUser'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { mdiTwitter, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
+import { getProfile } from '@/router/utils'
 
-
-const props = defineProps<{ userData: FirestoredUser; userEmailPending: string | null; isEditable: boolean | undefined }>()
+const props = defineProps<{
+  userData: FirestoredUser
+  userEmailPending: string | null
+  isEditable: boolean | undefined
+}>()
 
 const storedUserStore = useStoreStoredUser()
 
@@ -31,10 +35,7 @@ const instagramUrl = computed(() =>
   props.userData?.user_sns_instagram ? buildInstagramUrl(props.userData.user_sns_instagram) : undefined,
 )
 
-const websiteUrl = computed(() =>
-  props.userData?.user_sns_website ? props.userData.user_sns_website : undefined,
-)
-
+const websiteUrl = computed(() => (props.userData?.user_sns_website ? props.userData.user_sns_website : undefined))
 </script>
 
 <template>
@@ -68,15 +69,7 @@ const websiteUrl = computed(() =>
           {{ userDescription }}
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
-          <v-btn
-            color="primary"
-            class="mb-3"
-            size="x-large"
-            :prepend-icon="mdiCog"
-            to="/u/profile"
-          >
-            設定
-          </v-btn>
+          <v-btn color="primary" class="mb-3" size="x-large" :prepend-icon="mdiCog" :to="getProfile()"> 設定 </v-btn>
         </v-card-actions>
       </v-card>
     </v-col>

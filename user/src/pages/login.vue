@@ -24,6 +24,7 @@ import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import type { StoredUser } from '@/schemes/storedUser'
 import { type UserStore, useUserStore } from '@/stores/user'
+import { getProfile } from '@/router/utils'
 
 type CreateUserRequest = {
   user_email: string
@@ -339,7 +340,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     if (isNewUser) {
       // 初回登録ユーザーならプロフィール設定ページへ
       return router.push({
-        path: '/u/profile',
+        path: getProfile(),
         query: {
           new: Number(isNewUser),
           redirect: route.query.redirect as string,
