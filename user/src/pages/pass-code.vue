@@ -187,8 +187,8 @@ const submit = async () => {
 <template>
   <v-container>
     <v-row justify="center" class="mt-16">
-      <v-col md="5">
-        <v-sheet class="rounded-lg py-14 px-12">
+      <v-col lg="5" md="6" sm="10" cols="12" class="pa-0">
+        <v-sheet class="rounded-lg py-14 px-md-10 px-5">
           <v-container>
             <v-row justify="center">
               <v-img max-width="100" :src="logo"></v-img>
