@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
+import { db, functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import { generatePassCode } from '@/utils/generatePassCode'
@@ -25,6 +25,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import type { StoredUser } from '@/schemes/storedUser'
 import { type UserStore, useUserStore } from '@/stores/user'
 import { getProfile } from '@/router/utils'
+import { doc, updateDoc } from 'firebase/firestore'
 
 type CreateUserRequest = {
   user_email: string
@@ -272,6 +273,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   })
   const storedUser = storedUserStore.storedUser as StoredUser
   const userStore = useUserStore(storedUser.userId) as UserStore
+  const personalInformationSnapshotRef = doc(db, 'users_personal_information', storedUser.userId as string)
 
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
@@ -295,6 +297,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
 
       storedUserStore.update(storedUser)
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+      await updateDoc(personalInformationSnapshotRef, { user_sns_google: storedUser.userSnsGoogle })
       break
     default:
       break

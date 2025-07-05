@@ -4,7 +4,7 @@ import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import { type PartnerMenu } from './partnerMenu'
 import { type User } from 'firebase/auth'
-import {type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation} from './storedUser'
+import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
 
 export const dateString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
@@ -125,7 +125,6 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
     user_image_url: storedUser.userImageUrl,
     user_account: storedUser.userAccount,
     user_description: storedUser.userDescription,
-    user_sns_google: storedUser.userSnsGoogle,
     user_sns_facebook: storedUser.userSnsFacebook,
     user_sns_facebook_name: storedUser.userSnsFacebookName,
     user_sns_twitter: storedUser.userSnsTwitter,
@@ -138,25 +137,47 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
   })
 }
 
-export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser, firestoredUserPersonalInformation: FirestoredUserPersonalInformation): StoredUser => {
+export const convertFirestoredUserToStoredUser = (
+  firestoredUser: FirestoredUser,
+  firestoredUserPersonalInformation: FirestoredUserPersonalInformation,
+): StoredUser => {
+  const {
+    user_id,
+    user_name,
+    user_image_url,
+    user_account,
+    user_description,
+    user_sns_facebook,
+    user_sns_facebook_name,
+    user_sns_twitter,
+    user_sns_instagram,
+    user_sns_website,
+    user_pass_code,
+    verified_at,
+    created_at,
+    updated_at,
+  } = firestoredUser
+
+  const { user_email, user_email_pending, user_sns_google } = firestoredUserPersonalInformation
+
   return {
-    userId: firestoredUser.user_id,
-    userName: firestoredUser.user_name,
-    userEmail: firestoredUserPersonalInformation.user_email,
-    userEmailPending: firestoredUserPersonalInformation.user_email_pending || null,
-    userImageUrl: firestoredUser.user_image_url,
-    userAccount: firestoredUser.user_account,
-    userDescription: firestoredUser.user_description,
-    userSnsGoogle: firestoredUser.user_sns_google,
-    userSnsFacebook: firestoredUser.user_sns_facebook,
-    userSnsFacebookName: firestoredUser.user_sns_facebook_name,
-    userSnsTwitter: firestoredUser.user_sns_twitter,
-    userSnsInstagram: firestoredUser.user_sns_instagram,
-    userSnsWebsite: firestoredUser.user_sns_website,
-    userPassCode: firestoredUser.user_pass_code,
-    verifiedAt: firestoredUser.verified_at?.toDate() || null,
-    createdAt: firestoredUser.created_at?.toDate(),
-    updatedAt: firestoredUser.updated_at?.toDate(),
+    userId: user_id,
+    userName: user_name,
+    userEmail: user_email,
+    userEmailPending: user_email_pending || null,
+    userImageUrl: user_image_url,
+    userAccount: user_account,
+    userDescription: user_description,
+    userSnsGoogle: user_sns_google || null,
+    userSnsFacebook: user_sns_facebook,
+    userSnsFacebookName: user_sns_facebook_name,
+    userSnsTwitter: user_sns_twitter,
+    userSnsInstagram: user_sns_instagram,
+    userSnsWebsite: user_sns_website,
+    userPassCode: user_pass_code,
+    verifiedAt: verified_at?.toDate() || null,
+    createdAt: created_at?.toDate(),
+    updatedAt: updated_at?.toDate(),
   }
 }
 
@@ -170,7 +191,6 @@ export const convertDocumentDataToStoredUser = (
     user_image_url,
     user_account,
     user_description,
-    user_sns_google,
     user_sns_facebook,
     user_sns_facebook_name,
     user_sns_twitter,
@@ -182,7 +202,7 @@ export const convertDocumentDataToStoredUser = (
     updated_at,
   } = documentData
 
-  const { user_email, user_email_pending } = personalInfomationData
+  const { user_email, user_email_pending, user_sns_google } = personalInfomationData
 
   return {
     userId: user_id ?? '',

@@ -33,7 +33,6 @@ export class FirestoredUser {
   user_image_url: string | null = null
   user_account: string | null = null
   user_description: string | null = null
-  user_sns_google: string | null = null
   user_sns_facebook: string | null = null
   user_sns_facebook_name: string | null = null
   user_sns_twitter: string | null = null
@@ -60,11 +59,12 @@ export class FirestoredUser {
   }
 
   convertToDocumentData(): DocumentData {
-    return _.omit(this, ['user_email', 'user_thumb_image_urls'])
+    return _.omit(this, ['user_email', 'user_email_pending', 'user_sns_google', 'user_thumb_image_urls'])
   }
 }
 
 export type FirestoredUserPersonalInformation = {
   user_email: string
   user_email_pending: string | null
+  user_sns_google: string | null
 }

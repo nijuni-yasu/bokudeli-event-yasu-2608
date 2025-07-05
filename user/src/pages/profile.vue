@@ -58,13 +58,18 @@ if (currentUser) {
 }
 
 const user = computed(() => {
-  const userId = storedUser.value?.userId
-  return userId == null ? null : (useUserStore(userId) as UserStore).user
+  return storedUser.value
 })
+const firestoredUser = ref<FirestoredUser>(convertStoredUserToFirestoredUser(user.value as StoredUser))
+
+const userSnapshotRef = doc(db, 'users', user.value?.userId as string)
+const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.userId as string)
 
 const userEmailPending = computed(() => {
-  return storedUser.value?.userEmailPending === null ? '' : storedUser.value?.userEmailPending
+  return user.value?.userEmailPending
 })
+
+const userStore = useUserStore(user.value?.userId as string) as UserStore
 
 const router = useRouter()
 const route = useRoute()
@@ -120,7 +125,7 @@ const checkAccountExists = async (value: string) => {
 }
 
 const validateImage = () => {
-  if (!user.value?.user_image_url && !userImage.value) {
+  if (!user.value?.userImageUrl && !userImage.value) {
     imageError.value = $t('profile.choice_profile_image')
     return false
   } else {
@@ -143,9 +148,9 @@ const readImageFiles = (files: File | File[]) => {
   const file = files[0]
   userImage.value = file
 
-  const firestoredUser = user.value as FirestoredUser
-  firestoredUser.user_thumb_image_urls = buildThumbnailsLinks(
-    firestoredUser.user_id,
+  firestoredUser.value = convertStoredUserToFirestoredUser(user.value as StoredUser)
+  firestoredUser.value.user_thumb_image_urls = buildThumbnailsLinks(
+    firestoredUser.value.user_id,
     new URL(URL.createObjectURL(file)),
   )
 }
@@ -160,31 +165,30 @@ const profileSubmit = async () => {
   try {
     isProfileLoading.value = true
 
-    const firestoredUser = user.value as FirestoredUser
     const image = userImage.value
-    const personalInformationSnapshot = await getDocs(
-      query(collection(db, 'users_personal_information'), where('user_email', '==', email.value)),
-    )
 
-    if (!personalInformationSnapshot.docs[0]) return console.error("upi doesn't exist")
-
-    storedUserStore.update(
-      convertFirestoredUserToStoredUser(
-        firestoredUser,
-        personalInformationSnapshot.docs[0].data() as FirestoredUserPersonalInformation,
-      ),
-    )
-
-    const userStore = useUserStore(firestoredUser.user_id) as UserStore
-    await userStore.updateUser(firestoredUser)
-    if (image != null) {
+    await userStore.updateUser(convertStoredUserToFirestoredUser(user.value as StoredUser))
+    if (image != undefined) {
       try {
         await userStore.uploadUserImage(image)
+        userImage.value = undefined
       } catch (err) {
         console.error(err)
         window.alert($t('profile.fail_image_upload'))
       }
     }
+
+    const userSnapShot = await getDoc(userSnapshotRef)
+    const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
+
+    storedUserStore.update(
+      convertFirestoredUserToStoredUser(
+        userSnapShot.data() as FirestoredUser,
+        personalInformationSnapshot.data() as FirestoredUserPersonalInformation,
+      ),
+    )
+
+    firestoredUser.value = convertStoredUserToFirestoredUser(user.value as StoredUser)
 
     Object.assign(notification, { message: $t('profile.update_profile'), color: 'success' })
 
@@ -203,10 +207,8 @@ const emailSubmit = async () => {
     isEmailLoading.value = true
 
     const userEmail = email.value
-    const userRef = doc(db, 'users', user.value?.user_id as string)
-    const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.user_id as string)
 
-    if (storedUser.value?.userEmail === userEmail) {
+    if (user.value?.userEmail === userEmail) {
       isEmailLoading.value = false
       return Object.assign(notification, { message: $t('profile.not_changed_email'), color: 'warning' })
     }
@@ -220,17 +222,18 @@ const emailSubmit = async () => {
       return Object.assign(notification, { message: $t('profile.existEmail'), color: 'warning' })
     }
 
-    await updateDoc(userRef, {
+    await updateDoc(userSnapshotRef, {
       verified_at: null,
     })
 
-    const userSnapShot = await getDoc(doc(db, 'users', storedUser.value?.userId as string))
-    const personalInformationSnapshot = await getDoc(
-      doc(db, 'users_personal_information', storedUser.value?.userId as string),
-    )
+    const userSnapShot = await getDoc(userSnapshotRef)
+    const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
 
     // Pinia のデータを更新
-    const currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data()!, personalInformationSnapshot.data()!)
+    const currentStoredUser = convertDocumentDataToStoredUser(
+      userSnapShot.data() as FirestoredUser,
+      personalInformationSnapshot.data() as FirestoredUserPersonalInformation,
+    )
     storedUserStore.update(currentStoredUser)
 
     await updateDoc(personalInformationSnapshotRef, { user_email_pending: userEmail })
@@ -257,7 +260,7 @@ const emailSubmit = async () => {
 
 const certificationPendingEmail = async () => {
   isVerificationLoading.value = true
-  const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', user.value?.user_id as string))
+  const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
   const personalInformation = personalInformationSnapshot.data() as FirestoredUserPersonalInformation
   const userEmail = personalInformation.user_email_pending
 
@@ -278,21 +281,22 @@ const certificationPendingEmail = async () => {
 }
 
 const cancelPendingEmail = async () => {
-  const userRef = doc(db, 'users', user.value?.user_id as string)
-  await updateDoc(userRef, {
+  await updateDoc(userSnapshotRef, {
     user_pass_code: null,
     verified_at: Timestamp.now(),
   })
-  const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.user_id as string)
   await updateDoc(personalInformationSnapshotRef, { user_email_pending: null })
 
-  const userSnapshot = await getDoc(userRef)
+  const userSnapshot = await getDoc(userSnapshotRef)
   const userData = userSnapshot.data()
   const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
   const personalInformation = personalInformationSnapshot.data()
 
-  const storedUser = convertDocumentDataToStoredUser(userData!, personalInformation!)
-  storedUserStore.update(storedUser)
+  const storedUser = convertDocumentDataToStoredUser(
+    userData as FirestoredUser,
+    personalInformation as FirestoredUserPersonalInformation,
+  )
+  storedUserStore.update(storedUser as StoredUser)
   return Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
 }
 
@@ -417,35 +421,33 @@ const confirmUnLink = async (providerId: string) => {
     if (auth.currentUser) {
       await unlink(auth.currentUser, providerId)
 
-      const firestoredUser = user.value as FirestoredUser
-      const personalInformationSnapshot = await getDocs(
-        query(collection(db, 'users_personal_information'), where('user_email', '==', email.value)),
+      const userSnapshot = await getDoc(userSnapshotRef)
+      const userData = userSnapshot.data()
+      const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
+      const personalInformation = personalInformationSnapshot.data()
+
+      const storedUser = convertDocumentDataToStoredUser(
+        userData as FirestoredUser,
+        personalInformation as FirestoredUserPersonalInformation,
       )
 
       // 各プロバイダーは連携解除時に関連する値を削除する
       switch (providerId) {
         case 'google.com':
-          firestoredUser.user_sns_google = null
+          storedUser.userSnsGoogle = null
+          await updateDoc(personalInformationSnapshotRef, { user_sns_google: null })
           break
         case 'facebook.com':
-          firestoredUser.user_sns_facebook_name = null
+          storedUser.userSnsFacebookName = null
           break
         case 'twitter.com':
-          firestoredUser.user_sns_twitter = null
+          storedUser.userSnsTwitter = null
           break
       }
 
-      if (!personalInformationSnapshot.docs[0]) return console.error("upi doesn't exist")
+      storedUserStore.update(storedUser)
 
-      storedUserStore.update(
-        convertFirestoredUserToStoredUser(
-          firestoredUser,
-          personalInformationSnapshot.docs[0].data() as FirestoredUserPersonalInformation,
-        ),
-      )
-
-      const userStore = useUserStore(firestoredUser.user_id) as UserStore
-      await userStore.updateUser(firestoredUser)
+      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
 
       // ユーザー情報を再取得して更新
       await auth.currentUser.reload()
@@ -507,27 +509,22 @@ onMounted(async () => {
 
 const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
   const storedUser = storedUserStore.storedUser as StoredUser
-  const userStore = useUserStore(storedUser.userId) as UserStore
 
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
       storedUser.userSnsFacebookName = storedUser.userSnsFacebookName || (additionalUserInfo.profile?.name as string)
-      storedUserStore.update(storedUser)
-      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'twitter.com':
       storedUser.userSnsTwitter = additionalUserInfo?.username as string
-      storedUserStore.update(storedUser)
-      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'google.com':
-      storedUser.userSnsGoogle = storedUser.userSnsGoogle || (additionalUserInfo?.profile?.email as string)
-      storedUserStore.update(storedUser)
-      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-      break
-    default:
+      storedUser.userSnsGoogle = additionalUserInfo?.profile?.email as string
+      await updateDoc(personalInformationSnapshotRef, { user_sns_google: storedUser.userSnsGoogle })
       break
   }
+
+  await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+  storedUserStore.update(storedUser)
 }
 </script>
 
@@ -541,7 +538,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
             <v-sheet class="d-flex justify-center mt-4 mb-12">
               <div style="position: relative">
-                <UserAvatar :user="user" :size="140" @click="triggerFileInput" />
+                <UserAvatar :user="firestoredUser" :size="140" @click="triggerFileInput" />
                 <v-btn
                   :icon="mdiUpload"
                   size="small"
@@ -559,7 +556,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
             <v-sheet class="d-flex flex-column ga-7 mb-12">
               <v-text-field
                 :label="$t('profile.user_name')"
-                v-model="user.user_name"
+                v-model="user.userName"
                 variant="outlined"
                 :disabled="isProfileLoading"
                 :rules="[requiredValidator]"
@@ -567,7 +564,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
               <v-text-field
                 :label="$t('profile.user_account')"
-                v-model="user.user_account"
+                v-model="user.userAccount"
                 prefix="shokujii.jp/u/"
                 variant="outlined"
                 :disabled="isProfileLoading"
@@ -578,7 +575,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
               <v-textarea
                 :label="$t('profile.user_description')"
-                v-model="user.user_description"
+                v-model="user.userDescription"
                 rows="5"
                 variant="outlined"
                 :disabled="isProfileLoading"
@@ -603,18 +600,18 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
             <v-sheet class="d-flex flex-column ga-7 mb-12">
               <v-text-field
                 :label="$t('profile.user_sns_twitter')"
-                v-model="user.user_sns_twitter"
+                v-model="user.userSnsTwitter"
                 prefix="x.com/"
                 variant="outlined"
                 hide-details
-                :disabled="!!user.user_sns_twitter"
+                :disabled="!!user.userSnsTwitter"
                 readonly
                 @click="() => (isOpenTwitterLinkDialog = true)"
               />
 
               <v-text-field
                 :label="$t('profile.user_sns_facebook')"
-                v-model="user.user_sns_facebook"
+                v-model="user.userSnsFacebook"
                 prefix="facebook.com/"
                 variant="outlined"
                 hide-details
@@ -623,7 +620,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
               <v-text-field
                 :label="$t('profile.user_sns_instagram')"
-                v-model="user.user_sns_instagram"
+                v-model="user.userSnsInstagram"
                 prefix="instagram.com/"
                 variant="outlined"
                 hide-details
@@ -632,7 +629,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
 
               <v-text-field
                 :label="$t('profile.user_sns_website')"
-                v-model="user.user_sns_website"
+                v-model="user.userSnsWebsite"
                 variant="outlined"
                 :disabled="isProfileLoading"
                 :rules="[urlValidator]"
@@ -707,7 +704,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label class="align-center">
                 <v-icon :icon="GoogleIcon" size="x-large" class="me-3" />{{ $t('profile.google') }}
               </label>
-              <label v-if="user.user_sns_google" class="ml-11 font-weight-bold">{{ user.user_sns_google }}</label>
+              <label v-if="user.userSnsGoogle" class="ml-11 font-weight-bold">{{ user.userSnsGoogle }}</label>
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -740,8 +737,8 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label class="align-center">
                 <v-icon :icon="FacebookIcon" size="x-large" class="me-3" />{{ $t('profile.facebook') }}
               </label>
-              <label v-if="user.user_sns_facebook_name" class="ml-11 font-weight-bold">{{
-                user.user_sns_facebook_name
+              <label v-if="user.userSnsFacebookName" class="ml-11 font-weight-bold">{{
+                user.userSnsFacebookName
               }}</label>
             </div>
 
@@ -775,7 +772,7 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label class="align-center">
                 <v-icon :icon="XIcon" size="x-large" class="me-3" />{{ $t('profile.twitter') }}
               </label>
-              <label v-if="user.user_sns_twitter" class="ml-11 font-weight-bold">{{ user.user_sns_twitter }}</label>
+              <label v-if="user.userSnsTwitter" class="ml-11 font-weight-bold">{{ user.userSnsTwitter }}</label>
             </div>
 
             <div class="mt-6 mt-md-0">
