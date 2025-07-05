@@ -25,7 +25,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import type { StoredUser } from '@/schemes/storedUser'
 import { type UserStore, useUserStore } from '@/stores/user'
 import { getProfile } from '@/router/utils'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, Timestamp, updateDoc } from 'firebase/firestore'
 
 type CreateUserRequest = {
   user_email: string
@@ -286,6 +286,10 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     case 'facebook.com':
       storedUser.userSnsFacebookName = storedUser.userSnsFacebookName || (additionalUserInfo.profile?.name as string)
 
+      if (isNewUser) {
+        storedUser.verifiedAt = Timestamp.now().toDate()
+      }
+
       storedUserStore.update(storedUser)
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
@@ -296,11 +300,19 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
         storedUser.userDescription || (additionalUserInfo.profile?.description as string | null)
       storedUser.userAccount = storedUser.userAccount || (additionalUserInfo.username as string | null)
 
+      if (isNewUser) {
+        storedUser.verifiedAt = Timestamp.now().toDate()
+      }
+
       storedUserStore.update(storedUser)
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
       break
     case 'google.com':
       storedUser.userSnsGoogle = storedUser.userSnsGoogle || (additionalUserInfo?.profile?.email as string)
+
+      if (isNewUser) {
+        storedUser.verifiedAt = Timestamp.now().toDate()
+      }
 
       storedUserStore.update(storedUser)
       await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
@@ -324,8 +336,8 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     })
   }
 
-  // google以外のプロバイダでverifiedAtがnullならパスコード認証を行う
-  if (!storedUser?.verifiedAt && additionalUserInfo.providerId !== 'google.com') {
+  // verifiedAtがnullかつuserEmailPendingがnullならパスコード認証を行う
+  if (!storedUser.verifiedAt && !storedUser.userEmailPending) {
     const passCode = generatePassCode()
 
     const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, 'create_or_update_user')
