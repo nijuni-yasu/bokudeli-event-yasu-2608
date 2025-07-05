@@ -59,4 +59,7 @@ export default defineConfig({
       '@configured-variables': fileURLToPath(new URL('./src/styles/variables/_template.scss', import.meta.url)),
     },
   },
+  define: {
+    IS_SERVER: false,
+  },
 })

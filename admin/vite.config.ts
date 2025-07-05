@@ -62,4 +62,7 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 5000,
   },
+  define: {
+    IS_SERVER: false,
+  },
 })

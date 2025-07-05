@@ -109,4 +109,7 @@ export default defineConfig({
     exclude: ['vuetify'],
     entries: ['./src/**/*.vue'],
   },
+  define: {
+    IS_SERVER: false,
+  },
 })
