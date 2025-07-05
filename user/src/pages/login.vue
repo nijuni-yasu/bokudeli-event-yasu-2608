@@ -49,6 +49,7 @@ const router = useRouter()
 const { t: $t } = useI18n()
 
 const isLoading = ref(false)
+const isSnsLoading = ref<'google.com' | 'facebook.com' | 'twitter.com' | null>(null)
 const isDisable = ref(false)
 
 const isValid = ref(false)
@@ -90,6 +91,7 @@ const submit = async () => {
 }
 
 const handleTwitterLogin = async () => {
+  isSnsLoading.value = 'twitter.com'
   try {
     const userCredential = await signInByProviderService('Twitter')
     const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
@@ -141,9 +143,11 @@ const handleTwitterLogin = async () => {
       window.alert($t('login.login_fail', { snsName: 'X' }))
     }
   }
+  isSnsLoading.value = null
 }
 
 const handleFacebookLogin = async () => {
+  isSnsLoading.value = 'facebook.com'
   try {
     const userCredential = await signInByProviderService('Facebook')
     const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
@@ -195,9 +199,11 @@ const handleFacebookLogin = async () => {
       window.alert($t('login.login_fail', { snsName: 'Facebook' }))
     }
   }
+  isSnsLoading.value = null
 }
 
 const handleGoogleLogin = async () => {
+  isSnsLoading.value = 'google.com'
   try {
     const userCredential = await signInByProviderService('Google')
     const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
@@ -249,6 +255,7 @@ const handleGoogleLogin = async () => {
       window.alert($t('login.login_fail', { snsName: 'Google' }))
     }
   }
+  isSnsLoading.value = null
 }
 
 const transitionJudge = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
@@ -373,19 +380,18 @@ onMounted(async () => {
   const error = useStoreFirebaseAuthError().error
   if (userCredential !== undefined && additionalUserInfo !== null) {
     try {
-      isDisable.value = true
+      isSnsLoading.value = additionalUserInfo.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
       await transitionJudge(userCredential, additionalUserInfo)
     } catch (error) {
       console.error(error)
-      isDisable.value = false
-    } finally {
-      isDisable.value = false
     }
   } else if (error && error.code === 'auth/account-exists-with-different-credential') {
     const tokenResponse = error.customData?._tokenResponse as { providerId: string }
-    const providerId = tokenResponse.providerId
+    const providerId = tokenResponse.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
+    isSnsLoading.value = providerId
 
     let providerService: 'Facebook' | 'Google' | 'Twitter' | null = null
+
     let credential = null
     switch (providerId) {
       case FacebookAuthProvider.PROVIDER_ID:
@@ -439,6 +445,7 @@ onMounted(async () => {
         window.alert($t('login.login_fail', { snsName: providerService }))
       })
   }
+  isSnsLoading.value = null
 })
 </script>
 
@@ -482,13 +489,37 @@ onMounted(async () => {
             </v-btn>
           </v-form>
 
-          <v-btn class="mb-4" size="large" color="grey-900" block :disabled="isDisable" @click="handleTwitterLogin">
+          <v-btn
+            class="mb-4"
+            size="large"
+            color="grey-900"
+            block
+            :loading="isSnsLoading === 'twitter.com'"
+            :disabled="(isSnsLoading !== null && isSnsLoading !== 'twitter.com') || isDisable"
+            @click="handleTwitterLogin"
+          >
             {{ $t('login.sns_login', { snsName: 'X' }) }}
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block :disabled="isDisable" @click="handleFacebookLogin">
+          <v-btn
+            class="mb-4"
+            size="large"
+            color="grey-900"
+            block
+            :loading="isSnsLoading === 'facebook.com'"
+            :disabled="(isSnsLoading !== null && isSnsLoading !== 'facebook.com') || isDisable"
+            @click="handleFacebookLogin"
+          >
             {{ $t('login.sns_login', { snsName: 'Facebook' }) }}
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block :disabled="isDisable" @click="handleGoogleLogin">
+          <v-btn
+            class="mb-4"
+            size="large"
+            color="grey-900"
+            block
+            :loading="isSnsLoading === 'google.com'"
+            :disabled="(isSnsLoading !== null && isSnsLoading !== 'google.com') || isDisable"
+            @click="handleGoogleLogin"
+          >
             {{ $t('login.sns_login', { snsName: 'Google' }) }}
           </v-btn>
         </v-sheet>
