@@ -112,8 +112,8 @@ const PartnerShopDbSchema = z.object({
   shop_address_latitude: z.number().positive(),
   shop_address_longitude: z.number().positive(),
   shop_deadline_datetime: z.object({
-    days_before: z.number().int().positive(),
-    time: z.number().int().positive(),
+    days_before: z.number().int().nonnegative(),
+    time: z.number().int(),
   }),
   shop_description: z.string().nonempty(),
   shop_email: z.string().email().nonempty(),
@@ -161,8 +161,8 @@ const PartnerShopAppSchema = z.object({
   is_open: z.boolean().default(false),
   shop_deadline_datetime: z
     .object({
-      days_before: z.number().int().positive(),
-      time: z.number().int().positive(),
+      days_before: z.number().int().nonnegative(),
+      time: z.number().int(),
     })
     .default({
       days_before: 1,
