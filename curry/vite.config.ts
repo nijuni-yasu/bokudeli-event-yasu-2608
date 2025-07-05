@@ -59,6 +59,9 @@ export default defineConfig({
       '@configured-variables': fileURLToPath(new URL('./src/styles/variables/_template.scss', import.meta.url)),
     },
   },
+  build: {
+    target: 'esnext',
+  },
   define: {
     IS_SERVER: false,
   },
