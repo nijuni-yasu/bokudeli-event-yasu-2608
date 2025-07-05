@@ -224,7 +224,7 @@ const emailSubmit = async () => {
     )
 
     if (!existPersonalInformation.empty) {
-      return Object.assign(notification, { message: $t('profile.existEmail'), color: 'warning' })
+      return Object.assign(notification, { message: $t('profile.exist_email'), color: 'warning' })
     }
 
     await updateDoc(userSnapshotRef, {
