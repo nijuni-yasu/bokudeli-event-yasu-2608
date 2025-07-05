@@ -13,7 +13,7 @@ const PartnerMenuDbSchema = z.object({
   menu_date_end: TimestampSchema.optional(),
 })
 
-const EventOrderAppSchema = z.object({
+const PartnerMenuAppSchema = z.object({
   // Mandatory
   menu_description: z.string().nonempty(),
   menu_image_url: z.string().url().nonempty(),
@@ -40,7 +40,7 @@ export class PartnerMenu {
   menu_date_end?: number
 
   constructor(id: string, src: Partial<PartnerMenu>) {
-    Object.assign(this, EventOrderAppSchema.parse(src))
+    Object.assign(this, PartnerMenuAppSchema.parse(src))
     this.id = id
     this.updatedAt = Date.now()
   }
