@@ -228,10 +228,10 @@ const PartnerShopAppSchema = z.object({
 export class PartnerShop {
   // Mandatory
   readonly id: string
-  readonly partner_id: string
+  readonly shop_id: string
   createdAt: number
   updatedAt: number
-  shop_id!: string
+  partner_id!: string
   // Default
   is_approved!: boolean
   is_open!: boolean
@@ -274,7 +274,7 @@ export class PartnerShop {
   constructor(id: string, src: Partial<PartnerShop>) {
     Object.assign(this, PartnerShopAppSchema.parse(src))
     this.id = id
-    this.partner_id = id
+    this.shop_id = id
     this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
     this.updatedAt = Date.now()
   }
