@@ -15,14 +15,11 @@ import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
 import { convertToDateWeekdayShort, convertToDatetimeWeekdayShort, convertToDuration } from './utils/datetime.js'
 import { createEventBillInvoice } from './eventBillInvoice.js'
 
-const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
-const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
 const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b870616c'
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // 開発バージョンに変更
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
 
-const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098'
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d'
 const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
@@ -242,36 +239,6 @@ async function createTemplateDataForOrderDeadline(eventSnapshot) {
   }
 }
 
-async function sendOrderDeadlineMailToShop(start, end, is_reminder) {
-  const events = await db
-    .collectionGroup('events')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
-    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
-    .where('event_status.value', '==', 'accepting_order')
-    .where('is_deleted', '==', false)
-    .get()
-  return Promise.all(
-    events.docs.map(async (eventSnapshot) => {
-      try {
-        const [dynamic_template_data, shopSnapShot] = await Promise.all([
-          createTemplateDataForOrderDeadline(eventSnapshot),
-          getShopForEvent(eventSnapshot),
-        ])
-        dynamic_template_data.is_reminder = is_reminder
-        await sgMail.send({
-          to: getShopEmails(shopSnapShot),
-          from: DEFAULT_FROM,
-          cc: SUPPORT_MAIL,
-          templateId: ORDER_DEADLINE_TEMPLATE_ID,
-          dynamic_template_data,
-        })
-      } catch (err) {
-        console.warn(err)
-      }
-    }),
-  )
-}
-
 async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago) {
   const ordersRef = eventSnapshot.ref.collection('orders')
   const orders = await createOrdersForOrderRemind(ordersRef)
@@ -323,105 +290,6 @@ async function sendOrderRemindMailToOrganizer(start, end, event_days_ago) {
   })
 
   return Promise.all(promises)
-}
-
-async function createTemplateDataForOrganizersOrderDeadline(eventSnapshot) {
-  const ordersRef = eventSnapshot.ref.collection('orders')
-  const [order_count, _, orders] = await createOrdersForOrderDeadline(ordersRef)
-  const eventData = eventSnapshot.data()
-  const event_start_datetime = eventData.event_start_datetime?.toMillis()
-  const date = convertToDateWeekdayShort(event_start_datetime)
-  const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
-  const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
-  const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
-
-  const shopSnapshot = await getShopForEvent(eventSnapshot)
-  const shopData = shopSnapshot.data()
-
-  return {
-    ...shopData,
-    ...eventData,
-    date,
-    event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-    event_deadline_datetime,
-    order_count,
-    orders,
-    delivery_date,
-  }
-}
-
-async function sendOrderDeadlineMailToOrganizers(start, end) {
-  const events = await db
-    .collectionGroup('events')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
-    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
-    .where('event_status.value', '==', 'accepting_order')
-    .where('is_deleted', '==', false)
-    .get()
-
-  const promises = []
-  await events.docs.forEach(async (eventSnapshot) => {
-    try {
-      const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(eventSnapshot)
-      const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
-      communityEmails
-        .map(async (to) => {
-          await sgMail.send({
-            to,
-            from: DEFAULT_FROM,
-            templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
-            dynamic_template_data,
-          })
-        })
-        .forEach((promise) => promises.push(promise))
-    } catch (err) {
-      console.warn(err)
-    }
-  })
-
-  return Promise.all(promises)
-}
-
-async function sendOrderDeadlineMailToMembers(start, end) {
-  const events = await db
-    .collectionGroup('events')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
-    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
-    .where('event_status.value', '==', 'accepting_order')
-    .where('is_deleted', '==', false)
-    .get()
-  return Promise.all(
-    events.docs.map(async (eventSnapshot) => {
-      const eventData = eventSnapshot.data()
-      const dynamic_template_data = {
-        date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
-        event_datetime: convertToDuration(
-          eventData.event_start_datetime?.toMillis(),
-          eventData.event_end_datetime?.toMillis(),
-        ),
-        event_name: eventData.event_name,
-        event_cover_url: eventData.event_cover_url,
-        community_name: eventData.community_name,
-        event_address: eventData.event_address,
-        shop_name: eventData.shop_name,
-        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-      }
-      try {
-        await Promise.all(
-          (await getEventMemberEmails(eventSnapshot)).map(async (to) => {
-            await sgMail.send({
-              to,
-              from: DEFAULT_FROM,
-              templateId: EVENT_CONFIRMATION_TEMPLATE_ID,
-              dynamic_template_data,
-            })
-          }),
-        )
-      } catch (err) {
-        console.warn(err)
-      }
-    }),
-  )
 }
 
 async function sendEventConcludedMailToMembers(start, end) {
@@ -919,10 +787,6 @@ export const polling = functions
     const one_day_millis = 24 * 60 * 60 * 1000
 
     const promise_list = [
-      sendOrderDeadlineMailToShop(start, end, false),
-      sendOrderDeadlineMailToShop(start + one_day_millis, end + one_day_millis, true), // 1日前告知
-      sendOrderDeadlineMailToOrganizers(start, end),
-      sendOrderDeadlineMailToMembers(start, end),
       sendEventConcludedMailToMembers(start, end),
       sendInvoiceMailToOrganizers(start, end),
       sendInCartNotificationToMember(start, end),
