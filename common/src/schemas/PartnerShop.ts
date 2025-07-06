@@ -255,7 +255,7 @@ export class PartnerShop {
   shop_address_latitude?: number
   shop_address_longitude?: number
   shop_description?: number
-  shop_email?: number
+  shop_email?: string
   shop_genre?: typeof GENRE_ARRAY
   shop_image_url?: string
   shop_invoice_number?: string
