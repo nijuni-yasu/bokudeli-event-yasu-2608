@@ -117,15 +117,6 @@ async function getEventMemberEmails(eventSnapshotOrId) {
   return emails.filter((email) => email != null && email !== '')
 }
 
-async function getCommunityEmails(communityId) {
-  const emails = await getCommunityManagerEmailsSet(communityId)
-  if (emails.size === 0) {
-    // コミュマネがいない場合はsupport+to@nijuni.jpに送信
-    emails.add(SUPPORT_MAIL)
-  }
-  return Array.from(emails)
-}
-
 //コミュニティユーザーのIDを取得
 async function getCommunityMemberIds(communityId) {
   try {
