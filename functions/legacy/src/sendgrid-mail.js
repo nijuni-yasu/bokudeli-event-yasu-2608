@@ -2,7 +2,6 @@ import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
 import sgMail from '@sendgrid/mail'
-import { convertTruncateText } from './utils/converter.js'
 import { makeIcs } from './make-ics.js'
 import {
   getCommunityUrl,
@@ -13,12 +12,7 @@ import {
   getManageEventInvoiceUrl,
 } from './utils/urls.js'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
-import {
-  convertToDateWeekdayShort,
-  convertToDatetimeWeekdayShort,
-  convertToDuration,
-  convertToJustDate,
-} from './utils/datetime.js'
+import { convertToDateWeekdayShort, convertToDatetimeWeekdayShort, convertToDuration } from './utils/datetime.js'
 import { createEventBillInvoice } from './eventBillInvoice.js'
 
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
@@ -28,14 +22,11 @@ const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // 開�
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
 
-const EVENT_INFORMATION_TEMPLATE_ID = 'd-797deb1c54984007baadd1926ee974a2'
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098'
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d'
 const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
 const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7'
-// 環境変数の方がよいかもしれない
-const EVENT_INFORMATION_UNSUBSCRIBE_GROUP = 25345
 
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7'
 const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
@@ -652,133 +643,6 @@ async function getUsersFromOrders(ordersRef) {
   return users
 }
 
-async function createTemplateDataForEventInformation(targetDateTimeMillis) {
-  const date = convertToJustDate(targetDateTimeMillis)
-  const _dynamic_template_data = {
-    date,
-    events: [],
-  }
-  const events = await db
-    .collectionGroup('events')
-    .where('is_public', '==', true)
-    .where('event_status.value', '==', 'accepting_order')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(targetDateTimeMillis))
-    .where('is_deleted', '==', false)
-    .get()
-  // 不等号を含む where がある場合、他のフィールドでソートできない
-  // https://firebase.google.com/docs/firestore/query-data/order-limit-data#limitations
-  // .orderBy('event_start_datetime')
-  const eventsSnapshot = events.docs.sort((a, b) => {
-    const aTime = a.get('event_start_datetime')
-    const bTime = b.get('event_start_datetime')
-    return aTime > bTime ? 1 : aTime < bTime ? -1 : 0
-  })
-  for (const eventSnapshot of eventsSnapshot) {
-    const ordersRef = eventSnapshot.ref.collection('orders')
-    const users = await getUsersFromOrders(ordersRef)
-    if (users.size < eventSnapshot.get('event_max_people')) {
-      const eventData = eventSnapshot.data()
-      const event_datetime = convertToDuration(
-        eventData.event_start_datetime?.toMillis(),
-        eventData.event_end_datetime?.toMillis(),
-      )
-      const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
-      _dynamic_template_data.events.push({
-        event_name: eventData.event_name,
-        event_address: eventData.event_address,
-        event_place: eventData.event_place,
-        event_datetime,
-        event_deadline_datetime,
-        event_desc: convertTruncateText(eventData.event_desc, 250),
-        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-        event_cover_url: eventData.event_cover_url,
-        shop_name: eventData.shop_name,
-        community_name: eventData.community_name,
-      })
-      if (_dynamic_template_data.events.length === 12) {
-        break
-      }
-    }
-  }
-  return _dynamic_template_data
-}
-
-async function sendEventInformationMail() {
-  const nowDateTimeMillis = Date.now()
-  const _dynamic_template_data = await createTemplateDataForEventInformation(nowDateTimeMillis)
-  if (_dynamic_template_data.events.length === 0) {
-    return
-  }
-  const promises = []
-  for (const userRef of await db.collection('users').listDocuments()) {
-    const userSnapshot = await userRef.get()
-    const dynamic_template_data = {
-      ..._dynamic_template_data,
-      user_name: userSnapshot.get('user_name'),
-    }
-    const to = await getUserEmail(userRef.id)
-    if (to == null || to === '') {
-      continue
-    }
-    promises.push(
-      sgMail
-        .send({
-          to,
-          from: DEFAULT_FROM,
-          templateId: EVENT_INFORMATION_TEMPLATE_ID,
-          dynamic_template_data,
-          asm: {
-            groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
-          },
-        })
-        .catch((err) => {
-          console.warn(err)
-        }),
-    )
-  }
-  return Promise.all(promises)
-  // エミュレータからのテストメール
-  // const dynamic_template_data = {
-  //     ..._dynamic_template_data,
-  //     user_name: 'テストユーザー'
-  //   };
-  // sgMail.send({
-  //     to: 'yasukawa.naohiro+test@nijuni.jp',
-  //     from: DEFAULT_FROM,
-  //     templateId: EVENT_INFORMATION_TEMPLATE_ID,
-  //     dynamic_template_data,
-  //     asm: {
-  //         groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
-  //     }
-  // });
-}
-
-async function sendEventInformationMailPreview() {
-  const tomorrowDateTimeMillis = Date.now() + 24 * 60 * 60 * 1000
-  const _dynamic_template_data = await createTemplateDataForEventInformation(tomorrowDateTimeMillis)
-  if (_dynamic_template_data.events.length === 0) {
-    return sgMail.send({
-      to: DEFAULT_TO,
-      from: DEFAULT_FROM,
-      subject: '【プレビュー】明日のイベント情報について',
-      text: '明日送信予定のイベント予定はありません',
-    })
-  }
-  const dynamic_template_data = {
-    ..._dynamic_template_data,
-    user_name: 'テストユーザー',
-  }
-  return sgMail.send({
-    to: DEFAULT_TO,
-    from: DEFAULT_FROM,
-    templateId: EVENT_INFORMATION_TEMPLATE_ID,
-    dynamic_template_data,
-    asm: {
-      groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
-    },
-  })
-}
-
 async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnapshot) {
   const [templateData, shopSnapShot, emails] = await Promise.all([
     createTemplateDataForOrderDeadline(eventSnapshot),
@@ -1104,24 +968,6 @@ export const polling = functions
     })
 
     return Promise.all(promise_list)
-  })
-
-export const event_information = functions
-  .region('asia-northeast1')
-  .runWith({ timeoutSeconds: 540, memory: '1GB' })
-  .pubsub.schedule('15 10 * * 2') // 火曜日の10時15分
-  .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
-  .onRun(() => {
-    return sendEventInformationMail()
-  })
-
-export const event_information_preview = functions
-  .region('asia-northeast1')
-  .runWith({ timeoutSeconds: 540, memory: '1GB' })
-  .pubsub.schedule('15 10 * * 1') // 月曜日の10時15分
-  .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
-  .onRun(() => {
-    return sendEventInformationMailPreview()
   })
 
 export const on_event_changed = functions
