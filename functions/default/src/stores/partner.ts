@@ -7,6 +7,7 @@ import {
 } from 'firebase-admin/firestore'
 import { PartnerMenu } from '../schemas/PartnerMenu.js'
 import { PartnerShop } from '../schemas/PartnerShop.js'
+import { Event } from '../schemas/Event.js'
 
 class PartnerMenuConverter implements FirestoreDataConverter<PartnerMenu> {
   toFirestore(order: PartnerMenu): DocumentData {
@@ -104,4 +105,19 @@ export class Partner {
 export const getPartner = async (id: string): Promise<Partner> => {
   // TODO パートナーが存在するかどうかを確認する
   return new Partner(id)
+}
+
+export const getEventPartnerShop = async (
+  event: Event,
+  transaction?: Transaction,
+): Promise<PartnerShop | undefined> => {
+  const db = getFirestore()
+  const shopRef = db
+    .collection('partners')
+    .doc(event.partner_id)
+    .collection('shops')
+    .doc(event.shop_id)
+    .withConverter(new PartnerShopConverter())
+  const snapshot = await (transaction === undefined ? shopRef.get() : transaction.get(shopRef))
+  return snapshot.data()
 }
