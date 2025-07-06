@@ -667,25 +667,6 @@ async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnap
   )
 }
 
-async function sendShopOpenMailToSupport(shopSnapshot) {
-  const shopName = shopSnapshot.get('shop_name')
-  const isOpen = shopSnapshot.get('is_open') ? '開店（OPEN）' : '閉店（CLOSE）'
-  const subject = `${shopName}の開店設定が変更されました`
-  // TODO これ以上複雑になるようなら、テンプレートを使う
-  const text =
-    `${shopName}の開店設定が『${isOpen}』になりました\n\n` +
-    `【店舗名】${shopName}\n` +
-    `【店舗住所】${shopSnapshot.get('shop_address')}\n` +
-    `【PartnerID】${shopSnapshot.get('partner_id')}\n` +
-    `【開店設定】${isOpen}`
-  return sgMail.send({
-    to: SUPPORT_MAIL,
-    from: DEFAULT_FROM,
-    subject,
-    text,
-  })
-}
-
 async function sendOrderCompletionMailToMember(eventRef, userId) {
   const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
   const eventData = eventSnapshot.data()
@@ -997,19 +978,6 @@ export const on_event_changed = functions
       if (before.get('event_status')?.value === c[0] && after.get('event_status')?.value === c[1]) {
         promises.push(c[2](after))
       }
-    }
-    return Promise.all(promises)
-  })
-
-export const on_shop_changed = functions
-  .region('asia-northeast1')
-  .firestore.document('partners/{partnerId}/shops/{shopId}')
-  .onWrite(async (change) => {
-    const before = change.before
-    const after = change.after
-    const promises = []
-    if (after.get('is_open') != null && before.get('is_open') !== after.get('is_open')) {
-      promises.push(sendShopOpenMailToSupport(after))
     }
     return Promise.all(promises)
   })

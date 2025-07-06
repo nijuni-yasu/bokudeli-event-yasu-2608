@@ -11,7 +11,6 @@ export const { stripe_refunds } = await import('./stripe-refunds.js')
 export const {
   polling,
   on_event_changed,
-  on_shop_changed,
   on_order_changed,
   send_email,
   send_pass_code,
