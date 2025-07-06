@@ -37,7 +37,7 @@ export const shopStatusChanged = onDocumentWritten(
     const before = new PartnerShop(event.id, event.data?.before)
     const after = new PartnerShop(event.id, event.data?.after)
     const promises = []
-    if (after.is_open && before?.is_open !== after.is_open) {
+    if (before.is_open !== after.is_open) {
       promises.push(sendShopOpenMailToSupport(after))
     }
 
