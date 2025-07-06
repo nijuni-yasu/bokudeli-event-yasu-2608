@@ -46,3 +46,18 @@ export const getUserPersonalInformation = async (userId: string): Promise<UserPe
     .withConverter(userPersonalInformationConverter)
   return (await userPersonalInformationRef.get()).data()
 }
+
+export const getAllUsers = async (withPersonalInformation: boolean): Promise<ShokujiiUser[]> => {
+  const db = getFirestore()
+  const usersSnapshot = await db.collection('users').withConverter(userConverter).get()
+  const users: ShokujiiUser[] = []
+  for (const userDoc of usersSnapshot.docs) {
+    const user = userDoc.data()
+    if (withPersonalInformation) {
+      const userPersonalInformation = await getUserPersonalInformation(user.id)
+      user.user_email = userPersonalInformation?.user_email
+    }
+    users.push(user)
+  }
+  return users
+}

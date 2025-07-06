@@ -4,6 +4,7 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
   Transaction,
+  Timestamp,
 } from 'firebase-admin/firestore'
 import { Event } from '../schemas/Event.js'
 import { EventOrder, EventOrderStatusType } from '../schemas/EventOrder.js'
@@ -159,4 +160,21 @@ export const saveEvent = async (userId: string, event: ShokujiiEvent, transactio
   } else {
     transaction.set(eventRef, event, { merge: true })
   }
+}
+
+// 公開イベントで注文受付中のイベントを取得
+export const getAllAcceptingOrderEvents = async (
+  targetDateTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'accepting_order')
+    .where('is_public', '==', true)
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(targetDateTimeMillis))
+    .where('is_deleted', '==', false)
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
 }
