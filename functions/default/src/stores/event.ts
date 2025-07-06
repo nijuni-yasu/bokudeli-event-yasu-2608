@@ -178,3 +178,20 @@ export const getAllAcceptingOrderEvents = async (
   const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
+
+export const getAcceptingOrderEventsByTime = async (
+  startTimeMillis: number,
+  endTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'accepting_order')
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(startTimeMillis))
+    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(endTimeMillis))
+    .where('is_deleted', '==', false)
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
