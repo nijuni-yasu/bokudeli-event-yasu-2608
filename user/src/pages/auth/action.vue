@@ -83,7 +83,7 @@ onMounted(async () => {
             <v-row justify="center">
               <p
                 class="font-weight-bold"
-                v-html="$t('auth.action.reset_email', { currentEmail: currentEmail, restoredEmail: restoredEmail })"
+                v-html="$t('auth.action.reset_email', { current_email: currentEmail, restored_email: restoredEmail })"
               />
             </v-row>
           </v-container>

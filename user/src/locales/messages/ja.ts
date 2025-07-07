@@ -429,7 +429,7 @@ export default {
   'auth': {
     'action': {
       'title': 'shokujii',
-      'reset_email': 'ログイン用メールアドレスを{currentEmail}から{restoredEmail}に復元しています。<br/>少々お待ちくださいませ。',
+      'reset_email': 'ログイン用メールアドレスを{current_email}から{restored_email}に復元しています。<br/>少々お待ちくださいませ。',
       'notify_reset_email': 'ログイン用メールアドレスを復元しました。'
     }
   }
