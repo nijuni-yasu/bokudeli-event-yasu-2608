@@ -14,6 +14,7 @@ import {
   type UserCredential,
   signInWithCustomToken,
   type AdditionalUserInfo,
+  OAuthCredential,
 } from 'firebase/auth'
 import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
 import { useValidators } from '@/composable/validators'
@@ -26,6 +27,7 @@ import type { StoredUser } from '@/schemes/storedUser'
 import { type UserStore, useUserStore } from '@/stores/user'
 import { getProfile } from '@/router/utils'
 import { doc, Timestamp, updateDoc } from 'firebase/firestore'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 type CreateUserRequest = {
   user_email: string
@@ -54,6 +56,33 @@ const isDisable = ref(false)
 
 const isValid = ref(false)
 const email = ref('')
+
+const isShowSnsLinkDialog = ref(false)
+const tryLoginProvider = ref<'google.com' | 'facebook.com' | 'twitter.com' | null>(null)
+const linkProvider = ref<'google.com' | 'facebook.com' | 'twitter.com' | null>(null)
+const oAuthCredential = ref<OAuthCredential | null>(null)
+
+const tryLoginProviderLabel = computed(() => {
+  switch (tryLoginProvider.value) {
+    case 'google.com':
+      return 'Google'
+    case 'facebook.com':
+      return 'Facebook'
+    case 'twitter.com':
+      return 'X (Twitter)'
+  }
+})
+
+const linkProviderLabel = computed(() => {
+  switch (linkProvider.value) {
+    case 'google.com':
+      return 'Google'
+    case 'facebook.com':
+      return 'Facebook'
+    case 'twitter.com':
+      return 'X (Twitter)'
+  }
+})
 
 const { requiredValidator, emailValidator } = useValidators()
 
@@ -126,7 +155,7 @@ const handleTwitterLogin = async () => {
           }
         }
 
-        if (!userCredential || !credential) return window.alert($t('login.login_fail', { snsName: 'X' }))
+        if (!userCredential || !credential) return window.alert($t('login.login_fail', { sns_name: 'X' }))
 
         await linkWithCredential(userCredential.user, credential)
           .then(async (userCredential) => {
@@ -135,12 +164,12 @@ const handleTwitterLogin = async () => {
           })
           .catch((error) => {
             console.error(error)
-            window.alert($t('login.login_fail', { snsName: 'X' }))
+            window.alert($t('login.login_fail', { sns_name: 'X' }))
           })
       }
     } else {
       console.error({ error })
-      window.alert($t('login.login_fail', { snsName: 'X' }))
+      window.alert($t('login.login_fail', { sns_name: 'X' }))
     }
   }
   isSnsLoading.value = null
@@ -182,7 +211,7 @@ const handleFacebookLogin = async () => {
           }
         }
 
-        if (!userCredential || !credential) return window.alert($t('login.login_fail', { snsName: 'Facebook' }))
+        if (!userCredential || !credential) return window.alert($t('login.login_fail', { sns_name: 'Facebook' }))
 
         await linkWithCredential(userCredential.user, credential)
           .then(async (userCredential) => {
@@ -191,12 +220,12 @@ const handleFacebookLogin = async () => {
           })
           .catch((error) => {
             console.error(error)
-            window.alert($t('login.login_fail', { snsName: 'Facebook' }))
+            window.alert($t('login.login_fail', { sns_name: 'Facebook' }))
           })
       }
     } else {
       console.error({ error })
-      window.alert($t('login.login_fail', { snsName: 'Facebook' }))
+      window.alert($t('login.login_fail', { sns_name: 'Facebook' }))
     }
   }
   isSnsLoading.value = null
@@ -238,7 +267,7 @@ const handleGoogleLogin = async () => {
           }
         }
 
-        if (!userCredential || !credential) return window.alert($t('login.login_fail', { snsName: 'Google' }))
+        if (!userCredential || !credential) return window.alert($t('login.login_fail', { sns_name: 'Google' }))
 
         await linkWithCredential(userCredential.user, credential)
           .then(async (userCredential) => {
@@ -247,12 +276,12 @@ const handleGoogleLogin = async () => {
           })
           .catch((error) => {
             console.error(error)
-            window.alert($t('login.login_fail', { snsName: 'Google' }))
+            window.alert($t('login.login_fail', { sns_name: 'Google' }))
           })
       }
     } else {
       console.error({ error })
-      window.alert($t('login.login_fail', { snsName: 'Google' }))
+      window.alert($t('login.login_fail', { sns_name: 'Google' }))
     }
   }
   isSnsLoading.value = null
@@ -401,21 +430,17 @@ onMounted(async () => {
     const tokenResponse = error.customData?._tokenResponse as { providerId: string }
     const providerId = tokenResponse.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
     isSnsLoading.value = providerId
-
-    let providerService: 'Facebook' | 'Google' | 'Twitter' | null = null
+    tryLoginProvider.value = providerId
 
     let credential = null
     switch (providerId) {
       case FacebookAuthProvider.PROVIDER_ID:
-        providerService = 'Facebook'
         credential = FacebookAuthProvider.credentialFromError(error)
         break
       case GoogleAuthProvider.PROVIDER_ID:
-        providerService = 'Google'
         credential = GoogleAuthProvider.credentialFromError(error)
         break
       case TwitterAuthProvider.PROVIDER_ID:
-        providerService = 'Twitter'
         credential = TwitterAuthProvider.credentialFromError(error)
         break
     }
@@ -431,34 +456,66 @@ onMounted(async () => {
       const customToken = result.data as string
 
       userCredential = await signInWithCustomToken(getAuth(), customToken)
+
+      if (!userCredential || !credential)
+        return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
+
+      await linkWithCredential(userCredential.user, credential)
+        .then(async (userCredential) => {
+          const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
+          await transitionJudge(userCredential, additionalUserInfo)
+        })
+        .catch((error) => {
+          console.error(error)
+          window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
+        })
+      isSnsLoading.value = null
     } else {
-      switch (verifiedProvider[0]) {
-        case 'google.com':
-          userCredential = await getCredentialWithPopup('Google')
-          break
-        case 'facebook.com':
-          userCredential = await getCredentialWithPopup('Facebook')
-          break
-        case 'twitter.com':
-          userCredential = await getCredentialWithPopup('Twitter')
-          break
-      }
+      linkProvider.value = verifiedProvider[0] as 'google.com' | 'facebook.com' | 'twitter.com'
+      oAuthCredential.value = credential
+      isShowSnsLinkDialog.value = true
+      return
+    }
+  }
+  isSnsLoading.value = null
+})
+
+const handleLinkWithCredential = async () => {
+  try {
+    let userCredential: UserCredential | null = null
+    switch (linkProvider.value) {
+      case 'google.com':
+        userCredential = await getCredentialWithPopup('Google')
+        break
+      case 'facebook.com':
+        userCredential = await getCredentialWithPopup('Facebook')
+        break
+      case 'twitter.com':
+        userCredential = await getCredentialWithPopup('Twitter')
+        break
     }
 
-    if (!userCredential || !credential) return window.alert($t('login.login_fail', { snsName: providerService }))
+    if (!userCredential || !oAuthCredential.value) {
+      return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
+    }
 
-    await linkWithCredential(userCredential.user, credential)
+    await linkWithCredential(userCredential.user, oAuthCredential.value)
       .then(async (userCredential) => {
         const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
         await transitionJudge(userCredential, additionalUserInfo)
       })
       .catch((error) => {
         console.error(error)
-        window.alert($t('login.login_fail', { snsName: providerService }))
+        window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
       })
+      .finally(() => {
+        isShowSnsLinkDialog.value = false
+      })
+  } catch (error) {
+    console.error(error)
+    window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
   }
-  isSnsLoading.value = null
-})
+}
 </script>
 
 <template>
@@ -510,7 +567,7 @@ onMounted(async () => {
             :disabled="(isSnsLoading !== null && isSnsLoading !== 'twitter.com') || isDisable"
             @click="handleTwitterLogin"
           >
-            {{ $t('login.sns_login', { snsName: 'X' }) }}
+            {{ $t('login.sns_login', { sns_name: 'X' }) }}
           </v-btn>
           <v-btn
             class="mb-4"
@@ -521,7 +578,7 @@ onMounted(async () => {
             :disabled="(isSnsLoading !== null && isSnsLoading !== 'facebook.com') || isDisable"
             @click="handleFacebookLogin"
           >
-            {{ $t('login.sns_login', { snsName: 'Facebook' }) }}
+            {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
           </v-btn>
           <v-btn
             class="mb-4"
@@ -532,10 +589,35 @@ onMounted(async () => {
             :disabled="(isSnsLoading !== null && isSnsLoading !== 'google.com') || isDisable"
             @click="handleGoogleLogin"
           >
-            {{ $t('login.sns_login', { snsName: 'Google' }) }}
+            {{ $t('login.sns_login', { sns_name: 'Google' }) }}
           </v-btn>
         </v-sheet>
       </v-col>
     </v-row>
+
+    <confirm-dialog
+      v-model="isShowSnsLinkDialog"
+      :is-confirm="true"
+      :ok-text="$t('profile.linkage')"
+      :ok-click="handleLinkWithCredential"
+      :cancelClick="
+        () => {
+          isShowSnsLinkDialog = false
+          isSnsLoading = null
+        }
+      "
+    >
+      <v-card-text class="text-center py-10 text-h4"> アカウント連携 </v-card-text>
+      <v-card-text class="pb-0">
+        <p
+          v-html="
+            $t('login.link_dialog_body', {
+              try_login_provider_label: tryLoginProviderLabel,
+              link_provider_label: linkProviderLabel,
+            })
+          "
+        />
+      </v-card-text>
+    </confirm-dialog>
   </v-container>
 </template>

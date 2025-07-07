@@ -355,12 +355,13 @@ export default {
     }
   },
   'login': {
-    'login_fail': '{snsName}ログインできませんでした',
+    'login_fail': '{sns_name}ログインできませんでした',
     'welcome': 'shokujiiへようこそ',
     'please_login_or_register_below': `<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。`,
     'email': 'メールアドレス',
     'continue_email': 'メールアドレスで続ける',
-    'sns_login': '{snsName}でログイン',
+    'sns_login': '{sns_name}でログイン',
+    'link_dialog_body' : '{try_login_provider_label}に設定されているメールアドレスは、{link_provider_label}アカウントが既に連携されています。 <br/>連携しますか？'
   },
   'email': {
     'register_email': 'メールアドレス登録',
@@ -409,7 +410,7 @@ export default {
     'account_linkage_description': 'アカウントを連携すると、ソーシャルログインが利用できるようになり、SNSへの投稿もかんたんに行えるようになります。',
     'google': 'Google',
     'facebook': 'Facebook',
-    'twitter': 'Twitter',
+    'twitter': 'X (Twitter)',
     'linkage': '連携する',
     'linked': '連携中',
     'twitter_link_modal_title' : 'X連携をしますか？',
