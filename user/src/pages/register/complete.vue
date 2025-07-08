@@ -88,7 +88,10 @@ const handleTwitterLink = async () => {
       console.error({ error, credential })
 
       if (error.code === 'auth/credential-already-in-use') {
-        return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
+        return Object.assign(notification, {
+          message: $t('user.exists_credential', { snsName: 'X（旧Twitter）' }),
+          color: 'error',
+        })
       }
     } else {
       console.error({ error })
@@ -168,7 +171,7 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
     useStoreUserAdditionalInfo().reset()
     useStoreFirebaseAuthError().reset()
 
-    router.push(profileLink)
+    return await router.push(profileLink)
   }
 }
 </script>
