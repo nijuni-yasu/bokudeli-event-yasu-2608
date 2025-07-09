@@ -421,6 +421,7 @@ export default {
     'notice_pending_email': '※ メールアドレス変更中です。パスコードを認証してください',
     'certification': '認証する',
     'cancel': 'キャンセルする',
+    're_link': '※連携が解除されました。再連携お願いします。'
   },
   'user_profile': {
     'logout': 'ログアウトする',

@@ -745,6 +745,9 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
               <label v-if="user.userSnsFacebookName" class="ml-11 font-weight-bold">{{
                 user.userSnsFacebookName
               }}</label>
+              <label v-if="user.userSnsFacebookName && !linkedProviderData.includes('facebook.com')" class="ml-11">{{
+                $t('profile.re_link')
+              }}</label>
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -778,6 +781,9 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
                 <v-icon :icon="XIcon" size="x-large" class="me-3" />{{ $t('profile.twitter') }}
               </label>
               <label v-if="user.userSnsTwitter" class="ml-11 font-weight-bold">{{ user.userSnsTwitter }}</label>
+              <label v-if="user.userSnsTwitter && !linkedProviderData.includes('twitter.com')" class="ml-11">{{
+                $t('profile.re_link')
+              }}</label>
             </div>
 
             <div class="mt-6 mt-md-0">
