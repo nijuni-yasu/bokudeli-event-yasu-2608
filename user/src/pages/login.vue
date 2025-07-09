@@ -329,6 +329,19 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
         storedUser.userDescription || (additionalUserInfo.profile?.description as string | null)
       storedUser.userAccount = storedUser.userAccount || (additionalUserInfo.username as string | null)
 
+      var twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
+      if (twitterCredential?.accessToken && twitterCredential.secret) {
+        storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
+        storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
+
+        if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
+          await updateDoc(personalInformationSnapshotRef, {
+            user_sns_twitter_access_token: twitterCredential.accessToken,
+            user_sns_twitter_secret: twitterCredential.secret,
+          })
+        }
+      }
+
       if (isNewUser) {
         storedUser.verifiedAt = Timestamp.now().toDate()
       }

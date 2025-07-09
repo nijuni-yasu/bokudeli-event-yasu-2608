@@ -19,6 +19,8 @@ export type StoredUser = {
   userSnsFacebook: string | null
   userSnsFacebookName: string | null
   userSnsTwitter: string | null
+  userSnsTwitterAccessToken: string | null
+  userSnsTwitterSecret: string | null
   userSnsInstagram: string | null
   userSnsWebsite: string | null
   userPassCode: string | null
@@ -59,7 +61,14 @@ export class FirestoredUser {
   }
 
   convertToDocumentData(): DocumentData {
-    return _.omit(this, ['user_email', 'user_email_pending', 'user_sns_google', 'user_thumb_image_urls'])
+    return _.omit(this, [
+      'user_email',
+      'user_email_pending',
+      'user_sns_google',
+      'user_sns_twitter_access_token',
+      'user_sns_twitter_secret',
+      'user_thumb_image_urls',
+    ])
   }
 }
 
@@ -67,4 +76,6 @@ export type FirestoredUserPersonalInformation = {
   user_email: string
   user_email_pending: string | null
   user_sns_google: string | null
+  user_sns_twitter_access_token: string | null
+  user_sns_twitter_secret: string | null
 }

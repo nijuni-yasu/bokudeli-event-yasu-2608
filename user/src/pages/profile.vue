@@ -17,6 +17,7 @@ import {
   type User,
   type AdditionalUserInfo,
   getAdditionalUserInfo,
+  type UserCredential,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { useValidators } from '@/composable/validators'
@@ -31,6 +32,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
 import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 import { generatePassCode } from '@/utils/generatePassCode'
+import { useStoreUserCredential } from '@/stores/userCredential'
 
 type CustomData = {
   email: string
@@ -312,7 +314,7 @@ const handleFacebookLink = async () => {
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
     if (additionalUserInfo) {
-      await setSNSProfile(additionalUserInfo)
+      await setSNSProfile(userCredential, additionalUserInfo)
     }
 
     // ユーザー情報を再取得して更新
@@ -349,7 +351,7 @@ const handleGoogleLoginLink = async () => {
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
     if (additionalUserInfo) {
-      await setSNSProfile(additionalUserInfo)
+      await setSNSProfile(userCredential, additionalUserInfo)
     }
 
     // ユーザー情報を再取得して更新
@@ -386,7 +388,7 @@ const handleTwitterLoginLink = async () => {
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
     if (additionalUserInfo) {
-      await setSNSProfile(additionalUserInfo)
+      await setSNSProfile(userCredential, additionalUserInfo)
     }
 
     // ユーザー情報を再取得して更新
@@ -447,6 +449,12 @@ const confirmUnLink = async (providerId: string) => {
           break
         case 'twitter.com':
           storedUser.userSnsTwitter = null
+          storedUser.userSnsTwitterAccessToken = null
+          storedUser.userSnsTwitterSecret = null
+          await updateDoc(personalInformationSnapshotRef, {
+            user_sns_twitter_access_token: null,
+            user_sns_twitter_secret: null,
+          })
           break
       }
 
@@ -466,6 +474,7 @@ const confirmUnLink = async (providerId: string) => {
 }
 
 onMounted(async () => {
+  const userCredential = useStoreUserCredential().userCredential
   const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
   const error = useStoreFirebaseAuthError().error
   if (error instanceof FirebaseError) {
@@ -504,15 +513,15 @@ onMounted(async () => {
     console.error({ error })
   }
 
-  if (additionalUserInfo === null) return
+  if (!userCredential || additionalUserInfo === null) return
   isSnsLoading.value = additionalUserInfo.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
-  await setSNSProfile(additionalUserInfo)
+  await setSNSProfile(userCredential, additionalUserInfo)
   isSnsLoading.value = null
 
   useStoreUserAdditionalInfo().reset()
 })
 
-const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
+const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
   const storedUser = storedUserStore.storedUser as StoredUser
 
   switch (additionalUserInfo.providerId) {
@@ -521,6 +530,19 @@ const setSNSProfile = async (additionalUserInfo: AdditionalUserInfo) => {
       break
     case 'twitter.com':
       storedUser.userSnsTwitter = additionalUserInfo?.username as string
+
+      var twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
+      if (twitterCredential?.accessToken && twitterCredential.secret) {
+        storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
+        storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
+
+        if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
+          await updateDoc(personalInformationSnapshotRef, {
+            user_sns_twitter_access_token: twitterCredential.accessToken,
+            user_sns_twitter_secret: twitterCredential.secret,
+          })
+        }
+      }
       break
     case 'google.com':
       storedUser.userSnsGoogle = additionalUserInfo?.profile?.email as string

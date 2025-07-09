@@ -107,6 +107,8 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
     userSnsFacebook: null,
     userSnsFacebookName: null,
     userSnsTwitter: null,
+    userSnsTwitterAccessToken: null,
+    userSnsTwitterSecret: null,
     userSnsInstagram: null,
     userSnsWebsite: null,
     userPassCode: null,
@@ -158,7 +160,8 @@ export const convertFirestoredUserToStoredUser = (
     updated_at,
   } = firestoredUser
 
-  const { user_email, user_email_pending, user_sns_google } = firestoredUserPersonalInformation
+  const { user_email, user_email_pending, user_sns_google, user_sns_twitter_access_token, user_sns_twitter_secret } =
+    firestoredUserPersonalInformation
 
   return {
     userId: user_id,
@@ -172,6 +175,8 @@ export const convertFirestoredUserToStoredUser = (
     userSnsFacebook: user_sns_facebook,
     userSnsFacebookName: user_sns_facebook_name,
     userSnsTwitter: user_sns_twitter,
+    userSnsTwitterAccessToken: user_sns_twitter_access_token,
+    userSnsTwitterSecret: user_sns_twitter_secret,
     userSnsInstagram: user_sns_instagram,
     userSnsWebsite: user_sns_website,
     userPassCode: user_pass_code,
@@ -202,7 +207,8 @@ export const convertDocumentDataToStoredUser = (
     updated_at,
   } = documentData
 
-  const { user_email, user_email_pending, user_sns_google } = personalInfomationData
+  const { user_email, user_email_pending, user_sns_google, user_sns_twitter_access_token, user_sns_twitter_secret } =
+    personalInfomationData
 
   return {
     userId: user_id ?? '',
@@ -216,6 +222,8 @@ export const convertDocumentDataToStoredUser = (
     userSnsFacebook: user_sns_facebook ?? '',
     userSnsFacebookName: user_sns_facebook_name ?? '',
     userSnsTwitter: user_sns_twitter ?? '',
+    userSnsTwitterAccessToken: user_sns_twitter_access_token ?? '',
+    userSnsTwitterSecret: user_sns_twitter_secret ?? '',
     userSnsInstagram: user_sns_instagram ?? '',
     userSnsWebsite: user_sns_website ?? '',
     userPassCode: user_pass_code ?? '',
