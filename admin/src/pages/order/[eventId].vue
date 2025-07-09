@@ -10,7 +10,7 @@ import BokudeliEvent from '@/schemes/bokudeliEvent'
 import { getOrderPath } from '@/navigation/utils'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { useUserStore, type UserStore } from '@/stores/user'
-import { getUserPath } from '@/router/utils'
+import { getUserUrl } from '@/navigation/utils'
 import { getNamesPrintPath } from '@/router/utils'
 import { getNamesPrintPdf } from '@/utils/namesPrint'
 import { ref } from 'vue'
@@ -230,12 +230,12 @@ const downloadNamesPrint = async () => {
               >
                 <td>{{ key + 1 }}</td>
                 <td>
-                  <router-link :to="getUserPath(order.user_id)" class="name-link">
+                  <a :href="getUserUrl(order.user_id)" class="name-link" target="_blank">
                     <div class="d-flex align-center">
                       <UserAvatar :user="(useUserStore(order.user_id) as UserStore).user" :size="40" class="me-2" />
                       {{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}
                     </div>
-                  </router-link>
+                  </a>
                 </td>
                 <td>{{ menu.name }}</td>
                 <td>{{ $n(menu.price, 'currency') }}</td>
