@@ -266,7 +266,12 @@ const createTemplateData = (filteredValidNames) => {
   return templateData
 }
 
-export const namesprint = onRequest({ cors: CORS }, async (req, res) => {
+export const namesprint = onRequest(
+  {
+    cors: CORS,
+    memory: '1GiB',
+  },
+  async (req, res) => {
   const authHeader = req.headers.authorization ?? ''
   if (!authHeader.startsWith('JWT ')) {
     throw new HttpsError('unauthenticated', 'JWT token is required')
