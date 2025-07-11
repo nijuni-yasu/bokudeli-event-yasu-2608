@@ -767,9 +767,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
               <label v-if="user.userSnsFacebookName" class="ml-11 font-weight-bold">{{
                 user.userSnsFacebookName
               }}</label>
-              <label v-if="user.userSnsFacebookName && !linkedProviderData.includes('facebook.com')" class="ml-11">{{
-                $t('profile.re_link')
-              }}</label>
+              <label v-if="user.userSnsFacebookName && !linkedProviderData.includes('facebook.com')" class="ml-11 re-link" v-html="$t('profile.re_link')" />
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -803,9 +801,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
                 <v-icon :icon="XIcon" size="x-large" class="me-3" />{{ $t('profile.twitter') }}
               </label>
               <label v-if="user.userSnsTwitter" class="ml-11 font-weight-bold">{{ user.userSnsTwitter }}</label>
-              <label v-if="user.userSnsTwitter && !linkedProviderData.includes('twitter.com')" class="ml-11">{{
-                $t('profile.re_link')
-              }}</label>
+              <label v-if="user.userSnsTwitter && !linkedProviderData.includes('twitter.com')" class="ml-11 re-link" v-html="$t('profile.re_link')" />
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -874,5 +870,10 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
 
 .cursor-none {
   cursor: none;
+}
+.re-link {
+  font-size: 11px;
+  color: #2E263D8C;
+  padding: 5px;
 }
 </style>
