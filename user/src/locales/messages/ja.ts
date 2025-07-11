@@ -414,6 +414,8 @@ export default {
     'linkage': '連携する',
     'linked': '連携中',
     'twitter_link_modal_title' : 'X連携をしますか？',
+    'twitter_link_modal_description' : `アカウント連携するとマイページにXへのリンクが表示されます。<br />
+                                        さらにソーシャルログインや、Xへの投稿も簡単にできるようになります。`,
     'unlink_modal_title' : '連携を解除しますか？',
     'unlink': '解除',
     'exist_email': 'すでに他ユーザーが利用しているメールアドレスです。',
