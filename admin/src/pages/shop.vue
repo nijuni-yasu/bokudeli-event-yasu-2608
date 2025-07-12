@@ -10,7 +10,7 @@ import {
   mdiFileDocumentOutline,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@/stores/partner'
+import { usePartnerStore } from '@/stores/_partner'
 import { useValidators } from '@/composable/validators'
 import { getAuth } from 'firebase/auth'
 import { Shop, GENRE_ARRAY } from '@/schemes/shop'

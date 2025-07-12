@@ -5,7 +5,7 @@ import { useEventStore } from '@/stores/event'
 import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
 import { useCommunityStore } from '@/stores/community'
 import type { Shop } from '@/schemes/shop'
-import { usePartnerStore } from '@/stores/partner'
+import { usePartnerStore } from '@/stores/_partner'
 import { shareSnsButton } from '@/utils/shareSnsButton'
 import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
 

@@ -112,8 +112,8 @@ const PartnerShopDbSchema = z.object({
   shop_address_latitude: z.number().positive(),
   shop_address_longitude: z.number().positive(),
   shop_deadline_datetime: z.object({
-    days_before: z.number().int().positive(),
-    time: z.number().int().positive(),
+    days_before: z.number().int().nonnegative(),
+    time: z.number().int(),
   }),
   shop_description: z.string().nonempty(),
   shop_email: z.string().email().nonempty(),
@@ -161,8 +161,8 @@ const PartnerShopAppSchema = z.object({
   is_open: z.boolean().default(false),
   shop_deadline_datetime: z
     .object({
-      days_before: z.number().int().positive(),
-      time: z.number().int().positive(),
+      days_before: z.number().int().nonnegative(),
+      time: z.number().int(),
     })
     .default({
       days_before: 1,
@@ -228,10 +228,10 @@ const PartnerShopAppSchema = z.object({
 export class PartnerShop {
   // Mandatory
   readonly id: string
-  readonly partner_id: string
+  readonly shop_id: string
   createdAt: number
   updatedAt: number
-  shop_id!: string
+  partner_id!: string
   // Default
   is_approved!: boolean
   is_open!: boolean
@@ -274,7 +274,7 @@ export class PartnerShop {
   constructor(id: string, src: Partial<PartnerShop>) {
     Object.assign(this, PartnerShopAppSchema.parse(src))
     this.id = id
-    this.partner_id = id
+    this.shop_id = id
     this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
     this.updatedAt = Date.now()
   }

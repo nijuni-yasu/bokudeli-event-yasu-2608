@@ -200,30 +200,35 @@ const getMenuUsers = async (transaction, event) => {
 // ユーザー情報をマップとして取得する関数
 const getUserMap = async (transaction, menuUsers) => {
   const db = getFirestore()
-  const userIds = new Set(menuUsers.map((menuUser) => menuUser.userId))
-  const usersSnapshot = await transaction.get(db.collection('users').where('user_id', 'in', Array.from(userIds)))
-
-  const userMap = {}
-  usersSnapshot.forEach((doc) => {
-    const userData = doc.data()
-    userMap[userData.user_id] = {
-      userName: userData.user_name,
-      photo: userData.user_image_url,
-    }
-  })
-  return userMap
+  const userIds = Array.from(new Set(menuUsers.map((menuUser) => menuUser.userId)))
+  // WHERE IN の制限が30個までなので、30個ずつに分割して取得
+  const chunks = userIds.reduce((acc, _, i) => (i % 30 === 0 ? acc.push(userIds.slice(i, i + 30)) : acc, acc), [])
+  const userMapArray = await Promise.all(
+    chunks.map(async (chunk) => {
+      const usersSnapshot = await transaction.get(db.collection('users').where('user_id', 'in', chunk))
+      return usersSnapshot.docs.reduce((acc, doc) => {
+        const userData = doc.data()
+        acc.set(doc.id, {
+          userName: userData.user_name,
+          photo: userData.user_image_url,
+        })
+        return acc
+      }, new Map())
+    }),
+  )
+  return new Map(userMapArray.flatMap((um) => [...um]))
 }
 
 // 有効な名前の配列を作成する関数
 const createValidNames = async (menuUsers, userMap) => {
   return Promise.all(
     menuUsers.map(async (menuUser, index) => {
-      const photoUrl = userMap[menuUser.userId]?.photo
+      const photoUrl = userMap.get(menuUser.userId)?.photo
       return {
         name:
-          userMap[menuUser.userId]?.userName?.length > 14
-            ? userMap[menuUser.userId]?.userName.slice(0, 14)
-            : userMap[menuUser.userId]?.userName || '',
+          userMap.get(menuUser.userId)?.userName?.length > 14
+            ? userMap.get(menuUser.userId)?.userName.slice(0, 14)
+            : userMap.get(menuUser.userId)?.userName || '',
         menu: menuUser.menuName.length > 28 ? menuUser.menuName.slice(0, 28) + '…' : menuUser.menuName,
         photo: await isValidPhotoUrl(photoUrl),
         position: index,
@@ -261,7 +266,12 @@ const createTemplateData = (filteredValidNames) => {
   return templateData
 }
 
-export const namesprint = onRequest({ cors: CORS }, async (req, res) => {
+export const namesprint = onRequest(
+  {
+    cors: CORS,
+    memory: '1GiB',
+  },
+  async (req, res) => {
   const authHeader = req.headers.authorization ?? ''
   if (!authHeader.startsWith('JWT ')) {
     throw new HttpsError('unauthenticated', 'JWT token is required')

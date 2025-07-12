@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/partner'
+import { usePartnerStore } from '@/stores/_partner'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getCommunityPath, getShopPath, getEventPath, getUserEventUrl } from '@/navigation/utils'
 import { useEventStore, type EventStore } from '@/stores/event'

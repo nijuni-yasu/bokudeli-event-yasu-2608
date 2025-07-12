@@ -104,9 +104,13 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 5000,
+    target: 'esnext',
   },
   optimizeDeps: {
-    exclude: ['vuetify'],
     entries: ['./src/**/*.vue'],
+    exclude: ['vuetify', 'firebase-admin/firestore', 'firebase-admin'],
+  },
+  define: {
+    IS_SERVER: false,
   },
 })

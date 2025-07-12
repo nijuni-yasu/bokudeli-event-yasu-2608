@@ -61,5 +61,9 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 5000,
+    target: 'esnext',
+  },
+  define: {
+    IS_SERVER: false,
   },
 })
