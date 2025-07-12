@@ -31,6 +31,9 @@ export default {
     'community_create': 'コミュニティを作る',
     'canceled': 'キャンセルしました',
     'cancel_failed': 'キャンセルに失敗しました',
+    'exists_email': '登録済みのメールアドレスです。\n他のメールアドレスを入力いただくか、登録済みメールアドレスのアカウントでログインしてください。',
+    'update_email': 'メールアドレスを変更しました。',
+    'exists_credential': 'この{snsName}アカウントは、すでに別のユーザーとして登録されています。\n他のアカウントでお試しください。',
   },
   'manage': {
     'new_community': 'コミュニティ作成',
@@ -349,6 +352,88 @@ export default {
     'flyer': {
       'title': 'QRコード付きのチラシを印刷して、告知・集客に役立てよう！',
       'description': '微調整もしやすい <a href="https://bit.ly/433wAbb" target="_blank">Canvaのテンプレート</a> もぜひご活用ください🎨',
+    }
+  },
+  'login': {
+    'login_fail': '{sns_name}ログインできませんでした',
+    'welcome': 'shokujiiへようこそ',
+    'please_login_or_register_below': `<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。`,
+    'email': 'メールアドレス',
+    'continue_email': 'メールアドレスで続ける',
+    'sns_login': '{sns_name}でログイン',
+    'link_dialog_body' : '{try_login_provider_label}に設定されているメールアドレスは、{link_provider_label}アカウントが既に連携されています。 <br/>連携しますか？'
+  },
+  'email': {
+    'register_email': 'メールアドレス登録',
+    'register_email_description': 'メールアドレスを登録してください',
+    'email': 'メールアドレス',
+    'send': '送信',
+  },
+  'passcode': {
+    'enter_passcode': 'パスコードを入力',
+    'enter_passcode_description': '{email}に送信した6桁のコードを入力してください',
+    'resend': 'コードを再送信する',
+    'back': 'ログイン画面へ戻る',
+    'un_match_passcode': 'パスコードの値が間違っています'
+  },
+  'complete': {
+    'new_user_title': 'アカウント登録完了',
+    'new_user_description': 'shokujiiのアカウントの登録が完了しました 🎉\nSNSアカウント連携して、プロフィールを登録しましょう。',
+    'new_user_selfButton': '自分でプロフィールを登録する',
+    'exists_user_title': 'プロフィール登録',
+    'exists_user_description': 'プロフィールが登録されていません。\nSNSアカウントと連携して、プロフィール登録を完了させよう👍',
+    'exists_user_selfButton': '自分でプロフィールを入力する',
+    'profile_registration_X': 'X と連携してプロフィール登録',
+    'exists_email': '登録済みのメールアドレスです。\n登録済みメールアドレスのアカウントでログインしてください。',
+  },
+  'profile': {
+    'choice_profile_image': 'プロフィール画像を選択してください。',
+    'fail_image_upload': '画像のアップロードに失敗しました。',
+    'profile_settings': 'プロフィール設定',
+    'social_link': 'ソーシャルリンク',
+    'social_link_description': `ソーシャルリンクを設定すると <a href="https://shokujii.jp/mypage">マイページ</a> にSNSアカウントをリンクすることができます。`,
+    'profile_image': 'プロフィール画像',
+    'user_account': 'ユーザーURL',
+    'validator_account_exists': 'このユーザーURLは既に使用されています',
+    'user_name': 'ユーザー名',
+    'user_sns_twitter': 'X (Twitter)',
+    'user_sns_facebook': 'Facebook',
+    'user_sns_instagram': 'Instagram',
+    'user_sns_website': 'WEBサイト',
+    'user_description': '自己紹介文',
+    'change_settings': '設定を変更する',
+    'update_profile': 'プロフィールを変更しました。',
+    'email': 'メールアドレス',
+    'email_description': 'ログインや通知に使用するメールアドレスを設定してください。',
+    'not_changed_email': 'メールアドレスが変更されていません。',
+    'account_linkage': 'アカウント連携',
+    'account_linkage_description': 'アカウントを連携すると、ソーシャルログインが利用できるようになり、SNSへの投稿もかんたんに行えるようになります。',
+    'google': 'Google',
+    'facebook': 'Facebook',
+    'twitter': 'X (Twitter)',
+    'linkage': '連携する',
+    'linked': '連携中',
+    'twitter_link_modal_title' : 'X連携をしますか？',
+    'twitter_link_modal_description' : `アカウント連携するとマイページにXへのリンクが表示されます。<br />
+                                        さらにソーシャルログインや、Xへの投稿も簡単にできるようになります。`,
+    'unlink_modal_title' : '連携を解除しますか？',
+    'unlink': '解除',
+    'exist_email': 'すでに他ユーザーが利用しているメールアドレスです。',
+    'pending_email': '変更中のメールアドレス<br/>{pending_email}',
+    'notice_pending_email': '※ メールアドレス変更中です。パスコードを認証してください',
+    'certification': '認証する',
+    'cancel': 'キャンセルする',
+    're_link': '※連携が外れているか、まだ連携されていない状態です。<br />必要に応じて再連携してください。'
+  },
+  'user_profile': {
+    'logout': 'ログアウトする',
+    'logout_modal_title': 'ログアウトしますか？'
+  },
+  'auth': {
+    'action': {
+      'title': 'shokujii',
+      'reset_email': 'ログイン用メールアドレスを{current_email}から{restored_email}に復元しています。<br/>少々お待ちくださいませ。',
+      'notify_reset_email': 'ログイン用メールアドレスを復元しました。'
     }
   }
 }

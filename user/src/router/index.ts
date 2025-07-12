@@ -4,8 +4,7 @@ import {
   getAuth,
   getRedirectResult,
   onAuthStateChanged,
-  FacebookAuthProvider,
-  GoogleAuthProvider,
+  getAdditionalUserInfo,
   type Unsubscribe,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
@@ -13,10 +12,14 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { useStoreCredential } from '@/stores/credential'
 import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 import type { Router } from 'vue-router'
+import userAccessiblePaths from '@/utils/userAccessiblePaths'
 import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
 import { getManageCommunityListPath } from './utils'
+import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
+import { useStoreUserCredential } from '@/stores/userCredential'
+import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { useConfigStore } from '@/stores/config'
@@ -27,46 +30,15 @@ const checkUser = async (user: User | null) => {
   let userCredential: UserCredential | null = null
   try {
     userCredential = await getRedirectResult(getAuth())
+    if (userCredential) {
+      const additionalUserInfo = getAdditionalUserInfo(userCredential)
+      if (additionalUserInfo) {
+        useStoreUserAdditionalInfo().update(additionalUserInfo)
+      }
+    }
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const tokenResponse = error.customData?._tokenResponse as { providerId: string }
-      const providerId = tokenResponse.providerId
-
-      let providerService: 'Facebook' | 'Google' | null = null
-      switch (providerId) {
-        case FacebookAuthProvider.PROVIDER_ID:
-          providerService = 'Facebook'
-          break
-        case GoogleAuthProvider.PROVIDER_ID:
-          providerService = 'Google'
-          break
-      }
-
-      if (error.code === 'auth/account-exists-with-different-credential') {
-        switch (providerService) {
-          case 'Facebook':
-            window.alert('Googleアカウントですでに登録されています')
-            break
-          case 'Google':
-            window.alert('Facebookアカウントですでに登録されています')
-            break
-          default:
-            window.alert('他のアカウントですでに登録されています')
-            break
-        }
-      } else {
-        switch (providerService) {
-          case 'Facebook':
-            window.alert('Facebookログインできませんでした')
-            break
-          case 'Google':
-            window.alert('Googleログインできませんでした')
-            break
-          default:
-            window.alert('ログインできませんでした')
-            break
-        }
-      }
+      useStoreFirebaseAuthError().update(error)
     } else {
       window.alert('ログインに失敗しました')
       console.error('Error fetching redirect result:', { error })
@@ -85,6 +57,7 @@ const checkUser = async (user: User | null) => {
   }
   if (userCredential) {
     // リダイレクトでのログイン処理
+    useStoreUserCredential().update(userCredential)
     await updateCredentialFromUserCredential(userCredential)
     await loginUser(user || userCredential.user)
   }
@@ -110,6 +83,13 @@ export const setupRouter = (router: Router) => {
     } catch {
       // Do nothing
     }
+  })
+
+  // ユーザーがログイン済みか否かでリダイレクト
+  router.beforeEach((to) => {
+    const storedUserStore = useStoreStoredUser()
+
+    if (userAccessiblePaths.includes(to.path) && !storedUserStore.storedUser) router.replace('/')
   })
 
   let unsubscribeAuthStateChanged: Unsubscribe | null

@@ -19,6 +19,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
+import { getProfile } from '@/router/utils'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -161,7 +162,30 @@ const paymentMessage = (event: BokudeliEvent) => {
   }
 }
 
+const openUserParameterConfirm = ref(false)
+const targetUserParameter = ref('')
 const showConfirm = async (cart: Cart) => {
+  // ユーザー名存在チェック
+  if (!storedUser.value?.userName) {
+    targetUserParameter.value = $t('cart.doesnt_exists_user_name')
+    openUserParameterConfirm.value = true
+    return
+  }
+
+  // アイコン存在チェック
+  if (!storedUser.value?.userImageUrl) {
+    targetUserParameter.value = $t('cart.doesnt_exists_user_image')
+    openUserParameterConfirm.value = true
+    return
+  }
+
+  // メールアドレス存在チェック
+  if (!storedUser.value?.userEmail) {
+    targetUserParameter.value = $t('cart.doesnt_exists_user_email')
+    openUserParameterConfirm.value = true
+    return
+  }
+
   const checkResult = await checkCart(cart)
   if (checkResult !== true) {
     showDisableAlert(checkResult)
@@ -243,135 +267,141 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-row v-if="!state.isLoading && state.cartList.length !== 0" justify="center">
-      <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
-        <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
-        <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
-      </v-col>
-      <v-col v-for="cart in state.cartList" :key="cart.event.event_id" cols="12" md="8" sm="8">
-        <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
-          <v-row>
-            <v-col class="d-flex align-center">
-              <v-img class="ma-5" cover aspect-ratio="1.91" :src="cart.event.event_cover_url" />
-            </v-col>
-          </v-row>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.community_name') }}
-            <router-link :to="getCommunityPath(cart.event.community_account)">
-              {{ cart.event.community_name }}
-            </router-link>
-          </v-card-text>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.event_name') }}
-            <router-link :to="getEventPath(cart.event.community_account, cart.event.event_id)">
-              {{ cart.event.event_name }}
-            </router-link>
-          </v-card-text>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.place') }} {{ cart.event.event_address }} {{ cart.event.event_place }}
-          </v-card-text>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.date') }}{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{
-              dateOnlyTimeString(cart.event.event_end_datetime)
-            }}
-          </v-card-text>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.deadline') }}{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
-          </v-card-text>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.payment') }}{{ $t(`payment.${cart.event.event_payment}`) }} <br />
-          </v-card-text>
-          <v-card-text class="d-flex align-center card-text-style">
-            <div class="d-flex flex-column align-center">
-              {{ $t('cart.cancel') }}
-            </div>
-            <div class="event-content d-flex flex-column align-center">
-              {{ $t('cart.cancel_until_deadline') }}
-            </div>
-            <div class="d-flex flex-column align-center">
-              <v-btn
-                :icon="mdiHelpCircleOutline"
-                color="primary"
-                density="compact"
-                variant="text"
-                @click="isOpenCancelpolicyDialog = true"
-              >
-              </v-btn>
-            </div>
-          </v-card-text>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.shop') }}{{ cart.event.shop_name }}
-          </v-card-text>
-          <v-card-text class="card-text-style">
-            {{ $t('cart.order_contents') }}
-          </v-card-text>
-          <v-row class="text-center align-center text-md-body-1 text-caption">
-            <v-col cols="12" class="px-8">
-              <v-card class="pa-0" elevation="1">
-                <v-table>
-                  <thead>
-                    <tr>
-                      <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
-                      <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
-                      <th class="text-center" style="padding: 1px">{{ $t('cart.subtotal') }}</th>
-                      <th class="text-center" style="padding: 1px"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
-                      <td style="padding: 1px">{{ menu.name }}</td>
-                      <td style="padding: 1px">{{ menu.count }}</td>
-                      <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
-                      <td style="padding: 1px">
-                        <v-btn :icon="mdiTrashCan" variant="text" @click="deleteMenuInCart(cart.event, cart.order, menu)">
-                        </v-btn>
-                      </td>
-                    </tr>
-                  </tbody>
-                </v-table>
-              </v-card>
-            </v-col>
-          </v-row>
-          <v-card-text class="text-right">
-            <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
-            <span class="text-right my-2 ml-2 text-h6">¥</span>
-            <span class="text-right ma-2 text-h3 text-md-h2 font-weight-bold">{{ priceString(cart.total) }}</span>
-          </v-card-text>
+  <v-row v-if="!state.isLoading && state.cartList.length !== 0" justify="center">
+    <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
+      <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
+      <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
+    </v-col>
+    <v-col v-for="cart in state.cartList" :key="cart.event.event_id" cols="12" md="8" sm="8">
+      <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
+        <v-row>
+          <v-col class="d-flex align-center">
+            <v-img class="ma-5" cover aspect-ratio="1.91" :src="cart.event.event_cover_url" />
+          </v-col>
+        </v-row>
+        <v-card-text class="card-text-style">
+          {{ $t('cart.community_name') }}
+          <router-link :to="getCommunityPath(cart.event.community_account)">
+            {{ cart.event.community_name }}
+          </router-link>
+        </v-card-text>
+        <v-card-text class="card-text-style">
+          {{ $t('cart.event_name') }}
+          <router-link :to="getEventPath(cart.event.community_account, cart.event.event_id)">
+            {{ cart.event.event_name }}
+          </router-link>
+        </v-card-text>
+        <v-card-text class="card-text-style">
+          {{ $t('cart.place') }} {{ cart.event.event_address }} {{ cart.event.event_place }}
+        </v-card-text>
+        <v-card-text class="card-text-style">
+          {{ $t('cart.date') }}{{ dateWithDayOfWeekString(cart.event.event_start_datetime) }}〜{{
+            dateOnlyTimeString(cart.event.event_end_datetime)
+          }}
+        </v-card-text>
+        <v-card-text class="card-text-style">
+          {{ $t('cart.deadline') }}{{ dateWithDayOfWeekString(cart.event.event_deadline_datetime) }}
+        </v-card-text>
+        <v-card-text class="card-text-style">
+          {{ $t('cart.payment') }}{{ $t(`payment.${cart.event.event_payment}`) }} <br />
+        </v-card-text>
+        <v-card-text class="d-flex align-center card-text-style">
+          <div class="d-flex flex-column align-center">
+            {{ $t('cart.cancel') }}
+          </div>
+          <div class="event-content d-flex flex-column align-center">
+            {{ $t('cart.cancel_until_deadline') }}
+          </div>
+          <div class="d-flex flex-column align-center">
+            <v-btn
+              :icon="mdiHelpCircleOutline"
+              color="primary"
+              density="compact"
+              variant="text"
+              @click="isOpenCancelpolicyDialog = true"
+            >
+            </v-btn>
+          </div>
+        </v-card-text>
+        <v-card-text class="card-text-style"> {{ $t('cart.shop') }}{{ cart.event.shop_name }} </v-card-text>
+        <v-card-text class="card-text-style">
+          {{ $t('cart.order_contents') }}
+        </v-card-text>
+        <v-row class="text-center align-center text-md-body-1 text-caption">
+          <v-col cols="12" class="px-8">
+            <v-card class="pa-0" elevation="1">
+              <v-table>
+                <thead>
+                  <tr>
+                    <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
+                    <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
+                    <th class="text-center" style="padding: 1px">{{ $t('cart.subtotal') }}</th>
+                    <th class="text-center" style="padding: 1px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="menu in cart.order.menus" :key="menu.menu_id">
+                    <td style="padding: 1px">{{ menu.name }}</td>
+                    <td style="padding: 1px">{{ menu.count }}</td>
+                    <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
+                    <td style="padding: 1px">
+                      <v-btn :icon="mdiTrashCan" variant="text" @click="deleteMenuInCart(cart.event, cart.order, menu)">
+                      </v-btn>
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-card-text class="text-right">
+          <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
+          <span class="text-right my-2 ml-2 text-h6">¥</span>
+          <span class="text-right ma-2 text-h3 text-md-h2 font-weight-bold">{{ priceString(cart.total) }}</span>
+        </v-card-text>
 
-          <v-row class="justify-center">
-            <v-col class="text-center">
-              <v-btn
-                class="my-8 text-md-h4 text-h5"
-                color="grey-900"
-                size="x-large"
-                rounded="pill"
-                elevation="5"
-                width="85%"
-                @click="showConfirm(cart)"
-              >
-                {{ $t('cart.order_and_attend_event') }}
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-card>
-      </v-col>
-    </v-row>
-    <v-row justify="center" v-else-if="!state.isLoading">
-      <v-col cols="auto" class="my-5" style="font-size: 18px"> {{ $t('cart.no_items_in_cart') }}</v-col>
-    </v-row>
-    <v-row v-else justify="center">
-      <v-col cols="auto">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-      </v-col>
-    </v-row>
-    <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
-    <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
-      {{ confirmDialogMessage }}
-    </confirm-dialog>
-    <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
-      {{ $t('cart.remove_from_cart') }}
-    </confirm-dialog>
-    <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
+        <v-row class="justify-center">
+          <v-col class="text-center">
+            <v-btn
+              class="my-8 text-md-h4 text-h5"
+              color="grey-900"
+              size="x-large"
+              rounded="pill"
+              elevation="5"
+              width="85%"
+              @click="showConfirm(cart)"
+            >
+              {{ $t('cart.order_and_attend_event') }}
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card>
+    </v-col>
+  </v-row>
+  <v-row justify="center" v-else-if="!state.isLoading">
+    <v-col cols="auto" class="my-5" style="font-size: 18px"> {{ $t('cart.no_items_in_cart') }}</v-col>
+  </v-row>
+  <v-row v-else justify="center">
+    <v-col cols="auto">
+      <v-progress-circular indeterminate color="primary"></v-progress-circular>
+    </v-col>
+  </v-row>
+  <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
+  <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
+    {{ confirmDialogMessage }}
+  </confirm-dialog>
+  <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
+    {{ $t('cart.remove_from_cart') }}
+  </confirm-dialog>
+  <confirm-dialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</confirm-dialog>
+  <confirm-dialog
+    v-model="openUserParameterConfirm"
+    :is-confirm="true"
+    :ok-click="() => router.push({ path: getProfile() })"
+    ok-text="設定する"
+  >
+    {{ targetUserParameter }}
+  </confirm-dialog>
 </template>
 <style scoped>
 .v-table {

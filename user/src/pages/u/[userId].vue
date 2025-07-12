@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@/firebase'
-import { collectionGroup, doc, getDocs, orderBy, query, where } from 'firebase/firestore'
-import { useRoute } from 'vue-router'
+import { collectionGroup, doc, getDocs, orderBy, query, where, limit, collection } from 'firebase/firestore'
+import { useRoute, useRouter } from 'vue-router'
 import UserBioPanel from '@/components/UserBioPanel.vue'
 import UserEventCard from '@/components/UserEventCard.vue'
 import CommunityCard from '@/components/CommunityCard.vue'
@@ -20,9 +20,36 @@ import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.
 import type { CommunityMember } from '@/schemes/communityMember'
 import { getInvoicePdf } from '@/utils/pdf'
 import { useNotification } from '@/composable/notification'
+import { useStoreStoredUser } from '@/stores/storedUser'
 
 const route = useRoute()
-const userId = route.params.userId as string
+const router = useRouter()
+const id = route.params.userId as string
+
+const userIdRef = ref('')
+const fetchUser = async (identifier: string) => {
+  const userCollection = collection(db, 'users')
+  const queryById = query(userCollection, where('user_id', '==', identifier), limit(1))
+  const queryByUrlPath = query(userCollection, where('user_account', '==', identifier), limit(1))
+
+  try {
+    const [queryByIdSnapshot, queryByUrlPathSnapshot] = await Promise.all([getDocs(queryById), getDocs(queryByUrlPath)])
+
+    if (!queryByIdSnapshot.empty) {
+      userIdRef.value = queryByIdSnapshot.docs[0].data().user_id
+    } else if (!queryByUrlPathSnapshot.empty) {
+      userIdRef.value = queryByUrlPathSnapshot.docs[0].data().user_id
+    } else {
+      userIdRef.value = ''
+    }
+  } catch (error) {
+    userIdRef.value = ''
+  }
+}
+await fetchUser(id)
+const userId = userIdRef.value as string
+
+if (userId === '') router.replace('/')
 
 const notification = useNotification()
 
@@ -34,6 +61,9 @@ const isOwner = computed(() => {
 })
 
 const { user } = storeToRefs(useUserStore(userId))
+const storedUserStore = useStoreStoredUser()
+const { storedUser } = storeToRefs(storedUserStore)
+const emailPending = storedUser.value?.userEmailPending as string | null
 const tabs = ref(null)
 const cancelOperatingOrder = ref<OrderItem | null>(null)
 
@@ -144,7 +174,7 @@ const downloadInvoice = async (order: OrderItem) => {
 <template>
   <v-row v-if="user != null" justify="center">
     <v-col cols="12" sm="8" md="3">
-      <UserBioPanel :user-data="user" :is-editable="isOwner" />
+      <UserBioPanel :user-data="user" :user-email-pending="emailPending" :is-editable="isOwner" />
     </v-col>
     <v-col cols="12" sm="8" md="9">
       <v-tabs v-model="tabs">

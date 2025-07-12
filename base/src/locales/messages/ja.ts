@@ -99,6 +99,9 @@ export default {
     event_not_found: 'イベントが見つかりません。',
     order_and_attend_event: '注文を完了する',
     no_items_in_cart: 'カートに商品はありません。',
+    doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
+    doesnt_exists_user_image: 'アイコンが登録されていません。登録完了後、注文を完了してください',
+    doesnt_exists_user_email: 'メールアドレスが登録されていません。登録完了後、注文を完了してください',
   },
   cart_dialog: {
     add: 'カートに追加',
@@ -366,6 +369,7 @@ export default {
     account:
       '3文字以上20文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
+    reserved_chars: 'これらの記号は使用できません。（ %{}|^[]:?#/@`!$\'()*+,;=\\ ）'
   },
   invoice_error_card: {
     title: 'エラーが発生しました',

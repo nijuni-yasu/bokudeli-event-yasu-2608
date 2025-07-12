@@ -11,12 +11,20 @@ export type StoredUser = {
   userId: string
   userName: string
   userEmail: string
+  userEmailPending: string | null
   userImageUrl: string | null
   userAccount: string | null
   userDescription: string | null
+  userSnsGoogle: string | null
   userSnsFacebook: string | null
+  userSnsFacebookName: string | null
   userSnsTwitter: string | null
+  userSnsTwitterAccessToken: string | null
+  userSnsTwitterSecret: string | null
   userSnsInstagram: string | null
+  userSnsWebsite: string | null
+  userPassCode: string | null
+  verifiedAt: Date | null
   createdAt: Date | undefined
   updatedAt: Date | undefined
 }
@@ -28,8 +36,12 @@ export class FirestoredUser {
   user_account: string | null = null
   user_description: string | null = null
   user_sns_facebook: string | null = null
+  user_sns_facebook_name: string | null = null
   user_sns_twitter: string | null = null
   user_sns_instagram: string | null = null
+  user_sns_website: string | null = null
+  user_pass_code: string | null = null
+  verified_at: Timestamp | null = null
   created_at: Timestamp | null = null
   updated_at: Timestamp | null = null
   user_thumb_image_urls: ThumbnailLinks | null = null
@@ -49,10 +61,21 @@ export class FirestoredUser {
   }
 
   convertToDocumentData(): DocumentData {
-    return _.omit(this, ['user_email', 'user_thumb_image_urls'])
+    return _.omit(this, [
+      'user_email',
+      'user_email_pending',
+      'user_sns_google',
+      'user_sns_twitter_access_token',
+      'user_sns_twitter_secret',
+      'user_thumb_image_urls',
+    ])
   }
 }
 
 export type FirestoredUserPersonalInformation = {
   user_email: string
+  user_email_pending: string | null
+  user_sns_google: string | null
+  user_sns_twitter_access_token: string | null
+  user_sns_twitter_secret: string | null
 }

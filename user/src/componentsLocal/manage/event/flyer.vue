@@ -63,7 +63,7 @@ const downloadFlyer = async (size: string) => {
     <v-row class="justify-center">
       <div>
         <div class="text-center text-h5 mt-4">{{ $t('manage.flyer.title') }}</div>
-        <div v-html="$t('manage.flyer.description')" class="text-center text-h5 mt-2 mb-8"/>
+        <div v-html="$t('manage.flyer.description')" class="text-center text-h5 mt-2 mb-8" />
         <v-row class="mt-4" justify="center" no-gutters>
           <v-col cols="auto" class="d-flex flex-nowrap">
             <v-btn

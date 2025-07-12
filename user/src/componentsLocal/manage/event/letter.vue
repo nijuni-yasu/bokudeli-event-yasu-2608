@@ -127,7 +127,6 @@ const handleNewLetterClick = () => {
   }
   router.push({ query: { letterId: '' } })
 }
-
 </script>
 
 <template>
@@ -141,12 +140,7 @@ const handleNewLetterClick = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col cols="12">
-        <LetterTable
-          :letters="letters"
-          @edit="onEditClick"
-          @delete="onDeleteClick"
-          @copy="onCopyClick"
-        />
+        <LetterTable :letters="letters" @edit="onEditClick" @delete="onDeleteClick" @copy="onCopyClick" />
       </v-col>
     </v-row>
     <v-row v-show="letters.length ?? 0 !== 0" class="justify-center">

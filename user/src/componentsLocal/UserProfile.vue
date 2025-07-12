@@ -1,27 +1,65 @@
 <script setup lang="ts">
-import LoginDialog from '@/components/LoginDialog.vue'
 import HomeButtonDialog from '@/components/HomeButtonDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useUserStore, type UserStore } from '@/stores/user'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown } from '@mdi/js'
+import userAccessiblePaths from '@/utils/userAccessiblePaths'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
+import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
+import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
+import { getProfile } from '@/router/utils'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
 const isLogin = computed(() => storedUser.value?.userId != null)
+const userStore = ref<UserStore | null>(null)
+
+watch(
+  () => storedUser.value?.userId,
+  (userId) => {
+    if (userId != null) {
+      userStore.value = useUserStore(userId) as UserStore
+    } else {
+      userStore.value = null
+    }
+  },
+  { immediate: true },
+)
+
 const user = computed(() => {
-  const userId = storedUser.value?.userId
-  return userId == null ? null : (useUserStore(userId) as UserStore).user
+  return userStore.value?.user ?? null
 })
 
-const isOpenLoginDialog = ref(false)
 const isOpenHomeButtonDialog = ref(false)
+
+const route = useRoute()
+const router = useRouter()
+
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.path,
+    },
+  })
+}
+
+const isOpenLogoutDialog = ref(false)
+const handleLogoutDialog = () => {
+  isOpenLogoutDialog.value = true
+}
 
 const logout = async () => {
   const auth = getAuth()
   try {
+    useStoreUserAdditionalInfo().reset()
+    useStoreFirebaseAuthError().reset()
     await signOut(auth)
+
+    // ログインが必要なページにいる場合トップページに遷移
+    if (userAccessiblePaths.includes(route.path)) router.replace('/')
   } catch (error) {
     console.error(error)
   }
@@ -80,6 +118,17 @@ const logout = async () => {
           <!-- Divider -->
           <v-divider v-if="isLogin" class="my-2" />
 
+          <!-- 👉 Profile settings -->
+          <v-list-item v-if="isLogin" :to="getProfile()">
+            <template #prepend>
+              <v-icon class="me-2" :icon="mdiCog" size="22" />
+            </template>
+            <v-list-item-title>設定</v-list-item-title>
+          </v-list-item>
+
+          <!-- Divider -->
+          <v-divider v-if="isLogin" class="my-2" />
+
           <!-- 👉 homebutton -->
           <v-list-item v-if="isLogin" @click="isOpenHomeButtonDialog = true">
             <template #prepend>
@@ -92,14 +141,14 @@ const logout = async () => {
           <v-divider v-if="isLogin" class="my-2" />
 
           <!-- 👉 Login, Logout -->
-          <v-list-item v-if="!isLogin" @click="isOpenLoginDialog = true">
+          <v-list-item v-if="!isLogin" @click="login">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiLogout" size="22" />
             </template>
 
             <v-list-item-title>ログイン</v-list-item-title>
           </v-list-item>
-          <v-list-item v-else @click="logout()">
+          <v-list-item v-else @click="handleLogoutDialog()">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiLogout" size="22" />
             </template>
@@ -110,6 +159,15 @@ const logout = async () => {
       <!-- !SECTION -->
     </UserAvatar>
   </v-badge>
-  <login-dialog v-model="isOpenLoginDialog" />
+  <confirm-dialog
+    v-model="isOpenLogoutDialog"
+    :is-confirm="true"
+    :ok-text="$t('user_profile.logout')"
+    :ok-click="logout"
+  >
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('user_profile.logout_modal_title') }}
+    </v-card-text>
+  </confirm-dialog>
   <home-button-dialog v-model="isOpenHomeButtonDialog" />
 </template>

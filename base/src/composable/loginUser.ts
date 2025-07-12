@@ -11,6 +11,7 @@ import axios from 'axios'
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
+  TwitterAuthProvider,
   OAuthCredential,
   type User,
   type UserCredential,
@@ -26,6 +27,9 @@ export const updateCredentialFromUserCredential = async (redirectResult: UserCre
         break
       case GoogleAuthProvider.PROVIDER_ID:
         credential = GoogleAuthProvider.credentialFromResult(redirectResult)
+        break
+      case TwitterAuthProvider.PROVIDER_ID:
+        credential = TwitterAuthProvider.credentialFromResult(redirectResult)
         break
       default:
         console.error('Unknown providerId:', redirectResult.providerId)
@@ -62,23 +66,20 @@ export const loginUser = async (user: User) => {
     currentStoredUser = storedUser
   } else {
     currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data(), personalInformationSnapshot.data()!)
-    if (currentStoredUser.userEmail !== storedUser.userEmail || !currentStoredUser.userImageUrl) {
-      // 既にユーザーが存在しメールアドレスが変更されている場合は更新する
-      // 画像がない場合も更新する
+    if (!currentStoredUser.userImageUrl) {
+      // 画像がない場合更新する
       await setDoc(
         userSnapShot.ref,
         {
-          user_image_url: storedUser.userImageUrl,
+          user_image_url: storedUser.userImageUrl === '' ? null : storedUser.userImageUrl,
           updated_at: Timestamp.now(),
         },
         { merge: true },
       )
-      await setDoc(personalInformationSnapshot.ref, { user_email: storedUser.userEmail }, { merge: true })
 
       // Pinia に保存
       currentStoredUser = {
         ...currentStoredUser,
-        userEmail: storedUser.userEmail,
         userImageUrl: storedUser.userImageUrl,
       }
     }
@@ -88,18 +89,16 @@ export const loginUser = async (user: User) => {
   // Facebook Login の場合は、画像を Storage にアップロードする
   // ただし、Facebook Login の度に画像を Storage にアップロードするわけにはいかないので、
   // 既存の画像がない場合のみ
-  if (currentStoredUser.userImageUrl == null || currentStoredUser.userImageUrl === '') {
+  // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
+  if (currentStoredUser.userImageUrl == null || currentStoredUser.userImageUrl === '' || currentStoredUser.userImageUrl.startsWith("https://graph.facebook.com") || currentStoredUser.userImageUrl.startsWith("https://pbs.twimg.com")) {
     for (const provider of user.providerData) {
       switch (provider.providerId) {
         case FacebookAuthProvider.PROVIDER_ID:
           {
-            const credentialStore = useStoreCredential()
-            if (!credentialStore.credential) {
-              break
-            }
-            const imageQueryUrl =
-              user.photoURL +
-              `?width=500&height=500&redirect=false&access_token=${credentialStore.credential.accessToken}`
+            const providerData = user.providerData.find((info) => {
+              return info.providerId === FacebookAuthProvider.PROVIDER_ID
+            })
+            const imageQueryUrl = providerData?.photoURL + `?width=500&height=500&redirect=false`
             // ログインに影響が出ないよう、非同期で画像を取得する
             axios.get(imageQueryUrl).then(async (response) => {
               const imageUrl = !response.data.data.is_silhouette ? response.data.data.url : null
@@ -113,6 +112,23 @@ export const loginUser = async (user: User) => {
               const userStore = useUserStore(storedUser.userId) as UserStore
               await userStore.uploadUserImage(blob)
             })
+          }
+          break
+        case TwitterAuthProvider.PROVIDER_ID:
+          {
+            const providerData = user.providerData.find((info) => {
+              return info.providerId === TwitterAuthProvider.PROVIDER_ID
+            })
+            // photoURLを加工してオリジナル画像を取得出来るURLに成形
+            const splitPhotoURL = providerData?.photoURL?.split('_') as string[]
+            const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1];
+
+            // ログインに影響が出ないよう、非同期で画像を取得する
+            axios.get(photoURL, { responseType: "blob" }).then(async (response) => {
+              const blob = response.data
+              const userStore = useUserStore(storedUser.userId) as UserStore
+              await userStore.uploadUserImage(blob)
+            });
           }
           break
         default:

@@ -3,12 +3,12 @@ import { type PartnerMenu } from '@/schemes/partnerMenu'
 import { useEventStore, type EventStore } from '@/stores/event'
 import { useStoreStoredUser } from '@/stores/storedUser'
 
-import LoginDialog from '@/components/LoginDialog.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { priceString } from '@/schemes/converter'
 import { mdiCart } from '@mdi/js'
 
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps<{
   modelValue: boolean
@@ -47,6 +47,15 @@ const closeDialog = (isAddCart: boolean) => {
 }
 
 const userStore = useStoreStoredUser()
+
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.path
+    }
+  })
+}
 
 const addCart = async () => {
   if (userStore.storedUser == null) {
@@ -89,16 +98,12 @@ const addCart = async () => {
   }
 }
 
-const isOpenLoginDialog = ref(false)
 const isOpenConfirmDialog = ref(false)
 
 const openConfirmDialog = () => {
   isOpenConfirmDialog.value = true
 }
 
-const openLoginDialog = () => {
-  isOpenLoginDialog.value = true
-}
 </script>
 
 <template>
@@ -146,9 +151,12 @@ const openLoginDialog = () => {
         </v-btn>
       </v-row>
     </v-card>
-    <login-dialog v-model="isOpenLoginDialog" />
-    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
-      {{ $t('cart_dialog.login') }}
+    <confirm-dialog
+      v-model="isOpenConfirmDialog"
+      :is-confirm="false"
+      @click="login"
+    >
+      ログインしてください
     </confirm-dialog>
   </v-dialog>
 </template>

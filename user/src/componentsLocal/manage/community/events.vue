@@ -43,7 +43,6 @@ const events = computed(
     }) ?? [],
 )
 const isOpenEventDialog = ref(false)
-
 </script>
 
 <template>
@@ -90,7 +89,7 @@ const isOpenEventDialog = ref(false)
     <v-card-text class="pb-0" style="line-height: 2.4rem">
       <div v-html="$t('event_create_modal.desc')" />
     </v-card-text>
-  </confirm-dialog>  
+  </confirm-dialog>
 </template>
 
 <style scoped lang="scss">

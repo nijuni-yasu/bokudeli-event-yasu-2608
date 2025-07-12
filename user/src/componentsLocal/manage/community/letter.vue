@@ -150,12 +150,7 @@ const handleNewLetterClick = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col cols="12">
-        <LetterTable
-          :letters="letters"
-          @edit="onEditClick"
-          @delete="onDeleteClick"
-          @copy="onCopyClick"
-        />
+        <LetterTable :letters="letters" @edit="onEditClick" @delete="onDeleteClick" @copy="onCopyClick" />
       </v-col>
     </v-row>
     <v-row v-show="letters.length ?? 0 !== 0" class="justify-center">
@@ -185,13 +180,17 @@ const handleNewLetterClick = () => {
             <div class="ma-3">{{ $t('manage.letter.type_select_dialog.top') }}</div>
             <v-list class="list-with-borders">
               <v-list-item @click="onDialogClick1('event')">
-                <v-list-item-title class="text-h5 mt-3">{{ $t('manage.letter.type_select_dialog.event') }}</v-list-item-title>
+                <v-list-item-title class="text-h5 mt-3">{{
+                  $t('manage.letter.type_select_dialog.event')
+                }}</v-list-item-title>
                 <div>
                   {{ $t('manage.letter.type_select_dialog.event_description') }}
                 </div>
               </v-list-item>
               <v-list-item @click="onDialogClick1('community')">
-                <v-list-item-title class="text-h5 mt-3">{{ $t('manage.letter.type_select_dialog.community') }}</v-list-item-title>
+                <v-list-item-title class="text-h5 mt-3">{{
+                  $t('manage.letter.type_select_dialog.community')
+                }}</v-list-item-title>
                 <div>{{ $t('manage.letter.type_select_dialog.community_description') }}</div>
               </v-list-item>
             </v-list>

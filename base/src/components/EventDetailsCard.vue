@@ -4,7 +4,6 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EventMemberList from '@/components/EventMemberList.vue'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
-import LoginDialog from '@/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
@@ -29,6 +28,10 @@ import LineIcon from '@/icons/line'
 import type { Shop } from '@/schemes/shop'
 import { usePartnerStore } from '@/stores/_partner'
 import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
+
+const router = useRouter()
+const route = useRoute()
+
 
 const qrcodeSize = 300
 
@@ -66,9 +69,6 @@ const openContactDialog = () => {
     isOpenContactDialogVisible.value = true
   }
 }
-const openLoginDialog = () => {
-  isOpenLoginDialog.value = true
-}
 
 const openCalendarAddDialog = () => {
   isOpenCalendarAddDialog.value = true
@@ -76,6 +76,15 @@ const openCalendarAddDialog = () => {
 
 const showQrCode = () => {
   isShowQrCode.value = true
+}
+
+const login = () => {
+  router.push({
+    path: '/login',
+    query: {
+      redirect: route.path
+    }
+  })
 }
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
@@ -334,10 +343,9 @@ const isShowMember = computed(() =>
     </v-row>
   </v-card>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
-  <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+  <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="false" :ok-click="login">
     {{ $t('event_details.contact_community_after_login') }}
   </confirm-dialog>
-  <login-dialog v-model="isOpenLoginDialog" />
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
   <show-dialog v-model="isShowQrCode">
     <v-card class="justify-center text-center" elevation="0">

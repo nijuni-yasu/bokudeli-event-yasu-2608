@@ -4,7 +4,7 @@ import BokudeliEvent from './bokudeliEvent'
 import BokudeliCommunity from './bokudeliCommunity'
 import { type PartnerMenu } from './partnerMenu'
 import { type User } from 'firebase/auth'
-import { type StoredUser, FirestoredUser } from './storedUser'
+import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
 
 export const dateString = (date: Timestamp | Date | null): string => {
   if (!date) return ''
@@ -99,12 +99,20 @@ export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser 
     userId: uid,
     userName: displayName ?? '',
     userEmail: email ?? '',
-    userImageUrl: photoURL ?? '',
+    userEmailPending: null,
+    userImageUrl: photoURL ?? null,
     userAccount: null,
     userDescription: null,
+    userSnsGoogle: null,
     userSnsFacebook: null,
+    userSnsFacebookName: null,
     userSnsTwitter: null,
+    userSnsTwitterAccessToken: null,
+    userSnsTwitterSecret: null,
     userSnsInstagram: null,
+    userSnsWebsite: null,
+    userPassCode: null,
+    verifiedAt: null,
     createdAt: undefined,
     updatedAt: undefined,
   }
@@ -120,26 +128,61 @@ export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): Fires
     user_account: storedUser.userAccount,
     user_description: storedUser.userDescription,
     user_sns_facebook: storedUser.userSnsFacebook,
+    user_sns_facebook_name: storedUser.userSnsFacebookName,
     user_sns_twitter: storedUser.userSnsTwitter,
     user_sns_instagram: storedUser.userSnsInstagram,
+    user_sns_website: storedUser.userSnsWebsite,
+    user_pass_code: storedUser.userPassCode,
+    verified_at: storedUser.verifiedAt,
     created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
     updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
   })
 }
 
-export const convertFirestoredUserToStoredUser = (firestoredUser: FirestoredUser, email: string): StoredUser => {
+export const convertFirestoredUserToStoredUser = (
+  firestoredUser: FirestoredUser,
+  firestoredUserPersonalInformation: FirestoredUserPersonalInformation,
+): StoredUser => {
+  const {
+    user_id,
+    user_name,
+    user_image_url,
+    user_account,
+    user_description,
+    user_sns_facebook,
+    user_sns_facebook_name,
+    user_sns_twitter,
+    user_sns_instagram,
+    user_sns_website,
+    user_pass_code,
+    verified_at,
+    created_at,
+    updated_at,
+  } = firestoredUser
+
+  const { user_email, user_email_pending, user_sns_google, user_sns_twitter_access_token, user_sns_twitter_secret } =
+    firestoredUserPersonalInformation
+
   return {
-    userId: firestoredUser.user_id,
-    userName: firestoredUser.user_name,
-    userEmail: email,
-    userImageUrl: firestoredUser.user_image_url,
-    userAccount: firestoredUser.user_account,
-    userDescription: firestoredUser.user_description,
-    userSnsFacebook: firestoredUser.user_sns_facebook,
-    userSnsTwitter: firestoredUser.user_sns_twitter,
-    userSnsInstagram: firestoredUser.user_sns_instagram,
-    createdAt: firestoredUser.created_at?.toDate(),
-    updatedAt: firestoredUser.updated_at?.toDate(),
+    userId: user_id,
+    userName: user_name,
+    userEmail: user_email,
+    userEmailPending: user_email_pending || null,
+    userImageUrl: user_image_url,
+    userAccount: user_account,
+    userDescription: user_description,
+    userSnsGoogle: user_sns_google || null,
+    userSnsFacebook: user_sns_facebook,
+    userSnsFacebookName: user_sns_facebook_name,
+    userSnsTwitter: user_sns_twitter,
+    userSnsTwitterAccessToken: user_sns_twitter_access_token,
+    userSnsTwitterSecret: user_sns_twitter_secret,
+    userSnsInstagram: user_sns_instagram,
+    userSnsWebsite: user_sns_website,
+    userPassCode: user_pass_code,
+    verifiedAt: verified_at?.toDate() || null,
+    createdAt: created_at?.toDate(),
+    updatedAt: updated_at?.toDate(),
   }
 }
 
@@ -154,22 +197,37 @@ export const convertDocumentDataToStoredUser = (
     user_account,
     user_description,
     user_sns_facebook,
+    user_sns_facebook_name,
     user_sns_twitter,
     user_sns_instagram,
+    user_sns_website,
+    user_pass_code,
+    verified_at,
     created_at,
     updated_at,
   } = documentData
 
+  const { user_email, user_email_pending, user_sns_google, user_sns_twitter_access_token, user_sns_twitter_secret } =
+    personalInfomationData
+
   return {
     userId: user_id ?? '',
     userName: user_name ?? '',
-    userEmail: personalInfomationData.user_email ?? '',
-    userImageUrl: user_image_url ?? '',
+    userEmail: user_email ?? '',
+    userEmailPending: user_email_pending ?? null,
+    userImageUrl: user_image_url ?? null,
     userAccount: user_account ?? '',
     userDescription: user_description ?? '',
+    userSnsGoogle: user_sns_google ?? '',
     userSnsFacebook: user_sns_facebook ?? '',
+    userSnsFacebookName: user_sns_facebook_name ?? '',
     userSnsTwitter: user_sns_twitter ?? '',
+    userSnsTwitterAccessToken: user_sns_twitter_access_token ?? '',
+    userSnsTwitterSecret: user_sns_twitter_secret ?? '',
     userSnsInstagram: user_sns_instagram ?? '',
+    userSnsWebsite: user_sns_website ?? '',
+    userPassCode: user_pass_code ?? '',
+    verifiedAt: verified_at ? (verified_at as Timestamp).toDate() : null,
     createdAt: created_at ? (created_at as Timestamp).toDate() : undefined,
     updatedAt: updated_at ? (updated_at as Timestamp).toDate() : undefined,
   }
