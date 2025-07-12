@@ -414,6 +414,8 @@ export default {
     'linkage': '連携する',
     'linked': '連携中',
     'twitter_link_modal_title' : 'X連携をしますか？',
+    'twitter_link_modal_description' : `アカウント連携するとマイページにXへのリンクが表示されます。<br />
+                                        さらにソーシャルログインや、Xへの投稿も簡単にできるようになります。`,
     'unlink_modal_title' : '連携を解除しますか？',
     'unlink': '解除',
     'exist_email': 'すでに他ユーザーが利用しているメールアドレスです。',
@@ -421,7 +423,7 @@ export default {
     'notice_pending_email': '※ メールアドレス変更中です。パスコードを認証してください',
     'certification': '認証する',
     'cancel': 'キャンセルする',
-    're_link': '※連携が解除されました。再連携お願いします。'
+    're_link': '※連携が外れているか、まだ連携されていない状態です。<br />必要に応じて再連携してください。'
   },
   'user_profile': {
     'logout': 'ログアウトする',
