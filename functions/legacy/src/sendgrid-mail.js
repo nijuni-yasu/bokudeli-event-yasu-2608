@@ -20,7 +20,6 @@ const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // é–‹ç™
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
 
-const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d'
 const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
 const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7'
@@ -290,42 +289,6 @@ async function sendOrderRemindMailToOrganizer(start, end, event_days_ago) {
   })
 
   return Promise.all(promises)
-}
-
-async function sendEventConcludedMailToMembers(start, end) {
-  const events = await db
-    .collectionGroup('events')
-    .where('event_end_datetime', '>', Timestamp.fromMillis(start))
-    .where('event_end_datetime', '<=', Timestamp.fromMillis(end))
-    .where('event_status.value', '==', 'accepting_order')
-    .where('is_deleted', '==', false)
-    .get()
-  return Promise.all(
-    events.docs.map(async (eventSnapshot) => {
-      const eventData = eventSnapshot.data()
-      const dynamic_template_data = {
-        date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
-        event_name: eventData.event_name,
-        event_cover_url: eventData.event_cover_url,
-        event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-        is_public: eventData.is_public,
-      }
-      try {
-        await Promise.all(
-          (await getEventMemberEmails(eventSnapshot)).map(async (to) => {
-            await sgMail.send({
-              to,
-              from: DEFAULT_FROM,
-              templateId: EVENT_SURVEY_TEMPLATE_ID,
-              dynamic_template_data,
-            })
-          }),
-        )
-      } catch (err) {
-        console.warn(err)
-      }
-    }),
-  )
 }
 
 async function sendInvoiceMailToOrganizers(start, end) {
@@ -787,7 +750,6 @@ export const polling = functions
     const one_day_millis = 24 * 60 * 60 * 1000
 
     const promise_list = [
-      sendEventConcludedMailToMembers(start, end),
       sendInvoiceMailToOrganizers(start, end),
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
