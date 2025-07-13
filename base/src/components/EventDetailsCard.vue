@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getCommunityPath } from '@/router/utils'
+import { getCommunityPath, getLogin } from '@/router/utils'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EventMemberList from '@/components/EventMemberList.vue'
 import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
@@ -31,7 +31,6 @@ import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
 
 const router = useRouter()
 const route = useRoute()
-
 
 const qrcodeSize = 300
 
@@ -80,10 +79,10 @@ const showQrCode = () => {
 
 const login = () => {
   router.push({
-    path: '/login',
+    path: getLogin(),
     query: {
-      redirect: route.path
-    }
+      redirect: route.path,
+    },
   })
 }
 
@@ -106,7 +105,7 @@ const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | '
 }
 // コミュニティの設定によっては参加者一覧を非表示にする
 const isShowMember = computed(() =>
-  props.community.is_show_member !== undefined ? props.community.is_show_member : true
+  props.community.is_show_member !== undefined ? props.community.is_show_member : true,
 )
 </script>
 
@@ -282,14 +281,14 @@ const isShowMember = computed(() =>
             <v-spacer />
             <v-col cols="auto">
               <div v-if="isShowMember === true">
-              <router-link :to="{ path: `${event.event_id}/members` }">
-                <div class="d-flex align-end">
-                  <v-icon size="large" :icon="mdiAccountGroup" />
-                  <span class="ml-2" style="font-size: 16px">
-                    {{ $t('event_details.participants_profile') }}
-                  </span>
-                </div>
-              </router-link>
+                <router-link :to="{ path: `${event.event_id}/members` }">
+                  <div class="d-flex align-end">
+                    <v-icon size="large" :icon="mdiAccountGroup" />
+                    <span class="ml-2" style="font-size: 16px">
+                      {{ $t('event_details.participants_profile') }}
+                    </span>
+                  </div>
+                </router-link>
               </div>
               <div v-else-if="isShowMember === false">
                 <v-card-text class="text-subtitle-2 text-right pb-3">
@@ -299,7 +298,12 @@ const isShowMember = computed(() =>
             </v-col>
           </v-row>
           <v-divider class="custom-divider mt-2" />
-          <event-member-list :members="members" :event-max-people="event.event_max_people" :is-show-member="isShowMember" class="mt-4 mb-8" />
+          <event-member-list
+            :members="members"
+            :event-max-people="event.event_max_people"
+            :is-show-member="isShowMember"
+            class="mt-4 mb-8"
+          />
         </div>
         <v-card-text>
           <v-row align-self-center>

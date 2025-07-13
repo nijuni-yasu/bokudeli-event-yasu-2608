@@ -8,7 +8,7 @@ import { generatePassCode } from '@/utils/generatePassCode'
 import { FirestoredUser } from '@/schemes/storedUser'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { getProfile } from '@/router/utils'
+import { getLogin, getProfile } from '@/router/utils'
 
 const router = useRouter()
 const route = useRoute()
@@ -33,7 +33,7 @@ watch(passCode, async (newValue) => {
 
 const login = () => {
   router.push({
-    path: '/login',
+    path: getLogin(),
     query: {
       redirect: route.query.redirect as string,
     },
