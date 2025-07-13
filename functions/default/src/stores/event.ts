@@ -195,3 +195,21 @@ export const getAcceptingOrderEventsByTime = async (
   const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
+
+// イベント終了時間の範囲で注文受付中のイベントを取得
+export const getAcceptingOrderEventsByEndTime = async (
+  startTimeMillis: number,
+  endTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_end_datetime', '>', Timestamp.fromMillis(startTimeMillis))
+    .where('event_end_datetime', '<=', Timestamp.fromMillis(endTimeMillis))
+    .where('event_status.value', '==', 'accepting_order')
+    .where('is_deleted', '==', false)
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
