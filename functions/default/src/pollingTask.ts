@@ -6,6 +6,7 @@ import {
   sendOrderDeadlineMailToMembers,
 } from './orderDeadlineMail.js'
 import { sendEventConcludedMailToMembers } from './eventConclusionMail.js'
+import { sendInCartNotificationToMember, sendInCartEventDeadlineNotificationToMember } from './inCartNotification.js'
 
 const ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
 
@@ -28,6 +29,8 @@ export const pollingTask = onSchedule(
       sendOrderDeadlineMailToOrganizers(start, end),
       sendOrderDeadlineMailToMembers(start, end),
       sendEventConcludedMailToMembers(start, end),
+      sendInCartNotificationToMember(start, end),
+      sendInCartEventDeadlineNotificationToMember(start, end),
     ]
     await Promise.all(promiseFunctions)
   },

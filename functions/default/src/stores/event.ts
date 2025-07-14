@@ -213,3 +213,20 @@ export const getAcceptingOrderEventsByEndTime = async (
   const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
+
+// 更新時間の範囲でカート内注文を取得
+export const getInCartOrdersByUpdatedTime = async (
+  startTimeMillis: number,
+  endTimeMillis: number,
+  transaction?: Transaction,
+): Promise<EventOrder[]> => {
+  const db = getFirestore()
+  const ordersRef = db
+    .collectionGroup('orders')
+    .where('status', '==', 'in_cart')
+    .where('updated_at', '>', Timestamp.fromMillis(startTimeMillis))
+    .where('updated_at', '<=', Timestamp.fromMillis(endTimeMillis))
+    .withConverter(new ShokujiiEventOrderConverter())
+  const ordersSnapshot = await (transaction === undefined ? ordersRef.get() : transaction.get(ordersRef))
+  return ordersSnapshot.docs.map((doc) => doc.data())
+}
