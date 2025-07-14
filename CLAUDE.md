@@ -1,10 +1,17 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは、Claude Code（claude.ai/code）がこのリポジトリで作業する際の開発者向けガイドです。
+実装に必要な技術情報と開発フローに焦点を当てています。
+
+## 関連ドキュメント
+- **詳細仕様**: `documents/1_仕様概要/1.1_仕様概要.md` - プロジェクトの包括的な仕様書
+- **機能追加仕様**: `documents/2_機能追加/` - 新機能の仕様書
 
 ## プロジェクト概要
 
 Shokujii（食事でつながる）は、食事関連のコミュニティイベント管理プラットフォームです。Firebase ベースのモノレポ構造で、複数のフロントエンドアプリケーションと Firebase Functions で構成されています。
+
+**詳細な仕様については `documents/1_仕様概要/1.1_仕様概要.md` を参照してください。**
 
 ## 開発コマンド
 
@@ -45,8 +52,8 @@ cd functions/legacy
 
 ### モノレポ構造
 - **`/user/`** - メインユーザー向けアプリケーション（Vue 3 + Vite + Vuetify 3）
-- **`/admin/`** - 管理画面（Vue 3 + Vite + Vuetify 3）  
-- **`/manager/`** - 管理ダッシュボード（Vue 2 + Vue CLI + Vuetify 2）- レガシー
+- **`/admin/`** - 飲食店向け管理画面（Vue 3 + Vite + Vuetify 3）  
+- **`/manager/`** - 運営向け管理画面（Vue 2 + Vue CLI + Vuetify 2）- レガシー
 - **`/curry/`** - 特殊用途アプリケーション（Vue 3 + Vite + Vuetify 3）
 - **`/base/`** - Materio テンプレートを使用した共有UIコンポーネント
 - **`/common/`** - 共有Firebase スキーマとユーティリティ
@@ -83,8 +90,8 @@ cd functions/legacy
 
 ### ホスティングターゲット
 - `user` - メインユーザーアプリケーション
-- `admin` - 管理画面  
-- `manager` - 管理ダッシュボード
+- `admin` - 飲食店向け管理画面  
+- `manager` - 運営者向け管理画面
 - `curry` - 特殊用途アプリケーション
 
 ### 環境管理
