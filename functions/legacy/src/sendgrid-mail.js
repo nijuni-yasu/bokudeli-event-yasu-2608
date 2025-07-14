@@ -29,7 +29,6 @@ const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
 const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
 const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 
-const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
 const USER_PASS_CODE = 'd-84540f5feaf8422484b65bdc2be739fe'
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
@@ -554,75 +553,6 @@ async function sendOrderCompletionMailToOrganizers(orderSnapshot, userId) {
   )
 }
 
-async function sendInCartNotificationToMember(start, end) {
-  const notifyTime = 24 * 60 * 60 * 1000 // 1日
-  const orderSnapshot = await db
-    .collectionGroup('orders')
-    .where('status', '==', 'in_cart')
-    .where('updated_at', '>', Timestamp.fromMillis(start - notifyTime))
-    .where('updated_at', '<=', Timestamp.fromMillis(end - notifyTime))
-    .get()
-
-  // TODO map と filter をかける時は flatMap を使う
-  const notificationDataList = await Promise.all(
-    orderSnapshot.docs.map(async (orderDoc) => {
-      const order = orderDoc.data()
-      const userId = order.user_id
-      const [eventSnapshot, userEmail] = await Promise.all([orderDoc.ref.parent.parent.get(), getUserEmail(userId)])
-      return { eventSnapshot, userEmail }
-    }),
-  )
-
-  const filteredNotificationDataList = notificationDataList.filter((notificationData) => {
-    const deadlineTimestamp = notificationData.eventSnapshot.get('event_deadline_datetime')
-    return start < deadlineTimestamp.toMillis()
-  })
-
-  Promise.all(
-    filteredNotificationDataList.map(async (notificationData) => {
-      const { eventSnapshot, userEmail } = notificationData
-      return sgMail.send(buildInCartNotificationMail(eventSnapshot, userEmail))
-    }),
-  )
-}
-
-async function sendInCartEventDeadlineNotificationToMember(start, end) {
-  const notifyTime = 24 * 60 * 60 * 1000 // 1日
-  const events = await db
-    .collectionGroup('events')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start + notifyTime))
-    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end + notifyTime))
-    .where('event_status.value', '==', 'accepting_order')
-    .where('is_deleted', '==', false)
-    .get()
-
-  // user_email が設定されている場合のみメールコンテンツを生成する
-  const mailContentList = []
-  await Promise.all(
-    events.docs.map(async (eventSnapshot) => {
-      const ordersSnapshot = await eventSnapshot.ref.collection('orders').get()
-      return await Promise.all(
-        ordersSnapshot.docs
-          .filter((orderSnapshot) => orderSnapshot.get('status') === 'in_cart')
-          .map(async (orderSnapshot) => {
-            const orderData = orderSnapshot.data()
-            const userEmail = await getUserEmail(orderData.user_id)
-            if (userEmail == null || userEmail === '') {
-              return
-            }
-            mailContentList.push(buildInCartNotificationMail(eventSnapshot, userEmail))
-          }),
-      )
-    }),
-  )
-
-  return Promise.all(
-    mailContentList.map(async (mailContent) => {
-      sgMail.send(mailContent)
-    }),
-  )
-}
-
 async function sendLetter(_, end) {
   return db.runTransaction(async (transaction) => {
     const letters = await transaction.get(
@@ -715,29 +645,6 @@ async function sendLetter(_, end) {
   })
 }
 
-function buildInCartNotificationMail(eventSnapshot, to) {
-  const eventData = eventSnapshot.data()
-  return {
-    to,
-    from: DEFAULT_FROM,
-    templateId: IN_CART_NOTIFICATION_ID,
-    dynamic_template_data: {
-      date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
-      event_datetime: convertToDuration(
-        eventData.event_start_datetime?.toMillis(),
-        eventData.event_end_datetime?.toMillis(),
-      ),
-      event_name: eventData.event_name,
-      event_cover_url: eventData.event_cover_url,
-      community_name: eventData.community_name,
-      event_address: eventData.event_address,
-      shop_name: eventData.shop_name,
-      event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-      event_deadline_datetime: convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis()),
-    },
-  }
-}
-
 export const polling = functions
   .region('asia-northeast1')
   .runWith({ timeoutSeconds: 540 })
@@ -751,8 +658,6 @@ export const polling = functions
 
     const promise_list = [
       sendInvoiceMailToOrganizers(start, end),
-      sendInCartNotificationToMember(start, end),
-      sendInCartEventDeadlineNotificationToMember(start, end),
       sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis, false), // 1日後通知
       sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis, false), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
