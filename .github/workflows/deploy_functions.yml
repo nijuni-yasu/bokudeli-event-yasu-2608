@@ -16,7 +16,7 @@ on:
         options:
           - development
           - production
-    
+
 concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
@@ -37,15 +37,25 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version-file: ./functions/default/.node-version
+          node-version-file: ./.node-version
       - name: Install dependencies
-        working-directory: ./functions/default
         run: |
-          yarn install --frozen-lockfile
+          npm install --frozen-lockfile
       - name: Generate .env file
         working-directory: ./functions/default
         run: |
           echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
+      - name: Check Format
+        run: |
+          npm -w common run format:check
+          npm -w functions/default run format:check
+      - name: Build
+        run: |
+          npm -w functions/default run build
+      - name: Lint
+        run: |
+          npm -w common run lint
+          npm -w functions/default run lint
       - name: Install dependencies for legacy
         working-directory: ./functions/legacy
         run: |

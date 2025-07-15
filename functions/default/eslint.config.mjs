@@ -1,49 +1,47 @@
-import pluginJs from '@eslint/js'
 import importPlugin from 'eslint-plugin-import'
 import globals from 'globals'
-import typescriptEslintPlugin from '@typescript-eslint/eslint-plugin'
-import typescriptEslintParser from '@typescript-eslint/parser'
+import { baseConfig, typescriptConfig } from '../../eslint.config.mjs'
 
 export default [
+  ...baseConfig,
   {
-    ignores: [
-      'dist/**/*', // Ignore built files.
-      'tests/**/*', // Ignore test files.
-      'lib/**/*', // Ignore built files.
-    ],
+    ignores: ['dist/**/*', 'lib/**/*'],
   },
   {
+    ...typescriptConfig,
     languageOptions: {
-      sourceType: 'module',
-      globals: { ...globals.browser },
-    },
-    rules: {
-      quotes: ['error', 'single'],
-    },
-  },
-  pluginJs.configs.recommended,
-  {
-    files: ['**/*.ts', '**/*.tsx'],
-    languageOptions: {
+      ...typescriptConfig.languageOptions,
       globals: { NodeJS: true, ...globals.node },
-      parser: typescriptEslintParser,
-      parserOptions: {
-        project: ['tsconfig.json', 'tsconfig.dev.json'],
-      },
     },
     plugins: {
+      ...typescriptConfig.plugins,
       import: importPlugin,
-      '@typescript-eslint': typescriptEslintPlugin,
+    },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+        },
+      },
     },
     rules: {
+      ...typescriptConfig.rules,
       ...importPlugin.configs.errors.rules,
       ...importPlugin.configs.warnings.rules,
       ...importPlugin.configs.typescript.rules,
-      ...typescriptEslintPlugin.configs.rules,
-      'import/no-unresolved': 'off',
-      indent: ['error', 2],
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['error'],
+      'no-restricted-syntax': [
+        'error',
+        // Rule for logger.debug
+        {
+          selector: 'CallExpression[callee.object.name="logger"][callee.property.name="debug"]',
+          message: 'logger.debug() is not allowed in production code. Please remove it after debugging.',
+        },
+        // Rule for logger.log
+        {
+          selector: 'CallExpression[callee.object.name="logger"][callee.property.name="log"]',
+          message: 'Avoid using logger.log(). Please use a more specific log level like .info(), .warn(), or .error().',
+        },
+      ],
     },
   },
 ]

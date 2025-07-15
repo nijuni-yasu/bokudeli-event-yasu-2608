@@ -1,0 +1,16 @@
+node_modules
+*.d.ts
+firebase.json
+
+/base/src/@core
+/base/src/@layouts
+/documents
+
+// themes dires are associated with the materio, so they should not be formatted
+themes/
+
+// For legacy code that should not be formatted with this top level Prettier config
+/manager
+/functions/legacy
+/functions/shokujii-linebot
+/functions/shokujii-slackbot
