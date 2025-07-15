@@ -475,6 +475,16 @@ onMounted(async () => {
 
       await linkWithCredential(userCredential.user, credential)
         .then(async (userCredential) => {
+          // アカウントリンク時、メールアドレス変更中でなければverifiedAtを埋める
+          const storedUserStore = useStoreStoredUser()
+          const storedUser = storedUserStore.storedUser as StoredUser
+          if (storedUser.userEmailPending === null) {
+            storedUser.verifiedAt = Timestamp.now().toDate()
+            storedUserStore.update(storedUser)
+            const userStore = useUserStore(storedUser.userId) as UserStore
+            await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+          }
+
           const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
           await transitionJudge(userCredential, additionalUserInfo)
         })
@@ -514,6 +524,16 @@ const handleLinkWithCredential = async () => {
 
     await linkWithCredential(userCredential.user, oAuthCredential.value)
       .then(async (userCredential) => {
+        // アカウントリンク時、メールアドレス変更中でなければverifiedAtを埋める
+        const storedUserStore = useStoreStoredUser()
+        const storedUser = storedUserStore.storedUser as StoredUser
+        if (storedUser.userEmailPending === null) {
+          storedUser.verifiedAt = Timestamp.now().toDate()
+          storedUserStore.update(storedUser)
+          const userStore = useUserStore(storedUser.userId) as UserStore
+          await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+        }
+
         const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
         await transitionJudge(userCredential, additionalUserInfo)
       })
