@@ -315,7 +315,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     case 'facebook.com':
       storedUser.userSnsFacebookName = storedUser.userSnsFacebookName || (additionalUserInfo.profile?.name as string)
 
-      if (isNewUser) {
+      if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
         storedUser.verifiedAt = Timestamp.now().toDate()
       }
 
@@ -342,7 +342,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
         }
       }
 
-      if (isNewUser) {
+      if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
         storedUser.verifiedAt = Timestamp.now().toDate()
       }
 
@@ -352,7 +352,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     case 'google.com':
       storedUser.userSnsGoogle = storedUser.userSnsGoogle || (additionalUserInfo?.profile?.email as string)
 
-      if (isNewUser) {
+      if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
         storedUser.verifiedAt = Timestamp.now().toDate()
       }
 
@@ -478,7 +478,7 @@ onMounted(async () => {
           // アカウントリンク時、メールアドレス変更中でなければverifiedAtを埋める
           const storedUserStore = useStoreStoredUser()
           const storedUser = storedUserStore.storedUser as StoredUser
-          if (storedUser.userEmailPending === null) {
+          if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
             storedUser.verifiedAt = Timestamp.now().toDate()
             storedUserStore.update(storedUser)
             const userStore = useUserStore(storedUser.userId) as UserStore
