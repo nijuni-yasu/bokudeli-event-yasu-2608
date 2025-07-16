@@ -44,16 +44,16 @@ const userDescription = computed(() => props.member.user_description ?? '')
       <v-card-text class="sns-buttons">
         <v-row class="justify-center">
           <v-col cols="auto">
-            <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
+            <a v-if="twitterUrl" :href="twitterUrl" target="_blank" @click.stop>
               <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
             </a>
-            <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
+            <a v-if="facebookUrl" :href="facebookUrl" target="_blank" @click.stop>
               <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
             </a>
-            <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
+            <a v-if="instagramUrl" :href="instagramUrl" target="_blank" @click.stop>
               <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
             </a>
-            <a v-if="websiteUrl" :href="websiteUrl" target="_blank">
+            <a v-if="websiteUrl" :href="websiteUrl" target="_blank" @click.stop>
               <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
             </a>
           </v-col>
