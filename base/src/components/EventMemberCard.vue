@@ -3,7 +3,7 @@ import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/bu
 import { type EventMember } from '@/schemes/EventMember'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
-import { mdiTwitter, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
+import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{
   member: EventMember
@@ -45,7 +45,7 @@ const userDescription = computed(() => props.member.user_description ?? '')
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn :icon="mdiTwitter" size="small" class="ma-2"></v-btn>
+              <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
               <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
