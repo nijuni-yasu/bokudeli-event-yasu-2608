@@ -6,22 +6,33 @@ const props = defineProps<{ content: string; style?: string }>()
 </template>
 <style module>
 .tiny-mce-viewer {
-  h3 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     margin-top: 16px;
     margin-bottom: 8px;
     padding: 0;
-    font-size: calc(16px * 1.17);
-    line-height: calc(16px * 1.17 * 1.5);
+    font-size: calc(15px * 1.3);
+    line-height: calc(15px * 1.3 * 1.5);
     color: #2e263db3;
   }
 
-  p,
-  ul,
-  ol {
+  p {
     margin: 8px 0px 8px;
     padding: 0;
-    line-height: 2;
-    font-size: 16px;
+    line-height: 1.8;
+    font-size: 15px;
+    font-weight: 400;
+  }
+  ul,
+  ol {
+    margin: 8px 24px 8px;
+    padding: 0;
+    line-height: 1.8;
+    font-size: 15px;
     font-weight: 400;
   }
 
@@ -31,14 +42,15 @@ const props = defineProps<{ content: string; style?: string }>()
   }
 
   table {
-    margin: 0;
-    padding: 0;
-    border: 1px solid #ccc;
     border-collapse: collapse;
   }
-
-  td {
-    padding: 8px;
+  table, th, td  {
+    border: 1px solid #ccc;
+    padding: 5px;
+  }
+  td p, th p {
+    padding: 0;
+    margin: 0;
   }
 }
 </style>
