@@ -361,7 +361,7 @@ export default {
     'email': 'メールアドレス',
     'continue_email': 'メールアドレスで続ける',
     'sns_login': '{sns_name}でログイン',
-    'link_dialog_body' : '{try_login_provider_label}に設定されているメールアドレスは、{link_provider_label}アカウントが既に連携されています。 <br/>連携しますか？'
+    'link_dialog_body' : '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携しますか？'
   },
   'email': {
     'register_email': 'メールアドレス登録',
@@ -419,8 +419,8 @@ export default {
     'unlink_modal_title' : '連携を解除しますか？',
     'unlink': '解除',
     'exist_email': 'すでに他ユーザーが利用しているメールアドレスです。',
-    'pending_email': '変更中のメールアドレス<br/>{pending_email}',
-    'notice_pending_email': '※ メールアドレス変更中です。パスコードを認証してください',
+    'pending_email': '【変更中のメールアドレス】<br/><b>{pending_email}</b>',
+    'notice_pending_email': '※ メールアドレスを変更中です。パスコードを認証してください。',
     'certification': '認証する',
     'cancel': 'キャンセルする',
     're_link': '※連携が外れているか、まだ連携されていない状態です。<br />必要に応じて再連携してください。'

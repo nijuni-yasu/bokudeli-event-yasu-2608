@@ -676,14 +676,10 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
-          <div class="text-subtitle-1 mt-3 mb-10">{{ $t('profile.email_description') }}</div>
 
           <v-card-text v-if="userEmailPending">
-            <div>
-              <span v-html="$t('profile.pending_email', { pending_email: userEmailPending })" />
-              <br />
-              <span style="color: red">{{ $t('profile.notice_pending_email') }}</span>
-            </div>
+            <div class="py-1" v-html="$t('profile.pending_email', { pending_email: userEmailPending })" />
+            <div class="py-1 text-error text-subtitle-2">{{ $t('profile.notice_pending_email') }}</div>
             <div class="d-flex flex-row justify-center">
               <v-btn class="ma-2" :loading="isVerificationLoading" @click="certificationPendingEmail">{{
                 $t('profile.certification')
@@ -695,6 +691,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
           </v-card-text>
 
           <div v-else>
+            <div class="text-subtitle-1 mt-3 mb-10">{{ $t('profile.email_description') }}</div>
             <v-form v-model="isValidEmail" @submit.prevent="emailSubmit">
               <v-text-field
                 class="my-12"
