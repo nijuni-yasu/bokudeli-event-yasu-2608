@@ -3,7 +3,7 @@ import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/bu
 import { type EventMember } from '@/schemes/EventMember'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
-import { mdiTwitter, mdiFacebook, mdiInstagram } from '@mdi/js'
+import { mdiTwitter, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{
   member: EventMember
@@ -18,6 +18,9 @@ const facebookUrl = computed(() =>
 )
 const instagramUrl = computed(() =>
   props.member.user_sns_instagram ? buildInstagramUrl(props.member.user_sns_instagram) : null,
+)
+const websiteUrl = computed(() =>
+  props.member.user_sns_website ? props.member.user_sns_website : null,
 )
 const userDescription = computed(() => props.member.user_description ?? '')
 
@@ -49,6 +52,9 @@ const userDescription = computed(() => props.member.user_description ?? '')
             </a>
             <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
               <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
+            </a>
+            <a v-if="websiteUrl" :href="websiteUrl" target="_blank">
+              <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
             </a>
           </v-col>
         </v-row>
