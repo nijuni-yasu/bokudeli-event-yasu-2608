@@ -90,7 +90,12 @@ export const setupRouter = (router: Router) => {
     const storedUserStore = useStoreStoredUser()
 
     if (userAccessiblePaths.includes(to.path) && !storedUserStore.storedUser) router.replace('/')
-    if (to.path === getLogin() && storedUserStore.storedUser) router.replace('/')
+    if (
+      to.path === getLogin() &&
+      storedUserStore.storedUser &&
+      useStoreUserAdditionalInfo().additionalUserInfo === null
+    )
+      router.replace('/')
   })
 
   let unsubscribeAuthStateChanged: Unsubscribe | null
