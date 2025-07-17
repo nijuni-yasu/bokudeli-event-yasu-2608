@@ -13,6 +13,54 @@ interface OgpContext {
   description?: string
 }
 
+const returnOriginalIndexHtml = async (site: string, res: express.Response) => {
+  const originalResponse = await fetch(`${site}/index.html`)
+  if (originalResponse.ok) {
+    res.status(originalResponse.status)
+    originalResponse.headers.forEach((value, key) => {
+      res.setHeader(key, value)
+    })
+    pipeline(Readable.fromWeb(originalResponse.body as any), res, (err: NodeJS.ErrnoException | null) => {
+      if (err) {
+        console.error('Pipeline failed for original response.', err)
+      }
+    })
+  } else {
+    res.status(500).send('Could not retrieve index.html')
+  }
+}
+
+const convertToOgpString = (inputString: string): string => {
+  // 文字列から改行とHTMLタグを削除
+  const stringWithoutNewLinesAndHtmlTags = inputString.replace(/\n/g, '').replace(/<[^>]*>/g, '')
+  // 先頭から100文字を抜き出す
+  const first100Chars = stringWithoutNewLinesAndHtmlTags.substring(0, 100)
+  // HTMLエンコード（一部）を行う
+  return first100Chars.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+const makeMetaTags = (context: OgpContext): string => {
+  const title = context.title || ''
+  const description = context.description || ''
+  const image = context.image || ''
+  const url = context.url || ''
+  const site = context.site || ''
+
+  return `<meta property="og:title" content="${title}">
+<meta property="og:image" content="${image}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:description" content="${description}">
+<meta property="og:url" content="${url}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="食事でつながる「shokujii」">
+<meta name="twitter:site" content="${site}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:image" content="${image}">
+<meta name="twitter:description" content="${description}">`
+}
+
 export const handleEventOgpRequest = https.onRequest(
   {
     region: 'asia-northeast1',
@@ -50,7 +98,7 @@ export const handleEventOgpRequest = https.onRequest(
 
         const eventData = await getEvent(eventId)
         if (eventData === undefined) {
-          res.status(404).send('Event not found')
+          await returnOriginalIndexHtml(site, res)
           return
         }
         context.title = convertToOgpString(eventData.event_name)
@@ -78,11 +126,11 @@ export const handleEventOgpRequest = https.onRequest(
     } catch (e) {
       console.warn(e)
       if (!res.headersSent) {
-        res.status(500).send('Internal Server Error')
+        await returnOriginalIndexHtml(site, res)
       }
       return
     }
-    res.status(404).send('Invalid path')
+    await returnOriginalIndexHtml(site, res)
   },
 )
 
@@ -99,7 +147,7 @@ export const handleCommunityOgpRequest = https.onRequest(
       paths[1] = 'c'
     }
     if (paths[2] === undefined || paths[2] === '') {
-      res.status(404).send('Invalid path')
+      await returnOriginalIndexHtml(site, res)
       return
     }
     // Community 名に大文字を許可していた時代のリクエストに対応
@@ -125,7 +173,7 @@ export const handleCommunityOgpRequest = https.onRequest(
 
         const communityData = await getCommunityByAccount(communityAccount)
         if (communityData === undefined) {
-          res.status(404).send('Community not found')
+          await returnOriginalIndexHtml(site, res)
           return
         }
         context.title = convertToOgpString(communityData.community_name)
@@ -153,41 +201,10 @@ export const handleCommunityOgpRequest = https.onRequest(
     } catch (e) {
       console.warn(e)
       if (!res.headersSent) {
-        res.status(500).send('Internal Server Error')
+        await returnOriginalIndexHtml(site, res)
       }
       return
     }
-    res.status(404).send('Invalid path')
+    await returnOriginalIndexHtml(site, res)
   },
 )
-
-const convertToOgpString = (inputString: string): string => {
-  // 文字列から改行とHTMLタグを削除
-  const stringWithoutNewLinesAndHtmlTags = inputString.replace(/\n/g, '').replace(/<[^>]*>/g, '')
-  // 先頭から100文字を抜き出す
-  const first100Chars = stringWithoutNewLinesAndHtmlTags.substring(0, 100)
-  // HTMLエンコード（一部）を行う
-  return first100Chars.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
-
-const makeMetaTags = (context: OgpContext): string => {
-  const title = context.title || ''
-  const description = context.description || ''
-  const image = context.image || ''
-  const url = context.url || ''
-  const site = context.site || ''
-
-  return `<meta property="og:title" content="${title}">
-<meta property="og:image" content="${image}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:description" content="${description}">
-<meta property="og:url" content="${url}">
-<meta property="og:type" content="article">
-<meta property="og:site_name" content="食事でつながる「shokujii」">
-<meta name="twitter:site" content="${site}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${title}">
-<meta name="twitter:image" content="${image}">
-<meta name="twitter:description" content="${description}">`
-}
