@@ -11,13 +11,13 @@ const display = useDisplay()
 const avatarSize = computed(() => {
   switch (display.name.value) {
     case 'xs':
-      return 50
+      return 60
     case 'sm':
-      return 55
+      return 65
     case 'md':
-      return 35
+      return 44
     default:
-      return 39
+      return 48
   }
 })
 
@@ -55,11 +55,11 @@ const avatarSize = computed(() => {
       {{ $t('event_card.participants', [(members ?? []).length, event.event_max_people]) }}
     </v-card-text>
     <!-- Mutual members -->
-    <v-card-text class="position-relative px-3 pb-1" style="min-height: 50px">
+    <v-card-text class="position-relative px-3 pb-2" style="min-height: 50px">
       <div class="d-flex justify-space-between align-center">
         <div class="v-avatar-group">
           <UserAvatar
-            v-for="member in (members ?? []).slice(0, 9)"
+            v-for="member in (members ?? []).slice(0, 7)"
             :key="member.user_id"
             :user="member"
             :size="avatarSize"

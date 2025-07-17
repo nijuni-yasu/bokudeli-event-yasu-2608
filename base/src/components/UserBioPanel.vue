@@ -3,7 +3,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import { FirestoredUser } from '@/schemes/storedUser'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import UserAvatar from '@/components/UserAvatar.vue'
-import { mdiTwitter, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
+import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
 
 const props = defineProps<{
@@ -52,7 +52,7 @@ const websiteUrl = computed(() => (props.userData?.user_sns_website ? props.user
         <v-row class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn :icon="mdiTwitter" class="ma-2"></v-btn>
+              <v-btn :icon="mdiAlphaXCircle" class="ma-2"></v-btn>
             </a>
             <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
               <v-btn :icon="mdiFacebook" class="ma-2"></v-btn>

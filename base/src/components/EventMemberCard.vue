@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
 import { type EventMember } from '@/schemes/EventMember'
-import { convertTruncateText } from '@/schemes/converter'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
-import { mdiAccount, mdiTwitter, mdiFacebook, mdiInstagram } from '@mdi/js'
+import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{
   member: EventMember
@@ -20,15 +19,17 @@ const facebookUrl = computed(() =>
 const instagramUrl = computed(() =>
   props.member.user_sns_instagram ? buildInstagramUrl(props.member.user_sns_instagram) : null,
 )
+const websiteUrl = computed(() =>
+  props.member.user_sns_website ? props.member.user_sns_website : null,
+)
 const userDescription = computed(() => props.member.user_description ?? '')
 
-const descriptionCharacterLimit = 50
 </script>
 
 <template>
   <v-container class="pa-3">
     <router-link :to="getUserPath(member.user_id)">
-    <v-card class="pt-3 pb-2">
+    <v-card class="pt-3 pb-0">
       <v-card-title class="d-flex align-center flex-column">
         <UserAvatar :user="member" :size="150" />
         <v-row class="justify-center">
@@ -37,24 +38,27 @@ const descriptionCharacterLimit = 50
           </v-col>
         </v-row>
       </v-card-title>
-      <v-card-text v-linkify class="description py-0 px-5">
-        {{ convertTruncateText(userDescription, descriptionCharacterLimit) }}
+      <v-card-text class="description">
+        {{ userDescription }}
       </v-card-text>
-      <v-card-subtitle class="sns-buttons">
+      <v-card-text class="sns-buttons">
         <v-row class="justify-center">
-          <v-col cols="auto" class="pa-1">
-            <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
-              <v-btn :icon="mdiTwitter" size="small" class="ma-2"></v-btn>
+          <v-col cols="auto">
+            <a v-if="twitterUrl" :href="twitterUrl" target="_blank" @click.stop>
+              <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
             </a>
-            <a v-if="facebookUrl" :href="facebookUrl" target="_blank">
+            <a v-if="facebookUrl" :href="facebookUrl" target="_blank" @click.stop>
               <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
             </a>
-            <a v-if="instagramUrl" :href="instagramUrl" target="_blank">
+            <a v-if="instagramUrl" :href="instagramUrl" target="_blank" @click.stop>
               <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
+            </a>
+            <a v-if="websiteUrl" :href="websiteUrl" target="_blank" @click.stop>
+              <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
             </a>
           </v-col>
         </v-row>
-      </v-card-subtitle>
+      </v-card-text>
     </v-card>
     </router-link>
   </v-container>
@@ -64,15 +68,17 @@ const descriptionCharacterLimit = 50
 @import 'src/styles/variables/_vuetify.scss';
 
 .sns-buttons {
-  height: 45px;
+  height: 75px;
 }
 .description {
   font-size: 12px;
-  line-height: 20px;
-  white-space: normal;
-  text-overflow: ellipsis;
+  line-height: 1.7;
+  height: calc(1.7em * 2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  height: calc(5px * 2 + $card-text-padding * 2);
-  max-height: calc(5px * 2 + $card-text-padding * 2);
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 </style>

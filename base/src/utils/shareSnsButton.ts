@@ -61,7 +61,7 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: S
     `📍場所：${event.event_address} ${event.event_place}`,
     `👥主催：${event.community_name}`,
     `👩‍🍳食事：${shop.shop_name}`,
-    `👉詳細：${event.url}?openExternalBrowser=1`,
+    `👉詳細：${event.url}`,
     '',
     `${hashTagText}`,
   ]
