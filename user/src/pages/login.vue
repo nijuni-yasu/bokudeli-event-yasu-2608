@@ -103,7 +103,7 @@ const submit = async () => {
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
     await sendPassCode({ user_email: userEmail, user_pass_code: passCode })
 
-    router.push({
+    return await router.push({
       path: '/pass-code',
       query: {
         email: userEmail,
@@ -369,7 +369,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
 
   // メールアドレスが無い場合はメールアドレス設定へ
   if (email === '' || !email) {
-    return router.push({
+    return await router.push({
       path: '/register/email',
       query: {
         new: Number(isNewUser),
@@ -388,7 +388,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
     await sendPassCode({ user_email: email, user_pass_code: passCode })
 
-    return router.push({
+    return await router.push({
       path: '/pass-code',
       query: {
         email: email,
@@ -403,7 +403,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   if (storedUser?.userName && storedUser?.userDescription && storedUser?.userImageUrl) {
     if (isNewUser) {
       // 初回登録ユーザーならプロフィール設定ページへ
-      return router.push({
+      return await router.push({
         path: getProfile(),
         query: {
           new: Number(isNewUser),
@@ -412,14 +412,14 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
       })
     } else if (route.query.redirect) {
       // 元いたページへ
-      return router.push(route.query.redirect as string)
+      return await router.push(route.query.redirect as string)
     } else {
-      return router.push('/')
+      return await router.push('/')
     }
   }
 
   // プロフィールが埋まっていなければ、登録完了（プロフィール登録誘導）へ
-  return router.push({
+  return await router.push({
     path: '/register/complete',
     query: {
       new: Number(isNewUser),

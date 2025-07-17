@@ -90,7 +90,7 @@ const submit = async () => {
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
     await sendPassCode({ user_email: email, user_pass_code: passCode })
 
-    router.push({
+    return await router.push({
       path: '/pass-code',
       query: {
         email: email,

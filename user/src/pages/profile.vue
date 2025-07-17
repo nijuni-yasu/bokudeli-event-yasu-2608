@@ -200,7 +200,7 @@ const profileSubmit = async () => {
     Object.assign(notification, { message: $t('profile.update_profile'), color: 'success' })
 
     if (route.query.redirect) {
-      router.push(route.query.redirect as string)
+      route.query.redirect as string
     }
   } catch (error) {
     console.warn('Error profile submit:', error)
@@ -251,7 +251,7 @@ const emailSubmit = async () => {
 
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
     await sendPassCode({ user_email: userEmail, user_pass_code: passCode })
-    return router.push({
+    return await router.push({
       path: '/pass-code',
       query: {
         email: userEmail,
@@ -278,7 +278,7 @@ const certificationPendingEmail = async () => {
 
   const sendPassCode = httpsCallable(functions, 'send_pass_code')
   await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
-  return router.push({
+  return await router.push({
     path: '/pass-code',
     query: {
       email: userEmail,
@@ -764,7 +764,11 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
               <label v-if="user.userSnsFacebookName" class="ml-11 font-weight-bold">{{
                 user.userSnsFacebookName
               }}</label>
-              <label v-if="user.userSnsFacebookName && !linkedProviderData.includes('facebook.com')" class="ml-11 re-link" v-html="$t('profile.re_link')" />
+              <label
+                v-if="user.userSnsFacebookName && !linkedProviderData.includes('facebook.com')"
+                class="ml-11 re-link"
+                v-html="$t('profile.re_link')"
+              />
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -798,7 +802,11 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
                 <v-icon :icon="XIcon" size="x-large" class="me-3" />{{ $t('profile.twitter') }}
               </label>
               <label v-if="user.userSnsTwitter" class="ml-11 font-weight-bold">{{ user.userSnsTwitter }}</label>
-              <label v-if="user.userSnsTwitter && !linkedProviderData.includes('twitter.com')" class="ml-11 re-link" v-html="$t('profile.re_link')" />
+              <label
+                v-if="user.userSnsTwitter && !linkedProviderData.includes('twitter.com')"
+                class="ml-11 re-link"
+                v-html="$t('profile.re_link')"
+              />
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -871,7 +879,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
 }
 .re-link {
   font-size: 11px;
-  color: #2E263D8C;
+  color: #2e263d8c;
   padding: 5px;
 }
 </style>
