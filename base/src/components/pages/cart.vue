@@ -286,13 +286,14 @@ const loadCartList = async () => {
 
       // デフォルトのX投稿設定を各カートに追加
       const defaultXPostComment = generateDefaultXPostComment(event)
+      console.log('event', event)
       return [
         {
           order: item,
           event,
           subtotals,
           total,
-          twitterPostEnabled: twitterAccountConnected.value,
+          twitterPostEnabled: event.is_public ? twitterAccountConnected.value : false,
           twitterPostComment: defaultXPostComment,
         },
       ]
