@@ -102,6 +102,7 @@ export default {
     doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
     doesnt_exists_user_image: 'アイコンが登録されていません。登録完了後、注文を完了してください',
     doesnt_exists_user_email: 'メールアドレスが登録されていません。登録完了後、注文を完了してください',
+    go_to_setting: '設定する',
     x_post: {
       title: '参加コメント',
       enable_post: 'X(Twitter)に投稿する',

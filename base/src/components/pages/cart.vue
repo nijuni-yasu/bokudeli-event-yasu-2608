@@ -21,6 +21,7 @@ import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { getProfile } from '@/router/utils'
 import { ref, reactive, computed, onMounted } from 'vue'
+import { getAuth } from 'firebase/auth'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -285,8 +286,13 @@ const loadCartList = async () => {
 
 const isOpenCancelpolicyDialog = ref(false)
 
-// TODO:Xアカウント連携の状態を取得する
-const xAccountConnected = ref(true)
+const xAccountConnected = ref(false)
+
+const auth = getAuth()
+const currentUser = auth.currentUser
+if (currentUser) {
+  xAccountConnected.value = currentUser.providerData.some((info) => info.providerId === 'twitter.com')
+}
 
 onMounted(async () => {
   state.cartList = await loadCartList()
@@ -418,7 +424,7 @@ onMounted(async () => {
               <div v-else>
                 <v-card-text class="card-text-style"> 【{{ $t('cart.x_post.title') }}】 </v-card-text>
                 <v-card-text class="card-text-style">
-                  <v-btn size="small" rounded="pill" class="ma-2" variant="outlined" to="/mypage">
+                  <v-btn size="small" rounded="pill" class="ma-2" variant="outlined" :to="getProfile()">
                     {{ $t('cart.x_post.connect_x') }}
                   </v-btn>
                 </v-card-text>
@@ -476,7 +482,7 @@ onMounted(async () => {
     v-model="openUserParameterConfirm"
     :is-confirm="true"
     :ok-click="() => router.push({ path: getProfile() })"
-    ok-text="設定する"
+    :ok-text="$t('cart.go_to_setting')"
   >
     {{ targetUserParameter }}
   </confirm-dialog>
