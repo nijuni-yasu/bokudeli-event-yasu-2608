@@ -102,26 +102,35 @@ const startOrderProcess = async () => {
   const order = selectedOrder.value
   const event = selectedCartEvent.value
   const twitterPostEnabled = selectedCartTwitterPostEnabled.value
+  let isPosted = false
 
   if (twitterPostEnabled) {
     const postToTwitter = httpsCallable(functions, 'postToTwitter')
     await postToTwitter({ user_id: userId.value, post_comment: selectedCartTwitterPostComment.value })
+      .then(() => {
+        isPosted = true
+      })
+      .catch(() => {
+        isPosted = false
+      })
   }
 
   if (event.event_payment == 'user_advance') {
-    await createCheckoutSession(order)
+    await createCheckoutSession(order, isPosted)
   } else {
     try {
       const eventStore = useEventStore(event.event_id) as EventStore
       await eventStore.updateOrderStatus(order, 'ordered')
-      router.push(`${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`)
+      router.push(
+        `${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
+      )
     } catch (error) {
       alertBody.value = $t('cart.order_failed')
     }
   }
 }
 
-const createCheckoutSession = async (order: OrderItem) => {
+const createCheckoutSession = async (order: OrderItem, isPosted: boolean) => {
   const lineItems = order.menus.map((menu) => {
     return {
       price_data: {
@@ -142,9 +151,7 @@ const createCheckoutSession = async (order: OrderItem) => {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${
-        order.community_account
-      }`,
+      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
       cancel_url: `${stripeBaseURL}/`,
       customer_creation: 'if_required',
       line_items: lineItems,
@@ -286,7 +293,6 @@ const loadCartList = async () => {
 
       // デフォルトのX投稿設定を各カートに追加
       const defaultXPostComment = generateDefaultXPostComment(event)
-      console.log('event', event)
       return [
         {
           order: item,
