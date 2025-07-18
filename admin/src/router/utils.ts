@@ -9,3 +9,4 @@ export const getCommunityPath = (communityAccount: string) => `/c/${communityAcc
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getManageEventPath = (eventId: string) => ''
 export const getProfile = () => `/profile`
+export const getLogin = () => `/login`
