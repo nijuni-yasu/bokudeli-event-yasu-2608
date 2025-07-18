@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { loadEventMembers } from '@/composable/loadEventMembers'
-import { db, stripeBaseURL } from '@/firebase'
+import { db, functions, stripeBaseURL } from '@/firebase'
 import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
@@ -22,6 +22,7 @@ import { useI18n } from 'vue-i18n'
 import { getProfile } from '@/router/utils'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getAuth } from 'firebase/auth'
+import { httpsCallable } from 'firebase/functions'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -29,14 +30,21 @@ const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
 const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
+const twitterAccountConnected = ref<boolean>(false)
+
+const auth = getAuth()
+const currentUser = auth.currentUser
+if (currentUser) {
+  twitterAccountConnected.value = currentUser.providerData.some((info) => info.providerId === 'twitter.com')
+}
 
 type Cart = {
   order: OrderItem
   subtotals: { [key: string]: number }
   total: number
   event: BokudeliEvent
-  xPostEnabled: boolean
-  xPostComment: string
+  twitterPostEnabled: boolean
+  twitterPostComment: string
 }
 
 const state = reactive({
@@ -86,11 +94,19 @@ const openConfirmOrder = ref(false)
 const confirmDialogMessage = ref('')
 const selectedOrder = ref({} as OrderItem)
 const selectedCartEvent = ref({} as BokudeliEvent)
+const selectedCartTwitterPostEnabled = ref<boolean>(false)
+const selectedCartTwitterPostComment = ref<string>('')
 const selectedMenu = ref({} as OrderMenu)
 
 const startOrderProcess = async () => {
   const order = selectedOrder.value
   const event = selectedCartEvent.value
+  const twitterPostEnabled = selectedCartTwitterPostEnabled.value
+
+  if (twitterPostEnabled) {
+    const postToTwitter = httpsCallable(functions, 'postToTwitter')
+    await postToTwitter({ user_id: userId.value, post_comment: selectedCartTwitterPostComment.value })
+  }
 
   if (event.event_payment == 'user_advance') {
     await createCheckoutSession(order)
@@ -198,6 +214,8 @@ const showConfirm = async (cart: Cart) => {
 
   selectedOrder.value = cart.order
   selectedCartEvent.value = cart.event
+  selectedCartTwitterPostEnabled.value = cart.twitterPostEnabled
+  selectedCartTwitterPostComment.value = cart.twitterPostComment
   confirmDialogMessage.value = paymentMessage(cart.event)
   openConfirmOrder.value = true
 }
@@ -274,8 +292,8 @@ const loadCartList = async () => {
           event,
           subtotals,
           total,
-          xPostEnabled: true,
-          xPostComment: defaultXPostComment,
+          twitterPostEnabled: twitterAccountConnected.value,
+          twitterPostComment: defaultXPostComment,
         },
       ]
     }),
@@ -285,14 +303,6 @@ const loadCartList = async () => {
 }
 
 const isOpenCancelpolicyDialog = ref(false)
-
-const xAccountConnected = ref(false)
-
-const auth = getAuth()
-const currentUser = auth.currentUser
-if (currentUser) {
-  xAccountConnected.value = currentUser.providerData.some((info) => info.providerId === 'twitter.com')
-}
 
 onMounted(async () => {
   state.cartList = await loadCartList()
@@ -397,10 +407,10 @@ onMounted(async () => {
         <v-row v-if="cart.event.is_public" class="mt-3">
           <v-col cols="12" class="px-8">
             <v-card class="x-post-section" elevation="1">
-              <div v-if="xAccountConnected">
+              <div v-if="twitterAccountConnected">
                 <v-card-text class="card-text-style"> 【{{ $t('cart.x_post.title') }}】 </v-card-text>
                 <v-card-text class="card-text-style">
-                  <v-checkbox v-model="cart.xPostEnabled" class="px-2" color="primary" hide-details>
+                  <v-checkbox v-model="cart.twitterPostEnabled" class="px-2" color="primary" hide-details>
                     <template #label>
                       <span class="text-subtitle-1">
                         {{ $t('cart.x_post.enable_post') }}
@@ -409,8 +419,8 @@ onMounted(async () => {
                   </v-checkbox>
                 </v-card-text>
                 <v-textarea
-                  v-if="cart.xPostEnabled"
-                  v-model="cart.xPostComment"
+                  v-if="cart.twitterPostEnabled"
+                  v-model="cart.twitterPostComment"
                   class="px-5"
                   :placeholder="$t('cart.x_post.comment_placeholder')"
                   :label="$t('cart.x_post.comment_label')"
@@ -429,7 +439,7 @@ onMounted(async () => {
                   </v-btn>
                 </v-card-text>
                 <v-textarea
-                  v-model="cart.xPostComment"
+                  v-model="cart.twitterPostComment"
                   class="px-5"
                   :placeholder="$t('cart.x_post.comment_placeholder')"
                   :label="$t('cart.x_post.comment_label')"
