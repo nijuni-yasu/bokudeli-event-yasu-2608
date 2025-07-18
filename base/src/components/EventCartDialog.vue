@@ -6,6 +6,7 @@ import { useStoreStoredUser } from '@/stores/storedUser'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { priceString } from '@/schemes/converter'
 import { mdiCart } from '@mdi/js'
+import { getLogin } from '@/router/utils'
 
 const router = useRouter()
 const route = useRoute()
@@ -50,10 +51,10 @@ const userStore = useStoreStoredUser()
 
 const login = () => {
   router.push({
-    path: '/login',
+    path: getLogin(),
     query: {
-      redirect: route.path
-    }
+      redirect: route.path,
+    },
   })
 }
 
@@ -103,7 +104,6 @@ const isOpenConfirmDialog = ref(false)
 const openConfirmDialog = () => {
   isOpenConfirmDialog.value = true
 }
-
 </script>
 
 <template>
@@ -151,11 +151,7 @@ const openConfirmDialog = () => {
         </v-btn>
       </v-row>
     </v-card>
-    <confirm-dialog
-      v-model="isOpenConfirmDialog"
-      :is-confirm="false"
-      @click="login"
-    >
+    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="false" @click="login">
       ログインしてください
     </confirm-dialog>
   </v-dialog>

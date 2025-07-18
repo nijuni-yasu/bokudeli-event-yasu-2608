@@ -9,7 +9,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
 import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
-import { getProfile } from '@/router/utils'
+import { getLogin, getProfile } from '@/router/utils'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
@@ -39,7 +39,7 @@ const router = useRouter()
 
 const login = () => {
   router.push({
-    path: '/login',
+    path: getLogin(),
     query: {
       redirect: route.path,
     },

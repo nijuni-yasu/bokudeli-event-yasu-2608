@@ -28,4 +28,5 @@ export const getManageEventPath = (eventId: string) => `/manage/event/${eventId}
 export const getManageEventSettingsPath = (eventId: string) => `/manage/event/${eventId}/settings`
 export const getEventBillInvoicePath = (eventId: string) => `/manage/event/${eventId}/invoice`
 export const getFlyerPath = () => `/flyer`
+export const getLogin = () => `/login`
 export const getProfile = () => `/profile`

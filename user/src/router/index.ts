@@ -16,7 +16,7 @@ import userAccessiblePaths from '@/utils/userAccessiblePaths'
 import { useEventStore, type EventStore } from '@/stores/event'
 import type BokudeliEvent from '@/schemes/bokudeliEvent'
 import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { getManageCommunityListPath } from './utils'
+import { getLogin, getManageCommunityListPath } from './utils'
 import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
 import { useStoreUserCredential } from '@/stores/userCredential'
 import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
@@ -90,6 +90,12 @@ export const setupRouter = (router: Router) => {
     const storedUserStore = useStoreStoredUser()
 
     if (userAccessiblePaths.includes(to.path) && !storedUserStore.storedUser) router.replace('/')
+    if (
+      to.path === getLogin() &&
+      storedUserStore.storedUser &&
+      useStoreUserAdditionalInfo().additionalUserInfo === null
+    )
+      router.replace('/')
   })
 
   let unsubscribeAuthStateChanged: Unsubscribe | null

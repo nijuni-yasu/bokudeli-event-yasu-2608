@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { db, functions } from '@/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { getAuth, signInWithCustomToken, updateEmail, type User } from 'firebase/auth'
+import { getAuth, signInWithCustomToken, signOut, updateEmail, type User } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { collection, doc, getDocs, query, where, updateDoc, getDoc, Timestamp } from 'firebase/firestore'
+import { collection, doc, getDocs, query, where, updateDoc, Timestamp } from 'firebase/firestore'
 import { generatePassCode } from '@/utils/generatePassCode'
 import { FirestoredUser } from '@/schemes/storedUser'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useStoreStoredUser } from '@/stores/storedUser'
-import { getProfile } from '@/router/utils'
+import { getLogin, getProfile } from '@/router/utils'
+import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
+import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
 
 const router = useRouter()
 const route = useRoute()
@@ -31,9 +33,14 @@ watch(passCode, async (newValue) => {
   }
 })
 
-const login = () => {
-  router.push({
-    path: '/login',
+const login = async () => {
+  useStoreUserAdditionalInfo().reset()
+  useStoreFirebaseAuthError().reset()
+  const auth = getAuth()
+  await signOut(auth)
+
+  return await router.push({
+    path: getLogin(),
     query: {
       redirect: route.query.redirect as string,
     },
@@ -154,7 +161,7 @@ const submit = async () => {
 
       const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
       if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
-        router.push({
+        return await router.push({
           path: getProfile(),
           query: {
             new: Number(isNew),
@@ -164,10 +171,10 @@ const submit = async () => {
       } else if (isNew === undefined || isProfileCompleted) {
         // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
         // newが存在しない = メールアドレス変更時の場合
-        router.push(route.query.redirect as string)
+        return await router.push(route.query.redirect as string)
       } else {
         // プロフィール入力方法の選択ページに遷移
-        router.push({
+        return await router.push({
           path: '/register/complete',
           query: {
             new: Number(isNew),

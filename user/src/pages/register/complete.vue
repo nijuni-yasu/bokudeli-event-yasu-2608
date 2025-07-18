@@ -93,7 +93,7 @@ const handleTwitterLink = async () => {
           color: 'error',
         })
       }
-    } else {
+    } else if (error) {
       console.error({ error })
     }
   } finally {
