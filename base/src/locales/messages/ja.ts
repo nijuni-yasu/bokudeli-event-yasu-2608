@@ -102,6 +102,14 @@ export default {
     doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
     doesnt_exists_user_image: 'アイコンが登録されていません。登録完了後、注文を完了してください',
     doesnt_exists_user_email: 'メールアドレスが登録されていません。登録完了後、注文を完了してください',
+    x_post: {
+      title: '参加コメント',
+      enable_post: 'X(Twitter)に投稿する',
+      comment_placeholder: '参加コメントを入力してください',
+      comment_label: '参加コメント',
+      connect_x: 'X(Twitter)と連携設定して投稿する',
+      default_comment: '{eventName} に参加します✋\n{eventUrl}\n{hashtag}#shokujii',
+    },
   },
   cart_dialog: {
     add: 'カートに追加',
@@ -369,7 +377,7 @@ export default {
     account:
       '3文字以上20文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
-    reserved_chars: 'これらの記号は使用できません。（ %{}|^[]:?#/@`!$\'()*+,;=\\ ）'
+    reserved_chars: "これらの記号は使用できません。（ %{}|^[]:?#/@`!$'()*+,;=\\ ）",
   },
   invoice_error_card: {
     title: 'エラーが発生しました',
@@ -475,7 +483,7 @@ export default {
     share_on_x: 'X で参加予定をシェアする',
     add_to_calendar: 'カレンダーに追加する',
     copy_text: 'テキストコピー',
-    close: '閉じる'
+    close: '閉じる',
   },
   error: {
     '404': {
