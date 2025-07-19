@@ -142,7 +142,7 @@ const createCheckoutSession = async (order: OrderItem) => {
       },
     })
     window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-  } catch (err) {
+  } catch {
     alertBody.value = $t('cart.payment_failed')
   }
 }

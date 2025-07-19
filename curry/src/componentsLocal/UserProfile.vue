@@ -5,7 +5,6 @@ import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline } from '@mdi/js'
-import LineIcon from '@shokujii/base/icons/line.js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 
