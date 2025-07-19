@@ -121,7 +121,7 @@ export class ShokujiiEvent extends Event {
 
   async getMembers(withPersonalInformation: boolean): Promise<ShokujiiUser[]> {
     const members = await Promise.all(this.members.map(async (id) => getUser(id, withPersonalInformation)))
-    return members.filter((member) => member !== undefined)
+    return members.filter((member): member is ShokujiiUser => member !== undefined)
   }
 
   addMember(user: ShokujiiUser | string) {

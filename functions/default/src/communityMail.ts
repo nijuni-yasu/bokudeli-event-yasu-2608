@@ -113,6 +113,7 @@ export const communityAdded = onDocumentCreated(
       return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, community)
     } else {
       console.error('communityAdded event is undefined')
+      throw new HttpsError('invalid-argument', 'event is undefined')
     }
   },
 )
