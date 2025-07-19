@@ -269,7 +269,7 @@ const downloadInvoice = async (order: OrderItem) => {
     v-model="isUserSuccessJoinEventDialogVisible"
     :event-id="(($route.query.eventId ?? '') as string)"
     :community-account="(($route.query.communityAccount ?? '') as string)"
-    :is-posted="($route.query.isPosted === 'true' ? true : false)"
+    :is-posted="($route.query.isPosted === 'true')"
   />
 </template>
 
