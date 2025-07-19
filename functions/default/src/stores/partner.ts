@@ -59,9 +59,11 @@ export class Partner {
       .doc(this.id)
       .collection('menus')
       .withConverter(new PartnerMenuConverter())
-    transaction === undefined
-      ? await menusRef.doc(menu.id).set(menu, { merge: true })
-      : transaction.set(menusRef.doc(menu.id), menu, { merge: true })
+    if (transaction === undefined) {
+      await menusRef.doc(menu.id).set(menu, { merge: true })
+    } else {
+      transaction.set(menusRef.doc(menu.id), menu, { merge: true })
+    }
   }
 
   async getShops(transaction?: Transaction): Promise<PartnerShop[]> {
@@ -95,9 +97,11 @@ export class Partner {
       .doc(this.id)
       .collection('shops')
       .withConverter(new PartnerShopConverter())
-    transaction === undefined
-      ? await shopsRef.doc(shop.id).set(shop, { merge: true })
-      : transaction.set(shopsRef.doc(shop.id), shop, { merge: true })
+    if (transaction === undefined) {
+      await shopsRef.doc(shop.id).set(shop, { merge: true })
+    } else {
+      transaction.set(shopsRef.doc(shop.id), shop, { merge: true })
+    }
   }
 }
 

@@ -1,4 +1,5 @@
 import { pipeline, Readable } from 'stream'
+import { ReadableStream } from 'stream/web'
 import express from 'express'
 import { https } from 'firebase-functions/v2'
 import { ReplaceSectionStream } from '@shokujii/common/utils/ReplaceSectionStream.js'
@@ -20,7 +21,7 @@ const returnOriginalIndexHtml = async (site: string, res: express.Response) => {
     originalResponse.headers.forEach((value, key) => {
       res.setHeader(key, value)
     })
-    pipeline(Readable.fromWeb(originalResponse.body as any), res, (err: NodeJS.ErrnoException | null) => {
+    pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (err: NodeJS.ErrnoException | null) => {
       if (err) {
         console.error('Pipeline failed for original response.', err)
       }
@@ -108,7 +109,7 @@ export const handleEventOgpRequest = https.onRequest(
 
         // pipelineはPromiseを返さないため、コールバックでエラーハンドリング
         pipeline(
-          Readable.fromWeb(response.body as any),
+          Readable.fromWeb(response.body as ReadableStream),
           new ReplaceSectionStream('<!-- OGP_BEGIN_TAG -->', '<!-- OGP_END_TAG -->', makeMetaTags(context)),
           res,
           (err: NodeJS.ErrnoException | null) => {
@@ -183,7 +184,7 @@ export const handleCommunityOgpRequest = https.onRequest(
 
         // pipelineはPromiseを返さないため、コールバックでエラーハンドリング
         pipeline(
-          Readable.fromWeb(response.body as any),
+          Readable.fromWeb(response.body as ReadableStream),
           new ReplaceSectionStream('<!-- OGP_BEGIN_TAG -->', '<!-- OGP_END_TAG -->', makeMetaTags(context)),
           res,
           (err: NodeJS.ErrnoException | null) => {

@@ -64,7 +64,8 @@ export const postToTwitter = onCall(
       )
 
       return { success: true, data: response.data }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // @ts-expect-error Twitter の返すエラーの型が不明なので TODO 要調査
       console.error('Twitter post failed:', error?.response?.data || error.message)
       throw new Error('Twitter post failed')
     }

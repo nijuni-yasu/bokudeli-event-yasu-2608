@@ -12,7 +12,7 @@ import { getUser, type ShokujiiUser } from './user.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
   constructor(private readonly userId?: string) {
-    console.log('ShojukiEventConverter initialized with userId:', userId)
+    // console.log('ShojukiEventConverter initialized with userId:', userId)
   }
   toFirestore(event: ShokujiiEvent): DocumentData {
     if (this.userId == null) {
