@@ -14,6 +14,8 @@ export const loadEventMembers = async (communityAccount: string, eventId: string
   )
   const memberSnapshot = await getDocs(memberDb)
 
+  // 旧仕様を維持するため ESLint 抑制
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const memberList = memberSnapshot.docs.map((doc): { menus: any[]; userId: string } => {
     const { menus, user_id } = doc.data()
     return { menus, userId: user_id }

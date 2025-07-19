@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar } from '@mdi/js'
 import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import { useEventStore } from '@shokujii/base/stores/event'

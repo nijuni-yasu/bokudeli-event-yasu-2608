@@ -1,3 +1,4 @@
+import { inject } from 'vue'
 import type { Notification } from '@shokujii/base/types'
 
 export const useNotification = () => {

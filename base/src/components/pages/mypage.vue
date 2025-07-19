@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { getUserPath } from '@/router/utils'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 

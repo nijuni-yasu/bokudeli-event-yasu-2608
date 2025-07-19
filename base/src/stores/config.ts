@@ -1,4 +1,5 @@
-import { type ComputedRef } from 'vue'
+import { ref, computed, watch, type ComputedRef } from 'vue'
+import { defineStore } from 'pinia'
 import type { StateTree, Store } from 'pinia'
 import {
   doc,
@@ -8,9 +9,9 @@ import {
   type FirestoreDataConverter,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { db } from '@shokujii/base/firebase'
+import { db } from '@shokujii/base/firebase.js'
 import { ConfigGlobal } from '@shokujii/common/schemas/Config.js'
-import { FIRESTORE_LOADING } from '@shokujii/base/utils/const'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 
 const configConverter: FirestoreDataConverter<ConfigGlobal> = {
   toFirestore(config: ConfigGlobal): DocumentData {

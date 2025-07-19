@@ -1,4 +1,6 @@
-import { type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
+import { defineStore } from 'pinia'
+import type { Store, StateTree } from 'pinia'
 import { db } from '@shokujii/base/firebase'
 import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import {
@@ -19,7 +21,6 @@ import {
   type QueryConstraint,
 } from 'firebase/firestore'
 import { convertDocumentDataToEvent } from '@shokujii/base/schemes/converter'
-import type { Store, StateTree } from 'pinia'
 import { TaskExecutor } from '@shokujii/base/utils/executors'
 import { useEventStore, type EventStore } from './event'
 

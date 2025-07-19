@@ -2,7 +2,7 @@
  * This directive is inspired by the v-linkify
  * https://github.com/maorbarel/v-linkify
  */
-import type { DirectiveBinding } from 'vue'
+import type { DirectiveBinding, VNode } from 'vue'
 import findLinksAndReplace from './utils/findLinksAndReplace'
 
 export default {

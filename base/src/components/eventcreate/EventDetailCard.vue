@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { emailValidator } from '@core/utils/validators'
 import { useI18n } from 'vue-i18n'
 import BokudeliEvent, { eventPaymentSelectableTypes } from '@shokujii/base/schemes/bokudeliEvent'
 import { useValidators } from '@shokujii/base/composable/validators'

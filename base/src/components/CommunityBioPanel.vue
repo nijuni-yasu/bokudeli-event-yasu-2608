@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
 import { type CommunityMember } from '@shokujii/base/schemes/communityMember'
 import { getUserPath } from '@/router/utils'
@@ -11,7 +12,7 @@ const props = defineProps<{
   members: (CommunityMember | null)[] | null
 }>()
 const emit = defineEmits<{
-  (e: 'clickContact'): void
+  clickContact: []
 }>()
 
 const twitterUrl = computed(() =>

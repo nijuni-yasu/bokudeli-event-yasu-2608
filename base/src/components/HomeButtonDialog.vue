@@ -12,14 +12,7 @@ const props = defineProps<{
   maxWidth?: string
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
-
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const dialog = defineModel<boolean>()
 
 const maxWidth = computed(() => {
   return props.maxWidth ? props.maxWidth : '600px'

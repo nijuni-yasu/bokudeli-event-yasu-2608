@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import IncrementalLoader from './IncrementalLoader.vue'
 import { useEventListStore, type EventListStore } from '@shokujii/base/stores/eventList'

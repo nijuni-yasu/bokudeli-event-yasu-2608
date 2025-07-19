@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import type { VInput } from 'vuetify/components'
 
 // https://stackoverflow.com/a/77201828
@@ -16,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  (e: 'fileSelected', value: File | null): void
+  fileSelected: [value: File | null]
 }>()
 
 const imageFile = ref<File | null>(null)

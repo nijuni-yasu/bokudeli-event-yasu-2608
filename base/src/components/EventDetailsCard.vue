@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getCommunityPath, getLogin } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
@@ -43,18 +45,16 @@ const props = defineProps<{
 // TODO コンポーネントを分割する
 const eventStore = useEventStore(props.event.event_id) as EventStore
 
-const members = computed(
-  () =>
-    eventStore.members?.sort(
-      (a, b) =>
-        a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
-    ) ?? [],
+const members = computed(() =>
+  [...(eventStore.members ?? [])].sort(
+    (a, b) =>
+      a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
+      b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
+  ),
 )
 
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
-const isOpenLoginDialog = ref(false)
 const isOpenCalendarAddDialog = ref(false)
 const isShowQrCode = ref(false)
 const isOpenCancelpolicyDialog = ref(false)

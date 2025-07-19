@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers'
 import { db, functions, stripeBaseURL } from '@shokujii/base/firebase'
-import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
+import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
 import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import {
   dateWithDayOfWeekString,
@@ -19,8 +22,6 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { getProfile } from '@/router/utils'
-import { ref, reactive, computed, onMounted } from 'vue'
 import { getAuth } from 'firebase/auth'
 import { httpsCallable } from 'firebase/functions'
 
@@ -124,7 +125,7 @@ const startOrderProcess = async () => {
       router.push(
         `${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
       )
-    } catch (error) {
+    } catch {
       alertBody.value = $t('cart.order_failed')
     }
   }
@@ -167,7 +168,7 @@ const createCheckoutSession = async (order: OrderItem, isPosted: boolean) => {
       },
     })
     window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-  } catch (err) {
+  } catch {
     alertBody.value = $t('cart.payment_failed')
   }
 }

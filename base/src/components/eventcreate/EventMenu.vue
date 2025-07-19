@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
@@ -13,8 +14,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit'): void
-  (e: 'back'): void
+  submit: []
+  back: []
 }>()
 
 const submit = () => {

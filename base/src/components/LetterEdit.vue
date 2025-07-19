@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed, toRaw } from 'vue'
 import _ from 'lodash'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
@@ -28,7 +29,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:letter', letter: Letter): void
+  'update:letter': [letter: Letter]
 }>()
 
 const _letter = ref<Letter>(_.clone(toRaw(props.letter)))
@@ -82,7 +83,7 @@ const _save = async () => {
 const submit = async () => {
   try {
     const now = Timestamp.now()
-    _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
+    _letter.value.scheduled_at = isScheduled.value ? scheduleTime.value : now
     _letter.value.status = 'timed'
     await _save()
     emit('update:letter', toRaw(_letter.value))

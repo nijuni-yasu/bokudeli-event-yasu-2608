@@ -48,6 +48,7 @@ function onOpenUrl(url: string | undefined) {
       <template v-else>
         <v-carousel-item
           v-for="banner in banners"
+          :key="banner.image_url"
           cover
           hide-delimiter
           :class="{ 'clickable-item': banner.link_url !== undefined }"

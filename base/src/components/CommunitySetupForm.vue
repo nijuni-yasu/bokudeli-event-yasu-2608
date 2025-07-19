@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
 import { useValidators } from '@shokujii/base/composable/validators'
 import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
 import { type CommunityListStore } from '@shokujii/base/stores/communityList'
@@ -26,10 +27,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'openNewCommunityDialog'): void
-  (e: 'openConfirmDialog'): void
-  (e: 'cancel'): void
-  (e: 'submit'): void
+  openNewCommunityDialog: []
+  openConfirmDialog: []
+  cancel: []
+  submit: []
 }>()
 
 const isValid = ref(false)

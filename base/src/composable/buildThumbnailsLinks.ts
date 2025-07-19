@@ -55,5 +55,4 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       return result
     }, {} as ThumbnailLinks)
   } */ // Facebook は後からサイズ変更には対応していない
-  return null
 }

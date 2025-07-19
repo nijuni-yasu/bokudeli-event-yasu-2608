@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'

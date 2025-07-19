@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
@@ -17,16 +19,9 @@ const props = defineProps<{
   eventId: string
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
-
 const eventStore = useEventStore(props.eventId) as EventStore
 
-const isOpen = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const isOpen = defineModel<boolean>()
 
 const countOptions = Array.from({ length: 5 }, (_, i) => i + 1)
 const selectedCount = ref(1)

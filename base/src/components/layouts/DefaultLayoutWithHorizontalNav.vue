@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { ref, watch, type PropType } from 'vue'
 import { themeConfig } from '@themeConfig'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 

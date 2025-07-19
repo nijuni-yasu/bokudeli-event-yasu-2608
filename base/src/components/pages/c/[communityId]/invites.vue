@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { defineProps } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
@@ -29,7 +30,6 @@ const redirect = () => {
 watch(
   () => [useStoreStoredUser().storedUser, (useCommunityStore(props.communityId) as CommunityStore).community],
   ([storedUser, community]) => {
-    console.log('watch', storedUser)
     if (storedUser == null) {
       isOpenLoginDialog.value = true
       return

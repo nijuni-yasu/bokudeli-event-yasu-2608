@@ -1,6 +1,7 @@
 /**
  * 多くは '@core/utils/validators' に実装されているが、日本語に変換するためにここに実装する
  */
+import { isEmpty } from '@core/utils/helpers'
 import { useI18n } from 'vue-i18n'
 import {
   requiredValidator as _requiredValidator,

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { isEmpty } from '@core/utils/helpers'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
 import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
@@ -52,23 +54,32 @@ const communityStore = useCommunityStore(props.communityAccount) as CommunitySto
 const isOpenContactDialogVisible = ref(props.eventId == null)
 
 const _event = ref<BokudeliEvent | null>(null)
+
+// Initialize _event when community data becomes available
+watch(
+  () => communityStore.community,
+  (community) => {
+    if (props.eventId == null && _event.value == null && community != null) {
+      _event.value = new BokudeliEvent(
+        community.community_id,
+        community.community_account,
+        community.community_name,
+        community.community_manager_fullname,
+        community.community_company,
+        community.community_email,
+        community.community_phone,
+      )
+    }
+  },
+  { immediate: true },
+)
+
 const event = computed<BokudeliEvent | null>({
   get: () => {
     if (props.eventId != null) {
       const eventStore = useEventStore(props.eventId) as EventStore
       return eventStore.event
     } else {
-      if (_event.value == null && communityStore.community != null) {
-        _event.value = new BokudeliEvent(
-          communityStore.community.community_id,
-          communityStore.community.community_account,
-          communityStore.community.community_name,
-          communityStore.community.community_manager_fullname,
-          communityStore.community.community_company,
-          communityStore.community.community_email,
-          communityStore.community.community_phone,
-        )
-      }
       return _event.value
     }
   },
@@ -281,6 +292,7 @@ const submit = async () => {
 const sendReserveMail = async () => {
   const event = await saveDraft()
   if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
+    // eslint-disable-next-line quotes
     console.warn("The event doesn't have enough information.", event)
     return
   }

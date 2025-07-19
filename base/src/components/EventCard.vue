@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type BokudeliEvent from '../schemes//bokudeliEvent'
 import type { EventMember } from '../schemes/EventMember'
 import UserAvatar from './UserAvatar.vue'

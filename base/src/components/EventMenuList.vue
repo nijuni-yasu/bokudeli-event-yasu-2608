@@ -9,7 +9,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'selectMenu', menu: PartnerMenu): void
+  selectMenu: [menu: PartnerMenu]
 }>()
 </script>
 <template>

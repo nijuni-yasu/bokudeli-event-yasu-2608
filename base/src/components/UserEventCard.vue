@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import { type OrderItem } from '@shokujii/base/schemes/orderItem'
 

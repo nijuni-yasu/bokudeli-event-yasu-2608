@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
 import avatar1 from '@/assets/images/avatars/default_profile.jpeg'
 

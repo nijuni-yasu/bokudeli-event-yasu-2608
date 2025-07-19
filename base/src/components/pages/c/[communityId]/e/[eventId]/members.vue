@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import { type CommunityStore, useCommunityStore } from '@shokujii/base/stores/community'
 import { type EventStore, useEventStore } from '@shokujii/base/stores/event'
@@ -31,13 +33,12 @@ const isShowMember: boolean = await new Promise((resolve) => {
 
 const eventStore = useEventStore(props.eventId) as EventStore
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
-const members = computed(
-  () =>
-    eventStore.members?.sort(
-      (a, b) =>
-        a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
-    ) ?? [],
+const members = computed(() =>
+  [...(eventStore.members ?? [])].sort(
+    (a, b) =>
+      a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
+      b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
+  ),
 )
 </script>
 <template>

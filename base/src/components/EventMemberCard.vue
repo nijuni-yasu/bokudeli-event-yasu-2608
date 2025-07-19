@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { type EventMember } from '@shokujii/base/schemes/EventMember'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'

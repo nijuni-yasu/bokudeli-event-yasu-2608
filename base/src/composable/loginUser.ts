@@ -103,7 +103,7 @@ export const loginUser = async (user: User) => {
             const providerData = user.providerData.find((info) => {
               return info.providerId === FacebookAuthProvider.PROVIDER_ID
             })
-            const imageQueryUrl = providerData?.photoURL + `?width=500&height=500&redirect=false`
+            const imageQueryUrl = providerData?.photoURL + '?width=500&height=500&redirect=false'
             // ログインに影響が出ないよう、非同期で画像を取得する
             axios.get(imageQueryUrl).then(async (response) => {
               const imageUrl = !response.data.data.is_silhouette ? response.data.data.url : null

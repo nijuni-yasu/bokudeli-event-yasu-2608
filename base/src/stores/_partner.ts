@@ -1,4 +1,4 @@
-import type { Ref } from 'vue'
+import { ref, computed, type Ref } from 'vue'
 import type { Store, StateTree } from 'pinia'
 import type { DocumentReference, DocumentSnapshot, SnapshotOptions, Unsubscribe } from 'firebase/firestore'
 import { Shop } from '@shokujii/base/schemes/shop'
@@ -151,7 +151,7 @@ type PartnerStoreState = {
   menus: Ref<PartnerMenu[] | null>
 } & StateTree
 
-type PartnerStoreGetters = {}
+type PartnerStoreGetters = object
 
 type PartnerStoreAction = {
   updateShop: (data: Shop, image?: File) => Promise<void>

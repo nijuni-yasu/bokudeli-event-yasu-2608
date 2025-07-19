@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
@@ -12,8 +13,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'sent'): void
-  (e: 'failed'): void
+  sent: []
+  failed: []
 }>()
 
 const mailSubject = ref('')
@@ -37,7 +38,7 @@ const onFormSubmit = async () => {
         emit('sent')
         return
       } catch (error) {
-        console.log(error)
+        console.warn(error)
         // Fall through
       }
     }

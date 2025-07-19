@@ -10,22 +10,11 @@ import {
 } from 'firebase/auth'
 import { mdiFacebook, mdiGoogle } from '@mdi/js'
 
-const props = defineProps<{
-  modelValue: boolean
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
-
 const loginProvider = 'google' as 'facebook' | 'google'
 
 const isEnableLinkWithCredential = false
 
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const dialog = defineModel<boolean>()
 
 const closeDialog = () => {
   dialog.value = false

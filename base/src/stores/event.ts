@@ -1,7 +1,7 @@
-import { type Ref } from 'vue'
-import { db, functions } from '@shokujii/base/firebase'
+import { ref, computed, watch, toRaw, type Ref } from 'vue'
+import { defineStore } from 'pinia'
+import type { Store, StateTree } from 'pinia'
 import { httpsCallable } from 'firebase/functions'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import {
   collection,
   collectionGroup,
@@ -15,13 +15,14 @@ import {
   DocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { uploadEventImage } from '@shokujii/base/composable/uploadImage'
-import { convertDocumentDataToEvent, convertDocumentDataToMenu } from '@shokujii/base/schemes/converter'
-import type { Store, StateTree } from 'pinia'
-import { type OrderItem } from '@shokujii/base/schemes/orderItem'
-import { type EventMember } from '@shokujii/base/schemes/EventMember'
-import type { PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
-import { useUserStore, type UserStore } from './user'
+import { db, functions } from '@shokujii/base/firebase.js'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { uploadEventImage } from '@shokujii/base/composable/uploadImage.js'
+import { convertDocumentDataToEvent, convertDocumentDataToMenu } from '@shokujii/base/schemes/converter.js'
+import { type OrderItem } from '@shokujii/base/schemes/orderItem.js'
+import { type EventMember } from '@shokujii/base/schemes/EventMember.js'
+import type { PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
+import { useUserStore, type UserStore } from './user.js'
 
 const add_order = httpsCallable<Partial<OrderItem>, { order_id: string }>(functions, 'add_order')
 const delete_order = httpsCallable<{ community_id: string; event_id: string; order_id: string; menu_id: string }>(
@@ -91,8 +92,6 @@ export const useEventStore = (terget: string | DocumentSnapshot) => {
   const store = defineStore<string, EventStoreState & EventStoreGetters & EventStoreAction>(
     `/events/${eventId}`,
     () => {
-      const router = useRouter()
-
       const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
       const exists = ref<boolean | null>(null)
       const event = ref<BokudeliEvent | null>(null)

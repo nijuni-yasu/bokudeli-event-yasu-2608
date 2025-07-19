@@ -130,8 +130,8 @@ export default {
           ・<b>「注文の目安」</b> の個数を下回ると、配送料をご請求する場合がありますのでご注意ください🚚<br />
           ・当日フードを受け取って、食事会をお楽しみください😋😋😋<br />
           <br />
-          　詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> や <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_0#slide=id.g2b9c62499c1_0_0" target="_blank">告知・集客のコツ</a> もご一読ください。<br />
-          　ご不明点やご要望がありましたら、サポートまで
+          詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> や <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_0#slide=id.g2b9c62499c1_0_0" target="_blank">告知・集客のコツ</a> もご一読ください。<br />
+          ご不明点やご要望がありましたら、サポートまで
           <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
           `,
   },
@@ -215,10 +215,10 @@ export default {
     community_desc_hint: 'コミュニティの簡単な説明を入力してください',
     image_setting: '画像設定',
     community_cover_image: 'カバー画像',
-    community_cover_image_hint: `※推奨サイズ：1200x630px`,
+    community_cover_image_hint: '※推奨サイズ：1200x630px',
     community_icon_image: 'アイコン',
-    community_icon_image_hint: `※推奨サイズ：300x300px`,
-    community_create_next: `コミュニティを作成したら<br>次はイベントをつくってみよう🎉`,
+    community_icon_image_hint: '※推奨サイズ：300x300px',
+    community_create_next: 'コミュニティを作成したら<br>次はイベントをつくってみよう🎉',
     email_setting: 'メール設定',
     email_hint: '「問い合わせ先」や「配信するレターの返信先」として、コミュニティのメールアドレスを設定してください。',
     sns_setting: 'SNS設定',
@@ -378,6 +378,7 @@ export default {
     account:
       '3文字以上20文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
+    // eslint-disable-next-line quotes
     reserved_chars: "これらの記号は使用できません。（ %{}|^[]:?#/@`!$'()*+,;=\\ ）",
   },
   invoice_error_card: {
@@ -395,7 +396,7 @@ export default {
       'イベントの注文個数が「注文の目安」に達しない場合、イベント主催者に配送料をご請求させていただく場合がございます。あらかじめご了承ください。',
   },
   event_draft_notice_modal: {
-    title: `お店に予約申請しよう📩`,
+    title: 'お店に予約申請しよう📩',
     desc: `・現在<b>「下書き」</b>中のため、ご注文いただくことができません<br />
            ・イベント内容について問題なければ、お店に<b>「予約申請」</b>してください📩<br />
            ・お店から<b>「予約承認」</b>されると、注文や告知ができるようになります👍<br />
@@ -404,14 +405,14 @@ export default {
            ・予約申請が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   event_applying_notice_modal: {
-    title: `お店からの予約承認をお待ちください🙇‍♂️`,
+    title: 'お店からの予約承認をお待ちください🙇‍♂️',
     desc: `・現在<b>「予約申請中」</b>のため、ご注文いただくことができません。<br />
            ・お店からの<b>「予約承認」</b>をお待ちください。<br />
            ・予約申請期間は、<b>「最大で3日間」</b>となっております。<br />
            ・予約申請が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   event_few_members_notice_modal: {
-    title: `イベントを盛り上げよう🎉`,
+    title: 'イベントを盛り上げよう🎉',
     desc: `お店から予約承認をいただきました。<br />
            以下手順で友人知人を食事会に招待して盛り上げていきましょう。<br />
            <br />
