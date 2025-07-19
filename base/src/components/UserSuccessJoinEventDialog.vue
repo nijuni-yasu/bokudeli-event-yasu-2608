@@ -12,12 +12,14 @@ import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
 const props = defineProps<{
   eventId: string
   communityAccount: string
+  isPosted: boolean
 }>()
 
 const model = defineModel<boolean>()
 
 const eventStore = useEventStore(props.eventId)
 const communityStore = useCommunityStore(props.communityAccount)
+const isPosted = props.isPosted
 
 const event = computed(() => eventStore.event)
 
@@ -69,18 +71,27 @@ const openCalendarAddDialog = () => {
           {{ event.event_name }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
-          {{ $t('success_join_event_dialog.datetime') }} {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
+          {{ $t('success_join_event_dialog.datetime') }}
+          {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
             $d(event.event_end_datetime.toDate(), 'time')
           }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
-          {{ $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short')]) }}
+          {{
+            $t('success_join_event_dialog.deadline', [
+              $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short'),
+            ])
+          }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.place') }} {{ event.event_address }} {{ event.event_place }}
         </v-card-text>
-        <v-card-text class="text-description pb-1 px-0">{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text>
-        <v-card-text class="text-description pb-1 px-0">{{ $t('success_join_event_dialog.food') }} {{ event.shop_name }}</v-card-text>
+        <v-card-text class="text-description pb-1 px-0"
+          >{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text
+        >
+        <v-card-text class="text-description pb-1 px-0"
+          >{{ $t('success_join_event_dialog.food') }} {{ event.shop_name }}</v-card-text
+        >
         <v-card-text
           v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''"
           class="text-description pb-1 px-0"
@@ -91,30 +102,30 @@ const openCalendarAddDialog = () => {
           </a>
         </v-card-text>
         <v-card-text class="mt-5">
-          <v-row justify="center" v-if="event.is_public">
-              <v-btn
-                class="my-2"
-                size="large"
-                color="grey-900"
-                :append-icon="mdiSend"
-                rounded="pill"
-                @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
-              >
-                {{ $t('success_join_event_dialog.share_on_x') }}
-              </v-btn>
+          <v-row justify="center" v-if="event.is_public && !isPosted">
+            <v-btn
+              class="my-2"
+              size="large"
+              color="grey-900"
+              :append-icon="mdiSend"
+              rounded="pill"
+              @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
+            >
+              {{ $t('success_join_event_dialog.share_on_x') }}
+            </v-btn>
           </v-row>
           <v-row justify="center">
-              <v-btn
-                class="my-2"
-                size="large"
-                color="grey-900"
-                :append-icon="mdiCalendar"
-                rounded="pill"
-                @click="openCalendarAddDialog"
-              >
-                {{ $t('success_join_event_dialog.add_to_calendar') }}
-              </v-btn>
-          </v-row> 
+            <v-btn
+              class="my-2"
+              size="large"
+              color="grey-900"
+              :append-icon="mdiCalendar"
+              rounded="pill"
+              @click="openCalendarAddDialog"
+            >
+              {{ $t('success_join_event_dialog.add_to_calendar') }}
+            </v-btn>
+          </v-row>
         </v-card-text>
         <v-card-text class="text-center px-0 py-1">
           <v-btn
