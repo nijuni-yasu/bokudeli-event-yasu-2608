@@ -5,7 +5,7 @@ declare const IS_SERVER: boolean
 /*
  * Timestamp が client 用と server 用で異なるため、動的ロードで対応する
  */
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let module: any
 if (IS_SERVER) {
   module = await import('./firebase.server.js')

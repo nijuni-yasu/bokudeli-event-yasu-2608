@@ -16,7 +16,9 @@ export class ReplaceSectionStream extends Transform {
     this.isReplacing = false
   }
 
-  _transform(chunk: any, encoding: BufferEncoding, callback: Function): void {
+  // Node, Web コンパチブル対応のため Lint 抑制
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type, no-undef
+  _transform(chunk: any, _: BufferEncoding, callback: Function): void {
     this.buffer += chunk.toString()
 
     // 置換処理
@@ -48,6 +50,8 @@ export class ReplaceSectionStream extends Transform {
     callback()
   }
 
+  // Node, Web コンパチブル対応のため Lint 抑制
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   _flush(callback: Function): void {
     // ストリーム終了時に残りのバッファを処理
     if (this.isReplacing) {

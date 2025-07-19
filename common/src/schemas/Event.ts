@@ -10,10 +10,15 @@ import {
 export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
 
-const RAW_EVENT_STATUS_VALUES = ['in_draft', 'applying_reservation', 'applying_to_admin', 'accepting_order'] as const
+export const RAW_EVENT_STATUS_VALUES = [
+  'in_draft',
+  'applying_reservation',
+  'applying_to_admin',
+  'accepting_order',
+] as const
 type RawEventStatusType = (typeof RAW_EVENT_STATUS_VALUES)[number]
 
-const EVENT_STATUS_VALUES = [...RAW_EVENT_STATUS_VALUES, 'order_closed', 'finished', 'full'] as const
+export const EVENT_STATUS_VALUES = [...RAW_EVENT_STATUS_VALUES, 'order_closed', 'finished', 'full'] as const
 export type EventStatusType = (typeof EVENT_STATUS_VALUES)[number]
 
 // Member を DocumentReference から ID に変換するための Schema
@@ -234,6 +239,7 @@ export class Event {
     return EventDbSchema.safeParse(this.getDb(updateUserId)).success
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(updateUserId: string): any {
     return EventDbSchema.parse(this.getDb(updateUserId))
   }

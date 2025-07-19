@@ -84,6 +84,7 @@ export class Community {
     return CommunityDbSchema.safeParse(this.getDb()).success
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(): any {
     return CommunityDbSchema.parse(this.getDb())
   }
