@@ -5,7 +5,6 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { useCommunityListStore, type CommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 
-const router = useRouter()
 const notification = useNotification()
 const { t: $t } = useI18n()
 

@@ -340,17 +340,17 @@ export default {
                       詳細については <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携について</a> もご確認ください。</b>`,
       setup: '設定方法',
       step1: 'STEP1',
-      step1_desc: `下記リンクをクリックして、shokujii の SlackApp をコミュニティのワークスペースにインストール`,
+      step1_desc: '下記リンクをクリックして、shokujii の SlackApp をコミュニティのワークスペースにインストール',
       step2: 'STEP2',
       step2_desc: `通知先のチャンネルを選択👆<br>
                     通知用に <b>#shokujii</b> のチャンネルを作成するのもおすすめです。<b>`,
       step3: 'STEP3',
-      step3_desc: `SlackAppを追加したチャンネルを開いて、以下のコマンドを<b>コピーして送信！<b>`,
+      step3_desc: 'SlackAppを追加したチャンネルを開いて、以下のコマンドを<b>コピーして送信！<b>',
       step4: '完了🎉',
       step4_desc: `<b>「参加者の注文通知」「注文期限のリマインド」「参加者確定のお知らせ」「イベント開始のリマインド」「イベント終了のお知らせ」</b><br>
                     などがSlackのチャンネルで通知されるようになります。`,
       step5: '解除🔓',
-      step5_desc: `設定を解除したい場合は、以下コマンドを設定したチャンネルで送信してください。`,
+      step5_desc: '設定を解除したい場合は、以下コマンドを設定したチャンネルで送信してください。',
       copy: 'コピー',
     },
     settings: {
@@ -384,7 +384,8 @@ export default {
   login: {
     login_fail: '{sns_name}ログインできませんでした',
     welcome: 'shokujiiへようこそ',
-    please_login_or_register_below: `<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。`,
+    please_login_or_register_below:
+      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。',
     email: 'メールアドレス',
     continue_email: 'メールアドレスで続ける',
     sns_login: '{sns_name}でログイン',
@@ -421,7 +422,8 @@ export default {
     fail_image_upload: '画像のアップロードに失敗しました。',
     profile_settings: 'プロフィール設定',
     social_link: 'ソーシャルリンク',
-    social_link_description: `ソーシャルリンクを設定すると <a href="https://shokujii.jp/mypage">マイページ</a> にSNSアカウントをリンクすることができます。`,
+    social_link_description:
+      'ソーシャルリンクを設定すると <a href="https://shokujii.jp/mypage">マイページ</a> にSNSアカウントをリンクすることができます。',
     profile_image: 'プロフィール画像',
     user_account: 'ユーザーURL',
     validator_account_exists: 'このユーザーURLは既に使用されています',

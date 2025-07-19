@@ -48,9 +48,9 @@ onMounted(async () => {
             await updateDoc(personalInformationRef, {
               user_email: restoredEmail.value,
             })
-            console.info('users_personal_informationの復元に成功しました。')
+            // console.info('users_personal_informationの復元に成功しました。')
           } else {
-            console.info('users_personal_informationの復元に失敗しました。')
+            console.warn('users_personal_informationの復元に失敗しました。')
           }
 
           Object.assign(notification, { message: $t('auth.action.notify_reset_email'), color: 'success' })

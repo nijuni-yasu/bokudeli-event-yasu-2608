@@ -12,33 +12,35 @@ import X from '@/assets/images/sns/sns_x.png'
       <span class="align-center"> ＼最新情報はSNSをチェック／ </span>
     </div>
     <table align="center" style="margin: auto">
-      <tr>
-        <td style="padding: 0 10px">
-          <a href="https://x.com/shokujii_jp" target="_blank">
-            <img :src="X" alt="X" style="width: 45px; height: 45px; border-radius: 20%" />
-          </a>
-        </td>
-        <td style="padding: 0 10px">
-          <a href="https://facebook.com/shokujii" target="_blank">
-            <img :src="facebook" alt="Facebook" style="width: 45px; height: 45px; border-radius: 20%" />
-          </a>
-        </td>
-        <td style="padding: 0 10px">
-          <a href="https://instagram.com/shokujii_jp" target="_blank">
-            <img :src="instagram" alt="Instagram" style="width: 45px; height: 45px; border-radius: 20%" />
-          </a>
-        </td>
-        <td style="padding: 0 10px">
-          <a href="https://note.com/shokujii/" target="_blank">
-            <img :src="note" alt="note" style="width: 45px; height: 45px; border-radius: 20%" />
-          </a>
-        </td>
-        <td style="padding: 0 10px">
-          <a href="https://lin.ee/0FEi1kbV/" target="_blank">
-            <img :src="line" alt="LINE" style="width: 45px; height: 45px; border-radius: 20%" />
-          </a>
-        </td>
-      </tr>
+      <tbody>
+        <tr>
+          <td style="padding: 0 10px">
+            <a href="https://x.com/shokujii_jp" target="_blank">
+              <img :src="X" alt="X" style="width: 45px; height: 45px; border-radius: 20%" />
+            </a>
+          </td>
+          <td style="padding: 0 10px">
+            <a href="https://facebook.com/shokujii" target="_blank">
+              <img :src="facebook" alt="Facebook" style="width: 45px; height: 45px; border-radius: 20%" />
+            </a>
+          </td>
+          <td style="padding: 0 10px">
+            <a href="https://instagram.com/shokujii_jp" target="_blank">
+              <img :src="instagram" alt="Instagram" style="width: 45px; height: 45px; border-radius: 20%" />
+            </a>
+          </td>
+          <td style="padding: 0 10px">
+            <a href="https://note.com/shokujii/" target="_blank">
+              <img :src="note" alt="note" style="width: 45px; height: 45px; border-radius: 20%" />
+            </a>
+          </td>
+          <td style="padding: 0 10px">
+            <a href="https://lin.ee/0FEi1kbV/" target="_blank">
+              <img :src="line" alt="LINE" style="width: 45px; height: 45px; border-radius: 20%" />
+            </a>
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
   <div class="my-5 text-center">

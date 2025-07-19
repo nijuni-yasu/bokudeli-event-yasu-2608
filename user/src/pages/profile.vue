@@ -851,7 +851,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
       <v-card-text class="text-center py-10 text-h4">
         {{ $t('profile.twitter_link_modal_title') }}
       </v-card-text>
-      <v-card-text class="text-center py-5" v-html="$t('profile.twitter_link_modal_description')" />
+      <v-card-text class="text-center py-5">{{ $t('profile.twitter_link_modal_description') }} </v-card-text>
     </confirm-dialog>
     <confirm-dialog
       v-model="isOpenUnLinkDialog"

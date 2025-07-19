@@ -42,7 +42,7 @@ const fetchUser = async (identifier: string) => {
     } else {
       userIdRef.value = ''
     }
-  } catch (error) {
+  } catch {
     userIdRef.value = ''
   }
 }
