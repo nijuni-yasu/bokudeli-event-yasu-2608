@@ -8,7 +8,7 @@ import { VBtn } from 'vuetify/components/VBtn'
 import { createVueI18nAdapter } from 'vuetify/locale/adapters/vue-i18n'
 import defaults from './defaults'
 import { themes } from '@/themes'
-import { getI18n } from '@/plugins/i18n/index'
+import { getI18n } from '@shokujii/base/plugins/i18n/index'
 
 // Icons
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'

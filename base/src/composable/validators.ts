@@ -1,5 +1,5 @@
 /**
- * 多くは '@/@core/utils/validators' に実装されているが、日本語に変換するためにここに実装する
+ * 多くは '@core/utils/validators' に実装されているが、日本語に変換するためにここに実装する
  */
 import { useI18n } from 'vue-i18n'
 import {

@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAuth, checkActionCode, applyActionCode, signInWithCustomToken } from 'firebase/auth'
 import { doc, Timestamp, updateDoc } from 'firebase/firestore'
-import { db, functions } from '@/firebase'
+import { db, functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 

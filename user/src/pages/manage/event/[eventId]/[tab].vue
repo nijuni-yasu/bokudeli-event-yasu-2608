@@ -4,11 +4,11 @@ definePage({
     navActiveLink: '/manage/event/',
   },
 })
-import { useEventStore, type EventStore } from '@/stores/event'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowTopRight } from '@mdi/js'
-import { useCommunityStore } from '@/stores/community'
+import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import { getManageCommunityPath } from '@/router/utils'
 
 const { t: $t } = useI18n()

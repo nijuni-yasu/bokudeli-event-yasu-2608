@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { getCommunityPath } from '@/router/utils'
-import { useCommunityListStore } from '@/stores/communityList'
+import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { orderBy, where } from 'firebase/firestore'
-import CommunityCard from '@/components/CommunityCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 
 const communityListStore = useCommunityListStore([
   where('is_public', '==', true),

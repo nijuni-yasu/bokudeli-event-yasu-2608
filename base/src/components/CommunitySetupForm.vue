@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useValidators } from '@/composable/validators'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { type CommunityListStore } from '@/stores/communityList'
-import ImageInput from '@/components/ImageInput.vue'
+import { useValidators } from '@shokujii/base/composable/validators'
+import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type CommunityListStore } from '@shokujii/base/stores/communityList'
+import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import {
   mdiPlus,
   mdiHelpCircleOutline,

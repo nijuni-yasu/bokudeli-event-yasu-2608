@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { slackBotFunctionBaseURL } from '@/firebase'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { slackBotFunctionBaseURL } from '@shokujii/base/firebase.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { mdiContentCopy } from '@mdi/js'
 import slackLogo from '@/assets/images/slack/slack_logo.png'
 import slackImage01 from '@/assets/images/slack/slack_image_01.png'

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import LoginDialog from '@/components/LoginDialog.vue'
+import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useUserStore, type UserStore } from '@/stores/user'
-import UserAvatar from '@/components/UserAvatar.vue'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline } from '@mdi/js'
-import LineIcon from '@/icons/line'
+import LineIcon from '@shokujii/base/icons/line.js'
 
 const { storedUser } = storeToRefs(useStoreStoredUser())
 

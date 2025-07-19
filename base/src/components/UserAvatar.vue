@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { FirestoredUser } from '@/schemes/storedUser'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
-import avatar1 from '@images/avatars/default_profile.jpeg'
+import avatar1 from '@/assets/images/avatars/default_profile.jpeg'
 
 const props = defineProps<{ user: FirestoredUser | string | null; size?: number }>()
 
@@ -31,7 +31,7 @@ const resizeObserver = new ResizeObserver((entries) => {
     const { width, height } = entry.contentRect
     // 一度表示した後、非表示にした場合、は width, hight 共に 0 になり、
     // その後表示しても ResizeObserver が動作しないので無視する
-    if (width !== 0  && height !== 0) {
+    if (width !== 0 && height !== 0) {
       elementSize.value = Math.max(width, height)
     }
   }

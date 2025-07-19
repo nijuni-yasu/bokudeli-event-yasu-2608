@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { type CommunityMember } from '@/schemes/communityMember'
+import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type CommunityMember } from '@shokujii/base/schemes/communityMember'
 import { getUserPath } from '@/router/utils'
-import UserAvatar from '@/components/UserAvatar.vue'
-import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { mdiEmail, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb, mdiCrown, mdiAccountGroup } from '@mdi/js'
 
 const props = defineProps<{

@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { db, functions } from '@/firebase'
+import { db, functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import { getAuth, signInWithCustomToken, signOut, updateEmail, type User } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import { collection, doc, getDocs, query, where, updateDoc, Timestamp } from 'firebase/firestore'
-import { generatePassCode } from '@/utils/generatePassCode'
-import { FirestoredUser } from '@/schemes/storedUser'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
 import { getLogin, getProfile } from '@/router/utils'
-import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
-import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
+import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
+import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
 
 const router = useRouter()
 const route = useRoute()

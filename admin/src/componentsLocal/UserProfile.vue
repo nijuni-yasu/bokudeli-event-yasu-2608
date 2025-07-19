@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { getAuth, signOut } from 'firebase/auth'
-import UserAvatar from '@/components/UserAvatar.vue'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { mdiLogout } from '@mdi/js'
-import { usePartnerStore } from '@/stores/_partner'
+import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
 
 const auth = getAuth()
 const name = ref<string | null>(null)

@@ -1,5 +1,5 @@
 import { type Ref } from 'vue'
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase'
 import { getAuth } from 'firebase/auth'
 import {
   collection,
@@ -17,11 +17,11 @@ import {
   type DocumentData,
   type QueryConstraint,
 } from 'firebase/firestore'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import { convertDocumentDataToCommunity } from '@shokujii/base/schemes/converter'
 import type { StateTree, Store } from 'pinia'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { TaskExecutor } from '@/utils/executors'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { TaskExecutor } from '@shokujii/base/utils/executors'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 
 type CommunityListStoreState = {
   communityDraft: Ref<BokudeliCommunity>

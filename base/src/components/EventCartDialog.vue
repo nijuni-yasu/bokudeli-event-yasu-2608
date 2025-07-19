@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { type PartnerMenu } from '@/schemes/partnerMenu'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { priceString } from '@/schemes/converter'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'
 import { getLogin } from '@/router/utils'
 

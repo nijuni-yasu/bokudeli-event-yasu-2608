@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type EventStatusType } from '@/schemes/bokudeliEvent'
+import { type EventStatusType } from '@shokujii/base/schemes/bokudeliEvent'
 
 defineEmits<{
   (e: 'update:modelValue', value: string): void

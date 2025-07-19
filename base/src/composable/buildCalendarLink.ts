@@ -1,6 +1,6 @@
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import { google, ics } from 'calendar-link'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
 
 type CalendarType = 'google' | 'ics'
 

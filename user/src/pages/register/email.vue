@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { db, functions } from '@/firebase'
+import { db, functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { generatePassCode } from '@/utils/generatePassCode'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useUserStore, type UserStore } from '@/stores/user'
-import { FirestoredUser, type FirestoredUserPersonalInformation } from '@/schemes/storedUser'
-import { convertFirestoredUserToStoredUser } from '@/schemes/converter'
+import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
+import { FirestoredUser, type FirestoredUserPersonalInformation } from '@shokujii/base/schemes/storedUser.js'
+import { convertFirestoredUserToStoredUser } from '@shokujii/base/schemes/converter.js'
 import { getAuth, updateEmail, signInWithCustomToken, type User } from 'firebase/auth'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { useValidators } from '@/composable/validators'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 
 const auth = getAuth()
 const currentUser = auth.currentUser

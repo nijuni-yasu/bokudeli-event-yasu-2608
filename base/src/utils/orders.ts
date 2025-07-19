@@ -1,5 +1,5 @@
-import type { OrderItem } from '@/schemes/orderItem'
-import type { OrderMenu } from '@/schemes/orderMenu'
+import type { OrderItem } from '@shokujii/base/schemes/orderItem'
+import type { OrderMenu } from '@shokujii/base/schemes/orderMenu'
 
 export const ordersCount = (orders: OrderItem[]) =>
   orders.reduce((acc: number, order) => {

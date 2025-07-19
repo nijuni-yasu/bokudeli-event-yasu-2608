@@ -1,7 +1,7 @@
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import type { Shop } from '@/schemes/shop'
+import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
+import type { Shop } from '@shokujii/base/schemes/shop'
 
 const getXPostTextAfterOrder = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''

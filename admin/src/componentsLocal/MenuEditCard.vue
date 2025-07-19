@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { parseISO, format } from 'date-fns'
 import { Timestamp } from 'firebase/firestore'
-import { PartnerMenu } from '@/schemes/partnerMenu'
-import { useValidators } from '@/composable/validators'
-import ImageInput from '@/components/ImageInput.vue'
-import DateInput from '@/components/DateInput.vue'
+import { PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
+import { useValidators } from '@shokujii/base/composable/validators.js'
+import ImageInput from '@shokujii/base/components/ImageInput.vue'
+import DateInput from '@shokujii/base/components/DateInput.vue'
 
 const { requiredValidator, maxLengthValidator, betweenValidator } = useValidators()
 

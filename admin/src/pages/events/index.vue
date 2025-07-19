@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { where, orderBy } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/_partner'
-import { useEventListStore } from '@/stores/eventList'
+import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { getCommunityPath, getShopPath } from '@/navigation/utils'
-import type { Shop } from '@/schemes/shop'
-import EventCard from '@/components/EventCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import type { Shop } from '@shokujii/base/schemes/shop.js'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
 import {
   mdiPencilBoxOutline

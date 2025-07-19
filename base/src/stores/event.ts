@@ -1,7 +1,7 @@
 import { type Ref } from 'vue'
-import { db, functions } from '@/firebase'
+import { db, functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import {
   collection,
   collectionGroup,
@@ -15,12 +15,12 @@ import {
   DocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { uploadEventImage } from '@/composable/uploadImage'
-import { convertDocumentDataToEvent, convertDocumentDataToMenu } from '@/schemes/converter'
+import { uploadEventImage } from '@shokujii/base/composable/uploadImage'
+import { convertDocumentDataToEvent, convertDocumentDataToMenu } from '@shokujii/base/schemes/converter'
 import type { Store, StateTree } from 'pinia'
-import { type OrderItem } from '@/schemes/orderItem'
-import { type EventMember } from '@/schemes/EventMember'
-import type { PartnerMenu } from '@/schemes/partnerMenu'
+import { type OrderItem } from '@shokujii/base/schemes/orderItem'
+import { type EventMember } from '@shokujii/base/schemes/EventMember'
+import type { PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
 import { useUserStore, type UserStore } from './user'
 
 const add_order = httpsCallable<Partial<OrderItem>, { order_id: string }>(functions, 'add_order')

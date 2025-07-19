@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import CommunityEdit from '@/components/CommunityEdit.vue'
+import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
 import { getManageCommunityPath } from '@/router/utils'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useCommunityListStore, type CommunityListStore } from '@/stores/communityList'
-import { useNotification } from '@/composable/notification'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useCommunityListStore, type CommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const router = useRouter()
 const notification = useNotification()

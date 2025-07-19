@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 import type { StateTree, Store } from 'pinia'
-import { type Letter } from '@/schemes/letter'
+import { type Letter } from '@shokujii/base/schemes/letter'
 import {
   getFirestore,
   onSnapshot,

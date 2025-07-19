@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { useValidators } from '@/composable/validators'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useValidators } from '@shokujii/base/composable/validators'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import {
   mdiChevronLeft,
   mdiCalendarPlus,
@@ -13,9 +13,9 @@ import {
   mdiHandExtendedOutline,
   mdiTimerSand,
 } from '@mdi/js'
-import { hourString, minutesString } from '@/schemes/eventCreate'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import type { Shop } from '@/schemes/shop'
+import { hourString, minutesString } from '@shokujii/base/schemes/eventCreate'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
+import type { Shop } from '@shokujii/base/schemes/shop'
 
 const emit = defineEmits<{
   (e: 'submit'): void

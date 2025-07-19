@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { type OrderItem } from '@/schemes/orderItem'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type OrderItem } from '@shokujii/base/schemes/orderItem'
 
 const props = defineProps<{
   event: BokudeliEvent

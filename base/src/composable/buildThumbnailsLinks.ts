@@ -1,4 +1,4 @@
-import { FIREBASE_STORAGE_BASE_URL } from '@/firebase'
+import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase'
 
 type Sizes = 'large' | 'medium' | 'small'
 export type ThumbnailLinks = { [K in Sizes]: string }

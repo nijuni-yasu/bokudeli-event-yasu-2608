@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useEventStore } from '@/stores/event'
-import EventEdit from '@/components/EventEdit.vue'
+import { useEventStore } from '@shokujii/base/stores/event.js'
+import EventEdit from '@shokujii/base/components/EventEdit.vue'
 import { getManageEventPath } from '@/router/utils'
 
 const router = useRouter()

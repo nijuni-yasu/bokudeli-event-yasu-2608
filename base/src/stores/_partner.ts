@@ -1,8 +1,8 @@
 import type { Ref } from 'vue'
 import type { Store, StateTree } from 'pinia'
 import type { DocumentReference, DocumentSnapshot, SnapshotOptions, Unsubscribe } from 'firebase/firestore'
-import { Shop } from '@/schemes/shop'
-import { PartnerMenu } from '@/schemes/partnerMenu'
+import { Shop } from '@shokujii/base/schemes/shop'
+import { PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
 import { defineStore } from 'pinia'
 import {
   collection,
@@ -16,7 +16,7 @@ import {
   query,
   orderBy,
 } from 'firebase/firestore'
-import { uploadMenuImage, uploadShopImage } from '@/composable/uploadImage'
+import { uploadMenuImage, uploadShopImage } from '@shokujii/base/composable/uploadImage'
 
 // 暫定的な措置
 // 本来は変換を不要にする必要がある

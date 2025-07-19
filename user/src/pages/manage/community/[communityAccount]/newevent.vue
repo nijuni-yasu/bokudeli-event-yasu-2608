@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import EventEdit from '@/components/EventEdit.vue'
+import EventEdit from '@shokujii/base/components/EventEdit.vue'
 import { getManageEventPath } from '@/router/utils'
 
 const route = useRoute()

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
+import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { mdiEmail } from '@mdi/js'
-import type { FirestoredUser } from '@/schemes/storedUser'
+import type { FirestoredUser } from '@shokujii/base/schemes/storedUser'
 
 const model = defineModel<boolean>({ required: true })
 

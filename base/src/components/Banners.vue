@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
-import { FIRESTORE_LOADING } from '@/utils/const'
-import { type Banner } from '@/schemas/Banners'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const'
+import { type Banner } from '@shokujii/common/schemas/Banners.js'
 import { computed } from 'vue'
 
 const props = defineProps<{

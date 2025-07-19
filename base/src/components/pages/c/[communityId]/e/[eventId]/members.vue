@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { type CommunityStore, useCommunityStore } from '@/stores/community'
-import { type EventStore, useEventStore } from '@/stores/event'
-import EventMemberCard from '@/components/EventMemberCard.vue'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type CommunityStore, useCommunityStore } from '@shokujii/base/stores/community'
+import { type EventStore, useEventStore } from '@shokujii/base/stores/event'
+import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
 

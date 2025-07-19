@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
+import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { getUserPath } from '@/router/utils'
 import { mdiEmail } from '@mdi/js'
 

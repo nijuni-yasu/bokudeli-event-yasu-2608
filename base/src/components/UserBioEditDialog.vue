@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FirestoredUser } from '@/schemes/storedUser'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
 import _ from 'lodash'
 import SnsTextField from './SnsTextField.vue'
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useEventStore, type EventStore } from '@/stores/event'
-import EventCard from '@/components/EventCard.vue'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import EventCard from '@shokujii/base/components/EventCard.vue'
 import { getManageEventSettingsPath, getEventPath, getManageCommunityPath } from '@/router/utils'
 import { mdiPencil, mdiDelete } from '@mdi/js'
 

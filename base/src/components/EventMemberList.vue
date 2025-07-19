@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { type EventMember } from '@/schemes/EventMember'
-import UserAvatar from '@/components/UserAvatar.vue'
+import { type EventMember } from '@shokujii/base/schemes/EventMember'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 const { t: $t } = useI18n()
 

@@ -1,5 +1,5 @@
 import { type Ref } from 'vue'
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase'
 import {
   collection,
   getDocs,
@@ -18,9 +18,9 @@ import {
   orderBy,
 } from 'firebase/firestore'
 import type { StateTree, Store } from 'pinia'
-import { TaskExecutor } from '@/utils/executors'
+import { TaskExecutor } from '@shokujii/base/utils/executors'
 import { useLetterStore, type LetterStore } from './letter'
-import type { Letter } from '@/schemes/letter'
+import type { Letter } from '@shokujii/base/schemes/letter'
 
 type LetterListStoreState = {
   letterStores: Ref<LetterStore[] | null>

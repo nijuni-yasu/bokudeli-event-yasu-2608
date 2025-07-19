@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useNotification } from '@/composable/notification'
-import { getEventBillInvoicePdf } from '@/utils/pdf'
+import { useNotification } from '@shokujii/base/composable/notification.js'
+import { getEventBillInvoicePdf } from '@shokujii/base/utils/pdf.js'
 
 const route = useRoute()
 const { t: $t } = useI18n()

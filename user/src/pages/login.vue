@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { db, functions } from '@/firebase'
+import { db, functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { generatePassCode } from '@/utils/generatePassCode'
+import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { FirebaseError } from 'firebase/app'
 import {
   getAuth,
@@ -16,18 +16,18 @@ import {
   type AdditionalUserInfo,
   OAuthCredential,
 } from 'firebase/auth'
-import { convertStoredUserToFirestoredUser } from '@/schemes/converter'
-import { useValidators } from '@/composable/validators'
-import { getCredentialWithPopup, signInByProviderService } from '@/utils/providerService'
-import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
-import { useStoreUserCredential } from '@/stores/userCredential'
-import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import type { StoredUser } from '@/schemes/storedUser'
-import { type UserStore, useUserStore } from '@/stores/user'
+import { convertStoredUserToFirestoredUser } from '@shokujii/base/schemes/converter.js'
+import { useValidators } from '@shokujii/base/composable/validators.js'
+import { getCredentialWithPopup, signInByProviderService } from '@shokujii/base/utils/providerService.js'
+import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
+import { useStoreUserCredential } from '@shokujii/base/stores/userCredential.js'
+import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import type { StoredUser } from '@shokujii/base/schemes/storedUser.js'
+import { type UserStore, useUserStore } from '@shokujii/base/stores/user.js'
 import { getProfile } from '@/router/utils'
 import { doc, Timestamp, updateDoc } from 'firebase/firestore'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 type CreateUserRequest = {
   user_email: string
@@ -471,7 +471,7 @@ onMounted(async () => {
       userCredential = await signInWithCustomToken(getAuth(), customToken)
 
       if (!userCredential || !credential)
-        return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
+        {return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))}
 
       await linkWithCredential(userCredential.user, credential)
         .then(async (userCredential) => {

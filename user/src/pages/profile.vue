@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import XIcon from '@/icons/x'
-import FacebookIcon from '@/icons/facebook.vue'
-import GoogleIcon from '@/icons/google.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useUserStore, type UserStore } from '@/stores/user'
-import { convertFirestoredUserToStoredUser, convertStoredUserToFirestoredUser } from '@/schemes/converter'
-import { FirestoredUser, type FirestoredUserPersonalInformation, type StoredUser } from '@/schemes/storedUser'
-import UserAvatar from '@/components/UserAvatar.vue'
-import { buildThumbnailsLinks } from '@/composable/buildThumbnailsLinks'
+import XIcon from '@shokujii/base/icons/x.js'
+import FacebookIcon from '@shokujii/base/icons/facebook.vue'
+import GoogleIcon from '@shokujii/base/icons/google.vue'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
+import { convertFirestoredUserToStoredUser, convertStoredUserToFirestoredUser } from '@shokujii/base/schemes/converter.js'
+import { FirestoredUser, type FirestoredUserPersonalInformation, type StoredUser } from '@shokujii/base/schemes/storedUser.js'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
+import { buildThumbnailsLinks } from '@shokujii/base/composable/buildThumbnailsLinks.js'
 import {
   getAuth,
   FacebookAuthProvider,
@@ -20,19 +20,19 @@ import {
   type UserCredential,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { useValidators } from '@/composable/validators'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 import type { VForm } from 'vuetify/components'
-import { db, functions } from '@/firebase'
+import { db, functions } from '@shokujii/base/firebase.js'
 import { doc, updateDoc, getDoc, getDocs, query, collection, where, Timestamp } from 'firebase/firestore'
-import { convertDocumentDataToStoredUser } from '@/schemes/converter'
+import { convertDocumentDataToStoredUser } from '@shokujii/base/schemes/converter.js'
 import { httpsCallable } from 'firebase/functions'
-import { linkByProviderService } from '@/utils/providerService'
+import { linkByProviderService } from '@shokujii/base/utils/providerService.js'
 import { mdiUpload } from '@mdi/js'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
-import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
-import { generatePassCode } from '@/utils/generatePassCode'
-import { useStoreUserCredential } from '@/stores/userCredential'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
+import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
+import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
+import { useStoreUserCredential } from '@shokujii/base/stores/userCredential.js'
 
 type CustomData = {
   email: string

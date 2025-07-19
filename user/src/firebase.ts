@@ -1,1 +1,0 @@
-../../base/src/firebase.ts

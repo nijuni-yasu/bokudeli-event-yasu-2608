@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import buildCalendarLink from '@/composable/buildCalendarLink'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import buildCalendarLink from '@shokujii/base/composable/buildCalendarLink'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 
 const props = defineProps<{
   modelValue: boolean

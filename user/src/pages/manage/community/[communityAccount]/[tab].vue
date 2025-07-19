@@ -4,7 +4,7 @@ definePage({
     navActiveLink: '/manage/community/',
   },
 })
-import { useCommunityStore } from '@/stores/community'
+import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import { useI18n } from 'vue-i18n'
 import { getCommunityPath } from '@/router/utils'
 import { mdiArrowTopRight } from '@mdi/js'

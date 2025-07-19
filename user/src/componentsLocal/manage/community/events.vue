@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { where, orderBy } from 'firebase/firestore'
-import { useEventListStore } from '@/stores/eventList'
-import EventCard from '@/components/EventCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
 import { mdiPlus, mdiHelp } from '@mdi/js'
 import { getEventCreatePath, getManageEventPath } from '@/router/utils'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const route = useRoute()
 const router = useRouter()

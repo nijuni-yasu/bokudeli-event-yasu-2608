@@ -3,7 +3,7 @@ import type BokudeliEvent from '../schemes//bokudeliEvent'
 import type { EventMember } from '../schemes/EventMember'
 import UserAvatar from './UserAvatar.vue'
 import { useDisplay } from 'vuetify'
-import EventStatusChip from '@/components/EventStatusChip.vue'
+import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 
 defineProps<{ event: BokudeliEvent; members?: EventMember[] }>()
 

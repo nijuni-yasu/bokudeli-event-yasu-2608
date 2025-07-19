@@ -8,9 +8,9 @@ import {
   type FirestoreDataConverter,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { db } from '@/firebase'
-import { ConfigGlobal } from '@/schemas/Config.js'
-import { FIRESTORE_LOADING } from '@/utils/const'
+import { db } from '@shokujii/base/firebase'
+import { ConfigGlobal } from '@shokujii/common/schemas/Config.js'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const'
 
 const configConverter: FirestoreDataConverter<ConfigGlobal> = {
   toFirestore(config: ConfigGlobal): DocumentData {
@@ -34,7 +34,7 @@ type ConfigStoreAction = {
 export type ConfigStore = Store<string, ConfigStoreState, ConfigStoreGetters, ConfigStoreAction>
 export const useConfigStore = (target: ConfigGlobal | undefined = undefined): ConfigStore => {
   const store = defineStore<string, ConfigStoreState & ConfigStoreGetters & ConfigStoreAction>(
-    `/configs/global`,
+    '/configs/global',
     () => {
       const _config = ref<ConfigGlobal | typeof FIRESTORE_LOADING | undefined>(
         target !== undefined ? target : FIRESTORE_LOADING,

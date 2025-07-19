@@ -8,17 +8,17 @@ import {
   getEventEditBasicPath,
   getEventEditDetailsPath,
 } from '@/router/utils'
-import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import LoginDialog from '@/components/LoginDialog.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
-import CommunityBioPanel from '@/components/CommunityBioPanel.vue'
-import EventCard from '@/components/EventCard.vue'
-import { useEventStore, type EventStore } from '@/stores/event'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import type { EventMember } from '@/schemes/EventMember'
+import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import type { EventMember } from '@shokujii/base/schemes/EventMember'
 
 const props = defineProps<{
   communityId: string

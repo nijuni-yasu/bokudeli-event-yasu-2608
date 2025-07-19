@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import type { DocumentData, DocumentReference, Timestamp } from 'firebase/firestore'
-import { generateRandomAccount } from '@/utils/generateRandomAccount'
+import { generateRandomAccount } from '@shokujii/base/utils/generateRandomAccount'
 import {
   COMMUNITY_DEFAULT_IMAGE_SETS,
-} from '@/utils/defaultImages'
+} from '@shokujii/base/utils/defaultImages'
 
 class BokudeliCommunity {
   is_approved: boolean = true

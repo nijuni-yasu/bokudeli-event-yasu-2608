@@ -5,25 +5,25 @@ import '@core/scss/template/index.scss'
 import 'vuetify/styles'
 import '@core/scss/template/libs/vuetify/index.scss'
 // Styles from base
-import '@styles/base.scss'
+import '@shokujii/base/styles/base.scss'
 // Styles for this project
-import '@styles/styles.scss'
+import '@/styles/styles.scss'
 
-import '@/firebase'
+import '@shokujii/base/firebase.js'
 import '@/channelIo'
 
 const app = createApp(defineAsyncComponent(() => import('./App.vue')))
 
-import('@/directives/linkify').then((m) => {
+import('@shokujii/base/directives/linkify/index.js').then((m) => {
   app.directive('linkify', m.default)
 })
 
 Promise.all([
-  import('@/plugins/router'),
-  import('@/plugins/pinia'),
-  import('@/plugins/vuetify'),
-  import('@/plugins/i18n'),
-  import('@/plugins/layouts'),
+  import('@shokujii/base/plugins/router/index.js'),
+  import('@shokujii/base/plugins/pinia.js'),
+  import('@shokujii/base/plugins/vuetify/index.js'),
+  import('@shokujii/base/plugins/i18n/index.js'),
+  import('@shokujii/base/plugins/layouts.js'),
 ]).then((plugins) => {
   for (const plugin of plugins) {
     plugin.default(app)
@@ -35,7 +35,7 @@ Promise.all([
 app.config.errorHandler = (err, instance, info) => {
   console.error('Global error handler:', { err, instance, info })
   // TODO エラーの種類によって処理を変える
-  import('@/plugins/router').then(({ router }) => {
+  import('@shokujii/base/plugins/router/index.js').then(({ router }) => {
     router.replace('/520')
   })
 }

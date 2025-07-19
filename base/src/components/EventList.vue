@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import IncrementalLoader from './IncrementalLoader.vue'
-import { useEventListStore, type EventListStore } from '@/stores/eventList'
+import { useEventListStore, type EventListStore } from '@shokujii/base/stores/eventList'
 import { orderBy, where } from 'firebase/firestore'
 
 const props = defineProps<{

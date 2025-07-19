@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import _ from 'lodash'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useEventStore, type EventStore } from '@/stores/event'
-import DateInput from '@/components/DateInput.vue'
-import type { Letter } from '@/schemes/letter'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import DateInput from '@shokujii/base/components/DateInput.vue'
+import type { Letter } from '@shokujii/base/schemes/letter'
 import { Timestamp } from 'firebase/firestore'
-import { useLetterListStore } from '@/stores/letterList'
+import { useLetterListStore } from '@shokujii/base/stores/letterList'
 import {
   hourList,
   minutesList,
@@ -13,10 +13,10 @@ import {
   hourString,
   minutesString,
   parseDateTimeStrings,
-} from '@/schemes/eventCreate'
-import { useValidators } from '@/composable/validators'
-import { sendTestLetter } from '@/baseApis/letter.js'
-import { useNotification } from '@/composable/notification'
+} from '@shokujii/base/schemes/eventCreate'
+import { useValidators } from '@shokujii/base/composable/validators'
+import { sendTestLetter } from '@shokujii/base/apis/letter.js'
+import { useNotification } from '@shokujii/base/composable/notification'
 import { useI18n } from 'vue-i18n'
 
 const { requiredValidator } = useValidators()

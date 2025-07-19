@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { type Shop } from '@/schemes/shop'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type Shop } from '@shokujii/base/schemes/shop'
 import { Timestamp } from 'firebase/firestore'
 import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
-import { convertTruncateText, postalcodeString } from '@/schemes/converter'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { convertTruncateText, postalcodeString } from '@shokujii/base/schemes/converter'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const props = defineProps<{
   shops: Shop[]

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
-import { type EventMember } from '@/schemes/EventMember'
-import UserAvatar from '@/components/UserAvatar.vue'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
+import { type EventMember } from '@shokujii/base/schemes/EventMember'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 

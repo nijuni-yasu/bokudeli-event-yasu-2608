@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { type Letter } from '../schemes/letter'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useEventStore, type EventStore } from '@/stores/event'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 
 const props = defineProps<{ letter: Letter }>()
 

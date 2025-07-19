@@ -8,9 +8,9 @@ import {
   type QueryDocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { db } from '@/firebase'
-import { Banners, type Banner } from '@/schemas/Banners'
-import { FIRESTORE_LOADING } from '@/utils/const'
+import { db } from '@shokujii/base/firebase'
+import { Banners, type Banner } from '@shokujii/common/schemas/Banners.js'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const'
 
 const bannersConverter: FirestoreDataConverter<Banners> = {
   toFirestore(banners: Banners): DocumentData {

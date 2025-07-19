@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 const isOpenDialog = defineModel<boolean>({ required: true })
 </script>
 

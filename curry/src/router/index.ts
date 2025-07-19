@@ -8,9 +8,9 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useStoreCredential } from '@/stores/credential'
-import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useStoreCredential } from '@shokujii/base/stores/credential.js'
+import { loginUser, updateCredentialFromUserCredential } from '@shokujii/base/composable/loginUser.js'
 import type { Router } from 'vue-router'
 
 const checkUser = async (user: User | null) => {

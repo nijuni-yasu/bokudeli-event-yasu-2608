@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { where, orderBy } from 'firebase/firestore'
-import { useEventListStore } from '@/stores/eventList'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { mdiFilePdfBox } from '@mdi/js'
-import type { EventStore } from '@/stores/event'
+import type { EventStore } from '@shokujii/base/stores/event.js'
 import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
-import type { OrderItem } from '@/schemes/orderItem'
+import type { OrderItem } from '@shokujii/base/schemes/orderItem.js'
 
 const route = useRoute()
 

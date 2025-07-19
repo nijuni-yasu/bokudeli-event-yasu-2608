@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useEventStore, type EventStore } from '@/stores/event'
-// import EventCard from '@/components/EventCard.vue'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+// import EventCard from '@shokujii/base/components/EventCard.vue'
 import { getEventPath } from '@/router/utils'
 // import { mdiPencil, mdiDelete, mdiCarWindshield } from '@mdi/js'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
 import { getFlyerPath } from '@/router/utils'
-import { getFlyerPdf } from '@/utils/flyer'
+import { getFlyerPdf } from '@shokujii/base/utils/flyer.js'
 import flyerLogo from '@/assets/images/shokujii/flyer_logo.png'
 import VueQrious from 'vue-qrious'
 

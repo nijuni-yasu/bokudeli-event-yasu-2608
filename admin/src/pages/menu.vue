@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@/stores/_partner'
-import { PartnerMenu } from '@/schemes/partnerMenu'
+import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
 import MenuEditCard from '@/componentsLocal/MenuEditCard.vue'
-import MenuCard from '@/components/MenuCard.vue'
+import MenuCard from '@shokujii/base/components/MenuCard.vue'
 import { mdiPlus, mdiClose } from '@mdi/js'
-import { useNotification } from '@/composable/notification'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 

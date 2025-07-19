@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { loadEventMembers } from '@/composable/loadEventMembers'
-import { db, functions, stripeBaseURL } from '@/firebase'
+import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers'
+import { db, functions, stripeBaseURL } from '@shokujii/base/firebase'
 import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import {
   dateWithDayOfWeekString,
   dateOnlyTimeString,
   priceString,
   convertDocumentDataToEvent,
-} from '@/schemes/converter'
-import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
-import { type OrderMenu } from '@/schemes/orderMenu'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useEventStore, type EventStore } from '@/stores/event'
+} from '@shokujii/base/schemes/converter'
+import { type OrderItem, createEmptyOrderItem } from '@shokujii/base/schemes/orderItem'
+import { type OrderMenu } from '@shokujii/base/schemes/orderMenu'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import Stripe from 'stripe'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { getProfile } from '@/router/utils'

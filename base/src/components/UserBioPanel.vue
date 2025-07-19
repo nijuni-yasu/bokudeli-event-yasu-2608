@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { FirestoredUser } from '@/schemes/storedUser'
-import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
-import UserAvatar from '@/components/UserAvatar.vue'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
 

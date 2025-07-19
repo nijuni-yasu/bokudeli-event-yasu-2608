@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/_partner'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useCommunityListStore } from '@/stores/communityList'
-import { Shop } from '@/schemes/shop'
-import CommunityEdit from '@/components/CommunityEdit.vue'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { Shop } from '@shokujii/base/schemes/shop.js'
+import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
+import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity.js'
 import { mdiPlus } from '@mdi/js'
 import { getShopPath } from '@/navigation/utils'
-import { useNotification } from '@/composable/notification'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 

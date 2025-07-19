@@ -1,12 +1,12 @@
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase'
 import {
   convertDocumentDataToStoredUser,
   convertFirebaseUserToStoredUser,
   convertStoredUserToFirestoredUser,
-} from '@/schemes/converter'
-import { useStoreCredential } from '@/stores/credential'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useUserStore, type UserStore } from '@/stores/user'
+} from '@shokujii/base/schemes/converter'
+import { useStoreCredential } from '@shokujii/base/stores/credential'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useUserStore, type UserStore } from '@shokujii/base/stores/user'
 import axios from 'axios'
 import {
   FacebookAuthProvider,

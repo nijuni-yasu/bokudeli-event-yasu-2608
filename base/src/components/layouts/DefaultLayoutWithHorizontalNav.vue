@@ -3,7 +3,7 @@ import { themeConfig } from '@themeConfig'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 
 import { HorizontalNavLayout } from '@layouts'
-import type { HorizontalNavItems } from '@/@layouts/types'
+import type { HorizontalNavItems } from '@layouts/types'
 
 defineProps({
   navItems: {

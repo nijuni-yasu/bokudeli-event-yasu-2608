@@ -1,6 +1,6 @@
-import { functions } from '@/firebase'
+import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { sendTestLetterRequestSchema } from '@/commonApis/letter.js'
+import { sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 
 export const sendTestLetter = (input: any) => {
   const f = httpsCallable(functions, 'sendTestLetter')

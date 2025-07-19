@@ -1,6 +1,6 @@
 import { type Ref } from 'vue'
 import _ from 'lodash'
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase'
 import {
   collection,
   doc,
@@ -15,16 +15,16 @@ import {
   type DocumentReference,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
+import { convertDocumentDataToCommunity } from '@shokujii/base/schemes/converter'
 import type { StateTree, Store } from 'pinia'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { FirestoredUser } from '@/schemes/storedUser'
-import { type CommunityMember, convertCommunityMemberToDocumentData } from '@/schemes/communityMember'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { useUserStore } from '@/stores/user'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { uploadCommunityImage } from '@/composable/uploadImage'
+import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
+import { type CommunityMember, convertCommunityMemberToDocumentData } from '@shokujii/base/schemes/communityMember'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { useUserStore } from '@shokujii/base/stores/user'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { uploadCommunityImage } from '@shokujii/base/composable/uploadImage'
 import { useConfigStore } from './config'
 
 class CommunityRefUpdatedEvent extends Event {

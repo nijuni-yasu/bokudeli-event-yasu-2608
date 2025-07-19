@@ -1,9 +1,9 @@
 import { type Ref } from 'vue'
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase'
 import { doc, updateDoc, onSnapshot, DocumentReference, type Unsubscribe } from 'firebase/firestore'
 import type { StateTree, Store } from 'pinia'
-import { FirestoredUser } from '@/schemes/storedUser'
-import { storage } from '@/firebase'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
+import { storage } from '@shokujii/base/firebase'
 import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
 import { format } from 'date-fns'
 

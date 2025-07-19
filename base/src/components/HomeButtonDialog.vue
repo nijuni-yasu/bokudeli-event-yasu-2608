@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import home_button_01 from '@/assets/images/home_button/home_button_01.png'
-import home_button_02 from '@/assets/images/home_button/home_button_02.png'
+import home_button_01 from '@shokujii/base/assets/images/home_button/home_button_01.png'
+import home_button_02 from '@shokujii/base/assets/images/home_button/home_button_02.png'
 
 const { t } = useI18n()
 

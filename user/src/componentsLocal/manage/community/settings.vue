@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import CommunityEdit from '@/components/CommunityEdit.vue'
-import { useNotification } from '@/composable/notification'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 const { t: $t } = useI18n()

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { mdiTruckOutline } from '@mdi/js'
-import { useEventListStore } from '@/stores/eventList'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { orderBy, where } from 'firebase/firestore'
-import { ordersCount, ordersTotalPrice } from '@/utils/orders'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import { ordersCount, ordersTotalPrice } from '@shokujii/base/utils/orders.js'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { getOrderDetailPath } from '@/navigation/utils'
 
 const eventListStore = useEventListStore(

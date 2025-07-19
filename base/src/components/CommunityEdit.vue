@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { useValidators } from '@/composable/validators'
-import ImageInput from '@/components/ImageInput.vue'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import { useValidators } from '@shokujii/base/composable/validators'
+import ImageInput from '@shokujii/base/components/ImageInput.vue'
+import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
 import {
   mdiListBoxOutline,
   mdiWeb,
@@ -12,8 +12,8 @@ import {
   mdiEmailOutline,
 } from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
-import { trimHashTag } from '@/utils/hashTag'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { trimHashTag } from '@shokujii/base/utils/hashTag'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
