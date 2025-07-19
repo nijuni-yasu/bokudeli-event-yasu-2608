@@ -8,6 +8,8 @@ import '@core/scss/template/libs/vuetify/index.scss'
 import '@shokujii/base/styles/base.scss'
 // Styles for this project
 import '@/styles/styles.scss'
+// Themes
+import { themes } from '@/themes'
 
 import '@shokujii/base/firebase.js'
 
@@ -25,7 +27,7 @@ Promise.all([
   import('@shokujii/base/plugins/layouts.js'),
 ]).then((plugins) => {
   for (const plugin of plugins) {
-    plugin.default(app)
+    plugin.default(app, { themes })
   }
   app.mount('#app')
 })
