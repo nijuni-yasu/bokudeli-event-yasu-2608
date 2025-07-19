@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { sendTestLetterRequestSchema } from './apis/letter.js'
+import { sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { getCommunity } from './stores/community.js'
 import { getEvent } from './stores/event.js'
 import { getLetter } from './stores/letter.js'
@@ -7,7 +7,7 @@ import { getUserPersonalInformation } from './stores/user.js'
 import { DEFAULT_FROM } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getCommunityUrl, getEventUrl } from './utils/urls.js'
-import { convertToDate } from './commonUtils/datetime.js'
+import { convertToDate } from '@shokujii/common/utils/datetime.js'
 
 const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 

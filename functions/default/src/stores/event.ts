@@ -5,9 +5,9 @@ import {
   DocumentData,
   Transaction,
 } from 'firebase-admin/firestore'
-import { Event } from '../schemas/Event.js'
-import { EventOrder, EventOrderStatusType } from '../schemas/EventOrder.js'
-import { EventMenu } from '../schemas/EventMenu.js'
+import { Event } from '@shokujii/common/schemas/Event.js'
+import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
+import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {

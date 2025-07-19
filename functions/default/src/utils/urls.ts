@@ -1,5 +1,5 @@
 import { defineString } from 'firebase-functions/params'
-import * as common from '../commonUtils/urls.js'
+import * as common from '@shokujii/common/utils/urls.js'
 
 const EVENT_HOST = defineString('EVENT_HOST')
 const ADMIN_HOST = defineString('ADMIN_HOST')

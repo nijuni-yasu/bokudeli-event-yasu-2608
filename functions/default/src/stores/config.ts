@@ -1,5 +1,5 @@
 import { DocumentData, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore'
-import { ConfigGlobal } from '../schemas/Config.js'
+import { ConfigGlobal } from '@shokujii/common/schemas/Config.js'
 
 const configGlobalConverter: FirestoreDataConverter<ConfigGlobal> = {
   toFirestore(config: ConfigGlobal): DocumentData {

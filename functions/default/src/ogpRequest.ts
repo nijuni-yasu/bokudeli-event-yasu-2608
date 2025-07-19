@@ -1,7 +1,7 @@
 import { pipeline, Readable } from 'stream'
 import express from 'express'
 import { https } from 'firebase-functions/v2'
-import { ReplaceSectionStream } from './commonUtils/ReplaceSectionStream.js'
+import { ReplaceSectionStream } from '@shokujii/common/utils/ReplaceSectionStream.js'
 import { getEvent } from './stores/event.js'
 import { getCommunityByAccount } from './stores/community.js'
 

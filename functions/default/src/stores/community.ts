@@ -7,9 +7,9 @@ import {
   Transaction,
 } from 'firebase-admin/firestore'
 import { HttpsError } from 'firebase-functions/https'
-import { Community } from '../schemas/Community.js'
-import { CommunityMember, CommunityMemberRolesType } from '../schemas/CommunityMember.js'
-import { CommunityInvite } from '../schemas/CommunityInvite.js'
+import { Community } from '@shokujii/common/schemas/Community.js'
+import { CommunityMember, CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
+import { CommunityInvite } from '@shokujii/common/schemas/CommunityInvite.js'
 import { getCommunityInvitationUrl } from '../utils/urls.js'
 
 const EXPIRED_TIME = 7 * 1000 * 60 * 60 * 24 // 7 days

@@ -5,8 +5,8 @@ import {
   DocumentData,
   Transaction,
 } from 'firebase-admin/firestore'
-import { PartnerMenu } from '../schemas/PartnerMenu.js'
-import { PartnerShop } from '../schemas/PartnerShop.js'
+import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 
 class PartnerMenuConverter implements FirestoreDataConverter<PartnerMenu> {
   toFirestore(order: PartnerMenu): DocumentData {
