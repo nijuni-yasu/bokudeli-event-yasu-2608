@@ -2,12 +2,10 @@ import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
 import sgMail from '@sendgrid/mail'
-import { makeIcs } from './make-ics.js'
 import {
   getCommunityUrl,
   getEventUrl,
   getOrderUrl,
-  getUserUrl,
   getManageEventMemberUrl,
   getManageEventInvoiceUrl,
 } from './utils/urls.js'
@@ -21,8 +19,6 @@ const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
 
 const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
-const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
-const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7'
 
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7'
 const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
@@ -98,18 +94,6 @@ async function getCommunityEmailsForEvent(eventSnapshot) {
     emails.add(organizerEmail)
   }
   return Array.from(emails)
-}
-
-async function getEventMemberEmails(eventSnapshotOrId) {
-  let eventSnapshot
-  if (typeof eventSnapshotOrId === 'string') {
-    eventSnapshot = (await db.collectionGroup('events').where('event_id', '==', eventSnapshotOrId).get()).docs[0]
-  } else {
-    eventSnapshot = eventSnapshotOrId
-  }
-  const usersSet = await getUsersFromOrders(eventSnapshot.ref.collection('orders'))
-  const emails = await Promise.all(Array.from(usersSet).map(getUserEmail))
-  return emails.filter((email) => email != null && email !== '')
 }
 
 //コミュニティユーザーのIDを取得
@@ -452,17 +436,6 @@ async function sendApplyingMailToAdmin(eventSnapshot) {
   })
 }
 
-async function getUsersFromOrders(ordersRef) {
-  const users = new Set()
-  for (const orderRef of await ordersRef.listDocuments()) {
-    const orderSnapshot = await orderRef.get()
-    if (orderSnapshot.get('status') !== 'ordered') {
-      continue
-    }
-    users.add(orderSnapshot.get('user_id'))
-  }
-  return users
-}
 
 async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnapshot) {
   const [templateData, shopSnapShot, emails] = await Promise.all([
@@ -488,70 +461,6 @@ async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnap
   )
 }
 
-async function sendOrderCompletionMailToMember(eventRef, userId) {
-  const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
-  const eventData = eventSnapshot.data()
-  const dynamic_template_data = {
-    date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
-    event_datetime: convertToDuration(
-      eventData.event_start_datetime?.toMillis(),
-      eventData.event_end_datetime?.toMillis(),
-    ),
-    event_name: eventData.event_name,
-    event_cover_url: eventData.event_cover_url,
-    community_name: eventData.community_name,
-    event_address: eventData.event_address,
-    shop_name: eventData.shop_name,
-    event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-    is_public: eventData.is_public,
-  }
-  const icsContent = await makeIcs(eventData)
-  const to = await getUserEmail(userId)
-  if (to == null || to === '') {
-    return
-  }
-  return sgMail.send({
-    to,
-    from: DEFAULT_FROM,
-    templateId: ORDER_COMPLETION_TEMPLATE_ID,
-    dynamic_template_data,
-    attachments: [
-      {
-        content: Buffer.from(icsContent, 'utf-8').toString('base64'),
-        filename: 'invite.ics',
-        type: 'text/calendar',
-        disposition: 'attachment',
-      },
-    ],
-  })
-}
-
-async function sendOrderCompletionMailToOrganizers(orderSnapshot, userId) {
-  const eventRef = orderSnapshot.ref.parent.parent
-  const [eventSnapshot, userSnapshot] = await Promise.all([eventRef.get(), db.collection('users').doc(userId).get()])
-  const eventData = eventSnapshot.data()
-  const userData = userSnapshot.data()
-
-  const emails = await getCommunityEmailsForEvent(eventSnapshot)
-
-  const dynamic_template_data = {
-    date: convertToDateWeekdayShort(eventData.event_start_datetime?.toMillis()),
-    event_name: eventData.event_name,
-    event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-    user_name: userData.user_name,
-    user_url: getUserUrl(userData.user_id),
-  }
-  return Promise.all(
-    emails.map(async (to) => {
-      await sgMail.send({
-        to,
-        from: DEFAULT_FROM,
-        templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
-        dynamic_template_data,
-      })
-    }),
-  )
-}
 
 async function sendLetter(_, end) {
   return db.runTransaction(async (transaction) => {
@@ -700,21 +609,6 @@ export const on_event_changed = functions
       if (before.get('event_status')?.value === c[0] && after.get('event_status')?.value === c[1]) {
         promises.push(c[2](after))
       }
-    }
-    return Promise.all(promises)
-  })
-
-export const on_order_changed = functions
-  .region('asia-northeast1')
-  .firestore.document('communities/{communityId}/events/{eventId}/orders/{orderId}')
-  .onWrite(async (change) => {
-    const before = change.before
-    const after = change.after
-    const promises = []
-    if (before.get('status') !== after.get('status') && after.get('status') === 'ordered') {
-      const userId = after.get('user_id')
-      promises.push(sendOrderCompletionMailToMember(after.ref.parent.parent, userId))
-      promises.push(sendOrderCompletionMailToOrganizers(after, userId))
     }
     return Promise.all(promises)
   })

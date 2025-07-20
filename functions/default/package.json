@@ -21,14 +21,8 @@
     "@shokujii/common": "file:./libs/common",
     "firebase-admin": "^13.4.0",
     "firebase-functions": "^6.3.2",
-<<<<<<< HEAD
-    "oauth-1.0a": "^2.2.6"
-=======
-    "luxon": "^3.6.1",
     "oauth-1.0a": "^2.2.6",
-    "zod": "^3.24.4",
     "ics": "^3.8.1"
->>>>>>> 30f94349 ([function] #1294 ics ライブラリを追加)
   },
   "devDependencies": {
     "eslint-import-resolver-typescript": "^4.4.4",
