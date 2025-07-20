@@ -22,6 +22,7 @@ export const {
   postToTwitter,
   eventInformation, eventInformationPreview,
   shopStatusChanged,
+  onOrderChanged,
   pollingTask,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
@@ -31,5 +32,6 @@ export const {
   import('./postToTwitter.js'),
   import('./eventInformationMail.js'),
   import('./shopOpen.js'),
+  import('./orderCompletionMail.js'),
   import('./pollingTask.js'),
 ])))
