@@ -97,8 +97,10 @@ const selectedCartEvent = ref({} as BokudeliEvent)
 const selectedCartTwitterPostEnabled = ref<boolean>(false)
 const selectedCartTwitterPostComment = ref<string>('')
 const selectedMenu = ref({} as OrderMenu)
+const isOrderProcessing = ref<boolean>(false)
 
 const startOrderProcess = async () => {
+  isOrderProcessing.value = true
   const order = selectedOrder.value
   const event = selectedCartEvent.value
   const twitterPostEnabled = selectedCartTwitterPostEnabled.value
@@ -121,6 +123,7 @@ const startOrderProcess = async () => {
     try {
       const eventStore = useEventStore(event.event_id) as EventStore
       await eventStore.updateOrderStatus(order, 'ordered')
+      isOrderProcessing.value = false
       router.push(
         `${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
       )
@@ -166,6 +169,7 @@ const createCheckoutSession = async (order: OrderItem, isPosted: boolean) => {
         userId: userId.value,
       },
     })
+    isOrderProcessing.value = false
     window.location.href = session.url || getEventPath(order.community_account, order.event_id)
   } catch (err) {
     alertBody.value = $t('cart.payment_failed')
@@ -488,7 +492,13 @@ onMounted(async () => {
     </v-col>
   </v-row>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
-  <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
+
+  <confirm-dialog
+    v-model="openConfirmOrder"
+    :is-confirm="true"
+    :ok-click="startOrderProcess"
+    :ok-loading-state="isOrderProcessing"
+  >
     {{ confirmDialogMessage }}
   </confirm-dialog>
   <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
