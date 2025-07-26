@@ -24,7 +24,7 @@ const tab = ref<Tabs>(tabs.find((t) => t === tabName) ?? tabs[0])
 const components = tabs.map((tab) => ({
   value: tab,
   text: $t(`manage.community.tabs.${tab}`),
-  component: defineAsyncComponent(() => import(`@/componentsLocal/manage/community/${tab}.vue`)),
+  component: defineAsyncComponent(() => import(`@/components/manage/community/${tab}.vue`)),
 }))
 const openInNew = (url: string) => {
   window.open(url, '_blank')

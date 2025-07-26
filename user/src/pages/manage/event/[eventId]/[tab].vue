@@ -35,7 +35,7 @@ const community = computed(() => communityStore.value?.community)
 const components = tabs.map((tab) => ({
   value: tab,
   text: $t(`manage.event.tabs.${tab}`),
-  component: defineAsyncComponent(() => import(`@/componentsLocal/manage/event/${tab}.vue`)),
+  component: defineAsyncComponent(() => import(`@/components/manage/event/${tab}.vue`)),
 }))
 const openInNew = (url: string) => {
   window.open(url, '_blank')

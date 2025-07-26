@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ManageTopCard from '@/componentsLocal/ManageTopCard.vue'
+import ManageTopCard from '@/components/ManageTopCard.vue'
 import howto01 from '@/assets/images/manage_top/manage_howto_icon_01.png'
 import howto02 from '@/assets/images/manage_top/manage_howto_icon_02.png'
 import howto03 from '@/assets/images/manage_top/manage_howto_icon_03.png'
