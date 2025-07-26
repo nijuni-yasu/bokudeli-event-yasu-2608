@@ -12,7 +12,7 @@ export const useStoreUserAdditionalInfo = defineStore('userAdditionalInfo', {
       this.additionalUserInfo = additionalUserInfo
     },
     reset() {
-      this.additionalUserInfo = null;
+      this.additionalUserInfo = null
     },
   },
 })

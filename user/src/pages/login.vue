@@ -470,8 +470,9 @@ onMounted(async () => {
 
       userCredential = await signInWithCustomToken(getAuth(), customToken)
 
-      if (!userCredential || !credential)
-        {return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))}
+      if (!userCredential || !credential) {
+        return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
+      }
 
       await linkWithCredential(userCredential.user, credential)
         .then(async (userCredential) => {

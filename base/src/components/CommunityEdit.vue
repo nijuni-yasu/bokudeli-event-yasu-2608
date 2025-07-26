@@ -65,7 +65,13 @@ const isOpenNewCommunityDialog = ref(false)
       <v-card-title class="px-5 text-h3 font-weight-bold" v-if="isNew">
         <v-row class="pa-3 align-center">
           {{ $t('community_edit.create') }}
-          <v-btn class="ml-2" variant="outlined" size="x-small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
+          <v-btn
+            class="ml-2"
+            variant="outlined"
+            size="x-small"
+            :icon="mdiHelp"
+            @click="isOpenNewCommunityDialog = true"
+          />
         </v-row>
       </v-card-title>
       <v-card-title class="px-5" v-else>

@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const showArrows = computed(() => {
   // ローディング中は矢印を非表示
-  if (props.banners === FIRESTORE_LOADING){
+  if (props.banners === FIRESTORE_LOADING) {
     return false
   }
   // バナーが2つ以上の場合は矢印を表示

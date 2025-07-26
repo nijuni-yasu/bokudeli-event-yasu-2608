@@ -27,12 +27,7 @@
         コミュニティガイド
       </a>
       <br />
-      <a
-        href="https://about.shokujii.jp/howto"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="footer-text"
-      >
+      <a href="https://about.shokujii.jp/howto" target="_blank" rel="noopener noreferrer" class="footer-text">
         ヘルプ
       </a>
       <a

@@ -8,9 +8,7 @@ import type { Shop } from '@shokujii/base/schemes/shop.js'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
-import {
-  mdiPencilBoxOutline
-} from '@mdi/js'
+import { mdiPencilBoxOutline } from '@mdi/js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -102,7 +100,9 @@ const fab = () => {
       </v-row>
     </v-col>
   </v-row>
-  <v-btn class="fab" size="x-large" elevation="12" :prepend-icon="mdiPencilBoxOutline" @click="fab">{{ $t('event.new') }}</v-btn>
+  <v-btn class="fab" size="x-large" elevation="12" :prepend-icon="mdiPencilBoxOutline" @click="fab">{{
+    $t('event.new')
+  }}</v-btn>
 </template>
 
 <style scoped lang="scss">

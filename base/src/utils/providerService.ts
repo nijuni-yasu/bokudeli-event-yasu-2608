@@ -37,7 +37,7 @@ export const signInByProviderService = async (providerService: 'Facebook' | 'Goo
   }
 }
 
-export const linkByProviderService = async (user: User , providerService: 'Facebook' | 'Google' | 'Twitter') => {
+export const linkByProviderService = async (user: User, providerService: 'Facebook' | 'Google' | 'Twitter') => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 
   switch (providerService) {
@@ -57,13 +57,16 @@ export const linkByProviderService = async (user: User , providerService: 'Faceb
   }
 
   if (import.meta.env.DEV) {
-    return await linkWithPopup(user, provider);
+    return await linkWithPopup(user, provider)
   } else {
     return await linkWithRedirect(user, provider)
   }
 }
 
-export const reauthenticateByProviderService = async (user: User , providerService: 'Facebook' | 'Google' | 'Twitter') => {
+export const reauthenticateByProviderService = async (
+  user: User,
+  providerService: 'Facebook' | 'Google' | 'Twitter',
+) => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 
   switch (providerService) {
@@ -83,7 +86,7 @@ export const reauthenticateByProviderService = async (user: User , providerServi
   }
 
   if (import.meta.env.DEV) {
-    return await reauthenticateWithPopup(user, provider);
+    return await reauthenticateWithPopup(user, provider)
   } else {
     return await reauthenticateWithRedirect(user, provider)
   }

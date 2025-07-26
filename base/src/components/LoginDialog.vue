@@ -150,7 +150,8 @@ const handleGoogleLogin = async () => {
         および
         <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank"
           >プライバシーポリシー</a
-        > に同意してログインしてください。
+        >
+        に同意してログインしてください。
       </v-card-text>
       <v-card-text v-if="loginProvider === 'google'">
         <v-container>
@@ -180,8 +181,8 @@ const handleGoogleLogin = async () => {
           </v-row>
         </v-container>
       </v-card-text>
-      <v-card-text class="text-center py-5" style="font-size:12px; color:#E91E63;">
-        ※注意※<br/>
+      <v-card-text class="text-center py-5" style="font-size: 12px; color: #e91e63">
+        ※注意※<br />
         LINE、Messenger、Facebookアプリなどのアプリ内ブラウザでは、ログインができません。<br />
         ChromeやSafariなどのブラウザからログインしてください。<br />
       </v-card-text>

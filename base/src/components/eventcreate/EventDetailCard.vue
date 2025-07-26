@@ -19,7 +19,7 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-  }
+  },
 )
 
 const { t: $t } = useI18n()
@@ -43,7 +43,6 @@ const checkBillInfo = () => {
     event.value.bill_email = ''
   }
 }
-
 
 watch(
   () => event.value.event_payment,

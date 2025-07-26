@@ -139,7 +139,7 @@ const sendMail = async () => {
         <template #actions>
           <v-spacer></v-spacer>
           <v-btn @click="forgotPasswordDialog = false">{{ $t('cancel') }}</v-btn>
-          <v-btn variant="tonal" @click="sendMail(), (forgotPasswordDialog = false)">{{ $t('ok') }}</v-btn>
+          <v-btn variant="tonal" @click="(sendMail(), (forgotPasswordDialog = false))">{{ $t('ok') }}</v-btn>
         </template>
       </v-card>
     </v-dialog>

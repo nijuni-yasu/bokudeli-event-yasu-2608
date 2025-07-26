@@ -225,7 +225,12 @@ const sendTest = async () => {
             <v-btn @click="save" variant="outlined" :disabled="!isValid">
               {{ _letter.status === 'draft' ? $t('manage.letter.edit.save_draft') : $t('manage.letter.edit.to_draft') }}
             </v-btn>
-            <v-btn v-if="_letter.status === 'draft'" @click="sendTest" :disabled="!isValid || isTestSending" :loading="isTestSending">
+            <v-btn
+              v-if="_letter.status === 'draft'"
+              @click="sendTest"
+              :disabled="!isValid || isTestSending"
+              :loading="isTestSending"
+            >
               {{ $t('manage.letter.edit.send_test') }}
             </v-btn>
             <v-btn @click="submit" :disabled="isSubmitDisabled">

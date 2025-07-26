@@ -9,4 +9,4 @@ export const generateRandomAccount = (): string => {
     result += chars.charAt(Math.floor(Math.random() * chars.length))
   }
   return result
-} 
+}

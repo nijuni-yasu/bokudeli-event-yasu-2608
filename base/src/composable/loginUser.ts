@@ -90,7 +90,12 @@ export const loginUser = async (user: User) => {
   // ただし、Facebook Login の度に画像を Storage にアップロードするわけにはいかないので、
   // 既存の画像がない場合のみ
   // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
-  if (currentStoredUser.userImageUrl == null || currentStoredUser.userImageUrl === '' || currentStoredUser.userImageUrl.startsWith("https://graph.facebook.com") || currentStoredUser.userImageUrl.startsWith("https://pbs.twimg.com")) {
+  if (
+    currentStoredUser.userImageUrl == null ||
+    currentStoredUser.userImageUrl === '' ||
+    currentStoredUser.userImageUrl.startsWith('https://graph.facebook.com') ||
+    currentStoredUser.userImageUrl.startsWith('https://pbs.twimg.com')
+  ) {
     for (const provider of user.providerData) {
       switch (provider.providerId) {
         case FacebookAuthProvider.PROVIDER_ID:
@@ -121,14 +126,14 @@ export const loginUser = async (user: User) => {
             })
             // photoURLを加工してオリジナル画像を取得出来るURLに成形
             const splitPhotoURL = providerData?.photoURL?.split('_') as string[]
-            const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1];
+            const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1]
 
             // ログインに影響が出ないよう、非同期で画像を取得する
-            axios.get(photoURL, { responseType: "blob" }).then(async (response) => {
+            axios.get(photoURL, { responseType: 'blob' }).then(async (response) => {
               const blob = response.data
               const userStore = useUserStore(storedUser.userId) as UserStore
               await userStore.uploadUserImage(blob)
-            });
+            })
           }
           break
         default:

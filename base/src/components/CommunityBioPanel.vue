@@ -31,7 +31,7 @@ const officialSiteUrl = computed(() =>
 )
 // コミュニティの設定によってはメンバー一覧を非表示にする
 const isShowMember = computed(() =>
-  props.community.is_show_member !== undefined ? props.community.is_show_member : true
+  props.community.is_show_member !== undefined ? props.community.is_show_member : true,
 )
 </script>
 

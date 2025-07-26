@@ -5,12 +5,15 @@ import { orderBy, where } from 'firebase/firestore'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 
-const communityListStore = useCommunityListStore([
-  where('is_public', '==', true),
-  where('is_approved', '==', true),
-  where('subdomain_tags', 'array-contains', 'kanda-curry'),
-  orderBy('community_num_members', 'desc'),
-], 5)
+const communityListStore = useCommunityListStore(
+  [
+    where('is_public', '==', true),
+    where('is_approved', '==', true),
+    where('subdomain_tags', 'array-contains', 'kanda-curry'),
+    orderBy('community_num_members', 'desc'),
+  ],
+  5,
+)
 
 const communities = computed(() => {
   return (

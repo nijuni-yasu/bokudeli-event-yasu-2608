@@ -42,7 +42,7 @@ const closeText = computed(() => {
       </v-card-text>
       <v-card-text class="text-h5">
         {{ t('home_button_dialog.step3') }}
-      </v-card-text> 
+      </v-card-text>
 
       <v-card-actions>
         <v-spacer />

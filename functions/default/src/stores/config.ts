@@ -14,5 +14,5 @@ export const getConfigGlobal = async (): Promise<ConfigGlobal | undefined> => {
   const db = getFirestore()
   const configRef = db.collection('config').doc('global').withConverter(configGlobalConverter)
   const snapshot = await configRef.get()
-  return snapshot.exists ? snapshot.data() ?? undefined : undefined
+  return snapshot.exists ? (snapshot.data() ?? undefined) : undefined
 }

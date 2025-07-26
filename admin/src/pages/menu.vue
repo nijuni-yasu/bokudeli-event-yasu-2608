@@ -110,7 +110,7 @@ example.price = 800
       v-model="targetMenu"
       @save="
         (menu, imageFile) => {
-          saveMenu(menu, imageFile), (dialog = false)
+          ;(saveMenu(menu, imageFile), (dialog = false))
         }
       "
       @cancel="dialog = false"

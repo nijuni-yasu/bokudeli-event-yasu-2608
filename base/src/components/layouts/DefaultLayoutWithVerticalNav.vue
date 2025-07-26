@@ -22,7 +22,7 @@ watch(
 
     if (!isFallbackStateActive.value && refLoadingIndicator.value) refLoadingIndicator.value.resolveHandle()
   },
-  { immediate: true }
+  { immediate: true },
 )
 // !SECTION
 </script>

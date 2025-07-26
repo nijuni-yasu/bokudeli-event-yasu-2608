@@ -20,7 +20,6 @@ const avatarSize = computed(() => {
       return 48
   }
 })
-
 </script>
 
 <template>
@@ -28,7 +27,7 @@ const avatarSize = computed(() => {
     <div>
       <VImg cover class="mx-auto" aspect-ratio="1.91" :src="event.event_cover_url" />
     </div>
-    <EventStatusChip :status="event.event_status.value" size="x-small" class="mt-2 ml-2"/>
+    <EventStatusChip :status="event.event_status.value" size="x-small" class="mt-2 ml-2" />
     <v-card-title class="justify-center px-3 py-1" style="font-size: 16px; font-weight: 600">
       {{ event.event_name }}
     </v-card-title>

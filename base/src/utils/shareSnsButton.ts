@@ -35,7 +35,7 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
       : '#食事でつながる #shokujii'
 
   const textList = [
-   `${event.event_name} に参加します✋`,
+    `${event.event_name} に参加します✋`,
     '',
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
     `👥主催：${communityText}`,
@@ -83,7 +83,7 @@ export const shareSnsButton = async (
     const text = encodeURIComponent(getXPostText(event, community, shop))
     const openUrl = `${baseUrl}?text=${text}`
     _window!.location.href = openUrl
- } else if (snsType === 'facebook') {
+  } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
     const openUrl = `${baseUrl}?&u=${eventUrl}`
     _window!.location.href = openUrl

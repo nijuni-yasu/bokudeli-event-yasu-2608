@@ -1,4 +1,3 @@
-
 import { z } from 'zod'
 
 declare const IS_SERVER: boolean

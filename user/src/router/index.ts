@@ -94,8 +94,9 @@ export const setupRouter = (router: Router) => {
       to.path === getLogin() &&
       storedUserStore.storedUser &&
       useStoreUserAdditionalInfo().additionalUserInfo === null
-    )
-      {router.replace('/')}
+    ) {
+      router.replace('/')
+    }
   })
 
   let unsubscribeAuthStateChanged: Unsubscribe | null

@@ -41,4 +41,3 @@ export const COMMUNITY_DEFAULT_IMAGE_SETS: CommunityDefaultImageSet[] = [
   { icon: IMAGE_BASE_PATH + ICON_FILES[6], cover: IMAGE_BASE_PATH + COVER_FILES[6] },
   { icon: IMAGE_BASE_PATH + ICON_FILES[7], cover: IMAGE_BASE_PATH + COVER_FILES[7] },
 ] as const
-

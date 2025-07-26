@@ -1,4 +1,4 @@
-import { type UserCredential} from 'firebase/auth'
+import { type UserCredential } from 'firebase/auth'
 import { defineStore } from 'pinia'
 
 export const useStoreUserCredential = defineStore('userCredential', {
@@ -10,7 +10,7 @@ export const useStoreUserCredential = defineStore('userCredential', {
       this.userCredential = userCredential
     },
     reset() {
-      this.userCredential = undefined;
+      this.userCredential = undefined
     },
   },
 })

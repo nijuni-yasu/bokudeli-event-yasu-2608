@@ -4,7 +4,6 @@ import type BokudeliCommunity from '../schemes/bokudeliCommunity'
 defineProps<{
   community: BokudeliCommunity
 }>()
-
 </script>
 
 <template>
@@ -27,5 +26,5 @@ defineProps<{
         {{ community.community_name }}
       </v-card-title>
     </v-col>
-  </v-row>  
+  </v-row>
 </template>

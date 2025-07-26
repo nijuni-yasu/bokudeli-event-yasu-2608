@@ -51,16 +51,20 @@ const isShowInvoiceButton = computed(
         ])
       }}
     </v-card-text>
-    <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.event_address', [event.event_address]) }}</v-card-text>
+    <v-card-text class="py-1 px-2 event-card">{{
+      $t('user_event_card.event_address', [event.event_address])
+    }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
-    <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.event_payment', [$t(`payment.${order.event_payment}`)]) }}</v-card-text>
+    <v-card-text class="py-1 px-2 event-card">{{
+      $t('user_event_card.event_payment', [$t(`payment.${order.event_payment}`)])
+    }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">
       {{ $t('user_event_card.menu') }}
       <div class="ml-3">
         <template v-for="menu in order.menus" :key="menu.menu_id">
           <div v-html="$t('user_event_card.menu_item', [menu.name, menu.count])" />
         </template>
-        </div>
+      </div>
     </v-card-text>
     <v-card-text class="px-2 pt-1 pb-4 event-card">
       {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
@@ -77,7 +81,13 @@ const isShowInvoiceButton = computed(
       </v-row>
       <v-row v-if="isOwner && isShowInvoiceButton">
         <v-col class="d-flex justify-end pa-1">
-          <v-btn variant="outlined" rounded="pill" color="secondary" size="small" @click.prevent="$emit('downloadInvoice', order)">
+          <v-btn
+            variant="outlined"
+            rounded="pill"
+            color="secondary"
+            size="small"
+            @click.prevent="$emit('downloadInvoice', order)"
+          >
             {{ $t('user_event_card.download_invoice') }}
           </v-btn>
         </v-col>
@@ -103,7 +113,7 @@ const isShowInvoiceButton = computed(
       <template #actions>
         <v-spacer />
         <v-btn @click="dialog = false">{{ $t('user_event_card.cancel_dialog.not_cancel') }}</v-btn>
-        <v-btn variant="tonal" @click="$emit('cancel', order), (dialog = false)">
+        <v-btn variant="tonal" @click="($emit('cancel', order), (dialog = false))">
           {{ $t('user_event_card.cancel_dialog.submit') }}
         </v-btn>
       </template>

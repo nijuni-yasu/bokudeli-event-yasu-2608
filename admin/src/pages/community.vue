@@ -247,7 +247,7 @@ onUnmounted(() => {
       <template #actions>
         <v-spacer></v-spacer>
         <v-btn @click="createConfirmDialog = false">{{ $t('cancel') }}</v-btn>
-        <v-btn @click="submit(), (createConfirmDialog = false)">
+        <v-btn @click="(submit(), (createConfirmDialog = false))">
           {{ $t('community.create_confirm_dialog.submit') }}
         </v-btn>
       </template>

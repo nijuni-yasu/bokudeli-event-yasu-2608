@@ -4,8 +4,15 @@ import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
-import { convertFirestoredUserToStoredUser, convertStoredUserToFirestoredUser } from '@shokujii/base/schemes/converter.js'
-import { FirestoredUser, type FirestoredUserPersonalInformation, type StoredUser } from '@shokujii/base/schemes/storedUser.js'
+import {
+  convertFirestoredUserToStoredUser,
+  convertStoredUserToFirestoredUser,
+} from '@shokujii/base/schemes/converter.js'
+import {
+  FirestoredUser,
+  type FirestoredUserPersonalInformation,
+  type StoredUser,
+} from '@shokujii/base/schemes/storedUser.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { buildThumbnailsLinks } from '@shokujii/base/composable/buildThumbnailsLinks.js'
 import {
