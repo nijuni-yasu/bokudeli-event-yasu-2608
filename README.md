@@ -1,12 +1,109 @@
 # 食事でつながる「shokujii」
 
-## フォルダ構成
+## ディレクトリ構成
 
-- user
-- admin
-- functions
-- manager
+以下のディレクトリに関してはモノレポ構成で、トップレベルの設定ファイル群で制御されています。
 
-## GitHub Actions
+- **`/common`**  
+  全てのワークスペース横断で使用されることを想定した TypeScript ファイル群。Database schema や ユーティリティ関数を定義。
+- **`/base`**  
+  共有 UI コンポーネントを定義 (Vue3 + Vuetify3 + Materio)
+- **`/user`**  
+  ユーザー向けメインアプリケーション (Vue3 + Vuetify3)
+- **`/admin`**  
+  店舗管理者向けアプリケーション (Vue3 + Vuetify3)
+- **`/curry`**  
+  神田カレーグランプリ向けアプリケーション (Vue3 + Vuetify3)
+- **`/functions/default`**  
+  Google Cloud Run functions v2 上で動作するサーバーサイドアプリケーション
 
-user, admin のデプロイ作業をGitHub Actionsを使って行っている。mainブランチにマージしたタイミングでデプロイされる。また手動でデプロイアクションを実行することもできる。
+以下のディレクトリは過去実装を今後新規構成に変更して行く予定のものです。
+基本的に新規更新は行わず、上記新規構成に従うように変更していくものとします。
+
+- **`manager`**  
+  運営向け管理画面（Vue 2 + Vuetify 2）
+- **`functions/legacy`**  
+  サーバサイドアプリケーション  
+  Google Cloud Run Functions v1（2026/4/20 EOL）
+- **`/functions/shokujii-slackbot/`**  
+  Slack 連携ボット  
+  Google Cloud Run Functions v1（2026/4/20 EOL）
+- **`/functions/shokujii-linebot/`**  
+  LINE 連携ボット  
+  Google Cloud Run Functions v1（2026/4/20 EOL）
+
+### Materio
+
+このプロジェクトでは UI テンプレートとして [Materio](https://store.vuetifyjs.com/products/materio-vuetify-vuejs-admin-template) を使用しています。
+しかし、こちらはモノレポ構成との相性が悪いため、直接シンボリックリンクを張る方法で問題を回避しています。
+具体的には以下2つのディレクトリを各 UI アプリケーションから参照しています。
+これらのディレクトリに含まれるファイルは原則として修正しないでください。
+
+- [base/src/@core](./base/src/@core)
+- [base/src/@layouts](./base/src/@layouts/)
+
+### base
+
+本来、 [base](./base) は独立したワークスペースとしてビルドされるべきですが、以下の問題があるため、上位ワークスペースから参照して、そちらでビルドするようになっています。
+依存関係が逆転しているため、問題が起きやすいので注意してください。
+
+- auto-imports (Materio 由来)
+- `router/utils.ts`
+
+**TODO**  
+正しく構造化すれば分離することは理論上可能なので、将来的にはこれを修正していく
+
+## Development
+
+開発環境に関しては、基本的に各ディレクトリ以下の `README.md` を参照してください。
+以下では **モノレポ構成** のプロジェクトにおいて全体で適用されるルールについて説明します。（旧仕様のものに関しては各ディレクトリの `README.md` を参照してください。）
+
+### 依存関係のインストール
+
+トップレベルで一度だけ依存関係をインストールしてください。各ディレクトリでインストールする必要はありません。
+
+```sh
+npm install
+```
+
+### npm script
+
+npm script の実行方法は以下の 2 通りがあります。状況に応じて使い分けてください。
+
+- 各ディレクトリに移動してから実行
+  ```sh
+  cd user
+  npm run lint
+  ```
+- workspace を指定して実行
+  ```sh
+  npm -w user run lint
+  ```
+
+### Formatter & Lint
+
+これらが通らないとデプロイできない仕様になっています。
+こまめに確認するようにしてください。
+
+```sh
+npm run format:check
+npm run lint
+```
+
+## Deploy
+
+原則として firebase への Deploy は [GitHub Actions](../../actions) でのみ実行されることとし、ローカルでの実行は禁止とします。
+
+特別な事情等で、手動で Deploy が必要な場合は、プロジェクト名を直接指定する形でデプロイするか、 `.firebaserc` を作成してください。
+以下 [firebase](#firebase) を参照のこと。
+
+## firebase command
+
+firebase コマンドを使う場合は以下のように都度プロジェクト名を明示的に使用することを推奨します。
+基本的にローカルでの firebase コマンドの使用は避けるようにしてください。（エミュレータを除く）
+
+```sh
+firebase --project bokudeli-event-test emulators:start --only functions
+```
+
+個人用の開発環境等のために `.firebaserc` を作成して使用することは可能ですが、 git の管理下に入れないよう注意してください。

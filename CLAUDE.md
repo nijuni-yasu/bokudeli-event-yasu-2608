@@ -20,13 +20,14 @@ Shokujii（食事でつながる）は、食事関連のコミュニティイベ
 
 ```bash
 # モダンアプリ（user, admin, curry）- Vue 3 + Vite + Vuetify 3
-yarn dev                    # 開発モード
-yarn dev-development       # 開発環境
-yarn dev-production        # 本番環境
-yarn build-development     # 開発環境用ビルド
-yarn build-production      # 本番環境用ビルド
-yarn lint                  # ESLint チェック
-yarn format                # Prettier フォーマット
+npm run dev                     # 開発モード
+npm run dev -- -m development   # 開発環境
+npm run dev -- -m production    # 本番環境
+npm run build -- -m development # 開発環境用ビルド
+npm run build -- -m production  # 本番環境用ビルド
+npm run lint                    # ESLint チェック
+npm run format                  # Prettier フォーマット
+npm run format:check            # Prettier フォーマット（チェックのみ）
 
 # Manager アプリ（レガシー）- Vue 2 + Vue CLI + Vuetify 2
 yarn dev-development       # 開発モード
@@ -39,12 +40,9 @@ yarn build-production      # 本番環境用ビルド
 ```bash
 # Default functions（モダンTypeScript）
 cd functions/default
-yarn lint                  # ESLint
-yarn build                 # TypeScript コンパイル
-yarn build:watch          # ウォッチモードコンパイル
-yarn serve                 # Firebase エミュレーター
-yarn test                  # Vitest テスト
-yarn deploy                # 関数デプロイ
+npm run lint               # ESLint
+npm run build              # TypeScript コンパイル
+npm run build:watch        # ウォッチモードコンパイル
 
 # Legacy functions（非推奨JavaScript - 移行中）
 cd functions/legacy
