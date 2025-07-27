@@ -11,6 +11,8 @@ const props = defineProps<{
   cancelText?: string
   okClick?: () => void
   cancelClick?: () => void | Promise<void>
+  okLoadingState?: boolean
+  cancelLoadingState?: boolean
   maxWidth?: string
 }>()
 
@@ -49,10 +51,22 @@ const clickCancelHandler = () => {
       <v-card-text><slot></slot></v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn v-if="props.isConfirm" color="secondary" @click="clickCancelHandler()">
+        <v-btn
+          v-if="props.isConfirm"
+          color="secondary"
+          :loading="props.cancelLoadingState"
+          :disabled="props.okLoadingState"
+          @click="clickCancelHandler()"
+        >
           {{ props.cancelText ?? 'キャンセル' }}
         </v-btn>
-        <v-btn color="primary" @click="clickOkHandler()">{{ props.okText ?? 'OK' }}</v-btn>
+        <v-btn
+          color="primary"
+          :loading="props.okLoadingState"
+          :disabled="props.cancelLoadingState"
+          @click="clickOkHandler()"
+          >{{ props.okText ?? 'OK' }}</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>
