@@ -1,7 +1,11 @@
 import { send } from './utils/sendgrid.js'
 import { getUserPersonalInformation } from './stores/user.js'
 import { getEventUrl } from './utils/urls.js'
-import { convertToDateWeekdayShort, convertToDuration, convertToDatetimeWeekdayShort } from './commonUtils/datetime.js'
+import {
+  convertToDateWeekdayShort,
+  convertToDuration,
+  convertToDatetimeWeekdayShort,
+} from '@shokujii/common/utils/datetime.js'
 import { DEFAULT_FROM } from './utils/mail.js'
 import {
   getInCartOrdersByUpdatedTime,

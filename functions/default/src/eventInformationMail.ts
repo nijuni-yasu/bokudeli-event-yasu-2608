@@ -5,8 +5,8 @@ import type { ClientResponse } from '@sendgrid/mail'
 import { getEventUrl } from './utils/urls.js'
 import { getAllUsers } from './stores/user.js'
 import { getAllAcceptingOrderEvents } from './stores/event.js'
-import { convertTruncateText } from './commonUtils/converter.js'
-import { convertToJustDate, convertToDuration, convertToDatetimeWeekdayShort } from './commonUtils/datetime.js'
+import { convertTruncateText } from '@shokujii/common/utils/converter.js'
+import { convertToJustDate, convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 
 // 定数
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-797deb1c54984007baadd1926ee974a2'

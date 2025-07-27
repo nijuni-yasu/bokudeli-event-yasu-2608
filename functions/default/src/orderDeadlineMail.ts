@@ -4,9 +4,13 @@ import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
 import { getAcceptingOrderEventsByTime, ShokujiiEvent } from './stores/event.js'
 import { getUser, getUserPersonalInformation } from './stores/user.js'
 import { getCommunity } from './stores/community.js'
-import { convertToDateWeekdayShort, convertToDatetimeWeekdayShort, convertToDuration } from './commonUtils/datetime.js'
+import {
+  convertToDateWeekdayShort,
+  convertToDatetimeWeekdayShort,
+  convertToDuration,
+} from '@shokujii/common/utils/datetime.js'
 import { getEventPartnerShop } from './stores/partner.js'
-import { PartnerShop } from './schemas/PartnerShop.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 
 // テンプレートID
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'

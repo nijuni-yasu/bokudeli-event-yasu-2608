@@ -1,7 +1,7 @@
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getEventUrl, getManageEventInvoiceUrl } from './utils/urls.js'
-import { convertToDateWeekdayShort } from './commonUtils/datetime.js'
+import { getEventUrl } from './utils/urls.js'
+import { convertToDateWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { getUserPersonalInformation } from './stores/user.js'
 import { getAcceptingOrderEventsByEndTime, type ShokujiiEvent } from './stores/event.js'
 

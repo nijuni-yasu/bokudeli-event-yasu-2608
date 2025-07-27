@@ -1,7 +1,7 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import * as sgMail from './utils/sendgrid.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
-import { PartnerShop } from './schemas/PartnerShop.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 
 const sendShopOpenMailToSupport = async (shop: PartnerShop) => {
   const shopName = shop.shop_name
