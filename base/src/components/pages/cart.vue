@@ -8,21 +8,36 @@ import {
   dateOnlyTimeString,
   priceString,
   convertDocumentDataToEvent,
+  convertStoredUserToFirestoredUser,
 } from '@/schemes/converter'
 import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
 import { type OrderMenu } from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useEventStore, type EventStore } from '@/stores/event'
 import Stripe from 'stripe'
-import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
+import { collectionGroup, doc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { getProfile } from '@/router/utils'
 import { ref, reactive, computed, onMounted } from 'vue'
-import { getAuth } from 'firebase/auth'
+import {
+  type AdditionalUserInfo,
+  getAdditionalUserInfo,
+  getAuth,
+  TwitterAuthProvider,
+  type User,
+  type UserCredential,
+} from 'firebase/auth'
 import { httpsCallable } from 'firebase/functions'
+import { linkByProviderService } from '@/utils/providerService'
+import { FirebaseError } from 'firebase/app'
+import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
+import type { StoredUser } from '@/schemes/storedUser'
+import { type UserStore, useUserStore } from '@/stores/user'
+import { useStoreUserCredential } from '@/stores/userCredential'
+import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -315,9 +330,114 @@ const loadCartList = async () => {
 
 const isOpenCancelpolicyDialog = ref(false)
 
+const notification = inject('notification') as Notification
+const storedUserStore = useStoreStoredUser()
+const userStore = useUserStore(userId.value) as UserStore
+const personalInformationSnapshotRef = doc(db, 'users_personal_information', userId.value)
+const isTwitterLoading = ref<boolean>(false)
+const isOpenTwitterLinkDialog = ref<boolean>(false)
+
+type CustomData = {
+  email: string
+  _tokenResponse?: {
+    providerId?: string
+  }
+}
+
+const handleTwitterLoginLink = async () => {
+  try {
+    isTwitterLoading.value = true
+    const userCredential = await linkByProviderService(currentUser as User, 'Twitter')
+
+    const additionalUserInfo = getAdditionalUserInfo(userCredential)
+    if (additionalUserInfo) {
+      await setSNSProfile(userCredential, additionalUserInfo)
+    }
+
+    // ユーザー情報を再取得して更新
+    if (auth.currentUser) {
+      await auth.currentUser.reload()
+    }
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = TwitterAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
+      }
+      if (error.code === 'auth/email-already-in-use') {
+        useStoreFirebaseAuthError().reset()
+        return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+      }
+    } else {
+      console.error({ error })
+    }
+  } finally {
+    isTwitterLoading.value = false
+  }
+}
+
+const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
+  const storedUser = storedUserStore.storedUser as StoredUser
+
+  if (additionalUserInfo.providerId === 'twitter.com') {
+    storedUser.userSnsTwitter = additionalUserInfo?.username as string
+
+    const twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
+    if (twitterCredential?.accessToken && twitterCredential.secret) {
+      storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
+      storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
+
+      if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
+        await updateDoc(personalInformationSnapshotRef, {
+          user_sns_twitter_access_token: twitterCredential.accessToken,
+          user_sns_twitter_secret: twitterCredential.secret,
+        })
+      }
+    }
+  }
+
+  await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+  storedUserStore.update(storedUser)
+}
+
 onMounted(async () => {
   state.cartList = await loadCartList()
   state.isLoading = false
+
+  const userCredential = useStoreUserCredential().userCredential
+  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
+  const error = useStoreFirebaseAuthError().error
+  if (error instanceof FirebaseError) {
+    let credential
+    let snsName
+    const customData = error?.customData as CustomData
+    if (customData._tokenResponse?.providerId === 'twitter.com') {
+      credential = TwitterAuthProvider.credentialFromError(error)
+      snsName = 'X'
+    }
+
+    console.error({ error, credential })
+
+    if (error.code === 'auth/credential-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, {
+        message: $t('user.exists_credential', { snsName: snsName }),
+        color: 'error',
+      })
+    }
+    if (error.code === 'auth/email-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+    }
+  } else if (error) {
+    console.error({ error })
+  }
+
+  if (!userCredential || additionalUserInfo === null) return
+  await setSNSProfile(userCredential, additionalUserInfo)
+
+  useStoreUserAdditionalInfo().reset()
 })
 </script>
 
@@ -445,7 +565,13 @@ onMounted(async () => {
               <div v-else>
                 <v-card-text class="card-text-style"> 【{{ $t('cart.x_post.title') }}】 </v-card-text>
                 <v-card-text class="card-text-style">
-                  <v-btn size="small" rounded="pill" class="ma-2" variant="outlined" :to="getProfile()">
+                  <v-btn
+                    size="small"
+                    rounded="pill"
+                    class="ma-2"
+                    variant="outlined"
+                    @click="() => (isOpenTwitterLinkDialog = true)"
+                  >
                     {{ $t('cart.x_post.connect_x') }}
                   </v-btn>
                 </v-card-text>
@@ -512,6 +638,19 @@ onMounted(async () => {
     :ok-text="$t('cart.go_to_setting')"
   >
     {{ targetUserParameter }}
+  </confirm-dialog>
+
+  <confirm-dialog
+    v-model="isOpenTwitterLinkDialog"
+    :is-confirm="true"
+    :ok-text="$t('profile.linkage')"
+    :ok-click="handleTwitterLoginLink"
+    :ok-loading-state="isTwitterLoading"
+  >
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('profile.twitter_link_modal_title') }}
+    </v-card-text>
+    <v-card-text class="text-center py-5" v-html="$t('profile.twitter_link_modal_description')" />
   </confirm-dialog>
 </template>
 <style scoped>
