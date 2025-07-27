@@ -1,29 +1,31 @@
 <script setup lang="ts">
-import EventBasicInfoCard from '@/components/eventcreate/EventBasicInfoCard.vue'
-import EventShop from '@/components/eventcreate/EventShop.vue'
-import EventMenu from '@/components/eventcreate/EventMenu.vue'
-import EventDetailCard from '@/components/eventcreate/EventDetailCard.vue'
-import EventShopNotice from '@/components/eventcreate/EventShopNotice.vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { isEmpty } from '@core/utils/helpers'
+import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
+import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
+import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
+import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
+import EventShopNotice from '@shokujii/base/components/eventcreate/EventShopNotice.vue'
 import { collection, collectionGroup, getDocs } from 'firebase/firestore'
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase'
 import {
   convertDocumentDataToMenu,
   convertDateToWeekTimestamp,
   convertShopTimeToWeekTimestamp,
-} from '@/schemes/converter'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { type Shop } from '@/schemes/shop'
-import { type PartnerMenu } from '@/schemes/partnerMenu'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useEventListStore } from '@/stores/eventList'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useStoreStoredUser } from '@/stores/storedUser'
+} from '@shokujii/base/schemes/converter'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type Shop } from '@shokujii/base/schemes/shop'
+import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useEventListStore } from '@shokujii/base/stores/eventList'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { useRouter } from 'vue-router'
 import { getCommunityPath } from '@/router/utils'
-import { calculateDistance, fetchLocationByPostalcode } from '@/composable/fetchLocation'
+import { calculateDistance, fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
 import { maxBy } from 'lodash'
-import { useValidators } from '@/composable/validators'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useValidators } from '@shokujii/base/composable/validators'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 
 import { useI18n } from 'vue-i18n'
@@ -52,23 +54,32 @@ const communityStore = useCommunityStore(props.communityAccount) as CommunitySto
 const isOpenContactDialogVisible = ref(props.eventId == null)
 
 const _event = ref<BokudeliEvent | null>(null)
+
+// Initialize _event when community data becomes available
+watch(
+  () => communityStore.community,
+  (community) => {
+    if (props.eventId == null && _event.value == null && community != null) {
+      _event.value = new BokudeliEvent(
+        community.community_id,
+        community.community_account,
+        community.community_name,
+        community.community_manager_fullname,
+        community.community_company,
+        community.community_email,
+        community.community_phone,
+      )
+    }
+  },
+  { immediate: true },
+)
+
 const event = computed<BokudeliEvent | null>({
   get: () => {
     if (props.eventId != null) {
       const eventStore = useEventStore(props.eventId) as EventStore
       return eventStore.event
     } else {
-      if (_event.value == null && communityStore.community != null) {
-        _event.value = new BokudeliEvent(
-          communityStore.community.community_id,
-          communityStore.community.community_account,
-          communityStore.community.community_name,
-          communityStore.community.community_manager_fullname,
-          communityStore.community.community_company,
-          communityStore.community.community_email,
-          communityStore.community.community_phone,
-        )
-      }
       return _event.value
     }
   },
@@ -281,6 +292,7 @@ const submit = async () => {
 const sendReserveMail = async () => {
   const event = await saveDraft()
   if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
+    // eslint-disable-next-line quotes
     console.warn("The event doesn't have enough information.", event)
     return
   }

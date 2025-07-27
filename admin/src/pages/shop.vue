@@ -10,13 +10,13 @@ import {
   mdiFileDocumentOutline,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@/stores/_partner'
-import { useValidators } from '@/composable/validators'
+import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
-import { Shop, GENRE_ARRAY } from '@/schemes/shop'
-import ImageInput from '@/components/ImageInput.vue'
-import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
-import { useNotification } from '@/composable/notification'
+import { Shop, GENRE_ARRAY } from '@shokujii/base/schemes/shop.js'
+import ImageInput from '@shokujii/base/components/ImageInput.vue'
+import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 

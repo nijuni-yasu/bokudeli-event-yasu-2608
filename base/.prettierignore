@@ -1,2 +1,5 @@
-src/@*
+node_modules
 *.d.ts
+
+/src/@core
+/src/@layouts

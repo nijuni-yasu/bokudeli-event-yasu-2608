@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { PartnerMenu } from '@/schemes/partnerMenu'
-import { convertToDate } from '@/utils/datetime'
+import { type PropType } from 'vue'
+import { PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
+import { convertToDate } from '@shokujii/base/utils/datetime'
 
 defineProps({
   menu: {

@@ -6,11 +6,11 @@ on:
       - development
       - production
     paths:
-      - "manager/**"
+      - 'manager/**'
   workflow_dispatch:
     inputs:
       environment:
-        description: "Deployment environment"
+        description: 'Deployment environment'
         required: true
         type: choice
         options:
@@ -43,7 +43,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: ./manager/.node-version
-          cache: "npm"
+          cache: 'npm'
           cache-dependency-path: ./manager/package-lock.json
       - name: Generate .env file
         run: |
@@ -53,7 +53,7 @@ jobs:
           npm install
           npm run build-${ENVIRONMENT}
       - name: Install Firebase CLI
-        run: curl -sL https://firebase.tools | bash          
+        run: curl -sL https://firebase.tools | bash
       - name: Deploy to Firebase
         shell: bash
         run: |

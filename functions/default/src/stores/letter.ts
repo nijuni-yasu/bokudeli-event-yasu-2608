@@ -1,5 +1,5 @@
 import { DocumentData, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore'
-import { Letter } from '../schemas/CommunityLetter.js'
+import { Letter } from '@shokujii/common/schemas/CommunityLetter.js'
 
 const letterConverter: FirestoreDataConverter<Letter> = {
   toFirestore(letter: Letter): DocumentData {

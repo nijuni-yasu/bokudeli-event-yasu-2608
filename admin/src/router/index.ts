@@ -35,7 +35,7 @@ export const setupRouter = (router: Router) => {
           router.replace('/')
         }
       }
-    } catch (err) {
+    } catch {
       await getAuth().signOut()
       if (to.path !== '/login') {
         router.push({ path: '/login', query: { redirect: to.fullPath } })

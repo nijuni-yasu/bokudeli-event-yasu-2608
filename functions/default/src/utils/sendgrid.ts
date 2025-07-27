@@ -18,7 +18,7 @@ const isValidMailData = (data: MailDataRequired): boolean => {
   return data.to != null && data.to !== '' && data.from != null && data.from !== ''
 }
 
-export const send = async (data: MailDataRequired | MailDataRequired[]): Promise<[ClientResponse, {}]> => {
+export const send = async (data: MailDataRequired | MailDataRequired[]): Promise<[ClientResponse, object]> => {
   if (data instanceof Array) {
     data = data.flatMap((d) => (isValidMailData(d) ? [] : d))
   } else {

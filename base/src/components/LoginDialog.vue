@@ -10,22 +10,11 @@ import {
 } from 'firebase/auth'
 import { mdiFacebook, mdiGoogle } from '@mdi/js'
 
-const props = defineProps<{
-  modelValue: boolean
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
-
 const loginProvider = 'google' as 'facebook' | 'google'
 
 const isEnableLinkWithCredential = false
 
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const dialog = defineModel<boolean>()
 
 const closeDialog = () => {
   dialog.value = false
@@ -150,7 +139,8 @@ const handleGoogleLogin = async () => {
         および
         <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank"
           >プライバシーポリシー</a
-        > に同意してログインしてください。
+        >
+        に同意してログインしてください。
       </v-card-text>
       <v-card-text v-if="loginProvider === 'google'">
         <v-container>
@@ -180,8 +170,8 @@ const handleGoogleLogin = async () => {
           </v-row>
         </v-container>
       </v-card-text>
-      <v-card-text class="text-center py-5" style="font-size:12px; color:#E91E63;">
-        ※注意※<br/>
+      <v-card-text class="text-center py-5" style="font-size: 12px; color: #e91e63">
+        ※注意※<br />
         LINE、Messenger、Facebookアプリなどのアプリ内ブラウザでは、ログインができません。<br />
         ChromeやSafariなどのブラウザからログインしてください。<br />
       </v-card-text>

@@ -1,4 +1,4 @@
-import { storage } from '@/firebase'
+import { storage } from '@shokujii/base/firebase'
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
 
 const rebuildFilename = (filename: string) => {

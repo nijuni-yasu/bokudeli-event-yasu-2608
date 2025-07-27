@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/_partner'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getCommunityPath, getShopPath, getEventPath, getUserEventUrl } from '@/navigation/utils'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useEventListStore } from '@/stores/eventList'
-import type { Shop } from '@/schemes/shop'
-import EventDetailCard from '@/components/eventcreate/EventDetailCard.vue'
-import EventBasicInfoCard from '@/components/eventcreate/EventBasicInfoCard.vue'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
+import type { Shop } from '@shokujii/base/schemes/shop.js'
+import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
+import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
 import { Timestamp } from 'firebase/firestore'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity.js'
 import { mdiOpenInNew } from '@mdi/js'
-import { useNotification } from '@/composable/notification'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 

@@ -3,6 +3,8 @@
  * Deprecated
  * Please use `v-dialog` directly
  */
+import { computed } from 'vue'
+
 const props = defineProps<{
   modelValue: boolean
   isConfirm?: boolean
@@ -17,7 +19,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
+  'update:modelValue': [value: boolean]
 }>()
 
 const dialog = computed({

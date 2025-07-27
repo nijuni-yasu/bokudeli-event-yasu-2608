@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { priceString } from '@/schemes/converter'
-import { type PartnerMenu } from '@/schemes/partnerMenu'
+import { priceString } from '@shokujii/base/schemes/converter'
+import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
 import { mdiFoodForkDrink } from '@mdi/js'
 
 defineProps<{
@@ -9,7 +9,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'selectMenu', menu: PartnerMenu): void
+  selectMenu: [menu: PartnerMenu]
 }>()
 </script>
 <template>

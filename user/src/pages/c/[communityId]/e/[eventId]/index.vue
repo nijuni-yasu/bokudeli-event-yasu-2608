@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
-import { type PartnerMenu } from '@/schemes/partnerMenu'
-import EventCartDialog from '@/components/EventCartDialog.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import EventMenuList from '@/components/EventMenuList.vue'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
+import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import EventMenuList from '@shokujii/base/components/EventMenuList.vue'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
 import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
-import EventDetailsCard from '@/components/EventDetailsCard.vue'
-import EventStatusChip from '@/components/EventStatusChip.vue'
-import Banners from '@/components/Banners.vue'
-import { useBannersStore } from '@/stores/banner'
+import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
+import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
+import Banners from '@shokujii/base/components/Banners.vue'
+import { useBannersStore } from '@shokujii/base/stores/banner.js'
 
 const communityId = useRoute().params.communityId as string
 const eventId = useRoute().params.eventId as string
@@ -71,7 +71,7 @@ const selectMenu = (menu: PartnerMenu) => {
     return
   }
   if (menuDisabled.value === 'finished') {
-    alertState.message = $t(`menu_disabled_reason.finished`)
+    alertState.message = $t('menu_disabled_reason.finished')
     alertState.isOpen = true
   } else if (disabledReason === false) {
     selectedMenuState.menu = menu

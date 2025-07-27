@@ -1,16 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { type Letter } from '../schemes/letter'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useEventStore, type EventStore } from '@/stores/event'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 
 const props = defineProps<{ letter: Letter }>()
-
-const emits = defineEmits<{
-  edit: []
-  copy: []
-  delete: []
-}>()
 
 // 表示用コンポーネントの中で pinia を直接叩くのは望ましくないが、
 // それを避けるためだけに新たなレイヤを作るより、現状ではこの方が良いと判断した

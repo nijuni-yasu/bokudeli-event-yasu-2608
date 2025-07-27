@@ -1,4 +1,5 @@
-import { type ComputedRef } from 'vue'
+import { ref, computed, type ComputedRef } from 'vue'
+import { defineStore } from 'pinia'
 import type { StateTree, Store } from 'pinia'
 import {
   doc,
@@ -8,9 +9,9 @@ import {
   type QueryDocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { db } from '@/firebase'
-import { Banners, type Banner } from '@/schemas/Banners'
-import { FIRESTORE_LOADING } from '@/utils/const'
+import { db } from '@shokujii/base/firebase.js'
+import { Banners, type Banner } from '@shokujii/common/schemas/Banners.js'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 
 const bannersConverter: FirestoreDataConverter<Banners> = {
   toFirestore(banners: Banners): DocumentData {
@@ -21,13 +22,13 @@ const bannersConverter: FirestoreDataConverter<Banners> = {
   },
 }
 
-type BannersStoreState = {} & StateTree
+type BannersStoreState = object & StateTree
 
 type BannersStoreGetters = {
   banners: ComputedRef<Banner[] | typeof FIRESTORE_LOADING | undefined>
 }
 
-type BannersStoreAction = {}
+type BannersStoreAction = object
 
 export type BannersStore = Store<string, BannersStoreState, BannersStoreGetters, BannersStoreAction>
 export const useBannersStore = (target: Banners | string): BannersStore => {

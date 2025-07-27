@@ -1,6 +1,7 @@
-import type { Ref } from 'vue'
+import { ref, type Ref } from 'vue'
+import { defineStore } from 'pinia'
 import type { StateTree, Store } from 'pinia'
-import { type Letter } from '@/schemes/letter'
+import { type Letter } from '@shokujii/base/schemes/letter'
 import {
   getFirestore,
   onSnapshot,
@@ -20,7 +21,7 @@ type LetterStoreState = {
   letter: Ref<Letter | null>
 } & StateTree
 
-type LetterStoreGetters = {}
+type LetterStoreGetters = object
 
 type LetterStoreAction = {
   updateLetter: (data: Letter) => Promise<void>

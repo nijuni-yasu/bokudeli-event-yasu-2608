@@ -96,6 +96,7 @@ async function sendCommunityContactMailToOrganizers(
         replyTo: data.user_email,
         templateId,
         dynamicTemplateData,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
     }),
   )
@@ -113,6 +114,7 @@ export const communityAdded = onDocumentCreated(
       return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, community)
     } else {
       console.error('communityAdded event is undefined')
+      throw new HttpsError('invalid-argument', 'event is undefined')
     }
   },
 )
@@ -127,9 +129,9 @@ export const communityContact = onCall(
       const communityContactRequest = CommunityContactRequestSchema.parse(request.data) as CommunityContactRequest
       return sendCommunityContactMailToOrganizers(COMMUNITY_CONTACT_ID, communityContactRequest)
     } else {
-      console.log('community_contact Auth Error')
-      console.log(request.data)
-      console.log(request.auth)
+      // console.log('community_contact Auth Error')
+      // console.log(request.data)
+      // console.log(request.auth)
       throw new HttpsError('permission-denied', 'community_contact Auth Error')
     }
   },

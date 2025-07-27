@@ -1,29 +1,7 @@
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import type { Shop } from '@/schemes/shop'
-
-const getXPostTextAfterOrder = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
-  const communityTwitterAccount = community.community_sns_twitter ?? ''
-  const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
-  const shopText = shop.shop_name + (shop.shop_url_twitter ? ` @${shop.shop_url_twitter}` : '')
-  const hashTagText =
-    event.event_sns_hash_tag != null && event.event_sns_hash_tag !== ''
-      ? `#${event.event_sns_hash_tag} #shokujii`
-      : '#食事でつながる #shokujii'
-
-  const textList = [
-    `${event.event_name} に参加します✋`,
-    '',
-    `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
-    `👥主催：${communityText}`,
-    `👩‍🍳食事：${shopText}`,
-    `👉詳細：${event.url}`,
-    '',
-    `${hashTagText}`,
-  ]
-  return `${textList.join('\n')}`
-}
+import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
+import type { Shop } from '@shokujii/base/schemes/shop'
 
 const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''
@@ -35,7 +13,7 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
       : '#食事でつながる #shokujii'
 
   const textList = [
-   `${event.event_name} に参加します✋`,
+    `${event.event_name} に参加します✋`,
     '',
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
     `👥主催：${communityText}`,
@@ -83,7 +61,7 @@ export const shareSnsButton = async (
     const text = encodeURIComponent(getXPostText(event, community, shop))
     const openUrl = `${baseUrl}?text=${text}`
     _window!.location.href = openUrl
- } else if (snsType === 'facebook') {
+  } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
     const openUrl = `${baseUrl}?&u=${eventUrl}`
     _window!.location.href = openUrl

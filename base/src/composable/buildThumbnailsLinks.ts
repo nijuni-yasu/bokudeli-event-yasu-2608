@@ -1,4 +1,4 @@
-import { FIREBASE_STORAGE_BASE_URL } from '@/firebase'
+import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase'
 
 type Sizes = 'large' | 'medium' | 'small'
 export type ThumbnailLinks = { [K in Sizes]: string }
@@ -57,5 +57,4 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       return result
     }, {} as ThumbnailLinks)
   } */ // Facebook は後からサイズ変更には対応していない
-  return null
 }

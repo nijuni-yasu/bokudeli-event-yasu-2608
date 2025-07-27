@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
-import { FIRESTORE_LOADING } from '@/utils/const'
-import { type Banner } from '@/schemas/Banners'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const'
+import { type Banner } from '@shokujii/common/schemas/Banners.js'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const showArrows = computed(() => {
   // ローディング中は矢印を非表示
-  if (props.banners === FIRESTORE_LOADING){
+  if (props.banners === FIRESTORE_LOADING) {
     return false
   }
   // バナーが2つ以上の場合は矢印を表示
@@ -48,6 +48,7 @@ function onOpenUrl(url: string | undefined) {
       <template v-else>
         <v-carousel-item
           v-for="banner in banners"
+          :key="banner.image_url"
           cover
           hide-delimiter
           :class="{ 'clickable-item': banner.link_url !== undefined }"

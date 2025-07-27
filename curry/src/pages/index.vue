@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import topLogo from '@/assets/images/curry/curry_logo_cover.png'
 import { getEventPath } from '@/router/utils'
-import { useEventListStore } from '@/stores/eventList'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { where, orderBy } from 'firebase/firestore'
-import EventCard from '@/components/EventCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
 
 const display = useDisplay()

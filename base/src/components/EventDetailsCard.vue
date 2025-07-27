@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getCommunityPath, getLogin } from '@/router/utils'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import EventMemberList from '@/components/EventMemberList.vue'
-import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
-import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useEventStore, type EventStore } from '@/stores/event'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
-import { shareSnsButton } from '@/utils/shareSnsButton'
-import ShowDialog from '@/components/ShowDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
+import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
+import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
+import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
+import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
 import VueQrious from 'vue-qrious'
 import {
   mdiEmail,
@@ -23,11 +25,11 @@ import {
   mdiAccountGroup,
   mdiHelpCircleOutline,
 } from '@mdi/js'
-import XIcon from '@/icons/x'
-import LineIcon from '@/icons/line'
-import type { Shop } from '@/schemes/shop'
-import { usePartnerStore } from '@/stores/_partner'
-import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
+import XIcon from '@shokujii/base/icons/x'
+import LineIcon from '@shokujii/base/icons/line'
+import type { Shop } from '@shokujii/base/schemes/shop'
+import { usePartnerStore } from '@shokujii/base/stores/_partner'
+import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -43,18 +45,16 @@ const props = defineProps<{
 // TODO コンポーネントを分割する
 const eventStore = useEventStore(props.event.event_id) as EventStore
 
-const members = computed(
-  () =>
-    eventStore.members?.sort(
-      (a, b) =>
-        a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
-    ) ?? [],
+const members = computed(() =>
+  [...(eventStore.members ?? [])].sort(
+    (a, b) =>
+      a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
+      b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
+  ),
 )
 
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
-const isOpenLoginDialog = ref(false)
 const isOpenCalendarAddDialog = ref(false)
 const isShowQrCode = ref(false)
 const isOpenCancelpolicyDialog = ref(false)

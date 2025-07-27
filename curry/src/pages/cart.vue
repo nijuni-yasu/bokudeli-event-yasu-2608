@@ -5,24 +5,24 @@
  * をモディファイして使用
  * TODO 2重メンテになるので、早めにリファクタリングする
  */
-import { loadEventMembers } from '@/composable/loadEventMembers'
-import { db, stripeBaseURL } from '@/firebase'
+import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers.js'
+import { db, stripeBaseURL } from '@shokujii/base/firebase.js'
 import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
 import {
   dateWithDayOfWeekString,
   dateOnlyTimeString,
   priceString,
   convertDocumentDataToEvent,
-} from '@/schemes/converter'
-import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
-import { type OrderMenu } from '@/schemes/orderMenu'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useEventStore, type EventStore } from '@/stores/event'
+} from '@shokujii/base/schemes/converter.js'
+import { type OrderItem, createEmptyOrderItem } from '@shokujii/base/schemes/orderItem.js'
+import { type OrderMenu } from '@shokujii/base/schemes/orderMenu.js'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import Stripe from 'stripe'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 
@@ -142,7 +142,7 @@ const createCheckoutSession = async (order: OrderItem) => {
       },
     })
     window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-  } catch (err) {
+  } catch {
     alertBody.value = $t('cart.payment_failed')
   }
 }

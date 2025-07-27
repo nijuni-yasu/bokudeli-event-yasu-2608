@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { type PartnerMenu } from '@/schemes/partnerMenu'
-import { priceString } from '@/schemes/converter'
+import { computed } from 'vue'
+import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
+import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import type { Shop } from '@/schemes/shop'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import type { Shop } from '@shokujii/base/schemes/shop'
 
 const props = defineProps<{
   shop: Shop | null
@@ -13,8 +14,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit'): void
-  (e: 'back'): void
+  submit: []
+  back: []
 }>()
 
 const submit = () => {

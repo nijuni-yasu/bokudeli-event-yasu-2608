@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { defineProps } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { functions } from '@/firebase'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import LoginDialog from '@/components/LoginDialog.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { getManageCommunityPath } from '@/router/utils'
 
 const acceptInvitationForCommunityManager = httpsCallable(functions, 'acceptInvitationForCommunityManager')
@@ -29,7 +30,6 @@ const redirect = () => {
 watch(
   () => [useStoreStoredUser().storedUser, (useCommunityStore(props.communityId) as CommunityStore).community],
   ([storedUser, community]) => {
-    console.log('watch', storedUser)
     if (storedUser == null) {
       isOpenLoginDialog.value = true
       return

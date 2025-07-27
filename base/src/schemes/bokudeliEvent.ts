@@ -6,7 +6,7 @@ import _ from 'lodash'
 export const eventPaymentSelectableTypes = ['user_advance', 'community_bill'] as const
 
 // イベントページで使用されている支払い方法（参加者事前決済/参加者当日払い/主催者請求書払い）
-const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
+export const eventPaymentTypes = ['user_advance', 'user_on_day', 'community_bill'] as const
 
 export type EventPaymentType = (typeof eventPaymentTypes)[number]
 

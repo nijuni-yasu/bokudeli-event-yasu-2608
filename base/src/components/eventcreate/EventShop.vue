@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { type Shop } from '@/schemes/shop'
+import { ref, computed } from 'vue'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { type Shop } from '@shokujii/base/schemes/shop.js'
 import { Timestamp } from 'firebase/firestore'
 import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
-import { convertTruncateText, postalcodeString } from '@/schemes/converter'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { convertTruncateText, postalcodeString } from '@shokujii/base/schemes/converter'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const props = defineProps<{
   shops: Shop[]
@@ -13,17 +14,13 @@ const props = defineProps<{
   isUpdatedStartTime: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: BokudeliEvent): void
-  (e: 'submit'): void
-  (e: 'back'): void
-  (e: 'next'): void
-}>()
+const event = defineModel<BokudeliEvent>({ required: true })
 
-const event = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
-})
+const emit = defineEmits<{
+  submit: []
+  back: []
+  next: []
+}>()
 
 const displayShops = computed(() => {
   return props.shops.map((shop) => {

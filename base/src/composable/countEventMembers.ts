@@ -1,4 +1,4 @@
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 
 export const countEventMembers = async (communityAccount: string, eventId: string) => {

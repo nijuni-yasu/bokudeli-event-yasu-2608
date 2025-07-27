@@ -1,6 +1,7 @@
-import { type Ref } from 'vue'
+import { ref, computed, watch, toRaw, type Ref } from 'vue'
+import { defineStore } from 'pinia'
+import type { StateTree, Store } from 'pinia'
 import _ from 'lodash'
-import { db } from '@/firebase'
 import {
   collection,
   doc,
@@ -15,17 +16,16 @@ import {
   type DocumentReference,
   type Unsubscribe,
 } from 'firebase/firestore'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
-import type { StateTree, Store } from 'pinia'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { FirestoredUser } from '@/schemes/storedUser'
-import { type CommunityMember, convertCommunityMemberToDocumentData } from '@/schemes/communityMember'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { useUserStore } from '@/stores/user'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { uploadCommunityImage } from '@/composable/uploadImage'
-import { useConfigStore } from './config'
+import { db } from '@shokujii/base/firebase.js'
+import { convertDocumentDataToCommunity } from '@shokujii/base/schemes/converter.js'
+import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity.js'
+import { type CommunityMember } from '@shokujii/base/schemes/communityMember.js'
+import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { useUserStore } from '@shokujii/base/stores/user.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { uploadCommunityImage } from '@shokujii/base/composable/uploadImage.js'
+import { useConfigStore } from './config.js'
 
 class CommunityRefUpdatedEvent extends Event {
   constructor(
@@ -69,8 +69,6 @@ export const useCommunityStore = (target: string | DocumentSnapshot) => {
   const store = defineStore<string, CommunityStoreState & CommunityGetters & CommunityStoreAction>(
     `/communities/${communityAccount}`,
     () => {
-      const router = useRouter()
-
       const EVENT_TYPE_COMMUNITY_REF_UPDATED = `onCommunityRefUpdated_${communityAccount}`
       const exists = ref<boolean | null>(null)
       const community = ref<BokudeliCommunity | null>(null)

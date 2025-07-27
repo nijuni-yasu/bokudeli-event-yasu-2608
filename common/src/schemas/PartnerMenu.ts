@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { TimestampSchema, EpochMillisSchema } from './firebase/index.js'
+import { TimestampSchema } from './firebase/index.js'
 
 const PartnerMenuDbSchema = z.object({
   updatedAt: TimestampSchema,

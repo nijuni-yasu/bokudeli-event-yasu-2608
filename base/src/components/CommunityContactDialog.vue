@@ -1,25 +1,18 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
+import { reactive } from 'vue'
+import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { getUserPath } from '@/router/utils'
 import { mdiEmail } from '@mdi/js'
 
-interface Props {
+const props = defineProps<{
   modelValue: boolean
   communityName: string | null
   communityId: string | null
-}
-interface Emit {
-  (e: 'update:modelValue', value: boolean): void
-}
-const props = defineProps<Props>()
-const emit = defineEmits<Emit>()
+}>()
 
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const dialog = defineModel<boolean>()
 
 const closeDialog = () => {
   dialog.value = false
@@ -42,7 +35,7 @@ const onFormSubmit = async () => {
       const host = import.meta.env.VITE_ORIGIN_HOST
       const path = getUserPath(userId)
       try {
-        const res = await communityContact({
+        await communityContact({
           community_id: props.communityId,
           community_name: props.communityName,
           mail_title: state.mailTitle,
@@ -52,11 +45,9 @@ const onFormSubmit = async () => {
           user_email: userStore.storedUser?.userEmail,
           user_profile_url: `${host}${path}`,
         })
-        console.log(res)
         window.alert('送信完了しました')
         return
-      } catch (error) {
-        console.log(error)
+      } catch {
         // Fall through
       }
     }

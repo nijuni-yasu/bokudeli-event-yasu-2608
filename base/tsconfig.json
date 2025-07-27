@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@shokujii/base/*": ["./src/*"],
+      "@layouts/*": ["./src/@layouts/*"],
+      "@layouts": ["./src/@layouts"],
+      "@core/*": ["./src/@core/*"],
+      "@core": ["./src/@core"]
+    }
+  }
+}

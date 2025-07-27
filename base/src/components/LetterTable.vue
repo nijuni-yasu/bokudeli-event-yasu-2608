@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { type Letter } from '../schemes/letter'
-import { convertTruncateText } from '@/schemes/converter'
-import { useEventStore, type EventStore } from '@/stores/event'
+import { convertTruncateText } from '@shokujii/base/schemes/converter'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { getManageEventPath } from '@/router/utils'
-import LetterStatusChip from '@/components/LetterStatusChip.vue'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import LetterStatusChip from '@shokujii/base/components/LetterStatusChip.vue'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencil, mdiDelete, mdiContentCopy } from '@mdi/js'
 
 const props = defineProps<{ letters: Letter[] }>()

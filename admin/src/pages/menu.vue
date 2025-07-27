@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@/stores/_partner'
-import { PartnerMenu } from '@/schemes/partnerMenu'
-import MenuEditCard from '@/componentsLocal/MenuEditCard.vue'
-import MenuCard from '@/components/MenuCard.vue'
+import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
+import MenuEditCard from '@/components/MenuEditCard.vue'
+import MenuCard from '@shokujii/base/components/MenuCard.vue'
 import { mdiPlus, mdiClose } from '@mdi/js'
-import { useNotification } from '@/composable/notification'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 
@@ -110,7 +110,7 @@ example.price = 800
       v-model="targetMenu"
       @save="
         (menu, imageFile) => {
-          saveMenu(menu, imageFile), (dialog = false)
+          ;(saveMenu(menu, imageFile), (dialog = false))
         }
       "
       @cancel="dialog = false"

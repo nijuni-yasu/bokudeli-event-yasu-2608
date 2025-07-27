@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import Error from '@/components/Error.vue'
+import Error from '@shokujii/base/components/Error.vue'
 
 const route = useRoute()
 const error = route.params.error as string

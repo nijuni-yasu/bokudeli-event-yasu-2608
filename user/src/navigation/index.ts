@@ -1,7 +1,7 @@
 import type { NavLink, NavGroup } from '@layouts/types'
 import { getHomePath, getCommunityListPath } from '@/router/utils'
 import { mdiCalendarHeart, mdiAccountGroup, mdiNote, mdiHeart } from '@mdi/js'
-import XIcon from '@/icons/x'
+import XIcon from '@shokujii/base/icons/x.js'
 
 export const useNavItems = (): (NavLink | NavGroup)[] => {
   const { t: $t } = useI18n()

@@ -1,11 +1,11 @@
-import { type Ref } from 'vue'
-import { db } from '@/firebase'
-import { doc, updateDoc, onSnapshot, DocumentReference, type Unsubscribe } from 'firebase/firestore'
+import { ref, type Ref } from 'vue'
+import { defineStore } from 'pinia'
 import type { StateTree, Store } from 'pinia'
-import { FirestoredUser } from '@/schemes/storedUser'
-import { storage } from '@/firebase'
-import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
 import { format } from 'date-fns'
+import { doc, updateDoc, onSnapshot, DocumentReference, type Unsubscribe } from 'firebase/firestore'
+import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
+import { db, storage } from '@shokujii/base/firebase.js'
+import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
 
 type UserStoreState = {
   exists: Ref<boolean | null>

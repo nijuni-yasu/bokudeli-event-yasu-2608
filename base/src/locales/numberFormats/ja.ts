@@ -1,7 +1,7 @@
 export default {
-  'currency': {
-    'style': 'currency',
-    'currency': 'JPY',
-    'currencyDisplay': 'symbol',
+  currency: {
+    style: 'currency',
+    currency: 'JPY',
+    currencyDisplay: 'symbol',
   },
 }

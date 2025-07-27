@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase.js'
 import { getEventCreatePath, getManageEventPath } from '@/router/utils'
-import { useCommunityStore } from '@/stores/community'
-import { useCommunityListStore, type CommunityListStore } from '@/stores/communityList'
+import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useCommunityListStore, type CommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { getAuth } from 'firebase/auth'
 import { doc, orderBy, where } from 'firebase/firestore'
 import { mdiMenuDown, mdiPlus, mdiHelp } from '@mdi/js'
-import { useEventListStore } from '@/stores/eventList'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { useDisplay } from 'vuetify'
-import EventCard from '@/components/EventCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const router = useRouter()
 const display = useDisplay()

@@ -44,11 +44,14 @@ const props = defineProps<{ content: string; style?: string }>()
   table {
     border-collapse: collapse;
   }
-  table, th, td  {
+  table,
+  th,
+  td {
     border: 1px solid #ccc;
     padding: 5px;
   }
-  td p, th p {
+  td p,
+  th p {
     padding: 0;
     margin: 0;
   }

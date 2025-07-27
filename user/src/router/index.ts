@@ -8,22 +8,22 @@ import {
   type Unsubscribe,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useStoreCredential } from '@/stores/credential'
-import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
+import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useStoreCredential } from '@shokujii/base/stores/credential.js'
+import { loginUser, updateCredentialFromUserCredential } from '@shokujii/base/composable/loginUser.js'
 import type { Router } from 'vue-router'
-import userAccessiblePaths from '@/utils/userAccessiblePaths'
-import { useEventStore, type EventStore } from '@/stores/event'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import userAccessiblePaths from '@shokujii/base/utils/userAccessiblePaths.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getLogin, getManageCommunityListPath } from './utils'
-import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
-import { useStoreUserCredential } from '@/stores/userCredential'
-import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
+import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
+import { useStoreUserCredential } from '@shokujii/base/stores/userCredential.js'
+import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
 
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
-import { useConfigStore } from '@/stores/config'
-import { FIRESTORE_LOADING } from '@/utils/const'
+import { useConfigStore } from '@shokujii/base/stores/config.js'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 
 const checkUser = async (user: User | null) => {
   // リダイレクト結果を取得
@@ -94,8 +94,9 @@ export const setupRouter = (router: Router) => {
       to.path === getLogin() &&
       storedUserStore.storedUser &&
       useStoreUserAdditionalInfo().additionalUserInfo === null
-    )
+    ) {
       router.replace('/')
+    }
   })
 
   let unsubscribeAuthStateChanged: Unsubscribe | null

@@ -1,6 +1,6 @@
 import { DocumentData, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore'
-import { User } from '../schemas/User.js'
-import { UserPersonalInformation } from '../schemas/UserPersonalInformation.js'
+import { User } from '@shokujii/common/schemas/User.js'
+import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
 
 export class ShokujiiUser extends User {
   user_email?: string

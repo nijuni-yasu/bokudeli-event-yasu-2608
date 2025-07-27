@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar } from '@mdi/js'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { useEventStore } from '@/stores/event'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { useCommunityStore } from '@/stores/community'
-import type { Shop } from '@/schemes/shop'
-import { usePartnerStore } from '@/stores/_partner'
-import { shareSnsButton } from '@/utils/shareSnsButton'
-import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { useEventStore } from '@shokujii/base/stores/event'
+import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { useCommunityStore } from '@shokujii/base/stores/community'
+import type { Shop } from '@shokujii/base/schemes/shop'
+import { usePartnerStore } from '@shokujii/base/stores/_partner'
+import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
+import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 
 const props = defineProps<{
   eventId: string

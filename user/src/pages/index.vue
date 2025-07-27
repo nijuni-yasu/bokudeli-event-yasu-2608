@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { getEventPath } from '@/router/utils'
-import { useEventListStore } from '@/stores/eventList'
-import { useBannersStore } from '@/stores/banner'
-import Banners from '@/components/Banners.vue'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
+import { useBannersStore } from '@shokujii/base/stores/banner.js'
+import Banners from '@shokujii/base/components/Banners.vue'
 import { where, orderBy, Timestamp } from 'firebase/firestore'
-import EventCard from '@/components/EventCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
 import { mdiCrownOutline, mdiCalendarHeart, mdiCalendarCheck } from '@mdi/js'
 

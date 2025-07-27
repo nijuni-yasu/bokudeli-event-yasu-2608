@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Mypage from '@/components/pages/mypage.vue'
+import Mypage from '@shokujii/base/components/pages/mypage.vue'
 </script>
 
 <template>

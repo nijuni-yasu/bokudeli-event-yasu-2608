@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useValidators } from '@/composable/validators'
-import ImageInput from '@/components/ImageInput.vue'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import { useValidators } from '@shokujii/base/composable/validators'
+import ImageInput from '@shokujii/base/components/ImageInput.vue'
+import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
 import {
   mdiListBoxOutline,
   mdiWeb,
@@ -12,8 +13,8 @@ import {
   mdiEmailOutline,
 } from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
-import { trimHashTag } from '@/utils/hashTag'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { trimHashTag } from '@shokujii/base/utils/hashTag'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
@@ -27,6 +28,8 @@ const props = defineProps<{
    * 新規コミュニティURLのバリデーション関数
    * この関数が設定されていない場合、編集モードとして扱われ community_account は readonly になります
    */
+  // 関数宣言なのに no-unused-vars が出てしまう。恐らく ESLint のバグ。
+  // eslint-disable-next-line no-unused-vars
   validateNewAccount?: (account: string) => Promise<boolean>
 }>()
 const isNew = computed(() => props.validateNewAccount != null)
@@ -65,7 +68,13 @@ const isOpenNewCommunityDialog = ref(false)
       <v-card-title class="px-5 text-h3 font-weight-bold" v-if="isNew">
         <v-row class="pa-3 align-center">
           {{ $t('community_edit.create') }}
-          <v-btn class="ml-2" variant="outlined" size="x-small" :icon="mdiHelp" @click="isOpenNewCommunityDialog = true" />
+          <v-btn
+            class="ml-2"
+            variant="outlined"
+            size="x-small"
+            :icon="mdiHelp"
+            @click="isOpenNewCommunityDialog = true"
+          />
         </v-row>
       </v-card-title>
       <v-card-title class="px-5" v-else>

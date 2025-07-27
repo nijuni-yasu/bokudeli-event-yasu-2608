@@ -9,7 +9,6 @@ defineProps<{
   members?: CommunityMember[]
   textLength: number
 }>()
-
 </script>
 
 <template>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { ref, computed, toRaw } from 'vue'
 import _ from 'lodash'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useEventStore, type EventStore } from '@/stores/event'
-import DateInput from '@/components/DateInput.vue'
-import type { Letter } from '@/schemes/letter'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import DateInput from '@shokujii/base/components/DateInput.vue'
+import type { Letter } from '@shokujii/base/schemes/letter'
 import { Timestamp } from 'firebase/firestore'
-import { useLetterListStore } from '@/stores/letterList'
+import { useLetterListStore } from '@shokujii/base/stores/letterList'
 import {
   hourList,
   minutesList,
@@ -13,10 +14,10 @@ import {
   hourString,
   minutesString,
   parseDateTimeStrings,
-} from '@/schemes/eventCreate'
-import { useValidators } from '@/composable/validators'
-import { sendTestLetter } from '@/baseApis/letter.js'
-import { useNotification } from '@/composable/notification'
+} from '@shokujii/base/schemes/eventCreate'
+import { useValidators } from '@shokujii/base/composable/validators'
+import { sendTestLetter } from '@shokujii/base/apis/letter.js'
+import { useNotification } from '@shokujii/base/composable/notification'
 import { useI18n } from 'vue-i18n'
 
 const { requiredValidator } = useValidators()
@@ -28,7 +29,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:letter', letter: Letter): void
+  'update:letter': [letter: Letter]
 }>()
 
 const _letter = ref<Letter>(_.clone(toRaw(props.letter)))
@@ -82,7 +83,7 @@ const _save = async () => {
 const submit = async () => {
   try {
     const now = Timestamp.now()
-    _letter.value.scheduled_at = isScheduled ? scheduleTime.value : now
+    _letter.value.scheduled_at = isScheduled.value ? scheduleTime.value : now
     _letter.value.status = 'timed'
     await _save()
     emit('update:letter', toRaw(_letter.value))
@@ -225,7 +226,12 @@ const sendTest = async () => {
             <v-btn @click="save" variant="outlined" :disabled="!isValid">
               {{ _letter.status === 'draft' ? $t('manage.letter.edit.save_draft') : $t('manage.letter.edit.to_draft') }}
             </v-btn>
-            <v-btn v-if="_letter.status === 'draft'" @click="sendTest" :disabled="!isValid || isTestSending" :loading="isTestSending">
+            <v-btn
+              v-if="_letter.status === 'draft'"
+              @click="sendTest"
+              :disabled="!isValid || isTestSending"
+              :loading="isTestSending"
+            >
               {{ $t('manage.letter.edit.send_test') }}
             </v-btn>
             <v-btn @click="submit" :disabled="isSubmitDisabled">

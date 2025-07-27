@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAuth, checkActionCode, applyActionCode, signInWithCustomToken } from 'firebase/auth'
 import { doc, Timestamp, updateDoc } from 'firebase/firestore'
-import { db, functions } from '@/firebase'
+import { db, functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 
@@ -48,9 +48,9 @@ onMounted(async () => {
             await updateDoc(personalInformationRef, {
               user_email: restoredEmail.value,
             })
-            console.info('users_personal_informationの復元に成功しました。')
+            // console.info('users_personal_informationの復元に成功しました。')
           } else {
-            console.info('users_personal_informationの復元に失敗しました。')
+            console.warn('users_personal_informationの復元に失敗しました。')
           }
 
           Object.assign(notification, { message: $t('auth.action.notify_reset_email'), color: 'success' })

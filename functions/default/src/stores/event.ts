@@ -6,14 +6,14 @@ import {
   Transaction,
   Timestamp,
 } from 'firebase-admin/firestore'
-import { Event } from '../schemas/Event.js'
-import { EventOrder, EventOrderStatusType } from '../schemas/EventOrder.js'
-import { EventMenu } from '../schemas/EventMenu.js'
+import { Event } from '@shokujii/common/schemas/Event.js'
+import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
+import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
   constructor(private readonly userId?: string) {
-    console.log('ShojukiEventConverter initialized with userId:', userId)
+    // console.log('ShojukiEventConverter initialized with userId:', userId)
   }
   toFirestore(event: ShokujiiEvent): DocumentData {
     if (this.userId == null) {
@@ -122,7 +122,7 @@ export class ShokujiiEvent extends Event {
 
   async getMembers(withPersonalInformation: boolean): Promise<ShokujiiUser[]> {
     const members = await Promise.all(this.members.map(async (id) => getUser(id, withPersonalInformation)))
-    return members.filter((member) => member !== undefined)
+    return members.filter((member): member is ShokujiiUser => member !== undefined)
   }
 
   addMember(user: ShokujiiUser | string) {

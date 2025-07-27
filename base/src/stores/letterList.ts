@@ -1,5 +1,6 @@
-import { type Ref } from 'vue'
-import { db } from '@/firebase'
+import { ref, type Ref } from 'vue'
+import { defineStore } from 'pinia'
+import type { StateTree, Store } from 'pinia'
 import {
   collection,
   getDocs,
@@ -17,17 +18,17 @@ import {
   deleteDoc,
   orderBy,
 } from 'firebase/firestore'
-import type { StateTree, Store } from 'pinia'
-import { TaskExecutor } from '@/utils/executors'
-import { useLetterStore, type LetterStore } from './letter'
-import type { Letter } from '@/schemes/letter'
+import { db } from '@shokujii/base/firebase.js'
+import { TaskExecutor } from '@shokujii/base/utils/executors.js'
+import type { Letter } from '@shokujii/base/schemes/letter.js'
+import { useLetterStore, type LetterStore } from './letter.js'
 
 type LetterListStoreState = {
   letterStores: Ref<LetterStore[] | null>
   totalCount: Ref<number | null>
 } & StateTree
 
-type LetterListStoreGetters = {}
+type LetterListStoreGetters = object
 
 type LetterListStoreAction = {
   addLetter: (data: Letter) => Promise<Letter>

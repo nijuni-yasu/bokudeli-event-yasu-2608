@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { useValidators } from '@/composable/validators'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 import {
   mdiChevronLeft,
   mdiCalendarPlus,
@@ -13,14 +13,14 @@ import {
   mdiHandExtendedOutline,
   mdiTimerSand,
 } from '@mdi/js'
-import { hourString, minutesString } from '@/schemes/eventCreate'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import type { Shop } from '@/schemes/shop'
+import { hourString, minutesString } from '@shokujii/base/schemes/eventCreate'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
+import type { Shop } from '@shokujii/base/schemes/shop'
 
 const emit = defineEmits<{
-  (e: 'submit'): void
-  (e: 'sendReserveMail'): void
-  (e: 'back'): void
+  submit: []
+  sendReserveMail: []
+  back: []
 }>()
 
 const event = defineModel<BokudeliEvent>({ required: true })
@@ -29,8 +29,6 @@ const shop = defineModel<Shop | null>('shop', { required: true })
 const { t: $t } = useI18n()
 
 const { requiredValidator, phoneValidator, emailValidator } = useValidators()
-
-const storedUserStore = useStoreStoredUser()
 
 const isValid = ref(false)
 

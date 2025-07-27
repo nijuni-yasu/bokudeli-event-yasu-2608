@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, watchEffect } from 'vue'
 import {
   hourList,
   minutesList,
@@ -6,12 +7,12 @@ import {
   hourString,
   minutesString,
   parseDateTimeStrings,
-} from '@/schemes/eventCreate'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
+} from '@shokujii/base/schemes/eventCreate'
+import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
 import DateInput from '../DateInput.vue'
 import { Timestamp } from 'firebase/firestore'
-import { useValidators } from '@/composable/validators'
+import { useValidators } from '@shokujii/base/composable/validators'
 import { mdiMapMarker, mdiCalendar } from '@mdi/js'
 
 const { requiredValidator, postalCodeValidator, urlValidator } = useValidators()

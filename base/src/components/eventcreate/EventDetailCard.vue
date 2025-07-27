@@ -1,14 +1,16 @@
 <script setup lang="ts">
+import { computed, watch } from 'vue'
+import { emailValidator } from '@core/utils/validators'
 import { useI18n } from 'vue-i18n'
-import BokudeliEvent, { eventPaymentSelectableTypes } from '@/schemes/bokudeliEvent'
-import { useValidators } from '@/composable/validators'
+import BokudeliEvent, { eventPaymentSelectableTypes } from '@shokujii/base/schemes/bokudeliEvent'
+import { useValidators } from '@shokujii/base/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
-import eventDetailStyle from '@/utils/eventDetailStyle'
-import { useCommunityStore } from '@/stores/community'
-import type { CommunityStore } from '@/stores/community'
-import { trimHashTag } from '@/utils/hashTag'
+import eventDetailStyle from '@shokujii/base/utils/eventDetailStyle'
+import { useCommunityStore } from '@shokujii/base/stores/community'
+import type { CommunityStore } from '@shokujii/base/stores/community'
+import { trimHashTag } from '@shokujii/base/utils/hashTag'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -19,7 +21,7 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-  }
+  },
 )
 
 const { t: $t } = useI18n()
@@ -43,7 +45,6 @@ const checkBillInfo = () => {
     event.value.bill_email = ''
   }
 }
-
 
 watch(
   () => event.value.event_payment,
