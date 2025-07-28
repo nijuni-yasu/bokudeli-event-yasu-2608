@@ -10,7 +10,6 @@ import {
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
 import { getEventPartnerShop } from './stores/partner.js'
-import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 
 // テンプレートID
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
@@ -61,20 +60,6 @@ interface TemplateDataForMembers {
   event_address: string
   shop_name: string
   event_url: string
-}
-
-/**
- * ショップのメールアドレスを取得
- */
-function getShopEmails(shopData: PartnerShop): string[] {
-  const emails = new Set<string>()
-  for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3'] as const) {
-    const mail = shopData[field]
-    if (mail != null && mail !== '') {
-      emails.add(mail)
-    }
-  }
-  return Array.from(emails)
 }
 
 /**
@@ -248,7 +233,7 @@ export async function sendOrderDeadlineMailToShop(start: number, end: number, is
           return
         }
         await sgMail.send({
-          to: getShopEmails(shopData),
+          to: shopData.getEmails(),
           from: DEFAULT_FROM,
           cc: SUPPORT_MAIL,
           templateId: ORDER_DEADLINE_TEMPLATE_ID,

@@ -86,25 +86,6 @@ async function getShopForEvent(event: ShokujiiEvent) {
 }
 
 /**
- * 店舗のメールアドレス一覧を取得
- */
-function getShopEmails(shop: any): string[] {
-  if (!shop) return []
-
-  const emails = new Set<string>()
-  const emailFields = ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']
-
-  for (const field of emailFields) {
-    const email = shop[field]
-    if (email && email.trim() !== '') {
-      emails.add(email.trim())
-    }
-  }
-
-  return Array.from(emails)
-}
-
-/**
  * コミュニティのメールアドレス一覧を取得
  */
 async function getCommunityEmailsForEvent(event: ShokujiiEvent): Promise<string[]> {
@@ -199,7 +180,7 @@ async function sendApplyingOrderMailToShop(event: ShokujiiEvent): Promise<void> 
     return
   }
 
-  const shopEmails = getShopEmails(shop)
+  const shopEmails = shop.getEmails()
   if (shopEmails.length === 0) {
     console.warn(`No shop emails found for event: ${event.id}`)
     return
