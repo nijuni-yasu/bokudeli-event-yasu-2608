@@ -23,6 +23,7 @@ export const {
   eventInformation, eventInformationPreview,
   shopStatusChanged,
   onOrderChanged,
+  onEventChanged,
   pollingTask,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
@@ -33,5 +34,6 @@ export const {
   import('./eventInformationMail.js'),
   import('./shopOpen.js'),
   import('./orderCompletionMail.js'),
+  import('./eventStatusChangeMail.js'),
   import('./pollingTask.js'),
 ])))
