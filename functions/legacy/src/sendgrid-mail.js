@@ -9,7 +9,7 @@ import {
   getManageEventMemberUrl,
   getManageEventInvoiceUrl,
 } from './utils/urls.js'
-import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import { convertToDateWeekdayShort, convertToDatetimeWeekdayShort, convertToDuration } from './utils/datetime.js'
 import { createEventBillInvoice } from './eventBillInvoice.js'
 
@@ -20,9 +20,6 @@ const DELIVERY_DURATION = 30 // minutes
 
 const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
 
-const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7'
-const EVENT_STATUS_IN_DRAFT_ID = 'd-4f62892bece349e494cc0d545143f145'
-const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
 const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 
 const USER_PASS_CODE = 'd-84540f5feaf8422484b65bdc2be739fe'
@@ -336,23 +333,6 @@ async function createTemplateDataForApplyingOrder(eventSnapshot, updatedAt) {
   }
 }
 
-async function sendApplyingOrderMailToShop(eventSnapshot) {
-  const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
-
-  const [dynamic_template_data, shopSnapShot] = await Promise.all([
-    // ログ機能導入前のイベントには updatedAt がないため、その場合は現在時刻を使用する
-    createTemplateDataForApplyingOrder(eventSnapshot, updatedAt ? updatedAt : Timestamp.now()),
-    getShopForEvent(eventSnapshot),
-  ])
-  return sgMail.send({
-    to: getShopEmails(shopSnapShot),
-    from: DEFAULT_FROM,
-    cc: SUPPORT_MAIL,
-    templateId: APPLYING_ORDER_TEMPLATE_ID,
-    dynamic_template_data,
-  })
-}
-
 async function sendApplyingOrderRemindMailToShop(start, end) {
   const nowDateTimeMillis = Date.now()
   const events = await db
@@ -420,47 +400,6 @@ async function sendRejectOrderMailToShop(start, end) {
 
   return Promise.all(sendMailPromises)
 }
-
-async function sendApplyingMailToAdmin(eventSnapshot) {
-  // TODO これ以上複雑になるようなら、テンプレートを使う
-  const subject = `店舗「${eventSnapshot.get('shop_name')}」主催のイベントが申請されました`
-  const text =
-    `【ID】 ${eventSnapshot.ref.id}\n` +
-    `【イベント名】 ${eventSnapshot.get('event_name')}\n` +
-    `【イベントURL】 ${getEventUrl(eventSnapshot.get('community_account'), eventSnapshot.id)}\n`
-  return sgMail.send({
-    to: DEFAULT_TO,
-    from: DEFAULT_FROM,
-    subject,
-    text,
-  })
-}
-
-
-async function sendEventStatusMailToOrganizers(templateId, addSupport, eventSnapshot) {
-  const [templateData, shopSnapShot, emails] = await Promise.all([
-    createTemplateDataForOrderDeadline(eventSnapshot),
-    getShopForEvent(eventSnapshot),
-    getCommunityEmailsForEvent(eventSnapshot),
-  ])
-  const dynamic_template_data = { ...templateData, ...shopSnapShot.data() }
-
-  if (addSupport && !emails.includes(SUPPORT_MAIL)) {
-    emails.push(SUPPORT_MAIL)
-  }
-
-  return Promise.all(
-    emails.map(async (to) => {
-      await sgMail.send({
-        to,
-        from: DEFAULT_FROM,
-        templateId,
-        dynamic_template_data,
-      })
-    }),
-  )
-}
-
 
 async function sendLetter(_, end) {
   return db.runTransaction(async (transaction) => {
@@ -580,37 +519,6 @@ export const polling = functions
     })
 
     return Promise.all(promise_list)
-  })
-
-export const on_event_changed = functions
-  .region('asia-northeast1')
-  .firestore.document('communities/{communityId}/events/{eventId}')
-  .onWrite(async (change) => {
-    const conditions = [
-      ['in_draft', 'applying_to_admin', sendApplyingMailToAdmin],
-      [undefined, 'applying_to_admin', sendApplyingMailToAdmin],
-      ['in_draft', 'applying_reservation', sendApplyingOrderMailToShop],
-      [
-        'in_draft',
-        'applying_reservation',
-        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_APPLYING_RESERVATION_ID, false),
-      ],
-      ['applying_reservation', 'in_draft', sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_IN_DRAFT_ID, true)],
-      [
-        'applying_reservation',
-        'accepting_order',
-        sendEventStatusMailToOrganizers.bind(null, EVENT_STATUS_ACCEPTING_ORDER_ID, true),
-      ],
-    ]
-    const before = change.before
-    const after = change.after
-    const promises = []
-    for (const c of conditions) {
-      if (before.get('event_status')?.value === c[0] && after.get('event_status')?.value === c[1]) {
-        promises.push(c[2](after))
-      }
-    }
-    return Promise.all(promises)
   })
 
 export const send_email = functions.region('asia-northeast1').https.onCall(async (data, context) => {
