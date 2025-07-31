@@ -132,7 +132,7 @@ async function sendEventInformationMail(): Promise<void> {
     return
   }
 
-  const promises: Promise<void | [ClientResponse, {}]>[] = []
+  const promises: Promise<void | [ClientResponse, unknown]>[] = []
   const users = await getAllUsers(true)
 
   for (const user of users) {

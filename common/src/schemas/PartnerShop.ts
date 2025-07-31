@@ -294,4 +294,18 @@ export class PartnerShop {
   toFirestore(): z.infer<typeof PartnerShopDbSchema> {
     return PartnerShopDbSchema.parse(this.getDb())
   }
+
+  getEmails(): string[] {
+    const emails = new Set<string>()
+    const emailFields = ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']
+
+    for (const field of emailFields) {
+      const email = this[field as keyof PartnerShop] as string | undefined
+      if (email && email.trim() !== '') {
+        emails.add(email.trim())
+      }
+    }
+
+    return Array.from(emails)
+  }
 }
