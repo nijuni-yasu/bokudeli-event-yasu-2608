@@ -5,6 +5,7 @@ import {
   DocumentData,
   Transaction,
   Timestamp,
+  DocumentReference,
 } from 'firebase-admin/firestore'
 import { Event } from '@shokujii/common/schemas/Event.js'
 import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
@@ -229,4 +230,11 @@ export const getInCartOrdersByUpdatedTime = async (
     .withConverter(new ShokujiiEventOrderConverter())
   const ordersSnapshot = await (transaction === undefined ? ordersRef.get() : transaction.get(ordersRef))
   return ordersSnapshot.docs.map((doc) => doc.data())
+}
+
+export const convertReferenceToEvent = async (
+  eventRef: DocumentReference<DocumentData, DocumentData>,
+): Promise<ShokujiiEvent | undefined> => {
+  const eventSnapshot = await eventRef.withConverter(new ShokujiiEventConverter()).get()
+  return eventSnapshot.data()
 }
