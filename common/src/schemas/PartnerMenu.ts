@@ -26,6 +26,13 @@ const PartnerMenuAppSchema = z.object({
   menu_date_end: TimestampSchema.optional(),
 })
 
+const convertToDb = (menu: PartnerMenu) => {
+  return {
+    ...menu,
+    updatedAt: Date.now(),
+  }
+}
+
 export class PartnerMenu {
   // Mandatory
   readonly id: string
@@ -45,18 +52,11 @@ export class PartnerMenu {
     this.updatedAt = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      updatedAt: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return PartnerMenuDbSchema.safeParse(this.getDb()).success
+    return PartnerMenuDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof PartnerMenuDbSchema> {
-    return PartnerMenuDbSchema.parse(this.getDb())
+    return PartnerMenuDbSchema.parse(convertToDb(this))
   }
 }

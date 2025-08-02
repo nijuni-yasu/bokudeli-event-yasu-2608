@@ -18,6 +18,14 @@ const EventOrderAppSchema = z.object({
   menu_price: z.number().int().positive(),
 })
 
+const convertToDb = (menu: EventMenu) => {
+  return {
+    ...menu,
+    createdAt: EpochMillisSchema.default(Date.now()).parse(menu.createdAt),
+    updatedAt: Date.now(),
+  }
+}
+
 export class EventMenu {
   // Mandatory
   readonly id: string
@@ -35,19 +43,11 @@ export class EventMenu {
     this.updatedAt = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      createdAt: EpochMillisSchema.default(Date.now()).parse(this.createdAt),
-      updatedAt: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return EventMenuDbSchema.safeParse(this.getDb()).success
+    return EventMenuDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof EventMenuDbSchema> {
-    return EventMenuDbSchema.parse(this.getDb())
+    return EventMenuDbSchema.parse(convertToDb(this))
   }
 }

@@ -48,6 +48,14 @@ const EventOrderAppSchema = z.object({
   receipt_number: z.string().optional(),
 })
 
+const convertToDb = (order: EventOrder) => {
+  return {
+    ...order,
+    created_at: EpochMillisSchema.default(Date.now()).parse(order.created_at),
+    updated_at: Date.now(),
+  }
+}
+
 export class EventOrder {
   // Mandatory
   readonly id: string
@@ -90,19 +98,11 @@ export class EventOrder {
     return this.totalPrice - this.ExTaxPrice
   }
 
-  private getDb() {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return EventOrderDbSchema.safeParse(this.getDb()).success
+    return EventOrderDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof EventOrderDbSchema> {
-    return EventOrderDbSchema.parse(this.getDb())
+    return EventOrderDbSchema.parse(convertToDb(this))
   }
 }

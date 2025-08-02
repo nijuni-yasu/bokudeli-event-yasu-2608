@@ -32,6 +32,14 @@ const CommunityDbSchema = z.object({
   community_bill_email: NonEmptyStringSchema,
 })
 
+const convertToDb = (community: Community) => {
+  return {
+    ...community,
+    created_at: EpochMillisSchema.default(Date.now()).parse(community.created_at),
+    updated_at: Date.now(),
+  }
+}
+
 // ほぼ デフォルトなので CommunityAppSchema は（いまのところ）作成しない
 export class Community {
   // Mandatory
@@ -72,20 +80,12 @@ export class Community {
     this.updated_at = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return CommunityDbSchema.safeParse(this.getDb()).success
+    return CommunityDbSchema.safeParse(convertToDb(this)).success
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(): any {
-    return CommunityDbSchema.parse(this.getDb())
+    return CommunityDbSchema.parse(convertToDb(this))
   }
 }

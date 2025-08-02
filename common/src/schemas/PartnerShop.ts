@@ -225,6 +225,14 @@ const PartnerShopAppSchema = z.object({
   shop_email_sub3: z.string().nonempty().optional(),
 })
 
+const convertToDb = (shop: PartnerShop) => {
+  return {
+    ...shop,
+    createdAt: EpochMillisSchema.default(Date.now()).parse(shop.createdAt),
+    updatedAt: Date.now(),
+  }
+}
+
 export class PartnerShop {
   // Mandatory
   readonly id: string
@@ -279,19 +287,11 @@ export class PartnerShop {
     this.updatedAt = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      createdAt: EpochMillisSchema.default(Date.now()).parse(this.createdAt),
-      updatedAt: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return PartnerShopDbSchema.safeParse(this.getDb()).success
+    return PartnerShopDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof PartnerShopDbSchema> {
-    return PartnerShopDbSchema.parse(this.getDb())
+    return PartnerShopDbSchema.parse(convertToDb(this))
   }
 }
