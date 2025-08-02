@@ -5,7 +5,7 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { mdiFilePdfBox } from '@mdi/js'
 import type { EventStore } from '@shokujii/base/stores/event.js'
 import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
-import type { OrderItem } from '@shokujii/base/schemes/orderItem.js'
+import type { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 
 const route = useRoute()
 
@@ -19,7 +19,7 @@ const eventStores = computed<EventStore[] | undefined>(() =>
   eventListStore.eventStores?.flatMap((es) => {
     if (
       es.event?.event_payment !== 'community_bill' ||
-      es.event?.event_status.value !== 'finished' ||
+      es.event?.calculatedEventStatus !== 'finished' ||
       getTotalPrice(es.orders ?? []) === 0
     ) {
       return []
@@ -30,7 +30,7 @@ const eventStores = computed<EventStore[] | undefined>(() =>
 // 本来 model で定義すべきだが、現状そのような仕組みが用意されていないため、とりあえずここで定義しておく
 // また、functions と共通化しておくべきだが、functions は現状 typescript に対応していないので仕方なくこの状態で実装
 // TODO model で定義するようにする & functions と共通化する
-const getTotalPrice = (orders: OrderItem[]) => {
+const getTotalPrice = (orders: EventOrder[]) => {
   let total = 0
   for (const order of orders) {
     if (order.status === 'ordered') {
@@ -77,7 +77,7 @@ const getPdf = (eventId: string) => {
                 <tbody>
                   <template v-for="es of eventStores" :key="es.event!.event_id">
                     <tr v-if="es.event != null && es.orders != null">
-                      <td>{{ $d(es.event.event_start_datetime!.toDate(), 'date') }}</td>
+                      <td>{{ $d(es.event.event_start_datetime, 'date') }}</td>
                       <td>{{ es.event.event_address }}</td>
                       <td>
                         <router-link :to="getEventPath(es.event.community_account, es.event.event_id)">

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { type EventMember } from '@shokujii/base/schemes/EventMember'
+import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 const { t: $t } = useI18n()
 
 defineProps<{
-  members: EventMember[]
+  members: BokudeliEventMember[]
   eventMaxPeople: number
   isShowMember: boolean
 }>()

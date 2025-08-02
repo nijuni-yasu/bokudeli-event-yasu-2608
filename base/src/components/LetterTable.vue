@@ -48,17 +48,17 @@ const getNumberOfTargets = (letter: Letter) => {
 
   switch (letter.letter_type) {
     case 'community':
-      return communityStore?.community?.community_num_members ?? null
+      return communityStore?.community?.members?.length ?? null
     case 'event_participant':
       if (eventStore == null) {
         return null
       }
-      return eventStore.event?.event_num_members ?? null
+      return eventStore.event?.members?.length ?? null
     case 'event_non_participant':
       if (eventStore?.event == null || communityStore?.community == null) {
         return null
       }
-      return communityStore.community.community_num_members - eventStore.event.event_num_members
+      return communityStore.community.members.length - eventStore.event.members.length
     default:
       return null
   }

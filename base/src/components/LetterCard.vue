@@ -18,17 +18,17 @@ if (props.letter.event_id != null) {
 const numberOfTargets = computed(() => {
   switch (props.letter.letter_type) {
     case 'community':
-      return communityStore.community?.community_num_members
+      return communityStore.community?.members?.length
     case 'event_participant':
       if (eventStore == null) {
         return null
       }
-      return eventStore.event?.event_num_members
+      return eventStore.event?.members?.length
     case 'event_non_participant':
       if (eventStore?.event == null || communityStore.community == null) {
         return null
       }
-      return communityStore.community.community_num_members - eventStore.event.event_num_members
+      return communityStore.community.members.length - eventStore.event.members.length
     default:
       return null
   }

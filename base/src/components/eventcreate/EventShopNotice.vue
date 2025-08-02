@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import {
@@ -37,7 +37,7 @@ const eventDateTime = computed(
     `${dateWithDayOfWeekString(event.value.event_start_datetime)} 〜 ${dateOnlyTimeString(event.value.event_end_datetime)}`,
 )
 
-const eventStartDatetime = computed(() => event.value.event_start_datetime?.toDate() ?? null)
+const eventStartDatetime = computed(() => new Date(event.value.event_start_datetime))
 const pickUpStartDatetime = computed(() => {
   const pickUpStartDate = eventStartDatetime.value ? new Date(eventStartDatetime.value) : new Date()
 
@@ -48,7 +48,7 @@ const pickUpStartDateTime = computed(
   () =>
     `${dateWithDayOfWeekString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
 )
-const eventDeadlineDate = computed(() => event.value.event_deadline_datetime?.toDate() ?? null)
+const eventDeadlineDate = computed(() => new Date(event.value.event_deadline_datetime))
 const eventDeadlineDateTime = computed(() => `${dateWithDayOfWeekString(eventDeadlineDate.value)}`)
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))

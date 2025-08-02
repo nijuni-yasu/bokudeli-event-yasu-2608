@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type EventStatusType } from '@shokujii/base/schemes/bokudeliEvent'
+import { type EventStatusType } from '@shokujii/common/schemas/Event.js'
 
 const props = defineProps<{
-  status: EventStatusType['value']
+  status: EventStatusType
 }>()
 
 const chipColor = computed(() => {

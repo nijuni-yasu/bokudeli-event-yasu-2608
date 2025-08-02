@@ -2,7 +2,7 @@
 import { mdiPlus } from '@mdi/js'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import LetterTable from '@shokujii/base/components/LetterTable.vue'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import LetterEdit from '@shokujii/base/components/LetterEdit.vue'
 import type { Letter } from '@shokujii/base/schemes/letter.js'
 import { useEventStore } from '@shokujii/base/stores/event.js'

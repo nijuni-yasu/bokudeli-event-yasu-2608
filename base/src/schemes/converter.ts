@@ -1,6 +1,5 @@
 import { format } from 'date-fns'
 import { type DocumentData, Timestamp } from 'firebase/firestore'
-import BokudeliEvent from './bokudeliEvent'
 import { type PartnerMenu } from './partnerMenu'
 import { type User } from 'firebase/auth'
 import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
@@ -12,7 +11,7 @@ export const dateString = (date: Timestamp | Date | null): string => {
   return format(targetDate, 'yyyy-MM-dd')
 }
 
-export const dateWithDayOfWeekString = (date: Timestamp | Date | null): string => {
+export const dateWithDayOfWeekString = (date: Timestamp | Date | number | null): string => {
   if (!date) return ''
 
   const options: Intl.DateTimeFormatOptions = {
@@ -24,12 +23,12 @@ export const dateWithDayOfWeekString = (date: Timestamp | Date | null): string =
     weekday: 'short', // 曜日を短縮形で表示 (例: 金)
   }
 
-  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  const targetDate = date instanceof Timestamp ? date.toDate() : typeof date === 'number' ? new Date(date) : date
   const formattedDate = targetDate.toLocaleDateString('ja-JP', options)
   return formattedDate
 }
 
-export const dateOnlyTimeString = (date: Timestamp | Date | null): string => {
+export const dateOnlyTimeString = (date: Timestamp | Date | number | null): string => {
   if (!date) return ''
 
   const options: Intl.DateTimeFormatOptions = {
@@ -37,7 +36,7 @@ export const dateOnlyTimeString = (date: Timestamp | Date | null): string => {
     minute: '2-digit',
   }
 
-  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  const targetDate = date instanceof Timestamp ? date.toDate() : typeof date === 'number' ? new Date(date) : date
   const formattedDate = targetDate.toLocaleTimeString('ja-JP', options)
   return formattedDate
 }
@@ -51,10 +50,7 @@ export const postalcodeString = (postalCode: string): string => {
   return `〒${postalCode.slice(0, 3)}-${postalCode.slice(3)}`
 }
 
-export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
-  return new BokudeliEvent(documentData)
-}
-
+// Deprecated
 export const convertDocumentDataToMenu = (
   partnerId: string,
   documentId: string,

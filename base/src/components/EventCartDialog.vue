@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
+import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 
@@ -15,7 +15,7 @@ const route = useRoute()
 
 const props = defineProps<{
   modelValue: boolean
-  menu: PartnerMenu
+  menu: BokudeliEventMenu
   eventId: string
 }>()
 
@@ -76,11 +76,11 @@ const addCart = async () => {
       menus: [
         {
           menu_id,
-          partner_id: props.menu.partnerId,
-          name: props.menu.name,
-          price: props.menu.price,
-          imageUrl: props.menu.imageUrl,
-          count: selectedCount.value || 0,
+          partner_id: eventStore.event.partner_id,
+          name: props.menu.menu_name,
+          price: props.menu.menu_price,
+          imageUrl: props.menu.menu_image_url ?? '',
+          count: selectedCount.value,
           note: orderNote.value,
         },
       ],
@@ -104,16 +104,16 @@ const openConfirmDialog = () => {
 <template>
   <v-dialog v-model="isOpen" max-width="500px" @click:outside="closeDialog(false)">
     <v-card class="pa-sm-10 pa-5">
-      <v-img :src="menu.imageUrl ?? undefined" class="ma-3"></v-img>
+      <v-img :src="menu.menu_image_url ?? undefined" class="ma-3"></v-img>
       <v-card-title class="text-left text-h4 py-1 text-wrap">
-        {{ menu.name }}
+        {{ menu.menu_name }}
       </v-card-title>
       <v-card-text class="text-left py-2">
-        {{ menu.description }}
+        {{ menu.menu_description }}
       </v-card-text>
       <v-card-text class="text-right pb-8">
         <span class="text-h5">¥ </span>
-        <span class="text-h4">{{ priceString(menu.price) }}</span>
+        <span class="text-h4">{{ priceString(menu.menu_price) }}</span>
       </v-card-text>
       <v-row class="mx-3 mb-2">
         <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>

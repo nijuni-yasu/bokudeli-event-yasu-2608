@@ -11,8 +11,8 @@ import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import { createEmptyOrderItem, type OrderItem } from '@shokujii/base/schemes/orderItem.js'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getInvoicePath } from '@/router/utils'
 import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
@@ -65,7 +65,7 @@ const storedUserStore = useStoreStoredUser()
 const { storedUser } = storeToRefs(storedUserStore)
 const emailPending = storedUser.value?.userEmailPending as string | null
 const tabs = ref(null)
-const cancelOperatingOrder = ref<OrderItem | null>(null)
+const cancelOperatingOrder = ref<EventOrder | null>(null)
 
 // オーダー情報の取得
 // TODO: 直接 firebase を叩くべきではないので、store を使えるようにする
@@ -79,7 +79,7 @@ const fetchOrders = async () =>
     ),
   )
 const orderSnapshots = ref(await fetchOrders())
-const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() => {
+const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() => {
   return orderSnapshots.value.docs.flatMap((orderSnapshot) => {
     const eventId = orderSnapshot.ref.parent.parent!.id
     const event = (useEventStore(eventId) as EventStore).event
@@ -89,7 +89,7 @@ const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() =>
     if (!isOwner.value && !event.is_public) {
       return []
     }
-    const order = { ...createEmptyOrderItem(), ...orderSnapshot.data() } as OrderItem
+    const order = new EventOrder(eventId, orderSnapshot.id, orderSnapshot.data())
     return { order, event }
   })
 })
@@ -134,7 +134,7 @@ const managerCommunities = computed(() =>
   }),
 )
 
-const cancel = async (order: OrderItem) => {
+const cancel = async (order: EventOrder) => {
   cancelOperatingOrder.value = order
   try {
     if (order.event_payment == 'user_advance' && order.payment_intent) {
@@ -164,7 +164,7 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const downloadInvoice = async (order: OrderItem) => {
+const downloadInvoice = async (order: EventOrder) => {
   const w = window.open(getInvoicePath(), '_blank')
   const pdf = await getInvoicePdf(order.event_id, order.order_id)
   w!.location.href = window.URL.createObjectURL(pdf)

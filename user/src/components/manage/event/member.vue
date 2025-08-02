@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore, type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import { getUserPath } from '@/router/utils'
 import { mdiFacebook, mdiDownload } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
-import type { OrderItem } from '@shokujii/base/schemes/orderItem.js'
-import type { EventMember } from '@shokujii/base/schemes/EventMember.js'
-import type { OrderMenu } from '@shokujii/base/schemes/orderMenu.js'
+import type { EventOrder, OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
 // import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
@@ -22,7 +20,7 @@ const eventId = route.params.eventId as string
 // const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
 
 const eventStore = useEventStore(eventId) as EventStore
-const menus = computed<Array<[OrderItem, FirestoredUser, OrderMenu]>>(
+const menus = computed<Array<[EventOrder, FirestoredUser, OrderMenuType]>>(
   () =>
     eventStore.orders?.flatMap((order) => {
       const user = (useUserStore(order.user_id) as UserStore).user
@@ -30,25 +28,21 @@ const menus = computed<Array<[OrderItem, FirestoredUser, OrderMenu]>>(
     }) ?? [],
 )
 const orderedMenus = computed(() =>
-  menus.value
-    .filter(([order]) => order.status === 'ordered')
-    .sort(([a], [b]) => a.updated_at.toMillis() - b.updated_at.toMillis()),
+  menus.value.filter(([order]) => order.status === 'ordered').sort(([a], [b]) => a.updated_at - b.updated_at),
 )
 const cartMenus = computed(() =>
-  menus.value
-    .filter(([order]) => order.status === 'in_cart')
-    .sort(([a], [b]) => a.carted_at.toMillis() - b.carted_at.toMillis()),
+  menus.value.filter(([order]) => order.status === 'in_cart').sort(([a], [b]) => a.carted_at - b.carted_at),
 )
 const canceledMenus = computed(() =>
   menus.value
     .filter(([order]) => order.status === 'canceled')
-    .sort(([a], [b]) => (a.canceled_at?.toMillis() ?? 0) - (b.canceled_at?.toMillis() ?? 0)),
+    .sort(([a], [b]) => (a.canceled_at ?? 0) - (b.canceled_at ?? 0)),
 )
 const tables = computed(() => [orderedMenus.value, cartMenus.value, canceledMenus.value])
 
 // const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
-const targetMember = ref<EventMember | null>(null)
+const targetMember = ref<BokudeliEventMember | null>(null)
 const isEmailDialogOpen = computed({
   get: () => targetMember.value != null,
   set: (val) => {
@@ -63,14 +57,14 @@ const isEmailDialogOpen = computed({
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
 }
-const getDateString = (order: OrderItem) => {
+const getDateString = (order: EventOrder) => {
   switch (order.status) {
     case 'ordered':
-      return $d(order.updated_at.toDate(), 'datetime')
+      return $d(order.updated_at, 'datetime')
     case 'in_cart':
-      return $d(order.carted_at.toDate(), 'datetime')
+      return $d(order.carted_at, 'datetime')
     case 'canceled':
-      return order.canceled_at == null ? '' : $d(order.canceled_at.toDate(), 'datetime')
+      return order.canceled_at == null ? '' : $d(order.canceled_at, 'datetime')
   }
 }
 const downloadCsvFile = () => {

@@ -38,7 +38,7 @@ const letterListStore = useLetterListStore(props.letter.community_account)
 const communityStore = useCommunityStore(props.letter.community_account) as CommunityStore
 const eventStore = props.letter.event_id == null ? null : (useEventStore(props.letter.event_id) as EventStore)
 
-const numCommunityMembers = computed(() => communityStore.community?.community_num_members)
+const numCommunityMembers = computed(() => communityStore.community?.members?.length)
 const numEventMembers = computed(() => eventStore?.event?.members?.length)
 
 const isValid = ref(false)

@@ -49,15 +49,13 @@ const events = computed(
                   </td>
                   <td>
                     {{
-                      event.event_start_datetime != null
-                        ? $d(event.event_start_datetime.toDate(), 'datetime_weekday_short')
-                        : ''
+                      event.event_start_datetime != null ? $d(event.event_start_datetime, 'datetime_weekday_short') : ''
                     }}
                   </td>
                   <td>
                     {{
                       event?.event_deadline_datetime != null
-                        ? $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short')
+                        ? $d(event.event_deadline_datetime, 'datetime_weekday_short')
                         : ''
                     }}
                   </td>

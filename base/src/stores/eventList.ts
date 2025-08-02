@@ -2,7 +2,7 @@ import { ref, type Ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { Store, StateTree } from 'pinia'
 import { db } from '@shokujii/base/firebase'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { eventConverter, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import {
   doc,
   collection,
@@ -17,10 +17,8 @@ import {
   Timestamp,
   getCountFromServer,
   type QueryDocumentSnapshot,
-  type DocumentData,
   type QueryConstraint,
 } from 'firebase/firestore'
-import { convertDocumentDataToEvent } from '@shokujii/base/schemes/converter'
 import { TaskExecutor } from '@shokujii/base/utils/executors'
 import { useEventStore, type EventStore } from './event'
 
@@ -48,7 +46,7 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
       const eventStores = ref<EventStore[] | null>(null)
       const totalCount = ref<number | null>(null)
 
-      const eventsSnapsthot: QueryDocumentSnapshot[] = []
+      const eventsSnapsthot: QueryDocumentSnapshot<BokudeliEvent>[] = []
 
       const next = () => {
         if (pagenationExecutor.totalTaskLength > 0 || filters == null) {
@@ -66,11 +64,18 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
             ...filters,
             ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
             limit(pageSize),
-          )
+          ).withConverter(eventConverter)
           const querySnapshot = await getDocs(q)
           eventsSnapsthot.push(...querySnapshot.docs)
           window.setTimeout(() => {
-            eventStores.value = eventsSnapsthot.map((doc) => useEventStore(doc) as EventStore)
+            eventStores.value = eventsSnapsthot.flatMap((doc) => {
+              try {
+                return useEventStore(doc.data())
+              } catch (err) {
+                console.error(err)
+                return []
+              }
+            })
           })
         })
       }
@@ -88,20 +93,24 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
         if (!community.exists()) {
           throw new Error(`community ${event.community_id} does not exists`)
         }
-        const newEventRef = doc(collection(communityRef, 'events'))
-        await setDoc(newEventRef, {
-          ...event.convertToDocumentData(),
-          event_id: newEventRef.id,
-          community_name: community.get('community_name'),
-          community_account: community.get('community_account'),
-          created_at: Timestamp.now(),
-          updated_at: Timestamp.now(),
-        })
+        const newEventRef = doc(collection(communityRef, 'events')).withConverter(eventConverter)
+        await setDoc(
+          newEventRef,
+          {
+            ...event,
+            event_id: newEventRef.id,
+            community_name: community.get('community_name'),
+            community_account: community.get('community_account'),
+            created_at: Timestamp.now(),
+            updated_at: Timestamp.now(),
+          },
+          { merge: true },
+        )
         if (coverImage != null) {
           const eventStore = useEventStore(newEventRef.id) as EventStore
           await eventStore.updateCoverImage(coverImage)
         }
-        return convertDocumentDataToEvent((await getDoc(newEventRef)).data() as DocumentData)
+        return (await getDoc(newEventRef)).data()!
       }
 
       reload()

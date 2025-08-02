@@ -3,13 +3,11 @@ import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getCommunityPath, getShopPath, getEventPath, getUserEventUrl } from '@/navigation/utils'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import type { Shop } from '@shokujii/base/schemes/shop.js'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
-import { Timestamp } from 'firebase/firestore'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiOpenInNew } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -111,24 +109,24 @@ const isValid = ref(false)
 const coverImage = ref<File | null>(null)
 
 // TODO utils に移動
-const calcOrderDeadline = (eventStartTimestamp: Timestamp, deadLine: { days_before: number; time: number }) => {
-  const startDateTime = eventStartTimestamp.toDate()
+const calcOrderDeadline = (eventStartTime: number, deadLine: { days_before: number; time: number }) => {
+  const startDateTime = new Date(eventStartTime)
   startDateTime.setDate(startDateTime.getDate() - deadLine.days_before)
   // UTC なので必ず Date Object にしてから使う
   const deadLineTime = new Date(deadLine.time)
   startDateTime.setHours(deadLineTime.getHours())
   startDateTime.setMinutes(deadLineTime.getMinutes())
-  return Timestamp.fromDate(startDateTime)
+  return startDateTime.getTime()
 }
 
 watch(
   () => event.value.event_start_datetime,
-  (startTimestamp) => {
-    if (startTimestamp == null) {
-      event.value.event_deadline_datetime = null
+  (startTime) => {
+    if (startTime == null) {
+      event.value.event_deadline_datetime = Date.now()
       return
     }
-    event.value.event_deadline_datetime = calcOrderDeadline(startTimestamp, shop.shop_deadline_datetime)
+    event.value.event_deadline_datetime = calcOrderDeadline(startTime, shop.shop_deadline_datetime)
   },
 )
 

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
-import { type EventMember } from '@shokujii/base/schemes/EventMember'
+import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{
-  member: EventMember
+  member: BokudeliEventMember
 }>()
 
 const userName = computed(() => props.member.user_name ?? 'ゲスト')

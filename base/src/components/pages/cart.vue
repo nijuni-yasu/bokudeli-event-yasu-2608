@@ -5,15 +5,9 @@ import { storeToRefs } from 'pinia'
 import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers'
 import { db, functions, stripeBaseURL } from '@shokujii/base/firebase'
 import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
-import {
-  dateWithDayOfWeekString,
-  dateOnlyTimeString,
-  priceString,
-  convertDocumentDataToEvent,
-} from '@shokujii/base/schemes/converter'
-import { type OrderItem, createEmptyOrderItem } from '@shokujii/base/schemes/orderItem'
-import { type OrderMenu } from '@shokujii/base/schemes/orderMenu'
+import { BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
+import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import Stripe from 'stripe'
@@ -40,7 +34,7 @@ if (currentUser) {
 }
 
 type Cart = {
-  order: OrderItem
+  order: EventOrder
   subtotals: { [key: string]: number }
   total: number
   event: BokudeliEvent
@@ -56,7 +50,7 @@ const state = reactive({
 const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'> => {
   const { event } = cart
 
-  if (event.event_deadline_datetime && event.event_deadline_datetime.toDate() < new Date()) {
+  if (event.event_deadline_datetime && event.event_deadline_datetime < Date.now()) {
     return 'deadline'
   }
 
@@ -93,11 +87,11 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 
 const openConfirmOrder = ref(false)
 const confirmDialogMessage = ref('')
-const selectedOrder = ref({} as OrderItem)
+const selectedOrder = ref({} as EventOrder)
 const selectedCartEvent = ref({} as BokudeliEvent)
 const selectedCartTwitterPostEnabled = ref<boolean>(false)
 const selectedCartTwitterPostComment = ref<string>('')
-const selectedMenu = ref({} as OrderMenu)
+const selectedMenu = ref({} as OrderMenuType)
 
 const startOrderProcess = async () => {
   const order = selectedOrder.value
@@ -131,7 +125,7 @@ const startOrderProcess = async () => {
   }
 }
 
-const createCheckoutSession = async (order: OrderItem, isPosted: boolean) => {
+const createCheckoutSession = async (order: EventOrder, isPosted: boolean) => {
   const lineItems = order.menus.map((menu) => {
     return {
       price_data: {
@@ -237,7 +231,7 @@ const startDeleteProcess = async () => {
   state.cartList = await loadCartList()
 }
 
-const deleteMenuInCart = async (event: BokudeliEvent, order: OrderItem, menu: OrderMenu) => {
+const deleteMenuInCart = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
   selectedCartEvent.value = event
   selectedOrder.value = order
   selectedMenu.value = menu
@@ -265,7 +259,9 @@ const loadCartList = async () => {
 
   const cartSnapshot = await getDocs(inCartQuery)
   const orderItems = cartSnapshot.docs.map((doc) => {
-    return { ...createEmptyOrderItem(), ...doc.data() }
+    const eventId = doc.ref.parent.parent!.id
+    const data = doc.data()
+    return new EventOrder(eventId, doc.id, data)
   })
 
   // イベント情報を引きオーダー情報とくっつける
@@ -281,7 +277,7 @@ const loadCartList = async () => {
         console.error($t('cart.event_not_found'), { item })
         return []
       }
-      const event = convertDocumentDataToEvent(eventSnapshot.docs[0].data())
+      const event = new BokudeliEvent(item.community_id, item.event_id, eventSnapshot.docs[0].data())
       if (event.event_status.value !== 'accepting_order') {
         return []
       }

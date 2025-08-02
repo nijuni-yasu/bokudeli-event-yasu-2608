@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type CommunityStore, useCommunityStore } from '@shokujii/base/stores/community'
 import { type EventStore, useEventStore } from '@shokujii/base/stores/event'
 import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
@@ -36,8 +36,8 @@ const event = computed<BokudeliEvent | null>(() => eventStore.event)
 const members = computed(() =>
   [...(eventStore.members ?? [])].sort(
     (a, b) =>
-      a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-      b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
+      a.orders.reduce((max, order) => Math.max(max, order.updated_at), 0) -
+      b.orders.reduce((max, order) => Math.max(max, order.updated_at), 0),
   ),
 )
 </script>

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
-import { type OrderItem } from '@shokujii/base/schemes/orderItem'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { type EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 
 const props = defineProps<{
   event: BokudeliEvent
-  order: OrderItem
+  order: EventOrder
   isOwner: boolean
 }>()
 
 defineEmits<{
-  downloadInvoice: [order: OrderItem]
-  cancel: [order: OrderItem]
+  downloadInvoice: [order: EventOrder]
+  cancel: [order: EventOrder]
 }>()
 
 const dialog = ref(false)
@@ -19,10 +19,7 @@ const dialog = ref(false)
 const totalPrice = computed(() => props.order.menus.reduce((acc, menu) => acc + menu.price * menu.count, 0))
 
 const isShowCancelButton = computed(
-  () =>
-    props.order.status === 'ordered' &&
-    props.event.event_deadline_datetime &&
-    props.event.event_deadline_datetime?.seconds > Date.now() / 1000,
+  () => props.order.status === 'ordered' && props.event.event_deadline_datetime > Date.now(),
 )
 const isShowCanceled = computed(() => props.order.status === 'canceled')
 const isShowInvoiceButton = computed(
@@ -46,11 +43,7 @@ const isShowInvoiceButton = computed(
       {{ $t('user_event_card.community_name', [event.community_name]) }}
     </v-card-text>
     <v-card-text class="py-1 px-2 event-card">
-      {{
-        $t('user_event_card.event_start_datetime', [
-          $d(event.event_start_datetime?.toDate() ?? 0, 'datetime_weekday_short'),
-        ])
-      }}
+      {{ $t('user_event_card.event_start_datetime', [$d(event.event_start_datetime, 'datetime_weekday_short')]) }}
     </v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{
       $t('user_event_card.event_address', [event.event_address])

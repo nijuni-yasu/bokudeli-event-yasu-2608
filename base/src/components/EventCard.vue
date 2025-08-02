@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type BokudeliEvent from '../schemes//bokudeliEvent'
-import type { EventMember } from '../schemes/EventMember'
+import type { BokudeliEvent, BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import UserAvatar from './UserAvatar.vue'
 import { useDisplay } from 'vuetify'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 
-defineProps<{ event: BokudeliEvent; members?: EventMember[] }>()
+defineProps<{ event: BokudeliEvent; members?: BokudeliEventMember[] }>()
 
 const display = useDisplay()
 const avatarSize = computed(() => {
@@ -39,8 +38,8 @@ const avatarSize = computed(() => {
       <template v-if="event.event_start_datetime != null && event.event_end_datetime != null">
         {{
           $t('event_card.date', [
-            $d(event.event_start_datetime.toDate(), 'datetime_weekday_short'),
-            $d(event.event_end_datetime.toDate(), 'time'),
+            $d(event.event_start_datetime, 'datetime_weekday_short'),
+            $d(event.event_end_datetime, 'time'),
           ])
         }}
       </template>

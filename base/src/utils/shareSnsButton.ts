@@ -1,7 +1,8 @@
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
 import type { Shop } from '@shokujii/base/schemes/shop'
+import { getEventUrl } from '@shokujii/common/utils/urls.js'
 
 const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''
@@ -18,7 +19,8 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~`,
     `👥主催：${communityText}`,
     `👩‍🍳食事：${shopText}`,
-    `👉詳細：${event.url}`,
+    // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
+    `👉詳細：${getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id)}`,
     '',
     `${hashTagText}`,
   ]
@@ -39,7 +41,7 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: S
     `📍場所：${event.event_address} ${event.event_place}`,
     `👥主催：${event.community_name}`,
     `👩‍🍳食事：${shop.shop_name}`,
-    `👉詳細：${event.url}`,
+    `👉詳細：${getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id)}`,
     '',
     `${hashTagText}`,
   ]
@@ -55,7 +57,9 @@ export const shareSnsButton = async (
   // TODO copy 等動作の異なる処理を一関数にまとめるのは本来良くないので、修正する
   _window?: Window,
 ) => {
-  const eventUrl = encodeURIComponent(event.url)
+  const eventUrl = encodeURIComponent(
+    getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id),
+  )
   if (snsType === 'twitter' || snsType === 'twitterAfterOrder') {
     const baseUrl = 'https://x.com/intent/post'
     const text = encodeURIComponent(getXPostText(event, community, shop))

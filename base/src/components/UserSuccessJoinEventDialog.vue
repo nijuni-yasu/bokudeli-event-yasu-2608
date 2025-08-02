@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar } from '@mdi/js'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { useCommunityStore } from '@shokujii/base/stores/community'
@@ -73,16 +73,10 @@ const openCalendarAddDialog = () => {
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.datetime') }}
-          {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
-            $d(event.event_end_datetime.toDate(), 'time')
-          }}
+          {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}〜{{ $d(event.event_end_datetime, 'time') }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
-          {{
-            $t('success_join_event_dialog.deadline', [
-              $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short'),
-            ])
-          }}
+          {{ $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime, 'datetime_weekday_short')]) }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.place') }} {{ event.event_address }} {{ event.event_place }}

@@ -13,7 +13,7 @@ import {
   convertDateToWeekTimestamp,
   convertShopTimeToWeekTimestamp,
 } from '@shokujii/base/schemes/converter'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type Shop } from '@shokujii/base/schemes/shop'
 import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
@@ -60,15 +60,15 @@ watch(
   () => communityStore.community,
   (community) => {
     if (props.eventId == null && _event.value == null && community != null) {
-      _event.value = new BokudeliEvent(
-        community.community_id,
-        community.community_account,
-        community.community_name,
-        community.community_manager_fullname,
-        community.community_company,
-        community.community_email,
-        community.community_phone,
-      )
+      _event.value = new BokudeliEvent(community.community_id, null, {
+        community_id: community.community_id,
+        community_name: community.community_name,
+        community_account: community.community_account,
+        organizer_fullname: community.community_manager_fullname,
+        organizer_company: community.community_company,
+        organizer_email: community.community_email,
+        organizer_phone_company: community.community_phone,
+      })
     }
   },
   { immediate: true },
@@ -125,13 +125,13 @@ watch(
     if (event.value == null) {
       return
     }
-    const startDateTime = event.value.event_start_datetime?.toDate()
+    const startDateTime = new Date(event.value.event_start_datetime)
     const postalcode = event.value.event_postalcode
     if (isEmpty(postalcode) || postalCodeValidator(postalcode) !== true) {
       return
     }
     const location = await fetchLocationByPostalcode(postalcode)
-    if (location == null || startDateTime == null) {
+    if (location == null) {
       shops.value = []
       return
     }
@@ -229,7 +229,7 @@ watch(
     if (!newStartDateTime || !oldStartDateTime) {
       return
     }
-    if (!newStartDateTime.isEqual(oldStartDateTime)) {
+    if (newStartDateTime !== oldStartDateTime) {
       isUpdatedStartTime.value = true
     }
   },

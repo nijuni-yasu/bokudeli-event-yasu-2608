@@ -22,7 +22,7 @@ import {
 import { db } from '@shokujii/base/firebase.js'
 import { Community } from '@shokujii/common/schemas/Community.js'
 import { CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { FirestoredUser } from '../schemes/storedUser.js'
@@ -152,7 +152,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       const stores = Array.from(eventStores.value.values())
       return stores
         .flatMap((store) => (store.event == null ? [] : (store.event as BokudeliEvent)))
-        .sort((a, b) => (b.event_start_datetime?.toMillis() ?? 0) - (a.event_start_datetime?.toMillis() ?? 0))
+        .sort((a, b) => (b.event_start_datetime ?? 0) - (a.event_start_datetime ?? 0))
     })
 
     const updateCommunity = async (data: BokudeliCommunity) => {

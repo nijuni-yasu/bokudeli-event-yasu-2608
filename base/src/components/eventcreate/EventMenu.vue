@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import type { Shop } from '@shokujii/base/schemes/shop'
 
 const props = defineProps<{
@@ -27,7 +27,7 @@ const back = () => {
 
 const filteredMenu = computed(() =>
   props.menus.filter((menu) => {
-    const eventStartDate = props.event.event_start_datetime?.toMillis()
+    const eventStartDate = props.event.event_start_datetime
     if (menu.dateStart == null || menu.dateEnd == null || eventStartDate == null) {
       return true
     } else {

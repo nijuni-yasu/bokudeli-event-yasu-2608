@@ -14,7 +14,7 @@ import { loginUser, updateCredentialFromUserCredential } from '@shokujii/base/co
 import type { Router } from 'vue-router'
 import userAccessiblePaths from '@shokujii/base/utils/userAccessiblePaths.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getLogin, getManageCommunityListPath } from './utils'
 import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
