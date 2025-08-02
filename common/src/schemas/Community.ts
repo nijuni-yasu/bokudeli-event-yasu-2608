@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema, type DocumentReference } from './firebase/index.js'
 
 const CommunityDbSchema = z.object({
   // Mandatory
@@ -30,6 +30,7 @@ const CommunityDbSchema = z.object({
   community_sns_hash_tag: NonEmptyStringSchema,
   community_bill_fullname: NonEmptyStringSchema,
   community_bill_email: NonEmptyStringSchema,
+  // members, managers は functions で処理するので DB に直接書き込まない
 })
 
 const convertToDb = (community: Community) => {
@@ -71,6 +72,8 @@ export class Community {
   community_sns_hash_tag: string = ''
   community_bill_fullname: string = ''
   community_bill_email: string = ''
+  members: (typeof DocumentReference)[] = []
+  managers: (typeof DocumentReference)[] = []
 
   constructor(id: string, src: Partial<Community>) {
     Object.assign(this, src)
