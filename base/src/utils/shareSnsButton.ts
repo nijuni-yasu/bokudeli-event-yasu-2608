@@ -1,4 +1,4 @@
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
 import type { Shop } from '@shokujii/base/schemes/shop'

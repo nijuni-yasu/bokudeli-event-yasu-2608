@@ -7,7 +7,7 @@ import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { getManageCommunityPath } from '@/router/utils'
 

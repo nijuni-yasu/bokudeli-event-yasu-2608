@@ -5,7 +5,7 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { Shop } from '@shokujii/base/schemes/shop.js'
 import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity.js'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiPlus } from '@mdi/js'
 import { getShopPath } from '@/navigation/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'

@@ -3,7 +3,7 @@ import { ref, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useValidators } from '@shokujii/base/composable/validators'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
-import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import {
   mdiListBoxOutline,
   mdiWeb,

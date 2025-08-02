@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import UserAvatar from './UserAvatar.vue'
 import { convertTruncateText } from '../schemes/converter'
-import type BokudeliCommunity from '../schemes/bokudeliCommunity'
-import type { CommunityMember } from '../schemes/communityMember'
+import type { BokudeliCommunity, BokudeliCommunityMember } from '../stores/community'
 
 defineProps<{
   community: BokudeliCommunity
-  members?: CommunityMember[]
+  members?: BokudeliCommunityMember[]
   textLength: number
 }>()
 </script>

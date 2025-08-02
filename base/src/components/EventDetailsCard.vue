@@ -9,7 +9,7 @@ import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
 import ShowDialog from '@shokujii/base/components/ShowDialog.vue'

@@ -12,10 +12,13 @@ import CommunityContactDialog from '@shokujii/base/components/CommunityContactDi
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import {
+  useCommunityStore,
+  type CommunityStore,
+  type BokudeliCommunityMember,
+} from '@shokujii/base/stores/community.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
-import { type CommunityMember } from '@shokujii/base/schemes/communityMember.js'
 import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
@@ -198,7 +201,9 @@ const inviteManager = async () => {
             <div v-if="members.some((m) => m.roles?.includes('manager') ?? false)">
               <v-card-title class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
               <div
-                v-for="manager in members.filter((m) => m?.roles?.includes('manager') ?? false) as CommunityMember[]"
+                v-for="manager in members.filter(
+                  (m) => m?.roles?.includes('manager') ?? false,
+                ) as BokudeliCommunityMember[]"
                 :key="manager.user_id"
               >
                 <router-link :to="getUserPath(manager.user_id)">
@@ -215,7 +220,10 @@ const inviteManager = async () => {
             <!-- community member -->
             <div v-if="members.length !== 0">
               <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
-              <div v-for="member in members.filter((m) => m != null) as CommunityMember[]" :key="member.user_id">
+              <div
+                v-for="member in members.filter((m) => m != null) as BokudeliCommunityMember[]"
+                :key="member.user_id"
+              >
                 <router-link :to="getUserPath(member.user_id)">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">

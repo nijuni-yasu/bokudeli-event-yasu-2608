@@ -17,7 +17,7 @@ import { getCommunityPath, getEventPath, getInvoicePath } from '@/router/utils'
 import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
-import type { CommunityMember } from '@shokujii/base/schemes/communityMember.js'
+import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { getInvoicePdf } from '@shokujii/base/utils/pdf.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 
@@ -82,7 +82,7 @@ const memberCommunities = computed(() =>
     return communityStore.members?.some((member) => member?.user_id === userId)
       ? {
           community: communityStore.community,
-          members: communityStore.members.filter((m) => m != null) as CommunityMember[],
+          members: communityStore.members.filter((m) => m != null) as BokudeliCommunityMember[],
         }
       : []
   }),

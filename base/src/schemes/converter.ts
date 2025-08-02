@@ -1,7 +1,6 @@
 import { format } from 'date-fns'
 import { type DocumentData, Timestamp } from 'firebase/firestore'
 import BokudeliEvent from './bokudeliEvent'
-import BokudeliCommunity from './bokudeliCommunity'
 import { type PartnerMenu } from './partnerMenu'
 import { type User } from 'firebase/auth'
 import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
@@ -54,10 +53,6 @@ export const postalcodeString = (postalCode: string): string => {
 
 export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
   return new BokudeliEvent(documentData)
-}
-
-export const convertDocumentDataToCommunity = (documentData: DocumentData): BokudeliCommunity => {
-  return new BokudeliCommunity(documentData)
 }
 
 export const convertDocumentDataToMenu = (

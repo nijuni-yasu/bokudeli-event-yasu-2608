@@ -10,7 +10,7 @@ import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCa
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
 import { Timestamp } from 'firebase/firestore'
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity.js'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiOpenInNew } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 

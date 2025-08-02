@@ -186,7 +186,7 @@ export const setupRouter = (router: Router) => {
             }
             const community = communityStore.community
             const members = communityStore.members
-            if (community != null && members != null && members.length === community.community_num_members) {
+            if (community != null && members != null && members.length === community.members.length) {
               if (members.some((member) => member?.roles == null)) {
                 return
               }
