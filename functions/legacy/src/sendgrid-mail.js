@@ -14,7 +14,6 @@ import { convertToDateWeekdayShort, convertToDatetimeWeekdayShort, convertToDura
 import { createEventBillInvoice } from './eventBillInvoice.js'
 
 const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b870616c'
-const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b' // 開発バージョンに変更
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 const DELIVERY_DURATION = 30 // minutes
 
@@ -323,48 +322,7 @@ async function getLastUpdatedEventStatus(eventSnapshot, status) {
   return null
 }
 
-async function createTemplateDataForApplyingOrder(eventSnapshot, updatedAt) {
-  const limitTimeMills = updatedAt.toMillis() + 3 * 24 * 60 * 60 * 1000
 
-  const dynamic_template_data = await createTemplateDataForOrderDeadline(eventSnapshot)
-  return {
-    ...dynamic_template_data,
-    approve_deadline_datetime: convertToDateWeekdayShort(limitTimeMills),
-  }
-}
-
-async function sendApplyingOrderRemindMailToShop(start, end) {
-  const nowDateTimeMillis = Date.now()
-  const events = await db
-    .collectionGroup('events')
-    .where('event_status.value', '==', 'applying_reservation')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
-    .where('is_deleted', '==', false)
-    .get()
-
-  const sendMailPromises = events.docs
-    .map(async (eventSnapshot) => {
-      // applying_reservation に変更したログで一番新しいものを取得
-      const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
-      if (updatedAt != null && updatedAt.toMillis() > start && updatedAt.toMillis() <= end) {
-        const [dynamic_template_data, shopSnapShot] = await Promise.all([
-          createTemplateDataForApplyingOrder(eventSnapshot, updatedAt),
-          getShopForEvent(eventSnapshot),
-        ])
-        dynamic_template_data.is_reminder = true
-        return sgMail.send({
-          to: getShopEmails(shopSnapShot),
-          from: DEFAULT_FROM,
-          cc: SUPPORT_MAIL,
-          templateId: APPLYING_ORDER_TEMPLATE_ID,
-          dynamic_template_data,
-        })
-      }
-      return null
-    })
-    .filter((promise) => promise != null)
-  return Promise.all(sendMailPromises)
-}
 
 async function sendRejectOrderMailToShop(start, end) {
   const nowDateTimeMillis = Date.now()
@@ -506,8 +464,6 @@ export const polling = functions
 
     const promise_list = [
       sendInvoiceMailToOrganizers(start, end),
-      sendApplyingOrderRemindMailToShop(start - one_day_millis, end - one_day_millis, false), // 1日後通知
-      sendApplyingOrderRemindMailToShop(start - 2 * one_day_millis, end - 2 * one_day_millis, false), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
       sendLetter(start, end),
     ]
