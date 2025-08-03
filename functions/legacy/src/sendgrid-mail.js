@@ -2,20 +2,12 @@ import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
 import sgMail from '@sendgrid/mail'
-import {
-  getCommunityUrl,
-  getEventUrl,
-  getOrderUrl,
-  getManageEventMemberUrl,
-  getManageEventInvoiceUrl,
-} from './utils/urls.js'
+import { getCommunityUrl, getEventUrl, getManageEventMemberUrl, getManageEventInvoiceUrl } from './utils/urls.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import { convertToDateWeekdayShort, convertToDatetimeWeekdayShort, convertToDuration } from './utils/datetime.js'
 import { createEventBillInvoice } from './eventBillInvoice.js'
 
 const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b870616c'
-const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
-const DELIVERY_DURATION = 30 // minutes
 
 const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
 
@@ -42,24 +34,6 @@ async function getUserEmailWithName(userId) {
     email: userPersonalInformationRef.get('user_email'),
     name: userRef.get('user_name'),
   }
-}
-
-async function getShopForEvent(eventSnapshot) {
-  const shopId = eventSnapshot.get('shop_id')
-  const partnerId = eventSnapshot.get('partner_id')
-  const shopRef = db.collection('partners').doc(partnerId).collection('shops').doc(shopId)
-  return await shopRef.get()
-}
-
-function getShopEmails(shopSnapshot) {
-  const emails = new Set()
-  for (const field of ['shop_email', 'shop_email_sub1', 'shop_email_sub2', 'shop_email_sub3']) {
-    const mail = shopSnapshot.get(field)
-    if (mail != null && mail !== '') {
-      emails.add(mail)
-    }
-  }
-  return Array.from(emails)
 }
 
 async function getCommunityManagerEmailsSet(communityId) {
@@ -161,62 +135,6 @@ async function createOrdersForOrderRemind(ordersRef) {
   return orders_by_status
 }
 
-async function createOrdersForOrderDeadline(ordersRef) {
-  const promises = []
-  const orders = []
-  let count = 0
-  let price = 0
-  for (const orderRef of await ordersRef.listDocuments()) {
-    const orderSnapshot = await orderRef.get()
-    if (orderSnapshot.get('status') !== 'ordered') {
-      continue
-    }
-    const userRef = db.collection('users').doc(orderSnapshot.get('user_id'))
-    for (const menu of orderSnapshot.get('menus') ?? []) {
-      const promise = userRef.get().then((userSnapshot) => {
-        for (let i = 0; i < menu.count; i++) {
-          orders.push({
-            name: userSnapshot.get('user_name'),
-            order: menu.name,
-            price: `¥${menu.price}`,
-          })
-          count++
-          price += menu.price
-        }
-      })
-      promises.push(promise)
-    }
-  }
-  await Promise.all(promises)
-  orders
-    .sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0))
-    .forEach((order, i) => (order.number = i + 1))
-  return [count, price, orders]
-}
-
-async function createTemplateDataForOrderDeadline(eventSnapshot) {
-  const ordersRef = eventSnapshot.ref.collection('orders')
-  const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(ordersRef)
-  const eventData = eventSnapshot.data()
-  const event_start_datetime = eventData.event_start_datetime?.toMillis()
-  const date = convertToDateWeekdayShort(event_start_datetime)
-  const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
-  const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
-  const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
-
-  return {
-    ...eventData,
-    date,
-    delivery_date,
-    event_deadline_datetime,
-    order_count,
-    order_total_price,
-    event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-    orders,
-    order_url: getOrderUrl(eventSnapshot.id),
-  }
-}
-
 async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago) {
   const ordersRef = eventSnapshot.ref.collection('orders')
   const orders = await createOrdersForOrderRemind(ordersRef)
@@ -310,53 +228,6 @@ async function sendInvoiceMailToOrganizers(start, end) {
         }
       }),
   )
-}
-
-async function getLastUpdatedEventStatus(eventSnapshot, status) {
-  const logsSnapshot = await eventSnapshot.ref.collection('logs').orderBy('updated_at', 'desc').get()
-  for (const logSnapshot of logsSnapshot.docs) {
-    if (logSnapshot.get('event_status.value') === status) {
-      return logSnapshot.get('updated_at')
-    }
-  }
-  return null
-}
-
-
-
-async function sendRejectOrderMailToShop(start, end) {
-  const nowDateTimeMillis = Date.now()
-  const events = await db
-    .collectionGroup('events')
-    .where('event_status.value', '==', 'applying_reservation')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
-    .where('is_deleted', '==', false)
-    .get()
-
-  const sendMailPromises = events.docs
-    .map(async (eventSnapshot) => {
-      // applying_reservation に変更したログで一番新しいものを取得
-      const updatedAt = await getLastUpdatedEventStatus(eventSnapshot, 'applying_reservation')
-      if (updatedAt == null || updatedAt.toMillis() <= start || updatedAt.toMillis() > end) {
-        return null
-      }
-      eventSnapshot.ref.update({ 'event_status.value': 'in_draft' })
-
-      const [dynamic_template_data, shopSnapShot] = await Promise.all([
-        createTemplateDataForOrderDeadline(eventSnapshot),
-        getShopForEvent(eventSnapshot),
-      ])
-      return sgMail.send({
-        to: getShopEmails(shopSnapShot),
-        from: DEFAULT_FROM,
-        cc: SUPPORT_MAIL,
-        templateId: REJECT_ORDER_TEMPLATE_ID,
-        dynamic_template_data,
-      })
-    })
-    .filter((promise) => promise != null)
-
-  return Promise.all(sendMailPromises)
 }
 
 async function sendLetter(_, end) {
@@ -462,11 +333,7 @@ export const polling = functions
     const start = end - 60 * 1000
     const one_day_millis = 24 * 60 * 60 * 1000
 
-    const promise_list = [
-      sendInvoiceMailToOrganizers(start, end),
-      sendRejectOrderMailToShop(start - 3 * one_day_millis, end - 3 * one_day_millis, true), // 3日後却下通知
-      sendLetter(start, end),
-    ]
+    const promise_list = [sendInvoiceMailToOrganizers(start, end), sendLetter(start, end)]
 
     // 3, 5, 10, 20, 30, 40, 50, 60日後にリマインドメールを送信
     const orderRemindToOrganizerDays = [1, 5, 10, 20, 30, 40, 50, 60]
