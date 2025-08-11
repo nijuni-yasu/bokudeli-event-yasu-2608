@@ -118,11 +118,6 @@ const EventAppSchema = z.object({
   shop_name: z.string().nonempty().optional(),
   event_name: z.string().nonempty().optional(),
   event_cover_url: z.string().nonempty().optional(),
-  organizer_fullname: z.string().nonempty().optional(),
-  organizer_company: z.string().nonempty().optional(),
-  organizer_email: z.string().nonempty().optional(),
-  organizer_phone_personal: z.string().nonempty().optional(),
-  organizer_memo: z.string().nonempty().optional(),
   subdomain_tags: z.array(z.string()).optional(),
 
   // 本来は nonempty をつけたいが、現状 empty 状態のデータがあるため、nonempty を外す
@@ -133,6 +128,11 @@ const EventAppSchema = z.object({
   event_desc: z.string().optional(),
   event_sns_hash_tag: z.string().optional(),
   organizer_phone_company: z.string().optional(),
+  organizer_fullname: z.string().optional(),
+  organizer_company: z.string().optional(),
+  organizer_email: z.string().optional(),
+  organizer_phone_personal: z.string().optional(),
+  organizer_memo: z.string().optional(),
 })
 
 const convertToDb = (event: Event, updated_by: string) => {
@@ -161,7 +161,7 @@ export class Event {
   event_max_people!: number
   event_status!: {
     value: RawEventStatusType
-    shop_comment: string | undefined
+    shop_comment?: string
   }
   is_deleted!: boolean
 
