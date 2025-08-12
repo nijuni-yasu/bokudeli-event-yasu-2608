@@ -12,7 +12,8 @@
   "scripts": {
     "lint": "eslint --max-warnings=0 .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "build:types": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@channel.io/channel-web-sdk-loader": "^2.0.0",

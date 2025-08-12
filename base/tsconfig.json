@@ -10,12 +10,12 @@
   ],
   "exclude": ["node_modules", "materio/@core/**", "materio/@layouts/**"],
   "compilerOptions": {
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true, // デフォルトライブラリもスキップ
+    "types": [], // 自動的に含まれる型定義を制限
     "paths": {
-      "@shokujii/base/*": ["./src/*"],
-      "@layouts/*": ["./materio/@layouts/*"],
-      "@layouts": ["./materio/@layouts"],
-      "@core/*": ["./materio/@core/*"],
-      "@core": ["./materio/@core"]
+      "@shokujii/base/*": ["./src/*"]
     }
   }
 }
