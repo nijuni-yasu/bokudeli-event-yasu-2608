@@ -1073,7 +1073,7 @@ function buildInCartNotificationMail(eventSnapshot, to) {
 
 export const polling = functions
   .region('asia-northeast1')
-  .runWith({ timeoutSeconds: 540, memory: '1GiB' })
+  .runWith({ timeoutSeconds: 540, memory: '1GB' })
   .pubsub.schedule('*/1 * * * *') // .schedule('every 1 minutes')
   .onRun(async (event) => {
     const now = DateTime.fromISO(event.timestamp).toMillis()
