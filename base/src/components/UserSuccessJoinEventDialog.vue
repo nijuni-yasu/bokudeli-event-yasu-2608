@@ -5,8 +5,8 @@ import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { useCommunityStore } from '@shokujii/base/stores/community'
-import type { Shop } from '@shokujii/base/schemes/shop'
-import { usePartnerStore } from '@shokujii/base/stores/_partner'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { usePartnerStore } from '@shokujii/base/stores/partner'
 import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 
@@ -40,7 +40,7 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
         { immediate: true },
       )
     }),
-    new Promise<Shop | undefined>((resolve) => {
+    new Promise<BokudeliPartnerShop | undefined>((resolve) => {
       watch(
         () => partnerStore.shops,
         (shops) => {

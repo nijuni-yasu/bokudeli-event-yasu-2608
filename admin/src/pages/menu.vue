@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
-import { PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
+import { usePartnerStore, BokudeliPartnerMenu } from '@shokujii/base/stores/partner.js'
 import MenuEditCard from '@/components/MenuEditCard.vue'
 import MenuCard from '@shokujii/base/components/MenuCard.vue'
 import { mdiPlus, mdiClose } from '@mdi/js'
@@ -15,12 +14,12 @@ const { t: $t } = useI18n()
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 
-const menus = await new Promise<Ref<PartnerMenu[]>>((resolve) => {
+const menus = await new Promise<Ref<BokudeliPartnerMenu[]>>((resolve) => {
   watch(
     () => partnerStore.menus,
     () => {
       if (partnerStore.menus != null) {
-        resolve(computed<PartnerMenu[]>(() => partnerStore.menus ?? []))
+        resolve(computed<BokudeliPartnerMenu[]>(() => partnerStore.menus ?? []))
         stop()
       }
     },
@@ -28,7 +27,7 @@ const menus = await new Promise<Ref<PartnerMenu[]>>((resolve) => {
   )
 })
 
-const targetMenu: Ref<PartnerMenu | null> = ref(null)
+const targetMenu: Ref<BokudeliPartnerMenu | null> = ref(null)
 
 const dialog = computed({
   get: () => targetMenu.value != null,
@@ -39,10 +38,10 @@ const dialog = computed({
   },
 })
 
-const openDialog = (menu: PartnerMenu) => {
+const openDialog = (menu: BokudeliPartnerMenu) => {
   targetMenu.value = Object.assign({}, toRaw(menu))
 }
-const saveMenu = async (menu: PartnerMenu, file?: File) => {
+const saveMenu = async (menu: BokudeliPartnerMenu, file?: File) => {
   try {
     await partnerStore.updateMenu(menu, file)
     notification.show($t('menu.saved'), 'success')
@@ -51,7 +50,7 @@ const saveMenu = async (menu: PartnerMenu, file?: File) => {
     notification.show($t('menu.save_error'), 'error')
   }
 }
-const onDelete = (menu: PartnerMenu) => {
+const onDelete = (menu: BokudeliPartnerMenu) => {
   if (menu.id == null) {
     console.error('menu.id is null')
     notification.show($t('menu.delete_error'), 'error')
@@ -69,11 +68,12 @@ const onDelete = (menu: PartnerMenu) => {
   }
 }
 
-const example = new PartnerMenu(partnerId)
-example.imageUrl = 'deli_example.png'
-example.name = $t('menu.example.name')
-example.description = $t('menu.example.description')
-example.price = 800
+const example = new BokudeliPartnerMenu(partnerId, null, {
+  menu_image_url: 'deli_example.png',
+  menu_name: $t('menu.example.name'),
+  menu_description: $t('menu.example.description'),
+  menu_price: 800,
+})
 </script>
 
 <template>
@@ -97,7 +97,7 @@ example.price = 800
         <v-col cols="12" sm="6" md="4" lg="3">
           <v-card
             class="menu-card clickable d-flex justify-center align-center"
-            @click="openDialog(new PartnerMenu(partnerId))"
+            @click="openDialog(new BokudeliPartnerMenu(partnerId, null, {}))"
           >
             <v-icon size="64" :icon="mdiPlus" />
           </v-card>

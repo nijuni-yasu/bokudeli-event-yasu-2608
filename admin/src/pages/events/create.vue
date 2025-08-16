@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getCommunityPath, getShopPath, getEventPath, getUserEventUrl } from '@/navigation/utils'
 import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
-import type { Shop } from '@shokujii/base/schemes/shop.js'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
@@ -22,7 +21,7 @@ const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 const eventListStore = useEventListStore()
 
-const shop = await new Promise<Shop | null>((resolve) => {
+const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
   watch(
     () => partnerStore.shops,
     (shops) => {
@@ -92,13 +91,13 @@ if (route.query.id != null) {
   _event.community_account = communityAccount
   _event.community_id = communityId
   _event.community_name = communityName
-  _event.event_postalcode = shop.shop_postcode
-  _event.event_address = shop.shop_address
-  _event.event_place = shop.shop_name
-  _event.event_place_url = shop.shop_url
+  _event.event_postalcode = shop.shop_postcode ?? ''
+  _event.event_address = shop.shop_address ?? ''
+  _event.event_place = shop.shop_name ?? ''
+  _event.event_place_url = shop.shop_url ?? ''
   _event.partner_id = partnerId
-  _event.shop_id = shop.shop_id!
-  _event.shop_name = shop.shop_name
+  _event.shop_id = shop.shop_id
+  _event.shop_name = shop.shop_name ?? ''
   _event.event_status = { value: 'in_draft' }
 }
 

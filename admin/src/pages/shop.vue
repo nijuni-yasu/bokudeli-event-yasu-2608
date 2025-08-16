@@ -10,10 +10,10 @@ import {
   mdiFileDocumentOutline,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { usePartnerStore, BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
-import { Shop, GENRE_ARRAY } from '@shokujii/base/schemes/shop.js'
+import { GENRE_ARRAY } from '@shokujii/common/schemas/PartnerShop.js'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -108,13 +108,13 @@ const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 
 const shop = ref(
-  await new Promise<Shop>((resolve) => {
+  await new Promise<BokudeliPartnerShop>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {
         if (shops != null) {
           if (shops.length === 0) {
-            const shop = new Shop(partnerId)
+            const shop = new BokudeliPartnerShop(partnerId, null, {})
             shop.shop_email = getAuth().currentUser?.email ?? ''
             resolve(shop)
           } else {
@@ -150,7 +150,7 @@ watch(
       validatedPostalCode.value = null
       return
     }
-    validatedPostalCode.value = postalcode
+    validatedPostalCode.value = postalcode ?? null
     if (shop.value.shop_address?.startsWith(location.address) ?? false) {
       return
     }
@@ -176,7 +176,7 @@ watch(
   () => shop.value?.shop_url_twitter,
   (url) => {
     if (url?.startsWith('https://x.com/') ?? false) {
-      shop.value.shop_url_twitter = url.replace('https://x.com/', '')
+      shop.value.shop_url_twitter = url?.replace('https://x.com/', '')
     }
   },
   { immediate: true },
@@ -186,7 +186,7 @@ watch(
   () => shop.value?.shop_url_facebook,
   (url) => {
     if (url?.startsWith('https://www.facebook.com/') ?? false) {
-      shop.value.shop_url_facebook = url.replace('https://www.facebook.com/', '')
+      shop.value.shop_url_facebook = url?.replace('https://www.facebook.com/', '')
     }
   },
   { immediate: true },
@@ -196,7 +196,7 @@ watch(
   () => shop.value?.shop_url_instagram,
   (url) => {
     if (url?.startsWith('https://www.instagram.com/') ?? false) {
-      shop.value.shop_url_instagram = url.replace('https://www.instagram.com/', '')
+      shop.value.shop_url_instagram = url?.replace('https://www.instagram.com/', '')
     }
   },
   { immediate: true },

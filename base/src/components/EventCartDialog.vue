@@ -4,7 +4,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
-
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'

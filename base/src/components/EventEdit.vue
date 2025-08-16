@@ -14,8 +14,7 @@ import {
   convertShopTimeToWeekTimestamp,
 } from '@shokujii/base/schemes/converter'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { type Shop } from '@shokujii/base/schemes/shop'
-import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
+import { type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { useEventListStore } from '@shokujii/base/stores/eventList'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
@@ -95,10 +94,10 @@ const event = computed<BokudeliEvent | null>({
     }
   },
 })
-const shops = ref<Shop[]>([])
-const menus = ref<PartnerMenu[]>([])
+const shops = ref<(BokudeliPartnerShop & { distance: number; min_orders_on_spot: number })[]>([])
+const menus = ref<BokudeliPartnerMenu[]>([])
 const coverImage = ref<File | null>(null)
-const selectedShop = computed((): Shop | null => {
+const selectedShop = computed((): BokudeliPartnerShop | null => {
   if (event.value == null) {
     return null
   }
@@ -142,14 +141,17 @@ watch(
     const shopSnapshot = await getDocs(shopDb)
     shops.value = shopSnapshot.docs
       .map((doc) => {
-        const shop = doc.data() as Shop
+        const shop = doc.data() as BokudeliPartnerShop
 
         // calculate distance
-        const shopLocation = {
-          longitude: shop.shop_address_longitude,
-          latitude: shop.shop_address_latitude,
+        let distance = 0
+        if (shop.shop_address_longitude != null && shop.shop_address_latitude != null) {
+          const shopLocation = {
+            longitude: shop.shop_address_longitude,
+            latitude: shop.shop_address_latitude,
+          }
+          distance = calculateDistance(location, shopLocation)
         }
-        const distance = calculateDistance(location, shopLocation)
         // 最小注文個数の配列の何番目かを取得
         const rangeIndex = shop.shop_range_min_orders.findIndex(
           (order) => order?.range != null && order.range >= distance,

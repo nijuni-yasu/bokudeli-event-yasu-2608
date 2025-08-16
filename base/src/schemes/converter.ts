@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { type DocumentData, Timestamp } from 'firebase/firestore'
-import { type PartnerMenu } from './partnerMenu'
+import { BokudeliPartnerMenu } from '@shokujii/base/stores/partner.js'
 import { type User } from 'firebase/auth'
 import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
 
@@ -55,32 +55,28 @@ export const convertDocumentDataToMenu = (
   partnerId: string,
   documentId: string,
   documentData: DocumentData,
-): PartnerMenu => {
+): BokudeliPartnerMenu => {
   const {
     menu_name,
     menu_price,
     menu_image_url,
     menu_description,
-    createdAt,
     updatedAt,
     is_soldout,
     menu_date_start,
     menu_date_end,
   } = documentData
 
-  return {
-    id: documentId,
-    partnerId,
-    name: menu_name ?? '',
-    price: menu_price ?? 0,
-    imageUrl: menu_image_url ?? '',
-    description: menu_description ?? '',
-    createdAt: createdAt ? (createdAt as Timestamp).toDate() : null,
-    updatedAt: updatedAt ? (updatedAt as Timestamp).toDate() : null,
-    isSoldout: is_soldout ?? false,
-    dateStart: menu_date_start ?? null,
-    dateEnd: menu_date_end ?? null,
-  }
+  return new BokudeliPartnerMenu(partnerId, documentId, {
+    menu_name: menu_name ?? '',
+    menu_price: menu_price ?? 0,
+    menu_image_url: menu_image_url ?? '',
+    menu_description: menu_description ?? '',
+    updatedAt: updatedAt,
+    is_sold_out: is_soldout ?? false,
+    menu_date_start: menu_date_start ?? null,
+    menu_date_end: menu_date_end ?? null,
+  })
 }
 
 export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser => {

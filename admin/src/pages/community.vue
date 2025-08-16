@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
-import { Shop } from '@shokujii/base/schemes/shop.js'
 import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiPlus } from '@mdi/js'
@@ -19,7 +18,7 @@ const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 const isLoading = ref(false)
 
-const shop = await new Promise<Shop | null>((resolve) => {
+const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
   watch(
     () => partnerStore.shops,
     (shops) => {

@@ -15,7 +15,7 @@ import {
 } from '@mdi/js'
 import { hourString, minutesString } from '@shokujii/base/schemes/eventCreate'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
-import type { Shop } from '@shokujii/base/schemes/shop'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 
 const emit = defineEmits<{
   submit: []
@@ -24,7 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const event = defineModel<BokudeliEvent>({ required: true })
-const shop = defineModel<Shop | null>('shop', { required: true })
+const shop = defineModel<BokudeliPartnerShop | null>('shop', { required: true })
 
 const { t: $t } = useI18n()
 

@@ -1,10 +1,10 @@
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
-import type { Shop } from '@shokujii/base/schemes/shop'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { getEventUrl } from '@shokujii/common/utils/urls.js'
 
-const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
+const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: BokudeliPartnerShop) => {
   const communityTwitterAccount = community.community_sns_twitter ?? ''
   const communityText = event.community_name + (communityTwitterAccount ? ` @${communityTwitterAccount}` : '')
   const shopText = shop.shop_name + (shop.shop_url_twitter ? ` @${shop.shop_url_twitter}` : '')
@@ -27,7 +27,7 @@ const getXPostText = (event: BokudeliEvent, community: BokudeliCommunity, shop: 
   return `${textList.join('\n')}`
 }
 
-const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: Shop) => {
+const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: BokudeliPartnerShop) => {
   const hashTagText =
     event.event_sns_hash_tag != null && event.event_sns_hash_tag !== ''
       ? `#${event.event_sns_hash_tag} #shokujii`
@@ -52,7 +52,7 @@ export const shareSnsButton = async (
   snsType: 'twitter' | 'facebook' | 'line' | 'copy' | 'twitterAfterOrder',
   event: BokudeliEvent,
   community: BokudeliCommunity,
-  shop: Shop,
+  shop: BokudeliPartnerShop,
   // pop-up block を防ぐため、先に window を開いておく
   // TODO copy 等動作の異なる処理を一関数にまとめるのは本来良くないので、修正する
   _window?: Window,

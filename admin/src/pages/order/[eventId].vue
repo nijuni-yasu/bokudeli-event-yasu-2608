@@ -4,8 +4,8 @@ import { mdiTruckOutline, mdiMapMarkerRadius } from '@mdi/js'
 import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@shokujii/base/utils/orders.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
-import type { Shop } from '@shokujii/base/schemes/shop.js'
+import { usePartnerStore } from '@shokujii/base/stores/partner.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { getOrderPath } from '@/navigation/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
@@ -38,7 +38,7 @@ const [event, shop] = await Promise.all([
       { immediate: true },
     )
   }),
-  new Promise<Shop>((resolve) => {
+  new Promise<PartnerShop>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { where, orderBy } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { getCommunityPath, getShopPath } from '@/navigation/utils'
-import type { Shop } from '@shokujii/base/schemes/shop.js'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
@@ -17,7 +16,7 @@ const display = useDisplay()
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 
-const shop = await new Promise<Shop | null>((resolve) => {
+const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
   watch(
     () => partnerStore.shops,
     (shops) => {
