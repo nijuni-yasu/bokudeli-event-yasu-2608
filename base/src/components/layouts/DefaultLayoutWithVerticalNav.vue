@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, watch, type PropType } from 'vue'
 import { VerticalNavLayout } from '@layouts'
-import type { VerticalNavItems } from '@layouts/types.js'
+import type { VerticalNavItems } from '@layouts/types'
 import { mdiMenu } from '@mdi/js'
 
 defineProps({

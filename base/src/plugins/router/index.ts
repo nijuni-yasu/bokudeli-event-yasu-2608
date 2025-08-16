@@ -7,7 +7,8 @@ import { routes } from 'vue-router/auto-routes'
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: setupLayouts(routes),
-  scrollBehavior: (to, from, savedPosition) => {
+  // @ts-expect-error vue-router/auto does not provide types for this option
+  scrollBehavior: (_, __, savedPosition) => {
     if (savedPosition) {
       return savedPosition
     }
