@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { layoutConfig } from '@layouts'
-import { can } from '@layouts/plugins/casl'
-import type { NavLink } from '@layouts/types'
-import { getComputedNavLinkToProp, getDynamicI18nProps, isNavLinkActive } from '@layouts/utils'
+import { layoutConfig } from '..'
+import { can } from '../plugins/casl'
+import type { NavLink } from '../types'
+import { getComputedNavLinkToProp, getDynamicI18nProps, isNavLinkActive } from '../utils'
 
 interface Props {
   item: NavLink
@@ -20,10 +20,12 @@ const props = withDefaults(defineProps<Props>(), {
   <li
     v-if="can(item.action, item.subject)"
     class="nav-link"
-    :class="[{
-      'sub-item': props.isSubItem,
-      'disabled': item.disable,
-    }]"
+    :class="[
+      {
+        'sub-item': props.isSubItem,
+        disabled: item.disable,
+      },
+    ]"
   >
     <Component
       :is="item.to ? 'RouterLink' : 'a'"

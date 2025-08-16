@@ -7,7 +7,7 @@ shokujii サイト(hosting)共通で使用するコンポーネント等をま�
 > TODO `base` という名前は誤解を招くので変更する
 > TODO 将来的には何らかの方法でモジュール化する
 
-- [src/@core](./src/@core/), [src/@layouts](./src/@layouts/)  
+- [materio/@core](./materio/@core/), [materio/@layouts](./materio/@layouts/)  
   Materio のディレクトリです。
   以下の [Materio の扱い](#Materio-の扱い) を参照してください。
 - [src/\*](./src)  

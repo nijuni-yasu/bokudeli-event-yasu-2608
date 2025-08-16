@@ -1,13 +1,13 @@
 import type { OffsetOptions } from '@floating-ui/dom'
 import type { RouteLocationRaw } from 'vue-router'
-import type { AppContentLayoutNav, ContentWidth, FooterType, HorizontalNavType, NavbarType } from '@layouts/enums'
+import type { AppContentLayoutNav, ContentWidth, FooterType, HorizontalNavType, NavbarType } from './enums'
 
 export interface LayoutConfig {
   app: {
     title: Lowercase<string>
     logo: VNode
-    contentWidth: typeof ContentWidth[keyof typeof ContentWidth]
-    contentLayoutNav: typeof AppContentLayoutNav[keyof typeof AppContentLayoutNav]
+    contentWidth: (typeof ContentWidth)[keyof typeof ContentWidth]
+    contentLayoutNav: (typeof AppContentLayoutNav)[keyof typeof AppContentLayoutNav]
     overlayNavFromBreakpoint: number
 
     // isRTL: boolean
@@ -17,18 +17,18 @@ export interface LayoutConfig {
     iconRenderer: Component
   }
   navbar: {
-    type: typeof NavbarType[keyof typeof NavbarType]
+    type: (typeof NavbarType)[keyof typeof NavbarType]
     navbarBlur: boolean
   }
   footer: {
-    type: typeof FooterType[keyof typeof FooterType]
+    type: (typeof FooterType)[keyof typeof FooterType]
   }
   verticalNav: {
     isVerticalNavCollapsed: boolean
     defaultNavItemIconProps: any
   }
   horizontalNav: {
-    type: typeof HorizontalNavType[keyof typeof HorizontalNavType]
+    type: (typeof HorizontalNavType)[keyof typeof HorizontalNavType]
     transition: string | Component
     popoverOffset?: OffsetOptions
   }

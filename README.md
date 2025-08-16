@@ -39,8 +39,8 @@
 具体的には以下2つのディレクトリを各 UI アプリケーションから参照しています。
 これらのディレクトリに含まれるファイルは原則として修正しないでください。
 
-- [base/src/@core](./base/src/@core)
-- [base/src/@layouts](./base/src/@layouts/)
+- [base/materio/@core](./base/materio/@core)
+- [base/materio/@layouts](./base/materio/@layouts/)
 
 ### base
 

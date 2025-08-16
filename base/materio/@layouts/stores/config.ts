@@ -1,6 +1,6 @@
-import { AppContentLayoutNav, NavbarType } from '@layouts/enums'
-import { injectionKeyIsVerticalNavHovered } from '@layouts/symbols'
-import { _setDirAttr } from '@layouts/utils'
+import { AppContentLayoutNav, NavbarType } from '../enums'
+import { injectionKeyIsVerticalNavHovered } from '../symbols'
+import { _setDirAttr } from '../utils'
 
 // ℹ️ We should not import themeConfig here but in urgency we are doing it for now
 import { layoutConfig } from '@themeConfig'
@@ -29,11 +29,10 @@ export const useLayoutConfigStore = defineStore('layoutConfig', () => {
   // 👉 App Content Layout Nav
   const appContentLayoutNav = ref(layoutConfig.app.contentLayoutNav)
 
-  watch(appContentLayoutNav, val => {
+  watch(appContentLayoutNav, (val) => {
     // If Navbar type is hidden while switching to horizontal nav => Reset it to sticky
     if (val === AppContentLayoutNav.Horizontal) {
-      if (navbarType.value === NavbarType.Hidden)
-        navbarType.value = NavbarType.Sticky
+      if (navbarType.value === NavbarType.Hidden) navbarType.value = NavbarType.Sticky
 
       isVerticalNavCollapsed.value = false
     }
@@ -49,7 +48,9 @@ export const useLayoutConfigStore = defineStore('layoutConfig', () => {
   const footerType = ref(layoutConfig.footer.type)
 
   // 👉 Misc
-  const isLessThanOverlayNavBreakpoint = computed(() => useMediaQuery(`(max-width: ${layoutConfig.app.overlayNavFromBreakpoint}px)`).value)
+  const isLessThanOverlayNavBreakpoint = computed(
+    () => useMediaQuery(`(max-width: ${layoutConfig.app.overlayNavFromBreakpoint}px)`).value,
+  )
 
   // 👉 Layout Classes
   const _layoutClasses = computed(() => {
@@ -61,9 +62,9 @@ export const useLayoutConfigStore = defineStore('layoutConfig', () => {
       `layout-footer-${footerType.value}`,
       {
         'layout-vertical-nav-collapsed':
-          isVerticalNavCollapsed.value
-          && appContentLayoutNav.value === 'vertical'
-          && !isLessThanOverlayNavBreakpoint.value,
+          isVerticalNavCollapsed.value &&
+          appContentLayoutNav.value === 'vertical' &&
+          !isLessThanOverlayNavBreakpoint.value,
       },
       { [`horizontal-nav-${horizontalNavType.value}`]: appContentLayoutNav.value === 'horizontal' },
       `layout-content-width-${appContentWidth.value}`,
@@ -77,7 +78,7 @@ export const useLayoutConfigStore = defineStore('layoutConfig', () => {
   // const isAppRTL = ref(layoutConfig.app.isRTL)
   const isAppRTL = ref(false)
 
-  watch(isAppRTL, val => {
+  watch(isAppRTL, (val) => {
     _setDirAttr(val ? 'rtl' : 'ltr')
   })
 
@@ -95,7 +96,9 @@ export const useLayoutConfigStore = defineStore('layoutConfig', () => {
   const isVerticalNavMini = (isVerticalNavHovered: Ref<boolean> | null = null) => {
     const isVerticalNavHoveredLocal = isVerticalNavHovered || inject(injectionKeyIsVerticalNavHovered) || ref(false)
 
-    return computed(() => isVerticalNavCollapsed.value && !isVerticalNavHoveredLocal.value && !isLessThanOverlayNavBreakpoint.value)
+    return computed(
+      () => isVerticalNavCollapsed.value && !isVerticalNavHoveredLocal.value && !isLessThanOverlayNavBreakpoint.value,
+    )
   }
 
   return {

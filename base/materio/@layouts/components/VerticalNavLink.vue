@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { layoutConfig } from '@layouts'
-import { can } from '@layouts/plugins/casl'
-import { useLayoutConfigStore } from '@layouts/stores/config'
-import type { NavLink } from '@layouts/types'
-import { getComputedNavLinkToProp, getDynamicI18nProps, isNavLinkActive } from '@layouts/utils'
+import { layoutConfig } from '..'
+import { can } from '../plugins/casl'
+import { useLayoutConfigStore } from '../stores/config'
+import type { NavLink } from '../types'
+import { getComputedNavLinkToProp, getDynamicI18nProps, isNavLinkActive } from '../utils'
 
 defineProps<{
   item: NavLink
@@ -14,11 +14,7 @@ const hideTitleAndBadge = configStore.isVerticalNavMini()
 </script>
 
 <template>
-  <li
-    v-if="can(item.action, item.subject)"
-    class="nav-link"
-    :class="{ disabled: item.disable }"
-  >
+  <li v-if="can(item.action, item.subject)" class="nav-link" :class="{ disabled: item.disable }">
     <Component
       :is="item.to ? 'RouterLink' : 'a'"
       v-bind="getComputedNavLinkToProp(item)"

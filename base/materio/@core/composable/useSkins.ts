@@ -1,6 +1,6 @@
 import { VThemeProvider } from 'vuetify/components/VThemeProvider'
 import { useConfigStore } from '@core/stores/config'
-import { AppContentLayoutNav } from '@layouts/enums'
+import { AppContentLayoutNav } from '../../@layouts/enums'
 
 // TODO: Use `VThemeProvider` from dist instead of lib (Using this component from dist causes navbar to loose sticky positioning)
 
@@ -12,9 +12,10 @@ export const useSkins = () => {
       wrapper: h(VThemeProvider, { tag: 'aside' }),
       wrapperProps: {
         withBackground: true,
-        theme: (configStore.isVerticalNavSemiDark && configStore.appContentLayoutNav === AppContentLayoutNav.Vertical)
-          ? 'dark'
-          : undefined,
+        theme:
+          configStore.isVerticalNavSemiDark && configStore.appContentLayoutNav === AppContentLayoutNav.Vertical
+            ? 'dark'
+            : undefined,
       },
     },
   }))
