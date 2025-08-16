@@ -5,6 +5,7 @@ import {
   doc,
   onSnapshot,
   QueryDocumentSnapshot,
+  type SnapshotOptions,
   type DocumentData,
   type FirestoreDataConverter,
   type Unsubscribe,
@@ -17,8 +18,8 @@ const configConverter: FirestoreDataConverter<ConfigGlobal> = {
   toFirestore(config: ConfigGlobal): DocumentData {
     return config.toFirestore()
   },
-  fromFirestore(snapshot: QueryDocumentSnapshot): ConfigGlobal {
-    return new ConfigGlobal(snapshot.id, snapshot.data())
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): ConfigGlobal {
+    return new ConfigGlobal(snapshot.id, snapshot.data(options))
   },
 }
 

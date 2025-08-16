@@ -4,6 +4,7 @@ import type { StateTree, Store } from 'pinia'
 import {
   doc,
   onSnapshot,
+  type SnapshotOptions,
   type DocumentData,
   type FirestoreDataConverter,
   type QueryDocumentSnapshot,
@@ -17,8 +18,8 @@ const bannersConverter: FirestoreDataConverter<Banners> = {
   toFirestore(banners: Banners): DocumentData {
     return banners.toFirestore()
   },
-  fromFirestore(snapshot: QueryDocumentSnapshot): Banners {
-    return new Banners(snapshot.id, snapshot.data())
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): Banners {
+    return new Banners(snapshot.id, snapshot.data(options))
   },
 }
 
