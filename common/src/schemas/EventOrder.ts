@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { TimestampSchema, EpochMillisSchema, NonEmptyStringSchema } from './firebase/index.js'
-import { EVENT_PAYMENT_VALUES, type EventPaymentType } from './Event.js'
 
 export const EVENT_ORDER_STATUS_VALUES = ['in_cart', 'ordered', 'canceled'] as const
 export type EventOrderStatusType = (typeof EVENT_ORDER_STATUS_VALUES)[number]
@@ -24,7 +23,6 @@ const EventOrderDbSchema = z.object({
   community_id: z.string().nonempty(),
   event_id: z.string().nonempty(),
   order_id: z.string().nonempty(),
-  event_payment: z.enum(EVENT_PAYMENT_VALUES),
   user_id: z.string().nonempty(),
   menus: z.array(OrderMenuSchema).nonempty(),
   status: z.enum(EVENT_ORDER_STATUS_VALUES),
@@ -41,7 +39,6 @@ const EventOrderAppSchema = z.object({
   community_id: z.string().nonempty(),
   event_id: z.string().nonempty(),
   order_id: z.string().nonempty(),
-  event_payment: z.enum(EVENT_PAYMENT_VALUES),
   user_id: z.string().nonempty(),
   menus: z.array(OrderMenuSchema).nonempty(),
   // Default
@@ -71,7 +68,6 @@ export class EventOrder {
   carted_at: number
   community_account!: string
   community_id!: string
-  event_payment!: EventPaymentType
   user_id!: string
   menus!: OrderMenuType[]
   status!: EventOrderStatusType
