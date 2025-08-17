@@ -36,6 +36,8 @@ const convertToDb = (menu: PartnerMenu) => {
 export class PartnerMenu {
   // Mandatory
   readonly id: string
+  readonly menu_id: string
+  readonly partner_id: string
   updatedAt: number
   menu_description!: string
   menu_image_url!: string
@@ -46,9 +48,11 @@ export class PartnerMenu {
   menu_date_start?: number
   menu_date_end?: number
 
-  constructor(id: string, src: Partial<PartnerMenu>) {
+  constructor(partner_id: string, menu_id: string, src: Partial<PartnerMenu>) {
     Object.assign(this, PartnerMenuAppSchema.parse(src))
-    this.id = id
+    this.partner_id = partner_id
+    this.id = menu_id
+    this.menu_id = menu_id
     this.updatedAt = Date.now()
   }
 

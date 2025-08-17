@@ -239,9 +239,9 @@ export class PartnerShop {
   // Mandatory
   readonly id: string
   readonly shop_id: string
+  readonly partner_id: string
   createdAt: number
   updatedAt: number
-  partner_id!: string
   // Default
   is_approved!: boolean
   is_open!: boolean
@@ -282,10 +282,11 @@ export class PartnerShop {
   shop_email_sub2?: string
   shop_email_sub3?: string
 
-  constructor(id: string, src: Partial<PartnerShop>) {
+  constructor(partner_id: string, shop_id: string, src: Partial<PartnerShop>) {
     Object.assign(this, PartnerShopAppSchema.parse(src))
-    this.id = id
-    this.shop_id = id
+    this.partner_id = partner_id
+    this.id = shop_id
+    this.shop_id = shop_id
     this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
     this.updatedAt = Date.now()
   }

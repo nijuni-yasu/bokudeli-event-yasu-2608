@@ -65,12 +65,12 @@ export class EventOrder {
   // Mandatory
   readonly id: string
   readonly order_id: string
+  readonly event_id: string
   created_at: number
   updated_at: number
   carted_at: number
   community_account!: string
   community_id!: string
-  event_id!: string
   event_payment!: EventPaymentType
   user_id!: string
   menus!: OrderMenuType[]
@@ -81,10 +81,11 @@ export class EventOrder {
   receipt_number?: string
   payment_intent?: string
 
-  constructor(id: string, src: Partial<EventOrder>) {
+  constructor(event_id: string, order_id: string, src: Partial<EventOrder>) {
     Object.assign(this, EventOrderAppSchema.parse(src))
-    this.id = id
-    this.order_id = id
+    this.event_id = event_id
+    this.id = order_id
+    this.order_id = order_id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
     this.carted_at = EpochMillisSchema.default(Date.now()).parse(src.carted_at)
     this.updated_at = Date.now()
