@@ -9,6 +9,7 @@ import { sendEventConcludedMailToMembers } from './eventConclusionMail.js'
 import { sendInCartNotificationToMember, sendInCartEventDeadlineNotificationToMember } from './inCartNotification.js'
 import { sendApplyingOrderRemindMailToShop, sendOrderRemindMailToOrganizer } from './orderRemindMail.js'
 import { sendRejectOrderMailToShop } from './rejectOrderMail.js'
+import { sendLetter } from './letter.js'
 
 const ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
 
@@ -36,6 +37,7 @@ export const pollingTask = onSchedule(
       sendApplyingOrderRemindMailToShop(start - ONE_DAY_MILLIS, end - ONE_DAY_MILLIS), // 1日後通知
       sendApplyingOrderRemindMailToShop(start - 2 * ONE_DAY_MILLIS, end - 2 * ONE_DAY_MILLIS), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * ONE_DAY_MILLIS, end - 3 * ONE_DAY_MILLIS), // 3日後却下通知
+      sendLetter(start, end), // レター送信
     ]
 
     // 主催者向け注文リマインドメール（1,5,10,20,30,40,50,60日後）
