@@ -1,11 +1,3 @@
-// TODO 共通化
-export const convertTruncateText = (text, maxLength) => {
-  if (text.length > maxLength) {
-    return text.substring(0, maxLength) + '...'
-  } else {
-    return text
-  }
-}
 
 // TODO toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' }) に変更する
 export const convertNumberToYen = (num) => '¥' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')

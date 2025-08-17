@@ -135,6 +135,30 @@ export class ShokujiiEvent extends Event {
     const id = typeof user === 'string' ? user : user.id
     super.removeMember(id)
   }
+
+  /**
+   * イベントステータスの最後の更新日時を取得
+   */
+  async getLastUpdatedTimeByStatus(status: string): Promise<number | null> {
+    const db = getFirestore()
+    const logsRef = db
+      .collection('communities')
+      .doc(this.community_id)
+      .collection('events')
+      .doc(this.id)
+      .collection('logs')
+      .orderBy('updated_at', 'desc')
+
+    const logsSnapshot = await logsRef.get()
+
+    for (const logSnapshot of logsSnapshot.docs) {
+      const eventStatus = logSnapshot.get('event_status')
+      if (eventStatus?.value === status) {
+        return logSnapshot.get('updated_at') as number
+      }
+    }
+    return null
+  }
 }
 
 export const getEvent = async (eventId: string, transaction?: Transaction): Promise<ShokujiiEvent | undefined> => {
