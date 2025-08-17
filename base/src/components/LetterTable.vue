@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { type Letter } from '../schemes/letter'
+import { type BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { convertTruncateText } from '@shokujii/base/schemes/converter'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { getManageEventPath } from '@/router/utils'
@@ -8,13 +8,13 @@ import LetterStatusChip from '@shokujii/base/components/LetterStatusChip.vue'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencil, mdiDelete, mdiContentCopy } from '@mdi/js'
 
-const props = defineProps<{ letters: Letter[] }>()
+const props = defineProps<{ letters: BokudeliLetter[] }>()
 
 const emits = defineEmits<{
-  letters: [Letter[]]
-  edit: [Letter]
-  copy: [Letter]
-  delete: [Letter]
+  letters: [BokudeliLetter[]]
+  edit: [BokudeliLetter]
+  copy: [BokudeliLetter]
+  delete: [BokudeliLetter]
 }>()
 
 const eventStores = computed(() => {
@@ -42,7 +42,7 @@ const communityStores = computed(() => {
   return stores
 })
 
-const getNumberOfTargets = (letter: Letter) => {
+const getNumberOfTargets = (letter: BokudeliLetter) => {
   const communityStore = letter.community_account ? communityStores.value.get(letter.community_account) : null
   const eventStore = letter.event_id ? eventStores.value.get(letter.event_id) : null
 
@@ -65,8 +65,8 @@ const getNumberOfTargets = (letter: Letter) => {
 }
 
 const deleteConfirmationDialog = ref(false)
-const letterToDelete = ref<Letter | null>(null)
-const showDeleteConfirmation = (letter: Letter) => {
+const letterToDelete = ref<BokudeliLetter | null>(null)
+const showDeleteConfirmation = (letter: BokudeliLetter) => {
   letterToDelete.value = letter
   deleteConfirmationDialog.value = true
 }
@@ -122,10 +122,10 @@ const handleDelete = () => {
               {{ getNumberOfTargets(letter) }}
             </td>
             <td class="text-body-2">
-              {{ letter.scheduled_at ? $d(letter.scheduled_at.toDate(), 'datetime') : '-' }}
+              {{ letter.scheduled_at ? $d(letter.scheduled_at, 'datetime') : '-' }}
             </td>
             <td class="text-body-2">
-              {{ letter.updated_at ? $d(letter.updated_at.toDate(), 'datetime') : '-' }}
+              {{ letter.updated_at ? $d(letter.updated_at, 'datetime') : '-' }}
             </td>
             <td>
               <v-col class="pa-0">

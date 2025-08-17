@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type LetterStatusType } from '@shokujii/base/schemes/letter'
+import { type LetterStatusType } from '@shokujii/common/schemas/CommunityLetter.js'
 
 const props = defineProps<{
   status: LetterStatusType

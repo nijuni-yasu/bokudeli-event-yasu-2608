@@ -4,7 +4,7 @@ import _ from 'lodash'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import DateInput from '@shokujii/base/components/DateInput.vue'
-import type { Letter } from '@shokujii/base/schemes/letter'
+import type { BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { Timestamp } from 'firebase/firestore'
 import { useLetterListStore } from '@shokujii/base/stores/letterList'
 import {
@@ -25,14 +25,14 @@ const notification = useNotification()
 const { t: $t } = useI18n()
 
 const props = defineProps<{
-  letter: Letter
+  letter: BokudeliLetter
 }>()
 
 const emit = defineEmits<{
-  'update:letter': [letter: Letter]
+  'update:letter': [letter: BokudeliLetter]
 }>()
 
-const _letter = ref<Letter>(_.clone(toRaw(props.letter)))
+const _letter = ref<BokudeliLetter>(_.clone(toRaw(props.letter)))
 
 const letterListStore = useLetterListStore(props.letter.community_account)
 const communityStore = useCommunityStore(props.letter.community_account) as CommunityStore
@@ -72,8 +72,7 @@ const scheduledMinute = computed({
 
 const _save = async () => {
   if (_letter.value.letter_id == null) {
-    const newLetter = await letterListStore.addLetter(toRaw(_letter.value))
-    _letter.value.letter_id = newLetter.letter_id!
+    await letterListStore.addLetter(toRaw(_letter.value))
   } else {
     await letterListStore.updateLetter(toRaw(_letter.value))
   }
@@ -82,8 +81,6 @@ const _save = async () => {
 
 const submit = async () => {
   try {
-    const now = Timestamp.now()
-    _letter.value.scheduled_at = isScheduled.value ? scheduleTime.value : now
     _letter.value.status = 'timed'
     await _save()
     emit('update:letter', toRaw(_letter.value))

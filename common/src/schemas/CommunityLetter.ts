@@ -60,6 +60,7 @@ export class Letter {
   // Mandatory
   readonly id: string
   readonly letter_id: string
+  community_account!: string
   updated_at: number
   scheduled_at: number
   letter_type!: LetterTypeType
@@ -68,7 +69,7 @@ export class Letter {
   letter_title: string = ''
   letter_content: string = ''
   // Optional
-  community_account?: string
+
   event_id?: string
   sent_at?: number
 

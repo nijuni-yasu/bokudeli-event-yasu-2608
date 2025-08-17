@@ -20,8 +20,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
 import { TaskExecutor } from '@shokujii/base/utils/executors.js'
-import type { Letter } from '@shokujii/base/schemes/letter.js'
-import { useLetterStore, type LetterStore } from './letter.js'
+import { BokudeliLetter, useLetterStore, type LetterStore, letterConverter } from '@shokujii/base/stores/letter.js'
 
 type LetterListStoreState = {
   letterStores: Ref<LetterStore[] | null>
@@ -31,8 +30,8 @@ type LetterListStoreState = {
 type LetterListStoreGetters = object
 
 type LetterListStoreAction = {
-  addLetter: (data: Letter) => Promise<Letter>
-  updateLetter: (data: Letter) => Promise<void>
+  addLetter: (data: BokudeliLetter) => Promise<BokudeliLetter>
+  updateLetter: (data: BokudeliLetter) => Promise<void>
   deleteLetter: (letterId: string) => Promise<void>
   reload: () => void
   next: () => void
@@ -48,15 +47,15 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
       const letterStores = ref<LetterStore[] | null>(null)
       const totalCount = ref<number | null>(null)
 
-      const lettersSnapsthot: QueryDocumentSnapshot[] = []
+      const lettersSnapsthot: QueryDocumentSnapshot<BokudeliLetter>[] = []
 
-      let _letterListRef: CollectionReference | null = null
-      const getLetterRef = async () => {
+      let _letterListRef: CollectionReference<BokudeliLetter> | null = null
+      const getLettersRef = async () => {
         if (_letterListRef == null) {
           const communitySnapshot = await getDocs(
             query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
           )
-          _letterListRef = collection(communitySnapshot.docs[0].ref, 'letters')
+          _letterListRef = collection(communitySnapshot.docs[0].ref, 'letters').withConverter(letterConverter)
         }
         return _letterListRef
       }
@@ -67,11 +66,11 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
         }
         pagenationExecutor.addTask(async () => {
           if (totalCount.value == null) {
-            totalCount.value = (await getCountFromServer(await getLetterRef())).data().count
+            totalCount.value = (await getCountFromServer(await getLettersRef())).data().count
           }
           const lastVisibleDocument = lettersSnapsthot[lettersSnapsthot.length - 1]
           const q = query(
-            await getLetterRef(),
+            await getLettersRef(),
             orderBy('updated_at', 'desc'),
             ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
             limit(pageSize),
@@ -79,24 +78,23 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
           const querySnapshot = await getDocs(q)
           lettersSnapsthot.push(...querySnapshot.docs)
           window.setTimeout(() => {
-            letterStores.value = lettersSnapsthot.map((doc) => useLetterStore(communityAccount, doc) as LetterStore)
+            letterStores.value = lettersSnapsthot.map(
+              (doc) => useLetterStore(communityAccount, doc.data()) as LetterStore,
+            )
           })
         })
       }
 
-      const addLetter = async (data: Letter) => {
-        const newLetterRef = doc(await getLetterRef())
-        const newData: Letter = {
-          ...data,
-          letter_id: newLetterRef.id,
-          updated_at: Timestamp.now(),
-        }
+      const addLetter = async (data: BokudeliLetter) => {
+        const lettersRef = await getLettersRef()
+        const newLetterRef = doc(await getLettersRef())
+        const newData = new BokudeliLetter(lettersRef.parent!.id, newLetterRef.id, data)
         await setDoc(newLetterRef, newData)
         return newData
       }
 
-      const updateLetter = async (data: Letter) => {
-        const letterRef = doc(await getLetterRef(), data.letter_id)
+      const updateLetter = async (data: BokudeliLetter) => {
+        const letterRef = doc(await getLettersRef(), data.letter_id)
         await updateDoc(letterRef, {
           ...data,
           updated_at: Timestamp.now(),
@@ -104,7 +102,7 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
       }
 
       const deleteLetter = async (letterId: string) => {
-        const letterRef = doc(await getLetterRef(), letterId)
+        const letterRef = doc(await getLettersRef(), letterId)
         await deleteDoc(letterRef)
       }
 

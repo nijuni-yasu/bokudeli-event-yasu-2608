@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { type Letter } from '../schemes/letter'
+import { type BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 
-const props = defineProps<{ letter: Letter }>()
+const props = defineProps<{ letter: BokudeliLetter }>()
 
 // 表示用コンポーネントの中で pinia を直接叩くのは望ましくないが、
 // それを避けるためだけに新たなレイヤを作るより、現状ではこの方が良いと判断した
@@ -45,12 +45,12 @@ const deleteConfirmationDialog = ref(false)
       {{ letter.letter_title }}
     </v-card-title>
     <v-card-text class="text-body-2" style="line-height: 1.5rem">
-      {{ $t('letter_card.updated_at', [$d(letter.updated_at.toDate(), 'datetime')]) }}<br />
+      {{ $t('letter_card.updated_at', [$d(letter.updated_at, 'datetime')]) }}<br />
       <template v-if="letter.status === 'sent'">
-        {{ $t('letter_card.sent_at', [$d(letter.sent_at!.toDate(), 'datetime')]) }}<br />
+        {{ $t('letter_card.sent_at', [$d(letter.sent_at!, 'datetime')]) }}<br />
       </template>
       <template v-if="letter.status === 'timed'">
-        {{ $t('letter_card.scheduled_at', [$d(letter.scheduled_at!.toDate(), 'datetime')]) }}<br />
+        {{ $t('letter_card.scheduled_at', [$d(letter.scheduled_at!, 'datetime')]) }}<br />
       </template>
       {{ $t('letter_card.type', [$t(`letter_type.${letter.letter_type}`), numberOfTargets]) }}<br />
       <template v-if="eventStore?.event != null">
