@@ -1,9 +1,8 @@
-import { DEFAULT_FROM } from './utils/mail.js'
+import { DEFAULT_FROM, getEventMemberEmails } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl } from './utils/urls.js'
 import { convertToDateWeekdayShort } from '@shokujii/common/utils/datetime.js'
-import { getUserPersonalInformation } from './stores/user.js'
-import { getAcceptingOrderEventsByEndTime, type ShokujiiEvent } from './stores/event.js'
+import { getAcceptingOrderEventsByEndTime } from './stores/event.js'
 
 // テンプレートID
 const EVENT_SURVEY_TEMPLATE_ID = 'd-6ad8131506164c2f864155182c63de2d'
@@ -15,21 +14,6 @@ interface EventConcludedTemplateData {
   event_cover_url: string
   event_url: string
   is_public: boolean
-}
-
-/**
- * イベント参加者のメールアドレスを取得
- */
-async function getEventMemberEmails(event: ShokujiiEvent): Promise<string[]> {
-  const orders = await event.getOrders('ordered')
-  const usersSet = new Set(orders.map((order) => order.user_id))
-  const emails = await Promise.all(
-    Array.from(usersSet).map(async (userId) => {
-      const userPersonalInfo = await getUserPersonalInformation(userId)
-      return userPersonalInfo?.user_email
-    }),
-  )
-  return emails.filter((email): email is string => email != null && email !== '')
 }
 
 /**

@@ -1,9 +1,9 @@
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getAdminOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
+import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { ShokujiiEvent, getAcceptingOrderEventsByTime } from './stores/event.js'
-import { getCommunity } from './stores/community.js'
 import { getUser } from './stores/user.js'
 import { getEventPartnerShop } from './stores/partner.js'
 import {
@@ -20,13 +20,6 @@ const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b87061
 const DELIVERY_DURATION = 30 // minutes
 
 // 型定義
-interface OrderData {
-  name: string
-  order: string
-  price: string
-  number?: number
-}
-
 interface TemplateDataForApplyingOrder {
   event_name: string
   event_address: string
@@ -58,43 +51,6 @@ interface TemplateDataForOrganizerOrderRemind {
   event_deadline_datetime: string
   event_datetime: string
   orders: OrdersByStatus
-}
-
-/**
- * 注文締切用の注文データを作成
- */
-async function createOrdersForOrderDeadline(event: ShokujiiEvent): Promise<[number, number, OrderData[]]> {
-  const orders = await event.getOrders('ordered')
-  const orderDataList: OrderData[] = []
-  let count = 0
-  let price = 0
-
-  const promises = orders.map(async (order) => {
-    const db = getFirestore()
-    const userRef = db.collection('users').doc(order.user_id)
-    const userSnapshot = await userRef.get()
-    const userName = userSnapshot.get('user_name') || ''
-
-    for (const menu of order.menus || []) {
-      for (let i = 0; i < menu.count; i++) {
-        orderDataList.push({
-          name: userName,
-          order: menu.name,
-          price: `¥${menu.price}`,
-        })
-        count++
-        price += menu.price
-      }
-    }
-  })
-
-  await Promise.all(promises)
-
-  orderDataList
-    .sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0))
-    .forEach((order, i) => (order.number = i + 1))
-
-  return [count, price, orderDataList]
 }
 
 /**
@@ -182,39 +138,6 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
     .filter((promise) => promise != null)
 
   return Promise.all(sendMailPromises)
-}
-
-/**
- * コミュニティマネージャーのメールアドレスを取得
- */
-async function getCommunityManagerEmails(communityId: string): Promise<Set<string>> {
-  const emails = new Set<string>()
-  const community = await getCommunity(communityId)
-
-  if (community) {
-    const managers = await community.getMembersByRole('manager')
-    for (const manager of managers) {
-      const user = await getUser(manager.id, true)
-      if (user?.user_email) {
-        emails.add(user.user_email)
-      }
-    }
-  }
-
-  return emails
-}
-
-/**
- * イベント関連のメールアドレスを取得（主催者とコミュニティマネージャー）
- */
-async function getCommunityEmailsForEvent(event: ShokujiiEvent): Promise<string[]> {
-  const emails = await getCommunityManagerEmails(event.community_id)
-
-  if (event.organizer_email) {
-    emails.add(event.organizer_email)
-  }
-
-  return Array.from(emails)
 }
 
 /**

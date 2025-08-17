@@ -1,9 +1,8 @@
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent, getEventMemberEmails } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
+import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { getAcceptingOrderEventsByTime, ShokujiiEvent } from './stores/event.js'
-import { getUser, getUserPersonalInformation } from './stores/user.js'
-import { getCommunity } from './stores/community.js'
 import {
   convertToDateWeekdayShort,
   convertToDatetimeWeekdayShort,
@@ -20,13 +19,6 @@ const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098'
 const DELIVERY_DURATION = 30 // minutes
 
 // 型定義
-interface OrderData {
-  name: string
-  order: string
-  price: string
-  number?: number
-  status?: string
-}
 
 interface TemplateDataForOrderDeadline {
   event_name: string
@@ -60,92 +52,6 @@ interface TemplateDataForMembers {
   event_address: string
   shop_name: string
   event_url: string
-}
-
-/**
- * コミュニティマネージャーのメールアドレスを取得
- */
-async function getCommunityManagerEmailsSet(communityId: string): Promise<Set<string>> {
-  const emails = new Set<string>()
-  const community = await getCommunity(communityId)
-  if (!community) {
-    return emails
-  }
-
-  const members = await community.getMembersByRole('manager')
-  await Promise.all(
-    members.map(async (member) => {
-      const user = await getUser(member.id, true)
-      if (user?.user_email) {
-        emails.add(user.user_email)
-      }
-    }),
-  )
-  return emails
-}
-
-/**
- * イベントのコミュニティメールアドレスを取得
- */
-async function getCommunityEmailsForEvent(event: ShokujiiEvent): Promise<string[]> {
-  const emails = await getCommunityManagerEmailsSet(event.community_id)
-
-  if (event.organizer_email) {
-    emails.add(event.organizer_email)
-  }
-  return Array.from(emails)
-}
-
-/**
- * イベントメンバーのメールアドレスを取得
- */
-async function getEventMemberEmails(event: ShokujiiEvent): Promise<string[]> {
-  const orders = await event.getOrders('ordered')
-  const userIds = [...new Set(orders.map((order) => order.user_id))]
-
-  const emails = await Promise.all(
-    userIds.map(async (userId) => {
-      const userPersonalInfo = await getUserPersonalInformation(userId)
-      return userPersonalInfo?.user_email
-    }),
-  )
-
-  return emails.filter((email): email is string => email != null && email !== '')
-}
-
-/**
- * 注文締切用の注文データを作成
- */
-async function createOrdersForOrderDeadline(event: ShokujiiEvent): Promise<[number, number, OrderData[]]> {
-  const orders = await event.getOrders('ordered')
-  const orderDataList: OrderData[] = []
-  let count = 0
-  let price = 0
-
-  const promises = orders.map(async (order) => {
-    const user = await getUser(order.user_id, false)
-    const userName = user?.user_name || ''
-
-    for (const menu of order.menus || []) {
-      for (let i = 0; i < menu.count; i++) {
-        orderDataList.push({
-          name: userName,
-          order: menu.name,
-          price: `¥${menu.price}`,
-        })
-        count++
-        price += menu.price
-      }
-    }
-  })
-
-  await Promise.all(promises)
-
-  orderDataList
-    .sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0))
-    .forEach((order, i) => (order.number = i + 1))
-
-  return [count, price, orderDataList]
 }
 
 /**
