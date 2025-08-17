@@ -1,9 +1,8 @@
-import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getAdminOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
-import { ShokujiiEvent, getAcceptingOrderEventsByTime } from './stores/event.js'
+import { ShokujiiEvent, getAcceptingOrderEventsByTime, getApplyingReservationEvents } from './stores/event.js'
 import { getUser } from './stores/user.js'
 import { getEventPartnerShop } from './stores/partner.js'
 import {
@@ -93,16 +92,7 @@ async function createTemplateDataForApplyingOrder(
  */
 export async function sendApplyingOrderRemindMailToShop(start: number, end: number): Promise<void[]> {
   const nowDateTimeMillis = Date.now()
-  const db = getFirestore()
-
-  const eventsRef = db
-    .collectionGroup('events')
-    .where('event_status.value', '==', 'applying_reservation')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
-    .where('is_deleted', '==', false)
-
-  const eventsSnapshot = await eventsRef.get()
-  const events = eventsSnapshot.docs.map((doc) => new ShokujiiEvent(doc.id, doc.data()))
+  const events = await getApplyingReservationEvents(nowDateTimeMillis)
 
   const sendMailPromises = events
     .map(async (event) => {
