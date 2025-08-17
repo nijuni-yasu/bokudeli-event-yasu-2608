@@ -49,6 +49,13 @@ const LetterAppSchema = z.object({
   sent_at: EpochMillisSchema.optional(),
 })
 
+const convertToDb = (letter: Letter) => {
+  return {
+    ...letter,
+    updated_at: Date.now(),
+  }
+}
+
 export class Letter {
   // Mandatory
   readonly id: string
@@ -73,18 +80,11 @@ export class Letter {
     this.updated_at = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return LetterDbSchema.safeParse(this.getDb()).success
+    return LetterDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof LetterDbSchema> {
-    return LetterDbSchema.parse(this.getDb())
+    return LetterDbSchema.parse(convertToDb(this))
   }
 }

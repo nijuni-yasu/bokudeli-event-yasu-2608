@@ -32,7 +32,8 @@ class ShokujiiEventOrderConverter implements FirestoreDataConverter<EventOrder> 
     return order.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): EventOrder {
-    return new EventOrder(snapshot.id, snapshot.data())
+    const eventId = snapshot.ref.parent.parent!.id
+    return new EventOrder(eventId, snapshot.id, snapshot.data())
   }
 }
 
@@ -41,7 +42,8 @@ class ShokujiiEventMenuConverter implements FirestoreDataConverter<EventMenu> {
     return order.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): EventMenu {
-    return new EventMenu(snapshot.id, snapshot.data())
+    const eventId = snapshot.ref.parent.parent!.id
+    return new EventMenu(eventId, snapshot.id, snapshot.data())
   }
 }
 

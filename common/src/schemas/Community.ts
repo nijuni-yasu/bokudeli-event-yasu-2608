@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema, type DocumentReference } from './firebase/index.js'
 
 const CommunityDbSchema = z.object({
   // Mandatory
@@ -30,7 +30,16 @@ const CommunityDbSchema = z.object({
   community_sns_hash_tag: NonEmptyStringSchema,
   community_bill_fullname: NonEmptyStringSchema,
   community_bill_email: NonEmptyStringSchema,
+  // members, managers は functions で処理するので DB に直接書き込まない
 })
+
+const convertToDb = (community: Community) => {
+  return {
+    ...community,
+    created_at: EpochMillisSchema.default(Date.now()).parse(community.created_at),
+    updated_at: Date.now(),
+  }
+}
 
 // ほぼ デフォルトなので CommunityAppSchema は（いまのところ）作成しない
 export class Community {
@@ -63,6 +72,8 @@ export class Community {
   community_sns_hash_tag: string = ''
   community_bill_fullname: string = ''
   community_bill_email: string = ''
+  members: (typeof DocumentReference)[] = []
+  managers: (typeof DocumentReference)[] = []
 
   constructor(id: string, src: Partial<Community>) {
     Object.assign(this, src)
@@ -72,20 +83,12 @@ export class Community {
     this.updated_at = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return CommunityDbSchema.safeParse(this.getDb()).success
+    return CommunityDbSchema.safeParse(convertToDb(this)).success
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(): any {
-    return CommunityDbSchema.parse(this.getDb())
+    return CommunityDbSchema.parse(convertToDb(this))
   }
 }

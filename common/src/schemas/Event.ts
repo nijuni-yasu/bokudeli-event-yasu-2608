@@ -118,11 +118,6 @@ const EventAppSchema = z.object({
   shop_name: z.string().nonempty().optional(),
   event_name: z.string().nonempty().optional(),
   event_cover_url: z.string().nonempty().optional(),
-  organizer_fullname: z.string().nonempty().optional(),
-  organizer_company: z.string().nonempty().optional(),
-  organizer_email: z.string().nonempty().optional(),
-  organizer_phone_personal: z.string().nonempty().optional(),
-  organizer_memo: z.string().nonempty().optional(),
   subdomain_tags: z.array(z.string()).optional(),
 
   // 本来は nonempty をつけたいが、現状 empty 状態のデータがあるため、nonempty を外す
@@ -133,7 +128,24 @@ const EventAppSchema = z.object({
   event_desc: z.string().optional(),
   event_sns_hash_tag: z.string().optional(),
   organizer_phone_company: z.string().optional(),
+  organizer_fullname: z.string().optional(),
+  organizer_company: z.string().optional(),
+  organizer_email: z.string().optional(),
+  organizer_phone_personal: z.string().optional(),
+  organizer_memo: z.string().optional(),
 })
+
+const convertToDb = (event: Event, updated_by: string) => {
+  return {
+    ...event,
+    created_at: EpochMillisSchema.default(Date.now()).parse(event.created_at),
+    created_by: event.created_by ?? updated_by,
+    updated_at: Date.now(),
+    updated_by,
+    members: event.members.map((id) => getRefFromPath(`users/${id}`)),
+    event_num_members: event.members.length,
+  }
+}
 
 export class Event {
   readonly id: string
@@ -149,7 +161,7 @@ export class Event {
   event_max_people!: number
   event_status!: {
     value: RawEventStatusType
-    shop_comment: string | undefined
+    shop_comment?: string
   }
   is_deleted!: boolean
 
@@ -223,24 +235,12 @@ export class Event {
     this.members = this.members.filter((id) => id !== userId)
   }
 
-  private getDb(updated_by: string) {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      created_by: this.created_by ?? updated_by,
-      updated_at: Date.now(),
-      updated_by,
-      members: this.members.map((id) => getRefFromPath(`users/${id}`)),
-      event_num_members: this.members.length,
-    }
-  }
-
   isValidForDatabase(updateUserId: string): boolean {
-    return EventDbSchema.safeParse(this.getDb(updateUserId)).success
+    return EventDbSchema.safeParse(convertToDb(this, updateUserId)).success
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(updateUserId: string): any {
-    return EventDbSchema.parse(this.getDb(updateUserId))
+    return EventDbSchema.parse(convertToDb(this, updateUserId))
   }
 }

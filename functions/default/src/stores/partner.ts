@@ -14,7 +14,8 @@ class PartnerMenuConverter implements FirestoreDataConverter<PartnerMenu> {
     return order.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): PartnerMenu {
-    return new PartnerMenu(snapshot.id, snapshot.data())
+    const partnerId = snapshot.ref.parent.parent!.id
+    return new PartnerMenu(partnerId, snapshot.id, snapshot.data())
   }
 }
 
@@ -23,7 +24,8 @@ class PartnerShopConverter implements FirestoreDataConverter<PartnerShop> {
     return order.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): PartnerShop {
-    return new PartnerShop(snapshot.id, snapshot.data())
+    const partnerId = snapshot.ref.parent.parent!.id
+    return new PartnerShop(partnerId, snapshot.id, snapshot.data())
   }
 }
 

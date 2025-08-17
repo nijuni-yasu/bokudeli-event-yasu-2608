@@ -138,6 +138,7 @@ const PartnerShopDbSchema = z.object({
       }),
     )
     .length(7),
+  min_orders_on_spot: z.number().nonnegative(),
   is_approved: z.boolean(),
   is_open: z.boolean(),
   // Optional
@@ -203,6 +204,7 @@ const PartnerShopAppSchema = z.object({
       { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
       { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
     ]),
+  min_orders_on_spot: z.number().nonnegative().default(30),
   // Optional
   shop_address: z.string().nonempty().optional(),
   shop_address_latitude: z.number().positive().optional(),
@@ -225,13 +227,21 @@ const PartnerShopAppSchema = z.object({
   shop_email_sub3: z.string().nonempty().optional(),
 })
 
+const convertToDb = (shop: PartnerShop) => {
+  return {
+    ...shop,
+    createdAt: EpochMillisSchema.default(Date.now()).parse(shop.createdAt),
+    updatedAt: Date.now(),
+  }
+}
+
 export class PartnerShop {
   // Mandatory
   readonly id: string
   readonly shop_id: string
+  readonly partner_id: string
   createdAt: number
   updatedAt: number
-  partner_id!: string
   // Default
   is_approved!: boolean
   is_open!: boolean
@@ -242,7 +252,7 @@ export class PartnerShop {
   shop_range_min_orders!: {
     range: number
     min_orders: number
-  }
+  }[]
   shop_time!: {
     is_open: boolean
     time_start: string
@@ -250,13 +260,14 @@ export class PartnerShop {
     time_start2: string
     time_end2: string
   }[]
+  min_orders_on_spot!: number
   // Optional
   shop_address?: string
   shop_address_latitude?: number
   shop_address_longitude?: number
-  shop_description?: number
+  shop_description?: string
   shop_email?: string
-  shop_genre?: typeof GENRE_ARRAY
+  shop_genre?: (typeof GENRE_ARRAY)[number]
   shop_image_url?: string
   shop_invoice_number?: string
   shop_name?: string
@@ -271,28 +282,21 @@ export class PartnerShop {
   shop_email_sub2?: string
   shop_email_sub3?: string
 
-  constructor(id: string, src: Partial<PartnerShop>) {
+  constructor(partner_id: string, shop_id: string, src: Partial<PartnerShop>) {
     Object.assign(this, PartnerShopAppSchema.parse(src))
-    this.id = id
-    this.shop_id = id
+    this.partner_id = partner_id
+    this.id = shop_id
+    this.shop_id = shop_id
     this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
     this.updatedAt = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      createdAt: EpochMillisSchema.default(Date.now()).parse(this.createdAt),
-      updatedAt: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return PartnerShopDbSchema.safeParse(this.getDb()).success
+    return PartnerShopDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof PartnerShopDbSchema> {
-    return PartnerShopDbSchema.parse(this.getDb())
+    return PartnerShopDbSchema.parse(convertToDb(this))
   }
 
   getEmails(): string[] {

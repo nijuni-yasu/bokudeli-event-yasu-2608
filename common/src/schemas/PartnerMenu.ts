@@ -26,9 +26,18 @@ const PartnerMenuAppSchema = z.object({
   menu_date_end: TimestampSchema.optional(),
 })
 
+const convertToDb = (menu: PartnerMenu) => {
+  return {
+    ...menu,
+    updatedAt: Date.now(),
+  }
+}
+
 export class PartnerMenu {
   // Mandatory
   readonly id: string
+  readonly menu_id: string
+  readonly partner_id: string
   updatedAt: number
   menu_description!: string
   menu_image_url!: string
@@ -39,24 +48,19 @@ export class PartnerMenu {
   menu_date_start?: number
   menu_date_end?: number
 
-  constructor(id: string, src: Partial<PartnerMenu>) {
+  constructor(partner_id: string, menu_id: string, src: Partial<PartnerMenu>) {
     Object.assign(this, PartnerMenuAppSchema.parse(src))
-    this.id = id
+    this.partner_id = partner_id
+    this.id = menu_id
+    this.menu_id = menu_id
     this.updatedAt = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      updatedAt: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return PartnerMenuDbSchema.safeParse(this.getDb()).success
+    return PartnerMenuDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof PartnerMenuDbSchema> {
-    return PartnerMenuDbSchema.parse(this.getDb())
+    return PartnerMenuDbSchema.parse(convertToDb(this))
   }
 }

@@ -24,6 +24,13 @@ const UserAppSchema = z.object({
   user_sns_instagram: z.string().optional(),
 })
 
+const convertToDb = (user: User) => {
+  return {
+    ...user,
+    updated_at: Date.now(),
+  }
+}
+
 export class User {
   // Mandatory
   readonly id: string
@@ -46,18 +53,11 @@ export class User {
     this.updated_at = Date.now()
   }
 
-  private get db() {
-    return {
-      ...this,
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return UserDbSchema.safeParse(this.db).success
+    return UserDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof UserDbSchema> {
-    return UserDbSchema.parse(this)
+    return UserDbSchema.parse(convertToDb(this))
   }
 }

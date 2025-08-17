@@ -20,6 +20,14 @@ const CommunityInviteAppSchema = z.object({
   inviter_id: z.string().nonempty(),
 })
 
+const convertToDb = (invite: CommunityInvite) => {
+  return {
+    ...invite,
+    created_at: EpochMillisSchema.default(Date.now()).parse(invite.created_at),
+    updated_at: Date.now(),
+  }
+}
+
 export class CommunityInvite {
   // Mandatory
   readonly id: string
@@ -35,19 +43,11 @@ export class CommunityInvite {
     this.updated_at = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return CommunityInviteDbSchema.safeParse(this.getDb()).success
+    return CommunityInviteDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof CommunityInviteDbSchema> {
-    return CommunityInviteDbSchema.parse(this.getDb())
+    return CommunityInviteDbSchema.parse(convertToDb(this))
   }
 }
