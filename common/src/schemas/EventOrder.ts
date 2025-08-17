@@ -14,11 +14,12 @@ const OrderMenuSchema = z.object({
   note: NonEmptyStringSchema,
   imageUrl: z.string().url().nonempty(),
 })
-type OrderMenuType = z.infer<typeof OrderMenuSchema>
+export type OrderMenuType = z.infer<typeof OrderMenuSchema>
 
 const EventOrderDbSchema = z.object({
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
+  carted_at: TimestampSchema,
   community_account: z.string().nonempty(),
   community_id: z.string().nonempty(),
   event_id: z.string().nonempty(),
@@ -26,9 +27,11 @@ const EventOrderDbSchema = z.object({
   event_payment: z.enum(EVENT_PAYMENT_VALUES),
   user_id: z.string().nonempty(),
   menus: z.array(OrderMenuSchema).nonempty(),
-  staus: z.enum(EVENT_ORDER_STATUS_VALUES),
+  status: z.enum(EVENT_ORDER_STATUS_VALUES),
   // Optional
   ordered_at: TimestampSchema.optional(),
+  canceled_at: TimestampSchema.optional(),
+  payment_intent: z.string().nonempty().optional(),
   receipt_number: NonEmptyStringSchema.optional(),
 })
 
@@ -45,7 +48,9 @@ const EventOrderAppSchema = z.object({
   status: z.enum(EVENT_ORDER_STATUS_VALUES).default('in_cart'),
   // Optional
   ordered_at: EpochMillisSchema.optional(),
+  canceled_at: EpochMillisSchema.optional(),
   receipt_number: z.string().optional(),
+  payment_intent: z.string().optional(),
 })
 
 const convertToDb = (order: EventOrder) => {
@@ -62,6 +67,7 @@ export class EventOrder {
   readonly order_id: string
   created_at: number
   updated_at: number
+  carted_at: number
   community_account!: string
   community_id!: string
   event_id!: string
@@ -71,13 +77,16 @@ export class EventOrder {
   status!: EventOrderStatusType
   // Optional
   ordered_at?: number
+  canceled_at?: number
   receipt_number?: string
+  payment_intent?: string
 
   constructor(id: string, src: Partial<EventOrder>) {
     Object.assign(this, EventOrderAppSchema.parse(src))
     this.id = id
     this.order_id = id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
+    this.carted_at = EpochMillisSchema.default(Date.now()).parse(src.carted_at)
     this.updated_at = Date.now()
   }
 
