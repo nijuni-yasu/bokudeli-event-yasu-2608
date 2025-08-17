@@ -7,7 +7,7 @@ import {
   Timestamp,
   DocumentReference,
 } from 'firebase-admin/firestore'
-import { Event } from '@shokujii/common/schemas/Event.js'
+import { Event, RAW_EVENT_STATUS_VALUES, type EventStatusType } from '@shokujii/common/schemas/Event.js'
 import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
@@ -159,6 +159,57 @@ export class ShokujiiEvent extends Event {
     }
     return null
   }
+
+  /**
+   * EventStatusType を RawEventStatusType に変換
+   */
+  private convertToRawEventStatus(
+    status: EventStatusType,
+  ): 'in_draft' | 'applying_reservation' | 'applying_to_admin' | 'accepting_order' {
+    // 計算済みステータスは保存できないためエラーとする
+    if (status === 'order_closed' || status === 'finished' || status === 'full') {
+      throw new Error(`Cannot save computed status '${status}' to database. Use raw status instead.`)
+    }
+
+    // RAW_EVENT_STATUS_VALUES に含まれるかチェック
+    if (!RAW_EVENT_STATUS_VALUES.includes(status as any)) {
+      throw new Error(`Invalid EventStatusType: ${status}. Must be one of ${RAW_EVENT_STATUS_VALUES.join(', ')}`)
+    }
+
+    return status as 'in_draft' | 'applying_reservation' | 'applying_to_admin' | 'accepting_order'
+  }
+
+  /**
+   * イベントステータスを更新
+   */
+  async updateEventStatus(status: EventStatusType, transaction?: Transaction): Promise<void> {
+    // updated_by または created_by を取得、どちらもない場合はエラー
+    const userId = this.updated_by || this.created_by
+    if (!userId) {
+      throw new Error('Cannot update event status: no updated_by or created_by found')
+    }
+
+    // EventStatusType を RawEventStatusType に変換
+    const rawStatus = this.convertToRawEventStatus(status)
+
+    // インスタンスのステータスを更新
+    this.event_status.value = rawStatus
+
+    // ShokujiiEventConverterを使ってFirestoreに保存
+    const db = getFirestore()
+    const eventRef = db
+      .collection('communities')
+      .doc(this.community_id)
+      .collection('events')
+      .doc(this.id)
+      .withConverter(new ShokujiiEventConverter(userId))
+
+    if (transaction === undefined) {
+      await eventRef.set(this, { merge: true })
+    } else {
+      transaction.set(eventRef, this, { merge: true })
+    }
+  }
 }
 
 export const getEvent = async (eventId: string, transaction?: Transaction): Promise<ShokujiiEvent | undefined> => {
@@ -254,6 +305,22 @@ export const getInCartOrdersByUpdatedTime = async (
     .withConverter(new ShokujiiEventOrderConverter())
   const ordersSnapshot = await (transaction === undefined ? ordersRef.get() : transaction.get(ordersRef))
   return ordersSnapshot.docs.map((doc) => doc.data())
+}
+
+// 予約申請中のイベントを取得
+export const getApplyingReservationEvents = async (
+  nowDateTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'applying_reservation')
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
+    .where('is_deleted', '==', false)
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
 }
 
 export const convertReferenceToEvent = async (
