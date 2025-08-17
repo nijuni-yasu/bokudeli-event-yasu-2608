@@ -2,12 +2,10 @@ import functions from 'firebase-functions/v1'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
 import sgMail from '@sendgrid/mail'
-import { getCommunityUrl, getEventUrl, getManageEventMemberUrl, getManageEventInvoiceUrl } from './utils/urls.js'
+import { getCommunityUrl, getEventUrl, getManageEventInvoiceUrl } from './utils/urls.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
-import { convertToDateWeekdayShort, convertToDatetimeWeekdayShort, convertToDuration } from './utils/datetime.js'
+import { convertToDateWeekdayShort } from './utils/datetime.js'
 import { createEventBillInvoice } from './eventBillInvoice.js'
-
-const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b870616c'
 
 const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
 
@@ -34,36 +32,6 @@ async function getUserEmailWithName(userId) {
     email: userPersonalInformationRef.get('user_email'),
     name: userRef.get('user_name'),
   }
-}
-
-async function getCommunityManagerEmailsSet(communityId) {
-  // 重複するメールアドレスは追加しない
-  const emails = new Set()
-  const membersRef = db.collection('communities').doc(communityId).collection('members')
-  const membersSnapshot = await membersRef.get()
-  await Promise.all(
-    membersSnapshot.docs.map(async (member) => {
-      const roles = member.get('roles')
-      if (roles instanceof Array && roles.includes('manager')) {
-        const userEmail = await getUserEmail(member.id)
-        if (userEmail != null && userEmail !== '') {
-          emails.add(userEmail)
-        }
-      }
-    }),
-  )
-  return emails
-}
-
-async function getCommunityEmailsForEvent(eventSnapshot) {
-  const communityId = eventSnapshot.ref.parent.parent.id
-  const emails = await getCommunityManagerEmailsSet(communityId)
-
-  const organizerEmail = eventSnapshot.get('organizer_email')
-  if (organizerEmail != null && organizerEmail !== '') {
-    emails.add(organizerEmail)
-  }
-  return Array.from(emails)
 }
 
 //コミュニティユーザーのIDを取得
@@ -100,92 +68,6 @@ async function getParticipantIds(eventId) {
     console.error(`Error fetching event participants: ${error}`)
     throw error
   }
-}
-
-async function createOrdersForOrderRemind(ordersRef) {
-  const promises = []
-  const orders_by_status = {}
-  for (const orderRef of await ordersRef.listDocuments()) {
-    const orderSnapshot = await orderRef.get()
-    const status = orderSnapshot.get('status')
-    const userRef = db.collection('users').doc(orderSnapshot.get('user_id'))
-    for (const menu of orderSnapshot.get('menus') ?? []) {
-      const promise = userRef.get().then((userSnapshot) => {
-        for (let i = 0; i < menu.count; i++) {
-          if (!orders_by_status[status]) {
-            orders_by_status[status] = []
-          }
-          orders_by_status[status].push({
-            name: userSnapshot.get('user_name'),
-            order: menu.name,
-            price: `¥${menu.price}`,
-            status,
-          })
-        }
-      })
-      promises.push(promise)
-    }
-  }
-  await Promise.all(promises)
-
-  for (const orders of Object.values(orders_by_status)) {
-    orders.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0))
-    orders.forEach((order, i) => (order.number = i + 1))
-  }
-  return orders_by_status
-}
-
-async function createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago) {
-  const ordersRef = eventSnapshot.ref.collection('orders')
-  const orders = await createOrdersForOrderRemind(ordersRef)
-  const eventData = eventSnapshot.data()
-  const event_datetime = convertToDuration(
-    eventData.event_start_datetime?.toMillis(),
-    eventData.event_end_datetime?.toMillis(),
-  )
-  const event_deadline_datetime = convertToDatetimeWeekdayShort(eventData.event_deadline_datetime?.toMillis())
-
-  return {
-    ...eventData,
-    event_days_ago,
-    event_url: getEventUrl(eventData.community_account, eventSnapshot.id),
-    manage_event_member_url: getManageEventMemberUrl(eventSnapshot.id),
-    event_deadline_datetime,
-    event_datetime,
-    orders,
-  }
-}
-
-async function sendOrderRemindMailToOrganizer(start, end, event_days_ago) {
-  const events = await db
-    .collectionGroup('events')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(start))
-    .where('event_deadline_datetime', '<=', Timestamp.fromMillis(end))
-    .where('event_status.value', '==', 'accepting_order')
-    .where('is_deleted', '==', false)
-    .get()
-
-  const promises = []
-  await events.docs.forEach(async (eventSnapshot) => {
-    try {
-      const dynamic_template_data = await createTemplateDataForOrganizersOrderRemind(eventSnapshot, event_days_ago)
-      const communityEmails = await getCommunityEmailsForEvent(eventSnapshot)
-      communityEmails
-        .map(async (to) => {
-          await sgMail.send({
-            to,
-            from: DEFAULT_FROM,
-            templateId: ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID,
-            dynamic_template_data,
-          })
-        })
-        .forEach((promise) => promises.push(promise))
-    } catch (err) {
-      console.warn(err)
-    }
-  })
-
-  return Promise.all(promises)
 }
 
 async function sendInvoiceMailToOrganizers(start, end) {
@@ -331,15 +213,7 @@ export const polling = functions
     // 秒を無視しないと誤差で実行できないケースがでてきてしまう
     const end = Math.trunc(now / 60 / 1000) * 60 * 1000
     const start = end - 60 * 1000
-    const one_day_millis = 24 * 60 * 60 * 1000
-
     const promise_list = [sendInvoiceMailToOrganizers(start, end), sendLetter(start, end)]
-
-    // 3, 5, 10, 20, 30, 40, 50, 60日後にリマインドメールを送信
-    const orderRemindToOrganizerDays = [1, 5, 10, 20, 30, 40, 50, 60]
-    orderRemindToOrganizerDays.forEach((day) => {
-      promise_list.push(sendOrderRemindMailToOrganizer(start + day * one_day_millis, end + day * one_day_millis, day))
-    })
 
     return Promise.all(promise_list)
   })

@@ -7,7 +7,7 @@ import {
 } from './orderDeadlineMail.js'
 import { sendEventConcludedMailToMembers } from './eventConclusionMail.js'
 import { sendInCartNotificationToMember, sendInCartEventDeadlineNotificationToMember } from './inCartNotification.js'
-import { sendApplyingOrderRemindMailToShop } from './orderRemindMail.js'
+import { sendApplyingOrderRemindMailToShop, sendOrderRemindMailToOrganizer } from './orderRemindMail.js'
 import { sendRejectOrderMailToShop } from './rejectOrderMail.js'
 
 const ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
@@ -37,6 +37,14 @@ export const pollingTask = onSchedule(
       sendApplyingOrderRemindMailToShop(start - 2 * ONE_DAY_MILLIS, end - 2 * ONE_DAY_MILLIS), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * ONE_DAY_MILLIS, end - 3 * ONE_DAY_MILLIS), // 3日後却下通知
     ]
+
+    // 主催者向け注文リマインドメール（1,5,10,20,30,40,50,60日後）
+    const orderRemindToOrganizerDays = [1, 5, 10, 20, 30, 40, 50, 60]
+    orderRemindToOrganizerDays.forEach((day) => {
+      promiseFunctions.push(
+        sendOrderRemindMailToOrganizer(start + day * ONE_DAY_MILLIS, end + day * ONE_DAY_MILLIS, day),
+      )
+    })
     await Promise.all(promiseFunctions)
   },
 )
