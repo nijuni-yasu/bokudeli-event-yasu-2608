@@ -1,23 +1,42 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers'
 import { db, functions, stripeBaseURL } from '@shokujii/base/firebase'
 import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
+import {
+  dateWithDayOfWeekString,
+  dateOnlyTimeString,
+  priceString,
+  convertStoredUserToFirestoredUser,
+} from '@shokujii/base/schemes/converter'
 import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
 import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import Stripe from 'stripe'
-import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
+import { collectionGroup, doc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { getAuth } from 'firebase/auth'
+import {
+  type AdditionalUserInfo,
+  getAdditionalUserInfo,
+  getAuth,
+  TwitterAuthProvider,
+  type User,
+  type UserCredential,
+} from 'firebase/auth'
 import { httpsCallable } from 'firebase/functions'
+import { linkByProviderService } from '@shokujii/base/utils/providerService'
+import { FirebaseError } from 'firebase/app'
+import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError'
+import type { StoredUser } from '@shokujii/base/schemes/storedUser'
+import { type UserStore, useUserStore } from '@shokujii/base/stores/user'
+import { useStoreUserCredential } from '@shokujii/base/stores/userCredential'
+import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -92,8 +111,10 @@ const selectedCartEvent = ref({} as BokudeliEvent)
 const selectedCartTwitterPostEnabled = ref<boolean>(false)
 const selectedCartTwitterPostComment = ref<string>('')
 const selectedMenu = ref({} as OrderMenuType)
+const isOrderProcessing = ref<boolean>(false)
 
 const startOrderProcess = async () => {
+  isOrderProcessing.value = true
   const order = selectedOrder.value
   const event = selectedCartEvent.value
   const twitterPostEnabled = selectedCartTwitterPostEnabled.value
@@ -116,6 +137,7 @@ const startOrderProcess = async () => {
     try {
       const eventStore = useEventStore(event.event_id) as EventStore
       await eventStore.updateOrderStatus(order, 'ordered')
+      isOrderProcessing.value = false
       router.push(
         `${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
       )
@@ -160,6 +182,7 @@ const createCheckoutSession = async (order: EventOrder, isPosted: boolean) => {
         userId: userId.value,
       },
     })
+    isOrderProcessing.value = false
     window.location.href = session.url || getEventPath(order.community_account, order.event_id)
   } catch {
     alertBody.value = $t('cart.payment_failed')
@@ -313,9 +336,114 @@ const loadCartList = async () => {
 
 const isOpenCancelpolicyDialog = ref(false)
 
+const notification = inject('notification') as Notification
+const storedUserStore = useStoreStoredUser()
+const userStore = useUserStore(userId.value) as UserStore
+const personalInformationSnapshotRef = doc(db, 'users_personal_information', userId.value)
+const isTwitterLoading = ref<boolean>(false)
+const isOpenTwitterLinkDialog = ref<boolean>(false)
+
+type CustomData = {
+  email: string
+  _tokenResponse?: {
+    providerId?: string
+  }
+}
+
+const handleTwitterLoginLink = async () => {
+  try {
+    isTwitterLoading.value = true
+    const userCredential = await linkByProviderService(currentUser as User, 'Twitter')
+
+    const additionalUserInfo = getAdditionalUserInfo(userCredential)
+    if (additionalUserInfo) {
+      await setSNSProfile(userCredential, additionalUserInfo)
+    }
+
+    // ユーザー情報を再取得して更新
+    if (auth.currentUser) {
+      await auth.currentUser.reload()
+    }
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = TwitterAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
+      }
+      if (error.code === 'auth/email-already-in-use') {
+        useStoreFirebaseAuthError().reset()
+        return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+      }
+    } else {
+      console.error({ error })
+    }
+  } finally {
+    isTwitterLoading.value = false
+  }
+}
+
+const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
+  const storedUser = storedUserStore.storedUser as StoredUser
+
+  if (additionalUserInfo.providerId === 'twitter.com') {
+    storedUser.userSnsTwitter = additionalUserInfo?.username as string
+
+    const twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
+    if (twitterCredential?.accessToken && twitterCredential.secret) {
+      storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
+      storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
+
+      if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
+        await updateDoc(personalInformationSnapshotRef, {
+          user_sns_twitter_access_token: twitterCredential.accessToken,
+          user_sns_twitter_secret: twitterCredential.secret,
+        })
+      }
+    }
+  }
+
+  await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+  storedUserStore.update(storedUser)
+}
+
 onMounted(async () => {
   state.cartList = await loadCartList()
   state.isLoading = false
+
+  const userCredential = useStoreUserCredential().userCredential
+  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
+  const error = useStoreFirebaseAuthError().error
+  if (error instanceof FirebaseError) {
+    let credential
+    let snsName
+    const customData = error?.customData as CustomData
+    if (customData._tokenResponse?.providerId === 'twitter.com') {
+      credential = TwitterAuthProvider.credentialFromError(error)
+      snsName = 'X'
+    }
+
+    console.error({ error, credential })
+
+    if (error.code === 'auth/credential-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, {
+        message: $t('user.exists_credential', { snsName: snsName }),
+        color: 'error',
+      })
+    }
+    if (error.code === 'auth/email-already-in-use') {
+      useStoreFirebaseAuthError().reset()
+      return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+    }
+  } else if (error) {
+    console.error({ error })
+  }
+
+  if (!userCredential || additionalUserInfo === null) return
+  await setSNSProfile(userCredential, additionalUserInfo)
+
+  useStoreUserAdditionalInfo().reset()
 })
 </script>
 
@@ -443,7 +571,13 @@ onMounted(async () => {
               <div v-else>
                 <v-card-text class="card-text-style"> 【{{ $t('cart.x_post.title') }}】 </v-card-text>
                 <v-card-text class="card-text-style">
-                  <v-btn size="small" rounded="pill" class="ma-2" variant="outlined" :to="getProfile()">
+                  <v-btn
+                    size="small"
+                    rounded="pill"
+                    class="ma-2"
+                    variant="outlined"
+                    @click="() => (isOpenTwitterLinkDialog = true)"
+                  >
                     {{ $t('cart.x_post.connect_x') }}
                   </v-btn>
                 </v-card-text>
@@ -490,7 +624,13 @@ onMounted(async () => {
     </v-col>
   </v-row>
   <CancelPolicyDialog v-model="isOpenCancelpolicyDialog" />
-  <confirm-dialog v-model="openConfirmOrder" :is-confirm="true" :ok-click="startOrderProcess">
+
+  <confirm-dialog
+    v-model="openConfirmOrder"
+    :is-confirm="true"
+    :ok-click="startOrderProcess"
+    :ok-loading-state="isOrderProcessing"
+  >
     {{ confirmDialogMessage }}
   </confirm-dialog>
   <confirm-dialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
@@ -504,6 +644,21 @@ onMounted(async () => {
     :ok-text="$t('cart.go_to_setting')"
   >
     {{ targetUserParameter }}
+  </confirm-dialog>
+
+  <confirm-dialog
+    v-model="isOpenTwitterLinkDialog"
+    :is-confirm="true"
+    :ok-text="$t('profile.linkage')"
+    :ok-click="handleTwitterLoginLink"
+    :ok-loading-state="isTwitterLoading"
+  >
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('profile.twitter_link_modal_title') }}
+    </v-card-text>
+    <v-card-text class="text-center py-5">
+      <div v-html="$t('profile.twitter_link_modal_description')"></div>
+    </v-card-text>
   </confirm-dialog>
 </template>
 <style scoped>

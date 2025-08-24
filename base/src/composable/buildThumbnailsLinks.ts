@@ -40,6 +40,8 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       result[size.name] = url.href
       return result
     }, {} as ThumbnailLinks)
+  } else if (url.hostname === 'graph.facebook.com') {
+    return null
   } else {
     return SIZE_LIST.reduce((result, size) => {
       url.pathname = url.pathname.split('=')[0] + '=' + `s${size.value}-c`

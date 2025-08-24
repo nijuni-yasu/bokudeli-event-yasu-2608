@@ -120,7 +120,7 @@ const validateAccount = async (userAccount: string): Promise<boolean> => {
   const userSnapShot = await getDoc(userSnapshotRef)
   const user = userSnapShot.data() as FirestoredUser
   const duplicatedUserAccount = await getDocs(query(collection(db, 'users'), where('user_account', '==', userAccount)))
-  if (userAccount === user.user_account) {
+  if (userAccount === user.user_account || userAccount === '') {
     return true
   }
   return duplicatedUserAccount.empty
