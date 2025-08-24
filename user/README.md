@@ -12,7 +12,7 @@ Shokujii の一般ユーザー向けメインアプリケーションです。
    ```
 
 1. `.env.development` や `.env.production` を適切に準備  
-   [GitHub Actions Variables](https://github.com/nijuniinc/bokudeli-event-new/settings/variables/actions) にアクセスできる場合はここから適切な設定を取得し `.env.***` として保存してください。
+   [GitHub Actions Variables](https://github.com/nijuniinc/bokudeli-event-new/settings/variables/actions) にアクセスできる場合はここから適切な設定を取得し `.env.***` として保存してください。（トップレベルディレクトリではなく、各 workspace に）
    アクセス権がない場合は管理者に問い合わせてください。
 
 ## Development
@@ -22,6 +22,12 @@ Shokujii の一般ユーザー向けメインアプリケーションです。
 特に base は歴史的経緯により依存関係の逆転が起こりやすい仕様になっています。開発時に新たな依存逆転を持ち込まないよう十分に注意してください。
 
 ## Debug
+
+common を修正した際には、 common のビルドが必要です。
+
+```sh
+npm -w common run build
+```
 
 以下のコマンドで vite serever を起動します。起動ログにサーバーのアドレスが表示されるので、ブラウザでアクセスすることでデバッグが可能です。
 
