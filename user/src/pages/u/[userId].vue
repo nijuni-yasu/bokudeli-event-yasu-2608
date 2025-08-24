@@ -134,16 +134,16 @@ const managerCommunities = computed(() =>
   }),
 )
 
-const cancel = async (order: EventOrder) => {
+const cancel = async (event: BokudeliEvent, order: EventOrder) => {
   cancelOperatingOrder.value = order
   try {
-    if (order.event_payment == 'user_advance' && order.payment_intent) {
+    if (event.event_payment == 'user_advance' && order.payment_intent) {
       // user_advance はstripeの支払いの場合
       const stripeRefunds = httpsCallable(functions, 'stripe_refunds')
       await stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
       orderSnapshots.value = await fetchOrders()
       notification.show($t('user.canceled'), 'success')
-    } else if (order.event_payment == 'user_on_day' || order.event_payment == 'community_bill') {
+    } else if (event.event_payment == 'user_on_day' || event.event_payment == 'community_bill') {
       // それ以外は事前決済してないのでStripeの返金処理はなし
       const eventStore = useEventStore(order.event_id)
       eventStore.updateOrderStatus(order, 'canceled')
@@ -202,7 +202,7 @@ const downloadInvoice = async (order: EventOrder) => {
                     :event="event"
                     :isOwner="isOwner"
                     @downloadInvoice="downloadInvoice"
-                    @cancel="cancel"
+                    @cancel="cancel(event, order)"
                   />
                 </router-link>
 
