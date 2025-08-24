@@ -154,7 +154,6 @@ const createCheckoutSession = async (order: EventOrder, isPosted: boolean) => {
       payment_method_types: ['card'],
       metadata: {
         eventId: order.event_id,
-        eventPayment: order.event_payment,
         communityId: order.community_id,
         communityAccount: order.community_account,
         orderId: order.order_id,

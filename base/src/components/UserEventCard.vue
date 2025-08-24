@@ -23,7 +23,7 @@ const isShowCancelButton = computed(
 )
 const isShowCanceled = computed(() => props.order.status === 'canceled')
 const isShowInvoiceButton = computed(
-  () => props.order.status === 'ordered' && props.order.event_payment !== 'community_bill',
+  () => props.order.status === 'ordered' && props.event.event_payment !== 'community_bill',
 )
 </script>
 
@@ -50,7 +50,7 @@ const isShowInvoiceButton = computed(
     }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{
-      $t('user_event_card.event_payment', [$t(`payment.${order.event_payment}`)])
+      $t('user_event_card.event_payment', [$t(`payment.${event.event_payment}`)])
     }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">
       {{ $t('user_event_card.menu') }}
@@ -93,14 +93,14 @@ const isShowInvoiceButton = computed(
       <template #title>{{ $t('user_event_card.cancel_dialog.title') }}</template>
       <v-card-text class="text-h6" style="line-height: 2rem">
         {{ $t('user_event_card.cancel_dialog.event_name', [event.event_name]) }}<br />
-        {{ $t('user_event_card.event_payment', [$t(`payment.${order.event_payment}`)]) }}<br />
+        {{ $t('user_event_card.event_payment', [$t(`payment.${event.event_payment}`)]) }}<br />
         {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
       </v-card-text>
       <v-card-text class="py-5 text-body-2" style="line-height: 1.5rem">
-        <div v-if="order.event_payment === 'user_advance'">
+        <div v-if="event.event_payment === 'user_advance'">
           <div v-html="$t('user_event_card.cancel_dialog.description_user_advance')" />
         </div>
-        <div v-else-if="order.event_payment === 'community_bill'">
+        <div v-else-if="event.event_payment === 'community_bill'">
           <div v-html="$t('user_event_card.cancel_dialog.description_community_bill')" />
         </div>
       </v-card-text>
