@@ -59,8 +59,14 @@ const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() =
     if (!isOwner.value && !event.is_public) {
       return []
     }
-    const order = new EventOrder(eventId, orderSnapshot.id, orderSnapshot.data())
-    return { order, event }
+    // TODO 直接 new するのではなく store を経由する
+    try {
+      const order = new EventOrder(eventId, orderSnapshot.id, orderSnapshot.data())
+      return { order, event }
+    } catch (err) {
+      console.error(err)
+      return []
+    }
   })
 })
 

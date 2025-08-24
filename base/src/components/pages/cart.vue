@@ -257,10 +257,16 @@ const loadCartList = async () => {
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
-  const orderItems = cartSnapshot.docs.map((doc) => {
+  const orderItems = cartSnapshot.docs.flatMap((doc) => {
     const eventId = doc.ref.parent.parent!.id
     const data = doc.data()
-    return new EventOrder(eventId, doc.id, data)
+    // TODO 直接 new するのではなく store を経由する
+    try {
+      return new EventOrder(eventId, doc.id, data)
+    } catch (err) {
+      console.error(err)
+      return []
+    }
   })
 
   // イベント情報を引きオーダー情報とくっつける
