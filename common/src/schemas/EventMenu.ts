@@ -1,8 +1,7 @@
 import { z } from 'zod'
-import { TimestampSchema, EpochMillisSchema } from './firebase/index.js'
+import { TimestampSchema } from './firebase/index.js'
 
 const EventMenuDbSchema = z.object({
-  createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   menu_description: z.string().nonempty(),
   menu_image_url: z.string().url().nonempty(),
@@ -22,7 +21,6 @@ const EventMenuAppSchema = z.object({
 const convertToDb = (menu: EventMenu) => {
   return {
     ...menu,
-    createdAt: EpochMillisSchema.default(Date.now()).parse(menu.createdAt),
     updatedAt: Date.now(),
   }
 }
@@ -32,7 +30,6 @@ export class EventMenu {
   readonly id: string
   readonly menu_id: string
   readonly event_id: string
-  createdAt: number
   updatedAt: number
   menu_description!: string
   menu_image_url!: string
@@ -44,7 +41,6 @@ export class EventMenu {
     this.event_id = event_id
     this.id = menu_id
     this.menu_id = menu_id
-    this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
     this.updatedAt = Date.now()
   }
 
