@@ -24,7 +24,7 @@ const CommunityLetterDbSchema = z.object({
 const EventLetterDbSchema = z.object({
   // Mandatory
   letter_id: z.string().nonempty(),
-  letter_type: z.literal('event'),
+  letter_type: z.enum(['event_participant', 'event_non_participant']),
   event_id: z.string().nonempty(),
   status: z.enum(LETTER_STATUSES),
   letter_title: z.string().nonempty(),
