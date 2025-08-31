@@ -24,7 +24,7 @@ const CommunityLetterDbSchema = z.object({
 const EventLetterDbSchema = z.object({
   // Mandatory
   letter_id: z.string().nonempty(),
-  letter_type: z.literal('event'),
+  letter_type: z.enum(['event_participant', 'event_non_participant']),
   event_id: z.string().nonempty(),
   status: z.enum(LETTER_STATUSES),
   letter_title: z.string().nonempty(),
@@ -40,9 +40,9 @@ const LetterDbSchema = z.discriminatedUnion('letter_type', [CommunityLetterDbSch
 const LetterAppSchema = z.object({
   // Mandatory
   letter_type: z.enum(LETTER_TYPES),
-  status: z.enum(LETTER_STATUSES),
-  letter_title: z.string(),
-  letter_content: z.string(),
+  status: z.enum(LETTER_STATUSES).default('draft'),
+  letter_title: z.string().default(''),
+  letter_content: z.string().default(''),
   // Optional
   community_account: z.string().optional(),
   event_id: z.string().optional(),
