@@ -24,7 +24,7 @@ import { uploadEventImage } from '@shokujii/base/composable/uploadImage.js'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { FirestoredUser } from '../schemes/storedUser.js'
-import { type UserStore } from './user.js'
+import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
 import _ from 'lodash'
@@ -297,6 +297,11 @@ export const useEventStore = (target: string | BokudeliEvent) => {
         unsubscribeEvent = onSnapshot(eventRef, (doc) => {
           try {
             event.value = doc.data() ?? null
+            _members.value =
+              event.value?.members?.map((memberId) => ({
+                user_id: memberId,
+                store: useUserStore(memberId) as UserStore,
+              })) ?? []
           } catch (err) {
             console.error(err)
           }
