@@ -4,16 +4,15 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import DateInput from '@shokujii/base/components/DateInput.vue'
 import type { BokudeliLetter } from '@shokujii/base/stores/letter.js'
-import { Timestamp } from 'firebase/firestore'
 import { useLetterListStore } from '@shokujii/base/stores/letterList'
 import {
   hourList,
   minutesList,
-  dateString,
-  hourString,
-  minutesString,
-  parseDateTimeStrings,
-} from '@shokujii/base/schemes/eventCreate'
+  convertToDateString,
+  convertToHourString,
+  convertToMinuteString,
+  parseDatetimeStrings,
+} from '@shokujii/common/utils/datetime.js'
 import { useValidators } from '@shokujii/base/composable/validators'
 import { sendTestLetter } from '@shokujii/base/apis/letter.js'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -47,25 +46,25 @@ const isSubmitDisabled = computed(() => {
 })
 
 const isScheduled = ref(false)
-const scheduleTime = ref(Timestamp.now())
+const scheduleTime = ref(Date.now())
 const isTestSending = ref(false)
 
 const scheduledDate = computed({
-  get: () => dateString(scheduleTime.value.toDate() ?? null),
+  get: () => convertToDateString(scheduleTime.value),
   set: (value) => {
-    scheduleTime.value = Timestamp.fromDate(parseDateTimeStrings(value, scheduledHour.value, scheduledMinute.value))
+    scheduleTime.value = parseDatetimeStrings(value, scheduledHour.value, scheduledMinute.value)
   },
 })
 const scheduledHour = computed({
-  get: () => hourString(scheduleTime.value.toDate() ?? null),
+  get: () => convertToHourString(scheduleTime.value),
   set: (value) => {
-    scheduleTime.value = Timestamp.fromDate(parseDateTimeStrings(scheduledDate.value, value, scheduledMinute.value))
+    scheduleTime.value = parseDatetimeStrings(scheduledDate.value, value, scheduledMinute.value)
   },
 })
 const scheduledMinute = computed({
-  get: () => minutesString(scheduleTime.value.toDate() ?? null),
+  get: () => convertToMinuteString(scheduleTime.value),
   set: (value) => {
-    scheduleTime.value = Timestamp.fromDate(parseDateTimeStrings(scheduledDate.value, scheduledHour.value, value))
+    scheduleTime.value = parseDatetimeStrings(scheduledDate.value, scheduledHour.value, value)
   },
 })
 
@@ -77,6 +76,11 @@ const _save = async () => {
 const submit = async () => {
   try {
     _letter.value.status = 'timed'
+    if (isScheduled.value) {
+      _letter.value.scheduled_at = scheduleTime.value
+    } else {
+      _letter.value.scheduled_at = Date.now()
+    }
     await _save()
     emit('update:letter', toRaw(_letter.value))
     notification.show($t('manage.letter.edit.submit_success'), 'success')
