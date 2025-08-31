@@ -1,3 +1,8 @@
+/**
+ * Deprecated
+ * Use @shokujii/common/utils/datetime.ts instead
+ */
+
 import { format, parse } from 'date-fns'
 
 export const hourList = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
