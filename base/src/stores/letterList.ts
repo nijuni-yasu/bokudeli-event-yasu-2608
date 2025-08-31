@@ -13,14 +13,13 @@ import {
   CollectionReference,
   doc,
   setDoc,
-  Timestamp,
-  updateDoc,
   deleteDoc,
   orderBy,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
 import { TaskExecutor } from '@shokujii/base/utils/executors.js'
 import { BokudeliLetter, useLetterStore, type LetterStore, letterConverter } from '@shokujii/base/stores/letter.js'
+import { LetterTypeType } from '@shokujii/common/schemas/CommunityLetter.js'
 
 type LetterListStoreState = {
   letterStores: Ref<LetterStore[] | null>
@@ -30,7 +29,7 @@ type LetterListStoreState = {
 type LetterListStoreGetters = object
 
 type LetterListStoreAction = {
-  addLetter: (data: BokudeliLetter) => Promise<BokudeliLetter>
+  newLetter: (letter_type: LetterTypeType, event_id?: string) => Promise<BokudeliLetter>
   updateLetter: (data: BokudeliLetter) => Promise<void>
   deleteLetter: (letterId: string) => Promise<void>
   reload: () => void
@@ -85,20 +84,18 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
         })
       }
 
-      const addLetter = async (data: BokudeliLetter) => {
+      const newLetter = async (letter_type: LetterTypeType, event_id?: string): Promise<BokudeliLetter> => {
         const lettersRef = await getLettersRef()
-        const newLetterRef = doc(await getLettersRef())
-        const newData = new BokudeliLetter(lettersRef.parent!.id, newLetterRef.id, data)
-        await setDoc(newLetterRef, newData)
-        return newData
+        return new BokudeliLetter(lettersRef.parent!.id, null, {
+          community_account: communityAccount,
+          letter_type,
+          ...{ event_id },
+        })
       }
 
       const updateLetter = async (data: BokudeliLetter) => {
         const letterRef = doc(await getLettersRef(), data.letter_id)
-        await updateDoc(letterRef, {
-          ...data,
-          updated_at: Timestamp.now(),
-        })
+        await setDoc(letterRef, data, { merge: true })
       }
 
       const deleteLetter = async (letterId: string) => {
@@ -118,7 +115,7 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
       return {
         letterStores,
         totalCount,
-        addLetter,
+        newLetter,
         updateLetter,
         deleteLetter,
         next,

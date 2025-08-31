@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, toRaw } from 'vue'
-import _ from 'lodash'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import DateInput from '@shokujii/base/components/DateInput.vue'
@@ -32,7 +31,7 @@ const emit = defineEmits<{
   'update:letter': [letter: BokudeliLetter]
 }>()
 
-const _letter = ref<BokudeliLetter>(_.clone(toRaw(props.letter)))
+const _letter = ref<BokudeliLetter>(props.letter)
 
 const letterListStore = useLetterListStore(props.letter.community_account)
 const communityStore = useCommunityStore(props.letter.community_account) as CommunityStore
@@ -71,11 +70,7 @@ const scheduledMinute = computed({
 })
 
 const _save = async () => {
-  if (_letter.value.letter_id == null) {
-    await letterListStore.addLetter(toRaw(_letter.value))
-  } else {
-    await letterListStore.updateLetter(toRaw(_letter.value))
-  }
+  await letterListStore.updateLetter(_letter.value)
   letterListStore.reload()
 }
 

@@ -30,8 +30,8 @@ export class BokudeliLetter extends Letter {
 }
 
 export const letterConverter: FirestoreDataConverter<BokudeliLetter> = {
-  toFirestore(shop: BokudeliLetter): DocumentData {
-    return shop.toFirestore()
+  toFirestore(letter: BokudeliLetter): DocumentData {
+    return letter.toFirestore()
   },
   fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): BokudeliLetter {
     const data = snapshot.data(options)
@@ -48,6 +48,7 @@ type LetterStoreGetters = object
 
 type LetterStoreAction = {
   updateLetter: (data: BokudeliLetter) => Promise<void>
+  copyLetter: () => Promise<BokudeliLetter>
   unsubscribe: () => void
 }
 
@@ -97,6 +98,14 @@ export const useLetterStore = (communityAccount: string, target: string | Bokude
         await setDoc(await getLetterRef(), data)
       }
 
+      const copyLetter = async (): Promise<BokudeliLetter> => {
+        const letterRef = await getLetterRef()
+        const newLetter = new BokudeliLetter(letterRef.parent.parent!.id, null, letter.value!)
+        newLetter.scheduled_at = Date.now()
+        delete newLetter.sent_at
+        return newLetter
+      }
+
       const unsubscribe = () => {
         if (unsubscribeLetter != null) {
           unsubscribeLetter()
@@ -107,6 +116,7 @@ export const useLetterStore = (communityAccount: string, target: string | Bokude
       return {
         letter,
         updateLetter,
+        copyLetter,
         unsubscribe,
       }
     },

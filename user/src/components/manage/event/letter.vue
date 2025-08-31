@@ -4,11 +4,9 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import LetterTable from '@shokujii/base/components/LetterTable.vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import LetterEdit from '@shokujii/base/components/LetterEdit.vue'
-import type { Letter } from '@shokujii/base/schemes/letter.js'
 import { useEventStore } from '@shokujii/base/stores/event.js'
 import { useLetterListStore } from '@shokujii/base/stores/letterList.js'
-import { Timestamp } from 'firebase/firestore'
-import { useLetterStore } from '@shokujii/base/stores/letter.js'
+import { useLetterStore, type BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { getManageCommunityPath } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -47,17 +45,9 @@ const letters = computed(
     ) ?? [],
 )
 
-const getLetter = async (letterId: string) => {
+const getLetter = async (letterId: string): Promise<BokudeliLetter> => {
   if (letterId === '') {
-    return {
-      community_account: event.community_account,
-      event_id: event.event_id,
-      letter_type: 'event_participant',
-      letter_title: '',
-      letter_content: '',
-      status: 'draft',
-      updated_at: Timestamp.now(),
-    }
+    return letterListStore.newLetter('event_participant', event.event_id)
   }
   const letterStore = useLetterStore(event.community_account, letterId)
   return new Promise((resolve) => {
@@ -72,14 +62,14 @@ const getLetter = async (letterId: string) => {
     )
   })
 }
-const selectedLetter = ref<Letter | null>(letterId == null ? null : ((await getLetter(letterId)) as Letter))
+const selectedLetter = ref<BokudeliLetter | null>(letterId == null ? null : await getLetter(letterId))
 watch(
   () => route.query.letterId,
   async (newLetterId) => {
     if (newLetterId == null) {
       selectedLetter.value = null
     } else {
-      selectedLetter.value = (await getLetter(newLetterId as string)) as Letter
+      selectedLetter.value = await getLetter(newLetterId as string)
     }
   },
 )
@@ -91,26 +81,19 @@ watch(
     }
   },
 )
-const onEditClick = (letter: Letter) => {
+const onEditClick = (letter: BokudeliLetter) => {
   router.push({ query: { letterId: letter.letter_id } })
 }
-const onDeleteClick = async (letter: Letter) => {
+const onDeleteClick = async (letter: BokudeliLetter) => {
   await letterListStore.deleteLetter(letter.letter_id!)
   notification.show($t('manage.letter.notification.deleted'), 'success')
 }
-const onCopyClick = async (letter: Letter) => {
-  const newLetter: Letter = {
-    ...letter,
-    updated_at: Timestamp.now(),
-    status: 'draft',
-  }
-  delete newLetter.letter_id
-  delete newLetter.scheduled_at
-  delete newLetter.sent_at
-  selectedLetter.value = newLetter
+const onCopyClick = async (letter: BokudeliLetter) => {
+  const letterStore = useLetterStore(event.community_account, letter.id)
+  selectedLetter.value = await letterStore.copyLetter()
   router.push({ query: { copy: null } })
 }
-const onUpdated = (letter: Letter) => {
+const onUpdated = (letter: BokudeliLetter) => {
   selectedLetter.value = null
   if (letter.letter_type === 'community') {
     router.push(getManageCommunityPath(event.community_account) + '/letter')
