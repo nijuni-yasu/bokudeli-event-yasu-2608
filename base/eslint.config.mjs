@@ -15,7 +15,7 @@ export default [
   ...pluginVue.configs['flat/essential'],
 
   {
-    ignores: ['src/@core/**', 'src/@layouts/**'],
+    ignores: ['materio/**'],
   },
   {
     files: ['**/*.js', '**/*.ts', '*.vue', '**/*.vue'],
