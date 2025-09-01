@@ -73,9 +73,9 @@ const downloadCsvFile = () => {
     csv +=
       `"${$t(`manage.member.${order.status}`)}",` +
       `"${member.user_name}",` +
-      `"${member.user_sns_twitter == null ? '' : buildTwitterUrl(member.user_sns_twitter)}",` +
-      `"${member.user_sns_facebook == null ? '' : buildFacebookUrl(member.user_sns_facebook)}",` +
-      `"${member.user_sns_instagram == null ? '' : buildInstagramUrl(member.user_sns_instagram)}",` +
+      `"${member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : ''}",` +
+      `"${member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : ''}",` +
+      `"${member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : ''}",` +
       `"${menu.name}",` +
       `"${getDateString(order)}"\n`
   }
@@ -133,31 +133,31 @@ const downloadCsvFile = () => {
                       </td>
                       <td class="minimum-cell">
                         <v-btn
-                          v-if="member.user_sns_facebook != null"
+                          v-if="member.user_sns_facebook !== ''"
                           :icon="mdiFacebook"
                           color="#1877F2"
                           density="compact"
                           variant="text"
-                          @click="openNewLink(buildFacebookUrl(member.user_sns_facebook))"
+                          @click="openNewLink(buildFacebookUrl(member.user_sns_facebook!))"
                         />
                       </td>
                       <td class="minimum-cell">
                         <v-btn
-                          v-if="member.user_sns_twitter != null"
+                          v-if="member.user_sns_twitter !== ''"
                           :icon="XIcon"
                           color="grey-900"
                           density="compact"
                           variant="text"
-                          @click="openNewLink(buildTwitterUrl(member.user_sns_twitter))"
+                          @click="openNewLink(buildTwitterUrl(member.user_sns_twitter!))"
                         />
                       </td>
                       <td class="minimum-cell">
                         <v-btn
-                          v-if="member.user_sns_instagram != null"
+                          v-if="member.user_sns_instagram !== ''"
                           density="compact"
                           variant="text"
                           icon=""
-                          @click="openNewLink(buildInstagramUrl(member.user_sns_instagram))"
+                          @click="openNewLink(buildInstagramUrl(member.user_sns_instagram!))"
                         >
                           <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                         </v-btn>

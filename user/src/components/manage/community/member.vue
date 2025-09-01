@@ -122,9 +122,9 @@ const downloadCsvFile = () => {
   for (const member of members.value) {
     csv +=
       `"${member.user_name}",` +
-      `"${member.user_sns_twitter == null ? '' : buildTwitterUrl(member.user_sns_twitter)}",` +
-      `"${member.user_sns_facebook == null ? '' : buildFacebookUrl(member.user_sns_facebook)}",` +
-      `"${member.user_sns_instagram == null ? '' : buildInstagramUrl(member.user_sns_instagram)}",` +
+      `"${member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : ''}",` +
+      `"${member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : ''}",` +
+      `"${member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : ''}",` +
       `"${member.user_description ?? ''}"\n`
   }
   downloadCsv('community_member.csv', csv)
@@ -164,7 +164,7 @@ const downloadCsvFile = () => {
                     </td>
                     <td class="minimum-cell">
                       <v-btn
-                        :class="{ hidden: member.user_sns_facebook == null }"
+                        v-if="member.user_sns_facebook !== ''"
                         :icon="mdiFacebook"
                         color="#1877F2"
                         density="compact"
@@ -174,7 +174,7 @@ const downloadCsvFile = () => {
                     </td>
                     <td class="minimum-cell">
                       <v-btn
-                        :class="{ hidden: member.user_sns_twitter == null }"
+                        v-if="member.user_sns_twitter !== ''"
                         :icon="XIcon"
                         color="grey-900"
                         density="compact"
@@ -184,7 +184,7 @@ const downloadCsvFile = () => {
                     </td>
                     <td class="minimum-cell">
                       <v-btn
-                        :class="{ hidden: member.user_sns_instagram == null }"
+                        v-if="member.user_sns_instagram !== ''"
                         density="compact"
                         variant="text"
                         icon=""
