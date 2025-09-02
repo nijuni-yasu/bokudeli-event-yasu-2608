@@ -1,6 +1,5 @@
 import { format } from 'date-fns'
 import { type DocumentData, Timestamp } from 'firebase/firestore'
-import { BokudeliPartnerMenu } from '@shokujii/base/stores/partner.js'
 import { type User } from 'firebase/auth'
 import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
 
@@ -48,35 +47,6 @@ export const priceString = (price: number): string => {
 export const postalcodeString = (postalCode: string): string => {
   // 郵便番号を「〒XXX-XXXX」の形式に変換
   return `〒${postalCode.slice(0, 3)}-${postalCode.slice(3)}`
-}
-
-// Deprecated
-export const convertDocumentDataToMenu = (
-  partnerId: string,
-  documentId: string,
-  documentData: DocumentData,
-): BokudeliPartnerMenu => {
-  const {
-    menu_name,
-    menu_price,
-    menu_image_url,
-    menu_description,
-    updatedAt,
-    is_soldout,
-    menu_date_start,
-    menu_date_end,
-  } = documentData
-
-  return new BokudeliPartnerMenu(partnerId, documentId, {
-    menu_name: menu_name ?? '',
-    menu_price: menu_price ?? 0,
-    menu_image_url: menu_image_url ?? '',
-    menu_description: menu_description ?? '',
-    updatedAt: updatedAt,
-    is_sold_out: is_soldout ?? false,
-    menu_date_start: menu_date_start ?? null,
-    menu_date_end: menu_date_end ?? null,
-  })
 }
 
 export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser => {

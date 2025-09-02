@@ -11,14 +11,9 @@ const rebuildFilename = (filename: string) => {
 export const uploadEventImage = async (communityId: string, eventId: string, file: File) => {
   const filename = rebuildFilename(file.name)
   const uploadStorageRef = storageRef(storage, `communities/${communityId}/events/${eventId}/${filename}`)
-  try {
-    const snapshot = await uploadBytes(uploadStorageRef, file)
-    const url = await getDownloadURL(snapshot.ref)
-    return url
-  } catch (error) {
-    console.error(error)
-  }
-  return null
+  const snapshot = await uploadBytes(uploadStorageRef, file)
+  const url = await getDownloadURL(snapshot.ref)
+  return url
 }
 
 export const uploadCommunityImage = async (communityId: string, file: File) => {

@@ -1,6 +1,5 @@
-import { ref, computed, watch, toRaw, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, watch, toRaw } from 'vue'
 import { defineStore } from 'pinia'
-import type { Store, StateTree } from 'pinia'
 import { httpsCallable } from 'firebase/functions'
 import {
   collection,
@@ -8,6 +7,8 @@ import {
   doc,
   getDocs,
   updateDoc,
+  getDoc,
+  setDoc,
   query,
   where,
   onSnapshot,
@@ -111,42 +112,21 @@ const orderConverter: FirestoreDataConverter<EventOrder> = {
   },
 }
 
-type EventStoreState = {
-  event: Ref<BokudeliEvent | null>
-  exists: Ref<boolean | null>
-  /**
-   * 未注文のものを含む注文リスト
-   */
-  orders: Ref<EventOrder[] | null>
-  /**
-   * 注文確定済みリスト
-   */
-  confirmedOrders: Ref<EventOrder[] | null>
-  menus: Ref<EventMenu[] | null>
-} & StateTree
-
-type EventStoreGetters = {
-  /**
-   * 注文済みユーザーのみのリスト
-   */
-  members: ComputedRef<BokudeliEventMember[] | null>
+export const createNewEvent = async (event: BokudeliEvent, coverImage: File): Promise<EventStore> => {
+  const communityRef = doc(db, 'communities', event.community_id)
+  const community = await getDoc(communityRef)
+  if (!community.exists()) {
+    throw new Error(`community ${event.community_id} does not exists`)
+  }
+  event.event_cover_url = await uploadEventImage(community.id, event.id, coverImage)
+  event.bill_fullname = community.get('community_bill_fullname') ?? community.get('community_manager_fullname')
+  event.bill_email = community.get('community_bill_email') ?? community.get('community_email')
+  const newEventRef = doc(communityRef, 'events', event.id).withConverter(eventConverter)
+  await setDoc(newEventRef, event, { merge: true })
+  return useEventStore(event.id)
 }
 
-type EventStoreAction = {
-  updateEvent: (data: BokudeliEvent) => Promise<void>
-  updateCoverImage: (coverImage: File) => Promise<void>
-  addOrder: (data: Partial<EventOrder>) => Promise<string>
-  deleteOrder: (order: { community_id: string; event_id: string; order_id: string }, menu_id: string) => Promise<void>
-  updateOrderStatus: (
-    order: { community_id: string; event_id: string; order_id: string },
-    status: EventOrder['status'],
-  ) => Promise<void>
-  deleteEvent: () => Promise<void>
-  subscribe: () => Promise<void>
-  unsubscribe: () => void
-}
-
-export type EventStore = Store<string, EventStoreState, EventStoreGetters, EventStoreAction>
+export type EventStore = ReturnType<typeof useEventStore>
 
 export const useEventStore = (target: string | BokudeliEvent) => {
   let eventId: string
@@ -407,5 +387,5 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       },
     }
   })
-  return store() as EventStore
+  return store()
 }
