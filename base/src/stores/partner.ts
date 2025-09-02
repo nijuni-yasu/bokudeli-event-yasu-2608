@@ -51,12 +51,12 @@ const menuConverter: FirestoreDataConverter<BokudeliPartnerMenu> = {
 
 const db = getFirestore()
 
-type PartnerStoreState = {
+type PartnerStoreState = StateTree
+
+type PartnerStoreGetters = {
   shops: Ref<BokudeliPartnerShop[] | null>
   menus: Ref<BokudeliPartnerMenu[] | null>
-} & StateTree
-
-type PartnerStoreGetters = object
+}
 
 type PartnerStoreAction = {
   updateShop: (data: BokudeliPartnerShop, image?: File) => Promise<void>
