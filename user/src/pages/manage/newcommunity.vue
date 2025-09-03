@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
 import { getManageCommunityPath } from '@/router/utils'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
-import { useCommunityListStore, type CommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { BokudeliCommunity, createNewCommunity } from '@shokujii/base/stores/community.js'
+import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 const { t: $t } = useI18n()
 
-const communityListStore = useCommunityListStore() as CommunityListStore
+const communityListStore = useCommunityListStore()
 
 const coverImageFile = ref<File | null>(null)
 const iconImageFile = ref<File | null>(null)
-const community = communityListStore.communityDraft
+const community = ref(new BokudeliCommunity(null, {}))
 const isLoading = ref(false)
 
 const validateNewAccount = async (value: string) => {
@@ -23,18 +23,14 @@ const validateNewAccount = async (value: string) => {
 const submit = async () => {
   isLoading.value = true
   try {
-    const community = await communityListStore.createNewCommunityFromDraft()
-    const communityStore = useCommunityStore(community.community_account) as CommunityStore
-    if (coverImageFile.value != null) {
-      await communityStore.updateCoverImage(coverImageFile.value)
+    if (coverImageFile.value == null || iconImageFile.value == null) {
+      throw new Error()
     }
-    if (iconImageFile.value != null) {
-      await communityStore.updateIconImage(iconImageFile.value)
-    }
+    await createNewCommunity(toRaw(community.value), coverImageFile.value, iconImageFile.value)
     notification.show($t('manage.newcommunity.created'), 'success')
     // communityListStore.reload()
     // router.push(getManageCommunityPath(community.community_account))
-    window.location.href = getManageCommunityPath(community.community_account)
+    window.location.href = getManageCommunityPath(community.value.community_account)
   } catch (err) {
     console.error(err)
     notification.show($t('manage.newcommunity.error'), 'error')

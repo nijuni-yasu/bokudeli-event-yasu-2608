@@ -1,7 +1,7 @@
-import { ref, computed, watch, toRaw, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, watch, toRaw } from 'vue'
 import { defineStore } from 'pinia'
-import type { StateTree, Store } from 'pinia'
 import _ from 'lodash'
+import { getAuth } from 'firebase/auth'
 import {
   collection,
   doc,
@@ -11,7 +11,7 @@ import {
   query,
   where,
   onSnapshot,
-  Timestamp,
+  setDoc,
   type DocumentReference,
   type Unsubscribe,
   type FirestoreDataConverter,
@@ -42,7 +42,12 @@ class CommunityRefUpdatedEvent extends Event {
 /**
  * 将来的にユーティリティ関数などを定義する
  */
-export class BokudeliCommunity extends Community {}
+export class BokudeliCommunity extends Community {
+  constructor(communityId: string | null, src: Partial<Community>) {
+    communityId = communityId ?? doc(collection(db, 'communities')).id
+    super(communityId, src)
+  }
+}
 
 /**
  * 将来的にユーティリティ関数などを定義する
@@ -62,27 +67,31 @@ export const communityConverter: FirestoreDataConverter<BokudeliCommunity> = {
   },
 }
 
-type CommunityStoreState = {
-  community: Ref<BokudeliCommunity | null>
-} & StateTree
-
-type CommunityGetters = {
-  members: ComputedRef<(BokudeliCommunityMember | null)[] | null>
-  events: Ref<BokudeliEvent[] | null>
+export const createNewCommunity = async (
+  community: BokudeliCommunity,
+  coverImageFile: File,
+  iconImageFile: File,
+): Promise<CommunityStore> => {
+  // TODO loginUserStore など共通のソースにする
+  const uid = getAuth().currentUser?.uid
+  if (uid == null) {
+    throw new Error('Not Logged in')
+  }
+  ;[community.community_cover_image_url, community.community_icon_image_url] = await Promise.all([
+    uploadCommunityImage(community.id, coverImageFile),
+    uploadCommunityImage(community.id, iconImageFile),
+  ])
+  const communityRef = doc(db, 'communities', community.community_account).withConverter(communityConverter)
+  const memberRef = doc(communityRef, 'members', uid)
+  await Promise.all([
+    setDoc(communityRef, community, { merge: true }),
+    // TODO withConverter
+    setDoc(memberRef, { roles: ['manager'] }),
+  ])
+  return useCommunityStore(community)
 }
 
-type CommunityStoreAction = {
-  updateCommunity: (data: BokudeliCommunity) => Promise<void>
-  updateCoverImage: (coverImage: File) => Promise<void>
-  updateIconImage: (iconImage: File) => Promise<void>
-  addRole: (userId: string, role: string) => Promise<void>
-  removeRole: (userId: string, role: string) => Promise<void>
-  subscribe: () => Promise<void>
-  unsubscribe: () => void
-  getCurrentUserRoles: () => Promise<string[] | null>
-}
-
-export type CommunityStore = Store<string, CommunityStoreState, CommunityGetters, CommunityStoreAction>
+export type CommunityStore = ReturnType<typeof useCommunityStore>
 
 export const useCommunityStore = (target: string | BokudeliCommunity) => {
   const communityAccount: string = target instanceof BokudeliCommunity ? target.community_account : target
@@ -130,15 +139,14 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       const managers = community.value.managers
       return members.flatMap((doc: DocumentReference) => {
         const userStore = useUserStore(doc.id)
-        if (userStore.exists == null) {
+        if (userStore.user == null) {
           return []
         }
-        const roles = []
+        const roles: CommunityMemberRolesType[] = []
         if (managers.find((manager) => manager.id === doc.id) != null) {
           roles.push('manager')
         }
-        // CAUTION: _.merge is mutable function
-        return _.merge({}, userStore.user, { roles })
+        return { ...userStore.user, roles }
       })
     })
 
@@ -164,21 +172,13 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
     const updateCoverImage = async (file: File) => {
       const communityRef = await getCommunityRef()
       const community_cover_image_url = await uploadCommunityImage(communityRef.id, file)
-      const data = {
-        updated_at: Timestamp.now(),
-        community_cover_image_url,
-      }
-      await updateDoc(communityRef, data)
+      await updateDoc(communityRef, { community_cover_image_url })
     }
 
     const updateIconImage = async (file: File) => {
       const communityRef = await getCommunityRef()
       const community_icon_image_url = await uploadCommunityImage(communityRef.id, file)
-      const data = {
-        updated_at: Timestamp.now(),
-        community_icon_image_url,
-      }
-      await updateDoc(communityRef, data)
+      await updateDoc(communityRef, { community_icon_image_url })
     }
 
     let unsubscribeCommunity: Unsubscribe | null = null
@@ -301,5 +301,5 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       },
     }
   })
-  return store() as CommunityStore
+  return store()
 }

@@ -1,6 +1,5 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { StateTree, Store } from 'pinia'
 import {
   collection,
   getDocs,
@@ -18,26 +17,7 @@ import { Community } from '@shokujii/common/schemas/Community.js'
 import { TaskExecutor } from '@shokujii/base/utils/executors.js'
 import { communityConverter, useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 
-type CommunityListStoreState = {
-  totalCount: Ref<number | null>
-} & StateTree
-
-type CommunityListStoreGetters = {
-  communityStores: Ref<CommunityStore[] | null>
-}
-
-type CommunityListStoreAction = {
-  reload: () => void
-  next: () => void
-  getCommunityData: (communityAccount: string) => Promise<DocumentData | null>
-}
-
-export type CommunityListStore = Store<
-  string,
-  CommunityListStoreState,
-  CommunityListStoreGetters,
-  CommunityListStoreAction
->
+export type CommunityListStore = ReturnType<typeof useCommunityListStore>
 
 export const useCommunityListStore = (filters: QueryConstraint[] | null = null, pageSize: number = 5) => {
   const store = defineStore(
@@ -111,5 +91,5 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
       }
     },
   )
-  return store() as CommunityListStore
+  return store()
 }
