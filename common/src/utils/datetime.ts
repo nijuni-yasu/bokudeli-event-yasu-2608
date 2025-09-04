@@ -36,6 +36,13 @@ export function convertToDatetimeWeekdayShort(millis: number, zone = DEFAULT_TIM
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
 }
 
+/**
+ * Vuetify v-date-picker 準拠の文字列に変換する
+ * @param millis
+ * @param zone
+ * @param locale
+ * @returns
+ */
 export function convertToDateString(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy-MM-dd')
 }

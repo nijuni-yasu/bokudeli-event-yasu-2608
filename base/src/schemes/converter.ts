@@ -1,14 +1,6 @@
-import { format } from 'date-fns'
 import { type DocumentData, Timestamp } from 'firebase/firestore'
 import { type User } from 'firebase/auth'
 import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
-
-export const dateString = (date: Timestamp | Date | null): string => {
-  if (!date) return ''
-
-  const targetDate = date instanceof Timestamp ? date.toDate() : date
-  return format(targetDate, 'yyyy-MM-dd')
-}
 
 export const dateWithDayOfWeekString = (date: Timestamp | Date | number | null): string => {
   if (!date) return ''

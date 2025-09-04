@@ -13,8 +13,7 @@ import {
   mdiHandExtendedOutline,
   mdiTimerSand,
 } from '@mdi/js'
-import { hourString, minutesString } from '@shokujii/base/schemes/eventCreate'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
+import { convertToDuration, convertToMinuteString, convertToDateWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 
 const emit = defineEmits<{
@@ -32,24 +31,14 @@ const { requiredValidator, phoneValidator, emailValidator } = useValidators()
 
 const isValid = ref(false)
 
-const eventDateTime = computed(
-  () =>
-    `${dateWithDayOfWeekString(event.value.event_start_datetime)} 〜 ${dateOnlyTimeString(event.value.event_end_datetime)}`,
+const eventDateTime = computed(() =>
+  convertToDuration(event.value.event_start_datetime, event.value.event_end_datetime),
 )
-
-const eventStartDatetime = computed(() => new Date(event.value.event_start_datetime))
-const pickUpStartDatetime = computed(() => {
-  const pickUpStartDate = eventStartDatetime.value ? new Date(eventStartDatetime.value) : new Date()
-
-  pickUpStartDate.setMinutes(pickUpStartDate.getMinutes() - 30)
-  return pickUpStartDate
-})
 const pickUpStartDateTime = computed(
   () =>
-    `${dateWithDayOfWeekString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
+    `${convertToDuration(event.value.event_start_datetime - 30 * 60 * 1000, event.value.event_start_datetime)}:${convertToMinuteString(event.value.event_start_datetime)}`,
 )
-const eventDeadlineDate = computed(() => new Date(event.value.event_deadline_datetime))
-const eventDeadlineDateTime = computed(() => `${dateWithDayOfWeekString(eventDeadlineDate.value)}`)
+const eventDeadlineDateTime = computed(() => `${convertToDateWeekdayShort(event.value.event_deadline_datetime)}`)
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
 const shop_address = computed(() => (shop.value !== null ? shop.value.shop_address : ''))

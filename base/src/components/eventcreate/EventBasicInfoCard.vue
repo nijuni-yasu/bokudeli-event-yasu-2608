@@ -3,11 +3,11 @@ import { computed, watchEffect } from 'vue'
 import {
   hourList,
   minutesList,
-  dateString,
-  hourString,
-  minutesString,
-  parseDateTimeStrings,
-} from '@shokujii/base/schemes/eventCreate'
+  convertToDateString,
+  convertToHourString,
+  convertToMinuteString,
+  parseDatetimeStrings,
+} from '@shokujii/common/utils/datetime.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
 import DateInput from '../DateInput.vue'
@@ -32,44 +32,44 @@ if (event.value.event_end_datetime == null) {
 }
 
 const eventStartDate = computed({
-  get: () => dateString(event.value.event_start_datetime),
+  get: () => convertToDateString(event.value.event_start_datetime),
   set: (value) => {
-    const newValue = parseDateTimeStrings(value, eventStartHour.value, eventStartMinute.value).getTime()
+    const newValue = parseDatetimeStrings(value, eventStartHour.value, eventStartMinute.value)
     updateStartDatetime(newValue)
   },
 })
 const eventStartHour = computed({
-  get: () => hourString(event.value.event_start_datetime ?? null),
+  get: () => convertToHourString(event.value.event_start_datetime ?? null),
   set: (value) => {
-    const newValue = parseDateTimeStrings(eventStartDate.value, value, eventStartMinute.value).getTime()
+    const newValue = parseDatetimeStrings(eventStartDate.value, value, eventStartMinute.value)
     updateStartDatetime(newValue)
   },
 })
 const eventStartMinute = computed({
-  get: () => minutesString(event.value.event_start_datetime ?? null),
+  get: () => convertToMinuteString(event.value.event_start_datetime ?? null),
   set: (value) => {
-    const newValue = parseDateTimeStrings(eventStartDate.value, eventStartHour.value, value).getTime()
+    const newValue = parseDatetimeStrings(eventStartDate.value, eventStartHour.value, value)
     updateStartDatetime(newValue)
   },
 })
 const eventEndDate = computed({
-  get: () => dateString(event.value.event_end_datetime ?? null),
+  get: () => convertToDateString(event.value.event_end_datetime ?? null),
   set: (value) => {
-    const newValue = parseDateTimeStrings(value, eventEndHour.value, eventEndMinute.value).getTime()
+    const newValue = parseDatetimeStrings(value, eventEndHour.value, eventEndMinute.value)
     updateEndDatetime(newValue)
   },
 })
 const eventEndHour = computed({
-  get: () => hourString(event.value.event_end_datetime ?? null),
+  get: () => convertToHourString(event.value.event_end_datetime ?? null),
   set: (value) => {
-    const newValue = parseDateTimeStrings(eventEndDate.value, value, eventEndMinute.value).getTime()
+    const newValue = parseDatetimeStrings(eventEndDate.value, value, eventEndMinute.value)
     updateEndDatetime(newValue)
   },
 })
 const eventEndMinute = computed({
-  get: () => minutesString(event.value.event_end_datetime ?? null),
+  get: () => convertToMinuteString(event.value.event_end_datetime ?? null),
   set: (value) => {
-    const newValue = parseDateTimeStrings(eventEndDate.value, eventEndHour.value, value).getTime()
+    const newValue = parseDatetimeStrings(eventEndDate.value, eventEndHour.value, value)
     updateEndDatetime(newValue)
   },
 })
