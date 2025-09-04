@@ -50,7 +50,8 @@ const EventDbSchema = z.object({
   shop_id: z.string().nonempty(),
   shop_name: z.string().nonempty(),
   event_name: z.string().nonempty(),
-  event_cover_url: z.string().nonempty(),
+  // 本来 nonempty をつけたいが現在の登録フローでは一瞬 empty 状態になってしまうので一時的に解除 TODO 直す
+  event_cover_url: z.string() /*.nonempty().url()*/,
   event_payment: z.enum(EVENT_PAYMENT_VALUES),
   event_max_people: z.number().int().positive(),
   organizer_fullname: z.string().nonempty(),
@@ -61,7 +62,7 @@ const EventDbSchema = z.object({
   is_public: z.boolean(),
   event_status: z.object({
     value: z.enum(RAW_EVENT_STATUS_VALUES),
-    shop_comment: z.string().optional(),
+    shop_comment: NonEmptyStringSchema.optional(),
   }),
   bill_fullname: z.string().nonempty(),
   bill_email: z.string().nonempty(),
@@ -100,39 +101,37 @@ const EventAppSchema = z.object({
   is_public: z.boolean().default(true),
   event_payment: z.enum(EVENT_PAYMENT_VALUES).default('user_advance'),
   event_max_people: z.number().int().positive().default(25),
-  event_status: z.object({
-    value: z.enum(RAW_EVENT_STATUS_VALUES).default('in_draft'),
-    shop_comment: z.string().optional(),
-  }),
+  event_status: z
+    .object({
+      value: z.enum(RAW_EVENT_STATUS_VALUES),
+      shop_comment: z.string().optional(),
+    })
+    .default({
+      value: 'in_draft',
+      shop_comment: '',
+    }),
   is_deleted: z.boolean().default(false),
   members: z.array(MemberIdSchema).default([]),
-
-  // Optional
-  event_postalcode: z
-    .string()
-    .regex(/^\d{7}$/)
-    .optional(),
-  event_address: z.string().nonempty().optional(),
-  partner_id: z.string().nonempty().optional(),
-  shop_id: z.string().nonempty().optional(),
-  shop_name: z.string().nonempty().optional(),
-  event_name: z.string().nonempty().optional(),
-  event_cover_url: z.string().nonempty().optional(),
-  subdomain_tags: z.array(z.string()).optional(),
-
-  // 本来は nonempty をつけたいが、現状 empty 状態のデータがあるため、nonempty を外す
-  bill_fullname: z.string().optional(),
-  bill_email: z.string().optional(),
-  event_place: z.string().optional(),
-  event_place_url: z.string().optional(),
-  event_desc: z.string().optional(),
-  event_sns_hash_tag: z.string().optional(),
-  organizer_phone_company: z.string().optional(),
-  organizer_fullname: z.string().optional(),
-  organizer_company: z.string().optional(),
-  organizer_email: z.string().optional(),
-  organizer_phone_personal: z.string().optional(),
-  organizer_memo: z.string().optional(),
+  event_postalcode: z.string().default(''),
+  event_address: z.string().default(''),
+  partner_id: z.string().default(''),
+  shop_id: z.string().default(''),
+  shop_name: z.string().default(''),
+  event_name: z.string().default(''),
+  event_cover_url: z.string().default(''),
+  subdomain_tags: z.array(z.string()).default([]),
+  bill_fullname: z.string().default(''),
+  bill_email: z.string().default(''),
+  event_place: z.string().default(''),
+  event_place_url: z.string().default(''),
+  event_desc: z.string().default(''),
+  event_sns_hash_tag: z.string().default(''),
+  organizer_phone_company: z.string().default(''),
+  organizer_fullname: z.string().default(''),
+  organizer_company: z.string().default(''),
+  organizer_email: z.string().default(''),
+  organizer_phone_personal: z.string().default(''),
+  organizer_memo: z.string().default(''),
 })
 
 const convertToDb = (event: Event, updated_by: string) => {
@@ -149,7 +148,7 @@ const convertToDb = (event: Event, updated_by: string) => {
 
 export class Event {
   readonly id: string
-  readonly event_id: string
+  readonly event_id!: string
   community_id!: string
   community_name!: string
   community_account!: string
@@ -161,32 +160,32 @@ export class Event {
   event_max_people!: number
   event_status!: {
     value: RawEventStatusType
-    shop_comment?: string
+    shop_comment: string
   }
   is_deleted!: boolean
 
-  event_postalcode: string = ''
-  event_address: string = ''
-  partner_id: string = ''
-  shop_id: string = ''
-  shop_name: string = ''
-  event_name: string = ''
-  event_cover_url: string = ''
-  event_desc: string = ''
-  organizer_fullname: string = ''
-  organizer_company: string = ''
-  organizer_phone_personal: string = ''
-  organizer_phone_company: string = ''
-  organizer_email: string = ''
-  organizer_memo: string = ''
-  event_sns_hash_tag: string = ''
-  bill_fullname: string = ''
-  bill_email: string = ''
+  event_postalcode!: string
+  event_address!: string
+  partner_id!: string
+  shop_id!: string
+  shop_name!: string
+  event_name!: string
+  event_cover_url!: string
+  event_desc!: string
+  organizer_fullname!: string
+  organizer_company!: string
+  organizer_phone_personal!: string
+  organizer_phone_company!: string
+  organizer_email!: string
+  organizer_memo!: string
+  event_sns_hash_tag!: string
+  bill_fullname!: string
+  bill_email!: string
 
-  event_place: string = ''
-  event_place_url: string = ''
-  members: string[] = []
-  subdomain_tags: string[] = []
+  event_place!: string
+  event_place_url!: string
+  members!: string[]
+  subdomain_tags!: string[]
 
   created_at: number
   created_by?: string
@@ -194,9 +193,8 @@ export class Event {
   updated_by?: string
 
   constructor(id: string, src: Partial<Event>) {
-    Object.assign(this, EventAppSchema.parse(src))
+    Object.assign(this, EventAppSchema.parse({ ...src, event_id: id }))
     this.id = id
-    this.event_id = id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
     this.updated_at = Date.now()
   }

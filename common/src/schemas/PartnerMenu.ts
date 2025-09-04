@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { TimestampSchema } from './firebase/index.js'
+import { TimestampSchema, EpochMillisSchema } from './firebase/index.js'
 
 const PartnerMenuDbSchema = z.object({
   updatedAt: TimestampSchema,
@@ -14,16 +14,15 @@ const PartnerMenuDbSchema = z.object({
 })
 
 const PartnerMenuAppSchema = z.object({
-  // Mandatory
-  menu_description: z.string().nonempty(),
-  menu_image_url: z.string().url().nonempty(),
-  menu_name: z.string().nonempty(),
-  menu_price: z.number().int().positive(),
   // Default
+  menu_description: z.string().default(''),
+  menu_image_url: z.string().default(''),
+  menu_name: z.string().default(''),
+  menu_price: z.number().int().positive().default(100),
   is_sold_out: z.boolean().default(false),
   // Optional
-  menu_date_start: TimestampSchema.optional(),
-  menu_date_end: TimestampSchema.optional(),
+  menu_date_start: EpochMillisSchema.optional(),
+  menu_date_end: EpochMillisSchema.optional(),
 })
 
 const convertToDb = (menu: PartnerMenu) => {
