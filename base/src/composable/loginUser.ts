@@ -68,14 +68,14 @@ export const loginUser = async (user: User) => {
     currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data(), personalInformationSnapshot.data()!)
     if (!currentStoredUser.userImageUrl) {
       // 画像がない場合更新する
-      await setDoc(
-        userSnapShot.ref,
-        {
-          user_image_url: storedUser.userImageUrl === '' ? null : storedUser.userImageUrl,
-          updated_at: Timestamp.now(),
-        },
-        { merge: true },
-      )
+      // await setDoc(
+      //   userSnapShot.ref,
+      //   {
+      //     user_image_url: storedUser.userImageUrl === '' ? null : storedUser.userImageUrl,
+      //     updated_at: Timestamp.now(),
+      //   },
+      //   { merge: true },
+      // )
 
       // Pinia に保存
       currentStoredUser = {
