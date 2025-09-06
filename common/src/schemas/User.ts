@@ -13,15 +13,17 @@ const UserDbSchema = z.object({
   user_sns_facebook: NonEmptyStringSchema.optional(),
   user_sns_twitter: NonEmptyStringSchema.optional(),
   user_sns_instagram: NonEmptyStringSchema.optional(),
+  user_sns_website: NonEmptyStringSchema.optional(),
 })
 
 const UserAppSchema = z.object({
   user_name: z.string(),
-  user_description: z.string().optional(),
-  user_image_url: z.string().optional(),
-  user_sns_facebook: z.string().optional(),
-  user_sns_twitter: z.string().optional(),
-  user_sns_instagram: z.string().optional(),
+  user_description: z.string().default(''),
+  user_image_url: z.string().default(''),
+  user_sns_facebook: z.string().default(''),
+  user_sns_twitter: z.string().default(''),
+  user_sns_instagram: z.string().default(''),
+  user_sns_website: z.string().default(''),
 })
 
 const convertToDb = (user: User) => {
@@ -39,11 +41,12 @@ export class User {
   created_at: number
   updated_at: number
   // Default
-  user_description: string = ''
-  user_image_url: string = ''
-  user_sns_facebook: string = ''
-  user_sns_twitter: string = ''
-  user_sns_instagram: string = ''
+  user_description!: string
+  user_image_url!: string
+  user_sns_facebook!: string
+  user_sns_twitter!: string
+  user_sns_instagram!: string
+  user_sns_website!: string
 
   constructor(id: string, src: Partial<User>) {
     Object.assign(this, UserAppSchema.parse(src))
