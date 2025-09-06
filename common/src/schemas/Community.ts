@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema, type DocumentReference } from './firebase/index.js'
 
+// NonApproved なときのもの
+// TDODO Approved なものも作成する
 const CommunityDbSchema = z.object({
   // Mandatory
   community_id: z.string().nonempty(),
@@ -8,7 +10,6 @@ const CommunityDbSchema = z.object({
   community_account: z.string().nonempty(),
   community_cover_image_url: z.string().nonempty(),
   community_icon_image_url: z.string().nonempty(),
-  community_sns_officialsite: z.string().nonempty(),
   is_public: z.boolean(),
   is_approved: z.boolean(),
   is_show_member: z.boolean(),
@@ -28,6 +29,7 @@ const CommunityDbSchema = z.object({
   community_sns_twitter: NonEmptyStringSchema,
   community_sns_instagram: NonEmptyStringSchema,
   community_sns_hash_tag: NonEmptyStringSchema,
+  community_sns_officialsite: NonEmptyStringSchema,
   community_bill_fullname: NonEmptyStringSchema,
   community_bill_email: NonEmptyStringSchema,
   // members, managers は functions で処理するので DB に直接書き込まない

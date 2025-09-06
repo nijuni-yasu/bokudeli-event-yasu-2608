@@ -238,8 +238,8 @@ const convertToDb = (shop: PartnerShop) => {
 export class PartnerShop {
   // Mandatory
   readonly id: string
-  readonly shop_id: string
-  readonly partner_id: string
+  readonly shop_id!: string
+  readonly partner_id!: string
   createdAt: number
   updatedAt: number
   // Default
@@ -283,10 +283,8 @@ export class PartnerShop {
   shop_email_sub3?: string
 
   constructor(partner_id: string, shop_id: string, src: Partial<PartnerShop>) {
-    Object.assign(this, PartnerShopAppSchema.parse(src))
-    this.partner_id = partner_id
+    Object.assign(this, PartnerShopAppSchema.parse({ ...src, partner_id, shop_id }))
     this.id = shop_id
-    this.shop_id = shop_id
     this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
     this.updatedAt = Date.now()
   }
