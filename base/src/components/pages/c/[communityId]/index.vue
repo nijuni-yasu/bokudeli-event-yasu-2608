@@ -12,7 +12,7 @@ import {
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
@@ -71,9 +71,9 @@ const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
-const userStore = useStoreStoredUser()
+const userStore = useCurrentUserStore()
 const openContactDialog = () => {
-  if (!userStore.storedUser) {
+  if (userStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true

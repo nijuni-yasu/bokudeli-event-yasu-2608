@@ -24,7 +24,7 @@ import { db, functions } from '@shokujii/base/firebase.js'
 import { uploadEventImage } from '@shokujii/base/composable/uploadImage.js'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
-import { FirestoredUser } from '../schemes/storedUser.js'
+import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
@@ -64,7 +64,7 @@ export class BokudeliEvent extends _Event {
 /**
  * 将来的にユーティリティ関数などを定義する
  */
-export class BokudeliEventMember extends FirestoredUser {
+export class BokudeliEventMember extends User {
   // 多重継承が出来ないので CommunityMember のプロパティを手動で追加する
   orders: EventOrder[] = []
 }

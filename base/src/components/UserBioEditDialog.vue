@@ -1,22 +1,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
-import _ from 'lodash'
+import { User } from '@shokujii/common/schemas/User.js'
 import SnsTextField from './SnsTextField.vue'
 
 interface Props {
   modelValue: boolean
-  userData: FirestoredUser
+  userData: User
 }
 
 interface Emit {
-  submit: [value: FirestoredUser, image?: File]
+  submit: [value: User, image?: File]
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
-const userDataDraft = ref<FirestoredUser>(new FirestoredUser(_.cloneDeep(props.userData)))
+const userDataDraft = ref<User>(new User(props.userData.id, props.userData))
 const userImage = ref<File | undefined>(undefined)
 
 const dialog = defineModel<boolean>()
@@ -38,7 +37,7 @@ const onFormSubmit = async () => {
 }
 
 const onFormReset = () => {
-  userDataDraft.value = new FirestoredUser(_.cloneDeep(props.userData))
+  userDataDraft.value = new User(props.userData.id, props.userData)
   closeDialog()
 }
 </script>

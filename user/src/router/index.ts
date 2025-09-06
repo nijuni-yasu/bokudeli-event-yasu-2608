@@ -4,22 +4,17 @@ import {
   getAuth,
   getRedirectResult,
   onAuthStateChanged,
-  getAdditionalUserInfo,
   type Unsubscribe,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
-import { useStoreCredential } from '@shokujii/base/stores/credential.js'
-import { loginUser, updateCredentialFromUserCredential } from '@shokujii/base/composable/loginUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { loginUser } from '@shokujii/base/composable/loginUser.js'
 import type { Router } from 'vue-router'
 import userAccessiblePaths from '@shokujii/base/utils/userAccessiblePaths.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getLogin, getManageCommunityListPath } from './utils'
-import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
-import { useStoreUserCredential } from '@shokujii/base/stores/userCredential.js'
-import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
 
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
@@ -30,25 +25,18 @@ const checkUser = async (user: User | null) => {
   let userCredential: UserCredential | null = null
   try {
     userCredential = await getRedirectResult(getAuth())
-    if (userCredential) {
-      const additionalUserInfo = getAdditionalUserInfo(userCredential)
-      if (additionalUserInfo) {
-        useStoreUserAdditionalInfo().update(additionalUserInfo)
-      }
-    }
   } catch (error) {
     if (error instanceof FirebaseError) {
-      useStoreFirebaseAuthError().update(error)
+      useCurrentUserStore().setLastFirebaseError(error)
     } else {
       window.alert('ログインに失敗しました')
       console.error('Error fetching redirect result:', { error })
     }
   }
+  const currentUserStore = useCurrentUserStore()
   if (!userCredential && !user) {
     // ログアウト処理
-    const store = useStoreStoredUser()
-    store.$reset()
-    useStoreCredential().$reset()
+    currentUserStore.signOut()
     return
   }
   if (!userCredential && user) {
@@ -57,8 +45,6 @@ const checkUser = async (user: User | null) => {
   }
   if (userCredential) {
     // リダイレクトでのログイン処理
-    useStoreUserCredential().update(userCredential)
-    await updateCredentialFromUserCredential(userCredential)
     await loginUser(user || userCredential.user)
   }
 }
@@ -87,13 +73,15 @@ export const setupRouter = (router: Router) => {
 
   // ユーザーがログイン済みか否かでリダイレクト
   router.beforeEach((to) => {
-    const storedUserStore = useStoreStoredUser()
+    const currentUserStore = useCurrentUserStore()
 
-    if (userAccessiblePaths.includes(to.path) && !storedUserStore.storedUser) router.replace('/')
+    if (userAccessiblePaths.includes(to.path) && currentUserStore.firebaseUser == null) {
+      router.replace('/')
+    }
     if (
       to.path === getLogin() &&
-      storedUserStore.storedUser &&
-      useStoreUserAdditionalInfo().additionalUserInfo === null
+      currentUserStore.firebaseUser != null &&
+      currentUserStore.additionalUserInfo === null
     ) {
       router.replace('/')
     }

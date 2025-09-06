@@ -25,8 +25,8 @@ import { CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMemb
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import { FirestoredUser } from '../schemes/storedUser.js'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { User } from '@shokujii/common/schemas/User.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { uploadCommunityImage } from '@shokujii/base/composable/uploadImage.js'
 import { useConfigStore } from './config.js'
 
@@ -52,7 +52,7 @@ export class BokudeliCommunity extends Community {
 /**
  * 将来的にユーティリティ関数などを定義する
  */
-export class BokudeliCommunityMember extends FirestoredUser {
+export class BokudeliCommunityMember extends User {
   // 多重継承が出来ないので CommunityMember のプロパティを手動で追加する
   roles: CommunityMemberRolesType[] = []
 }
@@ -252,7 +252,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
 
     const getCurrentUserRoles = async () => {
       const communityRef = await getCommunityRef()
-      const userId = useStoreStoredUser().storedUser?.userId
+      const userId = useCurrentUserStore().firebaseUser?.uid
       if (communityRef == null || userId == null) {
         return null
       }

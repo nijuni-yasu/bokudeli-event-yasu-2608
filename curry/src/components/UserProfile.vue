@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { getAuth, signOut } from 'firebase/auth'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline } from '@mdi/js'
 
-const { storedUser } = storeToRefs(useStoreStoredUser())
+const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
-const isLogin = computed(() => storedUser.value?.userId != null)
+const isLogin = computed(() => firebaseUser.value?.uid != null)
 const user = computed(() => {
-  const userId = storedUser.value?.userId
+  const userId = firebaseUser.value?.uid
   return userId == null ? null : (useUserStore(userId) as UserStore).user
 })
 

@@ -2,21 +2,9 @@
 import XIcon from '@shokujii/base/icons/x.js'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
-import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
-import {
-  convertFirestoredUserToStoredUser,
-  convertStoredUserToFirestoredUser,
-} from '@shokujii/base/schemes/converter.js'
-import {
-  FirestoredUser,
-  type FirestoredUserPersonalInformation,
-  type StoredUser,
-} from '@shokujii/base/schemes/storedUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
-import { buildThumbnailsLinks } from '@shokujii/base/composable/buildThumbnailsLinks.js'
 import {
-  getAuth,
   FacebookAuthProvider,
   GoogleAuthProvider,
   TwitterAuthProvider,
@@ -30,16 +18,12 @@ import { FirebaseError } from 'firebase/app'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import type { VForm } from 'vuetify/components'
 import { db, functions } from '@shokujii/base/firebase.js'
-import { doc, updateDoc, getDoc, getDocs, query, collection, where, Timestamp } from 'firebase/firestore'
-import { convertDocumentDataToStoredUser } from '@shokujii/base/schemes/converter.js'
+import { getDocs, query, collection, where } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { linkByProviderService } from '@shokujii/base/utils/providerService.js'
 import { mdiUpload } from '@mdi/js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
-import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
 import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
-import { useStoreUserCredential } from '@shokujii/base/stores/userCredential.js'
 
 type CustomData = {
   email: string
@@ -48,12 +32,13 @@ type CustomData = {
   }
 }
 
-const auth = getAuth()
-const currentUser = auth.currentUser
-
-const storedUserStore = useStoreStoredUser()
-const { storedUser } = storeToRefs(storedUserStore)
-const email = ref<string>('')
+const currentUserStore = useCurrentUserStore()
+const {
+  firebaseUser,
+  user: currentUser,
+  personalInformation: currentUserPersonalInformation,
+} = storeToRefs(currentUserStore)
+const email = computed(() => firebaseUser.value?.email)
 const linkedProviderData = ref<string[]>([])
 
 const updateProviderData = (user: User | null) => {
@@ -62,23 +47,12 @@ const updateProviderData = (user: User | null) => {
 
 // 初期化（現在のユーザー情報を取得）
 if (currentUser) {
-  updateProviderData(currentUser)
-  email.value = currentUser.email as string
+  updateProviderData(toRaw(firebaseUser.value))
 }
 
-const user = computed(() => {
-  return storedUser.value
-})
-const firestoredUser = ref<FirestoredUser>(convertStoredUserToFirestoredUser(user.value as StoredUser))
-
-const userSnapshotRef = doc(db, 'users', user.value?.userId as string)
-const personalInformationSnapshotRef = doc(db, 'users_personal_information', user.value?.userId as string)
-
 const userEmailPending = computed(() => {
-  return user.value?.userEmailPending
+  return currentUserPersonalInformation.value?.user_email_pending || null
 })
-
-const userStore = useUserStore(user.value?.userId as string) as UserStore
 
 const router = useRouter()
 const route = useRoute()
@@ -117,10 +91,9 @@ const isCheckingAccount = ref(false)
 const isValidSameAccount = ref<true | string>(true)
 
 const validateAccount = async (userAccount: string): Promise<boolean> => {
-  const userSnapShot = await getDoc(userSnapshotRef)
-  const user = userSnapShot.data() as FirestoredUser
+  // TODO store で処理できるように
   const duplicatedUserAccount = await getDocs(query(collection(db, 'users'), where('user_account', '==', userAccount)))
-  if (userAccount === user.user_account || userAccount === '') {
+  if (userAccount === currentUser.value?.user_account || userAccount === '') {
     return true
   }
   return duplicatedUserAccount.empty
@@ -139,7 +112,7 @@ const checkAccountExists = async (value: string) => {
 }
 
 const validateImage = () => {
-  if (!user.value?.userImageUrl && !userImage.value) {
+  if (!currentUser.value?.user_image_url && !userImage.value) {
     imageError.value = $t('profile.choice_profile_image')
     return false
   } else {
@@ -162,11 +135,11 @@ const readImageFiles = (files: File | File[]) => {
   const file = files[0]
   userImage.value = file
 
-  firestoredUser.value = convertStoredUserToFirestoredUser(user.value as StoredUser)
-  firestoredUser.value.user_thumb_image_urls = buildThumbnailsLinks(
-    firestoredUser.value.user_id,
-    new URL(URL.createObjectURL(file)),
-  )
+  // firestoredUser.value = convertStoredUserToFirestoredUser(user.value as StoredUser)
+  // firebaseUser.value..value.user_thumb_image_urls = buildThumbnailsLinks(
+  //   firestoredUser.value.user_id,
+  //   new URL(URL.createObjectURL(file)),
+  // )
 }
 
 const profileSubmit = async () => {
@@ -181,28 +154,16 @@ const profileSubmit = async () => {
 
     const image = userImage.value
 
-    await userStore.updateUser(convertStoredUserToFirestoredUser(user.value as StoredUser))
+    await currentUserStore.updateUser(toRaw(currentUser.value!))
     if (image != undefined) {
       try {
-        await userStore.uploadUserImage(image)
+        await currentUserStore.uploadUserImage(image)
         userImage.value = undefined
       } catch (err) {
         console.error(err)
         window.alert($t('profile.fail_image_upload'))
       }
     }
-
-    const userSnapShot = await getDoc(userSnapshotRef)
-    const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
-
-    storedUserStore.update(
-      convertFirestoredUserToStoredUser(
-        userSnapShot.data() as FirestoredUser,
-        personalInformationSnapshot.data() as FirestoredUserPersonalInformation,
-      ),
-    )
-
-    firestoredUser.value = convertStoredUserToFirestoredUser(user.value as StoredUser)
 
     Object.assign(notification, { message: $t('profile.update_profile'), color: 'success' })
 
@@ -217,12 +178,15 @@ const profileSubmit = async () => {
 }
 
 const emailSubmit = async () => {
+  if (currentUser.value == null || currentUserPersonalInformation.value == null) {
+    throw new Error('User is not logged in')
+  }
   try {
     isEmailLoading.value = true
 
-    const userEmail = email.value
+    const userEmail = email.value as string
 
-    if (user.value?.userEmail === userEmail) {
+    if (currentUserPersonalInformation.value?.user_email === userEmail) {
       isEmailLoading.value = false
       return Object.assign(notification, { message: $t('profile.not_changed_email'), color: 'warning' })
     }
@@ -236,21 +200,12 @@ const emailSubmit = async () => {
       return Object.assign(notification, { message: $t('profile.exist_email'), color: 'warning' })
     }
 
-    await updateDoc(userSnapshotRef, {
-      verified_at: null,
-    })
-
-    const userSnapShot = await getDoc(userSnapshotRef)
-    const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
-
-    // Pinia のデータを更新
-    const currentStoredUser = convertDocumentDataToStoredUser(
-      userSnapShot.data() as FirestoredUser,
-      personalInformationSnapshot.data() as FirestoredUserPersonalInformation,
-    )
-    storedUserStore.update(currentStoredUser)
-
-    await updateDoc(personalInformationSnapshotRef, { user_email_pending: userEmail })
+    currentUser.value.verified_at = undefined
+    currentUserPersonalInformation.value.user_email_pending = userEmail
+    await Promise.all([
+      currentUserStore.updateUser(toRaw(currentUser.value)),
+      currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value)),
+    ])
 
     const passCode = generatePassCode()
     const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
@@ -274,9 +229,7 @@ const emailSubmit = async () => {
 
 const certificationPendingEmail = async () => {
   isVerificationLoading.value = true
-  const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
-  const personalInformation = personalInformationSnapshot.data() as FirestoredUserPersonalInformation
-  const userEmail = personalInformation.user_email_pending
+  const userEmail = currentUserPersonalInformation.value?.user_email_pending
 
   // パスコード再発行
   const reGeneratePassCode = generatePassCode()
@@ -295,29 +248,26 @@ const certificationPendingEmail = async () => {
 }
 
 const cancelPendingEmail = async () => {
-  await updateDoc(userSnapshotRef, {
-    user_pass_code: null,
-    verified_at: Timestamp.now(),
-  })
-  await updateDoc(personalInformationSnapshotRef, { user_email_pending: null })
-
-  const userSnapshot = await getDoc(userSnapshotRef)
-  const userData = userSnapshot.data()
-  const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
-  const personalInformation = personalInformationSnapshot.data()
-
-  const storedUser = convertDocumentDataToStoredUser(
-    userData as FirestoredUser,
-    personalInformation as FirestoredUserPersonalInformation,
-  )
-  storedUserStore.update(storedUser as StoredUser)
+  if (currentUser.value == null || currentUserPersonalInformation.value == null) {
+    throw new Error('User is not logged in')
+  }
+  currentUser.value.user_pass_code = ''
+  currentUser.value.verified_at = Date.now()
+  currentUserPersonalInformation.value.user_email_pending = ''
+  await Promise.all([
+    currentUserStore.updateUser(toRaw(currentUser.value)),
+    currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value)),
+  ])
   return Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
 }
 
 const handleFacebookLink = async () => {
+  if (firebaseUser.value == null) {
+    throw new Error('User is not logged in')
+  }
   try {
     isSnsLoading.value = 'facebook.com'
-    const userCredential = await linkByProviderService(currentUser as User, 'Facebook')
+    const userCredential = await linkByProviderService(firebaseUser.value, 'Facebook')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
     if (additionalUserInfo) {
@@ -325,10 +275,7 @@ const handleFacebookLink = async () => {
     }
 
     // ユーザー情報を再取得して更新
-    if (auth.currentUser) {
-      await auth.currentUser.reload()
-      updateProviderData(auth.currentUser)
-    }
+    updateProviderData(toRaw(firebaseUser.value))
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = FacebookAuthProvider.credentialFromError(error)
@@ -340,7 +287,6 @@ const handleFacebookLink = async () => {
         })
       }
       if (error.code === 'auth/email-already-in-use') {
-        useStoreFirebaseAuthError().reset()
         return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
       }
     } else {
@@ -352,9 +298,12 @@ const handleFacebookLink = async () => {
 }
 
 const handleGoogleLoginLink = async () => {
+  if (firebaseUser.value == null) {
+    throw new Error('User is not logged in')
+  }
   try {
     isSnsLoading.value = 'google.com'
-    const userCredential = await linkByProviderService(currentUser as User, 'Google')
+    const userCredential = await linkByProviderService(firebaseUser.value, 'Google')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
     if (additionalUserInfo) {
@@ -362,10 +311,7 @@ const handleGoogleLoginLink = async () => {
     }
 
     // ユーザー情報を再取得して更新
-    if (auth.currentUser) {
-      await auth.currentUser.reload()
-      updateProviderData(auth.currentUser)
-    }
+    updateProviderData(toRaw(firebaseUser.value))
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = GoogleAuthProvider.credentialFromError(error)
@@ -377,7 +323,6 @@ const handleGoogleLoginLink = async () => {
         })
       }
       if (error.code === 'auth/email-already-in-use') {
-        useStoreFirebaseAuthError().reset()
         return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
       }
     } else {
@@ -389,9 +334,12 @@ const handleGoogleLoginLink = async () => {
 }
 
 const handleTwitterLoginLink = async () => {
+  if (firebaseUser.value == null) {
+    throw new Error('User is not logged in')
+  }
   try {
     isSnsLoading.value = 'twitter.com'
-    const userCredential = await linkByProviderService(currentUser as User, 'Twitter')
+    const userCredential = await linkByProviderService(toRaw(firebaseUser.value), 'Twitter')
 
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
     if (additionalUserInfo) {
@@ -399,10 +347,7 @@ const handleTwitterLoginLink = async () => {
     }
 
     // ユーザー情報を再取得して更新
-    if (auth.currentUser) {
-      await auth.currentUser.reload()
-      updateProviderData(auth.currentUser)
-    }
+    updateProviderData(toRaw(firebaseUser.value))
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = TwitterAuthProvider.credentialFromError(error)
@@ -411,7 +356,6 @@ const handleTwitterLoginLink = async () => {
         return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
       }
       if (error.code === 'auth/email-already-in-use') {
-        useStoreFirebaseAuthError().reset()
         return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
       }
     } else {
@@ -428,51 +372,37 @@ const handleUnLink = async (providerId: 'google.com' | 'facebook.com' | 'twitter
 }
 
 const confirmUnLink = async (providerId: string) => {
+  if (firebaseUser.value == null || currentUser.value == null || currentUserPersonalInformation.value == null) {
+    throw new Error('User is not logged in')
+  }
   if (!providerId) return
   try {
     isSnsLoading.value = providerId as 'google.com' | 'facebook.com' | 'twitter.com'
 
-    if (auth.currentUser) {
-      await unlink(auth.currentUser, providerId)
+    await unlink(toRaw(firebaseUser.value), providerId)
 
-      const userSnapshot = await getDoc(userSnapshotRef)
-      const userData = userSnapshot.data()
-      const personalInformationSnapshot = await getDoc(personalInformationSnapshotRef)
-      const personalInformation = personalInformationSnapshot.data()
-
-      const storedUser = convertDocumentDataToStoredUser(
-        userData as FirestoredUser,
-        personalInformation as FirestoredUserPersonalInformation,
-      )
-
-      // 各プロバイダーは連携解除時に関連する値を削除する
-      switch (providerId) {
-        case 'google.com':
-          storedUser.userSnsGoogle = null
-          await updateDoc(personalInformationSnapshotRef, { user_sns_google: null })
-          break
-        case 'facebook.com':
-          storedUser.userSnsFacebookName = null
-          break
-        case 'twitter.com':
-          storedUser.userSnsTwitter = null
-          storedUser.userSnsTwitterAccessToken = null
-          storedUser.userSnsTwitterSecret = null
-          await updateDoc(personalInformationSnapshotRef, {
-            user_sns_twitter_access_token: null,
-            user_sns_twitter_secret: null,
-          })
-          break
-      }
-
-      storedUserStore.update(storedUser)
-
-      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-
-      // ユーザー情報を再取得して更新
-      await auth.currentUser.reload()
-      updateProviderData(auth.currentUser)
+    // 各プロバイダーは連携解除時に関連する値を削除する
+    switch (providerId) {
+      case 'google.com':
+        currentUserPersonalInformation.value.user_sns_google = ''
+        break
+      case 'facebook.com':
+        currentUser.value.user_sns_facebook_name = ''
+        break
+      case 'twitter.com':
+        currentUser.value.user_sns_twitter = ''
+        currentUserPersonalInformation.value.user_sns_twitter_access_token = ''
+        currentUserPersonalInformation.value.user_sns_twitter_secret = ''
+        break
     }
+
+    await Promise.all([
+      currentUserStore.updateUser(toRaw(currentUser.value)),
+      currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value)),
+    ])
+
+    // ユーザー情報を再取得して更新
+    updateProviderData(toRaw(firebaseUser.value))
   } catch (error) {
     console.error(error)
   } finally {
@@ -481,9 +411,9 @@ const confirmUnLink = async (providerId: string) => {
 }
 
 onMounted(async () => {
-  const userCredential = useStoreUserCredential().userCredential
-  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
-  const error = useStoreFirebaseAuthError().error
+  const userCredential = useCurrentUserStore().userCredential
+  const additionalUserInfo = useCurrentUserStore().additionalUserInfo
+  const error = useCurrentUserStore().lastFirebaseError
   if (error instanceof FirebaseError) {
     let credential
     let snsName
@@ -506,14 +436,12 @@ onMounted(async () => {
     console.error({ error, credential })
 
     if (error.code === 'auth/credential-already-in-use') {
-      useStoreFirebaseAuthError().reset()
       return Object.assign(notification, {
         message: $t('user.exists_credential', { snsName: snsName }),
         color: 'error',
       })
     }
     if (error.code === 'auth/email-already-in-use') {
-      useStoreFirebaseAuthError().reset()
       return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
     }
   } else if (error) {
@@ -524,46 +452,46 @@ onMounted(async () => {
   isSnsLoading.value = additionalUserInfo.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
   await setSNSProfile(userCredential, additionalUserInfo)
   isSnsLoading.value = null
-
-  useStoreUserAdditionalInfo().reset()
 })
 
 const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
-  const storedUser = storedUserStore.storedUser as StoredUser
-
+  // const storedUser = currentUserStore.storedUser as StoredUser
+  if (firebaseUser.value == null || currentUser.value == null || currentUserPersonalInformation.value == null) {
+    throw new Error('User is not logged in')
+  }
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
-      storedUser.userSnsFacebookName = storedUser.userSnsFacebookName || (additionalUserInfo.profile?.name as string)
+      currentUser.value.user_sns_facebook_name =
+        currentUser.value.user_sns_facebook_name || (additionalUserInfo.profile?.name as string)
+      await currentUserStore.updateUser(toRaw(currentUser.value))
       break
     case 'twitter.com':
-      storedUser.userSnsTwitter = additionalUserInfo?.username as string
+      currentUser.value.user_sns_twitter = additionalUserInfo?.username as string
 
       var twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
       if (twitterCredential?.accessToken && twitterCredential.secret) {
-        storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
-        storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
-
-        if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
-          await updateDoc(personalInformationSnapshotRef, {
-            user_sns_twitter_access_token: twitterCredential.accessToken,
-            user_sns_twitter_secret: twitterCredential.secret,
-          })
+        currentUserPersonalInformation.value.user_sns_twitter_access_token =
+          currentUserPersonalInformation.value.user_sns_twitter_access_token || twitterCredential.accessToken
+        currentUserPersonalInformation.value.user_sns_twitter_secret =
+          currentUserPersonalInformation.value.user_sns_twitter_secret || twitterCredential.secret
+        if (
+          currentUserPersonalInformation.value.user_sns_twitter_access_token &&
+          currentUserPersonalInformation.value.user_sns_twitter_secret
+        ) {
+          await currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value))
         }
       }
       break
     case 'google.com':
-      storedUser.userSnsGoogle = additionalUserInfo?.profile?.email as string
-      await updateDoc(personalInformationSnapshotRef, { user_sns_google: storedUser.userSnsGoogle })
+      currentUserPersonalInformation.value.user_sns_google = additionalUserInfo?.profile?.email as string
+      await currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value))
       break
   }
-
-  await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-  storedUserStore.update(storedUser)
 }
 </script>
 
 <template>
-  <v-container v-if="user != null" class="px-1">
+  <v-container v-if="currentUser != null" class="px-1">
     <v-form ref="form" v-model="isValidProfile" @submit.prevent="profileSubmit">
       <v-row justify="center" class="mt-1 mt-md-16 px-1">
         <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
@@ -572,7 +500,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
 
             <v-sheet class="d-flex justify-center mt-4 mb-12">
               <div style="position: relative">
-                <UserAvatar :user="firestoredUser" :size="140" @click="triggerFileInput" />
+                <UserAvatar :user="currentUser" :size="140" @click="triggerFileInput" />
                 <v-btn
                   :icon="mdiUpload"
                   size="small"
@@ -590,7 +518,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
             <v-sheet class="d-flex flex-column ga-7 mb-12">
               <v-text-field
                 :label="$t('profile.user_name')"
-                v-model="user.userName"
+                v-model="currentUser.user_name"
                 variant="outlined"
                 :disabled="isProfileLoading"
                 :rules="[requiredValidator]"
@@ -598,7 +526,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
 
               <v-text-field
                 :label="$t('profile.user_account')"
-                v-model="user.userAccount"
+                v-model="currentUser.user_account"
                 prefix="shokujii.jp/u/"
                 variant="outlined"
                 :disabled="isProfileLoading"
@@ -609,7 +537,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
 
               <v-textarea
                 :label="$t('profile.user_description')"
-                v-model="user.userDescription"
+                v-model="currentUser.user_description"
                 rows="5"
                 variant="outlined"
                 :disabled="isProfileLoading"
@@ -634,18 +562,18 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
             <v-sheet class="d-flex flex-column ga-7 mb-12">
               <v-text-field
                 :label="$t('profile.user_sns_twitter')"
-                v-model="user.userSnsTwitter"
+                v-model="currentUser.user_sns_twitter"
                 prefix="x.com/"
                 variant="outlined"
                 hide-details
-                :disabled="!!user.userSnsTwitter"
+                :disabled="!!currentUser.user_sns_twitter"
                 readonly
                 @click="() => (isOpenTwitterLinkDialog = true)"
               />
 
               <v-text-field
                 :label="$t('profile.user_sns_facebook')"
-                v-model="user.userSnsFacebook"
+                v-model="currentUser.user_sns_facebook"
                 prefix="facebook.com/"
                 variant="outlined"
                 hide-details
@@ -654,7 +582,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
 
               <v-text-field
                 :label="$t('profile.user_sns_instagram')"
-                v-model="user.userSnsInstagram"
+                v-model="currentUser.user_sns_instagram"
                 prefix="instagram.com/"
                 variant="outlined"
                 hide-details
@@ -663,7 +591,7 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
 
               <v-text-field
                 :label="$t('profile.user_sns_website')"
-                v-model="user.userSnsWebsite"
+                v-model="currentUser.user_sns_website"
                 variant="outlined"
                 :disabled="isProfileLoading"
                 :rules="[urlValidator]"
@@ -735,7 +663,9 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
               <label class="align-center">
                 <v-icon :icon="GoogleIcon" size="x-large" class="me-3" />{{ $t('profile.google') }}
               </label>
-              <label v-if="user.userSnsGoogle" class="ml-11 font-weight-bold">{{ user.userSnsGoogle }}</label>
+              <label v-if="currentUserPersonalInformation?.user_sns_google" class="ml-11 font-weight-bold">{{
+                currentUserPersonalInformation.user_sns_google
+              }}</label>
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -768,11 +698,11 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
               <label class="align-center">
                 <v-icon :icon="FacebookIcon" size="x-large" class="me-3" />{{ $t('profile.facebook') }}
               </label>
-              <label v-if="user.userSnsFacebookName" class="ml-11 font-weight-bold">{{
-                user.userSnsFacebookName
-              }}</label>
+              <label v-if="currentUser.user_sns_facebook_name" class="ml-11 font-weight-bold">
+                {{ currentUser.user_sns_facebook_name }}
+              </label>
               <label
-                v-if="user.userSnsFacebookName && !linkedProviderData.includes('facebook.com')"
+                v-if="currentUser.user_sns_facebook_name && !linkedProviderData.includes('facebook.com')"
                 class="ml-11 re-link"
                 v-html="$t('profile.re_link')"
               />
@@ -808,9 +738,11 @@ const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo:
               <label class="align-center">
                 <v-icon :icon="XIcon" size="x-large" class="me-3" />{{ $t('profile.twitter') }}
               </label>
-              <label v-if="user.userSnsTwitter" class="ml-11 font-weight-bold">{{ user.userSnsTwitter }}</label>
+              <label v-if="currentUser.user_sns_twitter" class="ml-11 font-weight-bold">{{
+                currentUser.user_sns_twitter
+              }}</label>
               <label
-                v-if="user.userSnsTwitter && !linkedProviderData.includes('twitter.com')"
+                v-if="currentUser.user_sns_twitter && !linkedProviderData.includes('twitter.com')"
                 class="ml-11 re-link"
                 v-html="$t('profile.re_link')"
               />

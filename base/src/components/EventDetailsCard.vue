@@ -7,7 +7,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
@@ -66,9 +66,9 @@ const isShowQrCode = ref(false)
 const isOpenCancelpolicyDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
-const userStore = useStoreStoredUser()
+const currentUserStore = useCurrentUserStore()
 const openContactDialog = () => {
-  if (!userStore.storedUser) {
+  if (currentUserStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true

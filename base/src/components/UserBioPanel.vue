@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
-import { FirestoredUser } from '@shokujii/base/schemes/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { User } from '@shokujii/common/schemas/User.js'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
 
 const props = defineProps<{
-  userData: FirestoredUser
+  userData: User
   userEmailPending: string | null
   isEditable: boolean | undefined
 }>()
 
-const storedUserStore = useStoreStoredUser()
+const currentUserStore = useCurrentUserStore()
 
 const isEditable = computed(() => props.isEditable ?? false)
 
@@ -21,22 +21,24 @@ const userName = computed(() => props.userData.user_name ?? 'ゲスト')
 const userDescription = computed(() => {
   return (
     props.userData.user_description ||
-    (storedUserStore.storedUser?.userId !== props.userData.user_id ? '' : 'ここに自己紹介文が入ります。')
+    (currentUserStore.firebaseUser?.uid !== props.userData.user_id ? '' : 'ここに自己紹介文が入ります。')
   )
 })
 const twitterUrl = computed(() =>
-  props.userData.user_sns_twitter ? buildTwitterUrl(props.userData.user_sns_twitter) : undefined,
+  props.userData.user_sns_twitter === '' ? undefined : buildTwitterUrl(props.userData.user_sns_twitter),
 )
 
 const facebookUrl = computed(() =>
-  props.userData?.user_sns_facebook ? buildFacebookUrl(props.userData.user_sns_facebook) : undefined,
+  props.userData.user_sns_facebook === '' ? undefined : buildFacebookUrl(props.userData.user_sns_facebook),
 )
 
 const instagramUrl = computed(() =>
-  props.userData?.user_sns_instagram ? buildInstagramUrl(props.userData.user_sns_instagram) : undefined,
+  props.userData.user_sns_instagram === '' ? undefined : buildInstagramUrl(props.userData.user_sns_instagram),
 )
 
-const websiteUrl = computed(() => (props.userData?.user_sns_website ? props.userData.user_sns_website : undefined))
+const websiteUrl = computed(() =>
+  props.userData.user_sns_website === '' ? undefined : props.userData.user_sns_website,
+)
 </script>
 
 <template>

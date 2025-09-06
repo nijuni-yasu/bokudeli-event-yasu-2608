@@ -2,28 +2,25 @@
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
 import { useEventStore, type EventStore, type BokudeliEventMember } from '@shokujii/base/stores/event.js'
-import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
+import { useUserStore } from '@shokujii/base/stores/user.js'
 import { getUserPath } from '@/router/utils'
 import { mdiFacebook, mdiDownload } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { EventOrder, OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
-// import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
-import type { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
+import type { User } from '@shokujii/common/schemas/User'
 
 const { t: $t, d: $d } = useI18n()
 const route = useRoute()
 const eventId = route.params.eventId as string
 
-// const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
-
 const eventStore = useEventStore(eventId) as EventStore
-const menus = computed<Array<[EventOrder, FirestoredUser, OrderMenuType]>>(
+const menus = computed<Array<[EventOrder, User, OrderMenuType]>>(
   () =>
     eventStore.orders?.flatMap((order) => {
-      const user = (useUserStore(order.user_id) as UserStore).user
+      const user = useUserStore(order.user_id).user
       return user == null ? [] : order.menus.flatMap((menu) => Array(menu.count).fill([order, user, menu]))
     }) ?? [],
 )

@@ -8,9 +8,8 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
-import { useStoreCredential } from '@shokujii/base/stores/credential.js'
-import { loginUser, updateCredentialFromUserCredential } from '@shokujii/base/composable/loginUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { loginUser } from '@shokujii/base/composable/loginUser.js'
 import type { Router } from 'vue-router'
 
 const checkUser = async (user: User | null) => {
@@ -63,11 +62,10 @@ const checkUser = async (user: User | null) => {
       console.error('Error fetching redirect result:', { error })
     }
   }
+  const currentUserStore = useCurrentUserStore()
   if (!userCredential && !user) {
     // ログアウト処理
-    const store = useStoreStoredUser()
-    store.$reset()
-    useStoreCredential().$reset()
+    currentUserStore.signOut()
     return
   }
   if (!userCredential && user) {
@@ -76,7 +74,6 @@ const checkUser = async (user: User | null) => {
   }
   if (userCredential) {
     // リダイレクトでのログイン処理
-    await updateCredentialFromUserCredential(userCredential)
     await loginUser(user || userCredential.user)
   }
 }

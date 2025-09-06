@@ -11,7 +11,7 @@ import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter.js'
 import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import Stripe from 'stripe'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
@@ -22,8 +22,8 @@ import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
 const router = useRouter()
-const { storedUser } = storeToRefs(useStoreStoredUser())
-const userId = computed(() => storedUser.value?.userId ?? '')
+const { firebaseUser } = storeToRefs(useCurrentUserStore())
+const userId = computed(() => firebaseUser.value?.uid ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
 const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
 

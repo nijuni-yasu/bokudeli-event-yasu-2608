@@ -2,13 +2,10 @@
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import { getAuth, TwitterAuthProvider, getAdditionalUserInfo, type User, type AdditionalUserInfo } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
-import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
-import { convertStoredUserToFirestoredUser } from '@shokujii/base/schemes/converter.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { useUserStore } from '@shokujii/base/stores/user.js'
 import axios from 'axios'
 import { linkByProviderService, reauthenticateByProviderService } from '@shokujii/base/utils/providerService.js'
-import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
-import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
 import { getProfile } from '@/router/utils'
 
 type ProfileLink = {
@@ -102,19 +99,17 @@ const handleTwitterLink = async () => {
 }
 
 onMounted(async () => {
-  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
-  const error = useStoreFirebaseAuthError().error
+  const additionalUserInfo = useCurrentUserStore().additionalUserInfo
+  const error = useCurrentUserStore().lastFirebaseError
 
   if (error instanceof FirebaseError) {
     const credential = TwitterAuthProvider.credentialFromError(error)
     console.error({ error, credential })
 
     if (error.code === 'auth/credential-already-in-use') {
-      useStoreFirebaseAuthError().reset()
       return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
     }
     if (error.code === 'auth/email-already-in-use') {
-      useStoreFirebaseAuthError().reset()
       return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
     }
   } else {
@@ -131,28 +126,17 @@ onMounted(async () => {
     isLoading.value = false
   } finally {
     isLoading.value = false
-    useStoreFirebaseAuthError().reset()
   }
 })
 
 const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
-  const storedUserStore = useStoreStoredUser()
-  const storedUser = storedUserStore.storedUser
-  const userId = storedUser?.userId
-  if (userId) {
-    const userStore = useUserStore(userId) as UserStore
-    storedUser.userName = additionalUserInfo.profile?.name as string | ''
-    storedUser.userDescription = additionalUserInfo.profile?.description as string | null
-    storedUser.userAccount = additionalUserInfo.username as string | null
-    storedUser.userSnsTwitter = additionalUserInfo.username as string | null
+  const currentUserStore = useCurrentUserStore()
+  const currentUser = currentUserStore.user
 
-    // 元がnullの場合に、firestoreのレコードに空文字が書かれてしまうため、空文字であればnullに変換する
-    storedUser.userPassCode = storedUser.userPassCode || null
-    storedUser.userSnsFacebook = storedUser.userSnsFacebook || null
-    storedUser.userSnsInstagram = storedUser.userSnsInstagram || null
-    storedUser.userSnsWebsite = storedUser.userSnsWebsite || null
-
-    await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+  if (currentUser != null) {
+    currentUser.user_name = (additionalUserInfo.profile?.name as string) ?? ''
+    currentUser.user_description = (additionalUserInfo.profile?.description as string) ?? ''
+    currentUser.user_sns_twitter = (additionalUserInfo.username as string) ?? ''
 
     const photoUrl = additionalUserInfo.profile?.profile_image_url_https as string
     const splitPhotoURL = photoUrl.split('_') as string[]
@@ -163,13 +147,9 @@ const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
     const blob = response.data
 
     // 保存
+    const userStore = useUserStore(currentUser.user_id)
     await userStore.uploadUserImage(blob)
-
-    storedUserStore.update(storedUser)
-
-    // 明示的に削除
-    useStoreUserAdditionalInfo().reset()
-    useStoreFirebaseAuthError().reset()
+    await userStore.updateUser(currentUser)
 
     return await router.push(profileLink)
   }

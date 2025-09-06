@@ -1,100 +1,40 @@
-import { db } from '@shokujii/base/firebase'
-import {
-  convertDocumentDataToStoredUser,
-  convertFirebaseUserToStoredUser,
-  convertStoredUserToFirestoredUser,
-} from '@shokujii/base/schemes/converter'
-import { useStoreCredential } from '@shokujii/base/stores/credential'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
-import { useUserStore, type UserStore } from '@shokujii/base/stores/user'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import axios from 'axios'
-import {
-  FacebookAuthProvider,
-  GoogleAuthProvider,
-  TwitterAuthProvider,
-  OAuthCredential,
-  type User,
-  type UserCredential,
-} from 'firebase/auth'
-import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
-
-export const updateCredentialFromUserCredential = async (redirectResult: UserCredential) => {
-  try {
-    let credential: OAuthCredential | null = null
-    switch (redirectResult.providerId) {
-      case FacebookAuthProvider.PROVIDER_ID:
-        credential = FacebookAuthProvider.credentialFromResult(redirectResult)
-        break
-      case GoogleAuthProvider.PROVIDER_ID:
-        credential = GoogleAuthProvider.credentialFromResult(redirectResult)
-        break
-      case TwitterAuthProvider.PROVIDER_ID:
-        credential = TwitterAuthProvider.credentialFromResult(redirectResult)
-        break
-      default:
-        console.error('Unknown providerId:', redirectResult.providerId)
-        return
-    }
-    if (credential) {
-      const store = useStoreCredential()
-      store.update(credential)
-    }
-  } catch (error) {
-    console.error('Error fetching redirect result:', error)
-  }
-}
+import { FacebookAuthProvider, TwitterAuthProvider, type User } from 'firebase/auth'
+import { watch } from 'vue'
 
 export const loginUser = async (user: User) => {
   // ログイン処理
-  const store = useStoreStoredUser()
-  const storedUser = convertFirebaseUserToStoredUser(user)
+  const currentUserStore = useCurrentUserStore()
 
-  const userSnapShot = await getDoc(doc(db, 'users', storedUser.userId))
-  const personalInformationSnapshot = await getDoc(doc(db, 'users_personal_information', storedUser.userId))
+  await new Promise<void>((resolve) => {
+    let unwatch: (() => void) | null = null
 
-  let currentStoredUser
-  if (userSnapShot == null || !userSnapShot.exists()) {
-    // ユーザーが存在しない場合は新規作成
-    const firestoredUser = convertStoredUserToFirestoredUser(storedUser)
-    firestoredUser.created_at = Timestamp.now()
-    firestoredUser.updated_at = Timestamp.now()
-    await setDoc(userSnapShot.ref, firestoredUser.convertToDocumentData())
-    await setDoc(personalInformationSnapshot.ref, { user_email: storedUser.userEmail })
+    unwatch = watch(
+      () => currentUserStore.user,
+      () => {
+        if (currentUserStore.user != null) {
+          if (unwatch) {
+            unwatch()
+          }
+          resolve()
+        }
+      },
+      { immediate: true },
+    )
+  })
 
-    // Pinia に保存
-    store.update(storedUser)
-    currentStoredUser = storedUser
-  } else {
-    currentStoredUser = convertDocumentDataToStoredUser(userSnapShot.data(), personalInformationSnapshot.data()!)
-    if (!currentStoredUser.userImageUrl) {
-      // 画像がない場合更新する
-      // await setDoc(
-      //   userSnapShot.ref,
-      //   {
-      //     user_image_url: storedUser.userImageUrl === '' ? null : storedUser.userImageUrl,
-      //     updated_at: Timestamp.now(),
-      //   },
-      //   { merge: true },
-      // )
-
-      // Pinia に保存
-      currentStoredUser = {
-        ...currentStoredUser,
-        userImageUrl: storedUser.userImageUrl,
-      }
-    }
-    store.update(currentStoredUser)
-  }
+  const currentUser = currentUserStore.user! // watchでnullでないことが保証されている
 
   // Facebook Login の場合は、画像を Storage にアップロードする
   // ただし、Facebook Login の度に画像を Storage にアップロードするわけにはいかないので、
   // 既存の画像がない場合のみ
   // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
   if (
-    currentStoredUser.userImageUrl == null ||
-    currentStoredUser.userImageUrl === '' ||
-    currentStoredUser.userImageUrl.startsWith('https://graph.facebook.com') ||
-    currentStoredUser.userImageUrl.startsWith('https://pbs.twimg.com')
+    currentUser.user_image_url == null ||
+    currentUser.user_image_url === '' ||
+    currentUser.user_image_url.startsWith('https://graph.facebook.com') ||
+    currentUser.user_image_url.startsWith('https://pbs.twimg.com')
   ) {
     for (const provider of user.providerData) {
       switch (provider.providerId) {
@@ -114,8 +54,7 @@ export const loginUser = async (user: User) => {
                 responseType: 'blob',
               })
               const blob = response2.data
-              const userStore = useUserStore(storedUser.userId) as UserStore
-              await userStore.uploadUserImage(blob)
+              await currentUserStore.uploadUserImage(blob)
             })
           }
           break
@@ -131,8 +70,7 @@ export const loginUser = async (user: User) => {
             // ログインに影響が出ないよう、非同期で画像を取得する
             axios.get(photoURL, { responseType: 'blob' }).then(async (response) => {
               const blob = response.data
-              const userStore = useUserStore(storedUser.userId) as UserStore
-              await userStore.uploadUserImage(blob)
+              await currentUserStore.uploadUserImage(blob)
             })
           }
           break

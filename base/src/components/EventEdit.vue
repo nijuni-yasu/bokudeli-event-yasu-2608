@@ -13,7 +13,7 @@ import { BokudeliEvent, createNewEvent } from '@shokujii/base/stores/event.js'
 import { usePartnerStore, type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useRouter } from 'vue-router'
 import { getCommunityPath } from '@/router/utils'
 import { calculateDistance, fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
@@ -102,9 +102,7 @@ const selectedShop = computed((): BokudeliPartnerShop | null => {
   return shops.value.find((shop) => shop.shop_id === event.value?.shop_id) ?? null
 })
 
-// 作成・更新のユーザーID取得
-const userStore = useStoreStoredUser()
-const handleUserId = userStore.storedUser?.userId ?? ''
+const currentUserStore = useCurrentUserStore()
 
 // @ts-expect-error parseInt can take no string params, then return NaN
 const stepQuery = Number.parseInt(props.step)
@@ -261,6 +259,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   if (event.value == null || communityId == null) {
     return null
   }
+  const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
   if (props.eventId == null) {
     if (coverImage.value == null) {
       return null

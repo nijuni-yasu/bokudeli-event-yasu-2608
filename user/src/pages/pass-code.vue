@@ -3,14 +3,12 @@ import { db, functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import { getAuth, signInWithCustomToken, signOut, updateEmail, type User } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { collection, doc, getDocs, query, where, updateDoc, Timestamp } from 'firebase/firestore'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
-import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { getLogin, getProfile } from '@/router/utils'
-import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
-import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
+import { User as BokudeliUser } from '@shokujii/common/schemas/User.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -34,8 +32,6 @@ watch(passCode, async (newValue) => {
 })
 
 const login = async () => {
-  useStoreUserAdditionalInfo().reset()
-  useStoreFirebaseAuthError().reset()
   const auth = getAuth()
   await signOut(auth)
 
@@ -113,40 +109,48 @@ const submit = async () => {
     const querySnapshot = await getDocs(q)
 
     if (!querySnapshot.empty) {
-      const user: FirestoredUser[] = []
+      const users: BokudeliUser[] = []
       querySnapshot.forEach((doc) => {
-        const firestoredUser = new FirestoredUser(doc.data())
-        user.push(firestoredUser)
+        const user = new BokudeliUser(doc.id, doc.data())
+        users.push(user)
       })
 
-      if (isNew === undefined) {
-        const currentUser = getAuth().currentUser
-        const storedUserStore = useStoreStoredUser()
-        const { storedUser } = storeToRefs(storedUserStore)
-        const userRef = doc(db, 'users', storedUser.value?.userId as string)
-        const personalInformationSnapshotRef = doc(db, 'users_personal_information', storedUser.value?.userId as string)
+      const currentUserStore = useCurrentUserStore()
+      const currentUser = currentUserStore.user
+      const currentUserPersonalInformation = currentUserStore.personalInformation
+      const firebaseUser = currentUserStore.firebaseUser
+      if (firebaseUser == null || currentUser == null || currentUserPersonalInformation == null) {
+        throw new Error('Not logged in')
+      }
 
-        await updateEmail(currentUser as User, userEmail)
+      if (isNew === undefined) {
+        await updateEmail(toRaw(firebaseUser), userEmail)
           .then(async () => {
-            await updateDoc(userRef, {
-              verified_at: Timestamp.now(),
-            })
-            await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
+            currentUser.verified_at = Date.now()
+            currentUserPersonalInformation.user_email = userEmail
+            currentUserPersonalInformation.user_email_pending = ''
+            await Promise.all([
+              currentUserStore.updateUser(toRaw(currentUser)),
+              currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation)),
+            ])
           })
           .catch(async (error) => {
             console.error(error)
             if (error.code === 'auth/requires-recent-login') {
               const getCustomToken = httpsCallable(functions, 'get_custom_token')
-              const result = await getCustomToken({ user_email: currentUser?.email })
+              const result = await getCustomToken({ user_email: currentUserPersonalInformation.user_email })
               const customToken = result.data as string
 
               await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
                 await updateEmail(userCredential.user as User, userEmail)
                   .then(async () => {
-                    await updateDoc(userRef, {
-                      verified_at: Timestamp.now(),
-                    })
-                    await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
+                    currentUser.verified_at = Date.now()
+                    currentUserPersonalInformation.user_email = userEmail
+                    currentUserPersonalInformation.user_email_pending = ''
+                    await Promise.all([
+                      currentUserStore.updateUser(toRaw(currentUser)),
+                      currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation)),
+                    ])
                   })
                   .catch((error) => {
                     // 基本的にこのスコープのエラーが出る想定は無い
@@ -159,7 +163,7 @@ const submit = async () => {
           })
       }
 
-      const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
+      const isProfileCompleted = users[0].user_name && users[0].user_description && users[0].user_image_url
       if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
         return await router.push({
           path: getProfile(),

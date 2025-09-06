@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { db, functions } from '@shokujii/base/firebase.js'
+import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
@@ -16,17 +16,10 @@ import {
   type AdditionalUserInfo,
   OAuthCredential,
 } from 'firebase/auth'
-import { convertStoredUserToFirestoredUser } from '@shokujii/base/schemes/converter.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getCredentialWithPopup, signInByProviderService } from '@shokujii/base/utils/providerService.js'
-import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
-import { useStoreUserCredential } from '@shokujii/base/stores/userCredential.js'
-import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
-import type { StoredUser } from '@shokujii/base/schemes/storedUser.js'
-import { type UserStore, useUserStore } from '@shokujii/base/stores/user.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getProfile } from '@/router/utils'
-import { doc, Timestamp, updateDoc } from 'firebase/firestore'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 type CreateUserRequest = {
@@ -291,81 +284,81 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   const email = userCredential.user.email ?? (additionalUserInfo?.profile?.email as string)
   const isNewUser = additionalUserInfo?.isNewUser
 
-  const storedUserStore = useStoreStoredUser()
+  const currentUserStore = useCurrentUserStore()
 
   await new Promise<void>((resolve) => {
     let unwatch: (() => void) | null = null
 
     unwatch = watch(
-      () => storedUserStore.storedUser,
-      (storedUser) => {
-        if (storedUser) {
-          if (unwatch) unwatch()
+      () => [currentUserStore.user, currentUserStore.personalInformation],
+      () => {
+        if (currentUserStore.user != null && currentUserStore.personalInformation != null) {
+          if (unwatch) {
+            unwatch()
+          }
           resolve()
         }
       },
       { immediate: true },
     )
   })
-  const storedUser = storedUserStore.storedUser as StoredUser
-  const userStore = useUserStore(storedUser.userId) as UserStore
-  const personalInformationSnapshotRef = doc(db, 'users_personal_information', storedUser.userId as string)
+  const currentUser = currentUserStore.user! // watch で null でないことを保証済み
+  const currentUserPersonalInformation = currentUserStore.personalInformation! // watch で null でないことを保証済み
 
   switch (additionalUserInfo.providerId) {
     case 'facebook.com':
-      storedUser.userSnsFacebookName = storedUser.userSnsFacebookName || (additionalUserInfo.profile?.name as string)
+      currentUser.user_sns_facebook_name =
+        currentUser.user_sns_facebook_name || (additionalUserInfo.profile?.name as string)
 
-      if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
-        storedUser.verifiedAt = Timestamp.now().toDate()
+      if (!currentUserPersonalInformation.user_email_pending && !currentUser.verified_at) {
+        currentUser.verified_at = Date.now()
       }
 
-      storedUserStore.update(storedUser)
-      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+      await currentUserStore.updateUser(currentUser)
       break
-    case 'twitter.com':
-      storedUser.userSnsTwitter = storedUser.userSnsTwitter || (additionalUserInfo?.username as string)
-      storedUser.userName = storedUser.userName || (additionalUserInfo.profile?.name as string)
-      storedUser.userDescription =
-        storedUser.userDescription || (additionalUserInfo.profile?.description as string | null)
-      storedUser.userAccount = storedUser.userAccount || (additionalUserInfo.username as string | null)
+    case 'twitter.com': {
+      currentUser.user_sns_twitter = currentUser.user_sns_twitter || (additionalUserInfo?.username as string)
+      currentUser.user_name = currentUser.user_name || (additionalUserInfo.profile?.name as string)
+      currentUser.user_description = currentUser.user_description || (additionalUserInfo.profile?.description as string)
 
-      var twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
+      const twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
       if (twitterCredential?.accessToken && twitterCredential.secret) {
-        storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
-        storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
+        currentUserPersonalInformation.user_sns_twitter_access_token =
+          currentUserPersonalInformation.user_sns_twitter_access_token || twitterCredential.accessToken
+        currentUserPersonalInformation.user_sns_twitter_secret =
+          currentUserPersonalInformation.user_sns_twitter_secret || twitterCredential.secret
 
-        if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
-          await updateDoc(personalInformationSnapshotRef, {
-            user_sns_twitter_access_token: twitterCredential.accessToken,
-            user_sns_twitter_secret: twitterCredential.secret,
-          })
+        if (
+          currentUserPersonalInformation.user_sns_twitter_access_token &&
+          currentUserPersonalInformation.user_sns_twitter_secret
+        ) {
+          await currentUserStore.updatePersonalInformation(currentUserPersonalInformation)
         }
       }
 
-      if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
-        storedUser.verifiedAt = Timestamp.now().toDate()
+      if (!currentUserPersonalInformation.user_email_pending && !currentUser.verified_at) {
+        currentUser.verified_at = Date.now()
       }
 
-      storedUserStore.update(storedUser)
-      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+      await currentUserStore.updateUser(currentUser)
       break
+    }
     case 'google.com':
-      storedUser.userSnsGoogle = storedUser.userSnsGoogle || (additionalUserInfo?.profile?.email as string)
+      currentUserPersonalInformation.user_sns_google =
+        currentUserPersonalInformation.user_sns_google || (additionalUserInfo?.profile?.email as string)
 
-      if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
-        storedUser.verifiedAt = Timestamp.now().toDate()
+      if (!currentUserPersonalInformation.user_email_pending && !currentUser.verified_at) {
+        currentUser.verified_at = Date.now()
       }
 
-      storedUserStore.update(storedUser)
-      await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-      await updateDoc(personalInformationSnapshotRef, { user_sns_google: storedUser.userSnsGoogle })
+      await Promise.all([
+        currentUserStore.updatePersonalInformation(currentUserPersonalInformation),
+        currentUserStore.updateUser(currentUser),
+      ])
       break
     default:
       break
   }
-
-  useStoreUserAdditionalInfo().reset()
-  useStoreFirebaseAuthError().reset()
 
   // メールアドレスが無い場合はメールアドレス設定へ
   if (email === '' || !email) {
@@ -379,7 +372,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   }
 
   // verifiedAtがnullかつuserEmailPendingがnullならパスコード認証を行う
-  if (!storedUser.verifiedAt && !storedUser.userEmailPending) {
+  if (!currentUser.verified_at && !currentUserPersonalInformation.user_email_pending) {
     const passCode = generatePassCode()
 
     const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, 'create_or_update_user')
@@ -400,7 +393,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   }
 
   // プロフィールが埋まっていれば
-  if (storedUser?.userName && storedUser?.userDescription && storedUser?.userImageUrl) {
+  if (currentUser.user_name && currentUser.user_description && currentUser.user_image_url) {
     if (isNewUser) {
       // 初回登録ユーザーならプロフィール設定ページへ
       return await router.push({
@@ -429,10 +422,10 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
 }
 
 onMounted(async () => {
-  const userCredential = useStoreUserCredential().userCredential
-  const additionalUserInfo = useStoreUserAdditionalInfo().additionalUserInfo
-  const error = useStoreFirebaseAuthError().error
-  if (userCredential !== undefined && additionalUserInfo !== null) {
+  const userCredential = useCurrentUserStore().userCredential
+  const additionalUserInfo = useCurrentUserStore().additionalUserInfo
+  const error = useCurrentUserStore().lastFirebaseError
+  if (userCredential !== null && additionalUserInfo !== null) {
     try {
       isSnsLoading.value = additionalUserInfo.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
       await transitionJudge(userCredential, additionalUserInfo)
@@ -477,13 +470,12 @@ onMounted(async () => {
       await linkWithCredential(userCredential.user, credential)
         .then(async (userCredential) => {
           // アカウントリンク時、メールアドレス変更中でなければverifiedAtを埋める
-          const storedUserStore = useStoreStoredUser()
-          const storedUser = storedUserStore.storedUser as StoredUser
-          if (!storedUser.userEmailPending && !storedUser.verifiedAt) {
-            storedUser.verifiedAt = Timestamp.now().toDate()
-            storedUserStore.update(storedUser)
-            const userStore = useUserStore(storedUser.userId) as UserStore
-            await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+          const currentUserStore = useCurrentUserStore()
+          const currentUser = currentUserStore.user
+          const currentUserPersonalInformation = currentUserStore.personalInformation
+          if (currentUser != null && !currentUserPersonalInformation?.user_email_pending && !currentUser?.verified_at) {
+            currentUser.verified_at = Date.now()
+            await currentUserStore.updateUser(currentUser)
           }
 
           const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
@@ -526,13 +518,12 @@ const handleLinkWithCredential = async () => {
     await linkWithCredential(userCredential.user, oAuthCredential.value)
       .then(async (userCredential) => {
         // アカウントリンク時、メールアドレス変更中でなければverifiedAtを埋める
-        const storedUserStore = useStoreStoredUser()
-        const storedUser = storedUserStore.storedUser as StoredUser
-        if (storedUser.userEmailPending === null) {
-          storedUser.verifiedAt = Timestamp.now().toDate()
-          storedUserStore.update(storedUser)
-          const userStore = useUserStore(storedUser.userId) as UserStore
-          await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+        const currentUserStore = useCurrentUserStore()
+        const currentUser = currentUserStore.user
+        const currentUserPersonalInformation = currentUserStore.personalInformation
+        if (currentUser != null && currentUserPersonalInformation?.user_email_pending == null) {
+          currentUser.verified_at = Date.now()
+          await currentUserStore.updateUser(currentUser)
         }
 
         const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo

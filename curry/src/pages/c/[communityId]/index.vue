@@ -11,7 +11,7 @@ import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/sche
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import {
   useCommunityStore,
   type CommunityStore,
@@ -80,9 +80,9 @@ const message = ref('')
 const isUrlLoading = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
-const userStore = useStoreStoredUser()
+const userStore = useCurrentUserStore()
 const openContactDialog = () => {
-  if (!userStore.storedUser) {
+  if (userStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true

@@ -9,7 +9,6 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
-import { getAuth } from 'firebase/auth'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
@@ -20,7 +19,7 @@ import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoi
 import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { getInvoicePdf } from '@shokujii/base/utils/pdf.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -55,18 +54,23 @@ const notification = useNotification()
 
 const { t: $t } = useI18n()
 
-const isOwner = computed(() => {
-  const uid = getAuth().currentUser?.uid
-  return uid != null ? userId === uid : false
-})
-
 const { user } = storeToRefs(useUserStore(userId))
-const storedUserStore = useStoreStoredUser()
-const { storedUser } = storeToRefs(storedUserStore)
-const emailPending = storedUser.value?.userEmailPending as string | null
+const { firebaseUser, personalInformation } = storeToRefs(useCurrentUserStore())
+
 const tabs = ref(null)
 const cancelOperatingOrder = ref<EventOrder | null>(null)
 
+const isOwner = computed(() => {
+  const uid = firebaseUser.value?.uid
+  return uid != null ? userId === uid : false
+})
+
+const emailPending = computed(() => {
+  if (isOwner.value) {
+    return personalInformation.value?.user_email_pending ?? null
+  }
+  return null
+})
 // オーダー情報の取得
 // TODO: 直接 firebase を叩くべきではないので、store を使えるようにする
 const fetchOrders = async () =>

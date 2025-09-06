@@ -2,9 +2,10 @@
 import { reactive } from 'vue'
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getUserPath } from '@/router/utils'
 import { mdiEmail } from '@mdi/js'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps<{
   modelValue: boolean
@@ -24,25 +25,24 @@ const state = reactive({
   isSending: false as boolean,
 })
 
-const userStore = useStoreStoredUser()
+const { user: currentUser, personalInformation: currentUserPersonalInformation } = storeToRefs(useCurrentUserStore())
 
 const onFormSubmit = async () => {
   state.isSending = true
   try {
-    const userId = userStore.storedUser?.userId
-    if (userId != null) {
+    if (currentUser.value != null && currentUserPersonalInformation.value != null) {
       const communityContact = httpsCallable(functions, 'communityContact')
       const host = import.meta.env.VITE_ORIGIN_HOST
-      const path = getUserPath(userId)
+      const path = getUserPath(currentUser.value.id)
       try {
         await communityContact({
           community_id: props.communityId,
           community_name: props.communityName,
           mail_title: state.mailTitle,
           mail_message: state.mailMessage,
-          user_id: userStore.storedUser?.userId,
-          user_name: userStore.storedUser?.userName,
-          user_email: userStore.storedUser?.userEmail,
+          user_id: currentUser.value.id,
+          user_name: currentUser.value.user_name,
+          user_email: currentUserPersonalInformation.value.user_email,
           user_profile_url: `${host}${path}`,
         })
         window.alert('送信完了しました')

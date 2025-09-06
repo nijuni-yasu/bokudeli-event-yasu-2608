@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'
@@ -41,7 +41,7 @@ const closeDialog = (isAddCart: boolean) => {
   isOpen.value = false
 }
 
-const userStore = useStoreStoredUser()
+const currentUserStore = useCurrentUserStore()
 
 const login = () => {
   router.push({
@@ -53,12 +53,12 @@ const login = () => {
 }
 
 const addCart = async () => {
-  if (userStore.storedUser == null) {
+  if (currentUserStore.firebaseUser == null) {
     openConfirmDialog()
     return
   }
-  if (userStore.storedUser == null || eventStore.event == null) {
-    console.warn('userStore.storedUser or eventStore.event is null')
+  if (currentUserStore.firebaseUser == null || eventStore.event == null) {
+    console.warn('currentUserStore.firebaseUser or eventStore.event is null')
     return
   }
   const menu_id = props.menu.id

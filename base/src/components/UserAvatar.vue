@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
-import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
 import avatar1 from '@/assets/images/avatars/default_profile.jpeg'
+import { User } from '@shokujii/common/schemas/User.js'
+import { buildThumbnailsLinks } from '@shokujii/base/utils/buildThumbnailsLinks.js'
 
-const props = defineProps<{ user: FirestoredUser | string | null; size?: number }>()
+const props = defineProps<{ user: User | string | null; size?: number }>()
 
 const calcAvatarSize = (size: number | undefined) => {
   if (size == null) return 'large'
@@ -15,10 +16,15 @@ const calcAvatarSize = (size: number | undefined) => {
 
 const hasError = ref(false)
 
-const avatar = computed(
-  // @ts-expect-error
-  () => props.user?.user_thumb_image_urls?.[calcAvatarSize(size.value)] ?? props.user?.user_image_url ?? avatar1,
-)
+const avatar = computed(() => {
+  if (typeof props.user === 'string') {
+    return props.user
+  } else if (props.user === null || props.user.user_image_url === '') {
+    return avatar1
+  }
+  const thubnails = buildThumbnailsLinks(props.user.user_id, new URL(props.user.user_image_url))
+  return thubnails?.[calcAvatarSize(size.value)] ?? props.user.user_image_url
+})
 const initial = computed(() => (typeof props.user === 'string' ? props.user.slice(0, 1) : undefined))
 
 const avatarElement = ref<VAvatar>()
