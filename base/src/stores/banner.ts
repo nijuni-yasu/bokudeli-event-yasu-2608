@@ -1,6 +1,5 @@
-import { ref, computed, type ComputedRef } from 'vue'
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import type { StateTree, Store } from 'pinia'
 import {
   doc,
   onSnapshot,
@@ -23,16 +22,8 @@ const bannersConverter: FirestoreDataConverter<Banners> = {
   },
 }
 
-type BannersStoreState = object & StateTree
-
-type BannersStoreGetters = {
-  banners: ComputedRef<Banner[] | typeof FIRESTORE_LOADING | undefined>
-}
-
-type BannersStoreAction = object
-
-export type BannersStore = Store<string, BannersStoreState, BannersStoreGetters, BannersStoreAction>
-export const useBannersStore = (target: Banners | string): BannersStore => {
+export type BannersStore = ReturnType<typeof useBannersStore>
+export const useBannersStore = (target: Banners | string) => {
   let bannersId: string
   if (target instanceof Banners) {
     bannersId = target.id

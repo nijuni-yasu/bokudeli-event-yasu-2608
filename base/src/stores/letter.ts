@@ -1,6 +1,5 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { StateTree, Store } from 'pinia'
 import { Letter } from '@shokujii/common/schemas/CommunityLetter.js'
 import {
   getFirestore,
@@ -40,20 +39,8 @@ export const letterConverter: FirestoreDataConverter<BokudeliLetter> = {
   },
 }
 
-type LetterStoreState = {
-  letter: Ref<BokudeliLetter | null>
-} & StateTree
-
-type LetterStoreGetters = object
-
-type LetterStoreAction = {
-  updateLetter: (data: BokudeliLetter) => Promise<void>
-  copyLetter: () => Promise<BokudeliLetter>
-  unsubscribe: () => void
-}
-
-export type LetterStore = Store<string, LetterStoreState, LetterStoreGetters, LetterStoreAction>
-export const useLetterStore = (communityAccount: string, target: string | BokudeliLetter): LetterStore => {
+export type LetterStore = ReturnType<typeof useLetterStore>
+export const useLetterStore = (communityAccount: string, target: string | BokudeliLetter) => {
   let _letterRef: DocumentReference<BokudeliLetter> | null = null
   let letterId: string
   if (target instanceof BokudeliLetter) {
@@ -61,66 +48,63 @@ export const useLetterStore = (communityAccount: string, target: string | Bokude
   } else {
     letterId = target
   }
-  const store = defineStore<string, LetterStoreState & LetterStoreGetters & LetterStoreAction>(
-    `/communities/${communityAccount}/letters/${letterId}`,
-    () => {
-      const getLetterRef = async () => {
-        if (_letterRef == null) {
-          const communitySnapshot = await getDocs(
-            query(
-              collectionGroup(db, 'letters'),
-              where('community_account', '==', communityAccount),
-              where('letter_id', '==', letterId),
-            ).withConverter(letterConverter),
-          )
-          _letterRef = communitySnapshot.docs[0]!.ref
-        }
-        return _letterRef
+  const store = defineStore(`/communities/${communityAccount}/letters/${letterId}`, () => {
+    const getLetterRef = async () => {
+      if (_letterRef == null) {
+        const communitySnapshot = await getDocs(
+          query(
+            collectionGroup(db, 'letters'),
+            where('community_account', '==', communityAccount),
+            where('letter_id', '==', letterId),
+          ).withConverter(letterConverter),
+        )
+        _letterRef = communitySnapshot.docs[0]!.ref
       }
+      return _letterRef
+    }
 
-      const letter = ref<BokudeliLetter | null>(null)
+    const letter = ref<BokudeliLetter | null>(null)
 
-      let unsubscribeLetter: Unsubscribe | null = null
-      const subscribeLetter = async () => {
-        if (unsubscribeLetter == null) {
-          unsubscribeLetter = onSnapshot(await getLetterRef(), (letterDoc) => {
-            try {
-              letter.value = letterDoc.data() ?? null
-            } catch (err) {
-              console.error(err)
-            }
-          })
-        }
+    let unsubscribeLetter: Unsubscribe | null = null
+    const subscribeLetter = async () => {
+      if (unsubscribeLetter == null) {
+        unsubscribeLetter = onSnapshot(await getLetterRef(), (letterDoc) => {
+          try {
+            letter.value = letterDoc.data() ?? null
+          } catch (err) {
+            console.error(err)
+          }
+        })
       }
-      subscribeLetter()
+    }
+    subscribeLetter()
 
-      const updateLetter = async (data: BokudeliLetter) => {
-        await setDoc(await getLetterRef(), data)
+    const updateLetter = async (data: BokudeliLetter) => {
+      await setDoc(await getLetterRef(), data)
+    }
+
+    const copyLetter = async (): Promise<BokudeliLetter> => {
+      const letterRef = await getLetterRef()
+      const newLetter = new BokudeliLetter(letterRef.parent.parent!.id, null, letter.value!)
+      newLetter.scheduled_at = Date.now()
+      delete newLetter.sent_at
+      return newLetter
+    }
+
+    const unsubscribe = () => {
+      if (unsubscribeLetter != null) {
+        unsubscribeLetter()
+        unsubscribeLetter = null
       }
+    }
 
-      const copyLetter = async (): Promise<BokudeliLetter> => {
-        const letterRef = await getLetterRef()
-        const newLetter = new BokudeliLetter(letterRef.parent.parent!.id, null, letter.value!)
-        newLetter.scheduled_at = Date.now()
-        delete newLetter.sent_at
-        return newLetter
-      }
+    return {
+      letter,
+      updateLetter,
+      copyLetter,
+      unsubscribe,
+    }
+  })
 
-      const unsubscribe = () => {
-        if (unsubscribeLetter != null) {
-          unsubscribeLetter()
-          unsubscribeLetter = null
-        }
-      }
-
-      return {
-        letter,
-        updateLetter,
-        copyLetter,
-        unsubscribe,
-      }
-    },
-  )
-
-  return store() as LetterStore
+  return store()
 }

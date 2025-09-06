@@ -1,28 +1,15 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { StateTree, Store } from 'pinia'
 import { format } from 'date-fns'
 import { doc, updateDoc, onSnapshot, DocumentReference, type Unsubscribe } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
 import { db, storage } from '@shokujii/base/firebase.js'
 import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
 
-type UserStoreState = {
-  exists: Ref<boolean | null>
-  user: Ref<FirestoredUser | null>
-} & StateTree
-
-type UserStoreAction = {
-  updateUser: (data: FirestoredUser) => Promise<void>
-  uploadUserImage: (file: File | Blob) => Promise<void>
-  subscribe: () => void
-  unsubscribe: () => void
-}
-
-export type UserStore = Store<string, UserStoreState, Record<string, never>, UserStoreAction>
+export type UserStore = ReturnType<typeof useUserStore>
 
 export const useUserStore = (userId: string) => {
-  const store = defineStore<string, UserStoreState & UserStoreAction>(`/users/${userId}`, () => {
+  const store = defineStore(`/users/${userId}`, () => {
     const userRef: DocumentReference = doc(db, 'users', userId)
     const exists = ref<boolean | null>(null)
     const user = ref<FirestoredUser | null>(null)
