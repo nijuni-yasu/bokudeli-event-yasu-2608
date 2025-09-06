@@ -534,12 +534,30 @@ const submit = async () => {
           <v-card-text>
             <v-text-field v-model="shop.shop_email" readonly outlined dense :label="$t('email')" />
           </v-card-text>
-          <v-card-text v-for="i in 3" :key="`sub_email_${i}`">
+          <v-card-text>
             <v-text-field
-              v-model="/* @ts-ignore */ shop[`shop_email_sub${i}`]"
+              v-model="shop['shop_email_sub1']"
               outlined
               dense
-              :label="$t('shop.email_sub_n', [i])"
+              :label="$t('shop.email_sub_n', [1])"
+              :rules="[emailValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop['shop_email_sub2']"
+              outlined
+              dense
+              :label="$t('shop.email_sub_n', [2])"
+              :rules="[emailValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop['shop_email_sub3']"
+              outlined
+              dense
+              :label="$t('shop.email_sub_n', [3])"
               :rules="[emailValidator]"
             />
           </v-card-text>

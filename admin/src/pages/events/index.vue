@@ -36,11 +36,9 @@ const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
 if (shop == null) {
   window.alert($t('alert.make_shop'))
   router.push(getShopPath())
-  throw new Error()
 } else if (shop.community_account == null) {
   window.alert($t('alert.make_community_account'))
   router.push(getCommunityPath())
-  throw new Error()
 }
 
 const numOfColumns = computed(() => {
@@ -56,9 +54,13 @@ const numOfColumns = computed(() => {
   }
 })
 
+// ページ遷移すると query 持ちのリクエストが失敗するので filter に null, count に 0 を渡す
+// TODO 原因調査
 const eventListStore = useEventListStore(
-  [where('community_account', '==', shop.community_account), orderBy('event_start_datetime', 'desc')],
-  numOfColumns.value,
+  shop == null
+    ? null
+    : [where('community_account', '==', shop.community_account), orderBy('event_start_datetime', 'desc')],
+  shop == null ? 0 : numOfColumns.value,
 )
 
 const events = computed(
