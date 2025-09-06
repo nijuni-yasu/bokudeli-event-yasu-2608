@@ -50,8 +50,7 @@ const EventDbSchema = z.object({
   shop_id: z.string().nonempty(),
   shop_name: z.string().nonempty(),
   event_name: z.string().nonempty(),
-  // 本来 nonempty をつけたいが現在の登録フローでは一瞬 empty 状態になってしまうので一時的に解除 TODO 直す
-  event_cover_url: z.string() /*.nonempty().url()*/,
+  event_cover_url: z.string().nonempty().url(),
   event_payment: z.enum(EVENT_PAYMENT_VALUES),
   event_max_people: z.number().int().positive(),
   organizer_fullname: z.string().nonempty(),
