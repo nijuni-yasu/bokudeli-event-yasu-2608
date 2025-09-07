@@ -293,10 +293,10 @@ const inviteManager = async () => {
                 </v-btn>
                 <v-btn
                   v-if="
-                    event.event_status.value == 'applying_reservation' ||
-                    event.event_status.value == 'accepting_order' ||
-                    event.event_status.value == 'order_closed' ||
-                    event.event_status.value === 'full'
+                    event.calculatedEventStatus == 'applying_reservation' ||
+                    event.calculatedEventStatus == 'accepting_order' ||
+                    event.calculatedEventStatus == 'order_closed' ||
+                    event.calculatedEventStatus === 'full'
                   "
                   class="ml-1"
                   color="white"
