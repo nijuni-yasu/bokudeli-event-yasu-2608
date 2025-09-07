@@ -215,16 +215,14 @@ export const useEventStore = (target: string | BokudeliEvent) => {
               return Reflect.get(target, prop, receiver)
             },
           })
-          // TODO 雑なキャストを修正する
-          return member.store.user == null
-            ? ({
-                user_id: member.user_id,
-                orders,
-              } as BokudeliEventMember)
-            : {
-                ...member.store.user,
-                orders,
-              }
+          const m: BokudeliEventMember =
+            member.store.user == null
+              ? // User をローディングする間にダミーの写真を表示するためにダミーユーザーを作成するが、
+                // この一時代入は良くないので、明示的にローディング中であることを判断できる仕組みが必要
+                new BokudeliEventMember(member.user_id, { user_name: '' })
+              : new BokudeliEventMember(member.user_id, member.store.user)
+          m.orders = orders
+          return m
         }) ?? null,
     )
 
