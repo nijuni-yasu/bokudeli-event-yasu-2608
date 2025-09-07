@@ -11,9 +11,13 @@ const UserDbSchema = z.object({
   user_description: NonEmptyStringSchema.optional(),
   user_image_url: NonEmptyStringSchema.optional(),
   user_sns_facebook: NonEmptyStringSchema.optional(),
+  user_sns_facebook_name: NonEmptyStringSchema.optional(),
   user_sns_twitter: NonEmptyStringSchema.optional(),
   user_sns_instagram: NonEmptyStringSchema.optional(),
   user_sns_website: NonEmptyStringSchema.optional(),
+  user_pass_code: NonEmptyStringSchema.optional(),
+  user_account: NonEmptyStringSchema.optional(),
+  verified_at: TimestampSchema.optional(),
 })
 
 const UserAppSchema = z.object({
@@ -21,9 +25,14 @@ const UserAppSchema = z.object({
   user_description: z.string().default(''),
   user_image_url: z.string().default(''),
   user_sns_facebook: z.string().default(''),
+  user_sns_facebook_name: z.string().default(''),
   user_sns_twitter: z.string().default(''),
   user_sns_instagram: z.string().default(''),
   user_sns_website: z.string().default(''),
+  user_pass_code: z.string().default(''),
+  user_account: z.string().default(''),
+  // Optional
+  verified_at: EpochMillisSchema.optional(),
 })
 
 const convertToDb = (user: User) => {
@@ -44,9 +53,14 @@ export class User {
   user_description!: string
   user_image_url!: string
   user_sns_facebook!: string
+  user_sns_facebook_name!: string
   user_sns_twitter!: string
   user_sns_instagram!: string
   user_sns_website!: string
+  user_pass_code!: string
+  user_account!: string
+  // Optional
+  verified_at?: number
 
   constructor(id: string, src: Partial<User>) {
     Object.assign(this, UserAppSchema.parse(src))
