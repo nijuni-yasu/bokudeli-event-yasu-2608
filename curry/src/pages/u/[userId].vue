@@ -103,7 +103,7 @@ const cancel = async (event: BokudeliEvent, order: EventOrder) => {
       await stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
       orderSnapshots.value = await fetchOrders()
       notification.show($t('user.canceled'), 'success')
-    } else if (event.event_payment == 'user_on_day' || event.event_payment == 'community_bill') {
+    } else if (event.event_payment == 'community_bill') {
       // それ以外は事前決済してないのでStripeの返金処理はなし
       const eventStore = useEventStore(order.event_id)
       eventStore.updateOrderStatus(order, 'canceled')

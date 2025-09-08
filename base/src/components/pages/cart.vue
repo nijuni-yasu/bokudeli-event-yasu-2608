@@ -194,9 +194,6 @@ const paymentMessage = (event: BokudeliEvent) => {
     case 'user_advance': {
       return $t('cart.confirm_order_credit_card')
     }
-    case 'user_on_day': {
-      return $t('cart.confirm_order_participant_on_day')
-    }
     case 'community_bill': {
       return $t('cart.confirm_order_community_bill')
     }
