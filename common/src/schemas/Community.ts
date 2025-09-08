@@ -54,7 +54,7 @@ export class Community {
   community_name: string = ''
   community_account: string = ''
   is_public: boolean = true
-  is_approved: boolean = false
+  is_approved: boolean = true
   is_show_member: boolean = true
   subdomain_tags: string[] = []
   community_manager_fullname: string = ''
