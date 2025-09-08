@@ -4,6 +4,10 @@ resource "google_iam_workload_identity_pool" "github_pool" {
 
   workload_identity_pool_id = "github-pool"
   display_name              = "GitHub Actions Pool"
+
+  depends_on = [
+    google_project_service.default
+  ]
 }
 
 resource "google_iam_workload_identity_pool_provider" "github_provider" {
@@ -22,11 +26,19 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }
+
+  depends_on = [
+    google_project_service.default
+  ]
 }
 
 resource "google_service_account" "firebase_deploy" {
   account_id   = "firebase-deploy"
   display_name = "Firebase Deploy for GitHub Actions"
+
+  depends_on = [
+    google_project_service.default
+  ]
 }
 resource "google_project_iam_member" "default" {
   project = var.project
@@ -38,8 +50,12 @@ resource "google_project_iam_member" "default" {
     "roles/artifactregistry.admin",
     "roles/secretmanager.viewer",
   ])
-  role = each.key
-  member  = "serviceAccount:${google_service_account.firebase_deploy.email}"
+  role   = each.key
+  member = "serviceAccount:${google_service_account.firebase_deploy.email}"
+
+  depends_on = [
+    google_project_service.default
+  ]
 }
 
 resource "google_service_account_iam_binding" "firebase_wif" {
@@ -48,5 +64,9 @@ resource "google_service_account_iam_binding" "firebase_wif" {
 
   members = [
     "principalSet://iam.googleapis.com/projects/${data.google_project.project.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.github_pool.workload_identity_pool_id}/attribute.repository/${var.github_repo}"
+  ]
+
+  depends_on = [
+    google_project_service.default
   ]
 }
