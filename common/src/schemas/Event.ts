@@ -6,6 +6,7 @@ import {
   getRefFromPath,
   DocumentReference,
 } from './firebase/index.js'
+import { getStartOfDay } from '../utils/datetime.js'
 
 export const EVENT_PAYMENT_VALUES = ['user_advance', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
@@ -94,9 +95,15 @@ const EventAppSchema = z.object({
   community_name: z.string().nonempty(),
   community_account: z.string().nonempty(),
   // Default
-  event_start_datetime: EpochMillisSchema.default(Date.now()),
-  event_end_datetime: EpochMillisSchema.default(Date.now() + 1000 * 60 * 60 * 24),
-  event_deadline_datetime: EpochMillisSchema.default(Date.now() + 1000 * 60 * 60 * 24 * 3),
+  event_start_datetime: EpochMillisSchema.default(
+    getStartOfDay(Date.now() + 1000 * 60 * 60 * 24 * 14) + 1000 * 60 * 60 * 12,
+  ),
+  event_end_datetime: EpochMillisSchema.default(
+    getStartOfDay(Date.now() + 1000 * 60 * 60 * 24 * 14) + 1000 * 60 * 60 * 13,
+  ),
+  event_deadline_datetime: EpochMillisSchema.default(
+    getStartOfDay(Date.now() + 1000 * 60 * 60 * 24 * 11) + 1000 * 60 * 60 * 12,
+  ),
   is_public: z.boolean().default(true),
   event_payment: z.enum(EVENT_PAYMENT_VALUES).default('user_advance'),
   event_max_people: z.number().int().positive().default(25),
