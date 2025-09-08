@@ -258,10 +258,13 @@ onUnmounted(() => {
 
 const saveDraft = async (): Promise<BokudeliEvent | null> => {
   const communityId = communityStore.community?.community_id
-  if (event.value == null || communityId == null || coverImage.value == null) {
+  if (event.value == null || communityId == null) {
     return null
   }
   if (props.eventId == null) {
+    if (coverImage.value == null) {
+      return null
+    }
     // 新規作成
     event.value.community_id = communityId
     event.value.created_by = handleUserId
