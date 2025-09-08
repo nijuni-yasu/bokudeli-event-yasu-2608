@@ -13,32 +13,32 @@ resource "google_firebase_project" "default" {
 resource "google_identity_platform_config" "auth" {
   provider = google-beta
   project  = var.project
-  
+
   # Authentication method configuration
   sign_in {
     allow_duplicate_emails = false
-    
+
     anonymous {
       enabled = false
     }
-    
+
     email {
       enabled           = true
       password_required = true
     }
-    
+
     phone_number {
       enabled = false
     }
   }
-  
+
   # Authorized domains configuration
   authorized_domains = [
     "localhost",
     "${var.project}.web.app",
     "${var.project}.firebaseapp.com"
   ]
-  
+
   depends_on = [
     google_project_service.default,
     google_firebase_project.default
@@ -50,10 +50,10 @@ resource "google_firestore_database" "default" {
   provider = google-beta
   project  = var.project
   name     = "(default)"
-  
+
   # Firestore location configuration
   location_id = var.region
-  
+
   # Database type (FIRESTORE_NATIVE or DATASTORE_MODE)
   type = "FIRESTORE_NATIVE"
 
@@ -85,9 +85,9 @@ resource "google_firebase_storage_bucket" "default" {
 resource "google_firebase_web_app" "default" {
   provider = google-beta
   project  = var.project
-  
+
   display_name = var.project
-  
+
   depends_on = [
     google_firebase_project.default
   ]
@@ -98,7 +98,7 @@ resource "google_firebase_hosting_site" "user" {
   provider = google-beta
   project  = var.project
   site_id  = var.project
-  
+
   depends_on = [
     google_firebase_project.default
   ]
@@ -109,7 +109,7 @@ resource "google_firebase_hosting_site" "admin" {
   provider = google-beta
   project  = var.project
   site_id  = "${var.project}-admin"
-  
+
   depends_on = [
     google_firebase_project.default
   ]
