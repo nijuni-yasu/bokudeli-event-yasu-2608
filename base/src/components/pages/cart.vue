@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { loadEventMembers } from '@/composable/loadEventMembers'
-import { db, functions, stripeBaseURL } from '@/firebase'
+import { db, functions } from '@/firebase'
 import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
 import BokudeliEvent from '@/schemes/bokudeliEvent'
 import {
@@ -14,7 +14,6 @@ import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
 import { type OrderMenu } from '@/schemes/orderMenu'
 import { useStoreStoredUser } from '@/stores/storedUser'
 import { useEventStore, type EventStore } from '@/stores/event'
-import Stripe from 'stripe'
 import { collectionGroup, doc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
@@ -38,13 +37,12 @@ import type { StoredUser } from '@/schemes/storedUser'
 import { type UserStore, useUserStore } from '@/stores/user'
 import { useStoreUserCredential } from '@/stores/userCredential'
 import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
+import { createStripeCheckoutSession } from '@/baseApis/stripe'
 
 const { t: $t } = useI18n()
 const router = useRouter()
 const { storedUser } = storeToRefs(useStoreStoredUser())
 const userId = computed(() => storedUser.value?.userId ?? '')
-const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
-const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
 const twitterAccountConnected = ref<boolean>(false)
 
 const auth = getAuth()
@@ -133,7 +131,13 @@ const startOrderProcess = async () => {
   }
 
   if (event.event_payment == 'user_advance') {
-    await createCheckoutSession(order, isPosted)
+    try {
+      const response = await createStripeCheckoutSession(order, isPosted) as any // 一時的措置
+      isOrderProcessing.value = false
+      window.location.href = response.data.url || getEventPath(order.community_account, order.event_id)
+    } catch {
+      alertBody.value = $t('cart.payment_failed')
+    }
   } else {
     try {
       const eventStore = useEventStore(event.event_id) as EventStore
@@ -145,49 +149,6 @@ const startOrderProcess = async () => {
     } catch (error) {
       alertBody.value = $t('cart.order_failed')
     }
-  }
-}
-
-const createCheckoutSession = async (order: OrderItem, isPosted: boolean) => {
-  const lineItems = order.menus.map((menu) => {
-    return {
-      price_data: {
-        currency: 'jpy',
-        tax_behavior: 'inclusive',
-        product_data: {
-          name: menu.name,
-          images: [menu.imageUrl],
-          metadata: {
-            partner_id: menu.partner_id,
-          },
-        },
-        unit_amount: menu.price,
-      },
-      quantity: menu.count,
-    } as Stripe.Checkout.SessionCreateParams.LineItem
-  })
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
-      cancel_url: `${stripeBaseURL}/`,
-      customer_creation: 'if_required',
-      line_items: lineItems,
-      mode: 'payment',
-      payment_method_types: ['card'],
-      metadata: {
-        eventId: order.event_id,
-        eventPayment: order.event_payment,
-        communityId: order.community_id,
-        communityAccount: order.community_account,
-        orderId: order.order_id,
-        userId: userId.value,
-      },
-    })
-    isOrderProcessing.value = false
-    window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-  } catch (err) {
-    alertBody.value = $t('cart.payment_failed')
   }
 }
 

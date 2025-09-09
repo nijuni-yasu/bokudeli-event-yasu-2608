@@ -31,10 +31,6 @@ if (import.meta.env.VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST != null) {
   connectFunctionsEmulator(functions, host, port)
 }
 
-export const stripeBaseURL = !import.meta.env.VITE_USE_LOCALHOST
-  ? import.meta.env.VITE_ORIGIN_HOST
-  : 'http://localhost:5173'
-
 if (import.meta.env.VITE_FIRESTORE_EMULATOR_HOST != null) {
   const [host, port] = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST.split(':')
   console.info('connectFirestoreEmulator', host, port)

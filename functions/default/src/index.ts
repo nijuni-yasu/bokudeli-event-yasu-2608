@@ -18,11 +18,14 @@ export const {
   getInvitationUrlForCommunityManager, acceptInvitationForCommunityManager,
   sendTestLetter,
   handleEventOgpRequest, handleCommunityOgpRequest,
-  communityAdded, communityContact,postToTwitter
+  communityAdded, communityContact,
+  createStripeCheckoutSession,
+  postToTwitter
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
   import('./ogpRequest.js'),
   import('./communityMail.js'),
+  import('./stripe.js'),
   import('./postToTwitter.js'),
 ])))
