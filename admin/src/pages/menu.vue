@@ -39,7 +39,7 @@ const dialog = computed({
 })
 
 const openDialog = (menu: BokudeliPartnerMenu) => {
-  targetMenu.value = Object.assign({}, toRaw(menu))
+  targetMenu.value = Object.assign(Object.create(Object.getPrototypeOf(menu)), menu)
 }
 const saveMenu = async (menu: BokudeliPartnerMenu, file?: File) => {
   try {
