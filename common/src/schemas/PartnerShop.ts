@@ -123,8 +123,8 @@ const PartnerShopDbSchema = z.object({
   shop_postcode: z.string().nonempty(),
   shop_range_min_orders: z.array(
     z.object({
-      range: z.number().positive(),
-      min_orders: z.number().int().positive(),
+      range: z.number().positive().nullable(),
+      min_orders: z.number().int().positive().nullable(),
     }),
   ),
   shop_time: z
@@ -133,8 +133,8 @@ const PartnerShopDbSchema = z.object({
         is_open: z.boolean(),
         time_start: z.string().nonempty(),
         time_end: z.string().nonempty(),
-        time_start2: z.string().nonempty(),
-        time_end2: z.string().nonempty(),
+        time_start2: z.string(),
+        time_end2: z.string(),
       }),
     )
     .length(7),
@@ -142,15 +142,15 @@ const PartnerShopDbSchema = z.object({
   is_approved: z.boolean(),
   is_open: z.boolean(),
   // Optional
-  community_account: NonEmptyStringSchema,
-  shop_invoice_number: NonEmptyStringSchema,
-  shop_email_sub1: NonEmptyStringSchema,
-  shop_email_sub2: NonEmptyStringSchema,
-  shop_email_sub3: NonEmptyStringSchema,
-  shop_url: NonEmptyStringSchema,
-  shop_url_facebook: NonEmptyStringSchema,
-  shop_url_instagram: NonEmptyStringSchema,
-  shop_url_twitter: NonEmptyStringSchema,
+  community_account: NonEmptyStringSchema.optional(),
+  shop_invoice_number: NonEmptyStringSchema.optional(),
+  shop_email_sub1: NonEmptyStringSchema.optional(),
+  shop_email_sub2: NonEmptyStringSchema.optional(),
+  shop_email_sub3: NonEmptyStringSchema.optional(),
+  shop_url: NonEmptyStringSchema.optional(),
+  shop_url_facebook: NonEmptyStringSchema.optional(),
+  shop_url_instagram: NonEmptyStringSchema.optional(),
+  shop_url_twitter: NonEmptyStringSchema.optional(),
 })
 
 const PartnerShopAppSchema = z.object({
