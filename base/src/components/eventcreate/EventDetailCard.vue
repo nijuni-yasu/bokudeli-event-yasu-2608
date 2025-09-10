@@ -55,7 +55,10 @@ watch(
   { immediate: true },
 )
 
-const eventPaymentSelectableItems = EVENT_PAYMENT_VALUES.map((type) => {
+const eventPaymentSelectableItems = EVENT_PAYMENT_VALUES.flatMap((type) => {
+  if (type === 'user_on_day') {
+    return []
+  }
   return { title: $t(`payment.${type}`), value: type }
 })
 
