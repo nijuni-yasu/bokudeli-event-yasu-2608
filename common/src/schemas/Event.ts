@@ -8,7 +8,7 @@ import {
 } from './firebase/index.js'
 import { getStartOfDay } from '../utils/datetime.js'
 
-export const EVENT_PAYMENT_VALUES = ['user_advance', 'community_bill'] as const
+export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
 
 export const RAW_EVENT_STATUS_VALUES = [

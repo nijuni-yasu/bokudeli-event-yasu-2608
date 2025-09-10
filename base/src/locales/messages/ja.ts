@@ -17,6 +17,7 @@ export default {
   back_to_top: 'トップページに戻る',
   payment: {
     user_advance: '参加者 事前決済 💳',
+    user_on_day: '参加者 当日払い 💰',
     community_bill: '主催者 請求書払い 📄',
   },
   event_status: {
@@ -90,6 +91,7 @@ export default {
     payment_failed: '決済処理に失敗しました。サポートにお問い合わせください。',
     order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
     confirm_order_credit_card: 'クレジットカードの事前決済に進みますか？',
+    confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
     confirm_order: '注文を確定しますか？',
     remove_from_cart: 'カートから削除しますか？',
