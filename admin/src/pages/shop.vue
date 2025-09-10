@@ -118,7 +118,7 @@ const shop = ref(
             shop.shop_email = getAuth().currentUser?.email ?? ''
             resolve(shop)
           } else {
-            resolve(Object.assign({}, toRaw(shops[0])))
+            resolve(Object.assign(Object.create(Object.getPrototypeOf(shops[0])), shops[0]))
           }
           stop()
         }
@@ -205,7 +205,7 @@ watch(
 const submit = async () => {
   isSaving.value = true
   try {
-    await partnerStore.updateShop(shop.value, imageFile.value ?? undefined)
+    await partnerStore.updateShop(toRaw(shop.value), imageFile.value ?? undefined)
     notification.show($t('shop.saved'), 'success')
   } catch (e) {
     console.error(e)
