@@ -1,5 +1,8 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema, type DocumentReference } from './firebase/index.js'
+import { COMMUNITY_DEFAULT_IMAGE_SETS } from '../utils/defaultImages'
+import { generateRandomAccount } from '../utils/generateRandomAccount.js'
+import { isEmpty } from '../utils/string.js'
 
 // NonApproved なときのもの
 // TDODO Approved なものも作成する
@@ -78,6 +81,14 @@ export class Community {
   managers: (typeof DocumentReference)[] = []
 
   constructor(id: string, src: Partial<Community>) {
+    if (isEmpty(src.community_cover_image_url) || isEmpty(src.community_icon_image_url)) {
+      const randomIndex = Math.floor(Math.random() * COMMUNITY_DEFAULT_IMAGE_SETS.length)
+      src.community_cover_image_url = COMMUNITY_DEFAULT_IMAGE_SETS[randomIndex].cover
+      src.community_icon_image_url = COMMUNITY_DEFAULT_IMAGE_SETS[randomIndex].icon
+    }
+    if (isEmpty(src.community_account)) {
+      src.community_account = generateRandomAccount()
+    }
     Object.assign(this, src)
     this.id = id
     this.community_id = id
