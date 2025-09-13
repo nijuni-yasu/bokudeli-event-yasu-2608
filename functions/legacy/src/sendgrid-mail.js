@@ -695,7 +695,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis) {
         shop_name: eventData.shop_name,
         community_name: eventData.community_name,
       })
-      if (_dynamic_template_data.events.length === 12) {
+      if (_dynamic_template_data.events.length === 15) {
         break
       }
     }
