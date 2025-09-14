@@ -1,8 +1,9 @@
-import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
-import { ShokujiiEvent } from './stores/event.js'
+import { getEventUrl, getAdminOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
+import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
+import { ShokujiiEvent, getAcceptingOrderEventsByTime, getApplyingReservationEvents } from './stores/event.js'
+import { getUser } from './stores/user.js'
 import { getEventPartnerShop } from './stores/partner.js'
 import {
   convertToDateWeekdayShort,
@@ -12,18 +13,12 @@ import {
 
 // テンプレートID
 const APPLYING_ORDER_TEMPLATE_ID = 'd-6e4b246cc4ef418993a1304b45b48d7b'
+const ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID = 'd-89612eeb2f1f42a98c92b543b870616c'
 
 // 定数
 const DELIVERY_DURATION = 30 // minutes
 
 // 型定義
-interface OrderData {
-  name: string
-  order: string
-  price: string
-  number?: number
-}
-
 interface TemplateDataForApplyingOrder {
   event_name: string
   event_address: string
@@ -42,41 +37,19 @@ interface TemplateDataForApplyingOrder {
   is_reminder?: boolean
 }
 
-/**
- * 注文締切用の注文データを作成
- */
-async function createOrdersForOrderDeadline(event: ShokujiiEvent): Promise<[number, number, OrderData[]]> {
-  const orders = await event.getOrders('ordered')
-  const orderDataList: OrderData[] = []
-  let count = 0
-  let price = 0
+interface OrdersByStatus {
+  [status: string]: OrderData[]
+}
 
-  const promises = orders.map(async (order) => {
-    const db = getFirestore()
-    const userRef = db.collection('users').doc(order.user_id)
-    const userSnapshot = await userRef.get()
-    const userName = userSnapshot.get('user_name') || ''
-
-    for (const menu of order.menus || []) {
-      for (let i = 0; i < menu.count; i++) {
-        orderDataList.push({
-          name: userName,
-          order: menu.name,
-          price: `¥${menu.price}`,
-        })
-        count++
-        price += menu.price
-      }
-    }
-  })
-
-  await Promise.all(promises)
-
-  orderDataList
-    .sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0))
-    .forEach((order, i) => (order.number = i + 1))
-
-  return [count, price, orderDataList]
+interface TemplateDataForOrganizerOrderRemind {
+  event_name: string
+  community_account: string
+  event_days_ago: number
+  event_url: string
+  manage_event_member_url: string
+  event_deadline_datetime: string
+  event_datetime: string
+  orders: OrdersByStatus
 }
 
 /**
@@ -119,16 +92,7 @@ async function createTemplateDataForApplyingOrder(
  */
 export async function sendApplyingOrderRemindMailToShop(start: number, end: number): Promise<void[]> {
   const nowDateTimeMillis = Date.now()
-  const db = getFirestore()
-
-  const eventsRef = db
-    .collectionGroup('events')
-    .where('event_status.value', '==', 'applying_reservation')
-    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
-    .where('is_deleted', '==', false)
-
-  const eventsSnapshot = await eventsRef.get()
-  const events = eventsSnapshot.docs.map((doc) => new ShokujiiEvent(doc.id, doc.data()))
+  const events = await getApplyingReservationEvents(nowDateTimeMillis)
 
   const sendMailPromises = events
     .map(async (event) => {
@@ -159,6 +123,102 @@ export async function sendApplyingOrderRemindMailToShop(start: number, end: numb
         }
       } catch (err) {
         console.warn('Failed to send applying order remind mail to shop:', err)
+      }
+    })
+    .filter((promise) => promise != null)
+
+  return Promise.all(sendMailPromises)
+}
+
+/**
+ * 主催者リマインド用の注文データを作成
+ */
+async function createOrdersForOrganizerRemind(event: ShokujiiEvent): Promise<OrdersByStatus> {
+  const allOrders = await event.getOrders()
+  const ordersByStatus: OrdersByStatus = {}
+
+  const promises = allOrders.map(async (order) => {
+    const user = await getUser(order.user_id, false)
+    const userName = user?.user_name || ''
+
+    for (const menu of order.menus || []) {
+      for (let i = 0; i < menu.count; i++) {
+        if (!ordersByStatus[order.status]) {
+          ordersByStatus[order.status] = []
+        }
+        ordersByStatus[order.status].push({
+          name: userName,
+          order: menu.name,
+          price: `¥${menu.price}`,
+        })
+      }
+    }
+  })
+
+  await Promise.all(promises)
+
+  // 各ステータスの注文を名前でソートし、番号を追加
+  for (const orders of Object.values(ordersByStatus)) {
+    orders.sort((a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0))
+    orders.forEach((order, i) => (order.number = i + 1))
+  }
+
+  return ordersByStatus
+}
+
+/**
+ * 主催者リマインド用のテンプレートデータを作成
+ */
+async function createTemplateDataForOrganizerRemind(
+  event: ShokujiiEvent,
+  eventDaysAgo: number,
+): Promise<TemplateDataForOrganizerOrderRemind> {
+  const orders = await createOrdersForOrganizerRemind(event)
+  const eventDateTime = convertToDuration(event.event_start_datetime, event.event_end_datetime)
+  const eventDeadlineDateTime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
+
+  return {
+    event_name: event.event_name,
+    community_account: event.community_account,
+    event_days_ago: eventDaysAgo,
+    event_url: getEventUrl(event.community_account, event.id),
+    manage_event_member_url: getManageEventMemberUrl(event.id),
+    event_deadline_datetime: eventDeadlineDateTime || '',
+    event_datetime: eventDateTime || '',
+    orders,
+  }
+}
+
+/**
+ * 主催者向け注文リマインドメール送信
+ */
+export async function sendOrderRemindMailToOrganizer(
+  start: number,
+  end: number,
+  eventDaysAgo: number,
+): Promise<void[]> {
+  const events = await getAcceptingOrderEventsByTime(start, end)
+
+  const sendMailPromises = events
+    .map(async (event) => {
+      try {
+        const [dynamicTemplateData, communityEmails] = await Promise.all([
+          createTemplateDataForOrganizerRemind(event, eventDaysAgo),
+          getCommunityEmailsForEvent(event),
+        ])
+
+        const emailPromises = communityEmails.map(async (to) => {
+          await sgMail.send({
+            to,
+            from: DEFAULT_FROM,
+            templateId: ORDER_REMIND_FOR_ORGANIZER_TEMPLATE_ID,
+            dynamicTemplateData,
+          })
+        })
+
+        await Promise.all(emailPromises)
+      } catch (err) {
+        console.warn('Failed to send order remind mail to organizer:', err)
       }
     })
     .filter((promise) => promise != null)

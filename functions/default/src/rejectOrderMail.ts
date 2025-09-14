@@ -1,9 +1,9 @@
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
+import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { ShokujiiEvent, getApplyingReservationEvents } from './stores/event.js'
 import { getEventPartnerShop } from './stores/partner.js'
-import { getUser } from './stores/user.js'
 import {
   convertToDateWeekdayShort,
   convertToDatetimeWeekdayShort,
@@ -15,14 +15,6 @@ const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
 
 // 定数
 const DELIVERY_DURATION = 30 // minutes
-
-// 型定義
-interface OrderData {
-  name: string
-  order: string
-  price: string
-  number?: number
-}
 
 interface TemplateDataForOrderDeadline {
   event_name: string
@@ -38,41 +30,6 @@ interface TemplateDataForOrderDeadline {
   event_url: string
   orders: OrderData[]
   order_url: string
-}
-
-/**
- * 注文締切用の注文データを作成
- */
-async function createOrdersForOrderDeadline(event: ShokujiiEvent): Promise<[number, number, OrderData[]]> {
-  const orders = await event.getOrders('ordered')
-  const orderDataList: OrderData[] = []
-  let count = 0
-  let price = 0
-
-  const promises = orders.map(async (order) => {
-    const user = await getUser(order.user_id, false)
-    const userName = user?.user_name || ''
-
-    for (const menu of order.menus || []) {
-      for (let i = 0; i < menu.count; i++) {
-        orderDataList.push({
-          name: userName,
-          order: menu.name,
-          price: `¥${menu.price}`,
-        })
-        count++
-        price += menu.price
-      }
-    }
-  })
-
-  await Promise.all(promises)
-
-  orderDataList
-    .sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0))
-    .forEach((order, i) => (order.number = i + 1))
-
-  return [count, price, orderDataList]
 }
 
 /**

@@ -1,5 +1,5 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
-import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
 import {
@@ -7,9 +7,8 @@ import {
   convertToDatetimeWeekdayShort,
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
-import { getCommunity } from './stores/community.js'
 import { getPartner } from './stores/partner.js'
-import { getUser, getUserPersonalInformation } from './stores/user.js'
+import { getUser } from './stores/user.js'
 import { convertReferenceToEvent, ShokujiiEvent } from './stores/event.js'
 
 // テンプレートID定数
@@ -83,34 +82,6 @@ async function getShopForEvent(event: ShokujiiEvent) {
 
   const shop = await partner.getShop(event.shop_id)
   return shop
-}
-
-/**
- * コミュニティのメールアドレス一覧を取得
- */
-async function getCommunityEmailsForEvent(event: ShokujiiEvent): Promise<string[]> {
-  const community = await getCommunity(event.community_account)
-  if (!community) return []
-
-  const emails = new Set<string>()
-
-  // コミュニティマネージャーのメールアドレスを取得
-  const managers = await community.getMembersByRole('manager')
-  await Promise.all(
-    managers.map(async (manager) => {
-      const userPersonalInfo = await getUserPersonalInformation(manager.id)
-      if (userPersonalInfo?.user_email) {
-        emails.add(userPersonalInfo.user_email)
-      }
-    }),
-  )
-
-  // 主催者のメールアドレスを追加
-  if (event.organizer_email) {
-    emails.add(event.organizer_email)
-  }
-
-  return Array.from(emails)
 }
 
 /**
