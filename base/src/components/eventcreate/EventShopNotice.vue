@@ -13,7 +13,7 @@ import {
   mdiHandExtendedOutline,
   mdiTimerSand,
 } from '@mdi/js'
-import { convertToDuration, convertToMinuteString, convertToDateWeekdayShort } from '@shokujii/common/utils/datetime.js'
+import { convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 
 const emit = defineEmits<{
@@ -35,10 +35,9 @@ const eventDateTime = computed(() =>
   convertToDuration(event.value.event_start_datetime, event.value.event_end_datetime),
 )
 const pickUpStartDateTime = computed(
-  () =>
-    `${convertToDuration(event.value.event_start_datetime - 30 * 60 * 1000, event.value.event_start_datetime)}:${convertToMinuteString(event.value.event_start_datetime)}`,
+  () => `${convertToDuration(event.value.event_start_datetime - 30 * 60 * 1000, event.value.event_start_datetime)}`,
 )
-const eventDeadlineDateTime = computed(() => `${convertToDateWeekdayShort(event.value.event_deadline_datetime)}`)
+const eventDeadlineDateTime = computed(() => `${convertToDatetimeWeekdayShort(event.value.event_deadline_datetime)}`)
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
 const shop_address = computed(() => (shop.value !== null ? shop.value.shop_address : ''))
