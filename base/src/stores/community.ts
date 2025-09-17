@@ -69,18 +69,24 @@ export const communityConverter: FirestoreDataConverter<BokudeliCommunity> = {
 
 export const createNewCommunity = async (
   community: BokudeliCommunity,
-  coverImageFile: File,
-  iconImageFile: File,
+  coverImageFile: File | null,
+  iconImageFile: File | null,
 ): Promise<CommunityStore> => {
   // TODO loginUserStore など共通のソースにする
   const uid = getAuth().currentUser?.uid
   if (uid == null) {
     throw new Error('Not Logged in')
   }
-  ;[community.community_cover_image_url, community.community_icon_image_url] = await Promise.all([
-    uploadCommunityImage(community.id, coverImageFile),
-    uploadCommunityImage(community.id, iconImageFile),
+  const [coverImageUrl, iconImageUrl] = await Promise.all([
+    coverImageFile != null ? uploadCommunityImage(community.id, coverImageFile) : null,
+    iconImageFile != null ? uploadCommunityImage(community.id, iconImageFile) : null,
   ])
+  if (coverImageUrl != null) {
+    community.community_cover_image_url = coverImageUrl
+  }
+  if (iconImageUrl != null) {
+    community.community_icon_image_url = iconImageUrl
+  }
   const communityRef = doc(db, 'communities', community.community_account).withConverter(communityConverter)
   const memberRef = doc(communityRef, 'members', uid)
   await Promise.all([

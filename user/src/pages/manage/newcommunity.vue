@@ -23,9 +23,6 @@ const validateNewAccount = async (value: string) => {
 const submit = async () => {
   isLoading.value = true
   try {
-    if (coverImageFile.value == null || iconImageFile.value == null) {
-      throw new Error()
-    }
     await createNewCommunity(toRaw(community.value), coverImageFile.value, iconImageFile.value)
     notification.show($t('manage.newcommunity.created'), 'success')
     // communityListStore.reload()
