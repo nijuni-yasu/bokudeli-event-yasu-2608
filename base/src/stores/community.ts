@@ -87,7 +87,7 @@ export const createNewCommunity = async (
   if (iconImageUrl != null) {
     community.community_icon_image_url = iconImageUrl
   }
-  const communityRef = doc(db, 'communities', community.community_account).withConverter(communityConverter)
+  const communityRef = doc(db, 'communities', community.id).withConverter(communityConverter)
   const memberRef = doc(communityRef, 'members', uid)
   await Promise.all([
     setDoc(communityRef, community, { merge: true }),
