@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema, type DocumentReference } from './firebase/index.js'
-import { COMMUNITY_DEFAULT_IMAGE_SETS } from '../utils/defaultImages'
+import { COMMUNITY_DEFAULT_IMAGE_SETS } from '../utils/defaultImages.js'
 import { generateRandomAccount } from '../utils/generateRandomAccount.js'
 import { isEmpty } from '../utils/string.js'
 
