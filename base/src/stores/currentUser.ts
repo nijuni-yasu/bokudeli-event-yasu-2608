@@ -1,11 +1,10 @@
-import { FirebaseError } from 'firebase/app'
 import {
-  AdditionalUserInfo,
   getAdditionalUserInfo,
   getAuth,
   getRedirectResult,
+  TwitterAuthProvider,
+  unlink,
   Unsubscribe,
-  UserCredential,
 } from 'firebase/auth'
 import {
   doc,
@@ -18,11 +17,13 @@ import {
   SnapshotOptions,
 } from 'firebase/firestore'
 import { defineStore } from 'pinia'
-import { computed, ref, toRaw, watch } from 'vue'
+import { computed, markRaw, ref, toRaw, watch } from 'vue'
 import { User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
 import { db } from '@shokujii/base/firebase.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
+import { getBlobIfNecessary } from '@shokujii/base/utils/user'
+import { linkByProviderService, ProviderIdType } from '@shokujii/base/utils/providerService'
 
 const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInformation> = {
   toFirestore(userPersonalInformation: UserPersonalInformation): DocumentData {
@@ -37,23 +38,45 @@ const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInfor
 export const useCurrentUserStore = defineStore('currentUser', () => {
   const firebaseUser = ref(getAuth().currentUser)
   getAuth().onAuthStateChanged(async (user) => {
-    firebaseUser.value = user
-    userCredential.value = await getRedirectResult(getAuth())
-  })
-
-  // 本来、store で持つべきものではないが、ログイン処理が UI に依存しているため、仕方なくここで持つ
-  const lastFirebaseError = ref<FirebaseError | null>(null)
-  const setLastFirebaseError = (error: FirebaseError | null) => {
-    lastFirebaseError.value = error
-  }
-
-  // const credential = ref<OAuthCredential | null>(null)
-  const userCredential = ref<UserCredential | null>(null)
-  const additionalUserInfo = computed<AdditionalUserInfo | null>(() => {
-    if (userCredential.value == null) {
-      return null
+    if (user != null) {
+      const userStore = useUserStore(user.uid)
+      let currentUser: User | null = await new Promise((resolve) =>
+        watch(
+          () => [userStore.user, userStore.exists],
+          () => {
+            if (userStore.user != null) {
+              resolve(userStore.user)
+            } else if (userStore.exists === false) {
+              resolve(null)
+            }
+          },
+          { immediate: true },
+        ),
+      )
+      const actualUser = (await getRedirectResult(getAuth()))?.user ?? user
+      if (currentUser == null) {
+        currentUser = new User(actualUser.uid, {
+          user_name: actualUser.displayName ?? undefined,
+          user_image_url: actualUser.photoURL ?? undefined,
+        })
+        await Promise.all([
+          userStore.updateUser(currentUser),
+          updatePersonalInformation(
+            new UserPersonalInformation(actualUser.uid, { user_email: actualUser.email ?? undefined }),
+          ),
+        ])
+      }
+      // ログインに影響が出ないよう、非同期で画像を取得する
+      getBlobIfNecessary(actualUser.providerData, userStore.user!).then(async (blob) => {
+        if (blob != null) {
+          await uploadUserImage(blob)
+        }
+      })
+      firebaseUser.value = markRaw(actualUser)
+    } else {
+      reset()
+      firebaseUser.value = null
     }
-    return getAdditionalUserInfo(toRaw(userCredential.value))
   })
 
   const user = computed(() => {
@@ -78,9 +101,6 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     unsubscribePersonalInformation?.()
     unsubscribePersonalInformation = null
     personalInformation.value = null
-    // credential.value = null
-    userCredential.value = null
-    lastFirebaseError.value = null
   }
 
   watch(
@@ -106,7 +126,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     const personalInformationRef = doc(db, 'users_personal_information', personalInformation.id).withConverter(
       converterUserPersonalInformation,
     )
-    await setDoc(personalInformationRef, personalInformation)
+    await setDoc(personalInformationRef, personalInformation, { merge: true })
   }
 
   const uploadUserImage = async (file: File | Blob) => {
@@ -117,28 +137,74 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     await userStore.uploadUserImage(file)
   }
 
-  // 本来、ログイン処理なども store で行うべきだが、現状の実装では処理を分離するのが難しいため、 credential の更新のみを行う
-  // TODO 修正
-  // const updateCredentialFromUserCredential = async (redirectResult: UserCredential) => {
-  //   try {
-  //     switch (redirectResult.providerId) {
-  //       case FacebookAuthProvider.PROVIDER_ID:
-  //         credential.value = FacebookAuthProvider.credentialFromResult(redirectResult)
-  //         break
-  //       case GoogleAuthProvider.PROVIDER_ID:
-  //         credential.value = GoogleAuthProvider.credentialFromResult(redirectResult)
-  //         break
-  //       case TwitterAuthProvider.PROVIDER_ID:
-  //         credential.value = TwitterAuthProvider.credentialFromResult(redirectResult)
-  //         break
-  //       default:
-  //         console.error('Unknown providerId:', redirectResult.providerId)
-  //         return
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching redirect result:', error)
-  //   }
-  // }
+  const linkProvider = async (providerId: ProviderIdType) => {
+    const currentUser = user.value
+    const currentUserPersonalInformation = personalInformation.value
+    const currentFirebaseUser = firebaseUser.value
+    if (currentUser == null || currentUserPersonalInformation == null || currentFirebaseUser == null) {
+      throw new Error('Not logged in')
+    }
+    const userCredential = await linkByProviderService(currentFirebaseUser, providerId)
+    const additionalUserInfo = getAdditionalUserInfo(userCredential)
+    if (additionalUserInfo != null) {
+      switch (additionalUserInfo.providerId) {
+        case 'facebook.com':
+          currentUser.user_sns_facebook_name =
+            currentUser.user_sns_facebook_name || (additionalUserInfo.profile?.name as string)
+          await updateUser(currentUser)
+          break
+        case 'twitter.com':
+          currentUser.user_sns_twitter = additionalUserInfo?.username as string
+          var twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
+          if (twitterCredential?.accessToken && twitterCredential.secret) {
+            currentUserPersonalInformation.user_sns_twitter_access_token =
+              currentUserPersonalInformation.user_sns_twitter_access_token || twitterCredential.accessToken
+            currentUserPersonalInformation.user_sns_twitter_secret =
+              currentUserPersonalInformation.user_sns_twitter_secret || twitterCredential.secret
+            if (
+              currentUserPersonalInformation.user_sns_twitter_access_token &&
+              currentUserPersonalInformation.user_sns_twitter_secret
+            ) {
+              await updatePersonalInformation(currentUserPersonalInformation)
+            }
+          }
+          break
+        case 'google.com':
+          currentUserPersonalInformation.user_sns_google = additionalUserInfo?.profile?.email as string
+          await updatePersonalInformation(toRaw(currentUserPersonalInformation))
+          break
+      }
+    }
+  }
+
+  const unlinkProvider = async (providerId: ProviderIdType) => {
+    const currentUser = user.value
+    const currentUserPersonalInformation = personalInformation.value
+    const currentFirebaseUser = firebaseUser.value
+    if (currentUser == null || currentUserPersonalInformation == null || currentFirebaseUser == null) {
+      throw new Error('Not logged in')
+    }
+    // 各プロバイダーは連携解除時に関連する値を削除する
+    switch (providerId) {
+      case 'google.com':
+        currentUserPersonalInformation.user_sns_google = ''
+        break
+      case 'facebook.com':
+        currentUser.user_sns_facebook_name = ''
+        break
+      case 'twitter.com':
+        currentUser.user_sns_twitter = ''
+        currentUserPersonalInformation.user_sns_twitter_access_token = ''
+        currentUserPersonalInformation.user_sns_twitter_secret = ''
+        break
+    }
+
+    await Promise.all([
+      unlink(toRaw(currentFirebaseUser), providerId),
+      updateUser(toRaw(currentUser)),
+      updatePersonalInformation(toRaw(currentUserPersonalInformation)),
+    ])
+  }
 
   const signOut = async () => {
     await getAuth().signOut()
@@ -150,15 +216,11 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     firebaseUser,
     user,
     personalInformation,
-    // credential,
-    userCredential,
-    additionalUserInfo,
-    lastFirebaseError,
     updateUser,
     updatePersonalInformation,
     uploadUserImage,
-    // updateCredentialFromUserCredential,
+    linkProvider,
+    unlinkProvider,
     signOut,
-    setLastFirebaseError,
   }
 })

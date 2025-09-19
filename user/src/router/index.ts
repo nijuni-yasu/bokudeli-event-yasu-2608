@@ -1,14 +1,5 @@
-import {
-  type User,
-  type UserCredential,
-  getAuth,
-  getRedirectResult,
-  onAuthStateChanged,
-  type Unsubscribe,
-} from 'firebase/auth'
-import { FirebaseError } from 'firebase/app'
+import { type User, getAuth, onAuthStateChanged, type Unsubscribe } from 'firebase/auth'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { loginUser } from '@shokujii/base/composable/loginUser.js'
 import type { Router } from 'vue-router'
 import userAccessiblePaths from '@shokujii/base/utils/userAccessiblePaths.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
@@ -20,46 +11,14 @@ import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 
-const checkUser = async (user: User | null) => {
-  // リダイレクト結果を取得
-  let userCredential: UserCredential | null = null
-  try {
-    userCredential = await getRedirectResult(getAuth())
-  } catch (error) {
-    if (error instanceof FirebaseError) {
-      useCurrentUserStore().setLastFirebaseError(error)
-    } else {
-      window.alert('ログインに失敗しました')
-      console.error('Error fetching redirect result:', { error })
-    }
-  }
-  const currentUserStore = useCurrentUserStore()
-  if (!userCredential && !user) {
-    // ログアウト処理
-    currentUserStore.signOut()
-    return
-  }
-  if (!userCredential && user) {
-    // ログイン済みのユーザーの処理
-    await loginUser(user)
-  }
-  if (userCredential) {
-    // リダイレクトでのログイン処理
-    await loginUser(user || userCredential.user)
-  }
-}
-
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
     const unsubscribe = onAuthStateChanged(getAuth(), async (user: User | null) => {
       unsubscribe()
-      await checkUser(user)
       resolve(user)
     })
   })
 }
-
-onAuthStateChanged(getAuth(), checkUser)
 
 export const setupRouter = (router: Router) => {
   // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
