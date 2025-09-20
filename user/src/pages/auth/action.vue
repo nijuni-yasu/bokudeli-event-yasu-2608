@@ -3,9 +3,9 @@ import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAuth, checkActionCode, applyActionCode, signInWithCustomToken } from 'firebase/auth'
 import { doc, Timestamp, updateDoc } from 'firebase/firestore'
-import { db, functions } from '@shokujii/base/firebase.js'
-import { httpsCallable } from 'firebase/functions'
+import { db } from '@shokujii/base/firebase.js'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
+import { getCustomToken } from '@shokujii/base/apis/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,9 +29,8 @@ onMounted(async () => {
 
       await applyActionCode(auth, oobCode)
         .then(async () => {
-          const getCustomToken = httpsCallable(functions, 'get_custom_token')
           const result = await getCustomToken({ user_email: currentEmail.value })
-          const customToken = result.data as string
+          const customToken = result.data
 
           await signInWithCustomToken(getAuth(), customToken)
 

@@ -6,6 +6,7 @@ import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getAuth, updateEmail, signInWithCustomToken, type User } from 'firebase/auth'
 import { useValidators } from '@shokujii/base/composable/validators.js'
+import { getCustomToken } from '@shokujii/base/apis/user'
 
 const currentUserStore = useCurrentUserStore()
 const userEmail = computed({
@@ -47,7 +48,6 @@ const submit = async () => {
     // Facebook or Twitterにメールアドレスの登録がない場合、firebase authのIDが空になるため、updateEmailで設定する。
     await updateEmail(toRaw(currentUserStore.firebaseUser), email).catch(async (error) => {
       if (error.code === 'auth/requires-recent-login') {
-        const getCustomToken = httpsCallable(functions, 'get_custom_token')
         const result = await getCustomToken({ user_email: email })
         const customToken = result.data as string
 

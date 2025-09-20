@@ -1,9 +1,26 @@
-import { DocumentData, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import {
+  DocumentData,
+  FirestoreDataConverter,
+  getFirestore,
+  QueryDocumentSnapshot,
+  Transaction,
+} from 'firebase-admin/firestore'
 import { User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
 
 export class ShokujiiUser extends User {
+  // TODO Add other UserPersonalInformation fields
   user_email?: string
+
+  constructor(id: string | null, data: Partial<User> & Partial<UserPersonalInformation>) {
+    const db = getFirestore()
+    if (id === null) {
+      id = db.collection('users').doc().id
+    }
+
+    super(id, data)
+    Object.assign(this, new UserPersonalInformation(id, data))
+  }
 }
 
 const userConverter: FirestoreDataConverter<ShokujiiUser> = {
@@ -45,4 +62,23 @@ export const getUserPersonalInformation = async (userId: string): Promise<UserPe
     .doc(userId)
     .withConverter(userPersonalInformationConverter)
   return (await userPersonalInformationRef.get()).data()
+}
+
+export const saveUser = async (user: ShokujiiUser, transaction?: Transaction) => {
+  const db = getFirestore()
+  const userRef = db.collection('users').doc(user.id).withConverter(userConverter)
+  const userPersonalInformationRef = db
+    .collection('users_personal_information')
+    .doc(user.id)
+    .withConverter(userPersonalInformationConverter)
+  const upi = new UserPersonalInformation(user.id, {
+    user_email: user.user_email,
+  })
+  if (transaction === undefined) {
+    await userRef.set(user, { merge: true })
+    await userPersonalInformationRef.set(upi, { merge: true })
+  } else {
+    transaction.set(userRef, user, { merge: true })
+    transaction.set(userPersonalInformationRef, upi, { merge: true })
+  }
 }

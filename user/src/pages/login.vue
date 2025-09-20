@@ -23,15 +23,7 @@ import {
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getProfile } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-
-type CreateUserRequest = {
-  user_email: string
-  user_pass_code: string
-}
-
-type CreateUserResponse = {
-  is_new: boolean
-}
+import { createOrUpdateUser, getCustomToken } from '@shokujii/base/apis/user'
 
 type CustomData = {
   email: string
@@ -92,7 +84,6 @@ const submit = async () => {
 
     const passCode = generatePassCode()
 
-    const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, 'create_or_update_user')
     const { data } = await createOrUpdateUser({ user_email: userEmail, user_pass_code: passCode })
 
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
@@ -131,9 +122,8 @@ const handleLogin = async (providerId: 'google.com' | 'facebook.com' | 'twitter.
         const verifiedProvider = customData?._tokenResponse?.verifiedProvider
         // カスタムトークンログインを行い、メールアドレスが既に存在している場合
         if (!verifiedProvider) {
-          const getCustomToken = httpsCallable(functions, 'get_custom_token')
           const result = await getCustomToken({ user_email: customData?.email })
-          const customToken = result.data as string
+          const customToken = result.data
 
           userCredential = await signInWithCustomToken(getAuth(), customToken)
         } else {
@@ -258,7 +248,6 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   if (!currentUser.verified_at && !currentUserPersonalInformation.user_email_pending) {
     const passCode = generatePassCode()
 
-    const createOrUpdateUser = httpsCallable<CreateUserRequest, CreateUserResponse>(functions, 'create_or_update_user')
     const { data } = await createOrUpdateUser({ user_email: email, user_pass_code: passCode })
 
     const sendPassCode = httpsCallable(functions, 'send_pass_code')

@@ -9,6 +9,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { getLogin, getProfile } from '@/router/utils'
 import { User as BokudeliUser } from '@shokujii/common/schemas/User.js'
+import { createOrUpdateUser, getCustomToken, verifyPassCode } from '@shokujii/base/apis/user'
 
 const router = useRouter()
 const route = useRoute()
@@ -50,10 +51,8 @@ const reSendPassCode = async () => {
     const reGeneratePassCode = generatePassCode()
 
     if (isNew === undefined) {
-      const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
       await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
     } else {
-      const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
       await createOrUpdateUser({ user_email: userEmail, user_pass_code: reGeneratePassCode })
     }
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
@@ -70,7 +69,6 @@ const submit = async () => {
   try {
     const userEmail = email.value
 
-    const verifyPassCode = httpsCallable(functions, 'verify_pass_code')
     let result
     if (isNew === undefined) {
       result = await verifyPassCode({ user_email_pending: userEmail, user_pass_code: passCode.value })
@@ -137,9 +135,8 @@ const submit = async () => {
           .catch(async (error) => {
             console.error(error)
             if (error.code === 'auth/requires-recent-login') {
-              const getCustomToken = httpsCallable(functions, 'get_custom_token')
               const result = await getCustomToken({ user_email: currentUserPersonalInformation.user_email })
-              const customToken = result.data as string
+              const customToken = result.data
 
               await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
                 await updateEmail(userCredential.user as User, userEmail)

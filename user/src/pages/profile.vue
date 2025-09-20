@@ -15,6 +15,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { getProviderClass, type ProviderIdType } from '@shokujii/base/utils/providerService'
+import { createOrUpdateUser } from '@shokujii/base/apis/user'
 
 const currentUserStore = useCurrentUserStore()
 const {
@@ -194,7 +195,6 @@ const emailSubmit = async () => {
     ])
 
     const passCode = generatePassCode()
-    const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
     await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: passCode })
 
     const sendPassCode = httpsCallable(functions, 'send_pass_code')
@@ -216,10 +216,13 @@ const emailSubmit = async () => {
 const certificationPendingEmail = async () => {
   isVerificationLoading.value = true
   const userEmail = currentUserPersonalInformation.value?.user_email_pending
+  if (userEmail == null) {
+    console.error('user_email_pending is undefined')
+    return
+  }
 
   // パスコード再発行
   const reGeneratePassCode = generatePassCode()
-  const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
   await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
 
   const sendPassCode = httpsCallable(functions, 'send_pass_code')
