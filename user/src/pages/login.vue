@@ -6,8 +6,6 @@ import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { FirebaseError } from 'firebase/app'
 import {
   getAuth,
-  FacebookAuthProvider,
-  GoogleAuthProvider,
   TwitterAuthProvider,
   linkWithCredential,
   getAdditionalUserInfo,
@@ -17,7 +15,11 @@ import {
   OAuthCredential,
 } from 'firebase/auth'
 import { useValidators } from '@shokujii/base/composable/validators.js'
-import { getCredentialWithPopup, signInByProviderService } from '@shokujii/base/utils/providerService.js'
+import {
+  getCredentialWithPopup,
+  getProviderClass,
+  signInByProviderService,
+} from '@shokujii/base/utils/providerService.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getProfile } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -112,15 +114,15 @@ const submit = async () => {
   }
 }
 
-const handleTwitterLogin = async () => {
-  isSnsLoading.value = 'twitter.com'
+const handleLogin = async (providerId: 'google.com' | 'facebook.com' | 'twitter.com') => {
+  isSnsLoading.value = providerId
   try {
-    const userCredential = await signInByProviderService('Twitter')
+    const userCredential = await signInByProviderService(providerId)
     const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
     await transitionJudge(userCredential, additionalUserInfo)
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const credential = TwitterAuthProvider.credentialFromError(error)
+      const credential = getProviderClass(providerId).credentialFromError(error)
       console.error({ error, credential })
 
       if (error.code === 'auth/account-exists-with-different-credential') {
@@ -135,20 +137,13 @@ const handleTwitterLogin = async () => {
 
           userCredential = await signInWithCustomToken(getAuth(), customToken)
         } else {
-          switch (verifiedProvider[0]) {
-            case 'google.com':
-              userCredential = await signInByProviderService('Google')
-              break
-            case 'facebook.com':
-              userCredential = await signInByProviderService('Facebook')
-              break
-            case 'twitter.com':
-              userCredential = await signInByProviderService('Twitter')
-              break
-          }
+          const vp = verifiedProvider[0] as 'google.com' | 'facebook.com' | 'twitter.com'
+          userCredential = await signInByProviderService(vp)
         }
 
-        if (!userCredential || !credential) return window.alert($t('login.login_fail', { sns_name: 'X' }))
+        if (!userCredential || !credential) {
+          return window.alert($t('login.login_fail', { sns_name: $t(`sns_name.${providerId}`) }))
+        }
 
         await linkWithCredential(userCredential.user, credential)
           .then(async (userCredential) => {
@@ -157,124 +152,12 @@ const handleTwitterLogin = async () => {
           })
           .catch((error) => {
             console.error(error)
-            window.alert($t('login.login_fail', { sns_name: 'X' }))
+            window.alert($t('login.login_fail', { sns_name: $t(`sns_name.${providerId}`) }))
           })
       }
     } else {
       console.error({ error })
-      window.alert($t('login.login_fail', { sns_name: 'X' }))
-    }
-  }
-  isSnsLoading.value = null
-}
-
-const handleFacebookLogin = async () => {
-  isSnsLoading.value = 'facebook.com'
-  try {
-    const userCredential = await signInByProviderService('Facebook')
-    const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
-    await transitionJudge(userCredential, additionalUserInfo)
-  } catch (error) {
-    if (error instanceof FirebaseError) {
-      const credential = FacebookAuthProvider.credentialFromError(error)
-      console.error({ error, credential })
-
-      if (error.code === 'auth/account-exists-with-different-credential') {
-        let userCredential
-        const customData = error?.customData as CustomData
-        const verifiedProvider = customData?._tokenResponse?.verifiedProvider
-        // カスタムトークンログインを行い、メールアドレスが既に存在している場合
-        if (!verifiedProvider) {
-          const getCustomToken = httpsCallable(functions, 'get_custom_token')
-          const result = await getCustomToken({ user_email: customData?.email })
-          const customToken = result.data as string
-
-          userCredential = await signInWithCustomToken(getAuth(), customToken)
-        } else {
-          switch (verifiedProvider[0]) {
-            case 'google.com':
-              userCredential = await signInByProviderService('Google')
-              break
-            case 'facebook.com':
-              userCredential = await signInByProviderService('Facebook')
-              break
-            case 'twitter.com':
-              userCredential = await signInByProviderService('Twitter')
-              break
-          }
-        }
-
-        if (!userCredential || !credential) return window.alert($t('login.login_fail', { sns_name: 'Facebook' }))
-
-        await linkWithCredential(userCredential.user, credential)
-          .then(async (userCredential) => {
-            const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
-            await transitionJudge(userCredential, additionalUserInfo)
-          })
-          .catch((error) => {
-            console.error(error)
-            window.alert($t('login.login_fail', { sns_name: 'Facebook' }))
-          })
-      }
-    } else {
-      console.error({ error })
-      window.alert($t('login.login_fail', { sns_name: 'Facebook' }))
-    }
-  }
-  isSnsLoading.value = null
-}
-
-const handleGoogleLogin = async () => {
-  isSnsLoading.value = 'google.com'
-  try {
-    const userCredential = await signInByProviderService('Google')
-    const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
-    await transitionJudge(userCredential, additionalUserInfo)
-  } catch (error) {
-    if (error instanceof FirebaseError) {
-      const credential = GoogleAuthProvider.credentialFromError(error)
-      console.error({ error, credential })
-
-      if (error.code === 'auth/account-exists-with-different-credential') {
-        let userCredential
-        const customData = error?.customData as CustomData
-        const verifiedProvider = customData?._tokenResponse?.verifiedProvider
-        // カスタムトークンログインを行い、メールアドレスが既に存在している場合
-        if (!verifiedProvider) {
-          const getCustomToken = httpsCallable(functions, 'get_custom_token')
-          const result = await getCustomToken({ user_email: customData?.email })
-          const customToken = result.data as string
-
-          userCredential = await signInWithCustomToken(getAuth(), customToken)
-        } else {
-          switch (verifiedProvider[0]) {
-            case 'google.com':
-              userCredential = await signInByProviderService('Google')
-              break
-            case 'facebook.com':
-              userCredential = await signInByProviderService('Facebook')
-              break
-            case 'twitter.com':
-              userCredential = await signInByProviderService('Twitter')
-              break
-          }
-        }
-
-        if (!userCredential || !credential) return window.alert($t('login.login_fail', { sns_name: 'Google' }))
-
-        await linkWithCredential(userCredential.user, credential)
-          .then(async (userCredential) => {
-            const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
-            await transitionJudge(userCredential, additionalUserInfo)
-          })
-          .catch((error) => {
-            console.error(error)
-            window.alert($t('login.login_fail', { sns_name: 'Google' }))
-          })
-      }
-    } else {
-      console.error({ error })
-      window.alert($t('login.login_fail', { sns_name: 'Google' }))
+      window.alert($t('login.login_fail', { sns_name: $t(`sns_name.${providerId}`) }))
     }
   }
   isSnsLoading.value = null
@@ -421,96 +304,10 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   })
 }
 
-onMounted(async () => {
-  const userCredential = useCurrentUserStore().userCredential
-  const additionalUserInfo = useCurrentUserStore().additionalUserInfo
-  const error = useCurrentUserStore().lastFirebaseError
-  if (userCredential !== null && additionalUserInfo !== null) {
-    try {
-      isSnsLoading.value = additionalUserInfo.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
-      await transitionJudge(userCredential, additionalUserInfo)
-    } catch (error) {
-      console.error(error)
-    }
-  } else if (error && error.code === 'auth/account-exists-with-different-credential') {
-    const tokenResponse = error.customData?._tokenResponse as { providerId: string }
-    const providerId = tokenResponse.providerId as 'google.com' | 'facebook.com' | 'twitter.com'
-    isSnsLoading.value = providerId
-    tryLoginProvider.value = providerId
-
-    let credential = null
-    switch (providerId) {
-      case FacebookAuthProvider.PROVIDER_ID:
-        credential = FacebookAuthProvider.credentialFromError(error)
-        break
-      case GoogleAuthProvider.PROVIDER_ID:
-        credential = GoogleAuthProvider.credentialFromError(error)
-        break
-      case TwitterAuthProvider.PROVIDER_ID:
-        credential = TwitterAuthProvider.credentialFromError(error)
-        break
-    }
-    console.error({ error, credential })
-
-    let userCredential
-    const customData = error?.customData as CustomData
-    const verifiedProvider = customData?._tokenResponse?.verifiedProvider
-    // カスタムトークンログインを行い、メールアドレスが既に存在している場合
-    if (!verifiedProvider) {
-      const getCustomToken = httpsCallable(functions, 'get_custom_token')
-      const result = await getCustomToken({ user_email: customData?.email })
-      const customToken = result.data as string
-
-      userCredential = await signInWithCustomToken(getAuth(), customToken)
-
-      if (!userCredential || !credential) {
-        return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
-      }
-
-      await linkWithCredential(userCredential.user, credential)
-        .then(async (userCredential) => {
-          // アカウントリンク時、メールアドレス変更中でなければverifiedAtを埋める
-          const currentUserStore = useCurrentUserStore()
-          const currentUser = currentUserStore.user
-          const currentUserPersonalInformation = currentUserStore.personalInformation
-          if (currentUser != null && !currentUserPersonalInformation?.user_email_pending && !currentUser?.verified_at) {
-            currentUser.verified_at = Date.now()
-            await currentUserStore.updateUser(currentUser)
-          }
-
-          const additionalUserInfo = getAdditionalUserInfo(userCredential) as AdditionalUserInfo
-          await transitionJudge(userCredential, additionalUserInfo)
-        })
-        .catch((error) => {
-          console.error(error)
-          window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
-        })
-      isSnsLoading.value = null
-    } else {
-      linkProvider.value = verifiedProvider[0] as 'google.com' | 'facebook.com' | 'twitter.com'
-      oAuthCredential.value = credential
-      isShowSnsLinkDialog.value = true
-      return
-    }
-  }
-  isSnsLoading.value = null
-})
-
 const handleLinkWithCredential = async () => {
   try {
-    let userCredential: UserCredential | null = null
-    switch (linkProvider.value) {
-      case 'google.com':
-        userCredential = await getCredentialWithPopup('Google')
-        break
-      case 'facebook.com':
-        userCredential = await getCredentialWithPopup('Facebook')
-        break
-      case 'twitter.com':
-        userCredential = await getCredentialWithPopup('Twitter')
-        break
-    }
-
+    const userCredential: UserCredential | null =
+      linkProvider.value == null ? null : await getCredentialWithPopup(linkProvider.value)
     if (!userCredential || !oAuthCredential.value) {
       return window.alert($t('login.login_fail', { sns_name: tryLoginProviderLabel.value }))
     }
@@ -590,7 +387,7 @@ const handleLinkWithCredential = async () => {
             block
             :loading="isSnsLoading === 'twitter.com'"
             :disabled="(isSnsLoading !== null && isSnsLoading !== 'twitter.com') || isDisable"
-            @click="handleTwitterLogin"
+            @click="handleLogin('twitter.com')"
           >
             {{ $t('login.sns_login', { sns_name: 'X' }) }}
           </v-btn>
@@ -601,7 +398,7 @@ const handleLinkWithCredential = async () => {
             block
             :loading="isSnsLoading === 'facebook.com'"
             :disabled="(isSnsLoading !== null && isSnsLoading !== 'facebook.com') || isDisable"
-            @click="handleFacebookLogin"
+            @click="handleLogin('facebook.com')"
           >
             {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
           </v-btn>
@@ -612,7 +409,7 @@ const handleLinkWithCredential = async () => {
             block
             :loading="isSnsLoading === 'google.com'"
             :disabled="(isSnsLoading !== null && isSnsLoading !== 'google.com') || isDisable"
-            @click="handleGoogleLogin"
+            @click="handleLogin('google.com')"
           >
             {{ $t('login.sns_login', { sns_name: 'Google' }) }}
           </v-btn>

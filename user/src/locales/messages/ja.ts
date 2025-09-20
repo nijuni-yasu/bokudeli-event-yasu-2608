@@ -2,6 +2,11 @@ import { ja } from 'vuetify/lib/locale/index.mjs'
 
 export default {
   $vuetify: ja,
+  sns_name: {
+    'twitter.com': 'X',
+    'google.com': 'Google',
+    'facebook.com': 'Facebook',
+  },
   navigation: {
     home: 'イベント参加',
     new_event: 'イベント開催',

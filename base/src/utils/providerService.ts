@@ -12,20 +12,41 @@ import {
   reauthenticateWithRedirect,
 } from 'firebase/auth'
 
-export const signInByProviderService = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
+export type ProviderIdType = 'facebook.com' | 'google.com' | 'twitter.com'
+
+export const getProviderClass = (
+  providerId: ProviderIdType,
+): typeof FacebookAuthProvider | typeof GoogleAuthProvider | typeof TwitterAuthProvider => {
+  let provider: typeof FacebookAuthProvider | typeof GoogleAuthProvider | typeof TwitterAuthProvider | null = null
+
+  switch (providerId) {
+    case 'facebook.com':
+      provider = FacebookAuthProvider
+      break
+    case 'google.com':
+      provider = GoogleAuthProvider
+      break
+    case 'twitter.com':
+      provider = TwitterAuthProvider
+      break
+  }
+  return provider
+}
+
+export const signInByProviderService = async (providerService: ProviderIdType) => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 
   switch (providerService) {
-    case 'Facebook':
+    case 'facebook.com':
       provider = new FacebookAuthProvider()
       provider.addScope('public_profile')
       break
-    case 'Google':
+    case 'google.com':
       provider = new GoogleAuthProvider()
       provider.addScope('profile')
       provider.addScope('openid')
       break
-    case 'Twitter':
+    case 'twitter.com':
       provider = new TwitterAuthProvider()
       break
   }
@@ -37,21 +58,33 @@ export const signInByProviderService = async (providerService: 'Facebook' | 'Goo
   }
 }
 
-export const linkByProviderService = async (user: User, providerService: 'Facebook' | 'Google' | 'Twitter') => {
+/**
+ *
+ * @param user
+ * @param providerService 'Facebook', 'Google', 'Twitter' は旧仕様
+ * @returns
+ */
+export const linkByProviderService = async (
+  user: User,
+  providerService: ProviderIdType | 'Facebook' | 'Google' | 'Twitter',
+) => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 
   switch (providerService) {
     case 'Facebook':
+    case 'facebook.com':
       provider = new FacebookAuthProvider()
       provider.addScope('email')
       provider.addScope('public_profile')
       break
     case 'Google':
+    case 'google.com':
       provider = new GoogleAuthProvider()
       provider.addScope('profile')
       provider.addScope('openid')
       break
     case 'Twitter':
+    case 'twitter.com':
       provider = new TwitterAuthProvider()
       break
   }
@@ -63,24 +96,21 @@ export const linkByProviderService = async (user: User, providerService: 'Facebo
   }
 }
 
-export const reauthenticateByProviderService = async (
-  user: User,
-  providerService: 'Facebook' | 'Google' | 'Twitter',
-) => {
+export const reauthenticateByProviderService = async (user: User, providerService: ProviderIdType) => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 
   switch (providerService) {
-    case 'Facebook':
+    case 'facebook.com':
       provider = new FacebookAuthProvider()
       provider.addScope('email')
       provider.addScope('public_profile')
       break
-    case 'Google':
+    case 'google.com':
       provider = new GoogleAuthProvider()
       provider.addScope('profile')
       provider.addScope('openid')
       break
-    case 'Twitter':
+    case 'twitter.com':
       provider = new TwitterAuthProvider()
       break
   }
@@ -92,23 +122,23 @@ export const reauthenticateByProviderService = async (
   }
 }
 
-export const getCredentialWithPopup = async (providerService: 'Facebook' | 'Google' | 'Twitter') => {
+export const getCredentialWithPopup = async (providerService: ProviderIdType) => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 
   switch (providerService) {
-    case 'Facebook':
+    case 'facebook.com':
       provider = new FacebookAuthProvider()
       provider.addScope('public_profile')
       provider.setCustomParameters({
         display: 'popup',
       })
       break
-    case 'Google':
+    case 'google.com':
       provider = new GoogleAuthProvider()
       provider.addScope('profile')
       provider.addScope('openid')
       break
-    case 'Twitter':
+    case 'twitter.com':
       provider = new TwitterAuthProvider()
       break
   }

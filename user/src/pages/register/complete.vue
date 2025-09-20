@@ -1,45 +1,22 @@
 <script setup lang="ts">
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { getAuth, TwitterAuthProvider, getAdditionalUserInfo, type User, type AdditionalUserInfo } from 'firebase/auth'
+import { TwitterAuthProvider, getAdditionalUserInfo } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useUserStore } from '@shokujii/base/stores/user.js'
-import axios from 'axios'
 import { linkByProviderService, reauthenticateByProviderService } from '@shokujii/base/utils/providerService.js'
 import { getProfile } from '@/router/utils'
-
-type ProfileLink = {
-  path: string
-  query: {
-    new: number
-    redirect: string
-  }
-}
-
-const auth = getAuth()
-const currentUser = auth.currentUser
-
-const linkedProviderData = ref<string[]>([])
-
-const updateProviderData = (user: User | null) => {
-  linkedProviderData.value = user ? user.providerData.map((info) => info.providerId) : []
-}
-
-// 初期化（現在のユーザー情報を取得）
-if (currentUser) {
-  updateProviderData(currentUser)
-}
+import { useNotification } from '@shokujii/base/composable/notification'
 
 const route = useRoute()
 const router = useRouter()
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 const { t: $t } = useI18n()
 
 const titleLabel = ref('')
 const descriptionLabel = ref('')
 const selfButtonLabel = ref('')
-const profileLink: ProfileLink = {
+const profileLink = {
   path: getProfile(),
   query: {
     new: Number(route.query.new),
@@ -67,91 +44,46 @@ if (isNew.value === 1) {
 const handleTwitterLink = async () => {
   try {
     isLoading.value = true
-    if (!currentUser) throw new Error('currentUser is null')
+    const currentUserStore = useCurrentUserStore()
+    const user = currentUserStore.user
+    const firebaseUser = currentUserStore.firebaseUser
+    if (user == null || firebaseUser == null) {
+      throw new Error('currentUser is null')
+    }
     let userCredential
-    if (linkedProviderData.value.includes('twitter.com')) {
-      userCredential = await reauthenticateByProviderService(currentUser, 'Twitter')
+    if (firebaseUser.providerData.some((pd) => pd.providerId === 'twitter.com')) {
+      userCredential = await reauthenticateByProviderService(firebaseUser, 'twitter.com')
     } else {
-      userCredential = await linkByProviderService(currentUser, 'Twitter')
+      userCredential = await linkByProviderService(firebaseUser, 'twitter.com')
     }
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
 
-    if (additionalUserInfo === null) return
+    if (additionalUserInfo === null) {
+      // TODO notification
+      return
+    }
 
-    await setTwitterProfile(additionalUserInfo)
+    user.user_name = (additionalUserInfo.profile?.name as string) ?? ''
+    user.user_description = (additionalUserInfo.profile?.description as string) ?? ''
+    user.user_sns_twitter = (additionalUserInfo.username as string) ?? ''
+    await currentUserStore.updateUser(user)
+    await router.push(profileLink)
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = TwitterAuthProvider.credentialFromError(error)
       console.error({ error, credential })
 
       if (error.code === 'auth/credential-already-in-use') {
-        return Object.assign(notification, {
-          message: $t('user.exists_credential', { snsName: 'X（旧Twitter）' }),
-          color: 'error',
-        })
+        notification.show($t('user.exists_credential', { snsName: 'X（旧Twitter）' }), 'error')
+      } else {
+        // TODO error message
+        notification.show('Error', 'error')
       }
     } else if (error) {
       console.error({ error })
     }
   } finally {
     isLoading.value = false
-  }
-}
-
-onMounted(async () => {
-  const additionalUserInfo = useCurrentUserStore().additionalUserInfo
-  const error = useCurrentUserStore().lastFirebaseError
-
-  if (error instanceof FirebaseError) {
-    const credential = TwitterAuthProvider.credentialFromError(error)
-    console.error({ error, credential })
-
-    if (error.code === 'auth/credential-already-in-use') {
-      return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
-    }
-    if (error.code === 'auth/email-already-in-use') {
-      return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
-    }
-  } else {
-    console.error({ error })
-  }
-
-  if (additionalUserInfo === null) return
-
-  try {
-    isLoading.value = true
-    await setTwitterProfile(additionalUserInfo)
-  } catch (error) {
-    console.error(error)
-    isLoading.value = false
-  } finally {
-    isLoading.value = false
-  }
-})
-
-const setTwitterProfile = async (additionalUserInfo: AdditionalUserInfo) => {
-  const currentUserStore = useCurrentUserStore()
-  const currentUser = currentUserStore.user
-
-  if (currentUser != null) {
-    currentUser.user_name = (additionalUserInfo.profile?.name as string) ?? ''
-    currentUser.user_description = (additionalUserInfo.profile?.description as string) ?? ''
-    currentUser.user_sns_twitter = (additionalUserInfo.username as string) ?? ''
-
-    const photoUrl = additionalUserInfo.profile?.profile_image_url_https as string
-    const splitPhotoURL = photoUrl.split('_') as string[]
-    const photoURL = splitPhotoURL[0] + '_' + splitPhotoURL[1] + '.' + splitPhotoURL[2].split('.')[1]
-
-    // blobに変換
-    const response = await axios.get(photoURL, { responseType: 'blob' })
-    const blob = response.data
-
-    // 保存
-    const userStore = useUserStore(currentUser.user_id)
-    await userStore.uploadUserImage(blob)
-    await userStore.updateUser(currentUser)
-
-    return await router.push(profileLink)
   }
 }
 </script>
