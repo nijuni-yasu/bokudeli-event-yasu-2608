@@ -22,45 +22,24 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
 
 export const setupRouter = (router: Router) => {
   // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
-  router.beforeEach(async () => {
+  router.beforeEach(async (to) => {
+    let user: User | null = null
     try {
-      await waitAdminAuthentication()
+      user = await waitAdminAuthentication()
     } catch {
       // Do nothing
     }
-  })
 
-  // ユーザーがログイン済みか否かでリダイレクト
-  router.beforeEach((to) => {
-    const currentUserStore = useCurrentUserStore()
-
-    if (userAccessiblePaths.includes(to.path) && currentUserStore.firebaseUser == null) {
-      router.replace('/')
-    }
-    if (
-      to.path === getLogin() &&
-      currentUserStore.firebaseUser != null &&
-      currentUserStore.additionalUserInfo === null
-    ) {
-      router.replace('/')
-    }
-  })
-
-  let unsubscribeAuthStateChanged: Unsubscribe | null
-  router.beforeEach((to) => {
-    unsubscribeAuthStateChanged?.()
+    // ユーザーがログイン済みか否かでリダイレクト
     const paths = to.path.split('/')
-    if (paths[1] === 'manage') {
-      if (getAuth().currentUser?.uid == null) {
-        return {
-          path: '/',
-        }
-      } else {
-        unsubscribeAuthStateChanged = onAuthStateChanged(getAuth(), (user) => {
-          if (user == null) {
-            router.push('/')
-          }
-        })
+    if (user == null && (userAccessiblePaths.includes(to.path) || paths[1] === 'manage')) {
+      return {
+        path: '/',
+      }
+    }
+    if (to.path === getLogin() && user != null) {
+      return {
+        path: '/',
       }
     }
   })
