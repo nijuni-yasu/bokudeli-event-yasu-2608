@@ -4,10 +4,10 @@ import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './fire
 const UserDbSchema = z.object({
   // Mandatory
   user_id: z.string().nonempty(),
-  user_name: z.string().nonempty(),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
   // Optional
+  user_name: NonEmptyStringSchema.optional(),
   user_description: NonEmptyStringSchema.optional(),
   user_image_url: NonEmptyStringSchema.optional(),
   user_sns_facebook: NonEmptyStringSchema.optional(),
@@ -21,7 +21,7 @@ const UserDbSchema = z.object({
 })
 
 const UserAppSchema = z.object({
-  user_name: z.string(),
+  user_name: z.string().default(''),
   user_description: z.string().default(''),
   user_image_url: z.string().default(''),
   user_sns_facebook: z.string().default(''),
@@ -46,10 +46,10 @@ export class User {
   // Mandatory
   readonly id: string
   readonly user_id: string
-  user_name!: string
   created_at: number
   updated_at: number
   // Default
+  user_name!: string
   user_description!: string
   user_image_url!: string
   user_sns_facebook!: string
