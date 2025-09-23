@@ -16,13 +16,21 @@ import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { getProviderClass, type ProviderIdType } from '@shokujii/base/utils/providerService'
 import { createOrUpdateUser } from '@shokujii/base/apis/user'
+import { User } from '@shokujii/common/schemas/User.js'
 
 const currentUserStore = useCurrentUserStore()
-const {
-  firebaseUser,
-  user: currentUser,
-  personalInformation: currentUserPersonalInformation,
-} = storeToRefs(currentUserStore)
+const { firebaseUser, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
+const currentUser = ref(new User('', {}))
+watch(
+  user,
+  (u) => {
+    if (u != null) {
+      currentUser.value = new User(u.id, u)
+    }
+  },
+  { immediate: true },
+)
+
 const email = computed(() => firebaseUser.value?.email)
 const linkedProviderData = computed<string[]>(
   () => firebaseUser.value?.providerData?.map((info) => info.providerId) ?? [],
@@ -118,15 +126,12 @@ const triggerFileInput = (): void => {
 
 const readImageFiles = (files: File | File[]) => {
   if (files instanceof File) files = [files]
-  if (files.length === 0) return
+  if (files.length === 0 || currentUser.value == null) {
+    return
+  }
   const file = files[0]
   userImage.value = file
-
-  // firestoredUser.value = convertStoredUserToFirestoredUser(user.value as StoredUser)
-  // firebaseUser.value..value.user_thumb_image_urls = buildThumbnailsLinks(
-  //   firestoredUser.value.user_id,
-  //   new URL(URL.createObjectURL(file)),
-  // )
+  currentUser.value.user_image_url = URL.createObjectURL(file)
 }
 
 const profileSubmit = async () => {
