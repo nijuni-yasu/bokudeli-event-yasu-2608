@@ -5,6 +5,7 @@ import { BokudeliCommunity, createNewCommunity } from '@shokujii/base/stores/com
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 
+const router = useRouter()
 const notification = useNotification()
 const { t: $t } = useI18n()
 
@@ -23,11 +24,28 @@ const validateNewAccount = async (value: string) => {
 const submit = async () => {
   isLoading.value = true
   try {
-    await createNewCommunity(toRaw(community.value), coverImageFile.value, iconImageFile.value)
+    const newCommunityStore = await createNewCommunity(
+      toRaw(community.value),
+      coverImageFile.value,
+      iconImageFile.value,
+    )
+    const newCommunity = await new Promise<BokudeliCommunity>((resolve) => {
+      watch(
+        () => [newCommunityStore.community, newCommunityStore.members],
+        () => {
+          if (
+            newCommunityStore.community != null &&
+            (newCommunityStore.members?.length ?? 0) > 0 // 自分が admin 登録されるまで待つ必要がある
+          ) {
+            resolve(newCommunityStore.community)
+          }
+        },
+        { immediate: true },
+      )
+    })
     notification.show($t('manage.newcommunity.created'), 'success')
-    // communityListStore.reload()
-    // router.push(getManageCommunityPath(community.community_account))
-    window.location.href = getManageCommunityPath(community.value.community_account)
+    communityListStore.reload()
+    router.push(getManageCommunityPath(newCommunity.community_account))
   } catch (err) {
     console.error(err)
     notification.show($t('manage.newcommunity.error'), 'error')
