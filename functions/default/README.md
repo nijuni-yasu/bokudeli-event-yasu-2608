@@ -29,6 +29,8 @@ functions v2 より snake_case が使えなくなったためです。kebab-case
 
    アクセス権がない場合は管理者に問い合わせてください。
 
+   `firebase` CLI ではエミュレータ起動時やデプロイ時に `.env.bokudeli-event-test`, `.secret.bokudeli-event-test` のようなプロジェクト名のついたファイルを自動的に選択して使用します。なお、エミュレータでは `.env.local` も使用されます。
+
 ## Build
 
 以下のようにビルドすると、デフォルトでは `dist/` に出力されます。
