@@ -148,7 +148,7 @@ const submit = async () => {
       shop.community_account = community.value.community_account
       await partnerStore.updateShop(shop)
       notification.show($t('community.created'), 'success')
-      communityListStore.$reset()
+      communityListStore.reload()
     }
   } catch (err) {
     console.error(err)
@@ -163,7 +163,7 @@ onUnmounted(() => {
     const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
     communityStore.$reset()
   } else {
-    communityListStore.$reset()
+    communityListStore.reload()
   }
 })
 </script>

@@ -160,7 +160,7 @@ const submit = async (apply: boolean) => {
 }
 
 onUnmounted(() => {
-  eventListStore.$reset()
+  eventListStore.reload()
 })
 </script>
 

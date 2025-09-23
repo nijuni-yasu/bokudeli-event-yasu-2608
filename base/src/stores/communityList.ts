@@ -87,7 +87,6 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
         reload,
         next,
         getCommunityData,
-        $reset: () => {},
       }
     },
   )
