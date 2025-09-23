@@ -152,7 +152,7 @@ const profileSubmit = async () => {
       }
     }
 
-    Object.assign(notification, { message: $t('profile.update_profile'), color: 'success' })
+    notification.show($t('profile.update_profile'), 'success')
 
     if (route.query.redirect) {
       router.push({ path: route.query.redirect as string })
@@ -175,7 +175,8 @@ const emailSubmit = async () => {
 
     if (currentUserPersonalInformation.value?.user_email === userEmail) {
       isEmailLoading.value = false
-      return Object.assign(notification, { message: $t('profile.not_changed_email'), color: 'warning' })
+      notification.show($t('profile.not_changed_email'), 'warning')
+      return
     }
 
     // メールアドレスが既に存在しているかチェック、存在していればreturnする。
@@ -184,7 +185,8 @@ const emailSubmit = async () => {
     )
 
     if (!existPersonalInformation.empty) {
-      return Object.assign(notification, { message: $t('profile.exist_email'), color: 'warning' })
+      notification.show($t('profile.exist_email'), 'warning')
+      return
     }
 
     currentUser.value.verified_at = undefined
@@ -247,7 +249,8 @@ const cancelPendingEmail = async () => {
     currentUserStore.updateUser(toRaw(currentUser.value)),
     currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value)),
   ])
-  return Object.assign(notification, { message: $t('user.canceled'), color: 'success' })
+  notification.show($t('user.canceled'), 'success')
+  return
 }
 
 const handleProviderLink = async (providerId: ProviderIdType) => {
