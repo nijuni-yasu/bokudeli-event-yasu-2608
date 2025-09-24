@@ -508,7 +508,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
                 {{ currentUser.user_sns_facebook_name }}
               </label>
               <label
-                v-if="currentUser.user_sns_facebook_name && !linkedProviderData.includes('facebook.com')"
+                v-if="currentUser.user_sns_facebook_name == '' && !linkedProviderData.includes('facebook.com')"
                 class="ml-11 re-link"
                 v-html="$t('profile.re_link')"
               />
@@ -548,7 +548,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
                 currentUser.user_sns_twitter
               }}</label>
               <label
-                v-if="currentUser.user_sns_twitter && !linkedProviderData.includes('twitter.com')"
+                v-if="currentUser.user_sns_twitter == '' && !linkedProviderData.includes('twitter.com')"
                 class="ml-11 re-link"
                 v-html="$t('profile.re_link')"
               />
