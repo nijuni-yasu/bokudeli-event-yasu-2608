@@ -7,15 +7,12 @@ import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { FirebaseError } from 'firebase/app'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import type { VForm } from 'vuetify/components'
-import { db, functions } from '@shokujii/base/firebase.js'
+import { db } from '@shokujii/base/firebase.js'
 import { getDocs, query, collection, where } from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
 import { mdiUpload } from '@mdi/js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { getProviderClass, type ProviderIdType } from '@shokujii/base/utils/providerService'
-import { createOrUpdateUser } from '@shokujii/base/apis/user'
 import { User } from '@shokujii/common/schemas/User.js'
 
 const currentUserStore = useCurrentUserStore()
@@ -31,7 +28,16 @@ watch(
   { immediate: true },
 )
 
-const email = computed(() => firebaseUser.value?.email)
+const _email = ref<string | null>(null)
+const email = computed({
+  get() {
+    return _email.value ?? currentUserPersonalInformation.value?.user_email
+  },
+  set(value) {
+    _email.value = value ?? null
+  },
+})
+
 const linkedProviderData = computed<string[]>(
   () => firebaseUser.value?.providerData?.map((info) => info.providerId) ?? [],
 )
@@ -176,44 +182,26 @@ const emailSubmit = async () => {
   try {
     isEmailLoading.value = true
 
-    const userEmail = email.value as string
+    const newUserEmail = email.value as string
 
-    if (currentUserPersonalInformation.value?.user_email === userEmail) {
-      isEmailLoading.value = false
+    if (currentUserPersonalInformation.value?.user_email === newUserEmail) {
       notification.show($t('profile.not_changed_email'), 'warning')
       return
     }
 
-    // メールアドレスが既に存在しているかチェック、存在していればreturnする。
-    const existPersonalInformation = await getDocs(
-      query(collection(db, 'users_personal_information'), where('user_email', '==', userEmail)),
-    )
+    await currentUserStore.requestEmailChange(newUserEmail)
 
-    if (!existPersonalInformation.empty) {
-      notification.show($t('profile.exist_email'), 'warning')
-      return
-    }
-
-    currentUser.value.verified_at = undefined
-    currentUserPersonalInformation.value.user_email_pending = userEmail
-    await Promise.all([
-      currentUserStore.updateUser(toRaw(currentUser.value)),
-      currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value)),
-    ])
-
-    const passCode = generatePassCode()
-    await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: passCode })
-
-    const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: userEmail, user_pass_code: passCode })
     return await router.push({
       path: '/pass-code',
       query: {
-        email: userEmail,
+        email: newUserEmail,
         redirect: route.path,
       },
     })
   } catch (error) {
+    if (error instanceof Error && error.message === 'already-exists') {
+      notification.show($t('profile.exist_email'), 'warning')
+    }
     console.warn('Error email submit:', error)
   } finally {
     isEmailLoading.value = false
@@ -221,26 +209,29 @@ const emailSubmit = async () => {
 }
 
 const certificationPendingEmail = async () => {
-  isVerificationLoading.value = true
-  const userEmail = currentUserPersonalInformation.value?.user_email_pending
-  if (userEmail == null) {
-    console.error('user_email_pending is undefined')
-    return
+  try {
+    isVerificationLoading.value = true
+    const userEmailPending = currentUserPersonalInformation.value?.user_email_pending
+    if (userEmailPending == null) {
+      console.error('user_email_pending is undefined')
+      return
+    }
+
+    await currentUserStore.requestEmailChange(userEmailPending)
+
+    return await router.push({
+      path: '/pass-code',
+      query: {
+        email: userEmailPending,
+        redirect: route.path,
+      },
+    })
+  } catch (error) {
+    notification.show($t('profile.exist_email'), 'warning')
+    console.warn('Error email submit:', error)
+  } finally {
+    isVerificationLoading.value = false
   }
-
-  // パスコード再発行
-  const reGeneratePassCode = generatePassCode()
-  await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
-
-  const sendPassCode = httpsCallable(functions, 'send_pass_code')
-  await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
-  return await router.push({
-    path: '/pass-code',
-    query: {
-      email: userEmail,
-      redirect: route.path,
-    },
-  })
 }
 
 const cancelPendingEmail = async () => {

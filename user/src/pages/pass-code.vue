@@ -9,12 +9,13 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { getLogin, getProfile } from '@/router/utils'
 import { User as BokudeliUser } from '@shokujii/common/schemas/User.js'
-import { createOrUpdateUser, getCustomToken, verifyPassCode } from '@shokujii/base/apis/user'
+import { useNotification } from '@shokujii/base/composable/notification'
+import { createOrUpdateUser, verifyPassCode } from '@shokujii/base/apis/user'
 
 const router = useRouter()
 const route = useRoute()
 
-const notification = inject('notification') as Notification
+const notification = useNotification()
 const { t: $t } = useI18n()
 
 const isLoading = ref(false)
@@ -69,28 +70,6 @@ const submit = async () => {
   try {
     const userEmail = email.value
 
-    let result
-    if (isNew === undefined) {
-      result = await verifyPassCode({ user_email_pending: userEmail, user_pass_code: passCode.value })
-    } else {
-      result = await verifyPassCode({ user_email: userEmail, user_pass_code: passCode.value })
-    }
-
-    const customToken = result.data as string
-
-    if (!customToken) {
-      return (isError.value = true)
-    }
-
-    if (isNew !== undefined) {
-      // メールアドレスログインの場合、初回はfirebase authのIDが必ず空になるため、updateEmailで設定する。
-      await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
-        await updateEmail(userCredential.user as User, userEmail).catch((error) => console.error(error))
-      })
-    }
-
-    const usersRef = collection(db, 'users')
-
     let personalInformationSnapshot
     if (isNew === undefined) {
       personalInformationSnapshot = await getDocs(
@@ -102,91 +81,65 @@ const submit = async () => {
       )
     }
 
-    const q = query(usersRef, where('user_id', '==', personalInformationSnapshot.docs[0].id))
-
+    const q = query(collection(db, 'users'), where('user_id', '==', personalInformationSnapshot.docs[0].id))
     const querySnapshot = await getDocs(q)
-
-    if (!querySnapshot.empty) {
-      const users: BokudeliUser[] = []
-      querySnapshot.forEach((doc) => {
-        const user = new BokudeliUser(doc.id, doc.data())
-        users.push(user)
-      })
-
-      const currentUserStore = useCurrentUserStore()
-      const currentUser = currentUserStore.user
-      const currentUserPersonalInformation = currentUserStore.personalInformation
-      const firebaseUser = currentUserStore.firebaseUser
-      if (firebaseUser == null || currentUser == null || currentUserPersonalInformation == null) {
-        throw new Error('Not logged in')
-      }
-
-      if (isNew === undefined) {
-        await updateEmail(toRaw(firebaseUser), userEmail)
-          .then(async () => {
-            currentUser.verified_at = Date.now()
-            currentUserPersonalInformation.user_email = userEmail
-            currentUserPersonalInformation.user_email_pending = ''
-            await Promise.all([
-              currentUserStore.updateUser(toRaw(currentUser)),
-              currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation)),
-            ])
-          })
-          .catch(async (error) => {
-            console.error(error)
-            if (error.code === 'auth/requires-recent-login') {
-              const result = await getCustomToken({ user_email: currentUserPersonalInformation.user_email })
-              const customToken = result.data
-
-              await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
-                await updateEmail(userCredential.user as User, userEmail)
-                  .then(async () => {
-                    currentUser.verified_at = Date.now()
-                    currentUserPersonalInformation.user_email = userEmail
-                    currentUserPersonalInformation.user_email_pending = ''
-                    await Promise.all([
-                      currentUserStore.updateUser(toRaw(currentUser)),
-                      currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation)),
-                    ])
-                  })
-                  .catch((error) => {
-                    // 基本的にこのスコープのエラーが出る想定は無い
-                    console.error(error)
-                  })
-              })
-            } else if (error.code === 'auth/email-already-in-use') {
-              return Object.assign(notification, { message: $t('profile.exists_email'), color: 'error' })
-            }
-          })
-      }
-
-      const isProfileCompleted = users[0].user_name && users[0].user_description && users[0].user_image_url
-      if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
-        return await router.push({
-          path: getProfile(),
-          query: {
-            new: Number(isNew),
-            redirect: route.query.redirect,
-          },
-        })
-      } else if (isNew === undefined || isProfileCompleted) {
-        // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
-        // newが存在しない = メールアドレス変更時の場合
-        return await router.push(route.query.redirect as string)
-      } else {
-        // プロフィール入力方法の選択ページに遷移
-        return await router.push({
-          path: '/register/complete',
-          query: {
-            new: Number(isNew),
-            redirect: route.query.redirect,
-          },
-        })
-      }
+    if (querySnapshot.empty) {
+      return
     }
-  } catch (error) {
+
+    let result
+    if (isNew !== undefined) {
+      result = await verifyPassCode({ user_email: userEmail, user_pass_code: passCode.value })
+      const customToken = result.data as string
+
+      if (!customToken) {
+        return (isError.value = true)
+      }
+      // メールアドレスログインの場合、初回はfirebase authのIDが必ず空になるため、updateEmailで設定する。
+      await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
+        await updateEmail(userCredential.user as User, userEmail).catch((error) => console.error(error))
+      })
+    } else {
+      const currentUserStore = useCurrentUserStore()
+      await currentUserStore.confirmEmailChange(passCode.value)
+    }
+
+    const users: BokudeliUser[] = []
+    querySnapshot.forEach((doc) => {
+      const user = new BokudeliUser(doc.id, doc.data())
+      users.push(user)
+    })
+
+    const isProfileCompleted = users[0].user_name && users[0].user_description && users[0].user_image_url
+    if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
+      return await router.push({
+        path: getProfile(),
+        query: {
+          new: Number(isNew),
+          redirect: route.query.redirect,
+        },
+      })
+    } else if (isNew === undefined || isProfileCompleted) {
+      // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
+      // newが存在しない = メールアドレス変更時の場合
+      return await router.push(route.query.redirect as string)
+    } else {
+      // プロフィール入力方法の選択ページに遷移
+      return await router.push({
+        path: '/register/complete',
+        query: {
+          new: Number(isNew),
+          redirect: route.query.redirect,
+        },
+      })
+    }
+  } catch (error: any) {
     console.warn('Error sending pass code:', error)
-    isOpenUnMatchPassCodeDialog.value = true
+    if (error.code === 'auth/email-already-in-use') {
+      notification.show($t('profile.exists_email'), 'error')
+    } else {
+      isOpenUnMatchPassCodeDialog.value = true
+    }
   } finally {
     isValid.value = false
   }
