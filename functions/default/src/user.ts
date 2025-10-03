@@ -1,103 +1,134 @@
 import { getAuth } from 'firebase-admin/auth'
-import { getFirestore } from 'firebase-admin/firestore'
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { getUser, saveUser, ShokujiiUser } from './stores/user.js'
+import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
+import {
+  ConfirmEmailChangeRequest,
+  ConfirmEmailLoginRequest,
+  ConfirmEmailLoginResponse,
+  RequestEmailChangeRequest,
+  RequestEmailLoginRequest,
+  RequestEmailLoginResponse,
+} from '@shokujii/common/apis/user.js'
+import { savePassCode, ShokujiiPassCode, getValidPassCodeFromEmail, deletePassCode } from './stores/passCode.js'
+import { send } from './utils/sendgrid.js'
+import { DEFAULT_FROM } from './utils/mail.js'
 
-export const createOrUpdateUser = onCall(async (request) => {
-  const { user_email, user_pass_code, user_email_pending } = request.data
+const USER_PASS_CODE_TEMPLATE_ID = 'd-84540f5feaf8422484b65bdc2be739fe'
 
-  const db = getFirestore()
-
-  // 直接ドキュメントを検索するのはベストではないが、仕様的に仕方がないのでとりあえずこの状態で維持する
-  let personalInformationSnapshot
-  if (user_email_pending) {
-    personalInformationSnapshot = await db
-      .collection('users_personal_information')
-      .where('user_email_pending', '==', user_email_pending)
-      .get()
-  } else {
-    personalInformationSnapshot = await db
-      .collection('users_personal_information')
-      .where('user_email', '==', user_email)
-      .get()
-  }
-  const personalInformationId = personalInformationSnapshot.docs[0]?.id
-
-  let is_new: boolean
-  if (personalInformationId != null) {
-    const user = await getUser(personalInformationId, true)
-    if (user == null) {
-      throw new HttpsError('invalid-argument', 'User not exist.')
+export const requestEmailLogin = onCall<RequestEmailLoginRequest, Promise<RequestEmailLoginResponse>>(
+  {
+    secrets: ['SENDGRID_API_KEY'],
+  },
+  async (request) => {
+    const { email } = request.data
+    if (email == null) {
+      throw new HttpsError('invalid-argument', 'email is null')
     }
-    // ユーザーが存在する場合、pass_code を追加して更新
-    user.user_pass_code = user_pass_code
-    saveUser(user)
-    is_new = false
-  } else {
-    saveUser(
-      new ShokujiiUser(null, {
-        user_pass_code,
-        user_email,
+    const userId = await getUserIdFromEmail(email)
+    const isNew = userId == null
+    const passCode = isNew
+      ? new ShokujiiPassCode(null, { user_email: email })
+      : new ShokujiiPassCode(null, { user_id: userId, user_email: email })
+    await Promise.all([
+      savePassCode(passCode),
+      send({
+        to: email,
+        from: DEFAULT_FROM,
+        templateId: USER_PASS_CODE_TEMPLATE_ID,
+        dynamicTemplateData: {
+          user_pass_code: passCode.pass_code,
+        },
       }),
-    )
-    is_new = true
-  }
-  return { is_new }
-})
-
-export const verifyPassCode = onCall(async (request) => {
-  const { user_email, user_pass_code, user_email_pending } = request.data
-
-  const db = getFirestore()
-
-  // 直接ドキュメントを検索するのはベストではないが、仕様的に仕方がないのでとりあえずこの状態で維持する
-  let personalInformationSnapshot
-  if (user_email_pending) {
-    personalInformationSnapshot = await db
-      .collection('users_personal_information')
-      .where('user_email_pending', '==', user_email_pending)
-      .get()
-  } else {
-    personalInformationSnapshot = await db
-      .collection('users_personal_information')
-      .where('user_email', '==', user_email)
-      .get()
-  }
-  const personalInformationId = personalInformationSnapshot.docs[0]?.id
-  const user = await getUser(personalInformationId, true)
-
-  if (user != null) {
-    const matchedPassCode = user.user_pass_code === user_pass_code
-
-    // カスタムエラーを早期リターン
-    if (!matchedPassCode) {
-      throw new HttpsError('invalid-argument', 'Pass code does not match.')
+    ])
+    return {
+      isNew,
     }
+  },
+)
 
-    user.user_pass_code = ''
-    user.verified_at = Date.now()
-    saveUser(user)
+export const confirmEmailLogin = onCall<ConfirmEmailLoginRequest, Promise<ConfirmEmailLoginResponse>>(
+  async (request) => {
+    const { email, passCode } = request.data
+    if (email == null || passCode == null) {
+      throw new HttpsError('invalid-argument', 'email or passCode is null')
+    }
+    const passCodeDocument = await getValidPassCodeFromEmail(email)
+    if (passCodeDocument == null || passCodeDocument.pass_code !== passCode) {
+      throw new HttpsError('invalid-argument', 'pass code is not valid')
+    }
+    const promises = [deletePassCode(passCodeDocument.id)]
+    let uid: string
+    if (passCodeDocument.user_id == null) {
+      const user = await getAuth().createUser({ email })
+      uid = user.uid
+      promises.push(
+        saveUser(
+          new ShokujiiUser(uid, {
+            user_email: email,
+          }),
+        ),
+      )
+    } else {
+      uid = passCodeDocument.user_id
+    }
+    const [token] = await Promise.all([getAuth().createCustomToken(uid), ...promises])
+    return { token }
+  },
+)
 
-    return await getAuth().createCustomToken(user.id)
-  } else {
-    throw new HttpsError('not-found', 'User not found.')
+export const requestEmailChange = onCall<RequestEmailChangeRequest>(
+  {
+    secrets: ['SENDGRID_API_KEY'],
+  },
+  async (request) => {
+    const uid = request.auth?.uid
+    if (uid == null) {
+      throw new HttpsError('unauthenticated', 'not logged in')
+    }
+    const { newEmail } = request.data
+    if (newEmail == null) {
+      throw new HttpsError('invalid-argument', 'newEmail is null')
+    }
+    const checkedUid = await getUserIdFromEmail(newEmail)
+    if (checkedUid != null) {
+      throw new HttpsError('already-exists', 'The email address has been already used')
+    }
+    const passCode = new ShokujiiPassCode(null, { user_id: uid, user_email: newEmail })
+    await Promise.all([
+      savePassCode(passCode),
+      send({
+        to: newEmail,
+        from: DEFAULT_FROM,
+        templateId: USER_PASS_CODE_TEMPLATE_ID,
+        dynamicTemplateData: {
+          user_pass_code: passCode.pass_code,
+        },
+      }),
+    ])
+  },
+)
+
+export const confirmEmailChange = onCall<ConfirmEmailChangeRequest>(async (request) => {
+  const uid = request.auth?.uid
+  if (uid == null) {
+    throw new HttpsError('unauthenticated', 'not logged in')
   }
-})
-
-export const getCustomToken = onCall(async (request) => {
-  const { user_email } = request.data
-
-  const db = getFirestore()
-
-  // 直接ドキュメントを検索するのはベストではないが、仕様的に仕方がないのでとりあえずこの状態で維持する
-  const personalInformationSnapshot = await db
-    .collection('users_personal_information')
-    .where('user_email', '==', user_email)
-    .get()
-  const id = personalInformationSnapshot.docs[0]?.id
-  if (id != null) {
-    return await getAuth().createCustomToken(id)
-  } else {
-    throw new HttpsError('not-found', 'User not found.')
+  const { passCode, newEmail } = request.data
+  if (passCode == null || newEmail == null) {
+    throw new HttpsError('invalid-argument', 'passCode or newEmail is null')
   }
+  const user = await getUser(uid, true)
+  if (user == null) {
+    throw new HttpsError('internal', 'no user')
+  }
+  const passCodeDocument = await getValidPassCodeFromEmail(newEmail)
+  if (passCodeDocument == null || passCodeDocument.pass_code !== passCode || passCodeDocument.user_id !== uid) {
+    throw new HttpsError('invalid-argument', 'pass code is not valid')
+  }
+  user.user_email = newEmail
+  await Promise.all([
+    deletePassCode(passCodeDocument.id),
+    getAuth().updateUser(uid, { email: newEmail }),
+    saveUser(user),
+  ])
 })

@@ -64,6 +64,15 @@ export const getUserPersonalInformation = async (userId: string): Promise<UserPe
   return (await userPersonalInformationRef.get()).data()
 }
 
+export const getUserIdFromEmail = async (user_email: string): Promise<string | undefined> => {
+  const db = getFirestore()
+  const personalInformationSnapshot = await db
+    .collection('users_personal_information')
+    .where('user_email', '==', user_email)
+    .get()
+  return personalInformationSnapshot.docs[0]?.id
+}
+
 export const saveUser = async (user: ShokujiiUser, transaction?: Transaction) => {
   const db = getFirestore()
   const userRef = db.collection('users').doc(user.id).withConverter(userConverter)

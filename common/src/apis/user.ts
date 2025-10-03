@@ -1,29 +1,9 @@
-export type CreateOrUpdateUserRequset =
-  | {
-      user_pass_code: string
-      user_email: string
-    }
-  | {
-      user_pass_code: string
-      user_email_pending: string
-    }
+export type RequestEmailLoginRequest = { email: string }
+export type RequestEmailLoginResponse = { isNew: boolean }
 
-export type CreateOrUpdateUserResponse = {
-  is_new: boolean
-}
+export type ConfirmEmailLoginRequest = { email: string; passCode: string }
+export type ConfirmEmailLoginResponse = { token: string }
 
-export type VerifyPassCodeRequest =
-  | {
-      user_pass_code: string
-      user_email: string
-    }
-  | {
-      user_pass_code: string
-      user_email_pending: string
-    }
-export type VerifyPassCodeResponse = string
+export type RequestEmailChangeRequest = { newEmail: string }
 
-export type GetCustomTokenRequest = {
-  user_email: string
-}
-export type GetCustomTokenResponse = string
+export type ConfirmEmailChangeRequest = { newEmail: string; passCode: string }

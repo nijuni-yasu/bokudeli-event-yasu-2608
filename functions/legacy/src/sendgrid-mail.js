@@ -43,7 +43,6 @@ const EVENT_STATUS_ACCEPTING_ORDER_ID = 'd-badaf130bf664cf3badb1ef2aab9f60c'
 const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 
 const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
-const USER_PASS_CODE = 'd-84540f5feaf8422484b65bdc2be739fe'
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
@@ -1204,32 +1203,4 @@ export const send_email = functions.region('asia-northeast1').https.onCall(async
     subject,
     text,
   })
-})
-
-export const send_pass_code = functions.region('asia-northeast1').https.onCall(async (data) => {
-  const { user_email, user_pass_code } = data
-
-  if (!user_email) {
-    throw new functions.https.HttpsError('invalid-argument', 'user_email is required.')
-  }
-
-  if (!user_pass_code) {
-    throw new functions.https.HttpsError('invalid-argument', 'user_pass_code is required.')
-  }
-
-  try {
-    await sgMail.send({
-      to: user_email,
-      from: DEFAULT_FROM,
-      templateId: USER_PASS_CODE,
-      dynamic_template_data: {
-        user_pass_code: user_pass_code,
-      },
-    })
-
-    return { message: 'Pass code sent and saved successfully!' }
-  } catch (error) {
-    console.error('Error in send_pass_code:', error)
-    throw new functions.https.HttpsError('internal', 'Failed to send pass code.')
-  }
 })
