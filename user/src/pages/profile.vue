@@ -42,16 +42,11 @@ const linkedProviderData = computed<string[]>(
   () => firebaseUser.value?.providerData?.map((info) => info.providerId) ?? [],
 )
 
-const userEmailPending = computed(() => {
-  return currentUserPersonalInformation.value?.user_email_pending || null
-})
-
 const router = useRouter()
 const route = useRoute()
 
 const isProfileLoading = ref<boolean>(false)
 const isEmailLoading = ref<boolean>(false)
-const isVerificationLoading = ref<boolean>(false)
 const isSnsLoading = ref<ProviderIdType | null>(null)
 
 const isValidProfile = ref<boolean>(false)
@@ -74,10 +69,7 @@ const form = ref<VForm | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const userImage = ref<File | undefined>(undefined)
 
-const isNew = computed(() => {
-  const value = route.query.new
-  return value === '1' ? 1 : 0
-})
+const isNew = route.query.isnew === undefined || (route.query.isnew as string) === 'false' ? false : true
 
 const imageError = ref('')
 
@@ -194,59 +186,18 @@ const emailSubmit = async () => {
     return await router.push({
       path: '/pass-code',
       query: {
-        email: newUserEmail,
+        newemail: newUserEmail,
         redirect: route.path,
       },
     })
   } catch (error) {
-    if (error instanceof Error && error.message === 'already-exists') {
+    if (error instanceof FirebaseError && error.code === 'functions/already-exists') {
       notification.show($t('profile.exist_email'), 'warning')
     }
     console.warn('Error email submit:', error)
   } finally {
     isEmailLoading.value = false
   }
-}
-
-const certificationPendingEmail = async () => {
-  try {
-    isVerificationLoading.value = true
-    const userEmailPending = currentUserPersonalInformation.value?.user_email_pending
-    if (userEmailPending == null) {
-      console.error('user_email_pending is undefined')
-      return
-    }
-
-    await currentUserStore.requestEmailChange(userEmailPending)
-
-    return await router.push({
-      path: '/pass-code',
-      query: {
-        email: userEmailPending,
-        redirect: route.path,
-      },
-    })
-  } catch (error) {
-    notification.show($t('profile.exist_email'), 'warning')
-    console.warn('Error email submit:', error)
-  } finally {
-    isVerificationLoading.value = false
-  }
-}
-
-const cancelPendingEmail = async () => {
-  if (currentUser.value == null || currentUserPersonalInformation.value == null) {
-    throw new Error('User is not logged in')
-  }
-  currentUser.value.user_pass_code = ''
-  currentUser.value.verified_at = Date.now()
-  currentUserPersonalInformation.value.user_email_pending = ''
-  await Promise.all([
-    currentUserStore.updateUser(toRaw(currentUser.value)),
-    currentUserStore.updatePersonalInformation(toRaw(currentUserPersonalInformation.value)),
-  ])
-  notification.show($t('user.canceled'), 'success')
-  return
 }
 
 const handleProviderLink = async (providerId: ProviderIdType) => {
@@ -350,7 +301,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
         </v-col>
       </v-row>
 
-      <v-row v-if="isNew !== 1" justify="center" class="mt-8">
+      <v-row v-if="!isNew" justify="center" class="mt-8">
         <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
           <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
             <div class="text-center text-h3 font-weight-bold mb-4">{{ $t('profile.social_link') }}</div>
@@ -404,25 +355,12 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
       </v-row>
     </v-form>
 
-    <v-row v-if="isNew !== 1" justify="center" class="mt-8">
+    <v-row v-if="!isNew" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
 
-          <v-card-text v-if="userEmailPending">
-            <div class="py-1" v-html="$t('profile.pending_email', { pending_email: userEmailPending })" />
-            <div class="py-1 text-error text-subtitle-2">{{ $t('profile.notice_pending_email') }}</div>
-            <div class="d-flex flex-row justify-center">
-              <v-btn class="ma-2" :loading="isVerificationLoading" @click="certificationPendingEmail">{{
-                $t('profile.certification')
-              }}</v-btn>
-              <v-btn class="ma-2" :disabled="isVerificationLoading" @click="cancelPendingEmail">{{
-                $t('profile.cancel')
-              }}</v-btn>
-            </div>
-          </v-card-text>
-
-          <div v-else>
+          <div>
             <div class="text-subtitle-1 mt-3 mb-10">{{ $t('profile.email_description') }}</div>
             <v-form v-model="isValidEmail" @submit.prevent="emailSubmit">
               <v-text-field
@@ -449,7 +387,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
       </v-col>
     </v-row>
 
-    <v-row v-if="isNew !== 1" justify="center" class="mt-8">
+    <v-row v-if="!isNew" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.account_linkage') }}</div>

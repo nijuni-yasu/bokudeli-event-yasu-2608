@@ -26,12 +26,9 @@ const profileLink = {
 
 const isLoading = ref(false)
 
-const isNew = computed(() => {
-  const value = route.query.new
-  return value === '1' ? 1 : 0
-})
+const isNew = route.query.isnew === undefined || (route.query.isnew as string) === 'false' ? false : true
 
-if (isNew.value === 1) {
+if (isNew) {
   titleLabel.value = $t('complete.new_user_title')
   descriptionLabel.value = $t('complete.new_user_description')
   selfButtonLabel.value = $t('complete.new_user_selfButton')

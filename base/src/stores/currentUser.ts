@@ -6,22 +6,16 @@ import {
   TwitterAuthProvider,
   unlink,
   Unsubscribe,
-  updateEmail,
-  User,
 } from 'firebase/auth'
 import {
-  collection,
   doc,
   DocumentData,
   DocumentReference,
   FirestoreDataConverter,
-  getDocs,
   onSnapshot,
-  query,
   QueryDocumentSnapshot,
   setDoc,
   SnapshotOptions,
-  where,
 } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { computed, markRaw, ref, toRaw, watch } from 'vue'
@@ -31,12 +25,7 @@ import { db } from '@shokujii/base/firebase.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { getBlobIfNecessary } from '@shokujii/base/utils/user'
 import { linkByProviderService, ProviderIdType } from '@shokujii/base/utils/providerService'
-import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
-
-import { functions } from '@shokujii/base/firebase.js'
-import { httpsCallable } from 'firebase/functions'
-import { getCustomToken, verifyPassCode } from '@shokujii/base/apis/user'
-import { FirebaseError } from 'firebase/app'
+import { requestEmailChange as _requestEmailChange, confirmEmailChange as _confirmEmailChange } from '../apis/user'
 
 const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInformation> = {
   toFirestore(userPersonalInformation: UserPersonalInformation): DocumentData {
@@ -154,71 +143,21 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
    * メールアドレス変更依頼を `user_email_pending` に保存し、pass code を新しいメールアドレスに送る
    * @param newUserEmail
    */
-  const requestEmailChange = async (newUserEmail: string) => {
-    // メールアドレスが既に存在しているかチェック、存在していれば Exception
-    const existPersonalInformation = await getDocs(
-      query(collection(db, 'users_personal_information'), where('user_email', '==', newUserEmail)),
-    )
-    if (!existPersonalInformation.empty) {
-      throw new Error('already-exists')
-    }
-
-    // TODO Move to functions
-    const currentUser = user.value
-    const currentUserPersonalInformation = personalInformation.value
-    if (currentUser == null || currentUserPersonalInformation == null) {
-      throw new Error('User not logged in')
-    }
-    const passCode = generatePassCode()
-    currentUser.user_pass_code = passCode
-    currentUserPersonalInformation.user_email_pending = newUserEmail
-    await Promise.all([
-      updateUser(toRaw(currentUser)),
-      updatePersonalInformation(toRaw(currentUserPersonalInformation)),
-    ])
-
-    // @shokujii/base/api に移動すべきだが、そもそも send_pass_code 自体は消す方向なので一時的に
-    const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: newUserEmail, user_pass_code: passCode })
+  const requestEmailChange = async (newEmail: string) => {
+    await _requestEmailChange({ newEmail })
   }
 
-  const confirmEmailChange = async (passCode: string) => {
+  const confirmEmailChange = async (newEmail: string, passCode: string) => {
     const currentUser = user.value
     const currentUserPersonalInformation = personalInformation.value
     const currentFirebaseUser = firebaseUser.value
     if (currentUser == null || currentUserPersonalInformation == null || currentFirebaseUser == null) {
       throw new Error('User not logged in')
     }
-    const newEmail = currentUserPersonalInformation.user_email_pending
-    if (newEmail == null) {
-      throw new Error('No request')
-    }
-
-    const result = await verifyPassCode({
-      user_email_pending: currentUserPersonalInformation.user_email_pending,
-      user_pass_code: passCode,
-    })
-    if (!result.data) {
-      throw new Error('')
-    }
-
-    const _updateEmail = async (user: User) => {
-      try {
-        await updateEmail(user, newEmail)
-      } catch (error: unknown) {
-        if (error instanceof FirebaseError && error.code === 'auth/requires-recent-login') {
-          const result = await getCustomToken({ user_email: user.email! })
-          const customToken = result.data
-          const userCredential = await signInWithCustomToken(getAuth(), customToken)
-          await _updateEmail(userCredential.user)
-        } else {
-          throw error
-        }
-      }
-    }
-    await _updateEmail(toRaw(currentFirebaseUser))
+    const response = await _confirmEmailChange({ newEmail, passCode })
     personalInformation.value!.user_email = newEmail
     updatePersonalInformation(toRaw(personalInformation.value!))
+    await signInWithCustomToken(getAuth(), response.data.token)
   }
 
   const linkProvider = async (providerId: ProviderIdType) => {

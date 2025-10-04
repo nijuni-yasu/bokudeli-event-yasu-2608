@@ -9,7 +9,6 @@ import { getProfile } from '@/router/utils'
 
 const props = defineProps<{
   userData: User
-  userEmailPending: string | null
   isEditable: boolean | undefined
 }>()
 

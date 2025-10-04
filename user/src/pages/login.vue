@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { functions } from '@shokujii/base/firebase.js'
-import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { FirebaseError } from 'firebase/app'
 import {
-  getAuth,
   TwitterAuthProvider,
   linkWithCredential,
   getAdditionalUserInfo,
   type UserCredential,
-  signInWithCustomToken,
   type AdditionalUserInfo,
   OAuthCredential,
 } from 'firebase/auth'
@@ -23,7 +18,7 @@ import {
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getProfile } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { createOrUpdateUser, getCustomToken } from '@shokujii/base/apis/user'
+import { requestEmailLogin } from '@shokujii/base/apis/user'
 
 type CustomData = {
   email: string
@@ -81,19 +76,15 @@ const submit = async () => {
     if (!userEmail) {
       throw new Error('Email is required')
     }
-
-    const passCode = generatePassCode()
-
-    const { data } = await createOrUpdateUser({ user_email: userEmail, user_pass_code: passCode })
-
-    const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: userEmail, user_pass_code: passCode })
-
+    const response = await requestEmailLogin({
+      email: userEmail,
+    })
+    const { isNew } = response.data
     return await router.push({
       path: '/pass-code',
       query: {
         email: userEmail,
-        new: Number(data.is_new),
+        isnew: isNew ? 'true' : 'false',
         redirect: route.query.redirect,
       },
     })
@@ -114,19 +105,13 @@ const handleLogin = async (providerId: 'google.com' | 'facebook.com' | 'twitter.
   } catch (error) {
     if (error instanceof FirebaseError) {
       const credential = getProviderClass(providerId).credentialFromError(error)
-      console.error({ error, credential })
+      console.error(error, credential)
 
       if (error.code === 'auth/account-exists-with-different-credential') {
         let userCredential
         const customData = error?.customData as CustomData
         const verifiedProvider = customData?._tokenResponse?.verifiedProvider
-        // カスタムトークンログインを行い、メールアドレスが既に存在している場合
-        if (!verifiedProvider) {
-          const result = await getCustomToken({ user_email: customData?.email })
-          const customToken = result.data
-
-          userCredential = await signInWithCustomToken(getAuth(), customToken)
-        } else {
+        if (verifiedProvider != null) {
           const vp = verifiedProvider[0] as 'google.com' | 'facebook.com' | 'twitter.com'
           userCredential = await signInByProviderService(vp)
         }
@@ -182,11 +167,6 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     case 'facebook.com':
       currentUser.user_sns_facebook_name =
         currentUser.user_sns_facebook_name || (additionalUserInfo.profile?.name as string)
-
-      if (!currentUserPersonalInformation.user_email_pending && !currentUser.verified_at) {
-        currentUser.verified_at = Date.now()
-      }
-
       await currentUserStore.updateUser(currentUser)
       break
     case 'twitter.com': {
@@ -208,21 +188,12 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
           await currentUserStore.updatePersonalInformation(currentUserPersonalInformation)
         }
       }
-
-      if (!currentUserPersonalInformation.user_email_pending && !currentUser.verified_at) {
-        currentUser.verified_at = Date.now()
-      }
-
       await currentUserStore.updateUser(currentUser)
       break
     }
     case 'google.com':
       currentUserPersonalInformation.user_sns_google =
         currentUserPersonalInformation.user_sns_google || (additionalUserInfo?.profile?.email as string)
-
-      if (!currentUserPersonalInformation.user_email_pending && !currentUser.verified_at) {
-        currentUser.verified_at = Date.now()
-      }
 
       await Promise.all([
         currentUserStore.updatePersonalInformation(currentUserPersonalInformation),
@@ -238,27 +209,6 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
     return await router.push({
       path: '/register/email',
       query: {
-        new: Number(isNewUser),
-        redirect: route.query.redirect,
-      },
-    })
-  }
-
-  // verifiedAtがnullかつuserEmailPendingがnullならパスコード認証を行う
-  if (!currentUser.verified_at && !currentUserPersonalInformation.user_email_pending) {
-    const passCode = generatePassCode()
-
-    const { data } = await createOrUpdateUser({ user_email: email, user_pass_code: passCode })
-
-    const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: email, user_pass_code: passCode })
-
-    return await router.push({
-      path: '/pass-code',
-      query: {
-        email: email,
-        new: Number(Number(data.is_new)),
-        sns: additionalUserInfo.providerId,
         redirect: route.query.redirect,
       },
     })
@@ -271,7 +221,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
       return await router.push({
         path: getProfile(),
         query: {
-          new: Number(isNewUser),
+          isnew: isNewUser ? 'true' : 'false',
           redirect: route.query.redirect as string,
         },
       })
@@ -287,7 +237,7 @@ const transitionJudge = async (userCredential: UserCredential, additionalUserInf
   return await router.push({
     path: '/register/complete',
     query: {
-      new: Number(isNewUser),
+      isnew: isNewUser ? 'true' : 'false',
       redirect: route.query.redirect,
     },
   })
@@ -306,9 +256,7 @@ const handleLinkWithCredential = async () => {
         // アカウントリンク時、メールアドレス変更中でなければverifiedAtを埋める
         const currentUserStore = useCurrentUserStore()
         const currentUser = currentUserStore.user
-        const currentUserPersonalInformation = currentUserStore.personalInformation
-        if (currentUser != null && currentUserPersonalInformation?.user_email_pending == null) {
-          currentUser.verified_at = Date.now()
+        if (currentUser != null) {
           await currentUserStore.updateUser(currentUser)
         }
 

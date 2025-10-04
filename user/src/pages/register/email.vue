@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { functions } from '@shokujii/base/firebase.js'
-import { httpsCallable } from 'firebase/functions'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { getAuth, updateEmail, signInWithCustomToken, type User } from 'firebase/auth'
 import { useValidators } from '@shokujii/base/composable/validators.js'
-import { getCustomToken } from '@shokujii/base/apis/user'
 
 const currentUserStore = useCurrentUserStore()
 const userEmail = computed({
@@ -24,63 +19,19 @@ const router = useRouter()
 const isLoading = ref(false)
 const isValid = ref(false)
 
-const notification = inject('notification') as Notification
 const { t: $t } = useI18n()
 
 const { requiredValidator, emailValidator } = useValidators()
 
 const submit = async () => {
-  if (
-    currentUserStore.firebaseUser == null ||
-    currentUserStore.user == null ||
-    currentUserStore.personalInformation == null
-  ) {
-    throw new Error('Not logged in')
-  }
-
   isLoading.value = true
   try {
-    await currentUserStore.updatePersonalInformation(toRaw(currentUserStore.personalInformation))
-    let isError = false
-
-    const email = currentUserStore.personalInformation.user_email
-
-    // Facebook or Twitterにメールアドレスの登録がない場合、firebase authのIDが空になるため、updateEmailで設定する。
-    await updateEmail(toRaw(currentUserStore.firebaseUser), email).catch(async (error) => {
-      if (error.code === 'auth/requires-recent-login') {
-        const result = await getCustomToken({ user_email: email })
-        const customToken = result.data as string
-
-        await signInWithCustomToken(getAuth(), customToken)
-          .then(async (userCredential) => {
-            await updateEmail(userCredential.user as User, email).catch((error) => console.error(error))
-          })
-          .catch((error) => {
-            // 基本的にこのスコープのエラーが出る想定は無い
-            isError = true
-            console.error(error)
-          })
-      } else if (error.code === 'auth/email-already-in-use') {
-        isError = true
-        Object.assign(notification, { message: $t('user.exists_email'), color: 'error' })
-      }
-    })
-
-    if (isError) return
-
-    const passCode = generatePassCode()
-    currentUserStore.user.user_pass_code = passCode
-
-    await currentUserStore.updateUser(toRaw(currentUserStore.user))
-
-    const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: email, user_pass_code: passCode })
-
-    return await router.push({
+    const email = userEmail.value
+    await currentUserStore.requestEmailChange(email)
+    await router.push({
       path: '/pass-code',
       query: {
-        email: email,
-        new: Number(route.query.new),
+        email,
         redirect: route.query.redirect,
       },
     })

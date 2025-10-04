@@ -1,16 +1,21 @@
 <script setup lang="ts">
-import { db, functions } from '@shokujii/base/firebase.js'
-import { httpsCallable } from 'firebase/functions'
-import { getAuth, signInWithCustomToken, signOut, updateEmail, type User } from 'firebase/auth'
+import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { collection, getDocs, query, where } from 'firebase/firestore'
-import { generatePassCode } from '@shokujii/base/utils/generatePassCode.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
-import { getLogin, getProfile } from '@/router/utils'
+import { getHomePath, getLogin } from '@/router/utils'
 import { User as BokudeliUser } from '@shokujii/common/schemas/User.js'
 import { useNotification } from '@shokujii/base/composable/notification'
-import { createOrUpdateUser, verifyPassCode } from '@shokujii/base/apis/user'
+import { confirmEmailLogin, requestEmailLogin } from '@shokujii/base/apis/user'
+
+const moveTo = async (path: string) => {
+  await router.push({
+    path,
+    query: {
+      redirect: route.query.redirect as string,
+    },
+  })
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -18,46 +23,41 @@ const route = useRoute()
 const notification = useNotification()
 const { t: $t } = useI18n()
 
+const currentUserStore = useCurrentUserStore()
+
 const isLoading = ref(false)
 const isValid = ref(false)
-const isError = ref(false)
 
-const email = ref(route.query.email as string)
-const isNew = route.query.new
+const isNew = route.query.isnew === undefined || (route.query.isnew as string) === 'false' ? false : true
+const email = route.query.email as string | undefined
+const newEmail = route.query.newemail as string | undefined
+if (email != null && getAuth().currentUser?.uid != null) {
+  moveTo(getHomePath())
+}
+if (newEmail != null && getAuth().currentUser?.uid == null) {
+  moveTo(getLogin())
+}
+if (email == null && newEmail == null) {
+  if (getAuth().currentUser?.uid == null) {
+    moveTo(getLogin())
+  } else {
+    moveTo(getHomePath())
+  }
+}
+
 const passCode = ref('')
 const isOpenUnMatchPassCodeDialog = ref(false)
 
 watch(passCode, async (newValue) => {
   if (newValue.length === 6) {
-    await submit()
+    await submit(newValue)
   }
 })
-
-const login = async () => {
-  const auth = getAuth()
-  await signOut(auth)
-
-  return await router.push({
-    path: getLogin(),
-    query: {
-      redirect: route.query.redirect as string,
-    },
-  })
-}
 
 const reSendPassCode = async () => {
   isLoading.value = true
   try {
-    const userEmail = email.value
-    const reGeneratePassCode = generatePassCode()
-
-    if (isNew === undefined) {
-      await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
-    } else {
-      await createOrUpdateUser({ user_email: userEmail, user_pass_code: reGeneratePassCode })
-    }
-    const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
+    await requestEmailLogin({ email: email! })
   } catch (error) {
     console.warn('Error resending pass code:', error)
   } finally {
@@ -65,74 +65,45 @@ const reSendPassCode = async () => {
   }
 }
 
-const submit = async () => {
+const submit = async (passCode: string) => {
   isValid.value = true
   try {
-    const userEmail = email.value
-
-    let personalInformationSnapshot
-    if (isNew === undefined) {
-      personalInformationSnapshot = await getDocs(
-        query(collection(db, 'users_personal_information'), where('user_email_pending', '==', userEmail)),
+    if (newEmail != null) {
+      // Email Change の場合
+      await currentUserStore.confirmEmailChange(newEmail, passCode)
+      return await router.push(route.query.redirect as string)
+    }
+    // Email Login
+    const result = await confirmEmailLogin({ email: email!, passCode: passCode })
+    const { token } = result.data
+    await signInWithCustomToken(getAuth(), token)
+    const user: BokudeliUser = await new Promise((resolve) => {
+      const unwatch = watch(
+        () => currentUserStore.user,
+        (user) => {
+          if (user != null) {
+            nextTick(() => {
+              unwatch()
+              resolve(user)
+            })
+          }
+        },
+        { immediate: true },
       )
-    } else {
-      personalInformationSnapshot = await getDocs(
-        query(collection(db, 'users_personal_information'), where('user_email', '==', userEmail)),
-      )
-    }
-
-    const q = query(collection(db, 'users'), where('user_id', '==', personalInformationSnapshot.docs[0].id))
-    const querySnapshot = await getDocs(q)
-    if (querySnapshot.empty) {
-      return
-    }
-
-    let result
-    if (isNew !== undefined) {
-      result = await verifyPassCode({ user_email: userEmail, user_pass_code: passCode.value })
-      const customToken = result.data as string
-
-      if (!customToken) {
-        return (isError.value = true)
-      }
-      // メールアドレスログインの場合、初回はfirebase authのIDが必ず空になるため、updateEmailで設定する。
-      await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
-        await updateEmail(userCredential.user as User, userEmail).catch((error) => console.error(error))
-      })
-    } else {
-      const currentUserStore = useCurrentUserStore()
-      await currentUserStore.confirmEmailChange(passCode.value)
-    }
-
-    const users: BokudeliUser[] = []
-    querySnapshot.forEach((doc) => {
-      const user = new BokudeliUser(doc.id, doc.data())
-      users.push(user)
     })
 
-    const isProfileCompleted = users[0].user_name && users[0].user_description && users[0].user_image_url
-    if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
-      return await router.push({
-        path: getProfile(),
-        query: {
-          new: Number(isNew),
-          redirect: route.query.redirect,
-        },
-      })
-    } else if (isNew === undefined || isProfileCompleted) {
+    const isProfileCompleted = user.user_name && user.user_description && user.user_image_url
+    if (isProfileCompleted) {
       // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
-      // newが存在しない = メールアドレス変更時の場合
       return await router.push(route.query.redirect as string)
-    } else {
-      // プロフィール入力方法の選択ページに遷移
-      return await router.push({
-        path: '/register/complete',
-        query: {
-          new: Number(isNew),
-          redirect: route.query.redirect,
-        },
-      })
     }
+    return await router.push({
+      path: '/register/complete',
+      query: {
+        isnew: isNew ? 'true' : 'false',
+        redirect: route.query.redirect,
+      },
+    })
   } catch (error: any) {
     console.warn('Error sending pass code:', error)
     if (error.code === 'auth/email-already-in-use') {
@@ -159,18 +130,11 @@ const submit = async () => {
               <h1 class="my-3 text-h3 font-weight-bold">{{ $t('passcode.enter_passcode') }}</h1>
             </v-row>
             <v-row justify="center">
-              <p>{{ $t('passcode.enter_passcode_description', { email: email }) }}</p>
+              <p>{{ $t('passcode.enter_passcode_description', { email: email ?? newEmail }) }}</p>
             </v-row>
           </v-container>
 
-          <v-otp-input
-            autofocus
-            :disabled="isLoading"
-            :loading="isValid"
-            :error="isError"
-            :focus-all="isError"
-            v-model="passCode"
-          />
+          <v-otp-input autofocus :disabled="isLoading" :loading="isValid" v-model="passCode" />
 
           <v-btn
             size="large"
@@ -184,14 +148,14 @@ const submit = async () => {
             {{ $t('passcode.resend') }}
           </v-btn>
           <v-btn
-            v-if="route.query.new"
+            v-if="isNew"
             size="large"
             color="grey-900"
             variant="text"
             block
             :disabled="isValid"
             :loading="isLoading"
-            @click="login"
+            @click="moveTo(getLogin())"
           >
             {{ $t('passcode.back') }}
           </v-btn>

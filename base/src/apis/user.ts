@@ -1,27 +1,33 @@
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
 import {
-  CreateOrUpdateUserRequset,
-  CreateOrUpdateUserResponse,
-  VerifyPassCodeRequest,
-  VerifyPassCodeResponse,
-  GetCustomTokenRequest,
-  GetCustomTokenResponse,
+  RequestEmailChangeRequest,
+  RequestEmailLoginRequest,
+  RequestEmailLoginResponse,
+  ConfirmEmailLoginRequest,
+  ConfirmEmailLoginResponse,
+  ConfirmEmailChangeRequest,
+  ConfirmEmailChangeResponse,
 } from '@shokujii/common/apis/user.js'
 
-export const createOrUpdateUser = async (
-  input: CreateOrUpdateUserRequset,
-): Promise<HttpsCallableResult<CreateOrUpdateUserResponse>> => {
-  const f = httpsCallable<CreateOrUpdateUserRequset, CreateOrUpdateUserResponse>(functions, 'createOrUpdateUser')
+export const requestEmailLogin = async (input: RequestEmailLoginRequest) => {
+  const f = httpsCallable<RequestEmailLoginRequest, RequestEmailLoginResponse>(functions, 'requestEmailLogin')
   return f(input)
 }
 
-export const verifyPassCode = (input: VerifyPassCodeRequest): Promise<HttpsCallableResult<VerifyPassCodeResponse>> => {
-  const f = httpsCallable<VerifyPassCodeRequest, VerifyPassCodeResponse>(functions, 'verifyPassCode')
+export const confirmEmailLogin = async (
+  input: ConfirmEmailLoginRequest,
+): Promise<HttpsCallableResult<ConfirmEmailLoginResponse>> => {
+  const f = httpsCallable<ConfirmEmailLoginRequest, ConfirmEmailLoginResponse>(functions, 'confirmEmailLogin')
   return f(input)
 }
 
-export const getCustomToken = (input: GetCustomTokenRequest): Promise<HttpsCallableResult<GetCustomTokenResponse>> => {
-  const f = httpsCallable<GetCustomTokenRequest, GetCustomTokenResponse>(functions, 'getCustomToken')
+export const requestEmailChange = async (input: RequestEmailChangeRequest) => {
+  const f = httpsCallable<RequestEmailChangeRequest>(functions, 'requestEmailChange')
+  return f(input)
+}
+
+export const confirmEmailChange = async (input: ConfirmEmailChangeRequest) => {
+  const f = httpsCallable<ConfirmEmailChangeRequest, ConfirmEmailChangeResponse>(functions, 'confirmEmailChange')
   return f(input)
 }

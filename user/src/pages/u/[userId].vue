@@ -55,7 +55,7 @@ const notification = useNotification()
 const { t: $t } = useI18n()
 
 const { user } = storeToRefs(useUserStore(userId))
-const { firebaseUser, personalInformation } = storeToRefs(useCurrentUserStore())
+const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const tabs = ref(null)
 const cancelOperatingOrder = ref<EventOrder | null>(null)
@@ -65,12 +65,6 @@ const isOwner = computed(() => {
   return uid != null ? userId === uid : false
 })
 
-const emailPending = computed(() => {
-  if (isOwner.value) {
-    return personalInformation.value?.user_email_pending ?? null
-  }
-  return null
-})
 // オーダー情報の取得
 // TODO: 直接 firebase を叩くべきではないので、store を使えるようにする
 const fetchOrders = async () =>
@@ -184,7 +178,7 @@ const downloadInvoice = async (order: EventOrder) => {
 <template>
   <v-row v-if="user != null" justify="center">
     <v-col cols="12" sm="8" md="3">
-      <UserBioPanel :user-data="user" :user-email-pending="emailPending" :is-editable="isOwner" />
+      <UserBioPanel :user-data="user" :is-editable="isOwner" />
     </v-col>
     <v-col cols="12" sm="8" md="9">
       <v-tabs v-model="tabs">
