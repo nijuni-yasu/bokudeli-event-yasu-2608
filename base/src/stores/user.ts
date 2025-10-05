@@ -38,6 +38,11 @@ export const useUserStore = (userId: string) => {
       await setDoc(userRef, data, { merge: true })
     }
 
+    /**
+     * functions にも同じ関数があるので注意
+     * TODO: 共通化
+     * @param file
+     */
     const uploadUserImage = async (file: File | Blob) => {
       let ext: string = ''
       if (file instanceof File) {

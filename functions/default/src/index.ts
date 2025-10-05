@@ -19,7 +19,7 @@ export const {
   sendTestLetter,
   handleEventOgpRequest, handleCommunityOgpRequest,
   communityAdded, communityContact,postToTwitter,
-  requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange
+  requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),

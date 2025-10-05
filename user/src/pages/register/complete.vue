@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { TwitterAuthProvider, getAdditionalUserInfo } from 'firebase/auth'
+import { TwitterAuthProvider } from 'firebase/auth'
 import { FirebaseError } from 'firebase/app'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { linkByProviderService, reauthenticateByProviderService } from '@shokujii/base/utils/providerService.js'
 import { getProfile } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification'
 
@@ -16,17 +15,17 @@ const { t: $t } = useI18n()
 const titleLabel = ref('')
 const descriptionLabel = ref('')
 const selfButtonLabel = ref('')
-const profileLink = {
-  path: getProfile(),
-  query: {
-    new: Number(route.query.new),
-    redirect: route.query.redirect as string,
-  },
-}
 
 const isLoading = ref(false)
 
 const isNew = route.query.isnew === undefined || (route.query.isnew as string) === 'false' ? false : true
+const profileLink = {
+  path: getProfile(),
+  query: {
+    isnew: isNew ? 'true' : 'false',
+    redirect: route.query.redirect as string,
+  },
+}
 
 if (isNew) {
   titleLabel.value = $t('complete.new_user_title')
@@ -42,28 +41,7 @@ const handleTwitterLink = async () => {
   try {
     isLoading.value = true
     const currentUserStore = useCurrentUserStore()
-    const user = currentUserStore.user
-    const firebaseUser = currentUserStore.firebaseUser
-    if (user == null || firebaseUser == null) {
-      throw new Error('currentUser is null')
-    }
-    let userCredential
-    if (firebaseUser.providerData.some((pd) => pd.providerId === 'twitter.com')) {
-      userCredential = await reauthenticateByProviderService(firebaseUser, 'twitter.com')
-    } else {
-      userCredential = await linkByProviderService(firebaseUser, 'twitter.com')
-    }
-    const additionalUserInfo = getAdditionalUserInfo(userCredential)
-
-    if (additionalUserInfo === null) {
-      // TODO notification
-      return
-    }
-
-    user.user_name = (additionalUserInfo.profile?.name as string) ?? ''
-    user.user_description = (additionalUserInfo.profile?.description as string) ?? ''
-    user.user_sns_twitter = (additionalUserInfo.username as string) ?? ''
-    await currentUserStore.updateUser(user)
+    await currentUserStore.linkProvider('twitter.com')
     await router.push(profileLink)
   } catch (error) {
     if (error instanceof FirebaseError) {

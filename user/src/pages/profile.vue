@@ -12,11 +12,11 @@ import { getDocs, query, collection, where } from 'firebase/firestore'
 import { mdiUpload } from '@mdi/js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
-import { getProviderClass, type ProviderIdType } from '@shokujii/base/utils/providerService'
+import { type ProviderIdType } from '@shokujii/base/utils/providerService'
 import { User } from '@shokujii/common/schemas/User.js'
 
 const currentUserStore = useCurrentUserStore()
-const { firebaseUser, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
+const { providerData, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
 const currentUser = ref(new User('', {}))
 watch(
   user,
@@ -38,9 +38,17 @@ const email = computed({
   },
 })
 
-const linkedProviderData = computed<string[]>(
-  () => firebaseUser.value?.providerData?.map((info) => info.providerId) ?? [],
-)
+const linkedGogleAccount = computed(() => {
+  return providerData.value?.find((pd) => pd.providerId === 'google.com')?.email ?? null
+})
+
+const linkedFacebookAccount = computed(() => {
+  return providerData.value?.find((pd) => pd.providerId === 'facebook.com')?.displayName ?? null
+})
+
+const linkedTwitterAccount = computed(() => {
+  return providerData.value?.find((pd) => pd.providerId === 'twitter.com')?.displayName ?? null
+})
 
 const router = useRouter()
 const route = useRoute()
@@ -201,22 +209,19 @@ const emailSubmit = async () => {
 }
 
 const handleProviderLink = async (providerId: ProviderIdType) => {
-  const provider = getProviderClass(providerId)
   try {
     isSnsLoading.value = providerId
     await currentUserStore.linkProvider(providerId)
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const credential = provider.credentialFromError(error)
-      console.error({ error, credential })
       if (error.code === 'auth/credential-already-in-use') {
-        notification.show($t('user.exists_credential', { snsName: 'Facebook' }), 'error')
+        notification.show($t('user.exists_credential', { snsName: providerId }), 'error')
       }
       if (error.code === 'auth/email-already-in-use') {
         notification.show($t('complete.exists_email'), 'error')
       }
     } else {
-      console.error({ error })
+      console.error(error)
     }
   } finally {
     isSnsLoading.value = null
@@ -398,22 +403,26 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
               <label class="align-center">
                 <v-icon :icon="GoogleIcon" size="x-large" class="me-3" />{{ $t('profile.google') }}
               </label>
-              <label v-if="currentUserPersonalInformation?.user_sns_google" class="ml-11 font-weight-bold">{{
-                currentUserPersonalInformation.user_sns_google
-              }}</label>
+              <label v-if="linkedGogleAccount != null" class="ml-11 font-weight-bold">
+                {{ linkedGogleAccount }}
+              </label>
+              <label v-else class="ml-11 re-link">
+                <div v-html="$t('profile.re_link')"></div>
+              </label>
             </div>
 
             <div class="mt-6 mt-md-0">
               <v-btn
-                v-if="!linkedProviderData.includes('google.com')"
+                v-if="linkedGogleAccount == null"
                 variant="outlined"
                 color="grey-500"
                 width="100"
                 :loading="isSnsLoading === 'google.com'"
                 :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'"
                 @click="handleProviderLink('google.com')"
-                >{{ $t('profile.linkage') }}</v-btn
               >
+                {{ $t('profile.linkage') }}
+              </v-btn>
               <v-btn
                 v-else
                 color="grey-900"
@@ -421,8 +430,9 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
                 :loading="isSnsLoading === 'google.com'"
                 :disabled="isSnsLoading !== null && isSnsLoading !== 'google.com'"
                 @click="() => handleUnLink('google.com')"
-                >{{ $t('profile.linked') }}</v-btn
               >
+                {{ $t('profile.linked') }}
+              </v-btn>
             </div>
           </div>
 
@@ -433,19 +443,17 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
               <label class="align-center">
                 <v-icon :icon="FacebookIcon" size="x-large" class="me-3" />{{ $t('profile.facebook') }}
               </label>
-              <label v-if="currentUser.user_sns_facebook_name" class="ml-11 font-weight-bold">
-                {{ currentUser.user_sns_facebook_name }}
+              <label v-if="linkedFacebookAccount != null" class="ml-11 font-weight-bold">
+                {{ linkedFacebookAccount }}
               </label>
-              <label
-                v-if="currentUser.user_sns_facebook_name == '' && !linkedProviderData.includes('facebook.com')"
-                class="ml-11 re-link"
-                v-html="$t('profile.re_link')"
-              />
+              <label v-else class="ml-11 re-link">
+                <div v-html="$t('profile.re_link')"></div>
+              </label>
             </div>
 
             <div class="mt-6 mt-md-0">
               <v-btn
-                v-if="!linkedProviderData.includes('facebook.com')"
+                v-if="linkedFacebookAccount == null"
                 variant="outlined"
                 color="grey-500"
                 width="100"
@@ -473,27 +481,26 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
               <label class="align-center">
                 <v-icon :icon="XIcon" size="x-large" class="me-3" />{{ $t('profile.twitter') }}
               </label>
-              <label v-if="currentUser.user_sns_twitter" class="ml-11 font-weight-bold">{{
-                currentUser.user_sns_twitter
-              }}</label>
-              <label
-                v-if="currentUser.user_sns_twitter == '' && !linkedProviderData.includes('twitter.com')"
-                class="ml-11 re-link"
-                v-html="$t('profile.re_link')"
-              />
+              <label v-if="linkedTwitterAccount != null" class="ml-11 font-weight-bold">
+                {{ linkedTwitterAccount }}
+              </label>
+              <label v-else class="ml-11 re-link">
+                <div v-html="$t('profile.re_link')"></div>
+              </label>
             </div>
 
             <div class="mt-6 mt-md-0">
               <v-btn
-                v-if="!linkedProviderData.includes('twitter.com')"
+                v-if="linkedTwitterAccount == null"
                 variant="outlined"
                 color="grey-500"
                 width="100"
                 :loading="isSnsLoading === 'twitter.com'"
                 :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'"
                 @click="handleProviderLink('twitter.com')"
-                >{{ $t('profile.linkage') }}</v-btn
               >
+                {{ $t('profile.linkage') }}
+              </v-btn>
               <v-btn
                 v-else
                 color="grey-900"
@@ -501,8 +508,9 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
                 :loading="isSnsLoading === 'twitter.com'"
                 :disabled="isSnsLoading !== null && isSnsLoading !== 'twitter.com'"
                 @click="() => handleUnLink('twitter.com')"
-                >{{ $t('profile.linked') }}</v-btn
               >
+                {{ $t('profile.linked') }}
+              </v-btn>
             </div>
           </div>
         </v-sheet>

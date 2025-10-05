@@ -1,6 +1,7 @@
 import { getAuth } from 'firebase-admin/auth'
+import { getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
+import { DateTime } from 'luxon'
 import {
   ConfirmEmailChangeRequest,
   ConfirmEmailChangeResponse,
@@ -9,7 +10,10 @@ import {
   RequestEmailChangeRequest,
   RequestEmailLoginRequest,
   RequestEmailLoginResponse,
+  UpdateProfileFromProvidersRequest,
 } from '@shokujii/common/apis/user.js'
+import { fetchFacebookImage, fetchTwitterImage } from '@shokujii/common/utils/user.js'
+import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
 import { savePassCode, ShokujiiPassCode, getValidPassCodeFromEmail, deletePassCode } from './stores/passCode.js'
 import { send } from './utils/sendgrid.js'
 import { DEFAULT_FROM } from './utils/mail.js'
@@ -137,3 +141,62 @@ export const confirmEmailChange = onCall<ConfirmEmailChangeRequest, Promise<Conf
     return { token }
   },
 )
+
+const uploadUserImage = async (uid: string, blob: Blob) => {
+  const bucket = getStorage().bucket()
+  // Blob -> Buffer へ変換（Admin SDK は Buffer/stream を受け付ける）
+  const arrayBuffer = await blob.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
+  const stem = `avatar_${DateTime.now().toFormat('yyyyMMddHHmmss')}`
+  const path = `users/${uid}/${stem}`
+  const file = bucket.file(path)
+  const contentType = blob.type != null && blob.type !== '' ? blob.type : 'image/*'
+
+  await file.save(buffer, {
+    contentType,
+    metadata: {
+      contentType,
+    },
+  })
+  return `gs://${bucket.name}/${path}`
+}
+
+const ADDITIONAL_KEYS = ['user_description', 'user_sns_twitter'] as const
+
+export const updateProfileFromProviders = onCall<UpdateProfileFromProvidersRequest>(async (request) => {
+  const uid = request.auth?.uid
+  if (uid == null) {
+    throw new HttpsError('unauthenticated', 'not logged in')
+  }
+  const { additinalInfo } = request.data
+  let user = await getUser(uid, true)
+  if (user == null) {
+    user = new ShokujiiUser(uid, {})
+  }
+  const providerData = (await getAuth().getUser(uid)).providerData
+  for (const provider of providerData) {
+    user.user_email = user.user_email || provider.email
+    user.user_name = user.user_name || provider.displayName
+    user.user_image_url = user.user_image_url || provider.photoURL
+  }
+  for (const key of ADDITIONAL_KEYS) {
+    const value = additinalInfo?.[key]
+    if (value !== undefined) {
+      user[key] = value
+    }
+  }
+  // Facebook, Twitter の場合は、画像を Storage にアップロードする
+  // ただし、Login の度に画像を Storage にアップロードするわけにはいかないので、既存の画像がない場合のみ
+  // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
+  let blob: Blob | null = null
+  if (user.user_image_url.startsWith('https://graph.facebook.com')) {
+    blob = await fetchFacebookImage(user.user_image_url)
+  } else if (user.user_image_url.startsWith('https://pbs.twimg.com')) {
+    blob = await fetchTwitterImage(user.user_image_url)
+  }
+  if (blob != null) {
+    user.user_image_url = await uploadUserImage(uid, blob)
+  }
+  await saveUser(user)
+})

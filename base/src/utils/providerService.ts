@@ -14,25 +14,6 @@ import {
 
 export type ProviderIdType = 'facebook.com' | 'google.com' | 'twitter.com'
 
-export const getProviderClass = (
-  providerId: ProviderIdType,
-): typeof FacebookAuthProvider | typeof GoogleAuthProvider | typeof TwitterAuthProvider => {
-  let provider: typeof FacebookAuthProvider | typeof GoogleAuthProvider | typeof TwitterAuthProvider | null = null
-
-  switch (providerId) {
-    case 'facebook.com':
-      provider = FacebookAuthProvider
-      break
-    case 'google.com':
-      provider = GoogleAuthProvider
-      break
-    case 'twitter.com':
-      provider = TwitterAuthProvider
-      break
-  }
-  return provider
-}
-
 export const signInByProviderService = async (providerService: ProviderIdType) => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
 

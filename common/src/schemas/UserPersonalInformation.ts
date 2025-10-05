@@ -4,14 +4,12 @@ import { NonEmptyStringSchema } from './firebase/index.js'
 const UserPersonalInformationDbSchema = z.object({
   user_email: z.string().email(),
   // optional
-  user_sns_google: NonEmptyStringSchema.optional(),
   user_sns_twitter_access_token: NonEmptyStringSchema.optional(),
   user_sns_twitter_secret: NonEmptyStringSchema.optional(),
 })
 
 const UserPersonalInformationAppSchema = z.object({
   user_email: z.string().default(''),
-  user_sns_google: z.string().default(''),
   user_sns_twitter_access_token: z.string().default(''),
   user_sns_twitter_secret: z.string().default(''),
 })
@@ -19,7 +17,6 @@ const UserPersonalInformationAppSchema = z.object({
 export class UserPersonalInformation {
   readonly id: string
   user_email: string = ''
-  user_sns_google: string = ''
   user_sns_twitter_access_token: string = ''
   user_sns_twitter_secret: string = ''
 

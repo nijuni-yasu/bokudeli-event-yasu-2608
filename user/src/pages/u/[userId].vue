@@ -270,6 +270,7 @@ const downloadInvoice = async (order: EventOrder) => {
   <!-- 存在しない eventId や communityAccount にも反応してしまう。 TODO 修正 -->
   <!-- prettier-ignore -->
   <UserSuccessJoinEventDialog
+    v-if="$route.query.eventId != null || $route.query.communityAccount != null"
     v-model="isUserSuccessJoinEventDialogVisible"
     :event-id="(($route.query.eventId ?? '') as string)"
     :community-account="(($route.query.communityAccount ?? '') as string)"
