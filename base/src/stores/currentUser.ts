@@ -1,18 +1,4 @@
-import { FirebaseError } from 'firebase/app'
-import {
-  getAdditionalUserInfo,
-  getAuth,
-  getRedirectResult,
-  linkWithCredential,
-  OAuthCredential,
-  OAuthProvider,
-  signInWithCustomToken,
-  TwitterAuthProvider,
-  unlink,
-  Unsubscribe,
-  UserCredential,
-  UserInfo,
-} from 'firebase/auth'
+import { getAuth, signInWithCustomToken, unlink, Unsubscribe, UserInfo } from 'firebase/auth'
 import {
   doc,
   DocumentData,
@@ -24,12 +10,11 @@ import {
 } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { computed, markRaw, ref, toRaw, watch } from 'vue'
-import { User as ShokujiiUser, User } from '@shokujii/common/schemas/User.js'
+import { User as ShokujiiUser } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
 import {
   requestEmailChange as _requestEmailChange,
   confirmEmailChange as _confirmEmailChange,
-  updateProfileFromProviders as _updateProfileFromProviders,
 } from '@shokujii/base/apis/user'
 import { db } from '@shokujii/base/firebase.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
@@ -37,6 +22,7 @@ import {
   linkByProviderService,
   ProviderIdType,
   reauthenticateByProviderService,
+  updateProfileFromProviders,
 } from '@shokujii/base/utils/providerService'
 
 const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInformation> = {
@@ -54,33 +40,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
   const firebaseUser = ref(getAuth().currentUser)
   const providerData = ref<UserInfo[]>([])
   getAuth().onAuthStateChanged(async (user) => {
-    // pendingCred はどのフローであっても消しておく
-    const pendingCred = getPendingCred()
-    removePendingCred()
-
-    let userCredential: UserCredential | null = null
-    try {
-      userCredential = await getRedirectResult(getAuth())
-    } catch (err: unknown) {
-      if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
-        const pendingCred = OAuthProvider.credentialFromError(err)
-        if (pendingCred != null /* false になることは無いはずだが念の為 */) {
-          // リンク依頼をセーブしておき次のログイン時に処理する
-          setPendingCred(pendingCred)
-        }
-      }
-    }
-
     if (user != null) {
-      if (pendingCred) {
-        // リンク依頼がセーブされていたら処理する
-        const cred = OAuthProvider.credentialFromJSON(pendingCred)
-        userCredential = await linkWithCredential(user, cred)
-      }
-      // ログインに影響が出ないように非同期で実行する
-      updateProfileFromProviders(userCredential).catch((error) => {
-        console.error('updateProfileFromProviders error:', error)
-      })
       firebaseUser.value = markRaw(user)
       providerData.value = user.providerData
     } else {
@@ -89,48 +49,6 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
       providerData.value = []
     }
   })
-
-  const removePendingCred = () => {
-    sessionStorage.removeItem('pendingCred')
-  }
-
-  const setPendingCred = (pendingCred: OAuthCredential) => {
-    sessionStorage.setItem('pendingCred', JSON.stringify(pendingCred))
-  }
-
-  const getPendingCred = (): OAuthCredential | null => {
-    const json = sessionStorage.getItem('pendingCred')
-    if (json == null) {
-      return null
-    }
-    return OAuthProvider.credentialFromJSON(json)
-  }
-
-  const updateProfileFromProviders = async (userCredential: UserCredential | null) => {
-    // updateProfileFromProviders で情報は一括更新したいところだが、
-    // 一部の情報はクライアントでしか取得できないため、ここで取得して functions に送る
-    let additinalInfo: Partial<User> | null = null
-    let isNewUser = false
-    if (userCredential != null) {
-      const additionalUserInfo = getAdditionalUserInfo(userCredential)
-      isNewUser ||= additionalUserInfo?.isNewUser ?? false
-      switch (userCredential.providerId) {
-        case TwitterAuthProvider.PROVIDER_ID: {
-          if (additionalUserInfo != null) {
-            additinalInfo = {
-              user_description: additionalUserInfo.profile?.description as string,
-              user_sns_twitter: additionalUserInfo.username as string,
-            }
-          }
-          break
-        }
-      }
-    }
-    if (isNewUser || additinalInfo != null) {
-      additinalInfo = additinalInfo ?? {}
-      await _updateProfileFromProviders({ additinalInfo })
-    }
-  }
 
   const user = computed(() => {
     if (firebaseUser.value === null) {

@@ -1,22 +1,9 @@
 <script setup lang="ts">
-import { FirebaseError } from 'firebase/app'
-import {
-  fetchSignInMethodsForEmail,
-  getAdditionalUserInfo,
-  getAuth,
-  getRedirectResult,
-  OAuthProvider,
-  type AdditionalUserInfo,
-  type User,
-} from 'firebase/auth'
-import type { User as BokudeliUser } from '@shokujii/common/schemas/User'
 import { requestEmailLogin } from '@shokujii/base/apis/user'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { useValidators } from '@shokujii/base/composable/validators.js'
-import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { signInByProviderService, type ProviderIdType } from '@shokujii/base/utils/providerService.js'
-import { getProfile } from '@/router/utils'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 
 const route = useRoute()
@@ -24,16 +11,21 @@ const router = useRouter()
 const notification = useNotification()
 const { t: $t } = useI18n()
 const { requiredValidator, emailValidator } = useValidators()
-const currentUserStore = useCurrentUserStore()
 
 const isLoading = ref<ProviderIdType | 'custom' | null>(null)
 const isValid = ref(false)
 const email = ref('')
-const linkRequestDialogParams = ref<{
+const linkRequestDialogParams = computed<{
   tryLoginProviderId: ProviderIdType
-  linkProviderId: ProviderIdType | 'custom'
-  email?: string
-} | null>(null)
+  linkProviderId: ProviderIdType
+} | null>(() => {
+  return route.query.pid1 == null || route.query.pid2 == null
+    ? null
+    : {
+        tryLoginProviderId: route.query.pid1 as ProviderIdType,
+        linkProviderId: route.query.pid2 as ProviderIdType,
+      }
+})
 
 const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string, redirect?: string) => {
   isLoading.value = providerId
@@ -42,23 +34,21 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
       if (email == null) {
         throw new Error('Email is required')
       }
-      const response = await requestEmailLogin({
+      await requestEmailLogin({
         email,
       })
-      const { isNew } = response.data
       await router.push({
         path: '/pass-code',
         query: {
           email,
-          isnew: isNew ? 'true' : 'false',
           redirect,
         },
       })
     } else {
-      const userCredential = await signInByProviderService(providerId)
+      await signInByProviderService(providerId)
       // ここに来るのはポップアップ認証（デバッグ用）成功時のみ
-      // リダイレクト認証は handleRedirect へ
-      await transitionJudge(userCredential.user, getAdditionalUserInfo(userCredential) ?? undefined)
+      // 再読みこみしてリダイレクト時と同様の処理をさせる
+      window.location.href = '/register/complete'
     }
   } catch (error) {
     console.error(error)
@@ -67,103 +57,6 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
     isLoading.value = null
   }
 }
-
-const transitionJudge = async (user: User, additionalUserInfo?: AdditionalUserInfo) => {
-  const email = user.email ?? additionalUserInfo?.profile?.email
-  const isNewUser = additionalUserInfo?.isNewUser
-
-  // メールアドレスが無い場合はメールアドレス設定へ
-  if (email == null || email === '') {
-    return await router.push({
-      path: '/register/email',
-      query: {
-        redirect: route.query.redirect,
-      },
-    })
-  }
-
-  const currentUser = await new Promise<BokudeliUser>((resolve) => {
-    const unwatch = watch(
-      () => currentUserStore.user,
-      (currentUser) => {
-        if (currentUser != null) {
-          nextTick(() => {
-            unwatch()
-            resolve(currentUser)
-          })
-        }
-      },
-      { immediate: true },
-    )
-  })
-
-  // プロフィールが埋まっていれば
-  if (currentUser.user_name && currentUser.user_description && currentUser.user_image_url) {
-    if (isNewUser) {
-      // 初回登録ユーザーならプロフィール設定ページへ
-      return await router.push({
-        path: getProfile(),
-        query: {
-          isnew: isNewUser ? 'true' : 'false',
-          redirect: route.query.redirect as string,
-        },
-      })
-    } else if (route.query.redirect) {
-      // 元いたページへ
-      return await router.push(route.query.redirect as string)
-    } else {
-      return await router.push('/')
-    }
-  }
-
-  // プロフィールが埋まっていなければ、登録完了（プロフィール登録誘導）へ
-  return await router.push({
-    path: '/register/complete',
-    query: {
-      isnew: isNewUser ? 'true' : 'false',
-      redirect: route.query.redirect,
-    },
-  })
-}
-
-onMounted(async () => {
-  // redirect の処理をここで行うのは得策ではないが、ダイアログを出すためだけに router で複雑な処理を行うより
-  // currentUserStore + onMounted の方がシンプルな実装になると判断
-  // 将来的に、さらに複雑な処理を行う場合は構造を変えた方がよい
-  try {
-    const userCredential = await getRedirectResult(getAuth())
-
-    const currentUser = getAuth().currentUser
-    if (currentUser != null) {
-      const additionalUserInfo =
-        userCredential == null ? undefined : (getAdditionalUserInfo(userCredential) ?? undefined)
-      transitionJudge(currentUser, additionalUserInfo)
-    }
-  } catch (err: unknown) {
-    // 既に同じ email のアカウントが存在している場合、そのアカウントでログインしてからリンクする必要がある
-    // ただし、 google.com と gmail は自動的にリンクされるのでこの限りではない
-    if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
-      const pendingCred = OAuthProvider.credentialFromError(err)
-      const email = err.customData?.email as string
-      if (pendingCred != null && email != null /* false になることは無いはずだが念の為 */) {
-        const methods = await fetchSignInMethodsForEmail(getAuth(), email)
-        const existingProviderId = methods[0]
-        let linkProviderId: ProviderIdType | 'custom'
-        if (existingProviderId == null) {
-          // カスタムトークンログインを行い、メールアドレスが既に存在している場合
-          linkProviderId = 'custom'
-        } else {
-          linkProviderId = existingProviderId as ProviderIdType
-        }
-        linkRequestDialogParams.value = {
-          tryLoginProviderId: pendingCred.providerId as ProviderIdType,
-          linkProviderId,
-          email,
-        }
-      }
-    }
-  }
-})
 </script>
 
 <template>
@@ -249,25 +142,18 @@ onMounted(async () => {
   <confirm-dialog
     v-if="linkRequestDialogParams !== null"
     :model-value="linkRequestDialogParams !== null"
-    :is-confirm="true"
+    :is-confirm="false"
     :ok-text="$t('profile.linkage')"
-    :ok-click="() => handleLogin(linkRequestDialogParams!.linkProviderId, linkRequestDialogParams?.email, '/login')"
-    :cancel-click="
-      () => {
-        linkRequestDialogParams = null
-      }
-    "
+    :ok-click="() => handleLogin(linkRequestDialogParams!.linkProviderId, undefined, '/login')"
   >
-    <v-card-text class="text-center py-10 text-h4"> アカウント連携 </v-card-text>
+    <v-card-text class="text-center py-10 text-h4"> {{ $t('profile.account_linkage') }} </v-card-text>
     <v-card-text class="pb-0">
-      <p
-        v-html="
-          $t('login.link_dialog_body', {
-            try_login_provider_label: $t(`sns_name['${linkRequestDialogParams.tryLoginProviderId}']`),
-            link_provider_label: $t(`sns_name['${linkRequestDialogParams.linkProviderId}']`),
-          })
-        "
-      />
+      {{
+        $t('login.link_dialog_body', {
+          try_login_provider_label: $t(`sns_name['${linkRequestDialogParams.tryLoginProviderId}']`),
+          link_provider_label: $t(`sns_name['${linkRequestDialogParams.linkProviderId}']`),
+        })
+      }}
     </v-card-text>
   </confirm-dialog>
 </template>

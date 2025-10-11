@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import { TwitterAuthProvider } from 'firebase/auth'
-import { FirebaseError } from 'firebase/app'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getProfile } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -18,11 +17,11 @@ const selfButtonLabel = ref('')
 
 const isLoading = ref(false)
 
-const isNew = route.query.isnew === undefined || (route.query.isnew as string) === 'false' ? false : true
+const isNew = route.query.new === undefined || route.query.new === 'false' ? false : true
 const profileLink = {
   path: getProfile(),
   query: {
-    isnew: isNew ? 'true' : 'false',
+    new: isNew ? '' : undefined,
     redirect: route.query.redirect as string,
   },
 }
@@ -37,26 +36,20 @@ if (isNew) {
   selfButtonLabel.value = $t('complete.exists_user_selfButton')
 }
 
+const currentUserStore = useCurrentUserStore()
+const isTwitterLinked = computed(() =>
+  currentUserStore.providerData.some((p) => p.providerId === TwitterAuthProvider.PROVIDER_ID),
+)
+
 const handleTwitterLink = async () => {
   try {
     isLoading.value = true
-    const currentUserStore = useCurrentUserStore()
-    await currentUserStore.linkProvider('twitter.com')
+    await currentUserStore.linkProvider(TwitterAuthProvider.PROVIDER_ID)
     await router.push(profileLink)
   } catch (error) {
-    if (error instanceof FirebaseError) {
-      const credential = TwitterAuthProvider.credentialFromError(error)
-      console.error({ error, credential })
-
-      if (error.code === 'auth/credential-already-in-use') {
-        notification.show($t('user.exists_credential', { snsName: 'X（旧Twitter）' }), 'error')
-      } else {
-        // TODO error message
-        notification.show('Error', 'error')
-      }
-    } else if (error) {
-      console.error({ error })
-    }
+    console.error(error)
+    // TODO error message
+    notification.show('Error', 'error')
   } finally {
     isLoading.value = false
   }
@@ -82,7 +75,15 @@ const handleTwitterLink = async () => {
             </v-row>
           </v-container>
 
-          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" @click="handleTwitterLink">
+          <v-btn
+            class="mb-4"
+            size="large"
+            color="grey-900"
+            block
+            :disabled="isTwitterLinked"
+            :loading="isLoading"
+            @click="handleTwitterLink"
+          >
             {{ $t('complete.profile_registration_X') }}
           </v-btn>
           <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" :to="profileLink">

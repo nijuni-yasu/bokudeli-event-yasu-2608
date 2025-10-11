@@ -2,6 +2,7 @@ import { getAuth } from 'firebase-admin/auth'
 import { getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { DateTime } from 'luxon'
+import _ from 'lodash'
 import {
   ConfirmEmailChangeRequest,
   ConfirmEmailChangeResponse,
@@ -11,6 +12,7 @@ import {
   RequestEmailLoginRequest,
   RequestEmailLoginResponse,
   UpdateProfileFromProvidersRequest,
+  UpdateProfileFromProvidersResponse,
 } from '@shokujii/common/apis/user.js'
 import { fetchFacebookImage, fetchTwitterImage } from '@shokujii/common/utils/user.js'
 import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
@@ -62,8 +64,10 @@ export const confirmEmailLogin = onCall<ConfirmEmailLoginRequest, Promise<Confir
       throw new HttpsError('invalid-argument', 'pass code is not valid')
     }
     const promises = [deletePassCode(passCodeDocument.id)]
+    let isNew: boolean
     let uid: string
     if (passCodeDocument.user_id == null) {
+      isNew = true
       const user = await getAuth().createUser({ email, emailVerified: true })
       uid = user.uid
       promises.push(
@@ -74,10 +78,11 @@ export const confirmEmailLogin = onCall<ConfirmEmailLoginRequest, Promise<Confir
         ),
       )
     } else {
+      isNew = false
       uid = passCodeDocument.user_id
     }
     const [token] = await Promise.all([getAuth().createCustomToken(uid), ...promises])
-    return { token }
+    return { token, isNew }
   },
 )
 
@@ -164,16 +169,21 @@ const uploadUserImage = async (uid: string, blob: Blob) => {
 
 const ADDITIONAL_KEYS = ['user_description', 'user_sns_twitter'] as const
 
-export const updateProfileFromProviders = onCall<UpdateProfileFromProvidersRequest>(async (request) => {
+export const updateProfileFromProviders = onCall<
+  UpdateProfileFromProvidersRequest,
+  Promise<UpdateProfileFromProvidersResponse>
+>(async (request) => {
   const uid = request.auth?.uid
   if (uid == null) {
     throw new HttpsError('unauthenticated', 'not logged in')
   }
   const { additinalInfo } = request.data
   let user = await getUser(uid, true)
-  if (user == null) {
-    user = new ShokujiiUser(uid, {})
-  }
+  // 元のユーザー情報を保存
+  // 新規ユーザーの場合は ShokujiiUser ではなく空オブジェクトにしておく
+  const originalUser = user == null ? {} : _.cloneDeep(user)
+  user = user ?? new ShokujiiUser(uid, {})
+
   const providerData = (await getAuth().getUser(uid)).providerData
   for (const provider of providerData) {
     user.user_email = user.user_email || provider.email
@@ -198,5 +208,14 @@ export const updateProfileFromProviders = onCall<UpdateProfileFromProvidersReque
   if (blob != null) {
     user.user_image_url = await uploadUserImage(uid, blob)
   }
-  await saveUser(user)
+
+  // 新規ユーザーの場合は空オブジェクトとの比較になるので必ず保存、
+  // 既存ユーザーの場合は差分がある場合のみ保存
+  if (!_.isEqual(originalUser, user)) {
+    await saveUser(user)
+  }
+
+  return {
+    user,
+  }
 })

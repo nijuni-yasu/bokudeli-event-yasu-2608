@@ -77,7 +77,7 @@ const form = ref<VForm | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const userImage = ref<File | undefined>(undefined)
 
-const isNew = route.query.isnew === undefined || (route.query.isnew as string) === 'false' ? false : true
+const isNew = route.query.new === undefined || route.query.new === 'false' ? false : true
 
 const imageError = ref('')
 

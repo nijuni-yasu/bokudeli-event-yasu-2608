@@ -396,7 +396,7 @@ export default {
     continue_email: 'メールアドレスで続ける',
     sns_login: '{sns_name}でログイン',
     link_dialog_body:
-      '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携しますか？',
+      '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
   },
   email: {
     register_email: 'メールアドレス登録',
@@ -410,6 +410,9 @@ export default {
     resend: 'コードを再送信する',
     back: 'ログイン画面へ戻る',
     un_match_passcode: 'パスコードの値が間違っています',
+    link_dialog_body:
+      '{email}は既にメールアドレスログインで使用されています。{provider_label}と連携するため、ログインしてください。',
+    send_code: 'パスコードを送信する',
   },
   complete: {
     new_user_title: 'アカウント登録完了',

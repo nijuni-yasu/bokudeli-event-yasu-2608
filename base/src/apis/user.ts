@@ -9,6 +9,7 @@ import {
   ConfirmEmailChangeRequest,
   ConfirmEmailChangeResponse,
   UpdateProfileFromProvidersRequest,
+  UpdateProfileFromProvidersResponse,
 } from '@shokujii/common/apis/user.js'
 
 export const requestEmailLogin = async (input: RequestEmailLoginRequest) => {
@@ -34,6 +35,9 @@ export const confirmEmailChange = async (input: ConfirmEmailChangeRequest) => {
 }
 
 export const updateProfileFromProviders = async (input: UpdateProfileFromProvidersRequest) => {
-  const f = httpsCallable<UpdateProfileFromProvidersRequest>(functions, 'updateProfileFromProviders')
+  const f = httpsCallable<UpdateProfileFromProvidersRequest, UpdateProfileFromProvidersResponse>(
+    functions,
+    'updateProfileFromProviders',
+  )
   return f(input)
 }
