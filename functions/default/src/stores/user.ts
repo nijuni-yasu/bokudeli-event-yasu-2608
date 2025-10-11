@@ -12,20 +12,15 @@ export class ShokujiiUser extends User {
   // TODO Add other UserPersonalInformation fields
   user_email?: string
 
-  constructor(id: string | null, data: Partial<User> & Partial<UserPersonalInformation>) {
-    const db = getFirestore()
-    if (id === null) {
-      id = db.collection('users').doc().id
-    }
-
+  constructor(id: string, data: Partial<User> & Partial<UserPersonalInformation>) {
     super(id, data)
     Object.assign(this, new UserPersonalInformation(id, data))
   }
 }
 
 const userConverter: FirestoreDataConverter<ShokujiiUser> = {
-  toFirestore(config: User): DocumentData {
-    return config.toFirestore()
+  toFirestore(user: User): DocumentData {
+    return user.toFirestore()
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ShokujiiUser {
     return new User(snapshot.id, snapshot.data())

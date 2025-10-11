@@ -3,6 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
 import {
   ConfirmEmailChangeRequest,
+  ConfirmEmailChangeResponse,
   ConfirmEmailLoginRequest,
   ConfirmEmailLoginResponse,
   RequestEmailChangeRequest,
@@ -59,7 +60,7 @@ export const confirmEmailLogin = onCall<ConfirmEmailLoginRequest, Promise<Confir
     const promises = [deletePassCode(passCodeDocument.id)]
     let uid: string
     if (passCodeDocument.user_id == null) {
-      const user = await getAuth().createUser({ email })
+      const user = await getAuth().createUser({ email, emailVerified: true })
       uid = user.uid
       promises.push(
         saveUser(
@@ -108,27 +109,31 @@ export const requestEmailChange = onCall<RequestEmailChangeRequest>(
   },
 )
 
-export const confirmEmailChange = onCall<ConfirmEmailChangeRequest>(async (request) => {
-  const uid = request.auth?.uid
-  if (uid == null) {
-    throw new HttpsError('unauthenticated', 'not logged in')
-  }
-  const { passCode, newEmail } = request.data
-  if (passCode == null || newEmail == null) {
-    throw new HttpsError('invalid-argument', 'passCode or newEmail is null')
-  }
-  const user = await getUser(uid, true)
-  if (user == null) {
-    throw new HttpsError('internal', 'no user')
-  }
-  const passCodeDocument = await getValidPassCodeFromEmail(newEmail)
-  if (passCodeDocument == null || passCodeDocument.pass_code !== passCode || passCodeDocument.user_id !== uid) {
-    throw new HttpsError('invalid-argument', 'pass code is not valid')
-  }
-  user.user_email = newEmail
-  await Promise.all([
-    deletePassCode(passCodeDocument.id),
-    getAuth().updateUser(uid, { email: newEmail }),
-    saveUser(user),
-  ])
-})
+export const confirmEmailChange = onCall<ConfirmEmailChangeRequest, Promise<ConfirmEmailChangeResponse>>(
+  async (request) => {
+    const uid = request.auth?.uid
+    if (uid == null) {
+      throw new HttpsError('unauthenticated', 'not logged in')
+    }
+    const { passCode, newEmail } = request.data
+    if (passCode == null || newEmail == null) {
+      throw new HttpsError('invalid-argument', 'passCode or newEmail is null')
+    }
+    const user = await getUser(uid, true)
+    if (user == null) {
+      throw new HttpsError('internal', 'no user')
+    }
+    const passCodeDocument = await getValidPassCodeFromEmail(newEmail)
+    if (passCodeDocument == null || passCodeDocument.pass_code !== passCode || passCodeDocument.user_id !== uid) {
+      throw new HttpsError('invalid-argument', 'pass code is not valid')
+    }
+    user.user_email = newEmail
+    const [token] = await Promise.all([
+      getAuth().createCustomToken(uid),
+      deletePassCode(passCodeDocument.id),
+      getAuth().updateUser(uid, { email: newEmail }),
+      saveUser(user),
+    ])
+    return { token }
+  },
+)

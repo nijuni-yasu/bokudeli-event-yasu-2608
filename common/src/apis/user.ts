@@ -7,3 +7,4 @@ export type ConfirmEmailLoginResponse = { token: string }
 export type RequestEmailChangeRequest = { newEmail: string }
 
 export type ConfirmEmailChangeRequest = { newEmail: string; passCode: string }
+export type ConfirmEmailChangeResponse = { token: string }
