@@ -3,7 +3,6 @@ import HomeButtonDialog from '@shokujii/base/components/HomeButtonDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
-import userAccessiblePaths from '@shokujii/base/utils/userAccessiblePaths.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
 import { getLogin, getProfile } from '@/router/utils'
@@ -40,14 +39,7 @@ const handleLogoutDialog = () => {
 }
 
 const logout = async () => {
-  try {
-    await useCurrentUserStore().signOut()
-
-    // ログインが必要なページにいる場合トップページに遷移
-    if (userAccessiblePaths.includes(route.path)) router.replace('/')
-  } catch (error) {
-    console.error(error)
-  }
+  await useCurrentUserStore().signOut()
 }
 </script>
 

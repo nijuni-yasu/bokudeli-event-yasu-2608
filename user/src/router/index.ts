@@ -1,7 +1,5 @@
-import { type User, getAuth, onAuthStateChanged, type Unsubscribe } from 'firebase/auth'
-import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { type User, getAuth, onAuthStateChanged } from 'firebase/auth'
 import type { Router } from 'vue-router'
-import userAccessiblePaths from '@shokujii/base/utils/userAccessiblePaths.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
@@ -20,7 +18,19 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
   })
 }
 
+const isLoginRequired = (path: string) => {
+  const paths = path.split('/')
+  return ['/profile', '/register/complete', '/register/email'].includes(path) || paths[1] === 'manage'
+}
+
 export const setupRouter = (router: Router) => {
+  onAuthStateChanged(getAuth(), (user) => {
+    const path = router.currentRoute.value.path
+    if (user == null && isLoginRequired(path)) {
+      router.replace('/')
+    }
+  })
+
   // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
   router.beforeEach(async (to) => {
     let user: User | null = null
@@ -31,8 +41,7 @@ export const setupRouter = (router: Router) => {
     }
 
     // ユーザーがログイン済みか否かでリダイレクト
-    const paths = to.path.split('/')
-    if (user == null && (userAccessiblePaths.includes(to.path) || paths[1] === 'manage')) {
+    if (user == null && isLoginRequired(to.path)) {
       return {
         path: '/',
       }
