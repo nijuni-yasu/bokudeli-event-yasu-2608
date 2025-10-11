@@ -1,7 +1,11 @@
+import { FirebaseError } from 'firebase/app'
 import {
   getAdditionalUserInfo,
   getAuth,
   getRedirectResult,
+  linkWithCredential,
+  OAuthCredential,
+  OAuthProvider,
   signInWithCustomToken,
   TwitterAuthProvider,
   unlink,
@@ -22,6 +26,11 @@ import { defineStore } from 'pinia'
 import { computed, markRaw, ref, toRaw, watch } from 'vue'
 import { User as ShokujiiUser, User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
+import {
+  requestEmailChange as _requestEmailChange,
+  confirmEmailChange as _confirmEmailChange,
+  updateProfileFromProviders as _updateProfileFromProviders,
+} from '@shokujii/base/apis/user'
 import { db } from '@shokujii/base/firebase.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import {
@@ -29,11 +38,6 @@ import {
   ProviderIdType,
   reauthenticateByProviderService,
 } from '@shokujii/base/utils/providerService'
-import {
-  requestEmailChange as _requestEmailChange,
-  confirmEmailChange as _confirmEmailChange,
-  updateProfileFromProviders as _updateProfileFromProviders,
-} from '@shokujii/base/apis/user'
 
 const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInformation> = {
   toFirestore(userPersonalInformation: UserPersonalInformation): DocumentData {
@@ -50,9 +54,31 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
   const firebaseUser = ref(getAuth().currentUser)
   const providerData = ref<UserInfo[]>([])
   getAuth().onAuthStateChanged(async (user) => {
+    // pendingCred はどのフローであっても消しておく
+    const pendingCred = getPendingCred()
+    removePendingCred()
+
+    let userCredential: UserCredential | null = null
+    try {
+      userCredential = await getRedirectResult(getAuth())
+    } catch (err: unknown) {
+      if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
+        const pendingCred = OAuthProvider.credentialFromError(err)
+        if (pendingCred != null /* false になることは無いはずだが念の為 */) {
+          // リンク依頼をセーブしておき次のログイン時に処理する
+          setPendingCred(pendingCred)
+        }
+      }
+    }
+
     if (user != null) {
+      if (pendingCred) {
+        // リンク依頼がセーブされていたら処理する
+        const cred = OAuthProvider.credentialFromJSON(pendingCred)
+        userCredential = await linkWithCredential(user, cred)
+      }
       // ログインに影響が出ないように非同期で実行する
-      updateProfileFromProviders(await getRedirectResult(getAuth())).catch((error) => {
+      updateProfileFromProviders(userCredential).catch((error) => {
         console.error('updateProfileFromProviders error:', error)
       })
       firebaseUser.value = markRaw(user)
@@ -63,6 +89,22 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
       providerData.value = []
     }
   })
+
+  const removePendingCred = () => {
+    sessionStorage.removeItem('pendingCred')
+  }
+
+  const setPendingCred = (pendingCred: OAuthCredential) => {
+    sessionStorage.setItem('pendingCred', JSON.stringify(pendingCred))
+  }
+
+  const getPendingCred = (): OAuthCredential | null => {
+    const json = sessionStorage.getItem('pendingCred')
+    if (json == null) {
+      return null
+    }
+    return OAuthProvider.credentialFromJSON(json)
+  }
 
   const updateProfileFromProviders = async (userCredential: UserCredential | null) => {
     // updateProfileFromProviders で情報は一括更新したいところだが、

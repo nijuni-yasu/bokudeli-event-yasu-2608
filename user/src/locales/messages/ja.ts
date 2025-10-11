@@ -6,6 +6,7 @@ export default {
     'twitter.com': 'X',
     'google.com': 'Google',
     'facebook.com': 'Facebook',
+    custom: 'メールアドレス',
   },
   navigation: {
     home: 'イベント参加',

@@ -1,71 +1,75 @@
 <script setup lang="ts">
-import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { getAdditionalUserInfo, type UserCredential } from 'firebase/auth'
-import { useValidators } from '@shokujii/base/composable/validators.js'
-import { signInByProviderService } from '@shokujii/base/utils/providerService.js'
-import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { getProfile } from '@/router/utils'
+import { FirebaseError } from 'firebase/app'
+import {
+  fetchSignInMethodsForEmail,
+  getAdditionalUserInfo,
+  getAuth,
+  getRedirectResult,
+  OAuthProvider,
+  type AdditionalUserInfo,
+  type User,
+} from 'firebase/auth'
+import type { User as BokudeliUser } from '@shokujii/common/schemas/User'
 import { requestEmailLogin } from '@shokujii/base/apis/user'
-import type { User } from '@shokujii/common/schemas/User'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useNotification } from '@shokujii/base/composable/notification'
+import { useValidators } from '@shokujii/base/composable/validators.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { signInByProviderService, type ProviderIdType } from '@shokujii/base/utils/providerService.js'
+import { getProfile } from '@/router/utils'
+import logo from '@/assets/images/shokujii/shokujii_logo.png'
 
 const route = useRoute()
 const router = useRouter()
-
+const notification = useNotification()
 const { t: $t } = useI18n()
+const { requiredValidator, emailValidator } = useValidators()
+const currentUserStore = useCurrentUserStore()
 
-const isLoading = ref(false)
-const isSnsLoading = ref<'google.com' | 'facebook.com' | 'twitter.com' | null>(null)
-const isDisable = ref(false)
-
+const isLoading = ref<ProviderIdType | 'custom' | null>(null)
 const isValid = ref(false)
 const email = ref('')
+const linkRequestDialogParams = ref<{
+  tryLoginProviderId: ProviderIdType
+  linkProviderId: ProviderIdType | 'custom'
+  email?: string
+} | null>(null)
 
-const { requiredValidator, emailValidator } = useValidators()
-
-const submit = async () => {
-  isLoading.value = true
-  isDisable.value = true
+const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string, redirect?: string) => {
+  isLoading.value = providerId
   try {
-    const userEmail = email.value
-    if (!userEmail) {
-      throw new Error('Email is required')
+    if (providerId === 'custom') {
+      if (email == null) {
+        throw new Error('Email is required')
+      }
+      const response = await requestEmailLogin({
+        email,
+      })
+      const { isNew } = response.data
+      await router.push({
+        path: '/pass-code',
+        query: {
+          email,
+          isnew: isNew ? 'true' : 'false',
+          redirect,
+        },
+      })
+    } else {
+      const userCredential = await signInByProviderService(providerId)
+      // ここに来るのはポップアップ認証（デバッグ用）成功時のみ
+      // リダイレクト認証は handleRedirect へ
+      await transitionJudge(userCredential.user, getAdditionalUserInfo(userCredential) ?? undefined)
     }
-    const response = await requestEmailLogin({
-      email: userEmail,
-    })
-    const { isNew } = response.data
-    return await router.push({
-      path: '/pass-code',
-      query: {
-        email: userEmail,
-        isnew: isNew ? 'true' : 'false',
-        redirect: route.query.redirect,
-      },
-    })
-  } catch (error) {
-    console.warn('Error sending pass code:', error)
-  } finally {
-    isLoading.value = false
-    isDisable.value = false
-  }
-}
-
-const handleLogin = async (providerId: 'google.com' | 'facebook.com' | 'twitter.com') => {
-  isSnsLoading.value = providerId
-  try {
-    const userCredential = await signInByProviderService(providerId)
-    await transitionJudge(userCredential)
   } catch (error) {
     console.error(error)
-    window.alert($t('login.login_fail', { sns_name: $t(`sns_name.${providerId}`) }))
+    notification.show($t('login.login_fail', { sns_name: $t(`sns_name['${providerId}']`) }), 'error')
   } finally {
-    isSnsLoading.value = null
+    isLoading.value = null
   }
 }
 
-const transitionJudge = async (userCredential: UserCredential) => {
-  const additionalUserInfo = getAdditionalUserInfo(userCredential)
-  const email = userCredential.user.email ?? additionalUserInfo?.profile?.email
+const transitionJudge = async (user: User, additionalUserInfo?: AdditionalUserInfo) => {
+  const email = user.email ?? additionalUserInfo?.profile?.email
   const isNewUser = additionalUserInfo?.isNewUser
 
   // メールアドレスが無い場合はメールアドレス設定へ
@@ -78,8 +82,7 @@ const transitionJudge = async (userCredential: UserCredential) => {
     })
   }
 
-  const currentUserStore = useCurrentUserStore()
-  const currentUser = await new Promise<User>((resolve) => {
+  const currentUser = await new Promise<BokudeliUser>((resolve) => {
     const unwatch = watch(
       () => currentUserStore.user,
       (currentUser) => {
@@ -122,6 +125,45 @@ const transitionJudge = async (userCredential: UserCredential) => {
     },
   })
 }
+
+onMounted(async () => {
+  // redirect の処理をここで行うのは得策ではないが、ダイアログを出すためだけに router で複雑な処理を行うより
+  // currentUserStore + onMounted の方がシンプルな実装になると判断
+  // 将来的に、さらに複雑な処理を行う場合は構造を変えた方がよい
+  try {
+    const userCredential = await getRedirectResult(getAuth())
+
+    const currentUser = getAuth().currentUser
+    if (currentUser != null) {
+      const additionalUserInfo =
+        userCredential == null ? undefined : (getAdditionalUserInfo(userCredential) ?? undefined)
+      transitionJudge(currentUser, additionalUserInfo)
+    }
+  } catch (err: unknown) {
+    // 既に同じ email のアカウントが存在している場合、そのアカウントでログインしてからリンクする必要がある
+    // ただし、 google.com と gmail は自動的にリンクされるのでこの限りではない
+    if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
+      const pendingCred = OAuthProvider.credentialFromError(err)
+      const email = err.customData?.email as string
+      if (pendingCred != null && email != null /* false になることは無いはずだが念の為 */) {
+        const methods = await fetchSignInMethodsForEmail(getAuth(), email)
+        const existingProviderId = methods[0]
+        let linkProviderId: ProviderIdType | 'custom'
+        if (existingProviderId == null) {
+          // カスタムトークンログインを行い、メールアドレスが既に存在している場合
+          linkProviderId = 'custom'
+        } else {
+          linkProviderId = existingProviderId as ProviderIdType
+        }
+        linkRequestDialogParams.value = {
+          tryLoginProviderId: pendingCred.providerId as ProviderIdType,
+          linkProviderId,
+          email,
+        }
+      }
+    }
+  }
+})
 </script>
 
 <template>
@@ -141,7 +183,10 @@ const transitionJudge = async (userCredential: UserCredential) => {
             </v-row>
           </v-container>
 
-          <v-form v-model="isValid" @submit.prevent="submit">
+          <v-form
+            v-model="isValid"
+            @submit.prevent="handleLogin('custom', email, route.query.redirect as string | undefined)"
+          >
             <v-container class="mb-4 pa-0">
               <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('login.email') }}</label>
               <v-text-field
@@ -156,8 +201,8 @@ const transitionJudge = async (userCredential: UserCredential) => {
               size="large"
               color="grey-900"
               block
-              :disabled="!isValid"
-              :loading="isLoading"
+              :loading="isLoading === 'custom'"
+              :disabled="!isValid || (isLoading !== null && isLoading !== 'custom')"
               type="submit"
             >
               {{ $t('login.continue_email') }}
@@ -169,8 +214,8 @@ const transitionJudge = async (userCredential: UserCredential) => {
             size="large"
             color="grey-900"
             block
-            :loading="isSnsLoading === 'twitter.com'"
-            :disabled="(isSnsLoading !== null && isSnsLoading !== 'twitter.com') || isDisable"
+            :loading="isLoading === 'twitter.com'"
+            :disabled="isLoading !== null && isLoading !== 'twitter.com'"
             @click="handleLogin('twitter.com')"
           >
             {{ $t('login.sns_login', { sns_name: 'X' }) }}
@@ -180,8 +225,8 @@ const transitionJudge = async (userCredential: UserCredential) => {
             size="large"
             color="grey-900"
             block
-            :loading="isSnsLoading === 'facebook.com'"
-            :disabled="(isSnsLoading !== null && isSnsLoading !== 'facebook.com') || isDisable"
+            :loading="isLoading === 'facebook.com'"
+            :disabled="isLoading !== null && isLoading !== 'facebook.com'"
             @click="handleLogin('facebook.com')"
           >
             {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
@@ -191,8 +236,8 @@ const transitionJudge = async (userCredential: UserCredential) => {
             size="large"
             color="grey-900"
             block
-            :loading="isSnsLoading === 'google.com'"
-            :disabled="(isSnsLoading !== null && isSnsLoading !== 'google.com') || isDisable"
+            :loading="isLoading === 'google.com'"
+            :disabled="isLoading !== null && isLoading !== 'google.com'"
             @click="handleLogin('google.com')"
           >
             {{ $t('login.sns_login', { sns_name: 'Google' }) }}
@@ -201,4 +246,28 @@ const transitionJudge = async (userCredential: UserCredential) => {
       </v-col>
     </v-row>
   </v-container>
+  <confirm-dialog
+    v-if="linkRequestDialogParams !== null"
+    :model-value="linkRequestDialogParams !== null"
+    :is-confirm="true"
+    :ok-text="$t('profile.linkage')"
+    :ok-click="() => handleLogin(linkRequestDialogParams!.linkProviderId, linkRequestDialogParams?.email, '/login')"
+    :cancel-click="
+      () => {
+        linkRequestDialogParams = null
+      }
+    "
+  >
+    <v-card-text class="text-center py-10 text-h4"> アカウント連携 </v-card-text>
+    <v-card-text class="pb-0">
+      <p
+        v-html="
+          $t('login.link_dialog_body', {
+            try_login_provider_label: $t(`sns_name['${linkRequestDialogParams.tryLoginProviderId}']`),
+            link_provider_label: $t(`sns_name['${linkRequestDialogParams.linkProviderId}']`),
+          })
+        "
+      />
+    </v-card-text>
+  </confirm-dialog>
 </template>
