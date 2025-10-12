@@ -5,6 +5,9 @@ import avatar1 from '@/assets/images/avatars/default_profile.jpeg'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildThumbnailsLinks } from '@shokujii/base/utils/buildThumbnailsLinks.js'
 
+const MAX_RETRIES = 10
+const RETRY_DELAY = 1000
+
 const props = defineProps<{ user: User | string | null; size?: number }>()
 
 const calcAvatarSize = (size: number | undefined) => {
@@ -13,8 +16,6 @@ const calcAvatarSize = (size: number | undefined) => {
   if (size <= 100) return 'medium'
   return 'large'
 }
-
-const hasError = ref(false)
 
 const avatar = computed(() => {
   if (typeof props.user === 'string') {
@@ -30,6 +31,21 @@ const initial = computed(() => (typeof props.user === 'string' ? props.user.slic
 const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
+
+const reloadKey = ref(0)
+let retries = 0
+const onError = () => {
+  if (retries < MAX_RETRIES) {
+    retries++
+    console.warn(`画像の再取得を試みます (${retries}/${MAX_RETRIES})`)
+    setTimeout(() => {
+      // キャッシュを回避するためクエリ文字列を付与
+      reloadKey.value++
+    }, RETRY_DELAY)
+  } else {
+    console.error('画像の取得に失敗しました')
+  }
+}
 
 // 画面をリサイズした際に適切にサイズを変更する
 const resizeObserver = new ResizeObserver((entries) => {
@@ -59,7 +75,7 @@ onUnmounted(() => {
 <template>
   <v-avatar ref="avatarElement" :size="size" :color="initial != null ? 'primary' : 'transparent'">
     <template v-if="initial != null">{{ initial }}</template>
-    <v-img v-else :src="avatar" cover @error="hasError = true" />
+    <v-img v-else :src="avatar" :key="reloadKey" cover @error="onError" />
     <slot />
   </v-avatar>
 </template>
