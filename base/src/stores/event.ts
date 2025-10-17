@@ -203,9 +203,6 @@ export const useEventStore = (target: string | BokudeliEvent) => {
     const members = computed<BokudeliEventMember[] | null>(
       () =>
         _members.value?.flatMap((member) => {
-          if (member.store.exists === false) {
-            return []
-          }
           const target = _orders.value?.filter((order) => order.user_id === member.user_id) ?? ([] as EventOrder[])
           const orders = new Proxy(target, {
             get: (target, prop, receiver) => {

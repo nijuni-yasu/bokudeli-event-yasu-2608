@@ -32,6 +32,7 @@ const popularEventListStore = useEventListStore(
   [
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
+    where('event_num_members', '>=', 3),
     where('event_deadline_datetime', '>', now),
     orderBy('event_num_members', 'desc'),
   ],
@@ -41,7 +42,7 @@ const popularEventListStore = useEventListStore(
 const popularEvents = computed(() => {
   const events =
     popularEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 3) {
+      if (s.event == null) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
@@ -59,6 +60,7 @@ const upcomingEventListStore = useEventListStore(
   [
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
+    where('event_num_members', '>=', 1),
     where('event_end_datetime', '>', now),
     orderBy('event_start_datetime', 'asc'),
   ],
@@ -68,7 +70,7 @@ const upcomingEventListStore = useEventListStore(
 const upcomingEvents =
   computed(() =>
     upcomingEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 1) {
+      if (s.event == null) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
@@ -79,6 +81,7 @@ const pastEventListStore = useEventListStore(
   [
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
+    where('event_num_members', '>=', 1),
     where('event_end_datetime', '<=', now),
     orderBy('event_start_datetime', 'desc'),
   ],
@@ -88,7 +91,7 @@ const pastEventListStore = useEventListStore(
 const pastEvents =
   computed(() =>
     pastEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null || s.event.event_num_members < 1) {
+      if (s.event == null) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
