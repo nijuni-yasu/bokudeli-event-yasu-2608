@@ -122,6 +122,11 @@ export const setupRouter = (router: Router) => {
         return (to.query.redirect as string) ?? '/'
       }
 
+      // profile に戻ってきた場合はリンクなので画面はそのまま
+      if (to.path === '/profile') {
+        return
+      }
+
       // メールアドレスが無い場合はメールアドレス設定へ
       if (!shokujiiUser.user_email) {
         return {
