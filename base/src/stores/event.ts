@@ -112,18 +112,18 @@ const orderConverter: FirestoreDataConverter<EventOrder> = {
   },
 }
 
-export const createNewEvent = async (event: BokudeliEvent, coverImage: File): Promise<EventStore> => {
+export const createNewEvent = async (event: BokudeliEvent, coverImage: File): Promise<BokudeliEvent> => {
   const communityRef = doc(db, 'communities', event.community_id)
   const community = await getDoc(communityRef)
   if (!community.exists()) {
     throw new Error(`community ${event.community_id} does not exists`)
   }
   event.event_cover_url = await uploadEventImage(community.id, event.id, coverImage)
-  event.bill_fullname = community.get('community_bill_fullname') ?? community.get('community_manager_fullname')
-  event.bill_email = community.get('community_bill_email') ?? community.get('community_email')
+  event.bill_fullname = community.get('community_bill_fullname') ?? community.get('community_manager_fullname') ?? ''
+  event.bill_email = community.get('community_bill_email') ?? community.get('community_email') ?? ''
   const newEventRef = doc(communityRef, 'events', event.id).withConverter(eventConverter)
   await setDoc(newEventRef, event, { merge: true })
-  return useEventStore(event.id)
+  return event
 }
 
 export type EventStore = ReturnType<typeof useEventStore>

@@ -64,8 +64,6 @@ const EventDbSchema = z.object({
     value: z.enum(RAW_EVENT_STATUS_VALUES),
     shop_comment: NonEmptyStringSchema.optional(),
   }),
-  bill_fullname: z.string().nonempty(),
-  bill_email: z.string().nonempty(),
 
   is_deleted: z.boolean(),
   created_at: TimestampSchema,
@@ -76,6 +74,8 @@ const EventDbSchema = z.object({
   event_num_members: z.number().int().min(0),
 
   // Optional
+  bill_fullname: NonEmptyStringSchema.optional(),
+  bill_email: NonEmptyStringSchema.optional(),
   event_place: NonEmptyStringSchema.optional(),
   event_place_url: NonEmptyStringSchema.optional(),
   event_desc: NonEmptyStringSchema.optional(),

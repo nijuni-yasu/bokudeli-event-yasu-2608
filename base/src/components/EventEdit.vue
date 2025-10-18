@@ -268,8 +268,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
     event.value.community_id = communityId
     event.value.created_by = handleUserId
     event.value.updated_by = handleUserId
-    const eventStore = await createNewEvent(toRaw(event.value), coverImage.value)
-    return eventStore.event
+    return await createNewEvent(toRaw(event.value), coverImage.value)
   } else {
     // 更新
     event.value.updated_by = handleUserId
