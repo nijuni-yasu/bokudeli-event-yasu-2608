@@ -5,7 +5,6 @@ import { BokudeliCommunity, createNewCommunity } from '@shokujii/base/stores/com
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 
-const router = useRouter()
 const notification = useNotification()
 const { t: $t } = useI18n()
 
@@ -44,8 +43,11 @@ const submit = async () => {
       )
     })
     notification.show($t('manage.newcommunity.created'), 'success')
-    communityListStore.reload()
-    router.push(getManageCommunityPath(newCommunity.community_account))
+    // このタイミングでのリロードでは invisible になっているモジュールに反映されない
+    // とりあえず再読込することで対応する
+    // communityListStore.reload()
+    // router.push(getManageCommunityPath(newCommunity.community_account))
+    window.location.href = getManageCommunityPath(newCommunity.community_account)
   } catch (err) {
     console.error(err)
     notification.show($t('manage.newcommunity.error'), 'error')
