@@ -28,7 +28,6 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import _ from 'lodash'
 
 const add_order = httpsCallable<Partial<EventOrder>, { order_id: string }>(functions, 'add_order')
 const delete_order = httpsCallable<{ community_id: string; event_id: string; order_id: string; menu_id: string }>(
@@ -225,8 +224,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
 
     const updateEvent = async (data: BokudeliEvent) => {
       const eventRef = await getEventRef()
-      const updateData = _.omit(data, ['event_cover_url'])
-      await updateDoc(eventRef, updateData)
+      await setDoc(eventRef, data, { merge: true })
     }
 
     const updateCoverImage = async (coverImage: File) => {
@@ -325,7 +323,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       getDocs(
         query(collectionGroup(db, 'events'), where('event_id', '==', eventId)).withConverter(eventConverter),
       ).then((querySnapshot) => {
-        const eventRef = querySnapshot.docs[0]?.ref
+        const eventRef = querySnapshot.docs[0]?.ref?.withConverter(eventConverter)
         if (eventRef == null) {
           if (retry++ < 10) {
             console.warn(
