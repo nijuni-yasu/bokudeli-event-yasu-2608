@@ -1,4 +1,10 @@
-import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent, getEventMemberEmails } from './utils/mail.js'
+import {
+  DEFAULT_FROM,
+  SUPPORT_MAIL,
+  getCommunityEmailsForEvent,
+  getEventMemberEmails,
+  getCommunityMemberEmailsExcludingOrdered,
+} from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
@@ -14,6 +20,7 @@ import { getEventPartnerShop } from './stores/partner.js'
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
 const ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID = 'd-1099d87af79f4d898012db3b8024715f'
 const EVENT_CONFIRMATION_TEMPLATE_ID = 'd-2fea06c315a240d2becd864b54f38098'
+const ORDER_DEADLINE_REMINDER_TO_COMMUNITY_TEMPLATE_ID = 'd-xxxxx'
 
 // 定数
 const DELIVERY_DURATION = 30 // minutes
@@ -52,6 +59,20 @@ interface TemplateDataForMembers {
   event_address: string
   shop_name: string
   event_url: string
+}
+
+interface TemplateDataForCommunityReminder {
+  community_name: string
+  event_url: string
+  event_name: string
+  event_cover_url: string
+  event_desc: string
+  event_datetime: string
+  event_address: string
+  event_place: string
+  shop_name: string
+  event_deadline_datetime: string
+  event_payment: string
 }
 
 /**
@@ -220,6 +241,58 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
         )
       } catch (err) {
         console.warn('Failed to send order deadline mail to members:', err)
+      }
+    }),
+  )
+}
+
+/**
+ * コミュニティメンバー向け注文期限リマインドメール送信（注文期限の24時間前）
+ */
+export async function sendOrderDeadlineReminderToCommunityMembers(start: number, end: number): Promise<void[]> {
+  const events = await getAcceptingOrderEventsByTime(start, end)
+
+  return Promise.all(
+    events.map(async (event) => {
+      try {
+        // is_publicがtrueのイベントのみ
+        if (!event.is_public) {
+          return
+        }
+
+        // 定員未満のイベントのみ
+        const orders = await event.getOrders('ordered')
+        if (orders.length >= event.event_max_people) {
+          return
+        }
+
+        const dynamic_template_data: TemplateDataForCommunityReminder = {
+          community_name: event.community_name,
+          event_url: getEventUrl(event.community_account, event.id),
+          event_name: event.event_name,
+          event_cover_url: event.event_cover_url || '',
+          event_desc: event.event_desc || '',
+          event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime) || '',
+          event_address: event.event_address,
+          event_place: event.event_place || '',
+          shop_name: event.shop_name,
+          event_deadline_datetime: convertToDatetimeWeekdayShort(event.event_deadline_datetime) || '',
+          event_payment: event.event_payment,
+        }
+
+        const memberEmails = await getCommunityMemberEmailsExcludingOrdered(event)
+        await Promise.all(
+          memberEmails.map(async (to) => {
+            await sgMail.send({
+              to,
+              from: DEFAULT_FROM,
+              templateId: ORDER_DEADLINE_REMINDER_TO_COMMUNITY_TEMPLATE_ID,
+              dynamicTemplateData: dynamic_template_data,
+            })
+          }),
+        )
+      } catch (err) {
+        console.warn('Failed to send order deadline reminder to community members:', err)
       }
     }),
   )

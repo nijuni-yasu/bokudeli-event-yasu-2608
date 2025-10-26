@@ -61,3 +61,34 @@ export async function getEventMemberEmails(event: ShokujiiEvent): Promise<string
 
   return emails.filter((email): email is string => email != null && email !== '')
 }
+
+/**
+ * コミュニティメンバー全員のメールアドレスを取得（注文済みユーザーを除外）
+ */
+export async function getCommunityMemberEmailsExcludingOrdered(event: ShokujiiEvent): Promise<string[]> {
+  // コミュニティIDの取得
+  const communityId = event.community_id || event.community_account
+  const community = await getCommunity(communityId)
+  if (!community) {
+    return []
+  }
+
+  // コミュニティメンバー全員を取得
+  const members = await community.getMembers()
+
+  // 注文済みユーザーのIDセットを取得
+  const orders = await event.getOrders('ordered')
+  const orderedUserIds = new Set(orders.map((order) => order.user_id))
+
+  // 注文済みユーザーを除外してメールアドレスを取得
+  const emails = await Promise.all(
+    members
+      .filter((member) => !orderedUserIds.has(member.id))
+      .map(async (member) => {
+        const userPersonalInfo = await getUserPersonalInformation(member.id)
+        return userPersonalInfo?.user_email
+      }),
+  )
+
+  return emails.filter((email): email is string => email != null && email !== '')
+}
