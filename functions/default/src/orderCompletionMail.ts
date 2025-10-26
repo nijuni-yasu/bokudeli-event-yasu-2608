@@ -10,8 +10,7 @@ import { getCommunity } from './stores/community.js'
 
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
 const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7'
-// TODO: SendGridのテンプレートIDを実際の値に置き換える
-const NEW_EVENT_NOTIFICATION_TEMPLATE_ID = 'd-148ab4d0aef644de815cc684c92a87de' // shokujii_user_in_cart のテンプレートIDを仮で指定している
+const NEW_EVENT_NOTIFICATION_TEMPLATE_ID = 'd-5ed49e5d3b5c43e1823a96bbf80af471' // shokujii_newevent_to_community_members
 
 async function getUserEmail(userId: string): Promise<string | undefined> {
   const userPersonalInformation = await getUserPersonalInformation(userId)
