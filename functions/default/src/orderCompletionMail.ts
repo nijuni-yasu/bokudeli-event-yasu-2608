@@ -7,9 +7,10 @@ import { getUser, getUserPersonalInformation } from './stores/user.js'
 import { convertReferenceToEvent, ShokujiiEvent, saveEvent } from './stores/event.js'
 import { makeIcs } from './makeIcs.js'
 import { getCommunity } from './stores/community.js'
+import { getUserImageUrl } from './utils/image.js'
 
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
-const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-38e33bff82d740d88b33b56347f63df7'
+const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-6f18a5804cb9458fb1267924ff954a95'
 const NEW_EVENT_NOTIFICATION_TEMPLATE_ID = 'd-5ed49e5d3b5c43e1823a96bbf80af471' // shokujii_newevent_to_community_members
 
 async function getUserEmail(userId: string): Promise<string | undefined> {
@@ -66,12 +67,16 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
 
   const emails = await getCommunityEmailsForEvent(event)
 
+  // Get small thumbnail URL for user image
+  const userImageUrl = getUserImageUrl(userData.user_id, userData.user_image_url, 'medium')
+
   const dynamicTemplateData = {
     date: convertToDateWeekdayShort(event.event_start_datetime),
     event_name: event.event_name,
     event_url: getEventUrl(event.community_account, event.id),
     user_name: userData.user_name,
     user_url: getUserUrl(userData.user_id),
+    user_image_url: userImageUrl,
   }
 
   await Promise.all(
