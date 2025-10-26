@@ -117,7 +117,7 @@ async function getCommunityMemberEmails(communityId: string): Promise<string[]> 
 async function sendNewEventNotificationToMembers(event: ShokujiiEvent, userId: string): Promise<void> {
   try {
     // is_publicがfalse、または既に送信済みの場合はスキップ
-    if (!event.is_public || event.is_sent_new_event_mail_at) {
+    if (!event.is_public || event.sent_new_event_mail_at) {
       return
     }
 
@@ -157,7 +157,7 @@ async function sendNewEventNotificationToMembers(event: ShokujiiEvent, userId: s
     )
 
     // 送信済みフラグを設定してイベントを更新
-    event.is_sent_new_event_mail_at = Date.now()
+    event.sent_new_event_mail_at = Date.now()
     await saveEvent(userId, event)
 
     console.log(`New event notification sent for event: ${event.id}`)
