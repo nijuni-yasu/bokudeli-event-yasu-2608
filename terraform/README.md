@@ -6,6 +6,30 @@
 
 なお、Google Cloud Project を変更する場合は `.terraform` を削除の上、再度 `init.sh` を実行してください。
 
+## init.shの実行手順
+1. Githubのリポジトリを新規作成してください。
+2. firebaseプロジェクトを新規作成してください。
+3. firebaseプロジェクトはBlazeプランに課金してください。
+4. 事前にTerraformをインストールしてください。
+```
+brew install terraform
+terraform --version
+```
+5. Github CLIにログインしてください。
+```
+gh auth login
+```
+6. gcloudに事前にログインしてください。
+```
+gcloud auth login
+```
+7. 実行
+```
+cd terraform
+chmod +x init.sh
+./init.sh
+```
+
 ## Apply
 
 Initialize 後は `apply` を適用
