@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
-import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
 import avatar1 from '@/assets/images/avatars/default_profile.jpeg'
+import { User } from '@shokujii/common/schemas/User.js'
+import { buildThumbnailsLinks } from '@shokujii/base/utils/buildThumbnailsLinks.js'
 
-const props = defineProps<{ user: FirestoredUser | string | null; size?: number }>()
+const MAX_RETRIES = 10
+const RETRY_DELAY = 1000
+
+const props = defineProps<{ user: User | string | null; size?: number }>()
 
 const calcAvatarSize = (size: number | undefined) => {
   if (size == null) return 'large'
@@ -13,17 +17,35 @@ const calcAvatarSize = (size: number | undefined) => {
   return 'large'
 }
 
-const hasError = ref(false)
-
-const avatar = computed(
-  // @ts-expect-error
-  () => props.user?.user_thumb_image_urls?.[calcAvatarSize(size.value)] ?? props.user?.user_image_url ?? avatar1,
-)
+const avatar = computed(() => {
+  if (typeof props.user === 'string') {
+    return props.user
+  } else if (props.user === null || props.user.user_image_url === '') {
+    return avatar1
+  }
+  const thubnails = buildThumbnailsLinks(props.user.user_id, new URL(props.user.user_image_url))
+  return thubnails?.[calcAvatarSize(size.value)] ?? props.user.user_image_url
+})
 const initial = computed(() => (typeof props.user === 'string' ? props.user.slice(0, 1) : undefined))
 
 const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
+
+const reloadKey = ref(0)
+let retries = 0
+const onError = () => {
+  if (retries < MAX_RETRIES) {
+    retries++
+    console.warn(`画像の再取得を試みます (${retries}/${MAX_RETRIES})`)
+    setTimeout(() => {
+      // キャッシュを回避するためクエリ文字列を付与
+      reloadKey.value++
+    }, RETRY_DELAY)
+  } else {
+    console.error('画像の取得に失敗しました')
+  }
+}
 
 // 画面をリサイズした際に適切にサイズを変更する
 const resizeObserver = new ResizeObserver((entries) => {
@@ -53,7 +75,7 @@ onUnmounted(() => {
 <template>
   <v-avatar ref="avatarElement" :size="size" :color="initial != null ? 'primary' : 'transparent'">
     <template v-if="initial != null">{{ initial }}</template>
-    <v-img v-else :src="avatar" cover @error="hasError = true" />
+    <v-img v-else :src="avatar" :key="reloadKey" cover @error="onError" />
     <slot />
   </v-avatar>
 </template>

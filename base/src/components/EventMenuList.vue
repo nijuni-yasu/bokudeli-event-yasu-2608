@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { priceString } from '@shokujii/base/schemes/converter'
-import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu'
+import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { mdiFoodForkDrink } from '@mdi/js'
 
 defineProps<{
-  menus: PartnerMenu[] | null
+  menus: BokudeliEventMenu[] | null
   disabled: boolean
 }>()
 
 const emit = defineEmits<{
-  selectMenu: [menu: PartnerMenu]
+  selectMenu: [menu: BokudeliEventMenu]
 }>()
 </script>
 <template>
@@ -19,33 +19,33 @@ const emit = defineEmits<{
         <v-card height="100%" color="text-center">
           <v-row no-gutters>
             <v-col cols="6" sm="12" class="d-flex">
-              <v-img :src="menu.imageUrl ?? undefined" aspect-ratio="1" cover />
+              <v-img :src="menu.menu_image_url ?? undefined" aspect-ratio="1" cover />
             </v-col>
 
             <v-col cols="6" sm="12" class="pa-2 d-flex flex-column">
               <v-card-title class="justify-start text-h6 font-weight-bold text-wrap pa-1">
-                {{ menu.name }}
+                {{ menu.menu_name }}
               </v-card-title>
               <v-card-text class="text-left text-subtitle-2 px-1 py-0 description-text">
-                {{ menu.description }}
+                {{ menu.menu_description }}
               </v-card-text>
               <v-card-text class="text-right pa-0 ma-3">
                 <span class="yen-text">¥ </span>
-                <span class="price-text">{{ priceString(menu.price) }}</span>
+                <span class="price-text">{{ priceString(menu.menu_price) }}</span>
               </v-card-text>
               <v-row class="pb-1 px-2">
                 <v-col cols="12">
                   <v-btn
                     class="menu-button"
                     block
-                    :class="{ 'disable-menu-button': disabled || menu.isSoldout === true }"
+                    :class="{ 'disable-menu-button': disabled }"
                     color="primary"
                     rounded="pill"
                     elevation="5"
                     :prepend-icon="mdiFoodForkDrink"
                     @click="emit('selectMenu', menu)"
                   >
-                    {{ menu.isSoldout === true ? '売り切れ' : '注文して参加する' }}
+                    {{ '注文して参加する' }}
                   </v-btn>
                 </v-col>
               </v-row>

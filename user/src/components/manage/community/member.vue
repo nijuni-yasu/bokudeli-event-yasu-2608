@@ -7,7 +7,7 @@ import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
 import { mdiFacebook, mdiDownload, mdiAccountPlusOutline, mdiAccountRemoveOutline, mdiLink } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
-import type { CommunityMember } from '@shokujii/base/schemes/communityMember.js'
+import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { getAuth } from 'firebase/auth'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
@@ -34,7 +34,7 @@ const members = computed(
 )
 // const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
-const emailTargetMember = ref<CommunityMember | null>(null)
+const emailTargetMember = ref<BokudeliCommunityMember | null>(null)
 const isEmailDialogOpen = computed({
   get: () => emailTargetMember.value != null,
   set: (val) => {
@@ -43,8 +43,8 @@ const isEmailDialogOpen = computed({
     }
   },
 })
-const addTargetMember = ref<CommunityMember | null>(null)
-const removeTargetMember = ref<CommunityMember | null>(null)
+const addTargetMember = ref<BokudeliCommunityMember | null>(null)
+const removeTargetMember = ref<BokudeliCommunityMember | null>(null)
 const isModifyAccountDialogOpen = computed({
   get: () => addTargetMember.value != null || removeTargetMember.value != null,
   set: (val) => {
@@ -58,7 +58,7 @@ const isModifyAccountDialogOpen = computed({
 //   emailTargetMember.value = member
 // }
 const isLoading = ref(false)
-const addAccount = async (member: CommunityMember) => {
+const addAccount = async (member: BokudeliCommunityMember) => {
   isLoading.value = true
   try {
     await communityStore.addRole(member.user_id, 'manager')
@@ -71,7 +71,7 @@ const addAccount = async (member: CommunityMember) => {
     isLoading.value = false
   }
 }
-const removeAccount = async (member: CommunityMember) => {
+const removeAccount = async (member: BokudeliCommunityMember) => {
   isLoading.value = true
   try {
     await communityStore.removeRole(member.user_id, 'manager')
@@ -122,9 +122,9 @@ const downloadCsvFile = () => {
   for (const member of members.value) {
     csv +=
       `"${member.user_name}",` +
-      `"${member.user_sns_twitter == null ? '' : buildTwitterUrl(member.user_sns_twitter)}",` +
-      `"${member.user_sns_facebook == null ? '' : buildFacebookUrl(member.user_sns_facebook)}",` +
-      `"${member.user_sns_instagram == null ? '' : buildInstagramUrl(member.user_sns_instagram)}",` +
+      `"${member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : ''}",` +
+      `"${member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : ''}",` +
+      `"${member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : ''}",` +
       `"${member.user_description ?? ''}"\n`
   }
   downloadCsv('community_member.csv', csv)
@@ -164,7 +164,7 @@ const downloadCsvFile = () => {
                     </td>
                     <td class="minimum-cell">
                       <v-btn
-                        :class="{ hidden: member.user_sns_facebook == null }"
+                        v-if="member.user_sns_facebook !== ''"
                         :icon="mdiFacebook"
                         color="#1877F2"
                         density="compact"
@@ -174,7 +174,7 @@ const downloadCsvFile = () => {
                     </td>
                     <td class="minimum-cell">
                       <v-btn
-                        :class="{ hidden: member.user_sns_twitter == null }"
+                        v-if="member.user_sns_twitter !== ''"
                         :icon="XIcon"
                         color="grey-900"
                         density="compact"
@@ -184,7 +184,7 @@ const downloadCsvFile = () => {
                     </td>
                     <td class="minimum-cell">
                       <v-btn
-                        :class="{ hidden: member.user_sns_instagram == null }"
+                        v-if="member.user_sns_instagram !== ''"
                         density="compact"
                         variant="text"
                         icon=""

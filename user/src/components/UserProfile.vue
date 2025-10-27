@@ -1,32 +1,19 @@
 <script setup lang="ts">
 import HomeButtonDialog from '@shokujii/base/components/HomeButtonDialog.vue'
-import { getAuth, signOut } from 'firebase/auth'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
-import userAccessiblePaths from '@shokujii/base/utils/userAccessiblePaths.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { useStoreUserAdditionalInfo } from '@shokujii/base/stores/userAdditionalInfo.js'
-import { useStoreFirebaseAuthError } from '@shokujii/base/stores/firebaseAuthError.js'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
 import { getLogin, getProfile } from '@/router/utils'
 
-const { storedUser } = storeToRefs(useStoreStoredUser())
+const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
-const isLogin = computed(() => storedUser.value?.userId != null)
-const userStore = ref<UserStore | null>(null)
-
-watch(
-  () => storedUser.value?.userId,
-  (userId) => {
-    if (userId != null) {
-      userStore.value = useUserStore(userId) as UserStore
-    } else {
-      userStore.value = null
-    }
-  },
-  { immediate: true },
-)
+const isLogin = computed(() => firebaseUser.value?.uid != null)
+const userStore = computed<UserStore | null>(() => {
+  const userId = firebaseUser.value?.uid
+  return userId != null ? (useUserStore(userId) as UserStore) : null
+})
 
 const user = computed(() => {
   return userStore.value?.user ?? null
@@ -52,17 +39,7 @@ const handleLogoutDialog = () => {
 }
 
 const logout = async () => {
-  const auth = getAuth()
-  try {
-    useStoreUserAdditionalInfo().reset()
-    useStoreFirebaseAuthError().reset()
-    await signOut(auth)
-
-    // ログインが必要なページにいる場合トップページに遷移
-    if (userAccessiblePaths.includes(route.path)) router.replace('/')
-  } catch (error) {
-    console.error(error)
-  }
+  await useCurrentUserStore().signOut()
 }
 </script>
 

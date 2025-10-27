@@ -10,10 +10,10 @@ import {
   mdiFileDocumentOutline,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { usePartnerStore, BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
-import { Shop, GENRE_ARRAY } from '@shokujii/base/schemes/shop.js'
+import { GENRE_ARRAY } from '@shokujii/common/schemas/PartnerShop.js'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -108,17 +108,17 @@ const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 
 const shop = ref(
-  await new Promise<Shop>((resolve) => {
+  await new Promise<BokudeliPartnerShop>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {
         if (shops != null) {
           if (shops.length === 0) {
-            const shop = new Shop(partnerId)
+            const shop = new BokudeliPartnerShop(partnerId, null, {})
             shop.shop_email = getAuth().currentUser?.email ?? ''
             resolve(shop)
           } else {
-            resolve(Object.assign({}, toRaw(shops[0])))
+            resolve(Object.assign(Object.create(Object.getPrototypeOf(shops[0])), shops[0]))
           }
           stop()
         }
@@ -150,7 +150,7 @@ watch(
       validatedPostalCode.value = null
       return
     }
-    validatedPostalCode.value = postalcode
+    validatedPostalCode.value = postalcode ?? null
     if (shop.value.shop_address?.startsWith(location.address) ?? false) {
       return
     }
@@ -176,7 +176,7 @@ watch(
   () => shop.value?.shop_url_twitter,
   (url) => {
     if (url?.startsWith('https://x.com/') ?? false) {
-      shop.value.shop_url_twitter = url.replace('https://x.com/', '')
+      shop.value.shop_url_twitter = url?.replace('https://x.com/', '')
     }
   },
   { immediate: true },
@@ -186,7 +186,7 @@ watch(
   () => shop.value?.shop_url_facebook,
   (url) => {
     if (url?.startsWith('https://www.facebook.com/') ?? false) {
-      shop.value.shop_url_facebook = url.replace('https://www.facebook.com/', '')
+      shop.value.shop_url_facebook = url?.replace('https://www.facebook.com/', '')
     }
   },
   { immediate: true },
@@ -196,7 +196,7 @@ watch(
   () => shop.value?.shop_url_instagram,
   (url) => {
     if (url?.startsWith('https://www.instagram.com/') ?? false) {
-      shop.value.shop_url_instagram = url.replace('https://www.instagram.com/', '')
+      shop.value.shop_url_instagram = url?.replace('https://www.instagram.com/', '')
     }
   },
   { immediate: true },
@@ -205,7 +205,7 @@ watch(
 const submit = async () => {
   isSaving.value = true
   try {
-    await partnerStore.updateShop(shop.value, imageFile.value ?? undefined)
+    await partnerStore.updateShop(toRaw(shop.value), imageFile.value ?? undefined)
     notification.show($t('shop.saved'), 'success')
   } catch (e) {
     console.error(e)
@@ -534,12 +534,30 @@ const submit = async () => {
           <v-card-text>
             <v-text-field v-model="shop.shop_email" readonly outlined dense :label="$t('email')" />
           </v-card-text>
-          <v-card-text v-for="i in 3" :key="`sub_email_${i}`">
+          <v-card-text>
             <v-text-field
-              v-model="/* @ts-ignore */ shop[`shop_email_sub${i}`]"
+              v-model="shop['shop_email_sub1']"
               outlined
               dense
-              :label="$t('shop.email_sub_n', [i])"
+              :label="$t('shop.email_sub_n', [1])"
+              :rules="[emailValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop['shop_email_sub2']"
+              outlined
+              dense
+              :label="$t('shop.email_sub_n', [2])"
+              :rules="[emailValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop['shop_email_sub3']"
+              outlined
+              dense
+              :label="$t('shop.email_sub_n', [3])"
               :rules="[emailValidator]"
             />
           </v-card-text>

@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { mdiTruckOutline, mdiMapMarkerRadius } from '@mdi/js'
 import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@shokujii/base/utils/orders.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
-import type { Shop } from '@shokujii/base/schemes/shop.js'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { usePartnerStore } from '@shokujii/base/stores/partner.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { getOrderPath } from '@/navigation/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
@@ -15,6 +14,7 @@ import { getNamesPrintPath } from '@/navigation/utils'
 import { getNamesPrintPdf } from '@shokujii/base/utils/namesPrint.js'
 import { ref } from 'vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import { getEventUrl } from '@shokujii/common/utils/urls.js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -38,7 +38,7 @@ const [event, shop] = await Promise.all([
       { immediate: true },
     )
   }),
-  new Promise<Shop>((resolve) => {
+  new Promise<PartnerShop>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {
@@ -51,6 +51,9 @@ const [event, shop] = await Promise.all([
     )
   }),
 ])
+
+// TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
+const eventUrl = getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id)
 
 if (event.partner_id !== partnerId) {
   window.alert($t('alert.invalid_account'))
@@ -110,15 +113,15 @@ const downloadNamesPrint = async () => {
         <v-card-text>
           <div class="mt-5">
             <p>{{ $t('order_detail.event_name', [eventStore.event.event_name]) }}</p>
-            <p v-linkify>{{ $t('order_detail.event_url', [eventStore.event.url]) }}</p>
+            <p v-linkify>{{ $t('order_detail.event_url', [eventUrl]) }}</p>
             <p>
               {{
                 $t(
                   'order_detail.event_date',
                   eventStore.event.event_start_datetime != null
                     ? [
-                        $d(eventStore.event.event_start_datetime.toMillis() - 30 * 60 * 1000, 'datetime_weekday_short'),
-                        $d(eventStore.event.event_start_datetime.toMillis(), 'time'),
+                        $d(eventStore.event.event_start_datetime - 30 * 60 * 1000, 'datetime_weekday_short'),
+                        $d(eventStore.event.event_start_datetime, 'time'),
                       ]
                     : [],
                 )
@@ -129,7 +132,7 @@ const downloadNamesPrint = async () => {
                 $t(
                   'order_detail.order_limit',
                   eventStore.event.event_deadline_datetime != null
-                    ? [$d(eventStore.event.event_deadline_datetime.toDate(), 'datetime_weekday_short')]
+                    ? [$d(eventStore.event.event_deadline_datetime, 'datetime_weekday_short')]
                     : [],
                 )
               }}
@@ -221,7 +224,7 @@ const downloadNamesPrint = async () => {
                   )
                   .sort((a, b) =>
                     a.menu.name === b.menu.name
-                      ? a.order.created_at.toMillis() - b.order.created_at.toMillis()
+                      ? a.order.created_at - b.order.created_at
                       : a.menu.name > b.menu.name
                         ? 1
                         : -1,
@@ -239,7 +242,7 @@ const downloadNamesPrint = async () => {
                 </td>
                 <td>{{ menu.name }}</td>
                 <td>{{ $n(menu.price, 'currency') }}</td>
-                <td>{{ $d(order.created_at.toDate(), 'datetime') }}</td>
+                <td>{{ $d(order.created_at, 'datetime') }}</td>
               </tr>
             </tbody>
           </v-table>

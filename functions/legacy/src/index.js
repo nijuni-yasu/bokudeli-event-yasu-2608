@@ -1,4 +1,4 @@
-import { initializeApp, applicationDefault, cert } from 'firebase-admin/app'
+import { initializeApp, applicationDefault } from 'firebase-admin/app'
 import { initializeFirestore } from 'firebase-admin/firestore'
 
 const app = initializeApp({
@@ -12,7 +12,6 @@ export const {
   polling,
   on_event_changed,
   send_email,
-  send_pass_code,
 } = await import('./sendgrid-mail.js')
 export const { on_write_community_members } = await import('./community-members.js')
 export const { create_event_members } = await import('./event-members.js')
@@ -25,4 +24,3 @@ export { invoice } from './invoice.js'
 export { namesprint } from './namesprint.js'
 export { eventBillInvoice } from './eventBillInvoice.js'
 export { flyer } from './flyer.js'
-export const { create_or_update_user, verify_pass_code, get_custom_token } = await import('./users.js')

@@ -12,14 +12,13 @@ import {
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
-import type { EventMember } from '@shokujii/base/schemes/EventMember'
+import { useEventStore } from '@shokujii/base/stores/event'
+import type { EventStore, BokudeliEvent, BokudeliEventMember } from '@shokujii/base/stores/event.js'
 
 const props = defineProps<{
   communityId: string
@@ -37,7 +36,7 @@ communityStore.getCurrentUserRoles().then((roles) => {
 
 type EventWithMembers = {
   event: BokudeliEvent
-  members: EventMember[]
+  members: BokudeliEventMember[]
 }
 
 const events = computed<EventWithMembers[] | null>(() => {
@@ -72,9 +71,9 @@ const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
-const userStore = useStoreStoredUser()
+const userStore = useCurrentUserStore()
 const openContactDialog = () => {
-  if (!userStore.storedUser) {
+  if (userStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true
@@ -166,11 +165,11 @@ const openLoginDialog = () => {
                   </v-btn>
                   <v-btn
                     v-if="
-                      eventWithMembers.event.event_status.value === 'in_draft' ||
-                      eventWithMembers.event.event_status.value === 'applying_reservation' ||
-                      eventWithMembers.event.event_status.value === 'accepting_order' ||
-                      eventWithMembers.event.event_status.value === 'order_closed' ||
-                      eventWithMembers.event.event_status.value === 'full'
+                      eventWithMembers.event.calculatedEventStatus === 'in_draft' ||
+                      eventWithMembers.event.calculatedEventStatus === 'applying_reservation' ||
+                      eventWithMembers.event.calculatedEventStatus === 'accepting_order' ||
+                      eventWithMembers.event.calculatedEventStatus === 'order_closed' ||
+                      eventWithMembers.event.calculatedEventStatus === 'full'
                     "
                     class="ml-1"
                     color="white"

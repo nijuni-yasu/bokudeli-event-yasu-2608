@@ -25,6 +25,7 @@ export const {
   onOrderChanged,
   onEventChanged,
   pollingTask,
+  requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -36,4 +37,5 @@ export const {
   import('./orderCompletionMail.js'),
   import('./eventStatusChangeMail.js'),
   import('./pollingTask.js'),
+  import('./user.js'),
 ])))

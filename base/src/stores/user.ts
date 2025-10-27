@@ -1,36 +1,48 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { StateTree, Store } from 'pinia'
 import { format } from 'date-fns'
-import { doc, updateDoc, onSnapshot, DocumentReference, type Unsubscribe } from 'firebase/firestore'
+import {
+  doc,
+  updateDoc,
+  onSnapshot,
+  type Unsubscribe,
+  FirestoreDataConverter,
+  DocumentData,
+  QueryDocumentSnapshot,
+  setDoc,
+  SnapshotOptions,
+} from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
 import { db, storage } from '@shokujii/base/firebase.js'
-import { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
+import { User } from '@shokujii/common/schemas/User.js'
 
-type UserStoreState = {
-  exists: Ref<boolean | null>
-  user: Ref<FirestoredUser | null>
-} & StateTree
-
-type UserStoreAction = {
-  updateUser: (data: FirestoredUser) => Promise<void>
-  uploadUserImage: (file: File | Blob) => Promise<void>
-  subscribe: () => void
-  unsubscribe: () => void
+const userConverter: FirestoreDataConverter<User> = {
+  toFirestore(user: User): DocumentData {
+    return user.toFirestore()
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): User {
+    const data = snapshot.data(options)
+    return new User(snapshot.id, data)
+  },
 }
 
-export type UserStore = Store<string, UserStoreState, Record<string, never>, UserStoreAction>
+export type UserStore = ReturnType<typeof useUserStore>
 
 export const useUserStore = (userId: string) => {
-  const store = defineStore<string, UserStoreState & UserStoreAction>(`/users/${userId}`, () => {
-    const userRef: DocumentReference = doc(db, 'users', userId)
+  const store = defineStore(`/users/${userId}`, () => {
+    const userRef = doc(db, 'users', userId).withConverter(userConverter)
     const exists = ref<boolean | null>(null)
-    const user = ref<FirestoredUser | null>(null)
+    const user = ref<User | null>(null)
 
-    const updateUser = async (data: FirestoredUser) => {
-      await updateDoc(userRef, data.convertToDocumentData())
+    const updateUser = async (data: User) => {
+      await setDoc(userRef, data, { merge: true })
     }
 
+    /**
+     * functions にも同じ関数があるので注意
+     * TODO: 共通化
+     * @param file
+     */
     const uploadUserImage = async (file: File | Blob) => {
       let ext: string = ''
       if (file instanceof File) {
@@ -74,7 +86,7 @@ export const useUserStore = (userId: string) => {
       if (unsubscribeUser == null) {
         unsubscribeUser = onSnapshot(userRef, (userSnapshot) => {
           exists.value = userSnapshot.exists()
-          user.value = exists.value ? new FirestoredUser(userSnapshot.data()) : null
+          user.value = userSnapshot.data() ?? null
         })
       }
     }

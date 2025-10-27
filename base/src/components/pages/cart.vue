@@ -1,20 +1,14 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers'
 import { db, functions, stripeBaseURL } from '@shokujii/base/firebase'
 import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
-import {
-  dateWithDayOfWeekString,
-  dateOnlyTimeString,
-  priceString,
-  convertDocumentDataToEvent,
-} from '@shokujii/base/schemes/converter'
-import { type OrderItem, createEmptyOrderItem } from '@shokujii/base/schemes/orderItem'
-import { type OrderMenu } from '@shokujii/base/schemes/orderMenu'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
+import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import Stripe from 'stripe'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
@@ -22,25 +16,27 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { getAuth } from 'firebase/auth'
+import { getAdditionalUserInfo, getAuth, TwitterAuthProvider } from 'firebase/auth'
 import { httpsCallable } from 'firebase/functions'
+import { linkByProviderService } from '@shokujii/base/utils/providerService'
+import { FirebaseError } from 'firebase/app'
 
 const { t: $t } = useI18n()
 const router = useRouter()
-const { storedUser } = storeToRefs(useStoreStoredUser())
-const userId = computed(() => storedUser.value?.userId ?? '')
+const {
+  user: currentUser,
+  personalInformation: currentUserPersonalInformation,
+  firebaseUser,
+} = storeToRefs(useCurrentUserStore())
+const userId = computed(() => currentUser.value?.id ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
 const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
-const twitterAccountConnected = ref<boolean>(false)
-
-const auth = getAuth()
-const currentUser = auth.currentUser
-if (currentUser) {
-  twitterAccountConnected.value = currentUser.providerData.some((info) => info.providerId === 'twitter.com')
-}
+const twitterAccountConnected = computed(
+  () => firebaseUser.value?.providerData.some((info) => info.providerId === 'twitter.com') ?? false,
+)
 
 type Cart = {
-  order: OrderItem
+  order: EventOrder
   subtotals: { [key: string]: number }
   total: number
   event: BokudeliEvent
@@ -56,7 +52,7 @@ const state = reactive({
 const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'> => {
   const { event } = cart
 
-  if (event.event_deadline_datetime && event.event_deadline_datetime.toDate() < new Date()) {
+  if (event.event_deadline_datetime && event.event_deadline_datetime < Date.now()) {
     return 'deadline'
   }
 
@@ -93,11 +89,11 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 
 const openConfirmOrder = ref(false)
 const confirmDialogMessage = ref('')
-const selectedOrder = ref({} as OrderItem)
+const selectedOrder = ref({} as EventOrder)
 const selectedCartEvent = ref({} as BokudeliEvent)
 const selectedCartTwitterPostEnabled = ref<boolean>(false)
 const selectedCartTwitterPostComment = ref<string>('')
-const selectedMenu = ref({} as OrderMenu)
+const selectedMenu = ref({} as OrderMenuType)
 const isOrderProcessing = ref<boolean>(false)
 
 const startOrderProcess = async () => {
@@ -134,7 +130,7 @@ const startOrderProcess = async () => {
   }
 }
 
-const createCheckoutSession = async (order: OrderItem, isPosted: boolean) => {
+const createCheckoutSession = async (order: EventOrder, isPosted: boolean) => {
   const lineItems = order.menus.map((menu) => {
     return {
       price_data: {
@@ -163,7 +159,6 @@ const createCheckoutSession = async (order: OrderItem, isPosted: boolean) => {
       payment_method_types: ['card'],
       metadata: {
         eventId: order.event_id,
-        eventPayment: order.event_payment,
         communityId: order.community_id,
         communityAccount: order.community_account,
         orderId: order.order_id,
@@ -198,21 +193,21 @@ const openUserParameterConfirm = ref(false)
 const targetUserParameter = ref('')
 const showConfirm = async (cart: Cart) => {
   // ユーザー名存在チェック
-  if (!storedUser.value?.userName) {
+  if (!currentUser.value?.user_name) {
     targetUserParameter.value = $t('cart.doesnt_exists_user_name')
     openUserParameterConfirm.value = true
     return
   }
 
   // アイコン存在チェック
-  if (!storedUser.value?.userImageUrl) {
+  if (!currentUser.value?.user_image_url) {
     targetUserParameter.value = $t('cart.doesnt_exists_user_image')
     openUserParameterConfirm.value = true
     return
   }
 
   // メールアドレス存在チェック
-  if (!storedUser.value?.userEmail) {
+  if (!currentUserPersonalInformation.value?.user_email) {
     targetUserParameter.value = $t('cart.doesnt_exists_user_email')
     openUserParameterConfirm.value = true
     return
@@ -241,7 +236,7 @@ const startDeleteProcess = async () => {
   state.cartList = await loadCartList()
 }
 
-const deleteMenuInCart = async (event: BokudeliEvent, order: OrderItem, menu: OrderMenu) => {
+const deleteMenuInCart = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
   selectedCartEvent.value = event
   selectedOrder.value = order
   selectedMenu.value = menu
@@ -268,8 +263,16 @@ const loadCartList = async () => {
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
-  const orderItems = cartSnapshot.docs.map((doc) => {
-    return { ...createEmptyOrderItem(), ...doc.data() }
+  const orderItems = cartSnapshot.docs.flatMap((doc) => {
+    const eventId = doc.ref.parent.parent!.id
+    const data = doc.data()
+    // TODO 直接 new するのではなく store を経由する
+    try {
+      return new EventOrder(eventId, doc.id, data)
+    } catch (err) {
+      console.error(err)
+      return []
+    }
   })
 
   // イベント情報を引きオーダー情報とくっつける
@@ -285,7 +288,7 @@ const loadCartList = async () => {
         console.error($t('cart.event_not_found'), { item })
         return []
       }
-      const event = convertDocumentDataToEvent(eventSnapshot.docs[0].data())
+      const event = new BokudeliEvent(item.community_id, item.event_id, eventSnapshot.docs[0].data())
       if (event.event_status.value !== 'accepting_order') {
         return []
       }
@@ -316,9 +319,107 @@ const loadCartList = async () => {
 
 const isOpenCancelpolicyDialog = ref(false)
 
+const notification = inject('notification') as Notification
+const isTwitterLoading = ref<boolean>(false)
+const isOpenTwitterLinkDialog = ref<boolean>(false)
+
+type CustomData = {
+  email: string
+  _tokenResponse?: {
+    providerId?: string
+  }
+}
+
+const handleTwitterLoginLink = async () => {
+  try {
+    isTwitterLoading.value = true
+    const userCredential = await linkByProviderService(firebaseUser.value!, 'Twitter')
+
+    const additionalUserInfo = getAdditionalUserInfo(userCredential)
+    if (additionalUserInfo) {
+      // await setSNSProfile(userCredential, additionalUserInfo)
+    }
+
+    // ユーザー情報を再取得して更新
+    const auth = getAuth()
+    if (auth.currentUser) {
+      await auth.currentUser.reload()
+    }
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const credential = TwitterAuthProvider.credentialFromError(error)
+      console.error({ error, credential })
+      if (error.code === 'auth/credential-already-in-use') {
+        return Object.assign(notification, { message: $t('user.exists_credential', { snsName: 'X' }), color: 'error' })
+      }
+      if (error.code === 'auth/email-already-in-use') {
+        return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+      }
+    } else {
+      console.error({ error })
+    }
+  } finally {
+    isTwitterLoading.value = false
+  }
+}
+
+// const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
+//   const storedUser = storedUserStore.storedUser as StoredUser
+
+//   if (additionalUserInfo.providerId === 'twitter.com') {
+//     storedUser.userSnsTwitter = additionalUserInfo?.username as string
+
+//     const twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
+//     if (twitterCredential?.accessToken && twitterCredential.secret) {
+//       storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
+//       storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
+
+//       if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
+//         await updateDoc(personalInformationSnapshotRef, {
+//           user_sns_twitter_access_token: twitterCredential.accessToken,
+//           user_sns_twitter_secret: twitterCredential.secret,
+//         })
+//       }
+//     }
+//   }
+
+//   await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
+//   storedUserStore.update(storedUser)
+// }
+
 onMounted(async () => {
   state.cartList = await loadCartList()
   state.isLoading = false
+
+  const error = useCurrentUserStore().lastFirebaseError
+  if (error instanceof FirebaseError) {
+    let credential
+    let snsName
+    const customData = error?.customData as CustomData
+    if (customData._tokenResponse?.providerId === 'twitter.com') {
+      credential = TwitterAuthProvider.credentialFromError(error)
+      snsName = 'X'
+    }
+
+    console.error({ error, credential })
+
+    if (error.code === 'auth/credential-already-in-use') {
+      return Object.assign(notification, {
+        message: $t('user.exists_credential', { snsName: snsName }),
+        color: 'error',
+      })
+    }
+    if (error.code === 'auth/email-already-in-use') {
+      return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
+    }
+  } else if (error) {
+    console.error({ error })
+  }
+
+  // if (!userCredential || additionalUserInfo === null) return
+  // await setSNSProfile(userCredential, additionalUserInfo)
+
+  // useStoreUserAdditionalInfo().reset()
 })
 </script>
 
@@ -446,7 +547,13 @@ onMounted(async () => {
               <div v-else>
                 <v-card-text class="card-text-style"> 【{{ $t('cart.x_post.title') }}】 </v-card-text>
                 <v-card-text class="card-text-style">
-                  <v-btn size="small" rounded="pill" class="ma-2" variant="outlined" :to="getProfile()">
+                  <v-btn
+                    size="small"
+                    rounded="pill"
+                    class="ma-2"
+                    variant="outlined"
+                    @click="() => (isOpenTwitterLinkDialog = true)"
+                  >
                     {{ $t('cart.x_post.connect_x') }}
                   </v-btn>
                 </v-card-text>
@@ -513,6 +620,21 @@ onMounted(async () => {
     :ok-text="$t('cart.go_to_setting')"
   >
     {{ targetUserParameter }}
+  </confirm-dialog>
+
+  <confirm-dialog
+    v-model="isOpenTwitterLinkDialog"
+    :is-confirm="true"
+    :ok-text="$t('profile.linkage')"
+    :ok-click="handleTwitterLoginLink"
+    :ok-loading-state="isTwitterLoading"
+  >
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('profile.twitter_link_modal_title') }}
+    </v-card-text>
+    <v-card-text class="text-center py-5">
+      <div v-html="$t('profile.twitter_link_modal_description')"></div>
+    </v-card-text>
   </confirm-dialog>
 </template>
 <style scoped>

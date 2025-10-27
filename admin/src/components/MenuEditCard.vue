@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { parseISO, format } from 'date-fns'
-import { Timestamp } from 'firebase/firestore'
-import { PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
+import { type BokudeliPartnerMenu } from '@shokujii/base/stores/partner.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import DateInput from '@shokujii/base/components/DateInput.vue'
 
 const { requiredValidator, maxLengthValidator, betweenValidator } = useValidators()
 
-const menu = defineModel<PartnerMenu>({ required: true })
+const menu = defineModel<BokudeliPartnerMenu>({ required: true })
 
 defineEmits(['save', 'cancel'])
 
@@ -21,25 +20,24 @@ const isValid = ref(false)
 // https://vuetifyjs.com/en/components/number-inputs/#installation
 // を使用したほうがよい
 const price = computed({
-  get: () => menu.value.price,
+  get: () => menu.value.menu_price,
   set: (value) => {
     if (Number.isInteger(value)) {
-      menu.value.price = value
+      menu.value.menu_price = value
     }
   },
 })
 
 const dateStart = computed({
-  get: () => (menu.value.dateStart == null ? null : format(menu.value.dateStart.toMillis(), 'yyyy-MM-dd')),
+  get: () => (menu.value.menu_date_start == null ? null : format(menu.value.menu_date_start, 'yyyy-MM-dd')),
   set: (value) => {
-    menu.value.dateStart = value == null ? null : Timestamp.fromMillis(parseISO(value).getTime())
+    menu.value.menu_date_start = value == null ? Date.now() : parseISO(value).getTime()
   },
 })
 const dateEnd = computed({
-  get: () => (menu.value.dateEnd == null ? null : format(menu.value.dateEnd.toMillis(), 'yyyy-MM-dd')),
+  get: () => (menu.value.menu_date_end == null ? null : format(menu.value.menu_date_end, 'yyyy-MM-dd')),
   set: (value) => {
-    menu.value.dateEnd =
-      value == null ? null : Timestamp.fromMillis(parseISO(value).getTime() + 24 * 60 * 60 * 1000 - 1)
+    menu.value.menu_date_end = (value == null ? Date.now() : parseISO(value).getTime()) + 24 * 60 * 60 * 1000 - 1
   },
 })
 </script>
@@ -56,7 +54,7 @@ const dateEnd = computed({
         <v-row justify="center">
           <v-col cols="7">
             <ImageInput
-              :url="menu.imageUrl ?? undefined"
+              :url="menu.menu_image_url ?? undefined"
               @file-selected="(f) => (imageFile = f)"
               style="width: auto; max-width: min(600px, 100%); aspect-ratio: 1/1"
               :cover="true"
@@ -68,7 +66,7 @@ const dateEnd = computed({
       </v-card-text>
       <v-card-text>
         <v-text-field
-          v-model="menu.name"
+          v-model="menu.menu_name"
           outlined
           dense
           :label="$t('menu_edit_card.name')"
@@ -77,7 +75,7 @@ const dateEnd = computed({
       </v-card-text>
       <v-card-text>
         <v-textarea
-          v-model="menu.description"
+          v-model="menu.menu_description"
           outlined
           :label="$t('menu_edit_card.description')"
           :rules="[(v: string) => maxLengthValidator(v, 140)]"
@@ -109,9 +107,9 @@ const dateEnd = computed({
       </v-card-text>
       <v-card-text>
         <v-switch
-          v-model="menu.isSoldout"
+          v-model="menu.is_sold_out"
           color="#FF0000"
-          :label="`${menu.isSoldout ? $t('menu_edit_card.sold_out') : $t('menu_edit_card.in_stock')}`"
+          :label="`${menu.is_sold_out ? $t('menu_edit_card.sold_out') : $t('menu_edit_card.in_stock')}`"
         />
       </v-card-text>
       <template #actions>

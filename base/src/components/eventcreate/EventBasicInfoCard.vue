@@ -3,15 +3,14 @@ import { computed, watchEffect } from 'vue'
 import {
   hourList,
   minutesList,
-  dateString,
-  hourString,
-  minutesString,
-  parseDateTimeStrings,
-} from '@shokujii/base/schemes/eventCreate'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+  convertToDateString,
+  convertToHourString,
+  convertToMinuteString,
+  parseDatetimeStrings,
+} from '@shokujii/common/utils/datetime.js'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
 import DateInput from '../DateInput.vue'
-import { Timestamp } from 'firebase/firestore'
 import { useValidators } from '@shokujii/base/composable/validators'
 import { mdiMapMarker, mdiCalendar } from '@mdi/js'
 
@@ -26,69 +25,67 @@ if (event.value.event_start_datetime == null) {
   defaultStartDate.setDate(today.getDate() + 14) // +14日
   defaultStartDate.setHours(12)
   defaultStartDate.setMinutes(0)
-  event.value.event_start_datetime = Timestamp.fromMillis(defaultStartDate.getTime())
+  event.value.event_start_datetime = defaultStartDate.getTime()
 }
 if (event.value.event_end_datetime == null) {
-  event.value.event_end_datetime = Timestamp.fromMillis(
-    event.value.event_start_datetime.toMillis() + 1 * 60 * 60 * 1000,
-  ) // + 1時間
+  event.value.event_end_datetime = event.value.event_start_datetime + 1 * 60 * 60 * 1000 // + 1時間
 }
 
 const eventStartDate = computed({
-  get: () => dateString(event.value.event_start_datetime?.toDate() ?? null),
+  get: () => convertToDateString(event.value.event_start_datetime),
   set: (value) => {
-    const newValue = Timestamp.fromDate(parseDateTimeStrings(value, eventStartHour.value, eventStartMinute.value))
+    const newValue = parseDatetimeStrings(value, eventStartHour.value, eventStartMinute.value)
     updateStartDatetime(newValue)
   },
 })
 const eventStartHour = computed({
-  get: () => hourString(event.value.event_start_datetime?.toDate() ?? null),
+  get: () => convertToHourString(event.value.event_start_datetime ?? null),
   set: (value) => {
-    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, value, eventStartMinute.value))
+    const newValue = parseDatetimeStrings(eventStartDate.value, value, eventStartMinute.value)
     updateStartDatetime(newValue)
   },
 })
 const eventStartMinute = computed({
-  get: () => minutesString(event.value.event_start_datetime?.toDate() ?? null),
+  get: () => convertToMinuteString(event.value.event_start_datetime ?? null),
   set: (value) => {
-    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventStartDate.value, eventStartHour.value, value))
+    const newValue = parseDatetimeStrings(eventStartDate.value, eventStartHour.value, value)
     updateStartDatetime(newValue)
   },
 })
 const eventEndDate = computed({
-  get: () => dateString(event.value.event_end_datetime?.toDate() ?? null),
+  get: () => convertToDateString(event.value.event_end_datetime ?? null),
   set: (value) => {
-    const newValue = Timestamp.fromDate(parseDateTimeStrings(value, eventEndHour.value, eventEndMinute.value))
+    const newValue = parseDatetimeStrings(value, eventEndHour.value, eventEndMinute.value)
     updateEndDatetime(newValue)
   },
 })
 const eventEndHour = computed({
-  get: () => hourString(event.value.event_end_datetime?.toDate() ?? null),
+  get: () => convertToHourString(event.value.event_end_datetime ?? null),
   set: (value) => {
-    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, value, eventEndMinute.value))
+    const newValue = parseDatetimeStrings(eventEndDate.value, value, eventEndMinute.value)
     updateEndDatetime(newValue)
   },
 })
 const eventEndMinute = computed({
-  get: () => minutesString(event.value.event_end_datetime?.toDate() ?? null),
+  get: () => convertToMinuteString(event.value.event_end_datetime ?? null),
   set: (value) => {
-    const newValue = Timestamp.fromDate(parseDateTimeStrings(eventEndDate.value, eventEndHour.value, value))
+    const newValue = parseDatetimeStrings(eventEndDate.value, eventEndHour.value, value)
     updateEndDatetime(newValue)
   },
 })
 
-const updateStartDatetime = (newValue: Timestamp) => {
-  if (Timestamp.now() < newValue) {
+const updateStartDatetime = (newValue: number) => {
+  if (Date.now() < newValue) {
     event.value.event_start_datetime = newValue
     // 開始日時を変更したら、終了日時も同じ日付に設定
-    event.value.event_end_datetime = Timestamp.fromMillis(newValue.toMillis() + 1 * 60 * 60 * 1000)
+    event.value.event_end_datetime = newValue + 1 * 60 * 60 * 1000
   }
 }
 
-const updateEndDatetime = (newValue: Timestamp) => {
+const updateEndDatetime = (newValue: number) => {
   // 30分のイベントとかがあるかも？
   // 今の所は終了時間が開始時間より後になっていれば良しとする
-  if (event.value.event_start_datetime != null && event.value.event_start_datetime < newValue) {
+  if (event.value.event_start_datetime < newValue) {
     event.value.event_end_datetime = newValue
   }
 }

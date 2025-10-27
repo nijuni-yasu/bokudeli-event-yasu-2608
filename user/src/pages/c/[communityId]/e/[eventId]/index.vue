@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
-import { type PartnerMenu } from '@shokujii/base/schemes/partnerMenu.js'
+import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMenuList from '@shokujii/base/components/EventMenuList.vue'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
@@ -39,7 +39,7 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
   if (event.value == null) {
     return null
   }
-  switch (event.value.event_status.value) {
+  switch (event.value.calculatedEventStatus) {
     case 'finished':
       return 'finished'
     case 'order_closed':
@@ -56,7 +56,7 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
 })
 
 const selectedMenuState = reactive({
-  menu: null as PartnerMenu | null,
+  menu: null as BokudeliEventMenu | null,
   isOpen: false,
 })
 
@@ -65,8 +65,8 @@ const alertState = reactive({
   isOpen: false,
 })
 
-const selectMenu = (menu: PartnerMenu) => {
-  const disabledReason = menu.isSoldout ? 'sold_out' : menuDisabled.value
+const selectMenu = (menu: BokudeliEventMenu) => {
+  const disabledReason = menuDisabled.value
   if (disabledReason == null) {
     return
   }
@@ -134,7 +134,7 @@ const isFewMemberNotice = computed({
     if (fewMemberNotice.value === null) {
       if (event.value != null) {
         return (
-          event.value.event_num_members < 1 &&
+          event.value.members.length < 1 &&
           event.value.is_public &&
           isManager.value &&
           event.value.event_status.value === 'accepting_order'
@@ -189,7 +189,7 @@ onUnmounted(() => {
         <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
           <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
           <v-spacer />
-          <EventStatusChip :status="event.event_status.value" size="large" />
+          <EventStatusChip :status="event.calculatedEventStatus" size="large" />
           <v-chip v-if="!event.is_public" color="primary" size="large">
             {{ $t('private_event') }}
           </v-chip>
@@ -206,10 +206,10 @@ onUnmounted(() => {
           </v-btn>
           <v-btn
             v-if="
-              (event.event_status.value === 'in_draft' ||
-                event.event_status.value === 'full' ||
-                event.event_status.value === 'applying_reservation' ||
-                event.event_status.value === 'accepting_order') &&
+              (event.calculatedEventStatus === 'in_draft' ||
+                event.calculatedEventStatus === 'full' ||
+                event.calculatedEventStatus === 'applying_reservation' ||
+                event.calculatedEventStatus === 'accepting_order') &&
               isManager
             "
             color="white"

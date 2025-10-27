@@ -1,6 +1,7 @@
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { google, ics } from 'calendar-link'
 import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter'
+import { getEventUrl } from '@shokujii/common/utils/urls.js'
 
 type CalendarType = 'google' | 'ics'
 
@@ -15,7 +16,8 @@ const buildCalendarLink = (event: BokudeliEvent | null, type: CalendarType) => {
     `⏳締切：${dateWithDayOfWeekString(event.event_deadline_datetime)} に注文締切`,
     `👥主催：${event.community_name}`,
     `👩‍🍳食事：${event.shop_name}`,
-    `👉イベント詳細：${event.url}`,
+    // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
+    `👉イベント詳細：${getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id)}`,
     '',
     '--------------------------------',
     '',
@@ -25,11 +27,12 @@ const buildCalendarLink = (event: BokudeliEvent | null, type: CalendarType) => {
 
   const calendarEvent = {
     title: event.event_name ?? '',
-    start: event.event_start_datetime?.toDate(),
-    end: event.event_end_datetime?.toDate() ?? undefined,
+    start: event.event_start_datetime,
+    end: event.event_end_datetime ?? undefined,
     location: event.event_address ?? undefined,
     description: textList.join('\n'),
-    url: event.url,
+    // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
+    url: getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id),
   }
 
   switch (type) {

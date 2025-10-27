@@ -1,54 +1,45 @@
 <script setup lang="ts">
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
+import { useEventStore, type EventStore, type BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import { useUserStore } from '@shokujii/base/stores/user.js'
 import { getUserPath } from '@/router/utils'
 import { mdiFacebook, mdiDownload } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
-import type { OrderItem } from '@shokujii/base/schemes/orderItem.js'
-import type { EventMember } from '@shokujii/base/schemes/EventMember.js'
-import type { OrderMenu } from '@shokujii/base/schemes/orderMenu.js'
-// import { getAuth } from 'firebase/auth'
+import type { EventOrder, OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
-import type { FirestoredUser } from '@shokujii/base/schemes/storedUser.js'
+import type { User } from '@shokujii/common/schemas/User'
 
 const { t: $t, d: $d } = useI18n()
 const route = useRoute()
 const eventId = route.params.eventId as string
 
-// const userStore = useUserStore(getAuth().currentUser!.uid) as UserStore
-
 const eventStore = useEventStore(eventId) as EventStore
-const menus = computed<Array<[OrderItem, FirestoredUser, OrderMenu]>>(
+const menus = computed<Array<[EventOrder, User, OrderMenuType]>>(
   () =>
     eventStore.orders?.flatMap((order) => {
-      const user = (useUserStore(order.user_id) as UserStore).user
+      const user = useUserStore(order.user_id).user
       return user == null ? [] : order.menus.flatMap((menu) => Array(menu.count).fill([order, user, menu]))
     }) ?? [],
 )
 const orderedMenus = computed(() =>
-  menus.value
-    .filter(([order]) => order.status === 'ordered')
-    .sort(([a], [b]) => a.updated_at.toMillis() - b.updated_at.toMillis()),
+  menus.value.filter(([order]) => order.status === 'ordered').sort(([a], [b]) => a.updated_at - b.updated_at),
 )
 const cartMenus = computed(() =>
-  menus.value
-    .filter(([order]) => order.status === 'in_cart')
-    .sort(([a], [b]) => a.carted_at.toMillis() - b.carted_at.toMillis()),
+  menus.value.filter(([order]) => order.status === 'in_cart').sort(([a], [b]) => a.carted_at - b.carted_at),
 )
 const canceledMenus = computed(() =>
   menus.value
     .filter(([order]) => order.status === 'canceled')
-    .sort(([a], [b]) => (a.canceled_at?.toMillis() ?? 0) - (b.canceled_at?.toMillis() ?? 0)),
+    .sort(([a], [b]) => (a.canceled_at ?? 0) - (b.canceled_at ?? 0)),
 )
 const tables = computed(() => [orderedMenus.value, cartMenus.value, canceledMenus.value])
 
 // const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
 
-const targetMember = ref<EventMember | null>(null)
+const targetMember = ref<BokudeliEventMember | null>(null)
 const isEmailDialogOpen = computed({
   get: () => targetMember.value != null,
   set: (val) => {
@@ -63,14 +54,14 @@ const isEmailDialogOpen = computed({
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
 }
-const getDateString = (order: OrderItem) => {
+const getDateString = (order: EventOrder) => {
   switch (order.status) {
     case 'ordered':
-      return $d(order.updated_at.toDate(), 'datetime')
+      return $d(order.updated_at, 'datetime')
     case 'in_cart':
-      return $d(order.carted_at.toDate(), 'datetime')
+      return $d(order.carted_at, 'datetime')
     case 'canceled':
-      return order.canceled_at == null ? '' : $d(order.canceled_at.toDate(), 'datetime')
+      return order.canceled_at == null ? '' : $d(order.canceled_at, 'datetime')
   }
 }
 const downloadCsvFile = () => {
@@ -79,9 +70,9 @@ const downloadCsvFile = () => {
     csv +=
       `"${$t(`manage.member.${order.status}`)}",` +
       `"${member.user_name}",` +
-      `"${member.user_sns_twitter == null ? '' : buildTwitterUrl(member.user_sns_twitter)}",` +
-      `"${member.user_sns_facebook == null ? '' : buildFacebookUrl(member.user_sns_facebook)}",` +
-      `"${member.user_sns_instagram == null ? '' : buildInstagramUrl(member.user_sns_instagram)}",` +
+      `"${member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : ''}",` +
+      `"${member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : ''}",` +
+      `"${member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : ''}",` +
       `"${menu.name}",` +
       `"${getDateString(order)}"\n`
   }
@@ -139,31 +130,31 @@ const downloadCsvFile = () => {
                       </td>
                       <td class="minimum-cell">
                         <v-btn
-                          v-if="member.user_sns_facebook != null"
+                          v-if="member.user_sns_facebook !== ''"
                           :icon="mdiFacebook"
                           color="#1877F2"
                           density="compact"
                           variant="text"
-                          @click="openNewLink(buildFacebookUrl(member.user_sns_facebook))"
+                          @click="openNewLink(buildFacebookUrl(member.user_sns_facebook!))"
                         />
                       </td>
                       <td class="minimum-cell">
                         <v-btn
-                          v-if="member.user_sns_twitter != null"
+                          v-if="member.user_sns_twitter !== ''"
                           :icon="XIcon"
                           color="grey-900"
                           density="compact"
                           variant="text"
-                          @click="openNewLink(buildTwitterUrl(member.user_sns_twitter))"
+                          @click="openNewLink(buildTwitterUrl(member.user_sns_twitter!))"
                         />
                       </td>
                       <td class="minimum-cell">
                         <v-btn
-                          v-if="member.user_sns_instagram != null"
+                          v-if="member.user_sns_instagram !== ''"
                           density="compact"
                           variant="text"
                           icon=""
-                          @click="openNewLink(buildInstagramUrl(member.user_sns_instagram))"
+                          @click="openNewLink(buildInstagramUrl(member.user_sns_instagram!))"
                         >
                           <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
                         </v-btn>

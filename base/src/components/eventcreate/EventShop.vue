@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
-import { type Shop } from '@shokujii/base/schemes/shop.js'
-import { Timestamp } from 'firebase/firestore'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
 import { convertTruncateText, postalcodeString } from '@shokujii/base/schemes/converter'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const props = defineProps<{
-  shops: Shop[]
+  shops: BokudeliPartnerShop[]
   modelValue: BokudeliEvent
   loading: boolean
   isUpdatedStartTime: boolean
@@ -24,28 +23,25 @@ const emit = defineEmits<{
 
 const displayShops = computed(() => {
   return props.shops.map((shop) => {
-    const addInformation = { week: 'ここ', time: 'どうする？' }
-    return { ...shop, ...addInformation }
+    // const addInformation = { week: 'ここ', time: 'どうする？' }
+    // return { ...shop, ...addInformation }
+    return shop
   })
 })
 
-const calculateDeadlineTime = (shop: Shop): number => {
-  const startDateTime = event.value.event_start_datetime?.toDate()
-  if (startDateTime == null) {
-    throw new Error('startDateTime is null')
-  }
+const calculateDeadlineTime = (shop: BokudeliPartnerShop): number => {
+  const startDateTime = event.value.event_start_datetime
   const daysBefore = shop.shop_deadline_datetime.days_before
   if (daysBefore == 0) {
     // 締め切り日時が当日の場合、何時間前に設定する
-    startDateTime.setTime(startDateTime.getTime() - shop.shop_deadline_datetime.time)
-    return startDateTime.getTime()
+    return startDateTime - shop.shop_deadline_datetime.time
   }
   return shop.shop_deadline_datetime.time
 }
 
 // 注文締め切り日時を計算し更新
-const updateDeadlineDatetime = (shop: Shop) => {
-  const startDateTime = event.value.event_start_datetime?.toDate()
+const updateDeadlineDatetime = (shop: BokudeliPartnerShop) => {
+  const startDateTime = new Date(event.value.event_start_datetime)
   if (startDateTime == null) {
     throw new Error('startDateTime is null')
   }
@@ -61,17 +57,17 @@ const updateDeadlineDatetime = (shop: Shop) => {
     startDateTime.setHours(deadLineTime.getHours())
     startDateTime.setMinutes(deadLineTime.getMinutes())
   }
-  event.value.event_deadline_datetime = Timestamp.fromDate(startDateTime)
+  event.value.event_deadline_datetime = startDateTime.getTime()
 }
 
-const submit = (shop: Shop) => {
+const submit = (shop: BokudeliPartnerShop) => {
   if (shop.shop_id == null) {
     console.error('shop_id is null')
     return
   }
   event.value.shop_id = shop.shop_id
   event.value.partner_id = shop.partner_id
-  event.value.shop_name = shop.shop_name
+  event.value.shop_name = shop.shop_name ?? ''
 
   updateDeadlineDatetime(shop)
   emit('submit')
@@ -120,7 +116,7 @@ const isOpenDeadlineDialog = ref(false)
                     {{ item.shop_name }}
                   </v-card-title>
                   <v-card-text class="text-left pb-3 text-subtitle-2">
-                    {{ convertTruncateText(item.shop_description, 40) }}
+                    {{ convertTruncateText(item.shop_description ?? '', 40) }}
                   </v-card-text>
                   <v-card-text class="text-left text-subtitle-2 pb-1">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}

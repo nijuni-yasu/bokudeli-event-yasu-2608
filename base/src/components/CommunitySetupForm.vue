@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import { useValidators } from '@shokujii/base/composable/validators'
-import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { type CommunityListStore } from '@shokujii/base/stores/communityList'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import {

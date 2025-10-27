@@ -1,19 +1,6 @@
-import { format } from 'date-fns'
-import { type DocumentData, Timestamp } from 'firebase/firestore'
-import BokudeliEvent from './bokudeliEvent'
-import BokudeliCommunity from './bokudeliCommunity'
-import { type PartnerMenu } from './partnerMenu'
-import { type User } from 'firebase/auth'
-import { type StoredUser, FirestoredUser, type FirestoredUserPersonalInformation } from './storedUser'
+import { Timestamp } from 'firebase/firestore'
 
-export const dateString = (date: Timestamp | Date | null): string => {
-  if (!date) return ''
-
-  const targetDate = date instanceof Timestamp ? date.toDate() : date
-  return format(targetDate, 'yyyy-MM-dd')
-}
-
-export const dateWithDayOfWeekString = (date: Timestamp | Date | null): string => {
+export const dateWithDayOfWeekString = (date: Timestamp | Date | number | null): string => {
   if (!date) return ''
 
   const options: Intl.DateTimeFormatOptions = {
@@ -25,12 +12,12 @@ export const dateWithDayOfWeekString = (date: Timestamp | Date | null): string =
     weekday: 'short', // 曜日を短縮形で表示 (例: 金)
   }
 
-  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  const targetDate = date instanceof Timestamp ? date.toDate() : typeof date === 'number' ? new Date(date) : date
   const formattedDate = targetDate.toLocaleDateString('ja-JP', options)
   return formattedDate
 }
 
-export const dateOnlyTimeString = (date: Timestamp | Date | null): string => {
+export const dateOnlyTimeString = (date: Timestamp | Date | number | null): string => {
   if (!date) return ''
 
   const options: Intl.DateTimeFormatOptions = {
@@ -38,7 +25,7 @@ export const dateOnlyTimeString = (date: Timestamp | Date | null): string => {
     minute: '2-digit',
   }
 
-  const targetDate = date instanceof Timestamp ? date.toDate() : date
+  const targetDate = date instanceof Timestamp ? date.toDate() : typeof date === 'number' ? new Date(date) : date
   const formattedDate = targetDate.toLocaleTimeString('ja-JP', options)
   return formattedDate
 }
@@ -50,187 +37,6 @@ export const priceString = (price: number): string => {
 export const postalcodeString = (postalCode: string): string => {
   // 郵便番号を「〒XXX-XXXX」の形式に変換
   return `〒${postalCode.slice(0, 3)}-${postalCode.slice(3)}`
-}
-
-export const convertDocumentDataToEvent = (documentData: DocumentData): BokudeliEvent => {
-  return new BokudeliEvent(documentData)
-}
-
-export const convertDocumentDataToCommunity = (documentData: DocumentData): BokudeliCommunity => {
-  return new BokudeliCommunity(documentData)
-}
-
-export const convertDocumentDataToMenu = (
-  partnerId: string,
-  documentId: string,
-  documentData: DocumentData,
-): PartnerMenu => {
-  const {
-    menu_name,
-    menu_price,
-    menu_image_url,
-    menu_description,
-    createdAt,
-    updatedAt,
-    is_soldout,
-    menu_date_start,
-    menu_date_end,
-  } = documentData
-
-  return {
-    id: documentId,
-    partnerId,
-    name: menu_name ?? '',
-    price: menu_price ?? 0,
-    imageUrl: menu_image_url ?? '',
-    description: menu_description ?? '',
-    createdAt: createdAt ? (createdAt as Timestamp).toDate() : null,
-    updatedAt: updatedAt ? (updatedAt as Timestamp).toDate() : null,
-    isSoldout: is_soldout ?? false,
-    dateStart: menu_date_start ?? null,
-    dateEnd: menu_date_end ?? null,
-  }
-}
-
-export const convertFirebaseUserToStoredUser = (firebaseUser: User): StoredUser => {
-  const { uid, displayName, email, photoURL } = firebaseUser
-
-  const user: StoredUser = {
-    userId: uid,
-    userName: displayName ?? '',
-    userEmail: email ?? '',
-    userEmailPending: null,
-    userImageUrl: photoURL ?? null,
-    userAccount: null,
-    userDescription: null,
-    userSnsGoogle: null,
-    userSnsFacebook: null,
-    userSnsFacebookName: null,
-    userSnsTwitter: null,
-    userSnsTwitterAccessToken: null,
-    userSnsTwitterSecret: null,
-    userSnsInstagram: null,
-    userSnsWebsite: null,
-    userPassCode: null,
-    verifiedAt: null,
-    createdAt: undefined,
-    updatedAt: undefined,
-  }
-
-  return user
-}
-
-export const convertStoredUserToFirestoredUser = (storedUser: StoredUser): FirestoredUser => {
-  return new FirestoredUser({
-    user_id: storedUser.userId,
-    user_name: storedUser.userName,
-    user_image_url: storedUser.userImageUrl,
-    user_account: storedUser.userAccount,
-    user_description: storedUser.userDescription,
-    user_sns_facebook: storedUser.userSnsFacebook,
-    user_sns_facebook_name: storedUser.userSnsFacebookName,
-    user_sns_twitter: storedUser.userSnsTwitter,
-    user_sns_instagram: storedUser.userSnsInstagram,
-    user_sns_website: storedUser.userSnsWebsite,
-    user_pass_code: storedUser.userPassCode,
-    verified_at: storedUser.verifiedAt,
-    created_at: storedUser.createdAt ? Timestamp.fromDate(storedUser.createdAt) : Timestamp.now(),
-    updated_at: storedUser.updatedAt ? Timestamp.fromDate(storedUser.updatedAt) : Timestamp.now(),
-  })
-}
-
-export const convertFirestoredUserToStoredUser = (
-  firestoredUser: FirestoredUser,
-  firestoredUserPersonalInformation: FirestoredUserPersonalInformation,
-): StoredUser => {
-  const {
-    user_id,
-    user_name,
-    user_image_url,
-    user_account,
-    user_description,
-    user_sns_facebook,
-    user_sns_facebook_name,
-    user_sns_twitter,
-    user_sns_instagram,
-    user_sns_website,
-    user_pass_code,
-    verified_at,
-    created_at,
-    updated_at,
-  } = firestoredUser
-
-  const { user_email, user_email_pending, user_sns_google, user_sns_twitter_access_token, user_sns_twitter_secret } =
-    firestoredUserPersonalInformation
-
-  return {
-    userId: user_id,
-    userName: user_name,
-    userEmail: user_email,
-    userEmailPending: user_email_pending || null,
-    userImageUrl: user_image_url,
-    userAccount: user_account,
-    userDescription: user_description,
-    userSnsGoogle: user_sns_google || null,
-    userSnsFacebook: user_sns_facebook,
-    userSnsFacebookName: user_sns_facebook_name,
-    userSnsTwitter: user_sns_twitter,
-    userSnsTwitterAccessToken: user_sns_twitter_access_token,
-    userSnsTwitterSecret: user_sns_twitter_secret,
-    userSnsInstagram: user_sns_instagram,
-    userSnsWebsite: user_sns_website,
-    userPassCode: user_pass_code,
-    verifiedAt: verified_at?.toDate() || null,
-    createdAt: created_at?.toDate(),
-    updatedAt: updated_at?.toDate(),
-  }
-}
-
-export const convertDocumentDataToStoredUser = (
-  documentData: DocumentData,
-  personalInfomationData: DocumentData,
-): StoredUser => {
-  const {
-    user_id,
-    user_name,
-    user_image_url,
-    user_account,
-    user_description,
-    user_sns_facebook,
-    user_sns_facebook_name,
-    user_sns_twitter,
-    user_sns_instagram,
-    user_sns_website,
-    user_pass_code,
-    verified_at,
-    created_at,
-    updated_at,
-  } = documentData
-
-  const { user_email, user_email_pending, user_sns_google, user_sns_twitter_access_token, user_sns_twitter_secret } =
-    personalInfomationData
-
-  return {
-    userId: user_id ?? '',
-    userName: user_name ?? '',
-    userEmail: user_email ?? '',
-    userEmailPending: user_email_pending ?? null,
-    userImageUrl: user_image_url ?? null,
-    userAccount: user_account ?? '',
-    userDescription: user_description ?? '',
-    userSnsGoogle: user_sns_google ?? '',
-    userSnsFacebook: user_sns_facebook ?? '',
-    userSnsFacebookName: user_sns_facebook_name ?? '',
-    userSnsTwitter: user_sns_twitter ?? '',
-    userSnsTwitterAccessToken: user_sns_twitter_access_token ?? '',
-    userSnsTwitterSecret: user_sns_twitter_secret ?? '',
-    userSnsInstagram: user_sns_instagram ?? '',
-    userSnsWebsite: user_sns_website ?? '',
-    userPassCode: user_pass_code ?? '',
-    verifiedAt: verified_at ? (verified_at as Timestamp).toDate() : null,
-    createdAt: created_at ? (created_at as Timestamp).toDate() : undefined,
-    updatedAt: updated_at ? (updated_at as Timestamp).toDate() : undefined,
-  }
 }
 
 export const convertDateToWeekTimestamp = (date: Date): number => {

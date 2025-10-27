@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
-import { type CommunityMember } from '@shokujii/base/schemes/communityMember'
+import type { BokudeliCommunity, BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
@@ -9,7 +8,7 @@ import { mdiEmail, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb, mdiCrown,
 
 const props = defineProps<{
   community: BokudeliCommunity
-  members: (CommunityMember | null)[] | null
+  members: (BokudeliCommunityMember | null)[] | null
 }>()
 const emit = defineEmits<{
   clickContact: []
@@ -79,7 +78,7 @@ const isShowMember = computed(() =>
         {{ $t('community_bio_panel.manager') }}
       </v-card-title>
       <div
-        v-for="manager in members.filter((m) => m?.roles?.includes('manager') ?? false) as CommunityMember[]"
+        v-for="manager in members.filter((m) => m?.roles?.includes('manager') ?? false) as BokudeliCommunityMember[]"
         :key="manager.user_id"
       >
         <router-link :to="getUserPath(manager.user_id)">
@@ -100,7 +99,7 @@ const isShowMember = computed(() =>
         <v-icon :icon="mdiAccountGroup" size="22" class="mr-1" />
         {{ $t('community_bio_panel.member') }}
       </v-card-title>
-      <div v-for="member in members.filter((m) => m != null) as CommunityMember[]" :key="member.user_id">
+      <div v-for="member in members.filter((m) => m != null) as BokudeliCommunityMember[]" :key="member.user_id">
         <router-link :to="getUserPath(member.user_id)">
           <v-row>
             <div class="d-flex flex-row px-6 py-2">

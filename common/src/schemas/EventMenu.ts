@@ -1,8 +1,7 @@
 import { z } from 'zod'
-import { TimestampSchema, EpochMillisSchema } from './firebase/index.js'
+import { TimestampSchema } from './firebase/index.js'
 
 const EventMenuDbSchema = z.object({
-  createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   menu_description: z.string().nonempty(),
   menu_image_url: z.string().url().nonempty(),
@@ -10,18 +9,18 @@ const EventMenuDbSchema = z.object({
   menu_price: z.number().int().positive(),
 })
 
-const EventOrderAppSchema = z.object({
+const EventMenuAppSchema = z.object({
   // Mandatory
-  menu_description: z.string().nonempty(),
-  menu_image_url: z.string().url().nonempty(),
   menu_name: z.string().nonempty(),
-  menu_price: z.number().int().positive(),
+  // Default
+  menu_price: z.number().int().positive().default(100),
+  menu_image_url: z.string().default(''),
+  menu_description: z.string().default(''),
 })
 
 const convertToDb = (menu: EventMenu) => {
   return {
     ...menu,
-    createdAt: EpochMillisSchema.default(Date.now()).parse(menu.createdAt),
     updatedAt: Date.now(),
   }
 }
@@ -31,7 +30,6 @@ export class EventMenu {
   readonly id: string
   readonly menu_id: string
   readonly event_id: string
-  createdAt: number
   updatedAt: number
   menu_description!: string
   menu_image_url!: string
@@ -39,11 +37,10 @@ export class EventMenu {
   menu_price!: number
 
   constructor(event_id: string, menu_id: string, src: Partial<EventMenu>) {
-    Object.assign(this, EventOrderAppSchema.parse(src))
+    Object.assign(this, EventMenuAppSchema.parse(src))
     this.event_id = event_id
     this.id = menu_id
     this.menu_id = menu_id
-    this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
     this.updatedAt = Date.now()
   }
 

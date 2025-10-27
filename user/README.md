@@ -39,6 +39,7 @@ firestore, functions, storage への接続を実際のインスタンスでは�
 export VITE_FIRESTORE_EMULATOR_HOST='localhost:8080'
 export VITE_FIREBASE_STORAGE_EMULATOR_HOST='localhost:9199'
 export VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST='localhost:5001'
+export VITE_FIREBASE_AUTH_EMULATOR_HOST='localhost:9099'
 ```
 
 以下は firestore に接続する例。

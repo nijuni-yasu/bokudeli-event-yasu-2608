@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import { ref, computed, toRaw } from 'vue'
-import _ from 'lodash'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import DateInput from '@shokujii/base/components/DateInput.vue'
-import type { Letter } from '@shokujii/base/schemes/letter'
-import { Timestamp } from 'firebase/firestore'
+import type { BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { useLetterListStore } from '@shokujii/base/stores/letterList'
 import {
   hourList,
   minutesList,
-  dateString,
-  hourString,
-  minutesString,
-  parseDateTimeStrings,
-} from '@shokujii/base/schemes/eventCreate'
+  convertToDateString,
+  convertToHourString,
+  convertToMinuteString,
+  parseDatetimeStrings,
+} from '@shokujii/common/utils/datetime.js'
 import { useValidators } from '@shokujii/base/composable/validators'
 import { sendTestLetter } from '@shokujii/base/apis/letter.js'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -25,20 +23,20 @@ const notification = useNotification()
 const { t: $t } = useI18n()
 
 const props = defineProps<{
-  letter: Letter
+  letter: BokudeliLetter
 }>()
 
 const emit = defineEmits<{
-  'update:letter': [letter: Letter]
+  'update:letter': [letter: BokudeliLetter]
 }>()
 
-const _letter = ref<Letter>(_.clone(toRaw(props.letter)))
+const _letter = ref<BokudeliLetter>(props.letter)
 
 const letterListStore = useLetterListStore(props.letter.community_account)
 const communityStore = useCommunityStore(props.letter.community_account) as CommunityStore
 const eventStore = props.letter.event_id == null ? null : (useEventStore(props.letter.event_id) as EventStore)
 
-const numCommunityMembers = computed(() => communityStore.community?.community_num_members)
+const numCommunityMembers = computed(() => communityStore.community?.members?.length)
 const numEventMembers = computed(() => eventStore?.event?.members?.length)
 
 const isValid = ref(false)
@@ -48,43 +46,41 @@ const isSubmitDisabled = computed(() => {
 })
 
 const isScheduled = ref(false)
-const scheduleTime = ref(Timestamp.now())
+const scheduleTime = ref(Date.now())
 const isTestSending = ref(false)
 
 const scheduledDate = computed({
-  get: () => dateString(scheduleTime.value.toDate() ?? null),
+  get: () => convertToDateString(scheduleTime.value),
   set: (value) => {
-    scheduleTime.value = Timestamp.fromDate(parseDateTimeStrings(value, scheduledHour.value, scheduledMinute.value))
+    scheduleTime.value = parseDatetimeStrings(value, scheduledHour.value, scheduledMinute.value)
   },
 })
 const scheduledHour = computed({
-  get: () => hourString(scheduleTime.value.toDate() ?? null),
+  get: () => convertToHourString(scheduleTime.value),
   set: (value) => {
-    scheduleTime.value = Timestamp.fromDate(parseDateTimeStrings(scheduledDate.value, value, scheduledMinute.value))
+    scheduleTime.value = parseDatetimeStrings(scheduledDate.value, value, scheduledMinute.value)
   },
 })
 const scheduledMinute = computed({
-  get: () => minutesString(scheduleTime.value.toDate() ?? null),
+  get: () => convertToMinuteString(scheduleTime.value),
   set: (value) => {
-    scheduleTime.value = Timestamp.fromDate(parseDateTimeStrings(scheduledDate.value, scheduledHour.value, value))
+    scheduleTime.value = parseDatetimeStrings(scheduledDate.value, scheduledHour.value, value)
   },
 })
 
 const _save = async () => {
-  if (_letter.value.letter_id == null) {
-    const newLetter = await letterListStore.addLetter(toRaw(_letter.value))
-    _letter.value.letter_id = newLetter.letter_id!
-  } else {
-    await letterListStore.updateLetter(toRaw(_letter.value))
-  }
+  await letterListStore.updateLetter(_letter.value)
   letterListStore.reload()
 }
 
 const submit = async () => {
   try {
-    const now = Timestamp.now()
-    _letter.value.scheduled_at = isScheduled.value ? scheduleTime.value : now
     _letter.value.status = 'timed'
+    if (isScheduled.value) {
+      _letter.value.scheduled_at = scheduleTime.value
+    } else {
+      _letter.value.scheduled_at = Date.now()
+    }
     await _save()
     emit('update:letter', toRaw(_letter.value))
     notification.show($t('manage.letter.edit.submit_success'), 'success')

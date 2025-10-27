@@ -2,14 +2,15 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCommunityPath, getLogin } from '@/router/utils'
+import { getEventUrl } from '@shokujii/common/utils/urls.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
-import type BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
 import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
@@ -27,8 +28,8 @@ import {
 } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x'
 import LineIcon from '@shokujii/base/icons/line'
-import type { Shop } from '@shokujii/base/schemes/shop'
-import { usePartnerStore } from '@shokujii/base/stores/_partner'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { usePartnerStore } from '@shokujii/base/stores/partner'
 import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
 
 const router = useRouter()
@@ -41,6 +42,11 @@ const props = defineProps<{
   community: BokudeliCommunity
 }>()
 
+const eventUrl = computed(() => {
+  // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
+  return getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, props.event.community_account, props.event.event_id)
+})
+
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
 const eventStore = useEventStore(props.event.event_id) as EventStore
@@ -48,8 +54,8 @@ const eventStore = useEventStore(props.event.event_id) as EventStore
 const members = computed(() =>
   [...(eventStore.members ?? [])].sort(
     (a, b) =>
-      a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-      b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
+      a.orders.reduce((max, order) => Math.max(max, order.updated_at), 0) -
+      b.orders.reduce((max, order) => Math.max(max, order.updated_at), 0),
   ),
 )
 
@@ -60,9 +66,9 @@ const isShowQrCode = ref(false)
 const isOpenCancelpolicyDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
-const userStore = useStoreStoredUser()
+const currentUserStore = useCurrentUserStore()
 const openContactDialog = () => {
-  if (!userStore.storedUser) {
+  if (currentUserStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true
@@ -89,7 +95,7 @@ const login = () => {
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
   const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(props.event.partner_id)
-  const shop = await new Promise<Shop | undefined>((resolve) => {
+  const shop = await new Promise<BokudeliPartnerShop | undefined>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {
@@ -185,9 +191,9 @@ const isShowMember = computed(() =>
                 {{ $t('event_details.date') }}
               </td>
               <td>
-                {{ $d(event.event_start_datetime!.toDate(), 'datetime_weekday_short') }}
+                {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}
                 〜
-                {{ $d(event.event_end_datetime!.toDate(), 'time') }}
+                {{ $d(event.event_end_datetime, 'time') }}
                 <a @click="openCalendarAddDialog">
                   <button><v-icon :icon="mdiCalendarPlus" /></button>
                 </a>
@@ -228,7 +234,7 @@ const isShowMember = computed(() =>
             </tr>
             <tr>
               <td>{{ $t('event_details.deadline') }}</td>
-              <td>{{ $d(event.event_deadline_datetime!.toDate(), 'datetime_weekday_short') }}</td>
+              <td>{{ $d(event.event_deadline_datetime, 'datetime_weekday_short') }}</td>
             </tr>
             <tr>
               <td>{{ $t('event_details.cancel') }}</td>
@@ -357,11 +363,11 @@ const isShowMember = computed(() =>
         {{ event?.event_name }}
       </v-card-text>
       <v-card-text>
-        {{ event && $d(event.event_start_datetime!.toDate(), 'datetime_weekday_short') }}
+        {{ event && $d(event.event_start_datetime, 'datetime_weekday_short') }}
         〜
-        {{ event && $d(event.event_end_datetime!.toDate(), 'time') }}
+        {{ event && $d(event.event_end_datetime, 'time') }}
       </v-card-text>
-      <vue-qrious :value="event?.url ?? ''" :size="qrcodeSize" />
+      <vue-qrious :value="eventUrl" :size="qrcodeSize" />
     </v-card>
   </show-dialog>
 </template>

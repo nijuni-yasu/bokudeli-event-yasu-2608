@@ -1,14 +1,26 @@
-import { DocumentData, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import {
+  DocumentData,
+  FirestoreDataConverter,
+  getFirestore,
+  QueryDocumentSnapshot,
+  Transaction,
+} from 'firebase-admin/firestore'
 import { User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
 
 export class ShokujiiUser extends User {
+  // TODO Add other UserPersonalInformation fields
   user_email?: string
+
+  constructor(id: string, data: Partial<User> & Partial<UserPersonalInformation>) {
+    super(id, data)
+    Object.assign(this, new UserPersonalInformation(id, data))
+  }
 }
 
 const userConverter: FirestoreDataConverter<ShokujiiUser> = {
-  toFirestore(config: User): DocumentData {
-    return config.toFirestore()
+  toFirestore(user: User): DocumentData {
+    return user.toFirestore()
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ShokujiiUser {
     return new User(snapshot.id, snapshot.data())
@@ -60,4 +72,32 @@ export const getAllUsers = async (withPersonalInformation: boolean): Promise<Sho
     users.push(user)
   }
   return users
+}
+
+export const getUserIdFromEmail = async (user_email: string): Promise<string | undefined> => {
+  const db = getFirestore()
+  const personalInformationSnapshot = await db
+    .collection('users_personal_information')
+    .where('user_email', '==', user_email)
+    .get()
+  return personalInformationSnapshot.docs[0]?.id
+}
+
+export const saveUser = async (user: ShokujiiUser, transaction?: Transaction) => {
+  const db = getFirestore()
+  const userRef = db.collection('users').doc(user.id).withConverter(userConverter)
+  const userPersonalInformationRef = db
+    .collection('users_personal_information')
+    .doc(user.id)
+    .withConverter(userPersonalInformationConverter)
+  const upi = new UserPersonalInformation(user.id, {
+    user_email: user.user_email,
+  })
+  if (transaction === undefined) {
+    await userRef.set(user, { merge: true })
+    await userPersonalInformationRef.set(upi, { merge: true })
+  } else {
+    transaction.set(userRef, user, { merge: true })
+    transaction.set(userPersonalInformationRef, upi, { merge: true })
+  }
 }

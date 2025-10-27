@@ -8,16 +8,10 @@
 import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers.js'
 import { db, stripeBaseURL } from '@shokujii/base/firebase.js'
 import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent.js'
-import {
-  dateWithDayOfWeekString,
-  dateOnlyTimeString,
-  priceString,
-  convertDocumentDataToEvent,
-} from '@shokujii/base/schemes/converter.js'
-import { type OrderItem, createEmptyOrderItem } from '@shokujii/base/schemes/orderItem.js'
-import { type OrderMenu } from '@shokujii/base/schemes/orderMenu.js'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser.js'
+import { BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter.js'
+import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import Stripe from 'stripe'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
@@ -28,13 +22,13 @@ import { useI18n } from 'vue-i18n'
 
 const { t: $t } = useI18n()
 const router = useRouter()
-const { storedUser } = storeToRefs(useStoreStoredUser())
-const userId = computed(() => storedUser.value?.userId ?? '')
+const { firebaseUser } = storeToRefs(useCurrentUserStore())
+const userId = computed(() => firebaseUser.value?.uid ?? '')
 const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
 const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
 
 type Cart = {
-  order: OrderItem
+  order: EventOrder
   subtotals: { [key: string]: number }
   total: number
   event: BokudeliEvent
@@ -48,7 +42,7 @@ const state = reactive({
 const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'> => {
   const { event } = cart
 
-  if (event.event_deadline_datetime && event.event_deadline_datetime.toDate() < new Date()) {
+  if (event.event_deadline_datetime && event.event_deadline_datetime < Date.now()) {
     return 'deadline'
   }
 
@@ -85,9 +79,9 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 
 const openConfirmOrder = ref(false)
 const confirmDialogMessage = ref('')
-const selectedOrder = ref({} as OrderItem)
+const selectedOrder = ref({} as EventOrder)
 const selectedCartEvent = ref({} as BokudeliEvent)
-const selectedMenu = ref({} as OrderMenu)
+const selectedMenu = ref({} as OrderMenuType)
 
 const startOrderProcess = async () => {
   const order = selectedOrder.value
@@ -103,7 +97,7 @@ const startOrderProcess = async () => {
   }
 }
 
-const createCheckoutSession = async (order: OrderItem) => {
+const createCheckoutSession = async (order: EventOrder) => {
   const lineItems = order.menus.map((menu) => {
     return {
       price_data: {
@@ -134,7 +128,6 @@ const createCheckoutSession = async (order: OrderItem) => {
       payment_method_types: ['card'],
       metadata: {
         eventId: order.event_id,
-        eventPayment: order.event_payment,
         communityId: order.community_id,
         communityAccount: order.community_account,
         orderId: order.order_id,
@@ -186,7 +179,7 @@ const startDeleteProcess = async () => {
   state.cartList = await loadCartList()
 }
 
-const deleteMenuInCart = async (event: BokudeliEvent, order: OrderItem, menu: OrderMenu) => {
+const deleteMenuInCart = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
   selectedCartEvent.value = event
   selectedOrder.value = order
   selectedMenu.value = menu
@@ -203,8 +196,16 @@ const loadCartList = async () => {
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
-  const orderItems = cartSnapshot.docs.map((doc) => {
-    return { ...createEmptyOrderItem(), ...doc.data() }
+  const orderItems = cartSnapshot.docs.flatMap((doc) => {
+    const eventId = doc.ref.parent.parent!.id
+    const data = doc.data()
+    // TODO 直接 new するのではなく store を経由する
+    try {
+      return new EventOrder(eventId, doc.id, data)
+    } catch (err) {
+      console.error(err)
+      return []
+    }
   })
 
   // イベント情報を引きオーダー情報とくっつける
@@ -221,7 +222,7 @@ const loadCartList = async () => {
         console.error($t('cart.event_not_found'), { item })
         return []
       }
-      const event = convertDocumentDataToEvent(eventSnapshot.docs[0].data())
+      const event = new BokudeliEvent(item.community_id, item.event_id, eventSnapshot.docs[0].data())
       if (event.event_status.value !== 'accepting_order') {
         return []
       }

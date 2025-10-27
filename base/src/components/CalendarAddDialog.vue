@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import buildCalendarLink from '@shokujii/base/composable/buildCalendarLink'
-import BokudeliEvent from '@shokujii/base/schemes/bokudeliEvent'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 
 const props = defineProps<{
   event: BokudeliEvent

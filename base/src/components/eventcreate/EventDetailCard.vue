@@ -2,7 +2,8 @@
 import { computed, watch } from 'vue'
 import { emailValidator } from '@core/utils/validators'
 import { useI18n } from 'vue-i18n'
-import BokudeliEvent, { eventPaymentSelectableTypes } from '@shokujii/base/schemes/bokudeliEvent'
+import { EVENT_PAYMENT_VALUES } from '@shokujii/common/schemas/Event.js'
+import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useValidators } from '@shokujii/base/composable/validators'
 import { mdiListBoxOutline, mdiLightbulbOnOutline, mdiAccountCreditCardOutline } from '@mdi/js'
 import Editor from '@tinymce/tinymce-vue'
@@ -54,7 +55,10 @@ watch(
   { immediate: true },
 )
 
-const eventPaymentSelectableItems = eventPaymentSelectableTypes.map((type) => {
+const eventPaymentSelectableItems = EVENT_PAYMENT_VALUES.flatMap((type) => {
+  if (type === 'user_on_day') {
+    return []
+  }
   return { title: $t(`payment.${type}`), value: type }
 })
 
@@ -64,8 +68,8 @@ const textFieldVariant = computed(() => {
 
 const { requiredValidator, positiveIntegerValidator } = useValidators()
 const maxPeopleValidator = (v: number) => {
-  if (v < event.value.event_num_members) {
-    return $t('event_detail.error_max_people', [event.value.event_num_members])
+  if (v < event.value.members.length) {
+    return $t('event_detail.error_max_people', [event.value.members.length])
   }
   return true
 }

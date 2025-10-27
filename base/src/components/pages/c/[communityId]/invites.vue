@@ -6,8 +6,8 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
-import { useStoreStoredUser } from '@shokujii/base/stores/storedUser'
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { getManageCommunityPath } from '@/router/utils'
 
@@ -28,9 +28,9 @@ const redirect = () => {
 }
 
 watch(
-  () => [useStoreStoredUser().storedUser, (useCommunityStore(props.communityId) as CommunityStore).community],
-  ([storedUser, community]) => {
-    if (storedUser == null) {
+  () => [useCurrentUserStore().firebaseUser, (useCommunityStore(props.communityId) as CommunityStore).community],
+  ([firebaseUser, community]) => {
+    if (firebaseUser == null) {
       isOpenLoginDialog.value = true
       return
     }

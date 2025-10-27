@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@shokujii/base/stores/_partner.js'
+import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
-import { Shop } from '@shokujii/base/schemes/shop.js'
 import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
-import type BokudeliCommunity from '@shokujii/base/schemes/bokudeliCommunity.js'
+import { BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiPlus } from '@mdi/js'
 import { getShopPath } from '@/navigation/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -19,7 +18,7 @@ const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 const isLoading = ref(false)
 
-const shop = await new Promise<Shop | null>((resolve) => {
+const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
   watch(
     () => partnerStore.shops,
     (shops) => {
@@ -56,26 +55,27 @@ const communityExists = ref<boolean>((await communityListStore.getCommunityData(
 const getCommunity = async () =>
   await new Promise<BokudeliCommunity>((resolve) => {
     if (!communityExists.value) {
-      communityListStore.communityDraft.community_account = communityAccount.value
-      communityListStore.communityDraft.community_name = shop.shop_name
-      communityListStore.communityDraft.community_desc = shop.shop_description
-      communityListStore.communityDraft.community_sns_facebook = shop.shop_url_facebook
-      communityListStore.communityDraft.community_sns_twitter = shop.shop_url_twitter
-      communityListStore.communityDraft.community_sns_instagram = shop.shop_url_instagram
-      communityListStore.communityDraft.community_sns_officialsite = shop.shop_url
-      communityListStore.communityDraft.community_postalcode = shop.shop_postcode
-      communityListStore.communityDraft.community_address = shop.shop_address
-      communityListStore.communityDraft.community_phone = shop.shop_phone
-      communityListStore.communityDraft.community_email = ''
-      communityListStore.communityDraft.is_approved = true
-      resolve(communityListStore.communityDraft)
+      const c = new BokudeliCommunity(null, {
+        community_account: communityAccount.value,
+        community_name: shop.shop_name,
+        community_desc: shop.shop_description,
+        community_sns_facebook: shop.shop_url_facebook,
+        community_sns_twitter: shop.shop_url_twitter,
+        community_sns_instagram: shop.shop_url_instagram,
+        community_sns_officialsite: shop.shop_url,
+        community_postalcode: shop.shop_postcode,
+        community_address: shop.shop_address,
+        community_phone: shop.shop_phone,
+        community_email: '',
+        is_approved: true,
+      })
+      resolve(c)
     } else {
       watch(
-        () => (useCommunityStore(communityAccount.value) as CommunityStore).community,
+        () => useCommunityStore(communityAccount.value).community,
         (value) => {
           if (value != null) {
-            Object.assign(communityListStore.communityDraft, toRaw(value))
-            resolve(communityListStore.communityDraft)
+            resolve(new BokudeliCommunity(value.community_id, value))
             stop()
           }
         },
@@ -84,19 +84,6 @@ const getCommunity = async () =>
     }
   })
 const community = ref(await getCommunity())
-watch(
-  () => shop.community_account,
-  async (value) => {
-    if (value == null) {
-      communityAccount.value = ''
-      communityExists.value = false
-    } else {
-      communityAccount.value = value
-      communityExists.value = (await communityListStore.getCommunityData(value)) != null
-    }
-    community.value = await getCommunity()
-  },
-)
 
 watch(
   () => community.value?.community_sns_twitter,
@@ -151,18 +138,17 @@ const submit = async () => {
       }
       notification.show($t('community.saved'), 'success')
     } else {
-      const community = await communityListStore.createNewCommunityFromDraft()
-      const communityStore = useCommunityStore(community.community_account) as CommunityStore
+      const communityStore = useCommunityStore(community.value.community_account) as CommunityStore
       if (coverImageFile.value != null) {
         await communityStore.updateCoverImage(coverImageFile.value)
       }
       if (iconImageFile.value != null) {
         await communityStore.updateIconImage(iconImageFile.value)
       }
-      shop.community_account = community.community_account
+      shop.community_account = community.value.community_account
       await partnerStore.updateShop(shop)
       notification.show($t('community.created'), 'success')
-      communityListStore.$reset()
+      communityListStore.reload()
     }
   } catch (err) {
     console.error(err)
@@ -177,7 +163,7 @@ onUnmounted(() => {
     const communityStore = useCommunityStore(communityAccount.value) as CommunityStore
     communityStore.$reset()
   } else {
-    communityListStore.$reset()
+    communityListStore.reload()
   }
 })
 </script>

@@ -1,5 +1,5 @@
 node_modules
 *.d.ts
 
-/src/@core
-/src/@layouts
+/materio/@core
+/materio/@layouts

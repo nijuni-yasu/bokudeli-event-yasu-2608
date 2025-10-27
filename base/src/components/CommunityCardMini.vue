@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type BokudeliCommunity from '../schemes/bokudeliCommunity'
+import { type BokudeliCommunity } from '../stores/community'
 
 defineProps<{
   community: BokudeliCommunity
