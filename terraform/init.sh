@@ -38,7 +38,7 @@ if [ -z "$GITHUB_ENV" ]; then
 else
   gh variable --repo "$GITHUB_REPO" set PROJECT_ID --env "$GITHUB_ENV" --body "$PROJECT_ID"
   gh variable --repo "$GITHUB_REPO" set PROJECT_NUMBER --env "$GITHUB_ENV" --body "$PROJECT_NUMBER"
-
+fi
 
 cat << EOS > terraform.tfvars
 project = "${PROJECT_ID}"
