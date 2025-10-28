@@ -43,6 +43,7 @@ interface OrdersByStatus {
 
 interface TemplateDataForOrganizerOrderRemind {
   event_name: string
+  community_name: string
   community_account: string
   event_days_ago: number
   event_url: string
@@ -179,6 +180,7 @@ async function createTemplateDataForOrganizerRemind(
 
   return {
     event_name: event.event_name,
+    community_name: event.community_name,
     community_account: event.community_account,
     event_days_ago: eventDaysAgo,
     event_url: getEventUrl(event.community_account, event.id),
