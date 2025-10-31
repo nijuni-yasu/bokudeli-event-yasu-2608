@@ -9,7 +9,7 @@ const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
 
 export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionRequest>(
   {
-    secrets: [STRIPE_API_KEY],
+    secrets: ['STRIPE_API_KEY'],
   },
   async (request) => {
     if (!request.auth?.uid) {
