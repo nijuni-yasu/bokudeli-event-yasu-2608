@@ -238,7 +238,7 @@ const tinymceInit = {
           <span v-else>{{ $t('event_detail.private') }}</span>
         </template>
       </v-switch>
-      <div class="mt-2 text-subtitle-1">
+      <div class="mt-2 text-subtitle-2">
         <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
         <span v-else>{{ $t('event_detail.private_desc') }}</span>
       </div>
@@ -290,12 +290,12 @@ const tinymceInit = {
             />
           </v-col>
         </v-row>
-        <v-card-text class="text-subtitle-1">
+        <v-card-text class="text-subtitle-2">
           <span v-html="$t('event_detail.payment_hint_community_bill')" />
         </v-card-text>
       </template>
       <template v-if="event.event_payment === 'user_advance'">
-        <v-card-text class="text-subtitle-1">
+        <v-card-text class="text-subtitle-2">
           <span v-html="$t('event_detail.payment_hint_user_advance')" />
         </v-card-text>
       </template>

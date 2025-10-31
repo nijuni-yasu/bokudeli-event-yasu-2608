@@ -23,7 +23,8 @@
     "firebase-functions": "^6.3.2",
     "lodash": "^4.17.21",
     "oauth-1.0a": "^2.2.6",
-    "ics": "^3.8.1"
+    "ics": "^3.8.1",
+    "stripe": "^12.17.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.5",

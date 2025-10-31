@@ -15,6 +15,21 @@ import './options/index.js'
 const CORS = defineList('CORS')
 const INVOICE_BUCKET_NAME = `gs://${process.env.GCLOUD_PROJECT}-invoice`
 
+/**
+ * 2025-11-01 00:00 JST 前後で請求手数料の有無を変える
+ */
+const CUTOFF_UNIX_TIME_2025_11_01_JST = 1761922800000
+
+/**
+ * 2025/11/1 より前のイベントで使用するテンプレートパス
+ */
+const TEMPLATE_PATH = path.join('template', 'eventBillInvoice.docx')
+
+/**
+ * 2025/11/1 以降のイベントで使用するテンプレートパス
+ */
+const TEMPLATE2_PATH = path.join('template', 'eventBillInvoice2.docx')
+
 const getInvoiceFile = async (eventId, invoiceId) => {
   const storage = new Storage()
   const bucket = storage.bucket(INVOICE_BUCKET_NAME)
@@ -96,18 +111,23 @@ export const createEventBillInvoice = async (communitySnapshot, eventSnapshot, w
     },
     new Map(),
   )
+  let templatePath
   const items = Array.from(_items.values())
-  // 今のところは請求手数料は含めない
-  // if (items.length !== 0) {
-  //   const price = Math.floor(tax08Inclusive * 0.1)
-  //   tax10Inclusive += price
-  //   items.push({
-  //     name: '請求手数料',
-  //     count: 1,
-  //     price: price,
-  //     totalPrice: price * 1,
-  //   })
-  // }
+
+  // 2025-11-01 00:00 JST 前後で請求手数料の有無を変える
+  if (eventSnapshot.get('event_start_datetime').toMillis() < CUTOFF_UNIX_TIME_2025_11_01_JST) {
+    templatePath = TEMPLATE_PATH
+  } else {
+    const price = Math.floor(tax08Inclusive * 0.1)
+    tax10Inclusive += price
+    items.push({
+      name: '請求手数料',
+      count: 1,
+      price,
+      totalPrice: price * 1,
+    })
+    templatePath = TEMPLATE2_PATH
+  }
   items.forEach((item) => {
     item.totalPrice = convertNumberToYen(item.totalPrice)
     item.price = convertNumberToYen(item.price)
@@ -161,7 +181,7 @@ export const createEventBillInvoice = async (communitySnapshot, eventSnapshot, w
   const generatedInvoiceId = generateRandomBase64UrlSafeString()
   const storageFileStream = (await getInvoiceFile(eventSnapshot.id, generatedInvoiceId)).createWriteStream()
   const outStream = writableStream == null ? storageFileStream : combineStream(storageFileStream, writableStream)
-  await makePdf(path.join('template', 'eventBillInvoice.docx'), jsonDataForMerge, outStream)
+  await makePdf(templatePath, jsonDataForMerge, outStream)
   return generatedInvoiceId
 }
 

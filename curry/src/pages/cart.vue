@@ -6,26 +6,24 @@
  * TODO 2重メンテになるので、早めにリファクタリングする
  */
 import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers.js'
-import { db, stripeBaseURL } from '@shokujii/base/firebase.js'
-import { getCommunityPath, getEventPath, getUserPath } from '@/router/utils'
+import { db } from '@shokujii/base/firebase.js'
+import { getCommunityPath, getEventPath } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter.js'
 import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import Stripe from 'stripe'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
+import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 
 const { t: $t } = useI18n()
 const router = useRouter()
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 const userId = computed(() => firebaseUser.value?.uid ?? '')
-const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
-const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
 
 type Cart = {
   order: EventOrder
@@ -88,55 +86,17 @@ const startOrderProcess = async () => {
   const event = selectedCartEvent.value
 
   if (event.event_payment == 'user_advance') {
-    await createCheckoutSession(order)
+    try {
+      const response = (await createStripeCheckoutSession({ order, isPosted: false })) as any // 一時的措置
+      window.location.href = response.data.url || getEventPath(order.community_account, order.event_id)
+    } catch {
+      alertBody.value = $t('cart.payment_failed')
+    }
   } else {
     const eventStore = useEventStore(event.event_id) as EventStore
     eventStore.updateOrderStatus(order, 'ordered')
     alertBody.value = $t('cart.order_completed')
     router.push(getEventPath(order.community_account, order.event_id))
-  }
-}
-
-const createCheckoutSession = async (order: EventOrder) => {
-  const lineItems = order.menus.map((menu) => {
-    return {
-      price_data: {
-        currency: 'jpy',
-        tax_behavior: 'inclusive',
-        product_data: {
-          name: menu.name,
-          images: [menu.imageUrl],
-          metadata: {
-            partner_id: menu.partner_id,
-          },
-        },
-        unit_amount: menu.price,
-      },
-      quantity: menu.count,
-    } as Stripe.Checkout.SessionCreateParams.LineItem
-  })
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${
-        order.community_account
-      }`,
-      cancel_url: `${stripeBaseURL}/`,
-      customer_creation: 'if_required',
-      line_items: lineItems,
-      mode: 'payment',
-      payment_method_types: ['card'],
-      metadata: {
-        eventId: order.event_id,
-        communityId: order.community_id,
-        communityAccount: order.community_account,
-        orderId: order.order_id,
-        userId: userId.value,
-      },
-    })
-    window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-  } catch {
-    alertBody.value = $t('cart.payment_failed')
   }
 }
 

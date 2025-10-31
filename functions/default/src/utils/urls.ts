@@ -7,6 +7,8 @@ const ADMIN_HOST = defineString('ADMIN_HOST')
 /*
  * User URLs
  */
+export const getMainUrl = () => `https://${EVENT_HOST.value()}/`
+
 export const getCommunityUrl = (communityAccount: string) =>
   common.getCommunityUrl(EVENT_HOST.value(), communityAccount)
 

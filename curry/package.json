@@ -16,7 +16,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@shokujii/base": "file:../base"
+    "@shokujii/base": "file:../base",
+    "@tinymce/tinymce-vue": "^6"
   },
   "devDependencies": {
     "unplugin-auto-import": "^0.17.8",

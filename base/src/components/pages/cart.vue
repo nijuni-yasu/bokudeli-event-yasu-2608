@@ -3,14 +3,13 @@ import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers'
-import { db, functions, stripeBaseURL } from '@shokujii/base/firebase'
+import { db, functions } from '@shokujii/base/firebase'
 import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
 import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
-import Stripe from 'stripe'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
@@ -20,6 +19,7 @@ import { getAdditionalUserInfo, getAuth, TwitterAuthProvider } from 'firebase/au
 import { httpsCallable } from 'firebase/functions'
 import { linkByProviderService } from '@shokujii/base/utils/providerService'
 import { FirebaseError } from 'firebase/app'
+import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -29,8 +29,6 @@ const {
   firebaseUser,
 } = storeToRefs(useCurrentUserStore())
 const userId = computed(() => currentUser.value?.id ?? '')
-const stripeApiKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string
-const stripe = new Stripe(stripeApiKey, { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
 const twitterAccountConnected = computed(
   () => firebaseUser.value?.providerData.some((info) => info.providerId === 'twitter.com') ?? false,
 )
@@ -115,7 +113,13 @@ const startOrderProcess = async () => {
   }
 
   if (event.event_payment == 'user_advance') {
-    await createCheckoutSession(order, isPosted)
+    try {
+      const response = (await createStripeCheckoutSession({ order, isPosted })) as any // 一時的措置
+      isOrderProcessing.value = false
+      window.location.href = response.data.url || getEventPath(order.community_account, order.event_id)
+    } catch {
+      alertBody.value = $t('cart.payment_failed')
+    }
   } else {
     try {
       const eventStore = useEventStore(event.event_id) as EventStore
@@ -127,48 +131,6 @@ const startOrderProcess = async () => {
     } catch {
       alertBody.value = $t('cart.order_failed')
     }
-  }
-}
-
-const createCheckoutSession = async (order: EventOrder, isPosted: boolean) => {
-  const lineItems = order.menus.map((menu) => {
-    return {
-      price_data: {
-        currency: 'jpy',
-        tax_behavior: 'inclusive',
-        product_data: {
-          name: menu.name,
-          images: [menu.imageUrl],
-          metadata: {
-            partner_id: menu.partner_id,
-          },
-        },
-        unit_amount: menu.price,
-      },
-      quantity: menu.count,
-    } as Stripe.Checkout.SessionCreateParams.LineItem
-  })
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      success_url: `${stripeBaseURL}${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
-      cancel_url: `${stripeBaseURL}/`,
-      customer_creation: 'if_required',
-      line_items: lineItems,
-      mode: 'payment',
-      payment_method_types: ['card'],
-      metadata: {
-        eventId: order.event_id,
-        communityId: order.community_id,
-        communityAccount: order.community_account,
-        orderId: order.order_id,
-        userId: userId.value,
-      },
-    })
-    isOrderProcessing.value = false
-    window.location.href = session.url || getEventPath(order.community_account, order.event_id)
-  } catch {
-    alertBody.value = $t('cart.payment_failed')
   }
 }
 
