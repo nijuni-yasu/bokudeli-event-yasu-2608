@@ -285,13 +285,6 @@ const notification = inject('notification') as Notification
 const isTwitterLoading = ref<boolean>(false)
 const isOpenTwitterLinkDialog = ref<boolean>(false)
 
-type CustomData = {
-  email: string
-  _tokenResponse?: {
-    providerId?: string
-  }
-}
-
 const handleTwitterLoginLink = async () => {
   try {
     isTwitterLoading.value = true
@@ -325,63 +318,10 @@ const handleTwitterLoginLink = async () => {
   }
 }
 
-// const setSNSProfile = async (userCredential: UserCredential, additionalUserInfo: AdditionalUserInfo) => {
-//   const storedUser = storedUserStore.storedUser as StoredUser
-
-//   if (additionalUserInfo.providerId === 'twitter.com') {
-//     storedUser.userSnsTwitter = additionalUserInfo?.username as string
-
-//     const twitterCredential = TwitterAuthProvider.credentialFromResult(userCredential)
-//     if (twitterCredential?.accessToken && twitterCredential.secret) {
-//       storedUser.userSnsTwitterAccessToken = storedUser.userSnsTwitterAccessToken || twitterCredential.accessToken
-//       storedUser.userSnsTwitterSecret = storedUser.userSnsTwitterSecret || twitterCredential.secret
-
-//       if (storedUser.userSnsTwitterAccessToken && storedUser.userSnsTwitterSecret) {
-//         await updateDoc(personalInformationSnapshotRef, {
-//           user_sns_twitter_access_token: twitterCredential.accessToken,
-//           user_sns_twitter_secret: twitterCredential.secret,
-//         })
-//       }
-//     }
-//   }
-
-//   await userStore.updateUser(convertStoredUserToFirestoredUser(storedUser))
-//   storedUserStore.update(storedUser)
-// }
-
 onMounted(async () => {
+  state.isLoading = true
   state.cartList = await loadCartList()
   state.isLoading = false
-
-  const error = useCurrentUserStore().lastFirebaseError
-  if (error instanceof FirebaseError) {
-    let credential
-    let snsName
-    const customData = error?.customData as CustomData
-    if (customData._tokenResponse?.providerId === 'twitter.com') {
-      credential = TwitterAuthProvider.credentialFromError(error)
-      snsName = 'X'
-    }
-
-    console.error({ error, credential })
-
-    if (error.code === 'auth/credential-already-in-use') {
-      return Object.assign(notification, {
-        message: $t('user.exists_credential', { snsName: snsName }),
-        color: 'error',
-      })
-    }
-    if (error.code === 'auth/email-already-in-use') {
-      return Object.assign(notification, { message: $t('complete.exists_email'), color: 'error' })
-    }
-  } else if (error) {
-    console.error({ error })
-  }
-
-  // if (!userCredential || additionalUserInfo === null) return
-  // await setSNSProfile(userCredential, additionalUserInfo)
-
-  // useStoreUserAdditionalInfo().reset()
 })
 </script>
 
