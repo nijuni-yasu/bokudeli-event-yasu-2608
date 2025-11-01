@@ -401,6 +401,8 @@ export default {
     sns_login: '{sns_name}でログイン',
     link_dialog_body:
       '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
+    link_to_partner_site: '<a href="https://partner.shokujii.jp/" target="_blank">飲食店管理画面のログインはこちら</a>',
+    link_to_forgot_account: '<a href="https://forms.gle/bFc77yitRgnaKgxa7" target="_blank">アカウントがわからない場合はこちら</a>',
   },
   email: {
     register_email: 'メールアドレス登録',

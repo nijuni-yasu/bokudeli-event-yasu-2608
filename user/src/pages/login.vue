@@ -76,6 +76,40 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
             </v-row>
           </v-container>
 
+          <v-btn
+            class="mb-4"
+            size="large"
+            color="grey-900"
+            block
+            :loading="isLoading === 'google.com'"
+            :disabled="isLoading !== null && isLoading !== 'google.com'"
+            @click="handleLogin('google.com')"
+          >
+            {{ $t('login.sns_login', { sns_name: 'Google' }) }}
+          </v-btn>
+          <v-btn
+            class="mb-4"
+            size="large"
+            color="grey-900"
+            block
+            :loading="isLoading === 'facebook.com'"
+            :disabled="isLoading !== null && isLoading !== 'facebook.com'"
+            @click="handleLogin('facebook.com')"
+          >
+            {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
+          </v-btn>
+          <v-btn
+            class="mb-4"
+            size="large"
+            color="grey-900"
+            block
+            :loading="isLoading === 'twitter.com'"
+            :disabled="isLoading !== null && isLoading !== 'twitter.com'"
+            @click="handleLogin('twitter.com')"
+          >
+            {{ $t('login.sns_login', { sns_name: 'X' }) }}
+          </v-btn>
+          <v-divider class="my-6" color="grey-lighten-3" />
           <v-form
             v-model="isValid"
             @submit.prevent="handleLogin('custom', email, route.query.redirect as string | undefined)"
@@ -101,40 +135,15 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
               {{ $t('login.continue_email') }}
             </v-btn>
           </v-form>
-
-          <v-btn
-            class="mb-4"
-            size="large"
-            color="grey-900"
-            block
-            :loading="isLoading === 'twitter.com'"
-            :disabled="isLoading !== null && isLoading !== 'twitter.com'"
-            @click="handleLogin('twitter.com')"
-          >
-            {{ $t('login.sns_login', { sns_name: 'X' }) }}
-          </v-btn>
-          <v-btn
-            class="mb-4"
-            size="large"
-            color="grey-900"
-            block
-            :loading="isLoading === 'facebook.com'"
-            :disabled="isLoading !== null && isLoading !== 'facebook.com'"
-            @click="handleLogin('facebook.com')"
-          >
-            {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
-          </v-btn>
-          <v-btn
-            class="mb-4"
-            size="large"
-            color="grey-900"
-            block
-            :loading="isLoading === 'google.com'"
-            :disabled="isLoading !== null && isLoading !== 'google.com'"
-            @click="handleLogin('google.com')"
-          >
-            {{ $t('login.sns_login', { sns_name: 'Google' }) }}
-          </v-btn>
+          <v-divider class="my-6" color="grey-lighten-3" />
+          <v-container>
+            <v-row justify="center" class="py-2 text-subtitle-2">
+              <div v-html="$t('login.link_to_partner_site')" />
+            </v-row>
+            <v-row justify="center" class="py-2 text-subtitle-2">
+              <div v-html="$t('login.link_to_forgot_account')" />
+            </v-row>
+          </v-container>
         </v-sheet>
       </v-col>
     </v-row>
