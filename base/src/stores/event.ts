@@ -100,7 +100,8 @@ const menuConverter: FirestoreDataConverter<EventMenu> = {
   },
 }
 
-const orderConverter: FirestoreDataConverter<EventOrder> = {
+// cart で使用するので export するが stores 以外では使用しないように注意
+export const orderConverter: FirestoreDataConverter<EventOrder> = {
   toFirestore(order: EventOrder): DocumentData {
     return order.toFirestore()
   },
@@ -281,6 +282,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
         })
       }
     }
+
     let unsubscribeOrders: Unsubscribe | null = null
     const subscribeOrders = (eventRef: DocumentReference) => {
       if (unsubscribeOrders == null) {
@@ -316,6 +318,34 @@ export const useEventStore = (target: string | BokudeliEvent) => {
           })
         })
       }
+    }
+
+    const getLoadedEvent = async (): Promise<BokudeliEvent> => {
+      return await new Promise((resolve) => {
+        watch(
+          event,
+          (e) => {
+            if (e != null) {
+              resolve(e)
+            }
+          },
+          { immediate: true },
+        )
+      })
+    }
+
+    const getLoadedMembers = async (): Promise<BokudeliEventMember[]> => {
+      return await new Promise((resolve) => {
+        watch(
+          members,
+          (ms) => {
+            if (ms != null) {
+              resolve(ms)
+            }
+          },
+          { immediate: true },
+        )
+      })
     }
 
     let retry = 0
@@ -366,6 +396,8 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       confirmedOrders,
       members,
       menus,
+      getLoadedEvent,
+      getLoadedMembers,
       updateEvent,
       updateCoverImage,
       addOrder,

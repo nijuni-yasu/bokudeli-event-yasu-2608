@@ -1,12 +1,16 @@
 import { getAuth, signInWithCustomToken, unlink, Unsubscribe, UserInfo } from 'firebase/auth'
 import {
+  collectionGroup,
   doc,
   DocumentData,
   DocumentReference,
   FirestoreDataConverter,
   onSnapshot,
+  orderBy,
+  query,
   QueryDocumentSnapshot,
   SnapshotOptions,
+  where,
 } from 'firebase/firestore'
 import { defineStore } from 'pinia'
 import { computed, markRaw, ref, toRaw, watch } from 'vue'
@@ -17,6 +21,8 @@ import {
   confirmEmailChange as _confirmEmailChange,
 } from '@shokujii/base/apis/user'
 import { db } from '@shokujii/base/firebase.js'
+import { type EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import { BokudeliEvent, orderConverter, useEventStore } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import {
   linkByProviderService,
@@ -33,6 +39,11 @@ const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInfor
     const data = snapshot.data(options)
     return new UserPersonalInformation(snapshot.id, data)
   },
+}
+
+export type CartItem = {
+  order: EventOrder
+  event: BokudeliEvent
 }
 
 export const useCurrentUserStore = defineStore('currentUser', () => {
@@ -67,6 +78,40 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     }
   }
   const personalInformation = ref<UserPersonalInformation | null>(null)
+
+  const _cart = ref<CartItem[] | null>(null)
+  const cart = computed(() => {
+    subscribeOrders()
+    return _cart.value
+  })
+  let unsubscribeOrders: Unsubscribe | null = null
+  const subscribeOrders = () => {
+    const uid = getAuth().currentUser?.uid
+    if (uid == null) {
+      return
+    }
+    if (unsubscribeOrders == null) {
+      const q = query(
+        collectionGroup(db, 'orders'),
+        where('user_id', '==', uid),
+        where('status', '==', 'in_cart'),
+        orderBy('updated_at', 'desc'),
+      ).withConverter(orderConverter)
+      unsubscribeOrders = onSnapshot(q, async (snapshots) => {
+        _cart.value = await Promise.all(
+          snapshots.docs.map(async (snapshot) => {
+            const order = snapshot.data()
+            const eventStore = useEventStore(order.event_id)
+            const event = await eventStore.getLoadedEvent()
+            return {
+              order,
+              event,
+            }
+          }),
+        )
+      })
+    }
+  }
 
   const reset = () => {
     unsubscribePersonalInformation?.()
@@ -168,6 +213,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     providerData,
     user,
     personalInformation,
+    cart,
     updateUser,
     uploadUserImage,
     requestEmailChange,
