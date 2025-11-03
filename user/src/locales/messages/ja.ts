@@ -423,7 +423,7 @@ export default {
   complete: {
     new_user_title: 'アカウント登録完了',
     new_user_description:
-      'shokujiiのアカウントの登録が完了しました 🎉\nSNSアカウント連携して、プロフィールを登録しましょう。',
+      'アカウント登録が完了しました🎉\nSNSアカウントと連携してプロフィールを登録しよう！',
     new_user_selfButton: '自分でプロフィールを登録する',
     exists_user_title: 'プロフィール登録',
     exists_user_description:
