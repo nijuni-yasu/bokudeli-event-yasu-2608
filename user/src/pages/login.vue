@@ -5,6 +5,9 @@ import { useNotification } from '@shokujii/base/composable/notification'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { signInByProviderService, type ProviderIdType } from '@shokujii/base/utils/providerService.js'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
+import GoogleIcon from '@shokujii/base/icons/google.vue'
+import FacebookIcon from '@shokujii/base/icons/facebook.vue'
+import XIcon from '@shokujii/base/icons/x'
 
 const route = useRoute()
 const router = useRouter()
@@ -85,7 +88,12 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
             :disabled="isLoading !== null && isLoading !== 'google.com'"
             @click="handleLogin('google.com')"
           >
-            {{ $t('login.sns_login', { sns_name: 'Google' }) }}
+            <template #prepend>
+              <v-icon :icon="GoogleIcon" size="22" />
+            </template>
+            <div class="ml-2">
+              {{ $t('login.sns_login', { sns_name: 'Google' }) }}
+            </div>
           </v-btn>
           <v-btn
             class="mb-4"
@@ -96,7 +104,12 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
             :disabled="isLoading !== null && isLoading !== 'facebook.com'"
             @click="handleLogin('facebook.com')"
           >
-            {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
+            <template #prepend>
+              <v-icon :icon="FacebookIcon" size="22" />
+            </template>
+            <div class="ml-2">
+              {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
+            </div>
           </v-btn>
           <v-btn
             class="mb-4"
@@ -107,7 +120,12 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
             :disabled="isLoading !== null && isLoading !== 'twitter.com'"
             @click="handleLogin('twitter.com')"
           >
-            {{ $t('login.sns_login', { sns_name: 'X' }) }}
+            <template #prepend>
+              <v-icon :icon="XIcon" size="22" />
+            </template>
+            <div class="ml-2">
+              {{ $t('login.sns_login', { sns_name: 'X' }) }}
+            </div>
           </v-btn>
           <v-divider class="my-6" color="grey-lighten-3" />
           <v-form
