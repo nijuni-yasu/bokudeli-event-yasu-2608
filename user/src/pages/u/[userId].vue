@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { db } from '@shokujii/base/firebase.js'
 import { collectionGroup, doc, getDocs, orderBy, query, where, limit, collection } from 'firebase/firestore'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import UserBioPanel from '@shokujii/base/components/UserBioPanel.vue'
 import UserEventCard from '@shokujii/base/components/UserEventCard.vue'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
@@ -22,8 +22,7 @@ import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
 const route = useRoute()
-const router = useRouter()
-const id = route.params.userId as string
+const userId = route.params.userId as string
 
 const userIdRef = ref('')
 const fetchUser = async (identifier: string) => {
@@ -45,10 +44,7 @@ const fetchUser = async (identifier: string) => {
     userIdRef.value = ''
   }
 }
-await fetchUser(id)
-const userId = userIdRef.value as string
-
-if (userId === '') router.replace('/')
+await fetchUser(userId)
 
 const notification = useNotification()
 

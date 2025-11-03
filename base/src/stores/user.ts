@@ -86,7 +86,7 @@ export const useUserStore = (userId: string) => {
       if (unsubscribeUser == null) {
         unsubscribeUser = onSnapshot(userRef, (userSnapshot) => {
           exists.value = userSnapshot.exists()
-          user.value = userSnapshot.data() ?? null
+          user.value = userSnapshot.data() ?? new User(userId, {})
         })
       }
     }
