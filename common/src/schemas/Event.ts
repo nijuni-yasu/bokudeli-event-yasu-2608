@@ -17,7 +17,7 @@ export const RAW_EVENT_STATUS_VALUES = [
   'applying_to_admin',
   'accepting_order',
 ] as const
-type RawEventStatusType = (typeof RAW_EVENT_STATUS_VALUES)[number]
+export type RawEventStatusType = (typeof RAW_EVENT_STATUS_VALUES)[number]
 
 export const EVENT_STATUS_VALUES = [...RAW_EVENT_STATUS_VALUES, 'order_closed', 'finished', 'full'] as const
 export type EventStatusType = (typeof EVENT_STATUS_VALUES)[number]
