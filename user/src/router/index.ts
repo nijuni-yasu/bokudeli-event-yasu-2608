@@ -135,8 +135,8 @@ export const setupRouter = (router: Router) => {
         }
       }
 
-      // プロフィールが埋まっていなければ、登録完了（プロフィール登録誘導）へ
-      if (!shokujiiUser.user_name || !shokujiiUser.user_description || !shokujiiUser.user_image_url) {
+      // プロフィール名かアイコンが設定されていなければ、登録完了（プロフィール登録誘導）へ
+      if (!shokujiiUser.user_name || !shokujiiUser.user_image_url) {
         return {
           path: '/register/complete',
           query: to.query,
