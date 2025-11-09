@@ -53,6 +53,7 @@ service cloud.firestore {
             match /members/{memberId} {
                 allow create: if isSupport() || isManager() || (request.auth != null && request.auth.uid == memberId)
                 allow update: if isSupport() || isManager()
+                allow delete: if request.auth != null && request.auth.uid == memberId
             }
             // invites は functions 内からのみアクセス可能
             match /invites/{document=**} {
