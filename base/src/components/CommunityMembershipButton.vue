@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'membership-change': { isMember: boolean }
+  'membership-change': [{ isMember: boolean }]
 }>()
 
 const router = useRouter()
@@ -28,6 +28,8 @@ const communityStore = useCommunityStore(props.communityId)
 const isMember = ref(false)
 const isManager = ref(false)
 const isLoading = ref(false)
+const isLeaveHover = ref(false)
+const leaveConfirmDialog = ref(false)
 const snackbarState = reactive({
   visible: false,
   color: 'success' as 'success' | 'error',
@@ -42,7 +44,6 @@ const loginConfirmState = reactive({
 const block = computed(() => props.block ?? false)
 
 const computedJoinButtonProps = computed<ButtonProps>(() => ({
-  variant: 'outlined',
   size: 'small',
   rounded: 'pill',
   color: 'primary',
@@ -53,9 +54,10 @@ const computedLeaveButtonProps = computed<ButtonProps>(() => ({
   variant: 'outlined',
   size: 'small',
   rounded: 'pill',
-  color: 'secondary',
   ...(props.leaveButtonProps ?? {}),
 }))
+
+const leaveButtonColor = computed(() => (isLeaveHover.value ? 'secondary' : 'primary'))
 
 const updateMembershipState = () => {
   const uid = userStore.firebaseUser?.uid
@@ -77,8 +79,11 @@ watchEffect(updateMembershipState)
 
 watch(
   () => isMember.value,
-  (value) => {
-    emit('membership-change', { isMember: value })
+  (value: boolean) => {
+    emit('membership-change', { isMember: value } as { isMember: boolean })
+    if (!value) {
+      isLeaveHover.value = false
+    }
   },
   { immediate: true },
 )
@@ -126,6 +131,21 @@ const joinCommunity = async () => {
   }
 }
 
+const handleLeaveButtonClick = () => {
+  if (isLoading.value) return
+
+  if (userStore.firebaseUser == null) {
+    openLoginConfirm(t('community_membership.login_confirm_leave'))
+    return
+  }
+
+  leaveConfirmDialog.value = true
+}
+
+const confirmLeaveCommunity = async () => {
+  await leaveCommunity()
+}
+
 const leaveCommunity = async () => {
   if (userStore.firebaseUser == null) {
     openLoginConfirm(t('community_membership.login_confirm_leave'))
@@ -164,11 +184,18 @@ const leaveCommunity = async () => {
       v-if="isMember"
       v-bind="computedLeaveButtonProps"
       :block="block"
+      :color="leaveButtonColor"
       :loading="isLoading"
       :disabled="isLoading"
-      @click="leaveCommunity"
+      @mouseover="isLeaveHover = true"
+      @mouseleave="isLeaveHover = false"
+      @focus="isLeaveHover = true"
+      @blur="isLeaveHover = false"
+      @click="handleLeaveButtonClick"
     >
-      <slot name="leave-label">{{ t('community_membership.leave') }}</slot>
+      <slot name="leave-label">
+        {{ isLeaveHover ? t('community_membership.leave') : t('community_membership.active') }}
+      </slot>
     </v-btn>
     <v-btn
       v-else
@@ -183,6 +210,9 @@ const leaveCommunity = async () => {
 
     <confirm-dialog v-model="loginConfirmState.dialog" :is-confirm="true" :ok-click="redirectToLogin">
       {{ loginConfirmState.message }}
+    </confirm-dialog>
+    <confirm-dialog v-model="leaveConfirmDialog" :is-confirm="true" :ok-click="confirmLeaveCommunity">
+      {{ t('community_membership.leave_confirm') }}
     </confirm-dialog>
 
     <v-snackbar v-model="snackbarState.visible" :color="snackbarState.color" location="top">

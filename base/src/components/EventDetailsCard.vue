@@ -349,7 +349,6 @@ const isShowMember = computed(() =>
                       v-if="community.community_account"
                       :community-id="community.community_account"
                       :join-button-props="{
-                        variant: 'outlined',
                         rounded: 'pill',
                         size: 'small',
                         'prepend-icon': mdiAccountGroup,
