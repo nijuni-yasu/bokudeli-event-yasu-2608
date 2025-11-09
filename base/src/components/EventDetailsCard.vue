@@ -14,6 +14,7 @@ import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
 import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
+import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 import VueQrious from 'vue-qrious'
 import {
   mdiEmail,
@@ -40,14 +41,6 @@ const qrcodeSize = 300
 const props = defineProps<{
   event: BokudeliEvent
   community: BokudeliCommunity
-  isMember?: boolean
-  isManager?: boolean
-  membershipLoading?: boolean
-}>()
-
-const emit = defineEmits<{
-  clickJoin: []
-  clickLeave: []
 }>()
 
 const eventUrl = computed(() => {
@@ -339,41 +332,37 @@ const isShowMember = computed(() =>
                   <div class="ma-1" style="font-size: 12px">{{ $t('event_details.community_name') }}</div>
                   <div class="ma-1" style="font-size: 18px">{{ community.community_name }}</div>
                 </router-link>
-                <div class="ma-2 d-flex flex-wrap align-center" style="gap: 12px">
-                  <v-btn
-                    variant="outlined"
-                    rounded="pill"
-                    size="small"
-                    :prepend-icon="mdiEmail"
-                    @click="openContactDialog"
-                  >
-                    {{ $t('event_details.contact_community') }}
-                  </v-btn>
-                  <v-btn
-                    v-if="props.isMember"
-                    rounded="pill"
-                    variant="outlined"
-                    size="small"
-                    :prepend-icon="mdiAccountGroup"
-                    :loading="props.membershipLoading"
-                    :disabled="props.membershipLoading"
-                    @click="emit('clickLeave')"
-                  >
-                    {{ $t('community_membership.leave') }}
-                  </v-btn>
-                  <v-btn
-                    v-else
-                    rounded="pill"
-                    variant="outlined"
-                    size="small"
-                    :prepend-icon="mdiAccountGroup"
-                    :loading="props.membershipLoading"
-                    :disabled="props.membershipLoading"
-                    @click="emit('clickJoin')"
-                  >
-                    {{ $t('community_membership.join') }}
-                  </v-btn>
-                </div>
+                <v-row class="ma-2" style="gap: 12px" align="center" justify="start">
+                  <v-col cols="auto" class="pa-0">
+                    <v-btn
+                      variant="outlined"
+                      rounded="pill"
+                      size="small"
+                      :prepend-icon="mdiEmail"
+                      @click="openContactDialog"
+                    >
+                      {{ $t('event_details.contact_community') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="auto" class="pa-0">
+                    <community-membership-button
+                      v-if="community.community_account"
+                      :community-id="community.community_account"
+                      :join-button-props="{
+                        variant: 'outlined',
+                        rounded: 'pill',
+                        size: 'small',
+                        'prepend-icon': mdiAccountGroup,
+                      }"
+                      :leave-button-props="{
+                        variant: 'outlined',
+                        rounded: 'pill',
+                        size: 'small',
+                        'prepend-icon': mdiAccountGroup,
+                      }"
+                    />
+                  </v-col>
+                </v-row>
                 <community-contact-dialog
                   v-model="isOpenContactDialogVisible"
                   :community-name="community.community_name"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onUnmounted, watchEffect } from 'vue'
+import { useRoute } from 'vue-router'
 import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
@@ -9,16 +10,16 @@ import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
-import { mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
+import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
 import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 
-const communityId = useRoute().params.communityId as string
-const eventId = useRoute().params.eventId as string
+const route = useRoute()
+const communityId = route.params.communityId as string
+const eventId = route.params.eventId as string
 
 const { t: $t } = useI18n()
 
@@ -33,23 +34,17 @@ const userStore = useCurrentUserStore()
 const currentUserId = computed(() => userStore.firebaseUser?.uid ?? null)
 
 const isManager = ref(false)
-const isCommunityMember = ref(false)
-const isCommunityManager = ref(false)
 
 // リアルタイムにコミュニティのメンバー情報を更新
 watchEffect(() => {
   const uid = currentUserId.value
   const community = communityStore.community
   if (uid == null || community == null) {
-    isCommunityMember.value = false
-    isCommunityManager.value = false
     isManager.value = false
     return
   }
   const member = community.members?.some((memberRef) => memberRef.id === uid) ?? false
   const manager = community.managers?.some((managerRef) => managerRef.id === uid) ?? false
-  isCommunityMember.value = member
-  isCommunityManager.value = manager
   isManager.value = manager
 })
 
@@ -86,79 +81,6 @@ const alertState = reactive({
   message: '',
   isOpen: false,
 })
-
-const membershipState = reactive({
-  loading: false,
-  snackbarVisible: false,
-  snackbarMessage: '',
-  snackbarColor: 'success' as 'success' | 'error',
-})
-
-const isOpenLoginDialog = ref(false)
-
-const showMembershipMessage = (message: string, color: 'success' | 'error' = 'success') => {
-  membershipState.snackbarMessage = message
-  membershipState.snackbarColor = color
-  membershipState.snackbarVisible = true
-}
-
-const joinCommunity = async () => {
-  if (userStore.firebaseUser == null) {
-    showMembershipMessage($t('community_membership.login_required'), 'error')
-    isOpenLoginDialog.value = true
-    return
-  }
-  if (membershipState.loading) return
-  membershipState.loading = true
-  try {
-    await communityStore.joinCommunity()
-    isCommunityMember.value = true
-    showMembershipMessage($t('community_membership.join_success'), 'success')
-  } catch (error) {
-    const message = (error as Error)?.message
-    if (message === 'not-logged-in') {
-      showMembershipMessage($t('community_membership.login_required'), 'error')
-      isOpenLoginDialog.value = true
-    } else {
-      console.error(error)
-      showMembershipMessage($t('community_membership.error_generic'), 'error')
-    }
-  } finally {
-    membershipState.loading = false
-  }
-}
-
-const leaveCommunity = async () => {
-  if (userStore.firebaseUser == null) {
-    showMembershipMessage($t('community_membership.login_required'), 'error')
-    isOpenLoginDialog.value = true
-    return
-  }
-  if (isCommunityManager.value) {
-    showMembershipMessage($t('community_membership.manager_leave_forbidden'), 'error')
-    return
-  }
-  if (membershipState.loading) return
-  membershipState.loading = true
-  try {
-    await communityStore.leaveCommunity()
-    isCommunityMember.value = false
-    showMembershipMessage($t('community_membership.leave_success'), 'success')
-  } catch (error) {
-    const message = (error as Error)?.message
-    if (message === 'manager-cannot-leave') {
-      showMembershipMessage($t('community_membership.manager_leave_forbidden'), 'error')
-    } else if (message === 'not-logged-in') {
-      showMembershipMessage($t('community_membership.login_required'), 'error')
-      isOpenLoginDialog.value = true
-    } else {
-      console.error(error)
-      showMembershipMessage($t('community_membership.error_generic'), 'error')
-    }
-  } finally {
-    membershipState.loading = false
-  }
-}
 
 const selectMenu = (menu: BokudeliEventMenu) => {
   const disabledReason = menuDisabled.value
@@ -325,15 +247,7 @@ onUnmounted(() => {
     </v-row>
     <v-row class="justify-center">
       <v-col md="8" sm="9" cols="12" class="mt-0 pt-0 px-0">
-        <EventDetailsCard
-          :event="event"
-          :community="communityStore.community"
-          :is-member="isCommunityMember"
-          :is-manager="isCommunityManager"
-          :membership-loading="membershipState.loading"
-          @click-join="joinCommunity"
-          @click-leave="leaveCommunity"
-        />
+        <EventDetailsCard :event="event" :community="communityStore.community" />
         <!-- メニュ -->
         <event-menu-list
           ref="menuListRef"
@@ -410,8 +324,4 @@ onUnmounted(() => {
       </v-col>
     </v-row>
   </v-navigation-drawer>
-  <login-dialog v-model="isOpenLoginDialog" />
-  <v-snackbar v-model="membershipState.snackbarVisible" :color="membershipState.snackbarColor" location="top">
-    {{ membershipState.snackbarMessage }}
-  </v-snackbar>
 </template>

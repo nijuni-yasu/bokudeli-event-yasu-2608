@@ -5,19 +5,14 @@ import { getUserPath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { mdiEmail, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb, mdiCrown, mdiAccountGroup } from '@mdi/js'
+import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 
 const props = defineProps<{
   community: BokudeliCommunity
   members: (BokudeliCommunityMember | null)[] | null
-  isMember?: boolean
-  isManager?: boolean
-  membershipLoading?: boolean
-  membersCount?: number | null
 }>()
 const emit = defineEmits<{
   clickContact: []
-  clickJoin: []
-  clickLeave: []
 }>()
 
 const twitterUrl = computed(() =>
@@ -78,32 +73,15 @@ const isShowMember = computed(() =>
       </v-btn>
     </v-col>
     <v-col class="pt-0">
-      <v-btn
-        v-if="props.isMember"
-        variant="outlined"
-        rounded="pill"
-        size="small"
-        width="100%"
-        :prepend-icon="mdiAccountGroup"
-        :loading="props.membershipLoading"
-        :disabled="props.membershipLoading"
-        @click="emit('clickLeave')"
-      >
-        {{ $t('community_membership.leave') }}
-      </v-btn>
-      <v-btn
-        v-else
-        variant="outlined"
-        rounded="pill"
-        size="small"
-        width="100%"
-        :prepend-icon="mdiAccountGroup"
-        :loading="props.membershipLoading"
-        :disabled="props.membershipLoading"
-        @click="emit('clickJoin')"
-      >
-        {{ $t('community_membership.join') }}
-      </v-btn>
+      <community-membership-button
+        v-if="community.community_account"
+        :community-id="community.community_account"
+        block
+        show-members-count
+        :members-count="community.community_num_members ?? null"
+        :join-button-props="{ variant: 'outlined', rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
+        :leave-button-props="{ variant: 'outlined', rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
+      />
     </v-col>
     <!-- community manager -->
     <div v-if="members?.some((m) => m?.roles?.includes('manager') ?? false)">

@@ -210,6 +210,8 @@ export default {
     join_success: 'コミュニティに参加しました。',
     leave_success: 'コミュニティから退会しました。',
     login_required: 'ログインするとコミュニティに参加できます。',
+    login_confirm_join: 'ログイン後、コミュニティに参加してください。',
+    login_confirm_leave: 'ログイン後、コミュニティを退会してください。',
     manager_leave_forbidden: '管理者はコミュニティを退会することができません。',
     error_generic: '処理に失敗しました。時間をおいて再度お試しください。',
   },

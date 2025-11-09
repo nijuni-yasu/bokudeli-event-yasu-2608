@@ -83,12 +83,6 @@ const goToEvents = (eventId: string) => {
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
-const membershipState = reactive({
-  loading: false,
-  snackbarVisible: false,
-  snackbarColor: 'success',
-  snackbarMessage: '',
-})
 
 const openContactDialog = () => {
   if (userStore.firebaseUser == null) {
@@ -99,70 +93,6 @@ const openContactDialog = () => {
 }
 const openLoginDialog = () => {
   isOpenLoginDialog.value = true
-}
-
-const showMembershipMessage = (message: string, color: 'success' | 'error' = 'success') => {
-  membershipState.snackbarMessage = message
-  membershipState.snackbarColor = color
-  membershipState.snackbarVisible = true
-}
-
-const joinCommunity = async () => {
-  if (userStore.firebaseUser == null) {
-    showMembershipMessage($t('community_membership.login_required'), 'error')
-    isOpenLoginDialog.value = true
-    return
-  }
-  if (membershipState.loading) return
-  membershipState.loading = true
-  try {
-    await communityStore.joinCommunity()
-    isMember.value = true
-    showMembershipMessage($t('community_membership.join_success'), 'success')
-  } catch (error) {
-    const message = (error as Error)?.message
-    if (message === 'not-logged-in') {
-      isOpenLoginDialog.value = true
-      showMembershipMessage($t('community_membership.login_required'), 'error')
-    } else {
-      console.error(error)
-      showMembershipMessage($t('community_membership.error_generic'), 'error')
-    }
-  } finally {
-    membershipState.loading = false
-  }
-}
-
-const leaveCommunity = async () => {
-  if (userStore.firebaseUser == null) {
-    showMembershipMessage($t('community_membership.login_required'), 'error')
-    isOpenLoginDialog.value = true
-    return
-  }
-  if (isManager.value) {
-    showMembershipMessage($t('community_membership.manager_leave_forbidden'), 'error')
-    return
-  }
-  if (membershipState.loading) return
-  membershipState.loading = true
-  try {
-    await communityStore.leaveCommunity()
-    isMember.value = false
-    showMembershipMessage($t('community_membership.leave_success'), 'success')
-  } catch (error) {
-    const message = (error as Error)?.message
-    if (message === 'manager-cannot-leave') {
-      showMembershipMessage($t('community_membership.manager_leave_forbidden'), 'error')
-    } else if (message === 'not-logged-in') {
-      isOpenLoginDialog.value = true
-      showMembershipMessage($t('community_membership.login_required'), 'error')
-    } else {
-      console.error(error)
-      showMembershipMessage($t('community_membership.error_generic'), 'error')
-    }
-  } finally {
-    membershipState.loading = false
-  }
 }
 </script>
 <template>
@@ -220,12 +150,6 @@ const leaveCommunity = async () => {
               :community="communityStore.community"
               :members="communityStore.members"
               @click-contact="openContactDialog"
-              :is-member="isMember"
-              :is-manager="isManager"
-              :membership-loading="membershipState.loading"
-              :members-count="communityStore.community?.community_num_members ?? null"
-              @click-join="joinCommunity"
-              @click-leave="leaveCommunity"
             />
           </v-col>
           <!-- events -->
@@ -296,9 +220,6 @@ const leaveCommunity = async () => {
       ログインした後にお問い合わせしてください。
     </confirm-dialog>
     <login-dialog v-model="isOpenLoginDialog" />
-    <v-snackbar v-model="membershipState.snackbarVisible" :color="membershipState.snackbarColor" location="top">
-      {{ membershipState.snackbarMessage }}
-    </v-snackbar>
   </section>
 </template>
 <style lang="scss" scoped></style>
