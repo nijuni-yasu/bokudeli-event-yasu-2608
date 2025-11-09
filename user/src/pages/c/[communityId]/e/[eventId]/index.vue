@@ -43,7 +43,6 @@ watchEffect(() => {
     isManager.value = false
     return
   }
-  const member = community.members?.some((memberRef) => memberRef.id === uid) ?? false
   const manager = community.managers?.some((managerRef) => managerRef.id === uid) ?? false
   isManager.value = manager
 })
@@ -69,6 +68,8 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
       return 'not_accepting_order'
     case 'accepting_order':
       return false
+    default:
+      return null
   }
 })
 
@@ -87,7 +88,7 @@ const selectMenu = (menu: BokudeliEventMenu) => {
   if (disabledReason == null) {
     return
   }
-  if (menuDisabled.value === 'finished') {
+  if (disabledReason === 'finished') {
     alertState.message = $t('menu_disabled_reason.finished')
     alertState.isOpen = true
   } else if (disabledReason === false) {

@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (event: 'membership-change', payload: { isMember: boolean }): void
+  'membership-change': { isMember: boolean }
 }>()
 
 const router = useRouter()

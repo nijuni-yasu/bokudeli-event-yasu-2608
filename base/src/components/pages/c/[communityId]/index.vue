@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect, reactive } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   getEventPath,
@@ -13,7 +13,6 @@ import CommunityContactDialog from '@shokujii/base/components/CommunityContactDi
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useI18n } from 'vue-i18n'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
@@ -27,7 +26,6 @@ const props = defineProps<{
 const router = useRouter()
 
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
-const { t: $t } = useI18n()
 
 const userStore = useCurrentUserStore()
 const currentUserId = computed(() => userStore.firebaseUser?.uid ?? null)
