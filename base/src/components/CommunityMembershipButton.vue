@@ -116,7 +116,6 @@ const joinCommunity = async () => {
   isLoading.value = true
   try {
     await communityStore.joinCommunity()
-    isMember.value = true
     showSnackbar(t('community_membership.join_success'), 'success')
   } catch (error) {
     const message = (error as Error)?.message
@@ -160,7 +159,6 @@ const leaveCommunity = async () => {
   isLoading.value = true
   try {
     await communityStore.leaveCommunity()
-    isMember.value = false
     showSnackbar(t('community_membership.leave_success'), 'success')
   } catch (error) {
     const message = (error as Error)?.message
@@ -220,9 +218,3 @@ const leaveCommunity = async () => {
     </v-snackbar>
   </div>
 </template>
-
-<style scoped>
-.community-membership-button {
-  width: 100%;
-}
-</style>

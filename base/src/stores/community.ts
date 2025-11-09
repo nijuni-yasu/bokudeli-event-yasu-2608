@@ -282,19 +282,8 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       }
       const communityRef = await getCommunityRef()
       const memberRef = doc(communityRef, 'members', uid)
-      const memberDoc = await getDoc(memberRef)
       const now = Timestamp.now()
-      if (memberDoc.exists()) {
-        await setDoc(memberRef, { updated_at: now }, { merge: true })
-      } else {
-        await setDoc(
-          memberRef,
-          {
-            updated_at: now,
-          },
-          { merge: true },
-        )
-      }
+      await setDoc(memberRef, { updated_at: now }, { merge: true })
     }
 
     const leaveCommunity = async (userId?: string) => {

@@ -77,8 +77,6 @@ const isShowMember = computed(() =>
         v-if="community.community_account"
         :community-id="community.community_account"
         block
-        show-members-count
-        :members-count="community.community_num_members ?? null"
         :join-button-props="{ rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
         :leave-button-props="{ variant: 'outlined', rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
       />

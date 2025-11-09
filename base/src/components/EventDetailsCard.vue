@@ -316,13 +316,7 @@ const isShowMember = computed(() =>
           <v-row align-self-center>
             <v-row class="ma-1">
               <router-link :to="getCommunityPath(event.community_account)">
-                <v-img
-                  :src="community.community_icon_image_url"
-                  class="community-icon"
-                  aspect-ratio="1"
-                  cover
-                  max-width="100px"
-                />
+                <v-img :src="community.community_icon_image_url" class="community-icon" aspect-ratio="1" cover />
               </router-link>
               <div class="ml-2 align-self-end">
                 <router-link
@@ -449,7 +443,6 @@ iframe {
   border-radius: 10%;
   width: 100px;
   height: 100px;
-  max-width: 100px;
 }
 
 .community-actions {
