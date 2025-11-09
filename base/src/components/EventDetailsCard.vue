@@ -40,6 +40,14 @@ const qrcodeSize = 300
 const props = defineProps<{
   event: BokudeliEvent
   community: BokudeliCommunity
+  isMember?: boolean
+  isManager?: boolean
+  membershipLoading?: boolean
+}>()
+
+const emit = defineEmits<{
+  clickJoin: []
+  clickLeave: []
 }>()
 
 const eventUrl = computed(() => {
@@ -331,15 +339,41 @@ const isShowMember = computed(() =>
                   <div class="ma-1" style="font-size: 12px">{{ $t('event_details.community_name') }}</div>
                   <div class="ma-1" style="font-size: 18px">{{ community.community_name }}</div>
                 </router-link>
-                <v-btn
-                  class="ma-1"
-                  variant="outlined"
-                  rounded="pill"
-                  :prepend-icon="mdiEmail"
-                  @click="openContactDialog"
-                >
-                  {{ $t('event_details.contact_community') }}
-                </v-btn>
+                <div class="ma-2 d-flex flex-wrap align-center" style="gap: 12px">
+                  <v-btn
+                    variant="outlined"
+                    rounded="pill"
+                    size="small"
+                    :prepend-icon="mdiEmail"
+                    @click="openContactDialog"
+                  >
+                    {{ $t('event_details.contact_community') }}
+                  </v-btn>
+                  <v-btn
+                    v-if="props.isMember"
+                    rounded="pill"
+                    variant="outlined"
+                    size="small"
+                    :prepend-icon="mdiAccountGroup"
+                    :loading="props.membershipLoading"
+                    :disabled="props.membershipLoading"
+                    @click="emit('clickLeave')"
+                  >
+                    {{ $t('community_membership.leave') }}
+                  </v-btn>
+                  <v-btn
+                    v-else
+                    rounded="pill"
+                    variant="outlined"
+                    size="small"
+                    :prepend-icon="mdiAccountGroup"
+                    :loading="props.membershipLoading"
+                    :disabled="props.membershipLoading"
+                    @click="emit('clickJoin')"
+                  >
+                    {{ $t('community_membership.join') }}
+                  </v-btn>
+                </div>
                 <community-contact-dialog
                   v-model="isOpenContactDialogVisible"
                   :community-name="community.community_name"

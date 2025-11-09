@@ -77,6 +77,7 @@ export class Community {
   community_sns_hash_tag: string = ''
   community_bill_fullname: string = ''
   community_bill_email: string = ''
+  community_num_members: number = 0
   members: (typeof DocumentReference)[] = []
   managers: (typeof DocumentReference)[] = []
 

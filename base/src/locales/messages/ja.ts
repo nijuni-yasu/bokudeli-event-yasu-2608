@@ -204,6 +204,15 @@ export default {
     manager: 'Manager',
     member: 'Member',
   },
+  community_membership: {
+    join: 'コミュニティに参加',
+    leave: 'コミュニティを退会',
+    join_success: 'コミュニティに参加しました。',
+    leave_success: 'コミュニティから退会しました。',
+    login_required: 'ログインするとコミュニティに参加できます。',
+    manager_leave_forbidden: '管理者はコミュニティを退会することができません。',
+    error_generic: '処理に失敗しました。時間をおいて再度お試しください。',
+  },
   community_edit: {
     title: 'コミュニティ設定',
     create: 'コミュニティ作成',

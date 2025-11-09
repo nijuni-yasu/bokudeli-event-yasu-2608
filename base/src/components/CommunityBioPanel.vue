@@ -9,9 +9,15 @@ import { mdiEmail, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb, mdiCrown,
 const props = defineProps<{
   community: BokudeliCommunity
   members: (BokudeliCommunityMember | null)[] | null
+  isMember?: boolean
+  isManager?: boolean
+  membershipLoading?: boolean
+  membersCount?: number | null
 }>()
 const emit = defineEmits<{
   clickContact: []
+  clickJoin: []
+  clickLeave: []
 }>()
 
 const twitterUrl = computed(() =>
@@ -69,6 +75,34 @@ const isShowMember = computed(() =>
         @click="emit('clickContact')"
       >
         {{ $t('community_bio_panel.contact') }}
+      </v-btn>
+    </v-col>
+    <v-col class="pt-0">
+      <v-btn
+        v-if="props.isMember"
+        variant="outlined"
+        rounded="pill"
+        size="small"
+        width="100%"
+        :prepend-icon="mdiAccountGroup"
+        :loading="props.membershipLoading"
+        :disabled="props.membershipLoading"
+        @click="emit('clickLeave')"
+      >
+        {{ $t('community_membership.leave') }}
+      </v-btn>
+      <v-btn
+        v-else
+        variant="outlined"
+        rounded="pill"
+        size="small"
+        width="100%"
+        :prepend-icon="mdiAccountGroup"
+        :loading="props.membershipLoading"
+        :disabled="props.membershipLoading"
+        @click="emit('clickJoin')"
+      >
+        {{ $t('community_membership.join') }}
       </v-btn>
     </v-col>
     <!-- community manager -->

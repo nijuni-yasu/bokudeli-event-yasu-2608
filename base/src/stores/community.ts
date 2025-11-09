@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { getAuth } from 'firebase/auth'
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   getDoc,
@@ -12,6 +13,7 @@ import {
   where,
   onSnapshot,
   setDoc,
+  Timestamp,
   type DocumentReference,
   type Unsubscribe,
   type FirestoreDataConverter,
@@ -273,6 +275,46 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       return Array.from(roles)
     }
 
+    const joinCommunity = async (userId?: string) => {
+      const uid = userId ?? getAuth().currentUser?.uid
+      if (uid == null) {
+        throw new Error('not-logged-in')
+      }
+      const communityRef = await getCommunityRef()
+      const memberRef = doc(communityRef, 'members', uid)
+      const memberDoc = await getDoc(memberRef)
+      const now = Timestamp.now()
+      if (memberDoc.exists()) {
+        await setDoc(memberRef, { updated_at: now }, { merge: true })
+      } else {
+        await setDoc(
+          memberRef,
+          {
+            updated_at: now,
+          },
+          { merge: true },
+        )
+      }
+    }
+
+    const leaveCommunity = async (userId?: string) => {
+      const uid = userId ?? getAuth().currentUser?.uid
+      if (uid == null) {
+        throw new Error('not-logged-in')
+      }
+      const communityRef = await getCommunityRef()
+      const memberRef = doc(communityRef, 'members', uid)
+      const memberDoc = await getDoc(memberRef)
+      if (!memberDoc.exists()) {
+        return
+      }
+      const roles: string[] = memberDoc.data()?.roles ?? []
+      if (roles.includes('manager')) {
+        throw new Error('manager-cannot-leave')
+      }
+      await deleteDoc(memberRef)
+    }
+
     const addRole = async (userId: string, role: string) => {
       const communityRef = await getCommunityRef()
       const memberRef = doc(communityRef, 'members', userId)
@@ -298,6 +340,8 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       updateIconImage,
       addRole,
       removeRole,
+      joinCommunity,
+      leaveCommunity,
       subscribe,
       unsubscribe,
       getCurrentUserRoles,

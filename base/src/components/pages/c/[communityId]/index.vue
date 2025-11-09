@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watchEffect, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   getEventPath,
@@ -13,6 +13,7 @@ import CommunityContactDialog from '@shokujii/base/components/CommunityContactDi
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { useI18n } from 'vue-i18n'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
@@ -26,12 +27,25 @@ const props = defineProps<{
 const router = useRouter()
 
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
+const { t: $t } = useI18n()
+
+const userStore = useCurrentUserStore()
+const currentUserId = computed(() => userStore.firebaseUser?.uid ?? null)
 
 const isMember = ref(false)
 const isManager = ref(false)
-communityStore.getCurrentUserRoles().then((roles) => {
-  isMember.value = roles != null
-  isManager.value = roles?.includes('manager') ?? false
+
+// リアルタイムにコミュニティのメンバー情報を更新
+watchEffect(() => {
+  const uid = currentUserId.value
+  const community = communityStore.community
+  if (uid == null || community == null) {
+    isMember.value = false
+    isManager.value = false
+    return
+  }
+  isMember.value = community.members?.some((memberRef) => memberRef.id === uid) ?? false
+  isManager.value = community.managers?.some((managerRef) => managerRef.id === uid) ?? false
 })
 
 type EventWithMembers = {
@@ -69,9 +83,13 @@ const goToEvents = (eventId: string) => {
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
+const membershipState = reactive({
+  loading: false,
+  snackbarVisible: false,
+  snackbarColor: 'success',
+  snackbarMessage: '',
+})
 
-// コミュニティへの問い合わせはログイン必須
-const userStore = useCurrentUserStore()
 const openContactDialog = () => {
   if (userStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
@@ -81,6 +99,70 @@ const openContactDialog = () => {
 }
 const openLoginDialog = () => {
   isOpenLoginDialog.value = true
+}
+
+const showMembershipMessage = (message: string, color: 'success' | 'error' = 'success') => {
+  membershipState.snackbarMessage = message
+  membershipState.snackbarColor = color
+  membershipState.snackbarVisible = true
+}
+
+const joinCommunity = async () => {
+  if (userStore.firebaseUser == null) {
+    showMembershipMessage($t('community_membership.login_required'), 'error')
+    isOpenLoginDialog.value = true
+    return
+  }
+  if (membershipState.loading) return
+  membershipState.loading = true
+  try {
+    await communityStore.joinCommunity()
+    isMember.value = true
+    showMembershipMessage($t('community_membership.join_success'), 'success')
+  } catch (error) {
+    const message = (error as Error)?.message
+    if (message === 'not-logged-in') {
+      isOpenLoginDialog.value = true
+      showMembershipMessage($t('community_membership.login_required'), 'error')
+    } else {
+      console.error(error)
+      showMembershipMessage($t('community_membership.error_generic'), 'error')
+    }
+  } finally {
+    membershipState.loading = false
+  }
+}
+
+const leaveCommunity = async () => {
+  if (userStore.firebaseUser == null) {
+    showMembershipMessage($t('community_membership.login_required'), 'error')
+    isOpenLoginDialog.value = true
+    return
+  }
+  if (isManager.value) {
+    showMembershipMessage($t('community_membership.manager_leave_forbidden'), 'error')
+    return
+  }
+  if (membershipState.loading) return
+  membershipState.loading = true
+  try {
+    await communityStore.leaveCommunity()
+    isMember.value = false
+    showMembershipMessage($t('community_membership.leave_success'), 'success')
+  } catch (error) {
+    const message = (error as Error)?.message
+    if (message === 'manager-cannot-leave') {
+      showMembershipMessage($t('community_membership.manager_leave_forbidden'), 'error')
+    } else if (message === 'not-logged-in') {
+      isOpenLoginDialog.value = true
+      showMembershipMessage($t('community_membership.login_required'), 'error')
+    } else {
+      console.error(error)
+      showMembershipMessage($t('community_membership.error_generic'), 'error')
+    }
+  } finally {
+    membershipState.loading = false
+  }
 }
 </script>
 <template>
@@ -138,6 +220,12 @@ const openLoginDialog = () => {
               :community="communityStore.community"
               :members="communityStore.members"
               @click-contact="openContactDialog"
+              :is-member="isMember"
+              :is-manager="isManager"
+              :membership-loading="membershipState.loading"
+              :members-count="communityStore.community?.community_num_members ?? null"
+              @click-join="joinCommunity"
+              @click-leave="leaveCommunity"
             />
           </v-col>
           <!-- events -->
@@ -208,6 +296,9 @@ const openLoginDialog = () => {
       ログインした後にお問い合わせしてください。
     </confirm-dialog>
     <login-dialog v-model="isOpenLoginDialog" />
+    <v-snackbar v-model="membershipState.snackbarVisible" :color="membershipState.snackbarColor" location="top">
+      {{ membershipState.snackbarMessage }}
+    </v-snackbar>
   </section>
 </template>
 <style lang="scss" scoped></style>
