@@ -318,7 +318,7 @@ const isShowMember = computed(() =>
               <router-link :to="getCommunityPath(event.community_account)">
                 <v-img
                   :src="community.community_icon_image_url"
-                  style="border-radius: 10%; width: 100px; height: 100px"
+                  class="community-icon"
                   aspect-ratio="1"
                   cover
                   max-width="100px"
@@ -329,10 +329,10 @@ const isShowMember = computed(() =>
                   :to="getCommunityPath(event.community_account)"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
-                  <div class="ma-1" style="font-size: 12px">{{ $t('event_details.community_name') }}</div>
-                  <div class="ma-1" style="font-size: 18px">{{ community.community_name }}</div>
+                  <div class="community-name-label">{{ $t('event_details.community_name') }}</div>
+                  <div class="pa-1 ma-1 community-name-text text-wrap">{{ community.community_name }}</div>
                 </router-link>
-                <v-row class="ma-2" style="gap: 12px" align="center" justify="start">
+                <v-row class="ma-2 community-actions" align="center" justify="start">
                   <v-col cols="auto" class="pa-0">
                     <v-btn
                       variant="outlined"
@@ -443,5 +443,40 @@ iframe {
 }
 .text-small {
   font-size: 14px !important;
+}
+
+.community-icon {
+  border-radius: 10%;
+  width: 100px;
+  height: 100px;
+  max-width: 100px;
+}
+
+.community-actions {
+  gap: 12px;
+}
+
+.community-name-label {
+  font-size: 12px;
+}
+
+.community-name-text {
+  font-size: 24px;
+}
+
+@media (max-width: 600px) {
+  .community-name-text {
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .community-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .community-actions .v-col {
+    width: 100%;
+  }
 }
 </style>
