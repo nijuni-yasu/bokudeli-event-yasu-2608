@@ -21,6 +21,8 @@ export default {
     manual: '店舗マニュアル',
     community: '店舗主催設定',
     event: '店舗主催イベント',
+    shokujii: 'shokujii公式サイト',
+    about: 'shokujiiって？',
   },
   forgot_password_dialog: {
     title: 'パスワードの再設定',
