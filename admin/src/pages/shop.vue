@@ -79,6 +79,24 @@ const SHOP_RANGE_ARRAY = (() => {
   }
   return array
 })()
+// 配送範囲と最小注文数の配列の長さを保つための関数
+const SHOP_RANGE_MIN_ORDERS_LIMIT = 5
+const createEmptyRangeMinOrder = () =>
+  ({ range: null, min_orders: null }) as unknown as BokudeliPartnerShop['shop_range_min_orders'][number]
+const ensureRangeMinOrdersLength = (target?: BokudeliPartnerShop | null) => {
+  if (target == null) {
+    return
+  }
+  if (!Array.isArray(target.shop_range_min_orders)) {
+    target.shop_range_min_orders = []
+  }
+  while (target.shop_range_min_orders.length < SHOP_RANGE_MIN_ORDERS_LIMIT) {
+    target.shop_range_min_orders.push(createEmptyRangeMinOrder())
+  }
+  if (target.shop_range_min_orders.length > SHOP_RANGE_MIN_ORDERS_LIMIT) {
+    target.shop_range_min_orders.splice(SHOP_RANGE_MIN_ORDERS_LIMIT)
+  }
+}
 const SHOP_DEADLINE_DATE_ARRAY = [...Array(4)].map((_, i) => ({ title: $t('days_before', i), value: i }))
 const SHOP_DEADLINE_TIME_ARRAY = makeDeadlineTimeArray(6, 18)
 const SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY = makeDeadlineCurrentDaytimeArray(3, 4)
@@ -127,6 +145,7 @@ const shop = ref(
     )
   }),
 )
+ensureRangeMinOrdersLength(shop.value)
 
 const isSaving = ref(false)
 const imageFile = ref<File | null>(null)
