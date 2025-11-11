@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'membership-change': [{ isMember: boolean }]
+  'membership-change': [ isMember: boolean ]
 }>()
 
 const router = useRouter()
@@ -80,7 +80,7 @@ watchEffect(updateMembershipState)
 watch(
   () => isMember.value,
   (value: boolean) => {
-    emit('membership-change', { isMember: value } as { isMember: boolean })
+    emit('membership-change', isMember.value)
     if (!value) {
       isLeaveHover.value = false
     }
