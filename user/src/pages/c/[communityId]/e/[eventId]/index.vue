@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onUnmounted, watchEffect } from 'vue'
+import { ref, reactive, computed, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
@@ -16,6 +16,7 @@ import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
 import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 
 const route = useRoute()
 const communityId = route.params.communityId as string
@@ -33,19 +34,8 @@ let menuListObserver: IntersectionObserver | null = null
 const userStore = useCurrentUserStore()
 const currentUserId = computed(() => userStore.firebaseUser?.uid ?? null)
 
-const isManager = ref(false)
-
-// リアルタイムにコミュニティのメンバー情報を更新
-watchEffect(() => {
-  const uid = currentUserId.value
-  const community = communityStore.community
-  if (uid == null || community == null) {
-    isManager.value = false
-    return
-  }
-  const manager = community.managers?.some((managerRef) => managerRef.id === uid) ?? false
-  isManager.value = manager
-})
+// 共通の composable を使用してサポートアカウントのロール拡張を考慮（isManager のみ使用）
+const { isManager } = useCommunityMemberFlags(communityStore, currentUserId)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 

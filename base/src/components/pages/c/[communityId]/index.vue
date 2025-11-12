@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   getEventPath,
@@ -19,6 +19,7 @@ import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import { useEventStore } from '@shokujii/base/stores/event'
 import type { EventStore, BokudeliEvent, BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 
 const props = defineProps<{
   communityId: string
@@ -30,21 +31,8 @@ const communityStore = useCommunityStore(props.communityId) as CommunityStore
 const userStore = useCurrentUserStore()
 const currentUserId = computed(() => userStore.firebaseUser?.uid ?? null)
 
-const isMember = ref(false)
-const isManager = ref(false)
-
-// リアルタイムにコミュニティのメンバー情報を更新
-watchEffect(() => {
-  const uid = currentUserId.value
-  const community = communityStore.community
-  if (uid == null || community == null) {
-    isMember.value = false
-    isManager.value = false
-    return
-  }
-  isMember.value = community.members?.some((memberRef) => memberRef.id === uid) ?? false
-  isManager.value = community.managers?.some((managerRef) => managerRef.id === uid) ?? false
-})
+// 共通の composable を使用してサポートアカウントのロール拡張を考慮
+const { isMember, isManager } = useCommunityMemberFlags(communityStore, currentUserId)
 
 type EventWithMembers = {
   event: BokudeliEvent
