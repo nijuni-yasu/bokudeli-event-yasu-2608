@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'membership-change': [ isMember: boolean ]
+  'membership-change': [isMember: boolean]
 }>()
 
 const router = useRouter()
@@ -28,6 +28,7 @@ const communityStore = useCommunityStore(props.communityId)
 const isMember = ref(false)
 const isManager = ref(false)
 const isLoading = ref(false)
+const membershipPendingAction = ref<null | 'join' | 'leave'>(null)
 const isLeaveHover = ref(false)
 const leaveConfirmDialog = ref(false)
 const snackbarState = reactive({
@@ -42,6 +43,18 @@ const loginConfirmState = reactive({
 })
 
 const block = computed(() => props.block ?? false)
+
+const isMemberForUi = computed(() => {
+  if (membershipPendingAction.value === 'join') {
+    return true
+  }
+  if (membershipPendingAction.value === 'leave') {
+    return false
+  }
+  return isMember.value
+})
+
+const isBusy = computed(() => isLoading.value || membershipPendingAction.value !== null)
 
 const computedJoinButtonProps = computed<ButtonProps>(() => ({
   size: 'small',
@@ -80,7 +93,19 @@ watchEffect(updateMembershipState)
 watch(
   () => isMember.value,
   (value: boolean) => {
-    emit('membership-change', isMember.value)
+    if (membershipPendingAction.value === 'join' && value) {
+      membershipPendingAction.value = null
+    } else if (membershipPendingAction.value === 'leave' && !value) {
+      membershipPendingAction.value = null
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => isMemberForUi.value,
+  (value: boolean) => {
+    emit('membership-change', value)
     if (!value) {
       isLeaveHover.value = false
     }
@@ -111,13 +136,15 @@ const joinCommunity = async () => {
     openLoginConfirm(t('community_membership.login_confirm_join'))
     return
   }
-  if (isLoading.value) return
+  if (isBusy.value) return
 
+  membershipPendingAction.value = 'join'
   isLoading.value = true
   try {
     await communityStore.joinCommunity()
     showSnackbar(t('community_membership.join_success'), 'success')
   } catch (error) {
+    membershipPendingAction.value = null
     const message = (error as Error)?.message
     if (message === 'not-logged-in') {
       openLoginConfirm(t('community_membership.login_confirm_join'))
@@ -131,7 +158,7 @@ const joinCommunity = async () => {
 }
 
 const handleLeaveButtonClick = () => {
-  if (isLoading.value) return
+  if (isBusy.value) return
 
   if (userStore.firebaseUser == null) {
     openLoginConfirm(t('community_membership.login_confirm_leave'))
@@ -154,13 +181,15 @@ const leaveCommunity = async () => {
     showSnackbar(t('community_membership.manager_leave_forbidden'), 'error')
     return
   }
-  if (isLoading.value) return
+  if (isBusy.value) return
 
+  membershipPendingAction.value = 'leave'
   isLoading.value = true
   try {
     await communityStore.leaveCommunity()
     showSnackbar(t('community_membership.leave_success'), 'success')
   } catch (error) {
+    membershipPendingAction.value = null
     const message = (error as Error)?.message
     if (message === 'manager-cannot-leave') {
       showSnackbar(t('community_membership.manager_leave_forbidden'), 'error')
@@ -179,12 +208,12 @@ const leaveCommunity = async () => {
 <template>
   <div class="community-membership-button">
     <v-btn
-      v-if="isMember"
+      v-if="isMemberForUi"
       v-bind="computedLeaveButtonProps"
       :block="block"
       :color="leaveButtonColor"
-      :loading="isLoading"
-      :disabled="isLoading"
+      :loading="isBusy"
+      :disabled="isBusy"
       @mouseover="isLeaveHover = true"
       @mouseleave="isLeaveHover = false"
       @focus="isLeaveHover = true"
@@ -199,8 +228,8 @@ const leaveCommunity = async () => {
       v-else
       v-bind="computedJoinButtonProps"
       :block="block"
-      :loading="isLoading"
-      :disabled="isLoading"
+      :loading="isBusy"
+      :disabled="isBusy"
       @click="joinCommunity"
     >
       <slot name="join-label">{{ t('community_membership.join') }}</slot>
