@@ -381,9 +381,9 @@ export default {
       イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
       <b>【お支払い期限】翌月末日</b><br />
       <b>【請求書払い手数料】注文金額の10%</b><br />
-      　※2025年11月1日以降のイベント開催分より、「請求書払い手数料」を加算してご請求させていただきます。<br />
-      　※参加者によるクレジットカードでの事前決済の場合は、手数料は発生しません。<br />
-      　※詳細は、<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g353224adc3a_0_0" target="_blank">支払い設定について</a> をご確認ください。`,
+      ※2025年11月1日以降のイベント開催分より、「請求書払い手数料」を加算してご請求させていただきます。<br />
+      ※参加者によるクレジットカードでの事前決済の場合は、手数料は発生しません。<br />
+      ※詳細は、<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g353224adc3a_0_0" target="_blank">支払い設定について</a> をご確認ください。`,
     },
     flyer: {
       title: 'QRコード付きのチラシを印刷して、告知・集客に役立てよう！',
@@ -402,11 +402,12 @@ export default {
     link_dialog_body:
       '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
     link_to_partner_site: '<a href="https://partner.shokujii.jp/" target="_blank">飲食店管理画面のログインはこちら</a>',
-    link_to_forgot_account: '<a href="https://forms.gle/bFc77yitRgnaKgxa7" target="_blank">アカウントがわからない場合はこちら</a>',
+    link_to_forgot_account:
+      '<a href="https://forms.gle/bFc77yitRgnaKgxa7" target="_blank">アカウントがわからない場合はこちら</a>',
     inapp: {
-      notice_title: 'ブラウザを開いてログインしてください',
+      notice_title: 'ChromeやSafariを開いてログインしてください',
       notice_body:
-        'LINEやMessengerなどのアプリ内ブラウザからは、ログインができません。<b>Chrome</b>や<b>Safari</b>などのブラウザを開いてログインしてください。',
+        'このブラウザからはログインができません。このページのURLをコピーして、ChromeやSafariなどのブラウザを開いてログインしてください。',
       copy_url: 'このページのURLをコピー',
       copied: 'URLをコピーしました',
       copy_failed: 'コピーに失敗しました。手動でURLを選択してコピーしてください',
@@ -430,8 +431,7 @@ export default {
   },
   complete: {
     new_user_title: 'アカウント登録完了',
-    new_user_description:
-      'アカウント登録が完了しました🎉\nSNSアカウントと連携してプロフィールを登録しよう！',
+    new_user_description: 'アカウント登録が完了しました🎉\nSNSアカウントと連携してプロフィールを登録しよう！',
     new_user_selfButton: '自分でプロフィールを登録する',
     exists_user_title: 'プロフィール登録',
     exists_user_description:
