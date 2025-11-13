@@ -1,4 +1,5 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
+import { Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getUserUrl } from './utils/urls.js'
@@ -102,16 +103,10 @@ async function getCommunityMemberEmails(communityId: string): Promise<string[]> 
   }
 
   const members = await community.getMembers()
-  const emails: string[] = []
 
-  await Promise.all(
-    members.map(async (member) => {
-      const email = await getUserEmail(member.id)
-      if (email) {
-        emails.push(email)
-      }
-    }),
-  )
+  // 全メンバーのメールアドレスを並列取得し、nullを除外
+  const emailResults = await Promise.all(members.map(async (member) => await getUserEmail(member.id)))
+  const emails = emailResults.filter((email): email is string => email != null)
 
   return emails
 }
@@ -162,7 +157,7 @@ async function sendNewEventNotificationToMembers(event: ShokujiiEvent, userId: s
     )
 
     // 送信済みフラグを設定してイベントを更新
-    event.sent_new_event_mail_at = Date.now()
+    event.sent_new_event_mail_at = Timestamp.now().toMillis()
     await saveEvent(userId, event)
 
     console.log(`New event notification sent for event: ${event.id}`)
