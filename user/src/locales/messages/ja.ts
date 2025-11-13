@@ -404,9 +404,9 @@ export default {
     link_to_partner_site: '<a href="https://partner.shokujii.jp/" target="_blank">飲食店管理画面のログインはこちら</a>',
     link_to_forgot_account: '<a href="https://forms.gle/bFc77yitRgnaKgxa7" target="_blank">アカウントがわからない場合はこちら</a>',
     inapp: {
-      notice_title: 'このブラウザからはログインができません。',
+      notice_title: 'ブラウザを開いてログインしてください',
       notice_body:
-        'LINEやFacebookMessengerなどのアプリ内ブラウザからは、ログインができません。ChromeやSafariなどのブラウザを開いてログインしてください。',
+        'LINEやMessengerなどのアプリ内ブラウザからは、ログインができません。<b>Chrome</b>や<b>Safari</b>などのブラウザを開いてログインしてください。',
       copy_url: 'このページのURLをコピー',
       copied: 'URLをコピーしました',
       copy_failed: 'コピーに失敗しました。手動でURLを選択してコピーしてください',

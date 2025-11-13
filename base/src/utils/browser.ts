@@ -4,7 +4,7 @@ export function isInAppBrowser(userAgent: string): boolean {
     /Line\//i, // LINE
     /FBAN|FBAV|Facebook/i, // Facebook アプリ/ブラウザ
     /Messenger/i, // Facebook Messenger
-    /Instagram/i, // Instagram
+    // /Instagram/i, // Instagramアプリでは通常ログイン可
     /Twitter/i, // X(Twitter)
     /; wv| wv;/i, // Android WebView 指標
   ]

@@ -15,6 +15,7 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
+import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { handleRedirect } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
@@ -38,6 +39,16 @@ export const setupRouter = (router: Router) => {
     const path = router.currentRoute.value.path
     if (user == null && isLoginRequired(path)) {
       router.replace('/')
+    }
+  })
+
+  // アプリ内ブラウザでログインページにアクセスした場合は専用ページにリダイレクト
+  router.beforeEach((to) => {
+    if (to.path === '/login' && isInAppBrowser(navigator.userAgent)) {
+      return {
+        path: '/inapp-login',
+        query: to.query,
+      }
     }
   })
 
