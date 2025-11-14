@@ -43,10 +43,18 @@ export const setupRouter = (router: Router) => {
   })
 
   // アプリ内ブラウザでログインページにアクセスした場合は専用ページにリダイレクト
+  // 通常のブラウザでアプリ内ログインページにアクセスした場合は通常のログインページにリダイレクト
+  const isInApp = isInAppBrowser(navigator.userAgent)
   router.beforeEach((to) => {
-    if (to.path === '/login' && isInAppBrowser(navigator.userAgent)) {
+    if (to.path === '/login' && isInApp) {
       return {
         path: '/inapp-login',
+        query: to.query,
+      }
+    }
+    if (to.path === '/inapp-login' && !isInApp) {
+      return {
+        path: '/login',
         query: to.query,
       }
     }
