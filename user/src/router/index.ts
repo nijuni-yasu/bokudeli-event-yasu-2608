@@ -172,6 +172,9 @@ export const setupRouter = (router: Router) => {
     }
   })
 
+  // ログイン状態に応じてページアクセスを制御
+  // 未ログインユーザーはログイン必須ページからリダイレクト
+  // ログイン済みユーザーはログインページ/アプリ内ログインページからリダイレクト
   router.beforeEach(async (to) => {
     let user: User | null = null
     try {
@@ -184,7 +187,7 @@ export const setupRouter = (router: Router) => {
         return (to.query?.redirect as string) ?? '/'
       }
     } else {
-      if (['/login'].includes(to.path)) {
+      if (['/login', '/inapp-login'].includes(to.path)) {
         return (to.query?.redirect as string) ?? '/'
       }
     }
