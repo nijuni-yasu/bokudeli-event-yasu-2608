@@ -67,9 +67,7 @@ const { requiredValidator } = useValidators()
 const isValid = ref(false)
 const isLoading = ref(false)
 const reservationAction = ref(0)
-const shopComment = computed(() =>
-  reservationAction.value === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample'),
-)
+const shopComment = ref($t('order_detail.accept_order_sample'))
 const isConfirmDialogOpen = ref(false)
 
 const confirmDialogContent = computed(() => {
@@ -88,6 +86,10 @@ const confirmDialogContent = computed(() => {
     okText: $t('order_detail.confirm_decline_dialog.submit'),
     cancelText: $t('order_detail.confirm_decline_dialog.close'),
   }
+})
+
+watch(reservationAction, (newValue) => {
+  shopComment.value = newValue === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
 })
 
 const submit = async () => {
