@@ -58,18 +58,18 @@ const handleTwitterLink = async () => {
 
 <template>
   <v-container>
-    <v-row justify="center" class="mt-16">
-      <v-col md="5">
-        <v-sheet class="rounded-lg py-14 px-12">
+    <v-row justify="center" class="mt-5 pa-0">
+      <v-col lg="5" md="6" sm="10" cols="12" class="pa-0">
+        <v-sheet class="rounded-lg py-14 px-sm-12 px-5">
           <v-container>
             <v-row justify="center">
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
-              <h1 class="my-3 text-h3 font-weight-bold">{{ titleLabel }}</h1>
+              <h1 class="my-3 text-h4 font-weight-bold">{{ titleLabel }}</h1>
             </v-row>
             <v-row justify="center">
-              <p class="pre-line">
+              <p class="pre-line my-5">
                 {{ descriptionLabel }}
               </p>
             </v-row>

@@ -15,6 +15,7 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
+import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { handleRedirect } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
@@ -38,6 +39,24 @@ export const setupRouter = (router: Router) => {
     const path = router.currentRoute.value.path
     if (user == null && isLoginRequired(path)) {
       router.replace('/')
+    }
+  })
+
+  // アプリ内ブラウザでログインページにアクセスした場合は専用ページにリダイレクト
+  // 通常のブラウザでアプリ内ログインページにアクセスした場合は通常のログインページにリダイレクト
+  const isInApp = isInAppBrowser(navigator.userAgent)
+  router.beforeEach((to) => {
+    if (to.path === '/login' && isInApp) {
+      return {
+        path: '/inapp-login',
+        query: to.query,
+      }
+    }
+    if (to.path === '/inapp-login' && !isInApp) {
+      return {
+        path: '/login',
+        query: to.query,
+      }
     }
   })
 
@@ -135,8 +154,8 @@ export const setupRouter = (router: Router) => {
         }
       }
 
-      // プロフィールが埋まっていなければ、登録完了（プロフィール登録誘導）へ
-      if (!shokujiiUser.user_name || !shokujiiUser.user_description || !shokujiiUser.user_image_url) {
+      // プロフィール名かアイコンが設定されていなければ、登録完了（プロフィール登録誘導）へ
+      if (!shokujiiUser.user_name || !shokujiiUser.user_image_url) {
         return {
           path: '/register/complete',
           query: to.query,
@@ -161,6 +180,9 @@ export const setupRouter = (router: Router) => {
     }
   })
 
+  // ログイン状態に応じてページアクセスを制御
+  // 未ログインユーザーはログイン必須ページからリダイレクト
+  // ログイン済みユーザーはログインページ/アプリ内ログインページからリダイレクト
   router.beforeEach(async (to) => {
     let user: User | null = null
     try {
@@ -173,7 +195,7 @@ export const setupRouter = (router: Router) => {
         return (to.query?.redirect as string) ?? '/'
       }
     } else {
-      if (['/login'].includes(to.path)) {
+      if (['/login', '/inapp-login'].includes(to.path)) {
         return (to.query?.redirect as string) ?? '/'
       }
     }
