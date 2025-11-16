@@ -7,7 +7,7 @@ import {
   Timestamp,
   DocumentReference,
 } from 'firebase-admin/firestore'
-import { Event, RAW_EVENT_STATUS_VALUES, type RawEventStatusType } from '@shokujii/common/schemas/Event.js'
+import { Event, type RawEventStatusType } from '@shokujii/common/schemas/Event.js'
 import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
@@ -170,11 +170,6 @@ export class ShokujiiEvent extends Event {
     const userId = this.updated_by || this.created_by
     if (!userId) {
       throw new Error('Cannot update event status: no updated_by or created_by found')
-    }
-
-    // RAW_EVENT_STATUS_VALUES に含まれるかチェック
-    if (!RAW_EVENT_STATUS_VALUES.includes(status)) {
-      throw new Error(`Invalid RawEventStatusType: ${status}. Must be one of ${RAW_EVENT_STATUS_VALUES.join(', ')}`)
     }
 
     // インスタンスのステータスを更新
