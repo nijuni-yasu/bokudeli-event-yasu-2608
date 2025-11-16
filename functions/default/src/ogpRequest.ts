@@ -14,6 +14,35 @@ interface OgpContext {
   description?: string
 }
 
+/**
+ * Firebase Hosting から取得したレスポンスヘッダを、圧縮や接続制御に関するものだけ除外して転送する。
+ * これにより、Content-Security-Policy などのセキュリティ関連ヘッダは維持される。
+ */
+const forwardSafeHeaders = (from: Response, to: express.Response, options?: { excludeCacheControl?: boolean }) => {
+  const excludedHeaderKeys = new Set([
+    // 圧縮・転送関連
+    'content-encoding',
+    'transfer-encoding',
+    // ボディサイズは Node/Express 側で決定させる
+    'content-length',
+    // 接続制御系（Hop-by-hop ヘッダ）は Node/Express に任せる
+    'connection',
+    'keep-alive',
+    'upgrade',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailer',
+  ])
+
+  from.headers.forEach((value, key) => {
+    const lowerKey = key.toLowerCase()
+    if (excludedHeaderKeys.has(lowerKey)) return
+    if (options?.excludeCacheControl && lowerKey === 'cache-control') return
+    to.setHeader(key, value)
+  })
+}
+
 const returnOriginalIndexHtml = async (site: string, res: express.Response) => {
   const originalResponse = await fetch(`${site}/index.html`)
 
@@ -22,19 +51,9 @@ const returnOriginalIndexHtml = async (site: string, res: express.Response) => {
     return
   }
 
-  // Firebase Hosting 側からのレスポンスヘッダをそのまま流すと
-  // content-encoding などの値とボディが食い違い、ブラウザ側で
-  // `ERR_CONTENT_DECODING_FAILED` が発生することがあるため、
-  // 安全なヘッダだけを転送する。
-  const safeHeaderKeys = new Set(['content-type', 'cache-control', 'etag', 'last-modified'])
-
   res.status(originalResponse.status)
-  originalResponse.headers.forEach((value, key) => {
-    const lowerKey = key.toLowerCase()
-    if (safeHeaderKeys.has(lowerKey)) {
-      res.setHeader(key, value)
-    }
-  })
+  // 圧縮や接続制御に関するヘッダのみ除外し、それ以外（特にセキュリティ関連ヘッダ）は透過する
+  forwardSafeHeaders(originalResponse, res)
 
   pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (err: NodeJS.ErrnoException | null) => {
     if (err) {
@@ -117,6 +136,9 @@ export const handleEventOgpRequest = https.onRequest(
           await returnOriginalIndexHtml(site, res)
           return
         }
+        // Firebase Hosting が付与したセキュリティ関連ヘッダを維持しつつ、
+        // Cache-Control はこの関数側で上書きする
+        forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(eventData.event_name)
         context.description = convertToOgpString(eventData.event_desc)
         context.image = eventData.event_cover_url
@@ -192,6 +214,9 @@ export const handleCommunityOgpRequest = https.onRequest(
           await returnOriginalIndexHtml(site, res)
           return
         }
+        // Firebase Hosting が付与したセキュリティ関連ヘッダを維持しつつ、
+        // Cache-Control はこの関数側で上書きする
+        forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(communityData.community_name)
         context.description = convertToOgpString(communityData.community_desc)
         context.image = communityData.community_cover_image_url
