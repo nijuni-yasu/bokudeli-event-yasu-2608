@@ -16,19 +16,34 @@ interface OgpContext {
 
 const returnOriginalIndexHtml = async (site: string, res: express.Response) => {
   const originalResponse = await fetch(`${site}/index.html`)
-  if (originalResponse.ok) {
-    res.status(originalResponse.status)
-    originalResponse.headers.forEach((value, key) => {
-      res.setHeader(key, value)
-    })
-    pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (err: NodeJS.ErrnoException | null) => {
-      if (err) {
-        console.error('Pipeline failed for original response.', err)
-      }
-    })
-  } else {
+
+  if (!originalResponse.ok || !originalResponse.body) {
     res.status(500).send('Could not retrieve index.html')
+    return
   }
+
+  // Firebase Hosting 側からのレスポンスヘッダをそのまま流すと
+  // content-encoding などの値とボディが食い違い、ブラウザ側で
+  // `ERR_CONTENT_DECODING_FAILED` が発生することがあるため、
+  // 安全なヘッダだけを転送する。
+  const safeHeaderKeys = new Set(['content-type', 'cache-control', 'etag', 'last-modified'])
+
+  res.status(originalResponse.status)
+  originalResponse.headers.forEach((value, key) => {
+    const lowerKey = key.toLowerCase()
+    if (safeHeaderKeys.has(lowerKey)) {
+      res.setHeader(key, value)
+    }
+  })
+
+  pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (err: NodeJS.ErrnoException | null) => {
+    if (err) {
+      console.error('Pipeline failed for original response.', err)
+      if (!res.headersSent) {
+        res.status(500).send('Internal Server Error during stream processing')
+      }
+    }
+  })
 }
 
 const convertToOgpString = (inputString: string): string => {
