@@ -21,6 +21,8 @@ export default {
     manual: '店舗マニュアル',
     community: '店舗主催設定',
     event: '店舗主催イベント',
+    shokujii: 'shokujii公式サイト',
+    about: 'shokujiiって？',
   },
   forgot_password_dialog: {
     title: 'パスワードの再設定',
@@ -183,14 +185,13 @@ export default {
     organizer_email: '【メールアドレス】 {0}',
     organizer_memo: '【配送メモ】 {0}',
     accept_or_decline: '予約を承認しますか？',
-    accept_order: '予約内容を承認する。',
-    decline_order: '予約内容を却下し、日程等の変更を依頼する。',
-    send_email_message: 'お店からのメッセージ',
-    accept_order_sample:
-      'ご予約ありがとうございます。ご指定のお時間にお届けいたしますので、よろしくお願い申し上げます。',
+    accept_order: '予約内容を承認する',
+    decline_order: '予約内容の変更を依頼する',
+    send_email_message: 'お店から主催者へのメッセージ',
+    accept_order_sample: 'ご予約ありがとうございます。ご指定のお時間にお届けいたしますので、よろしくお願いします。',
     decline_order_sample:
-      '誠に恐れ入りますが当日の予約が埋まっているため、日程等の変更をご検討いただけますと幸いです。どうぞよろしくお願い申し上げます。',
-    send_email: '主催者にメールを送信する',
+      '誠に恐れ入りますが、当日の対応が難しい状況のため、日程や内容の変更をご検討いただけますと幸いです。どうぞよろしくお願いいたします。',
+    send_email: '主催者へメッセージを送信する',
     order_detail: '注文内容',
     menu_name: 'メニュー名',
     menu_price: '金額',
@@ -207,6 +208,19 @@ export default {
     names_sheet_print_button: '[お名前]をダウンロード',
     names_sheet_print_button_desc:
       '※[お名前]の記載について、詳細は <a href="https://docs.google.com/presentation/d/1TJF92qrL1x8b-k3sYiVtmcOJ4YZNof4l5IYmXJIMQsg/edit#slide=id.g2ffdee5a4fe_13_22" target="_blank">店舗マニュアル</a> を確認ください。',
+    confirm_accept_dialog: {
+      title: '予約承認',
+      message:
+        '予約を承認しますか？<br />承認後はキャンセルやメニュー内容の変更ができません。<br />メニューの内容を変更する場合は、予約承認前にご対応ください。',
+      close: '閉じる',
+      submit: '予約承認を確定する',
+    },
+    confirm_decline_dialog: {
+      title: '予約の変更依頼',
+      message: '予約内容の変更を依頼しますか？必要事項はメッセージ欄に記載してください。',
+      close: '閉じる',
+      submit: '予約を変更依頼する',
+    },
   },
   menu_card: {
     sold_out: '売り切れ',
