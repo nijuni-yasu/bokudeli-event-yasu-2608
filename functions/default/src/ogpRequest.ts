@@ -14,21 +14,55 @@ interface OgpContext {
   description?: string
 }
 
+/**
+ * Firebase Hosting から取得したレスポンスヘッダを、圧縮や接続制御に関するものだけ除外して転送する。
+ * これにより、Content-Security-Policy などのセキュリティ関連ヘッダは維持される。
+ */
+const forwardSafeHeaders = (from: Response, to: express.Response, options?: { excludeCacheControl?: boolean }) => {
+  const excludedHeaderKeys = new Set([
+    // 圧縮・転送関連
+    'content-encoding',
+    'transfer-encoding',
+    // ボディサイズは Node/Express 側で決定させる
+    'content-length',
+    // 接続制御系（Hop-by-hop ヘッダ）は Node/Express に任せる
+    'connection',
+    'keep-alive',
+    'upgrade',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailer',
+  ])
+
+  from.headers.forEach((value, key) => {
+    const lowerKey = key.toLowerCase()
+    if (excludedHeaderKeys.has(lowerKey)) return
+    if (options?.excludeCacheControl && lowerKey === 'cache-control') return
+    to.setHeader(key, value)
+  })
+}
+
 const returnOriginalIndexHtml = async (site: string, res: express.Response) => {
   const originalResponse = await fetch(`${site}/index.html`)
-  if (originalResponse.ok) {
-    res.status(originalResponse.status)
-    originalResponse.headers.forEach((value, key) => {
-      res.setHeader(key, value)
-    })
-    pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (err: NodeJS.ErrnoException | null) => {
-      if (err) {
-        console.error('Pipeline failed for original response.', err)
-      }
-    })
-  } else {
+
+  if (!originalResponse.ok || !originalResponse.body) {
     res.status(500).send('Could not retrieve index.html')
+    return
   }
+
+  res.status(originalResponse.status)
+  // 圧縮や接続制御に関するヘッダのみ除外し、それ以外（特にセキュリティ関連ヘッダ）は透過する
+  forwardSafeHeaders(originalResponse, res)
+
+  pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (err: NodeJS.ErrnoException | null) => {
+    if (err) {
+      console.error('Pipeline failed for original response.', err)
+      if (!res.headersSent) {
+        res.status(500).send('Internal Server Error during stream processing')
+      }
+    }
+  })
 }
 
 const convertToOgpString = (inputString: string): string => {
@@ -102,6 +136,9 @@ export const handleEventOgpRequest = https.onRequest(
           await returnOriginalIndexHtml(site, res)
           return
         }
+        // Firebase Hosting が付与したセキュリティ関連ヘッダを維持しつつ、
+        // Cache-Control はこの関数側で上書きする
+        forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(eventData.event_name)
         context.description = convertToOgpString(eventData.event_desc)
         context.image = eventData.event_cover_url
@@ -177,6 +214,9 @@ export const handleCommunityOgpRequest = https.onRequest(
           await returnOriginalIndexHtml(site, res)
           return
         }
+        // Firebase Hosting が付与したセキュリティ関連ヘッダを維持しつつ、
+        // Cache-Control はこの関数側で上書きする
+        forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(communityData.community_name)
         context.description = convertToOgpString(communityData.community_desc)
         context.image = communityData.community_cover_image_url
