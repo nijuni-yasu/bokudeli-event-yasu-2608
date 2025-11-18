@@ -29,10 +29,8 @@ const router = useRouter()
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
 const userStore = useCurrentUserStore()
-const currentUserId = computed(() => userStore.firebaseUser?.uid ?? null)
 
-// 共通の composable を使用してサポートアカウントのロール拡張を考慮
-const { isMember, isManager } = useCommunityMemberFlags(communityStore, currentUserId)
+const { isMember, isManager } = useCommunityMemberFlags(props.communityId)
 
 type EventWithMembers = {
   event: BokudeliEvent

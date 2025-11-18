@@ -15,7 +15,6 @@ import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
 import { useBannersStore } from '@shokujii/base/stores/banner.js'
-import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 
 const route = useRoute()
@@ -31,11 +30,8 @@ const menuNavigation = ref(true)
 const menuListRef = ref()
 let menuListObserver: IntersectionObserver | null = null
 
-const userStore = useCurrentUserStore()
-const currentUserId = computed(() => userStore.firebaseUser?.uid ?? null)
-
 // 共通の composable を使用してサポートアカウントのロール拡張を考慮（isManager のみ使用）
-const { isManager } = useCommunityMemberFlags(communityStore, currentUserId)
+const { isManager } = useCommunityMemberFlags(communityId)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 

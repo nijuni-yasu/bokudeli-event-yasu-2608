@@ -13,7 +13,6 @@ import {
   where,
   onSnapshot,
   setDoc,
-  Timestamp,
   type DocumentReference,
   type Unsubscribe,
   type FirestoreDataConverter,
@@ -282,8 +281,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       }
       const communityRef = await getCommunityRef()
       const memberRef = doc(communityRef, 'members', uid)
-      const now = Timestamp.now()
-      await setDoc(memberRef, { updated_at: now }, { merge: true })
+      await setDoc(memberRef, {}, { merge: true })
     }
 
     const leaveCommunity = async (userId?: string) => {

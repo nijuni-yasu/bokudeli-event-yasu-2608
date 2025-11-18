@@ -1,18 +1,19 @@
-import { ref, watchEffect, type Ref, type ComputedRef } from 'vue'
-import type { CommunityStore } from '@shokujii/base/stores/community'
+import { ref, watchEffect, computed, type Ref } from 'vue'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 
 /**
  * コミュニティのメンバーシップフラグを計算する composable
  * サポートアカウントのロール拡張を考慮する
  *
- * @param communityStore - コミュニティストア
- * @param currentUserId - 現在のユーザーID（computed ref）
+ * @param communityId - コミュニティID
  * @returns isMember と isManager の ref
  */
-export const useCommunityMemberFlags = (
-  communityStore: CommunityStore,
-  currentUserId: ComputedRef<string | null>,
-): { isMember: Ref<boolean>; isManager: Ref<boolean> } => {
+export const useCommunityMemberFlags = (communityId: string): { isMember: Ref<boolean>; isManager: Ref<boolean> } => {
+  const communityStore = useCommunityStore(communityId) as CommunityStore
+  const currentUserStore = useCurrentUserStore()
+  const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? null)
+
   const isMember = ref(false)
   const isManager = ref(false)
 

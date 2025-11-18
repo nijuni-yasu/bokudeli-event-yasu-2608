@@ -77,7 +77,8 @@ export class Community {
   community_sns_hash_tag: string = ''
   community_bill_fullname: string = ''
   community_bill_email: string = ''
-  community_num_members: number = 0
+  // community_num_members はソート用で functions で処理されるフィールド。ここに追加すると不整合が起こるため追加してはいけない。
+  // community_num_members: number = 0
   members: (typeof DocumentReference)[] = []
   managers: (typeof DocumentReference)[] = []
 
