@@ -3,7 +3,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
 import avatar1 from '@/assets/images/avatars/default_profile.jpeg'
 import { User } from '@shokujii/common/schemas/User.js'
-import { buildThumbnailsLinks } from '@shokujii/base/utils/buildThumbnailsLinks.js'
+import { buildThumbnailsLinks } from '@shokujii/common/utils/buildThumbnailsLinks.js'
 
 const MAX_RETRIES = 10
 const RETRY_DELAY = 1000
