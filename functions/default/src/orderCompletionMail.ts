@@ -159,8 +159,6 @@ async function sendNewEventNotificationToMembers(event: ShokujiiEvent, userId: s
     // 送信済みフラグを設定してイベントを更新
     event.sent_new_event_mail_at = Timestamp.now().toMillis()
     await saveEvent(userId, event)
-
-    console.log(`New event notification sent for event: ${event.id}`)
   } catch (error) {
     console.error('Failed to send new event notification:', error)
   }

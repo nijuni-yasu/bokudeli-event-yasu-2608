@@ -66,9 +66,8 @@ export async function getEventMemberEmails(event: ShokujiiEvent): Promise<string
  * コミュニティメンバー全員のメールアドレスを取得（注文済みユーザーを除外）
  */
 export async function getCommunityMemberEmailsExcludingOrdered(event: ShokujiiEvent): Promise<string[]> {
-  // コミュニティIDの取得
-  const communityId = event.community_id || event.community_account
-  const community = await getCommunity(communityId)
+  // コミュニティの取得
+  const community = await getCommunity(event.community_id)
   if (!community) {
     return []
   }
