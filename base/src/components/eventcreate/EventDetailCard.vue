@@ -248,23 +248,21 @@ const tinymceInit = {
       {{ $t('event_detail.payment') }}
     </v-card-title>
     <v-card-text>
-      <v-row>
-        <v-col cols="12" sm="12" md="6">
-          <v-select
-            v-model="event.event_payment"
-            :items="eventPaymentSelectableItems"
-            :variant="textFieldVariant"
-            hide-details
-            class="mt-0"
-            :rules="[requiredValidator]"
-            :readonly="event.event_status.value !== 'in_draft'"
-          >
-            <template #label> {{ $t('event_detail.payment') }} </template>
-          </v-select>
-        </v-col>
-      </v-row>
+      <v-radio-group
+        v-model="event.event_payment"
+        hide-details
+        class="ma-3"
+        :readonly="event.event_status.value !== 'in_draft'"
+      >
+        <v-radio
+          v-for="item in eventPaymentSelectableItems"
+          :key="item.value"
+          :value="item.value"
+          :label="item.title"
+        />
+      </v-radio-group>
       <template v-if="event.event_payment === 'community_bill'">
-        <v-row class="justify-center">
+        <v-row class="justify-center px-3">
           <v-col cols="12">
             <v-text-field
               v-model="event.bill_fullname"
@@ -276,7 +274,7 @@ const tinymceInit = {
             />
           </v-col>
         </v-row>
-        <v-row class="justify-center">
+        <v-row class="justify-center px-3">
           <v-col cols="12">
             <v-text-field
               v-model="event.bill_email"
