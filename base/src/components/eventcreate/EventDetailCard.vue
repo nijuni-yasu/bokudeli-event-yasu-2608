@@ -232,15 +232,13 @@ const tinymceInit = {
       {{ $t('event_detail.activity') }}
     </v-card-title>
     <v-card-text>
-      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="props.readonly">
-        <template v-slot:label>
-          <span v-if="event.is_public">{{ $t('event_detail.public') }}</span>
-          <span v-else>{{ $t('event_detail.private') }}</span>
-        </template>
-      </v-switch>
+      <v-radio-group v-model="event.is_public" hide-details class="ma-3" :readonly="props.readonly">
+        <v-radio :value="true" :label="$t('event_detail.public')" />
+        <v-radio :value="false" :label="$t('event_detail.private')" />
+      </v-radio-group>
       <div class="mt-2 text-subtitle-2">
-        <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
-        <span v-else>{{ $t('event_detail.private_desc') }}</span>
+        <span v-if="event.is_public"><div v-html="$t('event_detail.public_desc')" /></span>
+        <span v-else><div v-html="$t('event_detail.private_desc')" /></span>
       </div>
     </v-card-text>
 
