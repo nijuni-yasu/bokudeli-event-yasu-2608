@@ -22,7 +22,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
 import { Community } from '@shokujii/common/schemas/Community.js'
-import { CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
+import { CommunityMember, CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
@@ -65,6 +65,15 @@ export const communityConverter: FirestoreDataConverter<BokudeliCommunity> = {
   },
   fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): BokudeliCommunity {
     return new BokudeliCommunity(snapshot.id, snapshot.data(options))
+  },
+}
+
+const communityMemberConverter: FirestoreDataConverter<CommunityMember> = {
+  toFirestore(member: CommunityMember): DocumentData {
+    return member.toFirestore()
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): CommunityMember {
+    return new CommunityMember(snapshot.id, snapshot.data(options))
   },
 }
 
@@ -280,7 +289,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
         throw new Error('not-logged-in')
       }
       const communityRef = await getCommunityRef()
-      const memberRef = doc(communityRef, 'members', uid)
+      const memberRef = doc(communityRef, 'members', uid).withConverter(communityMemberConverter)
       await setDoc(memberRef, {}, { merge: true })
     }
 
@@ -290,12 +299,12 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
         throw new Error('not-logged-in')
       }
       const communityRef = await getCommunityRef()
-      const memberRef = doc(communityRef, 'members', uid)
+      const memberRef = doc(communityRef, 'members', uid).withConverter(communityMemberConverter)
       const memberDoc = await getDoc(memberRef)
       if (!memberDoc.exists()) {
         return
       }
-      const roles: string[] = memberDoc.data()?.roles ?? []
+      const roles = memberDoc.data()?.roles ?? []
       if (roles.includes('manager')) {
         throw new Error('manager-cannot-leave')
       }
