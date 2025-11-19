@@ -1,56 +1,47 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { getPartner } from './stores/partner'
+import { getEvent } from './stores/event'
 
 /**
  * パートナーのメニューをイベントのメニューコレクションにスナップショットとしてコピー
  * @param partnerId - パートナーID
- * @param communityId - コミュニティID
  * @param eventId - イベントID
  * @param startDatetime - イベント開始日時（ミリ秒）
  */
-const makeMenuSnapshot = async (
-  partnerId: string,
-  communityId: string,
-  eventId: string,
-  startDatetime: number | null,
-): Promise<void> => {
-  const db = getFirestore()
-  const sourceCollectionRef = db.collection('partners').doc(partnerId).collection('menus')
-  const targetCollectionRef = db
-    .collection('communities')
-    .doc(communityId)
-    .collection('events')
-    .doc(eventId)
-    .collection('menus')
-
-  await db.runTransaction(async (transaction) => {
-    const targetSnapshot = await transaction.get(targetCollectionRef)
-    const sourceSnapshot = await transaction.get(sourceCollectionRef)
-
+const makeMenuSnapshot = async (partnerId: string, eventId: string, startDatetime: number): Promise<void> =>
+  getFirestore().runTransaction(async (transaction) => {
+    const partner = await getPartner(partnerId)
+    const event = await getEvent(eventId, transaction)
+    if (partner == null || event == null) {
+      throw new Error(`Partner ${partnerId} or Event ${eventId} not found`)
+    }
+    const partnerMenus = await partner.getMenus(transaction)
+    const eventMenus = await event.getMenus(transaction)
     // 既存のメニューを削除
-    targetSnapshot.docs.forEach((doc) => {
-      transaction.delete(doc.ref)
-    })
+    await Promise.all(
+      eventMenus.map(async (menu) => {
+        await event.deleteMenu(menu, transaction)
+      }),
+    )
 
     // パートナーのメニューをコピー（期間が重なるもののみ）
-    sourceSnapshot.docs.forEach((doc) => {
-      const menuDateStart = doc.get('menu_date_start') as Timestamp | undefined
-      const menuDateEnd = doc.get('menu_date_end') as Timestamp | undefined
+    await Promise.all(
+      partnerMenus.map(async (menu) => {
+        const menuDateStart = menu.menu_date_start
+        const menuDateEnd = menu.menu_date_end
 
-      const menuDateStartMillis = menuDateStart?.toMillis()
-      const menuDateEndMillis = menuDateEnd?.toMillis()
-
-      // メニューの日付が未設定、またはイベント開始時刻がメニューの期間内の場合はコピー
-      if (
-        menuDateStartMillis == null ||
-        menuDateEndMillis == null ||
-        (menuDateStartMillis! <= startDatetime! && startDatetime! <= menuDateEndMillis!)
-      ) {
-        transaction.set(targetCollectionRef.doc(doc.id), doc.data())
-      }
-    })
+        // メニューの日付が未設定、またはイベント開始時刻がメニューの期間内の場合はコピー
+        if (
+          menuDateStart == null ||
+          menuDateEnd == null ||
+          (menuDateStart <= startDatetime && startDatetime <= menuDateEnd)
+        ) {
+          await event.saveMenu(menu, transaction)
+        }
+      }),
+    )
   })
-}
 
 /**
  * イベント作成・更新時に、パートナーのメニューをイベントのメニューコレクションにスナップショットとしてコピー
@@ -92,22 +83,22 @@ export const makeShopSnapshotToEvent = onDocumentWritten(
     }
 
     // イベントデータを取得
-    const afterStartDatetime = (after.get('event_start_datetime') as Timestamp | undefined)?.toMillis() ?? null
+    const startDatetime = (after.get('event_start_datetime') as Timestamp | undefined)?.toMillis() ?? null
     const partnerId = after.get('partner_id') as string | undefined
     const communityId = after.get('community_id') as string | undefined
     const eventId = after.id
     const eventName = after.get('event_name') as string | undefined
 
     // 必須パラメータのチェック
-    if (!partnerId || !communityId) {
+    if (!partnerId || !startDatetime) {
       console.warn(
-        `Missing required parameters: partnerId=${partnerId}, communityId=${communityId}, eventId=${eventId}`,
+        `Missing required parameters: partnerId=${partnerId}, communityId=${communityId}, eventId=${eventId}, startDatetime=${startDatetime}`,
       )
       return
     }
 
     try {
-      await makeMenuSnapshot(partnerId, communityId, eventId, afterStartDatetime)
+      await makeMenuSnapshot(partnerId, eventId, startDatetime)
     } catch (error) {
       console.warn(`Community: ${communityId}, Event: ${eventId}, EventName: ${eventName}`, error)
     }
