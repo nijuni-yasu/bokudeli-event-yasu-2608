@@ -290,7 +290,8 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       }
       const communityRef = await getCommunityRef()
       const memberRef = doc(communityRef, 'members', uid).withConverter(communityMemberConverter)
-      await setDoc(memberRef, {}, { merge: true })
+      const member = new CommunityMember(uid, {})
+      await setDoc(memberRef, member, { merge: true })
     }
 
     const leaveCommunity = async (userId?: string) => {
