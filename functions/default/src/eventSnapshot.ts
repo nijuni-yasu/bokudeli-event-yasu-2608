@@ -1,7 +1,7 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import { getPartner } from './stores/partner'
-import { getEvent } from './stores/event'
+import { getPartner } from './stores/partner.js'
+import { getEvent } from './stores/event.js'
 
 /**
  * パートナーのメニューをイベントのメニューコレクションにスナップショットとしてコピー
