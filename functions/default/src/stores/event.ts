@@ -11,6 +11,7 @@ import { Event, type RawEventStatusType } from '@shokujii/common/schemas/Event.j
 import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
+import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
   constructor(private readonly userId?: string) {
@@ -106,7 +107,13 @@ export class ShokujiiEvent extends Event {
     return snapshot.docs.map((doc) => doc.data())
   }
 
-  async saveMenu(menu: EventMenu, transaction?: Transaction): Promise<void> {
+  async saveMenu(_menu: EventMenu | PartnerMenu, transaction?: Transaction): Promise<void> {
+    let menu: EventMenu
+    if (_menu instanceof PartnerMenu) {
+      menu = new EventMenu(this.id, _menu.id, _menu)
+    } else {
+      menu = _menu
+    }
     const db = getFirestore()
     const menuRef = db
       .collection('communities')
@@ -120,6 +127,23 @@ export class ShokujiiEvent extends Event {
       await menuRef.set(menu, { merge: true })
     } else {
       transaction.set(menuRef, menu, { merge: true })
+    }
+  }
+
+  async deleteMenu(menu: EventMenu, transaction?: Transaction): Promise<void> {
+    const db = getFirestore()
+    const menuRef = db
+      .collection('communities')
+      .doc(this.community_id)
+      .collection('events')
+      .doc(this.id)
+      .collection('menus')
+      .doc(menu.id)
+      .withConverter(new ShokujiiEventMenuConverter())
+    if (transaction === undefined) {
+      await menuRef.delete()
+    } else {
+      transaction.delete(menuRef)
     }
   }
 
