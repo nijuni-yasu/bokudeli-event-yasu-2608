@@ -108,9 +108,13 @@ export class Partner {
   }
 }
 
-export const getPartner = async (id: string): Promise<Partner> => {
-  // TODO パートナーが存在するかどうかを確認する
-  return new Partner(id)
+// 基本的に getXXX には transaction を渡しているが、
+// Partner には Document が存在しないので transaction では取得できない
+export const getPartner = async (id: string): Promise<Partner | undefined> => {
+  const db = getFirestore()
+  const shopsRef = db.collection('partners').doc(id).collection('shops').withConverter(new PartnerShopConverter())
+  const shops = await shopsRef.listDocuments()
+  return shops.length !== 0 ? new Partner(id) : undefined
 }
 
 export const getEventPartnerShop = async (
