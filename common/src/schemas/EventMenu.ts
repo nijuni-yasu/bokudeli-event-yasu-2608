@@ -7,6 +7,7 @@ const EventMenuDbSchema = z.object({
   menu_image_url: z.string().url().nonempty(),
   menu_name: z.string().nonempty(),
   menu_price: z.number().int().positive(),
+  is_sold_out: z.boolean(),
 })
 
 const EventMenuAppSchema = z.object({
@@ -16,6 +17,7 @@ const EventMenuAppSchema = z.object({
   menu_price: z.number().int().positive().default(100),
   menu_image_url: z.string().default(''),
   menu_description: z.string().default(''),
+  is_sold_out: z.boolean().default(false),
 })
 
 const convertToDb = (menu: EventMenu) => {
@@ -35,6 +37,7 @@ export class EventMenu {
   menu_image_url!: string
   menu_name!: string
   menu_price!: number
+  is_sold_out!: boolean
 
   constructor(event_id: string, menu_id: string, src: Partial<EventMenu>) {
     Object.assign(this, EventMenuAppSchema.parse(src))
