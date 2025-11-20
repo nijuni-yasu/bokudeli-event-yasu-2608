@@ -53,6 +53,11 @@ watch(
   () => communityStore.community,
   (community) => {
     if (props.eventId == null && _event.value == null && community != null) {
+      // コミュニティ名が取得できない場合は空文字列を使用
+      const communityName = community.community_name || ''
+      const eventName = communityName ? `${communityName}のイベント` : ''
+      const eventDesc = communityName ? `${communityName}のイベント` : ''
+
       _event.value = new BokudeliEvent(community.community_id, null, {
         community_id: community.community_id,
         community_name: community.community_name,
@@ -61,6 +66,10 @@ watch(
         organizer_company: community.community_company,
         organizer_email: community.community_email,
         organizer_phone_company: community.community_phone,
+        // 初期値の設定
+        event_name: eventName,
+        event_cover_url: community.community_cover_image_url ?? '',
+        event_desc: eventDesc,
       })
     }
   },
@@ -261,7 +270,8 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   }
   const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
   if (props.eventId == null) {
-    if (coverImage.value == null) {
+    // event_cover_urlが既に設定されている場合はcoverImage.valueがnullでもOK
+    if (coverImage.value == null && !event.value.event_cover_url) {
       return null
     }
     // 新規作成
