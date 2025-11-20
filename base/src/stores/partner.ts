@@ -108,7 +108,7 @@ export const usePartnerStore = (partnerId: string) => {
         data.shop_image_url = (await uploadShopImage(partnerRef.id, data.shop_id, image)) ?? ''
       }
       const shopRef = doc(partnerRef, 'shops', data.shop_id).withConverter(shopConverter)
-      return await setDoc(shopRef, data)
+      return await setDoc(shopRef, data, { merge: true })
     }
 
     const updateMenu = async (data: BokudeliPartnerMenu, image?: File) => {
@@ -116,7 +116,7 @@ export const usePartnerStore = (partnerId: string) => {
         data.menu_image_url = (await uploadMenuImage(partnerRef.id, data.id, image)) ?? ''
       }
       const menuRef = doc(partnerRef, 'menus', data.id).withConverter(menuConverter)
-      return await setDoc(menuRef, data)
+      return await setDoc(menuRef, data, { merge: true })
     }
 
     const deleteMenu = async (menuId: string) => {
