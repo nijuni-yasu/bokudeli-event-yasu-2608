@@ -5,6 +5,7 @@ import { getUserPath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { mdiEmail, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb, mdiCrown, mdiAccountGroup } from '@mdi/js'
+import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 
 const props = defineProps<{
   community: BokudeliCommunity
@@ -70,6 +71,15 @@ const isShowMember = computed(() =>
       >
         {{ $t('community_bio_panel.contact') }}
       </v-btn>
+    </v-col>
+    <v-col class="pt-0">
+      <community-membership-button
+        v-if="community.community_account"
+        :community-id="community.community_account"
+        block
+        :join-button-props="{ rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
+        :leave-button-props="{ variant: 'outlined', rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
+      />
     </v-col>
     <!-- community manager -->
     <div v-if="members?.some((m) => m?.roles?.includes('manager') ?? false)">

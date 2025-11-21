@@ -14,6 +14,7 @@ import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
 import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
+import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 import VueQrious from 'vue-qrious'
 import {
   mdiEmail,
@@ -315,31 +316,46 @@ const isShowMember = computed(() =>
           <v-row align-self-center>
             <v-row class="ma-1">
               <router-link :to="getCommunityPath(event.community_account)">
-                <v-img
-                  :src="community.community_icon_image_url"
-                  style="border-radius: 10%; width: 100px; height: 100px"
-                  aspect-ratio="1"
-                  cover
-                  max-width="100px"
-                />
+                <v-img :src="community.community_icon_image_url" class="community-icon" aspect-ratio="1" cover />
               </router-link>
               <div class="ml-2 align-self-end">
                 <router-link
                   :to="getCommunityPath(event.community_account)"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
-                  <div class="ma-1" style="font-size: 12px">{{ $t('event_details.community_name') }}</div>
-                  <div class="ma-1" style="font-size: 18px">{{ community.community_name }}</div>
+                  <div class="community-name-label">{{ $t('event_details.community_name') }}</div>
+                  <div class="pa-1 ma-1 community-name-text text-wrap">{{ community.community_name }}</div>
                 </router-link>
-                <v-btn
-                  class="ma-1"
-                  variant="outlined"
-                  rounded="pill"
-                  :prepend-icon="mdiEmail"
-                  @click="openContactDialog"
-                >
-                  {{ $t('event_details.contact_community') }}
-                </v-btn>
+                <v-row class="ma-2 community-actions" align="center" justify="start">
+                  <v-col cols="auto" class="pa-0">
+                    <v-btn
+                      variant="outlined"
+                      rounded="pill"
+                      size="small"
+                      :prepend-icon="mdiEmail"
+                      @click="openContactDialog"
+                    >
+                      {{ $t('event_details.contact_community') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="auto" class="pa-0">
+                    <community-membership-button
+                      v-if="community.community_account"
+                      :community-id="community.community_account"
+                      :join-button-props="{
+                        rounded: 'pill',
+                        size: 'small',
+                        'prepend-icon': mdiAccountGroup,
+                      }"
+                      :leave-button-props="{
+                        variant: 'outlined',
+                        rounded: 'pill',
+                        size: 'small',
+                        'prepend-icon': mdiAccountGroup,
+                      }"
+                    />
+                  </v-col>
+                </v-row>
                 <community-contact-dialog
                   v-model="isOpenContactDialogVisible"
                   :community-name="community.community_name"
@@ -421,5 +437,39 @@ iframe {
 }
 .text-small {
   font-size: 14px !important;
+}
+
+.community-icon {
+  border-radius: 10%;
+  width: 100px;
+  height: 100px;
+}
+
+.community-actions {
+  gap: 12px;
+}
+
+.community-name-label {
+  font-size: 12px;
+}
+
+.community-name-text {
+  font-size: 24px;
+}
+
+@media (max-width: 600px) {
+  .community-name-text {
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .community-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .community-actions .v-col {
+    width: 100%;
+  }
 }
 </style>

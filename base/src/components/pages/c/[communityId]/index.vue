@@ -19,6 +19,7 @@ import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import { useEventStore } from '@shokujii/base/stores/event'
 import type { EventStore, BokudeliEvent, BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 
 const props = defineProps<{
   communityId: string
@@ -27,12 +28,9 @@ const router = useRouter()
 
 const communityStore = useCommunityStore(props.communityId) as CommunityStore
 
-const isMember = ref(false)
-const isManager = ref(false)
-communityStore.getCurrentUserRoles().then((roles) => {
-  isMember.value = roles != null
-  isManager.value = roles?.includes('manager') ?? false
-})
+const userStore = useCurrentUserStore()
+
+const { isMember, isManager } = useCommunityMemberFlags(props.communityId)
 
 type EventWithMembers = {
   event: BokudeliEvent
@@ -70,8 +68,6 @@ const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
 
-// コミュニティへの問い合わせはログイン必須
-const userStore = useCurrentUserStore()
 const openContactDialog = () => {
   if (userStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true

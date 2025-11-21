@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, reactive, computed, watch, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
@@ -13,9 +15,11 @@ import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
 import { useBannersStore } from '@shokujii/base/stores/banner.js'
+import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 
-const communityId = useRoute().params.communityId as string
-const eventId = useRoute().params.eventId as string
+const route = useRoute()
+const communityId = route.params.communityId as string
+const eventId = route.params.eventId as string
 
 const { t: $t } = useI18n()
 
@@ -26,10 +30,8 @@ const menuNavigation = ref(true)
 const menuListRef = ref()
 let menuListObserver: IntersectionObserver | null = null
 
-const isManager = ref(false)
-communityStore.getCurrentUserRoles().then((roles) => {
-  isManager.value = roles?.includes('manager') ?? false
-})
+// 共通の composable を使用してサポートアカウントのロール拡張を考慮（isManager のみ使用）
+const { isManager } = useCommunityMemberFlags(communityId)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 
@@ -52,6 +54,8 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
       return 'not_accepting_order'
     case 'accepting_order':
       return false
+    default:
+      return null
   }
 })
 
@@ -70,7 +74,7 @@ const selectMenu = (menu: BokudeliEventMenu) => {
   if (disabledReason == null) {
     return
   }
-  if (menuDisabled.value === 'finished') {
+  if (disabledReason === 'finished') {
     alertState.message = $t('menu_disabled_reason.finished')
     alertState.isOpen = true
   } else if (disabledReason === false) {

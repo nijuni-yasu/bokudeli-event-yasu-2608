@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { getAuth } from 'firebase/auth'
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   getDoc,
@@ -21,7 +22,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
 import { Community } from '@shokujii/common/schemas/Community.js'
-import { CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
+import { CommunityMember, CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
@@ -64,6 +65,15 @@ export const communityConverter: FirestoreDataConverter<BokudeliCommunity> = {
   },
   fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): BokudeliCommunity {
     return new BokudeliCommunity(snapshot.id, snapshot.data(options))
+  },
+}
+
+const communityMemberConverter: FirestoreDataConverter<CommunityMember> = {
+  toFirestore(member: CommunityMember): DocumentData {
+    return member.toFirestore()
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): CommunityMember {
+    return new CommunityMember(snapshot.id, snapshot.data(options))
   },
 }
 
@@ -273,6 +283,35 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       return Array.from(roles)
     }
 
+    const joinCommunity = async (userId?: string) => {
+      const uid = userId ?? getAuth().currentUser?.uid
+      if (uid == null) {
+        throw new Error('not-logged-in')
+      }
+      const communityRef = await getCommunityRef()
+      const memberRef = doc(communityRef, 'members', uid).withConverter(communityMemberConverter)
+      const member = new CommunityMember(uid, {})
+      await setDoc(memberRef, member, { merge: true })
+    }
+
+    const leaveCommunity = async (userId?: string) => {
+      const uid = userId ?? getAuth().currentUser?.uid
+      if (uid == null) {
+        throw new Error('not-logged-in')
+      }
+      const communityRef = await getCommunityRef()
+      const memberRef = doc(communityRef, 'members', uid).withConverter(communityMemberConverter)
+      const memberDoc = await getDoc(memberRef)
+      if (!memberDoc.exists()) {
+        return
+      }
+      const roles = memberDoc.data()?.roles ?? []
+      if (roles.includes('manager')) {
+        throw new Error('manager-cannot-leave')
+      }
+      await deleteDoc(memberRef)
+    }
+
     const addRole = async (userId: string, role: string) => {
       const communityRef = await getCommunityRef()
       const memberRef = doc(communityRef, 'members', userId)
@@ -298,6 +337,8 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       updateIconImage,
       addRole,
       removeRole,
+      joinCommunity,
+      leaveCommunity,
       subscribe,
       unsubscribe,
       getCurrentUserRoles,
