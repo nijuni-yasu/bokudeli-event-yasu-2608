@@ -112,13 +112,20 @@ export const orderConverter: FirestoreDataConverter<EventOrder> = {
   },
 }
 
-export const createNewEvent = async (event: BokudeliEvent, coverImage: File): Promise<BokudeliEvent> => {
+export const createNewEvent = async (event: BokudeliEvent, coverImage: File | null): Promise<BokudeliEvent> => {
   const communityRef = doc(db, 'communities', event.community_id)
   const community = await getDoc(communityRef)
   if (!community.exists()) {
     throw new Error(`community ${event.community_id} does not exists`)
   }
-  event.event_cover_url = await uploadEventImage(community.id, event.id, coverImage)
+  // coverImageがnullでも、event_cover_urlが既に設定されている場合は画像アップロードをスキップ
+  if (coverImage != null) {
+    event.event_cover_url = await uploadEventImage(community.id, event.id, coverImage)
+  }
+  // event_cover_urlが設定されていない場合はエラー
+  if (!event.event_cover_url) {
+    throw new Error('event_cover_url must be set')
+  }
   event.bill_fullname = community.get('community_bill_fullname') ?? community.get('community_manager_fullname') ?? ''
   event.bill_email = community.get('community_bill_email') ?? community.get('community_email') ?? ''
   const newEventRef = doc(communityRef, 'events', event.id).withConverter(eventConverter)
