@@ -306,8 +306,10 @@ export default {
     activity: '公開設定',
     public: '公開イベント',
     private: '限定公開イベント',
-    public_desc: '公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されます。',
-    private_desc: '限定公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されず、URLを知る人だけが参加できます。',
+    public_desc:
+      '公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されます。',
+    private_desc:
+      '限定公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
     payment_hint_user_advance: `<b>【参加者 事前決済】</b>を設定した場合：<br />
     ・食事の代金は、参加者がクレジットカード決済にて事前にお支払いいただきます。<br />
