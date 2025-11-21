@@ -232,15 +232,13 @@ const tinymceInit = {
       {{ $t('event_detail.activity') }}
     </v-card-title>
     <v-card-text>
-      <v-switch v-model="event.is_public" hide-details class="mt-0" :readonly="props.readonly">
-        <template v-slot:label>
-          <span v-if="event.is_public">{{ $t('event_detail.public') }}</span>
-          <span v-else>{{ $t('event_detail.private') }}</span>
-        </template>
-      </v-switch>
+      <v-radio-group v-model="event.is_public" hide-details class="ma-3" :readonly="props.readonly">
+        <v-radio :value="true" :label="$t('event_detail.public')" />
+        <v-radio :value="false" :label="$t('event_detail.private')" />
+      </v-radio-group>
       <div class="mt-2 text-subtitle-2">
-        <span v-if="event.is_public">{{ $t('event_detail.public_desc') }}</span>
-        <span v-else>{{ $t('event_detail.private_desc') }}</span>
+        <span v-if="event.is_public"><div v-html="$t('event_detail.public_desc')" /></span>
+        <span v-else><div v-html="$t('event_detail.private_desc')" /></span>
       </div>
     </v-card-text>
 
@@ -250,23 +248,21 @@ const tinymceInit = {
       {{ $t('event_detail.payment') }}
     </v-card-title>
     <v-card-text>
-      <v-row>
-        <v-col cols="12" sm="12" md="6">
-          <v-select
-            v-model="event.event_payment"
-            :items="eventPaymentSelectableItems"
-            :variant="textFieldVariant"
-            hide-details
-            class="mt-0"
-            :rules="[requiredValidator]"
-            :readonly="event.event_status.value !== 'in_draft'"
-          >
-            <template #label> {{ $t('event_detail.payment') }} </template>
-          </v-select>
-        </v-col>
-      </v-row>
+      <v-radio-group
+        v-model="event.event_payment"
+        hide-details
+        class="ma-3"
+        :readonly="event.event_status.value !== 'in_draft'"
+      >
+        <v-radio
+          v-for="item in eventPaymentSelectableItems"
+          :key="item.value"
+          :value="item.value"
+          :label="item.title"
+        />
+      </v-radio-group>
       <template v-if="event.event_payment === 'community_bill'">
-        <v-row class="justify-center">
+        <v-row class="justify-center px-3">
           <v-col cols="12">
             <v-text-field
               v-model="event.bill_fullname"
@@ -278,7 +274,7 @@ const tinymceInit = {
             />
           </v-col>
         </v-row>
-        <v-row class="justify-center">
+        <v-row class="justify-center px-3">
           <v-col cols="12">
             <v-text-field
               v-model="event.bill_email"
