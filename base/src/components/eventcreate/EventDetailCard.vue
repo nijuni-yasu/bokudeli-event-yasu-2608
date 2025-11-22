@@ -110,14 +110,11 @@ const resizeImage = (blob: Blob, filename: string, maxSize: number): Promise<Fil
 
       let { width, height } = img
 
-      if (Math.max(width, height) > maxSize) {
-        if (width > maxSize) {
-          height *= maxSize / width
-          width = maxSize
-        } else {
-          width *= maxSize / height
-          height = maxSize
-        }
+      // アスペクト比を保ちながら、最大サイズ以下にリサイズ
+      if (width > maxSize || height > maxSize) {
+        const scale = Math.min(maxSize / width, maxSize / height)
+        width *= scale
+        height *= scale
       }
 
       canvas.width = width
