@@ -149,13 +149,8 @@ type BlobInfo = {
   uri: () => string | undefined
 }
 
-// MEMO: 以下で定義されている
-// https://github.com/tinymce/tinymce/blob/56bc9917426d58e526bda4e9c991f6b5bc82443f/modules/tinymce/src/core/main/ts/file/Uploader.ts#L33
-type ProgressFn = (percent: number) => void
-
-const bodyImageUploadHandler = async (blobInfo: BlobInfo, progress: ProgressFn) => {
+const bodyImageUploadHandler = async (blobInfo: BlobInfo) => {
   const file = await resizeImage(blobInfo.blob(), blobInfo.filename(), maxImageSize)
-  // MEMO: コミュニティID、イベントIDがすでに保存されているのを前提とした実装
   const url = await uploadEventImage(event.value.community_id, event.value.event_id, file)
   return url
 }
