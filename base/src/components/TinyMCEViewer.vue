@@ -55,5 +55,9 @@ const props = defineProps<{ content: string; style?: string }>()
     padding: 0;
     margin: 0;
   }
+  img {
+    max-width: 100%;
+    height: auto;
+  }
 }
 </style>

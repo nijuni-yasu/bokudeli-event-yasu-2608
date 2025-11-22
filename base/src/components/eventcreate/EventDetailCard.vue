@@ -162,18 +162,17 @@ const bodyImageUploadHandler = async (blobInfo: BlobInfo, progress: ProgressFn) 
 
 const tinymceInit = {
   language: 'ja',
-  plugins: 'table lists link autolink image',
-  menubar: 'edit insert format',
-  menu: {
-    edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
-    insert: { title: 'Insert', items: 'image link inserttable hr' },
-    format: {
-      title: 'Format',
-      items: 'bold italic underline strikethrough styles forecolor  | language | removeformat',
-    },
-  },
+  plugins: 'lists link autolink image autoresize',
+  menubar: false,
+  min_height: 400,
+  max_height: 800,
+  textcolor_map: ['#2E263DB3', '黒', '#FF4C51', '赤'],
+  textcolor_cols: 2,
+  custom_colors: false,
+  color_map_foreground: ['#2E263DB3', '黒', '#FF4C51', '赤'],
+  color_default_foreground: '#2E263DB3',
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | table link | image',
+  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | link image',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },

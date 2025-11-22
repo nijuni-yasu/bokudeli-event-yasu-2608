@@ -23,5 +23,9 @@ const eventDetailStyle = `
   td{
     padding: 8px;
   }
+  img {
+    max-width: 100%;
+    height: auto;
+  }
 `
 export default eventDetailStyle
