@@ -99,28 +99,27 @@ const resizeImage = (blob: Blob, filename: string, maxSize: number): Promise<Fil
   return new Promise((resolve, reject) => {
     const img = new Image()
     const reader = new FileReader()
-
     reader.onload = (e) => {
       img.src = e.target?.result as string
     }
-
     img.onload = () => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
 
       let { width, height } = img
 
-      // アスペクト比を保ちながら、最大サイズ以下にリサイズ
-      if (width > maxSize || height > maxSize) {
-        const scale = Math.min(maxSize / width, maxSize / height)
-        width *= scale
-        height *= scale
+      if (Math.max(width, height) > maxSize) {
+        if (width > maxSize) {
+          height *= maxSize / width
+          width = maxSize
+        } else {
+          width *= maxSize / height
+          height = maxSize
+        }
       }
-
       canvas.width = width
       canvas.height = height
       ctx?.drawImage(img, 0, 0, width, height)
-
       canvas.toBlob((blob) => {
         if (blob) {
           resolve(new File([blob], filename))
@@ -129,7 +128,6 @@ const resizeImage = (blob: Blob, filename: string, maxSize: number): Promise<Fil
         }
       })
     }
-
     reader.readAsDataURL(blob)
   })
 }
@@ -147,9 +145,30 @@ type BlobInfo = {
 }
 
 const bodyImageUploadHandler = async (blobInfo: BlobInfo) => {
-  const file = await resizeImage(blobInfo.blob(), blobInfo.filename(), maxImageSize)
-  const url = await uploadEventImage(event.value.community_id, event.value.event_id, file)
-  return url
+  try {
+    // community_id と event_id のバリデーション
+    if (!event.value.community_id) {
+      const error = new Error('community_id is undefined. Cannot upload image during new event creation.')
+      console.error('Image upload failed:', error)
+      return Promise.reject('イベントのコミュニティIDが設定されていません。')
+    }
+    if (!event.value.event_id) {
+      const error = new Error('event_id is undefined. Cannot upload image during new event creation.')
+      console.error('Image upload failed:', error)
+      return Promise.reject('イベントIDが設定されていません。イベントを保存してから画像をアップロードしてください。')
+    }
+    // 画像リサイズ
+    const file = await resizeImage(blobInfo.blob(), blobInfo.filename(), maxImageSize)
+    // 画像アップロード
+    const url = await uploadEventImage(event.value.community_id, event.value.event_id, file)
+    return url
+  } catch (error) {
+    console.error('Image upload failed:', error)
+    if (error instanceof Error) {
+      return Promise.reject(`画像のアップロードに失敗しました: ${error.message}`)
+    }
+    return Promise.reject('画像のアップロードに失敗しました。')
+  }
 }
 
 const tinymceInit = {
