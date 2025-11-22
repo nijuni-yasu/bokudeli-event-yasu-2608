@@ -10,7 +10,15 @@ import type {
 import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
 import { defineStore } from 'pinia'
-import { collection, doc, getFirestore, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore'
+import {
+  collection,
+  doc,
+  getFirestore,
+  onSnapshot,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+} from 'firebase/firestore'
 import { uploadMenuImage, uploadShopImage } from '@shokujii/base/composable/uploadImage'
 
 export class BokudeliPartnerShop extends PartnerShop {
@@ -82,25 +90,34 @@ export const usePartnerStore = (partnerId: string) => {
     let unsubscribeMenus: Unsubscribe | null = null
     const subscribeMenus = () => {
       if (unsubscribeMenus == null) {
-        unsubscribeMenus = onSnapshot(
-          query(collection(partnerRef, 'menus'), orderBy('updatedAt', 'desc')).withConverter(menuConverter),
-          (menusSnapshot) => {
-            _menus.value = menusSnapshot.docs.flatMap((menuDoc) => {
-              try {
-                return menuDoc.data()
-              } catch (err) {
-                console.error(err)
-                return []
-              }
-            })
-          },
-        )
+        unsubscribeMenus = onSnapshot(collection(partnerRef, 'menus').withConverter(menuConverter), (menusSnapshot) => {
+          _menus.value = menusSnapshot.docs.flatMap((menuDoc) => {
+            try {
+              return menuDoc.data()
+            } catch (err) {
+              console.error(err)
+              return []
+            }
+          })
+        })
       }
     }
 
     const menus = computed(() => {
       subscribeMenus()
-      return _menus.value
+      if (_menus.value == null) {
+        return null
+      }
+      // menu_sort_numberでソート（昇順）、未設定の場合はupdatedAtでソート（降順）
+      const sortedMenus = [..._menus.value].sort((a, b) => {
+        if (a.menu_sort_number != null && b.menu_sort_number != null) {
+          return a.menu_sort_number - b.menu_sort_number
+        }
+        if (a.menu_sort_number != null) return -1
+        if (b.menu_sort_number != null) return 1
+        return (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
+      })
+      return sortedMenus
     })
 
     const updateShop = async (data: BokudeliPartnerShop, image?: File) => {
@@ -124,12 +141,22 @@ export const usePartnerStore = (partnerId: string) => {
       return await deleteDoc(menuRef)
     }
 
+    const updateMenuSortOrder = async (menuIds: string[]) => {
+      const batch = writeBatch(db)
+      menuIds.forEach((menuId, index) => {
+        const menuRef = doc(partnerRef, 'menus', menuId)
+        batch.update(menuRef, { menu_sort_number: index })
+      })
+      await batch.commit()
+    }
+
     return {
       shops,
       menus,
       updateShop,
       updateMenu,
       deleteMenu,
+      updateMenuSortOrder,
       unsubscribe: () => {
         unsubscribeShops?.()
         unsubscribeShops = null

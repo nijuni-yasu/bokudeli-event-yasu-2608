@@ -6,6 +6,7 @@ import MenuEditCard from '@/components/MenuEditCard.vue'
 import MenuCard from '@shokujii/base/components/MenuCard.vue'
 import { mdiPlus, mdiClose } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import draggable from 'vuedraggable'
 
 const notification = useNotification()
 
@@ -26,6 +27,33 @@ const menus = await new Promise<Ref<BokudeliPartnerMenu[]>>((resolve) => {
     { immediate: true },
   )
 })
+
+// 並び替え用のローカル状態
+const sortedMenus = ref<BokudeliPartnerMenu[]>([])
+const originalMenuIds = ref<string[]>([])
+
+// メニューが読み込まれたら、ローカル状態を初期化
+watch(
+  () => menus.value,
+  (newMenus) => {
+    if (newMenus != null) {
+      // メニューが追加・削除された場合、または初回読み込み時は並び順をリセット
+      const currentMenuIds = sortedMenus.value.map((m) => m.id)
+      const newMenuIds = newMenus.map((m) => m.id)
+      const menusChanged =
+        currentMenuIds.length !== newMenuIds.length || currentMenuIds.some((id, index) => id !== newMenuIds[index])
+
+      if (menusChanged || sortedMenus.value.length === 0) {
+        sortedMenus.value = [...newMenus]
+        originalMenuIds.value = newMenus.map((m) => m.id)
+      }
+    } else {
+      sortedMenus.value = []
+      originalMenuIds.value = []
+    }
+  },
+  { immediate: true },
+)
 
 const targetMenu: Ref<BokudeliPartnerMenu | null> = ref(null)
 
@@ -74,33 +102,65 @@ const example = new BokudeliPartnerMenu(partnerId, null, {
   menu_description: $t('menu.example.description'),
   menu_price: 800,
 })
+
+// 並び順保存処理（ドラッグ終了時に自動呼び出し）
+const saveSortOrder = async () => {
+  try {
+    const menuIds = sortedMenus.value.map((m) => m.id)
+    // 並び順が実際に変更されたかチェック
+    const hasChanged =
+      menuIds.length === originalMenuIds.value.length &&
+      menuIds.some((id, index) => id !== originalMenuIds.value[index])
+
+    if (hasChanged) {
+      await partnerStore.updateMenuSortOrder(menuIds)
+      originalMenuIds.value = [...menuIds]
+      notification.show($t('menu.sort_order_saved'), 'success')
+    }
+  } catch (e) {
+    console.error(e)
+    notification.show($t('menu.sort_order_save_error'), 'error')
+  }
+}
 </script>
 
 <template>
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="12" class="px-0">
+      <div class="ma-4 d-flex justify-start align-center gap-2">
+        <v-btn
+          color="primary"
+          size="x-large"
+          :prepend-icon="mdiPlus"
+          @click="openDialog(new BokudeliPartnerMenu(partnerId, null, {}))"
+        >
+          {{ $t('menu.add') }}
+        </v-btn>
+      </div>
+      <draggable
+        v-model="sortedMenus"
+        :item-key="(menu: BokudeliPartnerMenu) => menu.id"
+        tag="div"
+        class="d-flex flex-wrap"
+        @end="saveSortOrder"
+      >
+        <template #item="{ element: menu }">
+          <div class="menu-item-wrapper">
+            <MenuCard class="menu-card clickable draggable-item" :menu="menu" @click="openDialog(menu)">
+              <v-btn
+                :icon="mdiClose"
+                class="close-button"
+                size="x-small"
+                color="#FFFFFF88"
+                @click.stop="onDelete(menu)"
+              />
+            </MenuCard>
+          </div>
+        </template>
+      </draggable>
       <v-row>
-        <v-col v-for="(menu, i) of menus" :key="`item_${i}`" cols="12" sm="6" md="4" lg="3">
-          <MenuCard class="menu-card clickable" :menu="menu" @click="openDialog(menu)">
-            <v-btn
-              :icon="mdiClose"
-              class="close-button"
-              size="x-small"
-              color="#FFFFFF88"
-              @click.stop="onDelete(menu)"
-            />
-          </MenuCard>
-        </v-col>
         <v-col v-if="menus.length === 0" cols="12" sm="6" md="4" lg="3">
           <MenuCard class="menu-card" :menu="example" />
-        </v-col>
-        <v-col cols="12" sm="6" md="4" lg="3">
-          <v-card
-            class="menu-card clickable d-flex justify-center align-center"
-            @click="openDialog(new BokudeliPartnerMenu(partnerId, null, {}))"
-          >
-            <v-icon size="64" :icon="mdiPlus" />
-          </v-card>
         </v-col>
       </v-row>
     </v-col>
@@ -125,6 +185,7 @@ const example = new BokudeliPartnerMenu(partnerId, null, {
   height: 100%;
   width: 100%;
   min-height: 300px;
+  margin: 16px;
 
   .close-button {
     position: absolute;
@@ -136,5 +197,32 @@ const example = new BokudeliPartnerMenu(partnerId, null, {
 
 .clickable {
   cursor: pointer;
+}
+
+.draggable-item {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.menu-item-wrapper {
+  position: relative;
+  height: 100%;
+  flex: 0 0 calc(100% - 16px);
+  margin: 8px;
+
+  @media (min-width: 600px) {
+    flex: 0 0 calc(50% - 16px);
+  }
+
+  @media (min-width: 960px) {
+    flex: 0 0 calc(33.333% - 16px);
+  }
+
+  @media (min-width: 1264px) {
+    flex: 0 0 calc(25% - 16px);
+  }
 }
 </style>
