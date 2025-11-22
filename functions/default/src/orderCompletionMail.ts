@@ -2,13 +2,13 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getEventUrl, getUserUrl } from './utils/urls.js'
+import { getEventUrl, getUserUrl, FIREBASE_STORAGE_BASE_URL } from './utils/urls.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { getUser, getUserPersonalInformation } from './stores/user.js'
 import { convertReferenceToEvent, ShokujiiEvent, saveEvent } from './stores/event.js'
 import { makeIcs } from './makeIcs.js'
 import { getCommunity } from './stores/community.js'
-import { getUserImageUrl } from './utils/image.js'
+import { getUserImageUrl } from '@shokujii/common/utils/buildThumbnailsLinks.js'
 
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
 const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-6f18a5804cb9458fb1267924ff954a95'
@@ -69,7 +69,7 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
   const emails = await getCommunityEmailsForEvent(event)
 
   // Get small thumbnail URL for user image
-  const userImageUrl = getUserImageUrl(userData.user_id, userData.user_image_url, 'medium')
+  const userImageUrl = getUserImageUrl(userData.user_id, userData.user_image_url, 'medium', FIREBASE_STORAGE_BASE_URL)
 
   const dynamicTemplateData = {
     date: convertToDateWeekdayShort(event.event_start_datetime),
