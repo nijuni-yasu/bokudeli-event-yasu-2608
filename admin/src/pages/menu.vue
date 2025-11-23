@@ -71,6 +71,14 @@ const openDialog = (menu: BokudeliPartnerMenu) => {
 }
 const saveMenu = async (menu: BokudeliPartnerMenu, file?: File) => {
   try {
+    // 新規作成の場合、menu_sort_number を設定
+    if (menu.id == null || menus.value.find((m) => m.id === menu.id) == null) {
+      // 既存のメニュー数をカウントして最後の値にする
+      const menuCount = menus.value?.length ?? 0
+      menu.menu_sort_number = menuCount
+    }
+    // 編集保存の場合、menu_sort_number は既に targetMenu に設定されているので変更しない
+
     await partnerStore.updateMenu(menu, file)
     notification.show($t('menu.saved'), 'success')
   } catch (e) {
@@ -101,6 +109,7 @@ const example = new BokudeliPartnerMenu(partnerId, null, {
   menu_name: $t('menu.example.name'),
   menu_description: $t('menu.example.description'),
   menu_price: 800,
+  menu_sort_number: 0,
 })
 
 // 並び順保存処理（ドラッグ終了時に自動呼び出し）

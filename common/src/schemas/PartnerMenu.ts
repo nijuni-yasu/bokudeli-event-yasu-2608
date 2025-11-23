@@ -8,8 +8,8 @@ const PartnerMenuDbSchema = z.object({
   menu_name: z.string().nonempty(),
   menu_price: z.number().int().positive(),
   is_sold_out: z.boolean(),
+  menu_sort_number: z.number().int().nonnegative(),
   // Optional
-  menu_sort_number: z.number().int().nonnegative().optional(),
   menu_date_start: TimestampSchema.optional(),
   menu_date_end: TimestampSchema.optional(),
 })
@@ -21,8 +21,8 @@ const PartnerMenuAppSchema = z.object({
   menu_name: z.string().default(''),
   menu_price: z.number().int().positive().default(100),
   is_sold_out: z.boolean().default(false),
+  menu_sort_number: z.number().int().nonnegative().default(0),
   // Optional
-  menu_sort_number: z.number().int().nonnegative().optional(),
   menu_date_start: EpochMillisSchema.optional(),
   menu_date_end: EpochMillisSchema.optional(),
 })
@@ -45,8 +45,8 @@ export class PartnerMenu {
   menu_name!: string
   menu_price!: number
   is_sold_out!: boolean
+  menu_sort_number!: number
   // Optional
-  menu_sort_number?: number
   menu_date_start?: number
   menu_date_end?: number
 
