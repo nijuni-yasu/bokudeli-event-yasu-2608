@@ -1,6 +1,4 @@
-import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase'
-
-type Sizes = 'large' | 'medium' | 'small'
+export type Sizes = 'large' | 'medium' | 'small'
 export type ThumbnailLinks = { [K in Sizes]: string }
 
 const SIZE_LIST: {
@@ -21,7 +19,11 @@ const SIZE_LIST: {
   },
 ]
 
-export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks | null => {
+export const buildThumbnailsLinks = (
+  userId: string,
+  url: URL,
+  firebaseStorageBaseUrl: string,
+): ThumbnailLinks | null => {
   if (url.protocol === 'gs:') {
     return SIZE_LIST.reduce((result, size) => {
       const hostname = url.href.match(/^gs:\/\/([^/]+)(\/.*)$/)?.[1]
@@ -29,23 +31,25 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       const imageName = base?.[0]
       const ext = (base?.length ?? 0) > 1 ? '.' + base?.slice(1)?.join('.') : ''
       result[size.name] =
-        `${FIREBASE_STORAGE_BASE_URL}b/${hostname}/o/` +
+        `${firebaseStorageBaseUrl}b/${hostname}/o/` +
         encodeURIComponent(`users/${userId}/${imageName}_thumb_${size.name}${ext}`) +
         '?alt=media'
       return result
     }, {} as ThumbnailLinks)
   } else if (url.hostname === 'lh3.googleusercontent.com') {
     return SIZE_LIST.reduce((result, size) => {
-      url.pathname = url.pathname.split('=')[0] + '=' + `s${size.value}-c`
-      result[size.name] = url.href
+      const sizedUrl = new URL(url.href)
+      sizedUrl.pathname = sizedUrl.pathname.split('=')[0] + '=' + `s${size.value}-c`
+      result[size.name] = sizedUrl.href
       return result
     }, {} as ThumbnailLinks)
   } else if (url.hostname === 'graph.facebook.com') {
     return null
   } else {
     return SIZE_LIST.reduce((result, size) => {
-      url.pathname = url.pathname.split('=')[0] + '=' + `s${size.value}-c`
-      result[size.name] = url.href
+      const sizedUrl = new URL(url.href)
+      sizedUrl.pathname = sizedUrl.pathname.split('=')[0] + '=' + `s${size.value}-c`
+      result[size.name] = sizedUrl.href
       return result
     }, {} as ThumbnailLinks)
   }
@@ -57,4 +61,37 @@ export const buildThumbnailsLinks = (userId: string, url: URL): ThumbnailLinks |
       return result
     }, {} as ThumbnailLinks)
   } */ // Facebook は後からサイズ変更には対応していない
+}
+
+/**
+ * Get thumbnail URL for user image with custom size
+ * @param userId - The user ID
+ * @param imageUrl - The image URL (can be gs:// or https://)
+ * @param size - The size type ('large', 'medium', 'small')
+ * @param firebaseStorageBaseUrl - The Firebase Storage base URL (defaults to production URL)
+ * @returns Thumbnail URL or empty string if no image
+ */
+export function getUserImageUrl(
+  userId: string,
+  imageUrl: string | undefined,
+  size: Sizes,
+  firebaseStorageBaseUrl: string,
+): string {
+  if (!imageUrl) {
+    return ''
+  }
+
+  try {
+    const url = new URL(imageUrl)
+
+    const thumbnails = buildThumbnailsLinks(userId, url, firebaseStorageBaseUrl)
+    if (thumbnails && thumbnails[size]) {
+      return thumbnails[size]
+    } else {
+      return imageUrl
+    }
+  } catch (error) {
+    console.error(`Failed to generate thumbnail URL: ${imageUrl}`, error)
+    return ''
+  }
 }
