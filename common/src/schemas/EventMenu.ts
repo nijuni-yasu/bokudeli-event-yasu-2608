@@ -19,7 +19,8 @@ const EventMenuAppSchema = z.object({
   menu_image_url: z.string().default(''),
   menu_description: z.string().default(''),
   is_sold_out: z.boolean().default(false),
-  menu_sort_number: z.number().int().nonnegative().default(0),
+  // Mandatory
+  menu_sort_number: z.number().int().nonnegative(),
 })
 
 const convertToDb = (menu: EventMenu) => {
