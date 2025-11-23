@@ -10,15 +10,7 @@ import type {
 import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
 import { defineStore } from 'pinia'
-import {
-  collection,
-  doc,
-  getFirestore,
-  onSnapshot,
-  setDoc,
-  deleteDoc,
-  writeBatch,
-} from 'firebase/firestore'
+import { collection, doc, getFirestore, onSnapshot, setDoc, deleteDoc, writeBatch } from 'firebase/firestore'
 import { uploadMenuImage, uploadShopImage } from '@shokujii/base/composable/uploadImage'
 
 export class BokudeliPartnerShop extends PartnerShop {
