@@ -6,7 +6,7 @@ import MenuEditCard from '@/components/MenuEditCard.vue'
 import MenuCard from '@shokujii/base/components/MenuCard.vue'
 import { mdiPlus, mdiClose } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
-import draggable from 'vuedraggable'
+import { VueDraggableNext as draggable } from 'vue-draggable-next'
 
 const notification = useNotification()
 
@@ -146,26 +146,18 @@ const saveSortOrder = async () => {
           {{ $t('menu.add') }}
         </v-btn>
       </div>
-      <draggable
-        v-model="sortedMenus"
-        :item-key="(menu: BokudeliPartnerMenu) => menu.id"
-        tag="div"
-        class="d-flex flex-wrap"
-        @end="saveSortOrder"
-      >
-        <template #item="{ element: menu }">
-          <div class="menu-item-wrapper">
-            <MenuCard class="menu-card clickable draggable-item" :menu="menu" @click="openDialog(menu)">
-              <v-btn
-                :icon="mdiClose"
-                class="close-button"
-                size="x-small"
-                color="#FFFFFF88"
-                @click.stop="onDelete(menu)"
-              />
-            </MenuCard>
-          </div>
-        </template>
+      <draggable v-model="sortedMenus" class="d-flex flex-wrap" @end="saveSortOrder">
+        <div v-for="menu in sortedMenus" :key="menu.id" class="menu-item-wrapper">
+          <MenuCard class="menu-card clickable draggable-item" :menu="menu" @click="openDialog(menu)">
+            <v-btn
+              :icon="mdiClose"
+              class="close-button"
+              size="x-small"
+              color="#FFFFFF88"
+              @click.stop="onDelete(menu)"
+            />
+          </MenuCard>
+        </div>
       </draggable>
       <v-row>
         <v-col v-if="menus.length === 0" cols="12" sm="6" md="4" lg="3">

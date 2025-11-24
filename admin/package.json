@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@shokujii/base": "file:../base",
-    "vuedraggable": "^4.1.0"
+    "vue-draggable-next": "^2.3.0"
   },
   "devDependencies": {
     "unplugin-auto-import": "^0.17.8",
