@@ -194,8 +194,8 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       })
       const sortedMenus =
         _menus.value?.sort((a, b) => {
-          // 更新日時でソート
-          return (b.updatedAt?.valueOf() ?? 0) - (a.updatedAt?.valueOf() ?? 0)
+          // menu_sort_numberでソート（昇順）
+          return a.menu_sort_number - b.menu_sort_number
         }) ?? null
       return sortedMenus
     })

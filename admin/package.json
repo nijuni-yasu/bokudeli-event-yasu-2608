@@ -16,7 +16,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@shokujii/base": "file:../base"
+    "@shokujii/base": "file:../base",
+    "vue-draggable-next": "^2.3.0"
   },
   "devDependencies": {
     "unplugin-auto-import": "^0.17.8",

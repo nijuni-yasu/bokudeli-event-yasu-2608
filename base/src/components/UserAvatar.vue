@@ -24,7 +24,11 @@ const avatar = computed(() => {
   } else if (props.user === null || props.user.user_image_url === '') {
     return avatar1
   }
-  const thumbnails = buildThumbnailsLinks(props.user.user_id, new URL(props.user.user_image_url), FIREBASE_STORAGE_BASE_URL)
+  const thumbnails = buildThumbnailsLinks(
+    props.user.user_id,
+    new URL(props.user.user_image_url),
+    FIREBASE_STORAGE_BASE_URL,
+  )
   return thumbnails?.[calcAvatarSize(size.value)] ?? props.user.user_image_url
 })
 const initial = computed(() => (typeof props.user === 'string' ? props.user.slice(0, 1) : undefined))

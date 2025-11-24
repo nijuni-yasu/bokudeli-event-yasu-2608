@@ -152,12 +152,15 @@ export default {
   },
   menu: {
     add: 'メニューの追加',
-    edit: 'メニューの編集',
+    edit: 'メニューの追加・編集',
     delete_confirm: 'メニューを削除しますか？',
     saved: 'メニューを保存しました',
     save_error: '保存できませんでした',
     deleted: 'メニューを削除しました',
     delete_error: '削除できませんでした',
+    save_sort_order: '並び順を保存',
+    sort_order_saved: '並び順を保存しました',
+    sort_order_save_error: '並び順の保存に失敗しました',
     example: {
       name: '例）サラダ弁当',
       description: '手間隙かけて作りました、季節のお野菜たっぷりのサラダ弁当です。',
