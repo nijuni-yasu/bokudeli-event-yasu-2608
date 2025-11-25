@@ -12,8 +12,10 @@ import eventDetailStyle from '@shokujii/base/utils/eventDetailStyle'
 import { useCommunityStore } from '@shokujii/base/stores/community'
 import type { CommunityStore } from '@shokujii/base/stores/community'
 import { trimHashTag } from '@shokujii/base/utils/hashTag'
+import { uploadEventImage } from '@shokujii/base/composable/uploadImage'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
+const maxImageSize = 600
 
 const props = withDefaults(
   defineProps<{
@@ -93,17 +95,95 @@ const event_sns_hash_tag = computed({
   },
 })
 
+const resizeImage = (blob: Blob, filename: string, maxSize: number): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      img.src = e.target?.result as string
+    }
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+
+      let { width, height } = img
+
+      if (Math.max(width, height) > maxSize) {
+        if (width > maxSize) {
+          height *= maxSize / width
+          width = maxSize
+        } else {
+          width *= maxSize / height
+          height = maxSize
+        }
+      }
+      canvas.width = width
+      canvas.height = height
+      ctx?.drawImage(img, 0, 0, width, height)
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(new File([blob], filename))
+        } else {
+          reject(new Error('リサイズに失敗しました'))
+        }
+      })
+    }
+    reader.readAsDataURL(blob)
+  })
+}
+
+// MEMO: 以下で定義されている
+// https://github.com/tinymce/tinymce/blob/56bc9917426d58e526bda4e9c991f6b5bc82443f/modules/tinymce/src/core/main/ts/api/file/BlobCache.ts#L29
+type BlobInfo = {
+  id: () => string
+  name: () => string
+  filename: () => string
+  blob: () => Blob
+  base64: () => string
+  blobUri: () => string
+  uri: () => string | undefined
+}
+
+const bodyImageUploadHandler = async (blobInfo: BlobInfo) => {
+  try {
+    // community_id と event_id のバリデーション
+    if (!event.value.community_id) {
+      const error = new Error('community_id is undefined. Cannot upload image during new event creation.')
+      console.error('Image upload failed:', error)
+      return Promise.reject('イベントのコミュニティIDが設定されていません。')
+    }
+    if (!event.value.event_id) {
+      const error = new Error('event_id is undefined. Cannot upload image during new event creation.')
+      console.error('Image upload failed:', error)
+      return Promise.reject('イベントIDが設定されていません。イベントを保存してから画像をアップロードしてください。')
+    }
+    // 画像リサイズ
+    const file = await resizeImage(blobInfo.blob(), blobInfo.filename(), maxImageSize)
+    // 画像アップロード
+    const url = await uploadEventImage(event.value.community_id, event.value.event_id, file)
+    return url
+  } catch (error) {
+    console.error('Image upload failed:', error)
+    if (error instanceof Error) {
+      return Promise.reject(`画像のアップロードに失敗しました: ${error.message}`)
+    }
+    return Promise.reject('画像のアップロードに失敗しました。')
+  }
+}
+
 const tinymceInit = {
   language: 'ja',
-  plugins: 'lists link autolink',
+  plugins: 'lists link autolink image autoresize',
   menubar: false,
+  min_height: 400,
+  max_height: 800,
   textcolor_map: ['#2E263DB3', '黒', '#FF4C51', '赤'],
   textcolor_cols: 2,
   custom_colors: false,
   color_map_foreground: ['#2E263DB3', '黒', '#FF4C51', '赤'],
   color_default_foreground: '#2E263DB3',
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo heading bold strikethrough forecolor | bullist numlist | link',
+  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | link image',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },
@@ -127,6 +207,8 @@ const tinymceInit = {
       },
     })
   },
+  images_upload_handler: bodyImageUploadHandler,
+  image_description: false,
 }
 </script>
 
