@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * @deprecated
+ * Use /pages/login.vue instead.
+ */
 import { FirebaseError } from 'firebase/app'
 import {
   getAuth,
