@@ -21,12 +21,12 @@ import { User as ShokujiiUser } from '@shokujii/common/schemas/User.js'
 
 export type ProviderIdType = 'facebook.com' | 'google.com' | 'twitter.com'
 
-export const signInByProviderService = async (providerService: ProviderIdType) => {
+const getProvider = (providerService: ProviderIdType) => {
   let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
   switch (providerService) {
     case 'facebook.com':
       provider = new FacebookAuthProvider()
+      provider.addScope('email')
       provider.addScope('public_profile')
       break
     case 'google.com':
@@ -37,7 +37,14 @@ export const signInByProviderService = async (providerService: ProviderIdType) =
     case 'twitter.com':
       provider = new TwitterAuthProvider()
       break
+    default:
+      throw new Error(`Invalid provider service: ${providerService}`)
   }
+  return provider
+}
+
+export const signInByProviderService = async (providerService: ProviderIdType) => {
+  const provider = getProvider(providerService)
 
   if (import.meta.env.DEV) {
     return await signInWithPopup(getAuth(), provider)
@@ -49,33 +56,11 @@ export const signInByProviderService = async (providerService: ProviderIdType) =
 /**
  *
  * @param user
- * @param providerService 'Facebook', 'Google', 'Twitter' は旧仕様
+ * @param providerService
  * @returns
  */
-export const linkByProviderService = async (
-  user: User,
-  providerService: ProviderIdType | 'Facebook' | 'Google' | 'Twitter',
-) => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'Facebook':
-    case 'facebook.com':
-      provider = new FacebookAuthProvider()
-      provider.addScope('email')
-      provider.addScope('public_profile')
-      break
-    case 'Google':
-    case 'google.com':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'Twitter':
-    case 'twitter.com':
-      provider = new TwitterAuthProvider()
-      break
-  }
+export const linkByProviderService = async (user: User, providerService: ProviderIdType) => {
+  const provider = getProvider(providerService)
 
   if (import.meta.env.DEV) {
     return await linkWithPopup(user, provider)
@@ -85,23 +70,7 @@ export const linkByProviderService = async (
 }
 
 export const reauthenticateByProviderService = async (user: User, providerService: ProviderIdType) => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'facebook.com':
-      provider = new FacebookAuthProvider()
-      provider.addScope('email')
-      provider.addScope('public_profile')
-      break
-    case 'google.com':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'twitter.com':
-      provider = new TwitterAuthProvider()
-      break
-  }
+  const provider = getProvider(providerService)
 
   if (import.meta.env.DEV) {
     return await reauthenticateWithPopup(user, provider)
@@ -122,30 +91,6 @@ export const credentialFromError = (error: FirebaseError): OAuthCredential | nul
     default:
       return null
   }
-}
-
-export const getCredentialWithPopup = async (providerService: ProviderIdType) => {
-  let provider: FacebookAuthProvider | GoogleAuthProvider | TwitterAuthProvider | null = null
-
-  switch (providerService) {
-    case 'facebook.com':
-      provider = new FacebookAuthProvider()
-      provider.addScope('public_profile')
-      provider.setCustomParameters({
-        display: 'popup',
-      })
-      break
-    case 'google.com':
-      provider = new GoogleAuthProvider()
-      provider.addScope('profile')
-      provider.addScope('openid')
-      break
-    case 'twitter.com':
-      provider = new TwitterAuthProvider()
-      break
-  }
-
-  return await signInWithPopup(getAuth(), provider)
 }
 
 export const updateProfileFromProviders = async (userCredential: UserCredential | null) => {
