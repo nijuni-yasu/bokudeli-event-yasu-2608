@@ -1,3 +1,4 @@
+import { type FirebaseError } from 'firebase/app'
 import {
   getAuth,
   FacebookAuthProvider,
@@ -12,6 +13,8 @@ import {
   reauthenticateWithRedirect,
   UserCredential,
   getAdditionalUserInfo,
+  type OAuthCredential,
+  OAuthProvider,
 } from 'firebase/auth'
 import { updateProfileFromProviders as _updateProfileFromProviders } from '@shokujii/base/apis/user'
 import { User as ShokujiiUser } from '@shokujii/common/schemas/User.js'
@@ -104,6 +107,20 @@ export const reauthenticateByProviderService = async (user: User, providerServic
     return await reauthenticateWithPopup(user, provider)
   } else {
     return await reauthenticateWithRedirect(user, provider)
+  }
+}
+
+export const credentialFromError = (error: FirebaseError): OAuthCredential | null => {
+  const providerId = OAuthProvider.credentialFromError(error)?.providerId
+  switch (providerId) {
+    case 'facebook.com':
+      return FacebookAuthProvider.credentialFromError(error)
+    case 'google.com':
+      return GoogleAuthProvider.credentialFromError(error)
+    case 'twitter.com':
+      return TwitterAuthProvider.credentialFromError(error)
+    default:
+      return null
   }
 }
 

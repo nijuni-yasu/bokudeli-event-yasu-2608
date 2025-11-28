@@ -3,11 +3,12 @@ import {
   getAuth,
   getRedirectResult,
   linkWithCredential,
-  OAuthCredential,
+  type OAuthCredential,
   OAuthProvider,
   User,
   UserCredential,
 } from 'firebase/auth'
+import { credentialFromError } from './providerService'
 
 const removePendingCred = () => {
   sessionStorage.removeItem('pendingCred')
@@ -35,8 +36,8 @@ export const handleRedirect = async (user: User | null) => {
     userCredential = await getRedirectResult(getAuth())
   } catch (err: unknown) {
     if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
-      const _pendingCred = OAuthProvider.credentialFromError(err)
-      if (_pendingCred != null /* false になることは無いはずだが念の為 */) {
+      const _pendingCred = credentialFromError(err)
+      if (_pendingCred != null) {
         // リンク依頼をセーブしておき次のログイン時に処理する
         setPendingCred(_pendingCred)
       }

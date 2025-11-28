@@ -1,6 +1,5 @@
 import { FirebaseError } from 'firebase/app'
 import {
-  OAuthProvider,
   type User,
   type UserCredential,
   fetchSignInMethodsForEmail,
@@ -16,7 +15,7 @@ import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
-import { updateProfileFromProviders } from '@shokujii/base/utils/providerService'
+import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { handleRedirect } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
 
@@ -78,20 +77,21 @@ export const setupRouter = (router: Router) => {
         userCredential = await handleRedirect(user)
       } catch (err: unknown) {
         if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
-          const pendingCred = OAuthProvider.credentialFromError(err)!
-          const email = err.customData?.email as string
+          const pendingCred = credentialFromError(err)
+          // email が同じ時に発生するエラーなので、email は必ず存在する
+          const email = err.customData!.email as string
           const methods = await fetchSignInMethodsForEmail(getAuth(), email)
           const existingProviderId = methods[0]
           if (existingProviderId == null) {
             // カスタムトークンログインを行い、メールアドレスが既に存在している場合
             return {
               path: '/pass-code',
-              query: { ...to.query, email, pid: pendingCred.providerId },
+              query: { ...to.query, email, pid: pendingCred?.providerId },
             }
           } else {
             return {
               path: '/login',
-              query: { ...to.query, pid1: pendingCred.providerId, pid2: existingProviderId },
+              query: { ...to.query, pid1: pendingCred?.providerId, pid2: existingProviderId },
             }
           }
         }
@@ -100,7 +100,7 @@ export const setupRouter = (router: Router) => {
         // useI18n() は plugin の中からは使えないので、 getI18n で直接取得する
         const i18n = getI18n()
         if (err instanceof FirebaseError) {
-          const pendingCred = OAuthProvider.credentialFromError(err)!
+          const pendingCred = credentialFromError(err)
           if (err.code === 'auth/credential-already-in-use') {
             window.alert(
               // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
