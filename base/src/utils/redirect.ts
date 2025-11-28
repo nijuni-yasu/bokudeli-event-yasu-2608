@@ -1,35 +1,23 @@
 import { FirebaseError } from 'firebase/app'
-import {
-  getAuth,
-  getRedirectResult,
-  linkWithCredential,
-  type OAuthCredential,
-  OAuthProvider,
-  User,
-  UserCredential,
-} from 'firebase/auth'
-import { credentialFromError } from './providerService'
+import { getAuth, getRedirectResult, type User, type UserCredential } from 'firebase/auth'
+import { credentialFromError, linkByProviderService, type ProviderIdType } from './providerService'
 
-const removePendingCred = () => {
-  sessionStorage.removeItem('pendingCred')
+const removePendingLinkRequest = () => {
+  sessionStorage.removeItem('pendingLinkRequestProviderId')
 }
 
-const setPendingCred = (pendingCred: OAuthCredential) => {
-  sessionStorage.setItem('pendingCred', JSON.stringify(pendingCred.toJSON()))
+const setPendingLinkRequest = (providerId: string) => {
+  sessionStorage.setItem('pendingLinkRequestProviderId', providerId)
 }
 
-const getPendingCred = (): OAuthCredential | null => {
-  const jsonString = sessionStorage.getItem('pendingCred')
-  if (jsonString == null) {
-    return null
-  }
-  return OAuthProvider.credentialFromJSON(jsonString)
+const getPendingLinkRequest = (): string | null => {
+  return sessionStorage.getItem('pendingLinkRequestProviderId')
 }
 
 export const handleRedirect = async (user: User | null) => {
-  // pendingCred はどのフローであっても消しておく
-  const pendingCred = getPendingCred()
-  removePendingCred()
+  // pendingLinkRequestProviderId はどのフローであっても消しておく
+  const pendingLinkRequestProviderId = getPendingLinkRequest()
+  removePendingLinkRequest()
 
   let userCredential: UserCredential | null = null
   try {
@@ -39,15 +27,15 @@ export const handleRedirect = async (user: User | null) => {
       const _pendingCred = credentialFromError(err)
       if (_pendingCred != null) {
         // リンク依頼をセーブしておき次のログイン時に処理する
-        setPendingCred(_pendingCred)
+        setPendingLinkRequest(_pendingCred.providerId)
       }
     }
     throw err
   }
   if (user != null) {
-    if (pendingCred) {
+    if (pendingLinkRequestProviderId != null) {
       // リンク依頼がセーブされていたら処理する
-      userCredential = await linkWithCredential(user, pendingCred)
+      userCredential = await linkByProviderService(user, pendingLinkRequestProviderId as ProviderIdType)
     }
     return userCredential
   } else {
