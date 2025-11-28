@@ -448,8 +448,6 @@ export default {
     social_link_description:
       'ソーシャルリンクを設定すると <a href="https://shokujii.jp/mypage">マイページ</a> にSNSアカウントをリンクすることができます。',
     profile_image: 'プロフィール画像',
-    user_account: 'ユーザーURL',
-    validator_account_exists: 'このユーザーURLは既に使用されています',
     user_name: 'ユーザー名',
     user_sns_twitter: 'X (Twitter)',
     user_sns_facebook: 'Facebook',
