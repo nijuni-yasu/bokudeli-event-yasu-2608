@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { NonEmptyStringSchema } from './firebase/index.js'
 
 const UserPersonalInformationDbSchema = z.object({
-  user_email: z.string().email(),
+  user_email: z.string().email().or(z.literal('')),
   // optional
   user_sns_twitter_access_token: NonEmptyStringSchema.optional(),
   user_sns_twitter_secret: NonEmptyStringSchema.optional(),

@@ -10,7 +10,7 @@ import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalIn
 
 export class ShokujiiUser extends User {
   // TODO Add other UserPersonalInformation fields
-  user_email?: string
+  user_email: string = ''
 
   constructor(id: string, data: Partial<User> & Partial<UserPersonalInformation>) {
     super(id, data)
@@ -19,11 +19,11 @@ export class ShokujiiUser extends User {
 }
 
 const userConverter: FirestoreDataConverter<ShokujiiUser> = {
-  toFirestore(user: User): DocumentData {
+  toFirestore(user: ShokujiiUser): DocumentData {
     return user.toFirestore()
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ShokujiiUser {
-    return new User(snapshot.id, snapshot.data())
+    return new ShokujiiUser(snapshot.id, snapshot.data())
   },
 }
 
@@ -45,7 +45,7 @@ export const getUser = async (userId: string, withPersonalInformation: boolean):
   }
   if (withPersonalInformation) {
     const userPersonalInformation = await getUserPersonalInformation(userId)
-    user.user_email = userPersonalInformation?.user_email
+    user.user_email = userPersonalInformation?.user_email ?? ''
   }
   return user
 }
@@ -67,7 +67,7 @@ export const getAllUsers = async (withPersonalInformation: boolean): Promise<Sho
     const user = userDoc.data()
     if (withPersonalInformation) {
       const userPersonalInformation = await getUserPersonalInformation(user.id)
-      user.user_email = userPersonalInformation?.user_email
+      user.user_email = userPersonalInformation?.user_email ?? ''
     }
     users.push(user)
   }
