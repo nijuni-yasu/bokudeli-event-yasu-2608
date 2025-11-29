@@ -22,7 +22,6 @@ const profileLink = {
   path: getProfile(),
   query: {
     new: isNew ? '' : undefined,
-    redirect: route.query.redirect as string,
   },
 }
 

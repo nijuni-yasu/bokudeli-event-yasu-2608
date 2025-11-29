@@ -16,7 +16,7 @@ import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/ba
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
-import { handleRedirect } from '@shokujii/base/utils/redirect'
+import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
@@ -38,6 +38,15 @@ export const setupRouter = (router: Router) => {
     const path = router.currentRoute.value.path
     if (user == null && isLoginRequired(path)) {
       router.replace('/')
+    }
+  })
+
+  router.afterEach((to, from) => {
+    if (['/login', '/profile'].includes(to.path)) {
+      const redirectPath = getRedirectPath(false)
+      if (redirectPath == null) {
+        setRedirectPath(from.path)
+      }
     }
   })
 
@@ -124,7 +133,7 @@ export const setupRouter = (router: Router) => {
       // 未ログインのときは無駄な通信が発生するのでここで終了
       // userCredential は null でも意味がある（passcode の初回ログイン時など）
       if (user == null) {
-        return to.query.redirect as string | undefined
+        return getRedirectPath() ?? undefined
       }
 
       let shokujiiUser = null
@@ -138,7 +147,7 @@ export const setupRouter = (router: Router) => {
       }
 
       if (shokujiiUser == null) {
-        return (to.query.redirect as string) ?? '/'
+        return getRedirectPath() ?? '/'
       }
 
       // profile に戻ってきた場合はリンクなので画面はそのまま
@@ -176,7 +185,7 @@ export const setupRouter = (router: Router) => {
         }
       }
       // 元いたページへ
-      return (to.query.redirect as string) ?? '/'
+      return getRedirectPath() ?? '/'
     }
   })
 

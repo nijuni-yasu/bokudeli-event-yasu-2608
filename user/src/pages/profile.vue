@@ -14,6 +14,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { type ProviderIdType } from '@shokujii/base/utils/providerService'
 import { User } from '@shokujii/common/schemas/User.js'
+import { getRedirectPath } from '@shokujii/base/utils/redirect'
 
 const currentUserStore = useCurrentUserStore()
 const { providerData, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
@@ -165,9 +166,8 @@ const profileSubmit = async () => {
 
     notification.show($t('profile.update_profile'), 'success')
 
-    if (route.query.redirect) {
-      router.push({ path: route.query.redirect as string })
-    }
+    const redirectPath = getRedirectPath() ?? '/'
+    return await router.push(redirectPath)
   } catch (error) {
     console.warn('Error profile submit:', error)
   } finally {
@@ -195,7 +195,6 @@ const emailSubmit = async () => {
       path: '/pass-code',
       query: {
         newemail: newUserEmail,
-        redirect: route.path,
       },
     })
   } catch (error) {

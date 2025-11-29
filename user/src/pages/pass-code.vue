@@ -5,15 +5,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { getHomePath, getLogin } from '@/router/utils'
 import { confirmEmailLogin, requestEmailLogin } from '@shokujii/base/apis/user'
-
-const moveTo = async (path: string) => {
-  await router.push({
-    path,
-    query: {
-      redirect: route.query.redirect as string,
-    },
-  })
-}
+import { getRedirectPath } from '@shokujii/base/utils/redirect'
 
 const router = useRouter()
 const route = useRoute()
@@ -28,16 +20,14 @@ const isValid = ref(false)
 const email = route.query.email as string | undefined
 const newEmail = route.query.newemail as string | undefined
 if (email != null && getAuth().currentUser?.uid != null) {
-  moveTo(getHomePath())
-}
-if (newEmail != null && getAuth().currentUser?.uid == null) {
-  moveTo(getLogin())
-}
-if (email == null && newEmail == null) {
+  await router.push(getHomePath())
+} else if (newEmail != null && getAuth().currentUser?.uid == null) {
+  await router.push(getLogin())
+} else if (email == null && newEmail == null) {
   if (getAuth().currentUser?.uid == null) {
-    moveTo(getLogin())
+    await router.push(getLogin())
   } else {
-    moveTo(getHomePath())
+    await router.push(getHomePath())
   }
 }
 
@@ -68,7 +58,8 @@ const submit = async (passCode: string) => {
     if (newEmail != null) {
       // Email Change の場合
       await currentUserStore.confirmEmailChange(newEmail, passCode)
-      return await router.push(route.query.redirect as string)
+      const redirectPath = getRedirectPath() ?? '/'
+      return await router.push(redirectPath)
     }
     // Email Login
     const result = await confirmEmailLogin({ email: email!, passCode: passCode })
@@ -123,7 +114,7 @@ const submit = async (passCode: string) => {
             block
             :disabled="isValid"
             :loading="isLoading"
-            @click="moveTo(getLogin())"
+            @click="router.push(getLogin())"
           >
             {{ $t('passcode.back') }}
           </v-btn>

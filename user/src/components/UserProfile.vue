@@ -21,15 +21,11 @@ const user = computed(() => {
 
 const isOpenHomeButtonDialog = ref(false)
 
-const route = useRoute()
 const router = useRouter()
 
 const login = () => {
   router.push({
     path: getLogin(),
-    query: {
-      redirect: route.path,
-    },
   })
 }
 

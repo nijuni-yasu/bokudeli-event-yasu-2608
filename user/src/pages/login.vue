@@ -30,7 +30,7 @@ const linkRequestDialogParams = computed<{
       }
 })
 
-const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string, redirect?: string) => {
+const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string) => {
   isLoading.value = providerId
   try {
     if (providerId === 'custom') {
@@ -44,7 +44,6 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
         path: '/pass-code',
         query: {
           email,
-          redirect,
         },
       })
     } else {
@@ -128,10 +127,7 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
             </div>
           </v-btn>
           <v-divider class="my-6" color="grey-lighten-3" />
-          <v-form
-            v-model="isValid"
-            @submit.prevent="handleLogin('custom', email, route.query.redirect as string | undefined)"
-          >
+          <v-form v-model="isValid" @submit.prevent="handleLogin('custom', email)">
             <v-container class="mb-4 pa-0">
               <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('login.email') }}</label>
               <v-text-field
@@ -171,7 +167,7 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
     :model-value="linkRequestDialogParams !== null"
     :is-confirm="false"
     :ok-text="$t('profile.linkage')"
-    :ok-click="() => handleLogin(linkRequestDialogParams!.linkProviderId, undefined, '/login')"
+    :ok-click="() => handleLogin(linkRequestDialogParams!.linkProviderId, undefined)"
   >
     <v-card-text class="text-center py-10 text-h4"> {{ $t('profile.account_linkage') }} </v-card-text>
     <v-card-text class="pb-0">
