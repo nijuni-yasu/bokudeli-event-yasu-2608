@@ -42,8 +42,8 @@ export const pollingTask = onSchedule(
       sendLetter(start, end), // レター送信
     ]
 
-    // 主催者向け注文リマインドメール（1,5,10,20,30,40,50,60日後）
-    const orderRemindToOrganizerDays = [1, 5, 10, 20, 30, 40, 50, 60]
+    // 主催者向け注文リマインドメール（5,10,20,30,40,50,60日後）
+    const orderRemindToOrganizerDays = [5, 10, 20, 30, 40, 50, 60]
     orderRemindToOrganizerDays.forEach((day) => {
       promiseFunctions.push(
         sendOrderRemindMailToOrganizer(start + day * ONE_DAY_MILLIS, end + day * ONE_DAY_MILLIS, day),
