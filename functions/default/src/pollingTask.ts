@@ -32,7 +32,7 @@ export const pollingTask = onSchedule(
       sendOrderDeadlineMailToShop(start + ONE_DAY_MILLIS, end + ONE_DAY_MILLIS, true),
       sendOrderDeadlineMailToOrganizers(start, end),
       sendOrderDeadlineMailToMembers(start, end),
-      sendOrderDeadlineReminderToCommunityMembers(start + ONE_DAY_MILLIS, end + ONE_DAY_MILLIS), // 注文期限24時間前
+      sendOrderDeadlineReminderToCommunityMembers(start + 2 * ONE_DAY_MILLIS, end + 2 * ONE_DAY_MILLIS), // 注文期限2日前
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
