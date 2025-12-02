@@ -7,8 +7,6 @@ import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { FirebaseError } from 'firebase/app'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import type { VForm } from 'vuetify/components'
-import { db } from '@shokujii/base/firebase.js'
-import { getDocs, query, collection, where } from 'firebase/firestore'
 import { mdiUpload } from '@mdi/js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -85,32 +83,7 @@ const notification = useNotification()
 const { t: $t } = useI18n()
 
 // バリデーション関連 ここから
-const { requiredValidator, emailValidator, urlValidator, accountValidator } = useValidators()
-
-const accountFieldRef = ref()
-const isCheckingAccount = ref(false)
-const isValidSameAccount = ref<true | string>(true)
-
-const validateAccount = async (userAccount: string): Promise<boolean> => {
-  // TODO store で処理できるように
-  const duplicatedUserAccount = await getDocs(query(collection(db, 'users'), where('user_account', '==', userAccount)))
-  if (userAccount === currentUser.value?.user_account || userAccount === '') {
-    return true
-  }
-  return duplicatedUserAccount.empty
-}
-
-const checkAccountExists = async (value: string) => {
-  isCheckingAccount.value = true
-  try {
-    isValidSameAccount.value = (await validateAccount(value)) || $t('profile.validator_account_exists')
-    await nextTick(() => {
-      accountFieldRef.value.validate()
-    })
-  } finally {
-    isCheckingAccount.value = false
-  }
-}
+const { requiredValidator, emailValidator, urlValidator } = useValidators()
 
 const validateImage = () => {
   if (!currentUser.value?.user_image_url && !userImage.value) {
@@ -275,17 +248,6 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
                 variant="outlined"
                 :disabled="isProfileLoading"
                 :rules="[requiredValidator]"
-              />
-
-              <v-text-field
-                :label="$t('profile.user_account')"
-                v-model="currentUser.user_account"
-                prefix="shokujii.jp/u/"
-                variant="outlined"
-                :disabled="isProfileLoading"
-                :rules="[isValidSameAccount, accountValidator]"
-                ref="accountFieldRef"
-                @update:modelValue="checkAccountExists"
               />
 
               <v-textarea

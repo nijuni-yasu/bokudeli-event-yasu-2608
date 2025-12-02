@@ -15,6 +15,7 @@ const UserDbSchema = z.object({
   user_sns_twitter: NonEmptyStringSchema.optional(),
   user_sns_instagram: NonEmptyStringSchema.optional(),
   user_sns_website: NonEmptyStringSchema.optional(),
+  // user_account (ユーザーURL) の設定機能はオミット済み. 設定済みのデータはDBに残している
   user_account: NonEmptyStringSchema.optional(),
 })
 
@@ -27,7 +28,6 @@ const UserAppSchema = z.object({
   user_sns_twitter: z.string().default(''),
   user_sns_instagram: z.string().default(''),
   user_sns_website: z.string().default(''),
-  user_account: z.string().default(''),
 })
 
 const convertToDb = (user: User) => {
@@ -52,7 +52,6 @@ export class User {
   user_sns_twitter!: string
   user_sns_instagram!: string
   user_sns_website!: string
-  user_account!: string
 
   constructor(id: string, src: Partial<User>) {
     Object.assign(this, UserAppSchema.parse(src))
