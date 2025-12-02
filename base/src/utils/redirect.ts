@@ -42,3 +42,15 @@ export const handleRedirect = async (user: User | null) => {
     return null
   }
 }
+
+export const setRedirectPath = (path: string) => {
+  sessionStorage.setItem('redirectPath', path)
+}
+
+export const getRedirectPath = (willDelete: boolean = true): string | null => {
+  const result = sessionStorage.getItem('redirectPath')
+  if (willDelete) {
+    sessionStorage.removeItem('redirectPath')
+  }
+  return result
+}

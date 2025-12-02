@@ -13,7 +13,6 @@ const userEmail = computed({
   },
 })
 
-const route = useRoute()
 const router = useRouter()
 
 const isLoading = ref(false)
@@ -32,7 +31,6 @@ const submit = async () => {
       path: '/pass-code',
       query: {
         email,
-        redirect: route.query.redirect,
       },
     })
   } catch (error) {

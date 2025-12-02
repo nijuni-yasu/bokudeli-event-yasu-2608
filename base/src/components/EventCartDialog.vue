@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -10,7 +10,6 @@ import { mdiCart } from '@mdi/js'
 import { getLogin } from '@/router/utils'
 
 const router = useRouter()
-const route = useRoute()
 
 const props = defineProps<{
   modelValue: boolean
@@ -46,9 +45,6 @@ const currentUserStore = useCurrentUserStore()
 const login = () => {
   router.push({
     path: getLogin(),
-    query: {
-      redirect: route.path,
-    },
   })
 }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { getCommunityPath, getLogin } from '@/router/utils'
 import { getEventUrl } from '@shokujii/common/utils/urls.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -34,7 +34,6 @@ import { usePartnerStore } from '@shokujii/base/stores/partner'
 import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
 
 const router = useRouter()
-const route = useRoute()
 
 const qrcodeSize = 300
 
@@ -87,9 +86,6 @@ const showQrCode = () => {
 const login = () => {
   router.push({
     path: getLogin(),
-    query: {
-      redirect: route.path,
-    },
   })
 }
 
