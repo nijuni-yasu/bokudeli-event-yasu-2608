@@ -181,7 +181,7 @@ export const setupRouter = (router: Router) => {
       if (isNew) {
         return {
           path: '/profile',
-          auery: { ...to.query, new: '' },
+          query: { ...to.query, new: '' },
         }
       }
       // 元いたページへ
