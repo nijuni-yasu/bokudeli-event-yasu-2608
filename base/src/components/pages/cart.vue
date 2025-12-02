@@ -10,7 +10,7 @@ import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
-import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
+import { mdiTrashCan, mdiHelpCircleOutline, mdiFoodForkDrink } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 
@@ -283,7 +283,7 @@ const isOpenCancelpolicyDialog = ref(false)
         <v-row class="justify-center">
           <v-col class="text-center">
             <v-btn
-              class="my-8 text-md-h4 text-h5"
+              class="mt-8 text-md-h4 text-h5"
               color="grey-900"
               size="x-large"
               :loading="isOrderProcessing"
@@ -293,6 +293,23 @@ const isOpenCancelpolicyDialog = ref(false)
               @click="showConfirm(cartItem)"
             >
               {{ $t('cart.order_and_attend_event') }}
+            </v-btn>
+          </v-col>
+        </v-row>
+
+        <v-row class="justify-center">
+          <v-col class="text-center">
+            <v-btn
+              :prepend-icon="mdiFoodForkDrink"
+              class="mb-8 text-md-h5 text-subtitle-1"
+              color="grey-600"
+              variant="text"
+              size="small"
+              rounded="pill"
+              elevation="0"
+              @click="router.push(getEventPath(cartItem.event.community_account, cartItem.event.event_id))"
+            >
+              {{ $t('cart.add_more_menu') }}
             </v-btn>
           </v-col>
         </v-row>
