@@ -292,7 +292,11 @@ const isOpenCancelpolicyDialog = ref(false)
               width="85%"
               @click="showConfirm(cartItem)"
             >
-              {{ $t('cart.order_and_attend_event') }}
+              {{
+                cartItem.event.event_payment === 'user_advance'
+                  ? $t('cart.proceed_to_payment')
+                  : $t('cart.order_and_attend_event')
+              }}
             </v-btn>
           </v-col>
         </v-row>
