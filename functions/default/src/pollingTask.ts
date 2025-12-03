@@ -32,7 +32,7 @@ export const pollingTask = onSchedule(
       sendOrderDeadlineMailToShop(start + ONE_DAY_MILLIS, end + ONE_DAY_MILLIS, true),
       sendOrderDeadlineMailToOrganizers(start, end),
       sendOrderDeadlineMailToMembers(start, end),
-      sendOrderDeadlineReminderToCommunityMembers(start + ONE_DAY_MILLIS, end + ONE_DAY_MILLIS), // 注文期限24時間前
+      sendOrderDeadlineReminderToCommunityMembers(start + 2 * ONE_DAY_MILLIS, end + 2 * ONE_DAY_MILLIS), // 注文期限2日前
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
       sendInCartEventDeadlineNotificationToMember(start, end),
@@ -42,8 +42,8 @@ export const pollingTask = onSchedule(
       sendLetter(start, end), // レター送信
     ]
 
-    // 主催者向け注文リマインドメール（1,5,10,20,30,40,50,60日後）
-    const orderRemindToOrganizerDays = [1, 5, 10, 20, 30, 40, 50, 60]
+    // 主催者向け注文リマインドメール（5,10,20,30,40,50,60日後）
+    const orderRemindToOrganizerDays = [5, 10, 20, 30, 40, 50, 60]
     orderRemindToOrganizerDays.forEach((day) => {
       promiseFunctions.push(
         sendOrderRemindMailToOrganizer(start + day * ONE_DAY_MILLIS, end + day * ONE_DAY_MILLIS, day),
