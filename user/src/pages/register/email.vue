@@ -2,6 +2,7 @@
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
+import { getPassCode } from '@/router/utils'
 
 const currentUserStore = useCurrentUserStore()
 const userEmail = computed({
@@ -27,12 +28,7 @@ const submit = async () => {
   try {
     const email = userEmail.value
     await currentUserStore.requestEmailChange(email)
-    await router.push({
-      path: '/pass-code',
-      query: {
-        email,
-      },
-    })
+    await router.push(getPassCode(email))
   } catch (error) {
     console.warn('Error sending pass code:', error)
   } finally {

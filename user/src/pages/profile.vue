@@ -15,6 +15,7 @@ import { useNotification } from '@shokujii/base/composable/notification'
 import { type ProviderIdType } from '@shokujii/base/utils/providerService'
 import { User } from '@shokujii/common/schemas/User.js'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
+import { getPassCode } from '@/router/utils'
 
 const currentUserStore = useCurrentUserStore()
 const { providerData, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
@@ -191,12 +192,7 @@ const emailSubmit = async () => {
 
     await currentUserStore.requestEmailChange(newUserEmail)
 
-    return await router.push({
-      path: '/pass-code',
-      query: {
-        newemail: newUserEmail,
-      },
-    })
+    return await router.push(getPassCode(newUserEmail))
   } catch (error) {
     if (error instanceof FirebaseError && error.code === 'functions/already-exists') {
       notification.show($t('profile.exist_email'), 'warning')

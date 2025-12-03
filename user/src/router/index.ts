@@ -95,7 +95,7 @@ export const setupRouter = (router: Router) => {
             // カスタムトークンログインを行い、メールアドレスが既に存在している場合
             return {
               path: '/pass-code',
-              query: { ...to.query, email, pid: pendingCred?.providerId },
+              state: { email },
             }
           } else {
             return {
@@ -159,7 +159,6 @@ export const setupRouter = (router: Router) => {
       if (!shokujiiUser.user_email) {
         return {
           path: '/register/email',
-          query: to.query,
         }
       }
 

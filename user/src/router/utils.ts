@@ -30,3 +30,4 @@ export const getEventBillInvoicePath = (eventId: string) => `/manage/event/${eve
 export const getFlyerPath = () => '/flyer'
 export const getLogin = () => '/login'
 export const getProfile = () => '/profile'
+export const getPassCode = (email: string) => ({ path: '/pass-code', state: { email } })
