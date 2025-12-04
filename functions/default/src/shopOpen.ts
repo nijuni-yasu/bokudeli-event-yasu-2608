@@ -42,7 +42,8 @@ export const shopStatusChanged = onDocumentWritten(
     const before = new PartnerShop(event.params.partnerId, event.params.shopId, beforeData)
     const after = new PartnerShop(event.params.partnerId, event.params.shopId, afterData)
     const promises = []
-    if (after.is_open && before?.is_open !== after.is_open) {
+    // OPEN/CLOSE いずれの変更でもサポート宛にメール通知する
+    if (before.is_open !== after.is_open) {
       promises.push(sendShopOpenMailToSupport(after))
     }
 
