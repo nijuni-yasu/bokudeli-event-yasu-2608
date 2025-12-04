@@ -12,6 +12,7 @@ import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/Event
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
 import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
+import { EventLog } from '@shokujii/common/schemas/EventLog.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
   constructor(private readonly userId?: string) {
@@ -45,6 +46,16 @@ class ShokujiiEventMenuConverter implements FirestoreDataConverter<EventMenu> {
   fromFirestore(snapshot: QueryDocumentSnapshot): EventMenu {
     const eventId = snapshot.ref.parent.parent!.id
     return new EventMenu(eventId, snapshot.id, snapshot.data())
+  }
+}
+
+class ShokujiiEventLogConverter implements FirestoreDataConverter<EventLog> {
+  toFirestore(log: EventLog): DocumentData {
+    return log.toFirestore()
+  }
+
+  fromFirestore(snapshot: QueryDocumentSnapshot): EventLog {
+    return new EventLog(snapshot.id, snapshot.data())
   }
 }
 
@@ -174,18 +185,14 @@ export class ShokujiiEvent extends Event {
       .doc(this.id)
       .collection('logs')
       .orderBy('updated_at', 'desc')
+      .withConverter(new ShokujiiEventLogConverter())
 
     const logsSnapshot = await logsRef.get()
 
     for (const logSnapshot of logsSnapshot.docs) {
-      const eventStatus = logSnapshot.get('event_status')
-      if (eventStatus?.value === status) {
-        const updatedAt = logSnapshot.get('updated_at')
-        // updated_at は Firestore の Timestamp 前提。そうでない場合はエラーにする
-        if (!(updatedAt instanceof Timestamp)) {
-          throw new Error('`updated_at` must be a Firestore Timestamp')
-        }
-        return updatedAt.toMillis()
+      const log = logSnapshot.data()
+      if (log.event_status?.value === status) {
+        return log.updated_at
       }
     }
     return null
