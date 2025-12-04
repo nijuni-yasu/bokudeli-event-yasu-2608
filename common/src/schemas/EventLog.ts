@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { EpochMillisSchema, TimestampSchema, DocumentData } from './firebase/index.js'
+import { EventDbSchema } from './Event.js'
 
 // Firestore(DB) 側のスキーマ
 const EventLogDbSchema = z
@@ -8,8 +9,7 @@ const EventLogDbSchema = z
     updated_at: TimestampSchema,
     updated_by: z.string().nonempty(),
   })
-  // 差分として保存される任意のフィールドをすべて許可
-  .passthrough()
+  .merge(EventDbSchema.partial())
 
 // アプリ側(クラス)用のスキーマ
 const EventLogAppSchema = z
@@ -18,7 +18,6 @@ const EventLogAppSchema = z
     updated_at: EpochMillisSchema,
     updated_by: z.string().nonempty(),
   })
-  // 差分として取得する任意フィールドをすべて許可
   .passthrough()
 
 export class EventLog {

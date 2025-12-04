@@ -36,7 +36,7 @@ const MemberIdSchema = z
  * TODO: postalcode は utils/validatier を使用するように
  * TODO: postalcode 以外の URL 等もバリデーションする
  */
-const EventDbSchema = z.object({
+export const EventDbSchema = z.object({
   // Mandatory
   event_id: z.string().nonempty(),
   community_id: z.string().nonempty(),
