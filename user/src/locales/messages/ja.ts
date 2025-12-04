@@ -493,4 +493,7 @@ export default {
       notify_reset_email: 'ログイン用メールアドレスを復元しました。',
     },
   },
+  error_messages: {
+    register_email: 'メールアドレス登録に失敗しました',
+  },
 }
