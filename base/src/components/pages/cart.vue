@@ -10,7 +10,7 @@ import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
-import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
+import { mdiTrashCan, mdiHelpCircleOutline, mdiFoodForkDrink } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 
@@ -73,29 +73,33 @@ const isOrderProcessing = ref<boolean>(false)
 
 const startOrderProcess = async () => {
   isOrderProcessing.value = true
-  const order = selectedOrder.value
-  const event = selectedCartEvent.value
-  if (order === undefined || event === undefined) {
-    return
-  }
+  try {
+    const order = selectedOrder.value
+    const event = selectedCartEvent.value
+    if (order === undefined || event === undefined) {
+      return
+    }
 
-  if (event.event_payment == 'user_advance') {
-    try {
-      const response = (await createStripeCheckoutSession({ order, isPosted: false })) as any // 一時的措置
-      isOrderProcessing.value = false
-      window.location.href = response.data.url || getEventPath(order.community_account, order.event_id)
-    } catch {
-      alertBody.value = $t('cart.payment_failed')
+    if (event.event_payment == 'user_advance') {
+      try {
+        const response = (await createStripeCheckoutSession({ order, isPosted: false })) as any // 一時的措置
+        window.location.href = response.data.url || getEventPath(order.community_account, order.event_id)
+      } catch {
+        alertBody.value = $t('cart.payment_failed')
+      }
+    } else {
+      try {
+        const eventStore = useEventStore(event.event_id) as EventStore
+        await eventStore.updateOrderStatus(order, 'ordered')
+        router.push(
+          `${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
+        )
+      } catch {
+        alertBody.value = $t('cart.order_failed')
+      }
     }
-  } else {
-    try {
-      const eventStore = useEventStore(event.event_id) as EventStore
-      await eventStore.updateOrderStatus(order, 'ordered')
-      isOrderProcessing.value = false
-      router.push(`${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`)
-    } catch {
-      alertBody.value = $t('cart.order_failed')
-    }
+  } finally {
+    isOrderProcessing.value = false
   }
 }
 
@@ -279,15 +283,37 @@ const isOpenCancelpolicyDialog = ref(false)
         <v-row class="justify-center">
           <v-col class="text-center">
             <v-btn
-              class="my-8 text-md-h4 text-h5"
+              class="mt-8 text-md-h4 text-h5"
               color="grey-900"
               size="x-large"
+              :loading="isOrderProcessing"
               rounded="pill"
               elevation="5"
               width="85%"
               @click="showConfirm(cartItem)"
             >
-              {{ $t('cart.order_and_attend_event') }}
+              {{
+                cartItem.event.event_payment === 'user_advance'
+                  ? $t('cart.proceed_to_payment')
+                  : $t('cart.order_and_attend_event')
+              }}
+            </v-btn>
+          </v-col>
+        </v-row>
+
+        <v-row class="justify-center">
+          <v-col class="text-center">
+            <v-btn
+              :prepend-icon="mdiFoodForkDrink"
+              class="mb-8 text-md-h5 text-subtitle-1"
+              color="grey-600"
+              variant="text"
+              size="small"
+              rounded="pill"
+              elevation="0"
+              @click="router.push(getEventPath(cartItem.event.community_account, cartItem.event.event_id))"
+            >
+              {{ $t('cart.add_more_menu') }}
             </v-btn>
           </v-col>
         </v-row>
