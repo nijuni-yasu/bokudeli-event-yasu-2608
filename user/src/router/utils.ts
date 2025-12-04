@@ -31,3 +31,4 @@ export const getFlyerPath = () => '/flyer'
 export const getLogin = () => '/login'
 export const getProfile = () => '/profile'
 export const getPassCode = (email: string) => ({ path: '/pass-code', state: { email } })
+export const getRegisterComplete = (isNewUser: boolean) => ({ path: '/register/complete', state: { isNewUser } })

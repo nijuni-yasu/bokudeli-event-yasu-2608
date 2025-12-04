@@ -3,7 +3,7 @@ import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
-import { getHomePath, getLogin } from '@/router/utils'
+import { getHomePath, getLogin, getRegisterComplete } from '@/router/utils'
 import { confirmEmailLogin, requestEmailLogin } from '@shokujii/base/apis/user'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 
@@ -66,8 +66,7 @@ const submit = async (passCode: string) => {
       const result = await confirmEmailLogin({ email, passCode })
       const { token, isNew } = result.data
       await signInWithCustomToken(getAuth(), token)
-      // 再読みこみしてリダイレクト時と同様の処理をさせる
-      window.location.href = '/register/complete' + (isNew ? '?new' : '')
+      router.push(getRegisterComplete(isNew))
     }
   } catch (error: any) {
     console.warn('Error sending pass code:', error)

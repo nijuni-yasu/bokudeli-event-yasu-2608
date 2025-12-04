@@ -162,25 +162,25 @@ export const setupRouter = (router: Router) => {
         }
       }
 
+      let isNewUser = false
+      // プロフィールが埋まっていても新規ユーザーのときだけ動作を変える
+      if (userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        isNewUser ||= aui?.isNewUser ?? false
+      }
+
       // プロフィール名かアイコンが設定されていなければ、登録完了（プロフィール登録誘導）へ
       if (!shokujiiUser.user_name || !shokujiiUser.user_image_url) {
         return {
           path: '/register/complete',
-          query: to.query,
+          state: { isNewUser },
         }
       }
 
-      // プロフィールが埋まっていても新規ユーザーのときだけ動作を変える
-      let isNew = to.query.new === undefined || to.query.new === 'false' ? false : true
-      if (!isNew && userCredential != null) {
-        const aui = getAdditionalUserInfo(userCredential)
-        isNew ||= aui?.isNewUser ?? false
-      }
-
-      if (isNew) {
+      if (isNewUser) {
         return {
           path: '/profile',
-          auery: { ...to.query, new: '' },
+          state: { isNewUser },
         }
       }
       // 元いたページへ

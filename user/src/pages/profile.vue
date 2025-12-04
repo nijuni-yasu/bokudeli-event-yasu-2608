@@ -53,7 +53,6 @@ const linkedTwitterAccount = computed(() => {
 })
 
 const router = useRouter()
-const route = useRoute()
 
 const isProfileLoading = ref<boolean>(false)
 const isEmailLoading = ref<boolean>(false)
@@ -79,7 +78,7 @@ const form = ref<VForm | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const userImage = ref<File | undefined>(undefined)
 
-const isNew = route.query.new === undefined || route.query.new === 'false' ? false : true
+const isNewUser = history.state?.isNewUser ?? false
 
 const imageError = ref('')
 
@@ -301,7 +300,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
         </v-col>
       </v-row>
 
-      <v-row v-if="!isNew" justify="center" class="mt-8">
+      <v-row v-if="!isNewUser" justify="center" class="mt-8">
         <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
           <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
             <div class="text-center text-h3 font-weight-bold mb-4">{{ $t('profile.social_link') }}</div>
@@ -355,7 +354,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
       </v-row>
     </v-form>
 
-    <v-row v-if="!isNew" justify="center" class="mt-8">
+    <v-row v-if="!isNewUser" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
@@ -387,7 +386,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
       </v-col>
     </v-row>
 
-    <v-row v-if="!isNew" justify="center" class="mt-8">
+    <v-row v-if="!isNewUser" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.account_linkage') }}</div>
