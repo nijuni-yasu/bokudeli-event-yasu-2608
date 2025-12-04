@@ -126,8 +126,6 @@ export const createNewEvent = async (event: BokudeliEvent, coverImage: File | nu
   if (!event.event_cover_url) {
     throw new Error('event_cover_url must be set')
   }
-  event.bill_fullname = community.get('community_bill_fullname') ?? community.get('community_manager_fullname') ?? ''
-  event.bill_email = community.get('community_bill_email') ?? community.get('community_email') ?? ''
   const newEventRef = doc(communityRef, 'events', event.id).withConverter(eventConverter)
   await setDoc(newEventRef, event, { merge: true })
   return event
