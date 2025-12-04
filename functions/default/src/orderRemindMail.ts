@@ -34,6 +34,13 @@ interface TemplateDataForApplyingOrder {
   orders: OrderData[]
   order_url: string
   approve_deadline_datetime: string
+  organizer_fullname: string
+  organizer_company: string
+  organizer_email: string
+  organizer_phone_personal: string
+  organizer_phone_company: string
+  organizer_memo: string
+  event_max_people: number
   is_reminder?: boolean
 }
 
@@ -85,6 +92,13 @@ async function createTemplateDataForApplyingOrder(
     orders,
     order_url: getAdminOrderUrl(event.id),
     approve_deadline_datetime: convertToDateWeekdayShort(limitTimeMills) || '',
+    organizer_fullname: event.organizer_fullname,
+    organizer_company: event.organizer_company,
+    organizer_email: event.organizer_email,
+    organizer_phone_personal: event.organizer_phone_personal,
+    organizer_phone_company: event.organizer_phone_company,
+    organizer_memo: event.organizer_memo,
+    event_max_people: event.event_max_people,
   }
 }
 
