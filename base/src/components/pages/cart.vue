@@ -319,7 +319,7 @@ const isOpenCancelpolicyDialog = ref(false)
   <ConfirmDialog
     v-model="openUserParameterConfirm"
     :is-confirm="true"
-    :ok-click="() => router.push({ path: getProfile() })"
+    :ok-click="() => router.push(getProfile(false))"
     :ok-text="$t('cart.go_to_setting')"
   >
     {{ targetUserParameter }}

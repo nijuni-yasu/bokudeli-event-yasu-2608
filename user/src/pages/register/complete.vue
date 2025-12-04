@@ -37,12 +37,7 @@ const handleTwitterLink = async () => {
   try {
     isLoading.value = true
     await currentUserStore.linkProvider(TwitterAuthProvider.PROVIDER_ID)
-    await router.push({
-      path: getProfile(),
-      state: {
-        isNewUser,
-      },
-    })
+    await router.push(getProfile(isNewUser))
   } catch (error) {
     console.error(error)
     // TODO error message
@@ -83,14 +78,7 @@ const handleTwitterLink = async () => {
           >
             {{ $t('complete.profile_registration_X') }}
           </v-btn>
-          <v-btn
-            class="mb-4"
-            size="large"
-            color="grey-900"
-            block
-            :loading="isLoading"
-            :to="{ path: getProfile(), state: { isNewUser } }"
-          >
+          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" :to="getProfile(isNewUser)">
             {{ selfButtonLabel }}
           </v-btn>
         </v-sheet>
