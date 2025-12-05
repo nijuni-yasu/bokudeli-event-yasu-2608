@@ -180,7 +180,12 @@ export class ShokujiiEvent extends Event {
     for (const logSnapshot of logsSnapshot.docs) {
       const eventStatus = logSnapshot.get('event_status')
       if (eventStatus?.value === status) {
-        return logSnapshot.get('updated_at') as number
+        const updatedAt = logSnapshot.get('updated_at')
+        // updated_at は Firestore の Timestamp 前提。そうでない場合はエラーにする
+        if (!(updatedAt instanceof Timestamp)) {
+          throw new Error('`updated_at` must be a Firestore Timestamp')
+        }
+        return updatedAt.toMillis()
       }
     }
     return null

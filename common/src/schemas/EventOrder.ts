@@ -84,7 +84,7 @@ export class EventOrder {
     this.order_id = order_id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
     this.carted_at = EpochMillisSchema.default(Date.now()).parse(src.carted_at)
-    this.updated_at = Date.now()
+    this.updated_at = EpochMillisSchema.default(Date.now()).parse(src.updated_at)
   }
 
   get totalPrice() {

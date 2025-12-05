@@ -28,15 +28,12 @@ const userIdRef = ref('')
 const fetchUser = async (identifier: string) => {
   const userCollection = collection(db, 'users')
   const queryById = query(userCollection, where('user_id', '==', identifier), limit(1))
-  const queryByUrlPath = query(userCollection, where('user_account', '==', identifier), limit(1))
 
   try {
-    const [queryByIdSnapshot, queryByUrlPathSnapshot] = await Promise.all([getDocs(queryById), getDocs(queryByUrlPath)])
+    const queryByIdSnapshot = await getDocs(queryById)
 
     if (!queryByIdSnapshot.empty) {
       userIdRef.value = queryByIdSnapshot.docs[0].data().user_id
-    } else if (!queryByUrlPathSnapshot.empty) {
-      userIdRef.value = queryByUrlPathSnapshot.docs[0].data().user_id
     } else {
       userIdRef.value = ''
     }

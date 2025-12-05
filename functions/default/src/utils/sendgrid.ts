@@ -20,7 +20,7 @@ const isValidMailData = (data: MailDataRequired): boolean => {
 
 export const send = async (data: MailDataRequired | MailDataRequired[]): Promise<[ClientResponse, object]> => {
   if (data instanceof Array) {
-    data = data.flatMap((d) => (isValidMailData(d) ? [] : d))
+    data = data.filter((d) => isValidMailData(d))
   } else {
     if (!isValidMailData(data)) {
       throw new Error('The argument "data" is invalid.')
