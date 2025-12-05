@@ -2,17 +2,20 @@ import { z } from 'zod'
 
 const ConfigGlobalDbSchema = z.object({
   support_user_ids: z.array(z.string().nonempty()),
+  system_id: z.string().nonempty(),
   // maintenance_mode: z.boolean(),
 })
 
 const ConfigGlobalAppSchema = z.object({
   support_user_ids: z.array(z.string().nonempty()),
+  system_id: z.string().nonempty(),
   // maintenance_mode: z.boolean(),
 })
 
 export class ConfigGlobal {
   readonly id: string
   support_user_ids!: string[]
+  system_id!: string
 
   constructor(id: string, src: Partial<ConfigGlobal>) {
     Object.assign(this, ConfigGlobalAppSchema.parse(src))
@@ -21,6 +24,10 @@ export class ConfigGlobal {
 
   isSupport(userId: string): boolean {
     return this.support_user_ids.includes(userId)
+  }
+
+  isSystem(userId: string): boolean {
+    return this.system_id === userId
   }
 
   isValidForDatabase(): boolean {
