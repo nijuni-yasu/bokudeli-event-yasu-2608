@@ -12,7 +12,7 @@ const configGlobalConverter: FirestoreDataConverter<ConfigGlobal> = {
 
 export const getConfigGlobal = async (): Promise<ConfigGlobal | undefined> => {
   const db = getFirestore()
-  const configRef = db.collection('config').doc('global').withConverter(configGlobalConverter)
+  const configRef = db.collection('configs').doc('global').withConverter(configGlobalConverter)
   const snapshot = await configRef.get()
   return snapshot.exists ? (snapshot.data() ?? undefined) : undefined
 }
