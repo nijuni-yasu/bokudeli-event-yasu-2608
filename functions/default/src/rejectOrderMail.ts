@@ -3,12 +3,14 @@ import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { ShokujiiEvent, getApplyingReservationEvents } from './stores/event.js'
+import { getConfigGlobal } from './stores/config.js'
 import { getEventPartnerShop } from './stores/partner.js'
 import {
   convertToDateWeekdayShort,
   convertToDatetimeWeekdayShort,
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
+import { HttpsError } from 'firebase-functions/https'
 
 // テンプレートID
 const REJECT_ORDER_TEMPLATE_ID = 'd-f968252a99864a1a9e126b9863944832'
@@ -66,7 +68,11 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
  */
 export async function sendRejectOrderMailToShop(start: number, end: number): Promise<void[]> {
   const nowDateTimeMillis = Date.now()
-  const events = await getApplyingReservationEvents(nowDateTimeMillis)
+  const [events, config] = await Promise.all([getApplyingReservationEvents(nowDateTimeMillis), getConfigGlobal()])
+  const updated_by = config?.system_id
+  if (updated_by == null) {
+    throw new HttpsError('internal', 'System ID not found')
+  }
 
   const sendMailPromises: Promise<void>[] = []
 
@@ -79,6 +85,7 @@ export async function sendRejectOrderMailToShop(start: number, end: number): Pro
         if (updatedAt == null || updatedAt <= start || updatedAt > end) {
           return
         }
+        event.updated_by = updated_by
 
         // イベントステータスを in_draft に更新
         await event.updateEventStatus('in_draft')
