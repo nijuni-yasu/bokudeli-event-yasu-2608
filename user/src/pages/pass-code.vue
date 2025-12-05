@@ -3,7 +3,7 @@ import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
-import { getHomePath, getLogin } from '@/router/utils'
+import { getHomePath, getLogin, getRegisterComplete } from '@/router/utils'
 import { confirmEmailLogin, requestEmailLogin } from '@shokujii/base/apis/user'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 
@@ -17,19 +17,16 @@ const currentUserStore = useCurrentUserStore()
 const isLoading = ref(false)
 const isValid = ref(false)
 
-const email = route.query.email as string | undefined
-const newEmail = route.query.newemail as string | undefined
-if (email != null && getAuth().currentUser?.uid != null) {
-  await router.push(getHomePath())
-} else if (newEmail != null && getAuth().currentUser?.uid == null) {
-  await router.push(getLogin())
-} else if (email == null && newEmail == null) {
-  if (getAuth().currentUser?.uid == null) {
-    await router.push(getLogin())
-  } else {
+const isLogin = getAuth().currentUser?.uid != null
+const _email = history.state?.email as string | undefined
+if (_email == null) {
+  if (isLogin) {
     await router.push(getHomePath())
+  } else {
+    await router.push(getLogin())
   }
 }
+const email = _email as string
 
 const passCode = ref('')
 const isOpenUnMatchPassCodeDialog = ref(false)
@@ -44,7 +41,11 @@ watch(passCode, async (newValue) => {
 const reSendPassCode = async () => {
   isLoading.value = true
   try {
-    await requestEmailLogin({ email: email! })
+    if (isLogin) {
+      await currentUserStore.requestEmailChange(email)
+    } else {
+      await requestEmailLogin({ email })
+    }
   } catch (error) {
     console.warn('Error resending pass code:', error)
   } finally {
@@ -55,18 +56,18 @@ const reSendPassCode = async () => {
 const submit = async (passCode: string) => {
   isValid.value = true
   try {
-    if (newEmail != null) {
+    if (isLogin) {
       // Email Change の場合
-      await currentUserStore.confirmEmailChange(newEmail, passCode)
+      await currentUserStore.confirmEmailChange(email, passCode)
       const redirectPath = getRedirectPath() ?? '/'
-      return await router.push(redirectPath)
+      await router.push(redirectPath)
+    } else {
+      // Email Login
+      const result = await confirmEmailLogin({ email, passCode })
+      const { token, isNew } = result.data
+      await signInWithCustomToken(getAuth(), token)
+      router.push(getRegisterComplete(isNew))
     }
-    // Email Login
-    const result = await confirmEmailLogin({ email: email!, passCode: passCode })
-    const { token, isNew } = result.data
-    await signInWithCustomToken(getAuth(), token)
-    // 再読みこみしてリダイレクト時と同様の処理をさせる
-    window.location.href = '/register/complete' + (isNew ? '?new' : '')
   } catch (error: any) {
     console.warn('Error sending pass code:', error)
     isOpenUnMatchPassCodeDialog.value = true
@@ -89,7 +90,7 @@ const submit = async (passCode: string) => {
               <h1 class="my-3 text-h3 font-weight-bold">{{ $t('passcode.enter_passcode') }}</h1>
             </v-row>
             <v-row justify="center">
-              <p>{{ $t('passcode.enter_passcode_description', { email: email ?? newEmail }) }}</p>
+              <p>{{ $t('passcode.enter_passcode_description', { email: email }) }}</p>
             </v-row>
           </v-container>
 
@@ -107,7 +108,7 @@ const submit = async (passCode: string) => {
             {{ $t('passcode.resend') }}
           </v-btn>
           <v-btn
-            v-if="!newEmail"
+            v-if="!isLogin"
             size="large"
             color="grey-900"
             variant="text"

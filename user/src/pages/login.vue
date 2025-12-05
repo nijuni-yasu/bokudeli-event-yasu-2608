@@ -8,6 +8,7 @@ import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
+import { getPassCode } from '@/router/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -40,12 +41,7 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', email?: string
       await requestEmailLogin({
         email,
       })
-      await router.push({
-        path: '/pass-code',
-        query: {
-          email,
-        },
-      })
+      await router.push(getPassCode(email))
     } else {
       await signInByProviderService(providerId)
       // ここに来るのはポップアップ認証（デバッグ用）成功時のみ

@@ -5,7 +5,6 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getProfile } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification'
 
-const route = useRoute()
 const router = useRouter()
 
 const notification = useNotification()
@@ -17,15 +16,9 @@ const selfButtonLabel = ref('')
 
 const isLoading = ref(false)
 
-const isNew = route.query.new === undefined || route.query.new === 'false' ? false : true
-const profileLink = {
-  path: getProfile(),
-  query: {
-    new: isNew ? '' : undefined,
-  },
-}
+const isNewUser = history.state?.isNewUser ?? false
 
-if (isNew) {
+if (isNewUser) {
   titleLabel.value = $t('complete.new_user_title')
   descriptionLabel.value = $t('complete.new_user_description')
   selfButtonLabel.value = $t('complete.new_user_selfButton')
@@ -44,7 +37,7 @@ const handleTwitterLink = async () => {
   try {
     isLoading.value = true
     await currentUserStore.linkProvider(TwitterAuthProvider.PROVIDER_ID)
-    await router.push(profileLink)
+    await router.push(getProfile(isNewUser))
   } catch (error) {
     console.error(error)
     // TODO error message
@@ -85,7 +78,7 @@ const handleTwitterLink = async () => {
           >
             {{ $t('complete.profile_registration_X') }}
           </v-btn>
-          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" :to="profileLink">
+          <v-btn class="mb-4" size="large" color="grey-900" block :loading="isLoading" :to="getProfile(isNewUser)">
             {{ selfButtonLabel }}
           </v-btn>
         </v-sheet>
