@@ -1,6 +1,11 @@
 import { z } from 'zod'
-import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema, type DocumentReference } from './firebase/index.js'
+import { COMMUNITY_DEFAULT_IMAGE_SETS } from '../utils/defaultImages.js'
+import { generateRandomAccount } from '../utils/generateRandomAccount.js'
+import { isEmpty } from '../utils/string.js'
 
+// NonApproved なときのもの
+// TDODO Approved なものも作成する
 const CommunityDbSchema = z.object({
   // Mandatory
   community_id: z.string().nonempty(),
@@ -8,7 +13,6 @@ const CommunityDbSchema = z.object({
   community_account: z.string().nonempty(),
   community_cover_image_url: z.string().nonempty(),
   community_icon_image_url: z.string().nonempty(),
-  community_sns_officialsite: z.string().nonempty(),
   is_public: z.boolean(),
   is_approved: z.boolean(),
   is_show_member: z.boolean(),
@@ -28,9 +32,19 @@ const CommunityDbSchema = z.object({
   community_sns_twitter: NonEmptyStringSchema,
   community_sns_instagram: NonEmptyStringSchema,
   community_sns_hash_tag: NonEmptyStringSchema,
+  community_sns_officialsite: NonEmptyStringSchema,
   community_bill_fullname: NonEmptyStringSchema,
   community_bill_email: NonEmptyStringSchema,
+  // members, managers は functions で処理するので DB に直接書き込まない
 })
+
+const convertToDb = (community: Community) => {
+  return {
+    ...community,
+    created_at: EpochMillisSchema.default(Date.now()).parse(community.created_at),
+    updated_at: Date.now(),
+  }
+}
 
 // ほぼ デフォルトなので CommunityAppSchema は（いまのところ）作成しない
 export class Community {
@@ -43,7 +57,7 @@ export class Community {
   community_name: string = ''
   community_account: string = ''
   is_public: boolean = true
-  is_approved: boolean = false
+  is_approved: boolean = true
   is_show_member: boolean = true
   subdomain_tags: string[] = []
   community_manager_fullname: string = ''
@@ -63,8 +77,20 @@ export class Community {
   community_sns_hash_tag: string = ''
   community_bill_fullname: string = ''
   community_bill_email: string = ''
+  // community_num_members はソート用で functions で処理されるフィールド。ここに追加すると不整合が起こるため追加してはいけない。
+  // community_num_members: number = 0
+  members: (typeof DocumentReference)[] = []
+  managers: (typeof DocumentReference)[] = []
 
   constructor(id: string, src: Partial<Community>) {
+    if (isEmpty(src.community_cover_image_url) || isEmpty(src.community_icon_image_url)) {
+      const randomIndex = Math.floor(Math.random() * COMMUNITY_DEFAULT_IMAGE_SETS.length)
+      src.community_cover_image_url = COMMUNITY_DEFAULT_IMAGE_SETS[randomIndex].cover
+      src.community_icon_image_url = COMMUNITY_DEFAULT_IMAGE_SETS[randomIndex].icon
+    }
+    if (isEmpty(src.community_account)) {
+      src.community_account = generateRandomAccount()
+    }
     Object.assign(this, src)
     this.id = id
     this.community_id = id
@@ -72,19 +98,12 @@ export class Community {
     this.updated_at = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return CommunityDbSchema.safeParse(this.getDb()).success
+    return CommunityDbSchema.safeParse(convertToDb(this)).success
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(): any {
-    return CommunityDbSchema.parse(this.getDb())
+    return CommunityDbSchema.parse(convertToDb(this))
   }
 }

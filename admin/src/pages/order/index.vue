@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { mdiTruckOutline } from '@mdi/js'
-import { useEventListStore } from '@/stores/eventList'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { orderBy, where } from 'firebase/firestore'
-import { ordersCount, ordersTotalPrice } from '@/utils/orders'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import { ordersCount, ordersTotalPrice } from '@shokujii/base/utils/orders.js'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
+import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import { getOrderDetailPath } from '@/navigation/utils'
 
 const eventListStore = useEventListStore(
@@ -49,15 +50,13 @@ const events = computed(
                   </td>
                   <td>
                     {{
-                      event.event_start_datetime != null
-                        ? $d(event.event_start_datetime.toDate(), 'datetime_weekday_short')
-                        : ''
+                      event.event_start_datetime != null ? $d(event.event_start_datetime, 'datetime_weekday_short') : ''
                     }}
                   </td>
                   <td>
                     {{
                       event?.event_deadline_datetime != null
-                        ? $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short')
+                        ? $d(event.event_deadline_datetime, 'datetime_weekday_short')
                         : ''
                     }}
                   </td>
@@ -66,7 +65,7 @@ const events = computed(
                   <td class="text-center">{{ $t('orders.order_count', [ordersCount(orders)]) }}</td>
                   <td class="text-center">{{ $n(ordersTotalPrice(orders), 'currency') }}</td>
                   <td>
-                    {{ $t(`event_status.${event.event_status.value}`) }}
+                    <EventStatusChip :status="event.calculatedEventStatus" />
                   </td>
                 </tr>
               </template>

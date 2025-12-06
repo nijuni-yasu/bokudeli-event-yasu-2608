@@ -1,15 +1,10 @@
-import { type Ref } from 'vue'
-import { db } from '@/firebase'
-import { getAuth } from 'firebase/auth'
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
 import {
   collection,
-  doc,
   getDocs,
-  getDoc,
   query,
   where,
-  Timestamp,
-  setDoc,
   getCountFromServer,
   QueryDocumentSnapshot,
   startAfter,
@@ -17,45 +12,22 @@ import {
   type DocumentData,
   type QueryConstraint,
 } from 'firebase/firestore'
-import { convertDocumentDataToCommunity } from '@/schemes/converter'
-import type { StateTree, Store } from 'pinia'
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { TaskExecutor } from '@/utils/executors'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { db } from '@shokujii/base/firebase.js'
+import { Community } from '@shokujii/common/schemas/Community.js'
+import { TaskExecutor } from '@shokujii/base/utils/executors.js'
+import { communityConverter, useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 
-type CommunityListStoreState = {
-  communityDraft: Ref<BokudeliCommunity>
-  totalCount: Ref<number | null>
-} & StateTree
-
-type CommunityListStoreGetters = {
-  communityStores: Ref<CommunityStore[] | null>
-}
-
-type CommunityListStoreAction = {
-  reload: () => void
-  next: () => void
-  getCommunityData: (communityAccount: string) => Promise<DocumentData | null>
-  createNewCommunityFromDraft: () => Promise<BokudeliCommunity>
-}
-
-export type CommunityListStore = Store<
-  string,
-  CommunityListStoreState,
-  CommunityListStoreGetters,
-  CommunityListStoreAction
->
+export type CommunityListStore = ReturnType<typeof useCommunityListStore>
 
 export const useCommunityListStore = (filters: QueryConstraint[] | null = null, pageSize: number = 5) => {
-  const store = defineStore<string, CommunityListStoreState & CommunityListStoreGetters & CommunityListStoreAction>(
+  const store = defineStore(
     filters == null ? '/communityList' : `/communityList/${JSON.stringify(filters)}/${pageSize}`,
     () => {
       const pagenationExecutor = new TaskExecutor(1)
       const communityStores = ref<CommunityStore[] | null>(null)
-      const communityDraft = ref<BokudeliCommunity>(BokudeliCommunity.createNew())
       const totalCount = ref<number | null>(null)
 
-      const communitiesSnapshot: QueryDocumentSnapshot[] = []
+      const communitiesSnapshot: QueryDocumentSnapshot<Community>[] = []
 
       const next = () => {
         if (pagenationExecutor.totalTaskLength > 0 || filters == null) {
@@ -72,11 +44,18 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
             ...filters,
             ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
             ...(pageSize == null ? [] : [limit(pageSize)]),
-          )
+          ).withConverter(communityConverter)
           const querySnapshot = await getDocs(q)
           communitiesSnapshot.push(...querySnapshot.docs)
           window.setTimeout(() => {
-            communityStores.value = communitiesSnapshot.map((doc) => useCommunityStore(doc) as CommunityStore)
+            communityStores.value = communitiesSnapshot.flatMap((doc) => {
+              try {
+                return useCommunityStore(doc.data())
+              } catch (err) {
+                console.error(err)
+                return []
+              }
+            })
           })
         })
       }
@@ -99,46 +78,17 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
         }
       }
 
-      const createNewCommunityFromDraft = async () => {
-        const c = await getCommunityData(communityDraft.value.community_account)
-        if (c != null) {
-          throw new Error(`community ${communityDraft.value.community_account} already exists`)
-        }
-        const userId = getAuth().currentUser?.uid
-        if (userId == null) {
-          throw new Error('user is not logged in')
-        }
-        const newCommunityRef = doc(collection(db, 'communities'))
-        await setDoc(newCommunityRef, {
-          ...communityDraft.value.convertToDocumentData(),
-          community_id: newCommunityRef.id,
-          created_at: Timestamp.now(),
-          updated_at: Timestamp.now(),
-        })
-        await setDoc(doc(newCommunityRef, 'members', userId), {
-          roles: ['manager'],
-          created_at: Timestamp.now(),
-          updated_at: Timestamp.now(),
-        })
-        return convertDocumentDataToCommunity((await getDoc(newCommunityRef)).data() as DocumentData)
-      }
-
       reload()
 
       return {
         filters,
         totalCount,
-        communityDraft,
         communityStores,
         reload,
         next,
         getCommunityData,
-        createNewCommunityFromDraft,
-        $reset: () => {
-          communityDraft.value = BokudeliCommunity.createNew()
-        },
       }
     },
   )
-  return store() as CommunityListStore
+  return store()
 }

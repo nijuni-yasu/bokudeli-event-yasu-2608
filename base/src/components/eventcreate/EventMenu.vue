@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { type PartnerMenu } from '@/schemes/partnerMenu'
-import { priceString } from '@/schemes/converter'
+import { computed } from 'vue'
+import { type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import type { Shop } from '@/schemes/shop'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 
 const props = defineProps<{
-  shop: Shop | null
-  menus: PartnerMenu[]
+  shop: BokudeliPartnerShop | null
+  menus: BokudeliPartnerMenu[]
   event: BokudeliEvent
   loading: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'submit'): void
-  (e: 'back'): void
+  submit: []
+  back: []
 }>()
 
 const submit = () => {
@@ -26,12 +26,12 @@ const back = () => {
 
 const filteredMenu = computed(() =>
   props.menus.filter((menu) => {
-    const eventStartDate = props.event.event_start_datetime?.toMillis()
-    if (menu.dateStart == null || menu.dateEnd == null || eventStartDate == null) {
+    const eventStartDate = props.event.event_start_datetime
+    if (menu.menu_date_start == null || menu.menu_date_end == null || eventStartDate == null) {
       return true
     } else {
-      const dateStart = menu.dateStart.toMillis()
-      const dateEnd = menu.dateEnd.toMillis()
+      const dateStart = menu.menu_date_start
+      const dateEnd = menu.menu_date_end
       return dateStart <= eventStartDate && eventStartDate <= dateEnd
     }
   }),
@@ -54,16 +54,16 @@ const filteredMenu = computed(() =>
             <v-row>
               <v-col v-for="(item, i) of filteredMenu" :key="`menu_${i}`" md="4" sm="4" cols="12">
                 <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
-                  <v-img :src="item.imageUrl ?? undefined" cover aspect-ratio="1" />
+                  <v-img :src="item.menu_image_url ?? undefined" cover aspect-ratio="1" />
 
                   <!-- title -->
                   <v-card-title class="justify-center pb-3 text-wrap">
-                    {{ item.name }}
+                    {{ item.menu_name }}
                   </v-card-title>
                   <v-card-text class="text-left text-subtitle-2 pb-8">
-                    {{ item.description }}
+                    {{ item.menu_description }}
                   </v-card-text>
-                  <v-card-text class="text-right text-h5 pb-5"> ¥ {{ priceString(item.price) }} </v-card-text>
+                  <v-card-text class="text-right text-h5 pb-5"> ¥ {{ priceString(item.menu_price) }} </v-card-text>
                 </v-card>
               </v-col>
 

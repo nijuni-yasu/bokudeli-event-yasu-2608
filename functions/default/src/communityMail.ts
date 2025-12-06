@@ -1,11 +1,10 @@
 import { z } from 'zod'
 import { onDocumentCreated } from 'firebase-functions/v2/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
-import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityManagerEmailSet } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getCommunityUrl, getManageCommunityUrl } from './utils/urls.js'
-import { getCommunity, ShokujiiCommunity } from './stores/community.js'
-import { getUser } from './stores/user.js'
+import { ShokujiiCommunity } from './stores/community.js'
 
 const COMMUNITY_ADD_ID = 'd-d116c6b010214d2b92a2421411a508d2'
 const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
@@ -24,37 +23,20 @@ const CommunityContactRequestSchema = z.object({
 
 type CommunityContactRequest = z.infer<typeof CommunityContactRequestSchema>
 
-async function getCommunityManagerEmailsSet(communityId: string): Promise<Set<string>> {
-  // 重複するメールアドレスは追加しない
-  const emails = new Set<string>()
-  const community = await getCommunity(communityId)
-  if (!community) {
-    return emails
-  }
-
-  const members = await community.getMembersByRole('manager')
-  await Promise.all(
-    members.map(async (member) => {
-      const user = await getUser(member.id, true)
-      if (user?.user_email) {
-        emails.add(user.user_email)
-      }
-    }),
-  )
-  return emails
-}
-
-async function getCommunityEmails(communityId: string): Promise<string[]> {
-  const emails = await getCommunityManagerEmailsSet(communityId)
-  if (emails.size === 0) {
+/**
+ * 対象メールアドレスリストを取得（マネージャーがいない場合はサポートメール）
+ */
+async function getEmailList(communityId: string): Promise<string[]> {
+  const emailSet = await getCommunityManagerEmailSet(communityId)
+  if (emailSet.size === 0) {
     // コミュマネがいない場合はsupport+to@nijuni.jpに送信
     return [SUPPORT_MAIL]
   }
-  return Array.from(emails)
+  return Array.from(emailSet)
 }
 
 async function sendCommunityAddedMailToOrganizer(templateId: string, community: ShokujiiCommunity): Promise<void[]> {
-  const emails = await getCommunityEmails(community.id)
+  const emails = await getEmailList(community.id)
   if (!emails.includes(SUPPORT_MAIL)) {
     emails.push(SUPPORT_MAIL)
   }
@@ -83,7 +65,7 @@ async function sendCommunityContactMailToOrganizers(
   templateId: string,
   data: CommunityContactRequest,
 ): Promise<void[]> {
-  const emails = await getCommunityEmails(data.community_id)
+  const emails = await getEmailList(data.community_id)
   const dynamicTemplateData = data
   if (!emails.includes(SUPPORT_MAIL)) {
     emails.push(SUPPORT_MAIL)
@@ -96,6 +78,7 @@ async function sendCommunityContactMailToOrganizers(
         replyTo: data.user_email,
         templateId,
         dynamicTemplateData,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
     }),
   )
@@ -113,6 +96,7 @@ export const communityAdded = onDocumentCreated(
       return sendCommunityAddedMailToOrganizer(COMMUNITY_ADD_ID, community)
     } else {
       console.error('communityAdded event is undefined')
+      throw new HttpsError('invalid-argument', 'event is undefined')
     }
   },
 )
@@ -127,9 +111,9 @@ export const communityContact = onCall(
       const communityContactRequest = CommunityContactRequestSchema.parse(request.data) as CommunityContactRequest
       return sendCommunityContactMailToOrganizers(COMMUNITY_CONTACT_ID, communityContactRequest)
     } else {
-      console.log('community_contact Auth Error')
-      console.log(request.data)
-      console.log(request.auth)
+      // console.log('community_contact Auth Error')
+      // console.log(request.data)
+      // console.log(request.auth)
       throw new HttpsError('permission-denied', 'community_contact Auth Error')
     }
   },

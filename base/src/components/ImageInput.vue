@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import type { VInput } from 'vuetify/components'
 
 // https://stackoverflow.com/a/77201828
@@ -16,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
-  (e: 'fileSelected', value: File | null): void
+  fileSelected: [value: File | null]
 }>()
 
 const imageFile = ref<File | null>(null)
@@ -54,7 +55,7 @@ const onIconTriggerUpload = () => {
       v-bind="$attrs"
     >
       <v-file-input ref="fileInputRef" v-model="imageFile" class="file-input" accept="image/*" />
-      <v-img v-if="iconImageUrl != null" :src="iconImageUrl" v-bind="$attrs" class="image-style"/>
+      <v-img v-if="iconImageUrl != null" :src="iconImageUrl" v-bind="$attrs" class="image-style" />
       <slot v-else name="placeholder"></slot>
     </div>
     <v-validation :rules="rules" :validation-value="iconImageUrl ?? false">

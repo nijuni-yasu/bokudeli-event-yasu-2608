@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { type EventMember } from '@/schemes/EventMember'
-import UserAvatar from '@/components/UserAvatar.vue'
+import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 const { t: $t } = useI18n()
 
 defineProps<{
-  members: EventMember[]
+  members: BokudeliEventMember[]
   eventMaxPeople: number
   isShowMember: boolean
 }>()
@@ -15,14 +15,7 @@ defineProps<{
   <section>
     <v-card-text class="text-left pb-10">
       <v-row v-if="isShowMember === true">
-        <v-col
-          v-for="member in members"
-          :key="member.user_id"
-          class="d-flex justify-start pa-2"
-          cols="6"
-          sm="6"
-          md="4"
-        >
+        <v-col v-for="member in members" :key="member.user_id" class="d-flex justify-start pa-2" cols="6" sm="6" md="4">
           <router-link
             :to="getUserPath(member.user_id)"
             class="text--primary cursor-pointer text-decoration-none d-flex align-center"
@@ -55,14 +48,7 @@ defineProps<{
       </v-row>
       <!-- コミュニティの設定によっては参加者氏名を非表示にし、リンクをなくす -->
       <v-row v-else-if="isShowMember === false">
-        <v-col
-          v-for="member in members"
-          :key="member.user_id"
-          class="d-flex justify-start pa-2"
-          cols="6"
-          sm="6"
-          md="4"
-        >
+        <v-col v-for="member in members" :key="member.user_id" class="d-flex justify-start pa-2" cols="6" sm="6" md="4">
           <v-row class="ma-0 d-flex align-center">
             <UserAvatar :user="member" :size="60" />
             <v-col class="ma-0 pl-2">
@@ -87,5 +73,4 @@ defineProps<{
     </v-card-text>
   </section>
 </template>
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

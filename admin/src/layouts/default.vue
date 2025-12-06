@@ -5,14 +5,14 @@ import { useSkins } from '@core/composable/useSkins'
 import { AppContentLayoutNav } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
 import { useNavItems } from '@/navigation'
-import UserProfile from '@/componentsLocal/UserProfile.vue'
-import type { Notification } from '@/types'
+import UserProfile from '@/components/UserProfile.vue'
+import type { Notification } from '@shokujii/base/types/index.js'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
-  () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
+  () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
 )
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(
-  () => import('@/components/layouts/DefaultLayoutWithVerticalNav.vue'),
+  () => import('@shokujii/base/components/layouts/DefaultLayoutWithVerticalNav.vue'),
 )
 
 const navItems = useNavItems()

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type BokudeliCommunity from '../schemes/bokudeliCommunity'
+import { type BokudeliCommunity } from '../stores/community'
 
 defineProps<{
   community: BokudeliCommunity
 }>()
-
 </script>
 
 <template>
@@ -27,5 +26,5 @@ defineProps<{
         {{ community.community_name }}
       </v-card-title>
     </v-col>
-  </v-row>  
+  </v-row>
 </template>

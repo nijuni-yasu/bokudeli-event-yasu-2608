@@ -1,8 +1,15 @@
 import { defineString } from 'firebase-functions/params'
-import * as common from '../commonUtils/urls.js'
+import * as common from '@shokujii/common/utils/urls.js'
 
 const EVENT_HOST = defineString('EVENT_HOST')
 const ADMIN_HOST = defineString('ADMIN_HOST')
+
+/*
+ * Firebase Storage Base URL
+ */
+export const FIREBASE_STORAGE_BASE_URL = process.env.FIREBASE_STORAGE_EMULATOR_HOST
+  ? `http://${process.env.FIREBASE_STORAGE_EMULATOR_HOST}/v0/`
+  : 'https://firebasestorage.googleapis.com/v0/'
 
 /*
  * User URLs

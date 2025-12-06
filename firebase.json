@@ -77,10 +77,6 @@
         "tsconfig.*",
         "firebase-debug.log",
         "firebase-debug.*.log"
-      ],
-      "predeploy": [
-        "yarn --cwd functions/default lint",
-        "yarn --cwd functions/default build"
       ]
     },
     {
@@ -123,6 +119,9 @@
     "rules": "storage.rules"
   },
   "emulators": {
+    "auth": {
+      "port": 9099
+    },
     "functions": {
       "port": 5001
     },

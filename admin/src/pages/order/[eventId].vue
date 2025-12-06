@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { useEventStore, type EventStore } from '@/stores/event'
+import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { mdiTruckOutline, mdiMapMarkerRadius } from '@mdi/js'
-import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@/utils/orders'
-import { useValidators } from '@/composable/validators'
+import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@shokujii/base/utils/orders.js'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/_partner'
-import type { Shop } from '@/schemes/shop'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { usePartnerStore } from '@shokujii/base/stores/partner.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { getOrderPath } from '@/navigation/utils'
-import UserAvatar from '@/components/UserAvatar.vue'
-import { useUserStore, type UserStore } from '@/stores/user'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import { getUserUrl } from '@/navigation/utils'
 import { getNamesPrintPath } from '@/navigation/utils'
-import { getNamesPrintPdf } from '@/utils/namesPrint'
-import { ref } from 'vue'
-import { useNotification } from '@/composable/notification'
+import { getNamesPrintPdf } from '@shokujii/base/utils/namesPrint.js'
+import { computed, ref } from 'vue'
+import { useNotification } from '@shokujii/base/composable/notification.js'
+import { getEventUrl } from '@shokujii/common/utils/urls.js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -38,7 +39,7 @@ const [event, shop] = await Promise.all([
       { immediate: true },
     )
   }),
-  new Promise<Shop>((resolve) => {
+  new Promise<PartnerShop>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {
@@ -52,6 +53,9 @@ const [event, shop] = await Promise.all([
   }),
 ])
 
+// TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
+const eventUrl = getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id)
+
 if (event.partner_id !== partnerId) {
   window.alert($t('alert.invalid_account'))
   router.push(getOrderPath())
@@ -62,22 +66,56 @@ const { requiredValidator } = useValidators()
 
 const isValid = ref(false)
 const isLoading = ref(false)
-const radio01 = ref(0)
-const text01 = ref($t('order_detail.accept_order_sample'))
+const reservationAction = ref(0)
+const shopComment = ref($t('order_detail.accept_order_sample'))
+const isConfirmDialogOpen = ref(false)
 
-watch(radio01, (newValue) => {
-  text01.value = newValue === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
+const confirmDialogContent = computed(() => {
+  if (reservationAction.value === 0) {
+    return {
+      title: $t('order_detail.confirm_accept_dialog.title'),
+      message: $t('order_detail.confirm_accept_dialog.message'),
+      okText: $t('order_detail.confirm_accept_dialog.submit'),
+      cancelText: $t('order_detail.confirm_accept_dialog.close'),
+    }
+  }
+
+  return {
+    title: $t('order_detail.confirm_decline_dialog.title'),
+    message: $t('order_detail.confirm_decline_dialog.message'),
+    okText: $t('order_detail.confirm_decline_dialog.submit'),
+    cancelText: $t('order_detail.confirm_decline_dialog.close'),
+  }
+})
+
+watch(reservationAction, (newValue) => {
+  shopComment.value = newValue === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
 })
 
 const submit = async () => {
   isLoading.value = true
   event.event_status = {
-    value: radio01.value === 0 ? 'accepting_order' : 'in_draft',
-    shop_comment: text01.value,
+    value: reservationAction.value === 0 ? 'accepting_order' : 'in_draft',
+    shop_comment: shopComment.value,
   }
   await eventStore.updateEvent(event)
   isLoading.value = false
   notification.show($t('order_detail.email_sent'), 'success')
+}
+
+const openConfirmDialog = () => {
+  if (!isValid.value || isLoading.value) {
+    return
+  }
+  isConfirmDialogOpen.value = true
+}
+
+const handleConfirmSubmit = async () => {
+  if (isLoading.value) {
+    return
+  }
+  await submit()
+  isConfirmDialogOpen.value = false
 }
 
 const isOwner = computed(() => {
@@ -110,15 +148,15 @@ const downloadNamesPrint = async () => {
         <v-card-text>
           <div class="mt-5">
             <p>{{ $t('order_detail.event_name', [eventStore.event.event_name]) }}</p>
-            <p v-linkify>{{ $t('order_detail.event_url', [eventStore.event.url]) }}</p>
+            <p v-linkify>{{ $t('order_detail.event_url', [eventUrl]) }}</p>
             <p>
               {{
                 $t(
                   'order_detail.event_date',
                   eventStore.event.event_start_datetime != null
                     ? [
-                        $d(eventStore.event.event_start_datetime.toMillis() - 30 * 60 * 1000, 'datetime_weekday_short'),
-                        $d(eventStore.event.event_start_datetime.toMillis(), 'time'),
+                        $d(eventStore.event.event_start_datetime - 30 * 60 * 1000, 'datetime_weekday_short'),
+                        $d(eventStore.event.event_start_datetime, 'time'),
                       ]
                     : [],
                 )
@@ -129,7 +167,7 @@ const downloadNamesPrint = async () => {
                 $t(
                   'order_detail.order_limit',
                   eventStore.event.event_deadline_datetime != null
-                    ? [$d(eventStore.event.event_deadline_datetime.toDate(), 'datetime_weekday_short')]
+                    ? [$d(eventStore.event.event_deadline_datetime, 'datetime_weekday_short')]
                     : [],
                 )
               }}
@@ -156,24 +194,38 @@ const downloadNamesPrint = async () => {
           </div>
         </v-card-text>
         <template v-if="eventStore.event.event_status.value == 'applying_reservation'">
-          <v-form v-model="isValid" @submit.prevent="submit">
+          <v-form v-model="isValid" @submit.prevent="openConfirmDialog">
             <v-card-text>
               <p>
                 {{ $t('order_detail.accept_or_decline') }}
               </p>
-              <v-radio-group v-model="radio01" column class="ml-5">
-                <v-radio :label="$t('order_detail.accept_order')" :value="0" />
-                <v-radio :label="$t('order_detail.decline_order')" :value="1" />
+              <v-radio-group v-model="reservationAction" column class="ml-5">
+                <v-radio :value="0">
+                  <template #label>
+                    <span :class="['radio-label', { 'radio-label--active': reservationAction === 0 }]">
+                      {{ $t('order_detail.accept_order') }}
+                    </span>
+                  </template>
+                </v-radio>
+                <v-radio :value="1">
+                  <template #label>
+                    <span :class="['radio-label', { 'radio-label--active': reservationAction === 1 }]">
+                      {{ $t('order_detail.decline_order') }}
+                    </span>
+                  </template>
+                </v-radio>
               </v-radio-group>
               <p class="mt-8">
                 {{ $t('order_detail.send_email_message') }}
               </p>
               <v-textarea
-                v-model="text01"
+                v-model="shopComment"
                 rows="2"
                 class="ml-5"
                 :placeholder="
-                  radio01 === 0 ? $t('order_detail.accept_order_sample') : $t('order_detail.decline_order_sample')
+                  reservationAction === 0
+                    ? $t('order_detail.accept_order_sample')
+                    : $t('order_detail.decline_order_sample')
                 "
                 :rules="[requiredValidator]"
               />
@@ -183,18 +235,32 @@ const downloadNamesPrint = async () => {
                 <v-btn
                   class="px-3"
                   size="large"
-                  type="submit"
+                  type="button"
                   elevation="3"
                   variant="outlined"
                   color="primary"
                   rounded="pill"
                   :disabled="!isValid"
                   :loading="isLoading"
+                  @click="openConfirmDialog"
                 >
                   {{ $t('order_detail.send_email') }}
                 </v-btn>
               </v-col>
             </v-card-actions>
+            <ConfirmDialog
+              v-model="isConfirmDialogOpen"
+              :is-confirm="true"
+              :title="confirmDialogContent.title"
+              :ok-text="confirmDialogContent.okText"
+              :cancel-text="confirmDialogContent.cancelText"
+              :ok-loading-state="isLoading"
+              :cancel-loading-state="isLoading"
+              :ok-click="handleConfirmSubmit"
+              max-width="600px"
+            >
+              <div class="confirm-dialog__message" v-html="confirmDialogContent.message" />
+            </ConfirmDialog>
           </v-form>
         </template>
         <v-card-text v-else-if="eventStore.confirmedOrders != null && eventStore.confirmedOrders.length !== 0">
@@ -221,7 +287,7 @@ const downloadNamesPrint = async () => {
                   )
                   .sort((a, b) =>
                     a.menu.name === b.menu.name
-                      ? a.order.created_at.toMillis() - b.order.created_at.toMillis()
+                      ? a.order.created_at - b.order.created_at
                       : a.menu.name > b.menu.name
                         ? 1
                         : -1,
@@ -239,7 +305,7 @@ const downloadNamesPrint = async () => {
                 </td>
                 <td>{{ menu.name }}</td>
                 <td>{{ $n(menu.price, 'currency') }}</td>
-                <td>{{ $d(order.created_at.toDate(), 'datetime') }}</td>
+                <td>{{ $d(order.created_at, 'datetime') }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -302,5 +368,13 @@ tbody {
 .name-link {
   color: inherit;
   text-decoration: none;
+}
+
+.radio-label {
+  font-weight: 400;
+}
+
+.radio-label--active {
+  font-weight: 700;
 }
 </style>

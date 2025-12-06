@@ -20,7 +20,14 @@ export const {
   handleEventOgpRequest, handleCommunityOgpRequest,
   communityAdded, communityContact,
   createStripeCheckoutSession,
-  postToTwitter
+  postToTwitter,
+  eventInformation, eventInformationPreview,
+  shopStatusChanged,
+  onOrderChanged,
+  onEventChanged,
+  makeShopSnapshotToEvent,
+  pollingTask,
+  requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -28,4 +35,11 @@ export const {
   import('./communityMail.js'),
   import('./stripe.js'),
   import('./postToTwitter.js'),
+  import('./eventInformationMail.js'),
+  import('./shopOpen.js'),
+  import('./orderCompletionMail.js'),
+  import('./eventStatusChangeMail.js'),
+  import('./eventSnapshot.js'),
+  import('./pollingTask.js'),
+  import('./user.js'),
 ])))

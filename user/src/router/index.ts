@@ -1,118 +1,210 @@
+import { FirebaseError } from 'firebase/app'
 import {
   type User,
   type UserCredential,
-  getAuth,
-  getRedirectResult,
-  onAuthStateChanged,
+  fetchSignInMethodsForEmail,
   getAdditionalUserInfo,
-  type Unsubscribe,
+  getAuth,
+  onAuthStateChanged,
 } from 'firebase/auth'
-import { FirebaseError } from 'firebase/app'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useStoreCredential } from '@/stores/credential'
-import { loginUser, updateCredentialFromUserCredential } from '@/composable/loginUser'
 import type { Router } from 'vue-router'
-import userAccessiblePaths from '@/utils/userAccessiblePaths'
-import { useEventStore, type EventStore } from '@/stores/event'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { getLogin, getManageCommunityListPath } from './utils'
-import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
-import { useStoreUserCredential } from '@/stores/userCredential'
-import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
-
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
-import { useConfigStore } from '@/stores/config'
-import { FIRESTORE_LOADING } from '@/utils/const'
-
-const checkUser = async (user: User | null) => {
-  // リダイレクト結果を取得
-  let userCredential: UserCredential | null = null
-  try {
-    userCredential = await getRedirectResult(getAuth())
-    if (userCredential) {
-      const additionalUserInfo = getAdditionalUserInfo(userCredential)
-      if (additionalUserInfo) {
-        useStoreUserAdditionalInfo().update(additionalUserInfo)
-      }
-    }
-  } catch (error) {
-    if (error instanceof FirebaseError) {
-      useStoreFirebaseAuthError().update(error)
-    } else {
-      window.alert('ログインに失敗しました')
-      console.error('Error fetching redirect result:', { error })
-    }
-  }
-  if (!userCredential && !user) {
-    // ログアウト処理
-    const store = useStoreStoredUser()
-    store.$reset()
-    useStoreCredential().$reset()
-    return
-  }
-  if (!userCredential && user) {
-    // ログイン済みのユーザーの処理
-    await loginUser(user)
-  }
-  if (userCredential) {
-    // リダイレクトでのログイン処理
-    useStoreUserCredential().update(userCredential)
-    await updateCredentialFromUserCredential(userCredential)
-    await loginUser(user || userCredential.user)
-  }
-}
+import { getI18n } from '@shokujii/base/plugins/i18n/index.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useConfigStore } from '@shokujii/base/stores/config.js'
+import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
+import { isInAppBrowser } from '@shokujii/base/utils/browser'
+import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
+import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
+import { getManageCommunityListPath } from './utils'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
     const unsubscribe = onAuthStateChanged(getAuth(), async (user: User | null) => {
       unsubscribe()
-      await checkUser(user)
       resolve(user)
     })
   })
 }
 
-onAuthStateChanged(getAuth(), checkUser)
+const isLoginRequired = (path: string) => {
+  const paths = path.split('/')
+  return ['/profile', '/register/complete', '/register/email'].includes(path) || paths[1] === 'manage'
+}
 
 export const setupRouter = (router: Router) => {
-  // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
-  router.beforeEach(async () => {
-    try {
-      await waitAdminAuthentication()
-    } catch {
-      // Do nothing
+  onAuthStateChanged(getAuth(), (user) => {
+    const path = router.currentRoute.value.path
+    if (user == null && isLoginRequired(path)) {
+      router.replace('/')
     }
   })
 
-  // ユーザーがログイン済みか否かでリダイレクト
-  router.beforeEach((to) => {
-    const storedUserStore = useStoreStoredUser()
-
-    if (userAccessiblePaths.includes(to.path) && !storedUserStore.storedUser) router.replace('/')
-    if (
-      to.path === getLogin() &&
-      storedUserStore.storedUser &&
-      useStoreUserAdditionalInfo().additionalUserInfo === null
-    )
-      router.replace('/')
+  router.afterEach((to, from) => {
+    if (['/login', '/profile'].includes(to.path)) {
+      const redirectPath = getRedirectPath(false)
+      if (redirectPath == null) {
+        setRedirectPath(from.path)
+      }
+    }
   })
 
-  let unsubscribeAuthStateChanged: Unsubscribe | null
+  // アプリ内ブラウザでログインページにアクセスした場合は専用ページにリダイレクト
+  // 通常のブラウザでアプリ内ログインページにアクセスした場合は通常のログインページにリダイレクト
+  const isInApp = isInAppBrowser(navigator.userAgent)
   router.beforeEach((to) => {
-    unsubscribeAuthStateChanged?.()
-    const paths = to.path.split('/')
-    if (paths[1] === 'manage') {
-      if (getAuth().currentUser?.uid == null) {
-        return {
-          path: '/',
-        }
-      } else {
-        unsubscribeAuthStateChanged = onAuthStateChanged(getAuth(), (user) => {
-          if (user == null) {
-            router.push('/')
+    if (to.path === '/login' && isInApp) {
+      return {
+        path: '/inapp-login',
+        query: to.query,
+      }
+    }
+    if (to.path === '/inapp-login' && !isInApp) {
+      return {
+        path: '/login',
+        query: to.query,
+      }
+    }
+  })
+
+  // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
+  let isFirstTime = true
+  router.beforeEach(async (to) => {
+    if (!isFirstTime) {
+      return
+    }
+    isFirstTime = false
+
+    // リダイレクトで戻ってきた場合の処理
+    // TODO リダイレクトの返りは一つのページにまとめた方がよいかもしれない
+    if (['/login', '/register/complete', '/profile'].includes(to.path)) {
+      let user = null
+      let userCredential: UserCredential | null = null
+      try {
+        user = await waitAdminAuthentication()
+        userCredential = await handleRedirect(user)
+      } catch (err: unknown) {
+        if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
+          const pendingCred = credentialFromError(err)
+          // email が同じ時に発生するエラーなので、email は必ず存在する
+          const email = err.customData!.email as string
+          const methods = await fetchSignInMethodsForEmail(getAuth(), email)
+          const existingProviderId = methods[0]
+          if (existingProviderId == null) {
+            // カスタムトークンログインを行い、メールアドレスが既に存在している場合
+            return {
+              path: '/pass-code',
+              state: { email },
+            }
+          } else {
+            return {
+              path: '/login',
+              query: { ...to.query, pid1: pendingCred?.providerId, pid2: existingProviderId },
+            }
           }
+        }
+        console.error(err)
+        // 今のところ router からは notification を出せないので window.alert で代用
+        // useI18n() は plugin の中からは使えないので、 getI18n で直接取得する
+        const i18n = getI18n()
+        if (err instanceof FirebaseError) {
+          const pendingCred = credentialFromError(err)
+          if (err.code === 'auth/credential-already-in-use') {
+            window.alert(
+              // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+              i18n.global.t('user.exists_credential', {
+                // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+                snsName: i18n.global.t(`sns_name['${pendingCred.providerId}']`),
+              }),
+            )
+          } else {
+            window.alert(
+              // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+              i18n.global.t('login.login_fail', { sns_name: i18n.global.t(`sns_name['${pendingCred.providerId}']`) }),
+            )
+          }
+        } else {
+          window.alert('Error')
+        }
+        return
+      }
+
+      // 未ログインのときは無駄な通信が発生するのでここで終了
+      // userCredential は null でも意味がある（passcode の初回ログイン時など）
+      if (user == null) {
+        return getRedirectPath() ?? undefined
+      }
+
+      let shokujiiUser = null
+      try {
+        const response = await updateProfileFromProviders(userCredential).catch((error) => {
+          console.error('updateProfileFromProviders error:', error)
         })
+        shokujiiUser = response?.data?.user
+      } catch (err) {
+        console.error(err)
+      }
+
+      if (shokujiiUser == null) {
+        return getRedirectPath() ?? '/'
+      }
+
+      // profile に戻ってきた場合はリンクなので画面はそのまま
+      if (to.path === '/profile') {
+        return
+      }
+
+      // メールアドレスが無い場合はメールアドレス設定へ
+      if (!shokujiiUser.user_email) {
+        return {
+          path: '/register/email',
+        }
+      }
+
+      let isNewUser = false
+      // プロフィールが埋まっていても新規ユーザーのときだけ動作を変える
+      if (userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        isNewUser ||= aui?.isNewUser ?? false
+      }
+
+      // プロフィール名かアイコンが設定されていなければ、登録完了（プロフィール登録誘導）へ
+      if (!shokujiiUser.user_name || !shokujiiUser.user_image_url) {
+        return {
+          path: '/register/complete',
+          state: { isNewUser },
+        }
+      }
+
+      if (isNewUser) {
+        return {
+          path: '/profile',
+          state: { isNewUser },
+        }
+      }
+      // 元いたページへ
+      return getRedirectPath() ?? '/'
+    }
+  })
+
+  // ログイン状態に応じてページアクセスを制御
+  // 未ログインユーザーはログイン必須ページからリダイレクト
+  // ログイン済みユーザーはログインページ/アプリ内ログインページからリダイレクト
+  router.beforeEach(async (to) => {
+    let user: User | null = null
+    try {
+      user = await waitAdminAuthentication()
+    } catch {
+      // Do nothing
+    }
+    if (user == null) {
+      if (isLoginRequired(to.path)) {
+        return (to.query?.redirect as string) ?? '/'
+      }
+    } else {
+      if (['/login', '/inapp-login'].includes(to.path)) {
+        return (to.query?.redirect as string) ?? '/'
       }
     }
   })
@@ -185,10 +277,7 @@ export const setupRouter = (router: Router) => {
             }
             const community = communityStore.community
             const members = communityStore.members
-            if (community != null && members != null && members.length === community.community_num_members) {
-              if (members.some((member) => member?.roles == null)) {
-                return
-              }
+            if (community != null && members != null && members.length === community.members.length) {
               const canView = members.some(
                 (member) => member?.user_id === getAuth().currentUser?.uid && member?.roles?.includes('manager'),
               )

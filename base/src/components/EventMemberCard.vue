@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
-import { type EventMember } from '@/schemes/EventMember'
-import UserAvatar from '@/components/UserAvatar.vue'
+import { computed } from 'vue'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
+import { type BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
 import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 
 const props = defineProps<{
-  member: EventMember
+  member: BokudeliEventMember
 }>()
 
 const userName = computed(() => props.member.user_name ?? 'ゲスト')
@@ -19,47 +20,44 @@ const facebookUrl = computed(() =>
 const instagramUrl = computed(() =>
   props.member.user_sns_instagram ? buildInstagramUrl(props.member.user_sns_instagram) : null,
 )
-const websiteUrl = computed(() =>
-  props.member.user_sns_website ? props.member.user_sns_website : null,
-)
+const websiteUrl = computed(() => (props.member.user_sns_website ? props.member.user_sns_website : null))
 const userDescription = computed(() => props.member.user_description ?? '')
-
 </script>
 
 <template>
   <v-container class="pa-3">
     <router-link :to="getUserPath(member.user_id)">
-    <v-card class="pt-3 pb-0">
-      <v-card-title class="d-flex align-center flex-column">
-        <UserAvatar :user="member" :size="150" />
-        <v-row class="justify-center">
-          <v-col class="mt-1">
-            <span class="text-h5 text-center text-wrap">{{ userName }}</span>
-          </v-col>
-        </v-row>
-      </v-card-title>
-      <v-card-text class="description">
-        {{ userDescription }}
-      </v-card-text>
-      <v-card-text class="sns-buttons">
-        <v-row class="justify-center">
-          <v-col cols="auto">
-            <a v-if="twitterUrl" :href="twitterUrl" target="_blank" @click.stop>
-              <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
-            </a>
-            <a v-if="facebookUrl" :href="facebookUrl" target="_blank" @click.stop>
-              <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
-            </a>
-            <a v-if="instagramUrl" :href="instagramUrl" target="_blank" @click.stop>
-              <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
-            </a>
-            <a v-if="websiteUrl" :href="websiteUrl" target="_blank" @click.stop>
-              <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
-            </a>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
+      <v-card class="pt-3 pb-0">
+        <v-card-title class="d-flex align-center flex-column">
+          <UserAvatar :user="member" :size="150" />
+          <v-row class="justify-center">
+            <v-col class="mt-1">
+              <span class="text-h5 text-center text-wrap">{{ userName }}</span>
+            </v-col>
+          </v-row>
+        </v-card-title>
+        <v-card-text class="description">
+          {{ userDescription }}
+        </v-card-text>
+        <v-card-text class="sns-buttons">
+          <v-row class="justify-center">
+            <v-col cols="auto">
+              <a v-if="twitterUrl" :href="twitterUrl" target="_blank" @click.stop>
+                <v-btn :icon="mdiAlphaXCircle" size="small" class="ma-2"></v-btn>
+              </a>
+              <a v-if="facebookUrl" :href="facebookUrl" target="_blank" @click.stop>
+                <v-btn :icon="mdiFacebook" size="small" class="ma-2"></v-btn>
+              </a>
+              <a v-if="instagramUrl" :href="instagramUrl" target="_blank" @click.stop>
+                <v-btn :icon="mdiInstagram" size="small" class="ma-2"></v-btn>
+              </a>
+              <a v-if="websiteUrl" :href="websiteUrl" target="_blank" @click.stop>
+                <v-btn :icon="mdiWeb" size="small" class="ma-2"></v-btn>
+              </a>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
     </router-link>
   </v-container>
 </template>

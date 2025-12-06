@@ -1,12 +1,13 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { getUserPath } from '@/router/utils'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 
 const router = useRouter()
 
-const storedUser = useStoreStoredUser().storedUser
-if (storedUser) {
-  router.replace(getUserPath(storedUser.userAccount || storedUser.userId))
+const currentUser = useCurrentUserStore().firebaseUser
+if (currentUser != null) {
+  router.replace(getUserPath(currentUser.uid))
 } else {
   router.replace('/')
 }

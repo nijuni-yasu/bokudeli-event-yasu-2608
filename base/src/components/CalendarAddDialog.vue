@@ -1,20 +1,13 @@
 <script setup lang="ts">
-import buildCalendarLink from '@/composable/buildCalendarLink'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import { computed } from 'vue'
+import buildCalendarLink from '@shokujii/base/composable/buildCalendarLink'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 
 const props = defineProps<{
-  modelValue: boolean
   event: BokudeliEvent
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
-
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const dialog = defineModel<boolean>()
 
 const googleCalendarLink = computed(() => {
   return buildCalendarLink(props.event, 'google')

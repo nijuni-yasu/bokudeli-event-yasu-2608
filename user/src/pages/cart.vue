@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Cart from '@/components/pages/cart.vue'
+import Cart from '@shokujii/base/components/pages/cart.vue'
 </script>
 
 <template>

@@ -20,7 +20,6 @@ declare module 'vue-router/auto-routes' {
   export interface RouteNamedMap {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/[[...error]]': RouteRecordInfo<'/[[...error]]', '/:error(.*)?', { error?: ParamValueZeroOrOne<true> }, { error?: ParamValueZeroOrOne<false> }>,
-    '/auth/action': RouteRecordInfo<'/auth/action', '/auth/action', Record<never, never>, Record<never, never>>,
     '/c/[communityId]/': RouteRecordInfo<'/c/[communityId]/', '/c/:communityId', { communityId: ParamValue<true> }, { communityId: ParamValue<false> }>,
     '/c/[communityId]/e/[eventId]/': RouteRecordInfo<'/c/[communityId]/e/[eventId]/', '/c/:communityId/e/:eventId', { communityId: ParamValue<true>, eventId: ParamValue<true> }, { communityId: ParamValue<false>, eventId: ParamValue<false> }>,
     '/c/[communityId]/e/[eventId]/members': RouteRecordInfo<'/c/[communityId]/e/[eventId]/members', '/c/:communityId/e/:eventId/members', { communityId: ParamValue<true>, eventId: ParamValue<true> }, { communityId: ParamValue<false>, eventId: ParamValue<false> }>,
@@ -28,6 +27,7 @@ declare module 'vue-router/auto-routes' {
     '/cart': RouteRecordInfo<'/cart', '/cart', Record<never, never>, Record<never, never>>,
     '/communitylist/': RouteRecordInfo<'/communitylist/', '/communitylist', Record<never, never>, Record<never, never>>,
     '/flyer': RouteRecordInfo<'/flyer', '/flyer', Record<never, never>, Record<never, never>>,
+    '/inapp-login': RouteRecordInfo<'/inapp-login', '/inapp-login', Record<never, never>, Record<never, never>>,
     '/invoice': RouteRecordInfo<'/invoice', '/invoice', Record<never, never>, Record<never, never>>,
     '/login': RouteRecordInfo<'/login', '/login', Record<never, never>, Record<never, never>>,
     '/manage/': RouteRecordInfo<'/manage/', '/manage', Record<never, never>, Record<never, never>>,

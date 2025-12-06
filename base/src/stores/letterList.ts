@@ -1,5 +1,5 @@
-import { type Ref } from 'vue'
-import { db } from '@/firebase'
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
 import {
   collection,
   getDocs,
@@ -12,121 +12,98 @@ import {
   CollectionReference,
   doc,
   setDoc,
-  Timestamp,
-  updateDoc,
   deleteDoc,
   orderBy,
 } from 'firebase/firestore'
-import type { StateTree, Store } from 'pinia'
-import { TaskExecutor } from '@/utils/executors'
-import { useLetterStore, type LetterStore } from './letter'
-import type { Letter } from '@/schemes/letter'
+import { db } from '@shokujii/base/firebase.js'
+import { TaskExecutor } from '@shokujii/base/utils/executors.js'
+import { BokudeliLetter, useLetterStore, type LetterStore, letterConverter } from '@shokujii/base/stores/letter.js'
+import { LetterTypeType } from '@shokujii/common/schemas/CommunityLetter.js'
 
-type LetterListStoreState = {
-  letterStores: Ref<LetterStore[] | null>
-  totalCount: Ref<number | null>
-} & StateTree
+export type LetterListStore = ReturnType<typeof useLetterListStore>
 
-type LetterListStoreGetters = {}
+export const useLetterListStore = (communityAccount: string, pageSize: number = 3) => {
+  const store = defineStore(`letterList/${communityAccount}/${pageSize}`, () => {
+    const pagenationExecutor = new TaskExecutor(1)
+    const letterStores = ref<LetterStore[] | null>(null)
+    const totalCount = ref<number | null>(null)
 
-type LetterListStoreAction = {
-  addLetter: (data: Letter) => Promise<Letter>
-  updateLetter: (data: Letter) => Promise<void>
-  deleteLetter: (letterId: string) => Promise<void>
-  reload: () => void
-  next: () => void
-}
+    const lettersSnapsthot: QueryDocumentSnapshot<BokudeliLetter>[] = []
 
-export type LetterListStore = Store<string, LetterListStoreState, LetterListStoreGetters, LetterListStoreAction>
+    let _letterListRef: CollectionReference<BokudeliLetter> | null = null
+    const getLettersRef = async () => {
+      if (_letterListRef == null) {
+        const communitySnapshot = await getDocs(
+          query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
+        )
+        _letterListRef = collection(communitySnapshot.docs[0].ref, 'letters').withConverter(letterConverter)
+      }
+      return _letterListRef
+    }
 
-export const useLetterListStore = (communityAccount: string, pageSize: number = 3): LetterListStore => {
-  const store = defineStore<string, LetterListStoreState & LetterListStoreGetters & LetterListStoreAction>(
-    `letterList/${communityAccount}/${pageSize}`,
-    () => {
-      const pagenationExecutor = new TaskExecutor(1)
-      const letterStores = ref<LetterStore[] | null>(null)
-      const totalCount = ref<number | null>(null)
-
-      const lettersSnapsthot: QueryDocumentSnapshot[] = []
-
-      let _letterListRef: CollectionReference | null = null
-      const getLetterRef = async () => {
-        if (_letterListRef == null) {
-          const communitySnapshot = await getDocs(
-            query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
+    const next = () => {
+      if (pagenationExecutor.totalTaskLength > 0) {
+        return
+      }
+      pagenationExecutor.addTask(async () => {
+        if (totalCount.value == null) {
+          totalCount.value = (await getCountFromServer(await getLettersRef())).data().count
+        }
+        const lastVisibleDocument = lettersSnapsthot[lettersSnapsthot.length - 1]
+        const q = query(
+          await getLettersRef(),
+          orderBy('updated_at', 'desc'),
+          ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
+          limit(pageSize),
+        )
+        const querySnapshot = await getDocs(q)
+        lettersSnapsthot.push(...querySnapshot.docs)
+        window.setTimeout(() => {
+          letterStores.value = lettersSnapsthot.map(
+            (doc) => useLetterStore(communityAccount, doc.data()) as LetterStore,
           )
-          _letterListRef = collection(communitySnapshot.docs[0].ref, 'letters')
-        }
-        return _letterListRef
-      }
-
-      const next = () => {
-        if (pagenationExecutor.totalTaskLength > 0) {
-          return
-        }
-        pagenationExecutor.addTask(async () => {
-          if (totalCount.value == null) {
-            totalCount.value = (await getCountFromServer(await getLetterRef())).data().count
-          }
-          const lastVisibleDocument = lettersSnapsthot[lettersSnapsthot.length - 1]
-          const q = query(
-            await getLetterRef(),
-            orderBy('updated_at', 'desc'),
-            ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
-            limit(pageSize),
-          )
-          const querySnapshot = await getDocs(q)
-          lettersSnapsthot.push(...querySnapshot.docs)
-          window.setTimeout(() => {
-            letterStores.value = lettersSnapsthot.map((doc) => useLetterStore(communityAccount, doc) as LetterStore)
-          })
         })
-      }
+      })
+    }
 
-      const addLetter = async (data: Letter) => {
-        const newLetterRef = doc(await getLetterRef())
-        const newData: Letter = {
-          ...data,
-          letter_id: newLetterRef.id,
-          updated_at: Timestamp.now(),
-        }
-        await setDoc(newLetterRef, newData)
-        return newData
-      }
+    const newLetter = async (letter_type: LetterTypeType, event_id?: string): Promise<BokudeliLetter> => {
+      const lettersRef = await getLettersRef()
+      return new BokudeliLetter(lettersRef.parent!.id, null, {
+        community_account: communityAccount,
+        letter_type,
+        ...{ event_id },
+      })
+    }
 
-      const updateLetter = async (data: Letter) => {
-        const letterRef = doc(await getLetterRef(), data.letter_id)
-        await updateDoc(letterRef, {
-          ...data,
-          updated_at: Timestamp.now(),
-        })
-      }
+    const updateLetter = async (data: BokudeliLetter) => {
+      const letterRef = doc(await getLettersRef(), data.letter_id)
+      await setDoc(letterRef, data, { merge: true })
+    }
 
-      const deleteLetter = async (letterId: string) => {
-        const letterRef = doc(await getLetterRef(), letterId)
-        await deleteDoc(letterRef)
-      }
+    const deleteLetter = async (letterId: string) => {
+      const letterRef = doc(await getLettersRef(), letterId)
+      await deleteDoc(letterRef)
+    }
 
-      const reload = () => {
-        lettersSnapsthot.splice(0) // clear
-        letterStores.value = null
-        totalCount.value = null
-        next()
-      }
+    const reload = () => {
+      lettersSnapsthot.splice(0) // clear
+      letterStores.value = null
+      totalCount.value = null
+      next()
+    }
 
-      reload()
+    reload()
 
-      return {
-        letterStores,
-        totalCount,
-        addLetter,
-        updateLetter,
-        deleteLetter,
-        next,
-        reload,
-      }
-    },
-  )
+    return {
+      letterStores,
+      totalCount,
+      newLetter,
+      updateLetter,
+      deleteLetter,
+      next,
+      reload,
+    }
+  })
 
-  return store() as LetterListStore
+  return store()
 }

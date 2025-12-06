@@ -6,14 +6,20 @@ import {
   getRefFromPath,
   DocumentReference,
 } from './firebase/index.js'
+import { getStartOfDay } from '../utils/datetime.js'
 
 export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
 
-const RAW_EVENT_STATUS_VALUES = ['in_draft', 'applying_reservation', 'applying_to_admin', 'accepting_order'] as const
-type RawEventStatusType = (typeof RAW_EVENT_STATUS_VALUES)[number]
+export const RAW_EVENT_STATUS_VALUES = [
+  'in_draft',
+  'applying_reservation',
+  'applying_to_admin',
+  'accepting_order',
+] as const
+export type RawEventStatusType = (typeof RAW_EVENT_STATUS_VALUES)[number]
 
-const EVENT_STATUS_VALUES = [...RAW_EVENT_STATUS_VALUES, 'order_closed', 'finished', 'full'] as const
+export const EVENT_STATUS_VALUES = [...RAW_EVENT_STATUS_VALUES, 'order_closed', 'finished', 'full'] as const
 export type EventStatusType = (typeof EVENT_STATUS_VALUES)[number]
 
 // Member を DocumentReference から ID に変換するための Schema
@@ -30,7 +36,7 @@ const MemberIdSchema = z
  * TODO: postalcode は utils/validatier を使用するように
  * TODO: postalcode 以外の URL 等もバリデーションする
  */
-const EventDbSchema = z.object({
+export const EventDbSchema = z.object({
   // Mandatory
   event_id: z.string().nonempty(),
   community_id: z.string().nonempty(),
@@ -56,10 +62,8 @@ const EventDbSchema = z.object({
   is_public: z.boolean(),
   event_status: z.object({
     value: z.enum(RAW_EVENT_STATUS_VALUES),
-    shop_comment: z.string().optional(),
+    shop_comment: NonEmptyStringSchema.optional(),
   }),
-  bill_fullname: z.string().nonempty(),
-  bill_email: z.string().nonempty(),
 
   is_deleted: z.boolean(),
   created_at: TimestampSchema,
@@ -70,12 +74,15 @@ const EventDbSchema = z.object({
   event_num_members: z.number().int().min(0),
 
   // Optional
+  bill_fullname: NonEmptyStringSchema.optional(),
+  bill_email: NonEmptyStringSchema.optional(),
   event_place: NonEmptyStringSchema.optional(),
   event_place_url: NonEmptyStringSchema.optional(),
   event_desc: NonEmptyStringSchema.optional(),
   event_sns_hash_tag: NonEmptyStringSchema.optional(),
   organizer_phone_company: NonEmptyStringSchema.optional(),
   subdomain_tags: z.array(z.string()).optional(),
+  sent_new_event_mail_at: TimestampSchema.optional(),
 })
 
 /**
@@ -89,50 +96,67 @@ const EventAppSchema = z.object({
   community_name: z.string().nonempty(),
   community_account: z.string().nonempty(),
   // Default
-  event_start_datetime: EpochMillisSchema.default(Date.now()),
-  event_end_datetime: EpochMillisSchema.default(Date.now() + 1000 * 60 * 60 * 24),
-  event_deadline_datetime: EpochMillisSchema.default(Date.now() + 1000 * 60 * 60 * 24 * 3),
+  event_start_datetime: EpochMillisSchema.default(
+    getStartOfDay(Date.now() + 1000 * 60 * 60 * 24 * 14) + 1000 * 60 * 60 * 12,
+  ),
+  event_end_datetime: EpochMillisSchema.default(
+    getStartOfDay(Date.now() + 1000 * 60 * 60 * 24 * 14) + 1000 * 60 * 60 * 13,
+  ),
+  event_deadline_datetime: EpochMillisSchema.default(
+    getStartOfDay(Date.now() + 1000 * 60 * 60 * 24 * 11) + 1000 * 60 * 60 * 12,
+  ),
   is_public: z.boolean().default(true),
   event_payment: z.enum(EVENT_PAYMENT_VALUES).default('user_advance'),
   event_max_people: z.number().int().positive().default(25),
-  event_status: z.object({
-    value: z.enum(RAW_EVENT_STATUS_VALUES).default('in_draft'),
-    shop_comment: z.string().optional(),
-  }),
+  event_status: z
+    .object({
+      value: z.enum(RAW_EVENT_STATUS_VALUES),
+      shop_comment: z.string().optional(),
+    })
+    .default({
+      value: 'in_draft',
+      shop_comment: '',
+    }),
   is_deleted: z.boolean().default(false),
   members: z.array(MemberIdSchema).default([]),
-
-  // Optional
-  event_postalcode: z
-    .string()
-    .regex(/^\d{7}$/)
-    .optional(),
-  event_address: z.string().nonempty().optional(),
-  partner_id: z.string().nonempty().optional(),
-  shop_id: z.string().nonempty().optional(),
-  shop_name: z.string().nonempty().optional(),
-  event_name: z.string().nonempty().optional(),
-  event_cover_url: z.string().nonempty().optional(),
-  organizer_fullname: z.string().nonempty().optional(),
-  organizer_company: z.string().nonempty().optional(),
-  organizer_email: z.string().nonempty().optional(),
-  organizer_phone_personal: z.string().nonempty().optional(),
-  organizer_memo: z.string().nonempty().optional(),
-  subdomain_tags: z.array(z.string()).optional(),
-
-  // 本来は nonempty をつけたいが、現状 empty 状態のデータがあるため、nonempty を外す
-  bill_fullname: z.string().optional(),
-  bill_email: z.string().optional(),
-  event_place: z.string().optional(),
-  event_place_url: z.string().optional(),
-  event_desc: z.string().optional(),
-  event_sns_hash_tag: z.string().optional(),
-  organizer_phone_company: z.string().optional(),
+  event_postalcode: z.string().default(''),
+  event_address: z.string().default(''),
+  partner_id: z.string().default(''),
+  shop_id: z.string().default(''),
+  shop_name: z.string().default(''),
+  event_name: z.string().default(''),
+  event_cover_url: z.string().default(''),
+  subdomain_tags: z.array(z.string()).default([]),
+  bill_fullname: z.string().default(''),
+  bill_email: z.string().default(''),
+  event_place: z.string().default(''),
+  event_place_url: z.string().default(''),
+  event_desc: z.string().default(''),
+  event_sns_hash_tag: z.string().default(''),
+  organizer_phone_company: z.string().default(''),
+  organizer_fullname: z.string().default(''),
+  organizer_company: z.string().default(''),
+  organizer_email: z.string().default(''),
+  organizer_phone_personal: z.string().default(''),
+  organizer_memo: z.string().default(''),
+  sent_new_event_mail_at: EpochMillisSchema.optional(),
 })
+
+const convertToDb = (event: Event, updated_by: string) => {
+  return {
+    ...event,
+    created_at: EpochMillisSchema.default(Date.now()).parse(event.created_at),
+    created_by: event.created_by ?? updated_by,
+    updated_at: Date.now(),
+    updated_by,
+    members: event.members.map((id) => getRefFromPath(`users/${id}`)),
+    event_num_members: event.members.length,
+  }
+}
 
 export class Event {
   readonly id: string
-  readonly event_id: string
+  readonly event_id!: string
   community_id!: string
   community_name!: string
   community_account!: string
@@ -144,42 +168,42 @@ export class Event {
   event_max_people!: number
   event_status!: {
     value: RawEventStatusType
-    shop_comment: string | undefined
+    shop_comment: string
   }
   is_deleted!: boolean
 
-  event_postalcode: string = ''
-  event_address: string = ''
-  partner_id: string = ''
-  shop_id: string = ''
-  shop_name: string = ''
-  event_name: string = ''
-  event_cover_url: string = ''
-  event_desc: string = ''
-  organizer_fullname: string = ''
-  organizer_company: string = ''
-  organizer_phone_personal: string = ''
-  organizer_phone_company: string = ''
-  organizer_email: string = ''
-  organizer_memo: string = ''
-  event_sns_hash_tag: string = ''
-  bill_fullname: string = ''
-  bill_email: string = ''
+  event_postalcode!: string
+  event_address!: string
+  partner_id!: string
+  shop_id!: string
+  shop_name!: string
+  event_name!: string
+  event_cover_url!: string
+  event_desc!: string
+  organizer_fullname!: string
+  organizer_company!: string
+  organizer_phone_personal!: string
+  organizer_phone_company!: string
+  organizer_email!: string
+  organizer_memo!: string
+  event_sns_hash_tag!: string
+  bill_fullname!: string
+  bill_email!: string
 
-  event_place: string = ''
-  event_place_url: string = ''
-  members: string[] = []
-  subdomain_tags: string[] = []
+  event_place!: string
+  event_place_url!: string
+  members!: string[]
+  subdomain_tags!: string[]
 
   created_at: number
   created_by?: string
   updated_at: number
   updated_by?: string
+  sent_new_event_mail_at?: number
 
   constructor(id: string, src: Partial<Event>) {
-    Object.assign(this, EventAppSchema.parse(src))
+    Object.assign(this, EventAppSchema.parse({ ...src, event_id: id }))
     this.id = id
-    this.event_id = id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
     this.updated_at = Date.now()
   }
@@ -218,23 +242,12 @@ export class Event {
     this.members = this.members.filter((id) => id !== userId)
   }
 
-  private getDb(updated_by: string) {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      created_by: this.created_by ?? updated_by,
-      updated_at: Date.now(),
-      updated_by,
-      members: this.members.map((id) => getRefFromPath(`users/${id}`)),
-      event_num_members: this.members.length,
-    }
-  }
-
   isValidForDatabase(updateUserId: string): boolean {
-    return EventDbSchema.safeParse(this.getDb(updateUserId)).success
+    return EventDbSchema.safeParse(convertToDb(this, updateUserId)).success
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(updateUserId: string): any {
-    return EventDbSchema.parse(this.getDb(updateUserId))
+    return EventDbSchema.parse(convertToDb(this, updateUserId))
   }
 }

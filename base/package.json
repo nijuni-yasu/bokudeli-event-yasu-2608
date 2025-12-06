@@ -1,0 +1,57 @@
+{
+  "name": "base",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "yarn": "Use npm instead"
+  },
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "lint": "eslint --max-warnings=0 .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build:types": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@channel.io/channel-web-sdk-loader": "^2.0.0",
+    "@floating-ui/dom": "^1.6.5",
+    "@mdi/js": "^7.4.47",
+    "@shokujii/common": "file:../common",
+    "@tinymce/tinymce-vue": "^6",
+    "@turf/distance": "^7.0.0",
+    "@vueuse/core": "^10.11.0",
+    "axios": "^1.4.0",
+    "calendar-link": "^2.6.0",
+    "cookie-es": "^1.1.0",
+    "date-fns": "^2.30.0",
+    "destr": "^2.0.3",
+    "firebase": "~11.7.1",
+    "lodash": "^4.17.21",
+    "pinia": "^2.1.7",
+    "qrious": "^4.0.2",
+    "vue": "^3.4.21",
+    "vue-flatpickr-component": "^11.0.5",
+    "vue-i18n": "^9.13.1",
+    "vue-qrious": "^3.1.1",
+    "vue-router": "^4.3.0",
+    "vue3-perfect-scrollbar": "^1.6.1",
+    "vuetify": "^3.4.6"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
+    "@types/lodash": "^4.17.5",
+    "@types/node": "^20.12.5",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/tsconfig": "0.5.1",
+    "eslint-plugin-vue": "^10.2.0",
+    "npm-run-all2": "^6.1.2",
+    "sass": "1.77.4",
+    "vite": "^5.2.8",
+    "vite-plugin-vue-devtools": "^7.0.25",
+    "vite-plugin-vuetify": "^2.0.3",
+    "vue-tsc": "2.0.16"
+  }
+}

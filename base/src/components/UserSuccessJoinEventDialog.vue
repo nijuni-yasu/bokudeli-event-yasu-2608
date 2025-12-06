@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar } from '@mdi/js'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { useEventStore } from '@/stores/event'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { useCommunityStore } from '@/stores/community'
-import type { Shop } from '@/schemes/shop'
-import { usePartnerStore } from '@/stores/_partner'
-import { shareSnsButton } from '@/utils/shareSnsButton'
-import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { useEventStore } from '@shokujii/base/stores/event'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
+import { useCommunityStore } from '@shokujii/base/stores/community'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { usePartnerStore } from '@shokujii/base/stores/partner'
+import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
+import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 
 const props = defineProps<{
   eventId: string
@@ -39,7 +40,7 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
         { immediate: true },
       )
     }),
-    new Promise<Shop | undefined>((resolve) => {
+    new Promise<BokudeliPartnerShop | undefined>((resolve) => {
       watch(
         () => partnerStore.shops,
         (shops) => {
@@ -72,16 +73,10 @@ const openCalendarAddDialog = () => {
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.datetime') }}
-          {{ $d(event.event_start_datetime.toDate(), 'datetime_weekday_short') }}〜{{
-            $d(event.event_end_datetime.toDate(), 'time')
-          }}
+          {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}〜{{ $d(event.event_end_datetime, 'time') }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
-          {{
-            $t('success_join_event_dialog.deadline', [
-              $d(event.event_deadline_datetime.toDate(), 'datetime_weekday_short'),
-            ])
-          }}
+          {{ $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime, 'datetime_weekday_short')]) }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
           {{ $t('success_join_event_dialog.place') }} {{ event.event_address }} {{ event.event_place }}

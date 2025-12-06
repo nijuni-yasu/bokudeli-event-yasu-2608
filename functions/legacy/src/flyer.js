@@ -92,24 +92,33 @@ const resizeAndCropImage = async (imageBuffer, targetWidth, targetHeight) => {
     }
 
     // 画像の処理
-    const processedBuffer = await sharp(imageBuffer).resize(resizeOptions).extract(extractOptions).toBuffer()
+    // extractOptions が空のまま `extract` を呼ぶと sharp がエラーになるため、幅・高さが設定されている場合のみ実行する
+    let sharpInstance = sharp(imageBuffer).resize(resizeOptions)
+
+    if (extractOptions.width && extractOptions.height) {
+      sharpInstance = sharpInstance.extract(extractOptions)
+    }
+
+    // Adobe PDF Services が WEBP をサポートしないため、最終的な出力は必ず JPEG に変換する
+    const processedBuffer = await sharpInstance.jpeg().toBuffer()
 
     return `data:image/jpeg;base64,${processedBuffer.toString('base64')}`
   } catch (error) {
     console.error('Error processing image:', error)
-    // エラー時は元の画像をそのままBase64エンコード
+    // エラー時はシンプルなリサイズのみ再トライ（このときも必ず JPEG へ変換）
     try {
       const simpleResized = await sharp(imageBuffer)
         .resize(targetWidth, targetHeight, {
           fit: 'contain',
           background: { r: 255, g: 255, b: 255, alpha: 1 },
         })
+        .jpeg()
         .toBuffer()
       return `data:image/jpeg;base64,${simpleResized.toString('base64')}`
     } catch (fallbackError) {
       console.error('Fallback resize failed:', fallbackError)
-      // 最後の手段として元の画像をそのままBase64エンコード
-      return `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
+      // Adobe PDF Services は WEBP をサポートしないため、変換に失敗した場合は null を返す
+      return null
     }
   }
 }

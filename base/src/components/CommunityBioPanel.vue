@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import { type CommunityMember } from '@/schemes/communityMember'
+import { computed } from 'vue'
+import type { BokudeliCommunity, BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { getUserPath } from '@/router/utils'
-import UserAvatar from '@/components/UserAvatar.vue'
-import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@/utils/buildSnsLinks'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
+import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import { mdiEmail, mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiWeb, mdiCrown, mdiAccountGroup } from '@mdi/js'
+import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 
 const props = defineProps<{
   community: BokudeliCommunity
-  members: (CommunityMember | null)[] | null
+  members: (BokudeliCommunityMember | null)[] | null
 }>()
 const emit = defineEmits<{
-  (e: 'clickContact'): void
+  clickContact: []
 }>()
 
 const twitterUrl = computed(() =>
@@ -31,7 +32,7 @@ const officialSiteUrl = computed(() =>
 )
 // コミュニティの設定によってはメンバー一覧を非表示にする
 const isShowMember = computed(() =>
-  props.community.is_show_member !== undefined ? props.community.is_show_member : true
+  props.community.is_show_member !== undefined ? props.community.is_show_member : true,
 )
 </script>
 
@@ -71,6 +72,15 @@ const isShowMember = computed(() =>
         {{ $t('community_bio_panel.contact') }}
       </v-btn>
     </v-col>
+    <v-col class="pt-0">
+      <community-membership-button
+        v-if="community.community_account"
+        :community-id="community.community_account"
+        block
+        :join-button-props="{ rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
+        :leave-button-props="{ variant: 'outlined', rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
+      />
+    </v-col>
     <!-- community manager -->
     <div v-if="members?.some((m) => m?.roles?.includes('manager') ?? false)">
       <v-card-title class="justify-center text-h6 mt-7 d-flex align-center text-primary">
@@ -78,7 +88,7 @@ const isShowMember = computed(() =>
         {{ $t('community_bio_panel.manager') }}
       </v-card-title>
       <div
-        v-for="manager in members.filter((m) => m?.roles?.includes('manager') ?? false) as CommunityMember[]"
+        v-for="manager in members.filter((m) => m?.roles?.includes('manager') ?? false) as BokudeliCommunityMember[]"
         :key="manager.user_id"
       >
         <router-link :to="getUserPath(manager.user_id)">
@@ -99,7 +109,7 @@ const isShowMember = computed(() =>
         <v-icon :icon="mdiAccountGroup" size="22" class="mr-1" />
         {{ $t('community_bio_panel.member') }}
       </v-card-title>
-      <div v-for="member in members.filter((m) => m != null) as CommunityMember[]" :key="member.user_id">
+      <div v-for="member in members.filter((m) => m != null) as BokudeliCommunityMember[]" :key="member.user_id">
         <router-link :to="getUserPath(member.user_id)">
           <v-row>
             <div class="d-flex flex-row px-6 py-2">

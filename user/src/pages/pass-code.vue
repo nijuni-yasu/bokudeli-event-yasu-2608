@@ -1,67 +1,51 @@
 <script setup lang="ts">
-import { db, functions } from '@/firebase'
-import { httpsCallable } from 'firebase/functions'
-import { getAuth, signInWithCustomToken, signOut, updateEmail, type User } from 'firebase/auth'
+import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
-import { collection, doc, getDocs, query, where, updateDoc, Timestamp } from 'firebase/firestore'
-import { generatePassCode } from '@/utils/generatePassCode'
-import { FirestoredUser } from '@/schemes/storedUser'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { getLogin, getProfile } from '@/router/utils'
-import { useStoreUserAdditionalInfo } from '@/stores/userAdditionalInfo'
-import { useStoreFirebaseAuthError } from '@/stores/firebaseAuthError'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
+import { getHomePath, getLogin, getRegisterComplete } from '@/router/utils'
+import { confirmEmailLogin, requestEmailLogin } from '@shokujii/base/apis/user'
+import { getRedirectPath } from '@shokujii/base/utils/redirect'
 
 const router = useRouter()
 const route = useRoute()
 
-const notification = inject('notification') as Notification
 const { t: $t } = useI18n()
+
+const currentUserStore = useCurrentUserStore()
 
 const isLoading = ref(false)
 const isValid = ref(false)
-const isError = ref(false)
 
-const email = ref(route.query.email as string)
-const isNew = route.query.new
+const isLogin = getAuth().currentUser?.uid != null
+const _email = history.state?.email as string | undefined
+if (_email == null) {
+  if (isLogin) {
+    await router.push(getHomePath())
+  } else {
+    await router.push(getLogin())
+  }
+}
+const email = _email as string
+
 const passCode = ref('')
 const isOpenUnMatchPassCodeDialog = ref(false)
+const isOpenLinkDialog = ref(route.query.pid != null)
 
 watch(passCode, async (newValue) => {
   if (newValue.length === 6) {
-    await submit()
+    await submit(newValue)
   }
 })
-
-const login = async () => {
-  useStoreUserAdditionalInfo().reset()
-  useStoreFirebaseAuthError().reset()
-  const auth = getAuth()
-  await signOut(auth)
-
-  return await router.push({
-    path: getLogin(),
-    query: {
-      redirect: route.query.redirect as string,
-    },
-  })
-}
 
 const reSendPassCode = async () => {
   isLoading.value = true
   try {
-    const userEmail = email.value
-    const reGeneratePassCode = generatePassCode()
-
-    if (isNew === undefined) {
-      const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
-      await createOrUpdateUser({ user_email_pending: userEmail, user_pass_code: reGeneratePassCode })
+    if (isLogin) {
+      await currentUserStore.requestEmailChange(email)
     } else {
-      const createOrUpdateUser = httpsCallable(functions, 'create_or_update_user')
-      await createOrUpdateUser({ user_email: userEmail, user_pass_code: reGeneratePassCode })
+      await requestEmailLogin({ email })
     }
-    const sendPassCode = httpsCallable(functions, 'send_pass_code')
-    await sendPassCode({ user_email: userEmail, user_pass_code: reGeneratePassCode })
   } catch (error) {
     console.warn('Error resending pass code:', error)
   } finally {
@@ -69,121 +53,22 @@ const reSendPassCode = async () => {
   }
 }
 
-const submit = async () => {
+const submit = async (passCode: string) => {
   isValid.value = true
   try {
-    const userEmail = email.value
-
-    const verifyPassCode = httpsCallable(functions, 'verify_pass_code')
-    let result
-    if (isNew === undefined) {
-      result = await verifyPassCode({ user_email_pending: userEmail, user_pass_code: passCode.value })
+    if (isLogin) {
+      // Email Change の場合
+      await currentUserStore.confirmEmailChange(email, passCode)
+      const redirectPath = getRedirectPath() ?? '/'
+      await router.push(redirectPath)
     } else {
-      result = await verifyPassCode({ user_email: userEmail, user_pass_code: passCode.value })
+      // Email Login
+      const result = await confirmEmailLogin({ email, passCode })
+      const { token, isNew } = result.data
+      await signInWithCustomToken(getAuth(), token)
+      router.push(getRegisterComplete(isNew))
     }
-
-    const customToken = result.data as string
-
-    if (!customToken) {
-      return (isError.value = true)
-    }
-
-    if (isNew !== undefined) {
-      // メールアドレスログインの場合、初回はfirebase authのIDが必ず空になるため、updateEmailで設定する。
-      await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
-        await updateEmail(userCredential.user as User, userEmail).catch((error) => console.error(error))
-      })
-    }
-
-    const usersRef = collection(db, 'users')
-
-    let personalInformationSnapshot
-    if (isNew === undefined) {
-      personalInformationSnapshot = await getDocs(
-        query(collection(db, 'users_personal_information'), where('user_email_pending', '==', userEmail)),
-      )
-    } else {
-      personalInformationSnapshot = await getDocs(
-        query(collection(db, 'users_personal_information'), where('user_email', '==', userEmail)),
-      )
-    }
-
-    const q = query(usersRef, where('user_id', '==', personalInformationSnapshot.docs[0].id))
-
-    const querySnapshot = await getDocs(q)
-
-    if (!querySnapshot.empty) {
-      const user: FirestoredUser[] = []
-      querySnapshot.forEach((doc) => {
-        const firestoredUser = new FirestoredUser(doc.data())
-        user.push(firestoredUser)
-      })
-
-      if (isNew === undefined) {
-        const currentUser = getAuth().currentUser
-        const storedUserStore = useStoreStoredUser()
-        const { storedUser } = storeToRefs(storedUserStore)
-        const userRef = doc(db, 'users', storedUser.value?.userId as string)
-        const personalInformationSnapshotRef = doc(db, 'users_personal_information', storedUser.value?.userId as string)
-
-        await updateEmail(currentUser as User, userEmail)
-          .then(async () => {
-            await updateDoc(userRef, {
-              verified_at: Timestamp.now(),
-            })
-            await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
-          })
-          .catch(async (error) => {
-            console.error(error)
-            if (error.code === 'auth/requires-recent-login') {
-              const getCustomToken = httpsCallable(functions, 'get_custom_token')
-              const result = await getCustomToken({ user_email: currentUser?.email })
-              const customToken = result.data as string
-
-              await signInWithCustomToken(getAuth(), customToken).then(async (userCredential) => {
-                await updateEmail(userCredential.user as User, userEmail)
-                  .then(async () => {
-                    await updateDoc(userRef, {
-                      verified_at: Timestamp.now(),
-                    })
-                    await updateDoc(personalInformationSnapshotRef, { user_email: userEmail, user_email_pending: null })
-                  })
-                  .catch((error) => {
-                    // 基本的にこのスコープのエラーが出る想定は無い
-                    console.error(error)
-                  })
-              })
-            } else if (error.code === 'auth/email-already-in-use') {
-              return Object.assign(notification, { message: $t('profile.exists_email'), color: 'error' })
-            }
-          })
-      }
-
-      const isProfileCompleted = user[0].user_name && user[0].user_description && user[0].user_image_url
-      if (isNew && isProfileCompleted && route.query.sns === 'twitter.com') {
-        return await router.push({
-          path: getProfile(),
-          query: {
-            new: Number(isNew),
-            redirect: route.query.redirect,
-          },
-        })
-      } else if (isNew === undefined || isProfileCompleted) {
-        // プロフィールが完成していればログインページにアクセスする直前のページへ遷移
-        // newが存在しない = メールアドレス変更時の場合
-        return await router.push(route.query.redirect as string)
-      } else {
-        // プロフィール入力方法の選択ページに遷移
-        return await router.push({
-          path: '/register/complete',
-          query: {
-            new: Number(isNew),
-            redirect: route.query.redirect,
-          },
-        })
-      }
-    }
-  } catch (error) {
+  } catch (error: any) {
     console.warn('Error sending pass code:', error)
     isOpenUnMatchPassCodeDialog.value = true
   } finally {
@@ -209,14 +94,7 @@ const submit = async () => {
             </v-row>
           </v-container>
 
-          <v-otp-input
-            autofocus
-            :disabled="isLoading"
-            :loading="isValid"
-            :error="isError"
-            :focus-all="isError"
-            v-model="passCode"
-          />
+          <v-otp-input autofocus :disabled="isLoading" :loading="isValid" v-model="passCode" />
 
           <v-btn
             size="large"
@@ -230,14 +108,14 @@ const submit = async () => {
             {{ $t('passcode.resend') }}
           </v-btn>
           <v-btn
-            v-if="route.query.new"
+            v-if="!isLogin"
             size="large"
             color="grey-900"
             variant="text"
             block
             :disabled="isValid"
             :loading="isLoading"
-            @click="login"
+            @click="router.push(getLogin())"
           >
             {{ $t('passcode.back') }}
           </v-btn>
@@ -248,6 +126,22 @@ const submit = async () => {
     <confirm-dialog v-model="isOpenUnMatchPassCodeDialog" :is-confirm="false">
       <v-card-text class="text-center py-10 text-h4">
         {{ $t('passcode.un_match_passcode') }}
+      </v-card-text>
+    </confirm-dialog>
+    <confirm-dialog
+      :model-value="isOpenLinkDialog"
+      :is-confirm="false"
+      :ok-text="$t('passcode.send_code')"
+      :ok-click="
+        () => {
+          reSendPassCode()
+          isOpenLinkDialog = false
+        }
+      "
+    >
+      <v-card-text class="text-center py-10 text-h4"> {{ $t('profile.account_linkage') }} </v-card-text>
+      <v-card-text class="pb-0">
+        {{ $t('passcode.link_dialog_body', { email, provider_label: $t(`sns_name['${route.query.pid}']`) }) }}
       </v-card-text>
     </confirm-dialog>
   </v-container>

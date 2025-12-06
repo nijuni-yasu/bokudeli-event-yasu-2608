@@ -1,28 +1,26 @@
-import { onCall, HttpsError } from 'firebase-functions/https';
+import { onCall, HttpsError } from 'firebase-functions/https'
 import { defineSecret } from 'firebase-functions/params'
 import Stripe from 'stripe'
-// import { z } from 'zod';
-import { EventOrder } from './schemas/EventOrder.js'
+import { CreateStripeCheckoutSessionRequest } from '@shokujii/common/apis/stripe.js'
 import { getUserUrl, getMainUrl } from './utils/urls.js'
+import { getEvent } from './stores/event.js'
 
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
 
-// const RequestSchema = z.object({
-//   order: z.instanceof(EventOrder),
-//   isPosted: z.boolean()
-// })
-
-export const createStripeCheckoutSession = onCall(
+export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionRequest>(
   {
-    secrets: [STRIPE_API_KEY],
+    secrets: ['STRIPE_API_KEY'],
   },
   async (request) => {
     if (!request.auth?.uid) {
-      throw new HttpsError('unauthenticated', 'Login required to use this feature.');
+      throw new HttpsError('unauthenticated', 'Login required to use this feature.')
     }
-    // const { order, isPosted } = RequestSchema.parse(request.data)
-    const order = request.data.order as EventOrder
-    const isPosted = request.data.isPosted as Boolean
+    const { order, isPosted } = request.data
+    const event = await getEvent(order.event_id)
+    if (event == null) {
+      throw new HttpsError('invalid-argument', 'Event does not exist.')
+    }
+
     const uid = request.auth.uid
     const lineItems = order.menus.map((menu) => {
       return {
@@ -42,7 +40,6 @@ export const createStripeCheckoutSession = onCall(
       } as Stripe.Checkout.SessionCreateParams.LineItem
     })
 
-
     const stripe = new Stripe(STRIPE_API_KEY.value(), { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
     const session = await stripe.checkout.sessions.create({
       success_url: `${getUserUrl(uid)}?eventId=${order.event_id}&communityAccount=${order.community_account}&isPosted=${isPosted}`,
@@ -53,7 +50,7 @@ export const createStripeCheckoutSession = onCall(
       payment_method_types: ['card'],
       metadata: {
         eventId: order.event_id,
-        eventPayment: order.event_payment,
+        eventPayment: event.event_payment,
         communityId: order.community_id,
         communityAccount: order.community_account,
         orderId: order.order_id,
@@ -61,5 +58,5 @@ export const createStripeCheckoutSession = onCall(
       },
     })
     return session
-  }
-)  
+  },
+)

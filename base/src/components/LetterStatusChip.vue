@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type LetterStatusType } from '@/schemes/letter'
-
-defineEmits<{
-  (e: 'update:modelValue', value: string): void
-}>()
+import { type LetterStatusType } from '@shokujii/common/schemas/CommunityLetter.js'
 
 const props = defineProps<{
   status: LetterStatusType
@@ -18,9 +14,10 @@ const chipColor = computed(() => {
       return 'primary'
     case 'sent':
       return 'secondary'
-    default:
+    default: {
       const _exhaustiveCheck: never = props.status
       throw new Error(`Unsupported type: ${_exhaustiveCheck}`)
+    }
   }
 })
 </script>

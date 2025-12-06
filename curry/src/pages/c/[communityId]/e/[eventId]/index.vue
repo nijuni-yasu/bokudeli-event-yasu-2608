@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
-import { type PartnerMenu } from '@/schemes/partnerMenu'
-import EventCartDialog from '@/components/EventCartDialog.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import EventMenuList from '@/components/EventMenuList.vue'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
+import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import EventMenuList from '@shokujii/base/components/EventMenuList.vue'
+import { useEventStore, type EventStore, type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
-import EventDetailsCard from '@/components/EventDetailsCard.vue'
-import EventStatusChip from '@/components/EventStatusChip.vue'
+import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
+import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 
 const communityId = useRoute().params.communityId as string
 const eventId = useRoute().params.eventId as string
@@ -36,7 +35,7 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
   if (event.value == null) {
     return null
   }
-  switch (event.value.event_status.value) {
+  switch (event.value.calculatedEventStatus) {
     case 'finished':
       return 'finished'
     case 'order_closed':
@@ -53,7 +52,7 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
 })
 
 const selectedMenuState = reactive({
-  menu: null as PartnerMenu | null,
+  menu: null as BokudeliEventMenu | null,
   isOpen: false,
 })
 
@@ -62,13 +61,13 @@ const alertState = reactive({
   isOpen: false,
 })
 
-const selectMenu = (menu: PartnerMenu) => {
-  const disabledReason = menu.isSoldout ? 'sold_out' : menuDisabled.value
+const selectMenu = (menu: BokudeliEventMenu) => {
+  const disabledReason = menuDisabled.value
   if (disabledReason == null) {
     return
   }
   if (menuDisabled.value === 'finished') {
-    alertState.message = $t(`menu_disabled_reason.finished`)
+    alertState.message = $t('menu_disabled_reason.finished')
     alertState.isOpen = true
   } else if (disabledReason === false) {
     selectedMenuState.menu = menu
@@ -131,7 +130,7 @@ const isFewMemberNotice = computed({
     if (fewMemberNotice.value === null) {
       if (event.value != null) {
         return (
-          event.value.event_num_members < 1 &&
+          event.value.members.length < 1 &&
           event.value.is_public &&
           isManager.value &&
           event.value.event_status.value === 'accepting_order'
@@ -203,10 +202,10 @@ onUnmounted(() => {
           </v-btn>
           <v-btn
             v-if="
-              (event.event_status.value === 'in_draft' ||
-                event.event_status.value === 'full' ||
-                event.event_status.value === 'applying_reservation' ||
-                event.event_status.value === 'accepting_order') &&
+              (event.calculatedEventStatus === 'in_draft' ||
+                event.calculatedEventStatus === 'full' ||
+                event.calculatedEventStatus === 'applying_reservation' ||
+                event.calculatedEventStatus === 'accepting_order') &&
               isManager
             "
             color="white"

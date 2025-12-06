@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase.js'
 import { collectionGroup, doc, getDocs, orderBy, query, where } from 'firebase/firestore'
 import { useRoute } from 'vue-router'
-import UserBioPanel from '@/components/UserBioPanel.vue'
-import UserEventCard from '@/components/UserEventCard.vue'
-import CommunityCard from '@/components/CommunityCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
-import { useCommunityListStore } from '@/stores/communityList'
-import { useUserStore } from '@/stores/user'
+import UserBioPanel from '@shokujii/base/components/UserBioPanel.vue'
+import UserEventCard from '@shokujii/base/components/UserEventCard.vue'
+import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
+import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiCalendarHeart, mdiAccountGroup } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { createEmptyOrderItem, type OrderItem } from '@/schemes/orderItem'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getInvoicePath } from '@/router/utils'
-import { functions } from '@/firebase'
+import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
-import UserSuccessJoinEventDialog from '@/components/UserSuccessJoinEventDialog.vue'
-import type { CommunityMember } from '@/schemes/communityMember'
-import { getInvoicePdf } from '@/utils/pdf'
-import { useNotification } from '@/composable/notification'
+import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
+import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
+import { getInvoicePdf } from '@shokujii/base/utils/pdf.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const route = useRoute()
 const userId = route.params.userId as string
@@ -35,7 +35,7 @@ const isOwner = computed(() => {
 
 const { user } = storeToRefs(useUserStore(userId))
 const tabs = ref(null)
-const cancelOperatingOrder = ref<OrderItem | null>(null)
+const cancelOperatingOrder = ref<EventOrder | null>(null)
 
 // オーダー情報の取得
 // TODO: 直接 firebase を叩くべきではないので、store を使えるようにする
@@ -49,7 +49,7 @@ const fetchOrders = async () =>
     ),
   )
 const orderSnapshots = ref(await fetchOrders())
-const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() => {
+const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() => {
   return orderSnapshots.value.docs.flatMap((orderSnapshot) => {
     const eventId = orderSnapshot.ref.parent.parent!.id
     const event = (useEventStore(eventId) as EventStore).event
@@ -59,8 +59,14 @@ const orders: Ref<{ order: OrderItem; event: BokudeliEvent }[]> = computed(() =>
     if (!isOwner.value && !event.is_public) {
       return []
     }
-    const order = { ...createEmptyOrderItem(), ...orderSnapshot.data() } as OrderItem
-    return { order, event }
+    // TODO 直接 new するのではなく store を経由する
+    try {
+      const order = new EventOrder(eventId, orderSnapshot.id, orderSnapshot.data())
+      return { order, event }
+    } catch (err) {
+      console.error(err)
+      return []
+    }
   })
 })
 
@@ -82,22 +88,22 @@ const memberCommunities = computed(() =>
     return communityStore.members?.some((member) => member?.user_id === userId)
       ? {
           community: communityStore.community,
-          members: communityStore.members.filter((m) => m != null) as CommunityMember[],
+          members: communityStore.members.filter((m) => m != null) as BokudeliCommunityMember[],
         }
       : []
   }),
 )
 
-const cancel = async (order: OrderItem) => {
+const cancel = async (event: BokudeliEvent, order: EventOrder) => {
   cancelOperatingOrder.value = order
   try {
-    if (order.event_payment == 'user_advance' && order.payment_intent) {
+    if (event.event_payment == 'user_advance' && order.payment_intent) {
       // user_advance はstripeの支払いの場合
       const stripeRefunds = httpsCallable(functions, 'stripe_refunds')
       await stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
       orderSnapshots.value = await fetchOrders()
       notification.show($t('user.canceled'), 'success')
-    } else if (order.event_payment == 'user_on_day' || order.event_payment == 'community_bill') {
+    } else if (event.event_payment == 'user_on_day' || event.event_payment == 'community_bill') {
       // それ以外は事前決済してないのでStripeの返金処理はなし
       const eventStore = useEventStore(order.event_id)
       eventStore.updateOrderStatus(order, 'canceled')
@@ -118,7 +124,7 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const downloadInvoice = async (order: OrderItem) => {
+const downloadInvoice = async (order: EventOrder) => {
   const w = window.open(getInvoicePath(), '_blank')
   const pdf = await getInvoicePdf(order.event_id, order.order_id)
   w!.location.href = window.URL.createObjectURL(pdf)
@@ -152,7 +158,7 @@ const downloadInvoice = async (order: OrderItem) => {
                     :event="event"
                     :isOwner="isOwner"
                     @downloadInvoice="downloadInvoice"
-                    @cancel="cancel"
+                    @cancel="cancel(event, order)"
                   />
                 </router-link>
 

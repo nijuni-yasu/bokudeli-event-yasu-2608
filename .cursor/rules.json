@@ -32,10 +32,7 @@
     },
     "lint": {
       "typescript": {
-        "extends": [
-          "eslint:recommended",
-          "plugin:@typescript-eslint/recommended"
-        ],
+        "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
         "rules": {
           "@typescript-eslint/explicit-function-return-type": "warn",
           "@typescript-eslint/no-explicit-any": "warn",
@@ -43,9 +40,7 @@
         }
       },
       "javascript": {
-        "extends": [
-          "eslint:recommended"
-        ],
+        "extends": ["eslint:recommended"],
         "rules": {
           "no-unused-vars": "error",
           "no-console": "warn"
@@ -53,14 +48,7 @@
       }
     },
     "search": {
-      "exclude": [
-        "node_modules/**",
-        ".git/**",
-        ".firebase/**",
-        ".github/**",
-        "**/*.log",
-        "**/.DS_Store"
-      ]
+      "exclude": ["node_modules/**", ".git/**", ".firebase/**", ".github/**", "**/*.log", "**/.DS_Store"]
     }
   }
-} 
+}

@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { themeConfig } from '@themeConfig'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
-import { useValidators } from '@/composable/validators'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
 import logo from '@/assets/images/shokujii/shokujii_logo_square.webp'
@@ -139,7 +139,7 @@ const sendMail = async () => {
         <template #actions>
           <v-spacer></v-spacer>
           <v-btn @click="forgotPasswordDialog = false">{{ $t('cancel') }}</v-btn>
-          <v-btn variant="tonal" @click="sendMail(), (forgotPasswordDialog = false)">{{ $t('ok') }}</v-btn>
+          <v-btn variant="tonal" @click="(sendMail(), (forgotPasswordDialog = false))">{{ $t('ok') }}</v-btn>
         </template>
       </v-card>
     </v-dialog>

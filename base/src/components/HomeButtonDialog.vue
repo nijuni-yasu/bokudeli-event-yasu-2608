@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import home_button_01 from '@/assets/images/home_button/home_button_01.png'
-import home_button_02 from '@/assets/images/home_button/home_button_02.png'
+import home_button_01 from '@shokujii/base/assets/images/home_button/home_button_01.png'
+import home_button_02 from '@shokujii/base/assets/images/home_button/home_button_02.png'
 
 const { t } = useI18n()
 
@@ -12,14 +12,7 @@ const props = defineProps<{
   maxWidth?: string
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
-
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const dialog = defineModel<boolean>()
 
 const maxWidth = computed(() => {
   return props.maxWidth ? props.maxWidth : '600px'
@@ -42,7 +35,7 @@ const closeText = computed(() => {
       </v-card-text>
       <v-card-text class="text-h5">
         {{ t('home_button_dialog.step3') }}
-      </v-card-text> 
+      </v-card-text>
 
       <v-card-actions>
         <v-spacer />

@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type EventStatusType } from '@/schemes/bokudeliEvent'
-
-defineEmits<{
-  (e: 'update:modelValue', value: string): void
-}>()
+import { type EventStatusType } from '@shokujii/common/schemas/Event.js'
 
 const props = defineProps<{
-  status: EventStatusType['value']
+  status: EventStatusType
 }>()
 
 const chipColor = computed(() => {
@@ -24,9 +20,10 @@ const chipColor = computed(() => {
       return 'error'
     case 'finished':
       return 'secondary'
-    default:
+    default: {
       const _exhaustiveCheck: never = props.status
       throw new Error(`Unsupported type: ${_exhaustiveCheck}`)
+    }
   }
 })
 </script>

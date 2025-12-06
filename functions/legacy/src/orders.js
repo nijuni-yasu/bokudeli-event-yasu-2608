@@ -126,9 +126,11 @@ export const update_order_status = functions.region('asia-northeast1').https.onC
       )
     }
     const now = Timestamp.now()
+    const canceled_at = data.status === 'canceled' ? now : orderSnapshot.get('canceled_at')
+    const ordered_at = data.status === 'ordered' ? now : orderSnapshot.get('ordered_at')
     transaction.update(orderSnapshot.ref, {
-      canceled_at: data.status === 'canceled' ? now : (orderSnapshot.get('canceled_at') ?? null),
-      ordered_at: data.status === 'ordered' ? now : (orderSnapshot.get('ordered_at') ?? null),
+      ...(canceled_at != null && { canceled_at}),
+      ...(ordered_at != null && { ordered_at }),
       updated_at: now,
       status: data.status,
     })

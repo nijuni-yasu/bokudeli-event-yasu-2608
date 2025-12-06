@@ -1,6 +1,7 @@
 /**
- * 多くは '@/@core/utils/validators' に実装されているが、日本語に変換するためにここに実装する
+ * 多くは '@core/utils/validators' に実装されているが、日本語に変換するためにここに実装する
  */
+import { isEmpty } from '@core/utils/helpers'
 import { useI18n } from 'vue-i18n'
 import {
   requiredValidator as _requiredValidator,
@@ -106,12 +107,12 @@ export const useValidators = () => {
     return /^T[0-9]{13}$/.test(value as string) || $t('validator.invoice_japan')
   }
 
-  const noReservedCharsValidator =  (value: string  | null | undefined) => {
+  const noReservedCharsValidator = (value: string | null | undefined) => {
     if (isEmpty(value)) {
       return true
     }
-    const reservedChars = /[%{}|^[\]:?#/@`!$'()*+,;=\\]/;
-    return !reservedChars.test(value as string) || $t('validator.reserved_chars');
+    const reservedChars = /[%{}|^[\]:?#/@`!$'()*+,;=\\]/
+    return !reservedChars.test(value as string) || $t('validator.reserved_chars')
   }
 
   return {
@@ -125,6 +126,6 @@ export const useValidators = () => {
     emailValidator,
     accountValidator,
     invoiceValidatorJapan,
-    noReservedCharsValidator
+    noReservedCharsValidator,
   }
 }

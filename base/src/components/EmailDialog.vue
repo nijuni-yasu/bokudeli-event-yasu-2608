@@ -1,31 +1,32 @@
 <script setup lang="ts">
-import { functions } from '@/firebase'
+import { ref } from 'vue'
+import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { mdiEmail } from '@mdi/js'
-import type { FirestoredUser } from '@/schemes/storedUser'
+import type { User } from '@shokujii/common/schemas/User.js'
 
 const model = defineModel<boolean>({ required: true })
 
 const props = defineProps<{
-  toUser: FirestoredUser
+  toUser: User
 }>()
 
 const emit = defineEmits<{
-  (e: 'sent'): void
-  (e: 'failed'): void
+  sent: []
+  failed: []
 }>()
 
 const mailSubject = ref('')
 const mailText = ref('')
 const isSending = ref(false)
 
-const userStore = useStoreStoredUser()
+const currentUserStore = useCurrentUserStore()
 
 const onFormSubmit = async () => {
   isSending.value = true
   try {
-    const userId = userStore.storedUser?.userId
+    const userId = currentUserStore.firebaseUser?.uid
     if (userId != null) {
       const sendMail = httpsCallable(functions, 'send_email')
       try {
@@ -37,7 +38,7 @@ const onFormSubmit = async () => {
         emit('sent')
         return
       } catch (error) {
-        console.log(error)
+        console.warn(error)
         // Fall through
       }
     }

@@ -5,15 +5,17 @@ import {
   DocumentData,
   Transaction,
 } from 'firebase-admin/firestore'
-import { PartnerMenu } from '../schemas/PartnerMenu.js'
-import { PartnerShop } from '../schemas/PartnerShop.js'
+import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
+import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
+import { Event } from '@shokujii/common/schemas/Event.js'
 
 class PartnerMenuConverter implements FirestoreDataConverter<PartnerMenu> {
   toFirestore(order: PartnerMenu): DocumentData {
     return order.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): PartnerMenu {
-    return new PartnerMenu(snapshot.id, snapshot.data())
+    const partnerId = snapshot.ref.parent.parent!.id
+    return new PartnerMenu(partnerId, snapshot.id, snapshot.data())
   }
 }
 
@@ -22,7 +24,8 @@ class PartnerShopConverter implements FirestoreDataConverter<PartnerShop> {
     return order.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): PartnerShop {
-    return new PartnerShop(snapshot.id, snapshot.data())
+    const partnerId = snapshot.ref.parent.parent!.id
+    return new PartnerShop(partnerId, snapshot.id, snapshot.data())
   }
 }
 
@@ -59,9 +62,11 @@ export class Partner {
       .doc(this.id)
       .collection('menus')
       .withConverter(new PartnerMenuConverter())
-    transaction === undefined
-      ? await menusRef.doc(menu.id).set(menu, { merge: true })
-      : transaction.set(menusRef.doc(menu.id), menu, { merge: true })
+    if (transaction === undefined) {
+      await menusRef.doc(menu.id).set(menu, { merge: true })
+    } else {
+      transaction.set(menusRef.doc(menu.id), menu, { merge: true })
+    }
   }
 
   async getShops(transaction?: Transaction): Promise<PartnerShop[]> {
@@ -95,13 +100,34 @@ export class Partner {
       .doc(this.id)
       .collection('shops')
       .withConverter(new PartnerShopConverter())
-    transaction === undefined
-      ? await shopsRef.doc(shop.id).set(shop, { merge: true })
-      : transaction.set(shopsRef.doc(shop.id), shop, { merge: true })
+    if (transaction === undefined) {
+      await shopsRef.doc(shop.id).set(shop, { merge: true })
+    } else {
+      transaction.set(shopsRef.doc(shop.id), shop, { merge: true })
+    }
   }
 }
 
-export const getPartner = async (id: string): Promise<Partner> => {
-  // TODO パートナーが存在するかどうかを確認する
-  return new Partner(id)
+// 基本的に getXXX には transaction を渡しているが、
+// Partner には Document が存在しないので transaction では取得できない
+export const getPartner = async (id: string): Promise<Partner | undefined> => {
+  const db = getFirestore()
+  const shopsRef = db.collection('partners').doc(id).collection('shops').withConverter(new PartnerShopConverter())
+  const shops = await shopsRef.listDocuments()
+  return shops.length !== 0 ? new Partner(id) : undefined
+}
+
+export const getEventPartnerShop = async (
+  event: Event,
+  transaction?: Transaction,
+): Promise<PartnerShop | undefined> => {
+  const db = getFirestore()
+  const shopRef = db
+    .collection('partners')
+    .doc(event.partner_id)
+    .collection('shops')
+    .doc(event.shop_id)
+    .withConverter(new PartnerShopConverter())
+  const snapshot = await (transaction === undefined ? shopRef.get() : transaction.get(shopRef))
+  return snapshot.data()
 }

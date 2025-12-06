@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ManageTopCard from '@/componentsLocal/ManageTopCard.vue'
+import ManageTopCard from '@/components/ManageTopCard.vue'
 import howto01 from '@/assets/images/manage_top/manage_howto_icon_01.png'
 import howto02 from '@/assets/images/manage_top/manage_howto_icon_02.png'
 import howto03 from '@/assets/images/manage_top/manage_howto_icon_03.png'
@@ -23,12 +23,12 @@ import support02 from '@/assets/images/manage_top/manage_support_icon_02.png'
 import support03 from '@/assets/images/manage_top/manage_support_icon_03.png'
 
 import { getManageCommunityPath } from '@/router/utils'
-import { useCommunityListStore } from '@/stores/communityList'
+import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { doc, orderBy, where } from 'firebase/firestore'
-import CommunityCardMini from '@/components/CommunityCardMini.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import CommunityCardMini from '@shokujii/base/components/CommunityCardMini.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { getAuth } from 'firebase/auth'
-import { db } from '@/firebase'
+import { db } from '@shokujii/base/firebase.js'
 import { mdiPlus } from '@mdi/js'
 
 const userId = getAuth().currentUser?.uid

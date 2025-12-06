@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/_partner'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
+import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getCommunityPath, getShopPath, getEventPath, getUserEventUrl } from '@/navigation/utils'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useEventListStore } from '@/stores/eventList'
-import type { Shop } from '@/schemes/shop'
-import EventDetailCard from '@/components/eventcreate/EventDetailCard.vue'
-import EventBasicInfoCard from '@/components/eventcreate/EventBasicInfoCard.vue'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import { Timestamp } from 'firebase/firestore'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
+import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
+import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
+import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { mdiOpenInNew } from '@mdi/js'
-import { useNotification } from '@/composable/notification'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 
@@ -24,7 +21,7 @@ const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 const eventListStore = useEventListStore()
 
-const shop = await new Promise<Shop | null>((resolve) => {
+const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
   watch(
     () => partnerStore.shops,
     (shops) => {
@@ -94,13 +91,13 @@ if (route.query.id != null) {
   _event.community_account = communityAccount
   _event.community_id = communityId
   _event.community_name = communityName
-  _event.event_postalcode = shop.shop_postcode
-  _event.event_address = shop.shop_address
-  _event.event_place = shop.shop_name
-  _event.event_place_url = shop.shop_url
+  _event.event_postalcode = shop.shop_postcode ?? ''
+  _event.event_address = shop.shop_address ?? ''
+  _event.event_place = shop.shop_name ?? ''
+  _event.event_place_url = shop.shop_url ?? ''
   _event.partner_id = partnerId
-  _event.shop_id = shop.shop_id!
-  _event.shop_name = shop.shop_name
+  _event.shop_id = shop.shop_id
+  _event.shop_name = shop.shop_name ?? ''
   _event.event_status = { value: 'in_draft' }
 }
 
@@ -111,24 +108,24 @@ const isValid = ref(false)
 const coverImage = ref<File | null>(null)
 
 // TODO utils に移動
-const calcOrderDeadline = (eventStartTimestamp: Timestamp, deadLine: { days_before: number; time: number }) => {
-  const startDateTime = eventStartTimestamp.toDate()
+const calcOrderDeadline = (eventStartTime: number, deadLine: { days_before: number; time: number }) => {
+  const startDateTime = new Date(eventStartTime)
   startDateTime.setDate(startDateTime.getDate() - deadLine.days_before)
   // UTC なので必ず Date Object にしてから使う
   const deadLineTime = new Date(deadLine.time)
   startDateTime.setHours(deadLineTime.getHours())
   startDateTime.setMinutes(deadLineTime.getMinutes())
-  return Timestamp.fromDate(startDateTime)
+  return startDateTime.getTime()
 }
 
 watch(
   () => event.value.event_start_datetime,
-  (startTimestamp) => {
-    if (startTimestamp == null) {
-      event.value.event_deadline_datetime = null
+  (startTime) => {
+    if (startTime == null) {
+      event.value.event_deadline_datetime = Date.now()
       return
     }
-    event.value.event_deadline_datetime = calcOrderDeadline(startTimestamp, shop.shop_deadline_datetime)
+    event.value.event_deadline_datetime = calcOrderDeadline(startTime, shop.shop_deadline_datetime)
   },
 )
 
@@ -163,7 +160,7 @@ const submit = async (apply: boolean) => {
 }
 
 onUnmounted(() => {
-  eventListStore.$reset()
+  eventListStore.reload()
 })
 </script>
 

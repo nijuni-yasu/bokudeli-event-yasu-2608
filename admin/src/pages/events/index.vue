@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import { where, orderBy } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
-import { usePartnerStore } from '@/stores/_partner'
-import { useEventListStore } from '@/stores/eventList'
+import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { getCommunityPath, getShopPath } from '@/navigation/utils'
-import type { Shop } from '@/schemes/shop'
-import EventCard from '@/components/EventCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
-import {
-  mdiPencilBoxOutline
-} from '@mdi/js'
+import { mdiPencilBoxOutline } from '@mdi/js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -19,7 +16,7 @@ const display = useDisplay()
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 
-const shop = await new Promise<Shop | null>((resolve) => {
+const shop = await new Promise<BokudeliPartnerShop | null>((resolve) => {
   watch(
     () => partnerStore.shops,
     (shops) => {
@@ -39,11 +36,9 @@ const shop = await new Promise<Shop | null>((resolve) => {
 if (shop == null) {
   window.alert($t('alert.make_shop'))
   router.push(getShopPath())
-  throw new Error()
 } else if (shop.community_account == null) {
   window.alert($t('alert.make_community_account'))
   router.push(getCommunityPath())
-  throw new Error()
 }
 
 const numOfColumns = computed(() => {
@@ -59,9 +54,13 @@ const numOfColumns = computed(() => {
   }
 })
 
+// ページ遷移すると query 持ちのリクエストが失敗するので filter に null, count に 0 を渡す
+// TODO 原因調査
 const eventListStore = useEventListStore(
-  [where('community_account', '==', shop.community_account), orderBy('event_start_datetime', 'desc')],
-  numOfColumns.value,
+  shop == null
+    ? null
+    : [where('community_account', '==', shop.community_account), orderBy('event_start_datetime', 'desc')],
+  shop == null ? 0 : numOfColumns.value,
 )
 
 const events = computed(
@@ -102,7 +101,9 @@ const fab = () => {
       </v-row>
     </v-col>
   </v-row>
-  <v-btn class="fab" size="x-large" elevation="12" :prepend-icon="mdiPencilBoxOutline" @click="fab">{{ $t('event.new') }}</v-btn>
+  <v-btn class="fab" size="x-large" elevation="12" :prepend-icon="mdiPencilBoxOutline" @click="fab">{{
+    $t('event.new')
+  }}</v-btn>
 </template>
 
 <style scoped lang="scss">

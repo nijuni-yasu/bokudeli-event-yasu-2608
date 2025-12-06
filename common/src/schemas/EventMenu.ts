@@ -1,53 +1,61 @@
 import { z } from 'zod'
-import { TimestampSchema, EpochMillisSchema } from './firebase/index.js'
+import { TimestampSchema } from './firebase/index.js'
 
 const EventMenuDbSchema = z.object({
-  createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   menu_description: z.string().nonempty(),
   menu_image_url: z.string().url().nonempty(),
   menu_name: z.string().nonempty(),
   menu_price: z.number().int().positive(),
+  is_sold_out: z.boolean(),
+  menu_sort_number: z.number().int().nonnegative(),
 })
 
-const EventOrderAppSchema = z.object({
+const EventMenuAppSchema = z.object({
   // Mandatory
-  menu_description: z.string().nonempty(),
-  menu_image_url: z.string().url().nonempty(),
   menu_name: z.string().nonempty(),
-  menu_price: z.number().int().positive(),
+  // Default
+  menu_price: z.number().int().positive().default(100),
+  menu_image_url: z.string().default(''),
+  menu_description: z.string().default(''),
+  is_sold_out: z.boolean().default(false),
+  // Mandatory
+  menu_sort_number: z.number().int().nonnegative(),
 })
+
+const convertToDb = (menu: EventMenu) => {
+  return {
+    ...menu,
+    updatedAt: Date.now(),
+  }
+}
 
 export class EventMenu {
   // Mandatory
   readonly id: string
-  createdAt: number
+  readonly menu_id: string
+  readonly event_id: string
   updatedAt: number
   menu_description!: string
   menu_image_url!: string
   menu_name!: string
   menu_price!: number
+  is_sold_out!: boolean
+  menu_sort_number!: number
 
-  constructor(id: string, src: Partial<EventMenu>) {
-    Object.assign(this, EventOrderAppSchema.parse(src))
-    this.id = id
-    this.createdAt = EpochMillisSchema.default(Date.now()).parse(src.createdAt)
+  constructor(event_id: string, menu_id: string, src: Partial<EventMenu>) {
+    Object.assign(this, EventMenuAppSchema.parse(src))
+    this.event_id = event_id
+    this.id = menu_id
+    this.menu_id = menu_id
     this.updatedAt = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      createdAt: EpochMillisSchema.default(Date.now()).parse(this.createdAt),
-      updatedAt: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return EventMenuDbSchema.safeParse(this.getDb()).success
+    return EventMenuDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof EventMenuDbSchema> {
-    return EventMenuDbSchema.parse(this.getDb())
+    return EventMenuDbSchema.parse(convertToDb(this))
   }
 }

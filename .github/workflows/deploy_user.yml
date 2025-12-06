@@ -6,12 +6,12 @@ on:
       - production
       - development
     paths:
-      - "user/**"
-      - "base/**"
+      - 'user/**'
+      - 'base/**'
   workflow_dispatch:
     inputs:
       environment:
-        description: "Deployment environment"
+        description: 'Deployment environment'
         required: true
         type: choice
         options:
@@ -36,28 +36,41 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ./user
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version-file: ./user/.node-version
-          cache: "yarn"
-          cache-dependency-path: ./user/yarn.lock
+          node-version-file: ./.node-version
+          cache: 'npm'
+          cache-dependency-path: ./package-lock.json
       - name: Install dependencies
         run: |
-          yarn install --frozen-lockfile
+          npm install --frozen-lockfile
       - name: Generate .env file
+        working-directory: ./user
         run: |
           echo '${{ vars.USER_ENV }}' | tr -d '\r' > .env
+      - name: Check Format
+        run: |
+          npm -w common run format:check
+          npm -w base run format:check
+          npm -w user run format:check
       - name: Build
         run: |
-          yarn run build-${ENVIRONMENT}
+          npm -w user run build
+      - name: Lint
+        run: |
+          npm -w common run lint
+          npm -w base run lint
+          npm -w user run lint
+      - name: Generate .firebaserc
+        run: |
+          echo '${{ vars.FIREBASERC }}' > .firebaserc
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
           project_id: ${{ vars.PROJECT_ID }}
           service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          args: "--only hosting:user"
+          args: '--only hosting:user'

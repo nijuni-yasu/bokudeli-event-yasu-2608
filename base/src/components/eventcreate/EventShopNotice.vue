@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { useValidators } from '@/composable/validators'
-import { useStoreStoredUser } from '@/stores/storedUser'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 import {
   mdiChevronLeft,
   mdiCalendarPlus,
@@ -13,45 +13,31 @@ import {
   mdiHandExtendedOutline,
   mdiTimerSand,
 } from '@mdi/js'
-import { hourString, minutesString } from '@/schemes/eventCreate'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import type { Shop } from '@/schemes/shop'
+import { convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 
 const emit = defineEmits<{
-  (e: 'submit'): void
-  (e: 'sendReserveMail'): void
-  (e: 'back'): void
+  submit: []
+  sendReserveMail: []
+  back: []
 }>()
 
 const event = defineModel<BokudeliEvent>({ required: true })
-const shop = defineModel<Shop | null>('shop', { required: true })
+const shop = defineModel<BokudeliPartnerShop | null>('shop', { required: true })
 
 const { t: $t } = useI18n()
 
 const { requiredValidator, phoneValidator, emailValidator } = useValidators()
 
-const storedUserStore = useStoreStoredUser()
-
 const isValid = ref(false)
 
-const eventDateTime = computed(
-  () =>
-    `${dateWithDayOfWeekString(event.value.event_start_datetime)} 〜 ${dateOnlyTimeString(event.value.event_end_datetime)}`,
+const eventDateTime = computed(() =>
+  convertToDuration(event.value.event_start_datetime, event.value.event_end_datetime),
 )
-
-const eventStartDatetime = computed(() => event.value.event_start_datetime?.toDate() ?? null)
-const pickUpStartDatetime = computed(() => {
-  const pickUpStartDate = eventStartDatetime.value ? new Date(eventStartDatetime.value) : new Date()
-
-  pickUpStartDate.setMinutes(pickUpStartDate.getMinutes() - 30)
-  return pickUpStartDate
-})
 const pickUpStartDateTime = computed(
-  () =>
-    `${dateWithDayOfWeekString(pickUpStartDatetime.value)} 〜 ${hourString(eventStartDatetime.value)}:${minutesString(eventStartDatetime.value)}`,
+  () => `${convertToDuration(event.value.event_start_datetime - 30 * 60 * 1000, event.value.event_start_datetime)}`,
 )
-const eventDeadlineDate = computed(() => event.value.event_deadline_datetime?.toDate() ?? null)
-const eventDeadlineDateTime = computed(() => `${dateWithDayOfWeekString(eventDeadlineDate.value)}`)
+const eventDeadlineDateTime = computed(() => `${convertToDatetimeWeekdayShort(event.value.event_deadline_datetime)}`)
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
 const shop_address = computed(() => (shop.value !== null ? shop.value.shop_address : ''))

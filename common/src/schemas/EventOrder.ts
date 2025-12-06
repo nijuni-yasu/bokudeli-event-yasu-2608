@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { TimestampSchema, EpochMillisSchema, NonEmptyStringSchema } from './firebase/index.js'
-import { EVENT_PAYMENT_VALUES, type EventPaymentType } from './Event.js'
 
 export const EVENT_ORDER_STATUS_VALUES = ['in_cart', 'ordered', 'canceled'] as const
 export type EventOrderStatusType = (typeof EVENT_ORDER_STATUS_VALUES)[number]
@@ -14,21 +13,23 @@ const OrderMenuSchema = z.object({
   note: NonEmptyStringSchema,
   imageUrl: z.string().url().nonempty(),
 })
-type OrderMenuType = z.infer<typeof OrderMenuSchema>
+export type OrderMenuType = z.infer<typeof OrderMenuSchema>
 
 const EventOrderDbSchema = z.object({
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
+  carted_at: TimestampSchema,
   community_account: z.string().nonempty(),
   community_id: z.string().nonempty(),
   event_id: z.string().nonempty(),
   order_id: z.string().nonempty(),
-  event_payment: z.enum(EVENT_PAYMENT_VALUES),
   user_id: z.string().nonempty(),
   menus: z.array(OrderMenuSchema).nonempty(),
-  staus: z.enum(EVENT_ORDER_STATUS_VALUES),
+  status: z.enum(EVENT_ORDER_STATUS_VALUES),
   // Optional
   ordered_at: TimestampSchema.optional(),
+  canceled_at: TimestampSchema.optional(),
+  payment_intent: z.string().nonempty().optional(),
   receipt_number: NonEmptyStringSchema.optional(),
 })
 
@@ -38,39 +39,52 @@ const EventOrderAppSchema = z.object({
   community_id: z.string().nonempty(),
   event_id: z.string().nonempty(),
   order_id: z.string().nonempty(),
-  event_payment: z.enum(EVENT_PAYMENT_VALUES),
   user_id: z.string().nonempty(),
   menus: z.array(OrderMenuSchema).nonempty(),
   // Default
   status: z.enum(EVENT_ORDER_STATUS_VALUES).default('in_cart'),
   // Optional
   ordered_at: EpochMillisSchema.optional(),
+  canceled_at: EpochMillisSchema.optional(),
   receipt_number: z.string().optional(),
+  payment_intent: z.string().optional(),
 })
+
+const convertToDb = (order: EventOrder) => {
+  return {
+    ...order,
+    created_at: EpochMillisSchema.default(Date.now()).parse(order.created_at),
+    updated_at: Date.now(),
+  }
+}
 
 export class EventOrder {
   // Mandatory
   readonly id: string
   readonly order_id: string
+  readonly event_id: string
   created_at: number
   updated_at: number
+  carted_at: number
   community_account!: string
   community_id!: string
-  event_id!: string
-  event_payment!: EventPaymentType
   user_id!: string
   menus!: OrderMenuType[]
   status!: EventOrderStatusType
   // Optional
   ordered_at?: number
+  canceled_at?: number
   receipt_number?: string
+  payment_intent?: string
 
-  constructor(id: string, src: Partial<EventOrder>) {
+  constructor(event_id: string, order_id: string, src: Partial<EventOrder>) {
     Object.assign(this, EventOrderAppSchema.parse(src))
-    this.id = id
-    this.order_id = id
+    this.event_id = event_id
+    this.id = order_id
+    this.order_id = order_id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
-    this.updated_at = Date.now()
+    this.carted_at = EpochMillisSchema.default(Date.now()).parse(src.carted_at)
+    this.updated_at = EpochMillisSchema.default(Date.now()).parse(src.updated_at)
   }
 
   get totalPrice() {
@@ -90,19 +104,11 @@ export class EventOrder {
     return this.totalPrice - this.ExTaxPrice
   }
 
-  private getDb() {
-    return {
-      ...this,
-      created_at: EpochMillisSchema.default(Date.now()).parse(this.created_at),
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return EventOrderDbSchema.safeParse(this.getDb()).success
+    return EventOrderDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof EventOrderDbSchema> {
-    return EventOrderDbSchema.parse(this.getDb())
+    return EventOrderDbSchema.parse(convertToDb(this))
   }
 }

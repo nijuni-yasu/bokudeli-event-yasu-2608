@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app'
 import { getAnalytics } from 'firebase/analytics'
-import { getAuth } from 'firebase/auth'
+import { getAuth, connectAuthEmulator } from 'firebase/auth'
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 import { getStorage, connectStorageEmulator } from 'firebase/storage'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions'
@@ -27,22 +27,36 @@ export const db = getFirestore(app)
 export const functions = getFunctions(app, 'asia-northeast1')
 if (import.meta.env.VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST != null) {
   const [host, port] = import.meta.env.VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST.split(':')
-  console.info('connectFunctionsEmulator', host, port)
+  // For debug use
+  // eslint-disable-next-line no-console
+  console.debug('connectFunctionsEmulator', host, port)
   connectFunctionsEmulator(functions, host, port)
 }
 
 if (import.meta.env.VITE_FIRESTORE_EMULATOR_HOST != null) {
   const [host, port] = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST.split(':')
-  console.info('connectFirestoreEmulator', host, port)
+  // For debug use
+  // eslint-disable-next-line no-console
+  console.debug('connectFirestoreEmulator', host, port)
   connectFirestoreEmulator(db, host, Number.parseInt(port, 10))
 }
 
 let FIREBASE_STORAGE_BASE_URL = 'https://firebasestorage.googleapis.com/v0/'
 if (import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST != null) {
   const [host, port] = import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST.split(':')
-  console.info('connectStorageEmulator', host, port)
+  // For debug use
+  // eslint-disable-next-line no-console
+  console.debug('connectStorageEmulator', host, port)
   connectStorageEmulator(storage, host, Number.parseInt(port, 10))
   FIREBASE_STORAGE_BASE_URL = `http://${host}:${port}/v0/`
+}
+
+if (import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST != null) {
+  const host = `http://${import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_HOST}`
+  // For debug use
+  // eslint-disable-next-line no-console
+  console.debug('connectAuthEmulator', host)
+  connectAuthEmulator(getAuth(app), host)
 }
 
 const slackBotFunctionBaseUrl = import.meta.env.VITE_SLACK_BOT_FUNCTION_URL

@@ -24,7 +24,8 @@ const CommunityLetterDbSchema = z.object({
 const EventLetterDbSchema = z.object({
   // Mandatory
   letter_id: z.string().nonempty(),
-  letter_type: z.literal('event'),
+  letter_type: z.enum(['event_participant', 'event_non_participant']),
+  community_account: z.string().nonempty(),
   event_id: z.string().nonempty(),
   status: z.enum(LETTER_STATUSES),
   letter_title: z.string().nonempty(),
@@ -40,19 +41,28 @@ const LetterDbSchema = z.discriminatedUnion('letter_type', [CommunityLetterDbSch
 const LetterAppSchema = z.object({
   // Mandatory
   letter_type: z.enum(LETTER_TYPES),
-  status: z.enum(LETTER_STATUSES),
-  letter_title: z.string(),
-  letter_content: z.string(),
+  community_account: z.string(),
+  // Default
+  status: z.enum(LETTER_STATUSES).default('draft'),
+  letter_title: z.string().default(''),
+  letter_content: z.string().default(''),
   // Optional
-  community_account: z.string().optional(),
   event_id: z.string().optional(),
   sent_at: EpochMillisSchema.optional(),
 })
+
+const convertToDb = (letter: Letter) => {
+  return {
+    ...letter,
+    updated_at: Date.now(),
+  }
+}
 
 export class Letter {
   // Mandatory
   readonly id: string
   readonly letter_id: string
+  community_account!: string
   updated_at: number
   scheduled_at: number
   letter_type!: LetterTypeType
@@ -61,7 +71,7 @@ export class Letter {
   letter_title: string = ''
   letter_content: string = ''
   // Optional
-  community_account?: string
+
   event_id?: string
   sent_at?: number
 
@@ -73,18 +83,11 @@ export class Letter {
     this.updated_at = Date.now()
   }
 
-  private getDb() {
-    return {
-      ...this,
-      updated_at: Date.now(),
-    }
-  }
-
   isValidForDatabase(): boolean {
-    return LetterDbSchema.safeParse(this.getDb()).success
+    return LetterDbSchema.safeParse(convertToDb(this)).success
   }
 
   toFirestore(): z.infer<typeof LetterDbSchema> {
-    return LetterDbSchema.parse(this.getDb())
+    return LetterDbSchema.parse(convertToDb(this))
   }
 }

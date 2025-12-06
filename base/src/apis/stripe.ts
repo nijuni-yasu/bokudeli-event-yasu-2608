@@ -1,8 +1,8 @@
-import { functions } from '@/firebase'
+import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import { type OrderItem } from '../schemes/orderItem'
+import { CreateStripeCheckoutSessionRequest } from '@shokujii/common/apis/stripe.js'
 
-export const createStripeCheckoutSession = (order: OrderItem, isPosted: boolean) => {
+export const createStripeCheckoutSession = (input: CreateStripeCheckoutSessionRequest) => {
   const f = httpsCallable(functions, 'createStripeCheckoutSession')
-  return f({order, isPosted})
+  return f(input)
 }

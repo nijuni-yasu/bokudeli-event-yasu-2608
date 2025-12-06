@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { getManageCommunityPath, getManageNewCommunityPath } from '@/router/utils'
-import { useCommunityListStore } from '@/stores/communityList'
+import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { doc, orderBy, where } from 'firebase/firestore'
-import CommunityCard from '@/components/CommunityCard.vue'
-import IncrementalLoader from '@/components/IncrementalLoader.vue'
+import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { mdiPlus, mdiHelp } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
-import { db } from '@/firebase'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { db } from '@shokujii/base/firebase.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const router = useRouter()
 

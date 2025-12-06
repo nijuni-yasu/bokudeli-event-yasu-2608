@@ -1,16 +1,7 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "./auto-imports.d.ts"],
-  "exclude": [
-    "src/**/__tests__/*",
-    "src/components/pages/**",
-    "src/components/CommunityContactDialog.vue",
-    "src/components/EventMemberCard.vue",
-    "src/components/EventMemberList.vue",
-    "src/components/EventDetailsCard.vue",
-    "src/components/UserCommunityPanel.vue",
-    "src/composable/loginUser.ts"
-  ],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "./auto-imports.d.ts", "../base/src/**/*"],
+  "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
@@ -23,8 +14,9 @@
       "@layouts": ["./src/@layouts"],
       "@core/*": ["./src/@core/*"],
       "@core": ["./src/@core"],
-      "@images": ["./src/assets/images"],
-      "@styles/*": ["./src/styles/*"]
+      "@styles/*": ["./src/styles/*"],
+      "@shokujii/common/*": ["../common/src/*"],
+      "@shokujii/base/*": ["../base/src/*"]
     },
     "types": ["vite/client", "vite-plugin-vue-layouts/client"]
   }

@@ -25,13 +25,24 @@ export const fetchLocationByPostalcode = async (postalCode: string) => {
     return null
   }
   const postalData = resJson[0]
-  if (!postalData['postcode'] || !postalData['allAddress'] || !postalData['location'] || !postalData['location']['longitude'] || !postalData['location']['latitude']) {
+  if (
+    !postalData['postcode'] ||
+    !postalData['allAddress'] ||
+    !postalData['location'] ||
+    !postalData['location']['longitude'] ||
+    !postalData['location']['latitude']
+  ) {
     console.error('Missing required keys in postal data:', postalData)
     throw new Error('Invalid postal data format')
   }
   const postalcode = postalData['postcode']
   const address = postalData['allAddress']
-  return { postalcode, address, longitude: postalData['location']['longitude'], latitude: postalData['location']['latitude'] } as LatLogLocation
+  return {
+    postalcode,
+    address,
+    longitude: postalData['location']['longitude'],
+    latitude: postalData['location']['latitude'],
+  } as LatLogLocation
 }
 
 export const calculateDistance = (location1: LatLogLocation, location2: LatLogLocation) => {

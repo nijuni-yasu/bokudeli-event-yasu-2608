@@ -1,32 +1,25 @@
 <script setup lang="ts">
-import { type PartnerMenu } from '@/schemes/partnerMenu'
-import { useEventStore, type EventStore } from '@/stores/event'
-import { useStoreStoredUser } from '@/stores/storedUser'
-
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import { priceString } from '@/schemes/converter'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'
 import { getLogin } from '@/router/utils'
 
 const router = useRouter()
-const route = useRoute()
 
 const props = defineProps<{
   modelValue: boolean
-  menu: PartnerMenu
+  menu: BokudeliEventMenu
   eventId: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
 }>()
 
 const eventStore = useEventStore(props.eventId) as EventStore
 
-const isOpen = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const isOpen = defineModel<boolean>()
 
 const countOptions = Array.from({ length: 5 }, (_, i) => i + 1)
 const selectedCount = ref(1)
@@ -47,24 +40,21 @@ const closeDialog = (isAddCart: boolean) => {
   isOpen.value = false
 }
 
-const userStore = useStoreStoredUser()
+const currentUserStore = useCurrentUserStore()
 
 const login = () => {
   router.push({
     path: getLogin(),
-    query: {
-      redirect: route.path,
-    },
   })
 }
 
 const addCart = async () => {
-  if (userStore.storedUser == null) {
+  if (currentUserStore.firebaseUser == null) {
     openConfirmDialog()
     return
   }
-  if (userStore.storedUser == null || eventStore.event == null) {
-    console.warn('userStore.storedUser or eventStore.event is null')
+  if (currentUserStore.firebaseUser == null || eventStore.event == null) {
+    console.warn('currentUserStore.firebaseUser or eventStore.event is null')
     return
   }
   const menu_id = props.menu.id
@@ -81,11 +71,11 @@ const addCart = async () => {
       menus: [
         {
           menu_id,
-          partner_id: props.menu.partnerId,
-          name: props.menu.name,
-          price: props.menu.price,
-          imageUrl: props.menu.imageUrl,
-          count: selectedCount.value || 0,
+          partner_id: eventStore.event.partner_id,
+          name: props.menu.menu_name,
+          price: props.menu.menu_price,
+          imageUrl: props.menu.menu_image_url ?? '',
+          count: selectedCount.value,
           note: orderNote.value,
         },
       ],
@@ -109,16 +99,16 @@ const openConfirmDialog = () => {
 <template>
   <v-dialog v-model="isOpen" max-width="500px" @click:outside="closeDialog(false)">
     <v-card class="pa-sm-10 pa-5">
-      <v-img :src="menu.imageUrl ?? undefined" class="ma-3"></v-img>
+      <v-img :src="menu.menu_image_url ?? undefined" class="ma-3"></v-img>
       <v-card-title class="text-left text-h4 py-1 text-wrap">
-        {{ menu.name }}
+        {{ menu.menu_name }}
       </v-card-title>
       <v-card-text class="text-left py-2">
-        {{ menu.description }}
+        {{ menu.menu_description }}
       </v-card-text>
       <v-card-text class="text-right pb-8">
         <span class="text-h5">¥ </span>
-        <span class="text-h4">{{ priceString(menu.price) }}</span>
+        <span class="text-h4">{{ priceString(menu.menu_price) }}</span>
       </v-card-text>
       <v-row class="mx-3 mb-2">
         <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>

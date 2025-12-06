@@ -1,28 +1,24 @@
 <script setup lang="ts">
-import { FirestoredUser } from '@/schemes/storedUser'
-import _ from 'lodash'
+import { ref } from 'vue'
+import { User } from '@shokujii/common/schemas/User.js'
 import SnsTextField from './SnsTextField.vue'
 
 interface Props {
   modelValue: boolean
-  userData: FirestoredUser
+  userData: User
 }
 
 interface Emit {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'submit', value: FirestoredUser, image?: File): void
+  submit: [value: User, image?: File]
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
-const userDataDraft = ref<FirestoredUser>(new FirestoredUser(_.cloneDeep(props.userData)))
+const userDataDraft = ref<User>(new User(props.userData.id, props.userData))
 const userImage = ref<File | undefined>(undefined)
 
-const dialog = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
-})
+const dialog = defineModel<boolean>()
 
 const readImageFiles = (files: File | File[]) => {
   if (files instanceof File) files = [files]
@@ -41,7 +37,7 @@ const onFormSubmit = async () => {
 }
 
 const onFormReset = () => {
-  userDataDraft.value = new FirestoredUser(_.cloneDeep(props.userData))
+  userDataDraft.value = new User(props.userData.id, props.userData)
   closeDialog()
 }
 </script>

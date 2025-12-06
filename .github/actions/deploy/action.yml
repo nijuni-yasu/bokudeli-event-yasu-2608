@@ -28,6 +28,5 @@ runs:
       run: |
         export GOOGLE_APPLICATION_CREDENTIALS=$(mktemp)
         echo '${{ inputs.service_key }}' > $GOOGLE_APPLICATION_CREDENTIALS
-        firebase use ${{ inputs.project_id }}
-        firebase deploy ${{ inputs.args }}
+        firebase --project ${{ inputs.project_id }} deploy ${{ inputs.args }}
         rm $GOOGLE_APPLICATION_CREDENTIALS

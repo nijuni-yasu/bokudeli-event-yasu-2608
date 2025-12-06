@@ -90,7 +90,7 @@ export default {
     order_completed: '注文を完了しました。',
     payment_failed: '決済処理に失敗しました。サポートにお問い合わせください。',
     order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
-    confirm_order_credit_card: 'クレジットカードの事前決済に進みますか？',
+    confirm_order_credit_card: 'クレジットカードでのお支払いに進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
     confirm_order: '注文を確定しますか？',
@@ -98,11 +98,13 @@ export default {
     removed_from_cart: 'カートから削除しました。',
     event_not_found: 'イベントが見つかりません。',
     order_and_attend_event: '注文を完了する',
+    proceed_to_payment: 'お支払いに進む',
     no_items_in_cart: 'カートに商品はありません。',
     doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
     doesnt_exists_user_image: 'アイコンが登録されていません。登録完了後、注文を完了してください',
     doesnt_exists_user_email: 'メールアドレスが登録されていません。登録完了後、注文を完了してください',
     go_to_setting: '設定する',
+    add_more_menu: 'メニューを追加する',
     x_post: {
       title: '参加コメント',
       enable_post: 'X(Twitter)に投稿する',
@@ -130,8 +132,8 @@ export default {
           ・<b>「注文の目安」</b> の個数を下回ると、配送料をご請求する場合がありますのでご注意ください🚚<br />
           ・当日フードを受け取って、食事会をお楽しみください😋😋😋<br />
           <br />
-          　詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> や <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_0#slide=id.g2b9c62499c1_0_0" target="_blank">告知・集客のコツ</a> もご一読ください。<br />
-          　ご不明点やご要望がありましたら、サポートまで
+          詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> や <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_0#slide=id.g2b9c62499c1_0_0" target="_blank">告知・集客のコツ</a> もご一読ください。<br />
+          ご不明点やご要望がありましたら、サポートまで
           <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
           `,
   },
@@ -204,6 +206,19 @@ export default {
     manager: 'Manager',
     member: 'Member',
   },
+  community_membership: {
+    join: 'コミュニティに参加する',
+    leave: 'コミュニティを退会する',
+    active: 'コミュニティに参加中',
+    join_success: 'コミュニティに参加しました。開催予定のイベントの通知を受け取れるようになりました。',
+    leave_success: 'コミュニティを退会しました。開催予定のイベントの通知を受け取れなくなりました。',
+    login_required: 'ログインするとコミュニティに参加できます。',
+    login_confirm_join: 'ログイン後、コミュニティに参加してください。',
+    login_confirm_leave: 'ログイン後、コミュニティを退会してください。',
+    manager_leave_forbidden: '管理者はコミュニティを退会することができません。',
+    error_generic: '処理に失敗しました。時間をおいて再度お試しください。',
+    leave_confirm: 'コミュニティを退会しますか？開催予定のイベントの通知を受け取れなくなります。',
+  },
   community_edit: {
     title: 'コミュニティ設定',
     create: 'コミュニティ作成',
@@ -215,10 +230,10 @@ export default {
     community_desc_hint: 'コミュニティの簡単な説明を入力してください',
     image_setting: '画像設定',
     community_cover_image: 'カバー画像',
-    community_cover_image_hint: `※推奨サイズ：1200x630px`,
+    community_cover_image_hint: '※推奨サイズ：1200x630px',
     community_icon_image: 'アイコン',
-    community_icon_image_hint: `※推奨サイズ：300x300px`,
-    community_create_next: `コミュニティを作成したら<br>次はイベントをつくってみよう🎉`,
+    community_icon_image_hint: '※推奨サイズ：300x300px',
+    community_create_next: 'コミュニティを作成したら<br>次はイベントをつくってみよう🎉',
     email_setting: 'メール設定',
     email_hint: '「問い合わせ先」や「配信するレターの返信先」として、コミュニティのメールアドレスを設定してください。',
     sns_setting: 'SNS設定',
@@ -293,17 +308,18 @@ export default {
     activity: '公開設定',
     public: '公開イベント',
     private: '限定公開イベント',
-    public_desc: '「公開イベント」はTOPページに一覧表示されます。',
-    private_desc: '「限定公開イベント」はTOPページに一覧表示されず、URLを知る人だけが参加できます。',
+    public_desc:
+      '公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されます。',
+    private_desc:
+      '限定公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
-    payment_hint_user_advance: `支払い設定は<b>【参加者 事前決済】</b>と<b>【主催者 請求書払い】</b>からお選びいただけます。<br />
-      <b>【参加者 事前決済】</b>を設定した場合、参加者はクレジットカード決済にて事前にお支払いいただきます。<br />
-      支払い設定は予約申請後、変更できないためご注意ください。`,
-    payment_hint_community_bill: `支払い設定は<b>【参加者 事前決済】</b>と<b>【主催者 請求書払い】</b>からお選びいただけます。<br />
-    <b>【主催者 請求書払い】</b>を設定した場合：<br />
+    payment_hint_user_advance: `<b>【参加者 事前決済】</b>を設定した場合：<br />
+    ・食事の代金は、参加者がクレジットカード決済にて事前にお支払いいただきます。<br />
+    ・支払い設定は予約申請後、変更できないためご注意ください。`,
+    payment_hint_community_bill: `<b>【主催者 請求書払い】</b>を設定した場合：<br />
     ・参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
     ・イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
-    ・2025年11月1日以降のイベントは、<b>「請求書払い手数料」</b>を加算してご請求させていただきます。<br />
+    ・2025年11月1日以降のイベントは、「請求書払い手数料」を加算してご請求させていただきます。<br />
     ・<b>「請求書払い手数料」</b>は<b>注文金額の10%</b>です。<br />
     ・銀行振込のお支払い期限は、イベント開催日から翌月末日です。<br />
     ・支払い設定は予約申請後、変更できないためご注意ください。`,
@@ -381,6 +397,7 @@ export default {
     account:
       '3文字以上20文字以内のコミュニティURLを入力してください。コミュニティURLに使えるのは「英小文字・数字・アンダースコア」のみです。コミュニティURLは変更できませんのでご注意ください。',
     invoice_japan: '適格請求書登録番号は「T+数字13桁」で入力してください',
+    // eslint-disable-next-line quotes
     reserved_chars: "これらの記号は使用できません。（ %{}|^[]:?#/@`!$'()*+,;=\\ ）",
   },
   invoice_error_card: {
@@ -398,7 +415,7 @@ export default {
       'イベントの注文個数が「注文の目安」に達しない場合、イベント主催者に配送料をご請求させていただく場合がございます。あらかじめご了承ください。',
   },
   event_draft_notice_modal: {
-    title: `お店に予約申請しよう📩`,
+    title: 'お店に予約申請しよう📩',
     desc: `・現在<b>「下書き」</b>中のため、ご注文いただくことができません<br />
            ・イベント内容について問題なければ、お店に<b>「予約申請」</b>してください📩<br />
            ・お店から<b>「予約承認」</b>されると、注文や告知ができるようになります👍<br />
@@ -407,14 +424,14 @@ export default {
            ・予約申請が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   event_applying_notice_modal: {
-    title: `お店からの予約承認をお待ちください🙇‍♂️`,
+    title: 'お店からの予約承認をお待ちください🙇‍♂️',
     desc: `・現在<b>「予約申請中」</b>のため、ご注文いただくことができません。<br />
            ・お店からの<b>「予約承認」</b>をお待ちください。<br />
            ・予約申請期間は、<b>「最大で3日間」</b>となっております。<br />
            ・予約申請が却下された場合は、お店などを変更して再度予約申請をしてください。<br />`,
   },
   event_few_members_notice_modal: {
-    title: `イベントを盛り上げよう🎉`,
+    title: 'イベントを盛り上げよう🎉',
     desc: `お店から予約承認をいただきました。<br />
            以下手順で友人知人を食事会に招待して盛り上げていきましょう。<br />
            <br />

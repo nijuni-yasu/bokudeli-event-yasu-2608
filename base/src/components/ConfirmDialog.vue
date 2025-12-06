@@ -3,6 +3,8 @@
  * Deprecated
  * Please use `v-dialog` directly
  */
+import { computed } from 'vue'
+
 const props = defineProps<{
   modelValue: boolean
   isConfirm?: boolean
@@ -17,7 +19,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
+  'update:modelValue': [value: boolean]
 }>()
 
 const dialog = computed({
@@ -46,8 +48,8 @@ const clickCancelHandler = () => {
 
 <template>
   <v-dialog v-model="dialog" persistent :max-width="props.maxWidth ? props.maxWidth : '600px'">
-    <v-card class="pa-1">
-      <v-card-title>{{ props.title }}</v-card-title>
+    <v-card class="pa-4">
+      <v-card-title class="text-h5 mb-3">{{ props.title }}</v-card-title>
       <v-card-text><slot></slot></v-card-text>
       <v-card-actions>
         <v-spacer />

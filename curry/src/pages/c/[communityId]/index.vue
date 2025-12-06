@@ -7,16 +7,19 @@
  */
 import { useRouter } from 'vue-router'
 import { getEventPath, getEventCreatePath, getCommunitySettingsPath } from '@/router/utils'
-import { dateWithDayOfWeekString, dateOnlyTimeString } from '@/schemes/converter'
-import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import LoginDialog from '@/components/LoginDialog.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import UserAvatar from '@/components/UserAvatar.vue'
+import { dateWithDayOfWeekString, dateOnlyTimeString } from '@shokujii/base/schemes/converter.js'
+import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import {
+  useCommunityStore,
+  type CommunityStore,
+  type BokudeliCommunityMember,
+} from '@shokujii/base/stores/community.js'
+import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { getUserPath } from '@/router/utils'
-import { type CommunityMember } from '@/schemes/communityMember'
-import { functions } from '@/firebase'
+import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 
@@ -77,9 +80,9 @@ const message = ref('')
 const isUrlLoading = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
-const userStore = useStoreStoredUser()
+const userStore = useCurrentUserStore()
 const openContactDialog = () => {
-  if (!userStore.storedUser) {
+  if (userStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true
@@ -198,7 +201,9 @@ const inviteManager = async () => {
             <div v-if="members.some((m) => m.roles?.includes('manager') ?? false)">
               <v-card-title class="justify-center text-h6 font-weight-medium mt-10">Communicator</v-card-title>
               <div
-                v-for="manager in members.filter((m) => m?.roles?.includes('manager') ?? false) as CommunityMember[]"
+                v-for="manager in members.filter(
+                  (m) => m?.roles?.includes('manager') ?? false,
+                ) as BokudeliCommunityMember[]"
                 :key="manager.user_id"
               >
                 <router-link :to="getUserPath(manager.user_id)">
@@ -215,7 +220,10 @@ const inviteManager = async () => {
             <!-- community member -->
             <div v-if="members.length !== 0">
               <v-card-title class="justify-center text-h6 mt-7">Member</v-card-title>
-              <div v-for="member in members.filter((m) => m != null) as CommunityMember[]" :key="member.user_id">
+              <div
+                v-for="member in members.filter((m) => m != null) as BokudeliCommunityMember[]"
+                :key="member.user_id"
+              >
                 <router-link :to="getUserPath(member.user_id)">
                   <v-row>
                     <div class="d-flex flex-row px-6 py-2">
@@ -285,10 +293,10 @@ const inviteManager = async () => {
                 </v-btn>
                 <v-btn
                   v-if="
-                    event.event_status.value == 'applying_reservation' ||
-                    event.event_status.value == 'accepting_order' ||
-                    event.event_status.value == 'order_closed' ||
-                    event.event_status.value === 'full'
+                    event.calculatedEventStatus == 'applying_reservation' ||
+                    event.calculatedEventStatus == 'accepting_order' ||
+                    event.calculatedEventStatus == 'order_closed' ||
+                    event.calculatedEventStatus === 'full'
                   "
                   class="ml-1"
                   color="white"

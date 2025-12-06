@@ -8,5 +8,5 @@ export const getUserPath = (userId: string) => `/u/${userId}`
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getManageEventPath = (eventId: string) => ''
-export const getProfile = () => `/profile`
-export const getLogin = () => `/login`
+export const getProfile = () => '/profile'
+export const getLogin = () => '/login'

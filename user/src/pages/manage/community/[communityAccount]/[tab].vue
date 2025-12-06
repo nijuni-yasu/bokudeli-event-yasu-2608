@@ -4,7 +4,7 @@ definePage({
     navActiveLink: '/manage/community/',
   },
 })
-import { useCommunityStore } from '@/stores/community'
+import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import { useI18n } from 'vue-i18n'
 import { getCommunityPath } from '@/router/utils'
 import { mdiArrowTopRight } from '@mdi/js'
@@ -24,7 +24,7 @@ const tab = ref<Tabs>(tabs.find((t) => t === tabName) ?? tabs[0])
 const components = tabs.map((tab) => ({
   value: tab,
   text: $t(`manage.community.tabs.${tab}`),
-  component: defineAsyncComponent(() => import(`@/componentsLocal/manage/community/${tab}.vue`)),
+  component: defineAsyncComponent(() => import(`@/components/manage/community/${tab}.vue`)),
 }))
 const openInNew = (url: string) => {
   window.open(url, '_blank')

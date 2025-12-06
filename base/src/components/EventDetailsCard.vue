@@ -1,16 +1,20 @@
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { getCommunityPath, getLogin } from '@/router/utils'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import EventMemberList from '@/components/EventMemberList.vue'
-import CommunityContactDialog from '@/components/CommunityContactDialog.vue'
-import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useEventStore, type EventStore } from '@/stores/event'
-import type BokudeliEvent from '@/schemes/bokudeliEvent'
-import type BokudeliCommunity from '@/schemes/bokudeliCommunity'
-import CalendarAddDialog from '@/components/CalendarAddDialog.vue'
-import { shareSnsButton } from '@/utils/shareSnsButton'
-import ShowDialog from '@/components/ShowDialog.vue'
+import { getEventUrl } from '@shokujii/common/utils/urls.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
+import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
+import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
+import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
+import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
+import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
+import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 import VueQrious from 'vue-qrious'
 import {
   mdiEmail,
@@ -23,14 +27,13 @@ import {
   mdiAccountGroup,
   mdiHelpCircleOutline,
 } from '@mdi/js'
-import XIcon from '@/icons/x'
-import LineIcon from '@/icons/line'
-import type { Shop } from '@/schemes/shop'
-import { usePartnerStore } from '@/stores/_partner'
-import TinyMCEViewer from '@/components/TinyMCEViewer.vue'
+import XIcon from '@shokujii/base/icons/x'
+import LineIcon from '@shokujii/base/icons/line'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { usePartnerStore } from '@shokujii/base/stores/partner'
+import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
 
 const router = useRouter()
-const route = useRoute()
 
 const qrcodeSize = 300
 
@@ -39,30 +42,33 @@ const props = defineProps<{
   community: BokudeliCommunity
 }>()
 
+const eventUrl = computed(() => {
+  // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
+  return getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, props.event.community_account, props.event.event_id)
+})
+
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
 const eventStore = useEventStore(props.event.event_id) as EventStore
 
-const members = computed(
-  () =>
-    eventStore.members?.sort(
-      (a, b) =>
-        a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
-    ) ?? [],
+const members = computed(() =>
+  [...(eventStore.members ?? [])].sort(
+    (a, b) =>
+      a.orders.reduce((max, order) => Math.max(max, order.updated_at), 0) -
+      b.orders.reduce((max, order) => Math.max(max, order.updated_at), 0),
+  ),
 )
 
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
-const isOpenLoginDialog = ref(false)
 const isOpenCalendarAddDialog = ref(false)
 const isShowQrCode = ref(false)
 const isOpenCancelpolicyDialog = ref(false)
 
 // コミュニティへの問い合わせはログイン必須
-const userStore = useStoreStoredUser()
+const currentUserStore = useCurrentUserStore()
 const openContactDialog = () => {
-  if (!userStore.storedUser) {
+  if (currentUserStore.firebaseUser == null) {
     isOpenConfirmDialog.value = true
   } else {
     isOpenContactDialogVisible.value = true
@@ -80,16 +86,13 @@ const showQrCode = () => {
 const login = () => {
   router.push({
     path: getLogin(),
-    query: {
-      redirect: route.path,
-    },
   })
 }
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
   const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(props.event.partner_id)
-  const shop = await new Promise<Shop | undefined>((resolve) => {
+  const shop = await new Promise<BokudeliPartnerShop | undefined>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {
@@ -185,9 +188,9 @@ const isShowMember = computed(() =>
                 {{ $t('event_details.date') }}
               </td>
               <td>
-                {{ $d(event.event_start_datetime!.toDate(), 'datetime_weekday_short') }}
+                {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}
                 〜
-                {{ $d(event.event_end_datetime!.toDate(), 'time') }}
+                {{ $d(event.event_end_datetime, 'time') }}
                 <a @click="openCalendarAddDialog">
                   <button><v-icon :icon="mdiCalendarPlus" /></button>
                 </a>
@@ -228,7 +231,7 @@ const isShowMember = computed(() =>
             </tr>
             <tr>
               <td>{{ $t('event_details.deadline') }}</td>
-              <td>{{ $d(event.event_deadline_datetime!.toDate(), 'datetime_weekday_short') }}</td>
+              <td>{{ $d(event.event_deadline_datetime, 'datetime_weekday_short') }}</td>
             </tr>
             <tr>
               <td>{{ $t('event_details.cancel') }}</td>
@@ -309,31 +312,46 @@ const isShowMember = computed(() =>
           <v-row align-self-center>
             <v-row class="ma-1">
               <router-link :to="getCommunityPath(event.community_account)">
-                <v-img
-                  :src="community.community_icon_image_url"
-                  style="border-radius: 10%; width: 100px; height: 100px"
-                  aspect-ratio="1"
-                  cover
-                  max-width="100px"
-                />
+                <v-img :src="community.community_icon_image_url" class="community-icon" aspect-ratio="1" cover />
               </router-link>
               <div class="ml-2 align-self-end">
                 <router-link
                   :to="getCommunityPath(event.community_account)"
                   class="text--primary cursor-pointer text-decoration-none"
                 >
-                  <div class="ma-1" style="font-size: 12px">{{ $t('event_details.community_name') }}</div>
-                  <div class="ma-1" style="font-size: 18px">{{ community.community_name }}</div>
+                  <div class="community-name-label">{{ $t('event_details.community_name') }}</div>
+                  <div class="pa-1 ma-1 community-name-text text-wrap">{{ community.community_name }}</div>
                 </router-link>
-                <v-btn
-                  class="ma-1"
-                  variant="outlined"
-                  rounded="pill"
-                  :prepend-icon="mdiEmail"
-                  @click="openContactDialog"
-                >
-                  {{ $t('event_details.contact_community') }}
-                </v-btn>
+                <v-row class="ma-2 community-actions" align="center" justify="start">
+                  <v-col cols="auto" class="pa-0">
+                    <v-btn
+                      variant="outlined"
+                      rounded="pill"
+                      size="small"
+                      :prepend-icon="mdiEmail"
+                      @click="openContactDialog"
+                    >
+                      {{ $t('event_details.contact_community') }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="auto" class="pa-0">
+                    <community-membership-button
+                      v-if="community.community_account"
+                      :community-id="community.community_account"
+                      :join-button-props="{
+                        rounded: 'pill',
+                        size: 'small',
+                        'prepend-icon': mdiAccountGroup,
+                      }"
+                      :leave-button-props="{
+                        variant: 'outlined',
+                        rounded: 'pill',
+                        size: 'small',
+                        'prepend-icon': mdiAccountGroup,
+                      }"
+                    />
+                  </v-col>
+                </v-row>
                 <community-contact-dialog
                   v-model="isOpenContactDialogVisible"
                   :community-name="community.community_name"
@@ -357,11 +375,11 @@ const isShowMember = computed(() =>
         {{ event?.event_name }}
       </v-card-text>
       <v-card-text>
-        {{ event && $d(event.event_start_datetime!.toDate(), 'datetime_weekday_short') }}
+        {{ event && $d(event.event_start_datetime, 'datetime_weekday_short') }}
         〜
-        {{ event && $d(event.event_end_datetime!.toDate(), 'time') }}
+        {{ event && $d(event.event_end_datetime, 'time') }}
       </v-card-text>
-      <vue-qrious :value="event?.url ?? ''" :size="qrcodeSize" />
+      <vue-qrious :value="eventUrl" :size="qrcodeSize" />
     </v-card>
   </show-dialog>
 </template>
@@ -415,5 +433,39 @@ iframe {
 }
 .text-small {
   font-size: 14px !important;
+}
+
+.community-icon {
+  border-radius: 10%;
+  width: 100px;
+  height: 100px;
+}
+
+.community-actions {
+  gap: 12px;
+}
+
+.community-name-label {
+  font-size: 12px;
+}
+
+.community-name-text {
+  font-size: 24px;
+}
+
+@media (max-width: 600px) {
+  .community-name-text {
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .community-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .community-actions .v-col {
+    width: 100%;
+  }
 }
 </style>

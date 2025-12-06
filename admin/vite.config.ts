@@ -7,12 +7,6 @@ import Layouts from 'vite-plugin-vue-layouts'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import AutoImport from 'unplugin-auto-import/vite'
 import vuetify from 'vite-plugin-vuetify'
-// eslint-disable-next-line
-// @ts-ignore
-import { baseModule } from '../base/vite-plugins/base'
-// eslint-disable-next-line
-// @ts-ignore
-import { commonModule } from '../common/vite-plugins/common'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -23,8 +17,6 @@ export default defineConfig({
 
     vue(),
     process.env.VUE_DEVTOOLS != null ? VueDevTools() : undefined,
-    baseModule(__dirname),
-    commonModule(__dirname),
 
     // Docs: https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin
     vuetify({
@@ -55,7 +47,6 @@ export default defineConfig({
       '@core': fileURLToPath(new URL('./src/@core', import.meta.url)),
       '@layouts': fileURLToPath(new URL('./src/@layouts', import.meta.url)),
       '@styles': fileURLToPath(new URL('./src/styles/', import.meta.url)),
-      '@images': fileURLToPath(new URL('./src/assets/images/', import.meta.url)),
       '@configured-variables': fileURLToPath(new URL('./src/styles/variables/_template.scss', import.meta.url)),
     },
   },

@@ -10,13 +10,13 @@ import {
   mdiFileDocumentOutline,
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { usePartnerStore } from '@/stores/_partner'
-import { useValidators } from '@/composable/validators'
+import { usePartnerStore, BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
-import { Shop, GENRE_ARRAY } from '@/schemes/shop'
-import ImageInput from '@/components/ImageInput.vue'
-import { fetchLocationByPostalcode } from '@/composable/fetchLocation'
-import { useNotification } from '@/composable/notification'
+import { GENRE_ARRAY } from '@shokujii/common/schemas/PartnerShop.js'
+import ImageInput from '@shokujii/base/components/ImageInput.vue'
+import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const notification = useNotification()
 
@@ -67,7 +67,7 @@ const makeDeadlineTimeArray = (start: number, num: number) => {
   return timeArray.reverse()
 }
 
-const SHOP_MIN_ORDERS_ARRAY_MAX = 20
+const SHOP_MIN_ORDERS_ARRAY_MAX = 15
 const SHOP_MIN_ORDERS_ARRAY = [null, ...[...Array(SHOP_MIN_ORDERS_ARRAY_MAX)].map((_, i) => i + 1)]
 const SHOP_RANGE_ARRAY_MAX = 50
 const SHOP_RANGE_ARRAY = (() => {
@@ -79,6 +79,24 @@ const SHOP_RANGE_ARRAY = (() => {
   }
   return array
 })()
+// 配送範囲と最小注文数の配列の長さを保つための関数
+const SHOP_RANGE_MIN_ORDERS_LIMIT = 5
+const createEmptyRangeMinOrder = () =>
+  ({ range: null, min_orders: null }) as unknown as BokudeliPartnerShop['shop_range_min_orders'][number]
+const ensureRangeMinOrdersLength = (target?: BokudeliPartnerShop | null) => {
+  if (target == null) {
+    return
+  }
+  if (!Array.isArray(target.shop_range_min_orders)) {
+    target.shop_range_min_orders = []
+  }
+  while (target.shop_range_min_orders.length < SHOP_RANGE_MIN_ORDERS_LIMIT) {
+    target.shop_range_min_orders.push(createEmptyRangeMinOrder())
+  }
+  if (target.shop_range_min_orders.length > SHOP_RANGE_MIN_ORDERS_LIMIT) {
+    target.shop_range_min_orders.splice(SHOP_RANGE_MIN_ORDERS_LIMIT)
+  }
+}
 const SHOP_DEADLINE_DATE_ARRAY = [...Array(4)].map((_, i) => ({ title: $t('days_before', i), value: i }))
 const SHOP_DEADLINE_TIME_ARRAY = makeDeadlineTimeArray(6, 18)
 const SHOP_DEADLINE_CURRENT_DAY_TIME_ARRAY = makeDeadlineCurrentDaytimeArray(3, 4)
@@ -108,17 +126,17 @@ const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 
 const shop = ref(
-  await new Promise<Shop>((resolve) => {
+  await new Promise<BokudeliPartnerShop>((resolve) => {
     watch(
       () => partnerStore.shops,
       (shops) => {
         if (shops != null) {
           if (shops.length === 0) {
-            const shop = new Shop(partnerId)
+            const shop = new BokudeliPartnerShop(partnerId, null, {})
             shop.shop_email = getAuth().currentUser?.email ?? ''
             resolve(shop)
           } else {
-            resolve(Object.assign({}, toRaw(shops[0])))
+            resolve(Object.assign(Object.create(Object.getPrototypeOf(shops[0])), shops[0]))
           }
           stop()
         }
@@ -127,6 +145,7 @@ const shop = ref(
     )
   }),
 )
+ensureRangeMinOrdersLength(shop.value)
 
 const isSaving = ref(false)
 const imageFile = ref<File | null>(null)
@@ -150,7 +169,7 @@ watch(
       validatedPostalCode.value = null
       return
     }
-    validatedPostalCode.value = postalcode
+    validatedPostalCode.value = postalcode ?? null
     if (shop.value.shop_address?.startsWith(location.address) ?? false) {
       return
     }
@@ -176,7 +195,7 @@ watch(
   () => shop.value?.shop_url_twitter,
   (url) => {
     if (url?.startsWith('https://x.com/') ?? false) {
-      shop.value.shop_url_twitter = url.replace('https://x.com/', '')
+      shop.value.shop_url_twitter = url?.replace('https://x.com/', '')
     }
   },
   { immediate: true },
@@ -186,7 +205,7 @@ watch(
   () => shop.value?.shop_url_facebook,
   (url) => {
     if (url?.startsWith('https://www.facebook.com/') ?? false) {
-      shop.value.shop_url_facebook = url.replace('https://www.facebook.com/', '')
+      shop.value.shop_url_facebook = url?.replace('https://www.facebook.com/', '')
     }
   },
   { immediate: true },
@@ -196,7 +215,7 @@ watch(
   () => shop.value?.shop_url_instagram,
   (url) => {
     if (url?.startsWith('https://www.instagram.com/') ?? false) {
-      shop.value.shop_url_instagram = url.replace('https://www.instagram.com/', '')
+      shop.value.shop_url_instagram = url?.replace('https://www.instagram.com/', '')
     }
   },
   { immediate: true },
@@ -205,7 +224,7 @@ watch(
 const submit = async () => {
   isSaving.value = true
   try {
-    await partnerStore.updateShop(shop.value, imageFile.value ?? undefined)
+    await partnerStore.updateShop(toRaw(shop.value), imageFile.value ?? undefined)
     notification.show($t('shop.saved'), 'success')
   } catch (e) {
     console.error(e)
@@ -534,12 +553,30 @@ const submit = async () => {
           <v-card-text>
             <v-text-field v-model="shop.shop_email" readonly outlined dense :label="$t('email')" />
           </v-card-text>
-          <v-card-text v-for="i in 3" :key="`sub_email_${i}`">
+          <v-card-text>
             <v-text-field
-              v-model="/* @ts-ignore */ shop[`shop_email_sub${i}`]"
+              v-model="shop['shop_email_sub1']"
               outlined
               dense
-              :label="$t('shop.email_sub_n', [i])"
+              :label="$t('shop.email_sub_n', [1])"
+              :rules="[emailValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop['shop_email_sub2']"
+              outlined
+              dense
+              :label="$t('shop.email_sub_n', [2])"
+              :rules="[emailValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop['shop_email_sub3']"
+              outlined
+              dense
+              :label="$t('shop.email_sub_n', [3])"
               :rules="[emailValidator]"
             />
           </v-card-text>

@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import CommunityEdit from '@/components/CommunityEdit.vue'
+import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
 import { getManageCommunityPath } from '@/router/utils'
-import { useCommunityStore, type CommunityStore } from '@/stores/community'
-import { useCommunityListStore, type CommunityListStore } from '@/stores/communityList'
-import { useNotification } from '@/composable/notification'
+import { BokudeliCommunity, createNewCommunity } from '@shokujii/base/stores/community.js'
+import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 
-const router = useRouter()
 const notification = useNotification()
 const { t: $t } = useI18n()
 
-const communityListStore = useCommunityListStore() as CommunityListStore
+const communityListStore = useCommunityListStore()
 
 const coverImageFile = ref<File | null>(null)
 const iconImageFile = ref<File | null>(null)
-const community = communityListStore.communityDraft
+const community = ref(new BokudeliCommunity(null, {}))
 const isLoading = ref(false)
 
 const validateNewAccount = async (value: string) => {
@@ -24,18 +23,31 @@ const validateNewAccount = async (value: string) => {
 const submit = async () => {
   isLoading.value = true
   try {
-    const community = await communityListStore.createNewCommunityFromDraft()
-    const communityStore = useCommunityStore(community.community_account) as CommunityStore
-    if (coverImageFile.value != null) {
-      await communityStore.updateCoverImage(coverImageFile.value)
-    }
-    if (iconImageFile.value != null) {
-      await communityStore.updateIconImage(iconImageFile.value)
-    }
+    const newCommunityStore = await createNewCommunity(
+      toRaw(community.value),
+      coverImageFile.value,
+      iconImageFile.value,
+    )
+    const newCommunity = await new Promise<BokudeliCommunity>((resolve) => {
+      watch(
+        () => [newCommunityStore.community, newCommunityStore.members],
+        () => {
+          if (
+            newCommunityStore.community != null &&
+            (newCommunityStore.members?.length ?? 0) > 0 // 自分が admin 登録されるまで待つ必要がある
+          ) {
+            resolve(newCommunityStore.community)
+          }
+        },
+        { immediate: true },
+      )
+    })
     notification.show($t('manage.newcommunity.created'), 'success')
+    // このタイミングでのリロードでは invisible になっているモジュールに反映されない
+    // とりあえず再読込することで対応する
     // communityListStore.reload()
-    // router.push(getManageCommunityPath(community.community_account))
-    window.location.href = getManageCommunityPath(community.community_account)
+    // router.push(getManageCommunityPath(newCommunity.community_account))
+    window.location.href = getManageCommunityPath(newCommunity.community_account)
   } catch (err) {
     console.error(err)
     notification.show($t('manage.newcommunity.error'), 'error')

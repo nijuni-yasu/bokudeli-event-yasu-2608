@@ -5,34 +5,28 @@
  * をモディファイして使用
  * TODO 2重メンテになるので、早めにリファクタリングする
  */
-import { loadEventMembers } from '@/composable/loadEventMembers'
-import { db } from '@/firebase'
+import { loadEventMembers } from '@shokujii/base/composable/loadEventMembers.js'
+import { db } from '@shokujii/base/firebase.js'
 import { getCommunityPath, getEventPath } from '@/router/utils'
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import {
-  dateWithDayOfWeekString,
-  dateOnlyTimeString,
-  priceString,
-  convertDocumentDataToEvent,
-} from '@/schemes/converter'
-import { type OrderItem, createEmptyOrderItem } from '@/schemes/orderItem'
-import { type OrderMenu } from '@/schemes/orderMenu'
-import { useStoreStoredUser } from '@/stores/storedUser'
-import { useEventStore, type EventStore } from '@/stores/event'
+import { BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter.js'
+import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { collectionGroup, getDocs, orderBy, query, where } from 'firebase/firestore'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import CancelPolicyDialog from '@/components/CancelPolicyDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { mdiTrashCan, mdiHelpCircleOutline } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
-import { createStripeCheckoutSession } from '@/baseApis/stripe'
+import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 
 const { t: $t } = useI18n()
 const router = useRouter()
-const { storedUser } = storeToRefs(useStoreStoredUser())
-const userId = computed(() => storedUser.value?.userId ?? '')
+const { firebaseUser } = storeToRefs(useCurrentUserStore())
+const userId = computed(() => firebaseUser.value?.uid ?? '')
 
 type Cart = {
-  order: OrderItem
+  order: EventOrder
   subtotals: { [key: string]: number }
   total: number
   event: BokudeliEvent
@@ -46,7 +40,7 @@ const state = reactive({
 const checkCart = async (cart: Cart): Promise<true | 'deadline' | 'limitPeople'> => {
   const { event } = cart
 
-  if (event.event_deadline_datetime && event.event_deadline_datetime.toDate() < new Date()) {
+  if (event.event_deadline_datetime && event.event_deadline_datetime < Date.now()) {
     return 'deadline'
   }
 
@@ -83,9 +77,9 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
 
 const openConfirmOrder = ref(false)
 const confirmDialogMessage = ref('')
-const selectedOrder = ref({} as OrderItem)
+const selectedOrder = ref({} as EventOrder)
 const selectedCartEvent = ref({} as BokudeliEvent)
-const selectedMenu = ref({} as OrderMenu)
+const selectedMenu = ref({} as OrderMenuType)
 
 const startOrderProcess = async () => {
   const order = selectedOrder.value
@@ -93,7 +87,7 @@ const startOrderProcess = async () => {
 
   if (event.event_payment == 'user_advance') {
     try {
-      const response = await createStripeCheckoutSession(order, false) as any // 一時的措置
+      const response = (await createStripeCheckoutSession({ order, isPosted: false })) as any // 一時的措置
       window.location.href = response.data.url || getEventPath(order.community_account, order.event_id)
     } catch {
       alertBody.value = $t('cart.payment_failed')
@@ -145,7 +139,7 @@ const startDeleteProcess = async () => {
   state.cartList = await loadCartList()
 }
 
-const deleteMenuInCart = async (event: BokudeliEvent, order: OrderItem, menu: OrderMenu) => {
+const deleteMenuInCart = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
   selectedCartEvent.value = event
   selectedOrder.value = order
   selectedMenu.value = menu
@@ -162,8 +156,16 @@ const loadCartList = async () => {
   )
 
   const cartSnapshot = await getDocs(inCartQuery)
-  const orderItems = cartSnapshot.docs.map((doc) => {
-    return { ...createEmptyOrderItem(), ...doc.data() }
+  const orderItems = cartSnapshot.docs.flatMap((doc) => {
+    const eventId = doc.ref.parent.parent!.id
+    const data = doc.data()
+    // TODO 直接 new するのではなく store を経由する
+    try {
+      return new EventOrder(eventId, doc.id, data)
+    } catch (err) {
+      console.error(err)
+      return []
+    }
   })
 
   // イベント情報を引きオーダー情報とくっつける
@@ -180,7 +182,7 @@ const loadCartList = async () => {
         console.error($t('cart.event_not_found'), { item })
         return []
       }
-      const event = convertDocumentDataToEvent(eventSnapshot.docs[0].data())
+      const event = new BokudeliEvent(item.community_id, item.event_id, eventSnapshot.docs[0].data())
       if (event.event_status.value !== 'accepting_order') {
         return []
       }

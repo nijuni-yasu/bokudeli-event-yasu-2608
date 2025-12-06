@@ -6,12 +6,12 @@ on:
       - development
       - production
     paths:
-      - "firestore.rules"
-      - "firestore.indexes.json"
+      - 'firestore.rules'
+      - 'firestore.indexes.json'
   workflow_dispatch:
     inputs:
       environment:
-        description: "Deployment environment"
+        description: 'Deployment environment'
         required: true
         type: choice
         options:
@@ -41,4 +41,4 @@ jobs:
         with:
           project_id: ${{ vars.PROJECT_ID }}
           service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          args: "--force --only firestore"
+          args: '--force --only firestore'

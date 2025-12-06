@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import BokudeliEvent from '@/schemes/bokudeliEvent'
-import { type CommunityStore, useCommunityStore } from '@/stores/community'
-import { type EventStore, useEventStore } from '@/stores/event'
-import EventMemberCard from '@/components/EventMemberCard.vue'
+import { computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { type CommunityStore, useCommunityStore } from '@shokujii/base/stores/community'
+import { type EventStore, useEventStore } from '@shokujii/base/stores/event'
+import EventMemberCard from '@shokujii/base/components/EventMemberCard.vue'
 import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
 
@@ -31,13 +33,12 @@ const isShowMember: boolean = await new Promise((resolve) => {
 
 const eventStore = useEventStore(props.eventId) as EventStore
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
-const members = computed(
-  () =>
-    eventStore.members?.sort(
-      (a, b) =>
-        a.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0) -
-        b.orders.reduce((max, order) => Math.max(max, order.updated_at.toMillis()), 0),
-    ) ?? [],
+const members = computed(() =>
+  [...(eventStore.members ?? [])].sort(
+    (a, b) =>
+      a.orders.reduce((max, order) => Math.max(max, order.updated_at), 0) -
+      b.orders.reduce((max, order) => Math.max(max, order.updated_at), 0),
+  ),
 )
 </script>
 <template>

@@ -1,24 +1,27 @@
 import { z } from 'zod'
+import { NonEmptyStringSchema } from './firebase/index.js'
 
 const UserPersonalInformationDbSchema = z.object({
-  user_email: z.string().email(),
-  user_email_pending: z.string(),
-  user_sns_google: z.string(),
-  user_sns_twitter_access_token: z.string(),
-  user_sns_twitter_secret: z.string(),
+  user_email: z.string().email().or(z.literal('')),
+  // optional
+  user_sns_twitter_access_token: NonEmptyStringSchema.optional(),
+  user_sns_twitter_secret: NonEmptyStringSchema.optional(),
 })
 
-// id 以外は デフォルト なので、 Schema は必要ない
+const UserPersonalInformationAppSchema = z.object({
+  user_email: z.string().default(''),
+  user_sns_twitter_access_token: z.string().default(''),
+  user_sns_twitter_secret: z.string().default(''),
+})
+
 export class UserPersonalInformation {
   readonly id: string
   user_email: string = ''
-  user_email_pending: string = ''
-  user_sns_google: string = ''
   user_sns_twitter_access_token: string = ''
   user_sns_twitter_secret: string = ''
 
   constructor(id: string, src: Partial<UserPersonalInformation>) {
-    Object.assign(this, src)
+    Object.assign(this, UserPersonalInformationAppSchema.parse(src))
     this.id = id
   }
 

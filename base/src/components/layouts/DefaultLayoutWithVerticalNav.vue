@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { ref, watch, type PropType } from 'vue'
 import { VerticalNavLayout } from '@layouts'
 import type { VerticalNavItems } from '@layouts/types'
 import { mdiMenu } from '@mdi/js'
@@ -22,7 +23,7 @@ watch(
 
     if (!isFallbackStateActive.value && refLoadingIndicator.value) refLoadingIndicator.value.resolveHandle()
   },
-  { immediate: true }
+  { immediate: true },
 )
 // !SECTION
 </script>
