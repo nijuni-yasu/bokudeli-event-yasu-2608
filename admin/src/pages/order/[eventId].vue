@@ -54,7 +54,7 @@ const [event, shop] = await Promise.all([
 ])
 
 // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
-const eventUrl = getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id)
+const eventUrl = getEventUrl(import.meta.env.VITE_ORIGIN_HOST, event.community_account, event.event_id)
 
 if (event.partner_id !== partnerId) {
   window.alert($t('alert.invalid_account'))
