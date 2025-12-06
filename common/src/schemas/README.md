@@ -18,4 +18,3 @@ Firestore DB から読み込まれる際、または new によって作成さ�
 生成される class の型を保証するためのものなので、基本的に `default()` を使用し、型が一意に決まるようにしてください。（ただし、 Mandatory 項目に関してはその限りではない）
 
 - DB で Timestamp として保存される項目は `EpochMillisSchema` を使用して `number` に変換します
-  
