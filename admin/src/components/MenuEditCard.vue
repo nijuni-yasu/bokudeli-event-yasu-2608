@@ -31,13 +31,13 @@ const price = computed({
 const dateStart = computed({
   get: () => (menu.value.menu_date_start == null ? null : format(menu.value.menu_date_start, 'yyyy-MM-dd')),
   set: (value) => {
-    menu.value.menu_date_start = value == null ? Date.now() : parseISO(value).getTime()
+    menu.value.menu_date_start = value == null ? null : parseISO(value).getTime()
   },
 })
 const dateEnd = computed({
   get: () => (menu.value.menu_date_end == null ? null : format(menu.value.menu_date_end, 'yyyy-MM-dd')),
   set: (value) => {
-    menu.value.menu_date_end = (value == null ? Date.now() : parseISO(value).getTime()) + 24 * 60 * 60 * 1000 - 1
+    menu.value.menu_date_end = value == null ? null : parseISO(value).getTime() + 24 * 60 * 60 * 1000 - 1
   },
 })
 </script>
