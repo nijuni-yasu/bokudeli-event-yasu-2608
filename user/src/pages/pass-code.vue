@@ -66,7 +66,8 @@ const submit = async (passCode: string) => {
       const result = await confirmEmailLogin({ email, passCode })
       const { token, isNew } = result.data
       await signInWithCustomToken(getAuth(), token)
-      router.push(getRegisterComplete(isNew))
+      // 再読みこみしてリダイレクト時と同様の処理をさせる
+      history.pushState({ isNewUser: isNew }, '', getRegisterComplete(isNew).path)
     }
   } catch (error: any) {
     console.warn('Error sending pass code:', error)
