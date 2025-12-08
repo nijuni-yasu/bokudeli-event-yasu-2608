@@ -293,17 +293,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       if (unsubscribeOrders == null) {
         const ordersRef = collection(eventRef, 'orders').withConverter(orderConverter)
         unsubscribeOrders = onSnapshot(ordersRef, (ordersSnapshot) => {
-          _orders.value = ordersSnapshot.docs.flatMap((o) => {
-            try {
-              const order = o.data()
-              // https://github.com/nijuniinc/bokudeli-event-new/issues/729
-              order.created_at = order.created_at ?? order.created_at
-              return order
-            } catch (err) {
-              console.error(err)
-              return []
-            }
-          })
+          _orders.value = ordersSnapshot.docs.flatMap((o) => o.data())
         })
       }
     }

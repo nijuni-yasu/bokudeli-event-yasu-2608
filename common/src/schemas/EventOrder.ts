@@ -83,7 +83,8 @@ export class EventOrder {
     this.id = order_id
     this.order_id = order_id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
-    this.carted_at = EpochMillisSchema.default(Date.now()).parse(src.carted_at)
+    // https://github.com/nijuniinc/bokudeli-event-new/issues/729
+    this.carted_at = EpochMillisSchema.default(Date.now()).parse(src.carted_at ?? src.created_at)
     this.updated_at = EpochMillisSchema.default(Date.now()).parse(src.updated_at)
   }
 
