@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import XIcon from '@shokujii/base/icons/x.js'
+import XIcon from '@shokujii/base/icons/x'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -59,7 +59,6 @@ const isSnsLoading = ref<ProviderIdType | null>(null)
 const isValidProfile = ref<boolean>(false)
 const isValidEmail = ref<boolean>(false)
 
-const isOpenTwitterLinkDialog = ref<boolean>(false)
 const targetUnLinkProvider = ref<ProviderIdType | null>(null)
 const isOpenUnLinkDialog = computed<boolean>({
   get() {
@@ -275,9 +274,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
                 prefix="x.com/"
                 variant="outlined"
                 hide-details
-                :disabled="!!currentUser.user_sns_twitter"
-                readonly
-                @click="() => (isOpenTwitterLinkDialog = true)"
+                :disabled="isProfileLoading"
               />
 
               <v-text-field
@@ -473,17 +470,6 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
       </v-col>
     </v-row>
 
-    <confirm-dialog
-      v-model="isOpenTwitterLinkDialog"
-      :is-confirm="true"
-      :ok-text="$t('profile.linkage')"
-      :ok-click="() => handleProviderLink('twitter.com')"
-    >
-      <v-card-text class="text-center py-10 text-h4">
-        {{ $t('profile.twitter_link_modal_title') }}
-      </v-card-text>
-      <v-card-text class="text-center py-5">{{ $t('profile.twitter_link_modal_description') }} </v-card-text>
-    </confirm-dialog>
     <confirm-dialog
       v-model="isOpenUnLinkDialog"
       :is-confirm="true"
