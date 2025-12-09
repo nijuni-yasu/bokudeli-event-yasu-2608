@@ -3,7 +3,7 @@ import { reactive } from 'vue'
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { getUserPath } from '@/router/utils'
+import { getUserPath, getUrlFromPath } from '@/router/utils'
 import { mdiEmail } from '@mdi/js'
 import { storeToRefs } from 'pinia'
 
@@ -32,8 +32,7 @@ const onFormSubmit = async () => {
   try {
     if (currentUser.value != null && currentUserPersonalInformation.value != null) {
       const communityContact = httpsCallable(functions, 'communityContact')
-      const host = import.meta.env.VITE_ORIGIN_HOST
-      const path = getUserPath(currentUser.value.id)
+      const user_profile_url = getUrlFromPath(getUserPath(currentUser.value.id))
       try {
         await communityContact({
           community_id: props.communityId,
@@ -43,7 +42,7 @@ const onFormSubmit = async () => {
           user_id: currentUser.value.id,
           user_name: currentUser.value.user_name,
           user_email: currentUserPersonalInformation.value.user_email,
-          user_profile_url: `${host}${path}`,
+          user_profile_url,
         })
         window.alert('送信完了しました')
         return

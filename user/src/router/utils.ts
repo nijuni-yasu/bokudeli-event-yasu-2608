@@ -1,3 +1,5 @@
+export const getUrlFromPath = (path: string) => `https://${import.meta.env.VITE_ORIGIN_HOST}${path}`
+
 export const getHomePath = () => '/'
 export const getCommunityListPath = () => '/communitylist'
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
