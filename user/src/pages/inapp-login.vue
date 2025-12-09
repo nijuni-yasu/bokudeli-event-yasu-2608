@@ -8,7 +8,8 @@ const notification = useNotification()
 const { t: $t } = useI18n()
 
 const copyCurrentUrl = async () => {
-  const url = getUrlFromPath(getRedirectPath() ?? getHomePath())
+  // getRedirectPath(false) でセッションストレージから削除せずに取得
+  const url = getUrlFromPath(getRedirectPath(false) ?? getHomePath())
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(url)
