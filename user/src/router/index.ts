@@ -162,7 +162,7 @@ export const setupRouter = (router: Router) => {
         }
       }
 
-      let isNewUser = false
+      let isNewUser = history.state?.isNewUser ?? false
       // プロフィールが埋まっていても新規ユーザーのときだけ動作を変える
       if (userCredential != null) {
         const aui = getAdditionalUserInfo(userCredential)
