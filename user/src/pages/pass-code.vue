@@ -66,8 +66,16 @@ const submit = async (passCode: string) => {
       const result = await confirmEmailLogin({ email, passCode })
       const { token, isNew } = result.data
       await signInWithCustomToken(getAuth(), token)
-      // 再読みこみしてリダイレクト時と同様の処理をさせる
-      history.pushState({ isNewUser: isNew }, '', getRegisterComplete(isNew).path)
+      // routing処理は routerで行いたいが、複雑性が増すためここで行う
+      // TODO: isNewか否かによって、遷移するページを変更し、pass-code.vueをコンポーネントにする
+      if (isNew) {
+        // 新規アカウントの場合、register/complete画面に遷移
+        await router.push(getRegisterComplete(isNew))
+      } else {
+        // 既存アカウントの場合、元のページに戻る
+        const redirectPath = getRedirectPath() ?? '/'
+        await router.push(redirectPath)
+      }
     }
   } catch (error: any) {
     console.warn('Error sending pass code:', error)
