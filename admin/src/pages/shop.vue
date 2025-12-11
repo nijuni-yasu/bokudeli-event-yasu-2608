@@ -237,10 +237,33 @@ const submit = async () => {
     isSaving.value = false
   }
 }
+
+/**
+ * 営業時間のバリデーション
+ * ここで formRef をとるのはベストとは言えない
+ * 本来なら別コンポーネントにするか UI そのものを修正すべき TODO
+ */
+const formRef = ref()
+watch(
+  () => shop.value.shop_time,
+  () => {
+    formRef.value?.validate()
+  },
+  { deep: true },
+)
+
+// 終了時刻が開始時刻より後になっているかどうかをバリデーション
+const shopEndTimeValidator = (isOpen: boolean, time_start: number | null, time_end: number | null) =>
+  isOpen && time_start != null && time_end != null && time_end <= time_start ? $t('shop.time_end_after_start') : true
+
+  // 第2部の開始時刻が第1部の終了時刻より後になっているかどうかをバリデーション
+const shopStartTime2Validator = (isOpen: boolean, time_end: number | null, time_start2: number | null) =>
+  isOpen && time_end != null && time_start2 != null && time_start2 <= time_end ? $t('shop.time_start2_after_end') : true
+
 </script>
 
 <template>
-  <v-form v-model="isValid" @submit.prevent="submit">
+  <v-form v-model="isValid" @submit.prevent="submit" ref="formRef">
     <v-row class="justify-center">
       <v-col cols="12" sm="12" md="9" class="px-0">
         <v-card class="mb-10" flat>
@@ -480,6 +503,7 @@ const submit = async () => {
                     outlined
                     dense
                     :label="$t('shop.time_end', ['1'])"
+                    :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start)]"
                   />
                 </td>
               </tr>
@@ -493,6 +517,7 @@ const submit = async () => {
                     outlined
                     dense
                     :label="$t('shop.time_start', ['2'])"
+                    :rules="[shopStartTime2Validator.bind(null, item.is_open, item.time_end)]"
                   />
                 </td>
                 <td style="padding: 12px">
@@ -503,6 +528,7 @@ const submit = async () => {
                     outlined
                     dense
                     :label="$t('shop.time_end', ['2'])"
+                    :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start2)]"
                   />
                 </td>
               </tr>
