@@ -36,10 +36,13 @@ const {
 
 const makeTimeArray = (start: number, num: number) =>
   [...Array(num)].map((_, i) => {
-    const date = new Date(0)
-    date.setHours(start + Math.floor(i / 4))
-    date.setMinutes((i % 4) * 15)
-    return { title: $d(date, 'time'), value: date.getTime() }
+    const millis = start * 60 * 60 * 1000 + i * 15 * 60 * 1000
+    const hour = `${Math.floor(millis / 60 / 60 / 1000)}`
+    const minute = `${Math.floor((millis % (60 * 60 * 1000)) / 60 / 1000)}`.padStart(2, '0')
+    return {
+      title: `${hour}:${minute}`,
+      value: millis,
+    }
   })
 
 const makeDeadlineCurrentDaytimeArray = (start: number, num: number) =>
@@ -120,7 +123,8 @@ const deadlineDaysBefore = computed({
   },
 })
 
-const SHOP_TIME_ARRAY = ['', ...makeTimeArray(6, 72)]
+const SHOP_TIME_ARRAY1 = makeTimeArray(6, 72)
+const SHOP_TIME_ARRAY2 = [{ value: null, title: '' }, ...makeTimeArray(6, 72)]
 
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
@@ -462,7 +466,7 @@ const submit = async () => {
                   <v-select
                     v-model="item.time_start"
                     :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY"
+                    :items="SHOP_TIME_ARRAY1"
                     outlined
                     dense
                     :label="$t('shop.time_start', ['1'])"
@@ -472,7 +476,7 @@ const submit = async () => {
                   <v-select
                     v-model="item.time_end"
                     :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY"
+                    :items="SHOP_TIME_ARRAY1"
                     outlined
                     dense
                     :label="$t('shop.time_end', ['1'])"
@@ -485,7 +489,7 @@ const submit = async () => {
                   <v-select
                     v-model="item.time_start2"
                     :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY"
+                    :items="SHOP_TIME_ARRAY2"
                     outlined
                     dense
                     :label="$t('shop.time_start', ['2'])"
@@ -495,7 +499,7 @@ const submit = async () => {
                   <v-select
                     v-model="item.time_end2"
                     :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY"
+                    :items="SHOP_TIME_ARRAY2"
                     outlined
                     dense
                     :label="$t('shop.time_end', ['2'])"

@@ -103,12 +103,20 @@ export const GENRE_ARRAY = [
   'その他',
 ] as const
 
-// Epoch Time (ミリ秒）または時刻文字列（string）を時刻文字列に変換するスキーマ
-// 本来はstringをDBに保存すべきではないが、旧来の仕様のため、numberをstringに変換する
+// Epoch Time (ミリ秒）と時刻文字列を相互に変換するスキーマ
+// 本来はstringをDBに保存すべきではないが、旧来の仕様のため、DB からの入出力時に number と string を変換する
 // PartnerShop以外では使用する想定がないので、関数のexportはしない
 const TimeStringSchema = z
-  .union([z.string(), z.number()])
-  .transform((val) => (typeof val === 'number' ? convertToTimeString(val) : val))
+  .number()
+  .nullable()
+  .transform((val) => (val == null ? '' : convertToTimeString(val, 'UTC')))
+const StringTimeSchema = z.string().transform((val) => {
+  const [hour, minute] = val.split(':').map((s) => Number(s))
+  if (isNaN(hour) || isNaN(minute)) {
+    return null
+  }
+  return hour * 60 * 60 * 1000 + minute * 60 * 1000
+})
 
 const PartnerShopDbSchema = z.object({
   createdAt: TimestampSchema,
@@ -195,23 +203,24 @@ const PartnerShopAppSchema = z.object({
       z.object({
         is_open: z.boolean(),
         // TODO 文字列ではなく数字にする
-        time_start: z.string().nonempty(),
-        time_end: z.string().nonempty(),
+        time_start: StringTimeSchema.pipe(z.number()),
+        time_end: StringTimeSchema.pipe(z.number()),
         // 本当は nonempty にしたいところだが、初期実装を踏襲
-        time_start2: z.string(),
-        time_end2: z.string(),
+        time_start2: StringTimeSchema,
+        time_end2: StringTimeSchema,
       }),
     )
     .length(7)
-    .default([
-      { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
-      { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
-      { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
-      { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
-      { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
-      { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
-      { is_open: true, time_start: '6:00', time_end: '23:00', time_start2: '', time_end2: '' },
-    ]),
+    .default(
+      Array(7).fill({
+        is_open: true,
+        // タイムゾーンに関係ないローカルタイム
+        time_start: 6 * 60 * 60 * 1000,
+        time_end: 23 * 60 * 60 * 1000,
+        time_start2: null,
+        time_end2: null,
+      }),
+    ),
   min_orders_on_spot: z.number().nonnegative().default(30),
   // Optional
   shop_address: z.string().nonempty().optional(),
@@ -263,10 +272,10 @@ export class PartnerShop {
   }[]
   shop_time!: {
     is_open: boolean
-    time_start: string
-    time_end: string
-    time_start2: string
-    time_end2: string
+    time_start: number
+    time_end: number
+    time_start2: number | null
+    time_end2: number | null
   }[]
   min_orders_on_spot!: number
   // Optional
