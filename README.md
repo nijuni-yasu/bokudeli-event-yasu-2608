@@ -90,6 +90,17 @@ npm run format:check
 npm run lint
 ```
 
+### Datetime
+
+JavaScript 標準の `Date` オブジェクトは、タイムゾーンを考慮しない値を扱うため、日付の比較や計算には注意が必要です。
+そのため、日付・時刻を表すデータは原則として Epoch Time（ミリ秒）を使用するものとします。
+
+日付の文字列変換・比較・計算等には `luxon` を使用してください。
+基本的には [common/src/utils/datetime.ts](./common/src/utils/datetime.ts) にユーティリティ関数として実装したものを使用してください。
+
+**注意**：
+現在、`Date` オブジェクトの独自変換や `$d` 等、日付に関する実装が混在しています。これらは原則として参考とせず、`luxon` を使用してください。
+
 ## Deploy
 
 原則として firebase への Deploy は [GitHub Actions](../../actions) でのみ実行されることとし、ローカルでの実行は禁止とします。

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { TimestampSchema, EpochMillisSchema, NonEmptyStringSchema } from './firebase/index.js'
+import { convertToTimeString } from '../utils/datetime.js'
 
 export const GENRE_ARRAY = [
   '弁当',
@@ -102,6 +103,13 @@ export const GENRE_ARRAY = [
   'その他',
 ] as const
 
+// Epoch Time (ミリ秒）または時刻文字列（string）を時刻文字列に変換するスキーマ
+// 本来はstringをDBに保存すべきではないが、旧来の仕様のため、numberをstringに変換する
+// PartnerShop以外では使用する想定がないので、関数のexportはしない
+const TimeStringSchema = z
+  .union([z.string(), z.number()])
+  .transform((val) => (typeof val === 'number' ? convertToTimeString(val) : val))
+
 const PartnerShopDbSchema = z.object({
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
@@ -131,10 +139,10 @@ const PartnerShopDbSchema = z.object({
     .array(
       z.object({
         is_open: z.boolean(),
-        time_start: z.string().nonempty(),
-        time_end: z.string().nonempty(),
-        time_start2: z.string(),
-        time_end2: z.string(),
+        time_start: TimeStringSchema.pipe(z.string().nonempty()),
+        time_end: TimeStringSchema.pipe(z.string().nonempty()),
+        time_start2: TimeStringSchema.pipe(z.string()),
+        time_end2: TimeStringSchema.pipe(z.string()),
       }),
     )
     .length(7),

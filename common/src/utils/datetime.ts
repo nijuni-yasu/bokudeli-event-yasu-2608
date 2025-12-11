@@ -55,6 +55,10 @@ export function convertToMinuteString(millis: number, zone = DEFAULT_TIME_ZONE, 
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('mm')
 }
 
+export function convertToTimeString(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('HH:mm')
+}
+
 export function parseDatetimeStrings(
   dateString: string,
   hourString: string | null,
