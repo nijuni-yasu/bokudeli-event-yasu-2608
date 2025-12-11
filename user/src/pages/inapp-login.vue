@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { useNotification } from '@shokujii/base/composable/notification'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
+import { getRedirectPath } from '@shokujii/base/utils/redirect'
+import { getHomePath, getUrlFromPath } from '@/router/utils'
 
 const notification = useNotification()
 const { t: $t } = useI18n()
 
 const copyCurrentUrl = async () => {
-  const url = window.location.href.replace('/inapp-login', '/login')
+  // getRedirectPath(false) でセッションストレージから削除せずに取得
+  const url = getUrlFromPath(getRedirectPath(false) ?? getHomePath())
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(url)
