@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "commands": {
+    "lint:all": {
+      "command": "npm -w common run lint; npm -w base run lint; npm -w user run lint; npm -w curry run lint; npm -w admin run lint; npm -w functions/default run lint",
+      "description": "全パッケージでlintを実行（全パッケージの結果を確認可能）"
+    },
+    "format:check:all": {
+      "command": "npm -w common run format:check; npm -w base run format:check; npm -w user run format:check; npm -w curry run format:check; npm -w admin run format:check; npm -w functions/default run format:check",
+      "description": "全パッケージでformat:checkを実行（全パッケージの結果を確認可能）"
+    },
+    "format:all": {
+      "command": "npm -w common run format; npm -w base run format; npm -w user run format; npm -w curry run format; npm -w admin run format; npm -w functions/default run format",
+      "description": "全パッケージでformatを実行"
+    }
+  }
+}
