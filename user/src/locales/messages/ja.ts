@@ -474,7 +474,6 @@ export default {
     notice_pending_email: '※ メールアドレスを変更中です。パスコードを認証してください。',
     certification: '認証する',
     cancel: 'キャンセルする',
-    re_link: '※連携が外れているか、まだ連携されていない状態です。<br />必要に応じて再連携してください。',
   },
   user_profile: {
     logout: 'ログアウトする',

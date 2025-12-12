@@ -359,9 +359,6 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
               <label v-if="linkedGogleAccount != null" class="ml-11 font-weight-bold">
                 {{ linkedGogleAccount }}
               </label>
-              <label v-else class="ml-11 re-link">
-                <div v-html="$t('profile.re_link')"></div>
-              </label>
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -399,9 +396,6 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
               <label v-if="linkedFacebookAccount != null" class="ml-11 font-weight-bold">
                 {{ linkedFacebookAccount }}
               </label>
-              <label v-else class="ml-11 re-link">
-                <div v-html="$t('profile.re_link')"></div>
-              </label>
             </div>
 
             <div class="mt-6 mt-md-0">
@@ -436,9 +430,6 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
               </label>
               <label v-if="linkedTwitterAccount != null" class="ml-11 font-weight-bold">
                 {{ linkedTwitterAccount }}
-              </label>
-              <label v-else class="ml-11 re-link">
-                <div v-html="$t('profile.re_link')"></div>
               </label>
             </div>
 
@@ -500,10 +491,5 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
 
 .cursor-none {
   cursor: none;
-}
-.re-link {
-  font-size: 11px;
-  color: #2e263d8c;
-  padding: 5px;
 }
 </style>
