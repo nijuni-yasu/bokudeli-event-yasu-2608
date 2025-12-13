@@ -42,7 +42,7 @@ export const setupRouter = (router: Router) => {
   })
 
   router.afterEach((to, from) => {
-    if (['/login', '/inapp-login', '/profile'].includes(to.path)) {
+    if (['/login', '/inapp-login'].includes(to.path)) {
       const redirectPath = getRedirectPath(false)
       if (redirectPath == null) {
         setRedirectPath(from.path)
