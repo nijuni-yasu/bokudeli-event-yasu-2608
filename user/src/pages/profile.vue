@@ -139,8 +139,12 @@ const profileSubmit = async () => {
 
     notification.show($t('profile.update_profile'), 'success')
 
-    const redirectPath = getRedirectPath() ?? '/'
-    return await router.push(redirectPath)
+    // isNewUser の時だけリダイレクトする
+    if (isNewUser) {
+      const redirectPath = getRedirectPath() ?? '/'
+      return await router.push(redirectPath)
+    }
+    // isNewUser ではない時は、リダイレクトせずにプロフィール設定画面に残る
   } catch (error) {
     console.warn('Error profile submit:', error)
   } finally {
