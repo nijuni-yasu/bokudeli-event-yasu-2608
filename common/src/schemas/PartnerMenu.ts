@@ -10,8 +10,8 @@ const PartnerMenuDbSchema = z.object({
   is_sold_out: z.boolean(),
   menu_sort_number: z.number().int().nonnegative(),
   // Optional
-  menu_date_start: TimestampSchema.optional(),
-  menu_date_end: TimestampSchema.optional(),
+  menu_date_start: TimestampSchema.nullable(),
+  menu_date_end: TimestampSchema.nullable(),
 })
 
 const PartnerMenuAppSchema = z.object({
@@ -23,8 +23,8 @@ const PartnerMenuAppSchema = z.object({
   is_sold_out: z.boolean().default(false),
   menu_sort_number: z.number().int().nonnegative().default(0),
   // Optional
-  menu_date_start: EpochMillisSchema.optional(),
-  menu_date_end: EpochMillisSchema.optional(),
+  menu_date_start: EpochMillisSchema.nullable().default(null),
+  menu_date_end: EpochMillisSchema.nullable().default(null),
 })
 
 const convertToDb = (menu: PartnerMenu) => {
@@ -47,8 +47,8 @@ export class PartnerMenu {
   is_sold_out!: boolean
   menu_sort_number!: number
   // Optional
-  menu_date_start?: number
-  menu_date_end?: number
+  menu_date_start!: number | null
+  menu_date_end!: number | null
 
   constructor(partner_id: string, menu_id: string, src: Partial<PartnerMenu>) {
     Object.assign(this, PartnerMenuAppSchema.parse(src))

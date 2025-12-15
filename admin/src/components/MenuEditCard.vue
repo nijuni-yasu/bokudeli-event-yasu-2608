@@ -1,19 +1,26 @@
 <script setup lang="ts">
 import { parseISO, format } from 'date-fns'
+import { watch } from 'vue'
 import { type BokudeliPartnerMenu } from '@shokujii/base/stores/partner.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
+import { useI18n } from 'vue-i18n'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import DateInput from '@shokujii/base/components/DateInput.vue'
 
 const { requiredValidator, maxLengthValidator, betweenValidator } = useValidators()
+const { t: $t } = useI18n()
 
 const menu = defineModel<BokudeliPartnerMenu>({ required: true })
 
-defineEmits(['save', 'cancel'])
+const emit = defineEmits<{
+  save: [menu: BokudeliPartnerMenu, file: File | null]
+  cancel: []
+}>()
 
 const imageFile = ref<File | null>(null)
 
 const isValid = ref(false)
+const formRef = ref()
 
 // v-mode.number が空文字列を受け入れてしまうため、computed を使って型を整える
 // TODO: vuetify 3.5.10 以降にアップグレードして
@@ -31,19 +38,53 @@ const price = computed({
 const dateStart = computed({
   get: () => (menu.value.menu_date_start == null ? null : format(menu.value.menu_date_start, 'yyyy-MM-dd')),
   set: (value) => {
-    menu.value.menu_date_start = value == null ? Date.now() : parseISO(value).getTime()
+    menu.value.menu_date_start = value == null ? null : parseISO(value).getTime()
   },
 })
 const dateEnd = computed({
   get: () => (menu.value.menu_date_end == null ? null : format(menu.value.menu_date_end, 'yyyy-MM-dd')),
   set: (value) => {
-    menu.value.menu_date_end = (value == null ? Date.now() : parseISO(value).getTime()) + 24 * 60 * 60 * 1000 - 1
+    menu.value.menu_date_end = value == null ? null : parseISO(value).getTime() + 24 * 60 * 60 * 1000 - 1
   },
 })
+
+// 販売期間のバリデーションを入力欄に紐付ける
+const dateRangeRule = (): true | string => {
+  const hasStart = menu.value.menu_date_start != null
+  const hasEnd = menu.value.menu_date_end != null
+
+  // 片方だけ設定されている場合はエラー
+  if (hasStart !== hasEnd) {
+    return $t('menu_edit_card.error_date_range_incomplete')
+  }
+  // 両方設定されている場合、開始日 <= 終了日であることを確認
+  if (hasStart && hasEnd && menu.value.menu_date_start! > menu.value.menu_date_end!) {
+    return $t('menu_edit_card.error_date_range_invalid')
+  }
+
+  return true
+}
+const dateRangeRules = [dateRangeRule]
+
+// 販売期間のバリデーションを入力欄に紐付けて、変更を監視する
+watch(
+  () => [menu.value.menu_date_start, menu.value.menu_date_end],
+  () => {
+    if (!formRef.value) return
+    formRef.value.validate()
+  },
+)
+
+const handleSubmit = () => {
+  if (!isValid.value) {
+    return
+  }
+  emit('save', menu.value, imageFile.value)
+}
 </script>
 
 <template>
-  <v-form v-model="isValid" @submit.prevent="$emit('save', menu, imageFile)">
+  <v-form ref="formRef" v-model="isValid" @submit.prevent="handleSubmit">
     <v-card class="pa-4">
       <template #title>
         <div class="text-h4">
@@ -98,10 +139,20 @@ const dateEnd = computed({
       <v-card-text>
         <v-row>
           <v-col cols="6">
-            <DateInput v-model="dateStart" :clearable="true" :label="$t('menu_edit_card.date_start')" />
+            <DateInput
+              v-model="dateStart"
+              :clearable="true"
+              :label="$t('menu_edit_card.date_start')"
+              :rules="dateRangeRules"
+            />
           </v-col>
           <v-col cols="6">
-            <DateInput v-model="dateEnd" :clearable="true" :label="$t('menu_edit_card.date_end')" />
+            <DateInput
+              v-model="dateEnd"
+              :clearable="true"
+              :label="$t('menu_edit_card.date_end')"
+              :rules="dateRangeRules"
+            />
           </v-col>
         </v-row>
       </v-card-text>

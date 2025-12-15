@@ -243,6 +243,8 @@ export default {
     date_end: '終了日',
     close: '閉じる',
     submit: '保存する',
+    error_date_range_incomplete: '開始日と終了日は両方設定するか、両方未設定にしてください。',
+    error_date_range_invalid: '開始日は終了日より前の日付を設定してください。',
   },
   community: {
     submit: '設定',

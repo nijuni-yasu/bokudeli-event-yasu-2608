@@ -15,45 +15,39 @@ const { t: $t } = useI18n()
 const partnerId = getAuth().currentUser?.uid ?? ''
 const partnerStore = usePartnerStore(partnerId)
 
-const menus = await new Promise<Ref<BokudeliPartnerMenu[]>>((resolve) => {
-  watch(
-    () => partnerStore.menus,
-    () => {
-      if (partnerStore.menus != null) {
-        resolve(computed<BokudeliPartnerMenu[]>(() => partnerStore.menus ?? []))
-        stop()
-      }
-    },
-    { immediate: true },
-  )
-})
+const menus = computed<BokudeliPartnerMenu[]>(() => partnerStore.menus ?? [])
 
 // 並び替え用のローカル状態
-const sortedMenus = ref<BokudeliPartnerMenu[]>([])
+const sortMenuIds = ref<string[]>([])
 const originalMenuIds = ref<string[]>([])
 
-// メニューが読み込まれたら、ローカル状態を初期化
+// メニュー変更時に並び順を同期
 watch(
-  () => menus.value,
+  menus,
   (newMenus) => {
-    if (newMenus != null) {
-      // メニューが追加・削除された場合、または初回読み込み時は並び順をリセット
-      const currentMenuIds = sortedMenus.value.map((m) => m.id)
-      const newMenuIds = newMenus.map((m) => m.id)
-      const menusChanged =
-        currentMenuIds.length !== newMenuIds.length || currentMenuIds.some((id, index) => id !== newMenuIds[index])
+    const currentMenuIds = newMenus.map((m) => m.id)
+    const isSynced =
+      sortMenuIds.value.length === currentMenuIds.length &&
+      sortMenuIds.value.every((id, index) => id === currentMenuIds[index])
 
-      if (menusChanged || sortedMenus.value.length === 0) {
-        sortedMenus.value = [...newMenus]
-        originalMenuIds.value = newMenus.map((m) => m.id)
-      }
-    } else {
-      sortedMenus.value = []
-      originalMenuIds.value = []
+    if (!isSynced) {
+      sortMenuIds.value = [...currentMenuIds]
+      originalMenuIds.value = [...currentMenuIds]
     }
   },
   { immediate: true },
 )
+
+// 並び替え済みメニュー（副作用なし）
+const sortedMenus = computed<BokudeliPartnerMenu[]>({
+  get: () =>
+    sortMenuIds.value
+      .map((id) => menus.value.find((menu) => menu.id === id))
+      .filter((menu): menu is BokudeliPartnerMenu => menu != null),
+  set: (newMenus) => {
+    sortMenuIds.value = newMenus.map((menu) => menu.id).filter((id): id is string => id != null)
+  },
+})
 
 const targetMenu: Ref<BokudeliPartnerMenu | null> = ref(null)
 
@@ -116,10 +110,9 @@ const example = new BokudeliPartnerMenu(partnerId, null, {
 const saveSortOrder = async () => {
   try {
     const menuIds = sortedMenus.value.map((m) => m.id)
+    const originalIds = originalMenuIds.value
     // 並び順が実際に変更されたかチェック
-    const hasChanged =
-      menuIds.length === originalMenuIds.value.length &&
-      menuIds.some((id, index) => id !== originalMenuIds.value[index])
+    const hasChanged = menuIds.length === originalIds.length && menuIds.some((id, index) => id !== originalIds[index])
 
     if (hasChanged) {
       await partnerStore.updateMenuSortOrder(menuIds)
