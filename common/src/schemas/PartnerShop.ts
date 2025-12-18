@@ -215,10 +215,10 @@ const PartnerShopAppSchema = z.object({
       Array(7).fill({
         is_open: true,
         // タイムゾーンに関係ないローカルタイム
-        time_start: 6 * 60 * 60 * 1000,
-        time_end: 23 * 60 * 60 * 1000,
-        time_start2: null,
-        time_end2: null,
+        time_start: '06:00',
+        time_end: '23:00',
+        time_start2: '',
+        time_end2: '',
       }),
     ),
   min_orders_on_spot: z.number().nonnegative().default(30),
