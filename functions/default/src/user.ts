@@ -200,10 +200,18 @@ export const updateProfileFromProviders = onCall<
   // ただし、Login の度に画像を Storage にアップロードするわけにはいかないので、既存の画像がない場合のみ
   // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
   let blob: Blob | null = null
-  if (user.user_image_url.startsWith('https://graph.facebook.com')) {
-    blob = await fetchFacebookImage(user.user_image_url)
-  } else if (user.user_image_url.startsWith('https://pbs.twimg.com')) {
-    blob = await fetchTwitterImage(user.user_image_url)
+  const imageUrl = user.user_image_url
+  try {
+    if (imageUrl.startsWith('https://graph.facebook.com')) {
+      blob = await fetchFacebookImage(imageUrl)
+    } else if (imageUrl.startsWith('https://pbs.twimg.com')) {
+      blob = await fetchTwitterImage(imageUrl)
+    }
+  } catch (error) {
+    // 画像が取得できない場合は致命的なエラーとはみなさず、ログを記録してスキップ
+    // SNSの画像URL仕様変更や一時的なエラーでも、ユーザー登録自体は継続させたい
+    const provider = imageUrl.startsWith('https://graph.facebook.com') ? 'Facebook' : 'Twitter'
+    console.warn(`Failed to fetch ${provider} image. url=${imageUrl}`, error)
   }
   if (blob != null) {
     user.user_image_url = await uploadUserImage(uid, blob)
