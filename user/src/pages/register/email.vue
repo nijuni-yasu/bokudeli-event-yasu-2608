@@ -50,23 +50,23 @@ const submit = async () => {
 
 <template>
   <v-container v-if="currentUserStore.firebaseUser !== null">
-    <v-row justify="center" class="mt-16">
-      <v-col md="5">
-        <v-sheet class="rounded-lg py-14 px-12">
+    <v-row justify="center" class="mt-5 pa-0">
+      <v-col lg="5" md="6" sm="10" cols="12" class="pa-0">
+        <v-sheet class="rounded-lg py-14 px-sm-12 px-5">
           <v-container>
             <v-row justify="center">
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
-              <h1 class="my-3 text-h3 font-weight-bold">{{ $t('email.register_email') }}</h1>
+              <h1 class="my-3 text-h4 font-weight-bold">{{ $t('email.register_email') }}</h1>
             </v-row>
             <v-row justify="center">
-              <p>{{ $t('email.register_email_description') }}</p>
+              <p class="mb-10">{{ $t('email.register_email_description') }}</p>
             </v-row>
           </v-container>
 
           <v-form v-model="isValid" @submit.prevent="submit">
-            <v-container class="mb-4">
+            <v-container class="mb-4 pa-0">
               <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('email.email') }}</label>
               <v-text-field
                 placeholder="example@example.com"
