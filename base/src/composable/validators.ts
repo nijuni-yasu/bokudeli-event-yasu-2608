@@ -39,7 +39,8 @@ export const useValidators = () => {
     if (isEmpty(value)) {
       return true
     }
-    return /^\d+$/.test(value as string) || $t('validator.positive_integer')
+    const numValue = Number(value)
+    return (Number.isInteger(numValue) && numValue >= 1) || $t('validator.positive_integer')
   }
 
   /**
