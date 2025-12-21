@@ -134,7 +134,7 @@ const isOpenEventDialog = ref(false)
     </v-col>
   </v-row>
   <confirm-dialog v-model="isOpenEventDialog" :ok-text="'OK'" max-width="800px">
-    <v-card-text class="text-center py-10 text-h4">
+    <v-card-text class="text-center py-6 text-h4">
       {{ $t('event_create_modal.title') }}
     </v-card-text>
     <v-card-text class="pb-0" style="line-height: 2.4rem">
