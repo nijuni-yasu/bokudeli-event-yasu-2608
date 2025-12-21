@@ -120,21 +120,17 @@ export default {
     login: 'ログインして注文する',
   },
   event_create_modal: {
-    title: 'イベントの進め方',
-    desc: `・<b>「郵便番号」</b>と<b>「開催日時」</b>を入力して、デリバリー可能な飲食店から1つ選択📍<br />
-          ・イベント内容を入力。カバー画像の作成には <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a>をご活用ください🎨<br />
-          ・誰でも参加可能な<b>「公開」</b> or 参加者を限定する<b>「URL限定公開」</b>から選択できます👀<br />
-          ・支払い方法は<b>「参加者 事前決済」</b>or <b>「主催者 請求書払い」</b>から選択できます💰<br />
+    title: 'イベント開催のステップ',
+    desc: `・<b>「郵便番号」</b>と<b>「開催日時」</b>を入力し、デリバリー可能な飲食店から1店舗を選択📍<br />
+          ・イベント内容を入力。カバー画像は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> をご活用ください🎨<br />
+          ・公開範囲を<b>「公開」</b>または<b>「URL限定公開」</b>から選択できます👀<br />
+          ・支払い方法は<b>「参加者 事前決済」</b>または<b>「主催者 請求書払い」</b>から選択できます💰<br />
           ・内容が確定したらお店に<b>「予約申請」</b>。お店から<b>「予約承認」</b>をいただいたら注文受付開始💨<br />
           ・<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a> などを駆使して告知しよう📣<br />
-          ・注文期限になると注文内容が確定し、お店に<b>「自動で発注」</b>されます📩<br />
-          ・注文期限までは、注文した参加者はマイページから<b>「キャンセル」</b>が可能です↩️<br />
+          ・注文期限になると、注文内容が確定し、お店へ自動で発注されます📩<br />
           ・<b>「注文の目安」</b> の個数を下回ると、配送料をご請求する場合がありますのでご注意ください🚚<br />
-          ・当日フードを受け取って、食事会をお楽しみください😋😋😋<br />
-          <br />
-          詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> や <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_0#slide=id.g2b9c62499c1_0_0" target="_blank">告知・集客のコツ</a> もご一読ください。<br />
-          ご不明点やご要望がありましたら、サポートまで
-          <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />
+          ・イベント当日は、フードを受け取って食事会をお楽しみください🎉<br />
+          ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> や <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_0#slide=id.g2b9c62499c1_0_0" target="_blank">告知・集客のコツ</a> もご一読ください。<br />
           `,
   },
   community_new_modal: {
