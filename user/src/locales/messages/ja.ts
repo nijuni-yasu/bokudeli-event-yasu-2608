@@ -474,6 +474,10 @@ export default {
     notice_pending_email: '※ メールアドレスを変更中です。パスコードを認証してください。',
     certification: '認証する',
     cancel: 'キャンセルする',
+    linkage_completed: '{snsName}と連携しました',
+    unlink_completed: '{snsName}の連携を解除しました',
+    linkage_failed: '{snsName}との連携に失敗しました',
+    unlink_failed: '{snsName}の連携解除に失敗しました',
   },
   user_profile: {
     logout: 'ログアウトする',
