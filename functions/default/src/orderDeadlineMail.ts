@@ -42,6 +42,13 @@ interface TemplateDataForOrderDeadline {
   orders: OrderData[]
   order_url: string
   is_reminder?: boolean
+  // 主催者情報・配送メモ
+  organizer_fullname: string
+  organizer_company: string
+  organizer_email: string
+  organizer_phone_personal: string
+  organizer_phone_company: string
+  organizer_memo: string
 }
 
 interface TemplateDataForOrganizers extends TemplateDataForOrderDeadline {
@@ -101,6 +108,12 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
     event_url: getEventUrl(event.community_account, event.id),
     orders,
     order_url: getAdminOrderUrl(event.id),
+    organizer_fullname: event.organizer_fullname,
+    organizer_company: event.organizer_company,
+    organizer_email: event.organizer_email,
+    organizer_phone_personal: event.organizer_phone_personal,
+    organizer_phone_company: event.organizer_phone_company,
+    organizer_memo: event.organizer_memo,
   }
 }
 
@@ -138,6 +151,12 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
     delivery_date,
     order_total_price: 0, // 主催者向けでは使用しない
     order_url: getAdminOrderUrl(event.id),
+    organizer_fullname: event.organizer_fullname,
+    organizer_company: event.organizer_company,
+    organizer_email: event.organizer_email,
+    organizer_phone_personal: event.organizer_phone_personal,
+    organizer_phone_company: event.organizer_phone_company,
+    organizer_memo: event.organizer_memo,
   }
 }
 
