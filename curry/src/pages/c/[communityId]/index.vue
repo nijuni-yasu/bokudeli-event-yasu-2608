@@ -72,8 +72,8 @@ const goToEvents = (eventId: string) => {
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
 const isOpenLoginDialog = ref(false)
-const isOpenInvitationDailog = ref(false)
-const isOpenMessageDailog = ref(false)
+const isOpenInvitationDialog = ref(false)
+const isOpenMessageDialog = ref(false)
 
 const invitationUrl = ref('')
 const message = ref('')
@@ -107,7 +107,7 @@ const inviteManager = async () => {
       .writeText(url.data as string)
       .then(() => {
         message.value = 'クリップボードにコピーしました'
-        isOpenMessageDailog.value = true
+        isOpenMessageDialog.value = true
       })
       .catch((err) => {
         // URL は表示されていて手動コピーは可能なのでメッセージは表示しない
@@ -116,7 +116,7 @@ const inviteManager = async () => {
   } catch (error) {
     console.error(error)
     message.value = 'URL の発行に失敗しました'
-    isOpenMessageDailog.value = true
+    isOpenMessageDialog.value = true
   } finally {
     isUrlLoading.value = false
   }
@@ -193,7 +193,7 @@ const inviteManager = async () => {
               </v-btn>
             </v-col>
             <v-col v-if="isManager">
-              <v-btn variant="outlined" rounded color="primary" width="100%" @click="isOpenInvitationDailog = true">
+              <v-btn variant="outlined" rounded color="primary" width="100%" @click="isOpenInvitationDialog = true">
                 管理者を招待する
               </v-btn>
             </v-col>
@@ -331,7 +331,7 @@ const inviteManager = async () => {
     ログインした後にお問い合わせしてください。
   </confirm-dialog>
   <login-dialog v-model="isOpenLoginDialog" />
-  <confirm-dialog v-model="isOpenInvitationDailog" ok-text="閉じる">
+  <confirm-dialog v-model="isOpenInvitationDialog" ok-text="閉じる">
     <div class="mt-4 mb-8">URL を発行して、追加するメンバーに権限を付与します<br /></div>
     <v-text-field
       v-model="invitationUrl"
@@ -342,7 +342,7 @@ const inviteManager = async () => {
     />
     <v-btn class="mt-4" color="primary" :loading="isUrlLoading" @click="inviteManager">招待URLを発行</v-btn>
   </confirm-dialog>
-  <confirm-dialog v-model="isOpenMessageDailog" :is-confirm="false">
+  <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false">
     {{ message }}
   </confirm-dialog>
 </template>
