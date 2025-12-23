@@ -96,13 +96,13 @@ export const credentialFromError = (error: FirebaseError): OAuthCredential | nul
 export const updateProfileFromProviders = async (userCredential: UserCredential | null) => {
   // updateProfileFromProviders で情報は一括更新したいところだが、
   // 一部の情報はクライアントでしか取得できないため、ここで取得して functions に送る
-  let additinalInfo: Partial<ShokujiiUser> | null = null
+  let additionalInfo: Partial<ShokujiiUser> | null = null
   if (userCredential != null) {
     const additionalUserInfo = getAdditionalUserInfo(userCredential)
     switch (userCredential.providerId) {
       case TwitterAuthProvider.PROVIDER_ID: {
         if (additionalUserInfo != null) {
-          additinalInfo = {
+          additionalInfo = {
             user_description: additionalUserInfo.profile?.description as string,
             user_sns_twitter: additionalUserInfo.username as string,
           }
@@ -111,6 +111,6 @@ export const updateProfileFromProviders = async (userCredential: UserCredential 
       }
     }
   }
-  additinalInfo = additinalInfo ?? {}
-  return await _updateProfileFromProviders({ additinalInfo })
+  additionalInfo = additionalInfo ?? {}
+  return await _updateProfileFromProviders({ additionalInfo })
 }

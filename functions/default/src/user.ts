@@ -177,7 +177,7 @@ export const updateProfileFromProviders = onCall<
   if (uid == null) {
     throw new HttpsError('unauthenticated', 'not logged in')
   }
-  const { additinalInfo } = request.data
+  const { additionalInfo } = request.data
   let user = await getUser(uid, true)
   // 元のユーザー情報を保存
   // 新規ユーザーの場合は ShokujiiUser ではなく空オブジェクトにしておく
@@ -191,7 +191,7 @@ export const updateProfileFromProviders = onCall<
     user.user_image_url = user.user_image_url || provider.photoURL
   }
   for (const key of ADDITIONAL_KEYS) {
-    const value = additinalInfo?.[key]
+    const value = additionalInfo?.[key]
     if (value !== undefined) {
       user[key] = value
     }
