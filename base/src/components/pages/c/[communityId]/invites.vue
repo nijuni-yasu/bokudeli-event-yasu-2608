@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { defineProps } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -19,7 +17,6 @@ const props = defineProps<{
 
 const route = useRoute()
 const router = useRouter()
-const isOpenLoginDialog = ref(false)
 const isOpenMessageDialog = ref(false)
 const message = ref('')
 
@@ -31,7 +28,7 @@ watch(
   () => [useCurrentUserStore().firebaseUser, (useCommunityStore(props.communityId) as CommunityStore).community],
   ([firebaseUser, community]) => {
     if (firebaseUser == null) {
-      isOpenLoginDialog.value = true
+      // ログインチェックは router で行われているので、ここにくることはない
       return
     }
     const communityId = (community as BokudeliCommunity | null)?.community_id
@@ -58,9 +55,6 @@ watch(
 
 <template>
   <section>
-    <div>
-      <login-dialog v-model="isOpenLoginDialog" />
-    </div>
     <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" onclick="redirect">
       {{ message }}
     </confirm-dialog>
