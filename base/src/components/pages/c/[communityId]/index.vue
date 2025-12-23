@@ -8,10 +8,10 @@ import {
   getManageCommunitySettingsPath,
   getEventEditBasicPath,
   getEventEditDetailsPath,
+  getLogin,
 } from '@/router/utils'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
@@ -66,7 +66,6 @@ const goToEvents = (eventId: string) => {
 
 const isOpenContactDialogVisible = ref(false)
 const isOpenConfirmDialog = ref(false)
-const isOpenLoginDialog = ref(false)
 
 const openContactDialog = () => {
   if (userStore.firebaseUser == null) {
@@ -75,8 +74,8 @@ const openContactDialog = () => {
     isOpenContactDialogVisible.value = true
   }
 }
-const openLoginDialog = () => {
-  isOpenLoginDialog.value = true
+const login = () => {
+  router.push(getLogin())
 }
 </script>
 <template>
@@ -200,10 +199,9 @@ const openLoginDialog = () => {
       :community-name="communityStore.community.community_name"
       :community-id="communityStore.community.community_id"
     />
-    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="openLoginDialog">
+    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="login">
       ログインした後にお問い合わせしてください。
     </confirm-dialog>
-    <login-dialog v-model="isOpenLoginDialog" />
   </section>
 </template>
 <style lang="scss" scoped></style>
