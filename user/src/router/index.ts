@@ -45,7 +45,7 @@ export const setupRouter = (router: Router) => {
     if (['/login', '/inapp-login'].includes(to.path)) {
       const redirectPath = getRedirectPath(false)
       if (redirectPath == null) {
-        setRedirectPath(from.path)
+        setRedirectPath(from.fullPath)
       }
     }
   })
