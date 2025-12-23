@@ -42,11 +42,11 @@ export const setupRouter = (router: Router) => {
   })
 
   router.afterEach((to, from) => {
-    if (['/login', '/inapp-login'].includes(to.path)) {
-      const redirectPath = getRedirectPath(false)
-      if (redirectPath == null) {
-        setRedirectPath(from.fullPath)
-      }
+    // 遷移先(to.path)が、ログインページまたはアプリ内ログインページの場合かつ、
+    // 遷移元(from.path)が、ログインページまたはアプリ内ログインページでない場合にのみ、リダイレクトのパスを保存する
+    // sessionStorageには、招待URLを考慮し、クエリパラメータも含めてfrom.fullPathで保存
+    if (['/login', '/inapp-login'].includes(to.path) && !['/login', '/inapp-login'].includes(from.path)) {
+      setRedirectPath(from.fullPath)
     }
   })
 
