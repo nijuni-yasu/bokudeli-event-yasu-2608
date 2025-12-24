@@ -11,5 +11,5 @@ export type RequestEmailChangeRequest = { newEmail: string }
 export type ConfirmEmailChangeRequest = { newEmail: string; passCode: string }
 export type ConfirmEmailChangeResponse = { token: string }
 
-export type UpdateProfileFromProvidersRequest = { additinalInfo: Partial<User> }
+export type UpdateProfileFromProvidersRequest = { additionalInfo: Partial<User> }
 export type UpdateProfileFromProvidersResponse = { user: User & { user_email?: string } }
