@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 
 const props = defineProps<{
   event: BokudeliEvent
@@ -30,9 +31,7 @@ const isShowInvoiceButton = computed(
 <template>
   <v-card class="pa-0">
     <v-img cover class="ma-0 pa-0" aspect-ratio="1.91" :src="event.event_cover_url"></v-img>
-    <v-chip class="mt-2 ml-3" color="primary" size="small">
-      {{ $t(`event_status.${event.event_status.value}`) }}
-    </v-chip>
+    <EventStatusChip :status="event.calculatedEventStatus" size="small" class="mt-2 ml-3" />
     <v-chip v-if="!event.is_public" class="mt-2 ml-3" color="primary" size="small">
       {{ $t('private_event') }}
     </v-chip>
