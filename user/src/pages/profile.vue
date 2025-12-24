@@ -179,19 +179,23 @@ const emailSubmit = async () => {
 }
 
 const handleProviderLink = async (providerId: ProviderIdType) => {
+  const snsName = $t(`sns_name['${providerId}']`)
   try {
     isSnsLoading.value = providerId
     await currentUserStore.linkProvider(providerId)
+    notification.show($t('profile.linkage_completed', { snsName }), 'success')
   } catch (error) {
     if (error instanceof FirebaseError) {
       if (error.code === 'auth/credential-already-in-use') {
-        notification.show($t('user.exists_credential', { snsName: providerId }), 'error')
-      }
-      if (error.code === 'auth/email-already-in-use') {
+        notification.show($t('user.exists_credential', { snsName }), 'error')
+      } else if (error.code === 'auth/email-already-in-use') {
         notification.show($t('complete.exists_email'), 'error')
+      } else {
+        notification.show($t('profile.linkage_failed', { snsName }), 'error')
       }
     } else {
       console.error(error)
+      notification.show($t('profile.linkage_failed', { snsName }), 'error')
     }
   } finally {
     isSnsLoading.value = null
@@ -204,11 +208,17 @@ const handleUnLink = async (providerId: ProviderIdType) => {
 }
 
 const confirmUnLink = async (providerId: ProviderIdType) => {
+  const snsName = $t(`sns_name['${providerId}']`)
   try {
     isSnsLoading.value = providerId
     await currentUserStore.unlinkProvider(providerId)
+    notification.show($t('profile.unlink_completed', { snsName }), 'success')
+  } catch (error) {
+    console.error(error)
+    notification.show($t('profile.unlink_failed', { snsName }), 'error')
   } finally {
     isSnsLoading.value = null
+    isOpenUnLinkDialog.value = false
   }
 }
 </script>
