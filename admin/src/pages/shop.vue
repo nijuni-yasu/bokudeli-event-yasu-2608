@@ -252,6 +252,14 @@ watch(
   { deep: true },
 )
 
+watch(
+  () => shop.value.shop_range_min_orders,
+  () => {
+    formRef.value?.validate()
+  },
+  { deep: true },
+)
+
 // 終了時刻が開始時刻より後になっているかどうかをバリデーション
 const shopEndTimeValidator = (isOpen: boolean, time_start: number | null, time_end: number | null) =>
   isOpen && time_start != null && time_end != null && time_end <= time_start ? $t('shop.time_end_after_start') : true
@@ -265,6 +273,12 @@ const shopStartTime2Validator = (isOpen: boolean, time_end: number | null, time_
 const shopTime2PairValidator = (isOpen: boolean, otherValue: number | null) => (currentValue: number | null) =>
   isOpen && currentValue == null && otherValue != null ? $t('shop.time2_pair_required') : true
 
+// 配送距離と注文最小個数が両方入力されているかどうかをバリデーション
+const shopRangePairValidator = (min_orders: number | null, range: number | null) =>
+  range == null && min_orders != null ? $t('shop.range_min_orders_pair_required') : true
+
+const minOrdersPairValidator = (range: number | null, min_orders: number | null) =>
+  min_orders == null && range != null ? $t('shop.range_min_orders_pair_required') : true
 </script>
 
 <template>
@@ -441,6 +455,7 @@ const shopTime2PairValidator = (isOpen: boolean, otherValue: number | null) => (
                       shop.shop_range_min_orders[i - 2]?.min_orders == null ||
                       shop.shop_range_min_orders[i - 2].min_orders == SHOP_MIN_ORDERS_ARRAY_MAX)
                   "
+                  :rules="[shopRangePairValidator.bind(null, shop.shop_range_min_orders[i - 1].min_orders)]"
                 />
               </v-col>
               <v-col cols="6">
@@ -470,6 +485,7 @@ const shopTime2PairValidator = (isOpen: boolean, otherValue: number | null) => (
                       shop.shop_range_min_orders[i - 2]?.min_orders == null ||
                       shop.shop_range_min_orders[i - 2].min_orders == SHOP_MIN_ORDERS_ARRAY_MAX)
                   "
+                  :rules="[minOrdersPairValidator.bind(null, shop.shop_range_min_orders[i - 1].range)]"
                 />
               </v-col>
             </v-row>
