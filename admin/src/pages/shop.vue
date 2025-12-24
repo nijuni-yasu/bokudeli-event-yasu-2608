@@ -481,58 +481,67 @@ const shopStartTime2Validator = (isOpen: boolean, time_end: number | null, time_
             <v-icon size="40" class="text--primary me-3" :icon="mdiClockOutline" />
             <span>{{ $t('shop.time') }}</span>
           </template>
-          <v-card-text v-for="(item, i) of shop.shop_time" :key="`shop_time_${i}`">
-            <v-table>
-              <tr>
-                <td style="padding: 12px"><v-switch v-model="item.is_open" :label="dayOfWeek[i]" /></td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_start"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY1"
-                    outlined
-                    dense
-                    :label="$t('shop.time_start', ['1'])"
-                  />
-                </td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_end"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY1"
-                    outlined
-                    dense
-                    :label="$t('shop.time_end', ['1'])"
-                    :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start)]"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td></td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_start2"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY2"
-                    outlined
-                    dense
-                    :label="$t('shop.time_start', ['2'])"
-                    :rules="[shopStartTime2Validator.bind(null, item.is_open, item.time_end)]"
-                  />
-                </td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_end2"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY2"
-                    outlined
-                    dense
-                    :label="$t('shop.time_end', ['2'])"
-                    :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start2)]"
-                  />
-                </td>
-              </tr>
-            </v-table>
+          <v-card-text v-for="(item, i) of shop.shop_time" :key="`shop_time_${i}`" class="mt-6">
+            <!-- 1行目: v-switch(2) + 第1部(開始/終了) -->
+            <v-row class="align-start mb-2">
+              <v-col cols="12" sm="3">
+                <v-switch v-model="item.is_open" :label="dayOfWeek[i]" />
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_start"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY1"
+                  outlined
+                  dense
+                  :label="$t('shop.time_start', ['1'])"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_end"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY1"
+                  outlined
+                  dense
+                  :label="$t('shop.time_end', ['1'])"
+                  :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start)]"
+                />
+              </v-col>
+            </v-row>
+
+            <!-- 2行目: オフセット(2) + 第2部(開始/終了) -->
+            <v-row class="align-start">
+              <v-col cols="12" sm="3">
+                <!-- 2行目は見た目上のオフセットだけなので空 -->
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_start2"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY2"
+                  outlined
+                  dense
+                  :label="$t('shop.time_start', ['2'])"
+                  :rules="[shopStartTime2Validator.bind(null, item.is_open, item.time_end)]"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_end2"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY2"
+                  outlined
+                  dense
+                  :label="$t('shop.time_end', ['2'])"
+                  :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start2)]"
+                />
+              </v-col>
+            </v-row>
           </v-card-text>
           <v-card-text class="hint-text">
             <div v-html="$t('shop.time_hint')"></div>
