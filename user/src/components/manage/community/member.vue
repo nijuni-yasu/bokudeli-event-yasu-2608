@@ -84,7 +84,7 @@ const removeAccount = async (member: BokudeliCommunityMember) => {
     isLoading.value = false
   }
 }
-const isInvitationDailogOpen = ref(false)
+const isInvitationDialogOpen = ref(false)
 const invitationUrl = ref('')
 const inviteManager = async () => {
   isLoading.value = true
@@ -135,7 +135,7 @@ const downloadCsvFile = () => {
   <v-container>
     <v-row class="justify-center">
       <v-col md="12" sm="12" cols="12" style="display: flex; justify-content: flex-end; gap: 10px">
-        <v-btn variant="outlined" :prepend-icon="mdiLink" @click="isInvitationDailogOpen = true">
+        <v-btn variant="outlined" :prepend-icon="mdiLink" @click="isInvitationDialogOpen = true">
           管理者を招待する
         </v-btn>
         <v-btn variant="outlined" :prepend-icon="mdiDownload" @click="downloadCsvFile">
@@ -272,7 +272,7 @@ const downloadCsvFile = () => {
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-dialog v-model="isInvitationDailogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
+  <v-dialog v-model="isInvitationDialogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
     <v-card class="px-2 py-4">
       <v-card-title> {{ $t('manage.community_manager_invitation.title') }} </v-card-title>
       <v-card-text style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px">
@@ -288,7 +288,7 @@ const downloadCsvFile = () => {
         </v-btn>
       </v-card-text>
       <v-card-actions>
-        <v-btn type="cancel" @click="isInvitationDailogOpen = false">
+        <v-btn type="cancel" @click="isInvitationDialogOpen = false">
           {{ $t('close') }}
         </v-btn>
       </v-card-actions>

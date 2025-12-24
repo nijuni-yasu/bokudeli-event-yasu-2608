@@ -20,7 +20,7 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 const isOpenLoginDialog = ref(false)
-const isOpenMessageDailog = ref(false)
+const isOpenMessageDialog = ref(false)
 const message = ref('')
 
 const redirect = () => {
@@ -41,12 +41,12 @@ watch(
     acceptInvitationForCommunityManager({ communityId, token: route.query.t })
       .then(() => {
         message.value = '管理者になりました'
-        isOpenMessageDailog.value = true
+        isOpenMessageDialog.value = true
       })
       .catch((error) => {
         console.error(error)
         message.value = '無効な URL です'
-        isOpenMessageDailog.value = true
+        isOpenMessageDialog.value = true
       })
       .finally(() => {
         window.setTimeout(redirect, 3000)
@@ -61,7 +61,7 @@ watch(
     <div>
       <login-dialog v-model="isOpenLoginDialog" />
     </div>
-    <confirm-dialog v-model="isOpenMessageDailog" :is-confirm="false" onclick="redirect">
+    <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" onclick="redirect">
       {{ message }}
     </confirm-dialog>
     <div class="justify-center">
