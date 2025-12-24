@@ -256,9 +256,14 @@ watch(
 const shopEndTimeValidator = (isOpen: boolean, time_start: number | null, time_end: number | null) =>
   isOpen && time_start != null && time_end != null && time_end <= time_start ? $t('shop.time_end_after_start') : true
 
-  // 第2部の開始時刻が第1部の終了時刻より後になっているかどうかをバリデーション
+// 第2部の開始時刻が第1部の終了時刻より後になっているかどうかをバリデーション
 const shopStartTime2Validator = (isOpen: boolean, time_end: number | null, time_start2: number | null) =>
   isOpen && time_end != null && time_start2 != null && time_start2 <= time_end ? $t('shop.time_start2_after_end') : true
+
+// 第2部の開始時刻と終了時刻が両方入力されているかどうかをバリデーション
+// currentValue: 現在のフィールドの値、otherValue: もう一方のフィールドの値
+const shopTime2PairValidator = (isOpen: boolean, otherValue: number | null) => (currentValue: number | null) =>
+  isOpen && currentValue == null && otherValue != null ? $t('shop.time2_pair_required') : true
 
 </script>
 
@@ -526,7 +531,10 @@ const shopStartTime2Validator = (isOpen: boolean, time_end: number | null, time_
                   outlined
                   dense
                   :label="$t('shop.time_start', ['2'])"
-                  :rules="[shopStartTime2Validator.bind(null, item.is_open, item.time_end)]"
+                  :rules="[
+                    shopStartTime2Validator.bind(null, item.is_open, item.time_end),
+                    shopTime2PairValidator(item.is_open, item.time_end2),
+                  ]"
                 />
               </v-col>
 
@@ -538,7 +546,10 @@ const shopStartTime2Validator = (isOpen: boolean, time_end: number | null, time_
                   outlined
                   dense
                   :label="$t('shop.time_end', ['2'])"
-                  :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start2)]"
+                  :rules="[
+                    shopEndTimeValidator.bind(null, item.is_open, item.time_start2),
+                    shopTime2PairValidator(item.is_open, item.time_start2),
+                  ]"
                 />
               </v-col>
             </v-row>
