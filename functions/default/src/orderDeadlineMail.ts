@@ -88,16 +88,18 @@ interface TemplateDataForCommunityReminder {
 async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise<TemplateDataForOrderDeadline> {
   const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(event)
   const event_start_datetime = event.event_start_datetime
-  const date = convertToDateWeekdayShort(event_start_datetime) || ''
-  const deliveryDuration =
-    convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime) || ''
+  const date = convertToDateWeekdayShort(event_start_datetime)
+  const deliveryDuration = convertToDuration(
+    event_start_datetime - DELIVERY_DURATION * 60 * 1000,
+    event_start_datetime,
+  )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
-  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime) || ''
+  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
 
   return {
     event_name: event.event_name,
     event_address: event.event_address,
-    event_place: event.event_place || '',
+    event_place: event.event_place,
     community_name: event.community_name,
     shop_name: event.shop_name,
     date,
@@ -123,10 +125,12 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
 async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent): Promise<TemplateDataForOrganizers> {
   const [order_count, , orders] = await createOrdersForOrderDeadline(event)
   const event_start_datetime = event.event_start_datetime
-  const date = convertToDateWeekdayShort(event_start_datetime) || ''
-  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime) || ''
-  const deliveryDuration =
-    convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime) || ''
+  const date = convertToDateWeekdayShort(event_start_datetime)
+  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
+  const deliveryDuration = convertToDuration(
+    event_start_datetime - DELIVERY_DURATION * 60 * 1000,
+    event_start_datetime,
+  )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
 
   const shopData = await getEventPartnerShop(event)
@@ -140,7 +144,7 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
     shop_phone: shopData.shop_phone,
     event_name: event.event_name,
     event_address: event.event_address,
-    event_place: event.event_place || '',
+    event_place: event.event_place,
     community_name: event.community_name,
     shop_name: event.shop_name,
     date,
@@ -236,10 +240,10 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
   return Promise.all(
     events.map(async (event) => {
       const dynamic_template_data: TemplateDataForMembers = {
-        date: convertToDateWeekdayShort(event.event_start_datetime) || '',
-        event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime) || '',
+        date: convertToDateWeekdayShort(event.event_start_datetime),
+        event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
         event_name: event.event_name,
-        event_cover_url: event.event_cover_url || '',
+        event_cover_url: event.event_cover_url,
         community_name: event.community_name,
         event_address: event.event_address,
         shop_name: event.shop_name,
@@ -289,13 +293,13 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
           community_name: event.community_name,
           event_url: getEventUrl(event.community_account, event.id),
           event_name: event.event_name,
-          event_cover_url: event.event_cover_url || '',
-          event_desc: event.event_desc || '',
-          event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime) || '',
+          event_cover_url: event.event_cover_url,
+          event_desc: event.event_desc,
+          event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
           event_address: event.event_address,
-          event_place: event.event_place || '',
+          event_place: event.event_place,
           shop_name: event.shop_name,
-          event_deadline_datetime: convertToDatetimeWeekdayShort(event.event_deadline_datetime) || '',
+          event_deadline_datetime: convertToDatetimeWeekdayShort(event.event_deadline_datetime),
           event_payment: event.event_payment,
         }
 

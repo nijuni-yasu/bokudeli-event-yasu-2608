@@ -40,16 +40,18 @@ interface TemplateDataForOrderDeadline {
 async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise<TemplateDataForOrderDeadline> {
   const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(event)
   const event_start_datetime = event.event_start_datetime
-  const date = convertToDateWeekdayShort(event_start_datetime) || ''
-  const deliveryDuration =
-    convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime) || ''
+  const date = convertToDateWeekdayShort(event_start_datetime)
+  const deliveryDuration = convertToDuration(
+    event_start_datetime - DELIVERY_DURATION * 60 * 1000,
+    event_start_datetime,
+  )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
-  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime) || ''
+  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
 
   return {
     event_name: event.event_name,
     event_address: event.event_address,
-    event_place: event.event_place || '',
+    event_place: event.event_place,
     community_name: event.community_name,
     shop_name: event.shop_name,
     date,

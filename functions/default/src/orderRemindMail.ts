@@ -71,16 +71,18 @@ async function createTemplateDataForApplyingOrder(
 
   const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(event)
   const event_start_datetime = event.event_start_datetime
-  const date = convertToDateWeekdayShort(event_start_datetime) || ''
-  const deliveryDuration =
-    convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime) || ''
+  const date = convertToDateWeekdayShort(event_start_datetime)
+  const deliveryDuration = convertToDuration(
+    event_start_datetime - DELIVERY_DURATION * 60 * 1000,
+    event_start_datetime,
+  )
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
-  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime) || ''
+  const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
 
   return {
     event_name: event.event_name,
     event_address: event.event_address,
-    event_place: event.event_place || '',
+    event_place: event.event_place,
     community_name: event.community_name,
     shop_name: event.shop_name,
     date,
@@ -91,7 +93,7 @@ async function createTemplateDataForApplyingOrder(
     event_url: getEventUrl(event.community_account, event.id),
     orders,
     order_url: getAdminOrderUrl(event.id),
-    approve_deadline_datetime: convertToDateWeekdayShort(limitTimeMills) || '',
+    approve_deadline_datetime: convertToDateWeekdayShort(limitTimeMills),
     organizer_fullname: event.organizer_fullname,
     organizer_company: event.organizer_company,
     organizer_email: event.organizer_email,
@@ -199,8 +201,8 @@ async function createTemplateDataForOrganizerRemind(
     event_days_ago: eventDaysAgo,
     event_url: getEventUrl(event.community_account, event.id),
     manage_event_member_url: getManageEventMemberUrl(event.id),
-    event_deadline_datetime: eventDeadlineDateTime || '',
-    event_datetime: eventDateTime || '',
+    event_deadline_datetime: eventDeadlineDateTime,
+    event_datetime: eventDateTime,
     orders,
   }
 }

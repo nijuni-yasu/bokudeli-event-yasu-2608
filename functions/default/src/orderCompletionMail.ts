@@ -135,12 +135,12 @@ async function sendNewEventNotificationToMembers(event: ShokujiiEvent, userId: s
       event_cover_url: event.event_cover_url,
       event_desc: event.event_desc,
       event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
-      event_start_datetime: convertToDateWeekdayShort(event.event_start_datetime) || '',
-      event_end_datetime: convertToDateWeekdayShort(event.event_end_datetime) || '',
+      event_start_datetime: convertToDateWeekdayShort(event.event_start_datetime),
+      event_end_datetime: convertToDateWeekdayShort(event.event_end_datetime),
       event_address: event.event_address,
       event_place: event.event_place,
       shop_name: event.shop_name,
-      event_deadline_datetime: convertToDateWeekdayShort(event.event_deadline_datetime) || '',
+      event_deadline_datetime: convertToDateWeekdayShort(event.event_deadline_datetime),
       event_payment: event.event_payment,
     }
 
