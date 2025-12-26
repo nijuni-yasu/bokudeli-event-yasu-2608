@@ -195,12 +195,12 @@ const prices = [
     buttonText: t('manage.top.prices.step2.button'),
     imageSrc: price02,
   },
-  // {
-  //   stepNumber: '③',
-  //   title: t('manage.top.prices.step3.title'),
-  //   description: t('manage.top.prices.step3.description'),
-  //   imageSrc: func02
-  // },
+  {
+    stepNumber: '③',
+    title: t('manage.top.prices.step3.title'),
+    description: t('manage.top.prices.step3.description'),
+    imageSrc: func02
+  },
 ]
 
 const supports = [
