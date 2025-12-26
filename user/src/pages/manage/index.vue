@@ -199,7 +199,7 @@ const prices = [
     stepNumber: '③',
     title: t('manage.top.prices.step3.title'),
     description: t('manage.top.prices.step3.description'),
-    imageSrc: func02
+    imageSrc: func02,
   },
 ]
 
