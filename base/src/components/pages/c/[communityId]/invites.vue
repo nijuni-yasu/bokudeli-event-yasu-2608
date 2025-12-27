@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { getManageCommunityPath } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { acceptInvitationForCommunityManager } from '@shokujii/base/apis/communityManager.js'
-import { getManageCommunityPath } from '@/router/utils'
 
 const props = defineProps<{
   communityAccount: string
@@ -12,8 +12,19 @@ const props = defineProps<{
 
 const route = useRoute()
 const router = useRouter()
-const isOpenMessageDialog = ref(false)
+const { t } = useI18n()
+
+// notification を使用したいところだが、Manager ページはレイアウトが違うので notification がキャンセルされてしまう
+// TODO: そもそも invites が Manager ページにあるべきかもしれない。仕様を再検討
 const message = ref('')
+const isOpenMessageDialog = computed({
+  get: () => message.value !== '',
+  set: (value) => {
+    if (!value) {
+      message.value = ''
+    }
+  },
+})
 
 const token = route.query.t as string
 
@@ -21,34 +32,22 @@ const redirect = () => {
   router.push(getManageCommunityPath(props.communityAccount))
 }
 
-watch(
-  () => [useCurrentUserStore().firebaseUser],
-  ([firebaseUser]) => {
-    if (firebaseUser == null) {
-      // ログインチェックは router で行われているので、ここにくることはない
-      return
-    }
-    acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token })
-      .then(() => {
-        message.value = '管理者になりました'
-        isOpenMessageDialog.value = true
-      })
-      .catch((error) => {
-        console.error(error)
-        message.value = '無効な URL です'
-        isOpenMessageDialog.value = true
-      })
-      .finally(() => {
-        window.setTimeout(redirect, 3000)
-      })
-  },
-  { immediate: true },
-)
+// ログイン状態は router で管理されているため、ここでログインチェックは不要
+
+try {
+  await acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token })
+  message.value = t('community_membership.manager_invite_success')
+} catch (error) {
+  console.error(error)
+  message.value = t('community_membership.manager_invite_invalid_url')
+} finally {
+  window.setTimeout(redirect, 3000)
+}
 </script>
 
 <template>
   <section>
-    <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" onclick="redirect">
+    <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" :onclick="redirect">
       {{ message }}
     </confirm-dialog>
     <div class="justify-center">

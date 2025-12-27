@@ -214,6 +214,8 @@ export default {
     manager_leave_forbidden: '管理者はコミュニティを退会することができません。',
     error_generic: '処理に失敗しました。時間をおいて再度お試しください。',
     leave_confirm: 'コミュニティを退会しますか？開催予定のイベントの通知を受け取れなくなります。',
+    manager_invite_success: '管理者になりました',
+    manager_invite_invalid_url: '無効な URL です',
   },
   community_edit: {
     title: 'コミュニティ設定',
