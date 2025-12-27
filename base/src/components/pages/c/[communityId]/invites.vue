@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
-import { getManageCommunityPath } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { acceptInvitationForCommunityManager } from '@shokujii/base/apis/communityManager.js'
 import { useCommunityStore } from '@shokujii/base/stores/community'
 
 const props = defineProps<{
   communityAccount: string
+  token: string
 }>()
 
-const route = useRoute()
-const router = useRouter()
+const emits = defineEmits<{
+  done: []
+}>()
+
 const { t } = useI18n()
 
 const communityStore = useCommunityStore(props.communityAccount)
@@ -29,11 +30,7 @@ const isOpenMessageDialog = computed({
   },
 })
 
-const token = route.query.t as string
-
-const redirect = () => {
-  router.push(getManageCommunityPath(props.communityAccount))
-}
+const done = () => emits('done')
 
 // ログイン状態は router で管理されているため、ここでログインチェックは不要
 
@@ -45,7 +42,7 @@ try {
     message.value = t('community_membership.manager_invite_already_manager')
   } else {
     try {
-      await acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token })
+      await acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token: props.token })
       message.value = t('community_membership.manager_invite_success')
     } catch (error) {
       console.error(error)
@@ -56,13 +53,13 @@ try {
   console.error(error)
   message.value = t('community_membership.manager_invite_error')
 } finally {
-  window.setTimeout(redirect, 3000)
+  window.setTimeout(done, 3000)
 }
 </script>
 
 <template>
   <section>
-    <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" :onclick="redirect">
+    <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" :onclick="done">
       {{ message }}
     </confirm-dialog>
     <div class="justify-center">
