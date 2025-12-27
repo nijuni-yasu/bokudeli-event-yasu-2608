@@ -216,6 +216,8 @@ export default {
     leave_confirm: 'コミュニティを退会しますか？開催予定のイベントの通知を受け取れなくなります。',
     manager_invite_success: '管理者になりました',
     manager_invite_invalid_url: '無効な URL です',
+    manager_invite_error: 'エラーが発生しました。時間をおいて再度お試しください。',
+    manager_invite_already_manager: '既にこのコミュニティの管理者です',
   },
   community_edit: {
     title: 'コミュニティ設定',

@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getManageCommunityPath } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { acceptInvitationForCommunityManager } from '@shokujii/base/apis/communityManager.js'
+import { useCommunityStore } from '@shokujii/base/stores/community'
 
 const props = defineProps<{
   communityAccount: string
@@ -13,6 +14,8 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+
+const communityStore = useCommunityStore(props.communityAccount)
 
 // notification を使用したいところだが、Manager ページはレイアウトが違うので notification がキャンセルされてしまう
 // TODO: そもそも invites が Manager ページにあるべきかもしれない。仕様を再検討
@@ -35,11 +38,23 @@ const redirect = () => {
 // ログイン状態は router で管理されているため、ここでログインチェックは不要
 
 try {
-  await acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token })
-  message.value = t('community_membership.manager_invite_success')
+  const roles = await communityStore.getCurrentUserRoles()
+  const isManager = roles?.includes('manager') ?? false
+  if (isManager) {
+    // 既に管理者の場合は、招待を受け入れずにメッセージを表示
+    message.value = t('community_membership.manager_invite_already_manager')
+  } else {
+    try {
+      await acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token })
+      message.value = t('community_membership.manager_invite_success')
+    } catch (error) {
+      console.error(error)
+      message.value = t('community_membership.manager_invite_invalid_url')
+    }
+  }
 } catch (error) {
   console.error(error)
-  message.value = t('community_membership.manager_invite_invalid_url')
+  message.value = t('community_membership.manager_invite_error')
 } finally {
   window.setTimeout(redirect, 3000)
 }
