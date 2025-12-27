@@ -24,16 +24,12 @@ const isOpen = defineModel<boolean>()
 const countOptions = Array.from({ length: 5 }, (_, i) => i + 1)
 const selectedCount = ref(1)
 
-// FIXME: 注記が入力されていた場合、表示させる必要がある
-const orderNote = ref('')
-
 const isAddingOrder = ref(false)
 
 const closeDialog = (isAddCart: boolean) => {
   // TODO 自分で閉じたり、ページ遷移するのではなく、親が処理を選べるようにする
   isAddingOrder.value = false
   selectedCount.value = 1
-  orderNote.value = ''
   if (isAddCart) {
     router.push('/cart')
   }
@@ -76,7 +72,6 @@ const addCart = async () => {
           price: props.menu.menu_price,
           imageUrl: props.menu.menu_image_url ?? '',
           count: selectedCount.value,
-          note: orderNote.value,
         },
       ],
     }
@@ -113,11 +108,6 @@ const openConfirmDialog = () => {
       <v-row class="mx-3 mb-2">
         <v-select v-model="selectedCount" :items="countOptions" dense outlined filled label="個数"></v-select>
       </v-row>
-      <!--
-      <v-row class="mx-3 my-2">
-        <v-textarea v-model="orderNote" outlined dense rows="1" label="注記を追加"></v-textarea>
-      </v-row>
-      -->
       <v-row class="justify-center mx-1 my-2">
         <v-btn
           class="justify-center mx-1 align-self-center"

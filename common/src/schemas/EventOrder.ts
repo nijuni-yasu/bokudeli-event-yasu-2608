@@ -10,7 +10,6 @@ const OrderMenuSchema = z.object({
   menu_id: z.string().nonempty(),
   name: z.string().nonempty(),
   price: z.number().int().positive(),
-  note: NonEmptyStringSchema,
   imageUrl: z.string().url().nonempty(),
 })
 export type OrderMenuType = z.infer<typeof OrderMenuSchema>
