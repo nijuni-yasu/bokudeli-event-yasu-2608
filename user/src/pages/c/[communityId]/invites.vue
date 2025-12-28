@@ -2,9 +2,10 @@
 import { useRoute } from 'vue-router'
 import Invites from '@shokujii/base/components/pages/c/[communityId]/invites.vue'
 
-const communityId = useRoute().params.communityId as string
+// communityId は間違いで、渡されるのは communityAccount
+const communityAccount = useRoute().params.communityId as string
 </script>
 
 <template>
-  <Invites :community-id="communityId" />
+  <Invites :communityAccount="communityAccount" />
 </template>
