@@ -1,6 +1,10 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { getCommunity, getCommunityByAccount } from './stores/community.js'
 import { getConfigGlobal } from './stores/config.js'
+import type {
+  AcceptInvitationForCommunityManagerRequest,
+  AcceptInvitationForCommunityManagerResponse,
+} from '@shokujii/common/apis/communityManager.js'
 
 export const getInvitationUrlForCommunityManager = onCall(async (request) => {
   const uid = request.auth?.uid
@@ -24,13 +28,16 @@ export const getInvitationUrlForCommunityManager = onCall(async (request) => {
   return await community.generateInvitationUrlForManager(uid)
 })
 
-export const acceptInvitationForCommunityManager = onCall(async (request) => {
+export const acceptInvitationForCommunityManager = onCall<
+  AcceptInvitationForCommunityManagerRequest,
+  Promise<AcceptInvitationForCommunityManagerResponse>
+>(async (request) => {
   const uid = request.auth?.uid
   if (uid == null) {
     throw new HttpsError('unauthenticated', 'The function must be called while authenticated.')
   }
-  const communityAccount = request.data.communityAccount as string | undefined
-  const token = request.data.token as string | undefined
+  const communityAccount = request.data.communityAccount
+  const token = request.data.token
   if (communityAccount == null || token == null) {
     throw new HttpsError(
       'invalid-argument',

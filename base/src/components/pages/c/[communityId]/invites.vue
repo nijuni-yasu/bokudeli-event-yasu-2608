@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { functions } from '@shokujii/base/firebase'
-import { httpsCallable } from 'firebase/functions'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { acceptInvitationForCommunityManager } from '@shokujii/base/apis/communityManager.js'
 import { getManageCommunityPath } from '@/router/utils'
-
-const acceptInvitationForCommunityManager = httpsCallable(functions, 'acceptInvitationForCommunityManager')
 
 const props = defineProps<{
   communityAccount: string
@@ -17,6 +14,8 @@ const route = useRoute()
 const router = useRouter()
 const isOpenMessageDialog = ref(false)
 const message = ref('')
+
+const token = route.query.t as string
 
 const redirect = () => {
   router.push(getManageCommunityPath(props.communityAccount))
@@ -29,7 +28,7 @@ watch(
       // ログインチェックは router で行われているので、ここにくることはない
       return
     }
-    acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token: route.query.t })
+    acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token })
       .then(() => {
         message.value = '管理者になりました'
         isOpenMessageDialog.value = true
