@@ -22,14 +22,14 @@ functions v2 より snake_case が使えなくなったためです。kebab-case
    npm install
    ```
 
-1. `.env` と `.secret` を適切に準備  
+1. `.env` と `.secret.local` を適切に準備  
    [GitHub Actions Variables](https://github.com/nijuniinc/bokudeli-event-new/settings/variables/actions) から適切な設定を取得し `.env` として保存してください。
 
-   また、 [Google Cloud Secret Manager](https://console.cloud.google.com/security/secret-manager) から適切な設定を取得し `.secret` として保存してください。(フォーマットは .env と一緒)
+   また、 [Google Cloud Secret Manager](https://console.cloud.google.com/security/secret-manager) から適切な設定を取得し `.secret.local` として保存してください。(フォーマットは .env と一緒)
 
    アクセス権がない場合は管理者に問い合わせてください。
 
-   `firebase` CLI ではエミュレータ起動時やデプロイ時に `.env.bokudeli-event-test`, `.secret.bokudeli-event-test` のようなプロジェクト名のついたファイルを自動的に選択して使用します。なお、エミュレータでは `.env.local` も使用されます。
+   `firebase` CLI ではエミュレータ起動時やデプロイ時に `.env.bokudeli-event-test` のようなプロジェクト名のついたファイルを自動的に選択して使用します。ただし、　seecret は `.secret.local` のみが使用されるようです。なお、エミュレータでは `.env.local` も使用されます。
 
 ## Build
 
