@@ -79,13 +79,13 @@ export function convertToDuration(
   return `${start}〜${end}`
 }
 
-export function getLastDayOfNextMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
+export function getLastDayOfNextMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): DateTime {
   return DateTime.fromMillis(millis, { zone, locale }).plus({ month: 1 }).endOf('month')
 }
 
-export function getStartOfDay(millis: number, zone = DEFAULT_TIME_ZONE) {
+export function getStartOfDay(millis: number, zone = DEFAULT_TIME_ZONE): number {
   return DateTime.fromMillis(millis, { zone }).startOf('day').toMillis()
 }
 
-export const convertDateToId = (millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) =>
+export const convertDateToId = (millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string =>
   DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyyMMddHHmmss')
