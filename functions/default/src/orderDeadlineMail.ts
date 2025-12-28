@@ -89,10 +89,7 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
   const [order_count, order_total_price, orders] = await createOrdersForOrderDeadline(event)
   const event_start_datetime = event.event_start_datetime
   const date = convertToDateWeekdayShort(event_start_datetime)
-  const deliveryDuration = convertToDuration(
-    event_start_datetime - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime,
-  )
+  const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
   const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
 
@@ -127,10 +124,7 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
   const event_start_datetime = event.event_start_datetime
   const date = convertToDateWeekdayShort(event_start_datetime)
   const event_deadline_datetime = convertToDatetimeWeekdayShort(event.event_deadline_datetime)
-  const deliveryDuration = convertToDuration(
-    event_start_datetime - DELIVERY_DURATION * 60 * 1000,
-    event_start_datetime,
-  )
+  const deliveryDuration = convertToDuration(event_start_datetime - DELIVERY_DURATION * 60 * 1000, event_start_datetime)
   const delivery_date = `${deliveryDuration} （※${DELIVERY_DURATION}分の配達時間をいただいています）`
 
   const shopData = await getEventPartnerShop(event)

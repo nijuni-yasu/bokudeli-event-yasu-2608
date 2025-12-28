@@ -20,7 +20,11 @@ export function convertToJustDate(millis: number, zone = DEFAULT_TIME_ZONE, loca
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('MM/dd')
 }
 
-export function convertToDatetimeWeekdayShort(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
+export function convertToDatetimeWeekdayShort(
+  millis: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
 }
 
