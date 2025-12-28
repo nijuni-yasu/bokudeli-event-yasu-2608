@@ -52,7 +52,7 @@ const { user } = storeToRefs(useUserStore(userId))
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const tabs = ref(null)
-const cancelOperatingOrder = ref<EventOrder | null>(null)
+const cancelOperatingOrderId = ref<string | null>(null)
 
 const isOwner = computed(() => {
   const uid = firebaseUser.value?.uid
@@ -115,7 +115,7 @@ const managerCommunities = computed(() =>
 )
 
 const cancel = async (event: BokudeliEvent, order: EventOrder) => {
-  cancelOperatingOrder.value = order
+  cancelOperatingOrderId.value = order.order_id
   try {
     if (event.event_payment == 'user_advance' && order.payment_intent) {
       // user_advance はstripeの支払いの場合
@@ -134,7 +134,7 @@ const cancel = async (event: BokudeliEvent, order: EventOrder) => {
     console.error(error)
     Object.assign(notification, { message: $t('user.cancel_failed'), color: 'error' })
   } finally {
-    cancelOperatingOrder.value = null
+    cancelOperatingOrderId.value = null
   }
 }
 
@@ -187,7 +187,7 @@ const downloadInvoice = async (order: EventOrder) => {
                 </router-link>
 
                 <div
-                  v-if="toRaw(cancelOperatingOrder) === order"
+                  v-if="cancelOperatingOrderId === order.order_id"
                   class="progress-container d-flex justify-center align-center"
                 >
                   <v-progress-circular :indeterminate="true" size="large" />
