@@ -90,6 +90,8 @@ export default {
     order_completed: '注文を完了しました。',
     payment_failed: '決済処理に失敗しました。サポートにお問い合わせください。',
     order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
+    update_failed: '個数の更新に失敗しました。',
+    delete_failed: '削除に失敗しました。',
     confirm_order_credit_card: 'クレジットカードでのお支払いに進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
