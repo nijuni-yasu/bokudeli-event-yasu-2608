@@ -28,18 +28,16 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
+import { DeleteOrderMenuRequest } from '@shokujii/common/apis/order.js'
 
 const add_order = httpsCallable<Partial<EventOrder>, { order_id: string }>(functions, 'add_order')
-const delete_order = httpsCallable<{ community_id: string; event_id: string; order_id: string; menu_id: string }>(
-  functions,
-  'delete_order',
-)
 const update_order_status = httpsCallable<{
   community_id: string
   event_id: string
   order_id: string
   status: EventOrder['status']
 }>(functions, 'update_order_status')
+const deleteOrderMenu = httpsCallable<DeleteOrderMenuRequest, void>(functions, 'deleteOrderMenu')
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -256,7 +254,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       order: { community_id: string; event_id: string; order_id: string },
       menu_id: string,
     ): Promise<void> => {
-      await delete_order({ ...order, menu_id })
+      await deleteOrderMenu({ ...order, menu_id })
     }
 
     const updateOrderStatus = async (

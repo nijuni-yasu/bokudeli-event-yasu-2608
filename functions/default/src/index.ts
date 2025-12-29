@@ -26,7 +26,8 @@ export const {
   onEventChanged,
   makeShopSnapshotToEvent,
   pollingTask,
-  requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders
+  requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
+  deleteOrderMenu
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -40,4 +41,5 @@ export const {
   import('./eventSnapshot.js'),
   import('./pollingTask.js'),
   import('./user.js'),
+  import('./orders.js'),
 ])))
