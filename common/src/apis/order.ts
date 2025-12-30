@@ -1,4 +1,4 @@
-export type UpdateOrderMenuCountRequest = {
+export type UpdateMenuCountInCartRequest = {
   community_id: string
   event_id: string
   order_id: string
@@ -6,7 +6,7 @@ export type UpdateOrderMenuCountRequest = {
   count: number // 1以上の整数（上限なし）
 }
 
-export type DeleteOrderMenuRequest = {
+export type DeleteMenuInCartRequest = {
   community_id: string
   event_id: string
   order_id: string

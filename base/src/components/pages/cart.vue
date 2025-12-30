@@ -176,7 +176,7 @@ const startDeleteProcess = async () => {
   isDeleteProcessing.value = true
   try {
     const eventStore = useEventStore(event.event_id) as EventStore
-    await eventStore.deleteOrder(order, menu.menu_id)
+    await eventStore.deleteMenuInCart(order, menu.menu_id)
     alertBody.value = $t('cart.removed_from_cart')
   } catch (error) {
     console.error('Failed to delete menu:', error)
@@ -205,7 +205,7 @@ const updateMenuCount = async (event: BokudeliEvent, order: EventOrder, menu: Or
   menuUpdatingStates.value[menuKey] = true
   const eventStore = useEventStore(event.event_id) as EventStore
   try {
-    await eventStore.updateMenuCount(order, menu.menu_id, count)
+    await eventStore.updateMenuCountInCart(order, menu.menu_id, count)
   } catch (error) {
     console.error('Failed to update menu count:', error)
     alertBody.value = $t('cart.update_failed')

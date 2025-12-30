@@ -27,7 +27,7 @@ export const {
   makeShopSnapshotToEvent,
   pollingTask,
   requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
-  updateOrderMenuCount, deleteOrderMenu
+  updateMenuCountInCart, deleteMenuInCart
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),

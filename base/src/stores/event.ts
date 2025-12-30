@@ -28,7 +28,7 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import { UpdateOrderMenuCountRequest, DeleteOrderMenuRequest } from '@shokujii/common/apis/order.js'
+import { UpdateMenuCountInCartRequest, DeleteMenuInCartRequest } from '@shokujii/common/apis/order.js'
 
 const add_order = httpsCallable<Partial<EventOrder>, { order_id: string }>(functions, 'add_order')
 const update_order_status = httpsCallable<{
@@ -37,8 +37,8 @@ const update_order_status = httpsCallable<{
   order_id: string
   status: EventOrder['status']
 }>(functions, 'update_order_status')
-const updateOrderMenuCount = httpsCallable<UpdateOrderMenuCountRequest, void>(functions, 'updateOrderMenuCount')
-const deleteOrderMenu = httpsCallable<DeleteOrderMenuRequest, void>(functions, 'deleteOrderMenu')
+const _updateMenuCountInCart = httpsCallable<UpdateMenuCountInCartRequest, void>(functions, 'updateMenuCountInCart')
+const _deleteMenuInCart = httpsCallable<DeleteMenuInCartRequest, void>(functions, 'deleteMenuInCart')
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -251,19 +251,19 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return response.data.order_id
     }
 
-    const updateMenuCount = async (
+    const updateMenuCountInCart = async (
       order: { community_id: string; event_id: string; order_id: string },
       menu_id: string,
       count: number,
     ): Promise<void> => {
-      await updateOrderMenuCount({ ...order, menu_id, count })
+      await _updateMenuCountInCart({ ...order, menu_id, count })
     }
 
-    const deleteOrder = async (
+    const deleteMenuInCart = async (
       order: { community_id: string; event_id: string; order_id: string },
       menu_id: string,
     ): Promise<void> => {
-      await deleteOrderMenu({ ...order, menu_id })
+      await _deleteMenuInCart({ ...order, menu_id })
     }
 
     const updateOrderStatus = async (
@@ -403,8 +403,8 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       updateEvent,
       updateCoverImage,
       addOrder,
-      updateMenuCount,
-      deleteOrder,
+      updateMenuCountInCart,
+      deleteMenuInCart,
       updateOrderStatus,
       deleteEvent,
       subscribe,

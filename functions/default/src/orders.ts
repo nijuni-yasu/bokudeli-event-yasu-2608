@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { getFirestore } from 'firebase-admin/firestore'
-import { UpdateOrderMenuCountRequest, DeleteOrderMenuRequest } from '@shokujii/common/apis/order.js'
+import { UpdateMenuCountInCartRequest, DeleteMenuInCartRequest } from '@shokujii/common/apis/order.js'
 import { getOrder, saveOrder, deleteOrder } from './stores/order.js'
 
 const db = getFirestore()
@@ -31,7 +31,7 @@ const db = getFirestore()
  * @returns メニュー個数の更新または注文削除が完了したら解決される Promise
  */
 
-export const updateOrderMenuCount = onCall<UpdateOrderMenuCountRequest, Promise<void>>(async (request) => {
+export const updateMenuCountInCart = onCall<UpdateMenuCountInCartRequest, Promise<void>>(async (request) => {
   // 認証チェック
   const uid = request.auth?.uid
   if (uid == null) {
@@ -109,7 +109,7 @@ export const updateOrderMenuCount = onCall<UpdateOrderMenuCountRequest, Promise<
  * @returns メニュー削除または注文削除が完了したら解決される Promise
  */
 
-export const deleteOrderMenu = onCall<DeleteOrderMenuRequest, Promise<void>>(async (request) => {
+export const deleteMenuInCart = onCall<DeleteMenuInCartRequest, Promise<void>>(async (request) => {
   // 認証チェック
   const uid = request.auth?.uid
   if (uid == null) {
@@ -138,11 +138,11 @@ export const deleteOrderMenu = onCall<DeleteOrderMenuRequest, Promise<void>>(asy
       throw new HttpsError('invalid-argument', 'カート内の注文ではありません')
     }
 
-    // 個数が0になった場合はメニューを削除
+    // 指定されたメニューIDを配列から除外する
     const filteredMenus = order.menus.filter((m) => m.menu_id !== menu_id)
 
     if (filteredMenus.length === 0) {
-      // 全てのメニューが0個になった場合は注文を削除
+      // 全てのメニューが0個になった場合はドキュメントを削除する
       await deleteOrder(community_id, event_id, order_id, transaction)
     } else {
       // メニューを更新
