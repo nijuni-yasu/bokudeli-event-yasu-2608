@@ -1,3 +1,5 @@
+import type { EventOrder, EventOrderStatusType } from '../schemas/EventOrder.js'
+
 export type UpdateMenuCountInCartRequest = {
   community_id: string
   event_id: string
@@ -11,4 +13,17 @@ export type DeleteMenuInCartRequest = {
   event_id: string
   order_id: string
   menu_id: string
+}
+
+export type AddOrderRequest = Partial<EventOrder>
+
+export type AddOrderResponse = {
+  order_id: string
+}
+
+export type UpdateOrderStatusRequest = {
+  community_id: string
+  event_id: string
+  order_id: string
+  status: EventOrderStatusType
 }

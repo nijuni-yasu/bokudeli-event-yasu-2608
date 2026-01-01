@@ -1,6 +1,5 @@
 import { ref, computed, watch, toRaw } from 'vue'
 import { defineStore } from 'pinia'
-import { httpsCallable } from 'firebase/functions'
 import {
   collection,
   collectionGroup,
@@ -20,7 +19,7 @@ import {
   type QueryDocumentSnapshot,
   type SnapshotOptions,
 } from 'firebase/firestore'
-import { db, functions } from '@shokujii/base/firebase.js'
+import { db } from '@shokujii/base/firebase.js'
 import { uploadEventImage } from '@shokujii/base/composable/uploadImage.js'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
@@ -28,17 +27,13 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import { UpdateMenuCountInCartRequest, DeleteMenuInCartRequest } from '@shokujii/common/apis/order.js'
-
-const add_order = httpsCallable<Partial<EventOrder>, { order_id: string }>(functions, 'add_order')
-const update_order_status = httpsCallable<{
-  community_id: string
-  event_id: string
-  order_id: string
-  status: EventOrder['status']
-}>(functions, 'update_order_status')
-const _updateMenuCountInCart = httpsCallable<UpdateMenuCountInCartRequest, void>(functions, 'updateMenuCountInCart')
-const _deleteMenuInCart = httpsCallable<DeleteMenuInCartRequest, void>(functions, 'deleteMenuInCart')
+import { UpdateMenuCountInCartRequest, DeleteMenuInCartRequest, AddOrderRequest } from '@shokujii/common/apis/order.js'
+import {
+  addOrder as _addOrder,
+  updateOrderStatus as _updateOrderStatus,
+  updateMenuCountInCart as _updateMenuCountInCart,
+  deleteMenuInCart as _deleteMenuInCart,
+} from '@shokujii/base/apis/order.js'
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -246,8 +241,8 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return await updateDoc(eventRef, data)
     }
 
-    const addOrder = async (data: Partial<EventOrder>): Promise<string> => {
-      const response = await add_order(data)
+    const addOrder = async (data: AddOrderRequest): Promise<string> => {
+      const response = await _addOrder(data)
       return response.data.order_id
     }
 
@@ -270,7 +265,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       order: { community_id: string; event_id: string; order_id: string },
       status: EventOrder['status'],
     ): Promise<void> => {
-      await update_order_status({ ...order, status })
+      await _updateOrderStatus({ ...order, status })
     }
 
     const deleteEvent = async (): Promise<void> => {
