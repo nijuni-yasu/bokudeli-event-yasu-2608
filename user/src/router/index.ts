@@ -40,8 +40,9 @@ const isLoginRequired = (path: string) => {
 export const setupRouter = (router: Router) => {
   onAuthStateChanged(getAuth(), (user) => {
     const path = router.currentRoute.value.path
+    const fullPath = router.currentRoute.value.fullPath
     if (user == null && isLoginRequired(path)) {
-      router.replace('/')
+      router.replace({ path: '/login', state: { redirect: fullPath } })
     }
   })
 
@@ -203,14 +204,8 @@ export const setupRouter = (router: Router) => {
       // Do nothing
     }
     if (user == null) {
-      // /c/{communityId}/invites のみ '/login' にリダイレクトするが
-      // 他の isLoginRequired も '/login' にリダイレクトしたほうが良いかもしれない
-      // TODO: 仕様検討
-      const paths = to.path.split('/')
-      if (paths[1] === 'c' && paths[3] === 'invites') {
+      if (isLoginRequired(to.path)) {
         return { path: '/login', state: { redirect: to.fullPath } }
-      } else if (isLoginRequired(to.path)) {
-        return (to.query?.redirect as string) ?? '/'
       }
     } else {
       if (['/login', '/inapp-login'].includes(to.path)) {
