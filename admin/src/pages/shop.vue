@@ -237,10 +237,52 @@ const submit = async () => {
     isSaving.value = false
   }
 }
+
+/**
+ * 営業時間のバリデーション
+ * ここで formRef をとるのはベストとは言えない
+ * 本来なら別コンポーネントにするか UI そのものを修正すべき TODO
+ */
+const formRef = ref()
+watch(
+  () => shop.value.shop_time,
+  () => {
+    formRef.value?.validate()
+  },
+  { deep: true },
+)
+
+watch(
+  () => shop.value.shop_range_min_orders,
+  () => {
+    formRef.value?.validate()
+  },
+  { deep: true },
+)
+
+// 終了時刻が開始時刻より後になっているかどうかをバリデーション
+const shopEndTimeValidator = (isOpen: boolean, time_start: number | null, time_end: number | null) =>
+  isOpen && time_start != null && time_end != null && time_end <= time_start ? $t('shop.time_end_after_start') : true
+
+// 第2部の開始時刻が第1部の終了時刻より後になっているかどうかをバリデーション
+const shopStartTime2Validator = (isOpen: boolean, time_end: number | null, time_start2: number | null) =>
+  isOpen && time_end != null && time_start2 != null && time_start2 <= time_end ? $t('shop.time_start2_after_end') : true
+
+// 第2部の開始時刻と終了時刻が両方入力されているかどうかをバリデーション
+// currentValue: 現在のフィールドの値、otherValue: もう一方のフィールドの値
+const shopTime2PairValidator = (isOpen: boolean, otherValue: number | null) => (currentValue: number | null) =>
+  isOpen && currentValue == null && otherValue != null ? $t('shop.time2_pair_required') : true
+
+// 配送距離と注文最小個数が両方入力されているかどうかをバリデーション
+const shopRangePairValidator = (min_orders: number | null, range: number | null) =>
+  range == null && min_orders != null ? $t('shop.range_min_orders_pair_required') : true
+
+const minOrdersPairValidator = (range: number | null, min_orders: number | null) =>
+  min_orders == null && range != null ? $t('shop.range_min_orders_pair_required') : true
 </script>
 
 <template>
-  <v-form v-model="isValid" @submit.prevent="submit">
+  <v-form v-model="isValid" @submit.prevent="submit" ref="formRef">
     <v-row class="justify-center">
       <v-col cols="12" sm="12" md="9" class="px-0">
         <v-card class="mb-10" flat>
@@ -413,6 +455,7 @@ const submit = async () => {
                       shop.shop_range_min_orders[i - 2]?.min_orders == null ||
                       shop.shop_range_min_orders[i - 2].min_orders == SHOP_MIN_ORDERS_ARRAY_MAX)
                   "
+                  :rules="[shopRangePairValidator.bind(null, shop.shop_range_min_orders[i - 1].min_orders)]"
                 />
               </v-col>
               <v-col cols="6">
@@ -442,6 +485,7 @@ const submit = async () => {
                       shop.shop_range_min_orders[i - 2]?.min_orders == null ||
                       shop.shop_range_min_orders[i - 2].min_orders == SHOP_MIN_ORDERS_ARRAY_MAX)
                   "
+                  :rules="[minOrdersPairValidator.bind(null, shop.shop_range_min_orders[i - 1].range)]"
                 />
               </v-col>
             </v-row>
@@ -458,55 +502,73 @@ const submit = async () => {
             <v-icon size="40" class="text--primary me-3" :icon="mdiClockOutline" />
             <span>{{ $t('shop.time') }}</span>
           </template>
-          <v-card-text v-for="(item, i) of shop.shop_time" :key="`shop_time_${i}`">
-            <v-table>
-              <tr>
-                <td style="padding: 12px"><v-switch v-model="item.is_open" :label="dayOfWeek[i]" /></td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_start"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY1"
-                    outlined
-                    dense
-                    :label="$t('shop.time_start', ['1'])"
-                  />
-                </td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_end"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY1"
-                    outlined
-                    dense
-                    :label="$t('shop.time_end', ['1'])"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td></td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_start2"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY2"
-                    outlined
-                    dense
-                    :label="$t('shop.time_start', ['2'])"
-                  />
-                </td>
-                <td style="padding: 12px">
-                  <v-select
-                    v-model="item.time_end2"
-                    :disabled="!item.is_open"
-                    :items="SHOP_TIME_ARRAY2"
-                    outlined
-                    dense
-                    :label="$t('shop.time_end', ['2'])"
-                  />
-                </td>
-              </tr>
-            </v-table>
+          <v-card-text v-for="(item, i) of shop.shop_time" :key="`shop_time_${i}`" class="mt-6">
+            <!-- 1行目: v-switch(2) + 第1部(開始/終了) -->
+            <v-row class="align-start mb-2">
+              <v-col cols="12" sm="3">
+                <v-switch v-model="item.is_open" :label="dayOfWeek[i]" />
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_start"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY1"
+                  outlined
+                  dense
+                  :label="$t('shop.time_start', ['1'])"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_end"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY1"
+                  outlined
+                  dense
+                  :label="$t('shop.time_end', ['1'])"
+                  :rules="[shopEndTimeValidator.bind(null, item.is_open, item.time_start)]"
+                />
+              </v-col>
+            </v-row>
+
+            <!-- 2行目: オフセット(2) + 第2部(開始/終了) -->
+            <v-row class="align-start">
+              <v-col cols="12" sm="3">
+                <!-- 2行目は見た目上のオフセットだけなので空 -->
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_start2"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY2"
+                  outlined
+                  dense
+                  :label="$t('shop.time_start', ['2'])"
+                  :rules="[
+                    shopStartTime2Validator.bind(null, item.is_open, item.time_end),
+                    shopTime2PairValidator(item.is_open, item.time_end2),
+                  ]"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="item.time_end2"
+                  :disabled="!item.is_open"
+                  :items="SHOP_TIME_ARRAY2"
+                  outlined
+                  dense
+                  :label="$t('shop.time_end', ['2'])"
+                  :rules="[
+                    shopEndTimeValidator.bind(null, item.is_open, item.time_start2),
+                    shopTime2PairValidator(item.is_open, item.time_start2),
+                  ]"
+                />
+              </v-col>
+            </v-row>
           </v-card-text>
           <v-card-text class="hint-text">
             <div v-html="$t('shop.time_hint')"></div>

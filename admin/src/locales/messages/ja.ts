@@ -122,6 +122,10 @@ export default {
     time: '営業曜日・配送時間',
     time_start: '開始時刻（第{0}部）',
     time_end: '終了時刻（第{0}部）',
+    time_end_after_start: '開始時刻より後にしてください',
+    time_start2_after_end: '第1部の終了時刻より後にしてください',
+    time2_pair_required: '第2部の開始時刻と終了時刻は、両方入力するか、両方未入力にしてください',
+    range_min_orders_pair_required: '配送距離と注文最小個数は、セットで入力してください',
     time_hint: `※ 営業曜日と配送時間を設定してください。<br />
                   ※ 「10:00~14:00」「17:00~22:00」のように2部に分けて設定することも可能です。<br />`,
     deadline_datetime: '注文期限',
