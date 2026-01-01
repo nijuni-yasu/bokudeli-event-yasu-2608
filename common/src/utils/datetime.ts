@@ -8,31 +8,23 @@ const DEFAULT_LOCALE = 'ja'
 export const hourList = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
 export const minutesList = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'))
 
-export function convertToDateWeekdayShort(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
-  if (millis == null) {
-    return undefined
-  }
+export function convertToDateWeekdayShort(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd (ccc)')
 }
 
-export function convertToDate(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
-  if (millis == null) {
-    return undefined
-  }
+export function convertToDate(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd')
 }
 
-export function convertToJustDate(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
-  if (millis == null) {
-    return undefined
-  }
+export function convertToJustDate(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('MM/dd')
 }
 
-export function convertToDatetimeWeekdayShort(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
-  if (millis == null) {
-    return undefined
-  }
+export function convertToDatetimeWeekdayShort(
+  millis: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
 }
 
@@ -81,25 +73,19 @@ export function convertToDuration(
   endMillis: number,
   zone = DEFAULT_TIME_ZONE,
   locale = DEFAULT_LOCALE,
-) {
-  if (startMillis == null || endMillis == null) {
-    return undefined
-  }
+): string {
   const start = DateTime.fromMillis(startMillis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
   const end = DateTime.fromMillis(endMillis, { zone, locale }).toFormat('HH:mm')
   return `${start}〜${end}`
 }
 
-export function getLastDayOfNextMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
-  if (millis == null) {
-    return undefined
-  }
-  return DateTime.fromMillis(millis, { zone, locale }).plus({ month: 1 }).endOf('month')
+export function getLastDayOfNextMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): number {
+  return DateTime.fromMillis(millis, { zone, locale }).plus({ month: 1 }).endOf('month').toMillis()
 }
 
-export function getStartOfDay(millis: number, zone = DEFAULT_TIME_ZONE) {
+export function getStartOfDay(millis: number, zone = DEFAULT_TIME_ZONE): number {
   return DateTime.fromMillis(millis, { zone }).startOf('day').toMillis()
 }
 
-export const convertDateToId = (millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) =>
+export const convertDateToId = (millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string =>
   DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyyMMddHHmmss')

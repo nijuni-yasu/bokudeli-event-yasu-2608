@@ -95,16 +95,16 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
       const eventEndTime = event.event_end_datetime
       const eventDeadlineTime = event.event_deadline_datetime
 
-      const event_datetime = convertToDuration(eventStartTime, eventEndTime) || ''
-      const event_deadline_datetime = convertToDatetimeWeekdayShort(eventDeadlineTime) || ''
+      const event_datetime = convertToDuration(eventStartTime, eventEndTime)
+      const event_deadline_datetime = convertToDatetimeWeekdayShort(eventDeadlineTime)
 
       templateData.events.push({
-        event_name: event.event_name || '',
-        event_address: event.event_address || '',
-        event_place: event.event_place || '',
+        event_name: event.event_name,
+        event_address: event.event_address,
+        event_place: event.event_place,
         event_datetime,
         event_deadline_datetime,
-        event_desc: convertTruncateText(event.event_desc || '', 250),
+        event_desc: convertTruncateText(event.event_desc, 250),
         event_url: getEventUrl(event.community_account, event.id),
         event_cover_url: event.event_cover_url,
         shop_name: event.shop_name,

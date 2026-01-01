@@ -149,7 +149,7 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         if (event) {
           eventData.event_name = event.event_name
           eventData.event_url = getEventUrl(communityAccount, letter.event_id)
-          eventData.event_date = convertToDateWeekdayShort(event.event_start_datetime) ?? null
+          eventData.event_date = convertToDateWeekdayShort(event.event_start_datetime)
         }
       }
 

@@ -25,11 +25,11 @@ export async function sendEventConcludedMailToMembers(start: number, end: number
   return Promise.all(
     events.map(async (event) => {
       const dynamic_template_data: EventConcludedTemplateData = {
-        date: convertToDateWeekdayShort(event.event_start_datetime) || '',
+        date: convertToDateWeekdayShort(event.event_start_datetime),
         event_name: event.event_name,
-        event_cover_url: event.event_cover_url || '',
+        event_cover_url: event.event_cover_url,
         event_url: getEventUrl(event.community_account, event.id),
-        is_public: event.is_public || false,
+        is_public: event.is_public,
       }
 
       try {
