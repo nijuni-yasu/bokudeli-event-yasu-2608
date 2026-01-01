@@ -30,7 +30,11 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
 
 const isLoginRequired = (path: string) => {
   const paths = path.split('/')
-  return ['/profile', '/register/complete', '/register/email'].includes(path) || paths[1] === 'manage'
+  return (
+    ['/profile', '/register/complete', '/register/email'].includes(path) ||
+    paths[1] === 'manage' ||
+    (paths[1] === 'c' && paths[3] === 'invites')
+  )
 }
 
 export const setupRouter = (router: Router) => {
@@ -42,11 +46,11 @@ export const setupRouter = (router: Router) => {
   })
 
   router.afterEach((to, from) => {
-    if (['/login', '/inapp-login'].includes(to.path)) {
-      const redirectPath = getRedirectPath(false)
-      if (redirectPath == null) {
-        setRedirectPath(from.path)
-      }
+    // 遷移先(to.path)が、ログインページまたはアプリ内ログインページの場合かつ、
+    // 遷移元(from.path)が、ログインページまたはアプリ内ログインページでない場合にのみ、リダイレクトのパスを保存する
+    // sessionStorageには、招待URLを考慮し、クエリパラメータも含めてfrom.fullPathで保存
+    if (['/login', '/inapp-login'].includes(to.path) && !['/login', '/inapp-login'].includes(from.path)) {
+      setRedirectPath(history.state?.redirect ?? from.fullPath)
     }
   })
 
@@ -199,7 +203,13 @@ export const setupRouter = (router: Router) => {
       // Do nothing
     }
     if (user == null) {
-      if (isLoginRequired(to.path)) {
+      // /c/{communityId}/invites のみ '/login' にリダイレクトするが
+      // 他の isLoginRequired も '/login' にリダイレクトしたほうが良いかもしれない
+      // TODO: 仕様検討
+      const paths = to.path.split('/')
+      if (paths[1] === 'c' && paths[3] === 'invites') {
+        return { path: '/login', state: { redirect: to.fullPath } }
+      } else if (isLoginRequired(to.path)) {
         return (to.query?.redirect as string) ?? '/'
       }
     } else {

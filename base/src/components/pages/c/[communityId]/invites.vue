@@ -1,67 +1,65 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { defineProps } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
-import { functions } from '@shokujii/base/firebase'
-import { httpsCallable } from 'firebase/functions'
-import LoginDialog from '@shokujii/base/components/LoginDialog.vue'
-import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { getManageCommunityPath } from '@/router/utils'
-
-const acceptInvitationForCommunityManager = httpsCallable(functions, 'acceptInvitationForCommunityManager')
+import { acceptInvitationForCommunityManager } from '@shokujii/base/apis/communityManager.js'
+import { useCommunityStore } from '@shokujii/base/stores/community'
 
 const props = defineProps<{
-  communityId: string
+  communityAccount: string
+  token: string
 }>()
 
-const route = useRoute()
-const router = useRouter()
-const isOpenLoginDialog = ref(false)
-const isOpenMessageDialog = ref(false)
+const emits = defineEmits<{
+  done: []
+}>()
+
+const { t } = useI18n()
+
+const communityStore = useCommunityStore(props.communityAccount)
+
+// notification を使用したいところだが、Manager ページはレイアウトが違うので notification がキャンセルされてしまう
+// TODO: そもそも invites が Manager ページにあるべきかもしれない。仕様を再検討
 const message = ref('')
-
-const redirect = () => {
-  router.push(getManageCommunityPath(props.communityId))
-}
-
-watch(
-  () => [useCurrentUserStore().firebaseUser, (useCommunityStore(props.communityId) as CommunityStore).community],
-  ([firebaseUser, community]) => {
-    if (firebaseUser == null) {
-      isOpenLoginDialog.value = true
-      return
+const isOpenMessageDialog = computed({
+  get: () => message.value !== '',
+  set: (value) => {
+    if (!value) {
+      message.value = ''
     }
-    const communityId = (community as BokudeliCommunity | null)?.community_id
-    if (communityId == null) {
-      return
-    }
-    acceptInvitationForCommunityManager({ communityId, token: route.query.t })
-      .then(() => {
-        message.value = '管理者になりました'
-        isOpenMessageDialog.value = true
-      })
-      .catch((error) => {
-        console.error(error)
-        message.value = '無効な URL です'
-        isOpenMessageDialog.value = true
-      })
-      .finally(() => {
-        window.setTimeout(redirect, 3000)
-      })
   },
-  { immediate: true },
-)
+})
+
+const done = () => emits('done')
+
+// ログイン状態は router で管理されているため、ここでログインチェックは不要
+
+try {
+  const roles = await communityStore.getCurrentUserRoles()
+  const isManager = roles?.includes('manager') ?? false
+  if (isManager) {
+    // 既に管理者の場合は、招待を受け入れずにメッセージを表示
+    message.value = t('community_membership.manager_invite_already_manager')
+  } else {
+    try {
+      await acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token: props.token })
+      message.value = t('community_membership.manager_invite_success')
+    } catch (error) {
+      console.error(error)
+      message.value = t('community_membership.manager_invite_invalid_url')
+    }
+  }
+} catch (error) {
+  console.error(error)
+  message.value = t('community_membership.manager_invite_error')
+} finally {
+  window.setTimeout(done, 3000)
+}
 </script>
 
 <template>
   <section>
-    <div>
-      <login-dialog v-model="isOpenLoginDialog" />
-    </div>
-    <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" onclick="redirect">
+    <confirm-dialog v-model="isOpenMessageDialog" :is-confirm="false" :onclick="done">
       {{ message }}
     </confirm-dialog>
     <div class="justify-center">
