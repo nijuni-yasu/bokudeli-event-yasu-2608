@@ -8,7 +8,7 @@ import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
 import { useNavItems } from '@/navigation'
 import type { Notification } from '@shokujii/base/types/index.js'
-import { getManagePath } from '@/router/utils'
+import { getManagePath, getLogin } from '@/router/utils'
 import { getAuth, type User } from 'firebase/auth'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
@@ -64,6 +64,9 @@ getAuth().onAuthStateChanged((user) => {
     <template #navbar-icons>
       <v-btn v-if="currentUser != null" class="me-4" :href="getManagePath()">
         {{ $t('navigation.new_event') }}
+      </v-btn>
+      <v-btn v-else class="me-4" variant="outlined" :to="getLogin()">
+        {{ $t('navigation.login') }}
       </v-btn>
       <UserProfile />
     </template>
