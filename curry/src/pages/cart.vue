@@ -134,7 +134,7 @@ const openDeleteConfirm = ref(false)
 const startDeleteProcess = async () => {
   const event = selectedCartEvent.value
   const eventStore = useEventStore(event.event_id) as EventStore
-  await eventStore.deleteOrder(selectedOrder.value, selectedMenu.value.menu_id)
+  await eventStore.deleteMenuInCart(selectedOrder.value, selectedMenu.value.menu_id)
   alertBody.value = $t('cart.removed_from_cart')
   state.cartList = await loadCartList()
 }

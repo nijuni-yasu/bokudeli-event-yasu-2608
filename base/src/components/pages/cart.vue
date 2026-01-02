@@ -10,7 +10,13 @@ import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
-import { mdiTrashCan, mdiHelpCircleOutline, mdiFoodForkDrink } from '@mdi/js'
+import {
+  mdiTrashCan,
+  mdiHelpCircleOutline,
+  mdiFoodForkDrink,
+  mdiPlusCircleOutline,
+  mdiMinusCircleOutline,
+} from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
 
@@ -70,6 +76,8 @@ const selectedOrder = ref<EventOrder | undefined>()
 const selectedCartEvent = ref<BokudeliEvent | undefined>()
 const selectedMenu = ref<OrderMenuType | undefined>()
 const isOrderProcessing = ref<boolean>(false)
+const menuUpdatingStates = ref<Record<string, boolean>>({})
+const isDeleteProcessing = ref<boolean>(false)
 
 const startOrderProcess = async () => {
   isOrderProcessing.value = true
@@ -165,16 +173,59 @@ const startDeleteProcess = async () => {
     console.error('Not selected')
     return
   }
-  const eventStore = useEventStore(event.event_id) as EventStore
-  await eventStore.deleteOrder(order, menu.menu_id)
-  alertBody.value = $t('cart.removed_from_cart')
+  isDeleteProcessing.value = true
+  try {
+    const eventStore = useEventStore(event.event_id) as EventStore
+    await eventStore.deleteMenuInCart(order, menu.menu_id)
+    alertBody.value = $t('cart.removed_from_cart')
+  } catch (error) {
+    console.error('Failed to delete menu:', error)
+    alertBody.value = $t('cart.delete_failed')
+  } finally {
+    isDeleteProcessing.value = false
+    openDeleteConfirm.value = false
+  }
 }
 
 const deleteMenuInCart = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
-  selectedCartEvent.value = event
-  selectedOrder.value = order
-  selectedMenu.value = menu
-  openDeleteConfirm.value = true
+  // 個数が1個の場合のみ削除確認ダイアログを表示
+  if (menu.count === 1) {
+    selectedCartEvent.value = event
+    selectedOrder.value = order
+    selectedMenu.value = menu
+    openDeleteConfirm.value = true
+  }
+}
+
+const updateMenuCount = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType, count: number) => {
+  const menuKey = `${order.order_id}_${menu.menu_id}`
+  if (menuUpdatingStates.value[menuKey]) {
+    return
+  }
+  menuUpdatingStates.value[menuKey] = true
+  const eventStore = useEventStore(event.event_id) as EventStore
+  try {
+    await eventStore.updateMenuCountInCart(order, menu.menu_id, count)
+  } catch (error) {
+    console.error('Failed to update menu count:', error)
+    alertBody.value = $t('cart.update_failed')
+  } finally {
+    menuUpdatingStates.value[menuKey] = false
+  }
+}
+
+const incrementMenuCount = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
+  await updateMenuCount(event, order, menu, menu.count + 1)
+}
+
+const decrementMenuCount = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
+  if (menu.count > 1) {
+    await updateMenuCount(event, order, menu, menu.count - 1)
+  }
+}
+
+const isMenuUpdating = (orderId: string, menuId: string) => {
+  return menuUpdatingStates.value[`${orderId}_${menuId}`] ?? false
 }
 
 const isOpenCancelpolicyDialog = ref(false)
@@ -250,22 +301,40 @@ const isOpenCancelpolicyDialog = ref(false)
                     <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.subtotal') }}</th>
-                    <th class="text-center" style="padding: 1px"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="menu in cartItem.order.menus" :key="menu.menu_id">
                     <td style="padding: 1px">{{ menu.name }}</td>
-                    <td style="padding: 1px">{{ menu.count }}</td>
-                    <td style="padding: 1px">¥{{ priceString(menu.price) }}</td>
                     <td style="padding: 1px">
-                      <v-btn
-                        :icon="mdiTrashCan"
-                        variant="text"
-                        @click="deleteMenuInCart(cartItem.event, cartItem.order, menu)"
-                      >
-                      </v-btn>
+                      <div class="d-flex align-center justify-center">
+                        <v-btn
+                          v-if="menu.count > 1"
+                          :icon="mdiMinusCircleOutline"
+                          variant="text"
+                          :loading="isMenuUpdating(cartItem.order.order_id, menu.menu_id)"
+                          @click="decrementMenuCount(cartItem.event, cartItem.order, menu)"
+                        >
+                        </v-btn>
+                        <v-btn
+                          v-else
+                          :icon="mdiTrashCan"
+                          variant="text"
+                          :loading="isDeleteProcessing"
+                          @click="deleteMenuInCart(cartItem.event, cartItem.order, menu)"
+                        >
+                        </v-btn>
+                        <span class="mx-2">{{ menu.count }}</span>
+                        <v-btn
+                          :icon="mdiPlusCircleOutline"
+                          variant="text"
+                          :loading="isMenuUpdating(cartItem.order.order_id, menu.menu_id)"
+                          @click="incrementMenuCount(cartItem.event, cartItem.order, menu)"
+                        >
+                        </v-btn>
+                      </div>
                     </td>
+                    <td style="padding: 1px">¥{{ priceString(menu.price * menu.count) }}</td>
                   </tr>
                 </tbody>
               </v-table>
@@ -338,7 +407,12 @@ const isOpenCancelpolicyDialog = ref(false)
   >
     {{ confirmDialogMessage }}
   </ConfirmDialog>
-  <ConfirmDialog v-model="openDeleteConfirm" :is-confirm="true" :ok-click="startDeleteProcess">
+  <ConfirmDialog
+    v-model="openDeleteConfirm"
+    :is-confirm="true"
+    :ok-click="startDeleteProcess"
+    :ok-loading-state="isDeleteProcessing"
+  >
     {{ $t('cart.remove_from_cart') }}
   </ConfirmDialog>
   <ConfirmDialog v-model="isOpenAlert" :is-confirm="false">{{ alertMessage }}</ConfirmDialog>

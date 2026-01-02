@@ -63,41 +63,6 @@ export const add_order = functions.region('asia-northeast1').https.onCall(async 
   })
 })
 
-export const delete_order = functions.region('asia-northeast1').https.onCall(async (data, context) => {
-  const user_id = context.auth?.uid
-  if (user_id == null) {
-    throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.')
-  }
-
-  return db.runTransaction(async (transaction) => {
-    const orderRef = db
-      .collection('communities')
-      .doc(data.community_id)
-      .collection('events')
-      .doc(data.event_id)
-      .collection('orders')
-      .doc(data.order_id)
-    const orderSnapshot = await transaction.get(orderRef)
-    if (orderSnapshot == null || orderSnapshot.exists === false) {
-      throw new functions.https.HttpsError('not-found', `No order ${orderRef.path}`)
-    }
-    if (orderSnapshot.get('user_id') !== context.auth.uid) {
-      throw new functions.https.HttpsError('permission-denied', `Invalid user ${context.auth?.uid}`)
-    }
-    if (orderSnapshot.get('status') !== 'in_cart') {
-      throw new functions.https.HttpsError('invalid-argument', `Order ${orderRef.path} is not in_cart`)
-    }
-
-    const menus = orderSnapshot.get('menus').filter((m) => m.menu_id !== data.menu_id)
-    if (menus.length === 0) {
-      transaction.delete(orderRef)
-    } else {
-      const updated_at = Timestamp.now()
-      transaction.update(orderRef, { menus, updated_at })
-    }
-  })
-})
-
 export const update_order_status = functions.region('asia-northeast1').https.onCall(async (data, context) => {
   const user_id = context.auth?.uid
   if (user_id == null) {
