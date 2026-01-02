@@ -27,7 +27,7 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import { UpdateMenuCountInCartRequest, DeleteMenuInCartRequest, AddOrderRequest } from '@shokujii/common/apis/order.js'
+import { AddOrderRequest } from '@shokujii/common/apis/order.js'
 import {
   addOrder as _addOrder,
   updateOrderStatus as _updateOrderStatus,
