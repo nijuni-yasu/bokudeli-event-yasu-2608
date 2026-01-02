@@ -17,6 +17,7 @@ import { GENRE_ARRAY } from '@shokujii/common/schemas/PartnerShop.js'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const notification = useNotification()
 
@@ -156,32 +157,70 @@ const imageFile = ref<File | null>(null)
 
 const isValid = ref(false)
 
-const validatedPostalCode = ref<string | null>(null)
-watch(
+// 郵便番号検証と位置情報取得の状態管理
+const validatedPostalCode = ref<string | null>(null) // 位置情報取得に成功した郵便番号（成功時のみ値が入る）
+
+// エラーダイアログの状態管理
+const showPostalcodeErrorDialog = ref(false)
+const postalcodeErrorMessage = ref<string>('')
+
+// 郵便番号の連続入力時、古いリクエストが最新の値に影響しないようdebounceを適用
+watchDebounced(
   () => shop.value?.shop_postcode,
-  async () => {
-    if (shop.value == null) {
+  async (requestPostalCode) => {
+    if (requestPostalCode == null) {
       return
     }
-    const postalcode = shop.value.shop_postcode
-    if (requiredValidator(postalcode) !== true || postalCodeValidator(postalcode) !== true) {
-      validatedPostalCode.value = null
+
+    // 必須チェックと郵便番号の形式チェック（7桁の数字）
+    if (requiredValidator(requestPostalCode) !== true || postalCodeValidator(requestPostalCode) !== true) {
       return
     }
-    const location = await fetchLocationByPostalcode(postalcode as string)
-    if (location?.address == null) {
-      validatedPostalCode.value = null
-      return
+
+    // 検証済み郵便番号と緯度経度をリセット
+    validatedPostalCode.value = null
+    shop.value.shop_address_latitude = undefined
+    shop.value.shop_address_longitude = undefined
+
+    try {
+      // 郵便番号から位置情報を取得（PostcodeJP API 呼び出し）
+      const location = await fetchLocationByPostalcode(requestPostalCode)
+
+      // レスポンスが返ってきた時点で、現在の郵便番号と一致するか確認
+      // レースコンディション対策: 古いリクエストの結果を無視する
+      if (shop.value.shop_postcode !== requestPostalCode) {
+        return
+      }
+
+      // 位置情報が取得できなかった場合
+      if (location?.address == null) {
+        postalcodeErrorMessage.value = $t('shop.postalcode_error_not_found')
+        showPostalcodeErrorDialog.value = true
+        return
+      }
+
+      // 位置情報が取得できた場合、検証済み郵便番号と緯度経度を更新
+      validatedPostalCode.value = requestPostalCode
+      shop.value.shop_address_latitude = location.latitude
+      shop.value.shop_address_longitude = location.longitude
+
+      // 既に同じ住所が入力されている場合は処理をスキップ
+      if (shop.value.shop_address?.startsWith(location.address) ?? false) {
+        return
+      }
+      shop.value.shop_address = location.address
+    } catch (error) {
+      // レスポンスが返ってきた時点で、現在の郵便番号と一致するか確認
+      if (shop.value.shop_postcode !== requestPostalCode) {
+        return // 既に別の郵便番号が入力されている場合は処理をスキップ
+      }
+
+      postalcodeErrorMessage.value = $t('shop.postalcode_error_fetch')
+      showPostalcodeErrorDialog.value = true
+      console.error('Error fetching postal code data:', error)
     }
-    validatedPostalCode.value = postalcode ?? null
-    if (shop.value.shop_address?.startsWith(location.address) ?? false) {
-      return
-    }
-    shop.value.shop_address_latitude = location.latitude
-    shop.value.shop_address_longitude = location.longitude
-    shop.value.shop_address = location.address
   },
-  { immediate: true },
+  { debounce: 500, immediate: true },
 )
 
 const hasInvoice = computed({
@@ -224,6 +263,14 @@ watch(
   },
   { immediate: true },
 )
+
+const handlePostalCodeErrorDialogOk = () => {
+  if (shop.value != null) {
+    shop.value.shop_postcode = ''
+    shop.value.shop_address = ''
+  }
+  showPostalcodeErrorDialog.value = false
+}
 
 const submit = async () => {
   isSaving.value = true
@@ -699,6 +746,16 @@ const minOrdersPairValidator = (range: number | null, min_orders: number | null)
       </v-col>
     </v-row>
   </v-form>
+
+  <!-- エラーダイアログ -->
+  <ConfirmDialog
+    v-model="showPostalcodeErrorDialog"
+    :title="$t('shop.postalcode_error_title')"
+    ok-text="OK"
+    :ok-click="handlePostalCodeErrorDialogOk"
+  >
+    {{ postalcodeErrorMessage }}
+  </ConfirmDialog>
 </template>
 <style lang="css" scoped>
 .hint-text {

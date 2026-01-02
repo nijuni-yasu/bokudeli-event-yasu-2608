@@ -111,6 +111,11 @@ export default {
     image_hint: '※店舗画像の推奨サイズは600x315pxです。',
     base_point: '配送中心地',
     base_point_hint: '※配送中心地は、店舗の郵便番号<span class="text-h3">{0}</span>をもとに自動算出しています。',
+    postalcodet_error_fetch:
+      '郵便番号から位置情報を取得する際にエラーが発生しました。しばらく時間をおいて再度お試しください。',
+    postalcode_error_not_found:
+      '入力された郵便番号から位置情報を取得できませんでした。郵便番号が正しいかご確認ください。',
+    postalcode_error_title: '郵便番号取得エラー',
     range_min_orders: '配送距離＆注文最小個数',
     range: '配送距離(半径km)',
     min_orders: '注文最小個数',
