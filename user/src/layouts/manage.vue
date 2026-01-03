@@ -57,7 +57,7 @@ const isNotificationShown = computed({
     "
   >
     <template #navbar-icons>
-      <v-btn class="me-4" href="/"> {{ $t('navigation.home') }}</v-btn>
+      <v-btn class="me-4" to="/"> {{ $t('navigation.home') }}</v-btn>
       <UserProfile />
     </template>
     <template #footer>
