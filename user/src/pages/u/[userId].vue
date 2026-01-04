@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { db } from '@shokujii/base/firebase.js'
-import { collectionGroup, doc, getDocs, orderBy, query, where, limit, collection } from 'firebase/firestore'
+import { doc, getDocs, orderBy, query, where, limit, collection } from 'firebase/firestore'
 import { useRoute } from 'vue-router'
 import UserBioPanel from '@shokujii/base/components/UserBioPanel.vue'
 import UserEventCard from '@shokujii/base/components/UserEventCard.vue'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
+import { useOrderListByUserId } from '@shokujii/base/stores/orderList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
@@ -51,7 +52,7 @@ const { user } = storeToRefs(useUserStore(userId))
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const tabs = ref(null)
-const cancelOperatingOrder = ref<EventOrder | null>(null)
+const cancelOperatingOrderId = ref<string | null>(null)
 
 const isOwner = computed(() => {
   const uid = firebaseUser.value?.uid
@@ -59,20 +60,9 @@ const isOwner = computed(() => {
 })
 
 // オーダー情報の取得
-// TODO: 直接 firebase を叩くべきではないので、store を使えるようにする
-const fetchOrders = async () =>
-  getDocs(
-    query(
-      collectionGroup(db, 'orders'),
-      where('user_id', '==', userId),
-      where('status', '!=', 'in_cart'),
-      orderBy('updated_at', 'desc'),
-    ),
-  )
-const orderSnapshots = ref(await fetchOrders())
+const userOrderListStore = useOrderListByUserId(userId)
 const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() => {
-  return orderSnapshots.value.docs.flatMap((orderSnapshot) => {
-    const eventId = orderSnapshot.ref.parent.parent!.id
+  return (userOrderListStore.orders ?? []).flatMap(({ order, eventId }) => {
     const event = (useEventStore(eventId) as EventStore).event
     if (event == null) {
       return []
@@ -80,14 +70,7 @@ const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() =
     if (!isOwner.value && !event.is_public) {
       return []
     }
-    // TODO 直接 new するのではなく store を経由する
-    try {
-      const order = new EventOrder(eventId, orderSnapshot.id, orderSnapshot.data())
-      return { order, event }
-    } catch (err) {
-      console.error(err)
-      return []
-    }
+    return { order, event }
   })
 })
 
@@ -132,26 +115,26 @@ const managerCommunities = computed(() =>
 )
 
 const cancel = async (event: BokudeliEvent, order: EventOrder) => {
-  cancelOperatingOrder.value = order
+  cancelOperatingOrderId.value = order.order_id
   try {
     if (event.event_payment == 'user_advance' && order.payment_intent) {
       // user_advance はstripeの支払いの場合
       const stripeRefunds = httpsCallable(functions, 'stripe_refunds')
       await stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
-      orderSnapshots.value = await fetchOrders()
+      userOrderListStore.reload()
       notification.show($t('user.canceled'), 'success')
     } else if (event.event_payment == 'user_on_day' || event.event_payment == 'community_bill') {
       // それ以外は事前決済してないのでStripeの返金処理はなし
       const eventStore = useEventStore(order.event_id)
       await eventStore.updateOrderStatus(order, 'canceled')
-      orderSnapshots.value = await fetchOrders()
+      userOrderListStore.reload()
       notification.show($t('user.canceled'), 'success')
     }
   } catch (error) {
     console.error(error)
     Object.assign(notification, { message: $t('user.cancel_failed'), color: 'error' })
   } finally {
-    cancelOperatingOrder.value = null
+    cancelOperatingOrderId.value = null
   }
 }
 
@@ -204,12 +187,21 @@ const downloadInvoice = async (order: EventOrder) => {
                 </router-link>
 
                 <div
-                  v-if="toRaw(cancelOperatingOrder) === order"
+                  v-if="cancelOperatingOrderId === order.order_id"
                   class="progress-container d-flex justify-center align-center"
                 >
                   <v-progress-circular :indeterminate="true" size="large" />
                 </div>
               </div>
+            </v-col>
+          </v-row>
+          <v-row class="justify-center">
+            <v-col cols="auto">
+              <IncrementalLoader
+                :loaded-count="userOrderListStore.orders?.length ?? 0"
+                :total-count="userOrderListStore.totalCount ?? 0"
+                @load="userOrderListStore.next()"
+              />
             </v-col>
           </v-row>
         </v-window-item>
