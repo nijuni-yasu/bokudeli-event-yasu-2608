@@ -11,6 +11,7 @@ export default {
   navigation: {
     home: 'イベント参加',
     new_event: 'イベント開催',
+    login: 'ログイン',
     community: 'コミュニティ',
     about: 'shokujiiって？',
     magagine: 'マガジン',

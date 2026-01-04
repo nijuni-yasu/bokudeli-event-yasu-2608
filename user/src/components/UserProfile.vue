@@ -5,7 +5,7 @@ import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
-import { getLogin, getProfile } from '@/router/utils'
+import { getProfile } from '@/router/utils'
 
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
@@ -21,14 +21,6 @@ const user = computed(() => {
 
 const isOpenHomeButtonDialog = ref(false)
 
-const router = useRouter()
-
-const login = () => {
-  router.push({
-    path: getLogin(),
-  })
-}
-
 const isOpenLogoutDialog = ref(false)
 const handleLogoutDialog = () => {
   isOpenLogoutDialog.value = true
@@ -40,13 +32,13 @@ const logout = async () => {
 </script>
 
 <template>
-  <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
-    <UserAvatar :user="user" class="cursor-pointer">
+  <v-badge v-if="isLogin" dot location="bottom right" offset-x="3" offset-y="3" color="success">
+    <UserAvatar :user="user">
       <!-- SECTION Menu -->
       <v-menu activator="parent" width="230" location="bottom end" offset="14px">
         <v-list>
           <!-- 👉 User Avatar & Name -->
-          <v-list-item v-if="isLogin">
+          <v-list-item>
             <template #prepend>
               <v-list-item-action start>
                 <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
@@ -57,10 +49,10 @@ const logout = async () => {
 
             <v-list-item-title class="font-weight-medium">{{ user?.user_name }}</v-list-item-title>
           </v-list-item>
-          <v-divider v-if="isLogin" class="my-2" />
+          <v-divider class="my-2" />
 
           <!-- 👉 Profile -->
-          <v-list-item v-if="isLogin" :to="`/mypage`">
+          <v-list-item :to="`/mypage`">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
             </template>
@@ -68,20 +60,20 @@ const logout = async () => {
           </v-list-item>
 
           <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
+          <v-divider class="my-2" />
 
           <!-- 👉 cart -->
-          <v-list-item v-if="isLogin" :to="`/cart`">
+          <v-list-item :to="`/cart`">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
             </template>
             <v-list-item-title>カート</v-list-item-title>
           </v-list-item>
           <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
+          <v-divider class="my-2" />
 
           <!-- 👉 howto -->
-          <v-list-item v-if="isLogin" :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
+          <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
             </template>
@@ -89,10 +81,10 @@ const logout = async () => {
           </v-list-item>
 
           <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
+          <v-divider class="my-2" />
 
           <!-- 👉 Profile settings -->
-          <v-list-item v-if="isLogin" :to="getProfile()">
+          <v-list-item :to="getProfile()">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiCog" size="22" />
             </template>
@@ -100,10 +92,10 @@ const logout = async () => {
           </v-list-item>
 
           <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
+          <v-divider class="my-2" />
 
           <!-- 👉 homebutton -->
-          <v-list-item v-if="isLogin" @click="isOpenHomeButtonDialog = true">
+          <v-list-item @click="isOpenHomeButtonDialog = true">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiCellphoneArrowDown" size="22" />
             </template>
@@ -111,17 +103,10 @@ const logout = async () => {
           </v-list-item>
 
           <!-- Divider -->
-          <v-divider v-if="isLogin" class="my-2" />
+          <v-divider class="my-2" />
 
-          <!-- 👉 Login, Logout -->
-          <v-list-item v-if="!isLogin" @click="login">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiLogout" size="22" />
-            </template>
-
-            <v-list-item-title>ログイン</v-list-item-title>
-          </v-list-item>
-          <v-list-item v-else @click="handleLogoutDialog()">
+          <!-- 👉 Logout -->
+          <v-list-item @click="handleLogoutDialog()">
             <template #prepend>
               <v-icon class="me-2" :icon="mdiLogout" size="22" />
             </template>
