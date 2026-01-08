@@ -188,7 +188,7 @@ const downloadInvoice = async (order: EventOrder) => {
             <v-col cols="auto">
               <IncrementalLoader
                 :loaded-count="communityListStore.communityStores?.length ?? 0"
-                :total-count="communityListStore.totalCount ?? 0"
+                :total-count="communityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
                 @load="communityListStore.next()"
               />
             </v-col>

@@ -60,7 +60,7 @@ const events = computed(
       <v-row>
         <v-col cols="12" class="text-center">
           <IncrementalLoader
-            :total-count="eventListStore.totalCount ?? 0"
+            :total-count="eventListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
             :loaded-count="eventListStore.eventStores?.length ?? 0"
             @load="eventListStore.next()"
           />
