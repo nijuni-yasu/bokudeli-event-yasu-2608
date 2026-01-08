@@ -20,17 +20,17 @@ export type EventListStore = ReturnType<typeof useEventListStore>
 
 export const useEventListStore = (filters: QueryConstraint[] | null = null, pageSize: number = 3) => {
   const store = defineStore(filters == null ? 'eventList' : `eventList/${JSON.stringify(filters)}/${pageSize}`, () => {
-    const pagenationExecutor = new TaskExecutor(1)
+    const paginationExecutor = new TaskExecutor(1)
     const eventStores = ref<EventStore[] | null>(null)
     const totalCount = ref<number | null>(null)
 
     const eventsSnapsthot: QueryDocumentSnapshot<BokudeliEvent>[] = []
 
     const next = () => {
-      if (pagenationExecutor.totalTaskLength > 0 || filters == null) {
+      if (paginationExecutor.totalTaskLength > 0 || filters == null) {
         return
       }
-      pagenationExecutor.addTask(async () => {
+      paginationExecutor.addTask(async () => {
         if (totalCount.value == null) {
           const q = query(collectionGroup(db, 'events'), where('is_deleted', '==', false), ...filters)
           totalCount.value = (await getCountFromServer(q)).data().count

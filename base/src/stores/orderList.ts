@@ -27,7 +27,7 @@ export type OrderListStore = ReturnType<typeof useOrderListStore>
  */
 export const useOrderListStore = (storeId: string, filters: QueryConstraint[], pageSize: number = 6) => {
   const store = defineStore(`/orderList/${storeId}/${pageSize}`, () => {
-    const pagenationExecutor = new TaskExecutor(1)
+    const paginationExecutor = new TaskExecutor(1)
     const orders = ref<{ order: EventOrder; eventId: string }[] | null>(null)
     const totalCount = ref<number | null>(null)
 
@@ -35,10 +35,10 @@ export const useOrderListStore = (storeId: string, filters: QueryConstraint[], p
 
     const next = () => {
       // 既にタスクが実行中またはキューにある場合は、新しいタスクを追加しない
-      if (pagenationExecutor.totalTaskLength > 0) {
+      if (paginationExecutor.totalTaskLength > 0) {
         return
       }
-      pagenationExecutor.addTask(async () => {
+      paginationExecutor.addTask(async () => {
         try {
           if (totalCount.value == null) {
             const q = query(collectionGroup(db, 'orders'), ...filters)

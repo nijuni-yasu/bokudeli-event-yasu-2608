@@ -24,7 +24,7 @@ export type LetterListStore = ReturnType<typeof useLetterListStore>
 
 export const useLetterListStore = (communityAccount: string, pageSize: number = 3) => {
   const store = defineStore(`letterList/${communityAccount}/${pageSize}`, () => {
-    const pagenationExecutor = new TaskExecutor(1)
+    const paginationExecutor = new TaskExecutor(1)
     const letterStores = ref<LetterStore[] | null>(null)
     const totalCount = ref<number | null>(null)
 
@@ -42,10 +42,10 @@ export const useLetterListStore = (communityAccount: string, pageSize: number = 
     }
 
     const next = () => {
-      if (pagenationExecutor.totalTaskLength > 0) {
+      if (paginationExecutor.totalTaskLength > 0) {
         return
       }
-      pagenationExecutor.addTask(async () => {
+      paginationExecutor.addTask(async () => {
         if (totalCount.value == null) {
           totalCount.value = (await getCountFromServer(await getLettersRef())).data().count
         }
