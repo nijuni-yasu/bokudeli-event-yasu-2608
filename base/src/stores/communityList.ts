@@ -23,17 +23,17 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
   const store = defineStore(
     filters == null ? '/communityList' : `/communityList/${JSON.stringify(filters)}/${pageSize}`,
     () => {
-      const pagenationExecutor = new TaskExecutor(1)
+      const paginationExecutor = new TaskExecutor(1)
       const communityStores = ref<CommunityStore[] | null>(null)
       const totalCount = ref<number | null>(null)
 
       const communitiesSnapshot: QueryDocumentSnapshot<Community>[] = []
 
       const next = () => {
-        if (pagenationExecutor.totalTaskLength > 0 || filters == null) {
+        if (paginationExecutor.totalTaskLength > 0 || filters == null) {
           return
         }
-        pagenationExecutor.addTask(async () => {
+        paginationExecutor.addTask(async () => {
           if (totalCount.value == null) {
             const q = query(collection(db, 'communities'), ...filters)
             totalCount.value = (await getCountFromServer(q)).data().count
