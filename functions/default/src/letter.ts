@@ -136,7 +136,6 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         community_name: community.community_name,
         community_url: getCommunityUrl(communityAccount),
       }
-      let userIds: string[] = []
 
       // イベント情報の取得
       const eventData = {
@@ -154,9 +153,9 @@ export async function sendLetter(_: number, end: number): Promise<void> {
       }
 
       // レタータイプに応じてユーザーIDを取得
-      userIds = await getUserIdsByLetterType(type, communityId, letter.event_id)
+      const userIds = await getUserIdsByLetterType(type, communityId, letter.event_id)
 
-      // ユーザー情報の取得とメール送信
+      // ユーザー情報の取得
       const userInfos = await Promise.all(userIds.map(getUserEmailWithName))
       const validUserInfos = userInfos.filter((info): info is UserEmailWithName => info !== null)
 
@@ -166,29 +165,55 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         name: 'サポートアカウント',
       })
 
-      for (const userInfo of validUserInfos) {
-        const dynamicTemplateData = {
-          ...communityData,
-          ...eventData,
-          letter_title: letter.letter_title,
-          letter_content: letter.letter_content,
-          letter_type: type,
-          user_name: userInfo.name || 'ユーザー',
+      try {
+        // 送信直前に sent に更新（2重送信防止）
+        await updateSentStatus(ref, transaction)
+
+        // Promise.allSettled を使用して、一部失敗しても続行
+        const results = await Promise.allSettled(
+          validUserInfos.map(async (userInfo) => {
+            const dynamicTemplateData = {
+              ...communityData,
+              ...eventData,
+              letter_title: letter.letter_title,
+              letter_content: letter.letter_content,
+              letter_type: type,
+              user_name: userInfo.name || 'ユーザー',
+            }
+
+            return send({
+              to: userInfo.email,
+              from: DEFAULT_FROM,
+              replyTo: communityEmail,
+              subject: letter.letter_title,
+              templateId: LETTER_ID,
+              dynamicTemplateData,
+            })
+          }),
+        )
+
+        // 成功・失敗の集計
+        const successCount = results.filter((r) => r.status === 'fulfilled').length
+        const failedCount = results.filter((r) => r.status === 'rejected').length
+
+        // 失敗したメールの詳細をログ出力
+        if (failedCount > 0) {
+          console.warn(`Failed to send ${failedCount}/${validUserInfos.length} letters`, {
+            letterId: letter.id,
+            communityAccount,
+            successCount,
+            failedCount,
+            errors: results
+              .filter((r) => r.status === 'rejected')
+              .map((r) => (r as PromiseRejectedResult).reason?.message || r.reason),
+          })
+        } else {
+          console.warn(`Successfully sent letter ${letter.id} to ${successCount} recipients`)
         }
-
-        console.warn('Sending letter with data:', dynamicTemplateData)
-
-        await send({
-          to: userInfo.email,
-          from: DEFAULT_FROM,
-          replyTo: communityEmail,
-          subject: letter.letter_title,
-          templateId: LETTER_ID,
-          dynamicTemplateData,
-        })
+      } catch (error) {
+        // ステータス更新またはメール送信のエラー
+        console.error(`Failed to send letter ${letter.id} after status update:`, error)
       }
-
-      updateSentStatus(ref, transaction)
     })
 
     await Promise.all(sendLetterPromises)
