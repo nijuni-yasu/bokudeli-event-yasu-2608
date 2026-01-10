@@ -199,7 +199,7 @@ const downloadInvoice = async (order: EventOrder) => {
             <v-col cols="auto">
               <IncrementalLoader
                 :loaded-count="userOrderListStore.orders?.length ?? 0"
-                :total-count="userOrderListStore.totalCount ?? 0"
+                :total-count="userOrderListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
                 @load="userOrderListStore.next()"
               />
             </v-col>
@@ -221,7 +221,7 @@ const downloadInvoice = async (order: EventOrder) => {
             <v-col cols="auto">
               <IncrementalLoader
                 :loaded-count="memberCommunityListStore.communityStores?.length ?? 0"
-                :total-count="memberCommunityListStore.totalCount ?? 0"
+                :total-count="memberCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
                 @load="memberCommunityListStore.next()"
               />
             </v-col>
@@ -243,7 +243,7 @@ const downloadInvoice = async (order: EventOrder) => {
             <v-col cols="auto">
               <IncrementalLoader
                 :loaded-count="managerCommunityListStore.communityStores?.length ?? 0"
-                :total-count="managerCommunityListStore.totalCount ?? 0"
+                :total-count="managerCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
                 @load="managerCommunityListStore.next()"
               />
             </v-col>

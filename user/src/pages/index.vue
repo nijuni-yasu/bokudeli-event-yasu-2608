@@ -182,7 +182,7 @@ const next = () => {
       <v-row>
         <v-col cols="12" class="text-center">
           <IncrementalLoader
-            :total-count="(upcomingEventListStore.totalCount ?? Infinity) + (pastEventListStore.totalCount ?? Infinity)"
+            :total-count="(upcomingEventListStore.totalCount ?? Number.MAX_SAFE_INTEGER) + (pastEventListStore.totalCount ?? Number.MAX_SAFE_INTEGER)"
             :loaded-count="
               (upcomingEventListStore.eventStores?.length ?? 0) + (pastEventListStore.eventStores?.length ?? 0)
             "

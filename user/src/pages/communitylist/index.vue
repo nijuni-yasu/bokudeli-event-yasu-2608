@@ -31,7 +31,7 @@ const communities = computed(() => {
     <v-col cols="auto">
       <IncrementalLoader
         class="my-5"
-        :total-count="communityListStore.totalCount ?? 0"
+        :total-count="communityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
         :loaded-count="communities?.length ?? 0"
         @load="communityListStore.next()"
       />

@@ -277,7 +277,7 @@ const supports = [
           <v-col cols="auto">
             <IncrementalLoader
               class="my-5"
-              :total-count="communityListStore.totalCount ?? Infinity"
+              :total-count="communityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
               :loaded-count="communityListStore.communityStores?.length ?? 0"
               @load="communityListStore.next()"
             />
