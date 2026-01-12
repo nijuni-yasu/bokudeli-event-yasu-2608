@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
+import { logger } from 'firebase-functions'
 import { getFirestore, Transaction } from 'firebase-admin/firestore'
 import { sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
@@ -25,14 +26,14 @@ async function getCommunityMemberIds(communityId: string): Promise<string[]> {
   try {
     const community = await getCommunity(communityId)
     if (!community) {
-      console.warn(`Community not found: ${communityId}`)
+      logger.warn('Community not found', { communityId })
       return []
     }
 
     const members = await community.getMembers()
     return members.map((member) => member.id)
   } catch (error) {
-    console.error(`Error fetching community members: ${error}`)
+    logger.error('Error fetching community members', { communityId, error })
     throw error
   }
 }
@@ -43,20 +44,20 @@ async function getCommunityMemberIds(communityId: string): Promise<string[]> {
 async function getParticipantIds(eventId: string): Promise<string[]> {
   try {
     if (!eventId) {
-      console.warn('No event_id provided')
+      logger.warn('No event_id provided', { eventId })
       return []
     }
 
     const event = await getEvent(eventId)
     if (!event) {
-      console.warn(`Event not found: ${eventId}`)
+      logger.warn('Event not found', { eventId })
       return []
     }
 
     const orders = await event.getOrders('ordered')
     return orders.map((order) => order.user_id)
   } catch (error) {
-    console.error(`Error fetching event participants: ${error}`)
+    logger.error('Error fetching event participants', { eventId, error })
     throw error
   }
 }
@@ -77,7 +78,7 @@ async function getUserEmailWithName(userId: string): Promise<UserEmailWithName |
       name: user.user_name,
     }
   } catch (error) {
-    console.error(`Error fetching user email and name for ${userId}: ${error}`)
+    logger.error('Error fetching user email and name', { userId, error })
     return null
   }
 }
@@ -100,11 +101,11 @@ async function getUserIdsByLetterType(letterType: string, communityId: string, e
         return communityMemberIds.filter((id) => !participantIds.includes(id))
       }
       default:
-        console.warn(`Unknown letter type: ${letterType}`)
+        logger.warn('Unknown letter type', { letterType })
         return []
     }
   } catch (error) {
-    console.error(`Error fetching user IDs for letter type ${letterType}: ${error}`)
+    logger.error('Error fetching user IDs for letter type', { letterType, communityId, eventId, error })
     return []
   }
 }
@@ -119,14 +120,14 @@ export async function sendLetter(_: number, end: number): Promise<void> {
       const type = letter.letter_type
       const communityAccount = letter.community_account
       if (!communityAccount) {
-        console.warn('No community_account provided')
+        logger.warn('No community_account provided', { letterId: letter.id })
         return
       }
 
       const community = await getCommunityByAccount(communityAccount, transaction)
 
       if (!community) {
-        console.warn(`Community not found for account: ${communityAccount}`)
+        logger.warn('Community not found for account', { communityAccount, letterId: letter.id })
         return
       }
 
@@ -198,7 +199,7 @@ export async function sendLetter(_: number, end: number): Promise<void> {
 
         // 失敗したメールの詳細をログ出力
         if (failedCount > 0) {
-          console.warn(`Failed to send ${failedCount}/${validUserInfos.length} letters`, {
+          logger.warn(`Failed to send ${failedCount}/${validUserInfos.length} letters`, {
             letterId: letter.id,
             communityAccount,
             successCount,
@@ -208,11 +209,14 @@ export async function sendLetter(_: number, end: number): Promise<void> {
               .map((r) => (r as PromiseRejectedResult).reason?.message || r.reason),
           })
         } else {
-          console.warn(`Successfully sent letter ${letter.id} to ${successCount} recipients`)
+          logger.info(`Successfully sent letter to ${successCount} recipients`, {
+            letterId: letter.id,
+            successCount,
+          })
         }
       } catch (error) {
         // ステータス更新またはメール送信のエラー
-        console.error(`Failed to send letter ${letter.id} after status update:`, error)
+        logger.error('Failed to send letter after status update', { letterId: letter.id, error })
       }
     })
 
