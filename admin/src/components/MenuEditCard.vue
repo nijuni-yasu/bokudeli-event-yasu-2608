@@ -119,7 +119,7 @@ const handleSubmit = () => {
           v-model="menu.menu_description"
           outlined
           :label="$t('menu_edit_card.description')"
-          :rules="[(v: string) => maxLengthValidator(v, 140)]"
+          :rules="[requiredValidator, (v: string) => maxLengthValidator(v, 140)]"
         />
       </v-card-text>
       <v-card-text>
