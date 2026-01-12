@@ -206,6 +206,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     await getAuth().signOut()
     // reset() は onAuthStateChanged のコールバックで呼ばれるが、念のためここでも呼んでおく
     reset()
+    // リダイレクトはルーター側の onAuthStateChanged で処理される
   }
 
   return {

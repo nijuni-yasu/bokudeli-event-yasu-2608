@@ -15,14 +15,10 @@ export async function waitAuthentication(): Promise<User | null> {
 }
 
 export const setupRouter = (router: Router) => {
-  router.isReady().then(() => {
-    let lastUser: User | null = null
-    getAuth().onAuthStateChanged(async (user: User | null) => {
-      if (lastUser != null && user == null) {
-        router.replace('/login')
-      }
-      lastUser = user
-    })
+  getAuth().onAuthStateChanged(async (user: User | null) => {
+    if (user == null) {
+      router.replace('/login')
+    }
   })
 
   router.beforeEach(async (to) => {
