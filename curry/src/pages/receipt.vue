@@ -20,7 +20,7 @@ const url = ref<string | null>(null)
     url.value = response.data.url
   } catch (e) {
     console.error(e)
-    notification.show($t('manage.invoice.error'), 'error')
+    notification.show($t('user_event_card.download_invoice_error'), 'error')
   }
 })()
 </script>
