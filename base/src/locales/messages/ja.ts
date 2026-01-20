@@ -386,6 +386,7 @@ export default {
       submit: 'キャンセルを実行する',
     },
     download_invoice: '領収書をダウンロードする',
+    download_invoice_error: '領収書の取得に失敗しました',
   },
   validator: {
     required: '*必須',

@@ -13,12 +13,11 @@ import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { getCommunityPath, getEventPath, getInvoicePath } from '@/router/utils'
+import { getCommunityPath, getEventPath, getReceiptPath } from '@/router/utils'
 import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
-import { getInvoicePdf } from '@shokujii/base/utils/pdf.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
@@ -144,10 +143,8 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const downloadInvoice = async (order: EventOrder) => {
-  const w = window.open(getInvoicePath(), '_blank')
-  const pdf = await getInvoicePdf(order.event_id, order.order_id)
-  w!.location.href = window.URL.createObjectURL(pdf)
+const downloadReceipt = async (order: EventOrder) => {
+  window.open(getReceiptPath(order.event_id, order.order_id), '_blank')
 }
 </script>
 
@@ -181,7 +178,7 @@ const downloadInvoice = async (order: EventOrder) => {
                     :order="order"
                     :event="event"
                     :isOwner="isOwner"
-                    @downloadInvoice="downloadInvoice"
+                    @downloadInvoice="downloadReceipt"
                     @cancel="cancel(event, order)"
                   />
                 </router-link>
