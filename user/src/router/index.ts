@@ -38,20 +38,28 @@ const isLoginRequired = (path: string) => {
 }
 
 export const setupRouter = (router: Router) => {
-  // ログイン状態の変化を監視
-  onAuthStateChanged(getAuth(), (user) => {
-    const path = router.currentRoute.value.path
-    const fullPath = router.currentRoute.value.fullPath
+  // 初期化時かログアウト時かを識別するため、前回のユーザー状態を保持
+  let lastUser: User | null = null
 
-    // ログアウト時の処理
-    if (user == null) {
-      // ログイン必須ページの場合はログインページへ
-      if (isLoginRequired(path)) {
-        router.replace({ path: '/login', state: { redirect: fullPath } })
-      } else {
-        router.replace('/')
+  router.isReady().then(() => {
+    onAuthStateChanged(getAuth(), (user) => {
+      const path = router.currentRoute.value.path
+      const fullPath = router.currentRoute.value.fullPath
+
+      // ログアウト or 初期化時の処理
+      if (user === null) {
+        // ログイン必須ページの場合はログインページへ
+        if (isLoginRequired(path)) {
+          router.replace({ path: '/login', state: { redirect: fullPath } })
+        // ログイン状態 → ログアウト時のみ
+        } else if (lastUser !== null) {
+          router.replace('/')
+        }
       }
-    }
+
+      // 現在の状態を保存
+      lastUser = user
+    })
   })
 
   router.afterEach((to, from) => {
