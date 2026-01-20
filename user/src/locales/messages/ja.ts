@@ -54,6 +54,15 @@ export default {
     new_community: 'コミュニティ作成',
     new_event: 'イベント作成',
     new_letter: 'レター作成',
+    copy_event: 'イベント複製',
+    copy_event_modal: {
+      title: 'イベント複製',
+      select_original: '① コピー元のイベントを選択',
+      select_target_date: '② 開催日を選択',
+      target_date: '開始日',
+      create_button: 'イベントを複製する',
+      error: 'イベントの複製に失敗しました',
+    },
     top: {
       about_title: '【shokujiiって？】',
       about_description: `<b>食事でつながる「shokujii」</b>は<b>『孤食を減らし、団欒を増やす』</b>をミッションに、<br>
