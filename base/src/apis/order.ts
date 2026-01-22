@@ -9,7 +9,7 @@ import {
 } from '@shokujii/common/apis/order.js'
 
 export const addOrder = async (input: AddOrderRequest): Promise<HttpsCallableResult<AddOrderResponse>> => {
-  const f = httpsCallable<AddOrderRequest, AddOrderResponse>(functions, 'add_order')
+  const f = httpsCallable<AddOrderRequest, AddOrderResponse>(functions, 'addOrder')
   return f(input)
 }
 

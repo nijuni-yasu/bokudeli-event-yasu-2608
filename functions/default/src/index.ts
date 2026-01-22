@@ -27,7 +27,7 @@ export const {
   onShopReservationChanged,
   pollingTask,
   requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
-  updateMenuCountInCart, deleteMenuInCart,
+  addOrder, updateMenuCountInCart, deleteMenuInCart,
   eventReceipt,
   eventCopy,
   updateEventMenus,

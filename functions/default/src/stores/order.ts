@@ -7,6 +7,22 @@ import {
 } from 'firebase-admin/firestore'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 
+export class ShokujiiEventOrder extends EventOrder {
+  constructor(communityId: string, eventId: string, orderId: string | null, src: Partial<EventOrder>) {
+    const db = getFirestore()
+    if (orderId === null) {
+      orderId = db
+        .collection('communities')
+        .doc(communityId)
+        .collection('events')
+        .doc(eventId)
+        .collection('orders')
+        .doc().id
+    }
+    super(eventId, orderId, { ...src, order_id: orderId })
+  }
+}
+
 class ShokujiiEventOrderConverter implements FirestoreDataConverter<EventOrder> {
   toFirestore(order: EventOrder): DocumentData {
     return order.toFirestore()
@@ -35,6 +51,28 @@ export const getOrder = async (
 
   const snapshot = await (transaction === undefined ? orderRef.get() : transaction.get(orderRef))
   return snapshot.exists ? snapshot.data() : undefined
+}
+
+export const getOrderInCart = async (
+  communityId: string,
+  eventId: string,
+  userId: string,
+  transaction?: Transaction,
+): Promise<EventOrder | undefined> => {
+  const db = getFirestore()
+  const ordersRef = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('events')
+    .doc(eventId)
+    .collection('orders')
+    .withConverter(new ShokujiiEventOrderConverter())
+
+  const query = ordersRef.where('user_id', '==', userId).where('status', '==', 'in_cart').limit(1)
+
+  const snapshot = await (transaction === undefined ? query.get() : transaction.get(query))
+
+  return snapshot.empty ? undefined : snapshot.docs[0].data()
 }
 
 export const saveOrder = async (
