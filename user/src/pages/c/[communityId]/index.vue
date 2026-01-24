@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   getEventPath,
   getEventEditShopNoticePath,
@@ -23,6 +24,7 @@ import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityM
 
 const router = useRouter()
 const communityId = useRoute().params.communityId as string
+const { t: $t } = useI18n()
 
 const communityStore = useCommunityStore(communityId) as CommunityStore
 
@@ -92,7 +94,7 @@ const login = () => {
             :prepend-icon="mdiPencilBoxOutline"
             :to="getEventCreatePath(communityStore.community.community_account)"
           >
-            イベント新規作成
+            {{ $t('user.event_create') }}
           </v-btn>
           <v-btn
             class="mx-2"
@@ -102,9 +104,11 @@ const login = () => {
             :prepend-icon="mdiCog"
             :to="getManageCommunitySettingsPath(communityStore.community.community_account)"
           >
-            コミュニティ設定
+            {{ $t('user.community_settings') }}
           </v-btn>
-          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large"> 申請中 </v-chip>
+          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large">
+            {{ $t('community.applying') }}
+          </v-chip>
         </v-row>
         <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
           <v-row>
@@ -155,7 +159,7 @@ const login = () => {
                     :prepend-icon="mdiEmail"
                     :to="getEventEditShopNoticePath(eventWithMembers.event.event_id)"
                   >
-                    予約
+                    {{ $t('community.reserve') }}
                   </v-btn>
                   <v-btn
                     v-if="
@@ -177,7 +181,7 @@ const login = () => {
                         : getEventEditDetailsPath(eventWithMembers.event.event_id)
                     "
                   >
-                    編集
+                    {{ $t('community.edit') }}
                   </v-btn>
                 </v-row>
               </v-col>
@@ -199,7 +203,7 @@ const login = () => {
       :community-id="communityStore.community.community_id"
     />
     <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="login">
-      ログインした後にお問い合わせしてください。
+      {{ $t('community.contact_after_login') }}
     </confirm-dialog>
   </section>
 </template>
