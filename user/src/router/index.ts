@@ -50,7 +50,7 @@ export const setupRouter = (router: Router) => {
       // ログイン必須ページの場合はログインページへ
       if (isLoginRequired(path)) {
         router.replace({ path: '/login', state: { redirect: fullPath } })
-      // ログイン状態 → ログアウト時のみ
+        // ログイン状態 → ログアウト時のみ
       } else if (lastUser !== null) {
         router.replace('/')
       }
