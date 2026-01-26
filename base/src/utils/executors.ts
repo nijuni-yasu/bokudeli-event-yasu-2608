@@ -13,6 +13,15 @@ export class TaskExecutor {
     this.#runNextTask()
   }
 
+  /*
+   * 待機中のタスクを破棄します
+   * ただし、実行中のタスクは破棄されません
+   */
+  clear() {
+    this.#taskQueue = []
+    this.#currentRunningTasks = []
+  }
+
   #runNextTask() {
     if (this.#currentRunningTasks.length < this.maxConcurrentTasks) {
       const task = this.#taskQueue.shift()
