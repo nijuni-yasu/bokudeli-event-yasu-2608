@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import { PartnerShop } from '../schemas/PartnerShop.js'
 
 // Default をハードコーディングする運用は危険なので取り扱いには注意すること
 // (このファイルのみに限定しておき、将来的に動的な対応が必要になった際に影響範囲が最小限になるようにする)
@@ -85,6 +86,42 @@ export function getLastDayOfNextMonth(millis: number, zone = DEFAULT_TIME_ZONE, 
 
 export function getStartOfDay(millis: number, zone = DEFAULT_TIME_ZONE): number {
   return DateTime.fromMillis(millis, { zone }).startOf('day').toMillis()
+}
+
+/**
+ * Luxon の weekday ではなく、Date の getDay() の値と一致する
+ * 0:日曜日, 1:月曜日, 2:火曜日, 3:水曜日, 4:木曜日, 5:金曜日, 6:土曜日
+ * @param millis
+ * @param zone
+ * @param locale
+ * @returns
+ */
+export function getDayOfWeek(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
+  return DateTime.fromMillis(millis, { zone, locale }).weekday % 7
+}
+
+/**
+ * 指定された日時が店舗の営業時間内かどうかを判定する
+ * datetime.ts に入れるべきかは微妙なところだが、 locale が絡むのでここにおいておく
+ * @param targetTime 指定された日時
+ * @param shop 店舗情報
+ * @param zone タイムゾーン
+ * @param locale ロケール
+ * @returns
+ */
+export function isInShopTime(targetTime: number, shop: PartnerShop, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE) {
+  const targetDayOfWeek = getDayOfWeek(targetTime, zone, locale)
+  const targetDayMidnight = getStartOfDay(targetTime, zone)
+  return shop.shop_time.some((shopTime, dayOfWeek) => {
+    if (!shopTime.is_open || dayOfWeek !== targetDayOfWeek) {
+      return false
+    }
+    const timeStart = targetDayMidnight + shopTime.time_start
+    const timeEnd = targetDayMidnight + shopTime.time_end
+    const timeStart2 = targetDayMidnight + (shopTime.time_start2 ?? Infinity)
+    const timeEnd2 = targetDayMidnight + (shopTime.time_end2 ?? 0)
+    return (timeStart <= targetTime && targetTime <= timeEnd) || (timeStart2 <= targetTime && targetTime <= timeEnd2)
+  })
 }
 
 export const convertDateToId = (millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string =>

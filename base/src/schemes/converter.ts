@@ -39,24 +39,6 @@ export const postalcodeString = (postalCode: string): string => {
   return `〒${postalCode.slice(0, 3)}-${postalCode.slice(3)}`
 }
 
-export const convertDateToWeekTimestamp = (date: Date): number => {
-  return (
-    date.getDay() * 24 * 60 * 60 * 1000 +
-    date.getHours() * 60 * 60 * 1000 +
-    date.getMinutes() * 60 * 1000 +
-    date.getSeconds() * 1000 +
-    date.getMilliseconds()
-  )
-}
-
-export const convertShopTimeToWeekTimestamp = (dayOfWeek: number, timeString: string): number => {
-  const [hour, minute] = timeString.split(':').map((value) => parseInt(value))
-  if (Number.isNaN(hour) || Number.isNaN(minute)) {
-    return NaN
-  }
-  return dayOfWeek * 24 * 60 * 60 * 1000 + hour * 60 * 60 * 1000 + minute * 60 * 1000
-}
-
 export const convertTruncateText = (text: string, maxLength: number): string => {
   if (text.length > maxLength) {
     return text.substring(0, maxLength - 3) + '...'

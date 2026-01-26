@@ -27,7 +27,10 @@ export class BokudeliPartnerMenu extends PartnerMenu {
   }
 }
 
-const shopConverter: FirestoreDataConverter<BokudeliPartnerShop> = {
+/**
+ * shopList で使用するので export するが、他では使用しないこと
+ */
+export const shopConverter: FirestoreDataConverter<BokudeliPartnerShop> = {
   toFirestore(shop: BokudeliPartnerShop): DocumentData {
     return shop.toFirestore()
   },

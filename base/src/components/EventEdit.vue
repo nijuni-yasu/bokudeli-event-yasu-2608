@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
-import { isEmpty } from '@core/utils/helpers'
+import { isInShopTime } from '@shokujii/common/utils/datetime.js'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
 import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventShopNotice from '@shokujii/base/components/eventcreate/EventShopNotice.vue'
-import { collectionGroup, getDocs } from 'firebase/firestore'
-import { db } from '@shokujii/base/firebase'
-import { convertDateToWeekTimestamp, convertShopTimeToWeekTimestamp } from '@shokujii/base/schemes/converter'
 import { BokudeliEvent, createNewEvent } from '@shokujii/base/stores/event.js'
 import { usePartnerStore, type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { useShopListStore } from '@shokujii/base/stores/shopList'
 import { useRouter } from 'vue-router'
 import { getCommunityPath } from '@/router/utils'
-import { calculateDistance, fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
+import { calculateDistance, fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/composable/fetchLocation'
 import { maxBy } from 'lodash'
 import { useValidators } from '@shokujii/base/composable/validators'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -97,18 +95,75 @@ const event = computed<BokudeliEvent | null>({
     }
   },
 })
+
+const location = ref<LatLogLocation | null>(null)
+watch(
+  () => event.value?.event_postalcode,
+  async (postalcode) => {
+    if (postalcode === undefined || postalCodeValidator(postalcode) !== true) {
+      location.value = null
+    } else {
+      location.value = await fetchLocationByPostalcode(postalcode)
+    }
+  },
+)
+
+const coverImage = ref<File | null>(null)
+
 type BokudeliPartnerShopWithExtras = BokudeliPartnerShop & {
   distance: number
   min_orders_on_spot: number
 }
-const shops = ref<BokudeliPartnerShopWithExtras[]>([])
-const menus = ref<BokudeliPartnerMenu[]>([])
-const coverImage = ref<File | null>(null)
+const shops = computed<BokudeliPartnerShopWithExtras[] | undefined>(() => {
+  const selectedLocation = location.value
+  if (selectedLocation == null) {
+    return undefined
+  }
+  const shopListStore = useShopListStore([])
+  return shopListStore.shops
+    ?.map((shop) => {
+      // calculate distance
+      let distance = 0
+      if (shop.shop_address_longitude != null && shop.shop_address_latitude != null) {
+        const shopLocation = {
+          longitude: shop.shop_address_longitude,
+          latitude: shop.shop_address_latitude,
+        }
+        distance = calculateDistance(selectedLocation, shopLocation)
+      }
+      // 最小注文個数の配列の何番目かを取得
+      const rangeIndex = shop.shop_range_min_orders.findIndex(
+        (order) => order?.range != null && order.range >= distance,
+      )
+      // 最小注文個数（注文の目安）を取得。値がない場合は30に設定
+      const min_orders_on_spot = shop.shop_range_min_orders[rangeIndex]?.min_orders ?? 30
+      return Object.assign(Object.create(Object.getPrototypeOf(shop)), shop, {
+        distance,
+        min_orders_on_spot,
+      })
+    })
+    .filter((shop: BokudeliPartnerShopWithExtras) => {
+      // check distance
+      const distance = shop.distance
+      const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
+      const isInRange = maxRange ? distance <= maxRange : false
+
+      // check time
+      const eventTimeStart = event.value?.event_start_datetime
+      if (eventTimeStart == null) {
+        return false
+      }
+      const isInTime = isInShopTime(eventTimeStart, shop)
+      return isInRange && isInTime && shop.is_approved && shop.is_open
+    })
+    .sort((a, b) => a.min_orders_on_spot - b.min_orders_on_spot)
+})
+
 const selectedShop = computed((): BokudeliPartnerShop | null => {
   if (event.value == null) {
     return null
   }
-  return shops.value.find((shop) => shop.shop_id === event.value?.shop_id) ?? null
+  return shops.value?.find((shop) => shop.shop_id === event.value?.shop_id) ?? null
 })
 
 const currentUserStore = useCurrentUserStore()
@@ -117,89 +172,13 @@ const currentUserStore = useCurrentUserStore()
 const stepQuery = Number.parseInt(props.step)
 const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 
-const isLoadingShop = ref(false)
 const isLoadingMenu = ref(false)
 
 const isUpdatedStartTime = ref(false)
 
-// Fetch Shops
-watch(
-  [() => event.value?.event_start_datetime, () => event.value?.event_postalcode],
-  async () => {
-    if (event.value == null) {
-      return
-    }
-    const startDateTime = new Date(event.value.event_start_datetime)
-    const postalcode = event.value.event_postalcode
-    if (isEmpty(postalcode) || postalCodeValidator(postalcode) !== true) {
-      return
-    }
-    const location = await fetchLocationByPostalcode(postalcode)
-    if (location == null) {
-      shops.value = []
-      return
-    }
-
-    isLoadingShop.value = true
-
-    const shopDb = collectionGroup(db, 'shops')
-    const shopSnapshot = await getDocs(shopDb)
-    shops.value = shopSnapshot.docs
-      .map((doc) => {
-        const shop = doc.data() as BokudeliPartnerShop
-
-        // calculate distance
-        let distance = 0
-        if (shop.shop_address_longitude != null && shop.shop_address_latitude != null) {
-          const shopLocation = {
-            longitude: shop.shop_address_longitude,
-            latitude: shop.shop_address_latitude,
-          }
-          distance = calculateDistance(location, shopLocation)
-        }
-        // 最小注文個数の配列の何番目かを取得
-        const rangeIndex = shop.shop_range_min_orders.findIndex(
-          (order) => order?.range != null && order.range >= distance,
-        )
-        // 最小注文個数（注文の目安）を取得。値がない場合は30に設定
-        const min_orders_on_spot = shop.shop_range_min_orders[rangeIndex]?.min_orders ?? 30
-        return Object.assign(Object.create(Object.getPrototypeOf(shop)), shop, {
-          distance,
-          min_orders_on_spot,
-        })
-      })
-      .filter((shop: BokudeliPartnerShopWithExtras) => {
-        // check distance
-        const distance = shop.distance
-        const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
-        const isInRange = maxRange ? distance <= maxRange : false
-
-        // check time
-        const eventTimeStart = convertDateToWeekTimestamp(startDateTime)
-        const isInTime = shop.shop_time.some((shopTime, dayOfWeek) => {
-          if (!shopTime.is_open) {
-            return false
-          }
-          const timeStart = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start)
-          const timeEnd = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end)
-          const timeStart2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_start2)
-          const timeEnd2 = convertShopTimeToWeekTimestamp(dayOfWeek, shopTime.time_end2)
-          return (
-            (timeStart <= eventTimeStart && eventTimeStart <= timeEnd) ||
-            (timeStart2 <= eventTimeStart && eventTimeStart <= timeEnd2)
-          )
-        })
-
-        return isInRange && isInTime && shop.is_approved && shop.is_open
-      })
-      .sort((a, b) => a.min_orders_on_spot - b.min_orders_on_spot)
-    isLoadingShop.value = false
-  },
-  { immediate: true },
-)
-
 // Fetch Menus
 // 本来 watch をつかわず computed のみで対応できるが loading 等、過去の資産を使うために残す。TODO: 修正する。
+const menus = ref<BokudeliPartnerMenu[]>([])
 watch(
   () => event.value?.partner_id,
   async () => {
@@ -365,8 +344,8 @@ const stepperItems = computed(() => [
     <template #[`item.2`]>
       <event-shop
         v-model="event"
-        :shops="shops"
-        :loading="isLoadingShop"
+        :shops="shops ?? []"
+        :loading="shops == null"
         :is-updated-start-time="isUpdatedStartTime"
         @submit="stepper++"
         @next="stepper++"
