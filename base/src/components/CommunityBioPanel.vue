@@ -9,7 +9,7 @@ import CommunityMembershipButton from '@shokujii/base/components/CommunityMember
 
 const props = defineProps<{
   community: BokudeliCommunity
-  members: (BokudeliCommunityMember | null)[] | null
+  members: (BokudeliCommunityMember | null | undefined)[] | null
 }>()
 const emit = defineEmits<{
   clickContact: []
@@ -121,6 +121,12 @@ const displayMembers = computed(() => props.members?.filter((m) => !m?.roles?.in
             </div>
           </v-row>
         </router-link>
+        <!-- null の時はローディング中だが、undefined の時はユーザーが存在しない -->
+        <v-row v-else-if="member === undefined">
+          <div class="d-flex flex-row px-6 py-2">
+            <UserAvatar :user="null" :size="40" />
+          </div>
+        </v-row>
       </div>
       <!-- 読み込み中のメンバーがいる場合はインジケーターを表示 -->
       <v-row v-if="displayMembers.some((m) => m === null)" class="justify-center">

@@ -5,7 +5,7 @@ import type { BokudeliCommunity, BokudeliCommunityMember } from '../stores/commu
 
 defineProps<{
   community: BokudeliCommunity
-  members?: BokudeliCommunityMember[]
+  members?: (BokudeliCommunityMember | null)[]
   textLength: number
 }>()
 </script>
