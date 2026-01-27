@@ -44,6 +44,12 @@ export default {
     exists_credential:
       'この{snsName}アカウントは、すでに別のユーザーとして登録されています。\n他のアカウントでお試しください。',
   },
+  community: {
+    applying: '申請中',
+    reserve: '予約',
+    edit: '編集',
+    contact_after_login: 'ログインした後にお問い合わせしてください。',
+  },
   manage: {
     new_community: 'コミュニティ作成',
     new_event: 'イベント作成',

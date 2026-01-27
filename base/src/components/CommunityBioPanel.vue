@@ -109,8 +109,11 @@ const isShowMember = computed(() =>
         <v-icon :icon="mdiAccountGroup" size="22" class="mr-1" />
         {{ $t('community_bio_panel.member') }}
       </v-card-title>
-      <div v-for="member in members.filter((m) => m != null) as BokudeliCommunityMember[]" :key="member.user_id">
-        <router-link :to="getUserPath(member.user_id)">
+      <div
+        v-for="(member, index) in members.filter((m) => !m?.roles?.includes('manager'))"
+        :key="member?.user_id ?? `user-${index}`"
+      >
+        <router-link v-if="member != null" :to="getUserPath(member.user_id)">
           <v-row>
             <div class="d-flex flex-row px-6 py-2">
               <UserAvatar :user="member" :size="40" />
@@ -119,6 +122,15 @@ const isShowMember = computed(() =>
           </v-row>
         </router-link>
       </div>
+      <!-- 読み込み中のメンバーがいる場合はインジケーターを表示 -->
+      <v-row
+        v-if="members?.filter((m) => !m?.roles?.includes('manager')).some((m) => m === null)"
+        class="justify-center"
+      >
+        <div class="py-2">
+          <v-progress-circular indeterminate color="primary" />
+        </div>
+      </v-row>
     </div>
   </v-card>
 </template>

@@ -30,6 +30,9 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { uploadCommunityImage } from '@shokujii/base/composable/uploadImage.js'
 import { useConfigStore } from './config.js'
+import { TaskExecutor } from '../utils/executors.js'
+
+const MEMBER_LOAD_BATCH_SIZE = 10
 
 class CommunityRefUpdatedEvent extends Event {
   constructor(
@@ -147,23 +150,49 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       })
     }
 
+    const retrievedMembers = ref<BokudeliCommunityMember[]>([])
+    const memberLoadExecutor = new TaskExecutor(MEMBER_LOAD_BATCH_SIZE)
+    const loadMembers = () => {
+      // 2度呼ばれることはない想定だが、念の為
+      memberLoadExecutor.clear()
+      const _members = community.value?.members as DocumentReference[] | undefined
+      const _managers = community.value?.managers as DocumentReference[] | undefined
+      if (_members === undefined || _managers == undefined) {
+        retrievedMembers.value = []
+        return
+      }
+      // managers 優先で members と結合し、重複を削除する
+      const membersWithManagersFirst = [...new Map([..._managers, ..._members].map((v) => [v.id, v])).values()]
+      membersWithManagersFirst.forEach((memberRef: DocumentReference) => {
+        memberLoadExecutor.addTask(async () => {
+          const userStore = useUserStore(memberRef.id)
+          const user = await userStore.getLoadedUser()
+          if (user == null) {
+            return
+          }
+          const roles: CommunityMemberRolesType[] = []
+          if (_managers.find((manager) => manager.id === memberRef.id) != null) {
+            roles.push('manager')
+          }
+          retrievedMembers.value.push({ ...user, roles } as BokudeliCommunityMember)
+        })
+      })
+    }
+
+    let isFirstMemberLoad = true
     const members = computed<(BokudeliCommunityMember | null)[] | null>(() => {
-      if (community.value == null || _communityRef.value == null) {
+      // 遅延評価
+      if (isFirstMemberLoad) {
+        isFirstMemberLoad = false
+        loadMembers()
+      }
+      if (community.value == null) {
         return null
       }
-      const members = community.value.members
-      const managers = community.value.managers
-      return members.flatMap((doc: DocumentReference) => {
-        const userStore = useUserStore(doc.id)
-        if (userStore.user == null) {
-          return []
-        }
-        const roles: CommunityMemberRolesType[] = []
-        if (managers.find((manager) => manager.id === doc.id) != null) {
-          roles.push('manager')
-        }
-        return { ...userStore.user, roles }
-      })
+      return [
+        ...retrievedMembers.value,
+        ...Array(community.value.members.length - retrievedMembers.value.length).fill(null),
+      ]
     })
 
     const events = computed<BokudeliEvent[] | null>(() => {

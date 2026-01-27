@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { format } from 'date-fns'
 import {
@@ -33,6 +33,21 @@ export const useUserStore = (userId: string) => {
     const userRef = doc(db, 'users', userId).withConverter(userConverter)
     const exists = ref<boolean | null>(null)
     const user = ref<User | null>(null)
+
+    // null はローディング中を表すので、存在しないユーザーは undefined で返す
+    const getLoadedUser = async (): Promise<User | undefined> => {
+      return new Promise((resolve) => {
+        watch(
+          [user, exists],
+          ([_user, _exists]: [User | null, boolean | null]) => {
+            if (_user != null || _exists != null) {
+              resolve(_user ?? undefined)
+            }
+          },
+          { immediate: true },
+        )
+      })
+    }
 
     const updateUser = async (data: User) => {
       await setDoc(userRef, data, { merge: true })
@@ -96,6 +111,7 @@ export const useUserStore = (userId: string) => {
     return {
       exists,
       user,
+      getLoadedUser,
       updateUser,
       uploadUserImage,
       subscribe,

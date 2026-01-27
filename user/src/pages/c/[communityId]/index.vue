@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   getEventPath,
   getEventEditShopNoticePath,
@@ -17,12 +18,15 @@ import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/co
 import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
-import { useEventStore } from '@shokujii/base/stores/event'
-import type { EventStore, BokudeliEvent, BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import type { EventStore, BokudeliEventMember } from '@shokujii/base/stores/event.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
+import { useEventListStore } from '@shokujii/base/stores/eventList'
+import { where, orderBy } from 'firebase/firestore'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 
 const router = useRouter()
 const communityId = useRoute().params.communityId as string
+const { t: $t } = useI18n()
 
 const communityStore = useCommunityStore(communityId) as CommunityStore
 
@@ -30,31 +34,37 @@ const userStore = useCurrentUserStore()
 
 const { isMember, isManager } = useCommunityMemberFlags(communityId)
 
+// イベントリストストアを作成（ページサイズ6件）
+const eventListStore = useEventListStore(
+  [where('community_account', '==', communityId), orderBy('event_start_datetime', 'desc')],
+  6,
+)
+
 type EventWithMembers = {
-  event: BokudeliEvent
+  eventStore: EventStore
   members: BokudeliEventMember[]
 }
 
-const events = computed<EventWithMembers[] | null>(() => {
-  const events = communityStore.events
-  if (!events) return null
+const events = computed<EventWithMembers[]>(() => {
+  return (
+    eventListStore.eventStores?.flatMap((eventStore) => {
+      const event = eventStore.event
+      if (!event) return []
 
-  // 読み込み中は null として扱う
-  return events.flatMap((event) => {
-    // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
-    if (
-      isManager.value === false &&
-      (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')
-    ) {
-      return []
-    }
-    // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
-    if (isManager.value === false && isMember.value === false && event.is_public === false) {
-      return []
-    }
-    const eventStore = useEventStore(event.event_id) as EventStore
-    return { event, members: eventStore.members ?? [] }
-  })
+      // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
+      if (
+        isManager.value === false &&
+        (event.event_status.value === 'in_draft' || event.event_status.value === 'applying_reservation')
+      ) {
+        return []
+      }
+      // 「コミュマネでもメンバーでもない」かつ「限定公開」の場合は非表示
+      if (isManager.value === false && isMember.value === false && event.is_public === false) {
+        return []
+      }
+      return { eventStore, members: eventStore.members ?? [] }
+    }) ?? []
+  )
 })
 
 const goToEvents = (eventId: string) => {
@@ -92,7 +102,7 @@ const login = () => {
             :prepend-icon="mdiPencilBoxOutline"
             :to="getEventCreatePath(communityStore.community.community_account)"
           >
-            イベント新規作成
+            {{ $t('user.event_create') }}
           </v-btn>
           <v-btn
             class="mx-2"
@@ -102,9 +112,11 @@ const login = () => {
             :prepend-icon="mdiCog"
             :to="getManageCommunitySettingsPath(communityStore.community.community_account)"
           >
-            コミュニティ設定
+            {{ $t('user.community_settings') }}
           </v-btn>
-          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large"> 申請中 </v-chip>
+          <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large">
+            {{ $t('community.applying') }}
+          </v-chip>
         </v-row>
         <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
           <v-row>
@@ -136,34 +148,41 @@ const login = () => {
           </v-col>
           <!-- events -->
           <v-col md="8" sm="7" cols="12" class="order-1 order-sm-2">
-            <v-row v-if="events != null">
-              <v-col v-for="eventWithMembers in events" :key="eventWithMembers.event.event_id" md="6" sm="12" cols="12">
+            <v-row>
+              <v-col
+                v-for="eventWithMembers in events"
+                :key="eventWithMembers.eventStore.event?.event_id"
+                md="6"
+                sm="12"
+                cols="12"
+              >
                 <EventCard
-                  :event="eventWithMembers.event"
+                  v-if="eventWithMembers.eventStore.event"
+                  :event="eventWithMembers.eventStore.event"
                   :members="eventWithMembers.members"
                   class="mx-0 cursor-pointer"
-                  @click="goToEvents(eventWithMembers.event.event_id)"
+                  @click="goToEvents(eventWithMembers.eventStore.event.event_id)"
                 />
-                <v-row v-if="isManager" class="justify-end my-2 mr-1">
+                <v-row v-if="isManager && eventWithMembers.eventStore.event" class="justify-end my-2 mr-1">
                   <v-btn
-                    v-if="eventWithMembers.event.event_status.value === `in_draft`"
+                    v-if="eventWithMembers.eventStore.event.event_status.value === `in_draft`"
                     class="ml-1"
                     color="white"
                     elevation="5"
                     size="small"
                     rounded="pill"
                     :prepend-icon="mdiEmail"
-                    :to="getEventEditShopNoticePath(eventWithMembers.event.event_id)"
+                    :to="getEventEditShopNoticePath(eventWithMembers.eventStore.event.event_id)"
                   >
-                    予約
+                    {{ $t('community.reserve') }}
                   </v-btn>
                   <v-btn
                     v-if="
-                      eventWithMembers.event.calculatedEventStatus === 'in_draft' ||
-                      eventWithMembers.event.calculatedEventStatus === 'applying_reservation' ||
-                      eventWithMembers.event.calculatedEventStatus === 'accepting_order' ||
-                      eventWithMembers.event.calculatedEventStatus === 'order_closed' ||
-                      eventWithMembers.event.calculatedEventStatus === 'full'
+                      eventWithMembers.eventStore.event.calculatedEventStatus === 'in_draft' ||
+                      eventWithMembers.eventStore.event.calculatedEventStatus === 'applying_reservation' ||
+                      eventWithMembers.eventStore.event.calculatedEventStatus === 'accepting_order' ||
+                      eventWithMembers.eventStore.event.calculatedEventStatus === 'order_closed' ||
+                      eventWithMembers.eventStore.event.calculatedEventStatus === 'full'
                     "
                     class="ml-1"
                     color="white"
@@ -172,18 +191,26 @@ const login = () => {
                     rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
                     :to="
-                      eventWithMembers.event.event_status.value === 'in_draft'
-                        ? getEventEditBasicPath(eventWithMembers.event.event_id)
-                        : getEventEditDetailsPath(eventWithMembers.event.event_id)
+                      eventWithMembers.eventStore.event.event_status.value === 'in_draft'
+                        ? getEventEditBasicPath(eventWithMembers.eventStore.event.event_id)
+                        : getEventEditDetailsPath(eventWithMembers.eventStore.event.event_id)
                     "
                   >
-                    編集
+                    {{ $t('community.edit') }}
                   </v-btn>
                 </v-row>
               </v-col>
-            </v-row>
-            <v-row v-else class="justify-center">
-              <v-progress-circular indeterminate color="primary" />
+              <v-col cols="12">
+                <v-row class="justify-center">
+                  <v-col cols="auto">
+                    <IncrementalLoader
+                      :loaded-count="eventListStore.eventStores?.length ?? 0"
+                      :total-count="eventListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+                      @load="eventListStore.next()"
+                    />
+                  </v-col>
+                </v-row>
+              </v-col>
             </v-row>
           </v-col>
         </v-row>
@@ -199,7 +226,7 @@ const login = () => {
       :community-id="communityStore.community.community_id"
     />
     <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="true" :ok-click="login">
-      ログインした後にお問い合わせしてください。
+      {{ $t('community.contact_after_login') }}
     </confirm-dialog>
   </section>
 </template>
