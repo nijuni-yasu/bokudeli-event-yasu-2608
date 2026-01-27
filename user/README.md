@@ -29,12 +29,13 @@ common を修正した際には、 common のビルドが必要です。
 npm -w common run build
 ```
 
-以下のコマンドで vite serever を起動します。起動ログにサーバーのアドレスが表示されるので、ブラウザでアクセスすることでデバッグが可能です。
+以下のコマンドで vite serever を起動します。起動ログにサーバーのアドレスが表示されるので、ブラウザでアクセスすることでデバッグが可能です。[Vue DevTools](https://devtools.vuejs.org/) を使う場合は `npm run devtool` を実行してください（パフォーマンスに影響があります）。
 
 `-m development` で指定可能なのは `.env.***` の `***` にあたる環境名です。
 
 ```sh
 npm run dev -- -m development
+npm run devtool -- -m development
 ```
 
 ## Debug with the Emulator

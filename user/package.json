@@ -10,7 +10,8 @@
     "lint": "eslint --max-warnings=0 .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "dev": "VUE_DEVTOOLS= vite",
+    "dev": "vite",
+    "devtool": "VUE_DEVTOOLS= vite",
     "build": "npm -w common run build && vite build",
     "build:types": "vue-tsc --noEmit",
     "preview": "vite preview"
