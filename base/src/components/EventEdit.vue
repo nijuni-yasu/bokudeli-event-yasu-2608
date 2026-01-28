@@ -35,7 +35,7 @@ const emits = defineEmits<{
   updated: [id: string]
 }>()
 
-const { postalCodeValidator } = useValidators()
+const { requiredValidator, postalCodeValidator } = useValidators()
 
 const isValid1 = ref(false)
 const isValid4 = ref(false)
@@ -100,12 +100,13 @@ const location = ref<LatLogLocation | null>(null)
 watch(
   () => event.value?.event_postalcode,
   async (postalcode) => {
-    if (postalcode === undefined || postalCodeValidator(postalcode) !== true) {
+    if (requiredValidator(postalcode) !== true || postalCodeValidator(postalcode) !== true) {
       location.value = null
     } else {
-      location.value = await fetchLocationByPostalcode(postalcode)
+      location.value = await fetchLocationByPostalcode(postalcode as string)
     }
   },
+  { immediate: true },
 )
 
 const coverImage = ref<File | null>(null)

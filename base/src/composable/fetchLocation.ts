@@ -8,12 +8,16 @@ export interface LatLogLocation {
   address?: string
 }
 
-export const fetchLocationByPostalcode = async (postalCode: string) => {
+export const fetchLocationByPostalcode = async (postalCode: string): Promise<LatLogLocation | null> => {
+  // 空文字列やnullの場合は早期リターン
+  if (!postalCode || postalCode.trim() === '') {
+    return null
+  }
   const apiKey = import.meta.env.VITE_POSTCODE_API_KEY
   const res = await fetch(`https://apis.postcode-jp.com/api/v6/postcodes/${postalCode}?apikey=${apiKey}`)
   if (res.status !== 200) {
     console.error('Error fetching postal code data:', res.status, res.statusText)
-    throw new Error('Failed to fetch postal code data') // Added error handling
+    throw new Error('Failed to fetch postal code data')
   }
 
   const resJson = await res.json()
