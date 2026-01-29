@@ -30,6 +30,7 @@ export const {
   updateMenuCountInCart, deleteMenuInCart,
   eventReceipt,
   eventCopy,
+  updateEventMenus,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -46,4 +47,5 @@ export const {
   import('./orders.js'),
   import('./eventReceipt.js'),
   import('./eventCopy.js'),
+  import('./updateEventMenus.js'),
 ])))

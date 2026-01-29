@@ -6,7 +6,7 @@ import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
 import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventShopNotice from '@shokujii/base/components/eventcreate/EventShopNotice.vue'
-import { BokudeliEvent, createNewEvent } from '@shokujii/base/stores/event.js'
+import { BokudeliEvent, createNewEvent, updateEventMenus } from '@shokujii/base/stores/event.js'
 import { usePartnerStore, type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useEventStore, type EventStore, BokudeliEventMenu } from '@shokujii/base/stores/event'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
@@ -301,6 +301,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
     return null
   }
   const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
+
   if (props.eventId == null) {
     // event_cover_urlが既に設定されている場合はcoverImage.valueがnullでもOK
     if (coverImage.value == null && !event.value.event_cover_url) {
@@ -310,7 +311,19 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
     event.value.community_id = communityId
     event.value.created_by = handleUserId
     event.value.updated_by = handleUserId
-    return await createNewEvent(toRaw(event.value), coverImage.value)
+    const newEvent = await createNewEvent(toRaw(event.value), coverImage.value)
+
+    // メニューを作成（Callable Function経由）
+    if (newEvent?.event_id) {
+      try {
+        await updateEventMenus(newEvent.event_id, communityId, selectedMenuIds.value)
+      } catch (error) {
+        console.error('Failed to update event menus:', error)
+        window.alert('メニューの更新に失敗しました')
+      }
+    }
+
+    return newEvent
   } else {
     // 更新
     event.value.updated_by = handleUserId
@@ -319,6 +332,15 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
     if (coverImage.value != null) {
       await eventStore.updateCoverImage(coverImage.value)
     }
+
+    // メニューを更新（Callable Function経由）
+    try {
+      await updateEventMenus(event.value.event_id, communityId, selectedMenuIds.value)
+    } catch (error) {
+      console.error('Failed to update event menus:', error)
+      window.alert('メニューの更新に失敗しました')
+    }
+
     return event.value
   }
 }
