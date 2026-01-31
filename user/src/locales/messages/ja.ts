@@ -379,7 +379,7 @@ export default {
       date: '開催日',
       place: '開催場所',
       event_name: 'イベント名',
-      price: '金額',
+      price: '請求金額',
       download: 'ダウンロード',
       no_invoice: '請求書はまだありません',
       error: '請求書の取得に失敗しました',
