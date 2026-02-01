@@ -7,7 +7,7 @@ import {
   Timestamp,
   DocumentReference,
 } from 'firebase-admin/firestore'
-import { Event, type RawEventStatusType } from '@shokujii/common/schemas/Event.js'
+import { Event } from '@shokujii/common/schemas/Event.js'
 import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
@@ -199,17 +199,17 @@ export class ShokujiiEvent extends Event {
   }
 
   /**
-   * イベントステータスを更新
+   * イベントを更新
    */
-  async updateEventStatus(status: RawEventStatusType, transaction?: Transaction): Promise<void> {
-    // updated_by または created_by を取得、どちらもない場合はエラー
-    const userId = this.updated_by || this.created_by
-    if (!userId) {
-      throw new Error('Cannot update event status: no updated_by or created_by found')
+  async updateEvent(data: Partial<ShokujiiEvent>, updateUserId: string, transaction?: Transaction): Promise<void> {
+    // 明示的な userId チェック
+    if (updateUserId === '') {
+      throw new Error('Cannot update event: updateUserId must be a non-empty string')
     }
 
-    // インスタンスのステータスを更新
-    this.event_status.value = status
+    // インスタンスを更新
+    Object.assign(this, data)
+    this.updated_by = updateUserId
 
     // ShokujiiEventConverterを使ってFirestoreに保存
     const db = getFirestore()
@@ -218,7 +218,7 @@ export class ShokujiiEvent extends Event {
       .doc(this.community_id)
       .collection('events')
       .doc(this.id)
-      .withConverter(new ShokujiiEventConverter(userId))
+      .withConverter(new ShokujiiEventConverter(updateUserId))
 
     if (transaction === undefined) {
       await eventRef.set(this, { merge: true })

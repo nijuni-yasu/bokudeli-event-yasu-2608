@@ -84,10 +84,10 @@ export async function sendRejectOrderMailToShop(start: number, end: number): Pro
         if (updatedAt == null || updatedAt <= start || updatedAt > end) {
           return
         }
-        event.updated_by = updated_by
 
         // イベントステータスを in_draft に更新
-        await event.updateEventStatus('in_draft')
+        // shop_comment は空文字列を指定してフィールドを削除
+        await event.updateEvent({ event_status: { value: 'in_draft', shop_comment: '' } }, updated_by)
 
         const [dynamicTemplateData, shopData] = await Promise.all([
           createTemplateDataForOrderDeadline(event),
