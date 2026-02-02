@@ -418,6 +418,8 @@ export default {
       copy_url: 'このページのURLをコピー',
       copied: 'URLをコピーしました',
       copy_failed: 'コピーに失敗しました。手動でURLを選択してコピーしてください',
+      chrome: 'Chrome',
+      safari: 'Safari',
     },
   },
   email: {
