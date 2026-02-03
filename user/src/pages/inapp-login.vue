@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useNotification } from '@shokujii/base/composable/notification'
-import logo from '@/assets/images/shokujii/shokujii_logo.png'
+import chromeIcon from '@/assets/images/browser/chrome.png'
+import safariIcon from '@/assets/images/browser/safari.png'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 import { getHomePath, getUrlFromPath } from '@/router/utils'
 
@@ -41,11 +42,23 @@ const copyCurrentUrl = async () => {
         <v-sheet class="rounded-lg py-14 px-sm-12 px-5">
           <v-container class="mb-2">
             <v-row justify="center">
-              <v-img max-width="100" :src="logo"></v-img>
-            </v-row>
-            <v-row justify="center">
               <div class="my-3 text-h4 font-weight-bold">{{ $t('login.inapp.notice_title') }}</div>
             </v-row>
+
+            <!-- ブラウザアイコン表示エリア（新規追加） -->
+            <v-row justify="center" class="my-4">
+              <div class="d-flex align-center ga-4">
+                <div class="browser-icon-wrapper">
+                  <v-img :src="chromeIcon" width="48" height="48" class="browser-icon" />
+                  <div class="browser-name">{{ $t('login.inapp.chrome') }}</div>
+                </div>
+                <div class="browser-icon-wrapper">
+                  <v-img :src="safariIcon" width="48" height="48" class="browser-icon" />
+                  <div class="browser-name">{{ $t('login.inapp.safari') }}</div>
+                </div>
+              </div>
+            </v-row>
+
             <v-row justify="center" class="py-5 text-subtitle-2">
               <div v-html="$t('login.inapp.notice_body')"></div>
             </v-row>
@@ -59,3 +72,31 @@ const copyCurrentUrl = async () => {
     </v-row>
   </v-container>
 </template>
+
+<style scoped>
+.browser-icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.browser-icon-wrapper:hover {
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.browser-icon {
+  border-radius: 8px;
+}
+
+.browser-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  letter-spacing: 0.2px;
+}
+</style>
