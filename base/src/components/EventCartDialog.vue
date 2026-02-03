@@ -3,11 +3,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
-import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'
-import { getLogin } from '@/router/utils'
 
 const router = useRouter()
 
@@ -36,21 +33,9 @@ const closeDialog = (isAddCart: boolean) => {
   isOpen.value = false
 }
 
-const currentUserStore = useCurrentUserStore()
-
-const login = () => {
-  router.push({
-    path: getLogin(),
-  })
-}
-
 const addCart = async () => {
-  if (currentUserStore.firebaseUser == null) {
-    openConfirmDialog()
-    return
-  }
-  if (currentUserStore.firebaseUser == null || eventStore.event == null) {
-    console.warn('currentUserStore.firebaseUser or eventStore.event is null')
+  if (eventStore.event == null) {
+    console.warn('eventStore.event is null')
     return
   }
   const menu_id = props.menu.id
@@ -82,12 +67,6 @@ const addCart = async () => {
   } finally {
     isAddingOrder.value = false
   }
-}
-
-const isOpenConfirmDialog = ref(false)
-
-const openConfirmDialog = () => {
-  isOpenConfirmDialog.value = true
 }
 </script>
 
@@ -131,9 +110,6 @@ const openConfirmDialog = () => {
         </v-btn>
       </v-row>
     </v-card>
-    <confirm-dialog v-model="isOpenConfirmDialog" :is-confirm="false" @click="login">
-      ログインしてください
-    </confirm-dialog>
   </v-dialog>
 </template>
 
