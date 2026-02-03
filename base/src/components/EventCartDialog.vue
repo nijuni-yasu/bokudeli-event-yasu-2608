@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'
 
-const router = useRouter()
-
 const props = defineProps<{
-  modelValue: boolean
   menu: BokudeliEventMenu
   eventId: string
 }>()
@@ -18,18 +14,18 @@ const eventStore = useEventStore(props.eventId) as EventStore
 
 const isOpen = defineModel<boolean>()
 
+const emit = defineEmits<{
+  added: []
+}>()
+
 const countOptions = Array.from({ length: 5 }, (_, i) => i + 1)
 const selectedCount = ref(1)
 
 const isAddingOrder = ref(false)
 
-const closeDialog = (isAddCart: boolean) => {
-  // TODO 自分で閉じたり、ページ遷移するのではなく、親が処理を選べるようにする
+const closeDialog = () => {
   isAddingOrder.value = false
   selectedCount.value = 1
-  if (isAddCart) {
-    router.push('/cart')
-  }
   isOpen.value = false
 }
 
@@ -61,7 +57,8 @@ const addCart = async () => {
       ],
     }
     await eventStore.addOrder(orderItem)
-    closeDialog(true)
+    emit('added')
+    closeDialog()
   } catch (e) {
     console.error(e)
   } finally {
@@ -71,7 +68,7 @@ const addCart = async () => {
 </script>
 
 <template>
-  <v-dialog v-model="isOpen" max-width="500px" @click:outside="closeDialog(false)">
+  <v-dialog v-model="isOpen" max-width="500px" @click:outside="closeDialog()">
     <v-card class="pa-sm-10 pa-5">
       <v-img :src="menu.menu_image_url ?? undefined" class="ma-3"></v-img>
       <v-card-title class="text-left text-h4 py-1 text-wrap">
@@ -104,7 +101,7 @@ const addCart = async () => {
           size="small"
           variant="outlined"
           color="secondary"
-          @click="closeDialog(false)"
+          @click="closeDialog()"
         >
           {{ $t('cart_dialog.close') }}
         </v-btn>

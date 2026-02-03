@@ -109,6 +109,10 @@ const goToLogin = () => {
   })
 }
 
+const handleCartAdded = () => {
+  router.push('/cart')
+}
+
 const scrollToMenu = () => {
   // Vuetify では scrollIntoView が使えないらしい
   // menuList.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -281,6 +285,7 @@ onUnmounted(() => {
     v-model="selectedMenuState.isOpen"
     :menu="selectedMenuState.menu"
     :event-id="event.event_id"
+    @added="handleCartAdded"
   ></event-cart-dialog>
   <confirm-dialog v-model="isLoginRequired" :is-confirm="true" :ok-click="goToLogin" max-width="700px">
     <v-card-text class="pb-0" style="line-height: 2rem; white-space: pre-line">
