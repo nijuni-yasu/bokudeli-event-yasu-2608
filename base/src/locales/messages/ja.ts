@@ -119,7 +119,7 @@ export default {
   cart_dialog: {
     add: 'カートに追加',
     close: '閉じる',
-    login: 'ログインして注文する',
+    login: 'ご注文にはログインが必要です。\nログイン完了後、再度この画面からメニューを選んでカートに追加してください。',
   },
   event_create_modal: {
     title: 'イベント開催のステップ',

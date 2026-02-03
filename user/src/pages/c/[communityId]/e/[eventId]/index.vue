@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath } from '@/router/utils'
+import { useRoute, useRouter } from 'vue-router'
+import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath, getLogin } from '@/router/utils'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -16,8 +16,10 @@ import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
 import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
 const route = useRoute()
+const router = useRouter()
 const communityId = route.params.communityId as string
 const eventId = route.params.eventId as string
 
@@ -26,6 +28,7 @@ const { t: $t } = useI18n()
 const eventStore = useEventStore(eventId) as EventStore
 const communityStore = useCommunityStore(communityId) as CommunityStore
 const bannersStore = useBannersStore('event_banners')
+const currentUserStore = useCurrentUserStore()
 const menuNavigation = ref(true)
 const menuListRef = ref()
 let menuListObserver: IntersectionObserver | null = null
@@ -69,21 +72,41 @@ const alertState = reactive({
   isOpen: false,
 })
 
+const isLoginRequired = ref(false)
+
 const selectMenu = (menu: BokudeliEventMenu) => {
   const disabledReason = menuDisabled.value
   if (disabledReason == null) {
     return
   }
-  if (disabledReason === 'finished') {
-    alertState.message = $t('menu_disabled_reason.finished')
-    alertState.isOpen = true
-  } else if (disabledReason === false) {
-    selectedMenuState.menu = menu
-    selectedMenuState.isOpen = true
-  } else {
-    alertState.message = $t(`menu_disabled_reason.${disabledReason}`)
-    alertState.isOpen = true
+
+  // 注文不可の場合は理由を表示
+  if (disabledReason !== false) {
+    // 「イベント終了」の条件を優先
+    if (disabledReason === 'finished') {
+      alertState.message = $t('menu_disabled_reason.finished')
+      alertState.isOpen = true
+    } else {
+      alertState.message = $t(`menu_disabled_reason.${disabledReason}`)
+      alertState.isOpen = true
+    }
+    return
   }
+
+  // ログインチェック
+  if (currentUserStore.firebaseUser == null) {
+    isLoginRequired.value = true
+    return
+  }
+
+  selectedMenuState.menu = menu
+  selectedMenuState.isOpen = true
+}
+
+const goToLogin = () => {
+  router.push({
+    path: getLogin(),
+  })
 }
 
 const scrollToMenu = () => {
@@ -259,6 +282,11 @@ onUnmounted(() => {
     :menu="selectedMenuState.menu"
     :event-id="event.event_id"
   ></event-cart-dialog>
+  <confirm-dialog v-model="isLoginRequired" :is-confirm="true" :ok-click="goToLogin" max-width="700px">
+    <v-card-text class="pb-0" style="line-height: 2rem; white-space: pre-line">
+      {{ $t('cart_dialog.login') }}
+    </v-card-text>
+  </confirm-dialog>
   <confirm-dialog v-model="alertState.isOpen" :is-confirm="false">{{ alertState.message }}</confirm-dialog>
   <confirm-dialog v-model="isDraftNotice" :ok-text="'OK'" max-width="700px">
     <v-card-text class="text-center py-10 text-h4">
