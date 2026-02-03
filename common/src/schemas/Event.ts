@@ -110,8 +110,8 @@ const EventAppSchema = z.object({
   event_max_people: z.number().int().positive().default(25),
   event_status: z
     .object({
-      value: z.enum(RAW_EVENT_STATUS_VALUES),
-      shop_comment: z.string().optional(),
+      value: z.enum(RAW_EVENT_STATUS_VALUES).default('in_draft'),
+      shop_comment: z.string().default(''),
     })
     .default({
       value: 'in_draft',
