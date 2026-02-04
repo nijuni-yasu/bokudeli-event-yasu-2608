@@ -5,8 +5,10 @@ import {
   QueryDocumentSnapshot,
   Transaction,
 } from 'firebase-admin/firestore'
+import { logger } from 'firebase-functions'
 import { User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
+import { Result, ok, err } from '@shokujii/common/utils/result.js'
 
 export class ShokujiiUser extends User {
   // TODO Add other UserPersonalInformation fields
@@ -59,19 +61,30 @@ export const getUserPersonalInformation = async (userId: string): Promise<UserPe
   return (await userPersonalInformationRef.get()).data()
 }
 
-export const getAllUsers = async (withPersonalInformation: boolean): Promise<ShokujiiUser[]> => {
+/**
+ * 全ユーザーを取得するジェネレーター
+ * Result型でエラーハンドリングを明示的に行う
+ *
+ * @param withPersonalInformation 個人情報（メールアドレスなど）を含めるか
+ * @yields Result<ShokujiiUser> 成功時はユーザー情報、失敗時はエラー情報
+ */
+export async function* getAllUsers(withPersonalInformation: boolean): AsyncGenerator<Result<ShokujiiUser>> {
   const db = getFirestore()
   const usersSnapshot = await db.collection('users').withConverter(userConverter).get()
-  const users: ShokujiiUser[] = []
+
   for (const userDoc of usersSnapshot.docs) {
-    const user = userDoc.data()
-    if (withPersonalInformation) {
-      const userPersonalInformation = await getUserPersonalInformation(user.id)
-      user.user_email = userPersonalInformation?.user_email ?? ''
+    try {
+      const user = userDoc.data()
+      if (withPersonalInformation) {
+        const userPersonalInformation = await getUserPersonalInformation(user.id)
+        user.user_email = userPersonalInformation?.user_email ?? ''
+      }
+      yield ok(user)
+    } catch (error: unknown) {
+      logger.warn('getAllUsers|Failed to get user', { userId: userDoc.id, error })
+      yield err(error instanceof Error ? error : new Error(String(error)))
     }
-    users.push(user)
   }
-  return users
 }
 
 export const getUserIdFromEmail = async (user_email: string): Promise<string | undefined> => {
