@@ -1,4 +1,5 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
+import { logger } from 'firebase-functions'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
@@ -62,7 +63,7 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
   const userData = await getUser(userId, true)
 
   if (!userData) {
-    console.warn(`User data not found for userId: ${userId}`)
+    logger.warn('User data not found', { userId })
     return
   }
 
@@ -98,7 +99,7 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
 async function getCommunityMemberEmails(communityId: string): Promise<string[]> {
   const community = await getCommunity(communityId)
   if (!community) {
-    console.warn(`Community not found: ${communityId}`)
+    logger.warn('Community not found', { communityId })
     return []
   }
 
@@ -176,26 +177,35 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
     const successCount = results.filter((r) => r.status === 'fulfilled').length
     const failedCount = results.filter((r) => r.status === 'rejected').length
 
-    console.log(`Sent ${successCount}/${emails.length} new event notification emails`, {
-      eventId: event.id,
-      successCount,
-      failedCount,
-    })
-
-    // 失敗したメールの詳細をログ出力
-    if (failedCount > 0) {
-      console.warn(`Failed to send ${failedCount}/${emails.length} new event notifications`, {
+    if (successCount > 0) {
+      logger.info('Sent new event notification emails', {
         eventId: event.id,
         communityId,
         successCount,
         failedCount,
+        totalEmails: emails.length,
+      })
+    }
+
+    // 失敗したメールの詳細をログ出力
+    if (failedCount > 0) {
+      logger.warn('Failed to send new event notifications', {
+        eventId: event.id,
+        communityId,
+        successCount,
+        failedCount,
+        totalEmails: emails.length,
         errors: results
           .filter((r) => r.status === 'rejected')
           .map((r) => (r as PromiseRejectedResult).reason?.message || r.reason),
       })
     }
   } catch (error) {
-    console.error('Failed to send new event notification:', error)
+    logger.error('Failed to send new event notification', {
+      error,
+      eventId,
+      communityId,
+    })
   }
 }
 
@@ -207,7 +217,7 @@ export const onOrderChanged = onDocumentWritten(
   },
   async (change) => {
     if (!change.data) {
-      console.warn('Change data is undefined')
+      logger.warn('Change data is undefined')
       return
     }
 
@@ -218,14 +228,14 @@ export const onOrderChanged = onDocumentWritten(
     if (before?.get('status') !== after?.get('status') && after?.get('status') === 'ordered') {
       const eventRef = after.ref.parent.parent
       if (!eventRef) {
-        console.warn('Event reference is null')
+        logger.warn('Event reference is null')
         return
       }
 
       const userId = after.get('user_id')
       const afterEvent = await convertReferenceToEvent(eventRef)
       if (!afterEvent) {
-        console.warn(`Event not found for eventRef: ${eventRef.path}`)
+        logger.warn('Event not found for eventRef', { eventRefPath: eventRef.path })
         return
       }
       promises.push(sendOrderCompletionMailToMember(afterEvent, userId))
