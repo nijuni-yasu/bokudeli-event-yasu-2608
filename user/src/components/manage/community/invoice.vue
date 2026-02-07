@@ -6,6 +6,7 @@ import { mdiFilePdfBox } from '@mdi/js'
 import type { EventStore } from '@shokujii/base/stores/event.js'
 import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
 import type { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import { calculateInvoiceFee, calculateOrdersTotal } from '@shokujii/common/utils/invoice.js'
 
 const route = useRoute()
 
@@ -15,33 +16,33 @@ const eventListStore = useEventListStore(
   [where('community_account', '==', communityAccount), orderBy('event_start_datetime', 'desc')],
   10,
 )
+
+/**
+ * イベントの請求書合計金額を計算（請求手数料を含む）
+ * @param orders 注文リスト
+ * @param eventStartDatetimeMillis イベント開始日時（Unix time in milliseconds）
+ * @returns 請求手数料を含めた合計金額
+ */
+const calculateInvoiceTotal = (orders: EventOrder[], eventStartDatetimeMillis: number) => {
+  const baseTotal = calculateOrdersTotal(orders)
+  const invoiceFee = calculateInvoiceFee(baseTotal, eventStartDatetimeMillis)
+  return baseTotal + invoiceFee
+}
+
 const eventStores = computed<EventStore[] | undefined>(() =>
   eventListStore.eventStores?.flatMap((es) => {
     if (
       es.event?.event_payment !== 'community_bill' ||
       es.event?.calculatedEventStatus !== 'finished' ||
-      getTotalPrice(es.orders ?? []) === 0
+      es.event?.event_start_datetime == null ||
+      calculateInvoiceTotal(es.orders ?? [], es.event.event_start_datetime) === 0
     ) {
       return []
     }
     return es
   }),
 )
-// 本来 model で定義すべきだが、現状そのような仕組みが用意されていないため、とりあえずここで定義しておく
-// また、functions と共通化しておくべきだが、functions は現状 typescript に対応していないので仕方なくこの状態で実装
-// TODO model で定義するようにする & functions と共通化する
-const getTotalPrice = (orders: EventOrder[]) => {
-  let total = 0
-  for (const order of orders) {
-    if (order.status === 'ordered') {
-      total += order.menus.reduce((acc, menu) => acc + menu.price * menu.count, 0)
-    }
-  }
-  // 今の所、請求手数料は含めないが、将来的には
-  // 特にこの計算式が functions との不整合になりやすいので注意
-  // total = Math.floor(total * 1.1)
-  return total
-}
+
 const getPdf = (eventId: string) => {
   window.open(getEventBillInvoicePath(eventId), '_blank')
 }
@@ -85,7 +86,12 @@ const getPdf = (eventId: string) => {
                         </router-link>
                       </td>
                       <td>
-                        {{ getTotalPrice(es.orders).toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' }) }}
+                        {{
+                          calculateInvoiceTotal(es.orders, es.event.event_start_datetime).toLocaleString('ja-JP', {
+                            style: 'currency',
+                            currency: 'JPY',
+                          })
+                        }}
                       </td>
                       <td>
                         <v-btn
