@@ -74,6 +74,7 @@ const isOpenUnLinkDialog = computed<boolean>({
 const form = ref<VForm | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const userImage = ref<File | undefined>(undefined)
+const userImagePreview = ref<string | undefined>(undefined)
 
 const isNewUser = history.state?.isNewUser ?? false
 
@@ -86,7 +87,7 @@ const { t: $t } = useI18n()
 const { requiredValidator, emailValidator, urlValidator } = useValidators()
 
 const validateImage = () => {
-  if (!currentUser.value?.user_image_url && !userImage.value) {
+  if (!currentUser.value?.user_image_url && !userImage.value && !userImagePreview.value) {
     imageError.value = $t('profile.choice_profile_image')
     return false
   } else {
@@ -110,7 +111,8 @@ const readImageFiles = (files: File | File[]) => {
   }
   const file = files[0]
   userImage.value = file
-  currentUser.value.user_image_url = URL.createObjectURL(file)
+  // プレビュー用のBlob URLを生成（currentUser.user_image_urlは変更しない）
+  userImagePreview.value = URL.createObjectURL(file)
 }
 
 const profileSubmit = async () => {
@@ -130,6 +132,11 @@ const profileSubmit = async () => {
       try {
         await currentUserStore.uploadUserImage(image)
         userImage.value = undefined
+        // プレビューをクリーンアップ
+        if (userImagePreview.value) {
+          URL.revokeObjectURL(userImagePreview.value)
+          userImagePreview.value = undefined
+        }
       } catch (err) {
         console.error(err)
         window.alert($t('profile.fail_image_upload'))
@@ -233,7 +240,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
 
             <v-sheet class="d-flex justify-center mt-4 mb-12">
               <div style="position: relative">
-                <UserAvatar :user="currentUser" :size="140" @click="triggerFileInput" />
+                <UserAvatar :user="userImagePreview ?? currentUser" :size="140" @click="triggerFileInput" />
                 <v-btn
                   :icon="mdiUpload"
                   size="small"
