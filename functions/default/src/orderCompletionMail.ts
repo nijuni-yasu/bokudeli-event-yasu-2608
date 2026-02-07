@@ -1,4 +1,5 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
+import { logger } from 'firebase-functions'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
@@ -62,7 +63,7 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
   const userData = await getUser(userId, true)
 
   if (!userData) {
-    console.warn(`User data not found for userId: ${userId}`)
+    logger.warn('User data not found', { userId })
     return
   }
 
@@ -98,7 +99,7 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
 async function getCommunityMemberEmails(communityId: string): Promise<string[]> {
   const community = await getCommunity(communityId)
   if (!community) {
-    console.warn(`Community not found: ${communityId}`)
+    logger.warn('Community not found', { communityId })
     return []
   }
 
@@ -113,77 +114,99 @@ async function getCommunityMemberEmails(communityId: string): Promise<string[]> 
 
 /**
  * 新着イベント通知メールをコミュニティメンバー全員に送信
+ *
+ * メール送信の前にトランザクション内で sent_new_event_mail_at フラグを設定
+ * これにより以下を保証：
+ * - 並行実行時の重複送信防止（複数のリクエストが同時に来ても、最初の1回のみ送信）
+ * - メール送信失敗時の再送信防止（送信処理が失敗しても、フラグにより2度目の送信は行われない）
  */
-async function sendNewEventNotificationToMembers(eventId: string, userId: string): Promise<void> {
-  getFirestore().runTransaction(async (transaction) => {
-    const event = await getEvent(eventId, transaction)
+async function sendNewEventNotificationToMembers(eventId: string, userId: string, communityId: string): Promise<void> {
+  // メンバー0人の場合は早期リターン
+  const emails = await getCommunityMemberEmails(communityId)
+  if (emails.length === 0) {
+    return
+  }
+
+  const event = await getFirestore().runTransaction(async (transaction) => {
+    const transactionEvent = await getEvent(eventId, transaction)
     // is_publicがfalseまたは既に送信済みの場合はスキップ
-    if (event == null || !event.is_public || event.sent_new_event_mail_at) {
-      return
+    if (transactionEvent == null || !transactionEvent.is_public || transactionEvent.sent_new_event_mail_at) {
+      return null
     }
-
-    try {
-      // メンバー0人の場合は早期リターン（フラグを立てずに再試行可能に）
-      const emails = await getCommunityMemberEmails(event.community_id)
-      if (emails.length === 0) {
-        console.warn(`No member emails found for community: ${event.community_id}`)
-        return
-      }
-
-      const dynamicTemplateData = {
-        community_name: event.community_name,
-        event_url: getEventUrl(event.community_account, event.id),
-        event_name: event.event_name,
-        event_cover_url: event.event_cover_url,
-        event_desc: event.event_desc,
-        event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
-        event_start_datetime: convertToDateWeekdayShort(event.event_start_datetime),
-        event_end_datetime: convertToDateWeekdayShort(event.event_end_datetime),
-        event_address: event.event_address,
-        event_place: event.event_place,
-        shop_name: event.shop_name,
-        event_deadline_datetime: convertToDateWeekdayShort(event.event_deadline_datetime),
-        event_payment: event.event_payment,
-      }
-
-      // Promise.allSettled を使用して、一部失敗しても続行
-      const results = await Promise.allSettled(
-        emails.map(async (to) => {
-          return sgMail.send({
-            to,
-            from: DEFAULT_FROM,
-            templateId: NEW_EVENT_NOTIFICATION_TEMPLATE_ID,
-            dynamicTemplateData,
-          })
-        }),
-      )
-
-      // 成功・失敗の集計
-      const successCount = results.filter((r) => r.status === 'fulfilled').length
-      const failedCount = results.filter((r) => r.status === 'rejected').length
-
-      // 失敗したメールの詳細をログ出力
-      if (failedCount > 0) {
-        console.warn(`Failed to send ${failedCount}/${emails.length} new event notifications`, {
-          eventId: event.id,
-          successCount,
-          failedCount,
-          errors: results
-            .filter((r) => r.status === 'rejected')
-            .map((r) => (r as PromiseRejectedResult).reason?.message || r.reason),
-        })
-      }
-
-      // フラグを設定して保存
-      // 1件でも成功していれば失敗があったとしてもフラグを立てる
-      if (successCount > 0) {
-        event.sent_new_event_mail_at = Timestamp.now().toMillis()
-        await saveEvent(userId, event, transaction)
-      }
-    } catch (error) {
-      console.error('Failed to send new event notification:', error)
-    }
+    // メール送信前にフラグを立てる
+    transactionEvent.sent_new_event_mail_at = Timestamp.now().toMillis()
+    await saveEvent(userId, transactionEvent, transaction)
+    return transactionEvent
   })
+
+  // トランザクションが成功した場合のみ、新着メールを送信
+  if (!event) {
+    return
+  }
+
+  try {
+    const dynamicTemplateData = {
+      community_name: event.community_name,
+      event_url: getEventUrl(event.community_account, event.id),
+      event_name: event.event_name,
+      event_cover_url: event.event_cover_url,
+      event_desc: event.event_desc,
+      event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
+      event_start_datetime: convertToDateWeekdayShort(event.event_start_datetime),
+      event_end_datetime: convertToDateWeekdayShort(event.event_end_datetime),
+      event_address: event.event_address,
+      event_place: event.event_place,
+      shop_name: event.shop_name,
+      event_deadline_datetime: convertToDateWeekdayShort(event.event_deadline_datetime),
+      event_payment: event.event_payment,
+    }
+
+    // Promise.allSettled を使用して、一部失敗しても続行
+    const results = await Promise.allSettled(
+      emails.map(async (to) => {
+        return sgMail.send({
+          to,
+          from: DEFAULT_FROM,
+          templateId: NEW_EVENT_NOTIFICATION_TEMPLATE_ID,
+          dynamicTemplateData,
+        })
+      }),
+    )
+
+    // 成功・失敗の集計
+    const successCount = results.filter((r) => r.status === 'fulfilled').length
+    const failedCount = results.filter((r) => r.status === 'rejected').length
+
+    if (successCount > 0) {
+      logger.info('Sent new event notification emails', {
+        eventId: event.id,
+        communityId,
+        successCount,
+        failedCount,
+        totalEmails: emails.length,
+      })
+    }
+
+    // 失敗したメールの詳細をログ出力
+    if (failedCount > 0) {
+      logger.warn('Failed to send new event notifications', {
+        eventId: event.id,
+        communityId,
+        successCount,
+        failedCount,
+        totalEmails: emails.length,
+        errors: results
+          .filter((r) => r.status === 'rejected')
+          .map((r) => (r as PromiseRejectedResult).reason?.message || r.reason),
+      })
+    }
+  } catch (error) {
+    logger.error('Failed to send new event notification', {
+      error,
+      eventId,
+      communityId,
+    })
+  }
 }
 
 export const onOrderChanged = onDocumentWritten(
@@ -194,7 +217,7 @@ export const onOrderChanged = onDocumentWritten(
   },
   async (change) => {
     if (!change.data) {
-      console.warn('Change data is undefined')
+      logger.warn('Change data is undefined')
       return
     }
 
@@ -205,20 +228,20 @@ export const onOrderChanged = onDocumentWritten(
     if (before?.get('status') !== after?.get('status') && after?.get('status') === 'ordered') {
       const eventRef = after.ref.parent.parent
       if (!eventRef) {
-        console.warn('Event reference is null')
+        logger.warn('Event reference is null')
         return
       }
 
       const userId = after.get('user_id')
       const afterEvent = await convertReferenceToEvent(eventRef)
       if (!afterEvent) {
-        console.warn(`Event not found for eventRef: ${eventRef.path}`)
+        logger.warn('Event not found for eventRef', { eventRefPath: eventRef.path })
         return
       }
       promises.push(sendOrderCompletionMailToMember(afterEvent, userId))
       promises.push(sendOrderCompletionMailToOrganizers(afterEvent, userId))
       // 新着イベント通知メールを送信（is_publicかつ未送信の場合のみ）
-      promises.push(sendNewEventNotificationToMembers(afterEvent.id, userId))
+      promises.push(sendNewEventNotificationToMembers(afterEvent.id, userId, afterEvent.community_id))
     }
 
     await Promise.all(promises)
