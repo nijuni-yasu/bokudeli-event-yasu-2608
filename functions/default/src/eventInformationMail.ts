@@ -1,7 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
+import { logger } from 'firebase-functions'
 import { DEFAULT_FROM, DEFAULT_TO } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import type { ClientResponse } from '@sendgrid/mail'
 import { getEventUrl } from './utils/urls.js'
 import { getAllUsers } from './stores/user.js'
 import { getAllAcceptingOrderEvents } from './stores/event.js'
@@ -123,6 +123,11 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
 
 /**
  * イベント情報メールを送信
+ * 処理フロー：
+ * 1. getAllUsers ジェネレーターでユーザーを順次取得し、メール送信を即座に開始
+ *    - Result型により個別のユーザー取得エラーを明示的にハンドリング
+ * 2. 全送信の完了を Promise.allSettled で待機
+ * 3. 処理結果（fetch/send エラー数）をログに出力
  */
 async function sendEventInformationMail(): Promise<void> {
   const nowDateTimeMillis = Date.now()
@@ -132,37 +137,50 @@ async function sendEventInformationMail(): Promise<void> {
     return
   }
 
-  const promises: Promise<void | [ClientResponse, unknown]>[] = []
-  const users = await getAllUsers(true)
+  let fetchErrorCount = 0
+  const promises: Promise<[unknown, object]>[] = []
 
-  for (const user of users) {
+  for await (const r of getAllUsers(true)) {
+    if (!r.ok) {
+      logger.error('eventInformationMail|Failed to get user', { error: r.error })
+      fetchErrorCount++
+      continue
+    }
+
+    const user = r.value
+
     if (!user?.user_email) {
       continue
     }
 
-    const dynamicTemplateData = {
-      ...templateData,
-      user_name: user.user_name,
-    }
-
     promises.push(
-      sgMail
-        .send({
-          to: user.user_email,
-          from: DEFAULT_FROM,
-          templateId: EVENT_INFORMATION_TEMPLATE_ID,
-          dynamicTemplateData,
-          asm: {
-            groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
-          },
-        })
-        .catch((err) => {
-          console.warn('Failed to send event information mail:', err)
-        }),
+      sgMail.send({
+        to: user.user_email,
+        from: DEFAULT_FROM,
+        templateId: EVENT_INFORMATION_TEMPLATE_ID,
+        dynamicTemplateData: {
+          ...templateData,
+          user_name: user.user_name,
+        },
+        asm: {
+          groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
+        },
+      }),
     )
   }
 
-  await Promise.all(promises)
+  const settled = await Promise.allSettled(promises)
+
+  const processedCount = settled.filter((r) => r.status === 'fulfilled').length
+  const sendErrorCount = settled.filter((r) => r.status === 'rejected').length
+
+  for (const r of settled) {
+    if (r.status === 'rejected') {
+      logger.warn('eventInformationMail|Failed to send email', { error: r.reason })
+    }
+  }
+
+  logger.info('eventInformationMail|Completed', { processedCount, sendErrorCount, fetchErrorCount })
 }
 
 /**
