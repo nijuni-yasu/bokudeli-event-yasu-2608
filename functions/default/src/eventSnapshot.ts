@@ -1,10 +1,15 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { createModuleLogger } from './utils/logger.js'
 import { getPartner } from './stores/partner.js'
 import { getEvent } from './stores/event.js'
+import { convertPartnerMenusToEventMenus } from '@shokujii/common/utils/eventMenuConverter.js'
+
+const logger = createModuleLogger('eventSnapshot')
 
 /**
- * パートナーのメニューをイベントのメニューコレクションにスナップショットとしてコピー
+ * 最新の PartnerMenu を EventMenu にスナップショットとしてコピー
+ * EventMenuのis_selected状態を保持する
  * @param partnerId - パートナーID
  * @param eventId - イベントID
  * @param startDatetime - イベント開始日時（ミリ秒）
@@ -16,35 +21,36 @@ const makeMenuSnapshot = async (partnerId: string, eventId: string, startDatetim
     if (partner == null || event == null) {
       throw new Error(`Partner ${partnerId} or Event ${eventId} not found`)
     }
+
     const partnerMenus = await partner.getMenus(transaction)
-    const eventMenus = await event.getMenus(transaction)
+    const existingEventMenus = await event.getMenus(transaction)
+
     // 既存のメニューを削除
     await Promise.all(
-      eventMenus.map(async (menu) => {
+      existingEventMenus.map(async (menu) => {
         await event.deleteMenu(menu, transaction)
       }),
     )
 
-    // パートナーのメニューをコピー（期間が重なるもののみ）
-    await Promise.all(
-      partnerMenus.map(async (menu) => {
-        const menuDateStart = menu.menu_date_start
-        const menuDateEnd = menu.menu_date_end
+    // convertPartnerMenusToEventMenus を使用してメニューを生成
+    // 期間チェックとis_selected引き継ぎが自動で行われる
+    // 既存の選択状態を引き継ぐため、選択されているmenu_idを抽出
+    const selectedMenuIds = existingEventMenus.filter((m) => m.is_selected).map((m) => m.menu_id)
+    const eventMenusToSave = convertPartnerMenusToEventMenus(partnerMenus, eventId, startDatetime, selectedMenuIds)
 
-        // メニューの日付が未設定、またはイベント開始時刻がメニューの期間内の場合はコピー
-        if (
-          menuDateStart == null ||
-          menuDateEnd == null ||
-          (menuDateStart <= startDatetime && startDatetime <= menuDateEnd)
-        ) {
-          await event.saveMenu(menu, transaction)
-        }
+    // 生成したEventMenusを保存
+    await Promise.all(
+      eventMenusToSave.map(async (eventMenu) => {
+        await event.saveMenu(eventMenu, transaction)
       }),
     )
   })
 
 /**
- * イベント作成・更新時に、パートナーのメニューをイベントのメニューコレクションにスナップショットとしてコピー
+ * 飲食店承認/却下時に、PartnerMenuをEventMenuにコピー
+ * 飲食店の承認: applying_reservation → accepting_order
+ * 飲食店の却下: applying_reservation → in_draft
+ * 上記以外のステータス変更では実行されない（主催者による更新時はCallable Functionを使用）
  */
 export const makeShopSnapshotToEvent = onDocumentWritten(
   {
@@ -53,7 +59,7 @@ export const makeShopSnapshotToEvent = onDocumentWritten(
   },
   async (change) => {
     if (!change.data) {
-      console.warn('Change data is undefined')
+      logger.warn('Change data is undefined')
       return
     }
 
@@ -67,19 +73,12 @@ export const makeShopSnapshotToEvent = onDocumentWritten(
     const beforeStatus = before?.get('event_status')?.value
     const afterStatus = after.get('event_status')?.value
 
-    // ステータスがaccepting_orderからaccepting_orderに変更された場合は何もしない
-    if (beforeStatus === 'accepting_order' && afterStatus === 'accepting_order') {
-      return
-    }
+    // 飲食店による承認または却下の場合のみ実行
+    const isShopApproval = beforeStatus === 'applying_reservation' && afterStatus === 'accepting_order'
+    const isShopRejection = beforeStatus === 'applying_reservation' && afterStatus === 'in_draft'
 
-    // ステータスがaccepting_orderから他のステータスに変更された場合は警告を出して処理を継続
-    if (beforeStatus === 'accepting_order' && afterStatus !== 'accepting_order') {
-      const communityId = after.get('community_id') as string | undefined
-      const eventId = after.id
-      console.warn(
-        `Event status changed from accepting_order to ${afterStatus}\n` +
-          `Community: ${communityId}, Event: ${eventId}`,
-      )
+    if (!isShopApproval && !isShopRejection) {
+      return
     }
 
     // イベントデータを取得
@@ -87,20 +86,27 @@ export const makeShopSnapshotToEvent = onDocumentWritten(
     const partnerId = after.get('partner_id') as string | undefined
     const communityId = after.get('community_id') as string | undefined
     const eventId = after.id
-    const eventName = after.get('event_name') as string | undefined
 
     // 必須パラメータのチェック
-    if (!partnerId || !startDatetime) {
-      console.warn(
-        `Missing required parameters: partnerId=${partnerId}, communityId=${communityId}, eventId=${eventId}, startDatetime=${startDatetime}`,
-      )
+    if (!partnerId || startDatetime == null) {
+      logger.warn('Missing required parameters', {
+        partnerId,
+        communityId,
+        eventId,
+        startDatetime,
+      })
       return
     }
 
     try {
       await makeMenuSnapshot(partnerId, eventId, startDatetime)
     } catch (error) {
-      console.warn(`Community: ${communityId}, Event: ${eventId}, EventName: ${eventName}`, error)
+      logger.error('Failed to make menu snapshot', {
+        communityId,
+        eventId,
+        error,
+      })
+      throw error
     }
   },
 )
