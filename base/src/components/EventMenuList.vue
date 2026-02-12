@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { mdiFoodForkDrink } from '@mdi/js'
 
-defineProps<{
+const props = defineProps<{
   menus: BokudeliEventMenu[] | null
   disabled: boolean
 }>()
@@ -11,11 +12,17 @@ defineProps<{
 const emit = defineEmits<{
   selectMenu: [menu: BokudeliEventMenu]
 }>()
+
+// is_selected が true のメニューのみを表示
+const filteredMenus = computed(() => {
+  if (props.menus === null) return null
+  return props.menus.filter((menu) => menu.is_selected === true)
+})
 </script>
 <template>
   <section>
-    <v-row v-if="menus !== null" class="align-items-stretch">
-      <v-col v-for="(menu, i) of menus" :key="`menu_${i}`" md="4" sm="6" cols="12" class="pa-3">
+    <v-row v-if="filteredMenus !== null" class="align-items-stretch">
+      <v-col v-for="(menu, i) of filteredMenus" :key="`menu_${i}`" md="4" sm="6" cols="12" class="pa-3">
         <v-card height="100%" color="text-center">
           <v-row no-gutters>
             <v-col cols="6" sm="12" class="d-flex">
@@ -55,7 +62,7 @@ const emit = defineEmits<{
       </v-col>
 
       <!-- no result found -->
-      <v-col v-show="menus !== null && menus.length === 0" cols="12" class="text-center">
+      <v-col v-show="filteredMenus !== null && filteredMenus.length === 0" cols="12" class="text-center">
         <h4 class="mt-4">メニューがありません</h4>
       </v-col>
     </v-row>
