@@ -22,7 +22,13 @@ const UserDbSchema = z.object({
 const UserAppSchema = z.object({
   user_name: z.string().default(''),
   user_description: z.string().default(''),
-  user_image_url: z.string().default(''),
+  // NOTE: 画像登録フローの不具合により null が保存されているユーザーが存在するため、
+  // null を受け入れて空文字列に変換している。根本的には画像登録フローを修正する
+  user_image_url: z
+    .string()
+    .nullable()
+    .transform((v) => v ?? '')
+    .default(''),
   user_sns_facebook: z.string().default(''),
   user_sns_facebook_name: z.string().default(''),
   user_sns_twitter: z.string().default(''),
