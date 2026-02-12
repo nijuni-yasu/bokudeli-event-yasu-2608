@@ -4,9 +4,10 @@ import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
-import { mdiPlus, mdiHelp } from '@mdi/js'
+import { mdiPlus, mdiHelp, mdiContentCopy } from '@mdi/js'
 import { getEventCreatePath, getManageEventPath } from '@/router/utils'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import CopyEventDialog from './CopyEventDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,6 +44,13 @@ const events = computed(
     }) ?? [],
 )
 const isOpenEventDialog = ref(false)
+const isOpenCopyDialog = ref(false)
+
+const handleCopySuccess = (newEventId: string) => {
+  router.push(getManageEventPath(newEventId))
+  // イベント一覧を再読み込み
+  eventListStore.reload()
+}
 </script>
 
 <template>
@@ -51,6 +59,14 @@ const isOpenEventDialog = ref(false)
       <v-col cols="12" class="buttons">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">
           {{ $t('manage.new_event') }}
+        </v-btn>
+        <v-btn
+          v-if="events.length > 0"
+          variant="outlined"
+          :prepend-icon="mdiContentCopy"
+          @click="isOpenCopyDialog = true"
+        >
+          {{ $t('manage.copy_event') }}
         </v-btn>
         <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenEventDialog = true" />
       </v-col>
@@ -90,6 +106,7 @@ const isOpenEventDialog = ref(false)
       <div v-html="$t('event_create_modal.desc')" />
     </v-card-text>
   </confirm-dialog>
+  <CopyEventDialog v-model="isOpenCopyDialog" :community-account="communityAccount" @success="handleCopySuccess" />
 </template>
 
 <style scoped lang="scss">

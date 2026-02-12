@@ -60,6 +60,17 @@ class ShokujiiEventLogConverter implements FirestoreDataConverter<EventLog> {
 }
 
 export class ShokujiiEvent extends Event {
+  constructor(id: string | null, src: Partial<Event>) {
+    if (id == null) {
+      if (src.community_id == null) {
+        throw new Error('community_id is required')
+      }
+      const db = getFirestore()
+      id = db.collection('communities').doc(src.community_id).collection('events').doc().id
+    }
+    super(id, src)
+  }
+
   async getOrders(status?: EventOrderStatusType, transaction?: Transaction): Promise<EventOrder[]> {
     const db = getFirestore()
     const ordersRef = db

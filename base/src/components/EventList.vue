@@ -7,6 +7,7 @@ import { orderBy, where } from 'firebase/firestore'
 
 const props = defineProps<{
   communityAccount: string
+  selectedEventId?: string | null
 }>()
 
 defineEmits<{
@@ -31,9 +32,15 @@ const events = computed(() => {
 
 <template>
   <v-list class="list-with-borders">
-    <v-list-item v-for="event of events" :key="event.event_id" @click="$emit('click', event)">
-      <v-list-item-title>{{ event.event_name }}</v-list-item-title>
+    <v-list-item
+      v-for="event of events"
+      :key="event.event_id"
+      :active="event.event_id === selectedEventId"
+      @click="$emit('click', event)"
+    >
+      <v-list-item-title class="text-h6 py-1">{{ event.event_name }}</v-list-item-title>
       <div class="text-body-2">{{ $d(event.event_start_datetime, 'datetime') }}</div>
+      <div class="text-body-2">{{ event.shop_name }}</div>
     </v-list-item>
     <v-list-item>
       <IncrementalLoader
@@ -48,5 +55,9 @@ const events = computed(() => {
 <style scoped>
 .list-with-borders .v-list-item:not(:last-child) {
   border-bottom: 1px solid #e0e0e0;
+}
+
+.v-list-item--active {
+  background-color: rgb(var(--v-theme-primary) / 0.1) !important;
 }
 </style>

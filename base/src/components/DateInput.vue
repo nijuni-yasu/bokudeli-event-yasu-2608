@@ -9,19 +9,17 @@ const modelValue = defineModel<string | null>({
   default: null,
 })
 
-// const props = withDefaults(defineProps<Props>(), {
-// 	bar: true,
-// 	hoge: () => ['one', 'two']
-// });
-
 const props = withDefaults(
   defineProps<{
     readonly?: boolean
     clearable?: boolean
+    // eslint-disable-next-line no-unused-vars
+    allowedDates?: unknown[] | ((value: unknown) => boolean) | undefined
   }>(),
   {
     readonly: false,
     clearable: true,
+    allowedDates: undefined,
   },
 )
 
@@ -61,6 +59,12 @@ const displayDate = computed<string>(() => (date.value == null ? '' : $d(date.va
         @click:append-inner.stop="modelValue = null"
       />
     </template>
-    <v-date-picker v-model="date" :hide-header="true" :clearable="true" @update:model-value="menu = false" />
+    <v-date-picker
+      v-model="date"
+      :hide-header="true"
+      :clearable="true"
+      :allowed-dates="allowedDates"
+      @update:model-value="menu = false"
+    />
   </v-menu>
 </template>
