@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
 import { isInShopTime } from '@shokujii/common/utils/datetime.js'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
@@ -41,12 +41,30 @@ const emits = defineEmits<{
 
 const { requiredValidator, postalCodeValidator } = useValidators()
 
+const alertDialog = reactive({
+  visible: false,
+  message: '',
+  onClose: undefined as (() => void) | undefined,
+})
+
+const showAlertDialog = (message: string, onClose?: () => void) => {
+  alertDialog.message = message
+  alertDialog.visible = true
+  alertDialog.onClose = onClose
+}
+
+const handleAlertDialogOk = () => {
+  const onClose = alertDialog.onClose
+  alertDialog.onClose = undefined
+  onClose?.()
+}
+
 const isValid1 = ref(false)
 const isValid4 = ref(false)
 
 const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
 
-const isOpenContactDialogVisible = ref(props.eventId == null)
+const isContactDialogOpen = ref(props.eventId == null)
 
 const _event = ref<BokudeliEvent | null>(null)
 
@@ -254,8 +272,9 @@ watch(
   () => communityStore.community?.is_approved,
   (is_approved) => {
     if (is_approved === false) {
-      window.alert('コミュニティが承認されていません')
-      router.push(getCommunityPath(props.communityAccount))
+      showAlertDialog($t('manage.event.community_not_approved'), () => {
+        router.push(getCommunityPath(props.communityAccount))
+      })
     }
   },
   { immediate: true },
@@ -283,8 +302,9 @@ const handleMenuIdsUpdate = (ids: string[]) => {
 onMounted(async () => {
   const roles = await communityStore.getCurrentUserRoles()
   if (roles == null || !roles.includes('manager')) {
-    window.alert('コミュニティ運営者ではありません')
-    router.push(getCommunityPath(props.communityAccount))
+    showAlertDialog($t('manage.event.not_manager'), () => {
+      router.push(getCommunityPath(props.communityAccount))
+    })
   }
 })
 
@@ -319,7 +339,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
         await updateEventMenus(newEvent.event_id, communityId, selectedMenuIds.value)
       } catch (error) {
         console.error('Failed to update event menus:', error)
-        window.alert('メニューの更新に失敗しました')
+        showAlertDialog($t('manage.event.menu_update_failed'))
       }
     }
 
@@ -338,39 +358,57 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
       await updateEventMenus(event.value.event_id, communityId, selectedMenuIds.value)
     } catch (error) {
       console.error('Failed to update event menus:', error)
-      window.alert('メニューの更新に失敗しました')
-    }
+        showAlertDialog($t('manage.event.menu_update_failed'))
+      }
 
     return event.value
   }
 }
 
 const submit = async () => {
-  const event = await saveDraft()
-  if (event?.event_id == null || event?.community_account == null) {
-    console.warn('Could not save event')
-    return
+  const isNewEvent = props.eventId == null // 保存前に新規作成かどうかを判定
+  try {
+    const event = await saveDraft()
+    if (event == null) {
+      showAlertDialog($t('manage.event.save_failed'))
+      return
+    }
+    if (isNewEvent) {
+      showAlertDialog($t('manage.event.created_success', { name: event.event_name }), () =>
+        emits('updated', event.event_id),
+      )
+    } else {
+      showAlertDialog($t('manage.event.updated_success', { name: event.event_name }), () =>
+        emits('updated', event.event_id),
+      )
+    }
+  } catch (error) {
+    console.error('Failed to save event:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    showAlertDialog($t('manage.event.save_error', { error: errorMessage }))
   }
-  if (event?.event_id == null) {
-    window.alert(`「${event.event_name}」のイベントを新規作成しました`)
-  } else {
-    window.alert(`「${event.event_name} 」のイベントを更新しました`)
-  }
-  emits('updated', event.event_id)
 }
 
 const sendReserveMail = async () => {
-  const event = await saveDraft()
-  if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
-    // eslint-disable-next-line quotes
-    console.warn("The event doesn't have enough information.", event)
-    return
+  try {
+    const event = await saveDraft()
+    if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
+      // eslint-disable-next-line quotes
+      console.warn("The event doesn't have enough information.", event)
+      showAlertDialog($t('manage.event.save_failed'))
+      return
+    }
+    event.event_status = { value: 'applying_reservation', shop_comment: '' }
+    const eventStore = useEventStore(event.event_id) as EventStore
+    await eventStore.updateEvent(event)
+    showAlertDialog($t('manage.event.reserve_success', { name: event.shop_name }), () =>
+      emits('updated', event.event_id),
+    )
+  } catch (error) {
+    console.error('Failed to send reserve mail:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    showAlertDialog($t('manage.event.reserve_error', { error: errorMessage }))
   }
-  event.event_status = { value: 'applying_reservation', shop_comment: '' }
-  const eventStore = useEventStore(event.event_id) as EventStore
-  await eventStore.updateEvent(event)
-  window.alert(`「${event.shop_name}」に予約申請しました。店舗からの予約承認をお待ちください。`)
-  emits('updated', event.event_id)
 }
 
 const stepperItems = computed(() => [
@@ -478,13 +516,17 @@ const stepperItems = computed(() => [
       />
     </template>
   </v-stepper>
-  <confirm-dialog v-model="isOpenContactDialogVisible" :ok-text="'OK'" max-width="800px">
-    <v-card-text class="text-center py-6 text-h4">
+  <confirm-dialog v-model="isContactDialogOpen" :ok-text="'OK'" max-width="800px">
+    <div class="text-center py-6 text-h4">
       {{ $t('event_create_modal.title') }}
-    </v-card-text>
-    <v-card-text class="pb-0" style="line-height: 2.4rem">
+    </div>
+    <div class="pb-0" style="line-height: 2.4rem">
       <div v-html="$t('event_create_modal.desc')" />
-    </v-card-text>
+    </div>
+  </confirm-dialog>
+
+  <confirm-dialog v-model="alertDialog.visible" :ok-click="handleAlertDialogOk" ok-text="OK">
+    {{ alertDialog.message }}
   </confirm-dialog>
 </template>
 
