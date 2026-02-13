@@ -285,7 +285,7 @@ export const setupRouter = (router: Router) => {
       const communityStore = useCommunityStore(communityAccount) as CommunityStore
       const canView = await new Promise<boolean>((resolve) => {
         watch(
-          () => [configStore.config, communityStore.community, communityStore.members],
+          () => [configStore.config, communityStore.community],
           () => {
             if (
               configStore.config !== FIRESTORE_LOADING &&
@@ -295,11 +295,10 @@ export const setupRouter = (router: Router) => {
               return
             }
             const community = communityStore.community
-            const members = communityStore.members
-            if (community != null && members != null && members.length === community.members.length) {
-              const canView = members.some(
-                (member) => member?.user_id === getAuth().currentUser?.uid && member?.roles?.includes('manager'),
-              )
+            const currentUserId = getAuth().currentUser?.uid
+
+            if (community != null && currentUserId != null) {
+              const canView = community.managers.some((managerRef) => managerRef.id === currentUserId)
               resolve(canView)
             }
           },
