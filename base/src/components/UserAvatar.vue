@@ -9,7 +9,10 @@ import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase.js'
 const MAX_RETRIES = 10
 const RETRY_DELAY = 1000
 
-const props = defineProps<{ user: User | string | null; size?: number }>()
+const props = defineProps<{
+  user: User | string | null
+  size?: number
+}>()
 
 const calcAvatarSize = (size: number | undefined): Sizes => {
   if (size == null) return 'large'
@@ -31,7 +34,16 @@ const avatar = computed(() => {
   )
   return thumbnails?.[calcAvatarSize(size.value)] ?? props.user.user_image_url
 })
-const initial = computed(() => (typeof props.user === 'string' ? props.user.slice(0, 1) : undefined))
+const initial = computed(() => {
+  if (typeof props.user === 'string') {
+    // URLの場合はイニシャル表示しない
+    if (props.user.startsWith('http') || props.user.startsWith('blob:')) {
+      return undefined
+    }
+    return props.user.slice(0, 1)
+  }
+  return undefined
+})
 
 const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
