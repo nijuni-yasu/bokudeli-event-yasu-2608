@@ -8,10 +8,14 @@ import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCa
 import EventShopNotice from '@shokujii/base/components/eventcreate/EventShopNotice.vue'
 import { BokudeliEvent, createNewEvent } from '@shokujii/base/stores/event.js'
 import { usePartnerStore, type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useEventStore, type EventStore, BokudeliEventMenu } from '@shokujii/base/stores/event'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useShopListStore } from '@shokujii/base/stores/shopList'
+import {
+  convertPartnerMenusToEventMenus,
+  updateEventMenusIsSelected,
+} from '@shokujii/common/utils/eventMenuConverter.js'
 import { useRouter } from 'vue-router'
 import { getCommunityPath } from '@/router/utils'
 import { calculateDistance, fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/composable/fetchLocation'
@@ -173,35 +177,78 @@ const currentUserStore = useCurrentUserStore()
 const stepQuery = Number.parseInt(props.step)
 const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 
-const isLoadingMenu = ref(false)
-
 const isUpdatedStartTime = ref(false)
 
-// Fetch Menus
-// 本来 watch をつかわず computed のみで対応できるが loading 等、過去の資産を使うために残す。TODO: 修正する。
-const menus = ref<BokudeliPartnerMenu[]>([])
-watch(
-  () => event.value?.partner_id,
-  async () => {
-    const partnerId = event.value?.partner_id
-    if (!partnerId) {
-      return
+// partner_id に基づいて PartnerMenu を取得
+const partnerMenus = computed<BokudeliPartnerMenu[]>(() => {
+  const partnerId = event.value?.partner_id
+  if (!partnerId) {
+    return []
+  }
+  const partnerStore = usePartnerStore(partnerId)
+  return partnerStore.menus ?? []
+})
+
+// eventMenus が空の場合はローディング中と判定
+const isLoadingMenu = computed(() => {
+  return eventMenus.value.length === 0
+})
+
+// 既存EventMenusを取得
+const existingMenus = computed(() => {
+  if (!props.eventId) return []
+  const eventStore = useEventStore(props.eventId) as EventStore
+  return eventStore.menus || []
+})
+
+// ユーザーのメニュー選択状態を管理
+const _userSelectedMenuIds = ref<string[] | null>(null)
+const userSelectedMenuIds = computed<string[]>({
+  get: () => {
+    // _userSelectedMenuIds が null の場合は existingMenus から初期値を取得
+    if (_userSelectedMenuIds.value === null) {
+      if (!props.eventId) {
+        return []
+      }
+      return existingMenus.value.filter((m) => m.is_selected).map((m) => m.menu_id)
     }
-    isLoadingMenu.value = true
-    const partenrStore = usePartnerStore(partnerId)
-    watch(
-      () => partenrStore.menus,
-      (ms) => {
-        if (ms != null) {
-          menus.value = ms
-          isLoadingMenu.value = false
-        }
-      },
-      { immediate: true },
-    )
+    return _userSelectedMenuIds.value
   },
-  { immediate: true },
-)
+  set: (value: string[]) => {
+    _userSelectedMenuIds.value = value
+  },
+})
+
+// 終了したイベントは編集不可
+const isFinished = computed(() => event.value?.calculatedEventStatus === 'finished')
+
+// 表示用のEventMenus（converter経由で変換）
+const eventMenus = computed(() => {
+  const eventId = event.value?.event_id ?? 'temp'
+  const eventStartDatetime = event.value?.event_start_datetime ?? null
+  const eventStatus = event.value?.event_status?.value
+
+  // accepting_order状態: 既存EventMenuを使用
+  if (eventStatus === 'accepting_order') {
+    const { updatedMenus } = updateEventMenusIsSelected(existingMenus.value, userSelectedMenuIds.value)
+    return updatedMenus
+  }
+
+  // in_draft, applying_reservation, 新規作成時
+  if (eventStatus === 'in_draft' || eventStatus === 'applying_reservation' || eventStatus == null) {
+    return convertPartnerMenusToEventMenus(partnerMenus.value, eventId, eventStartDatetime, userSelectedMenuIds.value)
+  }
+
+  return []
+})
+
+// 保存時はこのselectedMenuIds.valueをバックエンドに送信する
+// userSelectedMenuIdsとの違い:
+// - userSelectedMenuIds: ユーザーの選択意図を保持
+// - selectedMenuIds: 実際の表示状態を反映
+const selectedMenuIds = computed(() => {
+  return eventMenus.value.filter((m: BokudeliEventMenu) => m.is_selected).map((m: BokudeliEventMenu) => m.menu_id)
+})
 
 watch(
   () => communityStore.community?.is_approved,
@@ -227,6 +274,11 @@ watch(
   },
   { immediate: true },
 )
+
+// メニュー選択IDの更新ハンドラ
+const handleMenuIdsUpdate = (ids: string[]) => {
+  userSelectedMenuIds.value = ids
+}
 
 onMounted(async () => {
   const roles = await communityStore.getCurrentUserRoles()
@@ -355,10 +407,12 @@ const stepperItems = computed(() => [
     </template>
     <template #[`item.3`]>
       <event-menu
-        :menus="menus"
+        :menus="eventMenus"
         :event="event"
         :shop="selectedShop"
         :loading="isLoadingMenu"
+        :disabled="isFinished"
+        @update:selectedMenuIds="handleMenuIdsUpdate"
         @submit="stepper++"
         @back="stepper--"
       />
