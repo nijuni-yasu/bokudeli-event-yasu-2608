@@ -1,41 +1,75 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { useI18n } from 'vue-i18n'
+import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import { BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 
+const { t } = useI18n()
+
 const props = defineProps<{
   shop: BokudeliPartnerShop | null
-  menus: BokudeliPartnerMenu[]
+  menus: BokudeliEventMenu[]
   event: BokudeliEvent
   loading: boolean
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
   submit: []
   back: []
+  'update:selectedMenuIds': [selectedMenuIds: string[]]
 }>()
+
+// メニューの選択状態をトグル
+const toggleMenuSelection = (menuId: string) => {
+  // 編集が無効化されている場合は何もしない
+  if (props.disabled) return
+
+  // 現在の選択状態を反転させた新しい選択IDリストを作成
+  const currentMenu = props.menus.find((m) => m.menu_id === menuId)
+  if (!currentMenu) return
+
+  // 最後の1つを非選択にしようとした場合は何もしない
+  if (currentMenu.is_selected && selectedCount.value === 1) {
+    return
+  }
+
+  // 現在選択されているメニューIDのリスト
+  const selectedIds = props.menus.filter((m) => m.is_selected).map((m) => m.menu_id)
+
+  // 選択状態を反転
+  const newSelectedMenuIds = currentMenu.is_selected
+    ? selectedIds.filter((id) => id !== menuId) // 非選択に: 削除
+    : [...selectedIds, menuId] // 選択に: 追加
+
+  emit('update:selectedMenuIds', newSelectedMenuIds)
+}
+
+// メニューが選択されているかチェック
+const isMenuSelected = (menuId: string): boolean => {
+  return props.menus.find((m) => m.menu_id === menuId)?.is_selected ?? false
+}
+
+// 最後の1つの選択メニューかどうかを判定
+const isLastSelected = (menuId: string): boolean => {
+  return selectedCount.value === 1 && isMenuSelected(menuId)
+}
 
 const submit = () => {
   emit('submit')
 }
+
 const back = () => {
   emit('back')
 }
 
-const filteredMenu = computed(() =>
-  props.menus.filter((menu) => {
-    const eventStartDate = props.event.event_start_datetime
-    if (menu.menu_date_start == null || menu.menu_date_end == null || eventStartDate == null) {
-      return true
-    } else {
-      const dateStart = menu.menu_date_start
-      const dateEnd = menu.menu_date_end
-      return dateStart <= eventStartDate && eventStartDate <= dateEnd
-    }
-  }),
-)
+// 選択済みカウント
+const selectedCount = computed(() => {
+  return props.menus.filter((menu) => menu.is_selected).length
+})
 </script>
 
 <template>
@@ -48,13 +82,40 @@ const filteredMenu = computed(() =>
               <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
               {{ event.shop_name }}
             </v-card-title>
-            <v-card-text>
+            <v-card-text class="text-left text-h5">
               {{ shop?.shop_description }}
             </v-card-text>
+
+            <!-- 選択カウント表示 -->
+            <v-card-subtitle class="text-center text-h6 my-4">
+              {{ t('event_menu.select_menu_instruction') }}
+              <v-chip color="primary" class="ml-2">
+                {{ t('event_menu.selected_count', { count: selectedCount, total: props.menus.length }) }}
+              </v-chip>
+            </v-card-subtitle>
+
             <v-row>
-              <v-col v-for="(item, i) of filteredMenu" :key="`menu_${i}`" md="4" sm="4" cols="12">
-                <v-card class="mb-3 mx-0" color="text-center cursor-pointer">
+              <v-col v-for="(item, i) of props.menus" :key="`menu_${i}`" md="4" sm="4" cols="12">
+                <v-card
+                  class="mb-3 mx-0 menu-card"
+                  :class="{
+                    'menu-selected': isMenuSelected(item.menu_id),
+                    'menu-unselected': !isMenuSelected(item.menu_id),
+                    'menu-clickable': !props.disabled && !isLastSelected(item.menu_id),
+                    'menu-disabled': props.disabled || isLastSelected(item.menu_id),
+                  }"
+                  @click="toggleMenuSelection(item.menu_id)"
+                >
                   <v-img :src="item.menu_image_url ?? undefined" cover aspect-ratio="1" />
+
+                  <!-- 選択状態インジケーター -->
+                  <v-chip
+                    :color="isMenuSelected(item.menu_id) ? 'success' : 'grey'"
+                    class="selection-indicator"
+                    size="small"
+                  >
+                    {{ isMenuSelected(item.menu_id) ? t('event_menu.orderable') : t('event_menu.not_orderable') }}
+                  </v-chip>
 
                   <!-- title -->
                   <v-card-title class="justify-center pb-3 text-wrap">
@@ -69,17 +130,24 @@ const filteredMenu = computed(() =>
 
               <!-- no result found -->
               <v-col v-show="!props.menus.length" cols="12" class="text-center">
-                <h4 class="mt-4">メニューが見つかりませんでした</h4>
+                <h4 class="mt-4">{{ t('event_menu.no_menus_found') }}</h4>
               </v-col>
             </v-row>
 
             <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back"
-                >前へ</v-btn
+              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back">
+                {{ t('event_edit.back') }}
+              </v-btn>
+              <v-btn
+                color="primary"
+                class="me-3 mt-3"
+                size="large"
+                :append-icon="mdiChevronRight"
+                :disabled="selectedCount === 0"
+                @click="submit"
               >
-              <v-btn color="primary" class="me-3 mt-3" size="large" :append-icon="mdiChevronRight" @click="submit"
-                >次へ</v-btn
-              >
+                {{ t('event_edit.next') }}
+              </v-btn>
             </v-card-text>
           </v-form>
         </v-card>
@@ -92,4 +160,43 @@ const filteredMenu = computed(() =>
     </v-row>
   </section>
 </template>
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.menu-card {
+  position: relative;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.menu-clickable {
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(var(--v-shadow-key-umbra), 0.2);
+  }
+}
+
+.menu-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.menu-selected {
+  border: 4px solid rgb(var(--v-theme-primary));
+  background-color: rgb(var(--v-theme-grey-50));
+  opacity: 0.9;
+}
+
+.menu-unselected {
+  border: 2px solid rgb(var(--v-theme-grey-400));
+  background-color: rgb(var(--v-theme-grey-100));
+  opacity: 0.6;
+}
+
+.selection-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+}
+</style>

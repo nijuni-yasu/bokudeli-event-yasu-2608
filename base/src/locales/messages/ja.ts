@@ -290,6 +290,13 @@ export default {
     back: '前へ',
     next: '次へ',
   },
+  event_menu: {
+    select_menu_instruction: '参加者が注文できるメニューを選択してください',
+    selected_count: '選択中: {count} / {total} メニュー',
+    orderable: '注文可能',
+    not_orderable: '注文不可',
+    no_menus_found: 'メニューが見つかりませんでした',
+  },
   event_detail: {
     title: 'イベント詳細',
     event_name: 'イベントタイトル',

@@ -150,7 +150,6 @@ const isOpenDeadlineDialog = ref(false)
                   <div class="text-center">
                     <v-btn
                       v-if="item.shop_id == props.modelValue.shop_id"
-                      color="red"
                       class="ma-3"
                       size="large"
                       elevation="5"
@@ -162,6 +161,7 @@ const isOpenDeadlineDialog = ref(false)
                     <v-btn
                       v-else
                       color="primary"
+                      variant="outlined"
                       class="ma-3"
                       :append-icon="mdiChevronRight"
                       :disabled="event.event_status.value !== 'in_draft'"
@@ -211,6 +211,6 @@ const isOpenDeadlineDialog = ref(false)
 </template>
 <style lang="scss" scoped>
 .select-border {
-  border: 5px solid #ff4c51;
+  border: 5px solid rgb(var(--v-theme-primary));
 }
 </style>
