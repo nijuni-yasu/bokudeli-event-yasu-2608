@@ -80,7 +80,7 @@ export class Letter {
     this.id = id
     this.letter_id = id
     this.scheduled_at = EpochMillisSchema.default(Date.now()).parse(src.scheduled_at)
-    this.updated_at = Date.now()
+    this.updated_at = EpochMillisSchema.default(Date.now()).parse(src.updated_at)
   }
 
   isValidForDatabase(): boolean {
