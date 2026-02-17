@@ -55,3 +55,28 @@ export const updateSentStatus = async (ref: DocumentReference, transaction?: Tra
     await ref.update({ status: 'sent', sent_at: Timestamp.now() })
   }
 }
+
+/**
+ * レターのステータスを確認して更新（トランザクション内）
+ * 二重送信防止のため、期待するステータスと異なる場合はエラーをスロー
+ */
+export const updateLetterStatusWithCheck = async (
+  letterRef: DocumentReference,
+  expectedStatus: string,
+  newStatus: string,
+): Promise<void> => {
+  const db = getFirestore()
+  await db.runTransaction(async (transaction) => {
+    const currentDoc = await transaction.get(letterRef)
+    const currentStatus = currentDoc.data()?.status
+
+    if (currentStatus !== expectedStatus) {
+      throw new Error(`Letter status is not '${expectedStatus}': ${currentStatus}`)
+    }
+
+    transaction.update(letterRef, {
+      status: newStatus,
+      sent_at: Timestamp.now(),
+    })
+  })
+}

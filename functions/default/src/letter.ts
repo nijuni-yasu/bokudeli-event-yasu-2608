@@ -1,10 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { getFirestore, Transaction } from 'firebase-admin/firestore'
 import { sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
 import { getCommunity, getCommunityByAccount } from './stores/community.js'
 import { getEvent } from './stores/event.js'
-import { getLetter, getScheduledLetters, updateSentStatus } from './stores/letter.js'
+import { getLetter, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
 import { getUserPersonalInformation, getUser } from './stores/user.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import { send } from './utils/sendgrid.js'
@@ -170,9 +169,12 @@ async function getUserIdsByLetterType(letterType: string, communityId: string, e
  * 時間指定されたレターを送信する
  */
 export async function sendLetter(_: number, end: number): Promise<void> {
-  const sendLetterByTransaction = async (transaction: Transaction) => {
-    const lettersWithRefs = await getScheduledLetters(end, transaction)
-    const sendLetterPromises = lettersWithRefs.map(async ({ letter, ref }) => {
+  // 送信対象レターを取得
+  const lettersWithRefs = await getScheduledLetters(end)
+
+  // 各レターを並列処理
+  const sendLetterPromises = lettersWithRefs.map(async ({ letter, ref }) => {
+    try {
       const type = letter.letter_type
       const communityAccount = letter.community_account
       if (!communityAccount) {
@@ -180,7 +182,8 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         return
       }
 
-      const community = await getCommunityByAccount(communityAccount, transaction)
+      // コミュニティ情報の取得
+      const community = await getCommunityByAccount(communityAccount)
 
       if (!community) {
         logger.warn('Community not found for account', { communityAccount, letterId: letter.id })
@@ -232,80 +235,73 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         return
       }
 
+      // 送信済みステータスに更新（二重送信防止）
       try {
-        // 送信直前に sent に更新（2重送信防止）
-        await updateSentStatus(ref, transaction)
-
-        // コミュニティメールのバリデーション
-        if (!communityEmail || communityEmail.trim() === '') {
-          logger.error('letter | Invalid community email', {
-            communityId,
-            communityAccount,
-            communityEmail,
-          })
-          throw new Error('Community email is invalid')
-        }
-
-        // Promise.allSettled を使用して、一部失敗しても続行
-        const results = await Promise.allSettled(
-          validUserInfos.map(async (userInfo) => {
-            const dynamicTemplateData = {
-              ...communityData,
-              ...eventData,
-              letter_title: letter.letter_title,
-              letter_content: letter.letter_content,
-              letter_type: type,
-              user_name: userInfo.name || 'ユーザー',
-            }
-
-            return send({
-              to: userInfo.email,
-              from: DEFAULT_FROM,
-              replyTo: communityEmail.trim(),
-              subject: letter.letter_title,
-              templateId: LETTER_ID,
-              dynamicTemplateData,
-            })
-          }),
-        )
-
-        // 成功・失敗の集計
-        const successCount = results.filter((r) => r.status === 'fulfilled').length
-        const failedCount = results.filter((r) => r.status === 'rejected').length
-
-        // 失敗したメールのログ出力
-        if (failedCount > 0) {
-          // エラーの集計情報を取得（詳細は sendgrid.ts のログを参照）
-          const errorSummary = getErrorSummary(results)
-
-          logger.warn(`letter | Failed to send ${failedCount}/${validUserInfos.length} letters`, {
-            letterId: letter.id,
-            communityAccount,
-            successCount,
-            failedCount,
-            errorSummary,
-          })
-        } else {
-          logger.info(`letter | Successfully sent letter to ${successCount} recipients`, {
-            letterId: letter.id,
-            successCount,
-          })
-        }
+        await updateLetterStatusWithCheck(ref, 'timed', 'sent')
       } catch (error) {
-        // ステータス更新またはメール送信のエラー
-        logger.error('letter | Failed to send letter after status update', {
+        logger.error('Failed to update letter status', {
           letterId: letter.id,
           error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
+        })
+        return // ステータス更新失敗の場合は送信しない
+      }
+
+      // 全ユーザーにメール送信
+      const results = await Promise.allSettled(
+        validUserInfos.map(async (userInfo) => {
+          const dynamicTemplateData = {
+            ...communityData,
+            ...eventData,
+            letter_title: letter.letter_title,
+            letter_content: letter.letter_content,
+            letter_type: type,
+            user_name: userInfo.name || 'ユーザー',
+          }
+
+          return send({
+            to: userInfo.email,
+            from: DEFAULT_FROM,
+            replyTo: communityEmail.trim(),
+            subject: letter.letter_title,
+            templateId: LETTER_ID,
+            dynamicTemplateData,
+          })
+        }),
+      )
+
+      // 成功・失敗の集計
+      const successCount = results.filter((r) => r.status === 'fulfilled').length
+      const failedCount = results.filter((r) => r.status === 'rejected').length
+
+      // 失敗したメールのログ出力
+      if (failedCount > 0) {
+        // エラーの集計情報を取得（詳細は sendgrid.ts のログを参照）
+        const errorSummary = getErrorSummary(results)
+
+        logger.warn(`Failed to send ${failedCount}/${validUserInfos.length} letters`, {
+          letterId: letter.id,
+          communityAccount,
+          successCount,
+          failedCount,
+          errorSummary,
+        })
+      } else {
+        logger.info(`Successfully sent letter to ${successCount} recipients`, {
+          letterId: letter.id,
+          successCount,
         })
       }
-    })
+    } catch (error) {
+      // 予期しないエラー
+      logger.error('Failed to process letter', {
+        letterId: letter.id,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+    }
+  })
 
-    await Promise.all(sendLetterPromises)
-  }
-
-  const db = getFirestore()
-  return db.runTransaction(sendLetterByTransaction)
+  await Promise.all(sendLetterPromises)
 }
 
 const generateDynamicTemplateData = async (communityId: string, letterId: string) => {
