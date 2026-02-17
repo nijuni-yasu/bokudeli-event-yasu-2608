@@ -152,10 +152,13 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
 
     const retrievedMembers = ref<BokudeliCommunityMember[]>([])
     const memberLoadExecutor = new TaskExecutor(MEMBER_LOAD_BATCH_SIZE)
+    let memberLoadGeneration = 0
     const loadMembers = () => {
       // メンバー情報を常にクリアしてから再取得
       memberLoadExecutor.clear()
       retrievedMembers.value = []
+      memberLoadGeneration += 1
+      const currentGeneration = memberLoadGeneration
 
       const _members = community.value?.members as DocumentReference[] | undefined
       const _managers = community.value?.managers as DocumentReference[] | undefined
@@ -169,6 +172,10 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
           const userStore = useUserStore(memberRef.id)
           const user = await userStore.getLoadedUser()
           if (user == null) {
+            return
+          }
+          // 再取得が発動済みなら古い結果を破棄（世代競合の防止）
+          if (currentGeneration !== memberLoadGeneration) {
             return
           }
           const roles: CommunityMemberRolesType[] = []
