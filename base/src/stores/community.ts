@@ -152,13 +152,17 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
 
     const retrievedMembers = ref<BokudeliCommunityMember[]>([])
     const memberLoadExecutor = new TaskExecutor(MEMBER_LOAD_BATCH_SIZE)
+    let memberLoadGeneration = 0
     const loadMembers = () => {
-      // 2度呼ばれることはない想定だが、念の為
+      // メンバー情報を常にクリアしてから再取得
       memberLoadExecutor.clear()
+      retrievedMembers.value = []
+      memberLoadGeneration += 1
+      const currentGeneration = memberLoadGeneration
+
       const _members = community.value?.members as DocumentReference[] | undefined
       const _managers = community.value?.managers as DocumentReference[] | undefined
       if (_members === undefined || _managers == undefined) {
-        retrievedMembers.value = []
         return
       }
       // managers 優先で members と結合し、重複を削除する
@@ -168,6 +172,10 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
           const userStore = useUserStore(memberRef.id)
           const user = await userStore.getLoadedUser()
           if (user == null) {
+            return
+          }
+          // 再取得が発動済みなら古い結果を破棄（世代競合の防止）
+          if (currentGeneration !== memberLoadGeneration) {
             return
           }
           const roles: CommunityMemberRolesType[] = []
@@ -189,11 +197,24 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       if (community.value == null) {
         return null
       }
-      return [
-        ...retrievedMembers.value,
-        ...Array(community.value.members.length - retrievedMembers.value.length).fill(null),
-      ]
+      // 負数にならないように Math.max でガード
+      const remainingCount = Math.max(0, community.value.members.length - retrievedMembers.value.length)
+      return [...retrievedMembers.value, ...Array(remainingCount).fill(null)]
     })
+
+    // community.members が変更されたときにメンバー情報を再取得
+    watch(
+      () => community.value?.members,
+      (newMembers, oldMembers) => {
+        // 初回ロードは computed 内で実行されるのでスキップ
+        if (oldMembers !== undefined && newMembers !== undefined) {
+          // メンバー配列の参照または内容が変更された場合に再取得
+          if (newMembers !== oldMembers) {
+            loadMembers()
+          }
+        }
+      },
+    )
 
     const events = computed<BokudeliEvent[] | null>(() => {
       getCommunityRef().then((communityRef) => {

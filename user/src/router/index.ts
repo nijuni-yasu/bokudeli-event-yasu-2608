@@ -265,10 +265,12 @@ export const setupRouter = (router: Router) => {
       const eventId = to.params.eventId as string
       const eventStore = useEventStore(eventId) as EventStore
       const event = await new Promise<BokudeliEvent>((resolve) => {
-        watch(
+        let unwatch: (() => void) | undefined
+        unwatch = watch(
           () => eventStore.event,
           (event) => {
             if (event != null) {
+              unwatch?.()
               resolve(event)
             }
           },
@@ -284,13 +286,15 @@ export const setupRouter = (router: Router) => {
       const configStore = useConfigStore()
       const communityStore = useCommunityStore(communityAccount) as CommunityStore
       const canView = await new Promise<boolean>((resolve) => {
-        watch(
+        let unwatch: (() => void) | undefined
+        unwatch = watch(
           () => [configStore.config, communityStore.community],
           () => {
             if (
               configStore.config !== FIRESTORE_LOADING &&
               configStore.config?.isSupport(getAuth().currentUser?.uid as string) === true
             ) {
+              unwatch?.()
               resolve(true)
               return
             }
@@ -299,6 +303,7 @@ export const setupRouter = (router: Router) => {
 
             if (community != null && currentUserId != null) {
               const canView = community.managers.some((managerRef) => managerRef.id === currentUserId)
+              unwatch?.()
               resolve(canView)
             }
           },
