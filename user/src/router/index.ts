@@ -261,27 +261,28 @@ export const setupRouter = (router: Router) => {
 
   router.beforeEach(async (to) => {
     let communityAccount: string | null = null
-    if (to.path.startsWith('/manage/event/')) {
-      const eventId = to.params.eventId as string
+    // イベントページ or イベント管理ページの場合: 削除済みイベントは404へリダイレクト
+    // 例: /c/example-community/e/abc123, /manage/event/abc123
+    const eventIdMatch = to.path.match(/\/c\/[^/]+\/e\/([^/]+)/) || to.path.match(/\/manage\/event\/([^/]+)/)
+    if (eventIdMatch) {
+      const eventId = eventIdMatch[1]
       const eventStore = useEventStore(eventId) as EventStore
-      const event = await new Promise<BokudeliEvent>((resolve) => {
-        let unwatch: (() => void) | undefined
-        unwatch = watch(
-          () => eventStore.event,
-          (event) => {
-            if (event != null) {
-              unwatch?.()
-              resolve(event)
-            }
-          },
-          { immediate: true },
-        )
-      })
-      communityAccount = event.community_account
+      let event: BokudeliEvent
+      try {
+        event = await eventStore.getLoadedEvent(5000)
+        if (event.is_deleted) {
+          return '/404'
+        }
+      } catch {
+        return '/404'
+      }
+      if (to.path.startsWith('/manage/event/')) {
+        communityAccount = event.community_account
+      }
     } else if (to.path.startsWith('/manage/community/')) {
       communityAccount = to.params.communityAccount as string
     }
-
+    // コミュニティアカウントを取得できた場合は、コミュニティ管理権限をチェック
     if (communityAccount != null) {
       const configStore = useConfigStore()
       const communityStore = useCommunityStore(communityAccount) as CommunityStore

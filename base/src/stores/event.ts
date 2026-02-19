@@ -317,12 +317,27 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       }
     }
 
-    const getLoadedEvent = async (): Promise<BokudeliEvent> => {
-      return await new Promise((resolve) => {
-        watch(
+    /**
+     * Wait for the event to be loaded.
+     * It's better not to use this method in UI components because of the performance issue.
+     *
+     * @param timeout [ms]
+     * @returns Promise<BokudeliEvent> when the event is loaded
+     * @throws Error when the event is not loaded within the timeout
+     */
+    const getLoadedEvent = async (timeout: number = 5000): Promise<BokudeliEvent> => {
+      return await new Promise((resolve, reject) => {
+        let unwatch: (() => void) | undefined
+        const timeoutId = setTimeout(() => {
+          unwatch?.()
+          reject(new Error(`Event not loaded within ${timeout}ms`))
+        }, timeout)
+        unwatch = watch(
           event,
           (e) => {
             if (e != null) {
+              clearTimeout(timeoutId)
+              unwatch?.()
               resolve(e)
             }
           },
@@ -331,12 +346,27 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       })
     }
 
-    const getLoadedMembers = async (): Promise<BokudeliEventMember[]> => {
-      return await new Promise((resolve) => {
-        watch(
+    /**
+     * Wait for the members to be loaded.
+     * It's better not to use this method in UI components because of the performance issue.
+     *
+     * @param timeout [ms]
+     * @returns Promise<BokudeliEventMember[]> when the members are loaded
+     * @throws Error when the members are not loaded within the timeout
+     */
+    const getLoadedMembers = async (timeout: number = 5000): Promise<BokudeliEventMember[]> => {
+      return await new Promise((resolve, reject) => {
+        let unwatch: (() => void) | undefined
+        const timeoutId = setTimeout(() => {
+          unwatch?.()
+          reject(new Error(`Members not loaded within ${timeout}ms`))
+        }, timeout)
+        unwatch = watch(
           members,
           (ms) => {
             if (ms != null) {
+              clearTimeout(timeoutId)
+              unwatch?.()
               resolve(ms)
             }
           },
