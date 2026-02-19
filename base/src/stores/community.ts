@@ -1,6 +1,5 @@
 import { ref, computed, watch, toRaw } from 'vue'
 import { defineStore } from 'pinia'
-import _ from 'lodash'
 import { getAuth } from 'firebase/auth'
 import {
   collection,
@@ -137,7 +136,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
         if (_communityRef.value == null) {
           const listener = (event: Event) => {
             document.removeEventListener(EVENT_TYPE_COMMUNITY_REF_UPDATED, listener)
-            resolve((event as CommunityRefUpdatedEvent).communityRef)
+            resolve((event as CommunityRefUpdatedEvent).communityRef.withConverter(communityConverter))
           }
           document.addEventListener(EVENT_TYPE_COMMUNITY_REF_UPDATED, listener)
           window.setTimeout(() => {
@@ -145,7 +144,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
             reject(new Error('getCommunityRef timeout'))
           }, 5000)
         } else {
-          resolve(toRaw(_communityRef.value))
+          resolve(toRaw(_communityRef.value).withConverter(communityConverter))
         }
       })
     }
@@ -231,26 +230,58 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
 
     const updateCommunity = async (data: BokudeliCommunity) => {
       const communityRef = await getCommunityRef()
-      const updateData = _.omit(data, ['community_cover_image_url', 'community_icon_image_url'])
-      await updateDoc(communityRef, updateData)
+      await setDoc(communityRef, data, { merge: true })
     }
 
     const updateCoverImage = async (file: File) => {
+      // community.value が null ではないことを保証する。本来はこういう使い方をすべきではない
+      await getLoadedCommunity()
       const communityRef = await getCommunityRef()
-      const community_cover_image_url = await uploadCommunityImage(communityRef.id, file)
-      await updateDoc(communityRef, { community_cover_image_url })
+      community.value!.community_cover_image_url = await uploadCommunityImage(communityRef.id, file)
+      await setDoc(communityRef, toRaw(community.value!), { merge: true })
     }
 
     const updateIconImage = async (file: File) => {
+      // community.value が null ではないことを保証する。本来はこういう使い方をすべきではない
+      await getLoadedCommunity()
       const communityRef = await getCommunityRef()
-      const community_icon_image_url = await uploadCommunityImage(communityRef.id, file)
-      await updateDoc(communityRef, { community_icon_image_url })
+      community.value!.community_icon_image_url = await uploadCommunityImage(communityRef.id, file)
+      await setDoc(communityRef, toRaw(community.value!), { merge: true })
+    }
+
+    /**
+     * Wait for the community to be loaded.
+     * It's better not to use this method in UI components because of the performance issue.
+     *
+     * @param timeout [ms]
+     * @returns Promise<BokudeliCommunity> when the community is loaded
+     * @throws Error when the community is not loaded within the timeout
+     */
+    const getLoadedCommunity = async (timeout: number = 5000): Promise<BokudeliCommunity> => {
+      return await new Promise((resolve, reject) => {
+        let unwatch: (() => void) | undefined
+        const timeoutId = setTimeout(() => {
+          unwatch?.()
+          reject(new Error(`Community not loaded within ${timeout}ms`))
+        }, timeout)
+        unwatch = watch(
+          community,
+          (c) => {
+            if (c != null) {
+              clearTimeout(timeoutId)
+              unwatch?.()
+              resolve(c)
+            }
+          },
+          { immediate: true },
+        )
+      })
     }
 
     let unsubscribeCommunity: Unsubscribe | null = null
     const subscribeCommunity = (communityRef: DocumentReference<BokudeliCommunity>) => {
       if (unsubscribeCommunity == null) {
-        unsubscribeCommunity = onSnapshot(communityRef.withConverter(communityConverter), (doc) => {
+        unsubscribeCommunity = onSnapshot(communityRef, (doc) => {
           try {
             community.value = doc.data() ?? null
           } catch (err) {
@@ -283,7 +314,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
           communityConverter,
         ),
       ).then((querySnapshot) => {
-        const communityRef = querySnapshot.docs[0]?.ref
+        const communityRef = querySnapshot.docs[0]?.ref?.withConverter(communityConverter)
         if (communityRef == null) {
           if (retry++ < 10) {
             console.warn(

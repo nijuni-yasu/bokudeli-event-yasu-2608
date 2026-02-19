@@ -208,7 +208,7 @@ const isOpenNewCommunityDialog = ref(false)
               outlined
               dense
               :label="$t('email')"
-              :rules="[requiredValidator, emailValidator]"
+              :rules="[emailValidator]"
             />
           </v-col>
         </v-row>
@@ -305,7 +305,6 @@ const isOpenNewCommunityDialog = ref(false)
               outlined
               dense
               :label="$t('community_edit.manager_name')"
-              :rules="[requiredValidator]"
             />
           </v-col>
         </v-row>
@@ -319,7 +318,6 @@ const isOpenNewCommunityDialog = ref(false)
               outlined
               dense
               :label="$t('community_edit.company_name')"
-              :rules="[requiredValidator]"
             />
           </v-col>
         </v-row>
@@ -333,7 +331,7 @@ const isOpenNewCommunityDialog = ref(false)
               outlined
               dense
               :label="$t('postal_code')"
-              :rules="[requiredValidator, postalCodeValidator]"
+              :rules="[postalCodeValidator]"
             />
           </v-col>
         </v-row>
@@ -342,13 +340,7 @@ const isOpenNewCommunityDialog = ref(false)
       <v-card-text class="pt-5">
         <v-row>
           <v-col cols="12">
-            <v-text-field
-              v-model="community.community_address"
-              outlined
-              dense
-              :label="$t('address')"
-              :rules="[requiredValidator]"
-            />
+            <v-text-field v-model="community.community_address" outlined dense :label="$t('address')" />
           </v-col>
         </v-row>
       </v-card-text>
@@ -361,7 +353,7 @@ const isOpenNewCommunityDialog = ref(false)
               outlined
               dense
               :label="$t('phone_number')"
-              :rules="[requiredValidator, phoneValidator]"
+              :rules="[phoneValidator]"
             />
           </v-col>
         </v-row>
@@ -375,7 +367,6 @@ const isOpenNewCommunityDialog = ref(false)
               outlined
               rows="4"
               :label="$t('community_edit.use_purpose')"
-              :rules="[requiredValidator]"
             />
           </v-col>
         </v-row>
