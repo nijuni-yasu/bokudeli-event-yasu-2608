@@ -42,27 +42,6 @@
           "destination": "/index.html"
         }
       ]
-    },
-    {
-      "public": "curry/dist",
-      "target": "curry",
-      "ignore": ["**/.*", "**/node_modules/**"],
-      "rewrites": [
-        {
-          "source": "/c/**/e/**",
-          "function": "handleEventOgpRequest",
-          "region": "asia-northeast1"
-        },
-        {
-          "source": "/c/**",
-          "function": "handleCommunityOgpRequest",
-          "region": "asia-northeast1"
-        },
-        {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ]
     }
   ],
   "functions": [

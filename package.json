@@ -24,7 +24,6 @@
     "common",
     "base",
     "user",
-    "curry",
     "admin",
     "functions/default"
   ]
