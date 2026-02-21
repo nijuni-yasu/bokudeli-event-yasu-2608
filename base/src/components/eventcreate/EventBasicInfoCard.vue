@@ -52,13 +52,10 @@ const eventStartMinute = computed({
     updateStartDatetime(newValue)
   },
 })
-const eventEndDate = computed({
-  get: () => convertToDateString(event.value.event_end_datetime ?? null),
-  set: (value) => {
-    const newValue = parseDatetimeStrings(value, eventEndHour.value, eventEndMinute.value)
-    updateEndDatetime(newValue)
-  },
-})
+// 終了日は開始日と必ず同一日にする
+// TODO: 将来的に日付をまたぐイベントを許容する場合、
+// イベントページやメールなどの表示側で終了日を表示するよう修正する
+const eventEndDate = computed(() => convertToDateString(event.value.event_start_datetime))
 const eventEndHour = computed({
   get: () => convertToHourString(event.value.event_end_datetime ?? null),
   set: (value) => {
@@ -206,13 +203,14 @@ const textFieldVariant = computed(() => {
     <v-card-text class="pt-5">
       <v-row>
         <v-col cols="12" sm="12" md="6">
-          <DateInput
-            v-model="eventEndDate"
+          <!-- 終了日は開始日と同一日のため、操作不可の表示のみ -->
+          <v-text-field
+            :model-value="$d(event.event_start_datetime, 'date')"
             :label="$t('event_basic_info.end_date')"
             :variant="textFieldVariant"
+            :prepend-inner-icon="mdiCalendar"
             dense
-            :readonly="event.event_status.value !== 'in_draft'"
-            :clearable="false"
+            readonly
           />
         </v-col>
         <v-col cols="6" sm="6" md="3">
