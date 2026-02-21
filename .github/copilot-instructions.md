@@ -12,7 +12,6 @@
 | :--------------------- | :--------------------- | :------------------------------------------- |
 | **/user**              | 一般ユーザー向けアプリ | Vue 3 + Vite + Vuetify 3                     |
 | **/admin**             | 飲食店向け管理画面     | Vue 3 + Vite + Vuetify 3                     |
-| **/curry**             | 特殊用途アプリ         | Vue 3 + Vite + Vuetify 3                     |
 | **/functions/default** | バックエンドロジック   | Firebase Functions v2 (Node 20) + TypeScript |
 | **/common**            | 共有コード             | TypeScript (Schema, Utils)                   |
 | **/base**              | 共有UIコンポーネント   | Vue 3 (Materio Template)                     |
@@ -78,7 +77,7 @@ npm -w <pkg> run format:check
 - タイトルの接頭辞に変更したディレクトリと Issue 番号を含める
   - 例: `[admin] #1777 注文詳細画面の修正`
   - 例: `[base][common] #1799 withConverter の削除を禁止`
-  - 使用可能なタグ: `[user]` `[admin]` `[curry]` `[base]` `[common]` `[functions]` `[doc]`
+  - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]`
 
 ## Pull Request ルール
 
