@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { mdiTruckOutline, mdiMapMarkerRadius } from '@mdi/js'
 import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@shokujii/base/utils/orders.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@shokujii/base/stores/partner.js'
-import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { getOrderPath } from '@/navigation/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -26,32 +25,7 @@ const partnerStore = usePartnerStore(partnerId)
 
 const notification = useNotification()
 
-const [event, shop] = await Promise.all([
-  new Promise<BokudeliEvent>((resolve) => {
-    watch(
-      () => eventStore.event,
-      (event) => {
-        if (event != null) {
-          resolve(event)
-          stop()
-        }
-      },
-      { immediate: true },
-    )
-  }),
-  new Promise<PartnerShop>((resolve) => {
-    watch(
-      () => partnerStore.shops,
-      (shops) => {
-        if (shops != null && shops.length !== 0) {
-          resolve(shops[0])
-          stop()
-        }
-      },
-      { immediate: true },
-    )
-  }),
-])
+const event = await eventStore.getLoadedEvent()
 
 // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
 const eventUrl = getEventUrl(import.meta.env.VITE_ORIGIN_HOST, event.community_account, event.event_id)
@@ -118,8 +92,11 @@ const handleConfirmSubmit = async () => {
   isConfirmDialogOpen.value = false
 }
 
-const isOwner = computed(() => {
-  return event.community_account === shop.community_account
+// null=ロード中, true=オーナー, false=非オーナー
+const isOwner = computed<boolean | null>(() => {
+  if (partnerStore.shops === null) return null
+  const shop = partnerStore.shops[0] ?? null
+  return shop != null && event.community_account === shop.community_account
 })
 
 // [お名前]を印刷 ボタンの実装
@@ -183,7 +160,10 @@ const downloadNamesPrint = async () => {
             </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
-            <template v-if="!isOwner">
+            <template v-if="isOwner == null">
+              <v-progress-circular indeterminate color="primary" size="24" />
+            </template>
+            <template v-else-if="!isOwner">
               <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
               <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>
               <p>{{ $t('order_detail.organizer_phone_personal', [eventStore.event.organizer_phone_personal]) }}</p>
