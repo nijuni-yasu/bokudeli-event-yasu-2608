@@ -37,7 +37,6 @@
 
 - [ ] user
 - [ ] admin
-- [ ] curry
 - [ ] base
 - [ ] common
 - [ ] functions
