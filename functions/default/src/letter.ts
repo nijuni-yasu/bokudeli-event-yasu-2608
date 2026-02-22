@@ -1,22 +1,37 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { logger } from 'firebase-functions'
-import { getFirestore, Transaction } from 'firebase-admin/firestore'
 import { sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
 import { getCommunity, getCommunityByAccount } from './stores/community.js'
 import { getEvent } from './stores/event.js'
-import { getLetter, getScheduledLetters, updateSentStatus } from './stores/letter.js'
+import { getLetter, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
 import { getUserPersonalInformation, getUser } from './stores/user.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import { send } from './utils/sendgrid.js'
 import * as sgMail from './utils/sendgrid.js'
 import { getCommunityUrl, getEventUrl } from './utils/urls.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('letter')
 
 const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 
 interface UserEmailWithName {
   email: string
   name: string
+}
+
+/**
+ * エラーの集計情報を作成
+ */
+function getErrorSummary(results: PromiseSettledResult<unknown>[]): Record<string, number> {
+  const summary: Record<string, number> = {}
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      const errorMessage = result.reason?.message || String(result.reason)
+      summary[errorMessage] = (summary[errorMessage] || 0) + 1
+    }
+  })
+  return summary
 }
 
 /**
@@ -69,16 +84,56 @@ async function getUserEmailWithName(userId: string): Promise<UserEmailWithName |
   try {
     const [userPersonalInfo, user] = await Promise.all([getUserPersonalInformation(userId), getUser(userId, true)])
 
-    if (!userPersonalInfo?.user_email || !user?.user_name) {
+    if (!userPersonalInfo) {
+      logger.warn('User personal information not found', { userId })
+      return null
+    }
+
+    if (!user) {
+      logger.warn('User not found', { userId })
+      return null
+    }
+
+    if (!userPersonalInfo.user_email) {
+      logger.warn('User email is missing', {
+        userId,
+        hasPersonalInfo: !!userPersonalInfo,
+      })
+      return null
+    }
+
+    if (!user.user_name) {
+      logger.warn('User name is missing', {
+        userId,
+        email: userPersonalInfo.user_email,
+      })
+      return null
+    }
+
+    // メールアドレスのバリデーション強化
+    const email = userPersonalInfo.user_email.trim()
+    if (email === '') {
+      logger.warn('User email is empty or whitespace only', { userId })
+      return null
+    }
+
+    // 基本的なメールアドレス形式チェック
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      logger.warn('User email format is invalid', { userId, email })
       return null
     }
 
     return {
-      email: userPersonalInfo.user_email,
+      email: email,
       name: user.user_name,
     }
   } catch (error) {
-    logger.error('Error fetching user email and name', { userId, error })
+    logger.error('Error fetching user email and name', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    })
     return null
   }
 }
@@ -114,9 +169,12 @@ async function getUserIdsByLetterType(letterType: string, communityId: string, e
  * 時間指定されたレターを送信する
  */
 export async function sendLetter(_: number, end: number): Promise<void> {
-  const sendLetterByTransaction = async (transaction: Transaction) => {
-    const lettersWithRefs = await getScheduledLetters(end, transaction)
-    const sendLetterPromises = lettersWithRefs.map(async ({ letter, ref }) => {
+  // 送信対象レターを取得
+  const lettersWithRefs = await getScheduledLetters(end)
+
+  // 各レターを並列処理
+  const sendLetterPromises = lettersWithRefs.map(async ({ letter, ref }) => {
+    try {
       const type = letter.letter_type
       const communityAccount = letter.community_account
       if (!communityAccount) {
@@ -124,7 +182,8 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         return
       }
 
-      const community = await getCommunityByAccount(communityAccount, transaction)
+      // コミュニティ情報の取得
+      const community = await getCommunityByAccount(communityAccount)
 
       if (!community) {
         logger.warn('Community not found for account', { communityAccount, letterId: letter.id })
@@ -166,65 +225,83 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         name: 'サポートアカウント',
       })
 
-      try {
-        // 送信直前に sent に更新（2重送信防止）
-        await updateSentStatus(ref, transaction)
-
-        // Promise.allSettled を使用して、一部失敗しても続行
-        const results = await Promise.allSettled(
-          validUserInfos.map(async (userInfo) => {
-            const dynamicTemplateData = {
-              ...communityData,
-              ...eventData,
-              letter_title: letter.letter_title,
-              letter_content: letter.letter_content,
-              letter_type: type,
-              user_name: userInfo.name || 'ユーザー',
-            }
-
-            return send({
-              to: userInfo.email,
-              from: DEFAULT_FROM,
-              replyTo: communityEmail,
-              subject: letter.letter_title,
-              templateId: LETTER_ID,
-              dynamicTemplateData,
-            })
-          }),
-        )
-
-        // 成功・失敗の集計
-        const successCount = results.filter((r) => r.status === 'fulfilled').length
-        const failedCount = results.filter((r) => r.status === 'rejected').length
-
-        // 失敗したメールの詳細をログ出力
-        if (failedCount > 0) {
-          logger.warn(`Failed to send ${failedCount}/${validUserInfos.length} letters`, {
-            letterId: letter.id,
-            communityAccount,
-            successCount,
-            failedCount,
-            errors: results
-              .filter((r) => r.status === 'rejected')
-              .map((r) => (r as PromiseRejectedResult).reason?.message || r.reason),
-          })
-        } else {
-          logger.info(`Successfully sent letter to ${successCount} recipients`, {
-            letterId: letter.id,
-            successCount,
-          })
-        }
-      } catch (error) {
-        // ステータス更新またはメール送信のエラー
-        logger.error('Failed to send letter after status update', { letterId: letter.id, error })
+      // コミュニティメールのバリデーション
+      if (!communityEmail || communityEmail.trim() === '') {
+        logger.error('Invalid community email', {
+          communityId,
+          communityAccount,
+          communityEmail,
+        })
+        return
       }
-    })
 
-    await Promise.all(sendLetterPromises)
-  }
+      // 送信済みステータスに更新（二重送信防止）
+      try {
+        await updateLetterStatusWithCheck(ref, 'timed', 'sent')
+      } catch (error) {
+        logger.error('Failed to update letter status', {
+          letterId: letter.id,
+          error: error instanceof Error ? error.message : String(error),
+        })
+        return // ステータス更新失敗の場合は送信しない
+      }
 
-  const db = getFirestore()
-  return db.runTransaction(sendLetterByTransaction)
+      // 全ユーザーにメール送信
+      const results = await Promise.allSettled(
+        validUserInfos.map(async (userInfo) => {
+          const dynamicTemplateData = {
+            ...communityData,
+            ...eventData,
+            letter_title: letter.letter_title,
+            letter_content: letter.letter_content,
+            letter_type: type,
+            user_name: userInfo.name || 'ユーザー',
+          }
+
+          return send({
+            to: userInfo.email,
+            from: DEFAULT_FROM,
+            replyTo: communityEmail.trim(),
+            subject: letter.letter_title,
+            templateId: LETTER_ID,
+            dynamicTemplateData,
+          })
+        }),
+      )
+
+      // 成功・失敗の集計
+      const successCount = results.filter((r) => r.status === 'fulfilled').length
+      const failedCount = results.filter((r) => r.status === 'rejected').length
+
+      // 失敗したメールのログ出力
+      if (failedCount > 0) {
+        // エラーの集計情報を取得（詳細は sendgrid.ts のログを参照）
+        const errorSummary = getErrorSummary(results)
+
+        logger.warn(`Failed to send ${failedCount}/${validUserInfos.length} letters`, {
+          letterId: letter.id,
+          communityAccount,
+          successCount,
+          failedCount,
+          errorSummary,
+        })
+      } else {
+        logger.info(`Successfully sent letter to ${successCount} recipients`, {
+          letterId: letter.id,
+          successCount,
+        })
+      }
+    } catch (error) {
+      // 予期しないエラー
+      logger.error('Failed to process letter', {
+        letterId: letter.id,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+    }
+  })
+
+  await Promise.all(sendLetterPromises)
 }
 
 const generateDynamicTemplateData = async (communityId: string, letterId: string) => {
