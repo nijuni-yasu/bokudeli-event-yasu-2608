@@ -10,7 +10,7 @@ import {
   updateEventMenusIsSelected,
 } from '@shokujii/common/utils/eventMenuConverter.js'
 
-const logger = createModuleLogger('updateEventMenus')
+const logger = createModuleLogger('eventMenusSelection')
 
 /**
  * イベントのメニューを更新するCallable Function

@@ -5,17 +5,17 @@ import { getPartner } from './stores/partner.js'
 import { getEvent } from './stores/event.js'
 import { convertPartnerMenusToEventMenus } from '@shokujii/common/utils/eventMenuConverter.js'
 
-const logger = createModuleLogger('eventSnapshot')
+const logger = createModuleLogger('eventMenusSnapshot')
 
 /**
- * 最新の PartnerMenu を EventMenu にスナップショットとしてコピー
+ * 最新の PartnerMenu を EventMenu にスナップショットとして保存
  * EventMenuのis_selected状態を保持する
  * @param partnerId - パートナーID
  * @param eventId - イベントID
  * @param startDatetime - イベント開始日時（ミリ秒）
  * @param selectedMenuIds - 選択するmenu_idの配列。省略時は既存EventMenuのis_selected状態から引き継ぐ
  */
-export const makeMenuSnapshot = async (
+export const savePartnerMenusToEventMenus = async (
   partnerId: string,
   eventId: string,
   startDatetime: number,
@@ -57,12 +57,12 @@ export const makeMenuSnapshot = async (
   })
 
 /**
- * 飲食店承認/却下時に、PartnerMenuをEventMenuにコピー
+ * 飲食店承認/却下時に、PartnerMenuをEventMenuにスナップショットとして保存
  * 飲食店の承認: applying_reservation → accepting_order
  * 飲食店の却下: applying_reservation → in_draft
  * 上記以外のステータス変更では実行されない（主催者による更新時はCallable Functionを使用）
  */
-export const makeShopSnapshotToEvent = onDocumentWritten(
+export const onShopReservationChanged = onDocumentWritten(
   {
     document: 'communities/{communityId}/events/{eventId}',
     region: 'asia-northeast1',
@@ -109,9 +109,9 @@ export const makeShopSnapshotToEvent = onDocumentWritten(
     }
 
     try {
-      await makeMenuSnapshot(partnerId, eventId, startDatetime)
+      await savePartnerMenusToEventMenus(partnerId, eventId, startDatetime)
     } catch (error) {
-      logger.error('Failed to make menu snapshot', {
+      logger.error('Failed to save partner menus to event', {
         communityId,
         eventId,
         error,
