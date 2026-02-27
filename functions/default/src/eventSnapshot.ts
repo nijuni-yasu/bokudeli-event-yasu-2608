@@ -13,8 +13,14 @@ const logger = createModuleLogger('eventSnapshot')
  * @param partnerId - パートナーID
  * @param eventId - イベントID
  * @param startDatetime - イベント開始日時（ミリ秒）
+ * @param selectedMenuIds - 選択するmenu_idの配列。省略時は既存EventMenuのis_selected状態から引き継ぐ
  */
-const makeMenuSnapshot = async (partnerId: string, eventId: string, startDatetime: number): Promise<void> =>
+export const makeMenuSnapshot = async (
+  partnerId: string,
+  eventId: string,
+  startDatetime: number,
+  selectedMenuIds?: string[],
+): Promise<void> =>
   getFirestore().runTransaction(async (transaction) => {
     const partner = await getPartner(partnerId)
     const event = await getEvent(eventId, transaction)
@@ -32,11 +38,15 @@ const makeMenuSnapshot = async (partnerId: string, eventId: string, startDatetim
       }),
     )
 
-    // convertPartnerMenusToEventMenus を使用してメニューを生成
-    // 期間チェックとis_selected引き継ぎが自動で行われる
-    // 既存の選択状態を引き継ぐため、選択されているmenu_idを抽出
-    const selectedMenuIds = existingEventMenus.filter((m) => m.is_selected).map((m) => m.menu_id)
-    const eventMenusToSave = convertPartnerMenusToEventMenus(partnerMenus, eventId, startDatetime, selectedMenuIds)
+    // selectedMenuIds が指定されていない場合は既存EventMenuのis_selected状態から引き継ぐ
+    const effectiveSelectedMenuIds =
+      selectedMenuIds ?? existingEventMenus.filter((m) => m.is_selected).map((m) => m.menu_id)
+    const eventMenusToSave = convertPartnerMenusToEventMenus(
+      partnerMenus,
+      eventId,
+      startDatetime,
+      effectiveSelectedMenuIds,
+    )
 
     // 生成したEventMenusを保存
     await Promise.all(
