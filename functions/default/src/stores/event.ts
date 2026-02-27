@@ -11,7 +11,6 @@ import { Event } from '@shokujii/common/schemas/Event.js'
 import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
-import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
 import { EventLog } from '@shokujii/common/schemas/EventLog.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
@@ -129,13 +128,7 @@ export class ShokujiiEvent extends Event {
     return snapshot.docs.map((doc) => doc.data())
   }
 
-  async saveMenu(_menu: EventMenu | PartnerMenu, transaction?: Transaction): Promise<void> {
-    let menu: EventMenu
-    if (_menu instanceof PartnerMenu) {
-      menu = new EventMenu(this.id, _menu.id, _menu)
-    } else {
-      menu = _menu
-    }
+  async saveMenu(menu: EventMenu, transaction?: Transaction): Promise<void> {
     const db = getFirestore()
     const menuRef = db
       .collection('communities')

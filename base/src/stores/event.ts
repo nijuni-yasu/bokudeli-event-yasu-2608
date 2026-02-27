@@ -34,6 +34,7 @@ import {
   updateMenuCountInCart as _updateMenuCountInCart,
   deleteMenuInCart as _deleteMenuInCart,
 } from '@shokujii/base/apis/order.js'
+import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -123,6 +124,18 @@ export const createNewEvent = async (event: BokudeliEvent, coverImage: File | nu
   const newEventRef = doc(communityRef, 'events', event.id).withConverter(eventConverter)
   await setDoc(newEventRef, event, { merge: true })
   return event
+}
+
+export const updateEventMenus = async (
+  eventId: string,
+  communityId: string,
+  selectedMenuIds: string[],
+): Promise<void> => {
+  await _updateEventMenus({
+    eventId,
+    communityId,
+    selectedMenuIds,
+  })
 }
 
 export type EventStore = ReturnType<typeof useEventStore>
