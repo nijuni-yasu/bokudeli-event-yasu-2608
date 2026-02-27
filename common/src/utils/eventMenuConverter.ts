@@ -28,7 +28,7 @@ function applyDefaultSelectedMenuIds(selectedMenuIds: string[], partnerMenus: Pa
  * @param eventId - イベントID
  * @param eventStartDatetime - イベント開始日時（期間チェック用）
  * @param selectedMenuIds - 選択されたmenu_idの配列
- * @returns 変換されたEventMenu、または期間外の場合はnull
+ * @returns 変換されたEventMenu、または売り切れ・期間外の場合はnull
  */
 export function convertFromPartnerMenuToEventMenu(
   partnerMenu: PartnerMenu,
@@ -36,6 +36,11 @@ export function convertFromPartnerMenuToEventMenu(
   eventStartDatetime: number | null,
   selectedMenuIds: string[],
 ): EventMenu | null {
+  // 売り切れチェック：売り切れメニューはEventMenuに含めない
+  if (partnerMenu.is_sold_out) {
+    return null
+  }
+
   // 期間チェック：イベント開始日時がメニューの有効期間内かチェック
   if (eventStartDatetime != null && partnerMenu.menu_date_start != null && partnerMenu.menu_date_end != null) {
     // 期間外のメニューは変換しない
@@ -62,7 +67,7 @@ export function convertFromPartnerMenuToEventMenu(
  * @param eventId - イベントID
  * @param eventStartDatetime - イベント開始日時（期間チェック用）
  * @param selectedMenuIds - 選択されたmenu_idの配列（空配列の場合はデフォルトで全選択）
- * @returns 変換されたEventMenu配列（期間外のメニューは除外）
+ * @returns 変換されたEventMenu配列（売り切れ・期間外のメニューは除外）
  */
 export function convertPartnerMenusToEventMenus(
   partnerMenus: PartnerMenu[],
