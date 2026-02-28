@@ -31,7 +31,7 @@ const {
 
 const userId = computed(() => currentUser.value?.id ?? '')
 
-const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople'> => {
+const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople' | 'unselectedMenu'> => {
   const { event } = cartItem
 
   if (event.event_deadline_datetime && event.event_deadline_datetime < Date.now()) {
@@ -43,6 +43,16 @@ const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limit
   if (members.length >= event.event_max_people) {
     return 'limitPeople'
   }
+
+  const eventMenus = await eventStore.getLoadedMenus()
+  const hasUnselectedMenu = cartItem.order.menus.some((orderMenu) => {
+    const eventMenu = eventMenus.find((m) => m.id === orderMenu.menu_id)
+    return eventMenu == null || !eventMenu.is_selected
+  })
+  if (hasUnselectedMenu) {
+    return 'unselectedMenu'
+  }
+
   return true
 }
 
@@ -59,13 +69,16 @@ const alertBody = computed({
   },
 })
 
-const showDisableAlert = (reason: 'deadline' | 'limitPeople') => {
+const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'unselectedMenu') => {
   switch (reason) {
     case 'deadline':
       alertBody.value = $t('cart.cannot_order_deadline')
       break
     case 'limitPeople':
       alertBody.value = $t('cart.cannot_order_limit_people')
+      break
+    case 'unselectedMenu':
+      alertBody.value = $t('cart.cannot_order_unselected_menu')
       break
   }
 }

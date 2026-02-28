@@ -388,6 +388,35 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       })
     }
 
+    /**
+     * Wait for the menus to be loaded.
+     * It's better not to use this method in UI components because of the performance issue.
+     *
+     * @param timeout [ms]
+     * @returns Promise<EventMenu[]> when the menus are loaded
+     * @throws Error when the menus are not loaded within the timeout
+     */
+    const getLoadedMenus = async (timeout: number = 5000): Promise<EventMenu[]> => {
+      return await new Promise((resolve, reject) => {
+        let unwatch: (() => void) | undefined
+        const timeoutId = setTimeout(() => {
+          unwatch?.()
+          reject(new Error(`Menus not loaded within ${timeout}ms`))
+        }, timeout)
+        unwatch = watch(
+          menus,
+          (ms) => {
+            if (ms != null) {
+              clearTimeout(timeoutId)
+              unwatch?.()
+              resolve(ms)
+            }
+          },
+          { immediate: true },
+        )
+      })
+    }
+
     let retry = 0
     const subscribe = () =>
       getDocs(
@@ -438,6 +467,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       menus,
       getLoadedEvent,
       getLoadedMembers,
+      getLoadedMenus,
       updateEvent,
       updateCoverImage,
       addOrder,
