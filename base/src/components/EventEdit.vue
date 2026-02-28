@@ -339,7 +339,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
         await updateEventMenus(newEvent.event_id, communityId, selectedMenuIds.value)
       } catch (error) {
         console.error('Failed to update event menus:', error)
-        showAlertDialog($t('manage.event.menu_update_failed'))
+        throw error
       }
     }
 
@@ -358,8 +358,8 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
       await updateEventMenus(event.value.event_id, communityId, selectedMenuIds.value)
     } catch (error) {
       console.error('Failed to update event menus:', error)
-        showAlertDialog($t('manage.event.menu_update_failed'))
-      }
+      throw error
+    }
 
     return event.value
   }
