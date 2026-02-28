@@ -11,6 +11,12 @@ import { getStartOfDay } from '../utils/datetime.js'
 export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
 
+/**
+ * DB上に保存されるイベントステータス
+ * 新しいステータスを追加した場合、以下の対応も必要:
+ * - eventMenuConverter.ts の shouldRegenerateFromPartnerMenus / shouldUpdateExistingMenusOnly に分岐を追加
+ * - Event クラスの calculatedEventStatus を確認
+ */
 export const RAW_EVENT_STATUS_VALUES = [
   'in_draft',
   'applying_reservation',

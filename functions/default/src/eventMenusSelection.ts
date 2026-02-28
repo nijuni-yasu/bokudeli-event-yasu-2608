@@ -8,6 +8,8 @@ import { UpdateEventMenusRequest } from '@shokujii/common/apis/eventMenu.js'
 import {
   convertPartnerMenusToEventMenus,
   updateEventMenusIsSelected,
+  shouldRegenerateFromPartnerMenus,
+  shouldUpdateExistingMenusOnly,
 } from '@shokujii/common/utils/eventMenuConverter.js'
 
 const logger = createModuleLogger('eventMenusSelection')
@@ -81,8 +83,7 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
         throw new HttpsError('failed-precondition', 'Cannot update menus after event is finished.')
       }
 
-      // accepting_orderでは（満席や締切時も）is_selectedのみ変更
-      if (eventStatus === 'accepting_order') {
+      if (shouldUpdateExistingMenusOnly(eventStatus)) {
         const existingEventMenus = await event.getMenus(transaction)
         const { changedMenus } = updateEventMenusIsSelected(existingEventMenus, selectedMenuIds)
 
@@ -100,8 +101,7 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
           selectedMenusCount: selectedMenuIds.length,
           changedMenusCount: changedMenus.length,
         })
-      } else if (eventStatus === 'in_draft' || eventStatus === 'applying_reservation') {
-        // in_draft, applying_reservation状態: 最新のPartnerMenuから全メニューを再生成
+      } else if (shouldRegenerateFromPartnerMenus(eventStatus)) {
         const partner = await getPartner(event.partner_id)
         if (!partner) {
           throw new HttpsError('not-found', `Partner not found for event ${eventId}`)

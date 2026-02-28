@@ -1,5 +1,21 @@
 import { PartnerMenu } from '../schemas/PartnerMenu.js'
 import { EventMenu } from '../schemas/EventMenu.js'
+import { RawEventStatusType } from '../schemas/Event.js'
+
+/**
+ * PartnerMenu（店舗メニューマスタ）からEventMenuを再生成すべきステータスか判定
+ * フロントエンドでは新規作成時（undefined）も該当する
+ */
+export function shouldRegenerateFromPartnerMenus(status: RawEventStatusType | undefined): boolean {
+  return status === 'in_draft' || status === 'applying_reservation' || status == null
+}
+
+/**
+ * 既存EventMenuのis_selectedフラグのみ更新すべきステータスか判定
+ */
+export function shouldUpdateExistingMenusOnly(status: RawEventStatusType | undefined): boolean {
+  return status === 'accepting_order'
+}
 
 /**
  * 選択メニューIDにデフォルト選択を適用
