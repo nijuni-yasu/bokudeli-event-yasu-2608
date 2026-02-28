@@ -255,6 +255,15 @@ export default {
                       新しいコミュニティを立ち上げよう🌱`,
       no_events: `まだイベントがありません<br />
                     最初のイベントを作ってみよう🎈`,
+      save_failed: 'イベントの保存に失敗しました',
+      created_success: '「{name}」のイベントを新規作成しました',
+      updated_success: '「{name}」のイベントを更新しました',
+      save_error: 'イベントの保存中にエラーが発生しました: {error}',
+      reserve_success: '「{name}」に予約申請しました。店舗からの予約承認をお待ちください。',
+      reserve_error: '予約申請中にエラーが発生しました: {error}',
+      community_not_approved: 'コミュニティが承認されていません',
+      not_manager: 'コミュニティ運営者ではありません',
+      menu_update_failed: 'メニューの更新に失敗しました',
     },
     member: {
       manager: '管理者',
