@@ -25,6 +25,11 @@ const emit = defineEmits<{
 const event = defineModel<BokudeliEvent>({ required: true })
 const shop = defineModel<BokudeliPartnerShop | null>('shop', { required: true })
 
+const props = defineProps<{
+  loadingSubmit?: boolean
+  loadingReserve?: boolean
+}>()
+
 const { t: $t } = useI18n()
 
 const { requiredValidator, phoneValidator, emailValidator } = useValidators()
@@ -54,9 +59,7 @@ const sendReserveMail = () => {
   emit('sendReserveMail')
 }
 
-const isSubmitting = ref(false)
 const submit = () => {
-  isSubmitting.value = true
   emit('submit')
 }
 </script>
@@ -254,8 +257,8 @@ const submit = () => {
               class="mt-3"
               size="large"
               :prepend-icon="mdiCalendarPlus"
-              :disabled="!isValid"
-              :loading="isSubmitting"
+              :disabled="!isValid || props.loadingReserve"
+              :loading="props.loadingSubmit"
               @click="submit"
               >{{ $t('shop_notice.preview_draft') }}</v-btn
             >
@@ -265,8 +268,8 @@ const submit = () => {
               class="mt-3"
               size="large"
               :prepend-icon="mdiCalendarPlus"
-              :disabled="!isValid"
-              :loading="isSubmitting"
+              :disabled="!isValid || props.loadingReserve"
+              :loading="props.loadingSubmit"
               @click="submit"
               >{{ $t('shop_notice.save_event') }}</v-btn
             >
@@ -274,7 +277,8 @@ const submit = () => {
           <v-card-text class="text-center mx-0 px-0">
             <v-btn
               v-if="event.event_id"
-              :disabled="!isValid || event.event_status?.value !== 'in_draft'"
+              :disabled="!isValid || event.event_status?.value !== 'in_draft' || props.loadingSubmit"
+              :loading="props.loadingReserve"
               color="grey-900"
               class="mt-3"
               size="x-large"

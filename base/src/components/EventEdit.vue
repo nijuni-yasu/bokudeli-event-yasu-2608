@@ -61,6 +61,8 @@ const handleAlertDialogOk = () => {
 
 const isValid1 = ref(false)
 const isValid4 = ref(false)
+const isSubmitting = ref(false)
+const isReserveMailing = ref(false)
 
 const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
 
@@ -367,6 +369,7 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
 
 const submit = async () => {
   const isNewEvent = props.eventId == null // 保存前に新規作成かどうかを判定
+  isSubmitting.value = true
   try {
     const event = await saveDraft()
     if (event == null) {
@@ -386,10 +389,13 @@ const submit = async () => {
     console.error('Failed to save event:', error)
     const errorMessage = error instanceof Error ? error.message : String(error)
     showAlertDialog($t('manage.event.save_error', { error: errorMessage }))
+  } finally {
+    isSubmitting.value = false
   }
 }
 
 const sendReserveMail = async () => {
+  isReserveMailing.value = true
   try {
     const event = await saveDraft()
     if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
@@ -408,6 +414,8 @@ const sendReserveMail = async () => {
     console.error('Failed to send reserve mail:', error)
     const errorMessage = error instanceof Error ? error.message : String(error)
     showAlertDialog($t('manage.event.reserve_error', { error: errorMessage }))
+  } finally {
+    isReserveMailing.value = false
   }
 }
 
@@ -510,6 +518,8 @@ const stepperItems = computed(() => [
       <event-shop-notice
         v-model="event"
         v-model:shop="selectedShop"
+        :loading-submit="isSubmitting"
+        :loading-reserve="isReserveMailing"
         @submit="submit"
         @send-reserve-mail="sendReserveMail"
         @back="stepper--"
