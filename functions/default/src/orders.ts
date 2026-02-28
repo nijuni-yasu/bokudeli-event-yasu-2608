@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { getFirestore } from 'firebase-admin/firestore'
+import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import {
   UpdateMenuCountInCartRequest,
   DeleteMenuInCartRequest,
@@ -27,6 +27,7 @@ const db = getFirestore()
  * - unauthenticated: request.auth.uid が存在しない場合
  * - not-found: 指定されたイベントが存在しない場合
  * - invalid-argument: 必須パラメータが不足している場合
+ * - failed-precondition: 注文期限超過、定員超過、または選択されていないメニューが含まれる場合
  *
  * @param request Firebase Callable Function のリクエストオブジェクト
  * @returns order_id を含むレスポンスオブジェクト
@@ -54,6 +55,26 @@ export const addOrder = onCall<AddOrderRequest, Promise<AddOrderResponse>>(async
     const eventData = await getEvent(event_id, transaction)
     if (eventData == null || eventData.community_id !== community_id) {
       throw new HttpsError('not-found', `イベントが見つかりません: ${event_id}`)
+    }
+
+    // 注文期限チェック
+    const now = Timestamp.now().toMillis()
+    if (eventData.event_deadline_datetime < now) {
+      throw new HttpsError('failed-precondition', '注文期限を過ぎています')
+    }
+
+    // 定員チェック
+    if (eventData.members.length >= eventData.event_max_people) {
+      throw new HttpsError('failed-precondition', '定員に達しています')
+    }
+
+    // メニューの is_selected チェック
+    const eventMenus = await eventData.getMenus(transaction)
+    for (const menu of menus) {
+      const eventMenu = eventMenus.find((m) => m.id === menu.menu_id)
+      if (eventMenu == null || !eventMenu.is_selected) {
+        throw new HttpsError('failed-precondition', `メニューが選択されていません: ${menu.menu_id}`)
+      }
     }
 
     const orderInCart = await getOrderInCart(community_id, event_id, uid, transaction)
