@@ -62,6 +62,7 @@ export default {
       target_date: '開始日',
       create_button: 'イベントを複製する',
       error: 'イベントの複製に失敗しました',
+      complete: 'イベント複製が完了しました',
     },
     top: {
       about_title: '【shokujiiって？】',

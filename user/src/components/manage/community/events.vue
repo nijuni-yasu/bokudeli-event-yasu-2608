@@ -45,11 +45,24 @@ const events = computed(
 )
 const isOpenEventDialog = ref(false)
 const isOpenCopyDialog = ref(false)
+const isOpenCopyCompleteDialog = ref(false)
+const isOpenCopyErrorDialog = ref(false)
+const copiedEventId = ref<string | null>(null)
 
 const handleCopySuccess = (newEventId: string) => {
-  router.push(getManageEventPath(newEventId))
-  // イベント一覧を再読み込み
+  copiedEventId.value = newEventId
+  isOpenCopyCompleteDialog.value = true
   eventListStore.reload()
+}
+
+const handleCopyCompleteOk = () => {
+  if (copiedEventId.value) {
+    router.push(getManageEventPath(copiedEventId.value))
+  }
+}
+
+const handleCopyError = () => {
+  isOpenCopyErrorDialog.value = true
 }
 </script>
 
@@ -106,7 +119,25 @@ const handleCopySuccess = (newEventId: string) => {
       <div v-html="$t('event_create_modal.desc')" />
     </v-card-text>
   </confirm-dialog>
-  <CopyEventDialog v-model="isOpenCopyDialog" :community-account="communityAccount" @success="handleCopySuccess" />
+  <CopyEventDialog
+    v-model="isOpenCopyDialog"
+    :community-account="communityAccount"
+    @success="handleCopySuccess"
+    @error="handleCopyError"
+  />
+  <ConfirmDialog
+    v-model="isOpenCopyCompleteDialog"
+    :title="$t('manage.copy_event_modal.complete')"
+    ok-text="OK"
+    :ok-click="handleCopyCompleteOk"
+    max-width="500px"
+  />
+  <ConfirmDialog
+    v-model="isOpenCopyErrorDialog"
+    :title="$t('manage.copy_event_modal.error')"
+    ok-text="OK"
+    max-width="500px"
+  />
 </template>
 
 <style scoped lang="scss">
