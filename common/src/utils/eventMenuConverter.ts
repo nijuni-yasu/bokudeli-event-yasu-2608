@@ -1,5 +1,21 @@
 import { PartnerMenu } from '../schemas/PartnerMenu.js'
 import { EventMenu } from '../schemas/EventMenu.js'
+import { RawEventStatusType } from '../schemas/Event.js'
+
+/**
+ * PartnerMenu（店舗メニューマスタ）からEventMenuを再生成すべきステータスか判定
+ * フロントエンドでは新規作成時（undefined）も該当する
+ */
+export function shouldRegenerateFromPartnerMenus(status: RawEventStatusType | undefined): boolean {
+  return status === 'in_draft' || status === 'applying_reservation' || status == null
+}
+
+/**
+ * 既存EventMenuのis_selectedフラグのみ更新すべきステータスか判定
+ */
+export function shouldUpdateExistingMenusOnly(status: RawEventStatusType | undefined): boolean {
+  return status === 'accepting_order'
+}
 
 /**
  * 選択メニューIDにデフォルト選択を適用
@@ -28,7 +44,7 @@ function applyDefaultSelectedMenuIds(selectedMenuIds: string[], partnerMenus: Pa
  * @param eventId - イベントID
  * @param eventStartDatetime - イベント開始日時（期間チェック用）
  * @param selectedMenuIds - 選択されたmenu_idの配列
- * @returns 変換されたEventMenu、または期間外の場合はnull
+ * @returns 変換されたEventMenu、または売り切れ・期間外の場合はnull
  */
 export function convertFromPartnerMenuToEventMenu(
   partnerMenu: PartnerMenu,
@@ -36,6 +52,11 @@ export function convertFromPartnerMenuToEventMenu(
   eventStartDatetime: number | null,
   selectedMenuIds: string[],
 ): EventMenu | null {
+  // 売り切れチェック：売り切れメニューはEventMenuに含めない
+  if (partnerMenu.is_sold_out) {
+    return null
+  }
+
   // 期間チェック：イベント開始日時がメニューの有効期間内かチェック
   if (eventStartDatetime != null && partnerMenu.menu_date_start != null && partnerMenu.menu_date_end != null) {
     // 期間外のメニューは変換しない
@@ -62,7 +83,7 @@ export function convertFromPartnerMenuToEventMenu(
  * @param eventId - イベントID
  * @param eventStartDatetime - イベント開始日時（期間チェック用）
  * @param selectedMenuIds - 選択されたmenu_idの配列（空配列の場合はデフォルトで全選択）
- * @returns 変換されたEventMenu配列（期間外のメニューは除外）
+ * @returns 変換されたEventMenu配列（売り切れ・期間外のメニューは除外）
  */
 export function convertPartnerMenusToEventMenus(
   partnerMenus: PartnerMenu[],

@@ -78,20 +78,23 @@ const selectedCount = computed(() => {
       <v-col cols="12" sm="12" md="10">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
-            <v-card-title class="text-h4">
+            <v-card-title class="text-h3">
               <v-icon size="50" class="text--primary me-3" :icon="mdiStorefrontOutline" />
               {{ event.shop_name }}
             </v-card-title>
-            <v-card-text class="text-left text-h5">
+            <v-card-text class="text-left text-h5 my-3">
               {{ shop?.shop_description }}
             </v-card-text>
 
             <!-- 選択カウント表示 -->
-            <v-card-subtitle class="text-center text-h6 my-4">
+            <v-card-subtitle v-if="props.menus.length" class="text-center text-h6 my-6">
               {{ t('event_menu.select_menu_instruction') }}
               <v-chip color="primary" class="ml-2">
                 {{ t('event_menu.selected_count', { count: selectedCount, total: props.menus.length }) }}
               </v-chip>
+            </v-card-subtitle>
+            <v-card-subtitle v-else class="text-center text-h4 my-15 py-15">
+              {{ t('event_menu.no_menus_found') }}
             </v-card-subtitle>
 
             <v-row>
@@ -126,11 +129,6 @@ const selectedCount = computed(() => {
                   </v-card-text>
                   <v-card-text class="text-right text-h5 pb-5"> ¥ {{ priceString(item.menu_price) }} </v-card-text>
                 </v-card>
-              </v-col>
-
-              <!-- no result found -->
-              <v-col v-show="!props.menus.length" cols="12" class="text-center">
-                <h4 class="mt-4">{{ t('event_menu.no_menus_found') }}</h4>
               </v-col>
             </v-row>
 

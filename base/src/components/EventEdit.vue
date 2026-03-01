@@ -15,6 +15,8 @@ import { useShopListStore } from '@shokujii/base/stores/shopList'
 import {
   convertPartnerMenusToEventMenus,
   updateEventMenusIsSelected,
+  shouldRegenerateFromPartnerMenus,
+  shouldUpdateExistingMenusOnly,
 } from '@shokujii/common/utils/eventMenuConverter.js'
 import { useRouter } from 'vue-router'
 import { getCommunityPath } from '@/router/utils'
@@ -199,26 +201,33 @@ const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 
 const isUpdatedStartTime = ref(false)
 
-// partner_id に基づいて PartnerMenu を取得
-const partnerMenus = computed<BokudeliPartnerMenu[]>(() => {
+// partner_id に基づいて PartnerMenu を取得（null = 未取得）
+const partnerMenus = computed<BokudeliPartnerMenu[] | null>(() => {
   const partnerId = event.value?.partner_id
   if (!partnerId) {
     return []
   }
   const partnerStore = usePartnerStore(partnerId)
-  return partnerStore.menus ?? []
+  return partnerStore.menus ?? null
 })
 
-// eventMenus が空の場合はローディング中と判定
-const isLoadingMenu = computed(() => {
-  return eventMenus.value.length === 0
-})
-
-// 既存EventMenusを取得
-const existingMenus = computed(() => {
+// 既存EventMenusを取得（null = 未取得）
+const existingMenus = computed<BokudeliEventMenu[] | null>(() => {
   if (!props.eventId) return []
   const eventStore = useEventStore(props.eventId) as EventStore
-  return eventStore.menus || []
+  return eventStore.menus ?? null
+})
+
+// ステータスに応じたメニューソースが未取得（null）の場合にローディング中と判定
+const isLoadingMenu = computed(() => {
+  const eventStatus = event.value?.event_status?.value
+  if (shouldUpdateExistingMenusOnly(eventStatus)) {
+    return existingMenus.value === null
+  }
+  if (shouldRegenerateFromPartnerMenus(eventStatus)) {
+    return partnerMenus.value === null
+  }
+  return false
 })
 
 // ユーザーのメニュー選択状態を管理
@@ -230,7 +239,7 @@ const userSelectedMenuIds = computed<string[]>({
       if (!props.eventId) {
         return []
       }
-      return existingMenus.value.filter((m) => m.is_selected).map((m) => m.menu_id)
+      return existingMenus.value?.filter((m) => m.is_selected).map((m) => m.menu_id) ?? []
     }
     return _userSelectedMenuIds.value
   },
@@ -248,14 +257,14 @@ const eventMenus = computed(() => {
   const eventStartDatetime = event.value?.event_start_datetime ?? null
   const eventStatus = event.value?.event_status?.value
 
-  // accepting_order状態: 既存EventMenuを使用
-  if (eventStatus === 'accepting_order') {
+  if (shouldUpdateExistingMenusOnly(eventStatus)) {
+    if (existingMenus.value === null) return []
     const { updatedMenus } = updateEventMenusIsSelected(existingMenus.value, userSelectedMenuIds.value)
     return updatedMenus
   }
 
-  // in_draft, applying_reservation, 新規作成時
-  if (eventStatus === 'in_draft' || eventStatus === 'applying_reservation' || eventStatus == null) {
+  if (shouldRegenerateFromPartnerMenus(eventStatus)) {
+    if (partnerMenus.value === null) return []
     return convertPartnerMenusToEventMenus(partnerMenus.value, eventId, eventStartDatetime, userSelectedMenuIds.value)
   }
 
@@ -520,6 +529,7 @@ const stepperItems = computed(() => [
         v-model:shop="selectedShop"
         :loading-submit="isSubmitting"
         :loading-reserve="isReserveMailing"
+        :loading-menu="isLoadingMenu"
         @submit="submit"
         @send-reserve-mail="sendReserveMail"
         @back="stepper--"

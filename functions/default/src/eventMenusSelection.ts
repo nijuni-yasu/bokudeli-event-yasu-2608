@@ -4,10 +4,13 @@ import { createModuleLogger } from './utils/logger.js'
 import { getEvent } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
 import { getPartner } from './stores/partner.js'
+import { getConfigGlobal } from './stores/config.js'
 import { UpdateEventMenusRequest } from '@shokujii/common/apis/eventMenu.js'
 import {
   convertPartnerMenusToEventMenus,
   updateEventMenusIsSelected,
+  shouldRegenerateFromPartnerMenus,
+  shouldUpdateExistingMenusOnly,
 } from '@shokujii/common/utils/eventMenuConverter.js'
 
 const logger = createModuleLogger('eventMenusSelection')
@@ -54,14 +57,16 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
     throw new HttpsError('invalid-argument', 'At least one menu must be selected')
   }
 
-  // 認可チェック: コミュニティのマネージャーである必要がある
+  // 認可チェック: コミュニティのマネージャーまたはサポートユーザーである必要がある
   const community = await getCommunity(communityId)
   if (!community) {
     throw new HttpsError('not-found', `Community ${communityId} not found`)
   }
   const userId = request.auth.uid
   const isManager = await community.hasRole(userId, 'manager')
-  if (!isManager) {
+  const config = await getConfigGlobal()
+  const isSupport = config?.isSupport(userId) ?? false
+  if (!isManager && !isSupport) {
     throw new HttpsError('permission-denied', 'User does not have permission to update this event')
   }
 
@@ -81,8 +86,7 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
         throw new HttpsError('failed-precondition', 'Cannot update menus after event is finished.')
       }
 
-      // accepting_orderでは（満席や締切時も）is_selectedのみ変更
-      if (eventStatus === 'accepting_order') {
+      if (shouldUpdateExistingMenusOnly(eventStatus)) {
         const existingEventMenus = await event.getMenus(transaction)
         const { changedMenus } = updateEventMenusIsSelected(existingEventMenus, selectedMenuIds)
 
@@ -100,8 +104,7 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
           selectedMenusCount: selectedMenuIds.length,
           changedMenusCount: changedMenus.length,
         })
-      } else if (eventStatus === 'in_draft' || eventStatus === 'applying_reservation') {
-        // in_draft, applying_reservation状態: 最新のPartnerMenuから全メニューを再生成
+      } else if (shouldRegenerateFromPartnerMenus(eventStatus)) {
         const partner = await getPartner(event.partner_id)
         if (!partner) {
           throw new HttpsError('not-found', `Partner not found for event ${eventId}`)

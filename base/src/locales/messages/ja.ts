@@ -297,7 +297,7 @@ export default {
     selected_count: '選択中: {count} / {total} メニュー',
     orderable: '注文可能',
     not_orderable: '注文不可',
-    no_menus_found: 'メニューが見つかりませんでした',
+    no_menus_found: '注文できるメニューがありません',
   },
   event_detail: {
     title: 'イベント詳細',
