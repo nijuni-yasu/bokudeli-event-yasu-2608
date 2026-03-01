@@ -4,6 +4,7 @@ import { createModuleLogger } from './utils/logger.js'
 import { getEvent } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
 import { getPartner } from './stores/partner.js'
+import { getConfigGlobal } from './stores/config.js'
 import { UpdateEventMenusRequest } from '@shokujii/common/apis/eventMenu.js'
 import {
   convertPartnerMenusToEventMenus,
@@ -56,14 +57,16 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
     throw new HttpsError('invalid-argument', 'At least one menu must be selected')
   }
 
-  // 認可チェック: コミュニティのマネージャーである必要がある
+  // 認可チェック: コミュニティのマネージャーまたはサポートユーザーである必要がある
   const community = await getCommunity(communityId)
   if (!community) {
     throw new HttpsError('not-found', `Community ${communityId} not found`)
   }
   const userId = request.auth.uid
   const isManager = await community.hasRole(userId, 'manager')
-  if (!isManager) {
+  const config = await getConfigGlobal()
+  const isSupport = config?.isSupport(userId) ?? false
+  if (!isManager && !isSupport) {
     throw new HttpsError('permission-denied', 'User does not have permission to update this event')
   }
 
