@@ -87,6 +87,8 @@ export default {
     total: '合計',
     cannot_order_deadline: '注文期限をすぎました。注文確定できません。',
     cannot_order_limit_people: '定員に達しました。注文確定できません。',
+    cannot_order_unselected_menu:
+      '現在注文できないメニューが含まれているため、注文を確定できません。お手数ですが、カートの内容を削除し、改めてメニューを選び直してください。',
     order_completed: '注文を完了しました。',
     payment_failed: '決済処理に失敗しました。サポートにお問い合わせください。',
     order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
