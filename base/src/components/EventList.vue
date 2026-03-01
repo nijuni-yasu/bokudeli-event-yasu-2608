@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import IncrementalLoader from './IncrementalLoader.vue'
+import EventStatusChip from './EventStatusChip.vue'
 import { useEventListStore, type EventListStore } from '@shokujii/base/stores/eventList'
 import { orderBy, where } from 'firebase/firestore'
 
@@ -38,9 +39,15 @@ const events = computed(() => {
       :active="event.event_id === selectedEventId"
       @click="$emit('click', event)"
     >
+      <template #prepend>
+        <v-img :src="event.event_cover_url" width="120" aspect-ratio="1.91" cover rounded="sm" class="mr-3" />
+      </template>
       <v-list-item-title class="text-h6 py-1">{{ event.event_name }}</v-list-item-title>
       <div class="text-body-2">{{ $d(event.event_start_datetime, 'datetime') }}</div>
       <div class="text-body-2">{{ event.shop_name }}</div>
+      <template #append>
+        <EventStatusChip :status="event.calculatedEventStatus" size="x-small" />
+      </template>
     </v-list-item>
     <v-list-item>
       <IncrementalLoader
