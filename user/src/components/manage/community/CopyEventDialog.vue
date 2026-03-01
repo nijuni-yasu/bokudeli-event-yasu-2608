@@ -9,7 +9,6 @@ import {
 import { eventCopy } from '@shokujii/base/apis/eventCopy.js'
 import EventList from '@shokujii/base/components/EventList.vue'
 import DateInput from '@shokujii/base/components/DateInput.vue'
-import { useNotification } from '@shokujii/base/composable/notification'
 import type { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { BokudeliPartnerShop, usePartnerStore } from '@shokujii/base/stores/partner'
 
@@ -21,10 +20,10 @@ const dialog = defineModel<boolean>()
 
 const emit = defineEmits<{
   success: [newEventId: string]
+  error: []
 }>()
 
 const { t: $t } = useI18n()
-const notification = useNotification()
 
 const selectedEvent = ref<BokudeliEvent | null>(null)
 const isCreating = ref(false)
@@ -134,9 +133,9 @@ const createEvents = async () => {
     })
 
     emit('success', result.data.newEventId)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating events:', error)
-    notification.show($t('manage.copy_event_modal.error'), 'error')
+    emit('error')
   } finally {
     dialog.value = false
     isCreating.value = false

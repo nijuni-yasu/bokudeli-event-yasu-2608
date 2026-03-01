@@ -62,6 +62,7 @@ export default {
       target_date: '開始日',
       create_button: 'イベントを複製する',
       error: 'イベントの複製に失敗しました',
+      complete: 'イベント複製が完了しました',
     },
     top: {
       about_title: '【shokujiiって？】',
@@ -250,6 +251,7 @@ export default {
         title: 'イベント削除',
         description: '本当に削除しますか？この操作は取り消せません。',
         submit: '削除',
+        complete: 'イベント削除が完了しました',
       },
       no_community: `まだコミュニティがありません<br />
                       新しいコミュニティを立ち上げよう🌱`,

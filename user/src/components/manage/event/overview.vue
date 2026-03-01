@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import EventCard from '@shokujii/base/components/EventCard.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { getManageEventSettingsPath, getEventPath, getManageCommunityPath } from '@/router/utils'
 import { mdiPencil, mdiDelete } from '@mdi/js'
 
@@ -11,11 +12,19 @@ const eventId = route.params.eventId as string
 
 const eventStore = useEventStore(eventId) as EventStore
 const deleteConfirmationDialog = ref(false)
+const deleteCompleteDialog = ref(false)
+
 const deleteEvent = async () => {
-  const communityAccount = eventStore.event!.community_account
   await eventStore.deleteEvent()
-  window.location.href = getManageCommunityPath(communityAccount)
-  // router.push(getManageEventListPath())
+  deleteConfirmationDialog.value = false
+  deleteCompleteDialog.value = true
+}
+
+const handleDeleteCompleteOk = () => {
+  const communityAccount = eventStore.event?.community_account
+  if (communityAccount) {
+    window.location.href = getManageCommunityPath(communityAccount)
+  }
 }
 const openInNew = (url: string) => {
   window.open(url, '_blank')
@@ -78,4 +87,11 @@ const openInNew = (url: string) => {
       </v-card-actions>
     </v-card>
   </v-dialog>
+  <ConfirmDialog
+    v-model="deleteCompleteDialog"
+    :title="$t('manage.event.dialog.complete')"
+    ok-text="OK"
+    :ok-click="handleDeleteCompleteOk"
+    max-width="500px"
+  />
 </template>
