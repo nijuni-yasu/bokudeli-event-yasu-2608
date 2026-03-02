@@ -15,9 +15,9 @@ const avatarSize = computed(() => {
     case 'sm':
       return 65
     case 'md':
-      return 44
+      return 60
     default:
-      return 48
+      return 60
   }
 })
 </script>
