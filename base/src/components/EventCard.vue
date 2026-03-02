@@ -15,9 +15,9 @@ const avatarSize = computed(() => {
     case 'sm':
       return 65
     case 'md':
-      return 44
+      return 60
     default:
-      return 48
+      return 60
   }
 })
 </script>
@@ -54,17 +54,32 @@ const avatarSize = computed(() => {
       {{ $t('event_card.participants', [(members ?? []).length, event.event_max_people]) }}
     </v-card-text>
     <!-- Mutual members -->
-    <v-card-text class="position-relative px-3 pb-2" style="min-height: 50px">
-      <div class="d-flex justify-space-between align-center">
-        <div class="v-avatar-group">
-          <UserAvatar
-            v-for="member in (members ?? []).slice(0, 7)"
-            :key="member.user_id"
-            :user="member"
-            :size="avatarSize"
-          />
-        </div>
+    <v-card-text class="position-relative px-3 pb-2 avatar-scroll-container" style="min-height: 50px">
+      <div class="v-avatar-group">
+        <UserAvatar
+          v-for="member in (members ?? []).slice(0, 15)"
+          :key="member.user_id"
+          :user="member"
+          :size="avatarSize"
+        />
       </div>
     </v-card-text>
   </v-card>
 </template>
+
+<style lang="scss" scoped>
+.avatar-scroll-container {
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  :deep(.v-avatar-group > *) {
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+</style>

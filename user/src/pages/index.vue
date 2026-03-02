@@ -21,7 +21,7 @@ const numOfColumns = computed(() => {
       return 4
   }
 })
-const numOfPopularColumns = 4
+const numOfPopularColumns = 3
 
 const now = Timestamp.now()
 
@@ -32,7 +32,7 @@ const popularEventListStore = useEventListStore(
   [
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
-    where('event_num_members', '>=', 3),
+    where('event_num_members', '>=', 1),
     where('event_deadline_datetime', '>', now),
     orderBy('event_num_members', 'desc'),
   ],
@@ -123,7 +123,7 @@ const next = () => {
           <v-col
             v-for="{ event, members } in popularEvents"
             :key="`popular_${event.event_id}`"
-            md="3"
+            md="4"
             sm="6"
             cols="12"
             class="content"
