@@ -30,7 +30,7 @@ interface MailContent {
   to: string
   from: string
   templateId: string
-  dynamic_template_data: {
+  dynamicTemplateData: {
     date?: string
     event_datetime?: string
     event_name: string
@@ -48,7 +48,7 @@ function buildInCartNotificationMail(event: ShokujiiEvent, to: string): MailCont
     to,
     from: DEFAULT_FROM,
     templateId: IN_CART_NOTIFICATION_ID,
-    dynamic_template_data: {
+    dynamicTemplateData: {
       date: convertToDateWeekdayShort(event.event_start_datetime),
       event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
       event_name: event.event_name,
