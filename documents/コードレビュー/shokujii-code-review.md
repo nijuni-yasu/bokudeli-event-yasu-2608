@@ -56,8 +56,11 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 
 ### Firebase Functions
-- [ ] `console.log` / `console.error` を使っていないか（`logger` を使う）
-- [ ] ログメッセージに `letter |` 等の接頭辞をつけていないか（`logger` 使用時は不要）
+- [ ] `console.log` / `console.error` を使っていないか（`createModuleLogger` を使う）
+- [ ] `import { logger } from 'firebase-functions'` を直接使っていないか（`createModuleLogger` を使う）
+- [ ] ログメッセージに `letter |` 等の接頭辞をつけていないか（`createModuleLogger` 使用時は不要）
+- [ ] メールの一括送信に `Promise.all` を使っていないか（`Promise.allSettled` を使い、失敗集計をログに記録する）
+- [ ] メールの1件送信に `Promise.allSettled` や失敗集計ログを使っていないか（`try/catch` で十分）
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
 
@@ -175,16 +178,48 @@ await updateEventMenus({ menus: menuObjects })
 await updateEventMenus({ menuIds: menuObjects.map(m => m.menu_id) })
 ```
 
-### NG: Functions で console を使う
+### NG: Functions で console や logger を直接使う
 
 ```typescript
-// NG
+// NG: console を使う
 console.log('letter | sendLetter called')
 
-// OK
+// NG: firebase-functions の logger を直接インポートする
 import { logger } from 'firebase-functions'
 logger.info('sendLetter called')
-// logger 使用時はログに接頭辞（"letter |" 等）をつけない
+
+// OK: createModuleLogger を使う（Cloud Logging で module フィールドによるフィルタリングが可能になる）
+import { createModuleLogger } from './utils/logger.js'
+const logger = createModuleLogger('letter')
+logger.info('sendLetter called')
+// createModuleLogger 使用時はログに接頭辞（"letter |" 等）をつけない
+```
+
+### NG: メール一括送信に Promise.all を使う
+
+```typescript
+// NG: 1件の失敗で全体が中断する
+await Promise.all(
+  emails.map(async (to) => {
+    await sgMail.send({ to, from: DEFAULT_FROM, templateId, dynamicTemplateData })
+  }),
+)
+
+// OK: 失敗しても他の送信は継続し、結果を集計する
+const results = await Promise.allSettled(
+  emails.map(async (to) => {
+    return sgMail.send({ to, from: DEFAULT_FROM, templateId, dynamicTemplateData })
+  }),
+)
+
+const failedCount = results.filter((r) => r.status === 'rejected').length
+if (failedCount > 0) {
+  logger.warn('Failed to send mail', {
+    successCount: results.filter((r) => r.status === 'fulfilled').length,
+    failedCount,
+    totalEmails: emails.length,
+  })
+}
 ```
 
 ### NG: Date オブジェクトの直接使用
