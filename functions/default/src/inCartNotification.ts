@@ -13,6 +13,9 @@ import {
   getEvent,
   type ShokujiiEvent,
 } from './stores/event.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('inCartNotification')
 
 const IN_CART_NOTIFICATION_ID = 'd-148ab4d0aef644de815cc684c92a87de'
 
@@ -82,16 +85,21 @@ export async function sendInCartNotificationToMember(start: number, end: number)
       return start < notificationData.event.event_deadline_datetime
     })
 
-  await Promise.all(
+  const results = await Promise.allSettled(
     filteredNotificationDataList.map(async (notificationData) => {
       const { event, userEmail } = notificationData
-      try {
-        await send(buildInCartNotificationMail(event, userEmail))
-      } catch (error) {
-        console.error('Failed to send in-cart notification:', error)
-      }
+      return send(buildInCartNotificationMail(event, userEmail))
     }),
   )
+
+  const failedCount = results.filter((r) => r.status === 'rejected').length
+  if (failedCount > 0) {
+    logger.warn('Failed to send in-cart notification', {
+      successCount: results.filter((r) => r.status === 'fulfilled').length,
+      failedCount,
+      totalEmails: filteredNotificationDataList.length,
+    })
+  }
 }
 
 export async function sendInCartEventDeadlineNotificationToMember(start: number, end: number): Promise<void> {
@@ -114,13 +122,18 @@ export async function sendInCartEventDeadlineNotificationToMember(start: number,
     }),
   )
 
-  await Promise.all(
+  const results = await Promise.allSettled(
     mailContentList.map(async (mailContent) => {
-      try {
-        await send(mailContent)
-      } catch (error) {
-        console.error('Failed to send in-cart event deadline notification:', error)
-      }
+      return send(mailContent)
     }),
   )
+
+  const failedCount = results.filter((r) => r.status === 'rejected').length
+  if (failedCount > 0) {
+    logger.warn('Failed to send in-cart event deadline notification', {
+      successCount: results.filter((r) => r.status === 'fulfilled').length,
+      failedCount,
+      totalEmails: mailContentList.length,
+    })
+  }
 }

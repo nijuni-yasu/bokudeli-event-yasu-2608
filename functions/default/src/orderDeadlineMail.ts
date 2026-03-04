@@ -15,6 +15,9 @@ import {
   convertToDuration,
 } from '@shokujii/common/utils/datetime.js'
 import { getEventPartnerShop } from './stores/partner.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('orderDeadlineMail')
 
 // テンプレートID
 const ORDER_DEADLINE_TEMPLATE_ID = 'd-8609b6a7b1514595ae68d18532331e0e'
@@ -184,7 +187,10 @@ export async function sendOrderDeadlineMailToShop(start: number, end: number, is
           dynamicTemplateData: dynamic_template_data,
         })
       } catch (err) {
-        console.warn('Failed to send order deadline mail to shop:', err)
+        logger.warn('Failed to send order deadline mail to shop', {
+          eventId: event.id,
+          error: err instanceof Error ? err.message : String(err),
+        })
       }
     }),
   )
@@ -193,62 +199,69 @@ export async function sendOrderDeadlineMailToShop(start: number, end: number, is
 /**
  * 主催者向け注文締切メール送信
  */
-export async function sendOrderDeadlineMailToOrganizers(start: number, end: number): Promise<void[]> {
+export async function sendOrderDeadlineMailToOrganizers(start: number, end: number): Promise<void> {
   const events = await getAcceptingOrderEventsByTime(start, end)
-  const promises: Promise<void>[] = []
 
-  for (const event of events) {
-    try {
-      const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(event)
-      const communityEmails = await getCommunityEmailsForEvent(event)
+  await Promise.allSettled(
+    events.map(async (event) => {
+      try {
+        const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(event)
+        const communityEmails = await getCommunityEmailsForEvent(event)
 
-      for (const to of communityEmails) {
-        promises.push(
-          sgMail
-            .send({
+        const results = await Promise.allSettled(
+          communityEmails.map(async (to) => {
+            return sgMail.send({
               to,
               from: DEFAULT_FROM,
               templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
               dynamicTemplateData: dynamic_template_data,
             })
-            .then(() => {})
-            .catch((err) => {
-              console.warn('Failed to send order deadline mail to organizer:', err)
-            }),
+          }),
         )
-      }
-    } catch (err) {
-      console.warn('Failed to process event for organizer mail:', err)
-    }
-  }
 
-  return Promise.all(promises)
+        const failedCount = results.filter((r) => r.status === 'rejected').length
+        if (failedCount > 0) {
+          logger.warn('Failed to send order deadline mail to organizers', {
+            eventId: event.id,
+            successCount: results.filter((r) => r.status === 'fulfilled').length,
+            failedCount,
+            totalEmails: communityEmails.length,
+          })
+        }
+      } catch (err) {
+        logger.warn('Failed to process event for organizer mail', {
+          eventId: event.id,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }),
+  )
 }
 
 /**
  * メンバー向け注文締切メール送信
  */
-export async function sendOrderDeadlineMailToMembers(start: number, end: number): Promise<void[]> {
+export async function sendOrderDeadlineMailToMembers(start: number, end: number): Promise<void> {
   const events = await getAcceptingOrderEventsByTime(start, end)
 
-  return Promise.all(
+  await Promise.allSettled(
     events.map(async (event) => {
-      const dynamic_template_data: TemplateDataForMembers = {
-        date: convertToDateWeekdayShort(event.event_start_datetime),
-        event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
-        event_name: event.event_name,
-        event_cover_url: event.event_cover_url,
-        community_name: event.community_name,
-        event_address: event.event_address,
-        shop_name: event.shop_name,
-        event_url: getEventUrl(event.community_account, event.id),
-      }
-
       try {
+        const dynamic_template_data: TemplateDataForMembers = {
+          date: convertToDateWeekdayShort(event.event_start_datetime),
+          event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
+          event_name: event.event_name,
+          event_cover_url: event.event_cover_url,
+          community_name: event.community_name,
+          event_address: event.event_address,
+          shop_name: event.shop_name,
+          event_url: getEventUrl(event.community_account, event.id),
+        }
+
         const memberEmails = await getEventMemberEmails(event)
-        await Promise.all(
+        const results = await Promise.allSettled(
           memberEmails.map(async (to) => {
-            await sgMail.send({
+            return sgMail.send({
               to,
               from: DEFAULT_FROM,
               templateId: EVENT_CONFIRMATION_TEMPLATE_ID,
@@ -256,8 +269,21 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
             })
           }),
         )
+
+        const failedCount = results.filter((r) => r.status === 'rejected').length
+        if (failedCount > 0) {
+          logger.warn('Failed to send order deadline mail to members', {
+            eventId: event.id,
+            successCount: results.filter((r) => r.status === 'fulfilled').length,
+            failedCount,
+            totalEmails: memberEmails.length,
+          })
+        }
       } catch (err) {
-        console.warn('Failed to send order deadline mail to members:', err)
+        logger.warn('Failed to process event for member mail', {
+          eventId: event.id,
+          error: err instanceof Error ? err.message : String(err),
+        })
       }
     }),
   )
@@ -266,10 +292,10 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
 /**
  * コミュニティメンバー向け注文期限リマインドメール送信（注文期限の24時間前）
  */
-export async function sendOrderDeadlineReminderToCommunityMembers(start: number, end: number): Promise<void[]> {
+export async function sendOrderDeadlineReminderToCommunityMembers(start: number, end: number): Promise<void> {
   const events = await getAcceptingOrderEventsByTime(start, end)
 
-  return Promise.all(
+  await Promise.allSettled(
     events.map(async (event) => {
       try {
         // is_publicがtrueのイベントのみ
@@ -298,9 +324,9 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
         }
 
         const memberEmails = await getCommunityMemberEmailsExcludingOrdered(event)
-        await Promise.all(
+        const results = await Promise.allSettled(
           memberEmails.map(async (to) => {
-            await sgMail.send({
+            return sgMail.send({
               to,
               from: DEFAULT_FROM,
               templateId: ORDER_DEADLINE_REMINDER_TO_COMMUNITY_TEMPLATE_ID,
@@ -308,8 +334,21 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
             })
           }),
         )
+
+        const failedCount = results.filter((r) => r.status === 'rejected').length
+        if (failedCount > 0) {
+          logger.warn('Failed to send order deadline reminder to community members', {
+            eventId: event.id,
+            successCount: results.filter((r) => r.status === 'fulfilled').length,
+            failedCount,
+            totalEmails: memberEmails.length,
+          })
+        }
       } catch (err) {
-        console.warn('Failed to send order deadline reminder to community members:', err)
+        logger.warn('Failed to process event for community reminder mail', {
+          eventId: event.id,
+          error: err instanceof Error ? err.message : String(err),
+        })
       }
     }),
   )
