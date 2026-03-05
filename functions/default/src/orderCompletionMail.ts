@@ -1,5 +1,4 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
-import { logger } from 'firebase-functions'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
@@ -10,6 +9,9 @@ import { convertReferenceToEvent, ShokujiiEvent, saveEvent, getEvent } from './s
 import { makeIcs } from './makeIcs.js'
 import { getCommunity } from './stores/community.js'
 import { getUserImageUrl } from '@shokujii/common/utils/buildThumbnailsLinks.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('orderCompletionMail')
 
 const ORDER_COMPLETION_TEMPLATE_ID = 'd-b94849438f2642a29973670f3d79809f'
 const ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID = 'd-6f18a5804cb9458fb1267924ff954a95'
@@ -81,9 +83,9 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
     user_image_url: userImageUrl,
   }
 
-  await Promise.all(
+  const results = await Promise.allSettled(
     emails.map(async (to) => {
-      await sgMail.send({
+      return sgMail.send({
         to,
         from: DEFAULT_FROM,
         templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
@@ -91,6 +93,16 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
       })
     }),
   )
+
+  const failedCount = results.filter((r) => r.status === 'rejected').length
+  if (failedCount > 0) {
+    logger.warn('Failed to send order completion mail to organizers', {
+      eventId: event.id,
+      successCount: results.filter((r) => r.status === 'fulfilled').length,
+      failedCount,
+      totalEmails: emails.length,
+    })
+  }
 }
 
 /**
