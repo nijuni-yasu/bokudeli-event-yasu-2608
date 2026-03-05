@@ -23,7 +23,7 @@ description: ステージングされている変更差分を読み込んでコ�
 ```
 
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[admin]` `[curry]` `[base]` `[common]` `[functions]` `[doc]`
+使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]`
 
 ### 本文
 

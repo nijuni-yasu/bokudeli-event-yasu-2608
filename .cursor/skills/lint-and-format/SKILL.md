@@ -16,13 +16,13 @@ npm -w common run build
 2. 以下のコマンドで lint を全パッケージ実行する
 
 ```
-npm -w common run lint; npm -w base run lint; npm -w user run lint; npm -w curry run lint; npm -w admin run lint; npm -w functions/default run lint
+npm -w common run lint; npm -w base run lint; npm -w user run lint; npm -w admin run lint; npm -w functions/default run lint
 ```
 
 3. 以下のコマンドで format チェックを全パッケージ実行する
 
 ```
-npm -w common run format:check; npm -w base run format:check; npm -w user run format:check; npm -w curry run format:check; npm -w admin run format:check; npm -w functions/default run format:check
+npm -w common run format:check; npm -w base run format:check; npm -w user run format:check; npm -w admin run format:check; npm -w functions/default run format:check
 ```
 
 4. 結果を報告する
@@ -33,7 +33,7 @@ npm -w common run format:check; npm -w base run format:check; npm -w user run fo
 5. format:all を実行する場合は以下を実行する
 
 ```
-npm -w common run format; npm -w base run format; npm -w user run format; npm -w curry run format; npm -w admin run format; npm -w functions/default run format
+npm -w common run format; npm -w base run format; npm -w user run format; npm -w admin run format; npm -w functions/default run format
 ```
 
 ---

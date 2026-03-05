@@ -23,7 +23,7 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 変更内容を端的に表す日本語タイトルを生成する。Issue 番号は含めない。
 フォーマット: `[タグ] 変更内容を端的に表す日本語タイトル`
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[admin]` `[curry]` `[base]` `[common]` `[functions]` `[doc]`
+使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]`
 
 ### 概要
 
@@ -48,7 +48,7 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 #### 対象パッケージ
 
 変更が含まれるパッケージのチェックボックスを `[x]` にする。
-`user` `admin` `curry` `base` `common` `functions` から該当するものを選ぶ。
+`user` `admin` `base` `common` `functions` から該当するものを選ぶ。
 
 #### Firebase / Backend
 
