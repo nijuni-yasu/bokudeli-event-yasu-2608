@@ -365,11 +365,14 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
     }
 
     // メニューを更新（Callable Function経由）
-    try {
-      await updateEventMenus(event.value.event_id, communityId, selectedMenuIds.value)
-    } catch (error) {
-      console.error('Failed to update event menus:', error)
-      throw error
+    // イベントが終了している場合はメニュー更新しない
+    if (event.value.calculatedEventStatus !== 'finished') {
+      try {
+        await updateEventMenus(event.value.event_id, communityId, selectedMenuIds.value)
+      } catch (error) {
+        console.error('Failed to update event menus:', error)
+        throw error
+      }
     }
 
     return event.value
