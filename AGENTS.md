@@ -4,6 +4,19 @@ AIエージェント向けプロジェクトガイド。
 
 **出力は必ず日本語で行ってください。**
 
+
+## Skills スキル（定型タスクの手順書）
+
+以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
+
+| タスク | スキルファイル |
+| :--- | :--- |
+| コミットメッセージ生成 | `.cursor/skills/commit-message/SKILL.md` |
+| PR 本文生成 | `.cursor/skills/create-pull-request/SKILL.md` |
+| コードレビュー | `.cursor/skills/shokujii-code-review/SKILL.md` |
+| lint・format チェック | `.cursor/skills/lint-and-format/SKILL.md` |
+
+
 ## プロジェクト概要
 
 **プロジェクト名**: Shokujii（食事でつながる）
