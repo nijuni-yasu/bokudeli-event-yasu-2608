@@ -513,10 +513,12 @@ export default {
     organizer: '👥 主催：',
     food: '👩‍🍳 食事：',
     hashtag: '#️⃣ ハッシュタグ：',
-    share_on_x: 'X で参加予定をシェアする',
+    share_on_x: 'SNSでシェアする',
     add_to_calendar: 'カレンダーに追加する',
     copy_text: 'テキストコピー',
     close: '閉じる',
+    share_prompt: '参加することをSNSで友だちにも知らせよう🎉',
+    share_prompt_ok: 'OK',
   },
   error: {
     '404': {

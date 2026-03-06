@@ -3,12 +3,11 @@ import { ref, computed, watch } from 'vue'
 import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar } from '@mdi/js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventStore } from '@shokujii/base/stores/event'
-import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { useCommunityStore } from '@shokujii/base/stores/community'
-import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
-import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
+import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
 const props = defineProps<{
   eventId: string
@@ -25,40 +24,42 @@ const isPosted = props.isPosted
 const event = computed(() => eventStore.event)
 
 const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event: BokudeliEvent) => {
-  const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(event.partner_id)
-  const [community, shop] = await Promise.all([
-    new Promise<BokudeliCommunity>((resolve) => {
-      watch(
-        () => communityStore.community,
-        (community) => {
-          if (community != null) {
-            resolve(community)
-            stop()
-          }
-        },
-        { immediate: true },
-      )
-    }),
-    new Promise<BokudeliPartnerShop | undefined>((resolve) => {
-      watch(
-        () => partnerStore.shops,
-        (shops) => {
-          if (shops != null) {
-            resolve(shops[0])
-            stop()
-          }
-        },
-        { immediate: true },
-      )
-    }),
+  const _window = type !== 'copy' && !isMobileDevice() ? window.open('', '_blank', 'width=800,height=500')! : undefined
+  const community = communityStore.community
+  const shop = partnerStore.shops?.[0]
+
+  if (community != null && shop != null) {
+    await shareSnsButton(type, event, community, shop, _window)
+    return
+  }
+
+  const [loadedCommunity, loadedShops] = await Promise.all([
+    communityStore.getLoadedCommunity(),
+    partnerStore.getLoadedShops(),
   ])
-  await shareSnsButton(type, event, community, shop!, _window)
+  await shareSnsButton(type, event, loadedCommunity, loadedShops[0]!, _window)
 }
 const isOpenCalendarAddDialog = ref(false)
 const openCalendarAddDialog = () => {
   isOpenCalendarAddDialog.value = true
 }
+
+const isSharePromptDialogVisible = ref(false)
+let hasShownSharePrompt = false
+
+watch(
+  [model, event],
+  async ([newModel, newEvent]) => {
+    if (newModel && newEvent?.is_public && !isPosted && !hasShownSharePrompt) {
+      hasShownSharePrompt = true
+      const partnerStore = usePartnerStore(newEvent.partner_id)
+      await Promise.all([new Promise<void>((resolve) => setTimeout(resolve, 1000)), partnerStore.getLoadedShops()])
+      isSharePromptDialogVisible.value = true
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -150,6 +151,17 @@ const openCalendarAddDialog = () => {
     </v-card>
   </v-dialog>
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
+
+  <ConfirmDialog
+    v-model="isSharePromptDialogVisible"
+    :is-confirm="false"
+    :persistent="false"
+    :ok-click="() => event && onShareSnsButtonClicked('twitterAfterOrder', event)"
+    :ok-text="$t('success_join_event_dialog.share_prompt_ok')"
+    max-width="400px"
+  >
+    {{ $t('success_join_event_dialog.share_prompt') }}
+  </ConfirmDialog>
 </template>
 
 <style lang="scss" scoped>

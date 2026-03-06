@@ -413,6 +413,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       community,
       members,
       events,
+      getLoadedCommunity,
       updateCommunity,
       updateCoverImage,
       updateIconImage,

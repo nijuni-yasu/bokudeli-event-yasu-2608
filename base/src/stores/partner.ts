@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type {
   DocumentData,
   DocumentReference,
@@ -115,6 +115,32 @@ export const usePartnerStore = (partnerId: string) => {
       return sortedMenus
     })
 
+    /**
+     * @param timeout [ms]
+     * @returns Promise<BokudeliPartnerShop[]> when the shops are loaded
+     * @throws Error when the shops are not loaded within the timeout
+     */
+    const getLoadedShops = async (timeout: number = 5000): Promise<BokudeliPartnerShop[]> => {
+      return await new Promise((resolve, reject) => {
+        let unwatch: (() => void) | undefined
+        const timeoutId = setTimeout(() => {
+          unwatch?.()
+          reject(new Error(`Shops not loaded within ${timeout}ms`))
+        }, timeout)
+        unwatch = watch(
+          shops,
+          (s) => {
+            if (s != null) {
+              clearTimeout(timeoutId)
+              unwatch?.()
+              resolve(s)
+            }
+          },
+          { immediate: true },
+        )
+      })
+    }
+
     const updateShop = async (data: BokudeliPartnerShop, image?: File) => {
       if (image != null) {
         data.shop_image_url = (await uploadShopImage(partnerRef.id, data.shop_id, image)) ?? ''
@@ -148,6 +174,7 @@ export const usePartnerStore = (partnerId: string) => {
     return {
       shops,
       menus,
+      getLoadedShops,
       updateShop,
       updateMenu,
       deleteMenu,

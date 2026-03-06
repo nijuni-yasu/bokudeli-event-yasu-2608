@@ -48,6 +48,9 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: B
   return `${textList.join('\n')}`
 }
 
+export const isMobileDevice = () =>
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
 export const shareSnsButton = async (
   snsType: 'twitter' | 'facebook' | 'line' | 'copy' | 'twitterAfterOrder',
   event: BokudeliEvent,
@@ -61,10 +64,27 @@ export const shareSnsButton = async (
     getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id),
   )
   if (snsType === 'twitter' || snsType === 'twitterAfterOrder') {
-    const baseUrl = 'https://x.com/intent/post'
     const text = encodeURIComponent(getXPostText(event, community, shop))
-    const openUrl = `${baseUrl}?text=${text}`
-    _window!.location.href = openUrl
+    const webUrl = `https://x.com/intent/post?text=${text}`
+
+    if (_window != null) {
+      _window.location.href = webUrl
+    } else {
+      // モバイル: twitter:// スキームで X アプリを直接起動する
+      // アプリ未インストール時は x.com Web 版にフォールバック
+      const appUrl = `twitter://post?message=${text}`
+      window.location.href = appUrl
+      const timer = setTimeout(() => {
+        window.location.href = webUrl
+      }, 1500)
+      document.addEventListener(
+        'visibilitychange',
+        () => {
+          if (document.hidden) clearTimeout(timer)
+        },
+        { once: true },
+      )
+    }
   } else if (snsType === 'facebook') {
     const baseUrl = 'https://www.facebook.com/sharer/sharer.php'
     const openUrl = `${baseUrl}?&u=${eventUrl}`
