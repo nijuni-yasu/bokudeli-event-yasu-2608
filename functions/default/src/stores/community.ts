@@ -67,6 +67,26 @@ export class ShokujiiCommunity extends Community {
     return members.filter((member) => member.roles.includes(role))
   }
 
+  async addMember(userId: string, transaction?: Transaction): Promise<void> {
+    const db = getFirestore()
+    const memberRef = db
+      .collection('communities')
+      .doc(this.id)
+      .collection('members')
+      .doc(userId)
+      .withConverter(communityMemberConverter)
+
+    // 既存メンバーの roles を引き継ぎつつ updated_at を更新する。新規の場合は roles: [] で作成する
+    const snapshot = await (transaction === undefined ? memberRef.get() : transaction.get(memberRef))
+    const data = snapshot.data() ?? new CommunityMember(userId, {})
+
+    if (transaction === undefined) {
+      await memberRef.set(data)
+    } else {
+      transaction.set(memberRef, data)
+    }
+  }
+
   async generateInvitationUrlForManager(uid: string): Promise<string> {
     const db = getFirestore()
     const invitesCollectionRef = db
