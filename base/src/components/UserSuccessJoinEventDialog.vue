@@ -5,7 +5,7 @@ import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { useCommunityStore } from '@shokujii/base/stores/community'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
-import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
+import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
@@ -25,7 +25,7 @@ const event = computed(() => eventStore.event)
 
 const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event: BokudeliEvent) => {
   const partnerStore = usePartnerStore(event.partner_id)
-  const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
+  const _window = type !== 'copy' && !isMobileDevice() ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const community = communityStore.community
   const shop = partnerStore.shops?.[0]
 

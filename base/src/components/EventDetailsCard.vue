@@ -12,7 +12,7 @@ import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
-import { shareSnsButton } from '@shokujii/base/utils/shareSnsButton'
+import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
 import ShowDialog from '@shokujii/base/components/ShowDialog.vue'
 import CommunityMembershipButton from '@shokujii/base/components/CommunityMembershipButton.vue'
 import VueQrious from 'vue-qrious'
@@ -90,7 +90,8 @@ const login = () => {
 }
 
 const onShareSnsButtonClicked = async (type: 'twitter' | 'facebook' | 'line' | 'copy') => {
-  const _window = type !== 'copy' ? window.open('', '_blank', 'width=800,height=500')! : undefined
+  const skipNewWindow = type === 'copy' || (isMobileDevice() && type === 'twitter')
+  const _window = !skipNewWindow ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const partnerStore = usePartnerStore(props.event.partner_id)
   const shop = await new Promise<BokudeliPartnerShop | undefined>((resolve) => {
     watch(
