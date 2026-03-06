@@ -6,11 +6,7 @@ const app = initializeApp({
 })
 initializeFirestore(app, { preferRest: true })
 
-export const {
-  polling,
-  on_event_changed,
-  send_email,
-} = await import('./sendgrid-mail.js')
+export const { send_email } = await import('./sendgrid-mail.js')
 export const { on_write_community_members } = await import('./community-members.js')
 export const { create_event_members } = await import('./event-members.js')
 export const { on_object_finalized } = await import('./storage-image.js')
