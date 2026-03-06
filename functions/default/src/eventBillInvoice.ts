@@ -17,12 +17,17 @@ import {
   calculateInvoiceFee,
   calculateOrdersTotal,
 } from '@shokujii/common/utils/invoice.js'
-import { getEvent, type ShokujiiEvent } from './stores/event.js'
+import { getEvent, getAcceptingOrderEventsByEndTime, type ShokujiiEvent } from './stores/event.js'
 import { getCommunity, type ShokujiiCommunity } from './stores/community.js'
-import { getEventUrl } from './utils/urls.js'
+import { getEventUrl, getEventBillInvoiceDirectUrl } from './utils/urls.js'
+import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
+import { createModuleLogger } from './utils/logger.js'
+import * as sgMail from './utils/sendgrid.js'
 import { PdfGenerator } from './utils/PdfGenerator.js'
 
 const CORS = defineList('CORS')
+const logger = createModuleLogger('eventBillInvoice')
+
 const INVOICE_BUCKET_NAME = `gs://${process.env.GCLOUD_PROJECT}-invoice`
 
 const TEMPLATE_PATH = path.join('templates', 'eventBillInvoice.docx')
@@ -93,7 +98,7 @@ const getEventBillInvoice = async (eventId: string, invoiceId: string, writableS
  * 請求書PDFを生成し Cloud Storage に保存する。
  * writableStream が指定された場合は HTTP レスポンスにもパイプする。
  */
-export const createEventBillInvoice = async (
+const createEventBillInvoice = async (
   community: ShokujiiCommunity,
   event: ShokujiiEvent,
   writableStream?: Writable,
@@ -270,3 +275,55 @@ export const eventBillInvoice = onRequest(
     await createEventBillInvoice(community, event, res)
   },
 )
+
+const EVENT_INVOICE_TEMPLATE_ID = 'd-48e3179255834b8bb895cd995b1aac28'
+
+/**
+ * イベント終了後に請求書PDFを生成し、主催者にメールで送信する（ポーリング用）
+ */
+export async function sendInvoiceMailToOrganizers(start: number, end: number): Promise<void> {
+  const events = await getAcceptingOrderEventsByEndTime(start, end)
+  const billEvents = events.filter((event) => event.event_payment === 'community_bill')
+
+  await Promise.all(
+    billEvents.map(async (event) => {
+      try {
+        const community = await getCommunity(event.community_id)
+        if (community == null) {
+          logger.warn(`Community not found: ${event.community_id}`)
+          return
+        }
+
+        const to = event.bill_email?.trim()
+        if (!to) {
+          logger.warn(`bill_email is empty, skipping invoice mail: event_id=${event.id}`)
+          return
+        }
+
+        const invoiceId = await createEventBillInvoice(community, event)
+
+        const cc = event.organizer_email?.trim()
+
+        await sgMail.send({
+          to,
+          from: DEFAULT_FROM,
+          cc: cc && cc !== to ? cc : undefined,
+          bcc: SUPPORT_MAIL,
+          templateId: EVENT_INVOICE_TEMPLATE_ID,
+          dynamicTemplateData: {
+            company: event.organizer_company,
+            person: event.bill_fullname,
+            event_name: event.event_name,
+            event_invoice_url: getEventBillInvoiceDirectUrl(event.id, invoiceId),
+          },
+        })
+        logger.info('Invoice mail sent', { eventId: event.id, to })
+      } catch (err) {
+        logger.warn('Failed to send invoice mail', {
+          error: err instanceof Error ? { message: err.message, stack: err.stack } : String(err),
+          eventId: event.id,
+        })
+      }
+    }),
+  )
+}
