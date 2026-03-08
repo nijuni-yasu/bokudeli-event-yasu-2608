@@ -214,12 +214,12 @@ const tinymceInit = {
 
 <template>
   <v-card flat class="mt-2">
-    <v-card-title class="pt-10 px-5">
+    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiListBoxOutline" />
       {{ $t('event_detail.title') }}
     </v-card-title>
 
-    <v-card-text class="pt-5">
+    <v-card-text class="pt-2 pt-md-5">
       <v-row>
         <v-col cols="12">
           <v-text-field
@@ -234,7 +234,7 @@ const tinymceInit = {
       </v-row>
     </v-card-text>
 
-    <v-card-text v-if="props.subdomainTags != null && props.subdomainTags.length !== 0" class="pt-5">
+    <v-card-text v-if="props.subdomainTags != null && props.subdomainTags.length !== 0" class="pt-2 pt-md-5">
       <v-row>
         <v-col cols="12">
           <v-text-field outlined dense label="Tags" :readonly="true" :active="true">
@@ -246,7 +246,7 @@ const tinymceInit = {
       </v-row>
     </v-card-text>
 
-    <v-card-text class="pt-5">
+    <v-card-text class="pt-2 pt-md-5">
       <v-row>
         <v-col cols="12">
           <ImageInput
@@ -269,7 +269,7 @@ const tinymceInit = {
       </v-row>
     </v-card-text>
 
-    <v-card-text class="pt-5">
+    <v-card-text class="pt-2 pt-md-5">
       <v-row>
         <v-col cols="12">
           <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
@@ -277,7 +277,7 @@ const tinymceInit = {
       </v-row>
     </v-card-text>
 
-    <v-card-text class="mt-3">
+    <v-card-text class="mt-1 mt-md-3">
       <v-row>
         <v-col cols="12">
           <v-text-field
@@ -293,7 +293,7 @@ const tinymceInit = {
         </v-col>
       </v-row>
     </v-card-text>
-    <v-card-text class="mt-3">
+    <v-card-text class="mt-1 mt-md-3">
       <v-row>
         <v-col cols="12">
           <v-text-field
@@ -309,12 +309,12 @@ const tinymceInit = {
     </v-card-text>
 
     <!-- Activity -->
-    <v-card-title class="pt-10 px-5">
+    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiLightbulbOnOutline" />
       {{ $t('event_detail.activity') }}
     </v-card-title>
     <v-card-text>
-      <v-radio-group v-model="event.is_public" hide-details class="ma-3" :readonly="props.readonly">
+      <v-radio-group v-model="event.is_public" hide-details class="ma-1 ma-md-3" :readonly="props.readonly">
         <v-radio :value="true" :label="$t('event_detail.public')" />
         <v-radio :value="false" :label="$t('event_detail.private')" />
       </v-radio-group>
@@ -325,7 +325,7 @@ const tinymceInit = {
     </v-card-text>
 
     <!-- 支払い設定 -->
-    <v-card-title class="pt-10 px-5">
+    <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
       <v-icon size="50" class="text--primary me-3" :icon="mdiAccountCreditCardOutline" />
       {{ $t('event_detail.payment') }}
     </v-card-title>
@@ -333,7 +333,7 @@ const tinymceInit = {
       <v-radio-group
         v-model="event.event_payment"
         hide-details
-        class="ma-3"
+        class="ma-1 ma-md-3"
         :readonly="event.event_status.value !== 'in_draft'"
       >
         <v-radio
@@ -344,7 +344,7 @@ const tinymceInit = {
         />
       </v-radio-group>
       <template v-if="event.event_payment === 'community_bill'">
-        <v-row class="justify-center px-3">
+        <v-row class="justify-center px-1 px-md-3">
           <v-col cols="12">
             <v-text-field
               v-model="event.bill_fullname"
@@ -356,7 +356,7 @@ const tinymceInit = {
             />
           </v-col>
         </v-row>
-        <v-row class="justify-center px-3">
+        <v-row class="justify-center px-1 px-md-3">
           <v-col cols="12">
             <v-text-field
               v-model="event.bill_email"

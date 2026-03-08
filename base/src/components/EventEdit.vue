@@ -553,4 +553,10 @@ const stepperItems = computed(() => [
   </confirm-dialog>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+@media (max-width: 600px) {
+  :deep(.v-stepper-window) {
+    margin: 0;
+  }
+}
+</style>
