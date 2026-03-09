@@ -66,8 +66,6 @@ jobs:
         # また、将来的には GCP Secret Manager (defineSecret) を使用し、ここで環境変数に書き出すのはやめる
         run: |
           echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
-          echo 'STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.STRIPE_WEBHOOK_ENDPOINT_SECRET }}' >> .env
-          echo 'STRIPE_API_SECRET_KEY=${{ secrets.STRIPE_API_SECRET_KEY }}' >> .env
           echo 'SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}' >> .env
           echo 'PDF_SERVICES_CLIENT_ID=${{ secrets.PDF_SERVICES_CLIENT_ID }}' >> .env
           echo 'PDF_SERVICES_CLIENT_SECRET=${{ secrets.PDF_SERVICES_CLIENT_SECRET }}' >> .env
