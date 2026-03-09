@@ -172,7 +172,6 @@ const copyRemoveCommand = () => {
 
 <style scoped>
 .v-card-title {
-  font-family: Noto Sans JP;
   font-size: 24px;
   font-weight: 700;
   line-height: 24px;
@@ -182,7 +181,6 @@ const copyRemoveCommand = () => {
 }
 
 .v-card-text {
-  font-family: Noto Sans JP;
   font-size: 14px;
   font-weight: 400;
   line-height: 30px;
