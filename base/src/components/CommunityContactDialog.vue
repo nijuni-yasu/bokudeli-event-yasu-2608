@@ -79,7 +79,7 @@ const onFormSubmit = async () => {
               <VTextarea v-model="state.mailMessage" label="メッセージ" />
             </v-col>
             <!-- 👉 Submit and Cancel -->
-            <v-col cols="12" class="d-flex flex-wrap justify-center gap-4">
+            <v-col cols="12" class="d-flex flex-wrap justify-center ga-4">
               <v-btn
                 :disabled="state.isSending || !(state.mailTitle && state.mailMessage)"
                 :loading="state.isSending"

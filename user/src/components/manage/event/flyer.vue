@@ -61,16 +61,15 @@ const downloadFlyer = async (size: string) => {
 <template>
   <v-container>
     <v-row class="justify-center">
-      <div>
+      <v-col cols="12">
         <div class="text-center text-h5 mt-4">{{ $t('manage.flyer.title') }}</div>
         <div v-html="$t('manage.flyer.description')" class="text-center text-h5 mt-2 mb-8" />
         <v-row class="mt-4" justify="center" no-gutters>
-          <v-col cols="auto" class="d-flex flex-nowrap">
+          <v-col cols="12" class="d-flex flex-wrap justify-center ga-3">
             <v-btn
               v-for="size in flyerSizes"
               :key="size.label"
-              @click="() => downloadFlyer(size.size)"
-              class="mx-3"
+              @click="downloadFlyer(size.size)"
               size="large"
               elevation="6"
             >
@@ -78,7 +77,7 @@ const downloadFlyer = async (size: string) => {
             </v-btn>
           </v-col>
         </v-row>
-      </div>
+      </v-col>
     </v-row>
     <!-- チラシのプレビュー -->
     <v-row class="justify-center mt-6">

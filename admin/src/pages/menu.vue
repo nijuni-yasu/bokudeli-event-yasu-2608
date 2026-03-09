@@ -129,7 +129,7 @@ const saveSortOrder = async () => {
 <template>
   <v-row class="justify-center">
     <v-col cols="12" sm="12" md="12" class="px-0">
-      <div class="ma-4 d-flex justify-start align-center gap-2">
+      <div class="ma-4 d-flex justify-start align-center ga-2">
         <v-btn
           color="primary"
           size="x-large"

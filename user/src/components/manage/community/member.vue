@@ -134,7 +134,7 @@ const downloadCsvFile = () => {
 <template>
   <v-container>
     <v-row class="justify-center">
-      <v-col md="12" sm="12" cols="12" style="display: flex; justify-content: flex-end; gap: 10px">
+      <v-col md="12" sm="12" cols="12" class="d-flex justify-end ga-2">
         <v-btn variant="outlined" :prepend-icon="mdiLink" @click="isInvitationDialogOpen = true">
           管理者を招待する
         </v-btn>
