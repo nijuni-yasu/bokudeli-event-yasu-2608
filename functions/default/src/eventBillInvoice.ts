@@ -3,7 +3,6 @@ import path from 'path'
 import { PassThrough, pipeline, Writable } from 'stream'
 import { getAuth } from 'firebase-admin/auth'
 import { onRequest, HttpsError } from 'firebase-functions/https'
-import { defineList } from 'firebase-functions/params'
 import { Storage } from '@google-cloud/storage'
 import { convertNumberToYen } from '@shokujii/common/utils/converter.js'
 import {
@@ -25,8 +24,17 @@ import { createModuleLogger } from './utils/logger.js'
 import * as sgMail from './utils/sendgrid.js'
 import { PdfGenerator } from './utils/PdfGenerator.js'
 
-const CORS = defineList('CORS')
 const logger = createModuleLogger('eventBillInvoice')
+const CORS_ORIGINS: string[] = (() => {
+  const raw = process.env.CORS
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+})()
 
 const INVOICE_BUCKET_NAME = `gs://${process.env.GCLOUD_PROJECT}-invoice`
 
@@ -213,7 +221,7 @@ const createEventBillInvoice = async (
 
 export const eventBillInvoice = onRequest(
   {
-    cors: CORS,
+    cors: CORS_ORIGINS,
     timeoutSeconds: 120,
     secrets: ['PDF_SERVICES_CLIENT_ID', 'PDF_SERVICES_CLIENT_SECRET'],
   },
