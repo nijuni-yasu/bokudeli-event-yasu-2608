@@ -5,8 +5,7 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { mdiFilePdfBox } from '@mdi/js'
 import type { EventStore } from '@shokujii/base/stores/event.js'
 import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
-import type { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
-import { calculateInvoiceFee, calculateOrdersTotal } from '@shokujii/common/utils/invoice.js'
+import { calculateInvoiceTotal } from '@shokujii/common/utils/invoice.js'
 
 const route = useRoute()
 
@@ -16,18 +15,6 @@ const eventListStore = useEventListStore(
   [where('community_account', '==', communityAccount), orderBy('event_start_datetime', 'desc')],
   10,
 )
-
-/**
- * イベントの請求書合計金額を計算（請求手数料を含む）
- * @param orders 注文リスト
- * @param eventStartDatetimeMillis イベント開始日時（Unix time in milliseconds）
- * @returns 請求手数料を含めた合計金額
- */
-const calculateInvoiceTotal = (orders: EventOrder[], eventStartDatetimeMillis: number) => {
-  const baseTotal = calculateOrdersTotal(orders)
-  const invoiceFee = calculateInvoiceFee(baseTotal, eventStartDatetimeMillis)
-  return baseTotal + invoiceFee
-}
 
 const eventStores = computed<EventStore[] | undefined>(() =>
   eventListStore.eventStores?.flatMap((es) => {

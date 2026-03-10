@@ -3,6 +3,7 @@ import path from 'path'
 import { PassThrough, pipeline, Writable } from 'stream'
 import { getAuth } from 'firebase-admin/auth'
 import { onRequest, HttpsError } from 'firebase-functions/https'
+import { DateTime } from 'luxon'
 import { Storage } from '@google-cloud/storage'
 import { convertNumberToYen } from '@shokujii/common/utils/converter.js'
 import {
@@ -12,9 +13,10 @@ import {
   getLastDayOfNextMonth,
 } from '@shokujii/common/utils/datetime.js'
 import {
-  CUTOFF_UNIX_TIME_2025_11_01_JST,
-  calculateInvoiceFee,
+  isEventAfterInvoiceFeeCutoff,
   calculateOrdersTotal,
+  calculateInvoiceTaxBreakdown,
+  aggregateOrderMenus,
 } from '@shokujii/common/utils/invoice.js'
 import { getEvent, getAcceptingOrderEventsByEndTime, type ShokujiiEvent } from './stores/event.js'
 import { getCommunity, type ShokujiiCommunity } from './stores/community.js'
@@ -121,38 +123,16 @@ const createEventBillInvoice = async (
 
   const orders = await event.getOrders('ordered')
   const tax08Inclusive = calculateOrdersTotal(orders)
+  const menuSummary = aggregateOrderMenus(orders)
 
-  // メニュー別集計（テンプレートの items 生成用）
-  const menuMap = new Map<string, { name: string; price: number; count: number; totalPrice: number }>()
-  for (const order of orders) {
-    for (const menu of order.menus) {
-      const menuTotal = menu.price * menu.count
-      const existing = menuMap.get(menu.menu_id)
-      if (existing != null) {
-        existing.count += menu.count
-        existing.totalPrice += menuTotal
-      } else {
-        menuMap.set(menu.menu_id, {
-          name: menu.name.substring(0, 21) + '(※)',
-          price: menu.price,
-          count: menu.count,
-          totalPrice: menuTotal,
-        })
-      }
-    }
-  }
-
-  // 請求手数料
-  const isAfterCutoff = event.event_start_datetime >= CUTOFF_UNIX_TIME_2025_11_01_JST
-  const fee = calculateInvoiceFee(tax08Inclusive, event.event_start_datetime)
-  const tax10Inclusive = fee
+  // 請求手数料・税内訳
+  const isAfterCutoff = isEventAfterInvoiceFeeCutoff(event.event_start_datetime)
+  const taxBreakdown = calculateInvoiceTaxBreakdown(tax08Inclusive, event.event_start_datetime)
   const templatePath = isAfterCutoff ? TEMPLATE2_PATH : TEMPLATE_PATH
 
   // テンプレート用明細行
-  const items: { name: string; count: number | string; price: string; totalPrice: string }[] = Array.from(
-    menuMap.values(),
-  ).map((m) => ({
-    name: m.name,
+  const items: { name: string; count: number | string; price: string; totalPrice: string }[] = menuSummary.map((m) => ({
+    name: m.name.substring(0, 21) + '(※)',
     count: m.count,
     price: convertNumberToYen(m.price),
     totalPrice: convertNumberToYen(m.totalPrice),
@@ -162,23 +142,14 @@ const createEventBillInvoice = async (
     items.push({
       name: '請求書払い手数料',
       count: 1,
-      price: convertNumberToYen(fee),
-      totalPrice: convertNumberToYen(fee),
+      price: convertNumberToYen(taxBreakdown.tax10Inclusive),
+      totalPrice: convertNumberToYen(taxBreakdown.tax10Inclusive),
     })
   }
 
   while (items.length < 14) {
     items.push({ name: '', count: '', price: '', totalPrice: '' })
   }
-
-  // 税計算
-  const total = tax08Inclusive + tax10Inclusive
-  const tax8SubTotal = Math.floor(tax08Inclusive / 1.08)
-  const tax8 = tax08Inclusive - tax8SubTotal
-  const tax10SubTotal = Math.floor(tax10Inclusive / 1.1)
-  const tax10 = tax10Inclusive - tax10SubTotal
-  const tax = tax8 + tax10
-  const subTotal = tax8SubTotal + tax10SubTotal
 
   const jsonDataForMerge = {
     number: convertDateToId(event.event_end_datetime),
@@ -190,13 +161,13 @@ const createEventBillInvoice = async (
     companyPhoneNumber: community.community_phone,
     title: event.event_name.substring(0, 18),
     items,
-    subTotal: convertNumberToYen(subTotal),
-    tax: convertNumberToYen(tax),
-    total: convertNumberToYen(total),
-    tax10SubTotal: convertNumberToYen(tax10SubTotal),
-    tax10: convertNumberToYen(tax10),
-    tax8SubTotal: convertNumberToYen(tax8SubTotal),
-    tax8: convertNumberToYen(tax8),
+    subTotal: convertNumberToYen(taxBreakdown.subTotal),
+    tax: convertNumberToYen(taxBreakdown.tax),
+    total: convertNumberToYen(taxBreakdown.total),
+    tax10SubTotal: convertNumberToYen(taxBreakdown.tax10SubTotal),
+    tax10: convertNumberToYen(taxBreakdown.tax10),
+    tax8SubTotal: convertNumberToYen(taxBreakdown.tax8SubTotal),
+    tax8: convertNumberToYen(taxBreakdown.tax8),
     deadline: convertToDate(getLastDayOfNextMonth(event.event_end_datetime)),
     eventName: event.event_name,
     eventDate: convertToDuration(event.event_start_datetime, event.event_end_datetime),
@@ -262,7 +233,7 @@ export const eventBillInvoice = onRequest(
       return
     }
 
-    if (event.event_payment !== 'community_bill' || event.event_start_datetime > Date.now()) {
+    if (event.event_payment !== 'community_bill' || event.event_start_datetime > DateTime.now().toMillis()) {
       res.status(404).send('Event not found')
       return
     }
