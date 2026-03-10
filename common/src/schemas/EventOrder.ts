@@ -29,6 +29,7 @@ const EventOrderDbSchema = z.object({
   ordered_at: TimestampSchema.optional(),
   canceled_at: TimestampSchema.optional(),
   payment_intent: z.string().nonempty().optional(),
+  refund_id: z.string().nonempty().optional(),
   receipt_number: NonEmptyStringSchema.optional(),
 })
 
@@ -47,6 +48,7 @@ const EventOrderAppSchema = z.object({
   canceled_at: EpochMillisSchema.optional(),
   receipt_number: z.string().optional(),
   payment_intent: z.string().optional(),
+  refund_id: z.string().optional(),
 })
 
 const convertToDb = (order: EventOrder) => {
@@ -75,6 +77,7 @@ export class EventOrder {
   canceled_at?: number
   receipt_number?: string
   payment_intent?: string
+  refund_id?: string
 
   constructor(event_id: string, order_id: string, src: Partial<EventOrder>) {
     Object.assign(this, EventOrderAppSchema.parse(src))

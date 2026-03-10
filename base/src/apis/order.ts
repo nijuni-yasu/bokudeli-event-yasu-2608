@@ -14,7 +14,7 @@ export const addOrder = async (input: AddOrderRequest): Promise<HttpsCallableRes
 }
 
 export const updateOrderStatus = async (input: UpdateOrderStatusRequest): Promise<HttpsCallableResult<void>> => {
-  const f = httpsCallable<UpdateOrderStatusRequest, void>(functions, 'update_order_status')
+  const f = httpsCallable<UpdateOrderStatusRequest, void>(functions, 'updateOrderStatus')
   return f(input)
 }
 

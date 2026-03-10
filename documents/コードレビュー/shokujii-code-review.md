@@ -52,6 +52,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `toFirestore` を store の `FirestoreDataConverter` 外で直接呼んでいないか
 - [ ] `withConverter` を削除していないか（削除すると zod バリデーションが外れる）
 - [ ] `updateXXX` 系の関数は全フィールドを書き戻す方針になっているか（Partial マージ禁止）
+- [ ] `withConverter` + `set` で既存ドキュメントを更新する際、先に `get` して既存データを引き継いでいるか（`toFirestore` は全フィールドを書き込むため、既存フィールドが失われる）
 - [ ] Transaction 内で読み込む場合、Transaction 外で同じドキュメントを読んでいないか
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 
@@ -153,6 +154,34 @@ watch(someRef, (val) => {
 
 // OK: computed で代替する
 const result = computed(() => calc(someRef.value))
+```
+
+### NG: `withConverter` + `set` で既存データを取得せずに上書き
+
+```typescript
+// NG: 既存データを確認せず set → DB 上の他フィールドが消える
+const ref = db.collection('items').doc(id).withConverter(converter)
+const data = new Item(id, { name: 'new' })
+await ref.set(data) // 既存の price, category 等が消える
+
+// OK: 既存データを取得してから set
+const snapshot = await ref.get()
+const data = snapshot.data() ?? new Item(id, { name: 'new' })
+data.name = 'new'
+await ref.set(data)
+```
+
+### NG: save 関数の呼び出し側が get を忘れる
+
+```typescript
+// NG: get せずに新規インスタンスで saveUser → 既存フィールドが欠落
+const user = new ShokujiiUser(userId, { user_name: 'new name' })
+await saveUser(user) // merge: true でも toFirestore が返さないフィールドは維持されない
+
+// OK: get してから変更して save
+const user = await getUser(userId)
+user.user_name = 'new name'
+await saveUser(user)
 ```
 
 ### NG: `withConverter` なしの ref

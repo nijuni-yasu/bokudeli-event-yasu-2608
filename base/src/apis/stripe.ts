@@ -1,8 +1,17 @@
 import { functions } from '@shokujii/base/firebase'
-import { httpsCallable } from 'firebase/functions'
-import { CreateStripeCheckoutSessionRequest } from '@shokujii/common/apis/stripe.js'
+import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
+import { CreateStripeCheckoutSessionRequest, StripeRefundsRequest } from '@shokujii/common/apis/stripe.js'
 
-export const createStripeCheckoutSession = (input: CreateStripeCheckoutSessionRequest) => {
+export const createStripeCheckoutSession = async (
+  input: CreateStripeCheckoutSessionRequest,
+): Promise<HttpsCallableResult> => {
   const f = httpsCallable(functions, 'createStripeCheckoutSession')
+  return f(input)
+}
+
+export const stripeRefunds = async (
+  input: StripeRefundsRequest,
+): Promise<HttpsCallableResult<{ refund_id: string }>> => {
+  const f = httpsCallable<StripeRefundsRequest, { refund_id: string }>(functions, 'stripeRefunds')
   return f(input)
 }

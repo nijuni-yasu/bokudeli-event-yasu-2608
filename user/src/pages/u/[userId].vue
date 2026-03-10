@@ -14,8 +14,7 @@ import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getReceiptPath } from '@/router/utils'
-import { functions } from '@shokujii/base/firebase.js'
-import { httpsCallable } from 'firebase/functions'
+import { stripeRefunds } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -117,9 +116,11 @@ const cancel = async (event: BokudeliEvent, order: EventOrder) => {
   cancelOperatingOrderId.value = order.order_id
   try {
     if (event.event_payment == 'user_advance' && order.payment_intent) {
-      // user_advance はstripeの支払いの場合
-      const stripeRefunds = httpsCallable(functions, 'stripe_refunds')
-      await stripeRefunds({ paymentIntent: order.payment_intent, orderId: order.order_id })
+      await stripeRefunds({
+        order_id: order.order_id,
+        community_id: order.community_id,
+        event_id: order.event_id,
+      })
       userOrderListStore.reload()
       notification.show($t('user.canceled'), 'success')
     } else if (event.event_payment == 'user_on_day' || event.event_payment == 'community_bill') {

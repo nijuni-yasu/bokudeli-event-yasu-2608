@@ -56,6 +56,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `toFirestore` を store の `FirestoreDataConverter` 外で直接呼んでいないか
 - [ ] `withConverter` を削除していないか（削除すると zod バリデーションが外れる）
 - [ ] `updateXXX` 系の関数は全フィールドを書き戻す方針になっているか（Partial マージ禁止）
+- [ ] `withConverter` + `set` で既存ドキュメントを更新する際、先に `get` して既存データを引き継いでいるか（`toFirestore` は全フィールドを書き込むため、既存フィールドが失われる）
 - [ ] Transaction 内で読み込む場合、Transaction 外で同じドキュメントを読んでいないか
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 
