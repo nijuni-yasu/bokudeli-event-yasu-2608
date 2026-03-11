@@ -4,7 +4,14 @@ import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
-import { mdiFacebook, mdiDownload, mdiAccountPlusOutline, mdiAccountRemoveOutline, mdiLink } from '@mdi/js'
+import {
+  mdiFacebook,
+  mdiDownload,
+  mdiAccountPlusOutline,
+  mdiAccountRemoveOutline,
+  mdiLink,
+  mdiEmailOutline,
+} from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
@@ -32,7 +39,7 @@ const members = computed(
       ?.flatMap((member) => member ?? [])
       ?.sort((a, b) => (a.roles?.includes('manager') ? -1 : b.roles?.includes('manager') ? 1 : 0)) ?? [],
 )
-// const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
+const canSendEmail = computed(() => !!communityStore.community?.community_email)
 
 const emailTargetMember = ref<BokudeliCommunityMember | null>(null)
 const isEmailDialogOpen = computed({
@@ -54,9 +61,15 @@ const isModifyAccountDialogOpen = computed({
     }
   },
 })
-// const clickContact = (member: CommunityMember) => {
-//   emailTargetMember.value = member
-// }
+const clickContact = (member: BokudeliCommunityMember) => {
+  emailTargetMember.value = member
+}
+const onEmailSent = () => {
+  notification.show($t('email_dialog.sent'), 'success')
+}
+const onEmailFailed = () => {
+  // エラー通知は EmailDialog 内で表示
+}
 const isLoading = ref(false)
 const addAccount = async (member: BokudeliCommunityMember) => {
   isLoading.value = true
@@ -218,16 +231,15 @@ const downloadCsvFile = () => {
                         />
                       </template>
                     </td>
-                    <!--
-                    <td class="text-center">
+                    <td class="text-center number-cell">
                       <v-btn
-                        v-if="canSendEmail && !isEmpty(member.user_email) && member.user_id !== userStore.user?.user_id"
-                        :icon="mdiEmail"
+                        :icon="mdiEmailOutline"
                         variant="text"
+                        size="small"
+                        :color="canSendEmail ? undefined : 'grey-400'"
                         @click="clickContact(member)"
                       />
                     </td>
-                    -->
                   </tr>
                 </tbody>
               </v-table>
@@ -237,7 +249,16 @@ const downloadCsvFile = () => {
       </v-col>
     </v-row>
   </v-container>
-  <EmailDialog v-if="emailTargetMember != null" v-model="isEmailDialogOpen" :toUser="emailTargetMember" />
+  <EmailDialog
+    v-if="emailTargetMember != null"
+    v-model="isEmailDialogOpen"
+    :toUser="emailTargetMember"
+    :communityAccount="communityAccount"
+    :communityId="communityStore.community?.community_id ?? ''"
+    :replyTo="communityStore.community?.community_email ?? ''"
+    @sent="onEmailSent"
+    @failed="onEmailFailed"
+  />
   <v-dialog v-model="isModifyAccountDialogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
     <v-card v-if="addTargetMember != null" class="px-2 py-4">
       <v-card-title>

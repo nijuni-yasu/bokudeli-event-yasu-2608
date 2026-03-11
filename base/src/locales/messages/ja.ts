@@ -470,6 +470,7 @@ export default {
     community: 'コミュニティメンバー',
     event_participant: 'イベント参加者',
     event_non_participant: 'イベント未参加者',
+    individual: '個人宛',
   },
   letter_card: {
     updated_at: '【更新日時】 {0}',
@@ -500,9 +501,13 @@ export default {
     no_letters: 'レターはまだありません',
   },
   email_dialog: {
-    title: 'メール送信',
-    send_to: '送信先: {0}',
-    send: '送信',
+    title: '個人宛レター',
+    description: '個人宛にレターを配信することができます。\n返信先の設定は：{replyTo} です',
+    send_to: '配信先',
+    send: '配信',
+    send_letter: 'レターを配信する',
+    sent: 'レターを配信しました',
+    failed: 'レターの配信に失敗しました',
   },
   success_join_event_dialog: {
     title: '注文完了🎉',

@@ -303,8 +303,7 @@ export default {
       hint: {
         title: 'レターを配信しよう💌',
         description: `レター機能を使うと<b>「コミュニティメンバー」</b>や<b>「イベント参加者」「イベント未登録者」</b>にメールを配信することができます。<br />
-                        配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。返信先は［コミュニティ設定］タブからご設定ください。<br />
-                        詳細は <a href="https://note.com/preview/n0c961c680fd3?prev_access_key=ced956e93d24fb7689121a8bdb431ebb" target="_blank">レター機能について</a> をご確認ください。<br />
+                        配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。返信先は［コミュニティ設定］タブからご設定ください。詳細は <a href="https://note.com/preview/n0c961c680fd3?prev_access_key=ced956e93d24fb7689121a8bdb431ebb" target="_blank">レター機能について</a> をご確認ください。<br />
                         `,
       },
       type_select_dialog: {
