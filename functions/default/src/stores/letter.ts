@@ -18,14 +18,18 @@ const letterConverter: FirestoreDataConverter<Letter> = {
   },
 }
 
-export const getLetter = async (communityId: string, letterId: string): Promise<Letter | undefined> => {
+export const getLetterRef = (communityId: string, letterId: string): DocumentReference<Letter> => {
   const db = getFirestore()
-  const letterRef = db
+  return db
     .collection('communities')
     .doc(communityId)
     .collection('letters')
     .doc(letterId)
     .withConverter(letterConverter)
+}
+
+export const getLetter = async (communityId: string, letterId: string): Promise<Letter | undefined> => {
+  const letterRef = getLetterRef(communityId, letterId)
   const snapshot = await letterRef.get()
   return snapshot.data()
 }

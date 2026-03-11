@@ -33,6 +33,7 @@ export const {
   eventCopy,
   eventBillInvoice,
   updateEventMenus,
+  sendIndividualLetter,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
