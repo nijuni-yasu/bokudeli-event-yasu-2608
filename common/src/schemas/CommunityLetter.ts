@@ -4,7 +4,7 @@ import { EpochMillisSchema, TimestampSchema } from './firebase/index.js'
 const LETTER_STATUSES = ['draft', 'timed', 'sent'] as const
 export type LetterStatusType = (typeof LETTER_STATUSES)[number]
 
-const LETTER_TYPES = ['community', 'event_participant', 'event_non_participant'] as const
+const LETTER_TYPES = ['community', 'event_participant', 'event_non_participant', 'individual'] as const
 export type LetterTypeType = (typeof LETTER_TYPES)[number]
 
 const CommunityLetterDbSchema = z.object({
@@ -36,7 +36,26 @@ const EventLetterDbSchema = z.object({
   sent_at: TimestampSchema.optional(),
 })
 
-const LetterDbSchema = z.discriminatedUnion('letter_type', [CommunityLetterDbSchema, EventLetterDbSchema])
+export const IndividualLetterDbSchema = z.object({
+  letter_id: z.string().nonempty(),
+  letter_type: z.literal('individual'),
+  community_account: z.string().nonempty(),
+  status: z.enum(LETTER_STATUSES),
+  letter_title: z.string().nonempty(),
+  letter_content: z.string().nonempty(),
+  scheduled_at: TimestampSchema,
+  updated_at: TimestampSchema,
+  user_id: z.string().nonempty(),
+  // Optional
+  sent_at: TimestampSchema.optional(),
+  event_id: z.string().optional(),
+})
+
+const LetterDbSchema = z.discriminatedUnion('letter_type', [
+  CommunityLetterDbSchema,
+  EventLetterDbSchema,
+  IndividualLetterDbSchema,
+])
 
 const LetterAppSchema = z.object({
   // Mandatory
@@ -49,13 +68,16 @@ const LetterAppSchema = z.object({
   // Optional
   event_id: z.string().optional(),
   sent_at: EpochMillisSchema.optional(),
+  user_id: z.string().optional(),
 })
 
 const convertToDb = (letter: Letter) => {
-  return {
+  const base = {
     ...letter,
     updated_at: Date.now(),
   }
+  // Firestore は undefined を許容しないため、undefined のフィールドを除外する
+  return Object.fromEntries(Object.entries(base).filter(([, v]) => v !== undefined)) as z.infer<typeof LetterDbSchema>
 }
 
 export class Letter {
@@ -74,6 +96,7 @@ export class Letter {
 
   event_id?: string
   sent_at?: number
+  user_id?: string
 
   constructor(id: string, src: Partial<Letter>) {
     Object.assign(this, LetterAppSchema.parse(src))
