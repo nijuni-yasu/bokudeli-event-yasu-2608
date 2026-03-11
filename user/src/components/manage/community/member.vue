@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
-import { getUserPath } from '@/router/utils'
+import { getUserPath, getManageCommunitySettingsPath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
 import {
@@ -21,8 +21,11 @@ import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
 import { functions } from '@shokujii/base/firebase.js'
 import { httpsCallable } from 'firebase/functions'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 const { t: $t } = useI18n()
 
 const notification = useNotification()
@@ -61,8 +64,16 @@ const isModifyAccountDialogOpen = computed({
     }
   },
 })
-const clickContact = (member: BokudeliCommunityMember) => {
+const isOpenEmailSetupDialog = ref(false)
+const clickEmailButton = (member: BokudeliCommunityMember) => {
+  if (!canSendEmail.value) {
+    isOpenEmailSetupDialog.value = true
+    return
+  }
   emailTargetMember.value = member
+}
+const goToCommunitySettings = () => {
+  router.push(getManageCommunitySettingsPath(communityAccount))
 }
 const onEmailSent = () => {
   notification.show($t('email_dialog.sent'), 'success')
@@ -237,7 +248,7 @@ const downloadCsvFile = () => {
                         variant="text"
                         size="small"
                         :color="canSendEmail ? undefined : 'grey-400'"
-                        @click="clickContact(member)"
+                        @click="clickEmailButton(member)"
                       />
                     </td>
                   </tr>
@@ -259,6 +270,14 @@ const downloadCsvFile = () => {
     @sent="onEmailSent"
     @failed="onEmailFailed"
   />
+  <confirm-dialog v-model="isOpenEmailSetupDialog" :ok-text="'OK'" max-width="700px" :ok-click="goToCommunitySettings">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('manage.letter.email_not_set.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
+      <div v-html="$t('manage.letter.email_not_set.description')" />
+    </v-card-text>
+  </confirm-dialog>
   <v-dialog v-model="isModifyAccountDialogOpen" persistent :width="$vuetify.display.smAndDown ? 'auto' : 650">
     <v-card v-if="addTargetMember != null" class="px-2 py-4">
       <v-card-title>

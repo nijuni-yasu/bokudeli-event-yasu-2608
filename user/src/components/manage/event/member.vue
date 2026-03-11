@@ -22,6 +22,7 @@ const route = useRoute()
 const eventId = route.params.eventId as string
 
 const notification = useNotification()
+const router = useRouter()
 
 const eventStore = useEventStore(eventId) as EventStore
 const communityAccount = computed(() => eventStore.event?.community_account ?? '')
@@ -62,8 +63,18 @@ const isEmailDialogOpen = computed({
     }
   },
 })
-const clickContact = (member: User) => {
+const isOpenEmailSetupDialog = ref(false)
+const clickEmailButton = (member: User) => {
+  if (!canSendEmail.value) {
+    isOpenEmailSetupDialog.value = true
+    return
+  }
   targetMember.value = member
+}
+const goToCommunitySettings = () => {
+  if (communityAccount.value) {
+    router.push(getManageCommunitySettingsPath(communityAccount.value))
+  }
 }
 const onEmailSent = () => {
   notification.show($t('email_dialog.sent'), 'success')
@@ -194,7 +205,7 @@ const downloadCsvFile = () => {
                           variant="text"
                           size="small"
                           :color="canSendEmail ? undefined : 'grey-400'"
-                          @click="clickContact(member)"
+                          @click="clickEmailButton(member)"
                         />
                       </td>
                     </tr>
@@ -218,6 +229,14 @@ const downloadCsvFile = () => {
     @sent="onEmailSent"
     @failed="onEmailFailed"
   />
+  <confirm-dialog v-model="isOpenEmailSetupDialog" :ok-text="'OK'" max-width="700px" :ok-click="goToCommunitySettings">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('manage.letter.email_not_set.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
+      <div v-html="$t('manage.letter.email_not_set.description')" />
+    </v-card-text>
+  </confirm-dialog>
 </template>
 
 <style scoped>

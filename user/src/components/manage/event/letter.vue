@@ -113,6 +113,9 @@ const handleNewLetterClick = () => {
   }
   router.push({ query: { letterId: '' } })
 }
+const goToCommunitySettings = () => {
+  router.push(getManageCommunitySettingsPath(event.community_account))
+}
 </script>
 
 <template>
@@ -153,7 +156,7 @@ const handleNewLetterClick = () => {
       </v-col>
     </v-row>
   </v-container>
-  <confirm-dialog v-model="isOpenConfirmDialog" :ok-text="'OK'" max-width="700px">
+  <confirm-dialog v-model="isOpenConfirmDialog" :ok-text="'OK'" max-width="700px" :ok-click="goToCommunitySettings">
     <v-card-text class="text-center py-10 text-h4">
       {{ $t('manage.letter.email_not_set.title') }}
     </v-card-text>
