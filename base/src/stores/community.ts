@@ -23,7 +23,7 @@ import { db } from '@shokujii/base/firebase.js'
 import { Community } from '@shokujii/common/schemas/Community.js'
 import { CommunityMember, CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { useUserStore } from '@shokujii/base/stores/user.js'
+import { getUserRef, useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -107,6 +107,25 @@ export const createNewCommunity = async (
     setDoc(memberRef, { roles: ['manager'] }),
   ])
   return useCommunityStore(community)
+}
+
+/**
+ * ユーザーが唯一の管理者であるコミュニティが存在するかチェックする。
+ * アカウント削除時に、唯一の管理者の場合は削除を許容しないため使用する。
+ *
+ * @param userId チェック対象のユーザーID
+ * @returns 唯一の管理者であるコミュニティが1件以上あれば true
+ */
+export const checkSoleManagerCommunity = async (userId: string): Promise<boolean> => {
+  const q = query(
+    collection(db, 'communities').withConverter(communityConverter),
+    where('managers', 'array-contains', getUserRef(userId)),
+  )
+  const snapshot = await getDocs(q)
+  return snapshot.docs.some((d) => {
+    const community = d.data()
+    return (community.managers ?? []).length === 1
+  })
 }
 
 export type CommunityStore = ReturnType<typeof useCommunityStore>
