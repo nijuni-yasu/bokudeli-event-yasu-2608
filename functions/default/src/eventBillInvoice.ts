@@ -49,7 +49,7 @@ const INVOICE_ITEMS_PADDING = 12
 const generateRandomBase64UrlSafeString = (byteLength = 32): string =>
   crypto.randomBytes(byteLength).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-const getInvoiceFile = (eventId: string, invoiceId: string) => {
+const getInvoiceFile = (eventId: string, invoiceId: string): ReturnType<ReturnType<Storage['bucket']>['file']> => {
   const storage = new Storage()
   const bucket = storage.bucket(INVOICE_BUCKET_NAME)
   return bucket.file(`${eventId}/${invoiceId}`)
@@ -66,29 +66,59 @@ const getInvoiceId = async (eventId: string): Promise<string | null> => {
 }
 
 /**
- * ReadableStream のデータを複数の WritableStream に同時にパイプする
+ * ReadableStream のデータを複数の WritableStream に同時にパイプする。
+ * 各 writable の finish または close のどちらかで完了扱いとする。
+ * HTTP レスポンス（res）はクライアント切断時に finish を発火せず close のみになることがあるため、
+ * close も待機することで Promise のハングを防ぐ。
+ * いずれかでエラーが発生した場合は全ストリームを destroy して reject する。
  */
 const pipeToStreams = (readable: NodeJS.ReadableStream, ...writables: Writable[]): Promise<void> =>
   new Promise((resolve, reject) => {
     const passThrough = new PassThrough()
     let remaining = writables.length
+    let settled = false
+
+    const settleWithError = (err: unknown) => {
+      if (settled) return
+      settled = true
+      passThrough.destroy()
+      for (const w of writables) w.destroy()
+      const r = readable as { destroy?: (err?: Error) => void }
+      if (typeof r.destroy === 'function') r.destroy()
+      reject(err)
+    }
+
+    const onWritableDone = () => {
+      if (settled) return
+      if (--remaining === 0) {
+        settled = true
+        resolve()
+      }
+    }
+
     for (const writable of writables) {
       passThrough.pipe(writable)
-      writable.on('finish', () => {
-        if (--remaining === 0) resolve()
-      })
-      writable.on('error', reject)
+      let done = false
+      const once = () => {
+        if (done) return
+        done = true
+        onWritableDone()
+      }
+      writable.once('finish', once)
+      writable.once('close', once)
+      writable.on('error', settleWithError)
     }
-    passThrough.on('error', reject)
+    passThrough.on('error', settleWithError)
     readable.on('error', (err) => {
       passThrough.destroy(err instanceof Error ? err : new Error(String(err)))
-      reject(err)
+      settleWithError(err)
     })
     readable.pipe(passThrough)
   })
 
 /**
- * Cloud Storage から既存の請求書PDFを取得し writableStream にパイプする
+ * Cloud Storage から既存の請求書PDFを取得し writableStream にパイプする。
+ * クライアント切断時（writable の close のみ発火）でも Promise が解決するようにする。
  */
 const getEventBillInvoice = async (eventId: string, invoiceId: string, writableStream: Writable): Promise<void> => {
   const file = getInvoiceFile(eventId, invoiceId)
@@ -97,9 +127,23 @@ const getEventBillInvoice = async (eventId: string, invoiceId: string, writableS
     throw new Error(`File not found in bucket: ${file.name}`)
   }
   return new Promise((resolve, reject) => {
-    pipeline(file.createReadStream(), writableStream, (err) => {
-      if (err) reject(err)
+    let settled = false
+    const settle = (err: Error | null | undefined) => {
+      if (settled) return
+      settled = true
+      if (err != null) reject(err)
       else resolve()
+    }
+
+    const readable = file.createReadStream()
+    writableStream.once('close', () => {
+      if (!settled) {
+        readable.destroy()
+        settle(null) // クライアント切断時は完了扱い（resolve）で関数を終了させる
+      }
+    })
+    pipeline(readable, writableStream, (err) => {
+      settle(err)
     })
   })
 }
@@ -147,7 +191,7 @@ const createEventBillInvoice = async (
     })
   }
 
-  while (items.length < 14) {
+  while (items.length < INVOICE_ITEMS_PADDING) {
     items.push({ name: '', count: '', price: '', totalPrice: '' })
   }
 
