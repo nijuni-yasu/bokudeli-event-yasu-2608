@@ -507,6 +507,19 @@ export default {
     unlink_completed: '{snsName}の連携を解除しました',
     linkage_failed: '{snsName}との連携に失敗しました',
     unlink_failed: '{snsName}の連携解除に失敗しました',
+    account_delete: 'アカウント削除',
+    account_delete_description:
+      'アカウントおよびユーザーの登録情報はすべて削除されます。<br />一度削除すると、元に戻すことはできません。',
+    account_delete_confirm_title: 'アカウントを削除しますか？',
+    account_delete_confirm_body:
+      'アカウントを削除する前に、以下をご確認ください。<br /><br /><b>【削除される情報】</b><br />・ログイン情報<br />・プロフィール情報（ユーザー名/紹介文/画像/メールアドレス/SNS連携）<br />・コミュニティ管理者・メンバー登録情報<br /><br /><b>【保持される情報】</b><br />・ご注文履歴（サービス運営上の理由により保持されます。匿名化された形で管理いたします）<br /><br /><b>【注意事項】</b><br />・削除後は復元できません<br />・同じメールアドレスで再登録できますが、過去の履歴は引き継がれません',
+    account_delete_button: 'アカウントを削除する',
+    account_delete_sole_manager_error:
+      '管理者があなたのみのコミュニティがあるため、アカウントを削除できません。先に他の管理者を追加するか、該当コミュニティから退会してください。',
+    account_delete_failed: '処理に失敗しました。しばらくして再度お試しください',
+    account_delete_complete_title: 'アカウント削除完了',
+    account_delete_complete_message: 'ユーザーアカウントは正常に削除されました',
+    account_delete_complete_ok: 'トップページへ',
   },
   user_profile: {
     logout: 'ログアウトする',
