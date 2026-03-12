@@ -27,6 +27,12 @@ if (IS_SERVER) {
 
 export const Timestamp = module.Timestamp
 
+/**
+ * Firestore の Timestamp 型に正規化する Zod スキーマ。
+ * number（Unix ミリ秒）、Firestore Timestamp、または { seconds, nanoseconds } を受け取り、
+ * 出力は Firestore Timestamp に統一する。
+ * DbSchema に使う（created_at / updated_at / deleted_at など、DB に Timestamp で保存するフィールド）。
+ */
 export const TimestampSchema = z
   .union([
     z.number().int().positive(),
@@ -44,6 +50,12 @@ export const TimestampSchema = z
   ])
   .transform((value) => (typeof value === 'number' ? Timestamp.fromMillis(value) : value))
 
+/**
+ * Unix ミリ秒（number）に正規化する Zod スキーマ。
+ * number、Firestore Timestamp、または { seconds, nanoseconds } を受け取り、
+ * 出力は number（ミリ秒）に統一する。
+ * AppSchema に使う（アプリ側で日付比較や表示に使うフィールドの読み込み時）。
+ */
 export const EpochMillisSchema = z
   .union([
     z.number().int().positive(),

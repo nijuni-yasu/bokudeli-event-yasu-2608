@@ -17,6 +17,8 @@ const UserDbSchema = z.object({
   user_sns_website: NonEmptyStringSchema.optional(),
   // user_account (ユーザーURL) の設定機能はオミット済み. 設定済みのデータはDBに残している
   user_account: NonEmptyStringSchema.optional(),
+  is_deleted: z.boolean().optional(),
+  deleted_at: TimestampSchema.optional(),
 })
 
 const UserAppSchema = z.object({
@@ -34,6 +36,8 @@ const UserAppSchema = z.object({
   user_sns_twitter: z.string().default(''),
   user_sns_instagram: z.string().default(''),
   user_sns_website: z.string().default(''),
+  is_deleted: z.boolean().default(false),
+  deleted_at: EpochMillisSchema.optional(),
 })
 
 const convertToDb = (user: User) => {
@@ -58,6 +62,8 @@ export class User {
   user_sns_twitter!: string
   user_sns_instagram!: string
   user_sns_website!: string
+  is_deleted!: boolean
+  deleted_at?: number
 
   constructor(id: string, src: Partial<User>) {
     Object.assign(this, UserAppSchema.parse(src))
