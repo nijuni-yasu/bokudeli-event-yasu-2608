@@ -11,6 +11,7 @@ import { sendInCartNotificationToMember, sendInCartEventDeadlineNotificationToMe
 import { sendApplyingOrderRemindMailToShop, sendOrderRemindMailToOrganizer } from './orderRemindMail.js'
 import { sendRejectOrderMailToShop } from './rejectOrderMail.js'
 import { sendLetter } from './letter.js'
+import { sendInvoiceMailToOrganizers } from './eventBillInvoice.js'
 
 const ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
 
@@ -19,7 +20,8 @@ export const pollingTask = onSchedule(
     schedule: '*/1 * * * *',
     region: 'asia-northeast1',
     timeoutSeconds: 540, // 9 minutes
-    secrets: ['SENDGRID_API_KEY'],
+    memory: '1GiB',
+    secrets: ['SENDGRID_API_KEY', 'PDF_SERVICES_CLIENT_ID', 'PDF_SERVICES_CLIENT_SECRET'],
   },
   async (context) => {
     const now = DateTime.fromISO(context.scheduleTime).toMillis()
@@ -40,6 +42,7 @@ export const pollingTask = onSchedule(
       sendApplyingOrderRemindMailToShop(start - 2 * ONE_DAY_MILLIS, end - 2 * ONE_DAY_MILLIS), // 2日後通知
       sendRejectOrderMailToShop(start - 3 * ONE_DAY_MILLIS, end - 3 * ONE_DAY_MILLIS), // 3日後却下通知
       sendLetter(start, end), // レター送信
+      sendInvoiceMailToOrganizers(start, end),
     ]
 
     // 主催者向け注文リマインドメール（5,10,20,30,40,50,60日後）

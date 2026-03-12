@@ -35,6 +35,13 @@ export const getManageEventMemberUrl = (eventId: string) => common.getManageEven
 export const getManageEventInvoiceUrl = (eventId: string, invoiceId: string) =>
   common.getManageEventInvoiceUrl(EVENT_HOST.value(), eventId, invoiceId)
 
+/**
+ * Cloud Function の直リンクで請求書PDFを返す URL を生成する。
+ * 認証不要でアクセスできるため、メール記載用に使用する。
+ */
+export const getEventBillInvoiceDirectUrl = (eventId: string, invoiceId: string) =>
+  `https://asia-northeast1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/eventBillInvoice/${eventId}?id=${invoiceId}`
+
 export const getManageCommunityUrl = (communityAccount: string) =>
   common.getManageCommunityUrl(EVENT_HOST.value(), communityAccount)
 
