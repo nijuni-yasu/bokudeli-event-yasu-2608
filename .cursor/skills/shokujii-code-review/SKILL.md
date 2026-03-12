@@ -17,6 +17,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ## チェックリスト
 
 ### TypeScript・型安全性
+
 - [ ] `any` を使用していないか
 - [ ] `as` によるキャストを使用していないか（型推論で解決できるはず）
 - [ ] `@ts-ignore` を使用していないか
@@ -25,12 +26,14 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `tsconfig` の strict 設定を緩める変更をしていないか
 
 ### 比較・falsy チェック
+
 - [ ] 数値に falsy チェック (`!`, `||`, `if (num)`) を使っていないか（`0` に誤反応する）
 - [ ] 文字列に falsy チェックを使っていないか（`!= null` または `!== ''` を使う）
 - [ ] boolean 以外の値に `!` を使っていないか（`!= null` に変更する）
 - [ ] `null` と `undefined` を区別して比較しているか（`== null` で両方を捕捉する）
 
 ### Vue リアクティビティ
+
 - [ ] `watch` の多用をしていないか（`computed` で代替できる場合は `computed` を使う）
 - [ ] リアクティブ変数 (`.value`) を関数内で直接使っていないか
 - [ ] `isProcessing`、`isCompleted` 等の一時フラグを不必要にリアクティブにしていないか
@@ -39,6 +42,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `props` と `model` を同時に定義していないか
 
 ### Vue コンポーネント設計
+
 - [ ] `base` のコンポーネント内にルーティングパスをハードコードしていないか（`emit` を使ってコンポーネントを汎化する）
 - [ ] `base` のコンポーネント内にビジネスロジックを持ち込んでいないか
 - [ ] ローディング状態は「画面全体に影響するデータが読み込まれているか」で判断しているか
@@ -51,6 +55,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `var` を使っていないか（`const` / `let` を使う）
 
 ### Firestore / Store パターン
+
 - [ ] DB への操作は必ず store 関数を経由しているか（直接 `update`、`setDoc` 等を呼ばない）
 - [ ] `withConverter` を付けた reference を使っているか（付けない ref の使用は NG）
 - [ ] `toFirestore` を store の `FirestoreDataConverter` 外で直接呼んでいないか
@@ -61,6 +66,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 
 ### Firebase Functions
+
 - [ ] `console.log` / `console.error` を使っていないか（`createModuleLogger` を使う）
 - [ ] `import { logger } from 'firebase-functions'` を直接使っていないか（`createModuleLogger` を使う）
 - [ ] ログメッセージに `letter |` 等の接頭辞をつけていないか（`createModuleLogger` 使用時は不要）
@@ -70,22 +76,26 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
 
 ### 日付・時刻処理
+
 - [ ] `Date` オブジェクトを直接使っていないか（`luxon` を使う）
 - [ ] `new Date()` で UNIX タイムを生成していないか（実行環境によって値が変わる）
 - [ ] 日付の固定値は `CUTOFF_UNIX_TIME_XXXX` のように `common` に定数として定義しているか
 
 ### スキーマ設計 (Zod / common)
+
 - [ ] 新規フィールドを `optional` にしていないか（新規追加フィールドは基本 `required`）
 - [ ] ソート用のフィールドを文字列型で定義していないか（数値型が正しい）
 - [ ] 独自の日付文字列変換を実装していないか（`luxon` または `zod` の `transform` を使う）
 - [ ] 親ドキュメントが既に持っている情報を子ドキュメントに重複させていないか
 
 ### Composable / Store の役割分担
+
 - [ ] 計算ロジックは composable より store で行うようになっているか
 - [ ] Composable 内の Store は引数で受け取らず Composable 内で再取得しているか
 - [ ] Store に不要なビジネスロジックを持ち込んでいないか
 
 ### コード品質・可読性
+
 - [ ] 早期リターンをエラーハンドリング以外で多用していないか（並列処理は `else` で書く）
 - [ ] 「並列の処理（値の代入など）」を早期リターンで書いていないか
 - [ ] 不要な変数への代入を中継していないか
@@ -100,11 +110,13 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 将来流用できる部分を最初から汎用化しているか
 
 ### コミット・PR
+
 - [ ] 1つの PR に複数の責務を混在させていないか
 - [ ] 無関係な修正を同じコミットに含めていないか
 - [ ] 動作的に大きな変更を別 PR または別 Issue に分けているか
 
 ### アセット管理
+
 - [ ] 画像・バナー等のアセットをコード内にハードコードしていないか（Firestore / Storage で管理する）
 
 ---

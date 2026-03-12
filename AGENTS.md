@@ -4,18 +4,22 @@ AIエージェント向けプロジェクトガイド。
 
 **出力は必ず日本語で行ってください。**
 
-
 ## Skills スキル（定型タスクの手順書）
 
 以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
 
-| タスク | スキルファイル |
-| :--- | :--- |
-| コミットメッセージ生成 | `.cursor/skills/commit-message/SKILL.md` |
-| PR 本文生成 | `.cursor/skills/create-pull-request/SKILL.md` |
-| コードレビュー | `.cursor/skills/shokujii-code-review/SKILL.md` |
-| lint・format チェック | `.cursor/skills/lint-and-format/SKILL.md` |
-
+| タスク                         | スキルファイル                                     |
+| :----------------------------- | :------------------------------------------------- |
+| コミットメッセージ生成         | `.cursor/skills/commit-message/SKILL.md`           |
+| PR 本文生成                    | `.cursor/skills/create-pull-request/SKILL.md`      |
+| コードレビュー                 | `.cursor/skills/shokujii-code-review/SKILL.md`     |
+| lint・format チェック          | `.cursor/skills/lint-and-format/SKILL.md`          |
+| fixup                          | `.cursor/skills/fixup/SKILL.md`                    |
+| squash                         | `.cursor/skills/squash/SKILL.md`                   |
+| レビューコメント検討           | `.cursor/skills/review-comments-evaluate/SKILL.md` |
+| コードレビュードキュメント更新 | `.cursor/skills/code-review-doc-update/SKILL.md`   |
+| 分割コミット                   | `.cursor/skills/split-commit/SKILL.md`             |
+| スキル提案                     | `.cursor/skills/skill-propose/SKILL.md`           |
 
 ## プロジェクト概要
 
@@ -96,7 +100,9 @@ npm -w <pkg> run format:check
 - タイトルの接頭辞に変更したディレクトリと Issue 番号を含める
   - 例: `[admin] #1777 注文詳細画面の修正`
   - 例: `[base][common] #1799 withConverter の削除を禁止`
-  - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]`
+  - 例: `[ai] #1800 分割コミットスキルに doc と ai タグを追加`
+  - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
+  - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .github / CLAUDE.md / AGENTS.md 等
 
 ## コードレビュー
 

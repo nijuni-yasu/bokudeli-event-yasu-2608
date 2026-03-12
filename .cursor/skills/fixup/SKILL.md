@@ -1,11 +1,11 @@
 ---
-name: fixup-squash
-description: 変更を過去の適切なコミットに fixup + autosquash で統合する。「fixupして」「過去のコミットにまとめて」「squashして」と依頼された時に使用する。
+name: fixup
+description: 変更を過去の適切なコミットに fixup + autosquash で統合する。コミットメッセージはそのまま。「fixupして」「フィックスアップして」「過去のコミットにまとめて」と依頼された時に使用する。
 ---
 
-# fixup + autosquash
+# fixup
 
-レビュー修正など、既存コミットに吸収すべき変更を fixup コミット経由で統合する。
+レビュー修正など、既存コミットに吸収すべき変更を fixup コミット経由で統合する。コミットメッセージは変更しない。
 
 ## 手順
 
@@ -21,24 +21,26 @@ git log --oneline --name-only
 変更ファイルごとに、その変更を論理的に含むべきコミットを吸収先とする。
 `git log --oneline --name-only` の出力から、各ファイルが含まれるコミットを確認する。
 
-3. ステージングを解除する（既にステージング済みの場合）
+3. ステージングをいったん全解除する
 
 ```
 git restore --staged .
 ```
 
-4. 吸収先ごとにファイルをまとめて fixup コミットを作成する
+吸収先ごとに必要な差分だけを選んでステージするため、クリーンな状態から始める。
+
+4. 吸収先ごとに fixup コミットを作成する
+
+流れ: 1) 全解除 → 2) 必要な差分だけステージ（add または add -p）→ 3) commit --fixup
+
+**ファイル単位で吸収する場合**
 
 ```
 git add <対象ファイル...>
 git commit --fixup <吸収先ハッシュ>
 ```
 
-`--fixup` はコミットメッセージを自動生成する（例: `fixup! 元のコミットメッセージ`）。
-
-#### 同一ファイル内を分けて吸収したい場合
-
-`git add -p` でハンク単位にステージングする：
+**同一ファイル内のハンク単位で吸収する場合**
 
 ```
 git add -p <対象ファイル>
@@ -46,9 +48,11 @@ git add -p <対象ファイル>
 
 `y`（ステージ）/ `n`（スキップ）/ `s`（ハンク分割）で必要な差分だけを選択し、`git commit --fixup <吸収先ハッシュ>` を実行する。残りの差分は次の fixup コミット作成時に再度 `git add -p` で選択する。
 
+`--fixup` はコミットメッセージを自動生成する（例: `fixup! 元のコミットメッセージ`）。統合後も元のメッセージはそのまま。
+
 5. ワーキングツリーがクリーンであることを確認し、autosquash で rebase を実行する
 
-`git status` で `Your branch is ahead of` と表示されている場合はそのまま進める。`have diverged` と表示されている場合は force push が必要になる（手順7参照）。
+`git status` で `Your branch is ahead of` と表示されている場合はそのまま進める。`have diverged` と表示されている場合は、ユーザーが force push を実行する必要がある。
 
 複数の吸収先がある場合は最も古いコミットの一つ前を起点にする（例: `abc1234` と `def5678` へ fixup する場合、古い方の `abc1234~1` を指定）。
 
@@ -69,14 +73,13 @@ git status
 
 fixup コミットが消えて元のコミット数に戻っていることを確認する。
 
-7. リモートに push 済みの場合は force push する
+7. push は行わない
 
-```
-git push --force-with-lease
-```
+push や force push はユーザーが実行する。AI は実行しない。
 
 ## 制約
 
 - rebase 前に `git status` でワーキングツリーがクリーンであることを確認する
-- `--force-with-lease` を使い、他者の push を上書きしないようにする
+- force push はユーザーが実行する。`--force-with-lease` を使い、他者の push を上書きしないようにする
 - main / development ブランチでは実行しない
+- コミットメッセージも修正したい場合は squash スキルを使用する

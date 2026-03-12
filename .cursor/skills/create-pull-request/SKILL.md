@@ -1,18 +1,34 @@
 ---
 name: create-pull-request
-description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を自動生成する。「PRつくって」「プルリクを作って」「PR本文を作成して」と依頼された時に使用する。
+description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。新規 PR 作成時にも、force push 等で内容が変わった既存 PR の本文更新時にも使える。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
 ---
 
 # PR 本文生成
 
+## 適用場面
+
+- **新規作成**: まだ PR が存在しない場合。生成した本文を gh pr create で新規 PR 作成に使う
+- **既存 PR の本文更新**: すでに PR があり、force push や squash などで内容が変わった場合。生成した本文で gh pr edit により既存 PR の本文を更新する
+
 ## 手順
 
-1. `git diff development...HEAD --stat` で変更ファイル一覧を取得する
-2. `git diff development...HEAD` で全差分を取得する
-3. `git log development...HEAD --oneline` でコミット一覧を取得する
-4. `git branch --show-current` でブランチ名を取得し Issue 番号を特定する
-5. `.github/pull_request_template.md` の各セクションを差分をもとに埋める
-6. 生成した PR 本文を出力する
+1. gh pr view で現在のブランチに PR が紐づいているか確認する
+   - PR あり → 既存 PR の本文更新を想定
+   - PR なし → 新規作成を想定
+
+2. `git diff development...HEAD --stat` で変更ファイル一覧を取得する
+3. `git diff development...HEAD` で全差分を取得する
+4. `git log development...HEAD --oneline` でコミット一覧を取得する
+
+基準ブランチは development。リモートが基準の場合は origin/development に置き換える。
+
+5. `git branch --show-current` でブランチ名を取得し Issue 番号を特定する
+6. `.github/pull_request_template.md` の各セクションを差分をもとに埋める
+7. 生成した PR 本文を出力する
+
+8. 手順 1 の確認結果に応じて、実行方法を判断する
+   - **新規作成**: PR が紐づいていない場合 → 本文を出力し、gh pr create 実行時はユーザーに確認を取る
+   - **既存 PR の本文更新**: PR が紐づいている場合 → 本文を出力し、gh pr edit で本文を更新する場合はユーザーに確認を取る。本文をファイルに保存した場合は gh pr edit --body-file を使用する
 
 ---
 
@@ -23,7 +39,7 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 変更内容を端的に表す日本語タイトルを生成する。Issue 番号は含めない。
 フォーマット: `[タグ] 変更内容を端的に表す日本語タイトル`
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]`
+使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
 
 ### 概要
 
@@ -80,4 +96,8 @@ Firestore 変更時・Functions 変更時のチェック項目は該当する場
 
 - 日本語で記述する
 - 推定できない箇所は空欄または「要確認」と記述し、手動で補完を促す
-- `gh pr create` コマンドを使って実際に PR を作成する場合は、ユーザーに確認を取ってから実行する
+- gh pr create および gh pr edit を実行する場合は、ユーザーに確認を取ってから実行する
+
+## 運用上の推奨
+
+- force push や squash でブランチ内容が変わった後は、既存 PR の本文を更新することを推奨する
