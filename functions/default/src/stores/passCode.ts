@@ -1,5 +1,6 @@
 import {
   DocumentData,
+  DocumentReference,
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
@@ -55,4 +56,29 @@ export const getValidPassCodeFromEmail = async (email: string): Promise<PassCode
 export const deletePassCode = async (id: string) => {
   const db = getFirestore()
   await db.collection('pass_code').doc(id).delete()
+}
+
+/**
+ * user_id が一致する pass_code の DocumentReference を取得する。
+ * 読み取りのみ。Firestore トランザクションの「読み取りは書き込みより先」を満たすため、
+ * 取得した ref は後続の書き込みフェーズで transaction.delete すること。
+ */
+export const getPassCodeRefsByUserId = async (uid: string, transaction: Transaction): Promise<DocumentReference[]> => {
+  const db = getFirestore()
+  const snapshot = await transaction.get(db.collection('pass_code').where('user_id', '==', uid))
+  return snapshot.docs.map((doc) => doc.ref)
+}
+
+/**
+ * user_email が一致する pass_code の DocumentReference を取得する。
+ * user_id が optional のため、requestEmailLogin の新規ユーザー分などは user_email のみで保存される。
+ * アカウント削除時に user_id 検索に加えて user_email でも検索し、個人情報の漏洩を防ぐ。
+ */
+export const getPassCodeRefsByUserEmail = async (
+  email: string,
+  transaction: Transaction,
+): Promise<DocumentReference[]> => {
+  const db = getFirestore()
+  const snapshot = await transaction.get(db.collection('pass_code').where('user_email', '==', email))
+  return snapshot.docs.map((doc) => doc.ref)
 }
