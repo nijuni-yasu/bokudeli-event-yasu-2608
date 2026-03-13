@@ -1,5 +1,5 @@
 ---
-name: code-review-doc-update
+name: review-doc-update
 description: 現在のブランチ・PRの変更に基づき、shokujii-code-review を更新すべきか検討し、必要に応じて shokujii-code-review.md を更新する。PRマージ前に使用する。「レビュードキュメントを更新して」「shokujii-code-reviewをアップデートして」と依頼された時に使用する。
 ---
 

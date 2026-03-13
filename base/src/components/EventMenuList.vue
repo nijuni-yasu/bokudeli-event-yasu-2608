@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useDisplay } from 'vuetify'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { mdiFoodForkDrink } from '@mdi/js'
@@ -13,38 +14,51 @@ const emit = defineEmits<{
   selectMenu: [menu: BokudeliEventMenu]
 }>()
 
+/** 横長レイアウトを適用するメニュー数の上限（この数以下は横長、超えるとグリッド） */
+const HORIZONTAL_LAYOUT_MAX_COUNT = 3
+
+const display = useDisplay()
+
 // is_selected が true のメニューのみを表示
 const filteredMenus = computed(() => {
   if (props.menus === null) return null
   return props.menus.filter((menu) => menu.is_selected === true)
 })
+
+/** 横長レイアウトを使う条件: 3件以下 かつ PC・タブレット（スマホではグリッド） */
+const useHorizontalLayout = computed(() => {
+  if (filteredMenus.value === null || filteredMenus.value.length === 0) return false
+  return filteredMenus.value.length <= HORIZONTAL_LAYOUT_MAX_COUNT && !display.mobile.value
+})
 </script>
 <template>
   <section>
-    <v-row v-if="filteredMenus !== null" class="align-items-stretch">
-      <v-col v-for="(menu, i) of filteredMenus" :key="`menu_${i}`" md="4" sm="6" cols="12" class="pa-3">
-        <v-card height="100%" color="text-center">
-          <v-row no-gutters>
-            <v-col cols="6" sm="12" class="d-flex">
-              <v-img :src="menu.menu_image_url ?? undefined" aspect-ratio="1" cover />
-            </v-col>
-
-            <v-col cols="6" sm="12" class="pa-2 d-flex flex-column">
-              <v-card-title class="justify-start text-h6 font-weight-bold text-wrap pa-1">
-                {{ menu.menu_name }}
-              </v-card-title>
-              <v-card-text class="text-left text-subtitle-2 px-1 py-0 description-text">
-                {{ menu.menu_description }}
-              </v-card-text>
-              <v-card-text class="text-right pa-0 ma-3">
-                <span class="yen-text">¥ </span>
-                <span class="price-text">{{ priceString(menu.menu_price) }}</span>
-              </v-card-text>
-              <v-row class="pb-1 px-2">
-                <v-col cols="12">
+    <v-row v-if="filteredMenus !== null" class="align-stretch">
+      <!-- 横長レイアウト: 3件以下 かつ PC・タブレットのみ -->
+      <template v-if="useHorizontalLayout">
+        <v-col v-for="menu of filteredMenus" :key="menu.menu_id" cols="12" class="pa-3">
+          <v-card class="d-flex flex-column menu-card-horizontal">
+            <v-row no-gutters class="flex-grow-1">
+              <v-col cols="4" class="d-flex flex-shrink-0 align-stretch">
+                <div class="menu-image-wrapper menu-image-wrapper-horizontal">
+                  <v-img :src="menu.menu_image_url ?? undefined" :alt="menu.menu_name" cover />
+                </div>
+              </v-col>
+              <v-col cols="8" class="pa-4 pa-md-5 d-flex flex-column menu-content-col">
+                <v-card-title class="justify-start text-h5 font-weight-bold text-wrap pa-0 mb-3 flex-shrink-0">
+                  {{ menu.menu_name }}
+                </v-card-title>
+                <v-card-text class="text-left text-subtitle-2 px-0 py-0 mb-3 description-text-single flex-shrink-0">
+                  {{ menu.menu_description }}
+                </v-card-text>
+                <div class="menu-spacer" />
+                <div class="d-flex align-center justify-space-between flex-wrap gap-2 flex-shrink-0">
+                  <v-card-text class="text-left pa-0">
+                    <span class="yen-text">¥ </span>
+                    <span class="price-text">{{ priceString(menu.menu_price) }}</span>
+                  </v-card-text>
                   <v-btn
-                    class="menu-button"
-                    block
+                    class="menu-button menu-button-single"
                     :class="{ 'disable-menu-button': disabled }"
                     color="primary"
                     rounded="pill"
@@ -54,12 +68,59 @@ const filteredMenus = computed(() => {
                   >
                     {{ '注文して参加する' }}
                   </v-btn>
-                </v-col>
-              </v-row>
-            </v-col>
-          </v-row>
-        </v-card>
-      </v-col>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card>
+        </v-col>
+      </template>
+
+      <!-- グリッドレイアウト: 4件以上 または スマホ（3件以下でも） -->
+      <template v-else>
+        <v-col v-for="menu of filteredMenus" :key="menu.menu_id" md="4" sm="6" cols="12" class="pa-3">
+          <v-card height="100%" color="text-center" class="d-flex flex-column">
+            <v-row no-gutters class="flex-grow-1">
+              <v-col cols="6" sm="12" class="d-flex flex-shrink-0">
+                <div class="menu-image-wrapper">
+                  <v-img :src="menu.menu_image_url ?? undefined" :alt="menu.menu_name" aspect-ratio="1" cover />
+                </div>
+              </v-col>
+
+              <v-col cols="6" sm="12" class="pa-2 d-flex flex-column menu-content-col">
+                <v-card-title class="justify-start text-h6 font-weight-bold text-wrap pa-1 flex-shrink-0">
+                  {{ menu.menu_name }}
+                </v-card-title>
+                <v-card-text class="text-left text-subtitle-2 px-1 py-0 description-text flex-shrink-0">
+                  {{ menu.menu_description }}
+                </v-card-text>
+                <div class="menu-spacer" />
+                <div class="flex-shrink-0">
+                  <v-card-text class="text-right pa-0 ma-3">
+                    <span class="yen-text">¥ </span>
+                    <span class="price-text">{{ priceString(menu.menu_price) }}</span>
+                  </v-card-text>
+                  <v-row class="pb-1 px-2">
+                    <v-col cols="12">
+                      <v-btn
+                        class="menu-button"
+                        block
+                        :class="{ 'disable-menu-button': disabled }"
+                        color="primary"
+                        rounded="pill"
+                        elevation="5"
+                        :prepend-icon="mdiFoodForkDrink"
+                        @click="emit('selectMenu', menu)"
+                      >
+                        {{ '注文して参加する' }}
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card>
+        </v-col>
+      </template>
 
       <!-- no result found -->
       <v-col v-show="filteredMenus !== null && filteredMenus.length === 0" cols="12" class="text-center">
@@ -77,12 +138,62 @@ const filteredMenus = computed(() => {
 .disable-menu-button {
   opacity: 0.6;
 }
-.description-text {
+/* 説明文: 2行で切り捨て（横長・グリッド共通） */
+.description-text,
+.description-text-single {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* autoprefixer: ignore next - line-clamp に必須 */
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.4;
+  max-height: 2.8em;
 }
+
+/* 画像ラッパー共通 */
+.menu-image-wrapper {
+  overflow: hidden;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* グリッドレイアウト: 画像を正方形で揃える */
+.menu-image-wrapper:not(.menu-image-wrapper-horizontal) {
+  aspect-ratio: 1;
+}
+
+/* 横長レイアウト: カードの高さを統一するための最小高さ */
+.menu-card-horizontal {
+  min-height: 200px;
+}
+
+/* 横長レイアウト: 画像をコンテンツ高さに合わせて表示（縦長可、下の余白をなくす） */
+.menu-image-wrapper-horizontal {
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+
+  /* v-img が親の高さを埋めるようにする（aspect-ratio 未指定時は画像の元の比率で高さが決まるため） */
+  :deep(.v-img) {
+    height: 100%;
+    flex: 1;
+  }
+}
+
+/* flex の高さ計算のため min-height をリセット、テキスト切り捨てのため min-width をリセット */
+.menu-content-col {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* 横長・グリッド共通: 価格・ボタンを下揃えするためのスペーサー */
+.menu-spacer {
+  flex-grow: 1;
+  min-height: 0;
+}
+
 .price-text {
   font-size: 22px;
   color: #3a3541de;
@@ -97,10 +208,15 @@ const filteredMenus = computed(() => {
     font-size: 13px !important;
     height: 30px !important;
   }
-  .text-sm-no-wrap {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+  .menu-button-single {
+    font-size: 15px !important;
+    height: 44px !important;
+    padding-inline: 24px !important;
+  }
+  /* スマホ: 説明文を非表示 */
+  .description-text,
+  .description-text-single {
+    display: none !important;
   }
 }
 
@@ -108,6 +224,11 @@ const filteredMenus = computed(() => {
   .menu-button {
     font-size: 14px !important;
     height: 32px !important;
+  }
+  .menu-button-single {
+    font-size: 16px !important;
+    height: 48px !important;
+    padding-inline: 28px !important;
   }
 }
 </style>

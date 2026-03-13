@@ -1,11 +1,11 @@
 ---
-name: split-commit
-description: 変更差分を論理単位で分割コミット案を検討する。各コミットのメッセージは commit-message のフォーマットに従う。「分割コミットして」「分割コミットを検討して」「コミットを分けて」と依頼された時に使用する。[common][doc][ai]については、必ず独立したコミットとする。
+name: git-split-commit
+description: 変更差分を論理単位で分割コミット案を検討する。各コミットのメッセージは git-commit-message のフォーマットに従う。「分割コミットして」「分割コミットを検討して」「コミットを分けて」と依頼された時に使用する。[common][doc][ai]については、必ず独立したコミットとする。
 ---
 
 # 分割コミット
 
-変更差分について、分割コミットを検討する。コミットメッセージは commit-message スキルに従って検討する。分割コミットのみ依頼されても commit-message が呼び出されないため、本スキル内でコミットメッセージ生成を含む。[common][doc][ai]については、必ず独立したコミットとする。
+変更差分について、分割コミットを検討する。コミットメッセージは git-commit-message スキルに従って検討する。分割コミットのみ依頼されても git-commit-message が呼び出されないため、本スキル内でコミットメッセージ生成を含む。[common][doc][ai]については、必ず独立したコミットとする。
 
 対象の変更には、ステージング済みの変更のみの場合、ステージングされていない変更のみの場合、両方がある場合がある。
 
@@ -48,7 +48,7 @@ git branch --show-current
    - common のスキーマ変更が他パッケージに影響する場合、common を先にコミットする
 
 3. 各コミットのメッセージを生成する
-   - commit-message スキルのフォーマットに従う
+   - git-commit-message スキルのフォーマットに従う
    - タイトル: [タグ] #イシュー番号 変更内容
    - 本文: 目的・背景、ファイルごとの箇条書き、技術的補足
    - バッククォート・丸括弧・ダブルクォートは使用しない
@@ -126,12 +126,12 @@ git branch --show-current
 スキルと Git ルールの一貫性のため、[doc] [ai] タグの扱いを追加した。
 
 変更詳細:
-- .agents/skills/split-commit/SKILL.md
+- .agents/skills/git-split-commit/SKILL.md
   - コミット順序とタグの範囲を追記
 - AGENTS.md
   - 使用可能なタグに [ai] を追加
 
-対象ファイル: .agents/skills/split-commit/SKILL.md, AGENTS.md
+対象ファイル: .agents/skills/git-split-commit/SKILL.md, AGENTS.md
 
 ### コミット3: [common] #1800 Event スキーマに status フィールドを追加
 
@@ -160,5 +160,5 @@ Event の status に応じて表示を切り替えるようにした。
 - [doc] は documents/ 内の更新のみ。最初のコミットとする
 - [ai] は .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の変更に使う
 - [common] のスキーマ変更は必ず単独コミット
-- コミットメッセージは commit-message スキルに準拠
+- コミットメッセージは git-commit-message スキルに準拠
 - バッククォート・丸括弧・ダブルクォートは使用しない
