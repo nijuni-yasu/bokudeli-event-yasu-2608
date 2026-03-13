@@ -10,15 +10,16 @@ AIエージェント向けプロジェクトガイド。
 
 | タスク                         | スキル                         |
 | :----------------------------- | :----------------------------- |
-| コミットメッセージ生成         | `/commit-message`              |
-| PR 本文生成                    | `/create-pull-request`         |
+| コミットメッセージ生成         | `/git-commit-message`          |
+| PR 本文生成                    | `/git-create-pull-request`     |
 | コードレビュー                 | `/shokujii-code-review`        |
 | lint・format チェック          | `/lint-and-format`             |
-| fixup                          | `/fixup`                       |
-| squash                         | `/squash`                      |
+| fixup                          | `/git-fixup`                   |
+| squash                         | `/git-squash`                  |
 | レビューコメント検討           | `/review-comments-evaluate`    |
-| コードレビュードキュメント更新 | `/code-review-doc-update`      |
-| 分割コミット                   | `/split-commit`                |
+| レビューコメント返信           | `/review-comments-reply`       |
+| コードレビュードキュメント更新 | `/review-doc-update`           |
+| 分割コミット                   | `/git-split-commit`            |
 | スキル提案                     | `/skill-propose`               |
 
 ## 推奨スキル（技術スタック別）

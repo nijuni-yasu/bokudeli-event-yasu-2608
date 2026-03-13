@@ -1,5 +1,5 @@
 ---
-name: fixup
+name: git-fixup
 description: 変更を過去の適切なコミットに fixup + autosquash で統合する。コミットメッセージはそのまま。「fixupして」「フィックスアップして」「過去のコミットにまとめて」と依頼された時に使用する。
 ---
 
@@ -73,13 +73,19 @@ git status
 
 fixup コミットが消えて元のコミット数に戻っていることを確認する。
 
-7. push は行わない
+7. `git push --force-with-lease` を実行する
 
-push や force push はユーザーが実行する。AI は実行しない。
+rebase により履歴が書き換わっているため、リモートに反映する。
+
+```
+git push --force-with-lease
+```
+
+失敗した場合（他者の push でリモートが更新されている等）は、手動対応が必要な旨を報告する。
 
 ## 制約
 
 - rebase 前に `git status` でワーキングツリーがクリーンであることを確認する
-- force push はユーザーが実行する。`--force-with-lease` を使い、他者の push を上書きしないようにする
+- push には `--force-with-lease` を使い、他者の push を上書きしないようにする
 - main / development ブランチでは実行しない
-- コミットメッセージも修正したい場合は squash スキルを使用する
+- コミットメッセージも修正したい場合は git-squash スキルを使用する

@@ -1,5 +1,5 @@
 ---
-name: create-pull-request
+name: git-create-pull-request
 description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。新規 PR 作成時にも、force push 等で内容が変わった既存 PR の本文更新時にも使える。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
 ---
 

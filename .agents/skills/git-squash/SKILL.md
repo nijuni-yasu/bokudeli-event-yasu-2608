@@ -1,5 +1,5 @@
 ---
-name: squash
+name: git-squash
 description: 変更を過去の適切なコミットに squash + autosquash で統合する。統合後のコミットメッセージを AI が生成する。「squashして」「スカッシュして」「メッセージも直してまとめて」と依頼された時に使用する。
 ---
 
@@ -50,7 +50,7 @@ git add -p <対象ファイル>
 
 5. 統合後のコミットメッセージを生成する
 
-各吸収先コミットについて、元のメッセージと squash の変更内容を踏まえて、統合後のコミットメッセージを生成する。commit-message スキルのフォーマット・制約に従う（バッククォート・丸括弧・ダブルクォートは使用しない等）。
+各吸収先コミットについて、元のメッセージと squash の変更内容を踏まえて、統合後のコミットメッセージを生成する。git-commit-message スキルのフォーマット・制約に従う（バッククォート・丸括弧・ダブルクォートは使用しない等）。
 
 **参照する情報**
 - 元のメッセージ: `git log -1 --format=%B <吸収先ハッシュ>`
@@ -146,14 +146,19 @@ squash コミットが消えて元のコミット数に戻り、`git log` で各
 rm -f /tmp/squash-msg.txt /tmp/squash-msgs.txt /tmp/git-editor-squash.sh
 ```
 
-10. push は行わない
+10. `git push --force-with-lease` を実行する
 
-push や force push はユーザーが実行する。AI は実行しない。
+rebase により履歴が書き換わっているため、リモートに反映する。
 
+```
+git push --force-with-lease
+```
+
+失敗した場合（他者の push でリモートが更新されている等）は、手動対応が必要な旨を報告する。
 
 ## 制約
 
 - rebase 前に `git status` でワーキングツリーがクリーンであることを確認する
-- force push はユーザーが実行する。`--force-with-lease` を使い、他者の push を上書きしないようにする
+- push には `--force-with-lease` を使い、他者の push を上書きしないようにする
 - main / development ブランチでは実行しない
-- コミットメッセージを変更しない場合は fixup スキルを使用する
+- コミットメッセージを変更しない場合は git-fixup スキルを使用する
