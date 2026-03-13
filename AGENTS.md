@@ -6,20 +6,34 @@ AIエージェント向けプロジェクトガイド。
 
 ## Skills スキル（定型タスクの手順書）
 
-以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
+**プロジェクトオリジナル**のスキル。以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
 
-| タスク                         | スキルファイル                                     |
-| :----------------------------- | :------------------------------------------------- |
-| コミットメッセージ生成         | `.agents/skills/commit-message/SKILL.md`           |
-| PR 本文生成                    | `.agents/skills/create-pull-request/SKILL.md`      |
-| コードレビュー                 | `.agents/skills/shokujii-code-review/SKILL.md`     |
-| lint・format チェック          | `.agents/skills/lint-and-format/SKILL.md`          |
-| fixup                          | `.agents/skills/fixup/SKILL.md`                    |
-| squash                         | `.agents/skills/squash/SKILL.md`                   |
-| レビューコメント検討           | `.agents/skills/review-comments-evaluate/SKILL.md` |
-| コードレビュードキュメント更新 | `.agents/skills/code-review-doc-update/SKILL.md`   |
-| 分割コミット                   | `.agents/skills/split-commit/SKILL.md`             |
-| スキル提案                     | `.agents/skills/skill-propose/SKILL.md`           |
+| タスク                         | スキル                         |
+| :----------------------------- | :----------------------------- |
+| コミットメッセージ生成         | `/commit-message`              |
+| PR 本文生成                    | `/create-pull-request`         |
+| コードレビュー                 | `/shokujii-code-review`        |
+| lint・format チェック          | `/lint-and-format`             |
+| fixup                          | `/fixup`                       |
+| squash                         | `/squash`                      |
+| レビューコメント検討           | `/review-comments-evaluate`    |
+| コードレビュードキュメント更新 | `/code-review-doc-update`      |
+| 分割コミット                   | `/split-commit`                |
+| スキル提案                     | `/skill-propose`               |
+
+## 推奨スキル（技術スタック別）
+
+**外部からインストールした**スキル。以下のタスク時は、該当スキルを `/スキル名` で参照して利用すること。
+
+| タスク                     | スキル                         | タイミング     |
+| :------------------------- | :----------------------------- | :------------- |
+| Vue コンポーネント実装     | `/vue-best-practices`          | 実装時、レビュー時 |
+| ルーティング・ナビゲーション | `/vue-router-best-practices`   | 実装時         |
+| Vue のデバッグ             | `/vue-debug-guides`            | デバッグ時     |
+| Firestore の読み書き・ルール | `/firebase-firestore-standard` | 実装時         |
+| Stripe 決済実装            | `/stripe-integration`          | 実装時         |
+| UI の設計・実装           | `/frontend-design`             | 新規ページ・コンポーネント作成時、スタイリング・ビジュアル改善時 |
+| UI のレビュー・品質チェック | `/web-design-guidelines`       | アクセシビリティ確認時、UX レビュー時、PR マージ前の品質チェック時 |
 
 ## プロジェクト概要
 
