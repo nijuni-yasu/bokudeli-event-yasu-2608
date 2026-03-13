@@ -26,8 +26,8 @@ git log development...HEAD --oneline
    - [shokujii-code-review.md](../shokujii-code-review/shokujii-code-review.md) を参照
 
 3. 更新が必要な場合
-   - .cursor/skills/shokujii-code-review/shokujii-code-review.md に追記・修正する
-   - .cursor/skills/shokujii-code-review/SKILL.md のチェックリストも同期する（必要に応じて）
+   - .agents/skills/shokujii-code-review/shokujii-code-review.md に追記・修正する
+   - .agents/skills/shokujii-code-review/SKILL.md のチェックリストも同期する（必要に応じて）
    - 変更内容を簡潔に報告する
 
 4. 更新が不要な場合
@@ -35,8 +35,8 @@ git log development...HEAD --oneline
 
 ## 更新対象
 
-- .cursor/skills/shokujii-code-review/shokujii-code-review.md
-- .cursor/skills/shokujii-code-review/SKILL.md（チェックリストが食い違う場合）
+- .agents/skills/shokujii-code-review/shokujii-code-review.md
+- .agents/skills/shokujii-code-review/SKILL.md（チェックリストが食い違う場合）
 
 ## 制約
 

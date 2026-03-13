@@ -26,7 +26,7 @@ description: ステージングされている変更差分を読み込んでコ�
 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
 
 - [doc]: documents/ ディレクトリ内の更新のみ
-- [ai]: .cursor / .github / CLAUDE.md / AGENTS.md 等の AI 向け設定・指示ファイル
+- [ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の AI 向け設定・指示ファイル
 
 ### 本文
 

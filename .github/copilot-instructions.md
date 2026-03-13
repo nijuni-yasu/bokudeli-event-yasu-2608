@@ -92,7 +92,7 @@ npm -w <pkg> run format:check
 レビューコメントは必ず日本語で記述する。
 レビュー時はプロジェクト固有のチェックリストに従うこと。
 
-チェックリスト: `.cursor/skills/shokujii-code-review/shokujii-code-review.md`
+チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
 
 ### レビューコメントの prefix
 

@@ -10,16 +10,16 @@ AIエージェント向けプロジェクトガイド。
 
 | タスク                         | スキルファイル                                     |
 | :----------------------------- | :------------------------------------------------- |
-| コミットメッセージ生成         | `.cursor/skills/commit-message/SKILL.md`           |
-| PR 本文生成                    | `.cursor/skills/create-pull-request/SKILL.md`      |
-| コードレビュー                 | `.cursor/skills/shokujii-code-review/SKILL.md`     |
-| lint・format チェック          | `.cursor/skills/lint-and-format/SKILL.md`          |
-| fixup                          | `.cursor/skills/fixup/SKILL.md`                    |
-| squash                         | `.cursor/skills/squash/SKILL.md`                   |
-| レビューコメント検討           | `.cursor/skills/review-comments-evaluate/SKILL.md` |
-| コードレビュードキュメント更新 | `.cursor/skills/code-review-doc-update/SKILL.md`   |
-| 分割コミット                   | `.cursor/skills/split-commit/SKILL.md`             |
-| スキル提案                     | `.cursor/skills/skill-propose/SKILL.md`           |
+| コミットメッセージ生成         | `.agents/skills/commit-message/SKILL.md`           |
+| PR 本文生成                    | `.agents/skills/create-pull-request/SKILL.md`      |
+| コードレビュー                 | `.agents/skills/shokujii-code-review/SKILL.md`     |
+| lint・format チェック          | `.agents/skills/lint-and-format/SKILL.md`          |
+| fixup                          | `.agents/skills/fixup/SKILL.md`                    |
+| squash                         | `.agents/skills/squash/SKILL.md`                   |
+| レビューコメント検討           | `.agents/skills/review-comments-evaluate/SKILL.md` |
+| コードレビュードキュメント更新 | `.agents/skills/code-review-doc-update/SKILL.md`   |
+| 分割コミット                   | `.agents/skills/split-commit/SKILL.md`             |
+| スキル提案                     | `.agents/skills/skill-propose/SKILL.md`           |
 
 ## プロジェクト概要
 
@@ -102,11 +102,11 @@ npm -w <pkg> run format:check
   - 例: `[base][common] #1799 withConverter の削除を禁止`
   - 例: `[ai] #1800 分割コミットスキルに doc と ai タグを追加`
   - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
-  - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .github / CLAUDE.md / AGENTS.md 等
+  - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等
 
 ## コードレビュー
 
 PR・コードレビューのコメントは必ず日本語で行う。
 レビュー時はプロジェクト固有のチェックリストに従うこと。
 
-チェックリスト: `.cursor/skills/shokujii-code-review/shokujii-code-review.md`
+チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`

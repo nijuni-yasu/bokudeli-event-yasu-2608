@@ -28,16 +28,17 @@ git branch --show-current
 
    **コミット順序**
    1. [doc] documents/ 内の更新のみ。最初のコミットとする
-   2. [ai] .cursor / .github / CLAUDE.md / AGENTS.md 等の AI 関連設定・指示ファイル
+   2. [ai] .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の AI 関連設定・指示ファイル
    3. [common] スキーマ変更（Zod スキーマ・型定義等）
    4. その他（user / admin / base / functions）
 
    **[doc] の範囲**
    - documents/ ディレクトリ内の更新のみに限る
-   - AGENTS.md / CLAUDE.md / .cursor / .github 等は [doc] ではなく [ai] を使う
+   - AGENTS.md / CLAUDE.md / .cursor / .agents / .github 等は [doc] ではなく [ai] を使う
 
    **[ai] の範囲**
-   - .cursor ディレクトリ（スキル、ルール等）
+   - .cursor ディレクトリ（ルール、コマンド等）
+   - .agents ディレクトリ（スキル等）
    - .github ディレクトリ（ワークフロー、copilot-instructions 等）
    - CLAUDE.md / AGENTS.md 等のルート直下の AI 向け指示ファイル
 
@@ -93,7 +94,7 @@ git branch --show-current
 
 （本文）
 
-対象ファイル: .cursor/ または .github/ または AGENTS.md 等
+対象ファイル: .cursor/ または .agents/ または .github/ または AGENTS.md 等
 
 ### コミット3: [common] #XXXX スキーマ変更の説明
 
@@ -125,12 +126,12 @@ git branch --show-current
 スキルと Git ルールの一貫性のため、[doc] [ai] タグの扱いを追加した。
 
 変更詳細:
-- .cursor/skills/split-commit/SKILL.md
+- .agents/skills/split-commit/SKILL.md
   - コミット順序とタグの範囲を追記
 - AGENTS.md
   - 使用可能なタグに [ai] を追加
 
-対象ファイル: .cursor/skills/split-commit/SKILL.md, AGENTS.md
+対象ファイル: .agents/skills/split-commit/SKILL.md, AGENTS.md
 
 ### コミット3: [common] #1800 Event スキーマに status フィールドを追加
 
@@ -157,7 +158,7 @@ Event の status に応じて表示を切り替えるようにした。
 ## 制約
 
 - [doc] は documents/ 内の更新のみ。最初のコミットとする
-- [ai] は .cursor / .github / CLAUDE.md / AGENTS.md 等の変更に使う
+- [ai] は .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の変更に使う
 - [common] のスキーマ変更は必ず単独コミット
 - コミットメッセージは commit-message スキルに準拠
 - バッククォート・丸括弧・ダブルクォートは使用しない

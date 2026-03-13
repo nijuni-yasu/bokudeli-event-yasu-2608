@@ -29,7 +29,7 @@ git log development...HEAD --oneline
 2. 既存スキル一覧を確認する
 
 - AGENTS.md の Skills 一覧を参照
-- .cursor/skills/ 配下の各 SKILL.md の description を読み、既存スキルの役割と重複しないか把握する
+- .agents/skills/ 配下の各 SKILL.md の description を読み、既存スキルの役割と重複しないか把握する
 
 3. スキル候補を検討する
 
@@ -86,7 +86,7 @@ npx skills find [検索クエリ]
 
 **次のステップ**:
 - **既存スキルの場合**: `npx skills add <owner/repo@skill>` でインストールし、プロジェクトに合わせて調整する。必要に応じて AGENTS.md に登録する
-- **新規作成の場合**: create-skill スキル（または Cursor のスキル作成機能）を使って .cursor/skills/ に SKILL.md を作成し、AGENTS.md（および CLAUDE.md）の Skills 一覧に登録する
+- **新規作成の場合**: create-skill スキル（または Cursor のスキル作成機能）を使って .agents/skills/ に SKILL.md を作成し、AGENTS.md（および CLAUDE.md）の Skills 一覧に登録する
 
 ---
 
