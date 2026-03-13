@@ -23,10 +23,10 @@ git log development...HEAD --oneline
    - 新規パターン・よくある間違いが含まれていないか
    - 既存チェックリストでカバーできていない指摘はないか
    - 新機能・新規責務に応じたルール追加の要否
-   - [shokujii-code-review.md](../../../documents/コードレビュー/shokujii-code-review.md) を参照
+   - [shokujii-code-review.md](../shokujii-code-review/shokujii-code-review.md) を参照
 
 3. 更新が必要な場合
-   - documents/コードレビュー/shokujii-code-review.md に追記・修正する
+   - .cursor/skills/shokujii-code-review/shokujii-code-review.md に追記・修正する
    - .cursor/skills/shokujii-code-review/SKILL.md のチェックリストも同期する（必要に応じて）
    - 変更内容を簡潔に報告する
 
@@ -35,7 +35,7 @@ git log development...HEAD --oneline
 
 ## 更新対象
 
-- documents/コードレビュー/shokujii-code-review.md
+- .cursor/skills/shokujii-code-review/shokujii-code-review.md
 - .cursor/skills/shokujii-code-review/SKILL.md（チェックリストが食い違う場合）
 
 ## 制約

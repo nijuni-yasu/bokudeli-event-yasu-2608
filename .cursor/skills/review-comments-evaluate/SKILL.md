@@ -86,7 +86,7 @@ PR でレビュー依頼した Copilot、Codex、kokufu によるレビューを
 
 ## 参照
 
-- [shokujii-code-review.md](../../../documents/コードレビュー/shokujii-code-review.md) を参照してプロジェクト規約に照らす
+- [shokujii-code-review.md](../shokujii-code-review/shokujii-code-review.md) を参照してプロジェクト規約に照らす
 
 ## 制約
 

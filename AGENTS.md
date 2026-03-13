@@ -109,4 +109,4 @@ npm -w <pkg> run format:check
 PR・コードレビューのコメントは必ず日本語で行う。
 レビュー時はプロジェクト固有のチェックリストに従うこと。
 
-チェックリスト: `documents/コードレビュー/shokujii-code-review.md`
+チェックリスト: `.cursor/skills/shokujii-code-review/shokujii-code-review.md`

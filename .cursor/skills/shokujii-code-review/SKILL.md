@@ -10,7 +10,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 1. 変更差分（または指定されたファイル）を読む
 2. 下記チェックリストの各項目を順に確認する
 3. 問題があればフィードバック形式に従ってコメントを出力する
-4. 詳細な判断基準・よくある間違いパターンは [shokujii-code-review.md](../../../documents/コードレビュー/shokujii-code-review.md) を参照する
+4. 詳細な判断基準・よくある間違いパターンは [shokujii-code-review.md](shokujii-code-review.md) を参照する
 
 ---
 
@@ -139,4 +139,4 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 各ルールの詳細な説明・NG/OK のコード例は以下を参照：
 
-[shokujii-code-review.md](../../../documents/コードレビュー/shokujii-code-review.md)
+[shokujii-code-review.md](shokujii-code-review.md)

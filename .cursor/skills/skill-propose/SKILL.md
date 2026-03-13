@@ -104,7 +104,7 @@ npx skills find [検索クエリ]
 
 ## 参照
 
-- [shokujii-code-review.md](../../../documents/コードレビュー/shokujii-code-review.md) を参照し、プロジェクト固有のルールやよくあるパターンを把握する
+- [shokujii-code-review.md](../shokujii-code-review/shokujii-code-review.md) を参照し、プロジェクト固有のルールやよくあるパターンを把握する
 - documents/ 内の仕様書でドメイン知識を補う
 - skills.sh の検索: `npx skills find [query]` で既存スキルを検索する。https://skills.sh/ でブラウズ可能
 
