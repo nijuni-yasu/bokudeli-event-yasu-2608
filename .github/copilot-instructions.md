@@ -92,14 +92,14 @@ npm -w <pkg> run format:check
 レビューコメントは必ず日本語で記述する。
 レビュー時はプロジェクト固有のチェックリストに従うこと。
 
-チェックリスト: `documents/コードレビュー/shokujii-code-review.md`
+チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
 
 ### レビューコメントの prefix
 
-| prefix  | 意味                                              |
-| :------ | :------------------------------------------------ |
-| [must]  | 必ず変更（マージ前に対応必須）                    |
-| [imo]   | 自分の意見だが修正必須ではない（in my opinion）   |
-| [nits]  | ささいな指摘（nitpick）                           |
-| [ask]   | 質問                                              |
-| [fyi]   | 参考情報                                          |
+| prefix | 意味                                            |
+| :----- | :---------------------------------------------- |
+| [must] | 必ず変更（マージ前に対応必須）                  |
+| [imo]  | 自分の意見だが修正必須ではない（in my opinion） |
+| [nits] | ささいな指摘（nitpick）                         |
+| [ask]  | 質問                                            |
+| [fyi]  | 参考情報                                        |

@@ -4,18 +4,36 @@ AIエージェント向けプロジェクトガイド。
 
 **出力は必ず日本語で行ってください。**
 
-
 ## Skills スキル（定型タスクの手順書）
 
-以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
+**プロジェクトオリジナル**のスキル。以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
 
-| タスク | スキルファイル |
-| :--- | :--- |
-| コミットメッセージ生成 | `.cursor/skills/commit-message/SKILL.md` |
-| PR 本文生成 | `.cursor/skills/create-pull-request/SKILL.md` |
-| コードレビュー | `.cursor/skills/shokujii-code-review/SKILL.md` |
-| lint・format チェック | `.cursor/skills/lint-and-format/SKILL.md` |
+| タスク                         | スキル                         |
+| :----------------------------- | :----------------------------- |
+| コミットメッセージ生成         | `/commit-message`              |
+| PR 本文生成                    | `/create-pull-request`         |
+| コードレビュー                 | `/shokujii-code-review`        |
+| lint・format チェック          | `/lint-and-format`             |
+| fixup                          | `/fixup`                       |
+| squash                         | `/squash`                      |
+| レビューコメント検討           | `/review-comments-evaluate`    |
+| コードレビュードキュメント更新 | `/code-review-doc-update`      |
+| 分割コミット                   | `/split-commit`                |
+| スキル提案                     | `/skill-propose`               |
 
+## 推奨スキル（技術スタック別）
+
+**外部からインストールした**スキル。以下のタスク時は、該当スキルを `/スキル名` で参照して利用すること。
+
+| タスク                     | スキル                         | タイミング     |
+| :------------------------- | :----------------------------- | :------------- |
+| Vue コンポーネント実装     | `/vue-best-practices`          | 実装時、レビュー時 |
+| ルーティング・ナビゲーション | `/vue-router-best-practices`   | 実装時         |
+| Vue のデバッグ             | `/vue-debug-guides`            | デバッグ時     |
+| Firestore の読み書き・ルール | `/firebase-firestore-standard` | 実装時         |
+| Stripe 決済実装            | `/stripe-integration`          | 実装時         |
+| UI の設計・実装           | `/frontend-design`             | 新規ページ・コンポーネント作成時、スタイリング・ビジュアル改善時 |
+| UI のレビュー・品質チェック | `/web-design-guidelines`       | アクセシビリティ確認時、UX レビュー時、PR マージ前の品質チェック時 |
 
 ## プロジェクト概要
 
@@ -96,11 +114,13 @@ npm -w <pkg> run format:check
 - タイトルの接頭辞に変更したディレクトリと Issue 番号を含める
   - 例: `[admin] #1777 注文詳細画面の修正`
   - 例: `[base][common] #1799 withConverter の削除を禁止`
-  - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]`
+  - 例: `[ai] #1800 分割コミットスキルに doc と ai タグを追加`
+  - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
+  - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等
 
 ## コードレビュー
 
 PR・コードレビューのコメントは必ず日本語で行う。
 レビュー時はプロジェクト固有のチェックリストに従うこと。
 
-チェックリスト: `documents/コードレビュー/shokujii-code-review.md`
+チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
