@@ -388,6 +388,7 @@ Functions のデプロイは `deploy_functions.yml` により全 codebase（defa
 
 - GCP Secret Manager に `STRIPE_WEBHOOK_ENDPOINT_SECRET` を設定（development 環境）
   - `STRIPE_API_KEY` は `createStripeCheckoutSession` で既に設定済み
+  - 環境構築の詳細は `documents/07_リファクタリング/03_stripe決済の環境構築手順.md` を参照
 
 **コード変更**:
 
@@ -428,11 +429,13 @@ Functions のデプロイは `deploy_functions.yml` により全 codebase（defa
 - `user_advance` イベントでキャンセル → `stripeRefunds`（default）が呼ばれること
 - 注文確定メール（`onOrderChanged`）が正常に送信されること
 
-### Phase 3: Stripe Webhook URL の切り替え（development）
+### Phase 3: Stripe Webhook の切り替え（development）
 
 **作業**:
 
-- Stripe Dashboard（test mode）で Webhook エンドポイントを legacy の URL から Phase 1 で控えた default の URL に変更
+- Stripe Dashboard（test mode）で **新規 Webhook エンドポイントを作成**し、default の URL を登録
+- 既存の legacy 用エンドポイントの URL を変更するより、新規作成の方がロールバックが容易
+- 環境構築の詳細は `documents/07_リファクタリング/03_stripe決済の環境構築手順.md` を参照
 
 **確認事項**:
 
@@ -441,7 +444,7 @@ Functions のデプロイは `deploy_functions.yml` により全 codebase（defa
 - コミュニティメンバーに追加されること
 - `user_advance` の注文確定後にキャンセル → Stripe 返金 → order.status が `canceled` に更新される全フロー
 
-**ロールバック**: 問題があれば Stripe Dashboard で Webhook URL を legacy の URL に戻す
+**ロールバック**: 問題があれば Stripe Dashboard で新規エンドポイントを無効化し、既存の legacy 用エンドポイントをそのまま使用
 
 ### Phase 4: production デプロイ
 
@@ -459,19 +462,28 @@ Functions のデプロイは `deploy_functions.yml` により全 codebase（defa
 
 - Phase 2 と同じ確認を production で実施
 
-### Phase 5: Stripe Webhook URL の切り替え（production）
+### Phase 5: Stripe Webhook の切り替え（production）
 
 **作業**:
 
-- Stripe Dashboard（live mode）で Webhook エンドポイントを default の URL に変更
+- Stripe Dashboard（live mode）で **新規 Webhook エンドポイントを作成**し、default の URL を登録
+- 既存の legacy 用エンドポイントの URL を変更するより、新規作成の方がロールバックが容易
+- 環境構築の詳細は `documents/07_リファクタリング/03_stripe決済の環境構築手順.md` を参照
 
 **確認事項**:
 
 - Phase 3 と同じ全フローの動作確認を production で実施
 
-**ロールバック**: 問題があれば Stripe Dashboard で Webhook URL を legacy の URL に戻す
+**ロールバック**: 問題があれば Stripe Dashboard で新規エンドポイントを無効化し、既存の legacy 用エンドポイントをそのまま使用
 
 ### Phase 6: Legacy 関数の削除
+
+**Stripe 側の作業（コード変更・デプロイの前に実施）**:
+
+- default への切り替えが問題なく完了していることを確認したうえで、Stripe Dashboard で **旧（legacy）Webhook エンドポイントを無効化または削除**する
+- 実施タイミング: Phase 3（development）・Phase 5（production）の確認事項が完了し、切り替えが確定した後
+- 実施理由: Phase 6 で legacy 関数を削除すると、旧エンドポイントの URL は存在しない関数を指す。Stripe は有効なエンドポイントへイベントを配信し続けるため、無効化しないと checkout.session.completed が恒常的に失敗し、リトライが発生する
+- 手順の詳細は `documents/07_リファクタリング/03_stripe決済の環境構築手順.md` の「旧 Webhook エンドポイントの無効化」を参照
 
 **コード変更**:
 
@@ -544,6 +556,7 @@ SDK のアップグレードはこのタスク完了後に別 Issue で対応す
 
 ## 実装時の参考情報
 
+- `documents/07_リファクタリング/03_stripe決済の環境構築手順.md` ー Stripe 環境構築の詳細手順
 - `documents/実装メモ/common_schemas における zod の使い方.md`
 - `documents/実装メモ/functionsにおける common_schemas の使い方.md`
 - `documents/実装メモ/functionsにおける store の使い方.md`
