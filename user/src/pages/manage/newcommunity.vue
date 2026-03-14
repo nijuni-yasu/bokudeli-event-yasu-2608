@@ -4,14 +4,16 @@ import { getManageCommunityPath } from '@/router/utils'
 import { BokudeliCommunity, createNewCommunity } from '@shokujii/base/stores/community.js'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import { getCommunityDefaultImages } from '@shokujii/base/utils/defaultImage.js'
 
 const notification = useNotification()
 const { t: $t } = useI18n()
 
 const communityListStore = useCommunityListStore()
 
-const coverImageFile = ref<File | null>(null)
-const iconImageFile = ref<File | null>(null)
+const { coverFile, iconFile } = await getCommunityDefaultImages()
+const coverImageFile = ref<File>(coverFile)
+const iconImageFile = ref<File>(iconFile)
 const community = ref(new BokudeliCommunity(null, {}))
 const isLoading = ref(false)
 
