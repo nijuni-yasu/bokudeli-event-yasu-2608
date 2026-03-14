@@ -16,14 +16,6 @@ export const uploadEventImage = async (communityId: string, eventId: string, fil
   return url
 }
 
-export const uploadCommunityImage = async (communityId: string, file: File) => {
-  const filename = rebuildFilename(file.name)
-  const uploadStorageRef = storageRef(storage, `communities/${communityId}/community/${filename}`)
-  const snapshot = await uploadBytes(uploadStorageRef, file)
-  const url = await getDownloadURL(snapshot.ref)
-  return url
-}
-
 export const uploadShopImage = async (partnerId: string, shopId: string, file: File) => {
   const filename = rebuildFilename(file.name)
   const uploadStorageRef = storageRef(storage, `partners/${partnerId}/shops/${shopId}/${filename}`)
