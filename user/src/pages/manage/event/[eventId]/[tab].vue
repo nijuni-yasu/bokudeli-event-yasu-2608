@@ -43,7 +43,7 @@ const openInNew = (url: string) => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row v-if="community != null" class="py-2">
       <router-link :to="getManageCommunityPath(community.community_account)">
         <div class="text-h5 ml-3 d-flex align-center justify-start text-primary">

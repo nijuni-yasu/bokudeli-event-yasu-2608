@@ -35,7 +35,7 @@ const getPdf = (eventId: string) => {
 }
 </script>
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row v-if="eventStores != null">
       <v-col md="12" sm="12" cols="12">
         <v-card class="pa-10 mb-10">

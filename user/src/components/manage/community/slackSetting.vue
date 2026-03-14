@@ -41,7 +41,7 @@ const copyRemoveCommand = () => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-card class="pa-10 mb-10">
       <v-row>
         <v-col cols="8" sm="3" md="2">

@@ -32,7 +32,7 @@ const openInNew = (url: string) => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row class="justify-center">
       <v-col v-if="eventStore.event != null" class="justify-center" md="4" sm="6" cols="12">
         <!-- <router-link :to="getEventPath(eventStore.event.community_account, eventStore.event.event_id)"> -->

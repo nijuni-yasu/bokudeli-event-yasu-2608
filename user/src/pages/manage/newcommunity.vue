@@ -58,7 +58,7 @@ const submit = async () => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row class="justify-center">
       <v-col md="10" sm="10" cols="12">
         <CommunityEdit

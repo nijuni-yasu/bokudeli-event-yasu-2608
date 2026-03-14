@@ -32,7 +32,7 @@ const openInNew = (url: string) => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row v-if="community != null">
       <v-col cols="12">
         <div class="d-flex">

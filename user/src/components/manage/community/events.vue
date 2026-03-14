@@ -67,7 +67,7 @@ const handleCopyError = () => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row>
       <v-col cols="12" class="d-flex ga-4 pb-0">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">

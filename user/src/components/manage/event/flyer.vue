@@ -59,7 +59,7 @@ const downloadFlyer = async (size: string) => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row class="justify-center">
       <v-col cols="12">
         <div class="text-center text-h5 mt-4">{{ $t('manage.flyer.title') }}</div>

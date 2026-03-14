@@ -13,7 +13,7 @@ const eventStore = useEventStore(eventId)
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <EventEdit
       v-if="eventStore.event != null"
       :community-account="eventStore.event.community_account"
