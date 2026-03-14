@@ -214,7 +214,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="event != null && communityStore.community != null" class="justify-center">
+  <div v-if="event != null && communityStore.community != null" class="justify-center px-3 px-sm-0">
     <v-row class="justify-center mt-lg-10">
       <v-col md="8" sm="9" cols="12">
         <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
@@ -275,7 +275,7 @@ onUnmounted(() => {
       </v-col>
     </v-row>
   </div>
-  <div v-else class="justify-center">
+  <div v-else class="justify-center px-3 px-sm-0">
     <v-col cols="12" class="text-center">
       <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </v-col>

@@ -231,11 +231,11 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
 </script>
 
 <template>
-  <v-container v-if="currentUser != null" class="px-1">
+  <v-container v-if="currentUser != null" class="px-3">
     <v-form ref="form" v-model="isValidProfile" @submit.prevent="profileSubmit">
-      <v-row justify="center" class="mt-1 mt-md-16 px-1">
+      <v-row justify="center" class="mt-1 mt-md-16">
         <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
-          <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
+          <v-sheet class="rounded-lg py-14 px-6 px-sm-16">
             <div class="text-center text-h3 font-weight-bold">{{ $t('profile.profile_settings') }}</div>
 
             <v-sheet class="d-flex justify-center mt-4 mb-12">
@@ -335,7 +335,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
     </v-form>
 
     <v-row v-if="!isNewUser" justify="center" class="mt-8">
-      <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
+      <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
 
@@ -367,7 +367,7 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
     </v-row>
 
     <v-row v-if="!isNewUser" justify="center" class="mt-8">
-      <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
+      <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
         <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
           <div class="text-center text-h3 font-weight-bold">{{ $t('profile.account_linkage') }}</div>
           <div class="text-subtitle-1 mt-3 mb-10">{{ $t('profile.account_linkage_description') }}</div>
