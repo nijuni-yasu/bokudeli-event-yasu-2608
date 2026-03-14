@@ -8,14 +8,6 @@ const rebuildFilename = (filename: string) => {
   return `${name}-${Date.now()}.${ext}`
 }
 
-export const uploadEventImage = async (communityId: string, eventId: string, file: File) => {
-  const filename = rebuildFilename(file.name)
-  const uploadStorageRef = storageRef(storage, `communities/${communityId}/events/${eventId}/${filename}`)
-  const snapshot = await uploadBytes(uploadStorageRef, file)
-  const url = await getDownloadURL(snapshot.ref)
-  return url
-}
-
 export const uploadShopImage = async (partnerId: string, shopId: string, file: File) => {
   const filename = rebuildFilename(file.name)
   const uploadStorageRef = storageRef(storage, `partners/${partnerId}/shops/${shopId}/${filename}`)

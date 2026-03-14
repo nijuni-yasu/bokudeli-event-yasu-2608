@@ -20,7 +20,6 @@ import {
   type SnapshotOptions,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
-import { uploadEventImage } from '@shokujii/base/composable/uploadImage.js'
 import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { User } from '@shokujii/common/schemas/User.js'
@@ -28,6 +27,7 @@ import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
 import { AddOrderRequest } from '@shokujii/common/apis/order.js'
+import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
   addOrder as _addOrder,
   updateOrderStatus as _updateOrderStatus,
@@ -36,6 +36,7 @@ import {
 } from '@shokujii/base/apis/order.js'
 import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
+import { uploadImage } from '@shokujii/base/utils/storage.js'
 
 const TINYMCE_MAX_IMAGE_SIZE = 600
 
@@ -116,9 +117,10 @@ export const createNewEvent = async (event: BokudeliEvent, coverImage: File | nu
   if (!community.exists()) {
     throw new Error(`community ${event.community_id} does not exists`)
   }
-  // coverImageがnullでも、event_cover_urlが既に設定されている場合は画像アップロードをスキップ
   if (coverImage != null) {
-    event.event_cover_url = await uploadEventImage(community.id, event.id, coverImage)
+    // updateCoverImage を使うべきだが、event document 作成前のため今は使えない
+    // 将来的に event_cover_url を廃止するので、そのタイミングで統一する
+    event.event_cover_url = await uploadImage(coverImage, getEventCoverStoragePath(community.id, event.id))
   }
   // event_cover_urlが設定されていない場合はエラー
   if (!event.event_cover_url) {
@@ -250,9 +252,10 @@ export const useEventStore = (target: string | BokudeliEvent) => {
         console.warn(`These values must be set. eventRef: ${eventRef} communityId: ${communityId}`)
         return
       }
+      const event_cover_url = await uploadImage(coverImage, getEventCoverStoragePath(communityId, eventId))
       const data = {
         updated_at: Timestamp.now(),
-        event_cover_url: (await uploadEventImage(communityId, eventId, coverImage)) ?? '',
+        event_cover_url,
       }
       return await updateDoc(eventRef, data)
     }
@@ -265,7 +268,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
         throw new Error('communityId is undefined. Cannot upload image during new event creation.')
       }
       const resized = await resizeImage(image, TINYMCE_MAX_IMAGE_SIZE)
-      const url = await uploadEventImage(communityId, eventId, resized)
+      const url = await uploadImage(resized, generateTinymceImageStoragePath(communityId, eventId))
       return url
     }
 
