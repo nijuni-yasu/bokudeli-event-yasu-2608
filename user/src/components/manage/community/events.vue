@@ -69,7 +69,7 @@ const handleCopyError = () => {
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12" class="buttons">
+      <v-col cols="12" class="d-flex ga-4 pb-0">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">
           {{ $t('manage.new_event') }}
         </v-btn>
@@ -85,7 +85,7 @@ const handleCopyError = () => {
       </v-col>
     </v-row>
     <v-row class="justify-center">
-      <v-col cols="12" sm="12" md="12">
+      <v-col cols="12" sm="12" md="12" class="pt-0">
         <v-row v-show="eventListStore.eventStores?.length === 0">
           <v-col cols="12" class="text-h5">
             <div v-html="$t('manage.event.no_events')" />
@@ -145,9 +145,5 @@ const handleCopyError = () => {
   height: 100%;
   width: 100%;
   min-height: 300px;
-}
-.buttons {
-  display: flex;
-  gap: 16px;
 }
 </style>

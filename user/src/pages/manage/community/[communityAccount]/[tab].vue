@@ -32,32 +32,38 @@ const openInNew = (url: string) => {
 </script>
 
 <template>
-  <v-row v-if="community != null">
-    <v-col cols="12">
-      <div class="text-h3" style="display: flex; align-items: center; justify-content: flex-start">
-        <v-img class="icon" cover :src="community.community_icon_image_url" style="flex-grow: 0; margin-right: 15px" />
-        {{ community?.community_name }}
-        <v-btn
-          class="ml-3"
-          size="small"
-          variant="outlined"
-          :append-icon="mdiArrowTopRight"
-          @click="openInNew(getCommunityPath(communityAccount))"
-        >
-          コミュニティページ
-        </v-btn>
-      </div>
-    </v-col>
-  </v-row>
-  <v-row>
-    <v-col cols="12">
-      <v-tabs v-model="tab">
-        <v-tab v-for="c in components" :key="`tab_${c.value}`" :value="c.value" :to="`./${c.value}`">
-          {{ c.text }}
-        </v-tab>
-      </v-tabs>
-    </v-col>
-  </v-row>
+  <v-container>
+    <v-row v-if="community != null">
+      <v-col cols="12">
+        <div class="d-flex">
+          <div class="icon-wrapper flex-shrink-0">
+            <v-img class="icon" cover :src="community.community_icon_image_url" />
+          </div>
+          <div class="d-flex flex-column justify-center ms-3">
+            <span class="text-h3">{{ community?.community_name }}</span>
+            <v-btn
+              class="mt-2 align-self-start"
+              size="small"
+              variant="outlined"
+              :append-icon="mdiArrowTopRight"
+              @click="openInNew(getCommunityPath(communityAccount))"
+            >
+              コミュニティページ
+            </v-btn>
+          </div>
+        </div>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="12">
+        <v-tabs v-model="tab">
+          <v-tab v-for="c in components" :key="`tab_${c.value}`" :value="c.value" :to="`./${c.value}`">
+            {{ c.text }}
+          </v-tab>
+        </v-tabs>
+      </v-col>
+    </v-row>
+  </v-container>
   <v-row>
     <v-col cols="12">
       <v-tabs-window v-model="tab">
@@ -70,10 +76,17 @@ const openInNew = (url: string) => {
 </template>
 
 <style scoped lang="scss">
-.icon {
-  height: 75px;
-  aspect-ratio: 1/1;
+.icon-wrapper {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  overflow: hidden;
   border-radius: 10%;
+}
+
+.icon {
+  width: 100%;
+  height: 100%;
 }
 </style>
 

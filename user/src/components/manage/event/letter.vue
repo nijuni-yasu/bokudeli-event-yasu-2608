@@ -115,7 +115,7 @@ const handleNewLetterClick = () => {
 <template>
   <v-container v-if="selectedLetter == null">
     <v-row class="justify-center">
-      <v-col md="12" sm="9" cols="12">
+      <v-col md="12" sm="12" cols="12">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
           {{ $t('manage.new_letter') }}
         </v-btn>
