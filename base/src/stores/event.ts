@@ -35,6 +35,9 @@ import {
   deleteMenuInCart as _deleteMenuInCart,
 } from '@shokujii/base/apis/order.js'
 import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
+import { resizeImage } from '@shokujii/base/utils/image.js'
+
+const TINYMCE_MAX_IMAGE_SIZE = 600
 
 class EventRefUpdatedEvent extends Event {
   constructor(
@@ -254,6 +257,18 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return await updateDoc(eventRef, data)
     }
 
+    const uploadTinymceImage = async (image: File): Promise<string> => {
+      const eventRef = await getEventRef()
+      const communityId = eventRef.parent?.parent?.id
+      if (communityId == null) {
+        console.warn(`These values must be set. eventRef: ${eventRef} communityId: ${communityId}`)
+        throw new Error('communityId is undefined. Cannot upload image during new event creation.')
+      }
+      const resized = await resizeImage(image, TINYMCE_MAX_IMAGE_SIZE)
+      const url = await uploadEventImage(communityId, eventId, resized)
+      return url
+    }
+
     const addOrder = async (data: AddOrderRequest): Promise<string> => {
       const response = await _addOrder(data)
       return response.data.order_id
@@ -470,6 +485,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       getLoadedMenus,
       updateEvent,
       updateCoverImage,
+      uploadTinymceImage,
       addOrder,
       updateMenuCountInCart,
       deleteMenuInCart,
