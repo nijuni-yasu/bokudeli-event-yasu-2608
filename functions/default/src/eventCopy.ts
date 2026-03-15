@@ -1,10 +1,25 @@
+import { getDownloadURL, getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import type { EventCopyRequest, EventCopyResponse } from '@shokujii/common/apis/eventCopy.js'
 import { isInShopTime } from '@shokujii/common/utils/datetime.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { getCommunity } from './stores/community.js'
 import { getEvent, saveEvent, ShokujiiEvent } from './stores/event.js'
 import { getPartner } from './stores/partner.js'
 import { savePartnerMenusToEventMenus } from './eventMenusSnapshot.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('eventCopy')
+
+const copyEventImage = async (srcEvent: ShokujiiEvent, newEventId: string) => {
+  // TODO: batch 処理後 srcPath は getEventCoverStoragePath で取得するように変更する
+  // srcPath が存在しなかった場合のエラーハンドリングは呼び出し元で行う
+  // const srcPath = getEventCoverStoragePath(srcEvent.community_id, srcEvent.id)
+  const srcPath = decodeURIComponent(new URL(srcEvent.event_cover_url).pathname.split('/').slice(-1)[0])
+  const destPath = getEventCoverStoragePath(srcEvent.community_id, newEventId)
+  const bucket = getStorage().bucket()
+  return await bucket.file(srcPath).copy(destPath)
+}
 
 export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(async (request) => {
   if (!request.auth) {
@@ -74,9 +89,6 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
       value: 'in_draft',
       shop_comment: '',
     },
-    // とりあえず、いまのところは画像実体のコピーを行わないが将来的に修正する必要があるので注意
-    // https://github.com/nijuniinc/bokudeli-event-new/issues/1655#issuecomment-3866496037
-    event_cover_url: srcEvent.event_cover_url,
     event_start_datetime: startTime,
     event_end_datetime: startTime + srcEvent.event_end_datetime - srcEvent.event_start_datetime,
     event_deadline_datetime: startTime + srcEvent.event_deadline_datetime - srcEvent.event_start_datetime,
@@ -86,6 +98,17 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
     created_by: uid,
     updated_by: uid,
   })
+
+  // 画像をコピー
+  try {
+    const [newFile] = await copyEventImage(srcEvent, newEvent.id)
+    newEvent.event_cover_url = await getDownloadURL(newFile)
+  } catch (error) {
+    logger.error('Failed to copy event image', { error })
+    // フルパス指定時代のフォールバックとしてオリジナルURLをそのまま設定しておく
+    newEvent.event_cover_url = srcEvent.event_cover_url
+  }
+
   await saveEvent(uid, newEvent)
 
   // コピー元EventMenuのis_selected状態を引き継いで新規イベントにメニューをコピー
