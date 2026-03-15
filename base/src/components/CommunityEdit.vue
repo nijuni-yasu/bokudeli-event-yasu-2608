@@ -64,9 +64,9 @@ const isOpenNewCommunityDialog = ref(false)
 
 <template>
   <v-form v-model="isValid">
-    <v-card flat class="mt-2 pa-10">
-      <v-card-title class="px-5 text-h3 font-weight-bold" v-if="isNew">
-        <v-row class="pa-3 align-center">
+    <v-card flat class="mt-2 pa-3 pa-md-10">
+      <v-card-title class="px-2 px-md-5 text-h3 font-weight-bold" v-if="isNew">
+        <v-row class="pa-1 pa-md-3 align-center">
           {{ $t('community_edit.create') }}
           <v-btn
             class="ml-2"
@@ -77,7 +77,7 @@ const isOpenNewCommunityDialog = ref(false)
           />
         </v-row>
       </v-card-title>
-      <v-card-title class="px-5" v-else>
+      <v-card-title class="px-2 px-md-5" v-else>
         <v-icon size="50" class="text--primary me-3" :icon="mdiListBoxOutline" />
         {{ $t('community_edit.title') }}
       </v-card-title>
@@ -191,12 +191,12 @@ const isOpenNewCommunityDialog = ref(false)
       <slot :isValid="isValid" />
     </v-card>
 
-    <v-card flat class="mt-10 pa-10" v-if="!isNew">
-      <v-card-title class="pt-10 px-5">
+    <v-card flat class="mt-6 mt-md-10 pa-3 pa-md-10" v-if="!isNew">
+      <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiEmailOutline" />
         {{ $t('community_edit.email_setting') }}
       </v-card-title>
-      <v-card-text class="px-5 pb-5 text-body-2">
+      <v-card-text class="px-2 px-md-5 pb-5 text-body-2">
         {{ $t('community_edit.email_hint') }}
       </v-card-text>
 
@@ -214,7 +214,7 @@ const isOpenNewCommunityDialog = ref(false)
         </v-row>
       </v-card-text>
 
-      <v-card-title class="pt-10 px-5">
+      <v-card-title class="pt-6 pt-md-10 px-2 px-md-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiWeb" />
         {{ $t('community_edit.sns_setting') }}
       </v-card-title>
@@ -289,11 +289,11 @@ const isOpenNewCommunityDialog = ref(false)
       </v-card-text>
 
       <!-- Activity -->
-      <v-card-title class="pt-10 pl-5">
+      <v-card-title class="pt-6 pt-md-10 pl-2 pl-md-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiAccountOutline" />
         {{ $t('community_edit.manager_info') }}
       </v-card-title>
-      <v-card-text class="px-5 pb-10 text-body-2">
+      <v-card-text class="px-2 px-md-5 pb-6 pb-md-10 text-body-2">
         {{ $t('community_edit.manager_info_hint') }}
       </v-card-text>
 
@@ -373,11 +373,11 @@ const isOpenNewCommunityDialog = ref(false)
       </v-card-text>
 
       <!-- 請求書情報 -->
-      <v-card-title class="pt-10 pl-5">
+      <v-card-title class="pt-6 pt-md-10 pl-2 pl-md-5">
         <v-icon size="50" class="text--primary me-3" :icon="mdiAccountCreditCardOutline" />
         {{ $t('community_edit.bill_info') }}
       </v-card-title>
-      <v-card-text class="px-5 pb-10 text-body-2">
+      <v-card-text class="px-2 px-md-5 pb-6 pb-md-10 text-body-2">
         <div v-html="$t('community_edit.bill_info_hint')" />
       </v-card-text>
       <v-card-text class="pt-5">

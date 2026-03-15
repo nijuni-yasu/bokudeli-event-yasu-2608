@@ -14,7 +14,7 @@ const updated = (eventId: string) => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row class="justify-center">
       <v-col md="12" sm="12" cols="12">
         <EventEdit :community-account="communityAccount" @updated="updated" />

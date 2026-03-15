@@ -44,9 +44,9 @@ const websiteUrl = computed(() =>
   <v-row class="user-bio-panel">
     <!-- user profile -->
     <v-col cols="12">
-      <v-card class="pt-8">
+      <v-card class="pt-8 mx-4 mx-sm-0">
         <v-card-title class="d-flex align-center flex-column mb-4">
-          <UserAvatar :user="userData" :size="200" />
+          <UserAvatar :user="userData" :size="180" />
         </v-card-title>
         <v-card-text>
           <div class="text-h5 text-center">{{ userName }}</div>

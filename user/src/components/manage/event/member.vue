@@ -81,7 +81,7 @@ const downloadCsvFile = () => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row class="justify-center">
       <v-col md="12" sm="12" cols="12" class="d-flex justify-end">
         <v-btn variant="outlined" :prepend-icon="mdiDownload" @click="downloadCsvFile">{{

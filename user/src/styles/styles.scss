@@ -11,3 +11,27 @@ img.logo {
 a {
   cursor: pointer;
 }
+
+/* manage 画面: スマホでパディングを小さく、PC は従来どおり */
+.manage-container {
+  padding-inline: 12px !important;
+}
+
+@media (min-width: 600px) {
+  .manage-container {
+    padding-inline: 16px !important;
+  }
+}
+
+@media (min-width: 960px) {
+  .manage-container {
+    padding-inline: 24px !important;
+  }
+}
+
+/* main コンテンツエリア: スマホでパディングを小さく */
+@media (max-width: 599px) {
+  .layout-page-content {
+    padding-inline: 20px !important;
+  }
+}

@@ -286,7 +286,7 @@ const supports = [
       </v-card>
       <!-- shokujii サービス概要 -->
       <v-card class="pa-5 pa-md-8">
-        <v-container class="my-10">
+        <v-container class="manage-container my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
@@ -318,7 +318,7 @@ const supports = [
             </v-col>
           </v-row>
         </v-container>
-        <v-container class="my-10">
+        <v-container class="manage-container my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
@@ -345,7 +345,7 @@ const supports = [
             />
           </v-row>
         </v-container>
-        <v-container class="my-10">
+        <v-container class="manage-container my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
@@ -371,7 +371,7 @@ const supports = [
             />
           </v-row>
         </v-container>
-        <v-container class="my-10">
+        <v-container class="manage-container my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>
@@ -396,7 +396,7 @@ const supports = [
             />
           </v-row>
         </v-container>
-        <v-container class="my-10">
+        <v-container class="manage-container my-10">
           <v-row class="text-center">
             <v-col cols="12">
               <v-card-text>

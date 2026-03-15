@@ -113,7 +113,7 @@ const handleNewLetterClick = () => {
 </script>
 
 <template>
-  <v-container v-if="selectedLetter == null">
+  <v-container v-if="selectedLetter == null" class="manage-container">
     <v-row class="justify-center">
       <v-col md="12" sm="9" cols="12">
         <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
@@ -149,7 +149,7 @@ const handleNewLetterClick = () => {
       </v-col>
     </v-row>
   </v-container>
-  <v-container v-else>
+  <v-container v-else class="manage-container">
     <v-row class="justify-center">
       <v-col md="10" sm="10" cols="12">
         <LetterEdit :letter="selectedLetter" @update:letter="onUpdated" />
@@ -210,13 +210,11 @@ const handleNewLetterClick = () => {
   line-height: 2rem;
 }
 .title {
-  font-family: Noto Sans JP;
   font-size: 22px;
   font-weight: 700;
   text-align: left;
 }
 .description {
-  font-family: Noto Sans JP;
   font-size: 14px;
   font-weight: 400;
   line-height: 30px;

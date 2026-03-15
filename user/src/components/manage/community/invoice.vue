@@ -35,7 +35,7 @@ const getPdf = (eventId: string) => {
 }
 </script>
 <template>
-  <v-container>
+  <v-container class="manage-container">
     <v-row v-if="eventStores != null">
       <v-col md="12" sm="12" cols="12">
         <v-card class="pa-10 mb-10">
@@ -112,13 +112,11 @@ const getPdf = (eventId: string) => {
 
 <style scoped>
 .title {
-  font-family: Noto Sans JP;
   font-size: 22px;
   font-weight: 700;
   text-align: left;
 }
 .description {
-  font-family: Noto Sans JP;
   font-size: 14px;
   font-weight: 400;
   line-height: 30px;
