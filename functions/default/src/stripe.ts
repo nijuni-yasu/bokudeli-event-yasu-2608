@@ -143,7 +143,6 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       customer_creation: 'if_required',
       line_items: lineItems,
       mode: 'payment',
-      payment_method_types: ['card'],
       expires_at: Math.floor(now / 1000) + CHECKOUT_SESSION_EXPIRES_SECONDS,
       metadata: {
         eventId: event_id,
