@@ -150,7 +150,14 @@ const downloadReceipt = async (order: EventOrder) => {
 </script>
 
 <template>
-  <v-row v-if="user != null" justify="center">
+  <v-container
+    v-if="user != null && user.is_deleted"
+    class="d-flex align-center justify-center"
+    style="min-height: 60vh"
+  >
+    <p class="text-body-1 text-medium-emphasis">{{ $t('user_profile.account_deleted') }}</p>
+  </v-container>
+  <v-row v-else-if="user != null" justify="center">
     <v-col cols="12" sm="8" md="3">
       <UserBioPanel :user-data="user" :is-editable="isOwner" />
     </v-col>

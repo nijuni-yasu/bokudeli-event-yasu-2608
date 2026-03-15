@@ -524,6 +524,7 @@ export default {
   user_profile: {
     logout: 'ログアウトする',
     logout_modal_title: 'ログアウトしますか？',
+    account_deleted: 'このユーザーは利用できません',
   },
   auth: {
     action: {
