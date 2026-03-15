@@ -11,6 +11,7 @@ import { Community } from '@shokujii/common/schemas/Community.js'
 import { CommunityMember, CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
 import { CommunityInvite } from '@shokujii/common/schemas/CommunityInvite.js'
 import { getCommunityInvitationUrl } from '../utils/urls.js'
+import { getUserRef } from './user.js'
 
 const EXPIRED_TIME = 7 * 1000 * 60 * 60 * 24 // 7 days
 
@@ -170,4 +171,67 @@ export const getCommunityByAccount = async (
 
   const snapshot = await (transaction === undefined ? communityRef.get() : transaction.get(communityRef))
   return snapshot.empty ? undefined : snapshot.docs[0].data()
+}
+
+/**
+ * ユーザーが唯一の管理者であるコミュニティが存在するかチェックする。
+ * トランザクション内で呼び出し、取得〜削除の整合性を担保する。
+ *
+ * @param userId チェック対象のユーザーID
+ * @param transaction Firestore トランザクション（必須）
+ * @returns 唯一の管理者であるコミュニティが1件以上あれば true
+ */
+export const hasSoleManagerCommunity = async (userId: string, transaction: Transaction): Promise<boolean> => {
+  const db = getFirestore()
+  const userRef = getUserRef(userId)
+  const communitiesRef = db
+    .collection('communities')
+    .where('managers', 'array-contains', userRef)
+    .withConverter(communityConverter)
+  const snapshot = await transaction.get(communitiesRef)
+  return snapshot.docs.some((d) => {
+    const managers = d.data().managers ?? []
+    return managers.length === 1
+  })
+}
+
+/**
+ * ユーザーがメンバーであるコミュニティのドキュメント一覧を取得する。
+ * トランザクション内で呼び出し、取得〜削除の整合性を担保する。
+ *
+ * @param userId チェック対象のユーザーID
+ * @param transaction Firestore トランザクション（必須）
+ * @returns 該当コミュニティの QueryDocumentSnapshot 配列
+ */
+export const getCommunitiesWhereUserIsMember = async (
+  userId: string,
+  transaction: Transaction,
+): Promise<QueryDocumentSnapshot<ShokujiiCommunity>[]> => {
+  const db = getFirestore()
+  const userRef = getUserRef(userId)
+  const communitiesRef = db
+    .collection('communities')
+    .where('members', 'array-contains', userRef)
+    .withConverter(communityConverter)
+  const snapshot = await transaction.get(communitiesRef)
+  return snapshot.docs
+}
+
+/**
+ * コミュニティの members サブコレクションからユーザーを削除する。
+ * トランザクション内で呼び出すこと。
+ *
+ * @param communityId コミュニティID
+ * @param userId 削除するユーザーID
+ * @param transaction Firestore トランザクション（必須）
+ */
+export const removeMemberFromCommunity = async (
+  communityId: string,
+  userId: string,
+  transaction: Transaction,
+): Promise<void> => {
+  const db = getFirestore()
+  const communityRef = db.collection('communities').doc(communityId)
+  const memberRef = communityRef.collection('members').doc(userId).withConverter(communityMemberConverter)
+  transaction.delete(memberRef)
 }

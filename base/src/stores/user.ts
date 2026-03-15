@@ -6,6 +6,7 @@ import {
   updateDoc,
   onSnapshot,
   type Unsubscribe,
+  type DocumentReference,
   FirestoreDataConverter,
   DocumentData,
   QueryDocumentSnapshot,
@@ -26,11 +27,19 @@ const userConverter: FirestoreDataConverter<User> = {
   },
 }
 
+/**
+ * users コレクションの DocumentReference（withConverter 付き）を返す。
+ * array-contains 等のクエリで使用する際も、必ずこの ref を使うこと。
+ */
+export const getUserRef = (userId: string): DocumentReference<User> => {
+  return doc(db, 'users', userId).withConverter(userConverter)
+}
+
 export type UserStore = ReturnType<typeof useUserStore>
 
 export const useUserStore = (userId: string) => {
   const store = defineStore(`/users/${userId}`, () => {
-    const userRef = doc(db, 'users', userId).withConverter(userConverter)
+    const userRef = getUserRef(userId)
     const exists = ref<boolean | null>(null)
     const user = ref<User | null>(null)
 

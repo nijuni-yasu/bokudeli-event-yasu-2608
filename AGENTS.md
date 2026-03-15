@@ -97,6 +97,17 @@ npm -w <pkg> run format:check
 2. `common` / `base` にある再利用可能なコードを優先的に使用し、重複実装を避ける
 3. Firebase Security Rules (`firestore.rules`, `storage.rules`) へのセキュリティ影響を意識する
 
+### Firestore 操作の必須ルール（厳守）
+
+- **DB 操作は必ず store 経由**: `db.collection()`、`update`、`set`、`delete` 等を直接呼ばない。`base/src/stores/` または `functions/default/src/stores/` の関数を経由すること。
+- **xxxRef は必ず withConverter 付き**: DocumentReference を取得する際は store の `withConverter` 付き ref を使う（Zod バリデーションを維持するため）。
+- **Functions の Firestore 操作**: `functions/default` では `documents/実装メモ/functionsにおける store の使い方.md` を参照し、store 関数のみで読み書きすること。
+
+### スキーマの日付・時刻フィールド（common/src/schemas/firebase）
+
+- **DbSchema**: 日付・時刻フィールドには `TimestampSchema` を使う（Firestore に Timestamp 型で保存するため）
+- **AppSchema**: 日付・時刻フィールドには `EpochMillisSchema` を使う（Firestore の Timestamp を number に正規化し、アプリ側で扱いやすくするため）
+
 ### パッケージ依存関係の注意
 
 `base` は本来 `common` のみに依存すべきだが、現状 `user` 等との依存反転が発生している箇所がある。新規コード作成時はこの依存反転を避けて設計すること。

@@ -41,3 +41,9 @@ export const updateProfileFromProviders = async (input: UpdateProfileFromProvide
   )
   return f(input)
 }
+
+export const deleteUserAccount = async (): Promise<{ success: true }> => {
+  const f = httpsCallable<void, { success: true }>(functions, 'deleteUserAccount')
+  const result = await f()
+  return result.data
+}

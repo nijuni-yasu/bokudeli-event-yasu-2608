@@ -1,10 +1,13 @@
 import {
   DocumentData,
+  DocumentReference,
+  FieldValue,
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
   Transaction,
 } from 'firebase-admin/firestore'
+import { DateTime } from 'luxon'
 import { logger } from 'firebase-functions'
 import { User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
@@ -38,27 +41,48 @@ const userPersonalInformationConverter: FirestoreDataConverter<UserPersonalInfor
   },
 }
 
-export const getUser = async (userId: string, withPersonalInformation: boolean): Promise<ShokujiiUser | undefined> => {
+/**
+ * users コレクションの DocumentReference（withConverter 付き）を返す。
+ * array-contains 等のクエリで使用する際も、必ずこの ref を使うこと。
+ */
+export const getUserRef = (userId: string): DocumentReference<ShokujiiUser> => {
+  const db = getFirestore()
+  return db.collection('users').doc(userId).withConverter(userConverter)
+}
+
+export const getUser = async (
+  userId: string,
+  withPersonalInformation: boolean,
+  transaction?: Transaction,
+): Promise<ShokujiiUser | undefined> => {
   const db = getFirestore()
   const userRef = db.collection('users').doc(userId).withConverter(userConverter)
-  const user = (await userRef.get()).data()
+  const snapshot = transaction === undefined ? await userRef.get() : await transaction.get(userRef)
+  const user = snapshot.data()
   if (user == null) {
     return undefined
   }
   if (withPersonalInformation) {
-    const userPersonalInformation = await getUserPersonalInformation(userId)
+    const userPersonalInformation = await getUserPersonalInformation(userId, transaction)
     user.user_email = userPersonalInformation?.user_email ?? ''
   }
   return user
 }
 
-export const getUserPersonalInformation = async (userId: string): Promise<UserPersonalInformation | undefined> => {
+export const getUserPersonalInformation = async (
+  userId: string,
+  transaction?: Transaction,
+): Promise<UserPersonalInformation | undefined> => {
   const db = getFirestore()
   const userPersonalInformationRef = db
     .collection('users_personal_information')
     .doc(userId)
     .withConverter(userPersonalInformationConverter)
-  return (await userPersonalInformationRef.get()).data()
+  const snapshot =
+    transaction === undefined
+      ? await userPersonalInformationRef.get()
+      : await transaction.get(userPersonalInformationRef)
+  return snapshot.data()
 }
 
 /**
@@ -113,4 +137,50 @@ export const saveUser = async (user: ShokujiiUser, transaction?: Transaction) =>
     transaction.set(userRef, user, { merge: true })
     transaction.set(userPersonalInformationRef, upi, { merge: true })
   }
+}
+
+const ANONYMIZED_USER_NAME = '-'
+
+/**
+ * ユーザーを匿名化する。既存データを取得し、匿名化した User インスタンスで上書きする。
+ * トランザクション内で呼び出すこと。
+ */
+export const anonymizeUser = async (uid: string, transaction: Transaction): Promise<void> => {
+  const existingUser = await getUser(uid, false, transaction)
+  const userRef = getUserRef(uid)
+  const anonymizedUser = new ShokujiiUser(uid, {
+    ...(existingUser ?? {}),
+    user_name: ANONYMIZED_USER_NAME,
+    user_description: '',
+    user_image_url: '',
+    user_sns_facebook: '',
+    user_sns_facebook_name: '',
+    user_sns_twitter: '',
+    user_sns_instagram: '',
+    user_sns_website: '',
+    // user_account は削除（下の update でフィールドごと削除）
+    is_deleted: true,
+    deleted_at: DateTime.now().toMillis(),
+    created_at: existingUser?.created_at ?? DateTime.now().toMillis(),
+  })
+  transaction.set(userRef, anonymizedUser, { merge: true })
+  transaction.update(userRef, { user_account: FieldValue.delete() })
+}
+
+/**
+ * ユーザー個人情報を匿名化する。ドキュメントが存在しない場合も merge で作成する。
+ * トランザクション内で呼び出すこと。
+ */
+export const anonymizeUserPersonalInformation = async (uid: string, transaction: Transaction): Promise<void> => {
+  const db = getFirestore()
+  const userPersonalInformationRef = db
+    .collection('users_personal_information')
+    .doc(uid)
+    .withConverter(userPersonalInformationConverter)
+  const anonymized = new UserPersonalInformation(uid, {
+    user_email: '',
+    is_deleted: true,
+    deleted_at: DateTime.now().toMillis(),
+  })
+  transaction.set(userPersonalInformationRef, anonymized, { merge: true })
 }

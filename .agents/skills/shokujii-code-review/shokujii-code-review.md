@@ -75,6 +75,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] ソート用のフィールドを文字列型で定義していないか（数値型が正しい）
 - [ ] 独自の日付文字列変換を実装していないか（`luxon` または `zod` の `transform` を使う）
 - [ ] 親ドキュメントが既に持っている情報を子ドキュメントに重複させていないか
+- [ ] DbSchema の日付・時刻フィールドに `TimestampSchema` を使っているか
+- [ ] AppSchema の日付・時刻フィールドに `EpochMillisSchema` を使っているか
 
 ### Composable / Store の役割分担
 - [ ] 計算ロジックは composable より store で行うようになっているか
@@ -260,6 +262,22 @@ const now = new Date().getTime()
 // OK: luxon を使う
 import { DateTime } from 'luxon'
 const now = DateTime.now().toMillis()
+```
+
+### NG: 日付・時刻フィールドのスキーマの使い分け
+
+```typescript
+// NG: DbSchema で EpochMillisSchema を使う → Firestore に number で保存され、created_at 等と型が揃わない
+deleted_at: EpochMillisSchema.optional()
+
+// NG: AppSchema で TimestampSchema を使う → アプリ側で Timestamp オブジェクトになり、比較・表示が煩雑
+deleted_at: TimestampSchema.optional()
+
+// OK: DbSchema には TimestampSchema、AppSchema には EpochMillisSchema
+// DbSchema
+deleted_at: TimestampSchema.optional()
+// AppSchema
+deleted_at: EpochMillisSchema.optional()
 ```
 
 ### NG: ローディング状態を特定ドキュメントの読み込みで判断する
