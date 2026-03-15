@@ -87,6 +87,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] ソート用のフィールドを文字列型で定義していないか（数値型が正しい）
 - [ ] 独自の日付文字列変換を実装していないか（`luxon` または `zod` の `transform` を使う）
 - [ ] 親ドキュメントが既に持っている情報を子ドキュメントに重複させていないか
+- [ ] DbSchema の日付・時刻フィールドに `TimestampSchema` を使っているか
+- [ ] AppSchema の日付・時刻フィールドに `EpochMillisSchema` を使っているか
 
 ### Composable / Store の役割分担
 
