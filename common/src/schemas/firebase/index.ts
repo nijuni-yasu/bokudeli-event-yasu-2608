@@ -86,6 +86,13 @@ export const EpochMillisSchema = z
     throw new Error('Invalid value for EpochMillisSchema')
   })
 
+/**
+ * 空文字を Firestore のフィールド削除（FieldValue.delete() または deleteField()）に変換する Zod スキーマ。
+ *
+ * Firestore では、string 型において「空文字 ""」と「フィールドなし」は意味が異なる。
+ * ユーザーが値を設定しない場合は、空文字として保存するのではなく、フィールド自体を存在させない（フィールドなし）とするためのスキーマ。
+ * DbSchema の optional 文字列フィールドに使う。
+ */
 export const NonEmptyStringSchema = z.string().transform((value) => {
   if (value == null || value === '') {
     return FieldValue.delete != null ? FieldValue.delete() : deleteField()
