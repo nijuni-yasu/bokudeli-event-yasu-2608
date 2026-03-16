@@ -60,8 +60,7 @@ Firestore DB に書き込む際に適用されるスキーマです。
 
 - 基本的に `nullable()` は使用しない方針です
   - 明示的に `null` を使用しないといけない特殊なケースを除き、使用しないでください
-- 文字列に関しては、ユーザーが明示的に空文字を設定することが可能な場合は `z.string().optional()` を使用
-  - そうでない場合は `NonEmptyStringSchema` を使用してください
+- 文字列に関しては、optional 文字列は `NonEmptyStringSchema` を使用してください。空文字を FieldValue.delete に変換し、ユーザー未設定時はフィールドなしとする（空文字とフィールドなしは Firestore で意味が異なる）。空文字を DB に保存する特殊ケースは `z.string().optional()` も検討可
 - Timestamp は `TimestampSchema` を使用してください
 
 ### 例
@@ -272,7 +271,7 @@ const XxxAppSchema = z.object({
 
 ### NonEmptyStringSchema
 
-空文字列を Firestore の `FieldValue.delete()` に変換するスキーマです。DB に書き込む際に、空文字列のフィールドを削除したい場合に使用します。
+空文字を Firestore の `FieldValue.delete()` に変換するスキーマです。Firestore では string において「空文字 ""」と「フィールドなし」は意味が異なる。ユーザーが値を設定しない場合は、空文字として保存するのではなく、フィールド自体を存在させない（フィールドなし）とするためのスキーマ。DbSchema の optional 文字列フィールドに使用します。
 
 ```typescript
 import { NonEmptyStringSchema } from './firebase/index.js'

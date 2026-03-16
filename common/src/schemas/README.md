@@ -1,6 +1,6 @@
 # Schemas
 
-Firestore の各 Docuemnt に対応する zod schema を定義するディレクトリです。
+Firestore の各 Document に対応する zod schema を定義するディレクトリです。
 各ドキュメントに対して、以下2タイプの schema を用意します。
 
 ## xxxDbSchema
@@ -9,7 +9,7 @@ Firestore DB に書き込む際に適用される schema です。
 
 - 基本的に `nullable()` は使用しない方針です
   明示的に `null` を使用しないといけない特殊なケースを除き、使用しないでください
-- 文字列に関しては、ユーザーが明示的に空文字を設定することが可能な場合は `z.string().optional()` を使用、そうでない場合は `NonEmptyStringSchema` を使用してください
+- 文字列に関しては、optional 文字列は `NonEmptyStringSchema` を使用してください。空文字を FieldValue.delete に変換し、ユーザー未設定時はフィールドなしとする（空文字とフィールドなしは Firestore で意味が異なる）。空文字を DB に保存する特殊ケースは `z.string().optional()` も検討可
 - Timestamp は `TimestampSchema` を使用してください
 
 ## xxxAppSchema
