@@ -135,7 +135,10 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       throw new HttpsError('internal', '決済明細の生成に失敗しました')
     }
 
-    const stripe = new Stripe(STRIPE_API_KEY.value(), { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
+    const stripe = new Stripe(STRIPE_API_KEY.value(), {
+      apiVersion: '2026-02-25.clover',
+      maxNetworkRetries: 3,
+    })
     const communityAccount = event.community_account
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       success_url: `${getUserUrl(uid)}?eventId=${event_id}&communityAccount=${communityAccount}&isPosted=${isPosted}`,

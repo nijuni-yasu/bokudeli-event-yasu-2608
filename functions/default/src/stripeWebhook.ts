@@ -32,7 +32,10 @@ export const stripeWebhook = onRequest(
     secrets: ['STRIPE_API_KEY', 'STRIPE_WEBHOOK_ENDPOINT_SECRET', 'SENDGRID_API_KEY'],
   },
   async (req, res) => {
-    const stripe = new Stripe(STRIPE_API_KEY.value(), { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
+    const stripe = new Stripe(STRIPE_API_KEY.value(), {
+      apiVersion: '2026-02-25.clover',
+      maxNetworkRetries: 3,
+    })
 
     let event: Stripe.Event
     try {

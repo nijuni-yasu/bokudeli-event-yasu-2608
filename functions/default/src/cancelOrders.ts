@@ -137,7 +137,10 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
       }
     }
 
-    const stripe = new Stripe(STRIPE_API_KEY.value(), { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
+    const stripe = new Stripe(STRIPE_API_KEY.value(), {
+      apiVersion: '2026-02-25.clover',
+      maxNetworkRetries: 3,
+    })
     const refunds: CancelOrdersResponse['refunds'] = []
     const refundErrors: CancelOrdersRefundError[] = []
 
