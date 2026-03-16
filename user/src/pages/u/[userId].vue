@@ -16,7 +16,6 @@ import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getReceiptPath } from '@/router/utils'
 import { stripeRefunds } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
-import type { BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 
@@ -92,7 +91,7 @@ const memberCommunities = computed(() =>
     }
     return {
       community: communityStore.community,
-      members: communityStore.members.filter((m) => m != null) as BokudeliCommunityMember[],
+      members: communityStore.members.filter((m) => m !== undefined),
     }
   }),
 )
@@ -107,7 +106,7 @@ const managerCommunities = computed(() =>
     }
     return {
       community: communityStore.community,
-      members: communityStore.members.filter((m) => m != null) as BokudeliCommunityMember[],
+      members: communityStore.members.filter((m) => m !== undefined),
     }
   }),
 )

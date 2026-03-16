@@ -168,7 +168,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       })
     }
 
-    const retrievedMembers = ref<BokudeliCommunityMember[]>([])
+    const retrievedMembers = ref<(BokudeliCommunityMember | undefined)[]>([])
     const memberLoadExecutor = new TaskExecutor(MEMBER_LOAD_BATCH_SIZE)
     let memberLoadGeneration = 0
     const loadMembers = () => {
@@ -189,24 +189,27 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
         memberLoadExecutor.addTask(async () => {
           const userStore = useUserStore(memberRef.id)
           const user = await userStore.getLoadedUser()
-          if (user == null) {
-            return
-          }
           // 再取得が発動済みなら古い結果を破棄（世代競合の防止）
           if (currentGeneration !== memberLoadGeneration) {
             return
           }
-          const roles: CommunityMemberRolesType[] = []
-          if (_managers.find((manager) => manager.id === memberRef.id) != null) {
-            roles.push('manager')
+          if (user === undefined) {
+            retrievedMembers.value.push(undefined)
+          } else {
+            const roles: CommunityMemberRolesType[] = []
+            if (_managers.find((manager) => manager.id === memberRef.id) != null) {
+              roles.push('manager')
+            }
+            retrievedMembers.value.push({ ...user, roles } as BokudeliCommunityMember)
           }
-          retrievedMembers.value.push({ ...user, roles } as BokudeliCommunityMember)
         })
       })
     }
 
     let isFirstMemberLoad = true
-    const members = computed<(BokudeliCommunityMember | null)[] | null>(() => {
+    // 読み込み中は null, ユーザーが存在しない場合は undefined
+    // TODO 仕様検討
+    const members = computed<(BokudeliCommunityMember | null | undefined)[] | null>(() => {
       // 遅延評価
       if (isFirstMemberLoad) {
         isFirstMemberLoad = false
