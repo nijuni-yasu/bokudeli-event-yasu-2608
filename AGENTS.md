@@ -34,6 +34,7 @@ AIエージェント向けプロジェクトガイド。
 | Firestore の読み書き・ルール | `/firebase-firestore-standard` | 実装時         |
 | Firestore store 操作（base/functions） | `/shokujii-firestore` | store 追加・修正時、Firestore 読み書き時、仕様書に従った実装で Firestore を触る場合 |
 | common の Zod スキーマ設計 | `/shokujii-common-schemas` | 新規スキーマ追加時、既存スキーマのフィールド追加時、common/src/schemas や common/src/apis を触る場合 |
+| Firebase Functions 実装 | `/shokujii-functions-implementation` | Callable / Scheduled / メール送信の Function 追加・修正時、functions/default を触る場合 |
 | Stripe 決済実装            | `/stripe-integration`          | 実装時         |
 | UI の設計・実装           | `/frontend-design`             | 新規ページ・コンポーネント作成時、スタイリング・ビジュアル改善時 |
 | UI のレビュー・品質チェック | `/web-design-guidelines`       | アクセシビリティ確認時、UX レビュー時、PR マージ前の品質チェック時 |
@@ -101,6 +102,7 @@ npm -w <pkg> run format:check
 3. Firebase Security Rules (`firestore.rules`, `storage.rules`) へのセキュリティ影響を意識する
 4. 仕様書・ドキュメントに基づく実装で、base/functions の store や Firestore の読み書きが含まれる場合は、shokujii-firestore を参照すること
 5. 仕様書・ドキュメントに基づく実装で、common のスキーマ（common/src/schemas、common/src/apis）を触る場合は、shokujii-common-schemas を参照すること
+6. functions/default で Function を追加・修正する場合は、shokujii-functions-implementation を参照すること
 
 ### Firestore 操作の必須ルール（厳守）
 
