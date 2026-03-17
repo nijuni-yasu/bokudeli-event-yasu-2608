@@ -90,7 +90,7 @@ export const send = async (data: MailDataRequired | MailDataRequired[]): Promise
 
     logger.info('Email sent successfully via SendGrid', {
       statusCode: response[0].statusCode,
-      recipientCount: data instanceof Array ? data.length : 1,
+      targetCount: data instanceof Array ? data.length : 1,
     })
 
     return response

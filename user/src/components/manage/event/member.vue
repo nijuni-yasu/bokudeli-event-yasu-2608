@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
-import { useEventStore, type EventStore, type BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
-import { getUserPath } from '@/router/utils'
+import { useCommunityStore } from '@shokujii/base/stores/community.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useRouter } from 'vue-router'
+import { mdiEmailOutline } from '@mdi/js'
+import { getUserPath, getManageCommunitySettingsPath } from '@/router/utils'
 import { mdiFacebook, mdiDownload } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
@@ -16,7 +21,19 @@ const { t: $t, d: $d } = useI18n()
 const route = useRoute()
 const eventId = route.params.eventId as string
 
+const notification = useNotification()
+const router = useRouter()
+
 const eventStore = useEventStore(eventId) as EventStore
+const communityAccount = computed(() => eventStore.event?.community_account ?? '')
+const communityStore = computed(() => {
+  const account = communityAccount.value
+  if (account) {
+    return useCommunityStore(account)
+  }
+  return null
+})
+const canSendEmail = computed(() => !!communityStore.value?.community?.community_email)
 const menus = computed<Array<[EventOrder, User, OrderMenuType]>>(
   () =>
     eventStore.orders?.flatMap((order) => {
@@ -37,9 +54,7 @@ const canceledMenus = computed(() =>
 )
 const tables = computed(() => [orderedMenus.value, cartMenus.value, canceledMenus.value])
 
-// const canSendEmail = computed(() => !isEmpty(userStore.user?.user_email))
-
-const targetMember = ref<BokudeliEventMember | null>(null)
+const targetMember = ref<User | null>(null)
 const isEmailDialogOpen = computed({
   get: () => targetMember.value != null,
   set: (val) => {
@@ -48,9 +63,25 @@ const isEmailDialogOpen = computed({
     }
   },
 })
-// const clickContact = (member: EventMember) => {
-//   targetMember.value = member
-// }
+const isOpenEmailSetupDialog = ref(false)
+const clickEmailButton = (member: User) => {
+  if (!canSendEmail.value) {
+    isOpenEmailSetupDialog.value = true
+    return
+  }
+  targetMember.value = member
+}
+const goToCommunitySettings = () => {
+  if (communityAccount.value) {
+    router.push(getManageCommunitySettingsPath(communityAccount.value))
+  }
+}
+const onEmailSent = () => {
+  notification.show($t('email_dialog.sent'), 'success')
+}
+const onEmailFailed = () => {
+  // エラー通知は EmailDialog 内で表示
+}
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
 }
@@ -112,7 +143,7 @@ const downloadCsvFile = () => {
                       </th>
                       <th>{{ $t('manage.member.order') }}</th>
                       <th>{{ $t(`manage.member.date.${menus[0][0].status}`) }}</th>
-                      <!-- <th></th> -->
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -168,18 +199,15 @@ const downloadCsvFile = () => {
                       <td class="date-cell text-body-2">
                         {{ getDateString(order) }}
                       </td>
-                      <!--
-                      <td>
+                      <td class="text-center number-cell">
                         <v-btn
-                          v-if="
-                            canSendEmail && !isEmpty(member.user_email) && member.user_id !== userStore.user?.user_id
-                          "
-                          :icon="mdiEmail"
+                          :icon="mdiEmailOutline"
                           variant="text"
-                          @click="clickContact(member)"
+                          size="small"
+                          :color="canSendEmail ? undefined : 'grey-400'"
+                          @click="clickEmailButton(member)"
                         />
                       </td>
-                      -->
                     </tr>
                   </tbody>
                 </v-table>
@@ -190,7 +218,25 @@ const downloadCsvFile = () => {
       </v-col>
     </v-row>
   </v-container>
-  <EmailDialog v-if="targetMember != null" v-model="isEmailDialogOpen" :toUser="targetMember" />
+  <EmailDialog
+    v-if="targetMember != null"
+    v-model="isEmailDialogOpen"
+    :toUser="targetMember"
+    :communityAccount="communityAccount"
+    :communityId="communityStore?.community?.community_id ?? ''"
+    :eventId="eventId"
+    :replyTo="communityStore?.community?.community_email ?? ''"
+    @sent="onEmailSent"
+    @failed="onEmailFailed"
+  />
+  <confirm-dialog v-model="isOpenEmailSetupDialog" :ok-text="'OK'" max-width="700px" :ok-click="goToCommunitySettings">
+    <v-card-text class="text-center py-10 text-h4">
+      {{ $t('manage.letter.email_not_set.title') }}
+    </v-card-text>
+    <v-card-text class="pb-0" style="line-height: 2.4rem">
+      <div v-html="$t('manage.letter.email_not_set.description')" />
+    </v-card-text>
+  </confirm-dialog>
 </template>
 
 <style scoped>

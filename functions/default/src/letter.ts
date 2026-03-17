@@ -1,9 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
+import { sendIndividualLetterRequestSchema, sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
 import { getCommunity, getCommunityByAccount } from './stores/community.js'
 import { getEvent } from './stores/event.js'
-import { getLetter, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
+import { getLetter, getLetterRef, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
 import { getUserPersonalInformation, getUser } from './stores/user.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import { send } from './utils/sendgrid.js'
@@ -54,7 +54,7 @@ async function getCommunityMemberIds(communityId: string): Promise<string[]> {
 }
 
 /**
- * イベント参加者のユーザーIDを取得
+ * イベント参加者のユーザーIDを取得（ordered のみ）
  */
 async function getParticipantIds(eventId: string): Promise<string[]> {
   try {
@@ -73,6 +73,30 @@ async function getParticipantIds(eventId: string): Promise<string[]> {
     return orders.map((order) => order.user_id)
   } catch (error) {
     logger.error('Error fetching event participants', { eventId, error })
+    throw error
+  }
+}
+
+/**
+ * イベントメンバー一覧に表示されるユーザーIDを取得（ordered / in_cart / canceled の全注文）
+ */
+async function getEventMemberIds(eventId: string): Promise<string[]> {
+  try {
+    if (!eventId) {
+      logger.warn('No event_id provided', { eventId })
+      return []
+    }
+
+    const event = await getEvent(eventId)
+    if (!event) {
+      logger.warn('Event not found', { eventId })
+      return []
+    }
+
+    const orders = await event.getOrders()
+    return [...new Set(orders.map((order) => order.user_id))]
+  } catch (error) {
+    logger.error('Error fetching event members', { eventId, error })
     throw error
   }
 }
@@ -191,7 +215,8 @@ export async function sendLetter(_: number, end: number): Promise<void> {
       }
 
       const communityId = community.id
-      const communityEmail = community.community_email || DEFAULT_FROM
+      const communityEmail =
+        community.community_email != null && community.community_email !== '' ? community.community_email : DEFAULT_FROM
       const communityData = {
         community_name: community.community_name,
         community_url: getCommunityUrl(communityAccount),
@@ -226,7 +251,7 @@ export async function sendLetter(_: number, end: number): Promise<void> {
       })
 
       // コミュニティメールのバリデーション
-      if (!communityEmail || communityEmail.trim() === '') {
+      if (communityEmail == null || communityEmail === '' || communityEmail.trim() === '') {
         logger.error('Invalid community email', {
           communityId,
           communityAccount,
@@ -286,7 +311,7 @@ export async function sendLetter(_: number, end: number): Promise<void> {
           errorSummary,
         })
       } else {
-        logger.info(`Successfully sent letter to ${successCount} recipients`, {
+        logger.info(`Successfully sent letter to ${successCount} users`, {
           letterId: letter.id,
           successCount,
         })
@@ -357,6 +382,114 @@ export const sendTestLetter = onCall(
       from: DEFAULT_FROM,
       templateId: LETTER_ID,
       dynamicTemplateData: await generateDynamicTemplateData(communityId, letterId),
+    })
+  },
+)
+
+export const sendIndividualLetter = onCall(
+  {
+    secrets: ['SENDGRID_API_KEY'],
+  },
+  async (request) => {
+    const uid = request.auth?.uid
+    if (uid === undefined) {
+      throw new HttpsError('unauthenticated', 'The function must be called while authenticated.')
+    }
+
+    const { communityId, letterId } = sendIndividualLetterRequestSchema.parse(request.data)
+
+    const letter = await getLetter(communityId, letterId)
+    if (!letter) {
+      throw new HttpsError('not-found', 'Letter not found.')
+    }
+    if (letter.letter_type !== 'individual') {
+      throw new HttpsError('invalid-argument', 'Letter must be of type individual.')
+    }
+    if (letter.status !== 'draft') {
+      throw new HttpsError('failed-precondition', 'Letter must be in draft status to send.')
+    }
+    if (letter.user_id == null || letter.user_id === '') {
+      throw new HttpsError('invalid-argument', 'User is required.')
+    }
+
+    const community = await getCommunity(communityId)
+    if (!community) {
+      throw new HttpsError('not-found', 'Community not found.')
+    }
+
+    const isManager = await community.hasRole(uid, 'manager')
+    if (!isManager) {
+      throw new HttpsError('permission-denied', 'Only community managers can send direct emails.')
+    }
+
+    if (community.community_email == null || community.community_email === '') {
+      throw new HttpsError('failed-precondition', 'Community email is not set.')
+    }
+    const communityEmail = community.community_email
+
+    // 受信者がコミュニティ／イベントの対象であることを検証
+    if (letter.event_id) {
+      const eventMemberIds = await getEventMemberIds(letter.event_id)
+      if (!eventMemberIds.includes(letter.user_id)) {
+        throw new HttpsError('failed-precondition', 'Recipient is not a member of the event.')
+      }
+    } else {
+      const memberIds = await getCommunityMemberIds(communityId)
+      if (!memberIds.includes(letter.user_id)) {
+        throw new HttpsError('failed-precondition', 'Recipient is not a member of the community.')
+      }
+    }
+
+    const targetUser = await getUser(letter.user_id, true)
+    if (!targetUser?.user_email) {
+      throw new HttpsError('not-found', 'User email not found.')
+    }
+    const targetUserName = targetUser.user_name ?? 'ユーザー'
+
+    const eventData: {
+      event_name: string | null
+      event_url: string | null
+      event_date: string | null
+    } = {
+      event_name: null,
+      event_url: null,
+      event_date: null,
+    }
+    if (letter.event_id) {
+      const event = await getEvent(letter.event_id)
+      if (event) {
+        eventData.event_name = event.event_name
+        eventData.event_url = getEventUrl(community.community_account, letter.event_id)
+        eventData.event_date = convertToDateWeekdayShort(event.event_start_datetime)
+      }
+    }
+
+    const dynamicTemplateData = {
+      community_name: community.community_name,
+      community_url: getCommunityUrl(community.community_account),
+      ...eventData,
+      letter_title: letter.letter_title,
+      letter_content: letter.letter_content,
+      letter_type: 'individual',
+      user_name: targetUserName,
+    }
+
+    const letterRef = getLetterRef(communityId, letterId)
+    await updateLetterStatusWithCheck(letterRef, 'draft', 'sent')
+
+    await send({
+      to: targetUser.user_email,
+      from: DEFAULT_FROM,
+      replyTo: communityEmail,
+      subject: letter.letter_title,
+      templateId: LETTER_ID,
+      dynamicTemplateData,
+    })
+
+    logger.info('Individual letter sent and saved', {
+      communityId,
+      letterId,
+      userId: letter.user_id,
     })
   },
 )

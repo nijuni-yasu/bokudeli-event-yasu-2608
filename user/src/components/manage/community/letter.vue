@@ -7,7 +7,7 @@ import LetterTable from '@shokujii/base/components/LetterTable.vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import LetterEdit from '@shokujii/base/components/LetterEdit.vue'
 import { BokudeliLetter, useLetterStore } from '@shokujii/base/stores/letter.js'
-import { getManageEventPath } from '@/router/utils'
+import { getManageEventPath, getManageCommunitySettingsPath, getUserPath } from '@/router/utils'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -98,6 +98,9 @@ const onCopyClick = async (letter: BokudeliLetter) => {
   selectedLetter.value = await letterStore.copyLetter()
   router.push({ query: { copy: null } })
 }
+const onUserClick = (userId: string) => {
+  router.push(getUserPath(userId))
+}
 const onUpdated = () => {
   selectedLetter.value = null
   router.push({ query: {} })
@@ -109,6 +112,9 @@ const handleNewLetterClick = () => {
     return
   }
   dialogType.value = 0
+}
+const goToCommunitySettings = () => {
+  router.push(getManageCommunitySettingsPath(communityAccount))
 }
 </script>
 
@@ -135,10 +141,16 @@ const handleNewLetterClick = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col cols="12">
-        <LetterTable :letters="letters" @edit="onEditClick" @delete="onDeleteClick" @copy="onCopyClick" />
+        <LetterTable
+          :letters="letters"
+          @edit="onEditClick"
+          @delete="onDeleteClick"
+          @copy="onCopyClick"
+          @user-click="onUserClick"
+        />
       </v-col>
     </v-row>
-    <v-row v-show="letters.length ?? 0 !== 0" class="justify-center">
+    <v-row v-show="(letters.length ?? 0) > 0" class="justify-center">
       <v-col md="8" sm="9" cols="12" class="text-center">
         <IncrementalLoader
           class="my-5"
@@ -188,7 +200,7 @@ const handleNewLetterClick = () => {
       </v-card-text>
     </v-card>
   </v-dialog>
-  <confirm-dialog v-model="isOpenConfirmDialog" :ok-text="'OK'" max-width="700px">
+  <confirm-dialog v-model="isOpenConfirmDialog" :ok-text="'OK'" max-width="700px" :ok-click="goToCommunitySettings">
     <v-card-text class="text-center py-10 text-h4">
       {{ $t('manage.letter.email_not_set.title') }}
     </v-card-text>
