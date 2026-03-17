@@ -113,7 +113,7 @@ URL 形式は環境により異なる（Cloud Functions 形式 / Cloud Run 形�
 3. **「Select events to listen to」** をクリック
 4. 検索ボックスに `checkout.session.completed` と入力
 5. **「checkout.session.completed」** にチェックを入れる（必須）
-6. 任意: セッション期限切れの開発を進める場合は `checkout.session.expired` も追加可
+6. PayPay 遅延決済を扱う場合は `documents/01_マネタイズと決済/06_PayPay決済_遅延決済.md` の 3.5 に従い `checkout.session.async_payment_succeeded` / `checkout.session.async_payment_failed` も登録する。`checkout.session.expired` は本番の `stripeWebhook` で未処理のため **ダッシュボードへの登録は不要**（Stripe CLI 等で期限切れイベント単体を確認する用途に限り購読してよい）
 7. **「Add endpoint」** をクリック
 
 #### Signing secret を取得
