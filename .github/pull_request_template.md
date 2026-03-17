@@ -50,6 +50,8 @@
 ### Firebase / Backend
 
 - Firestore スキーマ変更: あり / なし
+  - データマイグレーション（バッチ処理）必要: あり / なし（スキーマ変更時のみ）
+  - 該当する場合: bokudeli-event-batch でバッチ処理スクリプトを実装する
 - Security Rules 変更: あり / なし
 - Functions 変更: あり / なし
 - 影響内容:

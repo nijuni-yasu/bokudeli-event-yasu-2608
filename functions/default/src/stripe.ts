@@ -1,11 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { defineSecret } from 'firebase-functions/params'
+import { DateTime } from 'luxon'
 import Stripe from 'stripe'
 import { CreateStripeCheckoutSessionRequest } from '@shokujii/common/apis/stripe.js'
 import { getUserUrl, getMainUrl } from './utils/urls.js'
 import { getEvent } from './stores/event.js'
 
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
+const CHECKOUT_SESSION_EXPIRES_SECONDS = 31 * 60 // Stripe の最短 30 分。余裕を持たせて 31 分に設定
 
 export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionRequest>(
   {
@@ -19,6 +21,11 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
     const event = await getEvent(order.event_id)
     if (event == null) {
       throw new HttpsError('invalid-argument', 'Event does not exist.')
+    }
+
+    const now = DateTime.now().toMillis()
+    if (event.event_deadline_datetime < now) {
+      throw new HttpsError('failed-precondition', '注文期限を過ぎています')
     }
 
     const uid = request.auth.uid
@@ -48,6 +55,7 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       line_items: lineItems,
       mode: 'payment',
       payment_method_types: ['card'],
+      expires_at: Math.floor(now / 1000) + CHECKOUT_SESSION_EXPIRES_SECONDS,
       metadata: {
         eventId: order.event_id,
         eventPayment: event.event_payment,

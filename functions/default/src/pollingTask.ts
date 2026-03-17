@@ -14,6 +14,7 @@ import { sendLetter } from './letter.js'
 import { sendInvoiceMailToOrganizers } from './eventBillInvoice.js'
 
 const ONE_DAY_MILLIS = 24 * 60 * 60 * 1000
+const ORDER_DEADLINE_MAIL_DELAY_MILLIS = 5 * 60 * 1000
 
 export const pollingTask = onSchedule(
   {
@@ -30,10 +31,17 @@ export const pollingTask = onSchedule(
     const start = end - 60 * 1000
 
     const promiseFunctions = [
-      sendOrderDeadlineMailToShop(start, end, false),
+      sendOrderDeadlineMailToShop(
+        start - ORDER_DEADLINE_MAIL_DELAY_MILLIS,
+        end - ORDER_DEADLINE_MAIL_DELAY_MILLIS,
+        false,
+      ),
       sendOrderDeadlineMailToShop(start + ONE_DAY_MILLIS, end + ONE_DAY_MILLIS, true),
-      sendOrderDeadlineMailToOrganizers(start, end),
-      sendOrderDeadlineMailToMembers(start, end),
+      sendOrderDeadlineMailToOrganizers(
+        start - ORDER_DEADLINE_MAIL_DELAY_MILLIS,
+        end - ORDER_DEADLINE_MAIL_DELAY_MILLIS,
+      ),
+      sendOrderDeadlineMailToMembers(start - ORDER_DEADLINE_MAIL_DELAY_MILLIS, end - ORDER_DEADLINE_MAIL_DELAY_MILLIS),
       sendOrderDeadlineReminderToCommunityMembers(start + 2 * ONE_DAY_MILLIS, end + 2 * ONE_DAY_MILLIS), // 注文期限2日前
       sendEventConcludedMailToMembers(start, end),
       sendInCartNotificationToMember(start, end),
