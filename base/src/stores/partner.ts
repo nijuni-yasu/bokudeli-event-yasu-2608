@@ -21,7 +21,8 @@ import {
   updateDoc,
   writeBatch,
 } from 'firebase/firestore'
-import { uploadMenuImage, uploadShopImage } from '@shokujii/base/composable/uploadImage'
+import { getMenuImageStoragePath, getShopCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { uploadImage } from '@shokujii/base/utils/storage.js'
 
 export class BokudeliPartnerShop extends PartnerShop {
   constructor(partner_id: string, shop_id: string | null, src: Partial<PartnerShop>) {
@@ -155,7 +156,7 @@ export const usePartnerStore = (partnerId: string) => {
 
     const updateShop = async (data: BokudeliPartnerShop, image?: File) => {
       if (image != null) {
-        data.shop_image_url = (await uploadShopImage(partnerRef.id, data.shop_id, image)) ?? ''
+        data.shop_image_url = await uploadImage(image, getShopCoverStoragePath(partnerRef.id, data.shop_id))
       }
       const shopRef = doc(partnerRef, 'shops', data.shop_id).withConverter(shopConverter)
       return await setDoc(shopRef, data, { merge: true })
@@ -163,7 +164,7 @@ export const usePartnerStore = (partnerId: string) => {
 
     const updateMenu = async (data: BokudeliPartnerMenu, image?: File) => {
       if (image != null) {
-        data.menu_image_url = (await uploadMenuImage(partnerRef.id, data.id, image)) ?? ''
+        data.menu_image_url = await uploadImage(image, getMenuImageStoragePath(partnerRef.id, data.id))
       }
       const menuRef = doc(partnerRef, 'menus', data.id).withConverter(menuConverter)
       return await setDoc(menuRef, data, { merge: true })

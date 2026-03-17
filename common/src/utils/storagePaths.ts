@@ -18,3 +18,11 @@ export function generateTinymceImageStoragePath(communityId: string, eventId: st
   const uuid = crypto.randomUUID()
   return getTinymceImageStoragePath(communityId, eventId, uuid)
 }
+
+export function getShopCoverStoragePath(partnerId: string, shopId: string): string {
+  return `partners/${partnerId}/shops/${shopId}/cover`
+}
+
+export function getMenuImageStoragePath(partnerId: string, menuId: string): string {
+  return `partners/${partnerId}/menus/${menuId}/image`
+}
