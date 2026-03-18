@@ -1,7 +1,6 @@
 import { getAuth } from 'firebase-admin/auth'
 import { getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
-import { DateTime } from 'luxon'
 import _ from 'lodash'
 import {
   ConfirmEmailChangeRequest,
@@ -14,6 +13,7 @@ import {
   UpdateProfileFromProvidersRequest,
   UpdateProfileFromProvidersResponse,
 } from '@shokujii/common/apis/user.js'
+import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { fetchFacebookImage, fetchTwitterImage } from '@shokujii/common/utils/user.js'
 import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
 import { savePassCode, ShokujiiPassCode, getValidPassCodeFromEmail, deletePassCode } from './stores/passCode.js'
@@ -153,8 +153,7 @@ const uploadUserImage = async (uid: string, blob: Blob) => {
   const arrayBuffer = await blob.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
-  const stem = `avatar_${DateTime.now().toFormat('yyyyMMddHHmmss')}`
-  const path = `users/${uid}/${stem}`
+  const path = getUserImageStoragePath(uid)
   const file = bucket.file(path)
   const contentType = blob.type != null && blob.type !== '' ? blob.type : 'image/*'
 

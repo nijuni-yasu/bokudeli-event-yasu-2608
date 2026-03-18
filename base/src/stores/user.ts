@@ -1,6 +1,5 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import { format } from 'date-fns'
 import {
   doc,
   updateDoc,
@@ -14,9 +13,9 @@ import {
   SnapshotOptions,
 } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
-import { db, storage } from '@shokujii/base/firebase.js'
 import { User } from '@shokujii/common/schemas/User.js'
-
+import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { db, storage } from '@shokujii/base/firebase.js'
 const userConverter: FirestoreDataConverter<User> = {
   toFirestore(user: User): DocumentData {
     return user.toFirestore()
@@ -68,13 +67,7 @@ export const useUserStore = (userId: string) => {
      * @param file
      */
     const uploadUserImage = async (file: File | Blob) => {
-      let ext: string = ''
-      if (file instanceof File) {
-        const _ext = file.name.split('.').pop()
-        ext = _ext ? '.' + _ext : ''
-      }
-      const stem = `avatar_${format(Date.now(), 'yyyyMMddHHmmss')}`
-      const filepath = `/users/${userId}/${stem}${ext}`
+      const filepath = getUserImageStoragePath(userId)
       const imageRef = storageRef(storage, filepath)
       const contentType = file.type != null && file.type !== '' ? file.type : 'image/*'
       const snapshot = await uploadBytes(imageRef, file, { contentType })
@@ -88,8 +81,8 @@ export const useUserStore = (userId: string) => {
         await new Promise((resolve) => window.setTimeout(resolve, 100))
         try {
           await Promise.all(
-            ['small', 'medium', 'large'].map(async (size) => {
-              const resizedImageRef = storageRef(storage, `/users/${userId}/${stem}_thumb_${size}${ext}`)
+            (['small', 'medium', 'large'] as const).map(async (size) => {
+              const resizedImageRef = storageRef(storage, getUserImageStoragePath(userId, size))
               await getMetadata(resizedImageRef)
             }),
           )

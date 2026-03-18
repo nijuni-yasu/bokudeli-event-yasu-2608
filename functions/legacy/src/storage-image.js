@@ -64,7 +64,7 @@ export const on_object_finalized = functions
     }
     const imagePath = object.name
     const imageName = path.basename(imagePath, path.extname(imagePath))
-    if (!imageName.startsWith('avatar_') || imageName.includes('_thumb_')) {
+    if (!imageName.startsWith('avatar') || imageName.includes('_thumb_')) {
       return
     }
     if (imagePath.split(path.sep)[0] === 'users') {

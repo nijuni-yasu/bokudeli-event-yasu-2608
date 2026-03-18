@@ -26,3 +26,7 @@ export function getShopCoverStoragePath(partnerId: string, shopId: string): stri
 export function getMenuImageStoragePath(partnerId: string, menuId: string): string {
   return `partners/${partnerId}/menus/${menuId}/image`
 }
+
+export function getUserImageStoragePath(userId: string, thumbnailSize?: 'small' | 'medium' | 'large'): string {
+  return thumbnailSize == null ? `users/${userId}/avatar` : `users/${userId}/avatar_thumb_${thumbnailSize}`
+}
