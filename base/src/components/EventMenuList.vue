@@ -15,7 +15,7 @@ const emit = defineEmits<{
 }>()
 
 /** 横長レイアウトを適用するメニュー数の上限（この数以下は横長、超えるとグリッド） */
-const HORIZONTAL_LAYOUT_MAX_COUNT = 3
+const HORIZONTAL_LAYOUT_MAX_COUNT = 2
 
 const display = useDisplay()
 
@@ -25,7 +25,7 @@ const filteredMenus = computed(() => {
   return props.menus.filter((menu) => menu.is_selected === true)
 })
 
-/** 横長レイアウトを使う条件: 3件以下 かつ PC・タブレット（スマホではグリッド） */
+/** 横長レイアウトを使う条件: 2件以下 かつ PC・タブレット（スマホではグリッド） */
 const useHorizontalLayout = computed(() => {
   if (filteredMenus.value === null || filteredMenus.value.length === 0) return false
   return filteredMenus.value.length <= HORIZONTAL_LAYOUT_MAX_COUNT && !display.mobile.value
@@ -34,7 +34,7 @@ const useHorizontalLayout = computed(() => {
 <template>
   <section>
     <v-row v-if="filteredMenus !== null" class="align-stretch">
-      <!-- 横長レイアウト: 3件以下 かつ PC・タブレットのみ -->
+      <!-- 横長レイアウト: 2件以下 かつ PC・タブレットのみ -->
       <template v-if="useHorizontalLayout">
         <v-col v-for="menu of filteredMenus" :key="menu.menu_id" cols="12" class="pa-3">
           <v-card class="d-flex flex-column menu-card-horizontal">
