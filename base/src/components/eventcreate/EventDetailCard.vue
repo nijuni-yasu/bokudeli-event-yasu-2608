@@ -171,7 +171,7 @@ const bodyImageUploadHandler = async (blobInfo: BlobInfo) => {
   }
 }
 
-const tinymceInit = {
+const tinymceInit = computed(() => ({
   language: 'ja',
   plugins: 'lists link autolink image autoresize',
   menubar: false,
@@ -183,7 +183,7 @@ const tinymceInit = {
   color_map_foreground: ['#2E263DB3', '黒', '#FF4C51', '赤'],
   color_default_foreground: '#2E263DB3',
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | link image',
+  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | link image insertimage',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },
@@ -206,10 +206,16 @@ const tinymceInit = {
         editor.execCommand('FormatBlock', false, 'h3')
       },
     })
+    editor.ui.registry.addButton('insertimage', {
+      text: '画像',
+      onAction: () => {
+        editor.execCommand('mceImage')
+      },
+    })
   },
   images_upload_handler: bodyImageUploadHandler,
   image_description: false,
-}
+}))
 </script>
 
 <template>
@@ -273,6 +279,12 @@ const tinymceInit = {
       <v-row>
         <v-col cols="12">
           <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
+          <div class="mt-2 text-subtitle-2">
+            <span>{{ $t('event_detail.event_desc_hint') }}</span>
+          </div>
+          <div class="mt-1 text-subtitle-2">
+            <span>{{ $t('event_detail.event_desc_image_hint') }}</span>
+          </div>
         </v-col>
       </v-row>
     </v-card-text>
