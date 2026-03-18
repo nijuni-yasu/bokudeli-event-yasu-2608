@@ -9,8 +9,12 @@ import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
 import { useNavItems } from '@/navigation'
 import type { Notification } from '@shokujii/base/types/index.js'
-import { getManagePath, getLogin } from '@/router/utils'
+import { getManagePath, getManageNewCommunityPath, getLogin } from '@/router/utils'
+import { hasManagedCommunity } from '@shokujii/base/stores/community.js'
+import { useRouter } from 'vue-router'
 import { getAuth, type User } from 'firebase/auth'
+
+const router = useRouter()
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -50,6 +54,14 @@ const currentUser = ref<User | null>(null)
 getAuth().onAuthStateChanged((user) => {
   currentUser.value = user
 })
+
+const handleEventHostClick = async () => {
+  const uid = currentUser.value?.uid
+  if (uid == null) return
+
+  const hasCommunity = await hasManagedCommunity(uid)
+  router.push(hasCommunity ? getManagePath() : getManageNewCommunityPath())
+}
 </script>
 
 <template>
@@ -63,7 +75,12 @@ getAuth().onAuthStateChanged((user) => {
     "
   >
     <template #navbar-icons>
-      <v-btn v-if="currentUser != null" class="event-host-cta me-4" :to="getManagePath()" :append-icon="mdiPartyPopper">
+      <v-btn
+        v-if="currentUser != null"
+        class="event-host-cta me-4"
+        :append-icon="mdiPartyPopper"
+        @click="handleEventHostClick"
+      >
         {{ $t('navigation.new_event') }}
       </v-btn>
       <v-btn v-else class="me-4" variant="outlined" :to="getLogin()">

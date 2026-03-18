@@ -7,6 +7,7 @@ import {
   doc,
   getDocs,
   getDoc,
+  limit,
   updateDoc,
   query,
   where,
@@ -107,6 +108,23 @@ export const createNewCommunity = async (
     setDoc(memberRef, { roles: ['manager'] }),
   ])
   return useCommunityStore(community)
+}
+
+/**
+ * ユーザーが管理しているコミュニティが1つ以上存在するかチェックする。
+ * イベント開催ボタンの遷移先判定などに使用する。
+ *
+ * @param userId チェック対象のユーザーID
+ * @returns 管理コミュニティが1件以上あれば true
+ */
+export const hasManagedCommunity = async (userId: string): Promise<boolean> => {
+  const q = query(
+    collection(db, 'communities').withConverter(communityConverter),
+    where('managers', 'array-contains', getUserRef(userId)),
+    limit(1),
+  )
+  const snapshot = await getDocs(q)
+  return !snapshot.empty
 }
 
 /**
