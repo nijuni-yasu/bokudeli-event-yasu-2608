@@ -178,10 +178,10 @@ const isShowMember = computed(() =>
             @click="onShareSnsButtonClicked('copy')"
           ></v-btn>
         </v-card-text>
-        <v-card-text class="text-h4 font-weight-black mt-5 pb-3">
+        <v-card-text class="text-h4 font-weight-black mt-6 pb-4">
           {{ $t('event_details.overview') }}
         </v-card-text>
-        <v-divider class="custom-divider pt-1" />
+        <v-divider class="custom-divider mt-0 mb-3" />
         <v-table class="custom-table mx-5 my-3" density="compact">
           <tbody>
             <tr>
@@ -268,22 +268,22 @@ const isShowMember = computed(() =>
             </tr>
           </tbody>
         </v-table>
-        <v-card-text class="text-h4 font-weight-black mt-5 pb-3">
+        <v-card-text class="text-h4 font-weight-black mt-6 pb-4">
           {{ $t('event_details.event_details') }}
         </v-card-text>
-        <v-divider class="custom-divider pt-2" />
+        <v-divider class="custom-divider mt-0 mb-3" />
         <v-card-text class="pt-0">
           <tiny-m-c-e-viewer :content="event.event_desc" class="event-content" />
         </v-card-text>
 
-        <div v-if="members.length > 0">
-          <v-row class="mt-5 px-4 d-flex align-center">
+        <div class="mt-6 mb-6">
+          <v-row class="px-5 d-flex align-center">
             <v-card-text class="text-h4 font-weight-black pb-3">
               {{ $t('event_details.participants') }}
               <span class="text-h5"> {{ members.length }} / {{ event.event_max_people }} </span>
             </v-card-text>
             <v-spacer />
-            <v-col cols="auto">
+            <v-col v-if="members.length > 0" cols="auto">
               <div v-if="isShowMember === true">
                 <router-link :to="{ path: `${event.event_id}/members` }">
                   <div class="d-flex align-end">
@@ -301,65 +301,67 @@ const isShowMember = computed(() =>
               </div>
             </v-col>
           </v-row>
-          <v-divider class="custom-divider mt-2" />
+          <v-divider class="custom-divider mt-2 mb-3" />
           <event-member-list
+            v-if="members.length > 0"
             :members="members"
             :event-max-people="event.event_max_people"
             :is-show-member="isShowMember"
-            class="mt-4 mb-8"
           />
         </div>
-        <v-card-text>
-          <v-row align-self-center>
-            <v-row class="ma-1">
+        <v-card-text class="px-5">
+          <v-row align="center" no-gutters class="flex-nowrap">
+            <v-col cols="auto" class="d-flex justify-start flex-shrink-0">
               <router-link :to="getCommunityPath(event.community_account)">
                 <v-img :src="community.community_icon_image_url" class="community-icon" aspect-ratio="1" cover />
               </router-link>
-              <div class="ml-2 align-self-end">
-                <router-link
-                  :to="getCommunityPath(event.community_account)"
-                  class="text--primary cursor-pointer text-decoration-none"
-                >
-                  <div class="community-name-label">{{ $t('event_details.community_name') }}</div>
-                  <div class="pa-1 ma-1 community-name-text text-wrap">{{ community.community_name }}</div>
-                </router-link>
-                <v-row class="ma-2 community-actions" align="center" justify="start">
-                  <v-col cols="auto" class="pa-0">
-                    <v-btn
-                      variant="outlined"
-                      rounded="pill"
-                      size="small"
-                      :prepend-icon="mdiEmail"
-                      @click="openContactDialog"
-                    >
-                      {{ $t('event_details.contact_community') }}
-                    </v-btn>
-                  </v-col>
-                  <v-col cols="auto" class="pa-0">
-                    <community-membership-button
-                      v-if="community.community_account"
-                      :community-id="community.community_account"
-                      :join-button-props="{
-                        rounded: 'pill',
-                        size: 'small',
-                        'prepend-icon': mdiAccountGroup,
-                      }"
-                      :leave-button-props="{
-                        variant: 'outlined',
-                        rounded: 'pill',
-                        size: 'small',
-                        'prepend-icon': mdiAccountGroup,
-                      }"
-                    />
-                  </v-col>
-                </v-row>
-                <community-contact-dialog
-                  v-model="isOpenContactDialogVisible"
-                  :community-name="community.community_name"
-                  :community-id="community.community_id"
-                />
-              </div>
-            </v-row>
+            </v-col>
+            <v-col class="flex-grow-1 min-width-0 pl-3">
+              <router-link
+                :to="getCommunityPath(event.community_account)"
+                class="text--primary cursor-pointer text-decoration-none d-block"
+              >
+                <div class="community-name-label">{{ $t('event_details.community_name') }}</div>
+                <div class="community-name-text text-wrap">{{ community.community_name }}</div>
+              </router-link>
+              <v-row class="community-actions mt-2" align="center" justify="start" no-gutters>
+                <v-col cols="12" sm="auto" class="pa-0">
+                  <v-btn
+                    variant="outlined"
+                    rounded="pill"
+                    size="small"
+                    :prepend-icon="mdiEmail"
+                    block
+                    @click="openContactDialog"
+                  >
+                    {{ $t('event_details.contact_community') }}
+                  </v-btn>
+                </v-col>
+                <v-col cols="12" sm="auto" class="pa-0">
+                  <community-membership-button
+                    v-if="community.community_account"
+                    :community-id="community.community_account"
+                    block
+                    :join-button-props="{
+                      rounded: 'pill',
+                      size: 'small',
+                      'prepend-icon': mdiAccountGroup,
+                    }"
+                    :leave-button-props="{
+                      variant: 'outlined',
+                      rounded: 'pill',
+                      size: 'small',
+                      'prepend-icon': mdiAccountGroup,
+                    }"
+                  />
+                </v-col>
+              </v-row>
+              <community-contact-dialog
+                v-model="isOpenContactDialogVisible"
+                :community-name="community.community_name"
+                :community-id="community.community_id"
+              />
+            </v-col>
           </v-row>
         </v-card-text>
       </v-col>
@@ -438,8 +440,13 @@ iframe {
 
 .community-icon {
   border-radius: 10%;
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
+
+  @media (min-width: 600px) {
+    width: 100px;
+    height: 100px;
+  }
 }
 
 .community-actions {
@@ -454,19 +461,17 @@ iframe {
   font-size: 24px;
 }
 
+@media (min-width: 600px) {
+  .community-name-text {
+    padding-top: 2px;
+    padding-bottom: 8px;
+  }
+}
+
 @media (max-width: 600px) {
   .community-name-text {
     font-size: 16px;
     line-height: 1.2;
-  }
-
-  .community-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .community-actions .v-col {
-    width: 100%;
   }
 }
 </style>

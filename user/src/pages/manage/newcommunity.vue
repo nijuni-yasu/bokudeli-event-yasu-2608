@@ -66,6 +66,7 @@ const submit = async () => {
           v-model:coverImageFile="coverImageFile"
           v-model:iconImageFile="iconImageFile"
           :validateNewAccount="validateNewAccount"
+          :auto-open-help-dialog="true"
         >
           <template #default="{ isValid }">
             <v-card-text class="text-center mx-0 px-0">

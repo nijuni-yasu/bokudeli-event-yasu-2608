@@ -5,12 +5,13 @@ import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import { useCommunityListStore, type CommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { getAuth } from 'firebase/auth'
 import { doc, orderBy, where } from 'firebase/firestore'
-import { mdiMenuDown, mdiPlus, mdiHelp } from '@mdi/js'
+import { mdiContentCopy, mdiMenuDown, mdiPlus, mdiHelp } from '@mdi/js'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { useDisplay } from 'vuetify'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import CopyEventDialog from '@/components/manage/community/CopyEventDialog.vue'
 
 const router = useRouter()
 const display = useDisplay()
@@ -76,6 +77,26 @@ const events = computed(
     }) ?? [],
 )
 const isOpenEventDialog = ref(false)
+const isOpenCopyDialog = ref(false)
+const isOpenCopyCompleteDialog = ref(false)
+const isOpenCopyErrorDialog = ref(false)
+const copiedEventId = ref<string | null>(null)
+
+const handleCopySuccess = (newEventId: string) => {
+  copiedEventId.value = newEventId
+  isOpenCopyCompleteDialog.value = true
+  eventListStore.value.reload()
+}
+
+const handleCopyCompleteOk = () => {
+  if (copiedEventId.value) {
+    router.push(getManageEventPath(copiedEventId.value))
+  }
+}
+
+const handleCopyError = () => {
+  isOpenCopyErrorDialog.value = true
+}
 </script>
 
 <template>
@@ -102,6 +123,14 @@ const isOpenEventDialog = ref(false)
       <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="router.push(getEventCreatePath(communityAccount))">{{
         $t('manage.new_event')
       }}</v-btn>
+      <v-btn
+        v-if="events.length > 0"
+        variant="outlined"
+        :prepend-icon="mdiContentCopy"
+        @click="isOpenCopyDialog = true"
+      >
+        {{ $t('manage.copy_event') }}
+      </v-btn>
       <v-btn variant="outlined" size="small" :icon="mdiHelp" @click="isOpenEventDialog = true" />
     </v-col>
   </v-row>
@@ -141,6 +170,27 @@ const isOpenEventDialog = ref(false)
       <div v-html="$t('event_create_modal.desc')" />
     </v-card-text>
   </confirm-dialog>
+  <CopyEventDialog
+    v-if="communityAccount != null"
+    :key="communityAccount"
+    v-model="isOpenCopyDialog"
+    :community-account="communityAccount"
+    @success="handleCopySuccess"
+    @error="handleCopyError"
+  />
+  <ConfirmDialog
+    v-model="isOpenCopyCompleteDialog"
+    :title="$t('manage.copy_event_modal.complete')"
+    ok-text="OK"
+    :ok-click="handleCopyCompleteOk"
+    max-width="500px"
+  />
+  <ConfirmDialog
+    v-model="isOpenCopyErrorDialog"
+    :title="$t('manage.copy_event_modal.error')"
+    ok-text="OK"
+    max-width="500px"
+  />
 </template>
 
 <style lang="scss" scoped>

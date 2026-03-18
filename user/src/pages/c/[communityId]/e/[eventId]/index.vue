@@ -10,7 +10,7 @@ import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
-import { mdiEmail, mdiPencilBoxOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
+import { mdiEmail, mdiPencilOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
@@ -226,14 +226,12 @@ onUnmounted(() => {
           </v-chip>
           <v-btn
             v-if="event.event_status.value === `in_draft` && isManager"
-            color="white"
             class="ml-2 my-1"
-            elevation="5"
-            rounded="pill"
+            variant="outlined"
             :prepend-icon="mdiEmail"
             :to="getEventEditShopNoticePath(eventId)"
           >
-            店舗へ予約申請
+            {{ $t('event_page.apply_to_shop') }}
           </v-btn>
           <v-btn
             v-if="
@@ -243,18 +241,16 @@ onUnmounted(() => {
                 event.calculatedEventStatus === 'accepting_order') &&
               isManager
             "
-            color="white"
             class="ml-2 my-1"
-            elevation="5"
-            rounded="pill"
-            :prepend-icon="mdiPencilBoxOutline"
+            variant="outlined"
+            :prepend-icon="mdiPencilOutline"
             :to="
               event.event_status.value === 'in_draft'
                 ? getEventEditBasicPath(eventId)
                 : getEventEditDetailsPath(eventId)
             "
           >
-            イベント編集
+            {{ $t('event_page.edit') }}
           </v-btn>
         </v-row>
       </v-col>
@@ -339,7 +335,7 @@ onUnmounted(() => {
           @click="scrollToMenu"
         >
           <v-icon :icon="mdiFoodForkDrink" class="mr-2" />
-          食事を注文してイベントに参加する
+          {{ $t('event_page.order_and_join') }}
         </v-btn>
       </v-col>
     </v-row>

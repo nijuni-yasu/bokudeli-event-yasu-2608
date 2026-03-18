@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useValidators } from '@shokujii/base/composable/validators'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
@@ -31,6 +31,10 @@ const props = defineProps<{
   // 関数宣言なのに no-unused-vars が出てしまう。恐らく ESLint のバグ。
   // eslint-disable-next-line no-unused-vars
   validateNewAccount?: (account: string) => Promise<boolean>
+  /**
+   * マウント後、ヘルプダイアログを自動表示する
+   */
+  autoOpenHelpDialog?: boolean
 }>()
 const isNew = computed(() => props.validateNewAccount != null)
 
@@ -60,6 +64,20 @@ const checkAccountExists = async (value: string) => {
   }
 }
 const isOpenNewCommunityDialog = ref(false)
+
+let autoOpenTimer: ReturnType<typeof setTimeout> | null = null
+onMounted(() => {
+  if (props.autoOpenHelpDialog === true) {
+    autoOpenTimer = window.setTimeout(() => {
+      isOpenNewCommunityDialog.value = true
+    }, 2000)
+  }
+})
+onUnmounted(() => {
+  if (autoOpenTimer != null) {
+    window.clearTimeout(autoOpenTimer)
+  }
+})
 </script>
 
 <template>
