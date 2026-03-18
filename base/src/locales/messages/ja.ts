@@ -309,7 +309,7 @@ export default {
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
-    event_desc_image_hint: '※ツールバーの「画像を挿入」ボタンから、本文中に画像を挿入できます。',
+    event_desc_image_hint: '※ツールバーの「画像」ボタンから、本文中に画像を挿入することができます。',
     deadline_date: '注文期限',
     deadline_hour: '時間',
     deadline_minute: '分',
