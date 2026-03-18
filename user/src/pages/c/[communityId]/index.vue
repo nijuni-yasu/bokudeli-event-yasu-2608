@@ -5,8 +5,7 @@ import { useI18n } from 'vue-i18n'
 import {
   getEventPath,
   getEventEditShopNoticePath,
-  getEventCreatePath,
-  getManageCommunitySettingsPath,
+  getManageCommunityPath,
   getEventEditBasicPath,
   getEventEditDetailsPath,
   getLogin,
@@ -14,8 +13,8 @@ import {
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community'
-import { mdiPencilBoxOutline, mdiCog, mdiEmail } from '@mdi/js'
+import { useCommunityStore } from '@shokujii/base/stores/community'
+import { mdiPencilBoxOutline, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import type { EventStore, BokudeliEventMember } from '@shokujii/base/stores/event.js'
@@ -28,7 +27,7 @@ const router = useRouter()
 const communityId = useRoute().params.communityId as string
 const { t: $t } = useI18n()
 
-const communityStore = useCommunityStore(communityId) as CommunityStore
+const communityStore = useCommunityStore(communityId)
 
 const userStore = useCurrentUserStore()
 
@@ -94,25 +93,11 @@ const login = () => {
       <v-col cols="12" md="9" sm="9">
         <v-row v-if="isManager" class="justify-end align-center mt-lg-5">
           <v-btn
-            v-if="communityStore.community.is_approved"
-            class="mx-2"
-            color="white"
-            elevation="5"
-            rounded="pill"
-            :prepend-icon="mdiPencilBoxOutline"
-            :to="getEventCreatePath(communityStore.community.community_account)"
+            class="mx-2 mt-2"
+            variant="outlined"
+            :to="getManageCommunityPath(communityStore.community.community_account)"
           >
-            {{ $t('user.event_create') }}
-          </v-btn>
-          <v-btn
-            class="mx-2"
-            color="white"
-            elevation="5"
-            rounded="pill"
-            :prepend-icon="mdiCog"
-            :to="getManageCommunitySettingsPath(communityStore.community.community_account)"
-          >
-            {{ $t('user.community_settings') }}
+            {{ $t('user.community_management') }}
           </v-btn>
           <v-chip v-if="communityStore.community.is_approved === false" color="primary" size="large">
             {{ $t('community.applying') }}
@@ -206,7 +191,7 @@ const login = () => {
                     <IncrementalLoader
                       :loaded-count="eventListStore.eventStores?.length ?? 0"
                       :total-count="eventListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                      @load="eventListStore.next()"
+                      @load="eventListStore.next"
                     />
                   </v-col>
                 </v-row>
