@@ -206,6 +206,10 @@ export default {
     manager: 'Manager',
     member: 'Member',
   },
+  community_contact_dialog: {
+    send_to: '送信先：{communityName} にメールにて問い合わせます。',
+    reply_to: '返信先：{replyTo}',
+  },
   community_membership: {
     join: 'コミュニティに参加する',
     leave: 'コミュニティを退会する',

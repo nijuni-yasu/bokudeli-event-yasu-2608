@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getUserPath, getUrlFromPath } from '@/router/utils'
 import { mdiEmail } from '@mdi/js'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   modelValue: boolean
@@ -25,7 +26,10 @@ const state = reactive({
   isSending: false as boolean,
 })
 
+const { t: $t } = useI18n()
 const { user: currentUser, personalInformation: currentUserPersonalInformation } = storeToRefs(useCurrentUserStore())
+
+const replyTo = computed(() => currentUserPersonalInformation.value?.user_email ?? '')
 
 const onFormSubmit = async () => {
   state.isSending = true
@@ -67,7 +71,10 @@ const onFormSubmit = async () => {
         <v-icon start :icon="mdiEmail" />
         お問い合わせ
       </v-card-title>
-      <v-card-text> 送信先：{{ props.communityName }} にメールにて問い合わせます。 </v-card-text>
+      <v-card-text class="text-body-2 text-medium-emphasis pb-0" style="white-space: pre-line">
+        {{ $t('community_contact_dialog.send_to', { communityName: props.communityName })
+        }}{{ replyTo ? '\n' + $t('community_contact_dialog.reply_to', { replyTo }) : '' }}
+      </v-card-text>
 
       <v-card-text>
         <v-form class="mt-6" @submit.prevent="onFormSubmit">
