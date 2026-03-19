@@ -206,6 +206,10 @@ export default {
     manager: 'Manager',
     member: 'Member',
   },
+  community_contact_dialog: {
+    send_to: '送信先：{communityName} にメールにて問い合わせます。',
+    reply_to: '返信先：{replyTo}',
+  },
   community_membership: {
     join: 'コミュニティに参加する',
     leave: 'コミュニティを退会する',
@@ -309,7 +313,7 @@ export default {
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
-    event_desc_image_hint: '※ツールバーの「画像を挿入」ボタンから、本文中に画像を挿入できます。',
+    event_desc_image_hint: '※ツールバーの「画像」ボタンから、本文中に画像を挿入することができます。',
     deadline_date: '注文期限',
     deadline_hour: '時間',
     deadline_minute: '分',
@@ -503,7 +507,7 @@ export default {
   },
   email_dialog: {
     title: '個人宛レター',
-    description: '個人宛にレターを配信することができます。\n返信先の設定は：{replyTo} です',
+    description: '個人宛にレターを配信することができます。\n返信先：{replyTo}',
     send_to: '配信先',
     send: '配信',
     send_letter: 'レターを配信する',

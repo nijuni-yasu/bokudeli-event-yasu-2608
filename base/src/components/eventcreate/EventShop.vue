@@ -93,7 +93,7 @@ const isOpenDeadlineDialog = ref(false)
 <template>
   <section>
     <v-row v-if="props.loading === false" class="justify-center">
-      <v-col cols="12" sm="12" md="10">
+      <v-col cols="12" sm="12" md="11">
         <v-card flat class="pa-3 mt-2">
           <v-form class="multi-col-validation">
             <v-card-title class="pa-3 text-h5 text-wrap">

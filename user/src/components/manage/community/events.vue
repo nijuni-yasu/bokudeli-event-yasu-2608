@@ -86,7 +86,7 @@ const handleCopyError = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col cols="12" sm="12" md="12" class="pt-0">
-        <v-row v-show="eventListStore.eventStores?.length === 0">
+        <v-row v-show="eventListStore.eventStores?.length === 0" class="pt-4">
           <v-col cols="12" class="text-h5">
             <div v-html="$t('manage.event.no_events')" />
           </v-col>

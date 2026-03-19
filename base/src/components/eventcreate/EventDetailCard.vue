@@ -183,7 +183,7 @@ const tinymceInit = computed(() => ({
   color_map_foreground: ['#2E263DB3', '黒', '#FF4C51', '赤'],
   color_default_foreground: '#2E263DB3',
   removed_menuitems: 'codeformat fontfamily styles',
-  toolbar: 'undo redo heading bold italic underline strikethrough forecolor | bullist numlist | link image insertimage',
+  toolbar: 'undo redo | insertimage image link | heading bold italic underline strikethrough forecolor bullist numlist',
   style_formats: [
     { title: 'Text', format: 'p' },
     { title: 'Headings', format: 'h3' },
