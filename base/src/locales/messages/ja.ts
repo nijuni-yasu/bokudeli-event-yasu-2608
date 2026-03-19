@@ -507,7 +507,7 @@ export default {
   },
   email_dialog: {
     title: '個人宛レター',
-    description: '個人宛にレターを配信することができます。\n返信先の設定は：{replyTo} です',
+    description: '個人宛にレターを配信することができます。\n返信先：{replyTo}',
     send_to: '配信先',
     send: '配信',
     send_letter: 'レターを配信する',
