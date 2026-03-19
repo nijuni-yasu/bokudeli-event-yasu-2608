@@ -25,10 +25,10 @@ const filteredMenus = computed(() => {
   return props.menus.filter((menu) => menu.is_selected === true)
 })
 
-/** 横長レイアウトを使う条件: 2件以下 かつ PC・タブレット（スマホではグリッド） */
+/** 横長レイアウトを使う条件: 2件以下 かつ PC・タブレット（スマホ xs のみグリッド） */
 const useHorizontalLayout = computed(() => {
   if (filteredMenus.value === null || filteredMenus.value.length === 0) return false
-  return filteredMenus.value.length <= HORIZONTAL_LAYOUT_MAX_COUNT && !display.mobile.value
+  return filteredMenus.value.length <= HORIZONTAL_LAYOUT_MAX_COUNT && !display.xs.value
 })
 </script>
 <template>
