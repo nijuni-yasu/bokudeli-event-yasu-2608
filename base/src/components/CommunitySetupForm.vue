@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useValidators } from '@shokujii/base/composable/validators'
+import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { type CommunityListStore } from '@shokujii/base/stores/communityList'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
@@ -15,6 +17,7 @@ import {
 } from '@mdi/js'
 import SnsTextField from './SnsTextField.vue'
 
+const { t: $t } = useI18n()
 const { requiredValidator, postalCodeValidator, phoneValidator, emailValidator, accountValidator } = useValidators()
 
 const community = defineModel<BokudeliCommunity>({ required: true })
@@ -86,6 +89,36 @@ const hashTag = computed({
     community.value.community_sns_hash_tag = trimHashTag(val)
   },
 })
+
+watch(
+  () => community.value?.community_postalcode,
+  async (postalcode) => {
+    if (community.value == null || postalCodeValidator(postalcode) !== true) {
+      if (community.value) community.value.community_address_base = ''
+      return
+    }
+    const requestedPostalcode = postalcode as string
+    let location: Awaited<ReturnType<typeof fetchLocationByPostalcode>>
+    try {
+      location = await fetchLocationByPostalcode(requestedPostalcode)
+    } catch {
+      // 失敗時のレース対策: 郵便番号が変わっていたら古い失敗でクリアしない
+      if (community.value == null || community.value.community_postalcode !== requestedPostalcode) {
+        return
+      }
+      community.value.community_address_base = ''
+      return
+    }
+    // レース対策: 古いリクエストの結果で上書きしない
+    if (community.value == null || community.value.community_postalcode !== requestedPostalcode) {
+      return
+    }
+    if (location?.address == null) return
+
+    community.value.community_address_base = location.address
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -313,11 +346,28 @@ const hashTag = computed({
         <v-row>
           <v-col cols="12">
             <v-text-field
-              v-model="community.community_address"
+              v-model="community.community_address_base"
               outlined
               dense
-              label="住所"
-              :rules="[requiredValidator]"
+              readonly
+              :label="$t('address')"
+              :hint="$t('address_hint')"
+              persistent-hint
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <v-card-text class="pt-5">
+        <v-row>
+          <v-col cols="12">
+            <v-text-field
+              v-model="community.community_address_detail"
+              outlined
+              dense
+              :label="$t('detail_address')"
+              :hint="$t('detail_address_hint')"
+              persistent-hint
             />
           </v-col>
         </v-row>
