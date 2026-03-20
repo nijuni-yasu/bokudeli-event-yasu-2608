@@ -38,7 +38,7 @@ const getCopyText = (event: BokudeliEvent, community: BokudeliCommunity, shop: B
     '',
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
     `⏳期限：${dateWithDayOfWeekString(event.event_deadline_datetime)}に注文締切`,
-    `📍場所：${event.event_address} ${event.event_place}`,
+    `📍場所：${event.fullAddress} ${event.event_place}`,
     `👥主催：${event.community_name}`,
     `👩‍🍳食事：${shop.shop_name}`,
     `👉詳細：${getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id)}`,

@@ -47,7 +47,7 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
 
   return {
     event_name: event.event_name,
-    event_address: event.event_address,
+    event_address: event.fullAddress,
     event_place: event.event_place,
     community_name: event.community_name,
     shop_name: event.shop_name,

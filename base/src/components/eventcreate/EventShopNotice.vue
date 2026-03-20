@@ -46,7 +46,7 @@ const pickUpStartDateTime = computed(
 const eventDeadlineDateTime = computed(() => `${convertToDatetimeWeekdayShort(event.value.event_deadline_datetime)}`)
 
 const shop_phone = computed(() => (shop.value !== null ? shop.value.shop_phone : ''))
-const shop_address = computed(() => (shop.value !== null ? shop.value.shop_address : ''))
+const shop_address = computed(() => (shop.value !== null ? shop.value.fullAddress : ''))
 
 const textFieldVariant = computed(() => {
   return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'

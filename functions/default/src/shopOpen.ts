@@ -5,7 +5,7 @@ import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 
 const sendShopOpenMailToSupport = async (shop: PartnerShop) => {
   const shopName = shop.shop_name
-  const shopAddress = shop.shop_address
+  const shopAddress = shop.fullAddress
   const partnerId = shop.partner_id
   const isOpen = shop.is_open ? '開店（OPEN）' : '閉店（CLOSE）'
   const subject = `${shopName}の開店設定が変更されました`

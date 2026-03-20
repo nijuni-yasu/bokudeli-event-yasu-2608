@@ -63,7 +63,7 @@ export const eventReceipt = onCall<EventReceiptRequest, Promise<EventReceiptResp
         date: convertToDate(Date.now()),
         shop: shop.shop_name,
         invoiceId: shop.shop_invoice_number ?? 'なし',
-        address: shop.shop_address,
+        address: shop.fullAddress,
         rawPrice: convertNumberToYen(order.ExTaxPrice),
         tax: convertNumberToYen(order.TaxPrice),
         reissue,

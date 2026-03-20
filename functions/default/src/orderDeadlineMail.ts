@@ -99,7 +99,7 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
 
   return {
     event_name: event.event_name,
-    event_address: event.event_address,
+    event_address: event.fullAddress,
     event_place: event.event_place,
     community_name: event.community_name,
     shop_name: event.shop_name,
@@ -138,10 +138,10 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
 
   return {
     shop_email: shopData.shop_email,
-    shop_address: shopData.shop_address,
+    shop_address: shopData.fullAddress,
     shop_phone: shopData.shop_phone,
     event_name: event.event_name,
-    event_address: event.event_address,
+    event_address: event.fullAddress,
     event_place: event.event_place,
     community_name: event.community_name,
     shop_name: event.shop_name,
@@ -256,7 +256,7 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
           event_name: event.event_name,
           event_cover_url: event.event_cover_url,
           community_name: event.community_name,
-          event_address: event.event_address,
+          event_address: event.fullAddress,
           shop_name: event.shop_name,
           event_url: getEventUrl(event.community_account, event.id),
         }
@@ -321,7 +321,7 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
           event_cover_url: event.event_cover_url,
           event_desc: event.event_desc,
           event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
-          event_address: event.event_address,
+          event_address: event.fullAddress,
           event_place: event.event_place,
           shop_name: event.shop_name,
           event_deadline_datetime: convertToDatetimeWeekdayShort(event.event_deadline_datetime),

@@ -80,7 +80,7 @@ watch(
           {{ $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime, 'datetime_weekday_short')]) }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0">
-          {{ $t('success_join_event_dialog.place') }} {{ event.event_address }} {{ event.event_place }}
+          {{ $t('success_join_event_dialog.place') }} {{ event.fullAddress }} {{ event.event_place }}
         </v-card-text>
         <v-card-text class="text-description pb-1 px-0"
           >{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text

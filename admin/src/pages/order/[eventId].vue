@@ -150,9 +150,9 @@ const downloadNamesPrint = async () => {
               }}
             </p>
             <p>
-              {{ $t('order_detail.event_address', [eventStore.event.event_address]) }}
+              {{ $t('order_detail.event_address', [eventStore.event.fullAddress]) }}
               <a
-                :href="`https://www.google.co.jp/maps/search/${eventStore.event.event_address} ${eventStore.event.event_place}`"
+                :href="`https://www.google.co.jp/maps/search/${eventStore.event.fullAddress} ${eventStore.event.event_place}`"
                 target="_blank"
               >
                 <v-icon :icon="mdiMapMarkerRadius" />

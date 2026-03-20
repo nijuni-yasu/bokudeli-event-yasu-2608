@@ -270,7 +270,7 @@ const isOpenCancelpolicyDialog = ref(false)
           </router-link>
         </v-card-text>
         <v-card-text class="card-text-style">
-          {{ $t('cart.place') }} {{ cartItem.event.event_address }} {{ cartItem.event.event_place }}
+          {{ $t('cart.place') }} {{ cartItem.event.fullAddress }} {{ cartItem.event.event_place }}
         </v-card-text>
         <v-card-text class="card-text-style">
           {{ $t('cart.date') }}{{ dateWithDayOfWeekString(cartItem.event.event_start_datetime) }}〜{{
