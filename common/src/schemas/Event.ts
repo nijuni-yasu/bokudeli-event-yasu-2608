@@ -7,6 +7,7 @@ import {
   DocumentReference,
 } from './firebase/index.js'
 import { getStartOfDay } from '../utils/datetime.js'
+import { computeEventFullAddress } from '../utils/splitAddress.js'
 
 export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
@@ -49,7 +50,9 @@ export const EventDbSchema = z.object({
   community_name: z.string().nonempty(),
   community_account: z.string().nonempty(),
   event_postalcode: z.string().regex(/^\d{7}$/),
-  event_address: z.string().nonempty(),
+  // event_address はレガシー用。新規保存では書き込まない（EventAppSchema で default('')）
+  event_address_base: z.string().nonempty(),
+  event_address_detail: z.string(),
   event_start_datetime: TimestampSchema,
   event_end_datetime: TimestampSchema,
   event_deadline_datetime: TimestampSchema,
@@ -127,6 +130,8 @@ const EventAppSchema = z.object({
   members: z.array(MemberIdSchema).default([]),
   event_postalcode: z.string().default(''),
   event_address: z.string().default(''),
+  event_address_base: z.string().default(''),
+  event_address_detail: z.string().default(''),
   partner_id: z.string().default(''),
   shop_id: z.string().default(''),
   shop_name: z.string().default(''),
@@ -180,6 +185,8 @@ export class Event {
 
   event_postalcode!: string
   event_address!: string
+  event_address_base!: string
+  event_address_detail!: string
   partner_id!: string
   shop_id!: string
   shop_name!: string
@@ -212,6 +219,14 @@ export class Event {
     this.id = id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
     this.updated_at = Date.now()
+  }
+
+  get fullAddress(): string {
+    return computeEventFullAddress({
+      event_address: this.event_address,
+      event_address_base: this.event_address_base,
+      event_address_detail: this.event_address_detail,
+    })
   }
 
   /**

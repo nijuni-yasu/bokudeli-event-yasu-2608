@@ -124,7 +124,8 @@ const PartnerShopDbSchema = z.object({
   partner_id: z.string().nonempty(),
   shop_id: z.string().nonempty(),
   shop_name: z.string().nonempty(),
-  shop_address: z.string().nonempty(),
+  shop_address_base: z.string().nonempty(),
+  shop_address_detail: z.string().nonempty(),
   shop_address_latitude: z.number().positive(),
   shop_address_longitude: z.number().positive(),
   shop_deadline_datetime: z.object({
@@ -222,8 +223,8 @@ const PartnerShopAppSchema = z.object({
       }),
     ),
   min_orders_on_spot: z.number().nonnegative().default(30),
-  // Optional
-  shop_address: z.string().nonempty().optional(),
+  shop_address_base: z.string().default(''),
+  shop_address_detail: z.string().default(''),
   shop_address_latitude: z.number().positive().optional(),
   shop_address_longitude: z.number().positive().optional(),
   shop_description: z.string().nonempty().optional(),
@@ -279,7 +280,8 @@ export class PartnerShop {
   }[]
   min_orders_on_spot!: number
   // Optional
-  shop_address?: string
+  shop_address_base?: string
+  shop_address_detail?: string
   shop_address_latitude?: number
   shop_address_longitude?: number
   shop_description?: string
@@ -312,6 +314,10 @@ export class PartnerShop {
 
   toFirestore(): z.infer<typeof PartnerShopDbSchema> {
     return PartnerShopDbSchema.parse(convertToDb(this))
+  }
+
+  get fullAddress(): string {
+    return [this.shop_address_base, this.shop_address_detail].filter(Boolean).join(' ')
   }
 
   getEmails(): string[] {
