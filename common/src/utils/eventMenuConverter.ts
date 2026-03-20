@@ -44,7 +44,7 @@ function applyDefaultSelectedMenuIds(selectedMenuIds: string[], partnerMenus: Pa
  * @param eventId - イベントID
  * @param eventStartDatetime - イベント開始日時（期間チェック用）
  * @param selectedMenuIds - 選択されたmenu_idの配列
- * @returns 変換されたEventMenu、または売り切れ・期間外の場合はnull
+ * @returns 変換されたEventMenu。論理削除済み・売り切れ・期間外の場合は null
  */
 export function convertFromPartnerMenuToEventMenu(
   partnerMenu: PartnerMenu,
@@ -52,6 +52,11 @@ export function convertFromPartnerMenuToEventMenu(
   eventStartDatetime: number | null,
   selectedMenuIds: string[],
 ): EventMenu | null {
+  // 論理削除チェック：削除済みメニューはEventMenuに含めない
+  if (partnerMenu.is_deleted) {
+    return null
+  }
+
   // 売り切れチェック：売り切れメニューはEventMenuに含めない
   if (partnerMenu.is_sold_out) {
     return null
@@ -83,7 +88,7 @@ export function convertFromPartnerMenuToEventMenu(
  * @param eventId - イベントID
  * @param eventStartDatetime - イベント開始日時（期間チェック用）
  * @param selectedMenuIds - 選択されたmenu_idの配列（空配列の場合はデフォルトで全選択）
- * @returns 変換されたEventMenu配列（売り切れ・期間外のメニューは除外）
+ * @returns 変換されたEventMenu配列。論理削除済み・売り切れ・期間外のメニューは除外
  */
 export function convertPartnerMenusToEventMenus(
   partnerMenus: PartnerMenu[],
@@ -91,10 +96,11 @@ export function convertPartnerMenusToEventMenus(
   eventStartDatetime: number | null,
   selectedMenuIds: string[] = [],
 ): EventMenu[] {
-  // デフォルト選択を適用: 空配列または店舗変更時は全menu_idに展開
-  const effectiveSelectedMenuIds = applyDefaultSelectedMenuIds(selectedMenuIds, partnerMenus)
+  // 論理削除済みはデフォルト選択の判定・店舗変更時の共通 menu_id 判定から除外する
+  const activePartnerMenus = partnerMenus.filter((pm) => !pm.is_deleted)
+  const effectiveSelectedMenuIds = applyDefaultSelectedMenuIds(selectedMenuIds, activePartnerMenus)
 
-  return partnerMenus
+  return activePartnerMenus
     .map((menu) => convertFromPartnerMenuToEventMenu(menu, eventId, eventStartDatetime, effectiveSelectedMenuIds))
     .filter((menu): menu is EventMenu => menu !== null)
 }

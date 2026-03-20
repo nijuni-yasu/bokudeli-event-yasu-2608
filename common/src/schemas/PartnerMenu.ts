@@ -12,6 +12,8 @@ const PartnerMenuDbSchema = z.object({
   // Optional
   menu_date_start: TimestampSchema.nullable(),
   menu_date_end: TimestampSchema.nullable(),
+  is_deleted: z.boolean().optional(),
+  deleted_at: TimestampSchema.optional(),
 })
 
 const PartnerMenuAppSchema = z.object({
@@ -25,6 +27,8 @@ const PartnerMenuAppSchema = z.object({
   // Optional
   menu_date_start: EpochMillisSchema.nullable().default(null),
   menu_date_end: EpochMillisSchema.nullable().default(null),
+  is_deleted: z.boolean().default(false),
+  deleted_at: EpochMillisSchema.optional(),
 })
 
 const convertToDb = (menu: PartnerMenu) => {
@@ -49,6 +53,8 @@ export class PartnerMenu {
   // Optional
   menu_date_start!: number | null
   menu_date_end!: number | null
+  is_deleted!: boolean
+  deleted_at?: number
 
   constructor(partner_id: string, menu_id: string, src: Partial<PartnerMenu>) {
     Object.assign(this, PartnerMenuAppSchema.parse(src))
