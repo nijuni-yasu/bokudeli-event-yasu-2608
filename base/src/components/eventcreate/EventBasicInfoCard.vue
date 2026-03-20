@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue'
+import { computed, watch } from 'vue'
 import {
   hourList,
   minutesList,
@@ -87,17 +87,25 @@ const updateEndDatetime = (newValue: number) => {
   }
 }
 
-watchEffect(async () => {
-  const postalcode = event.value.event_postalcode
-  if (requiredValidator(postalcode) !== true || postalCodeValidator(postalcode) !== true) {
-    return
-  }
-  const location = await fetchLocationByPostalcode(postalcode as string)
-  if (location?.address == null || (event.value.event_address?.startsWith(location.address) ?? false)) {
-    return
-  }
-  event.value.event_address = location.address
-})
+watch(
+  () => event.value.event_postalcode,
+  async (postalcode) => {
+    if (requiredValidator(postalcode) !== true || postalCodeValidator(postalcode) !== true) {
+      event.value.event_address_base = ''
+      return
+    }
+    const requestedPostalcode = postalcode as string
+    const location = await fetchLocationByPostalcode(requestedPostalcode)
+    // レース対策: 古いリクエストの結果で上書きしない
+    if (event.value.event_postalcode !== requestedPostalcode) {
+      return
+    }
+    if (location?.address == null) return
+
+    event.value.event_address_base = location.address
+  },
+  { immediate: true },
+)
 const textFieldVariant = computed(() => {
   return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
 })
@@ -112,7 +120,7 @@ const textFieldVariant = computed(() => {
 
     <v-card-text class="pt-5">
       <v-row>
-        <v-col cols="12" sm="12" md="3">
+        <v-col cols="12" sm="12" md="4">
           <v-text-field
             v-model="event.event_postalcode"
             :variant="textFieldVariant"
@@ -124,11 +132,26 @@ const textFieldVariant = computed(() => {
         </v-col>
         <v-col cols="12">
           <v-text-field
-            v-model="event.event_address"
+            v-model="event.event_address_base"
             :variant="textFieldVariant"
             dense
             :label="$t('address')"
+            :hint="$t('address_hint')"
+            persistent-hint
+            readonly
             :rules="[requiredValidator]"
+          />
+        </v-col>
+        <v-col cols="12">
+          <v-text-field
+            v-model="event.event_address_detail"
+            :variant="textFieldVariant"
+            dense
+            :label="$t('detail_address')"
+            :placeholder="$t('detail_address_hint')"
+            :hint="$t('detail_address_hint')"
+            :rules="[requiredValidator]"
+            persistent-hint
             :readonly="event.event_status.value !== 'in_draft'"
           />
         </v-col>
@@ -143,6 +166,8 @@ const textFieldVariant = computed(() => {
             variant="outlined"
             dense
             :label="$t('event_basic_info.place_name')"
+            :hint="$t('event_basic_info.place_name_hint')"
+            persistent-hint
           />
         </v-col>
         <v-col cols="12" sm="12" md="6">
@@ -152,11 +177,13 @@ const textFieldVariant = computed(() => {
             dense
             :label="$t('event_basic_info.place_url')"
             :rules="[urlValidator]"
+            :hint="$t('event_basic_info.place_url_hint')"
+            persistent-hint
           />
         </v-col>
       </v-row>
-      <div class="mt-2 text-subtitle-2">
-        <span>{{ $t('event_basic_info.place_hint') }}</span>
+      <div class="ma-4 text-subtitle-2">
+        <span>{{ $t('event_basic_info.address_hint') }}</span>
       </div>
     </v-card-text>
 
