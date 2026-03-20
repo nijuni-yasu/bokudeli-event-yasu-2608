@@ -10,7 +10,17 @@ import type {
 import { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
 import { PartnerMenu } from '@shokujii/common/schemas/PartnerMenu.js'
 import { defineStore } from 'pinia'
-import { collection, doc, getFirestore, onSnapshot, setDoc, deleteDoc, writeBatch } from 'firebase/firestore'
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  onSnapshot,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  writeBatch,
+} from 'firebase/firestore'
 import { uploadMenuImage, uploadShopImage } from '@shokujii/base/composable/uploadImage'
 
 export class BokudeliPartnerShop extends PartnerShop {
@@ -103,8 +113,10 @@ export const usePartnerStore = (partnerId: string) => {
       if (_menus.value == null) {
         return null
       }
+      // 論理削除されたメニューを除外
+      const activeMenus = _menus.value.filter((menu) => !menu.is_deleted)
       // menu_sort_numberでソート（昇順）、未設定の場合はupdatedAtでソート（降順）
-      const sortedMenus = [..._menus.value].sort((a, b) => {
+      const sortedMenus = [...activeMenus].sort((a, b) => {
         if (a.menu_sort_number != null && b.menu_sort_number != null) {
           return a.menu_sort_number - b.menu_sort_number
         }
@@ -158,8 +170,12 @@ export const usePartnerStore = (partnerId: string) => {
     }
 
     const deleteMenu = async (menuId: string) => {
-      const menuRef = doc(partnerRef, 'menus', menuId)
-      return await deleteDoc(menuRef)
+      const menuRef = doc(partnerRef, 'menus', menuId).withConverter(menuConverter)
+      const snap = await getDoc(menuRef)
+      if (!snap.exists()) {
+        return
+      }
+      await updateDoc(menuRef, { is_deleted: true, deleted_at: Timestamp.now() })
     }
 
     const updateMenuSortOrder = async (menuIds: string[]) => {
