@@ -217,6 +217,11 @@ export async function sendOrderRemindMailToOrganizer(
   const sendMailPromises = events
     .map(async (event) => {
       try {
+        const hasOrders = await event.hasOrderedOrders()
+        if (!hasOrders) {
+          return
+        }
+
         const [dynamicTemplateData, communityEmails] = await Promise.all([
           createTemplateDataForOrganizerRemind(event, eventDaysAgo),
           getCommunityEmailsForEvent(event),
