@@ -84,6 +84,24 @@ export class ShokujiiEvent extends Event {
     return status === undefined ? orders : orders.filter((order) => order.status === status)
   }
 
+  /**
+   * status === 'ordered' の注文が 1 件以上存在するかを limit(1) で効率的に判定する
+   */
+  async hasOrderedOrders(transaction?: Transaction): Promise<boolean> {
+    const db = getFirestore()
+    const ordersRef = db
+      .collection('communities')
+      .doc(this.community_id)
+      .collection('events')
+      .doc(this.id)
+      .collection('orders')
+      .where('status', '==', 'ordered')
+      .limit(1)
+      .withConverter(new ShokujiiEventOrderConverter())
+    const snapshot = await (transaction === undefined ? ordersRef.get() : transaction.get(ordersRef))
+    return !snapshot.empty
+  }
+
   async getOrder(orderId: string, transaction?: Transaction): Promise<EventOrder | undefined> {
     const db = getFirestore()
     const orderRef = db
@@ -179,6 +197,7 @@ export class ShokujiiEvent extends Event {
 
   /**
    * イベントステータスの最後の更新日時を取得
+   * where + orderBy + limit(1) で 1 件のみ読み取り
    */
   async getLastUpdatedTimeByStatus(status: string): Promise<number | null> {
     const db = getFirestore()
@@ -188,18 +207,14 @@ export class ShokujiiEvent extends Event {
       .collection('events')
       .doc(this.id)
       .collection('logs')
+      .where('event_status.value', '==', status)
       .orderBy('updated_at', 'desc')
+      .limit(1)
       .withConverter(new ShokujiiEventLogConverter())
 
     const logsSnapshot = await logsRef.get()
-
-    for (const logSnapshot of logsSnapshot.docs) {
-      const log = logSnapshot.data()
-      if (log.event_status?.value === status) {
-        return log.updated_at
-      }
-    }
-    return null
+    const log = logsSnapshot.docs[0]?.data()
+    return log?.updated_at ?? null
   }
 
   /**
@@ -269,6 +284,22 @@ export const getAllAcceptingOrderEvents = async (
     .where('event_status.value', '==', 'accepting_order')
     .where('is_public', '==', true)
     .where('event_deadline_datetime', '>', Timestamp.fromMillis(targetDateTimeMillis))
+    .where('is_deleted', '==', false)
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
+
+// 注文受付中かつ注文期限が未来のイベントを取得（公開・非公開を問わない）
+export const getAcceptingOrderEventsBeforeDeadline = async (
+  nowDateTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'accepting_order')
+    .where('event_deadline_datetime', '>', Timestamp.fromMillis(nowDateTimeMillis))
     .where('is_deleted', '==', false)
     .withConverter(new ShokujiiEventConverter())
   const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
