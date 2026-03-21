@@ -2,6 +2,7 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
+import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
 import { getEventUrl, getUserUrl, FIREBASE_STORAGE_BASE_URL } from './utils/urls.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { getUser, getUserPersonalInformation } from './stores/user.js'
@@ -83,24 +84,23 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
     user_image_url: userImageUrl,
   }
 
-  const results = await Promise.allSettled(
-    emails.map(async (to) => {
-      return sgMail.send({
-        to,
-        from: DEFAULT_FROM,
-        templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
-        dynamicTemplateData,
-      })
-    }),
+  const bulkResult = await sendDynamicTemplateWithPersonalizations(
+    {
+      from: DEFAULT_FROM,
+      templateId: ORDER_COMPLETION_FOR_ORGANIZER_TEMPLATE_ID,
+    },
+    emails.map((to) => ({ to, dynamicTemplateData })),
+    { feature: 'orderCompletionOrganizers', eventId: event.id },
   )
 
-  const failedCount = results.filter((r) => r.status === 'rejected').length
-  if (failedCount > 0) {
+  if (bulkResult.errors.length > 0) {
     logger.warn('Failed to send order completion mail to organizers', {
       eventId: event.id,
-      successCount: results.filter((r) => r.status === 'fulfilled').length,
-      failedCount,
+      batchesSucceeded: bulkResult.batchesSucceeded,
+      batchesFailed: bulkResult.batchesFailed,
+      totalRecipientsAccepted: bulkResult.totalRecipientsAccepted,
       totalEmails: emails.length,
+      errors: bulkResult.errors,
     })
   }
 }
@@ -173,43 +173,40 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
       event_payment: event.event_payment,
     }
 
-    // Promise.allSettled を使用して、一部失敗しても続行
-    const results = await Promise.allSettled(
-      emails.map(async (to) => {
-        return sgMail.send({
-          to,
-          from: DEFAULT_FROM,
-          templateId: NEW_EVENT_NOTIFICATION_TEMPLATE_ID,
-          dynamicTemplateData,
-        })
-      }),
+    const bulkResult = await sendDynamicTemplateWithPersonalizations(
+      {
+        from: DEFAULT_FROM,
+        templateId: NEW_EVENT_NOTIFICATION_TEMPLATE_ID,
+      },
+      emails.map((to) => ({ to, dynamicTemplateData })),
+      { feature: 'newEventNotification', eventId: event.id, communityId },
     )
 
-    // 成功・失敗の集計
-    const successCount = results.filter((r) => r.status === 'fulfilled').length
-    const failedCount = results.filter((r) => r.status === 'rejected').length
+    const totalRecipientsAccepted = bulkResult.totalRecipientsAccepted
+    const batchesFailed = bulkResult.batchesFailed
 
-    if (successCount > 0) {
+    if (totalRecipientsAccepted > 0) {
       logger.info('Sent new event notification emails', {
         eventId: event.id,
         communityId,
-        successCount,
-        failedCount,
-        totalEmails: emails.length,
+        totalRecipientsAccepted,
+        batchesAttempted: bulkResult.batchesAttempted,
+        batchesSucceeded: bulkResult.batchesSucceeded,
+        batchesFailed,
+        recipientTargetCount: emails.length,
       })
     }
 
-    // 失敗したメールの詳細をログ出力
-    if (failedCount > 0) {
+    if (bulkResult.errors.length > 0) {
       logger.warn('Failed to send new event notifications', {
         eventId: event.id,
         communityId,
-        successCount,
-        failedCount,
-        totalEmails: emails.length,
-        errors: results
-          .filter((r) => r.status === 'rejected')
-          .map((r) => (r as PromiseRejectedResult).reason?.message || r.reason),
+        totalRecipientsAccepted,
+        batchesAttempted: bulkResult.batchesAttempted,
+        batchesSucceeded: bulkResult.batchesSucceeded,
+        batchesFailed,
+        recipientTargetCount: emails.length,
+        errors: bulkResult.errors,
       })
     }
   } catch (error) {
