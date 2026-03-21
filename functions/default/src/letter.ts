@@ -8,6 +8,7 @@ import { getUserPersonalInformation, getUser } from './stores/user.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
 import { send } from './utils/sendgrid.js'
 import * as sgMail from './utils/sendgrid.js'
+import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
 import { getCommunityUrl, getEventUrl } from './utils/urls.js'
 import { createModuleLogger } from './utils/logger.js'
 
@@ -18,20 +19,6 @@ const LETTER_ID = 'd-e1ca1ca620374bfeaf0697495dbacb20'
 interface UserEmailWithName {
   email: string
   name: string
-}
-
-/**
- * エラーの集計情報を作成
- */
-function getErrorSummary(results: PromiseSettledResult<unknown>[]): Record<string, number> {
-  const summary: Record<string, number> = {}
-  results.forEach((result) => {
-    if (result.status === 'rejected') {
-      const errorMessage = result.reason?.message || String(result.reason)
-      summary[errorMessage] = (summary[errorMessage] || 0) + 1
-    }
-  })
-  return summary
 }
 
 /**
@@ -271,49 +258,54 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         return // ステータス更新失敗の場合は送信しない
       }
 
-      // 全ユーザーにメール送信
-      const results = await Promise.allSettled(
-        validUserInfos.map(async (userInfo) => {
-          const dynamicTemplateData = {
-            ...communityData,
-            ...eventData,
-            letter_title: letter.letter_title,
-            letter_content: letter.letter_content,
-            letter_type: type,
-            user_name: userInfo.name || 'ユーザー',
-          }
+      const recipients = validUserInfos.map((userInfo) => ({
+        to: userInfo.email,
+        dynamicTemplateData: {
+          ...communityData,
+          ...eventData,
+          letter_title: letter.letter_title,
+          letter_content: letter.letter_content,
+          letter_type: type,
+          user_name: userInfo.name || 'ユーザー',
+        },
+      }))
 
-          return send({
-            to: userInfo.email,
-            from: DEFAULT_FROM,
-            replyTo: communityEmail.trim(),
-            subject: letter.letter_title,
-            templateId: LETTER_ID,
-            dynamicTemplateData,
-          })
-        }),
+      const bulkResult = await sendDynamicTemplateWithPersonalizations(
+        {
+          from: DEFAULT_FROM,
+          replyTo: communityEmail.trim(),
+          subject: letter.letter_title,
+          templateId: LETTER_ID,
+        },
+        recipients,
+        { feature: 'letter', letterId: letter.id, communityId },
       )
 
-      // 成功・失敗の集計
-      const successCount = results.filter((r) => r.status === 'fulfilled').length
-      const failedCount = results.filter((r) => r.status === 'rejected').length
+      const totalRecipientsAccepted = bulkResult.totalRecipientsAccepted
+      const batchesFailed = bulkResult.batchesFailed
 
-      // 失敗したメールのログ出力
-      if (failedCount > 0) {
-        // エラーの集計情報を取得（詳細は sendgrid.ts のログを参照）
-        const errorSummary = getErrorSummary(results)
+      if (bulkResult.errors.length > 0) {
+        const errorSummary = bulkResult.errors.reduce<Record<string, number>>((acc, e) => {
+          const key = e.reason
+          acc[key] = (acc[key] ?? 0) + 1
+          return acc
+        }, {})
 
-        logger.warn(`Failed to send ${failedCount}/${validUserInfos.length} letters`, {
+        logger.warn('Letter bulk send had batch failures', {
           letterId: letter.id,
           communityAccount,
-          successCount,
-          failedCount,
+          totalRecipientsAccepted,
+          batchesAttempted: bulkResult.batchesAttempted,
+          batchesSucceeded: bulkResult.batchesSucceeded,
+          batchesFailed,
+          recipientTargetCount: validUserInfos.length,
           errorSummary,
+          errors: bulkResult.errors,
         })
       } else {
-        logger.info(`Successfully sent letter to ${successCount} users`, {
+        logger.info(`Successfully sent letter to ${totalRecipientsAccepted} users`, {
           letterId: letter.id,
-          successCount,
+          totalRecipientsAccepted,
         })
       }
     } catch (error) {
