@@ -70,7 +70,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `console.log` / `console.error` を使っていないか（`createModuleLogger` を使う）
 - [ ] `import { logger } from 'firebase-functions'` を直接使っていないか（`createModuleLogger` を使う）
 - [ ] ログメッセージに `letter |` 等の接頭辞をつけていないか（`createModuleLogger` 使用時は不要）
-- [ ] メールの一括送信に `Promise.all` を使っていないか（`Promise.allSettled` を使い、失敗集計をログに記録する）
+- [ ] メールの一括送信に `Promise.all` を使っていないか（SendGrid personalizations の `sendDynamicTemplateWithPersonalizations`（`utils/sendgridBulk.ts`）によるバッチ送信とし、バッチ単位の失敗と受付件数をログに記録する）
 - [ ] メールの1件送信に `Promise.allSettled` や失敗集計ログを使っていないか（`try/catch` で十分）
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
