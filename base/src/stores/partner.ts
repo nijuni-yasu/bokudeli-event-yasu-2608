@@ -22,7 +22,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { getMenuImageStoragePath, getShopCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
-import { uploadImage } from '@shokujii/base/utils/storage.js'
+import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 
 export class BokudeliPartnerShop extends PartnerShop {
   constructor(partner_id: string, shop_id: string | null, src: Partial<PartnerShop>) {
@@ -71,6 +71,8 @@ export const usePartnerStore = (partnerId: string) => {
     const partnerRef: DocumentReference = doc(db, 'partners', partnerId)
     const _shops = ref<BokudeliPartnerShop[] | null>(null)
     const _menus = ref<BokudeliPartnerMenu[] | null>(null)
+    const _shopImageCacheBusters = ref<Map<string, number>>(new Map())
+    const _menuImageCacheBusters = ref<Map<string, number>>(new Map())
 
     let unsubscribeShops: Unsubscribe | null = null
     const subscribeShops = () => {
@@ -128,6 +130,26 @@ export const usePartnerStore = (partnerId: string) => {
       return sortedMenus
     })
 
+    const shopImageUrls = computed<Map<string, string>>(() => {
+      const map = new Map<string, string>()
+      _shops.value?.forEach((shop) => {
+        const base = convertStoragePathToURL(getShopCoverStoragePath(partnerRef.id, shop.shop_id))
+        const buster = _shopImageCacheBusters.value.get(shop.shop_id) ?? 0
+        map.set(shop.shop_id, buster > 0 ? `${base}&t=${buster}` : base)
+      })
+      return map
+    })
+
+    const menuImageUrls = computed<Map<string, string>>(() => {
+      const map = new Map<string, string>()
+      _menus.value?.forEach((menu) => {
+        const base = convertStoragePathToURL(getMenuImageStoragePath(partnerRef.id, menu.menu_id))
+        const buster = _menuImageCacheBusters.value.get(menu.menu_id) ?? 0
+        map.set(menu.menu_id, buster > 0 ? `${base}&t=${buster}` : base)
+      })
+      return map
+    })
+
     /**
      * @param timeout [ms]
      * @returns Promise<BokudeliPartnerShop[]> when the shops are loaded
@@ -156,7 +178,8 @@ export const usePartnerStore = (partnerId: string) => {
 
     const updateShop = async (data: BokudeliPartnerShop, image?: File) => {
       if (image != null) {
-        data.shop_image_url = await uploadImage(image, getShopCoverStoragePath(partnerRef.id, data.shop_id))
+        await uploadImage(image, getShopCoverStoragePath(partnerRef.id, data.shop_id))
+        _shopImageCacheBusters.value = new Map(_shopImageCacheBusters.value).set(data.shop_id, Date.now())
       }
       const shopRef = doc(partnerRef, 'shops', data.shop_id).withConverter(shopConverter)
       return await setDoc(shopRef, data, { merge: true })
@@ -164,9 +187,10 @@ export const usePartnerStore = (partnerId: string) => {
 
     const updateMenu = async (data: BokudeliPartnerMenu, image?: File) => {
       if (image != null) {
-        data.menu_image_url = await uploadImage(image, getMenuImageStoragePath(partnerRef.id, data.id))
+        await uploadImage(image, getMenuImageStoragePath(partnerRef.id, data.menu_id))
+        _menuImageCacheBusters.value = new Map(_menuImageCacheBusters.value).set(data.menu_id, Date.now())
       }
-      const menuRef = doc(partnerRef, 'menus', data.id).withConverter(menuConverter)
+      const menuRef = doc(partnerRef, 'menus', data.menu_id).withConverter(menuConverter)
       return await setDoc(menuRef, data, { merge: true })
     }
 
@@ -191,6 +215,8 @@ export const usePartnerStore = (partnerId: string) => {
     return {
       shops,
       menus,
+      shopImageUrls,
+      menuImageUrls,
       getLoadedShops,
       updateShop,
       updateMenu,

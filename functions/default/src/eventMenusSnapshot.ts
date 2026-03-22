@@ -82,16 +82,8 @@ export const savePartnerMenusToEventMenus = async (
       effectiveSelectedMenuIds,
     )
 
-    // 生成したEventMenusを保存（コピー済み画像URLで上書き）
-    await Promise.all(
-      eventMenusToSave.map(async (eventMenu) => {
-        const copiedUrl = menuImageUrlMap.get(eventMenu.menu_id)
-        if (copiedUrl != null) {
-          eventMenu.menu_image_url = copiedUrl
-        }
-        await event.saveMenu(eventMenu, transaction)
-      }),
-    )
+    // 生成したEventMenusを保存
+    await Promise.all(eventMenusToSave.map((eventMenu) => event.saveMenu(eventMenu, transaction)))
   })
 }
 

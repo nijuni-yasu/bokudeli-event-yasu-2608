@@ -4,7 +4,6 @@ import { TimestampSchema } from './firebase/index.js'
 const EventMenuDbSchema = z.object({
   updatedAt: TimestampSchema,
   menu_description: z.string().nonempty(),
-  menu_image_url: z.string().url().nonempty(),
   menu_name: z.string().nonempty(),
   menu_price: z.number().int().positive(),
   is_sold_out: z.boolean(),
@@ -17,7 +16,6 @@ const EventMenuAppSchema = z.object({
   menu_name: z.string().nonempty(),
   // Default
   menu_price: z.number().int().positive().default(100),
-  menu_image_url: z.string().default(''),
   menu_description: z.string().default(''),
   is_sold_out: z.boolean().default(false),
   is_selected: z.boolean().default(true),
@@ -39,7 +37,6 @@ export class EventMenu {
   readonly event_id: string
   updatedAt: number
   menu_description!: string
-  menu_image_url!: string
   menu_name!: string
   menu_price!: number
   is_sold_out!: boolean

@@ -4,7 +4,6 @@ import { TimestampSchema, EpochMillisSchema } from './firebase/index.js'
 const PartnerMenuDbSchema = z.object({
   updatedAt: TimestampSchema,
   menu_description: z.string().nonempty(),
-  menu_image_url: z.string().url().nonempty(),
   menu_name: z.string().nonempty(),
   menu_price: z.number().int().positive(),
   is_sold_out: z.boolean(),
@@ -19,7 +18,6 @@ const PartnerMenuDbSchema = z.object({
 const PartnerMenuAppSchema = z.object({
   // Default
   menu_description: z.string().default(''),
-  menu_image_url: z.string().default(''),
   menu_name: z.string().default(''),
   menu_price: z.number().int().positive().default(100),
   is_sold_out: z.boolean().default(false),
@@ -45,7 +43,6 @@ export class PartnerMenu {
   readonly partner_id: string
   updatedAt: number
   menu_description!: string
-  menu_image_url!: string
   menu_name!: string
   menu_price!: number
   is_sold_out!: boolean

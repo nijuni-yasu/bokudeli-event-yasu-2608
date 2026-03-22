@@ -282,7 +282,7 @@ onUnmounted(() => {
         <!-- メニュ -->
         <event-menu-list
           ref="menuListRef"
-          :menus="eventStore.menus"
+          :event-id="eventId"
           :disabled="menuDisabled !== false"
           @select-menu="selectMenu"
         />

@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import { type PropType } from 'vue'
 import { type BokudeliPartnerMenu } from '@shokujii/base/stores/partner.js'
 import { convertToDate } from '@shokujii/base/utils/datetime'
 
-defineProps({
-  menu: {
-    type: Object as PropType<BokudeliPartnerMenu>,
-    required: true,
-  },
-})
+defineProps<{
+  menu: BokudeliPartnerMenu
+  imageUrl: string
+}>()
 </script>
 
 <template>
   <v-card class="card">
-    <v-img :src="menu.menu_image_url ?? undefined" cover aspect-ratio="1" />
+    <v-img :src="imageUrl" cover aspect-ratio="1" />
 
     <v-card-title class="text-h5 py-3 text-wrap">
       {{ menu.menu_name }}

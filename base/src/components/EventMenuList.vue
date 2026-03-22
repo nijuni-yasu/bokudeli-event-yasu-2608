@@ -2,11 +2,16 @@
 import { computed } from 'vue'
 import { useDisplay } from 'vuetify'
 import { priceString } from '@shokujii/base/schemes/converter'
-import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
+import { useEventStore, type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { mdiFoodForkDrink } from '@mdi/js'
+import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
+
+/** 横長レイアウトを適用するメニュー数の上限（この数以下は横長、超えるとグリッド） */
+const HORIZONTAL_LAYOUT_MAX_COUNT = 2
 
 const props = defineProps<{
-  menus: BokudeliEventMenu[] | null
+  eventId: string
   disabled: boolean
 }>()
 
@@ -14,26 +19,31 @@ const emit = defineEmits<{
   selectMenu: [menu: BokudeliEventMenu]
 }>()
 
-/** 横長レイアウトを適用するメニュー数の上限（この数以下は横長、超えるとグリッド） */
-const HORIZONTAL_LAYOUT_MAX_COUNT = 2
-
 const display = useDisplay()
+const eventStore = useEventStore(props.eventId)
 
 // is_selected が true のメニューのみを表示
 const filteredMenus = computed(() => {
-  if (props.menus === null) return null
-  return props.menus.filter((menu) => menu.is_selected === true)
+  return eventStore.menus?.filter((menu) => menu.is_selected === true)
 })
 
 /** 横長レイアウトを使う条件: 2件以下 かつ PC・タブレット（スマホ xs のみグリッド） */
 const useHorizontalLayout = computed(() => {
-  if (filteredMenus.value === null || filteredMenus.value.length === 0) return false
+  if (filteredMenus.value === undefined || filteredMenus.value.length === 0) return false
   return filteredMenus.value.length <= HORIZONTAL_LAYOUT_MAX_COUNT && !display.xs.value
 })
+
+const getMenuImageURL = (menu: BokudeliEventMenu) => {
+  const event = eventStore.event
+  if (event == null) {
+    return undefined
+  }
+  return convertStoragePathToURL(getEventMenuImageStoragePath(event, menu.menu_id))
+}
 </script>
 <template>
   <section>
-    <v-row v-if="filteredMenus !== null" class="align-stretch">
+    <v-row v-if="filteredMenus !== undefined && eventStore.event != null" class="align-stretch">
       <!-- 横長レイアウト: 2件以下 かつ PC・タブレットのみ -->
       <template v-if="useHorizontalLayout">
         <v-col v-for="menu of filteredMenus" :key="menu.menu_id" cols="12" class="pa-3">
@@ -41,7 +51,7 @@ const useHorizontalLayout = computed(() => {
             <v-row no-gutters class="flex-grow-1">
               <v-col cols="4" class="d-flex flex-shrink-0 align-stretch">
                 <div class="menu-image-wrapper menu-image-wrapper-horizontal">
-                  <v-img :src="menu.menu_image_url ?? undefined" :alt="menu.menu_name" cover />
+                  <v-img :src="getMenuImageURL(menu)" :alt="menu.menu_name" cover />
                 </div>
               </v-col>
               <v-col cols="8" class="pa-4 pa-md-5 d-flex flex-column menu-content-col">
@@ -82,7 +92,7 @@ const useHorizontalLayout = computed(() => {
             <v-row no-gutters class="flex-grow-1">
               <v-col cols="6" sm="12" class="d-flex flex-shrink-0">
                 <div class="menu-image-wrapper">
-                  <v-img :src="menu.menu_image_url ?? undefined" :alt="menu.menu_name" aspect-ratio="1" cover />
+                  <v-img :src="getMenuImageURL(menu)" :alt="menu.menu_name" aspect-ratio="1" cover />
                 </div>
               </v-col>
 
@@ -123,7 +133,7 @@ const useHorizontalLayout = computed(() => {
       </template>
 
       <!-- no result found -->
-      <v-col v-show="filteredMenus !== null && filteredMenus.length === 0" cols="12" class="text-center">
+      <v-col v-show="filteredMenus.length === 0" cols="12" class="text-center">
         <h4 class="mt-4">メニューがありません</h4>
       </v-col>
     </v-row>

@@ -135,7 +135,6 @@ const PartnerShopDbSchema = z.object({
   shop_description: z.string().nonempty(),
   shop_email: z.string().email().nonempty(),
   shop_genre: z.enum(GENRE_ARRAY),
-  shop_image_url: z.string().url().nonempty(),
   shop_phone: z.string().nonempty(),
   shop_postcode: z.string().nonempty(),
   shop_range_min_orders: z.array(
@@ -230,7 +229,6 @@ const PartnerShopAppSchema = z.object({
   shop_description: z.string().nonempty().optional(),
   shop_email: z.string().email().nonempty().optional(),
   shop_genre: z.enum(GENRE_ARRAY).optional(),
-  shop_image_url: z.string().url().nonempty().optional(),
   shop_invoice_number: z.string().nonempty().optional(),
   shop_name: z.string().nonempty().optional(),
   shop_phone: z.string().nonempty().optional(),
@@ -287,7 +285,6 @@ export class PartnerShop {
   shop_description?: string
   shop_email?: string
   shop_genre?: (typeof GENRE_ARRAY)[number]
-  shop_image_url?: string
   shop_invoice_number?: string
   shop_name?: string
   shop_phone?: string

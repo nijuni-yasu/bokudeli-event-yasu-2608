@@ -74,7 +74,6 @@ export function convertFromPartnerMenuToEventMenu(
   return new EventMenu(eventId, partnerMenu.menu_id, {
     menu_name: partnerMenu.menu_name,
     menu_description: partnerMenu.menu_description,
-    menu_image_url: partnerMenu.menu_image_url,
     menu_price: partnerMenu.menu_price,
     is_sold_out: partnerMenu.is_sold_out,
     menu_sort_number: partnerMenu.menu_sort_number,

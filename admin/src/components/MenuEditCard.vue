@@ -12,6 +12,8 @@ const { t: $t } = useI18n()
 
 const menu = defineModel<BokudeliPartnerMenu>({ required: true })
 
+defineProps<{ imageUrl: string }>()
+
 const emit = defineEmits<{
   save: [menu: BokudeliPartnerMenu, file: File | null]
   cancel: []
@@ -95,7 +97,7 @@ const handleSubmit = () => {
         <v-row justify="center">
           <v-col cols="7">
             <ImageInput
-              :url="menu.menu_image_url ?? undefined"
+              :url="imageUrl"
               @file-selected="(f) => (imageFile = f)"
               style="width: auto; max-width: min(600px, 100%); aspect-ratio: 1/1"
               :cover="true"
