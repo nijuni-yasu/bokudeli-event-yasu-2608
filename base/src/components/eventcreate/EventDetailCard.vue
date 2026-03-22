@@ -267,7 +267,7 @@ const tinymceInit = computed(() => ({
         <v-col cols="12">
           <ImageInput
             style="width: 100%; aspect-ratio: 120/63"
-            :url="event.event_cover_url"
+            :url="eventStore.coverImageUrl"
             :rules="[requiredValidator]"
             :readonly="props.readonly"
             :cover="true"

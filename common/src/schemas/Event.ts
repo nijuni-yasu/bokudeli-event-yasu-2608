@@ -60,7 +60,6 @@ export const EventDbSchema = z.object({
   shop_id: z.string().nonempty(),
   shop_name: z.string().nonempty(),
   event_name: z.string().nonempty(),
-  event_cover_url: z.string().nonempty(),
   event_payment: z.enum(EVENT_PAYMENT_VALUES),
   event_max_people: z.number().int().positive(),
   organizer_fullname: z.string().nonempty(),
@@ -137,7 +136,6 @@ const EventAppSchema = z.object({
   shop_id: z.string().default(''),
   shop_name: z.string().default(''),
   event_name: z.string().default(''),
-  event_cover_url: z.string().default(''),
   subdomain_tags: z.array(z.string()).default([]),
   bill_fullname: z.string().default(''),
   bill_email: z.string().default(''),
@@ -193,7 +191,6 @@ export class Event {
   shop_id!: string
   shop_name!: string
   event_name!: string
-  event_cover_url!: string
   event_desc!: string
   organizer_fullname!: string
   organizer_company!: string

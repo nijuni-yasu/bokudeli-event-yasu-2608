@@ -1,4 +1,4 @@
-import { getDownloadURL, getStorage } from 'firebase-admin/storage'
+import { getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import type { EventCopyRequest, EventCopyResponse } from '@shokujii/common/apis/eventCopy.js'
 import { isInShopTime } from '@shokujii/common/utils/datetime.js'
@@ -13,12 +13,10 @@ import { createModuleLogger } from './utils/logger.js'
 const logger = createModuleLogger('eventCopy')
 
 const copyEventImage = async (srcEvent: ShokujiiEvent, newEventId: string) => {
-  // TODO: batch 処理後 srcPath は getEventCoverStoragePath で取得するように変更する
-  // srcPath が存在しなかった場合のエラーハンドリングは呼び出し元で行う
-  // const srcPath = getEventCoverStoragePath(srcEvent.community_id, srcEvent.id)
-  const srcPath = decodeURIComponent(new URL(srcEvent.event_cover_url).pathname.split('/').slice(-1)[0])
+  const srcPath = getEventCoverStoragePath(srcEvent.community_id, srcEvent.id)
   const destPath = getEventCoverStoragePath(srcEvent.community_id, newEventId)
   const bucket = getStorage().bucket()
+  // srcPath が存在しなかった場合のエラーハンドリングは呼び出し元で行う
   return await bucket.file(srcPath).copy(destPath)
 }
 
@@ -113,12 +111,9 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
 
   // 画像をコピー
   try {
-    const [newFile] = await copyEventImage(srcEvent, newEvent.id)
-    newEvent.event_cover_url = await getDownloadURL(newFile)
+    await copyEventImage(srcEvent, newEvent.id)
   } catch (error) {
     logger.error('Failed to copy event image', { error })
-    // フルパス指定時代のフォールバックとしてオリジナルURLをそのまま設定しておく
-    newEvent.event_cover_url = srcEvent.event_cover_url
   }
 
   await saveEvent(uid, newEvent)

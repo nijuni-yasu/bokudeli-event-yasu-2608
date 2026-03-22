@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
+import { convertStoragePathToURL } from '../utils/storage'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const props = defineProps<{
   event: BokudeliEvent
@@ -197,7 +199,12 @@ const submitCancel = () => {
 
 <template>
   <v-card class="pa-0">
-    <v-img cover class="ma-0 pa-0" aspect-ratio="1.91" :src="event.event_cover_url"></v-img>
+    <v-img
+      cover
+      class="ma-0 pa-0"
+      aspect-ratio="1.91"
+      :src="convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.event_id))"
+    ></v-img>
     <EventStatusChip :status="event.calculatedEventStatus" size="small" class="mt-2 ml-3" />
     <v-chip v-if="!event.is_public" class="mt-2 ml-3" color="primary" size="small">
       {{ $t('private_event') }}

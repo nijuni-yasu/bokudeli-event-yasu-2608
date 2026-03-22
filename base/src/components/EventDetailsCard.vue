@@ -8,7 +8,7 @@ import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useEventStore } from '@shokujii/base/stores/event'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
@@ -57,7 +57,7 @@ const eventUrl = computed(() => {
 
 // コンポーネント内で pinia を直接たたくのはなるべく避けた方が良いが、このコンポーネントはかなり大きいので今の所は許容する
 // TODO コンポーネントを分割する
-const eventStore = useEventStore(props.event.event_id) as EventStore
+const eventStore = useEventStore(props.event.event_id)
 
 const members = computed(() =>
   [...(eventStore.members ?? [])].sort(
@@ -124,7 +124,7 @@ const isShowMember = computed(() =>
 <template>
   <v-card class="align-center justify-center mt-0 mb-4 pa-1 pa-sm-10">
     <PublicAlbumGallery
-      :cover-url="event.event_cover_url"
+      :cover-url="eventStore.coverImageUrl ?? ''"
       :cover-title="event.event_name"
       :albums="galleryAlbums"
       :lightbox-append-items="galleryDescImageSlides"

@@ -68,7 +68,7 @@ watch(
       <v-card-title class="text-center text-h3">{{ $t('success_join_event_dialog.title') }}</v-card-title>
       <v-card-text class="text-center text-h5 px-0 py-3">{{ $t('success_join_event_dialog.subtitle') }}</v-card-text>
       <div class="mx-4">
-        <v-img class="mx-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
+        <v-img class="mx-0" cover aspect-ratio="1.91" :src="eventStore.coverImageUrl" />
         <v-card-text class="text-left pb-3 px-0 text-h5">
           {{ event.event_name }}
         </v-card-text>

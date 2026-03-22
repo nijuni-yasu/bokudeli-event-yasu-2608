@@ -7,7 +7,7 @@ import {
 } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
-import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
+import { getEventUrl, getAdminOrderUrl, convertStoragePathToURL } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { getAcceptingOrderEventsByTime, ShokujiiEvent } from './stores/event.js'
 import {
@@ -17,6 +17,7 @@ import {
 } from '@shokujii/common/utils/datetime.js'
 import { getEventPartnerShop } from './stores/partner.js'
 import { createModuleLogger } from './utils/logger.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('orderDeadlineMail')
 
@@ -254,7 +255,7 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
           date: convertToDateWeekdayShort(event.event_start_datetime),
           event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
           event_name: event.event_name,
-          event_cover_url: event.event_cover_url,
+          event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
           community_name: event.community_name,
           event_address: event.fullAddress,
           shop_name: event.shop_name,
@@ -318,7 +319,7 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
           community_name: event.community_name,
           event_url: getEventUrl(event.community_account, event.id),
           event_name: event.event_name,
-          event_cover_url: event.event_cover_url,
+          event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
           event_desc: event.event_desc,
           event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
           event_address: event.fullAddress,

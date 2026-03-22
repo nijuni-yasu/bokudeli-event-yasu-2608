@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { BokudeliEvent, BokudeliEventMember } from '@shokujii/base/stores/event.js'
+import { type BokudeliEvent, type BokudeliEventMember, useEventStore } from '@shokujii/base/stores/event.js'
 import UserAvatar from './UserAvatar.vue'
 import { useDisplay } from 'vuetify'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 
-defineProps<{ event: BokudeliEvent; members?: BokudeliEventMember[] }>()
+const props = defineProps<{ event: BokudeliEvent; members?: BokudeliEventMember[] }>()
+const eventStore = useEventStore(props.event.event_id)
 
 const display = useDisplay()
 const avatarSize = computed(() => {
@@ -25,7 +26,7 @@ const avatarSize = computed(() => {
 <template>
   <v-card class="text-start">
     <div>
-      <VImg cover class="mx-auto" aspect-ratio="1.91" :src="event.event_cover_url" />
+      <VImg cover class="mx-auto" aspect-ratio="1.91" :src="eventStore.coverImageUrl" />
     </div>
     <EventStatusChip :status="event.calculatedEventStatus" size="x-small" class="mt-2 ml-2" />
     <v-card-title class="event-card__title-outer px-3 py-1">
