@@ -78,7 +78,7 @@ export default defineConfig(({ command }) => {
         devOptions: { enabled: true },
 
         workbox: {
-          globPatterns: ['images/**/*.{png,jpg,jpeg,svg}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           navigateFallbackDenylist: [/\/__\/auth/],
         },
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
