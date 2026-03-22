@@ -13,6 +13,7 @@ import CommunityContactDialog from '@shokujii/base/components/CommunityContactDi
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useCommunityStore } from '@shokujii/base/stores/community'
+
 import { mdiPencilBoxOutline, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
@@ -117,7 +118,7 @@ const albumSlides = computed(() => {
         </v-row>
         <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
           <PublicAlbumGallery
-            :cover-url="communityStore.community.community_cover_image_url"
+            :cover-url="communityStore.coverImageUrl ?? ''"
             :cover-title="communityStore.community.community_name"
             :albums="albumSlides"
           />

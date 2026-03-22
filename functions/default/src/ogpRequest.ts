@@ -6,7 +6,7 @@ import { ReplaceSectionStream } from '@shokujii/common/utils/ReplaceSectionStrea
 import { getEvent } from './stores/event.js'
 import { getCommunityByAccount } from './stores/community.js'
 import { convertStoragePathToURL } from './utils/urls.js'
-import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { getEventCoverStoragePath, getCommunityCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 interface OgpContext {
   site: string
@@ -221,7 +221,7 @@ export const handleCommunityOgpRequest = https.onRequest(
         forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(communityData.community_name)
         context.description = convertToOgpString(communityData.community_desc)
-        context.image = communityData.community_cover_image_url
+        context.image = convertStoragePathToURL(getCommunityCoverStoragePath(communityData.community_id))
         res.status(200).set('Cache-Control', 'public, max-age=600, s-maxage=600')
 
         // pipelineはPromiseを返さないため、コールバックでエラーハンドリング

@@ -1,22 +1,17 @@
 <script setup lang="ts">
-import { type BokudeliCommunity } from '../stores/community'
+import { type BokudeliCommunity, useCommunityStore } from '../stores/community'
 
-defineProps<{
+const props = defineProps<{
   community: BokudeliCommunity
 }>()
+const communityStore = useCommunityStore(props.community.community_account)
 </script>
 
 <template>
   <v-card class="mx-2" color="text-center" elevation="3">
     <v-row>
       <v-col class="pa-0">
-        <v-img
-          v-if="community.community_icon_image_url != null"
-          :src="community.community_icon_image_url"
-          style="border-radius: 5px 5px 5px 5px"
-          aspect-ratio="1"
-          cover
-        />
+        <v-img :src="communityStore.iconImageUrl" style="border-radius: 5px 5px 5px 5px" aspect-ratio="1" cover />
       </v-col>
     </v-row>
   </v-card>

@@ -38,7 +38,7 @@ import { getUserRef, useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { uploadAlbumImage, uploadImage } from '@shokujii/base/utils/storage.js'
+import { uploadAlbumImage, uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useConfigStore } from './config.js'
 import { TaskExecutor } from '../utils/executors.js'
 
@@ -121,16 +121,10 @@ export const createNewCommunity = async (
   if (uid == null) {
     throw new Error('Not Logged in')
   }
-  const [coverImageUrl, iconImageUrl] = await Promise.all([
+  await Promise.all([
     coverImageFile != null ? uploadImage(coverImageFile, getCommunityCoverStoragePath(community.id)) : null,
     iconImageFile != null ? uploadImage(iconImageFile, getCommunityIconStoragePath(community.id)) : null,
   ])
-  if (coverImageUrl != null) {
-    community.community_cover_image_url = coverImageUrl
-  }
-  if (iconImageUrl != null) {
-    community.community_icon_image_url = iconImageUrl
-  }
   const communityRef = doc(db, 'communities', community.id).withConverter(communityConverter)
   const memberRef = doc(communityRef, 'members', uid)
   await Promise.all([
@@ -187,6 +181,8 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
     const community = ref<BokudeliCommunity | null>(target instanceof BokudeliCommunity ? target : null)
     const eventStores = ref<Map<string, EventStore> | null>(null)
     const _communityRef = ref<DocumentReference<BokudeliCommunity> | null>(null)
+    const _coverImageCacheBuster = ref(0)
+    const _iconImageCacheBuster = ref(0)
 
     watch(
       _communityRef,
@@ -444,23 +440,34 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       await setDoc(communityRef, data, { merge: true })
     }
 
+    const coverImageUrl = computed<string | undefined>(() => {
+      const communityId = community.value?.community_id
+      if (communityId == null) {
+        return undefined
+      }
+      const base = convertStoragePathToURL(getCommunityCoverStoragePath(communityId))
+      return _coverImageCacheBuster.value > 0 ? `${base}&t=${_coverImageCacheBuster.value}` : base
+    })
+
+    const iconImageUrl = computed<string | undefined>(() => {
+      const communityId = community.value?.community_id
+      if (communityId == null) {
+        return undefined
+      }
+      const base = convertStoragePathToURL(getCommunityIconStoragePath(communityId))
+      return _iconImageCacheBuster.value > 0 ? `${base}&t=${_iconImageCacheBuster.value}` : base
+    })
+
     const updateCoverImage = async (file: File) => {
-      // community.value が null ではないことを保証する。本来はこういう使い方をすべきではない
-      await getLoadedCommunity()
-      const communityRef = await getCommunityRef()
-      community.value!.community_cover_image_url = await uploadImage(
-        file,
-        getCommunityCoverStoragePath(communityRef.id),
-      )
-      await setDoc(communityRef, toRaw(community.value!), { merge: true })
+      const loadedCommunity = await getLoadedCommunity()
+      await uploadImage(file, getCommunityCoverStoragePath(loadedCommunity.id))
+      _coverImageCacheBuster.value = Date.now()
     }
 
     const updateIconImage = async (file: File) => {
-      // community.value が null ではないことを保証する。本来はこういう使い方をすべきではない
-      await getLoadedCommunity()
-      const communityRef = await getCommunityRef()
-      community.value!.community_icon_image_url = await uploadImage(file, getCommunityIconStoragePath(communityRef.id))
-      await setDoc(communityRef, toRaw(community.value!), { merge: true })
+      const loadedCommunity = await getLoadedCommunity()
+      await uploadImage(file, getCommunityIconStoragePath(loadedCommunity.id))
+      _iconImageCacheBuster.value = Date.now()
     }
 
     /**
@@ -628,6 +635,8 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
 
     return {
       community,
+      coverImageUrl,
+      iconImageUrl,
       members,
       events,
       albumItems,

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { getCommunityCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import UserAvatar from './UserAvatar.vue'
-import type { BokudeliCommunity, BokudeliCommunityMember } from '../stores/community'
+import { type BokudeliCommunity, type BokudeliCommunityMember } from '../stores/community'
+import { convertStoragePathToURL } from '../utils/storage'
 
 defineProps<{
   community: BokudeliCommunity
@@ -13,13 +15,11 @@ defineProps<{
     <v-row>
       <v-col md="6" sm="12" cols="12" class="pa-0">
         <v-img
-          v-if="community.community_cover_image_url != null"
-          :src="community.community_cover_image_url"
+          :src="convertStoragePathToURL(getCommunityCoverStoragePath(community.community_id))"
           style="border-radius: 5px 0px 0px 5px"
           aspect-ratio="1.91"
           cover
         />
-        <div v-else>hoge</div>
       </v-col>
       <v-col md="6" sm="12" cols="12" class="d-flex flex-column">
         <!-- title -->

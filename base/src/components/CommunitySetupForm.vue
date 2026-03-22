@@ -6,6 +6,8 @@ import { fetchLocationByPostalcode } from '@shokujii/base/utils/fetchLocation'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import { type CommunityListStore } from '@shokujii/base/stores/communityList'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
+import { convertStoragePathToURL } from '../utils/storage.js'
+import { getCommunityCoverStoragePath, getCommunityIconStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
   mdiPlus,
   mdiHelpCircleOutline,
@@ -197,7 +199,7 @@ watch(
         <v-row>
           <v-col cols="12">
             <ImageInput
-              :url="community.community_icon_image_url ?? undefined"
+              :url="convertStoragePathToURL(getCommunityIconStoragePath(community.community_id))"
               :rules="[requiredValidator]"
               :cover="true"
               style="width: auto; max-width: min(100%, 300px); aspect-ratio: 1/1"
@@ -212,7 +214,7 @@ watch(
         <v-row>
           <v-col cols="12">
             <ImageInput
-              :url="community.community_cover_image_url ?? undefined"
+              :url="convertStoragePathToURL(getCommunityCoverStoragePath(community.community_id))"
               :rules="[requiredValidator]"
               style="width: 100%; aspect-ratio: 120/63"
               :cover="true"
