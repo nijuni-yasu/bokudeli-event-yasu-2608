@@ -9,6 +9,7 @@ import {
 import { sendEventConcludedMailToMembers } from './eventConclusionMail.js'
 import { sendInCartNotificationToMember, sendInCartEventDeadlineNotificationToMember } from './inCartNotification.js'
 import { sendApplyingOrderRemindMailToShop, sendOrderRemindMailToOrganizer } from './orderRemindMail.js'
+import { sendUnorderedRemindMailToManagers } from './remindUnorderedMail.js'
 import { sendRejectOrderMailToShop } from './rejectOrderMail.js'
 import { sendLetter } from './letter.js'
 import { sendInvoiceMailToOrganizers } from './eventBillInvoice.js'
@@ -53,13 +54,18 @@ export const pollingTask = onSchedule(
       sendInvoiceMailToOrganizers(start, end),
     ]
 
-    // 主催者向け注文リマインドメール（5,10,20,30,40,50,60日後）
-    const orderRemindToOrganizerDays = [5, 10, 20, 30, 40, 50, 60]
+    // 主催者向け注文リマインドメール（締切前 5, 10, 15 日、注文 1 件以上の場合）
+    const orderRemindToOrganizerDays = [5, 10, 15]
     orderRemindToOrganizerDays.forEach((day) => {
       promiseFunctions.push(
         sendOrderRemindMailToOrganizer(start + day * ONE_DAY_MILLIS, end + day * ONE_DAY_MILLIS, day),
       )
     })
+
+    // コミュニティ管理者向け・未注文リマインド（accepting_order ログの updated_at 起点、48 時間おき・最大 30 日まで）
+    // イベント取得を 1 回にし、ウィンドウ判定は remindUnorderedMail 内でループ
+    promiseFunctions.push(sendUnorderedRemindMailToManagers(end, start, end))
+
     await Promise.all(promiseFunctions)
   },
 )
