@@ -1,12 +1,15 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
-import { logger } from 'firebase-functions'
 import { DEFAULT_FROM, DEFAULT_TO } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
+import { sendDynamicTemplateWithPersonalizations, type SendDynamicTemplateBulkRecipient } from './utils/sendgridBulk.js'
 import { getEventUrl } from './utils/urls.js'
 import { getAllUsers } from './stores/user.js'
 import { getAllAcceptingOrderEvents } from './stores/event.js'
 import { convertTruncateText } from '@shokujii/common/utils/converter.js'
 import { convertToJustDate, convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('eventInformationMail')
 
 // 定数
 const EVENT_INFORMATION_TEMPLATE_ID = 'd-797deb1c54984007baadd1926ee974a2'
@@ -124,10 +127,10 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
 /**
  * イベント情報メールを送信
  * 処理フロー：
- * 1. getAllUsers ジェネレーターでユーザーを順次取得し、メール送信を即座に開始
+ * 1. getAllUsers ジェネレーターでユーザーを順次取得し、宛先リストを組み立てる
  *    - Result型により個別のユーザー取得エラーを明示的にハンドリング
- * 2. 全送信の完了を Promise.allSettled で待機
- * 3. 処理結果（fetch/send エラー数）をログに出力
+ * 2. sendDynamicTemplateWithPersonalizations で一括送信（バッチ単位）
+ * 3. 処理結果（取得エラー・バッチ成否・受付件数）をログに出力
  */
 async function sendEventInformationMail(): Promise<void> {
   const nowDateTimeMillis = Date.now()
@@ -138,11 +141,11 @@ async function sendEventInformationMail(): Promise<void> {
   }
 
   let fetchErrorCount = 0
-  const promises: Promise<[unknown, object]>[] = []
+  const recipients: SendDynamicTemplateBulkRecipient[] = []
 
   for await (const r of getAllUsers(true)) {
     if (!r.ok) {
-      logger.error('eventInformationMail|Failed to get user', { error: r.error })
+      logger.error('Failed to get user', { error: r.error })
       fetchErrorCount++
       continue
     }
@@ -153,34 +156,43 @@ async function sendEventInformationMail(): Promise<void> {
       continue
     }
 
-    promises.push(
-      sgMail.send({
-        to: user.user_email,
-        from: DEFAULT_FROM,
-        templateId: EVENT_INFORMATION_TEMPLATE_ID,
-        dynamicTemplateData: {
-          ...templateData,
-          user_name: user.user_name,
-        },
-        asm: {
-          groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
-        },
-      }),
-    )
+    recipients.push({
+      to: user.user_email,
+      dynamicTemplateData: {
+        ...templateData,
+        user_name: user.user_name,
+      },
+    })
   }
 
-  const settled = await Promise.allSettled(promises)
+  const bulkResult = await sendDynamicTemplateWithPersonalizations(
+    {
+      from: DEFAULT_FROM,
+      templateId: EVENT_INFORMATION_TEMPLATE_ID,
+      asm: {
+        groupId: EVENT_INFORMATION_UNSUBSCRIBE_GROUP,
+      },
+    },
+    recipients,
+    { feature: 'eventInformation' },
+  )
 
-  const processedCount = settled.filter((r) => r.status === 'fulfilled').length
-  const sendErrorCount = settled.filter((r) => r.status === 'rejected').length
-
-  for (const r of settled) {
-    if (r.status === 'rejected') {
-      logger.warn('eventInformationMail|Failed to send email', { error: r.reason })
-    }
+  if (bulkResult.errors.length > 0) {
+    logger.warn('Bulk send had batch failures', {
+      batchesAttempted: bulkResult.batchesAttempted,
+      batchesSucceeded: bulkResult.batchesSucceeded,
+      batchesFailed: bulkResult.batchesFailed,
+      errors: bulkResult.errors,
+    })
   }
 
-  logger.info('eventInformationMail|Completed', { processedCount, sendErrorCount, fetchErrorCount })
+  logger.info('Completed', {
+    totalRecipientsAccepted: bulkResult.totalRecipientsAccepted,
+    batchesAttempted: bulkResult.batchesAttempted,
+    batchesSucceeded: bulkResult.batchesSucceeded,
+    batchesFailed: bulkResult.batchesFailed,
+    fetchErrorCount,
+  })
 }
 
 /**

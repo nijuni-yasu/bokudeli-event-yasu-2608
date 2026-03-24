@@ -6,6 +6,7 @@ import {
   getCommunityMemberEmailsExcludingOrdered,
 } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
+import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
 import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { getAcceptingOrderEventsByTime, ShokujiiEvent } from './stores/event.js'
@@ -30,7 +31,7 @@ const DELIVERY_DURATION = 30 // minutes
 
 // 型定義
 
-interface TemplateDataForOrderDeadline {
+interface TemplateDataForOrderDeadline extends Record<string, unknown> {
   event_name: string
   event_address: string
   event_place: string
@@ -60,7 +61,7 @@ interface TemplateDataForOrganizers extends TemplateDataForOrderDeadline {
   shop_phone?: string
 }
 
-interface TemplateDataForMembers {
+interface TemplateDataForMembers extends Record<string, unknown> {
   date: string
   event_datetime: string
   event_name: string
@@ -71,7 +72,7 @@ interface TemplateDataForMembers {
   event_url: string
 }
 
-interface TemplateDataForCommunityReminder {
+interface TemplateDataForCommunityReminder extends Record<string, unknown> {
   community_name: string
   event_url: string
   event_name: string
@@ -208,24 +209,26 @@ export async function sendOrderDeadlineMailToOrganizers(start: number, end: numb
         const dynamic_template_data = await createTemplateDataForOrganizersOrderDeadline(event)
         const communityEmails = await getCommunityEmailsForEvent(event)
 
-        const results = await Promise.allSettled(
-          communityEmails.map(async (to) => {
-            return sgMail.send({
-              to,
-              from: DEFAULT_FROM,
-              templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
-              dynamicTemplateData: dynamic_template_data,
-            })
-          }),
+        const bulkResult = await sendDynamicTemplateWithPersonalizations(
+          {
+            from: DEFAULT_FROM,
+            templateId: ORDER_DEADLINE_FOR_ORGANIZER_TEMPLATE_ID,
+          },
+          communityEmails.map((to) => ({
+            to,
+            dynamicTemplateData: dynamic_template_data,
+          })),
+          { feature: 'orderDeadlineOrganizers', eventId: event.id },
         )
 
-        const failedCount = results.filter((r) => r.status === 'rejected').length
-        if (failedCount > 0) {
+        if (bulkResult.errors.length > 0) {
           logger.warn('Failed to send order deadline mail to organizers', {
             eventId: event.id,
-            successCount: results.filter((r) => r.status === 'fulfilled').length,
-            failedCount,
+            batchesSucceeded: bulkResult.batchesSucceeded,
+            batchesFailed: bulkResult.batchesFailed,
+            totalRecipientsAccepted: bulkResult.totalRecipientsAccepted,
             totalEmails: communityEmails.length,
+            errors: bulkResult.errors,
           })
         }
       } catch (err) {
@@ -259,24 +262,26 @@ export async function sendOrderDeadlineMailToMembers(start: number, end: number)
         }
 
         const memberEmails = await getEventMemberEmails(event)
-        const results = await Promise.allSettled(
-          memberEmails.map(async (to) => {
-            return sgMail.send({
-              to,
-              from: DEFAULT_FROM,
-              templateId: EVENT_CONFIRMATION_TEMPLATE_ID,
-              dynamicTemplateData: dynamic_template_data,
-            })
-          }),
+        const bulkResult = await sendDynamicTemplateWithPersonalizations(
+          {
+            from: DEFAULT_FROM,
+            templateId: EVENT_CONFIRMATION_TEMPLATE_ID,
+          },
+          memberEmails.map((to) => ({
+            to,
+            dynamicTemplateData: dynamic_template_data,
+          })),
+          { feature: 'orderDeadlineMembers', eventId: event.id },
         )
 
-        const failedCount = results.filter((r) => r.status === 'rejected').length
-        if (failedCount > 0) {
+        if (bulkResult.errors.length > 0) {
           logger.warn('Failed to send order deadline mail to members', {
             eventId: event.id,
-            successCount: results.filter((r) => r.status === 'fulfilled').length,
-            failedCount,
+            batchesSucceeded: bulkResult.batchesSucceeded,
+            batchesFailed: bulkResult.batchesFailed,
+            totalRecipientsAccepted: bulkResult.totalRecipientsAccepted,
             totalEmails: memberEmails.length,
+            errors: bulkResult.errors,
           })
         }
       } catch (err) {
@@ -324,24 +329,26 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
         }
 
         const memberEmails = await getCommunityMemberEmailsExcludingOrdered(event)
-        const results = await Promise.allSettled(
-          memberEmails.map(async (to) => {
-            return sgMail.send({
-              to,
-              from: DEFAULT_FROM,
-              templateId: ORDER_DEADLINE_REMINDER_TO_COMMUNITY_TEMPLATE_ID,
-              dynamicTemplateData: dynamic_template_data,
-            })
-          }),
+        const bulkResult = await sendDynamicTemplateWithPersonalizations(
+          {
+            from: DEFAULT_FROM,
+            templateId: ORDER_DEADLINE_REMINDER_TO_COMMUNITY_TEMPLATE_ID,
+          },
+          memberEmails.map((to) => ({
+            to,
+            dynamicTemplateData: dynamic_template_data,
+          })),
+          { feature: 'orderDeadlineCommunityReminder', eventId: event.id },
         )
 
-        const failedCount = results.filter((r) => r.status === 'rejected').length
-        if (failedCount > 0) {
+        if (bulkResult.errors.length > 0) {
           logger.warn('Failed to send order deadline reminder to community members', {
             eventId: event.id,
-            successCount: results.filter((r) => r.status === 'fulfilled').length,
-            failedCount,
+            batchesSucceeded: bulkResult.batchesSucceeded,
+            batchesFailed: bulkResult.batchesFailed,
+            totalRecipientsAccepted: bulkResult.totalRecipientsAccepted,
             totalEmails: memberEmails.length,
+            errors: bulkResult.errors,
           })
         }
       } catch (err) {
