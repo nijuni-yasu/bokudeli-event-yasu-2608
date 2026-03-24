@@ -94,8 +94,7 @@ export async function sendUnorderedRemindMailToManagers(nowMillis: number, start
             continue
           }
 
-          const communityManagerFullname =
-            user.user_name != null && user.user_name !== '' ? user.user_name : '管理者'
+          const communityManagerFullname = user.user_name != null && user.user_name !== '' ? user.user_name : '管理者'
 
           const dynamicTemplateData: RemindUnorderedTemplateData = {
             ...baseTemplateData,
