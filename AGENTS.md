@@ -21,6 +21,7 @@ AIエージェント向けプロジェクトガイド。
 | コードレビュードキュメント更新 | `/review-doc-update`           |
 | 分割コミット                   | `/git-split-commit`            |
 | スキル提案                     | `/skill-propose`               |
+| GitHub Actions デプロイ手動発火 | `/github-actions-deploy`      |
 
 ## 推奨スキル（技術スタック別）
 
