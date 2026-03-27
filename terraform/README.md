@@ -38,7 +38,7 @@ Initialize 後は `apply` を適用
 # Dry run
 terraform plan
 # Apply
-terrafrom apply
+terraform apply
 ```
 
 その後、各種変数は手動で登録する必要があります。
