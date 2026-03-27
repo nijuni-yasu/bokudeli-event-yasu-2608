@@ -47,11 +47,19 @@ PR のレビューコメントに対して、実装内容（対応済み・対�
 
    GitHub API で返信を投稿する。
 
+   **パス（必須）**: `repos/<OWNER>/<REPO>/pulls/<PR番号>/comments/<COMMENT_ID>/replies`
+
+   - `COMMENT_ID` は手順 1 で取得した各コメントの `id` フィールド。
+   - **PR 番号をパスに含めること**。`repos/<OWNER>/<REPO>/pulls/comments/<COMMENT_ID>/replies` のように PR 番号を省略すると、`gh api` では `404 Not Found` になることがある（公式 REST のパス表記と異なる挙動のため、実装は必ず PR 番号入りを使う）。
+
+   例（`OWNER/REPO` は対象リポジトリ、`PR_NUM` と `COMMENT_ID` は変数または具体値）:
+
    ```
-   gh api repos/:owner/:repo/pulls/<PR_NUM>/comments/<COMMENT_ID>/replies -X POST -f body="<返信文>"
+   gh api --method POST "repos/OWNER/REPO/pulls/${PR_NUM}/comments/${COMMENT_ID}/replies" -f body="返信本文"
    ```
 
-   ※ `COMMENT_ID` は各コメントの `id` フィールド
+   `gh` のカレントリポジトリが対象と一致する場合は、`OWNER/REPO` を `$(gh repo view --json nameWithOwner -q .nameWithOwner)` 等で埋めてもよい。
+
    ※ トップレベルコメントへの返信はサポートされていない（インラインコメントのみ）
 
 4. 結果を報告する
@@ -68,4 +76,4 @@ PR のレビューコメントに対して、実装内容（対応済み・対�
 ## 参照
 
 - [review-comments-evaluate](../review-comments-evaluate/SKILL.md) — コメント取得方法は同様
-- [GitHub API: Create a reply for a review comment](https://docs.github.com/en/rest/pulls/comments#create-a-reply-for-a-review-comment)
+- [GitHub API: Create a reply for a review comment](https://docs.github.com/en/rest/pulls/comments#create-a-reply-for-a-review-comment)（ドキュメント上のパスに PR 番号が無い場合があるが、`gh api` では本スキル記載の PR 番号入りパスを使うこと）

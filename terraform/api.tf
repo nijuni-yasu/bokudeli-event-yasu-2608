@@ -18,6 +18,7 @@ resource "google_project_service" "default" {
     "cloudresourcemanager.googleapis.com",
     "firebaserules.googleapis.com",
     "cloudscheduler.googleapis.com",
+    "pubsub.googleapis.com",
     "secretmanager.googleapis.com",
     "identitytoolkit.googleapis.com",
   ])

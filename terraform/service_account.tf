@@ -48,6 +48,7 @@ resource "google_project_iam_member" "default" {
     "roles/cloudfunctions.admin",
     "roles/cloudscheduler.admin",
     "roles/artifactregistry.admin",
+    # 一覧参照のみプロジェクト単位。各シークレットへの setIamPolicy は functions.tf の個別 IAM で付与する
     "roles/secretmanager.viewer",
   ])
   role   = each.key
@@ -118,5 +119,49 @@ resource "google_project_iam_member" "app_engine_service_account_storage_viewer"
   depends_on = [
     google_project_service.default,
     google_app_engine_application.default
+  ]
+}
+
+# Cloud Functions 2nd gen / Firebase deploy がプロジェクト IAM を自動調整しようとして失敗するのを防ぐため、
+# Pub/Sub サービスエージェントにプロジェクト全体の Token Creator は付与せず、実行に使う Compute デフォルト SA に対してのみ付与する
+resource "google_service_account_iam_member" "pubsub_agent_token_creator_on_compute_default" {
+  service_account_id = "projects/${var.project}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
+  ]
+}
+
+resource "google_project_iam_member" "compute_service_account_run_invoker" {
+  project = var.project
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
+  ]
+}
+
+resource "google_project_iam_member" "compute_service_account_eventarc_event_receiver" {
+  project = var.project
+  role    = "roles/eventarc.eventReceiver"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
+  ]
+}
+
+# Cloud Storage のプロジェクトサービスエージェントが Pub/Sub にメッセージを publish できるようにする
+# Firebase Functions デプロイ時の IAM 検証で要求される（gcloud projects add-iam-policy-binding と同等）
+resource "google_project_iam_member" "gs_project_accounts_pubsub_publisher" {
+  project = var.project
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:service-${data.google_project.project.number}@gs-project-accounts.iam.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
   ]
 }
