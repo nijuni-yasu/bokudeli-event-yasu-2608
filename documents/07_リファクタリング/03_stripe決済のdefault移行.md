@@ -552,7 +552,7 @@ SDK のアップグレードはこのタスク完了後に別 Issue で対応す
 - `onOrderChanged`（`orderCompletionMail.ts`）は order の `status` が `ordered` に変わった時にメール送信するトリガーで、移行後も変更不要（Firestore トリガーなのでどの関数が書き込んでも発火する）
 - admin パッケージは `stripe_refunds`, `update_order_status`, `stripe_webhook` のいずれも使用していないため、影響なし
 - Phase 4（production デプロイ）と Phase 5（Webhook URL 切り替え）の間にタイムラグがある。この間 `user_advance` の注文確定は legacy の Webhook で処理されるが、Callable 関数（`updateOrderStatus`, `stripeRefunds`）は default で処理される。両者は独立したフローなので問題ない
-- 既存の `CreateStripeCheckoutSessionRequest` は `order: EventOrder` をオブジェクトとして渡しており、コードレビュー規約の「Callable Functions の引数にオブジェクトを渡さない」に抵触する。ただし `createStripeCheckoutSession` は今回の移行対象ではなく、Stripe の `line_items` 生成にメニュー情報（name, price, imageUrl 等）が必要なため ID のみでは不十分である。この改善は今回のスコープ外とし、必要に応じて別 Issue で対応する
+- **`CreateStripeCheckoutSessionRequest`（EventMemberOrder 移行後）**: common では **`order_ids` のみ**を渡す型に統一し、旧 `order: EventOrder` ペイロードは廃止した。Callable はサーバ側で注文ドキュメントを取得して `line_items` を組み立てる。移行過渡期は order_ids を 1 件に限定し旧パスで読む実装もあり得る。複数件・metadata の `orderIds` 等の本実装は [05_EventOrder→EventMemberOrder.md](./05_EventOrder→EventMemberOrder.md) の Phase 2 を参照
 
 ## 実装時の参考情報
 
