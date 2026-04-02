@@ -46,7 +46,20 @@ service cloud.firestore {
                 allow delete: if isManager() && get(/databases/$(database)/documents/communities/$(community)/events/$(event)).data.event_status.value == 'in_draft'
                 // 予約承認・予約却下などイベントステータスを店舗が変更できる
                 allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
+                // 旧 orders（移行完了後に削除）
                 match /orders/{order} {
+                    allow write: if false
+                }
+                // 新 members / member_orders（EventMemberOrder）
+                match /members/{memberId} {
+                    allow write: if false
+                    match /member_orders/{orderId} {
+                        allow write: if false
+                    }
+                }
+                // stripes（決済情報は本人のみ read 可能）
+                match /stripes/{stripeId} {
+                    allow read: if request.auth != null && request.auth.uid == resource.data.user_id
                     allow write: if false
                 }
             }
