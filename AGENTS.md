@@ -22,6 +22,7 @@ AIエージェント向けプロジェクトガイド。
 | 分割コミット                   | `/git-split-commit`            |
 | スキル提案                     | `/skill-propose`               |
 | GitHub Actions デプロイ手動発火 | `/github-actions-deploy`      |
+| sandbox WIP デプロイ           | `/github-sandbox-wip-deploy`   |
 
 ## 推奨スキル（技術スタック別）
 
