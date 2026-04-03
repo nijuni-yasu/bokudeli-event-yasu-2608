@@ -41,14 +41,11 @@ const nextLoad = () => {
 }
 
 watch(
-  // hasMore の値は props.loadedCount が変化しても変わらないので、
-  // 明示的に props.loadedCount を watch する必要がある
   () => [props.totalCount, props.loadedCount],
   () => {
-    // props.loadedCount の変化を受けて DOM が再描画された後に isVisible の状態を再評価する必要がある
+    // props 変化を受けて DOM が再描画された後に isVisible の状態を再評価する必要がある
     // 一般的には nextTick で十分だが、nextTick では IntersectionObserver の動作前になってしまう
     // これを回避するため、 setTimeout で遅延させる
-    // TODO もっと良い方法がないか探す
     setTimeout(nextLoad, 100)
   },
 )

@@ -1,31 +1,59 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { type EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 
 const props = defineProps<{
   event: BokudeliEvent
-  order: EventOrder
+  orders: EventMemberOrder[]
   isOwner: boolean
 }>()
 
 defineEmits<{
-  downloadInvoice: [order: EventOrder]
-  cancel: [order: EventOrder]
+  downloadInvoice: [eventId: string, stripeId: string]
+  cancel: [orders: EventMemberOrder[]]
 }>()
 
 const dialog = ref(false)
 
-const totalPrice = computed(() => props.order.menus.reduce((acc, menu) => acc + menu.price * menu.count, 0))
+const groupedMenus = computed(() => {
+  const map = new Map<string, { menu_name: string; menu_price: number; count: number }>()
+  for (const o of props.orders.filter((o) => o.status !== 'canceled')) {
+    const existing = map.get(o.menu_id)
+    if (existing) {
+      existing.count++
+    } else {
+      map.set(o.menu_id, { menu_name: o.menu_name, menu_price: o.menu_price, count: 1 })
+    }
+  }
+  return Array.from(map.values())
+})
 
-const isShowCancelButton = computed(
-  () => props.order.status === 'ordered' && props.event.event_deadline_datetime > Date.now(),
+const totalPrice = computed(() =>
+  props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + o.menu_price, 0),
 )
-const isShowCanceled = computed(() => props.order.status === 'canceled')
+
+const hasActiveOrders = computed(() => props.orders.some((o) => o.status !== 'canceled'))
+
+const isShowCancelButton = computed(() => hasActiveOrders.value && props.event.event_deadline_datetime > Date.now())
+
+const isAllCanceled = computed(() => props.orders.every((o) => o.status === 'canceled'))
+
 const isShowInvoiceButton = computed(
-  () => props.order.status === 'ordered' && props.event.event_payment !== 'community_bill',
+  () => props.orders.some((o) => o.status === 'ordered') && props.event.event_payment === 'user_advance',
 )
+
+const stripeGroups = computed(() => {
+  const map = new Map<string, { stripeId: string; amount: number }>()
+  for (const o of props.orders.filter((o) => o.status !== 'canceled' && o.stripe_id != null)) {
+    if (!map.has(o.stripe_id!)) {
+      map.set(o.stripe_id!, { stripeId: o.stripe_id!, amount: 0 })
+    }
+    map.get(o.stripe_id!)!.amount += o.menu_price
+  }
+  return Array.from(map.values())
+})
 </script>
 
 <template>
@@ -54,9 +82,9 @@ const isShowInvoiceButton = computed(
     <v-card-text class="py-1 px-2 event-card">
       {{ $t('user_event_card.menu') }}
       <div class="ml-3">
-        <template v-for="menu in order.menus" :key="menu.menu_id">
-          <div v-html="$t('user_event_card.menu_item', [menu.name, menu.count])" />
-        </template>
+        <div v-for="menu in groupedMenus" :key="menu.menu_name">
+          {{ menu.menu_name }} ×{{ menu.count }}（{{ $n(menu.menu_price * menu.count, 'currency') }}）
+        </div>
       </div>
     </v-card-text>
     <v-card-text class="px-2 pt-1 pb-4 event-card">
@@ -70,18 +98,24 @@ const isShowInvoiceButton = computed(
             {{ $t('user_event_card.cancel_order') }}
           </v-btn>
         </v-col>
-        <v-col v-else-if="isShowCanceled" class="d-flex justify-end">{{ $t('user_event_card.canceled') }} </v-col>
+        <v-col v-else-if="isAllCanceled" class="d-flex justify-end">{{ $t('user_event_card.canceled') }} </v-col>
       </v-row>
       <v-row v-if="isOwner && isShowInvoiceButton">
-        <v-col class="d-flex justify-end pa-1">
+        <v-col class="d-flex justify-end pa-1 flex-wrap ga-1">
           <v-btn
+            v-for="sg in stripeGroups"
+            :key="sg.stripeId"
             variant="outlined"
             rounded="pill"
             color="secondary"
             size="small"
-            @click.prevent="$emit('downloadInvoice', order)"
+            @click.prevent="$emit('downloadInvoice', event.event_id, sg.stripeId)"
           >
-            {{ $t('user_event_card.download_invoice') }}
+            {{
+              stripeGroups.length === 1
+                ? $t('user_event_card.download_invoice')
+                : `${$t('user_event_card.download_invoice')}（${$n(sg.amount, 'currency')}）`
+            }}
           </v-btn>
         </v-col>
       </v-row>
@@ -106,7 +140,7 @@ const isShowInvoiceButton = computed(
       <template #actions>
         <v-spacer />
         <v-btn @click="dialog = false">{{ $t('user_event_card.cancel_dialog.not_cancel') }}</v-btn>
-        <v-btn variant="tonal" @click="($emit('cancel', order), (dialog = false))">
+        <v-btn variant="tonal" @click="($emit('cancel', orders), (dialog = false))">
           {{ $t('user_event_card.cancel_dialog.submit') }}
         </v-btn>
       </template>

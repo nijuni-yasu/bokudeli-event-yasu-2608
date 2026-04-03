@@ -4,7 +4,6 @@ import {
   collectionGroup,
   getDocs,
   query,
-  getCountFromServer,
   QueryDocumentSnapshot,
   startAfter,
   limit,
@@ -14,8 +13,8 @@ import {
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
 import { TaskExecutor } from '@shokujii/base/utils/executors.js'
-import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
-import { orderConverter } from '@shokujii/base/stores/event.js'
+import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import type { FirestoreDataConverter, DocumentData, SnapshotOptions } from 'firebase/firestore'
 
 export type OrderListStore = ReturnType<typeof useOrderListStore>
 
@@ -25,35 +24,43 @@ export type OrderListStore = ReturnType<typeof useOrderListStore>
  * @param filters Firestore のクエリ制約（where, orderBy など）
  * @param pageSize 1ページあたりの取得件数
  */
+const memberOrderConverter: FirestoreDataConverter<EventMemberOrder> = {
+  toFirestore(order: EventMemberOrder): DocumentData {
+    return order.toFirestore()
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): EventMemberOrder {
+    const data = snapshot.data(options)
+    return new EventMemberOrder(snapshot.id, data)
+  },
+}
+
 export const useOrderListStore = (storeId: string, filters: QueryConstraint[], pageSize: number = 6) => {
   const store = defineStore(`/orderList/${storeId}/${pageSize}`, () => {
     const paginationExecutor = new TaskExecutor(1)
-    const orders = ref<{ order: EventOrder; eventId: string }[] | null>(null)
-    const totalCount = ref<number | null>(null)
+    const orders = ref<{ order: EventMemberOrder; eventId: string }[] | null>(null)
+    const hasMore = ref(true)
 
-    const ordersSnapshot: QueryDocumentSnapshot<EventOrder>[] = []
+    const ordersSnapshot: QueryDocumentSnapshot<EventMemberOrder>[] = []
 
     const next = () => {
-      // 既にタスクが実行中またはキューにある場合は、新しいタスクを追加しない
       if (paginationExecutor.totalTaskLength > 0) {
         return
       }
       paginationExecutor.addTask(async () => {
         try {
-          if (totalCount.value == null) {
-            const q = query(collectionGroup(db, 'orders'), ...filters)
-            totalCount.value = (await getCountFromServer(q)).data().count
-          }
           const lastVisibleDocument = ordersSnapshot[ordersSnapshot.length - 1]
           const q = query(
-            collectionGroup(db, 'orders'),
+            collectionGroup(db, 'member_orders'),
             ...filters,
             ...(lastVisibleDocument == null ? [] : [startAfter(lastVisibleDocument)]),
             limit(pageSize),
-          ).withConverter(orderConverter)
+          ).withConverter(memberOrderConverter)
           const querySnapshot = await getDocs(q)
+          if (querySnapshot.docs.length < pageSize) {
+            hasMore.value = false
+          }
           ordersSnapshot.push(...querySnapshot.docs)
-          orders.value = ordersSnapshot.flatMap((orderSnapshot) => {
+          orders.value = ordersSnapshot.map((orderSnapshot) => {
             const order = orderSnapshot.data()
             const eventId = order.event_id
             return { order, eventId }
@@ -67,14 +74,14 @@ export const useOrderListStore = (storeId: string, filters: QueryConstraint[], p
     const reload = () => {
       ordersSnapshot.splice(0) // clear
       orders.value = null
-      totalCount.value = null
+      hasMore.value = true
       next()
     }
 
     reload()
 
     return {
-      totalCount,
+      hasMore,
       orders,
       reload,
       next,

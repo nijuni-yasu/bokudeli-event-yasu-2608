@@ -1,33 +1,31 @@
-import type { EventOrder, OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
+import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 
-export const ordersCount = (orders: EventOrder[]) =>
-  orders.reduce((acc: number, order) => {
-    if (order.status === 'ordered') {
-      const count = order.menus.reduce((acc: number, menu) => acc + menu.count, 0)
-      return acc + count
+export const ordersCount = (orders: EventMemberOrder[]) => orders.filter((o) => o.status === 'ordered').length
+
+export const ordersTotalPrice = (orders: EventMemberOrder[]) =>
+  orders.filter((o) => o.status === 'ordered').reduce((sum, o) => sum + o.menu_price, 0)
+
+export interface SubtotalMenu {
+  menu_id: string
+  name: string
+  price: number
+  count: number
+}
+
+export const getSubtotalsOfOrders = (orders: EventMemberOrder[]): SubtotalMenu[] => {
+  const map = new Map<string, SubtotalMenu>()
+  for (const o of orders) {
+    const existing = map.get(o.menu_id)
+    if (existing) {
+      existing.count++
     } else {
-      return acc
+      map.set(o.menu_id, {
+        menu_id: o.menu_id,
+        name: o.menu_name,
+        price: o.menu_price,
+        count: 1,
+      })
     }
-  }, 0)
-
-export const ordersTotalPrice = (orders: EventOrder[]) =>
-  orders.reduce((acc: number, order) => {
-    if (order.status === 'ordered') {
-      const price = order.menus.reduce((acc: number, menu) => acc + menu.price * menu.count, 0)
-      return acc + price
-    } else {
-      return acc
-    }
-  }, 0)
-
-export const getSubtotalsOfOrders = (orders: EventOrder[]): OrderMenuType[] => {
-  const subtotals = new Map()
-  orders.forEach((order) => {
-    order.menus.forEach((menu: OrderMenuType) => {
-      const m = { ...menu }
-      m.count = (subtotals.get(menu.menu_id)?.count ?? 0) + menu.count
-      subtotals.set(menu.menu_id, m)
-    })
-  })
-  return Array.from(subtotals.values())
+  }
+  return Array.from(map.values())
 }
