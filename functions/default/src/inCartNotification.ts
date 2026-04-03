@@ -7,12 +7,8 @@ import {
   convertToDatetimeWeekdayShort,
 } from '@shokujii/common/utils/datetime.js'
 import { DEFAULT_FROM } from './utils/mail.js'
-import {
-  getInCartOrdersByUpdatedTime,
-  getAcceptingOrderEventsByTime,
-  getEvent,
-  type ShokujiiEvent,
-} from './stores/event.js'
+import { getAcceptingOrderEventsByTime, getEvent, type ShokujiiEvent } from './stores/event.js'
+import { getInCartMemberOrdersByUpdatedTime } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('inCartNotification')
@@ -93,7 +89,7 @@ function dedupeByUserIdKeepFirst<T extends { userId: string }>(items: T[]): T[] 
 
 export async function sendInCartNotificationToMember(start: number, end: number): Promise<void> {
   const notifyTime = 24 * 60 * 60 * 1000 // 1日
-  const orders = await getInCartOrdersByUpdatedTime(start - notifyTime, end - notifyTime)
+  const orders = await getInCartMemberOrdersByUpdatedTime(start - notifyTime, end - notifyTime)
 
   const notificationDataList = await Promise.all(
     orders.map(async (order) => {

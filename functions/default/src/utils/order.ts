@@ -21,17 +21,13 @@ export async function createOrdersForOrderDeadline(event: ShokujiiEvent): Promis
     const user = await getUser(order.user_id, false)
     const userName = user?.user_name || ''
 
-    for (const menu of order.menus || []) {
-      for (let i = 0; i < menu.count; i++) {
-        orderDataList.push({
-          name: userName,
-          order: menu.name,
-          price: `¥${menu.price}`,
-        })
-        count++
-        price += menu.price
-      }
-    }
+    orderDataList.push({
+      name: userName,
+      order: order.menu_name,
+      price: `¥${order.menu_price}`,
+    })
+    count++
+    price += order.menu_price
   })
 
   await Promise.all(promises)

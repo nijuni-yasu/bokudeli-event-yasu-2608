@@ -220,7 +220,7 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
 
 export const onOrderChanged = onDocumentWritten(
   {
-    document: 'communities/{communityId}/events/{eventId}/orders/{orderId}',
+    document: 'communities/{communityId}/events/{eventId}/members/{userId}/member_orders/{orderId}',
     region: 'asia-northeast1',
     secrets: ['SENDGRID_API_KEY'],
   },
@@ -235,7 +235,9 @@ export const onOrderChanged = onDocumentWritten(
     const promises: Promise<void>[] = []
 
     if (before?.get('status') !== after?.get('status') && after?.get('status') === 'ordered') {
-      const eventRef = after.ref.parent.parent
+      // 新パス: communities/{cId}/events/{eId}/members/{uId}/member_orders/{oId}
+      const membersRef = after.ref.parent.parent
+      const eventRef = membersRef?.parent.parent
       if (!eventRef) {
         logger.warn('Event reference is null')
         return
@@ -249,7 +251,6 @@ export const onOrderChanged = onDocumentWritten(
       }
       promises.push(sendOrderCompletionMailToMember(afterEvent, userId))
       promises.push(sendOrderCompletionMailToOrganizers(afterEvent, userId))
-      // 新着イベント通知メールを送信（is_publicかつ未送信の場合のみ）
       promises.push(sendNewEventNotificationToMembers(afterEvent.id, userId, afterEvent.community_id))
     }
 
