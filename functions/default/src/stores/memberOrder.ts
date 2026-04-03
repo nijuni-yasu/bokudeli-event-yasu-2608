@@ -254,12 +254,13 @@ export const getStripeByPaymentIntent = async (
   communityId: string,
   eventId: string,
   paymentIntent: string,
+  transaction?: Transaction,
 ): Promise<EventStripe | undefined> => {
   const query = stripesCollection(communityId, eventId)
     .where('payment_intent', '==', paymentIntent)
     .limit(1)
     .withConverter(new EventStripeConverter())
-  const snapshot = await query.get()
+  const snapshot = await (transaction === undefined ? query.get() : transaction.get(query))
   return snapshot.empty ? undefined : snapshot.docs[0].data()
 }
 
