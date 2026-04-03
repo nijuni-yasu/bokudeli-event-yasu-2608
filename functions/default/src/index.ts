@@ -28,7 +28,9 @@ export const {
   pollingTask,
   requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
   deleteUserAccount,
-  addOrder, updateMenuCountInCart, deleteMenuInCart, updateOrderStatus,
+  updateOrderStatus,
+  addToCart, removeFromCart, confirmOrder,
+  createEventMembers,
   eventReceipt,
   eventCopy,
   eventBillInvoice,
@@ -55,4 +57,6 @@ export const {
   import('./eventBillInvoice.js'),
   import('./eventMenusSelection.js'),
   import('./userImage.js'),
+  import('./memberOrders.js'),
+  import('./eventMembers.js'),
 ])))
