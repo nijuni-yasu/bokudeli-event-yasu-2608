@@ -11,7 +11,7 @@ import { useOrderListByUserId } from '@shokujii/base/stores/orderList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getReceiptPath } from '@/router/utils'
 import { stripeRefunds } from '@shokujii/base/apis/stripe.js'
@@ -58,7 +58,7 @@ const isOwner = computed(() => {
 
 // オーダー情報の取得
 const userOrderListStore = useOrderListByUserId(userId)
-const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() => {
+const orders = computed(() => {
   return (userOrderListStore.orders ?? []).flatMap(({ order, eventId }) => {
     const event = (useEventStore(eventId) as EventStore).event
     if (event == null) {
@@ -69,6 +69,19 @@ const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() =
     }
     return { order, event }
   })
+})
+
+const eventGroups = computed(() => {
+  const map = new Map<string, { event: BokudeliEvent; orders: EventMemberOrder[] }>()
+  for (const { order, event } of orders.value) {
+    const existing = map.get(order.event_id)
+    if (existing) {
+      existing.orders.push(order)
+    } else {
+      map.set(order.event_id, { event, orders: [order] })
+    }
+  }
+  return Array.from(map.values())
 })
 
 const memberCommunityListStore = useCommunityListStore(
@@ -111,10 +124,16 @@ const managerCommunities = computed(() =>
   }),
 )
 
-const cancel = async (event: BokudeliEvent, order: EventOrder) => {
+// Phase 7 で cancelOrders API に統合予定。暫定的に先頭 order で既存処理を呼ぶ
+const cancel = async (cancelOrders: EventMemberOrder[]) => {
+  const order = cancelOrders[0]
+  if (order == null) return
+  const event = (useEventStore(order.event_id) as EventStore).event
+  if (event == null) return
+
   cancelOperatingOrderId.value = order.order_id
   try {
-    if (event.event_payment == 'user_advance' && order.payment_intent) {
+    if (event.event_payment === 'user_advance' && order.stripe_id != null) {
       await stripeRefunds({
         order_id: order.order_id,
         community_id: order.community_id,
@@ -122,8 +141,7 @@ const cancel = async (event: BokudeliEvent, order: EventOrder) => {
       })
       userOrderListStore.reload()
       notification.show($t('user.canceled'), 'success')
-    } else if (event.event_payment == 'user_on_day' || event.event_payment == 'community_bill') {
-      // それ以外は事前決済してないのでStripeの返金処理はなし
+    } else if (event.event_payment === 'user_on_day' || event.event_payment === 'community_bill') {
       const eventStore = useEventStore(order.event_id)
       await eventStore.updateOrderStatus(order, 'canceled')
       userOrderListStore.reload()
@@ -143,8 +161,8 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const downloadReceipt = async (order: EventOrder) => {
-  window.open(getReceiptPath(order.event_id, order.order_id), '_blank')
+const downloadReceipt = (eventId: string, stripeId: string) => {
+  window.open(getReceiptPath(eventId, stripeId), '_blank')
 }
 </script>
 
@@ -178,20 +196,27 @@ const downloadReceipt = async (order: EventOrder) => {
       <v-window v-model="tabs" class="pa-6">
         <v-window-item value="0">
           <v-row>
-            <v-col v-for="{ order, event } in orders" :key="`order_${order.order_id}`" sm="12" md="6" lg="4" cols="12">
+            <v-col
+              v-for="{ event, orders: groupOrders } in eventGroups"
+              :key="`event_${event.event_id}`"
+              sm="12"
+              md="6"
+              lg="4"
+              cols="12"
+            >
               <div class="event-card">
                 <router-link :to="getEventPath(event.community_account, event.event_id)">
                   <UserEventCard
-                    :order="order"
+                    :orders="groupOrders"
                     :event="event"
                     :isOwner="isOwner"
                     @downloadInvoice="downloadReceipt"
-                    @cancel="cancel(event, order)"
+                    @cancel="cancel"
                   />
                 </router-link>
 
                 <div
-                  v-if="cancelOperatingOrderId === order.order_id"
+                  v-if="groupOrders.some((o) => cancelOperatingOrderId === o.order_id)"
                   class="progress-container d-flex justify-center align-center"
                 >
                   <v-progress-circular :indeterminate="true" size="large" />
@@ -201,11 +226,7 @@ const downloadReceipt = async (order: EventOrder) => {
           </v-row>
           <v-row class="justify-center">
             <v-col cols="auto">
-              <IncrementalLoader
-                :loaded-count="userOrderListStore.orders?.length ?? 0"
-                :total-count="userOrderListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                @load="userOrderListStore.next()"
-              />
+              <IncrementalLoader :has-more="userOrderListStore.hasMore" @load="userOrderListStore.next()" />
             </v-col>
           </v-row>
         </v-window-item>

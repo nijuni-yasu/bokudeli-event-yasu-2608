@@ -261,17 +261,13 @@ const downloadNamesPrint = async () => {
             </thead>
             <tbody>
               <tr
-                v-for="({ order, menu }, key) in eventStore.confirmedOrders
-                  .flatMap((order) =>
-                    order.menus.flatMap((menu) => [...Array(menu.count)].map(() => ({ order, menu }))),
-                  )
-                  .sort((a, b) =>
-                    a.menu.name === b.menu.name
-                      ? a.order.created_at - b.order.created_at
-                      : a.menu.name > b.menu.name
-                        ? 1
-                        : -1,
-                  )"
+                v-for="(order, key) in [...eventStore.confirmedOrders].sort((a, b) =>
+                  a.menu_name === b.menu_name
+                    ? (a.ordered_at ?? 0) - (b.ordered_at ?? 0)
+                    : a.menu_name > b.menu_name
+                      ? 1
+                      : -1,
+                )"
                 :key="`order-${key}`"
               >
                 <td>{{ key + 1 }}</td>
@@ -283,9 +279,9 @@ const downloadNamesPrint = async () => {
                     </div>
                   </a>
                 </td>
-                <td>{{ menu.name }}</td>
-                <td>{{ $n(menu.price, 'currency') }}</td>
-                <td>{{ $d(order.created_at, 'datetime') }}</td>
+                <td>{{ order.menu_name }}</td>
+                <td>{{ $n(order.menu_price, 'currency') }}</td>
+                <td>{{ order.ordered_at != null ? $d(order.ordered_at, 'datetime') : '' }}</td>
               </tr>
             </tbody>
           </v-table>

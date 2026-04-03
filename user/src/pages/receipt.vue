@@ -10,13 +10,13 @@ const { t: $t } = useI18n()
 const notification = useNotification()
 
 const eventId = route.query.eventId as string
-const orderId = route.query.orderId as string
+const stripeId = route.query.stripeId as string
 
 const url = ref<string | null>(null)
 
 ;(async () => {
   try {
-    const response = await eventReceipt({ eventId, orderId })
+    const response = await eventReceipt({ eventId, stripeId })
     url.value = response.data.url
   } catch (e) {
     console.error(e)
