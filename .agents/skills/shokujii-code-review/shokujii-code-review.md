@@ -54,6 +54,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `updateXXX` 系の関数は全フィールドを書き戻す方針になっているか（Partial マージ禁止）
 - [ ] `withConverter` + `set` で既存ドキュメントを更新する際、先に `get` して既存データを引き継いでいるか（`toFirestore` は全フィールドを書き込むため、既存フィールドが失われる）
 - [ ] Transaction 内で読み込む場合、Transaction 外で同じドキュメントを読んでいないか
+- [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 
 ### Firebase Functions
@@ -144,6 +145,41 @@ await runTransaction(db, async (t) => {
   const eventSnap = await t.get(eventRef)
   if (eventSnap.data()?.is_public) { ... }
 })
+```
+
+### NG: Transaction 内で write の後に read を実行する
+
+Firestore のトランザクションは「すべての read → すべての write」の順序を厳守する必要がある。write 後の read は `FAILED_PRECONDITION` で拒否される。read+write を内包するメソッド（`addMember` 等）を Transaction 内で呼ぶ場合は特に注意。
+
+```typescript
+// NG: saveOrder（write）の後に addMember 内で transaction.get（read）が走る
+await db.runTransaction(async (transaction) => {
+  const orders = await getOrdersByIds(..., transaction) // read
+  for (const order of orders) {
+    saveOrder(..., order, transaction) // write
+  }
+  await community.addMember(uid, transaction) // 内部で transaction.get → read！エラー
+})
+
+// OK-1: read を全て先に実行する（addMember 内の read も含めて先に済ませる）
+await db.runTransaction(async (transaction) => {
+  const orders = await getOrdersByIds(..., transaction) // read
+  const memberRef = db.collection('communities').doc(id).collection('members').doc(uid)
+  const memberSnap = await transaction.get(memberRef) // read（addMember の read を先出し）
+  for (const order of orders) {
+    saveOrder(..., order, transaction) // write
+  }
+  transaction.set(memberRef, memberData) // write（addMember の write を後出し）
+})
+
+// OK-2: アトミック性が不要なら addMember をトランザクション外で呼ぶ
+await db.runTransaction(async (transaction) => {
+  const orders = await getOrdersByIds(..., transaction) // read
+  for (const order of orders) {
+    saveOrder(..., order, transaction) // write
+  }
+})
+await community.addMember(uid) // トランザクション外
 ```
 
 ### NG: `watch` を使ったリアクティビティ

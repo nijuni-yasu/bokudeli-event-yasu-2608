@@ -63,6 +63,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `updateXXX` 系の関数は全フィールドを書き戻す方針になっているか（Partial マージ禁止）
 - [ ] `withConverter` + `set` で既存ドキュメントを更新する際、先に `get` して既存データを引き継いでいるか（`toFirestore` は全フィールドを書き込むため、既存フィールドが失われる）
 - [ ] Transaction 内で読み込む場合、Transaction 外で同じドキュメントを読んでいないか
+- [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 
 ### Firebase Functions

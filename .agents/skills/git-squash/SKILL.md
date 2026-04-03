@@ -146,12 +146,43 @@ squash コミットが消えて元のコミット数に戻り、`git log` で各
 rm -f /tmp/squash-msg.txt /tmp/squash-msgs.txt /tmp/git-editor-squash.sh
 ```
 
-10. `git push --force-with-lease` を実行する
+10. リモートへの push
 
 rebase により履歴が書き換わっているため、リモートに反映する。
 
+まず現在のブランチと upstream 設定を確認する。
+
 ```
-git push --force-with-lease
+current=$(git rev-parse --abbrev-ref HEAD)
+```
+
+`current` が `HEAD`（detached HEAD）の場合は **push を実行しない**。ユーザーに、通常ブランチにチェックアウトするか、push 先リモート・ブランチを明示してもらう。
+
+```
+remote_name=$(git config --get branch."$current".remote)
+merge_ref=$(git config --get branch."$current".merge)
+```
+
+`remote_name` または `merge_ref` が空の場合（upstream 未設定）は **push を実行しない**。ユーザーに「`git branch -u <リモート>/<ブランチ>` で upstream を設定する」または「push 先を明示する」よう伝える。
+
+続けて、**上記で得た `remote_name`** で URL を取得し、本番リポか判定する（`git remote get-url` の引数なし実行や、`push.default` に依存した引数なし `git push` は使わない）。
+
+```
+git remote get-url "$remote_name"
+```
+
+URL が `nijuniinc/bokudeli-event-new` を指している場合は **push を実行しない**。本番リポへの force push は危険なため、ユーザーに「rebase は完了したが、upstream が本番リポを指しているため自動 push は行わない。手動で push 先を指定してほしい」と伝える。
+
+sandbox リモート等で問題ない場合、`merge_ref` からリモート上のブランチ名を得て push する。`merge_ref` は通常 `refs/heads/<ブランチ名>` 形式である。
+
+```
+remote_branch=${merge_ref#refs/heads/}
+```
+
+`merge_ref` が `refs/heads/` で始まらない場合は **push を実行せず**、手動確認を促す。
+
+```
+git push --force-with-lease "$remote_name" "HEAD:$remote_branch"
 ```
 
 失敗した場合（他者の push でリモートが更新されている等）は、手動対応が必要な旨を報告する。
