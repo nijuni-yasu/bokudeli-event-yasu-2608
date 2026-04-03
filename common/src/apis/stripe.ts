@@ -9,16 +9,15 @@ export type CreateStripeCheckoutSessionResponse = {
   url?: string
 }
 
-export type StripeRefundsRequest = {
-  order_id: string
-  community_id: string
-  event_id: string
-}
-
 export type CancelOrdersRequest = {
   community_id: string
   event_id: string
   order_ids: string[]
+}
+
+export type CancelOrdersRefundError = {
+  stripe_id: string
+  message: string
 }
 
 export type CancelOrdersResponse = {
@@ -28,4 +27,8 @@ export type CancelOrdersResponse = {
     refund_id: string
     amount: number
   }[]
+  /** Stripe 返金が一部または全部失敗した stripe_id。成功分は refunds に載る */
+  refund_errors?: CancelOrdersRefundError[]
+  /** トースト等に表示してよい文言（返金失敗時など） */
+  user_message?: string
 }

@@ -1,14 +1,3 @@
-import type { EventOrderStatusType } from '../schemas/EventOrder.js'
-
-export type UpdateOrderStatusRequest = {
-  community_id: string
-  event_id: string
-  order_id: string
-  status: EventOrderStatusType
-}
-
-// ── EventMemberOrder 用の新 API 型定義 ──
-
 export type AddToCartRequest = {
   community_id: string
   event_id: string
