@@ -1,31 +1,28 @@
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
 import {
-  AddOrderRequest,
-  AddOrderResponse,
   UpdateOrderStatusRequest,
-  UpdateMenuCountInCartRequest,
-  DeleteMenuInCartRequest,
+  AddToCartRequest,
+  RemoveFromCartRequest,
+  ConfirmOrderRequest,
 } from '@shokujii/common/apis/order.js'
-
-export const addOrder = async (input: AddOrderRequest): Promise<HttpsCallableResult<AddOrderResponse>> => {
-  const f = httpsCallable<AddOrderRequest, AddOrderResponse>(functions, 'addOrder')
-  return f(input)
-}
 
 export const updateOrderStatus = async (input: UpdateOrderStatusRequest): Promise<HttpsCallableResult<void>> => {
   const f = httpsCallable<UpdateOrderStatusRequest, void>(functions, 'updateOrderStatus')
   return f(input)
 }
 
-export const updateMenuCountInCart = async (
-  input: UpdateMenuCountInCartRequest,
-): Promise<HttpsCallableResult<void>> => {
-  const f = httpsCallable<UpdateMenuCountInCartRequest, void>(functions, 'updateMenuCountInCart')
+export const addToCart = async (input: AddToCartRequest): Promise<HttpsCallableResult<void>> => {
+  const f = httpsCallable<AddToCartRequest, void>(functions, 'addToCart')
   return f(input)
 }
 
-export const deleteMenuInCart = async (input: DeleteMenuInCartRequest): Promise<HttpsCallableResult<void>> => {
-  const f = httpsCallable<DeleteMenuInCartRequest, void>(functions, 'deleteMenuInCart')
+export const removeFromCart = async (input: RemoveFromCartRequest): Promise<HttpsCallableResult<void>> => {
+  const f = httpsCallable<RemoveFromCartRequest, void>(functions, 'removeFromCart')
+  return f(input)
+}
+
+export const confirmOrder = async (input: ConfirmOrderRequest): Promise<HttpsCallableResult<void>> => {
+  const f = httpsCallable<ConfirmOrderRequest, void>(functions, 'confirmOrder')
   return f(input)
 }

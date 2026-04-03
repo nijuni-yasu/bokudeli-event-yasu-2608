@@ -42,21 +42,16 @@ const addCart = async () => {
 
   isAddingOrder.value = true
   try {
-    const orderItem = {
+    await eventStore.addToCart({
       community_id: eventStore.event.community_id,
       event_id: eventStore.event.event_id,
       menus: [
         {
           menu_id,
-          partner_id: eventStore.event.partner_id,
-          name: props.menu.menu_name,
-          price: props.menu.menu_price,
-          imageUrl: props.menu.menu_image_url ?? '',
           count: selectedCount.value,
         },
       ],
-    }
-    await eventStore.addOrder(orderItem)
+    })
     emit('added')
     closeDialog()
   } catch (e) {

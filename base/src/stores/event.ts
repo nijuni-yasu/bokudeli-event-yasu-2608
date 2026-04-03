@@ -26,13 +26,13 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import { AddOrderRequest } from '@shokujii/common/apis/order.js'
+import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
 import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
-  addOrder as _addOrder,
   updateOrderStatus as _updateOrderStatus,
-  updateMenuCountInCart as _updateMenuCountInCart,
-  deleteMenuInCart as _deleteMenuInCart,
+  addToCart as _addToCart,
+  removeFromCart as _removeFromCart,
+  confirmOrder as _confirmOrder,
 } from '@shokujii/base/apis/order.js'
 import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
@@ -272,31 +272,23 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return url
     }
 
-    const addOrder = async (data: AddOrderRequest): Promise<string> => {
-      const response = await _addOrder(data)
-      return response.data.order_id
-    }
-
-    const updateMenuCountInCart = async (
-      order: { community_id: string; event_id: string; order_id: string },
-      menu_id: string,
-      count: number,
-    ): Promise<void> => {
-      await _updateMenuCountInCart({ ...order, menu_id, count })
-    }
-
-    const deleteMenuInCart = async (
-      order: { community_id: string; event_id: string; order_id: string },
-      menu_id: string,
-    ): Promise<void> => {
-      await _deleteMenuInCart({ ...order, menu_id })
-    }
-
     const updateOrderStatus = async (
       order: { community_id: string; event_id: string; order_id: string },
       status: EventOrder['status'],
     ): Promise<void> => {
       await _updateOrderStatus({ ...order, status })
+    }
+
+    const addToCart = async (data: AddToCartRequest): Promise<void> => {
+      await _addToCart(data)
+    }
+
+    const removeFromCart = async (data: RemoveFromCartRequest): Promise<void> => {
+      await _removeFromCart(data)
+    }
+
+    const confirmOrder = async (data: ConfirmOrderRequest): Promise<void> => {
+      await _confirmOrder(data)
     }
 
     const deleteEvent = async (): Promise<void> => {
@@ -489,10 +481,10 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       updateEvent,
       updateCoverImage,
       uploadTinymceImage,
-      addOrder,
-      updateMenuCountInCart,
-      deleteMenuInCart,
       updateOrderStatus,
+      addToCart,
+      removeFromCart,
+      confirmOrder,
       deleteEvent,
       subscribe,
       unsubscribe,

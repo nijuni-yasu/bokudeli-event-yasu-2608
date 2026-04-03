@@ -1,11 +1,18 @@
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
-import { CreateStripeCheckoutSessionRequest, StripeRefundsRequest } from '@shokujii/common/apis/stripe.js'
+import {
+  CreateStripeCheckoutSessionRequest,
+  CreateStripeCheckoutSessionResponse,
+  StripeRefundsRequest,
+} from '@shokujii/common/apis/stripe.js'
 
 export const createStripeCheckoutSession = async (
   input: CreateStripeCheckoutSessionRequest,
-): Promise<HttpsCallableResult> => {
-  const f = httpsCallable(functions, 'createStripeCheckoutSession')
+): Promise<HttpsCallableResult<CreateStripeCheckoutSessionResponse>> => {
+  const f = httpsCallable<CreateStripeCheckoutSessionRequest, CreateStripeCheckoutSessionResponse>(
+    functions,
+    'createStripeCheckoutSession',
+  )
   return f(input)
 }
 

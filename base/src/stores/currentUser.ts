@@ -21,8 +21,8 @@ import {
   confirmEmailChange as _confirmEmailChange,
 } from '@shokujii/base/apis/user'
 import { db } from '@shokujii/base/firebase.js'
-import { type EventOrder } from '@shokujii/common/schemas/EventOrder.js'
-import { BokudeliEvent, orderConverter, useEventStore } from '@shokujii/base/stores/event.js'
+import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { BokudeliEvent, useEventStore } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import {
   linkByProviderService,
@@ -42,8 +42,18 @@ const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInfor
 }
 
 export type CartItem = {
-  order: EventOrder
+  orders: EventMemberOrder[]
   event: BokudeliEvent
+}
+
+const memberOrderConverter: FirestoreDataConverter<EventMemberOrder> = {
+  toFirestore(order: EventMemberOrder): DocumentData {
+    return order.toFirestore()
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): EventMemberOrder {
+    const data = snapshot.data(options)
+    return new EventMemberOrder(snapshot.id, data)
+  },
 }
 
 export const useCurrentUserStore = defineStore('currentUser', () => {
@@ -92,21 +102,30 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     }
     if (unsubscribeOrders == null) {
       const q = query(
-        collectionGroup(db, 'orders'),
+        collectionGroup(db, 'member_orders'),
         where('user_id', '==', uid),
         where('status', '==', 'in_cart'),
         orderBy('updated_at', 'desc'),
-      ).withConverter(orderConverter)
+      ).withConverter(memberOrderConverter)
       unsubscribeOrders = onSnapshot(q, async (snapshots) => {
+        const cartOrders = snapshots.docs.map((doc) => doc.data())
+
+        const grouped = new Map<string, EventMemberOrder[]>()
+        for (const order of cartOrders) {
+          const key = order.event_id
+          const existing = grouped.get(key)
+          if (existing) {
+            existing.push(order)
+          } else {
+            grouped.set(key, [order])
+          }
+        }
+
         _cart.value = await Promise.all(
-          snapshots.docs.map(async (snapshot) => {
-            const order = snapshot.data()
-            const eventStore = useEventStore(order.event_id)
+          Array.from(grouped.entries()).map(async ([eventId, orders]) => {
+            const eventStore = useEventStore(eventId)
             const event = await eventStore.getLoadedEvent()
-            return {
-              order,
-              event,
-            }
+            return { orders, event }
           }),
         )
       })

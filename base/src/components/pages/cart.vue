@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
-import { EventOrder, type OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
+import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -31,8 +31,50 @@ const {
 
 const userId = computed(() => currentUser.value?.id ?? '')
 
+type GroupedMenu = {
+  menu_id: string
+  menu_name: string
+  menu_price: number
+  count: number
+  order_ids: string[]
+}
+
+const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
+  const map = new Map<string, GroupedMenu>()
+  for (const order of orders) {
+    const existing = map.get(order.menu_id)
+    if (existing) {
+      existing.count++
+      existing.order_ids.push(order.order_id)
+    } else {
+      map.set(order.menu_id, {
+        menu_id: order.menu_id,
+        menu_name: order.menu_name,
+        menu_price: order.menu_price,
+        count: 1,
+        order_ids: [order.order_id],
+      })
+    }
+  }
+  return Array.from(map.values())
+}
+
+type EnrichedCartItem = CartItem & {
+  groupedMenus: GroupedMenu[]
+  totalPrice: number
+}
+
+const enrichedCart = computed<EnrichedCartItem[] | null>(() => {
+  if (cart.value == null) return null
+  return cart.value.map((cartItem) => ({
+    ...cartItem,
+    groupedMenus: groupOrdersByMenu(cartItem.orders),
+    totalPrice: cartItem.orders.reduce((sum, o) => sum + o.menu_price, 0),
+  }))
+})
+
 const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople' | 'unselectedMenu'> => {
-  const { event } = cartItem
+  const { event, orders } = cartItem
 
   if (event.event_deadline_datetime && event.event_deadline_datetime < Date.now()) {
     return 'deadline'
@@ -45,12 +87,12 @@ const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limit
   }
 
   const eventMenus = await eventStore.getLoadedMenus()
-  const hasUnselectedMenu = cartItem.order.menus.some((orderMenu) => {
-    const eventMenu = eventMenus.find((m) => m.id === orderMenu.menu_id)
-    return eventMenu == null || !eventMenu.is_selected
-  })
-  if (hasUnselectedMenu) {
-    return 'unselectedMenu'
+  const menuIds = new Set(orders.map((o) => o.menu_id))
+  for (const menuId of menuIds) {
+    const eventMenu = eventMenus.find((m) => m.id === menuId)
+    if (eventMenu == null || !eventMenu.is_selected) {
+      return 'unselectedMenu'
+    }
   }
 
   return true
@@ -85,9 +127,7 @@ const showDisableAlert = (reason: 'deadline' | 'limitPeople' | 'unselectedMenu')
 
 const openConfirmOrder = ref(false)
 const confirmDialogMessage = ref('')
-const selectedOrder = ref<EventOrder | undefined>()
-const selectedCartEvent = ref<BokudeliEvent | undefined>()
-const selectedMenu = ref<OrderMenuType | undefined>()
+const selectedCartItem = ref<CartItem | undefined>()
 const isOrderProcessing = ref<boolean>(false)
 const menuUpdatingStates = ref<Record<string, boolean>>({})
 const isDeleteProcessing = ref<boolean>(false)
@@ -95,26 +135,35 @@ const isDeleteProcessing = ref<boolean>(false)
 const startOrderProcess = async () => {
   isOrderProcessing.value = true
   try {
-    const order = selectedOrder.value
-    const event = selectedCartEvent.value
-    if (order === undefined || event === undefined) {
-      return
-    }
+    const cartItem = selectedCartItem.value
+    if (cartItem === undefined) return
 
-    if (event.event_payment == 'user_advance') {
+    const { event, orders } = cartItem
+    const orderIds = orders.map((o) => o.order_id)
+    const communityId = event.community_id
+    const eventId = event.event_id
+
+    if (event.event_payment === 'user_advance') {
       try {
-        const response = (await createStripeCheckoutSession({ order, isPosted: false })) as any // 一時的措置
-        window.location.href = response.data.url || getEventPath(order.community_account, order.event_id)
+        const response = await createStripeCheckoutSession({
+          community_id: communityId,
+          event_id: eventId,
+          order_ids: orderIds,
+          isPosted: false,
+        })
+        window.location.href = response.data.url ?? getEventPath(event.community_account, eventId)
       } catch {
         alertBody.value = $t('cart.payment_failed')
       }
     } else {
       try {
-        const eventStore = useEventStore(event.event_id) as EventStore
-        await eventStore.updateOrderStatus(order, 'ordered')
-        router.push(
-          `${getUserPath(userId.value)}?eventId=${order.event_id}&communityAccount=${order.community_account}`,
-        )
+        const eventStore = useEventStore(eventId) as EventStore
+        await eventStore.confirmOrder({
+          community_id: communityId,
+          event_id: eventId,
+          order_ids: orderIds,
+        })
+        router.push(`${getUserPath(userId.value)}?eventId=${eventId}&communityAccount=${event.community_account}`)
       } catch {
         alertBody.value = $t('cart.order_failed')
       }
@@ -126,73 +175,67 @@ const startOrderProcess = async () => {
 
 const paymentMessage = (event: BokudeliEvent) => {
   switch (event.event_payment) {
-    case 'user_advance': {
+    case 'user_advance':
       return $t('cart.confirm_order_credit_card')
-    }
-    case 'user_on_day': {
+    case 'user_on_day':
       return $t('cart.confirm_order_participant_on_day')
-    }
-    case 'community_bill': {
+    case 'community_bill':
       return $t('cart.confirm_order_community_bill')
-    }
-    default: {
+    default:
       return $t('cart.confirm_order')
-    }
   }
 }
 
 const openUserParameterConfirm = ref(false)
 const targetUserParameter = ref('')
-const showConfirm = async (cart: CartItem) => {
-  // ユーザー名存在チェック
+const showConfirm = async (cartItem: CartItem) => {
   if (!currentUser.value?.user_name) {
     targetUserParameter.value = $t('cart.doesnt_exists_user_name')
     openUserParameterConfirm.value = true
     return
   }
-
-  // アイコン存在チェック
   if (!currentUser.value?.user_image_url) {
     targetUserParameter.value = $t('cart.doesnt_exists_user_image')
     openUserParameterConfirm.value = true
     return
   }
-
-  // メールアドレス存在チェック
   if (!currentUserPersonalInformation.value?.user_email) {
     targetUserParameter.value = $t('cart.doesnt_exists_user_email')
     openUserParameterConfirm.value = true
     return
   }
 
-  const checkResult = await checkCart(cart)
+  const checkResult = await checkCart(cartItem)
   if (checkResult !== true) {
     showDisableAlert(checkResult)
     return
   }
 
-  selectedOrder.value = cart.order
-  selectedCartEvent.value = cart.event
-  confirmDialogMessage.value = paymentMessage(cart.event)
+  selectedCartItem.value = cartItem
+  confirmDialogMessage.value = paymentMessage(cartItem.event)
   openConfirmOrder.value = true
 }
 
 const openDeleteConfirm = ref(false)
+const selectedDeleteOrderId = ref<string | undefined>()
+const selectedDeleteEvent = ref<BokudeliEvent | undefined>()
+
 const startDeleteProcess = async () => {
-  const event = selectedCartEvent.value
-  const order = selectedOrder.value
-  const menu = selectedMenu.value
-  if (event === undefined || order === undefined || menu === undefined) {
-    console.error('Not selected')
-    return
-  }
+  const event = selectedDeleteEvent.value
+  const orderId = selectedDeleteOrderId.value
+  if (event === undefined || orderId === undefined) return
+
   isDeleteProcessing.value = true
   try {
     const eventStore = useEventStore(event.event_id) as EventStore
-    await eventStore.deleteMenuInCart(order, menu.menu_id)
+    await eventStore.removeFromCart({
+      community_id: event.community_id,
+      event_id: event.event_id,
+      order_id: orderId,
+    })
     alertBody.value = $t('cart.removed_from_cart')
   } catch (error) {
-    console.error('Failed to delete menu:', error)
+    console.error('Failed to remove from cart:', error)
     alertBody.value = $t('cart.delete_failed')
   } finally {
     isDeleteProcessing.value = false
@@ -200,57 +243,71 @@ const startDeleteProcess = async () => {
   }
 }
 
-const deleteMenuInCart = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
-  // 個数が1個の場合のみ削除確認ダイアログを表示
-  if (menu.count === 1) {
-    selectedCartEvent.value = event
-    selectedOrder.value = order
-    selectedMenu.value = menu
-    openDeleteConfirm.value = true
-  }
+const showDeleteConfirm = (event: BokudeliEvent, orderId: string) => {
+  selectedDeleteEvent.value = event
+  selectedDeleteOrderId.value = orderId
+  openDeleteConfirm.value = true
 }
 
-const updateMenuCount = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType, count: number) => {
-  const menuKey = `${order.order_id}_${menu.menu_id}`
-  if (menuUpdatingStates.value[menuKey]) {
-    return
-  }
+const incrementMenuCount = async (event: BokudeliEvent, menu: GroupedMenu) => {
+  const menuKey = `add_${menu.menu_id}`
+  if (menuUpdatingStates.value[menuKey]) return
   menuUpdatingStates.value[menuKey] = true
-  const eventStore = useEventStore(event.event_id) as EventStore
   try {
-    await eventStore.updateMenuCountInCart(order, menu.menu_id, count)
+    const eventStore = useEventStore(event.event_id) as EventStore
+    await eventStore.addToCart({
+      community_id: event.community_id,
+      event_id: event.event_id,
+      menus: [
+        {
+          menu_id: menu.menu_id,
+          count: 1,
+        },
+      ],
+    })
   } catch (error) {
-    console.error('Failed to update menu count:', error)
+    console.error('Failed to add to cart:', error)
     alertBody.value = $t('cart.update_failed')
   } finally {
     menuUpdatingStates.value[menuKey] = false
   }
 }
 
-const incrementMenuCount = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
-  await updateMenuCount(event, order, menu, menu.count + 1)
-}
-
-const decrementMenuCount = async (event: BokudeliEvent, order: EventOrder, menu: OrderMenuType) => {
-  if (menu.count > 1) {
-    await updateMenuCount(event, order, menu, menu.count - 1)
+const decrementMenuCount = async (event: BokudeliEvent, menu: GroupedMenu) => {
+  if (menu.count <= 1) return
+  const menuKey = `remove_${menu.menu_id}`
+  if (menuUpdatingStates.value[menuKey]) return
+  menuUpdatingStates.value[menuKey] = true
+  try {
+    const lastOrderId = menu.order_ids[menu.order_ids.length - 1]
+    const eventStore = useEventStore(event.event_id) as EventStore
+    await eventStore.removeFromCart({
+      community_id: event.community_id,
+      event_id: event.event_id,
+      order_id: lastOrderId,
+    })
+  } catch (error) {
+    console.error('Failed to remove from cart:', error)
+    alertBody.value = $t('cart.update_failed')
+  } finally {
+    menuUpdatingStates.value[menuKey] = false
   }
 }
 
-const isMenuUpdating = (orderId: string, menuId: string) => {
-  return menuUpdatingStates.value[`${orderId}_${menuId}`] ?? false
+const isMenuUpdating = (menuId: string) => {
+  return (menuUpdatingStates.value[`add_${menuId}`] || menuUpdatingStates.value[`remove_${menuId}`]) ?? false
 }
 
 const isOpenCancelpolicyDialog = ref(false)
 </script>
 
 <template>
-  <v-row v-if="cart != null && cart.length !== 0" justify="center">
+  <v-row v-if="enrichedCart != null && enrichedCart.length !== 0" justify="center">
     <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
       <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
       <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
     </v-col>
-    <v-col v-for="cartItem in cart" :key="cartItem.event.event_id" cols="12" md="8" sm="8">
+    <v-col v-for="cartItem in enrichedCart" :key="cartItem.event.event_id" cols="12" md="8" sm="8">
       <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
         <v-row>
           <v-col class="d-flex align-center">
@@ -317,16 +374,16 @@ const isOpenCancelpolicyDialog = ref(false)
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="menu in cartItem.order.menus" :key="menu.menu_id">
-                    <td style="padding: 1px">{{ menu.name }}</td>
+                  <tr v-for="menu in cartItem.groupedMenus" :key="menu.menu_id">
+                    <td style="padding: 1px">{{ menu.menu_name }}</td>
                     <td style="padding: 1px">
                       <div class="d-flex align-center justify-center">
                         <v-btn
                           v-if="menu.count > 1"
                           :icon="mdiMinusCircleOutline"
                           variant="text"
-                          :loading="isMenuUpdating(cartItem.order.order_id, menu.menu_id)"
-                          @click="decrementMenuCount(cartItem.event, cartItem.order, menu)"
+                          :loading="isMenuUpdating(menu.menu_id)"
+                          @click="decrementMenuCount(cartItem.event, menu)"
                         >
                         </v-btn>
                         <v-btn
@@ -334,20 +391,20 @@ const isOpenCancelpolicyDialog = ref(false)
                           :icon="mdiTrashCan"
                           variant="text"
                           :loading="isDeleteProcessing"
-                          @click="deleteMenuInCart(cartItem.event, cartItem.order, menu)"
+                          @click="showDeleteConfirm(cartItem.event, menu.order_ids[0])"
                         >
                         </v-btn>
                         <span class="mx-2">{{ menu.count }}</span>
                         <v-btn
                           :icon="mdiPlusCircleOutline"
                           variant="text"
-                          :loading="isMenuUpdating(cartItem.order.order_id, menu.menu_id)"
-                          @click="incrementMenuCount(cartItem.event, cartItem.order, menu)"
+                          :loading="isMenuUpdating(menu.menu_id)"
+                          @click="incrementMenuCount(cartItem.event, menu)"
                         >
                         </v-btn>
                       </div>
                     </td>
-                    <td style="padding: 1px">¥{{ priceString(menu.price * menu.count) }}</td>
+                    <td style="padding: 1px">¥{{ priceString(menu.menu_price * menu.count) }}</td>
                   </tr>
                 </tbody>
               </v-table>
@@ -358,7 +415,7 @@ const isOpenCancelpolicyDialog = ref(false)
           <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
           <span class="text-right my-2 ml-2 text-h6">¥</span>
           <span class="text-right ma-2 text-h3 text-md-h2 font-weight-bold">{{
-            priceString(cartItem.order.totalPrice)
+            priceString(cartItem.totalPrice)
           }}</span>
         </v-card-text>
 
@@ -402,7 +459,7 @@ const isOpenCancelpolicyDialog = ref(false)
       </v-card>
     </v-col>
   </v-row>
-  <v-row justify="center" v-else-if="cart != null">
+  <v-row justify="center" v-else-if="enrichedCart != null">
     <v-col cols="auto" class="my-5" style="font-size: 18px"> {{ $t('cart.no_items_in_cart') }}</v-col>
   </v-row>
   <v-row v-else justify="center">
