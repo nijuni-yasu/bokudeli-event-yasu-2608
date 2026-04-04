@@ -114,7 +114,13 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
   // コピー元EventMenuのis_selected状態を引き継いで新規イベントにメニューをコピー
   const srcEventMenus = await srcEvent.getMenus()
   const selectedMenuIds = srcEventMenus.filter((m) => m.is_selected).map((m) => m.menu_id)
-  await savePartnerMenusToEventMenus(srcEvent.partner_id, newEvent.id, startTime, selectedMenuIds)
+  await savePartnerMenusToEventMenus(
+    srcEvent.partner_id,
+    newEvent.id,
+    srcEvent.community_id,
+    startTime,
+    selectedMenuIds,
+  )
 
   return {
     newEventId: newEvent.id,

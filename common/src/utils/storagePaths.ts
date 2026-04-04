@@ -10,6 +10,10 @@ export function getEventCoverStoragePath(communityId: string, eventId: string): 
   return `communities/${communityId}/events/${eventId}/cover`
 }
 
+export function getEventMenuImageStoragePath(communityId: string, eventId: string, menuId: string): string {
+  return `communities/${communityId}/events/${eventId}/menus/${menuId}/image`
+}
+
 export function getTinymceImageStoragePath(communityId: string, eventId: string, uuid: string): string {
   return `communities/${communityId}/events/${eventId}/tinymce/${uuid}`
 }

@@ -1,9 +1,11 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { getDownloadURL, getStorage } from 'firebase-admin/storage'
 import { createModuleLogger } from './utils/logger.js'
 import { getPartner } from './stores/partner.js'
 import { getEvent } from './stores/event.js'
 import { convertPartnerMenusToEventMenus } from '@shokujii/common/utils/eventMenuConverter.js'
+import { getMenuImageStoragePath, getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('eventMenusSnapshot')
 
@@ -12,23 +14,55 @@ const logger = createModuleLogger('eventMenusSnapshot')
  * EventMenuのis_selected状態を保持する
  * @param partnerId - パートナーID
  * @param eventId - イベントID
+ * @param communityId - コミュニティID
  * @param startDatetime - イベント開始日時（ミリ秒）
  * @param selectedMenuIds - 選択するmenu_idの配列。省略時は既存EventMenuのis_selected状態から引き継ぐ
  */
 export const savePartnerMenusToEventMenus = async (
   partnerId: string,
   eventId: string,
+  communityId: string,
   startDatetime: number,
   selectedMenuIds?: string[],
-): Promise<void> =>
-  getFirestore().runTransaction(async (transaction) => {
-    const partner = await getPartner(partnerId)
+): Promise<void> => {
+  // partnerMenus を transaction 外で先読み（Storageコピーのために必要）
+  const partner = await getPartner(partnerId)
+  if (partner == null) {
+    throw new Error(`Partner ${partnerId} not found`)
+  }
+  const partnerMenus = await partner.getMenus()
+
+  // メニュー画像を Storage コピー（Firestore トランザクション前に実行）
+  const bucket = getStorage().bucket()
+  const menuImageUrlMap = new Map<string, string>()
+  await Promise.allSettled(
+    partnerMenus
+      .filter((m) => !m.is_deleted)
+      .map(async (m) => {
+        const srcPath = getMenuImageStoragePath(partnerId, m.menu_id)
+        const destPath = getEventMenuImageStoragePath(communityId, eventId, m.menu_id)
+        try {
+          const [newFile] = await bucket.file(srcPath).copy(destPath)
+          menuImageUrlMap.set(m.menu_id, await getDownloadURL(newFile))
+        } catch (error) {
+          logger.error('Failed to copy menu image', {
+            menuId: m.menu_id,
+            srcPath,
+            destPath,
+            error,
+          })
+        }
+      }),
+  )
+
+  await getFirestore().runTransaction(async (transaction) => {
     const event = await getEvent(eventId, transaction)
-    if (partner == null || event == null) {
-      throw new Error(`Partner ${partnerId} or Event ${eventId} not found`)
+    if (event == null) {
+      throw new Error(`Event ${eventId} not found`)
     }
 
-    const partnerMenus = await partner.getMenus(transaction)
+    // トランザクション内で再取得して整合性を保つ
+    const freshPartnerMenus = await partner.getMenus(transaction)
     const existingEventMenus = await event.getMenus(transaction)
 
     // 既存のメニューを削除
@@ -42,19 +76,24 @@ export const savePartnerMenusToEventMenus = async (
     const effectiveSelectedMenuIds =
       selectedMenuIds ?? existingEventMenus.filter((m) => m.is_selected).map((m) => m.menu_id)
     const eventMenusToSave = convertPartnerMenusToEventMenus(
-      partnerMenus,
+      freshPartnerMenus,
       eventId,
       startDatetime,
       effectiveSelectedMenuIds,
     )
 
-    // 生成したEventMenusを保存
+    // 生成したEventMenusを保存（コピー済み画像URLで上書き）
     await Promise.all(
       eventMenusToSave.map(async (eventMenu) => {
+        const copiedUrl = menuImageUrlMap.get(eventMenu.menu_id)
+        if (copiedUrl != null) {
+          eventMenu.menu_image_url = copiedUrl
+        }
         await event.saveMenu(eventMenu, transaction)
       }),
     )
   })
+}
 
 /**
  * 飲食店承認/却下時に、PartnerMenuをEventMenuにスナップショットとして保存
@@ -98,7 +137,7 @@ export const onShopReservationChanged = onDocumentWritten(
     const eventId = after.id
 
     // 必須パラメータのチェック
-    if (!partnerId || startDatetime == null) {
+    if (!partnerId || !communityId || startDatetime == null) {
       logger.warn('Missing required parameters', {
         partnerId,
         communityId,
@@ -109,7 +148,7 @@ export const onShopReservationChanged = onDocumentWritten(
     }
 
     try {
-      await savePartnerMenusToEventMenus(partnerId, eventId, startDatetime)
+      await savePartnerMenusToEventMenus(partnerId, eventId, communityId, startDatetime)
     } catch (error) {
       logger.error('Failed to save partner menus to event', {
         communityId,
