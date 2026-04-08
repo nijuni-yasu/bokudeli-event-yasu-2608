@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useValidators } from '@shokujii/base/composable/validators'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
@@ -23,6 +23,41 @@ const { t: $t } = useI18n()
 const community = defineModel<BokudeliCommunity>({ required: true })
 const coverImageFile = defineModel<File | null>('coverImageFile', { required: true })
 const iconImageFile = defineModel<File | null>('iconImageFile', { required: true })
+
+const coverImagePreviewUrl = ref<string | undefined>(undefined)
+watch(
+  coverImageFile,
+  (newFile) => {
+    if (coverImagePreviewUrl.value?.startsWith('blob:')) {
+      URL.revokeObjectURL(coverImagePreviewUrl.value)
+    }
+    if (newFile != null) {
+      const url = URL.createObjectURL(newFile)
+      coverImagePreviewUrl.value = url
+    } else {
+      coverImagePreviewUrl.value = community.value.community_cover_image_url
+    }
+  },
+  { immediate: true },
+)
+
+const iconImagePreviewUrl = ref<string | undefined>(undefined)
+watch(
+  iconImageFile,
+  (newFile) => {
+    if (iconImagePreviewUrl.value?.startsWith('blob:')) {
+      URL.revokeObjectURL(iconImagePreviewUrl.value)
+    }
+    if (newFile != null) {
+      const url = URL.createObjectURL(newFile)
+      iconImagePreviewUrl.value = url
+    } else {
+      iconImagePreviewUrl.value = community.value.community_icon_image_url
+    }
+  },
+  { immediate: true },
+)
+
 const props = defineProps<{
   /**
    * 新規コミュニティURLのバリデーション関数
@@ -77,6 +112,12 @@ onUnmounted(() => {
   if (autoOpenTimer != null) {
     window.clearTimeout(autoOpenTimer)
   }
+  if (coverImagePreviewUrl.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(coverImagePreviewUrl.value)
+  }
+  if (iconImagePreviewUrl.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(iconImagePreviewUrl.value)
+  }
 })
 </script>
 
@@ -110,7 +151,7 @@ onUnmounted(() => {
               {{ $t('community_edit.community_cover_image_hint') }}
             </span>
             <ImageInput
-              :url="community.community_cover_image_url ?? undefined"
+              :url="coverImagePreviewUrl"
               :rules="[requiredValidator]"
               style="width: 100%; aspect-ratio: 120/63"
               :cover="true"
@@ -129,7 +170,7 @@ onUnmounted(() => {
               {{ $t('community_edit.community_icon_image_hint') }}
             </span>
             <ImageInput
-              :url="community.community_icon_image_url ?? undefined"
+              :url="iconImagePreviewUrl"
               :rules="[requiredValidator]"
               style="width: auto; max-width: min(100%, 150px); aspect-ratio: 1/1"
               :cover="true"

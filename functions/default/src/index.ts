@@ -34,6 +34,7 @@ export const {
   eventBillInvoice,
   updateEventMenus,
   sendIndividualLetter,
+  generateUserImageThumbnail,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -53,4 +54,5 @@ export const {
   import('./eventCopy.js'),
   import('./eventBillInvoice.js'),
   import('./eventMenusSelection.js'),
+  import('./userImage.js'),
 ])))

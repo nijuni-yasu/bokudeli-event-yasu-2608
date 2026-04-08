@@ -10,12 +10,10 @@ import Editor from '@tinymce/tinymce-vue'
 import ImageInput from '../ImageInput.vue'
 import eventDetailStyle from '@shokujii/base/utils/eventDetailStyle'
 import { useCommunityStore } from '@shokujii/base/stores/community'
-import type { CommunityStore } from '@shokujii/base/stores/community'
+import { useEventStore } from '@shokujii/base/stores/event.js'
 import { trimHashTag } from '@shokujii/base/utils/hashTag'
-import { uploadEventImage } from '@shokujii/base/composable/uploadImage'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
-const maxImageSize = 600
 
 const props = withDefaults(
   defineProps<{
@@ -31,7 +29,8 @@ const { t: $t } = useI18n()
 
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
-const communityStore = useCommunityStore(event.value.community_account) as CommunityStore
+const communityStore = useCommunityStore(event.value.community_account)
+const eventStore = useEventStore(event.value)
 
 const checkBillInfo = () => {
   if (event.value.event_payment === 'community_bill') {
@@ -95,43 +94,6 @@ const event_sns_hash_tag = computed({
   },
 })
 
-const resizeImage = (blob: Blob, filename: string, maxSize: number): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      img.src = e.target?.result as string
-    }
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-
-      let { width, height } = img
-
-      if (Math.max(width, height) > maxSize) {
-        if (width > maxSize) {
-          height *= maxSize / width
-          width = maxSize
-        } else {
-          width *= maxSize / height
-          height = maxSize
-        }
-      }
-      canvas.width = width
-      canvas.height = height
-      ctx?.drawImage(img, 0, 0, width, height)
-      canvas.toBlob((blob) => {
-        if (blob) {
-          resolve(new File([blob], filename))
-        } else {
-          reject(new Error('リサイズに失敗しました'))
-        }
-      })
-    }
-    reader.readAsDataURL(blob)
-  })
-}
-
 // MEMO: 以下で定義されている
 // https://github.com/tinymce/tinymce/blob/56bc9917426d58e526bda4e9c991f6b5bc82443f/modules/tinymce/src/core/main/ts/api/file/BlobCache.ts#L29
 type BlobInfo = {
@@ -157,10 +119,7 @@ const bodyImageUploadHandler = async (blobInfo: BlobInfo) => {
       console.error('Image upload failed:', error)
       return Promise.reject('イベントIDが設定されていません。イベントを保存してから画像をアップロードしてください。')
     }
-    // 画像リサイズ
-    const file = await resizeImage(blobInfo.blob(), blobInfo.filename(), maxImageSize)
-    // 画像アップロード
-    const url = await uploadEventImage(event.value.community_id, event.value.event_id, file)
+    const url = await eventStore.uploadTinymceImage(new File([blobInfo.blob()], blobInfo.filename()))
     return url
   } catch (error) {
     console.error('Image upload failed:', error)

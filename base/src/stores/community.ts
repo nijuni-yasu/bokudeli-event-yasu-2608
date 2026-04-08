@@ -23,12 +23,13 @@ import {
 import { db } from '@shokujii/base/firebase.js'
 import { Community } from '@shokujii/common/schemas/Community.js'
 import { CommunityMember, CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
+import { getCommunityCoverStoragePath, getCommunityIconStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getUserRef, useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { uploadCommunityImage } from '@shokujii/base/composable/uploadImage.js'
+import { uploadImage } from '@shokujii/base/utils/storage.js'
 import { useConfigStore } from './config.js'
 import { TaskExecutor } from '../utils/executors.js'
 
@@ -91,8 +92,8 @@ export const createNewCommunity = async (
     throw new Error('Not Logged in')
   }
   const [coverImageUrl, iconImageUrl] = await Promise.all([
-    coverImageFile != null ? uploadCommunityImage(community.id, coverImageFile) : null,
-    iconImageFile != null ? uploadCommunityImage(community.id, iconImageFile) : null,
+    coverImageFile != null ? uploadImage(coverImageFile, getCommunityCoverStoragePath(community.id)) : null,
+    iconImageFile != null ? uploadImage(iconImageFile, getCommunityIconStoragePath(community.id)) : null,
   ])
   if (coverImageUrl != null) {
     community.community_cover_image_url = coverImageUrl
@@ -277,7 +278,10 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       // community.value が null ではないことを保証する。本来はこういう使い方をすべきではない
       await getLoadedCommunity()
       const communityRef = await getCommunityRef()
-      community.value!.community_cover_image_url = await uploadCommunityImage(communityRef.id, file)
+      community.value!.community_cover_image_url = await uploadImage(
+        file,
+        getCommunityCoverStoragePath(communityRef.id),
+      )
       await setDoc(communityRef, toRaw(community.value!), { merge: true })
     }
 
@@ -285,7 +289,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       // community.value が null ではないことを保証する。本来はこういう使い方をすべきではない
       await getLoadedCommunity()
       const communityRef = await getCommunityRef()
-      community.value!.community_icon_image_url = await uploadCommunityImage(communityRef.id, file)
+      community.value!.community_icon_image_url = await uploadImage(file, getCommunityIconStoragePath(communityRef.id))
       await setDoc(communityRef, toRaw(community.value!), { merge: true })
     }
 
