@@ -107,6 +107,10 @@ npm -w <pkg> run format:check
 5. 仕様書・ドキュメントに基づく実装で、common のスキーマ（common/src/schemas、common/src/apis）を触る場合は、shokujii-common-schemas を参照すること
 6. functions/default で Function を追加・修正する場合は、shokujii-functions-implementation を参照すること
 
+## 作業完了前の必須手順（コード変更）
+
+ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、common のビルド、各パッケージの lint、format:check（必要に応じて format）を実行すること。
+
 ### Firestore 操作の必須ルール（厳守）
 
 - **DB 操作は必ず store 経由**: `db.collection()`、`update`、`set`、`delete` 等を直接呼ばない。`base/src/stores/` または `functions/default/src/stores/` の関数を経由すること。
@@ -146,3 +150,13 @@ PR・コードレビューのコメントは必ず日本語で行う。
 レビュー時はプロジェクト固有のチェックリストに従うこと。
 
 チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
+
+## エージェント用ファイルとシンボリックリンク
+
+実装・修正は **Cursor** と **Claude（Claude Code 等）** のどちらでも行う。どちらの環境でも同じプロジェクトガイドとスキルを参照できるよう、次のように整理している。
+
+- **`AGENTS.md`**: AI 向けプロジェクトガイドの**正本**。
+- **`CLAUDE.md`**: `AGENTS.md` への**シンボリックリンク**。Claude 側がプロジェクトルートの `CLAUDE.md` を読む場合でも、常に `AGENTS.md` と同じ内容になる。
+- **スキル（`SKILL.md` 等）の正本**: **`.agents/skills/`**。Cursor 用の **`.cursor/skills`** と Claude 用の **`.claude/skills`** は、どちらも **`.agents/skills` へのシンボリックリンク**である。スキルを編集する場合は **`.agents/skills` 側（またはリンク経由で同一ファイル）** を更新すればよい。
+
+`.cursor/` や `.claude/` には、エディタ・ツールごとの設定（例: `.cursor/rules.json`、`.claude/settings.json`、hooks）が置かれることがあり、これらはスキル正本とは別パスとして扱う。
