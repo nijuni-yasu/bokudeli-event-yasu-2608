@@ -6,8 +6,7 @@ import {
   getEventPath,
   getEventEditShopNoticePath,
   getManageCommunityPath,
-  getEventEditBasicPath,
-  getEventEditDetailsPath,
+  getEventEditPathByRawStatus,
   getLogin,
 } from '@/router/utils'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
@@ -176,9 +175,10 @@ const login = () => {
                     rounded="pill"
                     :prepend-icon="mdiPencilBoxOutline"
                     :to="
-                      eventWithMembers.eventStore.event.event_status.value === 'in_draft'
-                        ? getEventEditBasicPath(eventWithMembers.eventStore.event.event_id)
-                        : getEventEditDetailsPath(eventWithMembers.eventStore.event.event_id)
+                      getEventEditPathByRawStatus(
+                        eventWithMembers.eventStore.event.event_id,
+                        eventWithMembers.eventStore.event.event_status.value,
+                      )
                     "
                   >
                     {{ $t('community.edit') }}

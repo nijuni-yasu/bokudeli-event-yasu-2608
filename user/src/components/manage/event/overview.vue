@@ -2,7 +2,7 @@
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { getManageEventSettingsPath, getEventPath, getManageCommunityPath } from '@/router/utils'
+import { getEventEditPathByRawStatus, getEventPath, getManageCommunityPath } from '@/router/utils'
 import { mdiPencil, mdiDelete } from '@mdi/js'
 
 const router = useRouter()
@@ -29,6 +29,13 @@ const handleDeleteCompleteOk = () => {
 const openInNew = (url: string) => {
   window.open(url, '_blank')
 }
+
+const goToEventEdit = () => {
+  const e = eventStore.event
+  if (e != null) {
+    void router.push(getEventEditPathByRawStatus(eventId, e.event_status.value))
+  }
+}
 </script>
 
 <template>
@@ -49,7 +56,8 @@ const openInNew = (url: string) => {
             class="ma-3"
             variant="outlined"
             :prepend-icon="mdiPencil"
-            @click="router.push(getManageEventSettingsPath(eventId))"
+            :disabled="eventStore.event == null"
+            @click="goToEventEdit"
           >
             {{ $t('manage.event.edit') }}
           </v-btn>
