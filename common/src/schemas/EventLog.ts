@@ -10,6 +10,8 @@ const EventLogDbSchema = z
     updated_by: z.string().nonempty(),
   })
   .merge(EventDbSchema.partial())
+  // Event 本体の DB スキーマからは外したが、ログ差分にレガシー項目が残る場合がある
+  .merge(z.object({ event_address: z.string().optional() }))
 
 // アプリ側(クラス)用のスキーマ
 const EventLogAppSchema = z

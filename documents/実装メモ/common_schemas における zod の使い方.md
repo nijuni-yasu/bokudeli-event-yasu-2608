@@ -363,6 +363,8 @@ toFirestore(updateUserId: string): any {
 }
 ```
 
+**補足（Event の `event_address`）:** レガシー単一住所 `event_address` は **EventAppSchema** で `default('')` のみ保持し、**EventDbSchema には含めない**。`convertToDb` で `...event` に載るが、`EventDbSchema.parse` の結果から **スキーマ外キーは除去**されるため、新規保存では Firestore に `event_address` を書かない。読み取りは `EventAppSchema`（`fromFirestore` → コンストラクタ）で正規化する。
+
 ## 特殊なスキーマパターン
 
 ### discriminatedUnion（判別可能なユニオン）
@@ -397,6 +399,7 @@ const EventLogDbSchema = z
     updated_by: z.string().nonempty(),
   })
   .merge(EventDbSchema.partial())
+  .merge(z.object({ event_address: z.string().optional() })) // ログ差分にレガシーが残る場合
 
 const EventLogAppSchema = z
   .object({

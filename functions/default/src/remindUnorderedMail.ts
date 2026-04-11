@@ -83,7 +83,7 @@ export async function sendUnorderedRemindMailToManagers(nowMillis: number, start
         const baseTemplateData: Omit<RemindUnorderedTemplateData, 'community_manager_fullname'> = {
           event_name: event.event_name,
           event_start_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
-          event_place: event.event_place !== '' ? event.event_place : event.event_address,
+          event_place: event.event_place !== '' ? event.event_place : event.fullAddress,
           shop_name: event.shop_name,
           event_url: getEventUrl(event.community_account, event.id),
         }

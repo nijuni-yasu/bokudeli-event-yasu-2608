@@ -57,7 +57,7 @@ function buildInCartDynamicTemplateData(event: ShokujiiEvent): MailDynamicTempla
     event_name: event.event_name,
     event_cover_url: event.event_cover_url,
     community_name: event.community_name,
-    event_address: event.event_address,
+    event_address: event.fullAddress,
     shop_name: event.shop_name,
     event_url: getEventUrl(event.community_account, event.id),
     event_deadline_datetime: convertToDatetimeWeekdayShort(event.event_deadline_datetime),

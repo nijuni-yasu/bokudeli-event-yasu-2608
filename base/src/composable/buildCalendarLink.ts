@@ -12,7 +12,7 @@ const buildCalendarLink = (event: BokudeliEvent | null, type: CalendarType) => {
     `${event.event_name}`,
     '',
     `📅日時：${dateWithDayOfWeekString(event.event_start_datetime)}~${dateOnlyTimeString(event.event_end_datetime)}`,
-    `📍場所：${event.event_address} ${event.event_place}`,
+    `📍場所：${event.fullAddress} ${event.event_place}`,
     `⏳締切：${dateWithDayOfWeekString(event.event_deadline_datetime)} に注文締切`,
     `👥主催：${event.community_name}`,
     `👩‍🍳食事：${event.shop_name}`,
@@ -29,7 +29,7 @@ const buildCalendarLink = (event: BokudeliEvent | null, type: CalendarType) => {
     title: event.event_name ?? '',
     start: event.event_start_datetime,
     end: event.event_end_datetime ?? undefined,
-    location: event.event_address ?? undefined,
+    location: event.fullAddress ?? undefined,
     description: textList.join('\n'),
     // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
     url: getEventUrl(import.meta.env.VITE_AUTH_DOMAIN, event.community_account, event.event_id),

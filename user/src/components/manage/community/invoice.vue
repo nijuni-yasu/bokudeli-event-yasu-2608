@@ -66,7 +66,7 @@ const getPdf = (eventId: string) => {
                   <template v-for="es of eventStores" :key="es.event!.event_id">
                     <tr v-if="es.event != null && es.orders != null">
                       <td>{{ $d(es.event.event_start_datetime, 'date') }}</td>
-                      <td>{{ es.event.event_address }}</td>
+                      <td>{{ es.event.fullAddress }}</td>
                       <td>
                         <router-link :to="getEventPath(es.event.community_account, es.event.event_id)">
                           {{ es.event.event_name }}

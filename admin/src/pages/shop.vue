@@ -174,6 +174,7 @@ watchDebounced(
 
     // 必須チェックと郵便番号の形式チェック（7桁の数字）
     if (requiredValidator(requestPostalCode) !== true || postalCodeValidator(requestPostalCode) !== true) {
+      shop.value.shop_address_base = ''
       return
     }
 
@@ -204,11 +205,8 @@ watchDebounced(
       shop.value.shop_address_latitude = location.latitude
       shop.value.shop_address_longitude = location.longitude
 
-      // 既に同じ住所が入力されている場合は処理をスキップ
-      if (shop.value.shop_address?.startsWith(location.address) ?? false) {
-        return
-      }
-      shop.value.shop_address = location.address
+      // 住所1（基本）を郵便番号APIの結果で設定
+      shop.value.shop_address_base = location.address
     } catch (error) {
       // レスポンスが返ってきた時点で、現在の郵便番号と一致するか確認
       if (shop.value.shop_postcode !== requestPostalCode) {
@@ -267,7 +265,8 @@ watch(
 const handlePostalCodeErrorDialogOk = () => {
   if (shop.value != null) {
     shop.value.shop_postcode = ''
-    shop.value.shop_address = ''
+    shop.value.shop_address_base = ''
+    shop.value.shop_address_detail = ''
   }
   showPostalcodeErrorDialog.value = false
 }
@@ -357,10 +356,24 @@ const minOrdersPairValidator = (range: number | null, min_orders: number | null)
           </v-card-text>
           <v-card-text>
             <v-text-field
-              v-model="shop.shop_address"
+              v-model="shop.shop_address_base"
               outlined
               dense
+              readonly
               :label="$t('address')"
+              :hint="$t('address_hint')"
+              persistent-hint
+              :rules="[requiredValidator]"
+            />
+          </v-card-text>
+          <v-card-text>
+            <v-text-field
+              v-model="shop.shop_address_detail"
+              outlined
+              dense
+              :label="$t('detail_address')"
+              :hint="$t('detail_address_hint')"
+              persistent-hint
               :rules="[requiredValidator]"
             />
           </v-card-text>

@@ -60,7 +60,7 @@ const events = computed(
                         : ''
                     }}
                   </td>
-                  <td>{{ event.event_address }}</td>
+                  <td>{{ event.fullAddress }}</td>
                   <td class="text-center">{{ $t('orders.event_max_people', [event.event_max_people]) }}</td>
                   <td class="text-center">{{ $t('orders.order_count', [ordersCount(orders)]) }}</td>
                   <td class="text-center">{{ $n(ordersTotalPrice(orders), 'currency') }}</td>

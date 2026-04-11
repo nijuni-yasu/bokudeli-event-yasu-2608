@@ -103,7 +103,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
 
       templateData.events.push({
         event_name: event.event_name,
-        event_address: event.event_address,
+        event_address: event.fullAddress,
         event_place: event.event_place,
         event_datetime,
         event_deadline_datetime,

@@ -201,7 +201,7 @@ const createEventBillInvoice = async (
     companyName: event.organizer_company,
     companyPersonName: event.bill_fullname,
     companyPostalCode: community.community_postalcode,
-    companyAddress: community.community_address,
+    companyAddress: community.fullAddress,
     companyPhoneNumber: community.community_phone,
     title: event.event_name.substring(0, 18),
     items,

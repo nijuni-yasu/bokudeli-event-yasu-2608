@@ -22,7 +22,8 @@ const CommunityDbSchema = z.object({
   community_manager_fullname: NonEmptyStringSchema,
   community_company: NonEmptyStringSchema,
   community_postalcode: NonEmptyStringSchema,
-  community_address: NonEmptyStringSchema,
+  community_address_base: NonEmptyStringSchema,
+  community_address_detail: NonEmptyStringSchema,
   community_phone: NonEmptyStringSchema,
   community_email: NonEmptyStringSchema,
   community_use_purpose: NonEmptyStringSchema,
@@ -62,7 +63,8 @@ export class Community {
   community_manager_fullname: string = ''
   community_company: string = ''
   community_postalcode: string = ''
-  community_address: string = ''
+  community_address_base: string = ''
+  community_address_detail: string = ''
   community_phone: string = ''
   community_email: string = ''
   community_use_purpose: string = ''
@@ -90,6 +92,10 @@ export class Community {
     this.community_id = id
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
     this.updated_at = Date.now()
+  }
+
+  get fullAddress(): string {
+    return [this.community_address_base, this.community_address_detail].filter(Boolean).join(' ')
   }
 
   isValidForDatabase(): boolean {

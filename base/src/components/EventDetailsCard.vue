@@ -201,9 +201,9 @@ const isShowMember = computed(() =>
               <td>{{ $t('event_details.place') }}</td>
               <td>
                 <div>
-                  {{ event.event_address }}
+                  {{ event.fullAddress }}
                   <a
-                    :href="`https://www.google.co.jp/maps/search/${event.event_address} ${event.event_place}`"
+                    :href="`https://www.google.co.jp/maps/search/${event.fullAddress} ${event.event_place}`"
                     target="_blank"
                   >
                     <v-icon :icon="mdiMapMarkerRadius" />

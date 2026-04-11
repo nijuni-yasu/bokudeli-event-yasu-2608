@@ -45,7 +45,7 @@ const isShowInvoiceButton = computed(
       {{ $t('user_event_card.event_start_datetime', [$d(event.event_start_datetime, 'datetime_weekday_short')]) }}
     </v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{
-      $t('user_event_card.event_address', [event.event_address])
+      $t('user_event_card.event_address', [event.fullAddress])
     }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{

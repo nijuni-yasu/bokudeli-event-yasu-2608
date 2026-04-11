@@ -45,7 +45,7 @@ const avatarSize = computed(() => {
       </template>
     </v-card-title>
     <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
-      {{ $t('event_card.place', [event.event_address]) }}
+      {{ $t('event_card.place', [event.fullAddress]) }}
     </v-card-title>
     <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
       {{ $t('event_card.shop', [event.shop_name]) }}
