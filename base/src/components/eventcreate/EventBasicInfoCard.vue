@@ -9,7 +9,7 @@ import {
   parseDatetimeStrings,
 } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
-import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
+import { fetchLocationByPostalcode } from '@shokujii/base/utils/fetchLocation'
 import DateInput from '../DateInput.vue'
 import { useValidators } from '@shokujii/base/composable/validators'
 import { mdiMapMarker, mdiCalendar } from '@mdi/js'
