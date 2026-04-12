@@ -9,11 +9,16 @@ const props = defineProps<{
   orders: EventMemberOrder[]
   isOwner: boolean
   cancelLoading?: boolean
+  /** 注文サブコレクション取得中（注文ブロックのみローディング） */
+  ordersLoading?: boolean
+  /** 注文取得失敗時 true（注文ブロックにエラー＋再試行） */
+  ordersError?: boolean
 }>()
 
 const emit = defineEmits<{
   downloadInvoice: [eventId: string, stripeId: string]
   cancel: [orderIds: string[]]
+  retryOrders: [eventId: string]
 }>()
 
 /** キャンセルダイアログを開いているイベント ID（閉じているときは null）。親が v-model で保持し、成功後に閉じる。 */
@@ -40,7 +45,7 @@ const groupedMenus = computed(() => {
       map.set(o.menu_id, { menu_name: o.menu_name, menu_price: o.menu_price, count: 1 })
     }
   }
-  return Array.from(map.values())
+  return Array.from(map.entries()).map(([menu_id, v]) => ({ menu_id, ...v }))
 })
 
 const totalPrice = computed(() =>
@@ -49,13 +54,25 @@ const totalPrice = computed(() =>
 
 const hasActiveOrders = computed(() => props.orders.some((o) => o.status !== 'canceled'))
 
-const isShowCancelButton = computed(() => hasActiveOrders.value && props.event.event_deadline_datetime > Date.now())
+const isShowCancelButton = computed(
+  () =>
+    !props.ordersLoading &&
+    !props.ordersError &&
+    hasActiveOrders.value &&
+    props.event.event_deadline_datetime > Date.now(),
+)
 
-const isAllCanceled = computed(() => props.orders.every((o) => o.status === 'canceled'))
+const isAllCanceled = computed(() => props.orders.length > 0 && props.orders.every((o) => o.status === 'canceled'))
 
 const isShowInvoiceButton = computed(
-  () => props.orders.some((o) => o.status === 'ordered') && props.event.event_payment === 'user_advance',
+  () =>
+    !props.ordersLoading &&
+    !props.ordersError &&
+    props.orders.some((o) => o.status === 'ordered') &&
+    props.event.event_payment === 'user_advance',
 )
+
+const showOrderSummary = computed(() => !props.ordersLoading && !props.ordersError && groupedMenus.value.length > 0)
 
 const stripeGroups = computed(() => {
   const map = new Map<string, { stripeId: string; amount: number }>()
@@ -158,7 +175,9 @@ const selectedOrderIds = computed(() => {
   return ids
 })
 
-const canSubmit = computed(() => selectedOrderIds.value.length > 0 && !props.cancelLoading)
+const canSubmit = computed(
+  () => selectedOrderIds.value.length > 0 && !props.cancelLoading && !props.ordersLoading && !props.ordersError,
+)
 
 const cancelRefundAmount = computed(() => {
   let total = 0
@@ -199,17 +218,34 @@ const submitCancel = () => {
     <v-card-text class="py-1 px-2 event-card">{{
       $t('user_event_card.event_payment', [$t(`payment.${event.event_payment}`)])
     }}</v-card-text>
-    <v-card-text class="py-1 px-2 event-card">
-      {{ $t('user_event_card.menu') }}
-      <div class="ml-3">
-        <div v-for="menu in groupedMenus" :key="menu.menu_name">
-          {{ menu.menu_name }} ×{{ menu.count }}（{{ $n(menu.menu_price * menu.count, 'currency') }}）
+    <v-card-text v-if="ordersLoading" class="py-3 px-2 d-flex justify-center align-center">
+      <v-progress-circular indeterminate color="primary" size="28" width="2" />
+    </v-card-text>
+    <v-card-text v-else-if="ordersError" class="py-2 px-2 event-card">
+      <p class="text-body-2 text-error mb-2">{{ $t('user_event_card.orders_load_error') }}</p>
+      <v-btn
+        variant="tonal"
+        color="primary"
+        size="small"
+        rounded="pill"
+        @click.stop.prevent="emit('retryOrders', event.event_id)"
+      >
+        {{ $t('user_event_card.orders_retry') }}
+      </v-btn>
+    </v-card-text>
+    <template v-else>
+      <v-card-text v-if="showOrderSummary" class="py-1 px-2 event-card">
+        {{ $t('user_event_card.menu') }}
+        <div class="ml-3">
+          <div v-for="menu in groupedMenus" :key="menu.menu_id">
+            {{ menu.menu_name }} ×{{ menu.count }}（{{ $n(menu.menu_price * menu.count, 'currency') }}）
+          </div>
         </div>
-      </div>
-    </v-card-text>
-    <v-card-text class="px-2 pt-1 pb-4 event-card">
-      {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
-    </v-card-text>
+      </v-card-text>
+      <v-card-text v-if="showOrderSummary" class="px-2 pt-1 pb-4 event-card">
+        {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
+      </v-card-text>
+    </template>
     <v-card-text>
       <v-row v-if="isOwner" justify="end">
         <v-spacer></v-spacer>

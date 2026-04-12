@@ -91,19 +91,6 @@ export const useOrderListStore = (storeId: string, filters: QueryConstraint[], p
 }
 
 /**
- * ユーザーの注文リストを取得するヘルパー関数
- * @param userId ユーザーID
- * @param pageSize 1ページあたりの取得件数（デフォルト: 6）
- */
-export const useOrderListByUserId = (userId: string, pageSize: number = 6) => {
-  return useOrderListStore(
-    `user/${userId}`,
-    [where('user_id', '==', userId), where('status', '!=', 'in_cart'), orderBy('updated_at', 'desc')],
-    pageSize,
-  )
-}
-
-/**
  * 特定イベントの注文リストを取得するヘルパー関数
  * @param eventId イベントID
  * @param pageSize 1ページあたりの取得件数（デフォルト: 10）
