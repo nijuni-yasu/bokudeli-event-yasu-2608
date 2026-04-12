@@ -11,10 +11,10 @@ import { useOrderListByUserId } from '@shokujii/base/stores/orderList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { getCommunityPath, getEventPath, getReceiptPath } from '@/router/utils'
-import { stripeRefunds } from '@shokujii/base/apis/stripe.js'
+import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -49,7 +49,9 @@ const { user } = storeToRefs(useUserStore(userId))
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const tabs = ref(null)
-const cancelOperatingOrderId = ref<string | null>(null)
+const cancelLoadingEventId = ref<string | null>(null)
+/** UserEventCard のキャンセルダイアログの開閉（開いているイベントの event_id、閉じているときは null） */
+const cancelDialogEventId = ref<string | null>(null)
 
 const isOwner = computed(() => {
   const uid = firebaseUser.value?.uid
@@ -124,34 +126,31 @@ const managerCommunities = computed(() =>
   }),
 )
 
-// Phase 7 で cancelOrders API に統合予定。暫定的に先頭 order で既存処理を呼ぶ
-const cancel = async (cancelOrders: EventMemberOrder[]) => {
-  const order = cancelOrders[0]
-  if (order == null) return
-  const event = (useEventStore(order.event_id) as EventStore).event
-  if (event == null) return
+const cancel = async (orderIds: string[], communityId: string, eventId: string) => {
+  if (orderIds.length === 0) return
 
-  cancelOperatingOrderId.value = order.order_id
+  cancelLoadingEventId.value = eventId
   try {
-    if (event.event_payment === 'user_advance' && order.stripe_id != null) {
-      await stripeRefunds({
-        order_id: order.order_id,
-        community_id: order.community_id,
-        event_id: order.event_id,
-      })
-      userOrderListStore.reload()
-      notification.show($t('user.canceled'), 'success')
-    } else if (event.event_payment === 'user_on_day' || event.event_payment === 'community_bill') {
-      const eventStore = useEventStore(order.event_id)
-      await eventStore.updateOrderStatus(order, 'canceled')
-      userOrderListStore.reload()
+    const { data } = await callCancelOrders({
+      community_id: communityId,
+      event_id: eventId,
+      order_ids: orderIds,
+    })
+    userOrderListStore.reload()
+
+    cancelDialogEventId.value = null
+
+    const hasRefundIssues = data.refund_errors != null && data.refund_errors.length > 0
+    if (hasRefundIssues || data.user_message) {
+      notification.show(data.user_message ?? $t('user.canceled'), 'warning')
+    } else {
       notification.show($t('user.canceled'), 'success')
     }
   } catch (error) {
     console.error(error)
-    Object.assign(notification, { message: $t('user.cancel_failed'), color: 'error' })
+    notification.show($t('user.cancel_failed'), 'error')
   } finally {
-    cancelOperatingOrderId.value = null
+    cancelLoadingEventId.value = null
   }
 }
 
@@ -207,16 +206,18 @@ const downloadReceipt = (eventId: string, stripeId: string) => {
               <div class="event-card">
                 <router-link :to="getEventPath(event.community_account, event.event_id)">
                   <UserEventCard
+                    v-model:cancel-dialog-event-id="cancelDialogEventId"
                     :orders="groupOrders"
                     :event="event"
                     :isOwner="isOwner"
+                    :cancelLoading="cancelLoadingEventId === event.event_id"
                     @downloadInvoice="downloadReceipt"
-                    @cancel="cancel"
+                    @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
                   />
                 </router-link>
 
                 <div
-                  v-if="groupOrders.some((o) => cancelOperatingOrderId === o.order_id)"
+                  v-if="cancelLoadingEventId === event.event_id"
                   class="progress-container d-flex justify-center align-center"
                 >
                   <v-progress-circular :indeterminate="true" size="large" />

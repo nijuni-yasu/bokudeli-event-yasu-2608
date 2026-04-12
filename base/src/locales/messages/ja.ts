@@ -395,14 +395,17 @@ export default {
     cancel_dialog: {
       title: 'キャンセル',
       event_name: '【イベント名】 {0}',
-      description_user_advance: `注文及びイベント参加をキャンセルしますか？<br />
+      description_user_advance: `注文したメニューを選択してキャンセルを実行してください。<br />
                       キャンセルはイベントの注文期限まで可能です。<br />
                       キャンセル手続き完了後、返金がご利用の明細に反映されるまで5～10日かかります。<br />
                       キャンセルの取り消しはできません。あらかじめご了承ください。`,
-      description_community_bill: `注文及びイベント参加をキャンセルしますか？<br />
+      description_community_bill: `注文したメニューを選択してキャンセルを実行してください。<br />
                       キャンセルは、イベントの注文期限まで実行可能です。`,
       not_cancel: 'キャンセルしない',
       submit: 'キャンセルを実行する',
+      select_all: 'すべて選択',
+      remaining: '残り {0} 個',
+      refund_amount: 'キャンセル金額：{0}',
     },
     download_invoice: '領収書をダウンロードする',
     download_invoice_error: '領収書の取得に失敗しました',

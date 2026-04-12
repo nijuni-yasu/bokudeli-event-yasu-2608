@@ -1,16 +1,6 @@
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
-import {
-  UpdateOrderStatusRequest,
-  AddToCartRequest,
-  RemoveFromCartRequest,
-  ConfirmOrderRequest,
-} from '@shokujii/common/apis/order.js'
-
-export const updateOrderStatus = async (input: UpdateOrderStatusRequest): Promise<HttpsCallableResult<void>> => {
-  const f = httpsCallable<UpdateOrderStatusRequest, void>(functions, 'updateOrderStatus')
-  return f(input)
-}
+import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
 
 export const addToCart = async (input: AddToCartRequest): Promise<HttpsCallableResult<void>> => {
   const f = httpsCallable<AddToCartRequest, void>(functions, 'addToCart')

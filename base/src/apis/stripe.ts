@@ -3,7 +3,8 @@ import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
 import {
   CreateStripeCheckoutSessionRequest,
   CreateStripeCheckoutSessionResponse,
-  StripeRefundsRequest,
+  CancelOrdersRequest,
+  CancelOrdersResponse,
 } from '@shokujii/common/apis/stripe.js'
 
 export const createStripeCheckoutSession = async (
@@ -16,9 +17,7 @@ export const createStripeCheckoutSession = async (
   return f(input)
 }
 
-export const stripeRefunds = async (
-  input: StripeRefundsRequest,
-): Promise<HttpsCallableResult<{ refund_id: string }>> => {
-  const f = httpsCallable<StripeRefundsRequest, { refund_id: string }>(functions, 'stripeRefunds')
+export const cancelOrders = async (input: CancelOrdersRequest): Promise<HttpsCallableResult<CancelOrdersResponse>> => {
+  const f = httpsCallable<CancelOrdersRequest, CancelOrdersResponse>(functions, 'cancelOrders')
   return f(input)
 }

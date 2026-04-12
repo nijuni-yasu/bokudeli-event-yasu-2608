@@ -29,7 +29,6 @@ import { getAuth } from 'firebase/auth'
 import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
 import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
-  updateOrderStatus as _updateOrderStatus,
   addToCart as _addToCart,
   removeFromCart as _removeFromCart,
   confirmOrder as _confirmOrder,
@@ -265,13 +264,6 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return url
     }
 
-    const updateOrderStatus = async (
-      order: { community_id: string; event_id: string; order_id: string },
-      status: EventMemberOrder['status'],
-    ): Promise<void> => {
-      await _updateOrderStatus({ ...order, status })
-    }
-
     const addToCart = async (data: AddToCartRequest): Promise<void> => {
       await _addToCart(data)
     }
@@ -476,7 +468,6 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       updateEvent,
       updateCoverImage,
       uploadTinymceImage,
-      updateOrderStatus,
       addToCart,
       removeFromCart,
       confirmOrder,
