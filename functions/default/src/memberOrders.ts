@@ -14,6 +14,7 @@ import {
 import { getEvent } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
 import { createModuleLogger } from './utils/logger.js'
+import { sendOrderCompletionMails } from './orderCompletionMail.js'
 
 const logger = createModuleLogger('memberOrders')
 const db = getFirestore()
@@ -132,69 +133,92 @@ export const removeFromCart = onCall<RemoveFromCartRequest, Promise<void>>(async
   })
 })
 
-export const confirmOrder = onCall<ConfirmOrderRequest, Promise<void>>(async (request) => {
-  const uid = request.auth?.uid
-  if (uid == null) {
-    throw new HttpsError('unauthenticated', '認証が必要です')
-  }
-
-  const { community_id, event_id, order_ids } = request.data
-
-  if (!community_id || !event_id || !Array.isArray(order_ids) || order_ids.length === 0) {
-    throw new HttpsError('invalid-argument', '必須パラメータが不足しています')
-  }
-
-  await db.runTransaction(async (transaction) => {
-    const eventData = await getEvent(event_id, transaction)
-    if (eventData == null || eventData.community_id !== community_id) {
-      throw new HttpsError('not-found', 'イベントが見つかりません')
+export const confirmOrder = onCall(
+  {
+    secrets: ['SENDGRID_API_KEY'],
+  },
+  async (request) => {
+    const uid = request.auth?.uid
+    if (uid == null) {
+      throw new HttpsError('unauthenticated', '認証が必要です')
     }
 
-    if (eventData.event_payment === 'user_advance') {
-      throw new HttpsError('failed-precondition', '事前クレカ決済のイベントでは confirmOrder を使用できません')
+    const { community_id, event_id, order_ids } = request.data as ConfirmOrderRequest
+
+    if (!community_id || !event_id || !Array.isArray(order_ids) || order_ids.length === 0) {
+      throw new HttpsError('invalid-argument', '必須パラメータが不足しています')
     }
 
-    const now = Timestamp.now().toMillis()
-    if (eventData.event_deadline_datetime < now) {
-      throw new HttpsError('failed-precondition', '注文期限を過ぎています')
-    }
-
-    if (eventData.members.length >= eventData.event_max_people) {
-      throw new HttpsError('failed-precondition', '定員に達しています')
-    }
-
-    const orders = await getOrdersByIds(community_id, event_id, uid, order_ids, transaction)
-
-    if (orders.length !== order_ids.length) {
-      throw new HttpsError('not-found', '一部の注文が見つかりません')
-    }
-
-    for (const order of orders) {
-      if (order.user_id !== uid) {
-        throw new HttpsError('permission-denied', 'この注文にアクセスできません')
+    await db.runTransaction(async (transaction) => {
+      const eventData = await getEvent(event_id, transaction)
+      if (eventData == null || eventData.community_id !== community_id) {
+        throw new HttpsError('not-found', 'イベントが見つかりません')
       }
-      if (order.status !== 'in_cart') {
-        throw new HttpsError('failed-precondition', 'カート内の注文のみ確定できます')
+
+      if (eventData.event_payment === 'user_advance') {
+        throw new HttpsError('failed-precondition', '事前クレカ決済のイベントでは confirmOrder を使用できません')
       }
+
+      const now = Timestamp.now().toMillis()
+      if (eventData.event_deadline_datetime < now) {
+        throw new HttpsError('failed-precondition', '注文期限を過ぎています')
+      }
+
+      if (eventData.members.length >= eventData.event_max_people) {
+        throw new HttpsError('failed-precondition', '定員に達しています')
+      }
+
+      const orders = await getOrdersByIds(community_id, event_id, uid, order_ids, transaction)
+
+      if (orders.length !== order_ids.length) {
+        throw new HttpsError('not-found', '一部の注文が見つかりません')
+      }
+
+      for (const order of orders) {
+        if (order.user_id !== uid) {
+          throw new HttpsError('permission-denied', 'この注文にアクセスできません')
+        }
+        if (order.status !== 'in_cart') {
+          throw new HttpsError('failed-precondition', 'カート内の注文のみ確定できます')
+        }
+      }
+
+      const orderedAt = Timestamp.now().toMillis()
+      for (const order of orders) {
+        order.status = 'ordered'
+        order.ordered_at = orderedAt
+        saveOrder(community_id, event_id, uid, order, transaction)
+      }
+    })
+
+    const community = await getCommunity(community_id)
+    if (community != null) {
+      await community.addMember(uid)
     }
 
-    const orderedAt = Timestamp.now().toMillis()
-    for (const order of orders) {
-      order.status = 'ordered'
-      order.ordered_at = orderedAt
-      saveOrder(community_id, event_id, uid, order, transaction)
+    const eventForMail = await getEvent(event_id)
+    if (eventForMail != null) {
+      try {
+        await sendOrderCompletionMails(eventForMail, uid)
+      } catch (error) {
+        logger.error('Failed to send order completion mails', {
+          error,
+          eventId: event_id,
+          userId: uid,
+        })
+      }
+    } else {
+      logger.warn('Skipping order completion mails: event not found', {
+        eventId: event_id,
+        userId: uid,
+      })
     }
-  })
 
-  const community = await getCommunity(community_id)
-  if (community != null) {
-    await community.addMember(uid)
-  }
-
-  logger.info('注文確定', {
-    eventId: event_id,
-    communityId: community_id,
-    userId: uid,
-    orderCount: order_ids.length,
-  })
-})
+    logger.info('注文確定', {
+      eventId: event_id,
+      communityId: community_id,
+      userId: uid,
+      orderCount: order_ids.length,
+    })
+  },
+)

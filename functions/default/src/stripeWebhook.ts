@@ -12,15 +12,24 @@ import {
   saveStripe,
 } from './stores/memberOrder.js'
 import { getCommunity } from './stores/community.js'
+import { getEvent } from './stores/event.js'
+import { sendOrderCompletionMails } from './orderCompletionMail.js'
 
 const logger = createModuleLogger('stripeWebhook')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
 const STRIPE_WEBHOOK_ENDPOINT_SECRET = defineSecret('STRIPE_WEBHOOK_ENDPOINT_SECRET')
 const db = getFirestore()
 
+/** トランザクション結果に応じてハンドラが返す HTTP を分岐する（throw による 5xx と Stripe の無限再送を避ける） */
+type StripeWebhookTransactionResult =
+  | { kind: 'processed' }
+  | { kind: 'noop' }
+  | { kind: 'client_error'; message: string }
+  | { kind: 'unrecoverable_ack'; message: string }
+
 export const stripeWebhook = onRequest(
   {
-    secrets: ['STRIPE_API_KEY', 'STRIPE_WEBHOOK_ENDPOINT_SECRET'],
+    secrets: ['STRIPE_API_KEY', 'STRIPE_WEBHOOK_ENDPOINT_SECRET', 'SENDGRID_API_KEY'],
   },
   async (req, res) => {
     const stripe = new Stripe(STRIPE_API_KEY.value(), { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
@@ -61,28 +70,47 @@ export const stripeWebhook = onRequest(
     }
 
     const paymentIntent = session.payment_intent
-    const orderIds = orderIdsStr.split(',').filter((id) => id.length > 0)
+    const rawOrderIds = orderIdsStr.split(',').filter((id) => id.length > 0)
 
-    if (orderIds.length === 0) {
+    if (rawOrderIds.length === 0) {
       logger.error('orderIds is empty', { orderIdsStr })
       res.status(400).send('orderIds is empty')
       return
     }
 
+    if (new Set(rawOrderIds).size !== rawOrderIds.length) {
+      logger.warn('Duplicate order IDs in checkout session metadata', {
+        orderIdsStr,
+        eventId,
+        communityId,
+        userId,
+        paymentIntent,
+      })
+      res.status(400).send('Duplicate order IDs')
+      return
+    }
+
+    const orderIds = rawOrderIds
+
     const existingStripe = await getStripeByPaymentIntent(communityId, eventId, paymentIntent)
     if (existingStripe != null) {
-      logger.info('Stripe document already exists, skipping', { paymentIntent })
+      // stripes は既にあるが、前回が addMember 前に失敗した場合はここで冪等に補完する（R04）
+      logger.info('Stripe document already exists, skipping transaction', { paymentIntent })
+      const community = await getCommunity(communityId)
+      if (community != null) {
+        await community.addMember(userId)
+      }
       res.status(200).json({ received: true })
       return
     }
 
     const stripeDocId = createStripeDoc(communityId, eventId)
 
-    await db.runTransaction(async (transaction) => {
+    const txResult = await db.runTransaction(async (transaction): Promise<StripeWebhookTransactionResult> => {
       const existingInTx = await getStripeByPaymentIntent(communityId, eventId, paymentIntent, transaction)
       if (existingInTx != null) {
         logger.info('Stripe document created by concurrent request, skipping', { paymentIntent })
-        return
+        return { kind: 'noop' }
       }
 
       const orders = await getOrdersByIds(communityId, eventId, userId, orderIds, transaction)
@@ -93,13 +121,13 @@ export const stripeWebhook = onRequest(
           found: orders.length,
           paymentIntent,
         })
-        throw new Error('Orders not found')
+        return { kind: 'client_error', message: 'Orders not found' }
       }
 
       const allAlreadyOrdered = orders.every((o) => o.status === 'ordered')
       if (allAlreadyOrdered) {
         logger.info('All orders already ordered', { paymentIntent })
-        return
+        return { kind: 'noop' }
       }
 
       for (const order of orders) {
@@ -109,7 +137,10 @@ export const stripeWebhook = onRequest(
             status: order.status,
             paymentIntent,
           })
-          throw new Error(`Order ${order.order_id} has unexpected status: ${order.status}`)
+          return {
+            kind: 'unrecoverable_ack',
+            message: `Order ${order.order_id} has unexpected status: ${order.status}`,
+          }
         }
       }
 
@@ -150,11 +181,52 @@ export const stripeWebhook = onRequest(
         refunds: [],
       })
       saveStripe(communityId, eventId, stripeDoc, transaction)
+      return { kind: 'processed' }
     })
+
+    if (txResult.kind === 'client_error') {
+      res.status(400).send(txResult.message)
+      return
+    }
+    if (txResult.kind === 'unrecoverable_ack') {
+      logger.error('Webhook skipped: unrecoverable order state', {
+        message: txResult.message,
+        paymentIntent,
+        eventId,
+        communityId,
+        userId,
+      })
+      res.status(200).json({ received: true })
+      return
+    }
+
+    const shouldSendOrderCompletionMails = txResult.kind === 'processed'
 
     const community = await getCommunity(communityId)
     if (community != null) {
       await community.addMember(userId)
+    }
+
+    if (shouldSendOrderCompletionMails) {
+      const eventForMail = await getEvent(eventId)
+      if (eventForMail != null) {
+        try {
+          await sendOrderCompletionMails(eventForMail, userId)
+        } catch (error) {
+          logger.error('Failed to send order completion mails', {
+            error,
+            eventId,
+            userId,
+            paymentIntent,
+          })
+        }
+      } else {
+        logger.warn('Skipping order completion mails: event not found', {
+          eventId,
+          userId,
+          paymentIntent,
+        })
+      }
     }
 
     logger.info('Webhook 処理完了', {
