@@ -47,20 +47,35 @@ export const useConfigStore = (target: ConfigGlobal | undefined = undefined) => 
 
     const getResolvedConfig = () =>
       new Promise<ConfigGlobal | undefined>((resolve) => {
-        watch(
+        // immediate だと watch() が返る前にコールバックが走り、const stop 代入前に stop() を呼ぶと TDZ になる。
+        // マイクロタスクに回すと代入後に stop / resolve できる。
+        const stop = watch(
           config,
           (value) => {
             if (value !== FIRESTORE_LOADING) {
-              resolve(value)
+              queueMicrotask(() => {
+                stop()
+                resolve(value)
+              })
             }
           },
           { immediate: true },
         )
       })
 
+    const isMaintenanceMode = computed(() => {
+      subscribe()
+      const value = _config.value
+      if (value === FIRESTORE_LOADING || value === undefined) {
+        return false
+      }
+      return value.isMaintenanceMode()
+    })
+
     return {
       config,
       getResolvedConfig,
+      isMaintenanceMode,
     }
   })
   return store()

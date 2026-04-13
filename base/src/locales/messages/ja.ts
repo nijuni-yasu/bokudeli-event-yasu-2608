@@ -542,6 +542,10 @@ export default {
       description: '予期しないエラーが発生しました',
     },
   },
+  maintenance: {
+    title: 'メンテナンス中',
+    description: '現在システムメンテナンスを実施しています。しばらくお待ちください。',
+  },
   home_button_dialog: {
     title: 'ホーム画面に追加',
     step1: '①ご利用のブラウザから、以下のボタンをタップしてください。',
