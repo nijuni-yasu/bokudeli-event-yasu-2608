@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { VInput } from 'vuetify/components'
 
 // https://stackoverflow.com/a/77201828
@@ -11,7 +11,7 @@ defineOptions({
 })
 
 const props = defineProps<{
-  url?: string
+  urls: (string | undefined)[]
   rules?: ValidationRule[]
   readonly?: boolean | null
 }>()
@@ -22,6 +22,23 @@ const emits = defineEmits<{
 
 const imageFile = ref<File | null>(null)
 const fileInputRef = ref<HTMLInputElement>()
+const currentUrlIndex = ref(0)
+
+watch(
+  () => props.urls,
+  () => {
+    currentUrlIndex.value = 0
+  },
+)
+
+const onImageError = () => {
+  const candidates = props.urls?.filter((u) => u != null && u !== '') ?? []
+  // すべて失敗した場合は currntUrlIndex === candidates.length になるので、
+  // iconImageUrl が null になることを保証する。
+  if (currentUrlIndex.value < candidates.length) {
+    currentUrlIndex.value++
+  }
+}
 
 const iconImageUrl = computed(() => {
   const ii = imageFile.value
@@ -33,9 +50,9 @@ const iconImageUrl = computed(() => {
       emits('fileSelected', null)
       return null
     }
-  } else {
-    return props.url == null || props.url == '' ? null : props.url
   }
+  const candidates = props.urls?.filter((u) => u != null && u !== '') ?? []
+  return candidates[currentUrlIndex.value] ?? null
 })
 
 const onIconTriggerUpload = () => {
@@ -55,7 +72,13 @@ const onIconTriggerUpload = () => {
       v-bind="$attrs"
     >
       <v-file-input ref="fileInputRef" v-model="imageFile" class="file-input" accept="image/*" />
-      <v-img v-if="iconImageUrl != null" :src="iconImageUrl" v-bind="$attrs" class="image-style" />
+      <v-img
+        v-if="iconImageUrl != null"
+        :src="iconImageUrl"
+        @error="onImageError"
+        v-bind="$attrs"
+        class="image-style"
+      />
       <slot v-else name="placeholder"></slot>
     </div>
     <v-validation :rules="rules" :validation-value="iconImageUrl ?? false">

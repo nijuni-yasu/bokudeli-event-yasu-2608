@@ -193,7 +193,7 @@ onUnmounted(() => {
               {{ $t('community_edit.community_cover_image_hint') }}
             </span>
             <ImageInput
-              :url="coverImagePreviewUrl"
+              :urls="[coverImagePreviewUrl]"
               :rules="[requiredValidator]"
               style="width: 100%; aspect-ratio: 120/63"
               :cover="true"
@@ -212,7 +212,7 @@ onUnmounted(() => {
               {{ $t('community_edit.community_icon_image_hint') }}
             </span>
             <ImageInput
-              :url="iconImagePreviewUrl"
+              :urls="[iconImagePreviewUrl]"
               :rules="[requiredValidator]"
               style="width: auto; max-width: min(100%, 150px); aspect-ratio: 1/1"
               :cover="true"

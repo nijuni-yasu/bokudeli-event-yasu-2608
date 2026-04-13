@@ -199,7 +199,7 @@ watch(
         <v-row>
           <v-col cols="12">
             <ImageInput
-              :url="convertStoragePathToURL(getCommunityIconStoragePath(community.community_id))"
+              :urls="[convertStoragePathToURL(getCommunityIconStoragePath(community.community_id))]"
               :rules="[requiredValidator]"
               :cover="true"
               style="width: auto; max-width: min(100%, 300px); aspect-ratio: 1/1"
@@ -214,7 +214,7 @@ watch(
         <v-row>
           <v-col cols="12">
             <ImageInput
-              :url="convertStoragePathToURL(getCommunityCoverStoragePath(community.community_id))"
+              :urls="[convertStoragePathToURL(getCommunityCoverStoragePath(community.community_id))]"
               :rules="[requiredValidator]"
               style="width: 100%; aspect-ratio: 120/63"
               :cover="true"

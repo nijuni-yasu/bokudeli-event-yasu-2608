@@ -449,7 +449,7 @@ const minOrdersPairValidator = (range: number | null, min_orders: number | null)
           </template>
           <v-card-text class="hint-text">
             <ImageInput
-              :url="partnerStore.shopImageUrls.get(shop.shop_id)"
+              :urls="[partnerStore.shopImageUrls.get(shop.shop_id)]"
               :rules="[requiredValidator]"
               style="width: 100%; aspect-ratio: 120/63"
               :cover="true"

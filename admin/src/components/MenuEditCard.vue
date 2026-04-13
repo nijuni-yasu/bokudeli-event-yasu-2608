@@ -97,7 +97,7 @@ const handleSubmit = () => {
         <v-row justify="center">
           <v-col cols="7">
             <ImageInput
-              :url="imageUrl"
+              :urls="[imageUrl]"
               @file-selected="(f) => (imageFile = f)"
               style="width: auto; max-width: min(600px, 100%); aspect-ratio: 1/1"
               :cover="true"
