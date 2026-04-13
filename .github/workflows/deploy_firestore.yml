@@ -36,6 +36,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check firestore.indexes.json has no duplicate composite indexes
+        run: |
+          node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('firestore.indexes.json','utf8'));const ix=j.indexes||[];const seen=new Map();for(let i=0;i<ix.length;i++){const k=JSON.stringify(ix[i]);if(seen.has(k)){console.error('Duplicate firestore composite index at indices',seen.get(k),'and',i);process.exit(1);}seen.set(k,i);}console.log('firestore.indexes.json:',ix.length,'unique composite indexes');"
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
