@@ -381,10 +381,6 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
 
   if (props.eventId == null) {
-    // 新規作成の場合、カバー画像は必須
-    if (coverImage.value == null) {
-      return null
-    }
     // 新規作成
     event.value.community_id = communityId
     event.value.created_by = handleUserId

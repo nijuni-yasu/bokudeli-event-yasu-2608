@@ -26,7 +26,11 @@ import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
 import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
-import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import {
+  generateTinymceImageStoragePath,
+  getCommunityCoverStoragePath,
+  getEventCoverStoragePath,
+} from '@shokujii/common/utils/storagePaths.js'
 import {
   addToCart as _addToCart,
   removeFromCart as _removeFromCart,
@@ -34,7 +38,7 @@ import {
 } from '@shokujii/base/apis/order.js'
 import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
-import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { copyImage, uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 
 const TINYMCE_MAX_IMAGE_SIZE = 600
 
@@ -107,13 +111,17 @@ const memberOrderConverter: FirestoreDataConverter<EventMemberOrder> = {
   },
 }
 
-export const createNewEvent = async (event: BokudeliEvent, coverImage: File): Promise<BokudeliEvent> => {
+export const createNewEvent = async (event: BokudeliEvent, coverImage: File | null): Promise<BokudeliEvent> => {
   const communityRef = doc(db, 'communities', event.community_id)
   const community = await getDoc(communityRef)
   if (!community.exists()) {
     throw new Error(`community ${event.community_id} does not exists`)
   }
-  await uploadImage(coverImage, getEventCoverStoragePath(community.id, event.id))
+  if (coverImage == null) {
+    await copyImage(getCommunityCoverStoragePath(community.id), getEventCoverStoragePath(community.id, event.id))
+  } else {
+    await uploadImage(coverImage, getEventCoverStoragePath(community.id, event.id))
+  }
   const newEventRef = doc(communityRef, 'events', event.id).withConverter(eventConverter)
   await setDoc(newEventRef, event, { merge: true })
   return event

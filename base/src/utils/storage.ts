@@ -1,5 +1,5 @@
 import { storage, FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase'
-import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
+import { getBytes, getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
 
 export const uploadImage = async (file: File, path: string): Promise<string> => {
   const uploadStorageRef = storageRef(storage, path)
@@ -13,6 +13,15 @@ export const uploadAlbumImage = async (file: File, path: string): Promise<void> 
   const uploadStorageRef = storageRef(storage, path)
   const contentType = file.type !== '' ? file.type : 'application/octet-stream'
   await uploadBytes(uploadStorageRef, file, { contentType })
+}
+
+export const copyImage = async (srcPath: string, dstPath: string): Promise<void> => {
+  // Client SDK does not support direct copy function,
+  // so we need to download the image first.
+  const srcStorageRef = storageRef(storage, srcPath)
+  const bytes = await getBytes(srcStorageRef)
+  const dstStorageRef = storageRef(storage, dstPath)
+  await uploadBytes(dstStorageRef, bytes)
 }
 
 /**
