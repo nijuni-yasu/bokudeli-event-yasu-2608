@@ -20,7 +20,8 @@ import {
 } from '@shokujii/common/utils/eventMenuConverter.js'
 import { useRouter } from 'vue-router'
 import { getCommunityPath } from '@/router/utils'
-import { calculateDistance, fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/composable/fetchLocation'
+import { calculateDistance, fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/utils/fetchLocation'
+import { isAddressBaseValidForPostalcode } from '@shokujii/base/utils/isAddressBaseValidForPostalcode'
 import { maxBy } from 'lodash'
 import { useValidators } from '@shokujii/base/composable/validators'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -72,30 +73,59 @@ const isContactDialogOpen = ref(props.eventId == null)
 
 const _event = ref<BokudeliEvent | null>(null)
 
+/** 非同期初期化の取り違え防止（コミュニティ切り替え・二重実行） */
+let communityInitSerial = 0
+
 // Initialize _event when community data becomes available
 watch(
   () => communityStore.community,
   (community) => {
-    if (props.eventId == null && _event.value == null && community != null) {
-      // コミュニティ名が取得できない場合は空文字列を使用
-      const communityName = community.community_name || ''
-      const eventName = communityName ? `${communityName}のイベント` : ''
-      const eventDesc = communityName ? `${communityName}のイベント` : ''
-
-      _event.value = new BokudeliEvent(community.community_id, null, {
-        community_id: community.community_id,
-        community_name: community.community_name,
-        community_account: community.community_account,
-        organizer_fullname: community.community_manager_fullname,
-        organizer_company: community.community_company,
-        organizer_email: community.community_email,
-        organizer_phone_company: community.community_phone,
-        // 初期値の設定
-        event_name: eventName,
-        event_cover_url: community.community_cover_image_url ?? '',
-        event_desc: eventDesc,
-      })
+    if (props.eventId != null || community == null || _event.value != null) {
+      return
     }
+    const serial = ++communityInitSerial
+    const communityName = community.community_name || ''
+    const eventName = communityName ? `${communityName}のイベント` : ''
+    const eventDesc = communityName ? `${communityName}のイベント` : ''
+
+    // PostcodeJP 待ちで画面全体がブロックされないよう、先にイベントを生成する
+    _event.value = new BokudeliEvent(community.community_id, null, {
+      community_id: community.community_id,
+      community_name: community.community_name,
+      community_account: community.community_account,
+      organizer_fullname: community.community_manager_fullname,
+      organizer_company: community.community_company,
+      organizer_email: community.community_email,
+      organizer_phone_company: community.community_phone,
+      event_name: eventName,
+      event_cover_url: community.community_cover_image_url ?? '',
+      event_desc: eventDesc,
+    })
+
+    // コミュニティの郵便番号と住所をPostcodeJP APIから取得して、イベントの郵便番号と住所にコピー
+    void (async () => {
+      const addressBaseValid = await isAddressBaseValidForPostalcode(
+        community.community_postalcode,
+        community.community_address_base,
+      )
+      if (!addressBaseValid) {
+        return
+      }
+      // 既存イベントの場合はコミュニティの郵便番号が変わっていたら上書きしない
+      if (serial !== communityInitSerial || props.eventId != null) {
+        return
+      }
+      if (_event.value == null) {
+        return
+      }
+      // 非同期完了前にユーザーが郵便番号を入力していたら上書きしない
+      if (_event.value.event_postalcode !== '') {
+        return
+      }
+      _event.value.event_postalcode = community.community_postalcode
+      _event.value.event_address_base = community.community_address_base
+      _event.value.event_address_detail = community.community_address_detail
+    })()
   },
   { immediate: true },
 )

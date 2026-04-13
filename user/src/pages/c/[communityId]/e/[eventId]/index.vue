@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getEventEditBasicPath, getEventEditDetailsPath, getEventEditShopNoticePath, getLogin } from '@/router/utils'
+import { getEventEditPathByRawStatus, getEventEditShopNoticePath, getLogin } from '@/router/utils'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -244,11 +244,7 @@ onUnmounted(() => {
             class="ml-2 my-1"
             variant="outlined"
             :prepend-icon="mdiPencilOutline"
-            :to="
-              event.event_status.value === 'in_draft'
-                ? getEventEditBasicPath(eventId)
-                : getEventEditDetailsPath(eventId)
-            "
+            :to="getEventEditPathByRawStatus(eventId, event.event_status.value)"
           >
             {{ $t('event_page.edit') }}
           </v-btn>

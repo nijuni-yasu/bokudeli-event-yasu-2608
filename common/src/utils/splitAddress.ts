@@ -2,7 +2,7 @@
  * 住所フィールド分割まわりのユーティリティ（比較用正規化・Event 表示用フル住所）。
  * バッチ 0035・チェック 0035 では `normalizeAddressForComparison` と同一ロジックを別ファイルで保持する想定。
  *
- * PostcodeJP の allAddress の末尾除去は `base/src/composable/fetchLocation.ts` で行う。
+ * PostcodeJP の allAddress の末尾除去は `base/src/utils/fetchLocation.ts` で行う。
  */
 
 // --- 比較用正規化 ---

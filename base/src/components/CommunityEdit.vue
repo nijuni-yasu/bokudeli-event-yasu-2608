@@ -2,7 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useValidators } from '@shokujii/base/composable/validators'
-import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation'
+import { fetchLocationByPostalcode } from '@shokujii/base/utils/fetchLocation'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
 import {

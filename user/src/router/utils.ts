@@ -11,6 +11,10 @@ export const getEventEditPath = (eventId: string) => `/manage/event/${eventId}/s
 export const getEventEditBasicPath = (eventId: string) => `/manage/event/${eventId}/settings?step=1`
 export const getEventEditShopNoticePath = (eventId: string) => `/manage/event/${eventId}/settings?step=5`
 export const getEventEditDetailsPath = (eventId: string) => `/manage/event/${eventId}/settings?step=4`
+
+/** DB 上の event_status.value に応じたイベント編集の初期ステップ（下書きは step=1、それ以外は step=4） */
+export const getEventEditPathByRawStatus = (eventId: string, rawStatus: string) =>
+  rawStatus === 'in_draft' ? getEventEditBasicPath(eventId) : getEventEditDetailsPath(eventId)
 export const getManagePath = () => '/manage'
 export const getManageNewCommunityPath = () => '/manage/newcommunity'
 export const getManageCommunitySettingsPath = (communityAccount: string) =>

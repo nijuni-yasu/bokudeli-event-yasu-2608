@@ -15,7 +15,7 @@ import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
 import { GENRE_ARRAY } from '@shokujii/common/schemas/PartnerShop.js'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
-import { fetchLocationByPostalcode } from '@shokujii/base/composable/fetchLocation.js'
+import { fetchLocationByPostalcode } from '@shokujii/base/utils/fetchLocation.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 
