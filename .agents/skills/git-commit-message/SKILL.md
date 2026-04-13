@@ -28,6 +28,23 @@ description: ステージングされている変更差分を読み込んでコ�
 - [doc]: documents/ ディレクトリ内の更新のみ
 - [ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の AI 向け設定・指示ファイル
 
+### タグを付けない場合
+
+次のような変更では、`[user]` `[admin]` などの**ディレクトリタグを付けない**ことがある。無理に当てはめない。
+
+- `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみで、`user` `admin` `base` `common` `functions` のいずれも変更しない
+- リポジトリルートの設定やインフラ・CI のみで、上記パッケージのソースに該当しない変更
+
+このときのタイトル例：
+
+```
+#イシュー番号 変更内容を端的に表す日本語タイトル
+```
+
+イシュー番号を付けない方針やブランチから取れない場合は、`#番号` を省略してもよい。
+
+`[doc]` は documents/ のみ、`[ai]` は .cursor / .agents / .github 等のときに用いる。該当しないなら付けない。AGENTS.md に無い新しい角括弧タグを増やさない。
+
 ### 本文
 
 - 変更の目的・背景を1〜2文で説明する
@@ -35,6 +52,7 @@ description: ステージングされている変更差分を読み込んでコ�
 - 技術的な判断や注意点があれば補足する
 
 詳細に記述する場合、以下も含めてよい：
+
 - 影響範囲（どの画面・機能・API に影響するか）
 - 破壊的変更やマイグレーションの有無
 - 関連 Issue / PR
@@ -68,4 +86,17 @@ AGENTS.md・CLAUDE.md・copilot-instructions.md を整理した。
 - CLAUDE.md
   - シンボリックリンクからスタブファイルに変更
   - AGENTS.md を唯一の実体とする構成に変更した
+```
+
+## 出力例（タグなし）
+
+```
+#1901 Firestore デプロイ前に firestore.indexes.json の重複検証ステップを追加
+
+deploy_firestore ワークフローで Firebase へデプロイする直前に、indexes 配列の重複検査を挟む。
+
+変更詳細:
+
+- .github/workflows/deploy_firestore.yml
+  - Checkout 直後に Node ワンライナーで JSON 重複を検証するステップを追加
 ```

@@ -45,6 +45,18 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
 
+### タグを付けない場合
+
+変更が `firestore.indexes.json` や `firestore.rules` のみ、GitHub Actions の YAML のみなどで、**`user` `admin` `base` `common` `functions` のいずれにも当てはまらない**ときは、PR タイトルから `[タグ]` を省略してよい。
+
+フォーマット例：
+
+```
+変更内容を端的に表す日本語タイトル
+```
+
+Issue 番号は PR タイトルには含めず、本文の関連 Issue や closes で扱う。
+
 ### 概要
 
 1〜2文でこのPRの目的と内容を説明する。
@@ -64,6 +76,7 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 変更されたファイルと差分の内容をもとに、何をしたかを箇条書きで記述する。
 
 記述例:
+
 - stripe.ts: 注文期限チェックと expires_at を追加
 - pollingTask.ts: 注文締切メールの送信タイミングを5分遅延
 - documents/: 仕様書を廃案・将来実装に分割
@@ -75,6 +88,7 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 変更が含まれるパッケージのみを箇条書きで列挙する。
 `user` `admin` `base` `common` `functions` から該当するものだけを記載する。
 `documents/` のみの変更の場合は対象パッケージに含めず、タイトルの [doc] タグで表現する。
+`firestore.indexes.json` / `firestore.rules` / `storage.rules` のみなど、アプリの各パッケージのソースを変更していない場合は、その旨を書き、タイトルにパッケージタグを付けないことがある。
 
 #### Firebase / Backend
 

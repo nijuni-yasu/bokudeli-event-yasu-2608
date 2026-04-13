@@ -8,40 +8,40 @@ AIエージェント向けプロジェクトガイド。
 
 **プロジェクトオリジナル**のスキル。以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
 
-| タスク                         | スキル                         |
-| :----------------------------- | :----------------------------- |
-| コミットメッセージ生成         | `/git-commit-message`          |
-| PR 本文生成                    | `/git-create-pull-request`     |
-| コードレビュー                 | `/shokujii-code-review`        |
-| lint・format チェック          | `/lint-and-format`             |
-| fixup                          | `/git-fixup`                   |
-| squash                         | `/git-squash`                  |
-| レビューコメント検討           | `/review-comments-evaluate`    |
-| レビューコメント返信           | `/review-comments-reply`       |
-| コードレビュードキュメント更新 | `/review-doc-update`           |
-| 分割コミット                   | `/git-split-commit`            |
-| スキル提案                     | `/skill-propose`               |
-| GitHub Actions デプロイ手動発火 | `/github-actions-deploy`      |
-| sandbox WIP デプロイ           | `/github-sandbox-wip-deploy`   |
+| タスク                          | スキル                       |
+| :------------------------------ | :--------------------------- |
+| コミットメッセージ生成          | `/git-commit-message`        |
+| PR 本文生成                     | `/git-create-pull-request`   |
+| コードレビュー                  | `/shokujii-code-review`      |
+| lint・format チェック           | `/lint-and-format`           |
+| fixup                           | `/git-fixup`                 |
+| squash                          | `/git-squash`                |
+| レビューコメント検討            | `/review-comments-evaluate`  |
+| レビューコメント返信            | `/review-comments-reply`     |
+| コードレビュードキュメント更新  | `/review-doc-update`         |
+| 分割コミット                    | `/git-split-commit`          |
+| スキル提案                      | `/skill-propose`             |
+| GitHub Actions デプロイ手動発火 | `/github-actions-deploy`     |
+| sandbox WIP デプロイ            | `/github-sandbox-wip-deploy` |
 
 ## 推奨スキル（技術スタック別）
 
 **外部からインストールした**スキル。以下のタスク時は、該当スキルを `/スキル名` で参照して利用すること。
 
-| タスク                     | スキル                         | タイミング     |
-| :------------------------- | :----------------------------- | :------------- |
-| Vue コンポーネント実装     | `/vue-best-practices`          | 実装時、レビュー時 |
-| ルーティング・ナビゲーション | `/vue-router-best-practices`   | 実装時         |
-| Vue のデバッグ             | `/vue-debug-guides`            | デバッグ時     |
-| Firestore の読み書き・ルール | `/firebase-firestore-standard` | 実装時         |
-| Firestore store 操作（base/functions） | `/shokujii-firestore` | store 追加・修正時、Firestore 読み書き時、仕様書に従った実装で Firestore を触る場合 |
-| common の Zod スキーマ設計 | `/shokujii-common-schemas` | 新規スキーマ追加時、既存スキーマのフィールド追加時、common/src/schemas や common/src/apis を触る場合 |
-| Firebase Functions 実装 | `/shokujii-functions-implementation` | Callable / Scheduled / メール送信の Function 追加・修正時、functions/default を触る場合 |
-| Stripe 決済実装            | `/stripe-integration`          | 実装時         |
-| UI の設計・実装           | `/frontend-design`             | 新規ページ・コンポーネント作成時、スタイリング・ビジュアル改善時 |
-| UI のレビュー・品質チェック | `/web-design-guidelines`       | アクセシビリティ確認時、UX レビュー時、PR マージ前の品質チェック時 |
-| スキル作成・改善           | `/skill-creator`              | 新規スキル作成時、既存スキルの編集・最適化時                     |
-| ユニットテスト (Vitest)   | `/vitest`                    | テスト作成時、common/functions のロジックテスト時                |
+| タスク                                 | スキル                               | タイミング                                                                                           |
+| :------------------------------------- | :----------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| Vue コンポーネント実装                 | `/vue-best-practices`                | 実装時、レビュー時                                                                                   |
+| ルーティング・ナビゲーション           | `/vue-router-best-practices`         | 実装時                                                                                               |
+| Vue のデバッグ                         | `/vue-debug-guides`                  | デバッグ時                                                                                           |
+| Firestore の読み書き・ルール           | `/firebase-firestore-standard`       | 実装時                                                                                               |
+| Firestore store 操作（base/functions） | `/shokujii-firestore`                | store 追加・修正時、Firestore 読み書き時、仕様書に従った実装で Firestore を触る場合                  |
+| common の Zod スキーマ設計             | `/shokujii-common-schemas`           | 新規スキーマ追加時、既存スキーマのフィールド追加時、common/src/schemas や common/src/apis を触る場合 |
+| Firebase Functions 実装                | `/shokujii-functions-implementation` | Callable / Scheduled / メール送信の Function 追加・修正時、functions/default を触る場合              |
+| Stripe 決済実装                        | `/stripe-integration`                | 実装時                                                                                               |
+| UI の設計・実装                        | `/frontend-design`                   | 新規ページ・コンポーネント作成時、スタイリング・ビジュアル改善時                                     |
+| UI のレビュー・品質チェック            | `/web-design-guidelines`             | アクセシビリティ確認時、UX レビュー時、PR マージ前の品質チェック時                                   |
+| スキル作成・改善                       | `/skill-creator`                     | 新規スキル作成時、既存スキルの編集・最適化時                                                         |
+| ユニットテスト (Vitest)                | `/vitest`                            | テスト作成時、common/functions のロジックテスト時                                                    |
 
 ## プロジェクト概要
 
@@ -143,6 +143,7 @@ npm -w <pkg> run format:check
   - 例: `[ai] #1800 分割コミットスキルに doc と ai タグを追加`
   - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
   - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等
+  - `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみなど、アプリの各パッケージを変更しない変更では、**ディレクトリタグを付けず**、`#イシュー番号` と要約タイトルのみとしてよい。PR タイトルも同様にタグを省略できる。手順・例は `/git-commit-message` と `/git-create-pull-request` スキルを参照。
 
 ## コードレビュー
 
