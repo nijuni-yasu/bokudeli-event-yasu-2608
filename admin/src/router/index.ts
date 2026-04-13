@@ -1,6 +1,16 @@
-import { type User, getAuth } from 'firebase/auth'
+import { type User, getAuth, onAuthStateChanged } from 'firebase/auth'
 import type { Router } from 'vue-router'
+import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+
+/** Firebase Auth の初回 onAuthStateChanged まで待つ。セッション復元前の currentUser が null のままになるのを避ける。 */
+const waitForAuthInitialState = (): Promise<void> =>
+  new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(getAuth(), () => {
+      unsubscribe()
+      resolve()
+    })
+  })
 
 export async function waitAuthentication(): Promise<User | null> {
   return new Promise<User | null>((resolve, reject) => {
@@ -24,7 +34,33 @@ export const setupRouter = (router: Router) => {
     lastUser = user
   })
 
+  // 認証ガードより先に評価する。メンテ中は /login もブロックし未ログインは /maintenance のみ。
   router.beforeEach(async (to) => {
+    await waitForAuthInitialState()
+
+    const configStore = useConfigStore()
+    const config = await configStore.getResolvedConfig()
+
+    if (to.path === '/maintenance') {
+      if (config?.isMaintenanceMode()) {
+        return
+      }
+      return '/'
+    }
+
+    if (config?.isMaintenanceMode()) {
+      const currentUser = getAuth().currentUser
+      if (currentUser != null && config.isSupport(currentUser.uid)) {
+        return
+      }
+      return '/maintenance'
+    }
+  })
+
+  router.beforeEach(async (to) => {
+    if (to.path === '/maintenance') {
+      return
+    }
     try {
       await waitAuthentication()
       if (to.path === '/login') {
