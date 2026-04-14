@@ -74,7 +74,7 @@
 | `stripe-webhook.js` | Stripe Webhook処理 | v1 `onRequest` | v2 `onRequest` |
 | `invoice.js` | 請求書PDF生成 | v2 `onRequest` | 既にv2（最適化のみ） |
 | `eventBillInvoice.js` | イベント請求書PDF生成 | v2 `onRequest` | 既にv2（最適化のみ） |
-| `namesprint.js` | 名札PDF生成 | v2 `onRequest` | 既にv2（最適化のみ） |
+| `namesprint.js` | 名札PDF生成 | （legacy から削除済み） | `functions/default/src/namesPrint.ts`（移行済み） |
 | `flyer.js` | チラシPDF生成 | v2 `onRequest` | 既にv2（最適化のみ） |
 
 #### 5.1.4 Scheduled Functions
@@ -457,7 +457,8 @@ export type StripeRefundRequest = z.infer<typeof StripeRefundRequestSchema>
 **機能**: PDF生成（請求書、イベント請求書、名札、チラシ）
 
 **移行内容**:
-- 既にv2で実装されているため、最適化と型安全性の向上のみ
+- **名札（namesprint）**: `functions/default/src/namesPrint.ts` へ移行済み（`EventMemberOrder`・`PdfGenerator`）。詳細は [13_EventMemberOrder_名前印刷機能.md](./13_EventMemberOrder_名前印刷機能.md)。
+- 請求書・チラシ等: 既にv2で実装されているため、最適化と型安全性の向上のみ
 - スキーマの使用を検討
 
 ### 5.4 共通ユーティリティの移行
@@ -568,7 +569,7 @@ if (!user.is_admin) {
 - [ ] `backup.js` → `backup.ts`
 - [ ] `invoice.js`の最適化（既にv2）
 - [ ] `eventBillInvoice.js`の最適化（既にv2）
-- [ ] `namesprint.js`の最適化（既にv2）
+- [x] `namesprint.js` → `namesPrint.ts`（`functions/default` へ移行済み）
 - [ ] `flyer.js`の最適化（既にv2）
 
 ### 7.4 Phase 4（共通ユーティリティ）
