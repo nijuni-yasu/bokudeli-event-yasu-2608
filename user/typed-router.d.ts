@@ -29,6 +29,7 @@ declare module 'vue-router/auto-routes' {
     '/flyer': RouteRecordInfo<'/flyer', '/flyer', Record<never, never>, Record<never, never>>,
     '/inapp-login': RouteRecordInfo<'/inapp-login', '/inapp-login', Record<never, never>, Record<never, never>>,
     '/login': RouteRecordInfo<'/login', '/login', Record<never, never>, Record<never, never>>,
+    '/maintenance': RouteRecordInfo<'/maintenance', '/maintenance', Record<never, never>, Record<never, never>>,
     '/manage/': RouteRecordInfo<'/manage/', '/manage', Record<never, never>, Record<never, never>>,
     '/manage/community/': RouteRecordInfo<'/manage/community/', '/manage/community', Record<never, never>, Record<never, never>>,
     '/manage/community/[communityAccount]/': RouteRecordInfo<'/manage/community/[communityAccount]/', '/manage/community/:communityAccount', { communityAccount: ParamValue<true> }, { communityAccount: ParamValue<false> }>,

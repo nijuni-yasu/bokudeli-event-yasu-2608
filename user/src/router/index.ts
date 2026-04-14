@@ -41,6 +41,29 @@ export const setupRouter = (router: Router) => {
   // 初期化時かログアウト時かを識別するため、前回のユーザー状態を保持
   let lastUser: User | null = null
 
+  router.beforeEach(async (to) => {
+    // メンテ中はログイン画面も含めブロックする。サポートはメンテ開始前にログイン済みでバイパスする。
+    await waitAdminAuthentication()
+
+    const configStore = useConfigStore()
+    const config = await configStore.getResolvedConfig()
+
+    if (to.path === '/maintenance') {
+      if (config?.isMaintenanceMode()) {
+        return
+      }
+      return '/'
+    }
+
+    if (config?.isMaintenanceMode()) {
+      const currentUser = getAuth().currentUser
+      if (currentUser != null && config.isSupport(currentUser.uid)) {
+        return
+      }
+      return '/maintenance'
+    }
+  })
+
   onAuthStateChanged(getAuth(), (user) => {
     const path = router.currentRoute.value.path
     const fullPath = router.currentRoute.value.fullPath
