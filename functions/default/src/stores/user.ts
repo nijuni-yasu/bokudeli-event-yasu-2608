@@ -50,6 +50,36 @@ export const getUserRef = (userId: string): DocumentReference<ShokujiiUser> => {
   return db.collection('users').doc(userId).withConverter(userConverter)
 }
 
+const USER_IDS_IN_QUERY_CHUNK = 30
+
+/**
+ * `user_id` フィールドの IN クエリでユーザーをまとめて取得する（チャンクは Firestore の上限 30）。
+ * 戻り値の Map のキーはドキュメント ID（通常は Firebase UID = user_id）。
+ */
+export const getUsersByUserIds = async (
+  userIds: string[],
+  transaction?: Transaction,
+): Promise<Map<string, ShokujiiUser>> => {
+  const unique = [...new Set(userIds)].filter((id) => id !== '')
+  const db = getFirestore()
+  const result = new Map<string, ShokujiiUser>()
+
+  for (let i = 0; i < unique.length; i += USER_IDS_IN_QUERY_CHUNK) {
+    const chunk = unique.slice(i, i + USER_IDS_IN_QUERY_CHUNK)
+    if (chunk.length === 0) continue
+
+    const q = db.collection('users').where('user_id', 'in', chunk).withConverter(userConverter)
+    const snapshot = transaction === undefined ? await q.get() : await transaction.get(q)
+    for (const doc of snapshot.docs) {
+      const user = doc.data()
+      if (user != null) {
+        result.set(doc.id, user)
+      }
+    }
+  }
+  return result
+}
+
 export const getUser = async (
   userId: string,
   withPersonalInformation: boolean,
