@@ -1,5 +1,10 @@
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 
+export {
+  compareEventMemberOrdersForPartnerDetail,
+  sortEventMemberOrdersForPartnerDetail,
+} from '@shokujii/common/utils/eventMemberOrderSort.js'
+
 export const ordersCount = (orders: EventMemberOrder[]) => orders.filter((o) => o.status === 'ordered').length
 
 export const ordersTotalPrice = (orders: EventMemberOrder[]) =>
