@@ -19,7 +19,8 @@ const RefundEntryDbSchema = z.object({
 })
 
 const RefundEntryAppSchema = z.object({
-  refund_id: z.string().nonempty(),
+  // 過去のデータ移行時に refund_id が記録されていない返金エントリが存在するため optional
+  refund_id: z.string().nonempty().optional(),
   amount: z.number().int().positive(),
   order_ids: z.array(z.string().nonempty()),
   created_at: EpochMillisSchema,

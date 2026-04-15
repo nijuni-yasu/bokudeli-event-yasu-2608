@@ -158,7 +158,7 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
           if (stripeDoc == null) {
             throw new Error(`stripes ドキュメントが見つかりません: ${stripeId}`)
           }
-          if (stripeDoc.refunds.some((r) => r.refund_id === refund.id)) {
+          if (stripeDoc.refunds.some((r) => r.refund_id != null && r.refund_id === refund.id)) {
             return
           }
           const existingRefundTotal = stripeDoc.refunds.reduce((sum, r) => sum + r.amount, 0)
