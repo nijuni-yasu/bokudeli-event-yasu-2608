@@ -6,23 +6,30 @@ service cloud.firestore {
             return request.auth != null &&
                    request.auth.uid in get(/databases/$(database)/documents/configs/global).data.support_user_ids
         }
+        match /assets/{asset} {
+            allow read: if true
+        }
         match /configs/{config} {
             allow read: if true
             // 将来的には isSupport() にする可能性もあるが、現状 functions のみ変更可能とする
             allow write: if false
         }
         match /partners/{partner_id} {
+            allow read: if true
             match /shops/{shop} {
+                allow read: if true
                 // 店舗情報はログインした店舗アカウントでないと create/update/deleteできない
                 allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
                 // サポートアカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
                 allow create, update, delete: if isSupport()
             }
             match /menus/{menu} {
+                allow read: if true
                 // メニュー情報はログインした店舗アカウントでないと create/update/deleteできない
                 allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
             }
             match /options/{option} {
+                allow read: if true
                 // メニュー情報はログインした店舗アカウントでないと create/update/deleteできない
                 allow create, update, delete: if request.auth != null && request.auth.uid == partner_id
             }
@@ -34,11 +41,13 @@ service cloud.firestore {
                        exists(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)) &&
                        "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles
             }
+            allow read: if true
             // コミュニティはログインユーザーなら申請可能
             allow create: if request.auth != null
             // コミュマネ or サポートアカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
             allow update: if isSupport() || isManager()
             match /events/{event} {
+                allow read: if true
                 // コミュマネ or サポートアカウントはイベントの作成・更新ができる
                 allow create, update: if isSupport()
                 allow create, update: if isManager() && get(/databases/$(database)/documents/communities/$(community)).data.is_approved
@@ -48,12 +57,14 @@ service cloud.firestore {
                 allow update: if request.auth != null && resource.data.partner_id == request.auth.uid
                 // 旧 orders（移行完了後に削除）
                 match /orders/{order} {
-                    allow write: if false
+                    allow read, write: if false
                 }
                 // 新 members / member_orders（EventMemberOrder）
                 match /members/{memberId} {
+                    allow read: if true
                     allow write: if false
                     match /member_orders/{orderId} {
+                        allow read: if true
                         allow write: if false
                     }
                 }
@@ -62,8 +73,12 @@ service cloud.firestore {
                     allow read: if request.auth != null && request.auth.uid == resource.data.user_id
                     allow write: if false
                 }
+                match /menus/{menuId} {
+                    allow read: if true
+                }
             }
             match /members/{memberId} {
+                allow read: if true
                 allow create: if isSupport() || isManager() || (request.auth != null && request.auth.uid == memberId)
                 allow update: if isSupport() || isManager()
                 allow delete: if request.auth != null && request.auth.uid == memberId
@@ -77,6 +92,7 @@ service cloud.firestore {
             }
         }
         match /users/{user_id} {
+            allow read: if true
             // ユーザー情報はログインユーザーでないと create/update/deleteできない
             allow create, update: if request.auth != null && request.auth.uid == user_id
         }
@@ -90,7 +106,14 @@ service cloud.firestore {
             // pass_code は functions 内からのみアクセス可能
             allow read, write: if false
         }
-        match /{document=**} {
+        // collection group query 用ルール
+        match /{path=**}/events/{event} {
+            allow read: if true
+        }
+        match /{path=**}/member_orders/{order} {
+            allow read: if true
+        }
+        match /{path=**}/shops/{shop} {
             allow read: if true
         }
     }

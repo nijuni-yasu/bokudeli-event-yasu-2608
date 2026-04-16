@@ -10,7 +10,6 @@ import {
   where,
   query,
   getDocs,
-  collectionGroup,
   doc,
   collection,
   DocumentData,
@@ -52,13 +51,9 @@ export const useLetterStore = (communityAccount: string, target: string | Bokude
     const getLetterRef = async () => {
       if (_letterRef == null) {
         const communitySnapshot = await getDocs(
-          query(
-            collectionGroup(db, 'letters'),
-            where('community_account', '==', communityAccount),
-            where('letter_id', '==', letterId),
-          ).withConverter(letterConverter),
+          query(collection(db, 'communities'), where('community_account', '==', communityAccount)),
         )
-        _letterRef = communitySnapshot.docs[0]!.ref
+        _letterRef = doc(collection(communitySnapshot.docs[0]!.ref, 'letters'), letterId).withConverter(letterConverter)
       }
       return _letterRef
     }
