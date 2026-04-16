@@ -258,23 +258,25 @@ menus は member_order ドキュメントの `menu_id` ごとに count でまと
 
 | コレクション | read | write | 備考 |
 |:--|:--|:--|:--|
-| members | 全ユーザー | Functions のみ | イベントページの参加者一覧に表示するため。ワイルドカードルールで許可済み |
-| member_orders（members 配下） | 全ユーザー | Functions のみ | イベントページの注文情報に表示するため。ワイルドカードルールで許可済み |
+| members | 全ユーザー | Functions のみ | イベントページの参加者一覧に表示するため。明示的に `allow read: if true` で許可 |
+| member_orders（members 配下） | 全ユーザー | Functions のみ | イベントページの注文情報に表示するため。明示的に `allow read: if true` で許可 |
 | stripes | 本人のみ | Functions のみ | 決済情報・領収書は本人限定。resource.data.user_id で認証ユーザーと突き合わせる |
 
 **firestore.rules の変更内容**:
 
 現行の orders ルール（`match /orders/{order} { allow write: if false }`）を削除し、以下を追加する。
-members と member_orders の read は末尾のワイルドカードルール（`match /{document=**} { allow read: if true }`）で許可されるため、write のみ明示的に制限する。
-stripes はワイルドカードより前に配置し、read を本人のみに制限する。
+members と member_orders には明示的に `allow read: if true` を追加し、write は Functions のみに制限する。
+stripes は read を本人のみに制限する。
 
 ```
 match /events/{event} {
     // 既存の match /orders/{order} を削除
 
     match /members/{memberId} {
+        allow read: if true
         allow write: if false
         match /member_orders/{orderId} {
+            allow read: if true
             allow write: if false
         }
     }
