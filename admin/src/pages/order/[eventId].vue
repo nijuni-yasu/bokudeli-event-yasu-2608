@@ -9,12 +9,11 @@ import { getOrderPath } from '@/navigation/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
-import { getUserUrl } from '@/navigation/utils'
 import { getNamesPrintPath } from '@/navigation/utils'
 import { getNamesPrintPdf } from '@shokujii/base/utils/namesPrint.js'
 import { computed, ref } from 'vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
-import { getEventUrl } from '@shokujii/common/utils/urls.js'
+import { getEventUrl, getUserUrl } from '@shokujii/common/utils/urls.js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -28,7 +27,8 @@ const notification = useNotification()
 const event = await eventStore.getLoadedEvent()
 
 // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
-const eventUrl = getEventUrl(import.meta.env.VITE_ORIGIN_HOST, event.community_account, event.event_id)
+const originHost = import.meta.env.VITE_ORIGIN_HOST as string
+const eventUrl = getEventUrl(originHost, event.community_account, event.event_id)
 
 if (event.partner_id !== partnerId) {
   window.alert($t('alert.invalid_account'))
@@ -276,7 +276,7 @@ const downloadNamesPrint = async () => {
               >
                 <td>{{ key + 1 }}</td>
                 <td>
-                  <a :href="getUserUrl(order.user_id)" class="name-link" target="_blank">
+                  <a :href="getUserUrl(originHost, order.user_id)" class="name-link" target="_blank">
                     <div class="d-flex align-center">
                       <UserAvatar :user="(useUserStore(order.user_id) as UserStore).user" :size="40" class="me-2" />
                       {{ eventStore.members?.find((m) => m.user_id === order.user_id)?.user_name }}
