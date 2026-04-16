@@ -115,7 +115,7 @@ const isOpenDeadlineDialog = ref(false)
                   <v-card-title class="justify-center pb-3">
                     {{ item.shop_name }}
                   </v-card-title>
-                  <v-card-text class="text-left pb-3 text-subtitle-2">
+                  <v-card-text class="text-left pb-3 text-subtitle-2 shop-description text-truncate">
                     {{ convertTruncateText(item.shop_description ?? '', 40) }}
                   </v-card-text>
                   <v-card-text class="text-left text-subtitle-2 pb-1">
@@ -212,5 +212,10 @@ const isOpenDeadlineDialog = ref(false)
 <style lang="scss" scoped>
 .select-border {
   border: 5px solid rgb(var(--v-theme-primary));
+}
+
+/* flex 子要素内で 1 行省略（text-truncate）が効くようにする */
+.shop-description {
+  min-width: 0;
 }
 </style>
