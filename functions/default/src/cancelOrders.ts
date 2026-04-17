@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { defineSecret } from 'firebase-functions/params'
 import { getFirestore } from 'firebase-admin/firestore'
@@ -146,7 +147,8 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
         }
 
         const sortedOrderIds = groupOrders.map((o) => o.id).sort()
-        const idempotencyKey = `refund_${stripeId}_${sortedOrderIds.join('_')}`
+        const orderIdsHash = createHash('sha256').update(sortedOrderIds.join('_')).digest('hex')
+        const idempotencyKey = `refund_${stripeId}_${orderIdsHash}`
 
         const refund = await stripe.refunds.create(
           { payment_intent: stripeDocPre.payment_intent, amount: refundAmount },
