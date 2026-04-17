@@ -55,9 +55,9 @@ export const stripeWebhook = onRequest(
     }
 
     const session = event.data.object as Stripe.Checkout.Session
-    const { orderIds: orderIdsStr, eventId, communityId, userId } = session.metadata ?? {}
+    const { eventId, communityId, userId } = session.metadata ?? {}
 
-    if (orderIdsStr == null || eventId == null || communityId == null || userId == null) {
+    if (eventId == null || communityId == null || userId == null) {
       logger.error('Missing metadata in checkout session', { metadata: session.metadata })
       res.status(400).send('Missing metadata')
       return
@@ -70,17 +70,28 @@ export const stripeWebhook = onRequest(
     }
 
     const paymentIntent = session.payment_intent
-    const rawOrderIds = orderIdsStr.split(',').filter((id) => id.length > 0)
+
+    // orderIds_0, orderIds_1, ... を結合して order ID 一覧を復元する
+    const orderIdChunks: string[] = []
+    let chunkIndex = 0
+    while (session.metadata?.[`orderIds_${chunkIndex}`] != null) {
+      orderIdChunks.push(session.metadata[`orderIds_${chunkIndex}`])
+      chunkIndex++
+    }
+    const rawOrderIds = orderIdChunks
+      .join(',')
+      .split(',')
+      .filter((id) => id.length > 0)
 
     if (rawOrderIds.length === 0) {
-      logger.error('orderIds is empty', { orderIdsStr })
+      logger.error('orderIds is empty', { metadata: session.metadata })
       res.status(400).send('orderIds is empty')
       return
     }
 
     if (new Set(rawOrderIds).size !== rawOrderIds.length) {
       logger.warn('Duplicate order IDs in checkout session metadata', {
-        orderIdsStr,
+        rawOrderIds,
         eventId,
         communityId,
         userId,

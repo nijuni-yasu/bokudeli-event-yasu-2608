@@ -11,6 +11,7 @@ import { createModuleLogger } from './utils/logger.js'
 const logger = createModuleLogger('stripe')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
 const CHECKOUT_SESSION_EXPIRES_SECONDS = 31 * 60
+const ORDER_IDS_CHUNK_SIZE = 20
 
 export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionRequest>(
   {
@@ -113,8 +114,8 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
         eventId: event_id,
         eventPayment: event.event_payment,
         communityId: community_id,
-        orderIds: order_ids.join(','),
         userId: uid,
+        ...buildOrderIdChunks(order_ids),
       },
     }
     const session = await stripe.checkout.sessions.create(sessionParams)
@@ -131,3 +132,21 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
     return session
   },
 )
+
+/**
+ * order_ids を Stripe metadata の value 上限（500文字）に収まるよう分割する。
+ * Stripe metadata のキー上限（50個）のうち固定キー分（4個）を除いた 46 チャンクが最大。
+ */
+function buildOrderIdChunks(orderIds: string[]): Record<string, string> {
+  const maxChunks = 46
+  const maxOrders = maxChunks * ORDER_IDS_CHUNK_SIZE
+  if (orderIds.length > maxOrders) {
+    throw new HttpsError('invalid-argument', `一度にチェックアウトできる注文数の上限（${maxOrders}件）を超えています`)
+  }
+  const chunks: Record<string, string> = {}
+  for (let i = 0; i < orderIds.length; i += ORDER_IDS_CHUNK_SIZE) {
+    const chunk = orderIds.slice(i, i + ORDER_IDS_CHUNK_SIZE)
+    chunks[`orderIds_${i / ORDER_IDS_CHUNK_SIZE}`] = chunk.join(',')
+  }
+  return chunks
+}
