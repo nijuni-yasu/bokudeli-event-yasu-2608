@@ -2,7 +2,22 @@
  * 請求関連のユーティリティと定数
  */
 
+import type { CommunityBillSettingsType } from '../schemas/Event.js'
 import type { EventMemberOrder } from '../schemas/EventMemberOrder.js'
+
+/** 請求書 PDF の明細モード（documents/01_マネタイズと決済/03_無料参加・割引参加_請求書.md §1） */
+export type CommunityBillInvoiceMode = 'menu' | 'discount'
+
+/**
+ * `community_bill_settings` から請求書の明細モードを返す。
+ * 未設定・null・`free` → menu。`discount` → discount。
+ */
+export function getCommunityBillInvoiceMode(
+  settings: CommunityBillSettingsType | null | undefined,
+): CommunityBillInvoiceMode {
+  if (settings == null) return 'menu'
+  return settings.type === 'discount' ? 'discount' : 'menu'
+}
 
 /**
  * 請求手数料の計算ルールの変更日時（内部用）
@@ -70,6 +85,15 @@ export interface InvoiceTaxBreakdown {
 }
 
 /**
+ * 8% 税込合計のみから税抜・税額を求める（領収書用）。
+ * `calculateInvoiceTaxBreakdown` の 8% 部分と同一: 税抜は `Math.floor(税込 / 1.08)`。
+ */
+export function computeInclusive8ExTaxAndTax(taxInclusive: number): { exTaxPrice: number; taxPrice: number } {
+  const exTaxPrice = Math.floor(taxInclusive / 1.08)
+  return { exTaxPrice, taxPrice: taxInclusive - exTaxPrice }
+}
+
+/**
  * 請求書の税内訳（8% / 10%）を計算する
  * @param tax08Inclusive 8%税込合計（注文合計）
  * @param eventStartDatetime イベント開始日時（Unix time in milliseconds）
@@ -78,8 +102,7 @@ export function calculateInvoiceTaxBreakdown(tax08Inclusive: number, eventStartD
   const fee = calculateInvoiceFee(tax08Inclusive, eventStartDatetime)
   const tax10Inclusive = fee
   const total = tax08Inclusive + tax10Inclusive
-  const tax8SubTotal = Math.floor(tax08Inclusive / 1.08)
-  const tax8 = tax08Inclusive - tax8SubTotal
+  const { exTaxPrice: tax8SubTotal, taxPrice: tax8 } = computeInclusive8ExTaxAndTax(tax08Inclusive)
   const tax10SubTotal = Math.floor(tax10Inclusive / 1.1)
   const tax10 = tax10Inclusive - tax10SubTotal
   const tax = tax8 + tax10
@@ -141,4 +164,105 @@ export function calculateInvoiceTotal(orders: EventMemberOrder[], eventStartDate
   const baseTotal = calculateOrdersTotal(orders)
   const invoiceFee = calculateInvoiceFee(baseTotal, eventStartDatetime)
   return baseTotal + invoiceFee
+}
+
+/**
+ * 確定注文の主催者負担合計（割引総額）を算出する。
+ * payment_community_bill_off_amount が正の整数のもののみ合算。
+ * @param orders 注文リスト
+ */
+export function sumOrderedCommunityBillOffAmount(orders: EventMemberOrder[]): number {
+  return orders
+    .filter((o) => o.status === 'ordered')
+    .reduce((sum, o) => {
+      const amount = o.payment_community_bill_off_amount
+      return typeof amount === 'number' && amount > 0 ? sum + amount : sum
+    }, 0)
+}
+
+/**
+ * 割引請求書の明細行ごとの集計結果
+ */
+export interface CommunityBillOffGroupLine {
+  amountPerOrder: number
+  orderCount: number
+  lineSubtotal: number
+}
+
+/**
+ * 割引請求書の明細用に、payment_community_bill_off_amount ごとに注文件数をまとめる。
+ * 金額の降順でソートして返す。
+ * @param orders 注文リスト
+ */
+export function groupOrderedCommunityBillOffByAmount(orders: EventMemberOrder[]): CommunityBillOffGroupLine[] {
+  const countByAmount = new Map<number, number>()
+  for (const o of orders) {
+    if (o.status !== 'ordered') continue
+    const amount = o.payment_community_bill_off_amount
+    if (typeof amount !== 'number' || amount <= 0) continue
+    countByAmount.set(amount, (countByAmount.get(amount) ?? 0) + 1)
+  }
+  return Array.from(countByAmount.entries())
+    .map(([amountPerOrder, orderCount]) => ({
+      amountPerOrder,
+      orderCount,
+      lineSubtotal: amountPerOrder * orderCount,
+    }))
+    .sort((a, b) => b.amountPerOrder - a.amountPerOrder)
+}
+
+/**
+ * 割引補填のみの請求書の税内訳（8% なし・補填と手数料をそれぞれ 10% 税込として分解）。
+ * `tax10Inclusive` は手数料の税込額のみ（手数料行表示に利用）。
+ */
+export function calculateDiscountSubsidyInvoiceTaxBreakdown(
+  subsidyTotalInclusive: number,
+  eventStartDatetime: number,
+): InvoiceTaxBreakdown {
+  const S = subsidyTotalInclusive
+  const F = calculateInvoiceFee(S, eventStartDatetime)
+  const subsidyEx = Math.floor(S / 1.1)
+  const subsidyTax = S - subsidyEx
+  const feeEx = Math.floor(F / 1.1)
+  const feeTax = F - feeEx
+  const tax10SubTotal = subsidyEx + feeEx
+  const tax10 = subsidyTax + feeTax
+  return {
+    total: S + F,
+    subTotal: tax10SubTotal,
+    tax: tax10,
+    tax8Inclusive: 0,
+    tax8SubTotal: 0,
+    tax8: 0,
+    tax10Inclusive: F,
+    tax10SubTotal,
+    tax10,
+  }
+}
+
+/**
+ * 主催者請求書の税込合計（一覧・PDF で同一式）。
+ * - menu: メニュー計 + 売上に対する手数料（従来）
+ * - discount: 割引総額 + 割引総額に対する手数料
+ */
+export function calculateEventBillInvoiceTotal(
+  orders: EventMemberOrder[],
+  eventStartDatetime: number,
+  communityBillSettings: CommunityBillSettingsType | null | undefined,
+): number {
+  if (getCommunityBillInvoiceMode(communityBillSettings) === 'discount') {
+    const subsidyTotal = sumOrderedCommunityBillOffAmount(orders)
+    return subsidyTotal + calculateInvoiceFee(subsidyTotal, eventStartDatetime)
+  }
+  return calculateInvoiceTotal(orders, eventStartDatetime)
+}
+
+/** 割引請求の手数料行ラベル。メニュー請求の手数料行と同じ表記とする */
+export const DISCOUNT_SUBSIDY_INVOICE_FEE_LABEL = '請求書払い手数料'
+
+/**
+ * 割引請求の明細行数（実額グループ + 手数料行）。パディング前の行数。
+ */
+export function countDiscountInvoiceDetailRows(groupLineCount: number, isAfterFeeCutoff: boolean): number {
+  return groupLineCount + (isAfterFeeCutoff ? 1 : 0)
 }
