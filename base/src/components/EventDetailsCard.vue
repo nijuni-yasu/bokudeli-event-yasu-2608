@@ -32,6 +32,8 @@ import LineIcon from '@shokujii/base/icons/line'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
 import TinyMCEViewer from '@shokujii/base/components/TinyMCEViewer.vue'
+import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
+import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
 
 const router = useRouter()
 
@@ -40,7 +42,13 @@ const qrcodeSize = 300
 const props = defineProps<{
   event: BokudeliEvent
   community: BokudeliCommunity
+  /** イベントページでアルバムを横並び表示するときに渡す（Phase 2 想定） */
+  albumImageUrls?: { id: string; url: string; caption: string }[]
 }>()
+
+const galleryAlbums = computed(() => (props.albumImageUrls ?? []).map((i) => ({ src: i.url, title: i.caption })))
+
+const galleryDescImageSlides = computed(() => extractImageSlidesFromHtml(props.event.event_desc))
 
 const eventUrl = computed(() => {
   // TODO 環境変数を component 内で直接みるのはいまいちな実装なので直す
@@ -114,19 +122,20 @@ const isShowMember = computed(() =>
 </script>
 
 <template>
-  <v-card class="align-center justify-center mt-0 mb-4 pa-sm-10 pa-xs-1">
-    <v-row>
-      <v-col>
-        <v-img class="ma-0 pa-0" cover aspect-ratio="1.91" :src="event.event_cover_url" />
-      </v-col>
-    </v-row>
+  <v-card class="align-center justify-center mt-0 mb-4 pa-1 pa-sm-10">
+    <PublicAlbumGallery
+      :cover-url="event.event_cover_url"
+      :cover-title="event.event_name"
+      :albums="galleryAlbums"
+      :lightbox-append-items="galleryDescImageSlides"
+    />
     <v-row>
       <v-col>
         <!-- イベント情報 -->
-        <v-card-title class="py-0 text-sm-h3 text-h4 font-weight-black text-wrap" style="line-height: 1.3">
+        <v-card-title class="pt-6 pb-0 text-sm-h2 text-h4 font-weight-black text-wrap" style="line-height: 1.3">
           {{ event.event_name }}
         </v-card-title>
-        <v-card-text class="event-item text-right px-0 ma-1">
+        <v-card-text class="event-item text-right px-0 py-0 ma-1">
           <v-btn
             class="ml-3"
             :icon="XIcon"

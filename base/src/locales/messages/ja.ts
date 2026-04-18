@@ -70,6 +70,12 @@ export default {
     contact_community: '主催者に連絡',
     contact_community_after_login: 'ログインした後に主催者に連絡してください。',
   },
+  album: {
+    show_all_photos: 'すべての写真',
+    lightbox_count: '{current}/{total}枚',
+    gallery_open_cover: 'カバー写真を拡大表示',
+    gallery_open_album_photo: 'アルバムの写真を拡大表示',
+  },
   cart: {
     title: '🛒 カート 🛒',
     subtitle: '注文を完了してイベント参加をお申し込みください',
