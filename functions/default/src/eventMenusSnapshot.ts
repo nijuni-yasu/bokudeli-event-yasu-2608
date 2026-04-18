@@ -1,6 +1,6 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import { getDownloadURL, getStorage } from 'firebase-admin/storage'
+import { getStorage } from 'firebase-admin/storage'
 import { createModuleLogger } from './utils/logger.js'
 import { getPartner } from './stores/partner.js'
 import { getEvent } from './stores/event.js'
@@ -32,9 +32,8 @@ export const savePartnerMenusToEventMenus = async (
   }
   const partnerMenus = await partner.getMenus()
 
-  // メニュー画像を Storage コピー（Firestore トランザクション前に実行）
+  // メニュー画像を Storage コピー（Firestore トランザクション前に実行。URL は EventMenu に持たせずパス参照）
   const bucket = getStorage().bucket()
-  const menuImageUrlMap = new Map<string, string>()
   await Promise.allSettled(
     partnerMenus
       .filter((m) => !m.is_deleted)
@@ -42,8 +41,7 @@ export const savePartnerMenusToEventMenus = async (
         const srcPath = getMenuImageStoragePath(partnerId, m.menu_id)
         const destPath = getEventMenuImageStoragePath(communityId, eventId, m.menu_id)
         try {
-          const [newFile] = await bucket.file(srcPath).copy(destPath)
-          menuImageUrlMap.set(m.menu_id, await getDownloadURL(newFile))
+          await bucket.file(srcPath).copy(destPath)
         } catch (error) {
           logger.error('Failed to copy menu image', {
             menuId: m.menu_id,
