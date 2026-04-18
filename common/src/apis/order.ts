@@ -1,33 +1,18 @@
-import type { EventOrderStatusType, OrderMenuType } from '../schemas/EventOrder.js'
+export type AddToCartRequest = {
+  community_id: string
+  event_id: string
+  menus: { menu_id: string; count: number }[]
+}
+export type AddToCartResponse = void
 
-export type UpdateMenuCountInCartRequest = {
+export type RemoveFromCartRequest = {
   community_id: string
   event_id: string
   order_id: string
-  menu_id: string
-  count: number // 1以上の整数（上限なし）
 }
 
-export type DeleteMenuInCartRequest = {
+export type ConfirmOrderRequest = {
   community_id: string
   event_id: string
-  order_id: string
-  menu_id: string
-}
-
-export type AddOrderRequest = {
-  community_id: string
-  event_id: string
-  menus: OrderMenuType[]
-}
-
-export type AddOrderResponse = {
-  order_id: string
-}
-
-export type UpdateOrderStatusRequest = {
-  community_id: string
-  event_id: string
-  order_id: string
-  status: EventOrderStatusType
+  order_ids: string[]
 }

@@ -1,5 +1,5 @@
 export type EventReceiptRequest = {
   eventId: string
-  orderId: string
+  stripeId: string
 }
 export type EventReceiptResponse = { url: string }

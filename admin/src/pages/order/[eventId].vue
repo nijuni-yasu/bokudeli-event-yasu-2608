@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { mdiTruckOutline, mdiMapMarkerRadius } from '@mdi/js'
-import { ordersTotalPrice, getSubtotalsOfOrders, ordersCount } from '@shokujii/base/utils/orders.js'
+import {
+  ordersTotalPrice,
+  getSubtotalsOfOrders,
+  ordersCount,
+  sortEventMemberOrdersForPartnerDetail,
+} from '@shokujii/base/utils/orders.js'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore } from '@shokujii/base/stores/partner.js'
@@ -99,15 +104,21 @@ const isOwner = computed<boolean | null>(() => {
   return shop != null && event.community_account === shop.community_account
 })
 
+/** オーダー詳細明細テーブル・名前印刷 PDF と同一の並び（@shokujii/base/utils/orders.js 経由で common と同一のソート） */
+const sortedConfirmedOrders = computed(() => {
+  const o = eventStore.confirmedOrders
+  return o == null ? [] : sortEventMemberOrdersForPartnerDetail(o)
+})
+
 // [お名前]を印刷 ボタンの実装
 const downloadNamesPrint = async () => {
   isLoading.value = true
   try {
     const w = window.open(getNamesPrintPath(), '_blank')
-    const pdf = await getNamesPrintPdf(eventId) //todo 並び順
+    const pdf = await getNamesPrintPdf(eventId)
     w!.location.href = window.URL.createObjectURL(pdf)
-  } catch (error) {
-    console.error('Error downloading names sheet:', error)
+  } catch {
+    notification.show($t('order_detail.names_sheet_download_error'), 'error')
   } finally {
     isLoading.value = false
   }
@@ -260,20 +271,7 @@ const downloadNamesPrint = async () => {
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="({ order, menu }, key) in eventStore.confirmedOrders
-                  .flatMap((order) =>
-                    order.menus.flatMap((menu) => [...Array(menu.count)].map(() => ({ order, menu }))),
-                  )
-                  .sort((a, b) =>
-                    a.menu.name === b.menu.name
-                      ? a.order.created_at - b.order.created_at
-                      : a.menu.name > b.menu.name
-                        ? 1
-                        : -1,
-                  )"
-                :key="`order-${key}`"
-              >
+              <tr v-for="(order, key) in sortedConfirmedOrders" :key="`order-${key}`">
                 <td>{{ key + 1 }}</td>
                 <td>
                   <a :href="getUserUrl(originHost, order.user_id)" class="name-link" target="_blank">
@@ -283,9 +281,9 @@ const downloadNamesPrint = async () => {
                     </div>
                   </a>
                 </td>
-                <td>{{ menu.name }}</td>
-                <td>{{ $n(menu.price, 'currency') }}</td>
-                <td>{{ $d(order.created_at, 'datetime') }}</td>
+                <td>{{ order.menu_name }}</td>
+                <td>{{ $n(order.menu_price, 'currency') }}</td>
+                <td>{{ order.ordered_at != null ? $d(order.ordered_at, 'datetime') : '' }}</td>
               </tr>
             </tbody>
           </v-table>

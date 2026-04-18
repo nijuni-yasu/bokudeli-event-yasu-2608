@@ -34,18 +34,14 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
     const user = await getUser(order.user_id, false)
     if (!user) continue
 
-    for (const menu of order.menus || []) {
-      for (let i = 0; i < menu.count; i++) {
-        orderList.push({
-          name: user.user_name,
-          order: menu.name,
-          price: `¥${menu.price}`,
-          number: 0, // 後で設定
-        })
-        orderCount++
-        orderTotalPrice += menu.price
-      }
-    }
+    orderList.push({
+      name: user.user_name,
+      order: order.menu_name,
+      price: `¥${order.menu_price}`,
+      number: 0,
+    })
+    orderCount++
+    orderTotalPrice += order.menu_price
   }
 
   // 注文を料理名でソート

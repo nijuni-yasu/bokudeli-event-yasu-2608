@@ -75,5 +75,5 @@ PR のレビューコメントに対して、実装内容（対応済み・対�
 
 ## 参照
 
-- [review-comments-evaluate](../review-comments-evaluate/SKILL.md) — コメント取得方法は同様
+- [review-comments-evaluate](../review-comments-evaluate/SKILL.md) — コメント取得方法は同様。検討スキル出力の **`RC-n` 識別子** と併記の **GitHub id** を手掛かりに、返信対象の `COMMENT_ID` を特定してよい（インラインのみ）。
 - [GitHub API: Create a reply for a review comment](https://docs.github.com/en/rest/pulls/comments#create-a-reply-for-a-review-comment)（ドキュメント上のパスに PR 番号が無い場合があるが、`gh api` では本スキル記載の PR 番号入りパスを使うこと）

@@ -2,7 +2,7 @@
  * 請求関連のユーティリティと定数
  */
 
-import type { EventOrder } from '../schemas/EventOrder.js'
+import type { EventMemberOrder } from '../schemas/EventMemberOrder.js'
 
 /**
  * 請求手数料の計算ルールの変更日時（内部用）
@@ -32,8 +32,8 @@ export const INVOICE_FEE_RATE = 0.1
  * @param orders 注文リスト
  * @returns 注文済みの商品合計金額
  */
-export function calculateOrdersTotal(orders: EventOrder[]): number {
-  return orders.filter((order) => order.status === 'ordered').reduce((sum, order) => sum + order.totalPrice, 0)
+export function calculateOrdersTotal(orders: EventMemberOrder[]): number {
+  return orders.filter((order) => order.status === 'ordered').reduce((sum, order) => sum + order.menu_price, 0)
 }
 
 /**
@@ -112,24 +112,21 @@ export interface InvoiceMenuItem {
  * 注文リストからメニュー別に数量・金額を集計する
  * @param orders 注文リスト（status によるフィルタは呼び出し側で行う）
  */
-export function aggregateOrderMenus(orders: EventOrder[]): InvoiceMenuItem[] {
+export function aggregateOrderMenus(orders: EventMemberOrder[]): InvoiceMenuItem[] {
   const menuMap = new Map<string, InvoiceMenuItem>()
   for (const order of orders) {
-    for (const menu of order.menus) {
-      const menuTotal = menu.price * menu.count
-      const existing = menuMap.get(menu.menu_id)
-      if (existing != null) {
-        existing.count += menu.count
-        existing.totalPrice += menuTotal
-      } else {
-        menuMap.set(menu.menu_id, {
-          menu_id: menu.menu_id,
-          name: menu.name,
-          price: menu.price,
-          count: menu.count,
-          totalPrice: menuTotal,
-        })
-      }
+    const existing = menuMap.get(order.menu_id)
+    if (existing != null) {
+      existing.count++
+      existing.totalPrice += order.menu_price
+    } else {
+      menuMap.set(order.menu_id, {
+        menu_id: order.menu_id,
+        name: order.menu_name,
+        price: order.menu_price,
+        count: 1,
+        totalPrice: order.menu_price,
+      })
     }
   }
   return Array.from(menuMap.values())
@@ -140,7 +137,7 @@ export function aggregateOrderMenus(orders: EventOrder[]): InvoiceMenuItem[] {
  * @param orders 注文リスト
  * @param eventStartDatetime イベント開始日時（Unix time in milliseconds）
  */
-export function calculateInvoiceTotal(orders: EventOrder[], eventStartDatetime: number): number {
+export function calculateInvoiceTotal(orders: EventMemberOrder[], eventStartDatetime: number): number {
   const baseTotal = calculateOrdersTotal(orders)
   const invoiceFee = calculateInvoiceFee(baseTotal, eventStartDatetime)
   return baseTotal + invoiceFee

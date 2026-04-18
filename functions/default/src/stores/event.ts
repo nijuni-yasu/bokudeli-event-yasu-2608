@@ -8,10 +8,18 @@ import {
   DocumentReference,
 } from 'firebase-admin/firestore'
 import { Event } from '@shokujii/common/schemas/Event.js'
-import { EventOrder, EventOrderStatusType } from '@shokujii/common/schemas/EventOrder.js'
+import { EventMemberOrder, EventMemberOrderStatusType } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { getUser, type ShokujiiUser } from './user.js'
 import { EventLog } from '@shokujii/common/schemas/EventLog.js'
+import { getRefFromPath } from '@shokujii/common/schemas/firebase/index.js'
+import {
+  getOrders as getOrdersFromStore,
+  getOrder as getOrderFromStore,
+  saveOrder as saveOrderFromStore,
+  getOrdersByIds as getOrdersByIdsFromStore,
+  hasOrderedOrders as hasOrderedOrdersFromStore,
+} from './memberOrder.js'
 
 class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
   constructor(private readonly userId?: string) {
@@ -25,16 +33,6 @@ class ShokujiiEventConverter implements FirestoreDataConverter<ShokujiiEvent> {
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): ShokujiiEvent {
     return new ShokujiiEvent(snapshot.id, snapshot.data())
-  }
-}
-
-class ShokujiiEventOrderConverter implements FirestoreDataConverter<EventOrder> {
-  toFirestore(order: EventOrder): DocumentData {
-    return order.toFirestore()
-  }
-  fromFirestore(snapshot: QueryDocumentSnapshot): EventOrder {
-    const eventId = snapshot.ref.parent.parent!.id
-    return new EventOrder(eventId, snapshot.id, snapshot.data())
   }
 }
 
@@ -70,67 +68,24 @@ export class ShokujiiEvent extends Event {
     super(id, src)
   }
 
-  async getOrders(status?: EventOrderStatusType, transaction?: Transaction): Promise<EventOrder[]> {
-    const db = getFirestore()
-    const ordersRef = db
-      .collection('communities')
-      .doc(this.community_id)
-      .collection('events')
-      .doc(this.id)
-      .collection('orders')
-      .withConverter(new ShokujiiEventOrderConverter())
-    const snapshot = await (transaction === undefined ? ordersRef.get() : transaction.get(ordersRef))
-    const orders = snapshot.docs.map((doc) => doc.data())
-    return status === undefined ? orders : orders.filter((order) => order.status === status)
+  async getOrders(status?: EventMemberOrderStatusType, transaction?: Transaction): Promise<EventMemberOrder[]> {
+    return getOrdersFromStore(this.community_id, this.id, status, transaction)
   }
 
-  /**
-   * status === 'ordered' の注文が 1 件以上存在するかを limit(1) で効率的に判定する
-   */
   async hasOrderedOrders(transaction?: Transaction): Promise<boolean> {
-    const db = getFirestore()
-    const ordersRef = db
-      .collection('communities')
-      .doc(this.community_id)
-      .collection('events')
-      .doc(this.id)
-      .collection('orders')
-      .where('status', '==', 'ordered')
-      .limit(1)
-      .withConverter(new ShokujiiEventOrderConverter())
-    const snapshot = await (transaction === undefined ? ordersRef.get() : transaction.get(ordersRef))
-    return !snapshot.empty
+    return hasOrderedOrdersFromStore(this.community_id, this.id, transaction)
   }
 
-  async getOrder(orderId: string, transaction?: Transaction): Promise<EventOrder | undefined> {
-    const db = getFirestore()
-    const orderRef = db
-      .collection('communities')
-      .doc(this.community_id)
-      .collection('events')
-      .doc(this.id)
-      .collection('orders')
-      .doc(orderId)
-      .withConverter(new ShokujiiEventOrderConverter())
-    const snapshot = await (transaction === undefined ? orderRef.get() : transaction.get(orderRef))
-    return snapshot.data()
+  async getOrder(userId: string, orderId: string, transaction?: Transaction): Promise<EventMemberOrder | undefined> {
+    return getOrderFromStore(this.community_id, this.id, userId, orderId, transaction)
   }
 
-  async saveOrder(order: EventOrder, transaction?: Transaction): Promise<void> {
-    const db = getFirestore()
-    const orderRef = db
-      .collection('communities')
-      .doc(this.community_id)
-      .collection('events')
-      .doc(this.id)
-      .collection('orders')
-      .doc(order.id)
-      .withConverter(new ShokujiiEventOrderConverter())
-    if (transaction === undefined) {
-      await orderRef.set(order, { merge: true })
-    } else {
-      transaction.set(orderRef, order, { merge: true })
-    }
+  async saveOrder(userId: string, order: EventMemberOrder, transaction?: Transaction): Promise<void> {
+    return saveOrderFromStore(this.community_id, this.id, userId, order, transaction)
+  }
+
+  async getOrdersByIds(userId: string, orderIds: string[], transaction?: Transaction): Promise<EventMemberOrder[]> {
+    return getOrdersByIdsFromStore(this.community_id, this.id, userId, orderIds, transaction)
   }
 
   async getMenus(transaction?: Transaction): Promise<EventMenu[]> {
@@ -218,6 +173,22 @@ export class ShokujiiEvent extends Event {
   }
 
   /**
+   * `members` / `event_num_members` のみを書き換える（`updated_by`・`updated_at` は変更しない）。
+   * `eventMembers.ts` の `createEventMembers`（member_orders の `onDocumentWritten`）が ordered を集計してイベントに反映するときに使う。
+   * `withConverter` 付き ref ではなく生の `eventRef` で `transaction.update` するのは、上記の監査フィールドを変えずに部分更新するための意図的な例外（`set` + `toFirestore` 経路だと `updated_by` 等まで書き換わる）。
+   */
+  async updateMembersFieldOnly(memberUserIds: string[], transaction: Transaction): Promise<void> {
+    const members = memberUserIds.map((id) => getRefFromPath(`users/${id}`))
+    const db = getFirestore()
+    const eventRef = db.collection('communities').doc(this.community_id).collection('events').doc(this.id)
+    transaction.update(eventRef, {
+      members,
+      event_num_members: memberUserIds.length,
+    })
+    this.members = memberUserIds
+  }
+
+  /**
    * イベントを更新
    */
   async updateEvent(data: Partial<ShokujiiEvent>, updateUserId: string, transaction?: Transaction): Promise<void> {
@@ -256,6 +227,26 @@ export const getEvent = async (eventId: string, transaction?: Transaction): Prom
     .withConverter(new ShokujiiEventConverter())
   const eventData = await (transaction === undefined ? eventRef.get() : transaction.get(eventRef))
   return eventData.empty ? undefined : eventData.docs[0].data()
+}
+
+/**
+ * `communities/{communityId}/events/{eventId}` を直接参照して取得する（collectionGroup を使わない）。
+ * トリガーで communityId / eventId が既に分かっている場合はこちらを使う。
+ */
+export const getEventInCommunity = async (
+  communityId: string,
+  eventId: string,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent | undefined> => {
+  const db = getFirestore()
+  const eventRef = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('events')
+    .doc(eventId)
+    .withConverter(new ShokujiiEventConverter())
+  const snapshot = await (transaction === undefined ? eventRef.get() : transaction.get(eventRef))
+  return snapshot.exists ? snapshot.data() : undefined
 }
 
 export const saveEvent = async (userId: string, event: ShokujiiEvent, transaction?: Transaction): Promise<void> => {
@@ -339,23 +330,6 @@ export const getAcceptingOrderEventsByEndTime = async (
     .withConverter(new ShokujiiEventConverter())
   const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
   return eventsSnapshot.docs.map((doc) => doc.data())
-}
-
-// 更新時間の範囲でカート内注文を取得
-export const getInCartOrdersByUpdatedTime = async (
-  startTimeMillis: number,
-  endTimeMillis: number,
-  transaction?: Transaction,
-): Promise<EventOrder[]> => {
-  const db = getFirestore()
-  const ordersRef = db
-    .collectionGroup('orders')
-    .where('status', '==', 'in_cart')
-    .where('updated_at', '>', Timestamp.fromMillis(startTimeMillis))
-    .where('updated_at', '<=', Timestamp.fromMillis(endTimeMillis))
-    .withConverter(new ShokujiiEventOrderConverter())
-  const ordersSnapshot = await (transaction === undefined ? ordersRef.get() : transaction.get(ordersRef))
-  return ordersSnapshot.docs.map((doc) => doc.data())
 }
 
 // 予約申請中のイベントを取得

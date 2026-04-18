@@ -3,6 +3,7 @@ import { sendIndividualLetterRequestSchema, sendTestLetterRequestSchema } from '
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
 import { getCommunity, getCommunityByAccount } from './stores/community.js'
 import { getEvent } from './stores/event.js'
+import { getMemberIds } from './stores/memberOrder.js'
 import { getLetter, getLetterRef, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
 import { getUserPersonalInformation, getUser } from './stores/user.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
@@ -65,7 +66,8 @@ async function getParticipantIds(eventId: string): Promise<string[]> {
 }
 
 /**
- * イベントメンバー一覧に表示されるユーザーIDを取得（ordered / in_cart / canceled の全注文）
+ * イベントメンバー一覧に表示されるユーザーIDを取得（ordered / in_cart / canceled を問わず全員）
+ * members サブコレクションのドキュメント ID を直接取得するため、orders を全走査する必要がない。
  */
 async function getEventMemberIds(eventId: string): Promise<string[]> {
   try {
@@ -80,8 +82,7 @@ async function getEventMemberIds(eventId: string): Promise<string[]> {
       return []
     }
 
-    const orders = await event.getOrders()
-    return [...new Set(orders.map((order) => order.user_id))]
+    return getMemberIds(event.community_id, eventId)
   } catch (error) {
     logger.error('Error fetching event members', { eventId, error })
     throw error

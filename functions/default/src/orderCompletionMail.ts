@@ -1,4 +1,3 @@
-import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
@@ -6,7 +5,7 @@ import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js
 import { getEventUrl, getUserUrl, FIREBASE_STORAGE_BASE_URL } from './utils/urls.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { getUser, getUserPersonalInformation } from './stores/user.js'
-import { convertReferenceToEvent, ShokujiiEvent, saveEvent, getEvent } from './stores/event.js'
+import { ShokujiiEvent, saveEvent, getEvent } from './stores/event.js'
 import { makeIcs } from './makeIcs.js'
 import { getCommunity } from './stores/community.js'
 import { getUserImageUrl } from '@shokujii/common/utils/buildThumbnailsLinks.js'
@@ -218,41 +217,15 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
   }
 }
 
-export const onOrderChanged = onDocumentWritten(
-  {
-    document: 'communities/{communityId}/events/{eventId}/orders/{orderId}',
-    region: 'asia-northeast1',
-    secrets: ['SENDGRID_API_KEY'],
-  },
-  async (change) => {
-    if (!change.data) {
-      logger.warn('Change data is undefined')
-      return
-    }
-
-    const before = change.data.before
-    const after = change.data.after
-    const promises: Promise<void>[] = []
-
-    if (before?.get('status') !== after?.get('status') && after?.get('status') === 'ordered') {
-      const eventRef = after.ref.parent.parent
-      if (!eventRef) {
-        logger.warn('Event reference is null')
-        return
-      }
-
-      const userId = after.get('user_id')
-      const afterEvent = await convertReferenceToEvent(eventRef)
-      if (!afterEvent) {
-        logger.warn('Event not found for eventRef', { eventRefPath: eventRef.path })
-        return
-      }
-      promises.push(sendOrderCompletionMailToMember(afterEvent, userId))
-      promises.push(sendOrderCompletionMailToOrganizers(afterEvent, userId))
-      // 新着イベント通知メールを送信（is_publicかつ未送信の場合のみ）
-      promises.push(sendNewEventNotificationToMembers(afterEvent.id, userId, afterEvent.community_id))
-    }
-
-    await Promise.all(promises)
-  },
-)
+/**
+ * 注文確定（member_orders が ordered になった）後に 1 回だけ呼ぶ。
+ * confirmOrder / stripeWebhook から直接呼び出す（member_orders 単位の onDocumentWritten では N 回発火するため）。
+ * 呼び出し元の Function では secrets に SENDGRID_API_KEY を含めること。
+ */
+export async function sendOrderCompletionMails(event: ShokujiiEvent, userId: string): Promise<void> {
+  await Promise.all([
+    sendOrderCompletionMailToMember(event, userId),
+    sendOrderCompletionMailToOrganizers(event, userId),
+    sendNewEventNotificationToMembers(event.id, userId, event.community_id),
+  ])
+}

@@ -155,18 +155,14 @@ async function createOrdersForOrganizerRemind(event: ShokujiiEvent): Promise<Ord
     const user = await getUser(order.user_id, false)
     const userName = user?.user_name || ''
 
-    for (const menu of order.menus || []) {
-      for (let i = 0; i < menu.count; i++) {
-        if (!ordersByStatus[order.status]) {
-          ordersByStatus[order.status] = []
-        }
-        ordersByStatus[order.status].push({
-          name: userName,
-          order: menu.name,
-          price: `¥${menu.price}`,
-        })
-      }
+    if (!ordersByStatus[order.status]) {
+      ordersByStatus[order.status] = []
     }
+    ordersByStatus[order.status].push({
+      name: userName,
+      order: order.menu_name,
+      price: `¥${order.menu_price}`,
+    })
   })
 
   await Promise.all(promises)

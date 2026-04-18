@@ -20,19 +20,18 @@ import {
   type SnapshotOptions,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
-import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
+import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
-import { AddOrderRequest } from '@shokujii/common/apis/order.js'
+import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
 import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
-  addOrder as _addOrder,
-  updateOrderStatus as _updateOrderStatus,
-  updateMenuCountInCart as _updateMenuCountInCart,
-  deleteMenuInCart as _deleteMenuInCart,
+  addToCart as _addToCart,
+  removeFromCart as _removeFromCart,
+  confirmOrder as _confirmOrder,
 } from '@shokujii/base/apis/order.js'
 import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
@@ -64,7 +63,7 @@ export class BokudeliEvent extends _Event {
  */
 export class BokudeliEventMember extends User {
   // 多重継承が出来ないので CommunityMember のプロパティを手動で追加する
-  orders: EventOrder[] = []
+  orders: EventMemberOrder[] = []
 }
 
 /**
@@ -99,15 +98,13 @@ const menuConverter: FirestoreDataConverter<EventMenu> = {
   },
 }
 
-// cart で使用するので export するが stores 以外では使用しないように注意
-export const orderConverter: FirestoreDataConverter<EventOrder> = {
-  toFirestore(order: EventOrder): DocumentData {
+const memberOrderConverter: FirestoreDataConverter<EventMemberOrder> = {
+  toFirestore(order: EventMemberOrder): DocumentData {
     return order.toFirestore()
   },
-  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): EventOrder {
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): EventMemberOrder {
     const data = snapshot.data(options)
-    const event_id = snapshot.ref.parent.parent!.id
-    return new EventOrder(event_id, snapshot.id, data)
+    return new EventMemberOrder(snapshot.id, data)
   },
 }
 
@@ -156,7 +153,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
     const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(target instanceof BokudeliEvent ? target : null)
-    const _orders = ref<EventOrder[] | null>(null)
+    const _orders = ref<EventMemberOrder[] | null>(null)
     const _members = ref<{ user_id: string; store: UserStore }[] | null>(null)
     const _menus = ref<EventMenu[] | null>(null)
     const _eventRef = ref<DocumentReference<BokudeliEvent> | null>(null)
@@ -191,10 +188,8 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       })
     }
 
-    const orders = computed<EventOrder[] | null>(() => {
-      getEventRef().then((eventRef) => {
-        subscribeOrders(eventRef)
-      })
+    const orders = computed<EventMemberOrder[] | null>(() => {
+      subscribeOrders()
       return _orders.value
     })
 
@@ -210,22 +205,19 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return sortedMenus
     })
 
-    const confirmedOrders = computed<EventOrder[] | null>(() => {
-      getEventRef().then((eventRef) => {
-        subscribeOrders(eventRef)
-      })
+    const confirmedOrders = computed<EventMemberOrder[] | null>(() => {
+      subscribeOrders()
       return _orders.value?.filter((order) => order.status === 'ordered') ?? null
     })
 
     const members = computed<BokudeliEventMember[] | null>(
       () =>
         _members.value?.flatMap((member) => {
-          const target = _orders.value?.filter((order) => order.user_id === member.user_id) ?? ([] as EventOrder[])
+          const target =
+            _orders.value?.filter((order) => order.user_id === member.user_id) ?? ([] as EventMemberOrder[])
           const orders = new Proxy(target, {
             get: (target, prop, receiver) => {
-              getEventRef().then((eventRef) => {
-                subscribeOrders(eventRef)
-              })
+              subscribeOrders()
               return Reflect.get(target, prop, receiver)
             },
           })
@@ -272,31 +264,16 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return url
     }
 
-    const addOrder = async (data: AddOrderRequest): Promise<string> => {
-      const response = await _addOrder(data)
-      return response.data.order_id
+    const addToCart = async (data: AddToCartRequest): Promise<void> => {
+      await _addToCart(data)
     }
 
-    const updateMenuCountInCart = async (
-      order: { community_id: string; event_id: string; order_id: string },
-      menu_id: string,
-      count: number,
-    ): Promise<void> => {
-      await _updateMenuCountInCart({ ...order, menu_id, count })
+    const removeFromCart = async (data: RemoveFromCartRequest): Promise<void> => {
+      await _removeFromCart(data)
     }
 
-    const deleteMenuInCart = async (
-      order: { community_id: string; event_id: string; order_id: string },
-      menu_id: string,
-    ): Promise<void> => {
-      await _deleteMenuInCart({ ...order, menu_id })
-    }
-
-    const updateOrderStatus = async (
-      order: { community_id: string; event_id: string; order_id: string },
-      status: EventOrder['status'],
-    ): Promise<void> => {
-      await _updateOrderStatus({ ...order, status })
+    const confirmOrder = async (data: ConfirmOrderRequest): Promise<void> => {
+      await _confirmOrder(data)
     }
 
     const deleteEvent = async (): Promise<void> => {
@@ -322,11 +299,13 @@ export const useEventStore = (target: string | BokudeliEvent) => {
     }
 
     let unsubscribeOrders: Unsubscribe | null = null
-    const subscribeOrders = (eventRef: DocumentReference) => {
+    const subscribeOrders = () => {
       if (unsubscribeOrders == null) {
-        const ordersRef = collection(eventRef, 'orders').withConverter(orderConverter)
-        unsubscribeOrders = onSnapshot(ordersRef, (ordersSnapshot) => {
-          _orders.value = ordersSnapshot.docs.flatMap((o) => o.data())
+        const ordersQuery = query(collectionGroup(db, 'member_orders'), where('event_id', '==', eventId)).withConverter(
+          memberOrderConverter,
+        )
+        unsubscribeOrders = onSnapshot(ordersQuery, (ordersSnapshot) => {
+          _orders.value = ordersSnapshot.docs.map((doc) => doc.data())
         })
       }
     }
@@ -489,10 +468,9 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       updateEvent,
       updateCoverImage,
       uploadTinymceImage,
-      addOrder,
-      updateMenuCountInCart,
-      deleteMenuInCart,
-      updateOrderStatus,
+      addToCart,
+      removeFromCart,
+      confirmOrder,
       deleteEvent,
       subscribe,
       unsubscribe,

@@ -7,14 +7,12 @@ import UserEventCard from '@shokujii/base/components/UserEventCard.vue'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
-import { useOrderListByUserId } from '@shokujii/base/stores/orderList.js'
+import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { mdiCalendarHeart, mdiAccountGroup, mdiHeartOutline } from '@mdi/js'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
-import { EventOrder } from '@shokujii/common/schemas/EventOrder.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getReceiptPath } from '@/router/utils'
-import { stripeRefunds } from '@shokujii/base/apis/stripe.js'
+import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -41,43 +39,38 @@ const fetchUser = async (identifier: string) => {
 }
 await fetchUser(userId)
 
+/** プロフィール表示・Firestore・注文一覧で共通の Shokujii user_id（`fetchUser` 解決後を優先） */
+const profileUserId = userIdRef.value !== '' ? userIdRef.value : userId
+
 const notification = useNotification()
 
 const { t: $t } = useI18n()
 
-const { user } = storeToRefs(useUserStore(userId))
-const { firebaseUser } = storeToRefs(useCurrentUserStore())
+const { user } = storeToRefs(useUserStore(profileUserId))
+const currentUserStore = useCurrentUserStore()
+const { user: loginUser } = storeToRefs(currentUserStore)
 
 const tabs = ref(null)
-const cancelOperatingOrderId = ref<string | null>(null)
+const cancelLoadingEventId = ref<string | null>(null)
+/** UserEventCard のキャンセルダイアログの開閉（開いているイベントの event_id、閉じているときは null） */
+const cancelDialogEventId = ref<string | null>(null)
 
-const isOwner = computed(() => {
-  const uid = firebaseUser.value?.uid
-  return uid != null ? userId === uid : false
-})
+const isOwner = computed(() => loginUser.value?.user_id === profileUserId)
 
-// オーダー情報の取得
-const userOrderListStore = useOrderListByUserId(userId)
-const orders: Ref<{ order: EventOrder; event: BokudeliEvent }[]> = computed(() => {
-  return (userOrderListStore.orders ?? []).flatMap(({ order, eventId }) => {
-    const event = (useEventStore(eventId) as EventStore).event
-    if (event == null) {
-      return []
-    }
-    if (!isOwner.value && !event.is_public) {
-      return []
-    }
-    return { order, event }
-  })
-})
+const userEventListStore = useUserEventListByUserId(profileUserId)
+const { events: userEvents, totalCount: userEventsTotalCount, orderStateByEventId } = storeToRefs(userEventListStore)
+
+const visibleUserEvents = computed(() =>
+  userEvents.value.filter((event: BokudeliEvent) => isOwner.value || event.is_public),
+)
 
 const memberCommunityListStore = useCommunityListStore(
-  [where('members', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  [where('members', 'array-contains', doc(db, 'users', profileUserId)), orderBy('community_num_members', 'desc')],
   5,
 )
 
 const managerCommunityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  [where('managers', 'array-contains', doc(db, 'users', profileUserId)), orderBy('community_num_members', 'desc')],
   5,
 )
 
@@ -111,29 +104,31 @@ const managerCommunities = computed(() =>
   }),
 )
 
-const cancel = async (event: BokudeliEvent, order: EventOrder) => {
-  cancelOperatingOrderId.value = order.order_id
+const cancel = async (orderIds: string[], communityId: string, eventId: string) => {
+  if (orderIds.length === 0) return
+
+  cancelLoadingEventId.value = eventId
   try {
-    if (event.event_payment == 'user_advance' && order.payment_intent) {
-      await stripeRefunds({
-        order_id: order.order_id,
-        community_id: order.community_id,
-        event_id: order.event_id,
-      })
-      userOrderListStore.reload()
-      notification.show($t('user.canceled'), 'success')
-    } else if (event.event_payment == 'user_on_day' || event.event_payment == 'community_bill') {
-      // それ以外は事前決済してないのでStripeの返金処理はなし
-      const eventStore = useEventStore(order.event_id)
-      await eventStore.updateOrderStatus(order, 'canceled')
-      userOrderListStore.reload()
+    const { data } = await callCancelOrders({
+      community_id: communityId,
+      event_id: eventId,
+      order_ids: orderIds,
+    })
+    await userEventListStore.reloadOrdersForEvent(eventId)
+
+    cancelDialogEventId.value = null
+
+    const hasRefundIssues = data.refund_errors != null && data.refund_errors.length > 0
+    if (hasRefundIssues || data.user_message) {
+      notification.show(data.user_message ?? $t('user.canceled'), 'warning')
+    } else {
       notification.show($t('user.canceled'), 'success')
     }
   } catch (error) {
     console.error(error)
-    Object.assign(notification, { message: $t('user.cancel_failed'), color: 'error' })
+    notification.show($t('user.cancel_failed'), 'error')
   } finally {
-    cancelOperatingOrderId.value = null
+    cancelLoadingEventId.value = null
   }
 }
 
@@ -143,8 +138,8 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const downloadReceipt = async (order: EventOrder) => {
-  window.open(getReceiptPath(order.event_id, order.order_id), '_blank')
+const downloadReceipt = (eventId: string, stripeId: string) => {
+  window.open(getReceiptPath(eventId, stripeId), '_blank')
 }
 </script>
 
@@ -178,20 +173,25 @@ const downloadReceipt = async (order: EventOrder) => {
       <v-window v-model="tabs" class="pa-6">
         <v-window-item value="0">
           <v-row>
-            <v-col v-for="{ order, event } in orders" :key="`order_${order.order_id}`" sm="12" md="6" lg="4" cols="12">
+            <v-col v-for="event in visibleUserEvents" :key="`event_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
                 <router-link :to="getEventPath(event.community_account, event.event_id)">
                   <UserEventCard
-                    :order="order"
+                    v-model:cancel-dialog-event-id="cancelDialogEventId"
+                    :orders="orderStateByEventId[event.event_id]?.orders ?? []"
+                    :orders-loading="orderStateByEventId[event.event_id]?.loading ?? false"
+                    :orders-error="orderStateByEventId[event.event_id]?.error != null"
                     :event="event"
                     :isOwner="isOwner"
+                    :cancelLoading="cancelLoadingEventId === event.event_id"
                     @downloadInvoice="downloadReceipt"
-                    @cancel="cancel(event, order)"
+                    @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
+                    @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
                   />
                 </router-link>
 
                 <div
-                  v-if="cancelOperatingOrderId === order.order_id"
+                  v-if="cancelLoadingEventId === event.event_id"
                   class="progress-container d-flex justify-center align-center"
                 >
                   <v-progress-circular :indeterminate="true" size="large" />
@@ -202,9 +202,9 @@ const downloadReceipt = async (order: EventOrder) => {
           <v-row class="justify-center">
             <v-col cols="auto">
               <IncrementalLoader
-                :loaded-count="userOrderListStore.orders?.length ?? 0"
-                :total-count="userOrderListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                @load="userOrderListStore.next()"
+                :loaded-count="userEvents.length"
+                :total-count="userEventsTotalCount ?? Number.MAX_SAFE_INTEGER"
+                @load="userEventListStore.next()"
               />
             </v-col>
           </v-row>

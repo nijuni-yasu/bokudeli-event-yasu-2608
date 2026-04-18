@@ -12,7 +12,7 @@ import { getUserPath, getManageCommunitySettingsPath } from '@/router/utils'
 import { mdiFacebook, mdiDownload } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
-import type { EventOrder, OrderMenuType } from '@shokujii/common/schemas/EventOrder.js'
+import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
 import type { User } from '@shokujii/common/schemas/User'
@@ -34,18 +34,20 @@ const communityStore = computed(() => {
   return null
 })
 const canSendEmail = computed(() => !!communityStore.value?.community?.community_email)
-const menus = computed<Array<[EventOrder, User, OrderMenuType]>>(
+const menus = computed<Array<[EventMemberOrder, User]>>(
   () =>
     eventStore.orders?.flatMap((order) => {
       const user = useUserStore(order.user_id).user
-      return user == null ? [] : order.menus.flatMap((menu) => Array(menu.count).fill([order, user, menu]))
+      return user == null ? [] : [[order, user] as [EventMemberOrder, User]]
     }) ?? [],
 )
 const orderedMenus = computed(() =>
   menus.value.filter(([order]) => order.status === 'ordered').sort(([a], [b]) => a.updated_at - b.updated_at),
 )
 const cartMenus = computed(() =>
-  menus.value.filter(([order]) => order.status === 'in_cart').sort(([a], [b]) => a.carted_at - b.carted_at),
+  menus.value
+    .filter(([order]) => order.status === 'in_cart')
+    .sort(([a], [b]) => (a.carted_at ?? 0) - (b.carted_at ?? 0)),
 )
 const canceledMenus = computed(() =>
   menus.value
@@ -85,7 +87,7 @@ const onEmailFailed = () => {
 const openNewLink = (url: string) => {
   window.open(url, '_blank')
 }
-const getDateString = (order: EventOrder) => {
+const getDateString = (order: EventMemberOrder) => {
   switch (order.status) {
     case 'ordered':
       return $d(order.updated_at, 'datetime')
@@ -97,14 +99,14 @@ const getDateString = (order: EventOrder) => {
 }
 const downloadCsvFile = () => {
   let csv = '"Status","UserName","X","Facebook","Instagram","Order","Date"\n'
-  for (const [order, member, menu] of [...orderedMenus.value, ...cartMenus.value, ...canceledMenus.value]) {
+  for (const [order, member] of [...orderedMenus.value, ...cartMenus.value, ...canceledMenus.value]) {
     csv +=
       `"${$t(`manage.member.${order.status}`)}",` +
       `"${member.user_name}",` +
       `"${member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : ''}",` +
       `"${member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : ''}",` +
       `"${member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : ''}",` +
-      `"${menu.name}",` +
+      `"${order.menu_name}",` +
       `"${getDateString(order)}"\n`
   }
   downloadCsv('event_member.csv', csv)
@@ -147,7 +149,7 @@ const downloadCsvFile = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="([order, member, menu], i) of menus" :key="order.order_id">
+                    <tr v-for="([order, member], i) of menus" :key="order.order_id">
                       <td class="number-cell text-body-2">{{ i + 1 }}</td>
                       <td class="minimum-cell">
                         <router-link :to="getUserPath(member.user_id)">
@@ -194,7 +196,7 @@ const downloadCsvFile = () => {
                         <v-spacer />
                       </td>
                       <td class="menu-cell text-body-2">
-                        {{ menu.name }}
+                        {{ order.menu_name }}
                       </td>
                       <td class="date-cell text-body-2">
                         {{ getDateString(order) }}
