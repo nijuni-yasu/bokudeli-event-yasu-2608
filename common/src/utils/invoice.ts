@@ -184,31 +184,37 @@ export function sumOrderedCommunityBillOffAmount(orders: EventMemberOrder[]): nu
  * 割引請求書の明細行ごとの集計結果
  */
 export interface CommunityBillOffGroupLine {
+  menuName: string
   amountPerOrder: number
   orderCount: number
   lineSubtotal: number
 }
 
 /**
- * 割引請求書の明細用に、payment_community_bill_off_amount ごとに注文件数をまとめる。
- * 金額の降順でソートして返す。
+ * 割引請求書の明細用に、メニュー名 × payment_community_bill_off_amount の組ごとに注文件数をまとめる。
+ * 単価（おごり額）の降順、メニュー名の昇順でソートして返す。
  * @param orders 注文リスト
  */
 export function groupOrderedCommunityBillOffByAmount(orders: EventMemberOrder[]): CommunityBillOffGroupLine[] {
-  const countByAmount = new Map<number, number>()
+  const groupMap = new Map<string, { menuName: string; amountPerOrder: number; orderCount: number }>()
   for (const o of orders) {
     if (o.status !== 'ordered') continue
     const amount = o.payment_community_bill_off_amount
     if (typeof amount !== 'number' || amount <= 0) continue
-    countByAmount.set(amount, (countByAmount.get(amount) ?? 0) + 1)
+    const menuName = o.menu_name
+    const key = `${amount}\u0000${menuName}`
+    const cur = groupMap.get(key) ?? { menuName, amountPerOrder: amount, orderCount: 0 }
+    cur.orderCount += 1
+    groupMap.set(key, cur)
   }
-  return Array.from(countByAmount.entries())
-    .map(([amountPerOrder, orderCount]) => ({
-      amountPerOrder,
-      orderCount,
-      lineSubtotal: amountPerOrder * orderCount,
+  return Array.from(groupMap.values())
+    .map((v) => ({
+      menuName: v.menuName,
+      amountPerOrder: v.amountPerOrder,
+      orderCount: v.orderCount,
+      lineSubtotal: v.amountPerOrder * v.orderCount,
     }))
-    .sort((a, b) => b.amountPerOrder - a.amountPerOrder)
+    .sort((a, b) => b.amountPerOrder - a.amountPerOrder || a.menuName.localeCompare(b.menuName, 'ja'))
 }
 
 /**

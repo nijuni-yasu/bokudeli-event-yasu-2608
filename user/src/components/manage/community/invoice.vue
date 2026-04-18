@@ -5,7 +5,7 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { mdiFilePdfBox } from '@mdi/js'
 import type { EventStore } from '@shokujii/base/stores/event.js'
 import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
-import { calculateInvoiceTotal } from '@shokujii/common/utils/invoice.js'
+import { calculateEventBillInvoiceTotal } from '@shokujii/common/utils/invoice.js'
 
 const route = useRoute()
 
@@ -22,7 +22,11 @@ const eventStores = computed<EventStore[] | undefined>(() =>
       es.event?.event_payment !== 'community_bill' ||
       es.event?.calculatedEventStatus !== 'finished' ||
       es.event?.event_start_datetime == null ||
-      calculateInvoiceTotal(es.orders ?? [], es.event.event_start_datetime) === 0
+      calculateEventBillInvoiceTotal(
+        es.orders ?? [],
+        es.event.event_start_datetime,
+        es.event.community_bill_settings,
+      ) === 0
     ) {
       return []
     }
@@ -71,10 +75,11 @@ const getPdf = (eventId: string) => {
                       </td>
                       <td>
                         {{
-                          calculateInvoiceTotal(es.orders, es.event.event_start_datetime).toLocaleString('ja-JP', {
-                            style: 'currency',
-                            currency: 'JPY',
-                          })
+                          calculateEventBillInvoiceTotal(
+                            es.orders,
+                            es.event.event_start_datetime,
+                            es.event.community_bill_settings,
+                          ).toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' })
                         }}
                       </td>
                       <td>
