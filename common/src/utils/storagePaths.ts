@@ -6,6 +6,10 @@ export function getCommunityIconStoragePath(communityId: string): string {
   return `communities/${communityId}/community/icon`
 }
 
+export function getCommunityAlbumItemStoragePath(communityId: string, albumItemId: string): string {
+  return `communities/${communityId}/album_items/${albumItemId}`
+}
+
 export function getEventCoverStoragePath(communityId: string, eventId: string): string {
   return `communities/${communityId}/events/${eventId}/cover`
 }
