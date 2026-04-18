@@ -156,7 +156,8 @@ export const stripeWebhook = onRequest(
       }
 
       const orderedAt = Timestamp.now().toMillis()
-      const payAmount = orders.reduce((sum, o) => sum + o.menu_price, 0)
+      const payAmount = orders.reduce((sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0), 0)
+      const payCommunityBillAmount = orders.reduce((sum, o) => sum + (o.payment_community_bill_off_amount ?? 0), 0)
 
       const menusMap = new Map<string, StripeMenuType>()
       for (const order of orders) {
@@ -188,6 +189,7 @@ export const stripeWebhook = onRequest(
         community_id: communityId,
         payment_intent: paymentIntent,
         pay_amount: payAmount,
+        ...(payCommunityBillAmount > 0 ? { pay_community_bill_amount: payCommunityBillAmount } : {}),
         menus: Array.from(menusMap.values()),
         refunds: [],
       })

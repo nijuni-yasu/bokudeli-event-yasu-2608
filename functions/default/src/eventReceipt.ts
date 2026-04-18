@@ -5,6 +5,7 @@ import { DateTime } from 'luxon'
 import { EventReceiptRequest, EventReceiptResponse } from '@shokujii/common/apis/eventReceipt.js'
 import { convertNumberToYen } from '@shokujii/common/utils/converter.js'
 import { convertToDate, convertDateToId } from '@shokujii/common/utils/datetime.js'
+import { computeInclusive8ExTaxAndTax } from '@shokujii/common/utils/invoice.js'
 import { createModuleLogger } from './utils/logger.js'
 import { getEvent } from './stores/event.js'
 import { getPartner } from './stores/partner.js'
@@ -51,6 +52,10 @@ export const eventReceipt = onCall<EventReceiptRequest, Promise<EventReceiptResp
         throw new HttpsError('permission-denied', 'Forbidden')
       }
 
+      if (stripeRow.pay_amount === 0) {
+        throw new HttpsError('failed-precondition', '支払額 ¥0 の注文には領収書を発行できません')
+      }
+
       if (stripeRow.receipt_number != null) {
         return {
           receiptNumber: stripeRow.receipt_number,
@@ -67,8 +72,7 @@ export const eventReceipt = onCall<EventReceiptRequest, Promise<EventReceiptResp
     const refundedTotal = stripe.refunds.reduce((sum, r) => sum + r.amount, 0)
     // 個別キャンセル後は返金分を差し引いた残額を領収書に記載（番号は初回採番のまま、再発行時は金額のみ更新）
     const totalPrice = Math.max(0, stripe.pay_amount - refundedTotal)
-    const exTaxPrice = Math.ceil(totalPrice / 1.08)
-    const taxPrice = totalPrice - exTaxPrice
+    const { exTaxPrice, taxPrice } = computeInclusive8ExTaxAndTax(totalPrice)
 
     const jsonDataForMerge = {
       event: event.event_name + ' / お食事代として',
