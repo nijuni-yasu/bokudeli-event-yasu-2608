@@ -51,7 +51,9 @@ const groupedMenus = computed(() => {
 })
 
 const totalPrice = computed(() =>
-  props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + o.menu_price, 0),
+  props.orders
+    .filter((o) => o.status !== 'canceled')
+    .reduce((sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0), 0),
 )
 
 const hasActiveOrders = computed(() => props.orders.some((o) => o.status !== 'canceled'))
@@ -66,13 +68,14 @@ const isShowCancelButton = computed(
 
 const isAllCanceled = computed(() => props.orders.length > 0 && props.orders.every((o) => o.status === 'canceled'))
 
-const isShowInvoiceButton = computed(
-  () =>
-    !props.ordersLoading &&
-    !props.ordersError &&
-    props.orders.some((o) => o.status === 'ordered') &&
-    props.event.event_payment === 'user_advance',
-)
+const isShowInvoiceButton = computed(() => {
+  if (props.ordersLoading || props.ordersError) return false
+  if (!props.orders.some((o) => o.status === 'ordered')) return false
+  return (
+    props.event.event_payment === 'user_advance' ||
+    props.orders.some((o) => o.status === 'ordered' && o.stripe_id != null)
+  )
+})
 
 const showOrderSummary = computed(() => !props.ordersLoading && !props.ordersError && groupedMenus.value.length > 0)
 
@@ -82,7 +85,7 @@ const stripeGroups = computed(() => {
     if (!map.has(o.stripe_id!)) {
       map.set(o.stripe_id!, { stripeId: o.stripe_id!, amount: 0 })
     }
-    map.get(o.stripe_id!)!.amount += o.menu_price
+    map.get(o.stripe_id!)!.amount += o.menu_price - (o.payment_community_bill_off_amount ?? 0)
   }
   return Array.from(map.values())
 })

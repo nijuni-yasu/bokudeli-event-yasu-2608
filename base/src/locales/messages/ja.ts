@@ -23,7 +23,7 @@ export default {
     user_on_day: '参加者 当日払い 💰',
     community_bill: '主催者 請求書払い 📄',
     community_bill_free: '主催者請求書払い',
-    community_bill_discount: '主催者請求書払い＋差額事前決済',
+    community_bill_discount: '請求書払い＋差額決済',
   },
   discount_settings: {
     free: '全額おごり',
@@ -38,9 +38,9 @@ export default {
     bill_info_title: '請求先情報',
     chip_free: '💰全額おごり',
     chip_discount: '💰{0}円おごり',
-    banner_free: 'このイベントは主催者からの「全額おごり」でご注文いただけます。',
+    banner_free: '全額、主催者負担でご注文いただけます。追加のお支払いは不要です。',
     banner_discount:
-      'このイベントは主催者のおごりを利用してご注文いただけます。1品あたり最大¥{0}分がおごりとして適用され、差額分はクレジットカードでお支払いします。',
+      'メニュー1個につき{0}円まで主催者負担でご注文いただけます。差額はクレジットカードでお支払いください。',
     original_price: '小計：¥{0}',
     discount_applied: 'おごり合計：¥{0}',
     free_by_organizer: '全額おごり',
@@ -129,13 +129,13 @@ export default {
     delete_failed: '削除に失敗しました。',
     confirm_order_credit_card: 'クレジットカードでのお支払いに進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
-    confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
-    confirm_order_community_bill_checkout: 'おごり適用後の差額をクレジットカードでお支払いします。続きますか？',
+    confirm_order_community_bill: '支払い方法は「主催者請求書払い」です。注文を確定しますか？',
+    confirm_order_community_bill_checkout: 'おごり設定適用後の差額をクレジットカードでお支払いします。続きますか？',
     confirm_order: '注文を確定しますか？',
     remove_from_cart: 'カートから削除しますか？',
     removed_from_cart: 'カートから削除しました。',
     event_not_found: 'イベントが見つかりません。',
-    order_and_attend_event: '注文を完了する',
+    order_and_attend_event: '注文を確定する',
     proceed_to_payment: 'お支払いに進む',
     no_items_in_cart: 'カートに商品はありません。',
     doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
@@ -381,7 +381,7 @@ export default {
     payment_hint_community_bill_title: '主催者請求書払いについて',
     payment_hint_community_bill: `
     ・イベント終了後「請求先メールアドレス」宛に請求書を送付いたします。<br />
-    ・「請求書払い手数料」として注文金額の10%分を加算して、ご請求させていただきます。<br />
+    ・「請求書払い手数料」としてお支払い金額に10%を加算して、ご請求させていただきます。<br />
     ・お支払い方法は銀行振込です。お支払い期限はイベント開催日の翌月末日です。<br />
     ・支払い設定は予約申請後、変更できないためご注意ください。`,
     error_max_people: 'すでに{0}人の予約が入っています',
