@@ -22,25 +22,25 @@ export default {
     user_advance: '参加者 事前決済 💳',
     user_on_day: '参加者 当日払い 💰',
     community_bill: '主催者 請求書払い 📄',
-    community_bill_free: '主催者請求書払い（全額おごり）',
+    community_bill_free: '主催者請求書払い',
     community_bill_discount: '主催者請求書払い＋差額事前決済',
   },
   discount_settings: {
-    title: '金額設定',
     free: '全額おごり',
     free_description: '注文金額の全額を主催者に請求書払いにてまとめてお支払いいただきます。',
     discount: '金額指定おごり',
     discount_description:
-      'おごり金額を指定して、その金額を「1個あたりの上限」として、各メニュー（品目）の単価ごとに主催者負担を算定します。個数分だけ累積されます。差額は参加者が事前決済でお支払いします。割引はすべての参加者に適用されます。',
+      'おごり金額を指定して、その金額を「1個あたりの上限」として、各メニュー（品目）の単価ごとに主催者負担を算定します。個数分だけ累積されます。差額は参加者が事前決済でお支払いします。',
     off_amount: 'おごり金額',
-    off_amount_required: '割引金額は必須です',
-    off_amount_positive_integer: '100円以上の値を入力してください',
-    off_amount_step_100: '100円単位で入力してください',
+    off_amount_required: 'おごり金額は必須です',
+    off_amount_positive_integer: 'おごり金額は100円以上の値を入力してください',
+    off_amount_step_100: 'おごり金額は100円単位で入力してください',
     bill_info_title: '請求先情報',
     chip_free: '💰全額おごり',
     chip_discount: '💰{0}円おごり',
     banner_free: 'このイベントは主催者からの「全額おごり」でご注文いただけます。',
-    banner_discount: 'このイベントは主催者からのおごりで、各メニューは1個あたり最大¥{0}引きでご注文いただけます。',
+    banner_discount:
+      'このイベントは主催者のおごりを利用してご注文いただけます。1品あたり最大¥{0}分がおごりとして適用され、差額分はクレジットカードでお支払いします。',
     original_price: '小計：¥{0}',
     discount_applied: 'おごり合計：¥{0}',
     free_by_organizer: '全額おごり',
@@ -88,6 +88,8 @@ export default {
     participants_profile: '参加者プロフィール',
     participants_profile_hidden: '※参加者プロフィールは非表示です',
     order_count: '（{0}個）',
+    menu_join_button: '注文して参加する',
+    menu_empty: 'メニューがありません',
     community_name: '【主催者】',
     contact_community: '主催者に連絡',
     contact_community_after_login: 'ログインした後に主催者に連絡してください。',
@@ -128,7 +130,7 @@ export default {
     confirm_order_credit_card: 'クレジットカードでのお支払いに進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
-    confirm_order_community_bill_checkout: '割引適用後の差額をクレジットカードでお支払いします。続きますか？',
+    confirm_order_community_bill_checkout: 'おごり適用後の差額をクレジットカードでお支払いします。続きますか？',
     confirm_order: '注文を確定しますか？',
     remove_from_cart: 'カートから削除しますか？',
     removed_from_cart: 'カートから削除しました。',
@@ -373,15 +375,14 @@ export default {
     private_desc:
       '限定公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
-    payment_hint_user_advance: `<b>【参加者 事前決済】</b>を設定した場合：<br />
-    ・食事の代金は、参加者がクレジットカード決済にて事前にお支払いいただきます。<br />
-    ・支払い設定は予約申請後、変更できないためご注意ください。`,
-    payment_hint_community_bill: `<b>【主催者 請求書払い】</b>を設定した場合：<br />
-    ・参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
-    ・イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
-    ・2025年11月1日以降のイベントは、「請求書払い手数料」を加算してご請求させていただきます。<br />
-    ・<b>「請求書払い手数料」</b>は<b>注文金額の10%</b>です。<br />
-    ・銀行振込のお支払い期限は、イベント開催日から翌月末日です。<br />
+    payment_hint_user_advance: `参加者事前決済 を設定した場合<br />
+      食事の代金は、参加者がクレジットカード決済にて事前にお支払いいただきます。<br />
+      支払い設定は予約申請後、変更できないためご注意ください。`,
+    payment_hint_community_bill_title: '主催者請求書払いについて',
+    payment_hint_community_bill: `
+    ・イベント終了後「請求先メールアドレス」宛に請求書を送付いたします。<br />
+    ・「請求書払い手数料」として注文金額の10%分を加算して、ご請求させていただきます。<br />
+    ・お支払い方法は銀行振込です。お支払い期限はイベント開催日の翌月末日です。<br />
     ・支払い設定は予約申請後、変更できないためご注意ください。`,
     error_max_people: 'すでに{0}人の予約が入っています',
   },
