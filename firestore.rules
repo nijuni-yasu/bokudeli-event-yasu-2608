@@ -90,6 +90,12 @@ service cloud.firestore {
             match /letters/{letter} {
                 allow read, write: if isManager()
             }
+            match /album_items/{albumItemId} {
+                // 公開・非公開にかかわらず誰でも閲覧可（コミュニティページのアルバム表示）
+                allow read: if true
+                // アップロード・編集・削除はコミュマネまたはサポート
+                allow create, update, delete: if isManager() || isSupport();
+            }
         }
         match /users/{user_id} {
             allow read: if true
