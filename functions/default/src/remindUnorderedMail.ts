@@ -29,6 +29,7 @@ interface RemindUnorderedTemplateData {
   event_place: string
   shop_name: string
   event_url: string
+  event_cover_url: string
 }
 
 /**
@@ -86,6 +87,7 @@ export async function sendUnorderedRemindMailToManagers(nowMillis: number, start
           event_place: event.event_place !== '' ? event.event_place : event.fullAddress,
           shop_name: event.shop_name,
           event_url: getEventUrl(event.community_account, event.id),
+          event_cover_url: event.event_cover_url,
         }
 
         const sendPromises: Promise<unknown>[] = []

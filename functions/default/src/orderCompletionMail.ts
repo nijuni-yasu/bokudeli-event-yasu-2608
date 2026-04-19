@@ -71,8 +71,8 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
 
   const emails = await getCommunityEmailsForEvent(event)
 
-  // Get small thumbnail URL for user image
-  const userImageUrl = getUserImageUrl(userData.user_id, userData.user_image_url, 'medium', FIREBASE_STORAGE_BASE_URL)
+  // メール上のアバター表示用に large（500px）を使う（medium は 100px で粗く見える）
+  const userImageUrl = getUserImageUrl(userData.user_id, userData.user_image_url, 'large', FIREBASE_STORAGE_BASE_URL)
 
   const dynamicTemplateData = {
     date: convertToDateWeekdayShort(event.event_start_datetime),
