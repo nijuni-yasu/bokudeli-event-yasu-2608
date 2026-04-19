@@ -138,6 +138,18 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
+/** 注文完了で遷移したとき・既存 Pinia ストアが古い一覧のままになるのを防ぐ */
+watch(
+  () => [route.query.eventId, route.query.communityAccount] as const,
+  ([eventId, communityAccount]) => {
+    if (profileUserId === '') return
+    if (eventId != null && communityAccount != null) {
+      userEventListStore.reload()
+    }
+  },
+  { immediate: true },
+)
+
 const downloadReceipt = (eventId: string, stripeId: string) => {
   window.open(getReceiptPath(eventId, stripeId), '_blank')
 }
