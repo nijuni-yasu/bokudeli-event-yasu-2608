@@ -163,9 +163,14 @@ const startOrderProcess = async () => {
           event_id: eventId,
           order_ids: orderIds,
         })
-        router.push(`${getUserPath(userId.value)}?eventId=${eventId}&communityAccount=${event.community_account}`)
       } catch {
         alertBody.value = $t('cart.order_failed')
+        return
+      }
+      try {
+        await router.push(`${getUserPath(userId.value)}?eventId=${eventId}&communityAccount=${event.community_account}`)
+      } catch (error) {
+        console.error('Failed to navigate after order:', error)
       }
     }
   } finally {
@@ -459,7 +464,7 @@ const isOpenCancelpolicyDialog = ref(false)
       </v-card>
     </v-col>
   </v-row>
-  <v-row justify="center" v-else-if="enrichedCart != null">
+  <v-row justify="center" v-else-if="enrichedCart != null && !isOrderProcessing">
     <v-col cols="auto" class="my-5" style="font-size: 18px"> {{ $t('cart.no_items_in_cart') }}</v-col>
   </v-row>
   <v-row v-else justify="center">
