@@ -8,7 +8,7 @@ import {
 } from '@shokujii/common/utils/datetime.js'
 import { DEFAULT_FROM } from './utils/mail.js'
 import { getAcceptingOrderEventsByTime, getEvent, type ShokujiiEvent } from './stores/event.js'
-import { getInCartMemberOrdersByUpdatedTime } from './stores/memberOrder.js'
+import { getInCartMemberOrdersByUpdatedTime, getOrdersInCart } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('inCartNotification')
@@ -93,6 +93,17 @@ export async function sendInCartNotificationToMember(start: number, end: number)
 
   const notificationDataList = await Promise.all(
     orders.map(async (order) => {
+      // 同ユーザー×イベントの in_cart 全行を取得し、最新の updated_at を持つ行だけ送信対象にする。
+      // カートに複数回追加した場合でも、最後の操作から 24h 後に 1 通だけ送られる。
+      const allInCartOrders = await getOrdersInCart(order.community_id, order.event_id, order.user_id)
+      if (allInCartOrders.length === 0) {
+        return null
+      }
+      const latestUpdatedAt = Math.max(...allInCartOrders.map((o) => o.updated_at))
+      if (order.updated_at < latestUpdatedAt) {
+        return null
+      }
+
       const [event, userEmail] = await Promise.all([getEvent(order.event_id), getUserEmail(order.user_id)])
       if (!userEmail || !event) {
         return null
