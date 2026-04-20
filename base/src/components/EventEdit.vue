@@ -98,7 +98,8 @@ watch(
       organizer_email: community.community_email,
       organizer_phone_company: community.community_phone,
       event_name: eventName,
-      event_cover_url: community.community_cover_image_url ?? '',
+      // TODO: 初期設定時に、コミュニティ画像をイベントカバー画像へStorageでコピーする
+      // event_cover_url: community.community_cover_image_url ?? '',
       event_desc: eventDesc,
     })
 
