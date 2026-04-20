@@ -315,12 +315,22 @@ export default {
     no_menus_found: '注文できるメニューがありません',
   },
   event_detail: {
-    title: 'イベント詳細',
+    event_detail: '開催内容',
     event_name: 'イベントタイトル',
+    event_image: 'イベントカバーとアルバム',
     event_cover_url: 'イベントカバー画像',
     event_cover_url_hint: '※カバー画像の推奨サイズは、1200 x 630ピクセル です。',
     event_cover_template:
       '※カバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> もご活用ください🎨',
+    album_preview_title: 'アルバム',
+    album_preview_hint:
+      '※画像はコミュニティ管理の<a href="{albumUrl}" target="_blank" rel="noopener noreferrer">「アルバム」タブ</a>で設定します。イベントページやコミュニティページに表示されます。',
+    album_preview_modal_title: 'アルバムの設定',
+    album_preview_modal_close: '閉じる',
+    album_preview_modal_message:
+      '画像はコミュニティの「アルバム」機能で設定してください。「OK」で設定画面を新しいタブで開きます。',
+    album_preview_image_alt: 'アルバムのプレビュー {0}',
+    album_preview_tile_aria: 'アルバム設定について開く',
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',

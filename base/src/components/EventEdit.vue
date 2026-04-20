@@ -19,7 +19,7 @@ import {
   shouldUpdateExistingMenusOnly,
 } from '@shokujii/common/utils/eventMenuConverter.js'
 import { useRouter } from 'vue-router'
-import { getCommunityPath } from '@/router/utils'
+import { getCommunityPath, getManageCommunityAlbumPath } from '@/router/utils'
 import { calculateDistance, fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/utils/fetchLocation'
 import { isAddressBaseValidForPostalcode } from '@shokujii/base/utils/isAddressBaseValidForPostalcode'
 import { maxBy } from 'lodash'
@@ -151,6 +151,11 @@ const event = computed<BokudeliEvent | null>({
       _event.value = value
     }
   },
+})
+
+const albumManageUrl = computed(() => {
+  const e = event.value
+  return e != null ? getManageCommunityAlbumPath(e.community_account) : ''
 })
 
 const location = ref<LatLogLocation | null>(null)
@@ -536,6 +541,7 @@ const stepperItems = computed(() => [
               v-model="event"
               v-model:cover-image="coverImage"
               :subdomain-tags="communityStore.community?.subdomain_tags"
+              :album-manage-url="albumManageUrl"
             >
               <v-card-text class="text-center mt-10">
                 <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
