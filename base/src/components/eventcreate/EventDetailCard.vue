@@ -2,7 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { emailValidator } from '@core/utils/validators'
 import { useI18n } from 'vue-i18n'
-import { EVENT_PAYMENT_VALUES } from '@shokujii/common/schemas/Event.js'
+// user_on_day 復活時など、スキーマ駆動の支払い選択肢が必要になったら有効化する
+// import { EVENT_PAYMENT_VALUES } from '@shokujii/common/schemas/Event.js'
 import type { CommunityBillSettingsType } from '@shokujii/common/schemas/Event.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useValidators } from '@shokujii/base/composable/validators'
@@ -135,12 +136,13 @@ watch(
   { immediate: true },
 )
 
-const eventPaymentSelectableItems = EVENT_PAYMENT_VALUES.flatMap((type) => {
-  if (type === 'user_on_day') {
-    return []
-  }
-  return { title: $t(`payment.${type}`), value: type }
-})
+// user_on_day は当面 UI から外すが復活の可能性はゼロではないため、除外込みの選択肢配列を残す（現状未使用のためコメントアウト）
+// const eventPaymentSelectableItems = EVENT_PAYMENT_VALUES.flatMap((type) => {
+//   if (type === 'user_on_day') {
+//     return []
+//   }
+//   return { title: $t(`payment.${type}`), value: type }
+// })
 
 const textFieldVariant = computed(() => {
   return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
