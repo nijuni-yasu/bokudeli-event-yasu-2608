@@ -123,9 +123,12 @@ const albumSlides = computed(() => {
           />
           <v-row>
             <v-col>
-              <v-card-title class="justify-center text-h3 pb-6 text-wrap">{{
-                communityStore.community.community_name
-              }}</v-card-title>
+              <v-card-title
+                class="justify-center pt-6 pb-6 text-sm-h2 text-h4 font-weight-black text-wrap"
+                style="line-height: 1.3"
+              >
+                {{ communityStore.community.community_name }}
+              </v-card-title>
               <v-card-text v-linkify class="text-left pb-6">
                 {{ communityStore.community.community_desc }}
               </v-card-text>

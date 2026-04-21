@@ -229,7 +229,7 @@ const downloadReceipt = (eventId: string, stripeId: string) => {
               cols="12"
             >
               <router-link :to="getCommunityPath(community.community_account)">
-                <CommunityCard :community="community" :members="members" :textLength="60" />
+                <CommunityCard :community="community" :members="members" />
               </router-link>
             </v-col>
           </v-row>
@@ -251,7 +251,7 @@ const downloadReceipt = (eventId: string, stripeId: string) => {
               cols="12"
             >
               <router-link :to="getCommunityPath(community.community_account)">
-                <CommunityCard :community="community" :members="members" :textLength="60" />
+                <CommunityCard :community="community" :members="members" />
               </router-link>
             </v-col>
           </v-row>

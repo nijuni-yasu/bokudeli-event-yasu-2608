@@ -23,7 +23,7 @@ const communities = computed(() => {
   <v-row class="justify-center">
     <v-col v-for="community in communities" :key="community.community_id" md="10" sm="12" cols="12">
       <router-link :to="getCommunityPath(community.community_account)">
-        <CommunityCard :community="community" :textLength="150" />
+        <CommunityCard :community="community" />
       </router-link>
     </v-col>
   </v-row>
