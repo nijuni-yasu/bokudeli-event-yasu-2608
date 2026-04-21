@@ -17,6 +17,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@channel.io/channel-web-sdk-loader": "^2.0.0",
     "@shokujii/base": "file:../base",
     "vue-draggable-next": "^2.3.0"
   },

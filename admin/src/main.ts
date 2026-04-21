@@ -12,6 +12,7 @@ import '@/styles/styles.scss'
 import { themes } from '@/themes'
 
 import '@shokujii/base/firebase.js'
+import '@/channelIo'
 
 const app = createApp(defineAsyncComponent(() => import('./App.vue')))
 
