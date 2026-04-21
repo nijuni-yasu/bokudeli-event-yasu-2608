@@ -4,6 +4,7 @@ import { createModuleLogger } from './utils/logger.js'
 import { getEventInCommunity } from './stores/event.js'
 import { getOrders } from './stores/memberOrder.js'
 import { EventMemberOrderStatusType } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { trySendPopularEventMailAfterMembersSync } from './popularEventMail.js'
 
 const logger = createModuleLogger('eventMembers')
 
@@ -27,6 +28,9 @@ export const createEventMembers = onDocumentWritten(
   {
     document: 'communities/{communityId}/events/{eventId}/members/{userId}/member_orders/{orderId}',
     region: 'asia-northeast1',
+    secrets: ['SENDGRID_API_KEY'],
+    memory: '1GiB',
+    timeoutSeconds: 540,
   },
   async (firestoreEvent) => {
     const { communityId, eventId, userId } = firestoreEvent.params
@@ -85,6 +89,19 @@ export const createEventMembers = onDocumentWritten(
         eventId,
         orderId: firestoreEvent.params.orderId,
       })
+      try {
+        await trySendPopularEventMailAfterMembersSync({
+          communityId,
+          eventId,
+          triggerUserId: userId,
+        })
+      } catch (error) {
+        logger.error('Popular event mail after members sync failed', {
+          error,
+          communityId,
+          eventId,
+        })
+      }
     }
   },
 )

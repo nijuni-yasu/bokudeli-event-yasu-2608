@@ -33,6 +33,8 @@ export interface SendDynamicTemplateBulkMessage {
   templateId: string
   subject?: string
   replyTo?: MailDataRequired['replyTo']
+  /** 全バッチ共通の BCC（各バッチで同一 `message` を渡すことで全宛先に同じ BCC が付く） */
+  bcc?: MailDataRequired['bcc']
   asm?: MailDataRequired['asm']
   categories?: MailDataRequired['categories']
   mailSettings?: MailDataRequired['mailSettings']
@@ -181,6 +183,9 @@ const buildMailPayload = (
   }
   if (message.replyTo !== undefined) {
     payload.replyTo = message.replyTo
+  }
+  if (message.bcc !== undefined) {
+    payload.bcc = message.bcc
   }
   if (message.asm !== undefined) {
     payload.asm = message.asm
