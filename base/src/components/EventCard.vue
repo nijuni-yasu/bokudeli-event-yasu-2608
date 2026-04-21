@@ -49,12 +49,16 @@ const avatarSize = computed(() => {
     <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
       {{ $t('event_card.place', [event.fullAddress]) }}
     </v-card-title>
-    <v-card-title class="text-left px-3 py-0 text-subtitle-2" style="line-height: 1.75rem">
+    <v-card-title class="text-left px-3 pt-0 pb-2 text-subtitle-2" style="line-height: 1.75rem">
       {{ $t('event_card.shop', [event.shop_name]) }}
     </v-card-title>
-    <v-card-text class="text-left px-3 pt-0 pb-1 text-subtitle-2" style="line-height: 1.75rem">
+    <!--
+      実験的に非表示: event_card.participants の人数表示。
+      参加人数を気しない方が参加率は高まるかの検証。本採用時はコメントを外して有効化する。
+    -->
+    <!-- <v-card-text class="text-left px-3 pt-0 pb-1 text-subtitle-2" style="line-height: 1.75rem">
       {{ $t('event_card.participants', [(members ?? []).length, event.event_max_people]) }}
-    </v-card-text>
+    </v-card-text> -->
     <!-- Mutual members -->
     <v-card-text class="position-relative px-3 pb-2 avatar-scroll-container" style="min-height: 50px">
       <div class="v-avatar-group">
