@@ -26,7 +26,7 @@ lint・format チェックを先に通すことで、CI で落ちるコードを
 
 ### 2. push 先リモートの決定
 
-`github-actions-deploy` スキルの手順 1（1a / 1b / 1c）に従い、**リモート名**・**OWNER/REPO**・**ref（ブランチ名）** を決定する。
+`github-actions-deploy` スキルと同じ基準で、**リモート名**・**OWNER/REPO**・**ref（ブランチ名）** を決定する。ユーザーが会話で **`リモート名/ブランチ名`（例: `sandbox2510/feat/960-v2`）** または **リポ（URL / owner/repo）とブランチ**を明示していない場合は、push もデプロイ発火も行わず、指定を求める。**ローカルの `@{upstream}` や現在ブランチだけ**から push 先・ref を決めてはならない。
 
 手順 3 では、必ず次で実際の URL を検証する（文字列だけの OWNER/REPO 判断だけでは、ローカルの `git remote` 設定と意図がずれていても気づけないため）。
 
@@ -80,9 +80,9 @@ git push --force-with-lease <リモート名> HEAD:<ref>
 
 ### 6. デプロイ発火
 
-`github-actions-deploy` スキルの手順 3〜6 に従い、手順 2 で決定した OWNER/REPO と ref を使って workflow_dispatch を発火する。
+`github-actions-deploy` スキルの手順に従い、**このスキルの手順 2** で決定した OWNER/REPO と ref を使って workflow_dispatch を発火する。
 
-手順 2 で OWNER/REPO と ref が既に確定しているため、`github-actions-deploy` の手順 1（検出ロジック）は改めて実行しない。手順 3（environment 入力）から開始する。
+**`github-actions-deploy` の手順 1**（OWNER/REPO・ref の決定）は、ここでは既に確定しているため繰り返さない。**`github-actions-deploy` の手順 2**（本番ブロック）は、**このスキルの手順 3** で URL を検証済みなら省略してよい。**`github-actions-deploy` の手順 3**（environment 入力）から **手順 6**（結果報告）までに従う。
 
 ### 7. 結果の報告
 
