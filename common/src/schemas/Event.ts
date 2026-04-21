@@ -92,6 +92,7 @@ export const EventDbSchema = z.object({
   organizer_phone_company: NonEmptyStringSchema.optional(),
   subdomain_tags: z.array(z.string()).optional(),
   sent_new_event_mail_at: TimestampSchema.optional(),
+  sent_popular_event_mail_at: TimestampSchema.optional(),
 })
 
 /**
@@ -151,6 +152,7 @@ const EventAppSchema = z.object({
   organizer_phone_personal: z.string().default(''),
   organizer_memo: z.string().default(''),
   sent_new_event_mail_at: EpochMillisSchema.optional(),
+  sent_popular_event_mail_at: EpochMillisSchema.optional(),
 })
 
 const convertToDb = (event: Event, updated_by: string) => {
@@ -213,6 +215,7 @@ export class Event {
   updated_at: number
   updated_by?: string
   sent_new_event_mail_at?: number
+  sent_popular_event_mail_at?: number
 
   constructor(id: string, src: Partial<Event>) {
     Object.assign(this, EventAppSchema.parse({ ...src, event_id: id }))
