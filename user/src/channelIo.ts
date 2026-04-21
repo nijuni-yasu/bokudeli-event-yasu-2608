@@ -6,8 +6,8 @@ ChannelService.loadScript()
 const pluginKey = import.meta.env.VITE_CHANNEL_IO_PLUGIN_KEY
 if (pluginKey) {
   ChannelService.boot({
-    pluginKey: import.meta.env.VITE_CHANNEL_IO_PLUGIN_KEY,
-    hideChannelButtonOnBoot: false,
+    pluginKey,
+    hideChannelButtonOnBoot: true,
   })
 } else {
   console.error('ChannelService plugin key is not defined')
