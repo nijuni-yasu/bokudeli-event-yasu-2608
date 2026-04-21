@@ -132,7 +132,7 @@ const isShowMember = computed(() =>
     <v-row>
       <v-col>
         <!-- イベント情報 -->
-        <v-card-title class="pt-6 pb-0 text-sm-h2 text-h4 font-weight-black text-wrap" style="line-height: 1.3">
+        <v-card-title class="event-details-card__event-name pt-6 pb-0 font-weight-black text-wrap">
           {{ event.event_name }}
         </v-card-title>
         <v-card-text class="event-item text-right px-0 py-0 ma-1">
@@ -396,6 +396,16 @@ const isShowMember = computed(() =>
   </show-dialog>
 </template>
 <style lang="scss" scoped>
+/* text-h4 は付けない（Vuetify の font-size が !important で競合するため）。ここで xs / sm を定義 */
+.event-details-card__event-name {
+  line-height: 1.3;
+  font-size: 1.5rem; /* 従来 text-h4 相当 24px @ 16px root */
+
+  @media (min-width: 600px) {
+    font-size: 2.125rem; /* 34px @ 16px root */
+  }
+}
+
 .event-content {
   padding-bottom: 0px;
   color: #2e263db3;
