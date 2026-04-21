@@ -1,5 +1,6 @@
 import { type User, getAuth, onAuthStateChanged } from 'firebase/auth'
 import type { Router } from 'vue-router'
+import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 
@@ -76,6 +77,10 @@ export const setupRouter = (router: Router) => {
         router.push({ path: '/login', query: { redirect: to.fullPath } })
       }
     }
+  })
+
+  router.beforeEach(() => {
+    ChannelService.showChannelButton()
   })
 
   // イベント削除チェック
