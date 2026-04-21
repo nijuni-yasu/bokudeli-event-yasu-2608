@@ -132,7 +132,8 @@ const bodyImageUploadHandler = async (blobInfo: BlobInfo) => {
 
 const tinymceInit = computed(() => ({
   language: 'ja',
-  plugins: 'lists link autolink image autoresize',
+  plugins: 'lists link autolink image autoresize paste',
+  contextmenu: 'copy cut paste pastetext | link image',
   menubar: false,
   min_height: 400,
   max_height: 800,
