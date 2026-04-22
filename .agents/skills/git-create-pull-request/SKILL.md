@@ -1,6 +1,6 @@
 ---
 name: git-create-pull-request
-description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。PR 作成、プルリク作成、PR 本文の更新、マージ前の PR 整理、force push 後の PR 更新、squash 後の PR 更新、変更内容の PR への反映など、PR に関する作業全般で使用する。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
+description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。gh pr create または gh pr edit のあと、**必ず**固定文の gh pr comment で @copilot @codex にレビュー依頼する。マージ前の整理、force push や squash 後の更新など PR 全般。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
 ---
 
 # PR 本文生成
@@ -33,6 +33,25 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 9. 手順 1 の確認結果に応じて、実行方法を判断する
    - **新規作成**: PR が紐づいていない場合 → 本文を出力し、gh pr create 実行時は --base development を指定する。ユーザーに確認を取る
    - **既存 PR の本文更新**: PR が紐づいている場合 → 本文を出力し、gh pr edit で本文を更新する場合はユーザーに確認を取る。本文をファイルに保存した場合は gh pr edit --body-file を使用する
+
+10.（任意）**GitHub Copilot** と **Codex コネクタ**にレビューを依頼する。ユーザーに確認を取り、`gh` でレビュワーを指定する
+    - 新規作成: `gh pr create --base development ... --reviewer @copilot --reviewer 'chatgpt-codex-connector[bot]'`（`gh pr create` は `--reviewer` ／ `gh pr edit` は `--add-reviewer` で別名）
+    - 既存 PR: `gh pr edit --add-reviewer @copilot --add-reviewer 'chatgpt-codex-connector[bot]'`（重複依頼にならないよう、既に付いていればスキップしてよい）
+    - `gh` は v2.88.0 以降（`@copilot` 利用に必要）を推奨
+    - zsh では `chatgpt-codex-connector[bot]` の **シングルクォート**必須（`[ ]` のグロブ展開を防ぐ）
+    - レビュワー指定だけでは観点が伝わらないことがある。PR 本文の「レビューしてほしい観点」に shokujii コードレビュー方針へのリンクを必ず入れる
+    - 依頼の到達性の核は**手順 11**の固定コメント。手順 10 は併用を推奨する任意
+
+11.（必須）手順 9 で `gh pr create` または `gh pr edit` を実行し、**PR の作成・本文更新が反映された直後**に、次の**固定文だけ**のレビュー依頼コメントを `gh pr comment` で**必ず**送る。手順 10 の有無に関わらず省略しない。ユーザーに手順 9 の実行の確認を取ったうえで、同じ会話内で手順 11 まで完遂する
+
+    改行入りの本文は一括で `--body` に渡す（zsh では**シングルクォート**で全体を囲むと @ が安全）。**文言・改行・URL を変えないこと**:
+
+```
+gh pr comment --body '@copilot @codex review 日本語でレビューをお願いします。レビューは以下ドキュメントを参考にしてください。
+https://github.com/nijuniinc/bokudeli-event-new/blob/development/.agents/skills/shokujii-code-review/shokujii-code-review.md'
+```
+
+    直前に PR を紐づいていないブランチの場合は `gh pr comment 番号` の形で番号を明示する。手順 9 を挟むたびに同文が積み上がるのは意図どおり。コメントを減らしたい運用に変える場合はスキル更新で別定義する
 
 ---
 
@@ -104,7 +123,11 @@ Issue 番号は PR タイトルには含めず、本文の関連 Issue や close
 
 ### レビューしてほしい観点
 
-設計上の判断・迷いどころ・特に確認してほしいファイル・リスクを差分から抽出して記述する。
+次のレビュー基準ドキュメントを参照することを必ず1行目に記載する（URL はそのまま用いる）:
+
+- `https://github.com/nijuniinc/bokudeli-event-new/blob/development/.agents/skills/shokujii-code-review/shokujii-code-review.md`
+
+上記に加え、設計上の判断・迷いどころ・特に確認してほしいファイル・リスクを差分から抽出して箇条書きで記述する。人間用の要約に加え、**手順 11** では同じ URL を **@copilot @codex** 付きの PR コメントで必ず送る、という二重化を行う（依頼の到達性を上げる目的）。
 推定できない場合は「要確認」と記述して手動補完を促す。
 
 ### 確認済み事項
@@ -124,8 +147,10 @@ Firestore 変更時・Functions 変更時のチェック項目は該当する場
 
 - 日本語で記述する
 - 推定できない箇所は空欄または「要確認」と記述し、手動で補完を促す
-- gh pr create および gh pr edit を実行する場合は、ユーザーに確認を取ってから実行する
+- gh pr create および gh pr edit、gh pr comment を実行する場合は、ユーザーに確認を取ってから実行する
+- 手順 9 を実行したときは**手順 11 を必ず実行する**（固定文の `gh pr comment` を省略しない）
 
 ## 運用上の推奨
 
 - force push や squash でブランチ内容が変わった後は、既存 PR の本文を更新することを推奨する
+- PR 本文に shokujii のレビュー基準を書き、**手順 11**の固定 `gh pr comment` は必須。任意のうえで、新規は `gh pr create` の `--reviewer`、既存 PR は `gh pr edit` の `--add-reviewer` で @copilot と `chatgpt-codex-connector[bot]` を足す、とすると本文・レビュワー欄・コメントの三経路で補完しやすい
