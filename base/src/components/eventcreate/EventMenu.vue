@@ -6,6 +6,7 @@ import { BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
 
 const { t } = useI18n()
 
@@ -15,6 +16,11 @@ const props = defineProps<{
   event: BokudeliEvent
   loading: boolean
   disabled?: boolean
+  /**
+   * EventEdit のステッパー連携用。親から必ず渡す。
+   * アクティブなステップのとき true にし、Teleport した固定ナビを body に出す。
+   */
+  stepNavVisible: boolean
 }>()
 
 const emit = defineEmits<{
@@ -131,24 +137,31 @@ const selectedCount = computed(() => {
                 </v-card>
               </v-col>
             </v-row>
-
-            <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back">
-                {{ t('event_edit.back') }}
-              </v-btn>
-              <v-btn
-                color="primary"
-                class="me-3 mt-3"
-                size="large"
-                :append-icon="mdiChevronRight"
-                :disabled="selectedCount === 0"
-                @click="submit"
-              >
-                {{ t('event_edit.next') }}
-              </v-btn>
-            </v-card-text>
           </v-form>
         </v-card>
+        <event-edit-step-nav :visible="stepNavVisible">
+          <v-btn
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :prepend-icon="mdiChevronLeft"
+            @click="back"
+          >
+            {{ t('event_edit.back') }}
+          </v-btn>
+          <v-btn
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :append-icon="mdiChevronRight"
+            :disabled="selectedCount === 0"
+            @click="submit"
+          >
+            {{ t('event_edit.next') }}
+          </v-btn>
+        </event-edit-step-nav>
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">

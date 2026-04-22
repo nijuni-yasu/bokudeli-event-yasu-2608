@@ -15,6 +15,7 @@ import {
 } from '@mdi/js'
 import { convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
+import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
 
 const emit = defineEmits<{
   submit: []
@@ -29,6 +30,11 @@ const props = defineProps<{
   loadingSubmit?: boolean
   loadingReserve?: boolean
   loadingMenu?: boolean
+  /**
+   * EventEdit のステッパー連携用。親から必ず渡す。
+   * アクティブなステップのとき true にし、Teleport した固定ナビを body に出す。
+   */
+  stepNavVisible: boolean
 }>()
 
 const { t: $t } = useI18n()
@@ -248,49 +254,6 @@ const submit = () => {
             </v-row>
           </v-card-text>
 
-          <v-card-text class="text-center mt-10">
-            <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="emit('back')"
-              >前へ</v-btn
-            >
-            <v-btn
-              v-if="!event.event_id"
-              color="primary"
-              class="mt-3"
-              size="large"
-              :prepend-icon="mdiCalendarPlus"
-              :disabled="!isValid || props.loadingReserve || props.loadingMenu"
-              :loading="props.loadingSubmit"
-              @click="submit"
-              >{{ $t('shop_notice.preview_draft') }}</v-btn
-            >
-            <v-btn
-              v-else
-              color="primary"
-              class="mt-3"
-              size="large"
-              :prepend-icon="mdiCalendarPlus"
-              :disabled="!isValid || props.loadingReserve || props.loadingMenu"
-              :loading="props.loadingSubmit"
-              @click="submit"
-              >{{ $t('shop_notice.save_event') }}</v-btn
-            >
-          </v-card-text>
-          <v-card-text class="text-center mx-0 px-0">
-            <v-btn
-              v-if="event.event_id"
-              :disabled="
-                !isValid || event.event_status?.value !== 'in_draft' || props.loadingSubmit || props.loadingMenu
-              "
-              :loading="props.loadingReserve"
-              color="grey-900"
-              class="mt-3"
-              size="x-large"
-              :prepend-icon="mdiEmailOutline"
-              @click="openConfirmDialog"
-            >
-              {{ $t('shop_notice.send_reserve_mail') }}
-            </v-btn>
-          </v-card-text>
           <confirm-dialog
             v-model="isOpenConfirmDialog"
             :is-confirm="true"
@@ -307,8 +270,94 @@ const submit = () => {
           </confirm-dialog>
         </v-form>
       </v-card>
+      <event-edit-step-nav :visible="stepNavVisible">
+        <div class="event-shop-notice-footer__stack">
+          <div class="event-shop-notice-footer__top">
+            <v-btn
+              color="primary"
+              size="x-large"
+              rounded="xl"
+              min-width="168"
+              :prepend-icon="mdiChevronLeft"
+              @click="emit('back')"
+            >
+              {{ $t('event_edit.back') }}
+            </v-btn>
+            <v-btn
+              v-if="!event.event_id"
+              color="primary"
+              size="x-large"
+              rounded="xl"
+              min-width="168"
+              :prepend-icon="mdiCalendarPlus"
+              :disabled="!isValid || props.loadingReserve || props.loadingMenu"
+              :loading="props.loadingSubmit"
+              @click="submit"
+            >
+              {{ $t('shop_notice.preview_draft') }}
+            </v-btn>
+            <v-btn
+              v-else
+              color="primary"
+              size="x-large"
+              rounded="xl"
+              min-width="168"
+              :prepend-icon="mdiCalendarPlus"
+              :disabled="!isValid || props.loadingReserve || props.loadingMenu"
+              :loading="props.loadingSubmit"
+              @click="submit"
+            >
+              {{ $t('shop_notice.save_event') }}
+            </v-btn>
+          </div>
+          <v-btn
+            v-if="event.event_id"
+            class="event-shop-notice-footer__reserve"
+            :disabled="!isValid || event.event_status?.value !== 'in_draft' || props.loadingSubmit || props.loadingMenu"
+            :loading="props.loadingReserve"
+            color="grey-900"
+            size="x-large"
+            rounded="xl"
+            :prepend-icon="mdiEmailOutline"
+            @click="openConfirmDialog"
+          >
+            {{ $t('shop_notice.send_reserve_mail') }}
+          </v-btn>
+        </div>
+      </event-edit-step-nav>
     </v-col>
   </v-row>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+/* 上段（戻る＋保存）の幅に合わせて下段の予約申請ボタン幅を揃える */
+.event-shop-notice-footer__stack {
+  display: inline-grid;
+  grid-template-columns: max-content;
+  justify-items: stretch;
+  gap: 10px;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.event-shop-notice-footer__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.event-shop-notice-footer__reserve {
+  min-width: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  :deep(.v-btn__content) {
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+  }
+}
+</style>

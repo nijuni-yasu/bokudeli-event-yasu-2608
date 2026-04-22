@@ -5,12 +5,18 @@ import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
 import { convertTruncateText, postalcodeString } from '@shokujii/base/schemes/converter'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
 
 const props = defineProps<{
   shops: BokudeliPartnerShop[]
   modelValue: BokudeliEvent
   loading: boolean
   isUpdatedStartTime: boolean
+  /**
+   * EventEdit のステッパー連携用。親から必ず渡す。
+   * アクティブなステップのとき true にし、Teleport した固定ナビを body に出す。
+   */
+  stepNavVisible: boolean
 }>()
 
 const event = defineModel<BokudeliEvent>({ required: true })
@@ -178,22 +184,31 @@ const isOpenDeadlineDialog = ref(false)
                 <h4 class="mt-4">{{ $t('event_shop.shop_not_found') }}</h4>
               </v-col>
             </v-row>
-            <v-card-text class="text-center mt-10">
-              <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="back">{{
-                $t('event_shop.back')
-              }}</v-btn>
-              <v-btn
-                v-if="props.modelValue.shop_id"
-                color="primary"
-                class="me-3 mt-3"
-                size="large"
-                :append-icon="mdiChevronRight"
-                @click="next"
-                >{{ $t('event_shop.next') }}</v-btn
-              >
-            </v-card-text>
           </v-form>
         </v-card>
+        <event-edit-step-nav :visible="stepNavVisible">
+          <v-btn
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :prepend-icon="mdiChevronLeft"
+            @click="back"
+          >
+            {{ $t('event_edit.back') }}
+          </v-btn>
+          <v-btn
+            v-if="props.modelValue.shop_id"
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :append-icon="mdiChevronRight"
+            @click="next"
+          >
+            {{ $t('event_edit.next') }}
+          </v-btn>
+        </event-edit-step-nav>
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">
