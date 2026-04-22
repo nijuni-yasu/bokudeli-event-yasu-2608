@@ -95,4 +95,4 @@ jobs:
         with:
           project_id: ${{ vars.PROJECT_ID }}
           service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          args: '--only functions'
+          args: '--force --only functions'
