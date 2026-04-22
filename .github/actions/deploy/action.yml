@@ -3,7 +3,7 @@ inputs:
   firebase_tools_version:
     description: 'The version of the Firebase CLI to install'
     required: false
-    default: '13.35.1'
+    default: '15.15.0'
   project_id:
     description: 'The Firebase project ID'
     required: true
