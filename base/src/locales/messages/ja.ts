@@ -307,10 +307,10 @@ export default {
     shop_not_found: 'お店が見つかりませんでした',
   },
   event_menu: {
-    select_menu_instruction: '参加者が注文できるメニューを選択してください',
+    select_menu_instruction: '参加者が注文できるメニューを選択いただけます',
     selected_count: '選択中: {count} / {total} メニュー',
-    orderable: '注文可能',
-    not_orderable: '注文不可',
+    orderable: '選択中',
+    not_orderable: '非表示',
     no_menus_found: '注文できるメニューがありません',
   },
   event_detail: {

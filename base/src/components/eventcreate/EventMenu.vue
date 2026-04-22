@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { priceString } from '@shokujii/base/schemes/converter'
-import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline } from '@mdi/js'
+import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline, mdiGestureTap } from '@mdi/js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
 
@@ -93,12 +93,14 @@ const selectedCount = computed(() => {
             </v-card-text>
 
             <!-- 選択カウント表示 -->
-            <v-card-subtitle v-if="props.menus.length" class="text-center text-h6 my-6">
-              {{ t('event_menu.select_menu_instruction') }}
-              <v-chip color="primary" class="ml-2">
-                {{ t('event_menu.selected_count', { count: selectedCount, total: props.menus.length }) }}
-              </v-chip>
-            </v-card-subtitle>
+            <v-alert v-if="props.menus.length" :icon="mdiGestureTap" variant="tonal" color="primary" class="mx-2 my-6">
+              <div class="d-flex flex-wrap align-center gap-2">
+                <span class="text-body-1 font-weight-bold">{{ t('event_menu.select_menu_instruction') }}</span>
+                <v-chip color="primary" variant="elevated" size="small">
+                  {{ t('event_menu.selected_count', { count: selectedCount, total: props.menus.length }) }}
+                </v-chip>
+              </div>
+            </v-alert>
             <v-card-subtitle v-else class="text-center text-h4 my-15 py-15">
               {{ t('event_menu.no_menus_found') }}
             </v-card-subtitle>
@@ -119,9 +121,10 @@ const selectedCount = computed(() => {
 
                   <!-- 選択状態インジケーター -->
                   <v-chip
-                    :color="isMenuSelected(item.menu_id) ? 'success' : 'grey'"
+                    :color="isMenuSelected(item.menu_id) ? 'primary' : 'grey'"
+                    variant="elevated"
                     class="selection-indicator"
-                    size="small"
+                    size="default"
                   >
                     {{ isMenuSelected(item.menu_id) ? t('event_menu.orderable') : t('event_menu.not_orderable') }}
                   </v-chip>
