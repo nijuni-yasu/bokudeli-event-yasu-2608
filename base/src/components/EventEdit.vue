@@ -236,6 +236,18 @@ const currentUserStore = useCurrentUserStore()
 const stepQuery = Number.parseInt(props.step)
 const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
 
+watch(
+  stepper,
+  (newVal) => {
+    if (newVal !== 5 || event.value == null || event.value.organizer_memo !== '') return
+    const address = [event.value.event_address_base, event.value.event_address_detail].filter(Boolean).join(' ')
+    if (address) {
+      event.value.organizer_memo = $t('event_edit.organizer_memo_default', { address })
+    }
+  },
+  { immediate: true },
+)
+
 const isUpdatedStartTime = ref(false)
 
 // partner_id に基づいて PartnerMenu を取得（null = 未取得）

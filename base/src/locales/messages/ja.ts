@@ -283,6 +283,7 @@ export default {
     back: '戻る',
     next: '進む',
     step_nav_aria_label: 'ステップナビゲーション',
+    organizer_memo_default: '{address} に到着しましたらお電話ください。お迎えにあがります。よろしくお願いいたします。',
   },
   event_basic_info: {
     place: '開催場所',
