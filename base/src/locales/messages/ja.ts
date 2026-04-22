@@ -280,8 +280,10 @@ export default {
     bill_email: '請求先 メールアドレス',
   },
   event_edit: {
-    back: '前へ',
-    next: '次へ',
+    back: '戻る',
+    next: '進む',
+    step_nav_aria_label: 'ステップナビゲーション',
+    organizer_memo_default: '{address} に到着しましたらお電話ください。お迎えにあがります。よろしくお願いいたします。',
   },
   event_basic_info: {
     place: '開催場所',
@@ -304,14 +306,12 @@ export default {
     button_selected: '選択中',
     button_check_menu: 'メニューをみる',
     shop_not_found: 'お店が見つかりませんでした',
-    back: '前へ',
-    next: '次へ',
   },
   event_menu: {
-    select_menu_instruction: '参加者が注文できるメニューを選択してください',
+    select_menu_instruction: '参加者が注文できるメニューを選択いただけます',
     selected_count: '選択中: {count} / {total} メニュー',
-    orderable: '注文可能',
-    not_orderable: '注文不可',
+    orderable: '選択中',
+    not_orderable: '非表示',
     no_menus_found: '注文できるメニューがありません',
   },
   event_detail: {

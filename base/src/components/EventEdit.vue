@@ -6,6 +6,7 @@ import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
 import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventShopNotice from '@shokujii/base/components/eventcreate/EventShopNotice.vue'
+import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
 import { BokudeliEvent, createNewEvent, updateEventMenus } from '@shokujii/base/stores/event.js'
 import { usePartnerStore, type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useEventStore, type EventStore, BokudeliEventMenu } from '@shokujii/base/stores/event'
@@ -234,6 +235,18 @@ const currentUserStore = useCurrentUserStore()
 // @ts-expect-error parseInt can take no string params, then return NaN
 const stepQuery = Number.parseInt(props.step)
 const stepper = ref(Number.isNaN(stepQuery) ? 1 : stepQuery)
+
+watch(
+  stepper,
+  (newVal) => {
+    if (newVal !== 5 || event.value == null || event.value.organizer_memo !== '') return
+    const address = [event.value.event_address_base, event.value.event_address_detail].filter(Boolean).join(' ')
+    if (address) {
+      event.value.organizer_memo = $t('event_edit.organizer_memo_default', { address })
+    }
+  },
+  { immediate: true },
+)
 
 const isUpdatedStartTime = ref(false)
 
@@ -487,95 +500,107 @@ const stepperItems = computed(() => [
 </script>
 
 <template>
-  <v-stepper v-if="event" v-model="stepper" :items="stepperItems" hide-actions>
-    <template #[`item.1`]>
-      <v-form v-model="isValid1">
-        <v-row class="justify-center">
-          <v-col cols="12" sm="12" md="9">
-            <event-basic-info-card v-model="event">
-              <v-card-text class="text-center mt-10">
+  <div v-if="event" class="event-edit-page">
+    <v-stepper v-model="stepper" :items="stepperItems" hide-actions>
+      <template #[`item.1`]>
+        <v-form v-model="isValid1">
+          <v-row class="justify-center">
+            <v-col cols="12" sm="12" md="9">
+              <event-basic-info-card v-model="event" />
+              <event-edit-step-nav :visible="stepper === 1">
                 <v-btn
                   color="primary"
-                  class="me-3 mt-3"
-                  size="large"
+                  size="x-large"
+                  rounded="xl"
+                  min-width="168"
                   :append-icon="mdiChevronRight"
                   :disabled="!isValid1"
                   @click="stepper++"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
-              </v-card-text>
-            </event-basic-info-card>
-          </v-col>
-        </v-row>
-      </v-form>
-    </template>
-    <template #[`item.2`]>
-      <event-shop
-        v-model="event"
-        :shops="shops ?? []"
-        :loading="shops == null"
-        :is-updated-start-time="isUpdatedStartTime"
-        @submit="stepper++"
-        @next="stepper++"
-        @back="stepper--"
-      />
-    </template>
-    <template #[`item.3`]>
-      <event-menu
-        :menus="eventMenus"
-        :event="event"
-        :shop="selectedShop"
-        :loading="isLoadingMenu"
-        :disabled="isFinished"
-        @update:selectedMenuIds="handleMenuIdsUpdate"
-        @submit="stepper++"
-        @back="stepper--"
-      />
-    </template>
-    <template #[`item.4`]>
-      <v-form v-model="isValid4">
-        <v-row class="justify-center">
-          <v-col cols="12" sm="12" md="9">
-            <event-detail-card
-              v-model="event"
-              v-model:cover-image="coverImage"
-              :subdomain-tags="communityStore.community?.subdomain_tags"
-              :album-manage-url="albumManageUrl"
-            >
-              <v-card-text class="text-center mt-10">
-                <v-btn color="primary" class="me-3 mt-3" size="large" :prepend-icon="mdiChevronLeft" @click="stepper--">
+              </event-edit-step-nav>
+            </v-col>
+          </v-row>
+        </v-form>
+      </template>
+      <template #[`item.2`]>
+        <event-shop
+          v-model="event"
+          :shops="shops ?? []"
+          :loading="shops == null"
+          :is-updated-start-time="isUpdatedStartTime"
+          :step-nav-visible="stepper === 2"
+          @submit="stepper++"
+          @next="stepper++"
+          @back="stepper--"
+        />
+      </template>
+      <template #[`item.3`]>
+        <event-menu
+          :menus="eventMenus"
+          :event="event"
+          :shop="selectedShop"
+          :loading="isLoadingMenu"
+          :disabled="isFinished"
+          :step-nav-visible="stepper === 3"
+          @update:selectedMenuIds="handleMenuIdsUpdate"
+          @submit="stepper++"
+          @back="stepper--"
+        />
+      </template>
+      <template #[`item.4`]>
+        <v-form v-model="isValid4">
+          <v-row class="justify-center">
+            <v-col cols="12" sm="12" md="9">
+              <event-detail-card
+                v-model="event"
+                v-model:cover-image="coverImage"
+                :subdomain-tags="communityStore.community?.subdomain_tags"
+                :album-manage-url="albumManageUrl"
+              />
+              <event-edit-step-nav :visible="stepper === 4">
+                <v-btn
+                  color="primary"
+                  size="x-large"
+                  rounded="xl"
+                  min-width="168"
+                  :prepend-icon="mdiChevronLeft"
+                  @click="stepper--"
+                >
                   {{ $t('event_edit.back') }}
                 </v-btn>
                 <v-btn
                   color="primary"
-                  class="me-3 mt-3"
-                  size="large"
+                  size="x-large"
+                  rounded="xl"
+                  min-width="168"
                   :append-icon="mdiChevronRight"
                   :disabled="!isValid4"
                   @click="stepper++"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
-              </v-card-text>
-            </event-detail-card>
-          </v-col>
-        </v-row>
-      </v-form>
-    </template>
-    <template #[`item.5`]>
-      <event-shop-notice
-        v-model="event"
-        v-model:shop="selectedShop"
-        :loading-submit="isSubmitting"
-        :loading-reserve="isReserveMailing"
-        :loading-menu="isLoadingMenu"
-        @submit="submit"
-        @send-reserve-mail="sendReserveMail"
-        @back="stepper--"
-      />
-    </template>
-  </v-stepper>
+              </event-edit-step-nav>
+            </v-col>
+          </v-row>
+        </v-form>
+      </template>
+      <template #[`item.5`]>
+        <event-shop-notice
+          v-model="event"
+          v-model:shop="selectedShop"
+          :loading-submit="isSubmitting"
+          :loading-reserve="isReserveMailing"
+          :loading-menu="isLoadingMenu"
+          :step-nav-visible="stepper === 5"
+          @submit="submit"
+          @send-reserve-mail="sendReserveMail"
+          @back="stepper--"
+        />
+      </template>
+    </v-stepper>
+  </div>
   <confirm-dialog v-model="isContactDialogOpen" :ok-text="'OK'" max-width="800px">
     <div class="text-center py-6 text-h4">
       {{ $t('event_create_modal.title') }}
@@ -591,6 +616,11 @@ const stepperItems = computed(() => [
 </template>
 
 <style lang="scss" scoped>
+.event-edit-page {
+  /* 最終ステップの2段フッター（戻る・保存 + 予約申請）用に余白を確保 */
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+}
+
 @media (max-width: 600px) {
   :deep(.v-stepper-window) {
     margin: 0;

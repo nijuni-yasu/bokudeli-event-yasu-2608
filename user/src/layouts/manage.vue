@@ -8,6 +8,9 @@ import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
 import { useNavItems } from '@/navigation/manage'
 import type { Notification } from '@shokujii/base/types/index.js'
+import { useLayoutConfigStore } from '@layouts/stores/config'
+import { FooterType } from '@layouts/enums'
+import { layoutConfig } from '@themeConfig'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -43,6 +46,29 @@ const isNotificationShown = computed({
       notification.color = undefined
     }
   },
+})
+
+const route = useRoute()
+const layoutConfigStore = useLayoutConfigStore()
+
+/** イベント編集（新規・設定タブ）ではサイトフッターを隠し、固定ステップナビと重ならないようにする */
+const isEventEditFooterHidden = (path: string) => {
+  const normalized = path.replace(/\/$/, '') || '/'
+  return (
+    /\/manage\/community\/[^/]+\/newevent$/.test(normalized) || /\/manage\/event\/[^/]+\/settings$/.test(normalized)
+  )
+}
+
+watch(
+  () => route.path,
+  (path) => {
+    layoutConfigStore.footerType = isEventEditFooterHidden(path) ? FooterType.Hidden : layoutConfig.footer.type
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  layoutConfigStore.footerType = layoutConfig.footer.type
 })
 </script>
 
