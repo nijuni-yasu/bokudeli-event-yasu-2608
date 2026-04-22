@@ -2,7 +2,12 @@
 import { ref, reactive, computed, watch, onUnmounted } from 'vue'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useRoute, useRouter } from 'vue-router'
-import { getEventEditPathByRawStatus, getEventEditShopNoticePath, getLogin } from '@/router/utils'
+import {
+  getEventEditPathByRawStatus,
+  getEventEditShopNoticePath,
+  getLogin,
+  getManageCommunityPath,
+} from '@/router/utils'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -259,6 +264,14 @@ onUnmounted(() => {
             :to="getEventEditPathByRawStatus(eventId, event.event_status.value)"
           >
             {{ $t('event_page.edit') }}
+          </v-btn>
+          <v-btn
+            v-if="isManager && event.calculatedEventStatus === 'finished'"
+            class="ml-2 my-1"
+            variant="outlined"
+            :to="getManageCommunityPath(communityStore.community.community_account)"
+          >
+            {{ $t('user.community_management') }}
           </v-btn>
         </v-row>
       </v-col>
