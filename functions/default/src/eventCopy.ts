@@ -3,6 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import type { EventCopyRequest, EventCopyResponse } from '@shokujii/common/apis/eventCopy.js'
 import { isInShopTime } from '@shokujii/common/utils/datetime.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { getConfigGlobal } from './stores/config.js'
 import { getCommunity } from './stores/community.js'
 import { getEvent, saveEvent, ShokujiiEvent } from './stores/event.js'
 import { getPartner } from './stores/partner.js'
@@ -40,9 +41,19 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
   if (srcEvent === undefined) {
     throw new HttpsError('not-found', 'Event not found')
   }
-  const [community, partner] = await Promise.all([getCommunity(srcEvent.community_id), getPartner(srcEvent.partner_id)])
-  if (!(await community?.hasRole(uid, 'manager'))) {
+  const [community, partner, config] = await Promise.all([
+    getCommunity(srcEvent.community_id),
+    getPartner(srcEvent.partner_id),
+    getConfigGlobal(),
+  ])
+  const isSupport = config?.isSupport(uid) ?? false
+  const isManager = community != null && (await community.hasRole(uid, 'manager'))
+  if (!isSupport && !isManager) {
     throw new HttpsError('permission-denied', 'Forbidden')
+  }
+  // 親 communities が無い孤児イベントをコピーしない（サポート経路含む）
+  if (community == null) {
+    throw new HttpsError('not-found', 'Community not found')
   }
   if (partner === undefined) {
     throw new HttpsError('not-found', 'Partner not found')
