@@ -34,15 +34,15 @@ description: ブランチの変更差分を読み込み、pull_request_template.
    - **新規作成**: PR が紐づいていない場合 → 本文を出力し、gh pr create 実行時は --base development を指定する。ユーザーに確認を取る
    - **既存 PR の本文更新**: PR が紐づいている場合 → 本文を出力し、gh pr edit で本文を更新する場合はユーザーに確認を取る。本文をファイルに保存した場合は gh pr edit --body-file を使用する
 
-10.（任意）**GitHub Copilot** と **Codex コネクタ**にレビューを依頼する。ユーザーに確認を取り、`gh` でレビュワーを指定する
-    - 新規作成: `gh pr create --base development ... --reviewer @copilot --reviewer 'chatgpt-codex-connector[bot]'`（`gh pr create` は `--reviewer` ／ `gh pr edit` は `--add-reviewer` で別名）
-    - 既存 PR: `gh pr edit --add-reviewer @copilot --add-reviewer 'chatgpt-codex-connector[bot]'`（重複依頼にならないよう、既に付いていればスキップしてよい）
-    - `gh` は v2.88.0 以降（`@copilot` 利用に必要）を推奨
+10.（任意）手順 9 の直後に **GitHub Copilot** と **Codex コネクタ**をレビュワーに追加する。ユーザーに確認を取り、`gh` で指定する
+    - `gh pr create` の `--reviewer @copilot` は PR 作成 API のタイミングで失敗することがある。必ず **手順 9 で PR を作成・更新した後に** `gh pr edit --add-reviewer @copilot --add-reviewer 'chatgpt-codex-connector[bot]'` で追加する
+    - `gh` は v2.88.0 以降が必要（`@copilot` 利用に必須）
     - zsh では `chatgpt-codex-connector[bot]` の **シングルクォート**必須（`[ ]` のグロブ展開を防ぐ）
+    - 重複依頼にならないよう、既に付いていればスキップしてよい
     - レビュワー指定だけでは観点が伝わらないことがある。PR 本文の「レビューしてほしい観点」に shokujii コードレビュー方針へのリンクを必ず入れる
     - 依頼の到達性の核は**手順 11**の固定コメント。手順 10 は併用を推奨する任意
 
-11.（必須）手順 9 で `gh pr create` または `gh pr edit` を実行し、**PR の作成・本文更新が反映された直後**に、次の**固定文だけ**のレビュー依頼コメントを `gh pr comment` で**必ず**送る。手順 10 の有無に関わらず省略しない。ユーザーに手順 9 の実行の確認を取ったうえで、同じ会話内で手順 11 まで完遂する
+11.（必須）手順 9 で `gh pr create` または `gh pr edit` が完了したら、ユーザーへの確認や同意を待たず、**即座に**次の**固定文だけ**のレビュー依頼コメントを `gh pr comment` で送る。手順 10 の有無に関わらず省略しない
 
     改行入りの本文は一括で `--body` に渡す（zsh では**シングルクォート**で全体を囲むと @ が安全）。**文言・改行・URL を変えないこと**:
 
@@ -147,10 +147,10 @@ Firestore 変更時・Functions 変更時のチェック項目は該当する場
 
 - 日本語で記述する
 - 推定できない箇所は空欄または「要確認」と記述し、手動で補完を促す
-- gh pr create および gh pr edit、gh pr comment を実行する場合は、ユーザーに確認を取ってから実行する
-- 手順 9 を実行したときは**手順 11 を必ず実行する**（固定文の `gh pr comment` を省略しない）
+- gh pr create および gh pr edit を実行する場合は、ユーザーに確認を取ってから実行する
+- 手順 9 を実行したときは**手順 11 を即座に実行する**（ユーザーへの確認不要。固定文の `gh pr comment` を省略しない）
 
 ## 運用上の推奨
 
 - force push や squash でブランチ内容が変わった後は、既存 PR の本文を更新することを推奨する
-- PR 本文に shokujii のレビュー基準を書き、**手順 11**の固定 `gh pr comment` は必須。任意のうえで、新規は `gh pr create` の `--reviewer`、既存 PR は `gh pr edit` の `--add-reviewer` で @copilot と `chatgpt-codex-connector[bot]` を足す、とすると本文・レビュワー欄・コメントの三経路で補完しやすい
+- PR 本文に shokujii のレビュー基準を書き、**手順 11**の固定 `gh pr comment` は必須。任意のうえで、`gh pr create` 後に `gh pr edit --add-reviewer @copilot --add-reviewer 'chatgpt-codex-connector[bot]'` で @copilot と Codex を足す、とすると本文・レビュワー欄・コメントの三経路で補完しやすい。`gh pr create` の `--reviewer @copilot` は失敗することがあるため使わない
