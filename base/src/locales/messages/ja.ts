@@ -529,7 +529,6 @@ export default {
     edit: '編集',
     delete: '削除',
     copy: '複製',
-    no_letters: 'レターはまだありません',
   },
   email_dialog: {
     title: '個人宛レター',

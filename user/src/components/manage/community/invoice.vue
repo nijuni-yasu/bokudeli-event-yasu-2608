@@ -46,11 +46,8 @@ const getPdf = (eventId: string) => {
             <v-card-text class="pa-3 description"><div v-html="$t('manage.invoice.description')" /></v-card-text>
           </v-row>
         </v-card>
-        <v-card class="pa-10">
-          <v-row v-if="eventListStore.totalCount === eventListStore.eventStores?.length && eventStores.length === 0">
-            <v-col cols="12" class="pa-3 text-left">{{ $t('manage.invoice.no_invoice') }}</v-col>
-          </v-row>
-          <v-row v-else>
+        <v-card v-if="(eventStores?.length ?? 0) > 0" class="pa-10">
+          <v-row>
             <v-col md="12" sm="12" cols="12">
               <v-table>
                 <thead>
