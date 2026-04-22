@@ -8,5 +8,7 @@ export const getUserPath = (userId: string) => `/u/${userId}`
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getManageEventPath = (eventId: string) => ''
+/** base/src/components/EventEdit.vue が参照する。admin ではアルバムプレビューを出さないが import 解決に必要 */
+export const getManageCommunityAlbumPath = (communityAccount: string) => `/manage/community/${communityAccount}/album`
 export const getProfile = () => '/profile'
 export const getLogin = () => '/login'

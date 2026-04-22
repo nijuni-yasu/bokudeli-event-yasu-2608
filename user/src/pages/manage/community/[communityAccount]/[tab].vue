@@ -11,7 +11,7 @@ import { mdiArrowTopRight } from '@mdi/js'
 
 const { t: $t } = useI18n()
 
-const tabs = ['events', 'member', 'letter', 'invoice', 'slackSetting', 'settings'] as const
+const tabs = ['events', 'member', 'letter', 'album', 'invoice', 'slackSetting', 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const communityAccount = useRoute().params.communityAccount as string
@@ -64,15 +64,17 @@ const openInNew = (url: string) => {
       </v-col>
     </v-row>
   </v-container>
-  <v-row>
-    <v-col cols="12">
-      <v-tabs-window v-model="tab">
-        <v-tabs-window-item v-for="c in components" :key="`tabs-window_${c.value}`" :value="c.value">
-          <component :is="c.component" />
-        </v-tabs-window-item>
-      </v-tabs-window>
-    </v-col>
-  </v-row>
+  <v-container class="manage-container">
+    <v-row>
+      <v-col cols="12">
+        <v-tabs-window v-model="tab">
+          <v-tabs-window-item v-for="c in components" :key="`tabs-window_${c.value}`" :value="c.value">
+            <component :is="c.component" />
+          </v-tabs-window-item>
+        </v-tabs-window>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <style scoped lang="scss">

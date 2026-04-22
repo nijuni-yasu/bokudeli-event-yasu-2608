@@ -21,6 +21,9 @@ import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityM
 import { useEventListStore } from '@shokujii/base/stores/eventList'
 import { where, orderBy } from 'firebase/firestore'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
+import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
 
 const router = useRouter()
 const communityId = useRoute().params.communityId as string
@@ -83,6 +86,16 @@ const openContactDialog = () => {
 const login = () => {
   router.push(getLogin())
 }
+
+/** 表示順は communityStore.community の community_album_item_ids（store の albumItems で反映） */
+const albumSlides = computed(() => {
+  const cid = communityStore.community?.community_id
+  if (cid == null) return []
+  return (communityStore.albumItems ?? []).map((item) => ({
+    src: convertStoragePathToURL(getCommunityAlbumItemStoragePath(cid, item.id)),
+    title: item.album_caption,
+  }))
+})
 </script>
 
 <template>
@@ -103,16 +116,19 @@ const login = () => {
           </v-chip>
         </v-row>
         <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
+          <PublicAlbumGallery
+            :cover-url="communityStore.community.community_cover_image_url"
+            :cover-title="communityStore.community.community_name"
+            :albums="albumSlides"
+          />
           <v-row>
             <v-col>
-              <VImg class="ma-0" aspect-ratio="1.91" cover :src="communityStore.community.community_cover_image_url" />
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-card-title class="justify-center text-h3 pb-6 text-wrap">{{
-                communityStore.community.community_name
-              }}</v-card-title>
+              <v-card-title
+                class="justify-center pt-6 pb-6 text-sm-h2 text-h4 font-weight-black text-wrap"
+                style="line-height: 1.3"
+              >
+                {{ communityStore.community.community_name }}
+              </v-card-title>
               <v-card-text v-linkify class="text-left pb-6">
                 {{ communityStore.community.community_desc }}
               </v-card-text>

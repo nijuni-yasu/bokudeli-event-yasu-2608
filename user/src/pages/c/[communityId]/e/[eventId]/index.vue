@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onUnmounted } from 'vue'
+import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useRoute, useRouter } from 'vue-router'
-import { getEventEditPathByRawStatus, getEventEditShopNoticePath, getLogin } from '@/router/utils'
+import {
+  getEventEditPathByRawStatus,
+  getEventEditShopNoticePath,
+  getLogin,
+  getManageCommunityPath,
+} from '@/router/utils'
 import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -17,6 +23,7 @@ import Banners from '@shokujii/base/components/Banners.vue'
 import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,6 +44,16 @@ let menuListObserver: IntersectionObserver | null = null
 const { isManager } = useCommunityMemberFlags(communityId)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
+
+const albumImageUrls = computed(() => {
+  const cid = communityStore.community?.community_id
+  if (cid == null) return []
+  return (communityStore.albumItems ?? []).map((item) => ({
+    id: item.id,
+    url: convertStoragePathToURL(getCommunityAlbumItemStoragePath(cid, item.id)),
+    caption: item.album_caption,
+  }))
+})
 
 type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
 
@@ -214,9 +231,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="event != null && communityStore.community != null" class="justify-center px-3 px-sm-0">
+  <div v-if="event != null && communityStore.community != null" class="justify-center px-0 px-sm-0">
     <v-row class="justify-center mt-lg-10">
-      <v-col md="8" sm="9" cols="12">
+      <v-col md="8" sm="9" cols="12" class="py-0 py-sm-1">
         <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
           <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
           <v-spacer />
@@ -248,12 +265,20 @@ onUnmounted(() => {
           >
             {{ $t('event_page.edit') }}
           </v-btn>
+          <v-btn
+            v-if="isManager && event.calculatedEventStatus === 'finished'"
+            class="ml-2 my-1"
+            variant="outlined"
+            :to="getManageCommunityPath(communityStore.community.community_account)"
+          >
+            {{ $t('user.community_management') }}
+          </v-btn>
         </v-row>
       </v-col>
     </v-row>
     <v-row class="justify-center">
       <v-col md="8" sm="9" cols="12" class="mt-0 pt-0 px-0">
-        <EventDetailsCard :event="event" :community="communityStore.community" />
+        <EventDetailsCard :event="event" :community="communityStore.community" :album-image-urls="albumImageUrls" />
         <!-- メニュ -->
         <event-menu-list
           ref="menuListRef"
@@ -267,7 +292,7 @@ onUnmounted(() => {
       </v-col>
     </v-row>
   </div>
-  <div v-else class="justify-center px-3 px-sm-0">
+  <div v-else class="justify-center px-2 px-sm-0">
     <v-col cols="12" class="text-center">
       <v-progress-circular indeterminate color="primary"></v-progress-circular>
     </v-col>

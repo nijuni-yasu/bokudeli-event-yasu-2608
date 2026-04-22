@@ -126,7 +126,7 @@ const next = () => {
             md="4"
             sm="6"
             cols="12"
-            class="content"
+            class="content top-page-event-col"
           >
             <router-link :to="getEventPath(event.community_account, event.event_id)">
               <EventCard class="event-card" :event="event" :members="members" />
@@ -146,7 +146,7 @@ const next = () => {
           md="3"
           sm="6"
           cols="12"
-          class="content"
+          class="content top-page-event-col"
         >
           <router-link :to="getEventPath(event.community_account, event.event_id)">
             <EventCard class="event-card" :event="event" :members="members" />
@@ -172,7 +172,14 @@ const next = () => {
             </v-row>
           </v-col>
           <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
-          <v-col v-for="{ event, members } in pastEvents" :key="event.event_id" md="3" sm="6" cols="12" class="content">
+          <v-col
+            v-for="{ event, members } in pastEvents"
+            :key="event.event_id"
+            md="3"
+            sm="6"
+            cols="12"
+            class="content top-page-event-col"
+          >
             <router-link :to="getEventPath(event.community_account, event.event_id)">
               <EventCard class="event-card" :event="event" :members="members" />
             </router-link>
@@ -201,5 +208,15 @@ const next = () => {
 .event-card {
   height: 100%;
   width: 100%;
+}
+</style>
+
+<style lang="scss">
+/* Vuetify 3 の列は v-col-12 等のみで .v-col 単体クラスが付かないため .v-col を付けたセレクタは一致しない */
+.v-row .top-page-event-col {
+  padding-top: 9px !important;
+  padding-right: 9px !important;
+  padding-bottom: 9px !important;
+  padding-left: 9px !important;
 }
 </style>

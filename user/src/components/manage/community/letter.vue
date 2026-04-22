@@ -120,21 +120,21 @@ const goToCommunitySettings = () => {
 
 <template>
   <v-container v-if="selectedLetter == null" class="manage-container">
-    <v-row class="justify-center">
-      <v-col md="12" sm="9" cols="12">
-        <v-btn variant="outlined" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
-          {{ $t('manage.new_letter') }}
-        </v-btn>
-      </v-col>
-    </v-row>
     <v-row>
       <v-col md="12" sm="9" cols="12">
-        <v-card class="pa-10">
+        <v-card class="pa-10 mb-10">
           <v-row>
             <v-card-text class="pa-3 title"><div v-html="$t('manage.letter.hint.title')" /></v-card-text>
           </v-row>
           <v-row>
             <v-card-text class="pa-3 description"><div v-html="$t('manage.letter.hint.description')" /></v-card-text>
+          </v-row>
+          <v-row>
+            <v-card-text class="pa-3 description">
+              <v-btn color="primary" size="large" :prepend-icon="mdiPlus" @click="handleNewLetterClick">
+                {{ $t('manage.new_letter') }}
+              </v-btn>
+            </v-card-text>
           </v-row>
         </v-card>
       </v-col>

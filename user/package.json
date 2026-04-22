@@ -20,7 +20,9 @@
     "@channel.io/channel-web-sdk-loader": "^2.0.0",
     "@shokujii/base": "file:../base",
     "@shokujii/common": "file:../common",
-    "@tinymce/tinymce-vue": "^6"
+    "@tinymce/tinymce-vue": "^6",
+    "vue-draggable-next": "^2.3.0",
+    "vue-easy-lightbox": "^1.19.0"
   },
   "devDependencies": {
     "unplugin-auto-import": "^0.17.8",

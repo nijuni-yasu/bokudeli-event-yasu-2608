@@ -8,11 +8,14 @@ import {
   getDocs,
   getDoc,
   limit,
-  updateDoc,
   query,
+  updateDoc,
   where,
   onSnapshot,
   setDoc,
+  Timestamp,
+  runTransaction,
+  deleteField,
   type DocumentReference,
   type Unsubscribe,
   type FirestoreDataConverter,
@@ -20,16 +23,22 @@ import {
   type QueryDocumentSnapshot,
   type SnapshotOptions,
 } from 'firebase/firestore'
-import { db } from '@shokujii/base/firebase.js'
+import { db, storage } from '@shokujii/base/firebase.js'
+import { deleteObject, ref as storageRef } from 'firebase/storage'
 import { Community } from '@shokujii/common/schemas/Community.js'
 import { CommunityMember, CommunityMemberRolesType } from '@shokujii/common/schemas/CommunityMember.js'
-import { getCommunityCoverStoragePath, getCommunityIconStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import {
+  getCommunityAlbumItemStoragePath,
+  getCommunityCoverStoragePath,
+  getCommunityIconStoragePath,
+} from '@shokujii/common/utils/storagePaths.js'
+import { AlbumItem } from '@shokujii/common/schemas/AlbumItem.js'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getUserRef, useUserStore } from '@shokujii/base/stores/user.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { uploadImage } from '@shokujii/base/utils/storage.js'
+import { uploadAlbumImage, uploadImage } from '@shokujii/base/utils/storage.js'
 import { useConfigStore } from './config.js'
 import { TaskExecutor } from '../utils/executors.js'
 
@@ -60,6 +69,27 @@ export class BokudeliCommunity extends Community {
 export class BokudeliCommunityMember extends User {
   // 多重継承が出来ないので CommunityMember のプロパティを手動で追加する
   roles: CommunityMemberRolesType[] = []
+}
+
+export class BokudeliAlbumItem extends AlbumItem {
+  readonly community_id: string
+
+  constructor(communityId: string, albumItemId: string | null, src: Partial<AlbumItem>) {
+    const id = albumItemId ?? doc(collection(db, 'communities', communityId, 'album_items')).id
+    super(id, src)
+    this.community_id = communityId
+  }
+}
+
+const albumItemConverter: FirestoreDataConverter<BokudeliAlbumItem> = {
+  toFirestore(item: BokudeliAlbumItem): DocumentData {
+    return item.toFirestore()
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): BokudeliAlbumItem {
+    const data = snapshot.data(options)
+    const communityId = snapshot.ref.parent.parent!.id
+    return new BokudeliAlbumItem(communityId, snapshot.id, data)
+  },
 }
 
 // communityList で使用するために export するが、他では使用しないように
@@ -269,6 +299,146 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
         .sort((a, b) => (b.event_start_datetime ?? 0) - (a.event_start_datetime ?? 0))
     })
 
+    const _albumItems = ref<BokudeliAlbumItem[] | null>(null)
+    let unsubscribeAlbumItems: Unsubscribe | null = null
+
+    const subscribeAlbumItems = (communityRef: DocumentReference<BokudeliCommunity>) => {
+      if (unsubscribeAlbumItems != null) {
+        return
+      }
+      const albumItemsRef = collection(communityRef, 'album_items').withConverter(albumItemConverter)
+      unsubscribeAlbumItems = onSnapshot(
+        albumItemsRef,
+        (snapshot) => {
+          try {
+            _albumItems.value = snapshot.docs.map((d) => d.data())
+          } catch (err) {
+            console.error(err)
+            _albumItems.value = []
+          }
+        },
+        (err) => {
+          console.error('subscribeAlbumItems snapshot error', err)
+          _albumItems.value = []
+          unsubscribeAlbumItems?.()
+          unsubscribeAlbumItems = null
+        },
+      )
+    }
+
+    const albumItems = computed(() => {
+      if (community.value == null) {
+        return null
+      }
+      const refRaw = _communityRef.value
+      if (refRaw != null) {
+        subscribeAlbumItems(toRaw(refRaw))
+      }
+      if (_albumItems.value == null) {
+        return null
+      }
+      const ids = community.value.community_album_item_ids ?? []
+      const itemMap = new Map(_albumItems.value.map((item) => [item.id, item]))
+      const idSet = new Set(ids)
+      const ordered = ids.flatMap((id) => {
+        const i = itemMap.get(id)
+        return i !== undefined ? [i] : []
+      })
+      const extras = _albumItems.value.filter((item) => !idSet.has(item.id))
+      return [...ordered, ...extras]
+    })
+
+    const addAlbumItem = async (file: File) => {
+      const maxBytes = 10 * 1024 * 1024
+      if (file.size > maxBytes) {
+        throw new Error('album-file-too-large')
+      }
+      await getLoadedCommunity()
+      const communityRef = await getCommunityRef()
+      const communityId = communityRef.id
+      const albumItemId = doc(collection(communityRef, 'album_items')).id
+      const path = getCommunityAlbumItemStoragePath(communityId, albumItemId)
+      await uploadAlbumImage(file, path)
+      const now = Date.now()
+      const item = new BokudeliAlbumItem(communityId, albumItemId, {
+        album_caption: '',
+        created_at: now,
+        updated_at: now,
+      })
+      const itemRef = doc(communityRef, 'album_items', albumItemId).withConverter(albumItemConverter)
+      await runTransaction(db, async (transaction) => {
+        const commSnap = await transaction.get(communityRef)
+        if (!commSnap.exists()) {
+          throw new Error('Community not found')
+        }
+        const currentIds = commSnap.data()?.community_album_item_ids ?? []
+        transaction.set(itemRef, item)
+        transaction.update(communityRef, {
+          community_album_item_ids: [...currentIds, albumItemId],
+          updated_at: Timestamp.now(),
+        })
+      })
+    }
+
+    const deleteAlbumItem = async (albumItemId: string) => {
+      await getLoadedCommunity()
+      const communityRef = await getCommunityRef()
+      const communityId = communityRef.id
+      const itemRef = doc(communityRef, 'album_items', albumItemId).withConverter(albumItemConverter)
+      await runTransaction(db, async (transaction) => {
+        const commSnap = await transaction.get(communityRef)
+        if (!commSnap.exists()) {
+          throw new Error('Community not found')
+        }
+        const currentIds = commSnap.data()?.community_album_item_ids ?? []
+        transaction.delete(itemRef)
+        transaction.update(communityRef, {
+          community_album_item_ids: currentIds.filter((id) => id !== albumItemId),
+          updated_at: Timestamp.now(),
+        })
+      })
+      try {
+        await deleteObject(storageRef(storage, getCommunityAlbumItemStoragePath(communityId, albumItemId)))
+      } catch (e) {
+        console.error('Failed to delete album storage object', e)
+      }
+    }
+
+    const replaceAlbumImage = async (albumItemId: string, file: File) => {
+      const maxBytes = 10 * 1024 * 1024
+      if (file.size > maxBytes) {
+        throw new Error('album-file-too-large')
+      }
+      await getLoadedCommunity()
+      const communityRef = await getCommunityRef()
+      const communityId = communityRef.id
+      const path = getCommunityAlbumItemStoragePath(communityId, albumItemId)
+      await uploadAlbumImage(file, path)
+      const itemRef = doc(communityRef, 'album_items', albumItemId).withConverter(albumItemConverter)
+      await updateDoc(itemRef, {
+        updated_at: Timestamp.now(),
+      })
+    }
+
+    const updateAlbumCaption = async (albumItemId: string, caption: string) => {
+      await getLoadedCommunity()
+      const communityRef = await getCommunityRef()
+      const itemRef = doc(communityRef, 'album_items', albumItemId).withConverter(albumItemConverter)
+      const trimmed = caption.trim()
+      await updateDoc(itemRef, {
+        ...(trimmed === '' ? { album_caption: deleteField() } : { album_caption: trimmed }),
+        updated_at: Timestamp.now(),
+      })
+    }
+
+    const updateAlbumSortOrder = async (albumItemIds: string[]) => {
+      const communityRef = await getCommunityRef()
+      await updateDoc(communityRef, {
+        community_album_item_ids: albumItemIds,
+        updated_at: Timestamp.now(),
+      })
+    }
+
     const updateCommunity = async (data: BokudeliCommunity) => {
       const communityRef = await getCommunityRef()
       await setDoc(communityRef, data, { merge: true })
@@ -381,6 +551,9 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
 
     const unsubscribe = () => {
       retry = 0
+      unsubscribeAlbumItems?.()
+      unsubscribeAlbumItems = null
+      _albumItems.value = null
       unsubscribeCommunity?.()
       unsubscribeCommunity = null
     }
@@ -457,10 +630,16 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       community,
       members,
       events,
+      albumItems,
       getLoadedCommunity,
       updateCommunity,
       updateCoverImage,
       updateIconImage,
+      addAlbumItem,
+      deleteAlbumItem,
+      replaceAlbumImage,
+      updateAlbumCaption,
+      updateAlbumSortOrder,
       addRole,
       removeRole,
       joinCommunity,

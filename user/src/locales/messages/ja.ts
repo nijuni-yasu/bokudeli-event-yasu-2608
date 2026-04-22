@@ -239,7 +239,34 @@ export default {
         letter: 'レター',
         invoice: '請求書払い',
         slackSetting: 'Slack連携',
+        album: 'アルバム',
         settings: 'コミュニティ設定',
+      },
+      album: {
+        page_title: 'アルバムを設定しよう🎨',
+        help_heading_what: '【アルバム機能とは】',
+        help_what: `アルバム画像を設定すると、コミュニティページとイベントページで、メインのカバー画像の下に並びます。<br />
+            メインのカバー画像の一枚はこれまで通りで、雰囲気を補足する追加の写真としてご利用いただけます。<br />
+            施設の写真、前回のイベントの様子、集合写真など、コミュニティの雰囲気のわかるものを追加してください。`,
+        help_heading_how: '【設定方法】',
+        help_how: `画像の左端のつまみをドラッグして並び順を変えられます。<br>
+          画像をクリックすると、差し替え用の画像を選べます。各画像の説明は編集のあと、フォーカスを外すと自動保存されます。`,
+        help_drag: '左端のつまみをドラッグして並び順を変えられます。',
+        help_click_replace: '画像をクリックすると、差し替え用の画像を選べます。',
+        add_images: 'アルバムに画像を追加',
+        uploading: '{current}/{total} 枚をアップロード中…',
+        caption_label: '説明',
+        delete: '削除',
+        delete_confirm: 'この画像を削除しますか？',
+        sort_saved: '並び順を保存しました',
+        sort_save_error: '並び順の保存に失敗しました',
+        file_too_large: '1 枚あたり 10MB までです',
+        upload_error: 'アップロードに失敗しました',
+        delete_error: '削除に失敗しました',
+        replace_error: '差し替えに失敗しました',
+        replace_success: '画像を差し替えました',
+        caption_saved: '説明を保存しました',
+        caption_save_error: '説明の保存に失敗しました',
       },
     },
     event: {
@@ -308,7 +335,8 @@ export default {
       hint: {
         title: 'レターを配信しよう💌',
         description: `レター機能を使うと<b>「コミュニティメンバー」</b>や<b>「イベント参加者」「イベント未登録者」</b>にメールを配信することができます。<br />
-                        配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。返信先は［コミュニティ設定］タブからご設定ください。詳細は <a href="https://note.com/preview/n0c961c680fd3?prev_access_key=ced956e93d24fb7689121a8bdb431ebb" target="_blank">レター機能について</a> をご確認ください。<br />
+                        配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。<br />
+                        返信先は［コミュニティ設定］タブからご設定ください。詳細は <a href="https://note.com/preview/n0c961c680fd3?prev_access_key=ced956e93d24fb7689121a8bdb431ebb" target="_blank">レター機能について</a> をご確認ください。<br />
                         `,
       },
       type_select_dialog: {
@@ -405,7 +433,6 @@ export default {
       event_name: 'イベント名',
       price: '請求金額',
       download: 'ダウンロード',
-      no_invoice: '請求書はまだありません',
       error: '請求書の取得に失敗しました',
       title: '主催者 請求書払い📃',
       description: `イベント設定画面で<b>「主催者 請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />

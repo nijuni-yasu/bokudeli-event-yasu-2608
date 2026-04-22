@@ -35,6 +35,7 @@ const CommunityDbSchema = z.object({
   community_sns_officialsite: NonEmptyStringSchema,
   community_bill_fullname: NonEmptyStringSchema,
   community_bill_email: NonEmptyStringSchema,
+  community_album_item_ids: z.array(z.string()).optional(),
   // members, managers は functions で処理するので DB に直接書き込まない
 })
 
@@ -78,6 +79,7 @@ export class Community {
   community_sns_hash_tag: string = ''
   community_bill_fullname: string = ''
   community_bill_email: string = ''
+  community_album_item_ids: string[] = []
   // community_num_members はソート用で functions で処理されるフィールド。ここに追加すると不整合が起こるため追加してはいけない。
   // community_num_members: number = 0
   members: (typeof DocumentReference)[] = []

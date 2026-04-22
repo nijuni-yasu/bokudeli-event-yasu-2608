@@ -70,6 +70,12 @@ export default {
     contact_community: '主催者に連絡',
     contact_community_after_login: 'ログインした後に主催者に連絡してください。',
   },
+  album: {
+    show_all_photos: 'すべての写真',
+    lightbox_count: '{current}/{total}枚',
+    gallery_open_cover: 'カバー写真を拡大表示',
+    gallery_open_album_photo: 'アルバムの写真を拡大表示',
+  },
   cart: {
     title: '🛒 カート 🛒',
     subtitle: '注文を完了してイベント参加をお申し込みください',
@@ -309,12 +315,22 @@ export default {
     no_menus_found: '注文できるメニューがありません',
   },
   event_detail: {
-    title: 'イベント詳細',
+    event_detail: '開催内容',
     event_name: 'イベントタイトル',
+    event_image: 'イベントカバーとアルバム',
     event_cover_url: 'イベントカバー画像',
     event_cover_url_hint: '※カバー画像の推奨サイズは、1200 x 630ピクセル です。',
     event_cover_template:
       '※カバー画像作成は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> もご活用ください🎨',
+    album_preview_title: 'アルバム',
+    album_preview_hint:
+      '※画像はコミュニティ管理の<a href="{albumUrl}" target="_blank" rel="noopener noreferrer">「アルバム」タブ</a>で設定します。イベントページやコミュニティページに表示されます。',
+    album_preview_modal_title: 'アルバムの設定',
+    album_preview_modal_close: '閉じる',
+    album_preview_modal_message:
+      '画像はコミュニティの「アルバム」機能で設定してください。「OK」で設定画面を新しいタブで開きます。',
+    album_preview_image_alt: 'アルバムのプレビュー {0}',
+    album_preview_tile_aria: 'アルバム設定について開く',
     event_desc: '開催内容',
     event_desc_hint:
       '※「イベントの概要」「タイムスケジュール」「参加対象」「主催者情報」「緊急連絡先」「入館方法」「飲み物の有無/ご持参」「事前アンケートのURL」などについて適宜ご記載ください。',
@@ -513,7 +529,6 @@ export default {
     edit: '編集',
     delete: '削除',
     copy: '複製',
-    no_letters: 'レターはまだありません',
   },
   email_dialog: {
     title: '個人宛レター',
