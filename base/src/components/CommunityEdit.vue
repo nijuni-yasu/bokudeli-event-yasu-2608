@@ -27,6 +27,28 @@ const community = defineModel<BokudeliCommunity>({ required: true })
 const coverImageFile = defineModel<File | null>('coverImageFile', { required: true })
 const iconImageFile = defineModel<File | null>('iconImageFile', { required: true })
 
+const props = defineProps<{
+  /**
+   * 新規コミュニティURLのバリデーション関数
+   * この関数が設定されていない場合、編集モードとして扱われ community_account は readonly になります
+   */
+  // 関数宣言なのに no-unused-vars が出てしまう。恐らく ESLint のバグ。
+  // eslint-disable-next-line no-unused-vars
+  validateNewAccount?: (account: string) => Promise<boolean>
+  /**
+   * マウント後、ヘルプダイアログを自動表示する
+   */
+  autoOpenHelpDialog?: boolean
+  /**
+   * カバー画像の表示 URL（ストアの coverImageUrl を渡すことでアップロード後のキャッシュバストが有効になる）
+   */
+  defaultCoverImageUrl?: string | null
+  /**
+   * アイコン画像の表示 URL（ストアの iconImageUrl を渡すことでアップロード後のキャッシュバストが有効になる）
+   */
+  defaultIconImageUrl?: string | null
+}>()
+
 const coverImagePreviewUrl = ref<string | undefined>(undefined)
 watch(
   coverImageFile,
@@ -62,27 +84,6 @@ watch(
   { immediate: true },
 )
 
-const props = defineProps<{
-  /**
-   * 新規コミュニティURLのバリデーション関数
-   * この関数が設定されていない場合、編集モードとして扱われ community_account は readonly になります
-   */
-  // 関数宣言なのに no-unused-vars が出てしまう。恐らく ESLint のバグ。
-  // eslint-disable-next-line no-unused-vars
-  validateNewAccount?: (account: string) => Promise<boolean>
-  /**
-   * マウント後、ヘルプダイアログを自動表示する
-   */
-  autoOpenHelpDialog?: boolean
-  /**
-   * カバー画像の表示 URL（ストアの coverImageUrl を渡すことでアップロード後のキャッシュバストが有効になる）
-   */
-  defaultCoverImageUrl?: string | null
-  /**
-   * アイコン画像の表示 URL（ストアの iconImageUrl を渡すことでアップロード後のキャッシュバストが有効になる）
-   */
-  defaultIconImageUrl?: string | null
-}>()
 const isNew = computed(() => props.validateNewAccount != null)
 
 const isValid = ref(false)
