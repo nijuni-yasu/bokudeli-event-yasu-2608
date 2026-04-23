@@ -4,12 +4,15 @@ const ConfigGlobalDbSchema = z.object({
   support_user_ids: z.array(z.string().nonempty()),
   system_id: z.string().nonempty(),
   maintenance_mode: z.boolean().default(false),
+  /** 人気イベント全ユーザーメールの参加人数閾値（未設定時は送信しない。設定時は正の整数のみ） */
+  popular_event_mail_threshold: z.number().int().positive().optional(),
 })
 
 const ConfigGlobalAppSchema = z.object({
   support_user_ids: z.array(z.string().nonempty()),
   system_id: z.string().nonempty(),
   maintenance_mode: z.boolean().default(false),
+  popular_event_mail_threshold: z.number().int().positive().optional(),
 })
 
 export class ConfigGlobal {
@@ -17,6 +20,7 @@ export class ConfigGlobal {
   support_user_ids!: string[]
   system_id!: string
   maintenance_mode!: boolean
+  popular_event_mail_threshold?: number
 
   constructor(id: string, src: Partial<ConfigGlobal>) {
     Object.assign(this, ConfigGlobalAppSchema.parse(src))
