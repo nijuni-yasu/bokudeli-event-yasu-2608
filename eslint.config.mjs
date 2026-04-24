@@ -43,6 +43,9 @@ export const typescriptConfig = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': 'warn',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
+    // TypeScript のオーバーロードを許可するために標準のルールをオフにし、TS 版を有効にする
+    'no-redeclare': 'off',
+    '@typescript-eslint/no-redeclare': 'error',
   },
 }
 
