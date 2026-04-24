@@ -72,6 +72,7 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
     community_account: srcEvent.community_account,
     is_public: srcEvent.is_public,
     event_payment: srcEvent.event_payment,
+    community_bill_settings: srcEvent.community_bill_settings,
     event_max_people: srcEvent.event_max_people,
     event_postalcode: srcEvent.event_postalcode,
     event_address_base: srcEvent.event_address_base,
