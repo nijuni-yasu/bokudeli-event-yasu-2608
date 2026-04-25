@@ -122,12 +122,18 @@ resource "google_project_iam_member" "app_engine_service_account_storage_viewer"
   ]
 }
 
-# Cloud Functions 2nd gen / Firebase deploy がプロジェクト IAM を自動調整しようとして失敗するのを防ぐため、
-# Pub/Sub サービスエージェントにプロジェクト全体の Token Creator は付与せず、実行に使う Compute デフォルト SA に対してのみ付与する
-resource "google_service_account_iam_member" "pubsub_agent_token_creator_on_compute_default" {
-  service_account_id = "projects/${var.project}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
-  role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+# Pub/Sub サービスエージェントにプロジェクト IAM として serviceAccountTokenCreator を付与する。
+# firebase-tools (deploy/functions/checkIam.ts: obtainPubSubServiceAgentBindings) は
+# プロジェクト IAM ポリシーに次の Binding が存在することを検証し、不足していると setIamPolicy を試みる。
+#   gcloud projects add-iam-policy-binding <project> \
+#     --member=serviceAccount:service-<num>@gcp-sa-pubsub.iam.gserviceaccount.com \
+#     --role=roles/iam.serviceAccountTokenCreator
+# Compute デフォルト SA リソース上の IAM (google_service_account_iam_member) では検証を満たせないため、
+# プロジェクト IAM として先回りで付与し、デプロイ時の自動 IAM 変更（および権限不足による失敗）を回避する。
+resource "google_project_iam_member" "pubsub_service_agent_token_creator" {
+  project = var.project
+  role    = "roles/iam.serviceAccountTokenCreator"
+  member  = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 
   depends_on = [
     google_project_service.default,
