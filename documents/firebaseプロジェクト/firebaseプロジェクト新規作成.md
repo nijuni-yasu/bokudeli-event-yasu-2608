@@ -146,6 +146,8 @@ terraform apply
 | `FUNCTIONS_ENV`  | `functions/default/.env` の内容    |
 
 
+`ADMIN_ENV` / `USER_ENV` に **`VITE_STRIPE_PUBLISHABLE_KEY` を含める必要はありません**（不要です）。現行コードでは参照していません。理由と将来の扱いは [Stripe 環境構築手順](../07_リファクタリング/03_stripe決済の環境構築手順.md) のセクション 4 を参照してください。
+
 #### Secrets（機密情報）
 
 
@@ -229,3 +231,65 @@ git remote -v
 
 GitHub Actions のワークフローを使ってデプロイします。  
 （詳細は各リポジトリのワークフロー定義を参照）
+
+
+### 11. Stripe Webhook の設定
+
+個人 Firebase プロジェクトでは、Stripe 側は **Test mode**（`sk_test_...` / `pk_test_...`）で揃えるのが一般的です。Webhook も同じ Test mode で登録します。
+
+詳細・トラブルシュート・ログ確認は [Stripe 環境構築手順](../07_リファクタリング/03_stripe決済の環境構築手順.md) を参照してください。
+
+#### 前提
+
+- **手順 8**（GCP Secret Manager）で Terraform 作成済みのシークレットに値を入れられる状態であること
+- **手順 10**（デプロイ）で **Functions（`stripeWebhook` 含む）がデプロイ済み**であること（Webhook URL はデプロイ後に確定する）
+
+#### 手順
+
+1. **Stripe API キー（Test mode）**  
+   [Stripe Dashboard](https://dashboard.stripe.com/) → **Developers** → **API keys** で Test mode を選択し、Secret key（`sk_test_...`）をコピーする。  
+   GCP Secret Manager の `STRIPE_API_KEY` に登録する（手順 8）。Webhook 用 Signing secret とは別物なので混同しない。
+
+2. **`stripeWebhook` の URL を確認する**  
+   次のいずれかで実際の URL を取得する。
+   - Firebase Console → **Functions** → `stripeWebhook` のトリガー / URL
+   - GCP Console → **Cloud Run**（関数名に `stripewebhook` が含まれるサービス）の URL
+   - GitHub Actions のデプロイログで `Function URL (stripeWebhook(...)):` を検索  
+
+   URL の形式例（プロジェクトにより Cloud Functions 形式または Cloud Run 形式）:
+   - `https://asia-northeast1-{GCPプロジェクトID}.cloudfunctions.net/stripeWebhook`
+
+3. **Stripe で Webhook エンドポイントを追加する**  
+   Dashboard → **Developers** → **Webhooks** → **+ Add endpoint**  
+   - **Endpoint URL**: 手順 2 で取得した URL  
+   - **イベント**: **`checkout.session.completed`** にチェック（必須）。必要に応じて `checkout.session.expired` も追加可  
+   - **Add endpoint** で保存
+
+4. **Signing secret を Secret Manager に登録する**  
+   作成したエンドポイントを開き、**Signing secret** を **Reveal** して `whsec_...` をコピーする。  
+   GCP Secret Manager の `STRIPE_WEBHOOK_ENDPOINT_SECRET` に **新バージョンとして**登録する（手順 8）。
+
+5. **Functions の再デプロイ（必要な場合）**  
+   `STRIPE_WEBHOOK_ENDPOINT_SECRET` を初めて入れた直後や値を差し替えた直後は、シークレットを参照する `stripeWebhook` が新しい値を読むまで **Functions を再デプロイ**する。
+
+#### 確認の目安
+
+- Stripe Dashboard → Webhooks → 対象エンドポイント → **Events** で配信が **200** になっている
+- Cloud Logging で `jsonPayload.module="stripeWebhook"` など、`Order completed via webhook` が出る（テスト決済時）
+
+#### 注意
+
+- Test mode と Live mode では **API キー・Webhook・Signing secret は別**です。Firebase プロジェクトに合わせてモードを統一する。
+- Stripe 用のシークレットを **GitHub Actions の Secrets に登録する必要はありません**（不要です）。`defineSecret` で GCP Secret Manager を参照します。
+- フロント用の **`VITE_STRIPE_PUBLISHABLE_KEY` の設定も不要です**（手順 7 の `USER_ENV` / `ADMIN_ENV` に含めなくてよい）。詳細は [Stripe 環境構築手順](../07_リファクタリング/03_stripe決済の環境構築手順.md) セクション 4。
+
+### 12. データ移行
+以下ドキュメントを参考に、プロジェクトのデータを移行する
+documents/firebaseプロジェクト/firestoreデータ移行手順_手動.md
+documents/firebaseプロジェクト/storageデータ移行手順_手動.md
+
+### 13. Partnerアカウントの作成・店舗とメニューデータ作成
+
+- console.firebase で飲食店アカウントを登録する
+- ログインしてアカウント作成する
+
