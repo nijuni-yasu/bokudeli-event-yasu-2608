@@ -266,8 +266,9 @@ export const useEventStore = (target: string | BokudeliEvent) => {
         throw new Error('communityId is undefined. Cannot upload image during new event creation.')
       }
       const resized = await resizeImage(image, TINYMCE_MAX_IMAGE_SIZE)
-      const url = await uploadImage(resized, generateTinymceImageStoragePath(communityId, eventId))
-      return url
+      const storagePath = generateTinymceImageStoragePath(communityId, eventId)
+      await uploadImage(resized, storagePath)
+      return convertStoragePathToURL(storagePath)
     }
 
     const addToCart = async (data: AddToCartRequest): Promise<void> => {

@@ -1,11 +1,9 @@
 import { storage, FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase'
-import { getBytes, getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage'
+import { getBytes, ref as storageRef, uploadBytes } from 'firebase/storage'
 
-export const uploadImage = async (file: File, path: string): Promise<string> => {
+export const uploadImage = async (file: File, path: string): Promise<void> => {
   const uploadStorageRef = storageRef(storage, path)
-  const snapshot = await uploadBytes(uploadStorageRef, file)
-  const url = await getDownloadURL(snapshot.ref)
-  return url
+  await uploadBytes(uploadStorageRef, file)
 }
 
 /** アルバム用: download URL は返さず、contentType は File.type から推論する */
