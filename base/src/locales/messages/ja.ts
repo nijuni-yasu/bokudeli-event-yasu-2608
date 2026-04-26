@@ -23,7 +23,7 @@ export default {
     user_on_day: '参加者 当日払い 💰',
     community_bill: '主催者 請求書払い 📄',
     community_bill_free: '主催者請求書払い',
-    community_bill_discount: '請求書払い＋差額決済',
+    community_bill_discount: '主催者請求書払い＋差額決済',
   },
   discount_settings: {
     free: '全額おごり',
@@ -162,7 +162,7 @@ export default {
     desc: `・<b>「郵便番号」</b>と<b>「開催日時」</b>を入力し、デリバリー可能な飲食店から1店舗を選択📍<br />
           ・イベント内容を入力。カバー画像は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> をご活用ください🎨<br />
           ・公開範囲を<b>「公開」</b>または<b>「URL限定公開」</b>から選択できます👀<br />
-          ・支払い方法は<b>「参加者 事前決済」</b>または<b>「主催者 請求書払い」</b>から選択できます💰<br />
+          ・支払い方法は<b>「参加者 事前決済」</b>または<b>「主催者請求書払い」</b>から選択できます💰<br />
           ・内容が確定したらお店に<b>「予約申請」</b>。お店から<b>「予約承認」</b>をいただいたら注文受付開始💨<br />
           ・<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a> などを駆使して告知しよう📣<br />
           ・注文期限になると、注文内容が確定し、お店へ自動で発注されます📩<br />
@@ -185,7 +185,7 @@ export default {
             SNS投稿、QRコード、SlackApp、チラシなどを使って食事会への告知・集客もお気軽に！<br />
             <br />
             <b>🏢 社内交流などのクローズドな食事会にも</b><br />
-            「URL限定公開」や「主催者 請求書払い」を設定することで、クローズドなお食事会も。<br />
+            「URL限定公開」や「主催者請求書払い」を設定することで、クローズドなお食事会も。<br />
             食事代を会社負担で実施する「社内交流会」にもご活用いただけます。<br />
             <br />
             <b>🙋‍♀️ チームで協力体制も</b><br />
@@ -298,8 +298,8 @@ export default {
     use_purpose: '利用目的',
     validator_account_exists: 'このアカウントIDは既に使用されています',
     bill_info: '請求先情報',
-    bill_info_hint: `「主催者 請求書払い」を利用される場合、請求先を設定してください。<br />
-      「主催者 請求書払い」を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文でき、<br>
+    bill_info_hint: `「主催者請求書払い」を利用される場合、請求先を設定してください。<br />
+      「主催者請求書払い」を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文でき、<br>
       弊社より主催者様に請求書を発行いたします。請求書のお支払い期限は翌月末日となっております。`,
     bill_fullname: '請求先 担当者名',
     bill_email: '請求先 メールアドレス',
@@ -428,7 +428,7 @@ export default {
     shop_name: '【食事】{0}',
     menu: '【注文内容】',
     menu_item: '{0} <span class="text-caption">({1}個)</span>',
-    total_price: '【注文金額】{0}',
+    total_price: '【支払い金額】{0}',
     event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',

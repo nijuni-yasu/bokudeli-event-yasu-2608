@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { computeOrderLineNet } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import { convertStoragePathToURL } from '../utils/storage'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 
 const props = defineProps<{
   event: BokudeliEvent
@@ -37,23 +39,24 @@ const cancelDialogOpen = computed({
   },
 })
 
+const orderLineNet = (o: EventMemberOrder) =>
+  computeOrderLineNet(o, props.event.event_payment, props.event.community_bill_settings)
+
 const groupedMenus = computed(() => {
-  const map = new Map<string, { menu_name: string; menu_price: number; count: number }>()
+  const map = new Map<string, { menu_name: string; count: number }>()
   for (const o of props.orders.filter((o) => o.status !== 'canceled')) {
     const existing = map.get(o.menu_id)
     if (existing) {
       existing.count++
     } else {
-      map.set(o.menu_id, { menu_name: o.menu_name, menu_price: o.menu_price, count: 1 })
+      map.set(o.menu_id, { menu_name: o.menu_name, count: 1 })
     }
   }
   return Array.from(map.entries()).map(([menu_id, v]) => ({ menu_id, ...v }))
 })
 
 const totalPrice = computed(() =>
-  props.orders
-    .filter((o) => o.status !== 'canceled')
-    .reduce((sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0), 0),
+  props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + orderLineNet(o), 0),
 )
 
 const hasActiveOrders = computed(() => props.orders.some((o) => o.status !== 'canceled'))
@@ -85,10 +88,19 @@ const stripeGroups = computed(() => {
     if (!map.has(o.stripe_id!)) {
       map.set(o.stripe_id!, { stripeId: o.stripe_id!, amount: 0 })
     }
-    map.get(o.stripe_id!)!.amount += o.menu_price - (o.payment_community_bill_off_amount ?? 0)
+    map.get(o.stripe_id!)!.amount += orderLineNet(o)
   }
   return Array.from(map.values())
 })
+
+/** EventDetailsCard と同じ支払い方法ラベル（community_bill は全額おごり vs 金額おごりでキーを分岐） */
+const eventPaymentLabelKey = computed(() =>
+  props.event.event_payment === 'community_bill'
+    ? props.event.community_bill_settings?.type === 'discount'
+      ? 'payment.community_bill_discount'
+      : 'payment.community_bill_free'
+    : `payment.${props.event.event_payment}`,
+)
 
 // ── キャンセルモーダル ──
 
@@ -185,10 +197,14 @@ const canSubmit = computed(
 )
 
 const cancelRefundAmount = computed(() => {
+  const byId = new Map(props.orders.map((o) => [o.id, o]))
   let total = 0
   for (const g of cancelSelections.value) {
     if (g.checked && g.cancelCount > 0) {
-      total += g.menu_price * g.cancelCount
+      for (const id of g.orderedIds.slice(-g.cancelCount)) {
+        const o = byId.get(id)
+        if (o != null) total += orderLineNet(o)
+      }
     }
   }
   return total
@@ -207,11 +223,18 @@ const submitCancel = () => {
       class="ma-0 pa-0"
       aspect-ratio="1.91"
       :src="convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.event_id))"
-    ></v-img>
-    <EventStatusChip :status="event.calculatedEventStatus" size="small" class="mt-2 ml-3" />
-    <v-chip v-if="!event.is_public" class="mt-2 ml-3" color="primary" size="small">
-      {{ $t('private_event') }}
-    </v-chip>
+    />
+    <div class="d-flex align-center flex-wrap ga-2 mt-2 ml-3">
+      <EventStatusChip :status="event.calculatedEventStatus" size="small" />
+      <EventDiscountChip
+        v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
+        :settings="event.community_bill_settings"
+        size="small"
+      />
+      <v-chip v-if="!event.is_public" color="primary" size="small">
+        {{ $t('private_event') }}
+      </v-chip>
+    </div>
     <v-card-title class="justify-center pb-1 title text-h5">
       {{ event.event_name }}
     </v-card-title>
@@ -226,7 +249,7 @@ const submitCancel = () => {
     }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{
-      $t('user_event_card.event_payment', [$t(`payment.${event.event_payment}`)])
+      $t('user_event_card.event_payment', [$t(eventPaymentLabelKey)])
     }}</v-card-text>
     <v-card-text v-if="ordersLoading" class="py-3 px-2 d-flex justify-center align-center">
       <v-progress-circular indeterminate color="primary" size="28" width="2" />
@@ -247,9 +270,7 @@ const submitCancel = () => {
       <v-card-text v-if="showOrderSummary" class="py-1 px-2 event-card">
         {{ $t('user_event_card.menu') }}
         <div class="ml-3">
-          <div v-for="menu in groupedMenus" :key="menu.menu_id">
-            {{ menu.menu_name }} ×{{ menu.count }}（{{ $n(menu.menu_price * menu.count, 'currency') }}）
-          </div>
+          <div v-for="menu in groupedMenus" :key="menu.menu_id">{{ menu.menu_name }} ×{{ menu.count }}</div>
         </div>
       </v-card-text>
       <v-card-text v-if="showOrderSummary" class="px-2 pt-1 pb-4 event-card">
