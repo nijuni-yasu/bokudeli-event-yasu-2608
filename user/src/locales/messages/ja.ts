@@ -298,16 +298,27 @@ export default {
       community_not_approved: 'コミュニティが承認されていません',
       not_manager: 'コミュニティ運営者ではありません',
       menu_update_failed: 'メニューの更新に失敗しました',
+      community_bill_notice: {
+        title: '主催者請求書払いについて',
+        description: `本イベントの支払い方法は「主催者請求書払い」です。<br />
+イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
+<b>【お支払い期限】イベント開催日の翌月末日</b>`,
+        link_label: '請求書のダウンロードはこちら',
+        link_button: '請求書払いページを開く',
+      },
     },
     member: {
       manager: '管理者',
       member: 'メンバー',
       no_member: '参加者はまだいません。',
+      status: 'ステータス',
       ordered: '注文済',
       in_cart: 'カート追加中',
       canceled: 'キャンセル',
       name: '名前',
       order: '注文内容',
+      menu_price: 'メニュー金額',
+      community_bill_off_amount: 'おごり金額',
       csv_download: 'CSV ダウンロード',
       date: {
         ordered: '注文日時',

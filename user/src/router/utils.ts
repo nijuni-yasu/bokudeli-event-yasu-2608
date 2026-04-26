@@ -23,6 +23,8 @@ export const getManageCommunityListPath = () => '/manage/community'
 export const getManageEventListPath = () => '/manage/event'
 export const getManageCommunityPath = (communityAccount: string) => `/manage/community/${communityAccount}`
 export const getManageCommunityAlbumPath = (communityAccount: string) => `/manage/community/${communityAccount}/album`
+export const getManageCommunityInvoicePath = (communityAccount: string) =>
+  `/manage/community/${communityAccount}/invoice`
 // export const getManageEventListPath = (communityAccount: string) => `/manage/community/${communityAccount}/event`
 export const getManageEventPath = (eventId: string) => `/manage/event/${eventId}`
 export const getManageEventSettingsPath = (eventId: string) => `/manage/event/${eventId}/settings`
