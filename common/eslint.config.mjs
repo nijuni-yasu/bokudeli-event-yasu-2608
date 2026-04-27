@@ -6,6 +6,8 @@ import { baseConfig, typescriptConfig } from '../eslint.config.mjs'
 const BASE_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 export default [
+  { ignores: ['vitest.config.ts'] },
+
   // 共通設定を継承
   ...baseConfig,
 

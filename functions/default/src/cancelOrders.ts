@@ -80,11 +80,12 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
         }
       }
 
-      if (eventPayment === 'user_advance') {
-        const missingStripeId = fetchedOrders.find((o) => o.stripe_id == null)
-        if (missingStripeId != null) {
-          throw new HttpsError('failed-precondition', `注文 ${missingStripeId.id} に stripe_id がありません`)
-        }
+      // 先払いは決済に stripe_id が紐づくのが正常。全件欠落のままキャンセル成功にすると未返金が隠れる（RC-35）。community_bill 等は未決済扱いがあり得る。
+      if (eventPayment === 'user_advance' && fetchedOrders.every((o) => o.stripe_id == null)) {
+        throw new HttpsError(
+          'failed-precondition',
+          '先払い注文に決済情報（stripe_id）が紐づいていません。サポートへお問い合わせください。',
+        )
       }
 
       for (const order of fetchedOrders) {
@@ -98,7 +99,9 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
 
     const canceledCount = orders.length
 
-    if (eventPayment !== 'user_advance') {
+    const hasStripePayment = orders.some((o) => o.stripe_id != null)
+    if (!hasStripePayment) {
+      // community_bill（全額おごり等）・user_on_day は stripe なしで返金なし。user_advance+全件 stripe 欠落は上記トランザクション内で弾いている。
       logger.info('Orders canceled (no refund)', {
         communityId: community_id,
         eventId: event_id,
@@ -109,8 +112,8 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
       return { canceled_count: canceledCount, refunds: [] }
     }
 
-    // Stripe 返金（user_advance のみ。トランザクション外で実行）
-    // stripe_id はトランザクション内で全 order に存在することを検証済み
+    // Stripe 返金（user_advance または community_bill + discount で Stripe 決済済みの場合）
+    // stripe_id なしの注文は返金対象外（同一リクエストで混在し得る）
     const stripeIdGroups = new Map<string, typeof orders>()
     for (const order of orders) {
       const sid = order.stripe_id ?? ''
@@ -128,12 +131,27 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
 
     for (const [stripeId, groupOrders] of stripeIdGroups) {
       try {
+        if (stripeId === '') {
+          continue
+        }
+
         const stripeDocPre = await getStripe(community_id, event_id, stripeId)
         if (stripeDocPre == null) {
           throw new Error(`stripes ドキュメントが見つかりません: ${stripeId}`)
         }
 
-        const refundAmount = groupOrders.reduce((sum, o) => sum + o.menu_price, 0)
+        const refundAmount = groupOrders.reduce(
+          (sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0),
+          0,
+        )
+        if (refundAmount <= 0) {
+          logger.info('Skip Stripe refund (zero or negative amount)', {
+            stripeId,
+            orderIds: groupOrders.map((o) => o.id),
+            refundAmount,
+          })
+          continue
+        }
         const existingRefundTotalPre = stripeDocPre.refunds.reduce((sum, r) => sum + r.amount, 0)
         if (existingRefundTotalPre + refundAmount > stripeDocPre.pay_amount) {
           throw new Error(

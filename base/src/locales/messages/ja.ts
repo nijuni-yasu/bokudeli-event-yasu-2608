@@ -22,6 +22,28 @@ export default {
     user_advance: '参加者 事前決済 💳',
     user_on_day: '参加者 当日払い 💰',
     community_bill: '主催者 請求書払い 📄',
+    community_bill_free: '主催者請求書払い',
+    community_bill_discount: '主催者請求書払い＋差額決済',
+  },
+  discount_settings: {
+    free: '全額おごり',
+    free_description: '注文金額の全額を主催者に請求書払いにてまとめてお支払いいただきます。',
+    discount: '金額指定おごり',
+    discount_description:
+      'おごり金額を指定して、その金額を「1個あたりの上限」として、各メニュー（品目）の単価ごとに主催者負担を算定します。個数分だけ累積されます。差額は参加者が事前決済でお支払いします。',
+    off_amount: 'おごり金額',
+    off_amount_required: 'おごり金額は必須です',
+    off_amount_positive_integer: 'おごり金額は100円以上の値を入力してください',
+    off_amount_step_100: 'おごり金額は100円単位で入力してください',
+    bill_info_title: '請求先情報',
+    chip_free: '💰全額おごり',
+    chip_discount: '💰{0}円おごり',
+    banner_free: '全額、主催者負担でご注文いただけます。追加のお支払いは不要です。',
+    banner_discount:
+      'メニュー1個につき{0}円まで主催者負担でご注文いただけます。差額はクレジットカードでお支払いください。',
+    original_price: '小計：¥{0}',
+    discount_applied: 'おごり合計：¥{0}',
+    free_by_organizer: '全額おごり',
   },
   event_status: {
     in_draft: '下書き',
@@ -66,6 +88,8 @@ export default {
     participants_profile: '参加者プロフィール',
     participants_profile_hidden: '※参加者プロフィールは非表示です',
     order_count: '（{0}個）',
+    menu_join_button: '注文して参加する',
+    menu_empty: 'メニューがありません',
     community_name: '【主催者】',
     contact_community: '主催者に連絡',
     contact_community_after_login: 'ログインした後に主催者に連絡してください。',
@@ -105,12 +129,13 @@ export default {
     delete_failed: '削除に失敗しました。',
     confirm_order_credit_card: 'クレジットカードでのお支払いに進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
-    confirm_order_community_bill: '支払い方法は「主催者 請求書払い」です。注文を確定しますか？',
+    confirm_order_community_bill: '支払い方法は「主催者請求書払い」です。注文を確定しますか？',
+    confirm_order_community_bill_checkout: 'おごり設定適用後の差額をクレジットカードでお支払いします。続きますか？',
     confirm_order: '注文を確定しますか？',
     remove_from_cart: 'カートから削除しますか？',
     removed_from_cart: 'カートから削除しました。',
     event_not_found: 'イベントが見つかりません。',
-    order_and_attend_event: '注文を完了する',
+    order_and_attend_event: '注文を確定する',
     proceed_to_payment: 'お支払いに進む',
     no_items_in_cart: 'カートに商品はありません。',
     doesnt_exists_user_name: 'ユーザー名が登録されていません。登録完了後、注文を完了してください',
@@ -137,7 +162,7 @@ export default {
     desc: `・<b>「郵便番号」</b>と<b>「開催日時」</b>を入力し、デリバリー可能な飲食店から1店舗を選択📍<br />
           ・イベント内容を入力。カバー画像は <a href="https://www.canva.com/design/DAF9HoKfhMw/YpkjpVdWZEWVJZ-MjEL85Q/edit" target="_blank">Canvaのテンプレート</a> をご活用ください🎨<br />
           ・公開範囲を<b>「公開」</b>または<b>「URL限定公開」</b>から選択できます👀<br />
-          ・支払い方法は<b>「参加者 事前決済」</b>または<b>「主催者 請求書払い」</b>から選択できます💰<br />
+          ・支払い方法は<b>「参加者 事前決済」</b>または<b>「主催者請求書払い」</b>から選択できます💰<br />
           ・内容が確定したらお店に<b>「予約申請」</b>。お店から<b>「予約承認」</b>をいただいたら注文受付開始💨<br />
           ・<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2b9c62499c1_0_4#slide=id.g2b9c62499c1_0_4" target="_blank">SNS投稿</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g32d785a9a51_8_27#slide=id.g32d785a9a51_8_27" target="_blank">DM</a> / <a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit?slide=id.g2bc647906f7_0_0#slide=id.g2bc647906f7_0_0" target="_blank">QRコード</a> / <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携</a> / <a href="https://docs.google.com/presentation/d/1Hxnh5nJBwXM2MS7vmllYTcfc6k4s8XtxS0AvM6plbF0/edit?slide=id.g2e7a4494cae_0_0#slide=id.g2e7a4494cae_0_0" target="_blank">チラシ</a> / <a href="https://note.com/shokujii/n/n0c961c680fd3" target="_blank">レター機能</a> などを駆使して告知しよう📣<br />
           ・注文期限になると、注文内容が確定し、お店へ自動で発注されます📩<br />
@@ -160,7 +185,7 @@ export default {
             SNS投稿、QRコード、SlackApp、チラシなどを使って食事会への告知・集客もお気軽に！<br />
             <br />
             <b>🏢 社内交流などのクローズドな食事会にも</b><br />
-            「URL限定公開」や「主催者 請求書払い」を設定することで、クローズドなお食事会も。<br />
+            「URL限定公開」や「主催者請求書払い」を設定することで、クローズドなお食事会も。<br />
             食事代を会社負担で実施する「社内交流会」にもご活用いただけます。<br />
             <br />
             <b>🙋‍♀️ チームで協力体制も</b><br />
@@ -273,8 +298,8 @@ export default {
     use_purpose: '利用目的',
     validator_account_exists: 'このアカウントIDは既に使用されています',
     bill_info: '請求先情報',
-    bill_info_hint: `「主催者 請求書払い」を利用される場合、請求先を設定してください。<br />
-      「主催者 請求書払い」を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文でき、<br>
+    bill_info_hint: `「主催者請求書払い」を利用される場合、請求先を設定してください。<br />
+      「主催者請求書払い」を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文でき、<br>
       弊社より主催者様に請求書を発行いたします。請求書のお支払い期限は翌月末日となっております。`,
     bill_fullname: '請求先 担当者名',
     bill_email: '請求先 メールアドレス',
@@ -350,15 +375,14 @@ export default {
     private_desc:
       '限定公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
-    payment_hint_user_advance: `<b>【参加者 事前決済】</b>を設定した場合：<br />
-    ・食事の代金は、参加者がクレジットカード決済にて事前にお支払いいただきます。<br />
-    ・支払い設定は予約申請後、変更できないためご注意ください。`,
-    payment_hint_community_bill: `<b>【主催者 請求書払い】</b>を設定した場合：<br />
-    ・参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
-    ・イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
-    ・2025年11月1日以降のイベントは、「請求書払い手数料」を加算してご請求させていただきます。<br />
-    ・<b>「請求書払い手数料」</b>は<b>注文金額の10%</b>です。<br />
-    ・銀行振込のお支払い期限は、イベント開催日から翌月末日です。<br />
+    payment_hint_user_advance: `参加者事前決済 を設定した場合<br />
+      食事の代金は、参加者がクレジットカード決済にて事前にお支払いいただきます。<br />
+      支払い設定は予約申請後、変更できないためご注意ください。`,
+    payment_hint_community_bill_title: '主催者請求書払いについて',
+    payment_hint_community_bill: `
+    ・イベント終了後「請求先メールアドレス」宛に請求書を送付いたします。<br />
+    ・「請求書払い手数料」としてお支払い金額に10%を加算して、ご請求させていただきます。<br />
+    ・お支払い方法は銀行振込です。お支払い期限はイベント開催日の翌月末日です。<br />
     ・支払い設定は予約申請後、変更できないためご注意ください。`,
     error_max_people: 'すでに{0}人の予約が入っています',
   },
@@ -404,24 +428,31 @@ export default {
     shop_name: '【食事】{0}',
     menu: '【注文内容】',
     menu_item: '{0} <span class="text-caption">({1}個)</span>',
-    total_price: '【注文金額】{0}',
+    total_price: '【支払い金額】{0}',
     event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
     cancel_dialog: {
       title: 'キャンセル',
-      event_name: '【イベント名】 {0}',
+      event_name: '【イベント名】{0}',
+      order_deadline: '【注文期限】{0}',
       description_user_advance: `注文したメニューを選択してキャンセルを実行してください。<br />
                       キャンセルはイベントの注文期限まで可能です。<br />
                       キャンセル手続き完了後、返金がご利用の明細に反映されるまで5～10日かかります。<br />
                       キャンセルの取り消しはできません。あらかじめご了承ください。`,
       description_community_bill: `注文したメニューを選択してキャンセルを実行してください。<br />
                       キャンセルは、イベントの注文期限まで実行可能です。`,
+      description_community_bill_discount: `注文したメニューを選択してキャンセルを実行してください。<br />
+                      キャンセルはイベントの注文期限まで可能です。<br />
+                      お支払い済みの差額分は、キャンセル手続き完了後、ご利用の明細に反映されるまで5～10日かかります。<br />
+                      キャンセルの取り消しはできません。あらかじめご了承ください。`,
       not_cancel: 'キャンセルしない',
       submit: 'キャンセルを実行する',
       select_all: 'すべて選択',
       remaining: '残り {0} 個',
-      refund_amount: 'キャンセル金額：{0}',
+      column_menu: 'メニュー名',
+      column_amount: '支払い金額',
+      refund_total: '返金額 {0}',
     },
     download_invoice: '領収書をダウンロードする',
     download_invoice_error: '領収書の取得に失敗しました',

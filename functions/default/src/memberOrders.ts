@@ -15,6 +15,11 @@ import { getEvent } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
 import { createModuleLogger } from './utils/logger.js'
 import { sendOrderCompletionMails } from './orderCompletionMail.js'
+import {
+  computePaymentCommunityBillOffAmount,
+  computeTotalPayment,
+  isPaymentCommunityBillOffAmountConsistent,
+} from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 
 const logger = createModuleLogger('memberOrders')
 const db = getFirestore()
@@ -70,6 +75,11 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       if (masterMenu == null) {
         throw new HttpsError('failed-precondition', `メニューが見つかりません: ${menu.menu_id}`)
       }
+      const discount = computePaymentCommunityBillOffAmount(
+        eventData.event_payment,
+        eventData.community_bill_settings,
+        masterMenu.menu_price,
+      )
       for (let i = 0; i < menu.count; i++) {
         await createOrder(
           community_id,
@@ -83,6 +93,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
             menu_id: masterMenu.id,
             menu_name: masterMenu.menu_name,
             menu_price: masterMenu.menu_price,
+            ...(discount !== undefined ? { payment_community_bill_off_amount: discount } : {}),
           },
           transaction,
         )
@@ -181,6 +192,19 @@ export const confirmOrder = onCall(
         if (order.status !== 'in_cart') {
           throw new HttpsError('failed-precondition', 'カート内の注文のみ確定できます')
         }
+        if (
+          !isPaymentCommunityBillOffAmountConsistent(eventData.event_payment, eventData.community_bill_settings, order)
+        ) {
+          throw new HttpsError('failed-precondition', '割引金額が一致しません')
+        }
+      }
+
+      const totalPayment = computeTotalPayment(orders, eventData.event_payment, eventData.community_bill_settings)
+      if (totalPayment < 0) {
+        throw new HttpsError('internal', '支払額が負になっています')
+      }
+      if (eventData.event_payment === 'community_bill' && totalPayment > 0) {
+        throw new HttpsError('failed-precondition', '差額のある割引参加は Stripe Checkout で決済してください')
       }
 
       const orderedAt = Timestamp.now().toMillis()

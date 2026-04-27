@@ -100,3 +100,17 @@ export const NonEmptyStringSchema = z.string().transform((value) => {
   return value
 })
 export type NonEmptyStringType = z.infer<typeof NonEmptyStringSchema>
+
+/**
+ * Firestore のフィールド削除値（FieldValue.delete() または deleteField()）を返すヘルパー。
+ * DbSchema の transform 内でフィールドを削除したい場合に使う。
+ */
+export const getDeleteFieldValue = () => (FieldValue.delete != null ? FieldValue.delete() : deleteField())
+
+/**
+ * 内側スキーマを optional でラップし、undefined を FieldValue.delete() に変換する。
+ * `merge: true` で setDoc する際にフィールドを確実に削除したい DbSchema 用。
+ * （`NonEmptyStringSchema` は空文字→delete の別系統のため、オブジェクト用に本ヘルパーを使う）
+ */
+export const optionalDeleteField = <T extends z.ZodTypeAny>(schema: T) =>
+  schema.optional().transform((val) => (val === undefined ? getDeleteFieldValue() : val))

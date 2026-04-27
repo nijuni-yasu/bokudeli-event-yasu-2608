@@ -17,6 +17,12 @@ import {
   calculateOrdersTotal,
   calculateInvoiceTaxBreakdown,
   aggregateOrderMenus,
+  getCommunityBillInvoiceMode,
+  groupOrderedCommunityBillOffByAmount,
+  sumOrderedCommunityBillOffAmount,
+  calculateDiscountSubsidyInvoiceTaxBreakdown,
+  countDiscountInvoiceDetailRows,
+  DISCOUNT_SUBSIDY_INVOICE_FEE_LABEL,
 } from '@shokujii/common/utils/invoice.js'
 import { getEvent, getAcceptingOrderEventsByEndTime, type ShokujiiEvent } from './stores/event.js'
 import { getCommunity, type ShokujiiCommunity } from './stores/community.js'
@@ -166,29 +172,74 @@ const createEventBillInvoice = async (
   }
 
   const orders = await event.getOrders('ordered')
-  const tax08Inclusive = calculateOrdersTotal(orders)
-  const menuSummary = aggregateOrderMenus(orders)
-
-  // 請求手数料・税内訳
   const isAfterCutoff = isEventAfterInvoiceFeeCutoff(event.event_start_datetime)
-  const taxBreakdown = calculateInvoiceTaxBreakdown(tax08Inclusive, event.event_start_datetime)
+  const invoiceMode = getCommunityBillInvoiceMode(event.community_bill_settings)
   const templatePath = isAfterCutoff ? TEMPLATE2_PATH : TEMPLATE_PATH
 
-  // テンプレート用明細行
-  const items: { name: string; count: number | string; price: string; totalPrice: string }[] = menuSummary.map((m) => ({
-    name: m.name.substring(0, 21) + '(※)',
-    count: m.count,
-    price: convertNumberToYen(m.price),
-    totalPrice: convertNumberToYen(m.totalPrice),
-  }))
+  const items: { name: string; count: number | string; price: string; totalPrice: string }[] = []
+  let taxBreakdown: ReturnType<typeof calculateInvoiceTaxBreakdown>
 
-  if (isAfterCutoff) {
-    items.push({
-      name: '請求書払い手数料',
-      count: 1,
-      price: convertNumberToYen(taxBreakdown.tax10Inclusive),
-      totalPrice: convertNumberToYen(taxBreakdown.tax10Inclusive),
-    })
+  if (invoiceMode === 'discount') {
+    const billSettings = event.community_bill_settings
+    if (billSettings == null || billSettings.type !== 'discount') {
+      logger.error('Discount invoice mode but community_bill_settings is not discount', { eventId: event.id })
+      throw new HttpsError('failed-precondition', '割引請求に必要なイベント設定がありません。運営に連絡してください。')
+    }
+    const offAmountYen = convertNumberToYen(billSettings.off_amount)
+    const discountSubsidySuffix = `（金額指定おごり 最大${offAmountYen}）`
+    const groupLines = groupOrderedCommunityBillOffByAmount(orders)
+    const subsidyTotal = sumOrderedCommunityBillOffAmount(orders)
+    const detailRows = countDiscountInvoiceDetailRows(groupLines.length, isAfterCutoff)
+    if (detailRows > INVOICE_ITEMS_PADDING) {
+      logger.warn('Invoice detail rows exceed template padding', {
+        eventId: event.id,
+        groupLineCount: groupLines.length,
+        isAfterCutoff,
+        detailRows,
+        maxRows: INVOICE_ITEMS_PADDING,
+      })
+      throw new HttpsError(
+        'failed-precondition',
+        `請求書の明細行が上限（${INVOICE_ITEMS_PADDING}行）を超えています。運営に連絡してください。`,
+      )
+    }
+    for (const line of groupLines) {
+      items.push({
+        name: `${line.menuName.substring(0, 21)}${discountSubsidySuffix}`,
+        count: line.orderCount,
+        price: convertNumberToYen(line.amountPerOrder),
+        totalPrice: convertNumberToYen(line.lineSubtotal),
+      })
+    }
+    taxBreakdown = calculateDiscountSubsidyInvoiceTaxBreakdown(subsidyTotal, event.event_start_datetime)
+    if (isAfterCutoff) {
+      items.push({
+        name: DISCOUNT_SUBSIDY_INVOICE_FEE_LABEL,
+        count: 1,
+        price: convertNumberToYen(taxBreakdown.tax10Inclusive),
+        totalPrice: convertNumberToYen(taxBreakdown.tax10Inclusive),
+      })
+    }
+  } else {
+    const tax08Inclusive = calculateOrdersTotal(orders)
+    const menuSummary = aggregateOrderMenus(orders)
+    taxBreakdown = calculateInvoiceTaxBreakdown(tax08Inclusive, event.event_start_datetime)
+    for (const m of menuSummary) {
+      items.push({
+        name: m.name.substring(0, 21) + '(※)',
+        count: m.count,
+        price: convertNumberToYen(m.price),
+        totalPrice: convertNumberToYen(m.totalPrice),
+      })
+    }
+    if (isAfterCutoff) {
+      items.push({
+        name: '請求書払い手数料',
+        count: 1,
+        price: convertNumberToYen(taxBreakdown.tax10Inclusive),
+        totalPrice: convertNumberToYen(taxBreakdown.tax10Inclusive),
+      })
+    }
   }
 
   while (items.length < INVOICE_ITEMS_PADDING) {

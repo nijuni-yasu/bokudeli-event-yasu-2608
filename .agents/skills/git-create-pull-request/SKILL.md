@@ -44,11 +44,10 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 
 11.（必須）手順 9 で `gh pr create` または `gh pr edit` が完了したら、ユーザーへの確認や同意を待たず、**即座に**次の**固定文だけ**のレビュー依頼コメントを `gh pr comment` で送る。手順 10 の有無に関わらず省略しない
 
-    改行入りの本文は一括で `--body` に渡す（zsh では**シングルクォート**で全体を囲むと @ が安全）。**文言・改行・URL を変えないこと**:
+    本文は `--body` に渡す（zsh では**シングルクォート**で全体を囲むと @ が安全）。**文言を変えないこと**:
 
 ```
-gh pr comment --body '@copilot @codex review 日本語でレビューをお願いします。レビューは以下ドキュメントを参考にしてください。
-https://github.com/nijuniinc/bokudeli-event-new/blob/development/.agents/skills/shokujii-code-review/shokujii-code-review.md'
+gh pr comment --body '@copilot @codex review 日本語でレビューをお願いします。'
 ```
 
     直前に PR を紐づいていないブランチの場合は `gh pr comment 番号` の形で番号を明示する。手順 9 を挟むたびに同文が積み上がるのは意図どおり。コメントを減らしたい運用に変える場合はスキル更新で別定義する

@@ -15,8 +15,6 @@ const EventMemberDbSchema = z.object({
   community_id: z.string().nonempty(),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
-  member_count: z.number().int().optional(),
-  discount_amount: z.number().int().optional(),
 })
 
 const EventMemberAppSchema = z.object({
@@ -25,8 +23,6 @@ const EventMemberAppSchema = z.object({
   community_id: z.string().nonempty(),
   created_at: EpochMillisSchema.optional(),
   updated_at: EpochMillisSchema.optional(),
-  member_count: z.number().int().optional(),
-  discount_amount: z.number().int().optional(),
 })
 
 const convertMemberToDb = (member: EventMember) => {
@@ -44,8 +40,6 @@ export class EventMember {
   community_id!: string
   created_at: number
   updated_at: number
-  member_count?: number
-  discount_amount?: number
 
   constructor(userId: string, src: Partial<EventMember>) {
     Object.assign(this, EventMemberAppSchema.parse(src))
@@ -80,6 +74,7 @@ const EventMemberOrderDbSchema = z.object({
   stripe_id: z.string().nonempty().optional(),
   ordered_at: TimestampSchema.optional(),
   canceled_at: TimestampSchema.optional(),
+  payment_community_bill_off_amount: z.number().int().nonnegative().optional(),
 })
 
 const EventMemberOrderAppSchema = z.object({
@@ -95,6 +90,7 @@ const EventMemberOrderAppSchema = z.object({
   carted_at: EpochMillisSchema.optional(),
   ordered_at: EpochMillisSchema.optional(),
   canceled_at: EpochMillisSchema.optional(),
+  payment_community_bill_off_amount: z.number().int().nonnegative().optional(),
 })
 
 const convertOrderToDb = (order: EventMemberOrder) => {
@@ -121,6 +117,7 @@ export class EventMemberOrder {
   stripe_id?: string
   ordered_at?: number
   canceled_at?: number
+  payment_community_bill_off_amount?: number
 
   constructor(orderId: string, src: Partial<EventMemberOrder>) {
     Object.assign(this, EventMemberOrderAppSchema.parse(src))

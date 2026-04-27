@@ -4,6 +4,8 @@ import {
   TimestampSchema,
   EpochMillisSchema,
   getRefFromPath,
+  getDeleteFieldValue,
+  optionalDeleteField,
   DocumentReference,
 } from './firebase/index.js'
 import { getStartOfDay } from '../utils/datetime.js'
@@ -11,6 +13,19 @@ import { computeEventFullAddress } from '../utils/splitAddress.js'
 
 export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
+
+export const COMMUNITY_BILL_SETTINGS_TYPE_VALUES = ['free', 'discount'] as const
+const CommunityBillSettingsAppSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('free') }),
+  z.object({ type: z.literal('discount'), off_amount: z.number().int().positive() }),
+])
+const CommunityBillSettingsDbSchema = CommunityBillSettingsAppSchema.transform((val) => {
+  if (val.type !== 'discount') {
+    return { ...val, off_amount: getDeleteFieldValue() }
+  }
+  return val
+})
+export type CommunityBillSettingsType = z.infer<typeof CommunityBillSettingsAppSchema>
 
 /**
  * DB上に保存されるイベントステータス
@@ -92,6 +107,7 @@ export const EventDbSchema = z.object({
   subdomain_tags: z.array(z.string()).optional(),
   sent_new_event_mail_at: TimestampSchema.optional(),
   sent_popular_event_mail_at: TimestampSchema.optional(),
+  community_bill_settings: optionalDeleteField(CommunityBillSettingsDbSchema),
 })
 
 /**
@@ -151,6 +167,7 @@ const EventAppSchema = z.object({
   organizer_memo: z.string().default(''),
   sent_new_event_mail_at: EpochMillisSchema.optional(),
   sent_popular_event_mail_at: EpochMillisSchema.optional(),
+  community_bill_settings: CommunityBillSettingsAppSchema.optional(),
 })
 
 const convertToDb = (event: Event, updated_by: string) => {
@@ -206,6 +223,8 @@ export class Event {
   event_place_url!: string
   members!: string[]
   subdomain_tags!: string[]
+
+  community_bill_settings?: CommunityBillSettingsType
 
   created_at: number
   created_by?: string

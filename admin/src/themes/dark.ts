@@ -40,6 +40,7 @@ export default {
     'expansion-panel-text-custom-bg': '#373350',
     'track-bg': '#474360',
     'chat-bg': '#373452',
+    'discount': '#ffa200',
   },
 
   variables: {

@@ -8,10 +8,12 @@ import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shoku
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore } from '@shokujii/base/stores/event'
+import { computeTotalPayment } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import {
   mdiTrashCan,
   mdiHelpCircleOutline,
@@ -39,15 +41,20 @@ type GroupedMenu = {
   menu_price: number
   count: number
   order_ids: string[]
+  totalPrice: number
+  totalDiscount: number
 }
 
 const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
   const map = new Map<string, GroupedMenu>()
   for (const order of orders) {
+    const discount = order.payment_community_bill_off_amount ?? 0
     const existing = map.get(order.menu_id)
     if (existing) {
       existing.count++
       existing.order_ids.push(order.order_id)
+      existing.totalPrice += order.menu_price
+      existing.totalDiscount += discount
     } else {
       map.set(order.menu_id, {
         menu_id: order.menu_id,
@@ -55,6 +62,8 @@ const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
         menu_price: order.menu_price,
         count: 1,
         order_ids: [order.order_id],
+        totalPrice: order.menu_price,
+        totalDiscount: discount,
       })
     }
   }
@@ -66,19 +75,36 @@ type EnrichedCartItem = CartItem & {
   totalPrice: number
 }
 
+/** EventDetailsCard と同じ主催者請求の表示用 i18n キー */
+const getEventPaymentI18nKey = (event: BokudeliEvent) => {
+  if (event.event_payment === 'community_bill') {
+    return event.community_bill_settings?.type === 'discount'
+      ? 'payment.community_bill_discount'
+      : 'payment.community_bill_free'
+  }
+  return `payment.${event.event_payment}`
+}
+
+/** community_bill + discount でかつ差額 Stripe 決済が必要かどうか */
+const needsCommunityBillStripe = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean => {
+  if (event.event_payment !== 'community_bill') return false
+  if (event.community_bill_settings?.type !== 'discount') return false
+  return computeTotalPayment(orders) > 0
+}
+
 const enrichedCart = computed<EnrichedCartItem[] | null>(() => {
   if (cart.value == null) return null
   return cart.value.map((cartItem) => ({
     ...cartItem,
     groupedMenus: groupOrdersByMenu(cartItem.orders),
-    totalPrice: cartItem.orders.reduce((sum, o) => sum + o.menu_price, 0),
+    totalPrice: computeTotalPayment(cartItem.orders),
   }))
 })
 
 const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople' | 'unselectedMenu'> => {
   const { event, orders } = cartItem
 
-  if (event.event_deadline_datetime && event.event_deadline_datetime < Date.now()) {
+  if (event.event_deadline_datetime < Date.now()) {
     return 'deadline'
   }
 
@@ -145,7 +171,7 @@ const startOrderProcess = async () => {
     const communityId = event.community_id
     const eventId = event.event_id
 
-    if (event.event_payment === 'user_advance') {
+    if (event.event_payment === 'user_advance' || needsCommunityBillStripe(event, orders)) {
       try {
         const response = await createStripeCheckoutSession({
           community_id: communityId,
@@ -180,23 +206,20 @@ const startOrderProcess = async () => {
   }
 }
 
-const paymentMessage = (event: BokudeliEvent) => {
-  switch (event.event_payment) {
-    case 'user_advance':
-      return $t('cart.confirm_order_credit_card')
-    case 'user_on_day':
-      return $t('cart.confirm_order_participant_on_day')
-    case 'community_bill':
-      return $t('cart.confirm_order_community_bill')
-    default:
-      return $t('cart.confirm_order')
+const paymentMessage = (event: BokudeliEvent, orders: EventMemberOrder[]) => {
+  if (event.event_payment === 'user_advance') return $t('cart.confirm_order_credit_card')
+  if (event.event_payment === 'user_on_day') return $t('cart.confirm_order_participant_on_day')
+  if (event.event_payment === 'community_bill') {
+    if (needsCommunityBillStripe(event, orders)) return $t('cart.confirm_order_community_bill_checkout')
+    return $t('cart.confirm_order_community_bill')
   }
+  return $t('cart.confirm_order')
 }
 
 const openUserParameterConfirm = ref(false)
 const targetUserParameter = ref('')
 const showConfirm = async (cartItem: CartItem) => {
-  if (!currentUser.value?.user_name) {
+  if (currentUser.value?.user_name == null || currentUser.value.user_name === '') {
     targetUserParameter.value = $t('cart.doesnt_exists_user_name')
     openUserParameterConfirm.value = true
     return
@@ -219,7 +242,12 @@ const showConfirm = async (cartItem: CartItem) => {
   }
 
   selectedCartItem.value = cartItem
-  confirmDialogMessage.value = paymentMessage(cartItem.event)
+  const { event, orders } = cartItem
+  if (event.event_payment === 'user_advance' || needsCommunityBillStripe(event, orders)) {
+    await startOrderProcess()
+    return
+  }
+  confirmDialogMessage.value = paymentMessage(event, orders)
   openConfirmOrder.value = true
 }
 
@@ -352,7 +380,28 @@ const isOpenCancelpolicyDialog = ref(false)
           {{ $t('cart.deadline') }}{{ dateWithDayOfWeekString(cartItem.event.event_deadline_datetime) }}
         </v-card-text>
         <v-card-text class="card-text-style">
-          {{ $t('cart.payment') }}{{ $t(`payment.${cartItem.event.event_payment}`) }} <br />
+          <div class="d-flex align-center flex-wrap">
+            <span> {{ $t('cart.payment') }}{{ $t(getEventPaymentI18nKey(cartItem.event)) }} </span>
+            <EventDiscountChip
+              v-if="cartItem.event.event_payment === 'community_bill' && cartItem.event.community_bill_settings != null"
+              :settings="cartItem.event.community_bill_settings"
+              size="x-small"
+              class="ml-1"
+            />
+          </div>
+        </v-card-text>
+        <v-card-text
+          v-if="cartItem.event.event_payment === 'community_bill' && cartItem.event.community_bill_settings != null"
+          class="card-text-style pt-0"
+        >
+          <v-alert variant="tonal" color="discount" class="mb-0 cart-community-bill-banner">
+            <template v-if="cartItem.event.community_bill_settings.type === 'free'">
+              {{ $t('discount_settings.banner_free') }}
+            </template>
+            <template v-else-if="cartItem.event.community_bill_settings.type === 'discount'">
+              {{ $t('discount_settings.banner_discount', [cartItem.event.community_bill_settings.off_amount]) }}
+            </template>
+          </v-alert>
         </v-card-text>
         <v-card-text class="d-flex align-center card-text-style">
           <div class="d-flex flex-column align-center">
@@ -418,7 +467,13 @@ const isOpenCancelpolicyDialog = ref(false)
                         </v-btn>
                       </div>
                     </td>
-                    <td style="padding: 1px">¥{{ priceString(menu.menu_price * menu.count) }}</td>
+                    <td style="padding: 1px">
+                      <template v-if="menu.totalDiscount > 0">
+                        <div class="text-caption text-medium-emphasis">¥{{ priceString(menu.totalPrice) }}</div>
+                        <div class="text-caption text-discount">-¥{{ priceString(menu.totalDiscount) }}</div>
+                      </template>
+                      <template v-else> ¥{{ priceString(menu.totalPrice) }} </template>
+                    </td>
                   </tr>
                 </tbody>
               </v-table>
@@ -446,7 +501,8 @@ const isOpenCancelpolicyDialog = ref(false)
               @click="showConfirm(cartItem)"
             >
               {{
-                cartItem.event.event_payment === 'user_advance'
+                cartItem.event.event_payment === 'user_advance' ||
+                needsCommunityBillStripe(cartItem.event, cartItem.orders)
                   ? $t('cart.proceed_to_payment')
                   : $t('cart.order_and_attend_event')
               }}
@@ -534,10 +590,21 @@ const isOpenCancelpolicyDialog = ref(false)
   border-radius: 8px;
 }
 
+/* Materio が .v-alert__content に font-size を直指定するため text-body-2 が効かない。本文相当に揃える */
+.cart-community-bill-banner :deep(.v-alert__content) {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+}
+
 @media (max-width: 959px) {
   .card-text-style {
     font-size: 12px !important;
     padding-bottom: 12px !important;
+  }
+
+  .cart-community-bill-banner :deep(.v-alert__content) {
+    font-size: 0.75rem;
+    line-height: 1.25rem;
   }
 }
 </style>

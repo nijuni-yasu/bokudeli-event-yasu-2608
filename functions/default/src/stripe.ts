@@ -8,6 +8,10 @@ import { getUserUrl, getMainUrl, convertStoragePathToURL } from './utils/urls.js
 import { getEvent } from './stores/event.js'
 import { getOrdersByIds } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
+import {
+  isPaymentCommunityBillOffAmountConsistent,
+  computeTotalPayment,
+} from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 
 const logger = createModuleLogger('stripe')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
@@ -39,8 +43,11 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
 
-    if (event.event_payment !== 'user_advance') {
-      throw new HttpsError('failed-precondition', 'Stripe 決済は事前クレカ決済のイベントのみ使用できます')
+    if (event.event_payment !== 'user_advance' && event.event_payment !== 'community_bill') {
+      throw new HttpsError(
+        'failed-precondition',
+        'Stripe 決済は事前クレカ決済または主催者負担割引のイベントのみ使用できます',
+      )
     }
 
     const now = Timestamp.now().toMillis()
@@ -64,6 +71,20 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       if (order.status !== 'in_cart') {
         throw new HttpsError('failed-precondition', 'カート内の注文のみ決済できます')
       }
+      if (!isPaymentCommunityBillOffAmountConsistent(event.event_payment, event.community_bill_settings, order)) {
+        throw new HttpsError('failed-precondition', '割引金額が一致しません')
+      }
+    }
+
+    const totalPayment = computeTotalPayment(orders, event.event_payment, event.community_bill_settings)
+    if (totalPayment <= 0) {
+      throw new HttpsError('failed-precondition', '支払額が ¥0 の場合は Stripe 決済は不要です')
+    }
+    if (event.event_payment === 'community_bill' && event.community_bill_settings?.type !== 'discount') {
+      throw new HttpsError(
+        'failed-precondition',
+        '主催者負担イベントで Stripe 決済できるのは割引参加（差額あり）のみです',
+      )
     }
 
     const eventMenus = await event.getMenus()
@@ -78,28 +99,41 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       if (existing) {
         existing.quantity++
       } else {
+        const unitAmount = order.menu_price - (order.payment_community_bill_off_amount ?? 0)
         grouped.set(order.menu_id, {
           menuName: order.menu_name,
-          unitAmount: order.menu_price,
+          unitAmount,
           quantity: 1,
           imageUrl: menuImageMap.get(order.menu_id) ?? '',
         })
       }
     }
 
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = Array.from(grouped.values()).map((item) => ({
-      price_data: {
-        currency: 'jpy',
-        tax_behavior: 'inclusive',
-        product_data: {
-          name: item.menuName,
-          ...(item.imageUrl ? { images: [item.imageUrl] } : {}),
-          metadata: { partner_id: event.partner_id },
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = Array.from(grouped.values())
+      .filter((item) => item.unitAmount > 0)
+      .map((item) => ({
+        price_data: {
+          currency: 'jpy',
+          tax_behavior: 'inclusive',
+          product_data: {
+            name: item.menuName,
+            ...(item.imageUrl ? { images: [item.imageUrl] } : {}),
+            metadata: { partner_id: event.partner_id },
+          },
+          unit_amount: item.unitAmount,
         },
-        unit_amount: item.unitAmount,
-      },
-      quantity: item.quantity,
-    }))
+        quantity: item.quantity,
+      }))
+
+    if (lineItems.length === 0 && totalPayment > 0) {
+      logger.error('Checkout line items empty despite positive totalPayment', {
+        eventId: event_id,
+        communityId: community_id,
+        userId: uid,
+        totalPayment,
+      })
+      throw new HttpsError('internal', '決済明細の生成に失敗しました')
+    }
 
     const stripe = new Stripe(STRIPE_API_KEY.value(), { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
     const communityAccount = event.community_account

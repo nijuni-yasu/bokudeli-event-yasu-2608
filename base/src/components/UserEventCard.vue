@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { computeOrderLineNet } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import { convertStoragePathToURL } from '../utils/storage'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 
 const props = defineProps<{
   event: BokudeliEvent
@@ -37,21 +39,24 @@ const cancelDialogOpen = computed({
   },
 })
 
+const orderLineNet = (o: EventMemberOrder) =>
+  computeOrderLineNet(o, props.event.event_payment, props.event.community_bill_settings)
+
 const groupedMenus = computed(() => {
-  const map = new Map<string, { menu_name: string; menu_price: number; count: number }>()
+  const map = new Map<string, { menu_name: string; count: number }>()
   for (const o of props.orders.filter((o) => o.status !== 'canceled')) {
     const existing = map.get(o.menu_id)
     if (existing) {
       existing.count++
     } else {
-      map.set(o.menu_id, { menu_name: o.menu_name, menu_price: o.menu_price, count: 1 })
+      map.set(o.menu_id, { menu_name: o.menu_name, count: 1 })
     }
   }
   return Array.from(map.entries()).map(([menu_id, v]) => ({ menu_id, ...v }))
 })
 
 const totalPrice = computed(() =>
-  props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + o.menu_price, 0),
+  props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + orderLineNet(o), 0),
 )
 
 const hasActiveOrders = computed(() => props.orders.some((o) => o.status !== 'canceled'))
@@ -66,13 +71,14 @@ const isShowCancelButton = computed(
 
 const isAllCanceled = computed(() => props.orders.length > 0 && props.orders.every((o) => o.status === 'canceled'))
 
-const isShowInvoiceButton = computed(
-  () =>
-    !props.ordersLoading &&
-    !props.ordersError &&
-    props.orders.some((o) => o.status === 'ordered') &&
-    props.event.event_payment === 'user_advance',
-)
+const isShowInvoiceButton = computed(() => {
+  if (props.ordersLoading || props.ordersError) return false
+  if (!props.orders.some((o) => o.status === 'ordered')) return false
+  return (
+    props.event.event_payment === 'user_advance' ||
+    props.orders.some((o) => o.status === 'ordered' && o.stripe_id != null)
+  )
+})
 
 const showOrderSummary = computed(() => !props.ordersLoading && !props.ordersError && groupedMenus.value.length > 0)
 
@@ -82,114 +88,78 @@ const stripeGroups = computed(() => {
     if (!map.has(o.stripe_id!)) {
       map.set(o.stripe_id!, { stripeId: o.stripe_id!, amount: 0 })
     }
-    map.get(o.stripe_id!)!.amount += o.menu_price
+    map.get(o.stripe_id!)!.amount += orderLineNet(o)
   }
   return Array.from(map.values())
 })
+
+/** EventDetailsCard と同じ支払い方法ラベル（community_bill は全額おごり vs 金額おごりでキーを分岐） */
+const eventPaymentLabelKey = computed(() =>
+  props.event.event_payment === 'community_bill'
+    ? props.event.community_bill_settings?.type === 'discount'
+      ? 'payment.community_bill_discount'
+      : 'payment.community_bill_free'
+    : `payment.${props.event.event_payment}`,
+)
 
 // ── キャンセルモーダル ──
 
 const getOrderTimestamp = (o: EventMemberOrder) => o.ordered_at ?? o.carted_at ?? o.created_at ?? 0
 
-type CancelMenuGroup = {
-  menu_id: string
+type CancelDialogOrderedRow = {
+  orderId: string
   menu_name: string
-  menu_price: number
-  orderedIds: string[]
-  canceledCount: number
+  line_net: number
   checked: boolean
-  cancelCount: number
 }
 
-const cancelMenuGroups = computed<CancelMenuGroup[]>(() => {
-  const map = new Map<
-    string,
-    { ordered: EventMemberOrder[]; canceledCount: number; menu_name: string; menu_price: number }
-  >()
-  for (const o of props.orders) {
-    const existing = map.get(o.menu_id)
-    if (existing) {
-      if (o.status === 'ordered') existing.ordered.push(o)
-      else if (o.status === 'canceled') existing.canceledCount++
-    } else {
-      map.set(o.menu_id, {
-        menu_name: o.menu_name,
-        menu_price: o.menu_price,
-        ordered: o.status === 'ordered' ? [o] : [],
-        canceledCount: o.status === 'canceled' ? 1 : 0,
-      })
-    }
-  }
+type CancelDialogCanceledRow = {
+  orderId: string
+  menu_name: string
+}
 
-  return Array.from(map.entries()).map(([menu_id, g]) => {
-    g.ordered.sort((a, b) => getOrderTimestamp(a) - getOrderTimestamp(b))
-    return {
-      menu_id,
-      menu_name: g.menu_name,
-      menu_price: g.menu_price,
-      orderedIds: g.ordered.map((o) => o.id),
-      canceledCount: g.canceledCount,
-      checked: false,
-      cancelCount: 0,
-    }
-  })
-})
+const cancelOrderedRows = ref<CancelDialogOrderedRow[]>([])
+const cancelCanceledRows = ref<CancelDialogCanceledRow[]>([])
 
-const cancelSelections = ref<CancelMenuGroup[]>([])
-
-const initCancelSelections = () => {
-  cancelSelections.value = cancelMenuGroups.value.map((g) => ({
-    ...g,
+const initCancelDialogRows = () => {
+  const ordered = props.orders
+    .filter((o) => o.status === 'ordered')
+    .sort((a, b) => getOrderTimestamp(a) - getOrderTimestamp(b))
+  cancelOrderedRows.value = ordered.map((o) => ({
+    orderId: o.id,
+    menu_name: o.menu_name,
+    line_net: orderLineNet(o),
     checked: false,
-    cancelCount: 0,
+  }))
+  const canceled = props.orders
+    .filter((o) => o.status === 'canceled')
+    .sort((a, b) => getOrderTimestamp(a) - getOrderTimestamp(b))
+  cancelCanceledRows.value = canceled.map((o) => ({
+    orderId: o.id,
+    menu_name: o.menu_name,
   }))
 }
 
 const onOpenDialog = () => {
-  initCancelSelections()
+  initCancelDialogRows()
   cancelDialogOpen.value = true
 }
 
-const onCheckChanged = (group: CancelMenuGroup) => {
-  if (group.checked && group.cancelCount === 0) {
-    group.cancelCount = group.orderedIds.length
-  } else if (!group.checked) {
-    group.cancelCount = 0
-  }
-}
-
 const selectAll = () => {
-  for (const g of cancelSelections.value) {
-    if (g.orderedIds.length > 0) {
-      g.checked = true
-      g.cancelCount = g.orderedIds.length
-    }
+  for (const r of cancelOrderedRows.value) {
+    r.checked = true
   }
 }
 
-const selectedOrderIds = computed(() => {
-  const ids: string[] = []
-  for (const g of cancelSelections.value) {
-    if (g.checked && g.cancelCount > 0) {
-      ids.push(...g.orderedIds.slice(-g.cancelCount))
-    }
-  }
-  return ids
-})
+const selectedOrderIds = computed(() => cancelOrderedRows.value.filter((r) => r.checked).map((r) => r.orderId))
 
 const canSubmit = computed(
   () => selectedOrderIds.value.length > 0 && !props.cancelLoading && !props.ordersLoading && !props.ordersError,
 )
 
-const cancelRefundAmount = computed(() => {
-  let total = 0
-  for (const g of cancelSelections.value) {
-    if (g.checked && g.cancelCount > 0) {
-      total += g.menu_price * g.cancelCount
-    }
-  }
-  return total
-})
+const cancelRefundAmount = computed(() =>
+  cancelOrderedRows.value.filter((r) => r.checked).reduce((sum, r) => sum + r.line_net, 0),
+)
 
 const submitCancel = () => {
   if (!canSubmit.value) return
@@ -204,11 +174,18 @@ const submitCancel = () => {
       class="ma-0 pa-0"
       aspect-ratio="1.91"
       :src="convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.event_id))"
-    ></v-img>
-    <EventStatusChip :status="event.calculatedEventStatus" size="small" class="mt-2 ml-3" />
-    <v-chip v-if="!event.is_public" class="mt-2 ml-3" color="primary" size="small">
-      {{ $t('private_event') }}
-    </v-chip>
+    />
+    <div class="d-flex align-center flex-wrap ga-2 mt-2 ml-3">
+      <EventStatusChip :status="event.calculatedEventStatus" size="small" />
+      <EventDiscountChip
+        v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
+        :settings="event.community_bill_settings"
+        size="small"
+      />
+      <v-chip v-if="!event.is_public" color="primary" size="small">
+        {{ $t('private_event') }}
+      </v-chip>
+    </div>
     <v-card-title class="justify-center pb-1 title text-h5">
       {{ event.event_name }}
     </v-card-title>
@@ -223,7 +200,7 @@ const submitCancel = () => {
     }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{ $t('user_event_card.shop_name', [event.shop_name]) }}</v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{
-      $t('user_event_card.event_payment', [$t(`payment.${event.event_payment}`)])
+      $t('user_event_card.event_payment', [$t(eventPaymentLabelKey)])
     }}</v-card-text>
     <v-card-text v-if="ordersLoading" class="py-3 px-2 d-flex justify-center align-center">
       <v-progress-circular indeterminate color="primary" size="28" width="2" />
@@ -244,9 +221,7 @@ const submitCancel = () => {
       <v-card-text v-if="showOrderSummary" class="py-1 px-2 event-card">
         {{ $t('user_event_card.menu') }}
         <div class="ml-3">
-          <div v-for="menu in groupedMenus" :key="menu.menu_id">
-            {{ menu.menu_name }} ×{{ menu.count }}（{{ $n(menu.menu_price * menu.count, 'currency') }}）
-          </div>
+          <div v-for="menu in groupedMenus" :key="menu.menu_id">{{ menu.menu_name }} ×{{ menu.count }}</div>
         </div>
       </v-card-text>
       <v-card-text v-if="showOrderSummary" class="px-2 pt-1 pb-4 event-card">
@@ -296,44 +271,59 @@ const submitCancel = () => {
             <div v-html="$t('user_event_card.cancel_dialog.description_user_advance')" />
           </div>
           <div v-else-if="event.event_payment === 'community_bill'">
-            <div v-html="$t('user_event_card.cancel_dialog.description_community_bill')" />
+            <div
+              v-if="event.community_bill_settings?.type === 'discount'"
+              v-html="$t('user_event_card.cancel_dialog.description_community_bill_discount')"
+            />
+            <div v-else v-html="$t('user_event_card.cancel_dialog.description_community_bill')" />
           </div>
         </div>
 
-        <div v-for="group in cancelSelections" :key="group.menu_id" class="mb-3">
-          <div v-if="group.orderedIds.length > 0" class="d-flex align-center ga-3">
+        <div class="text-h6 mb-4" style="line-height: 2rem">
+          <div>{{ $t('user_event_card.cancel_dialog.event_name', [event.event_name]) }}</div>
+          <div>
+            {{
+              $t('user_event_card.cancel_dialog.order_deadline', [
+                $d(event.event_deadline_datetime, 'datetime_weekday_short'),
+              ])
+            }}
+          </div>
+        </div>
+
+        <div class="cancel-dialog-table text-body-1 pa-5">
+          <div class="cancel-dialog-table__head text-medium-emphasis">
+            <span />
+            <span>{{ $t('user_event_card.cancel_dialog.column_menu') }}</span>
+            <span class="text-end">{{ $t('user_event_card.cancel_dialog.column_amount') }}</span>
+          </div>
+          <div v-for="row in cancelOrderedRows" :key="row.orderId" class="cancel-dialog-table__row">
             <v-checkbox
-              v-model="group.checked"
-              :label="`${group.menu_name}（${$n(group.menu_price, 'currency')}）`"
+              v-model="row.checked"
               density="compact"
               hide-details
+              class="cancel-dialog-table__check"
               :disabled="cancelLoading"
-              @update:model-value="onCheckChanged(group)"
             />
-            <v-select
-              v-if="group.checked"
-              v-model="group.cancelCount"
-              :items="Array.from({ length: group.orderedIds.length }, (_, i) => i + 1)"
-              density="compact"
-              hide-details
-              :disabled="cancelLoading"
-              style="max-width: 100px"
-            />
-            <span class="text-body-2 text-medium-emphasis">
-              {{ $t('user_event_card.cancel_dialog.remaining', [group.orderedIds.length]) }}
-            </span>
+            <span>{{ row.menu_name }}</span>
+            <span class="text-end">{{ $n(row.line_net, 'currency') }}</span>
           </div>
-          <div v-if="group.canceledCount > 0" class="text-body-2 text-disabled ml-8">
-            {{ group.menu_name }} ×{{ group.canceledCount }} {{ $t('user_event_card.canceled') }}
+          <div
+            v-for="row in cancelCanceledRows"
+            :key="row.orderId"
+            class="cancel-dialog-table__row cancel-dialog-table__row--canceled text-disabled"
+          >
+            <span />
+            <span>{{ row.menu_name }}</span>
+            <span class="text-end">{{ $t('user_event_card.canceled') }}</span>
           </div>
         </div>
 
-        <div v-if="selectedOrderIds.length > 0" class="font-weight-bold mt-4">
-          {{ $t('user_event_card.cancel_dialog.refund_amount', [$n(cancelRefundAmount, 'currency')]) }}
+        <div v-if="selectedOrderIds.length > 0" class="font-weight-bold mt-4 text-end text-h5">
+          {{ $t('user_event_card.cancel_dialog.refund_total', [$n(cancelRefundAmount, 'currency')]) }}
         </div>
       </v-card-text>
       <v-card-actions>
-        <v-btn variant="text" @click="selectAll" :disabled="cancelLoading">
+        <v-btn variant="text" @click="selectAll" :disabled="cancelLoading || cancelOrderedRows.length === 0">
           {{ $t('user_event_card.cancel_dialog.select_all') }}
         </v-btn>
         <v-spacer />
@@ -350,5 +340,36 @@ const submitCancel = () => {
 <style lang="scss" scoped>
 .event-card {
   font-size: 13px;
+}
+
+.cancel-dialog-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cancel-dialog-table__head,
+.cancel-dialog-table__row {
+  display: grid;
+  grid-template-columns: 2.75rem 1fr minmax(5.5rem, auto);
+  column-gap: 0.5rem;
+  align-items: center;
+  min-height: 2.25rem;
+}
+
+.cancel-dialog-table__head {
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.125rem;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.cancel-dialog-table__check {
+  margin: -0.5rem 0;
+  padding: 0;
+  justify-self: start;
+}
+
+.cancel-dialog-table__row--canceled {
+  font-size: 0.8125rem;
 }
 </style>

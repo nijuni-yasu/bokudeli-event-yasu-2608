@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { useEventStore, type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const display = useDisplay()
+const { t: $t } = useI18n()
 const eventStore = useEventStore(props.eventId)
 
 // is_selected が true のメニューのみを表示
@@ -76,7 +78,7 @@ const getMenuImageURL = (menu: BokudeliEventMenu) => {
                     :prepend-icon="mdiFoodForkDrink"
                     @click="emit('selectMenu', menu)"
                   >
-                    {{ '注文して参加する' }}
+                    {{ $t('event_details.menu_join_button') }}
                   </v-btn>
                 </div>
               </v-col>
@@ -121,7 +123,7 @@ const getMenuImageURL = (menu: BokudeliEventMenu) => {
                         :prepend-icon="mdiFoodForkDrink"
                         @click="emit('selectMenu', menu)"
                       >
-                        {{ '注文して参加する' }}
+                        {{ $t('event_details.menu_join_button') }}
                       </v-btn>
                     </v-col>
                   </v-row>
@@ -134,7 +136,7 @@ const getMenuImageURL = (menu: BokudeliEventMenu) => {
 
       <!-- no result found -->
       <v-col v-show="filteredMenus.length === 0" cols="12" class="text-center">
-        <h4 class="mt-4">メニューがありません</h4>
+        <h4 class="mt-4">{{ $t('event_details.menu_empty') }}</h4>
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">

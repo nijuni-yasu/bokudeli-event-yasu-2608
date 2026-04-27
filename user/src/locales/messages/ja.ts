@@ -144,7 +144,7 @@ export default {
           button: '詳細を見る',
         },
         step2: {
-          title: '主催者 請求書払い',
+          title: '主催者請求書払い',
           description:
             '企業や団体などがイベントを主催する場合、まとめて後払い（請求書払い）にも対応可能です。イベント終了後に請求書を発行し、翌月末日までに銀行振込にてお支払いいただきます。',
           button: '詳細を見る',
@@ -298,16 +298,27 @@ export default {
       community_not_approved: 'コミュニティが承認されていません',
       not_manager: 'コミュニティ運営者ではありません',
       menu_update_failed: 'メニューの更新に失敗しました',
+      community_bill_notice: {
+        title: '主催者請求書払いについて',
+        description: `本イベントの支払い方法は「主催者請求書払い」です。<br />
+イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
+<b>【お支払い期限】イベント開催日の翌月末日</b>`,
+        link_label: '請求書のダウンロードはこちら',
+        link_button: '請求書払いページを開く',
+      },
     },
     member: {
       manager: '管理者',
       member: 'メンバー',
       no_member: '参加者はまだいません。',
+      status: 'ステータス',
       ordered: '注文済',
       in_cart: 'カート追加中',
       canceled: 'キャンセル',
       name: '名前',
       order: '注文内容',
+      menu_price: 'メニュー金額',
+      community_bill_off_amount: 'おごり金額',
       csv_download: 'CSV ダウンロード',
       date: {
         ordered: '注文日時',
@@ -434,8 +445,8 @@ export default {
       price: '請求金額',
       download: 'ダウンロード',
       error: '請求書の取得に失敗しました',
-      title: '主催者 請求書払い📃',
-      description: `イベント設定画面で<b>「主催者 請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
+      title: '主催者請求書払い📃',
+      description: `イベント設定画面で<b>「主催者請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />
       イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
       <b>【お支払い期限】翌月末日</b><br />
       <b>【請求書払い手数料】注文金額の10%</b><br />

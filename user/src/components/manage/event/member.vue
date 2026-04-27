@@ -15,6 +15,7 @@ import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
+import { priceString } from '@shokujii/base/schemes/converter'
 import type { User } from '@shokujii/common/schemas/User'
 
 const { t: $t, d: $d } = useI18n()
@@ -55,6 +56,8 @@ const canceledMenus = computed(() =>
     .sort(([a], [b]) => (a.canceled_at ?? 0) - (b.canceled_at ?? 0)),
 )
 const tables = computed(() => [orderedMenus.value, cartMenus.value, canceledMenus.value])
+
+const isCommunityBill = computed(() => eventStore.event?.event_payment === 'community_bill')
 
 const targetMember = ref<User | null>(null)
 const isEmailDialogOpen = computed({
@@ -98,16 +101,35 @@ const getDateString = (order: EventMemberOrder) => {
   }
 }
 const downloadCsvFile = () => {
-  let csv = '"Status","UserName","X","Facebook","Instagram","Order","Date"\n'
+  const headers = [
+    $t('manage.member.status'),
+    $t('manage.member.name'),
+    'X',
+    'Facebook',
+    'Instagram',
+    $t('manage.member.order'),
+    $t('manage.member.menu_price'),
+  ]
+  if (isCommunityBill.value) {
+    headers.push($t('manage.member.community_bill_off_amount'))
+  }
+  headers.push($t('manage.member.date.ordered'))
+  let csv = headers.map((h) => `"${h}"`).join(',') + '\n'
   for (const [order, member] of [...orderedMenus.value, ...cartMenus.value, ...canceledMenus.value]) {
-    csv +=
-      `"${$t(`manage.member.${order.status}`)}",` +
-      `"${member.user_name}",` +
-      `"${member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : ''}",` +
-      `"${member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : ''}",` +
-      `"${member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : ''}",` +
-      `"${order.menu_name}",` +
-      `"${getDateString(order)}"\n`
+    const row = [
+      $t(`manage.member.${order.status}`),
+      member.user_name,
+      member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : '',
+      member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : '',
+      member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : '',
+      order.menu_name,
+      String(order.menu_price),
+    ]
+    if (isCommunityBill.value) {
+      row.push(String(order.payment_community_bill_off_amount ?? 0))
+    }
+    row.push(getDateString(order) ?? '')
+    csv += row.map((v) => `"${v}"`).join(',') + '\n'
   }
   downloadCsv('event_member.csv', csv)
 }
@@ -144,6 +166,10 @@ const downloadCsvFile = () => {
                         <v-spacer />
                       </th>
                       <th>{{ $t('manage.member.order') }}</th>
+                      <th class="text-right amount-cell">{{ $t('manage.member.menu_price') }}</th>
+                      <th v-if="isCommunityBill" class="text-right amount-cell">
+                        {{ $t('manage.member.community_bill_off_amount') }}
+                      </th>
                       <th>{{ $t(`manage.member.date.${menus[0][0].status}`) }}</th>
                       <th></th>
                     </tr>
@@ -197,6 +223,10 @@ const downloadCsvFile = () => {
                       </td>
                       <td class="menu-cell text-body-2">
                         {{ order.menu_name }}
+                      </td>
+                      <td class="text-right text-body-2 amount-cell">¥{{ priceString(order.menu_price) }}</td>
+                      <td v-if="isCommunityBill" class="text-right text-body-2 amount-cell">
+                        ¥{{ priceString(order.payment_community_bill_off_amount ?? 0) }}
                       </td>
                       <td class="date-cell text-body-2">
                         {{ getDateString(order) }}
@@ -253,6 +283,10 @@ const downloadCsvFile = () => {
 }
 .menu-cell {
   width: 300px;
+}
+.amount-cell {
+  width: 120px;
+  white-space: nowrap;
 }
 .date-cell {
   width: 160px;

@@ -29,6 +29,7 @@ import {
   mdiHelpCircleOutline,
 } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x'
+import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import LineIcon from '@shokujii/base/icons/line'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { usePartnerStore } from '@shokujii/base/stores/partner'
@@ -239,7 +240,23 @@ const isShowMember = computed(() =>
             </tr>
             <tr>
               <td>{{ $t('event_details.payment') }}</td>
-              <td>{{ $t(`payment.${event.event_payment}`) }}</td>
+              <td>
+                {{
+                  $t(
+                    event.event_payment === 'community_bill'
+                      ? event.community_bill_settings?.type === 'discount'
+                        ? 'payment.community_bill_discount'
+                        : 'payment.community_bill_free'
+                      : `payment.${event.event_payment}`,
+                  )
+                }}
+                <EventDiscountChip
+                  v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
+                  :settings="event.community_bill_settings"
+                  size="x-small"
+                  class="ml-1"
+                />
+              </td>
             </tr>
             <tr>
               <td>{{ $t('event_details.deadline') }}</td>
