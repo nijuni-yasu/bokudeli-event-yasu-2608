@@ -1,11 +1,12 @@
 import { createModuleLogger } from './utils/logger.js'
 import { DEFAULT_FROM } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getEventUrl } from './utils/urls.js'
+import { convertStoragePathToURL, getEventUrl } from './utils/urls.js'
 import { getCommunity } from './stores/community.js'
 import { getAcceptingOrderEventsBeforeDeadline } from './stores/event.js'
 import { getUser } from './stores/user.js'
 import { convertToDuration } from '@shokujii/common/utils/datetime.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('remindUnorderedMail')
 
@@ -87,7 +88,7 @@ export async function sendUnorderedRemindMailToManagers(nowMillis: number, start
           event_place: event.event_place !== '' ? event.event_place : event.fullAddress,
           shop_name: event.shop_name,
           event_url: getEventUrl(event.community_account, event.id),
-          event_cover_url: event.event_cover_url,
+          event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
         }
 
         const sendPromises: Promise<unknown>[] = []
