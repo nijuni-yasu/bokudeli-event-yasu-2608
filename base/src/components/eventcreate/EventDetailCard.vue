@@ -33,10 +33,16 @@ const props = withDefaults(
     showAlbumPreview?: boolean
     /** アルバム管理画面の URL（showAlbumPreview 時は親が router utils 等で組み立てて渡す） */
     albumManageUrl?: string
+    /**
+     * 新規作成中（まだ Firestore にイベントが保存されていない）かどうか。
+     * true の場合は useEventStore を呼ばず、保存済みドキュメントを前提とした処理（カバー画像 URL 参照や本文画像アップロード）を無効化する。
+     */
+    isNew?: boolean
   }>(),
   {
     readonly: false,
     showAlbumPreview: true,
+    isNew: false,
   },
 )
 
@@ -45,7 +51,9 @@ const { t: $t } = useI18n()
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
 const communityStore = useCommunityStore(event.value.community_account)
-const eventStore = useEventStore(event.value)
+// 新規作成中はまだイベントドキュメントが Firestore に存在しないため、
+// useEventStore を呼ぶとコレクショングループ検索でリトライ警告が連発してしまう。保存済みのときだけストアを参照する。
+const eventStore = props.isNew ? null : useEventStore(event.value)
 
 const checkBillInfo = () => {
   if (event.value.event_payment === 'community_bill') {
@@ -153,16 +161,13 @@ type BlobInfo = {
 
 const bodyImageUploadHandler = async (blobInfo: BlobInfo) => {
   try {
-    // community_id と event_id のバリデーション
+    if (eventStore == null) {
+      return Promise.reject('イベントIDが設定されていません。イベントを保存してから画像をアップロードしてください。')
+    }
     if (!event.value.community_id) {
       const error = new Error('community_id is undefined. Cannot upload image during new event creation.')
       console.error('Image upload failed:', error)
       return Promise.reject('イベントのコミュニティIDが設定されていません。')
-    }
-    if (!event.value.event_id) {
-      const error = new Error('event_id is undefined. Cannot upload image during new event creation.')
-      console.error('Image upload failed:', error)
-      return Promise.reject('イベントIDが設定されていません。イベントを保存してから画像をアップロードしてください。')
     }
     const url = await eventStore.uploadTinymceImage(new File([blobInfo.blob()], blobInfo.filename()))
     return url
@@ -267,7 +272,7 @@ const tinymceInit = computed(() => ({
         <v-col cols="12">
           <ImageInput
             style="width: 100%; aspect-ratio: 120/63"
-            :urls="[eventStore.coverImageUrl, communityStore.coverImageUrl].filter((u): u is string => u != null)"
+            :urls="[eventStore?.coverImageUrl, communityStore.coverImageUrl].filter((u): u is string => u != null)"
             :rules="[requiredValidator]"
             :readonly="props.readonly"
             :cover="true"

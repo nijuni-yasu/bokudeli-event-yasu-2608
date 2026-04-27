@@ -181,6 +181,7 @@ onUnmounted(() => {
           :readonlyDeadline="event.event_status.value !== 'in_draft'"
           :subdomainTags="community.subdomain_tags"
           :show-album-preview="false"
+          :is-new="route.query.id == null"
         />
         <v-card-text class="text-end mt-10">
           <v-btn
