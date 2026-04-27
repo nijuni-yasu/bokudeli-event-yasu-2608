@@ -95,15 +95,11 @@ if [ -n "$format_errors" ]; then
   errors+="format エラーが解消されていません。対象パッケージ: $format_errors"
 fi
 
-report_json=$(echo -e "$report" | json_escape)
 if [ -n "$errors" ]; then
-  reason_json=$(echo -n "$errors" | json_escape)
-  printf '{"decision":"block","reason":%s,"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":%s}}' \
-    "$reason_json" "$report_json"
+  full_reason="${errors}\n\n詳細:\n${report}"
+  reason_json=$(echo -e "$full_reason" | json_escape)
+  printf '{"decision":"block","reason":%s}' "$reason_json"
   exit 2
 fi
 
-# エラーなし — additionalContext で結果を伝達
-printf '{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":%s}}' \
-  "$report_json"
 exit 0
