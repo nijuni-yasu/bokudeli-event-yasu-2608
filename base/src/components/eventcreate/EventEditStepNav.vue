@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { injectionKeyEventEditHostActive } from './symbols'
 
 /**
  * イベント編集ステッパー用: ビューポート下部に固定し、スクロールしてもナビが見える。
  * body へ Teleport し、v-stepper / VWindow の transform 祖先による position:fixed の包含ブロックずれを防ぐ。
- * VWindow は非アクティブ項目をマウントしたままにすることがあるため、visible で body 側の描画を切る。
+ *
+ * 表示条件は visible（ステップ番号で個別制御）と hostActive（タブ等のホスト画面が表示中か）の AND。
+ * VWindow は非アクティブ項目を v-show でマウントし続けるため、ホスト側からも非表示状態を inject で受け取り、
+ * Teleport 先の body 上にステップナビが残らないようにする。hostActive は未提供時 true（単独画面用）。
  */
 const props = defineProps<{
   visible: boolean
@@ -15,11 +19,14 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const navAriaLabel = computed(() => props.navigationAriaLabel ?? t('event_edit.step_nav_aria_label'))
+
+const hostActive = inject(injectionKeyEventEditHostActive, ref(true))
+const isShown = computed(() => props.visible && hostActive.value)
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="visible" class="event-edit-step-nav" role="navigation" :aria-label="navAriaLabel">
+    <div v-if="isShown" class="event-edit-step-nav" role="navigation" :aria-label="navAriaLabel">
       <div class="event-edit-step-nav__surface">
         <slot />
       </div>
