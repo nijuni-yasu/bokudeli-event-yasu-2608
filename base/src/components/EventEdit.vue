@@ -552,6 +552,7 @@ const stepperItems = computed(() => [
                 v-model:cover-image="coverImage"
                 :subdomain-tags="communityStore.community?.subdomain_tags"
                 :album-manage-url="albumManageUrl"
+                :is-new="props.eventId == null"
               />
               <event-edit-step-nav :visible="stepper === 4">
                 <v-btn

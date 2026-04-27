@@ -26,19 +26,16 @@ import { useUserStore, type UserStore } from './user.js'
 import { Event as _Event } from '@shokujii/common/schemas/Event.js'
 import { getAuth } from 'firebase/auth'
 import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
-import {
-  generateTinymceImageStoragePath,
-  getCommunityCoverStoragePath,
-  getEventCoverStoragePath,
-} from '@shokujii/common/utils/storagePaths.js'
+import { generateTinymceImageStoragePath, getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
   addToCart as _addToCart,
   removeFromCart as _removeFromCart,
   confirmOrder as _confirmOrder,
 } from '@shokujii/base/apis/order.js'
 import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
+import { copyCommunityCoverToEvent as callCopyCommunityCoverToEvent } from '@shokujii/base/apis/copyCommunityCoverToEvent.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
-import { copyImage, uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 
 const TINYMCE_MAX_IMAGE_SIZE = 600
 
@@ -118,7 +115,8 @@ export const createNewEvent = async (event: BokudeliEvent, coverImage: File | nu
     throw new Error(`community ${event.community_id} does not exists`)
   }
   if (coverImage == null) {
-    await copyImage(getCommunityCoverStoragePath(community.id), getEventCoverStoragePath(community.id, event.id))
+    // Callable でコミュニティカバーをコピー。Storage にコミュニティカバーが無い場合は Callable が失敗し setDoc には進まない。
+    await callCopyCommunityCoverToEvent({ communityId: community.id, eventId: event.id })
   } else {
     await uploadImage(coverImage, getEventCoverStoragePath(community.id, event.id))
   }
