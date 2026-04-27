@@ -2,12 +2,13 @@ import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { DEFAULT_FROM, DEFAULT_TO } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations, type SendDynamicTemplateBulkRecipient } from './utils/sendgridBulk.js'
-import { getEventUrl } from './utils/urls.js'
+import { getEventUrl, convertStoragePathToURL } from './utils/urls.js'
 import { getAllUsers } from './stores/user.js'
 import { getAllAcceptingOrderEvents } from './stores/event.js'
 import { convertTruncateText } from '@shokujii/common/utils/converter.js'
 import { convertToJustDate, convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { createModuleLogger } from './utils/logger.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('eventInformationMail')
 
@@ -109,7 +110,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
         event_deadline_datetime,
         event_desc: convertTruncateText(event.event_desc, 250),
         event_url: getEventUrl(event.community_account, event.id),
-        event_cover_url: event.event_cover_url,
+        event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
         shop_name: event.shop_name,
         community_name: event.community_name,
       })

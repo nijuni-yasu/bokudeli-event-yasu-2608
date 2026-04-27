@@ -37,7 +37,7 @@ const openInNew = (url: string) => {
       <v-col cols="12">
         <div class="d-flex">
           <div class="icon-wrapper flex-shrink-0">
-            <v-img class="icon" cover :src="community.community_icon_image_url" />
+            <v-img class="icon" cover :src="communityStore.iconImageUrl" />
           </div>
           <div class="d-flex flex-column justify-center ms-3">
             <span class="text-h3">{{ community?.community_name }}</span>

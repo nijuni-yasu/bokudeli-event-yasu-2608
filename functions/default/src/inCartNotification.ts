@@ -1,6 +1,6 @@
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
 import { getUserPersonalInformation } from './stores/user.js'
-import { getEventUrl } from './utils/urls.js'
+import { getEventUrl, convertStoragePathToURL } from './utils/urls.js'
 import {
   convertToDateWeekdayShort,
   convertToDuration,
@@ -10,6 +10,7 @@ import { DEFAULT_FROM } from './utils/mail.js'
 import { getAcceptingOrderEventsByTime, getEvent, type ShokujiiEvent } from './stores/event.js'
 import { getInCartMemberOrdersByUpdatedTime, getOrdersInCart } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('inCartNotification')
 
@@ -51,7 +52,7 @@ function buildInCartDynamicTemplateData(event: ShokujiiEvent): MailDynamicTempla
     date: convertToDateWeekdayShort(event.event_start_datetime),
     event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
     event_name: event.event_name,
-    event_cover_url: event.event_cover_url,
+    event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
     community_name: event.community_name,
     event_address: event.fullAddress,
     shop_name: event.shop_name,

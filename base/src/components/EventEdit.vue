@@ -99,8 +99,6 @@ watch(
       organizer_email: community.community_email,
       organizer_phone_company: community.community_phone,
       event_name: eventName,
-      // TODO: 初期設定時に、コミュニティ画像をイベントカバー画像へStorageでコピーする
-      // event_cover_url: community.community_cover_image_url ?? '',
       event_desc: eventDesc,
     })
 
@@ -383,10 +381,6 @@ const saveDraft = async (): Promise<BokudeliEvent | null> => {
   const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
 
   if (props.eventId == null) {
-    // event_cover_urlが既に設定されている場合はcoverImage.valueがnullでもOK
-    if (coverImage.value == null && !event.value.event_cover_url) {
-      return null
-    }
     // 新規作成
     event.value.community_id = communityId
     event.value.created_by = handleUserId

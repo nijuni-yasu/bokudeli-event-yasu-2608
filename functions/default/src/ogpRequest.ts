@@ -5,6 +5,8 @@ import { https } from 'firebase-functions/v2'
 import { ReplaceSectionStream } from '@shokujii/common/utils/ReplaceSectionStream.js'
 import { getEvent } from './stores/event.js'
 import { getCommunityByAccount } from './stores/community.js'
+import { convertStoragePathToURL } from './utils/urls.js'
+import { getEventCoverStoragePath, getCommunityCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 interface OgpContext {
   site: string
@@ -141,7 +143,7 @@ export const handleEventOgpRequest = https.onRequest(
         forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(eventData.event_name)
         context.description = convertToOgpString(eventData.event_desc)
-        context.image = eventData.event_cover_url
+        context.image = convertStoragePathToURL(getEventCoverStoragePath(eventData.community_id, eventId))
         res.status(200).set('Cache-Control', 'public, max-age=600, s-maxage=600')
 
         // pipelineはPromiseを返さないため、コールバックでエラーハンドリング
@@ -219,7 +221,7 @@ export const handleCommunityOgpRequest = https.onRequest(
         forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(communityData.community_name)
         context.description = convertToOgpString(communityData.community_desc)
-        context.image = communityData.community_cover_image_url
+        context.image = convertStoragePathToURL(getCommunityCoverStoragePath(communityData.community_id))
         res.status(200).set('Cache-Control', 'public, max-age=600, s-maxage=600')
 
         // pipelineはPromiseを返さないため、コールバックでエラーハンドリング

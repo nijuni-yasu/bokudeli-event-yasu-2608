@@ -3,7 +3,8 @@ import { defineSecret } from 'firebase-functions/params'
 import { Timestamp } from 'firebase-admin/firestore'
 import Stripe from 'stripe'
 import { CreateStripeCheckoutSessionRequest } from '@shokujii/common/apis/stripe.js'
-import { getUserUrl, getMainUrl } from './utils/urls.js'
+import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { getUserUrl, getMainUrl, convertStoragePathToURL } from './utils/urls.js'
 import { getEvent } from './stores/event.js'
 import { getOrdersByIds } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
@@ -68,7 +69,7 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
     const eventMenus = await event.getMenus()
     const menuImageMap = new Map<string, string>()
     for (const m of eventMenus) {
-      menuImageMap.set(m.id, m.menu_image_url)
+      menuImageMap.set(m.id, convertStoragePathToURL(getEventMenuImageStoragePath(community_id, event_id, m.menu_id)))
     }
 
     const grouped = new Map<string, { menuName: string; unitAmount: number; quantity: number; imageUrl: string }>()

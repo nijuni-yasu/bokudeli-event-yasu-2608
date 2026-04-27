@@ -54,7 +54,7 @@ const openInNew = (url: string) => {
     <v-row v-if="community != null" class="py-2">
       <router-link :to="getManageCommunityPath(community.community_account)">
         <div class="text-h5 ml-3 d-flex align-center justify-start text-primary">
-          <v-img class="icon flex-shrink-0 me-2" cover :src="community.community_icon_image_url" />
+          <v-img class="icon flex-shrink-0 me-2" cover :src="communityStore?.iconImageUrl" />
         </div>
       </router-link>
       <v-btn class="px-0" variant="text" size="small" :to="getManageCommunityPath(community.community_account)">

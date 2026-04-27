@@ -7,9 +7,11 @@ import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
+import { useEventStore } from '@shokujii/base/stores/event'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
+import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
   mdiTrashCan,
   mdiHelpCircleOutline,
@@ -157,7 +159,7 @@ const startOrderProcess = async () => {
       }
     } else {
       try {
-        const eventStore = useEventStore(eventId) as EventStore
+        const eventStore = useEventStore(eventId)
         await eventStore.confirmOrder({
           community_id: communityId,
           event_id: eventId,
@@ -232,7 +234,7 @@ const startDeleteProcess = async () => {
 
   isDeleteProcessing.value = true
   try {
-    const eventStore = useEventStore(event.event_id) as EventStore
+    const eventStore = useEventStore(event.event_id)
     await eventStore.removeFromCart({
       community_id: event.community_id,
       event_id: event.event_id,
@@ -259,7 +261,7 @@ const incrementMenuCount = async (event: BokudeliEvent, menu: GroupedMenu) => {
   if (menuUpdatingStates.value[menuKey]) return
   menuUpdatingStates.value[menuKey] = true
   try {
-    const eventStore = useEventStore(event.event_id) as EventStore
+    const eventStore = useEventStore(event.event_id)
     await eventStore.addToCart({
       community_id: event.community_id,
       event_id: event.event_id,
@@ -285,7 +287,7 @@ const decrementMenuCount = async (event: BokudeliEvent, menu: GroupedMenu) => {
   menuUpdatingStates.value[menuKey] = true
   try {
     const lastOrderId = menu.order_ids[menu.order_ids.length - 1]
-    const eventStore = useEventStore(event.event_id) as EventStore
+    const eventStore = useEventStore(event.event_id)
     await eventStore.removeFromCart({
       community_id: event.community_id,
       event_id: event.event_id,
@@ -316,7 +318,14 @@ const isOpenCancelpolicyDialog = ref(false)
       <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
         <v-row>
           <v-col class="d-flex align-center">
-            <v-img class="ma-5" cover aspect-ratio="1.91" :src="cartItem.event.event_cover_url" />
+            <v-img
+              class="ma-5"
+              cover
+              aspect-ratio="1.91"
+              :src="
+                convertStoragePathToURL(getEventCoverStoragePath(cartItem.event.community_id, cartItem.event.event_id))
+              "
+            />
           </v-col>
         </v-row>
         <v-card-text class="card-text-style">

@@ -27,6 +27,8 @@ const submit = async () => {
     if (iconImageFile.value != null) {
       await communityStore.updateIconImage(iconImageFile.value)
     }
+    coverImageFile.value = null
+    iconImageFile.value = null
     notification.show($t('manage.settings.saved'), 'success')
   } finally {
     isLoading.value = false
@@ -43,6 +45,8 @@ const submit = async () => {
           v-model="community"
           v-model:coverImageFile="coverImageFile"
           v-model:iconImageFile="iconImageFile"
+          :default-cover-image-url="communityStore.coverImageUrl"
+          :default-icon-image-url="communityStore.iconImageUrl"
         >
           <template #default="{ isValid }">
             <v-card-text class="text-center mt-10">

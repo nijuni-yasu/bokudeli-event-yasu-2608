@@ -6,6 +6,8 @@ import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOut
 import { convertTruncateText, postalcodeString } from '@shokujii/base/schemes/converter'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
+import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { getShopCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const props = defineProps<{
   shops: BokudeliPartnerShop[]
@@ -115,7 +117,11 @@ const isOpenDeadlineDialog = ref(false)
                   color="text-center cursor-pointer"
                   height="400px"
                 >
-                  <v-img :src="item.shop_image_url ?? undefined" cover aspect-ratio="1.91" />
+                  <v-img
+                    :src="convertStoragePathToURL(getShopCoverStoragePath(item.partner_id, item.shop_id))"
+                    cover
+                    aspect-ratio="1.91"
+                  />
 
                   <!-- title -->
                   <v-card-title class="justify-center pb-3">

@@ -15,9 +15,10 @@ import { getEventInCommunity, saveEvent } from './stores/event.js'
 import { getAllUsers } from './stores/user.js'
 import { sendDynamicTemplateWithPersonalizations, type SendDynamicTemplateBulkRecipient } from './utils/sendgridBulk.js'
 import { DEFAULT_FROM } from './utils/mail.js'
-import { getEventUrl } from './utils/urls.js'
+import { convertStoragePathToURL, getEventUrl } from './utils/urls.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { parsePopularEventMailThreshold, isEligibleForPopularEventMailSend } from './utils/popularEventMailThreshold.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('popularEventMail')
 
@@ -162,11 +163,11 @@ function memberCountLabel(event: { members: { length: number }; event_max_people
 
 function buildPopularEventTemplateData(
   event: {
+    community_id: string
     community_name: string
     community_account: string
     id: string
     event_name: string
-    event_cover_url: string
     event_desc: string
     event_start_datetime: number
     event_end_datetime: number
@@ -182,7 +183,7 @@ function buildPopularEventTemplateData(
     community_name: event.community_name,
     event_url: getEventUrl(event.community_account, event.id),
     event_name: event.event_name,
-    event_cover_url: event.event_cover_url,
+    event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
     event_desc: event.event_desc,
     event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
     event_start_datetime: convertToDateWeekdayShort(event.event_start_datetime),

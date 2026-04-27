@@ -2,7 +2,8 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { DEFAULT_FROM, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
-import { getEventUrl, getUserUrl, FIREBASE_STORAGE_BASE_URL } from './utils/urls.js'
+import { getEventUrl, getUserUrl, FIREBASE_STORAGE_BASE_URL, convertStoragePathToURL } from './utils/urls.js'
+import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { getUser, getUserPersonalInformation } from './stores/user.js'
 import { ShokujiiEvent, saveEvent, getEvent } from './stores/event.js'
@@ -27,7 +28,7 @@ async function sendOrderCompletionMailToMember(event: ShokujiiEvent, userId: str
     date: convertToDateWeekdayShort(event.event_start_datetime),
     event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
     event_name: event.event_name,
-    event_cover_url: event.event_cover_url,
+    event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
     community_name: event.community_name,
     event_address: event.fullAddress,
     shop_name: event.shop_name,
@@ -160,7 +161,7 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
       community_name: event.community_name,
       event_url: getEventUrl(event.community_account, event.id),
       event_name: event.event_name,
-      event_cover_url: event.event_cover_url,
+      event_cover_url: convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.id)),
       event_desc: event.event_desc,
       event_datetime: convertToDuration(event.event_start_datetime, event.event_end_datetime),
       event_start_datetime: convertToDateWeekdayShort(event.event_start_datetime),

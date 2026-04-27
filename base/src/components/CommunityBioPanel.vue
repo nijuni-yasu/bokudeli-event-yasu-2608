@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { BokudeliCommunity, BokudeliCommunityMember } from '@shokujii/base/stores/community.js'
+import {
+  type BokudeliCommunity,
+  type BokudeliCommunityMember,
+  useCommunityStore,
+} from '@shokujii/base/stores/community.js'
 import { getUserPath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
@@ -14,6 +18,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   clickContact: []
 }>()
+const communityStore = useCommunityStore(props.community.community_account)
 
 const twitterUrl = computed(() =>
   props.community.community_sns_twitter ? buildTwitterUrl(props.community.community_sns_twitter) : undefined,
@@ -42,7 +47,7 @@ const displayMembers = computed(() => props.members?.filter((m) => !m?.roles?.in
 <template>
   <v-card class="pa-5" color="text-center">
     <!-- community title and links -->
-    <v-img style="border-radius: 10%" aspect-ratio="1" cover :src="community.community_icon_image_url" />
+    <v-img style="border-radius: 10%" aspect-ratio="1" cover :src="communityStore.iconImageUrl" />
     <v-card-title class="justify-center text-h4 px-1 py-4 text-wrap">
       {{ community.community_name }}
     </v-card-title>

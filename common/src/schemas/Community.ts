@@ -10,8 +10,6 @@ const CommunityDbSchema = z.object({
   community_id: z.string().nonempty(),
   community_name: z.string().nonempty(),
   community_account: z.string().nonempty(),
-  community_cover_image_url: z.string().nonempty(),
-  community_icon_image_url: z.string().nonempty(),
   is_public: z.boolean(),
   is_approved: z.boolean(),
   is_show_member: z.boolean(),
@@ -69,8 +67,6 @@ export class Community {
   community_phone: string = ''
   community_email: string = ''
   community_use_purpose: string = ''
-  community_cover_image_url: string = ''
-  community_icon_image_url: string = ''
   community_desc: string = ''
   community_sns_facebook: string = ''
   community_sns_twitter: string = ''

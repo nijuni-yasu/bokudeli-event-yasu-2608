@@ -29,6 +29,16 @@ const events = computed(() => {
     }) ?? []
   )
 })
+
+const eventCoverUrls = computed(() => {
+  const map = new Map<string, string | undefined>()
+  eventListStore.eventStores?.forEach((s) => {
+    if (s.event != null) {
+      map.set(s.event.event_id, s.coverImageUrl)
+    }
+  })
+  return map
+})
 </script>
 
 <template>
@@ -40,7 +50,14 @@ const events = computed(() => {
       @click="$emit('click', event)"
     >
       <template #prepend>
-        <v-img :src="event.event_cover_url" width="120" aspect-ratio="1.91" cover rounded="sm" class="mr-3" />
+        <v-img
+          :src="eventCoverUrls.get(event.event_id)"
+          width="120"
+          aspect-ratio="1.91"
+          cover
+          rounded="sm"
+          class="mr-3"
+        />
       </template>
       <v-list-item-title class="text-h6 py-1">{{ event.event_name }}</v-list-item-title>
       <div class="text-body-2">{{ $d(event.event_start_datetime, 'datetime') }}</div>

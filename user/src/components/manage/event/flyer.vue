@@ -39,7 +39,7 @@ const htmlTagDeleteing = (html: string) => {
   // 前後の空白を削除
   return textOnly.trim()
 }
-const eventCoverUrl = eventStore.event?.event_cover_url
+const eventCoverUrl = computed(() => eventStore.coverImageUrl)
 const eventDesc = eventStore.event?.event_desc ? htmlTagDeleteing(eventStore.event.event_desc) : ''
 const homeUrl = window.location.origin
 const eventPath = computed(() => {

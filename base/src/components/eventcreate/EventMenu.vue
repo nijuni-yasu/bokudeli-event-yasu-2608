@@ -7,6 +7,8 @@ import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline, mdiGestureTap } from '@mdi/js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
+import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const { t } = useI18n()
 
@@ -117,7 +119,11 @@ const selectedCount = computed(() => {
                   }"
                   @click="toggleMenuSelection(item.menu_id)"
                 >
-                  <v-img :src="item.menu_image_url ?? undefined" cover aspect-ratio="1" />
+                  <v-img
+                    :src="convertStoragePathToURL(getEventMenuImageStoragePath(event, item.menu_id))"
+                    cover
+                    aspect-ratio="1"
+                  />
 
                   <!-- 選択状態インジケーター -->
                   <v-chip

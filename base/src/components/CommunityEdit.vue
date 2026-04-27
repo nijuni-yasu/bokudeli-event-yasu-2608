@@ -5,6 +5,8 @@ import { useValidators } from '@shokujii/base/composable/validators'
 import { fetchLocationByPostalcode } from '@shokujii/base/utils/fetchLocation'
 import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import { type BokudeliCommunity } from '@shokujii/base/stores/community.js'
+import { convertStoragePathToURL } from '../utils/storage.js'
+import { getCommunityIconStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import {
   mdiListBoxOutline,
   mdiWeb,
@@ -25,6 +27,28 @@ const community = defineModel<BokudeliCommunity>({ required: true })
 const coverImageFile = defineModel<File | null>('coverImageFile', { required: true })
 const iconImageFile = defineModel<File | null>('iconImageFile', { required: true })
 
+const props = defineProps<{
+  /**
+   * 新規コミュニティURLのバリデーション関数
+   * この関数が設定されていない場合、編集モードとして扱われ community_account は readonly になります
+   */
+  // 関数宣言なのに no-unused-vars が出てしまう。恐らく ESLint のバグ。
+  // eslint-disable-next-line no-unused-vars
+  validateNewAccount?: (account: string) => Promise<boolean>
+  /**
+   * マウント後、ヘルプダイアログを自動表示する
+   */
+  autoOpenHelpDialog?: boolean
+  /**
+   * カバー画像の表示 URL（ストアの coverImageUrl を渡すことでアップロード後のキャッシュバストが有効になる）
+   */
+  defaultCoverImageUrl?: string | null
+  /**
+   * アイコン画像の表示 URL（ストアの iconImageUrl を渡すことでアップロード後のキャッシュバストが有効になる）
+   */
+  defaultIconImageUrl?: string | null
+}>()
+
 const coverImagePreviewUrl = ref<string | undefined>(undefined)
 watch(
   coverImageFile,
@@ -36,7 +60,7 @@ watch(
       const url = URL.createObjectURL(newFile)
       coverImagePreviewUrl.value = url
     } else {
-      coverImagePreviewUrl.value = community.value.community_cover_image_url
+      coverImagePreviewUrl.value = props.defaultCoverImageUrl ?? undefined
     }
   },
   { immediate: true },
@@ -53,25 +77,13 @@ watch(
       const url = URL.createObjectURL(newFile)
       iconImagePreviewUrl.value = url
     } else {
-      iconImagePreviewUrl.value = community.value.community_icon_image_url
+      iconImagePreviewUrl.value =
+        props.defaultIconImageUrl ?? convertStoragePathToURL(getCommunityIconStoragePath(community.value.community_id))
     }
   },
   { immediate: true },
 )
 
-const props = defineProps<{
-  /**
-   * 新規コミュニティURLのバリデーション関数
-   * この関数が設定されていない場合、編集モードとして扱われ community_account は readonly になります
-   */
-  // 関数宣言なのに no-unused-vars が出てしまう。恐らく ESLint のバグ。
-  // eslint-disable-next-line no-unused-vars
-  validateNewAccount?: (account: string) => Promise<boolean>
-  /**
-   * マウント後、ヘルプダイアログを自動表示する
-   */
-  autoOpenHelpDialog?: boolean
-}>()
 const isNew = computed(() => props.validateNewAccount != null)
 
 const isValid = ref(false)
@@ -182,7 +194,7 @@ onUnmounted(() => {
               {{ $t('community_edit.community_cover_image_hint') }}
             </span>
             <ImageInput
-              :url="coverImagePreviewUrl"
+              :urls="[coverImagePreviewUrl]"
               :rules="[requiredValidator]"
               style="width: 100%; aspect-ratio: 120/63"
               :cover="true"
@@ -201,7 +213,7 @@ onUnmounted(() => {
               {{ $t('community_edit.community_icon_image_hint') }}
             </span>
             <ImageInput
-              :url="iconImagePreviewUrl"
+              :urls="[iconImagePreviewUrl]"
               :rules="[requiredValidator]"
               style="width: auto; max-width: min(100%, 150px); aspect-ratio: 1/1"
               :cover="true"
