@@ -10,6 +10,7 @@ import { getEventPath } from '@/router/utils'
 import { mdiArrowTopRight } from '@mdi/js'
 import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import { getManageCommunityPath } from '@/router/utils'
+import { injectionKeyEventEditHostActive } from '@shokujii/base/components/eventcreate/symbols.js'
 
 const { t: $t } = useI18n()
 
@@ -22,6 +23,12 @@ const eventStore = useEventStore(eventId) as EventStore
 const event = computed(() => eventStore.event)
 
 const tab = ref<Tabs>(tabs.find((t) => t === tabName) ?? tabs[0])
+
+// settings タブが表示中のときだけ EventEditStepNav (Teleport で body 直下) を表示させるためのフラグ。
+// VWindowItem は非アクティブ項目を v-show でマウントしたまま隠すため、Teleport 経由の DOM だけが
+// 祖先の display:none の影響を受けず残ってしまう。これを inject 経由で StepNav 側に伝えて抑制する。
+const isSettingsTabActive = computed(() => tab.value === 'settings')
+provide(injectionKeyEventEditHostActive, isSettingsTabActive)
 
 // コミュニティストアの取得
 const communityStore = computed(() => {
