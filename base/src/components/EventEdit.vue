@@ -821,11 +821,12 @@ const stepperItems = computed(() => [
               size="x-large"
               rounded="xl"
               min-width="168"
-              :disabled="!shopNoticeFormValid || isProcessing || isLoadingMenu"
+              :append-icon="mdiChevronRight"
+              :disabled="isProcessing || isLoadingMenu || event.shop_id === ''"
               :loading="processingState === 'submitting'"
               @click="submit"
             >
-              {{ $t('event_edit.save_draft') }}
+              {{ $t('event_edit.save_and_preview') }}
             </v-btn>
           </div>
           <template v-if="props.eventId != null || hasFirestoreDraft" #secondary>

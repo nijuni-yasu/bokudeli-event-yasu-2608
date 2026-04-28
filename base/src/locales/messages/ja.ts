@@ -309,6 +309,7 @@ export default {
     next: '進む',
     save_and_proceed: '保存して進む',
     save_draft: '保存する',
+    save_and_preview: '保存してプレビュー',
     draft_saved: '仮保存しました',
     draft_save_failed: '保存に失敗しました',
     saved: '保存しました',
