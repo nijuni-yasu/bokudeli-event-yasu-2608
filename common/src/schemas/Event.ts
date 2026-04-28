@@ -77,11 +77,12 @@ export const EventDbSchema = z.object({
   event_name: z.string().nonempty(),
   event_payment: z.enum(EVENT_PAYMENT_VALUES),
   event_max_people: z.number().int().positive(),
-  organizer_fullname: z.string().nonempty(),
-  organizer_company: z.string().nonempty(),
-  organizer_email: z.string().nonempty(),
-  organizer_phone_personal: z.string().nonempty(),
-  organizer_memo: z.string().nonempty(),
+  /** in_draft では未入力可。予約申請時は ReservationRequiredSchema で別途必須化 */
+  organizer_fullname: NonEmptyStringSchema.optional(),
+  organizer_company: NonEmptyStringSchema.optional(),
+  organizer_email: NonEmptyStringSchema.optional(),
+  organizer_phone_personal: NonEmptyStringSchema.optional(),
+  organizer_memo: NonEmptyStringSchema.optional(),
   is_public: z.boolean(),
   event_status: z.object({
     value: z.enum(RAW_EVENT_STATUS_VALUES),
@@ -108,6 +109,15 @@ export const EventDbSchema = z.object({
   sent_new_event_mail_at: TimestampSchema.optional(),
   sent_popular_event_mail_at: TimestampSchema.optional(),
   community_bill_settings: optionalDeleteField(CommunityBillSettingsDbSchema),
+})
+
+/** applying_reservation 遷移時に主催者連絡先を必須とするための追加バリデーション */
+export const ReservationRequiredSchema = z.object({
+  organizer_fullname: z.string().trim().min(1),
+  organizer_company: z.string().trim().min(1),
+  organizer_email: z.string().trim().min(1),
+  organizer_phone_personal: z.string().trim().min(1),
+  organizer_memo: z.string().trim().min(1),
 })
 
 /**
@@ -284,6 +294,24 @@ export class Event {
 
   isValidForDatabase(updateUserId: string): boolean {
     return EventDbSchema.safeParse(convertToDb(this, updateUserId)).success
+  }
+
+  isValidForReservation(updateUserId: string): { ok: true } | { ok: false; missing: string[] } {
+    const dbResult = EventDbSchema.safeParse(convertToDb(this, updateUserId))
+    if (!dbResult.success) {
+      return { ok: false, missing: dbResult.error.issues.map((i) => i.path.join('.')) }
+    }
+    const reservationResult = ReservationRequiredSchema.safeParse({
+      organizer_fullname: this.organizer_fullname,
+      organizer_company: this.organizer_company,
+      organizer_email: this.organizer_email,
+      organizer_phone_personal: this.organizer_phone_personal,
+      organizer_memo: this.organizer_memo,
+    })
+    if (!reservationResult.success) {
+      return { ok: false, missing: reservationResult.error.issues.map((i) => i.path.join('.')) }
+    }
+    return { ok: true }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
