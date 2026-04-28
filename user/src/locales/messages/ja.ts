@@ -295,6 +295,7 @@ export default {
       save_error: 'イベントの保存中にエラーが発生しました: {error}',
       reserve_success: '「{name}」に予約申請しました。店舗からの予約承認をお待ちください。',
       reserve_error: '予約申請中にエラーが発生しました: {error}',
+      reserve_validation_failed: '予約申請に必要な項目が不足しています: {fields}',
       community_not_approved: 'コミュニティが承認されていません',
       not_manager: 'コミュニティ運営者ではありません',
       menu_update_failed: 'メニューの更新に失敗しました',
