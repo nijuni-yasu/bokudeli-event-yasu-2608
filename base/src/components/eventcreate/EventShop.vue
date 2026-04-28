@@ -7,12 +7,12 @@ import { convertTruncateText, postalcodeString } from '@shokujii/base/schemes/co
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getShopCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { updateEventDeadlineFromShop } from '@shokujii/common/utils/eventShopDeadline.js'
 
 const props = defineProps<{
   shops: BokudeliPartnerShop[]
   modelValue: BokudeliEvent
   loading: boolean
-  isUpdatedStartTime: boolean
 }>()
 
 const event = defineModel<BokudeliEvent>({ required: true })
@@ -39,27 +39,6 @@ const calculateDeadlineTime = (shop: BokudeliPartnerShop): number => {
   return shop.shop_deadline_datetime.time
 }
 
-// 注文締め切り日時を計算し更新
-const updateDeadlineDatetime = (shop: BokudeliPartnerShop) => {
-  const startDateTime = new Date(event.value.event_start_datetime)
-  if (startDateTime == null) {
-    throw new Error('startDateTime is null')
-  }
-  const daysBefore = shop.shop_deadline_datetime.days_before
-  if (daysBefore == 0) {
-    // 締め切り日時が当日の場合、何時間前に設定する
-    startDateTime.setTime(startDateTime.getTime() - shop.shop_deadline_datetime.time)
-  } else {
-    startDateTime.setDate(startDateTime.getDate() - daysBefore)
-
-    // UTC なので必ず Date Object にしてから使う
-    const deadLineTime = new Date(shop.shop_deadline_datetime.time)
-    startDateTime.setHours(deadLineTime.getHours())
-    startDateTime.setMinutes(deadLineTime.getMinutes())
-  }
-  event.value.event_deadline_datetime = startDateTime.getTime()
-}
-
 const submit = (shop: BokudeliPartnerShop) => {
   if (shop.shop_id == null) {
     console.error('shop_id is null')
@@ -69,7 +48,7 @@ const submit = (shop: BokudeliPartnerShop) => {
   event.value.partner_id = shop.partner_id
   event.value.shop_name = shop.shop_name ?? ''
 
-  updateDeadlineDatetime(shop)
+  updateEventDeadlineFromShop(event.value, shop)
   emit('submit')
 }
 

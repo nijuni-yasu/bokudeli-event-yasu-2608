@@ -315,6 +315,8 @@ export default {
     saved: '保存しました',
     step_nav_aria_label: 'ステップナビゲーション',
     organizer_memo_default: '{address} に到着しましたらお電話ください。お迎えにあがります。よろしくお願いいたします。',
+    shop_cleared_incompatible_datetime:
+      '開始日時が選択中の店舗の営業時間外のため、店舗選択を解除しました。店舗選択画面で選び直してください。',
   },
   event_basic_info: {
     place: '開催場所',

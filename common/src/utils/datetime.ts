@@ -3,7 +3,7 @@ import { PartnerShop } from '../schemas/PartnerShop.js'
 
 // Default をハードコーディングする運用は危険なので取り扱いには注意すること
 // (このファイルのみに限定しておき、将来的に動的な対応が必要になった際に影響範囲が最小限になるようにする)
-const DEFAULT_TIME_ZONE = 'Asia/Tokyo'
+export const DEFAULT_TIME_ZONE = 'Asia/Tokyo'
 const DEFAULT_LOCALE = 'ja'
 
 export const hourList = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))

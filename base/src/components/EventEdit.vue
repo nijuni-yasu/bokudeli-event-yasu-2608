@@ -22,6 +22,7 @@ import {
 import { useRouter } from 'vue-router'
 import { getCommunityPath, getManageCommunityAlbumPath } from '@/router/utils'
 import { calculateDistance, fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/utils/fetchLocation'
+import { updateEventDeadlineFromShop } from '@shokujii/common/utils/eventShopDeadline.js'
 import { isAddressBaseValidForPostalcode } from '@shokujii/base/utils/isAddressBaseValidForPostalcode'
 import { maxBy } from 'lodash'
 import { useValidators } from '@shokujii/base/composable/validators'
@@ -182,6 +183,8 @@ watch(
 
 const coverImage = ref<File | null>(null)
 
+const partnerShopListStore = useShopListStore([])
+
 type BokudeliPartnerShopWithExtras = BokudeliPartnerShop & {
   distance: number
   min_orders_on_spot: number
@@ -191,8 +194,7 @@ const shops = computed<BokudeliPartnerShopWithExtras[] | undefined>(() => {
   if (selectedLocation == null) {
     return undefined
   }
-  const shopListStore = useShopListStore([])
-  return shopListStore.shops
+  return partnerShopListStore.shops
     ?.map((shop) => {
       // calculate distance
       let distance = 0
@@ -238,6 +240,24 @@ const selectedShop = computed((): BokudeliPartnerShop | null => {
   return shops.value?.find((shop) => shop.shop_id === event.value?.shop_id) ?? null
 })
 
+/** マスタ一覧から event.shop_id に一致する店（一覧未取得時は null） */
+const resolvedShopFromMaster = computed((): BokudeliPartnerShop | null => {
+  const e = event.value
+  if (e == null || e.shop_id === '') {
+    return null
+  }
+  return partnerShopListStore.shops?.find((s) => s.shop_id === e.shop_id) ?? null
+})
+
+const handleStep2Next = () => {
+  const ev = event.value
+  const shop = resolvedShopFromMaster.value
+  if (ev != null && shop != null) {
+    updateEventDeadlineFromShop(ev, shop)
+  }
+  stepper.value++
+}
+
 const currentUserStore = useCurrentUserStore()
 
 // @ts-expect-error parseInt can take no string params, then return NaN
@@ -255,8 +275,6 @@ watch(
   },
   { immediate: true },
 )
-
-const isUpdatedStartTime = ref(false)
 
 // partner_id に基づいて PartnerMenu を取得（null = 未取得）
 const partnerMenus = computed<BokudeliPartnerMenu[] | null>(() => {
@@ -319,6 +337,38 @@ const userSelectedMenuIds = computed<string[]>({
   },
 })
 
+watch(
+  () => ({
+    start: event.value?.event_start_datetime,
+    shopId: event.value?.shop_id ?? '',
+    shop: resolvedShopFromMaster.value,
+    listLen: partnerShopListStore.shops?.length ?? 0,
+  }),
+  ({ start, shopId, shop }) => {
+    const e = event.value
+    if (e == null || shopId === '') {
+      return
+    }
+    if (e.event_status?.value !== 'in_draft') {
+      return
+    }
+    if (start == null || start === 0) {
+      return
+    }
+    if (shop == null) {
+      return
+    }
+    if (isInShopTime(start, shop)) {
+      return
+    }
+    e.shop_id = ''
+    e.partner_id = ''
+    e.shop_name = ''
+    _userSelectedMenuIds.value = null
+    showNotification($t('event_edit.shop_cleared_incompatible_datetime'), 'warning')
+  },
+)
+
 // 終了したイベントは編集不可
 const isFinished = computed(() => event.value?.calculatedEventStatus === 'finished')
 
@@ -374,20 +424,6 @@ watch(
   { immediate: true },
 )
 
-// 開始日時が更新されたかどうかを監視
-watch(
-  () => event.value?.event_start_datetime,
-  (newStartDateTime, oldStartDateTime) => {
-    if (!newStartDateTime || !oldStartDateTime) {
-      return
-    }
-    if (newStartDateTime !== oldStartDateTime) {
-      isUpdatedStartTime.value = true
-    }
-  },
-  { immediate: true },
-)
-
 // メニュー選択IDの更新ハンドラ
 const handleMenuIdsUpdate = (ids: string[]) => {
   userSelectedMenuIds.value = ids
@@ -417,6 +453,10 @@ const createEventDraft = async (): Promise<BokudeliEvent | null> => {
   if (event.value == null || communityId == null) {
     return null
   }
+  const shop = resolvedShopFromMaster.value
+  if (shop != null && event.value.shop_id !== '') {
+    updateEventDeadlineFromShop(event.value, shop)
+  }
   const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
   event.value.community_id = communityId
   event.value.created_by = handleUserId
@@ -438,6 +478,10 @@ const updateEventDraft = async (): Promise<BokudeliEvent | null> => {
   const communityId = communityStore.community?.community_id
   if (event.value == null || communityId == null) {
     return null
+  }
+  const shop = resolvedShopFromMaster.value
+  if (shop != null && event.value.shop_id !== '') {
+    updateEventDeadlineFromShop(event.value, shop)
   }
   const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
   event.value.updated_by = handleUserId
@@ -550,15 +594,21 @@ const secondarySaveDisabledForStep = (step: number): boolean => {
   if (isProcessing.value) {
     return true
   }
+  if (isLoadingMenu.value) {
+    return true
+  }
   const e = event.value
   if (e == null) {
+    return true
+  }
+  if (e.shop_id === '') {
     return true
   }
   switch (step) {
     case 1:
       return !isValid1.value
     case 2:
-      return e.shop_id === ''
+      return false
     case 3:
       return selectedMenuCount.value === 0
     case 4:
@@ -649,13 +699,7 @@ const stepperItems = computed(() => [
         </v-form>
       </template>
       <template #[`item.2`]>
-        <event-shop
-          v-model="event"
-          :shops="shops ?? []"
-          :loading="shops == null"
-          :is-updated-start-time="isUpdatedStartTime"
-          @submit="stepper++"
-        />
+        <event-shop v-model="event" :shops="shops ?? []" :loading="shops == null" @submit="stepper++" />
         <event-edit-step-nav :visible="stepper === 2">
           <v-btn
             color="primary"
@@ -676,7 +720,7 @@ const stepperItems = computed(() => [
             min-width="168"
             :append-icon="mdiChevronRight"
             :disabled="isProcessing"
-            @click="stepper++"
+            @click="handleStep2Next"
           >
             {{ $t('event_edit.next') }}
           </v-btn>
@@ -722,7 +766,7 @@ const stepperItems = computed(() => [
             rounded="xl"
             min-width="168"
             :append-icon="mdiChevronRight"
-            :disabled="(props.eventId == null && selectedMenuCount === 0) || isProcessing"
+            :disabled="(props.eventId == null && selectedMenuCount === 0) || isProcessing || isLoadingMenu"
             :loading="processingState === 'creating'"
             @click="handleStep3Primary"
           >
