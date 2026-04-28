@@ -2,10 +2,9 @@
 import { ref, computed } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
-import { mdiChevronLeft, mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
+import { mdiStorefrontOutline, mdiChevronRight, mdiHelpCircleOutline } from '@mdi/js'
 import { convertTruncateText, postalcodeString } from '@shokujii/base/schemes/converter'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getShopCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
@@ -14,19 +13,12 @@ const props = defineProps<{
   modelValue: BokudeliEvent
   loading: boolean
   isUpdatedStartTime: boolean
-  /**
-   * EventEdit のステッパー連携用。親から必ず渡す。
-   * アクティブなステップのとき true にし、Teleport した固定ナビを body に出す。
-   */
-  stepNavVisible: boolean
 }>()
 
 const event = defineModel<BokudeliEvent>({ required: true })
 
 const emit = defineEmits<{
   submit: []
-  back: []
-  next: []
 }>()
 
 const displayShops = computed(() => {
@@ -81,19 +73,6 @@ const submit = (shop: BokudeliPartnerShop) => {
   emit('submit')
 }
 
-const back = () => {
-  emit('back')
-}
-const next = () => {
-  if (props.isUpdatedStartTime) {
-    const selectedShop = props.shops.filter((shop) => shop.shop_id === event.value.shop_id).shift()
-    if (!selectedShop) {
-      throw new Error('selectedShop is null')
-    }
-    updateDeadlineDatetime(selectedShop)
-  }
-  emit('next')
-}
 const isOpenMinOrdersDialog = ref(false)
 const isOpenDeadlineDialog = ref(false)
 </script>
@@ -192,29 +171,6 @@ const isOpenDeadlineDialog = ref(false)
             </v-row>
           </v-form>
         </v-card>
-        <event-edit-step-nav :visible="stepNavVisible">
-          <v-btn
-            color="primary"
-            size="x-large"
-            rounded="xl"
-            min-width="168"
-            :prepend-icon="mdiChevronLeft"
-            @click="back"
-          >
-            {{ $t('event_edit.back') }}
-          </v-btn>
-          <v-btn
-            v-if="props.modelValue.shop_id"
-            color="primary"
-            size="x-large"
-            rounded="xl"
-            min-width="168"
-            :append-icon="mdiChevronRight"
-            @click="next"
-          >
-            {{ $t('event_edit.next') }}
-          </v-btn>
-        </event-edit-step-nav>
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">

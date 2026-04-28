@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
+import { ref, shallowRef, reactive, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
 import { isInShopTime } from '@shokujii/common/utils/datetime.js'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
@@ -26,10 +26,12 @@ import { isAddressBaseValidForPostalcode } from '@shokujii/base/utils/isAddressB
 import { maxBy } from 'lodash'
 import { useValidators } from '@shokujii/base/composable/validators'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
+import { useNotification } from '@shokujii/base/composable/notification'
+import { mdiChevronLeft, mdiChevronRight, mdiEmailOutline } from '@mdi/js'
 
 import { useI18n } from 'vue-i18n'
 const { t: $t } = useI18n()
+const { show: showNotification } = useNotification()
 
 const router = useRouter()
 
@@ -65,8 +67,16 @@ const handleAlertDialogOk = () => {
 
 const isValid1 = ref(false)
 const isValid4 = ref(false)
-const isSubmitting = ref(false)
-const isReserveMailing = ref(false)
+
+type ProcessingState = null | 'creating' | 'saving' | 'submitting' | 'reserving'
+const processingState = ref<ProcessingState>(null)
+const isProcessing = computed(() => processingState.value != null)
+
+/** 新規ウィザードで Step 3 の初回 Firestore 作成が完了したか */
+const hasFirestoreDraft = ref(false)
+
+const shopNoticeFormValid = ref(false)
+const shopNoticeRef = shallowRef<{ openReserveConfirmDialog: () => void } | null>(null)
 
 const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
 
@@ -251,17 +261,30 @@ const isUpdatedStartTime = ref(false)
 // partner_id に基づいて PartnerMenu を取得（null = 未取得）
 const partnerMenus = computed<BokudeliPartnerMenu[] | null>(() => {
   const partnerId = event.value?.partner_id
-  if (!partnerId) {
+  if (partnerId === '') {
     return []
   }
   const partnerStore = usePartnerStore(partnerId)
   return partnerStore.menus ?? null
 })
 
+const persistedEventIdForMenus = computed(() => {
+  if (props.eventId != null) {
+    return props.eventId
+  }
+  if (hasFirestoreDraft.value && event.value != null) {
+    return event.value.event_id
+  }
+  return null
+})
+
 // 既存EventMenusを取得（null = 未取得）
 const existingMenus = computed<BokudeliEventMenu[] | null>(() => {
-  if (!props.eventId) return []
-  const eventStore = useEventStore(props.eventId) as EventStore
+  const id = persistedEventIdForMenus.value
+  if (id == null) {
+    return []
+  }
+  const eventStore = useEventStore(id) as EventStore
   return eventStore.menus ?? null
 })
 
@@ -283,7 +306,8 @@ const userSelectedMenuIds = computed<string[]>({
   get: () => {
     // _userSelectedMenuIds が null の場合は existingMenus から初期値を取得
     if (_userSelectedMenuIds.value === null) {
-      if (!props.eventId) {
+      const menuEventId = persistedEventIdForMenus.value
+      if (menuEventId == null) {
         return []
       }
       return existingMenus.value?.filter((m) => m.is_selected).map((m) => m.menu_id) ?? []
@@ -324,6 +348,18 @@ const eventMenus = computed(() => {
 // - selectedMenuIds: 実際の表示状態を反映
 const selectedMenuIds = computed(() => {
   return eventMenus.value.filter((m: BokudeliEventMenu) => m.is_selected).map((m: BokudeliEventMenu) => m.menu_id)
+})
+
+const selectedMenuCount = computed(() => selectedMenuIds.value.length)
+
+const canUseSecondarySave = computed(() => {
+  if (event.value == null) {
+    return false
+  }
+  if (props.eventId != null) {
+    return true
+  }
+  return hasFirestoreDraft.value
 })
 
 watch(
@@ -370,108 +406,189 @@ onUnmounted(() => {
   if (props.eventId != null) {
     const eventStore = useEventStore(props.eventId) as EventStore
     eventStore.$reset()
+  } else if (hasFirestoreDraft.value && _event.value?.event_id != null) {
+    const eventStore = useEventStore(_event.value.event_id) as EventStore
+    eventStore.$reset()
   }
 })
 
-const saveDraft = async (): Promise<BokudeliEvent | null> => {
+const createEventDraft = async (): Promise<BokudeliEvent | null> => {
   const communityId = communityStore.community?.community_id
   if (event.value == null || communityId == null) {
     return null
   }
   const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
-
-  if (props.eventId == null) {
-    // 新規作成
-    event.value.community_id = communityId
-    event.value.created_by = handleUserId
-    event.value.updated_by = handleUserId
-    const newEvent = await createNewEvent(toRaw(event.value), coverImage.value)
-
-    // メニューを作成（Callable Function経由）
-    if (newEvent?.event_id) {
-      try {
-        await updateEventMenus(newEvent.event_id, communityId, selectedMenuIds.value)
-      } catch (error) {
-        console.error('Failed to update event menus:', error)
-        throw error
-      }
+  event.value.community_id = communityId
+  event.value.created_by = handleUserId
+  event.value.updated_by = handleUserId
+  const newEvent = await createNewEvent(toRaw(event.value), coverImage.value)
+  if (newEvent.event_id !== '') {
+    try {
+      await updateEventMenus(newEvent.event_id, communityId, selectedMenuIds.value)
+    } catch (error) {
+      console.error('Failed to update event menus:', error)
+      throw error
     }
-
-    return newEvent
-  } else {
-    // 更新
-    event.value.updated_by = handleUserId
-    const eventStore = useEventStore(props.eventId) as EventStore
-    await eventStore.updateEvent(event.value)
-    if (coverImage.value != null) {
-      await eventStore.updateCoverImage(coverImage.value)
-    }
-
-    // メニューを更新（Callable Function経由）
-    // イベントが終了している場合はメニュー更新しない
-    if (event.value.calculatedEventStatus !== 'finished') {
-      try {
-        await updateEventMenus(event.value.event_id, communityId, selectedMenuIds.value)
-      } catch (error) {
-        console.error('Failed to update event menus:', error)
-        throw error
-      }
-    }
-
-    return event.value
   }
+  hasFirestoreDraft.value = true
+  return newEvent
 }
 
-const submit = async () => {
-  const isNewEvent = props.eventId == null // 保存前に新規作成かどうかを判定
-  isSubmitting.value = true
+const updateEventDraft = async (): Promise<BokudeliEvent | null> => {
+  const communityId = communityStore.community?.community_id
+  if (event.value == null || communityId == null) {
+    return null
+  }
+  const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
+  event.value.updated_by = handleUserId
+
+  // 既存編集は props.eventId、新規ウィザードの仮保存済みは event.value.event_id を store キーにする
+  const persistId = props.eventId ?? (hasFirestoreDraft.value ? event.value.event_id : null)
+  if (persistId == null || persistId === '') {
+    return null
+  }
+
+  const eventStore = useEventStore(persistId) as EventStore
+  await eventStore.updateEvent(event.value)
+  if (coverImage.value != null) {
+    await eventStore.updateCoverImage(coverImage.value)
+  }
+  if (event.value.calculatedEventStatus !== 'finished') {
+    try {
+      await updateEventMenus(event.value.event_id, communityId, selectedMenuIds.value)
+    } catch (error) {
+      console.error('Failed to update event menus:', error)
+      throw error
+    }
+  }
+  return event.value
+}
+
+const submitReservation = async () => {
+  const communityId = communityStore.community?.community_id
+  if (event.value == null || communityId == null) {
+    showAlertDialog($t('manage.event.save_failed'))
+    return
+  }
+  const handleUserId = currentUserStore.firebaseUser?.uid ?? ''
+  if (handleUserId === '') {
+    showAlertDialog($t('manage.event.save_failed'))
+    return
+  }
+
+  processingState.value = 'reserving'
   try {
-    const event = await saveDraft()
-    if (event == null) {
+    const ev = await updateEventDraft()
+    if (ev?.event_id == null || ev.community_id === '' || ev.community_account === '') {
+      console.warn('The event does not have enough information.', ev)
       showAlertDialog($t('manage.event.save_failed'))
       return
     }
-    if (isNewEvent) {
-      showAlertDialog($t('manage.event.created_success', { name: event.event_name }), () =>
-        emits('updated', event.event_id),
-      )
-    } else {
-      showAlertDialog($t('manage.event.updated_success', { name: event.event_name }), () =>
-        emits('updated', event.event_id),
-      )
-    }
-  } catch (error) {
-    console.error('Failed to save event:', error)
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    showAlertDialog($t('manage.event.save_error', { error: errorMessage }))
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-const sendReserveMail = async () => {
-  isReserveMailing.value = true
-  try {
-    const event = await saveDraft()
-    if (event?.event_id == null || event?.community_id == null || event?.community_account == null) {
-      // eslint-disable-next-line quotes
-      console.warn("The event doesn't have enough information.", event)
-      showAlertDialog($t('manage.event.save_failed'))
+    const reservationCheck = ev.isValidForReservation(handleUserId)
+    if (!reservationCheck.ok) {
+      showAlertDialog($t('manage.event.reserve_validation_failed', { fields: reservationCheck.missing.join('、') }))
       return
     }
-    event.event_status = { value: 'applying_reservation', shop_comment: '' }
-    const eventStore = useEventStore(event.event_id) as EventStore
-    await eventStore.updateEvent(event)
-    showAlertDialog($t('manage.event.reserve_success', { name: event.shop_name }), () =>
-      emits('updated', event.event_id),
-    )
+    ev.event_status = { value: 'applying_reservation', shop_comment: '' }
+    const eventStore = useEventStore(ev.event_id) as EventStore
+    await eventStore.updateEvent(ev)
+    showNotification($t('manage.event.reserve_success', { name: ev.shop_name }), 'success')
+    emits('updated', ev.event_id)
   } catch (error) {
     console.error('Failed to send reserve mail:', error)
     const errorMessage = error instanceof Error ? error.message : String(error)
     showAlertDialog($t('manage.event.reserve_error', { error: errorMessage }))
   } finally {
-    isReserveMailing.value = false
+    processingState.value = null
   }
+}
+
+const handleStep3Primary = async () => {
+  if (props.eventId != null) {
+    stepper.value++
+    return
+  }
+  if (hasFirestoreDraft.value) {
+    stepper.value++
+    return
+  }
+  processingState.value = 'creating'
+  try {
+    const ev = await createEventDraft()
+    if (ev == null) {
+      showNotification($t('event_edit.draft_save_failed'), 'error')
+      return
+    }
+    showNotification($t('event_edit.draft_saved'), 'success')
+    stepper.value++
+  } catch (error) {
+    console.error('Failed to create event draft:', error)
+    showNotification($t('event_edit.draft_save_failed'), 'error')
+  } finally {
+    processingState.value = null
+  }
+}
+
+const handleSecondarySave = async () => {
+  processingState.value = 'saving'
+  try {
+    const ev = await updateEventDraft()
+    if (ev == null) {
+      showNotification($t('event_edit.draft_save_failed'), 'error')
+      return
+    }
+    showNotification($t('event_edit.saved'), 'success')
+  } catch (error) {
+    console.error('Failed to save draft:', error)
+    showNotification($t('event_edit.draft_save_failed'), 'error')
+  } finally {
+    processingState.value = null
+  }
+}
+
+const secondarySaveDisabledForStep = (step: number): boolean => {
+  if (isProcessing.value) {
+    return true
+  }
+  const e = event.value
+  if (e == null) {
+    return true
+  }
+  switch (step) {
+    case 1:
+      return !isValid1.value
+    case 2:
+      return e.shop_id === ''
+    case 3:
+      return selectedMenuCount.value === 0
+    case 4:
+      return !isValid4.value
+    default:
+      return true
+  }
+}
+
+const submit = async () => {
+  processingState.value = 'submitting'
+  try {
+    const ev = props.eventId != null || hasFirestoreDraft.value ? await updateEventDraft() : await createEventDraft()
+    if (ev == null) {
+      showNotification($t('manage.event.save_failed'), 'error')
+      return
+    }
+    showNotification($t('manage.event.updated_success', { name: ev.event_name }), 'success')
+    emits('updated', ev.event_id)
+  } catch (error) {
+    console.error('Failed to save event:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    showAlertDialog($t('manage.event.save_error', { error: errorMessage }))
+  } finally {
+    processingState.value = null
+  }
+}
+
+const openReserveConfirm = () => {
+  shopNoticeRef.value?.openReserveConfirmDialog()
 }
 
 const stepperItems = computed(() => [
@@ -508,11 +625,24 @@ const stepperItems = computed(() => [
                   rounded="xl"
                   min-width="168"
                   :append-icon="mdiChevronRight"
-                  :disabled="!isValid1"
+                  :disabled="!isValid1 || isProcessing"
                   @click="stepper++"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
+                <template v-if="canUseSecondarySave" #secondary>
+                  <v-btn
+                    color="primary"
+                    variant="tonal"
+                    size="x-large"
+                    rounded="xl"
+                    min-width="168"
+                    :disabled="secondarySaveDisabledForStep(1)"
+                    @click="handleSecondarySave"
+                  >
+                    {{ $t('event_edit.save_draft') }}
+                  </v-btn>
+                </template>
               </event-edit-step-nav>
             </v-col>
           </v-row>
@@ -524,11 +654,46 @@ const stepperItems = computed(() => [
           :shops="shops ?? []"
           :loading="shops == null"
           :is-updated-start-time="isUpdatedStartTime"
-          :step-nav-visible="stepper === 2"
           @submit="stepper++"
-          @next="stepper++"
-          @back="stepper--"
         />
+        <event-edit-step-nav :visible="stepper === 2">
+          <v-btn
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :prepend-icon="mdiChevronLeft"
+            :disabled="isProcessing"
+            @click="stepper--"
+          >
+            {{ $t('event_edit.back') }}
+          </v-btn>
+          <v-btn
+            v-if="event.shop_id !== ''"
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :append-icon="mdiChevronRight"
+            :disabled="isProcessing"
+            @click="stepper++"
+          >
+            {{ $t('event_edit.next') }}
+          </v-btn>
+          <template v-if="canUseSecondarySave" #secondary>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              size="x-large"
+              rounded="xl"
+              min-width="168"
+              :disabled="secondarySaveDisabledForStep(2)"
+              @click="handleSecondarySave"
+            >
+              {{ $t('event_edit.save_draft') }}
+            </v-btn>
+          </template>
+        </event-edit-step-nav>
       </template>
       <template #[`item.3`]>
         <event-menu
@@ -537,11 +702,46 @@ const stepperItems = computed(() => [
           :shop="selectedShop"
           :loading="isLoadingMenu"
           :disabled="isFinished"
-          :step-nav-visible="stepper === 3"
           @update:selectedMenuIds="handleMenuIdsUpdate"
-          @submit="stepper++"
-          @back="stepper--"
         />
+        <event-edit-step-nav :visible="stepper === 3">
+          <v-btn
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :prepend-icon="mdiChevronLeft"
+            :disabled="isProcessing"
+            @click="stepper--"
+          >
+            {{ $t('event_edit.back') }}
+          </v-btn>
+          <v-btn
+            color="primary"
+            size="x-large"
+            rounded="xl"
+            min-width="168"
+            :append-icon="mdiChevronRight"
+            :disabled="(props.eventId == null && selectedMenuCount === 0) || isProcessing"
+            :loading="processingState === 'creating'"
+            @click="handleStep3Primary"
+          >
+            {{ props.eventId != null || hasFirestoreDraft ? $t('event_edit.next') : $t('event_edit.save_and_proceed') }}
+          </v-btn>
+          <template v-if="canUseSecondarySave" #secondary>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              size="x-large"
+              rounded="xl"
+              min-width="168"
+              :disabled="secondarySaveDisabledForStep(3)"
+              @click="handleSecondarySave"
+            >
+              {{ $t('event_edit.save_draft') }}
+            </v-btn>
+          </template>
+        </event-edit-step-nav>
       </template>
       <template #[`item.4`]>
         <v-form v-model="isValid4">
@@ -552,7 +752,7 @@ const stepperItems = computed(() => [
                 v-model:cover-image="coverImage"
                 :subdomain-tags="communityStore.community?.subdomain_tags"
                 :album-manage-url="albumManageUrl"
-                :is-new="props.eventId == null"
+                :is-new="props.eventId == null && !hasFirestoreDraft"
               />
               <event-edit-step-nav :visible="stepper === 4">
                 <v-btn
@@ -561,6 +761,7 @@ const stepperItems = computed(() => [
                   rounded="xl"
                   min-width="168"
                   :prepend-icon="mdiChevronLeft"
+                  :disabled="isProcessing"
                   @click="stepper--"
                 >
                   {{ $t('event_edit.back') }}
@@ -571,11 +772,24 @@ const stepperItems = computed(() => [
                   rounded="xl"
                   min-width="168"
                   :append-icon="mdiChevronRight"
-                  :disabled="!isValid4"
+                  :disabled="!isValid4 || isProcessing"
                   @click="stepper++"
                 >
                   {{ $t('event_edit.next') }}
                 </v-btn>
+                <template v-if="canUseSecondarySave" #secondary>
+                  <v-btn
+                    color="primary"
+                    variant="tonal"
+                    size="x-large"
+                    rounded="xl"
+                    min-width="168"
+                    :disabled="secondarySaveDisabledForStep(4)"
+                    @click="handleSecondarySave"
+                  >
+                    {{ $t('event_edit.save_draft') }}
+                  </v-btn>
+                </template>
               </event-edit-step-nav>
             </v-col>
           </v-row>
@@ -583,16 +797,56 @@ const stepperItems = computed(() => [
       </template>
       <template #[`item.5`]>
         <event-shop-notice
+          ref="shopNoticeRef"
           v-model="event"
           v-model:shop="selectedShop"
-          :loading-submit="isSubmitting"
-          :loading-reserve="isReserveMailing"
-          :loading-menu="isLoadingMenu"
-          :step-nav-visible="stepper === 5"
-          @submit="submit"
-          @send-reserve-mail="sendReserveMail"
-          @back="stepper--"
+          v-model:form-valid="shopNoticeFormValid"
+          @send-reserve-mail="submitReservation"
         />
+        <event-edit-step-nav :visible="stepper === 5">
+          <div class="event-edit-step-nav__step5-top-row">
+            <v-btn
+              color="primary"
+              size="x-large"
+              rounded="xl"
+              min-width="168"
+              :prepend-icon="mdiChevronLeft"
+              :disabled="isProcessing"
+              @click="stepper--"
+            >
+              {{ $t('event_edit.back') }}
+            </v-btn>
+            <v-btn
+              color="primary"
+              size="x-large"
+              rounded="xl"
+              min-width="168"
+              :disabled="!shopNoticeFormValid || isProcessing || isLoadingMenu"
+              :loading="processingState === 'submitting'"
+              @click="submit"
+            >
+              {{ $t('event_edit.save_draft') }}
+            </v-btn>
+          </div>
+          <template v-if="props.eventId != null || hasFirestoreDraft" #secondary>
+            <div class="event-edit-step-nav__step5-reserve-row">
+              <v-btn
+                class="event-shop-notice-footer__reserve"
+                :disabled="
+                  !shopNoticeFormValid || event.event_status?.value !== 'in_draft' || isProcessing || isLoadingMenu
+                "
+                :loading="processingState === 'reserving'"
+                color="grey-900"
+                size="x-large"
+                rounded="xl"
+                :prepend-icon="mdiEmailOutline"
+                @click="openReserveConfirm"
+              >
+                {{ $t('shop_notice.send_reserve_mail') }}
+              </v-btn>
+            </div>
+          </template>
+        </event-edit-step-nav>
       </template>
     </v-stepper>
   </div>
@@ -614,6 +868,34 @@ const stepperItems = computed(() => [
 .event-edit-page {
   /* 最終ステップの2段フッター（戻る・保存 + 予約申請）用に余白を確保 */
   padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+}
+
+.event-edit-step-nav__step5-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 12px;
+  width: 100%;
+}
+
+.event-edit-step-nav__step5-reserve-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.event-shop-notice-footer__reserve {
+  min-width: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  :deep(.v-btn__content) {
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+  }
 }
 
 @media (max-width: 600px) {

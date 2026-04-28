@@ -4,9 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { priceString } from '@shokujii/base/schemes/converter'
-import { mdiChevronLeft, mdiChevronRight, mdiStorefrontOutline, mdiGestureTap } from '@mdi/js'
+import { mdiStorefrontOutline, mdiGestureTap } from '@mdi/js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
-import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
@@ -18,16 +17,9 @@ const props = defineProps<{
   event: BokudeliEvent
   loading: boolean
   disabled?: boolean
-  /**
-   * EventEdit のステッパー連携用。親から必ず渡す。
-   * アクティブなステップのとき true にし、Teleport した固定ナビを body に出す。
-   */
-  stepNavVisible: boolean
 }>()
 
 const emit = defineEmits<{
-  submit: []
-  back: []
   'update:selectedMenuIds': [selectedMenuIds: string[]]
 }>()
 
@@ -64,14 +56,6 @@ const isMenuSelected = (menuId: string): boolean => {
 // 最後の1つの選択メニューかどうかを判定
 const isLastSelected = (menuId: string): boolean => {
   return selectedCount.value === 1 && isMenuSelected(menuId)
-}
-
-const submit = () => {
-  emit('submit')
-}
-
-const back = () => {
-  emit('back')
 }
 
 // 選択済みカウント
@@ -148,29 +132,6 @@ const selectedCount = computed(() => {
             </v-row>
           </v-form>
         </v-card>
-        <event-edit-step-nav :visible="stepNavVisible">
-          <v-btn
-            color="primary"
-            size="x-large"
-            rounded="xl"
-            min-width="168"
-            :prepend-icon="mdiChevronLeft"
-            @click="back"
-          >
-            {{ t('event_edit.back') }}
-          </v-btn>
-          <v-btn
-            color="primary"
-            size="x-large"
-            rounded="xl"
-            min-width="168"
-            :append-icon="mdiChevronRight"
-            :disabled="selectedCount === 0"
-            @click="submit"
-          >
-            {{ t('event_edit.next') }}
-          </v-btn>
-        </event-edit-step-nav>
       </v-col>
     </v-row>
     <v-row v-else class="justify-center">
