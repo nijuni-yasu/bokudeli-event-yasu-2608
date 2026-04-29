@@ -28,7 +28,12 @@ const isShown = computed(() => props.visible && hostActive.value)
   <Teleport to="body">
     <div v-if="isShown" class="event-edit-step-nav" role="navigation" :aria-label="navAriaLabel">
       <div class="event-edit-step-nav__surface">
-        <slot />
+        <div class="event-edit-step-nav__top">
+          <slot />
+        </div>
+        <div v-if="$slots.secondary" class="event-edit-step-nav__secondary">
+          <slot name="secondary" />
+        </div>
       </div>
     </div>
   </Teleport>
@@ -47,13 +52,30 @@ const isShown = computed(() => props.visible && hostActive.value)
 .event-edit-step-nav__surface {
   pointer-events: auto;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  gap: 10px 12px;
+  gap: 10px;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
   background: rgb(var(--v-theme-surface));
   border-top: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.event-edit-step-nav__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 12px;
+  width: 100%;
+}
+
+.event-edit-step-nav__secondary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 12px;
+  width: 100%;
 }
 </style>

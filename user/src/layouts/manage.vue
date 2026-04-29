@@ -90,7 +90,7 @@ onUnmounted(() => {
       <Footer />
     </template>
   </Component>
-  <v-snackbar v-model="isNotificationShown" :color="notification.color">
+  <v-snackbar v-model="isNotificationShown" :color="notification.color" location="top">
     {{ notification.message }}
   </v-snackbar>
 </template>

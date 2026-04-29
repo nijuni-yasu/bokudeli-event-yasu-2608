@@ -8,7 +8,7 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 ## 前提
 
 - gh CLI がインストール済みであること
-- 基準ブランチは origin/development 一択。必ず development を使用する
+- PR のマージ先は GitHub 上の development とする。git diff と git log の比較左辺はローカルブランチ development ではなくリモート追跡の origin/development を用いる。gh pr create の --base にはブランチ名として development を指定する（origin/ プレフィックスは付けない）。
 
 ## 適用場面
 
@@ -21,10 +21,10 @@ description: ブランチの変更差分を読み込み、pull_request_template.
    - PR あり → 既存 PR の本文更新を想定
    - PR なし → 新規作成を想定
 
-2. 基準ブランチは development を使用する
-3. `git diff development...HEAD --stat` で変更ファイル一覧を取得する
-4. `git diff development...HEAD` で全差分を取得する
-5. `git log development...HEAD --oneline` でコミット一覧を取得する
+2. 差分取得の直前に `git fetch origin development` を実行して origin/development を更新してよい。追跡ブランチが無い場合も同コマンドで作成される
+3. `git diff origin/development...HEAD --stat` で変更ファイル一覧を取得する
+4. `git diff origin/development...HEAD` で全差分を取得する
+5. `git log origin/development...HEAD --oneline` でコミット一覧を取得する
 
 6. `git branch --show-current` でブランチ名を取得し Issue 番号を特定する
 7. `.github/pull_request_template.md` の各セクションを差分をもとに埋める
@@ -81,7 +81,7 @@ Issue 番号は PR タイトルには含めず、本文の関連 Issue や close
 
 #### コミット一覧
 
-`git log development...HEAD --oneline` で取得したコミットタイトルをそのまま全件列挙する。
+`git log origin/development...HEAD --oneline` で取得したコミットタイトルをそのまま全件列挙する。
 要約や改変はせず、コミットタイトルの文字列をそのままコピーする。
 
 #### 関連情報

@@ -92,7 +92,7 @@ const handleEventHostClick = async () => {
       <Footer />
     </template>
   </Component>
-  <v-snackbar v-model="isNotificationShown" :color="notification.color" class="pre-line">
+  <v-snackbar v-model="isNotificationShown" :color="notification.color" class="pre-line" location="top">
     {{ notification.message }}
   </v-snackbar>
 </template>

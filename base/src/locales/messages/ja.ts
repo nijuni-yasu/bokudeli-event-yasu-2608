@@ -307,8 +307,20 @@ export default {
   event_edit: {
     back: '戻る',
     next: '進む',
+    save_and_proceed: '保存して進む',
+    save_draft: '保存する',
+    save_and_preview: '保存してプレビュー',
+    draft_saved: '仮保存しました',
+    draft_save_failed: '保存に失敗しました',
+    saved: '保存しました',
     step_nav_aria_label: 'ステップナビゲーション',
     organizer_memo_default: '{address} に到着しましたらお電話ください。お迎えにあがります。よろしくお願いいたします。',
+    shop_cleared_incompatible_datetime:
+      '開始日時が選択中の店舗の営業時間外のため、店舗選択を解除しました。店舗選択画面で選び直してください。',
+    shop_cleared_postal_changed: '郵便番号を変更したため、店舗選択を解除しました。店舗選択画面で選び直してください。',
+    shop_list_loading: '店舗一覧を読み込み中です。しばらくしてから再度お試しください。',
+    shop_not_deliverable_before_save:
+      '開催場所と開催日時に対して、選択中の店舗は配達・営業条件を満たしていません。店舗を選び直してください。',
   },
   event_basic_info: {
     place: '開催場所',
@@ -411,8 +423,6 @@ export default {
     bill_title: '請求先情報',
     bill_fullname: '請求先 担当者名',
     bill_email: '請求先 メールアドレス',
-    preview_draft: '下書きをプレビューする',
-    save_event: 'イベントを保存する',
     send_reserve_mail: 'お店に予約申請する',
     send_reserve_mail_ok: '予約申請メールを送信する',
     confirm_send_reserve_mail: '<b>「{0}」</b>に予約申請メールを送信しますか？📩<br />',
