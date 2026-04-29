@@ -618,4 +618,7 @@ export default {
     step2: '②「ホーム画面に追加」をタップしてください。',
     step3: '③ shokujiiにいつでもアクセスできるようになります👍',
   },
+  image: {
+    invalid_format: '対応していない画像形式です。JPEG / PNG / APNG / GIF / WebP のいずれかをお選びください。',
+  },
 }

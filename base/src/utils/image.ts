@@ -1,3 +1,18 @@
+import { isAllowedImageMimeType } from '@shokujii/common/constants/imageMimeTypes.js'
+
+export type ImageValidationResult = { ok: true } | { ok: false; messageKey: 'image.invalid_format' }
+
+/**
+ * アップロード対象の画像ファイルが許可された MIME タイプか検証する。
+ * 仕様: documents/02_主催者獲得と継続/16_画像の拡張子.md
+ */
+export const validateImageFile = (file: File): ImageValidationResult => {
+  if (!isAllowedImageMimeType(file.type)) {
+    return { ok: false, messageKey: 'image.invalid_format' }
+  }
+  return { ok: true }
+}
+
 export const resizeImage = (file: File, maxSize: number): Promise<File> => {
   return new Promise((resolve, reject) => {
     const img = new Image()
