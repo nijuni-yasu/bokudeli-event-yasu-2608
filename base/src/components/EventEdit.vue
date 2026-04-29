@@ -21,10 +21,13 @@ import {
 } from '@shokujii/common/utils/eventMenuConverter.js'
 import { useRouter } from 'vue-router'
 import { getCommunityPath, getManageCommunityAlbumPath } from '@/router/utils'
-import { calculateDistance, fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/utils/fetchLocation'
+import { fetchLocationByPostalcode, LatLogLocation } from '@shokujii/base/utils/fetchLocation'
 import { updateEventDeadlineFromShop } from '@shokujii/common/utils/eventShopDeadline.js'
+import {
+  getDeliverablePartnerShopsSorted,
+  isPartnerShopIdDeliverableAt,
+} from '@shokujii/common/utils/partnerShopDeliverable.js'
 import { isAddressBaseValidForPostalcode } from '@shokujii/base/utils/isAddressBaseValidForPostalcode'
-import { maxBy } from 'lodash'
 import { useValidators } from '@shokujii/base/composable/validators'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -194,43 +197,12 @@ const shops = computed<BokudeliPartnerShopWithExtras[] | undefined>(() => {
   if (selectedLocation == null) {
     return undefined
   }
-  return partnerShopListStore.shops
-    ?.map((shop) => {
-      // calculate distance
-      let distance = 0
-      if (shop.shop_address_longitude != null && shop.shop_address_latitude != null) {
-        const shopLocation = {
-          longitude: shop.shop_address_longitude,
-          latitude: shop.shop_address_latitude,
-        }
-        distance = calculateDistance(selectedLocation, shopLocation)
-      }
-      // 最小注文個数の配列の何番目かを取得
-      const rangeIndex = shop.shop_range_min_orders.findIndex(
-        (order) => order?.range != null && order.range >= distance,
-      )
-      // 最小注文個数（注文の目安）を取得。値がない場合は30に設定
-      const min_orders_on_spot = shop.shop_range_min_orders[rangeIndex]?.min_orders ?? 30
-      return Object.assign(Object.create(Object.getPrototypeOf(shop)), shop, {
-        distance,
-        min_orders_on_spot,
-      })
-    })
-    .filter((shop: BokudeliPartnerShopWithExtras) => {
-      // check distance
-      const distance = shop.distance
-      const maxRange = maxBy(shop.shop_range_min_orders, 'range')?.range
-      const isInRange = maxRange ? distance <= maxRange : false
-
-      // check time
-      const eventTimeStart = event.value?.event_start_datetime
-      if (eventTimeStart == null) {
-        return false
-      }
-      const isInTime = isInShopTime(eventTimeStart, shop)
-      return isInRange && isInTime && shop.is_approved && shop.is_open
-    })
-    .sort((a, b) => a.min_orders_on_spot - b.min_orders_on_spot)
+  const list = getDeliverablePartnerShopsSorted(
+    { longitude: selectedLocation.longitude, latitude: selectedLocation.latitude },
+    event.value?.event_start_datetime,
+    partnerShopListStore.shops ?? [],
+  )
+  return list as BokudeliPartnerShopWithExtras[]
 })
 
 const selectedShop = computed((): BokudeliPartnerShop | null => {
@@ -250,9 +222,12 @@ const resolvedShopFromMaster = computed((): BokudeliPartnerShop | null => {
 })
 
 const handleStep2Next = () => {
+  if (selectedShop.value == null) {
+    return
+  }
   const ev = event.value
-  const shop = resolvedShopFromMaster.value
-  if (ev != null && shop != null) {
+  const shop = selectedShop.value
+  if (ev != null) {
     updateEventDeadlineFromShop(ev, shop)
   }
   stepper.value++
@@ -279,7 +254,7 @@ watch(
 // partner_id に基づいて PartnerMenu を取得（null = 未取得）
 const partnerMenus = computed<BokudeliPartnerMenu[] | null>(() => {
   const partnerId = event.value?.partner_id
-  if (partnerId === '') {
+  if (partnerId == null || partnerId === '') {
     return []
   }
   const partnerStore = usePartnerStore(partnerId)
@@ -337,6 +312,53 @@ const userSelectedMenuIds = computed<string[]>({
   },
 })
 
+const normalizePostalDigits = (p: string | undefined): string => (p ?? '').replace(/\D/g, '')
+
+/** 下書き時に店舗・メニュー選択を外し、締切を開始日時に揃える（店舗再選択後に updateEventDeadlineFromShop で上書き） */
+const clearShopSelectionForDraft = (reason: 'postal' | 'incompatible_datetime'): void => {
+  const e = event.value
+  if (e == null || e.event_status?.value !== 'in_draft') {
+    return
+  }
+  if (e.shop_id === '') {
+    return
+  }
+  e.shop_id = ''
+  e.partner_id = ''
+  e.shop_name = ''
+  _userSelectedMenuIds.value = null
+  const start = e.event_start_datetime
+  if (start != null && start > 0) {
+    e.event_deadline_datetime = start
+  }
+  showNotification(
+    reason === 'postal'
+      ? $t('event_edit.shop_cleared_postal_changed')
+      : $t('event_edit.shop_cleared_incompatible_datetime'),
+    'warning',
+  )
+}
+
+watch(
+  () => event.value?.event_postalcode,
+  (newPc, oldPc) => {
+    const e = event.value
+    if (e == null || e.event_status?.value !== 'in_draft') {
+      return
+    }
+    if (oldPc === undefined) {
+      return
+    }
+    if (normalizePostalDigits(newPc) === normalizePostalDigits(oldPc)) {
+      return
+    }
+    if (e.shop_id === '') {
+      return
+    }
+    clearShopSelectionForDraft('postal')
+  },
+)
+
 watch(
   () => ({
     start: event.value?.event_start_datetime,
@@ -361,11 +383,7 @@ watch(
     if (isInShopTime(start, shop)) {
       return
     }
-    e.shop_id = ''
-    e.partner_id = ''
-    e.shop_name = ''
-    _userSelectedMenuIds.value = null
-    showNotification($t('event_edit.shop_cleared_incompatible_datetime'), 'warning')
+    clearShopSelectionForDraft('incompatible_datetime')
   },
 )
 
@@ -448,12 +466,44 @@ onUnmounted(() => {
   }
 })
 
+/** 店舗一覧取得完了後のみ検証。未完了時は保存・申請を止める */
+const assertCurrentShopDeliverable = (forReserve: boolean): boolean => {
+  const e = event.value
+  if (e == null || e.shop_id === '') {
+    return true
+  }
+  if (partnerShopListStore.totalCount == null) {
+    const msg = $t('event_edit.shop_list_loading')
+    if (forReserve) {
+      showAlertDialog(msg)
+    } else {
+      showNotification(msg, 'warning')
+    }
+    return false
+  }
+  const loc = location.value
+  const pos = loc != null ? { longitude: loc.longitude, latitude: loc.latitude } : null
+  if (!isPartnerShopIdDeliverableAt(e.shop_id, pos, e.event_start_datetime, partnerShopListStore.shops ?? [])) {
+    const msg = $t('event_edit.shop_not_deliverable_before_save')
+    if (forReserve) {
+      showAlertDialog(msg)
+    } else {
+      showNotification(msg, 'error')
+    }
+    return false
+  }
+  return true
+}
+
 const createEventDraft = async (): Promise<BokudeliEvent | null> => {
   const communityId = communityStore.community?.community_id
   if (event.value == null || communityId == null) {
     return null
   }
-  const shop = resolvedShopFromMaster.value
+  if (!assertCurrentShopDeliverable(false)) {
+    return null
+  }
+  const shop = selectedShop.value
   if (shop != null && event.value.shop_id !== '') {
     updateEventDeadlineFromShop(event.value, shop)
   }
@@ -479,7 +529,14 @@ const updateEventDraft = async (): Promise<BokudeliEvent | null> => {
   if (event.value == null || communityId == null) {
     return null
   }
-  const shop = resolvedShopFromMaster.value
+  const status = event.value.event_status?.value
+  // 参加受付中中など下書き以外では配達可否で保存を阻害しない。店舗が設定変更可能性を考慮
+  if (status == null || status === 'in_draft') {
+    if (!assertCurrentShopDeliverable(false)) {
+      return null
+    }
+  }
+  const shop = selectedShop.value
   if (shop != null && event.value.shop_id !== '') {
     updateEventDeadlineFromShop(event.value, shop)
   }
@@ -522,6 +579,9 @@ const submitReservation = async () => {
 
   processingState.value = 'reserving'
   try {
+    if (!assertCurrentShopDeliverable(true)) {
+      return
+    }
     const ev = await updateEventDraft()
     if (ev?.event_id == null || ev.community_id === '' || ev.community_account === '') {
       console.warn('The event does not have enough information.', ev)
@@ -601,6 +661,7 @@ const secondarySaveDisabledForStep = (step: number): boolean => {
   if (e == null) {
     return true
   }
+  // 下書き保存の Zod が店舗を必須とするため、未選択の間は仮保存を押せないようにする
   if (e.shop_id === '') {
     return true
   }
@@ -719,7 +780,7 @@ const stepperItems = computed(() => [
             rounded="xl"
             min-width="168"
             :append-icon="mdiChevronRight"
-            :disabled="isProcessing"
+            :disabled="isProcessing || selectedShop == null"
             @click="handleStep2Next"
           >
             {{ $t('event_edit.next') }}
