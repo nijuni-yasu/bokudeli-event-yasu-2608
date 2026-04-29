@@ -6,6 +6,8 @@ import { VueDraggableNext as draggable } from 'vue-draggable-next'
 import { useCommunityStore, type BokudeliAlbumItem, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { validateImageFile } from '@shokujii/base/utils/image.js'
+import { ALLOWED_IMAGE_ACCEPT_ATTR } from '@shokujii/common/constants/imageMimeTypes.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { mdiClose, mdiDragVertical, mdiPlus } from '@mdi/js'
@@ -119,6 +121,12 @@ const onFilesSelected = async (e: Event) => {
   uploadProgress.value = { current: 0, total: files.length }
   for (let i = 0; i < files.length; i++) {
     const file = files[i]!
+    const validation = validateImageFile(file)
+    if (!validation.ok) {
+      notification.show($t(validation.messageKey), 'error')
+      uploadProgress.value = { current: i + 1, total: files.length }
+      continue
+    }
     if (file.size > MAX_BYTES) {
       notification.show($t('manage.community.album.file_too_large'), 'error')
       uploadProgress.value = { current: i + 1, total: files.length }
@@ -154,6 +162,11 @@ const onReplaceFile = async (e: Event) => {
   input.value = ''
   replaceTargetId.value = null
   if (file == null || id == null) {
+    return
+  }
+  const validation = validateImageFile(file)
+  if (!validation.ok) {
+    notification.show($t(validation.messageKey), 'error')
     return
   }
   if (file.size > MAX_BYTES) {
@@ -195,8 +208,21 @@ const confirmDelete = async () => {
 
 <template>
   <v-container class="manage-container pb-10">
-    <input ref="fileInputRef" type="file" class="d-none" accept="image/*" multiple @change="onFilesSelected" />
-    <input ref="replaceInputRef" type="file" class="d-none" accept="image/*" @change="onReplaceFile" />
+    <input
+      ref="fileInputRef"
+      type="file"
+      class="d-none"
+      :accept="ALLOWED_IMAGE_ACCEPT_ATTR"
+      multiple
+      @change="onFilesSelected"
+    />
+    <input
+      ref="replaceInputRef"
+      type="file"
+      class="d-none"
+      :accept="ALLOWED_IMAGE_ACCEPT_ATTR"
+      @change="onReplaceFile"
+    />
 
     <v-card class="pa-10 mb-10">
       <v-row>
