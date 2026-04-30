@@ -33,6 +33,8 @@ const getProvider = (providerService: ProviderIdType) => {
       provider = new GoogleAuthProvider()
       provider.addScope('profile')
       provider.addScope('openid')
+      // 毎回アカウント選択画面を表示する（スマホで前回のアカウントが自動選択される問題への対応）
+      provider.setCustomParameters({ prompt: 'select_account' })
       break
     case 'twitter.com':
       provider = new TwitterAuthProvider()
