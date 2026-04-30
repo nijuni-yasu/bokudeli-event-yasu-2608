@@ -185,6 +185,7 @@ const closeDialog = () => {
             v-model="targetDateTimeString"
             :label="$t('manage.copy_event_modal.target_date')"
             :allowed-dates="allowedDates"
+            :disabled="selectedEvent === null"
           />
         </div>
       </v-card-text>
