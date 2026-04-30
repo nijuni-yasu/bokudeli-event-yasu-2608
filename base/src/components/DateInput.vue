@@ -31,7 +31,9 @@ const { d: $d } = useI18n()
 const _menu = ref(false)
 const menu = computed({
   get: () => (props.readonly || props.disabled ? false : _menu.value),
-  set: (value) => (_menu.value = value),
+  set: (value) => {
+    _menu.value = props.readonly || props.disabled ? false : value
+  },
 })
 const date = computed<string | null>({
   get: () =>
@@ -55,7 +57,7 @@ const displayDate = computed<string>(() => (date.value == null ? '' : $d(date.va
       <v-text-field
         :model-value="displayDate"
         :prepend-inner-icon="mdiCalendar"
-        :append-inner-icon="clearable && modelValue != null ? mdiClose : undefined"
+        :append-inner-icon="clearable && !disabled && modelValue != null ? mdiClose : undefined"
         :readonly="true"
         :disabled="disabled"
         v-bind="{ ...props, ...$attrs }"
