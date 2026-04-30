@@ -230,9 +230,9 @@ export const createOrder = async (
   const typedRef = newRef.withConverter(new EventMemberOrderConverter())
 
   if (transaction === undefined) {
-    await typedRef.set(order)
+    await typedRef.set(order, { merge: true })
   } else {
-    transaction.set(typedRef, order)
+    transaction.set(typedRef, order, { merge: true })
   }
   return order
 }
