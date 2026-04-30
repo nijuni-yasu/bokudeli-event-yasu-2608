@@ -29,6 +29,24 @@ export function distanceKmBetween(a: EventLocationLatLng, b: EventLocationLatLng
   return R * c
 }
 
+/** 店舗の `shop_range_min_orders` の最大 range を距離上限とする配達圏内判定。営業時間や承認状態は見ない */
+function isWithinShopDeliveryRange(shop: PartnerShop, eventLocation: EventLocationLatLng): boolean {
+  if (shop.shop_address_longitude == null || shop.shop_address_latitude == null) {
+    return false
+  }
+  const dist = distanceKmBetween(eventLocation, {
+    longitude: shop.shop_address_longitude,
+    latitude: shop.shop_address_latitude,
+  })
+  let maxRange: number | undefined
+  for (const o of shop.shop_range_min_orders) {
+    if (o.range != null && (maxRange == null || o.range > maxRange)) {
+      maxRange = o.range
+    }
+  }
+  return maxRange != null && dist <= maxRange
+}
+
 /**
  * 郵便番号から解決した位置と開催開始日時に対し、配達・営業条件を満たす店のみを返す。
  * 並びは距離レンジに応じた min_orders_on_spot の昇順（EventEdit.vue の shops computed と同一ルール）。
@@ -64,17 +82,13 @@ export function getDeliverablePartnerShopsSorted(
       return withExtras
     })
     .filter((row): row is DeliverablePartnerShop => row != null)
-    .filter((shop) => {
-      let maxRange: number | undefined
-      for (const o of shop.shop_range_min_orders) {
-        if (o.range != null && (maxRange === undefined || o.range > maxRange)) {
-          maxRange = o.range
-        }
-      }
-      const isInRange = maxRange != null ? shop.distance <= maxRange : false
-      const isInTime = isInShopTime(eventStartMillis, shop)
-      return isInRange && isInTime && shop.is_approved && shop.is_open
-    })
+    .filter(
+      (shop) =>
+        isWithinShopDeliveryRange(shop, eventLocation) &&
+        isInShopTime(eventStartMillis, shop) &&
+        shop.is_approved &&
+        shop.is_open,
+    )
     .sort((a, b) => a.min_orders_on_spot - b.min_orders_on_spot)
 
   return mapped
@@ -95,4 +109,27 @@ export function isPartnerShopIdDeliverableAt(
   }
   const list = getDeliverablePartnerShopsSorted(eventLocation, eventStartMillis, partnerShops)
   return list.some((s) => s.shop_id === shopId)
+}
+
+/**
+ * 指定した shop_id が距離だけで見て配達圏内に含まれるか（営業時間 / is_approved / is_open は判定しない）。
+ * 集約バリデーションで「営業時間外」と「配達圏外」を独立した理由コードに分離するために使う。
+ * shop_id が空のときは true（店未選択は別バリデーション）。
+ */
+export function isPartnerShopIdInDeliveryRange(
+  shopId: string,
+  eventLocation: EventLocationLatLng | null,
+  partnerShops: readonly PartnerShop[] | null | undefined,
+): boolean {
+  if (shopId === '') {
+    return true
+  }
+  if (eventLocation == null || partnerShops == null) {
+    return false
+  }
+  const shop = partnerShops.find((s) => s.shop_id === shopId)
+  if (shop == null) {
+    return false
+  }
+  return isWithinShopDeliveryRange(shop, eventLocation)
 }
