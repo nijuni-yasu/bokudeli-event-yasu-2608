@@ -446,6 +446,7 @@ export default {
     event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',
     canceled: 'キャンセル済み',
+    processing: '決済処理中',
     cancel_dialog: {
       title: 'キャンセル',
       event_name: '【イベント名】{0}',
@@ -587,8 +588,11 @@ export default {
     failed: 'レターの配信に失敗しました',
   },
   success_join_event_dialog: {
+    loading: '注文情報を読み込み中です…',
     title: '注文完了🎉',
     subtitle: '参加申し込みが完了しました！',
+    processing_title: '決済処理中',
+    processing_subtitle: '決済処理中です。完了後、注文一覧に反映されます。',
     datetime: '📅 日時：',
     deadline: '⏳ 期限：{0}に注文締切',
     place: '📍 場所：',

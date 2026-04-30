@@ -400,6 +400,7 @@ export default {
       no_member: '参加者はまだいません。',
       status: 'ステータス',
       ordered: '注文済',
+      processing: '決済処理中',
       in_cart: 'カート追加中',
       canceled: 'キャンセル',
       name: '名前',
@@ -409,6 +410,7 @@ export default {
       csv_download: 'CSV ダウンロード',
       date: {
         ordered: '注文日時',
+        processing: '決済処理中日時',
         in_cart: 'カート追加日時',
         canceled: 'キャンセル日時',
       },

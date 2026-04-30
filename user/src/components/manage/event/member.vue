@@ -45,6 +45,11 @@ const menus = computed<Array<[EventMemberOrder, User]>>(
 const orderedMenus = computed(() =>
   menus.value.filter(([order]) => order.status === 'ordered').sort(([a], [b]) => a.updated_at - b.updated_at),
 )
+const processingMenus = computed(() =>
+  menus.value
+    .filter(([order]) => order.status === 'processing')
+    .sort(([a], [b]) => (a.processing_at ?? a.updated_at) - (b.processing_at ?? b.updated_at)),
+)
 const cartMenus = computed(() =>
   menus.value
     .filter(([order]) => order.status === 'in_cart')
@@ -55,7 +60,7 @@ const canceledMenus = computed(() =>
     .filter(([order]) => order.status === 'canceled')
     .sort(([a], [b]) => (a.canceled_at ?? 0) - (b.canceled_at ?? 0)),
 )
-const tables = computed(() => [orderedMenus.value, cartMenus.value, canceledMenus.value])
+const tables = computed(() => [orderedMenus.value, processingMenus.value, cartMenus.value, canceledMenus.value])
 
 const isCommunityBill = computed(() => eventStore.event?.event_payment === 'community_bill')
 
@@ -94,6 +99,8 @@ const getDateString = (order: EventMemberOrder) => {
   switch (order.status) {
     case 'ordered':
       return $d(order.updated_at, 'datetime')
+    case 'processing':
+      return $d(order.processing_at ?? order.updated_at, 'datetime')
     case 'in_cart':
       return $d(order.carted_at, 'datetime')
     case 'canceled':
@@ -115,7 +122,12 @@ const downloadCsvFile = () => {
   }
   headers.push($t('manage.member.date.ordered'))
   let csv = headers.map((h) => `"${h}"`).join(',') + '\n'
-  for (const [order, member] of [...orderedMenus.value, ...cartMenus.value, ...canceledMenus.value]) {
+  for (const [order, member] of [
+    ...orderedMenus.value,
+    ...processingMenus.value,
+    ...cartMenus.value,
+    ...canceledMenus.value,
+  ]) {
     const row = [
       $t(`manage.member.${order.status}`),
       member.user_name,
@@ -146,7 +158,10 @@ const downloadCsvFile = () => {
     </v-row>
     <v-row class="justify-center">
       <v-col md="12" sm="12" cols="12">
-        <v-card v-if="orderedMenus.length + cartMenus.length + canceledMenus.length === 0" class="pa-10">
+        <v-card
+          v-if="orderedMenus.length + processingMenus.length + cartMenus.length + canceledMenus.length === 0"
+          class="pa-10"
+        >
           {{ $t('manage.member.no_member') }}
         </v-card>
         <v-card v-else class="pa-10">
