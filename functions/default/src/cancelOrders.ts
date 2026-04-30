@@ -184,7 +184,11 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
         const idempotencyKey = `refund_${stripeId}_${orderIdsHash}`
 
         const refund = await stripe.refunds.create(
-          { payment_intent: stripeDocPre.payment_intent, amount: refundAmount },
+          {
+            payment_intent: stripeDocPre.payment_intent,
+            amount: refundAmount,
+            reason: 'requested_by_customer',
+          },
           { idempotencyKey },
         )
 
@@ -225,11 +229,17 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
         })
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
-        logger.error('Stripe refund failed', {
+        const errorContext: Record<string, unknown> = {
           stripeId,
           orderIds: groupOrders.map((o) => o.id),
           error: message,
-        })
+        }
+        if (error instanceof Stripe.errors.StripeError) {
+          errorContext.stripeErrorType = error.type
+          errorContext.stripeErrorCode = error.code
+          errorContext.stripeRequestId = error.requestId
+        }
+        logger.error('Stripe refund failed', errorContext)
         refundErrors.push({ stripe_id: stripeId, message })
       }
     }
