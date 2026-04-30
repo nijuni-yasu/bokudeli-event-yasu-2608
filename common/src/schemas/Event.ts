@@ -180,7 +180,7 @@ const EventAppSchema = z.object({
   community_bill_settings: CommunityBillSettingsAppSchema.optional(),
 })
 
-const convertToDb = (event: Event, updated_by: string) => {
+export const convertEventToDb = (event: Event, updated_by: string) => {
   return {
     ...event,
     created_at: EpochMillisSchema.default(Date.now()).parse(event.created_at),
@@ -293,29 +293,11 @@ export class Event {
   }
 
   isValidForDatabase(updateUserId: string): boolean {
-    return EventDbSchema.safeParse(convertToDb(this, updateUserId)).success
-  }
-
-  isValidForReservation(updateUserId: string): { ok: true } | { ok: false; missing: string[] } {
-    const dbResult = EventDbSchema.safeParse(convertToDb(this, updateUserId))
-    if (!dbResult.success) {
-      return { ok: false, missing: dbResult.error.issues.map((i) => i.path.join('.')) }
-    }
-    const reservationResult = ReservationRequiredSchema.safeParse({
-      organizer_fullname: this.organizer_fullname,
-      organizer_company: this.organizer_company,
-      organizer_email: this.organizer_email,
-      organizer_phone_personal: this.organizer_phone_personal,
-      organizer_memo: this.organizer_memo,
-    })
-    if (!reservationResult.success) {
-      return { ok: false, missing: reservationResult.error.issues.map((i) => i.path.join('.')) }
-    }
-    return { ok: true }
+    return EventDbSchema.safeParse(convertEventToDb(this, updateUserId)).success
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   toFirestore(updateUserId: string): any {
-    return EventDbSchema.parse(convertToDb(this, updateUserId))
+    return EventDbSchema.parse(convertEventToDb(this, updateUserId))
   }
 }
