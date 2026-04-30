@@ -9,7 +9,10 @@ import sharp from 'sharp'
  * @throws Error if the image buffer is not a valid image.
  */
 export const resizeImage = async (imageBuffer: Buffer, size: number): Promise<Buffer> => {
-  const image = sharp(imageBuffer)
+  // autoOrient: true は EXIF Orientation を読み取り、metadata() / resize() / toBuffer() の
+  // すべての段階で論理的な向き（縦・横）を基準に動作させる。これがないと iPhone で撮影した
+  // 縦画像（物理ピクセルは横向き + EXIF Orientation = 6）のサムネが回転して保存される。
+  const image = sharp(imageBuffer, { autoOrient: true })
   const metadata = await image.metadata()
   // image.metadata() throws error if the image buffer is not a valid image and defines width and height as number.
   // It means metadata.width and metadata.height are guaranteed to be defined as number and not null or undefined.

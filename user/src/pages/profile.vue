@@ -16,6 +16,8 @@ import { getRedirectPath } from '@shokujii/base/utils/redirect'
 import { getPassCode } from '@/router/utils'
 import { checkSoleManagerCommunity } from '@shokujii/base/stores/community.js'
 import { deleteUserAccount } from '@shokujii/base/apis/user.js'
+import { validateImageFile } from '@shokujii/base/utils/image'
+import { ALLOWED_IMAGE_ACCEPT_ATTR } from '@shokujii/common/constants/imageMimeTypes.js'
 
 const currentUserStore = useCurrentUserStore()
 const { providerData, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
@@ -128,13 +130,33 @@ const triggerFileInput = (): void => {
   fileInput.value?.click()
 }
 
+const releaseUserImagePreview = () => {
+  if (userImagePreview.value != null) {
+    URL.revokeObjectURL(userImagePreview.value)
+    userImagePreview.value = undefined
+  }
+}
+
 const readImageFiles = (files: File | File[]) => {
   if (files instanceof File) files = [files]
   if (files.length === 0 || currentUser.value == null) {
     return
   }
   const file = files[0]
+  const result = validateImageFile(file)
+  if (!result.ok) {
+    const msg = $t(result.messageKey)
+    userImage.value = undefined
+    releaseUserImagePreview()
+    // watch(userImage) 内の validateImage が先に走り既存 user_image_url があると imageError を空にするため、無効形式メッセージはその後に確定させる
+    queueMicrotask(() => {
+      imageError.value = msg
+    })
+    return
+  }
+  imageError.value = ''
   userImage.value = file
+  releaseUserImagePreview()
   // プレビュー用のBlob URLを生成（currentUser.user_image_urlは変更しない）
   userImagePreview.value = URL.createObjectURL(file)
 }
@@ -150,11 +172,13 @@ const profileSubmit = async () => {
     isProfileLoading.value = true
 
     const image = userImage.value
+    let uploadSucceeded = false
 
     await currentUserStore.updateUser(toRaw(currentUser.value!))
     if (image != undefined) {
       try {
         await currentUserStore.uploadUserImage(image)
+        uploadSucceeded = true
         userImage.value = undefined
         // プレビューをクリーンアップ
         if (userImagePreview.value) {
@@ -175,6 +199,14 @@ const profileSubmit = async () => {
       return await router.push(redirectPath)
     }
     // isNewUser ではない時は、リダイレクトせずにプロフィール設定画面に残る
+    // 画像変更が成功した場合のみ、Storage の同一パスを上書きしている都合で
+    // ブラウザキャッシュから古いサムネが表示されるため、リロードで強制 revalidate させる。
+    // アップロード失敗時はリロードせずユーザーが再試行できる状態を保つ。
+    if (uploadSucceeded) {
+      window.setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+    }
   } catch (error) {
     console.warn('Error profile submit:', error)
   } finally {
@@ -315,7 +347,12 @@ const handleDeleteCompleteOkClick = async () => {
             <p v-if="imageError !== ''" class="text-center text-error font-weight-bold">{{ imageError }}</p>
 
             <!-- ファイル選択 -->
-            <v-file-input class="d-none" accept="image/*" ref="fileInput" @update:model-value="readImageFiles" />
+            <v-file-input
+              class="d-none"
+              :accept="ALLOWED_IMAGE_ACCEPT_ATTR"
+              ref="fileInput"
+              @update:model-value="readImageFiles"
+            />
 
             <v-sheet class="d-flex flex-column ga-7 mb-12">
               <v-text-field

@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { VInput } from 'vuetify/components'
+import { ALLOWED_IMAGE_ACCEPT_ATTR } from '@shokujii/common/constants/imageMimeTypes.js'
+import { validateImageFile } from '@shokujii/base/utils/image'
 
 // https://stackoverflow.com/a/77201828
 type UnwrapReadonlyArray<A> = A extends Readonly<Array<infer I>> ? I : A
@@ -20,9 +23,20 @@ const emits = defineEmits<{
   fileSelected: [value: File | null]
 }>()
 
+const { t: $t } = useI18n()
+
 const imageFile = ref<File | null>(null)
 const fileInputRef = ref<HTMLInputElement>()
 const currentUrlIndex = ref(0)
+const formatErrorMessage = ref<string | null>(null)
+const objectUrl = ref<string | null>(null)
+
+const releaseObjectUrl = () => {
+  if (objectUrl.value != null) {
+    URL.revokeObjectURL(objectUrl.value)
+    objectUrl.value = null
+  }
+}
 
 watch(
   () => props.urls,
@@ -30,6 +44,28 @@ watch(
     currentUrlIndex.value = 0
   },
 )
+
+watch(imageFile, (newFile) => {
+  releaseObjectUrl()
+  if (newFile == null) {
+    // invalid 経由で imageFile が null になった場合、formatErrorMessage は残してエラー表示を維持する
+    emits('fileSelected', null)
+    return
+  }
+  const result = validateImageFile(newFile)
+  if (!result.ok) {
+    formatErrorMessage.value = $t(result.messageKey)
+    // imageFile を null にすると watch が再発火して null 分岐で emits される。
+    // ここでは emit せず、null 分岐側に集約することで親への通知が 1 回になる。
+    imageFile.value = null
+    return
+  }
+  formatErrorMessage.value = null
+  objectUrl.value = URL.createObjectURL(newFile)
+  emits('fileSelected', newFile)
+})
+
+onBeforeUnmount(releaseObjectUrl)
 
 const onImageError = () => {
   const candidates = props.urls?.filter((u) => u != null && u !== '') ?? []
@@ -41,15 +77,8 @@ const onImageError = () => {
 }
 
 const iconImageUrl = computed(() => {
-  const ii = imageFile.value
-  if (ii != null) {
-    if (ii.type.startsWith('image/')) {
-      emits('fileSelected', ii)
-      return URL.createObjectURL(ii)
-    } else {
-      emits('fileSelected', null)
-      return null
-    }
+  if (objectUrl.value != null) {
+    return objectUrl.value
   }
   const candidates = props.urls?.filter((u) => u != null && u !== '') ?? []
   return candidates[currentUrlIndex.value] ?? null
@@ -71,7 +100,7 @@ const onIconTriggerUpload = () => {
       @click="onIconTriggerUpload"
       v-bind="$attrs"
     >
-      <v-file-input ref="fileInputRef" v-model="imageFile" class="file-input" accept="image/*" />
+      <v-file-input ref="fileInputRef" v-model="imageFile" class="file-input" :accept="ALLOWED_IMAGE_ACCEPT_ATTR" />
       <v-img
         v-if="iconImageUrl != null"
         :src="iconImageUrl"
@@ -96,6 +125,11 @@ const onIconTriggerUpload = () => {
         </div>
       </template>
     </v-validation>
+    <div v-if="formatErrorMessage != null" class="v-input__details">
+      <div class="v-messages" role="alert" aria-live="polite">
+        <div class="v-messages__message">{{ formatErrorMessage }}</div>
+      </div>
+    </div>
   </div>
 </template>
 

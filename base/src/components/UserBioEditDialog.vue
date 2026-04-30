@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { User } from '@shokujii/common/schemas/User.js'
+import { validateImageFile } from '@shokujii/base/utils/image'
+import { ALLOWED_IMAGE_ACCEPT_ATTR } from '@shokujii/common/constants/imageMimeTypes.js'
 import SnsTextField from './SnsTextField.vue'
 
 interface Props {
@@ -15,19 +18,35 @@ interface Emit {
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
+const { t: $t } = useI18n()
+
 const userDataDraft = ref<User>(new User(props.userData.id, props.userData))
 const userImage = ref<File | undefined>(undefined)
+const imageError = ref<string | null>(null)
 
 const dialog = defineModel<boolean>()
 
 const readImageFiles = (files: File | File[]) => {
   if (files instanceof File) files = [files]
-  if (files.length === 0) return
-  userImage.value = files[0]
+  if (files.length === 0) {
+    userImage.value = undefined
+    imageError.value = null
+    return
+  }
+  const file = files[0]
+  const result = validateImageFile(file)
+  if (!result.ok) {
+    imageError.value = $t(result.messageKey)
+    userImage.value = undefined
+    return
+  }
+  imageError.value = null
+  userImage.value = file
 }
 
 const closeDialog = () => {
   userImage.value = undefined
+  imageError.value = null
   dialog.value = false
 }
 
@@ -53,7 +72,12 @@ const onFormReset = () => {
         <v-form class="mt-6" @submit.prevent="onFormSubmit">
           <v-row>
             <v-col cols="12" md="12">
-              <v-file-input accept="image/*" label="アイコン" @update:model-value="readImageFiles" />
+              <v-file-input
+                :accept="ALLOWED_IMAGE_ACCEPT_ATTR"
+                label="アイコン"
+                :error-messages="imageError ?? undefined"
+                @update:model-value="readImageFiles"
+              />
             </v-col>
             <v-col cols="12" md="12">
               <v-text-field v-model="userDataDraft.user_name" label="ユーザー名" />

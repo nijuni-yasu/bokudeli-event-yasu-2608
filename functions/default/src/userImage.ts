@@ -3,6 +3,7 @@ import { onObjectFinalized } from 'firebase-functions/v2/storage'
 import { getStorage } from 'firebase-admin/storage'
 import { createModuleLogger } from './utils/logger.js'
 import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { isAllowedImageMimeType } from '@shokujii/common/constants/imageMimeTypes.js'
 import { resizeImage } from './utils/image.js'
 
 const logger = createModuleLogger('userImage')
@@ -40,8 +41,7 @@ export const generateUserImageThumbnail = onObjectFinalized(
     if (
       pathParts[0] !== 'users' ||
       pathParts.length !== 3 ||
-      contentType == null ||
-      !contentType.startsWith('image/') ||
+      !isAllowedImageMimeType(contentType) ||
       !imageName.startsWith('avatar') ||
       imageName.includes('_thumb_') ||
       userId == null // userId is not null because pathParts.length === 3, but for TypeScript to know it, it's better to add this condition
