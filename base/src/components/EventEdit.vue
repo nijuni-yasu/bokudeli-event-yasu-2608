@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, shallowRef, reactive, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
-import { isInShopTime } from '@shokujii/common/utils/datetime.js'
+import { DateTime } from 'luxon'
+import { isInShopTime, DEFAULT_TIME_ZONE } from '@shokujii/common/utils/datetime.js'
+import { validateReservationRequest } from '@shokujii/common/utils/validateReservationRequest.js'
+import { EVENT_RESERVATION_LEAD_TIME_DAYS } from '@shokujii/common/constants/eventReservation.js'
+import { reasonCodesToMessages } from '@shokujii/base/utils/reservationRequestMessages'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
 import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
@@ -55,6 +59,11 @@ const alertDialog = reactive({
   visible: false,
   message: '',
   onClose: undefined as (() => void) | undefined,
+})
+
+const reserveValidationDialog = reactive({
+  visible: false,
+  messages: [] as string[],
 })
 
 const showAlertDialog = (message: string, onClose?: () => void) => {
@@ -234,6 +243,29 @@ const handleStep2Next = () => {
 }
 
 const currentUserStore = useCurrentUserStore()
+
+/**
+ * 予約申請のリードタイム下限（JST 当日 0:00 + N 日後）。EventBasicInfoCard の picker 制約に使う。
+ * computed のリアクティブ依存に現在時刻は入らないためマウント中の深夜またぎでは再計算されないが、
+ * 送信時は submitReservation が押下時刻ベースで再判定するため UI と乖離しても安全側に倒れる。
+ */
+const minEventStartDate = computed<string>(() =>
+  DateTime.now()
+    .setZone(DEFAULT_TIME_ZONE)
+    .startOf('day')
+    .plus({ days: EVENT_RESERVATION_LEAD_TIME_DAYS })
+    .toFormat('yyyy-MM-dd'),
+)
+
+/** 予約申請ボタンの追加無効化条件: 必要なデータが未取得なら集約バリデーションを呼ばない */
+const isReserveDataMissing = computed(() => {
+  return (
+    partnerShopListStore.totalCount == null ||
+    currentUserStore.user == null ||
+    currentUserStore.personalInformation == null ||
+    location.value == null
+  )
+})
 
 // @ts-expect-error parseInt can take no string params, then return NaN
 const stepQuery = Number.parseInt(props.step)
@@ -576,21 +608,36 @@ const submitReservation = async () => {
     showAlertDialog($t('manage.event.save_failed'))
     return
   }
+  const user = currentUserStore.user
+  const personalInformation = currentUserStore.personalInformation
+  const loc = location.value
+  if (user == null || personalInformation == null || loc == null) {
+    showAlertDialog($t('event_edit.shop_list_loading'))
+    return
+  }
 
   processingState.value = 'reserving'
   try {
-    if (!assertCurrentShopDeliverable(true)) {
-      return
-    }
     const ev = await updateEventDraft()
     if (ev?.event_id == null || ev.community_id === '' || ev.community_account === '') {
       console.warn('The event does not have enough information.', ev)
       showAlertDialog($t('manage.event.save_failed'))
       return
     }
-    const reservationCheck = ev.isValidForReservation(handleUserId)
-    if (!reservationCheck.ok) {
-      showAlertDialog($t('manage.event.reserve_validation_failed', { fields: reservationCheck.missing.join('、') }))
+    const result = validateReservationRequest({
+      event: ev,
+      handleUserId,
+      user,
+      personalInformation,
+      authEmail: currentUserStore.firebaseUser?.email ?? null,
+      eventMenus: eventMenus.value,
+      partnerShops: partnerShopListStore.shops ?? [],
+      location: { latitude: loc.latitude, longitude: loc.longitude },
+      nowMillis: DateTime.now().toMillis(),
+    })
+    if (!result.ok) {
+      reserveValidationDialog.messages = reasonCodesToMessages(result.reasonCodes, $t)
+      reserveValidationDialog.visible = true
       return
     }
     ev.event_status = { value: 'applying_reservation', shop_comment: '' }
@@ -728,7 +775,7 @@ const stepperItems = computed(() => [
         <v-form v-model="isValid1">
           <v-row class="justify-center">
             <v-col cols="12" sm="12" md="9">
-              <event-basic-info-card v-model="event" />
+              <event-basic-info-card v-model="event" :min-start-date="minEventStartDate" />
               <event-edit-step-nav :visible="stepper === 1">
                 <v-btn
                   color="primary"
@@ -939,7 +986,11 @@ const stepperItems = computed(() => [
               <v-btn
                 class="event-shop-notice-footer__reserve"
                 :disabled="
-                  !shopNoticeFormValid || event.event_status?.value !== 'in_draft' || isProcessing || isLoadingMenu
+                  !shopNoticeFormValid ||
+                  event.event_status?.value !== 'in_draft' ||
+                  isProcessing ||
+                  isLoadingMenu ||
+                  isReserveDataMissing
                 "
                 :loading="processingState === 'reserving'"
                 color="grey-900"
@@ -968,6 +1019,18 @@ const stepperItems = computed(() => [
   <confirm-dialog v-model="alertDialog.visible" :ok-click="handleAlertDialogOk" ok-text="OK">
     {{ alertDialog.message }}
   </confirm-dialog>
+
+  <confirm-dialog
+    v-model="reserveValidationDialog.visible"
+    :title="$t('manage.event.reserve_validation_modal_title')"
+    role="alertdialog"
+    ok-text="OK"
+  >
+    <p class="mb-3">{{ $t('manage.event.reserve_validation_intro') }}</p>
+    <ul class="event-edit-reserve-validation-list">
+      <li v-for="(message, idx) in reserveValidationDialog.messages" :key="idx">{{ message }}</li>
+    </ul>
+  </confirm-dialog>
 </template>
 
 <style lang="scss" scoped>
@@ -989,6 +1052,16 @@ const stepperItems = computed(() => [
   display: flex;
   justify-content: center;
   width: 100%;
+}
+
+.event-edit-reserve-validation-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+
+  li + li {
+    margin-top: 0.25rem;
+  }
 }
 
 .event-shop-notice-footer__reserve {

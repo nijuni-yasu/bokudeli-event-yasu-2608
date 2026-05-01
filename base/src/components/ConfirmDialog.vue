@@ -17,6 +17,7 @@ const props = defineProps<{
   cancelLoadingState?: boolean
   maxWidth?: string
   persistent?: boolean
+  role?: string
 }>()
 
 const emit = defineEmits<{
@@ -52,6 +53,7 @@ const clickCancelHandler = () => {
     v-model="dialog"
     :persistent="props.persistent ?? true"
     :max-width="props.maxWidth ? props.maxWidth : '600px'"
+    :role="props.role"
   >
     <v-card class="pa-4">
       <v-card-title class="text-h5 mb-3">{{ props.title }}</v-card-title>

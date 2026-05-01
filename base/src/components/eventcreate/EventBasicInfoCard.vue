@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { DateTime } from 'luxon'
 import {
   hourList,
   minutesList,
@@ -17,6 +18,31 @@ import { mdiMapMarker, mdiCalendar } from '@mdi/js'
 const { requiredValidator, postalCodeValidator, urlValidator } = useValidators()
 
 const event = defineModel<BokudeliEvent>({ required: true })
+
+const props = withDefaults(
+  defineProps<{
+    /** 開催開始日時の選択下限（yyyy-MM-dd 形式、JST）。未指定なら下限なし */
+    minStartDate?: string
+  }>(),
+  {
+    minStartDate: undefined,
+  },
+)
+
+/** v-date-picker の allowedDates に渡す関数（minStartDate 以降のみ選択可） */
+// eslint-disable-next-line no-unused-vars
+const allowedStartDates = computed<((value: unknown) => boolean) | undefined>(() => {
+  const min = props.minStartDate
+  if (min == null) {
+    return undefined
+  }
+  return (value: unknown) => {
+    if (!(value instanceof Date)) {
+      return true
+    }
+    return DateTime.fromJSDate(value).toFormat('yyyy-MM-dd') >= min
+  }
+})
 
 // 新規作成の場合の初期値設定
 if (event.value.event_start_datetime == null) {
@@ -202,6 +228,7 @@ const textFieldVariant = computed(() => {
             dense
             :readonly="event.event_status.value !== 'in_draft'"
             :clearable="false"
+            :allowed-dates="allowedStartDates"
           />
         </v-col>
         <v-col cols="6" sm="6" md="3">

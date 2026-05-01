@@ -40,7 +40,9 @@
       "Bash(npm -w admin run build:types)",
       "Bash(git remote *)",
       "Bash(GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash *)",
-      "Bash(python3 -m json.tool *)"
+      "Bash(python3 -m json.tool *)",
+      "Bash(npm -w common test *)",
+      "Bash(npx vue-tsc *)"
     ],
     "deny": [
       "Bash(git push --force*)",

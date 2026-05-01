@@ -621,4 +621,23 @@ export default {
   image: {
     invalid_format: '対応していない画像形式です。JPEG / PNG / APNG / GIF / WebP のいずれかをお選びください。',
   },
+  reservation_request_reason: {
+    event_start_past: '開催開始日時が過去になっています。未来の日時を設定してください。',
+    event_start_lead_time: '開催開始日時が近すぎます。申請日から3日後以降の日時を設定してください。',
+    shop_not_found: '選択中の店舗が見つかりません。店舗を選び直してください。',
+    shop_not_approved: '未承認のため予約申請できません',
+    shop_closed: '閉店のため予約申請できません',
+    shop_not_open: '選択中の店舗の営業時間外です。営業時間内の開催開始日時を設定してください。',
+    shop_not_in_delivery_area: '選択中の店舗は開催地への配達対象外です。別の店舗を選び直してください。',
+    no_orderable_menu_selected: '注文可能なメニューが選択されていません。1件以上のメニューを選んでください。',
+    applicant_user_name_missing: 'ユーザー名が未設定です。プロフィールを更新してください。',
+    applicant_user_image_missing: 'プロフィール画像が未設定です。プロフィールを更新してください。',
+    applicant_email_missing: 'メールアドレスが未登録です。アカウント情報を更新してください。',
+    organizer_fullname_missing: '主催者氏名が未入力です。',
+    organizer_company_missing: '主催者会社名・団体名が未入力です。',
+    organizer_email_missing: '主催者メールアドレスが未入力です。',
+    organizer_phone_personal_missing: '主催者電話番号が未入力です。',
+    organizer_memo_missing: '配達受取場所が未入力です。',
+    event_db_invalid: 'イベント情報に不足があります。各ステップの入力内容を確認してください。',
+  },
 }
