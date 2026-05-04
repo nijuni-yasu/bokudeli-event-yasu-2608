@@ -94,6 +94,12 @@ npm -w <pkg> run format:check
 
 チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
 
+### Pull Request（GitHub）上でのレビュー形式
+
+- **インラインコメントを優先する**: `Files changed` タブで、指摘する**該当行**に review comment を付ける（1 指摘につき 1 コメントが望ましい）。
+- **トップレベル（会話タブ）への長文まとめは避ける**: 複数ファイル・複数観点を 1 本のトップレベルコメントに詰め込まない。ファイルごと・指摘ごとに行コメントへ分ける。
+- 上記は GitHub Copilot / Codex 等の自動レビューでも同様とする（ツールが常に従う保証はないが、プロジェクトの期待動作として記載する）。
+
 ### レビューコメントの prefix
 
 | prefix | 意味                                            |
