@@ -36,8 +36,9 @@ async function sendOrderCompletionMailToMember(event: ShokujiiEvent, userId: str
     is_public: event.is_public,
   }
 
-  const to = await getUserEmail(userId)
-  if (!to) {
+  const raw = await getUserEmail(userId)
+  const to = raw?.trim()
+  if (to === undefined || to === '') {
     return
   }
 
@@ -106,7 +107,7 @@ async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId:
 }
 
 /**
- * コミュニティメンバー全員のメールアドレスを取得
+ * コミュニティメンバー全員のメールアドレスを取得（送信可能な trim 済み非空のみ）
  */
 async function getCommunityMemberEmails(communityId: string): Promise<string[]> {
   const community = await getCommunity(communityId)
@@ -117,9 +118,20 @@ async function getCommunityMemberEmails(communityId: string): Promise<string[]> 
 
   const members = await community.getMembers()
 
-  // 全メンバーのメールアドレスを並列取得し、nullを除外
   const emailResults = await Promise.all(members.map(async (member) => await getUserEmail(member.id)))
-  const emails = emailResults.filter((email): email is string => email != null)
+  const emails = emailResults
+    .map((raw) => (raw == null ? undefined : raw.trim()))
+    .filter((email): email is string => email !== undefined && email !== '')
+
+  const skipped = members.length - emails.length
+  if (skipped > 0) {
+    logger.warn('Skipped community members without email for new event notification', {
+      communityId,
+      skipped,
+      memberCount: members.length,
+      sendableCount: emails.length,
+    })
+  }
 
   return emails
 }
@@ -133,7 +145,7 @@ async function getCommunityMemberEmails(communityId: string): Promise<string[]> 
  * - メール送信失敗時の再送信防止（送信処理が失敗しても、フラグにより2度目の送信は行われない）
  */
 async function sendNewEventNotificationToMembers(eventId: string, userId: string, communityId: string): Promise<void> {
-  // メンバー0人の場合は早期リターン
+  // 送信先が 0 件のときはトランザクション（sent_new_event_mail_at 更新）も行わない
   const emails = await getCommunityMemberEmails(communityId)
   if (emails.length === 0) {
     return
