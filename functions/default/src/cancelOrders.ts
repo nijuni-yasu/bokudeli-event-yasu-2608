@@ -141,7 +141,7 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
         }
 
         const refundAmount = groupOrders.reduce(
-          (sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0),
+          (sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0),
           0,
         )
         if (refundAmount <= 0) {

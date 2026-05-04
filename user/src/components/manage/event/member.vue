@@ -126,7 +126,7 @@ const downloadCsvFile = () => {
       String(order.menu_price),
     ]
     if (isCommunityBill.value) {
-      row.push(String(order.payment_community_bill_off_amount ?? 0))
+      row.push(String(order.pay_community_bill_off_amount ?? 0))
     }
     row.push(getDateString(order) ?? '')
     csv += row.map((v) => `"${v}"`).join(',') + '\n'
@@ -226,7 +226,7 @@ const downloadCsvFile = () => {
                       </td>
                       <td class="text-right text-body-2 amount-cell">¥{{ priceString(order.menu_price) }}</td>
                       <td v-if="isCommunityBill" class="text-right text-body-2 amount-cell">
-                        ¥{{ priceString(order.payment_community_bill_off_amount ?? 0) }}
+                        ¥{{ priceString(order.pay_community_bill_off_amount ?? 0) }}
                       </td>
                       <td class="date-cell text-body-2">
                         {{ getDateString(order) }}
