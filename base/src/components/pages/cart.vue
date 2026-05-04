@@ -48,7 +48,7 @@ type GroupedMenu = {
 const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
   const map = new Map<string, GroupedMenu>()
   for (const order of orders) {
-    const discount = order.payment_community_bill_off_amount ?? 0
+    const discount = order.pay_community_bill_off_amount ?? 0
     const existing = map.get(order.menu_id)
     if (existing) {
       existing.count++

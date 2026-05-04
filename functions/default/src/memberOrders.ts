@@ -93,7 +93,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
             menu_id: masterMenu.id,
             menu_name: masterMenu.menu_name,
             menu_price: masterMenu.menu_price,
-            ...(discount !== undefined ? { payment_community_bill_off_amount: discount } : {}),
+            ...(discount !== undefined ? { pay_community_bill_off_amount: discount } : {}),
           },
           transaction,
         )

@@ -99,7 +99,7 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       if (existing) {
         existing.quantity++
       } else {
-        const unitAmount = order.menu_price - (order.payment_community_bill_off_amount ?? 0)
+        const unitAmount = order.menu_price - (order.pay_community_bill_off_amount ?? 0)
         grouped.set(order.menu_id, {
           menuName: order.menu_name,
           unitAmount,

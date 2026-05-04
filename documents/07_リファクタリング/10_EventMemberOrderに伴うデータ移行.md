@@ -101,7 +101,7 @@
 | totalPrice (getter) | `pay_amount` | 旧 order の `menus.reduce((sum, m) => sum + m.price * m.count, 0)` で算出（`m` は旧 EventOrder のメニュー行） |
 | `refund_id` | `refunds` | 後述 |
 | `community_account` | *(削除)* | 新スキーマに含めない |
-| - | `pay_community_bill_amount` | 未設定（将来用） |
+| - | `pay_community_bill_off_amount` | 未設定（将来用） |
 | - | `pay_user_fee_amount` | 未設定（将来用） |
 
 ### receipt_number について

@@ -13,10 +13,10 @@
 | | 旧（EventOrder） | 新（EventMemberOrder） |
 |:--|:--|:--|
 | 1 ドキュメント | 複数メニューをまとめた注文単位（`menus: OrderMenu[]` + `count`） | **メニュー 1 品** |
-| `payment_community_bill_off_amount` | `Σ min(off_amount, price) × count`（全メニュー行の合計） | **`min(off_amount, menu_price)`（1 品分のみ）** |
+| `pay_community_bill_off_amount` | `Σ min(off_amount, price) × count`（全メニュー行の合計） | **`min(off_amount, menu_price)`（1 品分のみ）** |
 | free の値 | `menus の合計金額`（全行合計） | **`menu_price`（1 品分）** |
 | count 乗算 | 必要（各行の count を掛ける） | **不要**（ドキュメント数が count を表す） |
-| 削除後の再計算 | 残り menus から `payment_community_bill_off_amount` を再計算 | **不要**（各ドキュメントが独立して値を持つ） |
+| 削除後の再計算 | 残り menus から `pay_community_bill_off_amount` を再計算 | **不要**（各ドキュメントが独立して値を持つ） |
 
 ---
 
@@ -33,7 +33,7 @@ communities/{communityId}/events/
 │   │       └── member_orders/ (サブコレクション)   ← 旧 orders/ から変更
 │   │           └── {orderId}/
 │   │               ├── ... (既存フィールド)
-│   │               └── payment_community_bill_off_amount  ← 追加
+│   │               └── pay_community_bill_off_amount  ← 追加
 │   └── coupon_usage/ (サブコレクション・Phase 2以降)  ← 変更なし
 │       └── {couponUsageId}/
 │           ├── coupon_code
@@ -42,7 +42,7 @@ communities/{communityId}/events/
 │           └── discount_amount
 ```
 
-旧仕様の `orders/{orderId}` 直下に置いていた `payment_community_bill_off_amount` を、`members/{userId}/member_orders/{orderId}` 配下の各ドキュメントに移動する。
+旧仕様の `orders/{orderId}` 直下に置いていた主催者負担オフ額（旧フィールド名 `payment_community_bill_off_amount`、現在は `pay_community_bill_off_amount`）を、`members/{userId}/member_orders/{orderId}` 配下の各ドキュメントに移動する。
 
 ### 5.1.2 イベントドキュメント拡張
 
@@ -73,24 +73,24 @@ communities/{communityId}/events/
 - **監査フィールド**: `updated_by` / `updated_at` などは**付与しない**（onUpdate トリガーや他バッチとの干渉を避けるため、変更したフィールドのみを書き込む）。
 - **チェック内容**: `community_bill` イベント全件で `community_bill_settings` が `{ type: 'free' }` または `{ type: 'discount', off_amount: 正の整数 }` のいずれかになっていることを検証する。失敗があれば `process.exitCode = 1`。
 
-#### 5.1.3.2 既存 member_orders への payment_community_bill_off_amount 後付け（tasks/0039）
+#### 5.1.3.2 既存 member_orders への pay_community_bill_off_amount マイグレーション（tasks/0039）
 
-5.2.1 / 5.3.2 のとおり、新コードの `confirmOrder` / `createStripeCheckoutSession` では各 `member_orders` の `payment_community_bill_off_amount` をサーバー側で再計算し、ストアード値と一致しない場合 `failed-precondition` エラーになる。tasks/0038 で `community_bill_settings` を整備したあと、既存 `member_orders` の `payment_community_bill_off_amount` が `undefined` のままだと（`free` 相当の場合）`expected = menu_price` と不整合になるため、新コードデプロイの**前**に本タスクを実行する。
+5.2.1 / 5.3.2 のとおり、新コードの `confirmOrder` / `createStripeCheckoutSession` では各 `member_orders` の `pay_community_bill_off_amount` をサーバー側で再計算し、ストアード値と一致しない場合 `failed-precondition` エラーになる。tasks/0038 で `community_bill_settings` を整備したあと、既存 `member_orders` の `pay_community_bill_off_amount` が `undefined` のままだと（`free` 相当の場合）`expected = menu_price` と不整合になるため、新コードデプロイの**前**に本タスクを実行する。
 
 | 項目 | 内容 |
 |:--|:--|
-| **タスク** | `tasks/0039_backfill_payment_community_bill_off_amount.js` |
-| **チェック** | `checks/0039_check_payment_community_bill_off_amount.js` |
+| **タスク** | `tasks/0039_migrate_pay_community_bill_off_amount.js` |
+| **チェック** | `checks/0039_check_pay_community_bill_off_amount.js` |
 | **対象パス** | `communities/{cid}/events/{eid}/members/{uid}/member_orders/{oid}`（`collectionGroup('member_orders')`） |
 | **対象条件** | 親イベントが `event_payment === 'community_bill'` かつ `member_orders.status !== 'canceled'`（`canceled` は変更しない） |
-| **ドライラン環境変数** | `BACKFILL_PAYMENT_OFF_AMOUNT_DRY_RUN=1` |
+| **ドライラン環境変数** | `MIGRATE_PAY_COMMUNITY_BILL_OFF_AMOUNT_DRY_RUN=1` |
 
 - **算出**: `calcDiscount(community_bill_settings, menu_price)` の結果を書き込む。
   - `type === 'free'` → `menu_price`
   - `type === 'discount'` → `Math.min(off_amount, menu_price)`
   - 上記以外（割引なし） → `undefined`（フィールドを書き込まない。`0` は保存しない方針に従う）
 - **監査フィールド**: `updated_by` / `updated_at` などは**付与しない**（onUpdate トリガーや他バッチとの干渉を避けるため、変更したフィールドのみを書き込む）。
-- **チェック内容**: 上記対象条件の全 `member_orders` について、ストアード `payment_community_bill_off_amount` が `calcDiscount(...)` の結果と一致するか検証する。失敗があれば `process.exitCode = 1`。
+- **チェック内容**: 上記対象条件の全 `member_orders` について、ストアード `pay_community_bill_off_amount` が `calcDiscount(...)` の結果と一致するか検証する。失敗があれば `process.exitCode = 1`。
 - **依存関係**: 親イベントの `community_bill_settings` を参照するため、tasks/0038 完了後でないと正しい値を算出できない。
 
 #### 5.1.3.3 リリース順序
@@ -106,7 +106,7 @@ yarn run task -- -m <env>
 yarn run check -- -m <env>
 
 # 4. tasks/0039 ドライラン
-BACKFILL_PAYMENT_OFF_AMOUNT_DRY_RUN=1 yarn run task -- -m <env>
+MIGRATE_PAY_COMMUNITY_BILL_OFF_AMOUNT_DRY_RUN=1 yarn run task -- -m <env>
 
 # 5. tasks/0039 本番実行
 yarn run task -- -m <env>
@@ -147,13 +147,13 @@ interface EventMemberOrderDocument {
   // === 割引機能で追加 ===
   // この 1 品に適用された主催者負担額
   // addToCart 時にサーバー算出。割引なしの場合はフィールドなし（0 は保存しない）
-  payment_community_bill_off_amount?: number
+  pay_community_bill_off_amount?: number
 }
 
 // OrderMenu インターフェースは不要（menus 配列を持たないため）
 ```
 
-#### `payment_community_bill_off_amount` の値の決まり方（1 ドキュメント単位）
+#### `pay_community_bill_off_amount` の値の決まり方（1 ドキュメント単位）
 
 旧仕様では「メニュー行ごと」の計算・合算が必要だったが、1 ドキュメント = 1 品のため単純な比較になる。
 
@@ -164,7 +164,7 @@ interface EventMemberOrderDocument {
 | `coupon`（Phase 2） | `min(クーポン割引額, menu_price)` | — |
 | 割引なし | **フィールドなし**（`undefined`。`0` は保存しない） | — |
 
-旧仕様にあった `× count` の乗算は**不要**。1 ドキュメント = 1 品なので、同一メニューを 3 個注文した場合は同じ `payment_community_bill_off_amount` を持つ 3 つのドキュメントが作られる。
+旧仕様にあった `× count` の乗算は**不要**。1 ドキュメント = 1 品なので、同一メニューを 3 個注文した場合は同じ `pay_community_bill_off_amount` を持つ 3 つのドキュメントが作られる。
 
 **算出ロジック（Functions 共通ヘルパー）**:
 
@@ -181,11 +181,11 @@ const calcDiscount = (
 // undefined の場合はフィールドを付けない（FieldValue.delete() またはフィールド省略）
 ```
 
-#### カート中の `payment_community_bill_off_amount` の更新
+#### カート中の `pay_community_bill_off_amount` の更新
 
 旧仕様では「カート更新 Callable が menus の更新と**同一トランザクション**で更新」と規定していたが、新設計では**トランザクション不要**。
 
-- `addToCart` で各 order ドキュメントを作成する際、個別に `payment_community_bill_off_amount` を設定する
+- `addToCart` で各 order ドキュメントを作成する際、個別に `pay_community_bill_off_amount` を設定する
 - `removeFromCart` で order ドキュメントを削除しても、他の order ドキュメントへの影響がないため**再計算不要**
 
 旧仕様の「追加ボタン連打への対策として同一トランザクションで更新」という要件は、ドキュメント単位の独立性により自然に解消される。
@@ -194,23 +194,23 @@ const calcDiscount = (
 
 ```
 // 1 order ドキュメントの参加者支払額（1品分）
-per_item_payment = menu_price - (payment_community_bill_off_amount ?? 0)
+per_item_payment = menu_price - (pay_community_bill_off_amount ?? 0)
 
 // カート全体（order_ids 分）の合計支払額
 total_payment = Σ over order_ids: per_item_payment
-              = Σ menu_price - Σ payment_community_bill_off_amount
+              = Σ menu_price - Σ pay_community_bill_off_amount
 ```
 
-旧仕様の `支払額 = menus の合計金額 - payment_community_bill_off_amount` から変更。
+旧仕様の `支払額 = menus の合計金額 - pay_community_bill_off_amount` から変更。
 
 #### 支払額 ¥0 の判定
 
 `total_payment === 0` が成立するケース:
 
-- **`free`**: 全 order で `payment_community_bill_off_amount === menu_price` → 必ず ¥0
-- **`discount`**: 全 order で `off_amount >= menu_price`（= `payment_community_bill_off_amount === menu_price`）→ ¥0
+- **`free`**: 全 order で `pay_community_bill_off_amount === menu_price` → 必ず ¥0
+- **`discount`**: 全 order で `off_amount >= menu_price`（= `pay_community_bill_off_amount === menu_price`）→ ¥0
 
-いずれも個々のドキュメントの `menu_price - payment_community_bill_off_amount` を合算して判定する。
+いずれも個々のドキュメントの `menu_price - pay_community_bill_off_amount` を合算して判定する。
 
 #### Stripe 決済金額の保持
 
@@ -218,18 +218,18 @@ total_payment = Σ over order_ids: per_item_payment
 
 ### 5.1.6 stripes ドキュメント
 
-旧仕様で「将来用・optional」としていた `pay_community_bill_amount` を**本実装**に昇格させる。
+旧仕様で「将来用・optional」としていた stripes の主催者負担合計フィールド（旧名 `pay_community_bill_amount`）を **`pay_community_bill_off_amount` として本実装**に昇格させる（member_orders と同一キー名だが、stripes ではセッション合計）。
 
 ```typescript
 // stripes ドキュメント（変更箇所のみ）
 {
   pay_amount: number                   // 参加者の実支払額（Stripe 課金額）
-  pay_community_bill_amount: number    // 主催者負担合計（このセッション分の合計）
-  // ※ pay_amount + pay_community_bill_amount = Σ menu_price が成り立つ
+  pay_community_bill_off_amount: number    // 主催者負担合計（このセッション分の合計）
+  // ※ pay_amount + pay_community_bill_off_amount = Σ menu_price が成り立つ
 }
 ```
 
-`pay_community_bill_amount = Σ (payment_community_bill_off_amount ?? 0)` over all order_ids in this session。
+`stripes.pay_community_bill_off_amount = Σ (member_order.pay_community_bill_off_amount ?? 0)`（当該セッションの `order_ids` に含まれる各 member_orders ドキュメントの合計）。
 
 **無料参加 / 割引後 ¥0 確定**（`confirmOrder` 経由、Stripe 未使用）では `stripes` ドキュメントを作成しない（`stripe_id` は order ドキュメントに設定されない）。
 
@@ -241,9 +241,9 @@ total_payment = Σ over order_ids: per_item_payment
 
 #### カート更新（`addToCart`）
 
-旧仕様:「Order の `menus` を更新すると同時に、`community_bill_settings` と menus 各行の単価・個数から `payment_community_bill_off_amount` を算出し、同一トランザクションで更新する」
+旧仕様:「Order の `menus` を更新すると同時に、`community_bill_settings` と menus 各行の単価・個数から `pay_community_bill_off_amount` を算出し、同一トランザクションで更新する」
 
-新仕様:「`addToCart` で count 個分の order ドキュメントを作成する際、**各ドキュメントに個別に** `payment_community_bill_off_amount` を設定する。トランザクション不要。`removeFromCart` でのドキュメント削除後は再計算不要」
+新仕様:「`addToCart` で count 個分の order ドキュメントを作成する際、**各ドキュメントに個別に** `pay_community_bill_off_amount` を設定する。トランザクション不要。`removeFromCart` でのドキュメント削除後は再計算不要」
 
 具体的な処理:
 
@@ -253,7 +253,7 @@ addToCart 処理:
 2. menu_id に対応するマスタから menu_name / menu_price を取得（クライアント送信値は信頼しない）
 3. count 個分の order ドキュメントを作成。各 doc に:
    - menu_id, menu_name, menu_price（マスタ値）
-   - payment_community_bill_off_amount = calcDiscount(community_bill_settings, menu_price)
+   - pay_community_bill_off_amount = calcDiscount(community_bill_settings, menu_price)
      （undefined の場合はフィールドを付けない）
 4. members ドキュメントを upsert
 ```
@@ -282,22 +282,22 @@ addToCart 処理:
 
 注文確定処理のサーバー側再計算の対象が変わる。
 
-旧仕様:「イベント `community_bill_settings` と Order の `menus` から `payment_community_bill_off_amount` を再計算し、Order に保存済みの値と整合するか検証」
+旧仕様:「イベント `community_bill_settings` と Order の `menus` から `pay_community_bill_off_amount` を再計算し、Order に保存済みの値と整合するか検証」
 
-新仕様:「各 order ドキュメントの `menu_price` から個別に再計算し、各ドキュメントの `payment_community_bill_off_amount` と整合するか検証」
+新仕様:「各 order ドキュメントの `menu_price` から個別に再計算し、各ドキュメントの `pay_community_bill_off_amount` と整合するか検証」
 
 ```typescript
 // サーバー側再計算・整合検証（confirmOrder / createStripeCheckoutSession 内）
 for (const order of orders) {
   const expected = calcDiscount(event.community_bill_settings, order.menu_price)
-  if ((order.payment_community_bill_off_amount ?? undefined) !== expected) {
+  if ((order.pay_community_bill_off_amount ?? undefined) !== expected) {
     throw new HttpsError('failed-precondition', '割引金額が一致しません')
   }
 }
 
 // 支払額計算
 const total_payment = orders.reduce(
-  (sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0),
+  (sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0),
   0,
 )
 ```
@@ -308,8 +308,8 @@ const total_payment = orders.reduce(
 
 | 旧仕様 | 新仕様 |
 |:--|:--|
-| 「`payment_community_bill_off_amount` がメニュー合計と一致することを確認する」 | 「各 order ドキュメントの `payment_community_bill_off_amount === menu_price` を確認する」 |
-| 「`payment_community_bill_off_amount` はカート時点で既にメニュー合計相当が入っている」 | 「各 order ドキュメントに `menu_price` 相当が入っている」 |
+| 「`pay_community_bill_off_amount` がメニュー合計と一致することを確認する」 | 「各 order ドキュメントの `pay_community_bill_off_amount === menu_price` を確認する」 |
+| 「`pay_community_bill_off_amount` はカート時点で既にメニュー合計相当が入っている」 | 「各 order ドキュメントに `menu_price` 相当が入っている」 |
 
 #### `community_bill` + `discount`（割引参加）
 
@@ -317,8 +317,8 @@ const total_payment = orders.reduce(
 
 | 旧仕様 | 新仕様 |
 |:--|:--|
-| 「`Σ min(off_amount, price) × count`（5.1.5 の行ごと算定）と Order の `payment_community_bill_off_amount` が一致することを確認する」 | 「各 order ドキュメントの `min(off_amount, menu_price)` と `payment_community_bill_off_amount` が一致することを確認する」 |
-| 「支払額 = メニュー合計 − 上記主催者負担合計」 | 「支払額 = `Σ (menu_price - payment_community_bill_off_amount)` over order_ids」 |
+| 「`Σ min(off_amount, price) × count`（5.1.5 の行ごと算定）と Order の `pay_community_bill_off_amount` が一致することを確認する」 | 「各 order ドキュメントの `min(off_amount, menu_price)` と `pay_community_bill_off_amount` が一致することを確認する」 |
+| 「支払額 = メニュー合計 − 上記主催者負担合計」 | 「支払額 = `Σ (menu_price - pay_community_bill_off_amount)` over order_ids」 |
 
 #### `community_bill` + 割引設定なし
 
@@ -349,14 +349,14 @@ const total_payment = orders.reduce(
 
 請求ロジックの方針は変わらないが、集計対象コレクションが変わる。
 
-旧仕様:「対象イベントの全注文（`status: 'ordered'`）の `payment_community_bill_off_amount` を集計」
+旧仕様:「対象イベントの全注文（`status: 'ordered'`）の `pay_community_bill_off_amount` を集計」
 （`collectionGroup('orders')` または `event.getOrders('ordered')` を使用）
 
-新仕様:「`collectionGroup('member_orders')` + `where('event_id', '==', eventId)` + `where('status', '==', 'ordered')` で取得した全 member_orders の `payment_community_bill_off_amount` を集計」
+新仕様:「`collectionGroup('member_orders')` + `where('event_id', '==', eventId)` + `where('status', '==', 'ordered')` で取得した全 member_orders の `pay_community_bill_off_amount` を集計」
 
 ```
 割引総額 = Σ over ordered member_orders where event_id == eventId:
-             (payment_community_bill_off_amount ?? 0)
+             (pay_community_bill_off_amount ?? 0)
 手数料   = 割引総額 × 0.1
 請求合計 = 割引総額 + 手数料
 ```
@@ -372,20 +372,20 @@ const total_payment = orders.reduce(
 ```typescript
 // キャンセル対象 orders の返金金額（stripe_id でグルーピング後）
 const refund_amount = canceledOrders.reduce(
-  (sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0),
+  (sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0),
   0,
 )
 // ※ 旧設計では order.menus の price × count の合計だったが、
-//    新設計では各ドキュメントの (menu_price - payment_community_bill_off_amount) の合計になる
+//    新設計では各ドキュメントの (menu_price - pay_community_bill_off_amount) の合計になる
 ```
 
-`community_bill` + `discount` で差額を Stripe 決済していた場合も、各 order ドキュメントの `payment_community_bill_off_amount` から参加者の実支払額を計算できるため同じ式で対応できる。
+`community_bill` + `discount` で差額を Stripe 決済していた場合も、各 order ドキュメントの `pay_community_bill_off_amount` から参加者の実支払額を計算できるため同じ式で対応できる。
 
 ### 5.3.6 領収書（`receipt_number`）
 
 方針は変更なし。「無料参加 / 割引後 ¥0 で Stripe 決済がない注文では領収書を発行しない」。
 
-判定方法は `total_payment === 0`（全 order_ids の `menu_price - payment_community_bill_off_amount` の合計）。
+判定方法は `total_payment === 0`（全 order_ids の `menu_price - pay_community_bill_off_amount` の合計）。
 
 ---
 
@@ -407,12 +407,12 @@ const groupedMenus = computed(() => {
     count: number
     order_ids: string[]
     totalPrice: number    // 元の小計（menu_price × count）
-    totalDiscount: number // 割引合計（payment_community_bill_off_amount の合計）
+    totalDiscount: number // 割引合計（pay_community_bill_off_amount の合計）
     totalPayment: number  // 参加者支払小計
   }>()
 
   for (const order of cartOrders) {
-    const discount = order.payment_community_bill_off_amount ?? 0
+    const discount = order.pay_community_bill_off_amount ?? 0
     const existing = map.get(order.menu_id)
     if (existing) {
       existing.count++
@@ -466,7 +466,7 @@ const cartTotalPayment = computed(() =>
 合計: ¥1,400
 ```
 
-旧仕様 4.2.3 の「Order の `menus` および `payment_community_bill_off_amount` に基づく」という説明は、「各 order ドキュメントの `menu_price` と `payment_community_bill_off_amount` の合算に基づく」に読み替える。
+旧仕様 4.2.3 の「Order の `menus` および `pay_community_bill_off_amount` に基づく」という説明は、「各 order ドキュメントの `menu_price` と `pay_community_bill_off_amount` の合算に基づく」に読み替える。
 
 ---
 
@@ -476,24 +476,24 @@ const cartTotalPayment = computed(() =>
 
 | 旧仕様チェック項目 | 変更内容 |
 |:--|:--|
-| `payment_community_bill_off_amount` のスキーマ追加（common, EventOrder） | **`common/src/schemas/EventMemberOrder.ts` に追加**（`EventOrder.ts` ではなく） |
-| — | **`common/src/schemas/EventStripe.ts` の `pay_community_bill_amount` を optional から必須に変更**（stripes ドキュメント作成時に常に設定） |
+| `pay_community_bill_off_amount` のスキーマ追加（common, EventOrder） | **`common/src/schemas/EventMemberOrder.ts` に追加**（`EventOrder.ts` ではなく） |
+| — | **`common/src/schemas/EventStripe.ts` の `pay_community_bill_off_amount` を optional から必須に変更**（stripes ドキュメント作成時に常に設定） |
 
 ### Phase 1.3：決済処理・注文確定処理・キャンセル払い戻し
 
 | 旧仕様チェック項目 | 変更内容 |
 |:--|:--|
-| カート更新 Callable：`menus` と同一トランザクションで `payment_community_bill_off_amount` を算出・更新 | **`addToCart` で count 個分の各ドキュメント作成時に個別設定。トランザクション不要** |
-| 無料参加時の決済スキップ（Stripe なしで直接 `ordered`） | 判定を `total_payment === 0`（全 order の `menu_price - payment_community_bill_off_amount` の合計）に変更 |
-| 割引参加時の差額を Stripe Checkout Session で決済 | 決済金額を `Σ (menu_price - payment_community_bill_off_amount)` で算出。`stripes` ドキュメントに `pay_community_bill_amount` を設定 |
-| 注文確定時：サーバーで `payment_community_bill_off_amount` の再計算・整合検証 | **各 order ドキュメントを個別に検証**（1 ドキュメントごとに `min(off_amount, menu_price)` と比較） |
-| キャンセル時：Stripe 利用注文は全額払い戻し | 返金金額を `Σ (menu_price - payment_community_bill_off_amount)` over canceled order_ids で算出 |
+| カート更新 Callable：`menus` と同一トランザクションで `pay_community_bill_off_amount` を算出・更新 | **`addToCart` で count 個分の各ドキュメント作成時に個別設定。トランザクション不要** |
+| 無料参加時の決済スキップ（Stripe なしで直接 `ordered`） | 判定を `total_payment === 0`（全 order の `menu_price - pay_community_bill_off_amount` の合計）に変更 |
+| 割引参加時の差額を Stripe Checkout Session で決済 | 決済金額を `Σ (menu_price - pay_community_bill_off_amount)` で算出。`stripes` ドキュメントに `pay_community_bill_off_amount` を設定 |
+| 注文確定時：サーバーで `pay_community_bill_off_amount` の再計算・整合検証 | **各 order ドキュメントを個別に検証**（1 ドキュメントごとに `min(off_amount, menu_price)` と比較） |
+| キャンセル時：Stripe 利用注文は全額払い戻し | 返金金額を `Σ (menu_price - pay_community_bill_off_amount)` over canceled order_ids で算出 |
 
 ### Phase 1.4：請求書発行機能の対応
 
 | 旧仕様チェック項目 | 変更内容 |
 |:--|:--|
-| 注文の `payment_community_bill_off_amount` を集計する請求額算出ロジック | `collectionGroup('member_orders')` からの集計に変更（パス変更。集計式は同じ） |
+| 注文の `pay_community_bill_off_amount` を集計する請求額算出ロジック | `collectionGroup('member_orders')` からの集計に変更（パス変更。集計式は同じ） |
 
 ---
 
@@ -501,15 +501,15 @@ const cartTotalPayment = computed(() =>
 
 ### 7.2 セキュリティ考慮事項（追記）
 
-旧仕様の記述「`payment_community_bill_off_amount` はクライアントが任意に書き換えられないこと」は変わらない。
+旧仕様の記述「`pay_community_bill_off_amount` はクライアントが任意に書き換えられないこと」は変わらない。
 
 新設計では Firestore Security Rules で `members/{userId}/member_orders/{orderId}` への直接 write を `false` としているため（`05_EventOrder→EventMemberOrder.md` の Security Rules 参照）、クライアントからの直接更新はルールで防がれる。
 
 ### 7.6 removeFromCart 時の再計算不要（新規追記）
 
-旧設計では `-` ボタンでメニュー個数を減らした際に、Order の `menus` 配列を更新した後 `payment_community_bill_off_amount` を全行再計算して更新する必要があった。
+旧設計では `-` ボタンでメニュー個数を減らした際に、Order の `menus` 配列を更新した後 `pay_community_bill_off_amount` を全行再計算して更新する必要があった。
 
-新設計では `-` ボタンで 1 つの order ドキュメントを削除するだけで、残りのドキュメントへの影響がない。`removeFromCart` は単一ドキュメントの削除のみであり、`payment_community_bill_off_amount` の更新処理は**不要**。
+新設計では `-` ボタンで 1 つの order ドキュメントを削除するだけで、残りのドキュメントへの影響がない。`removeFromCart` は単一ドキュメントの削除のみであり、`pay_community_bill_off_amount` の更新処理は**不要**。
 
 ---
 
@@ -519,16 +519,16 @@ const cartTotalPayment = computed(() =>
 
 | ファイル | 変更内容 |
 |:--|:--|
-| `common/src/schemas/EventMemberOrder.ts` | `payment_community_bill_off_amount?: number` を追加 |
-| `common/src/schemas/EventStripe.ts` | `pay_community_bill_amount: number` を optional から必須に変更 |
-| `functions/default/src/memberOrders.ts` | `addToCart` で `calcDiscount` を呼び `payment_community_bill_off_amount` を各ドキュメントに設定 |
+| `common/src/schemas/EventMemberOrder.ts` | `pay_community_bill_off_amount?: number` を追加 |
+| `common/src/schemas/EventStripe.ts` | `pay_community_bill_off_amount: number` を optional から必須に変更 |
+| `functions/default/src/memberOrders.ts` | `addToCart` で `calcDiscount` を呼び `pay_community_bill_off_amount` を各ドキュメントに設定 |
 | `functions/default/src/memberOrders.ts` | `confirmOrder` の再計算ロジックを「各ドキュメント個別の `min(off_amount, menu_price)`」に変更 |
-| `functions/default/src/stripe.ts` | `createStripeCheckoutSession` の決済金額を `Σ (menu_price - payment_community_bill_off_amount)` で算出 |
-| `functions/default/src/stripeWebhook.ts` | stripes ドキュメント作成時に `pay_community_bill_amount` を設定 |
-| `functions/default/src/stripeRefunds.ts` | `cancelOrders` の返金額を `Σ (menu_price - payment_community_bill_off_amount)` で算出 |
+| `functions/default/src/stripe.ts` | `createStripeCheckoutSession` の決済金額を `Σ (menu_price - pay_community_bill_off_amount)` で算出 |
+| `functions/default/src/stripeWebhook.ts` | stripes ドキュメント作成時に `pay_community_bill_off_amount` を設定 |
+| `functions/default/src/stripeRefunds.ts` | `cancelOrders` の返金額を `Σ (menu_price - pay_community_bill_off_amount)` で算出 |
 | `functions/default/src/utils/invoice.ts` | 入力型を `EventMemberOrder[]`（1 item = 1 doc）に変更。groupBy や count 乗算を削除 |
 | `base/src/components/pages/cart.vue` | 割引表示を groupBy + `totalDiscount` / `totalPayment` で算出（上記 5.4 参照） |
-| `base/src/components/UserEventCard.vue` | totalPrice 算出を `status !== 'canceled'` の `menu_price` 合計に変更（`payment_community_bill_off_amount` の合計を割引額として表示） |
+| `base/src/components/UserEventCard.vue` | totalPrice 算出を `status !== 'canceled'` の `menu_price` 合計に変更（`pay_community_bill_off_amount` の合計を割引額として表示） |
 
 ---
 
@@ -546,11 +546,11 @@ git checkout -b feat/960-v2 origin/development
 
 | 項目 | 状況 |
 |:--|:--|
-| `EventMemberOrder` スキーマ（`EventMemberOrder.ts`） | 実装済み（`payment_community_bill_off_amount` フィールドのみ追加が必要） |
-| `EventStripe` スキーマ（`pay_community_bill_amount: optional`） | 実装済み。optional → 使用するよう変更のみ |
+| `EventMemberOrder` スキーマ（`EventMemberOrder.ts`） | 実装済み（`pay_community_bill_off_amount` フィールドのみ追加が必要） |
+| `EventStripe` スキーマ（`pay_community_bill_off_amount: optional`） | 実装済み。optional → 使用するよう変更のみ |
 | `memberOrders.ts`（`addToCart` / `removeFromCart` / `confirmOrder`） | 実装済み。割引ロジックのみ追加 |
 | `stripe.ts`（`createStripeCheckoutSession`） | 実装済み。`community_bill` + discount パスの追加のみ |
-| `stripeWebhook.ts` | 実装済み。`pay_community_bill_amount` のセットのみ追加 |
+| `stripeWebhook.ts` | 実装済み。`pay_community_bill_off_amount` のセットのみ追加 |
 | `cancelOrders.ts` | 実装済み。返金額の計算式変更と `community_bill` + discount の Stripe 返金対応のみ |
 | `invoice.ts`（基本的な集計関数） | 実装済み（`calculateOrdersTotal` は `menu_price` ベース）。割引集計関数の追加が必要 |
 | `cart.vue`（`GroupedMenu` 型・`groupOrdersByMenu`・基本的な決済フロー） | 実装済み。割引表示フィールドと `community_bill` + discount パスの追加のみ |
@@ -565,17 +565,17 @@ git checkout -b feat/960-v2 origin/development
 
 **新規追加・変更が必要なもの**
 
-- `common/src/schemas/EventMemberOrder.ts`：`payment_community_bill_off_amount?: number` を `EventMemberOrderDbSchema` / `EventMemberOrderAppSchema` / `EventMemberOrder` クラスに追加。`feat/960` にはなかった変更
+- `common/src/schemas/EventMemberOrder.ts`：`pay_community_bill_off_amount?: number` を `EventMemberOrderDbSchema` / `EventMemberOrderAppSchema` / `EventMemberOrder` クラスに追加。`feat/960` にはなかった変更
 
   ```typescript
   // EventMemberOrderDbSchema に追加
-  payment_community_bill_off_amount: z.number().int().nonnegative().optional(),
+  pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
 
   // EventMemberOrder クラスに追加
-  payment_community_bill_off_amount?: number
+  pay_community_bill_off_amount?: number
   ```
 
-- `common/src/schemas/EventStripe.ts`：`pay_community_bill_amount` はすでに optional で存在する。スキーマ変更は不要。Webhook 側でセットするだけでよい
+- `common/src/schemas/EventStripe.ts`：`pay_community_bill_off_amount` はすでに optional で存在する。スキーマ変更は不要。Webhook 側でセットするだけでよい
 
 #### Phase B：計算ユーティリティ（common）
 
@@ -606,7 +606,7 @@ export function computePaymentCommunityBillOffAmount(
  * order_ids 全体の参加者支払合計を算出する。
  */
 export function computeTotalPayment(orders: EventMemberOrder[]): number {
-  return orders.reduce((sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0), 0)
+  return orders.reduce((sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0), 0)
 }
 
 /**
@@ -618,7 +618,7 @@ export function isPaymentCommunityBillOffAmountConsistent(
   order: EventMemberOrder,
 ): boolean {
   const expected = computePaymentCommunityBillOffAmount(eventPayment, settings, order.menu_price)
-  const stored = order.payment_community_bill_off_amount
+  const stored = order.pay_community_bill_off_amount
   return expected === stored   // 両方 undefined も一致とみなす
 }
 ```
@@ -630,25 +630,25 @@ export function isPaymentCommunityBillOffAmountConsistent(
 ```typescript
 /**
  * 確定注文の主催者負担合計（割引総額）を算出する。
- * payment_community_bill_off_amount が正の整数のもののみ合算。
+ * pay_community_bill_off_amount が正の整数のもののみ合算。
  */
 export function sumOrderedCommunityBillOffAmount(orders: EventMemberOrder[]): number {
   return orders
     .filter((o) => o.status === 'ordered')
     .reduce((sum, o) => {
-      const amount = o.payment_community_bill_off_amount
+      const amount = o.pay_community_bill_off_amount
       return typeof amount === 'number' && amount > 0 ? sum + amount : sum
     }, 0)
 }
 
 /**
- * 割引請求書の明細用に、payment_community_bill_off_amount ごとに注文件数をまとめる。
+ * 割引請求書の明細用に、pay_community_bill_off_amount ごとに注文件数をまとめる。
  */
 export function groupOrderedCommunityBillOffByAmount(orders: EventMemberOrder[]): CommunityBillOffGroupLine[] {
   const countByAmount = new Map<number, number>()
   for (const o of orders) {
     if (o.status !== 'ordered') continue
-    const amount = o.payment_community_bill_off_amount
+    const amount = o.pay_community_bill_off_amount
     if (typeof amount !== 'number' || amount <= 0) continue
     countByAmount.set(amount, (countByAmount.get(amount) ?? 0) + 1)
   }
@@ -677,7 +677,7 @@ const discount = computePaymentCommunityBillOffAmount(
 )
 await createOrder(community_id, event_id, uid, {
   // ... 既存フィールド ...
-  ...(discount !== undefined ? { payment_community_bill_off_amount: discount } : {}),
+  ...(discount !== undefined ? { pay_community_bill_off_amount: discount } : {}),
 }, transaction)
 ```
 
@@ -731,30 +731,30 @@ for (const order of orders) {
 // line_items の unit_amount を参加者支払額（discount 後）に変更
 grouped.set(order.menu_id, {
   menuName: order.menu_name,
-  unitAmount: order.menu_price - (order.payment_community_bill_off_amount ?? 0), // ← 変更点
+  unitAmount: order.menu_price - (order.pay_community_bill_off_amount ?? 0), // ← 変更点
   quantity: 1,
   imageUrl: menuImageMap.get(order.menu_id) ?? '',
 })
 ```
 
-**`functions/default/src/stripeWebhook.ts`（`pay_community_bill_amount` の設定）**
+**`functions/default/src/stripeWebhook.ts`（`pay_community_bill_off_amount` の設定）**
 
-stripes ドキュメント作成時に `pay_community_bill_amount` を追加する：
+stripes ドキュメント作成時に `pay_community_bill_off_amount` を追加する：
 
 ```typescript
-const payAmount = orders.reduce((sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0), 0)
-const payCommunityBillAmount = orders.reduce((sum, o) => sum + (o.payment_community_bill_off_amount ?? 0), 0)
+const payAmount = orders.reduce((sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0), 0)
+const payCommunityBillAmount = orders.reduce((sum, o) => sum + (o.pay_community_bill_off_amount ?? 0), 0)
 
 const stripeDoc = new EventStripe(stripeDocId, {
   // ... 既存フィールド ...
   pay_amount: payAmount,  // ← discount 後の実支払額
-  pay_community_bill_amount: payCommunityBillAmount > 0 ? payCommunityBillAmount : undefined,
+  pay_community_bill_off_amount: payCommunityBillAmount > 0 ? payCommunityBillAmount : undefined,
 })
 ```
 
 **`functions/default/src/cancelOrders.ts`（返金額の計算式変更 + `community_bill` + discount 対応）**
 
-`development` 版は `refundAmount = Σ menu_price`（割引前の金額で返金）になっている。`community_bill` + `discount` で Stripe 決済した注文は `menu_price - payment_community_bill_off_amount` が実支払額なので、返金額もこれに変える。
+`development` 版は `refundAmount = Σ menu_price`（割引前の金額で返金）になっている。`community_bill` + `discount` で Stripe 決済した注文は `menu_price - pay_community_bill_off_amount` が実支払額なので、返金額もこれに変える。
 
 また、`development` 版は `event_payment === 'user_advance'` のときのみ Stripe 返金している。`community_bill` + `discount` で差額 Stripe 決済した場合（order に `stripe_id` がある場合）も返金が必要になる。
 
@@ -767,7 +767,7 @@ if (!hasStripePayment) {
 
 // 返金額の計算式を変更
 const refundAmount = groupOrders.reduce(
-  (sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0),
+  (sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0),
   0,
 )
 ```
@@ -810,14 +810,14 @@ type GroupedMenu = {
 }
 
 // groupOrdersByMenu を拡張
-const discount = order.payment_community_bill_off_amount ?? 0
+const discount = order.pay_community_bill_off_amount ?? 0
 existing.totalPrice += order.menu_price
 existing.totalDiscount += discount
 existing.totalPayment += order.menu_price - discount
 
 // EnrichedCartItem の totalPrice を totalPayment に変更（支払額ベース）
 totalPrice: cartItem.orders.reduce(
-  (sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0),
+  (sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0),
   0,
 ),
 
@@ -835,13 +835,13 @@ if (event.event_payment === 'user_advance' || needsCommunityBillStripe(event, ca
 
 **`base/src/components/UserEventCard.vue`（totalPrice の割引反映）**
 
-`development` 版の `totalPrice` は `Σ menu_price`。`payment_community_bill_off_amount` を引いた実支払額ベースに変更する：
+`development` 版の `totalPrice` は `Σ menu_price`。`pay_community_bill_off_amount` を引いた実支払額ベースに変更する：
 
 ```typescript
 const totalPrice = computed(() =>
   props.orders
     .filter((o) => o.status !== 'canceled')
-    .reduce((sum, o) => sum + o.menu_price - (o.payment_community_bill_off_amount ?? 0), 0),
+    .reduce((sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0), 0),
 )
 ```
 
@@ -872,7 +872,7 @@ const isShowInvoiceButton = computed(() => {
 ```
 Phase A（スキーマ）
   ├── Event.ts に community_bill_settings 追加
-  └── EventMemberOrder.ts に payment_community_bill_off_amount 追加
+  └── EventMemberOrder.ts に pay_community_bill_off_amount 追加
 
 Phase B（ユーティリティ）
   ├── paymentCommunityBillOffAmount.ts を EventMemberOrder 向けに書き直し

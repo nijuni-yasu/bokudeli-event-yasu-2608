@@ -50,7 +50,7 @@ describe('computePaymentCommunityBillOffAmount', () => {
 describe('computeOrderLineNet', () => {
   it('eventPayment 未指定はストアド値のみで line_net を返す', () => {
     expect(computeOrderLineNet(makeOrder({ menu_price: 1000 }))).toBe(1000)
-    expect(computeOrderLineNet(makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 300 }))).toBe(700)
+    expect(computeOrderLineNet(makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 300 }))).toBe(700)
   })
 
   it('user_advance はストアド値のみで line_net を返す（eventPayment あり）', () => {
@@ -58,12 +58,12 @@ describe('computeOrderLineNet', () => {
   })
 
   it('community_bill + free は line_net 0', () => {
-    const order = makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 1000 })
+    const order = makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 1000 })
     expect(computeOrderLineNet(order, communityBill, { type: 'free' })).toBe(0)
   })
 
   it('community_bill + discount はストアド値分を控除', () => {
-    const order = makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 300 })
+    const order = makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 300 })
     expect(computeOrderLineNet(order, communityBill, { type: 'discount', off_amount: 300 })).toBe(700)
   })
 
@@ -75,7 +75,7 @@ describe('computeOrderLineNet', () => {
   })
 
   it('community_bill + free で stored があれば優先', () => {
-    const order = makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 1000 })
+    const order = makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 1000 })
     expect(computeOrderLineNet(order, communityBill, { type: 'free' })).toBe(0)
   })
 })
@@ -88,16 +88,16 @@ describe('computeTotalPayment', () => {
 
   it('free 参加は全員 ¥0', () => {
     const orders = [
-      makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 1000 }),
-      makeOrder({ menu_price: 500, payment_community_bill_off_amount: 500 }),
+      makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 1000 }),
+      makeOrder({ menu_price: 500, pay_community_bill_off_amount: 500 }),
     ]
     expect(computeTotalPayment(orders)).toBe(0)
   })
 
   it('discount 参加は差額を合算', () => {
     const orders = [
-      makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 300 }),
-      makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 300 }),
+      makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 300 }),
+      makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 300 }),
     ]
     expect(computeTotalPayment(orders)).toBe(1400)
   })
@@ -112,8 +112,8 @@ describe('computeTotalPayment', () => {
 
   it('community_bill + free で stored が menu_price と一致すれば 0', () => {
     const orders = [
-      makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 1000 }),
-      makeOrder({ menu_price: 500, payment_community_bill_off_amount: 500 }),
+      makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 1000 }),
+      makeOrder({ menu_price: 500, pay_community_bill_off_amount: 500 }),
     ]
     expect(computeTotalPayment(orders, communityBill, { type: 'free' })).toBe(0)
   })
@@ -128,14 +128,14 @@ describe('computeTotalPayment', () => {
 
 describe('isPaymentCommunityBillOffAmountConsistent', () => {
   it('整合している場合は true', () => {
-    const order = makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 500 })
+    const order = makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 500 })
     expect(isPaymentCommunityBillOffAmountConsistent(communityBill, { type: 'discount', off_amount: 500 }, order)).toBe(
       true,
     )
   })
 
   it('整合していない場合は false', () => {
-    const order = makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 300 })
+    const order = makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 300 })
     expect(isPaymentCommunityBillOffAmountConsistent(communityBill, { type: 'discount', off_amount: 500 }, order)).toBe(
       false,
     )
@@ -154,12 +154,12 @@ describe('isPaymentCommunityBillOffAmountConsistent', () => {
   })
 
   it('community_bill + free で stored が menu_price と一致すれば true', () => {
-    const order = makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 1000 })
+    const order = makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 1000 })
     expect(isPaymentCommunityBillOffAmountConsistent(communityBill, { type: 'free' }, order)).toBe(true)
   })
 
   it('community_bill + free で stored が中途半端なら false', () => {
-    const order = makeOrder({ menu_price: 1000, payment_community_bill_off_amount: 300 })
+    const order = makeOrder({ menu_price: 1000, pay_community_bill_off_amount: 300 })
     expect(isPaymentCommunityBillOffAmountConsistent(communityBill, { type: 'free' }, order)).toBe(false)
   })
 })

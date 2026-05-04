@@ -168,14 +168,14 @@ export function calculateInvoiceTotal(orders: EventMemberOrder[], eventStartDate
 
 /**
  * 確定注文の主催者負担合計（割引総額）を算出する。
- * payment_community_bill_off_amount が正の整数のもののみ合算。
+ * pay_community_bill_off_amount が正の整数のもののみ合算。
  * @param orders 注文リスト
  */
 export function sumOrderedCommunityBillOffAmount(orders: EventMemberOrder[]): number {
   return orders
     .filter((o) => o.status === 'ordered')
     .reduce((sum, o) => {
-      const amount = o.payment_community_bill_off_amount
+      const amount = o.pay_community_bill_off_amount
       return typeof amount === 'number' && amount > 0 ? sum + amount : sum
     }, 0)
 }
@@ -191,7 +191,7 @@ export interface CommunityBillOffGroupLine {
 }
 
 /**
- * 割引請求書の明細用に、メニュー名 × payment_community_bill_off_amount の組ごとに注文件数をまとめる。
+ * 割引請求書の明細用に、メニュー名 × pay_community_bill_off_amount の組ごとに注文件数をまとめる。
  * 単価（おごり額）の降順、メニュー名の昇順でソートして返す。
  * @param orders 注文リスト
  */
@@ -199,7 +199,7 @@ export function groupOrderedCommunityBillOffByAmount(orders: EventMemberOrder[])
   const groupMap = new Map<string, { menuName: string; amountPerOrder: number; orderCount: number }>()
   for (const o of orders) {
     if (o.status !== 'ordered') continue
-    const amount = o.payment_community_bill_off_amount
+    const amount = o.pay_community_bill_off_amount
     if (typeof amount !== 'number' || amount <= 0) continue
     const menuName = o.menu_name
     const key = `${amount}\u0000${menuName}`
