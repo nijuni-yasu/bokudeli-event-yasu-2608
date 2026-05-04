@@ -40,7 +40,8 @@ const EventStripeDbSchema = z.object({
   pay_amount: z.number().int().nonnegative(),
   receipt_number: NonEmptyStringSchema.optional(),
   refunds: z.array(RefundEntryDbSchema),
-  pay_community_bill_amount: z.number().int().optional(),
+  // stripes ドキュメント単位: 当該決済セッションに含まれる全 member_orders の pay_community_bill_off_amount の合計
+  pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
   pay_user_fee_amount: z.number().int().optional(),
 })
 
@@ -55,7 +56,7 @@ const EventStripeAppSchema = z.object({
   pay_amount: z.number().int().nonnegative(),
   receipt_number: z.string().optional(),
   refunds: z.array(RefundEntryAppSchema).default([]),
-  pay_community_bill_amount: z.number().int().optional(),
+  pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
   pay_user_fee_amount: z.number().int().optional(),
 })
 
@@ -81,7 +82,7 @@ export class EventStripe {
   pay_amount!: number
   receipt_number?: string
   refunds!: RefundEntryType[]
-  pay_community_bill_amount?: number
+  pay_community_bill_off_amount?: number
   pay_user_fee_amount?: number
 
   constructor(stripeId: string, src: Partial<EventStripe>) {

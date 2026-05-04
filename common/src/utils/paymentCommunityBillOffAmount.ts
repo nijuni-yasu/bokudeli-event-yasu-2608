@@ -31,7 +31,7 @@ function effectiveCommunityBillOffAmount(
   eventPayment: EventPaymentType,
   settings: CommunityBillSettingsType | undefined,
 ): number {
-  const stored = order.payment_community_bill_off_amount
+  const stored = order.pay_community_bill_off_amount
   if (stored != null) return stored
   if (eventPayment === 'community_bill') {
     return computePaymentCommunityBillOffAmount(eventPayment, settings, order.menu_price) ?? 0
@@ -43,7 +43,7 @@ function effectiveCommunityBillOffAmount(
  * 1 注文ごとの参加者支払額（line net = menu_price - 主催者負担相当）を算出する。
  * キャンセル判定は呼び出し側の責務。
  *
- * `eventPayment` を省略した場合は、ストアドの `payment_community_bill_off_amount` のみを見る（`?? 0`）。
+ * `eventPayment` を省略した場合は、ストアドの `pay_community_bill_off_amount` のみを見る（`?? 0`）。
  */
 export function computeOrderLineNet(
   order: EventMemberOrder,
@@ -53,7 +53,7 @@ export function computeOrderLineNet(
   const off =
     eventPayment !== undefined
       ? effectiveCommunityBillOffAmount(order, eventPayment, settings)
-      : (order.payment_community_bill_off_amount ?? 0)
+      : (order.pay_community_bill_off_amount ?? 0)
   return order.menu_price - off
 }
 
@@ -61,7 +61,7 @@ export function computeOrderLineNet(
  * order_ids 全体の参加者支払合計を算出する。
  * キャンセル済みを除くすべての order を対象に (menu_price - 主催者負担相当) を合算。
  *
- * `eventPayment` を省略した場合は、ストアドの `payment_community_bill_off_amount` のみを見る（`?? 0`）。
+ * `eventPayment` を省略した場合は、ストアドの `pay_community_bill_off_amount` のみを見る（`?? 0`）。
  */
 export function computeTotalPayment(
   orders: EventMemberOrder[],
@@ -83,5 +83,5 @@ export function isPaymentCommunityBillOffAmountConsistent(
   order: EventMemberOrder,
 ): boolean {
   const expected = computePaymentCommunityBillOffAmount(eventPayment, settings, order.menu_price)
-  return expected === order.payment_community_bill_off_amount
+  return expected === order.pay_community_bill_off_amount
 }
