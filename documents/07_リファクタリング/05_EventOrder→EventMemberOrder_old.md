@@ -88,7 +88,7 @@ communities/{communityId}/events/{eventId}/stripes/{stripeId}
   ├── refunds: [                        // 返金履歴（一部返金のたびに追加）
   │     { refund_id: string, amount: number, menus: [...], created_at: Timestamp }
   │   ]
-  ├── pay_community_bill_amount: number // 将来用
+  ├── pay_community_bill_off_amount: number // 将来用
   └── pay_user_fee_amount: number       // 将来用
 ```
 
@@ -211,7 +211,7 @@ menus は決済時のスナップショットとして参考情報として保�
 | payment_intent | string | ○ | Stripe の PaymentIntent ID |
 | pay_amount | number | ○ | 合計注文金額 |
 | refunds | RefundEntry[] | ○ | 返金履歴（一部返金のたびに追加。初期値は空配列） |
-| pay_community_bill_amount | number | - | コミュニティ割引金額（※将来実装予定） |
+| pay_community_bill_off_amount | number | - | コミュニティ割引金額（※将来実装予定） |
 | pay_user_fee_amount | number | - | ユーザー手数料（※将来実装予定） |
 
 **RefundEntry**（refunds 配列の各要素）:
