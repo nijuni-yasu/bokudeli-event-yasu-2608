@@ -124,6 +124,17 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 ---
 
+## GitHub Pull Request でレビューするとき（GitHub Copilot 等）
+
+このスキルに沿って **GitHub 上**で PR をレビューする場合（例: GitHub Copilot が本リポの規約ドキュメントを参照するとき）は、次を守ること。
+
+- **Conversation タブに、複数ファイル分の指摘を 1 本のトップレベルコメントにまとめない**こと。
+- **Files changed** で該当行に **インラインの review comment** を付け、**1 指摘につき 1 コメント**とすること。
+
+本ファイルは主に **Cursor / Claude 等のエージェント**向けである。GitHub Copilot が常にこの節に従う保証はないが、プロジェクトの期待動作として記載する。リポジトリの `.github/copilot-instructions.md` や PR 依頼コメントとあわせて参照される想定。
+
+---
+
 ## フィードバック形式
 
 ```
