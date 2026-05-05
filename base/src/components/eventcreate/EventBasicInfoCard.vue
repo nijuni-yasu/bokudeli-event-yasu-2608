@@ -118,6 +118,7 @@ watch(
   async (postalcode) => {
     if (requiredValidator(postalcode) !== true || postalCodeValidator(postalcode) !== true) {
       event.value.event_address_base = ''
+      event.value.event_address_detail = ''
       return
     }
     const requestedPostalcode = postalcode as string
