@@ -43,6 +43,8 @@ type GroupedMenu = {
   order_ids: string[]
   totalPrice: number
   totalDiscount: number
+  /** 1個分おごり。同一 menu_id では pay_community_bill_off_amount が全行同額となる前提とし、グループ最初の注文の値を採用 */
+  offAmountPerUnit: number
 }
 
 const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
@@ -64,6 +66,7 @@ const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
         order_ids: [order.order_id],
         totalPrice: order.menu_price,
         totalDiscount: discount,
+        offAmountPerUnit: discount,
       })
     }
   }
@@ -74,6 +77,10 @@ type EnrichedCartItem = CartItem & {
   groupedMenus: GroupedMenu[]
   totalPrice: number
 }
+
+/** 主催者請求かつおごり設定ありのとき、カート注文テーブルに「おごり」列を出す */
+const hasCartCommunityBill = (event: BokudeliEvent): boolean =>
+  event.event_payment === 'community_bill' && event.community_bill_settings != null
 
 /** EventDetailsCard と同じ主催者請求の表示用 i18n キー */
 const getEventPaymentI18nKey = (event: BokudeliEvent) => {
@@ -433,7 +440,10 @@ const isOpenCancelpolicyDialog = ref(false)
                   <tr>
                     <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
-                    <th class="text-center" style="padding: 1px">{{ $t('cart.subtotal') }}</th>
+                    <th class="text-center" style="padding: 1px">{{ $t('cart.unit_price') }}</th>
+                    <th v-if="hasCartCommunityBill(cartItem.event)" class="text-center" style="padding: 1px">
+                      {{ $t('cart.off_amount') }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -467,12 +477,15 @@ const isOpenCancelpolicyDialog = ref(false)
                         </v-btn>
                       </div>
                     </td>
-                    <td style="padding: 1px">
-                      <template v-if="menu.totalDiscount > 0">
-                        <div class="text-caption text-medium-emphasis">¥{{ priceString(menu.totalPrice) }}</div>
-                        <div class="text-caption text-discount">-¥{{ priceString(menu.totalDiscount) }}</div>
-                      </template>
-                      <template v-else> ¥{{ priceString(menu.totalPrice) }} </template>
+                    <td class="text-center" style="padding: 1px">¥{{ priceString(menu.menu_price) }}</td>
+                    <td
+                      v-if="hasCartCommunityBill(cartItem.event)"
+                      class="text-center"
+                      style="padding: 1px"
+                      :class="menu.offAmountPerUnit > 0 ? 'text-caption text-discount' : ''"
+                    >
+                      <template v-if="menu.offAmountPerUnit > 0"> -¥{{ priceString(menu.offAmountPerUnit) }} </template>
+                      <template v-else>—</template>
                     </td>
                   </tr>
                 </tbody>
