@@ -58,6 +58,8 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
 
   return {
     ...event,
+    // getter fullAddress はスプレッドされない。テンプレの event_address 用に結合住所を渡す
+    event_address: event.fullAddress,
     date,
     delivery_date: deliveryDate,
     event_deadline_datetime: eventDeadlineDateTime,
