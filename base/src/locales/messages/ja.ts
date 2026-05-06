@@ -115,6 +115,8 @@ export default {
     order_contents: '【注文内容】',
     menu: 'メニュー',
     count: '個数',
+    unit_price: '単価',
+    off_amount: 'おごり',
     price: '金額',
     subtotal: '小計',
     total: '合計',
