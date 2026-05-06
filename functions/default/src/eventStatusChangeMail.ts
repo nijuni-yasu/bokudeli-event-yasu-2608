@@ -98,7 +98,13 @@ async function sendEventStatusMailToOrganizers(
 
   const dynamicTemplateData = {
     ...templateData,
-    ...(shop || {}),
+    ...(shop
+      ? {
+          ...shop,
+          // getter fullAddress はスプレッドされない。テンプレの shop_address 用に結合住所を渡す
+          shop_address: shop.fullAddress,
+        }
+      : {}),
   }
 
   if (addSupport && !emails.includes(SUPPORT_MAIL)) {
