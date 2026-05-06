@@ -23,7 +23,7 @@ export default {
     user_on_day: '参加者 当日払い 💰',
     community_bill: '主催者 請求書払い 📄',
     community_bill_free: '主催者請求書払い',
-    community_bill_discount: '主催者請求書払い＋差額決済',
+    community_bill_discount: '主催者請求書払い＋参加者決済',
   },
   discount_settings: {
     free: '全額おごり',
