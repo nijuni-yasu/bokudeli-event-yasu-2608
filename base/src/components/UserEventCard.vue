@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { computeOrderLineNet } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
+import { convertToDate } from '@shokujii/common/utils/datetime.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import { convertStoragePathToURL } from '../utils/storage'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
@@ -18,6 +20,8 @@ const props = defineProps<{
   /** 注文取得失敗時 true（注文ブロックにエラー＋再試行） */
   ordersError?: boolean
 }>()
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   downloadInvoice: [eventId: string, stripeId: string]
@@ -82,16 +86,49 @@ const isShowInvoiceButton = computed(() => {
 
 const showOrderSummary = computed(() => !props.ordersLoading && !props.ordersError && groupedMenus.value.length > 0)
 
+/** キャンセルモーダル・領収書日付で共通（ordered_at を優先し、欠損時は carted_at / created_at） */
+const getOrderTimestamp = (o: EventMemberOrder) => o.ordered_at ?? o.carted_at ?? o.created_at ?? 0
+
+/** Stripe グループの並び用。グループ内の注文について getOrderTimestamp の最小値が若い順。時刻不明は末尾へ */
+const earliestTimestampForStripe = (stripeId: string): number => {
+  const tsList = props.orders
+    .filter((o) => o.status !== 'canceled' && o.stripe_id === stripeId)
+    .map(getOrderTimestamp)
+    .filter((ts) => ts > 0)
+  return tsList.length === 0 ? Number.MAX_SAFE_INTEGER : Math.min(...tsList)
+}
+
 const stripeGroups = computed(() => {
-  const map = new Map<string, { stripeId: string; amount: number }>()
+  const stripeIds: string[] = []
+  const seen = new Set<string>()
   for (const o of props.orders.filter((o) => o.status !== 'canceled' && o.stripe_id != null)) {
-    if (!map.has(o.stripe_id!)) {
-      map.set(o.stripe_id!, { stripeId: o.stripe_id!, amount: 0 })
+    const sid = o.stripe_id!
+    if (!seen.has(sid)) {
+      seen.add(sid)
+      stripeIds.push(sid)
     }
-    map.get(o.stripe_id!)!.amount += orderLineNet(o)
   }
-  return Array.from(map.values())
+  stripeIds.sort((a, b) => {
+    const ta = earliestTimestampForStripe(a)
+    const tb = earliestTimestampForStripe(b)
+    if (ta !== tb) return ta - tb
+    return a < b ? -1 : a > b ? 1 : 0
+  })
+  return stripeIds.map((stripeId) => ({ stripeId }))
 })
+
+const stripeReceiptDateLabel = (stripeId: string): string | null => {
+  const earliest = earliestTimestampForStripe(stripeId)
+  if (earliest === Number.MAX_SAFE_INTEGER) return null
+  return convertToDate(earliest)
+}
+
+const receiptButtonLabel = (stripeId: string): string => {
+  const base = t('user_event_card.download_invoice')
+  if (stripeGroups.value.length === 1) return base
+  const d = stripeReceiptDateLabel(stripeId)
+  return d != null ? `${base} ${d}` : base
+}
 
 /** EventDetailsCard と同じ支払い方法ラベル（community_bill は全額おごり vs 金額おごりでキーを分岐） */
 const eventPaymentLabelKey = computed(() =>
@@ -103,8 +140,6 @@ const eventPaymentLabelKey = computed(() =>
 )
 
 // ── キャンセルモーダル ──
-
-const getOrderTimestamp = (o: EventMemberOrder) => o.ordered_at ?? o.carted_at ?? o.created_at ?? 0
 
 type CancelDialogOrderedRow = {
   orderId: string
@@ -249,11 +284,7 @@ const submitCancel = () => {
             size="small"
             @click.prevent="$emit('downloadInvoice', event.event_id, sg.stripeId)"
           >
-            {{
-              stripeGroups.length === 1
-                ? $t('user_event_card.download_invoice')
-                : `${$t('user_event_card.download_invoice')}（${$n(sg.amount, 'currency')}）`
-            }}
+            {{ receiptButtonLabel(sg.stripeId) }}
           </v-btn>
         </v-col>
       </v-row>

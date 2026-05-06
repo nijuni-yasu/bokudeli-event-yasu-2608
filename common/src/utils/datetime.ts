@@ -13,8 +13,9 @@ export function convertToDateWeekdayShort(millis: number, zone = DEFAULT_TIME_ZO
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd (ccc)')
 }
 
+/** スラッシュ区切りの日付。月・日は先頭ゼロなし。例 2026/3/30 */
 export function convertToDate(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
-  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd')
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d')
 }
 
 export function convertToJustDate(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {

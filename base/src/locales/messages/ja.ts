@@ -464,7 +464,7 @@ export default {
       column_amount: '支払い金額',
       refund_total: '返金額 {0}',
     },
-    download_invoice: '領収書をダウンロードする',
+    download_invoice: '領収書をダウンロード',
     download_invoice_error: '領収書の取得に失敗しました',
     orders_load_error: '注文内容の取得に失敗しました',
     orders_retry: '再試行',
