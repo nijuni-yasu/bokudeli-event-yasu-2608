@@ -175,6 +175,7 @@ watchDebounced(
     // 必須チェックと郵便番号の形式チェック（7桁の数字）
     if (requiredValidator(requestPostalCode) !== true || postalCodeValidator(requestPostalCode) !== true) {
       shop.value.shop_address_base = ''
+      shop.value.shop_address_detail = ''
       return
     }
 

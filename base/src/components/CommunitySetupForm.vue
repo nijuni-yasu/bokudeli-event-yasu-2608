@@ -96,7 +96,10 @@ watch(
   () => community.value?.community_postalcode,
   async (postalcode) => {
     if (community.value == null || postalCodeValidator(postalcode) !== true) {
-      if (community.value) community.value.community_address_base = ''
+      if (community.value) {
+        community.value.community_address_base = ''
+        community.value.community_address_detail = ''
+      }
       return
     }
     const requestedPostalcode = postalcode as string
@@ -109,6 +112,7 @@ watch(
         return
       }
       community.value.community_address_base = ''
+      community.value.community_address_detail = ''
       return
     }
     // レース対策: 古いリクエストの結果で上書きしない

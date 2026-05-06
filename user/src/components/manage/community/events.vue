@@ -64,6 +64,10 @@ const handleCopyCompleteOk = () => {
 const handleCopyError = () => {
   isOpenCopyErrorDialog.value = true
 }
+
+onMounted(() => {
+  eventListStore.reload()
+})
 </script>
 
 <template>
