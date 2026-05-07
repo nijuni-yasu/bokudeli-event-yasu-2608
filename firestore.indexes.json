@@ -1,6 +1,34 @@
 {
   "indexes": [
     {
+      "collectionGroup": "friends",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "meet_count",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "friends",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "last_met_at",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "communities",
       "queryScope": "COLLECTION",
       "fields": [
@@ -74,6 +102,20 @@
       "fields": [
         {
           "fieldPath": "community_account",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "community_id",
           "order": "ASCENDING"
         },
         {
