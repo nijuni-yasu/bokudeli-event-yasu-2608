@@ -28,7 +28,6 @@ export const {
   requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
   deleteUserAccount,
   addToCart, removeFromCart, confirmOrder,
-  createEventMembers,
   eventReceipt,
   eventCopy,
   copyCommunityCoverToEvent,
@@ -58,5 +57,4 @@ export const {
   import('./eventMenusSelection.js'),
   import('./userImage.js'),
   import('./memberOrders.js'),
-  import('./eventMembers.js'),
 ])))
