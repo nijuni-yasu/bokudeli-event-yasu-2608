@@ -33,6 +33,15 @@ export default {
     order_list: '参加イベント',
     member_community_list: '参加コミュニティ',
     manager_community_list: '運営コミュニティ',
+    friend_list: 'ともだち',
+    friend_sort_meet_count: '同席回数順',
+    friend_sort_last_met_at: '最後に会った順',
+    friend_meet_count: '同席 {count} 回',
+    friend_last_met_at: '最後に会った日',
+    friend_first_met_at: '初めて会った日',
+    friend_empty: 'まだ「ともだち」がいません。食事会に参加して仲間を見つけましょう。',
+    friend_empty_other: '{name} さんにはまだ「ともだち」がいません。',
+    friend_empty_cta: 'イベントを探す',
     event_create: 'イベント新規作成',
     community_management: 'コミュニティ管理画面',
     community_create: 'コミュニティを作る',
@@ -667,6 +676,7 @@ export default {
     logout: 'ログアウトする',
     logout_modal_title: 'ログアウトしますか？',
     account_deleted: 'このユーザーは利用できません',
+    user_not_found: '存在しないユーザーです',
   },
   auth: {
     action: {
