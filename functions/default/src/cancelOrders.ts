@@ -7,6 +7,7 @@ import Stripe from 'stripe'
 import { CancelOrdersRequest, CancelOrdersResponse, CancelOrdersRefundError } from '@shokujii/common/apis/stripe.js'
 import { getOrdersByIds, saveOrder, getStripe, saveStripe } from './stores/memberOrder.js'
 import { getEvent } from './stores/event.js'
+import { applyOrderCanceledSideEffects } from './orderCanceledSideEffects.js'
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('cancelOrders')
@@ -96,6 +97,17 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
 
       return fetchedOrders
     })
+
+    try {
+      await applyOrderCanceledSideEffects({ event: eventData, userId: uid })
+    } catch (error) {
+      logger.error('applyOrderCanceledSideEffects failed', {
+        error,
+        communityId: community_id,
+        eventId: event_id,
+        userId: uid,
+      })
+    }
 
     const canceledCount = orders.length
 
