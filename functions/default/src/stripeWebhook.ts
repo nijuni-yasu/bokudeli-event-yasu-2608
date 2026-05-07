@@ -13,7 +13,7 @@ import {
 } from './stores/memberOrder.js'
 import { getCommunity } from './stores/community.js'
 import { getEvent } from './stores/event.js'
-import { sendOrderCompletionMails } from './orderCompletionMail.js'
+import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
 
 const logger = createModuleLogger('stripeWebhook')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
@@ -105,7 +105,8 @@ export const stripeWebhook = onRequest(
 
     const existingStripe = await getStripeByPaymentIntent(communityId, eventId, paymentIntent)
     if (existingStripe != null) {
-      // stripes は既にあるが、前回が addMember 前に失敗した場合はここで冪等に補完する（R04）
+      // stripes は既にあるが、前回が addMember 前に失敗した場合はここで冪等に補完する（R04）。
+      // createEventMembers 廃止後も、メール再送・人気イベント判定は不要なため addMember のみ残す。
       logger.info('Stripe document already exists, skipping transaction', { paymentIntent })
       const community = await getCommunity(communityId)
       if (community != null) {
@@ -219,32 +220,22 @@ export const stripeWebhook = onRequest(
       return
     }
 
-    const shouldSendOrderCompletionMails = txResult.kind === 'processed'
-
-    const community = await getCommunity(communityId)
-    if (community != null) {
-      await community.addMember(userId)
-    }
-
-    if (shouldSendOrderCompletionMails) {
-      const eventForMail = await getEvent(eventId)
-      if (eventForMail != null) {
-        try {
-          await sendOrderCompletionMails(eventForMail, userId)
-        } catch (error) {
-          logger.error('Failed to send order completion mails', {
-            error,
-            eventId,
-            userId,
-            paymentIntent,
-          })
-        }
+    if (txResult.kind === 'processed') {
+      const eventForSideEffects = await getEvent(eventId)
+      if (eventForSideEffects != null) {
+        await applyOrderConfirmedSideEffects({ event: eventForSideEffects, userId })
       } else {
-        logger.warn('Skipping order completion mails: event not found', {
+        logger.warn('Skipping side effects: event not found', {
           eventId,
           userId,
           paymentIntent,
         })
+      }
+    } else {
+      // noop: 並行リクエストで先に処理済み。community メンバーのみ冪等に補完（R04 と同様）
+      const community = await getCommunity(communityId)
+      if (community != null) {
+        await community.addMember(userId)
       }
     }
 

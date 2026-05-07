@@ -32,7 +32,7 @@ export const POPULAR_EVENT_MAIL_TEMPLATE_ID = 'd-c1914ade0c8644cab22bfb8d6d6b16a
 export const POPULAR_EVENT_MAIL_ASM_GROUP_ID = 31252
 
 /**
- * `createEventMembers` の第 1 トランザクション成功後に呼ぶ。
+ * `applyOrderConfirmedSideEffects` 内で `recalcEventMembers` が例外なく完了したあとに呼ぶ（members に差分がなくても再実行時の取りこぼし防止のため）。
  * 第 2 トランザクションで `sent_popular_event_mail_at` を原子的に立て、条件を満たすときのみ全ユーザーへ送信する。
  */
 export async function trySendPopularEventMailAfterMembersSync(params: {
