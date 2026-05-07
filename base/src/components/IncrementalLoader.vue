@@ -20,18 +20,19 @@ const emits = defineEmits<{
 
 const hasMore = computed(() => props.totalCount > props.loadedCount)
 
+/** 少し下にあっても「追読み可能」とみなす（短い一覧でインジケータがビューポート外に落ちる場合の取りこぼし防止） */
+const VIEWPORT_CHAIN_MARGIN_PX = 800
+
 const isElementInViewport = (el: HTMLElement | undefined) => {
   if (el == null) {
     return false
   }
 
   const rect = el.getBoundingClientRect()
-  return (
-    rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
-    0 <= rect.bottom &&
-    rect.left <= (window.innerWidth || document.documentElement.clientWidth) &&
-    0 <= rect.right
-  )
+  const vh = window.innerHeight || document.documentElement.clientHeight
+  const vw = window.innerWidth || document.documentElement.clientWidth
+  const relaxedBottom = vh + VIEWPORT_CHAIN_MARGIN_PX
+  return rect.top <= relaxedBottom && rect.bottom >= -VIEWPORT_CHAIN_MARGIN_PX && rect.left <= vw && 0 <= rect.right
 }
 
 const nextLoad = () => {
@@ -64,7 +65,7 @@ watch(loadingElement, (newValue) => {
         })
       },
       {
-        // オプションでroot、rootMargin、thresholdを設定可能
+        rootMargin: `0px 0px ${VIEWPORT_CHAIN_MARGIN_PX}px 0px`,
         threshold: 0.1, // 10%の部分が見えたらトリガー
       },
     )
