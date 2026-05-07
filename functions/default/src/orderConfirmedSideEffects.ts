@@ -1,9 +1,12 @@
 import { createModuleLogger } from './utils/logger.js'
 import { recalcEventMembers } from './utils/recalcEventMembers.js'
 import { getCommunity } from './stores/community.js'
+import { getOrders } from './stores/memberOrder.js'
 import { sendOrderCompletionMails } from './orderCompletionMail.js'
 import { trySendPopularEventMailAfterMembersSync } from './popularEventMail.js'
 import type { ShokujiiEvent } from './stores/event.js'
+import { addEventToFriendHistoryForAnchor } from './utils/friendsService.js'
+import { recountUserProfileCounts } from './utils/recountUserProfileCounts.js'
 
 const logger = createModuleLogger('orderConfirmedSideEffects')
 
@@ -30,6 +33,27 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
     }
   } catch (error) {
     logger.error('recalcEventMembers failed', {
+      error,
+      communityId,
+      eventId,
+      userId,
+    })
+  }
+
+  // ordered な member_orders から友達グラフ（user_friends）に当該イベントの履歴を反映する
+  try {
+    const orderedOrders = await getOrders(communityId, eventId, 'ordered')
+    const orderedUserIds = [...new Set(orderedOrders.map((order) => order.user_id))]
+    const counterpartUserIds = orderedUserIds.filter((id) => id !== userId)
+    await addEventToFriendHistoryForAnchor({
+      event_id: eventId,
+      community_id: communityId,
+      event_at: event.event_start_datetime,
+      anchor_user_id: userId,
+      counterpart_user_ids: counterpartUserIds,
+    })
+  } catch (error) {
+    logger.error('addEventToFriendHistoryForAnchor failed', {
       error,
       communityId,
       eventId,
@@ -78,5 +102,17 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
         eventId,
       })
     }
+  }
+
+  // 注文確定したユーザーのマイページ用カウント（ordered_food_count / participated_event_count）を再集計する
+  try {
+    await recountUserProfileCounts(userId)
+  } catch (error) {
+    logger.error('recountUserProfileCounts failed after order confirmed', {
+      error,
+      communityId,
+      eventId,
+      userId,
+    })
   }
 }
