@@ -4,6 +4,12 @@
   z-index: 1001 !important;
 }
 
+// 横並びナビの項目を行内で中央寄せ（materio core は変更しない）
+.layout-wrapper.layout-nav-type-horizontal .layout-horizontal-nav .horizontal-nav-content-container {
+  display: flex;
+  justify-content: center;
+}
+
 // Vuetify のバグらしく、Safari で .v-btn__prepend, .v-btn__append が width: 300px になってしまう
 // これを抑制するために暫定的に以下を指定する
 // TODO Vuetify のバージョンを上げたら不要になるかもしれないので確認する
