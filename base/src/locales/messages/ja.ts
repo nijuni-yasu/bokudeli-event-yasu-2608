@@ -439,7 +439,7 @@ export default {
     event_address: '【場所】{0}',
     shop_name: '【食事】{0}',
     menu: '【注文内容】',
-    menu_item: '{0} <span class="text-caption">({1}個)</span>',
+    menu_item: '{0} ({1}個)',
     total_price: '【支払い金額】{0}',
     event_payment: '【支払い方法】{0}',
     cancel_order: '参加注文をキャンセルする',

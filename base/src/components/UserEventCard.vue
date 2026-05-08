@@ -59,6 +59,9 @@ const groupedMenus = computed(() => {
   return Array.from(map.entries()).map(([menu_id, v]) => ({ menu_id, ...v }))
 })
 
+const formatOrderMenuLine = (menu: { menu_name: string; count: number }): string =>
+  menu.count === 1 ? menu.menu_name : t('user_event_card.menu_item', [menu.menu_name, menu.count])
+
 const totalPrice = computed(() =>
   props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + orderLineNet(o), 0),
 )
@@ -256,7 +259,7 @@ const submitCancel = () => {
       <v-card-text v-if="showOrderSummary" class="py-1 px-2 event-card">
         {{ $t('user_event_card.menu') }}
         <div class="ml-3">
-          <div v-for="menu in groupedMenus" :key="menu.menu_id">{{ menu.menu_name }} ×{{ menu.count }}</div>
+          <div v-for="menu in groupedMenus" :key="menu.menu_id">{{ formatOrderMenuLine(menu) }}</div>
         </div>
       </v-card-text>
       <v-card-text v-if="showOrderSummary" class="px-2 pt-1 pb-4 event-card">
