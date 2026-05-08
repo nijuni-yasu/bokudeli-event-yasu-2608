@@ -126,6 +126,9 @@ const stripeReceiptDateLabel = (stripeId: string): string | null => {
   return convertToDate(earliest)
 }
 
+/** キャンセルモーダル「注文日」。領収書ボタン付記と同じ convertToDate（yyyy/M/d、曜日・時刻なし） */
+const cancelDialogOrderDateLabel = (millis: number | null): string => (millis != null ? convertToDate(millis) : '')
+
 const receiptButtonLabel = (stripeId: string): string => {
   const base = t('user_event_card.download_invoice')
   if (stripeGroups.value.length === 1) return base
@@ -147,6 +150,7 @@ const eventPaymentLabelKey = computed(() =>
 type CancelDialogOrderedRow = {
   orderId: string
   menu_name: string
+  orderDateMillis: number | null
   line_net: number
   checked: boolean
 }
@@ -154,6 +158,7 @@ type CancelDialogOrderedRow = {
 type CancelDialogCanceledRow = {
   orderId: string
   menu_name: string
+  orderDateMillis: number | null
 }
 
 const cancelOrderedRows = ref<CancelDialogOrderedRow[]>([])
@@ -163,19 +168,27 @@ const initCancelDialogRows = () => {
   const ordered = props.orders
     .filter((o) => o.status === 'ordered')
     .sort((a, b) => getOrderTimestamp(a) - getOrderTimestamp(b))
-  cancelOrderedRows.value = ordered.map((o) => ({
-    orderId: o.id,
-    menu_name: o.menu_name,
-    line_net: orderLineNet(o),
-    checked: false,
-  }))
+  cancelOrderedRows.value = ordered.map((o) => {
+    const ts = getOrderTimestamp(o)
+    return {
+      orderId: o.id,
+      menu_name: o.menu_name,
+      orderDateMillis: ts > 0 ? ts : null,
+      line_net: orderLineNet(o),
+      checked: false,
+    }
+  })
   const canceled = props.orders
     .filter((o) => o.status === 'canceled')
     .sort((a, b) => getOrderTimestamp(a) - getOrderTimestamp(b))
-  cancelCanceledRows.value = canceled.map((o) => ({
-    orderId: o.id,
-    menu_name: o.menu_name,
-  }))
+  cancelCanceledRows.value = canceled.map((o) => {
+    const ts = getOrderTimestamp(o)
+    return {
+      orderId: o.id,
+      menu_name: o.menu_name,
+      orderDateMillis: ts > 0 ? ts : null,
+    }
+  })
 }
 
 const onOpenDialog = () => {
@@ -328,6 +341,9 @@ const submitCancel = () => {
           <div class="cancel-dialog-table__head text-medium-emphasis">
             <span />
             <span>{{ $t('user_event_card.cancel_dialog.column_menu') }}</span>
+            <span class="cancel-dialog-table__col-date">{{
+              $t('user_event_card.cancel_dialog.column_order_date')
+            }}</span>
             <span class="text-end">{{ $t('user_event_card.cancel_dialog.column_amount') }}</span>
           </div>
           <div v-for="row in cancelOrderedRows" :key="row.orderId" class="cancel-dialog-table__row">
@@ -339,6 +355,7 @@ const submitCancel = () => {
               :disabled="cancelLoading"
             />
             <span>{{ row.menu_name }}</span>
+            <span class="cancel-dialog-table__col-date">{{ cancelDialogOrderDateLabel(row.orderDateMillis) }}</span>
             <span class="text-end">{{ $n(row.line_net, 'currency') }}</span>
           </div>
           <div
@@ -348,6 +365,7 @@ const submitCancel = () => {
           >
             <span />
             <span>{{ row.menu_name }}</span>
+            <span class="cancel-dialog-table__col-date">{{ cancelDialogOrderDateLabel(row.orderDateMillis) }}</span>
             <span class="text-end">{{ $t('user_event_card.canceled') }}</span>
           </div>
         </div>
@@ -385,7 +403,7 @@ const submitCancel = () => {
 .cancel-dialog-table__head,
 .cancel-dialog-table__row {
   display: grid;
-  grid-template-columns: 2.75rem 1fr minmax(5.5rem, auto);
+  grid-template-columns: 2.75rem minmax(0, 1fr) minmax(7rem, auto) minmax(5.5rem, auto);
   column-gap: 0.5rem;
   align-items: center;
   min-height: 2.25rem;
