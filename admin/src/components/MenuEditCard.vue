@@ -129,10 +129,12 @@ const handleSubmit = () => {
           <v-col cols="12">
             <v-text-field
               type="number"
+              min="10"
+              max="100000"
               :prefix="$n(0, 'currency').replace('0', '')"
               v-model.number="price"
               :label="$t('menu_edit_card.price')"
-              :rules="[requiredValidator, (v: string) => betweenValidator(v, 100, 99999)]"
+              :rules="[requiredValidator, (v: string) => betweenValidator(v, 10, 100000)]"
             />
           </v-col>
         </v-row>

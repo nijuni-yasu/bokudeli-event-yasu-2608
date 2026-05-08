@@ -19,7 +19,7 @@ const PartnerMenuAppSchema = z.object({
   // Default
   menu_description: z.string().default(''),
   menu_name: z.string().default(''),
-  menu_price: z.number().int().positive().default(100),
+  menu_price: z.number().int().positive().default(1000),
   is_sold_out: z.boolean().default(false),
   menu_sort_number: z.number().int().nonnegative().default(0),
   // Optional
