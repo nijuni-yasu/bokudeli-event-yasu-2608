@@ -186,7 +186,7 @@ const createEventBillInvoice = async (
       throw new HttpsError('failed-precondition', '割引請求に必要なイベント設定がありません。運営に連絡してください。')
     }
     const offAmountYen = convertNumberToYen(billSettings.off_amount)
-    const discountSubsidySuffix = `（金額指定おごり 最大${offAmountYen}）`
+    const discountSubsidySuffix = `（最大${offAmountYen}おごり）`
     const groupLines = groupOrderedCommunityBillOffByAmount(orders)
     const subsidyTotal = sumOrderedCommunityBillOffAmount(orders)
     const detailRows = countDiscountInvoiceDetailRows(groupLines.length, isAfterCutoff)

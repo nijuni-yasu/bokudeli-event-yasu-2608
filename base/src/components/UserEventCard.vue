@@ -59,6 +59,9 @@ const groupedMenus = computed(() => {
   return Array.from(map.entries()).map(([menu_id, v]) => ({ menu_id, ...v }))
 })
 
+const formatOrderMenuLine = (menu: { menu_name: string; count: number }): string =>
+  menu.count === 1 ? menu.menu_name : t('user_event_card.menu_item', [menu.menu_name, menu.count])
+
 const totalPrice = computed(() =>
   props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + orderLineNet(o), 0),
 )
@@ -237,8 +240,8 @@ const submitCancel = () => {
     <v-card-text class="py-1 px-2 event-card">{{
       $t('user_event_card.event_payment', [$t(eventPaymentLabelKey)])
     }}</v-card-text>
-    <v-card-text v-if="ordersLoading" class="py-3 px-2 d-flex justify-center align-center">
-      <v-progress-circular indeterminate color="primary" size="28" width="2" />
+    <v-card-text v-if="ordersLoading" class="py-2 px-2">
+      <v-progress-linear indeterminate color="primary" rounded height="4" />
     </v-card-text>
     <v-card-text v-else-if="ordersError" class="py-2 px-2 event-card">
       <p class="text-body-2 text-error mb-2">{{ $t('user_event_card.orders_load_error') }}</p>
@@ -253,13 +256,13 @@ const submitCancel = () => {
       </v-btn>
     </v-card-text>
     <template v-else>
-      <v-card-text v-if="showOrderSummary" class="py-1 px-2 event-card">
+      <v-card-text v-if="showOrderSummary" class="py-1 px-2 event-card" :class="{ 'pb-4': !isOwner }">
         {{ $t('user_event_card.menu') }}
         <div class="ml-3">
-          <div v-for="menu in groupedMenus" :key="menu.menu_id">{{ menu.menu_name }} ×{{ menu.count }}</div>
+          <div v-for="menu in groupedMenus" :key="menu.menu_id">{{ formatOrderMenuLine(menu) }}</div>
         </div>
       </v-card-text>
-      <v-card-text v-if="showOrderSummary" class="px-2 pt-1 pb-4 event-card">
+      <v-card-text v-if="showOrderSummary && isOwner" class="px-2 pt-1 pb-4 event-card">
         {{ $t('user_event_card.total_price', [$n(totalPrice, 'currency')]) }}
       </v-card-text>
     </template>
