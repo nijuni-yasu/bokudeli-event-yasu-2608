@@ -136,6 +136,9 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     unsubscribePersonalInformation?.()
     unsubscribePersonalInformation = null
     personalInformation.value = null
+    unsubscribeOrders?.()
+    unsubscribeOrders = null
+    _cart.value = null
   }
 
   watch(
