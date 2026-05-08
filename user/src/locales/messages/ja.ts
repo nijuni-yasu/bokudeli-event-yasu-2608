@@ -566,6 +566,12 @@ export default {
     account_delete_complete_ok: 'トップページへ',
   },
   user_profile: {
+    my_page: 'マイページ',
+    profile_settings: 'プロフィール設定',
+    cart: 'カート',
+    add_to_home_screen: 'ホーム画面に追加',
+    contact: 'お問い合わせ',
+    logout_menu: 'ログアウト',
     logout: 'ログアウトする',
     logout_modal_title: 'ログアウトしますか？',
     account_deleted: 'このユーザーは利用できません',
