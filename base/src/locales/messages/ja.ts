@@ -463,6 +463,7 @@ export default {
       select_all: 'すべて選択',
       remaining: '残り {0} 個',
       column_menu: 'メニュー名',
+      column_order_date: '注文日',
       column_amount: '支払い金額',
       refund_total: '返金額 {0}',
     },
