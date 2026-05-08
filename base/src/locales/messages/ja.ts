@@ -642,4 +642,7 @@ export default {
     organizer_memo_missing: '配達受取場所が未入力です。',
     event_db_invalid: 'イベント情報に不足があります。各ステップの入力内容を確認してください。',
   },
+  user_profile: {
+    profile_settings: 'プロフィール設定',
+  },
 }

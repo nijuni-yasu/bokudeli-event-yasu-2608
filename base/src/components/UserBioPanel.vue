@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
-import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiCog, mdiWeb } from '@mdi/js'
+import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiPencil, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
+
+const { t: $t } = useI18n()
 
 const props = defineProps<{
   userData: User
@@ -71,7 +74,9 @@ const websiteUrl = computed(() =>
           {{ userDescription }}
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
-          <v-btn color="primary" class="mb-3" size="x-large" :prepend-icon="mdiCog" :to="getProfile()"> 設定 </v-btn>
+          <v-btn color="primary" class="mb-3" :prepend-icon="mdiPencil" :to="getProfile()">
+            {{ $t('user_profile.profile_settings') }}
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-col>

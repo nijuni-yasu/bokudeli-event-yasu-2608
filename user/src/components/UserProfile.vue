@@ -4,7 +4,14 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { mdiAccountOutline, mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiCog } from '@mdi/js'
+import {
+  mdiAccountOutline,
+  mdiCartOutline,
+  mdiLogout,
+  mdiEmailOutline,
+  mdiCellphoneArrowDown,
+  mdiPencil,
+} from '@mdi/js'
 import { getProfile } from '@/router/utils'
 
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
@@ -32,91 +39,83 @@ const logout = async () => {
 </script>
 
 <template>
-  <v-badge v-if="isLogin" dot location="bottom right" offset-x="3" offset-y="3" color="success">
-    <UserAvatar :user="user">
-      <!-- SECTION Menu -->
-      <v-menu activator="parent" width="230" location="bottom end" offset="14px">
-        <v-list>
-          <!-- 👉 User Avatar & Name -->
-          <v-list-item>
-            <template #prepend>
-              <v-list-item-action start>
-                <v-badge dot location="bottom right" offset-x="3" offset-y="3" color="success">
-                  <UserAvatar :user="user" />
-                </v-badge>
-              </v-list-item-action>
-            </template>
+  <UserAvatar v-if="isLogin" :user="user">
+    <!-- SECTION Menu -->
+    <v-menu activator="parent" width="230" location="bottom end" offset="14px">
+      <v-list>
+        <!-- 👉 User Avatar & Name -->
+        <v-list-item>
+          <template #prepend>
+            <v-list-item-action start>
+              <UserAvatar :user="user" />
+            </v-list-item-action>
+          </template>
 
-            <v-list-item-title class="font-weight-medium">{{ user?.user_name }}</v-list-item-title>
-          </v-list-item>
-          <v-divider class="my-2" />
+          <v-list-item-title class="font-weight-medium">{{ user?.user_name }}</v-list-item-title>
+        </v-list-item>
+        <v-divider class="my-2" />
 
-          <!-- 👉 Profile -->
-          <v-list-item :to="`/mypage`">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
-            </template>
-            <v-list-item-title>マイページ</v-list-item-title>
-          </v-list-item>
+        <!-- 👉 Profile -->
+        <v-list-item :to="`/mypage`">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.my_page') }}</v-list-item-title>
+        </v-list-item>
 
-          <!-- Divider -->
-          <v-divider class="my-2" />
+        <v-divider class="my-2" />
 
-          <!-- 👉 cart -->
-          <v-list-item :to="`/cart`">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
-            </template>
-            <v-list-item-title>カート</v-list-item-title>
-          </v-list-item>
-          <!-- Divider -->
-          <v-divider class="my-2" />
+        <!-- 👉 Profile settings -->
+        <v-list-item :to="getProfile()">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiPencil" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.profile_settings') }}</v-list-item-title>
+        </v-list-item>
 
-          <!-- 👉 howto -->
-          <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
-            </template>
-            <v-list-item-title>お問い合わせ</v-list-item-title>
-          </v-list-item>
+        <v-divider class="my-2" />
 
-          <!-- Divider -->
-          <v-divider class="my-2" />
+        <!-- 👉 cart -->
+        <v-list-item :to="`/cart`">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.cart') }}</v-list-item-title>
+        </v-list-item>
 
-          <!-- 👉 Profile settings -->
-          <v-list-item :to="getProfile()">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiCog" size="22" />
-            </template>
-            <v-list-item-title>設定</v-list-item-title>
-          </v-list-item>
+        <v-divider class="my-2" />
 
-          <!-- Divider -->
-          <v-divider class="my-2" />
+        <!-- 👉 homebutton -->
+        <v-list-item @click="isOpenHomeButtonDialog = true">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiCellphoneArrowDown" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.add_to_home_screen') }}</v-list-item-title>
+        </v-list-item>
 
-          <!-- 👉 homebutton -->
-          <v-list-item @click="isOpenHomeButtonDialog = true">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiCellphoneArrowDown" size="22" />
-            </template>
-            <v-list-item-title>ホーム画面に追加</v-list-item-title>
-          </v-list-item>
+        <v-divider class="my-2" />
 
-          <!-- Divider -->
-          <v-divider class="my-2" />
+        <!-- 👉 contact -->
+        <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.contact') }}</v-list-item-title>
+        </v-list-item>
 
-          <!-- 👉 Logout -->
-          <v-list-item @click="handleLogoutDialog()">
-            <template #prepend>
-              <v-icon class="me-2" :icon="mdiLogout" size="22" />
-            </template>
-            <v-list-item-title>ログアウト</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-      <!-- !SECTION -->
-    </UserAvatar>
-  </v-badge>
+        <v-divider class="my-2" />
+
+        <!-- 👉 Logout -->
+        <v-list-item @click="handleLogoutDialog()">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiLogout" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.logout_menu') }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+    <!-- !SECTION -->
+  </UserAvatar>
   <confirm-dialog
     v-model="isOpenLogoutDialog"
     :is-confirm="true"
