@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { defineAsyncComponent } from 'vue'
-import { mdiPartyPopper } from '@mdi/js'
+import { storeToRefs } from 'pinia'
+import { mdiCartOutline, mdiPartyPopper } from '@mdi/js'
 import { useConfigStore } from '@core/stores/config'
 import { useSkins } from '@core/composable/useSkins'
 import { AppContentLayoutNav } from '@layouts/enums'
@@ -11,6 +12,7 @@ import { useNavItems } from '@/navigation'
 import type { Notification } from '@shokujii/base/types/index.js'
 import { getManagePath, getManageNewCommunityPath, getLogin } from '@/router/utils'
 import { hasManagedCommunity } from '@shokujii/base/stores/community.js'
+import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useRouter } from 'vue-router'
 import { getAuth, type User } from 'firebase/auth'
 
@@ -62,6 +64,10 @@ const handleEventHostClick = async () => {
   const hasCommunity = await hasManagedCommunity(uid)
   router.push(hasCommunity ? getManagePath() : getManageNewCommunityPath())
 }
+
+const { cart } = storeToRefs(useCurrentUserStore())
+const cartMenuCount = computed(() => cart.value?.reduce((sum, item) => sum + item.orders.length, 0) ?? 0)
+const cartBadgeContent = computed(() => (cartMenuCount.value > 0 ? String(cartMenuCount.value) : ''))
 </script>
 
 <template>
@@ -86,6 +92,18 @@ const handleEventHostClick = async () => {
       <v-btn v-else class="me-4" variant="outlined" :to="getLogin()">
         {{ $t('navigation.login') }}
       </v-btn>
+      <v-badge
+        v-if="currentUser != null"
+        :model-value="cartMenuCount > 0"
+        :content="cartBadgeContent"
+        color="primary"
+        location="top end"
+        offset-x="6"
+        offset-y="6"
+        class="me-3"
+      >
+        <v-btn variant="text" to="/cart" :aria-label="$t('user_profile.cart')" :icon="mdiCartOutline" />
+      </v-badge>
       <UserProfile />
     </template>
     <template #footer>
