@@ -8,13 +8,15 @@ import { doc, orderBy, where } from 'firebase/firestore'
 import { mdiContentCopy, mdiMenuDown, mdiPlus, mdiHelp } from '@mdi/js'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { useDisplay } from 'vuetify'
+import { useI18n } from 'vue-i18n'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import CopyEventDialog from '@/components/manage/community/CopyEventDialog.vue'
+import CopyEventDialog, { type CopyEventSuccessPayload } from '@/components/manage/community/CopyEventDialog.vue'
 
 const router = useRouter()
 const display = useDisplay()
+const { t: $t } = useI18n()
 
 const numOfColumns = computed(() => {
   switch (display.name.value) {
@@ -81,15 +83,29 @@ const isOpenCopyDialog = ref(false)
 const isOpenCopyCompleteDialog = ref(false)
 const isOpenCopyErrorDialog = ref(false)
 const copiedEventId = ref<string | null>(null)
+const copyCompleteTitle = ref('')
 
-const handleCopySuccess = (newEventId: string) => {
-  copiedEventId.value = newEventId
-  isOpenCopyCompleteDialog.value = true
+const handleCopySuccess = (payload: CopyEventSuccessPayload) => {
   eventListStore.value.reload()
+  if (payload.mode === 'single') {
+    copiedEventId.value = payload.newEventId
+    copyCompleteTitle.value = $t('manage.copy_event_modal.complete')
+  } else {
+    copiedEventId.value = null
+    if (payload.failureCount === 0) {
+      copyCompleteTitle.value = $t('manage.copy_event_modal.success_multiple', { count: payload.successCount })
+    } else {
+      copyCompleteTitle.value = $t('manage.copy_event_modal.success_partial', {
+        success: payload.successCount,
+        failure: payload.failureCount,
+      })
+    }
+  }
+  isOpenCopyCompleteDialog.value = true
 }
 
 const handleCopyCompleteOk = () => {
-  if (copiedEventId.value) {
+  if (copiedEventId.value != null) {
     router.push(getManageEventPath(copiedEventId.value))
   }
 }
@@ -180,7 +196,7 @@ const handleCopyError = () => {
   />
   <ConfirmDialog
     v-model="isOpenCopyCompleteDialog"
-    :title="$t('manage.copy_event_modal.complete')"
+    :title="copyCompleteTitle"
     ok-text="OK"
     :ok-click="handleCopyCompleteOk"
     max-width="500px"
