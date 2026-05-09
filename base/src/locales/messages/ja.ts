@@ -573,7 +573,7 @@ export default {
     status: 'ステータス',
     edit: '編集',
     delete: '削除',
-    copy: '複製',
+    copy: 'コピー',
   },
   email_dialog: {
     title: '個人宛レター',
