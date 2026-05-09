@@ -19,7 +19,6 @@ import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
-import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
 import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
@@ -239,11 +238,6 @@ onUnmounted(() => {
           <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
           <v-spacer />
           <EventStatusChip :status="event.calculatedEventStatus" size="large" />
-          <EventDiscountChip
-            v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
-            :settings="event.community_bill_settings"
-            size="large"
-          />
           <v-chip v-if="!event.is_public" color="primary" size="large">
             {{ $t('private_event') }}
           </v-chip>

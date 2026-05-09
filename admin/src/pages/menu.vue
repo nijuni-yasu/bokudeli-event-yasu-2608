@@ -8,7 +8,8 @@ import { mdiPlus, mdiClose } from '@mdi/js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { VueDraggableNext as draggable } from 'vue-draggable-next'
 
-const DEFAULT_IMAGE_URL = '/deli_example.png'
+/** メニュー 0 件時のプレビュー用（新規作成ダイアログには使わない） */
+const EXAMPLE_MENU_IMAGE_URL = '/deli_example.png'
 
 const notification = useNotification()
 
@@ -145,7 +146,7 @@ const saveSortOrder = async () => {
           <MenuCard
             class="menu-card clickable draggable-item"
             :menu="menu"
-            :image-url="partnerStore.menuImageUrls.get(menu.menu_id) ?? DEFAULT_IMAGE_URL"
+            :image-url="partnerStore.menuImageUrls.get(menu.menu_id) ?? ''"
             @click="openDialog(menu)"
           >
             <v-btn
@@ -160,7 +161,7 @@ const saveSortOrder = async () => {
       </draggable>
       <v-row>
         <v-col v-if="menus.length === 0" cols="12" sm="6" md="4" lg="3">
-          <MenuCard class="menu-card" :menu="example" :image-url="DEFAULT_IMAGE_URL" />
+          <MenuCard class="menu-card" :menu="example" :image-url="EXAMPLE_MENU_IMAGE_URL" />
         </v-col>
       </v-row>
     </v-col>
@@ -168,7 +169,7 @@ const saveSortOrder = async () => {
   <v-dialog v-if="targetMenu != null" v-model="dialog" max-width="600px">
     <MenuEditCard
       v-model="targetMenu"
-      :image-url="partnerStore.menuImageUrls.get(targetMenu.menu_id) ?? DEFAULT_IMAGE_URL"
+      :image-url="partnerStore.menuImageUrls.get(targetMenu.menu_id) ?? ''"
       @save="
         (menu, imageFile) => {
           ;(saveMenu(menu, imageFile), (dialog = false))

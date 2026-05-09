@@ -6,9 +6,9 @@ import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder
 import { computeOrderLineNet } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 import { convertToDate } from '@shokujii/common/utils/datetime.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
+import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import { convertStoragePathToURL } from '../utils/storage'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
-import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 
 const props = defineProps<{
   event: BokudeliEvent
@@ -228,11 +228,6 @@ const submitCancel = () => {
     />
     <div class="d-flex align-center flex-wrap ga-2 mt-2 ml-3">
       <EventStatusChip :status="event.calculatedEventStatus" size="small" />
-      <EventDiscountChip
-        v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
-        :settings="event.community_bill_settings"
-        size="small"
-      />
       <v-chip v-if="!event.is_public" color="primary" size="small">
         {{ $t('private_event') }}
       </v-chip>
@@ -334,6 +329,14 @@ const submitCancel = () => {
                 $d(event.event_deadline_datetime, 'datetime_weekday_short'),
               ])
             }}
+          </div>
+          <div class="d-flex align-center flex-wrap ga-2">
+            <span>{{ $t('user_event_card.event_payment', [$t(eventPaymentLabelKey)]) }}</span>
+            <EventDiscountChip
+              v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
+              :settings="event.community_bill_settings"
+              size="small"
+            />
           </div>
         </div>
 

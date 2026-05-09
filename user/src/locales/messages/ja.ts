@@ -442,10 +442,12 @@ export default {
     },
     invoice: {
       date: '開催日',
-      place: '開催場所',
+      status: 'ステータス',
       event_name: 'イベント名',
+      oge_amount: 'おごり金額',
       price: '請求金額',
-      download: 'ダウンロード',
+      download: '請求書',
+      download_invoice: '請求書をダウンロード',
       error: '請求書の取得に失敗しました',
       title: '主催者請求書払い📃',
       description: `イベント設定画面で<b>「主催者請求書払い」</b>を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文いただけます。<br />

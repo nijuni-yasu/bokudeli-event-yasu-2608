@@ -24,7 +24,7 @@ function groupOrderedMenus(orders: EventMemberOrder[]): [string, { name: string;
 </script>
 <template>
   <section>
-    <v-card-text class="text-left px-5">
+    <v-card-text class="text-left">
       <v-row v-if="isShowMember === true">
         <v-col v-for="member in members" :key="member.user_id" class="d-flex justify-start pa-2" cols="6" sm="6" md="4">
           <router-link

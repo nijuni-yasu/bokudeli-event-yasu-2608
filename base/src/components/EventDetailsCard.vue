@@ -304,32 +304,32 @@ const isShowMember = computed(() =>
           <tiny-m-c-e-viewer :content="event.event_desc" class="event-content" />
         </v-card-text>
 
-        <div class="mt-6 mb-6">
-          <v-row class="px-5 d-flex align-center">
-            <v-card-text class="text-h4 font-weight-black pb-3">
-              {{ $t('event_details.participants') }}
-              <span class="text-h5"> {{ members.length }} / {{ event.event_max_people }} </span>
-            </v-card-text>
-            <v-spacer />
-            <v-col v-if="members.length > 0" cols="auto">
-              <div v-if="isShowMember === true">
-                <router-link :to="{ path: `${event.event_id}/members` }">
-                  <div class="d-flex align-end">
-                    <v-icon size="large" :icon="mdiAccountGroup" />
-                    <span class="ml-2" style="font-size: 16px">
-                      {{ $t('event_details.participants_profile') }}
-                    </span>
-                  </div>
-                </router-link>
-              </div>
-              <div v-else-if="isShowMember === false">
-                <v-card-text class="text-subtitle-2 text-right pb-3">
+        <div class="mb-6">
+          <v-card-text class="mt-6 pb-3">
+            <div class="d-flex align-center flex-wrap ga-2">
+              <span class="text-h4 font-weight-black">
+                {{ $t('event_details.participants') }}
+                <span class="text-h5"> {{ members.length }} / {{ event.event_max_people }} </span>
+              </span>
+              <v-spacer />
+              <template v-if="members.length > 0">
+                <div v-if="isShowMember === true">
+                  <router-link :to="{ path: `${event.event_id}/members` }">
+                    <div class="d-flex align-end">
+                      <v-icon size="large" :icon="mdiAccountGroup" />
+                      <span class="ml-2" style="font-size: 16px">
+                        {{ $t('event_details.participants_profile') }}
+                      </span>
+                    </div>
+                  </router-link>
+                </div>
+                <div v-else-if="isShowMember === false" class="text-subtitle-2 text-right text-medium-emphasis">
                   {{ $t('event_details.participants_profile_hidden') }}
-                </v-card-text>
-              </div>
-            </v-col>
-          </v-row>
-          <v-divider class="custom-divider mt-2 mb-3" />
+                </div>
+              </template>
+            </div>
+          </v-card-text>
+          <v-divider class="custom-divider mt-0 mb-2" />
           <event-member-list
             v-if="members.length > 0"
             :members="members"

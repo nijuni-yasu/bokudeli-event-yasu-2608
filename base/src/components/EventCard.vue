@@ -4,7 +4,6 @@ import { type BokudeliEvent, type BokudeliEventMember, useEventStore } from '@sh
 import UserAvatar from './UserAvatar.vue'
 import { useDisplay } from 'vuetify'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
-import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 
 const props = defineProps<{ event: BokudeliEvent; members?: BokudeliEventMember[] }>()
 const eventStore = useEventStore(props.event.event_id)
@@ -30,12 +29,6 @@ const avatarSize = computed(() => {
       <VImg cover class="mx-auto" aspect-ratio="1.91" :src="eventStore.coverImageUrl" />
     </div>
     <EventStatusChip :status="event.calculatedEventStatus" size="x-small" class="mt-2 ml-2" />
-    <EventDiscountChip
-      v-if="event.event_payment === 'community_bill' && event.community_bill_settings != null"
-      :settings="event.community_bill_settings"
-      size="x-small"
-      class="mt-2 ml-2"
-    />
     <v-card-title class="event-card__title-outer px-3 py-1">
       <div class="event-card__event-name text-lg font-weight-semibold text-sm-body-1 w-100">
         {{ event.event_name }}
