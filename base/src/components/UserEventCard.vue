@@ -151,6 +151,9 @@ type CancelDialogOrderedRow = {
   orderId: string
   menu_name: string
   orderDateMillis: number | null
+  /** メニュー価格（税込想定の単価） */
+  menu_price: number
+  /** 参加者支払額（community_bill 時は menu_price - 主催者負担相当） */
   line_net: number
   checked: boolean
 }
@@ -159,6 +162,7 @@ type CancelDialogCanceledRow = {
   orderId: string
   menu_name: string
   orderDateMillis: number | null
+  menu_price: number
 }
 
 const cancelOrderedRows = ref<CancelDialogOrderedRow[]>([])
@@ -174,6 +178,7 @@ const initCancelDialogRows = () => {
       orderId: o.id,
       menu_name: o.menu_name,
       orderDateMillis: ts > 0 ? ts : null,
+      menu_price: o.menu_price,
       line_net: orderLineNet(o),
       checked: false,
     }
@@ -187,6 +192,7 @@ const initCancelDialogRows = () => {
       orderId: o.id,
       menu_name: o.menu_name,
       orderDateMillis: ts > 0 ? ts : null,
+      menu_price: o.menu_price,
     }
   })
 }
@@ -211,6 +217,9 @@ const canSubmit = computed(
 const cancelRefundAmount = computed(() =>
   cancelOrderedRows.value.filter((r) => r.checked).reduce((sum, r) => sum + r.line_net, 0),
 )
+
+/** 主催者請求書払いではメニュー金額と参加者支払額を分けて表示 */
+const showCancelPaymentColumn = computed(() => props.event.event_payment === 'community_bill')
 
 const submitCancel = () => {
   if (!canSubmit.value) return
@@ -302,7 +311,7 @@ const submitCancel = () => {
     </v-card-text>
   </v-card>
 
-  <v-dialog v-model="cancelDialogOpen" :persistent="cancelLoading" max-width="600px">
+  <v-dialog v-model="cancelDialogOpen" :persistent="cancelLoading" max-width="750px">
     <v-card class="pa-5">
       <v-card-title class="py-6 px-6 text-wrap text-h4">
         {{ $t('user_event_card.cancel_dialog.title') }}
@@ -340,14 +349,20 @@ const submitCancel = () => {
           </div>
         </div>
 
-        <div class="cancel-dialog-table text-body-1 pa-5">
+        <div
+          class="cancel-dialog-table text-body-1 pa-5"
+          :class="{ 'cancel-dialog-table--show-payment': showCancelPaymentColumn }"
+        >
           <div class="cancel-dialog-table__head text-medium-emphasis">
             <span />
             <span>{{ $t('user_event_card.cancel_dialog.column_menu') }}</span>
             <span class="cancel-dialog-table__col-date">{{
               $t('user_event_card.cancel_dialog.column_order_date')
             }}</span>
-            <span class="text-end">{{ $t('user_event_card.cancel_dialog.column_amount') }}</span>
+            <span class="text-end">{{ $t('user_event_card.cancel_dialog.column_menu_price') }}</span>
+            <span v-if="showCancelPaymentColumn" class="text-end">{{
+              $t('user_event_card.cancel_dialog.column_amount')
+            }}</span>
           </div>
           <div v-for="row in cancelOrderedRows" :key="row.orderId" class="cancel-dialog-table__row">
             <v-checkbox
@@ -359,7 +374,8 @@ const submitCancel = () => {
             />
             <span>{{ row.menu_name }}</span>
             <span class="cancel-dialog-table__col-date">{{ cancelDialogOrderDateLabel(row.orderDateMillis) }}</span>
-            <span class="text-end">{{ $n(row.line_net, 'currency') }}</span>
+            <span class="text-end">{{ $n(row.menu_price, 'currency') }}</span>
+            <span v-if="showCancelPaymentColumn" class="text-end">{{ $n(row.line_net, 'currency') }}</span>
           </div>
           <div
             v-for="row in cancelCanceledRows"
@@ -369,7 +385,11 @@ const submitCancel = () => {
             <span />
             <span>{{ row.menu_name }}</span>
             <span class="cancel-dialog-table__col-date">{{ cancelDialogOrderDateLabel(row.orderDateMillis) }}</span>
-            <span class="text-end">{{ $t('user_event_card.canceled') }}</span>
+            <template v-if="showCancelPaymentColumn">
+              <span class="text-end">{{ $n(row.menu_price, 'currency') }}</span>
+              <span class="text-end">{{ $t('user_event_card.canceled') }}</span>
+            </template>
+            <span v-else class="text-end">{{ $t('user_event_card.canceled') }}</span>
           </div>
         </div>
 
@@ -410,6 +430,11 @@ const submitCancel = () => {
   column-gap: 0.5rem;
   align-items: center;
   min-height: 2.25rem;
+}
+
+.cancel-dialog-table--show-payment .cancel-dialog-table__head,
+.cancel-dialog-table--show-payment .cancel-dialog-table__row {
+  grid-template-columns: 2.75rem minmax(0, 1fr) minmax(7rem, auto) minmax(5.5rem, auto) minmax(5.5rem, auto);
 }
 
 .cancel-dialog-table__head {
