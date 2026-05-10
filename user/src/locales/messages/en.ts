@@ -9,6 +9,8 @@ export default {
     friend_empty: 'No friends yet. Join events to meet more people.',
     friend_empty_other: '{name} has no friends yet.',
     friend_empty_cta: 'Explore events',
+    friend_profile_link_label: '{name} profile',
+    friend_meet_log_event_unavailable: '(Event is unavailable or deleted)',
   },
   user_profile: {
     user_not_found: 'This user does not exist.',

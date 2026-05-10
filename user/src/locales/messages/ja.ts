@@ -42,6 +42,8 @@ export default {
     friend_empty: 'まだ「ともだち」がいません。食事会に参加して仲間を見つけましょう。',
     friend_empty_other: '{name} さんにはまだ「ともだち」がいません。',
     friend_empty_cta: 'イベントを探す',
+    friend_profile_link_label: '{name}さんのプロフィールへ',
+    friend_meet_log_event_unavailable: '（公開されていない、または削除されたイベント）',
     event_create: 'イベント新規作成',
     community_management: 'コミュニティ管理画面',
     community_create: 'コミュニティを作る',

@@ -259,6 +259,50 @@ export const getEventInCommunity = async (
   return snapshot.exists ? snapshot.data() : undefined
 }
 
+/** `getEventsInCommunities` の結果キー: `community_id\tevent_id` */
+const buildCommunityEventKey = (communityId: string, eventId: string): string => `${communityId}\t${eventId}`
+
+export const getCommunityEventKey = buildCommunityEventKey
+
+/**
+ * `communities/{communityId}/events/{eventId}` を一括取得する。
+ * 大量参照時は Firestore の getAll の上限を考慮して 100 件単位でチャンクする。
+ * 戻り値のキーは `getCommunityEventKey(communityId, eventId)`。存在しないものは含めない。
+ */
+export const getEventsInCommunities = async (
+  refs: readonly { community_id: string; event_id: string }[],
+): Promise<Map<string, ShokujiiEvent>> => {
+  const result = new Map<string, ShokujiiEvent>()
+  if (refs.length === 0) {
+    return result
+  }
+  const db = getFirestore()
+  const converter = new ShokujiiEventConverter()
+  const uniqueRefs = Array.from(
+    new Map(refs.map((r) => [buildCommunityEventKey(r.community_id, r.event_id), r])).values(),
+  )
+
+  const CHUNK_SIZE = 100
+  for (let i = 0; i < uniqueRefs.length; i += CHUNK_SIZE) {
+    const chunk = uniqueRefs.slice(i, i + CHUNK_SIZE)
+    const docRefs = chunk.map((r) =>
+      db.collection('communities').doc(r.community_id).collection('events').doc(r.event_id).withConverter(converter),
+    )
+    const snapshots = await db.getAll(...docRefs)
+    snapshots.forEach((snapshot) => {
+      if (!snapshot.exists) {
+        return
+      }
+      const data = snapshot.data() as ShokujiiEvent | undefined
+      if (data == null) {
+        return
+      }
+      result.set(buildCommunityEventKey(data.community_id, data.id), data)
+    })
+  }
+  return result
+}
+
 export const saveEvent = async (userId: string, event: ShokujiiEvent, transaction?: Transaction): Promise<void> => {
   const db = getFirestore()
   const eventRef = db
