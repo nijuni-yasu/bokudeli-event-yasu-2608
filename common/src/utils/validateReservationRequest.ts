@@ -1,12 +1,11 @@
-import { DateTime } from 'luxon'
 import { Event, EventDbSchema, ReservationRequiredSchema, convertEventToDb } from '../schemas/Event.js'
 import { EventMenu } from '../schemas/EventMenu.js'
 import { PartnerShop } from '../schemas/PartnerShop.js'
 import { User } from '../schemas/User.js'
 import { UserPersonalInformation } from '../schemas/UserPersonalInformation.js'
-import { DEFAULT_TIME_ZONE, isInShopTime } from './datetime.js'
+import { isInShopTime } from './datetime.js'
 import { EventLocationLatLng, isPartnerShopIdInDeliveryRange } from './partnerShopDeliverable.js'
-import { EVENT_RESERVATION_LEAD_TIME_DAYS } from '../constants/eventReservation.js'
+import { getReservationLeadTimeMinMillis } from './reservationLeadTime.js'
 
 /**
  * 予約申請バリデーションの不合格理由コード。
@@ -90,10 +89,7 @@ function validateEventStart(eventStartMillis: number, nowMillis: number, reasons
     reasons.add('EVENT_START_PAST')
     return
   }
-  const leadTimeMin = DateTime.fromMillis(nowMillis, { zone: DEFAULT_TIME_ZONE })
-    .startOf('day')
-    .plus({ days: EVENT_RESERVATION_LEAD_TIME_DAYS })
-    .toMillis()
+  const leadTimeMin = getReservationLeadTimeMinMillis(nowMillis)
   if (eventStartMillis < leadTimeMin) {
     reasons.add('EVENT_START_LEAD_TIME')
   }

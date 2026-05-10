@@ -1,7 +1,8 @@
 import { getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import type { EventCopyRequest, EventCopyResponse } from '@shokujii/common/apis/eventCopy.js'
-import { isInShopTime } from '@shokujii/common/utils/datetime.js'
+import type { PartnerShop } from '@shokujii/common/schemas/PartnerShop.js'
+import { formatCopyEventDateSuffix, isInShopTime } from '@shokujii/common/utils/datetime.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { getConfigGlobal } from './stores/config.js'
 import { getCommunity } from './stores/community.js'
@@ -20,46 +21,16 @@ const copyEventImage = async (srcEvent: ShokujiiEvent, newEventId: string) => {
   return await bucket.file(srcPath).copy(destPath)
 }
 
-export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError('unauthenticated', 'User must be logged in')
-  }
-  const { uid } = request.auth
-  const { srcEventId, startTime } = request.data
-
-  // 入力バリデーション
-  if (typeof srcEventId !== 'string' || srcEventId.trim() === '') {
-    throw new HttpsError('invalid-argument', 'srcEventId must be a non-empty string')
-  }
-  if (typeof startTime !== 'number' || !Number.isFinite(startTime)) {
-    throw new HttpsError('invalid-argument', 'startTime must be a valid number')
-  }
-
-  const srcEvent = await getEvent(srcEventId)
-  if (srcEvent === undefined) {
-    throw new HttpsError('not-found', 'Event not found')
-  }
-  const [community, partner, config] = await Promise.all([
-    getCommunity(srcEvent.community_id),
-    getPartner(srcEvent.partner_id),
-    getConfigGlobal(),
-  ])
-  const isSupport = config?.isSupport(uid) ?? false
-  const isManager = community != null && (await community.hasRole(uid, 'manager'))
-  if (!isSupport && !isManager) {
-    throw new HttpsError('permission-denied', 'Forbidden')
-  }
-  // 親 communities が無い孤児イベントをコピーしない（サポート経路含む）
-  if (community == null) {
-    throw new HttpsError('not-found', 'Community not found')
-  }
-  if (partner === undefined) {
-    throw new HttpsError('not-found', 'Partner not found')
-  }
-  const shop = await partner.getShop(srcEvent.shop_id)
-  if (shop === undefined) {
-    throw new HttpsError('not-found', 'Shop not found')
-  }
+/**
+ * 認証・権限チェック済みのコンテキストで 1 件イベントをコピーする。
+ * eventCopy / eventCopyRepeat から利用する。
+ */
+export const copyEventCore = async (
+  uid: string,
+  srcEvent: ShokujiiEvent,
+  shop: PartnerShop,
+  startTime: number,
+): Promise<{ newEventId: string }> => {
   if (!isInShopTime(startTime, shop)) {
     throw new HttpsError('invalid-argument', 'Event time is not in shop time')
   }
@@ -95,7 +66,7 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
     subdomain_tags: srcEvent.subdomain_tags,
 
     // 更新するもの
-    event_name: `${srcEvent.event_name} (Copy)`, // TODO: multilang
+    event_name: `${srcEvent.event_name} ${formatCopyEventDateSuffix(startTime)}`, // TODO: multilang
     event_status: {
       value: 'in_draft',
       shop_comment: '',
@@ -110,7 +81,6 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
     updated_by: uid,
   })
 
-  // 画像をコピー
   try {
     await copyEventImage(srcEvent, newEvent.id)
   } catch (error) {
@@ -119,7 +89,6 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
 
   await saveEvent(uid, newEvent)
 
-  // コピー元EventMenuのis_selected状態を引き継いで新規イベントにメニューをコピー
   const srcEventMenus = await srcEvent.getMenus()
   const selectedMenuIds = srcEventMenus.filter((m) => m.is_selected).map((m) => m.menu_id)
   await savePartnerMenusToEventMenus(
@@ -132,5 +101,50 @@ export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(as
 
   return {
     newEventId: newEvent.id,
+  }
+}
+
+export const eventCopy = onCall<EventCopyRequest, Promise<EventCopyResponse>>(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'User must be logged in')
+  }
+  const { uid } = request.auth
+  const { srcEventId, startTime } = request.data
+
+  if (typeof srcEventId !== 'string' || srcEventId.trim() === '') {
+    throw new HttpsError('invalid-argument', 'srcEventId must be a non-empty string')
+  }
+  if (typeof startTime !== 'number' || !Number.isFinite(startTime)) {
+    throw new HttpsError('invalid-argument', 'startTime must be a valid number')
+  }
+
+  const srcEvent = await getEvent(srcEventId)
+  if (srcEvent === undefined) {
+    throw new HttpsError('not-found', 'Event not found')
+  }
+  const [community, partner, config] = await Promise.all([
+    getCommunity(srcEvent.community_id),
+    getPartner(srcEvent.partner_id),
+    getConfigGlobal(),
+  ])
+  const isSupport = config?.isSupport(uid) ?? false
+  const isManager = community != null && (await community.hasRole(uid, 'manager'))
+  if (!isSupport && !isManager) {
+    throw new HttpsError('permission-denied', 'Forbidden')
+  }
+  if (community == null) {
+    throw new HttpsError('not-found', 'Community not found')
+  }
+  if (partner === undefined) {
+    throw new HttpsError('not-found', 'Partner not found')
+  }
+  const shop = await partner.getShop(srcEvent.shop_id)
+  if (shop === undefined) {
+    throw new HttpsError('not-found', 'Shop not found')
+  }
+
+  const { newEventId } = await copyEventCore(uid, srcEvent, shop, startTime)
+  return {
+    newEventId,
   }
 })
