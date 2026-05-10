@@ -57,8 +57,8 @@ const targetDateTime = ref<number | null>(null)
 const repeatStartDateTime = ref<number | null>(null)
 
 const repeatInterval = ref(1)
-const repeatUnit = ref<'day' | 'week' | 'month' | 'year'>('week')
-const monthlyPattern = ref<'date' | 'weekday'>('date')
+const repeatUnit = ref<'day' | 'week' | 'month' | 'year'>('month')
+const monthlyPattern = ref<'date' | 'weekday'>('weekday')
 const repeatCount = ref(4)
 
 const MAX_REPEAT_COUNT = 12
@@ -145,8 +145,24 @@ const selectedShop = computed<BokudeliPartnerShop | null | undefined>(() => {
 const INITIAL_CANDIDATE_DAYS_AHEAD = 14
 const MAX_SEARCH_DAYS = 7
 
+/** 一覧先頭の自動提案（個別ページで開くときは initialSourceEvent があるため無効） */
+const suggestFirstFromEventList = computed(() => dialog.value === true && props.initialSourceEvent == null)
+
+function onSuggestFirstFromList(event: BokudeliEvent) {
+  if (props.initialSourceEvent != null) {
+    return
+  }
+  if (selectedEvent.value != null) {
+    return
+  }
+  selectedEvent.value = event
+}
+
 watch(dialog, (isOpen) => {
-  if (isOpen && props.initialSourceEvent != null) {
+  if (!isOpen) {
+    return
+  }
+  if (props.initialSourceEvent != null) {
     selectedEvent.value = props.initialSourceEvent
   }
 })
@@ -343,8 +359,8 @@ const closeDialog = () => {
   repeatStartDateTime.value = null
   copyType.value = 'single'
   repeatInterval.value = 1
-  repeatUnit.value = 'week'
-  monthlyPattern.value = 'date'
+  repeatUnit.value = 'month'
+  monthlyPattern.value = 'weekday'
   repeatCount.value = 4
   dialog.value = false
 }
@@ -382,7 +398,9 @@ const closeDialog = () => {
               <EventList
                 :community-account="communityAccount"
                 :selected-event-id="selectedEvent?.event_id"
+                :suggest-first="suggestFirstFromEventList"
                 @click="handleEventClick"
+                @suggest-first="onSuggestFirstFromList"
               />
             </div>
           </div>
@@ -493,8 +511,8 @@ const closeDialog = () => {
               {{ $t('manage.copy_event_modal.hint_monthly_pattern') }}
             </p>
             <v-radio-group v-model="monthlyPattern" class="mt-0" hide-details>
-              <v-radio :label="$t('manage.copy_event_modal.monthly_pattern_date')" value="date" class="mb-1" />
-              <v-radio :label="$t('manage.copy_event_modal.monthly_pattern_weekday')" value="weekday" />
+              <v-radio :label="$t('manage.copy_event_modal.monthly_pattern_weekday')" value="weekday" class="mb-1" />
+              <v-radio :label="$t('manage.copy_event_modal.monthly_pattern_date')" value="date" />
             </v-radio-group>
           </v-sheet>
 

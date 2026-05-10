@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import IncrementalLoader from './IncrementalLoader.vue'
 import EventStatusChip from './EventStatusChip.vue'
@@ -9,10 +9,12 @@ import { orderBy, where } from 'firebase/firestore'
 const props = defineProps<{
   communityAccount: string
   selectedEventId?: string | null
+  suggestFirst?: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   click: [BokudeliEvent]
+  suggestFirst: [BokudeliEvent]
 }>()
 
 const eventListStore = useEventListStore(
@@ -39,6 +41,20 @@ const eventCoverUrls = computed(() => {
   })
   return map
 })
+
+watch(
+  () => [props.suggestFirst === true, events.value] as const,
+  ([suggest, list]) => {
+    if (!suggest || list.length === 0) {
+      return
+    }
+    const first = list[0]
+    if (first != null) {
+      emit('suggestFirst', first)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
