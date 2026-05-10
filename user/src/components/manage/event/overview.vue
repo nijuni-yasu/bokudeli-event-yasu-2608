@@ -2,22 +2,59 @@
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import CopyEventDialog, { type CopyEventSuccessPayload } from '@/components/manage/community/CopyEventDialog.vue'
 import {
   getEventEditPathByRawStatus,
   getEventPath,
   getManageCommunityPath,
   getManageCommunityInvoicePath,
+  getManageEventPath,
 } from '@/router/utils'
-import { mdiPencil, mdiDelete, mdiFilePdfBox } from '@mdi/js'
+import { mdiPencil, mdiDelete, mdiFilePdfBox, mdiContentCopy } from '@mdi/js'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const route = useRoute()
+const { t: $t } = useI18n()
 
 const eventId = route.params.eventId as string
 
 const eventStore = useEventStore(eventId) as EventStore
 const deleteConfirmationDialog = ref(false)
 const deleteCompleteDialog = ref(false)
+const isOpenCopyDialog = ref(false)
+const isOpenCopyCompleteDialog = ref(false)
+const isOpenCopyErrorDialog = ref(false)
+const copiedEventId = ref<string | null>(null)
+const copyCompleteTitle = ref('')
+
+const handleCopySuccess = (payload: CopyEventSuccessPayload) => {
+  if (payload.mode === 'single') {
+    copiedEventId.value = payload.newEventId
+    copyCompleteTitle.value = $t('manage.copy_event_modal.complete')
+  } else {
+    copiedEventId.value = null
+    if (payload.failureCount === 0) {
+      copyCompleteTitle.value = $t('manage.copy_event_modal.success_multiple', { count: payload.successCount })
+    } else {
+      copyCompleteTitle.value = $t('manage.copy_event_modal.success_partial', {
+        success: payload.successCount,
+        failure: payload.failureCount,
+      })
+    }
+  }
+  isOpenCopyCompleteDialog.value = true
+}
+
+const handleCopyCompleteOk = () => {
+  if (copiedEventId.value != null) {
+    void router.push(getManageEventPath(copiedEventId.value))
+  }
+}
+
+const handleCopyError = () => {
+  isOpenCopyErrorDialog.value = true
+}
 
 const deleteEvent = async () => {
   await eventStore.deleteEvent()
@@ -100,6 +137,17 @@ const goToEventEdit = () => {
             {{ $t('manage.event.delete') }}
           </v-btn>
         </v-row>
+        <v-row>
+          <v-btn
+            v-if="eventStore.event != null"
+            class="ma-3"
+            variant="outlined"
+            :prepend-icon="mdiContentCopy"
+            @click="isOpenCopyDialog = true"
+          >
+            {{ $t('manage.copy_event') }}
+          </v-btn>
+        </v-row>
       </v-col>
     </v-row>
   </v-container>
@@ -127,6 +175,27 @@ const goToEventEdit = () => {
     :title="$t('manage.event.dialog.complete')"
     ok-text="OK"
     :ok-click="handleDeleteCompleteOk"
+    max-width="500px"
+  />
+  <CopyEventDialog
+    v-if="eventStore.event != null"
+    v-model="isOpenCopyDialog"
+    :community-account="eventStore.event.community_account"
+    :initial-source-event="eventStore.event"
+    @success="handleCopySuccess"
+    @error="handleCopyError"
+  />
+  <ConfirmDialog
+    v-model="isOpenCopyCompleteDialog"
+    :title="copyCompleteTitle"
+    ok-text="OK"
+    :ok-click="handleCopyCompleteOk"
+    max-width="500px"
+  />
+  <ConfirmDialog
+    v-model="isOpenCopyErrorDialog"
+    :title="$t('manage.copy_event_modal.error')"
+    ok-text="OK"
     max-width="500px"
   />
 </template>

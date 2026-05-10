@@ -29,8 +29,10 @@ import {
   mdiNumeric7CircleOutline,
 } from '@mdi/js'
 
-defineProps<{
+const props = defineProps<{
   communityAccount: string
+  /** 開いたとき①で選択済みにするイベント（概要画面から開くとき等） */
+  initialSourceEvent?: BokudeliEvent | null
 }>()
 
 const dialog = defineModel<boolean>()
@@ -141,6 +143,12 @@ const selectedShop = computed<BokudeliPartnerShop | null | undefined>(() => {
 
 const MIN_DAYS_AHEAD = 14
 const MAX_SEARCH_DAYS = 7
+
+watch(dialog, (isOpen) => {
+  if (isOpen && props.initialSourceEvent != null) {
+    selectedEvent.value = props.initialSourceEvent
+  }
+})
 
 watch([selectedEvent, selectedShop], ([event, shop]) => {
   const originalStartDateTime = event?.event_start_datetime
