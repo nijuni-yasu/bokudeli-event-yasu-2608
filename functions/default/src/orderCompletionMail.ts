@@ -232,7 +232,7 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
 
 /**
  * 注文確定（member_orders が ordered になった）後に 1 回だけ呼ぶ。
- * confirmOrder / stripeWebhook から直接呼び出す（member_orders 単位の onDocumentWritten では N 回発火するため）。
+ * `orderConfirmedSideEffects.applyOrderConfirmedSideEffects` 経由で呼び出す（member_orders 単位の onDocumentWritten では N 回発火するため廃止）。
  * 呼び出し元の Function では secrets に SENDGRID_API_KEY を含めること。
  */
 export async function sendOrderCompletionMails(event: ShokujiiEvent, userId: string): Promise<void> {

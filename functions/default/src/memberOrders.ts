@@ -12,9 +12,8 @@ import {
   saveOrder,
 } from './stores/memberOrder.js'
 import { getEvent } from './stores/event.js'
-import { getCommunity } from './stores/community.js'
 import { createModuleLogger } from './utils/logger.js'
-import { sendOrderCompletionMails } from './orderCompletionMail.js'
+import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
 import {
   computePaymentCommunityBillOffAmount,
   computeTotalPayment,
@@ -215,24 +214,11 @@ export const confirmOrder = onCall(
       }
     })
 
-    const community = await getCommunity(community_id)
-    if (community != null) {
-      await community.addMember(uid)
-    }
-
-    const eventForMail = await getEvent(event_id)
-    if (eventForMail != null) {
-      try {
-        await sendOrderCompletionMails(eventForMail, uid)
-      } catch (error) {
-        logger.error('Failed to send order completion mails', {
-          error,
-          eventId: event_id,
-          userId: uid,
-        })
-      }
+    const eventForSideEffects = await getEvent(event_id)
+    if (eventForSideEffects != null) {
+      await applyOrderConfirmedSideEffects({ event: eventForSideEffects, userId: uid })
     } else {
-      logger.warn('Skipping order completion mails: event not found', {
+      logger.warn('Skipping side effects: event not found', {
         eventId: event_id,
         userId: uid,
       })

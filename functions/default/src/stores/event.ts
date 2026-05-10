@@ -174,7 +174,7 @@ export class ShokujiiEvent extends Event {
 
   /**
    * `members` / `event_num_members` のみを書き換える（`updated_by`・`updated_at` は変更しない）。
-   * `eventMembers.ts` の `createEventMembers`（member_orders の `onDocumentWritten`）が ordered を集計してイベントに反映するときに使う。
+   * `utils/recalcEventMembers.ts` が ordered を集計してイベントに反映するときに使う。
    * `withConverter` 付き ref ではなく生の `eventRef` で `transaction.update` するのは、上記の監査フィールドを変えずに部分更新するための意図的な例外（`set` + `toFirestore` 経路だと `updated_by` 等まで書き換わる）。
    */
   async updateMembersFieldOnly(memberUserIds: string[], transaction: Transaction): Promise<void> {
