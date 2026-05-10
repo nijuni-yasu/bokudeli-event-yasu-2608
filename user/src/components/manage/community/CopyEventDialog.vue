@@ -13,6 +13,7 @@ import {
   parseDatetimeStrings,
   DEFAULT_TIME_ZONE,
 } from '@shokujii/common/utils/datetime.js'
+import { getReservationLeadTimeMinMillis } from '@shokujii/common/utils/reservationLeadTime.js'
 import { eventCopy } from '@shokujii/base/apis/eventCopy.js'
 import { eventCopyRepeat } from '@shokujii/base/apis/eventCopyRepeat.js'
 import EventList from '@shokujii/base/components/EventList.vue'
@@ -141,7 +142,7 @@ const selectedShop = computed<BokudeliPartnerShop | null | undefined>(() => {
   return partnerStore.shops?.find((s) => s.shop_id === selectedEvent.value?.shop_id) ?? null
 })
 
-const MIN_DAYS_AHEAD = 14
+const INITIAL_CANDIDATE_DAYS_AHEAD = 14
 const MAX_SEARCH_DAYS = 7
 
 watch(dialog, (isOpen) => {
@@ -157,7 +158,7 @@ watch([selectedEvent, selectedShop], ([event, shop]) => {
   }
 
   const offset = eventStartTimeOffset.value
-  const searchStart = getStartOfDay(Date.now() + MIN_DAYS_AHEAD * 24 * 60 * 60 * 1000)
+  const searchStart = getStartOfDay(Date.now() + INITIAL_CANDIDATE_DAYS_AHEAD * 24 * 60 * 60 * 1000)
   const oneDay = 24 * 60 * 60 * 1000
 
   for (let i = 0; i < MAX_SEARCH_DAYS; i++) {
@@ -177,17 +178,20 @@ const allowedDates = (date: unknown) => {
   if (!(date instanceof Date)) {
     return true
   }
-  if (date.getTime() < Date.now()) {
+  if (selectedEvent.value?.event_start_datetime == null) {
+    return false
+  }
+  const targetTime = getStartOfDay(date.getTime()) + eventStartTimeOffset.value
+  if (targetTime < getReservationLeadTimeMinMillis(Date.now())) {
     return false
   }
   const shop = selectedShop.value
-  if (shop === undefined || selectedEvent.value?.event_start_datetime == null) {
+  if (shop === undefined) {
     return false
   }
   if (shop === null) {
     return true
   }
-  const targetTime = getStartOfDay(date.getTime()) + eventStartTimeOffset.value
   return isInShopTime(targetTime, shop)
 }
 
@@ -304,22 +308,15 @@ const createEvents = async () => {
   isCreating.value = true
   try {
     if (copyType.value === 'single') {
-      if (targetDateTime.value == null) {
-        return
-      }
       const result = await eventCopy({
         srcEventId: selectedEvent.value.event_id,
-        startTime: targetDateTime.value,
+        startTime: targetDateTime.value!,
       })
       emit('success', { mode: 'single', newEventId: result.data.newEventId })
     } else {
-      const startTimes = previewStartTimes.value
-      if (startTimes.length === 0) {
-        return
-      }
       const result = await eventCopyRepeat({
         srcEventId: selectedEvent.value.event_id,
-        startTimes,
+        startTimes: previewStartTimes.value,
       })
       const { successCount, failureCount, results } = result.data
       const newEventIds = results.filter((r) => r.ok).map((r) => r.newEventId)
@@ -329,8 +326,7 @@ const createEvents = async () => {
         emit('success', { mode: 'repeat', successCount, failureCount, newEventIds })
       }
     }
-  } catch (error: unknown) {
-    console.error('Error creating events:', error)
+  } catch {
     emit('error')
   } finally {
     dialog.value = false
@@ -339,6 +335,9 @@ const createEvents = async () => {
 }
 
 const closeDialog = () => {
+  if (isCreating.value) {
+    return
+  }
   selectedEvent.value = null
   targetDateTime.value = null
   repeatStartDateTime.value = null
@@ -366,7 +365,10 @@ const closeDialog = () => {
 
       <v-divider />
 
-      <v-card-text class="px-5 px-sm-8 py-6 py-sm-8" style="max-height: 70vh">
+      <v-card-text class="px-5 px-sm-8 py-2 py-sm-2" style="max-height: 70vh">
+        <p class="text-body-2 text-medium-emphasis ma-5">
+          {{ $t('manage.copy_event_modal.intro_overview') }}
+        </p>
         <v-sheet border rounded="lg" class="pa-5 mb-5">
           <div class="text-h6 font-weight-medium d-flex align-center">
             <v-icon :icon="stepNumericCircleIcon(1)" size="28" class="me-2 text-medium-emphasis" aria-hidden="true" />
@@ -581,7 +583,7 @@ const closeDialog = () => {
 
       <v-card-actions class="px-5 px-sm-8 py-5">
         <v-spacer />
-        <v-btn variant="text" :loading="isCreating" @click="closeDialog">
+        <v-btn variant="text" :loading="isCreating" :disabled="isCreating" @click="closeDialog">
           {{ $t('cancel') }}
         </v-btn>
         <v-btn color="primary" variant="flat" @click="createEvents" :disabled="!canCreate" :loading="isCreating">
