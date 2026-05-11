@@ -81,9 +81,9 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
       const eventStatus = event.event_status.value
       const calculatedStatus = event.calculatedEventStatus
 
-      // finished状態の場合は更新不可
-      if (calculatedStatus === 'finished') {
-        throw new HttpsError('failed-precondition', 'Cannot update menus after event is finished.')
+      // finished または event_canceled 状態の場合は更新不可
+      if (calculatedStatus === 'finished' || calculatedStatus === 'event_canceled') {
+        throw new HttpsError('failed-precondition', 'Cannot update menus after event is finished or canceled.')
       }
 
       if (shouldUpdateExistingMenusOnly(eventStatus)) {
