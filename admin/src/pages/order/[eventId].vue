@@ -16,7 +16,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import { getNamesPrintPath } from '@/navigation/utils'
 import { getNamesPrintPdf } from '@shokujii/base/utils/namesPrint.js'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getEventUrl, getUserUrl } from '@shokujii/common/utils/urls.js'
 
@@ -171,6 +171,19 @@ const downloadNamesPrint = async () => {
             </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
+            <v-alert
+              v-if="
+                eventStore.event.event_status.value === 'event_canceled' &&
+                eventStore.event.event_status.cancel_reason != null &&
+                eventStore.event.event_status.cancel_reason !== ''
+              "
+              type="warning"
+              variant="tonal"
+              class="mt-4"
+            >
+              <div class="text-subtitle-2 font-weight-bold mb-1">{{ $t('order_detail.cancel_reason_label') }}</div>
+              <div class="text-body-2 text-pre-wrap">{{ eventStore.event.event_status.cancel_reason }}</div>
+            </v-alert>
             <template v-if="isOwner == null">
               <v-progress-circular indeterminate color="primary" size="24" />
             </template>
