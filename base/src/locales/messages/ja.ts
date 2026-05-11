@@ -53,6 +53,7 @@ export default {
     order_closed: '参加締切済',
     finished: 'イベント終了',
     full: '満席',
+    event_canceled: 'キャンセル',
   },
   private_event: 'URL限定公開',
   order_deadline: '注文期限',
@@ -65,6 +66,7 @@ export default {
     not_accepting_order: '注文受付開始前はカートに追加できません',
     limit_people: '定員に達しました。カートに追加できません',
     sold_out: '売り切れました。カートに追加できません',
+    event_canceled: 'イベントがキャンセルされたため、カートに追加できません',
   },
   event_card: {
     community_name: '【主催】{0}',

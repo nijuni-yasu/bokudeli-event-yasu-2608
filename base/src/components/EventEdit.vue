@@ -419,8 +419,10 @@ watch(
   },
 )
 
-// 終了したイベントは編集不可
-const isFinished = computed(() => event.value?.calculatedEventStatus === 'finished')
+// 終了またはキャンセル済みのイベントは編集不可
+const isFinished = computed(
+  () => event.value?.calculatedEventStatus === 'finished' || event.value?.calculatedEventStatus === 'event_canceled',
+)
 
 // 表示用のEventMenus（converter経由で変換）
 const eventMenus = computed(() => {
