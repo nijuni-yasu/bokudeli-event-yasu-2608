@@ -369,6 +369,30 @@ export default {
         link_label: '請求書のダウンロードはこちら',
         link_button: '請求書払いページを開く',
       },
+      cancel: 'イベントキャンセル',
+      cancel_reason_dialog: {
+        title: 'イベントキャンセル',
+        instruction: 'キャンセル理由を選択してください。',
+        other: 'その他',
+        other_placeholder: '理由を具体的に入力してください',
+        error_other_required: '理由を入力してください',
+        submit: '次へ（確認）',
+      },
+      cancel_confirm_dialog: {
+        title: 'イベントキャンセルの確認',
+        description: 'イベントのキャンセル処理は戻すことができません。本当にキャンセルしますか？',
+        yes: 'はい',
+        no: 'いいえ',
+      },
+      cancel_complete_dialog: {
+        title: 'イベントのキャンセルが完了しました',
+      },
+      cancel_support_dialog: {
+        title: 'イベントのキャンセル',
+        description:
+          '現在は参加者がいるため、この画面からのキャンセルはできません。参加者がいない場合は、「イベントをキャンセルする」から手続きできます。\n参加者への返金が必要な場合は、サポートまでお問い合わせください。',
+      },
+      cancel_failed: 'イベントのキャンセルに失敗しました',
     },
     member: {
       manager: '管理者',

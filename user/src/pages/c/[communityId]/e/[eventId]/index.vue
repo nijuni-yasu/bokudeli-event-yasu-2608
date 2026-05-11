@@ -55,7 +55,7 @@ const albumImageUrls = computed(() => {
   }))
 })
 
-type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
+type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people' | 'event_canceled'
 
 const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
   if (event.value == null) {
@@ -64,6 +64,8 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
   switch (event.value.calculatedEventStatus) {
     case 'finished':
       return 'finished'
+    case 'event_canceled':
+      return 'event_canceled'
     case 'order_closed':
       return 'order_closed'
     case 'full':
