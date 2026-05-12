@@ -78,6 +78,9 @@ const EventMemberOrderDbSchema = z.object({
   // クラス側で undefined を代入し、optionalDeleteField の transform で FieldValue.delete() に変換して Firestore から削除する。
   processing_at: optionalDeleteField(TimestampSchema),
   processing_payment_intent: optionalDeleteField(z.string().nonempty()),
+  // async_payment_failed 適用後、同一 PaymentIntent に対する遅延到着の checkout.session.completed (unpaid) で
+  // 再度 processing に上がるのを防ぐため記録する。新しい遅延決済（別 PI）開始時・ordered 確定時に削除する。
+  failed_async_payment_intent: optionalDeleteField(z.string().nonempty()),
   pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
 })
 
@@ -96,6 +99,7 @@ const EventMemberOrderAppSchema = z.object({
   canceled_at: EpochMillisSchema.optional(),
   processing_at: EpochMillisSchema.optional(),
   processing_payment_intent: z.string().nonempty().optional(),
+  failed_async_payment_intent: z.string().nonempty().optional(),
   pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
 })
 
@@ -125,6 +129,7 @@ export class EventMemberOrder {
   canceled_at?: number
   processing_at?: number
   processing_payment_intent?: string
+  failed_async_payment_intent?: string
   pay_community_bill_off_amount?: number
 
   constructor(orderId: string, src: Partial<EventMemberOrder>) {

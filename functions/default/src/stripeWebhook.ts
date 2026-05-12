@@ -170,6 +170,13 @@ async function handleAsyncPaymentPending(args: HandlerArgs): Promise<void> {
     const processingAt = Timestamp.now().toMillis()
     for (const order of orders) {
       if (order.status === 'processing' && order.processing_payment_intent === paymentIntent) continue
+      if (order.failed_async_payment_intent === paymentIntent) {
+        logger.info('Skip async pending: delayed completed for already-failed payment intent', {
+          orderId: order.order_id,
+          paymentIntent,
+        })
+        continue
+      }
       if (order.status !== 'in_cart') {
         logger.warn('Skip processing transition for unexpected status', {
           orderId: order.order_id,
@@ -181,6 +188,7 @@ async function handleAsyncPaymentPending(args: HandlerArgs): Promise<void> {
       order.status = 'processing'
       order.processing_payment_intent = paymentIntent
       order.processing_at = processingAt
+      order.failed_async_payment_intent = undefined
       saveOrder(communityId, eventId, userId, order, transaction)
     }
   })
@@ -236,6 +244,9 @@ async function handleAsyncPaymentFailed(args: HandlerArgs): Promise<void> {
       order.status = 'in_cart'
       order.processing_payment_intent = undefined
       order.processing_at = undefined
+      if (paymentIntent != null) {
+        order.failed_async_payment_intent = paymentIntent
+      }
       saveOrder(communityId, eventId, userId, order, transaction)
     }
   })
@@ -352,6 +363,7 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
       // 確定済み PaymentIntent は EventStripe.payment_intent が保持するため、order 側はクリアする
       order.processing_payment_intent = undefined
       order.processing_at = undefined
+      order.failed_async_payment_intent = undefined
       saveOrder(communityId, eventId, userId, order, transaction)
     }
 
