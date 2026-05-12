@@ -41,6 +41,10 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
 
+    if (eventData.isCanceled()) {
+      throw new HttpsError('failed-precondition', 'イベントがキャンセルされたため、カートに追加できません')
+    }
+
     const now = Timestamp.now().toMillis()
     if (eventData.event_deadline_datetime < now) {
       throw new HttpsError('failed-precondition', '注文期限を過ぎています')
@@ -163,6 +167,10 @@ export const confirmOrder = onCall(
       const eventData = await getEvent(event_id, transaction)
       if (eventData == null || eventData.community_id !== community_id) {
         throw new HttpsError('not-found', 'イベントが見つかりません')
+      }
+
+      if (eventData.isCanceled()) {
+        throw new HttpsError('failed-precondition', 'イベントがキャンセルされたため、注文を確定できません')
       }
 
       if (eventData.event_payment === 'user_advance') {

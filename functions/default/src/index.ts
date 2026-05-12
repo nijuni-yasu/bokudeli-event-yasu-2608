@@ -37,6 +37,7 @@ export const {
   updateEventMenus,
   sendIndividualLetter,
   generateUserImageThumbnail,
+  cancelEvent,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -59,4 +60,5 @@ export const {
   import('./eventMenusSelection.js'),
   import('./userImage.js'),
   import('./memberOrders.js'),
+  import('./eventCancellation.js'),
 ])))

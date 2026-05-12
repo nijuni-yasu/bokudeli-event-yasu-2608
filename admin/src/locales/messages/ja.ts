@@ -190,6 +190,7 @@ export default {
     event_address: '【開催場所】 {0}',
     event_max_people: '【定員数】 {0} 人',
     community_name: '【コミュニティ名】 {0}',
+    cancel_reason_label: '【キャンセル理由】',
     organizer_fullname: '【担当者名】 {0}',
     organizer_company: '【会社名】 {0}',
     organizer_phone_personal: '【電話番号(個人)】 {0}',

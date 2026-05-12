@@ -20,6 +20,8 @@ const chipColor = computed(() => {
       return 'error'
     case 'finished':
       return 'secondary'
+    case 'event_canceled':
+      return 'error'
     default: {
       const _exhaustiveCheck: never = props.status
       throw new Error(`Unsupported type: ${_exhaustiveCheck}`)

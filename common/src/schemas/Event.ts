@@ -38,6 +38,7 @@ export const RAW_EVENT_STATUS_VALUES = [
   'applying_reservation',
   'applying_to_admin',
   'accepting_order',
+  'event_canceled',
 ] as const
 export type RawEventStatusType = (typeof RAW_EVENT_STATUS_VALUES)[number]
 
@@ -87,6 +88,7 @@ export const EventDbSchema = z.object({
   event_status: z.object({
     value: z.enum(RAW_EVENT_STATUS_VALUES),
     shop_comment: NonEmptyStringSchema.optional(),
+    cancel_reason: z.string().min(1).optional(),
   }),
 
   is_deleted: z.boolean(),
@@ -109,6 +111,8 @@ export const EventDbSchema = z.object({
   sent_new_event_mail_at: TimestampSchema.optional(),
   sent_popular_event_mail_at: TimestampSchema.optional(),
   community_bill_settings: optionalDeleteField(CommunityBillSettingsDbSchema),
+  canceled_at: TimestampSchema.optional(),
+  canceled_by: z.string().nonempty().optional(),
 })
 
 /** applying_reservation 遷移時に主催者連絡先を必須とするための追加バリデーション */
@@ -147,6 +151,7 @@ const EventAppSchema = z.object({
     .object({
       value: z.enum(RAW_EVENT_STATUS_VALUES).default('in_draft'),
       shop_comment: z.string().default(''),
+      cancel_reason: z.string().min(1).optional(),
     })
     .default({
       value: 'in_draft',
@@ -178,6 +183,8 @@ const EventAppSchema = z.object({
   sent_new_event_mail_at: EpochMillisSchema.optional(),
   sent_popular_event_mail_at: EpochMillisSchema.optional(),
   community_bill_settings: CommunityBillSettingsAppSchema.optional(),
+  canceled_at: EpochMillisSchema.optional(),
+  canceled_by: z.string().nonempty().optional(),
 })
 
 export const convertEventToDb = (event: Event, updated_by: string) => {
@@ -207,6 +214,7 @@ export class Event {
   event_status!: {
     value: RawEventStatusType
     shop_comment: string
+    cancel_reason?: string
   }
   is_deleted!: boolean
 
@@ -242,6 +250,8 @@ export class Event {
   updated_by?: string
   sent_new_event_mail_at?: number
   sent_popular_event_mail_at?: number
+  canceled_at?: number
+  canceled_by?: string
 
   constructor(id: string, src: Partial<Event>) {
     Object.assign(this, EventAppSchema.parse({ ...src, event_id: id }))
@@ -268,6 +278,9 @@ export class Event {
     const event_end_datetime = this.event_end_datetime
     const event_deadline_datetime = this.event_deadline_datetime
     const rawStatus = this.event_status.value
+    if (rawStatus === 'event_canceled') {
+      return 'event_canceled'
+    }
     if (rawStatus === 'accepting_order') {
       const now = Date.now()
       if (event_end_datetime < now) {
@@ -290,6 +303,10 @@ export class Event {
 
   removeMember(userId: string) {
     this.members = this.members.filter((id) => id !== userId)
+  }
+
+  isCanceled(): boolean {
+    return this.event_status.value === 'event_canceled'
   }
 
   isValidForDatabase(updateUserId: string): boolean {

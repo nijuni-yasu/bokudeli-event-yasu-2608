@@ -45,6 +45,21 @@ const { isManager } = useCommunityMemberFlags(communityId)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 
+/** 表示ステータスが下書き・予約申請中・注文受付中・満席のときイベント編集。それ以外はコミュニティ管理画面へ */
+const showManagerEventEditButton = computed(
+  () =>
+    isManager.value &&
+    event.value != null &&
+    (event.value.calculatedEventStatus === 'in_draft' ||
+      event.value.calculatedEventStatus === 'applying_reservation' ||
+      event.value.calculatedEventStatus === 'accepting_order' ||
+      event.value.calculatedEventStatus === 'full'),
+)
+
+const showManagerCommunityButton = computed(
+  () => isManager.value && event.value != null && !showManagerEventEditButton.value,
+)
+
 const albumImageUrls = computed(() => {
   const cid = communityStore.community?.community_id
   if (cid == null) return []
@@ -55,7 +70,7 @@ const albumImageUrls = computed(() => {
   }))
 })
 
-type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people'
+type MenuDisabledReason = 'finished' | 'order_closed' | 'not_accepting_order' | 'limit_people' | 'event_canceled'
 
 const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
   if (event.value == null) {
@@ -64,6 +79,8 @@ const menuDisabled = computed<null | false | MenuDisabledReason>(() => {
   switch (event.value.calculatedEventStatus) {
     case 'finished':
       return 'finished'
+    case 'event_canceled':
+      return 'event_canceled'
     case 'order_closed':
       return 'order_closed'
     case 'full':
@@ -251,13 +268,7 @@ onUnmounted(() => {
             {{ $t('event_page.apply_to_shop') }}
           </v-btn>
           <v-btn
-            v-if="
-              (event.calculatedEventStatus === 'in_draft' ||
-                event.calculatedEventStatus === 'full' ||
-                event.calculatedEventStatus === 'applying_reservation' ||
-                event.calculatedEventStatus === 'accepting_order') &&
-              isManager
-            "
+            v-if="showManagerEventEditButton"
             class="ml-2 my-1"
             variant="outlined"
             :prepend-icon="mdiPencilOutline"
@@ -266,7 +277,7 @@ onUnmounted(() => {
             {{ $t('event_page.edit') }}
           </v-btn>
           <v-btn
-            v-if="isManager && event.calculatedEventStatus === 'finished'"
+            v-if="showManagerCommunityButton"
             class="ml-2 my-1"
             variant="outlined"
             :to="getManageCommunityPath(communityStore.community.community_account)"
