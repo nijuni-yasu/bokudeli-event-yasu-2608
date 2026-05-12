@@ -1,6 +1,6 @@
 /**
  * `getUserProfilePreview` Callable のリクエスト・レスポンス型。
- * 仕様書 5.2.1 / 03_参加者獲得/02_友人一覧_マイページ.md を参照。
+ * 仕様書 5.2.1 / 03_参加者獲得/02_マイページ.md を参照。
  *
  * - フィールド名は DB の物理名（`snake_case`）と一致させる
  * - 各プレビューの件数 `limit(N)` はサーバ既定とし、Phase 1 ではクライアントから渡さない
@@ -145,7 +145,7 @@ export type GetUserFoodsResponse = {
 
 /**
  * `backfillUserProfileCounts` Callable のリクエスト・レスポンス型。
- * 仕様書 5.2.2 / 03_参加者獲得/02_友人一覧_マイページ.md を参照。
+ * 仕様書 5.2.2 / 03_参加者獲得/02_マイページ.md を参照。
  */
 export type BackfillUserProfileCountsRequest = {
   /** true のときは集計のみ実行し書き込みはしない（差分件数のみ返す） */

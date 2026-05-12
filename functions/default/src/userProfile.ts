@@ -423,7 +423,7 @@ export const getUserFoods = onCall<GetUserFoodsRequest, Promise<GetUserFoodsResp
 /**
  * support 権限のユーザーが、`users` コレクションを順にスキャンし、
  * マイページ用カウントフィールドを backfill するための管理者 Callable。
- * 仕様書 5.2.2 / 03_参加者獲得/02_友人一覧_マイページ.md を参照。
+ * 仕様書 5.2.2 / 03_参加者獲得/02_マイページ.md を参照。
  *
  * App Check は必須としない。認証は Firebase Auth と support 判定のみとし、運用バッチからの呼び出しを可能にする。`getUserProfilePreview` と同様に `enforceAppCheck` は付けない。
  */
