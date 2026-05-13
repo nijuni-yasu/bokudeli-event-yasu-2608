@@ -1,6 +1,7 @@
 import { pipeline, Readable } from 'stream'
 import { ReadableStream } from 'stream/web'
 import express from 'express'
+import { getStorage } from 'firebase-admin/storage'
 import { https } from 'firebase-functions/v2'
 import { ReplaceSectionStream } from '@shokujii/common/utils/ReplaceSectionStream.js'
 import { getEvent } from './stores/event.js'
@@ -15,6 +16,7 @@ interface OgpContext {
   site: string
   url: string
   image: string
+  imageType: string
   title?: string
   description?: string
 }
@@ -90,6 +92,7 @@ const makeMetaTags = (context: OgpContext): string => {
 <meta property="og:image" content="${image}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:type" content="${context.imageType}">
 <meta property="og:description" content="${description}">
 <meta property="og:url" content="${url}">
 <meta property="og:type" content="article">
@@ -130,6 +133,7 @@ export const handleEventOgpRequest = https.onRequest(
       site,
       url: `${site}${path}`,
       image: `${site}/shokujii_ogp.png`,
+      imageType: 'image/png',
     }
     try {
       // Event ページの場合のみ処理
@@ -141,12 +145,21 @@ export const handleEventOgpRequest = https.onRequest(
           await returnOriginalIndexHtml(site, res)
           return
         }
+        try {
+          const storagePath = getEventCoverStoragePath(eventData.community_id, eventId)
+          const [metadata] = await getStorage().bucket().file(storagePath).getMetadata()
+          if (metadata.contentType != null) {
+            context.image = convertStoragePathToURL(storagePath)
+            context.imageType = metadata.contentType
+          }
+        } catch (error) {
+          logger.warn('Failed to get storage metadata for event cover image', { error })
+        }
         // Firebase Hosting が付与したセキュリティ関連ヘッダを維持しつつ、
         // Cache-Control はこの関数側で上書きする
         forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(eventData.event_name)
         context.description = convertToOgpString(eventData.event_desc)
-        context.image = convertStoragePathToURL(getEventCoverStoragePath(eventData.community_id, eventId))
         res.status(200).set('Cache-Control', 'public, max-age=600, s-maxage=600')
 
         // pipelineはPromiseを返さないため、コールバックでエラーハンドリング
@@ -207,6 +220,7 @@ export const handleCommunityOgpRequest = https.onRequest(
       site,
       url: `${site}${path}`,
       image: `${site}/shokujii_ogp.png`,
+      imageType: 'image/png',
     }
     try {
       // Community ページの場合のみ処理
@@ -219,12 +233,21 @@ export const handleCommunityOgpRequest = https.onRequest(
           await returnOriginalIndexHtml(site, res)
           return
         }
+        try {
+          const storagePath = getCommunityCoverStoragePath(communityData.community_id)
+          const [metadata] = await getStorage().bucket().file(storagePath).getMetadata()
+          if (metadata.contentType != null) {
+            context.image = convertStoragePathToURL(storagePath)
+            context.imageType = metadata.contentType
+          }
+        } catch (error) {
+          logger.warn('Failed to get storage metadata for community cover image', { error })
+        }
         // Firebase Hosting が付与したセキュリティ関連ヘッダを維持しつつ、
         // Cache-Control はこの関数側で上書きする
         forwardSafeHeaders(response, res, { excludeCacheControl: true })
         context.title = convertToOgpString(communityData.community_name)
         context.description = convertToOgpString(communityData.community_desc)
-        context.image = convertStoragePathToURL(getCommunityCoverStoragePath(communityData.community_id))
         res.status(200).set('Cache-Control', 'public, max-age=600, s-maxage=600')
 
         // pipelineはPromiseを返さないため、コールバックでエラーハンドリング
