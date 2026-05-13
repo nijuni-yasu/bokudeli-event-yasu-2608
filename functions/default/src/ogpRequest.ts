@@ -7,6 +7,9 @@ import { getEvent } from './stores/event.js'
 import { getCommunityByAccount } from './stores/community.js'
 import { convertStoragePathToURL } from './utils/urls.js'
 import { getEventCoverStoragePath, getCommunityCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('ogpRequest')
 
 interface OgpContext {
   site: string
@@ -57,9 +60,9 @@ const returnOriginalIndexHtml = async (site: string, res: express.Response) => {
   // 圧縮や接続制御に関するヘッダのみ除外し、それ以外（特にセキュリティ関連ヘッダ）は透過する
   forwardSafeHeaders(originalResponse, res)
 
-  pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (err: NodeJS.ErrnoException | null) => {
-    if (err) {
-      console.error('Pipeline failed for original response.', err)
+  pipeline(Readable.fromWeb(originalResponse.body as ReadableStream), res, (error: NodeJS.ErrnoException | null) => {
+    if (error) {
+      logger.error('Pipeline failed for original response.', { error })
       if (!res.headersSent) {
         res.status(500).send('Internal Server Error during stream processing')
       }
@@ -151,9 +154,9 @@ export const handleEventOgpRequest = https.onRequest(
           Readable.fromWeb(response.body as ReadableStream),
           new ReplaceSectionStream('<!-- OGP_BEGIN_TAG -->', '<!-- OGP_END_TAG -->', makeMetaTags(context)),
           res,
-          (err: NodeJS.ErrnoException | null) => {
-            if (err) {
-              console.error('Pipeline failed.', err)
+          (error: NodeJS.ErrnoException | null) => {
+            if (error) {
+              logger.error('Pipeline failed.', { error })
               // エラーが発生した場合でも、resが閉じられていなければエラーレスポンスを送る
               if (!res.headersSent) {
                 res.status(500).send('Internal Server Error during stream processing')
@@ -163,8 +166,8 @@ export const handleEventOgpRequest = https.onRequest(
         )
         return
       }
-    } catch (e) {
-      console.warn(e)
+    } catch (error) {
+      logger.warn('Unexpected error in OGP handler', { error })
       if (!res.headersSent) {
         await returnOriginalIndexHtml(site, res)
       }
@@ -229,9 +232,9 @@ export const handleCommunityOgpRequest = https.onRequest(
           Readable.fromWeb(response.body as ReadableStream),
           new ReplaceSectionStream('<!-- OGP_BEGIN_TAG -->', '<!-- OGP_END_TAG -->', makeMetaTags(context)),
           res,
-          (err: NodeJS.ErrnoException | null) => {
-            if (err) {
-              console.error('Pipeline failed.', err)
+          (error: NodeJS.ErrnoException | null) => {
+            if (error) {
+              logger.error('Pipeline failed.', { error })
               // エラーが発生した場合でも、resが閉じられていなければエラーレスポンスを送る
               if (!res.headersSent) {
                 res.status(500).send('Internal Server Error during stream processing')
@@ -241,8 +244,8 @@ export const handleCommunityOgpRequest = https.onRequest(
         )
         return
       }
-    } catch (e) {
-      console.warn(e)
+    } catch (error) {
+      logger.warn('Unexpected error in OGP handler', { error })
       if (!res.headersSent) {
         await returnOriginalIndexHtml(site, res)
       }
