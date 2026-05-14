@@ -262,7 +262,7 @@ GitHub Actions のワークフローを使ってデプロイします。
 3. **Stripe で Webhook エンドポイントを追加する**  
    Dashboard → **Developers** → **Webhooks** → **+ Add endpoint**  
    - **Endpoint URL**: 手順 2 で取得した URL  
-   - **イベント**: **`checkout.session.completed`** にチェック（必須）。必要に応じて `checkout.session.expired` も追加可  
+   - **イベント**: **`checkout.session.completed`** にチェック（必須）。`checkout.session.expired` はアプリ側で処理しないため通常は登録不要。PayPay 遅延決済を扱う場合は `documents/01_マネタイズと決済/06_PayPay決済_遅延決済.md` の 3.5 に従い `checkout.session.async_payment_succeeded` / `checkout.session.async_payment_failed` を追加する  
    - **Add endpoint** で保存
 
 4. **Signing secret を Secret Manager に登録する**  

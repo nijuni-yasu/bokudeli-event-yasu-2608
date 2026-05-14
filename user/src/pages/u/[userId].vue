@@ -276,6 +276,8 @@ const downloadReceipt = (eventId: string, stripeId: string) => {
     :event-id="(($route.query.eventId ?? '') as string)"
     :community-account="(($route.query.communityAccount ?? '') as string)"
     :is-posted="($route.query.isPosted === 'true')"
+    :session-id="(($route.query.session_id ?? '') as string)"
+    :user-id="profileUserId"
   />
 </template>
 

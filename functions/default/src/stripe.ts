@@ -2,7 +2,10 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import { defineSecret } from 'firebase-functions/params'
 import { Timestamp } from 'firebase-admin/firestore'
 import Stripe from 'stripe'
-import { CreateStripeCheckoutSessionRequest } from '@shokujii/common/apis/stripe.js'
+import {
+  CreateStripeCheckoutSessionRequest,
+  CreateStripeCheckoutSessionResponse,
+} from '@shokujii/common/apis/stripe.js'
 import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { getUserUrl, getMainUrl, convertStoragePathToURL } from './utils/urls.js'
 import { getEvent } from './stores/event.js'
@@ -18,7 +21,10 @@ const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
 const CHECKOUT_SESSION_EXPIRES_SECONDS = 31 * 60
 const ORDER_IDS_CHUNK_SIZE = 20
 
-export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionRequest>(
+export const createStripeCheckoutSession = onCall<
+  CreateStripeCheckoutSessionRequest,
+  Promise<CreateStripeCheckoutSessionResponse>
+>(
   {
     secrets: ['STRIPE_API_KEY'],
   },
@@ -135,15 +141,17 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       throw new HttpsError('internal', '決済明細の生成に失敗しました')
     }
 
-    const stripe = new Stripe(STRIPE_API_KEY.value(), { apiVersion: '2022-11-15', maxNetworkRetries: 3 })
+    const stripe = new Stripe(STRIPE_API_KEY.value(), {
+      apiVersion: '2026-02-25.clover',
+      maxNetworkRetries: 3,
+    })
     const communityAccount = event.community_account
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      success_url: `${getUserUrl(uid)}?eventId=${event_id}&communityAccount=${communityAccount}&isPosted=${isPosted}`,
+      success_url: `${getUserUrl(uid)}?eventId=${event_id}&communityAccount=${communityAccount}&isPosted=${isPosted}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: getMainUrl(),
       customer_creation: 'if_required',
       line_items: lineItems,
       mode: 'payment',
-      payment_method_types: ['card'],
       expires_at: Math.floor(now / 1000) + CHECKOUT_SESSION_EXPIRES_SECONDS,
       metadata: {
         eventId: event_id,
@@ -164,7 +172,7 @@ export const createStripeCheckoutSession = onCall<CreateStripeCheckoutSessionReq
       stripeRequest: sessionParams,
     })
 
-    return session
+    return { url: session.url }
   },
 )
 

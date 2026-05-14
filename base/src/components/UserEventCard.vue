@@ -66,17 +66,17 @@ const totalPrice = computed(() =>
   props.orders.filter((o) => o.status !== 'canceled').reduce((sum, o) => sum + orderLineNet(o), 0),
 )
 
-const hasActiveOrders = computed(() => props.orders.some((o) => o.status !== 'canceled'))
-
 const isShowCancelButton = computed(
   () =>
     !props.ordersLoading &&
     !props.ordersError &&
-    hasActiveOrders.value &&
+    props.orders.some((o) => o.status === 'ordered') &&
     props.event.event_deadline_datetime > Date.now(),
 )
 
 const isAllCanceled = computed(() => props.orders.length > 0 && props.orders.every((o) => o.status === 'canceled'))
+
+const isShowProcessing = computed(() => props.orders.some((o) => o.status === 'processing'))
 
 const isShowInvoiceButton = computed(() => {
   if (props.ordersLoading || props.ordersError) return false
@@ -290,6 +290,9 @@ const submitCancel = () => {
           <v-btn variant="outlined" rounded="pill" color="secondary" size="small" @click.prevent="onOpenDialog">
             {{ $t('user_event_card.cancel_order') }}
           </v-btn>
+        </v-col>
+        <v-col v-else-if="isShowProcessing" class="d-flex justify-end">
+          {{ $t('user_event_card.processing') }}
         </v-col>
         <v-col v-else-if="isAllCanceled" class="d-flex justify-end">{{ $t('user_event_card.canceled') }} </v-col>
       </v-row>

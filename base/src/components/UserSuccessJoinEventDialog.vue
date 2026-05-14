@@ -13,6 +13,10 @@ const props = defineProps<{
   eventId: string
   communityAccount: string
   isPosted: boolean
+  /** Stripe Checkout からのリダイレクト時に付与される session_id。PayPay 等の遅延決済の判定に使う */
+  sessionId?: string
+  /** 自分の注文を抽出するためのユーザー ID。未指定の場合は処理中判定を行わない */
+  userId?: string
 }>()
 
 const model = defineModel<boolean>()
@@ -22,6 +26,21 @@ const communityStore = useCommunityStore(props.communityAccount)
 const isPosted = props.isPosted
 
 const event = computed(() => eventStore.event)
+
+/** Checkout リダイレクト直後など、注文一覧が未読込の間は true（flash 表示や誤ったシェア誘導を防ぐ） */
+const isLoadingOrder = computed(() => {
+  if (props.userId == null || props.userId === '') return false
+  if (props.sessionId == null || props.sessionId === '') return false
+  return eventStore.orders == null
+})
+
+/** PayPay 遅延決済等で自分の注文が processing の間は決済処理中表示にする */
+const isProcessing = computed(() => {
+  if (props.sessionId == null || props.sessionId === '') return false
+  if (props.userId == null || props.userId === '') return false
+  if (eventStore.orders == null) return false
+  return eventStore.orders.some((o) => o.user_id === props.userId && o.status === 'processing')
+})
 
 const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event: BokudeliEvent) => {
   const partnerStore = usePartnerStore(event.partner_id)
@@ -49,14 +68,28 @@ const isSharePromptDialogVisible = ref(false)
 let hasShownSharePrompt = false
 
 watch(
-  [model, event],
-  async ([newModel, newEvent]) => {
-    if (newModel && newEvent?.is_public && !isPosted && !hasShownSharePrompt) {
-      hasShownSharePrompt = true
-      const partnerStore = usePartnerStore(newEvent.partner_id)
-      await Promise.all([new Promise<void>((resolve) => setTimeout(resolve, 1000)), partnerStore.getLoadedShops()])
-      isSharePromptDialogVisible.value = true
+  [model, event, isProcessing, isLoadingOrder],
+  async ([newModel, newEvent, , newIsLoadingOrder]) => {
+    if (!newModel || newIsLoadingOrder || !newEvent?.is_public || isPosted || hasShownSharePrompt) {
+      return
     }
+    if (isProcessing.value) {
+      return
+    }
+    const partnerStore = usePartnerStore(newEvent.partner_id)
+    await Promise.all([new Promise<void>((resolve) => setTimeout(resolve, 1000)), partnerStore.getLoadedShops()])
+    if (
+      !model.value ||
+      isLoadingOrder.value ||
+      isProcessing.value ||
+      !event.value?.is_public ||
+      isPosted ||
+      hasShownSharePrompt
+    ) {
+      return
+    }
+    hasShownSharePrompt = true
+    isSharePromptDialogVisible.value = true
   },
   { immediate: true },
 )
@@ -65,76 +98,14 @@ watch(
 <template>
   <v-dialog v-model="model" :width="$vuetify.display.smAndDown ? 'auto' : 650" persistent>
     <v-card v-if="event != null" class="px-sm-15 py-sm-9 pa-2 pre-line">
-      <v-card-title class="text-center text-h3">{{ $t('success_join_event_dialog.title') }}</v-card-title>
-      <v-card-text class="text-center text-h5 px-0 py-3">{{ $t('success_join_event_dialog.subtitle') }}</v-card-text>
-      <div class="mx-4">
-        <v-img class="mx-0" cover aspect-ratio="1.91" :src="eventStore.coverImageUrl" />
-        <v-card-text class="text-left pb-3 px-0 text-h5">
-          {{ event.event_name }}
-        </v-card-text>
-        <v-card-text class="text-description pb-1 px-0">
-          {{ $t('success_join_event_dialog.datetime') }}
-          {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}〜{{ $d(event.event_end_datetime, 'time') }}
-        </v-card-text>
-        <v-card-text class="text-description pb-1 px-0">
-          {{ $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime, 'datetime_weekday_short')]) }}
-        </v-card-text>
-        <v-card-text class="text-description pb-1 px-0">
-          {{ $t('success_join_event_dialog.place') }} {{ event.fullAddress }} {{ event.event_place }}
-        </v-card-text>
-        <v-card-text class="text-description pb-1 px-0"
-          >{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text
-        >
-        <v-card-text class="text-description pb-1 px-0"
-          >{{ $t('success_join_event_dialog.food') }} {{ event.shop_name }}</v-card-text
-        >
-        <v-card-text
-          v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''"
-          class="text-description pb-1 px-0"
-        >
-          {{ $t('success_join_event_dialog.hashtag') }}
-          <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
-            #{{ event.event_sns_hash_tag }}
-          </a>
-        </v-card-text>
-        <v-card-text class="mt-5">
-          <v-row justify="center" v-if="event.is_public && !isPosted">
-            <v-btn
-              class="my-2"
-              size="large"
-              color="grey-900"
-              :append-icon="mdiSend"
-              rounded="pill"
-              @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
-            >
-              {{ $t('success_join_event_dialog.share_on_x') }}
-            </v-btn>
-          </v-row>
-          <v-row justify="center">
-            <v-btn
-              class="my-2"
-              size="large"
-              color="grey-900"
-              :append-icon="mdiCalendar"
-              rounded="pill"
-              @click="openCalendarAddDialog"
-            >
-              {{ $t('success_join_event_dialog.add_to_calendar') }}
-            </v-btn>
-          </v-row>
+      <template v-if="isLoadingOrder">
+        <v-card-title class="text-center d-flex justify-center py-8">
+          <v-progress-circular indeterminate color="primary" />
+        </v-card-title>
+        <v-card-text class="text-center text-h6 px-0 py-3">
+          {{ $t('success_join_event_dialog.loading') }}
         </v-card-text>
         <v-card-text class="text-center px-0 py-1">
-          <v-btn
-            :prepend-icon="mdiContentCopy"
-            class="mx-1"
-            size="small"
-            color="grey-600"
-            rounded="pill"
-            variant="text"
-            @click="onShareSnsButtonClicked('copy', event)"
-          >
-            {{ $t('success_join_event_dialog.copy_text') }}
-          </v-btn>
           <v-btn
             :prepend-icon="mdiCloseCircle"
             class="mx-1"
@@ -147,7 +118,102 @@ watch(
             {{ $t('success_join_event_dialog.close') }}
           </v-btn>
         </v-card-text>
-      </div>
+      </template>
+      <template v-else>
+        <v-card-title class="text-center text-h3">
+          {{ isProcessing ? $t('success_join_event_dialog.processing_title') : $t('success_join_event_dialog.title') }}
+        </v-card-title>
+        <v-card-text class="text-center text-h5 px-0 py-3">
+          {{
+            isProcessing
+              ? $t('success_join_event_dialog.processing_subtitle')
+              : $t('success_join_event_dialog.subtitle')
+          }}
+        </v-card-text>
+        <div class="mx-4">
+          <v-img class="mx-0" cover aspect-ratio="1.91" :src="eventStore.coverImageUrl" />
+          <v-card-text class="text-left pb-3 px-0 text-h5">
+            {{ event.event_name }}
+          </v-card-text>
+          <v-card-text class="text-description pb-1 px-0">
+            {{ $t('success_join_event_dialog.datetime') }}
+            {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}〜{{ $d(event.event_end_datetime, 'time') }}
+          </v-card-text>
+          <v-card-text class="text-description pb-1 px-0">
+            {{
+              $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime, 'datetime_weekday_short')])
+            }}
+          </v-card-text>
+          <v-card-text class="text-description pb-1 px-0">
+            {{ $t('success_join_event_dialog.place') }} {{ event.fullAddress }} {{ event.event_place }}
+          </v-card-text>
+          <v-card-text class="text-description pb-1 px-0"
+            >{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text
+          >
+          <v-card-text class="text-description pb-1 px-0"
+            >{{ $t('success_join_event_dialog.food') }} {{ event.shop_name }}</v-card-text
+          >
+          <v-card-text
+            v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''"
+            class="text-description pb-1 px-0"
+          >
+            {{ $t('success_join_event_dialog.hashtag') }}
+            <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
+              #{{ event.event_sns_hash_tag }}
+            </a>
+          </v-card-text>
+          <v-card-text class="mt-5">
+            <v-row justify="center" v-if="event.is_public && !isPosted && !isProcessing">
+              <v-btn
+                class="my-2"
+                size="large"
+                color="grey-900"
+                :append-icon="mdiSend"
+                rounded="pill"
+                @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
+              >
+                {{ $t('success_join_event_dialog.share_on_x') }}
+              </v-btn>
+            </v-row>
+            <v-row justify="center">
+              <v-btn
+                class="my-2"
+                size="large"
+                color="grey-900"
+                :append-icon="mdiCalendar"
+                rounded="pill"
+                @click="openCalendarAddDialog"
+              >
+                {{ $t('success_join_event_dialog.add_to_calendar') }}
+              </v-btn>
+            </v-row>
+          </v-card-text>
+          <v-card-text class="text-center px-0 py-1">
+            <v-btn
+              :prepend-icon="mdiContentCopy"
+              class="mx-1"
+              size="small"
+              color="grey-600"
+              rounded="pill"
+              variant="text"
+              @click="onShareSnsButtonClicked('copy', event)"
+            >
+              {{ $t('success_join_event_dialog.copy_text') }}
+            </v-btn>
+            <v-btn
+              :prepend-icon="mdiCloseCircle"
+              class="mx-1"
+              size="small"
+              color="grey-600"
+              rounded="pill"
+              variant="text"
+              @click="model = false"
+            >
+              {{ $t('success_join_event_dialog.close') }}
+            </v-btn>
+          </v-card-text>
+        </div>
+      </template>
     </v-card>
   </v-dialog>
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />

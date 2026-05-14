@@ -6,7 +6,7 @@ export type CreateStripeCheckoutSessionRequest = {
 }
 
 export type CreateStripeCheckoutSessionResponse = {
-  url?: string
+  url: string | null
 }
 
 export type CancelOrdersRequest = {

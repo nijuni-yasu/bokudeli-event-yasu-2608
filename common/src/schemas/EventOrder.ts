@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { TimestampSchema, EpochMillisSchema, NonEmptyStringSchema } from './firebase/index.js'
 
-export const EVENT_ORDER_STATUS_VALUES = ['in_cart', 'ordered', 'canceled'] as const
+export const EVENT_ORDER_STATUS_VALUES = ['in_cart', 'processing', 'ordered', 'canceled'] as const
 export type EventOrderStatusType = (typeof EVENT_ORDER_STATUS_VALUES)[number]
 
 const OrderMenuSchema = z.object({

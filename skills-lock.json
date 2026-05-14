@@ -16,6 +16,11 @@
       "sourceType": "github",
       "computedHash": "b122f4d1e91aa1d83027e050b5b37c3156203ee85458d7b1360bc48167c9e02a"
     },
+    "stripe-best-practices": {
+      "source": "stripe/ai",
+      "sourceType": "github",
+      "computedHash": "c96412bd7ea966c643cbff87c05f59709a7b7b195bff6ae066a8fce7226d2ba1"
+    },
     "stripe-integration": {
       "source": "wshobson/agents",
       "sourceType": "github",
