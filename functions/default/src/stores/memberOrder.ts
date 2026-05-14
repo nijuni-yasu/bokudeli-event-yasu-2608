@@ -8,6 +8,7 @@ import {
 } from 'firebase-admin/firestore'
 import { EventMember, EventMemberOrder, EventMemberOrderStatusType } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { EventStripe } from '@shokujii/common/schemas/EventStripe.js'
+import { getCommunityEventKey, getEventsInCommunities } from './event.js'
 
 // ── Converters ──
 
@@ -280,6 +281,47 @@ export const saveStripe = async (
   } else {
     transaction.set(stripeRef, stripe, { merge: true })
   }
+}
+
+/**
+ * 参加イベント数（仕様 5.1.2 / RC-57）。
+ * `status === 'ordered'` の member_orders から (community_id, event_id) をユニーク化し、
+ * `is_deleted == false` かつ `event_status.value !== 'event_canceled'` のイベントのみ数える。
+ */
+export const countParticipatedEventsForUser = async (userId: string): Promise<number> => {
+  if (userId === '') {
+    return 0
+  }
+  const db = getFirestore()
+  const snapshot = await db
+    .collectionGroup('member_orders')
+    .where('user_id', '==', userId)
+    .where('status', '==', 'ordered')
+    .withConverter(new EventMemberOrderConverter())
+    .get()
+
+  const eventRefs = new Map<string, { community_id: string; event_id: string }>()
+  for (const doc of snapshot.docs) {
+    const order = doc.data()
+    const key = getCommunityEventKey(order.community_id, order.event_id)
+    if (!eventRefs.has(key)) {
+      eventRefs.set(key, { community_id: order.community_id, event_id: order.event_id })
+    }
+  }
+
+  if (eventRefs.size === 0) {
+    return 0
+  }
+
+  const eventMap = await getEventsInCommunities([...eventRefs.values()])
+  let count = 0
+  for (const key of eventRefs.keys()) {
+    const event = eventMap.get(key)
+    if (event != null && !event.is_deleted && !event.isCanceled()) {
+      count += 1
+    }
+  }
+  return count
 }
 
 export const getInCartMemberOrdersByUpdatedTime = async (

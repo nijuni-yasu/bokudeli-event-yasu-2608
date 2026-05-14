@@ -3,6 +3,7 @@ import { recalcEventMembers } from './utils/recalcEventMembers.js'
 import { getMemberIds, getOrders } from './stores/memberOrder.js'
 import type { ShokujiiEvent } from './stores/event.js'
 import { removeEventFromFriendHistory } from './utils/friendsService.js'
+import { recountUserProfileCounts } from './utils/recountUserProfileCounts.js'
 
 const logger = createModuleLogger('orderCanceledSideEffects')
 
@@ -46,6 +47,18 @@ export async function applyOrderCanceledSideEffects(params: { event: ShokujiiEve
     }
   } catch (error) {
     logger.error('removeEventFromFriendHistory failed', {
+      error,
+      communityId,
+      eventId,
+      userId,
+    })
+  }
+
+  // キャンセルしたユーザーのマイページ用カウント（ordered_food_count / participated_event_count）を再集計する
+  try {
+    await recountUserProfileCounts(userId)
+  } catch (error) {
+    logger.error('recountUserProfileCounts failed after order canceled', {
       error,
       communityId,
       eventId,
