@@ -14,5 +14,12 @@ export default {
   },
   user_profile: {
     user_not_found: 'This user does not exist.',
+    counts: {
+      stat_participated_events_count: 'Events joined',
+      stat_friends_count: 'Friends',
+      stat_joined_communities_count: 'Communities (member)',
+      stat_managed_communities_count: 'Communities (admin)',
+      stat_foods_count: 'Food orders',
+    },
   },
 }
