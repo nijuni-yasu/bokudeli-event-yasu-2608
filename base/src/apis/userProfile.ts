@@ -3,6 +3,8 @@ import { httpsCallable, HttpsCallableResult } from 'firebase/functions'
 import type {
   BackfillUserProfileCountsRequest,
   BackfillUserProfileCountsResponse,
+  GetUserFoodsRequest,
+  GetUserFoodsResponse,
   GetUserProfilePreviewRequest,
   GetUserProfilePreviewResponse,
 } from '@shokujii/common/apis/userProfile.js'
@@ -24,5 +26,10 @@ export const backfillUserProfileCounts = async (
     functions,
     'backfillUserProfileCounts',
   )
+  return f(input)
+}
+
+export const getUserFoods = async (input: GetUserFoodsRequest): Promise<HttpsCallableResult<GetUserFoodsResponse>> => {
+  const f = httpsCallable<GetUserFoodsRequest, GetUserFoodsResponse>(functions, 'getUserFoods')
   return f(input)
 }

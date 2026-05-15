@@ -12,6 +12,7 @@ import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
+import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
 import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline, mdiReceiptText } from '@mdi/js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getReceiptPath, getUserPath } from '@/router/utils'
@@ -143,6 +144,8 @@ watch(
 
 const previewStore = useUserProfilePreviewStore(profileUserId)
 const { data: previewData, loading: previewLoading, error: previewError } = storeToRefs(previewStore)
+const userFoodsStore = useUserFoodsStore(profileUserId, 12)
+const { foods: pagedFoods, hasMore: foodHasMore, loading: foodLoading, error: foodError } = storeToRefs(userFoodsStore)
 
 /** ともだち追読みのためのフック（タブ表示・ソート切替時に next を試す） */
 const isFriendTab = (tab: TabKey | null) => tab === TAB_FRIENDS
@@ -793,18 +796,18 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item :value="TAB_FOODS">
-          <div v-if="previewLoading && previewData == null" class="d-flex justify-center pa-6">
+          <div v-if="foodLoading && pagedFoods.length === 0" class="d-flex justify-center pa-6">
             <v-progress-circular indeterminate color="primary" />
           </div>
-          <div v-else-if="previewError != null" class="text-body-1 text-medium-emphasis pa-6">
+          <div v-else-if="foodError != null" class="text-body-1 text-medium-emphasis pa-6">
             {{ $t('user_profile.failed_to_load') }}
           </div>
           <template v-else>
-            <div v-if="previewFoods.length === 0" class="text-body-1 text-medium-emphasis pa-4">
+            <div v-if="pagedFoods.length === 0" class="text-body-1 text-medium-emphasis pa-4">
               {{ $t('user_profile.empty.foods') }}
             </div>
             <v-row v-else>
-              <v-col v-for="food in previewFoods" :key="food.order_id" cols="12" sm="6" md="4">
+              <v-col v-for="food in pagedFoods" :key="food.order_id" cols="12" sm="6" md="4">
                 <v-card variant="outlined" class="h-100 preview-card">
                   <v-img
                     v-if="foodImageUrl(food) != null"
@@ -821,6 +824,15 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                     </div>
                   </v-card-text>
                 </v-card>
+              </v-col>
+            </v-row>
+            <v-row v-if="pagedFoods.length > 0" class="justify-center mt-2">
+              <v-col cols="auto">
+                <IncrementalLoader
+                  :loaded-count="pagedFoods.length"
+                  :total-count="foodHasMore ? Number.MAX_SAFE_INTEGER : pagedFoods.length"
+                  @load="userFoodsStore.next()"
+                />
               </v-col>
             </v-row>
           </template>
