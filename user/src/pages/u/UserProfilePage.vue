@@ -37,6 +37,14 @@ const TAB_COMMUNITIES = 'communities'
 const TAB_FOODS = 'foods'
 const TAB_ORDERS = 'orders'
 
+/** プロフィール「ともだち」プレビュー。旧 72px×9 個相当の横幅に近づけるなら 72×(9/12)≈54。`UserAvatar` は 51 以上で medium サムネ（small より解像度高い） */
+const PROFILE_FRIEND_PREVIEW_AVATAR_SIZE = 54
+
+/** プロフィール概要カードのともだちアイコンに表示する最大人数。ともだちタブ本体は無制限 */
+const PROFILE_FRIENDS_PREVIEW_MAX_TOTAL = 150
+
+/** `getUserFriends` の 1 回あたり件数（サーバ側 limit 上限 50 以下であること） */
+const PROFILE_FRIENDS_PAGE_SIZE = 30
 type TabKey =
   | typeof TAB_PROFILE
   | typeof TAB_FRIENDS
@@ -103,8 +111,8 @@ watch(
     if (pid === '') return
     if (ex === null) return
     if (ex === false || deleted === true) return
-    userFriendsByMeetCountStore.value = useUserFriendsStore(pid, 'meet_count', 10)
-    userFriendsByLastMetStore.value = useUserFriendsStore(pid, 'last_met_at', 10)
+    userFriendsByMeetCountStore.value = useUserFriendsStore(pid, 'meet_count', PROFILE_FRIENDS_PAGE_SIZE)
+    userFriendsByLastMetStore.value = useUserFriendsStore(pid, 'last_met_at', PROFILE_FRIENDS_PAGE_SIZE)
   },
   { immediate: true },
 )
@@ -112,6 +120,24 @@ const activeUserFriendsStore = computed(() =>
   friendSortBy.value === 'meet_count' ? userFriendsByMeetCountStore.value : userFriendsByLastMetStore.value,
 )
 const activeFriends = computed(() => activeUserFriendsStore.value?.friends ?? [])
+/** プロフィール内ともだちアイコンは meet_count ストアとデータを共有しつつ表示だけ上限で切る */
+const profilePreviewFriends = computed(() => {
+  const store = userFriendsByMeetCountStore.value
+  if (store == null) return []
+  return store.friends.slice(0, PROFILE_FRIENDS_PREVIEW_MAX_TOTAL)
+})
+const profilePreviewFriendsLoading = computed(() => userFriendsByMeetCountStore.value?.loading ?? false)
+const profilePreviewFriendsHasMore = computed(() => {
+  const store = userFriendsByMeetCountStore.value
+  return store != null && store.hasMore && store.friends.length < PROFILE_FRIENDS_PREVIEW_MAX_TOTAL
+})
+
+const loadMoreProfilePreviewFriends = () => {
+  const store = userFriendsByMeetCountStore.value
+  if (store == null) return
+  if (!store.hasMore || store.loading || store.friends.length >= PROFILE_FRIENDS_PREVIEW_MAX_TOTAL) return
+  store.next()
+}
 
 /**
  * URL の `?tab=xxx` を初期タブとして読み取り、未指定や本人以外で `orders` を直叩きされた場合は
@@ -303,7 +329,6 @@ const profileStatRows = computed((): ProfileStatRow[] => {
 })
 
 const previewEvents = computed(() => previewData.value?.previews.events ?? [])
-const previewFriends = computed(() => previewData.value?.previews.friends ?? [])
 const previewJoinedCommunities = computed(() => previewData.value?.previews.joined_communities ?? [])
 const previewManagedCommunities = computed(() => previewData.value?.previews.managed_communities ?? [])
 const previewFoods = computed(() => previewData.value?.previews.foods ?? [])
@@ -416,20 +441,12 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
             <!-- 数値サマリー -->
             <v-card elevation="2" class="profile-panel-card mb-4">
               <v-card-text class="pa-4 pa-sm-5">
-                <v-row dense>
-                  <v-col
-                    v-for="row in profileStatRows"
-                    :key="row.key"
-                    cols="6"
-                    sm="4"
-                    md="2"
-                    lg="2"
-                    class="text-center"
-                  >
+                <div class="profile-stats-summary">
+                  <div v-for="row in profileStatRows" :key="row.key" class="profile-stats-item text-center">
                     <div class="text-caption text-medium-emphasis">{{ row.label }}</div>
                     <div class="profile-stat-value text-h3 font-weight-medium mt-1">{{ row.value }}</div>
-                  </v-col>
-                </v-row>
+                  </div>
+                </div>
               </v-card-text>
             </v-card>
 
@@ -444,22 +461,35 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="previewFriends.length === 0" class="text-body-2 text-medium-emphasis">
+                <div
+                  v-if="profilePreviewFriendsLoading && profilePreviewFriends.length === 0"
+                  class="d-flex justify-center pa-4"
+                >
+                  <v-progress-circular indeterminate color="primary" />
+                </div>
+                <div v-else-if="profilePreviewFriends.length === 0" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.friends') }}
                 </div>
-                <v-row v-else dense>
-                  <v-col v-for="friend in previewFriends" :key="friend.user_id" cols="auto">
-                    <router-link
-                      class="d-flex flex-column align-center text-decoration-none"
-                      :to="getUserPath(friend.user_id)"
-                    >
-                      <UserAvatar :user="friendUserOf(friend)" :size="72" />
-                      <div class="text-body-2 mt-2 text-truncate friend-preview-name" :title="friend.user_name">
-                        {{ friend.user_name }}
-                      </div>
-                    </router-link>
-                  </v-col>
-                </v-row>
+                <div v-else class="profile-friends-preview d-flex flex-wrap ga-2 align-center">
+                  <router-link
+                    v-for="friend in profilePreviewFriends"
+                    :key="friend.user_id"
+                    class="profile-friends-preview-link text-decoration-none flex-shrink-0"
+                    :to="getUserPath(friend.user_id)"
+                    :aria-label="friend.user_name"
+                  >
+                    <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
+                  </router-link>
+                </div>
+                <div v-if="profilePreviewFriends.length > 0" class="d-flex justify-center mt-3">
+                  <IncrementalLoader
+                    :loaded-count="profilePreviewFriends.length"
+                    :total-count="
+                      profilePreviewFriendsHasMore ? PROFILE_FRIENDS_PREVIEW_MAX_TOTAL : profilePreviewFriends.length
+                    "
+                    @load="loadMoreProfilePreviewFriends()"
+                  />
+                </div>
               </v-card-text>
             </v-card>
 
@@ -932,6 +962,34 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
   border-radius: 8px;
 }
 
+/* 数値サマリー: 2 / 3 / 5 列グリッドで等幅。md 以上はカード幅いっぱいに 5 等分＋項目間の縦線 */
+.profile-stats-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 8px;
+}
+
+.profile-stats-item {
+  min-width: 0;
+}
+
+@media (min-width: 600px) and (max-width: 959.98px) {
+  .profile-stats-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .profile-stats-summary {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .profile-stats-item:not(:last-child) {
+    border-inline-end: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+  }
+}
+
 .preview-card {
   transition:
     box-shadow 0.15s ease,
@@ -958,10 +1016,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
   min-height: 52px;
 }
 
-.friend-preview-name {
-  /* アバター約 1.3 倍に合わせて名前の折り返し幅も拡げる */
-  max-width: 6.5rem;
-  font-size: 0.9375rem;
-  line-height: 1.35;
+/* プロフィールともだちプレビュー：小アイコンのみ・折り返し */
+.profile-friends-preview-link:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+  border-radius: 50%;
 }
 </style>

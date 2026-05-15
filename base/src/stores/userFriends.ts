@@ -10,8 +10,11 @@ export const useUserFriendsStore = (
   targetUserId: string,
   sortBy: UserFriendsSortBy = 'meet_count',
   pageSize: number = 10,
+  /** 取得する友だちの上限。指定時はそれ以上 `next` しない（ページングは `IncrementalLoader` 等のまま） */
+  maxTotal?: number,
 ) => {
-  const store = defineStore(`userFriends/${targetUserId}/${sortBy}/${pageSize}`, () => {
+  const storeKeySuffix = maxTotal === undefined ? 'all' : String(maxTotal)
+  const store = defineStore(`userFriends/${targetUserId}/${sortBy}/${pageSize}/${storeKeySuffix}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const friends = ref<UserFriendListItem[]>([])
     const hasMore = ref(true)
@@ -24,19 +27,34 @@ export const useUserFriendsStore = (
       if (paginationExecutor.totalTaskLength > 0 || !hasMore.value) {
         return
       }
+      if (maxTotal !== undefined && friends.value.length >= maxTotal) {
+        hasMore.value = false
+        return
+      }
       paginationExecutor.addTask(async () => {
         loading.value = true
         error.value = null
         try {
+          const remainingSlots = maxTotal === undefined ? undefined : maxTotal - friends.value.length
+          if (remainingSlots !== undefined && remainingSlots <= 0) {
+            hasMore.value = false
+            return
+          }
+          const requestLimit = remainingSlots === undefined ? pageSize : Math.min(pageSize, remainingSlots)
+
           const response = await getUserFriends({
             target_user_id: targetUserId,
-            limit: pageSize,
+            limit: requestLimit,
             sort_by: sortBy,
             cursor: cursor.value,
           })
           const data = response.data
           friends.value.push(...data.friends)
-          hasMore.value = data.has_more
+          if (maxTotal !== undefined && friends.value.length > maxTotal) {
+            friends.value = friends.value.slice(0, maxTotal)
+          }
+          const underCap = maxTotal === undefined || friends.value.length < maxTotal
+          hasMore.value = Boolean(underCap && data.has_more)
           cursor.value = data.next_cursor
         } catch (err: unknown) {
           error.value = err
