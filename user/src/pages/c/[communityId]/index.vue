@@ -45,7 +45,10 @@ const events = computed<EventWithMembers[]>(() => {
     eventListStore.eventStores?.flatMap((eventStore) => {
       const event = eventStore.event
       if (!event) return []
-
+      // キャンセルされたイベントは非表示
+      if (event.isCanceled()) {
+        return []
+      }
       // 「コミュマネでない」かつ「参加受付中でない」場合は非表示
       if (
         isManager.value === false &&
