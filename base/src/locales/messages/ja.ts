@@ -40,7 +40,7 @@ export default {
     chip_discount: '💰{0}円おごり',
     banner_free: '全額、主催者負担でご注文いただけます。追加のお支払いは不要です。',
     banner_discount:
-      'メニュー1個につき{0}円まで主催者負担でご注文いただけます。差額はクレジットカードでお支払いください。',
+      'メニュー1個につき{0}円まで主催者負担でご注文いただけます。差額はオンライン決済（クレジットカード・Apple Pay・Google Pay・PayPay など）でお支払いください。',
     original_price: '小計：¥{0}',
     discount_applied: 'おごり合計：¥{0}',
     free_by_organizer: '全額おごり',
@@ -131,10 +131,10 @@ export default {
     order_failed: '注文処理に失敗しました。サポートにお問い合わせください。',
     update_failed: '個数の更新に失敗しました。',
     delete_failed: '削除に失敗しました。',
-    confirm_order_credit_card: 'クレジットカードでのお支払いに進みますか？',
+    confirm_order_credit_card: 'お支払い画面に進みますか？',
     confirm_order_participant_on_day: '支払い方法は「参加者による当日払い」です。注文を確定しますか？',
     confirm_order_community_bill: '支払い方法は「主催者請求書払い」です。注文を確定しますか？',
-    confirm_order_community_bill_checkout: 'おごり設定適用後の差額をクレジットカードでお支払いします。続きますか？',
+    confirm_order_community_bill_checkout: 'おごり設定適用後の差額をオンライン決済でお支払いします。続きますか？',
     confirm_order: '注文を確定しますか？',
     remove_from_cart: 'カートから削除しますか？',
     removed_from_cart: 'カートから削除しました。',
@@ -303,7 +303,7 @@ export default {
     validator_account_exists: 'このアカウントIDは既に使用されています',
     bill_info: '請求先情報',
     bill_info_hint: `「主催者請求書払い」を利用される場合、請求先を設定してください。<br />
-      「主催者請求書払い」を設定した場合、参加者はクレジットカードによる事前決済を行わずにご注文でき、<br>
+      「主催者請求書払い」を設定した場合、参加者は事前のオンライン決済を行わずにご注文でき、<br>
       弊社より主催者様に請求書を発行いたします。請求書のお支払い期限は翌月末日となっております。`,
     bill_fullname: '請求先 担当者名',
     bill_email: '請求先 メールアドレス',
@@ -392,7 +392,7 @@ export default {
       '限定公開イベントは、shokujiiの <a href="https://shokujii.jp" target="_blank">TOPページ</a> に一覧表示されず、URLを知る人だけが参加できます。',
     payment: '支払い設定',
     payment_hint_user_advance: `参加者事前決済 を設定した場合<br />
-      食事の代金は、参加者がクレジットカード決済にて事前にお支払いいただきます。<br />
+      食事の代金は、参加者がクレジットカード・Apple Pay・Google Pay・PayPay などで事前にお支払いいただきます。<br />
       支払い設定は予約申請後、変更できないためご注意ください。`,
     payment_hint_community_bill_title: '主催者請求書払いについて',
     payment_hint_community_bill: `
