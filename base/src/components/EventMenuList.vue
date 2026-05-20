@@ -5,8 +5,7 @@ import { useDisplay } from 'vuetify'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { useEventStore, type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { mdiFoodForkDrink } from '@mdi/js'
-import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
-import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import EventMenuImage from '@shokujii/base/components/EventMenuImage.vue'
 
 /** 横長レイアウトを適用するメニュー数の上限（この数以下は横長、超えるとグリッド） */
 const HORIZONTAL_LAYOUT_MAX_COUNT = 2
@@ -34,14 +33,6 @@ const useHorizontalLayout = computed(() => {
   if (filteredMenus.value === undefined || filteredMenus.value.length === 0) return false
   return filteredMenus.value.length <= HORIZONTAL_LAYOUT_MAX_COUNT && !display.xs.value
 })
-
-const getMenuImageURL = (menu: BokudeliEventMenu) => {
-  const event = eventStore.event
-  if (event == null) {
-    return undefined
-  }
-  return convertStoragePathToURL(getEventMenuImageStoragePath(event, menu.menu_id))
-}
 </script>
 <template>
   <section>
@@ -53,7 +44,7 @@ const getMenuImageURL = (menu: BokudeliEventMenu) => {
             <v-row no-gutters class="flex-grow-1">
               <v-col cols="4" class="d-flex flex-shrink-0 align-stretch">
                 <div class="menu-image-wrapper menu-image-wrapper-horizontal">
-                  <v-img :src="getMenuImageURL(menu)" :alt="menu.menu_name" cover />
+                  <EventMenuImage :event="eventStore.event" :menu="menu" :alt="menu.menu_name" cover />
                 </div>
               </v-col>
               <v-col cols="8" class="pa-4 pa-md-5 d-flex flex-column menu-content-col">
@@ -94,7 +85,13 @@ const getMenuImageURL = (menu: BokudeliEventMenu) => {
             <v-row no-gutters class="flex-grow-1">
               <v-col cols="6" sm="12" class="d-flex flex-shrink-0">
                 <div class="menu-image-wrapper">
-                  <v-img :src="getMenuImageURL(menu)" :alt="menu.menu_name" aspect-ratio="1" cover />
+                  <EventMenuImage
+                    :event="eventStore.event"
+                    :menu="menu"
+                    :alt="menu.menu_name"
+                    :aspect-ratio="1"
+                    cover
+                  />
                 </div>
               </v-col>
 
