@@ -2,19 +2,12 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import {
-  getEventPath,
-  getEventEditShopNoticePath,
-  getManageCommunityPath,
-  getEventEditPathByRawStatus,
-  getLogin,
-} from '@/router/utils'
+import { getEventPath, getManageCommunityPath, getLogin } from '@/router/utils'
 import CommunityContactDialog from '@shokujii/base/components/CommunityContactDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useCommunityStore } from '@shokujii/base/stores/community'
 
-import { mdiPencilBoxOutline, mdiEmail } from '@mdi/js'
 import CommunityBioPanel from '@shokujii/base/components/CommunityBioPanel.vue'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import type { EventStore, BokudeliEventMember } from '@shokujii/base/stores/event.js'
@@ -164,43 +157,6 @@ const albumSlides = computed(() => {
                   class="mx-0 cursor-pointer"
                   @click="goToEvents(eventWithMembers.eventStore.event.event_id)"
                 />
-                <v-row v-if="isManager && eventWithMembers.eventStore.event" class="justify-end my-2 mr-1">
-                  <v-btn
-                    v-if="eventWithMembers.eventStore.event.event_status.value === `in_draft`"
-                    class="ml-1"
-                    color="white"
-                    elevation="5"
-                    size="small"
-                    rounded="pill"
-                    :prepend-icon="mdiEmail"
-                    :to="getEventEditShopNoticePath(eventWithMembers.eventStore.event.event_id)"
-                  >
-                    {{ $t('community.reserve') }}
-                  </v-btn>
-                  <v-btn
-                    v-if="
-                      eventWithMembers.eventStore.event.calculatedEventStatus === 'in_draft' ||
-                      eventWithMembers.eventStore.event.calculatedEventStatus === 'applying_reservation' ||
-                      eventWithMembers.eventStore.event.calculatedEventStatus === 'accepting_order' ||
-                      eventWithMembers.eventStore.event.calculatedEventStatus === 'order_closed' ||
-                      eventWithMembers.eventStore.event.calculatedEventStatus === 'full'
-                    "
-                    class="ml-1"
-                    color="white"
-                    elevation="5"
-                    size="small"
-                    rounded="pill"
-                    :prepend-icon="mdiPencilBoxOutline"
-                    :to="
-                      getEventEditPathByRawStatus(
-                        eventWithMembers.eventStore.event.event_id,
-                        eventWithMembers.eventStore.event.event_status.value,
-                      )
-                    "
-                  >
-                    {{ $t('community.edit') }}
-                  </v-btn>
-                </v-row>
               </v-col>
               <v-col cols="12">
                 <v-row class="justify-center">
