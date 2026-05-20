@@ -3,15 +3,14 @@ import { getFirestore } from 'firebase-admin/firestore'
 import { createModuleLogger } from './utils/logger.js'
 import { getEvent } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
-import { getPartner } from './stores/partner.js'
 import { getConfigGlobal } from './stores/config.js'
 import { UpdateEventMenusRequest } from '@shokujii/common/apis/eventMenu.js'
 import {
-  convertPartnerMenusToEventMenus,
   updateEventMenusIsSelected,
   shouldRegenerateFromPartnerMenus,
   shouldUpdateExistingMenusOnly,
 } from '@shokujii/common/utils/eventMenuConverter.js'
+import { savePartnerMenusToEventMenus } from './eventMenusSnapshot.js'
 
 const logger = createModuleLogger('eventMenusSelection')
 
@@ -71,8 +70,7 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
   }
 
   try {
-    await getFirestore().runTransaction(async (transaction) => {
-      // イベント情報を取得
+    const regenerateParams = await getFirestore().runTransaction(async (transaction) => {
       const event = await getEvent(eventId, transaction)
       if (event == null) {
         throw new HttpsError('not-found', `Event ${eventId} not found`)
@@ -81,7 +79,6 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
       const eventStatus = event.event_status.value
       const calculatedStatus = event.calculatedEventStatus
 
-      // finished または event_canceled 状態の場合は更新不可
       if (calculatedStatus === 'finished' || calculatedStatus === 'event_canceled') {
         throw new HttpsError('failed-precondition', 'Cannot update menus after event is finished or canceled.')
       }
@@ -90,7 +87,6 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
         const existingEventMenus = await event.getMenus(transaction)
         const { changedMenus } = updateEventMenusIsSelected(existingEventMenus, selectedMenuIds)
 
-        // 変更されたメニューのみ保存
         await Promise.all(
           changedMenus.map(async (menu) => {
             await event.saveMenu(menu, transaction)
@@ -104,50 +100,37 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
           selectedMenusCount: selectedMenuIds.length,
           changedMenusCount: changedMenus.length,
         })
-      } else if (shouldRegenerateFromPartnerMenus(eventStatus)) {
-        const partner = await getPartner(event.partner_id)
-        if (!partner) {
-          throw new HttpsError('not-found', `Partner not found for event ${eventId}`)
-        }
-
-        const partnerMenus = await partner.getMenus(transaction)
-
-        // 最新のPartnerMenusから全EventMenusを生成（is_selectedフラグで管理）
-        // 期間チェックも実行され、期間外のメニューは除外
-        const eventMenusToSave = convertPartnerMenusToEventMenus(
-          partnerMenus,
-          eventId,
-          event.event_start_datetime,
-          selectedMenuIds,
-        )
-
-        // 既存のEventMenusを取得し削除
-        const existingEventMenus = await event.getMenus(transaction)
-        await Promise.all(
-          existingEventMenus.map(async (menu) => {
-            await event.deleteMenu(menu, transaction)
-          }),
-        )
-
-        // 生成したEventMenusを保存
-        await Promise.all(
-          eventMenusToSave.map(async (eventMenu) => {
-            await event.saveMenu(eventMenu, transaction)
-          }),
-        )
-
-        logger.info('Updated all menus from latest PartnerMenus with is_selected flag', {
-          eventId,
-          communityId,
-          status: eventStatus,
-          selectedMenusCount: selectedMenuIds.length,
-          totalSavedMenusCount: eventMenusToSave.length,
-          selectedSavedMenusCount: eventMenusToSave.filter((m) => m.is_selected).length,
-        })
-      } else {
-        throw new HttpsError('failed-precondition', `Unexpected event status: ${eventStatus}`)
+        return null
       }
+
+      if (shouldRegenerateFromPartnerMenus(eventStatus)) {
+        if (event.partner_id === '') {
+          throw new HttpsError('failed-precondition', 'Partner must be set before saving menus')
+        }
+        return {
+          partnerId: event.partner_id,
+          startDatetime: event.event_start_datetime,
+        }
+      }
+
+      throw new HttpsError('failed-precondition', `Unexpected event status: ${eventStatus}`)
     })
+
+    if (regenerateParams != null) {
+      await savePartnerMenusToEventMenus(
+        regenerateParams.partnerId,
+        eventId,
+        communityId,
+        regenerateParams.startDatetime,
+        selectedMenuIds,
+      )
+
+      logger.info('Updated all menus from latest PartnerMenus with is_selected flag', {
+        eventId,
+        communityId,
+        selectedMenusCount: selectedMenuIds.length,
+      })
+    }
 
     return { success: true }
   } catch (error) {
