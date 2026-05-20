@@ -11,6 +11,7 @@ import { getEventCoverStoragePath, getCommunityCoverStoragePath } from '@shokuji
 import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('ogpRequest')
+const DEFAULT_OGP_IMAGE_TYPE = 'image/png'
 
 interface OgpContext {
   site: string
@@ -81,18 +82,36 @@ const convertToOgpString = (inputString: string): string => {
   return first100Chars.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+/** getMetadata 成功時はカバー画像 URL を常に反映し、MIME のみ未設定時はデフォルトにフォールバックする */
+const resolveOgpImageType = (contentType: string | undefined | null): string => {
+  if (contentType == null || contentType === '') {
+    return DEFAULT_OGP_IMAGE_TYPE
+  }
+  return contentType.split(';')[0].trim()
+}
+
+const applyCoverImageFromMetadata = (
+  context: OgpContext,
+  storagePath: string,
+  metadata: { contentType?: string | null },
+): void => {
+  context.image = convertStoragePathToURL(storagePath)
+  context.imageType = resolveOgpImageType(metadata.contentType)
+}
+
 const makeMetaTags = (context: OgpContext): string => {
   const title = context.title || ''
   const description = context.description || ''
   const image = context.image || ''
   const url = context.url || ''
   const site = context.site || ''
+  const imageType = context.imageType || DEFAULT_OGP_IMAGE_TYPE
 
   return `<meta property="og:title" content="${title}">
 <meta property="og:image" content="${image}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:type" content="${context.imageType}">
+<meta property="og:image:type" content="${imageType}">
 <meta property="og:description" content="${description}">
 <meta property="og:url" content="${url}">
 <meta property="og:type" content="article">
@@ -148,10 +167,7 @@ export const handleEventOgpRequest = https.onRequest(
         try {
           const storagePath = getEventCoverStoragePath(eventData.community_id, eventId)
           const [metadata] = await getStorage().bucket().file(storagePath).getMetadata()
-          if (metadata.contentType != null) {
-            context.image = convertStoragePathToURL(storagePath)
-            context.imageType = metadata.contentType
-          }
+          applyCoverImageFromMetadata(context, storagePath, metadata)
         } catch (error) {
           logger.warn('Failed to get storage metadata for event cover image', { error })
         }
@@ -236,10 +252,7 @@ export const handleCommunityOgpRequest = https.onRequest(
         try {
           const storagePath = getCommunityCoverStoragePath(communityData.community_id)
           const [metadata] = await getStorage().bucket().file(storagePath).getMetadata()
-          if (metadata.contentType != null) {
-            context.image = convertStoragePathToURL(storagePath)
-            context.imageType = metadata.contentType
-          }
+          applyCoverImageFromMetadata(context, storagePath, metadata)
         } catch (error) {
           logger.warn('Failed to get storage metadata for community cover image', { error })
         }
