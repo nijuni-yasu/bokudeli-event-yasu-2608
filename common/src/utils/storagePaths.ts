@@ -1,5 +1,3 @@
-import { type Event } from '../schemas/Event.js'
-
 export function getCommunityCoverStoragePath(communityId: string): string {
   return `communities/${communityId}/community/cover`
 }
@@ -16,23 +14,13 @@ export function getEventCoverStoragePath(communityId: string, eventId: string): 
   return `communities/${communityId}/events/${eventId}/cover`
 }
 
-export function getEventMenuImageStoragePath(communityId: string, eventId: string, menuId: string): string
-export function getEventMenuImageStoragePath(event: Event, menuId: string): string
-export function getEventMenuImageStoragePath(arg1: string | Event, arg2: string, arg3?: string): string {
-  if (typeof arg1 === 'string' && typeof arg3 === 'string') {
-    return `communities/${arg1}/events/${arg2}/menus/${arg3}/image`
-  } else if (typeof arg1 === 'object') {
-    if (arg1.event_status.value === 'accepting_order') {
-      return `communities/${arg1.community_id}/events/${arg1.event_id}/menus/${arg2}/image`
-    } else {
-      if (arg1.partner_id === '') {
-        throw new Error('partner_id is not set')
-      }
-      return getMenuImageStoragePath(arg1.partner_id, arg2)
-    }
-  } else {
-    throw new Error('Invalid arguments')
-  }
+/** EventMenu 画像が格納される prefix（末尾スラッシュ付き）。deleteFiles 用。 */
+export function getEventMenuImagesPrefix(communityId: string, eventId: string): string {
+  return `communities/${communityId}/events/${eventId}/menus/`
+}
+
+export function getEventMenuImageStoragePath(communityId: string, eventId: string, menuId: string): string {
+  return `communities/${communityId}/events/${eventId}/menus/${menuId}/image`
 }
 
 export function getTinymceImageStoragePath(communityId: string, eventId: string, uuid: string): string {
