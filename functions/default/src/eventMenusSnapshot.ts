@@ -97,6 +97,15 @@ export const onShopReservationChanged = onDocumentWritten(
     region: 'asia-northeast1',
   },
   async (change) => {
+    // v2 トリガーの幽霊状態（Firestore → Eventarc publish 断）を検知するための invocation log
+    // 詳細: documents/07_リファクタリング/17_onDocumentWritten不具合.md
+    logger.info('onShopReservationChanged invoked', {
+      communityId: change.params.communityId,
+      eventId: change.params.eventId,
+      hasBefore: change.data?.before.exists ?? false,
+      hasAfter: change.data?.after.exists ?? false,
+    })
+
     if (!change.data) {
       logger.warn('Change data is undefined')
       return
@@ -106,6 +115,9 @@ export const onShopReservationChanged = onDocumentWritten(
     const after = change.data.after
 
     if (!after?.exists) {
+      logger.info('Event document deleted; skip', {
+        eventId: change.params.eventId,
+      })
       return
     }
 
@@ -117,6 +129,11 @@ export const onShopReservationChanged = onDocumentWritten(
     const isShopRejection = beforeStatus === 'applying_reservation' && afterStatus === 'in_draft'
 
     if (!isShopApproval && !isShopRejection) {
+      logger.info('Not a shop approval/rejection transition; skip', {
+        eventId: change.params.eventId,
+        beforeStatus,
+        afterStatus,
+      })
       return
     }
 
@@ -136,6 +153,15 @@ export const onShopReservationChanged = onDocumentWritten(
       })
       return
     }
+
+    logger.info('Executing menu snapshot', {
+      partnerId,
+      communityId,
+      eventId,
+      isShopApproval,
+      isShopRejection,
+      startDatetime,
+    })
 
     try {
       await savePartnerMenusToEventMenus(partnerId, eventId, communityId, startDatetime)

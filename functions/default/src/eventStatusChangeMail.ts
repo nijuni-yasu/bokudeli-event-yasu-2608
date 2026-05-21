@@ -10,6 +10,9 @@ import {
 import { getPartner } from './stores/partner.js'
 import { getUser } from './stores/user.js'
 import { convertReferenceToEvent, ShokujiiEvent } from './stores/event.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('eventStatusChangeMail')
 
 // テンプレートID定数
 const EVENT_STATUS_APPLYING_RESERVATION_ID = 'd-238517a9044c441598d1d0d7d4a7d0b7'
@@ -151,13 +154,13 @@ async function sendApplyingOrderMailToShop(event: ShokujiiEvent): Promise<void> 
   ])
 
   if (!shop) {
-    console.warn(`Shop not found for event: ${event.id}`)
+    logger.warn('Shop not found for event', { eventId: event.id })
     return
   }
 
   const shopEmails = shop.getEmails()
   if (shopEmails.length === 0) {
-    console.warn(`No shop emails found for event: ${event.id}`)
+    logger.warn('No shop emails found for event', { eventId: event.id })
     return
   }
 
@@ -180,8 +183,17 @@ export const onEventChanged = onDocumentWritten(
     secrets: ['SENDGRID_API_KEY'],
   },
   async (change) => {
+    // v2 トリガーの幽霊状態（Firestore → Eventarc publish 断）を検知するための invocation log
+    // 詳細: documents/07_リファクタリング/17_onDocumentWritten不具合.md
+    logger.info('onEventChanged invoked', {
+      communityId: change.params.communityId,
+      eventId: change.params.eventId,
+      hasBefore: change.data?.before.exists ?? false,
+      hasAfter: change.data?.after.exists ?? false,
+    })
+
     if (!change.data) {
-      console.warn('Change data is undefined')
+      logger.warn('Change data is undefined')
       return
     }
 
@@ -189,6 +201,9 @@ export const onEventChanged = onDocumentWritten(
     const after = change.data.after
 
     if (!after?.exists) {
+      logger.info('Event document deleted; skip', {
+        eventId: change.params.eventId,
+      })
       return
     }
 
@@ -219,17 +234,25 @@ export const onEventChanged = onDocumentWritten(
     const beforeStatus = before?.get('event_status')?.value
     const afterStatus = after.get('event_status')?.value
 
-    const promises: Promise<void>[] = []
+    const matchedConditions = conditions.filter(
+      ({ fromStatus, toStatus }) => beforeStatus === fromStatus && afterStatus === toStatus,
+    )
+    logger.info('Status transition evaluated', {
+      eventId: change.params.eventId,
+      beforeStatus,
+      afterStatus,
+      matchedCount: matchedConditions.length,
+    })
 
-    for (const { fromStatus, toStatus, callFunction } of conditions) {
-      if (beforeStatus === fromStatus && afterStatus === toStatus) {
-        const event = await convertReferenceToEvent(after.ref)
-        if (event) {
-          promises.push(callFunction(event))
-        }
-      }
+    if (matchedConditions.length === 0) {
+      return
     }
 
-    await Promise.all(promises)
+    const event = await convertReferenceToEvent(after.ref)
+    if (!event) {
+      return
+    }
+
+    await Promise.all(matchedConditions.map(({ callFunction }) => callFunction(event)))
   },
 )
