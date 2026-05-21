@@ -39,22 +39,17 @@ const popularEventListStore = useEventListStore(
   numOfPopularColumns,
 )
 
-const popularEvents = computed(() => {
-  const events =
-    popularEventListStore.eventStores?.flatMap((s) => {
-      if (s.event == null) {
-        return []
-      }
-      return { event: s.event, members: s.members ?? [] }
-    }) ?? []
-  if (
-    events.length < numOfPopularColumns &&
-    (popularEventListStore.totalCount ?? 0) > (popularEventListStore.eventStores?.length ?? 0)
-  ) {
-    popularEventListStore.next()
-  }
-  return events
-})
+const popularEvents = computed(
+  () =>
+    popularEventListStore.eventStores
+      ?.flatMap((s) => {
+        if (s.event == null) {
+          return []
+        }
+        return { event: s.event, members: s.members ?? [] }
+      })
+      .slice(0, numOfPopularColumns) ?? [],
+)
 
 const upcomingEventListStore = useEventListStore(
   [
