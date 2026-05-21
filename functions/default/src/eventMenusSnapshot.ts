@@ -5,7 +5,11 @@ import { createModuleLogger } from './utils/logger.js'
 import { getPartner } from './stores/partner.js'
 import { getEvent } from './stores/event.js'
 import { convertPartnerMenusToEventMenus } from '@shokujii/common/utils/eventMenuConverter.js'
-import { getMenuImageStoragePath, getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import {
+  getMenuImageStoragePath,
+  getEventMenuImageStoragePath,
+  getEventMenuImagesPrefix,
+} from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('eventMenusSnapshot')
 
@@ -25,33 +29,73 @@ export const savePartnerMenusToEventMenus = async (
   startDatetime: number,
   selectedMenuIds?: string[],
 ): Promise<void> => {
-  // partnerMenus を transaction 外で先読み（Storageコピーのために必要）
   const partner = await getPartner(partnerId)
   if (partner == null) {
     throw new Error(`Partner ${partnerId} not found`)
   }
-  const partnerMenus = await partner.getMenus()
 
-  // メニュー画像を Storage コピー（Firestore トランザクション前に実行。URL は EventMenu に持たせずパス参照）
-  const bucket = getStorage().bucket()
-  await Promise.allSettled(
-    partnerMenus
-      .filter((m) => !m.is_deleted)
-      .map(async (m) => {
-        const srcPath = getMenuImageStoragePath(partnerId, m.menu_id)
-        const destPath = getEventMenuImageStoragePath(communityId, eventId, m.menu_id)
-        try {
-          await bucket.file(srcPath).copy(destPath)
-        } catch (error) {
-          logger.error('Failed to copy menu image', {
-            menuId: m.menu_id,
-            srcPath,
-            destPath,
-            error,
-          })
-        }
-      }),
+  const eventForSelection = await getEvent(eventId)
+  if (eventForSelection == null) {
+    throw new Error(`Event ${eventId} not found`)
+  }
+  const existingEventMenusForSelection = await eventForSelection.getMenus()
+  const effectiveSelectedMenuIds =
+    selectedMenuIds ?? existingEventMenusForSelection.filter((m) => m.is_selected).map((m) => m.menu_id)
+
+  const partnerMenus = await partner.getMenus()
+  const eventMenusToSave = convertPartnerMenusToEventMenus(
+    partnerMenus,
+    eventId,
+    startDatetime,
+    effectiveSelectedMenuIds,
   )
+
+  const bucket = getStorage().bucket()
+  await bucket.deleteFiles({ prefix: getEventMenuImagesPrefix(communityId, eventId) })
+
+  const copyResults = await Promise.allSettled(
+    eventMenusToSave.map(async (eventMenu) => {
+      const srcPath = getMenuImageStoragePath(partnerId, eventMenu.menu_id)
+      const destPath = getEventMenuImageStoragePath(communityId, eventId, eventMenu.menu_id)
+      const [srcExists] = await bucket.file(srcPath).exists()
+      if (!srcExists) {
+        logger.info('PartnerMenu image not found', {
+          menuId: eventMenu.menu_id,
+          srcPath,
+          destPath,
+        })
+        return
+      }
+      try {
+        await bucket.file(srcPath).copy(destPath)
+      } catch (error) {
+        logger.error('Failed to copy menu image', {
+          menuId: eventMenu.menu_id,
+          srcPath,
+          destPath,
+          error,
+        })
+        throw error
+      }
+    }),
+  )
+
+  const failedMenuIds: string[] = []
+  for (let i = 0; i < copyResults.length; i++) {
+    if (copyResults[i].status === 'rejected') {
+      failedMenuIds.push(eventMenusToSave[i].menu_id)
+    }
+  }
+  if (failedMenuIds.length > 0) {
+    logger.error('Menu image copy failed; aborting Firestore snapshot', {
+      communityId,
+      eventId,
+      failedMenuIds,
+      failedCount: failedMenuIds.length,
+      totalCount: eventMenusToSave.length,
+    })
+    throw new Error(`Menu image copy failed: ${failedMenuIds.join(', ')}`)
+  }
 
   await getFirestore().runTransaction(async (transaction) => {
     const event = await getEvent(eventId, transaction)
@@ -59,29 +103,23 @@ export const savePartnerMenusToEventMenus = async (
       throw new Error(`Event ${eventId} not found`)
     }
 
-    // トランザクション内で再取得して整合性を保つ
     const freshPartnerMenus = await partner.getMenus(transaction)
     const existingEventMenus = await event.getMenus(transaction)
 
-    // 既存のメニューを削除
     await Promise.all(
       existingEventMenus.map(async (menu) => {
         await event.deleteMenu(menu, transaction)
       }),
     )
 
-    // selectedMenuIds が指定されていない場合は既存EventMenuのis_selected状態から引き継ぐ
-    const effectiveSelectedMenuIds =
-      selectedMenuIds ?? existingEventMenus.filter((m) => m.is_selected).map((m) => m.menu_id)
-    const eventMenusToSave = convertPartnerMenusToEventMenus(
+    const eventMenusToSaveInTx = convertPartnerMenusToEventMenus(
       freshPartnerMenus,
       eventId,
       startDatetime,
       effectiveSelectedMenuIds,
     )
 
-    // 生成したEventMenusを保存
-    await Promise.all(eventMenusToSave.map((eventMenu) => event.saveMenu(eventMenu, transaction)))
+    await Promise.all(eventMenusToSaveInTx.map((eventMenu) => event.saveMenu(eventMenu, transaction)))
   })
 }
 

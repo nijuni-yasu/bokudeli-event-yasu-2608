@@ -4,8 +4,7 @@ import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { priceString } from '@shokujii/base/schemes/converter'
 import { mdiCart } from '@mdi/js'
-import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
-import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import EventMenuImage from '@shokujii/base/components/EventMenuImage.vue'
 
 const props = defineProps<{
   menu: BokudeliEventMenu
@@ -67,14 +66,7 @@ const addCart = async () => {
 <template>
   <v-dialog v-model="isOpen" max-width="500px" @click:outside="closeDialog()">
     <v-card class="pa-sm-10 pa-5">
-      <v-img
-        :src="
-          eventStore.event != null
-            ? convertStoragePathToURL(getEventMenuImageStoragePath(eventStore.event, menu.menu_id))
-            : undefined
-        "
-        class="ma-3"
-      ></v-img>
+      <EventMenuImage v-if="eventStore.event != null" :event="eventStore.event" :menu="menu" class="ma-3" />
       <v-card-title class="text-left text-h4 py-1 text-wrap">
         {{ menu.menu_name }}
       </v-card-title>
