@@ -24,28 +24,6 @@ const messages2 = Object.fromEntries(
 
 const messages = _.merge(messages1, messages2)
 
-const datetimeFormats1 = Object.fromEntries(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Object.entries(import.meta.glob<{ default: any }>('../../locales/datetimeFormats/*.ts', { eager: true })).flatMap(
-    ([key, value]) => {
-      const fileName = /.*\/locales\/datetimeFormats\/(.+)\.ts/.exec(key)?.[1]
-      return fileName == null ? [] : [[fileName, value.default]]
-    },
-  ),
-)
-
-const datetimeFormats2 = Object.fromEntries(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Object.entries(import.meta.glob<{ default: any }>('@/locales/datetimeFormats/*.ts', { eager: true })).flatMap(
-    ([key, value]) => {
-      const fileName = /.*\/locales\/datetimeFormats\/(.+)\.ts/.exec(key)?.[1]
-      return fileName == null ? [] : [[fileName, value.default]]
-    },
-  ),
-)
-
-const datetimeFormats = _.merge(datetimeFormats1, datetimeFormats2)
-
 const numberFormats1 = Object.fromEntries(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Object.entries(import.meta.glob<{ default: any }>('../../locales/numberFormats/*.ts', { eager: true })).flatMap(
@@ -80,7 +58,6 @@ export const getI18n = () => {
       missingWarn: false,
       warnHtmlMessage: false,
       messages,
-      datetimeFormats,
       numberFormats,
     })
   }
