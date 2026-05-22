@@ -18,6 +18,11 @@ export function convertToDate(millis: number, zone = DEFAULT_TIME_ZONE, locale =
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d')
 }
 
+/** スラッシュ区切りの日付 + 24h 時刻。月日は先頭ゼロなし。例 2026/3/30 23:52 */
+export function convertToDatetime(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d HH:mm')
+}
+
 /** イベントコピー時の名前サフィックス用（開催開始の暦日・曜日）。例 → 2026/6/28(日) */
 export function formatCopyEventDateSuffix(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   const dt = DateTime.fromMillis(millis, { zone, locale })
@@ -33,7 +38,7 @@ export function convertToDatetimeWeekdayShort(
   zone = DEFAULT_TIME_ZONE,
   locale = DEFAULT_LOCALE,
 ): string {
-  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d(ccc) HH:mm')
 }
 
 /**
