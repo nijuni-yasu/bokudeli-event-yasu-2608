@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { getLogin } from '@/router/utils'
 import { useI18n } from 'vue-i18n'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useCommunityStore } from '@shokujii/base/stores/community'
@@ -120,7 +121,7 @@ const openLoginConfirm = (message: string) => {
 
 const redirectToLogin = () => {
   router.push({
-    path: '/login',
+    path: getLogin(),
     query: { redirect: route.fullPath },
   })
 }
