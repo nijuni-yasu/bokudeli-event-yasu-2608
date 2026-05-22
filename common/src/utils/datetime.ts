@@ -127,6 +127,11 @@ export function getDayOfWeek(millis: number, zone = DEFAULT_TIME_ZONE, locale = 
   return DateTime.fromMillis(millis, { zone, locale }).weekday % 7
 }
 
+/** 月内何日目か 1〜31 */
+export function getDayOfMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): number {
+  return DateTime.fromMillis(millis, { zone, locale }).day
+}
+
 /**
  * 指定された日時が店舗の営業時間内かどうかを判定する
  * datetime.ts に入れるべきかは微妙なところだが、 locale が絡むのでここにおいておく

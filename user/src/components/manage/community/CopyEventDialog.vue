@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { DateTime } from 'luxon'
 import { useI18n } from 'vue-i18n'
 import {
   computeEventRepeatCopyPreviewStartTimes,
   convertToDateString,
   convertToDatetimeWeekdayShort,
+  getDayOfMonth,
   getDayOfWeek,
   getEventDateTimeRangeDurationMs,
   getStartOfDay,
   getWeekNumberInMonthFromMillis,
   isInShopTime,
   parseDatetimeStrings,
-  DEFAULT_TIME_ZONE,
 } from '@shokujii/common/utils/datetime.js'
 import { getReservationLeadTimeMinMillis } from '@shokujii/common/utils/reservationLeadTime.js'
 import { eventCopy } from '@shokujii/base/apis/eventCopy.js'
@@ -230,7 +229,6 @@ const previewStartTimes = computed(() => {
     repeatInterval: repeatInterval.value,
     repeatUnit: repeatUnit.value,
     monthlyPattern: monthlyPattern.value,
-    zone: DEFAULT_TIME_ZONE,
     isShopOpen: (ms) => isInShopTime(ms, shop),
   })
   return startTimes
@@ -246,7 +244,7 @@ const monthlyPatternDescription = computed(() => {
   }
   const ms = repeatStartDateTime.value
   if (monthlyPattern.value === 'date') {
-    const day = DateTime.fromMillis(ms, { zone: DEFAULT_TIME_ZONE }).day
+    const day = getDayOfMonth(ms)
     return $t('manage.copy_event_modal.preview_monthly_date', { day })
   }
   const weekNumber = getWeekNumberInMonthFromMillis(ms)
