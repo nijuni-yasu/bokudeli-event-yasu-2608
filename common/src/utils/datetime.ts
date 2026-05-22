@@ -64,6 +64,22 @@ export function convertToTimeString(millis: number, zone = DEFAULT_TIME_ZONE, lo
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('HH:mm')
 }
 
+/**
+ * 店舗締切時刻など、epoch millis から JST の時分だけを取り出して使う値を生成する。
+ * ブラウザのローカル TZ に依存しない。
+ */
+export function timeOfDayToMillis(
+  hours: number,
+  minutes: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): number {
+  return DateTime.fromObject(
+    { year: 1970, month: 1, day: 1, hour: hours, minute: minutes },
+    { zone, locale },
+  ).toMillis()
+}
+
 export function parseDatetimeStrings(
   dateString: string,
   hourString: string | null,
