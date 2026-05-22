@@ -48,7 +48,9 @@ const date = computed<string | null>({
   },
 })
 const displayDate = computed<string>(() =>
-  date.value == null ? '' : convertToDate(parseDatetimeStrings(date.value, null, null)),
+  modelValue.value == null || !adapter.isValid(modelValue.value)
+    ? ''
+    : convertToDate(parseDatetimeStrings(modelValue.value, null, null)),
 )
 </script>
 
