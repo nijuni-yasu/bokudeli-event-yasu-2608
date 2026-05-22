@@ -171,6 +171,17 @@ const downloadNamesPrint = async () => {
             </p>
             <p>{{ $t('order_detail.event_max_people', [eventStore.event.event_max_people]) }}</p>
             <p>{{ $t('order_detail.community_name', [eventStore.event.community_name]) }}</p>
+            <template v-if="isOwner == null">
+              <v-progress-circular indeterminate color="primary" size="24" />
+            </template>
+            <template v-else-if="!isOwner">
+              <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
+              <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>
+              <p>{{ $t('order_detail.organizer_phone_personal', [eventStore.event.organizer_phone_personal]) }}</p>
+              <p>{{ $t('order_detail.organizer_phone_company', [eventStore.event.organizer_phone_company]) }}</p>
+              <p>{{ $t('order_detail.organizer_email', [eventStore.event.organizer_email]) }}</p>
+              <p>{{ $t('order_detail.organizer_memo', [eventStore.event.organizer_memo]) }}</p>
+            </template>
             <v-alert
               v-if="
                 eventStore.event.event_status.value === 'event_canceled' &&
@@ -184,17 +195,6 @@ const downloadNamesPrint = async () => {
               <div class="text-subtitle-2 font-weight-bold mb-1">{{ $t('order_detail.cancel_reason_label') }}</div>
               <div class="text-body-2 text-pre-wrap">{{ eventStore.event.event_status.cancel_reason }}</div>
             </v-alert>
-            <template v-if="isOwner == null">
-              <v-progress-circular indeterminate color="primary" size="24" />
-            </template>
-            <template v-else-if="!isOwner">
-              <p>{{ $t('order_detail.organizer_fullname', [eventStore.event.organizer_fullname]) }}</p>
-              <p>{{ $t('order_detail.organizer_company', [eventStore.event.organizer_company]) }}</p>
-              <p>{{ $t('order_detail.organizer_phone_personal', [eventStore.event.organizer_phone_personal]) }}</p>
-              <p>{{ $t('order_detail.organizer_phone_company', [eventStore.event.organizer_phone_company]) }}</p>
-              <p>{{ $t('order_detail.organizer_email', [eventStore.event.organizer_email]) }}</p>
-              <p>{{ $t('order_detail.organizer_memo', [eventStore.event.organizer_memo]) }}</p>
-            </template>
           </div>
         </v-card-text>
         <template v-if="eventStore.event.event_status.value == 'applying_reservation'">
