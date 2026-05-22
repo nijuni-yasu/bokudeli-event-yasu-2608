@@ -9,6 +9,7 @@ import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { computeTotalPayment } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
+import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
@@ -111,7 +112,7 @@ const enrichedCart = computed<EnrichedCartItem[] | null>(() => {
 const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople' | 'unselectedMenu'> => {
   const { event, orders } = cartItem
 
-  if (event.event_deadline_datetime < Date.now()) {
+  if (!isWithinOrderDeadline(event.event_deadline_datetime)) {
     return 'deadline'
   }
 

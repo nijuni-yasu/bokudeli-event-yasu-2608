@@ -22,7 +22,7 @@ import support01 from '@/assets/images/manage_top/manage_support_icon_01.png'
 import support02 from '@/assets/images/manage_top/manage_support_icon_02.png'
 import support03 from '@/assets/images/manage_top/manage_support_icon_03.png'
 
-import { getManageCommunityPath } from '@/router/utils'
+import { getManageCommunityPath, getManagePath } from '@/router/utils'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { doc, orderBy, where } from 'firebase/firestore'
 import CommunityCardMini from '@shokujii/base/components/CommunityCardMini.vue'
@@ -35,6 +35,8 @@ const userId = getAuth().currentUser?.uid
 if (userId == null) {
   throw new Error('User is not authenticated')
 }
+const route = useRoute()
+const router = useRouter()
 
 const communityListStore = useCommunityListStore(
   [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
@@ -43,12 +45,21 @@ const communityListStore = useCommunityListStore(
 const communities = computed(() => {
   return (
     communityListStore.communityStores?.flatMap((communityStore) => {
-      if (communityStore.community == null || communityStore.members == null) {
+      const community = communityStore.community
+      if (community == null || communityStore.members == null) {
         return []
       }
-      return communityStore.community
+      const isManager = community.managers?.some((managerRef) => managerRef.id === userId) ?? false
+      return isManager ? [community] : []
     }) ?? []
   )
+})
+
+onMounted(() => {
+  if (route.query.refreshManaged === '1') {
+    communityListStore.reload()
+    router.replace(getManagePath())
+  }
 })
 
 const { t } = useI18n()

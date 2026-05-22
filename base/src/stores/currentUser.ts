@@ -22,6 +22,7 @@ import {
 } from '@shokujii/base/apis/user'
 import { db } from '@shokujii/base/firebase.js'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
 import { BokudeliEvent, useEventStore } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import {
@@ -92,7 +93,10 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
   const _cart = ref<CartItem[] | null>(null)
   const cart = computed(() => {
     subscribeOrders()
-    return _cart.value
+    if (_cart.value == null) {
+      return null
+    }
+    return _cart.value.filter((item) => isWithinOrderDeadline(item.event.event_deadline_datetime))
   })
   let unsubscribeOrders: Unsubscribe | null = null
   const subscribeOrders = () => {
