@@ -18,6 +18,11 @@ export function convertToDate(millis: number, zone = DEFAULT_TIME_ZONE, locale =
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d')
 }
 
+/** スラッシュ区切りの日付 + 24h 時刻。月日・時は先頭ゼロなし。例 2026/3/30 6:00 */
+export function convertToDatetime(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d H:mm')
+}
+
 /** イベントコピー時の名前サフィックス用（開催開始の暦日・曜日）。例 → 2026/6/28(日) */
 export function formatCopyEventDateSuffix(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   const dt = DateTime.fromMillis(millis, { zone, locale })
@@ -33,7 +38,7 @@ export function convertToDatetimeWeekdayShort(
   zone = DEFAULT_TIME_ZONE,
   locale = DEFAULT_LOCALE,
 ): string {
-  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d(ccc) H:mm')
 }
 
 /**
@@ -56,7 +61,23 @@ export function convertToMinuteString(millis: number, zone = DEFAULT_TIME_ZONE, 
 }
 
 export function convertToTimeString(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
-  return DateTime.fromMillis(millis, { zone, locale }).toFormat('HH:mm')
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('H:mm')
+}
+
+/**
+ * 店舗締切時刻など、epoch millis から JST の時分だけを取り出して使う値を生成する。
+ * ブラウザのローカル TZ に依存しない。
+ */
+export function timeOfDayToMillis(
+  hours: number,
+  minutes: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): number {
+  return DateTime.fromObject(
+    { year: 1970, month: 1, day: 1, hour: hours, minute: minutes },
+    { zone, locale },
+  ).toMillis()
 }
 
 export function parseDatetimeStrings(
@@ -82,8 +103,8 @@ export function convertToDuration(
   zone = DEFAULT_TIME_ZONE,
   locale = DEFAULT_LOCALE,
 ): string {
-  const start = DateTime.fromMillis(startMillis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
-  const end = DateTime.fromMillis(endMillis, { zone, locale }).toFormat('HH:mm')
+  const start = DateTime.fromMillis(startMillis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) H:mm')
+  const end = DateTime.fromMillis(endMillis, { zone, locale }).toFormat('H:mm')
   return `${start}〜${end}`
 }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliLetter } from '@shokujii/base/stores/letter.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event'
 import { getManageEventPath } from '@/router/utils'
@@ -151,10 +152,10 @@ const handleDelete = () => {
                 {{ getNumberOfTargets(letter) }}
               </td>
               <td class="text-body-2 date-cell">
-                {{ letter.scheduled_at ? $d(letter.scheduled_at, 'datetime') : '-' }}
+                {{ letter.scheduled_at ? convertToDatetime(letter.scheduled_at) : '-' }}
               </td>
               <td class="text-body-2 date-cell">
-                {{ letter.updated_at ? $d(letter.updated_at, 'datetime') : '-' }}
+                {{ letter.updated_at ? convertToDatetime(letter.updated_at) : '-' }}
               </td>
               <td class="actions-cell">
                 <div v-if="letter.letter_type !== 'individual'" class="actions-cell-content">

@@ -7,6 +7,7 @@ import { ordersCount, ordersTotalPrice } from '@shokujii/base/utils/orders.js'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import { getOrderDetailPath } from '@/navigation/utils'
+import { convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 
 const eventListStore = useEventListStore(
   [
@@ -50,13 +51,15 @@ const events = computed(
                   </td>
                   <td>
                     {{
-                      event.event_start_datetime != null ? $d(event.event_start_datetime, 'datetime_weekday_short') : ''
+                      event.event_start_datetime != null
+                        ? convertToDatetimeWeekdayShort(event.event_start_datetime)
+                        : ''
                     }}
                   </td>
                   <td>
                     {{
                       event?.event_deadline_datetime != null
-                        ? $d(event.event_deadline_datetime, 'datetime_weekday_short')
+                        ? convertToDatetimeWeekdayShort(event.event_deadline_datetime)
                         : ''
                     }}
                   </td>

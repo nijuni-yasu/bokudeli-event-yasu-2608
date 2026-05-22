@@ -7,6 +7,7 @@ import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import type { EventStore } from '@shokujii/base/stores/event.js'
 import { getEventBillInvoicePath, getEventPath } from '@/router/utils'
 import { calculateEventBillInvoiceTotal } from '@shokujii/common/utils/invoice.js'
+import { convertToDate } from '@shokujii/common/utils/datetime.js'
 
 const route = useRoute()
 
@@ -78,7 +79,9 @@ const formatInvoiceTotal = (es: EventStore): string => {
                   <template v-for="es of eventStores" :key="es.event!.event_id">
                     <tr v-if="es.event != null">
                       <td>
-                        {{ es.event.event_start_datetime != null ? $d(es.event.event_start_datetime, 'date') : 'ー' }}
+                        {{
+                          es.event.event_start_datetime != null ? convertToDate(es.event.event_start_datetime) : 'ー'
+                        }}
                       </td>
                       <td>
                         <router-link :to="getEventPath(es.event.community_account, es.event.event_id)">

@@ -72,6 +72,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 日付の固定値は `CUTOFF_UNIX_TIME_XXXX` のように `common` に定数として定義しているか
 - [ ] `common` の `DEFAULT_TIME_ZONE` をアプリ層（`user` / `admin` / `base` / `functions`）で直接 import していないか（海外対応時の置換コストを下げるため、タイムゾーンへの参照は `common` 内部に閉じる）
 - [ ] タイムゾーン依存の計算ロジックを call site で組み立てていないか（必要なら `common` 側に zone を閉じた util / ドメイン関数を追加して呼び出す）
+- [ ] `$d(..., 'date'|'time'|'datetime'|'datetime_weekday_short')` 等の vue-i18n datetimeFormats を新規追加していないか（`common/src/utils/datetime.ts` の `convertToXxx` 系を使う）
+- [ ] 日付・時刻の表示フォーマットを call site で独自実装していないか（`convertToDate` / `convertToTimeString` / `convertToDatetime` / `convertToDatetimeWeekdayShort` 等を使う）
 
 ### スキーマ設計 (Zod / common)
 - [ ] 新規フィールドを `optional` にしていないか（新規追加フィールドは基本 `required`）
@@ -341,6 +343,20 @@ const min = DateTime.now()
 import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
 
 const min = getReservationLeadTimeMinDateString(Date.now())
+```
+
+### NG: vue-i18n の `$d` で日付・時刻をフォーマットする
+
+vue-i18n の datetimeFormats は廃止済み。新規実装では `common` の Luxon ベース util を使う。
+
+```typescript
+// NG: vue-i18n datetimeFormats に依存する
+{{ $d(event.event_start_datetime, 'datetime_weekday_short') }}
+
+// OK: common の convertToXxx を使う
+import { convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
+
+{{ convertToDatetimeWeekdayShort(event.event_start_datetime) }}
 ```
 
 ### NG: 日付・時刻フィールドのスキーマの使い分け

@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCommunityPath, getLogin } from '@/router/utils'
 import { getEventUrl } from '@shokujii/common/utils/urls.js'
+import { convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
 import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMemberList from '@shokujii/base/components/EventMemberList.vue'
@@ -201,9 +202,9 @@ const isShowMember = computed(() =>
                 {{ $t('event_details.date') }}
               </td>
               <td>
-                {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}
+                {{ convertToDatetimeWeekdayShort(event.event_start_datetime) }}
                 〜
-                {{ $d(event.event_end_datetime, 'time') }}
+                {{ convertToTimeString(event.event_end_datetime) }}
                 <a @click="openCalendarAddDialog">
                   <button><v-icon :icon="mdiCalendarPlus" /></button>
                 </a>
@@ -260,7 +261,7 @@ const isShowMember = computed(() =>
             </tr>
             <tr>
               <td>{{ $t('event_details.deadline') }}</td>
-              <td>{{ $d(event.event_deadline_datetime, 'datetime_weekday_short') }}</td>
+              <td>{{ convertToDatetimeWeekdayShort(event.event_deadline_datetime) }}</td>
             </tr>
             <tr>
               <td>{{ $t('event_details.cancel') }}</td>
@@ -406,9 +407,9 @@ const isShowMember = computed(() =>
         {{ event?.event_name }}
       </v-card-text>
       <v-card-text>
-        {{ event && $d(event.event_start_datetime, 'datetime_weekday_short') }}
+        {{ event && convertToDatetimeWeekdayShort(event.event_start_datetime) }}
         〜
-        {{ event && $d(event.event_end_datetime, 'time') }}
+        {{ event && convertToTimeString(event.event_end_datetime) }}
       </v-card-text>
       <vue-qrious :value="eventUrl" :size="qrcodeSize" />
     </v-card>
