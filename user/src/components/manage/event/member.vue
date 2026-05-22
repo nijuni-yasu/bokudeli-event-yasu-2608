@@ -17,8 +17,9 @@ import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/
 import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
 import { priceString } from '@shokujii/base/schemes/converter'
 import type { User } from '@shokujii/common/schemas/User'
+import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
 
-const { t: $t, d: $d } = useI18n()
+const { t: $t } = useI18n()
 const route = useRoute()
 const eventId = route.params.eventId as string
 
@@ -98,13 +99,13 @@ const openNewLink = (url: string) => {
 const getDateString = (order: EventMemberOrder) => {
   switch (order.status) {
     case 'ordered':
-      return $d(order.updated_at, 'datetime')
+      return convertToDatetime(order.updated_at)
     case 'processing':
-      return $d(order.processing_at ?? order.updated_at, 'datetime')
+      return convertToDatetime(order.processing_at ?? order.updated_at)
     case 'in_cart':
-      return $d(order.carted_at, 'datetime')
+      return convertToDatetime(order.carted_at)
     case 'canceled':
-      return order.canceled_at == null ? '' : $d(order.canceled_at, 'datetime')
+      return order.canceled_at == null ? '' : convertToDatetime(order.canceled_at)
   }
 }
 const downloadCsvFile = () => {

@@ -8,6 +8,7 @@ import { usePartnerStore } from '@shokujii/base/stores/partner'
 import { shareSnsButton, isMobileDevice } from '@shokujii/base/utils/shareSnsButton'
 import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
 
 const props = defineProps<{
   eventId: string
@@ -137,11 +138,13 @@ watch(
           </v-card-text>
           <v-card-text class="text-description pb-1 px-0">
             {{ $t('success_join_event_dialog.datetime') }}
-            {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}〜{{ $d(event.event_end_datetime, 'time') }}
+            {{ convertToDatetimeWeekdayShort(event.event_start_datetime) }}〜{{
+              convertToTimeString(event.event_end_datetime)
+            }}
           </v-card-text>
           <v-card-text class="text-description pb-1 px-0">
             {{
-              $t('success_join_event_dialog.deadline', [$d(event.event_deadline_datetime, 'datetime_weekday_short')])
+              $t('success_join_event_dialog.deadline', [convertToDatetimeWeekdayShort(event.event_deadline_datetime)])
             }}
           </v-card-text>
           <v-card-text class="text-description pb-1 px-0">

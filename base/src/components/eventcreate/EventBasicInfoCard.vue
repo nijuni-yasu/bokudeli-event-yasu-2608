@@ -4,6 +4,7 @@ import { DateTime } from 'luxon'
 import {
   hourList,
   minutesList,
+  convertToDate,
   convertToDateString,
   convertToHourString,
   convertToMinuteString,
@@ -260,7 +261,7 @@ const textFieldVariant = computed(() => {
         <v-col cols="12" sm="12" md="6">
           <!-- 終了日は開始日と同一日のため、操作不可の表示のみ -->
           <v-text-field
-            :model-value="$d(event.event_start_datetime, 'date')"
+            :model-value="convertToDate(event.event_start_datetime)"
             :label="$t('event_basic_info.end_date')"
             :variant="textFieldVariant"
             :prepend-inner-icon="mdiCalendar"

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useDate } from 'vuetify'
 import { mdiCalendar, mdiClose } from '@mdi/js'
-import { useI18n } from 'vue-i18n'
+import { convertToDate, parseDatetimeStrings } from '@shokujii/common/utils/datetime.js'
 
 const modelValue = defineModel<string | null>({
   required: false,
@@ -26,7 +26,6 @@ const props = withDefaults(
 )
 
 const adapter = useDate()
-const { d: $d } = useI18n()
 
 const _menu = ref(false)
 const menu = computed({
@@ -48,7 +47,9 @@ const date = computed<string | null>({
     }
   },
 })
-const displayDate = computed<string>(() => (date.value == null ? '' : $d(date.value, 'date')))
+const displayDate = computed<string>(() =>
+  date.value == null ? '' : convertToDate(parseDatetimeStrings(date.value, null, null)),
+)
 </script>
 
 <template>

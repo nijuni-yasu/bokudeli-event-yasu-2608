@@ -18,10 +18,11 @@ import ImageInput from '@shokujii/base/components/ImageInput.vue'
 import { fetchLocationByPostalcode } from '@shokujii/base/utils/fetchLocation.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { convertToTimeString } from '@shokujii/common/utils/datetime.js'
 
 const notification = useNotification()
 
-const { t: $t, tm: $tm, d: $d } = useI18n()
+const { t: $t, tm: $tm } = useI18n()
 const dayOfWeek = $tm('day_of_week') as {
   [key: number]: string // or whatever the correct type is
 }
@@ -62,12 +63,12 @@ const makeDeadlineTimeArray = (start: number, num: number) => {
     const date = new Date(0)
     date.setHours(start + Math.floor(i / 4))
     date.setMinutes((i % 4) * 15)
-    return { title: $d(date, 'time'), value: date.getTime() }
+    return { title: convertToTimeString(date.getTime()), value: date.getTime() }
   })
   const endDate = new Date(0)
   endDate.setHours(start + num - 1)
   endDate.setMinutes(59)
-  timeArray.push({ title: $d(endDate, 'time'), value: endDate.getTime() })
+  timeArray.push({ title: convertToTimeString(endDate.getTime()), value: endDate.getTime() })
   return timeArray.reverse()
 }
 

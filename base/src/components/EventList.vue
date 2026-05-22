@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import IncrementalLoader from './IncrementalLoader.vue'
 import EventStatusChip from './EventStatusChip.vue'
@@ -76,7 +77,7 @@ watch(
         />
       </template>
       <v-list-item-title class="text-h6 py-1">{{ event.event_name }}</v-list-item-title>
-      <div class="text-body-2">{{ $d(event.event_start_datetime, 'datetime') }}</div>
+      <div class="text-body-2">{{ convertToDatetime(event.event_start_datetime) }}</div>
       <div class="text-body-2">{{ event.shop_name }}</div>
       <template #append>
         <EventStatusChip :status="event.calculatedEventStatus" size="x-small" />

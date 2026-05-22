@@ -8,6 +8,7 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getShopCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { updateEventDeadlineFromShop } from '@shokujii/common/utils/eventShopDeadline.js'
+import { convertToTimeString } from '@shokujii/common/utils/datetime.js'
 
 const props = defineProps<{
   shops: BokudeliPartnerShop[]
@@ -90,7 +91,7 @@ const isOpenDeadlineDialog = ref(false)
                   </v-card-text>
                   <v-card-text class="text-left text-subtitle-2 pb-1">
                     【{{ $t('order_deadline') }}】 {{ $t('days_before', item.shop_deadline_datetime.days_before) }}
-                    {{ $d(calculateDeadlineTime(item), 'time') }}
+                    {{ convertToTimeString(calculateDeadlineTime(item)) }}
                     <v-btn
                       color="primary"
                       class="ma-0"

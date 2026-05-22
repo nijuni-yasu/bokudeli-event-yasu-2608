@@ -4,6 +4,7 @@ import {
   computeEventRepeatCopyPreviewStartTimes,
   convertToDateString,
   convertToDatetimeWeekdayShort,
+  convertToTimeString,
   getDayOfMonth,
   getDayOfWeek,
   getEventDateTimeRangeDurationMs,
@@ -573,7 +574,10 @@ const closeDialog = () => {
                 <div v-for="(ts, index) in previewStartTimes" :key="`${ts}-${index}`">
                   <template v-if="previewEventDurationMs != null">
                     {{
-                      $t('event_card.date', [$d(ts, 'datetime_weekday_short'), $d(ts + previewEventDurationMs, 'time')])
+                      $t('event_card.date', [
+                        convertToDatetimeWeekdayShort(ts),
+                        convertToTimeString(ts + previewEventDurationMs),
+                      ])
                     }}
                   </template>
                   <template v-else>

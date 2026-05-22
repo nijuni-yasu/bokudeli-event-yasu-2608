@@ -19,6 +19,11 @@ import { getNamesPrintPdf } from '@shokujii/base/utils/namesPrint.js'
 import { computed, ref, watch } from 'vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getEventUrl, getUserUrl } from '@shokujii/common/utils/urls.js'
+import {
+  convertToDatetime,
+  convertToDatetimeWeekdayShort,
+  convertToTimeString,
+} from '@shokujii/common/utils/datetime.js'
 
 const router = useRouter()
 const { t: $t } = useI18n()
@@ -143,8 +148,8 @@ const downloadNamesPrint = async () => {
                   'order_detail.event_date',
                   eventStore.event.event_start_datetime != null
                     ? [
-                        $d(eventStore.event.event_start_datetime - 30 * 60 * 1000, 'datetime_weekday_short'),
-                        $d(eventStore.event.event_start_datetime, 'time'),
+                        convertToDatetimeWeekdayShort(eventStore.event.event_start_datetime - 30 * 60 * 1000),
+                        convertToTimeString(eventStore.event.event_start_datetime),
                       ]
                     : [],
                 )
@@ -155,7 +160,7 @@ const downloadNamesPrint = async () => {
                 $t(
                   'order_detail.order_limit',
                   eventStore.event.event_deadline_datetime != null
-                    ? [$d(eventStore.event.event_deadline_datetime, 'datetime_weekday_short')]
+                    ? [convertToDatetimeWeekdayShort(eventStore.event.event_deadline_datetime)]
                     : [],
                 )
               }}
@@ -296,7 +301,7 @@ const downloadNamesPrint = async () => {
                 </td>
                 <td>{{ order.menu_name }}</td>
                 <td>{{ $n(order.menu_price, 'currency') }}</td>
-                <td>{{ order.ordered_at != null ? $d(order.ordered_at, 'datetime') : '' }}</td>
+                <td>{{ order.ordered_at != null ? convertToDatetime(order.ordered_at) : '' }}</td>
               </tr>
             </tbody>
           </v-table>

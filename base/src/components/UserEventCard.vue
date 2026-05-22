@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { type EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { computeOrderLineNet } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
-import { convertToDate } from '@shokujii/common/utils/datetime.js'
+import { convertToDate, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import EventDiscountChip from '@shokujii/base/components/EventDiscountChip.vue'
 import { convertStoragePathToURL } from '../utils/storage'
@@ -248,7 +248,7 @@ const submitCancel = () => {
       {{ $t('user_event_card.community_name', [event.community_name]) }}
     </v-card-text>
     <v-card-text class="py-1 px-2 event-card">
-      {{ $t('user_event_card.event_start_datetime', [$d(event.event_start_datetime, 'datetime_weekday_short')]) }}
+      {{ $t('user_event_card.event_start_datetime', [convertToDatetimeWeekdayShort(event.event_start_datetime)]) }}
     </v-card-text>
     <v-card-text class="py-1 px-2 event-card">{{
       $t('user_event_card.event_address', [event.fullAddress])
@@ -338,7 +338,7 @@ const submitCancel = () => {
           <div>
             {{
               $t('user_event_card.cancel_dialog.order_deadline', [
-                $d(event.event_deadline_datetime, 'datetime_weekday_short'),
+                convertToDatetimeWeekdayShort(event.event_deadline_datetime),
               ])
             }}
           </div>
