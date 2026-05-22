@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, shallowRef, reactive, computed, watch, onMounted, onUnmounted, toRaw } from 'vue'
 import { DateTime } from 'luxon'
-import { isInShopTime, DEFAULT_TIME_ZONE } from '@shokujii/common/utils/datetime.js'
+import { isInShopTime } from '@shokujii/common/utils/datetime.js'
 import { validateReservationRequest } from '@shokujii/common/utils/validateReservationRequest.js'
-import { EVENT_RESERVATION_LEAD_TIME_DAYS } from '@shokujii/common/constants/eventReservation.js'
+import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
 import { reasonCodesToMessages } from '@shokujii/base/utils/reservationRequestMessages'
 import EventBasicInfoCard from '@shokujii/base/components/eventcreate/EventBasicInfoCard.vue'
 import EventShop from '@shokujii/base/components/eventcreate/EventShop.vue'
@@ -249,13 +249,7 @@ const currentUserStore = useCurrentUserStore()
  * computed のリアクティブ依存に現在時刻は入らないためマウント中の深夜またぎでは再計算されないが、
  * 送信時は submitReservation が押下時刻ベースで再判定するため UI と乖離しても安全側に倒れる。
  */
-const minEventStartDate = computed<string>(() =>
-  DateTime.now()
-    .setZone(DEFAULT_TIME_ZONE)
-    .startOf('day')
-    .plus({ days: EVENT_RESERVATION_LEAD_TIME_DAYS })
-    .toFormat('yyyy-MM-dd'),
-)
+const minEventStartDate = computed<string>(() => getReservationLeadTimeMinDateString(Date.now()))
 
 /** 予約申請ボタンの追加無効化条件: 必要なデータが未取得なら集約バリデーションを呼ばない */
 const isReserveDataMissing = computed(() => {

@@ -70,6 +70,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `Date` オブジェクトを直接使っていないか（`luxon` を使う）
 - [ ] `new Date()` で UNIX タイムを生成していないか（実行環境によって値が変わる）
 - [ ] 日付の固定値は `CUTOFF_UNIX_TIME_XXXX` のように `common` に定数として定義しているか
+- [ ] `common` の `DEFAULT_TIME_ZONE` をアプリ層（`user` / `admin` / `base` / `functions`）で直接 import していないか（海外対応時の置換コストを下げるため、タイムゾーンへの参照は `common` 内部に閉じる）
+- [ ] タイムゾーン依存の計算ロジックを call site で組み立てていないか（必要なら `common` 側に zone を閉じた util / ドメイン関数を追加して呼び出す）
 
 ### スキーマ設計 (Zod / common)
 - [ ] 新規フィールドを `optional` にしていないか（新規追加フィールドは基本 `required`）
@@ -298,6 +300,47 @@ const now = new Date().getTime()
 // OK: luxon を使う
 import { DateTime } from 'luxon'
 const now = DateTime.now().toMillis()
+```
+
+### NG: アプリ層で `DEFAULT_TIME_ZONE` を直接参照する
+
+海外対応時にタイムゾーン参照が散らばっていると置換コストが膨らむ。
+`DEFAULT_TIME_ZONE` は `common` 内部に閉じ、アプリ層は zone を内部に閉じた util を呼ぶ。
+
+```typescript
+// NG: アプリ層で zone 参照（DEFAULT_TIME_ZONE）を露出させる
+import { DateTime } from 'luxon'
+import { DEFAULT_TIME_ZONE } from '@shokujii/common/utils/datetime.js'
+
+const day = DateTime.fromMillis(ms, { zone: DEFAULT_TIME_ZONE }).day
+
+// OK: zone を内部に閉じた util を使う（必要なら common に追加する）
+import { getDayOfMonth } from '@shokujii/common/utils/datetime.js'
+
+const day = getDayOfMonth(ms)
+```
+
+### NG: アプリ層で日付計算を組み立てる
+
+`common` の定数 / zone / format を call site で結線するとローカライズや仕様変更の影響が広がる。
+ドメイン的に意味のある計算は `common` に集約し、call site は 1 行で呼ぶ。
+
+```typescript
+// NG: 定数と zone と format を call site で結線する
+import { DateTime } from 'luxon'
+import { DEFAULT_TIME_ZONE } from '@shokujii/common/utils/datetime.js'
+import { EVENT_RESERVATION_LEAD_TIME_DAYS } from '@shokujii/common/constants/eventReservation.js'
+
+const min = DateTime.now()
+  .setZone(DEFAULT_TIME_ZONE)
+  .startOf('day')
+  .plus({ days: EVENT_RESERVATION_LEAD_TIME_DAYS })
+  .toFormat('yyyy-MM-dd')
+
+// OK: ドメイン関数として common に集約し、call site は 1 行
+import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
+
+const min = getReservationLeadTimeMinDateString(Date.now())
 ```
 
 ### NG: 日付・時刻フィールドのスキーマの使い分け
