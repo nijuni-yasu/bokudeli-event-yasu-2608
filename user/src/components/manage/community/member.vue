@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
-import { getUserPath, getManageCommunitySettingsPath } from '@/router/utils'
+import { getUserPath, getManageCommunitySettingsPath, getManagePath } from '@/router/utils'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
 import {
@@ -42,6 +42,8 @@ const members = computed(
       ?.flatMap((member) => member ?? [])
       ?.sort((a, b) => (a.roles?.includes('manager') ? -1 : b.roles?.includes('manager') ? 1 : 0)) ?? [],
 )
+const currentUserId = computed(() => userStore.user?.user_id)
+const managerCount = computed(() => members.value.filter((member) => member.roles?.includes('manager')).length)
 const canSendEmail = computed(() => !!communityStore.community?.community_email)
 
 const emailTargetMember = ref<BokudeliCommunityMember | null>(null)
@@ -96,10 +98,18 @@ const addAccount = async (member: BokudeliCommunityMember) => {
   }
 }
 const removeAccount = async (member: BokudeliCommunityMember) => {
+  if (member.user_id === currentUserId.value && managerCount.value <= 1) {
+    notification.show($t('manage.member.remove_manager_dialog.last_manager_error'), 'error')
+    return
+  }
+
   isLoading.value = true
   try {
     await communityStore.removeRole(member.user_id, 'manager')
     notification.show($t('manage.member.remove_manager_dialog.notification'), 'success')
+    if (member.user_id === currentUserId.value) {
+      await router.replace({ path: getManagePath(), query: { refreshManaged: '1' } })
+    }
   } catch (error) {
     console.error(error)
     notification.show($t('manage.member.remove_manager_dialog.error'), 'error')
@@ -224,17 +234,18 @@ const downloadCsvFile = () => {
                       {{ member.roles?.includes('manager') ? $t('manage.member.manager') : $t('manage.member.member') }}
                     </td>
                     <td class="text-center number-cell">
-                      <template v-if="member.user_id !== userStore.user?.user_id">
+                      <template v-if="member.roles?.includes('manager')">
                         <v-btn
-                          v-if="member.roles?.includes('manager')"
+                          v-if="member.user_id !== currentUserId || managerCount > 1"
                           :icon="mdiAccountRemoveOutline"
                           size="small"
                           variant="text"
                           color="grey-500"
                           @click="removeTargetMember = member"
                         />
+                      </template>
+                      <template v-else-if="member.user_id !== currentUserId">
                         <v-btn
-                          v-else
                           :icon="mdiAccountPlusOutline"
                           size="small"
                           variant="text"
@@ -300,7 +311,16 @@ const downloadCsvFile = () => {
         {{ $t('manage.member.remove_manager_dialog.title', [removeTargetMember.user_name]) }}
       </v-card-title>
       <v-card-text>
-        <div v-html="$t('manage.member.remove_manager_dialog.description', [removeTargetMember.user_name])" />
+        <div
+          v-html="
+            $t(
+              removeTargetMember.user_id === currentUserId
+                ? 'manage.member.remove_manager_dialog.self_description'
+                : 'manage.member.remove_manager_dialog.description',
+              [removeTargetMember.user_name],
+            )
+          "
+        />
       </v-card-text>
       <v-card-actions>
         <v-btn type="cancel" :disabled="isLoading" @click="isModifyAccountDialogOpen = false">
