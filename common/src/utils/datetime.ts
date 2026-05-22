@@ -18,9 +18,9 @@ export function convertToDate(millis: number, zone = DEFAULT_TIME_ZONE, locale =
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d')
 }
 
-/** スラッシュ区切りの日付 + 24h 時刻。月日は先頭ゼロなし。例 2026/3/30 23:52 */
+/** スラッシュ区切りの日付 + 24h 時刻。月日・時は先頭ゼロなし。例 2026/3/30 6:00 */
 export function convertToDatetime(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
-  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d HH:mm')
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d H:mm')
 }
 
 /** イベントコピー時の名前サフィックス用（開催開始の暦日・曜日）。例 → 2026/6/28(日) */
@@ -38,7 +38,7 @@ export function convertToDatetimeWeekdayShort(
   zone = DEFAULT_TIME_ZONE,
   locale = DEFAULT_LOCALE,
 ): string {
-  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d(ccc) HH:mm')
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy/M/d(ccc) H:mm')
 }
 
 /**
@@ -61,7 +61,7 @@ export function convertToMinuteString(millis: number, zone = DEFAULT_TIME_ZONE, 
 }
 
 export function convertToTimeString(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
-  return DateTime.fromMillis(millis, { zone, locale }).toFormat('HH:mm')
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('H:mm')
 }
 
 /**
@@ -103,8 +103,8 @@ export function convertToDuration(
   zone = DEFAULT_TIME_ZONE,
   locale = DEFAULT_LOCALE,
 ): string {
-  const start = DateTime.fromMillis(startMillis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) HH:mm')
-  const end = DateTime.fromMillis(endMillis, { zone, locale }).toFormat('HH:mm')
+  const start = DateTime.fromMillis(startMillis, { zone, locale }).toFormat('yyyy/MM/dd (ccc) H:mm')
+  const end = DateTime.fromMillis(endMillis, { zone, locale }).toFormat('H:mm')
   return `${start}〜${end}`
 }
 
