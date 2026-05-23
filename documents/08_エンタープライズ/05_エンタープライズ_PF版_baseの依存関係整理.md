@@ -7,14 +7,62 @@
 
 `base/README.md` では、`@/utils/router` への依存が「依存関係の逆転」として明記されている。実際には `@/router/utils` を参照しており、base が user/admin のルーティング構造に依存している状態である。
 
-**方針**: base は本来 common のみに依存すべき。enterprise を作る前に、base が user 固有の構造に依存している箇所を解消する。
+**理想**: base は本来 common のみに依存すべき。base が user 固有の構造に依存している箇所は解消する。
 
+**現時点の方針**: §2.1 の `@/router/utils` 依存解消（provide/inject 等）は **リファクタリング工数が高いため見送り**、現行の `@/router/utils` パターンを **継続する**。各 app が `router/utils.ts` を用意して path を提供する運用（いわゆる「お世話」）を受け入れる。enterprise 開発の着手を阻害しない。
+
+---
+
+# 1.1 現状の `@/router/utils` 運用
+
+## 仕組み
+
+`base` の `@/router/utils` は、Vite ビルド時に **各 app の `src` に解決**される（`@` → `user/src` / `admin/src` / `enterprise/src`）。
+
+```
+base のコンポーネント
+  import { getXxxPath } from '@/router/utils'
+           ↓（ビルド時）
+user/src/router/utils.ts      … PF 版の path 実装
+enterprise/src/router/utils.ts … エンプラ版の path 実装（user コピーから開始）
+admin/src/router/utils.ts      … admin 用の実装 or ダミー
+```
+
+## user と enterprise で path 仕様が違ってもよいか
+
+**問題ない。** 各 app の `router/utils.ts` が独立しているため、同じ関数名でも返す path 文字列は app ごとに変えられる。
+
+ただし次を満たすこと。
+
+| 条件 | 理由 |
+|------|------|
+| その app の **vue-router に実ルートがある** | path だけ変えてルート未定義だと 404 |
+| base 内の **path 直書き** も合わせる | 例: `CommunityMembershipButton.vue` の `path: '/login'` は `router/utils` 非経由 |
+| **完全 URL** | `getUrlFromPath` は `VITE_ORIGIN_HOST` 依存。ドメイン差は env で吸収 |
+
+## base に path 関数が増えたとき
+
+**理解は正しい。** base（または base へ移行した manage コンポーネント）が新たに `@/router/utils` から関数を import したら、**利用する各 app の `router/utils.ts` にもその関数の実装を追加する**必要がある。
+
+- **user**: 本番用の path を実装
+- **enterprise**: エンプラの path 仕様に合わせて実装（PF と同じでもよい）
+- **admin**: 機能を使わなくても **import 解決のためスタブ** が必要な場合がある（現状 `getManageEventPath = () => ''` など）
+
+TypeScript は「関数が存在するか」までは見るが、**空文字など誤った実装はコンパイルで検知できない**。admin のダミー実装のように、ビルドは通るがリンクが壊れる状態になり得る。
+
+## enterprise 作成時
+
+user をコピーすれば `router/utils.ts` も一緒についてくるため、**§2.1 を解消しなくても enterprise はビルド・起動できる**。URL 構造を PF 版と揃える初期段階では、追加対応なしで進められる。
+
+---
 
 # 2. リファクタリング対象の分類
 
-## 2.1 【最優先】`@/router/utils` への依存（依存の逆転）
+## 2.1 【最優先・将来対応】`@/router/utils` への依存（依存の逆転）
 
-**問題**: base のコンポーネントが `@/router/utils` を import しており、user/admin が router/utils を提供する必要がある。
+**ステータス**: **現状維持**（§1.1 参照）。provide/inject 等への移行は将来のリファクタ候補とする。
+
+**問題**: base のコンポーネントが `@/router/utils` を import しており、user/admin/enterprise が router/utils を提供する必要がある。
 
 | ファイル | 使用している関数 |
 |----------|------------------|
@@ -34,10 +82,15 @@
 - `admin/src/router/utils.ts` に「本来 admin が持つべきでない」ダミー実装が存在（コメント参照）
 - enterprise でも同様の router/utils を用意する必要が生じる
 
-**対応案**:
+**将来の対応案**（工数に余裕ができた段階で検討）:
 1. **props で URL 生成関数を注入**: 各コンポーネントに `getUserPath`, `getCommunityPath` 等を props で渡す
 2. **provide/inject**: アプリ起動時に path 生成関数を provide し、base 側で inject
 3. **common に path 定義を置く**: パス形式のみ common で定義し、base はそれを使用（ドメインは別途注入）
+
+**現状継続時の運用**（§1.1）:
+- base で `@/router/utils` から新関数を import したら、**user / enterprise / admin** の `router/utils.ts` を同時に更新する
+- user → enterprise マージ時に `router/utils.ts` の差分漏れに注意する
+- admin では未使用関数もスタブで埋める（`admin/src/router/utils.ts` 参照）
 
 ---
 
@@ -128,7 +181,10 @@
 # 3. リファクタリングの優先順位と依存関係
 
 ```
-1. @/router/utils の依存解消（provide/inject または props）
+【見送り】@/router/utils の依存解消 → 現状維持（§1.1）
+   ↓
+1. user の共通機能（/manage 等）を base へ移行 → `05_エンタープライズ_PF版_userをbaseに機能移行.md`
+     ※ 移行後も base 内は @/router/utils を参照。各 app の router/utils 更新は継続
    ↓
 2. base/src/components/pages/ の user 固有ページを user へ移行
    ↓
@@ -139,24 +195,29 @@
 5. locales の shokujii.jp ハードコード解消
    ↓
 6. router プラグインの @/router 依存の見直し（必要に応じて）
+   ↓
+【将来】@/router/utils の provide/inject 化（§2.1 将来対応案）
 ```
 
 ---
 
 # 4. enterprise 作成前の最低限の対応
 
-enterprise を user のコピーで作成する前提であれば、以下を先に対応しておくとスムーズである。
+`@/router/utils` を継続する前提では、provide/inject 化は **必須ではない**。user コピーで `router/utils.ts` ごと enterprise に載せれば着手できる。
 
-1. **path 生成の抽象化**: provide/inject で `getUserPath`, `getCommunityPath`, `getEventPath`, `getLogin` 等を注入する仕組みを用意
-2. **UserAvatar のデフォルト画像**: base 内に配置するか、props で渡すようにする
-3. **locales のベース URL**: 環境変数やパラメータで差し替え可能にする
+enterprise 作成・並行開発で **やっておくとよいこと**:
 
-これらを済ませておくことで、enterprise 側で path やロゴ・ドメインを差し替えやすくなる。
+1. **`router/utils.ts` の同期運用**: base 変更時に user / enterprise / admin の utils をセットで更新するルールを決める（§1.1）
+2. **UserAvatar のデフォルト画像**: base 内に配置するか、props で渡す（§2.4）。user コピー時にアセット重複は許容可
+3. **locales のベース URL**: 環境変数やパラメータで差し替え可能にする（§2.6）。enterprise 別ドメイン時に必要
+
+path 生成の abstract 化（旧 §4 第 1 項）は、マージ負荷や app 数が増えて `@/router/utils` のお世話が辛くなった段階で §2.1 の将来対応案を実施する。
 
 ---
 
 # 5. 参照ドキュメント
 
+- `05_エンタープライズ_PF版_userをbaseに機能移行.md` — user に残る共通機能（特に /manage）を base へ移行する計画
 - `base/README.md` — `@/utils/router` の扱い、依存関係の逆転について
 - `base/src/components/pages/@CAUTION.md` — pages の暫定仕様と今後の方針
 - `admin/src/router/utils.ts` — base 依存のため admin に置かれた router/utils のコメント
