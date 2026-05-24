@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getAuth } from 'firebase/auth'
 import { usePartnerStore, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
-import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
+import { useCommunityStore, type CommunityStore, createNewCommunity } from '@shokujii/base/stores/community.js'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import CommunityEdit from '@shokujii/base/components/CommunityEdit.vue'
 import { BokudeliCommunity } from '@shokujii/base/stores/community.js'
@@ -139,13 +139,7 @@ const submit = async () => {
       }
       notification.show($t('community.saved'), 'success')
     } else {
-      const communityStore = useCommunityStore(community.value.community_account) as CommunityStore
-      if (coverImageFile.value != null) {
-        await communityStore.updateCoverImage(coverImageFile.value)
-      }
-      if (iconImageFile.value != null) {
-        await communityStore.updateIconImage(iconImageFile.value)
-      }
+      await createNewCommunity(toRaw(community.value), coverImageFile.value, iconImageFile.value)
       shop.community_account = community.value.community_account
       await partnerStore.updateShop(shop)
       notification.show($t('community.created'), 'success')
