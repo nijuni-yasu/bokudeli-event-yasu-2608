@@ -11,6 +11,7 @@ import { useI18n } from 'vue-i18n'
 const props = defineProps<{
   modelValue: boolean
   communityName: string | null
+  /** Firestore ドキュメント ID（community_id）。CommunityMembershipButton の communityAccount とは異なる */
   communityId: string | null
 }>()
 

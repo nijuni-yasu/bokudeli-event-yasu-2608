@@ -83,7 +83,7 @@ const displayMembers = computed(() => props.members?.filter((m) => !m?.roles?.in
     <v-col class="pt-0">
       <community-membership-button
         v-if="community.community_account"
-        :community-id="community.community_account"
+        :community-account="community.community_account"
         block
         :join-button-props="{ rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
         :leave-button-props="{ variant: 'outlined', rounded: 'pill', size: 'small', 'prepend-icon': mdiAccountGroup }"
