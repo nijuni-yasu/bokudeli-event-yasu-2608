@@ -10,7 +10,8 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 type ButtonProps = Record<string, unknown>
 
 const props = defineProps<{
-  communityId: string
+  /** コミュニティアカウント（URL スラッグ）。useCommunityStore の検索キー */
+  communityAccount: string
   joinButtonProps?: ButtonProps
   leaveButtonProps?: ButtonProps
   block?: boolean
@@ -24,7 +25,7 @@ const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const userStore = useCurrentUserStore()
-const communityStore = useCommunityStore(props.communityId)
+const communityStore = useCommunityStore(props.communityAccount)
 
 const isMember = ref(false)
 const isManager = ref(false)

@@ -27,13 +27,13 @@ import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storage
 
 const route = useRoute()
 const router = useRouter()
-const communityId = route.params.communityId as string
+const communityAccount = route.params.communityAccount as string
 const eventId = route.params.eventId as string
 
 const { t: $t } = useI18n()
 
 const eventStore = useEventStore(eventId) as EventStore
-const communityStore = useCommunityStore(communityId) as CommunityStore
+const communityStore = useCommunityStore(communityAccount) as CommunityStore
 const bannersStore = useBannersStore('event_banners')
 const currentUserStore = useCurrentUserStore()
 const menuNavigation = ref(true)
@@ -41,7 +41,7 @@ const menuListRef = ref()
 let menuListObserver: IntersectionObserver | null = null
 
 // 共通の composable を使用してサポートアカウントのロール拡張を考慮（isManager のみ使用）
-const { isManager } = useCommunityMemberFlags(communityId)
+const { isManager } = useCommunityMemberFlags(communityAccount)
 
 const event = computed<BokudeliEvent | null>(() => eventStore.event)
 

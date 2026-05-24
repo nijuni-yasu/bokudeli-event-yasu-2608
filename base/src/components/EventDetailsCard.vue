@@ -367,9 +367,10 @@ const isShowMember = computed(() =>
                   </v-btn>
                 </v-col>
                 <v-col cols="12" sm="auto" class="pa-0">
+                  <!-- communityAccount: URL スラッグ（useCommunityStore 用） -->
                   <community-membership-button
                     v-if="community.community_account"
-                    :community-id="community.community_account"
+                    :community-account="community.community_account"
                     block
                     :join-button-props="{
                       rounded: 'pill',
@@ -385,6 +386,7 @@ const isShowMember = computed(() =>
                   />
                 </v-col>
               </v-row>
+              <!-- communityId: Firestore ドキュメント ID（communityContact Callable 用） -->
               <community-contact-dialog
                 v-model="isOpenContactDialogVisible"
                 :community-name="community.community_name"

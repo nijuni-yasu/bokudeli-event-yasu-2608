@@ -20,18 +20,18 @@ import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
 
 const router = useRouter()
-const communityId = useRoute().params.communityId as string
+const communityAccount = useRoute().params.communityAccount as string
 const { t: $t } = useI18n()
 
-const communityStore = useCommunityStore(communityId)
+const communityStore = useCommunityStore(communityAccount)
 
 const userStore = useCurrentUserStore()
 
-const { isMember, isManager } = useCommunityMemberFlags(communityId)
+const { isMember, isManager } = useCommunityMemberFlags(communityAccount)
 
 // イベントリストストアを作成（ページサイズ6件）
 const eventListStore = useEventListStore(
-  [where('community_account', '==', communityId), orderBy('event_start_datetime', 'desc')],
+  [where('community_account', '==', communityAccount), orderBy('event_start_datetime', 'desc')],
   6,
 )
 
@@ -66,7 +66,7 @@ const events = computed<EventWithMembers[]>(() => {
 })
 
 const goToEvents = (eventId: string) => {
-  const path = getEventPath(communityId, eventId)
+  const path = getEventPath(communityAccount, eventId)
   router.push({ path })
 }
 

@@ -173,6 +173,10 @@ export const checkSoleManagerCommunity = async (userId: string): Promise<boolean
 
 export type CommunityStore = ReturnType<typeof useCommunityStore>
 
+/**
+ * コミュニティ store。文字列を渡す場合は community_account（URL スラッグ）で検索する。
+ * Pinia store ID は `/communities/${communityAccount}` だが、Firestore path は `_communityRef.id`（community_id）。
+ */
 export const useCommunityStore = (target: string | BokudeliCommunity) => {
   const communityAccount: string = target instanceof BokudeliCommunity ? target.community_account : target
   // store の Identifier が firestore の path と異なるのは危険だが、この store 内に閉じている場合は問題ないはず

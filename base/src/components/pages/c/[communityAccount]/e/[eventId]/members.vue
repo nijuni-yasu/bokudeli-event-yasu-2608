@@ -9,13 +9,13 @@ import { getEventPath } from '@/router/utils'
 import { mdiArrowLeftBold } from '@mdi/js'
 
 const props = defineProps<{
-  communityId: string
+  communityAccount: string
   eventId: string
 }>()
 
 const router = useRouter()
 
-const communityStore = useCommunityStore(props.communityId) as CommunityStore
+const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
 const isShowMember: boolean = await new Promise((resolve) => {
   watch(
     () => communityStore.community?.is_show_member,
@@ -50,7 +50,7 @@ const members = computed(() =>
         variant="text"
         size="large"
         :prepend-icon="mdiArrowLeftBold"
-        @click="() => $router.push(getEventPath(props.communityId, props.eventId))"
+        @click="() => $router.push(getEventPath(props.communityAccount, props.eventId))"
       >
         イベントページ
       </v-btn>

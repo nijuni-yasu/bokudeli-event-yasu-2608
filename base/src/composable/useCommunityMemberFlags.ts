@@ -6,11 +6,13 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
  * コミュニティのメンバーシップフラグを計算する composable
  * サポートアカウントのロール拡張を考慮する
  *
- * @param communityId - コミュニティID
+ * @param communityAccount - コミュニティアカウント（URL スラッグ）。useCommunityStore に渡す値
  * @returns isMember と isManager の ref
  */
-export const useCommunityMemberFlags = (communityId: string): { isMember: Ref<boolean>; isManager: Ref<boolean> } => {
-  const communityStore = useCommunityStore(communityId) as CommunityStore
+export const useCommunityMemberFlags = (
+  communityAccount: string,
+): { isMember: Ref<boolean>; isManager: Ref<boolean> } => {
+  const communityStore = useCommunityStore(communityAccount) as CommunityStore
   const currentUserStore = useCurrentUserStore()
   const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? null)
 
