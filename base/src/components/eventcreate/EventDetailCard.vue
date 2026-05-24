@@ -148,7 +148,8 @@ const textFieldVariant = computed(() => {
   return event.value.event_status.value === 'in_draft' ? 'outlined' : 'solo-filled'
 })
 
-const { requiredValidator, positiveIntegerValidator } = useValidators()
+const { requiredValidator, positiveIntegerValidator, requiredHtmlValidator } = useValidators()
+
 const maxPeopleValidator = (v: number) => {
   if (v < event.value.members.length) {
     return $t('event_detail.error_max_people', [event.value.members.length])
@@ -386,13 +387,30 @@ const tinymceInit = computed(() => ({
     <v-card-text class="pt-2 pt-md-5">
       <v-row>
         <v-col cols="12">
-          <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
-          <div class="mt-2 text-subtitle-2">
-            <span>{{ $t('event_detail.event_desc_hint') }}</span>
-          </div>
-          <div class="mt-1 text-subtitle-2">
-            <span>{{ $t('event_detail.event_desc_image_hint') }}</span>
-          </div>
+          <v-validation :rules="props.readonly ? [] : [requiredHtmlValidator]" :validation-value="event.event_desc">
+            <template #default="{ errorMessages }">
+              <div class="event-desc-editor" :class="{ 'event-desc-editor--error': errorMessages.value.length !== 0 }">
+                <Editor v-model="event.event_desc" :api-key="tinymceApiKey" :init="tinymceInit" />
+              </div>
+              <div class="mt-2 text-subtitle-2">
+                <span>{{ $t('event_detail.event_desc_hint') }}</span>
+              </div>
+              <div class="mt-1 text-subtitle-2">
+                <span>{{ $t('event_detail.event_desc_image_hint') }}</span>
+              </div>
+              <div v-if="errorMessages.value.length !== 0" class="v-input__details">
+                <div class="v-messages" role="alert" aria-live="polite">
+                  <div
+                    v-for="(errorMessage, i) in errorMessages.value"
+                    :key="`event_desc_error_${i}`"
+                    class="v-messages__message text-error"
+                  >
+                    {{ errorMessage }}
+                  </div>
+                </div>
+              </div>
+            </template>
+          </v-validation>
         </v-col>
       </v-row>
     </v-card-text>
@@ -644,5 +662,10 @@ const tinymceInit = computed(() => ({
 /* 支払い設定: 補足文の行間 */
 .payment-hint {
   line-height: 1.55;
+}
+
+.event-desc-editor--error :deep(.tox-tinymce) {
+  border-color: rgb(var(--v-theme-error)) !important;
+  border-width: 1px !important;
 }
 </style>

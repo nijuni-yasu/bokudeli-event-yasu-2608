@@ -8,6 +8,7 @@ import {
   urlValidator as _urlValidator,
   betweenValidator as _betweenValidator,
 } from '@core/utils/validators'
+import { extractImageSlidesFromHtml } from '@shokujii/base/utils/extractImagesFromHtml'
 
 export const useValidators = () => {
   const { t: $t } = useI18n()
@@ -116,6 +117,24 @@ export const useValidators = () => {
     return !reservedChars.test(value as string) || $t('validator.reserved_chars')
   }
 
+  /** TinyMCE 等の HTML 入力で、タグ除去後にテキストが空かつ有効な img も無ければ必須エラー */
+  const requiredHtmlValidator = (value: string | null | undefined) => {
+    const html = value ?? ''
+    if (extractImageSlidesFromHtml(html).length > 0) {
+      return true
+    }
+    const text = html
+      .replace(/<a [^>]*>(.*?)<\/a>/gi, '$1')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (text === '') {
+      return $t('validator.required')
+    }
+    return true
+  }
+
   return {
     requiredValidator,
     urlValidator,
@@ -128,5 +147,6 @@ export const useValidators = () => {
     accountValidator,
     invoiceValidatorJapan,
     noReservedCharsValidator,
+    requiredHtmlValidator,
   }
 }
