@@ -57,6 +57,12 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 
+### community_id / community_account の使い分け
+- [ ] `useCommunityStore(string)` には `community_account`（URL スラッグ）を渡しているか
+- [ ] Callable / Firestore パス / Storage には `community_id`（Firestore ドキュメント ID）を渡しているか
+- [ ] URL 生成（`getCommunityPath`, `getEventPath` 等）には `community_account` を渡しているか
+- [ ] 同一コンポーネント内で prop 名 `communityId` と `communityAccount` を混在させていないか（用途が異なる場合は JSDoc で区別する）
+
 ### Firebase Functions
 - [ ] `console.log` / `console.error` を使っていないか（`createModuleLogger` を使う）
 - [ ] `import { logger } from 'firebase-functions'` を直接使っていないか（`createModuleLogger` を使う）
