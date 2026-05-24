@@ -255,13 +255,13 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
     // 読み込み中は null, ユーザーが存在しない場合は undefined
     // TODO 仕様検討
     const members = computed<(BokudeliCommunityMember | null | undefined)[] | null>(() => {
-      // 遅延評価
+      if (community.value == null) {
+        return null
+      }
+      // community 取得後に初回ロード（直接 URL / リロード時の競合を避ける）
       if (isFirstMemberLoad) {
         isFirstMemberLoad = false
         loadMembers()
-      }
-      if (community.value == null) {
-        return null
       }
       // 負数にならないように Math.max でガード
       const remainingCount = Math.max(0, community.value.members.length - retrievedMembers.value.length)
