@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { db } from '@shokujii/base/firebase.js'
-import { doc, getDocs, orderBy, query, where, limit, collection } from 'firebase/firestore'
+import { doc, orderBy, where } from 'firebase/firestore'
 import { useRoute, useRouter } from 'vue-router'
 import UserBioPanel from '@shokujii/base/components/UserBioPanel.vue'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
@@ -53,35 +53,18 @@ type TabKey =
   | typeof TAB_FOODS
   | typeof TAB_ORDERS
 
+const props = defineProps<{
+  userId: string
+}>()
+
 const route = useRoute()
 const router = useRouter()
-const userId = route.params.userId as string
 
-const userIdRef = ref('')
-const fetchUser = async (identifier: string) => {
-  const userCollection = collection(db, 'users')
-  const queryById = query(userCollection, where('user_id', '==', identifier), limit(1))
-
-  try {
-    const queryByIdSnapshot = await getDocs(queryById)
-
-    if (!queryByIdSnapshot.empty) {
-      userIdRef.value = queryByIdSnapshot.docs[0].data().user_id
-    } else {
-      userIdRef.value = ''
-    }
-  } catch {
-    userIdRef.value = ''
-  }
-}
-await fetchUser(userId)
-
-/** プロフィール表示・Firestore・注文一覧で共通の Shokujii user_id（`fetchUser` 解決後を優先） */
-const profileUserId = userIdRef.value !== '' ? userIdRef.value : userId
+const profileUserId = props.userId
 
 const notification = useNotification()
 
-const { t: $t, d } = useI18n()
+const { t: $t } = useI18n()
 
 const { user, exists } = storeToRefs(useUserStore(profileUserId))
 const currentUserStore = useCurrentUserStore()
@@ -167,6 +150,14 @@ watch(
     }
   },
 )
+
+/** リロード時に loginUser 未解決だと initialTab で orders が落ちるため、認証後に再反映（仕様 4.2.5） */
+watch([() => loginUser.value?.user_id, () => route.query.tab, () => profileUserId], () => {
+  const raw = String(route.query.tab ?? '')
+  if (raw === TAB_ORDERS && loginUser.value?.user_id === profileUserId) {
+    tabs.value = TAB_ORDERS
+  }
+})
 
 const previewStore = useUserProfilePreviewStore(profileUserId)
 const { data: previewData, loading: previewLoading, error: previewError } = storeToRefs(previewStore)
@@ -920,6 +911,8 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
     :event-id="(($route.query.eventId ?? '') as string)"
     :community-account="(($route.query.communityAccount ?? '') as string)"
     :is-posted="($route.query.isPosted === 'true')"
+    :session-id="(($route.query.session_id ?? '') as string)"
+    :user-id="profileUserId"
   />
 </template>
 
