@@ -34,9 +34,7 @@ export async function getCommunityManagerEmailSet(communityId: string): Promise<
  * イベント関連のメールアドレスを取得（コミュニティマネージャー + 主催者）
  */
 export async function getCommunityEmailsForEvent(event: ShokujiiEvent): Promise<string[]> {
-  // community_account と community_id の両方に対応
-  const communityId = event.community_id || event.community_account
-  const emailSet = await getCommunityManagerEmailSet(communityId)
+  const emailSet = await getCommunityManagerEmailSet(event.community_id)
 
   if (event.organizer_email) {
     emailSet.add(event.organizer_email)
