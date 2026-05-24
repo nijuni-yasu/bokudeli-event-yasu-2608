@@ -121,16 +121,16 @@ export const createNewCommunity = async (
   if (uid == null) {
     throw new Error('Not Logged in')
   }
-  await Promise.all([
-    coverImageFile != null ? uploadImage(coverImageFile, getCommunityCoverStoragePath(community.id)) : null,
-    iconImageFile != null ? uploadImage(iconImageFile, getCommunityIconStoragePath(community.id)) : null,
-  ])
   const communityRef = doc(db, 'communities', community.id).withConverter(communityConverter)
   const memberRef = doc(communityRef, 'members', uid)
   await Promise.all([
     setDoc(communityRef, community, { merge: true }),
     // TODO withConverter
     setDoc(memberRef, { roles: ['manager'] }),
+  ])
+  await Promise.all([
+    coverImageFile != null ? uploadImage(coverImageFile, getCommunityCoverStoragePath(community.id)) : null,
+    iconImageFile != null ? uploadImage(iconImageFile, getCommunityIconStoragePath(community.id)) : null,
   ])
   return useCommunityStore(community)
 }

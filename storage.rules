@@ -1,22 +1,45 @@
 rules_version = '2';
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
+    // サポートアカウントかを判定する関数
+    function isSupport() {
+      return request.auth != null &&
+             request.auth.uid in firestore.get(/databases/(default)/documents/configs/global).data.support_user_ids
+    }
 
-    // This rule allows anyone with your Storage bucket reference to view, edit,
-    // and delete all data in your Storage bucket. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Storage bucket will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Storage bucket will be denied until you Update
-    // your rules
-    match /{allPaths=**} {
-      allow read, write: if request.time < timestamp.date(2026, 12, 31);
+    // コミュニティ管理者かを判定する関数
+    function isCommunityManager(communityId) {
+      let member = firestore.get(/databases/(default)/documents/communities/$(communityId)/members/$(request.auth.uid));
+      return request.auth != null &&
+             member != null &&
+             member.data.roles is list &&
+             "manager" in member.data.roles
+    }
+
+    // users - ユーザー自身が作成、編集、削除できる、誰でも閲覧できる
+    match /users/{userId}/{allPaths=**} {
+      allow read: if true
+      allow write: if request.auth != null && request.auth.uid == userId
+    }
+
+    // communities - コミュニティ管理者またはサポートアカウントが作成、編集、削除できる、誰でも閲覧できる
+    match /communities/{communityId}/{allPaths=**} {
+      allow read: if true
+      allow write: if isCommunityManager(communityId) || isSupport()
+    }
+
+    // partners - 店舗管理者が作成、編集、削除できる、誰でも閲覧できる
+    match /partners/{partnerId}/{allPaths=**} {
+      allow read: if true
+      allow write: if request.auth != null && request.auth.uid == partnerId
+    }
+
+    // assets - 誰でも閲覧できる
+    match /assets/{allPaths=**} {
+      allow read: if true
+      // 書き込み権限は指定されていないため、デフォルトで拒否
+      allow write: if false
     }
   }
 }
