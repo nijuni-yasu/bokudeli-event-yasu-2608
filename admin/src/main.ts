@@ -13,6 +13,8 @@ import { themes } from '@/themes'
 
 import '@shokujii/base/firebase.js'
 import '@/channelIo'
+import { configureClientErrorReporting } from '@shokujii/base/utils/reportClientError.js'
+import { setupGlobalErrorHandling } from '@shokujii/base/utils/setupGlobalErrorHandling.js'
 
 const app = createApp(defineAsyncComponent(() => import('./App.vue')))
 
@@ -26,18 +28,11 @@ Promise.all([
   import('@shokujii/base/plugins/vuetify/index.js'),
   import('@shokujii/base/plugins/i18n/index.js'),
   import('@shokujii/base/plugins/layouts.js'),
-]).then((plugins) => {
-  for (const plugin of plugins) {
+]).then(([routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) => {
+  configureClientErrorReporting({ app: 'admin' })
+  for (const plugin of [routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) {
     plugin.default(app, { themes })
   }
+  setupGlobalErrorHandling(app, routerMod.router, { app: 'admin' })
   app.mount('#app')
 })
-
-// Global error handler
-app.config.errorHandler = (err, instance, info) => {
-  console.error('Global error handler:', { err, instance, info })
-  // TODO エラーの種類によって処理を変える
-  import('@shokujii/base/plugins/router/index.js').then(({ router }) => {
-    router.replace('/520')
-  })
-}
