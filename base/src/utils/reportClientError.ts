@@ -63,6 +63,19 @@ function getCurrentRoute(contextRoute?: string): string {
 }
 
 /**
+ * severity を決定する。
+ * - ZodError（Firestore とスキーマの乖離）は context の severity に関わらず error
+ * - store 層は呼び出し時に severity: 'warn' を明示する
+ * - severity 未指定時の既定値は error（グローバルハンドラ等）
+ */
+function resolveSeverity(err: unknown, contextSeverity?: 'error' | 'warn'): 'error' | 'warn' {
+  if (err instanceof ZodError) {
+    return 'error'
+  }
+  return contextSeverity ?? 'error'
+}
+
+/**
  * クライアントエラーを Callable 経由で Cloud Logging に送信する。
  * fire-and-forget で呼び出し、失敗しても UX に影響しない。
  */
@@ -98,7 +111,7 @@ export function reportClientError(err: unknown, context: ClientErrorContext = {}
         message: serialized.message,
         route,
         fingerprint,
-        severity: context.severity ?? 'error',
+        severity: resolveSeverity(err, context.severity),
       }
       if (serialized.stack != null) {
         payload.stack = serialized.stack
