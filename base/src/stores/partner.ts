@@ -23,6 +23,7 @@ import {
 } from 'firebase/firestore'
 import { getMenuImageStoragePath, getShopCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 
 export class BokudeliPartnerShop extends PartnerShop {
   constructor(partner_id: string, shop_id: string | null, src: Partial<PartnerShop>) {
@@ -83,6 +84,7 @@ export const usePartnerStore = (partnerId: string) => {
               return shopDoc.data()
             } catch (err) {
               console.error(err)
+              reportClientError(err, { documentPath: shopDoc.ref.path, severity: 'warn' })
               return []
             }
           })
@@ -104,6 +106,7 @@ export const usePartnerStore = (partnerId: string) => {
               return menuDoc.data()
             } catch (err) {
               console.error(err)
+              reportClientError(err, { documentPath: menuDoc.ref.path, severity: 'warn' })
               return []
             }
           })

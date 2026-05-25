@@ -31,6 +31,7 @@ import {
   reauthenticateByProviderService,
   updateProfileFromProviders,
 } from '@shokujii/base/utils/providerService'
+import { ZodError } from 'zod'
 
 const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInformation> = {
   toFirestore(userPersonalInformation: UserPersonalInformation): DocumentData {
@@ -125,13 +126,25 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
           }
         }
 
-        _cart.value = await Promise.all(
-          Array.from(grouped.entries()).map(async ([eventId, orders]) => {
-            const eventStore = useEventStore(eventId)
-            const event = await eventStore.getLoadedEvent()
-            return { orders, event }
-          }),
-        )
+        try {
+          const cartItems = await Promise.all(
+            Array.from(grouped.entries()).map(async ([eventId, orders]): Promise<CartItem | null> => {
+              try {
+                const eventStore = useEventStore(eventId)
+                const event = await eventStore.getLoadedEvent()
+                return { orders, event }
+              } catch (err) {
+                if (err instanceof ZodError) {
+                  return null
+                }
+                throw err
+              }
+            }),
+          )
+          _cart.value = cartItems.filter((item): item is CartItem => item != null)
+        } catch (err) {
+          console.error(err)
+        }
       })
     }
   }

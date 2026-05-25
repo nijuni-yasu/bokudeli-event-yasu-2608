@@ -14,6 +14,7 @@ import {
   type QueryConstraint,
 } from 'firebase/firestore'
 import { TaskExecutor } from '@shokujii/base/utils/executors'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { useEventStore, type EventStore } from './event'
 
 export type EventListStore = ReturnType<typeof useEventListStore>
@@ -51,6 +52,7 @@ export const useEventListStore = (filters: QueryConstraint[] | null = null, page
               return useEventStore(doc.data())
             } catch (err) {
               console.error(err)
+              reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
               return []
             }
           })

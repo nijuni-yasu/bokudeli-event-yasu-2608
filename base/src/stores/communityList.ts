@@ -15,6 +15,7 @@ import {
 import { db } from '@shokujii/base/firebase.js'
 import { Community } from '@shokujii/common/schemas/Community.js'
 import { TaskExecutor } from '@shokujii/base/utils/executors.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { communityConverter, useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 
 export type CommunityListStore = ReturnType<typeof useCommunityListStore>
@@ -53,6 +54,7 @@ export const useCommunityListStore = (filters: QueryConstraint[] | null = null, 
                 return useCommunityStore(doc.data())
               } catch (err) {
                 console.error(err)
+                reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
                 return []
               }
             })
