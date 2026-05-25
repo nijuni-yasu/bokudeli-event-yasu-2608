@@ -82,6 +82,8 @@ class ShokujiiEventOrderConverter implements FirestoreDataConverter<EventOrder> 
 
 ## 4. CollectionGroup クエリ
 
+**単一 event 取得の第一選択肢ではない。** communityId + eventId が分かる場合は §4.1 の `getEventInCommunity` を使うこと。`getEvent`（collectionGroup）は eventId のみ分かる Tier C 向け。
+
 ```typescript
 const eventRef = db
   .collectionGroup('events')
@@ -89,6 +91,23 @@ const eventRef = db
   .limit(1)
   .withConverter(new ShokujiiEventConverter())
 ```
+
+## 4.1. 直接参照（getEventInCommunity）
+
+Callable / Webhook / Scheduled で communityId と eventId の両方が分かる場合はこちらを優先する。collectionGroup より低コスト。
+
+```typescript
+const eventRef = db
+  .collection('communities')
+  .doc(communityId)
+  .collection('events')
+  .doc(eventId)
+  .withConverter(new ShokujiiEventConverter())
+const snapshot = await (transaction === undefined ? eventRef.get() : transaction.get(eventRef))
+return snapshot.exists ? snapshot.data() : undefined
+```
+
+詳細な使い分け: `documents/実装メモ/functionsにおける store の使い方.md` §1.5 を参照。
 
 ## 5. Transaction 内での使用
 
@@ -98,7 +117,10 @@ const eventRef = db
 
 ```typescript
 return db.runTransaction(async (transaction) => {
-  const event = await getEvent(eventId, transaction)
+  const event = await getEventInCommunity(communityId, eventId, transaction)
+  if (event == null) {
+    throw new HttpsError('not-found', 'イベントが見つかりません')
+  }
   const user = await getUser(userId)  // Transaction 非対応の場合は外で取得
   // ...
   await saveEvent(userId, event, transaction)
@@ -144,7 +166,7 @@ export class ShokujiiEvent extends Event {
 }
 ```
 
-使用例: getEvent で取得した ShokujiiEvent に対して、event.getOrders(), event.saveOrder() を呼ぶ。Transaction をサポートするメソッドには transaction を渡す。getMembers 等、Transaction 非対応のメソッドもある。
+使用例: getEventInCommunity で取得した ShokujiiEvent に対して、event.getOrders(), event.saveOrder() を呼ぶ。Transaction をサポートするメソッドには transaction を渡す。getMembers 等、Transaction 非対応のメソッドもある。
 
 ## 7. 関数ファイルでの使用
 
@@ -154,11 +176,12 @@ export class ShokujiiEvent extends Event {
 
 ```typescript
 import { getUser, saveUser } from './stores/user.js'
-import { getEvent, saveEvent } from './stores/event.js'
+import { getEventInCommunity, saveEvent } from './stores/event.js'
 
 export const someFunction = onCall(async (request) => {
+  const { community_id, event_id } = request.data
   const user = await getUser(uid, true)
-  const event = await getEvent(eventId)
+  const event = await getEventInCommunity(community_id, event_id)
   if (event == null) throw new HttpsError('not-found', 'イベントが見つかりません')
   const orders = await event.getOrders('in_cart')  // 拡張クラスのメソッド
   // ...
