@@ -56,6 +56,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Transaction 内で読み込む場合、Transaction 外で同じドキュメントを読んでいないか
 - [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
+- [ ] communityId と eventId の両方が分かるのに `getEvent` を使っていないか（`getEventInCommunity` を使う。`getEvent` は eventId のみ分かる Tier C 向け）
 
 ### community_id / community_account の使い分け
 - [ ] `useCommunityStore(string)` には `community_account`（URL スラッグ）を渡しているか
@@ -144,17 +145,29 @@ if (updateUserId !== '') { ... }
 
 ```typescript
 // NG: Transaction 外で取得した event を Transaction 内で使う
-const event = await getEvent(eventId)
+const event = await getEventInCommunity(community_id, event_id)
 await runTransaction(db, async (t) => {
   // event は Transaction で保護されていない
-  if (event.is_public) { ... }
+  if (event?.is_public) { ... }
 })
 
 // OK: Transaction 内で読み込む
 await runTransaction(db, async (t) => {
-  const eventSnap = await t.get(eventRef)
-  if (eventSnap.data()?.is_public) { ... }
+  const event = await getEventInCommunity(community_id, event_id, t)
+  if (event?.is_public) { ... }
 })
+```
+
+### NG: communityId が分かっているのに getEvent を使う
+
+```typescript
+// NG: communityId が分かっているのに collectionGroup の getEvent
+const event = await getEvent(event_id)
+if (event == null || event.community_id !== community_id) { ... }
+
+// OK
+const event = await getEventInCommunity(community_id, event_id, transaction)
+if (event == null) { ... }
 ```
 
 ### NG: Transaction 内で write の後に read を実行する

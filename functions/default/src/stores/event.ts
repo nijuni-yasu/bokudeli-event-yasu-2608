@@ -218,6 +218,13 @@ export class ShokujiiEvent extends Event {
   }
 }
 
+/**
+ * eventId のみが分かる場合に collectionGroup で横断検索して単一イベントを取得する。
+ * communityId が分かる場合は getEventInCommunity を使うこと。
+ *
+ * eventCopy / eventReceipt / ogpRequest 等、リクエストや URL に communityId が含まれない
+ * Tier C 向け。getAllAcceptingOrderEvents 等の全コミュニティ横断一覧取得とは用途が異なる。
+ */
 export const getEvent = async (eventId: string, transaction?: Transaction): Promise<ShokujiiEvent | undefined> => {
   const db = getFirestore()
   const eventRef = db
@@ -230,8 +237,11 @@ export const getEvent = async (eventId: string, transaction?: Transaction): Prom
 }
 
 /**
- * `communities/{communityId}/events/{eventId}` を直接参照して取得する（collectionGroup を使わない）。
- * トリガーで communityId / eventId が既に分かっている場合はこちらを使う。
+ * communities/{communityId}/events/{eventId} を直接参照して取得する。
+ *
+ * Callable・Webhook・Scheduled で communityId と eventId の両方が分かる場合はこちらを優先する。
+ * collectionGroup より読み取りコストが低く、パスでコミュニティを固定できる。
+ * 第3引数 transaction で Transaction 内 read にも対応する。
  */
 export const getEventInCommunity = async (
   communityId: string,

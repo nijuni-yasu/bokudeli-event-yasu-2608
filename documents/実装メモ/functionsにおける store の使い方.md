@@ -109,7 +109,24 @@ export class ShokujiiEvent extends Event {
   // 追加のメソッドを実装...
 }
 
-// 取得関数（パラメータ不要）
+// 取得関数（communityId + eventId が分かる場合は getEventInCommunity を優先）
+export const getEventInCommunity = async (
+  communityId: string,
+  eventId: string,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent | undefined> => {
+  const db = getFirestore()
+  const eventRef = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('events')
+    .doc(eventId)
+    .withConverter(new ShokujiiEventConverter())
+  const snapshot = await (transaction === undefined ? eventRef.get() : transaction.get(eventRef))
+  return snapshot.exists ? snapshot.data() : undefined
+}
+
+// eventId のみ分かる場合（Tier C 向け）。詳細は §1.5 を参照
 export const getEvent = async (eventId: string, transaction?: Transaction): Promise<ShokujiiEvent | undefined> => {
   const db = getFirestore()
   const eventRef = db
@@ -210,9 +227,23 @@ class ShokujiiEventOrderConverter implements FirestoreDataConverter<EventOrder> 
 }
 ```
 
-### 1.5. CollectionGroup クエリ
+### 1.5. getEvent と getEventInCommunity の使い分け
 
-複数のコレクションにまたがってクエリを実行する場合、`collectionGroup` を使用します。
+| 関数 | 用途 | 例 |
+|------|------|-----|
+| `getEventInCommunity` | communityId + eventId が分かる単一イベント取得 | memberOrders, letter, stripeWebhook |
+| `getEvent` | eventId のみ（Tier C） | eventReceipt, namesPrint, eventCopy |
+| collectionGroup 一覧系 | 全コミュニティ横断 | getAllAcceptingOrderEvents |
+
+**原則**: Callable / Webhook / Scheduled で `communityId` がリクエスト・metadata・order 等から取得できる場合は `getEventInCommunity` を使う。直接パス参照のため collectionGroup より低コストで、パス上に存在しなければ `undefined` となる。
+
+`getEventInCommunity` 利用時は、取得後の `event.community_id !== communityId` チェックは不要（存在チェックのみで十分）。
+
+`getEvent` は eventId のみ分かる API 向け。collectionGroup + `where('event_id', '==', eventId)` + `limit(1)` で横断検索する。
+
+### 1.6. CollectionGroup クエリ（単一 event 取得: getEvent）
+
+複数のコレクションにまたがってクエリを実行する場合、`collectionGroup` を使用します。**単一イベント取得の第一選択肢ではない**。communityId が分かる場合は §1.5 の `getEventInCommunity` を使うこと。
 
 ```typescript
 export const getEvent = async (eventId: string, transaction?: Transaction): Promise<ShokujiiEvent | undefined> => {
@@ -227,7 +258,7 @@ export const getEvent = async (eventId: string, transaction?: Transaction): Prom
 }
 ```
 
-### 1.6. 複合クエリ
+### 1.7. 複合クエリ
 
 複数の条件を組み合わせたクエリを実行します。
 
@@ -255,7 +286,7 @@ export const getAllAcceptingOrderEvents = async (
 
 ```typescript
 import { getUser, saveUser, ShokujiiUser } from './stores/user.js'
-import { getEvent, saveEvent, ShokujiiEvent } from './stores/event.js'
+import { getEventInCommunity, saveEvent, ShokujiiEvent } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
 
 export const someFunction = onCall(async (request) => {
@@ -264,14 +295,16 @@ export const someFunction = onCall(async (request) => {
     throw new HttpsError('unauthenticated', '認証が必要です')
   }
 
+  const { community_id, event_id } = request.data
+
   // ユーザーを取得
   const user = await getUser(uid, true)
   if (user == null) {
     throw new HttpsError('not-found', 'ユーザーが見つかりません')
   }
 
-  // イベントを取得
-  const event = await getEvent(eventId)
+  // イベントを取得（communityId + eventId が分かる場合は getEventInCommunity）
+  const event = await getEventInCommunity(community_id, event_id)
   if (event == null) {
     throw new HttpsError('not-found', 'イベントが見つかりません')
   }
@@ -288,15 +321,17 @@ export const someFunction = onCall(async (request) => {
 
 ```typescript
 import { getFirestore } from 'firebase-admin/firestore'
-import { getEvent, saveEvent } from './stores/event.js'
+import { getEventInCommunity, saveEvent } from './stores/event.js'
 import { getUser, saveUser } from './stores/user.js'
 
 const db = getFirestore()
 
 export const someFunction = onCall(async (request) => {
+  const { community_id, event_id } = request.data
+
   return db.runTransaction(async (transaction) => {
     // Transaction を渡して取得（Transaction をサポートしている関数のみ）
-    const event = await getEvent(eventId, transaction)
+    const event = await getEventInCommunity(community_id, event_id, transaction)
     
     // getUser は Transaction をサポートしていないため、Transaction 外で取得
     // または、Transaction 内で必要な場合は別の方法を検討
@@ -322,10 +357,11 @@ export const someFunction = onCall(async (request) => {
 拡張クラスに実装されたメソッドを使用します。
 
 ```typescript
-import { getEvent, ShokujiiEvent } from './stores/event.js'
+import { getEventInCommunity, ShokujiiEvent } from './stores/event.js'
 
 export const someFunction = onCall(async (request) => {
-  const event = await getEvent(eventId)
+  const { community_id, event_id } = request.data
+  const event = await getEventInCommunity(community_id, event_id)
   if (event == null) {
     throw new HttpsError('not-found', 'イベントが見つかりません')
   }
@@ -345,13 +381,15 @@ export const someFunction = onCall(async (request) => {
 
 ```typescript
 import { getFirestore } from 'firebase-admin/firestore'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 
 const db = getFirestore()
 
 export const someFunction = onCall(async (request) => {
+  const { community_id, event_id } = request.data
+
   return db.runTransaction(async (transaction) => {
-    const event = await getEvent(eventId, transaction)
+    const event = await getEventInCommunity(community_id, event_id, transaction)
     if (event == null) {
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
@@ -374,13 +412,14 @@ export const someFunction = onCall(async (request) => {
 
 ```typescript
 import { getCommunity } from './stores/community.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { getUser } from './stores/user.js'
 import { getEventPartnerShop } from './stores/partner.js'
 
 export const someFunction = onCall(async (request) => {
-  const community = await getCommunity(communityId)
-  const event = await getEvent(eventId)
+  const { community_id, event_id } = request.data
+  const community = await getCommunity(community_id)
+  const event = await getEventInCommunity(community_id, event_id)
   const user = await getUser(userId, true)
   const shop = await getEventPartnerShop(event)
 
@@ -694,7 +733,7 @@ export const saveEvent = async (userId: string, event: ShokujiiEvent, transactio
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { getFirestore } from 'firebase-admin/firestore'
 import { getCommunity } from './stores/community.js'
-import { getEvent, ShokujiiEvent } from './stores/event.js'
+import { getEventInCommunity, ShokujiiEvent } from './stores/event.js'
 import { getUser } from './stores/user.js'
 
 const db = getFirestore()
@@ -705,9 +744,11 @@ export const someFunction = onCall(async (request) => {
     throw new HttpsError('unauthenticated', '認証が必要です')
   }
 
+  const { community_id, event_id } = request.data
+
   return db.runTransaction(async (transaction) => {
-    const community = await getCommunity(communityId, transaction)
-    const event = await getEvent(eventId, transaction)
+    const community = await getCommunity(community_id, transaction)
+    const event = await getEventInCommunity(community_id, event_id, transaction)
     const user = await getUser(uid, true)
 
     if (community == null || event == null || user == null) {
@@ -800,7 +841,31 @@ export class ShokujiiEvent extends Event {
 }
 ```
 
-### パターン3: CollectionGroup クエリ
+### パターン3: 直接参照による単一 event 取得（getEventInCommunity）
+
+communityId + eventId が分かる場合はこちらを優先する。
+
+```typescript
+export const getEventInCommunity = async (
+  communityId: string,
+  eventId: string,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent | undefined> => {
+  const db = getFirestore()
+  const eventRef = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('events')
+    .doc(eventId)
+    .withConverter(new ShokujiiEventConverter())
+  const snapshot = await (transaction === undefined ? eventRef.get() : transaction.get(eventRef))
+  return snapshot.exists ? snapshot.data() : undefined
+}
+```
+
+### パターン4: CollectionGroup による単一 event 取得（getEvent）
+
+eventId のみ分かる Tier C 向け。communityId が分かる場合はパターン3を使うこと。
 
 ```typescript
 export const getEvent = async (eventId: string, transaction?: Transaction): Promise<ShokujiiEvent | undefined> => {
@@ -815,7 +880,7 @@ export const getEvent = async (eventId: string, transaction?: Transaction): Prom
 }
 ```
 
-### パターン4: 複合クエリ
+### パターン5: 複合クエリ
 
 ```typescript
 export const getAllAcceptingOrderEvents = async (

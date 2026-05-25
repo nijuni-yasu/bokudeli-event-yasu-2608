@@ -3,7 +3,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
 import { createModuleLogger } from './utils/logger.js'
 import { getPartner } from './stores/partner.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { convertPartnerMenusToEventMenus } from '@shokujii/common/utils/eventMenuConverter.js'
 import {
   getMenuImageStoragePath,
@@ -34,7 +34,7 @@ export const savePartnerMenusToEventMenus = async (
     throw new Error(`Partner ${partnerId} not found`)
   }
 
-  const eventForSelection = await getEvent(eventId)
+  const eventForSelection = await getEventInCommunity(communityId, eventId)
   if (eventForSelection == null) {
     throw new Error(`Event ${eventId} not found`)
   }
@@ -98,7 +98,7 @@ export const savePartnerMenusToEventMenus = async (
   }
 
   await getFirestore().runTransaction(async (transaction) => {
-    const event = await getEvent(eventId, transaction)
+    const event = await getEventInCommunity(communityId, eventId, transaction)
     if (event == null) {
       throw new Error(`Event ${eventId} not found`)
     }

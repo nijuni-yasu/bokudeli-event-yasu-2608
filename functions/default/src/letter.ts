@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import { sendIndividualLetterRequestSchema, sendTestLetterRequestSchema } from '@shokujii/common/apis/letter.js'
 import { convertToDateWeekdayShort, convertToDate } from '@shokujii/common/utils/datetime.js'
 import { getCommunity, getCommunityByAccount } from './stores/community.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { getMemberIds } from './stores/memberOrder.js'
 import { getLetter, getLetterRef, getScheduledLetters, updateLetterStatusWithCheck } from './stores/letter.js'
 import { getUserPersonalInformation, getUser } from './stores/user.js'
@@ -44,47 +44,23 @@ async function getCommunityMemberIds(communityId: string): Promise<string[]> {
 /**
  * イベント参加者のユーザーIDを取得（ordered のみ）
  */
-async function getParticipantIds(eventId: string): Promise<string[]> {
+async function getParticipantIds(communityId: string, eventId: string): Promise<string[]> {
   try {
-    if (!eventId) {
-      logger.warn('No event_id provided', { eventId })
+    if (eventId === '') {
+      logger.warn('No event_id provided', { communityId, eventId })
       return []
     }
 
-    const event = await getEvent(eventId)
-    if (!event) {
-      logger.warn('Event not found', { eventId })
+    const event = await getEventInCommunity(communityId, eventId)
+    if (event == null) {
+      logger.warn('Event not found', { communityId, eventId })
       return []
     }
 
     const orders = await event.getOrders('ordered')
     return orders.map((order) => order.user_id)
   } catch (error) {
-    logger.error('Error fetching event participants', { eventId, error })
-    throw error
-  }
-}
-
-/**
- * イベントメンバー一覧に表示されるユーザーIDを取得（ordered / in_cart / canceled を問わず全員）
- * members サブコレクションのドキュメント ID を直接取得するため、orders を全走査する必要がない。
- */
-async function getEventMemberIds(eventId: string): Promise<string[]> {
-  try {
-    if (!eventId) {
-      logger.warn('No event_id provided', { eventId })
-      return []
-    }
-
-    const event = await getEvent(eventId)
-    if (!event) {
-      logger.warn('Event not found', { eventId })
-      return []
-    }
-
-    return getMemberIds(event.community_id, eventId)
-  } catch (error) {
-    logger.error('Error fetching event members', { eventId, error })
+    logger.error('Error fetching event participants', { communityId, eventId, error })
     throw error
   }
 }
@@ -159,10 +135,10 @@ async function getUserIdsByLetterType(letterType: string, communityId: string, e
       case 'community':
         return await getCommunityMemberIds(communityId)
       case 'event_participant':
-        return eventId ? await getParticipantIds(eventId) : []
+        return eventId ? await getParticipantIds(communityId, eventId) : []
       case 'event_non_participant': {
         const [participantIds, communityMemberIds] = await Promise.all([
-          eventId ? getParticipantIds(eventId) : Promise.resolve([]),
+          eventId ? getParticipantIds(communityId, eventId) : Promise.resolve([]),
           getCommunityMemberIds(communityId),
         ])
         return communityMemberIds.filter((id) => !participantIds.includes(id))
@@ -217,7 +193,7 @@ export async function sendLetter(_: number, end: number): Promise<void> {
         event_date: null as string | null,
       }
       if (letter.event_id) {
-        const event = await getEvent(letter.event_id)
+        const event = await getEventInCommunity(communityId, letter.event_id)
         if (event) {
           eventData.event_name = event.event_name
           eventData.event_url = getEventUrl(communityAccount, letter.event_id)
@@ -335,7 +311,7 @@ const generateDynamicTemplateData = async (communityId: string, letterId: string
   }
   let eventInfo = {}
   if (letter.event_id !== undefined) {
-    const event = await getEvent(letter.event_id)
+    const event = await getEventInCommunity(communityId, letter.event_id)
     if (event !== undefined) {
       eventInfo = {
         event_name: event.event_name,
@@ -420,12 +396,29 @@ export const sendIndividualLetter = onCall(
     }
     const communityEmail = community.community_email
 
+    const eventData: {
+      event_name: string | null
+      event_url: string | null
+      event_date: string | null
+    } = {
+      event_name: null,
+      event_url: null,
+      event_date: null,
+    }
+
     // 受信者がコミュニティ／イベントの対象であることを検証
-    if (letter.event_id) {
-      const eventMemberIds = await getEventMemberIds(letter.event_id)
+    if (letter.event_id != null && letter.event_id !== '') {
+      const event = await getEventInCommunity(communityId, letter.event_id)
+      if (event == null) {
+        throw new HttpsError('not-found', 'Event not found.')
+      }
+      const eventMemberIds = await getMemberIds(communityId, letter.event_id)
       if (!eventMemberIds.includes(letter.user_id)) {
         throw new HttpsError('failed-precondition', 'Recipient is not a member of the event.')
       }
+      eventData.event_name = event.event_name
+      eventData.event_url = getEventUrl(community.community_account, letter.event_id)
+      eventData.event_date = convertToDateWeekdayShort(event.event_start_datetime)
     } else {
       const memberIds = await getCommunityMemberIds(communityId)
       if (!memberIds.includes(letter.user_id)) {
@@ -438,24 +431,6 @@ export const sendIndividualLetter = onCall(
       throw new HttpsError('not-found', 'User email not found.')
     }
     const targetUserName = targetUser.user_name ?? 'ユーザー'
-
-    const eventData: {
-      event_name: string | null
-      event_url: string | null
-      event_date: string | null
-    } = {
-      event_name: null,
-      event_url: null,
-      event_date: null,
-    }
-    if (letter.event_id) {
-      const event = await getEvent(letter.event_id)
-      if (event) {
-        eventData.event_name = event.event_name
-        eventData.event_url = getEventUrl(community.community_account, letter.event_id)
-        eventData.event_date = convertToDateWeekdayShort(event.event_start_datetime)
-      }
-    }
 
     const dynamicTemplateData = {
       community_name: community.community_name,

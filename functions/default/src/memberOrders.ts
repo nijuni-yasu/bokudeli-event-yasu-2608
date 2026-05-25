@@ -11,7 +11,7 @@ import {
   saveMember,
   saveOrder,
 } from './stores/memberOrder.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { createModuleLogger } from './utils/logger.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
 import {
@@ -36,8 +36,8 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
   }
 
   await db.runTransaction(async (transaction) => {
-    const eventData = await getEvent(event_id, transaction)
-    if (eventData == null || eventData.community_id !== community_id) {
+    const eventData = await getEventInCommunity(community_id, event_id, transaction)
+    if (eventData == null) {
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
 
@@ -164,8 +164,8 @@ export const confirmOrder = onCall(
     }
 
     await db.runTransaction(async (transaction) => {
-      const eventData = await getEvent(event_id, transaction)
-      if (eventData == null || eventData.community_id !== community_id) {
+      const eventData = await getEventInCommunity(community_id, event_id, transaction)
+      if (eventData == null) {
         throw new HttpsError('not-found', 'イベントが見つかりません')
       }
 
@@ -222,7 +222,7 @@ export const confirmOrder = onCall(
       }
     })
 
-    const eventForSideEffects = await getEvent(event_id)
+    const eventForSideEffects = await getEventInCommunity(community_id, event_id)
     if (eventForSideEffects != null) {
       await applyOrderConfirmedSideEffects({ event: eventForSideEffects, userId: uid })
     } else {

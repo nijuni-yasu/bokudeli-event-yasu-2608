@@ -7,7 +7,7 @@ import {
   convertToDatetimeWeekdayShort,
 } from '@shokujii/common/utils/datetime.js'
 import { DEFAULT_FROM } from './utils/mail.js'
-import { getAcceptingOrderEventsByTime, getEvent, type ShokujiiEvent } from './stores/event.js'
+import { getAcceptingOrderEventsByTime, getEventInCommunity, type ShokujiiEvent } from './stores/event.js'
 import { getInCartMemberOrdersByUpdatedTime, getOrdersInCart } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
@@ -105,7 +105,10 @@ export async function sendInCartNotificationToMember(start: number, end: number)
         return null
       }
 
-      const [event, userEmail] = await Promise.all([getEvent(order.event_id), getUserEmail(order.user_id)])
+      const [event, userEmail] = await Promise.all([
+        getEventInCommunity(order.community_id, order.event_id),
+        getUserEmail(order.user_id),
+      ])
       if (!userEmail || !event) {
         return null
       }
