@@ -3,6 +3,7 @@ import type { Router } from 'vue-router'
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { ZodError } from 'zod'
 
 /** Firebase Auth の初回 onAuthStateChanged まで待つ。セッション復元前の currentUser が null のままになるのを避ける。 */
 const waitForAuthInitialState = (): Promise<void> =>
@@ -97,7 +98,10 @@ export const setupRouter = (router: Router) => {
         if (event.is_deleted) {
           return '/404'
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof ZodError) {
+          return '/520'
+        }
         return '/404'
       }
     }

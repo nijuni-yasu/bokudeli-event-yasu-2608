@@ -18,6 +18,7 @@ import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
+import { ZodError } from 'zod'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -296,7 +297,10 @@ export const setupRouter = (router: Router) => {
         if (event.is_deleted) {
           return '/404'
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof ZodError) {
+          return '/520'
+        }
         return '/404'
       }
       if (to.path.startsWith('/manage/event/')) {

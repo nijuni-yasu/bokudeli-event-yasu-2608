@@ -34,6 +34,7 @@ import {
 } from '@shokujii/base/apis/order.js'
 import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/eventMenu.js'
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
+import { ZodError } from 'zod'
 import { copyCommunityCoverToEvent as callCopyCommunityCoverToEvent } from '@shokujii/base/apis/copyCommunityCoverToEvent.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
 import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
@@ -286,6 +287,18 @@ export const useEventStore = (target: string | BokudeliEvent) => {
       return updateDoc(await getEventRef(), { is_deleted: true })
     }
 
+    let pendingLoadedEventReject: ((reason: unknown) => void) | null = null
+    let pendingLoadedEventCleanup: (() => void) | null = null
+
+    const rejectPendingLoadedEvent = (reason: unknown) => {
+      const reject = pendingLoadedEventReject
+      const cleanup = pendingLoadedEventCleanup
+      pendingLoadedEventReject = null
+      pendingLoadedEventCleanup = null
+      cleanup?.()
+      reject?.(reason)
+    }
+
     let unsubscribeEvent: Unsubscribe | null = null
     const subscribeEvent = (eventRef: DocumentReference<BokudeliEvent>) => {
       if (unsubscribeEvent == null) {
@@ -300,6 +313,9 @@ export const useEventStore = (target: string | BokudeliEvent) => {
           } catch (err) {
             console.error(err)
             reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
+            if (err instanceof ZodError) {
+              rejectPendingLoadedEvent(err)
+            }
           }
         })
       }
@@ -354,16 +370,25 @@ export const useEventStore = (target: string | BokudeliEvent) => {
     const getLoadedEvent = async (timeout: number = 5000): Promise<BokudeliEvent> => {
       return await new Promise((resolve, reject) => {
         let unwatch: (() => void) | undefined
-        const timeoutId = setTimeout(() => {
+        const cleanup = () => {
+          clearTimeout(timeoutId)
           unwatch?.()
+          if (pendingLoadedEventReject === reject) {
+            pendingLoadedEventReject = null
+            pendingLoadedEventCleanup = null
+          }
+        }
+        const timeoutId = setTimeout(() => {
+          cleanup()
           reject(new Error(`Event not loaded within ${timeout}ms`))
         }, timeout)
+        pendingLoadedEventReject = reject
+        pendingLoadedEventCleanup = cleanup
         unwatch = watch(
           event,
           (e) => {
             if (e != null) {
-              clearTimeout(timeoutId)
-              unwatch?.()
+              cleanup()
               resolve(e)
             }
           },
