@@ -13,7 +13,7 @@ import {
   saveStripe,
 } from './stores/memberOrder.js'
 import { getCommunity } from './stores/community.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
 
 const logger = createModuleLogger('stripeWebhook')
@@ -402,7 +402,7 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
   }
 
   if (txResult.kind === 'processed') {
-    const eventForSideEffects = await getEvent(eventId)
+    const eventForSideEffects = await getEventInCommunity(communityId, eventId)
     if (eventForSideEffects != null) {
       await applyOrderConfirmedSideEffects({ event: eventForSideEffects, userId })
     } else {

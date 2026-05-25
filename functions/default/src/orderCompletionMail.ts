@@ -6,7 +6,7 @@ import { getEventUrl, getUserUrl, FIREBASE_STORAGE_BASE_URL, convertStoragePathT
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { getUser, getUserPersonalInformation } from './stores/user.js'
-import { ShokujiiEvent, saveEvent, getEvent } from './stores/event.js'
+import { ShokujiiEvent, saveEvent, getEventInCommunity } from './stores/event.js'
 import { makeIcs } from './makeIcs.js'
 import { getCommunity } from './stores/community.js'
 import { getUserImageUrl } from '@shokujii/common/utils/buildThumbnailsLinks.js'
@@ -152,7 +152,7 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
   }
 
   const event = await getFirestore().runTransaction(async (transaction) => {
-    const transactionEvent = await getEvent(eventId, transaction)
+    const transactionEvent = await getEventInCommunity(communityId, eventId, transaction)
     // is_publicがfalseまたは既に送信済みの場合はスキップ
     if (transactionEvent == null || !transactionEvent.is_public || transactionEvent.sent_new_event_mail_at) {
       return null

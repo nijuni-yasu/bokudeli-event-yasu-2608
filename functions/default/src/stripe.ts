@@ -8,7 +8,7 @@ import {
 } from '@shokujii/common/apis/stripe.js'
 import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { getUserUrl, getMainUrl, convertStoragePathToURL } from './utils/urls.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { getOrdersByIds } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
 import {
@@ -44,8 +44,8 @@ export const createStripeCheckoutSession = onCall<
 
     const uid = request.auth.uid
 
-    const event = await getEvent(event_id)
-    if (event == null || event.community_id !== community_id) {
+    const event = await getEventInCommunity(community_id, event_id)
+    if (event == null) {
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
 

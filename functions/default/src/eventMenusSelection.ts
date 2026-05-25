@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { getFirestore } from 'firebase-admin/firestore'
 import { createModuleLogger } from './utils/logger.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
 import { getConfigGlobal } from './stores/config.js'
 import { UpdateEventMenusRequest } from '@shokujii/common/apis/eventMenu.js'
@@ -71,7 +71,7 @@ export const updateEventMenus = onCall<UpdateEventMenusRequest>({ region: 'asia-
 
   try {
     const regenerateParams = await getFirestore().runTransaction(async (transaction) => {
-      const event = await getEvent(eventId, transaction)
+      const event = await getEventInCommunity(communityId, eventId, transaction)
       if (event == null) {
         throw new HttpsError('not-found', `Event ${eventId} not found`)
       }

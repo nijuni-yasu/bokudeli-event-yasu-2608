@@ -6,7 +6,7 @@ import { DateTime } from 'luxon'
 import Stripe from 'stripe'
 import { CancelOrdersRequest, CancelOrdersResponse, CancelOrdersRefundError } from '@shokujii/common/apis/stripe.js'
 import { getOrdersByIds, saveOrder, getStripe, saveStripe } from './stores/memberOrder.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { applyOrderCanceledSideEffects } from './orderCanceledSideEffects.js'
 import { createModuleLogger } from './utils/logger.js'
 
@@ -47,8 +47,8 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
 
     // event_payment・event_deadline_datetime はトランザクション中に変更されない前提のため、
     // トランザクション外で取得する（stripe.ts の createStripeCheckoutSession と同じパターン）
-    const eventData = await getEvent(event_id)
-    if (eventData == null || eventData.community_id !== community_id) {
+    const eventData = await getEventInCommunity(community_id, event_id)
+    if (eventData == null) {
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
 

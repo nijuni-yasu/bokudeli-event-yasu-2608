@@ -3,7 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
 import type { CancelEventRequest, CancelEventResponse } from '@shokujii/common/apis/eventCancellation.js'
 import { isPresetEventCancelReason } from '@shokujii/common/constants/eventCancellationReasons.js'
-import { getEvent } from './stores/event.js'
+import { getEventInCommunity } from './stores/event.js'
 import { getCommunity } from './stores/community.js'
 import { getEventPartnerShop } from './stores/partner.js'
 import * as sgMail from './utils/sendgrid.js'
@@ -46,8 +46,8 @@ export const cancelEvent = onCall<CancelEventRequest, Promise<CancelEventRespons
 
     // ステータス・参加者・注文の判定〜更新を 1 トランザクションで実行
     const event = await getFirestore().runTransaction(async (transaction) => {
-      const tEvent = await getEvent(eventId, transaction)
-      if (tEvent == null || tEvent.community_id !== communityId) {
+      const tEvent = await getEventInCommunity(communityId, eventId, transaction)
+      if (tEvent == null) {
         throw new HttpsError('not-found', 'イベントが見つかりません')
       }
 
