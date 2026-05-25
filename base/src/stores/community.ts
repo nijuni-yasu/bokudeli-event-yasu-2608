@@ -39,6 +39,7 @@ import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { uploadAlbumImage, uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { useConfigStore } from './config.js'
 import { TaskExecutor } from '../utils/executors.js'
 
@@ -310,15 +311,19 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
       unsubscribeAlbumItems = onSnapshot(
         albumItemsRef,
         (snapshot) => {
-          try {
-            _albumItems.value = snapshot.docs.map((d) => d.data())
-          } catch (err) {
-            console.error(err)
-            _albumItems.value = []
-          }
+          _albumItems.value = snapshot.docs.flatMap((d) => {
+            try {
+              return [d.data()]
+            } catch (err) {
+              console.error(err)
+              reportClientError(err, { documentPath: d.ref.path, severity: 'warn' })
+              return []
+            }
+          })
         },
         (err) => {
           console.error('subscribeAlbumItems snapshot error', err)
+          reportClientError(err, { documentPath: communityRef.path, severity: 'warn' })
           _albumItems.value = []
           unsubscribeAlbumItems?.()
           unsubscribeAlbumItems = null
@@ -511,6 +516,7 @@ export const useCommunityStore = (target: string | BokudeliCommunity) => {
             community.value = doc.data() ?? null
           } catch (err) {
             console.error(err)
+            reportClientError(err, { documentPath: doc.ref.path, severity: 'warn' })
           }
         })
       }

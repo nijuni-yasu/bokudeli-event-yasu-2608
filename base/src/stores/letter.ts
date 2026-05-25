@@ -18,6 +18,8 @@ import {
   FirestoreDataConverter,
 } from 'firebase/firestore'
 
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
+
 const db = getFirestore()
 
 export class BokudeliLetter extends Letter {
@@ -68,6 +70,7 @@ export const useLetterStore = (communityAccount: string, target: string | Bokude
             letter.value = letterDoc.data() ?? null
           } catch (err) {
             console.error(err)
+            reportClientError(err, { documentPath: letterDoc.ref.path, severity: 'warn' })
           }
         })
       }
