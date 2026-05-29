@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
 import defaultAvatar from '@shokujii/base/assets/images/avatars/default_profile.jpeg'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildThumbnailsLinks, type Sizes } from '@shokujii/common/utils/buildThumbnailsLinks.js'
+import { isGoogleProfileImageUrl, isGoogleUnavailableAvatar } from '@shokujii/common/utils/googleProfileImage.js'
 import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase.js'
 
 const MAX_RETRIES = 10
@@ -21,6 +22,10 @@ const calcAvatarSize = (size: number | undefined): Sizes => {
   return 'large'
 }
 
+const avatarElement = ref<VAvatar>()
+const elementSize = ref<number | undefined>(undefined)
+const size = computed(() => props.size ?? elementSize.value)
+
 const avatar = computed(() => {
   if (typeof props.user === 'string') {
     return props.user
@@ -34,6 +39,38 @@ const avatar = computed(() => {
   )
   return thumbnails?.[calcAvatarSize(size.value)] ?? props.user.user_image_url
 })
+
+const useDefaultAvatar = ref(false)
+const reloadKey = ref(0)
+let retries = 0
+let cancelled = false
+
+watch(
+  avatar,
+  async (url) => {
+    useDefaultAvatar.value = false
+    retries = 0
+    reloadKey.value = 0
+
+    if (typeof url !== 'string' || !isGoogleProfileImageUrl(url)) {
+      return
+    }
+
+    const result = await isGoogleUnavailableAvatar(url)
+    if (!cancelled && avatar.value === url) {
+      useDefaultAvatar.value = result
+    }
+  },
+  { immediate: true },
+)
+
+const displayAvatar = computed(() => {
+  if (useDefaultAvatar.value) {
+    return defaultAvatar
+  }
+  return avatar.value
+})
+
 const initial = computed(() => {
   if (typeof props.user === 'string') {
     // URLの場合はイニシャル表示しない
@@ -45,12 +82,6 @@ const initial = computed(() => {
   return undefined
 })
 
-const avatarElement = ref<VAvatar>()
-const elementSize = ref<number | undefined>(undefined)
-const size = computed(() => props.size ?? elementSize.value)
-
-const reloadKey = ref(0)
-let retries = 0
 const onError = () => {
   if (retries < MAX_RETRIES) {
     retries++
@@ -60,7 +91,8 @@ const onError = () => {
       reloadKey.value++
     }, RETRY_DELAY)
   } else {
-    console.error('画像の取得に失敗しました')
+    console.warn('画像の取得に失敗したためデフォルト画像を表示します')
+    useDefaultAvatar.value = true
   }
 }
 
@@ -85,6 +117,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  cancelled = true
   resizeObserver.disconnect()
 })
 </script>
@@ -92,7 +125,7 @@ onUnmounted(() => {
 <template>
   <v-avatar ref="avatarElement" :size="size" :color="initial != null ? 'primary' : 'transparent'">
     <template v-if="initial != null">{{ initial }}</template>
-    <v-img v-else :src="avatar" :key="reloadKey" cover @error="onError" />
+    <v-img v-else :src="displayAvatar" :key="reloadKey" cover @error="onError" />
     <slot />
   </v-avatar>
 </template>
