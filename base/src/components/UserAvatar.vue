@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { type VAvatar } from 'vuetify/lib/components/index.mjs'
-import defaultAvatar from '@shokujii/base/assets/images/avatars/default_profile.jpeg'
+import { getDefaultAvatarUrl } from '@shokujii/base/utils/defaultAvatar.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildThumbnailsLinks, type Sizes } from '@shokujii/common/utils/buildThumbnailsLinks.js'
 import { isGoogleProfileImageUrl, isGoogleUnavailableAvatar } from '@shokujii/common/utils/googleProfileImage.js'
@@ -26,11 +26,20 @@ const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
 
+const defaultAvatarUserId = computed(() => {
+  if (props.user != null && typeof props.user !== 'string') {
+    return props.user.user_id
+  }
+  return undefined
+})
+
+const defaultAvatar = computed(() => getDefaultAvatarUrl(defaultAvatarUserId.value))
+
 const avatar = computed(() => {
   if (typeof props.user === 'string') {
     return props.user
   } else if (props.user === null || props.user.user_image_url === '') {
-    return defaultAvatar
+    return defaultAvatar.value
   }
   const thumbnails = buildThumbnailsLinks(
     props.user.user_id,
@@ -66,7 +75,7 @@ watch(
 
 const displayAvatar = computed(() => {
   if (useDefaultAvatar.value) {
-    return defaultAvatar
+    return defaultAvatar.value
   }
   return avatar.value
 })
