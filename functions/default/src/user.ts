@@ -15,11 +15,14 @@ import {
 } from '@shokujii/common/apis/user.js'
 import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { fetchFacebookImage, fetchTwitterImage } from '@shokujii/common/utils/user.js'
+import { fetchGoogleProfileImage, isGoogleProfileImageUrl } from '@shokujii/common/utils/googleProfileImage.js'
 import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
 import { savePassCode, ShokujiiPassCode, getValidPassCodeFromEmail, deletePassCode } from './stores/passCode.js'
 import { send } from './utils/sendgrid.js'
 import { DEFAULT_FROM } from './utils/mail.js'
+import { createModuleLogger } from './utils/logger.js'
 
+const logger = createModuleLogger('user')
 const USER_PASS_CODE_TEMPLATE_ID = 'd-84540f5feaf8422484b65bdc2be739fe'
 
 export const requestEmailLogin = onCall<RequestEmailLoginRequest, Promise<RequestEmailLoginResponse>>(
@@ -195,9 +198,9 @@ export const updateProfileFromProviders = onCall<
       user[key] = value
     }
   }
-  // Facebook, Twitter の場合は、画像を Storage にアップロードする
-  // ただし、Login の度に画像を Storage にアップロードするわけにはいかないので、既存の画像がない場合のみ
-  // 想定ケースはFacebookとTwitterでの初回ログイン、メアドログインで画像が設定されていない際にいずれかのSNS連携を実施した場合
+  // Facebook, Twitter, Google の場合は、外部 URL の画像を Storage にアップロードする
+  // gs:// 形式に移行済みの場合は対象外。外部 URL が残っている間はログインのたびに fetch + upload を試みる
+  // Google の場合は停止・削除アカウントのプレースホルダー画像を除外し、有効な画像のみ Storage に保存する
   let blob: Blob | null = null
   const imageUrl = user.user_image_url
   try {
@@ -205,12 +208,25 @@ export const updateProfileFromProviders = onCall<
       blob = await fetchFacebookImage(imageUrl)
     } else if (imageUrl.startsWith('https://pbs.twimg.com')) {
       blob = await fetchTwitterImage(imageUrl)
+    } else if (isGoogleProfileImageUrl(imageUrl)) {
+      const googleResult = await fetchGoogleProfileImage(imageUrl)
+      if (googleResult.status === 'valid') {
+        blob = googleResult.blob
+      } else if (googleResult.status === 'placeholder') {
+        user.user_image_url = ''
+      }
     }
   } catch (error) {
     // 画像が取得できない場合は致命的なエラーとはみなさず、ログを記録してスキップ
     // SNSの画像URL仕様変更や一時的なエラーでも、ユーザー登録自体は継続させたい
-    const provider = imageUrl.startsWith('https://graph.facebook.com') ? 'Facebook' : 'Twitter'
-    console.warn(`Failed to fetch ${provider} image. url=${imageUrl}`, error)
+    const provider = imageUrl.startsWith('https://graph.facebook.com')
+      ? 'Facebook'
+      : imageUrl.startsWith('https://pbs.twimg.com')
+        ? 'Twitter'
+        : isGoogleProfileImageUrl(imageUrl)
+          ? 'Google'
+          : 'unknown'
+    logger.warn('Failed to fetch profile image', { provider, url: imageUrl, error: String(error) })
   }
   if (blob != null) {
     user.user_image_url = await uploadUserImage(uid, blob)
