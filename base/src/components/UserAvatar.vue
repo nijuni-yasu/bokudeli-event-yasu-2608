@@ -7,7 +7,7 @@ import { buildThumbnailsLinks, type Sizes } from '@shokujii/common/utils/buildTh
 import { isGoogleProfileImageUrl, isGoogleUnavailableAvatar } from '@shokujii/common/utils/googleProfileImage.js'
 import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase.js'
 
-const MAX_RETRIES = 10
+const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
 
 const props = defineProps<{
