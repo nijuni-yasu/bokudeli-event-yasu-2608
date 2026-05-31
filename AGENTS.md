@@ -86,6 +86,16 @@ AIエージェント向けプロジェクトガイド。
 - **フォーマッタ**: Prettier (`.prettierrc`)
 - **Linter**: ESLint (`eslint.config.mjs`)
 
+### UI 文言・i18n（日本語のみ）
+
+- **表示言語は日本語のみ**（Phase 1）。英語 UI・多言語切替は未対応。
+- UI 文字列は **`ja.ts` にのみ**追加する。
+  - `base/src/locales/messages/ja.ts`（共通）
+  - 各アプリの `src/locales/messages/ja.ts`（例: `user` / `admin`）
+- **`src/locales/messages/en.ts` 等の英語 locale ファイルは作らない**（製品として多言語対応を始める明示指示がある場合を除く）。
+- i18n 基盤（`vue-i18n`）は日本語用の `$t` 集約のために使う。`base/src/plugins/i18n/index.ts` は `locale` / `fallbackLocale` とも **`ja`**。各アプリの `themeConfig` の `langConfig` も日本語のみとする。
+- 日付・時刻の表示は `common/src/utils/datetime.ts` の `convertToXxx` を使う（`vue-i18n` の `datetimeFormats` / `$d` は新規追加しない）。
+
 ### 開発コマンド
 
 `-m <env_file_postfix>` は環境変数ファイルの接尾辞（例: `-m development` → `.env.development`）。

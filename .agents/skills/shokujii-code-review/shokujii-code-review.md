@@ -43,7 +43,9 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 複数の非同期処理が競合しうる箇所で `isLoading` を個別に持っていないか（先祖返りを防ぐため一つにまとめる）
 - [ ] テーマカラーを直接指定していないか（Vuetify Theme を使う）
 - [ ] `base/src/components/pages/` は deprecated であることを認識しているか
-- [ ] ハードコードされた UI 文字列を `i18n` に移行しているか
+- [ ] ハードコードされた UI 文字列を `i18n` に移行しているか（**`ja.ts` のみ**。英語 locale は作らない）
+- [ ] `src/locales/messages/en.ts` 等の **英語 locale を新規追加していないか**（本プロジェクトは日本語のみ）
+- [ ] 英語用の UI 文字列だけを別ファイルに分けていないか（未使用の `en.ts` 残骸を作らない）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
 
 ### Firestore / Store パターン
@@ -362,6 +364,22 @@ const min = DateTime.now()
 import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
 
 const min = getReservationLeadTimeMinDateString(Date.now())
+```
+
+### NG: 英語 locale ファイル（`en.ts`）の追加
+
+本プロジェクトは **日本語 UI のみ**。`user/src/locales/messages/en.ts` のような部分英語ファイルは、メンテ負荷だけ増やし、実際には `locale: 'ja'` で使われない。
+
+```typescript
+// NG: 英語 locale の新規追加
+// user/src/locales/messages/en.ts
+export default { user: { friend_sort_last_met_at: 'Last met' } }
+```
+
+```typescript
+// OK: 日本語のみ（base / user / admin の ja.ts）
+// user/src/locales/messages/ja.ts
+friend_sort_last_met_at: '最後に会った順',
 ```
 
 ### NG: vue-i18n の `$d` で日付・時刻をフォーマットする
