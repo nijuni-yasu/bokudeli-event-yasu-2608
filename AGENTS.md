@@ -14,8 +14,8 @@ AIエージェント向けプロジェクトガイド。
 | PR 本文生成                     | `/git-create-pull-request`   |
 | コードレビュー                  | `/shokujii-code-review`      |
 | lint・format チェック           | `/lint-and-format`           |
-| fixup                           | `/git-fixup`                 |
-| squash                          | `/git-squash`                |
+| fixup（追修正の統合。新規・分割向きは split-commit / commit-message へ） | `/git-fixup`                 |
+| squash（統合＋メッセージ更新。新規・分割向きは split-commit / commit-message へ） | `/git-squash`                |
 | レビューコメント検討            | `/review-comments-evaluate`  |
 | レビューコメント返信            | `/review-comments-reply`     |
 | コードレビュードキュメント更新  | `/review-doc-update`         |
