@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import UserBioPanel from '@shokujii/base/components/UserBioPanel.vue'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import UserEventCard from '@shokujii/base/components/UserEventCard.vue'
+import ProfileEventCard from '@shokujii/base/components/ProfileEventCard.vue'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import FriendCard from '@shokujii/base/components/FriendCard.vue'
@@ -29,6 +30,7 @@ import {
   getEventMenuImageStoragePath,
 } from '@shokujii/common/utils/storagePaths.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import { useDisplay } from 'vuetify'
 
 const TAB_PROFILE = 'profile'
 const TAB_FRIENDS = 'friends'
@@ -40,8 +42,12 @@ const TAB_ORDERS = 'orders'
 /** プロフィール「ともだち」プレビュー。旧 72px×9 個相当の横幅に近づけるなら 72×(9/12)≈54。`UserAvatar` は 51 以上で medium サムネ（small より解像度高い） */
 const PROFILE_FRIEND_PREVIEW_AVATAR_SIZE = 54
 
-/** プロフィール概要カードのともだちアイコンに表示する最大人数。ともだちタブ本体は無制限 */
-const PROFILE_FRIENDS_PREVIEW_MAX_TOTAL = 150
+/** プロフィール概要カードのともだちアイコン表示上限（ブレークポイント別。ともだちタブ本体は無制限） */
+const PROFILE_FRIENDS_PREVIEW_MAX_BY_BREAKPOINT = {
+  mobile: 30,
+  tablet: 100,
+  desktop: 150,
+} as const
 
 /** `getUserFriends` の 1 回あたり件数（サーバ側 limit 上限 50 以下であること） */
 const PROFILE_FRIENDS_PAGE_SIZE = 30
@@ -59,6 +65,13 @@ const props = defineProps<{
 
 const route = useRoute()
 const router = useRouter()
+const display = useDisplay()
+
+const profileFriendsPreviewMaxTotal = computed(() => {
+  if (display.mdAndUp.value) return PROFILE_FRIENDS_PREVIEW_MAX_BY_BREAKPOINT.desktop
+  if (display.smAndUp.value) return PROFILE_FRIENDS_PREVIEW_MAX_BY_BREAKPOINT.tablet
+  return PROFILE_FRIENDS_PREVIEW_MAX_BY_BREAKPOINT.mobile
+})
 
 const profileUserId = props.userId
 
@@ -107,40 +120,42 @@ const activeFriends = computed(() => activeUserFriendsStore.value?.friends ?? []
 const profilePreviewFriends = computed(() => {
   const store = userFriendsByMeetCountStore.value
   if (store == null) return []
-  return store.friends.slice(0, PROFILE_FRIENDS_PREVIEW_MAX_TOTAL)
+  return store.friends.slice(0, profileFriendsPreviewMaxTotal.value)
 })
 const profilePreviewFriendsLoading = computed(() => userFriendsByMeetCountStore.value?.loading ?? false)
 const profilePreviewFriendsHasMore = computed(() => {
   const store = userFriendsByMeetCountStore.value
-  return store != null && store.hasMore && store.friends.length < PROFILE_FRIENDS_PREVIEW_MAX_TOTAL
+  const maxTotal = profileFriendsPreviewMaxTotal.value
+  return store != null && store.hasMore && store.friends.length < maxTotal
 })
 
 const loadMoreProfilePreviewFriends = () => {
   const store = userFriendsByMeetCountStore.value
   if (store == null) return
-  if (!store.hasMore || store.loading || store.friends.length >= PROFILE_FRIENDS_PREVIEW_MAX_TOTAL) return
+  const maxTotal = profileFriendsPreviewMaxTotal.value
+  if (!store.hasMore || store.loading || store.friends.length >= maxTotal) return
   store.next()
 }
 
 /**
- * URL の `?tab=xxx` を初期タブとして読み取り、未指定や本人以外で `orders` を直叩きされた場合は
+ * URL の `?tab=xxx` をタブに解決する。未指定や本人以外で `orders` を直叩きされた場合は
  * プロフィールタブにフォールバックする（仕様 4.2.5）。
  */
-const initialTab: TabKey = (() => {
-  const raw = String(route.query.tab ?? '')
-  switch (raw) {
+const resolveTabFromQuery = (rawTab: string): TabKey => {
+  switch (rawTab) {
     case TAB_FRIENDS:
     case TAB_EVENTS:
     case TAB_COMMUNITIES:
     case TAB_FOODS:
-      return raw
+      return rawTab
     case TAB_ORDERS:
       return loginUser.value?.user_id === profileUserId ? TAB_ORDERS : TAB_PROFILE
     default:
       return TAB_PROFILE
   }
-})()
-const tabs = ref<TabKey>(initialTab)
+}
+
+const tabs = ref<TabKey>(resolveTabFromQuery(String(route.query.tab ?? '')))
 
 watch(
   () => isOwner.value,
@@ -151,13 +166,31 @@ watch(
   },
 )
 
-/** リロード時に loginUser 未解決だと initialTab で orders が落ちるため、認証後に再反映（仕様 4.2.5） */
-watch([() => loginUser.value?.user_id, () => route.query.tab, () => profileUserId], () => {
-  const raw = String(route.query.tab ?? '')
-  if (raw === TAB_ORDERS && loginUser.value?.user_id === profileUserId) {
-    tabs.value = TAB_ORDERS
+const queryTabFor = (tab: TabKey): string | undefined => (tab === TAB_PROFILE ? undefined : tab)
+
+const syncTabToUrl = (tab: TabKey) => {
+  const nextTab = queryTabFor(tab)
+  const currentTab = route.query.tab == null || String(route.query.tab) === '' ? undefined : String(route.query.tab)
+  if (currentTab === nextTab) return
+  const query = { ...route.query } as Record<string, string | string[] | undefined>
+  if (nextTab === undefined) {
+    delete query.tab
+  } else {
+    query.tab = nextTab
   }
-})
+  void router.replace({ query })
+}
+
+/** ブラウザ戻る/進む・loginUser 解決後の URL 反映（仕様 4.2.5） */
+watch(
+  () => [route.query.tab, loginUser.value?.user_id, profileUserId] as const,
+  ([rawTab]) => {
+    const resolved = resolveTabFromQuery(String(rawTab ?? ''))
+    if (tabs.value !== resolved) {
+      tabs.value = resolved
+    }
+  },
+)
 
 const previewStore = useUserProfilePreviewStore(profileUserId)
 const { data: previewData, loading: previewLoading, error: previewError } = storeToRefs(previewStore)
@@ -176,12 +209,12 @@ const tryLoadMoreUserFriends = () => {
   }
 }
 
+/** タブ表示直後に IncrementalLoader が画面外のとき、追読みを 1 回試す */
 watch(tabs, (tab) => {
+  syncTabToUrl(tab)
   if (!isFriendTab(tab)) return
   void nextTick(() => {
     tryLoadMoreUserFriends()
-    requestAnimationFrame(() => tryLoadMoreUserFriends())
-    window.setTimeout(tryLoadMoreUserFriends, 300)
   })
 })
 
@@ -189,8 +222,6 @@ watch(friendSortBy, () => {
   if (!isFriendTab(tabs.value)) return
   void nextTick(() => {
     tryLoadMoreUserFriends()
-    requestAnimationFrame(() => tryLoadMoreUserFriends())
-    window.setTimeout(tryLoadMoreUserFriends, 300)
   })
 })
 
@@ -237,6 +268,8 @@ const managerCommunities = computed(() =>
     }
   }),
 )
+
+const isUserEventsLoaded = computed(() => userEventsTotalCount.value !== null)
 
 const cancel = async (orderIds: string[], communityId: string, eventId: string) => {
   if (orderIds.length === 0) return
@@ -324,6 +357,34 @@ const previewJoinedCommunities = computed(() => previewData.value?.previews.join
 const previewManagedCommunities = computed(() => previewData.value?.previews.managed_communities ?? [])
 const previewFoods = computed(() => previewData.value?.previews.foods ?? [])
 
+/** 本人以外には非公開を表示しない（Callable 側でも除外。二重防御） */
+const isPublicProfileItemVisible = (isPublic: boolean) => isOwner.value || isPublic
+
+const visiblePreviewEvents = computed(() =>
+  previewEvents.value.filter((event) => isPublicProfileItemVisible(event.is_public)),
+)
+const visiblePreviewJoinedCommunities = computed(() =>
+  previewJoinedCommunities.value.filter((community) => isPublicProfileItemVisible(community.is_public)),
+)
+const visiblePreviewManagedCommunities = computed(() =>
+  previewManagedCommunities.value.filter((community) => isPublicProfileItemVisible(community.is_public)),
+)
+const visiblePreviewFoods = computed(() =>
+  previewFoods.value.filter((food) => isOwner.value || food.is_visible_to_viewer),
+)
+const visiblePagedFoods = computed(() => pagedFoods.value.filter((food) => isOwner.value || food.is_visible_to_viewer))
+
+const showProfileJoinedSection = computed(() => visiblePreviewJoinedCommunities.value.length > 0)
+const showProfileManagedSection = computed(() => visiblePreviewManagedCommunities.value.length > 0)
+const isProfileCommunitiesEmpty = computed(() => !showProfileJoinedSection.value && !showProfileManagedSection.value)
+
+const showJoinedSection = computed(() => memberCommunities.value.length > 0)
+const showManagedSection = computed(() => managerCommunities.value.length > 0)
+const isCommunitiesTabEmpty = computed(() => !showJoinedSection.value && !showManagedSection.value)
+const isCommunitiesTabReady = computed(
+  () => memberCommunityListStore.totalCount !== null && managerCommunityListStore.totalCount !== null,
+)
+
 const friendUserOf = (item: { user_id: string; user_name: string; user_image_url: string }) =>
   new User(item.user_id, { user_name: item.user_name, user_image_url: item.user_image_url })
 
@@ -371,7 +432,6 @@ const eventCoverUrl = (communityId: string, eventId: string): string | undefined
 
 const goToTab = (tab: TabKey) => {
   tabs.value = tab
-  void router.replace({ query: { ...route.query, tab } })
 }
 
 /** プロフィールプレビュー用。イベントは曜日付き、それ以外は日付のみ（`datetimeFormats` と整合） */
@@ -394,30 +454,30 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
       <UserBioPanel :user-data="user" :is-editable="isOwner" />
     </v-col>
     <v-col cols="12" sm="8" md="9">
-      <v-tabs v-model="tabs">
+      <v-tabs v-model="tabs" class="profile-page-tabs" grow stacked density="compact">
         <v-tab :value="TAB_PROFILE">
-          <v-icon start :icon="mdiAccountCircle" />
-          {{ $t('user_profile.tab_profile') }}
+          <v-icon :icon="mdiAccountCircle" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_profile') }}</span>
         </v-tab>
         <v-tab :value="TAB_FRIENDS">
-          <v-icon start :icon="mdiHeartOutline" />
-          {{ $t('user_profile.tab_friends') }}
+          <v-icon :icon="mdiHeartOutline" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_friends') }}</span>
         </v-tab>
         <v-tab :value="TAB_EVENTS">
-          <v-icon start :icon="mdiCalendarHeart" />
-          {{ $t('user_profile.tab_events') }}
+          <v-icon :icon="mdiCalendarHeart" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_events') }}</span>
         </v-tab>
         <v-tab :value="TAB_COMMUNITIES">
-          <v-icon start :icon="mdiAccountGroup" />
-          {{ $t('user_profile.tab_communities') }}
+          <v-icon :icon="mdiAccountGroup" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_communities') }}</span>
         </v-tab>
         <v-tab :value="TAB_FOODS">
-          <v-icon start :icon="mdiFood" />
-          {{ $t('user_profile.tab_foods') }}
+          <v-icon :icon="mdiFood" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_foods') }}</span>
         </v-tab>
         <v-tab v-if="isOwner" :value="TAB_ORDERS">
-          <v-icon start :icon="mdiReceiptText" />
-          {{ $t('user_profile.tab_orders') }}
+          <v-icon :icon="mdiReceiptText" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_orders') }}</span>
         </v-tab>
       </v-tabs>
       <v-window v-model="tabs" class="pa-4 pa-md-6">
@@ -434,7 +494,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
               <v-card-text class="pa-4 pa-sm-5">
                 <div class="profile-stats-summary">
                   <div v-for="row in profileStatRows" :key="row.key" class="profile-stats-item text-center">
-                    <div class="text-caption text-medium-emphasis">{{ row.label }}</div>
+                    <div class="text-body-2 text-medium-emphasis">{{ row.label }}</div>
                     <div class="profile-stat-value text-h3 font-weight-medium mt-1">{{ row.value }}</div>
                   </div>
                 </div>
@@ -443,9 +503,13 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 
             <!-- ともだち -->
             <v-card elevation="2" class="profile-panel-card mb-4">
-              <v-card-title class="d-flex align-center flex-wrap gap-y-2 py-4">
-                <v-icon :icon="mdiHeartOutline" size="small" class="text-medium-emphasis me-1" />
-                <span class="text-subtitle-1 font-weight-medium">{{ $t('user_profile.section.friends') }}</span>
+              <v-card-title class="profile-section-card-title d-flex align-center flex-wrap gap-y-2 py-4">
+                <v-icon
+                  :icon="mdiHeartOutline"
+                  size="18"
+                  class="profile-section-title__icon text-medium-emphasis me-1"
+                />
+                <span class="profile-section-title">{{ $t('user_profile.section.friends') }}</span>
                 <v-spacer />
                 <v-btn variant="text" size="small" @click="goToTab(TAB_FRIENDS)">{{
                   $t('user_profile.show_more')
@@ -476,7 +540,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   <IncrementalLoader
                     :loaded-count="profilePreviewFriends.length"
                     :total-count="
-                      profilePreviewFriendsHasMore ? PROFILE_FRIENDS_PREVIEW_MAX_TOTAL : profilePreviewFriends.length
+                      profilePreviewFriendsHasMore ? profileFriendsPreviewMaxTotal : profilePreviewFriends.length
                     "
                     @load="loadMoreProfilePreviewFriends()"
                   />
@@ -486,33 +550,29 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 
             <!-- 参加イベント -->
             <v-card elevation="2" class="profile-panel-card mb-4">
-              <v-card-title class="d-flex align-center flex-wrap gap-y-2 py-4">
-                <v-icon :icon="mdiCalendarHeart" size="small" class="text-medium-emphasis me-1" />
-                <span class="text-subtitle-1 font-weight-medium">{{ $t('user_profile.section.events') }}</span>
+              <v-card-title class="profile-section-card-title d-flex align-center flex-wrap gap-y-2 py-4">
+                <v-icon
+                  :icon="mdiCalendarHeart"
+                  size="18"
+                  class="profile-section-title__icon text-medium-emphasis me-1"
+                />
+                <span class="profile-section-title">{{ $t('user_profile.section.events') }}</span>
                 <v-spacer />
                 <v-btn variant="text" size="small" @click="goToTab(TAB_EVENTS)">{{
                   $t('user_profile.show_more')
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="previewEvents.length === 0" class="text-body-2 text-medium-emphasis">
+                <div v-if="visiblePreviewEvents.length === 0" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.events') }}
                 </div>
                 <v-row v-else dense>
-                  <v-col v-for="event in previewEvents" :key="event.event_id" cols="6" sm="4" md="3">
-                    <component
-                      :is="event.is_visible_to_viewer ? 'router-link' : 'div'"
-                      :to="
-                        event.is_visible_to_viewer ? getEventPath(event.community_account, event.event_id) : undefined
-                      "
-                      :class="['preview-event-link d-block', { 'preview-no-link': !event.is_visible_to_viewer }]"
-                      :aria-label="event.is_visible_to_viewer ? undefined : $t('user_profile.no_link_label')"
+                  <v-col v-for="event in visiblePreviewEvents" :key="event.event_id" cols="6" sm="4" md="3">
+                    <router-link
+                      class="preview-event-link d-block"
+                      :to="getEventPath(event.community_account, event.event_id)"
                     >
-                      <v-card
-                        variant="outlined"
-                        class="pa-3 h-100 preview-card"
-                        :class="{ 'preview-card--muted': !event.is_visible_to_viewer }"
-                      >
+                      <v-card variant="outlined" class="pa-3 h-100 preview-card">
                         <div class="event-preview-tile d-flex align-stretch ga-3">
                           <div class="event-preview-tile__cover flex-shrink-0 rounded overflow-hidden">
                             <v-img
@@ -536,18 +596,13 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                             <div class="text-body-2 text-medium-emphasis">
                               {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
                             </div>
-                            <div class="text-body-1 mt-1 text-truncate" :title="event.event_name">
+                            <div class="text-body-1 mt-1 profile-preview-tile__name" :title="event.event_name">
                               {{ event.event_name }}
-                            </div>
-                            <div v-if="!event.is_public" class="mt-2">
-                              <v-chip size="x-small" variant="tonal" color="secondary" label>
-                                {{ $t('user_profile.visibility_private') }}
-                              </v-chip>
                             </div>
                           </div>
                         </div>
                       </v-card>
-                    </component>
+                    </router-link>
                   </v-col>
                 </v-row>
               </v-card-text>
@@ -555,129 +610,118 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 
             <!-- コミュニティ（参加 + 運営） -->
             <v-card elevation="2" class="profile-panel-card mb-4">
-              <v-card-title class="d-flex align-center flex-wrap gap-y-2 py-4">
-                <v-icon :icon="mdiAccountGroup" size="small" class="text-medium-emphasis me-1" />
-                <span class="text-subtitle-1 font-weight-medium">{{ $t('user_profile.tab_communities') }}</span>
+              <v-card-title class="profile-section-card-title d-flex align-center flex-wrap gap-y-2 py-4">
+                <v-icon
+                  :icon="mdiAccountGroup"
+                  size="18"
+                  class="profile-section-title__icon text-medium-emphasis me-1"
+                />
+                <span class="profile-section-title">{{ $t('user_profile.tab_communities') }}</span>
                 <v-spacer />
                 <v-btn variant="text" size="small" @click="goToTab(TAB_COMMUNITIES)">{{
                   $t('user_profile.show_more')
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div class="text-subtitle-2 font-weight-medium mb-3">
-                  {{ $t('user_profile.section.joined_communities') }}
+                <div v-if="isProfileCommunitiesEmpty" class="text-body-2 text-medium-emphasis">
+                  {{ $t('user_profile.empty.communities') }}
                 </div>
-                <div v-if="previewJoinedCommunities.length === 0" class="text-body-2 text-medium-emphasis mb-6">
-                  {{ $t('user_profile.empty.joined_communities') }}
-                </div>
-                <v-row v-else dense class="mb-6">
-                  <v-col v-for="c in previewJoinedCommunities" :key="`joined_${c.community_id}`" cols="6" sm="4" md="3">
-                    <component
-                      :is="c.is_visible_to_viewer ? 'router-link' : 'div'"
-                      :to="c.is_visible_to_viewer ? getCommunityPath(c.community_account) : undefined"
-                      :class="['preview-event-link d-block', { 'preview-no-link': !c.is_visible_to_viewer }]"
-                      :aria-label="c.is_visible_to_viewer ? undefined : $t('user_profile.no_link_label_community')"
-                    >
-                      <v-card
-                        variant="outlined"
-                        class="pa-3 h-100 preview-card"
-                        :class="{ 'preview-card--muted': !c.is_visible_to_viewer }"
+                <template v-else>
+                  <template v-if="showProfileJoinedSection">
+                    <div class="text-subtitle-2 font-weight-medium mb-3">
+                      {{ $t('user_profile.section.joined_communities') }}
+                    </div>
+                    <v-row dense class="mb-6">
+                      <v-col
+                        v-for="c in visiblePreviewJoinedCommunities"
+                        :key="`joined_${c.community_id}`"
+                        cols="6"
+                        sm="4"
+                        md="3"
                       >
-                        <div class="community-preview-tile d-flex align-center ga-3">
-                          <v-avatar rounded="lg" size="48" class="flex-shrink-0">
-                            <v-img
-                              v-if="communityIconUrl(c.community_id) != null"
-                              :src="communityIconUrl(c.community_id)"
-                              :alt="c.community_name"
-                              cover
-                            />
-                            <v-icon v-else :icon="mdiAccountGroup" />
-                          </v-avatar>
-                          <div class="community-preview-tile__text min-width-0 flex-grow-1">
-                            <div class="text-body-1 text-truncate" :title="c.community_name">
-                              {{ c.community_name }}
+                        <router-link class="preview-event-link d-block" :to="getCommunityPath(c.community_account)">
+                          <v-card variant="outlined" class="pa-3 h-100 preview-card">
+                            <div class="community-preview-tile d-flex align-stretch ga-3">
+                              <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
+                                <v-img
+                                  v-if="communityIconUrl(c.community_id) != null"
+                                  :src="communityIconUrl(c.community_id)"
+                                  :alt="c.community_name"
+                                  cover
+                                />
+                                <v-icon v-else :icon="mdiAccountGroup" />
+                              </v-avatar>
+                              <div
+                                class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
+                              >
+                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
+                                  {{ c.community_name }}
+                                </div>
+                              </div>
                             </div>
-                            <div v-if="!c.is_public" class="mt-1">
-                              <v-chip size="x-small" variant="tonal" color="secondary" label>
-                                {{ $t('user_profile.visibility_private') }}
-                              </v-chip>
-                            </div>
-                          </div>
-                        </div>
-                      </v-card>
-                    </component>
-                  </v-col>
-                </v-row>
+                          </v-card>
+                        </router-link>
+                      </v-col>
+                    </v-row>
+                  </template>
 
-                <div class="text-subtitle-2 font-weight-medium mb-3">
-                  {{ $t('user_profile.section.managed_communities') }}
-                </div>
-                <div v-if="previewManagedCommunities.length === 0" class="text-body-2 text-medium-emphasis">
-                  {{ $t('user_profile.empty.managed_communities') }}
-                </div>
-                <v-row v-else dense>
-                  <v-col
-                    v-for="c in previewManagedCommunities"
-                    :key="`managed_${c.community_id}`"
-                    cols="6"
-                    sm="4"
-                    md="3"
-                  >
-                    <component
-                      :is="c.is_visible_to_viewer ? 'router-link' : 'div'"
-                      :to="c.is_visible_to_viewer ? getCommunityPath(c.community_account) : undefined"
-                      :class="['preview-event-link d-block', { 'preview-no-link': !c.is_visible_to_viewer }]"
-                      :aria-label="c.is_visible_to_viewer ? undefined : $t('user_profile.no_link_label_community')"
-                    >
-                      <v-card
-                        variant="outlined"
-                        class="pa-3 h-100 preview-card"
-                        :class="{ 'preview-card--muted': !c.is_visible_to_viewer }"
+                  <template v-if="showProfileManagedSection">
+                    <div class="text-subtitle-2 font-weight-medium mb-3">
+                      {{ $t('user_profile.section.managed_communities') }}
+                    </div>
+                    <v-row dense>
+                      <v-col
+                        v-for="c in visiblePreviewManagedCommunities"
+                        :key="`managed_${c.community_id}`"
+                        cols="6"
+                        sm="4"
+                        md="3"
                       >
-                        <div class="community-preview-tile d-flex align-center ga-3">
-                          <v-avatar rounded="lg" size="48" class="flex-shrink-0">
-                            <v-img
-                              v-if="communityIconUrl(c.community_id) != null"
-                              :src="communityIconUrl(c.community_id)"
-                              :alt="c.community_name"
-                              cover
-                            />
-                            <v-icon v-else :icon="mdiAccountGroup" />
-                          </v-avatar>
-                          <div class="community-preview-tile__text min-width-0 flex-grow-1">
-                            <div class="text-body-1 text-truncate" :title="c.community_name">
-                              {{ c.community_name }}
+                        <router-link class="preview-event-link d-block" :to="getCommunityPath(c.community_account)">
+                          <v-card variant="outlined" class="pa-3 h-100 preview-card">
+                            <div class="community-preview-tile d-flex align-stretch ga-3">
+                              <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
+                                <v-img
+                                  v-if="communityIconUrl(c.community_id) != null"
+                                  :src="communityIconUrl(c.community_id)"
+                                  :alt="c.community_name"
+                                  cover
+                                />
+                                <v-icon v-else :icon="mdiAccountGroup" />
+                              </v-avatar>
+                              <div
+                                class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
+                              >
+                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
+                                  {{ c.community_name }}
+                                </div>
+                              </div>
                             </div>
-                            <div v-if="!c.is_public" class="mt-1">
-                              <v-chip size="x-small" variant="tonal" color="secondary" label>
-                                {{ $t('user_profile.visibility_private') }}
-                              </v-chip>
-                            </div>
-                          </div>
-                        </div>
-                      </v-card>
-                    </component>
-                  </v-col>
-                </v-row>
+                          </v-card>
+                        </router-link>
+                      </v-col>
+                    </v-row>
+                  </template>
+                </template>
               </v-card-text>
             </v-card>
 
             <!-- フード -->
             <v-card elevation="2" class="profile-panel-card mb-4">
-              <v-card-title class="d-flex align-center flex-wrap gap-y-2 py-4">
-                <v-icon :icon="mdiFood" size="small" class="text-medium-emphasis me-1" />
-                <span class="text-subtitle-1 font-weight-medium">{{ $t('user_profile.section.foods') }}</span>
+              <v-card-title class="profile-section-card-title d-flex align-center flex-wrap gap-y-2 py-4">
+                <v-icon :icon="mdiFood" size="18" class="profile-section-title__icon text-medium-emphasis me-1" />
+                <span class="profile-section-title">{{ $t('user_profile.section.foods') }}</span>
                 <v-spacer />
                 <v-btn variant="text" size="small" @click="goToTab(TAB_FOODS)">{{
                   $t('user_profile.show_more')
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="previewFoods.length === 0" class="text-body-2 text-medium-emphasis">
+                <div v-if="visiblePreviewFoods.length === 0" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.foods') }}
                 </div>
                 <v-row v-else dense>
-                  <v-col v-for="food in previewFoods" :key="food.order_id" cols="6" sm="4" md="3">
+                  <v-col v-for="food in visiblePreviewFoods" :key="food.order_id" cols="6" sm="4" md="3">
                     <v-card variant="outlined" class="h-100 preview-card">
                       <v-img
                         v-if="foodImageUrl(food) != null"
@@ -686,9 +730,26 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                         cover
                         height="120"
                       />
+                      <div
+                        v-else
+                        class="food-preview-placeholder d-flex align-center justify-center bg-surface-variant"
+                        style="height: 120px"
+                      >
+                        <v-icon :icon="mdiFood" size="32" class="text-medium-emphasis" />
+                      </div>
                       <v-card-text>
                         <div class="text-body-2 text-truncate" :title="food.menu_name">{{ food.menu_name }}</div>
-                        <div class="text-caption text-medium-emphasis">
+                        <div v-if="food.event_name !== ''" class="mt-1 min-width-0">
+                          <router-link
+                            class="food-event-link text-body-2 text-truncate d-block"
+                            :to="getEventPath(food.community_account, food.event_id)"
+                            :title="food.event_name"
+                            :aria-label="$t('user_profile.food_event_link_label')"
+                          >
+                            {{ food.event_name }}
+                          </router-link>
+                        </div>
+                        <div class="text-caption text-medium-emphasis mt-1">
                           {{ formatProfileDate(food.ordered_at, 'date') }}
                         </div>
                       </v-card-text>
@@ -701,7 +762,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item :value="TAB_FRIENDS">
-          <v-row class="align-center mb-2">
+          <v-row v-if="activeFriends.length > 0" class="align-center mb-2">
             <v-col cols="12" sm="4">
               <v-btn-toggle
                 v-model="friendSortBy"
@@ -718,17 +779,17 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
           </v-row>
           <v-row v-if="activeFriends.length > 0">
             <v-col v-for="friend in activeFriends" :key="friend.user_id" cols="12" sm="6" md="4">
-              <FriendCard :friend="friend" />
+              <FriendCard
+                :friend="friend"
+                :target-user-id="profileUserId"
+                :target-user-name="user.user_name"
+                :is-owner="isOwner"
+              />
             </v-col>
           </v-row>
-          <v-row v-else-if="!activeUserFriendsStore?.loading" class="justify-center">
-            <v-col cols="12" class="text-center">
-              <div class="text-body-1 text-medium-emphasis mb-4">
-                {{ isOwner ? $t('user.friend_empty') : $t('user.friend_empty_other', { name: user.user_name }) }}
-              </div>
-              <v-btn v-if="isOwner" color="primary" @click="$router.push('/')">{{ $t('user.friend_empty_cta') }}</v-btn>
-            </v-col>
-          </v-row>
+          <div v-else-if="!activeUserFriendsStore?.loading" class="text-body-1 text-medium-emphasis pa-4">
+            {{ isOwner ? $t('user.friend_empty_tab') : $t('user.friend_empty_other', { name: user.user_name }) }}
+          </div>
           <v-row class="justify-center">
             <v-col cols="auto">
               <IncrementalLoader
@@ -741,20 +802,17 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item :value="TAB_EVENTS">
-          <v-row>
+          <div
+            v-if="isUserEventsLoaded && visibleUserEvents.length === 0"
+            class="text-body-1 text-medium-emphasis pa-4"
+          >
+            {{ $t('user_profile.empty.events') }}
+          </div>
+          <v-row v-else>
             <v-col v-for="event in visibleUserEvents" :key="`event_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
                 <router-link :to="getEventPath(event.community_account, event.event_id)">
-                  <UserEventCard
-                    v-model:cancel-dialog-event-id="cancelDialogEventId"
-                    :orders="orderStateByEventId[event.event_id]?.orders ?? []"
-                    :orders-loading="orderStateByEventId[event.event_id]?.loading ?? false"
-                    :orders-error="orderStateByEventId[event.event_id]?.error != null"
-                    :event="event"
-                    :isOwner="false"
-                    :cancelLoading="false"
-                    @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
-                  />
+                  <ProfileEventCard :event="event" />
                 </router-link>
               </div>
             </v-col>
@@ -771,49 +829,58 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item :value="TAB_COMMUNITIES">
-          <h3 class="text-h6 mt-2 mb-2">{{ $t('user_profile.section.joined_communities') }}</h3>
-          <v-row>
-            <v-col
-              v-for="{ community, members } in memberCommunities"
-              :key="`member_${community.community_id}`"
-              cols="12"
-            >
-              <router-link :to="getCommunityPath(community.community_account)">
-                <CommunityCard :community="community" :members="members" />
-              </router-link>
-            </v-col>
-          </v-row>
-          <v-row class="justify-center">
-            <v-col cols="auto">
-              <IncrementalLoader
-                :loaded-count="memberCommunityListStore.communityStores?.length ?? 0"
-                :total-count="memberCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                @load="memberCommunityListStore.next()"
-              />
-            </v-col>
-          </v-row>
+          <div v-if="isCommunitiesTabReady && isCommunitiesTabEmpty" class="text-body-1 text-medium-emphasis pa-4">
+            {{ $t('user_profile.empty.communities') }}
+          </div>
+          <template v-else-if="isCommunitiesTabReady">
+            <template v-if="showJoinedSection">
+              <h3 class="text-h6 mt-2 mb-2">{{ $t('user_profile.section.joined_communities') }}</h3>
+              <v-row>
+                <v-col
+                  v-for="{ community, members } in memberCommunities"
+                  :key="`member_${community.community_id}`"
+                  cols="12"
+                >
+                  <router-link :to="getCommunityPath(community.community_account)">
+                    <CommunityCard :community="community" :members="members" />
+                  </router-link>
+                </v-col>
+              </v-row>
+              <v-row class="justify-center">
+                <v-col cols="auto">
+                  <IncrementalLoader
+                    :loaded-count="memberCommunityListStore.communityStores?.length ?? 0"
+                    :total-count="memberCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+                    @load="memberCommunityListStore.next()"
+                  />
+                </v-col>
+              </v-row>
+            </template>
 
-          <h3 class="text-h6 mt-6 mb-2">{{ $t('user_profile.section.managed_communities') }}</h3>
-          <v-row>
-            <v-col
-              v-for="{ community, members } in managerCommunities"
-              :key="`manager_${community.community_id}`"
-              cols="12"
-            >
-              <router-link :to="getCommunityPath(community.community_account)">
-                <CommunityCard :community="community" :members="members" />
-              </router-link>
-            </v-col>
-          </v-row>
-          <v-row class="justify-center">
-            <v-col cols="auto">
-              <IncrementalLoader
-                :loaded-count="managerCommunityListStore.communityStores?.length ?? 0"
-                :total-count="managerCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                @load="managerCommunityListStore.next()"
-              />
-            </v-col>
-          </v-row>
+            <template v-if="showManagedSection">
+              <h3 class="text-h6 mt-6 mb-2">{{ $t('user_profile.section.managed_communities') }}</h3>
+              <v-row>
+                <v-col
+                  v-for="{ community, members } in managerCommunities"
+                  :key="`manager_${community.community_id}`"
+                  cols="12"
+                >
+                  <router-link :to="getCommunityPath(community.community_account)">
+                    <CommunityCard :community="community" :members="members" />
+                  </router-link>
+                </v-col>
+              </v-row>
+              <v-row class="justify-center">
+                <v-col cols="auto">
+                  <IncrementalLoader
+                    :loaded-count="managerCommunityListStore.communityStores?.length ?? 0"
+                    :total-count="managerCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+                    @load="managerCommunityListStore.next()"
+                  />
+                </v-col>
+              </v-row>
+            </template>
+          </template>
         </v-window-item>
 
         <v-window-item :value="TAB_FOODS">
@@ -824,12 +891,12 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
             {{ $t('user_profile.failed_to_load') }}
           </div>
           <template v-else>
-            <div v-if="pagedFoods.length === 0" class="text-body-1 text-medium-emphasis pa-4">
+            <div v-if="visiblePagedFoods.length === 0" class="text-body-1 text-medium-emphasis pa-4">
               {{ $t('user_profile.empty.foods') }}
             </div>
             <v-row v-else>
-              <v-col v-for="food in pagedFoods" :key="food.order_id" cols="12" sm="6" md="4">
-                <v-card variant="outlined" class="h-100 preview-card">
+              <v-col v-for="food in visiblePagedFoods" :key="food.order_id" cols="12" sm="6" md="4">
+                <v-card elevation="2" class="h-100 preview-card profile-panel-card">
                   <v-img
                     v-if="foodImageUrl(food) != null"
                     :src="foodImageUrl(food)"
@@ -837,9 +904,25 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                     cover
                     height="180"
                   />
+                  <div
+                    v-else
+                    class="food-preview-placeholder d-flex align-center justify-center bg-surface-variant"
+                    style="height: 180px"
+                  >
+                    <v-icon :icon="mdiFood" size="40" class="text-medium-emphasis" />
+                  </div>
                   <v-card-title class="text-truncate" :title="food.menu_name">{{ food.menu_name }}</v-card-title>
                   <v-card-text>
-                    <div class="text-body-2">¥{{ food.menu_price.toLocaleString('ja-JP') }}</div>
+                    <div v-if="food.event_name !== ''" class="mb-2 min-width-0">
+                      <router-link
+                        class="food-event-link text-body-2 text-truncate d-block"
+                        :to="getEventPath(food.community_account, food.event_id)"
+                        :title="food.event_name"
+                        :aria-label="$t('user_profile.food_event_link_label')"
+                      >
+                        {{ food.event_name }}
+                      </router-link>
+                    </div>
                     <div class="text-caption text-medium-emphasis">
                       {{ formatProfileDate(food.ordered_at, 'date') }}
                     </div>
@@ -847,11 +930,11 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 </v-card>
               </v-col>
             </v-row>
-            <v-row v-if="pagedFoods.length > 0" class="justify-center mt-2">
+            <v-row v-if="visiblePagedFoods.length > 0" class="justify-center mt-2">
               <v-col cols="auto">
                 <IncrementalLoader
-                  :loaded-count="pagedFoods.length"
-                  :total-count="foodHasMore ? Number.MAX_SAFE_INTEGER : pagedFoods.length"
+                  :loaded-count="visiblePagedFoods.length"
+                  :total-count="foodHasMore ? Number.MAX_SAFE_INTEGER : visiblePagedFoods.length"
                   @load="userFoodsStore.next()"
                 />
               </v-col>
@@ -917,6 +1000,48 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 </template>
 
 <style scoped lang="scss">
+/* タブ: 1 行に均等配置（横スクロール不要）。stacked でアイコン上・ラベル下 */
+.profile-page-tabs {
+  :deep(.v-slide-group__content) {
+    flex: 1 1 auto;
+  }
+
+  :deep(.v-tab) {
+    min-width: 0;
+    max-width: none;
+  }
+
+  :deep(.v-btn__content) {
+    flex-direction: column;
+    gap: 2px;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+.profile-page-tabs__label {
+  line-height: 1.2;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 599.98px) {
+  .profile-page-tabs :deep(.v-tab) {
+    padding-inline: 2px;
+    letter-spacing: 0;
+  }
+
+  .profile-page-tabs__label {
+    font-size: 0.65rem;
+  }
+}
+
+@media (min-width: 600px) {
+  .profile-page-tabs__label {
+    font-size: 0.8125rem;
+  }
+}
+
 .event-card {
   position: relative;
 
@@ -942,17 +1067,31 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
   }
 }
 
-/* プロフィール preview のリンク要素：is_visible_to_viewer === false ではカーソル default にする */
+/* プロフィール preview のリンク要素 */
 .preview-event-link {
   text-decoration: none;
   color: inherit;
 }
-.preview-no-link {
-  cursor: default;
-}
 
 .profile-panel-card {
   border-radius: 8px;
+}
+
+/* プロフィールタブ各セクション見出し（ともだち / イベント / コミュニティ / フード）
+ * text-h6（1.25rem）相当。子 span だけに text-h6 を付けても VCardTitle 既定 typography と
+ * 見た目がほぼ変わらないため、行（v-card-title）側で font-size を明示する。 */
+.profile-section-card-title {
+  font-size: 1.25rem;
+  line-height: 1.375;
+}
+
+.profile-section-title {
+  font-size: inherit;
+  font-weight: 500;
+}
+
+.profile-section-title__icon {
+  opacity: 1;
 }
 
 /* 数値サマリー: 2 / 3 / 5 列グリッドで等幅。md 以上はカード幅いっぱいに 5 等分＋項目間の縦線 */
@@ -984,17 +1123,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 }
 
 .preview-card {
-  transition:
-    box-shadow 0.15s ease,
-    opacity 0.15s ease;
+  transition: box-shadow 0.15s ease;
 }
 
-.preview-card--muted {
-  opacity: 0.88;
-  box-shadow: inset 0 0 0 1px rgba(var(--v-border-color), var(--v-border-opacity));
-}
-
-.preview-event-link:not(.preview-no-link) .preview-card:hover {
+.preview-event-link .preview-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -1009,10 +1141,39 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
   min-height: 52px;
 }
 
+/* イベント名・コミュニティ名: 2行で切り捨て（末尾 …）。flex 子で clamp が効くよう min-height: 0 */
+.event-preview-tile__text,
+.community-preview-tile__text {
+  min-height: 0;
+}
+
+.profile-preview-tile__name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  /* autoprefixer: ignore next - line-clamp に必須 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.375;
+  min-height: 0;
+}
+
 /* プロフィールともだちプレビュー：小アイコンのみ・折り返し */
 .profile-friends-preview-link:focus-visible {
   outline: 2px solid rgb(var(--v-theme-primary));
   outline-offset: 2px;
   border-radius: 50%;
+}
+
+.food-event-link {
+  color: rgb(var(--v-theme-primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.food-event-link:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 </style>
