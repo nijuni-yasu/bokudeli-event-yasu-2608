@@ -1,4 +1,4 @@
-import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { Timestamp } from 'firebase-admin/firestore'
 import { HttpsError, onCall } from 'firebase-functions/v2/https'
 import { z } from 'zod'
 import type {
@@ -16,12 +16,18 @@ import type {
   UserProfilePublicProfile,
 } from '@shokujii/common/apis/userProfile.js'
 import { getConfigGlobal } from './stores/config.js'
-import { getUser, getUserRef } from './stores/user.js'
-import { getCommunityEventKey, getEventsInCommunities } from './stores/event.js'
+import { getUser } from './stores/user.js'
+import { getCommunityEventKey, listEventsForProfilePreview } from './stores/event.js'
+import { listCommunitiesForProfilePreview } from './stores/community.js'
+import {
+  listOrderedFoodsPageForProfile,
+  listOrderedFoodsPreviewForProfile,
+  type ProfileFoodsPageCursor,
+} from './stores/memberOrder.js'
 import { runUserProfileBackfill } from './utils/userProfileBackfill.js'
 import { resolveUserFriendsList } from './utils/userFriendsResolver.js'
+import { computeProfileItemLinkableToViewer } from './utils/profileItemVisibility.js'
 import { createModuleLogger } from './utils/logger.js'
-import { computeProfileItemVisibleToViewer } from './utils/profileItemVisibility.js'
 
 const logger = createModuleLogger('userProfile')
 
@@ -46,7 +52,7 @@ const FoodCursorSchema = z.object({
   updated_at: z.number().int().nonnegative(),
   order_id: z.string().min(1),
 })
-type UserFoodsCursor = z.infer<typeof FoodCursorSchema>
+type UserFoodsCursor = ProfileFoodsPageCursor
 
 /**
  * 各プレビューの最大件数（仕様書 4.2 のプレビュー目安）。
@@ -103,34 +109,24 @@ const fetchEventPreviews = async (
   targetUserId: string,
   viewerUid: string | null,
 ): Promise<UserProfileEventPreviewItem[]> => {
-  const db = getFirestore()
-  const userRef = getUserRef(targetUserId)
-  const snapshot = await db
-    .collectionGroup('events')
-    .where('members', 'array-contains', userRef)
-    .where('is_deleted', '==', false)
-    .orderBy('event_start_datetime', 'desc')
-    .limit(PREVIEW_LIMITS.events)
-    .get()
-
-  const items: UserProfileEventPreviewItem[] = []
-  for (const doc of snapshot.docs) {
-    const data = doc.data()
-    const isPublic = data.is_public === true
-    const isVisibleToViewer = computeProfileItemVisibleToViewer({ isPublic, viewerUid, targetUserId })
-    if (!isVisibleToViewer) continue
-    items.push({
-      event_id: String(data.event_id ?? doc.id),
-      community_id: String(data.community_id ?? ''),
-      community_account: String(data.community_account ?? ''),
-      event_name: String(data.event_name ?? ''),
-      event_start_datetime: toMillis(data.event_start_datetime),
-      event_end_datetime: toMillis(data.event_end_datetime),
+  const events = await listEventsForProfilePreview({
+    targetUserId,
+    limit: PREVIEW_LIMITS.events,
+  })
+  return events.map((event) => {
+    const isPublic = event.is_public === true
+    return {
+      event_id: event.event_id,
+      community_id: event.community_id,
+      community_account: event.community_account,
+      event_name: event.event_name,
+      event_start_datetime: event.event_start_datetime,
+      event_end_datetime: event.event_end_datetime,
       is_public: isPublic,
       is_visible_to_viewer: true,
-    })
-  }
-  return items
+      is_linkable: computeProfileItemLinkableToViewer({ isPublic, viewerUid, targetUserId }),
+    }
+  })
 }
 
 const fetchCommunityPreviews = async (
@@ -139,26 +135,23 @@ const fetchCommunityPreviews = async (
   viewerUid: string | null,
   limit: number,
 ): Promise<UserProfileCommunityPreviewItem[]> => {
-  const db = getFirestore()
-  const userRef = getUserRef(targetUserId)
-  const snapshot = await db.collection('communities').where(arrayField, 'array-contains', userRef).limit(limit).get()
-
-  const items: UserProfileCommunityPreviewItem[] = []
-  for (const doc of snapshot.docs) {
-    const data = doc.data()
-    const isPublic = data.is_public === true
-    const isVisibleToViewer = computeProfileItemVisibleToViewer({ isPublic, viewerUid, targetUserId })
-    if (!isVisibleToViewer) continue
-    items.push({
-      community_id: String(data.community_id ?? doc.id),
-      community_account: String(data.community_account ?? ''),
-      community_name: String(data.community_name ?? ''),
-      community_desc: String(data.community_desc ?? ''),
+  const communities = await listCommunitiesForProfilePreview({
+    targetUserId,
+    arrayField,
+    limit,
+  })
+  return communities.map((community) => {
+    const isPublic = community.is_public === true
+    return {
+      community_id: community.community_id,
+      community_account: community.community_account,
+      community_name: community.community_name,
+      community_desc: community.community_desc,
       is_public: isPublic,
       is_visible_to_viewer: true,
-    })
-  }
-  return items
+      is_linkable: computeProfileItemLinkableToViewer({ isPublic, viewerUid, targetUserId }),
+    }
+  })
 }
 
 const fetchFriendPreviews = async (
@@ -201,6 +194,35 @@ const encodeFoodCursor = (cursor: UserFoodsCursor | null): string | null => {
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
 }
 
+const mapOrderToFoodPreview = (
+  order: Awaited<ReturnType<typeof listOrderedFoodsPageForProfile>>['orders'][number],
+  eventsByKey: Awaited<ReturnType<typeof listOrderedFoodsPageForProfile>>['eventsByKey'],
+  viewerUid: string | null,
+  targetUserId: string,
+): UserProfileFoodPreviewItem | null => {
+  const event = eventsByKey.get(getCommunityEventKey(order.community_id, order.event_id))
+  if (event == null || event.is_deleted) {
+    return null
+  }
+  const isPublic = event.is_public === true
+  return {
+    order_id: order.order_id,
+    community_id: order.community_id,
+    event_id: order.event_id,
+    menu_id: order.menu_id,
+    menu_name: order.menu_name,
+    menu_price: order.menu_price,
+    ordered_at: toMillis(order.ordered_at) || order.updated_at,
+    event_status_value: event.event_status?.value ?? '',
+    partner_id: event.partner_id ?? '',
+    event_name: event.event_name,
+    community_account: event.community_account,
+    is_public: isPublic,
+    is_visible_to_viewer: true,
+    is_linkable: computeProfileItemLinkableToViewer({ isPublic, viewerUid, targetUserId }),
+  }
+}
+
 const fetchFoodsPage = async (params: {
   targetUserId: string
   viewerUid: string | null
@@ -208,73 +230,24 @@ const fetchFoodsPage = async (params: {
   cursor?: UserFoodsCursor
 }): Promise<{ foods: UserProfileFoodPreviewItem[]; nextCursor: UserFoodsCursor | null; hasMore: boolean }> => {
   const { targetUserId, viewerUid, limit, cursor } = params
-  const db = getFirestore()
-  let q = db
-    .collectionGroup('member_orders')
-    .where('user_id', '==', targetUserId)
-    .where('status', '==', 'ordered')
-    .orderBy('updated_at', 'desc')
-    .orderBy('order_id', 'desc')
+  const page = await listOrderedFoodsPageForProfile({
+    targetUserId,
+    limit,
+    cursor,
+  })
 
-  if (cursor != null) {
-    q = q.startAfter(Timestamp.fromMillis(cursor.updated_at), cursor.order_id)
-  }
-  const snapshot = await q.limit(limit + 1).get()
-
-  if (snapshot.empty) {
-    return { foods: [], nextCursor: null, hasMore: false }
+  const foods: UserProfileFoodPreviewItem[] = []
+  for (const order of page.orders) {
+    const item = mapOrderToFoodPreview(order, page.eventsByKey, viewerUid, targetUserId)
+    if (item != null) {
+      foods.push(item)
+    }
   }
 
-  const hasMore = snapshot.docs.length > limit
-  const pageDocs = hasMore ? snapshot.docs.slice(0, limit) : snapshot.docs
-
-  // 画像 storage パスを組み立てるため、event の status と partner_id をまとめて解決する
-  const eventRefs = pageDocs
-    .map((doc) => ({
-      community_id: String(doc.get('community_id') ?? ''),
-      event_id: String(doc.get('event_id') ?? ''),
-    }))
-    .filter((ref) => ref.community_id !== '' && ref.event_id !== '')
-  const eventMap = await getEventsInCommunities(eventRefs)
-
-  const items: UserProfileFoodPreviewItem[] = []
-  for (const doc of pageDocs) {
-    const data = doc.data()
-    const community_id = String(data.community_id ?? '')
-    const event_id = String(data.event_id ?? '')
-    const event = eventMap.get(getCommunityEventKey(community_id, event_id))
-    const isPublic = event?.is_public === true
-    const isDeleted = event?.is_deleted === true
-    const isVisibleToViewer =
-      event != null && !isDeleted && computeProfileItemVisibleToViewer({ isPublic, viewerUid, targetUserId })
-    if (!isVisibleToViewer) continue
-    items.push({
-      order_id: String(data.order_id ?? doc.id),
-      community_id,
-      event_id,
-      menu_id: String(data.menu_id ?? ''),
-      menu_name: String(data.menu_name ?? ''),
-      menu_price: Number(data.menu_price ?? 0),
-      ordered_at: toMillis(data.ordered_at) || toMillis(data.updated_at),
-      event_status_value: event?.event_status?.value ?? '',
-      partner_id: event?.partner_id ?? '',
-      event_name: isDeleted || event == null ? '' : event.event_name,
-      community_account: isDeleted || event == null ? '' : event.community_account,
-      is_visible_to_viewer: true,
-    })
-  }
-
-  const lastDoc = pageDocs[pageDocs.length - 1]
-  const nextCursor = hasMore
-    ? {
-        updated_at: toMillis(lastDoc.get('updated_at')),
-        order_id: String(lastDoc.get('order_id') ?? lastDoc.id),
-      }
-    : null
   return {
-    foods: items,
-    nextCursor,
-    hasMore,
+    foods,
+    nextCursor: page.nextCursor,
+    hasMore: page.hasMore,
   }
 }
 
@@ -291,40 +264,17 @@ const fetchFoodPreviews = async (
 }
 
 const fetchOrderPreviews = async (targetUserId: string): Promise<UserProfileOrderPreviewItem[]> => {
-  const db = getFirestore()
-  const snapshot = await db
-    .collectionGroup('member_orders')
-    .where('user_id', '==', targetUserId)
-    .where('status', '==', 'ordered')
-    .orderBy('updated_at', 'desc')
-    .limit(PREVIEW_LIMITS.orders)
-    .get()
-
-  if (snapshot.empty) {
-    return []
-  }
-
-  const eventRefs = snapshot.docs
-    .map((doc) => ({
-      community_id: String(doc.get('community_id') ?? ''),
-      event_id: String(doc.get('event_id') ?? ''),
-    }))
-    .filter((ref) => ref.community_id !== '' && ref.event_id !== '')
-  const eventMap = await getEventsInCommunities(eventRefs)
-
+  const { orders, eventsByKey } = await listOrderedFoodsPreviewForProfile(targetUserId, PREVIEW_LIMITS.orders)
   const items: UserProfileOrderPreviewItem[] = []
-  for (const doc of snapshot.docs) {
-    const data = doc.data()
-    const community_id = String(data.community_id ?? '')
-    const event_id = String(data.event_id ?? '')
-    const event = eventMap.get(getCommunityEventKey(community_id, event_id))
+  for (const order of orders) {
+    const event = eventsByKey.get(getCommunityEventKey(order.community_id, order.event_id))
     items.push({
-      order_id: String(data.order_id ?? doc.id),
-      community_id,
-      event_id,
+      order_id: order.order_id,
+      community_id: order.community_id,
+      event_id: order.event_id,
       event_name: event?.event_name ?? '',
       event_start_datetime: event != null ? event.event_start_datetime : 0,
-      ordered_at: toMillis(data.ordered_at) || toMillis(data.updated_at),
+      ordered_at: toMillis(order.ordered_at) || order.updated_at,
     })
   }
   return items
@@ -337,7 +287,7 @@ const fetchOrderPreviews = async (targetUserId: string): Promise<UserProfileOrde
  * - 未ログインでも呼べる（`invoker: 'public'`）
  * - 退会済み / 存在しないユーザーは `not-found`
  * - `previews.orders` は本人のみ返し、それ以外は `null`
- * - 各プレビューには `is_visible_to_viewer` を付与する（返却項目は常に true。本人以外には非公開を含めない）
+ * - 各プレビューには `is_visible_to_viewer`（常に true）と `is_linkable`（§4.2.0）を付与する
  * - App Check は Phase 1 では必須としない。Firebase Functions の Callable 既定どおり `enforceAppCheck` は付けず、未ログイン呼び出しや運用バッチを阻害しない。強制を有効化する場合は別イシューでクライアント対応と合わせて検討する（仕様書 5.2.1 F1）
  */
 export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promise<GetUserProfilePreviewResponse>>(

@@ -10,7 +10,7 @@ import {
 import { Event } from '@shokujii/common/schemas/Event.js'
 import { EventMemberOrder, EventMemberOrderStatusType } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
-import { getUser, type ShokujiiUser } from './user.js'
+import { getUser, getUserRef, type ShokujiiUser } from './user.js'
 import { EventLog } from '@shokujii/common/schemas/EventLog.js'
 import { getRefFromPath } from '@shokujii/common/schemas/firebase/index.js'
 import {
@@ -263,6 +263,29 @@ export const getEventInCommunity = async (
 const buildCommunityEventKey = (communityId: string, eventId: string): string => `${communityId}\t${eventId}`
 
 export const getCommunityEventKey = buildCommunityEventKey
+
+/**
+ * マイページプロフィール用の参加イベントプレビュー（§4.2.0）。
+ * 限定公開も含め参加実績から limit する（リンク可否は Callable が `is_linkable` で付与）。
+ */
+export const listEventsForProfilePreview = async (params: {
+  targetUserId: string
+  limit: number
+}): Promise<ShokujiiEvent[]> => {
+  const { targetUserId, limit } = params
+  const db = getFirestore()
+  const userRef = getUserRef(targetUserId)
+  const eventsQuery = db
+    .collectionGroup('events')
+    .where('members', 'array-contains', userRef)
+    .where('is_deleted', '==', false)
+  const snapshot = await eventsQuery
+    .orderBy('event_start_datetime', 'desc')
+    .limit(limit)
+    .withConverter(new ShokujiiEventConverter(targetUserId))
+    .get()
+  return snapshot.docs.map((doc) => doc.data())
+}
 
 /**
  * `communities/{communityId}/events/{eventId}` を一括取得する。

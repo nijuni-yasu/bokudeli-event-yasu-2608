@@ -79,6 +79,34 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "members",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "communities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "managers",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "communities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "subdomain_tags",
           "arrayConfig": "CONTAINS"
         },
@@ -389,6 +417,28 @@
         {
           "fieldPath": "members",
           "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "members",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "event_start_datetime",

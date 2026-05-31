@@ -8,7 +8,8 @@ import {
 } from 'firebase-admin/firestore'
 import { EventMember, EventMemberOrder, EventMemberOrderStatusType } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { EventStripe } from '@shokujii/common/schemas/EventStripe.js'
-import { getCommunityEventKey, getEventsInCommunities } from './event.js'
+import type { ShokujiiEvent } from './event.js'
+import { MAX_PROFILE_PREVIEW_SKIP_PAGES } from '../utils/profileItemVisibility.js'
 
 // ── Converters ──
 
@@ -283,6 +284,141 @@ export const saveStripe = async (
   }
 }
 
+export type ProfileFoodsPageCursor = {
+  updated_at: number
+  order_id: string
+}
+
+export type ProfileFoodsPageResult = {
+  orders: EventMemberOrder[]
+  eventsByKey: Map<string, ShokujiiEvent>
+  hasMore: boolean
+  nextCursor: ProfileFoodsPageCursor | null
+}
+
+const orderConverter = new EventMemberOrderConverter()
+
+const fetchOneOrderedFoodsRawPage = async (
+  targetUserId: string,
+  limit: number,
+  cursor?: ProfileFoodsPageCursor,
+): Promise<{ orders: EventMemberOrder[]; hasMore: boolean; nextCursor: ProfileFoodsPageCursor | null }> => {
+  const db = getFirestore()
+  let q = db
+    .collectionGroup('member_orders')
+    .where('user_id', '==', targetUserId)
+    .where('status', '==', 'ordered')
+    .orderBy('updated_at', 'desc')
+    .orderBy('order_id', 'desc')
+
+  if (cursor != null) {
+    q = q.startAfter(Timestamp.fromMillis(cursor.updated_at), cursor.order_id)
+  }
+
+  const snapshot = await q
+    .limit(limit + 1)
+    .withConverter(orderConverter)
+    .get()
+  if (snapshot.empty) {
+    return { orders: [], hasMore: false, nextCursor: null }
+  }
+
+  const hasMore = snapshot.docs.length > limit
+  const pageDocs = hasMore ? snapshot.docs.slice(0, limit) : snapshot.docs
+  const orders = pageDocs.map((doc) => doc.data())
+  const lastDoc = pageDocs[pageDocs.length - 1]
+  const lastData = lastDoc.data()
+  const nextCursor = hasMore
+    ? {
+        updated_at: lastData.updated_at,
+        order_id: lastData.order_id,
+      }
+    : null
+
+  return { orders, hasMore, nextCursor }
+}
+
+const filterOrdersForProfile = async (
+  orders: EventMemberOrder[],
+): Promise<{ visibleOrders: EventMemberOrder[]; eventsByKey: Map<string, ShokujiiEvent> }> => {
+  const { getCommunityEventKey, getEventsInCommunities } = await import('./event.js')
+  const eventRefs = orders
+    .map((order) => ({ community_id: order.community_id, event_id: order.event_id }))
+    .filter((ref) => ref.community_id !== '' && ref.event_id !== '')
+  const eventsByKey = await getEventsInCommunities(eventRefs)
+
+  const visibleOrders: EventMemberOrder[] = []
+  for (const order of orders) {
+    const event = eventsByKey.get(getCommunityEventKey(order.community_id, order.event_id))
+    if (event == null || event.is_deleted) {
+      continue
+    }
+    visibleOrders.push(order)
+  }
+
+  return { visibleOrders, eventsByKey }
+}
+
+/**
+ * フードタブ・プレビュー用の ordered 注文ページ（可視分が limit に達するまでページング・RC-46/53）。
+ */
+export const listOrderedFoodsPageForProfile = async (params: {
+  targetUserId: string
+  limit: number
+  cursor?: ProfileFoodsPageCursor
+}): Promise<ProfileFoodsPageResult> => {
+  const { targetUserId, limit, cursor: startCursor } = params
+  const collected: EventMemberOrder[] = []
+  const eventsByKey = new Map<string, ShokujiiEvent>()
+  let cursor = startCursor
+  let firestoreHasMore = false
+  let firestoreNextCursor: ProfileFoodsPageCursor | null = null
+
+  for (let pageIndex = 0; pageIndex < MAX_PROFILE_PREVIEW_SKIP_PAGES; pageIndex++) {
+    const remaining = limit - collected.length
+    if (remaining <= 0) {
+      break
+    }
+
+    const raw = await fetchOneOrderedFoodsRawPage(targetUserId, remaining, cursor)
+    const { visibleOrders, eventsByKey: pageEvents } = await filterOrdersForProfile(raw.orders)
+    collected.push(...visibleOrders)
+    for (const [key, event] of pageEvents) {
+      eventsByKey.set(key, event)
+    }
+
+    firestoreHasMore = raw.hasMore
+    firestoreNextCursor = raw.nextCursor
+
+    if (collected.length >= limit) {
+      break
+    }
+    if (!raw.hasMore || raw.nextCursor == null) {
+      break
+    }
+    cursor = raw.nextCursor
+  }
+
+  return {
+    orders: collected,
+    eventsByKey,
+    hasMore: firestoreHasMore && firestoreNextCursor != null,
+    nextCursor: firestoreHasMore ? firestoreNextCursor : null,
+  }
+}
+
+/** プロフィール概要の注文プレビュー（本人のみ Callable から呼ぶ想定） */
+export const listOrderedFoodsPreviewForProfile = async (
+  targetUserId: string,
+  limit: number,
+): Promise<{ orders: EventMemberOrder[]; eventsByKey: Map<string, ShokujiiEvent> }> => {
+  const page = await listOrderedFoodsPageForProfile({
+    targetUserId,
+    limit,
+  })
+  return { orders: page.orders, eventsByKey: page.eventsByKey }
+}
+
 /**
  * 参加イベント数（仕様 5.1.2 / RC-57）。
  * `status === 'ordered'` の member_orders から (community_id, event_id) をユニーク化し、
@@ -292,6 +428,7 @@ export const countParticipatedEventsForUser = async (userId: string): Promise<nu
   if (userId === '') {
     return 0
   }
+  const { getCommunityEventKey, getEventsInCommunities } = await import('./event.js')
   const db = getFirestore()
   const snapshot = await db
     .collectionGroup('member_orders')
@@ -322,6 +459,23 @@ export const countParticipatedEventsForUser = async (userId: string): Promise<nu
     }
   }
   return count
+}
+
+/**
+ * 注文済みフード数（`member_orders` collection group で `user_id == uid + status == 'ordered'`）。
+ */
+export const countOrderedFoodsForUser = async (userId: string): Promise<number> => {
+  if (userId === '') {
+    return 0
+  }
+  const db = getFirestore()
+  const snapshot = await db
+    .collectionGroup('member_orders')
+    .where('user_id', '==', userId)
+    .where('status', '==', 'ordered')
+    .count()
+    .get()
+  return snapshot.data().count
 }
 
 export const getInCartMemberOrdersByUpdatedTime = async (

@@ -252,6 +252,23 @@ export const countJoinedCommunitiesForUser = async (userId: string): Promise<num
 }
 
 /**
+ * マイページプロフィール用のコミュニティプレビュー（§4.2.0）。
+ * 限定公開も含め参加・運営実績から limit する。
+ */
+export const listCommunitiesForProfilePreview = async (params: {
+  targetUserId: string
+  arrayField: 'members' | 'managers'
+  limit: number
+}): Promise<ShokujiiCommunity[]> => {
+  const { targetUserId, arrayField, limit } = params
+  const db = getFirestore()
+  const userRef = getUserRef(targetUserId)
+  const communitiesQuery = db.collection('communities').where(arrayField, 'array-contains', userRef)
+  const snapshot = await communitiesQuery.limit(limit).withConverter(communityConverter).get()
+  return snapshot.docs.map((doc) => doc.data())
+}
+
+/**
  * 管理コミュニティ数（親 `communities.managers` 配列に userRef が含まれる件数）。RC-55 同上。
  */
 export const countManagedCommunitiesForUser = async (userId: string): Promise<number> => {

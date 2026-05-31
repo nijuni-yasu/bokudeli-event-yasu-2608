@@ -4,7 +4,8 @@ const getUsersByUserIdsMock = vi.fn()
 const countJoinedCommunitiesForUserMock = vi.fn()
 const countManagedCommunitiesForUserMock = vi.fn()
 const countParticipatedEventsForUserMock = vi.fn()
-const aggregationCountGetMock = vi.fn()
+const countOrderedFoodsForUserMock = vi.fn()
+const listFriendUserIdsMock = vi.fn()
 
 vi.mock('../stores/community.js', () => ({
   countJoinedCommunitiesForUser: (...args: unknown[]) => countJoinedCommunitiesForUserMock(...args),
@@ -13,24 +14,11 @@ vi.mock('../stores/community.js', () => ({
 
 vi.mock('../stores/memberOrder.js', () => ({
   countParticipatedEventsForUser: (...args: unknown[]) => countParticipatedEventsForUserMock(...args),
+  countOrderedFoodsForUser: (...args: unknown[]) => countOrderedFoodsForUserMock(...args),
 }))
 
-vi.mock('firebase-admin/firestore', () => ({
-  getFirestore: () => ({
-    collection: () => ({
-      doc: () => ({
-        collection: () => ({
-          get: () => Promise.resolve({ docs: [] }),
-        }),
-      }),
-    }),
-    collectionGroup: () => ({
-      where: vi.fn().mockReturnThis(),
-      count: () => ({
-        get: () => aggregationCountGetMock(),
-      }),
-    }),
-  }),
+vi.mock('../stores/userFriend.js', () => ({
+  listFriendUserIds: (...args: unknown[]) => listFriendUserIdsMock(...args),
 }))
 
 vi.mock('../stores/user.js', () => ({
@@ -47,9 +35,11 @@ beforeEach(() => {
   countJoinedCommunitiesForUserMock.mockReset()
   countManagedCommunitiesForUserMock.mockReset()
   countParticipatedEventsForUserMock.mockReset()
-  aggregationCountGetMock.mockReset()
+  countOrderedFoodsForUserMock.mockReset()
+  listFriendUserIdsMock.mockReset()
   countParticipatedEventsForUserMock.mockResolvedValue(5)
-  aggregationCountGetMock.mockResolvedValue({ data: () => ({ count: 4 }) })
+  countOrderedFoodsForUserMock.mockResolvedValue(4)
+  listFriendUserIdsMock.mockResolvedValue([])
 })
 
 describe('computeActiveFriendCount', () => {
@@ -106,6 +96,8 @@ describe('computeUserProfileCounts', () => {
     expect(result.participated_event_count).toBe(5)
     expect(result.ordered_food_count).toBe(4)
     expect(countParticipatedEventsForUserMock).toHaveBeenCalledWith('uid-x')
+    expect(countOrderedFoodsForUserMock).toHaveBeenCalledWith('uid-x')
+    expect(listFriendUserIdsMock).toHaveBeenCalledWith('uid-x')
     expect(countJoinedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x')
     expect(countManagedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x')
   })

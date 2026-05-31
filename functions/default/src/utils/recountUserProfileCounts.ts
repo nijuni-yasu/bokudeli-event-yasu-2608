@@ -1,12 +1,7 @@
-import { getFirestore } from 'firebase-admin/firestore'
 import { countJoinedCommunitiesForUser, countManagedCommunitiesForUser } from '../stores/community.js'
-import { countParticipatedEventsForUser } from '../stores/memberOrder.js'
-import {
-  getUser,
-  getUsersByUserIds,
-  updateUserProfileCounts,
-  type UserProfileCountsUpdate,
-} from '../stores/user.js'
+import { countOrderedFoodsForUser, countParticipatedEventsForUser } from '../stores/memberOrder.js'
+import { listFriendUserIds } from '../stores/userFriend.js'
+import { getUser, getUsersByUserIds, updateUserProfileCounts, type UserProfileCountsUpdate } from '../stores/user.js'
 import { createModuleLogger } from './logger.js'
 
 const logger = createModuleLogger('recountUserProfileCounts')
@@ -42,14 +37,11 @@ export const computeActiveFriendCount = async (friendUserIds: string[]): Promise
  *   - managed_community_count: `communities.managers` array-contains userRef（RC-55）
  */
 export const computeUserProfileCounts = async (userId: string): Promise<UserProfileCounts> => {
-  const db = getFirestore()
+  const friendUserIds = await listFriendUserIds(userId)
 
-  const friendsSnapshot = await db.collection('users').doc(userId).collection('friends').get()
-  const friendUserIds = friendsSnapshot.docs.map((doc) => doc.id)
-
-  const [participatedCount, orderedAgg, joinedCount, managedCount, activeFriendCount] = await Promise.all([
+  const [participatedCount, orderedFoodCount, joinedCount, managedCount, activeFriendCount] = await Promise.all([
     countParticipatedEventsForUser(userId),
-    db.collectionGroup('member_orders').where('user_id', '==', userId).where('status', '==', 'ordered').count().get(),
+    countOrderedFoodsForUser(userId),
     countJoinedCommunitiesForUser(userId),
     countManagedCommunitiesForUser(userId),
     computeActiveFriendCount(friendUserIds),
@@ -60,7 +52,7 @@ export const computeUserProfileCounts = async (userId: string): Promise<UserProf
     friend_count: activeFriendCount,
     joined_community_count: joinedCount,
     managed_community_count: managedCount,
-    ordered_food_count: orderedAgg.data().count,
+    ordered_food_count: orderedFoodCount,
   }
 }
 
