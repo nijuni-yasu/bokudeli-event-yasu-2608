@@ -15,7 +15,6 @@ import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
 import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline, mdiReceiptText } from '@mdi/js'
-import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { getCommunityPath, getEventPath, getReceiptPath, getUserPath } from '@/router/utils'
 import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
@@ -29,6 +28,7 @@ import {
   getEventCoverStoragePath,
   getEventMenuImageStoragePath,
 } from '@shokujii/common/utils/storagePaths.js'
+import { convertToDate, convertToDateWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useDisplay } from 'vuetify'
 
@@ -137,6 +137,31 @@ const loadMoreProfilePreviewFriends = () => {
   store.next()
 }
 
+/** 概要ともだち: 追読み余地がなく空のときだけ「ともだちなし」（RC-52） */
+const showProfilePreviewFriendsEmpty = computed(
+  () =>
+    !profilePreviewFriendsLoading.value &&
+    profilePreviewFriends.value.length === 0 &&
+    !profilePreviewFriendsHasMore.value,
+)
+
+/** 表示 0 件かつ追読み余地があるときに loadMore を試す（RC-72） */
+const setupAutoLoadWhenEmpty = (deps: unknown[], config: { shouldLoad: () => boolean; load: () => void }) => {
+  watch(deps, () => {
+    if (config.shouldLoad()) {
+      config.load()
+    }
+  })
+}
+
+setupAutoLoadWhenEmpty([profilePreviewFriends, profilePreviewFriendsHasMore, profilePreviewFriendsLoading], {
+  shouldLoad: () =>
+    profilePreviewFriends.value.length === 0 &&
+    profilePreviewFriendsHasMore.value &&
+    !profilePreviewFriendsLoading.value,
+  load: loadMoreProfilePreviewFriends,
+})
+
 /**
  * URL の `?tab=xxx` をタブに解決する。未指定や本人以外で `orders` を直叩きされた場合は
  * プロフィールタブにフォールバックする（仕様 4.2.5）。
@@ -225,9 +250,8 @@ watch(friendSortBy, () => {
   })
 })
 
-const visibleUserEvents = computed(() =>
-  userEvents.value.filter((event: BokudeliEvent) => isOwner.value || event.is_public),
-)
+/** §4.2.0: 限定公開も表示。詳細リンクは本人または is_linkable / 一般公開のみ */
+const canLinkToDetail = (isPublic: boolean, isLinkable?: boolean): boolean => isLinkable ?? (isOwner.value || isPublic)
 
 const memberCommunityListStore = useCommunityListStore(
   [where('members', 'array-contains', doc(db, 'users', profileUserId)), orderBy('community_num_members', 'desc')],
@@ -244,9 +268,6 @@ const memberCommunities = computed(() =>
     if (communityStore.community == null || communityStore.members == null) {
       return []
     }
-    if (!isOwner.value && !communityStore.community.is_public) {
-      return []
-    }
     return {
       community: communityStore.community,
       members: communityStore.members.filter((m) => m !== undefined),
@@ -257,9 +278,6 @@ const memberCommunities = computed(() =>
 const managerCommunities = computed(() =>
   (managerCommunityListStore.communityStores ?? []).flatMap((communityStore) => {
     if (communityStore.community == null || communityStore.members == null) {
-      return []
-    }
-    if (!isOwner.value && !communityStore.community.is_public) {
       return []
     }
     return {
@@ -357,32 +375,70 @@ const previewJoinedCommunities = computed(() => previewData.value?.previews.join
 const previewManagedCommunities = computed(() => previewData.value?.previews.managed_communities ?? [])
 const previewFoods = computed(() => previewData.value?.previews.foods ?? [])
 
-/** 本人以外には非公開を表示しない（Callable 側でも除外。二重防御） */
-const isPublicProfileItemVisible = (isPublic: boolean) => isOwner.value || isPublic
+/** フードタブ: 次ページがなく空のときだけ空表示（RC-53/54） */
+const showFoodsTabEmpty = computed(() => !foodLoading.value && pagedFoods.value.length === 0 && !foodHasMore.value)
 
-const visiblePreviewEvents = computed(() =>
-  previewEvents.value.filter((event) => isPublicProfileItemVisible(event.is_public)),
-)
-const visiblePreviewJoinedCommunities = computed(() =>
-  previewJoinedCommunities.value.filter((community) => isPublicProfileItemVisible(community.is_public)),
-)
-const visiblePreviewManagedCommunities = computed(() =>
-  previewManagedCommunities.value.filter((community) => isPublicProfileItemVisible(community.is_public)),
-)
-const visiblePreviewFoods = computed(() =>
-  previewFoods.value.filter((food) => isOwner.value || food.is_visible_to_viewer),
-)
-const visiblePagedFoods = computed(() => pagedFoods.value.filter((food) => isOwner.value || food.is_visible_to_viewer))
+setupAutoLoadWhenEmpty([pagedFoods, foodHasMore, foodLoading, tabs], {
+  shouldLoad: () =>
+    tabs.value === TAB_FOODS && pagedFoods.value.length === 0 && foodHasMore.value && !foodLoading.value,
+  load: () => userFoodsStore.next(),
+})
 
-const showProfileJoinedSection = computed(() => visiblePreviewJoinedCommunities.value.length > 0)
-const showProfileManagedSection = computed(() => visiblePreviewManagedCommunities.value.length > 0)
+watch(
+  () => loginUser.value?.user_id,
+  (uid, prevUid) => {
+    if (uid === prevUid) return
+    previewStore.reload()
+    userFoodsStore.reload()
+  },
+)
+
+const showProfileJoinedSection = computed(() => previewJoinedCommunities.value.length > 0)
+const showProfileManagedSection = computed(() => previewManagedCommunities.value.length > 0)
 const isProfileCommunitiesEmpty = computed(() => !showProfileJoinedSection.value && !showProfileManagedSection.value)
 
 const showJoinedSection = computed(() => memberCommunities.value.length > 0)
 const showManagedSection = computed(() => managerCommunities.value.length > 0)
-const isCommunitiesTabEmpty = computed(() => !showJoinedSection.value && !showManagedSection.value)
+const memberCommunityListHasMore = computed(() => {
+  const loaded = memberCommunityListStore.communityStores?.length ?? 0
+  const total = memberCommunityListStore.totalCount
+  return total != null && loaded < total
+})
+const managerCommunityListHasMore = computed(() => {
+  const loaded = managerCommunityListStore.communityStores?.length ?? 0
+  const total = managerCommunityListStore.totalCount
+  return total != null && loaded < total
+})
+/** コミュニティタブ: 両セクションとも表示 0 かつ追読みも無いときのみ空表示（RC-61） */
+const isCommunitiesTabEmpty = computed(
+  () =>
+    memberCommunities.value.length === 0 &&
+    managerCommunities.value.length === 0 &&
+    !memberCommunityListHasMore.value &&
+    !managerCommunityListHasMore.value,
+)
 const isCommunitiesTabReady = computed(
   () => memberCommunityListStore.totalCount !== null && managerCommunityListStore.totalCount !== null,
+)
+
+setupAutoLoadWhenEmpty(
+  [memberCommunities, managerCommunities, memberCommunityListHasMore, managerCommunityListHasMore, tabs],
+  {
+    shouldLoad: () => {
+      if (tabs.value !== TAB_COMMUNITIES) return false
+      if (memberCommunities.value.length === 0 && memberCommunityListHasMore.value) return true
+      if (managerCommunities.value.length === 0 && managerCommunityListHasMore.value) return true
+      return false
+    },
+    load: () => {
+      if (memberCommunities.value.length === 0 && memberCommunityListHasMore.value) {
+        memberCommunityListStore.next()
+      }
+      if (managerCommunities.value.length === 0 && managerCommunityListHasMore.value) {
+        managerCommunityListStore.next()
+      }
+    },
+  },
 )
 
 const friendUserOf = (item: { user_id: string; user_name: string; user_image_url: string }) =>
@@ -434,11 +490,10 @@ const goToTab = (tab: TabKey) => {
   tabs.value = tab
 }
 
-/** プロフィールプレビュー用。イベントは曜日付き、それ以外は日付のみ（`datetimeFormats` と整合） */
+/** プロフィールプレビュー用。イベントは曜日付き、それ以外は日付のみ */
 const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = 'date') => {
-  if (!epochMillis) return ''
-  const date = new Date(epochMillis)
-  return kind === 'withWeekday' ? d(date, 'date_weekday_short') : d(date, 'date')
+  if (epochMillis === 0) return ''
+  return kind === 'withWeekday' ? convertToDateWeekdayShort(epochMillis) : convertToDate(epochMillis)
 }
 </script>
 
@@ -522,10 +577,13 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 >
                   <v-progress-circular indeterminate color="primary" />
                 </div>
-                <div v-else-if="profilePreviewFriends.length === 0" class="text-body-2 text-medium-emphasis">
+                <div v-else-if="showProfilePreviewFriendsEmpty" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.friends') }}
                 </div>
-                <div v-else class="profile-friends-preview d-flex flex-wrap ga-2 align-center">
+                <div
+                  v-if="profilePreviewFriends.length > 0"
+                  class="profile-friends-preview d-flex flex-wrap ga-2 align-center"
+                >
                   <router-link
                     v-for="friend in profilePreviewFriends"
                     :key="friend.user_id"
@@ -536,7 +594,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                     <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
                   </router-link>
                 </div>
-                <div v-if="profilePreviewFriends.length > 0" class="d-flex justify-center mt-3">
+                <div
+                  v-if="profilePreviewFriendsHasMore || profilePreviewFriends.length > 0"
+                  class="d-flex justify-center mt-3"
+                >
                   <IncrementalLoader
                     :loaded-count="profilePreviewFriends.length"
                     :total-count="
@@ -563,12 +624,13 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="visiblePreviewEvents.length === 0" class="text-body-2 text-medium-emphasis">
+                <div v-if="previewEvents.length === 0" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.events') }}
                 </div>
                 <v-row v-else dense>
-                  <v-col v-for="event in visiblePreviewEvents" :key="event.event_id" cols="6" sm="4" md="3">
+                  <v-col v-for="event in previewEvents" :key="event.event_id" cols="6" sm="4" md="3">
                     <router-link
+                      v-if="canLinkToDetail(event.is_public, event.is_linkable)"
                       class="preview-event-link d-block"
                       :to="getEventPath(event.community_account, event.event_id)"
                     >
@@ -603,6 +665,38 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                         </div>
                       </v-card>
                     </router-link>
+                    <div v-else class="preview-event-link preview-event-link--static d-block">
+                      <v-card variant="outlined" class="pa-3 h-100 preview-card">
+                        <div class="event-preview-tile d-flex align-stretch ga-3">
+                          <div class="event-preview-tile__cover flex-shrink-0 rounded overflow-hidden">
+                            <v-img
+                              v-if="eventCoverUrl(event.community_id, event.event_id) != null"
+                              :src="eventCoverUrl(event.community_id, event.event_id)"
+                              :alt="event.event_name"
+                              cover
+                              aspect-ratio="1.91"
+                              width="100"
+                            />
+                            <div
+                              v-else
+                              class="event-preview-tile__cover-placeholder d-flex align-center justify-center bg-surface-variant"
+                            >
+                              <v-icon :icon="mdiCalendarHeart" size="28" class="text-medium-emphasis" />
+                            </div>
+                          </div>
+                          <div
+                            class="event-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
+                          >
+                            <div class="text-body-2 text-medium-emphasis">
+                              {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
+                            </div>
+                            <div class="text-body-1 mt-1 profile-preview-tile__name" :title="event.event_name">
+                              {{ event.event_name }}
+                            </div>
+                          </div>
+                        </div>
+                      </v-card>
+                    </div>
                   </v-col>
                 </v-row>
               </v-card-text>
@@ -633,13 +727,17 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                     </div>
                     <v-row dense class="mb-6">
                       <v-col
-                        v-for="c in visiblePreviewJoinedCommunities"
+                        v-for="c in previewJoinedCommunities"
                         :key="`joined_${c.community_id}`"
                         cols="6"
                         sm="4"
                         md="3"
                       >
-                        <router-link class="preview-event-link d-block" :to="getCommunityPath(c.community_account)">
+                        <router-link
+                          v-if="canLinkToDetail(c.is_public, c.is_linkable)"
+                          class="preview-event-link d-block"
+                          :to="getCommunityPath(c.community_account)"
+                        >
                           <v-card variant="outlined" class="pa-3 h-100 preview-card">
                             <div class="community-preview-tile d-flex align-stretch ga-3">
                               <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
@@ -661,6 +759,28 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                             </div>
                           </v-card>
                         </router-link>
+                        <div v-else class="preview-event-link preview-event-link--static d-block">
+                          <v-card variant="outlined" class="pa-3 h-100 preview-card">
+                            <div class="community-preview-tile d-flex align-stretch ga-3">
+                              <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
+                                <v-img
+                                  v-if="communityIconUrl(c.community_id) != null"
+                                  :src="communityIconUrl(c.community_id)"
+                                  :alt="c.community_name"
+                                  cover
+                                />
+                                <v-icon v-else :icon="mdiAccountGroup" />
+                              </v-avatar>
+                              <div
+                                class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
+                              >
+                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
+                                  {{ c.community_name }}
+                                </div>
+                              </div>
+                            </div>
+                          </v-card>
+                        </div>
                       </v-col>
                     </v-row>
                   </template>
@@ -671,13 +791,17 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                     </div>
                     <v-row dense>
                       <v-col
-                        v-for="c in visiblePreviewManagedCommunities"
+                        v-for="c in previewManagedCommunities"
                         :key="`managed_${c.community_id}`"
                         cols="6"
                         sm="4"
                         md="3"
                       >
-                        <router-link class="preview-event-link d-block" :to="getCommunityPath(c.community_account)">
+                        <router-link
+                          v-if="canLinkToDetail(c.is_public, c.is_linkable)"
+                          class="preview-event-link d-block"
+                          :to="getCommunityPath(c.community_account)"
+                        >
                           <v-card variant="outlined" class="pa-3 h-100 preview-card">
                             <div class="community-preview-tile d-flex align-stretch ga-3">
                               <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
@@ -699,6 +823,28 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                             </div>
                           </v-card>
                         </router-link>
+                        <div v-else class="preview-event-link preview-event-link--static d-block">
+                          <v-card variant="outlined" class="pa-3 h-100 preview-card">
+                            <div class="community-preview-tile d-flex align-stretch ga-3">
+                              <v-avatar rounded="lg" size="48" class="flex-shrink-0 align-self-center">
+                                <v-img
+                                  v-if="communityIconUrl(c.community_id) != null"
+                                  :src="communityIconUrl(c.community_id)"
+                                  :alt="c.community_name"
+                                  cover
+                                />
+                                <v-icon v-else :icon="mdiAccountGroup" />
+                              </v-avatar>
+                              <div
+                                class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
+                              >
+                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
+                                  {{ c.community_name }}
+                                </div>
+                              </div>
+                            </div>
+                          </v-card>
+                        </div>
                       </v-col>
                     </v-row>
                   </template>
@@ -717,11 +863,11 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="visiblePreviewFoods.length === 0" class="text-body-2 text-medium-emphasis">
+                <div v-if="previewFoods.length === 0" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.foods') }}
                 </div>
                 <v-row v-else dense>
-                  <v-col v-for="food in visiblePreviewFoods" :key="food.order_id" cols="6" sm="4" md="3">
+                  <v-col v-for="food in previewFoods" :key="food.order_id" cols="6" sm="4" md="3">
                     <v-card variant="outlined" class="h-100 preview-card">
                       <v-img
                         v-if="foodImageUrl(food) != null"
@@ -741,6 +887,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                         <div class="text-body-2 text-truncate" :title="food.menu_name">{{ food.menu_name }}</div>
                         <div v-if="food.event_name !== ''" class="mt-1 min-width-0">
                           <router-link
+                            v-if="canLinkToDetail(food.is_public, food.is_linkable)"
                             class="food-event-link text-body-2 text-truncate d-block"
                             :to="getEventPath(food.community_account, food.event_id)"
                             :title="food.event_name"
@@ -748,6 +895,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                           >
                             {{ food.event_name }}
                           </router-link>
+                          <span v-else class="text-body-2 text-truncate d-block" :title="food.event_name">
+                            {{ food.event_name }}
+                          </span>
                         </div>
                         <div class="text-caption text-medium-emphasis mt-1">
                           {{ formatProfileDate(food.ordered_at, 'date') }}
@@ -784,6 +934,8 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 :target-user-id="profileUserId"
                 :target-user-name="user.user_name"
                 :is-owner="isOwner"
+                :resolve-user-path="getUserPath"
+                :resolve-event-path="getEventPath"
               />
             </v-col>
           </v-row>
@@ -802,18 +954,21 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item :value="TAB_EVENTS">
-          <div
-            v-if="isUserEventsLoaded && visibleUserEvents.length === 0"
-            class="text-body-1 text-medium-emphasis pa-4"
-          >
+          <div v-if="isUserEventsLoaded && userEvents.length === 0" class="text-body-1 text-medium-emphasis pa-4">
             {{ $t('user_profile.empty.events') }}
           </div>
           <v-row v-else>
-            <v-col v-for="event in visibleUserEvents" :key="`event_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
+            <v-col v-for="event in userEvents" :key="`event_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
-                <router-link :to="getEventPath(event.community_account, event.event_id)">
+                <router-link
+                  v-if="canLinkToDetail(event.is_public)"
+                  :to="getEventPath(event.community_account, event.event_id)"
+                >
                   <ProfileEventCard :event="event" />
                 </router-link>
+                <div v-else>
+                  <ProfileEventCard :event="event" />
+                </div>
               </div>
             </v-col>
           </v-row>
@@ -841,21 +996,31 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   :key="`member_${community.community_id}`"
                   cols="12"
                 >
-                  <router-link :to="getCommunityPath(community.community_account)">
+                  <router-link
+                    v-if="canLinkToDetail(community.is_public)"
+                    :to="getCommunityPath(community.community_account)"
+                  >
                     <CommunityCard :community="community" :members="members" />
                   </router-link>
-                </v-col>
-              </v-row>
-              <v-row class="justify-center">
-                <v-col cols="auto">
-                  <IncrementalLoader
-                    :loaded-count="memberCommunityListStore.communityStores?.length ?? 0"
-                    :total-count="memberCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                    @load="memberCommunityListStore.next()"
-                  />
+                  <div v-else>
+                    <CommunityCard :community="community" :members="members" />
+                  </div>
                 </v-col>
               </v-row>
             </template>
+            <v-row
+              v-if="memberCommunityListHasMore || memberCommunities.length > 0"
+              class="justify-center"
+              :class="{ 'mt-2': showJoinedSection }"
+            >
+              <v-col cols="auto">
+                <IncrementalLoader
+                  :loaded-count="memberCommunityListStore.communityStores?.length ?? 0"
+                  :total-count="memberCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+                  @load="memberCommunityListStore.next()"
+                />
+              </v-col>
+            </v-row>
 
             <template v-if="showManagedSection">
               <h3 class="text-h6 mt-6 mb-2">{{ $t('user_profile.section.managed_communities') }}</h3>
@@ -865,21 +1030,27 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   :key="`manager_${community.community_id}`"
                   cols="12"
                 >
-                  <router-link :to="getCommunityPath(community.community_account)">
+                  <router-link
+                    v-if="canLinkToDetail(community.is_public)"
+                    :to="getCommunityPath(community.community_account)"
+                  >
                     <CommunityCard :community="community" :members="members" />
                   </router-link>
-                </v-col>
-              </v-row>
-              <v-row class="justify-center">
-                <v-col cols="auto">
-                  <IncrementalLoader
-                    :loaded-count="managerCommunityListStore.communityStores?.length ?? 0"
-                    :total-count="managerCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                    @load="managerCommunityListStore.next()"
-                  />
+                  <div v-else>
+                    <CommunityCard :community="community" :members="members" />
+                  </div>
                 </v-col>
               </v-row>
             </template>
+            <v-row v-if="managerCommunityListHasMore || managerCommunities.length > 0" class="justify-center mt-2">
+              <v-col cols="auto">
+                <IncrementalLoader
+                  :loaded-count="managerCommunityListStore.communityStores?.length ?? 0"
+                  :total-count="managerCommunityListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+                  @load="managerCommunityListStore.next()"
+                />
+              </v-col>
+            </v-row>
           </template>
         </v-window-item>
 
@@ -891,11 +1062,11 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
             {{ $t('user_profile.failed_to_load') }}
           </div>
           <template v-else>
-            <div v-if="visiblePagedFoods.length === 0" class="text-body-1 text-medium-emphasis pa-4">
+            <div v-if="showFoodsTabEmpty" class="text-body-1 text-medium-emphasis pa-4">
               {{ $t('user_profile.empty.foods') }}
             </div>
-            <v-row v-else>
-              <v-col v-for="food in visiblePagedFoods" :key="food.order_id" cols="12" sm="6" md="4">
+            <v-row v-if="pagedFoods.length > 0">
+              <v-col v-for="food in pagedFoods" :key="food.order_id" cols="12" sm="6" md="4">
                 <v-card elevation="2" class="h-100 preview-card profile-panel-card">
                   <v-img
                     v-if="foodImageUrl(food) != null"
@@ -915,6 +1086,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   <v-card-text>
                     <div v-if="food.event_name !== ''" class="mb-2 min-width-0">
                       <router-link
+                        v-if="canLinkToDetail(food.is_public, food.is_linkable)"
                         class="food-event-link text-body-2 text-truncate d-block"
                         :to="getEventPath(food.community_account, food.event_id)"
                         :title="food.event_name"
@@ -922,6 +1094,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                       >
                         {{ food.event_name }}
                       </router-link>
+                      <span v-else class="text-body-2 text-truncate d-block" :title="food.event_name">
+                        {{ food.event_name }}
+                      </span>
                     </div>
                     <div class="text-caption text-medium-emphasis">
                       {{ formatProfileDate(food.ordered_at, 'date') }}
@@ -930,11 +1105,11 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 </v-card>
               </v-col>
             </v-row>
-            <v-row v-if="visiblePagedFoods.length > 0" class="justify-center mt-2">
+            <v-row v-if="foodHasMore || pagedFoods.length > 0" class="justify-center mt-2">
               <v-col cols="auto">
                 <IncrementalLoader
-                  :loaded-count="visiblePagedFoods.length"
-                  :total-count="foodHasMore ? Number.MAX_SAFE_INTEGER : visiblePagedFoods.length"
+                  :loaded-count="pagedFoods.length"
+                  :total-count="foodHasMore ? Number.MAX_SAFE_INTEGER : pagedFoods.length"
                   @load="userFoodsStore.next()"
                 />
               </v-col>
@@ -943,13 +1118,16 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item v-if="isOwner" :value="TAB_ORDERS">
-          <div v-if="visibleUserEvents.length === 0" class="text-body-1 text-medium-emphasis pa-4">
+          <div v-if="userEvents.length === 0" class="text-body-1 text-medium-emphasis pa-4">
             {{ $t('user_profile.empty.orders') }}
           </div>
           <v-row>
-            <v-col v-for="event in visibleUserEvents" :key="`order_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
+            <v-col v-for="event in userEvents" :key="`order_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
-                <router-link :to="getEventPath(event.community_account, event.event_id)">
+                <router-link
+                  v-if="canLinkToDetail(event.is_public)"
+                  :to="getEventPath(event.community_account, event.event_id)"
+                >
                   <UserEventCard
                     v-model:cancel-dialog-event-id="cancelDialogEventId"
                     :orders="orderStateByEventId[event.event_id]?.orders ?? []"
@@ -957,12 +1135,28 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                     :orders-error="orderStateByEventId[event.event_id]?.error != null"
                     :event="event"
                     :isOwner="isOwner"
+                    :hide-private-scope-chip="true"
                     :cancelLoading="cancelLoadingEventId === event.event_id"
                     @downloadInvoice="downloadReceipt"
                     @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
                     @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
                   />
                 </router-link>
+                <div v-else>
+                  <UserEventCard
+                    v-model:cancel-dialog-event-id="cancelDialogEventId"
+                    :orders="orderStateByEventId[event.event_id]?.orders ?? []"
+                    :orders-loading="orderStateByEventId[event.event_id]?.loading ?? false"
+                    :orders-error="orderStateByEventId[event.event_id]?.error != null"
+                    :event="event"
+                    :isOwner="isOwner"
+                    :hide-private-scope-chip="true"
+                    :cancelLoading="cancelLoadingEventId === event.event_id"
+                    @downloadInvoice="downloadReceipt"
+                    @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
+                    @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
+                  />
+                </div>
 
                 <div
                   v-if="cancelLoadingEventId === event.event_id"
@@ -1071,6 +1265,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 .preview-event-link {
   text-decoration: none;
   color: inherit;
+}
+
+.preview-event-link--static {
+  cursor: default;
 }
 
 .profile-panel-card {
