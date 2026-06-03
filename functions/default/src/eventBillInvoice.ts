@@ -25,6 +25,7 @@ import {
   DISCOUNT_SUBSIDY_INVOICE_FEE_LABEL,
 } from '@shokujii/common/utils/invoice.js'
 import { getEvent, getAcceptingOrderEventsByEndTime, type ShokujiiEvent } from './stores/event.js'
+import { getConfigGlobal } from './stores/config.js'
 import { getCommunity, type ShokujiiCommunity } from './stores/community.js'
 import { getEventUrl, getEventBillInvoiceDirectUrl } from './utils/urls.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
@@ -333,14 +334,15 @@ export const eventBillInvoice = onRequest(
       return
     }
 
-    const community = await getCommunity(event.community_id)
+    const [community, config] = await Promise.all([getCommunity(event.community_id), getConfigGlobal()])
     if (community == null) {
       res.status(404).send('Community not found')
       return
     }
 
+    const isSupport = config?.isSupport(uid) ?? false
     const isManager = await community.hasRole(uid, 'manager')
-    if (!isManager) {
+    if (!isSupport && !isManager) {
       res.status(403).send('Forbidden')
       return
     }
