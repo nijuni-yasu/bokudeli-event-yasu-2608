@@ -27,9 +27,9 @@ const logger = createModuleLogger('namesPrintPdf')
 const namesPrintAssetsDir = (): string => path.join(process.cwd(), 'assets', 'namesPrint')
 
 const readDefaultProfileBase64 = (): string => {
-  const p = path.join(namesPrintAssetsDir(), 'default_profile.jpeg')
+  const p = path.join(namesPrintAssetsDir(), 'default_profile.png')
   const buf = fs.readFileSync(p)
-  return `data:image/jpeg;base64,${buf.toString('base64')}`
+  return `data:image/png;base64,${buf.toString('base64')}`
 }
 
 const readBlankProfileBase64 = (): string => {
