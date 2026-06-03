@@ -908,6 +908,7 @@ export default {
       title: 'QRコード付きのチラシを印刷して、告知・集客に役立てよう！',
       description:
         '微調整もしやすい <a href="https://bit.ly/433wAbb" target="_blank">Canvaのテンプレート</a> もぜひご活用ください🎨',
+      download_error: 'チラシのダウンロードに失敗しました',
     },
     invoice: {
       date: '開催日',
