@@ -26,20 +26,13 @@ const avatarElement = ref<VAvatar>()
 const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
 
-const defaultAvatarUserId = computed(() => {
-  if (props.user != null && typeof props.user !== 'string') {
-    return props.user.user_id
-  }
-  return undefined
-})
-
-const defaultAvatar = computed(() => getDefaultAvatarUrl(defaultAvatarUserId.value))
+const defaultAvatar = getDefaultAvatarUrl()
 
 const avatar = computed(() => {
   if (typeof props.user === 'string') {
     return props.user
   } else if (props.user === null || props.user.user_image_url === '') {
-    return defaultAvatar.value
+    return defaultAvatar
   }
   const thumbnails = buildThumbnailsLinks(
     props.user.user_id,
@@ -75,7 +68,7 @@ watch(
 
 const displayAvatar = computed(() => {
   if (useDefaultAvatar.value) {
-    return defaultAvatar.value
+    return defaultAvatar
   }
   return avatar.value
 })
