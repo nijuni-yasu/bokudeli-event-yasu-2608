@@ -1,6 +1,6 @@
 ---
 name: shokujii-code-review
-description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。PRレビュー、コード変更のレビュー依頼時、またはレビューを求められた際に使用する。
+description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み）の4区分で review-comments-evaluate と共通。PRレビュー時は pr-<番号>.md に RC 記録を追記。コード変更のレビュー依頼時に使用する。
 ---
 
 # Shokujii コードレビュー
@@ -43,7 +43,9 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 複数の非同期処理が競合しうる箇所で `isLoading` を個別に持っていないか（先祖返りを防ぐため一つにまとめる）
 - [ ] テーマカラーを直接指定していないか（Vuetify Theme を使う）
 - [ ] `base/src/components/pages/` は deprecated であることを認識しているか
-- [ ] ハードコードされた UI 文字列を `i18n` に移行しているか
+- [ ] ハードコードされた UI 文字列を `i18n` に移行しているか（**`ja.ts` のみ**。英語 locale は作らない）
+- [ ] `src/locales/messages/en.ts` 等の **英語 locale を新規追加していないか**（本プロジェクトは日本語のみ）
+- [ ] 英語用の UI 文字列だけを別ファイルに分けていないか（未使用の `en.ts` 残骸を作らない）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
 
 ### Firestore / Store パターン
@@ -121,9 +123,12 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 ## フィードバック形式
 
-- 🔴 **必須修正**: マージ前に対応が必要（セキュリティ・データ不整合・バグ等）
-- 🟡 **提案**: 改善を検討してほしい（設計・可読性等）
-- 🟢 **任意**: あれば尚良い（スタイル・細かい最適化等）
+[/review-comments-evaluate](../../review-comments-evaluate/SKILL.md) と同一の **4区分**（**❌ 未対応は使わない**）。手順・`pr-<番号>.md` への記録は [SKILL.md](SKILL.md) を参照。
+
+- 🚨 **必須修正**: マージ前に対応が必要（セキュリティ・データ不整合・バグ等）
+- 🟡 **修正提案**: 改善を検討してほしい（設計・可読性等）。マージ必須ではない
+- 👌 **修正不要**: 指摘はあるが対応不要（誤解・仕様どおり・過剰指摘等）
+- ✅ **対応済み**: コード・PR で既に解消済み（ドキュメント追記時の **判断結果** に使用）
 
 ---
 
@@ -362,6 +367,22 @@ const min = DateTime.now()
 import { getReservationLeadTimeMinDateString } from '@shokujii/common/utils/reservationLeadTime.js'
 
 const min = getReservationLeadTimeMinDateString(Date.now())
+```
+
+### NG: 英語 locale ファイル（`en.ts`）の追加
+
+本プロジェクトは **日本語 UI のみ**。`user/src/locales/messages/en.ts` のような部分英語ファイルは、メンテ負荷だけ増やし、実際には `locale: 'ja'` で使われない。
+
+```typescript
+// NG: 英語 locale の新規追加
+// user/src/locales/messages/en.ts
+export default { user: { friend_sort_last_met_at: 'Last met' } }
+```
+
+```typescript
+// OK: 日本語のみ（base / user / admin の ja.ts）
+// user/src/locales/messages/ja.ts
+friend_sort_last_met_at: '最後に会った順',
 ```
 
 ### NG: vue-i18n の `$d` で日付・時刻をフォーマットする

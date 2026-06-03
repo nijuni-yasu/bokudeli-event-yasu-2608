@@ -1,0 +1,138 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const { runTransactionMock, deleteUserMock, listFriendUserIdsMock, recountUserProfileCountsForUsersMock } = vi.hoisted(
+  () => ({
+    runTransactionMock: vi.fn(),
+    deleteUserMock: vi.fn(),
+    listFriendUserIdsMock: vi.fn(),
+    recountUserProfileCountsForUsersMock: vi.fn(),
+  }),
+)
+
+vi.mock('firebase-functions/https', () => ({
+  HttpsError: class HttpsError extends Error {
+    constructor(
+      public code: string,
+      message: string,
+    ) {
+      super(message)
+    }
+  },
+  onCall: <T>(handler: T) => handler,
+}))
+
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: () => ({
+    runTransaction: runTransactionMock,
+  }),
+}))
+
+vi.mock('firebase-admin/auth', () => ({
+  getAuth: () => ({
+    deleteUser: deleteUserMock,
+  }),
+}))
+
+vi.mock('./stores/community.js', () => ({
+  hasSoleManagerCommunity: vi.fn(),
+  getCommunitiesWhereUserIsMember: vi.fn(),
+  removeMemberFromCommunity: vi.fn(),
+}))
+
+vi.mock('./stores/passCode.js', () => ({
+  getPassCodeRefsByUserId: vi.fn(),
+  getPassCodeRefsByUserEmail: vi.fn(),
+}))
+
+vi.mock('./stores/user.js', () => ({
+  anonymizeUser: vi.fn(),
+  anonymizeUserPersonalInformation: vi.fn(),
+  getUserPersonalInformation: vi.fn(),
+}))
+
+vi.mock('./stores/userFriend.js', () => ({
+  listFriendUserIds: (...args: unknown[]) => listFriendUserIdsMock(...args),
+}))
+
+vi.mock('./utils/recountUserProfileCounts.js', () => ({
+  recountUserProfileCountsForUsers: (...args: unknown[]) => recountUserProfileCountsForUsersMock(...args),
+}))
+
+vi.mock('./utils/logger.js', () => ({
+  createModuleLogger: () => ({
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }),
+}))
+
+import { hasSoleManagerCommunity, getCommunitiesWhereUserIsMember } from './stores/community.js'
+import { getPassCodeRefsByUserId, getPassCodeRefsByUserEmail } from './stores/passCode.js'
+import { anonymizeUser, anonymizeUserPersonalInformation, getUserPersonalInformation } from './stores/user.js'
+import { deleteUserAccount } from './deleteUserAccount.js'
+
+type DeleteUserAccountHandler = (req: { auth?: { uid: string } }) => Promise<{ success: true }>
+
+const callDeleteUserAccount = (uid: string | undefined) =>
+  (deleteUserAccount as unknown as DeleteUserAccountHandler)({
+    auth: uid == null ? undefined : { uid },
+  })
+
+beforeEach(() => {
+  runTransactionMock.mockReset()
+  deleteUserMock.mockReset()
+  listFriendUserIdsMock.mockReset()
+  recountUserProfileCountsForUsersMock.mockReset()
+
+  vi.mocked(hasSoleManagerCommunity).mockReset()
+  vi.mocked(getCommunitiesWhereUserIsMember).mockReset()
+  vi.mocked(getPassCodeRefsByUserId).mockReset()
+  vi.mocked(getPassCodeRefsByUserEmail).mockReset()
+  vi.mocked(anonymizeUser).mockReset()
+  vi.mocked(anonymizeUserPersonalInformation).mockReset()
+  vi.mocked(getUserPersonalInformation).mockReset()
+
+  runTransactionMock.mockImplementation(async (fn: (tx: object) => Promise<void>) => fn({}))
+  vi.mocked(hasSoleManagerCommunity).mockResolvedValue(false)
+  vi.mocked(getCommunitiesWhereUserIsMember).mockResolvedValue([])
+  vi.mocked(getPassCodeRefsByUserId).mockResolvedValue([])
+  vi.mocked(getPassCodeRefsByUserEmail).mockResolvedValue([])
+  vi.mocked(getUserPersonalInformation).mockResolvedValue(undefined)
+  vi.mocked(anonymizeUser).mockResolvedValue(undefined)
+  vi.mocked(anonymizeUserPersonalInformation).mockResolvedValue(undefined)
+  deleteUserMock.mockResolvedValue(undefined)
+  listFriendUserIdsMock.mockResolvedValue(['userA', 'userC'])
+  recountUserProfileCountsForUsersMock.mockResolvedValue(undefined)
+})
+
+describe('deleteUserAccount', () => {
+  it('未認証のとき unauthenticated', async () => {
+    await expect(callDeleteUserAccount(undefined)).rejects.toMatchObject({ code: 'unauthenticated' })
+  })
+
+  it('成功後に友人相手 uid へ recountUserProfileCountsForUsers を呼ぶ（RC-50）', async () => {
+    const result = await callDeleteUserAccount('userB')
+
+    expect(result).toEqual({ success: true })
+    expect(listFriendUserIdsMock).toHaveBeenCalledWith('userB')
+    expect(recountUserProfileCountsForUsersMock).toHaveBeenCalledWith(['userA', 'userC'])
+    expect(deleteUserMock).toHaveBeenCalledWith('userB')
+  })
+
+  it('recount 失敗時もアカウント削除は成功する（RC-50 A1）', async () => {
+    recountUserProfileCountsForUsersMock.mockRejectedValue(new Error('recount failed'))
+
+    const result = await callDeleteUserAccount('userB')
+
+    expect(result).toEqual({ success: true })
+    expect(deleteUserMock).toHaveBeenCalledWith('userB')
+  })
+
+  it('友人がいないときは空配列で recount を呼ぶ', async () => {
+    listFriendUserIdsMock.mockResolvedValue([])
+
+    await callDeleteUserAccount('userB')
+
+    expect(recountUserProfileCountsForUsersMock).toHaveBeenCalledWith([])
+  })
+})

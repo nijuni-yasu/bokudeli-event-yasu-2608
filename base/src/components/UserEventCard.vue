@@ -14,6 +14,8 @@ const props = defineProps<{
   event: BokudeliEvent
   orders: EventMemberOrder[]
   isOwner: boolean
+  /** マイページ文脈では URL 限定公開チップを出さない（§4.2.0） */
+  hidePrivateScopeChip?: boolean
   cancelLoading?: boolean
   /** 注文サブコレクション取得中（注文ブロックのみローディング） */
   ordersLoading?: boolean
@@ -237,7 +239,7 @@ const submitCancel = () => {
     />
     <div class="d-flex align-center flex-wrap ga-2 mt-2 ml-3">
       <EventStatusChip :status="event.calculatedEventStatus" size="small" />
-      <v-chip v-if="!event.is_public" color="primary" size="small">
+      <v-chip v-if="!event.is_public && !hidePrivateScopeChip" color="primary" size="small">
         {{ $t('private_event') }}
       </v-chip>
     </div>

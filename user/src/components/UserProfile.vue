@@ -4,16 +4,11 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import {
-  mdiAccountOutline,
-  mdiCartOutline,
-  mdiLogout,
-  mdiEmailOutline,
-  mdiCellphoneArrowDown,
-  mdiPencil,
-} from '@mdi/js'
-import { getProfile } from '@/router/utils'
+import { mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiPencil, mdiReceiptText } from '@mdi/js'
+import { useRoute } from 'vue-router'
+import { getProfile, getUserPath } from '@/router/utils'
 
+const route = useRoute()
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const isLogin = computed(() => firebaseUser.value?.uid != null)
@@ -24,6 +19,18 @@ const userStore = computed<UserStore | null>(() => {
 
 const user = computed(() => {
   return userStore.value?.user ?? null
+})
+
+const ordersTabPath = computed(() => {
+  const uid = firebaseUser.value?.uid
+  if (uid == null) return '/mypage'
+  return { path: getUserPath(uid), query: { tab: 'orders' } }
+})
+
+const isOrdersTabActive = computed(() => {
+  const uid = firebaseUser.value?.uid
+  if (uid == null) return false
+  return route.path === getUserPath(uid) && route.query.tab === 'orders'
 })
 
 const isOpenHomeButtonDialog = ref(false)
@@ -43,36 +50,16 @@ const logout = async () => {
     <!-- SECTION Menu -->
     <v-menu activator="parent" width="230" location="bottom end" offset="14px">
       <v-list>
-        <!-- 👉 User Avatar & Name -->
-        <v-list-item>
+        <!-- 👉 User Avatar & Name（マイページへ） -->
+        <v-list-item :to="`/mypage`">
           <template #prepend>
             <v-list-item-action start>
               <UserAvatar :user="user" />
             </v-list-item-action>
           </template>
 
-          <v-list-item-title class="font-weight-medium">{{ user?.user_name }}</v-list-item-title>
+          <v-list-item-title class="text-h5">{{ user?.user_name }}</v-list-item-title>
         </v-list-item>
-        <v-divider class="my-2" />
-
-        <!-- 👉 Profile -->
-        <v-list-item :to="`/mypage`">
-          <template #prepend>
-            <v-icon class="me-2" :icon="mdiAccountOutline" size="22" />
-          </template>
-          <v-list-item-title>{{ $t('user_profile.my_page') }}</v-list-item-title>
-        </v-list-item>
-
-        <v-divider class="my-2" />
-
-        <!-- 👉 Profile settings -->
-        <v-list-item :to="getProfile()">
-          <template #prepend>
-            <v-icon class="me-2" :icon="mdiPencil" size="22" />
-          </template>
-          <v-list-item-title>{{ $t('user_profile.profile_settings') }}</v-list-item-title>
-        </v-list-item>
-
         <v-divider class="my-2" />
 
         <!-- 👉 cart -->
@@ -81,6 +68,26 @@ const logout = async () => {
             <v-icon class="me-2" :icon="mdiCartOutline" size="22" />
           </template>
           <v-list-item-title>{{ $t('user_profile.cart') }}</v-list-item-title>
+        </v-list-item>
+
+        <v-divider class="my-2" />
+
+        <!-- 👉 Order history -->
+        <v-list-item :to="ordersTabPath" :active="isOrdersTabActive">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiReceiptText" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.tab_orders') }}</v-list-item-title>
+        </v-list-item>
+
+        <v-divider class="my-2" />
+
+        <!-- 👉 Profile edit -->
+        <v-list-item :to="getProfile()">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiPencil" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('user_profile.profile_settings') }}</v-list-item-title>
         </v-list-item>
 
         <v-divider class="my-2" />

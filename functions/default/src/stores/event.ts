@@ -10,7 +10,7 @@ import {
 import { Event } from '@shokujii/common/schemas/Event.js'
 import { EventMemberOrder, EventMemberOrderStatusType } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
-import { getUser, type ShokujiiUser } from './user.js'
+import { getUser, getUserRef, type ShokujiiUser } from './user.js'
 import { EventLog } from '@shokujii/common/schemas/EventLog.js'
 import { getRefFromPath } from '@shokujii/common/schemas/firebase/index.js'
 import {
@@ -257,6 +257,73 @@ export const getEventInCommunity = async (
     .withConverter(new ShokujiiEventConverter())
   const snapshot = await (transaction === undefined ? eventRef.get() : transaction.get(eventRef))
   return snapshot.exists ? snapshot.data() : undefined
+}
+
+/** `getEventsInCommunities` の結果キー: `community_id\tevent_id` */
+const buildCommunityEventKey = (communityId: string, eventId: string): string => `${communityId}\t${eventId}`
+
+export const getCommunityEventKey = buildCommunityEventKey
+
+/**
+ * マイページプロフィール用の参加イベントプレビュー（§4.2.0）。
+ * 限定公開も含め参加実績から limit する（リンク可否は Callable が `is_linkable` で付与）。
+ */
+export const listEventsForProfilePreview = async (params: {
+  targetUserId: string
+  limit: number
+}): Promise<ShokujiiEvent[]> => {
+  const { targetUserId, limit } = params
+  const db = getFirestore()
+  const userRef = getUserRef(targetUserId)
+  const eventsQuery = db
+    .collectionGroup('events')
+    .where('members', 'array-contains', userRef)
+    .where('is_deleted', '==', false)
+  const snapshot = await eventsQuery
+    .orderBy('event_start_datetime', 'desc')
+    .limit(limit)
+    .withConverter(new ShokujiiEventConverter(targetUserId))
+    .get()
+  return snapshot.docs.map((doc) => doc.data())
+}
+
+/**
+ * `communities/{communityId}/events/{eventId}` を一括取得する。
+ * 大量参照時は Firestore の getAll の上限を考慮して 100 件単位でチャンクする。
+ * 戻り値のキーは `getCommunityEventKey(communityId, eventId)`。存在しないものは含めない。
+ */
+export const getEventsInCommunities = async (
+  refs: readonly { community_id: string; event_id: string }[],
+): Promise<Map<string, ShokujiiEvent>> => {
+  const result = new Map<string, ShokujiiEvent>()
+  if (refs.length === 0) {
+    return result
+  }
+  const db = getFirestore()
+  const converter = new ShokujiiEventConverter()
+  const uniqueRefs = Array.from(
+    new Map(refs.map((r) => [buildCommunityEventKey(r.community_id, r.event_id), r])).values(),
+  )
+
+  const CHUNK_SIZE = 100
+  for (let i = 0; i < uniqueRefs.length; i += CHUNK_SIZE) {
+    const chunk = uniqueRefs.slice(i, i + CHUNK_SIZE)
+    const docRefs = chunk.map((r) =>
+      db.collection('communities').doc(r.community_id).collection('events').doc(r.event_id).withConverter(converter),
+    )
+    const snapshots = await db.getAll(...docRefs)
+    snapshots.forEach((snapshot) => {
+      if (!snapshot.exists) {
+        return
+      }
+      const data = snapshot.data() as ShokujiiEvent | undefined
+      if (data == null) {
+        return
+      }
+      result.set(buildCommunityEventKey(data.community_id, data.id), data)
+    })
+  }
+  return result
 }
 
 export const saveEvent = async (userId: string, event: ShokujiiEvent, transaction?: Transaction): Promise<void> => {

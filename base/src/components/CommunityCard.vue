@@ -55,11 +55,11 @@ defineProps<{
   min-height: 0;
 }
 
-/* 説明文: 5行で切り捨て（末尾 …）。v-card-text 直下ではなく内側 div に指定（Vuetify と display の競合を避ける） */
+/* 説明文: 2行で切り捨て（末尾 …）。v-card-text 直下ではなく内側 div に指定（Vuetify と display の競合を避ける） */
 .community-card__desc {
   display: -webkit-box;
-  -webkit-line-clamp: 5;
-  line-clamp: 5;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   /* autoprefixer: ignore next - line-clamp に必須 */
   -webkit-box-orient: vertical;
   overflow: hidden;

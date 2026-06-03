@@ -5,6 +5,7 @@ import {
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
+  Timestamp,
   Transaction,
 } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
@@ -195,6 +196,36 @@ export const anonymizeUser = async (uid: string, transaction: Transaction): Prom
   })
   transaction.set(userRef, anonymizedUser, { merge: true })
   transaction.update(userRef, { user_account: FieldValue.delete() })
+}
+
+/**
+ * マイページ用のカウントフィールドのみを更新する。
+ * `updated_at` 等の監査フィールドを変えないため、`update` で部分書き込みする
+ *（converter 経由の `set` だと `updated_at` まで書き換わるための例外的な扱い）。
+ */
+export type UserProfileCountsUpdate = {
+  participated_event_count: number
+  friend_count: number
+  joined_community_count: number
+  managed_community_count: number
+  ordered_food_count: number
+}
+
+export const updateUserProfileCounts = async (
+  userId: string,
+  counts: UserProfileCountsUpdate,
+  transaction?: Transaction,
+): Promise<void> => {
+  const userRef = getUserRef(userId)
+  const update = {
+    ...counts,
+    counts_updated_at: Timestamp.now(),
+  }
+  if (transaction === undefined) {
+    await userRef.update(update)
+  } else {
+    transaction.update(userRef, update)
+  }
 }
 
 /**

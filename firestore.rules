@@ -6,6 +6,49 @@ service cloud.firestore {
             return request.auth != null &&
                    request.auth.uid in get(/databases/$(database)/documents/configs/global).data.support_user_ids
         }
+        // マイページ用冗長カウント（Functions の recount のみ更新。RC-56）
+        function userProfileCountFields() {
+            return [
+                'participated_event_count',
+                'friend_count',
+                'joined_community_count',
+                'managed_community_count',
+                'ordered_food_count',
+                'counts_updated_at',
+            ];
+        }
+        // カウント1フィールドがクライアント update で改ざん・削除されていないか。
+        // resource に無いフィールドへの request 側 0 追加は許可（未バックフィル既存ユーザー向け RC-74）。
+        // resource にあるフィールドは request にも同一値が必須（deleteField 相当の削除を拒否 RC-78）。
+        function userProfileCountFieldUnchanged(field) {
+            return (!(field in resource.data)
+                    && (!(field in request.resource.data) || request.resource.data.get(field, 0) == 0))
+                || (field in resource.data
+                    && field in request.resource.data
+                    && request.resource.data[field] == resource.data[field]);
+        }
+        function userProfileCountsUpdatedAtUnchanged() {
+            return (!('counts_updated_at' in resource.data) && !('counts_updated_at' in request.resource.data))
+                || ('counts_updated_at' in resource.data
+                    && 'counts_updated_at' in request.resource.data
+                    && request.resource.data.counts_updated_at == resource.data.counts_updated_at);
+        }
+        function userProfileCountsUnchanged() {
+            return userProfileCountFieldUnchanged('participated_event_count')
+                && userProfileCountFieldUnchanged('friend_count')
+                && userProfileCountFieldUnchanged('joined_community_count')
+                && userProfileCountFieldUnchanged('managed_community_count')
+                && userProfileCountFieldUnchanged('ordered_food_count')
+                && userProfileCountsUpdatedAtUnchanged();
+        }
+        function userProfileCountsZeroOrAbsentOnCreate() {
+            return request.resource.data.get('participated_event_count', 0) == 0
+                && request.resource.data.get('friend_count', 0) == 0
+                && request.resource.data.get('joined_community_count', 0) == 0
+                && request.resource.data.get('managed_community_count', 0) == 0
+                && request.resource.data.get('ordered_food_count', 0) == 0
+                && !('counts_updated_at' in request.resource.data);
+        }
         match /assets/{asset} {
             allow read: if true
         }
@@ -100,7 +143,15 @@ service cloud.firestore {
         match /users/{user_id} {
             allow read: if true
             // ユーザー情報はログインユーザーでないと create/update/deleteできない
-            allow create, update: if request.auth != null && request.auth.uid == user_id
+            allow create: if request.auth != null
+                && request.auth.uid == user_id
+                && userProfileCountsZeroOrAbsentOnCreate()
+            allow update: if request.auth != null
+                && request.auth.uid == user_id
+                && userProfileCountsUnchanged()
+            match /friends/{friend_user_id} {
+                allow read, write: if false
+            }
         }
         match /users_personal_information/{user_id} {
             // 個人情報はログインユーザーでないと read できない

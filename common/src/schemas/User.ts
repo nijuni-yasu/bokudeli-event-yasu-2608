@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
 
+const NonNegativeIntSchema = z.number().int().nonnegative()
+
 const UserDbSchema = z.object({
   // Mandatory
   user_id: z.string().nonempty(),
@@ -19,6 +21,14 @@ const UserDbSchema = z.object({
   user_account: NonEmptyStringSchema.optional(),
   is_deleted: z.boolean().optional(),
   deleted_at: TimestampSchema.optional(),
+  // マイページ用の冗長カウント。本番 backfill 完了後に required へ格上げ済み（PR6）
+  participated_event_count: NonNegativeIntSchema,
+  friend_count: NonNegativeIntSchema,
+  joined_community_count: NonNegativeIntSchema,
+  managed_community_count: NonNegativeIntSchema,
+  ordered_food_count: NonNegativeIntSchema,
+  // counts_updated_at は初回 recount 完了までセットされない可能性があるため optional のまま
+  counts_updated_at: TimestampSchema.optional(),
 })
 
 const UserAppSchema = z.object({
@@ -38,6 +48,13 @@ const UserAppSchema = z.object({
   user_sns_website: z.string().default(''),
   is_deleted: z.boolean().default(false),
   deleted_at: EpochMillisSchema.optional(),
+  // マイページ用の冗長カウント。read 側は未設定を 0 として扱う
+  participated_event_count: NonNegativeIntSchema.default(0),
+  friend_count: NonNegativeIntSchema.default(0),
+  joined_community_count: NonNegativeIntSchema.default(0),
+  managed_community_count: NonNegativeIntSchema.default(0),
+  ordered_food_count: NonNegativeIntSchema.default(0),
+  counts_updated_at: EpochMillisSchema.optional(),
 })
 
 const convertToDb = (user: User) => {
@@ -64,6 +81,13 @@ export class User {
   user_sns_website!: string
   is_deleted!: boolean
   deleted_at?: number
+  // マイページ用の冗長カウント
+  participated_event_count!: number
+  friend_count!: number
+  joined_community_count!: number
+  managed_community_count!: number
+  ordered_food_count!: number
+  counts_updated_at?: number
 
   constructor(id: string, src: Partial<User>) {
     Object.assign(this, UserAppSchema.parse(src))

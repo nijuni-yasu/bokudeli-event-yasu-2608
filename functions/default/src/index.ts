@@ -28,6 +28,7 @@ export const {
   requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
   deleteUserAccount,
   addToCart, removeFromCart, confirmOrder,
+  getUserFriends, backfillUserFriends, getUserFriendMeetLog,
   eventReceipt,
   eventCopy,
   eventCopyRepeat,
@@ -39,6 +40,8 @@ export const {
   generateUserImageThumbnail,
   cancelEvent,
   reportClientError,
+  onCommunityMemberWritten,
+  getUserProfilePreview, getUserFoods, backfillUserProfileCounts,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -63,4 +66,7 @@ export const {
   import('./memberOrders.js'),
   import('./eventCancellation.js'),
   import('./clientErrorReport.js'),
+  import('./userFriends.js'),
+  import('./communityMemberCountsTrigger.js'),
+  import('./userProfile.js'),
 ])))

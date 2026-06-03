@@ -235,3 +235,48 @@ export const removeMemberFromCommunity = async (
   const memberRef = communityRef.collection('members').doc(userId).withConverter(communityMemberConverter)
   transaction.delete(memberRef)
 }
+
+/**
+ * 参加コミュニティ数（親 `communities.members` 配列に userRef が含まれる件数）。
+ * members サブコレは書き込み正本。集計 read は UI（UserProfilePage）と同じ親配列を使う（RC-55）。
+ * collection group + documentId は Admin SDK エラーおよび events/members 混入のため非採用。
+ */
+export const countJoinedCommunitiesForUser = async (userId: string): Promise<number> => {
+  if (userId === '') {
+    return 0
+  }
+  const db = getFirestore()
+  const userRef = getUserRef(userId)
+  const snapshot = await db.collection('communities').where('members', 'array-contains', userRef).count().get()
+  return snapshot.data().count
+}
+
+/**
+ * マイページプロフィール用のコミュニティプレビュー（§4.2.0）。
+ * 限定公開も含め参加・運営実績から limit する。
+ */
+export const listCommunitiesForProfilePreview = async (params: {
+  targetUserId: string
+  arrayField: 'members' | 'managers'
+  limit: number
+}): Promise<ShokujiiCommunity[]> => {
+  const { targetUserId, arrayField, limit } = params
+  const db = getFirestore()
+  const userRef = getUserRef(targetUserId)
+  const communitiesQuery = db.collection('communities').where(arrayField, 'array-contains', userRef)
+  const snapshot = await communitiesQuery.limit(limit).withConverter(communityConverter).get()
+  return snapshot.docs.map((doc) => doc.data())
+}
+
+/**
+ * 管理コミュニティ数（親 `communities.managers` 配列に userRef が含まれる件数）。RC-55 同上。
+ */
+export const countManagedCommunitiesForUser = async (userId: string): Promise<number> => {
+  if (userId === '') {
+    return 0
+  }
+  const db = getFirestore()
+  const userRef = getUserRef(userId)
+  const snapshot = await db.collection('communities').where('managers', 'array-contains', userRef).count().get()
+  return snapshot.data().count
+}

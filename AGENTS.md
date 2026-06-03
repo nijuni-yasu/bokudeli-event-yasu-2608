@@ -14,8 +14,8 @@ AIエージェント向けプロジェクトガイド。
 | PR 本文生成                     | `/git-create-pull-request`   |
 | コードレビュー                  | `/shokujii-code-review`      |
 | lint・format チェック           | `/lint-and-format`           |
-| fixup                           | `/git-fixup`                 |
-| squash                          | `/git-squash`                |
+| fixup（追修正の統合。新規・分割向きは split-commit / commit-message へ） | `/git-fixup`                 |
+| squash（統合＋メッセージ更新。新規・分割向きは split-commit / commit-message へ） | `/git-squash`                |
 | レビューコメント検討            | `/review-comments-evaluate`  |
 | レビューコメント返信            | `/review-comments-reply`     |
 | コードレビュードキュメント更新  | `/review-doc-update`         |
@@ -85,6 +85,16 @@ AIエージェント向けプロジェクトガイド。
 - **言語**: TypeScript（`any` 禁止）
 - **フォーマッタ**: Prettier (`.prettierrc`)
 - **Linter**: ESLint (`eslint.config.mjs`)
+
+### UI 文言・i18n（日本語のみ）
+
+- **表示言語は日本語のみ**（Phase 1）。英語 UI・多言語切替は未対応。
+- UI 文字列は **`ja.ts` にのみ**追加する。
+  - `base/src/locales/messages/ja.ts`（共通）
+  - 各アプリの `src/locales/messages/ja.ts`（例: `user` / `admin`）
+- **`src/locales/messages/en.ts` 等の英語 locale ファイルは作らない**（製品として多言語対応を始める明示指示がある場合を除く）。
+- i18n 基盤（`vue-i18n`）は日本語用の `$t` 集約のために使う。`base/src/plugins/i18n/index.ts` は `locale` / `fallbackLocale` とも **`ja`**。各アプリの `themeConfig` の `langConfig` も日本語のみとする。
+- 日付・時刻の表示は `common/src/utils/datetime.ts` の `convertToXxx` を使う（`vue-i18n` の `datetimeFormats` / `$d` は新規追加しない）。
 
 ### 開発コマンド
 
