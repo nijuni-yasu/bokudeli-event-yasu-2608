@@ -8,7 +8,9 @@ import {
   removeMemberFromCommunity,
 } from './stores/community.js'
 import { getPassCodeRefsByUserId, getPassCodeRefsByUserEmail } from './stores/passCode.js'
+import { listFriendUserIds } from './stores/userFriend.js'
 import { anonymizeUser, anonymizeUserPersonalInformation, getUserPersonalInformation } from './stores/user.js'
+import { recountUserProfileCountsForUsers } from './utils/recountUserProfileCounts.js'
 
 const db = getFirestore()
 const logger = createModuleLogger('deleteUserAccount')
@@ -73,6 +75,14 @@ export const deleteUserAccount = onCall<unknown, Promise<{ success: true }>>(asy
         transaction.delete(ref)
       }
     })
+
+    // RC-50: 退会者の友人相手側 friend_count を再集計（一覧除外ルールとキャッシュを一致させる）
+    try {
+      const friendUserIds = (await listFriendUserIds(uid)).filter((id) => id !== '' && id !== uid)
+      await recountUserProfileCountsForUsers(friendUserIds)
+    } catch (error) {
+      logger.error('recountUserProfileCountsForUsers failed after deleteUserAccount', { userId: uid, error })
+    }
 
     // Firebase Auth のアカウントを削除（auth/user-not-found は既に削除済みのため成功扱い）
     try {

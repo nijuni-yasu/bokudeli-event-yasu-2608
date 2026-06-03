@@ -6,6 +6,7 @@ vi.mock('../stores/userFriend.js', () => ({
 }))
 
 vi.mock('../stores/user.js', () => ({
+  getUser: vi.fn(),
   getUsersByUserIds: vi.fn(),
 }))
 
@@ -15,7 +16,7 @@ vi.mock('../stores/event.js', () => ({
 }))
 
 import { listUserFriends, getUserFriend } from '../stores/userFriend.js'
-import { getUsersByUserIds } from '../stores/user.js'
+import { getUser, getUsersByUserIds } from '../stores/user.js'
 import { getEventsInCommunities } from '../stores/event.js'
 import { resolveUserFriendsList, resolveUserFriendMeetLog } from './userFriendsResolver.js'
 
@@ -186,7 +187,51 @@ describe('resolveUserFriendsList', () => {
 describe('resolveUserFriendMeetLog', () => {
   beforeEach(() => {
     vi.mocked(getUserFriend).mockReset()
+    vi.mocked(getUser).mockReset()
     vi.mocked(getEventsInCommunities).mockReset()
+    vi.mocked(getUser).mockResolvedValue({
+      user_id: 'friend1',
+      user_name: 'Friend',
+      user_image_url: '',
+      is_deleted: false,
+    } as never)
+  })
+
+  it('友人が退会済みのとき null を返し events を読まない（RC-58）', async () => {
+    vi.mocked(getUserFriend).mockResolvedValue({
+      meet_count: 1,
+      event_history: [{ event_id: 'e1', community_id: 'c1', event_at: 1000 }],
+    } as never)
+    vi.mocked(getUser).mockResolvedValue({
+      user_id: 'friend1',
+      is_deleted: true,
+    } as never)
+
+    const result = await resolveUserFriendMeetLog({
+      targetUserId: 'owner',
+      friendUserId: 'friend1',
+      viewerUid: 'viewer',
+    })
+
+    expect(result).toBeNull()
+    expect(getEventsInCommunities).not.toHaveBeenCalled()
+  })
+
+  it('友人 users が存在しないとき null を返す（RC-58）', async () => {
+    vi.mocked(getUserFriend).mockResolvedValue({
+      meet_count: 1,
+      event_history: [{ event_id: 'e1', community_id: 'c1', event_at: 1000 }],
+    } as never)
+    vi.mocked(getUser).mockResolvedValue(undefined)
+
+    const result = await resolveUserFriendMeetLog({
+      targetUserId: 'owner',
+      friendUserId: 'friend1',
+      viewerUid: 'viewer',
+    })
+
+    expect(result).toBeNull()
+    expect(getEventsInCommunities).not.toHaveBeenCalled()
   })
 
   it('限定公開を含め日付降順で返す（他者は is_linkable false）', async () => {

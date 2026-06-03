@@ -1,7 +1,7 @@
 import type { UserFriendListItem, UserFriendMeetLogItem, UserFriendsSortBy } from '@shokujii/common/apis/userFriends.js'
 import type { UserFriend } from '@shokujii/common/schemas/UserFriend.js'
 import { listUserFriends, getUserFriend, type UserFriendsListCursor } from '../stores/userFriend.js'
-import { getUsersByUserIds } from '../stores/user.js'
+import { getUser, getUsersByUserIds } from '../stores/user.js'
 import { getCommunityEventKey, getEventsInCommunities, type ShokujiiEvent } from '../stores/event.js'
 import { computeProfileItemLinkableToViewer, MAX_PROFILE_PREVIEW_SKIP_PAGES } from './profileItemVisibility.js'
 
@@ -161,6 +161,11 @@ export const resolveUserFriendMeetLog = async (params: {
   const { targetUserId, friendUserId, viewerUid } = params
   const friend = await getUserFriend(targetUserId, friendUserId)
   if (friend == null) {
+    return null
+  }
+
+  const friendUser = await getUser(friendUserId, false)
+  if (friendUser == null || friendUser.is_deleted) {
     return null
   }
 

@@ -32,6 +32,15 @@ export const userFriendRef = (uid: string, friendUid: string): DocumentReference
   return friendsCollection(uid).doc(friendUid).withConverter(userFriendConverter)
 }
 
+/**
+ * `users/{uid}/friends` のドキュメント ID（相手 user_id）をすべて返す。
+ * 退会後の相手側 recount（RC-50）など、ページング不要の列挙用。
+ */
+export const listFriendUserIds = async (uid: string): Promise<string[]> => {
+  const snapshot = await friendsCollection(uid).select().get()
+  return snapshot.docs.map((doc) => doc.id)
+}
+
 export const getUserFriend = async (
   uid: string,
   friendUid: string,
@@ -96,7 +105,7 @@ export const listUserFriends = async (
   const lastDoc = pageDocs[pageDocs.length - 1]
   const nextCursor = hasMore
     ? {
-        value: (lastDoc.data() as UserFriend)[sortBy],
+        value: lastDoc.data()[sortBy],
         friend_user_id: lastDoc.id,
       }
     : null
