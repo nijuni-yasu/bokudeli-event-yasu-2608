@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar } from '@mdi/js'
+import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar, mdiMessageTextOutline } from '@mdi/js'
+import { buildEventChatRoomId } from '@shokujii/common/schemas/ChatRoom.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { useCommunityStore } from '@shokujii/base/stores/community'
@@ -27,6 +28,12 @@ const communityStore = useCommunityStore(props.communityAccount)
 const isPosted = props.isPosted
 
 const event = computed(() => eventStore.event)
+
+const chatRoomPath = computed(() => {
+  const currentEvent = event.value
+  if (currentEvent == null) return '/chat'
+  return `/chat/${buildEventChatRoomId(currentEvent.community_id, currentEvent.id)}`
+})
 
 /** Checkout リダイレクト直後など、注文一覧が未読込の間は true（flash 表示や誤ったシェア誘導を防ぐ） */
 const isLoadingOrder = computed(() => {
@@ -166,6 +173,19 @@ watch(
             </a>
           </v-card-text>
           <v-card-text class="mt-5">
+            <v-row justify="center" v-if="!isProcessing">
+              <v-btn
+                class="my-2"
+                size="large"
+                color="primary"
+                :append-icon="mdiMessageTextOutline"
+                rounded="pill"
+                :to="chatRoomPath"
+                @click="model = false"
+              >
+                {{ $t('chat.open_chat') }}
+              </v-btn>
+            </v-row>
             <v-row justify="center" v-if="event.is_public && !isPosted && !isProcessing">
               <v-btn
                 class="my-2"

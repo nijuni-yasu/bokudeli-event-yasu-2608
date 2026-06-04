@@ -96,6 +96,11 @@ export const eventConverter: FirestoreDataConverter<BokudeliEvent> = {
   },
 }
 
+/** communities/{communityId}/events/{eventId} への直接参照（collectionGroup 不使用） */
+export const getEventInCommunityRef = (communityId: string, eventId: string) => {
+  return doc(db, 'communities', communityId, 'events', eventId).withConverter(eventConverter)
+}
+
 const menuConverter: FirestoreDataConverter<EventMenu> = {
   toFirestore(menu: EventMenu): DocumentData {
     return menu.toFirestore()
