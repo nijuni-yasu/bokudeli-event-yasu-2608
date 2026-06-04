@@ -7,7 +7,7 @@ import {
 } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
-import { getEventUrl, getAdminOrderUrl, convertStoragePathToURL } from './utils/urls.js'
+import { getEventUrl, getPartnerOrderUrl, convertStoragePathToURL } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { getAcceptingOrderEventsByTime, ShokujiiEvent } from './stores/event.js'
 import {
@@ -111,7 +111,7 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent): Promise
     order_total_price,
     event_url: getEventUrl(event.community_account, event.id),
     orders,
-    order_url: getAdminOrderUrl(event.id),
+    order_url: getPartnerOrderUrl(event.id),
     organizer_fullname: event.organizer_fullname,
     organizer_company: event.organizer_company,
     organizer_email: event.organizer_email,
@@ -153,7 +153,7 @@ async function createTemplateDataForOrganizersOrderDeadline(event: ShokujiiEvent
     orders,
     delivery_date,
     order_total_price: 0, // 主催者向けでは使用しない
-    order_url: getAdminOrderUrl(event.id),
+    order_url: getPartnerOrderUrl(event.id),
     organizer_fullname: event.organizer_fullname,
     organizer_company: event.organizer_company,
     organizer_email: event.organizer_email,

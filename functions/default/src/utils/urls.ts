@@ -3,7 +3,7 @@ import * as common from '@shokujii/common/utils/urls.js'
 import { getStorage } from 'firebase-admin/storage'
 
 const EVENT_HOST = defineString('EVENT_HOST')
-const ADMIN_HOST = defineString('ADMIN_HOST')
+const PARTNER_HOST = defineString('PARTNER_HOST')
 
 /*
  * Firebase Storage Base URL
@@ -52,6 +52,6 @@ export const getManageCommunityUrl = (communityAccount: string) =>
   common.getManageCommunityUrl(EVENT_HOST.value(), communityAccount)
 
 /*
- * Admin URLs
+ * Partner URLs
  */
-export const getAdminOrderUrl = (eventId: string) => common.getAdminOrderUrl(ADMIN_HOST.value(), eventId)
+export const getPartnerOrderUrl = (eventId: string) => common.getPartnerOrderUrl(PARTNER_HOST.value(), eventId)

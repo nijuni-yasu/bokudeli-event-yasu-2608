@@ -1,6 +1,6 @@
 import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getEventUrl, getAdminOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
+import { getEventUrl, getPartnerOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
 import { ShokujiiEvent, getAcceptingOrderEventsByTime, getApplyingReservationEvents } from './stores/event.js'
 import { getUser } from './stores/user.js'
@@ -89,7 +89,7 @@ async function createTemplateDataForApplyingOrder(
     order_total_price,
     event_url: getEventUrl(event.community_account, event.id),
     orders,
-    order_url: getAdminOrderUrl(event.id),
+    order_url: getPartnerOrderUrl(event.id),
     approve_deadline_datetime: convertToDateWeekdayShort(limitTimeMills),
     organizer_fullname: event.organizer_fullname,
     organizer_company: event.organizer_company,

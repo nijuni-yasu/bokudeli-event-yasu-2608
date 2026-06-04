@@ -8,7 +8,7 @@ import { getCommunity } from './stores/community.js'
 import { getEventPartnerShop } from './stores/partner.js'
 import * as sgMail from './utils/sendgrid.js'
 import { DEFAULT_FROM, SUPPORT_MAIL } from './utils/mail.js'
-import { getAdminOrderUrl, getEventUrl } from './utils/urls.js'
+import { getPartnerOrderUrl, getEventUrl } from './utils/urls.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { createModuleLogger } from './utils/logger.js'
 
@@ -106,7 +106,7 @@ export const cancelEvent = onCall<CancelEventRequest, Promise<CancelEventRespons
               community_name: event.community_name,
               shop_name: shopData.shop_name,
               event_url: getEventUrl(event.community_account, eventId),
-              admin_url: getAdminOrderUrl(eventId),
+              admin_url: getPartnerOrderUrl(eventId),
             },
           })
         }
