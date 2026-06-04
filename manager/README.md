@@ -2,47 +2,47 @@
 
 初回はnpm install
 ```
-cd admin
+cd partner
 
 npm install
 ```
 
 ローカルで立ち上げる。
 ```
-cd admin
+cd partner
 
 npm run dev-development
 ```
 
 ビルドして開発テスト環境にデプロイする
 ```
-cd admin
+cd partner
 
 npm run build-development
 
 firebase use bokudeli-event-test
 
-firebase deploy --only hosting:admin
+firebase deploy --only hosting:partner
 ```
 
 # ADMIN(店舗管理画面)の本番環境について
 
 ローカルで立ち上げる。
 ```
-cd admin
+cd partner
 
 npm run dev-production
 ```
 
 ビルドして本番環境にデプロイする
 ```
-cd admin
+cd partner
 
 npm run build-production
 
 firebase use bokudeli-event-dev
 
-firebase deploy --only hosting:admin
+firebase deploy --only hosting:partner
 ```
 
 # firebase の プロジェクトIDについて

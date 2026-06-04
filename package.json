@@ -24,7 +24,7 @@
     "common",
     "base",
     "user",
-    "admin",
+    "partner",
     "functions/default"
   ]
 }

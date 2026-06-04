@@ -10,8 +10,8 @@
   共有 UI コンポーネントを定義 (Vue3 + Vuetify3 + Materio)
 - **`/user`**  
   ユーザー向けメインアプリケーション (Vue3 + Vuetify3)
-- **`/admin`**  
-  店舗管理者向けアプリケーション (Vue3 + Vuetify3)
+- **`/partner`**  
+  店舗（パートナー）向けアプリケーション (Vue3 + Vuetify3)
 - **`/curry`**  
   神田カレーグランプリ向けアプリケーション (Vue3 + Vuetify3)
 - **`/functions/default`**  

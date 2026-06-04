@@ -29,10 +29,10 @@ Promise.all([
   import('@shokujii/base/plugins/i18n/index.js'),
   import('@shokujii/base/plugins/layouts.js'),
 ]).then(([routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) => {
-  configureClientErrorReporting({ app: 'admin' })
+  configureClientErrorReporting({ app: 'partner' })
   for (const plugin of [routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) {
     plugin.default(app, { themes })
   }
-  setupGlobalErrorHandling(app, routerMod.router, { app: 'admin' })
+  setupGlobalErrorHandling(app, routerMod.router, { app: 'partner' })
   app.mount('#app')
 })
