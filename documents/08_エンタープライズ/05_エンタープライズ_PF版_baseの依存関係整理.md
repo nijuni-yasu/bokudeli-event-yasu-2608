@@ -5,7 +5,7 @@
 
 # 1. 概要
 
-`base/README.md` では、`@/utils/router` への依存が「依存関係の逆転」として明記されている。実際には `@/router/utils` を参照しており、base が user/admin のルーティング構造に依存している状態である。
+`base/README.md` では、`@/utils/router` への依存が「依存関係の逆転」として明記されている。実際には `@/router/utils` を参照しており、base が user/partner のルーティング構造に依存している状態である。
 
 **理想**: base は本来 common のみに依存すべき。base が user 固有の構造に依存している箇所は解消する。
 
@@ -17,7 +17,7 @@
 
 ## 仕組み
 
-`base` の `@/router/utils` は、Vite ビルド時に **各 app の `src` に解決**される（`@` → `user/src` / `admin/src` / `enterprise/src`）。
+`base` の `@/router/utils` は、Vite ビルド時に **各 app の `src` に解決**される（`@` → `user/src` / `partner/src` / `enterprise/src`）。
 
 ```
 base のコンポーネント
@@ -25,7 +25,7 @@ base のコンポーネント
            ↓（ビルド時）
 user/src/router/utils.ts      … PF 版の path 実装
 enterprise/src/router/utils.ts … エンプラ版の path 実装（user コピーから開始）
-admin/src/router/utils.ts      … admin 用の実装 or ダミー
+partner/src/router/utils.ts    … partner 用の実装 or ダミー
 ```
 
 ## user と enterprise で path 仕様が違ってもよいか
@@ -46,9 +46,9 @@ admin/src/router/utils.ts      … admin 用の実装 or ダミー
 
 - **user**: 本番用の path を実装
 - **enterprise**: エンプラの path 仕様に合わせて実装（PF と同じでもよい）
-- **admin**: 機能を使わなくても **import 解決のためスタブ** が必要な場合がある（現状 `getManageEventPath = () => ''` など）
+- **partner**: 機能を使わなくても **import 解決のためスタブ** が必要な場合がある（現状 `getManageEventPath = () => ''` など）
 
-TypeScript は「関数が存在するか」までは見るが、**空文字など誤った実装はコンパイルで検知できない**。admin のダミー実装のように、ビルドは通るがリンクが壊れる状態になり得る。
+TypeScript は「関数が存在するか」までは見るが、**空文字など誤った実装はコンパイルで検知できない**。partner のダミー実装のように、ビルドは通るがリンクが壊れる状態になり得る。
 
 ## enterprise 作成時
 
@@ -62,7 +62,7 @@ user をコピーすれば `router/utils.ts` も一緒についてくるため�
 
 **ステータス**: **現状維持**（§1.1 参照）。provide/inject 等への移行は将来のリファクタ候補とする。
 
-**問題**: base のコンポーネントが `@/router/utils` を import しており、user/admin/enterprise が router/utils を提供する必要がある。
+**問題**: base のコンポーネントが `@/router/utils` を import しており、user/partner/enterprise が router/utils を提供する必要がある。
 
 | ファイル | 使用している関数 |
 |----------|------------------|
@@ -79,7 +79,7 @@ user をコピーすれば `router/utils.ts` も一緒についてくるため�
 | `base/src/components/pages/c/[communityId]/e/[eventId]/members.vue` | `getEventPath` |
 
 **影響**:
-- `admin/src/router/utils.ts` に「本来 admin が持つべきでない」ダミー実装が存在（コメント参照）
+- `partner/src/router/utils.ts` に「本来 partner が持つべきでない」ダミー実装が存在（コメント参照）
 - enterprise でも同様の router/utils を用意する必要が生じる
 
 **将来の対応案**（工数に余裕ができた段階で検討）:
@@ -88,9 +88,9 @@ user をコピーすれば `router/utils.ts` も一緒についてくるため�
 3. **common に path 定義を置く**: パス形式のみ common で定義し、base はそれを使用（ドメインは別途注入）
 
 **現状継続時の運用**（§1.1）:
-- base で `@/router/utils` から新関数を import したら、**user / enterprise / admin** の `router/utils.ts` を同時に更新する
+- base で `@/router/utils` から新関数を import したら、**user / enterprise / partner** の `router/utils.ts` を同時に更新する
 - user → enterprise マージ時に `router/utils.ts` の差分漏れに注意する
-- admin では未使用関数もスタブで埋める（`admin/src/router/utils.ts` 参照）
+- partner では未使用関数もスタブで埋める（`partner/src/router/utils.ts` 参照）
 
 ---
 
@@ -121,7 +121,7 @@ user をコピーすれば `router/utils.ts` も一緒についてくるため�
 
 **問題**: デフォルトアバターを `@/assets/images/avatars/default_profile.jpeg` から import している。
 
-**影響**: user と admin の両方に同じアセットが必要。enterprise にも必要になる。
+**影響**: user と partner の両方に同じアセットが必要。enterprise にも必要になる。
 
 **対応案**:
 1. デフォルトアバターを base 内の assets に配置し、`@shokujii/base/assets/...` のように import
@@ -166,7 +166,7 @@ user をコピーすれば `router/utils.ts` も一緒についてくるため�
 | `base/src/components/layouts/DefaultLayoutWith*.vue` | `@layouts` |
 | `base/src/plugins/layouts.ts` | `@layouts` |
 
-**補足**: `@core` と `@layouts` は base の materio 内にもあり、user/admin の `@/` エイリアス経由で解決されている。Materio 由来のため、現状は許容しつつ、将来的な分離を検討する。
+**補足**: `@core` と `@layouts` は base の materio 内にもあり、user/partner の `@/` エイリアス経由で解決されている。Materio 由来のため、現状は許容しつつ、将来的な分離を検討する。
 
 ---
 
@@ -174,7 +174,7 @@ user をコピーすれば `router/utils.ts` も一緒についてくるため�
 
 **問題**: `storeId` が `user/${userId}` 形式で user 向けに固定されている。
 
-**補足**: admin では `admin/all` など別の storeId を使用。現状は storeId を引数で渡す設計のため、大きな問題にはなっていない。
+**補足**: partner では `partner/all` など別の storeId を使用。現状は storeId を引数で渡す設計のため、大きな問題にはなっていない。
 
 ---
 
@@ -207,7 +207,7 @@ user をコピーすれば `router/utils.ts` も一緒についてくるため�
 
 enterprise 作成・並行開発で **やっておくとよいこと**:
 
-1. **`router/utils.ts` の同期運用**: base 変更時に user / enterprise / admin の utils をセットで更新するルールを決める（§1.1）
+1. **`router/utils.ts` の同期運用**: base 変更時に user / enterprise / partner の utils をセットで更新するルールを決める（§1.1）
 2. **UserAvatar のデフォルト画像**: base 内に配置するか、props で渡す（§2.4）。user コピー時にアセット重複は許容可
 3. **locales のベース URL**: 環境変数やパラメータで差し替え可能にする（§2.6）。enterprise 別ドメイン時に必要
 
@@ -220,4 +220,4 @@ path 生成の abstract 化（旧 §4 第 1 項）は、マージ負荷や app �
 - `05_エンタープライズ_PF版_userをbaseに機能移行.md` — user に残る共通機能（特に /manage）を base へ移行する計画
 - `base/README.md` — `@/utils/router` の扱い、依存関係の逆転について
 - `base/src/components/pages/@CAUTION.md` — pages の暫定仕様と今後の方針
-- `admin/src/router/utils.ts` — base 依存のため admin に置かれた router/utils のコメント
+- `partner/src/router/utils.ts` — base 依存のため partner に置かれた router/utils のコメント
