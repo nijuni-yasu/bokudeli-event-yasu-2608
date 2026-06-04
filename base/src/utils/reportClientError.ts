@@ -4,17 +4,17 @@ import type { ClientErrorReportRequest } from '@shokujii/common/apis/clientError
 import { reportClientErrorCallable } from '@shokujii/base/apis/clientError.js'
 
 export type ClientErrorContext = {
-  app?: 'user' | 'admin'
+  app?: 'user' | 'partner'
   route?: string
   componentInfo?: string
   documentPath?: string
   severity?: 'error' | 'warn'
 }
 
-let defaultApp: 'user' | 'admin' = 'user'
+let defaultApp: 'user' | 'partner' = 'user'
 
-/** user / admin 起動時に呼び出し、store 経由の reportClientError に app を反映する */
-export function configureClientErrorReporting(options: { app: 'user' | 'admin' }): void {
+/** user / partner 起動時に呼び出し、store 経由の reportClientError に app を反映する */
+export function configureClientErrorReporting(options: { app: 'user' | 'partner' }): void {
   defaultApp = options.app
 }
 
