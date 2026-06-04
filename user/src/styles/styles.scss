@@ -35,3 +35,18 @@ a {
     padding-inline: 20px !important;
   }
 }
+
+/* チャット: layout-content-height-fixed 時の横 shrink-wrap を防ぐ（Materio は変更しない） */
+.layout-wrapper.layout-nav-type-horizontal.chat-layout-stretch {
+  > .layout-page-content {
+    flex-direction: column;
+    padding-block: 0;
+    padding-inline: 0 !important;
+
+    > :first-child {
+      flex: 1 1 auto;
+      inline-size: 100%;
+      min-inline-size: 0;
+    }
+  }
+}

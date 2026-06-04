@@ -46,6 +46,7 @@ const isLoginRequired = (path: string) => {
   return (
     ['/profile', '/register/complete', '/register/email'].includes(path) ||
     paths[1] === 'manage' ||
+    paths[1] === 'chat' ||
     (paths[1] === 'c' && paths[3] === 'invites')
   )
 }
