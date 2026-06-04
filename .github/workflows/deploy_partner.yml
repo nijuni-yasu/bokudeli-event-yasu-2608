@@ -1,4 +1,4 @@
-name: Deploy admin
+name: Deploy partner
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - development
       - production
     paths:
-      - 'admin/**'
+      - 'partner/**'
       - 'base/**'
   workflow_dispatch:
     inputs:
@@ -49,22 +49,22 @@ jobs:
         run: |
           npm ci
       - name: Generate .env file
-        working-directory: ./admin
+        working-directory: ./partner
         run: |
-          echo '${{ vars.ADMIN_ENV }}' | tr -d '\r' > .env
+          echo '${{ vars.PARTNER_ENV }}' | tr -d '\r' > .env
       - name: Check Format
         run: |
           npm -w common run format:check
           npm -w base run format:check
-          npm -w admin run format:check
+          npm -w partner run format:check
       - name: Build
         run: |
-          npm -w admin run build
+          npm -w partner run build
       - name: Lint
         run: |
           npm -w common run lint
           npm -w base run lint
-          npm -w admin run lint
+          npm -w partner run lint
       - name: Generate .firebaserc
         run: |
           echo '${{ vars.FIREBASERC }}' > .firebaserc
@@ -73,4 +73,4 @@ jobs:
         with:
           project_id: ${{ vars.PROJECT_ID }}
           service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-          args: '--only hosting:admin'
+          args: '--only hosting:partner'

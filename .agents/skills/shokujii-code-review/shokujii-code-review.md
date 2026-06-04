@@ -79,7 +79,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `Date` オブジェクトを直接使っていないか（`luxon` を使う）
 - [ ] `new Date()` で UNIX タイムを生成していないか（実行環境によって値が変わる）
 - [ ] 日付の固定値は `CUTOFF_UNIX_TIME_XXXX` のように `common` に定数として定義しているか
-- [ ] `common` の `DEFAULT_TIME_ZONE` をアプリ層（`user` / `admin` / `base` / `functions`）で直接 import していないか（海外対応時の置換コストを下げるため、タイムゾーンへの参照は `common` 内部に閉じる）
+- [ ] `common` の `DEFAULT_TIME_ZONE` をアプリ層（`user` / `partner` / `base` / `functions`）で直接 import していないか（海外対応時の置換コストを下げるため、タイムゾーンへの参照は `common` 内部に閉じる）
 - [ ] タイムゾーン依存の計算ロジックを call site で組み立てていないか（必要なら `common` 側に zone を閉じた util / ドメイン関数を追加して呼び出す）
 - [ ] `$d(..., 'date'|'time'|'datetime'|'datetime_weekday_short')` 等の vue-i18n datetimeFormats を新規追加していないか（`common/src/utils/datetime.ts` の `convertToXxx` 系を使う）
 - [ ] 日付・時刻の表示フォーマットを call site で独自実装していないか（`convertToDate` / `convertToTimeString` / `convertToDatetime` / `convertToDatetimeWeekdayShort` 等を使う）
@@ -380,7 +380,7 @@ export default { user: { friend_sort_last_met_at: 'Last met' } }
 ```
 
 ```typescript
-// OK: 日本語のみ（base / user / admin の ja.ts）
+// OK: 日本語のみ（base / user / partner の ja.ts）
 // user/src/locales/messages/ja.ts
 friend_sort_last_met_at: '最後に会った順',
 ```

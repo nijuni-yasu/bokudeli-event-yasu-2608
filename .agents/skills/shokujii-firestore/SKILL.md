@@ -1,11 +1,11 @@
 ---
 name: shokujii-firestore
-description: Shokujii プロジェクトにおける Firestore 操作のルールとパターン。base / functions / user / admin のいずれで Firestore を扱う場合も使用する。store 経由・withConverter・xxxRef の使用が必須。新規 store の追加、既存 store の修正、Firestore の読み書きを行うときは必ず参照すること。「Firestore を触る」「store を追加する」「Event のサブコレクションを読む」「array-contains でクエリする」「user_id でユーザーを検索する」「コミュニティの managers でフィルタする」「Callable Function で Firestore を読む」など、Firestore 関連の依頼時に使用する。
+description: Shokujii プロジェクトにおける Firestore 操作のルールとパターン。base / functions / user / partner のいずれで Firestore を扱う場合も使用する。store 経由・withConverter・xxxRef の使用が必須。新規 store の追加、既存 store の修正、Firestore の読み書きを行うときは必ず参照すること。「Firestore を触る」「store を追加する」「Event のサブコレクションを読む」「array-contains でクエリする」「user_id でユーザーを検索する」「コミュニティの managers でフィルタする」「Callable Function で Firestore を読む」など、Firestore 関連の依頼時に使用する。
 ---
 
 # Shokujii Firestore Store
 
-base、functions、user、admin の全パッケージで Firestore を扱う際の共通ルールとパターン。
+base、functions、user、partner の全パッケージで Firestore を扱う際の共通ルールとパターン。
 
 ## 共通ルール（全パッケージ）
 
@@ -21,9 +21,9 @@ base、functions、user、admin の全パッケージで Firestore を扱う際�
 
 | 対象 | 参照ファイル | 内容 |
 |------|-------------|------|
-| **base** (user/admin の store) | [references/base-stores.md](references/base-stores.md) | クライアント SDK、Pinia、xxxRef、onSnapshot |
+| **base** (user/partner の store) | [references/base-stores.md](references/base-stores.md) | クライアント SDK、Pinia、xxxRef、onSnapshot |
 | **functions** (サーバー store) | [references/functions-stores.md](references/functions-stores.md) | Admin SDK、get/save 関数、Transaction |
-| **user / admin** (store 利用側) | base-stores.md | store 経由のみ。直接 Firestore を呼ばない |
+| **user / partner** (store 利用側) | base-stores.md | store 経由のみ。直接 Firestore を呼ばない |
 
 ## クイックチェックリスト
 
@@ -52,5 +52,5 @@ base、functions、user、admin の全パッケージで Firestore を扱う際�
 
 - **base の store を追加・修正する**: base-stores.md を読む
 - **functions の store を追加・修正する**: functions-stores.md を読む
-- **user/admin で Firestore を使う**: base-stores.md を読み、既存 store を経由する形で実装する
+- **user/partner で Firestore を使う**: base-stores.md を読み、既存 store を経由する形で実装する
 - **共通ルールの確認**: common-rules.md を読む

@@ -61,11 +61,11 @@ gh pr comment --body '@copilot @codex review 日本語でお願いします。Fi
 変更内容を端的に表す日本語タイトルを生成する。Issue 番号は含めない。
 フォーマット: `[タグ] 変更内容を端的に表す日本語タイトル`
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
+使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
 
 ### タグを付けない場合
 
-変更が `firestore.indexes.json` や `firestore.rules` のみ、GitHub Actions の YAML のみなどで、**`user` `admin` `base` `common` `functions` のいずれにも当てはまらない**ときは、PR タイトルから `[タグ]` を省略してよい。
+変更が `firestore.indexes.json` や `firestore.rules` のみ、GitHub Actions の YAML のみなどで、**`user` `partner` `base` `common` `functions` のいずれにも当てはまらない**ときは、PR タイトルから `[タグ]` を省略してよい。
 
 フォーマット例：
 
@@ -104,7 +104,7 @@ Issue 番号は PR タイトルには含めず、本文の関連 Issue や close
 #### 対象パッケージ
 
 変更が含まれるパッケージのみを箇条書きで列挙する。
-`user` `admin` `base` `common` `functions` から該当するものだけを記載する。
+`user` `partner` `base` `common` `functions` から該当するものだけを記載する。
 `documents/` のみの変更の場合は対象パッケージに含めず、タイトルの [doc] タグで表現する。
 `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみなど、アプリの各パッケージのソースを変更していない場合は、その旨を書き、タイトルにパッケージタグを付けないことがある。
 

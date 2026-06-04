@@ -1,6 +1,6 @@
 # base における Firestore Store パターン
 
-base パッケージ（`base/src/stores/`）で Firestore を扱う際のパターン。user と admin は base の store を経由して Firestore にアクセスする。
+base パッケージ（`base/src/stores/`）で Firestore を扱う際のパターン。user と partner は base の store を経由して Firestore にアクセスする。
 
 ## 概要
 
@@ -112,9 +112,9 @@ query(
 ).withConverter(eventConverter)
 ```
 
-## 7. user / admin での利用
+## 7. user / partner での利用
 
-user と admin のページ・コンポーネントでは、**base の store のみ**を使用する。
+user と partner のページ・コンポーネントでは、**base の store のみ**を使用する。
 
 - Firestore の `doc`、`collection`、`getDocs` 等を直接 import して使わない
 - クエリが必要な場合は、base の store にヘルパー関数を追加する
