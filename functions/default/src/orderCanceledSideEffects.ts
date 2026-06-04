@@ -1,6 +1,7 @@
 import { createModuleLogger } from './utils/logger.js'
 import { recalcEventMembers } from './utils/recalcEventMembers.js'
 import { getMemberIds, getOrders } from './stores/memberOrder.js'
+import { syncEventChatMember } from './syncEventChatMember.js'
 import type { ShokujiiEvent } from './stores/event.js'
 import { removeEventFromFriendHistory } from './utils/friendsService.js'
 import { recountUserProfileCounts } from './utils/recountUserProfileCounts.js'
@@ -25,6 +26,7 @@ export async function applyOrderCanceledSideEffects(params: { event: ShokujiiEve
         memberCount: result.memberCount,
       })
     }
+    await syncEventChatMember({ event, userId })
   } catch (error) {
     logger.error('recalcEventMembers failed after cancel', {
       error,

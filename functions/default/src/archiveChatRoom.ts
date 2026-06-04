@@ -1,0 +1,51 @@
+import { getFirestore } from 'firebase-admin/firestore'
+import { createModuleLogger } from './utils/logger.js'
+import { buildEventRoomId, getChatRoom, saveChatRoom, setChatRoomInactive } from './stores/chatRoom.js'
+import { getChatMembership, getChatMembershipRef, setMembershipInactive } from './stores/chatMembership.js'
+
+const logger = createModuleLogger('archiveChatRoom')
+
+const MEMBERSHIP_BATCH_SIZE = 500
+
+export async function archiveChatRoom(roomId: string): Promise<void> {
+  const room = await getChatRoom(roomId)
+  if (room == null) {
+    logger.info('Chat room not found; skip archive', { roomId })
+    return
+  }
+  if (!room.is_active) {
+    logger.info('Chat room already archived', { roomId })
+    return
+  }
+
+  await saveChatRoom(setChatRoomInactive(room))
+
+  const memberUserIds = room.member_user_ids
+  const db = getFirestore()
+  for (let i = 0; i < memberUserIds.length; i += MEMBERSHIP_BATCH_SIZE) {
+    const chunk = memberUserIds.slice(i, i + MEMBERSHIP_BATCH_SIZE)
+    const batch = db.batch()
+    let writeCount = 0
+
+    for (const userId of chunk) {
+      const membership = await getChatMembership(userId, roomId)
+      if (membership == null || !membership.is_active) {
+        continue
+      }
+      const ref = getChatMembershipRef(userId, roomId)
+      batch.set(ref, setMembershipInactive(membership), { merge: true })
+      writeCount++
+    }
+
+    if (writeCount > 0) {
+      await batch.commit()
+    }
+  }
+
+  logger.info('Chat room archived', { roomId, memberCount: memberUserIds.length })
+}
+
+export async function archiveEventChatRoom(communityId: string, eventId: string): Promise<void> {
+  const roomId = buildEventRoomId(communityId, eventId)
+  await archiveChatRoom(roomId)
+}

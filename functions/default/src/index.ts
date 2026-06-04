@@ -67,6 +67,8 @@ export const {
   createEnterpriseCommunities,
   getInvitationUrlForEnterpriseCommunityManager,
   acceptInvitationForEnterpriseCommunityManager,
+  onChatMessageCreated,
+  onEventArchived,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -110,4 +112,6 @@ export const {
   import('./enterprise/subsidySettings.js'),
   import('./enterprise/community.js'),
   import('./enterprise/communityManager.js'),
+  import('./onChatMessageCreated.js'),
+  import('./onEventArchived.js'),
 ])))
