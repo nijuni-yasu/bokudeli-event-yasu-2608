@@ -33,8 +33,8 @@ export function getManageCommunityUrl(host: string, communityAccount: string) {
 }
 
 /*
- * Admin URLs
+ * Partner URLs
  */
-export function getAdminOrderUrl(host: string, eventId: string) {
+export function getPartnerOrderUrl(host: string, eventId: string) {
   return `https://${host}/order/${eventId}`
 }

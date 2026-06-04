@@ -71,4 +71,13 @@ describe('ClientErrorReportRequestSchema', () => {
     expect(result.component_info).toBeNull()
     expect(result.document_path).toBe('communities/x/events/y')
   })
+
+  it('app: partner で parse できる', () => {
+    const result = ClientErrorReportRequestSchema.parse({ ...validPayload, app: 'partner' })
+    expect(result.app).toBe('partner')
+  })
+
+  it('app: admin は拒否される', () => {
+    expect(() => ClientErrorReportRequestSchema.parse({ ...validPayload, app: 'admin' })).toThrow()
+  })
 })
