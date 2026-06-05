@@ -45,6 +45,7 @@ export const {
   log_event_status,
   backupFirestore,
   flyer,
+  slackbot,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -75,4 +76,5 @@ export const {
   import('./eventLog.js'),
   import('./backupFirestore.js'),
   import('./flyer.js'),
+  import('./slackbot.js'),
 ])))
