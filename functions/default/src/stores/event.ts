@@ -431,3 +431,37 @@ export const convertReferenceToEvent = async (
   const eventSnapshot = await eventRef.withConverter(new ShokujiiEventConverter()).get()
   return eventSnapshot.data()
 }
+
+/**
+ * イベント変更差分を `events/{eventId}/logs` に追加する。
+ * legacy `log_event_status` の write_log 相当。withConverter 付き ref 経由で書き込む。
+ */
+export const addEventChangeLog = async (
+  communityId: string,
+  eventId: string,
+  differences: Record<string, unknown>,
+  updatedBy: string,
+): Promise<void> => {
+  const db = getFirestore()
+  const logsCollection = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('events')
+    .doc(eventId)
+    .collection('logs')
+
+  const logRef = logsCollection.doc().withConverter(new ShokujiiEventLogConverter())
+  const updatedAt =
+    differences.updated_at instanceof Timestamp
+      ? differences.updated_at.toMillis()
+      : typeof differences.updated_at === 'number'
+        ? differences.updated_at
+        : Date.now()
+
+  const log = new EventLog(logRef.id, {
+    ...differences,
+    updated_by: updatedBy,
+    updated_at: updatedAt,
+  })
+  await logRef.set(log)
+}

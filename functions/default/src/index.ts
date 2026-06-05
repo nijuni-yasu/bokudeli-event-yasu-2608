@@ -42,6 +42,7 @@ export const {
   reportClientError,
   onCommunityMemberWritten,
   getUserProfilePreview, getUserFoods, backfillUserProfileCounts,
+  log_event_status,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -69,4 +70,5 @@ export const {
   import('./userFriends.js'),
   import('./communityMemberCountsTrigger.js'),
   import('./userProfile.js'),
+  import('./eventLog.js'),
 ])))
