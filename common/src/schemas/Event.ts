@@ -272,7 +272,7 @@ export class Event {
    * event_status を時間によって更新する getter
    * @returns {EventStatusType}
    *
-   * TODO: user, admin, manager にも同等のコードが存在するので、こちらを利用するように変更する
+   * TODO: user, partner, manager にも同等のコードが存在するので、こちらを利用するように変更する
    */
   get calculatedEventStatus(): EventStatusType {
     const event_end_datetime = this.event_end_datetime
