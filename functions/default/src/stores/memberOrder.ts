@@ -131,6 +131,25 @@ export const getOrder = async (
   return snapshot.exists ? snapshot.data() : undefined
 }
 
+/**
+ * 同一メンバーの member_orders から、集約窓内の ordered を取得する（Slack orderNotification 用）。
+ */
+export const getRecentOrderedOrdersForMember = async (
+  communityId: string,
+  eventId: string,
+  userId: string,
+  thresholdMillis: number,
+  transaction?: Transaction,
+): Promise<EventMemberOrder[]> => {
+  const query = ordersCollection(communityId, eventId, userId)
+    .where('status', '==', 'ordered')
+    .where('updated_at', '>', Timestamp.fromMillis(thresholdMillis))
+    .withConverter(new EventMemberOrderConverter())
+
+  const snapshot = await (transaction === undefined ? query.get() : transaction.get(query))
+  return snapshot.docs.map((doc) => doc.data())
+}
+
 export const getOrdersByIds = async (
   communityId: string,
   eventId: string,
