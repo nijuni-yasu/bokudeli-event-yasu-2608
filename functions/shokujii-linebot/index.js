@@ -1,13 +1,16 @@
-import 'dotenv/config'
 import functions from 'firebase-functions/v1'
+import { defineSecret, defineString } from 'firebase-functions/params'
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { initializeFirestore } from 'firebase-admin/firestore';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as dateFns from 'date-fns';
-import ja from 'date-fns/locale/ja';
+import { ja } from 'date-fns/locale/ja';
 import { promises as fs } from 'fs';
 import { messagingApi } from '@line/bot-sdk';
 const { MessagingApiClient } = messagingApi;
+
+const LINE_CHANNEL_ACCESS_TOKEN = defineSecret('LINE_CHANNEL_ACCESS_TOKEN')
+const EVENT_HOST = defineString('EVENT_HOST')
 
 const EVENT_LIMIT = 10;
 
@@ -61,7 +64,7 @@ function convertToDateTime(millis) {
 }
 
 function getEventUrl(communityAccount, eventId) {
-  return `https://${process.env.EVENT_HOST}/c/${communityAccount}/e/${eventId}?openExternalBrowser=1`;
+  return `https://${EVENT_HOST.value()}/c/${communityAccount}/e/${eventId}?openExternalBrowser=1`;
 }
 
 function buildEventContent(event) {
@@ -194,14 +197,17 @@ const buildNoticeMessage = async () => {
   }
 }
 
+const createLineClient = () =>
+  new MessagingApiClient({
+    channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN.value(),
+  })
+
 const broadcastEventMessage = async (message_data) => {
   const notice = await buildNoticeMessage();
   const message = buildMessage(message_data, notice);
   console.debug({ count: message_data.count });
   console.debug(JSON.stringify(message));
-  const client = new MessagingApiClient({
-    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  });
+  const client = createLineClient();
   await client.broadcast({
     messages: notice ? [ { type: "text", text: notice }, message] : [message],
   });
@@ -251,6 +257,7 @@ async function broadcastEventConcludedMessage() {
 }
 
 export const broadcast_event_message_request = functions
+  .runWith({ secrets: ['LINE_CHANNEL_ACCESS_TOKEN'] })
   .region('asia-northeast1')
   .https.onRequest(async (req, res) => {
     await Promise.all([
@@ -260,6 +267,7 @@ export const broadcast_event_message_request = functions
   })
 
 export const line_event_information = functions
+  .runWith({ secrets: ['LINE_CHANNEL_ACCESS_TOKEN'] })
   .region('asia-northeast1')
   .pubsub.schedule('15 12 * * 5') // 金曜日の12時15分
   .timeZone('Asia/Tokyo') // 世界展開時には注意が必要
