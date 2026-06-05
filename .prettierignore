@@ -11,6 +11,3 @@ themes/
 
 // For legacy code that should not be formatted with this top level Prettier config
 /manager
-/functions/legacy
-/functions/shokujii-linebot
-/functions/shokujii-slackbot
