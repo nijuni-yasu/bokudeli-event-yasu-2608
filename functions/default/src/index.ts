@@ -48,6 +48,8 @@ export const {
   slackbot,
   eventNotification,
   orderNotification,
+  broadcast_event_message_request,
+  line_event_information,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -81,4 +83,5 @@ export const {
   import('./slackbot.js'),
   import('./slackEventNotification.js'),
   import('./slackOrderNotification.js'),
+  import('./lineBroadcast.js'),
 ])))
