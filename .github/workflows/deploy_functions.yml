@@ -56,30 +56,6 @@ jobs:
         run: |
           npm -w common run lint
           npm -w functions/default run lint
-      - name: Install dependencies for legacy
-        working-directory: ./functions/legacy
-        run: |
-          yarn install --frozen-lockfile
-      - name: Generate .env file for legacy
-        working-directory: ./functions/legacy
-        run: |
-          echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
-      - name: Install Dependencies for shokujii-slackbot
-        working-directory: ./functions/shokujii-slackbot
-        run: |
-          yarn install --frozen-lockfile
-      - name: Generate .env file to shokujii-slackbot
-        working-directory: ./functions/shokujii-slackbot
-        run: |
-          echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
-      - name: Install Dependencies for shokujii-linebot
-        working-directory: ./functions/shokujii-linebot
-        run: |
-          yarn install --frozen-lockfile
-      - name: Generate .env file to shokujii-linebot
-        working-directory: ./functions/shokujii-linebot
-        run: |
-          echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:

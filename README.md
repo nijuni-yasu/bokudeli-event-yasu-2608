@@ -15,22 +15,13 @@
 - **`/curry`**  
   神田カレーグランプリ向けアプリケーション (Vue3 + Vuetify3)
 - **`/functions/default`**  
-  Google Cloud Run functions v2 上で動作するサーバーサイドアプリケーション
+  Google Cloud Run functions v2 上で動作するサーバーサイドアプリケーション（Slack / LINE bot 連携を含む）
 
 以下のディレクトリは過去実装を今後新規構成に変更して行く予定のものです。
 基本的に新規更新は行わず、上記新規構成に従うように変更していくものとします。
 
 - **`manager`**  
   運営向け管理画面（Vue 2 + Vuetify 2）
-- **`functions/legacy`**  
-  サーバサイドアプリケーション  
-  Google Cloud Run Functions v1（2026/4/20 EOL）
-- **`/functions/shokujii-slackbot/`**  
-  Slack 連携ボット  
-  Google Cloud Run Functions v1（2026/4/20 EOL）
-- **`/functions/shokujii-linebot/`**  
-  LINE 連携ボット  
-  Google Cloud Run Functions v1（2026/4/20 EOL）
 
 ### Materio
 

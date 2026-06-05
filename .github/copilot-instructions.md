@@ -18,12 +18,11 @@
 
 ### レガシー (Deprecated) — 新規コード生成時の参照禁止
 
-| パス                             | 概要                          |
-| :------------------------------- | :---------------------------- |
-| **/manager**                     | 運営向け管理画面 (Legacy)     |
-| **/functions/legacy**            | バックエンドロジック (Legacy) |
-| **/functions/shokujii-slackbot** | Slack 連携ボット              |
-| **/functions/shokujii-linebot**  | LINE 連携ボット               |
+| パス         | 概要                      |
+| :----------- | :------------------------ |
+| **/manager** | 運営向け管理画面 (Legacy) |
+
+Slack / LINE bot および旧 legacy Functions は `functions/default` に統合済み（#2060 Phase 2/3）。
 
 ## 外部サービス連携
 
