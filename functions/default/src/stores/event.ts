@@ -409,6 +409,24 @@ export const getAcceptingOrderEventsByEndTime = async (
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
 
+/** イベント開始時刻の範囲で注文受付中のイベントを取得（Slack eventNotification 用） */
+export const getAcceptingOrderEventsByStartTime = async (
+  startTimeMillis: number,
+  endTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'accepting_order')
+    .where('event_start_datetime', '>', Timestamp.fromMillis(startTimeMillis))
+    .where('event_start_datetime', '<=', Timestamp.fromMillis(endTimeMillis))
+    .where('is_deleted', '==', false)
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
+
 // 予約申請中のイベントを取得
 export const getApplyingReservationEvents = async (
   nowDateTimeMillis: number,
