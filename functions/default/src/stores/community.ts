@@ -15,7 +15,7 @@ import { getUserRef } from './user.js'
 
 const EXPIRED_TIME = 7 * 1000 * 60 * 60 * 24 // 7 days
 
-const communityMemberConverter: FirestoreDataConverter<CommunityMember> = {
+export const communityMemberConverter: FirestoreDataConverter<CommunityMember> = {
   toFirestore(member: CommunityMember): DocumentData {
     return member.toFirestore()
   },
