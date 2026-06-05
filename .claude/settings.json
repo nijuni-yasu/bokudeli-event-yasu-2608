@@ -37,7 +37,7 @@
       "Bash(npm -w * run build:*)",
       "Bash(npm -w base run build:types)",
       "Bash(npm -w user run build:types)",
-      "Bash(npm -w admin run build:types)",
+      "Bash(npm -w partner run build:types)",
       "Bash(git remote *)",
       "Bash(GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash *)",
       "Bash(python3 -m json.tool *)",

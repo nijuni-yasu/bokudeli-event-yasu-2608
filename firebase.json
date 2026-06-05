@@ -1,8 +1,8 @@
 {
   "hosting": [
     {
-      "public": "admin/dist",
-      "target": "admin",
+      "public": "partner/dist",
+      "target": "partner",
       "ignore": ["**/.*", "**/node_modules/**"],
       "rewrites": [
         {

@@ -74,7 +74,7 @@ git branch --show-current
 ```
 
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: [user] [admin] [base] [common] [functions] [doc] [ai]
+使用可能なタグ: [user] [partner] [base] [common] [functions] [doc] [ai]
 
 git-commit-message スキルの「タグを付けない場合」と同様、Firestore のインデックスやルールのみなどではタグを付けない。
 

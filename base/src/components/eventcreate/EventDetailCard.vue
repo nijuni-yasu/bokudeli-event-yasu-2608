@@ -33,7 +33,7 @@ const props = withDefaults(
   defineProps<{
     readonly?: boolean
     subdomainTags?: string[]
-    /** user アプリのイベント編集では true。admin など別オリジンでは false */
+    /** user アプリのイベント編集では true。partner など別オリジンでは false */
     showAlbumPreview?: boolean
     /** アルバム管理画面の URL（showAlbumPreview 時は親が router utils 等で組み立てて渡す） */
     albumManageUrl?: string

@@ -1,7 +1,7 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { DEFAULT_FROM, DEFAULT_TO, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/mail.js'
 import * as sgMail from './utils/sendgrid.js'
-import { getEventUrl, getAdminOrderUrl } from './utils/urls.js'
+import { getEventUrl, getPartnerOrderUrl } from './utils/urls.js'
 import {
   convertToDateWeekdayShort,
   convertToDatetimeWeekdayShort,
@@ -70,7 +70,7 @@ async function createTemplateDataForOrderDeadline(event: ShokujiiEvent) {
     order_total_price: orderTotalPrice,
     event_url: getEventUrl(event.community_account, event.id),
     orders: orderList,
-    order_url: getAdminOrderUrl(event.id),
+    order_url: getPartnerOrderUrl(event.id),
   }
 }
 

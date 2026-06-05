@@ -122,7 +122,7 @@ description: GitHub 上の指定リポジトリに対し、gh CLI でデプロ�
 | ファイル名 | ざっくりした対象 |
 |------------|------------------|
 | deploy_user.yml | hosting user |
-| deploy_admin.yml | hosting admin |
+| deploy_partner.yml | hosting partner |
 | deploy_functions.yml | functions |
 | deploy_firestore.yml | firestore |
 | deploy_storage.yml | storage |

@@ -1,6 +1,6 @@
 # Firestore / Store 共通ルール
 
-base、functions、user、admin の全パッケージで Firestore を扱う際に共通で適用されるルール。shokujii-code-review の Firestore / Store パターンに基づく。
+base、functions、user、partner の全パッケージで Firestore を扱う際に共通で適用されるルール。shokujii-code-review の Firestore / Store パターンに基づく。
 
 ## チェックリスト
 
@@ -28,10 +28,10 @@ xxxRef は withConverter 付きの DocumentReference を返す。withConverter �
 
 | パッケージ | store の配置 | 呼び出し元 |
 |-----------|-------------|------------|
-| base | `base/src/stores/` | user, admin のページ・コンポーネント |
+| base | `base/src/stores/` | user, partner のページ・コンポーネント |
 | functions | `functions/default/src/stores/` | functions の Callable/Trigger/Scheduled |
 
-user と admin は **base の store のみ**を使用する。直接 Firestore を呼ばない。
+user と partner は **base の store のみ**を使用する。直接 Firestore を呼ばない。
 
 ## 例外・違反の一覧
 

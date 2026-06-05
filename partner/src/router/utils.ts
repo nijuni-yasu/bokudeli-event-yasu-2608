@@ -1,4 +1,4 @@
-// 本来このファイルは、admin が持っているべきではないが、 `getEventPath` or `getUserPath` に関しては base に依存関係が散らばってしまっているため、
+// 本来このファイルは、partner が持っているべきではないが、 `getEventPath` or `getUserPath` に関しては base に依存関係が散らばってしまっているため、
 // ここに残すことにする。
 // TODO 将来的にはアプリケーションをまたいだ path の解決方法を提供する
 // navigation/utils.ts に移行する
@@ -8,7 +8,7 @@ export const getUserPath = (userId: string) => `/u/${userId}`
 export const getCommunityPath = (communityAccount: string) => `/c/${communityAccount}`
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getManageEventPath = (eventId: string) => ''
-/** base/src/components/EventEdit.vue が参照する。admin ではアルバムプレビューを出さないが import 解決に必要 */
+/** base/src/components/EventEdit.vue が参照する。partner ではアルバムプレビューを出さないが import 解決に必要 */
 export const getManageCommunityAlbumPath = (communityAccount: string) => `/manage/community/${communityAccount}/album`
 export const getProfile = () => '/profile'
 export const getLogin = () => '/login'

@@ -11,7 +11,7 @@ else
   json_escape() { jq -Rs .; }
 fi
 
-PACKAGES=("common" "base" "user" "admin" "functions/default")
+PACKAGES=("common" "base" "user" "partner" "functions/default")
 
 lint_errors=""
 format_errors=""

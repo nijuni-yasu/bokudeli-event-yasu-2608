@@ -140,13 +140,13 @@ terraform apply
 | `PROJECT_ID`     | GCP プロジェクトID（`init.sh` で自動登録済み） |
 | `PROJECT_NUMBER` | GCP プロジェクト番号（`init.sh` で自動登録済み） |
 | `FIREBASERC`     | `.firebaserc` ファイルの中身（JSON形式）   |
-| `ADMIN_ENV`      | `admin/.env` の内容                |
+| `PARTNER_ENV`    | `partner/.env` の内容              |
 | `USER_ENV`       | `user/.env` の内容                 |
 | `MANAGER_ENV`    | `manager/.env` の内容              |
 | `FUNCTIONS_ENV`  | `functions/default/.env` の内容    |
 
 
-`ADMIN_ENV` / `USER_ENV` に **`VITE_STRIPE_PUBLISHABLE_KEY` を含める必要はありません**（不要です）。現行コードでは参照していません。理由と将来の扱いは [Stripe 環境構築手順](../07_リファクタリング/03_stripe決済の環境構築手順.md) のセクション 4 を参照してください。
+`PARTNER_ENV` / `USER_ENV` に **`VITE_STRIPE_PUBLISHABLE_KEY` を含める必要はありません**（不要です）。現行コードでは参照していません。理由と将来の扱いは [Stripe 環境構築手順](../07_リファクタリング/03_stripe決済の環境構築手順.md) のセクション 4 を参照してください。
 
 #### Secrets（機密情報）
 
@@ -281,7 +281,7 @@ GitHub Actions のワークフローを使ってデプロイします。
 
 - Test mode と Live mode では **API キー・Webhook・Signing secret は別**です。Firebase プロジェクトに合わせてモードを統一する。
 - Stripe 用のシークレットを **GitHub Actions の Secrets に登録する必要はありません**（不要です）。`defineSecret` で GCP Secret Manager を参照します。
-- フロント用の **`VITE_STRIPE_PUBLISHABLE_KEY` の設定も不要です**（手順 7 の `USER_ENV` / `ADMIN_ENV` に含めなくてよい）。詳細は [Stripe 環境構築手順](../07_リファクタリング/03_stripe決済の環境構築手順.md) セクション 4。
+- フロント用の **`VITE_STRIPE_PUBLISHABLE_KEY` の設定も不要です**（手順 7 の `USER_ENV` / `PARTNER_ENV` に含めなくてよい）。詳細は [Stripe 環境構築手順](../07_リファクタリング/03_stripe決済の環境構築手順.md) セクション 4。
 
 ### 12. データ移行
 以下ドキュメントを参考に、プロジェクトのデータを移行する

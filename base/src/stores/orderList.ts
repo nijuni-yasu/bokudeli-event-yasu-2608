@@ -20,7 +20,7 @@ export type OrderListStore = ReturnType<typeof useOrderListStore>
 
 /**
  * 注文リストを管理する汎用的なストア
- * @param storeId ストアの一意な識別子（例: `user/${userId}` or `admin/all`）
+ * @param storeId ストアの一意な識別子（例: `user/${userId}` or `event/${eventId}`）
  * @param filters Firestore のクエリ制約（where, orderBy など）
  * @param pageSize 1ページあたりの取得件数
  */

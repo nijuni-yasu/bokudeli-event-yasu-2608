@@ -56,7 +56,7 @@ AIエージェント向けプロジェクトガイド。
 | パス                   | 概要                   | 技術スタック                                 |
 | :--------------------- | :--------------------- | :------------------------------------------- |
 | **/user**              | 一般ユーザー向けアプリ | Vue 3 + Vite + Vuetify 3                     |
-| **/admin**             | 飲食店向け管理画面     | Vue 3 + Vite + Vuetify 3                     |
+| **/partner**           | 飲食店向け管理画面     | Vue 3 + Vite + Vuetify 3                     |
 | **/functions/default** | バックエンドロジック   | Firebase Functions v2 (Node 20) + TypeScript |
 | **/common**            | 共有コード             | TypeScript (Schema, Utils)                   |
 | **/base**              | 共有UIコンポーネント   | Vue 3 (Materio Template)                     |
@@ -91,7 +91,7 @@ AIエージェント向けプロジェクトガイド。
 - **表示言語は日本語のみ**（Phase 1）。英語 UI・多言語切替は未対応。
 - UI 文字列は **`ja.ts` にのみ**追加する。
   - `base/src/locales/messages/ja.ts`（共通）
-  - 各アプリの `src/locales/messages/ja.ts`（例: `user` / `admin`）
+  - 各アプリの `src/locales/messages/ja.ts`（例: `user` / `partner`）
 - **`src/locales/messages/en.ts` 等の英語 locale ファイルは作らない**（製品として多言語対応を始める明示指示がある場合を除く）。
 - i18n 基盤（`vue-i18n`）は日本語用の `$t` 集約のために使う。`base/src/plugins/i18n/index.ts` は `locale` / `fallbackLocale` とも **`ja`**。各アプリの `themeConfig` の `langConfig` も日本語のみとする。
 - 日付・時刻の表示は `common/src/utils/datetime.ts` の `convertToXxx` を使う（`vue-i18n` の `datetimeFormats` / `$d` は新規追加しない）。
@@ -148,10 +148,10 @@ npm -w <pkg> run format:check
 - main ブランチへの直接コミット禁止
 - `package-lock.json` は必ずコミットする
 - タイトルの接頭辞に変更したディレクトリと Issue 番号を含める
-  - 例: `[admin] #1777 注文詳細画面の修正`
+  - 例: `[partner] #1777 注文詳細画面の修正`
   - 例: `[base][common] #1799 withConverter の削除を禁止`
   - 例: `[ai] #1800 分割コミットスキルに doc と ai タグを追加`
-  - 使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
+  - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
   - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等
   - `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみなど、アプリの各パッケージを変更しない変更では、**ディレクトリタグを付けず**、`#イシュー番号` と要約タイトルのみとしてよい。PR タイトルも同様にタグを省略できる。手順・例は `/git-commit-message` と `/git-create-pull-request` スキルを参照。
 

@@ -27,14 +27,14 @@ git-fixup / git-squash の手順 3 で「新規コミット（1つ）」と分�
 ```
 
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[admin]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
+使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
 
 - [doc]: documents/ ディレクトリ内の更新のみ
 - [ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の AI 向け設定・指示ファイル
 
 ### タグを付けない場合
 
-次のような変更では、`[user]` `[admin]` などの**ディレクトリタグを付けない**ことがある。無理に当てはめない。
+次のような変更では、`[user]` `[partner]` などの**ディレクトリタグを付けない**ことがある。無理に当てはめない。
 
 - `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみで、`user` `admin` `base` `common` `functions` のいずれも変更しない
 - リポジトリルートの設定やインフラ・CI のみで、上記パッケージのソースに該当しない変更

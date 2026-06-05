@@ -11,7 +11,7 @@ enterprise パッケージ作成前に、user に残っている共通機能を 
 ## 1. 実装方針
 
 - user をコピーして enterprise を実装する前提
-- base は user / enterprise / admin で共通利用する
+- base は user / enterprise / partner で共通利用する
 - user をコピーすると、user に残った共通機能は二重メンテナンスになる
 - 共通して実装すべき箇所は enterprise 着手前に base へ寄せる
 - 特に https://shokujii.jp/manage 管理者画面が移行候補の中心
@@ -43,7 +43,7 @@ enterprise パッケージ作成前に、user に残っている共通機能を 
 
 ```
 1. user の共通機能（本ドキュメント：/manage 等）を base へ移行
-     ※ base 追加時は user / enterprise / admin の router/utils を同時更新
+     ※ base 追加時は user / enterprise / partner の router/utils を同時更新
    ↓
 2. base/src/components/pages/ の user 固有ページ整理（base の依存関係整理 §2.2）
    ↓
@@ -154,7 +154,7 @@ enterprise では文言・リンク・ナビが変わるため、base に入れ�
 
 ```
 Phase 1-A: settings / newcommunity 等の薄いラッパー
-    ※ base 移行時は user / enterprise / admin の router/utils を同時更新（base の依存関係整理 §1.1）
+    ※ base 移行時は user / enterprise / partner の router/utils を同時更新（base の依存関係整理 §1.1）
     ↓
 Phase 1-B: member / overview / CopyEventDialog（EventMemberOrder 対応と並行可）
     ↓

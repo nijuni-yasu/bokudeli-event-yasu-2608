@@ -21,7 +21,7 @@ npm -w common run build
 npm -w common run lint
 npm -w base run lint
 npm -w user run lint
-npm -w admin run lint
+npm -w partner run lint
 npm -w functions/default run lint
 ```
 
@@ -31,7 +31,7 @@ npm -w functions/default run lint
 npm -w common run format:check
 npm -w base run format:check
 npm -w user run format:check
-npm -w admin run format:check
+npm -w partner run format:check
 npm -w functions/default run format:check
 ```
 
@@ -44,14 +44,14 @@ npm -w functions/default run format:check
 - common: ✅ 成功 / ❌ 失敗
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
-- admin: ✅ 成功 / ❌ 失敗
+- partner: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 
 3. format:check
 - common: ✅ 成功 / ❌ 失敗
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
-- admin: ✅ 成功 / ❌ 失敗
+- partner: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 ```
 
@@ -65,7 +65,7 @@ npm -w functions/default run format:check
 npm -w common run format
 npm -w base run format
 npm -w user run format
-npm -w admin run format
+npm -w partner run format
 npm -w functions/default run format
 ```
 
