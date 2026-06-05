@@ -62,13 +62,8 @@ jobs:
           yarn install --frozen-lockfile
       - name: Generate .env file for legacy
         working-directory: ./functions/legacy
-        # secrets は環境変数の書き換えによる事故が頻発したので個々で記述する
-        # また、将来的には GCP Secret Manager (defineSecret) を使用し、ここで環境変数に書き出すのはやめる
         run: |
           echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
-          echo 'SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}' >> .env
-          echo 'PDF_SERVICES_CLIENT_ID=${{ secrets.PDF_SERVICES_CLIENT_ID }}' >> .env
-          echo 'PDF_SERVICES_CLIENT_SECRET=${{ secrets.PDF_SERVICES_CLIENT_SECRET }}' >> .env
       - name: Install Dependencies for shokujii-slackbot
         working-directory: ./functions/shokujii-slackbot
         run: |
@@ -77,10 +72,6 @@ jobs:
         working-directory: ./functions/shokujii-slackbot
         run: |
           echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
-          echo 'SLACK_CLIENT_ID=${{ secrets.SLACK_CLIENT_ID }}' >> .env
-          echo 'SLACK_CLIENT_SECRET=${{ secrets.SLACK_CLIENT_SECRET }}' >> .env
-          echo 'SLACK_SIGNING_SECRET=${{ secrets.SLACK_SIGNING_SECRET }}' >> .env
-          echo 'SLACK_STATE_SECRET=${{ secrets.SLACK_STATE_SECRET }}' >> .env
       - name: Install Dependencies for shokujii-linebot
         working-directory: ./functions/shokujii-linebot
         run: |
@@ -89,7 +80,6 @@ jobs:
         working-directory: ./functions/shokujii-linebot
         run: |
           echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
-          echo 'LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}' >> .env
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
