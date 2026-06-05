@@ -44,6 +44,7 @@ export const {
   getUserProfilePreview, getUserFoods, backfillUserProfileCounts,
   log_event_status,
   backupFirestore,
+  flyer,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -73,4 +74,5 @@ export const {
   import('./userProfile.js'),
   import('./eventLog.js'),
   import('./backupFirestore.js'),
+  import('./flyer.js'),
 ])))

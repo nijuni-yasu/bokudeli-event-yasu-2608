@@ -8,4 +8,3 @@ initializeFirestore(app, { preferRest: true })
 
 export const { send_email } = await import('./sendgrid-mail.js')
 export const { on_write_community_members } = await import('./community-members.js')
-export { flyer } from './flyer.js'
