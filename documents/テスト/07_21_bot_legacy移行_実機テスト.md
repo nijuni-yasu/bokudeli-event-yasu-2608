@@ -33,7 +33,8 @@
 |------|----------|
 | Firebase プロジェクト | テスト対象（sandbox / dev / prod）を 1 つ特定 |
 | 1 プロジェクト = 1 Slack App | Slack App / Secret / 管理画面 URL が同一プロジェクト |
-| Secret Manager | `SLACK_*` 5 件 + `LINE_CHANNEL_ACCESS_TOKEN` + 既存 Secret 5 件 |
+| Secret Manager | **キー 12 件**（Terraform）: 新規 **5 件**（`SLACK_*` 4 + `LINE_CHANNEL_ACCESS_TOKEN` 1）+ 既存 **7 件**（SendGrid / PDF / Stripe / Twitter 各種）。**値**は全件手動。Functions が `defineSecret` で参照するのは **10 件**（`TWITTER_*` 2 件はレガシーで未使用） |
+| Terraform | 既存プロジェクトは import → apply（本番はリリース時）。手順: [terraform/README.md](../../terraform/README.md)、[21_bot_legacy移行.md](../07_リファクタリング/21_bot_legacy移行.md) §5.13 |
 | FUNCTIONS_ENV | `EVENT_HOST`, `PARTNER_HOST`, `SLACK_COMMAND_NAME`（任意）, `CORS` |
 | USER_ENV | `VITE_SLACK_BOT_FUNCTION_URL` = 現行 `slackbot` の Cloud Run URL |
 | CI | GitHub Actions `Deploy functions` が exit code 0 |
@@ -199,7 +200,7 @@ legacy `on_write_community_members` 統合。二重実行がないことも確�
 
 | ID | 優先度 | 項目 | 前提 | 操作 | 期待結果 |
 |----|--------|------|------|------|----------|
-| BKP-01 | 必須 | 手動エクスポート | `terraform apply` 済み、または [firestore_backup.tf](../../terraform/firestore_backup.tf) 相当のバケット + IAM が手動整備済み | Cloud Scheduler で `backupFirestore` を「今すぐ実行」 | ログ `Firestore export started`。バケットに新規 export フォルダ |
+| BKP-01 | 必須 | 手動エクスポート | `terraform apply` 済み（[README](../../terraform/README.md) の既存プロジェクト手順・本番はリリース時）、または [firestore_backup.tf](../../terraform/firestore_backup.tf) 相当のバケット + IAM が手動整備済み | Cloud Scheduler で `backupFirestore` を「今すぐ実行」 | ログ `Firestore export started`。バケットに新規 export フォルダ |
 | BKP-02 | 高 | 定期実行 | — | 翌日 2:00 JST 以降にバケット確認 | 自動 export 成功 |
 | BKP-03 | 中 | 旧関数名不在 | — | `scheduled_firestore_export` を functions 一覧で検索 | **存在しない**（`backupFirestore` のみ） |
 
