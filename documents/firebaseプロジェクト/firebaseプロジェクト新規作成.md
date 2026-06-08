@@ -107,6 +107,10 @@ GitHub Actions には「環境（Environment）」という機能があり、`de
 個人環境（`bokudeli-event-yasu-xxxx` 等）は sandbox 用途でプロジェクトが1つだけのため、**空欄で問題ありません**。  
 環境名を指定するのは、同じリポジトリで `development` と `production` の Firebase プロジェクトを切り替える本番・開発構成の場合です。
 
+`init.sh` 完了後、`terraform.tfvars` に次を手動追加する場合がある（[terraform/README.md](../../terraform/README.md) 参照）。
+
+- **`auth_authorized_domains_extra`**: 本番のように Firebase Auth にカスタムドメイン（例: `shokujii.jp`）がある場合のみ。テスト・sandbox は省略可。
+
 ### 6. Terraform を適用する
 
 ```bash
@@ -207,12 +211,19 @@ gcloud iam service-accounts keys create firebase-deploy-key.json \
 > Secret Manager の値は Cloud Functions の `defineSecret` で直接参照されます。GitHub Actions の Secrets とは別管理です。  
 > 既存 Terraform 管理プロジェクトで `for_each` 統合後に初回 apply する場合は、[terraform/README.md](../../terraform/README.md) の state 移行手順を先に実施してください。
 
-#### Terraform 未管理プロジェクト（本番 / テスト）
+#### 既存プロジェクト（本番 / テスト）— 新規作成手順との違い
 
-`bokudeli-event-dev` / `bokudeli-event-test` など Terraform を運用していないプロジェクトでは、上記 12 キーが自動作成されません。次のいずれかで対応してください。
+`bokudeli-event-dev`（本番）や `bokudeli-event-test`（development）のように **すでに Firebase を運用している**プロジェクトは、本ドキュメントの手順 5〜6（`init.sh` → そのまま `apply`）だけでは不十分な場合がある。
 
-1. **Terraform 初回セットアップ** — 本ドキュメント手順 5〜6 の `init.sh` → `terraform apply`
-2. **GCP コンソールで手動作成** — 不足キーを Secret Manager に作成し、`firebase-deploy` SA に各シークレットの `Secret Manager 管理者` を付与
+| 項目 | 新規 sandbox | 既存本番・テスト |
+| ---- | ------------ | ---------------- |
+| import | 不要 | **必要**（バケット・Secret・Auth・Hosting 等） |
+| `auth_authorized_domains_extra` | 通常不要 | 本番は **必須**（`shokujii.jp` 等） |
+| apply タイミング | セットアップ時 | 本番は **リリース時**（bot 移行と合わせる） |
+
+手順の正本: [terraform/README.md](../../terraform/README.md) の「既存プロジェクトの初回セットアップ」。移行 Runbook: [21_bot_legacy移行.md](../07_リファクタリング/21_bot_legacy移行.md) **5.13**。本番 plan 記録: [terraform/plan-dev-review.md](../../terraform/plan-dev-review.md)
+
+Terraform を使わない場合は、不足キーを Secret Manager に手動作成し、`firebase-deploy` SA に各シークレットの `Secret Manager 管理者` を付与する。
 
 Slack/LINE の値の取得元は [21_bot_legacy移行.md](../07_リファクタリング/21_bot_legacy移行.md) 5.8 Runbook を参照してください。
 

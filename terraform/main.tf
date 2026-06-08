@@ -7,6 +7,12 @@ variable "github_repo" {
   type = string
 }
 
+# Firebase Auth の Authorized domains（本番カスタムドメイン等）。全プロジェクト共通の 3 件に加えてマージする。
+variable "auth_authorized_domains_extra" {
+  type    = list(string)
+  default = []
+}
+
 terraform {
   required_providers {
     google = {

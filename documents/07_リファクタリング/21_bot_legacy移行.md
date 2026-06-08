@@ -315,7 +315,7 @@ export const slackbot = onRequest(
 - **キー（Secret リソース）**: [terraform/functions.tf](../../terraform/functions.tf) の `local.function_secret_ids` で Terraform が 12 件作成（うち Functions が参照するのは上記 10 件。`TWITTER_*` はレガシー）
 - **値（version）**: 手動登録（Terraform には含めない）
 
-Terraform 管理済みプロジェクトで `for_each` 統合後に初回 apply する場合は、[terraform/README.md](../../terraform/README.md) の **state 移行**を先に実施する。Terraform 未管理の本番/テストプロジェクトは同 README の **Terraform 未管理プロジェクト**を参照。
+Terraform 管理済みプロジェクトで `for_each` 統合後に初回 apply する場合は、[terraform/README.md](../../terraform/README.md) の **state 移行**を先に実施する。既存の本番/テストプロジェクトは同 README の **既存プロジェクトの初回セットアップ**および **5.13** を参照（本番 `apply` はリリース時）。
 
 ##### 本移行で新規登録が必要（5 件）
 
@@ -390,7 +390,7 @@ GitHub Environment Variables の `FUNCTIONS_ENV` に含め、デプロイ時に 
 □ デプロイ → 8.5 疎通確認
 ```
 
-新規 Firebase プロジェクト作成時の Terraform / GitHub 設定との対応は [firebaseプロジェクト新規作成.md](../firebaseプロジェクト/firebaseプロジェクト新規作成.md) を参照。Terraform 未管理プロジェクトでは [terraform/README.md](../../terraform/README.md) の手動キー作成手順に従う。
+新規 Firebase プロジェクト作成時は [firebaseプロジェクト新規作成.md](../firebaseプロジェクト/firebaseプロジェクト新規作成.md) を参照。既存本番/テストは [terraform/README.md](../../terraform/README.md) および **5.13**（import → apply はリリース時）。Terraform を使わない場合のみ README の手動キー作成手順に従う。
 
 ### 5.9 デプロイ切替手順（関数名衝突・ダウンタイム）
 
@@ -549,6 +549,49 @@ firebase --project <PROJECT_ID> functions:delete \
 
 実機確認は [07_21_bot_legacy移行_実機テスト.md](../テスト/07_21_bot_legacy移行_実機テスト.md) の SLK-EVT-07 / SLK-ORD-06。
 
+### 5.13 Terraform 初回適用 Runbook（既存本番・テスト）
+
+bot 移行で必要な Secret **キー**（新規 5 件: `SLACK_*` 4 + `LINE_CHANNEL_ACCESS_TOKEN` 1。既存 7 件は import）・`firebase-deploy` SA・バックアップ IAM は **Terraform** で provision する。新規 sandbox は `init.sh` → `apply` で足りるが、**既に運用中の `bokudeli-event-dev`（本番）と `bokudeli-event-test`（development）** では既存リソースの **import** が必要。手順の正本は [terraform/README.md](../../terraform/README.md) の「既存プロジェクトの初回セットアップ」。
+
+#### 適用タイミング
+
+| 環境 | プロジェクト ID | タイミング |
+| ---- | --------------- | ---------- |
+| development | `bokudeli-event-test` | テストデプロイ前後（**apply 済み**の想定） |
+| 本番 | `bokudeli-event-dev` | **本番リリース手順の一部**。Functions デプロイより**前**に `apply` |
+
+`terraform apply` の主な Add は新規 Secret **キー** 5 件・`firebase-deploy` SA・Workload Identity・各種 IAM 等。既存リソースの **update in-place**（Auth `authorized_domains` の並び替え、Hosting `app_id`、state バケット `versioning` 等）も plan に含まれる。**apply 直前の `terraform plan` で差分を必ず確認**すること（Destroy 0・ドメイン削除なし等。本番記録: [terraform/plan-dev-review.md](../../terraform/plan-dev-review.md)）。Secret **値**の登録と Functions デプロイは apply 後に実施する（5.8 Runbook）。
+
+#### 本番リリース時の推奨順序
+
+```
+1. terraform.tfvars（auth_authorized_domains_extra 含む）を用意
+2. 残り import（Firebase project / Hosting / Web App）→ plan（Destroy 0 確認）
+3. terraform apply
+4. Secret 値 5 件を本番用に登録（5.8）
+5. Functions デプロイ（production ブランチ）
+6. 8.5 疎通確認
+```
+
+#### Firebase Auth 許可ドメイン（本番のみ）
+
+本番は `shokujii.jp` 等のカスタムドメインが Authorized domains に登録されている。[firebase.tf](../../terraform/firebase.tf) の共通 3 件だけでは apply 時に**削除される**。本番 `terraform.tfvars` に `auth_authorized_domains_extra` を設定すること（README 参照）。テスト・sandbox は未設定でよい。
+
+#### import とは
+
+GCP リソースを**作らない**。**Terraform state に「既に存在する」と登録する**操作。import しないまま apply すると `409 Already exists` や意図しない二重作成（Web App 等）の原因になる。
+
+#### 作業チェックリスト（本番リリース時・コピー用）
+
+```
+□ terraform/README の import 一覧を実施（Hosting / Web App 含む）
+□ terraform plan: Destroy 0、shokujii.jp が authorized_domains から消えない
+□ firestore_backups の storage_class 差分を確認（必要なら方針合意）
+□ terraform apply
+□ SLACK_* / LINE_CHANNEL_ACCESS_TOKEN の値を本番 Secret Manager に登録
+□ Functions デプロイ → 8.5 疎通
+```
+
 ## 6. データマイグレーション
 
 Firestore データ構造の変更は伴わないため、データマイグレーションは不要。`slackbots` 等のコレクションは既存のまま store 経由でアクセスする。
@@ -632,7 +675,8 @@ Firestore データ構造の変更は伴わないため、データマイグレ�
 
 ### 8.6 関連ドキュメント
 
-- [terraform/README.md](../../terraform/README.md) — Secret Manager for_each 化・state 移行・Terraform 未管理プロジェクト手順
+- [terraform/README.md](../../terraform/README.md) — Secret Manager・既存プロジェクト初回セットアップ（import）・`auth_authorized_domains_extra`
+- [terraform/plan-dev-review.md](../../terraform/plan-dev-review.md) — 本番 plan レビュー記録（apply 未実施）
 - [firebaseプロジェクト新規作成.md](../firebaseプロジェクト/firebaseプロジェクト新規作成.md) — Terraform / GitHub / GCP Secret Manager の初期設定
 - [03_stripe決済の環境構築手順.md](./03_stripe決済の環境構築手順.md) — `STRIPE_*` Secret の登録と Webhook 設定
 - [01_legacy_to_default移行.md](./01_legacy_to_default移行.md) — legacy 機能の default 移行（v1→v2 パターンの正本）
@@ -653,5 +697,5 @@ Firestore データ構造の変更は伴わないため、データマイグレ�
 - **slackbot は ExpressReceiver 遅延初期化**を踏襲
 - **v1 は v2 へ統一**（`onDocumentWritten` / `onSchedule` / `onRequest` / `onCall`）
 - **重複（community-members）・死活（send_email）を精査**してから移行/廃止を確定
-- **Secret Manager**: キー 12 件は Terraform（5.8 Runbook）、値は手動。CI SA はシークレット単位 `secretmanager.admin`
+- **Secret Manager**: キー 12 件は Terraform（5.8 / 5.13）、値は手動。本番 apply はリリース時。CI SA はシークレット単位 `secretmanager.admin`
 - firebase-tools は **15.15.0 を維持**
