@@ -160,6 +160,28 @@ resource "google_project_iam_member" "compute_service_account_eventarc_event_rec
   ]
 }
 
+# backupFirestore（Cloud Functions Gen2）が exportDocuments を呼べるようにする
+resource "google_project_iam_member" "compute_service_account_firestore_import_export" {
+  project = var.project
+  role    = "roles/datastore.importExportAdmin"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
+  ]
+}
+
+resource "google_project_iam_member" "app_engine_service_account_firestore_import_export" {
+  project = var.project
+  role    = "roles/datastore.importExportAdmin"
+  member  = "serviceAccount:${var.project}@appspot.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
+    google_app_engine_application.default,
+  ]
+}
+
 # Cloud Storage のプロジェクトサービスエージェントが Pub/Sub にメッセージを publish できるようにする
 # Firebase Functions デプロイ時の IAM 検証で要求される（gcloud projects add-iam-policy-binding と同等）
 resource "google_project_iam_member" "gs_project_accounts_pubsub_publisher" {

@@ -41,6 +41,35 @@ terraform plan
 terraform apply
 ```
 
+`terraform apply` では次も作成されます（[firestore_backup.tf](firestore_backup.tf) / [service_account.tf](service_account.tf)）。
+
+| リソース | 内容 |
+| -------- | ---- |
+| GCS バケット | `gs://<PROJECT_ID>-firestore-backups`（`backupFirestore` の export 先） |
+| バケット IAM | Firestore サービスエージェントに `roles/storage.admin` |
+| プロジェクト IAM | Compute / App Engine デフォルト SA に `roles/datastore.importExportAdmin` |
+
+バケットのロケーションは Firestore と同じ `asia-northeast1`（`var.region`）です。
+
+### 既存プロジェクトでバケットが手動作成済みの場合
+
+`bokudeli-event-test` など、既に `gs://<PROJECT_ID>-firestore-backups` があると `Error 409` で apply が失敗します。state に取り込んでから再 apply してください。
+
+```bash
+terraform import google_storage_bucket.firestore_backups YOUR_PROJECT_ID-firestore-backups
+terraform apply
+```
+
+IAM リソース（Firestore SA・compute / appspot の `importExportAdmin`）は未設定なら apply で追加されます。
+
+### 動作確認（backupFirestore）
+
+1. Cloud Scheduler で `backupFirestore` を「今すぐ実行」
+2. ログに `Firestore export started` が出ること
+3. バケットにタイムスタンプ付き export フォルダが作成されること
+
+詳細は [07_21_bot_legacy移行_実機テスト.md](../documents/テスト/07_21_bot_legacy移行_実機テスト.md) の BKP-01 を参照。
+
 その後、各種変数は手動で登録する必要があります。
 
 - [GitHub Actions](../../../../settings/secrets/actions) 用環境変数を登録
