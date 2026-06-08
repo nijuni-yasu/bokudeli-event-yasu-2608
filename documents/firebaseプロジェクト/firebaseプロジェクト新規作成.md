@@ -186,21 +186,35 @@ gcloud iam service-accounts keys create firebase-deploy-key.json \
 ### 8. GCP Secret Manager で値を設定する
 
 [Google Cloud Secret Manager](https://console.cloud.google.com/security/secret-manager) を開きます。  
-Terraform でシークレットの**キー**は作成済みのため、**値（value）のみ手動で登録**します。
+[terraform/functions.tf](../../terraform/functions.tf) の `local.function_secret_ids` によりシークレットの**キー（12 件）は Terraform が作成済み**のため、**値（version）のみ手動で登録**します。
 
 
-| シークレット名                          | 説明                              |
-| -------------------------------- | ------------------------------- |
-| `SENDGRID_API_KEY`               | SendGrid API キー                 |
-| `PDF_SERVICES_CLIENT_ID`         | Adobe PDF Services クライアントID     |
-| `PDF_SERVICES_CLIENT_SECRET`     | Adobe PDF Services クライアントシークレット |
-| `STRIPE_API_KEY`                 | Stripe API キー                   |
-| `STRIPE_WEBHOOK_ENDPOINT_SECRET` | Stripe Webhook エンドポイントシークレット    |
-| `TWITTER_CONSUMER_KEY`           | Twitter（X）コンシューマーキー             |
-| `TWITTER_CONSUMER_SECRET`        | Twitter（X）コンシューマーシークレット         |
+| シークレット名 | 説明 |
+| ------------- | ---- |
+| `SENDGRID_API_KEY` | SendGrid API キー |
+| `PDF_SERVICES_CLIENT_ID` | Adobe PDF Services クライアントID |
+| `PDF_SERVICES_CLIENT_SECRET` | Adobe PDF Services クライアントシークレット |
+| `STRIPE_API_KEY` | Stripe API キー |
+| `STRIPE_WEBHOOK_ENDPOINT_SECRET` | Stripe Webhook エンドポイントシークレット |
+| `TWITTER_CONSUMER_KEY` | Twitter（X）コンシューマーキー（レガシー。現行 default 未使用） |
+| `TWITTER_CONSUMER_SECRET` | Twitter（X）コンシューマーシークレット（同上） |
+| `SLACK_SIGNING_SECRET` | Slack アプリ Signing Secret |
+| `SLACK_CLIENT_ID` | Slack アプリ クライアントID |
+| `SLACK_CLIENT_SECRET` | Slack アプリ クライアントシークレット |
+| `SLACK_STATE_SECRET` | Slack OAuth state 用シークレット |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINE チャネルアクセストークン |
 
+> Secret Manager の値は Cloud Functions の `defineSecret` で直接参照されます。GitHub Actions の Secrets とは別管理です。  
+> 既存 Terraform 管理プロジェクトで `for_each` 統合後に初回 apply する場合は、[terraform/README.md](../../terraform/README.md) の state 移行手順を先に実施してください。
 
-> Secret Manager の値は Cloud Functions の `defineSecret` で直接参照されます。GitHub Actions の Secrets とは別管理です。
+#### Terraform 未管理プロジェクト（本番 / テスト）
+
+`bokudeli-event-dev` / `bokudeli-event-test` など Terraform を運用していないプロジェクトでは、上記 12 キーが自動作成されません。次のいずれかで対応してください。
+
+1. **Terraform 初回セットアップ** — 本ドキュメント手順 5〜6 の `init.sh` → `terraform apply`
+2. **GCP コンソールで手動作成** — 不足キーを Secret Manager に作成し、`firebase-deploy` SA に各シークレットの `Secret Manager 管理者` を付与
+
+Slack/LINE の値の取得元は [21_bot_legacy移行.md](../07_リファクタリング/21_bot_legacy移行.md) 5.8 Runbook を参照してください。
 
 ### 9. ローカルリポジトリに remote を追加する
 

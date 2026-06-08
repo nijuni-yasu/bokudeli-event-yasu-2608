@@ -409,6 +409,24 @@ export const getAcceptingOrderEventsByEndTime = async (
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
 
+/** イベント開始時刻の範囲で注文受付中のイベントを取得（Slack slackEventNotification 用） */
+export const getAcceptingOrderEventsByStartTime = async (
+  startTimeMillis: number,
+  endTimeMillis: number,
+  transaction?: Transaction,
+): Promise<ShokujiiEvent[]> => {
+  const db = getFirestore()
+  const eventsRef = db
+    .collectionGroup('events')
+    .where('event_status.value', '==', 'accepting_order')
+    .where('event_start_datetime', '>', Timestamp.fromMillis(startTimeMillis))
+    .where('event_start_datetime', '<=', Timestamp.fromMillis(endTimeMillis))
+    .where('is_deleted', '==', false)
+    .withConverter(new ShokujiiEventConverter())
+  const eventsSnapshot = await (transaction === undefined ? eventsRef.get() : transaction.get(eventsRef))
+  return eventsSnapshot.docs.map((doc) => doc.data())
+}
+
 // 予約申請中のイベントを取得
 export const getApplyingReservationEvents = async (
   nowDateTimeMillis: number,
@@ -430,4 +448,38 @@ export const convertReferenceToEvent = async (
 ): Promise<ShokujiiEvent | undefined> => {
   const eventSnapshot = await eventRef.withConverter(new ShokujiiEventConverter()).get()
   return eventSnapshot.data()
+}
+
+/**
+ * イベント変更差分を `events/{eventId}/logs` に追加する。
+ * legacy `log_event_status` の write_log 相当。withConverter 付き ref 経由で書き込む。
+ */
+export const addEventChangeLog = async (
+  communityId: string,
+  eventId: string,
+  differences: Record<string, unknown>,
+  updatedBy: string,
+): Promise<void> => {
+  const db = getFirestore()
+  const logsCollection = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('events')
+    .doc(eventId)
+    .collection('logs')
+
+  const logRef = logsCollection.doc().withConverter(new ShokujiiEventLogConverter())
+  const updatedAt =
+    differences.updated_at instanceof Timestamp
+      ? differences.updated_at.toMillis()
+      : typeof differences.updated_at === 'number'
+        ? differences.updated_at
+        : Date.now()
+
+  const log = new EventLog(logRef.id, {
+    ...differences,
+    updated_by: updatedBy,
+    updated_at: updatedAt,
+  })
+  await logRef.set(log)
 }

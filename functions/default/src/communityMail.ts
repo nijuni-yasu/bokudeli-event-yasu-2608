@@ -5,9 +5,15 @@ import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityManagerEmailSet } from './utils
 import * as sgMail from './utils/sendgrid.js'
 import { getCommunityUrl, getManageCommunityUrl } from './utils/urls.js'
 import { ShokujiiCommunity } from './stores/community.js'
+import { getUser } from './stores/user.js'
+import { createModuleLogger } from './utils/logger.js'
+
+const logger = createModuleLogger('communityMail')
 
 const COMMUNITY_ADD_ID = 'd-d116c6b010214d2b92a2421411a508d2'
 const COMMUNITY_CONTACT_ID = 'd-940c5bd81040475e8c9522c80e361433'
+const COMMUNITY_MANAGER_ADDED_TEMPLATE_ID = 'd-2a1283b5d17040dfb3805d6b4a0f922e'
+const COMMUNITY_MANAGER_REMOVED_TEMPLATE_ID = 'd-019c40ece2e344ff9b4f6edb19dc7167'
 
 // See: CommunityContactDialog.vue
 const CommunityContactRequestSchema = z.object({
@@ -59,6 +65,59 @@ async function sendCommunityAddedMailToOrganizer(templateId: string, community: 
       })
     }),
   )
+}
+
+/**
+ * コミュニティマネージャーの追加・削除通知メール。
+ * legacy `on_write_community_members` の sendMessage 相当。
+ */
+export async function sendCommunityManagerRoleChangeMails(params: {
+  communityAccount: string
+  communityName: string
+  addedManagerIds: string[]
+  removedManagerIds: string[]
+}): Promise<void> {
+  const { communityAccount, communityName, addedManagerIds, removedManagerIds } = params
+  const community_url = getCommunityUrl(communityAccount)
+  const community_manage_url = getManageCommunityUrl(communityAccount)
+
+  const sendToManager = async (templateId: string, managerId: string): Promise<void> => {
+    const user = await getUser(managerId, true)
+    const to = user?.user_email
+    if (to == null || to === '') {
+      return
+    }
+    await sgMail.send({
+      to,
+      from: DEFAULT_FROM,
+      templateId,
+      dynamicTemplateData: {
+        user_name: user?.user_name ?? '',
+        community_name: communityName,
+        community_url,
+        community_manage_url,
+      },
+    })
+  }
+
+  const sendPromises = [
+    ...addedManagerIds.map((managerId) => sendToManager(COMMUNITY_MANAGER_ADDED_TEMPLATE_ID, managerId)),
+    ...removedManagerIds.map((managerId) => sendToManager(COMMUNITY_MANAGER_REMOVED_TEMPLATE_ID, managerId)),
+  ]
+  if (sendPromises.length === 0) {
+    return
+  }
+
+  const results = await Promise.allSettled(sendPromises)
+  const failedCount = results.filter((r) => r.status === 'rejected').length
+  if (failedCount > 0) {
+    logger.warn('Failed to send community manager role change mails', {
+      communityAccount,
+      failedCount,
+      successCount: results.length - failedCount,
+      totalCount: results.length,
+    })
+  }
 }
 
 async function sendCommunityContactMailToOrganizers(

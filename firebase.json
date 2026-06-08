@@ -57,37 +57,6 @@
         "firebase-debug.log",
         "firebase-debug.*.log"
       ]
-    },
-    {
-      "source": "functions/legacy",
-      "codebase": "legacy",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    },
-    {
-      "source": "functions/shokujii-slackbot",
-      "codebase": "shokujii-slackbot",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log"
-      ]
-    },
-    {
-      "source": "functions/shokujii-linebot",
-      "codebase": "shokujii-linebot",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log"
-      ]
     }
   ],
   "firestore": {

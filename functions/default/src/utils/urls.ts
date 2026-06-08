@@ -28,6 +28,10 @@ export const getCommunityUrl = (communityAccount: string) =>
 export const getEventUrl = (communityAccount: string, eventId: string) =>
   common.getEventUrl(EVENT_HOST.value(), communityAccount, eventId)
 
+/** LINE 等の外部ブラウザ起動用クエリ付きイベント URL */
+export const getEventUrlForExternalBrowser = (communityAccount: string, eventId: string): string =>
+  `${getEventUrl(communityAccount, eventId)}?openExternalBrowser=1`
+
 export const getUserUrl = (userId: string) => common.getUserUrl(EVENT_HOST.value(), userId)
 
 export const getCommunityInvitationUrl = (communityAccount: string, tokenId: string) =>
