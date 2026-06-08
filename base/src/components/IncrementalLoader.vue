@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { VProgressCircular } from 'vuetify/components'
 
 let observer: IntersectionObserver | null = null
-const loadingElement = ref<typeof VProgressCircular | undefined>()
+const loadingElement = ref<HTMLElement | null>(null)
 
 defineOptions({
   inheritAttrs: false,
@@ -23,7 +22,7 @@ const hasMore = computed(() => props.totalCount > props.loadedCount)
 /** 少し下にあっても「追読み可能」とみなす（短い一覧でインジケータがビューポート外に落ちる場合の取りこぼし防止） */
 const VIEWPORT_CHAIN_MARGIN_PX = 800
 
-const isElementInViewport = (el: HTMLElement | undefined) => {
+const isElementInViewport = (el: HTMLElement | null | undefined) => {
   if (el == null) {
     return false
   }
@@ -36,7 +35,7 @@ const isElementInViewport = (el: HTMLElement | undefined) => {
 }
 
 const nextLoad = () => {
-  if (hasMore.value && isElementInViewport(loadingElement.value?.$el)) {
+  if (hasMore.value && isElementInViewport(loadingElement.value)) {
     emits('load')
   }
 }
@@ -55,7 +54,7 @@ watch(
 // onMounted & nextTick で loadingElement が undefined になることがある
 // これを回避するため、watch で監視する
 watch(loadingElement, (newValue) => {
-  if (newValue?.$el != null && observer == null) {
+  if (newValue != null && observer == null) {
     observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -69,7 +68,7 @@ watch(loadingElement, (newValue) => {
         threshold: 0.1, // 10%の部分が見えたらトリガー
       },
     )
-    observer.observe(newValue.$el)
+    observer.observe(newValue)
   }
 })
 
@@ -80,5 +79,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-progress-circular v-show="hasMore" ref="loadingElement" indeterminate color="primary" />
+  <div v-show="hasMore" ref="loadingElement" class="incremental-loader-anchor text-center">
+    <v-progress-circular indeterminate color="primary" />
+  </div>
 </template>
+
+<style scoped>
+.incremental-loader-anchor {
+  min-height: 48px;
+  padding: 20px 0;
+}
+</style>

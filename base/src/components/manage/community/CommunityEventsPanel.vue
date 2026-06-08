@@ -35,6 +35,7 @@ const numOfColumns = computed(() => {
 const eventListStore = useEventListStore(
   [where('community_account', '==', props.communityAccount), orderBy('event_start_datetime', 'desc')],
   numOfColumns.value,
+  { autoContinue: true },
 )
 
 const events = computed(
@@ -99,7 +100,7 @@ onMounted(() => {
           :total-count="eventListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
           :loaded-count="eventListStore.eventStores?.length ?? 0"
           :get-manage-event-path="getManageEventPath"
-          @load="eventListStore.next()"
+          @load="eventListStore.next"
         />
       </v-col>
     </v-row>

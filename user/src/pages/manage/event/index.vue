@@ -65,6 +65,7 @@ const eventListStore = computed(() =>
   useEventListStore(
     [where('community_account', '==', communityAccount.value), orderBy('event_start_datetime', 'desc')],
     numOfColumns.value,
+    { autoContinue: true },
   ),
 )
 

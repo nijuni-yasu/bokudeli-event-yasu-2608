@@ -41,10 +41,12 @@ const emit = defineEmits<{
         <EventCard class="event-card" :event="event" :members="members" />
       </router-link>
     </v-col>
-  </v-row>
-  <v-row v-if="showLoader !== false && events.length > 0">
-    <v-col cols="12" class="text-center">
-      <IncrementalLoader class="my-5" :total-count="totalCount" :loaded-count="loadedCount" @load="emit('load')" />
+    <v-col v-if="showLoader !== false" cols="12">
+      <v-row class="justify-center">
+        <v-col cols="auto">
+          <IncrementalLoader :total-count="totalCount" :loaded-count="loadedCount" @load="emit('load')" />
+        </v-col>
+      </v-row>
     </v-col>
   </v-row>
 </template>
