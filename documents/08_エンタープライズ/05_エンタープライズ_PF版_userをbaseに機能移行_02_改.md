@@ -1,6 +1,6 @@
 # PF版 user から base への機能移行（改訂版）
 
-**Issue / ブランチ**: #2051 / `dev/2051-v2`（`origin/development` 起点で Phase 0 + Phase 1 実装中）  
+**Issue / ブランチ**: #2051 / `dev/2051-v2`（Phase 0〜3 完了、`EventMemberOrderTable` は延期）  
 **旧版**: `05_エンタープライズ_PF版_userをbaseに機能移行_01_旧.md`  
 **関連**: `05_エンタープライズ_PF版_userとenterpriseの共通化.md` / `05_エンタープライズ_PF版_baseの依存関係整理.md` / `base/README.md` / `base/src/components/pages/@CAUTION.md`
 
@@ -135,7 +135,7 @@ base/src/components/
 | 候補 | 移行元 | 概要 | 優先度 |
 |------|--------|------|--------|
 | `useCopyEventFeedback.ts` | `EventOverview`, `EventIndex`, `events.vue` | コピー成功/失敗 Dialog 状態・文言・遷移 | **高** ✅ Phase 1 |
-| `useMemberCsvExport.ts` | `CommunityMember`, `EventMember` | CSV 生成（community / event 列定義は引数） | 中 |
+| `memberCsvExport.ts` | `CommunityMember`, `EventMember` | CSV 生成（community / event 列定義は引数） | 中 ✅ Phase 2 |
 | `ManagerInvitationDialog.vue` | `CommunityMember` 280〜301 行付近 | 管理者招待 URL 生成 | 高 ✅ Phase 1 |
 | `ManagerRoleChangeDialog.vue` | `CommunityMember` add/remove | 管理者追加・解除確認 | 高 ✅ Phase 1 |
 | `MemberListRow.vue` | member 2 画面 | Avatar + 名前 + SNS + **actions slot** | 高 ✅ Phase 1 |
@@ -145,9 +145,9 @@ base/src/components/
 
 | 候補 | 移行元 | 概要 | 優先度 |
 |------|--------|------|--------|
-| `CommunityEventsPanel.vue` | `user/.../events.vue` | 新規作成・コピー・Help・EventCard グリッド・IncrementalLoader | **高**（未 base 化の唯一のタブ本体） |
-| `CommunityHeader.vue` | 旧 `CommunityTabLayout` template 上部 | アイコン・名称・公開ページリンク | 中 |
-| `CommunityMemberTable.vue` | 旧 `CommunityMember` | v-table + 上記 Row / Dialog 組み合わせ | 高 |
+| `CommunityEventsPanel.vue` | `user/.../events.vue` | 新規作成・コピー・Help・EventCard グリッド・IncrementalLoader | **高** ✅ Phase 2 |
+| `CommunityHeader.vue` | 旧 `CommunityTabLayout` template 上部 | アイコン・名称・公開ページリンク | 中 ✅ Phase 2 |
+| `CommunityMemberTable.vue` | 旧 `CommunityMember` | v-table + 上記 Row / Dialog 組み合わせ | 高 ✅ Phase 2 |
 | `CommunityAlbumGrid.vue` | 旧 `CommunityAlbum` | draggable グリッド部分 | 中 |
 | `CommunityAlbumUpload.vue` | 同上 | アップロード・バリデーション | 中 |
 
@@ -157,12 +157,12 @@ base/src/components/
 
 | 候補 | 移行元 | 概要 | 優先度 |
 |------|--------|------|--------|
-| `EventCommunityBillAlert.vue` | 旧 `EventOverview` | 請求書払い v-alert | 中 |
-| `EventOverviewActionPanel.vue` | 旧 `EventOverview` | 編集・削除・コピー・キャンセルボタン群 | 高 |
-| `EventCancelFlow.vue` | 旧 `EventOverview` | 理由入力〜確認〜完了 Dialog 群 | **高**（EventMemberOrder と関連） |
-| `EventDeleteDialogs.vue` | 旧 `EventOverview` | 削除確認・完了 | 中 |
-| `EventMemberOrderTable.vue` | 旧 `EventMember` | ステータス別 v-table。**列定義は props で外出し**（§7 EventMemberOrder 依存参照） | **最高** |
-| `EventCardGrid.vue` | `EventIndex`, `events.vue` | EventCard + IncrementalLoader（props: query, columns） | 高 |
+| `EventCommunityBillAlert.vue` | 旧 `EventOverview` | 請求書払い v-alert | 中 ✅ Phase 2 |
+| `EventOverviewActionPanel.vue` | 旧 `EventOverview` | 編集・削除・コピー・キャンセルボタン群 | 高 ✅ Phase 2 |
+| `EventCancelFlow.vue` | 旧 `EventOverview` | 理由入力〜確認〜完了 Dialog 群 | **高** ✅ Phase 2 |
+| `EventDeleteDialogs.vue` | 旧 `EventOverview` | 削除確認・完了 | 中 ✅ Phase 2 |
+| `EventMemberOrderTable.vue` | 旧 `EventMember` | ステータス別 v-table。**列定義は props で外出し** | **最高** ⏸ 延期（スキーマ確定後） |
+| `EventCardGrid.vue` | `EventIndex`, `events.vue` | EventCard + IncrementalLoader（props: query, columns） | 高 ✅ Phase 2 |
 
 **user の pages に残す**: `pages/manage/event/[eventId]/[tab].vue`, `pages/manage/event/index.vue`。
 
@@ -310,9 +310,36 @@ Phase 5: 横断（旧版 §10.7）
 - [x] 新規 4 点が `@/router/utils` を静的 import していない
 - [x] lint / format / build / unit test
 
-> Phase 1 部品の **user pages への組み込み**（`CommunityMemberTable` 等）は Phase 2/3 で実施。
+> Phase 1 部品の **user pages への組み込み**は Phase 3 で完了。
 
-**EventMemberOrder 対応**: Phase 2 の `EventMemberOrderTable` を最優先。ただし `06_エンタープライズ_EventMemberOrder対応論点.md` の **スキーマ変更（`pay_enterprise_subsidy_amount` 等）と密結合**。次のいずれかで手戻りを防ぐ。
+**Phase 2（完了）**
+
+- [x] `memberCsvExport.ts` + vitest（community / event CSV プリセット）
+- [x] `EventCardGrid.vue`（`getManageEventPath` 注入）
+- [x] `CommunityEventsPanel.vue`（`useCopyEventFeedback` 組み込み）
+- [x] `CommunityHeader.vue`（`communityPath` 注入）
+- [x] `CommunityMemberTable.vue`（Phase 1 Dialog / Row 結線）
+- [x] EventOverview 分解: `EventCommunityBillAlert` / `EventOverviewActionPanel` / `EventCancelFlow` / `EventDeleteDialogs`
+- [x] 新規パネルが `@/router/utils` 非依存（path は `managePathResolvers` 型 + props 注入）
+
+**Phase 3（完了）**
+
+- [x] `community/[tab].vue` を base パネル組み立てに書き換え（dynamic import 廃止）
+- [x] user 重複 7 ファイル削除（events / member / settings / letter / album / invoice / slackSetting）
+- [x] `event/[tab].vue` を base パネル組み立てに書き換え（overview 分解パネル + settings/letter/flyer は base 直接）
+- [x] `event/member` タブは現行 user 実装を維持（`EventMemberOrderTable` 延期）
+- [x] user 重複 4 ファイル削除（overview / settings / letter / flyer）
+- [x] `event/index.vue` を `EventCardGrid` + `useCopyEventFeedback` に書き換え
+- [x] user `CopyEventDialog.vue` 重複削除 → base 参照に統一
+- [x] lint / format / build / unit test
+
+**延期（Phase 4 以降）**
+
+- `EventMemberOrderTable` と `event/member.vue` の base 化 — `pay_enterprise_subsidy_amount` 等スキーマ確定後
+- `CommunityAlbumGrid` / `CommunityAlbumUpload` 分割
+- `CommunityHeader` 相当の enterprise カスタム PoC
+
+`EventMemberOrderTable` については `06_エンタープライズ_EventMemberOrder対応論点.md` のスキーマ変更と密結合のため、次のいずれかで手戻りを防ぐ。
 
 - スキーマ確定後にテーブル分解する、または
 - **列定義（ヘッダ・セル）を props で外出し**し、スキーマ追加に追従できる構造にする（§4.3 参照）
@@ -325,14 +352,14 @@ Phase 5: 横断（旧版 §10.7）
 
 ## 8. 受け入れ条件（改訂）
 
-- [ ] user / partner / enterprise（作成後）で `npm run build` 成功（partner は #2056 リネーム後の名称）
+- [x] user / partner で `npm run build` 成功（enterprise は未作成）
 - [ ] manage の各タブが **user pages の組み立て変更だけ** で enterprise 向けカスタム可能（PoC: 1 タブ omit）
-- [ ] `base/src/components/pages/` に **新規ファイル追加なし**
-- [ ] `CommunityTabLayout` 相当が **user の dynamic import `@/components/...` に依存しない**
-- [ ] コピーイベント完了フローのロジックが **1 composable** に集約
-- [ ] **新規パネルが §2.3 (A) の path 注入**になっている（やむを得ず (B) の場合は partner/enterprise スタブ整備済み）
-- [ ] **i18n キー未解決（生表示）がない** — base へ移したキーと user 残置キーの**両方**を確認（旧版 §8.1 継承）
-- [ ] lint / format（`/lint-and-format`）
+- [x] `base/src/components/pages/` に **新規ファイル追加なし**
+- [x] `CommunityTabLayout` 相当が **user の dynamic import `@/components/...` に依存しない**（community タブは base 直接 import。event member のみ user 残置）
+- [x] コピーイベント完了フローのロジックが **1 composable** に集約（`useCopyEventFeedback`）
+- [x] **新規パネルが §2.3 (A) の path 注入**（`managePathResolvers` + props）。既存 (B) コンポーネントは partner スタブ済み
+- [ ] **i18n キー未解決（生表示）がない** — 実機確認は Phase 4 以降
+- [x] lint / format（`/lint-and-format`）
 
 ---
 
@@ -452,7 +479,7 @@ fixup を使う場合も、**既存 19 コミットへの積み上げ fixup で�
 1. `origin/development` から **新ブランチ `dev/2051-v2` を作成**（既存 `dev/2051` への force push は避ける。§10.2 参照）
 2. §10.3 の cherry-pick 候補のみ取り込む（router スタブの追加先は `partner`。§10.3 注記参照）
 3. §3.2 対象ファイル（TabLayout / Index / モノリス等）が **base に存在しない** 状態を確認
-4. §7 Phase 1 以降を改訂方針で実装（新規パネルは §2.3 (A) の path 注入を原則） — **Phase 0 + Phase 1 完了（2026-06-08、`dev/2051-v2`）**
+4. §7 Phase 1 以降を改訂方針で実装（新規パネルは §2.3 (A) の path 注入を原則） — **Phase 0〜3 完了（2026-06-08、`dev/2051-v2`）。`EventMemberOrderTable` は延期**
 
 ---
 
