@@ -13,8 +13,12 @@ import { mdiFacebook, mdiDownload } from '@mdi/js'
 import XIcon from '@shokujii/base/icons/x.js'
 import instagramIcon from '@/assets/images/sns/sns_instagram.png'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import {
+  buildEventMemberCsv,
+  downloadMemberCsv,
+  type EventMemberCsvRowInput,
+} from '@shokujii/base/composable/memberCsvExport.js'
 import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
-import { downloadCsv } from '@shokujii/base/utils/downloadCsv.js'
 import { priceString } from '@shokujii/base/schemes/converter'
 import type { User } from '@shokujii/common/schemas/User'
 import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
@@ -108,43 +112,28 @@ const getDateString = (order: EventMemberOrder) => {
       return order.canceled_at == null ? '' : convertToDatetime(order.canceled_at)
   }
 }
+const allOrderRows = computed((): EventMemberCsvRowInput[] =>
+  [...orderedMenus.value, ...processingMenus.value, ...cartMenus.value, ...canceledMenus.value].map(
+    ([order, member]) => ({
+      order,
+      member,
+      statusLabel: $t(`manage.member.${order.status}`),
+      dateLabel: getDateString(order) ?? '',
+    }),
+  ),
+)
+
 const downloadCsvFile = () => {
-  const headers = [
-    $t('manage.member.status'),
-    $t('manage.member.name'),
-    'X',
-    'Facebook',
-    'Instagram',
-    $t('manage.member.order'),
-    $t('manage.member.menu_price'),
-  ]
-  if (isCommunityBill.value) {
-    headers.push($t('manage.member.community_bill_off_amount'))
-  }
-  headers.push($t('manage.member.date.ordered'))
-  let csv = headers.map((h) => `"${h}"`).join(',') + '\n'
-  for (const [order, member] of [
-    ...orderedMenus.value,
-    ...processingMenus.value,
-    ...cartMenus.value,
-    ...canceledMenus.value,
-  ]) {
-    const row = [
-      $t(`manage.member.${order.status}`),
-      member.user_name,
-      member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter!) : '',
-      member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook!) : '',
-      member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram!) : '',
-      order.menu_name,
-      String(order.menu_price),
-    ]
-    if (isCommunityBill.value) {
-      row.push(String(order.pay_community_bill_off_amount ?? 0))
-    }
-    row.push(getDateString(order) ?? '')
-    csv += row.map((v) => `"${v}"`).join(',') + '\n'
-  }
-  downloadCsv('event_member.csv', csv)
+  const csv = buildEventMemberCsv(allOrderRows.value, {
+    includeCommunityBill: isCommunityBill.value,
+    statusLabel: $t('manage.member.status'),
+    nameLabel: $t('manage.member.name'),
+    orderLabel: $t('manage.member.order'),
+    menuPriceLabel: $t('manage.member.menu_price'),
+    communityBillOffLabel: $t('manage.member.community_bill_off_amount'),
+    dateOrderedLabel: $t('manage.member.date.ordered'),
+  })
+  downloadMemberCsv('event_member.csv', csv)
 }
 </script>
 
