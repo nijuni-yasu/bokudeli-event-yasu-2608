@@ -960,6 +960,7 @@ export default {
         album: 'アルバム',
         settings: 'コミュニティ設定',
       },
+      public_page: 'コミュニティページ',
       album: {
         page_title: 'アルバムを設定しよう🎨',
         help_heading_what: '【アルバム機能とは】',
