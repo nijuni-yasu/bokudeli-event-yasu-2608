@@ -32,12 +32,15 @@ resource "google_identity_platform_config" "auth" {
     }
   }
 
-  # Authorized domains configuration
-  authorized_domains = [
-    "localhost",
-    "${var.project}.web.app",
-    "${var.project}.firebaseapp.com"
-  ]
+  # Authorized domains configuration（環境固有ドメインは auth_authorized_domains_extra で追加）
+  authorized_domains = distinct(concat(
+    [
+      "localhost",
+      "${var.project}.web.app",
+      "${var.project}.firebaseapp.com",
+    ],
+    var.auth_authorized_domains_extra,
+  ))
 
   depends_on = [
     google_project_service.default,

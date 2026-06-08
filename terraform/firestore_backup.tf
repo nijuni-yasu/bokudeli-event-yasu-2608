@@ -2,6 +2,7 @@
 resource "google_storage_bucket" "firestore_backups" {
   name                        = format("%s-firestore-backups", var.project)
   location                    = var.region
+  storage_class               = "ARCHIVE"
   uniform_bucket_level_access = true
 
   depends_on = [
