@@ -132,7 +132,7 @@ export const getOrder = async (
 }
 
 /**
- * 同一メンバーの member_orders から、集約窓内の ordered を取得する（Slack orderNotification 用）。
+ * 同一メンバーの member_orders から、集約窓内の ordered を取得する（Slack slackOrderNotification 用）。
  */
 export const getRecentOrderedOrdersForMember = async (
   communityId: string,

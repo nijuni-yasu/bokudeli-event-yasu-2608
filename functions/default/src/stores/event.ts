@@ -409,7 +409,7 @@ export const getAcceptingOrderEventsByEndTime = async (
   return eventsSnapshot.docs.map((doc) => doc.data())
 }
 
-/** イベント開始時刻の範囲で注文受付中のイベントを取得（Slack eventNotification 用） */
+/** イベント開始時刻の範囲で注文受付中のイベントを取得（Slack slackEventNotification 用） */
 export const getAcceptingOrderEventsByStartTime = async (
   startTimeMillis: number,
   endTimeMillis: number,

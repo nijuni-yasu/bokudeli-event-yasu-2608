@@ -20,8 +20,8 @@
 | F-04 | `onCommunityMemberWritten` | onDocumentWritten | legacy `on_write_community_members` 統合 | |
 | F-05 | `send_email` | — | legacy | **廃止**。存在しないことを確認 |
 | F-06 | `slackbot` | onRequest | shokujii-slackbot | Bolt 遅延初期化 |
-| F-07 | `eventNotification` | onSchedule | shokujii-slackbot | 1 分間隔 |
-| F-08 | `orderNotification` | onDocumentWritten | shokujii-slackbot | member_orders 集約 |
+| F-07 | `slackEventNotification` | onSchedule | shokujii-slackbot `eventNotification` | 1 分間隔。**関数名リネーム済み** |
+| F-08 | `slackOrderNotification` | onDocumentWritten | shokujii-slackbot `orderNotification` | member_orders 集約。**関数名リネーム済み** |
 | F-09 | `broadcast_event_message_request` | onRequest | shokujii-linebot | HTTP 手動実行可 |
 | F-10 | `line_event_information` | onSchedule | shokujii-linebot | 金曜 12:15 JST |
 
@@ -101,7 +101,7 @@
 
 ---
 
-### 4.3 Slack 注文通知 — orderNotification（SLK-ORD）
+### 4.3 Slack 注文通知 — slackOrderNotification（SLK-ORD）
 
 参照: [15_EventMemberOrder_SlackBot.md](../07_リファクタリング/15_EventMemberOrder_SlackBot.md)
 
@@ -112,7 +112,7 @@
 | SLK-ORD-03 | 高 | リンク URL | SLK-ORD-01 完了 | 通知内リンクをクリック | `EVENT_HOST` ベースのユーザー URL・イベント URL が正しく遷移 |
 | SLK-ORD-04 | 高 | bots 未登録 | add 未実施 or remove 済 | 注文確定 | Slack 通知なし。Functions ログに `No bots found`（info） |
 | SLK-ORD-05 | 中 | in_cart のみ | カート投入のみ | カートに入れるだけ | 通知なし（`ordered` 遷移時のみ） |
-| SLK-ORD-06 | 中 | 二重通知なし | SLK-ORD-02 実施 | Cloud Logging で `orderNotification` 実行回数確認 | 複数 member_order 更新でも Webhook POST は 1 回 |
+| SLK-ORD-06 | 中 | 二重通知なし | SLK-ORD-02 実施 | Cloud Logging で `slackOrderNotification` 実行回数確認 | 複数 member_order 更新でも Webhook POST は 1 回 |
 
 **SLK-ORD-02 確認ポイント**
 
@@ -122,7 +122,7 @@
 
 ---
 
-### 4.4 Slack イベント通知 — eventNotification（SLK-EVT）
+### 4.4 Slack イベント通知 — slackEventNotification（SLK-EVT）
 
 スケジュール: **毎分**（`*/1 * * * *` JST）。テストは「対象時刻が現在の 1 分ウィンドウに入るイベント」を用意するか、Cloud Scheduler から手動実行する。
 
@@ -134,7 +134,7 @@
 | SLK-EVT-04 | 高 | 開始 60 分前 | 同上 | `event_start_datetime` を「今+60分±1分」 | 「開始60分前になりました。」 |
 | SLK-EVT-05 | 高 | イベント終了 | 同上 | `event_end_datetime` を「今±1分」 | 「終了しました。次回開催をお楽しみに！」 |
 | SLK-EVT-06 | 中 | bots 未登録 | bots なしコミュニティ | SLK-EVT-01 相当のイベント | 通知なし（エラーで全体失敗しない） |
-| SLK-EVT-07 | 中 | スケジューラ実行 | GCP Console | Cloud Scheduler → `eventNotification` → 「今すぐ実行」 | ログに `eventNotification tick`。対象イベントがあれば Slack 通知 |
+| SLK-EVT-07 | 中 | スケジューラ実行 | GCP Console | Cloud Scheduler → `firebase-schedule-slackEventNotification-asia-northeast1` → 「今すぐ実行」 | ログに `slackEventNotification tick`。対象イベントがあれば Slack 通知 |
 
 ---
 
@@ -271,9 +271,10 @@ flowchart TD
 1. **`backupFirestore` リネーム**: 移行仕様 §8.5 の `scheduled_firestore_export` は実装名 `backupFirestore`。Gen1 削除時は旧名 `scheduled_firestore_export` を対象にする（§5.10）。
 2. **`send_email` 廃止**: 正常系テストは不要。INF-03 / PRE-03 で「存在しない」ことを確認。
 3. **Slack sandbox**: `SLACK_COMMAND_NAME` が `shokujii` 以外の場合、管理画面コピー文字列は手動置換（SLK-09）。
-4. **eventNotification**: 毎分実行のため、イベント日時は「現在時刻 ±1 分」で合わせる。待ち時間最大 2 分を見込む。
-5. **orderNotification 集約**: 複数品テストは「同一 confirmOrder / stripeWebhook バッチ」を使う（カートからまとめて確定）。
-6. **1 Firebase = 1 Slack App**: プロジェクト不一致は SLK-06/08 の典型原因。
+4. **`slackEventNotification` リネーム**: 旧 `eventNotification` Gen2 が残ると毎分二重通知。デプロイ後 §5.12 の `functions:delete` を実施し、`firebase functions:list` で旧名不在を確認。
+5. **`slackEventNotification`**: 毎分実行のため、イベント日時は「現在時刻 ±1 分」で合わせる。待ち時間最大 2 分を見込む。
+6. **`slackOrderNotification` 集約**: 複数品テストは「同一 confirmOrder / stripeWebhook バッチ」を使う（カートからまとめて確定）。
+7. **1 Firebase = 1 Slack App**: プロジェクト不一致は SLK-06/08 の典型原因。
 
 ---
 

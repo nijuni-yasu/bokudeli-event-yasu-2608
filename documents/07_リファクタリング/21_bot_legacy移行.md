@@ -329,7 +329,7 @@ Terraform 管理済みプロジェクトで `for_each` 統合後に初回 apply 
 | `SLACK_STATE_SECRET` | OAuth state 用の任意の長いランダム文字列（旧 `.env` の値を流用可） | `slackbot` |
 | `LINE_CHANNEL_ACCESS_TOKEN` | [LINE Developers Console](https://developers.line.biz/) → 対象チャネル → **Messaging API** → **Channel access token** | `broadcast_event_message_request`, `line_event_information` |
 
-`eventNotification` / `orderNotification` は Secret を直接使わない（Firestore + `EVENT_HOST` のみ）。
+`slackEventNotification` / `slackOrderNotification`（旧 `eventNotification` / `orderNotification`）は Secret を直接使わない（Firestore + `EVENT_HOST` のみ）。
 
 ##### 既存（移行前から default で使用中・登録確認が必要）
 
@@ -509,6 +509,46 @@ Gen1 削除後、GitHub Actions の `Deploy functions`（または `firebase dep
 
 実機確認は [07_21_bot_legacy移行_実機テスト.md](../テスト/07_21_bot_legacy移行_実機テスト.md) の BKP-01〜03。
 
+### 5.12 Slack 通知関数のリネームと Gen2 旧名削除
+
+移行完了後、Slack 専用の export 名に変更した（legacy 名 → 現行名）。
+
+| legacy / 旧 Gen2 名 | 現行 export 名 | 種別 |
+|---------------------|----------------|------|
+| `eventNotification` | `slackEventNotification` | `onSchedule`（毎分） |
+| `orderNotification` | `slackOrderNotification` | `onDocumentWritten`（member_orders） |
+
+**HTTP 公開関数**（`slackbot` 等）は外部 URL のためリネームしない。上記2件は外部 URL を持たないためリネーム可能。
+
+#### デプロイ後の必須手順（各環境）
+
+`firebase deploy --only functions` だけでは **旧 Gen2 名の関数が残り二重実行**する（毎分通知・注文ごと通知）。デプロイ成功後に必ず旧名を削除する。
+
+1. 新関数の存在確認
+
+```bash
+firebase functions:list --project <PROJECT_ID> | grep -E 'slackEventNotification|slackOrderNotification'
+```
+
+2. 旧 Gen2 関数の明示削除
+
+```bash
+firebase --project <PROJECT_ID> functions:delete \
+  eventNotification \
+  orderNotification \
+  --region asia-northeast1 \
+  --force
+```
+
+3. 孤立リソース確認（推奨）
+
+- Cloud Scheduler に `firebase-schedule-eventNotification-asia-northeast1` が残っていれば削除。新ジョブは `firebase-schedule-slackEventNotification-asia-northeast1`
+- `firebase functions:list` に `eventNotification` / `orderNotification` が無いこと
+
+§5.10 の Gen1 削除リストは **未削除環境向けに旧名のまま**維持する。Gen2 旧名削除は本節を参照。
+
+実機確認は [07_21_bot_legacy移行_実機テスト.md](../テスト/07_21_bot_legacy移行_実機テスト.md) の SLK-EVT-07 / SLK-ORD-06。
+
 ## 6. データマイグレーション
 
 Firestore データ構造の変更は伴わないため、データマイグレーションは不要。`slackbots` 等のコレクションは既存のまま store 経由でアクセスする。
@@ -534,8 +574,8 @@ Firestore データ構造の変更は伴わないため、データマイグレ�
 
 - [x] `stores/slackBot.ts`（および community bots アクセス）と必要スキーマを作成
 - [x] `slackbot`（Bolt 遅延初期化 + secrets）を default へ
-- [x] `eventNotification`（`onSchedule`）を default へ
-- [x] `orderNotification`（`onDocumentWritten`）を default へ
+- [x] `eventNotification`（`onSchedule`）を default へ → 現行名 `slackEventNotification`（§5.12）
+- [x] `orderNotification`（`onDocumentWritten`）を default へ → 現行名 `slackOrderNotification`（§5.12）
 - [x] `@slack/bolt` を default に追加
 
 ### 7.4 Phase 2c（LINE bot → default）
@@ -562,7 +602,8 @@ Firestore データ構造の変更は伴わないため、データマイグレ�
 ### 8.2 既存システムへの影響
 
 - Cloud Run / GCF は新リビジョン失敗時に旧リビジョンが稼働継続するが、**関数名の codebase 間移動時のみ削除→再作成**が起き、短時間の不通があり得る（5.9）。
-- 関数名を変えると flyer / Slack / LINE の URL が壊れるため、**export 名は不変**を厳守する。
+- **外部 HTTP URL を持つ関数**（`flyer`, `slackbot`, `broadcast_event_message_request` 等）は export 名を変えると URL が壊れるため**不変**を厳守する。
+- **onSchedule / onDocumentWritten の Slack 通知**（`slackEventNotification`, `slackOrderNotification`）は外部 URL を持たないためリネーム可。デプロイ後は §5.12 の Gen2 旧名削除が必須。
 
 ### 8.3 セキュリティ考慮事項
 
@@ -584,7 +625,7 @@ Firestore データ構造の変更は伴わないため、データマイグレ�
 | flyer URL | フロントから PDF 取得（関数名 URL 不変） |
 | slackbot OAuth / コマンド | Slack で `/shokujii add ...`、OAuth redirect 疎通 |
 | 注文通知 | テストイベントで member_orders を ordered に |
-| イベント通知（Slack/LINE） | スケジューラ手動実行 or 時刻到来で確認 |
+| イベント通知（Slack/LINE） | `slackEventNotification` を Scheduler 手動実行 or 時刻到来で確認（§5.12） |
 | LINE ブロードキャスト | `broadcast_event_message_request` を HTTP 呼び出し |
 | backup | `backupFirestore`（Cloud Scheduler 手動実行）で `gs://<PROJECT_ID>-firestore-backups` に出力（5.11・BKP-01） |
 | codebase | `firebase functions:list` が default のみ |
@@ -605,7 +646,7 @@ Firestore データ構造の変更は伴わないため、データマイグレ�
 
 ### 8.7 移行時の要点（まとめ）
 
-- **関数名（export 名）は完全一致で維持**（外部 URL 保護）
+- **外部 HTTP URL を持つ関数の export 名は維持**（flyer / slackbot / LINE HTTP 等）。Slack 通知2件は `slackEventNotification` / `slackOrderNotification` にリネーム済み（§5.12）
 - **同名関数の codebase 間移動は削除→再作成**になる。切替手順とダウンタイムを意識する（5.9）
 - **Phase 3 デプロイ前に旧 Gen1 関数を GCP から明示削除**する（5.10）。codebase 削除だけでは Gen1 が残り Gen2 デプロイが失敗する
 - **Firestore は store 経由・withConverter 必須**。slackbot 用 store を新規作成

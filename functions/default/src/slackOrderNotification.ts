@@ -51,7 +51,7 @@ const sendOrderedMessage = async (params: {
     .join(' と ')
 
   if (menuPhrase === '') {
-    logger.warn('orderNotification: no menu_name in aggregation window', { orderId })
+    logger.warn('slackOrderNotification: no menu_name in aggregation window', { orderId })
     return
   }
 
@@ -76,8 +76,8 @@ const sendOrderedMessage = async (params: {
   await sendCommunityBotsMessageOrThrow(bots, message)
 }
 
-/** legacy orderNotification から移行。export 名は維持する。 */
-export const orderNotification = onDocumentWritten(
+/** legacy orderNotification から移行。export 名を Slack 専用に変更。 */
+export const slackOrderNotification = onDocumentWritten(
   {
     document: 'communities/{communityId}/events/{eventId}/members/{memberId}/member_orders/{orderId}',
     region: 'asia-northeast1',

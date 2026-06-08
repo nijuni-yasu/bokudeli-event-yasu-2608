@@ -8,7 +8,7 @@ shokujii の Slack 連携は `functions/default` の `slackbot` 関数（`@slack
 |------|------|
 | **OAuth インストール** | チャンネルに Incoming Webhook を登録（Firestore `slackbots`） |
 | **スラッシュコマンド** | コミュニティと Slack チャンネルを紐づけ（`communities/{id}/bots`） |
-| **通知** | `orderNotification` / `eventNotification` が Webhook URL へ POST |
+| **通知** | `slackOrderNotification` / `slackEventNotification` が Webhook URL へ POST |
 
 ### 原則: 1 Firebase プロジェクト = 1 Slack App
 

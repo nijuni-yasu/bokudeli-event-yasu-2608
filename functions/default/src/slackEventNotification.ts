@@ -69,8 +69,8 @@ const notificationEventEnd = async (start: number, end: number): Promise<void> =
   await notifyEvents(events, (eventName, eventUrl) => makeEventEndMessage(eventName, eventUrl))
 }
 
-/** legacy eventNotification から移行。export 名は維持する。 */
-export const eventNotification = onSchedule(
+/** legacy eventNotification から移行。export 名を Slack 専用に変更。 */
+export const slackEventNotification = onSchedule(
   {
     schedule: '*/1 * * * *',
     timeZone: 'Asia/Tokyo',
@@ -82,7 +82,7 @@ export const eventNotification = onSchedule(
     const end = Math.trunc(now / 60 / 1000) * 60 * 1000
     const start = end - 60 * 1000
 
-    logger.info('eventNotification tick', { start, end })
+    logger.info('slackEventNotification tick', { start, end })
 
     const jobResults = await Promise.allSettled([
       notificationOrder(start, end, 3),
@@ -94,7 +94,7 @@ export const eventNotification = onSchedule(
 
     const failedJobs = jobResults.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
     if (failedJobs.length > 0) {
-      logger.error('eventNotification job failures', {
+      logger.error('slackEventNotification job failures', {
         failureCount: failedJobs.length,
         totalJobs: jobResults.length,
         reasons: failedJobs.map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason))),

@@ -46,8 +46,8 @@ export const {
   backupFirestore,
   flyer,
   slackbot,
-  eventNotification,
-  orderNotification,
+  slackEventNotification,
+  slackOrderNotification,
   broadcast_event_message_request,
   line_event_information,
 } = Object.assign({}, ...(await Promise.all([
