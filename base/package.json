@@ -13,7 +13,8 @@
     "lint": "eslint --max-warnings=0 .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:types": "vue-tsc --noEmit"
+    "build:types": "vue-tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@channel.io/channel-web-sdk-loader": "^2.0.0",
@@ -54,6 +55,7 @@
     "vite": "^5.2.8",
     "vite-plugin-vue-devtools": "^7.0.25",
     "vite-plugin-vuetify": "^2.0.3",
+    "vitest": "^3.0.5",
     "vue-tsc": "2.0.16"
   }
 }
