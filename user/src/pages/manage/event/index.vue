@@ -8,11 +8,10 @@ import { doc, orderBy, where } from 'firebase/firestore'
 import { mdiContentCopy, mdiMenuDown, mdiPlus, mdiHelp } from '@mdi/js'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
 import { useDisplay } from 'vuetify'
-import { useI18n } from 'vue-i18n'
-import EventCard from '@shokujii/base/components/EventCard.vue'
-import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import CopyEventDialog, { type CopyEventSuccessPayload } from '@/components/manage/community/CopyEventDialog.vue'
+import CopyEventDialog from '@shokujii/base/components/manage/community/CopyEventDialog.vue'
+import EventCardGrid from '@shokujii/base/components/manage/shared/EventCardGrid.vue'
+import { useCopyEventFeedback } from '@shokujii/base/composable/useCopyEventFeedback.js'
 
 const router = useRouter()
 const display = useDisplay()
@@ -78,41 +77,23 @@ const events = computed(
       return { event: s.event, members: s.members ?? [] }
     }) ?? [],
 )
+
+const {
+  isOpenCopyDialog,
+  isOpenCopyCompleteDialog,
+  isOpenCopyErrorDialog,
+  copyCompleteTitle,
+  handleCopySuccess,
+  handleCopyError,
+  handleCopyCompleteOk,
+} = useCopyEventFeedback({
+  onReload: () => eventListStore.value.reload(),
+  onNavigateToEvent: (eventId) => {
+    void router.push(getManageEventPath(eventId))
+  },
+})
+
 const isOpenEventDialog = ref(false)
-const isOpenCopyDialog = ref(false)
-const isOpenCopyCompleteDialog = ref(false)
-const isOpenCopyErrorDialog = ref(false)
-const copiedEventId = ref<string | null>(null)
-const copyCompleteTitle = ref('')
-
-const handleCopySuccess = (payload: CopyEventSuccessPayload) => {
-  eventListStore.value.reload()
-  if (payload.mode === 'single') {
-    copiedEventId.value = payload.newEventId
-    copyCompleteTitle.value = $t('manage.copy_event_modal.complete')
-  } else {
-    copiedEventId.value = null
-    if (payload.failureCount === 0) {
-      copyCompleteTitle.value = $t('manage.copy_event_modal.success_multiple', { count: payload.successCount })
-    } else {
-      copyCompleteTitle.value = $t('manage.copy_event_modal.success_partial', {
-        success: payload.successCount,
-        failure: payload.failureCount,
-      })
-    }
-  }
-  isOpenCopyCompleteDialog.value = true
-}
-
-const handleCopyCompleteOk = () => {
-  if (copiedEventId.value != null) {
-    router.push(getManageEventPath(copiedEventId.value))
-  }
-}
-
-const handleCopyError = () => {
-  isOpenCopyErrorDialog.value = true
-}
 </script>
 
 <template>
@@ -155,37 +136,26 @@ const handleCopyError = () => {
       <div v-html="$t('manage.event.no_events')" />
     </v-col>
   </v-row>
-  <v-row class="mb-2">
-    <v-col
-      v-for="{ event, members } in events"
-      :key="`popular_${event.event_id}`"
-      md="3"
-      sm="6"
-      cols="12"
-      class="content"
-    >
-      <router-link :to="getManageEventPath(event.event_id)">
-        <EventCard class="event-card" :event="event" :members="members" />
-      </router-link>
-    </v-col>
-  </v-row>
-  <v-row>
-    <v-col cols="12" class="text-center">
-      <IncrementalLoader
-        :total-count="eventListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-        :loaded-count="eventListStore.eventStores?.length ?? 0"
-        @load="eventListStore.next"
-      />
-    </v-col>
-  </v-row>
-  <confirm-dialog v-model="isOpenEventDialog" :ok-text="'OK'" max-width="800px">
+  <EventCardGrid
+    v-if="communityAccount != null"
+    class="mb-2"
+    :events="events"
+    :total-count="eventListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
+    :loaded-count="eventListStore.eventStores?.length ?? 0"
+    col-md="3"
+    col-sm="6"
+    col-lg="3"
+    :get-manage-event-path="getManageEventPath"
+    @load="eventListStore.next"
+  />
+  <ConfirmDialog v-model="isOpenEventDialog" :ok-text="'OK'" max-width="800px">
     <v-card-text class="text-center py-6 text-h4">
       {{ $t('event_create_modal.title') }}
     </v-card-text>
     <v-card-text class="pb-0" style="line-height: 2.4rem">
       <div v-html="$t('event_create_modal.desc')" />
     </v-card-text>
-  </confirm-dialog>
+  </ConfirmDialog>
   <CopyEventDialog
     v-if="communityAccount != null"
     :key="communityAccount"
@@ -210,11 +180,6 @@ const handleCopyError = () => {
 </template>
 
 <style lang="scss" scoped>
-.event-card {
-  height: 100%;
-  width: 100%;
-}
-
 .buttons {
   display: flex;
   gap: 16px;
