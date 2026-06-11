@@ -256,7 +256,7 @@
 
 - **論点**: `addToCart` で `pay_enterprise_subsidy_amount` を計算・保存するロジックを追加するか
 - **選択肢**:
-  - A. **`event_payment` で分岐**（`community_bill` → `pay_community_bill_off_amount`、`enterprise_subsidy` → `pay_enterprise_subsidy_amount`）
+  - A. **`event_payment` で分岐**（PF版: `community_bill` → `pay_community_bill_off_amount`、エンプラ: `enterprise_subsidy` → `pay_enterprise_subsidy_amount`。エンプラ版では `community_bill` は選択不可）
   - B. 個別 Callable を作る（例: `addToCartEnterprise`）
 - **推奨**: **A**。同一 Callable 内で `event_payment` を見て分岐する。`computePaymentEnterpriseSubsidyAmount` ヘルパを `common/src/utils/` に追加
 - **決定**: A（同一 `addToCart` 内で `event_payment` を見て分岐。`computePaymentEnterpriseSubsidyAmount` ヘルパを `common/src/utils/` に追加）
