@@ -2,11 +2,11 @@
 import { slackBotFunctionBaseURL } from '@shokujii/base/firebase.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { mdiContentCopy } from '@mdi/js'
-import slackLogo from '@/assets/images/slack/slack_logo.png'
-import slackImage01 from '@/assets/images/slack/slack_image_01.png'
-import slackImage02 from '@/assets/images/slack/slack_image_02.png'
-import slackImage03 from '@/assets/images/slack/slack_image_03.png'
-import slackImage04 from '@/assets/images/slack/slack_image_04.png'
+import slackLogo from '@shokujii/base/assets/images/slack/slack_logo.png'
+import slackImage01 from '@shokujii/base/assets/images/slack/slack_image_01.png'
+import slackImage02 from '@shokujii/base/assets/images/slack/slack_image_02.png'
+import slackImage03 from '@shokujii/base/assets/images/slack/slack_image_03.png'
+import slackImage04 from '@shokujii/base/assets/images/slack/slack_image_04.png'
 
 const { t: $t } = useI18n()
 

@@ -27,7 +27,10 @@ const thumbUrls = computed(() => {
   const cid = community.value?.community_id
   if (cid == null) return new Map<string, string>()
   return new Map(
-    items.value.map((item) => [item.id, convertStoragePathToURL(getCommunityAlbumItemStoragePath(cid, item.id))]),
+    items.value.map((item) => {
+      const base = convertStoragePathToURL(getCommunityAlbumItemStoragePath(cid, item.id))
+      return [item.id, `${base}&t=${item.updated_at}`]
+    }),
   )
 })
 

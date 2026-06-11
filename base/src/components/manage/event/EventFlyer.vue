@@ -1,16 +1,22 @@
 <script setup lang="ts">
 import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 // import EventCard from '@shokujii/base/components/EventCard.vue'
-import { getEventPath } from '@/router/utils'
+import { getEventPath, getFlyerPath } from '@/router/utils'
 // import { mdiPencil, mdiDelete, mdiCarWindshield } from '@mdi/js'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
-import { getFlyerPath } from '@/router/utils'
+import { useI18n } from 'vue-i18n'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getFlyerPdf } from '@shokujii/base/utils/flyer.js'
-import flyerLogo from '@/assets/images/shokujii/flyer_logo.png'
 import VueQrious from 'vue-qrious'
 
+defineProps<{
+  flyerLogoUrl: string
+}>()
+
 const route = useRoute()
+const notification = useNotification()
+const { t: $t } = useI18n()
 
 const eventId = route.params.eventId as string
 const eventStore = useEventStore(eventId) as EventStore
@@ -26,7 +32,7 @@ const flyerSizes = [
   },
 ]
 // HTMLのタグを削除する関数
-const htmlTagDeleteing = (html: string) => {
+const stripHtmlTags = (html: string) => {
   // <a>タグのリンクテキストを抽出し、リンクを削除
   let textOnly = html.replace(/<a [^>]*>(.*?)<\/a>/gi, '$1')
 
@@ -40,7 +46,10 @@ const htmlTagDeleteing = (html: string) => {
   return textOnly.trim()
 }
 const eventCoverUrl = computed(() => eventStore.coverImageUrl)
-const eventDesc = eventStore.event?.event_desc ? htmlTagDeleteing(eventStore.event.event_desc) : ''
+const eventDesc = computed(() => {
+  const desc = eventStore.event?.event_desc
+  return desc ? stripHtmlTags(desc) : ''
+})
 const homeUrl = window.location.origin
 const eventPath = computed(() => {
   if (!eventStore.event) return ''
@@ -50,10 +59,15 @@ const eventPath = computed(() => {
 const downloadFlyer = async (size: string) => {
   try {
     const w = window.open(getFlyerPath(), '_blank')
+    if (w == null) {
+      notification.show($t('manage.flyer.download_error'), 'error')
+      return
+    }
     const pdf = await getFlyerPdf(eventId, size)
-    w!.location.href = window.URL.createObjectURL(pdf)
+    w.location.href = window.URL.createObjectURL(pdf)
   } catch (error) {
     console.error('Error downloading flyer:', error)
+    notification.show($t('manage.flyer.download_error'), 'error')
   }
 }
 </script>
@@ -100,7 +114,7 @@ const downloadFlyer = async (size: string) => {
                 <div class="description-content" v-html="eventDesc"></div>
               </div>
               <div class="shop-logo">
-                <v-img :src="flyerLogo" height="45.73" contain />
+                <v-img :src="flyerLogoUrl" height="45.73" contain />
               </div>
             </v-col>
           </v-row>

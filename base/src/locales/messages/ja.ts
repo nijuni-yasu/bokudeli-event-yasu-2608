@@ -653,4 +653,342 @@ export default {
   user_profile: {
     profile_settings: 'プロフィール設定',
   },
+  manage: {
+    settings: {
+      submit: '設定する',
+      saved: '保存しました',
+    },
+    newcommunity: {
+      submit: 'コミュニティを作成する',
+      created: 'コミュニティを作成しました',
+      error: 'コミュニティの作成に失敗しました',
+    },
+    copy_event: 'イベントコピー',
+    copy_event_modal: {
+      title: 'イベントコピー',
+      intro_overview:
+        'イベントの内容を引き継いで「下書き」を作成します。場所・時刻・店舗・本文などは同じ内容がコピーされます。繰り返しコピーも可能です。コピー作成後、編集して予約申請を進めてください。',
+      select_original: 'イベントを選択',
+      hint_select_original: 'コピーの元になるイベントを一覧から選びます。',
+      select_target_date: '開催日',
+      hint_single_target_date: 'コピーするイベントの店舗の営業日・営業時間に合う日だけ選べます。',
+      target_date: '開催日',
+      field_open_date: '日付を選択',
+      create_button: 'コピーして下書きを作成する',
+      error: 'イベントのコピーに失敗しました',
+      complete: 'イベントコピーが完了しました',
+      copy_type: 'コピータイプ',
+      hint_copy_type: '1件だけコピーするか、条件に沿って繰り返してコピーするかを選びます。',
+      single_copy: '単発コピー',
+      repeat_copy: '繰り返しコピー',
+      repeat_interval: '繰り返す間隔',
+      hint_repeat_interval: '開始日を起点に、繰り返しの間隔（数値と「日・週・ヶ月・年」）を指定します。',
+      repeat_interval_number: '間隔の数値',
+      repeat_interval_unit: '単位',
+      interval_unit: {
+        day: '日ごと',
+        week: '週間ごと',
+        month: 'ヶ月ごと',
+        year: '年ごと',
+      },
+      monthly_pattern: '月次の繰り返し方（月ごとのとき）',
+      hint_monthly_pattern: '「毎月同じ日付」は日付固定。「毎月同じ曜日」は第何週の何曜日に合わせます。',
+      monthly_pattern_date: '毎月同じ日付',
+      monthly_pattern_weekday: '毎月同じ曜日',
+      start_date: '繰り返しの開始日',
+      hint_repeat_start_date: 'コピーするイベントの店舗の営業日・営業時間に合う日だけ選べます。',
+      repeat_count: '繰り返し回数',
+      repeat_count_field: '回数',
+      hint_repeat_count: '作成するイベントの回数です（最大12回）。店舗の営業日でない場合は、スキップされます。',
+      repeat_count_unit: '回',
+      preview_title: 'プレビュー',
+      preview_intro: '下記の日時にそれぞれ下書きイベントが作成されます。',
+      preview_count: '{count}個のイベントが下書き作成されます',
+      preview_monthly_date: '毎月{day}日に作成されます',
+      preview_monthly_weekday: '毎月第{week}{dayOfWeek}曜日に作成されます',
+      preview_short_notice:
+        '指定されたコピー回数（{requested}回）に対し、営業時間外スキップ等のため{actual}件のみ作成可能です',
+      create_multiple_button: '{count}個のイベントを下書き作成する',
+      success_multiple: '{count}個のイベントを下書き作成しました',
+      success_partial: '{success}個のイベントを下書き作成しました（{failure}個失敗）',
+      creating: 'イベントを作成中...',
+      validation: {
+        select_event: 'コピー元のイベントを選択してください',
+        max_count: '一度に作成できるイベントは最大12個です',
+        no_dates: '指定された条件で作成可能な日時がありません。間隔・コピー回数・開始日を見直してください',
+      },
+      day_of_week: {
+        0: '日',
+        1: '月',
+        2: '火',
+        3: '水',
+        4: '木',
+        5: '金',
+        6: '土',
+      },
+      week_number: {
+        1: '1',
+        2: '2',
+        3: '3',
+        4: '4',
+        5: '5',
+      },
+    },
+    event: {
+      tabs: {
+        overview: '概要',
+        member: '参加者',
+        letter: 'レター',
+        settings: '設定',
+        flyer: 'チラシ',
+      },
+      edit: 'イベント設定',
+      delete: 'イベント削除',
+      dialog: {
+        title: 'イベント削除',
+        description: '本当に削除しますか？この操作は取り消せません。',
+        submit: '削除',
+        complete: 'イベント削除が完了しました',
+      },
+      no_community: `まだコミュニティがありません<br />
+                      新しいコミュニティを立ち上げよう🌱`,
+      no_events: `まだイベントがありません<br />
+                    最初のイベントを作ってみよう🎈`,
+      save_failed: 'イベントの保存に失敗しました',
+      created_success: '「{name}」のイベントを新規作成しました',
+      updated_success: '「{name}」のイベントを更新しました',
+      save_error: 'イベントの保存中にエラーが発生しました: {error}',
+      reserve_success: '「{name}」に予約申請しました。店舗からの予約承認をお待ちください。',
+      reserve_error: '予約申請中にエラーが発生しました: {error}',
+      reserve_validation_modal_title: '予約申請できません',
+      reserve_validation_intro: '以下の項目をご確認のうえ、再度お試しください。下書きの内容は保存されています。',
+      community_not_approved: 'コミュニティが承認されていません',
+      not_manager: 'コミュニティ運営者ではありません',
+      menu_update_failed: 'メニューの更新に失敗しました',
+      community_bill_notice: {
+        title: '主催者請求書払いについて',
+        description: `本イベントの支払い方法は「主催者請求書払い」です。<br />
+イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
+<b>【お支払い期限】イベント開催日の翌月末日</b>`,
+        link_label: '請求書のダウンロードはこちら',
+        link_button: '請求書払いページを開く',
+      },
+      cancel: 'イベントキャンセル',
+      cancel_reason_dialog: {
+        title: 'イベントキャンセル',
+        instruction: 'キャンセル理由を選択してください。',
+        other: 'その他',
+        other_placeholder: '理由を具体的に入力してください',
+        error_other_required: '理由を入力してください',
+        submit: '次へ（確認）',
+      },
+      cancel_confirm_dialog: {
+        title: 'イベントキャンセルの確認',
+        description: 'イベントのキャンセル処理は戻すことができません。本当にキャンセルしますか？',
+        yes: 'はい',
+        no: 'いいえ',
+      },
+      cancel_complete_dialog: {
+        title: 'イベントのキャンセルが完了しました',
+      },
+      cancel_support_dialog: {
+        title: 'イベントのキャンセル',
+        description:
+          '現在は参加者がいるため、この画面からのキャンセルはできません。参加者がいない場合は、「イベントをキャンセルする」から手続きできます。\n参加者への返金が必要な場合は、サポートまでお問い合わせください。',
+      },
+      cancel_failed: 'イベントのキャンセルに失敗しました',
+      delete_failed: 'イベントの削除に失敗しました',
+    },
+    member: {
+      manager: '管理者',
+      member: 'メンバー',
+      no_member: '参加者はまだいません。',
+      status: 'ステータス',
+      ordered: '注文済',
+      processing: '決済処理中',
+      in_cart: 'カート追加中',
+      canceled: 'キャンセル',
+      name: '名前',
+      order: '注文内容',
+      menu_price: 'メニュー金額',
+      community_bill_off_amount: 'おごり金額',
+      csv_download: 'CSV ダウンロード',
+      invite_manager: '管理者を招待する',
+      date: {
+        ordered: '注文日時',
+        processing: '決済処理中日時',
+        in_cart: 'カート追加日時',
+        canceled: 'キャンセル日時',
+      },
+      add_manager_dialog: {
+        title: '{0} を管理者に追加する',
+        description:
+          '{0} をコミュニティ管理者に追加しますか？<br />コミュニティ管理者にすると、コミュニティの管理、イベントの作成・編集・削除などが行えるようになります。',
+        submit: '追加',
+        notification: 'コミュニティ管理者に追加しました',
+        error: 'コミュニティ管理者の追加に失敗しました',
+      },
+      remove_manager_dialog: {
+        title: '{0} を管理者から解除する',
+        description:
+          '{0} をコミュニティ管理者から解除しますか？<br />コミュニティ管理者でなくなると、コミュニティの管理、イベントの作成・編集・削除などが行えなくなります。',
+        self_description:
+          '{0} をコミュニティ管理者から解除しますか？<br />コミュニティ管理者でなくなると、コミュニティの管理、イベントの作成・編集・削除などが行えなくなります。<br /><br /><b>※自分自身を管理者から外した場合、自分で管理者に戻すことはできません。</b>',
+        submit: '解除',
+        notification: 'コミュニティ管理者から解除しました',
+        error: 'コミュニティ管理者の解除に失敗しました',
+        last_manager_error: '他に管理者がいないため、管理者から解除できません',
+      },
+    },
+    letter: {
+      hint: {
+        title: 'レターを配信しよう💌',
+        description: `レター機能を使うと<b>「コミュニティメンバー」</b>や<b>「イベント参加者」「イベント未登録者」</b>にメールを配信することができます。<br />
+                        配信されるメールの返信先（Reply-To）は [コミュニティ設定] で設定したメールアドレスです。<br />
+                        返信先は［コミュニティ設定］タブからご設定ください。詳細は <a href="https://note.com/preview/n0c961c680fd3?prev_access_key=ced956e93d24fb7689121a8bdb431ebb" target="_blank">レター機能について</a> をご確認ください。<br />
+                        `,
+      },
+      type_select_dialog: {
+        top: '「コミュニティメンバー」や「イベント参加者」「イベント未登録者」にメールで配信することができます。配信先を選択してください。',
+        event: 'イベント参加者に配信',
+        event_description: '「イベント参加者」や「イベント未登録者」にメールを配信することができます。',
+        community: 'コミュニティメンバーに配信',
+        community_description: 'コミュニティメンバー全体にメールを配信することができます。',
+        type: {
+          normal: '通常',
+          important: '重要',
+          warning: '警告',
+        },
+      },
+      event_dialog: {
+        top: 'レターを配信するイベントを選択してください',
+      },
+      edit: {
+        new: 'レター作成',
+        edit: 'レター編集',
+        to: '配信先',
+        to_community: 'コミュニティメンバー全体',
+        to_event_participant: 'イベント参加者',
+        to_event_non_participant: 'イベント未登録者',
+        number_of_people: '（配信先：{0}人）',
+        deliver_datetime: '配信日時',
+        deliver_now: '今すぐ配信',
+        subject: '件名',
+        message: 'メッセージ',
+        add_event_description: 'イベント内容を追加する',
+        event_description: 'イベント内容',
+        submit_reserve: '予約配信',
+        submit_now: '今すぐ配信',
+        save_draft: '下書き保存',
+        to_draft: '下書きに戻す',
+        send_test: 'テスト配信',
+        send_test_success: 'テスト配信しました',
+        send_test_error: 'テスト配信に失敗しました',
+        save_success: 'レターを下書き保存しました',
+        save_error: 'レターの下書き保存に失敗しました',
+        submit_success: 'レターを配信設定しました',
+        submit_error: 'レターの配信設定に失敗しました',
+      },
+      notification: {
+        saved: 'レターを保存しました',
+        deleted: 'レターを削除しました',
+      },
+      email_not_set: {
+        title: 'メールアドレス未設定',
+        description:
+          'レターを配信するには、コミュニティのメールアドレスを設定する必要があります。<br>[コミュニティ設定] 画面で、[メールアドレス] を設定してください。',
+      },
+    },
+    community_manager_invitation: {
+      title: 'URL を発行して、追加するメンバーに権限を付与します',
+      description: '発行したURLは1週間有効で、利用されると無効になります。',
+      generate: '招待URLを発行',
+      failed: 'URL の発行に失敗しました',
+    },
+    new_letter: 'レター作成',
+    flyer: {
+      title: 'QRコード付きのチラシを印刷して、告知・集客に役立てよう！',
+      description:
+        '微調整もしやすい <a href="https://bit.ly/433wAbb" target="_blank">Canvaのテンプレート</a> もぜひご活用ください🎨',
+      download_error: 'チラシのダウンロードに失敗しました',
+    },
+    invoice: {
+      date: '開催日',
+      status: 'ステータス',
+      event_name: 'イベント名',
+      oge_amount: 'おごり金額',
+      price: '請求金額',
+      download: '請求書',
+      download_invoice: '請求書をダウンロード',
+      error: '請求書の取得に失敗しました',
+      title: '主催者請求書払い📃',
+      description: `イベント設定画面で<b>「主催者請求書払い」</b>を設定した場合、参加者は事前のオンライン決済を行わずにご注文いただけます。<br />
+      イベント終了後、主催者様宛に請求書を発行いたしますので、銀行振込にてお支払いください。<br />
+      <b>【お支払い期限】翌月末日</b><br />
+      <b>【請求書払い手数料】注文金額の10%</b><br />
+      ※2025年11月1日以降のイベント開催分より、「請求書払い手数料」を加算してご請求させていただきます。<br />
+      ※参加者による事前のオンライン決済の場合は、手数料は発生しません。<br />
+      ※詳細は、<a href="https://docs.google.com/presentation/d/1rCoJlhzoPE9pOAYHYGxWimAOc1hVi0slJMp_-HhjqbE/edit#slide=id.g353224adc3a_0_0" target="_blank">支払い設定について</a> をご確認ください。`,
+    },
+    slack: {
+      description: `<b>shokujii の SlackApp を追加</b>すると<br/>
+                      <b>「🍽 参加者の注文通知」 「📅 注文期限のリマインド」 「🕛 イベント開始のリマインド」</b>
+                      などの通知をSlackで受け取ることができます。<br/>
+                      例えば、参加者の注文通知で<b>「自分も参加してみようかな？」</b>を促したり、注文期限のリマインドで<b>「主催者からの声がけを自動化」</b>できたり、<br/>
+                      食事会への盛り上がりを自然に演出することで、告知・集客やイベント運営をよりスムーズに行うことが可能です。<br/>
+                      詳細については <a href="https://docs.google.com/presentation/d/1i57dsnNhCi1G97RwSpJZQc1r7Gs7HilxMyQ9aWfxRqw/edit#slide=id.g2e7a4494cae_0_0" target="_blank">Slack連携について</a> もご確認ください。</b>`,
+      setup: '設定方法',
+      step1: 'STEP1',
+      step1_desc: '下記リンクをクリックして、shokujii の SlackApp をコミュニティのワークスペースにインストール',
+      step2: 'STEP2',
+      step2_desc: `通知先のチャンネルを選択👆<br>
+                    通知用に <b>#shokujii</b> のチャンネルを作成するのもおすすめです。<b>`,
+      step3: 'STEP3',
+      step3_desc: 'SlackAppを追加したチャンネルを開いて、以下のコマンドを<b>コピーして送信！<b>',
+      step4: '完了🎉',
+      step4_desc: `<b>「参加者の注文通知」「注文期限のリマインド」「参加者確定のお知らせ」「イベント開始のリマインド」「イベント終了のお知らせ」</b><br>
+                    などがSlackのチャンネルで通知されるようになります。`,
+      step5: '解除🔓',
+      step5_desc: '設定を解除したい場合は、以下コマンドを設定したチャンネルで送信してください。',
+      copy: 'コピー',
+    },
+    community: {
+      tabs: {
+        events: 'イベント',
+        member: 'メンバー',
+        letter: 'レター',
+        invoice: '請求書払い',
+        slackSetting: 'Slack連携',
+        album: 'アルバム',
+        settings: 'コミュニティ設定',
+      },
+      public_page: 'コミュニティページ',
+      album: {
+        page_title: 'アルバムを設定しよう🎨',
+        help_heading_what: '【アルバム機能とは】',
+        help_what: `アルバム画像を設定すると、コミュニティページとイベントページで、メインのカバー画像の下に並びます。<br />
+            メインのカバー画像の一枚はこれまで通りで、雰囲気を補足する追加の写真としてご利用いただけます。<br />
+            施設の写真、前回のイベントの様子、集合写真など、コミュニティの雰囲気のわかるものを追加してください。`,
+        help_heading_how: '【設定方法】',
+        help_how: `画像の左端のつまみをドラッグして並び順を変えられます。<br>
+          画像をクリックすると、差し替え用の画像を選べます。各画像の説明は編集のあと、フォーカスを外すと自動保存されます。`,
+        help_drag: '左端のつまみをドラッグして並び順を変えられます。',
+        help_click_replace: '画像をクリックすると、差し替え用の画像を選べます。',
+        add_images: 'アルバムに画像を追加',
+        uploading: '{current}/{total} 枚をアップロード中…',
+        caption_label: '説明',
+        delete: '削除',
+        delete_confirm: 'この画像を削除しますか？',
+        sort_saved: '並び順を保存しました',
+        sort_save_error: '並び順の保存に失敗しました',
+        file_too_large: '1 枚あたり 10MB までです',
+        upload_error: 'アップロードに失敗しました',
+        delete_error: '削除に失敗しました',
+        replace_error: '差し替えに失敗しました',
+        replace_success: '画像を差し替えました',
+        caption_saved: '説明を保存しました',
+        caption_save_error: '説明の保存に失敗しました',
+      },
+    },
+  },
 }
