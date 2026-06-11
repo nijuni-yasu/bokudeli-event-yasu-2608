@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "finance-billing-ops": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "skillPath": "skills/finance-billing-ops/SKILL.md",
+      "computedHash": "519ae2cd9c26ab957fd86deb3b5d4d0079c740f4d3a29044132817b1b18ea9dd"
+    },
     "firebase-firestore-standard": {
       "source": "firebase/agent-skills",
       "sourceType": "github",
@@ -10,6 +16,12 @@
       "source": "anthropics/skills",
       "sourceType": "github",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
+    "monetization-strategy": {
+      "source": "phuryn/pm-skills",
+      "sourceType": "github",
+      "skillPath": "pm-product-strategy/skills/monetization-strategy/SKILL.md",
+      "computedHash": "fe59fc0cde884e3e5ae7316b6bcbbdcf1936b7f74fec3cfe5e8a3523db0423b2"
     },
     "skill-creator": {
       "source": "anthropics/skills",
