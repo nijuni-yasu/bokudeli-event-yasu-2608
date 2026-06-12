@@ -10,8 +10,14 @@ import {
 } from './firebase/index.js'
 import { getStartOfDay } from '../utils/datetime.js'
 import { computeEventFullAddress } from '../utils/splitAddress.js'
+import { GUEST_PAYMENT_VALUES } from './Enterprise.js'
+import {
+  EnterpriseSubsidySettingsAppSchema,
+  EnterpriseSubsidySettingsDbSchema,
+  type EnterpriseSubsidySettingsType,
+} from './EnterpriseSubsidySettings.js'
 
-export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill'] as const
+export const EVENT_PAYMENT_VALUES = ['user_advance', 'user_on_day', 'community_bill', 'enterprise_subsidy'] as const
 export type EventPaymentType = (typeof EVENT_PAYMENT_VALUES)[number]
 
 export const COMMUNITY_BILL_SETTINGS_TYPE_VALUES = ['free', 'discount'] as const
@@ -26,6 +32,7 @@ const CommunityBillSettingsDbSchema = CommunityBillSettingsAppSchema.transform((
   return val
 })
 export type CommunityBillSettingsType = z.infer<typeof CommunityBillSettingsAppSchema>
+export type { EnterpriseSubsidySettingsType }
 
 /**
  * DB上に保存されるイベントステータス
@@ -111,6 +118,10 @@ export const EventDbSchema = z.object({
   sent_new_event_mail_at: TimestampSchema.optional(),
   sent_popular_event_mail_at: TimestampSchema.optional(),
   community_bill_settings: optionalDeleteField(CommunityBillSettingsDbSchema),
+  enterprise_id: NonEmptyStringSchema.optional(),
+  allow_guest: z.boolean().optional(),
+  guest_payment: z.enum(GUEST_PAYMENT_VALUES).optional(),
+  enterprise_subsidy_settings: optionalDeleteField(EnterpriseSubsidySettingsDbSchema),
   canceled_at: TimestampSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
 })
@@ -183,6 +194,10 @@ const EventAppSchema = z.object({
   sent_new_event_mail_at: EpochMillisSchema.optional(),
   sent_popular_event_mail_at: EpochMillisSchema.optional(),
   community_bill_settings: CommunityBillSettingsAppSchema.optional(),
+  enterprise_id: z.string().optional(),
+  allow_guest: z.boolean().default(false),
+  guest_payment: z.enum(GUEST_PAYMENT_VALUES).optional(),
+  enterprise_subsidy_settings: EnterpriseSubsidySettingsAppSchema.optional(),
   canceled_at: EpochMillisSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
 })
@@ -243,6 +258,10 @@ export class Event {
   subdomain_tags!: string[]
 
   community_bill_settings?: CommunityBillSettingsType
+  enterprise_id?: string
+  allow_guest!: boolean
+  guest_payment?: (typeof GUEST_PAYMENT_VALUES)[number]
+  enterprise_subsidy_settings?: EnterpriseSubsidySettingsType
 
   created_at: number
   created_by?: string

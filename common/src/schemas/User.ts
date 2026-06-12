@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
+import { USER_TYPE_VALUES } from './Enterprise.js'
 
 const NonNegativeIntSchema = z.number().int().nonnegative()
 
@@ -29,6 +30,8 @@ const UserDbSchema = z.object({
   ordered_food_count: NonNegativeIntSchema,
   // counts_updated_at は初回 recount 完了までセットされない可能性があるため optional のまま
   counts_updated_at: TimestampSchema.optional(),
+  user_type: z.enum(USER_TYPE_VALUES).optional(),
+  enterprise_id: NonEmptyStringSchema.optional(),
 })
 
 const UserAppSchema = z.object({
@@ -55,6 +58,8 @@ const UserAppSchema = z.object({
   managed_community_count: NonNegativeIntSchema.default(0),
   ordered_food_count: NonNegativeIntSchema.default(0),
   counts_updated_at: EpochMillisSchema.optional(),
+  user_type: z.enum(USER_TYPE_VALUES).optional(),
+  enterprise_id: z.string().optional(),
 })
 
 const convertToDb = (user: User) => {
@@ -88,6 +93,8 @@ export class User {
   managed_community_count!: number
   ordered_food_count!: number
   counts_updated_at?: number
+  user_type?: (typeof USER_TYPE_VALUES)[number]
+  enterprise_id?: string
 
   constructor(id: string, src: Partial<User>) {
     Object.assign(this, UserAppSchema.parse(src))
