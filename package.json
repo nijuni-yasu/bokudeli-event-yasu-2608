@@ -26,6 +26,7 @@
     "user",
     "enterprise",
     "partner",
-    "functions/default"
+    "functions/default",
+    "tests/firestore-rules"
   ]
 }
