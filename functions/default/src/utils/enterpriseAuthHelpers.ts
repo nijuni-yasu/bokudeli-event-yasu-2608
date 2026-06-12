@@ -1,0 +1,31 @@
+import { HttpsError } from 'firebase-functions/https'
+import { ENTERPRISE_SUBDOMAIN_PATTERN, RESERVED_ENTERPRISE_SUBDOMAINS } from '@shokujii/common/schemas/Enterprise.js'
+
+export function normalizeEnterpriseEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
+export function emailDomainMatches(email: string, allowedDomains: string[]): boolean {
+  const domain = email.split('@')[1]?.toLowerCase()
+  if (domain == null || domain === '') return false
+  return allowedDomains.some((d) => d.toLowerCase() === domain)
+}
+
+export function assertValidEnterpriseSubdomain(subdomain: string): void {
+  const normalized = subdomain.toLowerCase()
+  if (!ENTERPRISE_SUBDOMAIN_PATTERN.test(normalized)) {
+    throw new HttpsError('invalid-argument', 'subdomain format is invalid')
+  }
+  if ((RESERVED_ENTERPRISE_SUBDOMAINS as readonly string[]).includes(normalized)) {
+    throw new HttpsError('invalid-argument', 'subdomain is reserved')
+  }
+}
+
+export function getClientIp(rawRequest: {
+  headers?: Record<string, string | string[] | undefined>
+}): string | undefined {
+  const forwarded = rawRequest.headers?.['x-forwarded-for']
+  if (typeof forwarded === 'string') return forwarded.split(',')[0]?.trim()
+  if (Array.isArray(forwarded)) return forwarded[0]?.split(',')[0]?.trim()
+  return undefined
+}

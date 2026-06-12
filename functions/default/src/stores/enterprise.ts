@@ -57,6 +57,14 @@ export const saveEnterpriseMember = async (member: EnterpriseMember, enterpriseI
   await getEnterpriseMemberRef(enterpriseId, member.id).set(member)
 }
 
+export const getEnterpriseMember = async (
+  enterpriseId: string,
+  userId: string,
+): Promise<EnterpriseMember | undefined> => {
+  const snapshot = await getEnterpriseMemberRef(enterpriseId, userId).get()
+  return snapshot.exists ? snapshot.data() : undefined
+}
+
 export const getEnterpriseById = async (enterpriseId: string): Promise<Enterprise | undefined> => {
   const snapshot = await getEnterpriseRef(enterpriseId).get()
   return snapshot.exists ? snapshot.data() : undefined

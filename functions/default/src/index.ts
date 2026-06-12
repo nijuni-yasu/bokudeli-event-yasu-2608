@@ -52,6 +52,9 @@ export const {
   line_event_information,
   createEnterprise,
   getEnterpriseByDomain,
+  requestEnterpriseEmailLogin,
+  confirmEnterpriseEmailLogin,
+  logEnterpriseLogout,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -87,4 +90,6 @@ export const {
   import('./slackOrderNotification.js'),
   import('./lineBroadcast.js'),
   import('./enterprise/onboarding.js'),
+  import('./enterprise/auth.js'),
+  import('./enterprise/logout.js'),
 ])))

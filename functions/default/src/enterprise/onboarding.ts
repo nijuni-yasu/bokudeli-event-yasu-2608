@@ -18,7 +18,15 @@ import {
 } from '../stores/enterprise.js'
 import { getUserIdFromEmail, saveUser, ShokujiiUser } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
+import { resolveEnterpriseByHostname } from '../utils/enterpriseBaseDomain.js'
+import {
+  assertValidEnterpriseSubdomain,
+  emailDomainMatches,
+  getClientIp,
+  normalizeEnterpriseEmail,
+} from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
+import { isEnterpriseAppCheckEnforced } from '../utils/enterpriseAppCheck.js'
 
 const logger = createModuleLogger('enterprise')
 
@@ -36,19 +44,6 @@ async function assertIsSupport(uid: string): Promise<void> {
   if (config?.isSupport(uid) !== true) {
     throw new HttpsError('permission-denied', 'support only')
   }
-}
-
-function emailDomainMatches(email: string, allowedDomains: string[]): boolean {
-  const domain = email.split('@')[1]?.toLowerCase()
-  if (domain == null || domain === '') return false
-  return allowedDomains.some((d) => d.toLowerCase() === domain)
-}
-
-function getClientIp(rawRequest: { headers?: Record<string, string | string[] | undefined> }): string | undefined {
-  const forwarded = rawRequest.headers?.['x-forwarded-for']
-  if (typeof forwarded === 'string') return forwarded.split(',')[0]?.trim()
-  if (Array.isArray(forwarded)) return forwarded[0]?.split(',')[0]?.trim()
-  return undefined
 }
 
 export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEnterpriseResponse>>(async (request) => {
@@ -77,17 +72,22 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   if (initialAdmin?.email == null || initialAdmin.display_name == null) {
     throw new HttpsError('invalid-argument', 'initial_admin is incomplete')
   }
-  if (!emailDomainMatches(initialAdmin.email, allowedEmailDomains)) {
+
+  const normalizedSubdomain = subdomain.toLowerCase()
+  assertValidEnterpriseSubdomain(normalizedSubdomain)
+
+  const initialAdminEmail = normalizeEnterpriseEmail(initialAdmin.email)
+  if (!emailDomainMatches(initialAdminEmail, allowedEmailDomains)) {
     throw new HttpsError('invalid-argument', 'initial_admin email domain not allowed')
   }
 
   const [existingById, existingBySubdomain, existingByCustomDomain, existingUserId] = await Promise.all([
     getEnterpriseById(enterpriseId),
-    getEnterpriseBySubdomain(subdomain),
+    getEnterpriseBySubdomain(normalizedSubdomain),
     customDomain != null && customDomain !== ''
-      ? getEnterpriseByCustomDomain(customDomain)
+      ? getEnterpriseByCustomDomain(customDomain.toLowerCase())
       : Promise.resolve(undefined),
-    getUserIdFromEmail(initialAdmin.email),
+    getUserIdFromEmail(initialAdminEmail),
   ])
 
   if (existingById != null) {
@@ -108,7 +108,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
 
   const enterprise = new Enterprise(enterpriseId, {
     company_name: companyName,
-    subdomain,
+    subdomain: normalizedSubdomain,
     custom_domain: customDomain,
     allowed_email_domains: allowedEmailDomains,
     theme_color: themeColor ?? '#1976D2',
@@ -127,7 +127,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   await saveEnterprise(enterprise)
 
   const authUser = await getAuth().createUser({
-    email: initialAdmin.email,
+    email: initialAdminEmail,
     emailVerified: true,
     displayName: initialAdmin.display_name,
   })
@@ -157,7 +157,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
       user_name: initialAdmin.display_name,
       user_type: 'enterprise',
       enterprise_id: enterpriseId,
-      user_email: initialAdmin.email,
+      user_email: initialAdminEmail,
       created_at: now,
     }),
   )
@@ -171,8 +171,8 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
     ipAddress: getClientIp(request.rawRequest),
     details: {
       company_name: companyName,
-      subdomain,
-      initial_admin_email: initialAdmin.email,
+      subdomain: normalizedSubdomain,
+      initial_admin_email: initialAdminEmail,
     },
   })
 
@@ -186,22 +186,16 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
 
 /** ホスト名から enterprise_id とブランディング最小情報を解決（未認証 Callable） */
 export const getEnterpriseByDomain = onCall<GetEnterpriseByDomainRequest, Promise<GetEnterpriseByDomainResponse>>(
+  {
+    enforceAppCheck: isEnterpriseAppCheckEnforced(),
+  },
   async (request) => {
     const { hostname } = request.data
     if (hostname == null || hostname === '') {
       throw new HttpsError('invalid-argument', 'hostname is required')
     }
 
-    const host = hostname.toLowerCase()
-
-    // subdomain.shokujii.com 形式
-    const subdomainMatch = /^([a-z0-9-]+)\.shokujii\.com$/.exec(host)
-    let enterprise: Enterprise | undefined
-    if (subdomainMatch != null) {
-      enterprise = await getEnterpriseBySubdomain(subdomainMatch[1]!)
-    } else {
-      enterprise = await getEnterpriseByCustomDomain(host)
-    }
+    const enterprise = await resolveEnterpriseByHostname(hostname)
 
     if (enterprise == null || !enterprise.is_active) {
       throw new HttpsError('not-found', 'enterprise not found')
@@ -213,6 +207,7 @@ export const getEnterpriseByDomain = onCall<GetEnterpriseByDomainRequest, Promis
       company_logo_url: enterprise.company_logo_url,
       theme_color: enterprise.theme_color,
       subdomain: enterprise.subdomain,
+      allowed_email_domains: enterprise.allowed_email_domains,
     }
   },
 )
