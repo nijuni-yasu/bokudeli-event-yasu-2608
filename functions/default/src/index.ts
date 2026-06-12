@@ -50,6 +50,8 @@ export const {
   slackOrderNotification,
   broadcast_event_message_request,
   line_event_information,
+  createEnterprise,
+  getEnterpriseByDomain,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -84,4 +86,5 @@ export const {
   import('./slackEventNotification.js'),
   import('./slackOrderNotification.js'),
   import('./lineBroadcast.js'),
+  import('./enterprise/onboarding.js'),
 ])))
