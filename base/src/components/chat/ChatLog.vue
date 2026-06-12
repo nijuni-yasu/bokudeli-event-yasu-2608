@@ -3,8 +3,9 @@ import { mdiDotsVertical } from '@mdi/js'
 import { convertToTimeString } from '@shokujii/common/utils/datetime.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { getDoc } from 'firebase/firestore'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
-import { useUserStore } from '@shokujii/base/stores/user.js'
+import { getUserRef } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { CHAT_SYSTEM_EVENT_MEMBER_JOINED } from '@shokujii/common/schemas/ChatMessage.js'
 import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
@@ -101,31 +102,50 @@ const confirmRecall = async () => {
   }
 }
 
-watch(
-  () => store.messages,
-  (messages) => {
-    const senderIds = new Set<string>()
-    for (const message of messages) {
-      if (message.messageType === 'user' && message.senderUserId != null) {
-        senderIds.add(message.senderUserId)
-      }
+const collectSenderIds = (messages: ChatMessageItem[]): string[] => {
+  const senderIds = new Set<string>()
+  for (const message of messages) {
+    if (message.messageType === 'user' && message.senderUserId != null) {
+      senderIds.add(message.senderUserId)
     }
+  }
+  return [...senderIds]
+}
+
+const fetchSenderProfile = async (senderId: string) => {
+  if (senderUsers.value.has(senderId)) {
+    return
+  }
+  senderUsers.value.set(senderId, null)
+
+  try {
+    const snapshot = await getDoc(getUserRef(senderId))
+    const user = snapshot.exists() ? snapshot.data() : null
+    senderUsers.value.set(senderId, user)
+    if (user?.user_name != null) {
+      senderNames.value.set(senderId, user.user_name)
+    }
+  } catch {
+    senderUsers.value.set(senderId, null)
+  }
+}
+
+watch(
+  () => store.activeRoomId,
+  () => {
+    senderUsers.value = new Map()
+    senderNames.value = new Map()
+  },
+)
+
+watch(
+  () => collectSenderIds(store.messages),
+  (senderIds) => {
     for (const senderId of senderIds) {
-      if (senderUsers.value.has(senderId)) continue
-      const userStore = useUserStore(senderId)
-      watch(
-        () => userStore.user,
-        (user) => {
-          senderUsers.value.set(senderId, user ?? null)
-          if (user?.user_name != null) {
-            senderNames.value.set(senderId, user.user_name)
-          }
-        },
-        { immediate: true },
-      )
+      void fetchSenderProfile(senderId)
     }
   },
-  { immediate: true, deep: true },
+  { immediate: true },
 )
 </script>
 
