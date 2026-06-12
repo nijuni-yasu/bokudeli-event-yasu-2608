@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
-import { createEventChatMembership, incrementMembershipUnread, updateMembershipLastMessage } from './chatMembership.js'
+import {
+  createEventChatMembership,
+  incrementMembershipUnread,
+  shouldIncrementMembershipUnread,
+  updateMembershipLastMessage,
+} from './chatMembership.js'
 
 describe('chatMembership store', () => {
   it('createEventChatMembership does not require title', () => {
@@ -97,6 +102,73 @@ describe('chatMembership store', () => {
 
     const updated = updateMembershipLastMessage(membership, { preview: 'old', lastMessageAt: 1000 })
     expect(updated).toBeNull()
+  })
+
+  it('shouldIncrementMembershipUnread skips when last_read_at is at or after message time', () => {
+    expect(
+      shouldIncrementMembershipUnread({
+        claimed: true,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+        lastReadAt: 5000,
+        lastMessageAt: 5000,
+      }),
+    ).toBe(false)
+    expect(
+      shouldIncrementMembershipUnread({
+        claimed: true,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+        lastReadAt: 6000,
+        lastMessageAt: 5000,
+      }),
+    ).toBe(false)
+  })
+
+  it('shouldIncrementMembershipUnread increments when last_read_at is before message time', () => {
+    expect(
+      shouldIncrementMembershipUnread({
+        claimed: true,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+        lastReadAt: 4000,
+        lastMessageAt: 5000,
+      }),
+    ).toBe(true)
+  })
+
+  it('shouldIncrementMembershipUnread increments when last_read_at is unset', () => {
+    expect(
+      shouldIncrementMembershipUnread({
+        claimed: true,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+        lastReadAt: undefined,
+        lastMessageAt: 5000,
+      }),
+    ).toBe(true)
+  })
+
+  it('shouldIncrementMembershipUnread skips when claim failed (retry re-entry)', () => {
+    expect(
+      shouldIncrementMembershipUnread({
+        claimed: false,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+        lastReadAt: undefined,
+        lastMessageAt: 5000,
+      }),
+    ).toBe(false)
   })
 
   it('updateMembershipLastMessage allows older lastMessageAt when forced', () => {

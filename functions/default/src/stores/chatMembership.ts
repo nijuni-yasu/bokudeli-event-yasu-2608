@@ -102,6 +102,30 @@ export const updateMembershipLastMessage = (
   })
 }
 
+export const shouldIncrementMembershipUnread = (params: {
+  claimed: boolean
+  messageType: 'user' | 'system'
+  shouldApplyLastMessage: boolean
+  memberUserId: string
+  senderUserId: string | undefined
+  lastReadAt: number | undefined
+  lastMessageAt: number
+}): boolean => {
+  if (!params.claimed) {
+    return false
+  }
+  if (params.messageType !== 'user' || !params.shouldApplyLastMessage) {
+    return false
+  }
+  if (params.memberUserId === params.senderUserId) {
+    return false
+  }
+  if (params.lastReadAt != null && params.lastReadAt >= params.lastMessageAt) {
+    return false
+  }
+  return true
+}
+
 export const incrementMembershipUnread = (membership: ChatMembership): ChatMembership => {
   const next = Math.min(CHAT_UNREAD_COUNT_MAX, membership.unread_count + 1)
   return new ChatMembership(membership.id, {
