@@ -64,7 +64,7 @@ user 側は薄いラッパー化されたが、**ルーティング・タブ構�
 |------|-----|
 | **ルーティング・タブ・レイアウト** | `[tab].vue`, `layouts/manage.vue` |
 | **PF / enterprise 固有の文言・リンク・ナビ** | `manage/index.vue`, `navigation/manage.ts` |
-| **画面全体の store wiring と条件分岐** | enterprise で非表示タブ、ゲスト向け導線 |
+| **画面全体の store wiring と条件分岐** | enterprise で非表示タブ（SNS、`community_bill` 関連の `invoice` タブ等 §4.3）、ゲスト向け導線 |
 | **ブランド依存** | manage TOP マーケ、フライヤーロゴ（`flyerLogoUrl` prop パターンは維持） |
 
 ### 2.3 コンポーネント設計（base/README 準拠）
@@ -111,8 +111,8 @@ base/src/components/
 | `EventSettings.vue`, `CommunitySettings.vue` | EventEdit / CommunityEdit の薄いラッパー |
 | `NewCommunity.vue`, `NewEvent.vue` | 小〜中、作成フロー 1 画面 |
 | `EventLetter.vue`, `CommunityLetter.vue` | LetterEdit + LetterTable 組み合わせ |
-| `CommunitySlackSetting.vue`, `CommunityInvoice.vue`, `EventFlyer.vue` | 単機能（Flyer は `flyerLogoUrl` prop） |
-| `EventBillInvoicePdf.vue` | PDF 表示 1 用途 |
+| `CommunitySlackSetting.vue`, `CommunityInvoice.vue`, `EventFlyer.vue` | 単機能（Flyer は `flyerLogoUrl` prop）。**`CommunityInvoice` / `EventBillInvoicePdf` は PF版向け**。エンプラ版では tabs から omit（`04_イベント管理` §4.3、D-13） |
+| `EventBillInvoicePdf.vue` | PDF 表示 1 用途（PF版 `community_bill` 請求書）。エンプラ版では非表示 |
 | SNS / Slack アセット | 共通化済み |
 
 ### 3.2 やり直し（ページ単位 → 分解 or user へ戻す）
@@ -157,7 +157,7 @@ base/src/components/
 
 | 候補 | 移行元 | 概要 | 優先度 |
 |------|--------|------|--------|
-| `EventCommunityBillAlert.vue` | 旧 `EventOverview` | 請求書払い v-alert | 中 ✅ Phase 2 |
+| `EventCommunityBillAlert.vue` | 旧 `EventOverview` | 請求書払い v-alert（PF版 `community_bill` 向け）。エンプラ版では非表示（D-13） | 中 ✅ Phase 2 |
 | `EventOverviewActionPanel.vue` | 旧 `EventOverview` | 編集・削除・コピー・キャンセルボタン群 | 高 ✅ Phase 2 |
 | `EventCancelFlow.vue` | 旧 `EventOverview` | 理由入力〜確認〜完了 Dialog 群 | **高** ✅ Phase 2 |
 | `EventDeleteDialogs.vue` | 旧 `EventOverview` | 削除確認・完了 | 中 ✅ Phase 2 |
