@@ -6,6 +6,16 @@ service cloud.firestore {
             return request.auth != null &&
                    request.auth.uid in get(/databases/$(database)/documents/configs/global).data.support_user_ids
         }
+        // エンタープライズ: ドキュメントの enterprise_id（未設定 = null）
+        function docEnterpriseId(data) {
+            return data.get('enterprise_id', null);
+        }
+        // エンタープライズ: 認証ユーザーの claims とドキュメントの enterprise_id が一致
+        function isSameEnterprise(data) {
+            return request.auth != null
+                && request.auth.token.get('enterprise_id', null) != null
+                && docEnterpriseId(data) == request.auth.token.enterprise_id;
+        }
         // マイページ用冗長カウント（Functions の recount のみ更新。RC-56）
         function userProfileCountFields() {
             return [
