@@ -6,9 +6,14 @@ import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiPencil, mdiReceiptText } from '@mdi/js'
 import { useRoute } from 'vue-router'
-import { getProfile, getUserPath } from '@/router/utils'
+import { useNotification } from '@shokujii/base/composable/notification'
+import { getLogin, getProfile, getUserPath } from '@/router/utils'
+import { performEnterpriseLogout } from '@/utils/enterpriseLogout'
 
 const route = useRoute()
+const router = useRouter()
+const notification = useNotification()
+const { t } = useI18n()
 const { firebaseUser } = storeToRefs(useCurrentUserStore())
 
 const isLogin = computed(() => firebaseUser.value?.uid != null)
@@ -41,7 +46,9 @@ const handleLogoutDialog = () => {
 }
 
 const logout = async () => {
-  await useCurrentUserStore().signOut()
+  await performEnterpriseLogout('logout')
+  notification.show(t('enterprise.logout.success'), 'success')
+  await router.push(getLogin())
 }
 </script>
 

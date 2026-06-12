@@ -12,7 +12,10 @@ import '@/styles/styles.scss'
 import { themes } from '@/themes'
 
 import '@shokujii/base/firebase.js'
+import { initEnterpriseAppCheck } from '@/firebaseAppCheck'
 import '@/channelIo'
+
+initEnterpriseAppCheck()
 import { configureClientErrorReporting } from '@shokujii/base/utils/reportClientError.js'
 import { setupGlobalErrorHandling } from '@shokujii/base/utils/setupGlobalErrorHandling.js'
 
@@ -28,11 +31,16 @@ Promise.all([
   import('@shokujii/base/plugins/vuetify/index.js'),
   import('@shokujii/base/plugins/i18n/index.js'),
   import('@shokujii/base/plugins/layouts.js'),
-]).then(([routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) => {
-  configureClientErrorReporting({ app: 'user' })
+]).then(async ([routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) => {
+  configureClientErrorReporting({ app: 'enterprise' })
   for (const plugin of [routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) {
     plugin.default(app, { themes })
   }
-  setupGlobalErrorHandling(app, routerMod.router, { app: 'user' })
+  setupGlobalErrorHandling(app, routerMod.router, { app: 'enterprise' })
+
+  const { useEnterpriseStore } = await import('@/stores/enterprise')
+  const enterpriseStore = useEnterpriseStore()
+  await enterpriseStore.resolveEnterprise()
+
   app.mount('#app')
 })
