@@ -1,0 +1,23 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "./auto-imports.d.ts", "../base/src/**/*"],
+  "exclude": ["src/**/__tests__/*"],
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@themeConfig": ["./src/themeConfig.ts"],
+      "@layouts/*": ["./src/@layouts/*"],
+      "@layouts": ["./src/@layouts"],
+      "@core/*": ["./src/@core/*"],
+      "@core": ["./src/@core"],
+      "@styles/*": ["./src/styles/*"],
+      "@shokujii/common/*": ["../common/src/*"],
+      "@shokujii/base/*": ["../base/src/*"]
+    },
+    "types": ["vite/client", "vite-plugin-vue-layouts/client"]
+  }
+}

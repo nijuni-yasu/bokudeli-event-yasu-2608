@@ -1,0 +1,217 @@
+<script setup lang="ts">
+import { getEventPath } from '@/router/utils'
+import { useEventListStore } from '@shokujii/base/stores/eventList.js'
+import { useBannersStore } from '@shokujii/base/stores/banner.js'
+import Banners from '@shokujii/base/components/Banners.vue'
+import { where, orderBy, Timestamp } from 'firebase/firestore'
+import EventCard from '@shokujii/base/components/EventCard.vue'
+import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
+import { useDisplay } from 'vuetify'
+import { mdiCrownOutline, mdiCalendarHeart, mdiCalendarCheck } from '@mdi/js'
+
+const display = useDisplay()
+
+const numOfColumns = computed(() => {
+  switch (display.name.value) {
+    case 'xs':
+      return 1
+    case 'sm':
+      return 2
+    default:
+      return 4
+  }
+})
+const numOfPopularColumns = 3
+
+const now = Timestamp.now()
+
+const topBannersStore = useBannersStore('top_banners')
+const centerBannersStore = useBannersStore('center_banners')
+
+const popularEventListStore = useEventListStore(
+  [
+    where('is_public', '==', true),
+    where('event_status.value', '==', 'accepting_order'),
+    where('event_num_members', '>=', 1),
+    where('event_deadline_datetime', '>', now),
+    orderBy('event_num_members', 'desc'),
+  ],
+  numOfPopularColumns,
+)
+
+const popularEvents = computed(
+  () =>
+    popularEventListStore.eventStores
+      ?.flatMap((s) => {
+        if (s.event == null) {
+          return []
+        }
+        return { event: s.event, members: s.members ?? [] }
+      })
+      .slice(0, numOfPopularColumns) ?? [],
+)
+
+const upcomingEventListStore = useEventListStore(
+  [
+    where('is_public', '==', true),
+    where('event_status.value', '==', 'accepting_order'),
+    where('event_num_members', '>=', 1),
+    where('event_end_datetime', '>', now),
+    orderBy('event_start_datetime', 'asc'),
+  ],
+  numOfColumns.value,
+)
+
+const upcomingEvents =
+  computed(() =>
+    upcomingEventListStore.eventStores?.flatMap((s) => {
+      if (s.event == null) {
+        return []
+      }
+      return { event: s.event, members: s.members ?? [] }
+    }),
+  ) ?? []
+
+const pastEventListStore = useEventListStore(
+  [
+    where('is_public', '==', true),
+    where('event_status.value', '==', 'accepting_order'),
+    where('event_num_members', '>=', 1),
+    where('event_end_datetime', '<=', now),
+    orderBy('event_start_datetime', 'desc'),
+  ],
+  numOfColumns.value,
+)
+
+const pastEvents =
+  computed(() =>
+    pastEventListStore.eventStores?.flatMap((s) => {
+      if (s.event == null) {
+        return []
+      }
+      return { event: s.event, members: s.members ?? [] }
+    }),
+  ) ?? []
+
+const next = () => {
+  if ((upcomingEventListStore.eventStores?.length ?? 0) < (upcomingEventListStore.totalCount ?? Infinity)) {
+    upcomingEventListStore.next()
+  } else {
+    pastEventListStore.next()
+  }
+}
+</script>
+
+<template>
+  <v-row class="justify-center align-center">
+    <v-col md="10" cols="12">
+      <Banners :banners="topBannersStore.banners ?? []" />
+      <v-row class="mb-2">
+        <template v-if="popularEvents.length > 0">
+          <v-col cols="12" class="text-h4 mt-8 ml-2">
+            <v-row align="center">
+              <v-icon size="40" :icon="mdiCrownOutline" class="mr-1" />
+              <span>{{ $t('top.popular_events') }}</span>
+            </v-row>
+          </v-col>
+          <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
+          <v-col
+            v-for="{ event, members } in popularEvents"
+            :key="`popular_${event.event_id}`"
+            md="4"
+            sm="6"
+            cols="12"
+            class="content top-page-event-col"
+          >
+            <router-link :to="getEventPath(event.community_account, event.event_id)">
+              <EventCard class="event-card" :event="event" :members="members" />
+            </router-link>
+          </v-col>
+        </template>
+        <v-col cols="12" class="text-h4 mt-10 ml-2">
+          <v-row align="center">
+            <v-icon size="40" :icon="mdiCalendarHeart" class="mr-1" />
+            <span>{{ $t('top.upcoming_events') }}</span>
+          </v-row>
+        </v-col>
+        <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
+        <v-col
+          v-for="{ event, members } in upcomingEvents"
+          :key="event.event_id"
+          md="3"
+          sm="6"
+          cols="12"
+          class="content top-page-event-col"
+        >
+          <router-link :to="getEventPath(event.community_account, event.event_id)">
+            <EventCard class="event-card" :event="event" :members="members" />
+          </router-link>
+        </v-col>
+      </v-row>
+      <v-row
+        class="justify-center ma-0 mx-md-16 mt-md-10"
+        v-show="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
+      >
+        <v-col md="9" sm="12" cols="12" class="mt-0 pt-0 px-0">
+          <Banners :banners="centerBannersStore.banners ?? []" />
+        </v-col>
+      </v-row>
+      <v-row class="mb-2">
+        <template
+          v-if="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
+        >
+          <v-col cols="12" class="text-h4 mt-10 ml-2">
+            <v-row align="center">
+              <v-icon size="40" :icon="mdiCalendarCheck" class="mr-1" />
+              <span>{{ $t('top.past_events') }}</span>
+            </v-row>
+          </v-col>
+          <!-- cols 等を修正した場合は numOfColumns も修正する必要あり -->
+          <v-col
+            v-for="{ event, members } in pastEvents"
+            :key="event.event_id"
+            md="3"
+            sm="6"
+            cols="12"
+            class="content top-page-event-col"
+          >
+            <router-link :to="getEventPath(event.community_account, event.event_id)">
+              <EventCard class="event-card" :event="event" :members="members" />
+            </router-link>
+          </v-col>
+        </template>
+      </v-row>
+      <v-row>
+        <v-col cols="12" class="text-center">
+          <IncrementalLoader
+            :total-count="
+              (upcomingEventListStore.totalCount ?? Number.MAX_SAFE_INTEGER) +
+              (pastEventListStore.totalCount ?? Number.MAX_SAFE_INTEGER)
+            "
+            :loaded-count="
+              (upcomingEventListStore.eventStores?.length ?? 0) + (pastEventListStore.eventStores?.length ?? 0)
+            "
+            @load="next"
+          />
+        </v-col>
+      </v-row>
+    </v-col>
+  </v-row>
+</template>
+
+<style lang="scss" scoped>
+.event-card {
+  height: 100%;
+  width: 100%;
+}
+</style>
+
+<style lang="scss">
+/* Vuetify 3 の列は v-col-12 等のみで .v-col 単体クラスが付かないため .v-col を付けたセレクタは一致しない */
+.v-row .top-page-event-col {
+  padding-top: 9px !important;
+  padding-right: 9px !important;
+  padding-bottom: 9px !important;
+  padding-left: 9px !important;
+}
+</style>

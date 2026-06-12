@@ -24,6 +24,7 @@
     "common",
     "base",
     "user",
+    "enterprise",
     "partner",
     "functions/default"
   ]

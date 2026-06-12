@@ -1,0 +1,5 @@
+node_modules
+*.d.ts
+
+// themes dires are associated with the materio, so they should not be formatted
+themes/
