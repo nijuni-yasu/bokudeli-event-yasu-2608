@@ -104,6 +104,37 @@ export const getChatMembershipRef = (userId: string, roomId: string) => {
   return doc(db, 'users', userId, 'chat_memberships', roomId).withConverter(chatMembershipConverter)
 }
 
+export const waitForMembership = (userId: string, roomId: string, timeoutMs = 10_000): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const ref = getChatMembershipRef(userId, roomId)
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let unsubscribe: Unsubscribe | null = null
+
+    const cleanup = (): void => {
+      if (timeoutId != null) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      if (unsubscribe != null) {
+        unsubscribe()
+        unsubscribe = null
+      }
+    }
+
+    unsubscribe = onSnapshot(ref, (snapshot) => {
+      if (snapshot.exists()) {
+        cleanup()
+        resolve(true)
+      }
+    })
+
+    timeoutId = setTimeout(() => {
+      cleanup()
+      resolve(false)
+    }, timeoutMs)
+  })
+}
+
 const getMessagesCollectionRef = (roomId: string) => {
   return collection(db, 'chat_rooms', roomId, 'messages').withConverter(chatMessageConverter)
 }

@@ -1039,5 +1039,9 @@ export default {
     recall_confirm_message: 'このメッセージを取り消しますか？取り消し後は元に戻せません。',
     system_message_deleted: '{name}がメッセージを削除しました',
     last_message_preview_deleted: 'メッセージが削除されました',
+    error: {
+      preparing: '準備中です。しばらくしてから再度お試しください',
+      room_not_found: 'チャットが見つかりません',
+    },
   },
 }

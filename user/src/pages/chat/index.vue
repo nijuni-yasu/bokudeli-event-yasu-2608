@@ -2,7 +2,7 @@
 import { getDoc } from 'firebase/firestore'
 import ChatApp from '@shokujii/base/components/chat/ChatApp.vue'
 import { getEventInCommunityRef } from '@shokujii/base/stores/event.js'
-import { getEventPath, getUserPath } from '@/router/utils'
+import { getChatPath, getEventPath, getUserPath } from '@/router/utils'
 
 definePage({
   meta: {
@@ -11,6 +11,14 @@ definePage({
 })
 
 const router = useRouter()
+
+const onNavigateRoom = (payload: { path: Parameters<typeof router.push>[0]; replace?: boolean }) => {
+  if (payload.replace === true) {
+    void router.replace(payload.path)
+  } else {
+    void router.push(payload.path)
+  }
+}
 
 const onOpenEvent = async (payload: { communityId: string; eventId: string }) => {
   const snapshot = await getDoc(getEventInCommunityRef(payload.communityId, payload.eventId))
@@ -25,7 +33,12 @@ const onOpenEvent = async (payload: { communityId: string; eventId: string }) =>
 <template>
   <div class="chat-page d-flex flex-column overflow-hidden">
     <VCard class="chat-page-card d-flex flex-column flex-grow-1 overflow-hidden" elevation="2">
-      <ChatApp :resolve-profile-path="getUserPath" @open-event="onOpenEvent" />
+      <ChatApp
+        :resolve-profile-path="getUserPath"
+        :resolve-chat-room-path="getChatPath"
+        @navigate-room="onNavigateRoom"
+        @open-event="onOpenEvent"
+      />
     </VCard>
   </div>
 </template>

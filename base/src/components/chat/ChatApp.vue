@@ -1,43 +1,58 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { mdiMenu, mdiMessageOutline, mdiSend } from '@mdi/js'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { useDisplay } from 'vuetify'
 import { useResponsiveLeftSidebar } from '@core/composable/useResponsiveSidebar'
 import { avatarText } from '@core/utils/formatters'
 import { CHAT_MESSAGE_BODY_MAX_LENGTH } from '@shokujii/common/schemas/ChatMessage.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
+import type { ResolveChatRoomPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
 import ChatLog from './ChatLog.vue'
+
+const MEMBERSHIP_WAIT_TIMEOUT_MS = 10_000
 
 const props = defineProps<{
   roomId?: string
   resolveProfilePath?: ResolveUserPathFn
+  resolveChatRoomPath?: ResolveChatRoomPathFn
 }>()
 
 const emit = defineEmits<{
   openEvent: [payload: { communityId: string; eventId: string }]
+  'navigate-room': [payload: { path: RouteLocationRaw; replace?: boolean }]
 }>()
 
-const router = useRouter()
 const { t } = useI18n()
+const notification = useNotification()
 const vuetifyDisplays = useDisplay()
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar(vuetifyDisplays.smAndDown)
 const store = useChatStore()
 const currentUserStore = useCurrentUserStore()
 const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? '')
 
+const SCROLL_NEAR_BOTTOM_THRESHOLD = 80
+
 const msg = ref('')
 const isSending = ref(false)
+const isNearBottom = ref(true)
 const chatLogPS = ref<InstanceType<typeof PerfectScrollbar> | null>(null)
 
 const getChatLogScrollEl = (): HTMLElement | null => {
-  const el = chatLogPS.value?.$el ?? chatLogPS.value
-  return el instanceof HTMLElement ? el : null
+  const ps = chatLogPS.value as (InstanceType<typeof PerfectScrollbar> & { ps?: { element?: HTMLElement } }) | null
+  const element = ps?.ps?.element
+  return element instanceof HTMLElement ? element : null
+}
+
+const updateIsNearBottom = (el: HTMLElement): void => {
+  isNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_NEAR_BOTTOM_THRESHOLD
 }
 
 const scrollToBottomInChatLog = () => {
+  isNearBottom.value = true
   nextTick(() => {
     const scrollEl = getChatLogScrollEl()
     if (scrollEl != null) {
@@ -48,6 +63,7 @@ const scrollToBottomInChatLog = () => {
 
 const onChatLogScroll = (event: Event) => {
   const target = event.target as HTMLElement
+  updateIsNearBottom(target)
   if (target.scrollTop <= 48 && store.hasMoreMessages && !store.isLoadingOlderMessages) {
     void loadOlderMessages()
   }
@@ -60,12 +76,28 @@ const onMessageKeydown = (event: KeyboardEvent) => {
   void sendMessage()
 }
 
+const navigateToChatPath = (roomId?: string, replace = false): void => {
+  const path = props.resolveChatRoomPath?.(roomId) ?? {
+    path: roomId != null && roomId !== '' ? `/chat/${roomId}` : '/chat',
+  }
+  emit('navigate-room', { path, replace })
+}
+
+let pendingRoomTimeoutId: ReturnType<typeof setTimeout> | null = null
+
+const clearPendingRoomTimeout = (): void => {
+  if (pendingRoomTimeoutId != null) {
+    clearTimeout(pendingRoomTimeoutId)
+    pendingRoomTimeoutId = null
+  }
+}
+
 const openRoom = async (roomId: string) => {
   const userId = currentUserId.value
   if (userId === '') return
 
   if (props.roomId !== roomId) {
-    await router.push(`/chat/${roomId}`)
+    navigateToChatPath(roomId)
   }
   store.openRoom(roomId, userId)
   msg.value = ''
@@ -94,7 +126,19 @@ const sendMessage = async () => {
 const loadOlderMessages = async () => {
   const roomId = store.activeRoomId
   if (roomId == null) return
+
+  const scrollEl = getChatLogScrollEl()
+  const prevScrollHeight = scrollEl?.scrollHeight ?? 0
+
   await store.loadOlderMessages(roomId)
+
+  nextTick(() => {
+    const el = getChatLogScrollEl()
+    if (el != null && prevScrollHeight > 0) {
+      el.scrollTop = el.scrollHeight - prevScrollHeight
+      updateIsNearBottom(el)
+    }
+  })
 }
 
 const canOpenActiveEvent = computed(() => {
@@ -121,41 +165,91 @@ const onActiveRoomAvatarClick = () => {
 watch(
   () => [store.membershipsLoaded, store.rooms, props.roomId, currentUserId.value] as const,
   ([loaded, rooms, roomId, userId]) => {
+    clearPendingRoomTimeout()
+
     if (userId === '') {
       store.unsubscribeActiveRoom()
       return
     }
     if (!loaded) return
 
+    const hasSpecifiedRoom = roomId != null && roomId !== ''
+
     if (rooms.length === 0) {
       if (store.activeRoomId != null) {
         store.unsubscribeActiveRoom()
       }
+      if (hasSpecifiedRoom) {
+        notification.show(t('chat.error.room_not_found'), 'warning')
+        navigateToChatPath(undefined, true)
+      }
       return
     }
 
-    const targetRoomId = roomId != null && roomId !== '' ? roomId : rooms[0].roomId
-
-    if ((roomId == null || roomId === '') && props.roomId !== targetRoomId) {
-      void router.replace(`/chat/${targetRoomId}`)
+    if (!hasSpecifiedRoom) {
+      const targetRoomId = rooms[0].roomId
+      if (props.roomId !== targetRoomId) {
+        navigateToChatPath(targetRoomId, true)
+      }
+      if (store.activeRoomId !== targetRoomId) {
+        store.openRoom(targetRoomId, userId)
+        scrollToBottomInChatLog()
+      }
+      return
     }
 
-    if (store.activeRoomId !== targetRoomId) {
-      store.openRoom(targetRoomId, userId)
-      scrollToBottomInChatLog()
+    const roomInList = rooms.some((room) => room.roomId === roomId)
+    if (roomInList) {
+      if (store.activeRoomId !== roomId) {
+        store.openRoom(roomId, userId)
+        scrollToBottomInChatLog()
+      }
+      return
     }
+
+    store.unsubscribeActiveRoom()
+    pendingRoomTimeoutId = setTimeout(() => {
+      pendingRoomTimeoutId = null
+      if (!store.rooms.some((room) => room.roomId === roomId)) {
+        notification.show(t('chat.error.room_not_found'), 'warning')
+        navigateToChatPath(undefined, true)
+      }
+    }, MEMBERSHIP_WAIT_TIMEOUT_MS)
   },
   { immediate: true },
 )
 
 watch(
+  () => store.rooms,
+  (rooms) => {
+    const roomId = props.roomId
+    const userId = currentUserId.value
+    if (!store.membershipsLoaded || userId === '' || roomId == null || roomId === '') {
+      return
+    }
+    if (!rooms.some((room) => room.roomId === roomId)) {
+      return
+    }
+
+    clearPendingRoomTimeout()
+    if (store.activeRoomId !== roomId) {
+      store.openRoom(roomId, userId)
+      scrollToBottomInChatLog()
+    }
+  },
+)
+
+watch(
   () => store.messages.length,
   () => {
-    scrollToBottomInChatLog()
+    if (isNearBottom.value) {
+      scrollToBottomInChatLog()
+    }
   },
 )
 
 onBeforeUnmount(() => {
+  clearPendingRoomTimeout()
   store.unsubscribeActiveRoom()
 })
 </script>
