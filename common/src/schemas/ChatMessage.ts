@@ -8,11 +8,30 @@ export const CHAT_MESSAGE_BODY_MAX_LENGTH = 2000
 
 export const CHAT_SYSTEM_EVENT_MEMBER_JOINED = 'member_joined'
 
+const requireBodyUnlessDeleted = (
+  data: { message_type?: string; body?: string; deleted_at?: unknown },
+  ctx: z.RefinementCtx,
+): void => {
+  if (data.message_type !== 'user') {
+    return
+  }
+  if (data.deleted_at == null && (data.body == null || data.body.length === 0)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'body is required when message is not deleted',
+      path: ['body'],
+    })
+  }
+}
+
 const ChatUserMessageDbSchema = z.object({
   message_type: z.literal('user'),
   sender_user_id: z.string().nonempty(),
-  body: z.string().min(1).max(CHAT_MESSAGE_BODY_MAX_LENGTH),
+  body: z.string().min(1).max(CHAT_MESSAGE_BODY_MAX_LENGTH).optional(),
   created_at: TimestampSchema,
+  deleted_at: TimestampSchema.optional(),
+  deleted_by_user_id: z.string().nonempty().optional(),
+  deleted_display_name: z.string().nonempty().optional(),
   processed: z.boolean().optional(),
 })
 
@@ -25,15 +44,17 @@ const ChatSystemMessageDbSchema = z.object({
   processed: z.boolean().optional(),
 })
 
-export const ChatMessageDbSchema = z.discriminatedUnion('message_type', [
-  ChatUserMessageDbSchema,
-  ChatSystemMessageDbSchema,
-])
+export const ChatMessageDbSchema = z
+  .discriminatedUnion('message_type', [ChatUserMessageDbSchema, ChatSystemMessageDbSchema])
+  .superRefine(requireBodyUnlessDeleted)
 
 const ChatUserMessageAppSchema = z.object({
   message_type: z.literal('user'),
   sender_user_id: z.string().nonempty(),
-  body: z.string().min(1).max(CHAT_MESSAGE_BODY_MAX_LENGTH),
+  body: z.string().min(1).max(CHAT_MESSAGE_BODY_MAX_LENGTH).optional(),
+  deleted_at: EpochMillisSchema.optional(),
+  deleted_by_user_id: z.string().nonempty().optional(),
+  deleted_display_name: z.string().nonempty().optional(),
 })
 
 const ChatSystemMessageAppSchema = z.object({
@@ -43,10 +64,9 @@ const ChatSystemMessageAppSchema = z.object({
   body: z.string().max(CHAT_MESSAGE_BODY_MAX_LENGTH).optional(),
 })
 
-export const ChatMessageAppSchema = z.discriminatedUnion('message_type', [
-  ChatUserMessageAppSchema,
-  ChatSystemMessageAppSchema,
-])
+export const ChatMessageAppSchema = z
+  .discriminatedUnion('message_type', [ChatUserMessageAppSchema, ChatSystemMessageAppSchema])
+  .superRefine(requireBodyUnlessDeleted)
 
 export type ChatMessageApp = z.infer<typeof ChatMessageAppSchema>
 
@@ -54,6 +74,7 @@ const convertToDb = (message: ChatMessage) => {
   const base = {
     ...message,
     created_at: EpochMillisSchema.default(Date.now()).parse(message.created_at),
+    deleted_at: message.deleted_at == null ? undefined : EpochMillisSchema.parse(message.deleted_at),
   }
   return Object.fromEntries(Object.entries(base).filter(([, v]) => v !== undefined)) as z.infer<
     typeof ChatMessageDbSchema
@@ -68,15 +89,21 @@ export class ChatMessage {
   system_event?: string
   system_params?: Record<string, string>
   created_at: number
+  deleted_at?: number
+  deleted_by_user_id?: string
+  deleted_display_name?: string
 
   constructor(id: string, src: Partial<ChatMessage>) {
     this.id = id
-    if (src.message_type === 'system') {
-      Object.assign(this, ChatSystemMessageAppSchema.parse(src))
-    } else {
-      Object.assign(this, ChatUserMessageAppSchema.parse({ message_type: 'user', ...src }))
-    }
+    const parsed = ChatMessageAppSchema.parse({
+      message_type: src.message_type ?? 'user',
+      ...src,
+    })
+    Object.assign(this, parsed)
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
+    if (src.deleted_at != null) {
+      this.deleted_at = EpochMillisSchema.parse(src.deleted_at)
+    }
   }
 
   isValidForDatabase(): boolean {
