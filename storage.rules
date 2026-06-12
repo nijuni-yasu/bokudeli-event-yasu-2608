@@ -38,8 +38,13 @@ service firebase.storage {
     // assets - 誰でも閲覧できる
     match /assets/{allPaths=**} {
       allow read: if true
-      // 書き込み権限は指定されていないため、デフォルトで拒否
       allow write: if false
+    }
+
+    match /enterprises/{enterpriseId}/{allPaths=**} {
+      allow read: if request.auth != null
+                  && request.auth.token.enterprise_id == enterpriseId;
+      allow write: if false;
     }
   }
 }

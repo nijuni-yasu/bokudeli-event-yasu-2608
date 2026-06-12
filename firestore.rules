@@ -163,6 +163,28 @@ service cloud.firestore {
             // pass_code は functions 内からのみアクセス可能
             allow read, write: if false
         }
+        match /enterprises/{enterpriseId} {
+            allow read: if request.auth != null
+                        && request.auth.token.enterprise_id == enterpriseId;
+            allow write: if false;
+            match /members/{userId} {
+                allow read: if request.auth != null
+                            && request.auth.token.enterprise_id == enterpriseId;
+                allow write: if false;
+            }
+            match /audit_logs/{logId} {
+                allow read: if request.auth != null
+                            && request.auth.token.enterprise_id == enterpriseId
+                            && request.auth.token.enterprise_role == "admin";
+                allow write: if false;
+            }
+            match /billing_snapshots/{yearMonth} {
+                allow read: if request.auth != null
+                            && request.auth.token.enterprise_id == enterpriseId
+                            && request.auth.token.enterprise_role == "admin";
+                allow write: if false;
+            }
+        }
         // collection group query 用ルール
         match /{path=**}/events/{event} {
             allow read: if true
