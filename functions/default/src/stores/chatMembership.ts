@@ -80,6 +80,11 @@ export const createEventChatMembership = (params: {
   })
 }
 
+export const listChatMembershipsForUser = async (userId: string): Promise<ChatMembership[]> => {
+  const snapshot = await membershipsCollection(userId).withConverter(new ChatMembershipConverter()).get()
+  return snapshot.docs.map((doc) => doc.data())
+}
+
 export const updateMembershipLastMessage = (
   membership: ChatMembership,
   params: { preview: string; lastMessageAt: number },

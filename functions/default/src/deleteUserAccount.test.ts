@@ -1,13 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { runTransactionMock, deleteUserMock, listFriendUserIdsMock, recountUserProfileCountsForUsersMock } = vi.hoisted(
-  () => ({
-    runTransactionMock: vi.fn(),
-    deleteUserMock: vi.fn(),
-    listFriendUserIdsMock: vi.fn(),
-    recountUserProfileCountsForUsersMock: vi.fn(),
-  }),
-)
+const {
+  runTransactionMock,
+  deleteUserMock,
+  listFriendUserIdsMock,
+  recountUserProfileCountsForUsersMock,
+  listChatMembershipsForUserMock,
+  batchCommitMock,
+} = vi.hoisted(() => ({
+  runTransactionMock: vi.fn(),
+  deleteUserMock: vi.fn(),
+  listFriendUserIdsMock: vi.fn(),
+  recountUserProfileCountsForUsersMock: vi.fn(),
+  listChatMembershipsForUserMock: vi.fn(),
+  batchCommitMock: vi.fn(),
+}))
 
 vi.mock('firebase-functions/https', () => ({
   HttpsError: class HttpsError extends Error {
@@ -24,6 +31,11 @@ vi.mock('firebase-functions/https', () => ({
 vi.mock('firebase-admin/firestore', () => ({
   getFirestore: () => ({
     runTransaction: runTransactionMock,
+    batch: () => ({
+      set: vi.fn(),
+      delete: vi.fn(),
+      commit: batchCommitMock,
+    }),
   }),
 }))
 
@@ -58,6 +70,20 @@ vi.mock('./utils/recountUserProfileCounts.js', () => ({
   recountUserProfileCountsForUsers: (...args: unknown[]) => recountUserProfileCountsForUsersMock(...args),
 }))
 
+vi.mock('./stores/chatMembership.js', () => ({
+  listChatMembershipsForUser: (...args: unknown[]) => listChatMembershipsForUserMock(...args),
+  getChatMembershipRef: vi.fn(() => ({ path: 'users/uid/chat_memberships/room1' })),
+}))
+
+vi.mock('./stores/chatRoom.js', () => ({
+  getChatRoom: vi.fn(),
+  getChatRoomRef: vi.fn(() => ({ path: 'chat_rooms/room1' })),
+  updateChatRoomMembers: vi.fn((room: { member_user_ids: string[] }, memberUserIds: string[]) => ({
+    ...room,
+    member_user_ids: memberUserIds,
+  })),
+}))
+
 vi.mock('./utils/logger.js', () => ({
   createModuleLogger: () => ({
     error: vi.fn(),
@@ -69,6 +95,7 @@ vi.mock('./utils/logger.js', () => ({
 import { hasSoleManagerCommunity, getCommunitiesWhereUserIsMember } from './stores/community.js'
 import { getPassCodeRefsByUserId, getPassCodeRefsByUserEmail } from './stores/passCode.js'
 import { anonymizeUser, anonymizeUserPersonalInformation, getUserPersonalInformation } from './stores/user.js'
+import { getChatRoom } from './stores/chatRoom.js'
 import { deleteUserAccount } from './deleteUserAccount.js'
 
 type DeleteUserAccountHandler = (req: { auth?: { uid: string } }) => Promise<{ success: true }>
@@ -83,6 +110,8 @@ beforeEach(() => {
   deleteUserMock.mockReset()
   listFriendUserIdsMock.mockReset()
   recountUserProfileCountsForUsersMock.mockReset()
+  listChatMembershipsForUserMock.mockReset()
+  batchCommitMock.mockReset()
 
   vi.mocked(hasSoleManagerCommunity).mockReset()
   vi.mocked(getCommunitiesWhereUserIsMember).mockReset()
@@ -103,6 +132,9 @@ beforeEach(() => {
   deleteUserMock.mockResolvedValue(undefined)
   listFriendUserIdsMock.mockResolvedValue(['userA', 'userC'])
   recountUserProfileCountsForUsersMock.mockResolvedValue(undefined)
+  listChatMembershipsForUserMock.mockResolvedValue([])
+  batchCommitMock.mockResolvedValue(undefined)
+  vi.mocked(getChatRoom).mockReset()
 })
 
 describe('deleteUserAccount', () => {
@@ -134,5 +166,19 @@ describe('deleteUserAccount', () => {
     await callDeleteUserAccount('userB')
 
     expect(recountUserProfileCountsForUsersMock).toHaveBeenCalledWith([])
+  })
+
+  it('成功後に chat_memberships を削除し member_user_ids から除外する（RC-18）', async () => {
+    listChatMembershipsForUserMock.mockResolvedValue([{ room_id: 'event_comm_evt', id: 'event_comm_evt' }])
+    vi.mocked(getChatRoom).mockResolvedValue({
+      id: 'event_comm_evt',
+      member_user_ids: ['userB', 'userC'],
+    })
+
+    await callDeleteUserAccount('userB')
+
+    expect(listChatMembershipsForUserMock).toHaveBeenCalledWith('userB')
+    expect(batchCommitMock).toHaveBeenCalled()
+    expect(deleteUserMock).toHaveBeenCalledWith('userB')
   })
 })
