@@ -34,4 +34,33 @@ export type GetEnterpriseByDomainResponse = {
   company_logo_url: string
   theme_color: string
   subdomain: string
+  allowed_email_domains: string[]
+}
+
+export type RequestEnterpriseEmailLoginRequest = {
+  enterprise_id: string
+  email: string
+}
+
+export type RequestEnterpriseEmailLoginResponse = {
+  success: true
+}
+
+export type ConfirmEnterpriseEmailLoginRequest = {
+  enterprise_id: string
+  email: string
+  pass_code: string
+}
+
+export type ConfirmEnterpriseEmailLoginResponse = {
+  token: string
+}
+
+export type LogEnterpriseLogoutRequest = {
+  enterprise_id: string
+  action: 'logout' | 'session_timeout'
+}
+
+export type LogEnterpriseLogoutResponse = {
+  success: true
 }

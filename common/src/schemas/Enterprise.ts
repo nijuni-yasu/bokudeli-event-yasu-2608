@@ -7,6 +7,20 @@ export type EnterpriseDiscountType = (typeof ENTERPRISE_DISCOUNT_TYPE_VALUES)[nu
 export const ENTERPRISE_MEMBER_ROLE_VALUES = ['admin', 'member'] as const
 export type EnterpriseMemberRoleType = (typeof ENTERPRISE_MEMBER_ROLE_VALUES)[number]
 
+/** createEnterprise の subdomain バリデーション用（DNS ラベル準拠・予約語） */
+export const RESERVED_ENTERPRISE_SUBDOMAINS = [
+  'www',
+  'user',
+  'partner',
+  'enterprise',
+  'admin',
+  'api',
+  'mail',
+  'app',
+] as const
+
+export const ENTERPRISE_SUBDOMAIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/
+
 export const ENTERPRISE_PAYMENT_METHOD_VALUES = ['credit_card'] as const
 export type EnterprisePaymentMethodType = (typeof ENTERPRISE_PAYMENT_METHOD_VALUES)[number]
 
