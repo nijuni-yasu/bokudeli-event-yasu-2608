@@ -486,6 +486,33 @@ const eventCoverUrl = (communityId: string, eventId: string): string | undefined
   }
 }
 
+const failedEventCoverIds = ref(new Set<string>())
+
+const eventCoverKey = (communityId: string, eventId: string): string => `${communityId}/${eventId}`
+
+watch(
+  () => [profileUserId, previewData.value] as const,
+  () => {
+    failedEventCoverIds.value = new Set()
+  },
+)
+
+const onEventCoverError = (communityId: string, eventId: string) => {
+  const key = eventCoverKey(communityId, eventId)
+  if (failedEventCoverIds.value.has(key)) return
+  failedEventCoverIds.value = new Set([...failedEventCoverIds.value, key])
+}
+
+const showEventCoverImage = (communityId: string, eventId: string): boolean =>
+  eventCoverUrl(communityId, eventId) != null && !failedEventCoverIds.value.has(eventCoverKey(communityId, eventId))
+
+const showFriendSortToggle = computed(() => {
+  if ((counts.value?.friend_count ?? 0) > 0) return true
+  const meetLen = userFriendsByMeetCountStore.value?.friends.length ?? 0
+  const lastLen = userFriendsByLastMetStore.value?.friends.length ?? 0
+  return meetLen > 0 || lastLen > 0
+})
+
 const goToTab = (tab: TabKey) => {
   tabs.value = tab
 }
@@ -638,12 +665,13 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                         <div class="event-preview-tile d-flex align-stretch ga-3">
                           <div class="event-preview-tile__cover flex-shrink-0 rounded overflow-hidden">
                             <v-img
-                              v-if="eventCoverUrl(event.community_id, event.event_id) != null"
+                              v-if="showEventCoverImage(event.community_id, event.event_id)"
                               :src="eventCoverUrl(event.community_id, event.event_id)"
                               :alt="event.event_name"
                               cover
                               aspect-ratio="1.91"
                               width="100"
+                              @error="onEventCoverError(event.community_id, event.event_id)"
                             />
                             <div
                               v-else
@@ -670,12 +698,13 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                         <div class="event-preview-tile d-flex align-stretch ga-3">
                           <div class="event-preview-tile__cover flex-shrink-0 rounded overflow-hidden">
                             <v-img
-                              v-if="eventCoverUrl(event.community_id, event.event_id) != null"
+                              v-if="showEventCoverImage(event.community_id, event.event_id)"
                               :src="eventCoverUrl(event.community_id, event.event_id)"
                               :alt="event.event_name"
                               cover
                               aspect-ratio="1.91"
                               width="100"
+                              @error="onEventCoverError(event.community_id, event.event_id)"
                             />
                             <div
                               v-else
@@ -912,7 +941,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item :value="TAB_FRIENDS">
-          <v-row v-if="activeFriends.length > 0" class="align-center mb-2">
+          <v-row v-if="showFriendSortToggle" class="align-center mb-2">
             <v-col cols="12" sm="4">
               <v-btn-toggle
                 v-model="friendSortBy"
@@ -1118,45 +1147,28 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item v-if="isOwner" :value="TAB_ORDERS">
-          <div v-if="userEvents.length === 0" class="text-body-1 text-medium-emphasis pa-4">
+          <div v-if="isUserEventsLoaded && userEvents.length === 0" class="text-body-1 text-medium-emphasis pa-4">
             {{ $t('user_profile.empty.orders') }}
           </div>
           <v-row>
             <v-col v-for="event in userEvents" :key="`order_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
-                <router-link
-                  v-if="canLinkToDetail(event.is_public)"
-                  :to="getEventPath(event.community_account, event.event_id)"
-                >
-                  <UserEventCard
-                    v-model:cancel-dialog-event-id="cancelDialogEventId"
-                    :orders="orderStateByEventId[event.event_id]?.orders ?? []"
-                    :orders-loading="orderStateByEventId[event.event_id]?.loading ?? false"
-                    :orders-error="orderStateByEventId[event.event_id]?.error != null"
-                    :event="event"
-                    :isOwner="isOwner"
-                    :hide-private-scope-chip="true"
-                    :cancelLoading="cancelLoadingEventId === event.event_id"
-                    @downloadInvoice="downloadReceipt"
-                    @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
-                    @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
-                  />
-                </router-link>
-                <div v-else>
-                  <UserEventCard
-                    v-model:cancel-dialog-event-id="cancelDialogEventId"
-                    :orders="orderStateByEventId[event.event_id]?.orders ?? []"
-                    :orders-loading="orderStateByEventId[event.event_id]?.loading ?? false"
-                    :orders-error="orderStateByEventId[event.event_id]?.error != null"
-                    :event="event"
-                    :isOwner="isOwner"
-                    :hide-private-scope-chip="true"
-                    :cancelLoading="cancelLoadingEventId === event.event_id"
-                    @downloadInvoice="downloadReceipt"
-                    @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
-                    @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
-                  />
-                </div>
+                <UserEventCard
+                  v-model:cancel-dialog-event-id="cancelDialogEventId"
+                  :orders="orderStateByEventId[event.event_id]?.orders ?? []"
+                  :orders-loading="orderStateByEventId[event.event_id]?.loading ?? false"
+                  :orders-error="orderStateByEventId[event.event_id]?.error != null"
+                  :event="event"
+                  :isOwner="isOwner"
+                  :hide-private-scope-chip="true"
+                  :cancelLoading="cancelLoadingEventId === event.event_id"
+                  :event-detail-path="
+                    canLinkToDetail(event.is_public) ? getEventPath(event.community_account, event.event_id) : undefined
+                  "
+                  @downloadInvoice="downloadReceipt"
+                  @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
+                  @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
+                />
 
                 <div
                   v-if="cancelLoadingEventId === event.event_id"
