@@ -61,6 +61,29 @@ export const addUserChatMessage = (params: {
   })
 }
 
+export const listRecentChatMessages = async (roomId: string, limitCount = 50): Promise<ChatMessage[]> => {
+  const snapshot = await messagesCollection(roomId)
+    .withConverter(new ChatMessageConverter())
+    .orderBy('created_at', 'desc')
+    .limit(limitCount)
+    .get()
+  return snapshot.docs.map((docSnapshot) => docSnapshot.data())
+}
+
+export const markChatMessageDeleted = (
+  message: ChatMessage,
+  params: { deletedByUserId: string; deletedDisplayName: string },
+): ChatMessage => {
+  return new ChatMessage(message.id, {
+    message_type: 'user',
+    sender_user_id: message.sender_user_id,
+    created_at: message.created_at,
+    deleted_at: Date.now(),
+    deleted_by_user_id: params.deletedByUserId,
+    deleted_display_name: params.deletedDisplayName,
+  })
+}
+
 export const isMessageProcessed = async (
   roomId: string,
   messageId: string,

@@ -69,6 +69,7 @@ export const {
   acceptInvitationForEnterpriseCommunityManager,
   onChatMessageCreated,
   onEventArchived,
+  recallChatMessage,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -114,4 +115,5 @@ export const {
   import('./enterprise/communityManager.js'),
   import('./onChatMessageCreated.js'),
   import('./onEventArchived.js'),
+  import('./recallChatMessage.js'),
 ])))
