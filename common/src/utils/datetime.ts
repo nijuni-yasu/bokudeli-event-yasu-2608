@@ -69,6 +69,16 @@ export function convertToTimeString(millis: number, zone = DEFAULT_TIME_ZONE, lo
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('H:mm')
 }
 
+/** チャット一覧の最終メッセージ日時。JST で当日は H:mm、それ以外は M月d日 */
+export function formatChatListTimestamp(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
+  const dt = DateTime.fromMillis(millis, { zone, locale })
+  const now = DateTime.now().setZone(zone)
+  if (dt.hasSame(now, 'day')) {
+    return dt.toFormat('H:mm')
+  }
+  return dt.toFormat('M月d日')
+}
+
 /**
  * 店舗締切時刻など、epoch millis から JST の時分だけを取り出して使う値を生成する。
  * ブラウザのローカル TZ に依存しない。
