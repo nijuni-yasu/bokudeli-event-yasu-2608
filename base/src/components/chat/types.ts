@@ -23,6 +23,8 @@ export type ChatMessageItem = {
   systemEvent?: string
   systemParams?: Record<string, string>
   createdAt: number
+  deletedAt?: number
+  deletedDisplayName?: string
 }
 
 export type ChatActiveRoom = {

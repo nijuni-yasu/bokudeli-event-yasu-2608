@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { mdiDotsVertical } from '@mdi/js'
 import { convertToTimeString } from '@shokujii/common/utils/datetime.js'
 import { User } from '@shokujii/common/schemas/User.js'
+import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { CHAT_SYSTEM_EVENT_MEMBER_JOINED } from '@shokujii/common/schemas/ChatMessage.js'
 import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
+import { useNotification } from '@shokujii/base/composable/notification.js'
 import type { ChatMessageItem } from './types.js'
 
 const props = defineProps<{
@@ -15,9 +18,13 @@ const props = defineProps<{
 
 const store = useChatStore()
 const { t } = useI18n()
+const notification = useNotification()
 
 const senderNames = ref<Map<string, string>>(new Map())
 const senderUsers = ref<Map<string, User | null>>(new Map())
+const recallTarget = ref<ChatMessageItem | null>(null)
+const showRecallConfirm = ref(false)
+const isRecalling = ref(false)
 
 const resolveSystemMessage = (message: ChatMessageItem): string => {
   if (message.systemEvent === CHAT_SYSTEM_EVENT_MEMBER_JOINED) {
@@ -25,6 +32,11 @@ const resolveSystemMessage = (message: ChatMessageItem): string => {
     return t('chat.system_member_joined', { name: userName })
   }
   return t('chat.system_message')
+}
+
+const resolveDeletedMessage = (message: ChatMessageItem): string => {
+  const name = message.deletedDisplayName ?? t('chat.default_user_name')
+  return t('chat.system_message_deleted', { name })
 }
 
 const resolveSenderName = (senderUserId: string): string => {
@@ -55,6 +67,38 @@ const profilePath = (senderUserId: string): string | undefined => {
 
 const profileAriaLabel = (senderUserId: string): string => {
   return t('chat.open_user_profile', { name: resolveSenderName(senderUserId) })
+}
+
+const canRecall = (message: ChatMessageItem): boolean => {
+  return (
+    message.messageType === 'user' &&
+    message.senderUserId === props.currentUserId &&
+    message.deletedAt == null &&
+    store.activeRoom?.isReadonly !== true
+  )
+}
+
+const openRecallConfirm = (message: ChatMessageItem) => {
+  recallTarget.value = message
+  showRecallConfirm.value = true
+}
+
+const confirmRecall = async () => {
+  const roomId = store.activeRoomId
+  const message = recallTarget.value
+  if (roomId == null || message == null) {
+    return
+  }
+
+  isRecalling.value = true
+  try {
+    await store.recallMessage(roomId, message.id)
+    recallTarget.value = null
+  } catch {
+    notification.show(t('chat.error.recall_failed'), 'error')
+  } finally {
+    isRecalling.value = false
+  }
 }
 
 watch(
@@ -96,10 +140,14 @@ watch(
         {{ resolveSystemMessage(message) }}
       </div>
 
+      <div v-else-if="message.deletedAt != null" class="text-center text-disabled text-sm my-4">
+        {{ resolveDeletedMessage(message) }}
+      </div>
+
       <div
         v-else
         class="chat-group d-flex align-start mb-6"
-        :class="message.senderUserId === currentUserId ? 'flex-row-reverse' : ''"
+        :class="[message.senderUserId === currentUserId ? 'flex-row-reverse chat-group-own' : '']"
       >
         <component
           :is="profilePath(message.senderUserId ?? '') != null ? 'router-link' : 'div'"
@@ -122,9 +170,33 @@ watch(
           class="chat-body d-inline-flex flex-column"
           :class="message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
         >
-          <span v-if="message.senderUserId !== currentUserId" class="text-xs text-medium-emphasis mb-1">
-            {{ resolveSenderName(message.senderUserId ?? '') }}
-          </span>
+          <div
+            class="chat-body-header d-flex align-center gap-1"
+            :class="message.senderUserId === currentUserId ? 'flex-row-reverse' : ''"
+          >
+            <span v-if="message.senderUserId !== currentUserId" class="text-xs text-medium-emphasis mb-1">
+              {{ resolveSenderName(message.senderUserId ?? '') }}
+            </span>
+            <VMenu v-if="canRecall(message)" location="bottom">
+              <template #activator="{ props: menuProps }">
+                <VBtn
+                  v-bind="menuProps"
+                  icon
+                  variant="text"
+                  size="x-small"
+                  color="default"
+                  class="chat-recall-menu-btn"
+                  :aria-label="t('chat.recall_message')"
+                  @click.stop
+                >
+                  <VIcon :icon="mdiDotsVertical" size="18" />
+                </VBtn>
+              </template>
+              <VList density="compact">
+                <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
+              </VList>
+            </VMenu>
+          </div>
           <p
             v-linkify
             class="chat-content text-sm py-3 px-4 elevation-1 mb-1"
@@ -140,10 +212,41 @@ watch(
         </div>
       </div>
     </template>
+
+    <ConfirmDialog
+      v-model="showRecallConfirm"
+      is-confirm
+      :title="t('chat.recall_confirm_title')"
+      :ok-text="t('chat.recall_message')"
+      :ok-loading-state="isRecalling"
+      :cancel-loading-state="isRecalling"
+      :ok-click="confirmRecall"
+    >
+      {{ t('chat.recall_confirm_message') }}
+    </ConfirmDialog>
   </div>
 </template>
 
 <style scoped lang="scss">
+.chat-group-own {
+  .chat-recall-menu-btn {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover .chat-recall-menu-btn,
+  &:focus-within .chat-recall-menu-btn,
+  .chat-recall-menu-btn:focus-visible {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .chat-group-own .chat-recall-menu-btn {
+    opacity: 1;
+  }
+}
+
 .chat-content {
   border-end-end-radius: 6px;
   border-end-start-radius: 6px;

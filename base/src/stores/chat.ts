@@ -22,6 +22,7 @@ import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import { ChatMessage, CHAT_MESSAGE_BODY_MAX_LENGTH } from '@shokujii/common/schemas/ChatMessage.js'
 import { ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
 import { EpochMillisSchema } from '@shokujii/common/schemas/firebase/index.js'
+import { recallChatMessage as callRecallChatMessage } from '@shokujii/base/apis/chat.js'
 import { db } from '@shokujii/base/firebase.js'
 import type { ChatActiveRoom, ChatMessageItem, ChatRoomListItem } from '../components/chat/types.js'
 import {
@@ -64,6 +65,7 @@ const messageFromFirestore = (snapshot: QueryDocumentSnapshot): ChatMessage => {
   return new ChatMessage(snapshot.id, {
     ...raw,
     created_at: parseEpochMillisOrDefault(raw.created_at, Date.now()),
+    deleted_at: parseOptionalEpochMillis(raw.deleted_at),
   })
 }
 
@@ -114,6 +116,8 @@ const toMessageItem = (message: ChatMessage): ChatMessageItem => ({
   systemEvent: message.system_event,
   systemParams: message.system_params,
   createdAt: message.created_at,
+  deletedAt: message.deleted_at,
+  deletedDisplayName: message.deleted_display_name,
 })
 
 export const mergeMessages = (existing: ChatMessageItem[], incoming: ChatMessageItem[]): ChatMessageItem[] => {
@@ -377,6 +381,10 @@ export const useChatStore = defineStore('chat', () => {
     })
   }
 
+  const recallMessage = async (roomId: string, messageId: string) => {
+    await callRecallChatMessage({ room_id: roomId, message_id: messageId })
+  }
+
   return {
     rooms,
     membershipsLoaded,
@@ -392,6 +400,7 @@ export const useChatStore = defineStore('chat', () => {
     openRoom,
     loadOlderMessages,
     sendMessage,
+    recallMessage,
     markAsRead,
     unsubscribeAll,
     unsubscribeActiveRoom,

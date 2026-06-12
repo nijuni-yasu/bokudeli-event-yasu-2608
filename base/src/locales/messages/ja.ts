@@ -1034,5 +1034,10 @@ export default {
     open_chat: 'チャットを開く',
     header_tooltip: 'チャット',
     open_user_profile: '{name}のプロフィールを見る',
+    recall_message: '送信を取り消す',
+    recall_confirm_title: '送信を取り消す',
+    recall_confirm_message: 'このメッセージを取り消しますか？取り消し後は元に戻せません。',
+    system_message_deleted: '{name}がメッセージを削除しました',
+    last_message_preview_deleted: 'メッセージが削除されました',
   },
 }
