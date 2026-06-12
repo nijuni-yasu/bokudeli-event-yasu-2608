@@ -111,6 +111,7 @@ terraform import google_identity_platform_config.auth projects/PROJECT/config
 terraform import google_firebase_project.default projects/PROJECT
 terraform import google_firebase_hosting_site.user "projects/PROJECT/sites/PROJECT"
 terraform import google_firebase_hosting_site.admin "projects/PROJECT/sites/PROJECT-admin"
+terraform import google_firebase_hosting_site.enterprise "projects/PROJECT/sites/PROJECT-enterprise"
 # Web App: Console → プロジェクトの設定 → アプリ から App ID を確認
 # terraform import google_firebase_web_app.default "projects/PROJECT/webApps/APP_ID"
 
@@ -130,7 +131,7 @@ import は **Terraform state のみ**更新する。本番サービスは停止�
 | Destroy | **0** |
 | `authorized_domains` | 本番カスタムドメイン（例: `shokujii.jp`）が **削除（`-`）されない** |
 | 新規 Secret | **5 件**の Add のみ（`SLACK_*` 4 + `LINE_CHANNEL_ACCESS_TOKEN` 1。既存 7 件が Add なら import 漏れ） |
-| Hosting / Web App | create のままなら import 漏れ（409 リスク） |
+| Hosting / Web App | create のままなら import 漏れ（409 リスク）。user / admin / **enterprise**（`PROJECT-enterprise`）を確認 |
 | `firestore_backups` | `storage_class` 差分なし（[firestore_backup.tf](firestore_backup.tf) は `ARCHIVE` 固定。本番手動作成バケットと一致） |
 | `firebasestorage_firestore_cross_service_rules` | 未付与 env では **Add 1**。Console 手動付与済みなら **import 後 no-op**（[service_account.tf](service_account.tf)） |
 
@@ -158,7 +159,7 @@ terraform plan
 terraform apply
 ```
 
-`terraform apply` では次も作成されます（[firestore_backup.tf](firestore_backup.tf) / [service_account.tf](service_account.tf)）。
+`terraform apply` では次も作成されます（[firestore_backup.tf](firestore_backup.tf) / [service_account.tf](service_account.tf) / [firebase.tf](firebase.tf)）。
 
 | リソース | 内容 |
 | -------- | ---- |
@@ -166,6 +167,7 @@ terraform apply
 | バケット IAM | Firestore サービスエージェントに `roles/storage.admin` |
 | プロジェクト IAM | Compute / App Engine デフォルト SA に `roles/datastore.importExportAdmin` |
 | プロジェクト IAM | Firebasestorage SA に `roles/firebaserules.firestoreServiceAgent`（Storage Rules の `firestore.get()` 用） |
+| Firebase Hosting サイト | `<PROJECT_ID>`（user）、`<PROJECT_ID>-admin`（partner）、`<PROJECT_ID>-enterprise`（enterprise）。初回 apply 時のみ。既存 site は [import](#import-一覧gcp-は変更しない) |
 
 バケットのロケーションは Firestore と同じ `asia-northeast1`（`var.region`）です。
 

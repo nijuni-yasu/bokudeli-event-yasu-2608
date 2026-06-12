@@ -117,3 +117,14 @@ resource "google_firebase_hosting_site" "admin" {
     google_firebase_project.default
   ]
 }
+
+# Firebase Hosting Site - Enterprise
+resource "google_firebase_hosting_site" "enterprise" {
+  provider = google-beta
+  project  = var.project
+  site_id  = "${var.project}-enterprise"
+
+  depends_on = [
+    google_firebase_project.default
+  ]
+}
