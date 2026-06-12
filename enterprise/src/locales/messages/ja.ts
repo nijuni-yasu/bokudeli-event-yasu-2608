@@ -2,6 +2,40 @@ import { ja } from 'vuetify/lib/locale/index.mjs'
 
 export default {
   $vuetify: ja,
+  enterprise: {
+    error: {
+      not_found_title: '企業が見つかりません',
+      not_found_body:
+        'ご利用の URL をご確認のうえ、貴社の管理者にお問い合わせください。URL が正しい場合は、管理者に企業設定の確認を依頼してください。',
+      generic_title: '読み込みに失敗しました',
+      generic_body: 'しばらく時間をおいて再度お試しください。問題が続く場合は貴社の管理者にお問い合わせください。',
+    },
+    login: {
+      title: 'ログイン',
+      email_label: 'メールアドレス',
+      email_placeholder: 'example@company.com',
+      submit: 'パスコードを送信',
+      domain_error: 'このメールアドレスはログインできません。会社のメールアドレスをご利用ください。',
+      not_registered: 'このメールアドレスは登録されていません。管理者にお問い合わせください。',
+      disabled: 'このアカウントは利用停止中です。管理者にお問い合わせください。',
+      send_failed: 'パスコードの送信に失敗しました。しばらくしてから再度お試しください。',
+    },
+    pass_code: {
+      title: 'パスコード入力',
+      description: 'メールに記載された6桁のパスコードを入力してください。',
+      label: 'パスコード',
+      submit: 'ログイン',
+      invalid: 'パスコードが正しくありません。',
+      resend: 'パスコードを再送',
+      resend_success: 'パスコードを再送しました。',
+    },
+    session: {
+      timeout: 'セッションの有効期限が切れました。再度ログインしてください。',
+    },
+    logout: {
+      success: 'ログアウトしました。',
+    },
+  },
   sns_name: {
     'twitter.com': 'X',
     'google.com': 'Google',

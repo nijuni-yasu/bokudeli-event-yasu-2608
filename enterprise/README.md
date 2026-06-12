@@ -12,7 +12,7 @@ Shokujii エンタープライズ版の従業員・全社管理者向けアプ�
 
 2. `.env.development` / `.env.production` を `enterprise/` 配下に配置  
    GitHub Actions Variables の `ENTERPRISE_ENV` を参照するか、管理者に問い合わせてください。  
-   項目一覧・CI 設定は [09_エンタープライズ_デプロイ手順.md](../documents/08_エンタープライズ/09_エンタープライズ_デプロイ手順.md) を参照。
+   項目一覧・CI 設定は [09*エンタープライズ*デプロイ手順](../documents/08_エンタープライズ/09_エンタープライズ_デプロイ手順.md) を参照。
 
 ## Development
 
@@ -36,7 +36,7 @@ npm -w enterprise run build -- -m development
 
 ## Firebase Hosting
 
-`firebase.json` に `enterprise` target を追加済みです。初回デプロイの手順（Hosting サイト ID = `<PROJECT_ID>-enterprise`、`ENTERPRISE_ENV` / `FIREBASERC` 設定、CI デプロイ）は [09_エンタープライズ_デプロイ手順.md](../documents/08_エンタープライズ/09_エンタープライズ_デプロイ手順.md) を参照。
+`firebase.json` に `enterprise` target を追加済みです。初回デプロイの手順（Hosting サイト ID = `<PROJECT_ID>-enterprise`、`ENTERPRISE_ENV` / `FIREBASERC` 設定、CI デプロイ）は [09*エンタープライズ*デプロイ手順](../documents/08_エンタープライズ/09_エンタープライズ_デプロイ手順.md) を参照。
 
 ```sh
 firebase target:apply hosting enterprise <PROJECT_ID>-enterprise
