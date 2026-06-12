@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar, mdiMessageTextOutline } from '@mdi/js'
 import { buildEventChatRoomId } from '@shokujii/common/schemas/ChatRoom.js'
+import type { NavigateToChatFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { useCommunityStore } from '@shokujii/base/stores/community'
@@ -19,6 +20,8 @@ const props = defineProps<{
   sessionId?: string
   /** 自分の注文を抽出するためのユーザー ID。未指定の場合は処理中判定を行わない */
   userId?: string
+  /** チャットルームへ遷移するコールバック（membership 待機を含む）。user 側から注入する */
+  navigateToChat?: NavigateToChatFn
 }>()
 
 const model = defineModel<boolean>()
@@ -29,11 +32,36 @@ const isPosted = props.isPosted
 
 const event = computed(() => eventStore.event)
 
-const chatRoomPath = computed(() => {
+const chatRoomId = computed(() => {
   const currentEvent = event.value
-  if (currentEvent == null) return '/chat'
-  return `/chat/${buildEventChatRoomId(currentEvent.community_id, currentEvent.id)}`
+  if (currentEvent == null) return null
+  return buildEventChatRoomId(currentEvent.community_id, currentEvent.id)
 })
+
+const canOpenChat = computed(() => {
+  const currentEvent = event.value
+  if (currentEvent == null || props.userId == null || props.userId === '') return false
+  return currentEvent.members.includes(props.userId)
+})
+
+const isNavigatingToChat = ref(false)
+
+const onOpenChatClick = async () => {
+  const roomId = chatRoomId.value
+  if (roomId == null || !canOpenChat.value || props.navigateToChat == null) {
+    return
+  }
+
+  isNavigatingToChat.value = true
+  try {
+    await props.navigateToChat(roomId)
+    if (model.value) {
+      model.value = false
+    }
+  } finally {
+    isNavigatingToChat.value = false
+  }
+}
 
 /** Checkout リダイレクト直後など、注文一覧が未読込の間は true（flash 表示や誤ったシェア誘導を防ぐ） */
 const isLoadingOrder = computed(() => {
@@ -173,15 +201,16 @@ watch(
             </a>
           </v-card-text>
           <v-card-text class="mt-5">
-            <v-row justify="center" v-if="!isProcessing">
+            <v-row justify="center" v-if="!isProcessing && canOpenChat">
               <v-btn
                 class="my-2"
                 size="large"
                 color="primary"
                 :append-icon="mdiMessageTextOutline"
                 rounded="pill"
-                :to="chatRoomPath"
-                @click="model = false"
+                :loading="isNavigatingToChat"
+                :disabled="isNavigatingToChat || navigateToChat == null"
+                @click="onOpenChatClick"
               >
                 {{ $t('chat.open_chat') }}
               </v-btn>
