@@ -1,5 +1,20 @@
 import { HttpsError } from 'firebase-functions/https'
+import type { CallableRequest } from 'firebase-functions/https'
 import { ENTERPRISE_SUBDOMAIN_PATTERN, RESERVED_ENTERPRISE_SUBDOMAINS } from '@shokujii/common/schemas/Enterprise.js'
+
+export function assertEnterpriseAdmin(
+  auth: CallableRequest['auth'],
+  enterpriseId: string,
+): asserts auth is NonNullable<typeof auth> {
+  if (auth?.uid == null) {
+    throw new HttpsError('unauthenticated', 'not logged in')
+  }
+  const tokenEnterpriseId = auth.token.enterprise_id as string | undefined
+  const tokenRole = auth.token.enterprise_role as string | undefined
+  if (tokenEnterpriseId !== enterpriseId || tokenRole !== 'admin') {
+    throw new HttpsError('permission-denied', 'enterprise admin only')
+  }
+}
 
 export function normalizeEnterpriseEmail(email: string): string {
   return email.trim().toLowerCase()

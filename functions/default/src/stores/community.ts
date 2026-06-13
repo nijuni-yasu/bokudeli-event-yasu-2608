@@ -280,3 +280,54 @@ export const countManagedCommunitiesForUser = async (userId: string): Promise<nu
   const snapshot = await db.collection('communities').where('managers', 'array-contains', userRef).count().get()
   return snapshot.data().count
 }
+
+export const saveCommunity = async (community: ShokujiiCommunity): Promise<void> => {
+  const db = getFirestore()
+  await db.collection('communities').doc(community.id).withConverter(communityConverter).set(community)
+}
+
+export type EnterpriseCommunityRecord = {
+  community_id: string
+  community_name: string
+  community_account: string
+  community_num_members: number
+  created_at: number
+  manager_ids: string[]
+}
+
+export const listCommunitiesByEnterpriseId = async (enterpriseId: string): Promise<EnterpriseCommunityRecord[]> => {
+  const db = getFirestore()
+  const snapshot = await db
+    .collection('communities')
+    .where('enterprise_id', '==', enterpriseId)
+    .withConverter(communityConverter)
+    .get()
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    const numMembers =
+      typeof doc.get('community_num_members') === 'number' ? (doc.get('community_num_members') as number) : 0
+    return {
+      community_id: doc.id,
+      community_name: data.community_name,
+      community_account: data.community_account,
+      community_num_members: numMembers,
+      created_at: data.created_at,
+      manager_ids: (data.managers ?? []).map((ref) => ref.id),
+    }
+  })
+}
+
+export const setCommunityMemberWithRoles = async (
+  communityId: string,
+  userId: string,
+  roles: CommunityMemberRolesType[],
+): Promise<void> => {
+  const db = getFirestore()
+  const memberRef = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('members')
+    .doc(userId)
+    .withConverter(communityMemberConverter)
+  await memberRef.set(new CommunityMember(userId, { roles }))
+}

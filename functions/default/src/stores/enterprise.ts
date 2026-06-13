@@ -44,6 +44,23 @@ export const getEnterpriseMemberRef = (enterpriseId: string, userId: string) => 
     .withConverter(enterpriseMemberConverter)
 }
 
+export const getEnterpriseMembersCollectionRef = (enterpriseId: string) => {
+  const db = getFirestore()
+  return db.collection('enterprises').doc(enterpriseId).collection('members').withConverter(enterpriseMemberConverter)
+}
+
+export const listEnterpriseMembers = async (enterpriseId: string): Promise<EnterpriseMember[]> => {
+  const snapshot = await getEnterpriseMembersCollectionRef(enterpriseId).get()
+  return snapshot.docs.map((doc) => doc.data())
+}
+
+export const countActiveEnterpriseAdmins = async (enterpriseId: string, excludeUserId?: string): Promise<number> => {
+  const members = await listEnterpriseMembers(enterpriseId)
+  return members.filter(
+    (m) => m.role === 'admin' && m.is_active && (excludeUserId == null || m.user_id !== excludeUserId),
+  ).length
+}
+
 export const getAuditLogsCollectionRef = (enterpriseId: string) => {
   const db = getFirestore()
   return db.collection('enterprises').doc(enterpriseId).collection('audit_logs').withConverter(auditLogConverter)
