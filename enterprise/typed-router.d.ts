@@ -20,6 +20,13 @@ declare module 'vue-router/auto-routes' {
   export interface RouteNamedMap {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/[[...error]]': RouteRecordInfo<'/[[...error]]', '/:error(.*)?', { error?: ParamValueZeroOrOne<true> }, { error?: ParamValueZeroOrOne<false> }>,
+    '/admin/': RouteRecordInfo<'/admin/', '/admin', Record<never, never>, Record<never, never>>,
+    '/admin/communities/': RouteRecordInfo<'/admin/communities/', '/admin/communities', Record<never, never>, Record<never, never>>,
+    '/admin/communities/import': RouteRecordInfo<'/admin/communities/import', '/admin/communities/import', Record<never, never>, Record<never, never>>,
+    '/admin/discount': RouteRecordInfo<'/admin/discount', '/admin/discount', Record<never, never>, Record<never, never>>,
+    '/admin/members/': RouteRecordInfo<'/admin/members/', '/admin/members', Record<never, never>, Record<never, never>>,
+    '/admin/members/import': RouteRecordInfo<'/admin/members/import', '/admin/members/import', Record<never, never>, Record<never, never>>,
+    '/admin/settings': RouteRecordInfo<'/admin/settings', '/admin/settings', Record<never, never>, Record<never, never>>,
     '/c/[communityAccount]/': RouteRecordInfo<'/c/[communityAccount]/', '/c/:communityAccount', { communityAccount: ParamValue<true> }, { communityAccount: ParamValue<false> }>,
     '/c/[communityAccount]/e/[eventId]/': RouteRecordInfo<'/c/[communityAccount]/e/[eventId]/', '/c/:communityAccount/e/:eventId', { communityAccount: ParamValue<true>, eventId: ParamValue<true> }, { communityAccount: ParamValue<false>, eventId: ParamValue<false> }>,
     '/c/[communityAccount]/e/[eventId]/members': RouteRecordInfo<'/c/[communityAccount]/e/[eventId]/members', '/c/:communityAccount/e/:eventId/members', { communityAccount: ParamValue<true>, eventId: ParamValue<true> }, { communityAccount: ParamValue<false>, eventId: ParamValue<false> }>,

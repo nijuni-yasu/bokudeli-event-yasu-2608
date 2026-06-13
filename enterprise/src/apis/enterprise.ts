@@ -1,6 +1,6 @@
 import { functions } from '@shokujii/base/firebase'
 import { httpsCallable } from 'firebase/functions'
-import {
+import type {
   GetEnterpriseByDomainRequest,
   GetEnterpriseByDomainResponse,
   RequestEnterpriseEmailLoginRequest,
