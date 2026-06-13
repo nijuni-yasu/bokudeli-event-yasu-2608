@@ -39,7 +39,7 @@ export default {
   },
   admin: {
     navigation: {
-      portal: '管理者画面',
+      portal: '管理画面',
       settings: '全社設定',
       members: 'アカウント管理',
       communities: 'コミュニティ管理',

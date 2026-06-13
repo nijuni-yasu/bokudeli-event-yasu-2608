@@ -1,23 +1,20 @@
 <script lang="ts" setup>
 import { defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
-import { mdiCartOutline, mdiPartyPopper } from '@mdi/js'
+import { mdiCartOutline } from '@mdi/js'
 import { useConfigStore } from '@core/stores/config'
 import { useSkins } from '@core/composable/useSkins'
 import { AppContentLayoutNav } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
 import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
+import EnterpriseModeSwitchButtons from '@/components/EnterpriseModeSwitchButtons.vue'
 import { useNavItems } from '@/navigation'
 import type { Notification } from '@shokujii/base/types/index.js'
-import { getManagePath, getManageNewCommunityPath, getLogin } from '@/router/utils'
-import { hasManagedCommunity } from '@shokujii/base/stores/community.js'
+import { getLogin } from '@/router/utils'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
-import { useRouter } from 'vue-router'
 import { getAuth, type User } from 'firebase/auth'
 import { consumePendingToast } from '@/utils/pendingToast'
-
-const router = useRouter()
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -58,14 +55,6 @@ getAuth().onAuthStateChanged((user) => {
   currentUser.value = user
 })
 
-const handleEventHostClick = async () => {
-  const uid = currentUser.value?.uid
-  if (uid == null) return
-
-  const hasCommunity = await hasManagedCommunity(uid)
-  router.push(hasCommunity ? getManagePath() : getManageNewCommunityPath())
-}
-
 const { cart } = storeToRefs(useCurrentUserStore())
 const cartMenuCount = computed(() => cart.value?.reduce((sum, item) => sum + item.orders.length, 0) ?? 0)
 const cartBadgeContent = computed(() => (cartMenuCount.value > 0 ? String(cartMenuCount.value) : ''))
@@ -89,14 +78,7 @@ onMounted(() => {
     "
   >
     <template #navbar-icons>
-      <v-btn
-        v-if="currentUser != null"
-        class="event-host-cta me-4"
-        :append-icon="mdiPartyPopper"
-        @click="handleEventHostClick"
-      >
-        {{ $t('navigation.new_event') }}
-      </v-btn>
+      <EnterpriseModeSwitchButtons v-if="currentUser != null" mode="default" />
       <v-btn v-else class="me-4" variant="outlined" :to="getLogin()">
         {{ $t('navigation.login') }}
       </v-btn>
@@ -126,59 +108,4 @@ onMounted(() => {
 <style lang="scss">
 // As we are using `layouts` plugin we need its styles to be imported
 @use '@layouts/styles/default-layout';
-</style>
-
-<style lang="scss" scoped>
-// イベント開催ボタン: ナビの「イベント参加」「コミュニティ」と同じグラデーション + キラーンアニメーション
-.event-host-cta {
-  background: linear-gradient(
-    -72.47deg,
-    rgb(var(--v-global-theme-primary)) 22.16%,
-    rgba(var(--v-global-theme-primary), 0.7) 76.47%
-  ) !important;
-  color: rgb(var(--v-theme-on-primary)) !important;
-  box-shadow:
-    0 4px 6px -1px rgb(0 0 0 / 0.1),
-    0 2px 4px -2px rgb(0 0 0 / 0.1);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    width: 50%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-    animation: event-host-shimmer 5.5s ease-in-out infinite;
-  }
-
-  :deep(.v-btn__content),
-  :deep(.v-icon) {
-    position: relative;
-    z-index: 1;
-  }
-
-  :deep(.v-icon) {
-    color: rgb(var(--v-theme-on-primary)) !important;
-  }
-}
-
-@keyframes event-host-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  18% {
-    transform: translateX(200%);
-  }
-  100% {
-    transform: translateX(200%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .event-host-cta::before {
-    animation: none;
-    display: none;
-  }
-}
 </style>

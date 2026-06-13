@@ -6,6 +6,7 @@ import { AppContentLayoutNav } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
 import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
+import EnterpriseModeSwitchButtons from '@/components/EnterpriseModeSwitchButtons.vue'
 import { useNavItems } from '@/navigation/manage'
 import type { Notification } from '@shokujii/base/types/index.js'
 import { useLayoutConfigStore } from '@layouts/stores/config'
@@ -83,7 +84,7 @@ onUnmounted(() => {
     "
   >
     <template #navbar-icons>
-      <v-btn class="me-4" to="/"> {{ $t('navigation.home') }}</v-btn>
+      <EnterpriseModeSwitchButtons mode="manage" />
       <UserProfile />
     </template>
     <template #footer>
