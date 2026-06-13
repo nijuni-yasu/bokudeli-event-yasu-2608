@@ -53,6 +53,23 @@ export const getValidPassCodeFromEmail = async (email: string): Promise<PassCode
   return passCodeSnapShots.docs[0]?.data()
 }
 
+export const getValidEnterprisePassCodeFromEmail = async (
+  email: string,
+  enterpriseId: string,
+): Promise<PassCode | undefined> => {
+  const db = getFirestore()
+  const passCodeSnapShots = await db
+    .collection('pass_code')
+    .where('user_email', '==', email)
+    .where('enterprise_id', '==', enterpriseId)
+    .where('created_at', '>', Timestamp.fromMillis(Date.now() - PASS_CODE_DURATION))
+    .orderBy('created_at', 'desc')
+    .limit(1)
+    .withConverter(passCodeConverter)
+    .get()
+  return passCodeSnapShots.docs[0]?.data()
+}
+
 export const deletePassCode = async (id: string) => {
   const db = getFirestore()
   await db.collection('pass_code').doc(id).delete()

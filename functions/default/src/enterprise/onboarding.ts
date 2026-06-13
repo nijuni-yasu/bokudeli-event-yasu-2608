@@ -6,7 +6,7 @@ import {
   GetEnterpriseByDomainRequest,
   GetEnterpriseByDomainResponse,
 } from '@shokujii/common/apis/enterprise.js'
-import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
+import { Enterprise, EnterpriseMember, ENTERPRISE_DISCOUNT_TYPE_VALUES } from '@shokujii/common/schemas/Enterprise.js'
 import { computeBillingTrialEndsAtMillis } from '@shokujii/common/utils/isEnterpriseMemberBillableInYearMonth.js'
 import { getConfigGlobal } from '../stores/config.js'
 import {
@@ -72,9 +72,26 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   if (initialAdmin?.email == null || initialAdmin.display_name == null) {
     throw new HttpsError('invalid-argument', 'initial_admin is incomplete')
   }
+  if (initialSubsidy?.type == null || initialSubsidy?.value == null || initialSubsidy?.monthly_limit_per_user == null) {
+    throw new HttpsError('invalid-argument', 'initial_subsidy_settings is incomplete')
+  }
+  if (!ENTERPRISE_DISCOUNT_TYPE_VALUES.includes(initialSubsidy.type)) {
+    throw new HttpsError('invalid-argument', 'initial_subsidy_settings.type is invalid')
+  }
+  if (
+    !Number.isInteger(initialSubsidy.value) ||
+    initialSubsidy.value < 0 ||
+    !Number.isInteger(initialSubsidy.monthly_limit_per_user) ||
+    initialSubsidy.monthly_limit_per_user < 0
+  ) {
+    throw new HttpsError('invalid-argument', 'initial_subsidy_settings values must be non-negative integers')
+  }
 
   const normalizedSubdomain = subdomain.toLowerCase()
   assertValidEnterpriseSubdomain(normalizedSubdomain)
+
+  const normalizedCustomDomain =
+    customDomain != null && customDomain.trim() !== '' ? customDomain.trim().toLowerCase() : undefined
 
   const initialAdminEmail = normalizeEnterpriseEmail(initialAdmin.email)
   if (!emailDomainMatches(initialAdminEmail, allowedEmailDomains)) {
@@ -84,9 +101,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   const [existingById, existingBySubdomain, existingByCustomDomain, existingUserId] = await Promise.all([
     getEnterpriseById(enterpriseId),
     getEnterpriseBySubdomain(normalizedSubdomain),
-    customDomain != null && customDomain !== ''
-      ? getEnterpriseByCustomDomain(customDomain.toLowerCase())
-      : Promise.resolve(undefined),
+    normalizedCustomDomain != null ? getEnterpriseByCustomDomain(normalizedCustomDomain) : Promise.resolve(undefined),
     getUserIdFromEmail(initialAdminEmail),
   ])
 
@@ -109,7 +124,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   const enterprise = new Enterprise(enterpriseId, {
     company_name: companyName,
     subdomain: normalizedSubdomain,
-    custom_domain: customDomain,
+    custom_domain: normalizedCustomDomain,
     allowed_email_domains: allowedEmailDomains,
     theme_color: themeColor ?? '#1976D2',
     discount_type: initialSubsidy.type,

@@ -8,7 +8,12 @@ import {
 } from '@shokujii/common/apis/enterprise.js'
 import { getEnterpriseById, getEnterpriseMember } from '../stores/enterprise.js'
 import { getUserIdFromEmail } from '../stores/user.js'
-import { deletePassCode, getValidPassCodeFromEmail, savePassCode, ShokujiiPassCode } from '../stores/passCode.js'
+import {
+  deletePassCode,
+  getValidEnterprisePassCodeFromEmail,
+  savePassCode,
+  ShokujiiPassCode,
+} from '../stores/passCode.js'
 import { send } from '../utils/sendgrid.js'
 import { DEFAULT_FROM } from '../utils/mail.js'
 import { writeAuditLog } from '../utils/auditLog.js'
@@ -19,7 +24,7 @@ import { isEnterpriseAppCheckEnforced } from '../utils/enterpriseAppCheck.js'
 const logger = createModuleLogger('enterprise-auth')
 
 // SendGrid テンプレート作成後に実 ID を記入（documents/sendgridテンプレ/enterprise_pass_code.md）
-const ENTERPRISE_PASS_CODE_TEMPLATE_ID = 'd-00000000000000000000000000000000'
+const ENTERPRISE_PASS_CODE_TEMPLATE_ID = 'd-df16d8a143e2488891841fb739ce36f3'
 
 type EnterpriseCustomClaims = {
   enterprise_id: string
@@ -81,7 +86,7 @@ export const requestEnterpriseEmailLogin = onCall<
       throw new HttpsError('permission-denied', 'account is disabled')
     }
 
-    const passCode = new ShokujiiPassCode(null, { user_id: userId, user_email: email })
+    const passCode = new ShokujiiPassCode(null, { user_id: userId, user_email: email, enterprise_id: enterpriseId })
     await Promise.all([
       savePassCode(passCode),
       send({
@@ -114,9 +119,17 @@ export const confirmEnterpriseEmailLogin = onCall<
     }
 
     const email = normalizeEnterpriseEmail(rawEmail)
-    const passCodeDocument = await getValidPassCodeFromEmail(email)
+    const passCodeDocument = await getValidEnterprisePassCodeFromEmail(email, enterpriseId)
     if (passCodeDocument == null || passCodeDocument.pass_code !== passCodeInput) {
       throw new HttpsError('invalid-argument', 'pass code is not valid')
+    }
+
+    const enterprise = await getEnterpriseById(enterpriseId)
+    if (enterprise == null || !enterprise.is_active) {
+      throw new HttpsError('not-found', 'enterprise not found')
+    }
+    if (!emailDomainMatches(email, enterprise.allowed_email_domains)) {
+      throw new HttpsError('permission-denied', 'email domain not allowed')
     }
 
     const userId = await getUserIdFromEmail(email)
