@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   assertFails,
   assertSucceeds,
@@ -9,6 +10,7 @@ import {
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest'
 
 const PROJECT_ID = 'firestore-rules-test'
+const testDir = fileURLToPath(new URL('.', import.meta.url))
 
 let testEnv: RulesTestEnvironment
 
@@ -17,7 +19,7 @@ describe('enterprise firestore rules', () => {
     testEnv = await initializeTestEnvironment({
       projectId: PROJECT_ID,
       firestore: {
-        rules: readFileSync(resolve(import.meta.dirname, '../../../firestore.rules'), 'utf8'),
+        rules: readFileSync(resolve(testDir, '../../../firestore.rules'), 'utf8'),
       },
     })
   })
