@@ -6,7 +6,7 @@ import {
   GetEnterpriseByDomainRequest,
   GetEnterpriseByDomainResponse,
 } from '@shokujii/common/apis/enterprise.js'
-import { Enterprise, EnterpriseMember, ENTERPRISE_DISCOUNT_TYPE_VALUES } from '@shokujii/common/schemas/Enterprise.js'
+import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 import { computeBillingTrialEndsAtMillis } from '@shokujii/common/utils/isEnterpriseMemberBillableInYearMonth.js'
 import { getConfigGlobal } from '../stores/config.js'
 import {
@@ -27,6 +27,7 @@ import {
 } from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
 import { isEnterpriseAppCheckEnforced } from '../utils/enterpriseAppCheck.js'
+import { validateSubsidySettings } from './subsidyValidation.js'
 
 const logger = createModuleLogger('enterprise')
 
@@ -75,17 +76,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   if (initialSubsidy?.type == null || initialSubsidy?.value == null || initialSubsidy?.monthly_limit_per_user == null) {
     throw new HttpsError('invalid-argument', 'initial_subsidy_settings is incomplete')
   }
-  if (!ENTERPRISE_DISCOUNT_TYPE_VALUES.includes(initialSubsidy.type)) {
-    throw new HttpsError('invalid-argument', 'initial_subsidy_settings.type is invalid')
-  }
-  if (
-    !Number.isInteger(initialSubsidy.value) ||
-    initialSubsidy.value < 0 ||
-    !Number.isInteger(initialSubsidy.monthly_limit_per_user) ||
-    initialSubsidy.monthly_limit_per_user < 0
-  ) {
-    throw new HttpsError('invalid-argument', 'initial_subsidy_settings values must be non-negative integers')
-  }
+  validateSubsidySettings(initialSubsidy.type, initialSubsidy.value, initialSubsidy.monthly_limit_per_user)
 
   const normalizedSubdomain = subdomain.toLowerCase()
   assertValidEnterpriseSubdomain(normalizedSubdomain)
@@ -124,7 +115,7 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   const enterprise = new Enterprise(enterpriseId, {
     company_name: companyName,
     subdomain: normalizedSubdomain,
-    custom_domain: normalizedCustomDomain,
+    ...(normalizedCustomDomain != null ? { custom_domain: normalizedCustomDomain } : {}),
     allowed_email_domains: allowedEmailDomains,
     theme_color: themeColor ?? '#1976D2',
     discount_type: initialSubsidy.type,
@@ -153,13 +144,18 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
     user_type: 'enterprise',
   })
 
+  const normalizedDepartment =
+    initialAdmin.department != null && initialAdmin.department.trim() !== ''
+      ? initialAdmin.department.trim()
+      : undefined
+
   const member = new EnterpriseMember(authUser.uid, {
     role: 'admin',
     is_active: true,
     last_activated_at: now,
     last_deactivated_at: null,
     display_name: initialAdmin.display_name,
-    department: initialAdmin.department,
+    ...(normalizedDepartment != null ? { department: normalizedDepartment } : {}),
     monthly_usage: {},
     monthly_order_count: {},
     created_at: now,

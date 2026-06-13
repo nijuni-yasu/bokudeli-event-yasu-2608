@@ -3,13 +3,7 @@ import { UpdateEnterpriseSettingsRequest, UpdateEnterpriseSettingsResponse } fro
 import { getEnterpriseById, saveEnterprise } from '../stores/enterprise.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { assertEnterpriseAdmin, getClientIp } from '../utils/enterpriseAuthHelpers.js'
-
-function assertEnterpriseLogoUrl(enterpriseId: string, logoUrl: string): void {
-  const marker = `/enterprises/${enterpriseId}/logo/`
-  if (!logoUrl.includes(marker)) {
-    throw new HttpsError('invalid-argument', 'company_logo_url must be under enterprise logo path')
-  }
-}
+import { assertEnterpriseLogoUrl } from './enterpriseLogoUrl.js'
 
 export const updateEnterpriseSettings = onCall<
   UpdateEnterpriseSettingsRequest,

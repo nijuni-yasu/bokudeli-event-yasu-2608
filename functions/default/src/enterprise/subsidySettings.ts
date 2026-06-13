@@ -3,32 +3,10 @@ import {
   UpdateEnterpriseSubsidySettingsRequest,
   UpdateEnterpriseSubsidySettingsResponse,
 } from '@shokujii/common/apis/enterprise.js'
-import { ENTERPRISE_DISCOUNT_TYPE_VALUES } from '@shokujii/common/schemas/Enterprise.js'
 import { getEnterpriseById, saveEnterprise } from '../stores/enterprise.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { assertEnterpriseAdmin, getClientIp } from '../utils/enterpriseAuthHelpers.js'
-
-function validateSubsidySettings(
-  discountType: UpdateEnterpriseSubsidySettingsRequest['discount_type'],
-  discountValue: number,
-  monthlyLimitPerUser: number,
-): void {
-  if (!ENTERPRISE_DISCOUNT_TYPE_VALUES.includes(discountType)) {
-    throw new HttpsError('invalid-argument', 'invalid discount_type')
-  }
-  if (!Number.isInteger(discountValue)) {
-    throw new HttpsError('invalid-argument', 'discount_value must be an integer')
-  }
-  if (discountType === 'fixed' && discountValue < 0) {
-    throw new HttpsError('invalid-argument', 'fixed discount_value must be non-negative')
-  }
-  if (discountType === 'percentage' && (discountValue < 0 || discountValue > 100)) {
-    throw new HttpsError('invalid-argument', 'percentage discount_value must be between 0 and 100')
-  }
-  if (!Number.isInteger(monthlyLimitPerUser) || monthlyLimitPerUser < 0) {
-    throw new HttpsError('invalid-argument', 'monthly_limit_per_user must be a non-negative integer')
-  }
-}
+import { validateSubsidySettings } from './subsidyValidation.js'
 
 export const updateEnterpriseSubsidySettings = onCall<
   UpdateEnterpriseSubsidySettingsRequest,

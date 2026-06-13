@@ -62,6 +62,9 @@ async function validateCreateCommunityRow(
   if (managerMember == null) {
     return '指定された管理者は自社メンバーではありません'
   }
+  if (!managerMember.is_active) {
+    return '指定された管理者は無効化されています'
+  }
 
   return undefined
 }
