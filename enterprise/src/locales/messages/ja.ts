@@ -13,7 +13,8 @@ export default {
     login: {
       title: 'ログイン',
       email_label: 'メールアドレス',
-      email_placeholder: 'example@company.com',
+      // eslint-disable-next-line quotes
+      email_placeholder: "example{'@'}company.com",
       submit: 'パスコードを送信',
       domain_error: 'このメールアドレスはログインできません。会社のメールアドレスをご利用ください。',
       not_registered: 'このメールアドレスは登録されていません。管理者にお問い合わせください。',
