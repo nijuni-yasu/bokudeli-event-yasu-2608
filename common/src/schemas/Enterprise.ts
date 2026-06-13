@@ -85,8 +85,12 @@ const EnterpriseAppSchema = z.object({
   is_active: z.boolean().default(true),
 })
 
+function omitUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined)) as T
+}
+
 const convertEnterpriseToDb = (enterprise: Enterprise) => {
-  return {
+  return omitUndefined({
     ...enterprise,
     created_at: EpochMillisSchema.default(Date.now()).parse(enterprise.created_at),
     updated_at: Date.now(),
@@ -94,7 +98,7 @@ const convertEnterpriseToDb = (enterprise: Enterprise) => {
       ...enterprise.billing_settings,
       billing_trial_ends_at: EpochMillisSchema.parse(enterprise.billing_settings.billing_trial_ends_at),
     },
-  }
+  })
 }
 
 export class Enterprise {
@@ -168,14 +172,14 @@ const EnterpriseMemberAppSchema = z.object({
 })
 
 const convertEnterpriseMemberToDb = (member: EnterpriseMember) => {
-  return {
+  return omitUndefined({
     ...member,
     last_activated_at: member.last_activated_at == null ? null : EpochMillisSchema.parse(member.last_activated_at),
     last_deactivated_at:
       member.last_deactivated_at == null ? null : EpochMillisSchema.parse(member.last_deactivated_at),
     created_at: EpochMillisSchema.default(Date.now()).parse(member.created_at),
     updated_at: Date.now(),
-  }
+  })
 }
 
 export class EnterpriseMember {
