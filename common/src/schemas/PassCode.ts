@@ -14,12 +14,14 @@ const PassCodeDbSchema = z.object({
   created_at: TimestampSchema,
   // optional
   user_id: NonEmptyStringSchema.optional(),
+  enterprise_id: NonEmptyStringSchema.optional(),
 })
 
 const PassCodeAppSchema = z.object({
   user_email: z.string(),
   // optional
   user_id: z.string().optional(),
+  enterprise_id: z.string().optional(),
 })
 
 export class PassCode {
@@ -28,6 +30,7 @@ export class PassCode {
   readonly pass_code: string
   readonly user_email!: string
   user_id?: string
+  enterprise_id?: string
 
   constructor(id: string, src: Partial<PassCode>) {
     Object.assign(this, PassCodeAppSchema.parse(src))

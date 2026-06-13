@@ -193,11 +193,12 @@ export class EnterpriseMember {
   updated_at: number
 
   constructor(userId: string, src: Partial<EnterpriseMember>) {
-    Object.assign(this, EnterpriseMemberAppSchema.parse({ ...src, user_id: userId }))
+    const parsed = EnterpriseMemberAppSchema.parse({ ...src, user_id: userId })
+    Object.assign(this, parsed)
     this.id = userId
     this.user_id = userId
-    this.last_activated_at = src.last_activated_at ?? null
-    this.last_deactivated_at = src.last_deactivated_at ?? null
+    this.last_activated_at = parsed.last_activated_at ?? null
+    this.last_deactivated_at = parsed.last_deactivated_at ?? null
     this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
     this.updated_at = Date.now()
   }
