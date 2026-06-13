@@ -4,11 +4,20 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiPencil, mdiReceiptText } from '@mdi/js'
+import {
+  mdiCartOutline,
+  mdiLogout,
+  mdiEmailOutline,
+  mdiCellphoneArrowDown,
+  mdiPencil,
+  mdiReceiptText,
+  mdiShieldAccount,
+} from '@mdi/js'
 import { useRoute } from 'vue-router'
 import { useNotification } from '@shokujii/base/composable/notification'
-import { getLogin, getProfile, getUserPath } from '@/router/utils'
+import { getLogin, getProfile, getUserPath, getAdminSettingsPath } from '@/router/utils'
 import { performEnterpriseLogout } from '@/utils/enterpriseLogout'
+import { isEnterpriseAdmin } from '@/composable/useEnterpriseAdmin'
 
 const route = useRoute()
 const router = useRouter()
@@ -39,6 +48,11 @@ const isOrdersTabActive = computed(() => {
 })
 
 const isOpenHomeButtonDialog = ref(false)
+const showAdminLink = ref(false)
+
+onMounted(async () => {
+  showAdminLink.value = await isEnterpriseAdmin()
+})
 
 const isOpenLogoutDialog = ref(false)
 const handleLogoutDialog = () => {
@@ -98,6 +112,15 @@ const logout = async () => {
         </v-list-item>
 
         <v-divider class="my-2" />
+
+        <v-list-item v-if="showAdminLink" :to="getAdminSettingsPath()">
+          <template #prepend>
+            <v-icon class="me-2" :icon="mdiShieldAccount" size="22" />
+          </template>
+          <v-list-item-title>{{ $t('admin.navigation.portal') }}</v-list-item-title>
+        </v-list-item>
+
+        <v-divider v-if="showAdminLink" class="my-2" />
 
         <!-- 👉 homebutton -->
         <v-list-item @click="isOpenHomeButtonDialog = true">

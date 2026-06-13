@@ -15,6 +15,7 @@ import { hasManagedCommunity } from '@shokujii/base/stores/community.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useRouter } from 'vue-router'
 import { getAuth, type User } from 'firebase/auth'
+import { consumePendingToast } from '@/utils/pendingToast'
 
 const router = useRouter()
 
@@ -68,6 +69,13 @@ const handleEventHostClick = async () => {
 const { cart } = storeToRefs(useCurrentUserStore())
 const cartMenuCount = computed(() => cart.value?.reduce((sum, item) => sum + item.orders.length, 0) ?? 0)
 const cartBadgeContent = computed(() => (cartMenuCount.value > 0 ? String(cartMenuCount.value) : ''))
+
+onMounted(() => {
+  const toast = consumePendingToast()
+  if (toast != null) {
+    Object.assign(notification, toast)
+  }
+})
 </script>
 
 <template>

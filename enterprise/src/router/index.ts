@@ -8,6 +8,7 @@ import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { setRedirectPath } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
 import { ZodError } from 'zod'
+import { setPendingToast } from '@/utils/pendingToast'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -20,7 +21,9 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
 
 const isLoginRequired = (path: string) => {
   const paths = path.split('/')
-  return path === '/profile' || paths[1] === 'manage' || (paths[1] === 'c' && paths[3] === 'invites')
+  return (
+    path === '/profile' || paths[1] === 'manage' || paths[1] === 'admin' || (paths[1] === 'c' && paths[3] === 'invites')
+  )
 }
 
 export const setupRouter = (router: Router) => {
@@ -178,6 +181,23 @@ export const setupRouter = (router: Router) => {
       ChannelService.showChannelButton()
     } else {
       ChannelService.hideChannelButton()
+    }
+  })
+
+  router.beforeEach(async (to) => {
+    if (!to.path.startsWith('/admin')) {
+      return
+    }
+
+    const user = getAuth().currentUser
+    if (user == null) {
+      return { path: '/login', state: { redirect: to.fullPath } }
+    }
+
+    const tokenResult = await user.getIdTokenResult()
+    if (tokenResult.claims.enterprise_role !== 'admin') {
+      setPendingToast('管理者権限が必要です', 'error')
+      return { path: '/' }
     }
   })
 }

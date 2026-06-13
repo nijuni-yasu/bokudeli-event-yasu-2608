@@ -35,3 +35,10 @@ export const getLogin = () => '/login'
 export const getProfile = (isNewUser: boolean = false) => ({ path: '/profile', state: { isNewUser } })
 export const getPassCode = (email: string) => ({ path: '/pass-code', state: { email } })
 export const getRegisterComplete = (isNewUser: boolean) => ({ path: '/register/complete', state: { isNewUser } })
+
+export const getAdminSettingsPath = () => '/admin/settings'
+export const getAdminMembersPath = () => '/admin/members'
+export const getAdminMembersImportPath = () => '/admin/members/import'
+export const getAdminCommunitiesPath = () => '/admin/communities'
+export const getAdminCommunitiesImportPath = () => '/admin/communities/import'
+export const getAdminDiscountPath = () => '/admin/discount'
