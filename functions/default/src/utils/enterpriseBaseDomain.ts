@@ -2,7 +2,7 @@ import { defineString } from 'firebase-functions/params'
 import type { Enterprise } from '@shokujii/common/schemas/Enterprise.js'
 import { getEnterpriseByCustomDomain, getEnterpriseBySubdomain } from '../stores/enterprise.js'
 
-export const ENTERPRISE_BASE_DOMAIN = defineString('ENTERPRISE_BASE_DOMAIN', { default: '' })
+const ENTERPRISE_BASE_DOMAIN = defineString('ENTERPRISE_BASE_DOMAIN', { default: '' })
 
 export async function resolveEnterpriseByHostname(hostname: string): Promise<Enterprise | undefined> {
   const host = hostname.toLowerCase()
