@@ -8,6 +8,7 @@ on:
     paths:
       - 'enterprise/**'
       - 'base/**'
+      - 'common/**'
   workflow_dispatch:
     inputs:
       environment:

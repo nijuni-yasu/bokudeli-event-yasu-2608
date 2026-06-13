@@ -6,7 +6,7 @@ resource "google_recaptcha_enterprise_key" "enterprise_app_check" {
     integration_type = "SCORE"
     allowed_domains = distinct(
       compact([
-        var.enterprise_base_domain != "" ? "*.${var.enterprise_base_domain}" : null,
+        var.enterprise_base_domain != "" ? var.enterprise_base_domain : null,
         "${var.project}-enterprise.web.app",
       ])
     )
