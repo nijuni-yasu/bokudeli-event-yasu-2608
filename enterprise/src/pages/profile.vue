@@ -13,14 +13,11 @@ import { useNotification } from '@shokujii/base/composable/notification'
 import { type ProviderIdType } from '@shokujii/base/utils/providerService'
 import { User } from '@shokujii/common/schemas/User.js'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
-import { getPassCode } from '@/router/utils'
-import { checkSoleManagerCommunity } from '@shokujii/base/stores/community.js'
-import { deleteUserAccount } from '@shokujii/base/apis/user.js'
 import { validateImageFile } from '@shokujii/base/utils/image'
 import { ALLOWED_IMAGE_ACCEPT_ATTR } from '@shokujii/common/constants/imageMimeTypes.js'
 
 const currentUserStore = useCurrentUserStore()
-const { providerData, user, personalInformation: currentUserPersonalInformation } = storeToRefs(currentUserStore)
+const { providerData, user } = storeToRefs(currentUserStore)
 const currentUser = ref(new User('', {}))
 watch(
   user,
@@ -31,16 +28,6 @@ watch(
   },
   { immediate: true },
 )
-
-const _email = ref<string | null>(null)
-const email = computed({
-  get() {
-    return _email.value ?? currentUserPersonalInformation.value?.user_email
-  },
-  set(value) {
-    _email.value = value ?? null
-  },
-})
 
 const linkedGogleAccount = computed(() => {
   return providerData.value?.find((pd) => pd.providerId === 'google.com')?.email ?? null
@@ -57,11 +44,9 @@ const linkedTwitterAccount = computed(() => {
 const router = useRouter()
 
 const isProfileLoading = ref<boolean>(false)
-const isEmailLoading = ref<boolean>(false)
 const isSnsLoading = ref<ProviderIdType | null>(null)
 
 const isValidProfile = ref<boolean>(false)
-const isValidEmail = ref<boolean>(false)
 
 const targetUnLinkProvider = ref<ProviderIdType | null>(null)
 const isOpenUnLinkDialog = computed<boolean>({
@@ -82,18 +67,13 @@ const userImagePreview = ref<string | undefined>(undefined)
 
 const isNewUser = history.state?.isNewUser ?? false
 
-const isSoleManager = ref<boolean | null>(null)
-const isOpenDeleteAccountDialog = ref(false)
-const isOpenDeleteCompleteDialog = ref(false)
-const isDeleteAccountLoading = ref(false)
-
 const imageError = ref('')
 
 const notification = useNotification()
 const { t: $t } = useI18n()
 
 // バリデーション関連 ここから
-const { requiredValidator, emailValidator, urlValidator } = useValidators()
+const { requiredValidator, urlValidator } = useValidators()
 
 const validateImage = () => {
   if (!currentUser.value?.user_image_url && !userImage.value && !userImagePreview.value) {
@@ -107,23 +87,6 @@ const validateImage = () => {
 
 watch(userImage, validateImage)
 // バリデーション関連 ここまで
-
-// uid 取得後に唯一管理者判定を再実行（Auth 初期化タイミングに依存しない）
-watch(
-  user,
-  async (u) => {
-    if (u?.id != null) {
-      try {
-        isSoleManager.value = await checkSoleManagerCommunity(u.id)
-      } catch {
-        isSoleManager.value = null
-      }
-    } else {
-      isSoleManager.value = null
-    }
-  },
-  { immediate: true },
-)
 
 // 画像ファイル選択処理
 const triggerFileInput = (): void => {
@@ -214,33 +177,6 @@ const profileSubmit = async () => {
   }
 }
 
-const emailSubmit = async () => {
-  if (currentUser.value == null || currentUserPersonalInformation.value == null) {
-    throw new Error('User is not logged in')
-  }
-  try {
-    isEmailLoading.value = true
-
-    const newUserEmail = email.value as string
-
-    if (currentUserPersonalInformation.value?.user_email === newUserEmail) {
-      notification.show($t('profile.not_changed_email'), 'warning')
-      return
-    }
-
-    await currentUserStore.requestEmailChange(newUserEmail)
-
-    return await router.push(getPassCode(newUserEmail))
-  } catch (error) {
-    if (error instanceof FirebaseError && error.code === 'functions/already-exists') {
-      notification.show($t('profile.exist_email'), 'warning')
-    }
-    console.warn('Error email submit:', error)
-  } finally {
-    isEmailLoading.value = false
-  }
-}
-
 const handleProviderLink = async (providerId: ProviderIdType) => {
   const snsName = $t(`sns_name['${providerId}']`)
   try {
@@ -283,44 +219,6 @@ const confirmUnLink = async (providerId: ProviderIdType) => {
     isSnsLoading.value = null
     isOpenUnLinkDialog.value = false
   }
-}
-
-const handleDeleteAccountClick = () => {
-  isOpenDeleteAccountDialog.value = true
-}
-
-const confirmDeleteAccount = async () => {
-  try {
-    isDeleteAccountLoading.value = true
-    await deleteUserAccount()
-    isOpenDeleteAccountDialog.value = false
-    isOpenDeleteCompleteDialog.value = true
-  } catch (error) {
-    console.error('Failed to delete user account', error)
-    const message =
-      error instanceof FirebaseError && error.code === 'functions/failed-precondition'
-        ? $t('profile.account_delete_sole_manager_error')
-        : $t('profile.account_delete_failed')
-    notification.show(message, 'error')
-    isOpenDeleteAccountDialog.value = false
-  } finally {
-    isDeleteAccountLoading.value = false
-  }
-}
-
-const handleDeleteCompleteOk = async () => {
-  try {
-    await currentUserStore.signOut()
-    await router.push('/')
-  } catch (error) {
-    console.error('Failed to sign out or redirect after account deletion', error)
-    notification.show($t('profile.account_delete_failed'), 'error')
-  }
-}
-
-const handleDeleteCompleteOkClick = async () => {
-  isOpenDeleteCompleteDialog.value = false
-  await handleDeleteCompleteOk()
 }
 </script>
 
@@ -432,38 +330,6 @@ const handleDeleteCompleteOkClick = async () => {
         </v-col>
       </v-row>
     </v-form>
-
-    <v-row v-if="!isNewUser" justify="center" class="mt-8">
-      <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
-        <v-sheet class="rounded-lg py-14 px-5 px-sm-16">
-          <div class="text-center text-h3 font-weight-bold">{{ $t('profile.email') }}</div>
-
-          <div>
-            <div class="text-subtitle-1 mt-3 mb-10">{{ $t('profile.email_description') }}</div>
-            <v-form v-model="isValidEmail" @submit.prevent="emailSubmit">
-              <v-text-field
-                class="my-12"
-                :label="$t('profile.change_settings')"
-                v-model="email"
-                variant="outlined"
-                :disabled="isEmailLoading"
-                :rules="[requiredValidator, emailValidator]"
-              />
-              <v-row justify="center">
-                <v-btn
-                  class="rounded-xl"
-                  color="primary"
-                  :disabled="!isValidEmail"
-                  :loading="isEmailLoading"
-                  type="submit"
-                  >{{ $t('profile.change_settings') }}</v-btn
-                >
-              </v-row>
-            </v-form>
-          </div>
-        </v-sheet>
-      </v-col>
-    </v-row>
 
     <v-row v-if="!isNewUser" justify="center" class="mt-8">
       <v-col lg="6" md="8" sm="10" cols="12" class="px-1">
@@ -581,27 +447,6 @@ const handleDeleteCompleteOkClick = async () => {
       </v-col>
     </v-row>
 
-    <v-row v-if="!isNewUser" justify="center" class="mt-8">
-      <v-col lg="6" md="8" sm="10" cols="12" class="px-0">
-        <v-sheet class="rounded-lg pa-6">
-          <v-btn
-            variant="outlined"
-            color="error"
-            size="small"
-            class="text-body-2 my-3"
-            :disabled="isSoleManager !== false"
-            @click="handleDeleteAccountClick"
-          >
-            {{ $t('profile.account_delete') }}
-          </v-btn>
-          <div class="text-body-2 text-medium-emphasis" v-html="$t('profile.account_delete_description')" />
-          <p v-if="isSoleManager" class="text-body-2 text-error mt-2 mb-2">
-            {{ $t('profile.account_delete_sole_manager_error') }}
-          </p>
-        </v-sheet>
-      </v-col>
-    </v-row>
-
     <confirm-dialog
       v-model="isOpenUnLinkDialog"
       :is-confirm="true"
@@ -612,39 +457,6 @@ const handleDeleteCompleteOkClick = async () => {
         {{ $t('profile.unlink_modal_title') }}
       </v-card-text>
     </confirm-dialog>
-
-    <v-dialog v-model="isOpenDeleteAccountDialog" max-width="420px" persistent>
-      <v-card class="pa-4">
-        <v-card-title class="text-h5">{{ $t('profile.account_delete_confirm_title') }}</v-card-title>
-        <v-card-text>
-          <span class="d-block py-5 text-body-2" v-html="$t('profile.account_delete_confirm_body')" />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="secondary" :disabled="isDeleteAccountLoading" @click="isOpenDeleteAccountDialog = false">
-            {{ $t('cancel') }}
-          </v-btn>
-          <v-btn color="error" :loading="isDeleteAccountLoading" @click="confirmDeleteAccount">
-            {{ $t('profile.account_delete_button') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="isOpenDeleteCompleteDialog" max-width="380px" persistent>
-      <v-card class="pa-4">
-        <v-card-title class="text-h5">{{ $t('profile.account_delete_complete_title') }}</v-card-title>
-        <v-card-text>
-          <span class="text-body-2">{{ $t('profile.account_delete_complete_message') }}</span>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="primary" variant="flat" @click="handleDeleteCompleteOkClick">
-            {{ $t('profile.account_delete_complete_ok') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 

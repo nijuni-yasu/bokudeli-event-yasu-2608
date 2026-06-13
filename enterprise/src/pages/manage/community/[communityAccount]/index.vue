@@ -4,4 +4,6 @@ const router = useRouter()
 router.replace(`/manage/community/${route.params.communityAccount}/events`)
 </script>
 
-<template>{{}}</template>
+<template>
+  <div />
+</template>

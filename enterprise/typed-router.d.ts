@@ -27,7 +27,6 @@ declare module 'vue-router/auto-routes' {
     '/cart': RouteRecordInfo<'/cart', '/cart', Record<never, never>, Record<never, never>>,
     '/communitylist/': RouteRecordInfo<'/communitylist/', '/communitylist', Record<never, never>, Record<never, never>>,
     '/flyer': RouteRecordInfo<'/flyer', '/flyer', Record<never, never>, Record<never, never>>,
-    '/inapp-login': RouteRecordInfo<'/inapp-login', '/inapp-login', Record<never, never>, Record<never, never>>,
     '/login': RouteRecordInfo<'/login', '/login', Record<never, never>, Record<never, never>>,
     '/maintenance': RouteRecordInfo<'/maintenance', '/maintenance', Record<never, never>, Record<never, never>>,
     '/manage/': RouteRecordInfo<'/manage/', '/manage', Record<never, never>, Record<never, never>>,
@@ -44,8 +43,6 @@ declare module 'vue-router/auto-routes' {
     '/pass-code': RouteRecordInfo<'/pass-code', '/pass-code', Record<never, never>, Record<never, never>>,
     '/profile': RouteRecordInfo<'/profile', '/profile', Record<never, never>, Record<never, never>>,
     '/receipt': RouteRecordInfo<'/receipt', '/receipt', Record<never, never>, Record<never, never>>,
-    '/register/complete': RouteRecordInfo<'/register/complete', '/register/complete', Record<never, never>, Record<never, never>>,
-    '/register/email': RouteRecordInfo<'/register/email', '/register/email', Record<never, never>, Record<never, never>>,
     '/u/[userId]': RouteRecordInfo<'/u/[userId]', '/u/:userId', { userId: ParamValue<true> }, { userId: ParamValue<false> }>,
   }
 }

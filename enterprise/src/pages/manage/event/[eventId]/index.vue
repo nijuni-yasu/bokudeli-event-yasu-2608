@@ -4,4 +4,6 @@ const router = useRouter()
 router.replace(`/manage/event/${route.params.eventId}/overview`)
 </script>
 
-<template>{{}}</template>
+<template>
+  <div />
+</template>
