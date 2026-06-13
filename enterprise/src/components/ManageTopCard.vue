@@ -29,7 +29,15 @@ defineProps<Props>()
         <v-btn v-if="buttonLink" class="mb-4" color="primary" variant="outlined" :to="buttonLink">
           {{ buttonText }}
         </v-btn>
-        <v-btn v-if="buttonHref" class="mb-4" color="primary" variant="outlined" :href="buttonHref" target="_blank">
+        <v-btn
+          v-if="buttonHref"
+          class="mb-4"
+          color="primary"
+          variant="outlined"
+          :href="buttonHref"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {{ buttonText }}
         </v-btn>
       </v-card-text>

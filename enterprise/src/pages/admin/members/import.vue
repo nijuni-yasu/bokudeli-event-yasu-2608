@@ -21,12 +21,15 @@ const handleExecute = async (rows: string[][]) => {
   if (enterpriseId.value == null) return
   loading.value = true
   try {
-    const members = rows.map((cells) => ({
-      email: cells[0] ?? '',
-      display_name: cells[1] ?? '',
-      department: cells[2] || undefined,
-      role: (cells[3]?.trim() === 'admin' ? 'admin' : 'member') as EnterpriseMemberRoleType,
-    }))
+    const members = rows.map((cells) => {
+      const rawRole = cells[3]?.trim() ?? ''
+      return {
+        email: cells[0] ?? '',
+        display_name: cells[1] ?? '',
+        department: cells[2] || undefined,
+        role: (rawRole === '' ? 'member' : rawRole) as EnterpriseMemberRoleType,
+      }
+    })
 
     const result = await createEnterpriseMembers({
       enterprise_id: enterpriseId.value,

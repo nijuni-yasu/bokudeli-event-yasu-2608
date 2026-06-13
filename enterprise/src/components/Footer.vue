@@ -15,27 +15,27 @@ import X from '@/assets/images/sns/sns_x.png'
       <tbody>
         <tr>
           <td style="padding: 0 10px">
-            <a href="https://x.com/shokujii_jp" target="_blank">
+            <a href="https://x.com/shokujii_jp" target="_blank" rel="noopener noreferrer">
               <img :src="X" alt="X" style="width: 45px; height: 45px; border-radius: 20%" />
             </a>
           </td>
           <td style="padding: 0 10px">
-            <a href="https://facebook.com/shokujii" target="_blank">
+            <a href="https://facebook.com/shokujii" target="_blank" rel="noopener noreferrer">
               <img :src="facebook" alt="Facebook" style="width: 45px; height: 45px; border-radius: 20%" />
             </a>
           </td>
           <td style="padding: 0 10px">
-            <a href="https://instagram.com/shokujii_jp" target="_blank">
+            <a href="https://instagram.com/shokujii_jp" target="_blank" rel="noopener noreferrer">
               <img :src="instagram" alt="Instagram" style="width: 45px; height: 45px; border-radius: 20%" />
             </a>
           </td>
           <td style="padding: 0 10px">
-            <a href="https://note.com/shokujii/m/mc65c92109f2b" target="_blank">
+            <a href="https://note.com/shokujii/m/mc65c92109f2b" target="_blank" rel="noopener noreferrer">
               <img :src="note" alt="note" style="width: 45px; height: 45px; border-radius: 20%" />
             </a>
           </td>
           <td style="padding: 0 10px">
-            <a href="https://lin.ee/0FEi1kbV/" target="_blank">
+            <a href="https://lin.ee/0FEi1kbV/" target="_blank" rel="noopener noreferrer">
               <img :src="line" alt="LINE" style="width: 45px; height: 45px; border-radius: 20%" />
             </a>
           </td>

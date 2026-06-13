@@ -133,7 +133,7 @@ const logout = async () => {
         <v-divider class="my-2" />
 
         <!-- 👉 contact -->
-        <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank">
+        <v-list-item :href="`https://forms.gle/QSuf1LNP8nR9pZbW9`" target="_blank" rel="noopener noreferrer">
           <template #prepend>
             <v-icon class="me-2" :icon="mdiEmailOutline" size="22" />
           </template>
