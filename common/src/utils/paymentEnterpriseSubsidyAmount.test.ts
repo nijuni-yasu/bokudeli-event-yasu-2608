@@ -4,6 +4,7 @@ import {
   computePaymentEnterpriseSubsidyAmount,
   enterpriseSubsidySettingsFromEnterprise,
   isPaymentEnterpriseSubsidyAmountConsistent,
+  replayEnterpriseSubsidyAmountsForOrders,
 } from './paymentEnterpriseSubsidyAmount.js'
 
 describe('enterpriseSubsidySettingsFromEnterprise', () => {
@@ -77,5 +78,47 @@ describe('isPaymentEnterpriseSubsidyAmountConsistent', () => {
       pay_enterprise_subsidy_amount: 400,
     })
     expect(isPaymentEnterpriseSubsidyAmountConsistent('enterprise_subsidy', settings, order, 7500)).toBe(false)
+  })
+})
+
+describe('replayEnterpriseSubsidyAmountsForOrders', () => {
+  const settings = { type: 'fixed' as const, value: 300, monthly_limit_per_user: 7500 }
+
+  it('残枠途中で品ごとに補助額が変わる', () => {
+    const orders = [
+      new EventMemberOrder('o1', {
+        order_id: 'o1',
+        user_id: 'u1',
+        event_id: 'e1',
+        community_id: 'c1',
+        menu_id: 'm1',
+        menu_name: 'menu',
+        menu_price: 600,
+        pay_enterprise_subsidy_amount: 300,
+      }),
+      new EventMemberOrder('o2', {
+        order_id: 'o2',
+        user_id: 'u1',
+        event_id: 'e1',
+        community_id: 'c1',
+        menu_id: 'm1',
+        menu_name: 'menu',
+        menu_price: 600,
+        pay_enterprise_subsidy_amount: 300,
+      }),
+      new EventMemberOrder('o3', {
+        order_id: 'o3',
+        user_id: 'u1',
+        event_id: 'e1',
+        community_id: 'c1',
+        menu_id: 'm1',
+        menu_name: 'menu',
+        menu_price: 600,
+      }),
+    ]
+    const replay = replayEnterpriseSubsidyAmountsForOrders('enterprise_subsidy', settings, orders, 7200)
+    expect(replay.expectedAmounts).toEqual([300, undefined, undefined])
+    expect(replay.subsidyTotal).toBe(300)
+    expect(replay.totalPayment).toBe(1500)
   })
 })

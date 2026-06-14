@@ -92,3 +92,49 @@ export function isPaymentEnterpriseSubsidyAmountConsistent(
   )
   return expected === order.pay_enterprise_subsidy_amount
 }
+
+/** enterprise_subsidy 注文セッションの参加者支払合計 */
+export function computeEnterpriseSubsidyTotalPayment(orders: EventMemberOrder[]): number {
+  return orders.reduce((sum, o) => sum + o.menu_price - (o.pay_enterprise_subsidy_amount ?? 0), 0)
+}
+
+/** community_bill / enterprise_subsidy いずれかの割引額（表示・合計用） */
+export function getMemberOrderDiscountAmount(order: EventMemberOrder): number {
+  return order.pay_enterprise_subsidy_amount ?? order.pay_community_bill_off_amount ?? 0
+}
+
+/** カート表示・合計用（キャンセル済み除外） */
+export function computeMemberOrdersTotalPayment(orders: EventMemberOrder[]): number {
+  return orders
+    .filter((o) => o.status !== 'canceled')
+    .reduce((sum, o) => sum + o.menu_price - getMemberOrderDiscountAmount(o), 0)
+}
+
+/**
+ * addToCart / confirmOrder / createStripeCheckoutSession で同一順序の order 列を
+ * イベント開催月 usage 起点でループ再現し、order ごとの期待補助額を返す。
+ */
+export function replayEnterpriseSubsidyAmountsForOrders(
+  eventPayment: EventPaymentType,
+  settings: EnterpriseSubsidySettingsType | undefined,
+  orders: EventMemberOrder[],
+  monthlyUsageForEventMonth: number,
+): { expectedAmounts: (number | undefined)[]; subsidyTotal: number; totalPayment: number } {
+  if (eventPayment !== 'enterprise_subsidy') {
+    throw new Error('replayEnterpriseSubsidyAmountsForOrders is only for enterprise_subsidy')
+  }
+  if (settings == null) {
+    throw new Error('enterprise_subsidy requires enterprise_subsidy_settings')
+  }
+  let runningUsage = monthlyUsageForEventMonth
+  const expectedAmounts: (number | undefined)[] = []
+  for (const order of orders) {
+    const remaining = Math.max(0, settings.monthly_limit_per_user - runningUsage)
+    const expected = computePaymentEnterpriseSubsidyAmount(eventPayment, settings, order.menu_price, remaining)
+    expectedAmounts.push(expected)
+    runningUsage += expected ?? 0
+  }
+  const subsidyTotal = expectedAmounts.reduce<number>((sum, a) => sum + (a ?? 0), 0)
+  const totalPayment = orders.reduce<number>((sum, o, i) => sum + o.menu_price - (expectedAmounts[i] ?? 0), 0)
+  return { expectedAmounts, subsidyTotal, totalPayment }
+}
