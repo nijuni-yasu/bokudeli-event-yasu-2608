@@ -69,13 +69,6 @@ const onChatLogScroll = (event: Event) => {
   }
 }
 
-const onMessageKeydown = (event: KeyboardEvent) => {
-  if (event.key !== 'Enter' || event.shiftKey) return
-  if (vuetifyDisplays.smAndDown.value) return
-  event.preventDefault()
-  void sendMessage()
-}
-
 const navigateToChatPath = (roomId?: string, replace = false): void => {
   const path = props.resolveChatRoomPath?.(roomId) ?? {
     path: roomId != null && roomId !== '' ? `/chat/${roomId}` : '/chat',
@@ -290,8 +283,8 @@ onBeforeUnmount(() => {
 
           <VAvatar
             size="40"
-            variant="tonal"
-            color="primary"
+            :variant="store.activeRoom.coverImageUrl != null ? 'flat' : 'tonal'"
+            :color="store.activeRoom.coverImageUrl != null ? undefined : 'primary'"
             class="me-3"
             :class="{ 'cursor-pointer': canOpenActiveEvent }"
             @click.stop="onActiveRoomAvatarClick"
@@ -341,9 +334,8 @@ onBeforeUnmount(() => {
               :aria-label="t('chat.message_input_label')"
               auto-grow
               rows="1"
-              max-rows="3"
+              max-rows="10"
               hide-details
-              @keydown="onMessageKeydown"
             />
             <VBtn
               type="submit"

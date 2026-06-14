@@ -50,8 +50,8 @@ const onAvatarClick = (event: MouseEvent) => {
   >
     <VAvatar
       size="40"
-      variant="tonal"
-      color="primary"
+      :variant="room.coverImageUrl != null ? 'flat' : 'tonal'"
+      :color="room.coverImageUrl != null ? undefined : 'primary'"
       :class="{ 'cursor-pointer': canOpenEvent }"
       @click="onAvatarClick"
     >

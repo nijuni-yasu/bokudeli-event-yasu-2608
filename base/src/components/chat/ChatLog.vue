@@ -41,9 +41,6 @@ const resolveDeletedMessage = (message: ChatMessageItem): string => {
 }
 
 const resolveSenderName = (senderUserId: string): string => {
-  if (senderUserId === props.currentUserId) {
-    return t('chat.you')
-  }
   return senderNames.value.get(senderUserId) ?? senderUserId.slice(0, 8)
 }
 
@@ -190,13 +187,10 @@ watch(
           class="chat-body d-inline-flex flex-column"
           :class="message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
         >
-          <div
-            class="chat-body-header d-flex align-center gap-1"
-            :class="message.senderUserId === currentUserId ? 'flex-row-reverse' : ''"
-          >
-            <span v-if="message.senderUserId !== currentUserId" class="text-xs text-medium-emphasis mb-1">
-              {{ resolveSenderName(message.senderUserId ?? '') }}
-            </span>
+          <span class="text-xs text-medium-emphasis mb-1">
+            {{ resolveSenderName(message.senderUserId ?? '') }}
+          </span>
+          <div class="chat-message-row d-flex align-center gap-1">
             <VMenu v-if="canRecall(message)" location="bottom">
               <template #activator="{ props: menuProps }">
                 <VBtn
@@ -205,7 +199,7 @@ watch(
                   variant="text"
                   size="x-small"
                   color="default"
-                  class="chat-recall-menu-btn"
+                  class="chat-recall-menu-btn flex-shrink-0"
                   :aria-label="t('chat.recall_message')"
                   @click.stop
                 >
@@ -216,16 +210,16 @@ watch(
                 <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
               </VList>
             </VMenu>
+            <p
+              v-linkify
+              class="chat-content py-3 px-4 elevation-1 mb-1"
+              :class="
+                message.senderUserId === currentUserId ? 'bg-primary text-white chat-right' : 'bg-surface chat-left'
+              "
+            >
+              {{ message.body }}
+            </p>
           </div>
-          <p
-            v-linkify
-            class="chat-content text-sm py-3 px-4 elevation-1 mb-1"
-            :class="
-              message.senderUserId === currentUserId ? 'bg-primary text-white chat-right' : 'bg-surface chat-left'
-            "
-          >
-            {{ message.body }}
-          </p>
           <span class="text-xs text-disabled">
             {{ convertToTimeString(message.createdAt) }}
           </span>
@@ -268,6 +262,7 @@ watch(
 }
 
 .chat-content {
+  font-size: 15px;
   border-end-end-radius: 6px;
   border-end-start-radius: 6px;
   margin: 0;
@@ -280,6 +275,11 @@ watch(
 
   &.chat-right {
     border-start-start-radius: 6px;
+
+    :deep(a) {
+      color: rgb(var(--v-theme-on-primary));
+      text-decoration: underline;
+    }
   }
 }
 </style>
