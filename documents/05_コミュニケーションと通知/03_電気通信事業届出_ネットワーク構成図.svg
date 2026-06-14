@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="820" viewBox="0 0 1120 820">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#333333"/>
+    </marker>
+    <style>
+      .title { font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 20px; font-weight: bold; fill: #111111; }
+      .subtitle { font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 13px; fill: #333333; }
+      .label { font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 12px; fill: #111111; }
+      .small { font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 11px; fill: #333333; }
+      .note { font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 11px; fill: #444444; }
+    </style>
+  </defs>
+
+  <rect width="1120" height="820" fill="#ffffff"/>
+
+  <text x="40" y="42" class="title">ネットワーク構成図（様式第3）</text>
+  <text x="40" y="68" class="subtitle">届出者: ニジュウニ株式会社 / 提供サービス: Shokujii アプリ内クローズドチャット / 自社設置回線: なし</text>
+
+  <rect x="70" y="130" width="180" height="90" rx="8" fill="#f5f8ff" stroke="#2f5f9e" stroke-width="1.5"/>
+  <text x="160" y="158" text-anchor="middle" class="label">利用者 A 端末</text>
+  <text x="160" y="180" text-anchor="middle" class="small">PC / スマートフォン</text>
+  <text x="160" y="200" text-anchor="middle" class="small">Web ブラウザ（Shokujii）</text>
+
+  <rect x="70" y="280" width="180" height="90" rx="8" fill="#f5f8ff" stroke="#2f5f9e" stroke-width="1.5"/>
+  <text x="160" y="308" text-anchor="middle" class="label">利用者 B 端末</text>
+  <text x="160" y="330" text-anchor="middle" class="small">PC / スマートフォン</text>
+  <text x="160" y="350" text-anchor="middle" class="small">Web ブラウザ（Shokujii）</text>
+
+  <ellipse cx="360" cy="250" rx="95" ry="55" fill="#fff8e8" stroke="#c68a00" stroke-width="1.5"/>
+  <text x="360" y="245" text-anchor="middle" class="label">インターネット</text>
+  <text x="360" y="265" text-anchor="middle" class="small">HTTPS</text>
+
+  <rect x="520" y="210" width="170" height="80" rx="8" fill="#f8f8f8" stroke="#666666" stroke-width="1.5"/>
+  <text x="605" y="238" text-anchor="middle" class="label">既存回線・ネットワーク</text>
+  <text x="605" y="258" text-anchor="middle" class="small">インターネット接続事業者等</text>
+  <text x="605" y="276" text-anchor="middle" class="small">（自社設置なし）</text>
+
+  <rect x="760" y="95" width="300" height="430" rx="12" fill="#f0faf0" stroke="#2d7a2d" stroke-width="2"/>
+  <text x="910" y="125" text-anchor="middle" class="label">Firebase / Google Cloud</text>
+  <text x="910" y="145" text-anchor="middle" class="small">（Google LLC 提供）</text>
+
+  <rect x="790" y="165" width="240" height="58" rx="6" fill="#ffffff" stroke="#2d7a2d" stroke-width="1"/>
+  <text x="910" y="190" text-anchor="middle" class="label">Firebase Hosting</text>
+  <text x="910" y="210" text-anchor="middle" class="small">Shokujii Web アプリ配信</text>
+
+  <rect x="790" y="240" width="240" height="58" rx="6" fill="#ffffff" stroke="#2d7a2d" stroke-width="1"/>
+  <text x="910" y="265" text-anchor="middle" class="label">Firebase Authentication</text>
+  <text x="910" y="285" text-anchor="middle" class="small">利用者認証</text>
+
+  <rect x="790" y="315" width="240" height="88" rx="6" fill="#ffffff" stroke="#2d7a2d" stroke-width="1"/>
+  <text x="910" y="340" text-anchor="middle" class="label">Cloud Firestore</text>
+  <text x="910" y="360" text-anchor="middle" class="small">chat_rooms / messages</text>
+  <text x="910" y="378" text-anchor="middle" class="small">chat_memberships</text>
+  <text x="910" y="396" text-anchor="middle" class="small">メッセージ媒介・リアルタイム同期</text>
+
+  <rect x="790" y="420" width="240" height="78" rx="6" fill="#ffffff" stroke="#2d7a2d" stroke-width="1"/>
+  <text x="910" y="445" text-anchor="middle" class="label">Cloud Functions for Firebase</text>
+  <text x="910" y="465" text-anchor="middle" class="small">ルーム同期 / 後処理 / 取り消し</text>
+  <text x="910" y="483" text-anchor="middle" class="small">Security Rules 連携</text>
+
+  <rect x="760" y="560" width="300" height="70" rx="8" fill="#fafafa" stroke="#999999" stroke-width="1"/>
+  <text x="910" y="588" text-anchor="middle" class="label">サービス提供事業者</text>
+  <text x="910" y="610" text-anchor="middle" class="small">ニジュウニ株式会社（利用者間通信を媒介）</text>
+
+  <line x1="250" y1="175" x2="300" y2="220" stroke="#333333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="250" y1="325" x2="300" y2="280" stroke="#333333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="455" y1="250" x2="520" y2="250" stroke="#333333" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="690" y1="250" x2="760" y2="250" stroke="#333333" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <line x1="910" y1="223" x2="910" y2="240" stroke="#666666" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <line x1="910" y1="298" x2="910" y2="315" stroke="#666666" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <line x1="910" y1="403" x2="910" y2="420" stroke="#666666" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <line x1="910" y1="498" x2="910" y2="560" stroke="#666666" stroke-width="1.2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+
+  <path d="M160 220 C220 220 220 280 160 280" fill="none" stroke="#888888" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="200" y="252" class="small">利用者間メッセージ</text>
+  <text x="200" y="268" class="small">（Firestore 経由）</text>
+
+  <rect x="40" y="660" width="1040" height="130" rx="8" fill="#fafafa" stroke="#cccccc" stroke-width="1"/>
+  <text x="60" y="688" class="label">注記</text>
+  <text x="60" y="712" class="note">1. 自社で電気通信回線設備・交換設備・伝送路設備等は設置しない（回線非設置届出）。</text>
+  <text x="60" y="732" class="note">2. 利用者端末から Firebase / Google Cloud までの通信は、インターネット接続事業者等の既存ネットワークを利用する。</text>
+  <text x="60" y="752" class="note">3. 特定の利用者間（イベント参加者 / コミュニティメンバー / 友人関係）に限定したテキストメッセージを媒介する。</text>
+  <text x="60" y="772" class="note">4. IP 電話、音声通話、ビデオ通話は提供しない。</text>
+</svg>
