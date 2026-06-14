@@ -283,7 +283,9 @@ export const countManagedCommunitiesForUser = async (userId: string): Promise<nu
 
 export const saveCommunity = async (community: ShokujiiCommunity): Promise<void> => {
   const db = getFirestore()
-  await db.collection('communities').doc(community.id).withConverter(communityConverter).set(community)
+  // toFirestore は未設定の NonEmptyString フィールドを FieldValue.delete() に変換するため、
+  // merge なし set だと新規ドキュメント作成時に delete sentinel が拒否され失敗する。merge: true で回避する。
+  await db.collection('communities').doc(community.id).withConverter(communityConverter).set(community, { merge: true })
 }
 
 export type EnterpriseCommunityRecord = {
