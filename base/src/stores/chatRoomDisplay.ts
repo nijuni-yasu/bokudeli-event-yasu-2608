@@ -38,12 +38,6 @@ const ensureEventListener = (communityId: string, eventId: string): void => {
     return
   }
 
-  const cached = cache.get(key)
-  if (cached != null) {
-    notifySubscribers(key, cached)
-    return
-  }
-
   const ref = getEventInCommunityRef(communityId, eventId)
   const unsubscribe = onSnapshot(
     ref,
@@ -102,6 +96,7 @@ export const subscribeEventRoomDisplay = (
       subscriberSets.delete(key)
       listeners.get(key)?.()
       listeners.delete(key)
+      cache.delete(key)
     }
   }
 }

@@ -59,7 +59,7 @@ const canLinkToProfile = (senderUserId: string): boolean => {
   return user == null || !user.is_deleted
 }
 
-const profilePath = (senderUserId: string): string | undefined => {
+const profilePath = (senderUserId: string): ReturnType<ResolveUserPathFn> | undefined => {
   if (!canLinkToProfile(senderUserId) || props.resolveProfilePath == null) {
     return undefined
   }

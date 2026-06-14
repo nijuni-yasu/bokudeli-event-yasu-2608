@@ -187,6 +187,26 @@ export const useChatStore = defineStore('chat', () => {
     rooms.value = rooms.value.map((room) => (room.roomId === roomId ? { ...room, ...meta } : room))
   }
 
+  /** membership 更新で一覧が作り直されても、取得済みのイベント表示メタを維持する */
+  const preserveRoomDisplayMeta = (
+    nextRooms: ChatRoomListItem[],
+    prevRooms: ChatRoomListItem[],
+  ): ChatRoomListItem[] => {
+    const prevById = new Map(prevRooms.map((room) => [room.roomId, room]))
+    return nextRooms.map((newRoom) => {
+      const prev = prevById.get(newRoom.roomId)
+      if (prev?.displayTitleReady) {
+        return {
+          ...newRoom,
+          displayTitle: prev.displayTitle,
+          displayTitleReady: prev.displayTitleReady,
+          coverImageUrl: prev.coverImageUrl,
+        }
+      }
+      return newRoom
+    })
+  }
+
   const syncListRoomDisplays = (roomList: ChatRoomListItem[]): void => {
     const eventRoomIds = new Set<string>()
 
@@ -289,8 +309,8 @@ export const useChatStore = defineStore('chat', () => {
 
     membershipsUnsubscribe = onSnapshot(membershipsQuery, (snapshot) => {
       const nextRooms = snapshot.docs.map((docSnapshot) => membershipToListItem(docSnapshot.data()))
-      rooms.value = nextRooms
-      syncListRoomDisplays(nextRooms)
+      rooms.value = preserveRoomDisplayMeta(nextRooms, rooms.value)
+      syncListRoomDisplays(rooms.value)
       membershipsLoaded.value = true
     })
   }
@@ -362,8 +382,10 @@ export const useChatStore = defineStore('chat', () => {
     messagesUnsubscribe = onSnapshot(messagesQuery, (snapshot) => {
       const incoming = snapshot.docs.map((docSnapshot) => toMessageItem(docSnapshot.data())).reverse()
       messages.value = mergeMessages(messages.value, incoming)
-      oldestMessageSnapshot = snapshot.docs[snapshot.docs.length - 1] ?? null
-      hasMoreMessages.value = snapshot.docs.length >= MESSAGES_PAGE_SIZE
+      if (oldestMessageSnapshot == null) {
+        oldestMessageSnapshot = snapshot.docs[snapshot.docs.length - 1] ?? null
+        hasMoreMessages.value = snapshot.docs.length >= MESSAGES_PAGE_SIZE
+      }
 
       if (activeRoomId.value === roomId) {
         void markAsRead(roomId, userId)
@@ -396,7 +418,6 @@ export const useChatStore = defineStore('chat', () => {
   const openRoom = (roomId: string, userId: string) => {
     subscribeRoom(roomId)
     subscribeMessages(roomId, userId)
-    void markAsRead(roomId, userId)
   }
 
   const sendMessage = async (roomId: string, userId: string, body: string) => {

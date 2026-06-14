@@ -94,6 +94,9 @@ export const recallChatMessage = onCall<RecallChatMessageRequest, Promise<Recall
     if (!room.is_active) {
       throw new HttpsError('failed-precondition', 'このチャットは終了しています')
     }
+    if (!room.member_user_ids.includes(uid)) {
+      throw new HttpsError('permission-denied', 'このチャットに参加していません')
+    }
 
     const user = await getUser(uid, false)
     const deletedDisplayName = user?.user_name ?? 'ユーザー'
