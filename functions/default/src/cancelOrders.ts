@@ -7,6 +7,11 @@ import Stripe from 'stripe'
 import { CancelOrdersRequest, CancelOrdersResponse, CancelOrdersRefundError } from '@shokujii/common/apis/stripe.js'
 import { getOrdersByIds, saveOrder, getStripe, saveStripe } from './stores/memberOrder.js'
 import { getEventInCommunity } from './stores/event.js'
+import { adjustEnterpriseMemberMonthlyUsage } from './stores/enterprise.js'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import { getEventEnterpriseId } from './utils/enterpriseSubsidyOrders.js'
+import { writeAuditLog } from './utils/auditLog.js'
 import { applyOrderCanceledSideEffects } from './orderCanceledSideEffects.js'
 import { createModuleLogger } from './utils/logger.js'
 
@@ -59,6 +64,9 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
     }
 
     const db = getFirestore()
+    const enterpriseId = getEventEnterpriseId(eventData)
+    const eventMonth = eventPayment === 'enterprise_subsidy' ? formatYearMonth(eventData.event_start_datetime) : null
+
     const orders = await db.runTransaction(async (transaction) => {
       const fetchedOrders = await getOrdersByIds(community_id, event_id, uid, order_ids, transaction)
 
@@ -89,6 +97,18 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
         )
       }
 
+      if (eventPayment === 'enterprise_subsidy' && enterpriseId != null && eventMonth != null) {
+        const subsidyTotal = fetchedOrders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
+        await adjustEnterpriseMemberMonthlyUsage(
+          enterpriseId,
+          uid,
+          eventMonth,
+          -subsidyTotal,
+          -fetchedOrders.length,
+          transaction,
+        )
+      }
+
       for (const order of fetchedOrders) {
         order.status = 'canceled'
         order.canceled_at = nowMillis
@@ -97,6 +117,20 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
 
       return fetchedOrders
     })
+
+    if (eventPayment === 'enterprise_subsidy' && enterpriseId != null) {
+      const returnedSubsidy = orders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
+      await writeAuditLog({
+        enterpriseId,
+        userId: uid,
+        action: 'order_cancel',
+        targetType: 'order_session',
+        details: {
+          order_ids,
+          returned_subsidy_amount: returnedSubsidy,
+        },
+      })
+    }
 
     try {
       await applyOrderCanceledSideEffects({ event: eventData, userId: uid })
@@ -155,10 +189,7 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
           throw new Error(`stripes ドキュメントが見つかりません: ${stripeId}`)
         }
 
-        const refundAmount = groupOrders.reduce(
-          (sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0),
-          0,
-        )
+        const refundAmount = groupOrders.reduce((sum, o) => sum + o.menu_price - getMemberOrderDiscountAmount(o), 0)
         if (refundAmount <= 0) {
           logger.info('Skip Stripe refund (zero or negative amount)', {
             stripeId,

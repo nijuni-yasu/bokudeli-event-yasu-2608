@@ -15,6 +15,14 @@ import {
 import { getCommunity } from './stores/community.js'
 import { getEventInCommunity } from './stores/event.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import { adjustEnterpriseMemberMonthlyUsage } from './stores/enterprise.js'
+import { writeAuditLog } from './utils/auditLog.js'
+import {
+  getEventEnterpriseId,
+  loadEnterpriseMemberForSubsidy,
+  validateEnterpriseSubsidyOrdersSnapshotForWebhook,
+} from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('stripeWebhook')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
@@ -23,7 +31,15 @@ const db = getFirestore()
 
 /** トランザクション結果に応じてハンドラが返す HTTP を分岐する（throw による 5xx と Stripe の無限再送を避ける） */
 type StripeWebhookTransactionResult =
-  | { kind: 'processed' }
+  | {
+      kind: 'processed'
+      enterpriseOrderCreateLog?: {
+        enterpriseId: string
+        subsidyTotal: number
+        totalPayment: number
+        stripeDocId: string
+      }
+    }
   | { kind: 'noop' }
   | { kind: 'client_error'; message: string }
   | { kind: 'unrecoverable_ack'; message: string }
@@ -322,6 +338,54 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
       return { kind: 'client_error', message: 'Orders not found' }
     }
 
+    const eventData = await getEventInCommunity(communityId, eventId, transaction)
+    if (eventData == null) {
+      return { kind: 'client_error', message: 'Event not found' }
+    }
+
+    const enterpriseId = getEventEnterpriseId(eventData)
+    let subsidyTotal = 0
+    let enterpriseOrderCreateLog:
+      | {
+          enterpriseId: string
+          subsidyTotal: number
+          totalPayment: number
+          stripeDocId: string
+        }
+      | undefined
+
+    if (eventData.event_payment === 'enterprise_subsidy') {
+      if (enterpriseId == null) {
+        return { kind: 'client_error', message: 'enterprise_id is required for enterprise_subsidy' }
+      }
+      const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, userId, transaction)
+      if (entMember == null) {
+        return { kind: 'client_error', message: 'EnterpriseMember not found' }
+      }
+      const snapshotValidation = validateEnterpriseSubsidyOrdersSnapshotForWebhook({
+        event: eventData,
+        orders,
+      })
+      if (!snapshotValidation.ok) {
+        return { kind: 'client_error', message: snapshotValidation.message }
+      }
+      const ordersToConfirm = orders.filter((o) => o.status !== 'ordered')
+      const subsidyToAdd = ordersToConfirm.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
+      subsidyTotal = orders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
+      if (ordersToConfirm.length > 0) {
+        const eventMonth = formatYearMonth(eventData.event_start_datetime)
+        await adjustEnterpriseMemberMonthlyUsage(
+          enterpriseId,
+          userId,
+          eventMonth,
+          subsidyToAdd,
+          ordersToConfirm.length,
+          transaction,
+        )
+        enterpriseOrderCreateLog = { enterpriseId, subsidyTotal: subsidyToAdd, totalPayment: 0, stripeDocId }
+      }
+    }
+
     const allAlreadyOrdered = orders.every((o) => o.status === 'ordered')
     if (allAlreadyOrdered) {
       logger.info('All orders already ordered', { paymentIntent })
@@ -343,8 +407,13 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
     }
 
     const orderedAt = Timestamp.now().toMillis()
-    const payAmount = orders.reduce((sum, o) => sum + o.menu_price - (o.pay_community_bill_off_amount ?? 0), 0)
-    // 当該 Stripe セッションに含まれる全 order の pay_community_bill_off_amount の合計
+    const payAmount = orders.reduce(
+      (sum, o) => sum + o.menu_price - (o.pay_enterprise_subsidy_amount ?? o.pay_community_bill_off_amount ?? 0),
+      0,
+    )
+    if (enterpriseOrderCreateLog != null) {
+      enterpriseOrderCreateLog.totalPayment = payAmount
+    }
     const sessionPayCommunityBillOffAmount = orders.reduce((sum, o) => sum + (o.pay_community_bill_off_amount ?? 0), 0)
 
     const menusMap = new Map<string, StripeMenuType>()
@@ -381,6 +450,8 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
       community_id: communityId,
       payment_intent: paymentIntent,
       pay_amount: payAmount,
+      ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
+      ...(subsidyTotal > 0 ? { pay_enterprise_subsidy_amount: subsidyTotal } : {}),
       ...(sessionPayCommunityBillOffAmount > 0
         ? { pay_community_bill_off_amount: sessionPayCommunityBillOffAmount }
         : {}),
@@ -388,7 +459,7 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
       refunds: [],
     })
     saveStripe(communityId, eventId, stripeDoc, transaction)
-    return { kind: 'processed' }
+    return { kind: 'processed', enterpriseOrderCreateLog }
   })
 
   if (txResult.kind === 'client_error') {
@@ -408,6 +479,20 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
   }
 
   if (txResult.kind === 'processed') {
+    if (txResult.enterpriseOrderCreateLog != null) {
+      await writeAuditLog({
+        enterpriseId: txResult.enterpriseOrderCreateLog.enterpriseId,
+        userId,
+        action: 'order_create',
+        targetId: txResult.enterpriseOrderCreateLog.stripeDocId,
+        targetType: 'order_session',
+        details: {
+          order_ids: orderIds,
+          total_payment: txResult.enterpriseOrderCreateLog.totalPayment,
+          pay_enterprise_subsidy_amount: txResult.enterpriseOrderCreateLog.subsidyTotal,
+        },
+      })
+    }
     const eventForSideEffects = await getEventInCommunity(communityId, eventId)
     if (eventForSideEffects != null) {
       // 副作用完了後に 200 を返す。Stripe は約 30 秒以内の応答を期待するため、
