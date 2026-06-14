@@ -1,4 +1,12 @@
-import { DocumentData, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import {
+  DocumentData,
+  FieldPath,
+  FieldValue,
+  FirestoreDataConverter,
+  getFirestore,
+  QueryDocumentSnapshot,
+  Transaction,
+} from 'firebase-admin/firestore'
 import { AuditLog } from '@shokujii/common/schemas/AuditLog.js'
 import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 
@@ -80,6 +88,46 @@ export const getEnterpriseMember = async (
 ): Promise<EnterpriseMember | undefined> => {
   const snapshot = await getEnterpriseMemberRef(enterpriseId, userId).get()
   return snapshot.exists ? snapshot.data() : undefined
+}
+
+export const getEnterpriseMemberInTransaction = async (
+  enterpriseId: string,
+  userId: string,
+  transaction: Transaction,
+): Promise<EnterpriseMember | undefined> => {
+  const snapshot = await transaction.get(getEnterpriseMemberRef(enterpriseId, userId))
+  return snapshot.exists ? snapshot.data() : undefined
+}
+
+/** monthly_usage / monthly_order_count を Transaction 内で加減算（Math.max(0, ...) でガード） */
+export const adjustEnterpriseMemberMonthlyUsage = async (
+  enterpriseId: string,
+  userId: string,
+  eventMonth: string,
+  subsidyDelta: number,
+  orderCountDelta: number,
+  transaction: Transaction,
+): Promise<void> => {
+  const memberRef = getEnterpriseMemberRef(enterpriseId, userId)
+  const snapshot = await transaction.get(memberRef)
+  if (!snapshot.exists) {
+    throw new Error(`EnterpriseMember not found: ${enterpriseId}/${userId}`)
+  }
+  const member = snapshot.data()
+  if (member == null) {
+    throw new Error(`EnterpriseMember data is empty: ${enterpriseId}/${userId}`)
+  }
+  const newUsage = Math.max(0, (member.monthly_usage[eventMonth] ?? 0) + subsidyDelta)
+  const newCount = Math.max(0, (member.monthly_order_count[eventMonth] ?? 0) + orderCountDelta)
+  transaction.update(
+    memberRef,
+    new FieldPath('monthly_usage', eventMonth),
+    newUsage,
+    new FieldPath('monthly_order_count', eventMonth),
+    newCount,
+    'updated_at',
+    FieldValue.serverTimestamp(),
+  )
 }
 
 export const getEnterpriseById = async (enterpriseId: string): Promise<Enterprise | undefined> => {
