@@ -913,7 +913,20 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                         <v-icon :icon="mdiFood" size="32" class="text-medium-emphasis" />
                       </div>
                       <v-card-text>
-                        <div class="text-body-2 text-truncate" :title="food.menu_name">{{ food.menu_name }}</div>
+                        <div
+                          v-if="food.shop_name !== ''"
+                          class="text-caption text-medium-emphasis text-truncate"
+                          :title="food.shop_name"
+                        >
+                          {{ food.shop_name }}
+                        </div>
+                        <div
+                          class="text-body-2 text-truncate"
+                          :class="{ 'mt-1': food.shop_name !== '' }"
+                          :title="food.menu_name"
+                        >
+                          {{ food.menu_name }}
+                        </div>
                         <div v-if="food.event_name !== ''" class="mt-1 min-width-0">
                           <router-link
                             v-if="canLinkToDetail(food.is_public, food.is_linkable)"
@@ -927,9 +940,6 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                           <span v-else class="text-body-2 text-truncate d-block" :title="food.event_name">
                             {{ food.event_name }}
                           </span>
-                        </div>
-                        <div class="text-caption text-medium-emphasis mt-1">
-                          {{ formatProfileDate(food.ordered_at, 'date') }}
                         </div>
                       </v-card-text>
                     </v-card>
@@ -1111,9 +1121,22 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   >
                     <v-icon :icon="mdiFood" size="40" class="text-medium-emphasis" />
                   </div>
-                  <v-card-title class="text-truncate" :title="food.menu_name">{{ food.menu_name }}</v-card-title>
-                  <v-card-text>
-                    <div v-if="food.event_name !== ''" class="mb-2 min-width-0">
+                  <v-card-text class="pt-3">
+                    <div
+                      v-if="food.shop_name !== ''"
+                      class="text-caption text-medium-emphasis text-truncate"
+                      :title="food.shop_name"
+                    >
+                      {{ food.shop_name }}
+                    </div>
+                    <div
+                      class="text-body-1 font-weight-medium text-truncate"
+                      :class="{ 'mt-1': food.shop_name !== '' }"
+                      :title="food.menu_name"
+                    >
+                      {{ food.menu_name }}
+                    </div>
+                    <div v-if="food.event_name !== ''" class="mt-2 min-width-0">
                       <router-link
                         v-if="canLinkToDetail(food.is_public, food.is_linkable)"
                         class="food-event-link text-body-2 text-truncate d-block"
@@ -1126,9 +1149,6 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                       <span v-else class="text-body-2 text-truncate d-block" :title="food.event_name">
                         {{ food.event_name }}
                       </span>
-                    </div>
-                    <div class="text-caption text-medium-emphasis">
-                      {{ formatProfileDate(food.ordered_at, 'date') }}
                     </div>
                   </v-card-text>
                 </v-card>
