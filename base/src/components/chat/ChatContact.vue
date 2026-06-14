@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useChatStore } from '@shokujii/base/stores/chat.js'
-import { avatarText } from '@core/utils/formatters'
+import { avatarText } from '@shokujii/base/utils/avatarText.js'
 import { formatChatListTimestamp } from '@shokujii/common/utils/datetime.js'
 import type { ChatRoomListItem } from './types.js'
 

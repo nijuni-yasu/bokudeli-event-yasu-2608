@@ -1,4 +1,4 @@
-import type { Ref } from 'vue'
+import { ref, watch, type Ref } from 'vue'
 import { useDisplay } from 'vuetify'
 
 export const useResponsiveLeftSidebar = (mobileBreakpoint: Ref<boolean> | undefined = undefined) => {
