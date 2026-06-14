@@ -661,16 +661,15 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                       class="preview-event-link d-block"
                       :to="getEventPath(event.community_account, event.event_id)"
                     >
-                      <v-card variant="outlined" class="pa-3 h-100 preview-card">
-                        <div class="event-preview-tile d-flex align-stretch ga-3">
-                          <div class="event-preview-tile__cover flex-shrink-0 rounded overflow-hidden">
+                      <v-card variant="outlined" class="h-100 preview-card overflow-hidden">
+                        <div class="event-preview-tile">
+                          <div class="event-preview-tile__cover overflow-hidden">
                             <v-img
                               v-if="showEventCoverImage(event.community_id, event.event_id)"
                               :src="eventCoverUrl(event.community_id, event.event_id)"
                               :alt="event.event_name"
                               cover
                               aspect-ratio="1.91"
-                              width="100"
                               @error="onEventCoverError(event.community_id, event.event_id)"
                             />
                             <div
@@ -680,30 +679,30 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                               <v-icon :icon="mdiCalendarHeart" size="28" class="text-medium-emphasis" />
                             </div>
                           </div>
-                          <div
-                            class="event-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
-                          >
-                            <div class="text-body-2 text-medium-emphasis">
+                          <v-card-text class="pa-3 pt-2">
+                            <div
+                              class="profile-preview-tile__meta text-medium-emphasis text-truncate"
+                              :title="formatProfileDate(event.event_start_datetime, 'withWeekday')"
+                            >
                               {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
                             </div>
-                            <div class="text-body-1 mt-1 profile-preview-tile__name" :title="event.event_name">
+                            <div class="text-body-2 mt-1 text-truncate" :title="event.event_name">
                               {{ event.event_name }}
                             </div>
-                          </div>
+                          </v-card-text>
                         </div>
                       </v-card>
                     </router-link>
                     <div v-else class="preview-event-link preview-event-link--static d-block">
-                      <v-card variant="outlined" class="pa-3 h-100 preview-card">
-                        <div class="event-preview-tile d-flex align-stretch ga-3">
-                          <div class="event-preview-tile__cover flex-shrink-0 rounded overflow-hidden">
+                      <v-card variant="outlined" class="h-100 preview-card overflow-hidden">
+                        <div class="event-preview-tile">
+                          <div class="event-preview-tile__cover overflow-hidden">
                             <v-img
                               v-if="showEventCoverImage(event.community_id, event.event_id)"
                               :src="eventCoverUrl(event.community_id, event.event_id)"
                               :alt="event.event_name"
                               cover
                               aspect-ratio="1.91"
-                              width="100"
                               @error="onEventCoverError(event.community_id, event.event_id)"
                             />
                             <div
@@ -713,16 +712,17 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                               <v-icon :icon="mdiCalendarHeart" size="28" class="text-medium-emphasis" />
                             </div>
                           </div>
-                          <div
-                            class="event-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
-                          >
-                            <div class="text-body-2 text-medium-emphasis">
+                          <v-card-text class="pa-3 pt-2">
+                            <div
+                              class="profile-preview-tile__meta text-medium-emphasis text-truncate"
+                              :title="formatProfileDate(event.event_start_datetime, 'withWeekday')"
+                            >
                               {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
                             </div>
-                            <div class="text-body-1 mt-1 profile-preview-tile__name" :title="event.event_name">
+                            <div class="text-body-2 mt-1 text-truncate" :title="event.event_name">
                               {{ event.event_name }}
                             </div>
-                          </div>
+                          </v-card-text>
                         </div>
                       </v-card>
                     </div>
@@ -912,16 +912,16 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                       >
                         <v-icon :icon="mdiFood" size="32" class="text-medium-emphasis" />
                       </div>
-                      <v-card-text>
+                      <v-card-text class="pa-3 pt-2">
                         <div
                           v-if="food.shop_name !== ''"
-                          class="text-caption text-medium-emphasis text-truncate"
+                          class="profile-preview-tile__meta text-medium-emphasis text-truncate"
                           :title="food.shop_name"
                         >
                           {{ food.shop_name }}
                         </div>
                         <div
-                          class="text-body-2 text-truncate"
+                          class="text-body-2 profile-preview-tile__name"
                           :class="{ 'mt-1': food.shop_name !== '' }"
                           :title="food.menu_name"
                         >
@@ -1121,16 +1121,16 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   >
                     <v-icon :icon="mdiFood" size="40" class="text-medium-emphasis" />
                   </div>
-                  <v-card-text class="pt-3">
+                  <v-card-text class="pa-3 pt-2">
                     <div
                       v-if="food.shop_name !== ''"
-                      class="text-caption text-medium-emphasis text-truncate"
+                      class="profile-preview-tile__meta text-medium-emphasis text-truncate"
                       :title="food.shop_name"
                     >
                       {{ food.shop_name }}
                     </div>
                     <div
-                      class="text-body-1 font-weight-medium text-truncate"
+                      class="text-body-2 profile-preview-tile__name"
                       :class="{ 'mt-1': food.shop_name !== '' }"
                       :title="food.menu_name"
                     >
@@ -1360,19 +1360,23 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* 参加イベントプレビュー: 左カバー（イベントページと同じ 1.91）＋右に日付・タイトル */
+/* 参加イベントプレビュー: カバー上・日付・タイトル下（EventCard と同系の縦並び） */
 .event-preview-tile__cover {
-  width: 100px;
+  width: 100%;
 }
 
 .event-preview-tile__cover-placeholder {
-  width: 100px;
+  width: 100%;
   aspect-ratio: 1.91;
-  min-height: 52px;
 }
 
-/* イベント名・コミュニティ名: 2行で切り捨て（末尾 …）。flex 子で clamp が効くよう min-height: 0 */
-.event-preview-tile__text,
+/* 上段メタ情報（日付・飲食店名など）: タイトル（text-body-2）より一段小さく */
+.profile-preview-tile__meta {
+  font-size: 0.6875rem;
+  line-height: 1.3;
+}
+
+/* コミュニティ名: 2行で切り捨て（末尾 …）。flex 子で clamp が効くよう min-height: 0 */
 .community-preview-tile__text {
   min-height: 0;
 }
