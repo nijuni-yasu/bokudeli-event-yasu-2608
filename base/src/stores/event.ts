@@ -116,6 +116,10 @@ export const createNewEvent = async (event: BokudeliEvent, coverImage: File | nu
   if (!community.exists()) {
     throw new Error(`community ${event.community_id} does not exists`)
   }
+  const enterpriseId = community.data()?.enterprise_id
+  if (enterpriseId != null && event.enterprise_id == null) {
+    event.enterprise_id = enterpriseId
+  }
   if (coverImage == null) {
     // Callable でコミュニティカバーをコピー。Storage にコミュニティカバーが無い場合は Callable が失敗し setDoc には進まない。
     await callCopyCommunityCoverToEvent({ communityId: community.id, eventId: event.id })
