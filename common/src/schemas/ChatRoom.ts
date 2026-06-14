@@ -94,11 +94,12 @@ const ChatRoomAppSchema = z.object({
 })
 
 const convertToDb = (room: ChatRoom) => {
-  return {
+  const base = {
     ...room,
     created_at: EpochMillisSchema.default(Date.now()).parse(room.created_at),
     updated_at: Date.now(),
   }
+  return Object.fromEntries(Object.entries(base).filter(([, v]) => v !== undefined)) as z.infer<typeof ChatRoomDbSchema>
 }
 
 export class ChatRoom {

@@ -27,11 +27,14 @@ const ChatMembershipAppSchema = z.object({
 })
 
 const convertToDb = (membership: ChatMembership) => {
-  return {
+  const base = {
     ...membership,
     created_at: EpochMillisSchema.default(Date.now()).parse(membership.created_at),
     updated_at: Date.now(),
   }
+  return Object.fromEntries(Object.entries(base).filter(([, v]) => v !== undefined)) as z.infer<
+    typeof ChatMembershipDbSchema
+  >
 }
 
 export class ChatMembership {

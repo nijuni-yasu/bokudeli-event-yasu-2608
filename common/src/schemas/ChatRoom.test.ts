@@ -3,6 +3,7 @@ import {
   buildCommunityChatRoomId,
   buildDirectChatRoomId,
   buildEventChatRoomId,
+  ChatRoom,
   parseCommunityChatRoomId,
   parseDirectChatRoomId,
   parseEventChatRoomId,
@@ -49,5 +50,31 @@ describe('ChatRoom roomId builders and parsers', () => {
     const roomId = buildDirectChatRoomId('userA', 'userB')
     expect(parseDirectChatRoomId(roomId, 'userC')).toBeNull()
     expect(parseDirectChatRoomId('userA_userB_userC', 'userA')).toBeNull()
+  })
+})
+
+describe('ChatRoom toFirestore', () => {
+  it('omits optional fields when they are undefined (new event room)', () => {
+    const now = Date.now()
+    const room = new ChatRoom('event_comm_evt', {
+      room_type: 'event',
+      community_id: 'comm',
+      event_id: 'evt',
+      member_user_ids: ['user1'],
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+    })
+
+    expect(room.isValidForDatabase()).toBe(true)
+    const firestore = room.toFirestore()
+    expect(firestore.room_type).toBe('event')
+    expect(firestore.community_id).toBe('comm')
+    expect(firestore.event_id).toBe('evt')
+    expect(firestore.last_message_at).toBeUndefined()
+    expect(firestore.last_message_preview).toBeUndefined()
+    expect('last_message_at' in firestore).toBe(false)
+    expect('last_message_preview' in firestore).toBe(false)
+    expect('title' in firestore).toBe(false)
   })
 })
