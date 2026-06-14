@@ -11,6 +11,7 @@ AIエージェント向けプロジェクトガイド。
 | タスク                          | スキル                       |
 | :------------------------------ | :--------------------------- |
 | コミットメッセージ生成          | `/git-commit-message`        |
+| GitHub イシュー作成             | `/git-create-issue`          |
 | PR 本文生成                     | `/git-create-pull-request`   |
 | コードレビュー                  | `/shokujii-code-review`      |
 | lint・format チェック           | `/lint-and-format`           |
