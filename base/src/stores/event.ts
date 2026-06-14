@@ -36,6 +36,8 @@ import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/event
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { ZodError } from 'zod'
 import { copyCommunityCoverToEvent as callCopyCommunityCoverToEvent } from '@shokujii/base/apis/copyCommunityCoverToEvent.js'
+import { enterpriseSubsidySettingsFromEnterprise } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import { Enterprise } from '@shokujii/common/schemas/Enterprise.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
 import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 
@@ -72,6 +74,37 @@ export class BokudeliEventMember extends User {
  * EventMember は UI 上で新規作成はしないので、いまのところコンストラクタを用意しない
  */
 export class BokudeliEventMenu extends EventMenu {}
+
+/** 下書き保存時に enterprise_subsidy_settings を Enterprise マスターから再スナップショット */
+export const applyEnterpriseSubsidySnapshotForDraft = async (event: BokudeliEvent): Promise<void> => {
+  const enterpriseId = event.enterprise_id
+  if (enterpriseId == null || enterpriseId === '') {
+    return
+  }
+  const status = event.event_status?.value
+  if (status != null && status !== 'in_draft') {
+    return
+  }
+  if (event.event_payment === 'community_bill' || event.event_payment === 'user_on_day') {
+    event.event_payment = 'enterprise_subsidy'
+    event.community_bill_settings = undefined
+  }
+  const enterpriseRef = doc(db, 'enterprises', enterpriseId)
+  const enterpriseSnap = await getDoc(enterpriseRef)
+  if (!enterpriseSnap.exists()) {
+    return
+  }
+  const raw = enterpriseSnap.data()
+  if (raw == null) {
+    return
+  }
+  try {
+    const enterprise = new Enterprise(enterpriseId, raw)
+    event.enterprise_subsidy_settings = enterpriseSubsidySettingsFromEnterprise(enterprise)
+  } catch (err) {
+    console.warn('Failed to snapshot enterprise_subsidy_settings', err)
+  }
+}
 
 // eventList で使用するために export するが、他では使用しないように
 export const eventConverter: FirestoreDataConverter<BokudeliEvent> = {
@@ -120,6 +153,10 @@ export const createNewEvent = async (event: BokudeliEvent, coverImage: File | nu
   if (enterpriseId != null && event.enterprise_id == null) {
     event.enterprise_id = enterpriseId
   }
+  if (enterpriseId != null && event.event_payment == null) {
+    event.event_payment = 'enterprise_subsidy'
+  }
+  await applyEnterpriseSubsidySnapshotForDraft(event)
   if (coverImage == null) {
     // Callable でコミュニティカバーをコピー。Storage にコミュニティカバーが無い場合は Callable が失敗し setDoc には進まない。
     await callCopyCommunityCoverToEvent({ communityId: community.id, eventId: event.id })
@@ -247,6 +284,7 @@ export const useEventStore = (target: string | BokudeliEvent) => {
     })
 
     const updateEvent = async (data: BokudeliEvent) => {
+      await applyEnterpriseSubsidySnapshotForDraft(data)
       const eventRef = await getEventRef()
       await setDoc(eventRef, data, { merge: true })
     }

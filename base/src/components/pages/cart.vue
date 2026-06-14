@@ -1,14 +1,23 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { getAuth } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@shokujii/base/firebase.js'
 import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { computeTotalPayment } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
+import {
+  computeMemberOrdersTotalPayment,
+  getMemberOrderDiscountAmount,
+} from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { isWithinOrderDeadline } from '@shokujii/common/utils/orderDeadline.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CancelPolicyDialog from '@shokujii/base/components/CancelPolicyDialog.vue'
@@ -44,20 +53,22 @@ type GroupedMenu = {
   order_ids: string[]
   totalPrice: number
   totalDiscount: number
-  /** 1個分おごり。同一 menu_id では pay_community_bill_off_amount が全行同額となる前提とし、グループ最初の注文の値を採用 */
+  totalPayment: number
+  /** 1個分の割引。enterprise_subsidy では品目ごとに異なり得るため表示は totalDiscount/count を使用 */
   offAmountPerUnit: number
 }
 
 const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
   const map = new Map<string, GroupedMenu>()
   for (const order of orders) {
-    const discount = order.pay_community_bill_off_amount ?? 0
+    const discount = getMemberOrderDiscountAmount(order)
     const existing = map.get(order.menu_id)
     if (existing) {
       existing.count++
       existing.order_ids.push(order.order_id)
       existing.totalPrice += order.menu_price
       existing.totalDiscount += discount
+      existing.totalPayment += order.menu_price - discount
     } else {
       map.set(order.menu_id, {
         menu_id: order.menu_id,
@@ -67,6 +78,7 @@ const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
         order_ids: [order.order_id],
         totalPrice: order.menu_price,
         totalDiscount: discount,
+        totalPayment: order.menu_price - discount,
         offAmountPerUnit: discount,
       })
     }
@@ -76,8 +88,44 @@ const groupOrdersByMenu = (orders: EventMemberOrder[]): GroupedMenu[] => {
 
 type EnrichedCartItem = CartItem & {
   groupedMenus: GroupedMenu[]
+  totalMenuPrice: number
+  totalDiscount: number
   totalPrice: number
+  eventMonthLabel: string
 }
+
+const monthlyUsage = ref<{ used: number; limit: number } | null>(null)
+
+onMounted(async () => {
+  const auth = getAuth()
+  const user = auth.currentUser
+  if (user == null) {
+    return
+  }
+  try {
+    const token = await user.getIdTokenResult()
+    const enterpriseId = token.claims.enterprise_id as string | undefined
+    if (enterpriseId == null || enterpriseId === '') {
+      return
+    }
+    const [memberSnap, enterpriseSnap] = await Promise.all([
+      getDoc(doc(db, 'enterprises', enterpriseId, 'members', user.uid)),
+      getDoc(doc(db, 'enterprises', enterpriseId)),
+    ])
+    if (!memberSnap.exists() || !enterpriseSnap.exists()) {
+      return
+    }
+    const member = new EnterpriseMember(user.uid, memberSnap.data())
+    const enterprise = new Enterprise(enterpriseId, enterpriseSnap.data())
+    const month = formatYearMonth(Date.now())
+    monthlyUsage.value = {
+      used: member.monthly_usage[month] ?? 0,
+      limit: enterprise.monthly_limit_per_user,
+    }
+  } catch (error) {
+    console.warn('Failed to load monthly usage', error)
+  }
+})
 
 /** 主催者請求かつおごり設定ありのとき、カート注文テーブルに「おごり」列を出す */
 const hasCartCommunityBill = (event: BokudeliEvent): boolean =>
@@ -90,8 +138,14 @@ const getEventPaymentI18nKey = (event: BokudeliEvent) => {
       ? 'payment.community_bill_discount'
       : 'payment.community_bill_free'
   }
+  if (event.event_payment === 'enterprise_subsidy') {
+    return 'payment.enterprise_subsidy'
+  }
   return `payment.${event.event_payment}`
 }
+
+/** 福利厚生割引イベントのカート表示 */
+const hasCartEnterpriseSubsidy = (event: BokudeliEvent): boolean => event.event_payment === 'enterprise_subsidy'
 
 /** community_bill + discount でかつ差額 Stripe 決済が必要かどうか */
 const needsCommunityBillStripe = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean => {
@@ -100,13 +154,37 @@ const needsCommunityBillStripe = (event: BokudeliEvent, orders: EventMemberOrder
   return computeTotalPayment(orders) > 0
 }
 
+/** enterprise_subsidy で自己負担あり Stripe 決済が必要か */
+const needsEnterpriseSubsidyStripe = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean => {
+  if (event.event_payment !== 'enterprise_subsidy') return false
+  return computeMemberOrdersTotalPayment(orders) > 0
+}
+
+const needsStripeCheckout = (event: BokudeliEvent, orders: EventMemberOrder[]): boolean =>
+  event.event_payment === 'user_advance' ||
+  needsCommunityBillStripe(event, orders) ||
+  needsEnterpriseSubsidyStripe(event, orders)
+
+const getEventMonthLabel = (event: BokudeliEvent): string => {
+  const month = formatYearMonth(event.event_start_datetime)
+  const [, m] = month.split('-')
+  return `${Number(m)}月`
+}
+
 const enrichedCart = computed<EnrichedCartItem[] | null>(() => {
   if (cart.value == null) return null
-  return cart.value.map((cartItem) => ({
-    ...cartItem,
-    groupedMenus: groupOrdersByMenu(cartItem.orders),
-    totalPrice: computeTotalPayment(cartItem.orders),
-  }))
+  return cart.value.map((cartItem) => {
+    const totalMenuPrice = cartItem.orders.reduce((sum, o) => sum + o.menu_price, 0)
+    const totalDiscount = cartItem.orders.reduce((sum, o) => sum + getMemberOrderDiscountAmount(o), 0)
+    return {
+      ...cartItem,
+      groupedMenus: groupOrdersByMenu(cartItem.orders),
+      totalMenuPrice,
+      totalDiscount,
+      totalPrice: computeMemberOrdersTotalPayment(cartItem.orders),
+      eventMonthLabel: getEventMonthLabel(cartItem.event),
+    }
+  })
 })
 
 const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limitPeople' | 'unselectedMenu'> => {
@@ -179,13 +257,14 @@ const startOrderProcess = async () => {
     const communityId = event.community_id
     const eventId = event.event_id
 
-    if (event.event_payment === 'user_advance' || needsCommunityBillStripe(event, orders)) {
+    if (needsStripeCheckout(event, orders)) {
       try {
         const response = await createStripeCheckoutSession({
           community_id: communityId,
           event_id: eventId,
           order_ids: orderIds,
           isPosted: false,
+          origin: window.location.origin,
         })
         window.location.href = response.data.url ?? getEventPath(event.community_account, eventId)
       } catch {
@@ -217,6 +296,12 @@ const startOrderProcess = async () => {
 const paymentMessage = (event: BokudeliEvent, orders: EventMemberOrder[]) => {
   if (event.event_payment === 'user_advance') return $t('cart.confirm_order_credit_card')
   if (event.event_payment === 'user_on_day') return $t('cart.confirm_order_participant_on_day')
+  if (event.event_payment === 'enterprise_subsidy') {
+    if (needsEnterpriseSubsidyStripe(event, orders)) {
+      return $t('cart.confirm_order_enterprise_subsidy_checkout')
+    }
+    return $t('cart.confirm_order_enterprise_subsidy_zero')
+  }
   if (event.event_payment === 'community_bill') {
     if (needsCommunityBillStripe(event, orders)) return $t('cart.confirm_order_community_bill_checkout')
     return $t('cart.confirm_order_community_bill')
@@ -251,7 +336,7 @@ const showConfirm = async (cartItem: CartItem) => {
 
   selectedCartItem.value = cartItem
   const { event, orders } = cartItem
-  if (event.event_payment === 'user_advance' || needsCommunityBillStripe(event, orders)) {
+  if (needsStripeCheckout(event, orders)) {
     await startOrderProcess()
     return
   }
@@ -349,6 +434,10 @@ const isOpenCancelpolicyDialog = ref(false)
     <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
       <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
       <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
+      <div v-if="monthlyUsage != null" class="text-center text-body-1 my-2">
+        {{ $t('cart.monthly_usage_label') }}: {{ priceString(monthlyUsage.used) }}円 /
+        {{ priceString(monthlyUsage.limit) }}円
+      </div>
     </v-col>
     <v-col v-for="cartItem in enrichedCart" :key="cartItem.event.event_id" cols="12" md="8" sm="8">
       <v-card class="pa-0 pa-md-10 ma-0 ma-md-5">
@@ -442,8 +531,14 @@ const isOpenCancelpolicyDialog = ref(false)
                     <th class="text-center" style="padding: 2px">{{ $t('cart.menu') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.count') }}</th>
                     <th class="text-center" style="padding: 1px">{{ $t('cart.unit_price') }}</th>
-                    <th v-if="hasCartCommunityBill(cartItem.event)" class="text-center" style="padding: 1px">
-                      {{ $t('cart.off_amount') }}
+                    <th
+                      v-if="hasCartCommunityBill(cartItem.event) || hasCartEnterpriseSubsidy(cartItem.event)"
+                      class="text-center"
+                      style="padding: 1px"
+                    >
+                      {{
+                        hasCartEnterpriseSubsidy(cartItem.event) ? $t('cart.company_subsidy') : $t('cart.off_amount')
+                      }}
                     </th>
                   </tr>
                 </thead>
@@ -480,12 +575,12 @@ const isOpenCancelpolicyDialog = ref(false)
                     </td>
                     <td class="text-center" style="padding: 1px">¥{{ priceString(menu.menu_price) }}</td>
                     <td
-                      v-if="hasCartCommunityBill(cartItem.event)"
+                      v-if="hasCartCommunityBill(cartItem.event) || hasCartEnterpriseSubsidy(cartItem.event)"
                       class="text-center"
                       style="padding: 1px"
-                      :class="menu.offAmountPerUnit > 0 ? 'text-caption text-discount' : ''"
+                      :class="menu.totalDiscount > 0 ? 'text-caption text-discount' : ''"
                     >
-                      <template v-if="menu.offAmountPerUnit > 0"> -¥{{ priceString(menu.offAmountPerUnit) }} </template>
+                      <template v-if="menu.totalDiscount > 0"> -¥{{ priceString(menu.totalDiscount) }} </template>
                       <template v-else>—</template>
                     </td>
                   </tr>
@@ -494,7 +589,33 @@ const isOpenCancelpolicyDialog = ref(false)
             </v-card>
           </v-col>
         </v-row>
-        <v-card-text class="text-right">
+        <v-card-text v-if="hasCartEnterpriseSubsidy(cartItem.event)" class="card-text-style pt-0">
+          <div class="text-body-2">
+            <div>{{ $t('cart.order_total') }}: ¥{{ priceString(cartItem.totalMenuPrice) }}</div>
+            <div v-if="cartItem.totalDiscount > 0" class="text-discount">
+              {{ $t('cart.company_subsidy_total') }}: -¥{{ priceString(cartItem.totalDiscount) }}
+            </div>
+            <div class="font-weight-bold">{{ $t('cart.your_payment') }}: ¥{{ priceString(cartItem.totalPrice) }}</div>
+            <div v-if="cartItem.totalPrice === 0" class="mt-2">
+              {{ $t('cart.enterprise_subsidy_zero_payment') }}
+            </div>
+            <div v-else-if="cartItem.totalDiscount > 0 && cartItem.totalPrice > 0" class="mt-2">
+              {{ $t('cart.enterprise_subsidy_month', [cartItem.eventMonthLabel]) }}
+            </div>
+            <div
+              v-if="
+                cartItem.totalDiscount > 0 && cartItem.totalMenuPrice > cartItem.totalDiscount + cartItem.totalPrice
+              "
+              class="mt-1"
+            >
+              {{ $t('cart.enterprise_subsidy_partial', [cartItem.eventMonthLabel]) }}
+            </div>
+            <div v-if="cartItem.totalDiscount === 0 && cartItem.totalMenuPrice > 0" class="mt-1">
+              {{ $t('cart.enterprise_subsidy_exceeded', [cartItem.eventMonthLabel]) }}
+            </div>
+          </div>
+        </v-card-text>
+        <v-card-text v-else class="text-right">
           <span class="text-right ma-2 text-h6">{{ $t('cart.total') }}</span>
           <span class="text-right my-2 ml-2 text-h6">¥</span>
           <span class="text-right ma-2 text-h3 text-md-h2 font-weight-bold">{{
@@ -515,8 +636,7 @@ const isOpenCancelpolicyDialog = ref(false)
               @click="showConfirm(cartItem)"
             >
               {{
-                cartItem.event.event_payment === 'user_advance' ||
-                needsCommunityBillStripe(cartItem.event, cartItem.orders)
+                needsStripeCheckout(cartItem.event, cartItem.orders)
                   ? $t('cart.proceed_to_payment')
                   : $t('cart.order_and_attend_event')
               }}
