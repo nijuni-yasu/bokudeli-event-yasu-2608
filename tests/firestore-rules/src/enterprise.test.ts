@@ -67,6 +67,79 @@ describe('enterprise firestore rules', () => {
     await assertSucceeds(member.firestore().collection('enterprises').doc('ent-a').get())
   })
 
+  it('他社 enterprise_id の communities read は拒否', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .set({ community_name: 'Enterprise A', enterprise_id: 'ent-a' })
+    })
+
+    const otherEnterpriseUser = testEnv.authenticatedContext('user-other', {
+      enterprise_id: 'ent-b',
+      enterprise_role: 'member',
+      user_type: 'enterprise',
+    })
+    await assertFails(otherEnterpriseUser.firestore().collection('communities').doc('community-ent-a').get())
+  })
+
+  it('自社 enterprise_id の communities read は許可', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .set({ community_name: 'Enterprise A', enterprise_id: 'ent-a' })
+    })
+
+    const member = testEnv.authenticatedContext('user-a', {
+      enterprise_id: 'ent-a',
+      enterprise_role: 'member',
+      user_type: 'enterprise',
+    })
+    await assertSucceeds(member.firestore().collection('communities').doc('community-ent-a').get())
+  })
+
+  it('他社 enterprise_id の member_orders read は拒否', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .collection('members')
+        .doc('user-a')
+        .collection('member_orders')
+        .doc('order-1')
+        .set({
+          user_id: 'user-a',
+          enterprise_id: 'ent-a',
+          menu_price: 1000,
+        })
+    })
+
+    const otherEnterpriseUser = testEnv.authenticatedContext('user-other', {
+      enterprise_id: 'ent-b',
+      enterprise_role: 'member',
+      user_type: 'enterprise',
+    })
+    await assertFails(
+      otherEnterpriseUser
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .collection('members')
+        .doc('user-a')
+        .collection('member_orders')
+        .doc('order-1')
+        .get(),
+    )
+  })
+
   it('pass_code はクライアントから read/write できない', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await context.firestore().collection('pass_code').doc('code-1').set({ pass_code: '123456' })
