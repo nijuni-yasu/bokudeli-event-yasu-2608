@@ -702,6 +702,7 @@ export default {
       submit: 'コミュニティを作成する',
       created: 'コミュニティを作成しました',
       error: 'コミュニティの作成に失敗しました',
+      enterprise_not_ready: '企業情報の取得に失敗しました。ページを再読み込みしてください',
     },
     invoice: {
       date: '開催日',

@@ -5,16 +5,22 @@ import { BokudeliCommunity, createNewCommunity } from '@shokujii/base/stores/com
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { getCommunityDefaultImages } from '@shokujii/base/utils/defaultImage.js'
+import { useEnterpriseStore } from '@/stores/enterprise'
 
 const notification = useNotification()
 const { t: $t } = useI18n()
+const enterpriseStore = useEnterpriseStore()
 
 const communityListStore = useCommunityListStore()
 
 const { coverFile, iconFile } = await getCommunityDefaultImages()
 const coverImageFile = ref<File>(coverFile)
 const iconImageFile = ref<File>(iconFile)
-const community = ref(new BokudeliCommunity(null, {}))
+const community = ref(
+  new BokudeliCommunity(null, {
+    enterprise_id: enterpriseStore.enterprise?.enterprise_id,
+  }),
+)
 const isLoading = ref(false)
 
 const validateNewAccount = async (value: string) => {
@@ -23,6 +29,13 @@ const validateNewAccount = async (value: string) => {
 }
 
 const submit = async () => {
+  const enterpriseId = enterpriseStore.enterprise?.enterprise_id
+  if (enterpriseId == null || enterpriseId === '') {
+    notification.show($t('manage.newcommunity.enterprise_not_ready'), 'error')
+    return
+  }
+  community.value.enterprise_id = enterpriseId
+
   isLoading.value = true
   try {
     const newCommunityStore = await createNewCommunity(
