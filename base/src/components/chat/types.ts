@@ -1,4 +1,4 @@
-import type { ChatMessageType } from '@shokujii/common/schemas/ChatMessage.js'
+import type { ChatAttachment, ChatMessageType } from '@shokujii/common/schemas/ChatMessage.js'
 import type { ChatRoomType } from '@shokujii/common/schemas/ChatRoom.js'
 
 export type ChatRoomListItem = {
@@ -25,6 +25,7 @@ export type ChatMessageItem = {
   createdAt: number
   deletedAt?: number
   deletedDisplayName?: string
+  attachments?: ChatAttachment[]
 }
 
 export type ChatActiveRoom = {

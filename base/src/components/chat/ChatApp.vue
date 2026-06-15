@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
-import { mdiMenu, mdiMessageOutline, mdiSend } from '@mdi/js'
+import { mdiClose, mdiImageOutline, mdiMenu, mdiMessageOutline, mdiSend } from '@mdi/js'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { useDisplay } from 'vuetify'
 import { useResponsiveLeftSidebar } from '@shokujii/base/composable/useResponsiveSidebar.js'
 import { avatarText } from '@shokujii/base/utils/avatarText.js'
-import { CHAT_MESSAGE_BODY_MAX_LENGTH } from '@shokujii/common/schemas/ChatMessage.js'
+import { CHAT_ATTACHMENT_MAX_BYTE_SIZE, CHAT_MESSAGE_BODY_MAX_LENGTH } from '@shokujii/common/schemas/ChatMessage.js'
+import { isAllowedChatAttachmentMimeType } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
@@ -14,6 +15,7 @@ import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
 import ChatLog from './ChatLog.vue'
 
 const MEMBERSHIP_WAIT_TIMEOUT_MS = 10_000
+const CHAT_ATTACHMENT_MAX_SIZE_LABEL = '10MB'
 
 const props = defineProps<{
   roomId?: string
@@ -40,6 +42,57 @@ const msg = ref('')
 const isSending = ref(false)
 const isNearBottom = ref(true)
 const chatLogPS = ref<InstanceType<typeof PerfectScrollbar> | null>(null)
+const selectedImageFile = ref<File | null>(null)
+const selectedImagePreviewUrl = ref<string | null>(null)
+const imageInputRef = ref<HTMLInputElement | null>(null)
+
+const canSendMessage = computed(() => {
+  return msg.value.trim() !== '' || selectedImageFile.value != null
+})
+
+const clearSelectedImage = (): void => {
+  if (selectedImagePreviewUrl.value != null) {
+    URL.revokeObjectURL(selectedImagePreviewUrl.value)
+  }
+  selectedImageFile.value = null
+  selectedImagePreviewUrl.value = null
+  if (imageInputRef.value != null) {
+    imageInputRef.value.value = ''
+  }
+}
+
+const validateImageFile = (file: File): string | null => {
+  if (!isAllowedChatAttachmentMimeType(file.type)) {
+    return t('chat.error.attachment_type')
+  }
+  if (file.size > CHAT_ATTACHMENT_MAX_BYTE_SIZE) {
+    return t('chat.error.attachment_too_large', { size: CHAT_ATTACHMENT_MAX_SIZE_LABEL })
+  }
+  return null
+}
+
+const onImageSelected = (event: Event): void => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file == null) {
+    return
+  }
+
+  const validationError = validateImageFile(file)
+  if (validationError != null) {
+    notification.show(validationError, 'warning')
+    input.value = ''
+    return
+  }
+
+  clearSelectedImage()
+  selectedImageFile.value = file
+  selectedImagePreviewUrl.value = URL.createObjectURL(file)
+}
+
+const openImagePicker = (): void => {
+  imageInputRef.value?.click()
+}
 
 const getChatLogScrollEl = (): HTMLElement | null => {
   const ps = chatLogPS.value as (InstanceType<typeof PerfectScrollbar> & { ps?: { element?: HTMLElement } }) | null
@@ -103,14 +156,21 @@ const openRoom = async (roomId: string) => {
 const sendMessage = async () => {
   const userId = currentUserId.value
   const roomId = store.activeRoomId
-  if (userId === '' || roomId == null || msg.value.trim() === '') return
+  if (userId === '' || roomId == null) return
   if (store.activeRoom?.isReadonly === true) return
+  if (!canSendMessage.value) return
 
   isSending.value = true
   try {
-    await store.sendMessage(roomId, userId, msg.value)
+    await store.sendMessage(roomId, userId, {
+      body: msg.value,
+      imageFile: selectedImageFile.value ?? undefined,
+    })
     msg.value = ''
+    clearSelectedImage()
     scrollToBottomInChatLog()
+  } catch {
+    notification.show(t('chat.error.attachment_upload_failed'), 'error')
   } finally {
     isSending.value = false
   }
@@ -243,6 +303,7 @@ watch(
 
 onBeforeUnmount(() => {
   clearPendingRoomTimeout()
+  clearSelectedImage()
   store.unsubscribeActiveRoom()
 })
 </script>
@@ -323,7 +384,48 @@ onBeforeUnmount(() => {
         </PerfectScrollbar>
 
         <VForm class="chat-log-message-form mb-3 mx-5" @submit.prevent="sendMessage">
+          <input
+            ref="imageInputRef"
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp"
+            class="d-none"
+            :aria-label="t('chat.attach_image')"
+            @change="onImageSelected"
+          />
+
+          <div v-if="selectedImagePreviewUrl != null" class="chat-attachment-preview mb-3">
+            <VImg
+              :src="selectedImagePreviewUrl"
+              :alt="t('chat.image_preview_alt')"
+              max-height="120"
+              max-width="160"
+              cover
+              class="rounded"
+            />
+            <VBtn
+              icon
+              variant="text"
+              size="x-small"
+              color="default"
+              class="chat-attachment-preview-remove"
+              :aria-label="t('chat.remove_attachment')"
+              @click="clearSelectedImage"
+            >
+              <VIcon :icon="mdiClose" size="18" />
+            </VBtn>
+          </div>
+
           <div class="d-flex align-end gap-3">
+            <VBtn
+              v-if="!store.activeRoom.isReadonly"
+              icon
+              variant="text"
+              color="default"
+              :aria-label="t('chat.attach_image')"
+              @click="openImagePicker"
+            >
+              <VIcon :icon="mdiImageOutline" />
+            </VBtn>
             <VTextarea
               v-model="msg"
               variant="solo"
@@ -341,7 +443,7 @@ onBeforeUnmount(() => {
               type="submit"
               color="primary"
               :prepend-icon="mdiSend"
-              :disabled="store.activeRoom.isReadonly || isSending || msg.trim() === ''"
+              :disabled="store.activeRoom.isReadonly || isSending || !canSendMessage"
               :loading="isSending"
             >
               {{ t('chat.send') }}
@@ -410,6 +512,18 @@ onBeforeUnmount(() => {
 
 .chat-log-message-form {
   flex-shrink: 0;
+}
+
+.chat-attachment-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.chat-attachment-preview-remove {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 4px;
+  background-color: rgba(var(--v-theme-surface), 0.9);
 }
 
 .chat-content-container {

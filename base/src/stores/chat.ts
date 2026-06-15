@@ -10,6 +10,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   startAfter,
   updateDoc,
   type DocumentData,
@@ -18,12 +19,21 @@ import {
   type QueryDocumentSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore'
+import { deleteObject, ref as storageRef } from 'firebase/storage'
 import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
-import { ChatMessage, CHAT_MESSAGE_BODY_MAX_LENGTH } from '@shokujii/common/schemas/ChatMessage.js'
+import {
+  ChatMessage,
+  CHAT_ATTACHMENT_MAX_BYTE_SIZE,
+  CHAT_MESSAGE_BODY_MAX_LENGTH,
+  type ChatAttachment,
+  type ChatAttachmentImageMimeType,
+} from '@shokujii/common/schemas/ChatMessage.js'
 import { ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
 import { EpochMillisSchema } from '@shokujii/common/schemas/firebase/index.js'
+import { getChatAttachmentStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { recallChatMessage as callRecallChatMessage } from '@shokujii/base/apis/chat.js'
-import { db } from '@shokujii/base/firebase.js'
+import { db, storage } from '@shokujii/base/firebase.js'
+import { isAllowedChatAttachmentMimeType, uploadChatAttachment } from '../utils/storage.js'
 import type { ChatActiveRoom, ChatMessageItem, ChatRoomListItem } from '../components/chat/types.js'
 import {
   resolveEventIdsFromRoomId,
@@ -149,6 +159,7 @@ const toMessageItem = (message: ChatMessage): ChatMessageItem => ({
   createdAt: message.created_at,
   deletedAt: message.deleted_at,
   deletedDisplayName: message.deleted_display_name,
+  attachments: message.attachments,
 })
 
 export const mergeMessages = (existing: ChatMessageItem[], incoming: ChatMessageItem[]): ChatMessageItem[] => {
@@ -420,17 +431,103 @@ export const useChatStore = defineStore('chat', () => {
     subscribeMessages(roomId, userId)
   }
 
-  const sendMessage = async (roomId: string, userId: string, body: string) => {
-    const trimmed = body.trim()
-    if (trimmed === '' || trimmed.length > CHAT_MESSAGE_BODY_MAX_LENGTH) {
+  const getImageDimensions = async (file: File): Promise<{ width: number; height: number }> => {
+    const objectUrl = URL.createObjectURL(file)
+    try {
+      const img = new Image()
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = objectUrl
+      })
+      return { width: img.naturalWidth, height: img.naturalHeight }
+    } finally {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }
+
+  const buildAttachment = async (
+    roomId: string,
+    messageId: string,
+    imageFile: File,
+    contentType: ChatAttachmentImageMimeType,
+  ): Promise<ChatAttachment> => {
+    const { width, height } = await getImageDimensions(imageFile)
+    const attachmentId = crypto.randomUUID()
+    const storagePath = getChatAttachmentStoragePath(roomId, messageId, attachmentId)
+    return {
+      storage_path: storagePath,
+      content_type: contentType,
+      file_name: imageFile.name,
+      byte_size: imageFile.size,
+      width,
+      height,
+    }
+  }
+
+  const sendMessage = async (
+    roomId: string,
+    userId: string,
+    params: { body?: string; imageFile?: File },
+  ): Promise<void> => {
+    const trimmedBody = params.body?.trim() ?? ''
+    const hasBody = trimmedBody !== '' && trimmedBody.length <= CHAT_MESSAGE_BODY_MAX_LENGTH
+    const imageFile = params.imageFile
+
+    if (imageFile == null) {
+      if (!hasBody) {
+        return
+      }
+      await addDoc(collection(db, 'chat_rooms', roomId, 'messages'), {
+        message_type: 'user',
+        sender_user_id: userId,
+        body: trimmedBody,
+        created_at: serverTimestamp(),
+      })
       return
     }
-    await addDoc(collection(db, 'chat_rooms', roomId, 'messages'), {
-      message_type: 'user',
-      sender_user_id: userId,
-      body: trimmed,
-      created_at: serverTimestamp(),
-    })
+
+    const contentType = imageFile.type
+    if (!isAllowedChatAttachmentMimeType(contentType)) {
+      throw new Error('attachment_type')
+    }
+    if (imageFile.size > CHAT_ATTACHMENT_MAX_BYTE_SIZE) {
+      throw new Error('attachment_too_large')
+    }
+    if (trimmedBody.length > CHAT_MESSAGE_BODY_MAX_LENGTH) {
+      return
+    }
+
+    const messagesCol = collection(db, 'chat_rooms', roomId, 'messages')
+    const messageRef = doc(messagesCol)
+    const messageId = messageRef.id
+    const attachment = await buildAttachment(roomId, messageId, imageFile, contentType)
+    let uploaded = false
+
+    try {
+      await uploadChatAttachment(imageFile, attachment.storage_path, attachment.content_type)
+      uploaded = true
+
+      const payload: Record<string, unknown> = {
+        message_type: 'user',
+        sender_user_id: userId,
+        attachments: [attachment],
+        created_at: serverTimestamp(),
+      }
+      if (hasBody) {
+        payload.body = trimmedBody
+      }
+      await setDoc(messageRef, payload)
+    } catch (error) {
+      if (uploaded) {
+        try {
+          await deleteObject(storageRef(storage, attachment.storage_path))
+        } catch {
+          // ロールバック失敗は握りつぶす（本体エラーを優先）
+        }
+      }
+      throw error
+    }
   }
 
   const recallMessage = async (roomId: string, messageId: string) => {

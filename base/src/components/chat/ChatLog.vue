@@ -10,6 +10,7 @@ import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { CHAT_SYSTEM_EVENT_MEMBER_JOINED } from '@shokujii/common/schemas/ChatMessage.js'
 import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import ChatAttachmentImage from './ChatAttachmentImage.vue'
 import type { ChatMessageItem } from './types.js'
 
 const props = defineProps<{
@@ -26,6 +27,8 @@ const senderUsers = ref<Map<string, User | null>>(new Map())
 const recallTarget = ref<ChatMessageItem | null>(null)
 const showRecallConfirm = ref(false)
 const isRecalling = ref(false)
+const expandedImageUrl = ref<string | null>(null)
+const expandedImageAlt = ref('')
 
 const resolveSystemMessage = (message: ChatMessageItem): string => {
   if (message.systemEvent === CHAT_SYSTEM_EVENT_MEMBER_JOINED) {
@@ -74,6 +77,16 @@ const canRecall = (message: ChatMessageItem): boolean => {
     message.deletedAt == null &&
     store.activeRoom?.isReadonly !== true
   )
+}
+
+const openExpandedImage = (payload: { url: string; alt: string }): void => {
+  expandedImageUrl.value = payload.url
+  expandedImageAlt.value = payload.alt
+}
+
+const closeExpandedImage = (): void => {
+  expandedImageUrl.value = null
+  expandedImageAlt.value = ''
 }
 
 const openRecallConfirm = (message: ChatMessageItem) => {
@@ -211,6 +224,7 @@ watch(
               </VList>
             </VMenu>
             <p
+              v-if="message.body != null && message.body !== ''"
               v-linkify
               class="chat-content py-3 px-4 elevation-1 mb-1"
               :class="
@@ -219,6 +233,12 @@ watch(
             >
               {{ message.body }}
             </p>
+            <ChatAttachmentImage
+              v-for="attachment in message.attachments ?? []"
+              :key="attachment.storage_path"
+              :attachment="attachment"
+              @expand="openExpandedImage"
+            />
           </div>
           <span class="text-xs text-disabled">
             {{ convertToTimeString(message.createdAt) }}
@@ -238,6 +258,28 @@ watch(
     >
       {{ t('chat.recall_confirm_message') }}
     </ConfirmDialog>
+
+    <VDialog
+      :model-value="expandedImageUrl != null"
+      max-width="960"
+      @update:model-value="
+        (value) => {
+          if (!value) closeExpandedImage()
+        }
+      "
+    >
+      <VCard v-if="expandedImageUrl != null">
+        <VCardText class="pa-0">
+          <VImg :src="expandedImageUrl" :alt="expandedImageAlt" max-height="80vh" contain />
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn variant="text" @click="closeExpandedImage">
+            {{ t('close') }}
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </div>
 </template>
 

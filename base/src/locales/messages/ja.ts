@@ -1039,9 +1039,18 @@ export default {
     recall_confirm_message: 'このメッセージを取り消しますか？取り消し後は元に戻せません。',
     system_message_deleted: '{name}がメッセージを削除しました',
     last_message_preview_deleted: 'メッセージが削除されました',
+    last_message_preview_image: '画像を送信しました',
+    attach_image: '画像を添付',
+    image_preview_alt: '添付画像のプレビュー',
+    remove_attachment: '添付画像を取り消す',
     error: {
       preparing: '準備中です。しばらくしてから再度お試しください',
       room_not_found: 'チャットが見つかりません',
+      attachment_too_large: '画像サイズが大きすぎます（最大 {size}）',
+      attachment_type: 'この形式の画像は送信できません',
+      attachment_upload_failed: '画像の送信に失敗しました',
+      attachment_load_failed: '画像の読み込みに失敗しました',
+      recall_failed: '送信の取り消しに失敗しました。時間をおいて再度お試しください。',
     },
   },
 }
