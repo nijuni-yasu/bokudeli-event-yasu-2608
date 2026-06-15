@@ -1,0 +1,52 @@
+name: PR verify
+
+on:
+  pull_request:
+    branches:
+      - development
+      - production
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./.node-version
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build common
+        run: npm -w common run build
+      - name: Build functions
+        run: npm -w functions/default run build
+      - name: Lint
+        run: |
+          npm -w common run lint
+          npm -w base run lint
+          npm -w functions/default run lint
+      - name: Check Format
+        run: |
+          npm -w common run format:check
+          npm -w base run format:check
+          npm -w functions/default run format:check
+      - name: Typecheck base
+        run: npm -w base run build:types
+      - name: Test
+        run: |
+          npm -w common run test
+          npm -w base run test
+          npm -w functions/default run test
