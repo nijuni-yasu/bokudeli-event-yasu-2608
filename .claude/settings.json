@@ -71,7 +71,10 @@
       "Bash(gh release delete*)",
       "Bash(gh pr merge*)",
       "Bash(gh pr close*)",
-      "Bash(yarn*)"
+      "Bash(yarn*)",
+      "Bash(npm version *)",
+      "Bash(git branch -f main*)",
+      "Bash(git branch -f production*)"
     ]
   },
   "hooks": {
@@ -83,6 +86,16 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh\"",
             "statusMessage": "保護ファイルチェック中..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-git-release.sh\"",
+            "statusMessage": "リリース系 git チェック中..."
           }
         ]
       }
