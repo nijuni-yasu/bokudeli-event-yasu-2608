@@ -157,6 +157,22 @@ npm -w <pkg> run format:check
   - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等
   - `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみなど、アプリの各パッケージを変更しない変更では、**ディレクトリタグを付けず**、`#イシュー番号` と要約タイトルのみとしてよい。PR タイトルも同様にタグを省略できる。手順・例は `/git-commit-message` と `/git-create-pull-request` スキルを参照。
 
+### エージェント向け Git 操作の禁止（本番・リリース系）
+
+背景: [`documents/AIエージェント/03_branch_protection.md`](documents/AIエージェント/03_branch_protection.md) §5。
+
+**エージェントは次を実行してはならない**（人間のリリース作業専用）:
+
+- `development` / `main` / `production` / リリースタグ（`v` + 数字）への **直 push**
+- `npm version`（`minor` / `patch` / `major`）
+- `git branch -f main` / `git branch -f production`
+
+**許可される push**: 現在の feature / `release/*` / `sync/*` / `hotfix/*` 等の作業ブランチへの `git push origin HEAD:<ref>`（PR 作成・更新用）。`development` の更新はこれらのブランチ + PR 経由のみ。
+
+**例外**: ユーザーが「本番リリースを実行して」と明示した場合でも、エージェントは **自動実行せず** [`documents/デプロイ手順/デプロイ手順.md`](documents/デプロイ手順/デプロイ手順.md) の手順を提示に留める。
+
+上記は Hook でも機械的にブロックされる（検査正本: `.agents/hooks/protect-git-release-check.sh`、Claude: `.claude/hooks/`、Cursor: `.cursor/hooks/`）。
+
 ## コードレビュー
 
 PR・コードレビューのコメントは必ず日本語で行う。

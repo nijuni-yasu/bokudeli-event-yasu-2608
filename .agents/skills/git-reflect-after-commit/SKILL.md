@@ -40,6 +40,10 @@ B では必ず `git remote get-url <remote>` で URL を実検証し、本番を
 ### 4. A) origin へ push して PR 作成/更新
 
 - 現在ブランチを `ref` とする（`git branch --show-current`）。
+- **push 先 ref の検証（厳守）** — push 実行前に必ず確認する:
+  - **拒否**（ref の**完全一致**）: `development` / `main` / `production`、または `v` + 数字で始まるタグ ref（例: `v2.6.0`）
+  - **許可**: 上記以外の作業ブランチ（feature / `release/*` / `sync/*` / `hotfix/*` 等）。ブランチ名への部分一致では判定しない（`sync/main-to-development` は許可）
+  - 拒否条件に該当する場合は **push せず中断**し、保護 ref への直 push は人間のリリース手順に従う旨をユーザーに伝える
 - **push の方法**（`ref` はリモート上のブランチ名。通常は現在ブランチ名）:
 
   - **履歴書き換え時**（git-fixup / git-squash の直後、または会話文脈で rebase 済みと分かる場合）:
