@@ -31,22 +31,31 @@ jobs:
         run: npm ci
       - name: Build common
         run: npm -w common run build
-      - name: Build functions
-        run: npm -w functions/default run build
       - name: Lint
         run: |
           npm -w common run lint
           npm -w base run lint
+          npm -w user run lint
+          npm -w partner run lint
           npm -w functions/default run lint
       - name: Check Format
         run: |
           npm -w common run format:check
           npm -w base run format:check
+          npm -w user run format:check
+          npm -w partner run format:check
           npm -w functions/default run format:check
-      - name: Typecheck base
-        run: npm -w base run build:types
+      - name: Typecheck
+        run: |
+          npm -w base run build:types
+          npm -w user run build:types
+          npm -w partner run build:types
+      - name: Build and typecheck functions
+        run: npm -w functions/default run build
       - name: Test
         run: |
           npm -w common run test
           npm -w base run test
+          npm -w user run test
+          npm -w partner run test
           npm -w functions/default run test
