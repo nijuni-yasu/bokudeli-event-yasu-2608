@@ -959,6 +959,180 @@
       ]
     },
     {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_num_members",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "event_deadline_datetime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_end_datetime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_num_members",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "event_end_datetime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "event_num_members",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "community_account",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "communities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_approved",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "community_num_members",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "communities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "managers",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "community_num_members",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "member_orders",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "event_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "pass_code",
       "queryScope": "COLLECTION",
       "fields": [
