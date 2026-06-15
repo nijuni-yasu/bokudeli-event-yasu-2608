@@ -182,14 +182,33 @@ export const updateEventMenus = async (
 
 export type EventStore = ReturnType<typeof useEventStore>
 
-export const useEventStore = (target: string | BokudeliEvent) => {
+export type EventStoreOptions = {
+  /** enterprise 向け: member_orders の collectionGroup クエリに enterprise_id フィルタを追加 */
+  ordersEnterpriseId?: string | null
+  /** enterprise 向け: events の collectionGroup クエリに enterprise_id フィルタを追加 */
+  eventsEnterpriseId?: string | null
+}
+
+export const buildEventStoreOptions = (enterpriseId: string | null | undefined): EventStoreOptions => {
+  if (enterpriseId == null || enterpriseId === '') {
+    return {}
+  }
+  return { ordersEnterpriseId: enterpriseId, eventsEnterpriseId: enterpriseId }
+}
+
+export const useEventStore = (target: string | BokudeliEvent, options: EventStoreOptions = {}) => {
   let eventId: string
   if (target instanceof BokudeliEvent) {
     eventId = target.id
   } else {
     eventId = target
   }
-  const store = defineStore(`/events/${eventId}`, () => {
+  const scopedEnterpriseId = options.eventsEnterpriseId ?? options.ordersEnterpriseId ?? null
+  const piniaStoreId =
+    scopedEnterpriseId != null && scopedEnterpriseId !== ''
+      ? `/events/${eventId}/e/${scopedEnterpriseId}`
+      : `/events/${eventId}`
+  const store = defineStore(piniaStoreId, () => {
     const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
     const event = ref<BokudeliEvent | null>(target instanceof BokudeliEvent ? target : null)
@@ -366,7 +385,11 @@ export const useEventStore = (target: string | BokudeliEvent) => {
     let unsubscribeOrders: Unsubscribe | null = null
     const subscribeOrders = () => {
       if (unsubscribeOrders == null) {
-        const ordersQuery = query(collectionGroup(db, 'member_orders'), where('event_id', '==', eventId)).withConverter(
+        const orderConstraints = [where('event_id', '==', eventId)]
+        if (scopedEnterpriseId != null && scopedEnterpriseId !== '') {
+          orderConstraints.push(where('enterprise_id', '==', scopedEnterpriseId))
+        }
+        const ordersQuery = query(collectionGroup(db, 'member_orders'), ...orderConstraints).withConverter(
           memberOrderConverter,
         )
         unsubscribeOrders = onSnapshot(ordersQuery, (ordersSnapshot) => {
@@ -498,31 +521,36 @@ export const useEventStore = (target: string | BokudeliEvent) => {
     }
 
     let retry = 0
-    const subscribe = () =>
-      getDocs(
-        query(collectionGroup(db, 'events'), where('event_id', '==', eventId)).withConverter(eventConverter),
-      ).then((querySnapshot) => {
-        const eventRef = querySnapshot.docs[0]?.ref?.withConverter(eventConverter)
-        if (eventRef == null) {
-          if (retry++ < 10) {
-            console.warn(
-              `The event "${eventId}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
-            )
-            window.setTimeout(subscribe, 500)
+    const subscribe = () => {
+      const eventConstraints = [where('event_id', '==', eventId)]
+      if (scopedEnterpriseId != null && scopedEnterpriseId !== '') {
+        eventConstraints.push(where('enterprise_id', '==', scopedEnterpriseId))
+      }
+      getDocs(query(collectionGroup(db, 'events'), ...eventConstraints).withConverter(eventConverter)).then(
+        (querySnapshot) => {
+          const eventRef = querySnapshot.docs[0]?.ref?.withConverter(eventConverter)
+          if (eventRef == null) {
+            if (retry++ < 10) {
+              console.warn(
+                `The event "${eventId}" does not exist. It may not have been created yet. It will retry in 500 ms.`,
+              )
+              window.setTimeout(subscribe, 500)
+              return
+            }
+            exists.value = false
+            console.error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
+            // TODO: マイページ動作しないため、一時的にコメントアウト
+            // router.replace('/404')
             return
           }
-          exists.value = false
-          console.error(`The event "${eventId}" does not exist. It ceased attempting to retry.`)
-          // TODO: マイページ動作しないため、一時的にコメントアウト
-          // router.replace('/404')
-          return
-        }
-        retry = 0
-        _eventRef.value = eventRef
-        subscribeEvent(eventRef)
-        // 遅延評価なので以下を呼ぶ必要はない
-        // subscribeOrders(eventRef)
-      })
+          retry = 0
+          _eventRef.value = eventRef
+          subscribeEvent(eventRef)
+          // 遅延評価なので以下を呼ぶ必要はない
+          // subscribeOrders(eventRef)
+        },
+      )
+    }
 
     const unsubscribe = () => {
       retry = 0

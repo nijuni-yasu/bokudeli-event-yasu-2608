@@ -11,7 +11,7 @@ import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shoku
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
-import { useEventStore } from '@shokujii/base/stores/event'
+import { useEventStore, buildEventStoreOptions, type EventStoreOptions } from '@shokujii/base/stores/event'
 import { computeTotalPayment } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
 import {
   computeMemberOrdersTotalPayment,
@@ -44,6 +44,20 @@ const {
 } = storeToRefs(useCurrentUserStore())
 
 const userId = computed(() => currentUser.value?.id ?? '')
+
+async function resolveEventStoreOptions(): Promise<EventStoreOptions> {
+  const auth = getAuth()
+  const user = auth.currentUser
+  if (user == null) {
+    return {}
+  }
+  try {
+    const token = await user.getIdTokenResult()
+    return buildEventStoreOptions(token.claims.enterprise_id as string | undefined)
+  } catch {
+    return {}
+  }
+}
 
 type GroupedMenu = {
   menu_id: string
@@ -194,7 +208,8 @@ const checkCart = async (cartItem: CartItem): Promise<true | 'deadline' | 'limit
     return 'deadline'
   }
 
-  const eventStore = useEventStore(event.event_id)
+  const eventStoreOptions = await resolveEventStoreOptions()
+  const eventStore = useEventStore(event.event_id, eventStoreOptions)
   const members = await eventStore.getLoadedMembers()
   if (members.length >= event.event_max_people) {
     return 'limitPeople'
@@ -272,7 +287,8 @@ const startOrderProcess = async () => {
       }
     } else {
       try {
-        const eventStore = useEventStore(eventId)
+        const eventStoreOptions = await resolveEventStoreOptions()
+        const eventStore = useEventStore(eventId, eventStoreOptions)
         await eventStore.confirmOrder({
           community_id: communityId,
           event_id: eventId,
@@ -355,7 +371,8 @@ const startDeleteProcess = async () => {
 
   isDeleteProcessing.value = true
   try {
-    const eventStore = useEventStore(event.event_id)
+    const eventStoreOptions = await resolveEventStoreOptions()
+    const eventStore = useEventStore(event.event_id, eventStoreOptions)
     await eventStore.removeFromCart({
       community_id: event.community_id,
       event_id: event.event_id,
@@ -382,7 +399,8 @@ const incrementMenuCount = async (event: BokudeliEvent, menu: GroupedMenu) => {
   if (menuUpdatingStates.value[menuKey]) return
   menuUpdatingStates.value[menuKey] = true
   try {
-    const eventStore = useEventStore(event.event_id)
+    const eventStoreOptions = await resolveEventStoreOptions()
+    const eventStore = useEventStore(event.event_id, eventStoreOptions)
     await eventStore.addToCart({
       community_id: event.community_id,
       event_id: event.event_id,
@@ -408,7 +426,8 @@ const decrementMenuCount = async (event: BokudeliEvent, menu: GroupedMenu) => {
   menuUpdatingStates.value[menuKey] = true
   try {
     const lastOrderId = menu.order_ids[menu.order_ids.length - 1]
-    const eventStore = useEventStore(event.event_id)
+    const eventStoreOptions = await resolveEventStoreOptions()
+    const eventStore = useEventStore(event.event_id, eventStoreOptions)
     await eventStore.removeFromCart({
       community_id: event.community_id,
       event_id: event.event_id,
