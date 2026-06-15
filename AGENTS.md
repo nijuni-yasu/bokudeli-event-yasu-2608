@@ -14,7 +14,7 @@ AIエージェント向けプロジェクトガイド。
 | GitHub イシュー作成             | `/git-create-issue`          |
 | PR 本文生成                     | `/git-create-pull-request`   |
 | コードレビュー                  | `/shokujii-code-review`      |
-| lint・format チェック           | `/lint-and-format`           |
+| lint・format・型・test チェック（PR verify 相当。format はローカル自動修正） | `/lint-and-format`           |
 | fixup（追修正の統合。新規・分割向きは split-commit / commit-message へ） | `/git-fixup`                 |
 | squash（統合＋メッセージ更新。新規・分割向きは split-commit / commit-message へ） | `/git-squash`                |
 | レビューコメント検討            | `/review-comments-evaluate`  |
@@ -121,7 +121,7 @@ npm -w <pkg> run format:check
 
 ## 作業完了前の必須手順（コード変更）
 
-ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、common のビルド、各パッケージの lint、format:check（必要に応じて format）を実行すること。
+ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、PR verify（`pr-verify.yml`）と同じ build / lint / format / 型 / vitest のローカルチェック（format 失敗時は format 自動修正）を実行すること。
 
 ### Firestore 操作の必須ルール（厳守）
 
