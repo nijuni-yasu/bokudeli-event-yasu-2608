@@ -165,8 +165,8 @@ async function createSingleEnterpriseMember(
 export const createEnterpriseMembers = onCall<CreateEnterpriseMembersRequest, Promise<CreateEnterpriseMembersResponse>>(
   { timeoutSeconds: 300 },
   async (request) => {
-    assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-    const uid = request.auth.uid
+    await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+    const uid = request.auth!.uid
     const { enterprise_id: enterpriseId, members } = request.data
 
     if (enterpriseId == null || members == null || members.length === 0) {
@@ -291,7 +291,7 @@ function filterAndSortMembers(
 
 export const getEnterpriseMembers = onCall<GetEnterpriseMembersRequest, Promise<GetEnterpriseMembersResponse>>(
   async (request) => {
-    assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+    await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
     const { enterprise_id: enterpriseId } = request.data
 
     const members = await listEnterpriseMembers(enterpriseId)
@@ -327,8 +327,8 @@ export const getEnterpriseMembers = onCall<GetEnterpriseMembersRequest, Promise<
 
 export const disableEnterpriseMember = onCall<DisableEnterpriseMemberRequest, Promise<DisableEnterpriseMemberResponse>>(
   async (request) => {
-    assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-    const uid = request.auth.uid
+    await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+    const uid = request.auth!.uid
     const { enterprise_id: enterpriseId, user_id: userId } = request.data
 
     if (userId == null) {
@@ -370,8 +370,8 @@ export const disableEnterpriseMember = onCall<DisableEnterpriseMemberRequest, Pr
 
 export const enableEnterpriseMember = onCall<EnableEnterpriseMemberRequest, Promise<EnableEnterpriseMemberResponse>>(
   async (request) => {
-    assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-    const uid = request.auth.uid
+    await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+    const uid = request.auth!.uid
     const { enterprise_id: enterpriseId, user_id: userId } = request.data
 
     if (userId == null) {
@@ -405,8 +405,8 @@ export const enableEnterpriseMember = onCall<EnableEnterpriseMemberRequest, Prom
 
 export const updateEnterpriseMember = onCall<UpdateEnterpriseMemberRequest, Promise<UpdateEnterpriseMemberResponse>>(
   async (request) => {
-    assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-    const uid = request.auth.uid
+    await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+    const uid = request.auth!.uid
     const { enterprise_id: enterpriseId, user_id: userId, display_name: displayName, department } = request.data
 
     if (userId == null || displayName == null) {
@@ -428,7 +428,7 @@ export const updateEnterpriseMember = onCall<UpdateEnterpriseMemberRequest, Prom
     member.department = trimmedDepartment
     await saveEnterpriseMember(member, enterpriseId)
 
-    const user = await getUser(userId, false)
+    const user = await getUser(userId, true)
     if (user != null) {
       user.user_name = trimmedName
       await saveUser(user)

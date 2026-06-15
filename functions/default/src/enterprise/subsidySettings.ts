@@ -12,8 +12,8 @@ export const updateEnterpriseSubsidySettings = onCall<
   UpdateEnterpriseSubsidySettingsRequest,
   Promise<UpdateEnterpriseSubsidySettingsResponse>
 >(async (request) => {
-  assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-  const uid = request.auth.uid
+  await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+  const uid = request.auth!.uid
   const {
     enterprise_id: enterpriseId,
     discount_type: discountType,

@@ -9,8 +9,8 @@ export const updateEnterpriseSettings = onCall<
   UpdateEnterpriseSettingsRequest,
   Promise<UpdateEnterpriseSettingsResponse>
 >(async (request) => {
-  assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-  const uid = request.auth.uid
+  await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+  const uid = request.auth!.uid
   const { enterprise_id: enterpriseId, company_name: companyName, company_logo_url: companyLogoUrl } = request.data
 
   if (companyName == null && companyLogoUrl == null) {

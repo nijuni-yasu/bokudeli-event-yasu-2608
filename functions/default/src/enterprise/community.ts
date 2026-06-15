@@ -123,7 +123,7 @@ export const getEnterpriseCommunities = onCall<
   GetEnterpriseCommunitiesRequest,
   Promise<GetEnterpriseCommunitiesResponse>
 >(async (request) => {
-  assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+  await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
   const { enterprise_id: enterpriseId } = request.data
 
   const records = await listCommunitiesByEnterpriseId(enterpriseId)
@@ -162,8 +162,8 @@ export const createEnterpriseCommunities = onCall<
   CreateEnterpriseCommunitiesRequest,
   Promise<CreateEnterpriseCommunitiesResponse>
 >({ timeoutSeconds: 300 }, async (request) => {
-  assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-  const uid = request.auth.uid
+  await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+  const uid = request.auth!.uid
   const { enterprise_id: enterpriseId, communities } = request.data
 
   if (enterpriseId == null || communities == null || communities.length === 0) {

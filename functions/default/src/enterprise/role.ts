@@ -8,8 +8,8 @@ import { assertEnterpriseAdmin, getClientIp } from '../utils/enterpriseAuthHelpe
 
 export const updateEnterpriseRole = onCall<UpdateEnterpriseRoleRequest, Promise<UpdateEnterpriseRoleResponse>>(
   async (request) => {
-    assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
-    const uid = request.auth.uid
+    await assertEnterpriseAdmin(request.auth, request.data.enterprise_id)
+    const uid = request.auth!.uid
     const { enterprise_id: enterpriseId, user_id: userId, role: newRole } = request.data
 
     if (userId == null || newRole == null) {
@@ -38,6 +38,9 @@ export const updateEnterpriseRole = onCall<UpdateEnterpriseRoleRequest, Promise<
       ...existingClaims,
       enterprise_role: newRole,
     })
+    if (oldRole === 'admin' && newRole !== 'admin') {
+      await getAuth().revokeRefreshTokens(userId)
+    }
 
     member.role = newRole
     await saveEnterpriseMember(member, enterpriseId)

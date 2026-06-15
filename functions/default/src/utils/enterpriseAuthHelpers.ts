@@ -1,17 +1,18 @@
 import { HttpsError } from 'firebase-functions/https'
 import type { CallableRequest } from 'firebase-functions/https'
 import { ENTERPRISE_SUBDOMAIN_PATTERN, RESERVED_ENTERPRISE_SUBDOMAINS } from '@shokujii/common/schemas/Enterprise.js'
+import { getEnterpriseMember } from '../stores/enterprise.js'
 
-export function assertEnterpriseAdmin(
-  auth: CallableRequest['auth'],
-  enterpriseId: string,
-): asserts auth is NonNullable<typeof auth> {
+export async function assertEnterpriseAdmin(auth: CallableRequest['auth'], enterpriseId: string): Promise<void> {
   if (auth?.uid == null) {
     throw new HttpsError('unauthenticated', 'not logged in')
   }
   const tokenEnterpriseId = auth.token.enterprise_id as string | undefined
-  const tokenRole = auth.token.enterprise_role as string | undefined
-  if (tokenEnterpriseId !== enterpriseId || tokenRole !== 'admin') {
+  if (tokenEnterpriseId !== enterpriseId) {
+    throw new HttpsError('permission-denied', 'enterprise admin only')
+  }
+  const member = await getEnterpriseMember(enterpriseId, auth.uid)
+  if (member == null || member.role !== 'admin' || !member.is_active) {
     throw new HttpsError('permission-denied', 'enterprise admin only')
   }
 }
