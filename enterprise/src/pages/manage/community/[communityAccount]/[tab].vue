@@ -79,6 +79,7 @@ const onManagerSelfRemoved = () => {
               :community-account="communityAccount"
               :get-user-path="getUserPath"
               :get-manage-community-settings-path="getManageCommunitySettingsPath"
+              invitation-callable-name="getInvitationUrlForEnterpriseCommunityManager"
               @manager-self-removed="onManagerSelfRemoved"
             />
           </v-tabs-window-item>

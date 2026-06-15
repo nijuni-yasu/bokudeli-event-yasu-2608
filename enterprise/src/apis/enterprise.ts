@@ -29,6 +29,10 @@ import type {
   GetEnterpriseCommunitiesResponse,
   CreateEnterpriseCommunitiesRequest,
   CreateEnterpriseCommunitiesResponse,
+  GetInvitationUrlForEnterpriseCommunityManagerRequest,
+  GetInvitationUrlForEnterpriseCommunityManagerResponse,
+  AcceptInvitationForEnterpriseCommunityManagerRequest,
+  AcceptInvitationForEnterpriseCommunityManagerResponse,
 } from '@shokujii/common/apis/enterprise.js'
 
 export const getEnterpriseByDomain = async (input: GetEnterpriseByDomainRequest) => {
@@ -131,5 +135,25 @@ export const createEnterpriseCommunities = async (input: CreateEnterpriseCommuni
     functions,
     'createEnterpriseCommunities',
   )
+  return f(input)
+}
+
+export const getInvitationUrlForEnterpriseCommunityManager = async (
+  input: GetInvitationUrlForEnterpriseCommunityManagerRequest,
+) => {
+  const f = httpsCallable<
+    GetInvitationUrlForEnterpriseCommunityManagerRequest,
+    GetInvitationUrlForEnterpriseCommunityManagerResponse
+  >(functions, 'getInvitationUrlForEnterpriseCommunityManager')
+  return f(input)
+}
+
+export const acceptInvitationForEnterpriseCommunityManager = async (
+  input: AcceptInvitationForEnterpriseCommunityManagerRequest,
+) => {
+  const f = httpsCallable<
+    AcceptInvitationForEnterpriseCommunityManagerRequest,
+    AcceptInvitationForEnterpriseCommunityManagerResponse
+  >(functions, 'acceptInvitationForEnterpriseCommunityManager')
   return f(input)
 }
