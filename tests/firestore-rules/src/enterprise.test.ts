@@ -153,4 +153,162 @@ describe('enterprise firestore rules', () => {
     await assertFails(member.firestore().collection('pass_code').doc('code-1').get())
     await assertFails(member.firestore().collection('pass_code').doc('code-1').set({ pass_code: '999999' }))
   })
+
+  it('PF 既存データ（enterprise_id なし）の events read は許可', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-pf')
+        .collection('events')
+        .doc('event-pf')
+        .set({ event_name: 'PF Event' })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertSucceeds(
+      unauthed.firestore().collection('communities').doc('community-pf').collection('events').doc('event-pf').get(),
+    )
+  })
+
+  it('他社 enterprise_id の events read は拒否', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .set({ event_name: 'Enterprise Event', enterprise_id: 'ent-a' })
+    })
+
+    const otherEnterpriseUser = testEnv.authenticatedContext('user-other', {
+      enterprise_id: 'ent-b',
+      enterprise_role: 'member',
+      user_type: 'enterprise',
+    })
+    await assertFails(
+      otherEnterpriseUser
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .get(),
+    )
+  })
+
+  it('自社 enterprise_id の events read は許可', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .set({ event_name: 'Enterprise Event', enterprise_id: 'ent-a' })
+    })
+
+    const member = testEnv.authenticatedContext('user-a', {
+      enterprise_id: 'ent-a',
+      enterprise_role: 'member',
+      user_type: 'enterprise',
+    })
+    await assertSucceeds(
+      member.firestore().collection('communities').doc('community-ent-a').collection('events').doc('event-1').get(),
+    )
+  })
+
+  it('allow_guest の他社 events は未認証でも read できる', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-guest')
+        .set({ event_name: 'Guest Event', enterprise_id: 'ent-a', allow_guest: true })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertSucceeds(
+      unauthed
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-guest')
+        .get(),
+    )
+  })
+
+  it('PF member_orders（enterprise_id なし）は未認証でも read できる', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-pf')
+        .collection('events')
+        .doc('event-pf')
+        .collection('members')
+        .doc('user-a')
+        .collection('member_orders')
+        .doc('order-pf')
+        .set({ user_id: 'user-a', menu_price: 500 })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertSucceeds(
+      unauthed
+        .firestore()
+        .collection('communities')
+        .doc('community-pf')
+        .collection('events')
+        .doc('event-pf')
+        .collection('members')
+        .doc('user-a')
+        .collection('member_orders')
+        .doc('order-pf')
+        .get(),
+    )
+  })
+
+  it('注文本人は自社 enterprise_id の member_orders を read できる', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .collection('members')
+        .doc('user-a')
+        .collection('member_orders')
+        .doc('order-1')
+        .set({
+          user_id: 'user-a',
+          enterprise_id: 'ent-a',
+          menu_price: 1000,
+        })
+    })
+
+    const owner = testEnv.authenticatedContext('user-a', {
+      enterprise_id: 'ent-a',
+      enterprise_role: 'member',
+      user_type: 'enterprise',
+    })
+    await assertSucceeds(
+      owner
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .collection('members')
+        .doc('user-a')
+        .collection('member_orders')
+        .doc('order-1')
+        .get(),
+    )
+  })
 })
