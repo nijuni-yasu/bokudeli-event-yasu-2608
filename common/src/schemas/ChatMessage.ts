@@ -6,19 +6,46 @@ export type ChatMessageType = (typeof CHAT_MESSAGE_TYPES)[number]
 
 export const CHAT_MESSAGE_BODY_MAX_LENGTH = 2000
 
+export const CHAT_ATTACHMENT_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'] as const
+
+export type ChatAttachmentImageMimeType = (typeof CHAT_ATTACHMENT_IMAGE_MIME_TYPES)[number]
+
+export const CHAT_ATTACHMENT_MAX_BYTE_SIZE = 10 * 1024 * 1024
+
+export const CHAT_ATTACHMENT_MAX_COUNT = 1
+
 export const CHAT_SYSTEM_EVENT_MEMBER_JOINED = 'member_joined'
 
+export const ChatAttachmentSchema = z.object({
+  storage_path: z.string().nonempty(),
+  content_type: z.enum(CHAT_ATTACHMENT_IMAGE_MIME_TYPES),
+  file_name: z.string().nonempty().max(255),
+  byte_size: z.number().int().positive().max(CHAT_ATTACHMENT_MAX_BYTE_SIZE),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+})
+
+export type ChatAttachment = z.infer<typeof ChatAttachmentSchema>
+
+const hasAttachments = (attachments: ChatAttachment[] | undefined): boolean => {
+  return attachments != null && attachments.length > 0
+}
+
 const requireBodyUnlessDeleted = (
-  data: { message_type?: string; body?: string; deleted_at?: unknown },
+  data: { message_type?: string; body?: string; deleted_at?: unknown; attachments?: ChatAttachment[] },
   ctx: z.RefinementCtx,
 ): void => {
   if (data.message_type !== 'user') {
     return
   }
-  if (data.deleted_at == null && (data.body == null || data.body.length === 0)) {
+  if (data.deleted_at != null) {
+    return
+  }
+  const hasBody = data.body != null && data.body.length > 0
+  if (!hasBody && !hasAttachments(data.attachments)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'body is required when message is not deleted',
+      message: 'body or attachments is required when message is not deleted',
       path: ['body'],
     })
   }
@@ -28,6 +55,7 @@ const ChatUserMessageDbSchema = z.object({
   message_type: z.literal('user'),
   sender_user_id: z.string().nonempty(),
   body: z.string().min(1).max(CHAT_MESSAGE_BODY_MAX_LENGTH).optional(),
+  attachments: z.array(ChatAttachmentSchema).min(1).max(CHAT_ATTACHMENT_MAX_COUNT).optional(),
   created_at: TimestampSchema,
   deleted_at: TimestampSchema.optional(),
   deleted_by_user_id: z.string().nonempty().optional(),
@@ -52,6 +80,7 @@ const ChatUserMessageAppSchema = z.object({
   message_type: z.literal('user'),
   sender_user_id: z.string().nonempty(),
   body: z.string().min(1).max(CHAT_MESSAGE_BODY_MAX_LENGTH).optional(),
+  attachments: z.array(ChatAttachmentSchema).min(1).max(CHAT_ATTACHMENT_MAX_COUNT).optional(),
   deleted_at: EpochMillisSchema.optional(),
   deleted_by_user_id: z.string().nonempty().optional(),
   deleted_display_name: z.string().nonempty().optional(),
@@ -92,6 +121,7 @@ export class ChatMessage {
   deleted_at?: number
   deleted_by_user_id?: string
   deleted_display_name?: string
+  attachments?: ChatAttachment[]
 
   constructor(id: string, src: Partial<ChatMessage>) {
     this.id = id

@@ -40,6 +40,10 @@ export function getMenuImageStoragePath(partnerId: string, menuId: string): stri
   return `partners/${partnerId}/menus/${menuId}/image`
 }
 
+export function getChatAttachmentStoragePath(roomId: string, messageId: string, attachmentId: string): string {
+  return `chat_rooms/${roomId}/${messageId}/${attachmentId}`
+}
+
 export function getUserImageStoragePath(userId: string, thumbnailSize?: 'small' | 'medium' | 'large'): string {
   return thumbnailSize == null ? `users/${userId}/avatar` : `users/${userId}/avatar_thumb_${thumbnailSize}`
 }

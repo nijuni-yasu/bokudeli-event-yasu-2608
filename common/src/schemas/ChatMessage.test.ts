@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { RecallChatMessageRequestSchema } from '../apis/chat.js'
-import { ChatMessage } from './ChatMessage.js'
+import { CHAT_ATTACHMENT_IMAGE_MIME_TYPES, ChatAttachmentSchema, ChatMessage } from './ChatMessage.js'
+import { getChatAttachmentStoragePath } from '../utils/storagePaths.js'
+
+const sampleAttachment = {
+  storage_path: 'chat_rooms/room1/msg1/att1',
+  content_type: CHAT_ATTACHMENT_IMAGE_MIME_TYPES[0],
+  file_name: 'photo.png',
+  byte_size: 1024,
+  width: 800,
+  height: 600,
+} as const
 
 describe('ChatMessage deleted fields', () => {
   it('omits body in toFirestore when message is deleted', () => {
@@ -25,7 +35,7 @@ describe('ChatMessage deleted fields', () => {
     }
   })
 
-  it('requires body when deleted_at is not set', () => {
+  it('requires body when deleted_at is not set and attachments are empty', () => {
     expect(
       () =>
         new ChatMessage('msg1', {
@@ -34,6 +44,50 @@ describe('ChatMessage deleted fields', () => {
           created_at: Date.now(),
         }),
     ).toThrow()
+  })
+
+  it('accepts image-only message without body', () => {
+    const message = new ChatMessage('msg1', {
+      message_type: 'user',
+      sender_user_id: 'user1',
+      created_at: Date.now(),
+      attachments: [sampleAttachment],
+    })
+
+    expect(message.isValidForDatabase()).toBe(true)
+    const firestore = message.toFirestore()
+    if (firestore.message_type === 'user') {
+      expect(firestore.body).toBeUndefined()
+      expect(firestore.attachments).toHaveLength(1)
+      expect(firestore.attachments?.[0]?.file_name).toBe('photo.png')
+    }
+  })
+
+  it('accepts message with both body and attachments', () => {
+    const message = new ChatMessage('msg1', {
+      message_type: 'user',
+      sender_user_id: 'user1',
+      body: '本文',
+      created_at: Date.now(),
+      attachments: [sampleAttachment],
+    })
+
+    expect(message.isValidForDatabase()).toBe(true)
+  })
+
+  it('rejects unsupported attachment mime type', () => {
+    expect(() =>
+      ChatAttachmentSchema.parse({
+        ...sampleAttachment,
+        content_type: 'application/pdf',
+      }),
+    ).toThrow()
+  })
+})
+
+describe('getChatAttachmentStoragePath', () => {
+  it('builds path under chat_rooms', () => {
+    expect(getChatAttachmentStoragePath('room1', 'msg1', 'att1')).toBe('chat_rooms/room1/msg1/att1')
   })
 })
 
