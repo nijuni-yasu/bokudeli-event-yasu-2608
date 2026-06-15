@@ -88,7 +88,7 @@ export class ShokujiiCommunity extends Community {
     }
   }
 
-  async generateInvitationUrlForManager(uid: string): Promise<string> {
+  async createManagerInviteToken(uid: string): Promise<string> {
     const db = getFirestore()
     const invitesCollectionRef = db
       .collection('communities')
@@ -105,7 +105,12 @@ export class ShokujiiCommunity extends Community {
         updated_at: now,
       }),
     )
-    return getCommunityInvitationUrl(this.community_account, inviteRef.id)
+    return inviteRef.id
+  }
+
+  async generateInvitationUrlForManager(uid: string): Promise<string> {
+    const tokenId = await this.createManagerInviteToken(uid)
+    return getCommunityInvitationUrl(this.community_account, tokenId)
   }
 
   async inviteAsManager(uid: string, token: string): Promise<void> {

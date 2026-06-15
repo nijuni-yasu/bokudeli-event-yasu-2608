@@ -65,6 +65,8 @@ export const {
   updateEnterpriseSubsidySettings,
   getEnterpriseCommunities,
   createEnterpriseCommunities,
+  getInvitationUrlForEnterpriseCommunityManager,
+  acceptInvitationForEnterpriseCommunityManager,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -107,4 +109,5 @@ export const {
   import('./enterprise/settings.js'),
   import('./enterprise/subsidySettings.js'),
   import('./enterprise/community.js'),
+  import('./enterprise/communityManager.js'),
 ])))
