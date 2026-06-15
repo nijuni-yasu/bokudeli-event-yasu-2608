@@ -12,7 +12,7 @@ import { type BokudeliEventMenu } from '@shokujii/base/stores/event.js'
 import EventCartDialog from '@shokujii/base/components/EventCartDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import EventMenuList from '@shokujii/base/components/EventMenuList.vue'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
@@ -24,6 +24,9 @@ import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
+import { useEnterpriseTenantGuard } from '@/composable/useEnterpriseTenantGuard'
+import EnterpriseErrorPage from '@/components/EnterpriseErrorPage.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -31,9 +34,21 @@ const communityAccount = route.params.communityAccount as string
 const eventId = route.params.eventId as string
 
 const { t: $t } = useI18n()
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
 
-const eventStore = useEventStore(eventId) as EventStore
+const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
 const communityStore = useCommunityStore(communityAccount) as CommunityStore
+const eventEnterpriseId = computed(() => eventStore.event?.enterprise_id)
+const communityEnterpriseId = computed(() => communityStore.community?.enterprise_id)
+const { isTenantMismatch } = useEnterpriseTenantGuard([eventEnterpriseId, communityEnterpriseId])
+const isCommunityAccountMismatch = computed(() => {
+  const loadedEvent = eventStore.event
+  return loadedEvent != null && loadedEvent.community_account !== communityAccount
+})
+const isAccessDenied = computed(() => isTenantMismatch.value || isCommunityAccountMismatch.value)
 const bannersStore = useBannersStore('event_banners')
 const currentUserStore = useCurrentUserStore()
 const menuNavigation = ref(true)
@@ -248,7 +263,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="event != null && communityStore.community != null" class="justify-center px-0 px-sm-0">
+  <EnterpriseErrorPage v-if="isAccessDenied" variant="not_found" />
+  <div v-else-if="event != null && communityStore.community != null" class="justify-center px-0 px-sm-0">
     <v-row class="justify-center mt-lg-10">
       <v-col md="8" sm="9" cols="12" class="py-0 py-sm-1">
         <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">

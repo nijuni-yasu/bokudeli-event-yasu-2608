@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import EmailDialog from '@shokujii/base/components/EmailDialog.vue'
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -22,15 +22,17 @@ import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/
 import { priceString } from '@shokujii/base/schemes/converter'
 import type { User } from '@shokujii/common/schemas/User'
 import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
 const { t: $t } = useI18n()
 const route = useRoute()
 const eventId = route.params.eventId as string
+const { enterpriseId } = useEnterpriseId()
 
 const notification = useNotification()
 const router = useRouter()
 
-const eventStore = useEventStore(eventId) as EventStore
+const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
 const communityAccount = computed(() => eventStore.event?.community_account ?? '')
 const communityStore = computed(() => {
   const account = communityAccount.value

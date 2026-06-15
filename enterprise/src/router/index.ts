@@ -3,12 +3,18 @@ import type { Router } from 'vue-router'
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { useConfigStore } from '@shokujii/base/stores/config.js'
-import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/base/stores/event.js'
+import {
+  useEventStore,
+  buildEventStoreOptions,
+  type EventStore,
+  type BokudeliEvent,
+} from '@shokujii/base/stores/event.js'
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { setRedirectPath } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
 import { ZodError } from 'zod'
 import { setPendingToast } from '@/utils/pendingToast'
+import { useEnterpriseStore } from '@/stores/enterprise'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -22,7 +28,12 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
 const isLoginRequired = (path: string) => {
   const paths = path.split('/')
   return (
-    path === '/profile' || paths[1] === 'manage' || paths[1] === 'admin' || (paths[1] === 'c' && paths[3] === 'invites')
+    path === '/' ||
+    path === '/profile' ||
+    paths[1] === 'communitylist' ||
+    paths[1] === 'manage' ||
+    paths[1] === 'admin' ||
+    (paths[1] === 'c' && paths[3] === 'invites')
   )
 }
 
@@ -124,11 +135,16 @@ export const setupRouter = (router: Router) => {
     const eventIdMatch = to.path.match(/\/c\/[^/]+\/e\/([^/]+)/) || to.path.match(/\/manage\/event\/([^/]+)/)
     if (eventIdMatch) {
       const eventId = eventIdMatch[1]
-      const eventStore = useEventStore(eventId) as EventStore
+      const enterpriseStore = useEnterpriseStore()
+      const enterpriseId = enterpriseStore.enterprise?.enterprise_id
+      const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId)) as EventStore
       let event: BokudeliEvent
       try {
         event = await eventStore.getLoadedEvent(5000)
         if (event.is_deleted) {
+          return '/404'
+        }
+        if (enterpriseId != null && event.enterprise_id != null && event.enterprise_id !== enterpriseId) {
           return '/404'
         }
       } catch (err) {
@@ -161,6 +177,16 @@ export const setupRouter = (router: Router) => {
             }
             const community = communityStore.community
             const currentUserId = getAuth().currentUser?.uid
+            const enterpriseStore = useEnterpriseStore()
+            const enterpriseId = enterpriseStore.enterprise?.enterprise_id
+
+            if (community != null && enterpriseId != null && community.enterprise_id != null) {
+              if (community.enterprise_id !== enterpriseId) {
+                unwatch?.()
+                resolve(false)
+                return
+              }
+            }
 
             if (community != null && currentUserId != null) {
               const canView = community.managers.some((managerRef) => managerRef.id === currentUserId)
@@ -198,6 +224,22 @@ export const setupRouter = (router: Router) => {
     if (tokenResult.claims.enterprise_role !== 'admin') {
       setPendingToast('管理者権限が必要です', 'error')
       return { path: '/' }
+    }
+
+    const configStore = useConfigStore()
+    const config = await configStore.getResolvedConfig()
+    const isSupport = config?.isSupport(user.uid) ?? false
+    if (!isSupport) {
+      const enterpriseStore = useEnterpriseStore()
+      if (enterpriseStore.status !== 'ready') {
+        await enterpriseStore.resolveEnterprise()
+      }
+      const resolvedEnterpriseId = enterpriseStore.enterprise?.enterprise_id
+      const tokenEnterpriseId = tokenResult.claims.enterprise_id as string | undefined
+      if (resolvedEnterpriseId == null || tokenEnterpriseId == null || tokenEnterpriseId !== resolvedEnterpriseId) {
+        setPendingToast('管理者権限が必要です', 'error')
+        return { path: '/' }
+      }
     }
   })
 }

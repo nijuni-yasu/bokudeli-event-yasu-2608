@@ -4,15 +4,28 @@ import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { orderBy, where } from 'firebase/firestore'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
-const communityListStore = useCommunityListStore(
-  [where('is_public', '==', true), where('is_approved', '==', true), orderBy('community_num_members', 'desc')],
-  5,
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
+
+const communityListStore = computed(() =>
+  useCommunityListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('is_public', '==', true),
+      where('is_approved', '==', true),
+      orderBy('community_num_members', 'desc'),
+    ],
+    5,
+  ),
 )
 
 const communities = computed(() => {
   return (
-    communityListStore.communityStores?.flatMap((communityStore) =>
+    communityListStore.value.communityStores?.flatMap((communityStore) =>
       communityStore.community == null ? [] : communityStore.community,
     ) ?? []
   )

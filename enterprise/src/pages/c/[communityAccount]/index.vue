@@ -18,21 +18,37 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
+import { useEnterpriseTenantGuard } from '@/composable/useEnterpriseTenantGuard'
+import EnterpriseErrorPage from '@/components/EnterpriseErrorPage.vue'
 
 const router = useRouter()
 const communityAccount = useRoute().params.communityAccount as string
 const { t: $t } = useI18n()
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
 
 const communityStore = useCommunityStore(communityAccount)
+
+const communityEnterpriseId = computed(() => communityStore.community?.enterprise_id)
+const { isTenantMismatch } = useEnterpriseTenantGuard([communityEnterpriseId])
 
 const userStore = useCurrentUserStore()
 
 const { isMember, isManager } = useCommunityMemberFlags(communityAccount)
 
 // イベントリストストアを作成（ページサイズ6件）
-const eventListStore = useEventListStore(
-  [where('community_account', '==', communityAccount), orderBy('event_start_datetime', 'desc')],
-  6,
+const eventListStore = computed(() =>
+  useEventListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('community_account', '==', communityAccount),
+      orderBy('event_start_datetime', 'desc'),
+    ],
+    6,
+  ),
 )
 
 type EventWithMembers = {
@@ -42,7 +58,7 @@ type EventWithMembers = {
 
 const events = computed<EventWithMembers[]>(() => {
   return (
-    eventListStore.eventStores?.flatMap((eventStore) => {
+    eventListStore.value.eventStores?.flatMap((eventStore) => {
       const event = eventStore.event
       if (!event) return []
       // キャンセルされたイベントは非表示
@@ -96,7 +112,8 @@ const albumSlides = computed(() => {
 </script>
 
 <template>
-  <section>
+  <EnterpriseErrorPage v-if="isTenantMismatch" variant="not_found" />
+  <section v-else>
     <v-row v-if="communityStore.community != null" class="justify-center">
       <!-- community main -->
       <v-col cols="12" md="9" sm="9">
@@ -167,7 +184,7 @@ const albumSlides = computed(() => {
                     <IncrementalLoader
                       :loaded-count="eventListStore.eventStores?.length ?? 0"
                       :total-count="eventListStore.totalCount ?? Number.MAX_SAFE_INTEGER"
-                      @load="eventListStore.next"
+                      @load="eventListStore.next()"
                     />
                   </v-col>
                 </v-row>

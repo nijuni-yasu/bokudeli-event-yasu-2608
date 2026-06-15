@@ -4,7 +4,7 @@ definePage({
     navActiveLink: '/manage/event/',
   },
 })
-import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
+import { useEventStore, buildEventStoreOptions, type EventStore } from '@shokujii/base/stores/event.js'
 import { useCommunityStore } from '@shokujii/base/stores/community.js'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -28,16 +28,18 @@ import {
 } from '@/router/utils'
 import { mdiArrowTopRight } from '@mdi/js'
 import flyerLogo from '@/assets/images/shokujii/flyer_logo.png'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
 const { t: $t } = useI18n()
 const router = useRouter()
+const { enterpriseId } = useEnterpriseId()
 
 const tabs = ['overview', 'member', 'letter', 'flyer', 'settings'] as const
 type Tabs = (typeof tabs)[number]
 
 const eventId = useRoute().params.eventId as string
 const tabName = useRoute().params.tab as string
-const eventStore = useEventStore(eventId) as EventStore
+const eventStore = useEventStore(eventId, buildEventStoreOptions(enterpriseId.value)) as EventStore
 const event = computed(() => eventStore.event)
 
 const tab = ref<Tabs>(tabs.find((t) => t === tabName) ?? tabs[0])

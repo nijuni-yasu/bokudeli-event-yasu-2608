@@ -12,10 +12,15 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import CopyEventDialog from '@shokujii/base/components/manage/community/CopyEventDialog.vue'
 import EventCardGrid from '@shokujii/base/components/manage/shared/EventCardGrid.vue'
 import { useCopyEventFeedback } from '@shokujii/base/composable/useCopyEventFeedback.js'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
 const router = useRouter()
 const display = useDisplay()
 const { t: $t } = useI18n()
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
 
 const numOfColumns = computed(() => {
   switch (display.name.value) {
@@ -29,19 +34,26 @@ const numOfColumns = computed(() => {
 })
 
 const userId = getAuth().currentUser!.uid
-const communityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
-  5,
-) as CommunityListStore
+const communityListStore = computed(
+  () =>
+    useCommunityListStore(
+      [
+        where('enterprise_id', '==', enterpriseId.value),
+        where('managers', 'array-contains', doc(db, 'users', userId)),
+        orderBy('community_num_members', 'desc'),
+      ],
+      5,
+    ) as CommunityListStore,
+)
 
 const communityList = computed(() => {
-  if (communityListStore.communityStores == null) {
+  if (communityListStore.value.communityStores == null) {
     return null
   }
-  if (communityListStore.communityStores.length !== communityListStore.totalCount) {
-    communityListStore.next()
+  if (communityListStore.value.communityStores.length !== communityListStore.value.totalCount) {
+    communityListStore.value.next()
   }
-  return communityListStore.communityStores.flatMap((communityStore) => communityStore.community ?? [])
+  return communityListStore.value.communityStores.flatMap((communityStore) => communityStore.community ?? [])
 })
 
 const communityAccount = ref<string | null>(communityList.value?.[0]?.community_account ?? null)
@@ -63,7 +75,11 @@ const community = computed(() =>
 
 const eventListStore = computed(() =>
   useEventListStore(
-    [where('community_account', '==', communityAccount.value), orderBy('event_start_datetime', 'desc')],
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('community_account', '==', communityAccount.value),
+      orderBy('event_start_datetime', 'desc'),
+    ],
     numOfColumns.value,
     { autoContinue: true },
   ),

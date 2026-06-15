@@ -8,22 +8,33 @@ import { mdiPlus, mdiHelp } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
 import { db } from '@shokujii/base/firebase.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
 const router = useRouter()
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
 
 const userId = getAuth().currentUser?.uid
 if (userId == null) {
   throw new Error('User is not authenticated')
 }
 
-const communityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
-  10,
+const communityListStore = computed(() =>
+  useCommunityListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('managers', 'array-contains', doc(db, 'users', userId)),
+      orderBy('community_num_members', 'desc'),
+    ],
+    10,
+  ),
 )
 
 const communities = computed(() => {
   return (
-    communityListStore.communityStores?.flatMap((communityStore) => {
+    communityListStore.value.communityStores?.flatMap((communityStore) => {
       if (communityStore.community == null || communityStore.members == null) {
         return []
       }
@@ -36,7 +47,7 @@ const isOpenNewCommunityDialog = ref(false)
 
 watch(communities, (communities) => {
   const isReady =
-    communityListStore.communityStores?.every(
+    communityListStore.value.communityStores?.every(
       (communityStore) =>
         communityStore.community != null &&
         communityStore.members != null &&
@@ -45,7 +56,7 @@ watch(communities, (communities) => {
     ) ?? false
   if (
     isReady &&
-    communityListStore.totalCount === communityListStore.communityStores?.length &&
+    communityListStore.value.totalCount === communityListStore.value.communityStores?.length &&
     communities.length === 0
   ) {
     isOpenNewCommunityDialog.value = true

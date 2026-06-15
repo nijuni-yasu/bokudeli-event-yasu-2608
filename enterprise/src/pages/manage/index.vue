@@ -30,6 +30,12 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { getAuth } from 'firebase/auth'
 import { db } from '@shokujii/base/firebase.js'
 import { mdiPlus } from '@mdi/js'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
+
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
 
 const userId = getAuth().currentUser?.uid
 if (userId == null) {
@@ -38,13 +44,19 @@ if (userId == null) {
 const route = useRoute()
 const router = useRouter()
 
-const communityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
-  10,
+const communityListStore = computed(() =>
+  useCommunityListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('managers', 'array-contains', doc(db, 'users', userId)),
+      orderBy('community_num_members', 'desc'),
+    ],
+    10,
+  ),
 )
 const communities = computed(() => {
   return (
-    communityListStore.communityStores?.flatMap((communityStore) => {
+    communityListStore.value.communityStores?.flatMap((communityStore) => {
       const community = communityStore.community
       if (community == null || communityStore.members == null) {
         return []
@@ -57,7 +69,7 @@ const communities = computed(() => {
 
 onMounted(() => {
   if (route.query.refreshManaged === '1') {
-    communityListStore.reload()
+    communityListStore.value.reload()
     router.replace(getManagePath())
   }
 })

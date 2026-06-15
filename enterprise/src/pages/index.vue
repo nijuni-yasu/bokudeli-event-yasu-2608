@@ -8,6 +8,12 @@ import EventCard from '@shokujii/base/components/EventCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { useDisplay } from 'vuetify'
 import { mdiCrownOutline, mdiCalendarHeart, mdiCalendarCheck } from '@mdi/js'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
+
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
 
 const display = useDisplay()
 
@@ -28,20 +34,23 @@ const now = Timestamp.now()
 const topBannersStore = useBannersStore('top_banners')
 const centerBannersStore = useBannersStore('center_banners')
 
-const popularEventListStore = useEventListStore(
-  [
-    where('is_public', '==', true),
-    where('event_status.value', '==', 'accepting_order'),
-    where('event_num_members', '>=', 1),
-    where('event_deadline_datetime', '>', now),
-    orderBy('event_num_members', 'desc'),
-  ],
-  numOfPopularColumns,
+const popularEventListStore = computed(() =>
+  useEventListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('is_public', '==', true),
+      where('event_status.value', '==', 'accepting_order'),
+      where('event_num_members', '>=', 1),
+      where('event_deadline_datetime', '>', now),
+      orderBy('event_num_members', 'desc'),
+    ],
+    numOfPopularColumns,
+  ),
 )
 
 const popularEvents = computed(
   () =>
-    popularEventListStore.eventStores
+    popularEventListStore.value.eventStores
       ?.flatMap((s) => {
         if (s.event == null) {
           return []
@@ -51,53 +60,59 @@ const popularEvents = computed(
       .slice(0, numOfPopularColumns) ?? [],
 )
 
-const upcomingEventListStore = useEventListStore(
-  [
-    where('is_public', '==', true),
-    where('event_status.value', '==', 'accepting_order'),
-    where('event_num_members', '>=', 1),
-    where('event_end_datetime', '>', now),
-    orderBy('event_start_datetime', 'asc'),
-  ],
-  numOfColumns.value,
+const upcomingEventListStore = computed(() =>
+  useEventListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('is_public', '==', true),
+      where('event_status.value', '==', 'accepting_order'),
+      where('event_num_members', '>=', 1),
+      where('event_end_datetime', '>', now),
+      orderBy('event_start_datetime', 'asc'),
+    ],
+    numOfColumns.value,
+  ),
 )
 
-const upcomingEvents =
-  computed(() =>
-    upcomingEventListStore.eventStores?.flatMap((s) => {
+const upcomingEvents = computed(
+  () =>
+    upcomingEventListStore.value.eventStores?.flatMap((s) => {
       if (s.event == null) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
-    }),
-  ) ?? []
-
-const pastEventListStore = useEventListStore(
-  [
-    where('is_public', '==', true),
-    where('event_status.value', '==', 'accepting_order'),
-    where('event_num_members', '>=', 1),
-    where('event_end_datetime', '<=', now),
-    orderBy('event_start_datetime', 'desc'),
-  ],
-  numOfColumns.value,
+    }) ?? [],
 )
 
-const pastEvents =
-  computed(() =>
-    pastEventListStore.eventStores?.flatMap((s) => {
+const pastEventListStore = computed(() =>
+  useEventListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('is_public', '==', true),
+      where('event_status.value', '==', 'accepting_order'),
+      where('event_num_members', '>=', 1),
+      where('event_end_datetime', '<=', now),
+      orderBy('event_start_datetime', 'desc'),
+    ],
+    numOfColumns.value,
+  ),
+)
+
+const pastEvents = computed(
+  () =>
+    pastEventListStore.value.eventStores?.flatMap((s) => {
       if (s.event == null) {
         return []
       }
       return { event: s.event, members: s.members ?? [] }
-    }),
-  ) ?? []
+    }) ?? [],
+)
 
 const next = () => {
-  if ((upcomingEventListStore.eventStores?.length ?? 0) < (upcomingEventListStore.totalCount ?? Infinity)) {
-    upcomingEventListStore.next()
+  if ((upcomingEventListStore.value.eventStores?.length ?? 0) < (upcomingEventListStore.value.totalCount ?? Infinity)) {
+    upcomingEventListStore.value.next()
   } else {
-    pastEventListStore.next()
+    pastEventListStore.value.next()
   }
 }
 </script>
