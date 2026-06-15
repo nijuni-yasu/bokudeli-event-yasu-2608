@@ -219,3 +219,16 @@ export type CreateEnterpriseCommunitiesResponse = {
   error_count: number
   results: CreateEnterpriseCommunitiesResultItem[]
 }
+
+export type GetInvitationUrlForEnterpriseCommunityManagerRequest = {
+  communityId: string
+}
+
+export type GetInvitationUrlForEnterpriseCommunityManagerResponse = string
+
+export type AcceptInvitationForEnterpriseCommunityManagerRequest = {
+  communityAccount: string
+  token: string
+}
+
+export type AcceptInvitationForEnterpriseCommunityManagerResponse = void
