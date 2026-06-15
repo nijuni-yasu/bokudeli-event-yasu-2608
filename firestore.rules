@@ -187,6 +187,13 @@ service cloud.firestore {
             // pass_code は functions 内からのみアクセス可能
             allow read, write: if false
         }
+        function isEnterpriseAdminMember(enterpriseId) {
+            return request.auth != null
+                && request.auth.token.enterprise_id == enterpriseId
+                && exists(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid))
+                && get(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid)).data.role == 'admin'
+                && get(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid)).data.is_active == true;
+        }
         match /enterprises/{enterpriseId} {
             allow read: if request.auth != null
                         && request.auth.token.enterprise_id == enterpriseId;
@@ -197,15 +204,11 @@ service cloud.firestore {
                 allow write: if false;
             }
             match /audit_logs/{logId} {
-                allow read: if request.auth != null
-                            && request.auth.token.enterprise_id == enterpriseId
-                            && request.auth.token.enterprise_role == "admin";
+                allow read: if isEnterpriseAdminMember(enterpriseId);
                 allow write: if false;
             }
             match /billing_snapshots/{yearMonth} {
-                allow read: if request.auth != null
-                            && request.auth.token.enterprise_id == enterpriseId
-                            && request.auth.token.enterprise_role == "admin";
+                allow read: if isEnterpriseAdminMember(enterpriseId);
                 allow write: if false;
             }
         }
