@@ -35,6 +35,27 @@ service firebase.storage {
       allow write: if request.auth != null && request.auth.uid == partnerId
     }
 
+    // chat attachments - ルームメンバーのみ read / create（Phase 3.1 画像添付）
+    function isChatRoomMemberStorage(roomId) {
+      return request.auth != null &&
+        request.auth.uid in firestore.get(/databases/(default)/documents/chat_rooms/$(roomId)).data.member_user_ids;
+    }
+    function isChatRoomWritableStorage(roomId) {
+      return isChatRoomMemberStorage(roomId) &&
+        firestore.get(/databases/(default)/documents/chat_rooms/$(roomId)).data.is_active == true;
+    }
+    function isAllowedChatImageType() {
+      return request.resource.contentType.matches('image/(png|jpeg|gif|webp)');
+    }
+
+    match /chat_rooms/{roomId}/{messageId}/{attachmentId} {
+      allow read: if isChatRoomMemberStorage(roomId);
+      allow create: if isChatRoomWritableStorage(roomId)
+        && request.resource.size <= 10 * 1024 * 1024
+        && isAllowedChatImageType();
+      allow update, delete: if false;
+    }
+
     // assets - 誰でも閲覧できる
     match /assets/{allPaths=**} {
       allow read: if true
