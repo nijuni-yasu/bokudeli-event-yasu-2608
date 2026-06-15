@@ -11,6 +11,7 @@ AIエージェント向けプロジェクトガイド。
 | タスク                          | スキル                       |
 | :------------------------------ | :--------------------------- |
 | コミットメッセージ生成          | `/git-commit-message`        |
+| GitHub イシュー作成             | `/git-create-issue`          |
 | PR 本文生成                     | `/git-create-pull-request`   |
 | コードレビュー                  | `/shokujii-code-review`      |
 | lint・format チェック           | `/lint-and-format`           |
@@ -23,6 +24,7 @@ AIエージェント向けプロジェクトガイド。
 | スキル提案                      | `/skill-propose`             |
 | GitHub Actions デプロイ手動発火 | `/github-actions-deploy`     |
 | sandbox WIP デプロイ            | `/github-sandbox-wip-deploy` |
+| コミット後の反映（PR + sandbox）    | `/git-reflect-after-commit`  |
 
 ## 推奨スキル（技術スタック別）
 

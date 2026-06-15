@@ -22,6 +22,7 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
   let recalcSucceeded = false
   // ordered な member_orders から event.members / event_num_members を再集約する
   try {
+    logger.info('sideEffect:start', { step: 'recalcEventMembers', communityId, eventId, userId })
     recalcResult = await recalcEventMembers(event)
     recalcSucceeded = true
     if (recalcResult.updated) {
@@ -42,6 +43,7 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
 
   // ordered な member_orders から友達グラフ（user_friends）に当該イベントの履歴を反映する
   try {
+    logger.info('sideEffect:start', { step: 'addEventToFriendHistoryForAnchor', communityId, eventId, userId })
     const orderedOrders = await getOrders(communityId, eventId, 'ordered')
     const orderedUserIds = [...new Set(orderedOrders.map((order) => order.user_id))]
     const counterpartUserIds = orderedUserIds.filter((id) => id !== userId)
@@ -63,6 +65,7 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
 
   // コミュニティの members にユーザーを追加する
   try {
+    logger.info('sideEffect:start', { step: 'community.addMember', communityId, eventId, userId })
     const community = await getCommunity(communityId)
     if (community != null) {
       await community.addMember(userId)
@@ -78,6 +81,7 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
 
   // 注文完了メール（参加者・主催者）・公開イベント向け新着通知など
   try {
+    logger.info('sideEffect:start', { step: 'sendOrderCompletionMails', communityId, eventId, userId })
     await sendOrderCompletionMails(event, userId)
   } catch (error) {
     logger.error('Failed to send order completion mails', {
@@ -90,6 +94,7 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
   if (recalcSucceeded) {
     // 閾値を満たすときのみ全ユーザー向け人気イベントメール（トランザクション内で冪等フラグ）
     try {
+      logger.info('sideEffect:start', { step: 'trySendPopularEventMailAfterMembersSync', communityId, eventId, userId })
       await trySendPopularEventMailAfterMembersSync({
         communityId,
         eventId,
@@ -106,6 +111,7 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
 
   // 注文確定したユーザーのマイページ用カウント（ordered_food_count / participated_event_count）を再集計する
   try {
+    logger.info('sideEffect:start', { step: 'recountUserProfileCounts', communityId, eventId, userId })
     await recountUserProfileCounts(userId)
   } catch (error) {
     logger.error('recountUserProfileCounts failed after order confirmed', {

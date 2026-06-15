@@ -68,6 +68,12 @@ function parseSessionContext(session: Stripe.Checkout.Session) {
 export const stripeWebhook = onRequest(
   {
     secrets: ['STRIPE_API_KEY', 'STRIPE_WEBHOOK_ENDPOINT_SECRET', 'SENDGRID_API_KEY'],
+    // 注文確定後の副作用（コミュニティ全員への新着通知メール一括送信など）が
+    // デフォルト 60 秒を超えて 504 になる事象への暫定対応（#2075 段階1）。
+    // timeoutSeconds: 主目的。律速は SendGrid 等の I/O であり OOM は未観測。
+    // memory: 予防的に 1GiB（並列メール送信時の余裕）。I/O 律速のため効果は限定的。
+    timeoutSeconds: 300,
+    memory: '1GiB',
   },
   async (req, res) => {
     const stripe = new Stripe(STRIPE_API_KEY.value(), {
@@ -404,6 +410,9 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
   if (txResult.kind === 'processed') {
     const eventForSideEffects = await getEventInCommunity(communityId, eventId)
     if (eventForSideEffects != null) {
+      // 副作用完了後に 200 を返す。Stripe は約 30 秒以内の応答を期待するため、
+      // 処理が長いとリトライされメール等が重複実行されうる（注文確定 TX は冪等）。
+      // #2075 段階2で Cloud Tasks へ分離し、早期 200 返却へ移行予定。
       await applyOrderConfirmedSideEffects({ event: eventForSideEffects, userId })
     } else {
       logger.warn('Skipping side effects: event not found', {

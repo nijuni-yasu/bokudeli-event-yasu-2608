@@ -269,3 +269,17 @@ git push --force-with-lease "$remote_name" "HEAD:$remote_branch"
 - push には `--force-with-lease` を使い、他者の push を上書きしないようにする
 - main / development ブランチでは実行しない
 - メッセージを変えずに統合だけしたい場合は **git-fixup** スキルを使用する
+
+---
+
+## コミット完了後の提案
+
+squash と rebase が正常に完了し、working tree が clean になったら、次をユーザーに提案する（勝手に実行しない）:
+
+> コミットが完了しました。`/git-reflect-after-commit` で origin への PR 反映と sandbox デプロイをまとめて実行しますか？
+
+- ユーザーが同意したら `git-reflect-after-commit` スキルを実行する
+- 「PR だけ」「sandbox だけ」と言われたら実行範囲を絞る
+- 未コミット変更が残っている・squash/rebase 失敗時は提案しない
+- 本スキルでは origin（本番 upstream）への push をブロックすることがある。
+  reflect 側で origin へ `--force-with-lease` して PR を更新する
