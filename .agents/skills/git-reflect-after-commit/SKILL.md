@@ -95,14 +95,17 @@ PR 用は **origin**（手順 4）、動作確認用は **`sandboxRemote`**（�
   - `-u`（`--set-upstream`）は付けない（追跡設定を変えないため）。
   - 失敗時はリモートが他で更新された可能性を伝え、`-f` で強制するか確認する。
 
-- デプロイ発火: `github-actions-deploy` スキルの environment 入力〜結果報告の手順に従い、
+- デプロイ発火・結果監視・エラー解析: `github-actions-deploy` スキルの environment 入力〜
+  **結果検知（手順 6）・失敗時のエラー解析（手順 7）・結果報告（手順 8）** までに従い、
   ここで確定した **OWNER/REPO・ref** を使う。
   OWNER/REPO 決定と本番ブロックは本スキルで実施済みのため繰り返さない。
+  デプロイが失敗した場合は **解析結果をユーザーに報告するに留め、修正や自動再実行はしない**。
 
 ### 6. 結果報告
 
 - PR の URL（A 実行時）
 - sandbox の remote 名・OWNER/REPO・ref、発火したワークフロー（B 実行時）
+- sandbox デプロイの各ワークフローの **成否・run URL**、失敗時は **エラー分類と原因サマリ**（B 実行時）
 - `branch.<branch>.sandboxRemote` を新規保存した場合はその旨
 
 ## 注意
