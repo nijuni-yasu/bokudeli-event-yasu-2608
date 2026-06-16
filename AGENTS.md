@@ -164,7 +164,7 @@ npm -w <pkg> run format:check
 **エージェントは次を実行してはならない**（人間のリリース作業専用）:
 
 - `development` / `main` / `production` / リリースタグ（`v` + 数字）への **直 push**
-- `npm version`（`minor` / `patch` / `major`）
+- `npm version`（引数問わず全バリアント）
 - `git branch -f main` / `git branch -f production`
 
 **許可される push**: 現在の feature / `release/*` / `sync/*` / `hotfix/*` 等の作業ブランチへの `git push origin HEAD:<ref>`（PR 作成・更新用）。`development` の更新はこれらのブランチ + PR 経由のみ。
