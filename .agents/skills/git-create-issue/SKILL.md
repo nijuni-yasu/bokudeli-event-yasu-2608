@@ -30,8 +30,8 @@ Shokujii プロジェクトのイシューを、projects・Status・milestone �
 1. **イシューのタイトル・本文を用意する**
    - 会話の文脈や対応中の作業から AI が下書きする
    - タイトルは [/git-commit-message](../git-commit-message/SKILL.md) のタグ運用に揃える（例: `[functions] stripeWebhook の 504 対策`）
-     - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
-     - `firestore.rules` のみ等、アプリパッケージを変更しない場合はタグ省略可（commit-message スキル参照）
+     - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
+     - ルートの package.json 等、タグに該当しないモノレポ横断設定は接頭辞なし（commit-message スキル参照）
      - イシュー番号はまだ存在しないため、タイトルに `#番号` は含めない
    - 本文は [イシュー本文テンプレート](#イシュー本文テンプレート) に沿って記述する
    - ラベルが明らかな場合は `--label` を検討する（例: `bug`）

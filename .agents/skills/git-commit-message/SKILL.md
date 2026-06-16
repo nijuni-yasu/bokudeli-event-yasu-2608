@@ -26,18 +26,30 @@ git-fixup / git-squash の手順 3 で「新規コミット（1つ）」と分�
 [タグ] #イシュー番号 変更内容を端的に表す日本語タイトル
 ```
 
-タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
+タグは変更したディレクトリ・領域に対応するものを選ぶ。複数可。
+使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
 
 - [doc]: documents/ ディレクトリ内の更新のみ
-- [ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の AI 向け設定・指示ファイル
+- [ci]: .github/workflows/（GitHub Actions の CI/CD）
+- [terraform]: terraform/ ディレクトリ
+- [firebase]: firebase.json、.firebaserc、firestore.rules、storage.rules、firestore.indexes.json
+- [ai]: .cursor / .agents / .claude / CLAUDE.md / AGENTS.md / .github/copilot-instructions.md 等の AI エージェント向け指示・設定ファイル
+
+### タグの判定（優先順位）
+
+1. アプリ/パッケージのソース（user / partner / base / common / functions）に該当 → そのタグ（複数可）
+2. 該当しないが ci / terraform / firebase / doc / ai に該当 → 対応タグ（複数可）
+3. いずれにも該当しないモノレポ横断設定 → **接頭辞なし**
+
+パッケージ配下の package.json（例: user/package.json）は [user] 等。ルート直下の package.json / package-lock.json のみ接頭辞なし。
 
 ### タグを付けない場合
 
-次のような変更では、`[user]` `[partner]` などの**ディレクトリタグを付けない**ことがある。無理に当てはめない。
+次のような変更では接頭辞を付けない。無理に当てはめない。
 
-- `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみで、`user` `admin` `base` `common` `functions` のいずれも変更しない
-- リポジトリルートの設定やインフラ・CI のみで、上記パッケージのソースに該当しない変更
+- ルート直下の package.json / package-lock.json
+- eslint.config.mjs / .prettierrc / tsconfig*.json 等、特定アプリパッケージに属さないリポジトリルートの設定
+- 上記パッケージタグ・ci・terraform・firebase・doc・ai のいずれにも該当しない変更
 
 このときのタイトル例：
 
@@ -47,7 +59,7 @@ git-fixup / git-squash の手順 3 で「新規コミット（1つ）」と分�
 
 イシュー番号を付けない方針やブランチから取れない場合は、`#番号` を省略してもよい。
 
-`[doc]` は documents/ のみ、`[ai]` は .cursor / .agents / .github 等のときに用いる。該当しないなら付けない。AGENTS.md に無い新しい角括弧タグを増やさない。
+AGENTS.md に無い新しい角括弧タグを増やさない。
 
 ### 本文
 
@@ -104,10 +116,10 @@ AGENTS.md・CLAUDE.md・copilot-instructions.md を整理した。
   - AGENTS.md を唯一の実体とする構成に変更した
 ```
 
-## 出力例（タグなし）
+## 出力例（ci / firebase）
 
 ```
-#1901 Firestore デプロイ前に firestore.indexes.json の重複検証ステップを追加
+[ci] #1901 Firestore デプロイ前に firestore.indexes.json の重複検証ステップを追加
 
 deploy_firestore ワークフローで Firebase へデプロイする直前に、indexes 配列の重複検査を挟む。
 
@@ -115,4 +127,30 @@ deploy_firestore ワークフローで Firebase へデプロイする直前に�
 
 - .github/workflows/deploy_firestore.yml
   - Checkout 直後に Node ワンライナーで JSON 重複を検証するステップを追加
+```
+
+```
+[firebase] #1901 firestore.indexes.json の重複インデックスを削除
+
+同一フィールド組み合わせのインデックス定義が重複していたため整理した。
+
+変更詳細:
+
+- firestore.indexes.json
+  - events コレクションの重複エントリを削除
+```
+
+## 出力例（タグなし）
+
+```
+#2000 ルート依存を更新
+
+npm audit fix 後に package-lock.json を再生成した。
+
+変更詳細:
+
+- package.json
+  - ルート workspaces の devDependencies を更新
+- package-lock.json
+  - 依存ツリーを再生成
 ```

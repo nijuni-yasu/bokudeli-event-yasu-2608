@@ -35,19 +35,32 @@ git branch --show-current
 
    **コミット順序**
    1. [doc] documents/ 内の更新のみ。最初のコミットとする
-   2. [ai] .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の AI 関連設定・指示ファイル
-   3. [common] スキーマ変更（Zod スキーマ・型定義等）
-   4. その他（user / admin / base / functions）
+   2. [ai] .cursor / .agents / .claude / CLAUDE.md / AGENTS.md / .github/copilot-instructions.md 等の AI エージェント向け指示・設定
+   3. [ci] .github/workflows/（GitHub Actions）
+   4. [terraform] terraform/
+   5. [firebase] firebase.json、.firebaserc、firestore.rules、storage.rules、firestore.indexes.json
+   6. [common] スキーマ変更（Zod スキーマ・型定義等）
+   7. その他（user / partner / base / functions）
 
    **[doc] の範囲**
    - documents/ ディレクトリ内の更新のみに限る
-   - AGENTS.md / CLAUDE.md / .cursor / .agents / .github 等は [doc] ではなく [ai] を使う
+   - AGENTS.md / CLAUDE.md / .cursor / .agents / .claude 等は [doc] ではなく [ai] を使う
 
    **[ai] の範囲**
-   - .cursor ディレクトリ（ルール、コマンド等）
+   - .cursor ディレクトリ（ルール、コマンド、hooks 等）
    - .agents ディレクトリ（スキル等）
-   - .github ディレクトリ（ワークフロー、copilot-instructions 等）
+   - .claude ディレクトリ（設定、スキル等）
    - CLAUDE.md / AGENTS.md 等のルート直下の AI 向け指示ファイル
+   - .github/copilot-instructions.md（AI 向け指示。ワークフローは [ci]）
+
+   **[ci] の範囲**
+   - .github/workflows/ 内の GitHub Actions ワークフロー
+
+   **[terraform] の範囲**
+   - terraform/ ディレクトリ
+
+   **[firebase] の範囲**
+   - firebase.json、.firebaserc、firestore.rules、storage.rules、firestore.indexes.json
 
    **[common] の扱い**
    - common のスキーマ変更は必ず単独コミットにする
@@ -56,7 +69,7 @@ git branch --show-current
 
 3. 各コミットのメッセージを生成する
    - git-commit-message スキルのフォーマットに従う（**タグを付けない場合**も git-commit-message の「タグを付けない場合」を参照）
-   - タイトル: 原則 `[タグ] #イシュー番号 変更内容`。Firestore ルールやインデックスのみなどタグが不要なときは `#イシュー番号 変更内容` のみでもよい
+   - タイトル: 原則 `[タグ] #イシュー番号 変更内容`。ルート package.json 等タグが不要なときは `#イシュー番号 変更内容` のみでもよい
    - 本文: 目的・背景、ファイルごとの箇条書き、技術的補足
    - バッククォート・丸括弧・ダブルクォートは使用しない
    - 詳細に複数行で記述する
@@ -74,9 +87,9 @@ git branch --show-current
 ```
 
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: [user] [partner] [base] [common] [functions] [doc] [ai]
+使用可能なタグ: [user] [partner] [base] [common] [functions] [doc] [ci] [terraform] [firebase] [ai]
 
-git-commit-message スキルの「タグを付けない場合」と同様、Firestore のインデックスやルールのみなどではタグを付けない。
+git-commit-message スキルの「タグを付けない場合」と同様、ルート package.json 等ではタグを付けない。
 
 ### 本文
 
@@ -104,15 +117,21 @@ git-commit-message スキルの「タグを付けない場合」と同様、Fire
 
 （本文）
 
-対象ファイル: .cursor/ または .agents/ または .github/ または AGENTS.md 等
+対象ファイル: .agents/skills/git-commit-message/SKILL.md, AGENTS.md
 
-### コミット3: [common] #XXXX スキーマ変更の説明
+### コミット3: [ci] #XXXX ワークフロー更新の説明
+
+（本文）
+
+対象ファイル: .github/workflows/pr-verify.yml
+
+### コミット4: [common] #XXXX スキーマ変更の説明
 
 （本文）
 
 対象ファイル: common/src/...
 
-### コミット4: [user] #XXXX 機能追加の説明
+### コミット5: [user] #XXXX 機能追加の説明
 
 （本文）
 
@@ -131,15 +150,15 @@ git-commit-message スキルの「タグを付けない場合」と同様、Fire
 
 対象ファイル: documents/01_マネタイズと決済/04_有料チケット.md
 
-### コミット2: [ai] #1800 分割コミットスキルに doc と ai タグを追加
+### コミット2: [ai] #1800 コミットメッセージスキルに ci と firebase タグを追加
 
-スキルと Git ルールの一貫性のため、[doc] [ai] タグの扱いを追加した。
+スキルと Git ルールの一貫性のため、[ci] [terraform] [firebase] タグの扱いを追加し、[ai] を AI 指示ファイル専用に再定義した。
 
 変更詳細:
-- .agents/skills/git-split-commit/SKILL.md
-  - コミット順序とタグの範囲を追記
+- .agents/skills/git-commit-message/SKILL.md
+  - タグ定義と判定ルールを追記
 - AGENTS.md
-  - 使用可能なタグに [ai] を追加
+  - 使用可能なタグに [ci] [terraform] [firebase] を追加
 
 対象ファイル: .agents/skills/git-split-commit/SKILL.md, AGENTS.md
 
@@ -168,7 +187,8 @@ Event の status に応じて表示を切り替えるようにした。
 ## 制約
 
 - [doc] は documents/ 内の更新のみ。最初のコミットとする
-- [ai] は .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等の変更に使う
+- [ai] は .cursor / .agents / .claude / CLAUDE.md / AGENTS.md / .github/copilot-instructions.md 等の変更に使う
+- [ci] は .github/workflows/、[terraform] は terraform/、[firebase] は Firebase 設定・ルール・インデックスに使う
 - [common] のスキーマ変更は必ず単独コミット
 - コミットメッセージは git-commit-message スキルに準拠する。タグ省略可のケースも含む
 - バッククォート・丸括弧・ダブルクォートは使用しない

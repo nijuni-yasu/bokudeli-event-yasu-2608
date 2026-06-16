@@ -61,11 +61,17 @@ gh pr comment --body '@copilot @codex review 日本語でお願いします。Fi
 変更内容を端的に表す日本語タイトルを生成する。Issue 番号は含めない。
 フォーマット: `[タグ] 変更内容を端的に表す日本語タイトル`
 タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
+使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
+
+- [doc]: documents/ 内の更新のみ
+- [ci]: .github/workflows/
+- [terraform]: terraform/
+- [firebase]: firebase.json、.firebaserc、firestore.rules、storage.rules、firestore.indexes.json
+- [ai]: .cursor / .agents / .claude / CLAUDE.md / AGENTS.md / .github/copilot-instructions.md 等
 
 ### タグを付けない場合
 
-変更が `firestore.indexes.json` や `firestore.rules` のみ、GitHub Actions の YAML のみなどで、**`user` `partner` `base` `common` `functions` のいずれにも当てはまらない**ときは、PR タイトルから `[タグ]` を省略してよい。
+変更がルートの package.json / package-lock.json 等、**パッケージタグ・ci・terraform・firebase・doc・ai のいずれにも当てはまらない**モノレポ横断設定のみのときは、PR タイトルから `[タグ]` を省略してよい。
 
 フォーマット例：
 
