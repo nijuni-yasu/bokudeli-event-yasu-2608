@@ -1,4 +1,6 @@
-export const getUrlFromPath = (path: string) => `https://${import.meta.env.VITE_ORIGIN_HOST}${path}`
+import { resolveTenantHost } from '@/utils/tenantHost'
+
+export const getUrlFromPath = (path: string) => `https://${resolveTenantHost(true)}${path}`
 
 export const getHomePath = () => '/'
 export const getCommunityListPath = () => '/communitylist'

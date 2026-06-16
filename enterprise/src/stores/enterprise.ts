@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { GetEnterpriseByDomainResponse } from '@shokujii/common/apis/enterprise.js'
 import { getEnterpriseByDomain } from '@/apis/enterprise'
+import { resolveTenantHost } from '@/utils/tenantHost'
 
 export type EnterpriseResolveStatus = 'loading' | 'ready' | 'not_found' | 'error'
 
@@ -10,12 +11,7 @@ export const useEnterpriseStore = defineStore('enterprise', () => {
   const status = ref<EnterpriseResolveStatus>('loading')
 
   function resolveHostname(): string {
-    const subdomain = import.meta.env.VITE_ENTERPRISE_SUBDOMAIN
-    const baseDomain = import.meta.env.VITE_ENTERPRISE_BASE_DOMAIN
-    if (subdomain != null && subdomain !== '' && baseDomain != null && baseDomain !== '') {
-      return `${subdomain}.${baseDomain}`
-    }
-    return window.location.hostname
+    return resolveTenantHost()
   }
 
   async function resolveEnterprise(): Promise<void> {
