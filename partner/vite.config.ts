@@ -1,5 +1,3 @@
-import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import VueRouter from 'unplugin-vue-router/vite'
@@ -7,6 +5,8 @@ import Layouts from 'vite-plugin-vue-layouts'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import AutoImport from 'unplugin-auto-import/vite'
 import vuetify from 'vite-plugin-vuetify'
+
+import { alias } from './vite.alias'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -41,14 +41,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@themeConfig': fileURLToPath(new URL('./src/themeConfig.ts', import.meta.url)),
-      '@core': fileURLToPath(new URL('./src/@core', import.meta.url)),
-      '@layouts': fileURLToPath(new URL('./src/@layouts', import.meta.url)),
-      '@styles': fileURLToPath(new URL('./src/styles/', import.meta.url)),
-      '@configured-variables': fileURLToPath(new URL('./src/styles/variables/_template.scss', import.meta.url)),
-    },
+    alias,
   },
   build: {
     chunkSizeWarningLimit: 5000,

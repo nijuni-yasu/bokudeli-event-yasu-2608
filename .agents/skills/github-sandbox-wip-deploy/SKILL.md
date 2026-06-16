@@ -1,13 +1,13 @@
 ---
 name: github-sandbox-wip-deploy
-description: WIP コミットで sandbox に仮デプロイする。lint・format → WIP コミット → --force-with-lease push → Actions デプロイ発火を一括実行。「WIP でコミットして sandbox にデプロイして」など WIP + sandbox デプロイを明示された時に使用する。WIP に言及がない単なるデプロイには github-actions-deploy を使う。本番 nijuniinc/bokudeli-event-new には push しない。
+description: WIP コミットで sandbox に仮デプロイする。lint・format・型・test チェック（lint-and-format）→ WIP コミット → --force-with-lease push → Actions デプロイ発火を一括実行。「WIP でコミットして sandbox にデプロイして」など WIP + sandbox デプロイを明示された時に使用する。WIP に言及がない単なるデプロイには github-actions-deploy を使う。本番 nijuniinc/bokudeli-event-new には push しない。
 ---
 
 # sandbox WIP デプロイ
 
 作業中の変更を WIP コミットで sandbox 環境にデプロイし、動作確認を行うためのワークフロー。
 
-lint・format チェックを先に通すことで、CI で落ちるコードを sandbox に上げないようにしている。また、WIP コミットの後始末（reset 等）はこのスキルの範囲外とし、ユーザーが自身のタイミングで行う。
+lint・format・型・test チェック（`lint-and-format` スキル）を先に通すことで、PR verify で落ちるコードを sandbox に上げないようにしている。また、WIP コミットの後始末（reset 等）はこのスキルの範囲外とし、ユーザーが自身のタイミングで行う。
 
 ## 本番リポジトリは対象外（厳守）
 
@@ -17,12 +17,12 @@ lint・format チェックを先に通すことで、CI で落ちるコードを
 
 ## 手順
 
-### 1. lint・format チェック
+### 1. lint・format・型・test チェック（PR verify 相当）
 
-`lint-and-format` スキルの手順に従い、全パッケージで lint と format をチェックする。
+`lint-and-format` スキルの手順に従い、build / lint / format / 型 / vitest をローカルで実行する（format 失敗時は自動修正）。
 
-- **lint エラーがある場合**: ユーザーに報告して **中断する**。修正後に再度依頼してもらう
-- **format エラーがある場合**: `lint-and-format` スキルの手順 5 に従い自動修正して続行する
+- **build・lint・build:types・test エラーがある場合**: ユーザーに報告して **中断する**。修正後に再度依頼してもらう
+- **format エラーがある場合**: `lint-and-format` スキルの format 自動修正手順に従い自動修正して続行する
 
 ### 2. push 先リモートの決定
 

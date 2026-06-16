@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/protect-git-release.sh",
+        "timeout": 5,
+        "failClosed": false
+      }
+    ]
+  }
+}

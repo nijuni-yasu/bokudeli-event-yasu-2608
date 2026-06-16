@@ -14,7 +14,7 @@ AIエージェント向けプロジェクトガイド。
 | GitHub イシュー作成             | `/git-create-issue`          |
 | PR 本文生成                     | `/git-create-pull-request`   |
 | コードレビュー                  | `/shokujii-code-review`      |
-| lint・format チェック           | `/lint-and-format`           |
+| lint・format・型・test チェック（PR verify 相当。format はローカル自動修正） | `/lint-and-format`           |
 | fixup（追修正の統合。新規・分割向きは split-commit / commit-message へ） | `/git-fixup`                 |
 | squash（統合＋メッセージ更新。新規・分割向きは split-commit / commit-message へ） | `/git-squash`                |
 | レビューコメント検討            | `/review-comments-evaluate`  |
@@ -44,6 +44,7 @@ AIエージェント向けプロジェクトガイド。
 | UI のレビュー・品質チェック            | `/web-design-guidelines`             | アクセシビリティ確認時、UX レビュー時、PR マージ前の品質チェック時                                   |
 | スキル作成・改善                       | `/skill-creator`                     | 新規スキル作成時、既存スキルの編集・最適化時                                                         |
 | ユニットテスト (Vitest)                | `/vitest`                            | テスト作成時、common/functions のロジックテスト時                                                    |
+| 実装前の設計インタビュー（要件明確化） | `/grill-me`                          | 実装前の設計フェーズ、要件が固まっていない時、設計の壁打ち時                                         |
 
 ## プロジェクト概要
 
@@ -120,7 +121,7 @@ npm -w <pkg> run format:check
 
 ## 作業完了前の必須手順（コード変更）
 
-ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、common のビルド、各パッケージの lint、format:check（必要に応じて format）を実行すること。
+ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、PR verify（`pr-verify.yml`）と同じ build / lint / format / 型 / vitest のローカルチェック（format 失敗時は format 自動修正）を実行すること。
 
 ### Firestore 操作の必須ルール（厳守）
 
@@ -155,6 +156,22 @@ npm -w <pkg> run format:check
   - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
   - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等
   - `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみなど、アプリの各パッケージを変更しない変更では、**ディレクトリタグを付けず**、`#イシュー番号` と要約タイトルのみとしてよい。PR タイトルも同様にタグを省略できる。手順・例は `/git-commit-message` と `/git-create-pull-request` スキルを参照。
+
+### エージェント向け Git 操作の禁止（本番・リリース系）
+
+背景: [`documents/AIエージェント/03_branch_protection.md`](documents/AIエージェント/03_branch_protection.md) §5。
+
+**エージェントは次を実行してはならない**（人間のリリース作業専用）:
+
+- `development` / `main` / `production` / リリースタグ（`v` + 数字）への **直 push**
+- `npm version`（引数問わず全バリアント）
+- `git branch -f main` / `git branch -f production`
+
+**許可される push**: 現在の feature / `release/*` / `sync/*` / `hotfix/*` 等の作業ブランチへの `git push origin HEAD:<ref>`（PR 作成・更新用）。`development` の更新はこれらのブランチ + PR 経由のみ。
+
+**例外**: ユーザーが「本番リリースを実行して」と明示した場合でも、エージェントは **自動実行せず** [`documents/デプロイ手順/デプロイ手順.md`](documents/デプロイ手順/デプロイ手順.md) の手順を提示に留める。
+
+上記は Hook でも機械的にブロックされる（検査正本: `.agents/hooks/protect-git-release-check.sh`、Claude: `.claude/hooks/`、Cursor: `.cursor/hooks/`）。
 
 ## コードレビュー
 

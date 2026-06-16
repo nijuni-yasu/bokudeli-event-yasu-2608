@@ -14,7 +14,8 @@
     "devtool": "VUE_DEVTOOLS= vite",
     "build": "npm -w common run build && vite build",
     "build:types": "vue-tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@channel.io/channel-web-sdk-loader": "^2.0.0",
@@ -22,6 +23,7 @@
     "vue-draggable-next": "^2.3.0"
   },
   "devDependencies": {
+    "vitest": "^3.0.5",
     "unplugin-auto-import": "^0.17.8",
     "unplugin-vue-router": "^0.10.0",
     "vite-plugin-vue-layouts": "^0.11.0"
