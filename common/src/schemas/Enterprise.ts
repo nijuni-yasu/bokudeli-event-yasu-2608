@@ -33,9 +33,6 @@ export type UserType = (typeof USER_TYPE_VALUES)[number]
 export const COMMUNITY_APPROVAL_STATUS_VALUES = ['pending', 'approved', 'rejected'] as const
 export type CommunityApprovalStatusType = (typeof COMMUNITY_APPROVAL_STATUS_VALUES)[number]
 
-export const GUEST_PAYMENT_VALUES = ['free', 'self_pay'] as const
-export type GuestPaymentType = (typeof GUEST_PAYMENT_VALUES)[number]
-
 const YearMonthRecordSchema = z.record(z.string(), z.number().int().nonnegative())
 
 const EnterpriseBillingSettingsDbSchema = z.object({

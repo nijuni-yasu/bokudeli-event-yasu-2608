@@ -69,8 +69,6 @@ export const copyEventCore = async (
     event_payment: normalizedPayment.event_payment,
     community_bill_settings: normalizedPayment.community_bill_settings,
     enterprise_id: srcEvent.enterprise_id,
-    allow_guest: srcEvent.allow_guest,
-    guest_payment: srcEvent.guest_payment,
     enterprise_subsidy_settings: srcEvent.enterprise_subsidy_settings,
     event_max_people: srcEvent.event_max_people,
     event_postalcode: srcEvent.event_postalcode,

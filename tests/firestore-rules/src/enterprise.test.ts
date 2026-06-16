@@ -219,29 +219,6 @@ describe('enterprise firestore rules', () => {
     )
   })
 
-  it('allow_guest の他社 events は未認証でも read できる', async () => {
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await context
-        .firestore()
-        .collection('communities')
-        .doc('community-ent-a')
-        .collection('events')
-        .doc('event-guest')
-        .set({ event_name: 'Guest Event', enterprise_id: 'ent-a', allow_guest: true })
-    })
-
-    const unauthed = testEnv.unauthenticatedContext()
-    await assertSucceeds(
-      unauthed
-        .firestore()
-        .collection('communities')
-        .doc('community-ent-a')
-        .collection('events')
-        .doc('event-guest')
-        .get(),
-    )
-  })
-
   it('PF member_orders（enterprise_id なし）は未認証でも read できる', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await context

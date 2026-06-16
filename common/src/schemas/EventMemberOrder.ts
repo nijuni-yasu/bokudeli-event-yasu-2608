@@ -16,7 +16,6 @@ const EventMemberDbSchema = z.object({
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
   enterprise_id: z.string().nonempty().optional(),
-  is_guest: z.boolean().optional(),
 })
 
 const EventMemberAppSchema = z.object({
@@ -26,7 +25,6 @@ const EventMemberAppSchema = z.object({
   created_at: EpochMillisSchema.optional(),
   updated_at: EpochMillisSchema.optional(),
   enterprise_id: z.string().optional(),
-  is_guest: z.boolean().optional(),
 })
 
 const convertMemberToDb = (member: EventMember) => {
@@ -45,7 +43,6 @@ export class EventMember {
   created_at: number
   updated_at: number
   enterprise_id?: string
-  is_guest?: boolean
 
   constructor(userId: string, src: Partial<EventMember>) {
     Object.assign(this, EventMemberAppSchema.parse(src))
