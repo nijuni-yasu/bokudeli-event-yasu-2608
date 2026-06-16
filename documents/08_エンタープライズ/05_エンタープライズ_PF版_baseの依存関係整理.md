@@ -38,7 +38,7 @@ partner/src/router/utils.ts    … partner 用の実装 or ダミー
 |------|------|
 | その app の **vue-router に実ルートがある** | path だけ変えてルート未定義だと 404 |
 | base 内の **path 直書き** も合わせる | 例: `CommunityMembershipButton.vue` の `path: '/login'` は `router/utils` 非経由 |
-| **完全 URL** | `getUrlFromPath` は `VITE_ORIGIN_HOST` 依存。ドメイン差は env で吸収 |
+| **完全 URL** | enterprise の `getUrlFromPath` はアクセス中テナントのホスト（`resolveTenantHost`）から組み立てる。user/partner は単一ドメインで `VITE_ORIGIN_HOST` 依存 |
 
 ## base に path 関数が増えたとき
 
