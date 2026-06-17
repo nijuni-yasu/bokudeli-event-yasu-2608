@@ -152,10 +152,12 @@ npm -w <pkg> run format:check
 - タイトルの接頭辞に変更したディレクトリと Issue 番号を含める
   - 例: `[partner] #1777 注文詳細画面の修正`
   - 例: `[base][common] #1799 withConverter の削除を禁止`
-  - 例: `[ai] #1800 分割コミットスキルに doc と ai タグを追加`
-  - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ai]`
-  - [doc]: documents/ 内の更新のみ。[ai]: .cursor / .agents / .github / CLAUDE.md / AGENTS.md 等
-  - `firestore.indexes.json` / `firestore.rules` / `storage.rules` のみなど、アプリの各パッケージを変更しない変更では、**ディレクトリタグを付けず**、`#イシュー番号` と要約タイトルのみとしてよい。PR タイトルも同様にタグを省略できる。手順・例は `/git-commit-message` と `/git-create-pull-request` スキルを参照。
+  - 例: `[ci] #2084 deploy_manager の checkout を v6 に更新`
+  - 例: `[firebase] #1901 firestore.indexes.json の重複インデックスを削除`
+  - 例: `[ai] #1800 分割コミットスキルに ci と firebase タグを追加`
+  - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
+  - [doc]: documents/ 内の更新のみ。[ci]: `.github/workflows/`。[terraform]: `terraform/`。[firebase]: `firebase.json` / `.firebaserc` / `firestore.rules` / `storage.rules` / `firestore.indexes.json`。[ai]: `.cursor` / `.agents` / `.claude` / `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` 等の AI エージェント向け指示・設定
+  - ルートの `package.json` / `package-lock.json` 等、上記タグに該当しないモノレポ横断設定は**接頭辞なし**（`#イシュー番号` と要約タイトルのみ）。PR タイトルも同様。手順・判定ルール・例は `/git-commit-message` と `/git-create-pull-request` スキルを参照。
 
 ### エージェント向け Git 操作の禁止（本番・リリース系）
 
