@@ -1,6 +1,6 @@
 ---
 name: github-actions-deploy
-description: sandbox / fork 向け。ローカル HEAD を branch.<branch>.sandboxRemote で決まった sandbox へ push してから、gh CLI で deploy_*.yml を workflow_dispatch 発火する。監視はバックグラウンド watch + wake 1 回（エージェントは gh run watch でブロックしない）。mode=report は sentinel / pending wake から結果報告のみ。sandbox 先は git-reflect-after-commit と同じ branch.<branch>.sandboxRemote で記憶。git-reflect-after-commit / github-sandbox-wip-deploy から委譲時は会話に sandbox と書かなくてよい。「sandbox にデプロイ」で sandboxRemote 設定済みなら現在ブランチで実行可。1a のリモート/ブランチ明示は sandbox 系 remote のみ。repo+ブランチの明示指定は上書き（発火のみ）。「push せず」「再デプロイだけ」で push 省略。本番 nijuniinc/bokudeli-event-new では push も発火も拒否。5 本一括は一括発火後にバックグラウンド並列 watch がデフォルト。
+description: sandbox / fork 向け。ローカル HEAD を branch.<branch>.sandboxRemote で決まった sandbox へ push してから、gh CLI で deploy_*.yml を workflow_dispatch 発火する。監視はバックグラウンド watch + wake 1 回（エージェントは gh run watch でブロックしない）。mode=report は sentinel / pending wake から結果報告のみ。sandbox 先は git-reflect-after-commit と同じ branch.<branch>.sandboxRemote で記憶。git-reflect-after-commit / github-sandbox-wip-deploy から委譲時は会話に sandbox と書かなくてよい。「sandbox にデプロイ」で sandboxRemote 設定済みなら現在ブランチで実行可。1a のリモート/ブランチ明示は sandbox 系 remote のみ。repo+ブランチの明示指定は上書き（発火のみ）。「push せず」「再デプロイだけ」で push 省略。本番 nijuniinc/bokudeli-event-new では push も発火も拒否。6 本一括（deploy_enterprise 含む）は一括発火後にバックグラウンド並列 watch がデフォルト。
 ---
 
 # GitHub Actions デプロイ（push + 手動発火）
@@ -140,7 +140,7 @@ git push --force-with-lease "$REMOTE" HEAD:"$REF"
 ```
 
 - `-u`（`--set-upstream`）は付けない（追跡設定を変えないため）
-- `--force-with-lease` 失敗時はリモートが他で更新された可能性を伝え、`-f` で強制 push するか確認する
+- `--force-with-lease` 失敗時はリモートが他で更新された場合の可能性を伝え、`-f` で強制 push するか確認する
 
 ### 4. workflow_dispatch の environment 入力
 
@@ -154,20 +154,22 @@ git push --force-with-lease "$REMOTE" HEAD:"$REF"
 
 ### 5. 発火するワークフローを選ぶ
 
-対象は **リポジトリ内のデプロイ用ワークフロー 5 本のみ**。Lint や他用途のワークフローは動かさない。
+対象は **リポジトリ内のデプロイ用ワークフロー 6 本のみ**。Lint や他用途のワークフローは動かさない。`deploy_manager.yml`（hosting manager）は #2087 で削除済み（フェーズ5で `deploy_support.yml` として新規追加予定）。
 
 | ファイル名 | ざっくりした対象 |
 |------------|------------------|
 | deploy_user.yml | hosting user |
 | deploy_partner.yml | hosting partner |
+| deploy_enterprise.yml | hosting enterprise |
 | deploy_functions.yml | functions |
 | deploy_firestore.yml | firestore |
 | deploy_storage.yml | storage |
 
-- ユーザーが **特定パッケージだけ** と言ったら、対応する 1 本だけ `gh workflow run` する
-- **全体デプロイ**や指定がなければ、上記 5 本を **一括発火**する（**デフォルト**）
+- ユーザーが **特定パッケージだけ** と言ったら、対応する 1 本だけ `gh workflow run` する（例: user だけ → `deploy_user.yml`、enterprise / エンプラ だけ → `deploy_enterprise.yml`）
+- **全体デプロイ**や指定がなければ、上記 6 本を **一括発火**する（**デフォルト**）
 - **禁止**: 1 本ごとに `gh run watch` で完了を待ってから次を発火する直列パターン
-- 同一リポの負荷を抑えたい場合やユーザーが明示した場合のみ、5 本を **順次発火**してよい
+- 同一リポの負荷を抑えたい場合やユーザーが明示した場合のみ、6 本を **順次発火**してよい
+- sandbox fork に `deploy_enterprise.yml` が無い場合、その WF の `gh workflow run` は 404 等で失敗し得る。**他 WF は続行**し、失敗した WF だけユーザーに報告する
 
 ### 6. gh で実行するコマンド形
 
@@ -177,20 +179,20 @@ git push --force-with-lease "$REMOTE" HEAD:"$REF"
 gh workflow run deploy_user.yml --repo OWNER/REPO --ref REF -f environment=development
 ```
 
-**5 本一括発火する場合（デフォルト・発火のみ・監視は手順 7）**
+**6 本一括発火する場合（デフォルト・発火のみ・監視は手順 7）**
 
 一括発火の直前に **基準時刻 `SINCE` を 1 回だけ**控える。
 
 ```bash
 SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-for WF in deploy_user.yml deploy_partner.yml deploy_functions.yml \
-          deploy_firestore.yml deploy_storage.yml; do
+for WF in deploy_user.yml deploy_partner.yml deploy_enterprise.yml \
+          deploy_functions.yml deploy_firestore.yml deploy_storage.yml; do
   gh workflow run "$WF" --repo OWNER/REPO --ref REF -f environment=development
 done
 ```
 
-`gh workflow run` は即座に返る。5 本を **watch 完了まで待たず** 連続発火する。
+`gh workflow run` は即座に返る。6 本を **watch 完了まで待たず** 連続発火する。
 
 ### 7. バックグラウンド監視起動（Shell 要件・厳守）
 
@@ -208,7 +210,7 @@ done
 
 ```bash
 DEPLOY_ID=$(python3 -c 'import uuid; print(uuid.uuid4())')
-WORKFLOWS="deploy_user.yml,deploy_partner.yml,deploy_functions.yml,deploy_firestore.yml,deploy_storage.yml"
+WORKFLOWS="deploy_user.yml,deploy_partner.yml,deploy_enterprise.yml,deploy_functions.yml,deploy_firestore.yml,deploy_storage.yml"
 
 .agents/scripts/github_actions_deploy_watch.sh \
   --owner "$OWNER" \
@@ -221,6 +223,8 @@ WORKFLOWS="deploy_user.yml,deploy_partner.yml,deploy_functions.yml,deploy_firest
 
 - **`notify_on_output` を付けない起動は未完成**とみなし、手順 7 完了と報告してはならない
 - 1 本だけ発火した場合は `WORKFLOWS` をその 1 ファイルにする
+- `--created ">=$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する
+- 6 本を一括発火しても、GitHub Actions の **同時実行枠**の都合で run が **Queued** になることはある（発火は並列・実行はキュー待ちになり得る）
 
 ### 8. 即時報告
 
@@ -268,9 +272,9 @@ AGENT_LOOP_WAKE_deploy {"prompt":"/github-actions-deploy","mode":"report","deplo
 | 一時的エラー | `HTTP Error: 503` / `500` / `429`、`service is currently unavailable` | Firebase / Google API 側の一時障害 | 再実行を提案 |
 | Rules コンパイルエラー | `compilation errors`、`firestore.rules` / `storage.rules` | ルールの構文・参照ミス | 該当ルールの修正が必要 |
 | インデックス | `firestore.indexes.json` 関連の Error | indexes 定義の不整合 | indexes 定義の見直し |
-| 権限・認証 | `403`、`PERMISSION_DENIED` | Secrets / IAM | リポの Secrets 確認 |
-| API 未有効化 | `API ... is disabled` | 必要 API が無効 | GCP で API 有効化 |
-| ビルド失敗 | `tsc`、`npm run build` | アプリ側のビルド不良 | ソース修正 |
+| 権限・認証 | `403`、`PERMISSION_DENIED`、`GOOGLE_APPLICATION_CREDENTIALS`、IAM 系 | サービスアカウント権限・Secrets 設定 | リポの Secrets / IAM 設定確認 |
+| API 未有効化 | `has not been used in project`、`API ... is disabled` | 必要 API が無効 | GCP で該当 API を有効化 |
+| ビルド失敗 | `tsc`、`npm run build`、Functions のビルドエラー、`npm -w enterprise run build` | アプリ側のビルド不良 | ソース修正（このスキルでは修正しない） |
 
 - **重要**: 解析までで止める。修正や自動再実行は行わない
 
@@ -310,7 +314,8 @@ watcher ログと [`.agents/state/deploy-watch.json`](../../state/deploy-watch.j
 - **本番 `nijuniinc/bokudeli-event-new` は必ず拒否**（push も発火も）
 - **デフォルトは push → 発火**。push 省略はユーザー明示または 1c（発火のみ）のみ
 - **`branch.<branch>.sandboxRemote`** は `git-reflect-after-commit` と共有する。ブランチごとに sandbox 先を記憶する
-- 5 本一括は **一括発火 → バックグラウンド並列 watch → wake 1 回で結果報告** がデフォルト
+- 6 本すべて発火すると Functions や Hosting（user / partner / enterprise）がまとめて動く。ユーザーが「user だけ」「enterprise だけ」と言った場合は絞る
+- 6 本一括は **一括発火 → バックグラウンド並列 watch → wake 1 回で結果報告** がデフォルト
 - デプロイ失敗時は **原因を解析するだけ**。修正・自動再実行はユーザーに委ねる
 
 ## 関連ドキュメント
