@@ -181,7 +181,7 @@ gh run list --repo OWNER/REPO --limit 10
 - 発火直後は run がまだ作成されておらず、`RUN_ID` が **空文字列**になり得る（空のまま `gh run watch` すると失敗する）。
 - `--limit 1` は最新 run を返すだけで、**同一ブランチの過去に成功した run** を掴むことがある。この場合 `RUN_ID` は空でないため気付きにくく、`gh run watch --exit-status` が **古い成功 run を即座に成功と判定**し、今回の失敗を見逃す。
 
-これを避けるため、**一括発火前に基準時刻 `SINCE` を 1 回控え**、各 WF について `workflow_dispatch` イベントかつ **基準時刻より後に作成された run** を、取得できるまで**リトライ**して特定する。
+これを避けるため、**一括発火前に基準時刻 `SINCE` を 1 回控え**、各 WF について `workflow_dispatch` イベントかつ **基準時刻以降（`>=`）に作成された run** を、取得できるまで**リトライ**して特定する。
 
 **フェーズ B: RUN_ID 特定（WF ごと）**
 
@@ -196,7 +196,7 @@ for WF in "${WORKFLOWS[@]}"; do
   RUN_ID=""
   for i in $(seq 1 10); do
     RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH \
-      --event workflow_dispatch --created ">$SINCE" \
+      --event workflow_dispatch --created ">=$SINCE" \
       --limit 1 --json databaseId --jq '.[0].databaseId // empty')
     [ -n "$RUN_ID" ] && RUN_ID_ENTRIES+=("${WF}:${RUN_ID}") && break
     sleep 3
@@ -246,7 +246,7 @@ gh workflow run "$WF" --repo OWNER/REPO --ref BRANCH -f environment=development
 RUN_ID=""
 for i in $(seq 1 10); do
   RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH \
-    --event workflow_dispatch --created ">$SINCE" \
+    --event workflow_dispatch --created ">=$SINCE" \
     --limit 1 --json databaseId --jq '.[0].databaseId // empty')
   [ -n "$RUN_ID" ] && break
   sleep 3
@@ -262,7 +262,7 @@ fi
 
 **補足**
 
-- `--created ">$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する。
+- `--created ">=$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する。
 - 5 本を一括発火しても、GitHub Actions の **同時実行枠**の都合で run が **Queued** になることはある（発火は並列・実行はキュー待ちになり得る）。
 
 ### 7. 失敗時のエラー解析（解析のみ・修正はしない）

@@ -152,7 +152,7 @@ npm -w <pkg> run format:check
 - タイトルの接頭辞に変更したディレクトリと Issue 番号を含める
   - 例: `[partner] #1777 注文詳細画面の修正`
   - 例: `[base][common] #1799 withConverter の削除を禁止`
-  - 例: `[ci] #2084 deploy_manager の checkout を v6 に更新`
+  - 例: `[ci] #2084 deploy_user の checkout を v6 に更新`
   - 例: `[firebase] #1901 firestore.indexes.json の重複インデックスを削除`
   - 例: `[ai] #1800 分割コミットスキルに ci と firebase タグを追加`
   - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
