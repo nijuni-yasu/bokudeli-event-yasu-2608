@@ -76,7 +76,7 @@ npm -w <pkg> run format:check
 - タイトルの接頭辞に変更したディレクトリと Issue 番号を含める
   - 例: `[partner] #1777 注文詳細画面の修正`
   - 例: `[base][common] #1799 withConverter の削除を禁止`
-  - 例: `[ci] #2084 deploy_manager の checkout を v6 に更新`
+  - 例: `[ci] #2084 deploy_user の checkout を v6 に更新`
   - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
   - [doc]: documents/ 内の更新のみ。[ci]: `.github/workflows/`。[terraform]: `terraform/`。[firebase]: Firebase 設定・ルール・インデックス。[ai]: AI エージェント向け指示・設定
   - ルートの package.json / package-lock.json 等、上記タグに該当しない変更は接頭辞なし
