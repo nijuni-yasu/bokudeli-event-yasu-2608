@@ -1,6 +1,6 @@
 ---
 name: github-actions-deploy
-description: GitHub 上の指定リポジトリに対し、gh CLI でデプロイ系ワークフローを workflow_dispatch により手動発火する。fork や sandbox 向け。**ユーザーがリモート名とブランチ（例 sandbox2510/feat/960-v2）またはリポ URL・owner/repo とブランチを会話で明示したときだけ**使う。ローカル git の upstream（@{upstream}）だけを根拠に勝手に ref を決めて発火してはならない——明示がなければ gh workflow run は実行せず、指定を求める。bokudeli-event-yasu をデプロイ、nijuni-yasu のリポを Actions で走らせたい、workflow_dispatch で deploy、リモート sandbox に手動デプロイ などの文脈で参照する。本番リポジトリ nijuniinc/bokudeli-event-new ではこのスキルを使わず発火してはならない。push ではなく Actions の手動実行でデプロイしたいときに使う。デプロイ後は run の成否を監視し、失敗時はログから原因を解析する（解析のみ・修正はしない）。6 本一括は一括発火後に並列 watch がデフォルト。デプロイエラーの原因を調べたい・解析したいという文脈でも参照する。
+description: GitHub 上の指定リポジトリに対し、gh CLI でデプロイ系ワークフローを workflow_dispatch により手動発火する。fork や sandbox 向け。**ユーザーがリモート名とブランチ（例 sandbox2510/feat/960-v2）またはリポ URL・owner/repo とブランチを会話で明示したときだけ**使う。ローカル git の upstream（@{upstream}）だけを根拠に勝手に ref を決めて発火してはならない——明示がなければ gh workflow run は実行せず、指定を求める。bokudeli-event-yasu をデプロイ、nijuni-yasu のリポを Actions で走らせたい、workflow_dispatch で deploy、リモート sandbox に手動デプロイ などの文脈で参照する。本番リポジトリ nijuniinc/bokudeli-event-new ではこのスキルを使わず発火してはならない。push ではなく Actions の手動実行でデプロイしたいときに使う。デプロイ後は run の成否を監視し、失敗時はログから原因を解析する（解析のみ・修正はしない）。5 本一括は一括発火後に並列 watch がデフォルト。デプロイエラーの原因を調べたい・解析したいという文脈でも参照する。
 ---
 
 # GitHub Actions デプロイ手動発火
@@ -117,7 +117,7 @@ description: GitHub 上の指定リポジトリに対し、gh CLI でデプロ�
 
 ### 4. 発火するワークフローを選ぶ
 
-対象は **リポジトリ内のデプロイ用ワークフロー 6 本のみ**。Lint や他用途のワークフローは動かさない。
+対象は **リポジトリ内のデプロイ用ワークフロー 5 本のみ**。Lint や他用途のワークフローは動かさない。`deploy_manager.yml`（hosting manager）は manager 移行（#2087）完了まで対象外。
 
 | ファイル名 | ざっくりした対象 |
 |------------|------------------|
@@ -126,13 +126,12 @@ description: GitHub 上の指定リポジトリに対し、gh CLI でデプロ�
 | deploy_functions.yml | functions |
 | deploy_firestore.yml | firestore |
 | deploy_storage.yml | storage |
-| deploy_manager.yml | hosting manager |
 
 - ユーザーが **特定パッケージだけ** と言ったら、対応する 1 本だけ `gh workflow run` する
-- **全体デプロイ**や指定がなければ、上記 6 本を **一括発火**する（**デフォルト**）。`gh workflow run` は非同期のため、ループで連続実行すれば数秒で 6 本すべて発火できる
+- **全体デプロイ**や指定がなければ、上記 5 本を **一括発火**する（**デフォルト**）。`gh workflow run` は非同期のため、ループで連続実行すれば数秒で 5 本すべて発火できる
 - **禁止**: 1 本ごとに `gh run watch` で完了を待ってから次を発火する直列パターン（user 完了後に partner が走る等、発火が遅くなる）
-- 同一リポの負荷を抑えたい場合やユーザーが明示した場合のみ、6 本を **順次発火**してよい
-- **6 本一括は負荷が大きい**ため、初回や迷いがあるときはユーザーに確認してもよい
+- 同一リポの負荷を抑えたい場合やユーザーが明示した場合のみ、5 本を **順次発火**してよい
+- **5 本一括は負荷が大きい**ため、初回や迷いがあるときはユーザーに確認してもよい
 
 ### 5. gh で実行するコマンド形
 
@@ -142,20 +141,20 @@ description: GitHub 上の指定リポジトリに対し、gh CLI でデプロ�
 gh workflow run deploy_user.yml --repo OWNER/REPO --ref BRANCH -f environment=development
 ```
 
-**6 本一括発火する場合（デフォルト・発火のみ・監視は手順 6）**
+**5 本一括発火する場合（デフォルト・発火のみ・監視は手順 6）**
 
-一括発火の直前に **基準時刻 `SINCE` を 1 回だけ**控える（6 本共通。`--workflow` で run を区別するため）。
+一括発火の直前に **基準時刻 `SINCE` を 1 回だけ**控える（5 本共通。`--workflow` で run を区別するため）。
 
 ```bash
 SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 for WF in deploy_user.yml deploy_partner.yml deploy_functions.yml \
-          deploy_firestore.yml deploy_storage.yml deploy_manager.yml; do
+          deploy_firestore.yml deploy_storage.yml; do
   gh workflow run "$WF" --repo OWNER/REPO --ref BRANCH -f environment=development
 done
 ```
 
-`gh workflow run` は即座に返る。6 本を **watch 完了まで待たず** 連続発火する。
+`gh workflow run` は即座に返る。5 本を **watch 完了まで待たず** 連続発火する。
 
 発火後の一覧確認:
 
@@ -169,9 +168,9 @@ gh run list --repo OWNER/REPO --limit 10
 
 `gh workflow run` は発火するだけで結果を返さない。発火した各ワークフローについて **今回発火した run を確実に特定**し、完了まで監視する。
 
-**手順の流れ（6 本一括の場合）**
+**手順の流れ（5 本一括の場合）**
 
-1. **フェーズ A（一括発火）**: 手順 5 のとおり `SINCE` を控えて 6 本を連続 `gh workflow run`（watch はしない）
+1. **フェーズ A（一括発火）**: 手順 5 のとおり `SINCE` を控えて 5 本を連続 `gh workflow run`（watch はしない）
 2. **フェーズ B（RUN_ID 特定）**: 各 workflow ファイルごとに、基準時刻以降の run をリトライ取得
 3. **フェーズ C（並列監視）**: 取得できた run を **並列**に `gh run watch`（バックグラウンド起動 + `wait`）
 
@@ -190,7 +189,7 @@ gh run list --repo OWNER/REPO --limit 10
 
 ```bash
 WORKFLOWS=(deploy_user.yml deploy_partner.yml deploy_functions.yml \
-           deploy_firestore.yml deploy_storage.yml deploy_manager.yml)
+           deploy_firestore.yml deploy_storage.yml)
 RUN_ID_ENTRIES=()
 
 for WF in "${WORKFLOWS[@]}"; do
@@ -264,7 +263,7 @@ fi
 **補足**
 
 - `--created ">$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する。
-- 6 本を一括発火しても、GitHub Actions の **同時実行枠**の都合で run が **Queued** になることはある（発火は並列・実行はキュー待ちになり得る）。
+- 5 本を一括発火しても、GitHub Actions の **同時実行枠**の都合で run が **Queued** になることはある（発火は並列・実行はキュー待ちになり得る）。
 
 ### 7. 失敗時のエラー解析（解析のみ・修正はしない）
 
@@ -301,8 +300,8 @@ gh run view "$RUN_ID" --repo OWNER/REPO --log-failed
 - このスキルは **ローカルの Cursor エージェントが gh を実行する**前提である。Cursor クラウドやサンドボックスのみでは gh や認証が無いことがある。その場合はユーザーに同じコマンドを端末で実行してもらう
 - **本番 `nijuniinc/bokudeli-event-new` は必ず拒否**する。依頼の言い回しが本番 URL でも同様
 - **upstream や現在ブランチだけ**ではデプロイ先 ref を決めない。**必ず会話での明示**（`リモート/ブランチ` または リポ + ブランチ）を待つ
-- 6 本すべて発火すると Functions や Hosting がまとめて動く。ユーザーが「user だけ」と言った場合は絞る
-- **6 本一括は一括発火 → 並列 watch がデフォルト**。1 本 watch 完了まで待ってから次を発火する直列パターンは使わない
+- 5 本すべて発火すると Functions や Hosting がまとめて動く。ユーザーが「user だけ」と言った場合は絞る
+- **5 本一括は一括発火 → 並列 watch がデフォルト**。1 本 watch 完了まで待ってから次を発火する直列パターンは使わない
 - デプロイ後は run の成否を監視し、失敗時はログから **原因を解析するだけ**にとどめる。ルール・コード・設定の修正や自動再実行はしない（再実行の可否はユーザーに委ねる）
 
 ## 関連ドキュメント
