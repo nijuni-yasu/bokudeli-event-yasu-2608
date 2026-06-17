@@ -196,7 +196,7 @@ for WF in "${WORKFLOWS[@]}"; do
   RUN_ID=""
   for i in $(seq 1 10); do
     RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH \
-      --event workflow_dispatch --created ">="$SINCE" \
+      --event workflow_dispatch --created ">=$SINCE" \
       --limit 1 --json databaseId --jq '.[0].databaseId // empty')
     [ -n "$RUN_ID" ] && RUN_ID_ENTRIES+=("${WF}:${RUN_ID}") && break
     sleep 3
@@ -246,7 +246,7 @@ gh workflow run "$WF" --repo OWNER/REPO --ref BRANCH -f environment=development
 RUN_ID=""
 for i in $(seq 1 10); do
   RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH \
-    --event workflow_dispatch --created ">="$SINCE" \
+    --event workflow_dispatch --created ">=$SINCE" \
     --limit 1 --json databaseId --jq '.[0].databaseId // empty')
   [ -n "$RUN_ID" ] && break
   sleep 3
@@ -262,7 +262,7 @@ fi
 
 **補足**
 
-- `--created ">="$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する。
+- `--created ">=$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する。
 - 5 本を一括発火しても、GitHub Actions の **同時実行枠**の都合で run が **Queued** になることはある（発火は並列・実行はキュー待ちになり得る）。
 
 ### 7. 失敗時のエラー解析（解析のみ・修正はしない）
