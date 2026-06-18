@@ -1,0 +1,98 @@
+# エンタープライズ v0.2 再設計
+
+現在実装中のものをv0.1とする
+以下内容をもとに、v0.2を再設計・再実装を進める
+v0.1はリリース前なので、sandbox環境のデータは削除する前提で良い
+
+------------------------------------
+1. firebaseプロジェクト / テナント分離
+------------------------------------
+
+## 概要
+- PF版とエンプラ版は、firebaseのプロジェクト=テナントを分けた方が安全ではないか
+- エンプラ版のテナントは企業ごとに作成する。100社利用する場合は100テナント
+
+## 現状の課題
+- エンプラユーザーとPFユーザー
+	- アカウントが混ざってしまう。
+	- エンプラユーザーがPF版にログインしてしまう。データを共通化する？分離する？などの対応が必要
+- セキュリティリスク
+	- SaaSの社内データがPF版と混ざってしまう
+	- データ混在・データ漏洩のリスク
+	- 大企業になるとテナント分離が、社内導入への一定の要件になると思われる
+- 他にどんな課題がある？
+	- 
+	- 
+
+## テナント分離を実装する場合
+
+### partnerの対応
+- eventsについて、partnerは全てのテナント/プロジェクトをreadする必要がある
+- 店舗情報・メニュー情報は、PF版のテナントにてデータ保存・作成する
+- 注文情報はPF版だけでなく、エンプラ版の全企業のテナントをreadするようになる
+- memberOrdersについて、partnerは全てのテナントをreadする
+- eventDocのevent_stausのapplying_reservationの承認と却下はテナントを跨いで行う
+- ParnerMenusからEventMenusのコピーについて、テナントを跨いで行う。
+- テナントが増えた時に、全てのデータを見にいく必要がある。
+
+## CIの対応
+- terraform
+	- 新規企業の作成
+	- firebaseプロジェクト/GCPテナント新規作成のterraformが必要
+	- 将来的に、管理画面から、ボタン押下でできるようにしたい。
+- リリース作業/デプロイ
+	- deploy_enterprise.yml と deploy_functions.yml について、企業の個数分デプロイする必要がある
+	- サブタスク？として、全ての企業分を並列にデプロイする想定
+- SecretManagerの対応
+	- SecretManagerに新規項目が増えた場合、全てのテナントへの設定が必要
+	- 100社いた場合、100社の手作業は難しい。for文でスクリプトから設定できるようにする。
+	- SecretManagerの値はGit管理はしない
+
+### ゲストユーザーの仕様について
+- テナント分離されている前提とする
+- PF版ユーザーはエンプラ版にログインはできない
+- エンプラ版のゲスト参加できるイベントについては、エンプラ版
+- ゲストユーザーはエンプラ版にてゲストアカウントを作成する。
+- メールアドレスと、パスコードでアカウントを作成。
+- 作成完了後、
+- 別企業のエンプラ版を利用する場合は、またアカウントを作成し直すようにする。
+
+------------------------------------
+2. コードベースの分離
+------------------------------------
+
+## functionsの分離
+functions
+	functions_base
+		utils
+		store
+			partner_store
+			event_store
+			commuity_store
+	functions_user
+		funtion_file
+		funtion_file
+		funtion_file
+		
+
+	functions_enterprise
+		funtion_file
+		funtion_file
+		funtion_file
+		※ functions_baseのシンボリックリンクを貼る
+
+
+### 狙い
+- userとenterpriseのfunctionsを明確に分離する
+- テナントごとに、デプロイするfunctionsが別れるようにする
+- 共通のものを、functions_baseに置く
+- PF版は functions_user
+- エンプラ版は functions_enterprise
+
+### 懸念と対応
+- firebase functionsは1つのディレクトリしかデプロイできない
+- functions_base をどのように取り込むか
+- 現状commonは、functionsのlibsに ../../../commonとしてシンボリックリンクを貼っている
+- functions_baseのシンボリックリンクを貼る？
+- もしくは github actisonのymlでフックスクリプト。（functions_baseをコピーしてからデプロイする）
+- もしくはtypescriptのビルドが終わったら、functions_baseの実態をコピーしてからデプロイする
