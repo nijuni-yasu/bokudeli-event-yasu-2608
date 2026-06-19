@@ -11,7 +11,7 @@ const props = defineProps<{
   friend: UserFriendListItem
   targetUserId: string
   targetUserName: string
-  isOwner: boolean
+  targetUserImageUrl: string
   resolveUserPath: ResolveUserPathFn
   resolveEventPath: ResolveEventPathFn
 }>()
@@ -66,13 +66,12 @@ const openMeetLogDialog = () => {
 
         <v-chip
           size="small"
-          color="primary"
           variant="tonal"
           class="friend-meet-count-chip mt-2"
           :prepend-icon="mdiSilverwareForkKnife"
           label
         >
-          <span class="friend-date-value">{{ $t('user.friend_meet_count', { count: friend.meet_count }) }}</span>
+          <span class="friend-meet-count-value">{{ $t('user.friend_meet_count', { count: friend.meet_count }) }}</span>
         </v-chip>
       </div>
     </v-card-item>
@@ -98,7 +97,8 @@ const openMeetLogDialog = () => {
 
     <v-card-actions v-if="hasMeetHistory" class="pt-0 pb-2 pe-2 justify-end">
       <v-btn
-        variant="tonal"
+        variant="outlined"
+        rounded="pill"
         color="primary"
         density="comfortable"
         size="small"
@@ -114,7 +114,7 @@ const openMeetLogDialog = () => {
       v-model="meetLogDialogOpen"
       :target-user-id="targetUserId"
       :target-user-name="targetUserName"
-      :is-owner="isOwner"
+      :target-user-image-url="targetUserImageUrl"
       :friend="friend"
       :resolve-user-path="resolveUserPath"
       :resolve-event-path="resolveEventPath"
@@ -163,6 +163,7 @@ const openMeetLogDialog = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
 }
 
 .friend-card-profile-link:focus-visible {
@@ -188,6 +189,10 @@ const openMeetLogDialog = () => {
 
 .friend-meet-count-chip {
   max-width: 100%;
+}
+
+.friend-meet-count-value {
+  font-variant-numeric: tabular-nums;
 }
 
 .meet-log-open-btn {
