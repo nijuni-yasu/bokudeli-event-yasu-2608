@@ -730,6 +730,8 @@ export default {
     food_event_link_label: 'イベントを開く',
   },
   auth: {
+    enterprise_user_on_pf:
+      '企業アカウントでログイン中です。一般向け（PF）サイトはご利用いただけません。企業向けサイトからアクセスしてください。',
     action: {
       title: 'shokujii',
       reset_email:
