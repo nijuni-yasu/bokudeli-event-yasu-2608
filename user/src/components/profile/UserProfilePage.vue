@@ -1057,7 +1057,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 :friend="friend"
                 :target-user-id="profileUserId"
                 :target-user-name="user.user_name"
-                :is-owner="isOwner"
+                :target-user-image-url="user.user_image_url"
                 :resolve-user-path="getUserPath"
                 :resolve-event-path="getEventPath"
               />
