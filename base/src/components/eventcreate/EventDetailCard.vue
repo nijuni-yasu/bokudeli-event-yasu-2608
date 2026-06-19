@@ -26,6 +26,10 @@ import { trimHashTag } from '@shokujii/base/utils/hashTag'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import {
+  PF_EVENT_PAYMENT_UI_STRATEGY,
+  type EventPaymentUiStrategy,
+} from '@shokujii/base/composable/eventPaymentUiStrategy.js'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -42,11 +46,14 @@ const props = withDefaults(
      * true の場合は useEventStore を呼ばず、保存済みドキュメントを前提とした処理（カバー画像 URL 参照や本文画像アップロード）を無効化する。
      */
     isNew?: boolean
+    /** 支払い方式 UI（enterprise / PF）。呼び出し側から注入 */
+    paymentUiStrategy?: EventPaymentUiStrategy
   }>(),
   {
     readonly: false,
     showAlbumPreview: true,
     isNew: false,
+    paymentUiStrategy: () => PF_EVENT_PAYMENT_UI_STRATEGY,
   },
 )
 
@@ -59,10 +66,7 @@ const OFF_AMOUNT_STEP = 100
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
 const communityStore = useCommunityStore(event.value.community_account)
-const isEnterpriseCommunity = computed(() => {
-  const id = communityStore.community?.enterprise_id
-  return id != null && id !== ''
-})
+const paymentUiStrategy = computed(() => props.paymentUiStrategy)
 // 新規作成中はまだイベントドキュメントが Firestore に存在しないため、
 // useEventStore を呼ぶとコレクショングループ検索でリトライ警告が連発してしまう。保存済みのときだけストアを参照する。
 const eventStore = props.isNew ? null : useEventStore(event.value)
@@ -135,9 +139,9 @@ const offAmountValidator = (v: number | string | undefined) => {
 watch(
   () => event.value.event_payment,
   () => {
-    if (isEnterpriseCommunity.value) {
-      if (event.value.event_payment === 'community_bill' || event.value.event_payment === 'user_on_day') {
-        event.value.event_payment = 'enterprise_subsidy'
+    if (paymentUiStrategy.value.isEnterpriseMode) {
+      if (paymentUiStrategy.value.forbiddenPayments.includes(event.value.event_payment)) {
+        event.value.event_payment = paymentUiStrategy.value.defaultPaymentWhenDraft ?? 'enterprise_subsidy'
       }
       if (event.value.event_payment !== 'community_bill') {
         event.value.community_bill_settings = undefined
@@ -150,13 +154,13 @@ watch(
 )
 
 watch(
-  isEnterpriseCommunity,
+  () => paymentUiStrategy.value.isEnterpriseMode,
   (isEnterprise) => {
     if (!isEnterprise || props.readonly || event.value.event_status.value !== 'in_draft') {
       return
     }
-    if (event.value.event_payment === 'community_bill' || event.value.event_payment === 'user_on_day') {
-      event.value.event_payment = 'enterprise_subsidy'
+    if (paymentUiStrategy.value.forbiddenPayments.includes(event.value.event_payment)) {
+      event.value.event_payment = paymentUiStrategy.value.defaultPaymentWhenDraft ?? 'enterprise_subsidy'
       event.value.community_bill_settings = undefined
     }
   },
@@ -507,7 +511,7 @@ const tinymceInit = computed(() => ({
         class="ma-1 ma-md-3"
         :readonly="event.event_status.value !== 'in_draft'"
       >
-        <template v-if="isEnterpriseCommunity">
+        <template v-if="paymentUiStrategy.isEnterpriseMode">
           <v-card
             variant="outlined"
             :color="event.event_payment === 'enterprise_subsidy' ? 'primary' : undefined"

@@ -3,13 +3,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { getAuth } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@shokujii/base/firebase.js'
 import { getCommunityPath, getEventPath, getUserPath, getProfile } from '@/router/utils'
 import { BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { dateWithDayOfWeekString, dateOnlyTimeString, priceString } from '@shokujii/base/schemes/converter'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
-import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 import { CartItem, useCurrentUserStore } from '@shokujii/base/stores/currentUser'
 import { useEventStore, buildEventStoreOptions, type EventStoreOptions } from '@shokujii/base/stores/event'
 import { computeTotalPayment } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
@@ -33,6 +30,17 @@ import {
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
+import { pfCartMonthlyUsageLoader, type CartMonthlyUsageLoader } from '@shokujii/base/composable/cartMonthlyUsage.js'
+
+const props = withDefaults(
+  defineProps<{
+    /** 月次 usage 表示用ローダー。enterprise 側から注入 */
+    monthlyUsageLoader?: CartMonthlyUsageLoader
+  }>(),
+  {
+    monthlyUsageLoader: () => pfCartMonthlyUsageLoader,
+  },
+)
 
 const { t: $t } = useI18n()
 const router = useRouter()
@@ -111,34 +119,11 @@ type EnrichedCartItem = CartItem & {
 const monthlyUsage = ref<{ used: number; limit: number } | null>(null)
 
 onMounted(async () => {
-  const auth = getAuth()
-  const user = auth.currentUser
-  if (user == null) {
+  const uid = userId.value
+  if (uid === '') {
     return
   }
-  try {
-    const token = await user.getIdTokenResult()
-    const enterpriseId = token.claims.enterprise_id as string | undefined
-    if (enterpriseId == null || enterpriseId === '') {
-      return
-    }
-    const [memberSnap, enterpriseSnap] = await Promise.all([
-      getDoc(doc(db, 'enterprises', enterpriseId, 'members', user.uid)),
-      getDoc(doc(db, 'enterprises', enterpriseId)),
-    ])
-    if (!memberSnap.exists() || !enterpriseSnap.exists()) {
-      return
-    }
-    const member = new EnterpriseMember(user.uid, memberSnap.data())
-    const enterprise = new Enterprise(enterpriseId, enterpriseSnap.data())
-    const month = formatYearMonth(Date.now())
-    monthlyUsage.value = {
-      used: member.monthly_usage[month] ?? 0,
-      limit: enterprise.monthly_limit_per_user,
-    }
-  } catch (error) {
-    console.warn('Failed to load monthly usage', error)
-  }
+  monthlyUsage.value = await props.monthlyUsageLoader(uid)
 })
 
 /** 主催者請求かつおごり設定ありのとき、カート注文テーブルに「おごり」列を出す */

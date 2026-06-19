@@ -11,6 +11,8 @@ import EventMenu from '@shokujii/base/components/eventcreate/EventMenu.vue'
 import EventDetailCard from '@shokujii/base/components/eventcreate/EventDetailCard.vue'
 import EventShopNotice from '@shokujii/base/components/eventcreate/EventShopNotice.vue'
 import EventEditStepNav from '@shokujii/base/components/eventcreate/EventEditStepNav.vue'
+import { eventPaymentUiStrategyFromEnterpriseId } from '@shokujii/base/composable/eventPaymentUiStrategy.js'
+import { eventDraftPreparerFromEnterpriseId } from '@shokujii/base/stores/eventDraft.js'
 import { BokudeliEvent, createNewEvent, updateEventMenus } from '@shokujii/base/stores/event.js'
 import { usePartnerStore, type BokudeliPartnerMenu, type BokudeliPartnerShop } from '@shokujii/base/stores/partner.js'
 import { useEventStore, type EventStore, BokudeliEventMenu } from '@shokujii/base/stores/event'
@@ -92,6 +94,10 @@ const shopNoticeFormValid = ref(false)
 const shopNoticeRef = shallowRef<{ openReserveConfirmDialog: () => void } | null>(null)
 
 const communityStore = useCommunityStore(props.communityAccount) as CommunityStore
+
+const paymentUiStrategy = computed(() =>
+  eventPaymentUiStrategyFromEnterpriseId(communityStore.community?.enterprise_id),
+)
 
 const isContactDialogOpen = ref(props.eventId == null)
 
@@ -539,7 +545,9 @@ const createEventDraft = async (): Promise<BokudeliEvent | null> => {
   event.value.community_id = communityId
   event.value.created_by = handleUserId
   event.value.updated_by = handleUserId
-  const newEvent = await createNewEvent(toRaw(event.value), coverImage.value)
+  const newEvent = await createNewEvent(toRaw(event.value), coverImage.value, {
+    draftPreparer: eventDraftPreparerFromEnterpriseId(communityStore.community?.enterprise_id),
+  })
   if (newEvent.event_id !== '') {
     try {
       await updateEventMenus(newEvent.event_id, communityId, selectedMenuIds.value)
@@ -901,6 +909,7 @@ const stepperItems = computed(() => [
                 :subdomain-tags="communityStore.community?.subdomain_tags"
                 :album-manage-url="albumManageUrl"
                 :is-new="props.eventId == null && !hasFirestoreDraft"
+                :payment-ui-strategy="paymentUiStrategy"
               />
               <event-edit-step-nav :visible="stepper === 4">
                 <v-btn

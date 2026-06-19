@@ -36,8 +36,11 @@ import { updateEventMenus as _updateEventMenus } from '@shokujii/base/apis/event
 import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { ZodError } from 'zod'
 import { copyCommunityCoverToEvent as callCopyCommunityCoverToEvent } from '@shokujii/base/apis/copyCommunityCoverToEvent.js'
-import { enterpriseSubsidySettingsFromEnterprise } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
-import { Enterprise } from '@shokujii/common/schemas/Enterprise.js'
+import {
+  preparePfEventDraft,
+  prepareEnterpriseEventDraft,
+  type EventDraftPreparer,
+} from '@shokujii/base/stores/eventDraft.js'
 import { resizeImage } from '@shokujii/base/utils/image.js'
 import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 
@@ -75,36 +78,7 @@ export class BokudeliEventMember extends User {
  */
 export class BokudeliEventMenu extends EventMenu {}
 
-/** 下書き保存時に enterprise_subsidy_settings を Enterprise マスターから再スナップショット */
-export const applyEnterpriseSubsidySnapshotForDraft = async (event: BokudeliEvent): Promise<void> => {
-  const enterpriseId = event.enterprise_id
-  if (enterpriseId == null || enterpriseId === '') {
-    return
-  }
-  const status = event.event_status?.value
-  if (status != null && status !== 'in_draft') {
-    return
-  }
-  if (event.event_payment === 'community_bill' || event.event_payment === 'user_on_day') {
-    event.event_payment = 'enterprise_subsidy'
-    event.community_bill_settings = undefined
-  }
-  const enterpriseRef = doc(db, 'enterprises', enterpriseId)
-  const enterpriseSnap = await getDoc(enterpriseRef)
-  if (!enterpriseSnap.exists()) {
-    return
-  }
-  const raw = enterpriseSnap.data()
-  if (raw == null) {
-    return
-  }
-  try {
-    const enterprise = new Enterprise(enterpriseId, raw)
-    event.enterprise_subsidy_settings = enterpriseSubsidySettingsFromEnterprise(enterprise)
-  } catch (err) {
-    console.warn('Failed to snapshot enterprise_subsidy_settings', err)
-  }
-}
+export { prepareEnterpriseEventDraft as applyEnterpriseSubsidySnapshotForDraft } from './eventDraft.js'
 
 // eventList で使用するために export するが、他では使用しないように
 export const eventConverter: FirestoreDataConverter<BokudeliEvent> = {
@@ -143,20 +117,22 @@ const memberOrderConverter: FirestoreDataConverter<EventMemberOrder> = {
   },
 }
 
-export const createNewEvent = async (event: BokudeliEvent, coverImage: File | null): Promise<BokudeliEvent> => {
+export const createNewEvent = async (
+  event: BokudeliEvent,
+  coverImage: File | null,
+  options?: { draftPreparer?: EventDraftPreparer },
+): Promise<BokudeliEvent> => {
   const communityRef = doc(db, 'communities', event.community_id)
   const community = await getDoc(communityRef)
   if (!community.exists()) {
     throw new Error(`community ${event.community_id} does not exists`)
   }
-  const enterpriseId = community.data()?.enterprise_id
+  const enterpriseId = community.data()?.enterprise_id as string | null | undefined
   if (enterpriseId != null && enterpriseId !== '' && event.enterprise_id == null) {
     event.enterprise_id = enterpriseId
   }
-  if (enterpriseId != null && event.event_payment == null) {
-    event.event_payment = 'enterprise_subsidy'
-  }
-  await applyEnterpriseSubsidySnapshotForDraft(event)
+  const draftPreparer = options?.draftPreparer ?? preparePfEventDraft
+  await draftPreparer(event, enterpriseId)
   if (coverImage == null) {
     // Callable でコミュニティカバーをコピー。Storage にコミュニティカバーが無い場合は Callable が失敗し setDoc には進まない。
     await callCopyCommunityCoverToEvent({ communityId: community.id, eventId: event.id })
@@ -187,13 +163,19 @@ export type EventStoreOptions = {
   ordersEnterpriseId?: string | null
   /** enterprise 向け: events の collectionGroup クエリに enterprise_id フィルタを追加 */
   eventsEnterpriseId?: string | null
+  /** 下書き保存前の event 補正（enterprise subsidy スナップショット等） */
+  draftPreparer?: EventDraftPreparer
 }
 
 export const buildEventStoreOptions = (enterpriseId: string | null | undefined): EventStoreOptions => {
   if (enterpriseId == null || enterpriseId === '') {
     return {}
   }
-  return { ordersEnterpriseId: enterpriseId, eventsEnterpriseId: enterpriseId }
+  return {
+    ordersEnterpriseId: enterpriseId,
+    eventsEnterpriseId: enterpriseId,
+    draftPreparer: prepareEnterpriseEventDraft,
+  }
 }
 
 export const useEventStore = (target: string | BokudeliEvent, options: EventStoreOptions = {}) => {
@@ -204,6 +186,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     eventId = target
   }
   const scopedEnterpriseId = options.eventsEnterpriseId ?? options.ordersEnterpriseId ?? null
+  const draftPreparer = options.draftPreparer ?? preparePfEventDraft
   const piniaStoreId =
     scopedEnterpriseId != null && scopedEnterpriseId !== ''
       ? `/events/${eventId}/e/${scopedEnterpriseId}`
@@ -303,7 +286,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     })
 
     const updateEvent = async (data: BokudeliEvent) => {
-      await applyEnterpriseSubsidySnapshotForDraft(data)
+      await draftPreparer(data, scopedEnterpriseId)
       const eventRef = await getEventRef()
       await setDoc(eventRef, data, { merge: true })
     }
