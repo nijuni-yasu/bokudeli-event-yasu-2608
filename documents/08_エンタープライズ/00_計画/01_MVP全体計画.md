@@ -22,11 +22,11 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-06-19**（M-2 コード実装完了。M-1 本番 backfill 待ち）
+最終更新: **2026-06-20**（本番ブロッカー RC 4 件 ✅。A-1 は RC-35 対応済・Callable 薄層化のみ残）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
-| WS-A（Phase 0） | 0 | 6 | 6 |
+| WS-A（Phase 0） | 3 | 3 | 6 |
 | WS-B（IdP・本番前） | 0 | 6 | 6 |
 | WS-C（スキーマ） | 1 | 4 | 5 |
 | WS-D（v0.1 残） | 0 | 5 | 5 |
@@ -34,9 +34,9 @@
 | WS-F（PF 露出） | 0 | 2 | 2 |
 | **WS-M（development マージ）** | **7** | **5** | **12** |
 | WS-G（Phase 2・MVP 外） | 0 | 4 | 4 |
-| **WS-A〜F 全タスク** | **1** | **29** | **30** |
+| **WS-A〜F 全タスク** | **4** | **26** | **30** |
 | ゲート G1〜G3 | 1 | 2 | 3 |
-| 本番ブロッカー RC | 2 | 2 | 4 |
+| 本番ブロッカー RC | 4 | 0 | 4 |
 
 ---
 
@@ -84,7 +84,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - [ ] **M-9** PF 版トップ／コミュニティ一覧が、公開エンプラデータ存在下でも正常表示（permission-denied なし・エンプラ非表示）
 - ✅ **M-10** Rules 後方互換テストがグリーン（`tests/firestore-rules/src/enterprise.test.ts`）
 - [ ] **M-11** 本番反映順: インデックス（M-3）→ Rules（M-4 / M-5）→ アプリ（M-2）
-- [ ] **M-12** #2071 着地 — 本番ブロッカー RC-36 / RC-82 / RC-96 / RC-92 解消 ＋ `development` へマージ（RC-36 ✅、残 RC-82 / RC-92 / RC-96）
+- [ ] **M-12** #2071 着地 — 本番ブロッカー RC-36 / RC-82 / RC-96 / RC-92 解消 ＋ `development` へマージ（RC 4 件 ✅。**残**: M-1 本番 backfill・M-8〜M-11）
 
 > M-7: `users` に `enterprise_id` を載せる方針で判断完了（RC-70 受容）。M-6 はマージブロッカーではない（02 §3）。
 
@@ -93,18 +93,22 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
 | - [ ] | A-1 | memberOrders / stripe の subsidy 分岐を純粋関数へ抽出＋ユニットテスト（本丸） | PA-21a〜f | 前提 | — |
-| - [ ] | A-2 | `if==enterprise` の DI 化（base 3 ファイル） | PA-30a-b / PA-31a-b | 前提 | — |
-| - [ ] | A-3 | PF 越境ログインのルートガード（暫定防御） | PA-03d | 必須 | — |
-| - [ ] | A-4 | PF 版アカウント作成 / ログイン入口の分離（誤作成是正） | PA-05 | 必須 | — |
+| ✅ | A-2 | `if==enterprise` の DI 化（base 3 ファイル） | PA-30a-b / PA-31a-b | 前提 | — |
+| ✅ | A-3 | PF 越境ログインのルートガード（暫定防御） | PA-03d | 必須 | — |
+| - [ ] | A-4 | PF 版アカウント作成 / ログイン入口の分離（誤作成是正） — **#2071 / 本ブランチの WS-A スコープ外**（[#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) で別途実装） | PA-05 | 必須 | — |
 | - [ ] | A-5 | CI paths フィルタ＋ Rules CI 必須化 | PA-22a-b / PA-23 | 必須 | — |
-| - [ ] | A-6 | functions 選択的デプロイ分割（デプロイ結合の解消） | PA-24a-b | 必須 | — |
+| ✅ | A-6 | functions 選択的デプロイ分割（デプロイ結合の解消） | PA-24a-b | 必須 | — |
 
 **メモ（一部進捗）**
 
-- **A-1**: `enterpriseSubsidyOrders.ts` / `paymentEnterpriseSubsidyAmount` 抽出・テストあり。memberOrders / stripe 本体の分岐整理は未完了。
-- **A-2**: `event.ts` / `EventDetailCard.vue` / `cart.vue` に enterprise 分岐が残存。
-- **A-3**: エンプラ側 `useEnterpriseTenantGuard` はある。PF 版側の enterprise ユーザールートガード（PA-03d）は未。
-- **A-5**: `test_firestore_rules.yml` の paths トリガーはある。branch protection での必須化・pr-verify paths 最適化は未確認。
+- **A-1**（一部完了 — [03_WS-A実装設計](../30_リファクタ計画/03_WS-A実装設計.md) §A-1 リファクタ完了条件未達）:
+  - **済**: `paymentEnterpriseSubsidyAmount.ts`（純粋計算）、`enterpriseSubsidyOrders.ts`（検証・tracker・confirm / stripe / webhook / cancel helper）、`enterpriseSubsidyOrders.test.ts`。**RC-35**: addToCart で `pay_enterprise_subsidy_amount` 計算、confirmOrder は `finalizeEnterpriseSubsidyZeroPaymentOrder` + replay / 月次上限、自己負担 > 0 は Stripe 必須（#2071 マージブロッカーではないが MVP 前倒しとして ✅）。
+  - **残（#2071 マージ後可）**: Callable 薄層化 — `memberOrders.ts` / `stripe.ts` / `stripeWebhook.ts` / `cancelOrders.ts` の orchestration 分岐を helper 委譲のみに縮小。`buildEnterpriseSubsidyCartOrders` 等への cart / confirm 一括委譲は未。
+- **A-2**: ✅ `EventPaymentUiStrategy` / `EventDraftPreparer` / `CartMonthlyUsageLoader` 注入完了（`eventPaymentUiStrategy.ts`・`eventDraft.ts`・`cartMonthlyUsage.ts`、base 3 ファイル + enterprise 側 loader）。
+- **A-3**: ✅ PF `user` router guard（`enterpriseUserClaims` + `/` リダイレクト + 通知 i18n）。エンプラ `/admin` token とホスト照合（RC-96）も ✅。
+- **A-4**: [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090)（PA-05）で別イシュー起票済。**`dev/enterprise`（#2071）および WS-A 実装ブランチでは対象外**。ログイン / 新規登録入口の分離は別ブランチ・別 PR で実装する（[02_developmentマージ](./02_developmentマージ.md) §「#2071 に新規 WS を積み増さない」方針に合わせる）。
+- **A-5**: ✅ `pr-verify.yml` paths-filter・enterprise verify 追加。**未**: GitHub branch protection への `Test Firestore Rules / test` 必須化（[03_branch_protection.md](../../AIエージェント/03_branch_protection.md) §0-3-2b）。
+- **A-6**: ✅ `deploy_functions.yml` hybrid / pf / enterprise 3 job 並列 + `workflow_dispatch` 個別発火。
 
 ### WS-B: 認証モデル（IdP・Phase 1・本番投入前に前倒し）
 
@@ -195,7 +199,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | フェーズ | 含むワークストリーム | 完了の意味 |
 |:--|:--|:--|
 | **Merge** | **WS-M** | #2071 を PF 版影響ゼロで `development` へ取り込み |
-| Phase 0 | WS-A（全部）／ WS-F（独立着手可） | リリース独立・テスト独立・越境ログイン抑止・PF 露出防止 |
+| Phase 0 | WS-A（A-4 を除く本ブランチ分 ＋ A-4 は #2090 別 PR）／ WS-F（独立着手可） | リリース独立・テスト独立・越境ログイン抑止・PF 露出防止 |
 | Phase 1 | WS-B（本番前）／ WS-C（G1・G2 後）／ WS-E の C-2 依存分 | 本番投入の認証基盤＋型安全な拡張基盤 |
 | MVP 仕上げ | WS-D（v0.1 残 5 件）／ WS-E（前倒し）／ WS-F 仕上げ | MVP 機能の完成 |
 | Phase 2 | WS-G | 事業ニーズに応じ追加 |
@@ -203,7 +207,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 **フェーズ完了チェック**
 
 - [ ] **WS-M 完了** — M-1〜M-12 全項目 ✅（最初の関門）
-- [ ] **Phase 0 完了** — WS-A 全項目 ✅ ＋ WS-F の F-1・F-2 ✅
+- [ ] **Phase 0 完了** — WS-A 全項目 ✅（**A-4 は [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) 別 PR で可**）＋ WS-F の F-1・F-2 ✅
 - [ ] **Phase 1 完了** — WS-B 全項目 ✅ ＋ WS-C 全項目 ✅ ＋ G1 ✅
 - [ ] **MVP 仕上げ完了** — WS-D・WS-E（E-6 は Q-1 判断後）・WS-F 全項目 ✅
 - [ ] **本番ブロッカー RC 全解消** — 下記 §本番ブロッカー 全項目 ✅
@@ -238,18 +242,18 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 状態 | RC | 要約 | 紐付け WS | PF 影響 |
 |:--|:--|:--|:--|:--|
 | ✅ | RC-36 | member_orders の enterprise 補助情報が公開 read（Rules 分離または非公開保存） | F-1 / A-5 | ◯ 共有 collection |
-| - [ ] | RC-82 | communities create が任意 enterprise_id 許可（create 時に claims と一致検証） | B-4 / A-5 | △ 共有 Rules |
-| - [ ] | RC-92 | invoice status≠200 でも blob 処理（エラー時 return） | —（PR 内修正） | — |
-| - [ ] | RC-96 | `/admin` が token とホスト企業未照合（他社 admin が別ホスト /admin 可能） | A-3 / B-4 | — |
+| ✅ | RC-82 | communities create が任意 enterprise_id 許可（create 時に claims と一致検証） | B-4 / A-5 | △ 共有 Rules |
+| ✅ | RC-92 | invoice status≠200 でも blob 処理（エラー時 return） | —（PR 内修正） | — |
+| ✅ | RC-96 | `/admin` が token とホスト企業未照合（他社 admin が別ホスト /admin 可能） | A-3 / B-4 | — |
 
 ### MVP 前倒し（🟡 計画タスクと重複・要追従）
 
 | 状態 | RC | 要約 | 紐付け WS | PF 影響 |
 |:--|:--|:--|:--|:--|
-| - [ ] | RC-35 | enterprise_subsidy が決済なしで確定可能（confirmOrder 側拒否または補助計算まで受付停止） | A-1 / D-4 | ◯ 共有 functions |
+| ✅ | RC-35 | enterprise_subsidy が決済なしで確定可能（confirmOrder 側拒否または補助計算まで受付停止） | A-1 / D-4 | ◯ 共有 functions |
 | - [ ] | RC-44 | `/u/:userId` が他社・停止メンバーをゲートなし | D-5 | △ |
-| - [ ] | RC-48 | カートが PF/他テナント注文を混在表示（enterprise_id 一致のみ） | F-1 | ◯ base 共有 cart |
-| - [ ] | RC-86 | 注文 doc に enterprise_id / is_guest 未保存（EventMember には付与済み） | C-4 → D-2 | ◯ 注文スキーマ |
+| ✅ | RC-48 | カートが PF/他テナント注文を混在表示（enterprise_id 一致のみ） | F-1 | ◯ base 共有 cart |
+| - [ ] | RC-86 | 注文 doc の `enterprise_id` は保存済み。`is_guest` は未導入（ゲスト参加 / C-4 → D-2 で追跡） | C-4 → D-2 | ◯ 注文スキーマ |
 | - [ ] | RC-28 / RC-87 | enterprises / admin 判定の withConverter なし直読み | A-2 / PA-11 | ◯ base store 共有 |
 
 ### データ整合・claims 一貫性（🟡 束ねて対応）
@@ -297,4 +301,8 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-19 | PF 露出方針を `enterprise_id: null` materialize へ更新。ゲスト PF 掲載は `allow_guest + publish_scope`（G-1） |
 | 2026-06-19 | 実装照合で M-3〜M-7・M-10・C-5 を ✅ に更新。記法を `[x]` から ✅ へ統一。M-1・M-2 は一部のみで `[ ]` 維持 |
 | 2026-06-19 | M-2 をコード実装完了として ✅ に更新（本番反映は T1 backfill 後） |
+| 2026-06-20 | A-4 を #2071 / WS-A ブランチのスコープ外と明記。実装は [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) 別途 |
+| 2026-06-20 | WS-A 実装照合: A-2 / A-3 / A-6 を ✅。A-1 は helper 抽出済・Callable 薄層化残で `- [ ]` 維持。A-5 は repo 内 workflow 済・branch protection 未 |
+| 2026-06-20 | RC-35 / RC-82 / RC-92 / RC-96 を ✅ に更新。A-1 メモを RC-35 済・リファクタ残に整理。M-12 は M-1 backfill 待ちが残 |
+| 2026-06-20 | RC-48 を ✅ に更新。RC-86 は `enterprise_id` 済・`is_guest` 未として文言を精密化 |
 | 2026-06-25 | M-1 / F-1 メモに 02 §2.3.1（member_orders 等 T1 対象外・将来 backfill 条件）へのリンクを追加 |
