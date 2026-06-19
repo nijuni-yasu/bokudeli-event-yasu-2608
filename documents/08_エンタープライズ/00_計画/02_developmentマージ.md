@@ -20,9 +20,9 @@
 
 | 領域 | 根拠 |
 |:--|:--|
-| 共有スキーマ | `Event` / `Community` / `User` / `EventMemberOrder` の追加フィールド（`enterprise_id` 等）は**すべて `.optional()`**。PF 版の Zod parse は壊れない（`common/src/schemas/Event.ts` ほか） |
-| Firestore Rules | events / communities の read は `docEnterpriseId(data) == null \|\| isSameEnterprise(data)`（`firestore.rules`）。**`enterprise_id` を持たない既存 PF doc は `== null` 分岐で従来どおり read 可**。後方互換 |
-| 共有カート | `base/src/components/pages/cart.vue` は `enterprise_id` を claims から取得し、未保持（= PF 版ユーザー）は早期 return。PF 版動線は素通り |
+| 共有スキーマ | **T1 コード完了**: `Event` / `Community` / `User` の `enterprise_id` を nullable 化し PF doc へ `null` 明示保存可能。Vitest（`Event.test` / `Community.test`）済み。**T1 batch 対象は `communities` / `events` のみ**（§2.3〜2.3.1）。`EventMember` / `EventMemberOrder` / `stripes` は PF 時フィールド省略の書き込み経路が残る — F-1 で CG に `== null` を載せる際は §2.3.1。**本番 backfill（T1）は [`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch) 完了待ち** |
+| Firestore Rules | events / communities の read は `docEnterpriseId(data) == null \|\| isSameEnterprise(data)`。**communities create は `canCreateCommunity()` で claims と `enterprise_id` を照合**（RC-82/124 対応済み） |
+| 共有カート | `base/src/components/pages/cart.vue` は token の `enterprise_id` を `buildEventStoreOptions` 経由で `useEventStore` に渡し、PF ユーザー（claims なし）は options 空のまま既存 PF 動線を維持 |
 
 ---
 
@@ -75,7 +75,28 @@ PF / Enterprise の判別を **`enterprise_id` に一本化**し、PF doc には
 - `/communities/{communityId}`: PF コミュニティ一覧 `user/src/pages/communitylist/index.vue` の対象
 - `/communities/{communityId}/events/{eventId}`: PF トップ `user/src/pages/index.vue` の `collectionGroup('events')` 対象
 
-`member_orders` / `members` / `stripes` は、PF トップ・公開コミュニティ一覧の露出フィルタ目的では必須対象外。ただし、将来 PF/Enterprise が混在する collectionGroup クエリを同じ方式で絞る場合は、その対象 doc にも `enterprise_id: null` を materialize する。
+`member_orders` / `members` / `stripes` は **T1 batch の必須対象外**（詳細は §2.3.1）。
+
+### 2.3.1 `member_orders` / `members` / `stripes`（T1 対象外と将来 backfill）
+
+§2.1 の `== null` 罠は **クエリを載せるコレクションすべて**に適用される。T1 で `communities` / `events` だけ batch 対象にしているのは、**#2071 マージ時点で PF 側が `where('enterprise_id', '==', null)` を載せている CG がそこだけ**だからである（T2）。**エンプラ本番リリースそのもの**を T1 batch 3 コレクション分まで必須ゲートにする、という意味ではない。
+
+| 観点 | `communities` / `events`（T1） | `member_orders` / `members` / `stripes` |
+|:--|:--|:--|
+| **T1 batch（`0043`）** | 必須。PF トップ・公開コミュニティ一覧（T2）の前提 | **対象外** |
+| **T5 / RC-36（Rules）** | テナント read 分離 | CG 認証必須・テナント read 分離（**クエリフィルタの代替ではない**） |
+| **PF クライアント CG** | T2 で `== null` 済 | **現状** `user_id` / `event_id` 中心で `== null` **未実装**（F-1 残: `base/stores/event.ts` の `event_id` 横断 CG、`currentUser` カート CG 等 — §3 メモ） |
+| **エンプラ go-live 単体** | T1 完了 → T2 本番反映のゲート | **batch 不要**（Rules + 未フィルタ CG のまま PF カート等は動作） |
+
+**将来 batch / materialize が要る条件**（いずれも **PF 側で当該 collectionGroup に `where('enterprise_id', '==', null)` を載せる直前**）:
+
+1. **既存 PF doc** — フィールド欠落のままでは `== null` にマッチしない（§2.1 と同罠）。[`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch) で `enterprise_id` 欠落 doc のみ `null` を付与（Enterprise doc は触らない。§2.4 と同型）。
+2. **以降の新規 doc** — batch だけでは足りない。PF 書き込み経路（例: `addToCart`）が Enterprise 時のみ `enterprise_id` を spread して **PF 時はフィールド省略**している箇所は、`null` **明示保存**＋ schema nullable 化がセット（現状 `EventMember` / `EventMemberOrder` は T1 コード範囲外）。
+3. **複合 index** — 新クエリ形状に応じて `firestore.indexes.json` を先行デプロイ（T3 と同順序）。
+
+**優先度の目安**: `member_orders`（F-1 で CG フィルタ予定）＞ `members`（client の collectionGroup 未使用・direct path read が主）＞ `stripes`（client CG 未使用）。
+
+> **混同しやすい点**: 「エンプラ利用開始 = 3 コレクションも T1 と同時に backfill」ではない。**「その CG に PF 露出フィルタを載せる」タイミング**で batch + 書き込み経路を揃える。仕様上の原則は [10_仕様/02_アーキテクチャ](../10_仕様/02_アーキテクチャ.md) §PF 版データ露出フィルタ。
 
 ### 2.4 バックフィル実装リポジトリ
 
@@ -146,15 +167,30 @@ PF クエリ切替（T2）は、`bokudeli-event-batch` による本番バック�
 
 ## 3. プレマージ・チェックリスト（T1〜T7）
 
-| # | タスク | 対象 | 重要度 |
-|:--|:--|:--|:--|
-| T1 | `enterprise_id: null` の materialize＋既存 PF `communities` / `events` バックフィル（§2.2〜2.4。schema nullable 化含む） | `common` schema / converter・[`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch) | 🚨 前提 |
-| T2 | PF 版の全一覧/検索クエリに `where('enterprise_id', '==', null)` 露出フィルタ追加（**T1 完了が条件**） | `user/index.vue`(×3)・`communitylist/index.vue`・`userEventList` ほか | 🚨 必須（F-1） |
-| T3 | 複合インデックス追加（`enterprise_id` + `is_public` + 既存 orderBy）。**先行デプロイ**（C-3 後は `publish_scope` へ移行） | `firestore.indexes.json` | 🚨 必須 |
-| T4 | Rules 後方互換テスト（PF 版ユーザーが既存 PF doc を read 可・エンプラ doc を read 不可） | `tests/firestore-rules` | 🟡 強く推奨 |
-| T5 | member_orders の公開 read 厳格化（共有 collectionGroup） | `firestore.rules` / RC-36 | 🚨 必須 |
-| T6 | partner / PF が新 enum `enterprise_subsidy`（`EVENT_PAYMENT_VALUES`）＋ optional 追加を許容して parse できる回帰テスト | `common` / partner | 🟡 推奨（C-5） |
-| T7 | 公開 `users` doc が `enterprise_id` を持つことの是非（PF 版から read 可＝プライバシー） | RC-70・要判断 | 🟡 判断 |
+| # | ステータス | タスク | 対象 | 重要度 |
+|:--|:--|:--|:--|:--|
+| T1 | 一部（schema/converter・`Event.test` / `Community.test` 済 / batch `0043` あり / **本番 backfill 完了確認待ち**） | `enterprise_id: null` の materialize＋既存 PF `communities` / `events` バックフィル（§2.2〜2.4。schema nullable 化含む） | `common` schema / converter・[`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch) | 🚨 前提 |
+| T2 | ✅（本番反映は backfill 完了後） | PF 版の全一覧/検索クエリに `where('enterprise_id', '==', null)` 露出フィルタ追加（**T1 完了が条件**） | `user/index.vue`(×3)・`communitylist/index.vue`・`userEventList` ほか | 🚨 必須（F-1） |
+| T3 | ✅ | 複合インデックス追加（`enterprise_id` + `is_public` + 既存 orderBy）。**先行デプロイ**（C-3 後は `publish_scope` へ移行） | `firestore.indexes.json` | 🚨 必須 |
+| T4 | ✅ | Rules 後方互換テスト（PF 版ユーザーが既存 PF doc を read 可・エンプラ doc を read 不可） | `tests/firestore-rules` | 🟡 強く推奨 |
+| T5 | ✅ | member_orders の公開 read 厳格化（共有 collectionGroup） | `firestore.rules` / RC-36 | 🚨 必須 |
+| T6 | ✅ | partner / PF が新 enum `enterprise_subsidy`（`EVENT_PAYMENT_VALUES`）＋ optional 追加を許容して parse できる回帰テスト | `common` / partner | 🟡 推奨（C-5） |
+| T7 | ✅ | 公開 `users` doc が `enterprise_id` を持つことの是非（PF 版から read 可＝プライバシー）。載せる方針で判断完了 | RC-70・要判断 | 🟡 判断 |
+
+**メモ（T2 — 実装済み・本番切替条件）**
+
+- **本番反映条件**: T1 backfill 完了確認後（§2.4）。backfill 前の本番切替は PF 一覧全件ゼロになる。
+- **実装済み（`user` PF クエリ）**
+  - `user/src/pages/index.vue` — 人気・開催前・終了（×3）
+  - `user/src/pages/communitylist/index.vue` — 公開コミュニティ一覧
+  - `user/src/components/profile/UserProfilePage.vue` — 参加イベント・参加/運営コミュニティ
+  - `user/src/pages/c/[communityAccount]/index.vue` — コミュニティ配下 eventList
+  - `user/src/pages/manage/index.vue` / `manage/community/index.vue` / `manage/event/index.vue` — 運営コミュニティ・イベント一覧
+  - `base/src/stores/userEventList.ts` — `additionalFilters` オプションで PF 側から `enterprise_id == null` を渡す
+- **F-1 残（T2 本丸外・#2071 マージブロッカー外）** — 詳細 §2.3.1
+  - `base/src/stores/event.ts` の `event_id` 横断 CG（PF 側 `== null` 未追加）
+  - `base/src/stores/currentUser.ts` カート `member_orders` CG（tenant 非スコープ）
+  - T5 / RC-36 は Rules 層。クエリ層の F-1 完成とは別
 
 ---
 
@@ -174,11 +210,11 @@ PF クエリ切替（T2）は、`bokudeli-event-batch` による本番バック�
 - `dev/enterprise` は **#2071 の決着専用**とし、新規 WS をここに積み増さない（肥大化回避）。
 - 着地条件がそろったら **`development` へ 1 回マージして #2071 を閉じる**。
 
-| 着地条件 | 内容 |
-|:--|:--|
-| 🚨 必須修正の解消 | RC-36 / RC-82 / RC-96（セキュリティ）＋ RC-92 |
-| PF 回帰の安全確認 | 共有コード・Rules 変更が PF を壊さない（A-5 の Rules CI が効く状態が理想） |
-| 移行敏感機能の隔離 | IdP（WS-B）・スキーマ分岐（WS-C）など未確定なものは #2071 に含めない（含まれていれば別ブランチへ切り出す） |
+| ステータス | 着地条件 | 内容 |
+|:--|:--|:--|
+| | 🚨 必須修正の解消 | RC-36 / RC-82 / RC-92 / RC-96 / RC-124 / RC-137 / RC-146 / RC-152 ✅（ドキュメント RC-119〜122 含む） |
+| | PF 回帰の安全確認 | 共有コード・Rules 変更が PF を壊さない（A-5 の Rules CI が効く状態が理想） |
+| | 移行敏感機能の隔離 | IdP（WS-B）・スキーマ分岐（WS-C）など未確定なものは #2071 に含めない（含まれていれば別ブランチへ切り出す） |
 
 - **以降の新規作業は `development` から短命トピックブランチを切り、`development` へ直接 PR マージ**する（`dev/enterprise` を経由しない）。
 - `development` への**こまめな rebase は常時**行い乖離を抑える。「MVP 完成後に一括マージ」はしない。
@@ -187,11 +223,13 @@ PF クエリ切替（T2）は、`bokudeli-event-batch` による本番バック�
 
 ## 6. 完了条件
 
-- [ ] T1〜T5 が実装・テスト済み（戦略 B）
-- [ ] PF 版トップ／コミュニティ一覧が、公開エンプラデータ存在下でも正常表示（permission-denied なし・エンプラ非表示）
-- [ ] Rules 後方互換テストがグリーン（既存 PF doc read 可）
-- [ ] インデックス先行デプロイ → Rules → アプリの順で本番反映
-- [ ] #2071 着地条件（§5）を満たし `development` へマージ
+| ステータス | 完了条件 | 備考 |
+|:--|:--|:--|
+| | T1〜T5 が実装・テスト済み（戦略 B） | T2〜T5 ✅。T1（schema/converter 済・本番 backfill 待ち）のみ未完 |
+| | PF 版トップ／コミュニティ一覧が、公開エンプラデータ存在下でも正常表示 | permission-denied なし・エンプラ非表示 |
+| ✅ | Rules 後方互換テストがグリーン | `tests/firestore-rules/src/enterprise.test.ts` |
+| | インデックス先行デプロイ → Rules → アプリの順で本番反映 | |
+| | #2071 着地条件（§5）を満たし `development` へマージ | |
 
 ---
 
@@ -205,4 +243,9 @@ PF クエリ切替（T2）は、`bokudeli-event-batch` による本番バック�
 | 2026-06-19 | 将来拡張（`site_type` enum 等への migrate）を §2.5 に追記 |
 | 2026-06-19 | 01 の WS-M セクション追加に伴い、索引先を WS-M（M-1〜M-12）へ明記 |
 | 2026-06-19 | §2.6 に curry（`subdomain_tags`）先行事例と `is_enterprise` との対比を追記 |
-| 2026-06-19 | T1 方針を `enterprise_id: null` 方式へ再確定。`is_enterprise` / `site_targets` は不採用。ゲスト PF 掲載は `allow_guest + publish_scope`（G-1） |
+| 2026-06-19 | T5（RC-36）member_orders Rules 分離・CG 認証必須化・Rules テスト追加。T6（C-5）`partnerCompat.test.ts` 追加。T7 `users.enterprise_id` 載せる方針で判断完了 |
+| 2026-06-19 | 実装照合で T3・T4 を ✅ に更新。§6 Rules 後方互換テストを完了に更新。T1・T2 は一部のみで未完 |
+| 2026-06-19 | §3・§5・§6 の表にステータス列を追加。完了項目はステータス列に ✅ を集約 |
+| 2026-06-19 | T1・T2 の進捗をステータス列へ移動。T2 の状況・残タスクを §3 メモに追記 |
+| 2026-06-19 | RC-82/92/96/124/137/146/152 およびドキュメント RC-119〜122 対応。communities create Rules・admin guard・tenant-aware EventStore/Cart・Rules テスト追加 |
+| 2026-06-25 | §2.3.1 追加（member_orders / members / stripes の T1 対象外・将来 backfill 条件・F-1 残との関係）。§1 スキーマ行を T1 範囲に整合 |

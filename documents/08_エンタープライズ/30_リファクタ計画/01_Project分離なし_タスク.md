@@ -239,7 +239,7 @@ Project 分離なしで実装を進める場合のリファクタリングを検
 | PA-11b | `User` の `user_type`/`enterprise_id` を再定義 | `common/src/schemas/User.ts` | 同上 | PA-10a | 小 |
 | PA-11c | `Community` のエンプラ拡張 | `common/src/schemas/Community.ts` | 同上 | PA-10a | 小 |
 | PA-11d | `EventMember`/`EventMemberOrder`/`EventStripe` の `enterprise_id`・`pay_enterprise_subsidy_amount` | 各スキーマ | 同上 | PA-10a | 中 |
-| PA-11e | partner が base 形で parse できる互換テスト追加 | `common` テスト | 混在データで parse 成功 | PA-11a-d, PA-10b | 中 |
+| PA-11e | partner が base 形で parse できる互換テスト追加 ✅ | `common` テスト | 混在データで parse 成功 | PA-11a-d, PA-10b | 中 |
 
 ### C. テスト・リリース（§3）— 最大の難所
 

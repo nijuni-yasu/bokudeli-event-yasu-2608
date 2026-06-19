@@ -8,9 +8,9 @@
 | 記法 | 意味 |
 |:--|:--|
 | `- [ ]` | **未完了**（未着手、または一部のみ完了） |
-| `- [x]` | **完了**（受け入れ条件を満たし、本番投入可能な状態） |
+| `✅` | **完了**（受け入れ条件を満たし、本番投入可能な状態） |
 
-- チェックは **実装完了** を表す。仕様書の確定だけでは `[x]` にしない（ゲート G2 は例外 — 下記）。
+- チェックは **実装完了** を表す。仕様書の確定だけでは ✅ にしない（ゲート G2 は例外 — 下記）。
 - 一部完了の場合は `- [ ]` のまま、**メモ** 行に進捗を書く。
 - 正本の詳細・受け入れ条件は `出所` 列のリンクを参照。
 - v0.1 で既に入っている基盤（オンボーディング・OTP・全社管理者・subsidy 決済・監査ログ**書き込み**等）は [90_アーカイブ/v0.1原典/11_未実装洗い出し](../90_アーカイブ/v0.1原典/11_エンタープライズ_v0.1未実装洗い出し.md) §実装済みを参照。**本書のチェック対象は残タスク**。
@@ -22,21 +22,21 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-06-19**（チェックリスト形式へ移行。以降はタスク完了時に `[ ]` → `[x]` を更新する）
+最終更新: **2026-06-19**（M-2 コード実装完了。M-1 本番 backfill 待ち）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
 | WS-A（Phase 0） | 0 | 6 | 6 |
 | WS-B（IdP・本番前） | 0 | 6 | 6 |
-| WS-C（スキーマ） | 0 | 5 | 5 |
+| WS-C（スキーマ） | 1 | 4 | 5 |
 | WS-D（v0.1 残） | 0 | 5 | 5 |
 | WS-E（前倒し） | 0 | 6 | 6 |
 | WS-F（PF 露出） | 0 | 2 | 2 |
-| **WS-M（development マージ）** | **0** | **12** | **12** |
+| **WS-M（development マージ）** | **7** | **5** | **12** |
 | WS-G（Phase 2・MVP 外） | 0 | 4 | 4 |
-| **WS-A〜F 全タスク** | **0** | **30** | **30** |
+| **WS-A〜F 全タスク** | **1** | **29** | **30** |
 | ゲート G1〜G3 | 1 | 2 | 3 |
-| 本番ブロッカー RC | 0 | 4 | 4 |
+| 本番ブロッカー RC | 2 | 2 | 4 |
 
 ---
 
@@ -63,29 +63,30 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | 状態 | ID | タスク | 02 | 紐付け | 重要度 | 依存 |
 |:--|:--|:--|:--|:--|:--|:--|
 | - [ ] | M-1 | `enterprise_id: null` の materialize（schema nullable 化 / converter）＋既存 PF `communities` / `events` バックフィル | T1 | F-1 | 🚨 前提 | — |
-| - [ ] | M-2 | PF 版の全一覧/検索クエリに `where('enterprise_id','==',null)` 露出フィルタ追加 | T2 | F-1 | 🚨 必須 | M-1 |
-| - [ ] | M-3 | 複合インデックス追加（`enterprise_id` + `is_public` + 既存 orderBy）。**先行デプロイ**（C-3 後は `publish_scope` へ） | T3 | — | 🚨 必須 | M-1 |
-| - [ ] | M-4 | Rules 後方互換テスト（PF ユーザーが既存 PF doc を read 可・エンプラ doc を read 不可） | T4 | A-5 | 🟡 強推 | — |
-| - [ ] | M-5 | member_orders の公開 read 厳格化（共有 collectionGroup） | T5 | RC-36 / F-1 | 🚨 必須 | — |
-| - [ ] | M-6 | partner / PF が `enterprise_subsidy` enum ＋ optional 追加を parse できる回帰テスト | T6 | C-5 | 🟡 推奨 | — |
-| - [ ] | M-7 | 公開 `users` doc の `enterprise_id` 保存の是非（プライバシー・PF 露出） | T7 | RC-70 | 🟡 判断 | — |
+| ✅ | M-2 | PF 版の全一覧/検索クエリに `where('enterprise_id','==',null)` 露出フィルタ追加 | T2 | F-1 | 🚨 必須 | M-1 |
+| ✅ | M-3 | 複合インデックス追加（`enterprise_id` + `is_public` + 既存 orderBy）。**先行デプロイ**（C-3 後は `publish_scope` へ） | T3 | — | 🚨 必須 | M-1 |
+| ✅ | M-4 | Rules 後方互換テスト（PF ユーザーが既存 PF doc を read 可・エンプラ doc を read 不可） | T4 | A-5 | 🟡 強推 | — |
+| ✅ | M-5 | member_orders の公開 read 厳格化（共有 collectionGroup） | T5 | RC-36 / F-1 | 🚨 必須 | — |
+| ✅ | M-6 | partner / PF が `enterprise_subsidy` enum ＋ optional 追加を parse できる回帰テスト | T6 | C-5 | 🟡 推奨 | — |
+| ✅ | M-7 | 公開 `users` doc の `enterprise_id` 保存の是非（プライバシー・PF 露出） | T7 | RC-70 | 🟡 判断 | — |
 
 **メモ（責務分界）**
 
-- **M-1（本リポジトリ）**: `common` schema / converter（PF doc に `enterprise_id: null` 保存）。
-- **M-1（[`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch)）**: 既存 PF `communities` / `events` への `enterprise_id: null` バックフィル（dry-run・件数確認・冪等性）。**M-2 はバックフィル完了確認後**に切替（02 §2.4）。
+- **M-1（本リポジトリ）**: ✅ `Event` / `Community` schema nullable 化・converter materialize・`Event.test.ts` / `Community.test.ts` 済。**未**: 本番バックフィル完了確認。`member_orders` 等は T1 batch 外 — [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)
+- **M-1（[`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch)）**: `tasks/0043_backfill_enterprise_id_null.js` あり。**本番実行・完了確認待ち**。M-2 切替はバックフィル完了後（02 §2.4）。
+- **M-2**: ✅ `user` の PF 一覧・検索・collectionGroup クエリに `enterprise_id == null` を追加済み（index・communitylist・profile・community 詳細・manage 系・`userEventList`）。**本番反映は T1 backfill 完了後**（§2.4）。
 - **M-2〜M-3**: F-1 のマージ必須サブセット。F-1 全体（他 collectionGroup 等）は WS-F で継続追跡。
 - **デプロイ順（戦略 B）**: M-3 → M-4 / M-5（Rules）→ M-2（アプリ）。02 §4 参照。
 
 **WS-M 完了条件**（02 §6・§5 着地条件）
 
-- [ ] **M-8** M-1〜M-5 がすべて `[x]`（戦略 B: WS-F 同梱マージ）
+- [ ] **M-8** M-1〜M-5 がすべて ✅（戦略 B: WS-F 同梱マージ）。現状 M-2〜M-5 ✅、M-1（本番 backfill）未完
 - [ ] **M-9** PF 版トップ／コミュニティ一覧が、公開エンプラデータ存在下でも正常表示（permission-denied なし・エンプラ非表示）
-- [ ] **M-10** Rules 後方互換テストがグリーン（既存 PF doc read 可）
+- ✅ **M-10** Rules 後方互換テストがグリーン（`tests/firestore-rules/src/enterprise.test.ts`）
 - [ ] **M-11** 本番反映順: インデックス（M-3）→ Rules（M-4 / M-5）→ アプリ（M-2）
-- [ ] **M-12** #2071 着地 — 本番ブロッカー RC-36 / RC-82 / RC-96 / RC-92 解消 ＋ `development` へマージ
+- [ ] **M-12** #2071 着地 — 本番ブロッカー RC-36 / RC-82 / RC-96 / RC-92 解消 ＋ `development` へマージ（RC-36 ✅、残 RC-82 / RC-92 / RC-96）
 
-> M-6・M-7 はマージブロッカーではない（02 §3）。M-7 は本番前判断（RC-70）。
+> M-7: `users` に `enterprise_id` を載せる方針で判断完了（RC-70 受容）。M-6 はマージブロッカーではない（02 §3）。
 
 ### WS-A: コード衛生・リリース独立（Phase 0・即着手・高 ROI）
 
@@ -126,7 +127,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | - [ ] | C-2 | 3 軸モデル確定（join_type / publish_scope / auto_join / community_type） | D-1〜D-5 | 必須 | — |
 | - [ ] | C-3 | publish_scope 導入・is_public 段階廃止（expand → migrate → contract） | D-6 | 必須 | C-2 |
 | - [ ] | C-4 | Event/User/Community/EventMember 等のエンプラ拡張を採用方式で再定義 | PA-11a-d | 必須 | G1, G2 |
-| - [ ] | C-5 | partner が base 形で parse できる互換テスト | PA-11e | 必須 | C-4 |
+| ✅ | C-5 | partner が base 形で parse できる互換テスト | PA-11e | 必須 | C-4 |
 
 **メモ**: **C-2** は [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) + [10_仕様/04_イベント管理](../10_仕様/04_詳細_イベント管理.md) で**仕様確定済**。コード（`common/src/schemas`）への反映は **C-3 以降**。
 
@@ -159,8 +160,10 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| - [ ] | F-1 | PF の全一覧・検索・collectionGroup に `where('enterprise_id', '==', null)` を必須化。既存 PF `communities` / `events` は [`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch) で `enterprise_id: null` を materialize する。詳細は [02_developmentマージ](./02_developmentマージ.md) §2.1〜2.4。エンプラゲストの PF 掲載（`allow_guest && publish_scope === 'public'`）は **G-1 / MVP 外**（[04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1） | §3-1 | 必須 | — |
+| - [ ] | F-1 | PF の全一覧・検索・collectionGroup に `where('enterprise_id', '==', null)` を必須化。T1 batch は `communities` / `events` のみ — `member_orders` 等は [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)。エンプラゲストの PF 掲載（`allow_guest && publish_scope === 'public'`）は **G-1 / MVP 外**（[04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1） | §3-1 | 必須 | — |
 | - [ ] | F-2 | 未ログイン時はエンプラ画面をログインへリダイレクト（ゲスト参加=allow_guest による未ログイン閲覧例外は MVP 外・将来対応） | §3-2 | 必須 | — |
+
+**メモ（F-1 残）**: T2 一覧は ✅。共有 store の CG（`event.ts` `event_id` 横断、`currentUser` カート等）は §3 メモ・[02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)。当該 CG に `== null` を載せる前に batch + PF 書き込み経路の materialize が必要。
 
 ### WS-G: 後続（Phase 2・移行に鈍感・MVP 外）
 
@@ -180,7 +183,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | 状態 | ゲート | 判定内容 | 影響 |
 |:--|:--|:--|:--|
 | - [ ] | **G1**: スキーマ PoC | discriminatedUnion × プロジェクト規約 × partner 互換が成立するか | C-4 着手可否 |
-| - [x] | **G2**: スキーマ確定 | [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) + [10_仕様/04_イベント管理](../10_仕様/04_詳細_イベント管理.md) で publish_scope / join_type / auto_join が固まったか | C-4・D-2・E-1 着手可否 |
+| ✅ | **G2**: スキーマ確定 | [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) + [10_仕様/04_イベント管理](../10_仕様/04_詳細_イベント管理.md) で publish_scope / join_type / auto_join が固まったか | C-4・D-2・E-1 着手可否 |
 | - [ ] | **G3**: IdP 着手前論点 | ロールバック境界・方式併存・MAU 課金試算・partner 影響 | WS-B 全体の着手可否 |
 
 > **G2** は仕様・ADR レベルで通過。**C-3 以降のコード反映**が完了するまで C-4 は着手しない。
@@ -199,11 +202,11 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 **フェーズ完了チェック**
 
-- [ ] **WS-M 完了** — M-1〜M-12 全項目 `[x]`（最初の関門）
-- [ ] **Phase 0 完了** — WS-A 全項目 `[x]` ＋ WS-F の F-1・F-2 `[x]`
-- [ ] **Phase 1 完了** — WS-B 全項目 `[x]` ＋ WS-C 全項目 `[x]` ＋ G1 `[x]`
-- [ ] **MVP 仕上げ完了** — WS-D・WS-E（E-6 は Q-1 判断後）・WS-F 全項目 `[x]`
-- [ ] **本番ブロッカー RC 全解消** — 下記 §本番ブロッカー 全項目 `[x]`
+- [ ] **WS-M 完了** — M-1〜M-12 全項目 ✅（最初の関門）
+- [ ] **Phase 0 完了** — WS-A 全項目 ✅ ＋ WS-F の F-1・F-2 ✅
+- [ ] **Phase 1 完了** — WS-B 全項目 ✅ ＋ WS-C 全項目 ✅ ＋ G1 ✅
+- [ ] **MVP 仕上げ完了** — WS-D・WS-E（E-6 は Q-1 判断後）・WS-F 全項目 ✅
+- [ ] **本番ブロッカー RC 全解消** — 下記 §本番ブロッカー 全項目 ✅
 
 WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5 認可）は WS-A〜C と**並行可**。D-2 ダッシュボードのみ一覧クエリで C-3（publish_scope）に依存。
 
@@ -234,7 +237,7 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 
 | 状態 | RC | 要約 | 紐付け WS | PF 影響 |
 |:--|:--|:--|:--|:--|
-| - [ ] | RC-36 | member_orders の enterprise 補助情報が公開 read（Rules 分離または非公開保存） | F-1 / A-5 | ◯ 共有 collection |
+| ✅ | RC-36 | member_orders の enterprise 補助情報が公開 read（Rules 分離または非公開保存） | F-1 / A-5 | ◯ 共有 collection |
 | - [ ] | RC-82 | communities create が任意 enterprise_id 許可（create 時に claims と一致検証） | B-4 / A-5 | △ 共有 Rules |
 | - [ ] | RC-92 | invoice status≠200 でも blob 処理（エラー時 return） | —（PR 内修正） | — |
 | - [ ] | RC-96 | `/admin` が token とホスト企業未照合（他社 admin が別ホスト /admin 可能） | A-3 / B-4 | — |
@@ -263,7 +266,7 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 
 | 状態 | RC | 要約 | 備考 |
 |:--|:--|:--|:--|
-| - [ ] | RC-70 | 公開 users に enterprise_id を保存 | ⏸ 本番前に再判断（プライバシー・PF 露出） |
+| ✅ | RC-70 | 公開 users に enterprise_id を保存 | 👌 載せる方針で受容 |
 | - [ ] | RC-20 / RC-116 | ログイン前ロゴが Storage 403 | logo 公開 read か URL 方針を [10_仕様/05_認証・テナント](../10_仕様/05_認証・テナント.md) で確定 |
 | - [ ] | RC-62 / RC-117 | App Check 未登録・custom_domain が reCAPTCHA allowed_domains 外 | [10_仕様/07_デプロイ・運用](../10_仕様/07_デプロイ・運用.md) 運用手順 |
 
@@ -292,3 +295,6 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-19 | チェックリスト形式へ移行（状態列・進捗サマリ・フェーズ完了チェック・初期進捗メモ） |
 | 2026-06-19 | WS-M（development マージ）セクション追加。02 の T1〜T7 を M-1〜M-7、着地条件を M-8〜M-12 に索引化 |
 | 2026-06-19 | PF 露出方針を `enterprise_id: null` materialize へ更新。ゲスト PF 掲載は `allow_guest + publish_scope`（G-1） |
+| 2026-06-19 | 実装照合で M-3〜M-7・M-10・C-5 を ✅ に更新。記法を `[x]` から ✅ へ統一。M-1・M-2 は一部のみで `[ ]` 維持 |
+| 2026-06-19 | M-2 をコード実装完了として ✅ に更新（本番反映は T1 backfill 後） |
+| 2026-06-25 | M-1 / F-1 メモに 02 §2.3.1（member_orders 等 T1 対象外・将来 backfill 条件）へのリンクを追加 |
