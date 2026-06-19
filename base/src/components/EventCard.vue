@@ -29,7 +29,12 @@ const avatarSize = computed(() => {
     <div>
       <VImg cover class="mx-auto" aspect-ratio="1.91" :src="eventStore.coverImageUrl" />
     </div>
-    <EventStatusChip :status="event.calculatedEventStatus" size="x-small" class="mt-2 ml-2" />
+    <div class="d-flex align-center flex-wrap ga-2 mt-2 ml-2">
+      <EventStatusChip :status="event.calculatedEventStatus" size="x-small" />
+      <v-chip v-if="!event.is_public" color="primary" size="x-small">
+        {{ $t('private_event') }}
+      </v-chip>
+    </div>
     <v-card-title class="event-card__title-outer px-3 py-1">
       <div class="event-card__event-name text-lg font-weight-semibold text-sm-body-1 w-100">
         {{ event.event_name }}
