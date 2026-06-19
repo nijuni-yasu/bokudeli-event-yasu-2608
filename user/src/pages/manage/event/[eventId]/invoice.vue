@@ -16,6 +16,7 @@ const url = ref<string | null>(null)
     const response = await getEventBillInvoicePdf(eventId, invoiceId)
     if (response.status !== 200) {
       notification.show($t('manage.invoice.error'), 'error')
+      return
     }
     url.value = window.URL.createObjectURL(await response.blob())
   } catch (e) {
