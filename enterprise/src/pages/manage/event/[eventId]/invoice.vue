@@ -11,6 +11,11 @@ const invoiceId = route.query.id as string | undefined
 
 const url = ref<string | null>(null)
 
+onUnmounted(() => {
+  if (url.value != null) {
+    window.URL.revokeObjectURL(url.value)
+  }
+})
 ;(async () => {
   try {
     const response = await getEventBillInvoicePdf(eventId, invoiceId)

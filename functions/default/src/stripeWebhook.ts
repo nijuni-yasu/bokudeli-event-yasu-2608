@@ -382,7 +382,7 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
           ordersToConfirm.length,
           transaction,
         )
-        enterpriseOrderCreateLog = { enterpriseId, subsidyTotal: subsidyToAdd, totalPayment: 0, stripeDocId }
+        enterpriseOrderCreateLog = { enterpriseId, subsidyTotal, totalPayment: 0, stripeDocId }
       }
     }
 
