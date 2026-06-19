@@ -60,7 +60,7 @@ const websiteUrl = computed(() =>
           <UserAvatar :user="userData" :size="180" />
         </v-card-title>
         <v-card-text>
-          <div class="text-h5 text-center">{{ userName }}</div>
+          <div class="text-h4 text-center">{{ userName }}</div>
         </v-card-text>
         <v-row class="justify-center">
           <v-col cols="auto">
