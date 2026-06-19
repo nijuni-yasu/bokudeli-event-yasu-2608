@@ -17,7 +17,8 @@ export const router = createRouter({
 })
 
 // 昔の仕様を維持するために、このような実装になっているが、もっと汎用的な仕組みに変更するべき
-Object.values(import.meta.glob<{ setupRouter?: (r: Router) => void }>('@/router/*.ts', { eager: true })).forEach(
+// setupRouter を export する index.ts のみ読み込む（*.test.ts 等を dev バンドルに含めない）
+Object.values(import.meta.glob<{ setupRouter?: (r: Router) => void }>('@/router/index.ts', { eager: true })).forEach(
   (t) => {
     t.setupRouter?.(router)
   },

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiHistory } from '@mdi/js'
+import { mdiHistory, mdiSilverwareForkKnife } from '@mdi/js'
 import type { ResolveEventPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import FriendMeetLogDialog from '@shokujii/base/components/FriendMeetLogDialog.vue'
@@ -11,7 +11,7 @@ const props = defineProps<{
   friend: UserFriendListItem
   targetUserId: string
   targetUserName: string
-  isOwner: boolean
+  targetUserImageUrl: string
   resolveUserPath: ResolveUserPathFn
   resolveEventPath: ResolveEventPathFn
 }>()
@@ -41,7 +41,7 @@ const openMeetLogDialog = () => {
 
 <template>
   <v-card class="friend-card h-100 d-flex flex-column">
-    <v-card-item class="pb-2">
+    <v-card-item class="friend-card-item pb-2">
       <template #prepend>
         <router-link
           class="friend-card-profile-link rounded-circle align-self-start"
@@ -49,43 +49,64 @@ const openMeetLogDialog = () => {
           tabindex="0"
           :aria-label="$t('user.friend_profile_link_label', { name: friend.user_name })"
         >
-          <UserAvatar :user="friendUser" :size="48" />
+          <UserAvatar :user="friendUser" :size="56" />
         </router-link>
       </template>
 
-      <v-card-title class="text-wrap lh-normal ps-2">
-        <router-link class="friend-card-profile-link-text text-reset text-decoration-none" :to="profilePath">
-          {{ friend.user_name }}
-        </router-link>
-      </v-card-title>
-      <v-card-subtitle class="text-wrap lh-normal ps-2">
-        {{ $t('user.friend_meet_count', { count: friend.meet_count }) }}
-      </v-card-subtitle>
+      <div class="friend-card-header ps-2 min-w-0">
+        <v-card-title class="friend-card-title lh-normal pa-0">
+          <router-link
+            class="friend-card-profile-link-text text-reset text-decoration-none"
+            :to="profilePath"
+            :title="friend.user_name"
+          >
+            {{ friend.user_name }}
+          </router-link>
+        </v-card-title>
+
+        <v-chip
+          size="small"
+          variant="tonal"
+          class="friend-meet-count-chip mt-2"
+          :prepend-icon="mdiSilverwareForkKnife"
+          label
+        >
+          <span class="friend-meet-count-value">{{ $t('user.friend_meet_count', { count: friend.meet_count }) }}</span>
+        </v-chip>
+      </div>
     </v-card-item>
 
-    <v-card-text class="pt-0 flex-grow-1 d-flex flex-column ga-2">
-      <div v-if="isSingleMeet && friend.last_met_at > 0" class="meet-event-row text-body-2">
+    <v-card-text class="pt-0 flex-grow-1 d-flex flex-column ga-1">
+      <div v-if="isSingleMeet && friend.last_met_at > 0" class="friend-date-primary text-body-2">
         <span class="text-medium-emphasis">{{ $t('user.friend_first_met_at') }}</span>
-        <span class="ms-1">{{ convertToDate(friend.last_met_at) }}</span>
+        <span class="ms-1 friend-date-value">{{ convertToDate(friend.last_met_at) }}</span>
       </div>
 
       <template v-else>
-        <div v-if="friend.last_met_at > 0" class="meet-event-row text-body-2">
+        <div v-if="friend.last_met_at > 0" class="friend-date-primary text-body-2">
           <span class="text-medium-emphasis">{{ $t('user.friend_last_met_at') }}</span>
-          <span class="ms-1">{{ convertToDate(friend.last_met_at) }}</span>
+          <span class="ms-1 friend-date-value">{{ convertToDate(friend.last_met_at) }}</span>
         </div>
 
-        <div v-if="friend.first_met_at > 0" class="meet-event-row text-body-2">
-          <span class="text-medium-emphasis">{{ $t('user.friend_first_met_at') }}</span>
-          <span class="ms-1">{{ convertToDate(friend.first_met_at) }}</span>
+        <div v-if="friend.first_met_at > 0" class="friend-date-secondary text-caption text-medium-emphasis">
+          <span>{{ $t('user.friend_first_met_at') }}</span>
+          <span class="ms-1 friend-date-value">{{ convertToDate(friend.first_met_at) }}</span>
         </div>
       </template>
     </v-card-text>
 
     <v-card-actions v-if="hasMeetHistory" class="pt-0 pb-2 pe-2 justify-end">
-      <v-btn variant="text" density="comfortable" size="small" class="meet-log-open-btn" @click="openMeetLogDialog">
+      <v-btn
+        variant="outlined"
+        rounded="pill"
+        color="primary"
+        density="comfortable"
+        size="small"
+        class="meet-log-open-btn"
+        @click="openMeetLogDialog"
+      >
         {{ $t('user.friend_meet_log_open') }}
-        <v-icon end :icon="mdiHistory" />
+        <v-icon end :icon="mdiHistory" aria-hidden="true" />
       </v-btn>
     </v-card-actions>
 
@@ -93,7 +114,7 @@ const openMeetLogDialog = () => {
       v-model="meetLogDialogOpen"
       :target-user-id="targetUserId"
       :target-user-name="targetUserName"
-      :is-owner="isOwner"
+      :target-user-image-url="targetUserImageUrl"
       :friend="friend"
       :resolve-user-path="resolveUserPath"
       :resolve-event-path="resolveEventPath"
@@ -102,6 +123,49 @@ const openMeetLogDialog = () => {
 </template>
 
 <style scoped lang="scss">
+.friend-card {
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+
+  @media (hover: hover) {
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .friend-card {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.friend-card-item {
+  align-items: flex-start;
+}
+
+.friend-card-header {
+  min-width: 0;
+}
+
+.friend-card-title {
+  min-width: 0;
+}
+
+.friend-card-profile-link-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(var(--v-theme-on-background), var(--v-high-emphasis-opacity));
+}
+
 .friend-card-profile-link:focus-visible {
   outline: 2px solid rgb(var(--v-theme-primary));
   outline-offset: 3px;
@@ -114,8 +178,21 @@ const openMeetLogDialog = () => {
   border-radius: 4px;
 }
 
-.meet-event-row {
+.friend-date-primary,
+.friend-date-secondary {
   line-height: 1.5;
+}
+
+.friend-date-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.friend-meet-count-chip {
+  max-width: 100%;
+}
+
+.friend-meet-count-value {
+  font-variant-numeric: tabular-nums;
 }
 
 .meet-log-open-btn {

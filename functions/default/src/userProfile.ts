@@ -212,6 +212,7 @@ const mapOrderToFoodPreview = (
     menu_id: order.menu_id,
     menu_name: order.menu_name,
     menu_price: order.menu_price,
+    shop_name: event.shop_name ?? '',
     ordered_at: toMillis(order.ordered_at) || order.updated_at,
     event_status_value: event.event_status?.value ?? '',
     partner_id: event.partner_id ?? '',

@@ -244,6 +244,9 @@ export default {
     manager: 'Manager',
     member: 'Member',
   },
+  community_card: {
+    members_count: 'メンバー {count}人',
+  },
   community_contact_dialog: {
     send_to: '送信先：{communityName} にメールにて問い合わせます。',
     reply_to: '返信先：{replyTo}',
@@ -652,6 +655,7 @@ export default {
   },
   user_profile: {
     profile_settings: 'プロフィール設定',
+    user_description_placeholder: '自己紹介を追加しましょう。',
   },
   manage: {
     settings: {

@@ -21,6 +21,8 @@ const props = defineProps<{
   ordersLoading?: boolean
   /** 注文取得失敗時 true（注文ブロックにエラー＋再試行） */
   ordersError?: boolean
+  /** 指定時はカバー・タイトルをイベント詳細へリンク（操作ボタンはリンク外） */
+  eventDetailPath?: string
 }>()
 
 const { t } = useI18n()
@@ -231,11 +233,26 @@ const submitCancel = () => {
 
 <template>
   <v-card class="pa-0">
+    <router-link
+      v-if="eventDetailPath != null"
+      class="user-event-card-detail-link d-block text-reset text-decoration-none"
+      :to="eventDetailPath"
+    >
+      <v-img
+        cover
+        class="ma-0 pa-0"
+        aspect-ratio="1.91"
+        :src="convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.event_id))"
+        :alt="event.event_name"
+      />
+    </router-link>
     <v-img
+      v-else
       cover
       class="ma-0 pa-0"
       aspect-ratio="1.91"
       :src="convertStoragePathToURL(getEventCoverStoragePath(event.community_id, event.event_id))"
+      :alt="event.event_name"
     />
     <div class="d-flex align-center flex-wrap ga-2 mt-2 ml-3">
       <EventStatusChip :status="event.calculatedEventStatus" size="small" />
@@ -244,7 +261,14 @@ const submitCancel = () => {
       </v-chip>
     </div>
     <v-card-title class="justify-center pb-1 title text-h5">
-      {{ event.event_name }}
+      <router-link
+        v-if="eventDetailPath != null"
+        class="user-event-card-detail-link text-reset text-decoration-none"
+        :to="eventDetailPath"
+      >
+        {{ event.event_name }}
+      </router-link>
+      <template v-else>{{ event.event_name }}</template>
     </v-card-title>
     <v-card-text class="py-1 px-2 event-card">
       {{ $t('user_event_card.community_name', [event.community_name]) }}
@@ -456,5 +480,11 @@ const submitCancel = () => {
 
 .cancel-dialog-table__row--canceled {
   font-size: 0.8125rem;
+}
+
+.user-event-card-detail-link:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 </style>

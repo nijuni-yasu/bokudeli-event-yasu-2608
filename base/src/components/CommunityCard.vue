@@ -33,7 +33,9 @@ defineProps<{
         <!-- Mutual members -->
         <v-card-text v-if="members != null" class="mt-auto">
           <div class="mb-2">
-            <span class="text--primary font-weight-medium"> {{ members.length }} members </span>
+            <span class="text--primary font-weight-medium">
+              {{ $t('community_card.members_count', { count: members.length }) }}
+            </span>
           </div>
           <div class="v-avatar-group">
             <UserAvatar

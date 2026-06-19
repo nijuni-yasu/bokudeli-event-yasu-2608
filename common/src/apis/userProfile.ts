@@ -88,6 +88,8 @@ export type UserProfileFoodPreviewItem = {
   menu_id: string
   menu_name: string
   menu_price: number
+  /** イベントに紐づく飲食店名（`Event.shop_name`） */
+  shop_name: string
   /** `ordered_at` または `updated_at`（時系列ソート用） */
   ordered_at: number
   event_status_value: string

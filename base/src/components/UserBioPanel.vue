@@ -20,11 +20,14 @@ const currentUserStore = useCurrentUserStore()
 const isEditable = computed(() => props.isEditable ?? false)
 
 const userName = computed(() => props.userData.user_name ?? 'ゲスト')
+
+const isDescriptionPlaceholder = computed(
+  () => props.userData.user_description === '' && currentUserStore.firebaseUser?.uid === props.userData.user_id,
+)
+
 const userDescription = computed(() => {
-  return (
-    props.userData.user_description ||
-    (currentUserStore.firebaseUser?.uid !== props.userData.user_id ? '' : 'ここに自己紹介文が入ります。')
-  )
+  if (props.userData.user_description !== '') return props.userData.user_description
+  return isDescriptionPlaceholder.value ? $t('user_profile.user_description_placeholder') : ''
 })
 const twitterUrl = computed(() =>
   props.userData.user_sns_twitter === '' ? undefined : buildTwitterUrl(props.userData.user_sns_twitter),
@@ -52,7 +55,7 @@ const websiteUrl = computed(() =>
           <UserAvatar :user="userData" :size="180" />
         </v-card-title>
         <v-card-text>
-          <div class="text-h5 text-center">{{ userName }}</div>
+          <div class="text-h4 text-center">{{ userName }}</div>
         </v-card-text>
         <v-row class="justify-center">
           <v-col cols="auto">
@@ -70,7 +73,12 @@ const websiteUrl = computed(() =>
             </a>
           </v-col>
         </v-row>
-        <v-card-text v-linkify class="text-subtitle-1" style="line-height: 30px; white-space: pre-line">
+        <v-card-text
+          v-linkify
+          class="text-subtitle-1"
+          :class="{ 'text-medium-emphasis': isDescriptionPlaceholder }"
+          style="line-height: 30px; white-space: pre-line"
+        >
           {{ userDescription }}
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
