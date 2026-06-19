@@ -9,6 +9,13 @@ describe('normalizeEnterpriseEventPaymentForCopy', () => {
     })
   })
 
+  it('enterprise_id が null は PF としてそのまま', () => {
+    expect(normalizeEnterpriseEventPaymentForCopy(null, 'community_bill', { type: 'free' })).toEqual({
+      event_payment: 'community_bill',
+      community_bill_settings: { type: 'free' },
+    })
+  })
+
   it('enterprise_id 付き community_bill は enterprise_subsidy に変換', () => {
     expect(
       normalizeEnterpriseEventPaymentForCopy('ent1', 'community_bill', { type: 'discount', off_amount: 300 }),

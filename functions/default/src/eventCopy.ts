@@ -16,7 +16,7 @@ const logger = createModuleLogger('eventCopy')
 
 /** enterprise_id 付きイベントの支払い方式をエンプラ版で許可された値に正規化する */
 export const normalizeEnterpriseEventPaymentForCopy = (
-  enterpriseId: string | undefined,
+  enterpriseId: string | null | undefined,
   eventPayment: ShokujiiEvent['event_payment'],
   communityBillSettings: ShokujiiEvent['community_bill_settings'],
 ): {
