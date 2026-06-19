@@ -51,6 +51,9 @@ export type RawEventStatusType = (typeof RAW_EVENT_STATUS_VALUES)[number]
 export const EVENT_STATUS_VALUES = [...RAW_EVENT_STATUS_VALUES, 'order_closed', 'finished', 'full'] as const
 export type EventStatusType = (typeof EVENT_STATUS_VALUES)[number]
 
+/** PF = null / Enterprise = string。NonEmptyStringSchema は null を delete するため使わない */
+const EnterpriseIdDbSchema = z.union([z.string().nonempty(), z.null()])
+
 // Member を DocumentReference から ID に変換するための Schema
 // 実装として良くはない
 const MemberIdSchema = z
@@ -117,7 +120,7 @@ export const EventDbSchema = z.object({
   sent_new_event_mail_at: TimestampSchema.optional(),
   sent_popular_event_mail_at: TimestampSchema.optional(),
   community_bill_settings: optionalDeleteField(CommunityBillSettingsDbSchema),
-  enterprise_id: NonEmptyStringSchema.optional(),
+  enterprise_id: EnterpriseIdDbSchema,
   enterprise_subsidy_settings: optionalDeleteField(EnterpriseSubsidySettingsDbSchema),
   canceled_at: TimestampSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
@@ -191,7 +194,7 @@ const EventAppSchema = z.object({
   sent_new_event_mail_at: EpochMillisSchema.optional(),
   sent_popular_event_mail_at: EpochMillisSchema.optional(),
   community_bill_settings: CommunityBillSettingsAppSchema.optional(),
-  enterprise_id: z.string().optional(),
+  enterprise_id: z.string().nullable().optional(),
   enterprise_subsidy_settings: EnterpriseSubsidySettingsAppSchema.optional(),
   canceled_at: EpochMillisSchema.optional(),
   canceled_by: z.string().nonempty().optional(),
@@ -200,6 +203,7 @@ const EventAppSchema = z.object({
 export const convertEventToDb = (event: Event, updated_by: string) => {
   return {
     ...event,
+    enterprise_id: event.enterprise_id ?? null,
     created_at: EpochMillisSchema.default(Date.now()).parse(event.created_at),
     created_by: event.created_by ?? updated_by,
     updated_at: Date.now(),
@@ -253,7 +257,7 @@ export class Event {
   subdomain_tags!: string[]
 
   community_bill_settings?: CommunityBillSettingsType
-  enterprise_id?: string
+  enterprise_id?: string | null
   enterprise_subsidy_settings?: EnterpriseSubsidySettingsType
 
   created_at: number
