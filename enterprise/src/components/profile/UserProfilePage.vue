@@ -16,6 +16,7 @@ import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePre
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
 import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline, mdiReceiptText } from '@mdi/js'
 import { getCommunityPath, getEventPath, getReceiptPath, getUserPath } from '@/router/utils'
+import { useEnterpriseId } from '@/composable/useEnterpriseId'
 import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -74,6 +75,11 @@ const profileFriendsPreviewMaxTotal = computed(() => {
 })
 
 const profileUserId = props.userId
+
+const { enterpriseId } = useEnterpriseId()
+if (enterpriseId.value == null) {
+  throw new Error('Enterprise is not resolved')
+}
 
 const notification = useNotification()
 
@@ -253,18 +259,30 @@ watch(friendSortBy, () => {
 /** §4.2.0: 限定公開も表示。詳細リンクは本人または is_linkable / 一般公開のみ */
 const canLinkToDetail = (isPublic: boolean, isLinkable?: boolean): boolean => isLinkable ?? (isOwner.value || isPublic)
 
-const memberCommunityListStore = useCommunityListStore(
-  [where('members', 'array-contains', doc(db, 'users', profileUserId)), orderBy('community_num_members', 'desc')],
-  5,
+const memberCommunityListStore = computed(() =>
+  useCommunityListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('members', 'array-contains', doc(db, 'users', profileUserId)),
+      orderBy('community_num_members', 'desc'),
+    ],
+    5,
+  ),
 )
 
-const managerCommunityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', profileUserId)), orderBy('community_num_members', 'desc')],
-  5,
+const managerCommunityListStore = computed(() =>
+  useCommunityListStore(
+    [
+      where('enterprise_id', '==', enterpriseId.value),
+      where('managers', 'array-contains', doc(db, 'users', profileUserId)),
+      orderBy('community_num_members', 'desc'),
+    ],
+    5,
+  ),
 )
 
 const memberCommunities = computed(() =>
-  (memberCommunityListStore.communityStores ?? []).flatMap((communityStore) => {
+  (memberCommunityListStore.value.communityStores ?? []).flatMap((communityStore) => {
     if (communityStore.community == null || communityStore.members == null) {
       return []
     }
@@ -276,7 +294,7 @@ const memberCommunities = computed(() =>
 )
 
 const managerCommunities = computed(() =>
-  (managerCommunityListStore.communityStores ?? []).flatMap((communityStore) => {
+  (managerCommunityListStore.value.communityStores ?? []).flatMap((communityStore) => {
     if (communityStore.community == null || communityStore.members == null) {
       return []
     }
@@ -400,13 +418,13 @@ const isProfileCommunitiesEmpty = computed(() => !showProfileJoinedSection.value
 const showJoinedSection = computed(() => memberCommunities.value.length > 0)
 const showManagedSection = computed(() => managerCommunities.value.length > 0)
 const memberCommunityListHasMore = computed(() => {
-  const loaded = memberCommunityListStore.communityStores?.length ?? 0
-  const total = memberCommunityListStore.totalCount
+  const loaded = memberCommunityListStore.value.communityStores?.length ?? 0
+  const total = memberCommunityListStore.value.totalCount
   return total != null && loaded < total
 })
 const managerCommunityListHasMore = computed(() => {
-  const loaded = managerCommunityListStore.communityStores?.length ?? 0
-  const total = managerCommunityListStore.totalCount
+  const loaded = managerCommunityListStore.value.communityStores?.length ?? 0
+  const total = managerCommunityListStore.value.totalCount
   return total != null && loaded < total
 })
 /** コミュニティタブ: 両セクションとも表示 0 かつ追読みも無いときのみ空表示（RC-61） */
@@ -418,7 +436,7 @@ const isCommunitiesTabEmpty = computed(
     !managerCommunityListHasMore.value,
 )
 const isCommunitiesTabReady = computed(
-  () => memberCommunityListStore.totalCount !== null && managerCommunityListStore.totalCount !== null,
+  () => memberCommunityListStore.value.totalCount !== null && managerCommunityListStore.value.totalCount !== null,
 )
 
 setupAutoLoadWhenEmpty(
@@ -432,10 +450,10 @@ setupAutoLoadWhenEmpty(
     },
     load: () => {
       if (memberCommunities.value.length === 0 && memberCommunityListHasMore.value) {
-        memberCommunityListStore.next()
+        memberCommunityListStore.value.next()
       }
       if (managerCommunities.value.length === 0 && managerCommunityListHasMore.value) {
-        managerCommunityListStore.next()
+        managerCommunityListStore.value.next()
       }
     },
   },
