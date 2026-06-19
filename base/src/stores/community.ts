@@ -154,6 +154,21 @@ export const hasManagedCommunity = async (userId: string): Promise<boolean> => {
 }
 
 /**
+ * 指定 enterprise 内でユーザーが管理しているコミュニティが1件以上存在するかチェックする。
+ * enterprise アプリのイベント主催導線など、テナント分離が必要な判定に使用する。
+ */
+export const hasManagedCommunityInEnterprise = async (userId: string, enterpriseId: string): Promise<boolean> => {
+  const q = query(
+    collection(db, 'communities').withConverter(communityConverter),
+    where('enterprise_id', '==', enterpriseId),
+    where('managers', 'array-contains', getUserRef(userId)),
+    limit(1),
+  )
+  const snapshot = await getDocs(q)
+  return !snapshot.empty
+}
+
+/**
  * ユーザーが唯一の管理者であるコミュニティが存在するかチェックする。
  * アカウント削除時に、唯一の管理者の場合は削除を許容しないため使用する。
  *
