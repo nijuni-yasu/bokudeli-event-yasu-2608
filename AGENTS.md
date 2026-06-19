@@ -54,6 +54,14 @@ AIエージェント向けプロジェクトガイド。
 **概要**: 食事関連のコミュニティイベント管理プラットフォーム。
 **アーキテクチャ**: Firebase ベースのモノレポ（`npm workspaces`）。
 
+## 関連リポジトリ
+
+| リポジトリ | 役割 |
+| :-- | :-- |
+| [`nijuniinc/bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch) | Firestore 既存データの backfill / migration など、アプリ本体外で実行するバッチ処理 |
+
+既存 Firestore データへの backfill は、原則として本リポジトリの `functions/default` ではなく `bokudeli-event-batch` 側で実装・実行する。アプリ本体側は schema / converter / store / Rules / index / テストを整備する。エンプラ MVP の enterprise_id null materialize バックフィル手順は [documents/08_エンタープライズ/00_計画/02_developmentマージ.md](documents/08_エンタープライズ/00_計画/02_developmentマージ.md) §2.4 を参照。
+
 ## ディレクトリ構造
 
 ### アクティブ
