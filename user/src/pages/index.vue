@@ -30,6 +30,7 @@ const centerBannersStore = useBannersStore('center_banners')
 
 const popularEventListStore = useEventListStore(
   [
+    where('enterprise_id', '==', null),
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
     where('event_num_members', '>=', 1),
@@ -53,6 +54,7 @@ const popularEvents = computed(
 
 const upcomingEventListStore = useEventListStore(
   [
+    where('enterprise_id', '==', null),
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
     where('event_num_members', '>=', 1),
@@ -74,6 +76,7 @@ const upcomingEvents =
 
 const pastEventListStore = useEventListStore(
   [
+    where('enterprise_id', '==', null),
     where('is_public', '==', true),
     where('event_status.value', '==', 'accepting_order'),
     where('event_num_members', '>=', 1),

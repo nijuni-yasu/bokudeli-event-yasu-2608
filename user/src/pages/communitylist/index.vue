@@ -6,7 +6,12 @@ import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 
 const communityListStore = useCommunityListStore(
-  [where('is_public', '==', true), where('is_approved', '==', true), orderBy('community_num_members', 'desc')],
+  [
+    where('enterprise_id', '==', null),
+    where('is_public', '==', true),
+    where('is_approved', '==', true),
+    orderBy('community_num_members', 'desc'),
+  ],
   5,
 )
 
