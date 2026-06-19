@@ -10,6 +10,7 @@ import {
   query,
   startAfter,
   where,
+  type QueryConstraint,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
@@ -18,12 +19,23 @@ import { eventConverter, type BokudeliEvent } from './event.js'
 
 export type UserEventListStore = ReturnType<typeof useUserEventListByUserId>
 
+export type UserEventListStoreOptions = {
+  /** PF 露出フィルタ等。`collectionGroup('events')` の base 条件（is_deleted / members）に追加する */
+  additionalFilters?: QueryConstraint[]
+}
+
 /**
  * プロフィールの参加イベント一覧用。`userId` は `fetchUser` 解決後の Shokujii `user_id` を渡すこと。
  */
-export const useUserEventListByUserId = (userId: string, pageSize: number = 6) => {
+export const useUserEventListByUserId = (
+  userId: string,
+  pageSize: number = 6,
+  options: UserEventListStoreOptions = {},
+) => {
+  const additionalFilters = options.additionalFilters ?? []
   const storeId = userId !== '' ? userId : '_empty'
-  const store = defineStore(`/userEventList/${storeId}/${pageSize}`, () => {
+  const filtersKey = additionalFilters.length > 0 ? `/${JSON.stringify(additionalFilters)}` : ''
+  const store = defineStore(`/userEventList/${storeId}/${pageSize}${filtersKey}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const events = ref<BokudeliEvent[]>([])
     const totalCount = ref<number | null>(null)
@@ -46,6 +58,7 @@ export const useUserEventListByUserId = (userId: string, pageSize: number = 6) =
               collectionGroup(db, 'events'),
               where('is_deleted', '==', false),
               where('members', 'array-contains', userMemberRef),
+              ...additionalFilters,
             )
             totalCount.value = (await getCountFromServer(countQ)).data().count
           }
@@ -54,6 +67,7 @@ export const useUserEventListByUserId = (userId: string, pageSize: number = 6) =
             collectionGroup(db, 'events'),
             where('is_deleted', '==', false),
             where('members', 'array-contains', userMemberRef),
+            ...additionalFilters,
             orderBy('event_start_datetime', 'desc'),
             ...(lastVisible == null ? [] : [startAfter(lastVisible)]),
             limit(pageSize),

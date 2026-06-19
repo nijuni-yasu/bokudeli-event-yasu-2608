@@ -39,7 +39,11 @@ const route = useRoute()
 const router = useRouter()
 
 const communityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  [
+    where('enterprise_id', '==', null),
+    where('managers', 'array-contains', doc(db, 'users', userId)),
+    orderBy('community_num_members', 'desc'),
+  ],
   10,
 )
 const communities = computed(() => {

@@ -96,7 +96,9 @@ const isOwner = computed(() => loginUser.value?.user_id === profileUserId)
 const isInvalidProfile = computed(() => exists.value === false || (user.value != null && user.value.is_deleted))
 const isProfileLoading = computed(() => profileUserId !== '' && exists.value === null)
 
-const userEventListStore = useUserEventListByUserId(profileUserId)
+const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
+  additionalFilters: [where('enterprise_id', '==', null)],
+})
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
 
 const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId)
@@ -302,12 +304,20 @@ watch(friendSortBy, () => {
 const canLinkToDetail = (isPublic: boolean, isLinkable?: boolean): boolean => isLinkable ?? (isOwner.value || isPublic)
 
 const memberCommunityListStore = useCommunityListStore(
-  [where('members', 'array-contains', doc(db, 'users', profileUserId)), orderBy('community_num_members', 'desc')],
+  [
+    where('enterprise_id', '==', null),
+    where('members', 'array-contains', doc(db, 'users', profileUserId)),
+    orderBy('community_num_members', 'desc'),
+  ],
   5,
 )
 
 const managerCommunityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', profileUserId)), orderBy('community_num_members', 'desc')],
+  [
+    where('enterprise_id', '==', null),
+    where('managers', 'array-contains', doc(db, 'users', profileUserId)),
+    orderBy('community_num_members', 'desc'),
+  ],
   5,
 )
 
