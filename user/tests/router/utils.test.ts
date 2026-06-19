@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { getEventEditPathByRawStatus, getEventPath } from './utils.js'
+import { getEventEditPathByRawStatus, getEventPath } from '@/router/utils.js'
 
 describe('router utils', () => {
   it('getEventPath builds community event path', () => {
