@@ -15,13 +15,11 @@ import {
 import { getCommunity } from './stores/community.js'
 import { getEventInCommunity } from './stores/event.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
-import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
-import { adjustEnterpriseMemberMonthlyUsage } from './stores/enterprise.js'
 import { writeAuditLog } from './utils/auditLog.js'
 import {
+  computeOrderSelfPayUnitAmount,
   getEventEnterpriseId,
-  loadEnterpriseMemberForSubsidy,
-  validateEnterpriseSubsidyOrdersSnapshotForWebhook,
+  processEnterpriseSubsidyOrdersForWebhook,
 } from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('stripeWebhook')
@@ -358,31 +356,23 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
       if (enterpriseId == null) {
         return { kind: 'client_error', message: 'enterprise_id is required for enterprise_subsidy' }
       }
-      const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, userId, transaction)
-      if (entMember == null) {
-        return { kind: 'client_error', message: 'EnterpriseMember not found' }
-      }
-      const snapshotValidation = validateEnterpriseSubsidyOrdersSnapshotForWebhook({
+      const subsidyResult = await processEnterpriseSubsidyOrdersForWebhook({
+        enterpriseId,
+        userId,
         event: eventData,
         orders,
+        transaction,
       })
-      if (!snapshotValidation.ok) {
-        return { kind: 'client_error', message: snapshotValidation.message }
+      if (!subsidyResult.ok) {
+        return { kind: 'client_error', message: subsidyResult.message }
       }
-      const ordersToConfirm = orders.filter((o) => o.status !== 'ordered')
-      const subsidyToAdd = ordersToConfirm.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
-      subsidyTotal = orders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
-      if (ordersToConfirm.length > 0) {
-        const eventMonth = formatYearMonth(eventData.event_start_datetime)
-        await adjustEnterpriseMemberMonthlyUsage(
-          enterpriseId,
-          userId,
-          eventMonth,
-          subsidyToAdd,
-          ordersToConfirm.length,
-          transaction,
-        )
-        enterpriseOrderCreateLog = { enterpriseId, subsidyTotal, totalPayment: 0, stripeDocId }
+      subsidyTotal = subsidyResult.subsidyTotal
+      if (subsidyResult.enterpriseOrderCreateLog != null) {
+        enterpriseOrderCreateLog = {
+          ...subsidyResult.enterpriseOrderCreateLog,
+          totalPayment: 0,
+          stripeDocId,
+        }
       }
     }
 
@@ -407,10 +397,7 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
     }
 
     const orderedAt = Timestamp.now().toMillis()
-    const payAmount = orders.reduce(
-      (sum, o) => sum + o.menu_price - (o.pay_enterprise_subsidy_amount ?? o.pay_community_bill_off_amount ?? 0),
-      0,
-    )
+    const payAmount = orders.reduce((sum, o) => sum + computeOrderSelfPayUnitAmount(o), 0)
     if (enterpriseOrderCreateLog != null) {
       enterpriseOrderCreateLog.totalPayment = payAmount
     }

@@ -7,10 +7,13 @@ import Stripe from 'stripe'
 import { CancelOrdersRequest, CancelOrdersResponse, CancelOrdersRefundError } from '@shokujii/common/apis/stripe.js'
 import { getOrdersByIds, saveOrder, getStripe, saveStripe } from './stores/memberOrder.js'
 import { getEventInCommunity } from './stores/event.js'
-import { adjustEnterpriseMemberMonthlyUsage } from './stores/enterprise.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import { getMemberOrderDiscountAmount } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
-import { getEventEnterpriseId } from './utils/enterpriseSubsidyOrders.js'
+import {
+  getEventEnterpriseId,
+  revertEnterpriseSubsidyUsageOnCancel,
+  sumEnterpriseSubsidyAmounts,
+} from './utils/enterpriseSubsidyOrders.js'
 import { writeAuditLog } from './utils/auditLog.js'
 import { applyOrderCanceledSideEffects } from './orderCanceledSideEffects.js'
 import { createModuleLogger } from './utils/logger.js'
@@ -98,15 +101,13 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
       }
 
       if (eventPayment === 'enterprise_subsidy' && enterpriseId != null && eventMonth != null) {
-        const subsidyTotal = fetchedOrders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
-        await adjustEnterpriseMemberMonthlyUsage(
+        await revertEnterpriseSubsidyUsageOnCancel({
           enterpriseId,
-          uid,
+          userId: uid,
           eventMonth,
-          -subsidyTotal,
-          -fetchedOrders.length,
+          orders: fetchedOrders,
           transaction,
-        )
+        })
       }
 
       for (const order of fetchedOrders) {
@@ -119,7 +120,7 @@ export const cancelOrders = onCall<CancelOrdersRequest, Promise<CancelOrdersResp
     })
 
     if (eventPayment === 'enterprise_subsidy' && enterpriseId != null) {
-      const returnedSubsidy = orders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
+      const returnedSubsidy = sumEnterpriseSubsidyAmounts(orders)
       await writeAuditLog({
         enterpriseId,
         userId: uid,

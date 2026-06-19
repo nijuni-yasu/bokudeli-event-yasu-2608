@@ -22,7 +22,9 @@ import {
   assertActiveEnterpriseMember,
   assertEnterpriseEventPaymentAllowed,
   assertEnterpriseSubsidyOrdersConsistent,
+  computeOrderSelfPayUnitAmount,
   getEventEnterpriseId,
+  getStripeCheckoutLineItemGroupKey,
   loadEnterpriseMemberForSubsidy,
 } from './utils/enterpriseSubsidyOrders.js'
 
@@ -143,10 +145,8 @@ export const createStripeCheckoutSession = onCall<
 
     const grouped = new Map<string, { menuName: string; unitAmount: number; quantity: number; imageUrl: string }>()
     for (const order of orders) {
-      const unitAmount =
-        order.menu_price - (order.pay_enterprise_subsidy_amount ?? order.pay_community_bill_off_amount ?? 0)
-      const groupKey =
-        event.event_payment === 'enterprise_subsidy' ? `${order.menu_id}\u0000${unitAmount}` : order.menu_id
+      const unitAmount = computeOrderSelfPayUnitAmount(order)
+      const groupKey = getStripeCheckoutLineItemGroupKey(event.event_payment, order)
       const existing = grouped.get(groupKey)
       if (existing) {
         existing.quantity++

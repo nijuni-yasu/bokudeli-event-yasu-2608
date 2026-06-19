@@ -4,9 +4,11 @@ import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@s
 import { EventMember } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import {
-  computePaymentEnterpriseSubsidyAmount,
-  computeEnterpriseSubsidyTotalPayment,
-} from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+  computePaymentCommunityBillOffAmount,
+  computeTotalPayment,
+  isPaymentCommunityBillOffAmountConsistent,
+} from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
+import { writeAuditLog } from './utils/auditLog.js'
 import {
   createOrder,
   deleteOrder,
@@ -17,19 +19,15 @@ import {
   saveOrder,
 } from './stores/memberOrder.js'
 import { getEventInCommunity } from './stores/event.js'
-import { adjustEnterpriseMemberMonthlyUsage } from './stores/enterprise.js'
 import { createModuleLogger } from './utils/logger.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
 import {
-  computePaymentCommunityBillOffAmount,
-  computeTotalPayment,
-  isPaymentCommunityBillOffAmountConsistent,
-} from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
-import { writeAuditLog } from './utils/auditLog.js'
-import {
   assertActiveEnterpriseMember,
   assertEnterpriseEventPaymentAllowed,
-  assertEnterpriseSubsidyOrdersConsistent,
+  applyEnterpriseSubsidyPayFieldToCartTracker,
+  buildEnterpriseSubsidyUsageExceededDetails,
+  createEnterpriseSubsidyAddToCartTracker,
+  finalizeEnterpriseSubsidyZeroPaymentOrder,
   getEventEnterpriseId,
   loadEnterpriseMemberForSubsidy,
 } from './utils/enterpriseSubsidyOrders.js'
@@ -82,10 +80,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
 
     const existingMember = await getMember(community_id, event_id, uid, transaction)
 
-    let runningUsage = 0
-    let requestedTotal = 0
-    let grantedTotal = 0
-    let unfilledCount = 0
+    let subsidyTracker: ReturnType<typeof createEnterpriseSubsidyAddToCartTracker> | null = null
     let eventMonth = ''
 
     if (eventData.event_payment === 'enterprise_subsidy') {
@@ -100,7 +95,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       if (entMember == null) {
         throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
       }
-      runningUsage = entMember.monthly_usage[eventMonth] ?? 0
+      subsidyTracker = createEnterpriseSubsidyAddToCartTracker(entMember.monthly_usage[eventMonth] ?? 0)
     }
 
     if (existingMember == null) {
@@ -124,28 +119,11 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
 
       if (eventData.event_payment === 'enterprise_subsidy') {
         for (let i = 0; i < menu.count; i++) {
-          const settings = eventData.enterprise_subsidy_settings
-          const remaining = Math.max(0, settings!.monthly_limit_per_user - runningUsage)
-          const candidateBase =
-            computePaymentEnterpriseSubsidyAmount(
-              eventData.event_payment,
-              settings,
-              masterMenu.menu_price,
-              Number.MAX_SAFE_INTEGER,
-            ) ?? 0
-          requestedTotal += candidateBase
-          const payField = computePaymentEnterpriseSubsidyAmount(
-            eventData.event_payment,
-            settings,
-            masterMenu.menu_price,
-            remaining,
-          )
-          if (payField != null && payField > 0) {
-            runningUsage += payField
-            grantedTotal += payField
-          } else if (candidateBase > 0) {
-            unfilledCount += 1
-          }
+          const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
+            event: eventData,
+            menuPrice: masterMenu.menu_price,
+            tracker: subsidyTracker!,
+          })
           await createOrder(
             community_id,
             event_id,
@@ -192,14 +170,12 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       }
     }
 
-    if (unfilledCount > 0 && enterpriseId != null) {
-      return {
+    if (subsidyTracker != null && enterpriseId != null) {
+      return buildEnterpriseSubsidyUsageExceededDetails({
         enterpriseId,
         eventMonth,
-        requestedTotal,
-        grantedTotal,
-        unfilledCount,
-      }
+        tracker: subsidyTracker,
+      })
     }
     return null
   })
@@ -329,37 +305,19 @@ export const confirmOrder = onCall(
         if (entMember == null) {
           throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
         }
-        const replay = await assertEnterpriseSubsidyOrdersConsistent({
+        const orderedAt = Timestamp.now().toMillis()
+        return finalizeEnterpriseSubsidyZeroPaymentOrder({
           enterpriseId,
           userId: uid,
+          communityId: community_id,
+          eventId: event_id,
           event: eventData,
           orders,
           orderIds: order_ids,
           member: entMember,
-        })
-        const totalPayment = computeEnterpriseSubsidyTotalPayment(orders)
-        if (totalPayment !== 0) {
-          throw new HttpsError(
-            'failed-precondition',
-            'confirmOrder は自己負担0円のときのみ使用できます。Stripe 決済が必要です。',
-          )
-        }
-        const eventMonth = formatYearMonth(eventData.event_start_datetime)
-        await adjustEnterpriseMemberMonthlyUsage(
-          enterpriseId,
-          uid,
-          eventMonth,
-          replay.subsidyTotal,
-          orders.length,
           transaction,
-        )
-        const orderedAt = Timestamp.now().toMillis()
-        for (const order of orders) {
-          order.status = 'ordered'
-          order.ordered_at = orderedAt
-          saveOrder(community_id, event_id, uid, order, transaction)
-        }
-        return { enterpriseId, subsidyTotal: replay.subsidyTotal }
+          orderedAt,
+        })
       }
 
       for (const order of orders) {

@@ -3,9 +3,19 @@ import type { CallableRequest } from 'firebase-functions/https'
 import type { Transaction } from 'firebase-admin/firestore'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import type { EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
+import type { EventPaymentType } from '@shokujii/common/schemas/Event.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
-import { replayEnterpriseSubsidyAmountsForOrders } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
-import { getEnterpriseMember, getEnterpriseMemberInTransaction } from '../stores/enterprise.js'
+import {
+  computePaymentEnterpriseSubsidyAmount,
+  computeEnterpriseSubsidyTotalPayment,
+  replayEnterpriseSubsidyAmountsForOrders,
+} from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import {
+  adjustEnterpriseMemberMonthlyUsage,
+  getEnterpriseMember,
+  getEnterpriseMemberInTransaction,
+} from '../stores/enterprise.js'
+import { saveOrder } from '../stores/memberOrder.js'
 import type { ShokujiiEvent } from '../stores/event.js'
 import { writeAuditLog } from './auditLog.js'
 
@@ -133,5 +143,194 @@ export function validateEnterpriseSubsidyOrdersSnapshotForWebhook(params: {
     subsidyTotal += subsidy
   }
 
+  return { ok: true, subsidyTotal }
+}
+
+export type EnterpriseSubsidyAddToCartTracker = {
+  runningUsage: number
+  requestedTotal: number
+  grantedTotal: number
+  unfilledCount: number
+}
+
+export type EnterpriseSubsidyUsageExceededDetails = {
+  enterpriseId: string
+  eventMonth: string
+  requestedTotal: number
+  grantedTotal: number
+  unfilledCount: number
+}
+
+export function createEnterpriseSubsidyAddToCartTracker(monthlyUsage: number): EnterpriseSubsidyAddToCartTracker {
+  return {
+    runningUsage: monthlyUsage,
+    requestedTotal: 0,
+    grantedTotal: 0,
+    unfilledCount: 0,
+  }
+}
+
+/** カート追加時: 1 品目分の pay_enterprise_subsidy_amount を計算し tracker を更新 */
+export function applyEnterpriseSubsidyPayFieldToCartTracker(params: {
+  event: ShokujiiEvent
+  menuPrice: number
+  tracker: EnterpriseSubsidyAddToCartTracker
+}): number | undefined {
+  const { event, menuPrice, tracker } = params
+  const settings = event.enterprise_subsidy_settings
+  if (settings == null) {
+    throw new HttpsError('failed-precondition', 'enterprise_subsidy_settings is required')
+  }
+  const remaining = Math.max(0, settings.monthly_limit_per_user - tracker.runningUsage)
+  const candidateBase =
+    computePaymentEnterpriseSubsidyAmount(event.event_payment, settings, menuPrice, Number.MAX_SAFE_INTEGER) ?? 0
+  tracker.requestedTotal += candidateBase
+  const payField = computePaymentEnterpriseSubsidyAmount(event.event_payment, settings, menuPrice, remaining)
+  if (payField != null && payField > 0) {
+    tracker.runningUsage += payField
+    tracker.grantedTotal += payField
+  } else if (candidateBase > 0) {
+    tracker.unfilledCount += 1
+  }
+  return payField
+}
+
+export function buildEnterpriseSubsidyUsageExceededDetails(params: {
+  enterpriseId: string
+  eventMonth: string
+  tracker: EnterpriseSubsidyAddToCartTracker
+}): EnterpriseSubsidyUsageExceededDetails | null {
+  const { enterpriseId, eventMonth, tracker } = params
+  if (tracker.unfilledCount <= 0) {
+    return null
+  }
+  return {
+    enterpriseId,
+    eventMonth,
+    requestedTotal: tracker.requestedTotal,
+    grantedTotal: tracker.grantedTotal,
+    unfilledCount: tracker.unfilledCount,
+  }
+}
+
+/** confirmOrder: 自己負担 0 円の enterprise_subsidy 注文を確定し usage を加算 */
+export async function finalizeEnterpriseSubsidyZeroPaymentOrder(params: {
+  enterpriseId: string
+  userId: string
+  communityId: string
+  eventId: string
+  event: ShokujiiEvent
+  orders: EventMemberOrder[]
+  orderIds: string[]
+  member: EnterpriseMember
+  transaction: Transaction
+  orderedAt: number
+}): Promise<{ enterpriseId: string; subsidyTotal: number }> {
+  const { enterpriseId, userId, communityId, eventId, event, orders, orderIds, member, transaction, orderedAt } = params
+  const replay = await assertEnterpriseSubsidyOrdersConsistent({
+    enterpriseId,
+    userId,
+    event,
+    orders,
+    orderIds,
+    member,
+  })
+  const totalPayment = computeEnterpriseSubsidyTotalPayment(orders)
+  if (totalPayment !== 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'confirmOrder は自己負担0円のときのみ使用できます。Stripe 決済が必要です。',
+    )
+  }
+  const eventMonth = formatYearMonth(event.event_start_datetime)
+  await adjustEnterpriseMemberMonthlyUsage(
+    enterpriseId,
+    userId,
+    eventMonth,
+    replay.subsidyTotal,
+    orders.length,
+    transaction,
+  )
+  for (const order of orders) {
+    order.status = 'ordered'
+    order.ordered_at = orderedAt
+    saveOrder(communityId, eventId, userId, order, transaction)
+  }
+  return { enterpriseId, subsidyTotal: replay.subsidyTotal }
+}
+
+export function computeOrderSelfPayUnitAmount(order: EventMemberOrder): number {
+  return order.menu_price - (order.pay_enterprise_subsidy_amount ?? order.pay_community_bill_off_amount ?? 0)
+}
+
+export function getStripeCheckoutLineItemGroupKey(eventPayment: EventPaymentType, order: EventMemberOrder): string {
+  if (eventPayment === 'enterprise_subsidy') {
+    return `${order.menu_id}\u0000${computeOrderSelfPayUnitAmount(order)}`
+  }
+  return order.menu_id
+}
+
+export function sumEnterpriseSubsidyAmounts(orders: EventMemberOrder[]): number {
+  return orders.reduce((sum, o) => sum + (o.pay_enterprise_subsidy_amount ?? 0), 0)
+}
+
+/** cancelOrders: enterprise_subsidy の usage を減算 */
+export async function revertEnterpriseSubsidyUsageOnCancel(params: {
+  enterpriseId: string
+  userId: string
+  eventMonth: string
+  orders: EventMemberOrder[]
+  transaction: Transaction
+}): Promise<number> {
+  const { enterpriseId, userId, eventMonth, orders, transaction } = params
+  const subsidyTotal = sumEnterpriseSubsidyAmounts(orders)
+  await adjustEnterpriseMemberMonthlyUsage(enterpriseId, userId, eventMonth, -subsidyTotal, -orders.length, transaction)
+  return subsidyTotal
+}
+
+export type EnterpriseSubsidyWebhookProcessResult =
+  | { ok: false; message: string }
+  | {
+      ok: true
+      subsidyTotal: number
+      enterpriseOrderCreateLog?: { enterpriseId: string; subsidyTotal: number }
+    }
+
+/** stripeWebhook: enterprise_subsidy のスナップショット検証と usage 加算 */
+export async function processEnterpriseSubsidyOrdersForWebhook(params: {
+  enterpriseId: string
+  userId: string
+  event: ShokujiiEvent
+  orders: EventMemberOrder[]
+  transaction: Transaction
+}): Promise<EnterpriseSubsidyWebhookProcessResult> {
+  const { enterpriseId, userId, event, orders, transaction } = params
+  const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, userId, transaction)
+  if (entMember == null) {
+    return { ok: false, message: 'EnterpriseMember not found' }
+  }
+  const snapshotValidation = validateEnterpriseSubsidyOrdersSnapshotForWebhook({ event, orders })
+  if (!snapshotValidation.ok) {
+    return { ok: false, message: snapshotValidation.message }
+  }
+  const ordersToConfirm = orders.filter((o) => o.status !== 'ordered')
+  const subsidyToAdd = sumEnterpriseSubsidyAmounts(ordersToConfirm)
+  const subsidyTotal = sumEnterpriseSubsidyAmounts(orders)
+  if (ordersToConfirm.length > 0) {
+    const eventMonth = formatYearMonth(event.event_start_datetime)
+    await adjustEnterpriseMemberMonthlyUsage(
+      enterpriseId,
+      userId,
+      eventMonth,
+      subsidyToAdd,
+      ordersToConfirm.length,
+      transaction,
+    )
+    return {
+      ok: true,
+      subsidyTotal,
+      enterpriseOrderCreateLog: { enterpriseId, subsidyTotal: subsidyToAdd },
+    }
+  }
   return { ok: true, subsidyTotal }
 }

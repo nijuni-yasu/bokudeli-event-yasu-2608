@@ -14,6 +14,12 @@ import {
   assertActiveEnterpriseMember,
   assertEnterpriseEventPaymentAllowed,
   assertEnterpriseSubsidyOrdersConsistent,
+  applyEnterpriseSubsidyPayFieldToCartTracker,
+  buildEnterpriseSubsidyUsageExceededDetails,
+  computeOrderSelfPayUnitAmount,
+  createEnterpriseSubsidyAddToCartTracker,
+  getStripeCheckoutLineItemGroupKey,
+  sumEnterpriseSubsidyAmounts,
   validateEnterpriseSubsidyOrdersSnapshotForWebhook,
 } from './enterpriseSubsidyOrders.js'
 
@@ -232,5 +238,79 @@ describe('validateEnterpriseSubsidyOrdersSnapshotForWebhook', () => {
       orders: [makeOrder('o1', 800, 500)],
     })
     expect(result).toEqual({ ok: true, subsidyTotal: 500 })
+  })
+})
+
+describe('enterprise subsidy cart tracker', () => {
+  const settings = { type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 }
+
+  const makeEvent = () =>
+    new ShokujiiEvent('e1', {
+      ...baseEventFields,
+      enterprise_id: 'ent1',
+      event_payment: 'enterprise_subsidy',
+      event_start_datetime: Date.UTC(2026, 5, 15),
+      enterprise_subsidy_settings: settings,
+    })
+
+  it('applyEnterpriseSubsidyPayFieldToCartTracker は残枠内で補助額を付与する', () => {
+    const tracker = createEnterpriseSubsidyAddToCartTracker(1000)
+    const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
+      event: makeEvent(),
+      menuPrice: 800,
+      tracker,
+    })
+    expect(payField).toBe(500)
+    expect(tracker.grantedTotal).toBe(500)
+    expect(tracker.runningUsage).toBe(1500)
+  })
+
+  it('残枠不足時は unfilledCount を増やす', () => {
+    const tracker = createEnterpriseSubsidyAddToCartTracker(7500)
+    const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
+      event: makeEvent(),
+      menuPrice: 800,
+      tracker,
+    })
+    expect(payField).toBeUndefined()
+    expect(tracker.unfilledCount).toBe(1)
+    expect(
+      buildEnterpriseSubsidyUsageExceededDetails({
+        enterpriseId: 'ent1',
+        eventMonth: '2026-06',
+        tracker,
+      }),
+    ).toMatchObject({ unfilledCount: 1 })
+  })
+})
+
+describe('stripe checkout helpers', () => {
+  const makeOrder = (id: string, menuPrice: number, subsidy?: number) =>
+    new EventMemberOrder(id, {
+      order_id: id,
+      user_id: 'u1',
+      event_id: 'e1',
+      community_id: 'c1',
+      menu_id: 'm1',
+      menu_name: 'menu',
+      menu_price: menuPrice,
+      ...(subsidy !== undefined ? { pay_enterprise_subsidy_amount: subsidy } : {}),
+    })
+
+  it('computeOrderSelfPayUnitAmount は自己負担額を返す', () => {
+    expect(computeOrderSelfPayUnitAmount(makeOrder('o1', 800, 500))).toBe(300)
+  })
+
+  it('getStripeCheckoutLineItemGroupKey は enterprise_subsidy で unitAmount ごとに分割', () => {
+    const orderA = makeOrder('o1', 800, 500)
+    const orderB = makeOrder('o2', 800, 300)
+    expect(getStripeCheckoutLineItemGroupKey('enterprise_subsidy', orderA)).not.toBe(
+      getStripeCheckoutLineItemGroupKey('enterprise_subsidy', orderB),
+    )
+    expect(getStripeCheckoutLineItemGroupKey('user_advance', orderA)).toBe('m1')
+  })
+
+  it('sumEnterpriseSubsidyAmounts は合計補助額', () => {
+    expect(sumEnterpriseSubsidyAmounts([makeOrder('o1', 800, 500), makeOrder('o2', 800, 300)])).toBe(800)
   })
 })
