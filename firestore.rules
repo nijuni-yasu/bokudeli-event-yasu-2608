@@ -94,12 +94,25 @@ service cloud.firestore {
                        exists(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)) &&
                        "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles
             }
+            // PF: enterprise_id 欠落/null のみ create 可。Enterprise: claims と一致する enterprise_id のみ create 可
+            function canCreateCommunity() {
+                return request.auth != null
+                    && (
+                        (request.auth.token.get('enterprise_id', null) == null
+                         && docEnterpriseId(request.resource.data) == null)
+                        || (request.auth.token.get('enterprise_id', null) != null
+                            && docEnterpriseId(request.resource.data) == request.auth.token.enterprise_id)
+                    );
+            }
+            function communityEnterpriseIdUnchanged() {
+                return docEnterpriseId(request.resource.data) == docEnterpriseId(resource.data);
+            }
             allow read: if docEnterpriseId(resource.data) == null
                         || isSameEnterprise(resource.data);
-            // コミュニティはログインユーザーなら申請可能
-            allow create: if request.auth != null
+            // コミュニティはログインユーザーなら申請可能（enterprise_id は canCreateCommunity で検証）
+            allow create: if canCreateCommunity()
             // コミュマネ or サポートアカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
-            allow update: if isSupport() || isManager()
+            allow update: if (isSupport() || isManager()) && communityEnterpriseIdUnchanged()
             match /events/{event} {
                 allow read: if docEnterpriseId(resource.data) == null
                             || isSameEnterprise(resource.data);
@@ -211,22 +224,24 @@ service cloud.firestore {
                 allow write: if false;
             }
         }
-        // collection group query 用ルール
-        match /{path=**}/events/{event} {
-            allow read: if docEnterpriseId(resource.data) == null
-                        || isSameEnterprise(resource.data);
-        }
-        match /{path=**}/member_orders/{order} {
-            allow read: if docEnterpriseId(resource.data) == null
-                        || (request.auth != null && (
-                             isSameEnterprise(resource.data)
-                             || request.auth.uid == resource.data.user_id
-                           ));
-        }
-        match /{path=**}/stripes/{stripeId} {
-            allow read: if request.auth != null
-                        && request.auth.uid == resource.data.user_id
-                        && (docEnterpriseId(resource.data) == null || isSameEnterprise(resource.data));
+        // collection group query 用ルール（/{path=**} 配下にネスト。フラットな /{path=**}/member_orders は評価されない）
+        match /{path=**} {
+            match /events/{event} {
+                allow read: if docEnterpriseId(resource.data) == null
+                            || isSameEnterprise(resource.data);
+            }
+            match /member_orders/{order} {
+                // collectionGroup はネスト path とは別評価。未認証の CG クエリを拒否し direct path の PF read をネスト側に委ねる
+                allow read: if request.auth != null
+                            && (docEnterpriseId(resource.data) == null
+                                || isSameEnterprise(resource.data)
+                                || request.auth.uid == resource.data.user_id);
+            }
+            match /stripes/{stripeId} {
+                allow read: if request.auth != null
+                            && request.auth.uid == resource.data.user_id
+                            && (docEnterpriseId(resource.data) == null || isSameEnterprise(resource.data));
+            }
         }
         match /{path=**}/shops/{shop} {
             allow read: if true
