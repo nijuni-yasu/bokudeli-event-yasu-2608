@@ -141,7 +141,7 @@ const closeDialog = () => {
 
         <v-list v-else class="pa-0 meet-log-list list-with-borders" max-height="360" style="overflow-y: auto">
           <v-list-item
-            v-for="row in meetLog"
+            v-for="(row, index) in meetLog"
             :key="`${row.community_id}-${row.event_id}`"
             class="meet-log-row"
             :to="isEventLinkable(row) ? resolveEventPath(row.community_account!, row.event_id) : undefined"
@@ -151,6 +151,7 @@ const closeDialog = () => {
               <v-img
                 v-if="isMeetLogEventResolvable(row)"
                 :src="eventCoverUrl(row.community_id, row.event_id)"
+                :alt="row.event_name ?? ''"
                 width="120"
                 aspect-ratio="1.91"
                 cover
@@ -158,13 +159,16 @@ const closeDialog = () => {
                 class="mr-3 flex-shrink-0"
               />
             </template>
+            <div v-if="index === 0" class="text-caption text-medium-emphasis mb-1">
+              {{ $t('user.friend_meet_log_latest_event_label') }}
+            </div>
             <v-list-item-title v-if="isMeetLogEventResolvable(row)" class="text-h6 py-1 meet-log-event-title">
               {{ row.event_name }}
             </v-list-item-title>
             <v-list-item-title v-else class="text-body-2 text-medium-emphasis py-1">
               {{ $t('user.friend_meet_log_event_unavailable') }}
             </v-list-item-title>
-            <div class="text-body-2">{{ convertToDatetime(row.event_at) }}</div>
+            <div class="text-body-2 meet-log-event-date">{{ convertToDatetime(row.event_at) }}</div>
           </v-list-item>
         </v-list>
       </v-card-text>
@@ -189,6 +193,10 @@ const closeDialog = () => {
   border-radius: 4px;
 }
 
+.meet-log-list {
+  overscroll-behavior: contain;
+}
+
 .list-with-borders .v-list-item:not(:last-child) {
   border-bottom: 1px solid #e0e0e0;
 }
@@ -196,5 +204,9 @@ const closeDialog = () => {
 .meet-log-event-title {
   white-space: normal;
   line-height: 1.375;
+}
+
+.meet-log-event-date {
+  font-variant-numeric: tabular-nums;
 }
 </style>
