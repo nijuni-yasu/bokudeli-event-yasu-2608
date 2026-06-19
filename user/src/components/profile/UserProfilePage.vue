@@ -366,6 +366,9 @@ const downloadReceipt = (eventId: string, stripeId: string) => {
 
 const counts = computed(() => previewData.value?.counts ?? null)
 
+/** プロフィールプレビュー Callable の初回取得中（カード枠は先に表示） */
+const isProfilePreviewInitialLoading = computed(() => previewLoading.value && previewData.value == null)
+
 type ProfileStatRow = {
   key: 'participated_event' | 'friend_count' | 'joined_community' | 'managed_community' | 'ordered_food'
   label: string
@@ -589,20 +592,22 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
       </v-tabs>
       <v-window v-model="tabs" class="pa-4 pa-md-6">
         <v-window-item :value="TAB_PROFILE">
-          <div v-if="previewLoading && previewData == null" class="d-flex justify-center pa-6">
-            <v-progress-circular indeterminate color="primary" />
-          </div>
-          <div v-else-if="previewError != null" class="text-body-1 text-medium-emphasis pa-6">
+          <div v-if="previewError != null" class="text-body-1 text-medium-emphasis pa-6">
             {{ $t('user_profile.failed_to_load') }}
           </div>
-          <template v-else-if="previewData != null">
+          <template v-else>
             <!-- 数値サマリー -->
             <v-card elevation="2" class="profile-panel-card mb-4">
               <v-card-text class="pa-4 pa-sm-5">
                 <div class="profile-stats-summary">
                   <div v-for="row in profileStatRows" :key="row.key" class="profile-stats-item text-center">
                     <div class="text-body-2 text-medium-emphasis">{{ row.label }}</div>
-                    <div class="profile-stat-value text-h3 font-weight-medium mt-1">{{ row.value }}</div>
+                    <v-skeleton-loader
+                      v-if="isProfilePreviewInitialLoading"
+                      type="text"
+                      class="profile-stat-skeleton mx-auto mt-1"
+                    />
+                    <div v-else class="profile-stat-value text-h3 font-weight-medium mt-1">{{ row.value }}</div>
                   </div>
                 </div>
               </v-card-text>
@@ -624,10 +629,18 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
               </v-card-title>
               <v-card-text class="pt-0">
                 <div
-                  v-if="profilePreviewFriendsLoading && profilePreviewFriends.length === 0"
-                  class="d-flex justify-center pa-4"
+                  v-if="
+                    isProfilePreviewInitialLoading ||
+                    (profilePreviewFriendsLoading && profilePreviewFriends.length === 0)
+                  "
+                  class="profile-friends-preview d-flex flex-wrap ga-2 align-center"
                 >
-                  <v-progress-circular indeterminate color="primary" />
+                  <v-skeleton-loader
+                    v-for="n in 8"
+                    :key="`friend-skeleton-${n}`"
+                    type="avatar"
+                    class="profile-friend-preview-skeleton flex-shrink-0"
+                  />
                 </div>
                 <div v-else-if="showProfilePreviewFriendsEmpty" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.friends') }}
@@ -647,7 +660,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   </router-link>
                 </div>
                 <div
-                  v-if="profilePreviewFriendsHasMore || profilePreviewFriends.length > 0"
+                  v-if="
+                    !isProfilePreviewInitialLoading &&
+                    (profilePreviewFriendsHasMore || profilePreviewFriends.length > 0)
+                  "
                   class="d-flex justify-center mt-3"
                 >
                   <IncrementalLoader
@@ -676,7 +692,12 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="previewEvents.length === 0" class="text-body-2 text-medium-emphasis">
+                <v-row v-if="isProfilePreviewInitialLoading" dense>
+                  <v-col v-for="n in 4" :key="`event-skeleton-${n}`" cols="6" sm="4" md="3">
+                    <v-skeleton-loader type="image, text@2" class="profile-preview-skeleton" />
+                  </v-col>
+                </v-row>
+                <div v-else-if="previewEvents.length === 0" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.events') }}
                 </div>
                 <v-row v-else dense>
@@ -771,7 +792,12 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="isProfileCommunitiesEmpty" class="text-body-2 text-medium-emphasis">
+                <v-row v-if="isProfilePreviewInitialLoading" dense>
+                  <v-col v-for="n in 4" :key="`community-skeleton-${n}`" cols="6" sm="4" md="3">
+                    <v-skeleton-loader type="list-item-avatar-two-line" class="profile-preview-skeleton" />
+                  </v-col>
+                </v-row>
+                <div v-else-if="isProfileCommunitiesEmpty" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.communities') }}
                 </div>
                 <template v-else>
@@ -917,7 +943,12 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 }}</v-btn>
               </v-card-title>
               <v-card-text class="pt-0">
-                <div v-if="previewFoods.length === 0" class="text-body-2 text-medium-emphasis">
+                <v-row v-if="isProfilePreviewInitialLoading" dense>
+                  <v-col v-for="n in 4" :key="`food-skeleton-${n}`" cols="6" sm="4" md="3">
+                    <v-skeleton-loader type="image, text@2" class="profile-preview-skeleton" />
+                  </v-col>
+                </v-row>
+                <div v-else-if="previewFoods.length === 0" class="text-body-2 text-medium-emphasis">
                   {{ $t('user_profile.empty.foods') }}
                 </div>
                 <v-row v-else dense>
@@ -1317,6 +1348,22 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
     white-space: nowrap;
     padding-inline: 12px;
   }
+}
+
+.profile-stat-skeleton {
+  max-width: 48px;
+}
+
+.profile-friend-preview-skeleton {
+  :deep(.v-skeleton-loader__avatar) {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+.profile-preview-skeleton {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* プロフィール preview のリンク要素 */
