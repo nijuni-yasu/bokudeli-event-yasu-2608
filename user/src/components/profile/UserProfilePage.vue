@@ -95,7 +95,13 @@ const isProfileLoading = computed(() => profileUserId !== '' && exists.value ===
 const userEventListStore = useUserEventListByUserId(profileUserId)
 const { events: userEvents, totalCount: userEventsTotalCount, orderStateByEventId } = storeToRefs(userEventListStore)
 
-const friendSortBy = ref<UserFriendsSortBy>('meet_count')
+const resolveFriendSortFromQuery = (rawSort: unknown): UserFriendsSortBy => {
+  const sort = String(rawSort ?? '')
+  if (sort === 'last_met_at') return 'last_met_at'
+  return 'meet_count'
+}
+
+const friendSortBy = ref<UserFriendsSortBy>(resolveFriendSortFromQuery(route.query.sort))
 const userFriendsByMeetCountStore = ref<UserFriendsStore | null>(null)
 const userFriendsByLastMetStore = ref<UserFriendsStore | null>(null)
 
@@ -193,26 +199,44 @@ watch(
 
 const queryTabFor = (tab: TabKey): string | undefined => (tab === TAB_PROFILE ? undefined : tab)
 
-const syncTabToUrl = (tab: TabKey) => {
-  const nextTab = queryTabFor(tab)
+const querySortFor = (tab: TabKey, sort: UserFriendsSortBy): string | undefined => {
+  if (tab !== TAB_FRIENDS || sort === 'meet_count') return undefined
+  return sort
+}
+
+const syncProfileQueryToUrl = () => {
+  const nextTab = queryTabFor(tabs.value)
   const currentTab = route.query.tab == null || String(route.query.tab) === '' ? undefined : String(route.query.tab)
-  if (currentTab === nextTab) return
+  const nextSort = querySortFor(tabs.value, friendSortBy.value)
+  const currentSort = route.query.sort == null || String(route.query.sort) === '' ? undefined : String(route.query.sort)
+  if (currentTab === nextTab && currentSort === nextSort) return
   const query = { ...route.query } as Record<string, string | string[] | undefined>
   if (nextTab === undefined) {
     delete query.tab
   } else {
     query.tab = nextTab
   }
+  if (nextSort === undefined) {
+    delete query.sort
+  } else {
+    query.sort = nextSort
+  }
   void router.replace({ query })
 }
 
 /** ブラウザ戻る/進む・loginUser 解決後の URL 反映（仕様 4.2.5） */
 watch(
-  () => [route.query.tab, loginUser.value?.user_id, profileUserId] as const,
-  ([rawTab]) => {
+  () => [route.query.tab, route.query.sort, loginUser.value?.user_id, profileUserId] as const,
+  ([rawTab, rawSort]) => {
     const resolved = resolveTabFromQuery(String(rawTab ?? ''))
     if (tabs.value !== resolved) {
       tabs.value = resolved
+    }
+    if (isFriendTab(resolved)) {
+      const resolvedSort = resolveFriendSortFromQuery(rawSort)
+      if (friendSortBy.value !== resolvedSort) {
+        friendSortBy.value = resolvedSort
+      }
     }
   },
 )
@@ -236,7 +260,7 @@ const tryLoadMoreUserFriends = () => {
 
 /** タブ表示直後に IncrementalLoader が画面外のとき、追読みを 1 回試す */
 watch(tabs, (tab) => {
-  syncTabToUrl(tab)
+  syncProfileQueryToUrl()
   if (!isFriendTab(tab)) return
   void nextTick(() => {
     tryLoadMoreUserFriends()
@@ -244,6 +268,7 @@ watch(tabs, (tab) => {
 })
 
 watch(friendSortBy, () => {
+  syncProfileQueryToUrl()
   if (!isFriendTab(tabs.value)) return
   void nextTick(() => {
     tryLoadMoreUserFriends()
@@ -960,6 +985,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 density="comfortable"
                 divided
                 class="friend-sort-toggle w-100"
+                :aria-label="$t('user.friend_sort_aria_label')"
               >
                 <v-btn value="meet_count">{{ $t('user.friend_sort_meet_count') }}</v-btn>
                 <v-btn value="last_met_at">{{ $t('user.friend_sort_last_met_at') }}</v-btn>
