@@ -41,6 +41,32 @@ describe('enterprise firestore rules', () => {
     await assertSucceeds(unauthed.firestore().collection('communities').doc('community-1').get())
   })
 
+  it('PF データ（enterprise_id: null 明示）の communities read は許可', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-pf-null')
+        .set({ community_name: 'PF Community', enterprise_id: null })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertSucceeds(unauthed.firestore().collection('communities').doc('community-pf-null').get())
+  })
+
+  it('未認証ユーザーは enterprise_id string の communities read を拒否される', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .set({ community_name: 'Enterprise A', enterprise_id: 'ent-a' })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertFails(unauthed.firestore().collection('communities').doc('community-ent-a').get())
+  })
+
   it('他社 enterprise_id claims では enterprises を read できない', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await context.firestore().collection('enterprises').doc('ent-a').set({ company_name: 'Company A' })
@@ -168,6 +194,79 @@ describe('enterprise firestore rules', () => {
     const unauthed = testEnv.unauthenticatedContext()
     await assertSucceeds(
       unauthed.firestore().collection('communities').doc('community-pf').collection('events').doc('event-pf').get(),
+    )
+  })
+
+  it('PF データ（enterprise_id: null 明示）の events read は許可', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-pf')
+        .collection('events')
+        .doc('event-pf-null')
+        .set({ event_name: 'PF Event', enterprise_id: null })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertSucceeds(
+      unauthed
+        .firestore()
+        .collection('communities')
+        .doc('community-pf')
+        .collection('events')
+        .doc('event-pf-null')
+        .get(),
+    )
+  })
+
+  it('未認証ユーザーは enterprise_id string の events read を拒否される', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .set({ event_name: 'Enterprise Event', enterprise_id: 'ent-a' })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    await assertFails(
+      unauthed
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-1')
+        .get(),
+    )
+  })
+
+  it('collectionGroup events: PF（enterprise_id: null）は read 可、エンプラ doc は未認証で拒否', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore()
+      await db
+        .collection('communities')
+        .doc('community-pf')
+        .collection('events')
+        .doc('event-pf-null')
+        .set({ event_name: 'PF Event', enterprise_id: null, is_public: true })
+      await db
+        .collection('communities')
+        .doc('community-ent-a')
+        .collection('events')
+        .doc('event-ent')
+        .set({ event_name: 'Enterprise Event', enterprise_id: 'ent-a', is_public: true })
+    })
+
+    const unauthed = testEnv.unauthenticatedContext()
+    const db = unauthed.firestore()
+    await assertSucceeds(
+      db.collectionGroup('events').where('event_name', '==', 'PF Event').get(),
+    )
+    await assertFails(
+      db.collectionGroup('events').where('event_name', '==', 'Enterprise Event').get(),
     )
   })
 
