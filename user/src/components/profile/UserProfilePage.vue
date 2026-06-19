@@ -369,6 +369,11 @@ const counts = computed(() => previewData.value?.counts ?? null)
 /** プロフィールプレビュー Callable の初回取得中（カード枠は先に表示） */
 const isProfilePreviewInitialLoading = computed(() => previewLoading.value && previewData.value == null)
 
+const friendSortItems = computed(() => [
+  { title: $t('user.friend_sort_meet_count'), value: 'meet_count' as UserFriendsSortBy },
+  { title: $t('user.friend_sort_last_met_at'), value: 'last_met_at' as UserFriendsSortBy },
+])
+
 type ProfileStatRow = {
   key: 'participated_event' | 'friend_count' | 'joined_community' | 'managed_community' | 'ordered_food'
   label: string
@@ -727,10 +732,23 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                           </div>
                           <v-card-text class="pa-3 pt-2">
                             <div
-                              class="profile-preview-tile__meta text-medium-emphasis text-truncate"
-                              :title="formatProfileDate(event.event_start_datetime, 'withWeekday')"
+                              class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0"
                             >
-                              {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
+                              <div
+                                class="profile-preview-tile__meta text-medium-emphasis text-truncate min-width-0"
+                                :title="formatProfileDate(event.event_start_datetime, 'withWeekday')"
+                              >
+                                {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
+                              </div>
+                              <v-chip
+                                v-if="!event.is_public"
+                                size="x-small"
+                                variant="flat"
+                                class="profile-preview-private-chip flex-shrink-0"
+                                label
+                              >
+                                {{ $t('user_profile.private_event_chip') }}
+                              </v-chip>
                             </div>
                             <div class="text-body-2 mt-1 text-truncate" :title="event.event_name">
                               {{ event.event_name }}
@@ -760,10 +778,23 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                           </div>
                           <v-card-text class="pa-3 pt-2">
                             <div
-                              class="profile-preview-tile__meta text-medium-emphasis text-truncate"
-                              :title="formatProfileDate(event.event_start_datetime, 'withWeekday')"
+                              class="event-preview-tile__meta-row d-flex align-center justify-space-between ga-1 min-width-0"
                             >
-                              {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
+                              <div
+                                class="profile-preview-tile__meta text-medium-emphasis text-truncate min-width-0"
+                                :title="formatProfileDate(event.event_start_datetime, 'withWeekday')"
+                              >
+                                {{ formatProfileDate(event.event_start_datetime, 'withWeekday') }}
+                              </div>
+                              <v-chip
+                                v-if="!event.is_public"
+                                size="x-small"
+                                variant="flat"
+                                class="profile-preview-private-chip flex-shrink-0"
+                                label
+                              >
+                                {{ $t('user_profile.private_event_chip') }}
+                              </v-chip>
                             </div>
                             <div class="text-body-2 mt-1 text-truncate" :title="event.event_name">
                               {{ event.event_name }}
@@ -1007,22 +1038,19 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item :value="TAB_FRIENDS">
-          <v-row v-if="showFriendSortToggle" class="align-center mb-2">
-            <v-col cols="12" sm="4">
-              <v-btn-toggle
-                v-model="friendSortBy"
-                mandatory
-                color="primary"
-                density="comfortable"
-                divided
-                class="friend-sort-toggle w-100"
-                :aria-label="$t('user.friend_sort_aria_label')"
-              >
-                <v-btn value="meet_count">{{ $t('user.friend_sort_meet_count') }}</v-btn>
-                <v-btn value="last_met_at">{{ $t('user.friend_sort_last_met_at') }}</v-btn>
-              </v-btn-toggle>
-            </v-col>
-          </v-row>
+          <div v-if="showFriendSortToggle" class="d-flex justify-end mb-3">
+            <v-select
+              v-model="friendSortBy"
+              :items="friendSortItems"
+              item-title="title"
+              item-value="value"
+              density="compact"
+              variant="outlined"
+              hide-details
+              :label="$t('user.friend_sort_aria_label')"
+              class="friend-sort-select"
+            />
+          </div>
           <v-row v-if="activeFriends.length > 0">
             <v-col v-for="friend in activeFriends" :key="friend.user_id" cols="12" sm="6" md="4">
               <FriendCard
@@ -1338,16 +1366,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
   }
 }
 
-/* ともだちソート: 親幅いっぱいにし、各ボタンが均等幅でラベルが潰れないようにする */
-.friend-sort-toggle {
-  max-width: 100%;
-
-  :deep(.v-btn) {
-    flex: 1 1 0;
-    min-width: 0;
-    white-space: nowrap;
-    padding-inline: 12px;
-  }
+/* ともだちソート: 右寄せのコンパクトなセレクト */
+.friend-sort-select {
+  max-width: 220px;
+  width: 100%;
 }
 
 .profile-stat-skeleton {
@@ -1447,6 +1469,22 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 .profile-preview-tile__meta {
   font-size: 0.6875rem;
   line-height: 1.3;
+}
+
+.event-preview-tile__meta-row {
+  min-height: 1.3em;
+}
+
+.profile-preview-private-chip {
+  font-size: 0.625rem;
+  height: 18px;
+  background-color: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+
+  :deep(.v-chip__content) {
+    padding-inline: 5px;
+    line-height: 1;
+  }
 }
 
 /* コミュニティ名: 2行で切り捨て（末尾 …）。flex 子で clamp が効くよう min-height: 0 */
