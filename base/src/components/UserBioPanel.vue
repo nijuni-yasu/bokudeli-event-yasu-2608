@@ -26,13 +26,8 @@ const isDescriptionPlaceholder = computed(
 )
 
 const userDescription = computed(() => {
-  if (props.userData.user_description !== '') {
-    return props.userData.user_description
-  }
-  if (currentUserStore.firebaseUser?.uid !== props.userData.user_id) {
-    return ''
-  }
-  return $t('user_profile.user_description_placeholder')
+  if (props.userData.user_description !== '') return props.userData.user_description
+  return isDescriptionPlaceholder.value ? $t('user_profile.user_description_placeholder') : ''
 })
 const twitterUrl = computed(() =>
   props.userData.user_sns_twitter === '' ? undefined : buildTwitterUrl(props.userData.user_sns_twitter),

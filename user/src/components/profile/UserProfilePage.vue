@@ -524,7 +524,7 @@ const failedEventCoverIds = ref(new Set<string>())
 const eventCoverKey = (communityId: string, eventId: string): string => `${communityId}/${eventId}`
 
 watch(
-  () => [profileUserId, previewData.value] as const,
+  () => previewData.value,
   () => {
     failedEventCoverIds.value = new Set()
   },
