@@ -12,7 +12,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      common: ${{ steps.filter.outputs.common }}
+      base: ${{ steps.filter.outputs.base }}
+      user: ${{ steps.filter.outputs.user }}
+      partner: ${{ steps.filter.outputs.partner }}
+      enterprise: ${{ steps.filter.outputs.enterprise }}
+      functions: ${{ steps.filter.outputs.functions }}
+      root: ${{ steps.filter.outputs.root }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common:
+              - 'common/**'
+            base:
+              - 'base/**'
+            user:
+              - 'user/**'
+            partner:
+              - 'partner/**'
+            enterprise:
+              - 'enterprise/**'
+            functions:
+              - 'functions/**'
+            root:
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/pr-verify.yml'
+
   verify:
+    needs: changes
     timeout-minutes: 15
     runs-on: ubuntu-latest
     defaults:
@@ -30,32 +66,56 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build common
+        if: >-
+          needs.changes.outputs.common == 'true' ||
+          needs.changes.outputs.base == 'true' ||
+          needs.changes.outputs.user == 'true' ||
+          needs.changes.outputs.partner == 'true' ||
+          needs.changes.outputs.enterprise == 'true' ||
+          needs.changes.outputs.functions == 'true' ||
+          needs.changes.outputs.root == 'true'
         run: npm -w common run build
       - name: Lint
         run: |
-          npm -w common run lint
-          npm -w base run lint
-          npm -w user run lint
-          npm -w partner run lint
-          npm -w functions/default run lint
+          set -e
+          run_if() { if [ "$1" = "true" ]; then shift; "$@"; fi; }
+          run_if "${{ needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w common run lint
+          run_if "${{ needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w base run lint
+          run_if "${{ needs.changes.outputs.user == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w user run lint
+          run_if "${{ needs.changes.outputs.partner == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w partner run lint
+          run_if "${{ needs.changes.outputs.enterprise == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w enterprise run lint
+          run_if "${{ needs.changes.outputs.functions == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w functions/default run lint
       - name: Check Format
         run: |
-          npm -w common run format:check
-          npm -w base run format:check
-          npm -w user run format:check
-          npm -w partner run format:check
-          npm -w functions/default run format:check
+          set -e
+          run_if() { if [ "$1" = "true" ]; then shift; "$@"; fi; }
+          run_if "${{ needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w common run format:check
+          run_if "${{ needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w base run format:check
+          run_if "${{ needs.changes.outputs.user == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w user run format:check
+          run_if "${{ needs.changes.outputs.partner == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w partner run format:check
+          run_if "${{ needs.changes.outputs.enterprise == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w enterprise run format:check
+          run_if "${{ needs.changes.outputs.functions == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w functions/default run format:check
       - name: Typecheck
         run: |
-          npm -w base run build:types
-          npm -w user run build:types
-          npm -w partner run build:types
+          set -e
+          run_if() { if [ "$1" = "true" ]; then shift; "$@"; fi; }
+          run_if "${{ needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w base run build:types
+          run_if "${{ needs.changes.outputs.user == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w user run build:types
+          run_if "${{ needs.changes.outputs.partner == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w partner run build:types
+          run_if "${{ needs.changes.outputs.enterprise == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w enterprise run build:types
       - name: Build and typecheck functions
+        if: >-
+          needs.changes.outputs.functions == 'true' ||
+          needs.changes.outputs.common == 'true' ||
+          needs.changes.outputs.root == 'true'
         run: npm -w functions/default run build
       - name: Test
         run: |
-          npm -w common run test
-          npm -w base run test
-          npm -w user run test
-          npm -w partner run test
-          npm -w functions/default run test
+          set -e
+          run_if() { if [ "$1" = "true" ]; then shift; "$@"; fi; }
+          run_if "${{ needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w common run test
+          run_if "${{ needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w base run test
+          run_if "${{ needs.changes.outputs.user == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w user run test
+          run_if "${{ needs.changes.outputs.partner == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w partner run test
+          run_if "${{ needs.changes.outputs.enterprise == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w enterprise run test
+          run_if "${{ needs.changes.outputs.functions == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w functions/default run test

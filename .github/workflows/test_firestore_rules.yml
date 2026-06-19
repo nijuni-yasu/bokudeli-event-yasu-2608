@@ -7,6 +7,9 @@ on:
       - 'tests/firestore-rules/**'
       - '.github/workflows/test_firestore_rules.yml'
   pull_request:
+    branches:
+      - development
+      - production
     paths:
       - 'firestore.rules'
       - 'tests/firestore-rules/**'
