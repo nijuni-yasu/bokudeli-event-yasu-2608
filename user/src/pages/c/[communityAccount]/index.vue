@@ -112,7 +112,7 @@ const albumSlides = computed(() => {
             {{ $t('community.applying') }}
           </v-chip>
         </v-row>
-        <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
+        <v-card elevation="2" class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
           <PublicAlbumGallery
             :cover-url="communityStore.coverImageUrl ?? ''"
             :cover-title="communityStore.community.community_name"
@@ -157,7 +157,7 @@ const albumSlides = computed(() => {
                   v-if="eventWithMembers.eventStore.event"
                   :event="eventWithMembers.eventStore.event"
                   :members="eventWithMembers.members"
-                  class="mx-0 cursor-pointer"
+                  class="mx-0 cursor-pointer elevation-2"
                   @click="goToEvents(eventWithMembers.eventStore.event.event_id)"
                 />
               </v-col>
