@@ -150,7 +150,7 @@ onMounted(() => {
   if (props.autoOpenHelpDialog === true) {
     autoOpenTimer = window.setTimeout(() => {
       isOpenNewCommunityDialog.value = true
-    }, 2000)
+    }, 1000)
   }
 })
 onUnmounted(() => {
