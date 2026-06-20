@@ -103,3 +103,7 @@ $RECYCLE.BIN/
 
 # ローカル開発用 symlink（絶対パス・開発者ごとに異なる）
 /bokudeli-event-batch
+
+# Playwright MCP（生成物・ローカル設定はコミットしない）
+.playwright-mcp/
+documents/テスト方針・テスト項目書/playwright-mcp/環境/環境設定.local.md
