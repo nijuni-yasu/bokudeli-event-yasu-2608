@@ -23,13 +23,16 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserFriendsStore, type UserFriendsStore } from '@shokujii/base/stores/userFriends.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import type { UserFriendsSortBy } from '@shokujii/common/apis/userFriends.js'
+import type { UserProfileFoodPreviewItem } from '@shokujii/common/apis/userProfile.js'
 import {
   getCommunityIconStoragePath,
   getEventCoverStoragePath,
   getEventMenuImageStoragePath,
+  getMenuImageStoragePath,
 } from '@shokujii/common/utils/storagePaths.js'
 import { convertToDate, convertToDateWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
+import menuDefaultImage from '@shokujii/base/assets/images/menu_default.png'
 import { useDisplay } from 'vuetify'
 
 const TAB_PROFILE = 'profile'
@@ -477,27 +480,50 @@ setupAutoLoadWhenEmpty(
 const friendUserOf = (item: { user_id: string; user_name: string; user_image_url: string }) =>
   new User(item.user_id, { user_name: item.user_name, user_image_url: item.user_image_url })
 
-const foodImageUrl = (food: {
-  community_id: string
-  event_id: string
-  menu_id: string
-  event_status_value: string
-  partner_id: string
-}): string | undefined => {
-  if (food.community_id === '' || food.event_id === '' || food.menu_id === '') {
-    return undefined
+const statTabForKey = (key: ProfileStatRow['key']): TabKey => {
+  switch (key) {
+    case 'friend_count':
+      return TAB_FRIENDS
+    case 'participated_event':
+      return TAB_EVENTS
+    case 'joined_community':
+    case 'managed_community':
+      return TAB_COMMUNITIES
+    case 'ordered_food':
+      return TAB_FOODS
+  }
+}
+
+const failedFoodMenuImageIds = ref(new Set<string>())
+
+const getMenuImageUrl = (food: UserProfileFoodPreviewItem): string => {
+  const { community_id, event_id, menu_id, event_status_value, partner_id } = food
+  if (community_id === '' || event_id === '' || menu_id === '') {
+    return menuDefaultImage
   }
   try {
-    if (food.event_status_value === 'accepting_order') {
-      return convertStoragePathToURL(getEventMenuImageStoragePath(food.community_id, food.event_id, food.menu_id))
+    if (event_status_value === 'accepting_order') {
+      return convertStoragePathToURL(getEventMenuImageStoragePath(community_id, event_id, menu_id))
     }
-    if (food.partner_id !== '') {
-      return convertStoragePathToURL(`partners/${food.partner_id}/menus/${food.menu_id}/image`)
+    if (partner_id !== '') {
+      return convertStoragePathToURL(getMenuImageStoragePath(partner_id, menu_id))
     }
   } catch {
-    return undefined
+    return menuDefaultImage
   }
-  return undefined
+  return menuDefaultImage
+}
+
+const foodMenuImageSrc = (food: UserProfileFoodPreviewItem): string => {
+  if (failedFoodMenuImageIds.value.has(food.order_id)) {
+    return menuDefaultImage
+  }
+  return getMenuImageUrl(food)
+}
+
+const markFoodMenuImageFailed = (orderId: string) => {
+  if (failedFoodMenuImageIds.value.has(orderId)) return
+  failedFoodMenuImageIds.value.add(orderId)
 }
 
 const communityIconUrl = (communityId: string): string | undefined => {
@@ -612,7 +638,15 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                       type="text"
                       class="profile-stat-skeleton mx-auto mt-1"
                     />
-                    <div v-else class="profile-stat-value text-h3 font-weight-medium mt-1">{{ row.value }}</div>
+                    <button
+                      v-else
+                      type="button"
+                      class="profile-stat-value text-h3 font-weight-medium mt-1"
+                      :aria-label="$t('user_profile.stat_view_detail', { label: row.label })"
+                      @click="goToTab(statTabForKey(row.key))"
+                    >
+                      {{ row.value }}
+                    </button>
                   </div>
                 </div>
               </v-card-text>
@@ -833,9 +867,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                 </div>
                 <template v-else>
                   <template v-if="showProfileJoinedSection">
-                    <div class="text-subtitle-2 font-weight-medium mb-3">
+                    <h3 class="profile-community-subsection-title mb-3">
                       {{ $t('user_profile.section.joined_communities') }}
-                    </div>
+                    </h3>
                     <v-row dense class="mb-6">
                       <v-col
                         v-for="c in previewJoinedCommunities"
@@ -863,8 +897,24 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                               <div
                                 class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
                               >
-                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
-                                  {{ c.community_name }}
+                                <div
+                                  class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
+                                >
+                                  <div
+                                    class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
+                                    :title="c.community_name"
+                                  >
+                                    {{ c.community_name }}
+                                  </div>
+                                  <v-chip
+                                    v-if="!c.is_public"
+                                    size="x-small"
+                                    variant="flat"
+                                    class="profile-preview-private-chip flex-shrink-0"
+                                    label
+                                  >
+                                    {{ $t('user_profile.private_event_chip') }}
+                                  </v-chip>
                                 </div>
                               </div>
                             </div>
@@ -885,8 +935,24 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                               <div
                                 class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
                               >
-                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
-                                  {{ c.community_name }}
+                                <div
+                                  class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
+                                >
+                                  <div
+                                    class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
+                                    :title="c.community_name"
+                                  >
+                                    {{ c.community_name }}
+                                  </div>
+                                  <v-chip
+                                    v-if="!c.is_public"
+                                    size="x-small"
+                                    variant="flat"
+                                    class="profile-preview-private-chip flex-shrink-0"
+                                    label
+                                  >
+                                    {{ $t('user_profile.private_event_chip') }}
+                                  </v-chip>
                                 </div>
                               </div>
                             </div>
@@ -897,9 +963,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   </template>
 
                   <template v-if="showProfileManagedSection">
-                    <div class="text-subtitle-2 font-weight-medium mb-3">
+                    <h3 class="profile-community-subsection-title mb-3">
                       {{ $t('user_profile.section.managed_communities') }}
-                    </div>
+                    </h3>
                     <v-row dense>
                       <v-col
                         v-for="c in previewManagedCommunities"
@@ -927,8 +993,24 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                               <div
                                 class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
                               >
-                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
-                                  {{ c.community_name }}
+                                <div
+                                  class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
+                                >
+                                  <div
+                                    class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
+                                    :title="c.community_name"
+                                  >
+                                    {{ c.community_name }}
+                                  </div>
+                                  <v-chip
+                                    v-if="!c.is_public"
+                                    size="x-small"
+                                    variant="flat"
+                                    class="profile-preview-private-chip flex-shrink-0"
+                                    label
+                                  >
+                                    {{ $t('user_profile.private_event_chip') }}
+                                  </v-chip>
                                 </div>
                               </div>
                             </div>
@@ -949,8 +1031,24 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                               <div
                                 class="community-preview-tile__text min-width-0 flex-grow-1 d-flex flex-column justify-center"
                               >
-                                <div class="text-body-1 profile-preview-tile__name" :title="c.community_name">
-                                  {{ c.community_name }}
+                                <div
+                                  class="community-preview-tile__name-row d-flex align-start justify-space-between ga-1 min-width-0"
+                                >
+                                  <div
+                                    class="text-body-1 profile-preview-tile__name min-width-0 flex-grow-1"
+                                    :title="c.community_name"
+                                  >
+                                    {{ c.community_name }}
+                                  </div>
+                                  <v-chip
+                                    v-if="!c.is_public"
+                                    size="x-small"
+                                    variant="flat"
+                                    class="profile-preview-private-chip flex-shrink-0"
+                                    label
+                                  >
+                                    {{ $t('user_profile.private_event_chip') }}
+                                  </v-chip>
                                 </div>
                               </div>
                             </div>
@@ -986,19 +1084,12 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   <v-col v-for="food in previewFoods" :key="food.order_id" cols="6" sm="4" md="3">
                     <v-card variant="outlined" class="h-100 preview-card">
                       <v-img
-                        v-if="foodImageUrl(food) != null"
-                        :src="foodImageUrl(food)"
+                        :src="foodMenuImageSrc(food)"
                         :alt="food.menu_name"
                         cover
                         height="120"
+                        @error="markFoodMenuImageFailed(food.order_id)"
                       />
-                      <div
-                        v-else
-                        class="food-preview-placeholder d-flex align-center justify-center bg-surface-variant"
-                        style="height: 120px"
-                      >
-                        <v-icon :icon="mdiFood" size="32" class="text-medium-emphasis" />
-                      </div>
                       <v-card-text class="pa-3 pt-2">
                         <div
                           v-if="food.shop_name !== ''"
@@ -1113,7 +1204,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
           </div>
           <template v-else-if="isCommunitiesTabReady">
             <template v-if="showJoinedSection">
-              <h3 class="text-h6 mt-2 mb-2">{{ $t('user_profile.section.joined_communities') }}</h3>
+              <h3 class="profile-community-subsection-title mt-2 mb-2">
+                {{ $t('user_profile.section.joined_communities') }}
+              </h3>
               <v-row>
                 <v-col
                   v-for="{ community, members } in memberCommunities"
@@ -1147,7 +1240,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
             </v-row>
 
             <template v-if="showManagedSection">
-              <h3 class="text-h6 mt-6 mb-2">{{ $t('user_profile.section.managed_communities') }}</h3>
+              <h3 class="profile-community-subsection-title mt-6 mb-2">
+                {{ $t('user_profile.section.managed_communities') }}
+              </h3>
               <v-row>
                 <v-col
                   v-for="{ community, members } in managerCommunities"
@@ -1193,19 +1288,12 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
               <v-col v-for="food in pagedFoods" :key="food.order_id" cols="12" sm="6" md="4">
                 <v-card elevation="2" class="h-100 preview-card profile-panel-card">
                   <v-img
-                    v-if="foodImageUrl(food) != null"
-                    :src="foodImageUrl(food)"
+                    :src="foodMenuImageSrc(food)"
                     :alt="food.menu_name"
                     cover
                     height="180"
+                    @error="markFoodMenuImageFailed(food.order_id)"
                   />
-                  <div
-                    v-else
-                    class="food-preview-placeholder d-flex align-center justify-center bg-surface-variant"
-                    style="height: 180px"
-                  >
-                    <v-icon :icon="mdiFood" size="40" class="text-medium-emphasis" />
-                  </div>
                   <v-card-text class="pa-3 pt-2">
                     <div
                       v-if="food.shop_name !== ''"
@@ -1417,6 +1505,23 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 
 .profile-section-title__icon {
   opacity: 1;
+}
+
+.profile-community-subsection-title {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.375;
+  margin: 0;
+}
+
+.profile-stat-value {
+  appearance: none;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
 }
 
 /* 数値サマリー: 2 / 3 / 5 列グリッドで等幅。md 以上はカード幅いっぱいに 5 等分＋項目間の縦線 */
