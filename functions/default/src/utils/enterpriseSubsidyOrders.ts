@@ -329,7 +329,7 @@ export async function processEnterpriseSubsidyOrdersForWebhook(params: {
     return {
       ok: true,
       subsidyTotal,
-      enterpriseOrderCreateLog: { enterpriseId, subsidyTotal: subsidyToAdd },
+      enterpriseOrderCreateLog: { enterpriseId, subsidyTotal: subsidyTotal },
     }
   }
   return { ok: true, subsidyTotal }

@@ -248,7 +248,7 @@ export const setupRouter = (router: Router) => {
     }
     const token = await user.getIdTokenResult()
     if (isEnterpriseUserFromClaims(token.claims)) {
-      if (to.path === '/' && to.query.enterprise_blocked === '1') {
+      if (to.path === '/') {
         return
       }
       return { path: '/', query: { ...to.query, enterprise_blocked: '1' } }
