@@ -68,9 +68,10 @@ AIエージェント向けプロジェクトガイド。
 
 | パス                   | 概要                   | 技術スタック                                 |
 | :--------------------- | :--------------------- | :------------------------------------------- |
-| **/user**              | 一般ユーザー向けアプリ | Vue 3 + Vite + Vuetify 3                     |
-| **/partner**           | 飲食店向け管理画面     | Vue 3 + Vite + Vuetify 3                     |
-| **/functions/default** | バックエンドロジック   | Firebase Functions v2 (Node 20) + TypeScript |
+| **/user**              | 一般ユーザー向けアプリ       | Vue 3 + Vite + Vuetify 3                     |
+| **/partner**           | 飲食店向け管理画面           | Vue 3 + Vite + Vuetify 3                     |
+| **/enterprise**        | エンタープライズ向けアプリ   | Vue 3 + Vite + Vuetify 3                     |
+| **/functions/default** | バックエンドロジック         | Firebase Functions v2 (Node 20) + TypeScript |
 | **/common**            | 共有コード             | TypeScript (Schema, Utils)                   |
 | **/base**              | 共有UIコンポーネント   | Vue 3 (Materio Template)                     |
 
@@ -168,7 +169,8 @@ npm -w <pkg> run format:check
   - 例: `[ci] #2084 deploy_user の checkout を v6 に更新`
   - 例: `[firebase] #1901 firestore.indexes.json の重複インデックスを削除`
   - 例: `[ai] #1800 分割コミットスキルに ci と firebase タグを追加`
-  - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
+  - 例: `[enterprise] #2071 カート月次 usage を enterprise 側から注入`
+  - 使用可能なタグ: `[user]` `[partner]` `[enterprise]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
   - [doc]: documents/ 内の更新のみ。[ci]: `.github/workflows/`。[terraform]: `terraform/`。[firebase]: `firebase.json` / `.firebaserc` / `firestore.rules` / `storage.rules` / `firestore.indexes.json`。[ai]: `.cursor` / `.agents` / `.claude` / `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` 等の AI エージェント向け指示・設定
   - ルートの `package.json` / `package-lock.json` 等、上記タグに該当しないモノレポ横断設定は**接頭辞なし**（`#イシュー番号` と要約タイトルのみ）。PR タイトルも同様。手順・判定ルール・例は `/git-commit-message` と `/git-create-pull-request` スキルを参照。
 
