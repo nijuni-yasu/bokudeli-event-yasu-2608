@@ -16,7 +16,7 @@ import { useEventStore, type EventStore } from '@shokujii/base/stores/event.js'
 import { useCommunityStore, type CommunityStore } from '@shokujii/base/stores/community.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useI18n } from 'vue-i18n'
-import { mdiEmail, mdiPencilOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
+import { mdiCogOutline, mdiEmail, mdiPencilOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
 import Banners from '@shokujii/base/components/Banners.vue'
@@ -24,6 +24,7 @@ import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
+import { useDisplay } from 'vuetify'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,6 +59,18 @@ const showManagerEventEditButton = computed(
 
 const showManagerCommunityButton = computed(
   () => isManager.value && event.value != null && !showManagerEventEditButton.value,
+)
+
+const display = useDisplay()
+
+const managerActionButtonSize = computed(() => (display.xs.value ? 'small' : 'default'))
+
+const showApplyToShopButton = computed(
+  () => event.value != null && event.value.event_status.value === 'in_draft' && isManager.value,
+)
+
+const hasManagerActions = computed(
+  () => showApplyToShopButton.value || showManagerEventEditButton.value || showManagerCommunityButton.value,
 )
 
 const albumImageUrls = computed(() => {
@@ -250,41 +263,63 @@ onUnmounted(() => {
 <template>
   <div v-if="event != null && communityStore.community != null" class="justify-center px-0 px-sm-0">
     <v-row class="justify-center mt-lg-10">
-      <v-col md="8" sm="9" cols="12" class="py-0 py-sm-1">
-        <v-row class="justify-space-between align-center my-0 py-0" style="gap: 15px">
-          <v-btn :icon="mdiHome" size="x-large" variant="text" to="/" />
-          <v-spacer />
-          <EventStatusChip :status="event.calculatedEventStatus" size="large" />
-          <v-chip v-if="!event.is_public" color="primary" size="large">
-            {{ $t('private_event') }}
-          </v-chip>
-          <v-btn
-            v-if="event.event_status.value === `in_draft` && isManager"
-            class="ml-2 my-1"
-            variant="outlined"
-            :prepend-icon="mdiEmail"
-            :to="getEventEditShopNoticePath(eventId)"
-          >
-            {{ $t('event_page.apply_to_shop') }}
-          </v-btn>
-          <v-btn
-            v-if="showManagerEventEditButton"
-            class="ml-2 my-1"
-            variant="outlined"
-            :prepend-icon="mdiPencilOutline"
-            :to="getEventEditPathByRawStatus(eventId, event.event_status.value)"
-          >
-            {{ $t('event_page.edit') }}
-          </v-btn>
-          <v-btn
-            v-if="showManagerCommunityButton"
-            class="ml-2 my-1"
-            variant="outlined"
-            :to="getManageCommunityPath(communityStore.community.community_account)"
-          >
-            {{ $t('user.community_management') }}
-          </v-btn>
-        </v-row>
+      <v-col md="8" sm="9" cols="12" class="py-0 py-sm-1 px-0">
+        <div
+          class="event-page-toolbar my-0 py-0 mb-0"
+          :class="{
+            'event-page-toolbar--compact': display.xs.value,
+            'event-page-toolbar--compact-single-row': display.xs.value && !hasManagerActions,
+          }"
+        >
+          <div class="event-page-toolbar__leading">
+            <v-btn
+              class="event-page-toolbar__home"
+              :icon="mdiHome"
+              size="x-large"
+              variant="text"
+              to="/"
+              :aria-label="$t('back_to_top')"
+            />
+            <div class="event-page-toolbar__status-chips">
+              <EventStatusChip :status="event.calculatedEventStatus" size="large" />
+              <v-chip v-if="!event.is_public" color="primary" size="large">
+                {{ $t('private_event') }}
+              </v-chip>
+            </div>
+          </div>
+          <div v-if="hasManagerActions" class="event-page-toolbar__actions">
+            <v-btn
+              v-if="showApplyToShopButton"
+              class="event-page-toolbar__action-btn"
+              variant="outlined"
+              :size="managerActionButtonSize"
+              :prepend-icon="mdiEmail"
+              :to="getEventEditShopNoticePath(eventId)"
+            >
+              {{ $t('event_page.apply_to_shop') }}
+            </v-btn>
+            <v-btn
+              v-if="showManagerEventEditButton"
+              class="event-page-toolbar__action-btn"
+              variant="outlined"
+              :size="managerActionButtonSize"
+              :prepend-icon="mdiPencilOutline"
+              :to="getEventEditPathByRawStatus(eventId, event.event_status.value)"
+            >
+              {{ $t('event_page.edit') }}
+            </v-btn>
+            <v-btn
+              v-if="showManagerCommunityButton"
+              class="event-page-toolbar__action-btn"
+              variant="outlined"
+              :size="managerActionButtonSize"
+              :prepend-icon="mdiCogOutline"
+              :to="getManageCommunityPath(communityStore.community.community_account)"
+            >
+              {{ $t('user.community_management') }}
+            </v-btn>
+          </div>
+        </div>
       </v-col>
     </v-row>
     <v-row class="justify-center">
@@ -373,3 +408,65 @@ onUnmounted(() => {
     </v-row>
   </v-navigation-drawer>
 </template>
+
+<style scoped lang="scss">
+.event-page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px 15px;
+}
+
+.event-page-toolbar__leading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-inline-end: auto;
+}
+
+.event-page-toolbar__status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-page-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.event-page-toolbar__action-btn {
+  white-space: nowrap;
+}
+
+.event-page-toolbar--compact {
+  display: grid;
+  grid-template-areas:
+    'leading'
+    'actions';
+  align-items: center;
+  row-gap: 8px;
+
+  .event-page-toolbar__leading {
+    grid-area: leading;
+    margin-inline-end: 0;
+  }
+
+  .event-page-toolbar__actions {
+    grid-area: actions;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.event-page-toolbar--compact-single-row {
+  grid-template-areas: 'leading';
+  row-gap: 0;
+}
+</style>

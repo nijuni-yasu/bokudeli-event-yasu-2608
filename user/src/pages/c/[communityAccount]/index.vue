@@ -18,8 +18,11 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
+import { useDisplay } from 'vuetify'
+import { mdiCogOutline } from '@mdi/js'
 
 const router = useRouter()
+const display = useDisplay()
 const communityAccount = useRoute().params.communityAccount as string
 const { t: $t } = useI18n()
 
@@ -102,8 +105,10 @@ const albumSlides = computed(() => {
       <v-col cols="12" md="9" sm="9">
         <v-row v-if="isManager" class="justify-end align-center mt-lg-5">
           <v-btn
-            class="mx-2 mt-2"
+            class="mx-2 mt-2 community-management-btn"
             variant="outlined"
+            :size="display.xs.value ? 'small' : 'default'"
+            :prepend-icon="mdiCogOutline"
             :to="getManageCommunityPath(communityStore.community.community_account)"
           >
             {{ $t('user.community_management') }}
@@ -191,3 +196,9 @@ const albumSlides = computed(() => {
     </confirm-dialog>
   </section>
 </template>
+
+<style scoped lang="scss">
+.community-management-btn {
+  white-space: nowrap;
+}
+</style>
