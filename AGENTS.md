@@ -22,7 +22,7 @@ AIエージェント向けプロジェクトガイド。
 | コードレビュードキュメント更新  | `/review-doc-update`         |
 | 分割コミット                    | `/git-split-commit`          |
 | スキル提案                      | `/skill-propose`             |
-| GitHub Actions デプロイ手動発火 | `/github-actions-deploy`     |
+| sandbox へ push + Actions デプロイ | `/github-actions-deploy`     |
 | sandbox WIP デプロイ            | `/github-sandbox-wip-deploy` |
 | コミット後の反映（PR + sandbox）    | `/git-reflect-after-commit`  |
 
