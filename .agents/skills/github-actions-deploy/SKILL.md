@@ -1,123 +1,147 @@
 ---
 name: github-actions-deploy
-description: GitHub 上の指定リポジトリに対し、gh CLI でデプロイ系ワークフローを workflow_dispatch により手動発火する。fork や sandbox 向け。**ユーザーがリモート名とブランチ（例 sandbox2510/feat/960-v2）またはリポ URL・owner/repo とブランチを会話で明示したときだけ**使う。ローカル git の upstream（@{upstream}）だけを根拠に勝手に ref を決めて発火してはならない——明示がなければ gh workflow run は実行せず、指定を求める。bokudeli-event-yasu をデプロイ、nijuni-yasu のリポを Actions で走らせたい、workflow_dispatch で deploy、リモート sandbox に手動デプロイ などの文脈で参照する。本番リポジトリ nijuniinc/bokudeli-event-new ではこのスキルを使わず発火してはならない。push ではなく Actions の手動実行でデプロイしたいときに使う。デプロイ後は run の成否を監視し、失敗時はログから原因を解析する（解析のみ・修正はしない）。5 本一括は一括発火後に並列 watch がデフォルト。デプロイエラーの原因を調べたい・解析したいという文脈でも参照する。
+description: sandbox / fork 向け。ローカル HEAD を branch.<branch>.sandboxRemote で決まった sandbox へ push してから、gh CLI で deploy_*.yml を workflow_dispatch 発火する。sandbox 先は git-reflect-after-commit と同じ branch.<branch>.sandboxRemote で記憶。git-reflect-after-commit / github-sandbox-wip-deploy から委譲時は会話に sandbox と書かなくてよい。「sandbox にデプロイ」で sandboxRemote 設定済みなら現在ブランチで実行可。1a のリモート/ブランチ明示は sandbox 系 remote のみ。repo+ブランチの明示指定は上書き（発火のみ）。「push せず」「再デプロイだけ」で push 省略。本番 nijuniinc/bokudeli-event-new では push も発火も拒否。5 本一括は一括発火後に並列 watch がデフォルト。
 ---
 
-# GitHub Actions デプロイ手動発火
+# GitHub Actions デプロイ（push + 手動発火）
 
 ## 目的
 
-ユーザーが **どの GitHub リポジトリに対して** デプロイ用ワークフローを走らせるかを指示したとき、そのリポジトリで **workflow_dispatch** を発火する手順に従う。
+sandbox / fork 向けに、**ローカル HEAD を sandbox リモートへ push してから**、対象リポジトリで **workflow_dispatch** を発火する。
+
+push なしでリモート上の既存 ref を再デプロイしたい場合は、ユーザーが **「push せず」「再デプロイだけ」** と明示したときのみ push を省略する。
 
 本リポジトリのワークフロー定義は `.github/workflows/deploy_*.yml` である。fork や sandbox リポでも **同一ファイル名・同一 inputs** を前提にする。異なる場合はユーザーに確認する。
 
 ## 本番リポジトリは対象外（厳守）
 
-次のリポジトリに対しては、このスキル経由で **`gh workflow run` を一切実行してはならない**。依頼が来ても **拒否し、理由をユーザーに伝える**。
+次のリポジトリに対しては、このスキル経由で **push も `gh workflow run` も一切実行してはならない**。依頼が来ても **拒否し、理由をユーザーに伝える**。
 
 - **本番リポジトリ**: `nijuniinc/bokudeli-event-new`  
   URL 例: `https://github.com/nijuniinc/bokudeli-event-new`
 
-正規化のあと `OWNER/REPO` が上記と一致する場合はブロックする。大小文字は GitHub の慣例に合わせ小文字比較でもよいが、通常は `nijuniinc/bokudeli-event-new` のみを想定する。
+正規化のあと `OWNER/REPO` が上記と一致する場合はブロックする。
 
-**ローカル git の upstream が `origin/ブランチ名` のとき**、`git remote get-url origin` が本番リポを指していれば、同様に **gh workflow run は実行しない**。
+**リモート URL**（`git remote get-url <remote>`）が本番を指す場合も、**push もデプロイ発火も中止**する。
 
-本番のデプロイは **GitHub の Web UI からの手動実行**や **既定のブランチへの push** など、チームの運用に任せる。このスキルは **sandbox / fork 用の遠隔発火**に限定する。
+本番のデプロイは **GitHub の Web UI からの手動実行**や **既定のブランチへの push** など、チームの運用に任せる。
 
 ## 前提
 
 - **GitHub CLI** `gh` がインストール済みであること
-- `gh auth login` 済みで、対象リポジトリに **actions:write** 相当の権限があること（リポジトリへの書き込み権限または fine-grained PAT の Workflows 権限）
+- `gh auth login` 済みで、対象リポジトリに **actions:write** 相当の権限があること
 - ネットワークが利用できる実行環境であること
 
 権限不足で 403 になる場合は、ユーザーに PAT のスコープや org の GitHub Actions ポリシーを確認してもらう。
 
-## 明示指定が必須（upstream だけでは発火しない）
+## sandbox 先の決定（優先順）
 
-**次を満たさない限り `gh workflow run` を実行してはならない。** 不足していれば発火せず、ユーザーに `リモート名/ブランチ名`（例: `sandbox2510/feat/960-v2`）または **リポ（URL または owner/repo）とブランチ**を書いてもらう。
+**REMOTE**（ローカル git remote 名）・**OWNER/REPO**・**ref** を次の優先順で決める。いずれの段でも **本番リポ**に当たったらそこで打ち切る。
 
-### デプロイ対象として「明示された」とみなす例
+### 1a. ユーザーが `リモート名/ブランチ名` を明示している場合（最優先）
 
-- **リモート/ブランチ**: 会話に `sandbox2510/feat/960-v2`、`sandbox2603/ai/1842` のように **`既知の sandbox 系リモート名` + `/` + ブランチ** が含まれる（先頭の `/` だけで左右分割し、右側全体を ref とする）
-- **リポ + ブランチ**: GitHub URL または `owner/repo` と、別にまたは同じ発話内で **ブランチ名**が指定されている
-- **リモート名とブランチを別表現**: 例「sandbox2510 の feat/960-v2 にデプロイ」など、**どのリモートのどのブランチか**が一意に読み取れる
+会話から `sandbox2510/...` や `sandbox2603/...` など **`sandbox` で始まるリモート名**の **`A/B` 形式**を取り出す。ブランチ名に `/` が含まれ得るため、**先頭の最初の `/` だけ**で左右に分割する。**sandbox 系以外の remote 名は 1a では使わない**（1b / 1c を検討）。
 
-### 明示がない典型（このままでは発火しない）
+- 例: `sandbox2603/ai/1842` → REMOTE `sandbox2603`、ref `ai/1842`
+- 例: `sandbox2510/feature/foo` → REMOTE `sandbox2510`、ref `feature/foo`
 
-- 「デプロイして」「sandbox にデプロイ」だけで **リモート/ブランチまたはリポ+ブランチが無い**
-- **ローカルの `git rev-parse @{upstream}` や現在ブランチだけ**を根拠に、ユーザーが口頭でリモート・ブランチを言っていない
+`git remote get-url <REMOTE>` の URL から `OWNER/REPO` を取る。
 
-`@{upstream}` は **補助情報**（ユーザーが指定したリモート/ブランチと一致するか確認する、リモート URL から OWNER/REPO を取る）に使ってよいが、**ユーザー発話に無い ref で勝手に決めて発火してはならない**。
+### 1b. `branch.<branch>.sandboxRemote` + 現在ブランチ（`git-reflect-after-commit` と同じ）
+
+会話に 1a の明示が無く、次の **いずれか** に該当する場合:
+
+1. 会話に「sandbox にデプロイ」等の依頼がある
+2. **`git-reflect-after-commit` または `github-sandbox-wip-deploy` から委譲されている**（会話に sandbox と書かなくてよい）
+3. `branch.<branch>.sandboxRemote` が**設定済み**で、会話にデプロイ依頼がある（「デプロイして」「sandbox だけ」等。リモート/ブランチの明示が無い場合）
+
+```bash
+BRANCH=$(git branch --show-current)
+REMOTE=$(git config --get branch."$BRANCH".sandboxRemote)
+REF="$BRANCH"
+```
+
+- **未設定の場合**: `git remote -v` から **`sandbox*` 候補のみ**提示してユーザーに選んでもらい、確認のうえ保存する（次回以降は自動）。
+
+  ```bash
+  git config branch."$BRANCH".sandboxRemote <選択した remote>
+  ```
+
+- `git remote get-url "$REMOTE"` の URL から `OWNER/REPO` を取る。
+
+### 1c. ユーザーが URL または owner/repo とブランチを明示している場合（発火のみ）
+
+- 完全 URL または `owner/repo` から `OWNER/REPO` を抽出する
+- **ref**: ユーザーが会話で指定したブランチ名のみを使う
+- **push は行わない**（ローカル remote との対応が不明なため）。**`SKIP_PUSH=true`** として手順 3 を省略し、手順 4 以降（発火のみ）に進む
+
+### 1d. 上記いずれも満たさない場合
+
+- **実行しない**
+- ユーザーに **`リモート名/ブランチ名`（例: `sandbox2510/feat/960-v2`）**、**owner/repo + ブランチ**、または sandbox remote の初回設定を求める
+
+`@{upstream}` は **補助情報**（指定したリモート/ブランチと一致するか確認する）に使ってよいが、**ユーザー発話に無い ref で勝手に決めて実行してはならない**（1b の委譲・`sandboxRemote` 設定済みの場合を除く）。
 
 ## トリガー例
 
-次のような表現を検知したらこのスキルを使う（対象リポが本番でないこと、かつ **上記の明示指定があること**）。
-
 - `sandbox2510/feat/960-v2` にデプロイして
-- `https://github.com/nijuni-yasu/bokudeli-event-yasu-2603` のブランチ `ai/1842` をデプロイして
-- `nijuni-yasu/bokudeli-event-yasu-2510` を Actions で走らせて（**ブランチも明示されている場合**）
-- sandbox リポを workflow_dispatch で全部デプロイ（**リモート/ブランチまたはリポ+ref が「同じユーザー発話」に含まれるか、続く返信でユーザーがコピペ・引用・繰り返しなどで文字どおりに示した場合に限る。会話の要約や「さっきの」とだけの暗黙の文脈では発火しない**）
+- sandbox にデプロイして（**`branch.<branch>.sandboxRemote` 設定済み**）
+- `/git-reflect-after-commit` 実行時（**B: sandbox デプロイ**。会話に sandbox と書かなくてよい）
+- `/github-sandbox-wip-deploy` 実行時（同上）
+- `https://github.com/nijuni-yasu/bokudeli-event-yasu-2603` のブランチ `ai/1842` を再デプロイ（**push 省略・発火のみ**）
+- sandbox リポを workflow_dispatch で全部デプロイ（**リモート/ブランチまたは repo+ref が会話に含まれる場合**）
 
-**NG**: リポ URL もリモート/ブランチも言わず「今のブランチを sandbox にデプロイ」だけ → **確認を求め、明示が取れるまで `gh workflow run` しない**。
+**NG**: `sandboxRemote` 未設定かつ 1a/1c も無い「デプロイして」だけ → 指定または sandbox remote の初回設定を求める。
 
 ## 手順
 
-### 1. OWNER/REPO と ref を決める
+### 0. 前提確認
 
-次の **優先順** で決める。いずれの段でも **本番リポ**に当たったらそこで打ち切る。
+```bash
+git status
+```
 
-#### 1a. ユーザーが `リモート名/ブランチ名` を明示している場合
+- **未コミット変更がある場合**: **中断**する（WIP 含めてデプロイしたい場合は `github-sandbox-wip-deploy` を案内）。
+- 委譲元（`git-reflect-after-commit`）で clean 確認済みの場合は省略してよい。
 
-会話から `sandbox2510/...` や `sandbox2603/...` など **既知の sandbox リモート名で始まる `A/B` 形式**を取り出す。ブランチ名に `/` が含まれ得るため、**先頭の最初の `/` だけ**で左右に分割する。
+### 1. REMOTE・OWNER/REPO・ref の決定
 
-- 例: `sandbox2603/ai/1842` → リモート名 `sandbox2603`、ref `ai/1842`
-- 例: `sandbox2510/feature/foo` → リモート名 `sandbox2510`、ref `feature/foo`
-
-1. **リモート名が `origin` の場合**  
-   `git remote get-url origin` をパースし、`nijuniinc/bokudeli-event-new` なら **拒否**（本番）。
-
-2. **リモート名が sandbox 系など本番以外のとき**  
-   `git remote get-url <リモート名>` の URL から `OWNER/REPO` を取る。ref は右側のブランチ名。
-
-**リモート URL から OWNER/REPO を取る例**
-
-- `git@github.com:nijuni-yasu/bokudeli-event-yasu-2603.git` → `nijuni-yasu/bokudeli-event-yasu-2603`
-- `https://github.com/OWNER/REPO.git` → `OWNER/REPO`
-
-#### 1b. ユーザーが URL または owner/repo とブランチを明示している場合
-
-- 完全 URL または `owner/repo` から `OWNER/REPO` を抽出する。末尾の `.git` や `/` は除く
-- **ref**: ユーザーが会話で指定したブランチ名のみを使う
-
-**ここで `nijuniinc/bokudeli-event-new` と一致したら処理を打ち切る**。`gh workflow run` は実行しない。
-
-#### 1c. 明示が不足している場合
-
-- **`gh workflow run` は実行しない**
-- ユーザーに **`リモート名/ブランチ名`（例: `sandbox2510/feat/960-v2`）** または **owner/repo（または URL）とブランチ**を書いてもらう
-- ユーザーが **リモート名だけ**言った場合も、**ブランチが会話に無ければ** ref を推測せず確認する
-
-デフォルトブランチを `gh repo view` で調べて ref にするのは、**ユーザーがリポを特定したうえでブランチを任せる**と明言した場合など **限定的**にのみ。upstream や「今のブランチ」だけを根拠にした自動投入はしない。
+上記 **sandbox 先の決定（優先順）** に従う。
 
 ### 2. 本番ブロックの最終確認
 
-`OWNER/REPO` が `nijuniinc/bokudeli-event-new` に正規化されたら **ここで中止**。ユーザーに「本番リポはこのスキルでは発火しない。GitHub の Actions 画面から操作してほしい」と伝える。
+- `OWNER/REPO` が `nijuniinc/bokudeli-event-new` なら **中止**
+- 1a / 1b で REMOTE を使う場合、`git remote get-url "$REMOTE"` が本番 URL なら **中止**
 
-### 3. workflow_dispatch の environment 入力
+### 3. sandbox へ push（デフォルト）
+
+**次のいずれかに該当する場合は push を省略**し、手順 4 へ:
+
+- ユーザーが **「push せず」「再デプロイだけ」** と明示した
+- 手順 1c（owner/repo + ブランチのみ・発火のみモード）
+
+**それ以外は必ず push してから発火する**（リモートの古いコミットをデプロイしないため）。
+
+```bash
+git push --force-with-lease "$REMOTE" HEAD:"$REF"
+```
+
+- `-u`（`--set-upstream`）は付けない（追跡設定を変えないため）
+- `--force-with-lease` 失敗時はリモートが他で更新された可能性を伝え、`-f` で強制 push するか確認する
+
+### 4. workflow_dispatch の environment 入力
 
 ワークフローは `workflow_dispatch` の入力 **environment** に `development` または `production` が必須である。
 
-このスキルが対象とするのは **本番リポ以外** のみである。**sandbox 系 fork** では setup ジョブ側でこの値は実質参照されず GitHub Environment は `sandbox` 固定だが、YAML 上は必須のため **`development` を渡す**のでよい。
+**sandbox 系 fork** では setup ジョブ側でこの値は実質参照されず GitHub Environment は `sandbox` 固定だが、YAML 上は必須のため **`development` を渡す**。
 
 ```bash
 -f environment=development
 ```
 
-本番リポへの発火は行わないため、このスキル内で `production` を選ぶ場面は基本的にない。
+### 5. 発火するワークフローを選ぶ
 
-### 4. 発火するワークフローを選ぶ
-
-対象は **リポジトリ内のデプロイ用ワークフロー 5 本のみ**。Lint や他用途のワークフローは動かさない。`deploy_manager.yml`（hosting manager）は #2087 で削除済み（フェーズ5で `deploy_support.yml` として新規追加予定）。
+対象は **リポジトリ内のデプロイ用ワークフロー 5 本のみ**。Lint や他用途のワークフローは動かさない。
 
 | ファイル名 | ざっくりした対象 |
 |------------|------------------|
@@ -128,64 +152,51 @@ description: GitHub 上の指定リポジトリに対し、gh CLI でデプロ�
 | deploy_storage.yml | storage |
 
 - ユーザーが **特定パッケージだけ** と言ったら、対応する 1 本だけ `gh workflow run` する
-- **全体デプロイ**や指定がなければ、上記 5 本を **一括発火**する（**デフォルト**）。`gh workflow run` は非同期のため、ループで連続実行すれば数秒で 5 本すべて発火できる
-- **禁止**: 1 本ごとに `gh run watch` で完了を待ってから次を発火する直列パターン（user 完了後に partner が走る等、発火が遅くなる）
+- **全体デプロイ**や指定がなければ、上記 5 本を **一括発火**する（**デフォルト**）
+- **禁止**: 1 本ごとに `gh run watch` で完了を待ってから次を発火する直列パターン
 - 同一リポの負荷を抑えたい場合やユーザーが明示した場合のみ、5 本を **順次発火**してよい
-- **5 本一括は負荷が大きい**ため、初回や迷いがあるときはユーザーに確認してもよい
 
-### 5. gh で実行するコマンド形
+### 6. gh で実行するコマンド形
 
 **1 本だけ発火する場合**
 
 ```bash
-gh workflow run deploy_user.yml --repo OWNER/REPO --ref BRANCH -f environment=development
+gh workflow run deploy_user.yml --repo OWNER/REPO --ref REF -f environment=development
 ```
 
-**5 本一括発火する場合（デフォルト・発火のみ・監視は手順 6）**
+**5 本一括発火する場合（デフォルト・発火のみ・監視は手順 7）**
 
-一括発火の直前に **基準時刻 `SINCE` を 1 回だけ**控える（5 本共通。`--workflow` で run を区別するため）。
+一括発火の直前に **基準時刻 `SINCE` を 1 回だけ**控える。
 
 ```bash
 SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 for WF in deploy_user.yml deploy_partner.yml deploy_functions.yml \
           deploy_firestore.yml deploy_storage.yml; do
-  gh workflow run "$WF" --repo OWNER/REPO --ref BRANCH -f environment=development
+  gh workflow run "$WF" --repo OWNER/REPO --ref REF -f environment=development
 done
 ```
 
 `gh workflow run` は即座に返る。5 本を **watch 完了まで待たず** 連続発火する。
 
-発火後の一覧確認:
-
-```bash
-gh run list --repo OWNER/REPO --limit 10
-```
-
-成否を監視する場合は、手順 6 で **RUN_ID 特定 → 並列 watch** を行う。
-
-### 6. デプロイ結果の検知（成功/失敗の確認）
+### 7. デプロイ結果の検知（成功/失敗の確認）
 
 `gh workflow run` は発火するだけで結果を返さない。発火した各ワークフローについて **今回発火した run を確実に特定**し、完了まで監視する。
 
 **手順の流れ（5 本一括の場合）**
 
-1. **フェーズ A（一括発火）**: 手順 5 のとおり `SINCE` を控えて 5 本を連続 `gh workflow run`（watch はしない）
+1. **フェーズ A（一括発火）**: 手順 6 のとおり `SINCE` を控えて 5 本を連続 `gh workflow run`
 2. **フェーズ B（RUN_ID 特定）**: 各 workflow ファイルごとに、基準時刻以降の run をリトライ取得
-3. **フェーズ C（並列監視）**: 取得できた run を **並列**に `gh run watch`（バックグラウンド起動 + `wait`）
-
-**1 本だけ発火した場合**も、フェーズ B・C は同様（対象 WF が 1 件）。
+3. **フェーズ C（並列監視）**: 取得できた run を **並列**に `gh run watch`
 
 **run 特定の注意（重要）**: 単純な `gh run list --limit 1` は危険である。
 
-- 発火直後は run がまだ作成されておらず、`RUN_ID` が **空文字列**になり得る（空のまま `gh run watch` すると失敗する）。
-- `--limit 1` は最新 run を返すだけで、**同一ブランチの過去に成功した run** を掴むことがある。この場合 `RUN_ID` は空でないため気付きにくく、`gh run watch --exit-status` が **古い成功 run を即座に成功と判定**し、今回の失敗を見逃す。
+- 発火直後は run がまだ作成されておらず、`RUN_ID` が **空文字列**になり得る
+- `--limit 1` は **同一ブランチの過去に成功した run** を掴むことがある
 
-これを避けるため、**一括発火前に基準時刻 `SINCE` を 1 回控え**、各 WF について `workflow_dispatch` イベントかつ **基準時刻以降（`>=`）に作成された run** を、取得できるまで**リトライ**して特定する。
+**一括発火前に基準時刻 `SINCE` を 1 回控え**、各 WF について `workflow_dispatch` イベントかつ **基準時刻以降（`>=`）に作成された run** を、取得できるまで**リトライ**して特定する。
 
 **フェーズ B: RUN_ID 特定（WF ごと）**
-
-連想配列（`declare -A`）は bash 4+ 専用のため使わない。`WF:RUN_ID` ペアを通常配列に蓄積する（macOS 標準 bash 3.2 / zsh でもコピペ実行可）。
 
 ```bash
 WORKFLOWS=(deploy_user.yml deploy_partner.yml deploy_functions.yml \
@@ -195,7 +206,7 @@ RUN_ID_ENTRIES=()
 for WF in "${WORKFLOWS[@]}"; do
   RUN_ID=""
   for i in $(seq 1 10); do
-    RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH \
+    RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch REF \
       --event workflow_dispatch --created ">=$SINCE" \
       --limit 1 --json databaseId --jq '.[0].databaseId // empty')
     [ -n "$RUN_ID" ] && RUN_ID_ENTRIES+=("${WF}:${RUN_ID}") && break
@@ -203,7 +214,7 @@ for WF in "${WORKFLOWS[@]}"; do
   done
   if [ -z "$RUN_ID" ]; then
     echo "[$WF] 今回の run を自動特定できませんでした。一覧から手動で特定してください:"
-    gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH --limit 10
+    gh run list --repo OWNER/REPO --workflow "$WF" --branch REF --limit 10
   fi
 done
 ```
@@ -231,21 +242,19 @@ for pid in "${PIDS[@]}"; do
 done
 ```
 
-- `RUN_ID` が取れなかった WF は watch しない（一覧提示にフォールバック）。
-- 失敗した run（`FAIL=1`）は手順 7 で **WF ごとに** `gh run view "$RUN_ID" --log-failed` を実行して解析する。
-- run の URL は `gh run view "$RUN_ID" --repo OWNER/REPO --json url --jq .url` で取得し、報告に含める。
-- `RUN_ID` が空のまま `gh run watch` を実行しない。
+- `RUN_ID` が空のまま `gh run watch` を実行しない
+- 失敗した run は手順 8 で `gh run view "$RUN_ID" --log-failed` を解析する
 
 **1 本だけ発火・監視する場合の例**
 
 ```bash
 SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 WF=deploy_firestore.yml
-gh workflow run "$WF" --repo OWNER/REPO --ref BRANCH -f environment=development
+gh workflow run "$WF" --repo OWNER/REPO --ref REF -f environment=development
 
 RUN_ID=""
 for i in $(seq 1 10); do
-  RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH \
+  RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch REF \
     --event workflow_dispatch --created ">=$SINCE" \
     --limit 1 --json databaseId --jq '.[0].databaseId // empty')
   [ -n "$RUN_ID" ] && break
@@ -254,7 +263,7 @@ done
 
 if [ -z "$RUN_ID" ]; then
   echo "今回の run を自動特定できませんでした。一覧から手動で run を特定してください:"
-  gh run list --repo OWNER/REPO --workflow "$WF" --branch BRANCH --limit 10
+  gh run list --repo OWNER/REPO --workflow "$WF" --branch REF --limit 10
 else
   gh run watch "$RUN_ID" --repo OWNER/REPO --exit-status
 fi
@@ -265,44 +274,39 @@ fi
 - `--created ">=$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する。
 - 5 本を一括発火しても、GitHub Actions の **同時実行枠**の都合で run が **Queued** になることはある（発火は並列・実行はキュー待ちになり得る）。
 
-### 7. 失敗時のエラー解析（解析のみ・修正はしない）
-
-`gh run watch` が失敗（非ゼロ終了）した場合、失敗ステップのログを取得して原因を解析する。
+### 8. 失敗時のエラー解析（解析のみ・修正はしない）
 
 ```bash
 gh run view "$RUN_ID" --repo OWNER/REPO --log-failed
 ```
 
-ログ末尾の `Error:` 行を中心に確認し、次の分類で原因を切り分けてユーザーに報告する。
-
 | 分類 | ログの手がかり | 典型的な原因 | 推奨アクション（提案のみ） |
 |------|----------------|--------------|----------------------------|
-| 一時的エラー | `HTTP Error: 503` / `500` / `429`、`service is currently unavailable`、`ETIMEDOUT` / `ECONNRESET` | Firebase / Google API 側の一時障害・レート制限 | 同じワークフローの再実行で解消する可能性が高い |
-| Rules コンパイルエラー | `compilation errors`、`firestore.rules` / `storage.rules` の行番号付きエラー | ルールの構文・参照ミス | 該当ルールの修正が必要（このスキルでは修正しない） |
+| 一時的エラー | `HTTP Error: 503` / `500` / `429`、`service is currently unavailable` | Firebase / Google API 側の一時障害 | 再実行を提案 |
+| Rules コンパイルエラー | `compilation errors`、`firestore.rules` / `storage.rules` | ルールの構文・参照ミス | 該当ルールの修正が必要 |
 | インデックス | `firestore.indexes.json` 関連の Error | indexes 定義の不整合 | indexes 定義の見直し |
-| 権限・認証 | `403`、`PERMISSION_DENIED`、`GOOGLE_APPLICATION_CREDENTIALS`、IAM 系 | サービスアカウント権限・Secrets 設定 | リポの Secrets / IAM 設定確認 |
-| API 未有効化 | `has not been used in project`、`API ... is disabled` | 必要 API が無効 | GCP で該当 API を有効化 |
-| ビルド失敗 | `tsc`、`npm run build`、Functions のビルドエラー | アプリ側のビルド不良 | ソース修正（このスキルでは修正しない） |
+| 権限・認証 | `403`、`PERMISSION_DENIED` | Secrets / IAM | リポの Secrets 確認 |
+| API 未有効化 | `API ... is disabled` | 必要 API が無効 | GCP で API 有効化 |
+| ビルド失敗 | `tsc`、`npm run build` | アプリ側のビルド不良 | ソース修正 |
 
-- **重要**: このスキルは **解析までで止める**。ルール・コード・設定の修正や、ワークフローの自動再実行は行わない。一時的エラーで再実行が有効そうな場合でも、再実行の可否はユーザーに委ねる。
-- 例: `firebaserules.googleapis.com ... HTTP Error: 503, The service is currently unavailable` → **一時的エラー**。Firebase Rules API の一時障害で、ブランチ内容に問題はない。`gh workflow run deploy_firestore.yml ...` の再実行を提案する。
+- **重要**: 解析までで止める。修正や自動再実行は行わない
 
-### 8. 結果をユーザーに伝える
+### 9. 結果をユーザーに伝える
 
-- 発火した **owner/repo**、**ref**、**workflow ファイル名**、**environment 入力の値** を列挙する
-- 各 run の **成否** と **run の URL** を示す
-- 失敗した run については、**手順 7 の分類と原因サマリ**、および推奨アクション（再実行が有効か / 修正が必要か）を伝える
-- ユーザーが **`リモート名/ブランチ名` 形式**で依頼した場合は、解釈した **リモート・ref** をそのまま示し、意図と一致するか確認しやすくする
-- それ以外の `gh` のエラー（発火自体の失敗）は、権限・ブランチ名・リポジトリ名の typo を疑う
+- push した **REMOTE**・**OWNER/REPO**・**ref**（push 省略時はその旨）
+- 発火した **workflow ファイル名**、**environment 入力の値**
+- 各 run の **成否** と **run の URL**
+- 失敗時は **手順 8 の分類と原因サマリ**
+- `branch.<branch>.sandboxRemote` を新規保存した場合はその旨
 
 ## 注意
 
-- このスキルは **ローカルの Cursor エージェントが gh を実行する**前提である。Cursor クラウドやサンドボックスのみでは gh や認証が無いことがある。その場合はユーザーに同じコマンドを端末で実行してもらう
-- **本番 `nijuniinc/bokudeli-event-new` は必ず拒否**する。依頼の言い回しが本番 URL でも同様
-- **upstream や現在ブランチだけ**ではデプロイ先 ref を決めない。**必ず会話での明示**（`リモート/ブランチ` または リポ + ブランチ）を待つ
-- 5 本すべて発火すると Functions や Hosting がまとめて動く。ユーザーが「user だけ」と言った場合は絞る
-- **5 本一括は一括発火 → 並列 watch がデフォルト**。1 本 watch 完了まで待ってから次を発火する直列パターンは使わない
-- デプロイ後は run の成否を監視し、失敗時はログから **原因を解析するだけ**にとどめる。ルール・コード・設定の修正や自動再実行はしない（再実行の可否はユーザーに委ねる）
+- このスキルは **ローカルの Cursor エージェントが `git` と `gh` を実行する**前提
+- **本番 `nijuniinc/bokudeli-event-new` は必ず拒否**（push も発火も）
+- **デフォルトは push → 発火**。push 省略はユーザー明示または 1c（発火のみ）のみ
+- **`branch.<branch>.sandboxRemote`** は `git-reflect-after-commit` と共有する。ブランチごとに sandbox 先を記憶する
+- 5 本一括は **一括発火 → 並列 watch** がデフォルト
+- デプロイ失敗時は **原因を解析するだけ**。修正・自動再実行はユーザーに委ねる
 
 ## 関連ドキュメント
 

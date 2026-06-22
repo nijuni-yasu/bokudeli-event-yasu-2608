@@ -18,8 +18,11 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import PublicAlbumGallery from '@shokujii/base/components/PublicAlbumGallery.vue'
+import { useDisplay } from 'vuetify'
+import { mdiCogOutline } from '@mdi/js'
 
 const router = useRouter()
+const display = useDisplay()
 const communityAccount = useRoute().params.communityAccount as string
 const { t: $t } = useI18n()
 
@@ -102,8 +105,10 @@ const albumSlides = computed(() => {
       <v-col cols="12" md="9" sm="9">
         <v-row v-if="isManager" class="justify-end align-center mt-lg-5">
           <v-btn
-            class="mx-2 mt-2"
+            class="mx-2 mt-2 community-management-btn"
             variant="outlined"
+            :size="display.xs.value ? 'small' : 'default'"
+            :prepend-icon="mdiCogOutline"
             :to="getManageCommunityPath(communityStore.community.community_account)"
           >
             {{ $t('user.community_management') }}
@@ -112,7 +117,7 @@ const albumSlides = computed(() => {
             {{ $t('community.applying') }}
           </v-chip>
         </v-row>
-        <v-card flat class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
+        <v-card elevation="2" class="align-center justify-center text-center my-8 pa-md-15 pa-sm-8 pa-xs-0">
           <PublicAlbumGallery
             :cover-url="communityStore.coverImageUrl ?? ''"
             :cover-title="communityStore.community.community_name"
@@ -157,7 +162,7 @@ const albumSlides = computed(() => {
                   v-if="eventWithMembers.eventStore.event"
                   :event="eventWithMembers.eventStore.event"
                   :members="eventWithMembers.members"
-                  class="mx-0 cursor-pointer"
+                  class="mx-0 cursor-pointer elevation-2"
                   @click="goToEvents(eventWithMembers.eventStore.event.event_id)"
                 />
               </v-col>
@@ -191,3 +196,9 @@ const albumSlides = computed(() => {
     </confirm-dialog>
   </section>
 </template>
+
+<style scoped lang="scss">
+.community-management-btn {
+  white-space: nowrap;
+}
+</style>

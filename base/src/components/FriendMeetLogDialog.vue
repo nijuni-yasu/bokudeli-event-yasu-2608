@@ -65,6 +65,11 @@ const isMeetLogEventResolvable = (row: UserFriendMeetLogItem) => row.event_name 
 
 const isEventLinkable = (row: UserFriendMeetLogItem) => isMeetLogEventResolvable(row) && row.is_linkable
 
+const resolveEventHref = (communityAccount: string, eventId: string): string | undefined => {
+  const path = props.resolveEventPath(communityAccount, eventId)
+  return typeof path === 'string' ? path : 'path' in path ? path.path : undefined
+}
+
 const resetState = () => {
   meetLog.value = []
   loading.value = false
@@ -98,6 +103,8 @@ watch(isOpen, (open) => {
 const closeDialog = () => {
   isOpen.value = false
 }
+
+const meetLogDialogAvatarSize = 75
 </script>
 
 <template>
@@ -117,7 +124,7 @@ const closeDialog = () => {
                 tabindex="0"
                 :aria-label="$t('user.friend_profile_link_label', { name: targetUserName })"
               >
-                <UserAvatar :user="targetUser" :size="56" />
+                <UserAvatar :user="targetUser" :size="meetLogDialogAvatarSize" />
               </router-link>
               <router-link
                 class="friend-meet-log-dialog-profile-link-text text-reset text-decoration-none text-body-1 font-weight-medium mt-2 text-center meet-log-dialog-user-name"
@@ -142,7 +149,7 @@ const closeDialog = () => {
                 tabindex="0"
                 :aria-label="$t('user.friend_profile_link_label', { name: friend.user_name })"
               >
-                <UserAvatar :user="friendUser" :size="56" />
+                <UserAvatar :user="friendUser" :size="meetLogDialogAvatarSize" />
               </router-link>
               <router-link
                 class="friend-meet-log-dialog-profile-link-text text-reset text-decoration-none text-body-1 font-weight-medium mt-2 text-center meet-log-dialog-user-name"
@@ -154,8 +161,8 @@ const closeDialog = () => {
             </div>
           </div>
 
-          <div class="d-flex justify-center mt-2">
-            <v-chip variant="tonal" :prepend-icon="mdiSilverwareForkKnife" label>
+          <div class="d-flex justify-center mt-3">
+            <v-chip size="large" variant="tonal" :prepend-icon="mdiSilverwareForkKnife" label>
               {{ $t('user.friend_meet_count', { count: friend.meet_count }) }}
             </v-chip>
           </div>
@@ -176,7 +183,9 @@ const closeDialog = () => {
             v-for="row in meetLog"
             :key="`${row.community_id}-${row.event_id}`"
             class="meet-log-row"
-            :to="isEventLinkable(row) ? resolveEventPath(row.community_account!, row.event_id) : undefined"
+            :href="isEventLinkable(row) ? resolveEventHref(row.community_account!, row.event_id) : undefined"
+            target="_blank"
+            rel="noopener noreferrer"
             :link="isEventLinkable(row)"
           >
             <template #prepend>
@@ -233,8 +242,8 @@ const closeDialog = () => {
   display: grid;
   grid-template-columns: max-content auto max-content;
   justify-content: center;
-  align-items: start;
-  column-gap: 8px;
+  align-items: center;
+  column-gap: 12px;
 }
 
 .meet-log-dialog-user {
@@ -242,12 +251,11 @@ const closeDialog = () => {
   flex-direction: column;
   align-items: center;
   min-width: 0;
-  max-width: 132px;
+  max-width: 180px;
 }
 
 .meet-log-dialog-separator {
-  align-self: start;
-  margin-top: 15px;
+  align-self: center;
   opacity: 0.72;
 }
 

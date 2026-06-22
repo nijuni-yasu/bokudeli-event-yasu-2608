@@ -1,6 +1,6 @@
 ---
 name: github-sandbox-wip-deploy
-description: WIP コミットで sandbox に仮デプロイする。lint・format・型・test チェック（lint-and-format）→ WIP コミット → --force-with-lease push → Actions デプロイ発火を一括実行。「WIP でコミットして sandbox にデプロイして」など WIP + sandbox デプロイを明示された時に使用する。WIP に言及がない単なるデプロイには github-actions-deploy を使う。本番 nijuniinc/bokudeli-event-new には push しない。
+description: WIP コミットで sandbox に仮デプロイする。lint・format・型・test チェック（lint-and-format）→ WIP コミット → github-actions-deploy（push + デプロイ発火）を実行。「WIP でコミットして sandbox にデプロイして」など WIP + sandbox デプロイを明示された時に使用する。WIP に言及がない単なるデプロイには github-actions-deploy を使う。本番 nijuniinc/bokudeli-event-new には push しない。
 ---
 
 # sandbox WIP デプロイ
@@ -12,8 +12,7 @@ lint・format・型・test チェック（`lint-and-format` スキル）を先�
 ## 本番リポジトリは対象外（厳守）
 
 本番リポジトリ `nijuniinc/bokudeli-event-new` に対しては **push もデプロイ発火も一切行わない**。
-
-手順 3 で `git remote get-url` により実際の URL を取得し、本番リポを指している場合は即座にブロックする。リモート名が `origin` であっても `sandbox` であっても、URL が本番を指していれば拒否する。
+push・本番ブロックは **`github-actions-deploy`** が実施する。
 
 ## 手順
 
@@ -24,30 +23,9 @@ lint・format・型・test チェック（`lint-and-format` スキル）を先�
 - **build・lint・build:types・test エラーがある場合**: ユーザーに報告して **中断する**。修正後に再度依頼してもらう
 - **format エラーがある場合**: `lint-and-format` スキルの format 自動修正手順に従い自動修正して続行する
 
-### 2. push 先リモートの決定
+### 2. 変更のステージングとコミット
 
-`github-actions-deploy` スキルと同じ基準で、**リモート名**・**OWNER/REPO**・**ref（ブランチ名）** を決定する。ユーザーが会話で **`リモート名/ブランチ名`（例: `sandbox2510/feat/960-v2`）** または **リポ（URL / owner/repo）とブランチ**を明示していない場合は、push もデプロイ発火も行わず、指定を求める。**ローカルの `@{upstream}` や現在ブランチだけ**から push 先・ref を決めてはならない。
-
-手順 3 では、必ず次で実際の URL を検証する（文字列だけの OWNER/REPO 判断だけでは、ローカルの `git remote` 設定と意図がずれていても気づけないため）。
-
-### 3. 本番ブロックの確認
-
-手順 2 で決めた **リモート名** について、次を実行する。
-
-```bash
-git remote get-url <リモート名>
-```
-
-出力 URL から `owner/repo` を解釈する（例: `https://github.com/owner/repo.git` / `git@github.com:owner/repo.git`）。次のいずれかに当てはまる場合は **即座に中止** する。
-
-- URL が `nijuniinc/bokudeli-event-new` を指している
-- 手順 2 で決めた OWNER/REPO と、URL から読み取った owner/repo が一致しない
-
-中止時はユーザーに「本番リポへの WIP push は行わない。sandbox リモートを指定してほしい」と伝える。
-
-### 4. 変更のステージングとコミット
-
-まず `git status` で変更の有無を確認する。変更がない場合（clean）は **WIP コミットは作成せず** 手順 5 の push のみ行う。既存のコミットが未 push であればそれを push する。
+まず `git status` で変更の有無を確認する。変更がない場合（clean）は **WIP コミットは作成せず** 手順 3 へ進む。既存のコミットが未 push であれば、手順 3 で push される。
 
 変更がある場合、追跡済みファイルの変更のみをステージする（未追跡の `.env` 等を誤ってコミットしないため）。
 
@@ -60,40 +38,29 @@ git commit -m "WIP 動作確認コミット"
 
 format 自動修正（手順 1）で生じた変更も、追跡済みであれば `git add -u` でステージされる。
 
-手順 4 で `git commit` まで実行した場合のみ「WIP コミットを新規作成した」とみなし、手順 7 の reset 案内の対象とする。clean でコミットをスキップした場合は作成していない。
+手順 2 で `git commit` まで実行した場合のみ「WIP コミットを新規作成した」とみなし、手順 4 の reset 案内の対象とする。clean でコミットをスキップした場合は作成していない。
 
-### 5. sandbox への push
+### 3. sandbox へ push してデプロイ
 
-手順 2 で決めた **ref（リモート上のブランチ名）** に、現在の `HEAD` をそのまま載せる。ローカルブランチ名と追跡先ブランチ名が異なる場合でも、手順 6 の `workflow_dispatch` で使う ref と push 先が一致するようにする。
+**`github-actions-deploy` スキルの手順 0〜9** に委譲する。
 
-```bash
-git push --force-with-lease <リモート名> HEAD:<ref>
-```
+- 委譲時は `github-actions-deploy` の **1b** がトリガーとして成立する（会話に sandbox と書かなくてよい）
+- sandbox 先は `branch.<branch>.sandboxRemote` で解決・記憶（`git-reflect-after-commit` と同じ）。候補は **`sandbox*` のみ**
+- ユーザーが **`リモート名/ブランチ名` を明示**している場合は上書き指定として優先
+- push（手順 3）→ workflow_dispatch 発火 → 監視 → 報告までを一括実行
+- 本スキルでは push 手順を **重複実施しない**
 
-例: ref が `ai/1885` のとき `HEAD:ai/1885`。
+### 4. 結果の報告
 
-`-f` ではなく `--force-with-lease` を使う。リモート側が予期せず更新されていた場合に上書きを防ぐためである。
-
-`git push` に `-u`（`--set-upstream`）は付けない。upstream の追跡設定を変えないようにする（`git add -u` とは別物である）。
-
-`--force-with-lease` が失敗した場合は、リモートが他で更新されている可能性をユーザーに伝え、`-f` で強制 push するかどうか確認する。
-
-### 6. デプロイ発火
-
-`github-actions-deploy` スキルの手順に従い、**このスキルの手順 2** で決定した OWNER/REPO と ref を使って workflow_dispatch を発火する。
-
-**`github-actions-deploy` の手順 1**（OWNER/REPO・ref の決定）は、ここでは既に確定しているため繰り返さない。**`github-actions-deploy` の手順 2**（本番ブロック）は、**このスキルの手順 3** で URL を検証済みなら省略してよい。**`github-actions-deploy` の手順 3**（environment 入力）から **手順 6**（結果報告）までに従う。
-
-### 7. 結果の報告
-
-以下を報告する:
+以下を報告する（`github-actions-deploy` 手順 9 の内容を含む）:
 
 - push 先リモート名と OWNER/REPO
 - push したブランチ名（ref）
-- 発火したワークフロー
-- 手順 4 で WIP コミットを新規作成した場合のみ: WIP コミットがローカルに残っていること
+- 発火したワークフローと各 run の成否・URL
+- 手順 2 で WIP コミットを新規作成した場合のみ: WIP コミットがローカルに残っていること
+- `branch.<branch>.sandboxRemote` を新規保存した場合はその旨
 
-**手順 4 で `git commit` により WIP コミットを新規作成した場合のみ**、後始末として次を案内する。clean でコミットをスキップした場合は **案内しない**（直前の通常コミットを誤って `reset` するのを防ぐ）。
+**手順 2 で `git commit` により WIP コミットを新規作成した場合のみ**、後始末として次を案内する。clean でコミットをスキップした場合は **案内しない**（直前の通常コミットを誤って `reset` するのを防ぐ）。
 
 > WIP コミットはローカルに残っています。動作確認が完了したら `git reset --soft HEAD~1` で解除できます。
 

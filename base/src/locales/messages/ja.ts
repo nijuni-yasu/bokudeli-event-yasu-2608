@@ -538,10 +538,12 @@ export default {
   },
   cancelpolicy_modal: {
     title: 'キャンセルポリシー',
-    desc: `注文期限まで：キャンセル料金 0%<br />
+    desc_before: `注文期限まで：キャンセル料金 0%<br />
     注文期限以降：キャンセル料金 100%<br />
     <br />
-    注文期限内であれば <a href="https://shokujii.jp/mypage" target="_blank">マイページ</a> にてご自身でキャンセルを行うことができます。注文期限後、キャンセルはできませんのでご了承ください。`,
+    注文期限内であれば `,
+    orders_link: '注文履歴',
+    desc_after: ' にてご自身でキャンセルを行うことができます。注文期限後、キャンセルはできませんのでご了承ください。',
   },
   letter_status: {
     draft: '下書き',

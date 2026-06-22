@@ -34,7 +34,7 @@ export default {
     member_community_list: '参加コミュニティ',
     manager_community_list: '運営コミュニティ',
     friend_list: 'ともだち',
-    friend_sort_meet_count: '食事を一緒にした順',
+    friend_sort_meet_count: '食事した回数順',
     friend_sort_last_met_at: '最近会った順',
     friend_sort_aria_label: 'ともだちの並び替え',
     friend_meet_count: '{count} 回の食事',
@@ -201,7 +201,7 @@ export default {
         step6: {
           title: '注文期限で自動発注',
           description:
-            '注文期限になると、確定した注文内容をお店に自動発注。締切前であれば参加者はマイページから「キャンセル」することも可能です。',
+            '注文期限になると、確定した注文内容をお店に自動発注。締切前であれば参加者は注文履歴から「キャンセル」することも可能です。',
           button: '詳細を見る',
         },
         step7: {
@@ -716,13 +716,14 @@ export default {
       orders: '最近の注文',
     },
     show_more: 'もっと見る',
+    stat_view_detail: '{label}の詳細を見る',
     empty: {
-      events: 'まだ参加しているイベントはありません。',
+      events: '参加しているイベントは、まだありません。',
       friends: 'ともだちは、まだいません。',
-      foods: '注文したフードはまだありません。',
-      communities: 'まだ参加しているコミュニティはありません。',
-      joined_communities: '参加コミュニティはありません。',
-      managed_communities: '運営コミュニティはありません。',
+      foods: '注文したフードは、まだありません。',
+      communities: '参加しているコミュニティは、まだありません。',
+      joined_communities: '参加コミュニティは、まだありません。',
+      managed_communities: '運営コミュニティは、まだありません。',
       orders: '注文履歴はありません。',
     },
     failed_to_load: 'プロフィール情報の取得に失敗しました。',

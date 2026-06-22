@@ -12,8 +12,8 @@ description: コミット完了後の次ステップ。origin へ push して PR
 ## 本番リポジトリは対象外（厳守）
 
 本番リポ `nijuniinc/bokudeli-event-new` には **デプロイ発火を一切行わない**。
-A の PR 用 push（origin への通常 push）は許可するが、B のデプロイ発火対象に origin/本番を選んではならない。
-B では必ず `git remote get-url <remote>` で URL を実検証し、本番を指す場合は中止する。
+A の PR 用 push（origin への通常 push）は許可するが、B のデプロイ対象に origin/本番を選んではならない。
+B は `github-actions-deploy` に委譲し、同スキル内で本番ブロックを実施する。
 
 ## 手順
 
@@ -64,53 +64,30 @@ B では必ず `git remote get-url <remote>` で URL を実検証し、本番を
 - `git-create-pull-request` スキルの手順に従い PR を作成/更新し、
   **固定文のレビュー依頼コメント**まで実行する。
 
-### 5. B) ブランチに紐づく sandbox へ push してデプロイ
+### 5. B) sandbox へ push してデプロイ
 
 git-fixup / git-squash の upstream push（`branch.<branch>.remote`）とは **別系統**である。
-PR 用は **origin**（手順 4）、動作確認用は **`sandboxRemote`**（本手順）とする。
+PR 用は **origin**（手順 4）、動作確認用は **`branch.<branch>.sandboxRemote`**（`github-actions-deploy` が解決・記憶）とする。
 
-- 現在ブランチを取得: `git branch --show-current`
-- 紐づく sandbox remote を取得:
+**`github-actions-deploy` スキルの手順 0〜9** に委譲する（sandboxRemote 解決・push・本番ブロック・発火・監視・報告を含む）。
+本スキルでは B 専用の push 手順を **重複実施しない**。
 
-  ```bash
-  git config --get branch.<branch>.sandboxRemote
-  ```
-
-- **未設定の場合**: `git remote -v` から `sandbox*` 候補を提示してユーザーに選んでもらい、
-  確認のうえ保存する（次回以降は自動）。
-
-  ```bash
-  git config branch.<branch>.sandboxRemote <選択した remote>
-  ```
-
-- **本番ブロック**: `git remote get-url <remote>` の URL が
-  `nijuniinc/bokudeli-event-new` を指す場合は **中止**する。
-- push:
-
-  ```bash
-  git push --force-with-lease <remote> HEAD:<ref>
-  ```
-
-  - `ref` はリモート上の対象ブランチ名（通常は現在ブランチ名）。
-  - `-u`（`--set-upstream`）は付けない（追跡設定を変えないため）。
-  - 失敗時はリモートが他で更新された可能性を伝え、`-f` で強制するか確認する。
-
-- デプロイ発火・結果監視・エラー解析: `github-actions-deploy` スキルの environment 入力〜
-  **結果検知（手順 6）・失敗時のエラー解析（手順 7）・結果報告（手順 8）** までに従い、
-  ここで確定した **OWNER/REPO・ref** を使う。
-  OWNER/REPO 決定と本番ブロックは本スキルで実施済みのため繰り返さない。
-  デプロイが失敗した場合は **解析結果をユーザーに報告するに留め、修正や自動再実行はしない**。
+- 手順 1 で clean 確認済みのため、`github-actions-deploy` 手順 0 は省略してよい
+- B 実行時は `github-actions-deploy` の **1b** が委譲をトリガーとして成立する（会話に sandbox と書かなくてよい）
+- ユーザーが sandbox 向けに **`sandbox*` リモート名/ブランチ名** を明示している場合は、`github-actions-deploy` 手順 1a がそれを優先する
+- デプロイが失敗した場合は **解析結果をユーザーに報告するに留め、修正や自動再実行はしない**
 
 ### 6. 結果報告
 
 - PR の URL（A 実行時）
-- sandbox の remote 名・OWNER/REPO・ref、発火したワークフロー（B 実行時）
+- sandbox の remote 名・OWNER/REPO・ref、発火したワークフロー（B 実行時・`github-actions-deploy` 手順 9 の内容を含む）
 - sandbox デプロイの各ワークフローの **成否・run URL**、失敗時は **エラー分類と原因サマリ**（B 実行時）
-- `branch.<branch>.sandboxRemote` を新規保存した場合はその旨
+- `branch.<branch>.sandboxRemote` を新規保存した場合はその旨（B 実行時）
 
 ## 注意
 
 - 委譲先（`git-create-pull-request` / `github-actions-deploy` / `lint-and-format`）のルールを上書きしない。
-- origin / sandbox への push は、履歴書き換え時（fixup/squash 直後等）は **`--force-with-lease`** を使う。
-  本番への **デプロイ発火**は行わない（origin への PR 用 push は許可）。
+- origin への push は、履歴書き換え時（fixup/squash 直後等）は **`--force-with-lease`** を使う。
+  sandbox への push は **`github-actions-deploy` 手順 3** に委譲する。
+- 本番への **デプロイ発火**は行わない（origin への PR 用 push は許可）。
 - このスキルは Cursor / Claude エージェントがローカルで `git` と `gh` を実行する前提。

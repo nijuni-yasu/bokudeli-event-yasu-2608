@@ -95,7 +95,7 @@ const openMeetLogDialog = () => {
       </template>
     </v-card-text>
 
-    <v-card-actions v-if="hasMeetHistory" class="pt-0 pb-2 pe-2 justify-end">
+    <div v-if="hasMeetHistory" class="friend-card-meet-log-action d-flex justify-end pb-2 pe-2">
       <v-btn
         variant="outlined"
         rounded="pill"
@@ -103,12 +103,12 @@ const openMeetLogDialog = () => {
         density="comfortable"
         size="small"
         class="meet-log-open-btn"
+        :append-icon="mdiHistory"
         @click="openMeetLogDialog"
       >
         {{ $t('user.friend_meet_log_open') }}
-        <v-icon end :icon="mdiHistory" aria-hidden="true" />
       </v-btn>
-    </v-card-actions>
+    </div>
 
     <FriendMeetLogDialog
       v-model="meetLogDialogOpen"
