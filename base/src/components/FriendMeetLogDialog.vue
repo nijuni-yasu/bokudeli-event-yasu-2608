@@ -65,6 +65,11 @@ const isMeetLogEventResolvable = (row: UserFriendMeetLogItem) => row.event_name 
 
 const isEventLinkable = (row: UserFriendMeetLogItem) => isMeetLogEventResolvable(row) && row.is_linkable
 
+const resolveEventHref = (communityAccount: string, eventId: string): string | undefined => {
+  const path = props.resolveEventPath(communityAccount, eventId)
+  return typeof path === 'string' ? path : 'path' in path ? path.path : undefined
+}
+
 const resetState = () => {
   meetLog.value = []
   loading.value = false
@@ -178,7 +183,9 @@ const meetLogDialogAvatarSize = 75
             v-for="row in meetLog"
             :key="`${row.community_id}-${row.event_id}`"
             class="meet-log-row"
-            :to="isEventLinkable(row) ? resolveEventPath(row.community_account!, row.event_id) : undefined"
+            :href="isEventLinkable(row) ? resolveEventHref(row.community_account!, row.event_id) : undefined"
+            target="_blank"
+            rel="noopener noreferrer"
             :link="isEventLinkable(row)"
           >
             <template #prepend>
