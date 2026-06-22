@@ -1,108 +1,181 @@
 # Storage データ移行手順（手作業・バケット間コピー）
 
-エージェントやスキルに `gcloud` / `gsutil` を任せず、**エンジニアが自分の端末から**実施する前提。Firestore のマネージド export/import のような **Storage 専用の「公式インポート」はない**ため、**Cloud Storage 上で移行元バケットから移行先バケットへオブジェクトをコピー（または同期）する**流れとする。本手順は **GCS バケット間のみで完結**させ、**端末へのダウンロードは行わない**。コピー前に **移行先 B バケット内の既存オブジェクトを削除**し、古い階層や試行コピーの残骸と混ざらないようにする前提とする（**削除は取り消せない**。必要なら別バケットに退避してから実施する）。
+エージェントやスキルに `gcloud` / `gsutil` を任せず、**エンジニアが自分の端末から**実施する前提。Firestore のマネージド export/import のような **Storage 専用の「公式インポート」はない**ため、**Cloud Storage 上で移行元バケットから移行先バケットへオブジェクトをコピー**する流れとする。本手順は **GCS バケット間のみで完結**させ、**端末へのダウンロードは行わない**。コピー前に **移行先 B バケット内の既存オブジェクトを削除**し、古い階層や試行コピーの残骸と混ざらないようにする前提とする（**削除は取り消せない**。必要なら別バケットに退避してから実施する）。
 
 ## 対象プロジェクト（例）
 
 | 役割 | プロジェクト ID（例） |
 |------|------------------------|
-| **移行元（A）** | `bokudeli-event-yasu-test` |
-| **移行先（B）** | `bokudeli-event-yasu-2603` |
+| **移行元（A）** | `bokudeli-event-dev` |
+| **移行先（B）** | `bokudeli-event-yasu-2604` |
 
-- **Firebase の既定バケット名**はプロジェクトごとに異なる。Firebase Console の **Storage**、または GCP の **Cloud Storage** で **実バケット名**を確認する（例: `<project-id>.appspot.com` や `<project-id>.firebasestorage.app` など）。
+- A のバケット名（例）: `bokudeli-event-dev.appspot.com`
+- B のバケット名（例）: `bokudeli-event-yasu-2604.appspot.com`
+
+> **前提**: [firestoreデータ移行手順_手動.md](./firestoreデータ移行手順_手動.md) の §0〜§7（Firestore import + rules/indexes + **0004 メール削除**）を **先に完了**すること。
+> **位置づけ**: 本手順は Firestore 手順の **§8 Storage 移行**に相当する。Storage 完了後は Firestore 手順 §9 検証・§10 片付けへ進む。
 
 ---
 
-## 認証と権限（バケット間コピーの前提）
+## 手順概要
 
-**同一の認証主体**（多くはオペレータの Google アカウント、またはサービスアカウント）に、**コピー元バケット A とコピー先バケット B の両方**で必要な権限が付いていること。A と B が**別プロジェクト**でも、**1 アカウントに両方のバケット（またはプロジェクト）で IAM を付与**するのが一般的である。
+| 段 | 内容 |
+|----|------|
+| 0 | 事前確認（バケット名・IAM・Firestore 移行済み） |
+| 1 | B バケット内オブジェクトの全削除 |
+| 2 | A → B の GCS 間コピー（ソースは `gs://.../*`） |
+| 3 | オブジェクトキー（パス）の確認 |
+| 4 | `storage.rules` デプロイ |
+| 5 | （任意）Facebook 画像移行 `0042` |
+| 6 | 検証 |
 
-- **人間が PC で実行する場合**の例: `gcloud auth login` でログインし、`gcloud auth list` でアクティブなアカウントを確認する。
-- **サービスアカウントで実行する場合**: `gcloud auth activate-service-account` 等でその SA を使い、SA に A の読み取り・B の書き込み（組織の最小権限に合わせる）を付与する。
+---
 
-`gcloud config set project` は**デフォルトプロジェクト**の指定であり、バケット URI を `gs://...` でフル指定するコピー自体の成否は **IAM 次第**である。分かりやすさのため **移行先 B のプロジェクト**に合わせておいてもよい。
+## 0. 事前確認
+
+### 認証と権限
+
+**同一の認証主体**（オペレータの Google アカウント、またはサービスアカウント）に、**コピー元バケット A とコピー先バケット B の両方**で必要な権限が付いていること。
+
+- **A（本番）**: オブジェクトの **読み取りのみ**（本番バケットを削除・上書きしない）
+- **B（sandbox2604）**: オブジェクトの **削除と書き込み**
 
 ```bash
 gcloud auth login
-gcloud config set project <PROJECT_B>
+gcloud config set project bokudeli-event-yasu-2604
 gcloud auth list
 gcloud config list
 ```
 
-## バケットの確認（Console）
+### バケットの確認（Console）
 
-- GCP ストレージ（A）: `https://console.cloud.google.com/storage/browser?hl=ja&project=<PROJECT_A>`
-- GCP ストレージ（B）: `https://console.cloud.google.com/storage/browser?hl=ja&project=<PROJECT_B>`
-- Firebase Storage（A）: `https://console.firebase.google.com/project/<PROJECT_A>/storage`
-- Firebase Storage（B）: `https://console.firebase.google.com/project/<PROJECT_B>/storage`
+- GCP ストレージ（A）: https://console.cloud.google.com/storage/browser?hl=ja&project=bokudeli-event-dev
+- GCP ストレージ（B）: https://console.cloud.google.com/storage/browser?hl=ja&project=bokudeli-event-yasu-2604
+- Firebase Storage（A）: https://console.firebase.google.com/project/bokudeli-event-dev/storage
+- Firebase Storage（B）: https://console.firebase.google.com/project/bokudeli-event-yasu-2604/storage
 
-**コピー元** `gs://<BUCKET_A>/` と **コピー先** `gs://<BUCKET_B>/`、必要なら **プレフィックス**（例: `communities/` のみ移行 等）を決める。
+実バケット名を Console で確認する。2024-10-30 以降に作成された default bucket は `{project-id}.firebasestorage.app` 形式のことがある（[Firebase Storage FAQ](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024)）。以降のコマンドでは [変数の例](#変数の例実行前に実値に置き換え) の `BUCKET_A` / `BUCKET_B` に **Console で確認した実値**を入れる。
+
+```bash
+gcloud storage buckets list --project=bokudeli-event-dev
+gcloud storage buckets list --project=bokudeli-event-yasu-2604
+```
+
+### コピー対象外
+
+本手順は **Firebase Storage の既定バケット**（アプリ用オブジェクト）のみを対象とする。
+
+| バケット | 用途 | 本手順 |
+|---------|------|--------|
+| `{project-id}.appspot.com` または `{project-id}.firebasestorage.app` | コミュニティ画像・ユーザーアバター等 | **対象** |
+| `{project-id}-firestore-backups` | Firestore export | [Firestore 手順](./firestoreデータ移行手順_手動.md) で扱う |
+| `{project-id}-invoice` | 請求書 PDF | 対象外（請求書機能のテストが必要な場合のみ別途検討） |
+| `{project-id}-terraform` 等 | インフラ | 対象外 |
+
+### 本手順だけでは移行・更新されないもの
+
+- **`storage.rules`** → コピー後にデプロイ
+- **Authentication・Firestore・Secrets・外部サービス連携**
+- **アプリの環境変数**（`VITE_STORAGE_BUCKET` 等）→ 2604 向けに既デプロイ済みなら変更不要
 
 ---
 
-## 移行先 B のオブジェクトを削除する（コピー前・必須前提）
+## 1. 「プロジェクト B」の Storage オブジェクトを削除する（コピー前・必須）
 
-**B バケット内の既存データをすべて消す**（本番 B を使う場合はメンテナンス枠・書き込み停止と合わせて実施）。誤ったバケットを指定しないこと。
-
-```bash
-gcloud config set project <PROJECT_B>
-gcloud config set project bokudeli-event-yasu-2603
-# B バケット内の全オブジェクトを削除（バケット自体は残る）
-gcloud storage rm -r "gs://<BUCKET_B>/**"
-gcloud storage rm -r "gs://bokudeli-event-yasu-2603.appspot.com/**"
-```
-
-削除対象の確認の例:
+**B バケット内の既存データをすべて消す。** 誤ったバケットを指定しないこと。**本番 A のバケットは削除しない。**
 
 ```bash
-gcloud storage ls --recursive "gs://<BUCKET_B>/"
+gcloud config set project bokudeli-event-yasu-2604
+
+BUCKET_A=bokudeli-event-dev.appspot.com  # Console で確認した実値
+BUCKET_B=bokudeli-event-yasu-2604.appspot.com  # または *.firebasestorage.app
+
+# バケット名を再確認してから実行
+gcloud storage rm -r "gs://${BUCKET_B}/**"
 ```
 
-Console からフォルダ単位で削除してもよい。**削除後、一覧が空または意図した状態か**確認してから次へ進む。
+削除後の確認:
+
+```bash
+gcloud storage ls "gs://${BUCKET_B}/"
+```
+
+Console からフォルダ単位で削除してもよい。**一覧が空または意図した状態か**確認してから次へ進む。
 
 ---
 
-## バケット間コピー（本手順の本体）
+## 2. A → B のバケット間コピー（本手順の本体）
 
 **ソースは `gs://<BUCKET_A>/*` とし、バケット直下の中身だけを B のルートへ載せる。** `gs://<BUCKET_A>/`（末尾スラッシュのみ）からコピーすると、移行元バケット名など **余分な親フォルダが 1 段**付くことがある。
 
 ```bash
-gcloud config set project <PROJECT_B>
-gcloud storage cp --recursive "gs://<BUCKET_A>/*" "gs://<BUCKET_B>/"
-```
+gcloud config set project bokudeli-event-yasu-2604
 
-具体例（バケット名は環境に合わせて置き換える）:
+BUCKET_A=bokudeli-event-dev.appspot.com  # Console で確認した実値
+BUCKET_B=bokudeli-event-yasu-2604.appspot.com  # または *.firebasestorage.app
 
-```bash
 gcloud storage cp --recursive \
-  "gs://bokudeli-event-test.appspot.com/*" \
-  "gs://bokudeli-event-yasu-2603.appspot.com/"
+  "gs://${BUCKET_A}/*" \
+  "gs://${BUCKET_B}/"
 ```
 
-`gsutil` を使う場合の例:
+`gsutil` を使う場合（大容量向け）:
 
 ```bash
-gsutil -m cp -r "gs://<BUCKET_A>/*" "gs://<BUCKET_B>/"
+gsutil -m cp -r \
+  "gs://${BUCKET_A}/*" \
+  "gs://${BUCKET_B}/"
 ```
 
-**差分同期**が必要なら `gsutil -m rsync -r` の利用を検討する（初回フルコピー後の追いつき等）。本手順の「B を空にしてからフルコピー」と併用する場合は、方針を決めてから使い分ける。組織の手順に合わせる。
+**差分同期**が必要なら `gsutil -m rsync -r` の利用を検討する。本手順の「B を空にしてからフルコピー」と併用する場合は、方針を決めてから使い分ける。
 
 ---
 
-## 「プロジェクト B」でセキュリティルールをデプロイする
+## 3. オブジェクトキー（パス）の確認
 
-**オブジェクトのコピーだけでは `storage.rules` は移行されない。** リポジトリの `storage.rules` を B にデプロイする（Firebase CLI、`firebase deploy --only storage`、または CI / GitHub Actions の既存フローに従う）。
+コピー後、**`communities/` `partners/` `users/` 等が B バケット直下**にあることを確認する。
+
+```bash
+gcloud storage ls "gs://${BUCKET_B}/"
+gcloud storage ls --recursive "gs://${BUCKET_B}/" | head
+```
+
+`bokudeli-event-dev.appspot.com/` のような **移行元バケット名のフォルダが 1 段**付いている場合は、ソース指定を `/*` 付きに修正してコピーし直す。
 
 ---
 
-## 検証の目安
+## 4. 「プロジェクト B」でセキュリティルールをデプロイする
 
-- GCP Console または `gcloud storage ls --recursive "gs://<BUCKET_B>/"` で、主要プレフィックス（下記「アプリ側のオブジェクトキー規約」）にオブジェクトが存在するか確認する
-- 認証済みクライアントから、代表ファイルのダウンロード・アップロードが期待どおりか確認する
+**オブジェクトのコピーだけでは `storage.rules` は移行されない。**
+
+```bash
+firebase use bokudeli-event-yasu-2604
+firebase deploy --only storage
+```
+
+または `bokudeli-event-yasu-2604` 向け GitHub Actions の Storage デプロイワークフローを実行する。
 
 ---
 
-------------------------------------------------------------------------------------------------
+## 5. Facebook ユーザー画像の移行（任意）
+
+Firestore の `user_image_url` が Facebook 外部 URL のままの場合、Storage コピーだけでは表示が直らない。`bokudeli-event-batch/tasks/0042_migrate_facebook_user_image_urls.js` を **dry run から**実行する。
+
+```bash
+cd bokudeli-event-batch
+MIGRATE_FACEBOOK_USER_IMAGE_DRY_RUN=1 yarn run task -- -m sandbox2604
+# 問題なければ
+MIGRATE_FACEBOOK_USER_IMAGE_DRY_RUN=false yarn run task -- -m sandbox2604
+```
+
+---
+
+## 6. 検証
+
+- GCP Console または `gcloud storage ls --recursive "gs://${BUCKET_B}/"` で、主要プレフィックス（下記「アプリ側のオブジェクトキー規約」）にオブジェクトが存在するか確認する
+- 認証済みクライアントから、代表ファイルのダウンロードが **403 等にならないか**（ルール・認証・パスの一致）を確認する
+
+---
 
 ## 重要: Storage に Firestore 型のマネージド import はない
 
@@ -112,7 +185,7 @@ Firestore の `gcloud firestore import` のように、**バケット一式を�
 
 ## アプリ側のオブジェクトキー規約（Shokujii）
 
-リポジトリでは `common/src/utils/storagePaths.ts` にパス生成が集約されている。移行後も **キー（パス）構造を一致**させること（コピーで余分な親フォルダが 1 段増えると、アプリが参照するパスとずれる）。
+リポジトリでは [storagePaths.ts](../../common/src/utils/storagePaths.ts) にパス生成が集約されている。移行後も **キー（パス）構造を一致**させること（コピーで余分な親フォルダが 1 段増えると、アプリが参照するパスとずれる）。
 
 主なプレフィックスの例:
 
@@ -130,100 +203,56 @@ Firestore の `gcloud firestore import` のように、**バケット一式を�
 
 **Storage のファイルをコピーしただけでは不十分なことがある。**
 
-- Firestore やアプリ設定に **フル URL**（トークン付き download URL、旧プロジェクトのドメイン等）が保存されている場合、**B では URL が無効**になりうる。別タスクとして **URL の再発行**や **DB の一括更新**、**アプリのベース URL 設定**（環境変数等）の見直しが必要になる。
+- Firestore やアプリ設定に **フル URL**（トークン付き download URL、旧プロジェクトのドメイン等）が保存されている場合、**B では URL が無効**になりうる。別タスクとして **URL の再発行**や **DB の一括更新**が必要になる。
 - **相対パスや Storage パスのみ**を保存している設計なら、バケット名・ルール・クライアント設定を B に合わせれば整合しやすい。
-
-**Firestore データ移行**との実行順序（先に DB か先に Storage か）は、**URL の保存形式**に依存する。カットオーバー前に方針を決める。
+- Facebook 外部 URL が残る場合は [§5](#5-facebook-ユーザー画像の移行任意) の `0042` を実行する。
 
 ---
 
-## 事前に揃えるもの
+## 全体フロー（Firestore 手順との関係）
 
-- `gcloud` CLI（および必要なら `gsutil`）が入り、**オペレータアカウント（または SA）**が **A・B 両バケット**に必要な権限を持つ
-- **A / B の実バケット名**・**リージョン**（アプリ・組織要件と整合）
-- コピーに必要な **IAM**（組織の最小権限に合わせる。例: A での読み取り、B での **オブジェクト削除と書き込み**）
-- **`storage.rules`** を B にデプロイ済み、またはコピー直後にデプロイ
-- 必要なら **CORS**・バケットの公開設定・**ライフサイクル**を B 側で揃える
-- **Authentication・Firestore・Secrets・外部サービス連携**は本手順だけでは完結しない（別タスク）
+```text
+1. Firestore 移行（firestoreデータ移行手順_手動.md §0〜§7）
+   → A DL/UL → B 削除 → import → firestore.rules + indexes → 0004 メール削除
+2. Storage 移行（本手順 = Firestore §8）
+   → B 削除 → A → B コピー → storage.rules → 0042 任意 → 検証
+3. Firestore §9 検証 / §10 片付け
+```
 
 ---
 
 ## 変数の例（実行前に実値に置き換え）
 
 ```bash
-PROJECT_A=<移行元プロジェクトID>
-PROJECT_B=<移行先プロジェクトID>
+PROJECT_A=bokudeli-event-dev
+PROJECT_B=bokudeli-event-yasu-2604
 
-# Firebase Console / gcloud storage buckets list で実名を確認
-BUCKET_A=<A側のFirebase Storage用GCSバケット名>
-BUCKET_B=<B側のFirebase Storage用GCSバケット名>
-
-# バケット全体ではなくプレフィックスのみ移行する場合（末尾スラッシュに注意）
-PREFIX=""
+# Console / gcloud storage buckets list で確認した実バケット名
+BUCKET_A=bokudeli-event-dev.appspot.com
+BUCKET_B=bokudeli-event-yasu-2604.appspot.com
+# B が 2024-10 以降の default bucket の場合は例:
+# BUCKET_B=bokudeli-event-yasu-2604.firebasestorage.app
 ```
-
----
-
-## 手順概要
-
-| 段 | 内容 |
-|----|------|
-| 1 | B のバケット・IAM・（必要なら）CORS・ライフサイクル |
-| 2 | 認証（例: `gcloud auth login`）と **A・B 両バケット**の権限確認 |
-| 3 | **B バケット内オブジェクトの全削除**（コピー前・対象バケットを再確認） |
-| 4 | A → B の **GCS 間コピー**（ソースは `gs://<BUCKET_A>/*`） |
-| 5 | **オブジェクトキー（パス）**がアプリ想定と一致するか確認（階層ずれに注意） |
-| 6 | B に **`storage.rules`** をデプロイ |
-| 7 | アプリ・Functions の **バケット参照・環境変数**を B に合わせる |
-| 8 | Firestore 等の **URL 整合**（必要なら別スクリプト・手作業） |
-| 9 | 検証 |
-| 10 | 一時 IAM の片付け |
-
----
-
-### 1. コピー前後の確認（削除・階層ずれ）
-
-- **削除後**: `gcloud storage ls "gs://<BUCKET_B>/"` で B が空に近い状態か確認する（意図しないバケットを消していないか）。
-- **コピー後**: ソースを **`gs://<BUCKET_A>/*`** にしたうえで、`gcloud storage ls --recursive "gs://<BUCKET_B>/"` または Console で、**`assets/` `communities/` `partners/` `users/` 等がバケット直下**にあるか確認する。`gs://<BUCKET_A>/` だけをソースにすると、B 側に **移行元バケット名のフォルダが 1 段**付くことがある。
-
----
-
-### 2. IAM（例・組織標準に置き換える）
-
-バケット間コピーを **別のサービスアカウント**で行う場合は、その SA に A の読み取り・B の書き込みを付与する。オペレータのユーザーアカウントで実行する場合は、**同一アカウント**に両バケットで権限が足りているか事前に確認する。
-
----
-
-### 3. 検証
-
-- 主要プレフィックスのオブジェクト数・サンプルパスを目視する
-- 代表ファイルについて、クライアントからの取得が **403 等にならないか**（ルール・認証・パスの一致）を確認する
-
----
-
-### 4. 片付け
-
-- 移行専用で広げた権限の縮小
-- 一時バケットやプレフィックスのライフサイクル
 
 ---
 
 ## 事前確認チェックリスト
 
-- [ ] A / B の **実バケット名**・リージョンを特定した
-- [ ] 実行アカウント（または SA）が **A・B 両方のバケット**に必要な権限を持つ（B は **削除**を含む）
-- [ ] **コピー前に B の削除対象**が正しいバケットであることを確認した
-- [ ] コピー後の **オブジェクトキー**が `storagePaths` の想定と一致する（階層ずれなし・ソースは `/*`）
-- [ ] B に **`storage.rules`** をデプロイする手順・タイミングが決まっている
-- [ ] アプリ・バックエンドの **バケット参照**（環境変数等）を B に向ける方針が決まっている
-- [ ] Firestore 等に **フル URL** が残っていないか確認し、残る場合は **更新方針**がある
-- [ ] **カットオーバー**（書き込み停止の要否、Firestore 移行との順序）を決めた
+- [ ] [Firestore 移行](./firestoreデータ移行手順_手動.md) の §7 **0004 メール削除**まで **完了済み**
+- [ ] A / B の **実バケット名**を Console で確認した（`BUCKET_A` / `BUCKET_B` に実値を設定）
+- [ ] 実行アカウントが A で **読み取り**、B で **削除・書き込み**できる
+- [ ] **削除対象が B のバケットのみ**であることを再確認（本番 A を消さない）
+- [ ] コピー後、`communities/` `partners/` `users/` が B バケット直下にある
+- [ ] B に **`storage.rules`** をデプロイする手順が決まっている
+- [ ] Storage 完了後に [Firestore 手順 §9 検証](./firestoreデータ移行手順_手動.md#9-検証) へ進む
+- [ ] Facebook 外部 URL が残る場合は **0042**（本手順 §5）の実行を検討
 
 ---
 
 ## 注意事項
 
 - **B の全削除は復元できない**。消す前にバケット名を再確認し、必要なら退避やスナップショット方針を決める
-- 大容量では転送に時間がかかり、**操作課金・ネットワークコスト**に注意する。可能なら **同一リージョン**間のコピーを検討する
-- **VPC Service Controls** や組織制約で端末からの `gsutil` / `gcloud storage` が使えない場合は、組織手順（GCP 上 VM、Transfer Service 等）に従う
+- **本番（A）のデータを個人 sandbox（B）へコピーする**作業である。誤プロジェクトへの削除を防ぐため、各段階で `gcloud config list` を確認する
+- 大容量では転送に時間がかかり、**操作課金・ネットワークコスト**に注意する
+- **VPC Service Controls** や組織制約で端末からの `gsutil` / `gcloud storage` が使えない場合は、組織手順（GCP 上 VM、Storage Transfer Service 等）に従う
 - **Cursor 等のエージェントが `gcloud` を実行する場合**、実行環境が `~/.config/gcloud` へ書き込めないと失敗することがある。本手順は**エンジニアのローカル端末**での実行を想定する
