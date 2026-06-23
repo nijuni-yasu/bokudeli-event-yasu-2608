@@ -7,6 +7,13 @@ description: GitHub イシューを作成する。作成時に必ず projects �
 
 Shokujii プロジェクトのイシューを、projects・Status・milestone を正しく紐づけて作成する。
 
+## 委譲元
+
+- ユーザーがイシュー作成を明示依頼したとき
+- [git-commit-message](../git-commit-message/SKILL.md) の [issue-resolution full](../git-commit-message/references/issue-resolution.md#full-フロー) で該当 Issue が見つからず、ユーザーが作成に同意したとき
+
+委譲時は commit-message 側で diff から下書き済みのタイトル・本文があればそれを流用する。
+
 ## 前提
 
 - gh CLI がインストール済みであること
@@ -18,17 +25,18 @@ Shokujii プロジェクトのイシューを、projects・Status・milestone �
 
 ## 固定値
 
-| 項目 | 値 |
-|:-----|:---|
-| project owner | `nijuniinc` |
-| project タイトル | `shokujii-all-task`（必ず付与する） |
-| project Status | `Todo`（新規イシューの初期ステータス） |
-| リポジトリ | `nijuniinc/bokudeli-event-new` |
+| 項目             | 値                                     |
+| :--------------- | :------------------------------------- |
+| project owner    | `nijuniinc`                            |
+| project タイトル | `shokujii-all-task`（必ず付与する）    |
+| project Status   | `Todo`（新規イシューの初期ステータス） |
+| リポジトリ       | `nijuniinc/bokudeli-event-new`         |
 
 ## 手順
 
 1. **イシューのタイトル・本文を用意する**
    - 会話の文脈や対応中の作業から AI が下書きする
+   - git-commit-message から委譲された場合は、issue-resolution で提示済みの下書きを優先する
    - タイトルは [/git-commit-message](../git-commit-message/SKILL.md) のタグ運用に揃える（例: `[functions] stripeWebhook の 504 対策`）
      - 使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
      - ルートの package.json 等、タグに該当しないモノレポ横断設定は接頭辞なし（commit-message スキル参照）
@@ -59,11 +67,11 @@ Shokujii プロジェクトのイシューを、projects・Status・milestone �
 
    例:
 
-   | 最新タグ | production 先頭 | 採用 minor | マイルストーン |
-   |:---------|:------------------|:-----------|:---------------|
-   | `v2.9.0` | `2.9.0` | `2.9` | `v2.10` |
-   | `v2.8.1` | `2.9.0` | `2.9`（production が新しい） | `v2.10` |
-   | `v2.8.1` | （取得不可） | `2.8` | `v2.9` |
+   | 最新タグ | production 先頭 | 採用 minor                   | マイルストーン |
+   | :------- | :-------------- | :--------------------------- | :------------- |
+   | `v2.9.0` | `2.9.0`         | `2.9`                        | `v2.10`        |
+   | `v2.8.1` | `2.9.0`         | `2.9`（production が新しい） | `v2.10`        |
+   | `v2.8.1` | （取得不可）    | `2.8`                        | `v2.9`         |
 
 3. **マイルストーンの存在を確認する**（**open** のみ対象）
 

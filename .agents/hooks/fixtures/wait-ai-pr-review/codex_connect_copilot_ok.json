@@ -1,0 +1,14 @@
+[
+  {
+    "reviewer": "codex",
+    "created_at": "2026-06-23T06:02:00Z",
+    "kind": "issue",
+    "body": "To use Codex here, create a Codex account and connect to github."
+  },
+  {
+    "reviewer": "copilot",
+    "created_at": "2026-06-23T06:04:00Z",
+    "kind": "review",
+    "body": "## Pull request overview\n\nLooks good with one nit."
+  }
+]

@@ -622,6 +622,7 @@ export default {
       title: 'Client Application Error',
       description: '予期しないエラーが発生しました',
     },
+    app_update_reload: '更新を反映しています…',
   },
   maintenance: {
     title: 'メンテナンス中',

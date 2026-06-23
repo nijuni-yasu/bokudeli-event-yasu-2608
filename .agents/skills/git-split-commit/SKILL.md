@@ -1,20 +1,20 @@
 ---
 name: git-split-commit
-description: 変更差分を論理単位で分割コミット案を検討する。各コミットのメッセージは git-commit-message のフォーマットに従う。「分割コミットして」「分割コミットを検討して」「コミットを分けて」と依頼された時に使用する。[common][doc][ai]については、必ず独立したコミットとする。
+description: 変更差分を論理単位で分割コミット案を検討する。各コミットのメッセージは git-commit-message に委譲する。「分割コミットして」「分割コミットを検討して」「コミットを分けて」と依頼された時に使用する。[common][doc][ai]については、必ず独立したコミットとする。
 ---
 
 # 分割コミット
 
-変更差分について、分割コミットを検討する。コミットメッセージは git-commit-message スキルに従って検討する。分割コミットのみ依頼されても git-commit-message が呼び出されないため、本スキル内でコミットメッセージ生成を含む。[common][doc][ai]については、必ず独立したコミットとする。
+変更差分について、分割コミットを検討する。メッセージは [git-commit-message](../git-commit-message/SKILL.md) に委譲する。[common][doc][ai] については、必ず独立したコミットとする。
 
-fixup / squash 依頼で「新規コミットが複数必要」と判断された場合、**git-fixup** または **git-squash** から本スキルが呼ばれる。委譲時の流れは次のとおり。
+git-commit-workflow / git-fixup / git-squash から「新規コミットが複数必要」と判断された場合、本スキルが呼ばれる。委譲時の流れ:
 
 1. 本スキルで分割案とコミットメッセージを出力する（手順 4 まで。ここではコミットしない）
 2. ユーザーが分割案を承認する
-3. AI が承認された案どおりに B/C をコミットする（実行は別途依頼を受けて行う）
-4. 残りが fixup / squash 向き（分類 A）なら、呼び出し元の fixup / squash の再実行をユーザーに促す
+3. AI が承認された案どおりに B/C をコミットする
+4. 残りが A 向きなら、呼び出し元の fixup / squash / workflow を再開する
 
-対象の変更には、ステージング済みの変更のみの場合、ステージングされていない変更のみの場合、両方がある場合がある。
+対象の変更には、ステージング済みの変更のみ、未ステージのみ、両方がある場合がある。
 
 ## 手順
 
@@ -27,10 +27,9 @@ git diff --cached
 git branch --show-current
 ```
 
-ステージング済み・未ステージの両方を取得する。ブランチ名から Issue 番号を特定する。
-
 2. 分割案を検討する
    - 責務ごとに論理単位で分割する
+   - 分類 B の詳細は [classification.md](../git-commit-workflow/references/classification.md) も参照
    - 以下の変更はそれぞれ独立した単独コミットにする。コミット順序を守る
 
    **コミット順序**
@@ -68,74 +67,32 @@ git branch --show-current
    - common のスキーマ変更が他パッケージに影響する場合、common を先にコミットする
 
 3. 各コミットのメッセージを生成する
-   - git-commit-message スキルのフォーマットに従う（**タグを付けない場合**も git-commit-message の「タグを付けない場合」を参照）
-   - タイトル: 原則 `[タグ] #イシュー番号 変更内容`。ルート package.json 等タグが不要なときは `#イシュー番号 変更内容` のみでもよい
-   - 本文: 目的・背景、ファイルごとの箇条書き、技術的補足
-   - バッククォート・丸括弧・ダブルクォートは使用しない
-   - 詳細に複数行で記述する
+
+   分割案の **コミットごと** に次を行う。
+   1. `git restore --staged .` で全解除
+   2. 当該コミットの対象ファイルのみ stage する
+   3. [git-commit-message](../git-commit-message/SKILL.md) を呼ぶ（内部で [issue-resolution full](../git-commit-message/references/issue-resolution.md#full-フロー) が走る。**コミットごとに Issue 番号が異なってよい**
+   4. 再度 `git restore --staged .` する（検討のみのためコミットしない）
+
+   メッセージフォーマットの正本は git-commit-message のみ。本スキルにフォーマット節を書かない。
 
 4. 分割案とコミットメッセージを出力する
 
 ※ このスキルは分割案とコミットメッセージの検討・出力までとする。実際のコミット実行は別途 AI に依頼する
 
-## コミットメッセージフォーマット
-
-### タイトル
-
-```
-[タグ] #イシュー番号 変更内容を端的に表す日本語タイトル
-```
-
-タグは変更したディレクトリに対応するものを選ぶ。複数可。
-使用可能なタグ: [user] [partner] [base] [common] [functions] [doc] [ci] [terraform] [firebase] [ai]
-
-git-commit-message スキルの「タグを付けない場合」と同様、ルート package.json 等ではタグを付けない。
-
-### 本文
-
-- 変更の目的・背景を1〜2文で説明する
-- 追加・変更・削除したファイルごとに内容を箇条書きで記述する
-- 技術的な判断や注意点があれば補足する
-- 日本語で記述する。タイトルは1行に収める。本文は変更の規模に応じて詳細度を調整する
-
-詳細に記述する場合、以下も含めてよい：
-
-- 影響範囲（どの画面・機能・API に影響するか）
-- 破壊的変更やマイグレーションの有無
-- 関連 Issue / PR
-- レビューで確認してほしい観点
-
 ## 出力形式
 
-### コミット1: [doc] #XXXX ドキュメント更新の説明
+### コミット1: （git-commit-message が生成したタイトル）
 
-（本文）
+（git-commit-message が生成した本文）
 
 対象ファイル: documents/...
 
-### コミット2: [ai] #XXXX AI 向け設定の説明
+### コミット2: （タイトル）
 
 （本文）
 
-対象ファイル: .agents/skills/git-commit-message/SKILL.md, AGENTS.md
-
-### コミット3: [ci] #XXXX ワークフロー更新の説明
-
-（本文）
-
-対象ファイル: .github/workflows/pr-verify.yml
-
-### コミット4: [common] #XXXX スキーマ変更の説明
-
-（本文）
-
-対象ファイル: common/src/...
-
-### コミット5: [user] #XXXX 機能追加の説明
-
-（本文）
-
-対象ファイル: user/src/...
+対象ファイル: .agents/skills/...
 
 ## 出力例
 
@@ -150,30 +107,7 @@ git-commit-message スキルの「タグを付けない場合」と同様、ル�
 
 対象ファイル: documents/01_マネタイズと決済/04_有料チケット.md
 
-### コミット2: [ai] #1800 コミットメッセージスキルに ci と firebase タグを追加
-
-スキルと Git ルールの一貫性のため、[ci] [terraform] [firebase] タグの扱いを追加し、[ai] を AI 指示ファイル専用に再定義した。
-
-変更詳細:
-- .agents/skills/git-commit-message/SKILL.md
-  - タグ定義と判定ルールを追記
-- AGENTS.md
-  - 使用可能なタグに [ci] [terraform] [firebase] を追加
-
-対象ファイル: .agents/skills/git-split-commit/SKILL.md, AGENTS.md
-
-### コミット3: [common] #1800 Event スキーマに status フィールドを追加
-
-イベントの公開状態を管理するため、Event スキーマに status フィールドを追加した。
-
-変更詳細:
-- common/src/schemas/Event.ts
-  - status フィールドを追加。draft または published
-  - zod スキーマを更新
-
-対象ファイル: common/src/schemas/Event.ts
-
-### コミット4: [user] #1800 イベント詳細画面に公開状態を表示
+### コミット2: [user] #1800 イベント詳細画面に公開状態を表示
 
 Event の status に応じて表示を切り替えるようにした。
 
@@ -187,20 +121,15 @@ Event の status に応じて表示を切り替えるようにした。
 ## 制約
 
 - [doc] は documents/ 内の更新のみ。最初のコミットとする
-- [ai] は .cursor / .agents / .claude / CLAUDE.md / AGENTS.md / .github/copilot-instructions.md 等の変更に使う
-- [ci] は .github/workflows/、[terraform] は terraform/、[firebase] は Firebase 設定・ルール・インデックスに使う
-- [common] のスキーマ変更は必ず単独コミット
-- コミットメッセージは git-commit-message スキルに準拠する。タグ省略可のケースも含む
-- バッククォート・丸括弧・ダブルクォートは使用しない
+- [ai] / [ci] / [terraform] / [firebase] / [common] の単独コミット規則を守る
+- メッセージは git-commit-message に委譲する
 
 ---
 
 ## コミット完了後の提案
 
-分割コミットの実行がすべて正常に完了し、working tree が clean になったら、次をユーザーに提案する（勝手に実行しない）:
+分割コミットの実行がすべて正常に完了し、working tree が clean になったら:
 
 > コミットが完了しました。`/git-reflect-after-commit` で origin への PR 反映と sandbox デプロイをまとめて実行しますか？
 
-- ユーザーが同意したら `git-reflect-after-commit` スキルを実行する
-- 「PR だけ」「sandbox だけ」と言われたら実行範囲を絞る
 - 未コミット変更が残っている・コミット失敗時・分割案の実行前は提案しない
