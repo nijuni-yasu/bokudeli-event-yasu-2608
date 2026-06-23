@@ -11,6 +11,7 @@ import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import FriendCard from '@shokujii/base/components/FriendCard.vue'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
+import { useUserOrderHistoryByUserId } from '@shokujii/base/stores/userOrderHistoryList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
@@ -96,7 +97,26 @@ const isInvalidProfile = computed(() => exists.value === false || (user.value !=
 const isProfileLoading = computed(() => profileUserId !== '' && exists.value === null)
 
 const userEventListStore = useUserEventListByUserId(profileUserId)
-const { events: userEvents, totalCount: userEventsTotalCount, orderStateByEventId } = storeToRefs(userEventListStore)
+const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
+
+const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId)
+const {
+  events: orderHistoryEvents,
+  orderStateByEventId: orderHistoryStateByEventId,
+  hasMore: orderHistoryHasMore,
+  initialLoaded: isOrderHistoryLoaded,
+} = storeToRefs(userOrderHistoryStore)
+
+watch(
+  () => [profileUserId, isOwner.value, exists.value, user.value?.is_deleted] as const,
+  ([pid, owner, ex, deleted]) => {
+    if (pid === '' || !owner) return
+    if (ex === null) return
+    if (ex === false || deleted === true) return
+    userOrderHistoryStore.reload()
+  },
+  { immediate: true },
+)
 
 const resolveFriendSortFromQuery = (rawSort: unknown): UserFriendsSortBy => {
   const sort = String(rawSort ?? '')
@@ -327,7 +347,7 @@ const cancel = async (orderIds: string[], communityId: string, eventId: string) 
       event_id: eventId,
       order_ids: orderIds,
     })
-    await userEventListStore.reloadOrdersForEvent(eventId)
+    await userOrderHistoryStore.reloadOrdersForEvent(eventId)
 
     cancelDialogEventId.value = null
 
@@ -353,11 +373,13 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
 
 /** 注文完了で遷移したとき・既存 Pinia ストアが古い一覧のままになるのを防ぐ */
 watch(
-  () => [route.query.eventId, route.query.communityAccount] as const,
-  ([eventId, communityAccount]) => {
+  () => [route.query.eventId, route.query.communityAccount, isOwner.value] as const,
+  ([eventId, communityAccount, owner]) => {
     if (profileUserId === '') return
+    if (!owner) return
     if (eventId != null && communityAccount != null) {
       userEventListStore.reload()
+      userOrderHistoryStore.reload()
     }
   },
   { immediate: true },
@@ -414,10 +436,25 @@ const previewFoods = computed(() => previewData.value?.previews.foods ?? [])
 /** フードタブ: 次ページがなく空のときだけ空表示（RC-53/54） */
 const showFoodsTabEmpty = computed(() => !foodLoading.value && pagedFoods.value.length === 0 && !foodHasMore.value)
 
+/** 注文履歴タブ: 追読み余地なしかつ可視 0 件のときだけ空表示（RC-7） */
+const showOrdersTabEmpty = computed(
+  () => isOrderHistoryLoaded.value && orderHistoryEvents.value.length === 0 && !orderHistoryHasMore.value,
+)
+
 setupAutoLoadWhenEmpty([pagedFoods, foodHasMore, foodLoading, tabs], {
   shouldLoad: () =>
     tabs.value === TAB_FOODS && pagedFoods.value.length === 0 && foodHasMore.value && !foodLoading.value,
   load: () => userFoodsStore.next(),
+})
+
+setupAutoLoadWhenEmpty([orderHistoryEvents, orderHistoryHasMore, isOrderHistoryLoaded, tabs], {
+  shouldLoad: () =>
+    tabs.value === TAB_ORDERS &&
+    isOwner.value &&
+    orderHistoryEvents.value.length === 0 &&
+    orderHistoryHasMore.value &&
+    isOrderHistoryLoaded.value,
+  load: () => userOrderHistoryStore.next(),
 })
 
 watch(
@@ -1340,17 +1377,17 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         </v-window-item>
 
         <v-window-item v-if="isOwner" :value="TAB_ORDERS">
-          <div v-if="isUserEventsLoaded && userEvents.length === 0" class="text-body-1 text-medium-emphasis pa-4">
+          <div v-if="showOrdersTabEmpty" class="text-body-1 text-medium-emphasis pa-4">
             {{ $t('user_profile.empty.orders') }}
           </div>
           <v-row>
-            <v-col v-for="event in userEvents" :key="`order_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
+            <v-col v-for="event in orderHistoryEvents" :key="`order_${event.event_id}`" sm="12" md="6" lg="4" cols="12">
               <div class="event-card">
                 <UserEventCard
                   v-model:cancel-dialog-event-id="cancelDialogEventId"
-                  :orders="orderStateByEventId[event.event_id]?.orders ?? []"
-                  :orders-loading="orderStateByEventId[event.event_id]?.loading ?? false"
-                  :orders-error="orderStateByEventId[event.event_id]?.error != null"
+                  :orders="orderHistoryStateByEventId[event.event_id]?.orders ?? []"
+                  :orders-loading="orderHistoryStateByEventId[event.event_id]?.loading ?? false"
+                  :orders-error="orderHistoryStateByEventId[event.event_id]?.error != null"
                   :event="event"
                   :isOwner="isOwner"
                   :hide-private-scope-chip="true"
@@ -1360,7 +1397,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   "
                   @downloadInvoice="downloadReceipt"
                   @cancel="(orderIds: string[]) => cancel(orderIds, event.community_id, event.event_id)"
-                  @retry-orders="(eid: string) => userEventListStore.reloadOrdersForEvent(eid)"
+                  @retry-orders="(eid: string) => userOrderHistoryStore.reloadOrdersForEvent(eid)"
                 />
 
                 <div
@@ -1375,9 +1412,9 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
           <v-row class="justify-center">
             <v-col cols="auto">
               <IncrementalLoader
-                :loaded-count="userEvents.length"
-                :total-count="userEventsTotalCount ?? Number.MAX_SAFE_INTEGER"
-                @load="userEventListStore.next()"
+                :loaded-count="orderHistoryEvents.length"
+                :total-count="orderHistoryHasMore ? Number.MAX_SAFE_INTEGER : orderHistoryEvents.length"
+                @load="userOrderHistoryStore.next()"
               />
             </v-col>
           </v-row>

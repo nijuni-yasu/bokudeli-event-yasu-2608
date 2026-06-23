@@ -5,12 +5,13 @@
 - [05_EventOrder→EventMemberOrder.md](./05_EventOrder→EventMemberOrder.md) のデータ構造変更に伴い、マイページの注文一覧表示と領収書機能の変更を整理する
 - **注文一覧の表示単位**: order ドキュメント単位（現行）→ **イベント単位** に変更する
 - **領収書の発行単位**: order ドキュメント単位（現行）→ **stripe_id 単位** に変更する
-- **データ取得（改訂）**: 一覧の主軸は **`collectionGroup('member_orders')` ではなく、Event ドキュメントの `members` にユーザーが含まれる参加イベント**。参加イベントは **`totalCount` / `loadedCount` 方式のページネーション**（`eventList.ts` 等に倣い、スクロールで次ページ）。各イベントの **`member_orders` は遅延取得**し、**表示ページ内は並列取得**、取得完了後に注文内容を表示する。クライアント側の集約は **`base/src/stores/userEventList.ts`（新規）** で行う。
+- **データ取得（改訂）**: **イベントタブ**は Event ドキュメントの `members` にユーザーが含まれる参加イベントを **`base/src/stores/userEventList.ts`** で取得する。**注文履歴タブ**は **`collectionGroup('member_orders')` を `user_id` で検索**し、`in_cart` を除外した注文からイベントを列挙する **`base/src/stores/userOrderHistoryList.ts`** を用いる（全キャンセルで `members` から外れても履歴として表示）。各イベントの注文詳細は **`member_orders` サブコレクションを遅延取得**し、表示ページ内は並列取得する。
 
 ### `members` と注文一覧の前提（仕様）
 
-- **カートのみ（`in_cart`）のユーザーは Event の `members` 配列には含まれない**。したがって「参加しているが `member_orders` が無い／`in_cart` だけのイベントが一覧に載る」ケースは、**`members` 起点の一覧では想定しなくてよい**。
-- **キャンセル等で参加者から外れたユーザーは `members` から外れる**。一覧対象外となるため、**その状態を注文一覧で別途考慮する必要はない**（現行の非表示挙動と整合する）。
+- **カートのみ（`in_cart`）のユーザーは Event の `members` 配列には含まれない**。したがって「参加しているが `member_orders` が無い／`in_cart` だけのイベントが一覧に載る」ケースは、**`members` 起点のイベントタブでは想定しなくてよい**。
+- **イベントタブ**: キャンセル等で参加者から外れたユーザーは `members` から外れるため、**参加イベント一覧には載らない**（現行維持）。
+- **注文履歴タブ**: `member_orders` collectionGroup 起点のため、**全キャンセルで `members` から外れてもイベントカードを表示**する。全注文が `canceled` のときは `UserEventCard` で「キャンセル済み」と表示する（v2.9 以前の挙動に合わせる）。
 - カード内の注文表示では、サブコレクション上に **`in_cart` ドキュメントが存在し得る場合は従来どおり一覧用に除外**する（`status !== 'in_cart'`）。
 
 
