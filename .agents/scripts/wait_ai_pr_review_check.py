@@ -15,6 +15,7 @@ from typing import Any
 
 MIN_WAIT_SEC = 180
 QUIET_SEC = 120
+CODEX_TERMINAL_QUIET_SEC = 300
 CODEX_GIVEUP_SEC = 720
 TIMEOUT_SEC = 1200
 POLL_SEC = 60
@@ -31,7 +32,7 @@ class Event:
     created_at: datetime
     kind: str  # issue | inline | review
     body: str
-    category: str  # substantive | limit | connect | request | boilerplate
+    category: str  # substantive | no_issues | limit | connect | request | boilerplate
 
 
 def parse_ts(value: str) -> datetime:
@@ -47,7 +48,7 @@ def classify_reviewer(login: str) -> str | None:
     lower = (login or "").lower()
     if "copilot" in lower:
         return "copilot"
-    if "codex" in lower or "chatgpt-codex" in lower:
+    if "codex" in lower:
         return "codex"
     return None
 
@@ -72,14 +73,14 @@ def classify_body(body: str) -> str:
     ):
         return "boilerplate"
     if "Didn't find any major issues" in text and len(text) < 700:
-        return "boilerplate"
+        return "no_issues"
     return "substantive"
 
 
 def gh_api(path: str, *, paginate: bool = False) -> list[dict[str, Any]]:
     cmd = ["gh", "api", path]
     if paginate:
-        cmd.insert(2, "--paginate")
+        cmd.extend(["--paginate", "--slurp"])
     proc = subprocess.run(
         cmd,
         capture_output=True,
@@ -88,7 +89,14 @@ def gh_api(path: str, *, paginate: bool = False) -> list[dict[str, Any]]:
     )
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or f"gh api failed: {path}")
-    data = json.loads(proc.stdout or "[]")
+    try:
+        data = json.loads(proc.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"gh api returned invalid JSON: {path}") from exc
+    if paginate:
+        if not isinstance(data, list):
+            raise RuntimeError(f"gh api paginate expected list: {path}")
+        return [item for page in data for item in page]
     if isinstance(data, dict):
         return [data]
     return data
@@ -163,13 +171,17 @@ def load_fixture_events(path: Path) -> list[Event]:
 
 def reviewer_summary(events: list[Event], reviewer: str) -> dict[str, Any]:
     subs = [e for e in events if e.reviewer == reviewer and e.category == "substantive"]
+    no_issues = [e for e in events if e.reviewer == reviewer and e.category == "no_issues"]
     limits = [e for e in events if e.reviewer == reviewer and e.category == "limit"]
     connects = [e for e in events if e.reviewer == reviewer and e.category == "connect"]
+    reviewed = len(subs) > 0 or len(no_issues) > 0
     return {
         "substantive": len(subs) > 0,
         "substantive_count": len(subs),
-        "limit_only": len(limits) > 0 and len(subs) == 0,
-        "connect_only": len(connects) > 0 and len(subs) == 0,
+        "no_issues": len(no_issues) > 0,
+        "reviewed": reviewed,
+        "limit_only": len(limits) > 0 and not reviewed,
+        "connect_only": len(connects) > 0 and not reviewed,
         "last_event_at": max((e.created_at for e in events if e.reviewer == reviewer), default=None),
     }
 
@@ -199,7 +211,11 @@ def evaluate(
     copilot = reviewer_summary(filtered, "copilot")
     codex = reviewer_summary(filtered, "codex")
 
-    ai_events = [e for e in filtered if e.category in ("substantive", "limit", "connect", "boilerplate")]
+    ai_events = [
+        e
+        for e in filtered
+        if e.category in ("substantive", "no_issues", "limit", "connect", "boilerplate")
+    ]
     last_ai_at = max((e.created_at for e in ai_events), default=None)
     quiet_ok = (
         last_ai_at is None
@@ -208,15 +224,28 @@ def evaluate(
 
     codex_events = [e for e in filtered if e.reviewer == "codex"]
     codex_silent = len(codex_events) == 0
+    codex_has_terminal = any(
+        e.reviewer == "codex" and e.category in ("limit", "connect") for e in filtered
+    )
+    codex_terminal_events = [
+        e for e in filtered if e.reviewer == "codex" and e.category in ("limit", "connect")
+    ]
+    last_codex_terminal_at = max((e.created_at for e in codex_terminal_events), default=None)
+    codex_terminal_quiet_ok = (
+        not codex_has_terminal
+        or last_codex_terminal_at is None
+        or int((now - last_codex_terminal_at).total_seconds()) >= CODEX_TERMINAL_QUIET_SEC
+    )
 
-    codex_done = codex["substantive"] or (
-        elapsed_sec >= CODEX_GIVEUP_SEC
-        and (codex["limit_only"] or codex["connect_only"] or codex_silent)
+    codex_done = (
+        codex["reviewed"]
+        or (codex_has_terminal and quiet_ok and codex_terminal_quiet_ok)
+        or (codex_silent and elapsed_sec >= CODEX_GIVEUP_SEC)
     )
 
     complete = (
         elapsed_sec >= MIN_WAIT_SEC
-        and copilot["substantive"]
+        and copilot["reviewed"]
         and codex_done
         and quiet_ok
     )
@@ -230,17 +259,23 @@ def evaluate(
         "copilot": {
             "substantive": copilot["substantive"],
             "substantive_count": copilot["substantive_count"],
+            "no_issues": copilot["no_issues"],
+            "reviewed": copilot["reviewed"],
         },
         "codex_silent": codex_silent,
+        "codex_has_terminal": codex_has_terminal,
         "codex": {
             "substantive": codex["substantive"],
             "substantive_count": codex["substantive_count"],
+            "no_issues": codex["no_issues"],
+            "reviewed": codex["reviewed"],
             "limit_only": codex["limit_only"],
             "connect_only": codex["connect_only"],
             "silent": codex_silent,
             "skipped": partial and codex_done,
         },
         "quiet_ok": quiet_ok,
+        "codex_terminal_quiet_ok": codex_terminal_quiet_ok,
         "min_wait_ok": elapsed_sec >= MIN_WAIT_SEC,
         "timeout_ok": elapsed_sec >= TIMEOUT_SEC,
     }
@@ -264,13 +299,19 @@ def print_shell_constants() -> None:
     print(f"TIMEOUT_SEC={TIMEOUT_SEC}")
 
 
+def elapsed_since_request(since_str: str) -> int:
+    since = parse_ts(since_str)
+    return int((datetime.now(timezone.utc) - since).total_seconds())
+
+
 def main() -> int:
     if "--print-shell-constants" in sys.argv:
         print_shell_constants()
         return 0
 
     parser = argparse.ArgumentParser(description="AI PR review completion check")
-    parser.add_argument("--pr", type=int, required=True)
+    parser.add_argument("--print-elapsed-sec", action="store_true")
+    parser.add_argument("--pr", type=int)
     parser.add_argument("--since", required=True, help="ISO8601 UTC review request time")
     parser.add_argument("--owner", default=DEFAULT_OWNER)
     parser.add_argument("--repo", default=DEFAULT_REPO)
@@ -289,6 +330,13 @@ def main() -> int:
         help="Override elapsed seconds (tests)",
     )
     args = parser.parse_args()
+
+    if args.print_elapsed_sec:
+        print(elapsed_since_request(args.since))
+        return 0
+
+    if args.pr is None:
+        parser.error("--pr is required unless --print-elapsed-sec is set")
 
     since = parse_ts(args.since)
 

@@ -6,10 +6,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 STATE_DIR="${REPO_ROOT}/.agents/state"
 STATE_FILE="${STATE_DIR}/pr-review-watch.json"
+WAKE_FILE="${STATE_DIR}/pr-review-pending-wake.json"
 CHECK="${SCRIPT_DIR}/wait-ai-pr-review-check.sh"
+CHECK_PY="${SCRIPT_DIR}/wait_ai_pr_review_check.py"
 STATE="${SCRIPT_DIR}/wait_ai_pr_review_state.py"
+WAKE="${SCRIPT_DIR}/wait_ai_pr_review_wake.py"
 
-eval "$(python3 "${SCRIPT_DIR}/wait_ai_pr_review_check.py" --print-shell-constants)"
+eval "$(python3 "${CHECK_PY}" --print-shell-constants)"
 
 usage() {
   echo "Usage: $0 --pr NUM --since ISO8601 [--owner OWNER] [--repo REPO]" >&2
@@ -55,6 +58,14 @@ fi
 
 mkdir -p "${STATE_DIR}"
 
+elapsed_since_request() {
+  python3 "${CHECK_PY}" --since "${SINCE}" --print-elapsed-sec
+}
+
+partial_from_output() {
+  python3 -c 'import json,sys; print("true" if json.loads(sys.argv[1]).get("partial") else "false")' "$1"
+}
+
 stop_existing_watchers() {
   if [[ ! -f "${STATE_FILE}" ]]; then
     echo "[]" >"${STATE_FILE}"
@@ -71,7 +82,8 @@ register_pid() {
     --since "${SINCE}" \
     --owner "${OWNER}" \
     --repo "${REPO}" \
-    --pid "${pid}"
+    --pid "${pid}" \
+    --command "wait-ai-pr-review-watch.sh"
 }
 
 unregister_pid() {
@@ -87,16 +99,37 @@ cleanup() {
   unregister_pid "$$" "stopped"
 }
 
+emit_evaluate_wake() {
+  local partial="$1"
+  python3 "${WAKE}" write \
+    --wake-file "${WAKE_FILE}" \
+    --pr "${PR}" \
+    --since "${SINCE}" \
+    --owner "${OWNER}" \
+    --repo "${REPO}" \
+    --partial "${partial}"
+  echo "AGENT_LOOP_WAKE_pr_review {\"prompt\":\"/review-comments-evaluate\",\"pr\":${PR},\"partial\":${partial}}"
+}
+
+finish_with_output() {
+  local output="$1"
+  local code="$2"
+  local final_status="$3"
+  local partial
+  partial=$(partial_from_output "${output}")
+  unregister_pid "$$" "${final_status}"
+  trap - EXIT INT TERM
+  emit_evaluate_wake "${partial}"
+  exit 0
+}
+
 stop_existing_watchers
 trap cleanup EXIT INT TERM
 
 register_pid "$$"
 
-START_EPOCH=$(date -u +%s)
-
 while true; do
-  NOW_EPOCH=$(date -u +%s)
-  ELAPSED=$((NOW_EPOCH - START_EPOCH))
+  ELAPSED=$(elapsed_since_request)
 
   if [[ "${ELAPSED}" -lt "${MIN_WAIT_SEC}" ]]; then
     sleep "${POLL_SEC}"
@@ -104,24 +137,26 @@ while true; do
   fi
 
   set +e
-  OUTPUT="$("${CHECK}" --pr "${PR}" --since "${SINCE}" --owner "${OWNER}" --repo "${REPO}" --elapsed-sec "${ELAPSED}")"
+  OUTPUT="$("${CHECK}" --pr "${PR}" --since "${SINCE}" --owner "${OWNER}" --repo "${REPO}")"
   CODE=$?
   set -e
 
-  PARTIAL=false
   if [[ "${CODE}" -eq 0 || "${CODE}" -eq 2 ]]; then
-    PARTIAL=$(python3 -c 'import json,sys; print("true" if json.loads(sys.argv[1]).get("partial") else "false")' "${OUTPUT}")
-    unregister_pid "$$" "$([[ "${CODE}" -eq 0 ]] && echo complete || echo timeout)"
-    trap - EXIT INT TERM
-    echo "AGENT_LOOP_WAKE_pr_review {\"prompt\":\"/review-comments-evaluate\",\"pr\":${PR},\"partial\":${PARTIAL}}"
-    exit 0
+    finish_with_output "${OUTPUT}" "${CODE}" "$([[ "${CODE}" -eq 0 ]] && echo complete || echo timeout)"
   fi
 
   if [[ "${ELAPSED}" -ge "${TIMEOUT_SEC}" ]]; then
-    unregister_pid "$$" "timeout"
-    trap - EXIT INT TERM
-    echo "AGENT_LOOP_WAKE_pr_review {\"prompt\":\"/review-comments-evaluate\",\"pr\":${PR},\"partial\":true}"
-    exit 0
+    set +e
+    OUTPUT="$("${CHECK}" --pr "${PR}" --since "${SINCE}" --owner "${OWNER}" --repo "${REPO}" --elapsed-sec "${TIMEOUT_SEC}")"
+    CODE=$?
+    set -e
+    if [[ "${CODE}" -eq 3 ]]; then
+      unregister_pid "$$" "error"
+      trap - EXIT INT TERM
+      echo "wait-ai-pr-review-watch: check error: ${OUTPUT}" >&2
+      exit 1
+    fi
+    finish_with_output "${OUTPUT}" 2 "timeout"
   fi
 
   if [[ "${CODE}" -eq 3 ]]; then

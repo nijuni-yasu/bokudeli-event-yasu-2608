@@ -63,6 +63,7 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
     それでも失敗した場合はリモートが他で更新された可能性を伝え、`-f` で強制するか確認する。
 
 - [`git-create-pull-request`](../git-create-pull-request/SKILL.md) スキルの**全手順**（手順 11 のレビュー依頼コメント + **手順 12 の wait 委譲**）まで実行する。
+- 手順 12 委譲時は **wait-ai-pr-review 手順 3** の Shell 要件（`block_until_ms: 0` + `notify_on_output: ^AGENT_LOOP_WAKE_pr_review`）を満たすこと（reflect 側で watcher を二重起動しないが、Shell 要件は省略しない）。
 
 ### 5. B) sandbox へ push してデプロイ
 
@@ -80,7 +81,12 @@ PR 用は **origin**（手順 4）、動作確認用は **`branch.<branch>.sandb
 ### 6. 結果報告
 
 - PR の URL（A 実行時）
-- AI レビュー監視（A 実行時・手順 12）: PR 番号、`REVIEW_REQUEST_SINCE`、バックグラウンド watcher 起動済み、typical 5〜8 分 / 最大 20 分、Codex limits 時は partial evaluate あり得る旨。オプトアウト時はスキップした旨
+- AI レビュー監視（A 実行時・手順 12）:
+  - PR 番号、`REVIEW_REQUEST_SINCE`、watcher 起動済み（Shell に `notify_on_output` 付与済みであること）
+  - Copilot 実質レビュー typical: 依頼後 4〜5 分
+  - evaluate 開始目安: Copilot 完了後 quiet 2 分 + Codex 条件（limits/connect は quiet 後、無応答は最大 12 分）。**Copilot 完了 ≠ evaluate 開始**
+  - 全体タイムアウト 20 分、Codex limits 時は partial evaluate あり得る旨
+  - オプトアウト時はスキップした旨
 - sandbox の remote 名・OWNER/REPO・ref、発火したワークフロー（B 実行時・`github-actions-deploy` 手順 9 の内容を含む）
 - sandbox デプロイの各ワークフローの **成否・run URL**、失敗時は **エラー分類と原因サマリ**（B 実行時）
 - `branch.<branch>.sandboxRemote` を新規保存した場合はその旨（B 実行時）

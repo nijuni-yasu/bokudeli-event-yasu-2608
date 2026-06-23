@@ -23,8 +23,13 @@ CASES: list[tuple[str, str, int, int | None]] = [
     ("copilot_only.json", "complete copilot + codex silent", 0, 800),
     ("both_reviewers.json", "complete both reviewers", 0, 820),
     ("codex_connect_copilot_ok.json", "complete copilot + codex skipped", 0, 800),
+    ("codex_limit_copilot_ok.json", "complete copilot + codex limit after quiet", 0, 680),
+    ("codex_limit_copilot_ok.json", "waiting before terminal quiet", 1, 620),
+    ("codex_limit_copilot_ok.json", "complete after terminal quiet", 0, 660),
+    ("codex_connect_copilot_ok.json", "waiting before terminal quiet", 1, 700),
     ("request_only.json", "waiting request ignored", 1, 300),
     ("request_only.json", "timeout no substantive", 2, 1300),
+    ("codex_no_issues.json", "complete copilot + codex no issues", 0, 820),
 ]
 
 
@@ -58,6 +63,16 @@ def main() -> int:
             ok = (
                 payload.get("partial") is True
                 and payload.get("codex_silent") is True
+            )
+        if (
+            fixture == "codex_no_issues.json"
+            and label == "complete copilot + codex no issues"
+            and code == 0
+        ):
+            ok = (
+                payload.get("partial") is True
+                and payload.get("codex", {}).get("no_issues") is True
+                and payload.get("codex", {}).get("reviewed") is True
             )
         status = "OK" if ok else "NG"
         print(f"[{status}] {fixture} / {label}: expected={expected_code} actual={code} status={payload.get('status')}")

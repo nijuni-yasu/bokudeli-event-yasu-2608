@@ -66,6 +66,8 @@ gh pr comment --body '@copilot @codex review 日本語でお願いします。Fi
     - 手順 9 が未実行（ユーザー未確認で PR 未作成・未更新）の場合は手順 12 も実行しない
     - 会話に「評価待ちなし」「evaluate しない」「review wait しない」があれば手順 12 をスキップ
     - `git-reflect-after-commit` から委譲された場合も本手順 12 で wait を起動する（reflect 側で二重起動しない）
+    - wait 委譲時は **wait-ai-pr-review 手順 3 の Shell 要件**（`block_until_ms: 0` + `notify_on_output`）を省略しない
+    - wait 委譲後、sentinel 受信時に [`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) **auto モード**が起動し、`documents/レビューコメント/pr-<番号>.md` 追記まで自動完走する
 
 ---
 
