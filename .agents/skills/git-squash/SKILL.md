@@ -41,7 +41,7 @@ git log --oneline --name-only
 - **C** → **git-commit-message** → `git commit`
 - **D** → 停止してユーザー確認
 - **A0** → **git-commit-workflow** の A0 amend 手順
-- **A1** → **git-fixup** 手順6以降（A1-fast OK 時。ユーザーが squash 明示の場合は A2 として本スキルを続行）
+- **A1** → **git-fixup** 手順5以降（A1-fast OK 時・A1 判定は手順3済み。ユーザーが squash 明示の場合は A2 として本スキルを続行）
 - **A2** → 本スキル手順4以降
 
 4. ステージングをいったん全解除する
