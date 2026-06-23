@@ -14,11 +14,14 @@ export const useUserFoodsStore = (targetUserId: string, pageSize: number = 12) =
     const loading = ref(false)
     const error = ref<unknown>(null)
     const cursor = ref<string | null>(null)
+    /** reload 後に完了した古い fetch の結果を push しない（認証確定時の二重 reload 対策） */
+    let loadGeneration = 0
 
     const next = () => {
       if (targetUserId === '') return
       if (paginationExecutor.totalTaskLength > 0 || !hasMore.value) return
 
+      const generation = loadGeneration
       paginationExecutor.addTask(async () => {
         loading.value = true
         error.value = null
@@ -28,19 +31,24 @@ export const useUserFoodsStore = (targetUserId: string, pageSize: number = 12) =
             limit: pageSize,
             cursor: cursor.value,
           })
+          if (generation !== loadGeneration) return
           const data = response.data
           foods.value.push(...data.foods)
           hasMore.value = data.has_more
           cursor.value = data.next_cursor
         } catch (err: unknown) {
+          if (generation !== loadGeneration) return
           error.value = err
         } finally {
-          loading.value = false
+          if (generation === loadGeneration) {
+            loading.value = false
+          }
         }
       })
     }
 
     const reload = () => {
+      loadGeneration += 1
       paginationExecutor.clear()
       foods.value = []
       hasMore.value = true
