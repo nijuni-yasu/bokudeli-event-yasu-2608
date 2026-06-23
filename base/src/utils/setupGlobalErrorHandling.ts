@@ -10,6 +10,7 @@ import {
   isStaleChunkRetryExhausted,
   tryReloadForStaleChunk,
 } from '@shokujii/base/utils/reloadForStaleChunk.js'
+import { isChunkLoadError } from '@shokujii/base/utils/isChunkLoadError.js'
 
 type SetupGlobalErrorHandlingOptions = Pick<ClientErrorContext, 'app'>
 
@@ -35,7 +36,9 @@ export function setupGlobalErrorHandling(app: App, router: Router, options: Setu
       clearStaleChunkReloadFlag()
     })
     .catch((err) => {
-      console.error('router.isReady failed:', err)
+      if (!isChunkLoadError(err)) {
+        console.error('router.isReady failed:', err)
+      }
     })
 
   router.onError((error) => {

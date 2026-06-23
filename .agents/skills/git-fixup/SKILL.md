@@ -44,7 +44,7 @@ git log --oneline --name-only
 - **C** → **git-commit-message** → `git commit`
 - **D** → 停止してユーザー確認
 - **A0** → **git-commit-workflow** の A0 amend 手順
-- **A2** → **git-squash** 手順5以降（メッセージ乖離）
+- **A2** → **git-squash** 手順4以降（メッセージ乖離）
 - **A1 のみ** → 本スキル手順4以降
 
 4. A1 判定（A1 のみ、手順5の前）
@@ -54,7 +54,7 @@ git log --oneline --name-only
 - **A1-fast OK** → 手順5以降（`gh issue view`・意味チェックは **スキップ**）
 - **A1-full 昇格** → [coherence-full](../git-commit-message/references/issue-resolution.md#coherence-full-フローa1-full-昇格時) を実行
   - OK → 手順5以降
-  - NG（メッセージ更新必要）→ **git-squash** 手順5以降（理由1行）
+  - NG（メッセージ更新必要）→ **git-squash** 手順4以降（理由1行）
   - NG（別 Issue）→ **B/C** へ委譲
 
 5. ステージングをいったん全解除する
