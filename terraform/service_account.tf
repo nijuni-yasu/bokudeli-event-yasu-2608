@@ -193,3 +193,17 @@ resource "google_project_iam_member" "gs_project_accounts_pubsub_publisher" {
     google_project_service.default,
   ]
 }
+
+# Storage Security Rules の firestore.get() / firestore.exists() 用（#772 storage.rules）
+# Console「サービス間のルールのプロビジョニング」と同等
+# 公式: https://firebase.google.com/docs/rules/manage-deploy#manage_permissions_for_cross-service
+resource "google_project_iam_member" "firebasestorage_firestore_cross_service_rules" {
+  project = var.project
+  role    = "roles/firebaserules.firestoreServiceAgent"
+  member  = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firebasestorage.iam.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
+    google_firebase_storage_bucket.default,
+  ]
+}

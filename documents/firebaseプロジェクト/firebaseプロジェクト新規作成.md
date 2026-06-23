@@ -121,6 +121,8 @@ terraform plan
 terraform apply
 ```
 
+`terraform apply` により、Storage Security Rules（#772 `storage.rules`）の `firestore.get()` に必要な **Firebase Rules Firestore Service Agent**（`roles/firebaserules.firestoreServiceAgent`）が Firebasestorage サービスアカウントへ付与されます。Console の「サービス間のルールのプロビジョニング → 権限を付与」と同等です。**`storage.rules` を初デプロイする前に apply 済みであること**を推奨します（[terraform/README.md](../../terraform/README.md) の「Storage ルールと IAM の順序」参照）。
+
 > **エラーが出た場合（quota project 未設定）**  
 > 以下のエラーが出た場合は、quota project を設定してください。
 >

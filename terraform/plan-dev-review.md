@@ -125,6 +125,7 @@ Plan: 58 to add, 3 to change, 0 to destroy.
 
 - `google_project_service.*`（API 有効化。既存プロジェクトでは実質 no-op 相当）
 - IAM 各種（`importExportAdmin`, `storage.admin`, `firebase-deploy` 権限等）
+- **`firebasestorage_firestore_cross_service_rules`**: 未付与なら Add 1。Console 手動付与済み（本番 v2.10 障害対応後）なら import 後 no-op
 - 新規 Secret 5 件（Slack 4 + LINE 1）+ 既存 7 件含む計 12 件への `firebase-deploy` 用 `secretmanager.admin` IAM
 
 ---
@@ -147,6 +148,7 @@ Plan: 58 to add, 3 to change, 0 to destroy.
 | `google_firebase_hosting_site.user` | `projects/bokudeli-event-dev/sites/bokudeli-event-dev` |
 | `google_firebase_hosting_site.admin` | `projects/bokudeli-event-dev/sites/bokudeli-event-dev-admin` |
 | `google_firebase_web_app.default` | `projects/bokudeli-event-dev/webApps/1:602744855875:web:b9713923c7f8fa4deaa3f6` |
+| `google_project_iam_member.firebasestorage_firestore_cross_service_rules` | `bokudeli-event-dev roles/firebaserules.firestoreServiceAgent serviceAccount:service-602744855875@gcp-sa-firebasestorage.iam.gserviceaccount.com`（v2.10 Storage 403 対応後・手動付与を import） |
 
 ---
 

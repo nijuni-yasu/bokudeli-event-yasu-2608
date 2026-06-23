@@ -113,6 +113,12 @@ terraform import google_firebase_hosting_site.user "projects/PROJECT/sites/PROJE
 terraform import google_firebase_hosting_site.admin "projects/PROJECT/sites/PROJECT-admin"
 # Web App: Console → プロジェクトの設定 → アプリ から App ID を確認
 # terraform import google_firebase_web_app.default "projects/PROJECT/webApps/APP_ID"
+
+# Storage クロスサービス Rules IAM（#772 storage.rules。Console「権限を付与」と同等）
+# 手動付与済みの場合のみ import。未付与なら apply で Add される
+NUM=$(gcloud projects describe PROJECT --format='value(projectNumber)')
+terraform import google_project_iam_member.firebasestorage_firestore_cross_service_rules \
+  "PROJECT roles/firebaserules.firestoreServiceAgent serviceAccount:service-${NUM}@gcp-sa-firebasestorage.iam.gserviceaccount.com"
 ```
 
 import は **Terraform state のみ**更新する。本番サービスは停止しない。
@@ -126,6 +132,13 @@ import は **Terraform state のみ**更新する。本番サービスは停止�
 | 新規 Secret | **5 件**の Add のみ（`SLACK_*` 4 + `LINE_CHANNEL_ACCESS_TOKEN` 1。既存 7 件が Add なら import 漏れ） |
 | Hosting / Web App | create のままなら import 漏れ（409 リスク） |
 | `firestore_backups` | `storage_class` 差分なし（[firestore_backup.tf](firestore_backup.tf) は `ARCHIVE` 固定。本番手動作成バケットと一致） |
+| `firebasestorage_firestore_cross_service_rules` | 未付与 env では **Add 1**。Console 手動付与済みなら **import 後 no-op**（[service_account.tf](service_account.tf)） |
+
+### Storage ルール（`storage.rules`）と IAM の順序
+
+#772 以降の `storage.rules` は `firestore.get()` を使う。**`terraform apply` で Storage クロスサービス IAM を付与してから** `Deploy storage`（または `firebase deploy --only storage`）すること。新規 sandbox では Console の「問題を修正」は不要（Terraform が [Firebase Rules Firestore Service Agent](https://firebase.google.com/docs/rules/manage-deploy#manage_permissions_for_cross-service) を付与する）。
+
+既存プロジェクトで Console から手動付与済みの場合は import 一覧の `firebasestorage_firestore_cross_service_rules` を実行してから plan する。
 
 ### 環境別の進捗（参考）
 
@@ -152,6 +165,7 @@ terraform apply
 | GCS バケット | `gs://<PROJECT_ID>-firestore-backups`（`backupFirestore` の export 先。`storage_class = ARCHIVE`） |
 | バケット IAM | Firestore サービスエージェントに `roles/storage.admin` |
 | プロジェクト IAM | Compute / App Engine デフォルト SA に `roles/datastore.importExportAdmin` |
+| プロジェクト IAM | Firebasestorage SA に `roles/firebaserules.firestoreServiceAgent`（Storage Rules の `firestore.get()` 用） |
 
 バケットのロケーションは Firestore と同じ `asia-northeast1`（`var.region`）です。
 
@@ -164,7 +178,7 @@ terraform import google_storage_bucket.firestore_backups YOUR_PROJECT_ID-firesto
 terraform apply
 ```
 
-IAM リソース（Firestore SA・compute / appspot の `importExportAdmin`）は未設定なら apply で追加されます。
+IAM リソース（Firestore SA・compute / appspot の `roles/datastore.importExportAdmin`、Firebasestorage の `roles/firebaserules.firestoreServiceAgent`）は未設定なら apply で追加されます。`roles/firebaserules.firestoreServiceAgent` を Console で手動付与済みの場合は import 一覧を参照。
 
 ### 動作確認（backupFirestore）
 
