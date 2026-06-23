@@ -14,7 +14,7 @@ FIXTURES = REPO_ROOT / ".agents/hooks/fixtures/wait-ai-pr-review"
 SINCE = "2026-06-23T05:55:00Z"
 
 CASES: list[tuple[str, str, int, int | None]] = [
-    ("codex_limit_only.json", "waiting before min wait", 1, 200),
+    ("codex_limit_only.json", "waiting no copilot", 1, 200),
     ("codex_limit_only.json", "waiting before codex giveup", 1, 600),
     ("codex_limit_only.json", "waiting without copilot", 1, 800),
     ("codex_limit_only.json", "timeout without copilot", 2, 1300),
