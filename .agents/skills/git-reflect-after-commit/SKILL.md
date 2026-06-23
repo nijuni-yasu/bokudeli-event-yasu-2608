@@ -1,6 +1,6 @@
 ---
 name: git-reflect-after-commit
-description: コミット完了後の次ステップ。origin へ push して PR 作成/更新（git-create-pull-request 全手順・手順 12 の AI レビュー待ち含む）し、ブランチに紐づく sandbox へ push・デプロイ（github-actions-deploy へ委譲）する。git-commit-message / git-split-commit / git-fixup / git-squash でコミットが完了した直後、エージェントはユーザーへ「/git-reflect-after-commit を実行しますか？」と提案する。ユーザーが「して」「お願い」「反映して」等と答えたら本スキルを実行する。「push して PR 作って sandbox にもデプロイ」「コミット後の反映」でも使用。本番 nijuniinc/bokudeli-event-new へはデプロイ発火しない。
+description: コミット完了後の次ステップ。origin へ push して PR 作成/更新（git-create-pull-request 全手順・手順 12 の AI レビュー待ち含む）し、ブランチに紐づく sandbox へ push・デプロイ（github-actions-deploy へ委譲）する。git-commit-workflow / git-commit-message / git-split-commit / git-fixup / git-squash でコミットが完了した直後、エージェントはユーザーへ「/git-reflect-after-commit を実行しますか？」と提案する。ユーザーが「して」「お願い」「反映して」等と答えたら本スキルを実行する。「push して PR 作って sandbox にもデプロイ」「コミット後の反映」でも使用。本番 nijuniinc/bokudeli-event-new へはデプロイ発火しない。
 ---
 
 # コミット後の反映（PR + sandbox デプロイ）
@@ -20,7 +20,7 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
 ### 1. 前提確認
 
 - `git status` で未コミット変更が無いか確認する（このスキルはコミット完了が前提）。
-- 直前が git-fixup / git-squash の場合は rebase により履歴が書き換わっていることがある。
+- 直前が git-commit-workflow / git-fixup / git-squash の場合は rebase により履歴が書き換わっていることがある。
   upstream（本番 origin）へは fixup/squash 側で push していないことが多い（本番 upstream ブロックのため）。
 
 ### 2. 実行範囲の決定
@@ -47,8 +47,7 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
   - **許可**: 上記以外の作業ブランチ（feature / `release/*` / `sync/*` / `hotfix/*` 等）。ブランチ名への部分一致では判定しない（`sync/main-to-development` は許可）
   - 拒否条件に該当する場合は **push せず中断**し、保護 ref への直 push は人間のリリース手順に従う旨をユーザーに伝える
 - **push の方法**（`ref` はリモート上のブランチ名。通常は現在ブランチ名）:
-
-  - **履歴書き換え時**（git-fixup / git-squash の直後、または会話文脈で rebase 済みと分かる場合）:
+  - **履歴書き換え時**（git-commit-workflow / git-fixup / git-squash の直後、または会話文脈で rebase 済みと分かる場合）:
 
     ```bash
     git push --force-with-lease origin HEAD:<ref>
@@ -67,7 +66,7 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
 
 ### 5. B) sandbox へ push してデプロイ
 
-git-fixup / git-squash の upstream push（`branch.<branch>.remote`）とは **別系統**である。
+git-commit-workflow / git-fixup / git-squash の upstream push（`branch.<branch>.remote`）とは **別系統**である。
 PR 用は **origin**（手順 4）、動作確認用は **`branch.<branch>.sandboxRemote`**（`github-actions-deploy` が解決・記憶）とする。
 
 **`github-actions-deploy` スキルの手順 0〜9** に委譲する（sandboxRemote 解決・push・本番ブロック・発火・監視・報告を含む）。

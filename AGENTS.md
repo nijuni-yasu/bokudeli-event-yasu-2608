@@ -8,24 +8,25 @@ AIエージェント向けプロジェクトガイド。
 
 **プロジェクトオリジナル**のスキル。以下のタスクを依頼された場合、対応するスキルファイルを読み込んで手順に従うこと。
 
-| タスク                          | スキル                       |
-| :------------------------------ | :--------------------------- |
-| コミットメッセージ生成          | `/git-commit-message`        |
-| GitHub イシュー作成             | `/git-create-issue`          |
-| PR 本文生成                     | `/git-create-pull-request`   |
-| AI レビュー完了待ち → evaluate  | `/wait-ai-pr-review`         |
-| コードレビュー                  | `/shokujii-code-review`      |
+| タスク                                                                       | スキル                       |
+| :--------------------------------------------------------------------------- | :--------------------------- |
+| コミット整理（fixup / squash / 分割 / 新規 / amend の自律判断）              | `/git-commit-workflow`       |
+| コミットメッセージ生成                                                       | `/git-commit-message`        |
+| GitHub イシュー作成                                                          | `/git-create-issue`          |
+| PR 本文生成                                                                  | `/git-create-pull-request`   |
+| AI レビュー完了待ち → evaluate                                               | `/wait-ai-pr-review`         |
+| コードレビュー                                                               | `/shokujii-code-review`      |
 | lint・format・型・test チェック（PR verify 相当。format はローカル自動修正） | `/lint-and-format`           |
-| fixup（追修正の統合。新規・分割向きは split-commit / commit-message へ） | `/git-fixup`                 |
-| squash（統合＋メッセージ更新。新規・分割向きは split-commit / commit-message へ） | `/git-squash`                |
-| レビューコメント検討            | `/review-comments-evaluate`  |
-| レビューコメント返信            | `/review-comments-reply`     |
-| コードレビュードキュメント更新  | `/review-doc-update`         |
-| 分割コミット                    | `/git-split-commit`          |
-| スキル提案                      | `/skill-propose`             |
-| sandbox へ push + Actions デプロイ | `/github-actions-deploy`     |
-| sandbox WIP デプロイ            | `/github-sandbox-wip-deploy` |
-| コミット後の反映（PR + sandbox）    | `/git-reflect-after-commit`  |
+| fixup（追修正の統合・メッセージ維持。明示依頼時）                            | `/git-fixup`                 |
+| squash（統合＋メッセージ更新。明示依頼時）                                   | `/git-squash`                |
+| レビューコメント検討                                                         | `/review-comments-evaluate`  |
+| レビューコメント返信                                                         | `/review-comments-reply`     |
+| コードレビュードキュメント更新                                               | `/review-doc-update`         |
+| 分割コミット（明示依頼時）                                                   | `/git-split-commit`          |
+| スキル提案                                                                   | `/skill-propose`             |
+| sandbox へ push + Actions デプロイ                                           | `/github-actions-deploy`     |
+| sandbox WIP デプロイ                                                         | `/github-sandbox-wip-deploy` |
+| コミット後の反映（PR + sandbox）                                             | `/git-reflect-after-commit`  |
 
 ## 推奨スキル（技術スタック別）
 
