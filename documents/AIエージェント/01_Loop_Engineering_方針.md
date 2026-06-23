@@ -527,9 +527,9 @@ build → lint-and-format       →    PR CI: lint/format/test/型（段階 0）
 | 意図抽出ゲート | grill-me |
 | Checker | shokujii-code-review, review-comments-evaluate |
 | ローカル検証 | lint-and-format（Stop フック） |
-| issue / branch / commit | git-create-issue, git-commit-message, git-split-commit |
+| issue / branch / commit | git-create-issue, git-commit-workflow, git-commit-message, git-split-commit |
 | push / PR / deploy | git-reflect-after-commit（→ git-create-pull-request, github-actions-deploy） |
-| 修正統合 | git-fixup, git-squash |
+| 修正統合 | git-commit-workflow（→ git-fixup, git-squash） |
 | Memory | STATE.md（新規）＋ GitHub Projects |
 
 ### 18.6 このワークフロー特有のリスク
