@@ -1,6 +1,6 @@
 ---
 name: git-fixup
-description: 変更を過去の適切なコミットに fixup + autosquash で統合する。コミットメッセージはそのまま。分類は git-commit-workflow/references/classification.md に従う。メッセージ乖離時は git-squash へ委譲。fixup 向きでない差分は git-split-commit または git-commit-message へ委譲。「fixupして」「フィックスアップして」と明示依頼された時に使用。吸収先はいま作業中のブランチ上のコミットに限定する。
+description: 変更を過去の適切なコミットに fixup + autosquash で統合する。コミットメッセージはそのまま。A1-fast（軽量判定）で通し、昇格時のみ A2 squash へ委譲。分類は git-commit-workflow/references/classification.md に従う。fixup 向きでない差分は git-split-commit または git-commit-message へ委譲。「fixupして」「フィックスアップして」と明示依頼された時に使用。吸収先はいま作業中のブランチ上のコミットに限定する。
 ---
 
 # fixup
@@ -47,12 +47,15 @@ git log --oneline --name-only
 - **A2** → **git-squash** 手順5以降（メッセージ乖離）
 - **A1 のみ** → 本スキル手順4以降
 
-4. メッセージ整合性チェック（A1 のみ、手順5の前に必須）
+4. A1 判定（A1 のみ、手順5の前）
 
-[classification.md のメッセージ整合性チェック](../git-commit-workflow/references/classification.md#メッセージ整合性チェック必須) を吸収先ごとに実施する。
+[classification.md の A1 判定](../git-commit-workflow/references/classification.md#a1-判定fixup-向きか) に従う。
 
-- **整合** → 手順5以降を続行
-- **乖離** → fixup を **中止**し **git-squash** 手順5以降へ委譲（理由を1行示す）
+- **A1-fast OK** → 手順5以降（`gh issue view`・意味チェックは **スキップ**）
+- **A1-full 昇格** → [coherence-full](../git-commit-message/references/issue-resolution.md#coherence-full-フローa1-full-昇格時) を実行
+  - OK → 手順5以降
+  - NG（メッセージ更新必要）→ **git-squash** 手順5以降（理由1行）
+  - NG（別 Issue）→ **B/C** へ委譲
 
 5. ステージングをいったん全解除する
 
@@ -124,7 +127,7 @@ git push --force-with-lease "$remote_name" "HEAD:$remote_branch"
 - rebase 前に `git status` でワーキングツリーがクリーンであることを確認する
 - push には `--force-with-lease` を使う
 - main / development ブランチでは実行しない
-- メッセージ乖離がある吸収先には fixup せず **git-squash** を使う
+- A1-fast 合格後はメッセージを変更しない。A1-full / A2 で乖離が判明した吸収先には fixup しない
 
 ---
 

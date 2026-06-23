@@ -71,7 +71,7 @@ git branch --show-current
    分割案の **コミットごと** に次を行う。
    1. `git restore --staged .` で全解除
    2. 当該コミットの対象ファイルのみ stage する
-   3. [git-commit-message](../git-commit-message/SKILL.md) を **通常コンテキスト**で呼び、メッセージを取得する
+   3. [git-commit-message](../git-commit-message/SKILL.md) を呼ぶ（内部で [issue-resolution full](../git-commit-message/references/issue-resolution.md#full-フロー) が走る。**コミットごとに Issue 番号が異なってよい**
    4. 再度 `git restore --staged .` する（検討のみのためコミットしない）
 
    メッセージフォーマットの正本は git-commit-message のみ。本スキルにフォーマット節を書かない。

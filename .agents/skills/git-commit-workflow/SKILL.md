@@ -30,9 +30,9 @@ description: 未コミット変更を分析し fixup / squash / 分割 / 新規 
 2. 分類を実行する
    - 事前コマンドを実行する
    - 各未コミット変更を B / C / D / A0 / A1 / A2 に分類する
-   - A 系は **メッセージ整合性チェックを必須** とする（classification.md 参照。A1 は Issue coherence 含む）
+   - A 系は [classification.md A1 判定](references/classification.md#a1-判定fixup-向きか) に従う（**デフォルト A1-fast**。昇格時のみ coherence-full）
 
-3. 分類・メッセージ整合性・イシュー解決・実行計画をユーザーに提示する（classification.md の出力フォーマット）
+3. 分類・A1 判定・実行計画をユーザーに提示する（classification.md の出力フォーマット）
 
 4. **D がある場合は停止**し、ユーザー確認を待つ
 
@@ -45,7 +45,7 @@ description: 未コミット変更を分析し fixup / squash / 分割 / 新規 
    | B    | [git-split-commit](../git-split-commit/SKILL.md) 手順1〜4で分割案提示 → ユーザー承認後コミット実行（各コミットで issue-resolution full） |
    | C    | 対象を stage → [git-commit-message](../git-commit-message/SKILL.md)（issue-resolution full）→ `git commit`                               |
    | A0   | 下記「A0 amend」                                                                                                                         |
-   | A1   | [git-fixup](../git-fixup/SKILL.md) **手順5以降**（Issue coherence 済み。手順3は本スキルで済みとしてスキップ可）                          |
+   | A1   | [git-fixup](../git-fixup/SKILL.md) **手順5以降**（A1-fast 済み。full は classification 側で完了していること）                          |
    | A2   | [git-squash](../git-squash/SKILL.md) **手順4以降**（issue-resolution full 含む。手順3は本スキルで済みとしてスキップ可）                  |
 
 6. working tree が clean になったら [git-reflect-after-commit](../git-reflect-after-commit/SKILL.md) を提案する（勝手に実行しない）
@@ -56,9 +56,9 @@ description: 未コミット変更を分析し fixup / squash / 分割 / 新規 
 
 1. `git restore --staged .` でいったん全解除する
 2. 対象差分を stage する
-3. メッセージ整合性を確認する
-   - 整合: `git commit --amend --no-edit`
-   - 乖離: [git-commit-message](../git-commit-message/SKILL.md) を **amend + full** コンテキストで呼び（issue-resolution 含む）、`git commit --amend -F` または `-m` で反映
+3. A1-fast 相当の確認（HEAD タイトル + パス整合）
+   - OK: `git commit --amend --no-edit`
+   - 乖離（明白）または A1-full 昇格: [git-commit-message](../git-commit-message/SKILL.md) を **amend + full** コンテキストで呼び（issue-resolution 含む）、`git commit --amend -F` または `-m` で反映
 4. `git log -1 --oneline` で確認する
 
 ## 制約

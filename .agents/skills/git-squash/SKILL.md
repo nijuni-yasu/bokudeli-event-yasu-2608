@@ -41,7 +41,7 @@ git log --oneline --name-only
 - **C** → **git-commit-message** → `git commit`
 - **D** → 停止してユーザー確認
 - **A0** → **git-commit-workflow** の A0 amend 手順
-- **A1** → **git-fixup** 手順6以降（メッセージ整合。ユーザーが squash 明示の場合は A2 として本スキルを続行）
+- **A1** → **git-fixup** 手順6以降（A1-fast OK 時。ユーザーが squash 明示の場合は A2 として本スキルを続行）
 - **A2** → 本スキル手順4以降
 
 4. ステージングをいったん全解除する
@@ -66,7 +66,7 @@ git commit --squash <吸収先ハッシュ>
 
 6. 統合後のコミットメッセージを生成する（A2 の吸収先のみ）
 
-各吸収先について、[git-commit-message](../git-commit-message/SKILL.md) を **squash 書き換えコンテキスト**で呼ぶ。
+各吸収先について、[git-commit-message](../git-commit-message/SKILL.md) を **squash 書き換え + full** コンテキストで呼ぶ。commit-message 内で [issue-resolution full](../git-commit-message/references/issue-resolution.md#full-フロー) が走り、必要なら `#` を修正してからメッセージを生成する。
 
 **参照する情報**
 
