@@ -1,6 +1,6 @@
 ---
 name: git-create-pull-request
-description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。gh pr create または gh pr edit のあと、**必ず**固定文の gh pr comment で @copilot @codex にレビュー依頼する。マージ前の整理、force push や squash 後の更新など PR 全般。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
+description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。gh pr create または gh pr edit のあと、**必ず**固定文の gh pr comment で @copilot @codex にレビュー依頼する。手順 12 で wait-ai-pr-review へ委譲し、AI レビュー完了後に review-comments-evaluate を自動起動する（デフォルト ON）。マージ前の整理、force push や squash 後の更新など PR 全般。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
 ---
 
 # PR 本文生成
@@ -44,6 +44,15 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 
 11.（必須）手順 9 で `gh pr create` または `gh pr edit` が完了したら、ユーザーへの確認や同意を待たず、**即座に**次の**固定文**のレビュー依頼コメントを `gh pr comment` で送る。手順 10 の有無に関わらず省略しない
 
+    **手順 11 直前**に基準時刻と PR 番号を記録する（手順 12 の wait 委譲で使う）:
+
+    ```bash
+    REVIEW_REQUEST_SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    PR_NUM=$(gh pr view --json number -q .number)
+    ```
+
+    直前に PR を新規作成した場合で `gh pr view` が失敗するときは、手順 9 で得た PR 番号を `PR_NUM` に使う。
+
     本文は `--body` に渡す（zsh では**シングルクォート**で全体を囲むと @ が安全）。**固定文は次の 1 行のみ**とする（インライン指摘を促すため。Copilot が常に従う保証は製品側次第）:
 
 ```
@@ -51,6 +60,12 @@ gh pr comment --body '@copilot @codex review 日本語でお願いします。Fi
 ```
 
     直前に PR を紐づいていないブランチの場合は `gh pr comment 番号` の形で番号を明示する。手順 9 を挟むたびに同文が積み上がるのは意図どおり。コメントを減らしたい運用に変える場合はスキル更新で別定義する
+
+12.（デフォルト ON）手順 11 完了後、[`wait-ai-pr-review`](../wait-ai-pr-review/SKILL.md) へ **`PR_NUM`** と **`REVIEW_REQUEST_SINCE`** を渡して委譲する（バックグラウンド監視開始。完了時に `review-comments-evaluate` 自動起動）
+
+    - 手順 9 が未実行（ユーザー未確認で PR 未作成・未更新）の場合は手順 12 も実行しない
+    - 会話に「評価待ちなし」「evaluate しない」「review wait しない」があれば手順 12 をスキップ
+    - `git-reflect-after-commit` から委譲された場合も本手順 12 で wait を起動する（reflect 側で二重起動しない）
 
 ---
 
@@ -154,6 +169,7 @@ Firestore 変更時・Functions 変更時のチェック項目は該当する場
 - 推定できない箇所は空欄または「要確認」と記述し、手動で補完を促す
 - gh pr create および gh pr edit を実行する場合は、ユーザーに確認を取ってから実行する
 - 手順 9 を実行したときは**手順 11 を即座に実行する**（ユーザーへの確認不要。固定文の `gh pr comment` を省略しない）
+- 手順 11 完了後は**手順 12**で wait を起動する（オプトアウト時を除く）。evaluate 本体は wait スキルが sentinel 受信後に実行する
 
 ## 運用上の推奨
 

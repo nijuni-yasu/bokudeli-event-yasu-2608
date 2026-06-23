@@ -13,6 +13,7 @@ AIエージェント向けプロジェクトガイド。
 | コミットメッセージ生成          | `/git-commit-message`        |
 | GitHub イシュー作成             | `/git-create-issue`          |
 | PR 本文生成                     | `/git-create-pull-request`   |
+| AI レビュー完了待ち → evaluate  | `/wait-ai-pr-review`         |
 | コードレビュー                  | `/shokujii-code-review`      |
 | lint・format・型・test チェック（PR verify 相当。format はローカル自動修正） | `/lint-and-format`           |
 | fixup（追修正の統合。新規・分割向きは split-commit / commit-message へ） | `/git-fixup`                 |

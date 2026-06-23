@@ -1,0 +1,8 @@
+[
+  {
+    "reviewer": "codex",
+    "created_at": "2026-06-23T06:00:00Z",
+    "kind": "issue",
+    "body": "You have reached your Codex usage limits for code reviews."
+  }
+]

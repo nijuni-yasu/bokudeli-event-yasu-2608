@@ -1,6 +1,6 @@
 ---
 name: git-reflect-after-commit
-description: コミット完了後の次ステップ。origin へ push して PR 作成/更新（git-create-pull-request へ委譲）し、ブランチに紐づく sandbox へ push・デプロイ（github-actions-deploy へ委譲）する。git-commit-message / git-split-commit / git-fixup / git-squash でコミットが完了した直後、エージェントはユーザーへ「/git-reflect-after-commit を実行しますか？」と提案する。ユーザーが「して」「お願い」「反映して」等と答えたら本スキルを実行する。「push して PR 作って sandbox にもデプロイ」「コミット後の反映」でも使用。本番 nijuniinc/bokudeli-event-new へはデプロイ発火しない。
+description: コミット完了後の次ステップ。origin へ push して PR 作成/更新（git-create-pull-request 全手順・手順 12 の AI レビュー待ち含む）し、ブランチに紐づく sandbox へ push・デプロイ（github-actions-deploy へ委譲）する。git-commit-message / git-split-commit / git-fixup / git-squash でコミットが完了した直後、エージェントはユーザーへ「/git-reflect-after-commit を実行しますか？」と提案する。ユーザーが「して」「お願い」「反映して」等と答えたら本スキルを実行する。「push して PR 作って sandbox にもデプロイ」「コミット後の反映」でも使用。本番 nijuniinc/bokudeli-event-new へはデプロイ発火しない。
 ---
 
 # コミット後の反映（PR + sandbox デプロイ）
@@ -27,6 +27,8 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
 
 - ユーザー指定が無ければ **A・B の両方**を実行する。
 - 「PR だけ」「sandbox だけ」と指定された場合はその片方に絞る。
+- **AI レビュー待ち → evaluate** は `git-create-pull-request` 手順 12 で **デフォルト ON**（create-pr 内で `wait-ai-pr-review` を起動。本スキルで二重起動しない）。
+- 会話に「評価待ちなし」「evaluate しない」「review wait しない」があれば create-pr 手順 12 もスキップする（手順 4 委譲時に伝播）。
 
 ### 3. lint・format・型・test チェック（PR verify 相当・A・B 両方の push 前に一度だけ実施）
 
@@ -61,8 +63,7 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
     non-fast-forward で reject された場合は `--force-with-lease` で再試行する。
     それでも失敗した場合はリモートが他で更新された可能性を伝え、`-f` で強制するか確認する。
 
-- `git-create-pull-request` スキルの手順に従い PR を作成/更新し、
-  **固定文のレビュー依頼コメント**まで実行する。
+- [`git-create-pull-request`](../git-create-pull-request/SKILL.md) スキルの**全手順**（手順 11 のレビュー依頼コメント + **手順 12 の wait 委譲**）まで実行する。
 
 ### 5. B) sandbox へ push してデプロイ
 
@@ -80,13 +81,15 @@ PR 用は **origin**（手順 4）、動作確認用は **`branch.<branch>.sandb
 ### 6. 結果報告
 
 - PR の URL（A 実行時）
+- AI レビュー監視（A 実行時・手順 12）: PR 番号、`REVIEW_REQUEST_SINCE`、バックグラウンド watcher 起動済み、typical 5〜8 分 / 最大 20 分、Codex limits 時は partial evaluate あり得る旨。オプトアウト時はスキップした旨
 - sandbox の remote 名・OWNER/REPO・ref、発火したワークフロー（B 実行時・`github-actions-deploy` 手順 9 の内容を含む）
 - sandbox デプロイの各ワークフローの **成否・run URL**、失敗時は **エラー分類と原因サマリ**（B 実行時）
 - `branch.<branch>.sandboxRemote` を新規保存した場合はその旨（B 実行時）
 
 ## 注意
 
-- 委譲先（`git-create-pull-request` / `github-actions-deploy` / `lint-and-format`）のルールを上書きしない。
+- 委譲先（`git-create-pull-request` / `wait-ai-pr-review` / `github-actions-deploy` / `lint-and-format`）のルールを上書きしない。
+- AI レビュー wait は **create-pr 手順 12 のみ**から起動する（本スキルで wait を重複起動しない）。
 - origin への push は、履歴書き換え時（fixup/squash 直後等）は **`--force-with-lease`** を使う。
   sandbox への push は **`github-actions-deploy` 手順 3** に委譲する。
 - 本番への **デプロイ発火**は行わない（origin への PR 用 push は許可）。

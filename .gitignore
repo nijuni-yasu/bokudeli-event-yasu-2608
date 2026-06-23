@@ -100,6 +100,7 @@ $RECYCLE.BIN/
 
 # AI
 .serena
+.agents/state/
 
 # ローカル開発用 symlink（絶対パス・開発者ごとに異なる）
 /bokudeli-event-batch
