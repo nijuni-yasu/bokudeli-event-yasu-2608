@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { RecallChatMessageRequestSchema } from '../apis/chat.js'
-import { CHAT_ATTACHMENT_IMAGE_MIME_TYPES, ChatAttachmentSchema, ChatMessage } from './ChatMessage.js'
+import {
+  CHAT_ATTACHMENT_IMAGE_MIME_TYPES,
+  CHAT_ATTACHMENT_MAX_COUNT,
+  ChatAttachmentSchema,
+  ChatMessage,
+} from './ChatMessage.js'
 import { getChatAttachmentMessagePrefix, getChatAttachmentStoragePath } from '../utils/storagePaths.js'
 
 const sampleAttachment = {
@@ -73,6 +78,43 @@ describe('ChatMessage deleted fields', () => {
     })
 
     expect(message.isValidForDatabase()).toBe(true)
+  })
+
+  it('accepts message with up to CHAT_ATTACHMENT_MAX_COUNT attachments', () => {
+    const attachments = Array.from({ length: CHAT_ATTACHMENT_MAX_COUNT }, (_, index) => ({
+      ...sampleAttachment,
+      storage_path: `chat_rooms/room1/msg1/att${index}`,
+      file_name: `photo-${index}.png`,
+    }))
+    const message = new ChatMessage('msg1', {
+      message_type: 'user',
+      sender_user_id: 'user1',
+      created_at: Date.now(),
+      attachments,
+    })
+
+    expect(message.isValidForDatabase()).toBe(true)
+    const firestore = message.toFirestore()
+    if (firestore.message_type === 'user') {
+      expect(firestore.attachments).toHaveLength(CHAT_ATTACHMENT_MAX_COUNT)
+    }
+  })
+
+  it('rejects message exceeding CHAT_ATTACHMENT_MAX_COUNT attachments', () => {
+    const attachments = Array.from({ length: CHAT_ATTACHMENT_MAX_COUNT + 1 }, (_, index) => ({
+      ...sampleAttachment,
+      storage_path: `chat_rooms/room1/msg1/att${index}`,
+      file_name: `photo-${index}.png`,
+    }))
+    expect(
+      () =>
+        new ChatMessage('msg1', {
+          message_type: 'user',
+          sender_user_id: 'user1',
+          created_at: Date.now(),
+          attachments,
+        }),
+    ).toThrow()
   })
 
   it('rejects unsupported attachment mime type', () => {

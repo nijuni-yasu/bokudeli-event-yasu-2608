@@ -12,7 +12,7 @@ export type ChatAttachmentImageMimeType = (typeof CHAT_ATTACHMENT_IMAGE_MIME_TYP
 
 export const CHAT_ATTACHMENT_MAX_BYTE_SIZE = 10 * 1024 * 1024
 
-export const CHAT_ATTACHMENT_MAX_COUNT = 1
+export const CHAT_ATTACHMENT_MAX_COUNT = 12
 
 export const CHAT_SYSTEM_EVENT_MEMBER_JOINED = 'member_joined'
 

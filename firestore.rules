@@ -84,11 +84,11 @@ service cloud.firestore {
         function hasValidChatMessageAttachments() {
             return 'attachments' in request.resource.data
                 && request.resource.data.attachments is list
-                && request.resource.data.attachments.size() == 1;
+                && request.resource.data.attachments.size() >= 1
+                && request.resource.data.attachments.size() <= 12;
         }
-        function isValidChatAttachmentPath(roomId, messageId) {
+        function isValidChatAttachmentEntry(roomId, messageId, attachment) {
             let prefix = 'chat_rooms/' + roomId + '/' + messageId + '/';
-            let attachment = request.resource.data.attachments[0];
             return attachment.storage_path is string
                 && attachment.storage_path.matches('^' + prefix + '.+')
                 && attachment.content_type is string
@@ -101,6 +101,11 @@ service cloud.firestore {
                 && attachment.width > 0
                 && attachment.height is int
                 && attachment.height > 0;
+        }
+        function isValidChatAttachmentPath(roomId, messageId) {
+            return !(false in request.resource.data.attachments.map(
+                a => isValidChatAttachmentEntry(roomId, messageId, a)
+            ));
         }
         match /assets/{asset} {
             allow read: if true
