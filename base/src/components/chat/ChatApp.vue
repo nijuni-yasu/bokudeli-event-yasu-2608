@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import type { RouteLocationRaw } from 'vue-router'
-import { mdiClose, mdiImageOutline, mdiMenu, mdiMessageOutline, mdiSend } from '@mdi/js'
+import { mdiClose, mdiImageOutline, mdiMenu, mdiMessageOutline, mdiPlus, mdiSend } from '@mdi/js'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { useDisplay } from 'vuetify'
 import { useResponsiveLeftSidebar } from '@shokujii/base/composable/useResponsiveSidebar.js'
 import { avatarText } from '@shokujii/base/utils/avatarText.js'
-import { CHAT_ATTACHMENT_MAX_BYTE_SIZE, CHAT_MESSAGE_BODY_MAX_LENGTH } from '@shokujii/common/schemas/ChatMessage.js'
+import {
+  CHAT_ATTACHMENT_MAX_BYTE_SIZE,
+  CHAT_ATTACHMENT_MAX_COUNT,
+  CHAT_MESSAGE_BODY_MAX_LENGTH,
+} from '@shokujii/common/schemas/ChatMessage.js'
 import { isAllowedChatAttachmentMimeType } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
-import { useChatStore } from '@shokujii/base/stores/chat.js'
+import { CHAT_SEND_MESSAGE_ERROR, useChatStore } from '@shokujii/base/stores/chat.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import type { ResolveChatRoomPathFn, ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import ChatLeftSidebarContent from './ChatLeftSidebarContent.vue'
@@ -16,6 +20,12 @@ import ChatLog from './ChatLog.vue'
 
 const MEMBERSHIP_WAIT_TIMEOUT_MS = 10_000
 const CHAT_ATTACHMENT_MAX_SIZE_LABEL = '10MB'
+
+type SelectedImage = {
+  id: string
+  file: File
+  previewUrl: string
+}
 
 const props = defineProps<{
   roomId?: string
@@ -42,20 +52,38 @@ const msg = ref('')
 const isSending = ref(false)
 const isNearBottom = ref(true)
 const chatLogPS = ref<InstanceType<typeof PerfectScrollbar> | null>(null)
-const selectedImageFile = ref<File | null>(null)
-const selectedImagePreviewUrl = ref<string | null>(null)
+const selectedImages = ref<SelectedImage[]>([])
 const imageInputRef = ref<HTMLInputElement | null>(null)
 
 const canSendMessage = computed(() => {
-  return msg.value.trim() !== '' || selectedImageFile.value != null
+  return msg.value.trim() !== '' || selectedImages.value.length > 0
 })
 
-const clearSelectedImage = (): void => {
-  if (selectedImagePreviewUrl.value != null) {
-    URL.revokeObjectURL(selectedImagePreviewUrl.value)
+const canAddMoreImages = computed(() => {
+  return selectedImages.value.length < CHAT_ATTACHMENT_MAX_COUNT
+})
+
+const revokeSelectedImagePreview = (image: SelectedImage): void => {
+  URL.revokeObjectURL(image.previewUrl)
+}
+
+const clearSelectedImages = (): void => {
+  for (const image of selectedImages.value) {
+    revokeSelectedImagePreview(image)
   }
-  selectedImageFile.value = null
-  selectedImagePreviewUrl.value = null
+  selectedImages.value = []
+  if (imageInputRef.value != null) {
+    imageInputRef.value.value = ''
+  }
+}
+
+const removeSelectedImage = (id: string): void => {
+  const index = selectedImages.value.findIndex((image) => image.id === id)
+  if (index === -1) {
+    return
+  }
+  const [removed] = selectedImages.value.splice(index, 1)
+  revokeSelectedImagePreview(removed)
   if (imageInputRef.value != null) {
     imageInputRef.value.value = ''
   }
@@ -73,25 +101,75 @@ const validateImageFile = (file: File): string | null => {
 
 const onImageSelected = (event: Event): void => {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (file == null) {
+  const files = input.files
+  if (files == null || files.length === 0) {
     return
   }
 
-  const validationError = validateImageFile(file)
-  if (validationError != null) {
-    notification.show(validationError, 'warning')
+  const remainingSlots = CHAT_ATTACHMENT_MAX_COUNT - selectedImages.value.length
+  if (remainingSlots <= 0) {
+    notification.show(t('chat.error.attachment_count_limit', { count: CHAT_ATTACHMENT_MAX_COUNT }), 'warning')
     input.value = ''
     return
   }
 
-  clearSelectedImage()
-  selectedImageFile.value = file
-  selectedImagePreviewUrl.value = URL.createObjectURL(file)
+  const filesToAdd = Array.from(files).slice(0, remainingSlots)
+  if (files.length > remainingSlots) {
+    notification.show(t('chat.error.attachment_count_limit', { count: CHAT_ATTACHMENT_MAX_COUNT }), 'warning')
+  }
+
+  for (const file of filesToAdd) {
+    const validationError = validateImageFile(file)
+    if (validationError != null) {
+      notification.show(validationError, 'warning')
+      continue
+    }
+    selectedImages.value.push({
+      id: crypto.randomUUID(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+    })
+  }
+
+  input.value = ''
 }
 
 const openImagePicker = (): void => {
+  if (!canAddMoreImages.value) {
+    notification.show(t('chat.error.attachment_count_limit', { count: CHAT_ATTACHMENT_MAX_COUNT }), 'warning')
+    return
+  }
   imageInputRef.value?.click()
+}
+
+const resolveSendMessageErrorMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return t('chat.error.attachment_upload_failed')
+  }
+  switch (error.message) {
+    case CHAT_SEND_MESSAGE_ERROR.attachment_count_limit:
+      return t('chat.error.attachment_count_limit', { count: CHAT_ATTACHMENT_MAX_COUNT })
+    case CHAT_SEND_MESSAGE_ERROR.attachment_type:
+      return t('chat.error.attachment_type')
+    case CHAT_SEND_MESSAGE_ERROR.attachment_too_large:
+      return t('chat.error.attachment_too_large', { size: CHAT_ATTACHMENT_MAX_SIZE_LABEL })
+    case CHAT_SEND_MESSAGE_ERROR.body_too_long:
+      return t('chat.error.body_too_long', { count: CHAT_MESSAGE_BODY_MAX_LENGTH })
+    default:
+      return t('chat.error.attachment_upload_failed')
+  }
+}
+
+const resolveSendMessageErrorVariant = (error: unknown): 'warning' | 'error' => {
+  if (!(error instanceof Error)) {
+    return 'error'
+  }
+  return error.message === CHAT_SEND_MESSAGE_ERROR.attachment_count_limit ||
+    error.message === CHAT_SEND_MESSAGE_ERROR.attachment_type ||
+    error.message === CHAT_SEND_MESSAGE_ERROR.attachment_too_large ||
+    error.message === CHAT_SEND_MESSAGE_ERROR.body_too_long
+    ? 'warning'
+    : 'error'
 }
 
 const getChatLogScrollEl = (): HTMLElement | null => {
@@ -152,6 +230,8 @@ const openRoom = async (roomId: string) => {
 }
 
 const sendMessage = async () => {
+  if (isSending.value) return
+
   const userId = currentUserId.value
   const roomId = store.activeRoomId
   if (userId === '' || roomId == null) return
@@ -162,13 +242,13 @@ const sendMessage = async () => {
   try {
     await store.sendMessage(roomId, userId, {
       body: msg.value,
-      imageFile: selectedImageFile.value ?? undefined,
+      imageFiles: selectedImages.value.map((image) => image.file),
     })
     msg.value = ''
-    clearSelectedImage()
+    clearSelectedImages()
     scrollToBottomInChatLog()
-  } catch {
-    notification.show(t('chat.error.attachment_upload_failed'), 'error')
+  } catch (error) {
+    notification.show(resolveSendMessageErrorMessage(error), resolveSendMessageErrorVariant(error))
   } finally {
     isSending.value = false
   }
@@ -301,7 +381,7 @@ watch(
 
 onBeforeUnmount(() => {
   clearPendingRoomTimeout()
-  clearSelectedImage()
+  clearSelectedImages()
   store.unsubscribeActiveRoom()
 })
 </script>
@@ -385,6 +465,7 @@ onBeforeUnmount(() => {
           <input
             ref="imageInputRef"
             type="file"
+            multiple
             accept="image/png,image/jpeg,image/gif,image/webp"
             class="d-none"
             :aria-label="t('chat.attach_image')"
@@ -407,28 +488,40 @@ onBeforeUnmount(() => {
               :class="{ 'chat-compose-box--readonly': store.activeRoom.isReadonly }"
             >
               <div
-                v-if="selectedImagePreviewUrl != null"
+                v-if="selectedImages.length > 0"
                 role="group"
                 :aria-label="t('chat.attachment_preview_group')"
                 class="chat-compose-attachments px-3 pt-3 pb-1"
               >
-                <div class="chat-compose-thumb">
-                  <VImg
-                    :src="selectedImagePreviewUrl"
-                    :alt="t('chat.image_preview_alt')"
-                    class="chat-compose-thumb-img rounded"
-                  />
-                  <div v-if="isSending" class="chat-compose-thumb-overlay rounded d-flex align-center justify-center">
-                    <VProgressCircular indeterminate size="24" width="2" color="surface" />
+                <div class="chat-compose-attachments-row">
+                  <div v-for="image in selectedImages" :key="image.id" class="chat-compose-thumb">
+                    <VImg
+                      :src="image.previewUrl"
+                      :alt="t('chat.image_preview_alt')"
+                      class="chat-compose-thumb-img rounded"
+                    />
+                    <div v-if="isSending" class="chat-compose-thumb-overlay rounded d-flex align-center justify-center">
+                      <VProgressCircular indeterminate size="24" width="2" color="surface" />
+                    </div>
+                    <button
+                      type="button"
+                      class="chat-compose-remove"
+                      :aria-label="t('chat.remove_attachment')"
+                      :disabled="isSending"
+                      @click="removeSelectedImage(image.id)"
+                    >
+                      <VIcon :icon="mdiClose" size="14" />
+                    </button>
                   </div>
                   <button
+                    v-if="canAddMoreImages"
                     type="button"
-                    class="chat-compose-remove"
-                    :aria-label="t('chat.remove_attachment')"
+                    class="chat-compose-add-btn rounded d-flex align-center justify-center"
+                    :aria-label="t('chat.attach_image')"
                     :disabled="isSending"
-                    @click="clearSelectedImage"
+                    @click="openImagePicker"
                   >
-                    <VIcon :icon="mdiClose" size="14" />
+                    <VIcon :icon="mdiPlus" size="24" />
                   </button>
                 </div>
               </div>
@@ -532,6 +625,37 @@ onBeforeUnmount(() => {
 
   &--readonly {
     opacity: var(--v-disabled-opacity);
+  }
+}
+
+.chat-compose-attachments-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding-block-end: 2px;
+}
+
+.chat-compose-add-btn {
+  flex-shrink: 0;
+  inline-size: 64px;
+  block-size: 64px;
+  padding: 0;
+  border: 1px dashed rgba(var(--v-theme-on-surface), 0.24);
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  color: rgba(var(--v-theme-on-surface), 0.6);
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+@media (min-width: 600px) {
+  .chat-compose-add-btn {
+    inline-size: 72px;
+    block-size: 72px;
   }
 }
 

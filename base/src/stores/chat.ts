@@ -24,6 +24,7 @@ import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import {
   ChatMessage,
   CHAT_ATTACHMENT_MAX_BYTE_SIZE,
+  CHAT_ATTACHMENT_MAX_COUNT,
   CHAT_MESSAGE_BODY_MAX_LENGTH,
   type ChatAttachment,
   type ChatAttachmentImageMimeType,
@@ -32,6 +33,15 @@ import { ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
 import { EpochMillisSchema } from '@shokujii/common/schemas/firebase/index.js'
 import { getChatAttachmentStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { recallChatMessage as callRecallChatMessage } from '@shokujii/base/apis/chat.js'
+
+export const CHAT_SEND_MESSAGE_ERROR = {
+  attachment_count_limit: 'attachment_count_limit',
+  attachment_type: 'attachment_type',
+  attachment_too_large: 'attachment_too_large',
+  body_too_long: 'body_too_long',
+} as const
+
+export type ChatSendMessageErrorCode = (typeof CHAT_SEND_MESSAGE_ERROR)[keyof typeof CHAT_SEND_MESSAGE_ERROR]
 import { db, storage } from '@shokujii/base/firebase.js'
 import { isAllowedChatAttachmentMimeType, uploadChatAttachment } from '../utils/storage.js'
 import type { ChatActiveRoom, ChatMessageItem, ChatRoomListItem } from '../components/chat/types.js'
@@ -476,13 +486,13 @@ export const useChatStore = defineStore('chat', () => {
   const sendMessage = async (
     roomId: string,
     userId: string,
-    params: { body?: string; imageFile?: File },
+    params: { body?: string; imageFiles?: File[] },
   ): Promise<void> => {
     const trimmedBody = params.body?.trim() ?? ''
     const hasBody = trimmedBody !== '' && trimmedBody.length <= CHAT_MESSAGE_BODY_MAX_LENGTH
-    const imageFile = params.imageFile
+    const imageFiles = params.imageFiles ?? []
 
-    if (imageFile == null) {
+    if (imageFiles.length === 0) {
       if (!hasBody) {
         return
       }
@@ -495,31 +505,42 @@ export const useChatStore = defineStore('chat', () => {
       return
     }
 
-    const contentType = imageFile.type
-    if (!isAllowedChatAttachmentMimeType(contentType)) {
-      throw new Error('attachment_type')
+    if (imageFiles.length > CHAT_ATTACHMENT_MAX_COUNT) {
+      throw new Error(CHAT_SEND_MESSAGE_ERROR.attachment_count_limit)
     }
-    if (imageFile.size > CHAT_ATTACHMENT_MAX_BYTE_SIZE) {
-      throw new Error('attachment_too_large')
+
+    for (const imageFile of imageFiles) {
+      if (!isAllowedChatAttachmentMimeType(imageFile.type)) {
+        throw new Error(CHAT_SEND_MESSAGE_ERROR.attachment_type)
+      }
+      if (imageFile.size > CHAT_ATTACHMENT_MAX_BYTE_SIZE) {
+        throw new Error(CHAT_SEND_MESSAGE_ERROR.attachment_too_large)
+      }
     }
+
     if (trimmedBody.length > CHAT_MESSAGE_BODY_MAX_LENGTH) {
-      return
+      throw new Error(CHAT_SEND_MESSAGE_ERROR.body_too_long)
     }
 
     const messagesCol = collection(db, 'chat_rooms', roomId, 'messages')
     const messageRef = doc(messagesCol)
     const messageId = messageRef.id
-    const attachment = await buildAttachment(roomId, messageId, imageFile, contentType)
-    let uploaded = false
+    const uploadedPaths: string[] = []
+    const attachments: ChatAttachment[] = []
 
     try {
-      await uploadChatAttachment(imageFile, attachment.storage_path, attachment.content_type)
-      uploaded = true
+      for (const imageFile of imageFiles) {
+        const contentType = imageFile.type as ChatAttachmentImageMimeType
+        const attachment = await buildAttachment(roomId, messageId, imageFile, contentType)
+        await uploadChatAttachment(imageFile, attachment.storage_path, attachment.content_type)
+        uploadedPaths.push(attachment.storage_path)
+        attachments.push(attachment)
+      }
 
       const payload: Record<string, unknown> = {
         message_type: 'user',
         sender_user_id: userId,
-        attachments: [attachment],
+        attachments,
         created_at: serverTimestamp(),
       }
       if (hasBody) {
@@ -527,9 +548,9 @@ export const useChatStore = defineStore('chat', () => {
       }
       await setDoc(messageRef, payload)
     } catch (error) {
-      if (uploaded) {
+      for (const storagePath of uploadedPaths) {
         try {
-          await deleteObject(storageRef(storage, attachment.storage_path))
+          await deleteObject(storageRef(storage, storagePath))
         } catch {
           // ロールバック失敗は握りつぶす（本体エラーを優先）
         }
