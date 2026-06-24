@@ -6,12 +6,17 @@ import 'vue-easy-lightbox/external-css/vue-easy-lightbox.css'
 
 export type AlbumLightboxSlide = { src: string; title?: string }
 
-const props = defineProps<{
-  visible: boolean
-  imgs: AlbumLightboxSlide[]
-  /** 表示開始インデックス（0 始まり） */
-  index?: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    imgs: AlbumLightboxSlide[]
+    /** 表示開始インデックス（0 始まり） */
+    index?: number
+    /** 画像下のキャプション（title）を表示する */
+    showCaption?: boolean
+  }>(),
+  { showCaption: true },
+)
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
@@ -22,7 +27,7 @@ const { t } = useI18n()
 const lightboxImgs = computed(() =>
   props.imgs.map((img) => ({
     src: img.src,
-    title: img.title ?? '',
+    title: props.showCaption ? (img.title ?? '') : '',
   })),
 )
 
@@ -78,7 +83,7 @@ const onHide = () => {
     <template #toolbar />
   </VueEasyLightbox>
   <Teleport to="body">
-    <div v-if="props.visible && totalSlides > 0" class="album-lightbox__counter" aria-live="polite">
+    <div v-if="props.visible && totalSlides > 1" class="album-lightbox__counter" aria-live="polite">
       {{ counterLabel }}
     </div>
   </Teleport>
@@ -86,6 +91,10 @@ const onHide = () => {
 
 <style lang="scss">
 /* vue-easy-lightbox は teleport するためキャプションはグローバル指定（当プロジェクトでは本コンポーネントのみ VueEasyLightbox を使用） */
+.vel-modal .vel-img-title:empty {
+  display: none !important;
+}
+
 .vel-modal .vel-img-title {
   bottom: 92px;
   font-size: 22px !important;

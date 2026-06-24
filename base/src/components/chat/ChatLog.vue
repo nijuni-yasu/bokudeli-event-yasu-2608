@@ -2,6 +2,7 @@
 import { mdiDotsVertical } from '@mdi/js'
 import { convertToTimeString } from '@shokujii/common/utils/datetime.js'
 import { User } from '@shokujii/common/schemas/User.js'
+import AlbumLightbox, { type AlbumLightboxSlide } from '@shokujii/base/components/AlbumLightbox.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { getDoc } from 'firebase/firestore'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
@@ -27,8 +28,8 @@ const senderUsers = ref<Map<string, User | null>>(new Map())
 const recallTarget = ref<ChatMessageItem | null>(null)
 const showRecallConfirm = ref(false)
 const isRecalling = ref(false)
-const expandedImageUrl = ref<string | null>(null)
-const expandedImageAlt = ref('')
+const lightboxVisible = ref(false)
+const lightboxImgs = ref<AlbumLightboxSlide[]>([])
 
 const resolveSystemMessage = (message: ChatMessageItem): string => {
   if (message.systemEvent === CHAT_SYSTEM_EVENT_MEMBER_JOINED) {
@@ -80,13 +81,15 @@ const canRecall = (message: ChatMessageItem): boolean => {
 }
 
 const openExpandedImage = (payload: { url: string; alt: string }): void => {
-  expandedImageUrl.value = payload.url
-  expandedImageAlt.value = payload.alt
+  lightboxImgs.value = [{ src: payload.url }]
+  lightboxVisible.value = true
 }
 
-const closeExpandedImage = (): void => {
-  expandedImageUrl.value = null
-  expandedImageAlt.value = ''
+const onLightboxVisibleUpdate = (value: boolean): void => {
+  lightboxVisible.value = value
+  if (!value) {
+    lightboxImgs.value = []
+  }
 }
 
 const openRecallConfirm = (message: ChatMessageItem) => {
@@ -290,27 +293,13 @@ watch(
       {{ t('chat.recall_confirm_message') }}
     </ConfirmDialog>
 
-    <VDialog
-      :model-value="expandedImageUrl != null"
-      max-width="960"
-      @update:model-value="
-        (value) => {
-          if (!value) closeExpandedImage()
-        }
-      "
-    >
-      <VCard v-if="expandedImageUrl != null">
-        <VCardText class="pa-0">
-          <VImg :src="expandedImageUrl" :alt="expandedImageAlt" max-height="80vh" contain />
-        </VCardText>
-        <VCardActions>
-          <VSpacer />
-          <VBtn variant="text" @click="closeExpandedImage">
-            {{ t('close') }}
-          </VBtn>
-        </VCardActions>
-      </VCard>
-    </VDialog>
+    <AlbumLightbox
+      :visible="lightboxVisible"
+      :imgs="lightboxImgs"
+      :index="0"
+      :show-caption="false"
+      @update:visible="onLightboxVisibleUpdate"
+    />
   </div>
 </template>
 
