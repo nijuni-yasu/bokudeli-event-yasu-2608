@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { RecallChatMessageRequestSchema } from '../apis/chat.js'
 import { CHAT_ATTACHMENT_IMAGE_MIME_TYPES, ChatAttachmentSchema, ChatMessage } from './ChatMessage.js'
-import { getChatAttachmentStoragePath } from '../utils/storagePaths.js'
+import { getChatAttachmentMessagePrefix, getChatAttachmentStoragePath } from '../utils/storagePaths.js'
 
 const sampleAttachment = {
   storage_path: 'chat_rooms/room1/msg1/att1',
@@ -88,6 +88,12 @@ describe('ChatMessage deleted fields', () => {
 describe('getChatAttachmentStoragePath', () => {
   it('builds path under chat_rooms', () => {
     expect(getChatAttachmentStoragePath('room1', 'msg1', 'att1')).toBe('chat_rooms/room1/msg1/att1')
+  })
+})
+
+describe('getChatAttachmentMessagePrefix', () => {
+  it('builds prefix for deleteFiles', () => {
+    expect(getChatAttachmentMessagePrefix('room1', 'msg1')).toBe('chat_rooms/room1/msg1/')
   })
 })
 
