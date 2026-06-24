@@ -391,28 +391,6 @@ onBeforeUnmount(() => {
             @change="onImageSelected"
           />
 
-          <div v-if="selectedImagePreviewUrl != null" class="chat-attachment-preview mb-3">
-            <VImg
-              :src="selectedImagePreviewUrl"
-              :alt="t('chat.image_preview_alt')"
-              max-height="120"
-              max-width="160"
-              cover
-              class="rounded"
-            />
-            <VBtn
-              icon
-              variant="text"
-              size="x-small"
-              color="default"
-              class="chat-attachment-preview-remove"
-              :aria-label="t('chat.remove_attachment')"
-              @click="clearSelectedImage"
-            >
-              <VIcon :icon="mdiClose" size="18" />
-            </VBtn>
-          </div>
-
           <div class="d-flex align-end gap-3">
             <VBtn
               v-if="!store.activeRoom.isReadonly"
@@ -424,19 +402,50 @@ onBeforeUnmount(() => {
             >
               <VIcon :icon="mdiImageOutline" />
             </VBtn>
-            <VTextarea
-              v-model="msg"
-              variant="solo"
-              class="chat-message-input flex-grow-1"
-              :placeholder="t('chat.message_placeholder')"
-              :disabled="store.activeRoom.isReadonly"
-              :maxlength="CHAT_MESSAGE_BODY_MAX_LENGTH"
-              :aria-label="t('chat.message_input_label')"
-              auto-grow
-              rows="1"
-              max-rows="10"
-              hide-details
-            />
+            <div
+              class="chat-compose-box flex-grow-1"
+              :class="{ 'chat-compose-box--readonly': store.activeRoom.isReadonly }"
+            >
+              <div
+                v-if="selectedImagePreviewUrl != null"
+                role="group"
+                :aria-label="t('chat.attachment_preview_group')"
+                class="chat-compose-attachments px-3 pt-3 pb-1"
+              >
+                <div class="chat-compose-thumb">
+                  <VImg
+                    :src="selectedImagePreviewUrl"
+                    :alt="t('chat.image_preview_alt')"
+                    class="chat-compose-thumb-img rounded"
+                  />
+                  <div v-if="isSending" class="chat-compose-thumb-overlay rounded d-flex align-center justify-center">
+                    <VProgressCircular indeterminate size="24" width="2" color="surface" />
+                  </div>
+                  <button
+                    type="button"
+                    class="chat-compose-remove"
+                    :aria-label="t('chat.remove_attachment')"
+                    :disabled="isSending"
+                    @click="clearSelectedImage"
+                  >
+                    <VIcon :icon="mdiClose" size="14" />
+                  </button>
+                </div>
+              </div>
+              <VTextarea
+                v-model="msg"
+                variant="plain"
+                class="chat-compose-input"
+                :placeholder="t('chat.message_placeholder')"
+                :disabled="store.activeRoom.isReadonly"
+                :maxlength="CHAT_MESSAGE_BODY_MAX_LENGTH"
+                :aria-label="t('chat.message_input_label')"
+                auto-grow
+                rows="1"
+                max-rows="10"
+                hide-details
+              />
+            </div>
             <VBtn
               type="submit"
               color="primary"
@@ -512,16 +521,101 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
-.chat-attachment-preview {
-  position: relative;
-  display: inline-block;
+.chat-compose-box {
+  min-inline-size: 0;
+  border-radius: 4px;
+  background-color: rgb(var(--v-theme-surface));
+  box-shadow:
+    0 2px 6px rgba(var(--v-shadow-key-umbra-color), 0.14),
+    0 0 transparent,
+    0 0 transparent;
+
+  &--readonly {
+    opacity: var(--v-disabled-opacity);
+  }
 }
 
-.chat-attachment-preview-remove {
+.chat-compose-thumb {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.chat-compose-thumb-img {
+  display: block;
+  inline-size: 64px;
+  block-size: 64px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+
+  :deep(.v-img__img) {
+    object-fit: contain;
+  }
+}
+
+@media (min-width: 600px) {
+  .chat-compose-thumb-img {
+    inline-size: 72px;
+    block-size: 72px;
+  }
+}
+
+.chat-compose-thumb-overlay {
   position: absolute;
-  inset-block-start: 4px;
-  inset-inline-end: 4px;
-  background-color: rgba(var(--v-theme-surface), 0.9);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.chat-compose-remove {
+  position: absolute;
+  inset-block-start: -4px;
+  inset-inline-end: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 22px;
+  block-size: 22px;
+  padding: 0;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  border-radius: 50%;
+  background-color: rgb(var(--v-theme-surface));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+
+  &::before {
+    position: absolute;
+    inset: -11px;
+    content: '';
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.chat-compose-input {
+  :deep(.v-field) {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  :deep(.v-field__field) {
+    align-items: center;
+    min-block-size: 48px;
+  }
+
+  :deep(.v-field__input) {
+    mask-image: none;
+    padding-inline: 16px;
+    padding-block: 12px;
+  }
+
+  :deep(textarea) {
+    margin-block: 0;
+    padding-block: 0;
+    line-height: 1.5;
+  }
 }
 
 .chat-content-container {

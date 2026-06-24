@@ -1042,6 +1042,7 @@ export default {
     last_message_preview_image: '画像を送信しました',
     attach_image: '画像を添付',
     image_preview_alt: '添付画像のプレビュー',
+    attachment_preview_group: '添付画像（送信前）',
     remove_attachment: '添付画像を取り消す',
     error: {
       preparing: '準備中です。しばらくしてから再度お試しください',
