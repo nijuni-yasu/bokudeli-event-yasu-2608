@@ -98,7 +98,9 @@ service cloud.firestore {
                 && attachment.byte_size > 0
                 && attachment.byte_size <= 10 * 1024 * 1024
                 && attachment.width is int
-                && attachment.height is int;
+                && attachment.width > 0
+                && attachment.height is int
+                && attachment.height > 0;
         }
         match /assets/{asset} {
             allow read: if true
