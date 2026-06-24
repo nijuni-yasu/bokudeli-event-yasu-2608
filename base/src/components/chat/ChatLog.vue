@@ -203,42 +203,73 @@ watch(
           <span class="text-xs text-medium-emphasis mb-1">
             {{ resolveSenderName(message.senderUserId ?? '') }}
           </span>
-          <div class="chat-message-row d-flex align-center gap-1">
-            <VMenu v-if="canRecall(message)" location="bottom">
-              <template #activator="{ props: menuProps }">
-                <VBtn
-                  v-bind="menuProps"
-                  icon
-                  variant="text"
-                  size="x-small"
-                  color="default"
-                  class="chat-recall-menu-btn flex-shrink-0"
-                  :aria-label="t('chat.recall_message')"
-                  @click.stop
-                >
-                  <VIcon :icon="mdiDotsVertical" size="18" />
-                </VBtn>
-              </template>
-              <VList density="compact">
-                <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
-              </VList>
-            </VMenu>
-            <p
+          <div
+            class="chat-message-content d-flex flex-column gap-1"
+            :class="message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
+          >
+            <div
               v-if="message.body != null && message.body !== ''"
-              v-linkify
-              class="chat-content py-3 px-4 elevation-1 mb-1"
-              :class="
-                message.senderUserId === currentUserId ? 'bg-primary text-white chat-right' : 'bg-surface chat-left'
-              "
+              class="chat-message-text-row d-flex align-center gap-1"
             >
-              {{ message.body }}
-            </p>
-            <ChatAttachmentImage
-              v-for="attachment in message.attachments ?? []"
-              :key="attachment.storage_path"
-              :attachment="attachment"
-              @expand="openExpandedImage"
-            />
+              <VMenu v-if="canRecall(message)" location="bottom">
+                <template #activator="{ props: menuProps }">
+                  <VBtn
+                    v-bind="menuProps"
+                    icon
+                    variant="text"
+                    size="x-small"
+                    color="default"
+                    class="chat-recall-menu-btn flex-shrink-0"
+                    :aria-label="t('chat.recall_message')"
+                    @click.stop
+                  >
+                    <VIcon :icon="mdiDotsVertical" size="18" />
+                  </VBtn>
+                </template>
+                <VList density="compact">
+                  <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
+                </VList>
+              </VMenu>
+              <p
+                v-linkify
+                class="chat-content py-3 px-4 elevation-1 mb-0"
+                :class="
+                  message.senderUserId === currentUserId ? 'bg-primary text-white chat-right' : 'bg-surface chat-left'
+                "
+              >
+                {{ message.body }}
+              </p>
+            </div>
+            <div
+              v-if="(message.attachments ?? []).length > 0"
+              class="chat-message-attachments d-flex align-center gap-1"
+            >
+              <VMenu v-if="canRecall(message) && (message.body == null || message.body === '')" location="bottom">
+                <template #activator="{ props: menuProps }">
+                  <VBtn
+                    v-bind="menuProps"
+                    icon
+                    variant="text"
+                    size="x-small"
+                    color="default"
+                    class="chat-recall-menu-btn flex-shrink-0"
+                    :aria-label="t('chat.recall_message')"
+                    @click.stop
+                  >
+                    <VIcon :icon="mdiDotsVertical" size="18" />
+                  </VBtn>
+                </template>
+                <VList density="compact">
+                  <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
+                </VList>
+              </VMenu>
+              <ChatAttachmentImage
+                v-for="attachment in message.attachments ?? []"
+                :key="attachment.storage_path"
+                :attachment="attachment"
+                @expand="openExpandedImage"
+              />
+            </div>
           </div>
           <span class="text-xs text-disabled">
             {{ convertToTimeString(message.createdAt) }}
