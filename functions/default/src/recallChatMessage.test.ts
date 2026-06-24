@@ -1,13 +1,67 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChatMessage } from '@shokujii/common/schemas/ChatMessage.js'
 import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import { markChatMessageDeleted } from './stores/chatMessage.js'
 import { updateMembershipLastMessage } from './stores/chatMembership.js'
+import { deleteChatMessageAttachmentsFromStorage, resolveDeletedDisplayName } from './recallChatMessage.js'
 import {
   CHAT_LAST_MESSAGE_PREVIEW_DELETED,
   findEffectiveLastMessage,
   resolveLastMessagePreviewFromMessages,
 } from './utils/chatPreview.js'
+
+const deleteFilesMock = vi.fn()
+
+vi.mock('firebase-admin/storage', () => ({
+  getStorage: () => ({
+    bucket: () => ({
+      deleteFiles: deleteFilesMock,
+    }),
+  }),
+}))
+
+beforeEach(() => {
+  deleteFilesMock.mockReset()
+  deleteFilesMock.mockResolvedValue(undefined)
+})
+
+describe('resolveDeletedDisplayName', () => {
+  it('uses default when user_name is empty string', () => {
+    expect(resolveDeletedDisplayName('')).toBe('ユーザー')
+  })
+
+  it('uses user_name when non-empty', () => {
+    expect(resolveDeletedDisplayName('太郎')).toBe('太郎')
+  })
+
+  it('uses default when user_name is undefined', () => {
+    expect(resolveDeletedDisplayName(undefined)).toBe('ユーザー')
+  })
+})
+
+describe('deleteChatMessageAttachmentsFromStorage', () => {
+  it('deletes files under message prefix', async () => {
+    await deleteChatMessageAttachmentsFromStorage('room1', 'msg1')
+
+    expect(deleteFilesMock).toHaveBeenCalledWith({ prefix: 'chat_rooms/room1/msg1/' })
+  })
+
+  it('throws when deleteFiles fails', async () => {
+    deleteFilesMock.mockRejectedValue(new Error('storage error'))
+
+    await expect(deleteChatMessageAttachmentsFromStorage('room1', 'msg1')).rejects.toMatchObject({
+      code: 'internal',
+    })
+  })
+
+  it('does not throw when deleteFiles fails with bestEffort', async () => {
+    deleteFilesMock.mockRejectedValue(new Error('storage error'))
+
+    await expect(
+      deleteChatMessageAttachmentsFromStorage('room1', 'msg1', { bestEffort: true }),
+    ).resolves.toBeUndefined()
+  })
+})
 
 describe('markChatMessageDeleted', () => {
   it('sets deleted fields and removes body', () => {

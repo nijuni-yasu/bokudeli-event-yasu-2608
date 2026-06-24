@@ -17,6 +17,8 @@ const objectUrl = ref<string | null>(null)
 const isLoading = ref(true)
 const hasError = ref(false)
 
+const isUnmounted = ref(false)
+
 const revokeObjectUrl = (): void => {
   if (objectUrl.value != null) {
     URL.revokeObjectURL(objectUrl.value)
@@ -31,6 +33,9 @@ const loadAttachment = async (): Promise<void> => {
 
   try {
     const blob = await getChatAttachmentBlob(props.attachment.storage_path)
+    if (isUnmounted.value) {
+      return
+    }
     objectUrl.value = URL.createObjectURL(blob)
   } catch {
     hasError.value = true
@@ -51,6 +56,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  isUnmounted.value = true
   revokeObjectUrl()
 })
 </script>

@@ -1,5 +1,5 @@
 import { getAuth } from 'firebase-admin/auth'
-import { getFirestore } from 'firebase-admin/firestore'
+import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { createModuleLogger } from './utils/logger.js'
 import {
@@ -12,7 +12,7 @@ import { listFriendUserIds } from './stores/userFriend.js'
 import { anonymizeUser, anonymizeUserPersonalInformation, getUserPersonalInformation } from './stores/user.js'
 import { recountUserProfileCountsForUsers } from './utils/recountUserProfileCounts.js'
 import { listChatMembershipsForUser, getChatMembershipRef } from './stores/chatMembership.js'
-import { getChatRoom, getChatRoomRef, updateChatRoomMembers } from './stores/chatRoom.js'
+import { getChatRoom, getChatRoomRef } from './stores/chatRoom.js'
 
 const db = getFirestore()
 const logger = createModuleLogger('deleteUserAccount')
@@ -29,18 +29,20 @@ const cleanupUserChatData = async (uid: string): Promise<void> => {
   for (let i = 0; i < roomIds.length; i += FIRESTORE_BATCH_LIMIT) {
     const batch = db.batch()
     const chunk = roomIds.slice(i, i + FIRESTORE_BATCH_LIMIT)
+    let writeCount = 0
     for (const roomId of chunk) {
       const room = await getChatRoom(roomId)
       if (room == null || !room.member_user_ids.includes(uid)) {
         continue
       }
-      const updatedRoom = updateChatRoomMembers(
-        room,
-        room.member_user_ids.filter((memberId) => memberId !== uid),
-      )
-      batch.set(getChatRoomRef(roomId), updatedRoom, { merge: true })
+      batch.update(getChatRoomRef(roomId), {
+        member_user_ids: FieldValue.arrayRemove(uid),
+      })
+      writeCount++
     }
-    await batch.commit()
+    if (writeCount > 0) {
+      await batch.commit()
+    }
   }
 
   for (let i = 0; i < memberships.length; i += FIRESTORE_BATCH_LIMIT) {

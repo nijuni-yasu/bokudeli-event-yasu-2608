@@ -1,10 +1,12 @@
 import { HttpsError, onCall } from 'firebase-functions/v2/https'
 import { getFirestore } from 'firebase-admin/firestore'
+import { getStorage } from 'firebase-admin/storage'
 import {
   RecallChatMessageRequestSchema,
   type RecallChatMessageRequest,
   type RecallChatMessageResponse,
 } from '@shokujii/common/apis/chat.js'
+import { getChatAttachmentMessagePrefix } from '@shokujii/common/utils/storagePaths.js'
 import { createModuleLogger } from './utils/logger.js'
 import { getChatRoom, saveChatRoom, updateChatRoomLastMessage } from './stores/chatRoom.js'
 import { getChatMembership, getChatMembershipRef, updateMembershipLastMessage } from './stores/chatMembership.js'
@@ -20,6 +22,28 @@ import { resolveLastMessagePreviewFromMessages } from './utils/chatPreview.js'
 const logger = createModuleLogger('recallChatMessage')
 
 const MEMBERSHIP_BATCH_SIZE = 500
+
+export const resolveDeletedDisplayName = (userName: string | undefined | null): string => {
+  return userName || 'ユーザー'
+}
+
+export const deleteChatMessageAttachmentsFromStorage = async (
+  roomId: string,
+  messageId: string,
+  options?: { bestEffort?: boolean },
+): Promise<void> => {
+  const prefix = getChatAttachmentMessagePrefix(roomId, messageId)
+  const bucket = getStorage().bucket()
+  try {
+    await bucket.deleteFiles({ prefix })
+  } catch (error) {
+    logger.error('Failed to delete chat attachment files from storage', { error, roomId, messageId, prefix })
+    if (options?.bestEffort === true) {
+      return
+    }
+    throw new HttpsError('internal', '添付ファイルの削除に失敗しました')
+  }
+}
 
 export const recalculateRoomLastMessage = async (roomId: string): Promise<void> => {
   const room = await getChatRoom(roomId)
@@ -99,13 +123,17 @@ export const recallChatMessage = onCall<RecallChatMessageRequest, Promise<Recall
     }
 
     const user = await getUser(uid, false)
-    const deletedDisplayName = user?.user_name ?? 'ユーザー'
+    const deletedDisplayName = resolveDeletedDisplayName(user?.user_name)
 
     const deletedMessage = markChatMessageDeleted(message, {
       deletedByUserId: uid,
       deletedDisplayName,
     })
     await saveChatMessage(roomId, deletedMessage)
+
+    if (message.attachments != null && message.attachments.length > 0) {
+      await deleteChatMessageAttachmentsFromStorage(roomId, messageId, { bestEffort: true })
+    }
 
     const recent = await listRecentChatMessages(roomId, 1)
     const isLatest = recent[0]?.id === messageId

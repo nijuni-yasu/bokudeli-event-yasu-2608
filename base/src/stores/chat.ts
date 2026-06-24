@@ -187,6 +187,7 @@ export const useChatStore = defineStore('chat', () => {
   let roomUnsubscribe: Unsubscribe | null = null
   let messagesUnsubscribe: Unsubscribe | null = null
   let oldestMessageSnapshot: DocumentSnapshot | null = null
+  let lastMarkedReadMaxCreatedAt = 0
   let activeRoomDisplayUnsubscribe: Unsubscribe | null = null
   const roomDisplayUnsubscribes = new Map<string, Unsubscribe>()
 
@@ -291,6 +292,7 @@ export const useChatStore = defineStore('chat', () => {
     messagesUnsubscribe?.()
     messagesUnsubscribe = null
     oldestMessageSnapshot = null
+    lastMarkedReadMaxCreatedAt = 0
     activeRoomId.value = null
     activeRoom.value = null
     messages.value = []
@@ -382,6 +384,7 @@ export const useChatStore = defineStore('chat', () => {
     messagesUnsubscribe?.()
     messages.value = []
     oldestMessageSnapshot = null
+    lastMarkedReadMaxCreatedAt = 0
     hasMoreMessages.value = true
 
     const messagesQuery = query(
@@ -398,7 +401,9 @@ export const useChatStore = defineStore('chat', () => {
         hasMoreMessages.value = snapshot.docs.length >= MESSAGES_PAGE_SIZE
       }
 
-      if (activeRoomId.value === roomId) {
+      const maxCreatedAt = incoming.reduce((max, message) => Math.max(max, message.createdAt), 0)
+      if (activeRoomId.value === roomId && maxCreatedAt > lastMarkedReadMaxCreatedAt) {
+        lastMarkedReadMaxCreatedAt = maxCreatedAt
         void markAsRead(roomId, userId)
       }
     })
@@ -417,6 +422,9 @@ export const useChatStore = defineStore('chat', () => {
         limit(MESSAGES_PAGE_SIZE),
       )
       const snapshot = await getDocs(olderQuery)
+      if (activeRoomId.value !== roomId) {
+        return
+      }
       const incoming = snapshot.docs.map((docSnapshot) => toMessageItem(docSnapshot.data())).reverse()
       messages.value = mergeMessages(incoming, messages.value)
       oldestMessageSnapshot = snapshot.docs[snapshot.docs.length - 1] ?? oldestMessageSnapshot

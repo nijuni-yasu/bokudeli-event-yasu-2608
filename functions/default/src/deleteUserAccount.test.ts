@@ -7,6 +7,8 @@ const {
   recountUserProfileCountsForUsersMock,
   listChatMembershipsForUserMock,
   batchCommitMock,
+  batchUpdateMock,
+  batchSetMock,
 } = vi.hoisted(() => ({
   runTransactionMock: vi.fn(),
   deleteUserMock: vi.fn(),
@@ -14,6 +16,8 @@ const {
   recountUserProfileCountsForUsersMock: vi.fn(),
   listChatMembershipsForUserMock: vi.fn(),
   batchCommitMock: vi.fn(),
+  batchUpdateMock: vi.fn(),
+  batchSetMock: vi.fn(),
 }))
 
 vi.mock('firebase-functions/https', () => ({
@@ -29,10 +33,14 @@ vi.mock('firebase-functions/https', () => ({
 }))
 
 vi.mock('firebase-admin/firestore', () => ({
+  FieldValue: {
+    arrayRemove: (...args: unknown[]) => ({ type: 'arrayRemove', args }),
+  },
   getFirestore: () => ({
     runTransaction: runTransactionMock,
     batch: () => ({
-      set: vi.fn(),
+      set: batchSetMock,
+      update: batchUpdateMock,
       delete: vi.fn(),
       commit: batchCommitMock,
     }),
@@ -112,6 +120,8 @@ beforeEach(() => {
   recountUserProfileCountsForUsersMock.mockReset()
   listChatMembershipsForUserMock.mockReset()
   batchCommitMock.mockReset()
+  batchUpdateMock.mockReset()
+  batchSetMock.mockReset()
 
   vi.mocked(hasSoleManagerCommunity).mockReset()
   vi.mocked(getCommunitiesWhereUserIsMember).mockReset()
@@ -178,7 +188,23 @@ describe('deleteUserAccount', () => {
     await callDeleteUserAccount('userB')
 
     expect(listChatMembershipsForUserMock).toHaveBeenCalledWith('userB')
-    expect(batchCommitMock).toHaveBeenCalled()
+    expect(batchUpdateMock).toHaveBeenCalledWith(
+      { path: 'chat_rooms/room1' },
+      { member_user_ids: { type: 'arrayRemove', args: ['userB'] } },
+    )
+    expect(batchSetMock).not.toHaveBeenCalled()
+    expect(batchCommitMock).toHaveBeenCalledTimes(2)
+    expect(deleteUserMock).toHaveBeenCalledWith('userB')
+  })
+
+  it('chat_room が存在しないとき room 更新 batch は commit しない（RC-94）', async () => {
+    listChatMembershipsForUserMock.mockResolvedValue([{ room_id: 'missing_room', id: 'missing_room' }])
+    vi.mocked(getChatRoom).mockResolvedValue(null)
+
+    await callDeleteUserAccount('userB')
+
+    expect(batchUpdateMock).not.toHaveBeenCalled()
+    expect(batchCommitMock).toHaveBeenCalledTimes(1)
     expect(deleteUserMock).toHaveBeenCalledWith('userB')
   })
 })

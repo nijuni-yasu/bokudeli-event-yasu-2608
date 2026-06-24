@@ -20,7 +20,7 @@ const CHAT_ATTACHMENT_MAX_SIZE_LABEL = '10MB'
 const props = defineProps<{
   roomId?: string
   resolveProfilePath?: ResolveUserPathFn
-  resolveChatRoomPath?: ResolveChatRoomPathFn
+  resolveChatRoomPath: ResolveChatRoomPathFn
 }>()
 
 const emit = defineEmits<{
@@ -123,9 +123,7 @@ const onChatLogScroll = (event: Event) => {
 }
 
 const navigateToChatPath = (roomId?: string, replace = false): void => {
-  const path = props.resolveChatRoomPath?.(roomId) ?? {
-    path: roomId != null && roomId !== '' ? `/chat/${roomId}` : '/chat',
-  }
+  const path = props.resolveChatRoomPath(roomId)
   emit('navigate-room', { path, replace })
 }
 
