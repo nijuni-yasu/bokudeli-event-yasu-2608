@@ -104,7 +104,7 @@ service cloud.firestore {
         }
         function isValidChatAttachmentPath(roomId, messageId) {
             return !(false in request.resource.data.attachments.map(
-                a => isValidChatAttachmentEntry(roomId, messageId, a)
+                a, isValidChatAttachmentEntry(roomId, messageId, a)
             ));
         }
         match /assets/{asset} {
