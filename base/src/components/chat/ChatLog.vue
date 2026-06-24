@@ -245,7 +245,7 @@ watch(
             </div>
             <div
               v-if="(message.attachments ?? []).length > 0"
-              class="chat-message-attachments d-flex align-center gap-1"
+              class="chat-message-attachments-row d-flex align-center gap-1"
             >
               <VMenu v-if="canRecall(message) && (message.body == null || message.body === '')" location="bottom">
                 <template #activator="{ props: menuProps }">
@@ -266,12 +266,20 @@ watch(
                   <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
                 </VList>
               </VMenu>
-              <ChatAttachmentImage
-                v-for="attachment in message.attachments ?? []"
-                :key="attachment.storage_path"
-                :attachment="attachment"
-                @expand="openExpandedImage"
-              />
+              <div
+                class="chat-message-attachments"
+                :class="{
+                  'chat-message-attachments--single': (message.attachments ?? []).length === 1,
+                }"
+              >
+                <ChatAttachmentImage
+                  v-for="attachment in message.attachments ?? []"
+                  :key="attachment.storage_path"
+                  :attachment="attachment"
+                  layout="tile"
+                  @expand="openExpandedImage"
+                />
+              </div>
             </div>
           </div>
           <span class="text-xs text-disabled">
@@ -304,6 +312,23 @@ watch(
 </template>
 
 <style scoped lang="scss">
+.chat-log {
+  container-type: inline-size;
+  container-name: chat-log;
+}
+
+.chat-body {
+  max-inline-size: 100%;
+}
+
+.chat-message-content {
+  max-inline-size: 100%;
+}
+
+.chat-message-attachments-row {
+  max-inline-size: 100%;
+}
+
 .chat-group-own {
   .chat-recall-menu-btn {
     opacity: 0;
@@ -341,6 +366,43 @@ watch(
     :deep(a) {
       color: rgb(var(--v-theme-on-primary));
       text-decoration: underline;
+    }
+  }
+}
+
+.chat-message-attachments {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  inline-size: 248px;
+  max-inline-size: 248px;
+  flex-shrink: 0;
+}
+
+.chat-message-attachments--single {
+  inline-size: 240px;
+  max-inline-size: 240px;
+
+  :deep(.chat-attachment-image--tile) {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 600px) {
+  @container chat-log (min-width: 380px) {
+    .chat-message-attachments {
+      grid-template-columns: repeat(3, 1fr);
+      inline-size: 372px;
+      max-inline-size: 372px;
+    }
+
+    .chat-message-attachments--single {
+      inline-size: 360px;
+      max-inline-size: 360px;
+
+      :deep(.chat-attachment-image--tile) {
+        grid-column: span 3;
+      }
     }
   }
 }

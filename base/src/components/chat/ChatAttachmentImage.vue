@@ -4,9 +4,17 @@ import type { ChatAttachment } from '@shokujii/common/schemas/ChatMessage.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
 import { computeChatAttachmentDisplaySize } from '@shokujii/base/utils/chatAttachmentDisplaySize.js'
 
-const props = defineProps<{
-  attachment: ChatAttachment
-}>()
+const props = withDefaults(
+  defineProps<{
+    attachment: ChatAttachment
+    layout?: 'fluid' | 'tile'
+  }>(),
+  {
+    layout: 'fluid',
+  },
+)
+
+const isTileLayout = computed(() => props.layout === 'tile')
 
 const emit = defineEmits<{
   expand: [payload: { url: string; alt: string }]
@@ -83,7 +91,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="chat-attachment-image mb-1" :style="displaySizeStyle">
+  <div
+    class="chat-attachment-image"
+    :class="{ 'chat-attachment-image--tile': isTileLayout }"
+    :style="isTileLayout ? undefined : displaySizeStyle"
+  >
     <div v-if="isLoading" class="chat-attachment-placeholder d-flex align-center justify-center">
       <VProgressCircular indeterminate size="24" width="2" color="primary" />
     </div>
@@ -91,15 +103,16 @@ onBeforeUnmount(() => {
       v-else-if="objectUrl != null"
       type="button"
       class="chat-attachment-button"
-      :style="displaySizeStyle"
+      :style="isTileLayout ? undefined : displaySizeStyle"
       @click="onExpandClick"
     >
       <VImg
         :src="objectUrl"
         :alt="attachment.file_name"
-        :width="displaySize.width"
-        :height="displaySize.height"
+        :width="isTileLayout ? undefined : displaySize.width"
+        :height="isTileLayout ? undefined : displaySize.height"
         class="rounded chat-attachment-img"
+        :class="{ 'chat-attachment-img--tile': isTileLayout }"
       />
     </button>
     <div v-else-if="hasError" class="chat-attachment-error text-disabled text-sm">
@@ -110,6 +123,17 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+.chat-attachment-image {
+  margin-block-end: 4px;
+}
+
+.chat-attachment-image--tile {
+  inline-size: 100%;
+  aspect-ratio: 1;
+  margin-block-end: 0;
+  min-inline-size: 0;
+}
+
 .chat-attachment-placeholder {
   width: 100%;
   height: 100%;
@@ -125,8 +149,18 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
+.chat-attachment-image--tile .chat-attachment-button {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
 .chat-attachment-img :deep(.v-img__img) {
   object-fit: contain;
+}
+
+.chat-attachment-img--tile {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .chat-attachment-error {
