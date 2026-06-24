@@ -19,6 +19,13 @@ variable "enterprise_base_domain" {
   default     = ""
 }
 
+# Storage CORS の追加 origin（Preview Channel 等、auth に無い origin のみ）。
+# auth_authorized_domains_extra のカスタムドメインは locals で https:// に変換して自動マージする。
+variable "storage_cors_origins_extra" {
+  type    = list(string)
+  default = []
+}
+
 terraform {
   required_providers {
     google = {

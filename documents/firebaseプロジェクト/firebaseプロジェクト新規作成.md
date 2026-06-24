@@ -110,6 +110,7 @@ GitHub Actions には「環境（Environment）」という機能があり、`de
 `init.sh` 完了後、`terraform.tfvars` に次を手動追加する場合がある（[terraform/README.md](../../terraform/README.md) 参照）。
 
 - **`auth_authorized_domains_extra`**: 本番のように Firebase Auth にカスタムドメイン（例: `shokujii.jp`）がある場合のみ。テスト・sandbox は省略可。
+- **`storage_cors_origins_extra`**: Auth に無い origin（Preview Channel URL 等）のみ。カスタムドメインは `auth_authorized_domains_extra` から CORS にも自動反映される（[terraform/README.md](../../terraform/README.md) の「Storage CORS」参照）。
 
 ### 6. Terraform を適用する
 
@@ -122,6 +123,10 @@ terraform apply
 ```
 
 `terraform apply` により、Storage Security Rules（#772 `storage.rules`）の `firestore.get()` に必要な **Firebase Rules Firestore Service Agent**（`roles/firebaserules.firestoreServiceAgent`）が Firebasestorage サービスアカウントへ付与されます。Console の「サービス間のルールのプロビジョニング → 権限を付与」と同等です。**`storage.rules` を初デプロイする前に apply 済みであること**を推奨します（[terraform/README.md](../../terraform/README.md) の「Storage ルールと IAM の順序」参照）。
+
+あわせて **デフォルト Storage バケットの CORS**（チャット画像の `uploadBytes` / `getBlob` 用）も apply で設定されます。`firebase deploy --only storage` では CORS は付与されません。
+
+初回 apply で `google_storage_bucket.default` が **409 Already Exists** になった場合、または CORS が未反映の場合は、[terraform/README.md](../../terraform/README.md) の「新規 sandbox で初回 apply 後に default bucket import が必要な場合」に従い import → 再 apply してください。
 
 > **エラーが出た場合（quota project 未設定）**  
 > 以下のエラーが出た場合は、quota project を設定してください。
