@@ -1,11 +1,11 @@
 ---
 name: wait-ai-pr-review
-description: git-create-pull-request 手順 12 のレビュー依頼後、Copilot/Codex の応答完了（またはタイムアウト）をバックグラウンド監視し、完了時に review-comments-evaluate を自動起動する。create-pr 手順 13 から委譲される。Codex usage limits 時は partial evaluate。「評価待ちなし」「evaluate しない」「review wait しない」でスキップ。
+description: git-create-pull-request 手順 11〜12 のレビュー依頼後、Copilot/Codex の応答完了（またはタイムアウト）をバックグラウンド監視し、完了時に review-comments-evaluate を自動起動する。create-pr 手順 13 から委譲される。Codex usage limits 時は partial evaluate。「評価待ちなし」「evaluate しない」「review wait しない」でスキップ。
 ---
 
 # AI PR レビュー完了待ち → evaluate 自動起動
 
-`git-create-pull-request` 手順 12 でレビュー依頼したあと、GitHub 上の Copilot / Codex 応答が落ち着くまで **非ブロッキング**で監視し、完了またはタイムアウト時に [`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) へ委譲する。
+`git-create-pull-request` 手順 11（reviewer 追加）・手順 12（Codex 向けコメント）でレビュー依頼したあと、GitHub 上の Copilot / Codex 応答が落ち着くまで **非ブロッキング**で監視し、完了またはタイムアウト時に [`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) へ委譲する。
 
 **入口は `git-create-pull-request` 手順 13 のみ**。`git-reflect-after-commit` は create-pr 経由で間接的に ON（二重起動しない）。
 
@@ -13,7 +13,7 @@ description: git-create-pull-request 手順 12 のレビュー依頼後、Copilo
 
 - `gh` CLI が認証済み
 - 呼び出し元から **PR 番号**と **`REVIEW_REQUEST_SINCE`**（ISO8601 UTC）を受け取る
-- 対象リポジトリはデフォルト `nijuniinc/bokudeli-event-new`（手順 12 と同じ origin PR）
+- 対象リポジトリはデフォルト `nijuniinc/bokudeli-event-new`（手順 11〜12 と同じ origin PR）
 
 ## オプトアウト（会話のみ）
 
@@ -55,7 +55,10 @@ description: git-create-pull-request 手順 12 のレビュー依頼後、Copilo
 - `usage limits for code reviews`
 - `Copilot encountered an error and was unable to review`
 - `create a Codex account and connect` / `To use Codex here`
-- `@copilot @codex review` で始まる依頼コメント
+- `@copilot @codex review` で始まる依頼コメント（旧手順 12・後方互換）
+- `@codex この PR の Files changed をコードレビュー` で始まる依頼コメント（手順 12）
+- `@copilot この PR の Files changed をコードレビュー` で始まる依頼コメント（手順 12・2 行固定文の 2 行目）
+- Copilot の承知返信（書き方確認・次回厳守のみでコード未言及、`acknowledgment` カテゴリ）
 
 **レビュワー login**: `copilot` / `codex` / `chatgpt-codex` を部分一致（`Copilot` issue コメントも Copilot 扱い）。
 
@@ -64,7 +67,7 @@ description: git-create-pull-request 手順 12 のレビュー依頼後、Copilo
 ### 0. 入力確認
 
 - `PR_NUM`: PR 番号（整数）
-- `REVIEW_REQUEST_SINCE`: 手順 12 直前に記録した ISO8601 UTC
+- `REVIEW_REQUEST_SINCE`: 手順 11 直前（レビュー依頼開始時点）に記録した ISO8601 UTC
 
 ### 1. オプトアウト確認
 
