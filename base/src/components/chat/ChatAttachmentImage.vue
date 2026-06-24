@@ -2,6 +2,7 @@
 import { mdiImageBrokenVariant } from '@mdi/js'
 import type { ChatAttachment } from '@shokujii/common/schemas/ChatMessage.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
+import { computeChatAttachmentDisplaySize } from '@shokujii/base/utils/chatAttachmentDisplaySize.js'
 
 const props = defineProps<{
   attachment: ChatAttachment
@@ -17,7 +18,14 @@ const objectUrl = ref<string | null>(null)
 const isLoading = ref(true)
 const hasError = ref(false)
 
-const isUnmounted = ref(false)
+let loadGeneration = 0
+
+const displaySize = computed(() => computeChatAttachmentDisplaySize(props.attachment.width, props.attachment.height))
+
+const displaySizeStyle = computed(() => ({
+  width: `${displaySize.value.width}px`,
+  height: `${displaySize.value.height}px`,
+}))
 
 const revokeObjectUrl = (): void => {
   if (objectUrl.value != null) {
@@ -27,20 +35,26 @@ const revokeObjectUrl = (): void => {
 }
 
 const loadAttachment = async (): Promise<void> => {
+  const generation = ++loadGeneration
   isLoading.value = true
   hasError.value = false
   revokeObjectUrl()
 
   try {
     const blob = await getChatAttachmentBlob(props.attachment.storage_path)
-    if (isUnmounted.value) {
+    if (generation !== loadGeneration) {
       return
     }
     objectUrl.value = URL.createObjectURL(blob)
   } catch {
+    if (generation !== loadGeneration) {
+      return
+    }
     hasError.value = true
   } finally {
-    isLoading.value = false
+    if (generation === loadGeneration) {
+      isLoading.value = false
+    }
   }
 }
 
@@ -55,24 +69,37 @@ onMounted(() => {
   void loadAttachment()
 })
 
+watch(
+  () => props.attachment.storage_path,
+  () => {
+    void loadAttachment()
+  },
+)
+
 onBeforeUnmount(() => {
-  isUnmounted.value = true
+  loadGeneration++
   revokeObjectUrl()
 })
 </script>
 
 <template>
-  <div class="chat-attachment-image mb-1">
-    <VProgressCircular v-if="isLoading" indeterminate size="24" width="2" color="primary" />
-    <button v-else-if="objectUrl != null" type="button" class="chat-attachment-button" @click="onExpandClick">
+  <div class="chat-attachment-image mb-1" :style="displaySizeStyle">
+    <div v-if="isLoading" class="chat-attachment-placeholder d-flex align-center justify-center">
+      <VProgressCircular indeterminate size="24" width="2" color="primary" />
+    </div>
+    <button
+      v-else-if="objectUrl != null"
+      type="button"
+      class="chat-attachment-button"
+      :style="displaySizeStyle"
+      @click="onExpandClick"
+    >
       <VImg
         :src="objectUrl"
         :alt="attachment.file_name"
-        loading="lazy"
-        max-width="240"
-        max-height="240"
-        cover
-        class="rounded"
+        :width="displaySize.width"
+        :height="displaySize.height"
+        class="rounded chat-attachment-img"
       />
     </button>
     <div v-else-if="hasError" class="chat-attachment-error text-disabled text-sm">
@@ -83,12 +110,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+.chat-attachment-placeholder {
+  width: 100%;
+  height: 100%;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: 4px;
+}
+
 .chat-attachment-button {
   display: block;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+.chat-attachment-img :deep(.v-img__img) {
+  object-fit: contain;
 }
 
 .chat-attachment-error {
