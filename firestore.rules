@@ -79,7 +79,7 @@ service cloud.firestore {
             return 'body' in request.resource.data
                 && request.resource.data.body is string
                 && request.resource.data.body.size() > 0
-                && request.resource.data.body.size() <= 8000;
+                && request.resource.data.body.size() <= 2000;
         }
         function hasValidChatMessageAttachments() {
             return 'attachments' in request.resource.data
