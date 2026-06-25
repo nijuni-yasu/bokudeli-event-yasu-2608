@@ -75,7 +75,7 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
 git-commit-workflow / git-fixup / git-squash の upstream push（`branch.<branch>.remote`）とは **別系統**である。
 PR 用は **origin**（手順 4）、動作確認用は **`branch.<branch>.sandboxRemote`**（`github-actions-deploy` が解決・記憶）とする。
 
-**`github-actions-deploy` スキルの手順 0〜9** に委譲する（sandboxRemote 解決・push・本番ブロック・発火・監視・報告を含む）。
+**`github-actions-deploy` スキルの手順 0〜10** に委譲する（sandboxRemote 解決・push・本番ブロック・発火・**バックグラウンド watch**・wake 時結果報告を含む）。
 本スキルでは B 専用の push 手順を **重複実施しない**。
 
 - 手順 1 で clean 確認済みのため、`github-actions-deploy` 手順 0 は省略してよい
@@ -92,8 +92,9 @@ PR 用は **origin**（手順 4）、動作確認用は **`branch.<branch>.sandb
   - evaluate 開始目安: Copilot 完了後 quiet 2 分 + Codex 条件（limits/connect は quiet 後、無応答は最大 12 分）。**Copilot 完了 ≠ evaluate 開始**
   - 全体タイムアウト 20 分、Codex limits 時は partial evaluate あり得る旨
   - オプトアウト時はスキップした旨
-- sandbox の remote 名・OWNER/REPO・ref、発火したワークフロー（B 実行時・`github-actions-deploy` 手順 9 の内容を含む）
-- sandbox デプロイの各ワークフローの **成否・run URL**、失敗時は **エラー分類と原因サマリ**（B 実行時）
+- sandbox の remote 名・OWNER/REPO・ref、発火したワークフロー（B 実行時・`github-actions-deploy` 手順 8 の内容を含む）
+- sandbox デプロイは **reflect 完了時点では監視中**になり得る（wake 後に手順 9〜10 で結果報告）
+- sandbox デプロイの各ワークフローの **成否・run URL**（wake 受信後・`github-actions-deploy` 手順 10）、失敗時は **エラー分類と原因サマリ**（B 実行時）
 - `branch.<branch>.sandboxRemote` を新規保存した場合はその旨（B 実行時）
 
 ## 注意

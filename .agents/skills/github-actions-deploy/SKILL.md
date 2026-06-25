@@ -1,6 +1,6 @@
 ---
 name: github-actions-deploy
-description: sandbox / fork 向け。ローカル HEAD を branch.<branch>.sandboxRemote で決まった sandbox へ push してから、gh CLI で deploy_*.yml を workflow_dispatch 発火する。sandbox 先は git-reflect-after-commit と同じ branch.<branch>.sandboxRemote で記憶。git-reflect-after-commit / github-sandbox-wip-deploy から委譲時は会話に sandbox と書かなくてよい。「sandbox にデプロイ」で sandboxRemote 設定済みなら現在ブランチで実行可。1a のリモート/ブランチ明示は sandbox 系 remote のみ。repo+ブランチの明示指定は上書き（発火のみ）。「push せず」「再デプロイだけ」で push 省略。本番 nijuniinc/bokudeli-event-new では push も発火も拒否。5 本一括は一括発火後に並列 watch がデフォルト。
+description: sandbox / fork 向け。ローカル HEAD を branch.<branch>.sandboxRemote で決まった sandbox へ push してから、gh CLI で deploy_*.yml を workflow_dispatch 発火する。監視はバックグラウンド watch + wake 1 回（エージェントは gh run watch でブロックしない）。mode=report は sentinel / pending wake から結果報告のみ。sandbox 先は git-reflect-after-commit と同じ branch.<branch>.sandboxRemote で記憶。git-reflect-after-commit / github-sandbox-wip-deploy から委譲時は会話に sandbox と書かなくてよい。「sandbox にデプロイ」で sandboxRemote 設定済みなら現在ブランチで実行可。1a のリモート/ブランチ明示は sandbox 系 remote のみ。repo+ブランチの明示指定は上書き（発火のみ）。「push せず」「再デプロイだけ」で push 省略。本番 nijuniinc/bokudeli-event-new では push も発火も拒否。5 本一括は一括発火後にバックグラウンド並列 watch がデフォルト。
 ---
 
 # GitHub Actions デプロイ（push + 手動発火）
@@ -95,14 +95,27 @@ REF="$BRANCH"
 
 ## 手順
 
-### 0. 前提確認
+### 0. 前提確認・モード判定
+
+**mode=report**（結果報告のみ）に該当する場合は **手順 1〜7 をスキップ**し、**手順 9** へ:
+
+- 会話または sentinel に `mode":"report"` がある
+- `AGENT_LOOP_WAKE_deploy` sentinel を受信した
+- `.agents/state/deploy-pending-wake.json` の未処理 wake を処理する（`deploy_id` を特定）
 
 ```bash
-git status
+git status   # mode=report 以外では未コミット変更があれば中断
 ```
 
-- **未コミット変更がある場合**: **中断**する（WIP 含めてデプロイしたい場合は `github-sandbox-wip-deploy` を案内）。
+- **未コミット変更がある場合**（通常モード）: **中断**する（WIP 含めてデプロイしたい場合は `github-sandbox-wip-deploy` を案内）。
 - 委譲元（`git-reflect-after-commit`）で clean 確認済みの場合は省略してよい。
+
+pending wake 一覧:
+
+```bash
+python3 .agents/scripts/github_actions_deploy_wake.py list \
+  --wake-file .agents/state/deploy-pending-wake.json
+```
 
 ### 1. REMOTE・OWNER/REPO・ref の決定
 
@@ -179,106 +192,76 @@ done
 
 `gh workflow run` は即座に返る。5 本を **watch 完了まで待たず** 連続発火する。
 
-### 7. デプロイ結果の検知（成功/失敗の確認）
+### 7. バックグラウンド監視起動（Shell 要件・厳守）
 
-`gh workflow run` は発火するだけで結果を返さない。発火した各ワークフローについて **今回発火した run を確実に特定**し、完了まで監視する。
+手順 6 の発火後、**エージェント内で `gh run watch` してはならない**。バックグラウンド watcher に委譲する。
 
-**手順の流れ（5 本一括の場合）**
+発火前に **`DEPLOY_ID`**（UUID）と **`SINCE`**（手順 6 で控えた値）、発火した **`WORKFLOWS`**（カンマ区切り）を控える。
 
-1. **フェーズ A（一括発火）**: 手順 6 のとおり `SINCE` を控えて 5 本を連続 `gh workflow run`
-2. **フェーズ B（RUN_ID 特定）**: 各 workflow ファイルごとに、基準時刻以降の run をリトライ取得
-3. **フェーズ C（並列監視）**: 取得できた run を **並列**に `gh run watch`
+| パラメータ | 値 |
+|-----------|-----|
+| `block_until_ms` | `0` |
+| `notify_on_output.pattern` | `^AGENT_LOOP_WAKE_deploy` |
+| `notify_on_output.reason` | `deploy wake` |
 
-**run 特定の注意（重要）**: 単純な `gh run list --limit 1` は危険である。
-
-- 発火直後は run がまだ作成されておらず、`RUN_ID` が **空文字列**になり得る
-- `--limit 1` は **同一ブランチの過去に成功した run** を掴むことがある
-
-**一括発火前に基準時刻 `SINCE` を 1 回控え**、各 WF について `workflow_dispatch` イベントかつ **基準時刻以降（`>=`）に作成された run** を、取得できるまで**リトライ**して特定する。
-
-**フェーズ B: RUN_ID 特定（WF ごと）**
+手順 6 と連続実行する場合、**`SINCE` は手順 6 の値をそのまま使う**（手順 7 で再取得しない）。
 
 ```bash
-WORKFLOWS=(deploy_user.yml deploy_partner.yml deploy_functions.yml \
-           deploy_firestore.yml deploy_storage.yml)
-RUN_ID_ENTRIES=()
+DEPLOY_ID=$(python3 -c 'import uuid; print(uuid.uuid4())')
+WORKFLOWS="deploy_user.yml,deploy_partner.yml,deploy_functions.yml,deploy_firestore.yml,deploy_storage.yml"
 
-for WF in "${WORKFLOWS[@]}"; do
-  RUN_ID=""
-  for i in $(seq 1 10); do
-    RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch REF \
-      --event workflow_dispatch --created ">=$SINCE" \
-      --limit 1 --json databaseId --jq '.[0].databaseId // empty')
-    [ -n "$RUN_ID" ] && RUN_ID_ENTRIES+=("${WF}:${RUN_ID}") && break
-    sleep 3
-  done
-  if [ -z "$RUN_ID" ]; then
-    echo "[$WF] 今回の run を自動特定できませんでした。一覧から手動で特定してください:"
-    gh run list --repo OWNER/REPO --workflow "$WF" --branch REF --limit 10
-  fi
-done
+.agents/scripts/github_actions_deploy_watch.sh \
+  --owner "$OWNER" \
+  --repo "$REPO" \
+  --ref "$REF" \
+  --since "$SINCE" \
+  --workflows "$WORKFLOWS" \
+  --deploy-id "$DEPLOY_ID"
 ```
 
-**フェーズ C: 並列監視**
+- **`notify_on_output` を付けない起動は未完成**とみなし、手順 7 完了と報告してはならない
+- 1 本だけ発火した場合は `WORKFLOWS` をその 1 ファイルにする
 
-```bash
-PIDS=()
-FAIL=0
-for ENTRY in "${RUN_ID_ENTRIES[@]}"; do
-  WF=${ENTRY%%:*}
-  RUN_ID=${ENTRY#*:}
-  (
-    if gh run watch "$RUN_ID" --repo OWNER/REPO --exit-status; then
-      exit 0
-    else
-      exit 1
-    fi
-  ) &
-  PIDS+=($!)
-done
+### 8. 即時報告
 
-for pid in "${PIDS[@]}"; do
-  wait "$pid" || FAIL=1
-done
+ユーザーへ次を伝える（各 run の成否はまだ確定しない）:
+
+- **OWNER/REPO**・**ref**・**DEPLOY_ID**
+- 発火した **workflow ファイル名**
+- **バックグラウンド監視中**である旨（完了後 sentinel で自動 wake）
+- push 省略時はその旨
+
+### 9. sentinel 受信時 → 結果読み取り・失敗解析
+
+stdout の sentinel 例:
+
+```
+AGENT_LOOP_WAKE_deploy {"prompt":"/github-actions-deploy","mode":"report","deploy_id":"<uuid>"}
 ```
 
-- `RUN_ID` が空のまま `gh run watch` を実行しない
-- 失敗した run は手順 8 で `gh run view "$RUN_ID" --log-failed` を解析する
+- 結果 JSON: `.agents/state/deploy-results/<deploy_id>.json`
 
-**1 本だけ発火・監視する場合の例**
+- **`notify_on_output` による wake 受信後、同一ターンで** 手順 10（報告 + consume）まで完走する
+- 各 run の **成否** と **run URL** を results JSON から報告
+- 失敗 run について `gh run view "$RUN_ID" --repo OWNER/REPO --log-failed` で解析（修正はしない）
 
-```bash
-SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-WF=deploy_firestore.yml
-gh workflow run "$WF" --repo OWNER/REPO --ref REF -f environment=development
+**results JSON スキーマ（概要）**:
 
-RUN_ID=""
-for i in $(seq 1 10); do
-  RUN_ID=$(gh run list --repo OWNER/REPO --workflow "$WF" --branch REF \
-    --event workflow_dispatch --created ">=$SINCE" \
-    --limit 1 --json databaseId --jq '.[0].databaseId // empty')
-  [ -n "$RUN_ID" ] && break
-  sleep 3
-done
+| フィールド | 説明 |
+|-----------|------|
+| `overall_status` | `success` / `failure` / `partial` |
+| `runs[].workflow` | ワークフローファイル名 |
+| `runs[].run_id` | GitHub run ID（特定失敗時は null） |
+| `runs[].url` | run URL |
+| `runs[].success` | 成否 |
 
-if [ -z "$RUN_ID" ]; then
-  echo "今回の run を自動特定できませんでした。一覧から手動で run を特定してください:"
-  gh run list --repo OWNER/REPO --workflow "$WF" --branch REF --limit 10
-else
-  gh run watch "$RUN_ID" --repo OWNER/REPO --exit-status
-fi
-```
+### 10. 結果をユーザーに伝える
 
-**補足**
-
-- `--created ">=$SINCE"` が使えない環境では、`gh run list` の `startedAt`／`createdAt` を確認し、基準時刻より後の run か目視で照合してから watch する。
-- 5 本を一括発火しても、GitHub Actions の **同時実行枠**の都合で run が **Queued** になることはある（発火は並列・実行はキュー待ちになり得る）。
-
-### 8. 失敗時のエラー解析（解析のみ・修正はしない）
-
-```bash
-gh run view "$RUN_ID" --repo OWNER/REPO --log-failed
-```
+- push した **REMOTE**・**OWNER/REPO**・**ref**（push 省略時はその旨）
+- 発火した **workflow ファイル名**、**environment 入力の値**
+- 各 run の **成否** と **run の URL**
+- 失敗時は **手順 9 の分類と原因サマリ**（下表）
+- `branch.<branch>.sandboxRemote` を新規保存した場合はその旨
 
 | 分類 | ログの手がかり | 典型的な原因 | 推奨アクション（提案のみ） |
 |------|----------------|--------------|----------------------------|
@@ -291,13 +274,35 @@ gh run view "$RUN_ID" --repo OWNER/REPO --log-failed
 
 - **重要**: 解析までで止める。修正や自動再実行は行わない
 
-### 9. 結果をユーザーに伝える
+**報告完了後**に pending wake を consume する（中断時の復旧のため、報告前に consume しない）:
 
-- push した **REMOTE**・**OWNER/REPO**・**ref**（push 省略時はその旨）
-- 発火した **workflow ファイル名**、**environment 入力の値**
-- 各 run の **成否** と **run の URL**
-- 失敗時は **手順 8 の分類と原因サマリ**
-- `branch.<branch>.sandboxRemote` を新規保存した場合はその旨
+```bash
+python3 .agents/scripts/github_actions_deploy_wake.py consume \
+  --wake-file .agents/state/deploy-pending-wake.json \
+  --deploy-id "$DEPLOY_ID"
+```
+
+## スクリプト
+
+| ファイル | 役割 |
+|---------|------|
+| [`.agents/scripts/github_actions_deploy_watch.sh`](../../scripts/github_actions_deploy_watch.sh) | バックグラウンド RUN_ID 特定 + 並列 watch + sentinel |
+| [`.agents/scripts/github_actions_deploy_state.py`](../../scripts/github_actions_deploy_state.py) | watcher PID 管理 |
+| [`.agents/scripts/github_actions_deploy_wake.py`](../../scripts/github_actions_deploy_wake.py) | 結果報告 pending wake |
+| [`.agents/scripts/github_actions_deploy_check.py`](../../scripts/github_actions_deploy_check.py) | RUN_ID 特定・results JSON 構築 |
+
+開発用テスト:
+
+```bash
+python3 .agents/hooks/test-github-actions-deploy-watch.py
+bash -n .agents/scripts/github_actions_deploy_watch.sh
+```
+
+## トラブルシュート
+
+### pending wake / sentinel が出ない
+
+watcher ログと [`.agents/state/deploy-watch.json`](../../state/deploy-watch.json) を確認し、手動で mode=report（results JSON 参照）を実行する。
 
 ## 注意
 
@@ -305,7 +310,7 @@ gh run view "$RUN_ID" --repo OWNER/REPO --log-failed
 - **本番 `nijuniinc/bokudeli-event-new` は必ず拒否**（push も発火も）
 - **デフォルトは push → 発火**。push 省略はユーザー明示または 1c（発火のみ）のみ
 - **`branch.<branch>.sandboxRemote`** は `git-reflect-after-commit` と共有する。ブランチごとに sandbox 先を記憶する
-- 5 本一括は **一括発火 → 並列 watch** がデフォルト
+- 5 本一括は **一括発火 → バックグラウンド並列 watch → wake 1 回で結果報告** がデフォルト
 - デプロイ失敗時は **原因を解析するだけ**。修正・自動再実行はユーザーに委ねる
 
 ## 関連ドキュメント

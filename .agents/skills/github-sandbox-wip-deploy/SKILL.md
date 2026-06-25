@@ -42,21 +42,22 @@ format 自動修正（手順 1）で生じた変更も、追跡済みであれ�
 
 ### 3. sandbox へ push してデプロイ
 
-**`github-actions-deploy` スキルの手順 0〜9** に委譲する。
+**`github-actions-deploy` スキルの手順 0〜10** に委譲する。
 
 - 委譲時は `github-actions-deploy` の **1b** がトリガーとして成立する（会話に sandbox と書かなくてよい）
 - sandbox 先は `branch.<branch>.sandboxRemote` で解決・記憶（`git-reflect-after-commit` と同じ）。候補は **`sandbox*` のみ**
 - ユーザーが **`リモート名/ブランチ名` を明示**している場合は上書き指定として優先
-- push（手順 3）→ workflow_dispatch 発火 → 監視 → 報告までを一括実行
+- push（手順 3）→ workflow_dispatch 発火 → **バックグラウンド watch** → wake 時結果報告までを委譲
 - 本スキルでは push 手順を **重複実施しない**
 
 ### 4. 結果の報告
 
-以下を報告する（`github-actions-deploy` 手順 9 の内容を含む）:
+以下を報告する（`github-actions-deploy` 手順 8 の内容を含む。各 run 成否は wake 後の手順 10）:
 
 - push 先リモート名と OWNER/REPO
 - push したブランチ名（ref）
-- 発火したワークフローと各 run の成否・URL
+- 発火したワークフローと **DEPLOY_ID**（監視中である旨）
+- wake 受信後: 各 run の成否・URL（手順 10）
 - 手順 2 で WIP コミットを新規作成した場合のみ: WIP コミットがローカルに残っていること
 - `branch.<branch>.sandboxRemote` を新規保存した場合はその旨
 
