@@ -461,7 +461,7 @@ onBeforeUnmount(() => {
           <ChatLog :current-user-id="currentUserId" :resolve-profile-path="resolveProfilePath" />
         </PerfectScrollbar>
 
-        <VForm class="chat-log-message-form mb-3 mx-5" @submit.prevent="sendMessage">
+        <VForm class="chat-log-message-form" @submit.prevent="sendMessage">
           <input
             ref="imageInputRef"
             type="file"
@@ -472,12 +472,14 @@ onBeforeUnmount(() => {
             @change="onImageSelected"
           />
 
-          <div class="d-flex align-end gap-3">
+          <div class="d-flex align-end gap-1">
             <VBtn
               v-if="!store.activeRoom.isReadonly"
               icon
               variant="text"
               color="default"
+              size="small"
+              class="chat-compose-attach-btn flex-shrink-0"
               :aria-label="t('chat.attach_image')"
               @click="openImagePicker"
             >
@@ -541,12 +543,15 @@ onBeforeUnmount(() => {
             </div>
             <VBtn
               type="submit"
+              icon
+              variant="text"
               color="primary"
-              :prepend-icon="mdiSend"
+              class="chat-compose-send-btn flex-shrink-0"
+              :aria-label="t('chat.send')"
               :disabled="store.activeRoom.isReadonly || isSending || !canSendMessage"
               :loading="isSending"
             >
-              {{ t('chat.send') }}
+              <VIcon :icon="mdiSend" />
             </VBtn>
           </div>
           <div v-if="store.activeRoom.isReadonly" class="text-caption text-disabled mt-2">
@@ -593,8 +598,10 @@ onBeforeUnmount(() => {
 }
 
 .active-chat-panel {
+  flex: 1 1 auto;
   inline-size: 100%;
   min-block-size: 0;
+  overflow: hidden;
 }
 
 .chat-empty-state {
@@ -607,11 +614,28 @@ onBeforeUnmount(() => {
 }
 
 .chat-log-scroll {
+  flex: 1 1 auto;
   min-block-size: 0;
+  overflow: hidden;
 }
 
 .chat-log-message-form {
   flex-shrink: 0;
+  margin-block-start: 12px;
+  margin-block-end: 8px;
+  padding-inline: 12px;
+
+  @media (min-width: 600px) {
+    margin-block-start: 12px;
+    margin-block-end: 12px;
+    padding-inline: 20px;
+  }
+}
+
+.chat-compose-attach-btn,
+.chat-compose-send-btn {
+  min-inline-size: 44px;
+  min-block-size: 44px;
 }
 
 .chat-compose-box {
@@ -743,7 +767,17 @@ onBeforeUnmount(() => {
 }
 
 .chat-content-container {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: hidden;
   background-color: rgba(var(--v-theme-on-surface), var(--v-hover-opacity));
+
+  :deep(.v-main__wrap) {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+    block-size: 100%;
+  }
 }
 
 .chat-list-sidebar {

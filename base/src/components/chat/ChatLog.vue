@@ -163,7 +163,7 @@ watch(
 </script>
 
 <template>
-  <div class="chat-log pa-5">
+  <div class="chat-log">
     <div v-if="store.isLoadingOlderMessages" class="text-center text-disabled text-sm mb-4">
       {{ t('chat.loading_older') }}
     </div>
@@ -315,6 +315,11 @@ watch(
 .chat-log {
   container-type: inline-size;
   container-name: chat-log;
+  padding: 12px;
+
+  @media (min-width: 600px) {
+    padding: 20px;
+  }
 }
 
 .chat-body {

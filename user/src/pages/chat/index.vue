@@ -46,11 +46,10 @@ const onOpenEvent = async (payload: { communityId: string; eventId: string }) =>
 <style scoped lang="scss">
 .chat-page {
   flex: 1 1 auto;
-  block-size: 100%;
   min-block-size: 0;
   inline-size: 100%;
   min-inline-size: 0;
-  padding: 12px;
+  padding: 0;
 
   @media (min-width: 600px) {
     padding: 16px;
@@ -58,7 +57,32 @@ const onOpenEvent = async (payload: { communityId: string; eventId: string }) =>
 }
 
 .chat-page-card {
-  block-size: 100%;
+  flex: 1 1 auto;
   min-block-size: 0;
+  overflow: hidden;
+  border-radius: 0;
+
+  :deep(.chat-app-layout) {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow: hidden;
+
+    .v-main {
+      flex: 1 1 auto;
+      min-block-size: 0;
+      overflow: hidden;
+    }
+
+    .v-main__wrap {
+      display: flex;
+      flex-direction: column;
+      min-block-size: 0;
+      block-size: 100%;
+    }
+  }
+
+  @media (min-width: 600px) {
+    border-radius: var(--v-card-border-radius);
+  }
 }
 </style>
