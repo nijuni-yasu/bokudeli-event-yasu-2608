@@ -488,7 +488,7 @@ export const useChatStore = defineStore('chat', () => {
     return ChatAttachmentSchema.parse({
       storage_path: storagePath,
       content_type: contentType,
-      file_name: imageFile.name,
+      file_name: imageFile.name.slice(0, 255),
       byte_size: imageFile.size,
       width,
       height,
