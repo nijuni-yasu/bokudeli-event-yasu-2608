@@ -35,6 +35,7 @@ vi.mock('firebase-functions/https', () => ({
 vi.mock('firebase-admin/firestore', () => ({
   FieldValue: {
     arrayRemove: (...args: unknown[]) => ({ type: 'arrayRemove', args }),
+    serverTimestamp: () => ({ type: 'serverTimestamp' }),
   },
   getFirestore: () => ({
     runTransaction: runTransactionMock,
@@ -190,7 +191,10 @@ describe('deleteUserAccount', () => {
     expect(listChatMembershipsForUserMock).toHaveBeenCalledWith('userB')
     expect(batchUpdateMock).toHaveBeenCalledWith(
       { path: 'chat_rooms/room1' },
-      { member_user_ids: { type: 'arrayRemove', args: ['userB'] } },
+      {
+        member_user_ids: { type: 'arrayRemove', args: ['userB'] },
+        updated_at: { type: 'serverTimestamp' },
+      },
     )
     expect(batchSetMock).not.toHaveBeenCalled()
     expect(batchCommitMock).toHaveBeenCalledTimes(2)

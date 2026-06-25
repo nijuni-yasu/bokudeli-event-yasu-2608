@@ -37,6 +37,7 @@ const cleanupUserChatData = async (uid: string): Promise<void> => {
       }
       batch.update(getChatRoomRef(roomId), {
         member_user_ids: FieldValue.arrayRemove(uid),
+        updated_at: FieldValue.serverTimestamp(),
       })
       writeCount++
     }
