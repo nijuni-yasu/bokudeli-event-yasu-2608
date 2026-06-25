@@ -3,6 +3,7 @@ import { mdiImageBrokenVariant } from '@mdi/js'
 import type { ChatAttachment } from '@shokujii/common/schemas/ChatMessage.js'
 import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
 import { computeChatAttachmentDisplaySize } from '@shokujii/base/utils/chatAttachmentDisplaySize.js'
+import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
 
 const props = withDefaults(
   defineProps<{
@@ -18,7 +19,11 @@ const isTileLayout = computed(() => props.layout === 'tile')
 
 const emit = defineEmits<{
   expand: [payload: { url: string; alt: string }]
+  loaded: [payload: { storagePath: string; url: string }]
+  unloaded: [payload: { storagePath: string }]
 }>()
+
+const lightboxPinActive = inject(injectionKeyChatAttachmentLightboxPin, ref(false))
 
 const { t } = useI18n()
 
@@ -46,7 +51,10 @@ const loadAttachment = async (): Promise<void> => {
   const generation = ++loadGeneration
   isLoading.value = true
   hasError.value = false
-  revokeObjectUrl()
+  if (objectUrl.value != null) {
+    emit('unloaded', { storagePath: props.attachment.storage_path })
+    revokeObjectUrl()
+  }
 
   try {
     const blob = await getChatAttachmentBlob(props.attachment.storage_path)
@@ -54,6 +62,7 @@ const loadAttachment = async (): Promise<void> => {
       return
     }
     objectUrl.value = URL.createObjectURL(blob)
+    emit('loaded', { storagePath: props.attachment.storage_path, url: objectUrl.value })
   } catch {
     if (generation !== loadGeneration) {
       return
@@ -86,6 +95,12 @@ watch(
 
 onBeforeUnmount(() => {
   loadGeneration++
+  if (lightboxPinActive.value) {
+    return
+  }
+  if (objectUrl.value != null) {
+    emit('unloaded', { storagePath: props.attachment.storage_path })
+  }
   revokeObjectUrl()
 })
 </script>
@@ -111,6 +126,7 @@ onBeforeUnmount(() => {
         :alt="attachment.file_name"
         :width="isTileLayout ? undefined : displaySize.width"
         :height="isTileLayout ? undefined : displaySize.height"
+        :cover="isTileLayout"
         class="rounded chat-attachment-img"
         :class="{ 'chat-attachment-img--tile': isTileLayout }"
       />
@@ -148,9 +164,11 @@ onBeforeUnmount(() => {
 .chat-attachment-image--tile .chat-attachment-button {
   inline-size: 100%;
   block-size: 100%;
+  overflow: hidden;
+  border-radius: 4px;
 }
 
-.chat-attachment-img :deep(.v-img__img) {
+.chat-attachment-img:not(.chat-attachment-img--tile) :deep(.v-img__img) {
   object-fit: contain;
 }
 

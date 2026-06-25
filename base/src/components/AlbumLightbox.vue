@@ -14,8 +14,10 @@ const props = withDefaults(
     index?: number
     /** 画像下のキャプション（title）を表示する */
     showCaption?: boolean
+    /** 複数枚時の「1/N枚」カウンター表示 */
+    showCounter?: boolean
   }>(),
-  { showCaption: true },
+  { showCaption: true, showCounter: true },
 )
 
 const emit = defineEmits<{
@@ -53,6 +55,8 @@ watch(
 
 const totalSlides = computed(() => props.imgs.length)
 
+const moveDisabled = computed(() => totalSlides.value <= 1)
+
 const counterLabel = computed(() =>
   totalSlides.value === 0
     ? ''
@@ -76,6 +80,7 @@ const onHide = () => {
     teleport="body"
     :zoom-disabled="true"
     :rotate-disabled="true"
+    :move-disabled="moveDisabled"
     @hide="onHide"
     @on-index-change="onIndexChange"
   >
@@ -83,7 +88,11 @@ const onHide = () => {
     <template #toolbar />
   </VueEasyLightbox>
   <Teleport to="body">
-    <div v-if="props.visible && totalSlides > 1" class="album-lightbox__counter" aria-live="polite">
+    <div
+      v-if="props.visible && totalSlides > 1 && props.showCounter"
+      class="album-lightbox__counter"
+      aria-live="polite"
+    >
       {{ counterLabel }}
     </div>
   </Teleport>

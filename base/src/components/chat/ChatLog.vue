@@ -11,7 +11,10 @@ import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import { CHAT_SYSTEM_EVENT_MEMBER_JOINED } from '@shokujii/common/schemas/ChatMessage.js'
 import type { ResolveUserPathFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import { getChatAttachmentBlob } from '@shokujii/base/utils/storage.js'
 import ChatAttachmentImage from './ChatAttachmentImage.vue'
+import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
+
 import type { ChatMessageItem } from './types.js'
 
 const props = defineProps<{
@@ -30,6 +33,133 @@ const showRecallConfirm = ref(false)
 const isRecalling = ref(false)
 const lightboxVisible = ref(false)
 const lightboxImgs = ref<AlbumLightboxSlide[]>([])
+const lightboxIndex = ref(0)
+/** サムネ読込済み Object URL（storage_path → url）。ライトボックスで再利用する */
+const attachmentObjectUrlByPath = ref(new Map<string, string>())
+/** ライトボックス用に ChatLog が生成した Object URL（サムネ側の URL は含めない） */
+const lightboxOwnedObjectUrls = ref<string[]>([])
+const attachmentLightboxPinActive = ref(false)
+
+provide(injectionKeyChatAttachmentLightboxPin, attachmentLightboxPinActive)
+
+const onAttachmentLoaded = ({ storagePath, url }: { storagePath: string; url: string }): void => {
+  const prev = attachmentObjectUrlByPath.value.get(storagePath)
+  if (prev != null && prev !== url) {
+    URL.revokeObjectURL(prev)
+  }
+  attachmentObjectUrlByPath.value.set(storagePath, url)
+}
+
+const onAttachmentUnloaded = ({ storagePath }: { storagePath: string }): void => {
+  attachmentObjectUrlByPath.value.delete(storagePath)
+}
+
+const revokeLightboxOwnedUrls = (): void => {
+  for (const url of lightboxOwnedObjectUrls.value) {
+    URL.revokeObjectURL(url)
+  }
+  lightboxOwnedObjectUrls.value = []
+}
+
+const resolveAttachmentObjectUrl = (
+  storagePath: string,
+  clickedStoragePath: string,
+  clickedUrl: string,
+): string | undefined => {
+  if (storagePath === clickedStoragePath) {
+    return clickedUrl
+  }
+  return attachmentObjectUrlByPath.value.get(storagePath)
+}
+
+const fetchPendingLightboxSlides = async (
+  pending: { slideIndex: number; storagePath: string; fileName: string }[],
+): Promise<void> => {
+  await Promise.all(
+    pending.map(async ({ slideIndex, storagePath, fileName }) => {
+      try {
+        const blob = await getChatAttachmentBlob(storagePath)
+        const url = URL.createObjectURL(blob)
+        if (!lightboxVisible.value) {
+          URL.revokeObjectURL(url)
+          return
+        }
+        lightboxOwnedObjectUrls.value.push(url)
+        onAttachmentLoaded({ storagePath, url })
+        const slide = lightboxImgs.value[slideIndex]
+        if (slide != null) {
+          lightboxImgs.value[slideIndex] = { src: url, title: fileName }
+        }
+      } catch {
+        // 読み込み失敗分は空スライドのまま
+      }
+    }),
+  )
+}
+
+const openExpandedImage = (
+  message: ChatMessageItem,
+  clickedStoragePath: string,
+  payload: { url: string; alt: string },
+): void => {
+  revokeLightboxOwnedUrls()
+
+  const attachments = message.attachments ?? []
+
+  if (attachments.length <= 1) {
+    lightboxImgs.value = [{ src: payload.url, title: payload.alt }]
+    lightboxIndex.value = 0
+    attachmentLightboxPinActive.value = true
+    lightboxVisible.value = true
+    return
+  }
+
+  const slides: AlbumLightboxSlide[] = []
+  const pendingFetches: { slideIndex: number; storagePath: string; fileName: string }[] = []
+  let clickedSlideIndex = 0
+
+  for (const attachment of attachments) {
+    const url = resolveAttachmentObjectUrl(attachment.storage_path, clickedStoragePath, payload.url)
+    const slideIndex = slides.length
+    if (attachment.storage_path === clickedStoragePath) {
+      clickedSlideIndex = slideIndex
+    }
+    if (url != null) {
+      slides.push({ src: url, title: attachment.file_name })
+    } else {
+      slides.push({ src: '', title: attachment.file_name })
+      pendingFetches.push({ slideIndex, storagePath: attachment.storage_path, fileName: attachment.file_name })
+    }
+  }
+
+  lightboxImgs.value = slides
+  lightboxIndex.value = clickedSlideIndex
+  attachmentLightboxPinActive.value = true
+  lightboxVisible.value = true
+
+  if (pendingFetches.length > 0) {
+    void fetchPendingLightboxSlides(pendingFetches)
+  }
+}
+
+const onLightboxVisibleUpdate = (value: boolean): void => {
+  lightboxVisible.value = value
+  if (!value) {
+    attachmentLightboxPinActive.value = false
+    revokeLightboxOwnedUrls()
+    lightboxImgs.value = []
+    lightboxIndex.value = 0
+  }
+}
+
+onBeforeUnmount(() => {
+  attachmentLightboxPinActive.value = false
+  for (const url of attachmentObjectUrlByPath.value.values()) {
+    URL.revokeObjectURL(url)
+  }
+  attachmentObjectUrlByPath.value.clear()
+  revokeLightboxOwnedUrls()
+})
 
 const resolveSystemMessage = (message: ChatMessageItem): string => {
   if (message.systemEvent === CHAT_SYSTEM_EVENT_MEMBER_JOINED) {
@@ -78,18 +208,6 @@ const canRecall = (message: ChatMessageItem): boolean => {
     message.deletedAt == null &&
     store.activeRoom?.isReadonly !== true
   )
-}
-
-const openExpandedImage = (payload: { url: string; alt: string }): void => {
-  lightboxImgs.value = [{ src: payload.url }]
-  lightboxVisible.value = true
-}
-
-const onLightboxVisibleUpdate = (value: boolean): void => {
-  lightboxVisible.value = value
-  if (!value) {
-    lightboxImgs.value = []
-  }
 }
 
 const openRecallConfirm = (message: ChatMessageItem) => {
@@ -160,6 +278,10 @@ watch(
   },
   { immediate: true },
 )
+
+onBeforeUnmount(() => {
+  revokeLightboxOwnedUrls()
+})
 </script>
 
 <template>
@@ -270,6 +392,7 @@ watch(
                 class="chat-message-attachments"
                 :class="{
                   'chat-message-attachments--single': (message.attachments ?? []).length === 1,
+                  'chat-message-attachments--pair': (message.attachments ?? []).length === 2,
                 }"
               >
                 <ChatAttachmentImage
@@ -277,7 +400,9 @@ watch(
                   :key="attachment.storage_path"
                   :attachment="attachment"
                   :layout="(message.attachments ?? []).length === 1 ? 'fluid' : 'tile'"
-                  @expand="openExpandedImage"
+                  @loaded="onAttachmentLoaded"
+                  @unloaded="onAttachmentUnloaded"
+                  @expand="(payload) => openExpandedImage(message, attachment.storage_path, payload)"
                 />
               </div>
             </div>
@@ -304,8 +429,9 @@ watch(
     <AlbumLightbox
       :visible="lightboxVisible"
       :imgs="lightboxImgs"
-      :index="0"
+      :index="lightboxIndex"
       :show-caption="false"
+      :show-counter="false"
       @update:visible="onLightboxVisibleUpdate"
     />
   </div>
@@ -401,6 +527,12 @@ watch(
     .chat-message-attachments--single {
       inline-size: fit-content;
       max-inline-size: 240px;
+    }
+
+    .chat-message-attachments--pair {
+      grid-template-columns: repeat(2, 1fr);
+      inline-size: 248px;
+      max-inline-size: 248px;
     }
   }
 }
