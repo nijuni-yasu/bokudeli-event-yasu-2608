@@ -22,6 +22,7 @@ import {
 import { deleteObject, ref as storageRef } from 'firebase/storage'
 import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import {
+  ChatAttachmentSchema,
   ChatMessage,
   CHAT_ATTACHMENT_MAX_BYTE_SIZE,
   CHAT_ATTACHMENT_MAX_COUNT,
@@ -89,12 +90,23 @@ const messageFromFirestore = (snapshot: QueryDocumentSnapshot): ChatMessage => {
   })
 }
 
+const roomFromFirestore = (snapshot: QueryDocumentSnapshot): ChatRoom => {
+  const raw = snapshot.data()
+  const now = Date.now()
+  return new ChatRoom(snapshot.id, {
+    ...raw,
+    created_at: parseEpochMillisOrDefault(raw.created_at, now),
+    updated_at: parseEpochMillisOrDefault(raw.updated_at, now),
+    last_message_at: parseOptionalEpochMillis(raw.last_message_at),
+  })
+}
+
 const chatRoomConverter: FirestoreDataConverter<ChatRoom> = {
   toFirestore(room: ChatRoom): DocumentData {
     return room.toFirestore()
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ChatRoom {
-    return new ChatRoom(snapshot.id, snapshot.data())
+    return roomFromFirestore(snapshot)
   },
 }
 
@@ -473,14 +485,14 @@ export const useChatStore = defineStore('chat', () => {
     const { width, height } = await getImageDimensions(imageFile)
     const attachmentId = crypto.randomUUID()
     const storagePath = getChatAttachmentStoragePath(roomId, messageId, attachmentId)
-    return {
+    return ChatAttachmentSchema.parse({
       storage_path: storagePath,
       content_type: contentType,
       file_name: imageFile.name,
       byte_size: imageFile.size,
       width,
       height,
-    }
+    })
   }
 
   const sendMessage = async (

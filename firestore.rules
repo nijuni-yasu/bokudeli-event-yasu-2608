@@ -96,7 +96,7 @@ service cloud.firestore {
         function isValidChatAttachmentAt(prefix, index) {
             let attachment = request.resource.data.attachments[index];
             return attachment.storage_path is string
-                && attachment.storage_path.matches('^' + prefix + '.+');
+                && attachment.storage_path.matches('^' + prefix + '[^/]+$');
         }
         function isValidChatAttachmentPath(roomId, messageId) {
             let prefix = chatAttachmentStoragePathPrefix(roomId, messageId);
