@@ -19,6 +19,7 @@ LEDGER_PATH = STATE_DIR / "ledger.jsonl"
 ACTIVE_TASKS_PATH = STATE_DIR / "active-tasks.json"
 REPORTS_DIR = STATE_DIR / "reports"
 PRICING_PATH = REPO_ROOT / ".agents" / "config" / "agent-usage-pricing.json"
+HOOK_ERRORS_PATH = STATE_DIR / "hook-errors.log"
 ACTIVE_TASKS_LOCK_SUFFIX = ".lock"
 
 SKILL_PATTERN = re.compile(r"^/([a-zA-Z0-9][\w-]*)")
@@ -31,6 +32,9 @@ SHELL_PHASE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("pr_review_watch", re.compile(r"wait-ai-pr-review-watch")),
 ]
 
+USAGE_REPORT_PREFIX = "[agent-usage-report]"
+SKIP_NEXT_FOLLOWUP_KEY = "skip_next_followup"
+
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -39,6 +43,14 @@ def utc_now_iso() -> str:
 def ensure_state_dirs() -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _active_tasks_path(path: Path | None) -> Path:
+    return path if path is not None else ACTIVE_TASKS_PATH
+
+
+def _ledger_path(ledger_path: Path | None) -> Path:
+    return ledger_path if ledger_path is not None else LEDGER_PATH
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -55,11 +67,12 @@ def _write_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def append_ledger(entry: dict[str, Any], *, ledger_path: Path = LEDGER_PATH) -> None:
+def append_ledger(entry: dict[str, Any], *, ledger_path: Path | None = None) -> None:
+    resolved = _ledger_path(ledger_path)
     ensure_state_dirs()
-    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    resolved.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
-    with ledger_path.open("a", encoding="utf-8") as fh:
+    with resolved.open("a", encoding="utf-8") as fh:
         fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
         try:
             fh.write(line)
@@ -67,11 +80,12 @@ def append_ledger(entry: dict[str, Any], *, ledger_path: Path = LEDGER_PATH) -> 
             fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
 
 
-def load_ledger(*, ledger_path: Path = LEDGER_PATH) -> list[dict[str, Any]]:
-    if not ledger_path.exists():
+def load_ledger(*, ledger_path: Path | None = None) -> list[dict[str, Any]]:
+    resolved = _ledger_path(ledger_path)
+    if not resolved.exists():
         return []
     entries: list[dict[str, Any]] = []
-    for line in ledger_path.read_text(encoding="utf-8").splitlines():
+    for line in resolved.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line:
             continue
@@ -83,9 +97,10 @@ def load_ledger(*, ledger_path: Path = LEDGER_PATH) -> list[dict[str, Any]]:
 
 
 @contextmanager
-def _active_tasks_lock(*, path: Path = ACTIVE_TASKS_PATH):
+def _active_tasks_lock(*, path: Path | None = None):
+    resolved = _active_tasks_path(path)
     ensure_state_dirs()
-    lock_path = Path(f"{path}{ACTIVE_TASKS_LOCK_SUFFIX}")
+    lock_path = Path(f"{resolved}{ACTIVE_TASKS_LOCK_SUFFIX}")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a", encoding="utf-8") as lock_fh:
         fcntl.flock(lock_fh.fileno(), fcntl.LOCK_EX)
@@ -95,28 +110,31 @@ def _active_tasks_lock(*, path: Path = ACTIVE_TASKS_PATH):
             fcntl.flock(lock_fh.fileno(), fcntl.LOCK_UN)
 
 
-def load_active_tasks(*, path: Path = ACTIVE_TASKS_PATH) -> dict[str, dict[str, Any]]:
-    with _active_tasks_lock(path=path):
-        data = _read_json(path, {})
+def load_active_tasks(*, path: Path | None = None) -> dict[str, dict[str, Any]]:
+    resolved = _active_tasks_path(path)
+    with _active_tasks_lock(path=resolved):
+        data = _read_json(resolved, {})
         return data if isinstance(data, dict) else {}
 
 
-def save_active_tasks(tasks: dict[str, dict[str, Any]], *, path: Path = ACTIVE_TASKS_PATH) -> None:
-    with _active_tasks_lock(path=path):
-        _write_json(path, tasks)
+def save_active_tasks(tasks: dict[str, dict[str, Any]], *, path: Path | None = None) -> None:
+    resolved = _active_tasks_path(path)
+    with _active_tasks_lock(path=resolved):
+        _write_json(resolved, tasks)
 
 
 def update_active_tasks(
     mutator: Callable[[dict[str, dict[str, Any]]], Any],
     *,
-    path: Path = ACTIVE_TASKS_PATH,
+    path: Path | None = None,
 ) -> Any:
-    with _active_tasks_lock(path=path):
-        tasks = _read_json(path, {})
+    resolved = _active_tasks_path(path)
+    with _active_tasks_lock(path=resolved):
+        tasks = _read_json(resolved, {})
         if not isinstance(tasks, dict):
             tasks = {}
         result = mutator(tasks)
-        _write_json(path, tasks)
+        _write_json(resolved, tasks)
         return result
 
 
@@ -127,6 +145,22 @@ def session_key(payload: dict[str, Any]) -> str:
         or payload.get("sessionId")
         or "unknown"
     )
+
+
+def prompt_from_payload(payload: dict[str, Any]) -> str:
+    return str(payload.get("prompt") or payload.get("user_message") or "")
+
+
+def is_usage_report_prompt(prompt: str) -> bool:
+    return prompt.strip().startswith(USAGE_REPORT_PREFIX)
+
+
+def is_usage_report_ack_turn(payload: dict[str, Any], *, path: Path | None = None) -> bool:
+    """True when this turn should not emit another usage followup."""
+    if is_usage_report_prompt(prompt_from_payload(payload)):
+        return True
+    task = get_active_task(payload, path=path)
+    return bool(task.get(SKIP_NEXT_FOLLOWUP_KEY))
 
 
 def detect_task_from_prompt(prompt: str) -> tuple[str | None, str | None, str | None]:
@@ -180,17 +214,22 @@ def _optional_int(value: Any) -> int | None:
         return None
 
 
-def normalize_tokens_from_cursor(payload: dict[str, Any]) -> dict[str, int | None]:
-    inp = _optional_int(payload.get("input_tokens"))
-    out = _optional_int(payload.get("output_tokens"))
-    cache_read = _optional_int(payload.get("cache_read_tokens"))
-    cache_write = _optional_int(payload.get("cache_write_tokens"))
-
+def _tokens_from_ints(
+    inp: int | None,
+    out: int | None,
+    cache_read: int | None,
+    cache_write: int | None,
+    *,
+    fresh_equals_input: bool = False,
+) -> dict[str, int | None]:
     fresh: int | None = None
     if inp is not None:
-        fresh = inp - (cache_read or 0) - (cache_write or 0)
-        if fresh < 0:
+        if fresh_equals_input:
             fresh = inp
+        else:
+            fresh = inp - (cache_read or 0) - (cache_write or 0)
+            if fresh < 0:
+                fresh = inp
 
     return {
         "input": inp,
@@ -199,6 +238,48 @@ def normalize_tokens_from_cursor(payload: dict[str, Any]) -> dict[str, int | Non
         "cache_write": cache_write,
         "fresh_input": fresh,
     }
+
+
+def _tokens_from_usage_dict(usage: dict[str, Any], *, cursor_field_names: bool) -> dict[str, int | None]:
+    if cursor_field_names:
+        inp = _optional_int(usage.get("input_tokens"))
+        out = _optional_int(usage.get("output_tokens"))
+        cache_read = _optional_int(usage.get("cache_read_tokens"))
+        cache_write = _optional_int(usage.get("cache_write_tokens"))
+    else:
+        inp = _optional_int(usage.get("input_tokens"))
+        out = _optional_int(usage.get("output_tokens"))
+        cache_read = _optional_int(usage.get("cache_read_input_tokens"))
+        cache_write = _optional_int(usage.get("cache_creation_input_tokens"))
+
+    if all(v is None for v in (inp, out, cache_read, cache_write)):
+        return _tokens_from_ints(None, None, None, None)
+
+    return _tokens_from_ints(
+        inp,
+        out,
+        cache_read,
+        cache_write,
+        fresh_equals_input=not cursor_field_names,
+    )
+
+
+def normalize_tokens_from_cursor(payload: dict[str, Any]) -> dict[str, int | None]:
+    tokens = _tokens_from_usage_dict(payload, cursor_field_names=True)
+    if tokens.get("input") is not None or tokens.get("output") is not None:
+        return tokens
+
+    usage = payload.get("usage")
+    if isinstance(usage, dict):
+        nested = _tokens_from_usage_dict(usage, cursor_field_names=True)
+        if nested.get("input") is not None or nested.get("output") is not None:
+            return nested
+
+    transcript = payload.get("transcript_path")
+    if isinstance(transcript, str):
+        return _usage_from_transcript(transcript)
+
+    return _tokens_from_ints(None, None, None, None)
 
 
 def _usage_from_transcript(transcript_path: str | None) -> dict[str, int | None]:
@@ -238,61 +319,21 @@ def _usage_from_transcript(transcript_path: str | None) -> dict[str, int | None]
             usage = u
 
     if not usage:
-        return {
-            "input": None,
-            "output": None,
-            "cache_read": None,
-            "cache_write": None,
-            "fresh_input": None,
-        }
+        return _tokens_from_ints(None, None, None, None, fresh_equals_input=True)
 
-    inp = _optional_int(usage.get("input_tokens"))
-    out = _optional_int(usage.get("output_tokens"))
-    cache_read = _optional_int(usage.get("cache_read_input_tokens"))
-    cache_write = _optional_int(usage.get("cache_creation_input_tokens"))
-
-    fresh: int | None = None
-    if inp is not None:
-        fresh = inp
-
-    return {
-        "input": inp,
-        "output": out,
-        "cache_read": cache_read,
-        "cache_write": cache_write,
-        "fresh_input": fresh,
-    }
+    return _tokens_from_usage_dict(usage, cursor_field_names=False)
 
 
 def normalize_tokens_from_claude(payload: dict[str, Any]) -> dict[str, int | None]:
     usage = payload.get("usage")
     if isinstance(usage, dict):
-        inp = _optional_int(usage.get("input_tokens"))
-        out = _optional_int(usage.get("output_tokens"))
-        cache_read = _optional_int(usage.get("cache_read_input_tokens"))
-        cache_write = _optional_int(usage.get("cache_creation_input_tokens"))
-
-        fresh: int | None = inp
-
-        return {
-            "input": inp,
-            "output": out,
-            "cache_read": cache_read,
-            "cache_write": cache_write,
-            "fresh_input": fresh,
-        }
+        return _tokens_from_usage_dict(usage, cursor_field_names=False)
 
     transcript = payload.get("transcript_path")
     if isinstance(transcript, str):
         return _usage_from_transcript(transcript)
 
-    return {
-        "input": None,
-        "output": None,
-        "cache_read": None,
-        "cache_write": None,
-        "fresh_input": None,
-    }
+    return _tokens_from_ints(None, None, None, None, fresh_equals_input=True)
 
 
 def resolve_model_id(payload: dict[str, Any]) -> str | None:
@@ -305,6 +346,18 @@ def resolve_model_id(payload: dict[str, Any]) -> str | None:
 
 def load_pricing(*, path: Path = PRICING_PATH) -> dict[str, Any]:
     return _read_json(path, {"default": {}, "models": {}})
+
+
+def followup_min_jpy(*, path: Path = PRICING_PATH) -> int | None:
+    """Minimum estimated JPY to emit stop-hook followup. None disables threshold."""
+    pricing = load_pricing(path=path)
+    val = pricing.get("followup_min_jpy")
+    if val is None:
+        return None
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return None
 
 
 def estimate_cost_usd(tokens: dict[str, int | None], model_id: str | None) -> float | None:
@@ -353,12 +406,25 @@ def estimate_cost_usd(tokens: dict[str, int | None], model_id: str | None) -> fl
     return round(cost, 4) if has_component else None
 
 
+def usd_to_jpy(usd: float | None, *, path: Path = PRICING_PATH) -> float | None:
+    if usd is None:
+        return None
+    pricing = load_pricing(path=path)
+    rate = pricing.get("usd_jpy_rate")
+    if rate is None:
+        return None
+    try:
+        return round(usd * float(rate))
+    except (TypeError, ValueError):
+        return None
+
+
 def start_task(
     payload: dict[str, Any],
     *,
     platform: str,
     prompt: str,
-    path: Path = ACTIVE_TASKS_PATH,
+    path: Path | None = None,
 ) -> dict[str, Any]:
     key = session_key(payload)
     skill, phase, wake_mode = detect_task_from_prompt(prompt)
@@ -383,12 +449,12 @@ def start_task(
     return load_active_tasks(path=path).get(key, {})
 
 
-def get_active_task(payload: dict[str, Any], *, path: Path = ACTIVE_TASKS_PATH) -> dict[str, Any]:
+def get_active_task(payload: dict[str, Any], *, path: Path | None = None) -> dict[str, Any]:
     key = session_key(payload)
     return load_active_tasks(path=path).get(key, {})
 
 
-def clear_active_task(session_id: str, *, path: Path = ACTIVE_TASKS_PATH) -> None:
+def clear_active_task(session_id: str, *, path: Path | None = None) -> None:
     def mutator(tasks: dict[str, dict[str, Any]]) -> None:
         tasks.pop(session_id, None)
         return None
@@ -396,8 +462,35 @@ def clear_active_task(session_id: str, *, path: Path = ACTIVE_TASKS_PATH) -> Non
     update_active_tasks(mutator, path=path)
 
 
+def clear_skip_next_followup(payload: dict[str, Any], *, path: Path | None = None) -> None:
+    key = session_key(payload)
+
+    def mutator(tasks: dict[str, dict[str, Any]]) -> None:
+        task = tasks.get(key)
+        if not task or SKIP_NEXT_FOLLOWUP_KEY not in task:
+            return None
+        del task[SKIP_NEXT_FOLLOWUP_KEY]
+        tasks[key] = task
+        return None
+
+    update_active_tasks(mutator, path=path)
+
+
 def record_task_start(payload: dict[str, Any], *, platform: str) -> None:
-    prompt = str(payload.get("prompt") or payload.get("user_message") or "")
+    prompt = prompt_from_payload(payload)
+
+    if is_usage_report_prompt(prompt):
+        key = session_key(payload)
+
+        def mutator(tasks: dict[str, dict[str, Any]]) -> None:
+            task = tasks.get(key)
+            if task:
+                task[SKIP_NEXT_FOLLOWUP_KEY] = True
+                tasks[key] = task
+            return None
+
+        update_active_tasks(mutator)
+        return
 
     skill, _, _ = detect_task_from_prompt(prompt)
     if not skill:
@@ -536,6 +629,74 @@ def _format_usd(v: float | None) -> str:
     if v is None:
         return "—"
     return f"${v:.2f}"
+
+
+def _format_jpy(v: float | None) -> str:
+    if v is None:
+        return "—"
+    return f"¥{v:,.0f}"
+
+
+def build_turn_usage_followup(payload: dict[str, Any], *, platform: str) -> str | None:
+    if platform == "cursor":
+        tokens = normalize_tokens_from_cursor(payload)
+    else:
+        tokens = normalize_tokens_from_claude(payload)
+
+    inp = tokens.get("input")
+    out = tokens.get("output")
+    if inp is None and out is None:
+        return None
+
+    model_id = resolve_model_id(payload)
+    cost_usd = estimate_cost_usd(tokens, model_id)
+    cost_jpy = usd_to_jpy(cost_usd)
+
+    parts: list[str] = []
+    if inp is not None:
+        parts.append(f"input {_format_tokens(inp)}")
+    fresh = tokens.get("fresh_input")
+    if fresh is not None and inp is not None and fresh != inp:
+        parts.append(f"fresh {_format_tokens(fresh)}")
+    if out is not None:
+        parts.append(f"output {_format_tokens(out)}")
+
+    cost_str = _format_jpy(cost_jpy) if cost_jpy is not None else _format_usd(cost_usd)
+    token_str = " / ".join(parts)
+
+    min_jpy = followup_min_jpy()
+    if min_jpy is not None:
+        threshold_jpy = cost_jpy if cost_jpy is not None else usd_to_jpy(cost_usd)
+        if threshold_jpy is None or threshold_jpy < min_jpy:
+            return None
+
+    return (
+        f"{USAGE_REPORT_PREFIX} {token_str}、"
+        f"推定 {cost_str}（参考）。応答・思考不要。"
+    )
+
+
+def process_stop_hook(payload: dict[str, Any], *, platform: str) -> dict[str, Any]:
+    """stop hook: ledger 記録 + Cursor 向け followup_message（必要時）。"""
+    skip_followup = is_usage_report_ack_turn(payload)
+    record_turn_end(payload, platform=platform)
+
+    if skip_followup:
+        clear_skip_next_followup(payload)
+        return {}
+
+    status = str(payload.get("status") or payload.get("stop_reason") or "completed")
+    if status in ("aborted", "error"):
+        return {}
+
+    if platform != "cursor":
+        return {}
+
+    followup = build_turn_usage_followup(payload, platform=platform)
+    if not followup:
+        return {}
+
+    return {"followup_message": followup}
 
 
 def aggregate_entries(entries: list[dict[str, Any]]) -> dict[str, Any]:
@@ -700,13 +861,14 @@ def record_session_end(payload: dict[str, Any], *, platform: str) -> Path | None
     return report_path
 
 
-def last_session_id(*, ledger_path: Path = LEDGER_PATH) -> str | None:
+def last_session_id(*, ledger_path: Path | None = None) -> str | None:
     entries = load_ledger(ledger_path=ledger_path)
     for e in reversed(entries):
         if e.get("event") == "session_end":
             sid = e.get("conversation_id")
             if isinstance(sid, str):
                 return sid
+    for e in reversed(entries):
         sid = e.get("conversation_id")
         if isinstance(sid, str):
             return sid

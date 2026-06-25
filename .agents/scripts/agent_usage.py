@@ -43,6 +43,13 @@ def cmd_record(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_stop(args: argparse.Namespace) -> int:
+    payload = _read_stdin_json()
+    result = lib.process_stop_hook(payload, platform=args.platform)
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     entries = lib.load_ledger()
 
@@ -114,10 +121,15 @@ def main() -> int:
     summary_p.add_argument("--platform", default="cursor", choices=("cursor", "claude"))
     summary_p.add_argument("--duration-ms", type=int)
 
+    stop_p = sub.add_parser("stop", help="Process stop hook: record turn + optional followup_message")
+    stop_p.add_argument("--platform", required=True, choices=("cursor", "claude"))
+
     args = parser.parse_args()
 
     if args.command == "record":
         return cmd_record(args)
+    if args.command == "stop":
+        return cmd_stop(args)
     if args.command == "report":
         return cmd_report(args)
     if args.command == "summary":

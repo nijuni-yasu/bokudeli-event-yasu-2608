@@ -1,5 +1,7 @@
 {
   "disclaimer": "推定金額は参考値です。Cursor / Anthropic の実際の請求と一致しない場合があります。単価は手動更新してください。",
+  "usd_jpy_rate": 150,
+  "followup_min_jpy": 50,
   "default": {
     "input_per_mtok": 3.0,
     "output_per_mtok": 15.0,
