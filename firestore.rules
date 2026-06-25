@@ -59,13 +59,18 @@ service cloud.firestore {
                 && request.resource.data.get('ordered_food_count', 0) == 0
                 && !('counts_updated_at' in request.resource.data);
         }
+        function chatRoomDoc(roomId) {
+            return get(/databases/$(database)/documents/chat_rooms/$(roomId)).data;
+        }
         function isChatRoomMember(roomId) {
             return request.auth != null
-                && request.auth.uid in get(/databases/$(database)/documents/chat_rooms/$(roomId)).data.member_user_ids;
+                && request.auth.uid in chatRoomDoc(roomId).member_user_ids;
         }
         function isChatRoomWritable(roomId) {
-            return isChatRoomMember(roomId)
-                && get(/databases/$(database)/documents/chat_rooms/$(roomId)).data.is_active == true;
+            let room = chatRoomDoc(roomId);
+            return request.auth != null
+                && request.auth.uid in room.member_user_ids
+                && room.is_active == true;
         }
         function chatMembershipUpdateAllowed() {
             return request.resource.data.diff(resource.data).affectedKeys()
