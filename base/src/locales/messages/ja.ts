@@ -1029,6 +1029,8 @@ export default {
     send: '送信',
     readonly_hint: 'このチャットは終了したため、新しいメッセージは送信できません',
     loading_older: '過去のメッセージを読み込み中…',
+    date_today: '今日',
+    date_yesterday: '昨日',
     you: 'あなた',
     default_user_name: 'ユーザー',
     system_member_joined: '{name}さんが参加しました',

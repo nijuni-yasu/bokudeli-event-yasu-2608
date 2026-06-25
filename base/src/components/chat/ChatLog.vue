@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { mdiDotsVertical } from '@mdi/js'
-import { convertToTimeString } from '@shokujii/common/utils/datetime.js'
+import {
+  convertToTimeString,
+  convertToDateString,
+  formatChatCalendarDate,
+  isChatSameCalendarDay,
+  isChatToday,
+  isChatYesterday,
+} from '@shokujii/common/utils/datetime.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import AlbumLightbox, { type AlbumLightboxSlide } from '@shokujii/base/components/AlbumLightbox.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
@@ -16,6 +23,10 @@ import ChatAttachmentImage from './ChatAttachmentImage.vue'
 import { injectionKeyChatAttachmentLightboxPin } from './symbols.js'
 
 import type { ChatMessageItem } from './types.js'
+
+type ChatLogEntry =
+  | { kind: 'date-separator'; key: string; label: string }
+  | { kind: 'message'; key: string; message: ChatMessageItem }
 
 const props = defineProps<{
   currentUserId: string
@@ -279,6 +290,39 @@ watch(
   { immediate: true },
 )
 
+const resolveDateSeparatorLabel = (createdAt: number): string => {
+  if (isChatToday(createdAt)) {
+    return t('chat.date_today')
+  }
+  if (isChatYesterday(createdAt)) {
+    return t('chat.date_yesterday')
+  }
+  return formatChatCalendarDate(createdAt)
+}
+
+const chatLogEntries = computed((): ChatLogEntry[] => {
+  const entries: ChatLogEntry[] = []
+  let previousCreatedAt: number | null = null
+
+  for (const message of store.messages) {
+    if (previousCreatedAt == null || !isChatSameCalendarDay(previousCreatedAt, message.createdAt)) {
+      entries.push({
+        kind: 'date-separator',
+        key: `date-${convertToDateString(message.createdAt)}`,
+        label: resolveDateSeparatorLabel(message.createdAt),
+      })
+    }
+    entries.push({
+      kind: 'message',
+      key: message.id,
+      message,
+    })
+    previousCreatedAt = message.createdAt
+  }
+
+  return entries
+})
+
 onBeforeUnmount(() => {
   revokeLightboxOwnedUrls()
 })
@@ -290,128 +334,139 @@ onBeforeUnmount(() => {
       {{ t('chat.loading_older') }}
     </div>
 
-    <template v-for="message in store.messages" :key="message.id">
-      <div v-if="message.messageType === 'system'" class="text-center text-disabled text-sm my-4">
-        {{ resolveSystemMessage(message) }}
+    <template v-for="entry in chatLogEntries" :key="entry.key">
+      <div v-if="entry.kind === 'date-separator'" class="text-center text-disabled text-sm my-4">
+        {{ entry.label }}
       </div>
 
-      <div v-else-if="message.deletedAt != null" class="text-center text-disabled text-sm my-4">
-        {{ resolveDeletedMessage(message) }}
-      </div>
+      <template v-else>
+        <div v-if="entry.message.messageType === 'system'" class="text-center text-disabled text-sm my-4">
+          {{ resolveSystemMessage(entry.message) }}
+        </div>
 
-      <div
-        v-else
-        class="chat-group d-flex align-start mb-6"
-        :class="[message.senderUserId === currentUserId ? 'flex-row-reverse chat-group-own' : '']"
-      >
-        <component
-          v-if="message.senderUserId !== currentUserId"
-          :is="profilePath(message.senderUserId ?? '') != null ? 'router-link' : 'div'"
-          v-bind="
-            profilePath(message.senderUserId ?? '') != null
-              ? {
-                  to: profilePath(message.senderUserId ?? ''),
-                  'aria-label': profileAriaLabel(message.senderUserId ?? ''),
-                }
-              : {}
-          "
-          class="flex-shrink-0 me-3"
-          @click.stop
-        >
-          <UserAvatar :user="resolveSenderUser(message.senderUserId ?? '')" :size="38" />
-        </component>
+        <div v-else-if="entry.message.deletedAt != null" class="text-center text-disabled text-sm my-4">
+          {{ resolveDeletedMessage(entry.message) }}
+        </div>
 
         <div
-          class="chat-body d-inline-flex flex-column gap-1"
-          :class="message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
+          v-else
+          class="chat-group d-flex align-start mb-6"
+          :class="[entry.message.senderUserId === currentUserId ? 'flex-row-reverse chat-group-own' : '']"
         >
-          <span v-if="message.senderUserId !== currentUserId" class="text-xs text-medium-emphasis">
-            {{ resolveSenderName(message.senderUserId ?? '') }}
-          </span>
-          <div
-            class="chat-message-content d-flex flex-column gap-1"
-            :class="message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
+          <component
+            v-if="entry.message.senderUserId !== currentUserId"
+            :is="profilePath(entry.message.senderUserId ?? '') != null ? 'router-link' : 'div'"
+            v-bind="
+              profilePath(entry.message.senderUserId ?? '') != null
+                ? {
+                    to: profilePath(entry.message.senderUserId ?? ''),
+                    'aria-label': profileAriaLabel(entry.message.senderUserId ?? ''),
+                  }
+                : {}
+            "
+            class="flex-shrink-0 me-3"
+            @click.stop
           >
+            <UserAvatar :user="resolveSenderUser(entry.message.senderUserId ?? '')" :size="38" />
+          </component>
+
+          <div
+            class="chat-body d-inline-flex flex-column gap-1"
+            :class="entry.message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
+          >
+            <span v-if="entry.message.senderUserId !== currentUserId" class="text-xs text-medium-emphasis">
+              {{ resolveSenderName(entry.message.senderUserId ?? '') }}
+            </span>
             <div
-              v-if="message.body != null && message.body !== ''"
-              class="chat-message-text-row d-flex align-center gap-1"
+              class="chat-message-content d-flex flex-column gap-1"
+              :class="entry.message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
             >
-              <VMenu v-if="canRecall(message)" location="bottom">
-                <template #activator="{ props: menuProps }">
-                  <VBtn
-                    v-bind="menuProps"
-                    icon
-                    variant="text"
-                    size="x-small"
-                    color="default"
-                    class="chat-recall-menu-btn flex-shrink-0"
-                    :aria-label="t('chat.recall_message')"
-                    @click.stop
-                  >
-                    <VIcon :icon="mdiDotsVertical" size="18" />
-                  </VBtn>
-                </template>
-                <VList density="compact">
-                  <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
-                </VList>
-              </VMenu>
-              <p
-                v-linkify
-                class="chat-content py-3 px-4 elevation-1 mb-0"
-                :class="
-                  message.senderUserId === currentUserId ? 'bg-primary text-white chat-right' : 'bg-surface chat-left'
-                "
-              >
-                {{ message.body }}
-              </p>
-            </div>
-            <div
-              v-if="(message.attachments ?? []).length > 0"
-              class="chat-message-attachments-row d-flex align-center gap-1"
-            >
-              <VMenu v-if="canRecall(message) && (message.body == null || message.body === '')" location="bottom">
-                <template #activator="{ props: menuProps }">
-                  <VBtn
-                    v-bind="menuProps"
-                    icon
-                    variant="text"
-                    size="x-small"
-                    color="default"
-                    class="chat-recall-menu-btn flex-shrink-0"
-                    :aria-label="t('chat.recall_message')"
-                    @click.stop
-                  >
-                    <VIcon :icon="mdiDotsVertical" size="18" />
-                  </VBtn>
-                </template>
-                <VList density="compact">
-                  <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(message)" />
-                </VList>
-              </VMenu>
               <div
-                class="chat-message-attachments"
-                :class="{
-                  'chat-message-attachments--single': (message.attachments ?? []).length === 1,
-                  'chat-message-attachments--pair': (message.attachments ?? []).length === 2,
-                }"
+                v-if="entry.message.body != null && entry.message.body !== ''"
+                class="chat-message-text-row d-flex align-center gap-1"
               >
-                <ChatAttachmentImage
-                  v-for="attachment in message.attachments ?? []"
-                  :key="attachment.storage_path"
-                  :attachment="attachment"
-                  :layout="(message.attachments ?? []).length === 1 ? 'fluid' : 'tile'"
-                  @loaded="onAttachmentLoaded"
-                  @unloaded="onAttachmentUnloaded"
-                  @expand="(payload) => openExpandedImage(message, attachment.storage_path, payload)"
-                />
+                <VMenu v-if="canRecall(entry.message)" location="bottom">
+                  <template #activator="{ props: menuProps }">
+                    <VBtn
+                      v-bind="menuProps"
+                      icon
+                      variant="text"
+                      size="x-small"
+                      color="default"
+                      class="chat-recall-menu-btn flex-shrink-0"
+                      :aria-label="t('chat.recall_message')"
+                      @click.stop
+                    >
+                      <VIcon :icon="mdiDotsVertical" size="18" />
+                    </VBtn>
+                  </template>
+                  <VList density="compact">
+                    <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(entry.message)" />
+                  </VList>
+                </VMenu>
+                <p
+                  v-linkify
+                  class="chat-content py-3 px-4 elevation-1 mb-0"
+                  :class="
+                    entry.message.senderUserId === currentUserId
+                      ? 'bg-primary text-white chat-right'
+                      : 'bg-surface chat-left'
+                  "
+                >
+                  {{ entry.message.body }}
+                </p>
+              </div>
+              <div
+                v-if="(entry.message.attachments ?? []).length > 0"
+                class="chat-message-attachments-row d-flex align-center gap-1"
+              >
+                <VMenu
+                  v-if="canRecall(entry.message) && (entry.message.body == null || entry.message.body === '')"
+                  location="bottom"
+                >
+                  <template #activator="{ props: menuProps }">
+                    <VBtn
+                      v-bind="menuProps"
+                      icon
+                      variant="text"
+                      size="x-small"
+                      color="default"
+                      class="chat-recall-menu-btn flex-shrink-0"
+                      :aria-label="t('chat.recall_message')"
+                      @click.stop
+                    >
+                      <VIcon :icon="mdiDotsVertical" size="18" />
+                    </VBtn>
+                  </template>
+                  <VList density="compact">
+                    <VListItem :title="t('chat.recall_message')" @click="openRecallConfirm(entry.message)" />
+                  </VList>
+                </VMenu>
+                <div
+                  class="chat-message-attachments"
+                  :class="{
+                    'chat-message-attachments--single': (entry.message.attachments ?? []).length === 1,
+                    'chat-message-attachments--pair': (entry.message.attachments ?? []).length === 2,
+                  }"
+                >
+                  <ChatAttachmentImage
+                    v-for="attachment in entry.message.attachments ?? []"
+                    :key="attachment.storage_path"
+                    :attachment="attachment"
+                    :layout="(entry.message.attachments ?? []).length === 1 ? 'fluid' : 'tile'"
+                    @loaded="onAttachmentLoaded"
+                    @unloaded="onAttachmentUnloaded"
+                    @expand="(payload) => openExpandedImage(entry.message, attachment.storage_path, payload)"
+                  />
+                </div>
               </div>
             </div>
+            <span class="text-xs text-disabled">
+              {{ convertToTimeString(entry.message.createdAt) }}
+            </span>
           </div>
-          <span class="text-xs text-disabled">
-            {{ convertToTimeString(message.createdAt) }}
-          </span>
         </div>
-      </div>
+      </template>
     </template>
 
     <ConfirmDialog
