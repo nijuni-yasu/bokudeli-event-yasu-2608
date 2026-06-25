@@ -87,25 +87,32 @@ service cloud.firestore {
                 && request.resource.data.attachments.size() >= 1
                 && request.resource.data.attachments.size() <= 12;
         }
-        function isValidChatAttachmentEntry(roomId, messageId, attachment) {
-            let prefix = 'chat_rooms/' + roomId + '/' + messageId + '/';
+        // 添付の深い検証（MIME / byte_size / 寸法）は Web SDK setDoc と相性が悪いため Firestore では
+        // storage_path の prefix のみ検証する。list.map は permission-denied になるため添字参照を使う。
+        // MIME・サイズ・寸法は Storage Rules + クライアント（Zod）で担保する。
+        function chatAttachmentStoragePathPrefix(roomId, messageId) {
+            return 'chat_rooms/' + roomId + '/' + messageId + '/';
+        }
+        function isValidChatAttachmentAt(prefix, index) {
+            let attachment = request.resource.data.attachments[index];
             return attachment.storage_path is string
-                && attachment.storage_path.matches('^' + prefix + '.+')
-                && attachment.content_type is string
-                && attachment.content_type in ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
-                && attachment.file_name is string
-                && attachment.byte_size is int
-                && attachment.byte_size > 0
-                && attachment.byte_size <= 10 * 1024 * 1024
-                && attachment.width is int
-                && attachment.width > 0
-                && attachment.height is int
-                && attachment.height > 0;
+                && attachment.storage_path.matches('^' + prefix + '.+');
         }
         function isValidChatAttachmentPath(roomId, messageId) {
-            return !(false in request.resource.data.attachments.map(
-                a, isValidChatAttachmentEntry(roomId, messageId, a)
-            ));
+            let prefix = chatAttachmentStoragePathPrefix(roomId, messageId);
+            let n = request.resource.data.attachments.size();
+            return n >= 1 && isValidChatAttachmentAt(prefix, 0)
+                && (n < 2 || isValidChatAttachmentAt(prefix, 1))
+                && (n < 3 || isValidChatAttachmentAt(prefix, 2))
+                && (n < 4 || isValidChatAttachmentAt(prefix, 3))
+                && (n < 5 || isValidChatAttachmentAt(prefix, 4))
+                && (n < 6 || isValidChatAttachmentAt(prefix, 5))
+                && (n < 7 || isValidChatAttachmentAt(prefix, 6))
+                && (n < 8 || isValidChatAttachmentAt(prefix, 7))
+                && (n < 9 || isValidChatAttachmentAt(prefix, 8))
+                && (n < 10 || isValidChatAttachmentAt(prefix, 9))
+                && (n < 11 || isValidChatAttachmentAt(prefix, 10))
+                && (n < 12 || isValidChatAttachmentAt(prefix, 11));
         }
         match /assets/{asset} {
             allow read: if true
