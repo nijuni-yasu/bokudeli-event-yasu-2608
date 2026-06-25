@@ -121,6 +121,7 @@ npm -w <pkg> run format:check
 5. 仕様書・ドキュメントに基づく実装で、common のスキーマ（common/src/schemas、common/src/apis）を触る場合は、shokujii-common-schemas を参照すること
 6. functions/default で Function を追加・修正する場合は、shokujii-functions-implementation を参照すること
 7. セッション開始時、`.agents/state/pr-review-pending-wake.json` に未処理 wake があれば [`wait-ai-pr-review`](.agents/skills/wait-ai-pr-review/SKILL.md) 手順 6 に従い evaluate 未処理をユーザーへ報告する。`pr-<n>.md` に当該 `since` 以降の評価セッションが無い場合は auto evaluate 未完了として [`review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) auto モード（手順 4 追記まで）の実行を提案する
+8. Agent 使用量の確認: `python3 .agents/scripts/agent_usage.py report --last-session` または `.agents/state/agent-usage/reports/` を参照（hook による推定値）
 
 ## 作業完了前の必須手順（コード変更）
 
