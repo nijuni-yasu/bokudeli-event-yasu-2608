@@ -46,6 +46,22 @@ const store = useChatStore()
 const currentUserStore = useCurrentUserStore()
 const currentUserId = computed(() => currentUserStore.firebaseUser?.uid ?? '')
 
+const hasSpecifiedRoom = computed(() => props.roomId != null && props.roomId !== '')
+
+const isMobileWithoutRoom = computed(() => {
+  return vuetifyDisplays.smAndDown.value && !hasSpecifiedRoom.value && store.activeRoom == null
+})
+
+const needsOpenRoom = (roomId: string): boolean => {
+  return store.activeRoomId !== roomId || store.activeRoom == null
+}
+
+const openMobileChatList = (): void => {
+  if (vuetifyDisplays.smAndDown.value) {
+    isLeftSidebarOpen.value = true
+  }
+}
+
 const SCROLL_NEAR_BOTTOM_THRESHOLD = 80
 
 const msg = ref('')
@@ -192,6 +208,13 @@ const scrollToBottomInChatLog = () => {
   })
 }
 
+const ensureRoomOpened = (roomId: string, userId: string): void => {
+  if (needsOpenRoom(roomId)) {
+    store.openRoom(roomId, userId)
+    scrollToBottomInChatLog()
+  }
+}
+
 const onChatLogScroll = (event: Event) => {
   const target = event.target as HTMLElement
   updateIsNearBottom(target)
@@ -304,37 +327,40 @@ watch(
     }
     if (!loaded) return
 
-    const hasSpecifiedRoom = roomId != null && roomId !== ''
+    const hasRoomParam = roomId != null && roomId !== ''
 
     if (rooms.length === 0) {
       if (store.activeRoomId != null) {
         store.unsubscribeActiveRoom()
       }
-      if (hasSpecifiedRoom) {
+      if (hasRoomParam) {
         notification.show(t('chat.error.room_not_found'), 'warning')
         navigateToChatPath(undefined, true)
       }
       return
     }
 
-    if (!hasSpecifiedRoom) {
+    if (!hasRoomParam) {
+      if (vuetifyDisplays.smAndDown.value) {
+        openMobileChatList()
+        const lastRoomId = store.activeRoomId
+        if (lastRoomId != null && rooms.some((room) => room.roomId === lastRoomId)) {
+          ensureRoomOpened(lastRoomId, userId)
+        }
+        return
+      }
+
       const targetRoomId = rooms[0].roomId
       if (props.roomId !== targetRoomId) {
         navigateToChatPath(targetRoomId, true)
       }
-      if (store.activeRoomId !== targetRoomId) {
-        store.openRoom(targetRoomId, userId)
-        scrollToBottomInChatLog()
-      }
+      ensureRoomOpened(targetRoomId, userId)
       return
     }
 
     const roomInList = rooms.some((room) => room.roomId === roomId)
     if (roomInList) {
-      if (store.activeRoomId !== roomId) {
-        store.openRoom(roomId, userId)
-        scrollToBottomInChatLog()
-      }
+      ensureRoomOpened(roomId, userId)
       return
     }
 
@@ -363,11 +389,25 @@ watch(
     }
 
     clearPendingRoomTimeout()
-    if (store.activeRoomId !== roomId) {
-      store.openRoom(roomId, userId)
-      scrollToBottomInChatLog()
+    ensureRoomOpened(roomId, userId)
+  },
+)
+
+watch(
+  () => store.openChatListRequestId,
+  () => {
+    openMobileChatList()
+  },
+)
+
+watch(
+  () => history.state?.openChatList as boolean | undefined,
+  (openChatList) => {
+    if (openChatList === true) {
+      openMobileChatList()
     }
   },
+  { immediate: true },
 )
 
 watch(
@@ -382,7 +422,6 @@ watch(
 onBeforeUnmount(() => {
   clearPendingRoomTimeout()
   clearSelectedImages()
-  store.unsubscribeActiveRoom()
 })
 </script>
 
@@ -577,6 +616,20 @@ onBeforeUnmount(() => {
           </p>
           <p class="mb-0 text-medium-emphasis">
             {{ t('chat.empty.no_rooms_hint') }}
+          </p>
+        </div>
+      </div>
+
+      <div v-else-if="isMobileWithoutRoom" class="active-chat-panel d-flex flex-column h-100 w-100">
+        <div class="chat-empty-state d-flex flex-grow-1 align-center justify-center flex-column text-center px-6">
+          <VAvatar size="109" class="elevation-3 mb-6 bg-surface">
+            <VIcon size="50" class="rounded-0 text-high-emphasis" :icon="mdiMessageOutline" />
+          </VAvatar>
+          <p class="mb-2 font-weight-medium text-lg text-high-emphasis">
+            {{ t('chat.empty.select_room') }}
+          </p>
+          <p class="mb-0 text-medium-emphasis">
+            {{ t('chat.empty.select_room_hint') }}
           </p>
         </div>
       </div>

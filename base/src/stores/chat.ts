@@ -204,6 +204,8 @@ export const useChatStore = defineStore('chat', () => {
   const isLoadingOlderMessages = ref(false)
   const hasMoreMessages = ref(true)
   const subscribedUserId = ref<string | null>(null)
+  /** ヘッダーアイコン等から一覧ドロワーを開く要求（インクリメントで通知） */
+  const openChatListRequestId = ref(0)
 
   let membershipsUnsubscribe: Unsubscribe | null = null
   let roomUnsubscribe: Unsubscribe | null = null
@@ -575,11 +577,16 @@ export const useChatStore = defineStore('chat', () => {
     await callRecallChatMessage({ room_id: roomId, message_id: messageId })
   }
 
+  const requestOpenChatList = (): void => {
+    openChatListRequestId.value += 1
+  }
+
   return {
     rooms,
     membershipsLoaded,
     activeRoomId,
     activeRoom,
+    openChatListRequestId,
     messages,
     isLoadingOlderMessages,
     hasMoreMessages,
@@ -592,6 +599,7 @@ export const useChatStore = defineStore('chat', () => {
     sendMessage,
     recallMessage,
     markAsRead,
+    requestOpenChatList,
     unsubscribeAll,
     unsubscribeActiveRoom,
     unsubscribeMemberships,

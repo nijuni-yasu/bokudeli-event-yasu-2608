@@ -17,22 +17,28 @@ import { hasManagedCommunity } from '@shokujii/base/stores/community.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { getAuth, type User } from 'firebase/auth'
 
 const router = useRouter()
 const route = useRoute()
+const { smAndDown } = useDisplay()
 const layoutConfigStore = useLayoutConfigStore()
+const chatStore = useChatStore()
 
 /** チャット画面ではサイトフッターを隠し、ビューポートをチャット UI に専有する */
-const isChatFooterHidden = (path: string) => {
+const isChatRoute = (path: string) => {
   const normalized = path.replace(/\/$/, '') || '/'
   return normalized === '/chat' || normalized.startsWith('/chat/')
 }
 
 watch(
   () => route.path,
-  (path) => {
-    layoutConfigStore.footerType = isChatFooterHidden(path) ? FooterType.Hidden : layoutConfig.footer.type
+  (path, oldPath) => {
+    layoutConfigStore.footerType = isChatRoute(path) ? FooterType.Hidden : layoutConfig.footer.type
+    if (oldPath != null && isChatRoute(oldPath) && !isChatRoute(path)) {
+      chatStore.unsubscribeActiveRoom()
+    }
   },
   { immediate: true },
 )
@@ -89,7 +95,6 @@ const handleEventHostClick = async () => {
 }
 
 const { cart } = storeToRefs(useCurrentUserStore())
-const chatStore = useChatStore()
 const cartMenuCount = computed(() => cart.value?.reduce((sum, item) => sum + item.orders.length, 0) ?? 0)
 const cartBadgeContent = computed(() => (cartMenuCount.value > 0 ? String(cartMenuCount.value) : ''))
 const chatUnreadCount = computed(() => chatStore.totalUnreadCount)
@@ -110,6 +115,18 @@ watch(
   },
   { immediate: true },
 )
+
+const handleChatHeaderClick = (): void => {
+  if (isChatRoute(route.path)) {
+    chatStore.requestOpenChatList()
+    return
+  }
+  if (smAndDown.value) {
+    void router.push({ path: '/chat', state: { openChatList: true } })
+    return
+  }
+  void router.push('/chat')
+}
 </script>
 
 <template>
@@ -144,7 +161,12 @@ watch(
         offset-y="6"
         class="me-3"
       >
-        <v-btn variant="text" to="/chat" :aria-label="$t('chat.header_tooltip')" :icon="mdiMessageTextOutline" />
+        <v-btn
+          variant="text"
+          :aria-label="$t('chat.header_tooltip')"
+          :icon="mdiMessageTextOutline"
+          @click="handleChatHeaderClick"
+        />
       </v-badge>
       <v-badge
         v-if="currentUser != null"
