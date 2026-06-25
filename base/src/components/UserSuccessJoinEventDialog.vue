@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { mdiContentCopy, mdiCloseCircle, mdiSend, mdiCalendar, mdiMessageTextOutline } from '@mdi/js'
+import { mdiCloseCircle, mdiSend, mdiCalendar, mdiMessageTextOutline } from '@mdi/js'
 import { buildEventChatRoomId } from '@shokujii/common/schemas/ChatRoom.js'
 import type { NavigateToChatFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
@@ -44,6 +44,12 @@ const canOpenChat = computed(() => {
   return currentEvent.members.includes(props.userId)
 })
 
+const showShareLink = computed(() => {
+  const currentEvent = event.value
+  if (currentEvent == null) return false
+  return currentEvent.is_public && !isPosted && !isProcessing.value
+})
+
 const isNavigatingToChat = ref(false)
 
 const onOpenChatClick = async () => {
@@ -78,14 +84,14 @@ const isProcessing = computed(() => {
   return eventStore.orders.some((o) => o.user_id === props.userId && o.status === 'processing')
 })
 
-const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event: BokudeliEvent) => {
+const onShareSnsButtonClicked = async (event: BokudeliEvent) => {
   const partnerStore = usePartnerStore(event.partner_id)
-  const _window = type !== 'copy' && !isMobileDevice() ? window.open('', '_blank', 'width=800,height=500')! : undefined
+  const _window = !isMobileDevice() ? window.open('', '_blank', 'width=800,height=500')! : undefined
   const community = communityStore.community
   const shop = partnerStore.shops?.[0]
 
   if (community != null && shop != null) {
-    await shareSnsButton(type, event, community, shop, _window)
+    await shareSnsButton('twitterAfterOrder', event, community, shop, _window)
     return
   }
 
@@ -93,7 +99,7 @@ const onShareSnsButtonClicked = async (type: 'twitterAfterOrder' | 'copy', event
     communityStore.getLoadedCommunity(),
     partnerStore.getLoadedShops(),
   ])
-  await shareSnsButton(type, event, loadedCommunity, loadedShops[0]!, _window)
+  await shareSnsButton('twitterAfterOrder', event, loadedCommunity, loadedShops[0]!, _window)
 }
 const isOpenCalendarAddDialog = ref(false)
 const openCalendarAddDialog = () => {
@@ -132,23 +138,22 @@ watch(
 </script>
 
 <template>
-  <v-dialog v-model="model" :width="$vuetify.display.smAndDown ? 'auto' : 650" persistent>
-    <v-card v-if="event != null" class="px-sm-15 py-sm-9 pa-2 pre-line">
+  <v-dialog v-model="model" :width="$vuetify.display.smAndDown ? 'calc(100% - 48px)' : 650" persistent>
+    <v-card v-if="event != null" class="success-join-dialog pre-line">
       <template v-if="isLoadingOrder">
         <v-card-title class="text-center d-flex justify-center py-8">
           <v-progress-circular indeterminate color="primary" />
         </v-card-title>
-        <v-card-text class="text-center text-h6 px-0 py-3">
+        <v-card-text class="text-center text-body-1 px-8 py-3">
           {{ $t('success_join_event_dialog.loading') }}
         </v-card-text>
-        <v-card-text class="text-center px-0 py-1">
+        <v-card-text class="text-center px-8 pb-8 pt-1">
           <v-btn
-            :prepend-icon="mdiCloseCircle"
-            class="mx-1"
+            variant="outlined"
             size="small"
-            color="grey-600"
             rounded="pill"
-            variant="text"
+            color="primary"
+            :prepend-icon="mdiCloseCircle"
             @click="model = false"
           >
             {{ $t('success_join_event_dialog.close') }}
@@ -156,115 +161,124 @@ watch(
         </v-card-text>
       </template>
       <template v-else>
-        <v-card-title class="text-center text-h3">
-          {{ isProcessing ? $t('success_join_event_dialog.processing_title') : $t('success_join_event_dialog.title') }}
-        </v-card-title>
-        <v-card-text class="text-center text-h5 px-0 py-3">
-          {{
-            isProcessing
-              ? $t('success_join_event_dialog.processing_subtitle')
-              : $t('success_join_event_dialog.subtitle')
-          }}
-        </v-card-text>
-        <div class="mx-4">
-          <v-img class="mx-0" cover aspect-ratio="1.91" :src="eventStore.coverImageUrl" />
-          <v-card-text class="text-left pb-3 px-0 text-h5">
-            {{ event.event_name }}
-          </v-card-text>
-          <v-card-text class="text-description pb-1 px-0">
-            {{ $t('success_join_event_dialog.datetime') }}
-            {{ convertToDatetimeWeekdayShort(event.event_start_datetime) }}〜{{
-              convertToTimeString(event.event_end_datetime)
-            }}
-          </v-card-text>
-          <v-card-text class="text-description pb-1 px-0">
+        <div class="success-join-dialog__header px-8 pt-8 pb-4 text-center">
+          <v-card-title class="success-join-dialog__title px-0">
             {{
-              $t('success_join_event_dialog.deadline', [convertToDatetimeWeekdayShort(event.event_deadline_datetime)])
+              isProcessing ? $t('success_join_event_dialog.processing_title') : $t('success_join_event_dialog.title')
             }}
-          </v-card-text>
-          <v-card-text class="text-description pb-1 px-0">
-            {{ $t('success_join_event_dialog.place') }} {{ event.fullAddress }} {{ event.event_place }}
-          </v-card-text>
-          <v-card-text class="text-description pb-1 px-0"
-            >{{ $t('success_join_event_dialog.organizer') }} {{ event.community_name }}</v-card-text
-          >
-          <v-card-text class="text-description pb-1 px-0"
-            >{{ $t('success_join_event_dialog.food') }} {{ event.shop_name }}</v-card-text
-          >
-          <v-card-text
-            v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''"
-            class="text-description pb-1 px-0"
-          >
-            {{ $t('success_join_event_dialog.hashtag') }}
-            <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
-              #{{ event.event_sns_hash_tag }}
-            </a>
-          </v-card-text>
-          <v-card-text class="mt-5">
-            <v-row justify="center" v-if="!isProcessing && canOpenChat">
+          </v-card-title>
+          <p class="success-join-dialog__subtitle mb-0">
+            {{
+              isProcessing
+                ? $t('success_join_event_dialog.processing_subtitle')
+                : $t('success_join_event_dialog.subtitle')
+            }}
+          </p>
+        </div>
+
+        <div class="success-join-dialog__body px-8 pb-4">
+          <div class="success-join-dialog__event-content">
+            <v-img
+              class="success-join-dialog__cover rounded-lg elevation-1"
+              cover
+              aspect-ratio="1.91"
+              :src="eventStore.coverImageUrl"
+            />
+            <h2 class="success-join-dialog__event-name text-left mt-4 mb-3">
+              {{ event.event_name }}
+            </h2>
+            <v-sheet class="success-join-dialog__details pa-3 rounded-lg" color="grey-lighten-5">
+              <dl class="event-details-grid">
+                <dt class="text-description">{{ $t('success_join_event_dialog.datetime') }}</dt>
+                <dd class="text-description">
+                  {{ convertToDatetimeWeekdayShort(event.event_start_datetime) }}〜{{
+                    convertToTimeString(event.event_end_datetime)
+                  }}
+                </dd>
+                <dt class="text-description">{{ $t('success_join_event_dialog.deadline') }}</dt>
+                <dd class="text-description">
+                  {{
+                    $t('success_join_event_dialog.deadline_value', [convertToTimeString(event.event_deadline_datetime)])
+                  }}
+                </dd>
+                <dt class="text-description">{{ $t('success_join_event_dialog.place') }}</dt>
+                <dd class="text-description">{{ event.fullAddress }} {{ event.event_place }}</dd>
+                <dt class="text-description">{{ $t('success_join_event_dialog.organizer') }}</dt>
+                <dd class="text-description">{{ event.community_name }}</dd>
+                <dt class="text-description">{{ $t('success_join_event_dialog.food') }}</dt>
+                <dd class="text-description">{{ event.shop_name }}</dd>
+                <template v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''">
+                  <dt class="text-description">{{ $t('success_join_event_dialog.hashtag') }}</dt>
+                  <dd class="text-description">
+                    <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
+                      #{{ event.event_sns_hash_tag }}
+                    </a>
+                  </dd>
+                </template>
+              </dl>
+            </v-sheet>
+          </div>
+        </div>
+
+        <v-sheet class="success-join-dialog__footer px-8 py-5" color="grey-lighten-5" rounded="0">
+          <template v-if="!isProcessing && canOpenChat">
+            <p class="success-join-dialog__chat-hint text-center mb-3">
+              {{ $t('success_join_event_dialog.chat_hint') }}
+            </p>
+            <div class="d-flex justify-center">
               <v-btn
-                class="my-2"
                 size="large"
                 color="primary"
-                :append-icon="mdiMessageTextOutline"
+                class="success-join-dialog__chat-btn"
+                :prepend-icon="mdiMessageTextOutline"
                 rounded="pill"
+                elevation="2"
                 :loading="isNavigatingToChat"
                 :disabled="isNavigatingToChat || navigateToChat == null"
                 @click="onOpenChatClick"
               >
                 {{ $t('chat.open_chat') }}
               </v-btn>
-            </v-row>
-            <v-row justify="center" v-if="event.is_public && !isPosted && !isProcessing">
-              <v-btn
-                class="my-2"
-                size="large"
-                color="grey-900"
-                :append-icon="mdiSend"
-                rounded="pill"
-                @click="onShareSnsButtonClicked('twitterAfterOrder', event)"
-              >
-                {{ $t('success_join_event_dialog.share_on_x') }}
-              </v-btn>
-            </v-row>
-            <v-row justify="center">
-              <v-btn
-                class="my-2"
-                size="large"
-                color="grey-900"
-                :append-icon="mdiCalendar"
-                rounded="pill"
-                @click="openCalendarAddDialog"
-              >
-                {{ $t('success_join_event_dialog.add_to_calendar') }}
-              </v-btn>
-            </v-row>
-          </v-card-text>
-          <v-card-text class="text-center px-0 py-1">
+            </div>
+          </template>
+
+          <div class="d-flex flex-wrap justify-center align-center ga-2 mt-4 secondary-actions">
             <v-btn
-              :prepend-icon="mdiContentCopy"
-              class="mx-1"
+              v-if="showShareLink"
+              class="secondary-action-btn"
+              variant="outlined"
               size="small"
-              color="grey-600"
               rounded="pill"
-              variant="text"
-              @click="onShareSnsButtonClicked('copy', event)"
+              color="primary"
+              :prepend-icon="mdiSend"
+              @click="onShareSnsButtonClicked(event)"
             >
-              {{ $t('success_join_event_dialog.copy_text') }}
+              {{ $t('success_join_event_dialog.share_on_x') }}
             </v-btn>
             <v-btn
-              :prepend-icon="mdiCloseCircle"
-              class="mx-1"
+              class="secondary-action-btn"
+              variant="outlined"
               size="small"
-              color="grey-600"
               rounded="pill"
-              variant="text"
+              color="primary"
+              :prepend-icon="mdiCalendar"
+              @click="openCalendarAddDialog"
+            >
+              {{ $t('success_join_event_dialog.add_to_calendar') }}
+            </v-btn>
+            <v-btn
+              class="secondary-action-btn"
+              variant="outlined"
+              size="small"
+              rounded="pill"
+              color="primary"
+              :prepend-icon="mdiCloseCircle"
               @click="model = false"
             >
               {{ $t('success_join_event_dialog.close') }}
             </v-btn>
-          </v-card-text>
-        </div>
+          </div>
+        </v-sheet>
       </template>
     </v-card>
   </v-dialog>
@@ -274,7 +288,7 @@ watch(
     v-model="isSharePromptDialogVisible"
     :is-confirm="false"
     :persistent="false"
-    :ok-click="() => event && onShareSnsButtonClicked('twitterAfterOrder', event)"
+    :ok-click="() => event && onShareSnsButtonClicked(event)"
     :ok-text="$t('success_join_event_dialog.share_prompt_ok')"
     max-width="400px"
   >
@@ -283,11 +297,87 @@ watch(
 </template>
 
 <style lang="scss" scoped>
-.text-lowercase {
-  text-transform: lowercase;
+.success-join-dialog {
+  overflow: hidden;
 }
+
+.success-join-dialog__title {
+  font-size: 1.5rem !important;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+.success-join-dialog__subtitle {
+  font-size: 0.9375rem;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+}
+
+.success-join-dialog__event-content {
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.success-join-dialog__event-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.success-join-dialog__details {
+  min-width: 0;
+}
+
+.event-details-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.5em;
+  row-gap: 0.5rem;
+  margin: 0;
+
+  dt {
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+  }
+}
+
+.success-join-dialog__cover {
+  display: block;
+  width: 100%;
+}
+
+.success-join-dialog__chat-hint {
+  font-size: 0.875rem;
+  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+}
+
+.success-join-dialog__chat-btn {
+  min-height: 52px;
+}
+
 .text-description {
-  font-size: 14px !important;
-  text-align: left !important;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.secondary-actions {
+  width: 100%;
+}
+
+.secondary-action-btn {
+  letter-spacing: normal;
+  text-transform: none;
 }
 </style>
