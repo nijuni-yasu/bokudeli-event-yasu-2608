@@ -21,12 +21,16 @@ const onNavigateRoom = (payload: { path: Parameters<typeof router.push>[0]; repl
 }
 
 const onOpenEvent = async (payload: { communityId: string; eventId: string }) => {
-  const snapshot = await getDoc(getEventInCommunityRef(payload.communityId, payload.eventId))
-  if (!snapshot.exists()) {
-    return
+  try {
+    const snapshot = await getDoc(getEventInCommunityRef(payload.communityId, payload.eventId))
+    if (!snapshot.exists()) {
+      return
+    }
+    const event = snapshot.data()
+    void router.push(getEventPath(event.community_account, payload.eventId))
+  } catch {
+    // getDoc 失敗時（ネットワーク / 権限）: イベントハンドラからの unhandled rejection を防ぐ
   }
-  const event = snapshot.data()
-  void router.push(getEventPath(event.community_account, payload.eventId))
 }
 </script>
 
