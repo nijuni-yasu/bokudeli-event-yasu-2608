@@ -123,10 +123,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
-.chat-attachment-image {
-  margin-block-end: 4px;
-}
-
 .chat-attachment-image--tile {
   inline-size: 100%;
   aspect-ratio: 1;

@@ -183,6 +183,7 @@ watch(
         :class="[message.senderUserId === currentUserId ? 'flex-row-reverse chat-group-own' : '']"
       >
         <component
+          v-if="message.senderUserId !== currentUserId"
           :is="profilePath(message.senderUserId ?? '') != null ? 'router-link' : 'div'"
           v-bind="
             profilePath(message.senderUserId ?? '') != null
@@ -192,18 +193,17 @@ watch(
                 }
               : {}
           "
-          class="flex-shrink-0"
-          :class="message.senderUserId === currentUserId ? 'ms-3' : 'me-3'"
+          class="flex-shrink-0 me-3"
           @click.stop
         >
           <UserAvatar :user="resolveSenderUser(message.senderUserId ?? '')" :size="38" />
         </component>
 
         <div
-          class="chat-body d-inline-flex flex-column"
+          class="chat-body d-inline-flex flex-column gap-1"
           :class="message.senderUserId === currentUserId ? 'align-end' : 'align-start'"
         >
-          <span class="text-xs text-medium-emphasis mb-1">
+          <span v-if="message.senderUserId !== currentUserId" class="text-xs text-medium-emphasis">
             {{ resolveSenderName(message.senderUserId ?? '') }}
           </span>
           <div
@@ -276,7 +276,7 @@ watch(
                   v-for="attachment in message.attachments ?? []"
                   :key="attachment.storage_path"
                   :attachment="attachment"
-                  layout="tile"
+                  :layout="(message.attachments ?? []).length === 1 ? 'fluid' : 'tile'"
                   @expand="openExpandedImage"
                 />
               </div>
@@ -380,12 +380,9 @@ watch(
 }
 
 .chat-message-attachments--single {
-  inline-size: 240px;
+  display: block;
+  inline-size: fit-content;
   max-inline-size: 240px;
-
-  :deep(.chat-attachment-image--tile) {
-    grid-column: span 2;
-  }
 }
 
 @media (min-width: 600px) {
@@ -397,12 +394,8 @@ watch(
     }
 
     .chat-message-attachments--single {
-      inline-size: 360px;
-      max-inline-size: 360px;
-
-      :deep(.chat-attachment-image--tile) {
-        grid-column: span 3;
-      }
+      inline-size: fit-content;
+      max-inline-size: 240px;
     }
   }
 }
