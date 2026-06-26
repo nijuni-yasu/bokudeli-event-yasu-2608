@@ -28,9 +28,13 @@ export const enterpriseCartMonthlyUsageLoader: CartMonthlyUsageLoader = async (u
     const member = new EnterpriseMember(userId, memberSnap.data())
     const enterprise = new Enterprise(enterpriseId, enterpriseSnap.data())
     const month = formatYearMonth(Date.now())
+    const limit = enterprise.monthly_limit_per_user
+    if (typeof limit !== 'number') {
+      return null
+    }
     return {
       used: member.monthly_usage[month] ?? 0,
-      limit: enterprise.monthly_limit_per_user,
+      limit,
     }
   } catch (error) {
     console.warn('Failed to load monthly usage', error)

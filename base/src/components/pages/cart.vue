@@ -30,7 +30,11 @@ import {
 } from '@mdi/js'
 import { useI18n } from 'vue-i18n'
 import { createStripeCheckoutSession } from '@shokujii/base/apis/stripe'
-import { pfCartMonthlyUsageLoader, type CartMonthlyUsageLoader } from '@shokujii/base/composable/cartMonthlyUsage.js'
+import {
+  pfCartMonthlyUsageLoader,
+  normalizeCartMonthlyUsage,
+  type CartMonthlyUsageLoader,
+} from '@shokujii/base/composable/cartMonthlyUsage.js'
 
 const props = withDefaults(
   defineProps<{
@@ -38,7 +42,8 @@ const props = withDefaults(
     monthlyUsageLoader?: CartMonthlyUsageLoader
   }>(),
   {
-    monthlyUsageLoader: () => pfCartMonthlyUsageLoader,
+    // Function prop はファクトリ () => fn ではなく関数を直接指定する（Vue withDefaults の仕様）
+    monthlyUsageLoader: pfCartMonthlyUsageLoader,
   },
 )
 
@@ -118,12 +123,20 @@ type EnrichedCartItem = CartItem & {
 
 const monthlyUsage = ref<{ used: number; limit: number } | null>(null)
 
+const monthlyUsageDisplay = computed(() => normalizeCartMonthlyUsage(monthlyUsage.value))
+
 onMounted(async () => {
   const uid = userId.value
   if (uid === '') {
     return
   }
-  monthlyUsage.value = await props.monthlyUsageLoader(uid)
+  try {
+    const result = await props.monthlyUsageLoader(uid)
+    monthlyUsage.value = normalizeCartMonthlyUsage(result)
+  } catch (error) {
+    console.warn('[cart] monthlyUsageLoader failed', error)
+    monthlyUsage.value = null
+  }
 })
 
 /** 主催者請求かつおごり設定ありのとき、カート注文テーブルに「おごり」列を出す */
@@ -438,9 +451,9 @@ const isOpenCancelpolicyDialog = ref(false)
     <v-col cols="12" md="8" sm="8" class="pa-0 mt-5">
       <div class="text-center text-h3 my-3">{{ $t('cart.title') }}</div>
       <div class="text-center my-3">{{ $t('cart.subtitle') }}</div>
-      <div v-if="monthlyUsage != null" class="text-center text-body-1 my-2">
-        {{ $t('cart.monthly_usage_label') }}: {{ priceString(monthlyUsage.used) }}円 /
-        {{ priceString(monthlyUsage.limit) }}円
+      <div v-if="monthlyUsageDisplay != null" class="text-center text-body-1 my-2">
+        {{ $t('cart.monthly_usage_label') }}: {{ priceString(monthlyUsageDisplay.used) }}円 /
+        {{ priceString(monthlyUsageDisplay.limit) }}円
       </div>
     </v-col>
     <v-col v-for="cartItem in enrichedCart" :key="cartItem.event.event_id" cols="12" md="8" sm="8">

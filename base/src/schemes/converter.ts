@@ -30,8 +30,8 @@ export const dateOnlyTimeString = (date: Timestamp | Date | number | null): stri
   return formattedDate
 }
 
-export const priceString = (price: number): string => {
-  return `${price.toLocaleString()}`
+export const priceString = (price: number | null | undefined): string => {
+  return `${(price ?? 0).toLocaleString()}`
 }
 
 export const postalcodeString = (postalCode: string): string => {
