@@ -15,6 +15,7 @@ import { getManageCommunityListPath } from './utils'
 import { ZodError } from 'zod'
 import { setPendingToast } from '@/utils/pendingToast'
 import { useEnterpriseStore } from '@/stores/enterprise'
+import { isEnterpriseAuthTenantConsistent } from '@/utils/enterpriseAuth'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -96,6 +97,24 @@ export const setupRouter = (router: Router) => {
       }
     } else if (to.path === '/login') {
       return (to.query?.redirect as string) ?? '/'
+    } else if (isLoginRequired(to.path)) {
+      const enterpriseStore = useEnterpriseStore()
+      if (enterpriseStore.status !== 'ready') {
+        await enterpriseStore.resolveEnterprise()
+      }
+      const tokenResult = await user.getIdTokenResult()
+      if (tokenResult.claims.user_type === 'enterprise') {
+        const tokenEnterpriseId = tokenResult.claims.enterprise_id as string | undefined
+        const tenantOk = isEnterpriseAuthTenantConsistent(
+          enterpriseStore.enterprise?.tenant_id,
+          enterpriseStore.enterprise?.enterprise_id,
+          tokenEnterpriseId,
+          user.tenantId,
+        )
+        if (!tenantOk) {
+          return { path: '/404' }
+        }
+      }
     }
   })
 
@@ -236,7 +255,13 @@ export const setupRouter = (router: Router) => {
       }
       const resolvedEnterpriseId = enterpriseStore.enterprise?.enterprise_id
       const tokenEnterpriseId = tokenResult.claims.enterprise_id as string | undefined
-      if (resolvedEnterpriseId == null || tokenEnterpriseId == null || tokenEnterpriseId !== resolvedEnterpriseId) {
+      const tenantOk = isEnterpriseAuthTenantConsistent(
+        enterpriseStore.enterprise?.tenant_id,
+        resolvedEnterpriseId,
+        tokenEnterpriseId,
+        user.tenantId,
+      )
+      if (resolvedEnterpriseId == null || tokenEnterpriseId == null || !tenantOk) {
         setPendingToast('管理者権限が必要です', 'error')
         return { path: '/' }
       }

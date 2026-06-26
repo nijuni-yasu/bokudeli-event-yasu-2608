@@ -42,5 +42,10 @@ Promise.all([
   const enterpriseStore = useEnterpriseStore()
   await enterpriseStore.resolveEnterprise()
 
+  if (enterpriseStore.enterprise?.tenant_id != null && enterpriseStore.enterprise.tenant_id !== '') {
+    const { setEnterpriseAuthTenantId } = await import('@/utils/enterpriseAuth')
+    setEnterpriseAuthTenantId(enterpriseStore.enterprise.tenant_id)
+  }
+
   app.mount('#app')
 })
