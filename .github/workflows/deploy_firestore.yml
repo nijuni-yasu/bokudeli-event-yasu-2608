@@ -36,12 +36,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ./.node-version
       - name: Check firestore.indexes.json has no duplicate composite indexes
         run: |
           node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('firestore.indexes.json','utf8'));const ix=j.indexes||[];const seen=new Map();for(let i=0;i<ix.length;i++){const k=JSON.stringify(ix[i]);if(seen.has(k)){console.error('Duplicate firestore composite index at indices',seen.get(k),'and',i);process.exit(1);}seen.set(k,i);}console.log('firestore.indexes.json:',ix.length,'unique composite indexes');"
+      - name: Generate .firebaserc
+        run: |
+          echo '${{ vars.FIREBASERC }}' > .firebaserc
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
+          project_id: ${{ vars.PROJECT_ID }}
       - name: Deploy to Firebase
         uses: ./.github/actions/deploy
         with:
           project_id: ${{ vars.PROJECT_ID }}
-          service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
           args: '--force --only firestore'
