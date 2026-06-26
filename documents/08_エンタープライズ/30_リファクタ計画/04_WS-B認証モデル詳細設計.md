@@ -331,9 +331,9 @@ function isSameEnterprise(data) {
 
 | # | 論点 | 状態 |
 |:--|:--|:--|
-| Q-1 | tenantId を `enterprise_id` と同一にできるか | **PoC 待ち**（B-1）。不可なら Firebase 発行 ID を `tenant_id` に保存 |
+| Q-1 | tenantId を `enterprise_id` と同一にできるか | **確定（2026-06-27）**: Admin SDK `createTenant` は Firebase 発行 ID のみ。`enterprises.tenant_id` に保存（displayName に `enterprise_id` を設定） |
 | Q-2 | email lookup の保存先 | **確定**: `EnterpriseMember.user_email`（[05_認証・テナント](../10_仕様/05_認証・テナント.md) §0.2） |
-| Q-3 | claims に `tenant_id` を持たせるか | **条件付き**: 原則 `firebase.tenant` を正。Rules PoC（B-1）で必要時のみ claim 追加（05 §0.5） |
+| Q-3 | claims に `tenant_id` を持たせるか | **確定（2026-06-27）**: 採用しない。`request.auth.token.firebase.tenant` を正とし Rules で `enterprises.tenant_id` を get 照合 |
 | Q-4 | 本番に project-level enterprise user が存在する場合の移行 | 原則 WS-B 本番投入前にユーザー蓄積を避ける。存在時は import / 再作成を別途判断 |
 | Q-5 | ゲスト用 secondary Firebase app の設計 | Phase 2。WS-B ではデフォルトプール固定方針のみ維持 |
 
@@ -348,3 +348,4 @@ function isSameEnterprise(data) {
 | 2026-06-20 | 初版（WS-B 認証モデル詳細設計。G3・B-1〜B-6 の実装順、tenant / email lookup / Rules / 移行方針を整理） |
 | 2026-06-27 | Q-2 確定（EnterpriseMember.user_email）、Q-3 条件付き（firebase.tenant 正）。05_認証・テナント §0 へ仕様昇格 |
 | 2026-06-27 | G3 通過（MAU 試算・IdP 前倒し決定。07 §9.1 参照） |
+| 2026-06-27 | Q-1/Q-3 確定・WS-B 実装（tenantAuth, onboarding, auth/members, Rules, enterprise frontend） |
