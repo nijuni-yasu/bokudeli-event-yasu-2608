@@ -22,20 +22,20 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-06-27**（#2119: A-1 Callable 薄層化・A-5 Rules CI 必須化 ✅。A-4 のみ #2090 別途）
+最終更新: **2026-06-27**（WS-B B-1〜B-6 ✅、C-1 PoC + G1 通過。3 軸モデル・publish_scope 移行は Phase 2 継続）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
 | WS-A（Phase 0） | 5 | 1 | 6 |
-| WS-B（IdP・本番前） | 0 | 6 | 6 |
-| WS-C（スキーマ） | 1 | 4 | 5 |
+| WS-B（IdP・本番前） | 6 | 0 | 6 |
+| WS-C（スキーマ・MVP 最小） | 2 | 0 | 2 |
 | WS-D（v0.1 残） | 0 | 5 | 5 |
-| WS-E（前倒し） | 0 | 6 | 6 |
+| WS-E（前倒し） | 0 | 5 | 5 |
 | WS-F（PF 露出） | 0 | 2 | 2 |
 | **WS-M（development マージ）** | **7** | **5** | **12** |
-| WS-G（Phase 2・MVP 外） | 0 | 4 | 4 |
-| **WS-A〜F 全タスク** | **4** | **26** | **30** |
-| ゲート G1〜G3 | 1 | 2 | 3 |
+| WS-G（Phase 2・MVP 外） | 0 | 8 | 8 |
+| **WS-A〜F 全タスク** | **11** | **13** | **24** |
+| ゲート G1〜G3 | 3 | 0 | 3 |
 | 本番ブロッカー RC | 4 | 0 | 4 |
 
 ---
@@ -46,7 +46,7 @@
 |:--|:--|:--|
 | [00_計画/02_developmentマージ.md](./02_developmentマージ.md) | **#2071 マージ実行**（PF 版影響ゼロ） | WS-M（T1〜T7・デプロイ順・着地条件） |
 | [10_仕様/](../10_仕様/) | MVP 機能仕様（現行正本） | WS-D 各タスクの詳細 |
-| [30_リファクタ計画/01・02](../30_リファクタ計画/01_Project分離なし_タスク.md) | コード衛生・認証モデル | PA-01〜31（Phase 0/1/2） |
+| [30_リファクタ計画/01・02・05](../30_リファクタ計画/01_Project分離なし_タスク.md) | コード衛生・認証モデル・**C-1 PoC** | PA-01〜31（Phase 0/1/2）、[05_WS-C_C-1_PoC設計](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md) |
 | [10_仕様/04_詳細_イベント管理](../10_仕様/04_詳細_イベント管理.md) + [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) | 機能拡張・スキーマ | 3 軸モデル / publish_scope / MVP 前倒し / PF 露出フィルタ |
 
 ---
@@ -64,7 +64,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 |:--|:--|:--|:--|:--|:--|:--|
 | - [ ] | M-1 | `enterprise_id: null` の materialize（schema nullable 化 / converter）＋既存 PF `communities` / `events` バックフィル | T1 | F-1 | 🚨 前提 | — |
 | ✅ | M-2 | PF 版の全一覧/検索クエリに `where('enterprise_id','==',null)` 露出フィルタ追加 | T2 | F-1 | 🚨 必須 | M-1 |
-| ✅ | M-3 | 複合インデックス追加（`enterprise_id` + `is_public` + 既存 orderBy）。**先行デプロイ**（C-3 後は `publish_scope` へ） | T3 | — | 🚨 必須 | M-1 |
+| ✅ | M-3 | 複合インデックス追加（`enterprise_id` + `is_public` + 既存 orderBy）。**先行デプロイ**（Phase 2 G-6 後は `publish_scope` 版を追加） | T3 | — | 🚨 必須 | M-1 |
 | ✅ | M-4 | Rules 後方互換テスト（PF ユーザーが既存 PF doc を read 可・エンプラ doc を read 不可） | T4 | A-5 | 🟡 強推 | — |
 | ✅ | M-5 | member_orders の公開 read 厳格化（共有 collectionGroup） | T5 | RC-36 / F-1 | 🚨 必須 | — |
 | ✅ | M-6 | partner / PF が `enterprise_subsidy` enum ＋ optional 追加を parse できる回帰テスト | T6 | C-5 | 🟡 推奨 | — |
@@ -112,51 +112,52 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| - [ ] | B-1 | IdP / マルチテナンシー有効化・tenantId 疎通・Rules tenant 検証 | PA-01a-c | 本番前 | G3 |
-| - [ ] | B-2 | `enterprise_id ↔ tenantId` 設計・移行方針 | PA-01d-e | 本番前 | G3 |
-| - [ ] | B-3 | テナント onboarding（企業作成＝テナント＋初期管理者＋claims、本丸） | PA-02d | 本番前 | B-1, B-2 |
-| - [ ] | B-4 | auth/claims/メアド検索のテナント化 | PA-02a-c, e-f | 本番前 | B-2 |
-| - [ ] | B-5 | クライアント tenantId 設定・ログイン UI・guard | PA-03a-c | 本番前 | B-1 |
-| - [ ] | B-6 | 同一メール衝突方針の正式化 | PA-04 | 本番前 | B-2 |
+| ✅ | B-1 | IdP / マルチテナンシー有効化・tenantId 疎通・Rules tenant 検証 | PA-01a-c | 本番前 | G3 |
+| ✅ | B-2 | `enterprise_id ↔ tenantId` 設計・移行方針 | PA-01d-e | 本番前 | G3 |
+| ✅ | B-3 | テナント onboarding（企業作成＝テナント＋初期管理者＋claims、本丸） | PA-02d | 本番前 | B-1, B-2 |
+| ✅ | B-4 | auth/claims/メアド検索のテナント化 | PA-02a-c, e-f | 本番前 | B-2 |
+| ✅ | B-5 | クライアント tenantId 設定・ログイン UI・guard | PA-03a-c | 本番前 | B-1 |
+| ✅ | B-6 | 同一メール衝突方針の正式化 | PA-04 | 本番前 | B-2 |
 
 **メモ**: 現行コードは claims + OTP（project-level `getAuth()`）。IdP テナントは未導入。**仕様正本**: [05_認証・テナント](../10_仕様/05_認証・テナント.md) §0（`tenant_id` / `EnterpriseMember.user_email` / 同一メール共存確定。[#2121](https://github.com/nijuniinc/bokudeli-event-new/issues/2121)）。
 
-### WS-C: スキーマ基盤（Phase 1・v0.3 確定がゲート）
+### WS-C: スキーマ基盤（MVP: C-1 PoC + C-5。本実装は Phase 2）
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| - [ ] | C-1 | スキーマ型分岐 PoC（discriminatedUnion 等 3 方式比較） | PA-10a | 前提 | — |
-| - [ ] | C-2 | 3 軸モデル確定（join_type / publish_scope / auto_join / community_type） | D-1〜D-5 | 必須 | — |
-| - [ ] | C-3 | publish_scope 導入・is_public 段階廃止（expand → migrate → contract） | D-6 | 必須 | C-2 |
-| - [ ] | C-4 | Event/User/Community/EventMember 等のエンプラ拡張を採用方式で再定義 | PA-11a-d | 必須 | G1, G2 |
-| ✅ | C-5 | partner が base 形で parse できる互換テスト | PA-11e | 必須 | C-4 |
+| ✅ | C-1 | スキーマ型分岐 PoC（3 方式比較 → **H1 採用** → G1 通過） | PA-10a / [05_WS-C_C-1](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md) | 推奨 | — |
+| ✅ | C-5 | partner が base 形で parse できる互換テスト | PA-11e | 必須 | — |
 
-**メモ**: **C-2** は [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) + [10_仕様/04_イベント管理](../10_仕様/04_詳細_イベント管理.md) で**仕様確定済**。コード（`common/src/schemas`）への反映は **C-3 以降**。
+**メモ（2026-06-27 スコープ変更 + C-1 MVP 前倒し）**
+
+- **C-1** は MVP 中に **PoC + G1 のみ**（本番 `Event.ts` 変更なし）。正本: [05_WS-C_C-1_PoC設計.md](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md)。採用案 **H1**（App write discriminatedUnion + Db フラット寛容）。
+- **PR-C1b ✅** — `eventWrite.ts` 昇格 + `eventDraft` strict（[05 §10.2](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md#102-pr-c1bmvp-中推奨-完了)）
+- **C-2〜C-4・旧 E-1・旧 C-3（publish_scope Migrate）** は **Phase 2（WS-G G-5〜G-7 本実装）** へ移行。PF 横断の理由は前回メモ参照。
+- **MVP の公開・参加**: **`is_public`（2 値）** ＋ PF 共有即参加。`publish_scope` / `join_type` は Phase 2。
+- **C-5 ✅** — 現行 optional 拡張向け。G-7 本実装後に fixture 拡張。
 
 ### WS-D: MVP 機能の未実装（v0.1 残・大半は WS-A〜C と並行可）
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
 | - [ ] | D-1 | メール配信制御（エンプラのイベント/ユーザーに PF 不要メールを送らない） | 10_仕様/04_メール | 必須 | — |
-| - [ ] | D-2 | ダッシュボード＋ CSV（月別/メンバー別の回数・人数・金額） | 10_仕様/04_ダッシュボード | 必須 | C-3 |
+| - [ ] | D-2 | ダッシュボード＋ CSV（月別/メンバー別の回数・人数・金額） | 10_仕様/04_ダッシュボード | 必須 | — |
 | - [ ] | D-3 | 監査ログ閲覧 UI＋取得 Callable（書き込みは実装済み） | 10_仕様/04_監査 | 必須 | — |
 | - [ ] | D-4 | 課金スナップショット Scheduled Function（毎月 1 日） | 10_仕様/03_課金 | 必須 | — |
 | - [ ] | D-5 | マイページ・友人の認可レイヤ（enterprise_id フィルタ） | 10_仕様/04_マイページ | 必須 | — |
 
-**メモ**: D-3 の **writeAuditLog（書き込み）** は v0.1 実装済。`/admin/audit-logs`・`getEnterpriseAuditLogs` は未。
+**メモ**: D-3 の **writeAuditLog（書き込み）** は v0.1 実装済。`/admin/audit-logs`・`getEnterpriseAuditLogs` は未。**D-2** は MVP では `enterprise_id` ＋ **`is_public`** による一覧・集計で実装可。`publish_scope` クエリへの切替は Phase 2（G-6）後。
 
 ### WS-E: 機能拡張・仕様変更（v0.3 MVP 前倒し）
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| - [ ] | E-1 | コミュニティ参加方式（approval / open）＋退出・除名 Rules | D-2 | 必須 | C-2 |
 | - [ ] | E-2 | 全社管理者の全イベント編集権限【前倒し】 | D-8 | 必須 | — |
 | - [ ] | E-3 | セッションタイムアウト 1 週間【前倒し・v0.1 上書き】 | D-9 | 必須 | — |
 | - [ ] | E-4 | マイページ：福利厚生割の利用状況表示【前倒し】 | D-10 | 必須 | — |
 | - [ ] | E-5 | コミュニティ一括作成のデフォルト画像ランダム付与 | D-11 | 必須 | — |
-| - [ ] | E-6 | パスワード保護 access_password（アクセス付与基盤が必要） | D-6a / D-6b | 要判断 | C-3 |
 
-**メモ**: **E-3** は `useSessionTimeout` あり（現状 1 時間）。仕様の 1 週間には未対応。
+**メモ**: **E-1**（参加方式 `join_type`）・**E-6**（`access_password`）は **WS-G G-5 / G-6** へ移行（Phase 2）。**E-3** は `useSessionTimeout` あり（現状 1 時間）。仕様の 1 週間には未対応。
 
 ### WS-F: PF 版データ露出フィルタ（v0.3 §3・MVP 必須・独立）
 
@@ -167,16 +168,22 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 **メモ（F-1 残）**: T2 一覧は ✅。共有 store の CG（`event.ts` `event_id` 横断、`currentUser` カート等）は §3 メモ・[02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)。当該 CG に `== null` を載せる前に batch + PF 書き込み経路の materialize が必要。
 
-### WS-G: 後続（Phase 2・移行に鈍感・MVP 外）
+### WS-G: Phase 2（MVP 外・PF/エンプラ横断含む）
 
-| 状態 | ID | タスク | 出所 |
-|:--|:--|:--|:--|
-| - [ ] | G-1 | ゲスト参加（デフォルトプール固定）＋ allow_guest テナント例外 Rules ＋ PF 掲載（`allow_guest == true` かつ `publish_scope === 'public'` をクエリ B で取得し PF 一覧とマージ） | PA-06 / ADR-002 §3 / [04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1 |
-| - [ ] | G-2 | 企業別 SSO（テナント単位 SAML/OIDC）／オープン交流の扉 | ADR-002 §1.5 / §5.1 |
-| - [ ] | G-3 | functions の _base/_user/_enterprise 再編・マルチ codebase | PA-20b-c / PA-24c |
-| - [ ] | G-4 | 機能 ON/OFF（feature_flags）・トップバナー | D-12 |
+| 状態 | ID | タスク | 出所 | 旧 WS | 依存 |
+|:--|:--|:--|:--|:--|:--|
+| - [ ] | G-5 | **3 軸モデル実装**（`join_type` / `auto_join_on_event_order` / `community_type`）＋参加方式 UI・Rules（approval / open）。**PF 版と合わせて設計**（PF も承認制参加を入れる場合は同時） | D-1〜D-5 / E-1 | 旧 C-2, E-1 | G2 |
+| - [ ] | G-6 | **`publish_scope` 導入・`is_public` 段階廃止**（expand → migrate → contract）。PF/エンプラ横断 Migrate・インデックス切替 | D-6 / ADR-003 | 旧 C-3 | G-5（推奨） |
+| - [ ] | G-7 | **C-4 本実装** — H1（C-1 採用）で Event/User/Community/EventMember 再定義 + partner 互換テスト拡張 | PA-11a-e | 旧 C-4 | **G1**, G2 |
+| - [ ] | G-1 | ゲスト参加（デフォルトプール固定）＋ allow_guest テナント例外 Rules ＋ PF 掲載（`allow_guest == true` かつ `publish_scope === 'public'` をクエリ B で取得し PF 一覧とマージ） | PA-06 / ADR-002 §3 / [04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1 | — | G-6 |
+| - [ ] | G-8 | パスワード保護 `access_password`（アクセス付与基盤） | D-6a / D-6b / ADR-003 §4 | 旧 E-6 | G-6 |
+| - [ ] | G-2 | 企業別 SSO（テナント単位 SAML/OIDC）／オープン交流の扉 | ADR-002 §1.5 / §5.1 | — | — |
+| - [ ] | G-3 | functions の _base/_user/_enterprise 再編・マルチ codebase | PA-20b-c / PA-24c | — | — |
+| - [ ] | G-4 | 機能 ON/OFF（feature_flags）・トップバナー | D-12 | — | — |
 
-> ゲスト参加は v0.1 `01` では MVP 記載だが、最新方針（ADR・実装計画）で **MVP 外（将来実装）に確定**。
+**メモ（G-5〜G-7 の推奨順）**: **MVP: C-1 PoC → G1** →（Phase 2）**G-7 本実装（C-4）** → G-5 → G-6 → G-1 / G-8。C-1 正本: [05_WS-C_C-1_PoC設計](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md)。
+
+> ゲスト参加（G-1）は v0.1 `01` では MVP 記載だったが **MVP 外に確定**。3 軸モデル・publish_scope も **2026-06-27 時点で MVP 外（Phase 2）に確定**。
 
 ---
 
@@ -184,13 +191,15 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ゲート | 判定内容 | 影響 |
 |:--|:--|:--|:--|
-| - [ ] | **G1**: スキーマ PoC | discriminatedUnion × プロジェクト規約 × partner 互換が成立するか | C-4 着手可否 |
-| ✅ | **G2**: スキーマ確定 | [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) + [10_仕様/04_イベント管理](../10_仕様/04_詳細_イベント管理.md) で publish_scope / join_type / auto_join が固まったか | C-4・D-2・E-1 着手可否 |
+| ✅ | **G1**: スキーマ PoC | discriminatedUnion × プロジェクト規約 × partner 互換 — **C-1**（[05_WS-C_C-1](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md)） | **G-7（C-4 本実装）着手可** |
+| ✅ | **G2**: スキーマ確定 | [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) + [10_仕様/04_イベント管理](../10_仕様/04_詳細_イベント管理.md) で publish_scope / join_type / auto_join が固まったか | **G-5〜G-7 着手可否**（Phase 2・仕様のみ MVP 前確定済） |
 | ✅ | **G3**: IdP 着手前論点 | ロールバック境界・方式併存・MAU 課金試算・partner 影響 | WS-B 全体の着手可否 |
 
 > **G3（2026-06-27 通過）**: ロールバック・併存・lookup 分離は [05_認証・テナント](../10_仕様/05_認証・テナント.md) §0 / [04_WS-B](../30_リファクタ計画/04_WS-B認証モデル詳細設計.md)。MAU は [07_デプロイ・運用](../10_仕様/07_デプロイ・運用.md) §9.1 — MVP は 50k MAU 無料枠内、超過見込み時は Shokujii 収益で IdP 従量課金を許容（延期フォールバック不採用）。Rules CI は A-5 ✅。
 
-> **G2** は仕様・ADR レベルで通過。**C-3 以降のコード反映**が完了するまで C-4 は着手しない。
+> **G1（2026-06-27 通過）**: H1（App write discriminatedUnion + Db flat）採用。[05_WS-C_C-1_PoC設計](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md) 末尾 G1 判定。実装 `eventWrite.ts`（PR-C1b）、比較 PoC `poc/eventSchemaPoC.ts`。
+
+> **G2** は仕様・ADR レベルで通過。**コード反映は Phase 2（WS-G G-5〜G-7）**。MVP は現行 `is_public` ＋ optional 拡張（C-5 ✅）で出荷する。
 
 ---
 
@@ -200,19 +209,19 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 |:--|:--|:--|
 | **Merge** | **WS-M** | #2071 を PF 版影響ゼロで `development` へ取り込み |
 | Phase 0 | WS-A（A-4 を除く本ブランチ分 ＋ A-4 は #2090 別 PR）／ WS-F（独立着手可） | リリース独立・テスト独立・越境ログイン抑止・PF 露出防止 |
-| Phase 1 | WS-B（本番前）／ WS-C（G1・G2 後）／ WS-E の C-2 依存分 | 本番投入の認証基盤＋型安全な拡張基盤 |
-| MVP 仕上げ | WS-D（v0.1 残 5 件）／ WS-E（前倒し）／ WS-F 仕上げ | MVP 機能の完成 |
-| Phase 2 | WS-G | 事業ニーズに応じ追加 |
+| Phase 1 | WS-B（**B-1〜B-6 ✅**）／ WS-C（**C-1 ✅**、**G1 ✅**、C-5 ✅） | 本番投入の認証基盤 ＋ 型分岐方式確定 |
+| MVP 仕上げ | WS-D（v0.1 残 5 件）／ WS-E（E-2〜E-5）／ WS-F 仕上げ | MVP 機能の完成（`is_public`・即参加モデル） |
+| Phase 2 | WS-G（3 軸・publish_scope・ゲスト等） | PF/エンプラ横断の機能拡張 |
 
 **フェーズ完了チェック**
 
 - [ ] **WS-M 完了** — M-1〜M-12 全項目 ✅（最初の関門）
 - [ ] **Phase 0 完了** — WS-A 全項目 ✅（**A-4 は [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) 別 PR で可**）＋ WS-F の F-1・F-2 ✅
-- [ ] **Phase 1 完了** — WS-B 全項目 ✅ ＋ WS-C 全項目 ✅ ＋ G1 ✅
-- [ ] **MVP 仕上げ完了** — WS-D・WS-E（E-6 は Q-1 判断後）・WS-F 全項目 ✅
+- [x] **Phase 1 完了** — WS-B 全項目 ✅ ＋ WS-C（**C-1** ✅、C-5 ✅）＋ **G1** ✅
+- [ ] **MVP 仕上げ完了** — WS-D・WS-E（E-2〜E-5）・WS-F 全項目 ✅
 - [ ] **本番ブロッカー RC 全解消** — 下記 §本番ブロッカー 全項目 ✅
 
-WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5 認可）は WS-A〜C と**並行可**。D-2 ダッシュボードのみ一覧クエリで C-3（publish_scope）に依存。
+WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5 認可・D-2 ダッシュボード）は WS-B と**並行可**。D-2 は MVP では `is_public` ベースの一覧・集計で実装する。
 
 ---
 
@@ -223,13 +232,14 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 [Phase 0] A-1（memberOrders 分岐抽出・本丸）──┐
           A-2/A-5/A-6 ───────────────────────┼─→ Phase 0 完了
 [Phase 1] G3 → B-2 → B-3（onboarding テナント化・本丸）─→ 本番投入可
-          C-2（3軸確定）→ G2 → C-3 → C-4 → C-5 ─→ 型安全な拡張基盤
-[MVP] C-3 → D-2（ダッシュボード）／ E-1（参加方式）
-      D-1・D-3・D-4・D-5・F-1（並行・独立）
+          C-1（PoC）→ G1 ─→ 方式 H1 確定（WS-B/D/F と並行可）
+[MVP]     D-1・D-2・D-3・D-4・D-5・E-2〜E-5・F-1（並行・独立）
+[Phase 2] G-7（C-4 本実装）→ G-5（3 軸）→ G-6（publish_scope Migrate）→ G-1 / G-8
 ```
 
 - 2 大山場: **A-1（Phase 0）** と **B-3（Phase 1）** は独立。人員 2 系統なら同時進行可。
-- 全体をまたぐ最重要結節点: **C-2（v0.3 スキーマ確定）→ G2 → C-4 / D-2 / E-1**。
+- MVP クリティカルパス: **M-1 backfill 完了 → #2071 着地** と **B-3（IdP onboarding）**。
+- Phase 2 結節点: **G-5（PF 合わせた参加モデル）→ G-6（PF 横断 publish_scope）**（[ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md)）。
 
 ---
 
@@ -253,8 +263,8 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | ✅ | RC-35 | enterprise_subsidy が決済なしで確定可能（confirmOrder 側拒否または補助計算まで受付停止） | A-1 / D-4 | ◯ 共有 functions |
 | - [ ] | RC-44 | `/u/:userId` が他社・停止メンバーをゲートなし | D-5 | △ |
 | ✅ | RC-48 | カートが PF/他テナント注文を混在表示（enterprise_id 一致のみ） | F-1 | ◯ base 共有 cart |
-| - [ ] | RC-86 | 注文 doc の `enterprise_id` は保存済み。`is_guest` は未導入（ゲスト参加 / C-4 → D-2 で追跡） | C-4 → D-2 | ◯ 注文スキーマ |
-| - [ ] | RC-28 / RC-87 | enterprises / admin 判定の withConverter なし直読み | A-2 / PA-11 | ◯ base store 共有 |
+| - [ ] | RC-86 | 注文 doc の `enterprise_id` は保存済み。`is_guest` は未導入（ゲスト参加 / G-1 → D-2 で追跡） | G-1 → D-2 | ◯ 注文スキーマ |
+| - [ ] | RC-28 / RC-87 | enterprises / admin 判定の withConverter なし直読み | A-2 / G-7 | ◯ base store 共有 |
 
 ### データ整合・claims 一貫性（🟡 束ねて対応）
 
@@ -282,9 +292,10 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 
 | # | 論点 | 備考 |
 |:--|:--|:--|
-| Q-1 | E-6 パスワード保護を MVP に含めるか | アクセス付与基盤が必要（D-6b 要判断） |
-| Q-2 | C-3 community 公開区分を PF 版へ展開するか | 実装フェーズ判断 |
+| ~~Q-1~~ | ~~E-6 パスワード保護を MVP に含めるか~~ | **Phase 2（G-8）へ確定**（ADR-003 §4） |
+| ~~Q-2~~ | ~~C-3 community 公開区分を PF 版へ展開するか~~ | **Phase 2（G-6）で PF/エンプラ横断 Migrate 時に判断** |
 | Q-3 | dev/enterprise を development へ取り込む段取り | **WS-M** + [02_developmentマージ.md](./02_developmentマージ.md)（PF 版影響ゼロ・戦略 B 推奨） |
+| Q-4 | Phase 2 で PF 版にも `join_type: approval`（参加申請）を入れるか | G-5 着手前に PF 版仕様（[10_コミュニティに参加・退会](../../03_参加者獲得/10_コミュニティに参加・退会.md)）と合わせて決定 |
 
 ---
 
@@ -308,3 +319,8 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-25 | M-1 / F-1 メモに 02 §2.3.1（member_orders 等 T1 対象外・将来 backfill 条件）へのリンクを追加 |
 | 2026-06-27 | #2119: A-1 ✅（addEnterpriseSubsidyMenusToCart）・A-5 ✅。WS-A 5/6 完了（A-4 は #2090） |
 | 2026-06-27 | G3 ✅ 通過（MAU 試算確定・IdP 前倒し。07 §9.1 参照） |
+| 2026-06-27 | 3 軸モデル・publish_scope 移行（旧 C-2/C-3/E-1/E-6）を Phase 2（WS-G G-5〜G-8）へ延期。MVP は `is_public` ＋ PF 共有即参加 |
+| 2026-06-27 | **WS-B B-1〜B-6 ✅** — IdP Phase 1 完了。Phase 1 フェーズ完了チェック ✅ |
+| 2026-06-27 | **PR-C1b 完了** — `eventWrite.ts` + `eventDraft` strict |
+| 2026-06-27 | **C-1 PoC 実装 + G1 通過**（poc/eventSchemaPoC。H1 採用確定） |
+| 2026-06-27 | **C-1 PoC を MVP 前倒し**（05_WS-C_C-1_PoC設計.md。H1 採用案・G1 条件）。G-7 は C-4 本実装のみ |

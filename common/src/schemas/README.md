@@ -18,3 +18,9 @@ Firestore DB から読み込まれる際、または new によって作成さ�
 生成される class の型を保証するためのものなので、基本的に `default()` を使用し、型が一意に決まるようにしてください。（ただし、 Mandatory 項目に関してはその限りではない）
 
 - DB で Timestamp として保存される項目は `EpochMillisSchema` を使用して `number` に変換します
+
+## eventWrite.ts と poc/
+
+**`eventWrite.ts`** は Event の **write 経路専用**スキーマ（H1: App write strict + Db flat 寛容）。`event_payment` を判別子とする `discriminatedUnion` で、エンプラ書き込み時に `enterprise_id` / `enterprise_subsidy_settings` を型で必須化する。package から export し、`base/src/stores/eventDraft.ts` 等の書き込み前検証に使う。正本: [05_WS-C_C-1_PoC設計.md](../../../documents/08_エンタープライズ/30_リファクタ計画/05_WS-C_C-1_PoC設計.md)（PR-C1b で昇格済み）。
+
+**`poc/`** は C-1 PoC 用の **A/B/C 方式比較**（discriminatedUnion / extend / ネスト）のみ。package export の対象ではなく、方式選定と G1 ゲート用の試作・テスト置き場である。本番 write スキーマは `eventWrite.ts` を参照すること。
