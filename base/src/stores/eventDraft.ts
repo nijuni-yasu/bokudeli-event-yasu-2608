@@ -1,6 +1,7 @@
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
 import { Enterprise } from '@shokujii/common/schemas/Enterprise.js'
+import { assertEnterpriseEventDraftStrict } from '@shokujii/common/schemas/eventWrite.js'
 import { enterpriseSubsidySettingsFromEnterprise } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import type { BokudeliEvent } from '@shokujii/base/stores/event.js'
 
@@ -29,21 +30,25 @@ export const prepareEnterpriseEventDraft: EventDraftPreparer = async (event, com
     event.event_payment = 'enterprise_subsidy'
     event.community_bill_settings = undefined
   }
-  const enterpriseRef = doc(db, 'enterprises', enterpriseId)
-  const enterpriseSnap = await getDoc(enterpriseRef)
-  if (!enterpriseSnap.exists()) {
-    return
+  if (event.enterprise_subsidy_settings == null) {
+    const enterpriseRef = doc(db, 'enterprises', enterpriseId)
+    const enterpriseSnap = await getDoc(enterpriseRef)
+    if (!enterpriseSnap.exists()) {
+      return
+    }
+    const raw = enterpriseSnap.data()
+    if (raw == null) {
+      return
+    }
+    try {
+      const enterprise = new Enterprise(enterpriseId, raw)
+      event.enterprise_subsidy_settings = enterpriseSubsidySettingsFromEnterprise(enterprise)
+    } catch (err) {
+      console.warn('Failed to snapshot enterprise_subsidy_settings', err)
+      return
+    }
   }
-  const raw = enterpriseSnap.data()
-  if (raw == null) {
-    return
-  }
-  try {
-    const enterprise = new Enterprise(enterpriseId, raw)
-    event.enterprise_subsidy_settings = enterpriseSubsidySettingsFromEnterprise(enterprise)
-  } catch (err) {
-    console.warn('Failed to snapshot enterprise_subsidy_settings', err)
-  }
+  assertEnterpriseEventDraftStrict(event)
 }
 
 export function eventDraftPreparerFromEnterpriseId(enterpriseId: string | null | undefined): EventDraftPreparer {
