@@ -50,9 +50,9 @@ WS-B 実装前に次を確定する。
 |:--|:--|
 | ロールバック境界 | sandbox は tenant / tenant user を作り直し可。本番は tenant 化後の Auth user 移行が重いため、tenant onboarding を本番投入前に完了させる |
 | 方式併存 | 実装ブランチ内では既存 claims 方式と tenant 方式を段階併存。リリース境界では Enterprise 従業員ログインは tenant 方式へ寄せる |
-| MAU 課金 | Identity Platform 有効化後の MAU 課金を本番前に試算し、sandbox / production の有効化タイミングを明記する |
-| PF / partner 影響 | PF / partner はデフォルトプール前提のまま。`users` / `users_personal_information` の共有により同一メール検索が壊れないよう、Enterprise 用 lookup を分離する |
-| Rules CI | `Test Firestore Rules / test` を branch protection の required check に入れる（A-5 残） |
+| MAU 課金 | **確定（2026-06-27）**: MVP は月 50k MAU 無料枠内。超過見込み時は Shokujii 全体の利用・課金規模に見合い IdP 従量課金を許容（[07_デプロイ・運用](../10_仕様/07_デプロイ・運用.md) §9.1）。sandbox: B-1 PoC で有効化 / production: 本番 Enterprise 投入前 |
+| PF / partner 影響 | PF / partner はデフォルトプール前提のまま。Enterprise lookup は `EnterpriseMember.user_email` に分離（05 §0.2） |
+| Rules CI | ✅ `Test Firestore Rules / test` を branch protection の required check に登録済み（A-5） |
 
 ---
 
@@ -190,7 +190,7 @@ enterprises/{enterpriseId}/members/{uid}
 
 ### 推奨
 
-**候補 B を第一候補**とする。
+**`EnterpriseMember.user_email` を採用**（2026-06-27 仕様確定。[05_認証・テナント](../10_仕様/05_認証・テナント.md) §0.2）。
 
 理由:
 
@@ -198,8 +198,6 @@ enterprises/{enterpriseId}/members/{uid}
 - 同一メール共存時に global query を避けられる
 - `/users_personal_information` の Rules を本人 read のまま維持しやすい
 - `getEnterpriseMembers` の email join が不要または軽くなる
-
-ただし、既存仕様との差分が大きいため、B-2 で最終判断する。
 
 ---
 
@@ -253,7 +251,7 @@ function isSameEnterprise(data) {
 
 ### claims 方針
 
-最低限:
+最低限（tenant 内 user）:
 
 ```ts
 {
@@ -263,15 +261,7 @@ function isSameEnterprise(data) {
 }
 ```
 
-検討:
-
-```ts
-{
-  tenant_id: string
-}
-```
-
-`tenant_id` claim を持たせると Rules で `enterprises/{id}` を参照せずに照合できる。ただし `firebase.tenant` と重複するため、ドリフト検知が必要。
+**`tenant_id` custom claim（条件付き）**: 原則 **`request.auth.token.firebase.tenant` を正**とする（[05_認証・テナント](../10_仕様/05_認証・テナント.md) §0.5）。Rules PoC（B-1）で `get(/enterprises/{id})` の参照コストが高い場合のみ、claims に `tenant_id` を追加し `firebase.tenant` と常に同値を維持する。
 
 ---
 
@@ -339,13 +329,15 @@ function isSameEnterprise(data) {
 
 ## 未決事項
 
-| # | 論点 | 初期案 |
+| # | 論点 | 状態 |
 |:--|:--|:--|
-| Q-1 | tenantId を `enterprise_id` と同一にできるか | PoC で確認。不可なら Firebase 発行 ID を `tenant_id` に保存 |
-| Q-2 | email lookup の保存先 | `EnterpriseMember.user_email` 追加を第一候補 |
-| Q-3 | claims に `tenant_id` を持たせるか | Rules PoC で参照コストを見て判断 |
+| Q-1 | tenantId を `enterprise_id` と同一にできるか | **PoC 待ち**（B-1）。不可なら Firebase 発行 ID を `tenant_id` に保存 |
+| Q-2 | email lookup の保存先 | **確定**: `EnterpriseMember.user_email`（[05_認証・テナント](../10_仕様/05_認証・テナント.md) §0.2） |
+| Q-3 | claims に `tenant_id` を持たせるか | **条件付き**: 原則 `firebase.tenant` を正。Rules PoC（B-1）で必要時のみ claim 追加（05 §0.5） |
 | Q-4 | 本番に project-level enterprise user が存在する場合の移行 | 原則 WS-B 本番投入前にユーザー蓄積を避ける。存在時は import / 再作成を別途判断 |
 | Q-5 | ゲスト用 secondary Firebase app の設計 | Phase 2。WS-B ではデフォルトプール固定方針のみ維持 |
+
+> **仕様正本**: 製品仕様は [10_仕様/05_認証・テナント.md](../10_仕様/05_認証・テナント.md) §0。本書は実装手順・PoC・テストの詳細正本。
 
 ---
 
@@ -354,3 +346,5 @@ function isSameEnterprise(data) {
 | 日付 | 内容 |
 |:--|:--|
 | 2026-06-20 | 初版（WS-B 認証モデル詳細設計。G3・B-1〜B-6 の実装順、tenant / email lookup / Rules / 移行方針を整理） |
+| 2026-06-27 | Q-2 確定（EnterpriseMember.user_email）、Q-3 条件付き（firebase.tenant 正）。05_認証・テナント §0 へ仕様昇格 |
+| 2026-06-27 | G3 通過（MAU 試算・IdP 前倒し決定。07 §9.1 参照） |

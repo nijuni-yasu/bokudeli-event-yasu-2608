@@ -119,7 +119,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | - [ ] | B-5 | クライアント tenantId 設定・ログイン UI・guard | PA-03a-c | 本番前 | B-1 |
 | - [ ] | B-6 | 同一メール衝突方針の正式化 | PA-04 | 本番前 | B-2 |
 
-**メモ**: 現行は claims + OTP（`enterprise/auth.ts`）。IdP テナント（`authForTenant` / `auth.tenantId`）は未導入。
+**メモ**: 現行コードは claims + OTP（project-level `getAuth()`）。IdP テナントは未導入。**仕様正本**: [05_認証・テナント](../10_仕様/05_認証・テナント.md) §0（`tenant_id` / `EnterpriseMember.user_email` / 同一メール共存確定。[#2121](https://github.com/nijuniinc/bokudeli-event-new/issues/2121)）。
 
 ### WS-C: スキーマ基盤（Phase 1・v0.3 確定がゲート）
 
@@ -186,7 +186,9 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 |:--|:--|:--|:--|
 | - [ ] | **G1**: スキーマ PoC | discriminatedUnion × プロジェクト規約 × partner 互換が成立するか | C-4 着手可否 |
 | ✅ | **G2**: スキーマ確定 | [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) + [10_仕様/04_イベント管理](../10_仕様/04_詳細_イベント管理.md) で publish_scope / join_type / auto_join が固まったか | C-4・D-2・E-1 着手可否 |
-| - [ ] | **G3**: IdP 着手前論点 | ロールバック境界・方式併存・MAU 課金試算・partner 影響 | WS-B 全体の着手可否 |
+| ✅ | **G3**: IdP 着手前論点 | ロールバック境界・方式併存・MAU 課金試算・partner 影響 | WS-B 全体の着手可否 |
+
+> **G3（2026-06-27 通過）**: ロールバック・併存・lookup 分離は [05_認証・テナント](../10_仕様/05_認証・テナント.md) §0 / [04_WS-B](../30_リファクタ計画/04_WS-B認証モデル詳細設計.md)。MAU は [07_デプロイ・運用](../10_仕様/07_デプロイ・運用.md) §9.1 — MVP は 50k MAU 無料枠内、超過見込み時は Shokujii 収益で IdP 従量課金を許容（延期フォールバック不採用）。Rules CI は A-5 ✅。
 
 > **G2** は仕様・ADR レベルで通過。**C-3 以降のコード反映**が完了するまで C-4 は着手しない。
 
@@ -305,3 +307,4 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-20 | RC-48 を ✅ に更新。RC-86 は `enterprise_id` 済・`is_guest` 未として文言を精密化 |
 | 2026-06-25 | M-1 / F-1 メモに 02 §2.3.1（member_orders 等 T1 対象外・将来 backfill 条件）へのリンクを追加 |
 | 2026-06-27 | #2119: A-1 ✅（addEnterpriseSubsidyMenusToCart）・A-5 ✅。WS-A 5/6 完了（A-4 は #2090） |
+| 2026-06-27 | G3 ✅ 通過（MAU 試算確定・IdP 前倒し。07 §9.1 参照） |
