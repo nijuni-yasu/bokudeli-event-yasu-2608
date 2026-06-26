@@ -51,6 +51,7 @@ export type EnterpriseBillingSettingsType = z.infer<typeof EnterpriseBillingSett
 
 const EnterpriseDbSchema = z.object({
   enterprise_id: z.string().nonempty(),
+  tenant_id: z.string().nonempty(),
   company_name: z.string().nonempty(),
   company_logo_url: z.string(),
   theme_color: z.string().nonempty(),
@@ -68,6 +69,7 @@ const EnterpriseDbSchema = z.object({
 })
 
 const EnterpriseAppSchema = z.object({
+  tenant_id: z.string().default(''),
   company_name: z.string().default(''),
   company_logo_url: z.string().default(''),
   theme_color: z.string().default('#1976D2'),
@@ -101,6 +103,7 @@ const convertEnterpriseToDb = (enterprise: Enterprise) => {
 export class Enterprise {
   readonly id: string
   readonly enterprise_id: string
+  tenant_id!: string
   company_name!: string
   company_logo_url!: string
   theme_color!: string
@@ -144,6 +147,7 @@ export class Enterprise {
 
 const EnterpriseMemberDbSchema = z.object({
   user_id: z.string().nonempty(),
+  user_email: z.string().email(),
   role: z.enum(ENTERPRISE_MEMBER_ROLE_VALUES),
   is_active: z.boolean(),
   last_activated_at: TimestampSchema.nullable(),
@@ -158,6 +162,7 @@ const EnterpriseMemberDbSchema = z.object({
 
 const EnterpriseMemberAppSchema = z.object({
   user_id: z.string().nonempty(),
+  user_email: z.string().email(),
   role: z.enum(ENTERPRISE_MEMBER_ROLE_VALUES).default('member'),
   is_active: z.boolean().default(true),
   last_activated_at: EpochMillisSchema.nullable().default(null),
@@ -182,6 +187,7 @@ const convertEnterpriseMemberToDb = (member: EnterpriseMember) => {
 export class EnterpriseMember {
   readonly id: string
   user_id!: string
+  user_email!: string
   role!: EnterpriseMemberRoleType
   is_active!: boolean
   last_activated_at: number | null
