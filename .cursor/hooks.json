@@ -1,6 +1,37 @@
 {
   "version": 1,
   "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": ".cursor/hooks/agent-usage-task-start.sh",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/agent-usage-turn-record.sh",
+        "timeout": 5
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": ".cursor/hooks/agent-usage-shell-record.sh",
+        "matcher": "gh run watch|github_actions_deploy_watch|wait-ai-pr-review-watch|gh workflow run",
+        "timeout": 5
+      }
+    ],
+    "preCompact": [
+      {
+        "command": ".cursor/hooks/agent-usage-compact-record.sh",
+        "timeout": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": ".cursor/hooks/agent-usage-session-end.sh",
+        "timeout": 10
+      }
+    ],
     "beforeShellExecution": [
       {
         "command": ".cursor/hooks/protect-git-release.sh",
