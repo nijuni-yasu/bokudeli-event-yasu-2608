@@ -1,4 +1,3 @@
-import { getAuth } from 'firebase-admin/auth'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import {
   CreateEnterpriseRequest,
@@ -10,13 +9,14 @@ import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterpris
 import { computeBillingTrialEndsAtMillis } from '@shokujii/common/utils/isEnterpriseMemberBillableInYearMonth.js'
 import { getConfigGlobal } from '../stores/config.js'
 import {
+  deleteEnterprise,
   getEnterpriseByCustomDomain,
   getEnterpriseById,
   getEnterpriseBySubdomain,
   saveEnterprise,
   saveEnterpriseMember,
 } from '../stores/enterprise.js'
-import { getUserIdFromEmail, saveUser, ShokujiiUser } from '../stores/user.js'
+import { saveUser, ShokujiiUser } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { resolveEnterpriseByHostname } from '../utils/enterpriseBaseDomain.js'
 import {
@@ -27,6 +27,11 @@ import {
 } from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
 import { isEnterpriseAppCheckEnforced } from '../utils/enterpriseAppCheck.js'
+import {
+  authForEnterpriseTenant,
+  createIdentityPlatformTenant,
+  deleteIdentityPlatformTenant,
+} from '../utils/tenantAuth.js'
 import { validateSubsidySettings } from './subsidyValidation.js'
 
 const logger = createModuleLogger('enterprise')
@@ -89,11 +94,10 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
     throw new HttpsError('invalid-argument', 'initial_admin email domain not allowed')
   }
 
-  const [existingById, existingBySubdomain, existingByCustomDomain, existingUserId] = await Promise.all([
+  const [existingById, existingBySubdomain, existingByCustomDomain] = await Promise.all([
     getEnterpriseById(enterpriseId),
     getEnterpriseBySubdomain(normalizedSubdomain),
     normalizedCustomDomain != null ? getEnterpriseByCustomDomain(normalizedCustomDomain) : Promise.resolve(undefined),
-    getUserIdFromEmail(initialAdminEmail),
   ])
 
   if (existingById != null) {
@@ -105,93 +109,131 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
   if (existingByCustomDomain != null) {
     throw new HttpsError('already-exists', 'custom_domain already exists')
   }
-  if (existingUserId != null) {
-    throw new HttpsError('already-exists', 'initial_admin email already in use')
-  }
 
   const now = Date.now()
   const billingTrialEndsAt = computeBillingTrialEndsAtMillis(now)
 
-  const enterprise = new Enterprise(enterpriseId, {
-    company_name: companyName,
-    subdomain: normalizedSubdomain,
-    ...(normalizedCustomDomain != null ? { custom_domain: normalizedCustomDomain } : {}),
-    allowed_email_domains: allowedEmailDomains,
-    theme_color: themeColor ?? '#1976D2',
-    discount_type: initialSubsidy.type,
-    discount_value: initialSubsidy.value,
-    monthly_limit_per_user: initialSubsidy.monthly_limit_per_user,
-    billing_settings: {
-      unit_price: DEFAULT_UNIT_PRICE,
-      trial_months: DEFAULT_TRIAL_MONTHS,
-      billing_trial_ends_at: billingTrialEndsAt,
-    },
-    is_active: true,
-    created_at: now,
-  })
+  let tenantId: string | undefined
+  let authUserId: string | undefined
 
-  await saveEnterprise(enterprise)
+  try {
+    tenantId = await createIdentityPlatformTenant(enterpriseId)
 
-  const authUser = await getAuth().createUser({
-    email: initialAdminEmail,
-    emailVerified: true,
-    displayName: initialAdmin.display_name,
-  })
-
-  await getAuth().setCustomUserClaims(authUser.uid, {
-    enterprise_id: enterpriseId,
-    enterprise_role: 'admin',
-    user_type: 'enterprise',
-  })
-
-  const normalizedDepartment =
-    initialAdmin.department != null && initialAdmin.department.trim() !== ''
-      ? initialAdmin.department.trim()
-      : undefined
-
-  const member = new EnterpriseMember(authUser.uid, {
-    role: 'admin',
-    is_active: true,
-    last_activated_at: now,
-    last_deactivated_at: null,
-    display_name: initialAdmin.display_name,
-    ...(normalizedDepartment != null ? { department: normalizedDepartment } : {}),
-    monthly_usage: {},
-    monthly_order_count: {},
-    created_at: now,
-  })
-
-  await saveEnterpriseMember(member, enterpriseId)
-
-  await saveUser(
-    new ShokujiiUser(authUser.uid, {
-      user_name: initialAdmin.display_name,
-      user_type: 'enterprise',
-      enterprise_id: enterpriseId,
-      user_email: initialAdminEmail,
-      created_at: now,
-    }),
-  )
-
-  await writeAuditLog({
-    enterpriseId,
-    userId: uid!,
-    action: 'enterprise_create',
-    targetId: enterpriseId,
-    targetType: 'enterprise',
-    ipAddress: getClientIp(request.rawRequest),
-    details: {
+    const enterprise = new Enterprise(enterpriseId, {
+      tenant_id: tenantId,
       company_name: companyName,
       subdomain: normalizedSubdomain,
-      initial_admin_email: initialAdminEmail,
-    },
-  })
+      ...(normalizedCustomDomain != null ? { custom_domain: normalizedCustomDomain } : {}),
+      allowed_email_domains: allowedEmailDomains,
+      theme_color: themeColor ?? '#1976D2',
+      discount_type: initialSubsidy.type,
+      discount_value: initialSubsidy.value,
+      monthly_limit_per_user: initialSubsidy.monthly_limit_per_user,
+      billing_settings: {
+        unit_price: DEFAULT_UNIT_PRICE,
+        trial_months: DEFAULT_TRIAL_MONTHS,
+        billing_trial_ends_at: billingTrialEndsAt,
+      },
+      is_active: true,
+      created_at: now,
+    })
 
-  logger.info('enterprise_created', { enterpriseId, initialAdminUserId: authUser.uid })
+    await saveEnterprise(enterprise)
 
-  return {
-    enterprise_id: enterpriseId,
-    initial_admin_user_id: authUser.uid,
+    const tenantAuth = authForEnterpriseTenant(tenantId)
+    const authUser = await tenantAuth.createUser({
+      email: initialAdminEmail,
+      emailVerified: true,
+      displayName: initialAdmin.display_name,
+    })
+    authUserId = authUser.uid
+
+    await tenantAuth.setCustomUserClaims(authUser.uid, {
+      enterprise_id: enterpriseId,
+      enterprise_role: 'admin',
+      user_type: 'enterprise',
+    })
+
+    const normalizedDepartment =
+      initialAdmin.department != null && initialAdmin.department.trim() !== ''
+        ? initialAdmin.department.trim()
+        : undefined
+
+    const member = new EnterpriseMember(authUser.uid, {
+      user_email: initialAdminEmail,
+      role: 'admin',
+      is_active: true,
+      last_activated_at: now,
+      last_deactivated_at: null,
+      display_name: initialAdmin.display_name,
+      ...(normalizedDepartment != null ? { department: normalizedDepartment } : {}),
+      monthly_usage: {},
+      monthly_order_count: {},
+      created_at: now,
+    })
+
+    await saveEnterpriseMember(member, enterpriseId)
+
+    await saveUser(
+      new ShokujiiUser(authUser.uid, {
+        user_name: initialAdmin.display_name,
+        user_type: 'enterprise',
+        enterprise_id: enterpriseId,
+        user_email: initialAdminEmail,
+        created_at: now,
+      }),
+    )
+
+    await writeAuditLog({
+      enterpriseId,
+      userId: uid!,
+      action: 'enterprise_create',
+      targetId: enterpriseId,
+      targetType: 'enterprise',
+      ipAddress: getClientIp(request.rawRequest),
+      details: {
+        company_name: companyName,
+        subdomain: normalizedSubdomain,
+        initial_admin_email: initialAdminEmail,
+        tenant_id: tenantId,
+      },
+    })
+
+    logger.info('enterprise_created', { enterpriseId, tenantId, initialAdminUserId: authUser.uid })
+
+    return {
+      enterprise_id: enterpriseId,
+      initial_admin_user_id: authUser.uid,
+    }
+  } catch (error) {
+    logger.error('enterprise_create_failed', { enterpriseId, tenantId, authUserId, error })
+
+    if (authUserId != null && tenantId != null) {
+      try {
+        await authForEnterpriseTenant(tenantId).deleteUser(authUserId)
+      } catch (deleteUserError) {
+        logger.error('enterprise_create_rollback_delete_user_failed', { enterpriseId, authUserId, deleteUserError })
+      }
+    }
+
+    try {
+      await deleteEnterprise(enterpriseId)
+    } catch (deleteEnterpriseError) {
+      logger.error('enterprise_create_rollback_delete_enterprise_failed', { enterpriseId, deleteEnterpriseError })
+    }
+
+    if (tenantId != null) {
+      try {
+        await deleteIdentityPlatformTenant(tenantId)
+      } catch (deleteTenantError) {
+        logger.error('enterprise_create_rollback_delete_tenant_failed', { enterpriseId, tenantId, deleteTenantError })
+      }
+    }
+
+    if (error instanceof HttpsError) {
+      throw error
+    }
+    throw new HttpsError('internal', 'enterprise creation failed')
   }
 })
 
@@ -211,9 +253,13 @@ export const getEnterpriseByDomain = onCall<GetEnterpriseByDomainRequest, Promis
     if (enterprise == null || !enterprise.is_active) {
       throw new HttpsError('not-found', 'enterprise not found')
     }
+    if (enterprise.tenant_id.trim() === '') {
+      throw new HttpsError('failed-precondition', 'enterprise tenant is not configured')
+    }
 
     return {
       enterprise_id: enterprise.enterprise_id,
+      tenant_id: enterprise.tenant_id,
       company_name: enterprise.company_name,
       company_logo_url: enterprise.company_logo_url,
       theme_color: enterprise.theme_color,

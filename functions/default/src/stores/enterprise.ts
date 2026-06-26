@@ -78,6 +78,10 @@ export const saveEnterprise = async (enterprise: Enterprise): Promise<void> => {
   await getEnterpriseRef(enterprise.id).set(enterprise)
 }
 
+export const deleteEnterprise = async (enterpriseId: string): Promise<void> => {
+  await getEnterpriseRef(enterpriseId).delete()
+}
+
 export const saveEnterpriseMember = async (member: EnterpriseMember, enterpriseId: string): Promise<void> => {
   await getEnterpriseMemberRef(enterpriseId, member.id).set(member)
 }
@@ -144,6 +148,17 @@ export const getEnterpriseBySubdomain = async (subdomain: string): Promise<Enter
     .withConverter(enterpriseConverter)
     .get()
   return snapshot.empty ? undefined : snapshot.docs[0]?.data()
+}
+
+export const getEnterpriseMemberUserIdByEmail = async (
+  enterpriseId: string,
+  email: string,
+): Promise<string | undefined> => {
+  const snapshot = await getEnterpriseMembersCollectionRef(enterpriseId).where('user_email', '==', email).limit(1).get()
+  if (snapshot.empty) {
+    return undefined
+  }
+  return snapshot.docs[0]?.id
 }
 
 export const getEnterpriseByCustomDomain = async (customDomain: string): Promise<Enterprise | undefined> => {
