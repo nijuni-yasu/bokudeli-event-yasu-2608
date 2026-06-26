@@ -2,7 +2,6 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
 import { EventMember } from '@shokujii/common/schemas/EventMemberOrder.js'
-import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import {
   computePaymentCommunityBillOffAmount,
   computeTotalPayment,
@@ -22,11 +21,9 @@ import { getEventInCommunity } from './stores/event.js'
 import { createModuleLogger } from './utils/logger.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
 import {
+  addEnterpriseSubsidyMenusToCart,
   assertActiveEnterpriseMember,
   assertEnterpriseEventPaymentAllowed,
-  applyEnterpriseSubsidyPayFieldToCartTracker,
-  buildEnterpriseSubsidyUsageExceededDetails,
-  createEnterpriseSubsidyAddToCartTracker,
   finalizeEnterpriseSubsidyZeroPaymentOrder,
   getEventEnterpriseId,
   loadEnterpriseMemberForSubsidy,
@@ -55,7 +52,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
 
     assertEnterpriseEventPaymentAllowed(eventData)
     const enterpriseId = getEventEnterpriseId(eventData)
-    await assertActiveEnterpriseMember(enterpriseId, request.auth, transaction)
+    const enterpriseMember = await assertActiveEnterpriseMember(enterpriseId, request.auth, transaction)
 
     if (eventData.isCanceled()) {
       throw new HttpsError('failed-precondition', 'イベントがキャンセルされたため、カートに追加できません')
@@ -80,24 +77,6 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
 
     const existingMember = await getMember(community_id, event_id, uid, transaction)
 
-    let subsidyTracker: ReturnType<typeof createEnterpriseSubsidyAddToCartTracker> | null = null
-    let eventMonth = ''
-
-    if (eventData.event_payment === 'enterprise_subsidy') {
-      if (eventData.enterprise_subsidy_settings == null) {
-        throw new HttpsError('failed-precondition', 'enterprise_subsidy_settings is required')
-      }
-      if (enterpriseId == null) {
-        throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
-      }
-      eventMonth = formatYearMonth(eventData.event_start_datetime)
-      const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, uid, transaction)
-      if (entMember == null) {
-        throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
-      }
-      subsidyTracker = createEnterpriseSubsidyAddToCartTracker(entMember.monthly_usage[eventMonth] ?? 0)
-    }
-
     if (existingMember == null) {
       const member = new EventMember(uid, {
         user_id: uid,
@@ -111,72 +90,55 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       await saveMember(community_id, event_id, existingMember, transaction)
     }
 
+    if (eventData.event_payment === 'enterprise_subsidy') {
+      if (enterpriseId == null || enterpriseMember == null) {
+        throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
+      }
+      return addEnterpriseSubsidyMenusToCart({
+        communityId: community_id,
+        eventId: event_id,
+        userId: uid,
+        enterpriseId,
+        event: eventData,
+        menus,
+        eventMenus,
+        transaction,
+        enterpriseMember,
+      })
+    }
+
     for (const menu of menus) {
       const masterMenu = eventMenus.find((m) => m.id === menu.menu_id)
       if (masterMenu == null) {
         throw new HttpsError('failed-precondition', `メニューが見つかりません: ${menu.menu_id}`)
       }
 
-      if (eventData.event_payment === 'enterprise_subsidy') {
-        for (let i = 0; i < menu.count; i++) {
-          const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
-            event: eventData,
-            menuPrice: masterMenu.menu_price,
-            tracker: subsidyTracker!,
-          })
-          await createOrder(
-            community_id,
+      const discount = computePaymentCommunityBillOffAmount(
+        eventData.event_payment,
+        eventData.community_bill_settings,
+        masterMenu.menu_price,
+      )
+      for (let i = 0; i < menu.count; i++) {
+        await createOrder(
+          community_id,
+          event_id,
+          uid,
+          {
+            user_id: uid,
             event_id,
-            uid,
-            {
-              user_id: uid,
-              event_id,
-              community_id,
-              status: 'in_cart',
-              menu_id: masterMenu.id,
-              menu_name: masterMenu.menu_name,
-              menu_price: masterMenu.menu_price,
-              enterprise_id: enterpriseId,
-              ...(payField !== undefined ? { pay_enterprise_subsidy_amount: payField } : {}),
-            },
-            transaction,
-          )
-        }
-      } else {
-        const discount = computePaymentCommunityBillOffAmount(
-          eventData.event_payment,
-          eventData.community_bill_settings,
-          masterMenu.menu_price,
+            community_id,
+            status: 'in_cart',
+            menu_id: masterMenu.id,
+            menu_name: masterMenu.menu_name,
+            menu_price: masterMenu.menu_price,
+            ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
+            ...(discount !== undefined ? { pay_community_bill_off_amount: discount } : {}),
+          },
+          transaction,
         )
-        for (let i = 0; i < menu.count; i++) {
-          await createOrder(
-            community_id,
-            event_id,
-            uid,
-            {
-              user_id: uid,
-              event_id,
-              community_id,
-              status: 'in_cart',
-              menu_id: masterMenu.id,
-              menu_name: masterMenu.menu_name,
-              menu_price: masterMenu.menu_price,
-              ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
-              ...(discount !== undefined ? { pay_community_bill_off_amount: discount } : {}),
-            },
-            transaction,
-          )
-        }
       }
     }
 
-    if (subsidyTracker != null && enterpriseId != null) {
-      return buildEnterpriseSubsidyUsageExceededDetails({
-        enterpriseId,
-        eventMonth,
-        tracker: subsidyTracker,
-      })
-    }
     return null
   })
 

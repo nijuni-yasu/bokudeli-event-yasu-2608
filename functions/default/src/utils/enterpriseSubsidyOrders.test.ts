@@ -1,16 +1,24 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { HttpsError } from 'firebase-functions/https'
 import { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
 import { EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 import { replayEnterpriseSubsidyAmountsForOrders } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
 import { ShokujiiEvent } from '../stores/event.js'
 
 vi.mock('../stores/enterprise.js', () => ({
   getEnterpriseMember: vi.fn(),
+  getEnterpriseMemberInTransaction: vi.fn(),
 }))
 
-import { getEnterpriseMember } from '../stores/enterprise.js'
+vi.mock('../stores/memberOrder.js', () => ({
+  createOrder: vi.fn(),
+}))
+
+import { getEnterpriseMember, getEnterpriseMemberInTransaction } from '../stores/enterprise.js'
+import { createOrder } from '../stores/memberOrder.js'
 import {
+  addEnterpriseSubsidyMenusToCart,
   assertActiveEnterpriseMember,
   assertEnterpriseEventPaymentAllowed,
   assertEnterpriseSubsidyOrdersConsistent,
@@ -62,13 +70,17 @@ describe('assertActiveEnterpriseMember', () => {
     ).rejects.toMatchObject({ code: 'permission-denied' })
   })
 
-  it('自社アクティブメンバーは通過', async () => {
-    vi.mocked(getEnterpriseMember).mockResolvedValue(
-      new EnterpriseMember('u1', { user_id: 'u1', is_active: true, monthly_usage: {}, monthly_order_count: {} }),
-    )
+  it('自社アクティブメンバーは通過し member を返す', async () => {
+    const member = new EnterpriseMember('u1', {
+      user_id: 'u1',
+      is_active: true,
+      monthly_usage: {},
+      monthly_order_count: {},
+    })
+    vi.mocked(getEnterpriseMember).mockResolvedValue(member)
     await expect(
       assertActiveEnterpriseMember('ent-a', { uid: 'u1', token: { enterprise_id: 'ent-a' } } as never),
-    ).resolves.toBeUndefined()
+    ).resolves.toBe(member)
   })
 })
 
@@ -281,6 +293,183 @@ describe('enterprise subsidy cart tracker', () => {
         tracker,
       }),
     ).toMatchObject({ unfilledCount: 1 })
+  })
+})
+
+describe('addEnterpriseSubsidyMenusToCart', () => {
+  const settings = { type: 'fixed' as const, value: 500, monthly_limit_per_user: 7500 }
+  const transaction = {} as never
+
+  const makeEnterpriseMember = (monthlyUsage: Record<string, number> = { '2026-06': 1000 }) =>
+    new EnterpriseMember('u1', {
+      user_id: 'u1',
+      is_active: true,
+      monthly_usage: monthlyUsage,
+      monthly_order_count: {},
+    })
+
+  const makeEvent = (overrides: Partial<ConstructorParameters<typeof ShokujiiEvent>[1]> = {}) =>
+    new ShokujiiEvent('e1', {
+      ...baseEventFields,
+      enterprise_id: 'ent1',
+      event_payment: 'enterprise_subsidy',
+      event_start_datetime: Date.UTC(2026, 5, 15),
+      enterprise_subsidy_settings: settings,
+      ...overrides,
+    })
+
+  const eventMenus = [new EventMenu('e1', 'm1', { menu_name: 'menu', menu_price: 800, menu_sort_number: 0 })]
+
+  beforeEach(() => {
+    vi.mocked(getEnterpriseMemberInTransaction).mockReset()
+    vi.mocked(createOrder).mockReset()
+    vi.mocked(createOrder).mockResolvedValue(
+      new EventMemberOrder('new-order', {
+        order_id: 'new-order',
+        user_id: 'u1',
+        event_id: 'e1',
+        community_id: 'c1',
+        menu_id: 'm1',
+        menu_name: 'menu',
+        menu_price: 800,
+      }),
+    )
+  })
+
+  it('残枠内で createOrder を count 分呼び pay_enterprise_subsidy_amount を付与する', async () => {
+    const result = await addEnterpriseSubsidyMenusToCart({
+      communityId: 'c1',
+      eventId: 'e1',
+      userId: 'u1',
+      enterpriseId: 'ent1',
+      event: makeEvent(),
+      menus: [{ menu_id: 'm1', count: 2 }],
+      eventMenus,
+      transaction,
+      enterpriseMember: makeEnterpriseMember(),
+    })
+
+    expect(getEnterpriseMemberInTransaction).not.toHaveBeenCalled()
+    expect(createOrder).toHaveBeenCalledTimes(2)
+    expect(createOrder).toHaveBeenCalledWith(
+      'c1',
+      'e1',
+      'u1',
+      expect.objectContaining({ pay_enterprise_subsidy_amount: 500, enterprise_id: 'ent1' }),
+      transaction,
+    )
+    expect(result).toBeNull()
+  })
+
+  it('残枠不足時は usage exceeded details を返す', async () => {
+    const result = await addEnterpriseSubsidyMenusToCart({
+      communityId: 'c1',
+      eventId: 'e1',
+      userId: 'u1',
+      enterpriseId: 'ent1',
+      event: makeEvent(),
+      menus: [{ menu_id: 'm1', count: 1 }],
+      eventMenus,
+      transaction,
+      enterpriseMember: makeEnterpriseMember({ '2026-06': 7500 }),
+    })
+
+    expect(result).toMatchObject({ enterpriseId: 'ent1', eventMonth: '2026-06', unfilledCount: 1 })
+  })
+
+  it('enterprise_subsidy_settings 欠落は failed-precondition', async () => {
+    await expect(
+      addEnterpriseSubsidyMenusToCart({
+        communityId: 'c1',
+        eventId: 'e1',
+        userId: 'u1',
+        enterpriseId: 'ent1',
+        event: makeEvent({ enterprise_subsidy_settings: undefined }),
+        menus: [{ menu_id: 'm1', count: 1 }],
+        eventMenus,
+        transaction,
+        enterpriseMember: makeEnterpriseMember(),
+      }),
+    ).rejects.toMatchObject({ code: 'failed-precondition' })
+    expect(createOrder).not.toHaveBeenCalled()
+  })
+
+  it('EnterpriseMember 不在は failed-precondition', async () => {
+    vi.mocked(getEnterpriseMemberInTransaction).mockResolvedValue(undefined)
+
+    await expect(
+      addEnterpriseSubsidyMenusToCart({
+        communityId: 'c1',
+        eventId: 'e1',
+        userId: 'u1',
+        enterpriseId: 'ent1',
+        event: makeEvent(),
+        menus: [{ menu_id: 'm1', count: 1 }],
+        eventMenus,
+        transaction,
+      }),
+    ).rejects.toMatchObject({ code: 'failed-precondition' })
+    expect(createOrder).not.toHaveBeenCalled()
+  })
+
+  it('存在しない menu_id は failed-precondition', async () => {
+    await expect(
+      addEnterpriseSubsidyMenusToCart({
+        communityId: 'c1',
+        eventId: 'e1',
+        userId: 'u1',
+        enterpriseId: 'ent1',
+        event: makeEvent(),
+        menus: [{ menu_id: 'unknown', count: 1 }],
+        eventMenus,
+        transaction,
+        enterpriseMember: makeEnterpriseMember(),
+      }),
+    ).rejects.toMatchObject({ code: 'failed-precondition', message: expect.stringContaining('unknown') })
+    expect(createOrder).not.toHaveBeenCalled()
+  })
+
+  it('複数品目で一部のみ残枠内: 先頭は補助付き・後続は pay_enterprise_subsidy_amount 省略', async () => {
+    const result = await addEnterpriseSubsidyMenusToCart({
+      communityId: 'c1',
+      eventId: 'e1',
+      userId: 'u1',
+      enterpriseId: 'ent1',
+      event: makeEvent(),
+      menus: [{ menu_id: 'm1', count: 2 }],
+      eventMenus,
+      transaction,
+      enterpriseMember: makeEnterpriseMember({ '2026-06': 7000 }),
+    })
+
+    expect(createOrder).toHaveBeenCalledTimes(2)
+    expect(createOrder.mock.calls[0][3]).toMatchObject({ pay_enterprise_subsidy_amount: 500 })
+    expect(createOrder.mock.calls[1][3]).not.toHaveProperty('pay_enterprise_subsidy_amount')
+    expect(result).toMatchObject({ unfilledCount: 1, grantedTotal: 500 })
+  })
+
+  it('補助額 0（fixed value=0）では pay_enterprise_subsidy_amount: 0 を付与', async () => {
+    await addEnterpriseSubsidyMenusToCart({
+      communityId: 'c1',
+      eventId: 'e1',
+      userId: 'u1',
+      enterpriseId: 'ent1',
+      event: makeEvent({
+        enterprise_subsidy_settings: { type: 'fixed', value: 0, monthly_limit_per_user: 7500 },
+      }),
+      menus: [{ menu_id: 'm1', count: 1 }],
+      eventMenus,
+      transaction,
+      enterpriseMember: makeEnterpriseMember(),
+    })
+
+    expect(createOrder).toHaveBeenCalledWith(
+      'c1',
+      'e1',
+      'u1',
+      expect.objectContaining({ pay_enterprise_subsidy_amount: 0 }),
+      transaction,
+    )
   })
 })
 
