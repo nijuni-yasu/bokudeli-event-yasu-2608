@@ -21,6 +21,8 @@ resource "google_project_service" "default" {
     "pubsub.googleapis.com",
     "secretmanager.googleapis.com",
     "identitytoolkit.googleapis.com",
+    "recaptchaenterprise.googleapis.com",
+    "firebaseappcheck.googleapis.com",
   ])
   service                    = each.key
   disable_dependent_services = true

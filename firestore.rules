@@ -6,6 +6,16 @@ service cloud.firestore {
             return request.auth != null &&
                    request.auth.uid in get(/databases/$(database)/documents/configs/global).data.support_user_ids
         }
+        // エンタープライズ: ドキュメントの enterprise_id（未設定 = null）
+        function docEnterpriseId(data) {
+            return data.get('enterprise_id', null);
+        }
+        // エンタープライズ: 認証ユーザーの claims とドキュメントの enterprise_id が一致
+        function isSameEnterprise(data) {
+            return request.auth != null
+                && request.auth.token.get('enterprise_id', null) != null
+                && docEnterpriseId(data) == request.auth.token.enterprise_id;
+        }
         // マイページ用冗長カウント（Functions の recount のみ更新。RC-56）
         function userProfileCountFields() {
             return [
@@ -84,13 +94,28 @@ service cloud.firestore {
                        exists(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)) &&
                        "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles
             }
-            allow read: if true
-            // コミュニティはログインユーザーなら申請可能
-            allow create: if request.auth != null
+            // PF: enterprise_id 欠落/null のみ create 可。Enterprise: claims と一致する enterprise_id のみ create 可
+            function canCreateCommunity() {
+                return request.auth != null
+                    && (
+                        (request.auth.token.get('enterprise_id', null) == null
+                         && docEnterpriseId(request.resource.data) == null)
+                        || (request.auth.token.get('enterprise_id', null) != null
+                            && docEnterpriseId(request.resource.data) == request.auth.token.enterprise_id)
+                    );
+            }
+            function communityEnterpriseIdUnchanged() {
+                return docEnterpriseId(request.resource.data) == docEnterpriseId(resource.data);
+            }
+            allow read: if docEnterpriseId(resource.data) == null
+                        || isSameEnterprise(resource.data);
+            // コミュニティはログインユーザーなら申請可能（enterprise_id は canCreateCommunity で検証）
+            allow create: if canCreateCommunity()
             // コミュマネ or サポートアカウントであれば、運営マネージャーから店舗の開店設定と承認設定を変更できる
-            allow update: if isSupport() || isManager()
+            allow update: if (isSupport() || isManager()) && communityEnterpriseIdUnchanged()
             match /events/{event} {
-                allow read: if true
+                allow read: if docEnterpriseId(resource.data) == null
+                            || isSameEnterprise(resource.data);
                 // コミュマネ or サポートアカウントはイベントの作成・更新ができる
                 allow create, update: if isSupport()
                 allow create, update: if isManager() && get(/databases/$(database)/documents/communities/$(community)).data.is_approved
@@ -104,16 +129,27 @@ service cloud.firestore {
                 }
                 // 新 members / member_orders（EventMemberOrder）
                 match /members/{memberId} {
-                    allow read: if true
+                    allow read: if docEnterpriseId(resource.data) == null
+                                || (request.auth != null && (
+                                     isSameEnterprise(resource.data)
+                                     || request.auth.uid == memberId
+                                     || request.auth.uid == resource.data.user_id
+                                   ));
                     allow write: if false
                     match /member_orders/{orderId} {
-                        allow read: if true
+                        allow read: if docEnterpriseId(resource.data) == null
+                                    || (request.auth != null && (
+                                         isSameEnterprise(resource.data)
+                                         || request.auth.uid == resource.data.user_id
+                                       ));
                         allow write: if false
                     }
                 }
-                // stripes（決済情報は本人のみ read 可能）
+                // stripes（決済情報は本人のみ read 可能 + テナント分離）
                 match /stripes/{stripeId} {
-                    allow read: if request.auth != null && request.auth.uid == resource.data.user_id
+                    allow read: if request.auth != null
+                                && request.auth.uid == resource.data.user_id
+                                && (docEnterpriseId(resource.data) == null || isSameEnterprise(resource.data));
                     allow write: if false
                 }
                 match /menus/{menuId} {
@@ -163,12 +199,49 @@ service cloud.firestore {
             // pass_code は functions 内からのみアクセス可能
             allow read, write: if false
         }
-        // collection group query 用ルール
-        match /{path=**}/events/{event} {
-            allow read: if true
+        function isEnterpriseAdminMember(enterpriseId) {
+            return request.auth != null
+                && request.auth.token.enterprise_id == enterpriseId
+                && exists(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid))
+                && get(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid)).data.role == 'admin'
+                && get(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid)).data.is_active == true;
         }
-        match /{path=**}/member_orders/{order} {
-            allow read: if true
+        match /enterprises/{enterpriseId} {
+            allow read: if request.auth != null
+                        && request.auth.token.enterprise_id == enterpriseId;
+            allow write: if false;
+            match /members/{userId} {
+                allow read: if request.auth != null
+                            && request.auth.token.enterprise_id == enterpriseId;
+                allow write: if false;
+            }
+            match /audit_logs/{logId} {
+                allow read: if isEnterpriseAdminMember(enterpriseId);
+                allow write: if false;
+            }
+            match /billing_snapshots/{yearMonth} {
+                allow read: if isEnterpriseAdminMember(enterpriseId);
+                allow write: if false;
+            }
+        }
+        // collection group query 用ルール（/{path=**} 配下にネスト。フラットな /{path=**}/member_orders は評価されない）
+        match /{path=**} {
+            match /events/{event} {
+                allow read: if docEnterpriseId(resource.data) == null
+                            || isSameEnterprise(resource.data);
+            }
+            match /member_orders/{order} {
+                // collectionGroup はネスト path とは別評価。未認証の CG クエリを拒否し direct path の PF read をネスト側に委ねる
+                allow read: if request.auth != null
+                            && (docEnterpriseId(resource.data) == null
+                                || isSameEnterprise(resource.data)
+                                || request.auth.uid == resource.data.user_id);
+            }
+            match /stripes/{stripeId} {
+                allow read: if request.auth != null
+                            && request.auth.uid == resource.data.user_id
+                            && (docEnterpriseId(resource.data) == null || isSameEnterprise(resource.data));
+            }
         }
         match /{path=**}/shops/{shop} {
             allow read: if true

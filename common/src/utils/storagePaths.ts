@@ -43,3 +43,24 @@ export function getMenuImageStoragePath(partnerId: string, menuId: string): stri
 export function getUserImageStoragePath(userId: string, thumbnailSize?: 'small' | 'medium' | 'large'): string {
   return thumbnailSize == null ? `users/${userId}/avatar` : `users/${userId}/avatar_thumb_${thumbnailSize}`
 }
+
+export function getEnterpriseLogoStoragePath(enterpriseId: string): string {
+  return `enterprises/${enterpriseId}/logo/company-logo.png`
+}
+
+export function getEnterpriseMemberAvatarStoragePath(enterpriseId: string, userId: string): string {
+  return `enterprises/${enterpriseId}/members/${userId}/avatar.png`
+}
+
+export function getEnterpriseCommunityCoverStoragePath(enterpriseId: string, communityId: string): string {
+  return `enterprises/${enterpriseId}/communities/${communityId}/cover.png`
+}
+
+export function getEnterpriseEventPhotoStoragePath(
+  enterpriseId: string,
+  communityId: string,
+  eventId: string,
+  photoId: string,
+): string {
+  return `enterprises/${enterpriseId}/communities/${communityId}/events/${eventId}/photos/${photoId}`
+}

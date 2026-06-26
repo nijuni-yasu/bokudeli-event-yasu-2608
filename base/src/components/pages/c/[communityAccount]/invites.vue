@@ -5,9 +5,12 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { acceptInvitationForCommunityManager } from '@shokujii/base/apis/communityManager.js'
 import { useCommunityStore } from '@shokujii/base/stores/community'
 
+type AcceptCommunityManagerInvitation = typeof acceptInvitationForCommunityManager
+
 const props = defineProps<{
   communityAccount: string
   token: string
+  acceptInvitation?: AcceptCommunityManagerInvitation
 }>()
 
 const emits = defineEmits<{
@@ -42,7 +45,10 @@ try {
     message.value = t('community_membership.manager_invite_already_manager')
   } else {
     try {
-      await acceptInvitationForCommunityManager({ communityAccount: props.communityAccount, token: props.token })
+      await (props.acceptInvitation ?? acceptInvitationForCommunityManager)({
+        communityAccount: props.communityAccount,
+        token: props.token,
+      })
       message.value = t('community_membership.manager_invite_success')
     } catch (error) {
       console.error(error)

@@ -30,7 +30,11 @@ const numOfColumns = computed(() => {
 
 const userId = getAuth().currentUser!.uid
 const communityListStore = useCommunityListStore(
-  [where('managers', 'array-contains', doc(db, 'users', userId)), orderBy('community_num_members', 'desc')],
+  [
+    where('enterprise_id', '==', null),
+    where('managers', 'array-contains', doc(db, 'users', userId)),
+    orderBy('community_num_members', 'desc'),
+  ],
   5,
 ) as CommunityListStore
 
@@ -63,7 +67,11 @@ const community = computed(() =>
 
 const eventListStore = computed(() =>
   useEventListStore(
-    [where('community_account', '==', communityAccount.value), orderBy('event_start_datetime', 'desc')],
+    [
+      where('enterprise_id', '==', null),
+      where('community_account', '==', communityAccount.value),
+      orderBy('event_start_datetime', 'desc'),
+    ],
     numOfColumns.value,
     { autoContinue: true },
   ),

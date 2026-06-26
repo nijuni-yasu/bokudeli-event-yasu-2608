@@ -24,6 +24,7 @@ export default {
     community_bill: '主催者 請求書払い 📄',
     community_bill_free: '主催者請求書払い',
     community_bill_discount: '主催者請求書払い＋参加者決済',
+    enterprise_subsidy: '福利厚生割引 🏢',
   },
   discount_settings: {
     free: '全額おごり',
@@ -119,6 +120,17 @@ export default {
     count: '個数',
     unit_price: 'メニュー金額',
     off_amount: 'おごり金額',
+    company_subsidy: '会社負担',
+    order_total: '注文合計',
+    company_subsidy_total: '会社負担合計',
+    your_payment: 'お支払い額',
+    enterprise_subsidy_month: '{0}分の福利厚生割引として適用されます',
+    enterprise_subsidy_partial: '⚠ {0}分の割引上限に達するため、一部は全額自己負担となります',
+    enterprise_subsidy_exceeded: '⚠ {0}分の割引上限に達しました。全額自己負担となります',
+    enterprise_subsidy_zero_payment: '✓ 全額会社負担のため、決済は不要です',
+    monthly_usage_label: '今月の割引利用',
+    confirm_order_enterprise_subsidy_checkout: '福利厚生割引適用後の差額をオンライン決済でお支払いします。続きますか？',
+    confirm_order_enterprise_subsidy_zero: '全額会社負担のため、決済なしで注文を確定します。よろしいですか？',
     price: '金額',
     subtotal: '小計',
     total: '合計',
@@ -397,6 +409,9 @@ export default {
     payment_hint_user_advance: `参加者事前決済 を設定した場合<br />
       食事の代金は、参加者がクレジットカード・Apple Pay・Google Pay・PayPay などで事前にお支払いいただきます。<br />
       支払い設定は予約申請後、変更できないためご注意ください。`,
+    payment_hint_enterprise_subsidy: `福利厚生割引 を設定した場合<br />
+      企業の割引ルールが適用されます。残額は参加者がクレジットカード等でお支払いいただきます。<br />
+      自己負担0円の場合は決済不要で注文確定できます。`,
     payment_hint_community_bill_title: '主催者請求書払いについて',
     payment_hint_community_bill: `
     ・イベント終了後「請求先メールアドレス」宛に請求書を送付いたします。<br />

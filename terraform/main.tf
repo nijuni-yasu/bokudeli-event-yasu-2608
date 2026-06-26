@@ -13,6 +13,12 @@ variable "auth_authorized_domains_extra" {
   default = []
 }
 
+variable "enterprise_base_domain" {
+  type        = string
+  description = "エンタープライズのサブドメインベース（例: shokujii.jp）。未設定時は custom_domain のみ"
+  default     = ""
+}
+
 terraform {
   required_providers {
     google = {

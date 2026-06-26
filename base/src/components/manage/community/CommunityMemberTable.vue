@@ -24,6 +24,8 @@ const props = defineProps<{
   communityAccount: string
   getUserPath: UserPathResolver
   getManageCommunitySettingsPath: ManageCommunitySettingsPathResolver
+  /** デフォルトは PF 版 Callable */
+  invitationCallableName?: string
 }>()
 
 const emit = defineEmits<{
@@ -205,7 +207,11 @@ const downloadCsvFile = () => {
     @confirm-remove="removeAccount"
     @cancel="clearRoleDialog"
   />
-  <ManagerInvitationDialog v-model="isInvitationDialogOpen" :community-id="communityId" />
+  <ManagerInvitationDialog
+    v-model="isInvitationDialogOpen"
+    :community-id="communityId"
+    :invitation-callable-name="invitationCallableName"
+  />
 </template>
 
 <style scoped>

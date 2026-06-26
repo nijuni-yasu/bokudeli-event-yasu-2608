@@ -55,7 +55,7 @@ git diff --cached
 ```
 
 タグは変更したディレクトリ・領域に対応するものを選ぶ。複数可。
-使用可能なタグ: `[user]` `[partner]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
+使用可能なタグ: `[user]` `[partner]` `[enterprise]` `[base]` `[common]` `[functions]` `[doc]` `[ci]` `[terraform]` `[firebase]` `[ai]`
 
 - [doc]: documents/ ディレクトリ内の更新のみ
 - [ci]: .github/workflows/（GitHub Actions の CI/CD）
@@ -65,7 +65,7 @@ git diff --cached
 
 ### タグの判定（優先順位）
 
-1. アプリ/パッケージのソース（user / partner / base / common / functions）に該当 → そのタグ（複数可）
+1. アプリ/パッケージのソース（user / partner / enterprise / base / common / functions）に該当 → そのタグ（複数可）
 2. 該当しないが ci / terraform / firebase / doc / ai に該当 → 対応タグ（複数可）
 3. いずれにも該当しないモノレポ横断設定 → **接頭辞なし**
 

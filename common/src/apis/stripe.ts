@@ -3,6 +3,8 @@ export type CreateStripeCheckoutSessionRequest = {
   event_id: string
   order_ids: string[]
   isPosted: boolean
+  /** Stripe 完了後のリダイレクト先オリジン（enterprise 等）。Functions 側でテナントホストと照合する */
+  origin?: string
 }
 
 export type CreateStripeCheckoutSessionResponse = {

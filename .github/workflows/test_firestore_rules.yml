@@ -1,0 +1,43 @@
+name: Test Firestore Rules
+
+on:
+  push:
+    paths:
+      - 'firestore.rules'
+      - 'tests/firestore-rules/**'
+      - '.github/workflows/test_firestore_rules.yml'
+  pull_request:
+    branches:
+      - development
+      - production
+    paths:
+      - 'firestore.rules'
+      - 'tests/firestore-rules/**'
+      - '.github/workflows/test_firestore_rules.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@15.15.0
+
+      - name: Run Firestore rules tests
+        run: firebase emulators:exec --only firestore "npm -w tests-firestore-rules run test"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

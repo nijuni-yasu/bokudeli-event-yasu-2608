@@ -9,12 +9,24 @@ import {
 import { getEventMenuImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { getUserUrl, getMainUrl, convertStoragePathToURL } from './utils/urls.js'
 import { getEventInCommunity } from './stores/event.js'
+import { getEnterpriseById } from './stores/enterprise.js'
+import { resolveEnterpriseCheckoutOrigin } from './utils/enterpriseBaseDomain.js'
 import { getOrdersByIds } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
 import {
   isPaymentCommunityBillOffAmountConsistent,
   computeTotalPayment,
 } from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
+import { computeEnterpriseSubsidyTotalPayment } from '@shokujii/common/utils/paymentEnterpriseSubsidyAmount.js'
+import {
+  assertActiveEnterpriseMember,
+  assertEnterpriseEventPaymentAllowed,
+  assertEnterpriseSubsidyOrdersConsistent,
+  computeOrderSelfPayUnitAmount,
+  getEventEnterpriseId,
+  getStripeCheckoutLineItemGroupKey,
+  loadEnterpriseMemberForSubsidy,
+} from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('stripe')
 const STRIPE_API_KEY = defineSecret('STRIPE_API_KEY')
@@ -32,7 +44,7 @@ export const createStripeCheckoutSession = onCall<
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', '認証が必要です')
     }
-    const { community_id, event_id, order_ids, isPosted } = request.data
+    const { community_id, event_id, order_ids, isPosted, origin } = request.data
 
     if (!community_id || !event_id || !Array.isArray(order_ids) || order_ids.length === 0) {
       throw new HttpsError('invalid-argument', '必須パラメータが不足しています')
@@ -49,12 +61,20 @@ export const createStripeCheckoutSession = onCall<
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
 
-    if (event.event_payment !== 'user_advance' && event.event_payment !== 'community_bill') {
+    if (
+      event.event_payment !== 'user_advance' &&
+      event.event_payment !== 'community_bill' &&
+      event.event_payment !== 'enterprise_subsidy'
+    ) {
       throw new HttpsError(
         'failed-precondition',
-        'Stripe 決済は事前クレカ決済または主催者負担割引のイベントのみ使用できます',
+        'Stripe 決済は事前クレカ決済、主催者負担割引、または福利厚生割引のイベントのみ使用できます',
       )
     }
+
+    assertEnterpriseEventPaymentAllowed(event)
+    const enterpriseId = getEventEnterpriseId(event)
+    await assertActiveEnterpriseMember(enterpriseId, request.auth)
 
     const now = Timestamp.now().toMillis()
     if (event.event_deadline_datetime < now) {
@@ -77,12 +97,36 @@ export const createStripeCheckoutSession = onCall<
       if (order.status !== 'in_cart') {
         throw new HttpsError('failed-precondition', 'カート内の注文のみ決済できます')
       }
-      if (!isPaymentCommunityBillOffAmountConsistent(event.event_payment, event.community_bill_settings, order)) {
-        throw new HttpsError('failed-precondition', '割引金額が一致しません')
+    }
+
+    if (event.event_payment === 'enterprise_subsidy') {
+      if (enterpriseId == null) {
+        throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
+      }
+      const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, uid)
+      if (entMember == null) {
+        throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
+      }
+      await assertEnterpriseSubsidyOrdersConsistent({
+        enterpriseId,
+        userId: uid,
+        event,
+        orders,
+        orderIds: order_ids,
+        member: entMember,
+      })
+    } else {
+      for (const order of orders) {
+        if (!isPaymentCommunityBillOffAmountConsistent(event.event_payment, event.community_bill_settings, order)) {
+          throw new HttpsError('failed-precondition', '割引金額が一致しません')
+        }
       }
     }
 
-    const totalPayment = computeTotalPayment(orders, event.event_payment, event.community_bill_settings)
+    const totalPayment =
+      event.event_payment === 'enterprise_subsidy'
+        ? computeEnterpriseSubsidyTotalPayment(orders)
+        : computeTotalPayment(orders, event.event_payment, event.community_bill_settings)
     if (totalPayment <= 0) {
       throw new HttpsError('failed-precondition', '支払額が ¥0 の場合は Stripe 決済は不要です')
     }
@@ -101,12 +145,13 @@ export const createStripeCheckoutSession = onCall<
 
     const grouped = new Map<string, { menuName: string; unitAmount: number; quantity: number; imageUrl: string }>()
     for (const order of orders) {
-      const existing = grouped.get(order.menu_id)
+      const unitAmount = computeOrderSelfPayUnitAmount(order)
+      const groupKey = getStripeCheckoutLineItemGroupKey(event.event_payment, order)
+      const existing = grouped.get(groupKey)
       if (existing) {
         existing.quantity++
       } else {
-        const unitAmount = order.menu_price - (order.pay_community_bill_off_amount ?? 0)
-        grouped.set(order.menu_id, {
+        grouped.set(groupKey, {
           menuName: order.menu_name,
           unitAmount,
           quantity: 1,
@@ -146,9 +191,25 @@ export const createStripeCheckoutSession = onCall<
       maxNetworkRetries: 3,
     })
     const communityAccount = event.community_account
+
+    let successUrl: string
+    let cancelUrl: string
+    if (enterpriseId != null) {
+      const enterprise = await getEnterpriseById(enterpriseId)
+      if (enterprise == null) {
+        throw new HttpsError('failed-precondition', 'enterprise not found')
+      }
+      const checkoutOrigin = resolveEnterpriseCheckoutOrigin(enterprise, origin)
+      successUrl = `${checkoutOrigin}/u/${uid}?eventId=${event_id}&communityAccount=${communityAccount}&isPosted=${isPosted}&session_id={CHECKOUT_SESSION_ID}`
+      cancelUrl = `${checkoutOrigin}/`
+    } else {
+      successUrl = `${getUserUrl(uid)}?eventId=${event_id}&communityAccount=${communityAccount}&isPosted=${isPosted}&session_id={CHECKOUT_SESSION_ID}`
+      cancelUrl = getMainUrl()
+    }
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      success_url: `${getUserUrl(uid)}?eventId=${event_id}&communityAccount=${communityAccount}&isPosted=${isPosted}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: getMainUrl(),
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       customer_creation: 'if_required',
       line_items: lineItems,
       mode: 'payment',
@@ -158,6 +219,7 @@ export const createStripeCheckoutSession = onCall<
         eventPayment: event.event_payment,
         communityId: community_id,
         userId: uid,
+        ...(enterpriseId != null ? { enterpriseId } : {}),
         ...buildOrderIdChunks(order_ids),
       },
     }

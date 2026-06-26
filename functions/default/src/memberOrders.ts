@@ -2,6 +2,13 @@ import { onCall, HttpsError } from 'firebase-functions/https'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { AddToCartRequest, RemoveFromCartRequest, ConfirmOrderRequest } from '@shokujii/common/apis/order.js'
 import { EventMember } from '@shokujii/common/schemas/EventMemberOrder.js'
+import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
+import {
+  computePaymentCommunityBillOffAmount,
+  computeTotalPayment,
+  isPaymentCommunityBillOffAmountConsistent,
+} from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
+import { writeAuditLog } from './utils/auditLog.js'
 import {
   createOrder,
   deleteOrder,
@@ -15,10 +22,15 @@ import { getEventInCommunity } from './stores/event.js'
 import { createModuleLogger } from './utils/logger.js'
 import { applyOrderConfirmedSideEffects } from './orderConfirmedSideEffects.js'
 import {
-  computePaymentCommunityBillOffAmount,
-  computeTotalPayment,
-  isPaymentCommunityBillOffAmountConsistent,
-} from '@shokujii/common/utils/paymentCommunityBillOffAmount.js'
+  assertActiveEnterpriseMember,
+  assertEnterpriseEventPaymentAllowed,
+  applyEnterpriseSubsidyPayFieldToCartTracker,
+  buildEnterpriseSubsidyUsageExceededDetails,
+  createEnterpriseSubsidyAddToCartTracker,
+  finalizeEnterpriseSubsidyZeroPaymentOrder,
+  getEventEnterpriseId,
+  loadEnterpriseMemberForSubsidy,
+} from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('memberOrders')
 const db = getFirestore()
@@ -35,11 +47,15 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
     throw new HttpsError('invalid-argument', '必須パラメータが不足しています')
   }
 
-  await db.runTransaction(async (transaction) => {
+  const usageExceededDetails = await db.runTransaction(async (transaction) => {
     const eventData = await getEventInCommunity(community_id, event_id, transaction)
     if (eventData == null) {
       throw new HttpsError('not-found', 'イベントが見つかりません')
     }
+
+    assertEnterpriseEventPaymentAllowed(eventData)
+    const enterpriseId = getEventEnterpriseId(eventData)
+    await assertActiveEnterpriseMember(enterpriseId, request.auth, transaction)
 
     if (eventData.isCanceled()) {
       throw new HttpsError('failed-precondition', 'イベントがキャンセルされたため、カートに追加できません')
@@ -64,13 +80,35 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
 
     const existingMember = await getMember(community_id, event_id, uid, transaction)
 
+    let subsidyTracker: ReturnType<typeof createEnterpriseSubsidyAddToCartTracker> | null = null
+    let eventMonth = ''
+
+    if (eventData.event_payment === 'enterprise_subsidy') {
+      if (eventData.enterprise_subsidy_settings == null) {
+        throw new HttpsError('failed-precondition', 'enterprise_subsidy_settings is required')
+      }
+      if (enterpriseId == null) {
+        throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
+      }
+      eventMonth = formatYearMonth(eventData.event_start_datetime)
+      const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, uid, transaction)
+      if (entMember == null) {
+        throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
+      }
+      subsidyTracker = createEnterpriseSubsidyAddToCartTracker(entMember.monthly_usage[eventMonth] ?? 0)
+    }
+
     if (existingMember == null) {
       const member = new EventMember(uid, {
         user_id: uid,
         event_id,
         community_id,
+        ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
       })
       await saveMember(community_id, event_id, member, transaction)
+    } else if (enterpriseId != null && existingMember.enterprise_id == null) {
+      existingMember.enterprise_id = enterpriseId
+      await saveMember(community_id, event_id, existingMember, transaction)
     }
 
     for (const menu of menus) {
@@ -78,31 +116,85 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
       if (masterMenu == null) {
         throw new HttpsError('failed-precondition', `メニューが見つかりません: ${menu.menu_id}`)
       }
-      const discount = computePaymentCommunityBillOffAmount(
-        eventData.event_payment,
-        eventData.community_bill_settings,
-        masterMenu.menu_price,
-      )
-      for (let i = 0; i < menu.count; i++) {
-        await createOrder(
-          community_id,
-          event_id,
-          uid,
-          {
-            user_id: uid,
-            event_id,
+
+      if (eventData.event_payment === 'enterprise_subsidy') {
+        for (let i = 0; i < menu.count; i++) {
+          const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
+            event: eventData,
+            menuPrice: masterMenu.menu_price,
+            tracker: subsidyTracker!,
+          })
+          await createOrder(
             community_id,
-            status: 'in_cart',
-            menu_id: masterMenu.id,
-            menu_name: masterMenu.menu_name,
-            menu_price: masterMenu.menu_price,
-            ...(discount !== undefined ? { pay_community_bill_off_amount: discount } : {}),
-          },
-          transaction,
+            event_id,
+            uid,
+            {
+              user_id: uid,
+              event_id,
+              community_id,
+              status: 'in_cart',
+              menu_id: masterMenu.id,
+              menu_name: masterMenu.menu_name,
+              menu_price: masterMenu.menu_price,
+              enterprise_id: enterpriseId,
+              ...(payField !== undefined ? { pay_enterprise_subsidy_amount: payField } : {}),
+            },
+            transaction,
+          )
+        }
+      } else {
+        const discount = computePaymentCommunityBillOffAmount(
+          eventData.event_payment,
+          eventData.community_bill_settings,
+          masterMenu.menu_price,
         )
+        for (let i = 0; i < menu.count; i++) {
+          await createOrder(
+            community_id,
+            event_id,
+            uid,
+            {
+              user_id: uid,
+              event_id,
+              community_id,
+              status: 'in_cart',
+              menu_id: masterMenu.id,
+              menu_name: masterMenu.menu_name,
+              menu_price: masterMenu.menu_price,
+              ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
+              ...(discount !== undefined ? { pay_community_bill_off_amount: discount } : {}),
+            },
+            transaction,
+          )
+        }
       }
     }
+
+    if (subsidyTracker != null && enterpriseId != null) {
+      return buildEnterpriseSubsidyUsageExceededDetails({
+        enterpriseId,
+        eventMonth,
+        tracker: subsidyTracker,
+      })
+    }
+    return null
   })
+
+  if (usageExceededDetails != null) {
+    await writeAuditLog({
+      enterpriseId: usageExceededDetails.enterpriseId,
+      userId: uid,
+      action: 'monthly_usage_exceeded',
+      targetType: 'order_session',
+      details: {
+        event_id,
+        year_month: usageExceededDetails.eventMonth,
+        requested_amount: usageExceededDetails.requestedTotal,
+        granted_amount: usageExceededDetails.grantedTotal,
+        unfilled_count: usageExceededDetails.unfilledCount,
+      },
+    })
+  }
 
   logger.info('カートに追加', {
     eventId: event_id,
@@ -163,11 +255,15 @@ export const confirmOrder = onCall(
       throw new HttpsError('invalid-argument', '必須パラメータが不足しています')
     }
 
-    await db.runTransaction(async (transaction) => {
+    const enterpriseOrderCreateLog = await db.runTransaction(async (transaction) => {
       const eventData = await getEventInCommunity(community_id, event_id, transaction)
       if (eventData == null) {
         throw new HttpsError('not-found', 'イベントが見つかりません')
       }
+
+      assertEnterpriseEventPaymentAllowed(eventData)
+      const enterpriseId = getEventEnterpriseId(eventData)
+      await assertActiveEnterpriseMember(enterpriseId, request.auth, transaction)
 
       if (eventData.isCanceled()) {
         throw new HttpsError('failed-precondition', 'イベントがキャンセルされたため、注文を確定できません')
@@ -199,6 +295,32 @@ export const confirmOrder = onCall(
         if (order.status !== 'in_cart') {
           throw new HttpsError('failed-precondition', 'カート内の注文のみ確定できます')
         }
+      }
+
+      if (eventData.event_payment === 'enterprise_subsidy') {
+        if (enterpriseId == null) {
+          throw new HttpsError('failed-precondition', 'enterprise_id is required for enterprise_subsidy')
+        }
+        const entMember = await loadEnterpriseMemberForSubsidy(enterpriseId, uid, transaction)
+        if (entMember == null) {
+          throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
+        }
+        const orderedAt = Timestamp.now().toMillis()
+        return finalizeEnterpriseSubsidyZeroPaymentOrder({
+          enterpriseId,
+          userId: uid,
+          communityId: community_id,
+          eventId: event_id,
+          event: eventData,
+          orders,
+          orderIds: order_ids,
+          member: entMember,
+          transaction,
+          orderedAt,
+        })
+      }
+
+      for (const order of orders) {
         if (
           !isPaymentCommunityBillOffAmountConsistent(eventData.event_payment, eventData.community_bill_settings, order)
         ) {
@@ -220,7 +342,22 @@ export const confirmOrder = onCall(
         order.ordered_at = orderedAt
         saveOrder(community_id, event_id, uid, order, transaction)
       }
+      return null
     })
+
+    if (enterpriseOrderCreateLog != null) {
+      await writeAuditLog({
+        enterpriseId: enterpriseOrderCreateLog.enterpriseId,
+        userId: uid,
+        action: 'order_create',
+        targetType: 'order_session',
+        details: {
+          order_ids,
+          total_payment: 0,
+          pay_enterprise_subsidy_amount: enterpriseOrderCreateLog.subsidyTotal,
+        },
+      })
+    }
 
     const eventForSideEffects = await getEventInCommunity(community_id, event_id)
     if (eventForSideEffects != null) {

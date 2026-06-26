@@ -1,0 +1,35 @@
+{
+  "name": "enterprise",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "yarn": "Use npm instead"
+  },
+  "scripts": {
+    "lint": "eslint --max-warnings=0 .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dev": "vite",
+    "devtool": "VUE_DEVTOOLS= vite",
+    "build": "npm -w common run build && vite build",
+    "build:types": "vue-tsc --noEmit",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@channel.io/channel-web-sdk-loader": "^2.0.0",
+    "@shokujii/base": "file:../base",
+    "@shokujii/common": "file:../common",
+    "@tinymce/tinymce-vue": "^6",
+    "vue-draggable-next": "^2.3.0",
+    "vue-easy-lightbox": "^1.19.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.5",
+    "unplugin-auto-import": "^0.17.8",
+    "unplugin-vue-router": "^0.10.0",
+    "vite-plugin-pwa": "^1.0.0",
+    "vite-plugin-vue-layouts": "^0.11.0"
+  }
+}

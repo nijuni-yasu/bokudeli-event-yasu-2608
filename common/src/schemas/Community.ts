@@ -1,7 +1,11 @@
 import { z } from 'zod'
 import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema, type DocumentReference } from './firebase/index.js'
+import { COMMUNITY_APPROVAL_STATUS_VALUES } from './Enterprise.js'
 import { generateRandomAccount } from '../utils/generateRandomAccount.js'
 import { isEmpty } from '../utils/string.js'
+
+/** PF = null / Enterprise = string。NonEmptyStringSchema は null を delete するため使わない */
+const EnterpriseIdDbSchema = z.union([z.string().nonempty(), z.null()])
 
 // NonApproved なときのもの
 // TDODO Approved なものも作成する
@@ -34,12 +38,15 @@ const CommunityDbSchema = z.object({
   community_bill_fullname: NonEmptyStringSchema,
   community_bill_email: NonEmptyStringSchema,
   community_album_item_ids: z.array(z.string()).optional(),
+  enterprise_id: EnterpriseIdDbSchema,
+  approval_status: z.enum(COMMUNITY_APPROVAL_STATUS_VALUES).optional(),
   // members, managers は functions で処理するので DB に直接書き込まない
 })
 
 const convertToDb = (community: Community) => {
   return {
     ...community,
+    enterprise_id: community.enterprise_id ?? null,
     created_at: EpochMillisSchema.default(Date.now()).parse(community.created_at),
     updated_at: Date.now(),
   }
@@ -76,6 +83,8 @@ export class Community {
   community_bill_fullname: string = ''
   community_bill_email: string = ''
   community_album_item_ids: string[] = []
+  enterprise_id?: string | null
+  approval_status?: (typeof COMMUNITY_APPROVAL_STATUS_VALUES)[number]
   // community_num_members はソート用で functions で処理されるフィールド。ここに追加すると不整合が起こるため追加してはいけない。
   // community_num_members: number = 0
   members: (typeof DocumentReference)[] = []

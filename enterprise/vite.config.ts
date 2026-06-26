@@ -1,0 +1,111 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import VueRouter from 'unplugin-vue-router/vite'
+import Layouts from 'vite-plugin-vue-layouts'
+import VueDevTools from 'vite-plugin-vue-devtools'
+import AutoImport from 'unplugin-auto-import/vite'
+import vuetify from 'vite-plugin-vuetify'
+import { VitePWA } from 'vite-plugin-pwa'
+
+import { alias } from './vite.alias'
+
+// https://vitejs.dev/config/
+export default defineConfig(({ command }) => {
+  const isBuild = command === 'build'
+
+  const result = {
+    plugins: [
+      // Docs: https://github.com/posva/unplugin-vue-router
+      // ℹ️ This plugin should be placed before vue plugin
+      VueRouter(),
+
+      vue(),
+      process.env.VUE_DEVTOOLS != null ? VueDevTools() : undefined,
+
+      // Docs: https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin
+      vuetify({
+        styles: {
+          configFile: 'src/styles/variables/_vuetify.scss',
+        },
+      }),
+
+      // Docs: https://github.com/johncampionjr/vite-plugin-vue-layouts#vite-plugin-vue-layouts
+      Layouts({
+        layoutsDirs: './src/layouts/',
+      }),
+
+      // Docs: https://github.com/antfu/unplugin-auto-import#unplugin-auto-import
+      AutoImport({
+        imports: ['vue', 'vue-router', '@vueuse/core', 'vue-i18n', 'pinia'],
+        dirs: ['./src/@core/utils', './src/@core/composable/'],
+        vueTemplate: true,
+
+        // ℹ️ Disabled to avoid confusion & accidental usage
+        ignore: ['useCookies', 'useStorage'],
+      }),
+    ],
+    resolve: {
+      alias,
+    },
+    build: {
+      chunkSizeWarningLimit: 5000,
+      target: 'esnext',
+    },
+    optimizeDeps: {
+      entries: ['./src/**/*.vue'],
+      exclude: ['vuetify', 'firebase-admin/firestore', 'firebase-admin'],
+    },
+    define: {
+      IS_SERVER: false,
+    },
+  }
+
+  if (isBuild) {
+    // PWA は vite server では機能せず warning を出すので、build 時のみ有効にする
+    result.plugins.push(
+      // Docs: https://vite-pwa-org.netlify.app/guide/
+      VitePWA({
+        registerType: 'autoUpdate',
+
+        //TODO PWA開発時以外はオフにしたいため環境変数で切り替えられるようにする
+        devOptions: { enabled: true },
+
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          navigateFallbackDenylist: [/\/__\/auth/],
+        },
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        manifest: {
+          name: '食事でつながる「shokujii」',
+          short_name: 'shokujii',
+          description: 'shokujii and event Application',
+          theme_color: '#ffffff',
+          icons: [
+            {
+              src: 'pwa-96x96.png',
+              sizes: '96x96',
+              type: 'image/png',
+            },
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable',
+            },
+          ],
+        },
+      }),
+    )
+  }
+  return result
+})

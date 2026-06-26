@@ -52,6 +52,11 @@ export function convertToDateString(millis: number, zone = DEFAULT_TIME_ZONE, lo
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy-MM-dd')
 }
 
+/** イベント開催月キー（monthly_usage 辞書用）。例: "2026-07" */
+export function formatYearMonth(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
+  return DateTime.fromMillis(millis, { zone, locale }).toFormat('yyyy-MM')
+}
+
 export function convertToHourString(millis: number, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): string {
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('HH')
 }

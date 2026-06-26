@@ -34,7 +34,11 @@ const { isMember, isManager } = useCommunityMemberFlags(communityAccount)
 
 // イベントリストストアを作成（ページサイズ6件）
 const eventListStore = useEventListStore(
-  [where('community_account', '==', communityAccount), orderBy('event_start_datetime', 'desc')],
+  [
+    where('enterprise_id', '==', null),
+    where('community_account', '==', communityAccount),
+    orderBy('event_start_datetime', 'desc'),
+  ],
   6,
 )
 

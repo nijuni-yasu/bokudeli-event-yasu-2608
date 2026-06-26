@@ -15,6 +15,7 @@ const EventMemberDbSchema = z.object({
   community_id: z.string().nonempty(),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
+  enterprise_id: z.string().nonempty().optional(),
 })
 
 const EventMemberAppSchema = z.object({
@@ -23,6 +24,7 @@ const EventMemberAppSchema = z.object({
   community_id: z.string().nonempty(),
   created_at: EpochMillisSchema.optional(),
   updated_at: EpochMillisSchema.optional(),
+  enterprise_id: z.string().optional(),
 })
 
 const convertMemberToDb = (member: EventMember) => {
@@ -40,6 +42,7 @@ export class EventMember {
   community_id!: string
   created_at: number
   updated_at: number
+  enterprise_id?: string
 
   constructor(userId: string, src: Partial<EventMember>) {
     Object.assign(this, EventMemberAppSchema.parse(src))
@@ -82,6 +85,8 @@ const EventMemberOrderDbSchema = z.object({
   // 再度 processing に上がるのを防ぐため記録する。新しい遅延決済（別 PI）開始時・ordered 確定時に削除する。
   failed_async_payment_intent: optionalDeleteField(z.string().nonempty()),
   pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
+  enterprise_id: z.string().nonempty().optional(),
+  pay_enterprise_subsidy_amount: z.number().int().nonnegative().optional(),
 })
 
 const EventMemberOrderAppSchema = z.object({
@@ -101,6 +106,8 @@ const EventMemberOrderAppSchema = z.object({
   processing_payment_intent: z.string().nonempty().optional(),
   failed_async_payment_intent: z.string().nonempty().optional(),
   pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
+  enterprise_id: z.string().optional(),
+  pay_enterprise_subsidy_amount: z.number().int().nonnegative().optional(),
 })
 
 const convertOrderToDb = (order: EventMemberOrder) => {
@@ -131,6 +138,8 @@ export class EventMemberOrder {
   processing_payment_intent?: string
   failed_async_payment_intent?: string
   pay_community_bill_off_amount?: number
+  enterprise_id?: string
+  pay_enterprise_subsidy_amount?: number
 
   constructor(orderId: string, src: Partial<EventMemberOrder>) {
     Object.assign(this, EventMemberOrderAppSchema.parse(src))

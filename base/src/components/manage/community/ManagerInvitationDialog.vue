@@ -6,6 +6,8 @@ import { useNotification } from '@shokujii/base/composable/notification.js'
 
 const props = defineProps<{
   communityId: string | undefined
+  /** デフォルトは PF 版 Callable */
+  invitationCallableName?: string
 }>()
 
 const isOpen = defineModel<boolean>({ required: true })
@@ -13,13 +15,16 @@ const isOpen = defineModel<boolean>({ required: true })
 const { t: $t } = useI18n()
 const notification = useNotification()
 
-const getInvitationUrlForCommunityManager = httpsCallable<{ communityId: string }, string>(
-  functions,
-  'getInvitationUrlForCommunityManager',
-)
-
 const invitationUrl = ref('')
 const isLoading = ref(false)
+
+const fetchInvitationUrl = async (communityId: string) => {
+  const callable = httpsCallable<{ communityId: string }, string>(
+    functions,
+    props.invitationCallableName ?? 'getInvitationUrlForCommunityManager',
+  )
+  return callable({ communityId })
+}
 
 const inviteManager = async () => {
   if (props.communityId == null) {
@@ -28,7 +33,7 @@ const inviteManager = async () => {
   }
   isLoading.value = true
   try {
-    const result = await getInvitationUrlForCommunityManager({ communityId: props.communityId })
+    const result = await fetchInvitationUrl(props.communityId)
     invitationUrl.value = result.data
     await navigator.clipboard
       .writeText(result.data)

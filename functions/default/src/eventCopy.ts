@@ -10,8 +10,27 @@ import { getEvent, saveEvent, ShokujiiEvent } from './stores/event.js'
 import { getPartner } from './stores/partner.js'
 import { savePartnerMenusToEventMenus } from './eventMenusSnapshot.js'
 import { createModuleLogger } from './utils/logger.js'
+import { assertEnterpriseEventPaymentAllowed } from './utils/enterpriseSubsidyOrders.js'
 
 const logger = createModuleLogger('eventCopy')
+
+/** enterprise_id 付きイベントの支払い方式をエンプラ版で許可された値に正規化する */
+export const normalizeEnterpriseEventPaymentForCopy = (
+  enterpriseId: string | null | undefined,
+  eventPayment: ShokujiiEvent['event_payment'],
+  communityBillSettings: ShokujiiEvent['community_bill_settings'],
+): {
+  event_payment: ShokujiiEvent['event_payment']
+  community_bill_settings: ShokujiiEvent['community_bill_settings']
+} => {
+  if (enterpriseId == null || enterpriseId === '') {
+    return { event_payment: eventPayment, community_bill_settings: communityBillSettings }
+  }
+  if (eventPayment === 'community_bill' || eventPayment === 'user_on_day') {
+    return { event_payment: 'enterprise_subsidy', community_bill_settings: undefined }
+  }
+  return { event_payment: eventPayment, community_bill_settings: communityBillSettings }
+}
 
 const copyEventImage = async (srcEvent: ShokujiiEvent, newEventId: string) => {
   const srcPath = getEventCoverStoragePath(srcEvent.community_id, srcEvent.id)
@@ -35,6 +54,11 @@ export const copyEventCore = async (
     throw new HttpsError('invalid-argument', 'Event time is not in shop time')
   }
   const now = Date.now()
+  const normalizedPayment = normalizeEnterpriseEventPaymentForCopy(
+    srcEvent.enterprise_id,
+    srcEvent.event_payment,
+    srcEvent.community_bill_settings,
+  )
   const newEvent = new ShokujiiEvent(null, {
     // スプレッド構文を使うとコピーすべきでないフィールドが混ざってしまうので、
     // 必要なフィールドを明示的に指定する
@@ -42,8 +66,10 @@ export const copyEventCore = async (
     community_name: srcEvent.community_name,
     community_account: srcEvent.community_account,
     is_public: srcEvent.is_public,
-    event_payment: srcEvent.event_payment,
-    community_bill_settings: srcEvent.community_bill_settings,
+    event_payment: normalizedPayment.event_payment,
+    community_bill_settings: normalizedPayment.community_bill_settings,
+    enterprise_id: srcEvent.enterprise_id,
+    enterprise_subsidy_settings: srcEvent.enterprise_subsidy_settings,
     event_max_people: srcEvent.event_max_people,
     event_postalcode: srcEvent.event_postalcode,
     event_address_base: srcEvent.event_address_base,
@@ -80,6 +106,8 @@ export const copyEventCore = async (
     created_by: uid,
     updated_by: uid,
   })
+
+  assertEnterpriseEventPaymentAllowed(newEvent)
 
   try {
     await copyEventImage(srcEvent, newEvent.id)

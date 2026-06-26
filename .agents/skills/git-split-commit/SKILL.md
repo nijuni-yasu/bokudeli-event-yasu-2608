@@ -39,7 +39,7 @@ git branch --show-current
    4. [terraform] terraform/
    5. [firebase] firebase.json、.firebaserc、firestore.rules、storage.rules、firestore.indexes.json
    6. [common] スキーマ変更（Zod スキーマ・型定義等）
-   7. その他（user / partner / base / functions）
+   7. その他（user / partner / enterprise / base / functions）
 
    **[doc] の範囲**
    - documents/ ディレクトリ内の更新のみに限る

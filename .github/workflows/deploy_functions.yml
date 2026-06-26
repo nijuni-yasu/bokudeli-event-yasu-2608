@@ -7,6 +7,7 @@ on:
       - development
     paths:
       - 'functions/**'
+      - 'common/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -16,17 +17,33 @@ on:
         options:
           - development
           - production
-
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: true
+      deploy_group:
+        description: 'Function group (all = 3 groups parallel)'
+        required: false
+        type: choice
+        options:
+          - all
+          - hybrid
+          - pf
+          - enterprise
+        default: all
 
 jobs:
   deploy:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.group }}
+      cancel-in-progress: true
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    # push のときだけ GITHUB_REF_NAME を使う（workflow_dispatch のときは inputs.environment を使う）
-    # 可読性に欠けるが、うまい手がみつからない
+    strategy:
+      fail-fast: false
+      matrix:
+        group: >-
+          ${{
+            (github.event_name == 'push' || github.event.inputs.deploy_group == 'all')
+            && fromJSON('["hybrid","pf","enterprise"]')
+            || fromJSON(format('["{0}"]', github.event.inputs.deploy_group))
+          }}
     environment: ${{ github.event_name == 'push' && (github.ref_name == 'production' && 'production' || github.ref_name == 'development' && 'development') || inputs.environment }}
     defaults:
       run:
@@ -39,30 +56,43 @@ jobs:
         with:
           node-version-file: ./.node-version
       - name: Install dependencies
-        run: |
-          npm ci
+        run: npm ci
       - name: Generate .env file
         working-directory: ./functions/default
-        run: |
-          echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
+        run: echo '${{ vars.FUNCTIONS_ENV }}' | tr -d '\r' > .env
       - name: Check Format
         run: |
           npm -w common run format:check
           npm -w functions/default run format:check
       - name: Build
-        run: |
-          npm -w functions/default run build
+        run: npm -w functions/default run build
       - name: Lint
         run: |
           npm -w common run lint
           npm -w functions/default run lint
+      - name: Resolve deploy targets
+        id: targets
+        env:
+          GROUP: ${{ matrix.group }}
+        run: |
+          case "$GROUP" in
+            hybrid)
+              echo "args=--force --only functions:addToCart,functions:removeFromCart,functions:confirmOrder,functions:createStripeCheckoutSession,functions:stripeWebhook,functions:cancelOrders" >> "$GITHUB_OUTPUT"
+              ;;
+            pf)
+              echo "args=--force --only functions:getInvitationUrlForCommunityManager,functions:acceptInvitationForCommunityManager,functions:sendTestLetter,functions:handleEventOgpRequest,functions:handleCommunityOgpRequest,functions:communityAdded,functions:communityContact,functions:eventInformation,functions:eventInformationPreview,functions:shopStatusChanged,functions:onEventChanged,functions:onShopReservationChanged,functions:pollingTask,functions:requestEmailLogin,functions:confirmEmailLogin,functions:requestEmailChange,functions:confirmEmailChange,functions:updateProfileFromProviders,functions:deleteUserAccount,functions:getUserFriends,functions:backfillUserFriends,functions:getUserFriendMeetLog,functions:eventReceipt,functions:eventCopy,functions:eventCopyRepeat,functions:copyCommunityCoverToEvent,functions:eventBillInvoice,functions:namesprint,functions:updateEventMenus,functions:sendIndividualLetter,functions:generateUserImageThumbnail,functions:cancelEvent,functions:reportClientError,functions:onCommunityMemberWritten,functions:getUserProfilePreview,functions:getUserFoods,functions:backfillUserProfileCounts,functions:log_event_status,functions:backupFirestore,functions:flyer,functions:slackbot,functions:slackEventNotification,functions:slackOrderNotification,functions:broadcast_event_message_request,functions:line_event_information" >> "$GITHUB_OUTPUT"
+              ;;
+            enterprise)
+              echo "args=--force --only functions:createEnterprise,functions:getEnterpriseByDomain,functions:requestEnterpriseEmailLogin,functions:confirmEnterpriseEmailLogin,functions:logEnterpriseLogout,functions:createEnterpriseMembers,functions:getEnterpriseMembers,functions:disableEnterpriseMember,functions:enableEnterpriseMember,functions:updateEnterpriseMember,functions:updateEnterpriseRole,functions:updateEnterpriseSettings,functions:updateEnterpriseSubsidySettings,functions:getEnterpriseCommunities,functions:createEnterpriseCommunities,functions:getInvitationUrlForEnterpriseCommunityManager,functions:acceptInvitationForEnterpriseCommunityManager" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
           project_id: ${{ vars.PROJECT_ID }}
-      - name: Deploy to Firebase
+      - name: Deploy to Firebase (${{ matrix.group }})
         uses: ./.github/actions/deploy
         with:
           project_id: ${{ vars.PROJECT_ID }}
-          args: '--force --only functions'
+          args: ${{ steps.targets.outputs.args }}

@@ -1,5 +1,6 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { sendCommunityManagerRoleChangeMails } from './communityMail.js'
+import { getCommunity } from './stores/community.js'
 import { createModuleLogger } from './utils/logger.js'
 import { recalcCommunityMembers } from './utils/recalcCommunityMembers.js'
 import { recountUserProfileCounts } from './utils/recountUserProfileCounts.js'
@@ -29,12 +30,16 @@ export const onCommunityMemberWritten = onDocumentWritten(
 
     const recalcResult = await recalcCommunityMembers(communityId)
     if (recalcResult.addedManagerIds.length > 0 || recalcResult.removedManagerIds.length > 0) {
-      await sendCommunityManagerRoleChangeMails({
-        communityAccount: recalcResult.communityAccount,
-        communityName: recalcResult.communityName,
-        addedManagerIds: recalcResult.addedManagerIds,
-        removedManagerIds: recalcResult.removedManagerIds,
-      })
+      const community = await getCommunity(communityId)
+      const isEnterpriseCommunity = community?.enterprise_id != null && community.enterprise_id !== ''
+      if (!isEnterpriseCommunity) {
+        await sendCommunityManagerRoleChangeMails({
+          communityAccount: recalcResult.communityAccount,
+          communityName: recalcResult.communityName,
+          addedManagerIds: recalcResult.addedManagerIds,
+          removedManagerIds: recalcResult.removedManagerIds,
+        })
+      }
     }
 
     try {

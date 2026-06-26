@@ -36,6 +36,7 @@ npm -w common run lint
 npm -w base run lint
 npm -w user run lint
 npm -w partner run lint
+npm -w enterprise run lint
 npm -w functions/default run lint
 ```
 
@@ -46,6 +47,7 @@ npm -w common run format:check
 npm -w base run format:check
 npm -w user run format:check
 npm -w partner run format:check
+npm -w enterprise run format:check
 npm -w functions/default run format:check
 ```
 
@@ -58,6 +60,7 @@ npm -w common run format
 npm -w base run format
 npm -w user run format
 npm -w partner run format
+npm -w enterprise run format
 npm -w functions/default run format
 ```
 
@@ -69,6 +72,7 @@ npm -w functions/default run format
 npm -w base run build:types
 npm -w user run build:types
 npm -w partner run build:types
+npm -w enterprise run build:types
 ```
 
 ### 5. ビルド（functions）
@@ -86,6 +90,7 @@ npm -w common run test
 npm -w base run test
 npm -w user run test
 npm -w partner run test
+npm -w enterprise run test
 npm -w functions/default run test
 ```
 
@@ -102,6 +107,7 @@ npm -w functions/default run test
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
+- enterprise: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 
 3. format:check
@@ -109,12 +115,14 @@ npm -w functions/default run test
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
+- enterprise: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 
 4. build:types
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
+- enterprise: ✅ 成功 / ❌ 失敗
 
 5. build（functions）
 - functions/default: ✅ 成功 / ❌ 失敗
@@ -124,6 +132,7 @@ npm -w functions/default run test
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
+- enterprise: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 ```
 

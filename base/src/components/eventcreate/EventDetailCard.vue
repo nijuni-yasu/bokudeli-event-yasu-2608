@@ -26,6 +26,10 @@ import { trimHashTag } from '@shokujii/base/utils/hashTag'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import {
+  PF_EVENT_PAYMENT_UI_STRATEGY,
+  type EventPaymentUiStrategy,
+} from '@shokujii/base/composable/eventPaymentUiStrategy.js'
 
 const tinymceApiKey = import.meta.env.VITE_TINYMCE_API_KEY
 
@@ -42,11 +46,14 @@ const props = withDefaults(
      * true の場合は useEventStore を呼ばず、保存済みドキュメントを前提とした処理（カバー画像 URL 参照や本文画像アップロード）を無効化する。
      */
     isNew?: boolean
+    /** 支払い方式 UI（enterprise / PF）。呼び出し側から注入 */
+    paymentUiStrategy?: EventPaymentUiStrategy
   }>(),
   {
     readonly: false,
     showAlbumPreview: true,
     isNew: false,
+    paymentUiStrategy: () => PF_EVENT_PAYMENT_UI_STRATEGY,
   },
 )
 
@@ -59,6 +66,7 @@ const OFF_AMOUNT_STEP = 100
 const event = defineModel<BokudeliEvent>({ required: true })
 const coverImage = defineModel<File | null>('coverImage', { required: true })
 const communityStore = useCommunityStore(event.value.community_account)
+const paymentUiStrategy = computed(() => props.paymentUiStrategy)
 // 新規作成中はまだイベントドキュメントが Firestore に存在しないため、
 // useEventStore を呼ぶとコレクショングループ検索でリトライ警告が連発してしまう。保存済みのときだけストアを参照する。
 const eventStore = props.isNew ? null : useEventStore(event.value)
@@ -131,7 +139,30 @@ const offAmountValidator = (v: number | string | undefined) => {
 watch(
   () => event.value.event_payment,
   () => {
+    if (paymentUiStrategy.value.isEnterpriseMode) {
+      if (paymentUiStrategy.value.forbiddenPayments.includes(event.value.event_payment)) {
+        event.value.event_payment = paymentUiStrategy.value.defaultPaymentWhenDraft ?? 'enterprise_subsidy'
+      }
+      if (event.value.event_payment !== 'community_bill') {
+        event.value.community_bill_settings = undefined
+      }
+      return
+    }
     checkBillInfo()
+  },
+  { immediate: true },
+)
+
+watch(
+  () => paymentUiStrategy.value.isEnterpriseMode,
+  (isEnterprise) => {
+    if (!isEnterprise || props.readonly || event.value.event_status.value !== 'in_draft') {
+      return
+    }
+    if (paymentUiStrategy.value.forbiddenPayments.includes(event.value.event_payment)) {
+      event.value.event_payment = paymentUiStrategy.value.defaultPaymentWhenDraft ?? 'enterprise_subsidy'
+      event.value.community_bill_settings = undefined
+    }
   },
   { immediate: true },
 )
@@ -480,128 +511,160 @@ const tinymceInit = computed(() => ({
         class="ma-1 ma-md-3"
         :readonly="event.event_status.value !== 'in_draft'"
       >
-        <!-- 参加者事前決済 -->
-        <v-card
-          variant="outlined"
-          :color="event.event_payment === 'user_advance' ? 'primary' : undefined"
-          class="mb-4 pa-3"
-        >
-          <v-radio value="user_advance">
-            <template #label>
-              <span class="text-body-1 font-weight-bold">{{ $t('payment.user_advance') }}</span>
-            </template>
-          </v-radio>
-          <div class="payment-hint text-body-2 text-medium-emphasis ml-8 mt-2">
-            <span v-html="$t('event_detail.payment_hint_user_advance')" />
-          </div>
-        </v-card>
-
-        <!-- 主催者請求書払い -->
-        <v-card
-          variant="outlined"
-          :color="event.event_payment === 'community_bill' ? 'primary' : undefined"
-          class="mb-4 pa-3"
-        >
-          <v-radio value="community_bill">
-            <template #label>
-              <span class="text-body-1 font-weight-bold">{{ $t('payment.community_bill') }}</span>
-            </template>
-          </v-radio>
-
-          <div class="mt-1">
-            <!-- 割引設定（枠線なし） -->
-            <div class="mt-3 mb-4 mx-2">
-              <div class="pt-4">
-                <v-radio-group
-                  v-model="discountType"
-                  hide-details
-                  class="ma-2"
-                  :readonly="event.event_status.value !== 'in_draft'"
-                  :disabled="event.event_payment !== 'community_bill'"
-                >
-                  <v-radio value="free" :label="$t('discount_settings.free')" />
-                  <div
-                    class="text-body-2 ml-8 mb-2"
-                    :class="discountType === 'free' ? undefined : 'text-medium-emphasis'"
-                  >
-                    {{ $t('discount_settings.free_description') }}
-                  </div>
-
-                  <v-radio value="discount" :label="$t('discount_settings.discount')" class="mt-4" />
-                  <div
-                    class="text-body-2 ml-8 mb-2"
-                    :class="discountType === 'discount' ? undefined : 'text-medium-emphasis'"
-                  >
-                    {{ $t('discount_settings.discount_description') }}
-                  </div>
-                  <v-row class="pt-3 ml-5">
-                    <v-col cols="8" sm="6">
-                      <v-text-field
-                        v-model.number="offAmount"
-                        type="number"
-                        :step="OFF_AMOUNT_STEP"
-                        :variant="textFieldVariant"
-                        dense
-                        :label="$t('discount_settings.off_amount')"
-                        :rules="
-                          event.event_payment === 'community_bill' && discountType === 'discount'
-                            ? [offAmountValidator]
-                            : []
-                        "
-                        :readonly="event.event_status.value !== 'in_draft'"
-                        :disabled="discountType !== 'discount' || event.event_payment !== 'community_bill'"
-                        prefix="¥"
-                      />
-                    </v-col>
-                  </v-row>
-                </v-radio-group>
-              </div>
+        <template v-if="paymentUiStrategy.isEnterpriseMode">
+          <v-card
+            variant="outlined"
+            :color="event.event_payment === 'enterprise_subsidy' ? 'primary' : undefined"
+            class="mb-4 pa-3"
+          >
+            <v-radio value="enterprise_subsidy">
+              <template #label>
+                <span class="text-body-1 font-weight-bold">{{ $t('payment.enterprise_subsidy') }}</span>
+              </template>
+            </v-radio>
+            <div class="payment-hint text-body-2 text-medium-emphasis ml-8 mt-2">
+              <span v-html="$t('event_detail.payment_hint_enterprise_subsidy')" />
             </div>
+          </v-card>
+          <v-card
+            variant="outlined"
+            :color="event.event_payment === 'user_advance' ? 'primary' : undefined"
+            class="mb-4 pa-3"
+          >
+            <v-radio value="user_advance">
+              <template #label>
+                <span class="text-body-1 font-weight-bold">{{ $t('payment.user_advance') }}</span>
+              </template>
+            </v-radio>
+            <div class="payment-hint text-body-2 text-medium-emphasis ml-8 mt-2">
+              <span v-html="$t('event_detail.payment_hint_user_advance')" />
+            </div>
+          </v-card>
+        </template>
+        <template v-else>
+          <!-- 参加者事前決済 -->
+          <v-card
+            variant="outlined"
+            :color="event.event_payment === 'user_advance' ? 'primary' : undefined"
+            class="mb-4 pa-3"
+          >
+            <v-radio value="user_advance">
+              <template #label>
+                <span class="text-body-1 font-weight-bold">{{ $t('payment.user_advance') }}</span>
+              </template>
+            </v-radio>
+            <div class="payment-hint text-body-2 text-medium-emphasis ml-8 mt-2">
+              <span v-html="$t('event_detail.payment_hint_user_advance')" />
+            </div>
+          </v-card>
 
-            <!-- 請求先情報（枠線なし・v-radio-group と同マージンで左揃え） -->
-            <div class="ma-4 py-4">
-              <div class="d-flex align-center text-body-1 font-weight-bold pb-3">
-                <v-icon size="22" class="text--primary me-1" :icon="mdiEmailOutline" />
-                {{ $t('discount_settings.bill_info_title') }}
-              </div>
-              <v-row class="px-5">
-                <v-col cols="12">
-                  <v-text-field
-                    v-model="event.bill_fullname"
-                    :variant="textFieldVariant"
-                    dense
-                    :label="$t('shop_notice.bill_fullname')"
-                    :rules="event.event_payment === 'community_bill' ? [requiredValidator] : []"
+          <!-- 主催者請求書払い -->
+          <v-card
+            variant="outlined"
+            :color="event.event_payment === 'community_bill' ? 'primary' : undefined"
+            class="mb-4 pa-3"
+          >
+            <v-radio value="community_bill">
+              <template #label>
+                <span class="text-body-1 font-weight-bold">{{ $t('payment.community_bill') }}</span>
+              </template>
+            </v-radio>
+
+            <div class="mt-1">
+              <!-- 割引設定（枠線なし） -->
+              <div class="mt-3 mb-4 mx-2">
+                <div class="pt-4">
+                  <v-radio-group
+                    v-model="discountType"
+                    hide-details
+                    class="ma-2"
                     :readonly="event.event_status.value !== 'in_draft'"
                     :disabled="event.event_payment !== 'community_bill'"
-                  />
-                </v-col>
-              </v-row>
-              <v-row class="px-5">
-                <v-col cols="12">
-                  <v-text-field
-                    v-model="event.bill_email"
-                    :variant="textFieldVariant"
-                    dense
-                    :label="$t('shop_notice.bill_email')"
-                    :rules="event.event_payment === 'community_bill' ? [requiredValidator, emailValidator] : []"
-                    :readonly="event.event_status.value !== 'in_draft'"
-                    :disabled="event.event_payment !== 'community_bill'"
-                  />
-                </v-col>
-              </v-row>
-            </div>
-            <div class="px-4 py-2">
-              <div class="d-flex align-center text-body-1 font-weight-bold pb-3">
-                <v-icon size="22" class="text--primary me-1" :icon="mdiReceiptTextOutline" />
-                {{ $t('event_detail.payment_hint_community_bill_title') }}
+                  >
+                    <v-radio value="free" :label="$t('discount_settings.free')" />
+                    <div
+                      class="text-body-2 ml-8 mb-2"
+                      :class="discountType === 'free' ? undefined : 'text-medium-emphasis'"
+                    >
+                      {{ $t('discount_settings.free_description') }}
+                    </div>
+
+                    <v-radio value="discount" :label="$t('discount_settings.discount')" class="mt-4" />
+                    <div
+                      class="text-body-2 ml-8 mb-2"
+                      :class="discountType === 'discount' ? undefined : 'text-medium-emphasis'"
+                    >
+                      {{ $t('discount_settings.discount_description') }}
+                    </div>
+                    <v-row class="pt-3 ml-5">
+                      <v-col cols="8" sm="6">
+                        <v-text-field
+                          v-model.number="offAmount"
+                          type="number"
+                          :step="OFF_AMOUNT_STEP"
+                          :variant="textFieldVariant"
+                          dense
+                          :label="$t('discount_settings.off_amount')"
+                          :rules="
+                            event.event_payment === 'community_bill' && discountType === 'discount'
+                              ? [offAmountValidator]
+                              : []
+                          "
+                          :readonly="event.event_status.value !== 'in_draft'"
+                          :disabled="discountType !== 'discount' || event.event_payment !== 'community_bill'"
+                          prefix="¥"
+                        />
+                      </v-col>
+                    </v-row>
+                  </v-radio-group>
+                </div>
               </div>
-              <div class="payment-hint text-body-2">
-                <span v-html="$t('event_detail.payment_hint_community_bill')" />
+
+              <!-- 請求先情報（枠線なし・v-radio-group と同マージンで左揃え） -->
+              <div class="ma-4 py-4">
+                <div class="d-flex align-center text-body-1 font-weight-bold pb-3">
+                  <v-icon size="22" class="text--primary me-1" :icon="mdiEmailOutline" />
+                  {{ $t('discount_settings.bill_info_title') }}
+                </div>
+                <v-row class="px-5">
+                  <v-col cols="12">
+                    <v-text-field
+                      v-model="event.bill_fullname"
+                      :variant="textFieldVariant"
+                      dense
+                      :label="$t('shop_notice.bill_fullname')"
+                      :rules="event.event_payment === 'community_bill' ? [requiredValidator] : []"
+                      :readonly="event.event_status.value !== 'in_draft'"
+                      :disabled="event.event_payment !== 'community_bill'"
+                    />
+                  </v-col>
+                </v-row>
+                <v-row class="px-5">
+                  <v-col cols="12">
+                    <v-text-field
+                      v-model="event.bill_email"
+                      :variant="textFieldVariant"
+                      dense
+                      :label="$t('shop_notice.bill_email')"
+                      :rules="event.event_payment === 'community_bill' ? [requiredValidator, emailValidator] : []"
+                      :readonly="event.event_status.value !== 'in_draft'"
+                      :disabled="event.event_payment !== 'community_bill'"
+                    />
+                  </v-col>
+                </v-row>
+              </div>
+              <div class="px-4 py-2">
+                <div class="d-flex align-center text-body-1 font-weight-bold pb-3">
+                  <v-icon size="22" class="text--primary me-1" :icon="mdiReceiptTextOutline" />
+                  {{ $t('event_detail.payment_hint_community_bill_title') }}
+                </div>
+                <div class="payment-hint text-body-2">
+                  <span v-html="$t('event_detail.payment_hint_community_bill')" />
+                </div>
               </div>
             </div>
-          </div>
-        </v-card>
+          </v-card>
+        </template>
       </v-radio-group>
     </v-card-text>
     <confirm-dialog

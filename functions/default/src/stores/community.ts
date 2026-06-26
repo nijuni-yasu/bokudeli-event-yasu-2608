@@ -88,7 +88,7 @@ export class ShokujiiCommunity extends Community {
     }
   }
 
-  async generateInvitationUrlForManager(uid: string): Promise<string> {
+  async createManagerInviteToken(uid: string): Promise<string> {
     const db = getFirestore()
     const invitesCollectionRef = db
       .collection('communities')
@@ -105,7 +105,12 @@ export class ShokujiiCommunity extends Community {
         updated_at: now,
       }),
     )
-    return getCommunityInvitationUrl(this.community_account, inviteRef.id)
+    return inviteRef.id
+  }
+
+  async generateInvitationUrlForManager(uid: string): Promise<string> {
+    const tokenId = await this.createManagerInviteToken(uid)
+    return getCommunityInvitationUrl(this.community_account, tokenId)
   }
 
   async inviteAsManager(uid: string, token: string): Promise<void> {
@@ -279,4 +284,57 @@ export const countManagedCommunitiesForUser = async (userId: string): Promise<nu
   const userRef = getUserRef(userId)
   const snapshot = await db.collection('communities').where('managers', 'array-contains', userRef).count().get()
   return snapshot.data().count
+}
+
+export const saveCommunity = async (community: ShokujiiCommunity): Promise<void> => {
+  const db = getFirestore()
+  // toFirestore は未設定の NonEmptyString フィールドを FieldValue.delete() に変換するため、
+  // merge なし set だと新規ドキュメント作成時に delete sentinel が拒否され失敗する。merge: true で回避する。
+  await db.collection('communities').doc(community.id).withConverter(communityConverter).set(community, { merge: true })
+}
+
+export type EnterpriseCommunityRecord = {
+  community_id: string
+  community_name: string
+  community_account: string
+  community_num_members: number
+  created_at: number
+  manager_ids: string[]
+}
+
+export const listCommunitiesByEnterpriseId = async (enterpriseId: string): Promise<EnterpriseCommunityRecord[]> => {
+  const db = getFirestore()
+  const snapshot = await db
+    .collection('communities')
+    .where('enterprise_id', '==', enterpriseId)
+    .withConverter(communityConverter)
+    .get()
+  return snapshot.docs.map((doc) => {
+    const data = doc.data()
+    const numMembers =
+      typeof doc.get('community_num_members') === 'number' ? (doc.get('community_num_members') as number) : 0
+    return {
+      community_id: doc.id,
+      community_name: data.community_name,
+      community_account: data.community_account,
+      community_num_members: numMembers,
+      created_at: data.created_at,
+      manager_ids: (data.managers ?? []).map((ref) => ref.id),
+    }
+  })
+}
+
+export const setCommunityMemberWithRoles = async (
+  communityId: string,
+  userId: string,
+  roles: CommunityMemberRolesType[],
+): Promise<void> => {
+  const db = getFirestore()
+  const memberRef = db
+    .collection('communities')
+    .doc(communityId)
+    .collection('members')
+    .doc(userId)
+    .withConverter(communityMemberConverter)
+  await memberRef.set(new CommunityMember(userId, { roles }))
 }

@@ -18,6 +18,7 @@ import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
 import { getManageCommunityListPath } from './utils'
+import { isEnterpriseUserFromClaims } from '@shokujii/base/utils/enterpriseUserClaims.js'
 import { ZodError } from 'zod'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
@@ -228,6 +229,29 @@ export const setupRouter = (router: Router) => {
       }
       // 元いたページへ
       return getRedirectPath() ?? '/'
+    }
+  })
+
+  // エンタープライズユーザーが PF 版に入らないよう暫定ガード（PA-03d / A-3）
+  router.beforeEach(async (to) => {
+    if (to.path === '/maintenance') {
+      return
+    }
+    let user: User | null = null
+    try {
+      user = await waitAdminAuthentication()
+    } catch {
+      return
+    }
+    if (user == null) {
+      return
+    }
+    const token = await user.getIdTokenResult()
+    if (isEnterpriseUserFromClaims(token.claims)) {
+      if (to.path === '/') {
+        return
+      }
+      return { path: '/', query: { ...to.query, enterprise_blocked: '1' } }
     }
   })
 

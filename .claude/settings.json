@@ -42,7 +42,8 @@
       "Bash(GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash *)",
       "Bash(python3 -m json.tool *)",
       "Bash(npm -w common test *)",
-      "Bash(npx vue-tsc *)"
+      "Bash(npx vue-tsc *)",
+      "Bash(npm -w enterprise run build:types)"
     ],
     "deny": [
       "Bash(git push --force)",
