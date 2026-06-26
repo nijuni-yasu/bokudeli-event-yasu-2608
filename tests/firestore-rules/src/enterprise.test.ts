@@ -5,6 +5,7 @@ import {
   assertFails,
   assertSucceeds,
   initializeTestEnvironment,
+  type RulesTestContext,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
@@ -12,7 +13,35 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 const PROJECT_ID = 'firestore-rules-test'
 const testDir = fileURLToPath(new URL('.', import.meta.url))
 
+const TENANT_A = 'tenant-ent-a'
+const TENANT_B = 'tenant-ent-b'
+
 let testEnv: RulesTestEnvironment
+
+function enterpriseAuth(
+  userId: string,
+  enterpriseId: string,
+  tenantId: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return testEnv.authenticatedContext(
+    userId,
+    {
+      enterprise_id: enterpriseId,
+      enterprise_role: 'member',
+      user_type: 'enterprise',
+      ...overrides,
+    },
+    { tenantId },
+  )
+}
+
+async function seedEnterpriseTenant(context: RulesTestContext, enterpriseId: string, tenantId: string): Promise<void> {
+  await context.firestore().collection('enterprises').doc(enterpriseId).set({
+    company_name: `Company ${enterpriseId}`,
+    tenant_id: tenantId,
+  })
+}
 
 describe('enterprise firestore rules', () => {
   beforeAll(async () => {
@@ -30,6 +59,10 @@ describe('enterprise firestore rules', () => {
 
   beforeEach(async () => {
     await testEnv.clearFirestore()
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await seedEnterpriseTenant(context, 'ent-a', TENANT_A)
+      await seedEnterpriseTenant(context, 'ent-b', TENANT_B)
+    })
   })
 
   it('PF 既存データ（enterprise_id なし）の communities read は許可', async () => {
@@ -69,28 +102,43 @@ describe('enterprise firestore rules', () => {
 
   it('他社 enterprise_id claims では enterprises を read できない', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
-      await context.firestore().collection('enterprises').doc('ent-a').set({ company_name: 'Company A' })
+      await seedEnterpriseTenant(context, 'ent-a', TENANT_A)
+      await seedEnterpriseTenant(context, 'ent-b', TENANT_B)
     })
 
-    const otherEnterpriseUser = testEnv.authenticatedContext('user-other', {
-      enterprise_id: 'ent-b',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const otherEnterpriseUser = enterpriseAuth('user-other', 'ent-b', TENANT_B)
     await assertFails(otherEnterpriseUser.firestore().collection('enterprises').doc('ent-a').get())
   })
 
   it('自社 enterprise_id claims では enterprises を read できる', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
-      await context.firestore().collection('enterprises').doc('ent-a').set({ company_name: 'Company A' })
+      await seedEnterpriseTenant(context, 'ent-a', TENANT_A)
     })
 
-    const member = testEnv.authenticatedContext('user-a', {
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
+    await assertSucceeds(member.firestore().collection('enterprises').doc('ent-a').get())
+  })
+
+  it('firebase.tenant なしの enterprise claims では enterprises を read できない', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await seedEnterpriseTenant(context, 'ent-a', TENANT_A)
+    })
+
+    const legacyUser = testEnv.authenticatedContext('user-a', {
       enterprise_id: 'ent-a',
       enterprise_role: 'member',
       user_type: 'enterprise',
     })
-    await assertSucceeds(member.firestore().collection('enterprises').doc('ent-a').get())
+    await assertFails(legacyUser.firestore().collection('enterprises').doc('ent-a').get())
+  })
+
+  it('tenant 不一致の enterprise user は enterprises を read できない', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await seedEnterpriseTenant(context, 'ent-a', TENANT_A)
+    })
+
+    const wrongTenantUser = enterpriseAuth('user-a', 'ent-a', 'wrong-tenant')
+    await assertFails(wrongTenantUser.firestore().collection('enterprises').doc('ent-a').get())
   })
 
   it('他社 enterprise_id の communities read は拒否', async () => {
@@ -102,11 +150,7 @@ describe('enterprise firestore rules', () => {
         .set({ community_name: 'Enterprise A', enterprise_id: 'ent-a' })
     })
 
-    const otherEnterpriseUser = testEnv.authenticatedContext('user-other', {
-      enterprise_id: 'ent-b',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const otherEnterpriseUser = enterpriseAuth('user-other', 'ent-b', TENANT_B)
     await assertFails(otherEnterpriseUser.firestore().collection('communities').doc('community-ent-a').get())
   })
 
@@ -119,11 +163,7 @@ describe('enterprise firestore rules', () => {
         .set({ community_name: 'Enterprise A', enterprise_id: 'ent-a' })
     })
 
-    const member = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     await assertSucceeds(member.firestore().collection('communities').doc('community-ent-a').get())
   })
 
@@ -135,11 +175,7 @@ describe('enterprise firestore rules', () => {
   })
 
   it('Enterprise ユーザーは自社 enterprise_id で communities create できる', async () => {
-    const member = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     await assertSucceeds(
       member
         .firestore()
@@ -150,11 +186,7 @@ describe('enterprise firestore rules', () => {
   })
 
   it('Enterprise ユーザーは他社 enterprise_id で communities create できない', async () => {
-    const member = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     await assertFails(
       member
         .firestore()
@@ -165,11 +197,7 @@ describe('enterprise firestore rules', () => {
   })
 
   it('Enterprise ユーザーは enterprise_id なしで communities create できない', async () => {
-    const member = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     await assertFails(
       member.firestore().collection('communities').doc('community-pf-from-ent').set({ community_name: 'PF from ent' }),
     )
@@ -230,11 +258,7 @@ describe('enterprise firestore rules', () => {
         })
     })
 
-    const otherEnterpriseUser = testEnv.authenticatedContext('user-other', {
-      enterprise_id: 'ent-b',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const otherEnterpriseUser = enterpriseAuth('user-other', 'ent-b', TENANT_B)
     await assertFails(
       otherEnterpriseUser
         .firestore()
@@ -255,11 +279,7 @@ describe('enterprise firestore rules', () => {
       await context.firestore().collection('pass_code').doc('code-1').set({ pass_code: '123456' })
     })
 
-    const member = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     await assertFails(member.firestore().collection('pass_code').doc('code-1').get())
     await assertFails(member.firestore().collection('pass_code').doc('code-1').set({ pass_code: '999999' }))
   })
@@ -356,11 +376,7 @@ describe('enterprise firestore rules', () => {
         .set({ event_name: 'Enterprise Event', enterprise_id: 'ent-a' })
     })
 
-    const otherEnterpriseUser = testEnv.authenticatedContext('user-other', {
-      enterprise_id: 'ent-b',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const otherEnterpriseUser = enterpriseAuth('user-other', 'ent-b', TENANT_B)
     await assertFails(
       otherEnterpriseUser
         .firestore()
@@ -383,11 +399,7 @@ describe('enterprise firestore rules', () => {
         .set({ event_name: 'Enterprise Event', enterprise_id: 'ent-a' })
     })
 
-    const member = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     await assertSucceeds(
       member.firestore().collection('communities').doc('community-ent-a').collection('events').doc('event-1').get(),
     )
@@ -434,11 +446,7 @@ describe('enterprise firestore rules', () => {
     await assertFails(db.collectionGroup('member_orders').where('menu_name', '==', 'Enterprise Menu').get())
     await assertFails(db.collectionGroup('member_orders').where('menu_name', '==', 'PF Menu').get())
 
-    const owner = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const owner = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     const authDb = owner.firestore()
     const enterpriseSnap = await assertSucceeds(
       authDb.collectionGroup('member_orders').where('menu_name', '==', 'Enterprise Menu').get(),
@@ -532,11 +540,7 @@ describe('enterprise firestore rules', () => {
         })
     })
 
-    const coworker = testEnv.authenticatedContext('user-b', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const coworker = enterpriseAuth('user-b', 'ent-a', TENANT_A)
     await assertSucceeds(
       coworker
         .firestore()
@@ -571,11 +575,7 @@ describe('enterprise firestore rules', () => {
         })
     })
 
-    const owner = testEnv.authenticatedContext('user-a', {
-      enterprise_id: 'ent-a',
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-    })
+    const owner = enterpriseAuth('user-a', 'ent-a', TENANT_A)
     await assertSucceeds(
       owner
         .firestore()
