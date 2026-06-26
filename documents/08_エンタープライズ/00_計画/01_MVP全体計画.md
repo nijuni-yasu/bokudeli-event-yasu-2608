@@ -22,11 +22,11 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-06-20**（本番ブロッカー RC 4 件 ✅。A-1 は RC-35 対応済・Callable 薄層化のみ残）
+最終更新: **2026-06-27**（#2119: A-1 Callable 薄層化・A-5 Rules CI 必須化 ✅。A-4 のみ #2090 別途）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
-| WS-A（Phase 0） | 3 | 3 | 6 |
+| WS-A（Phase 0） | 5 | 1 | 6 |
 | WS-B（IdP・本番前） | 0 | 6 | 6 |
 | WS-C（スキーマ） | 1 | 4 | 5 |
 | WS-D（v0.1 残） | 0 | 5 | 5 |
@@ -92,22 +92,20 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| - [ ] | A-1 | memberOrders / stripe の subsidy 分岐を純粋関数へ抽出＋ユニットテスト（本丸） | PA-21a〜f | 前提 | — |
+| ✅ | A-1 | memberOrders / stripe の subsidy 分岐を純粋関数へ抽出＋ユニットテスト（本丸） | PA-21a〜f | 前提 | — |
 | ✅ | A-2 | `if==enterprise` の DI 化（base 3 ファイル） | PA-30a-b / PA-31a-b | 前提 | — |
 | ✅ | A-3 | PF 越境ログインのルートガード（暫定防御） | PA-03d | 必須 | — |
-| - [ ] | A-4 | PF 版アカウント作成 / ログイン入口の分離（誤作成是正） — **#2071 / 本ブランチの WS-A スコープ外**（[#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) で別途実装） | PA-05 | 必須 | — |
-| - [ ] | A-5 | CI paths フィルタ＋ Rules CI 必須化 | PA-22a-b / PA-23 | 必須 | — |
+| - [ ] | A-4 | PF 版アカウント作成 / ログイン入口の分離（誤作成是正） — **WS-A スコープ外**（[#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) で別途実装） | PA-05 | 必須 | — |
+| ✅ | A-5 | CI paths フィルタ＋ Rules CI 必須化 | PA-22a-b / PA-23 | 必須 | — |
 | ✅ | A-6 | functions 選択的デプロイ分割（デプロイ結合の解消） | PA-24a-b | 必須 | — |
 
 **メモ（一部進捗）**
 
-- **A-1**（一部完了 — [03_WS-A実装設計](../30_リファクタ計画/03_WS-A実装設計.md) §A-1 リファクタ完了条件未達）:
-  - **済**: `paymentEnterpriseSubsidyAmount.ts`（純粋計算）、`enterpriseSubsidyOrders.ts`（検証・tracker・confirm / stripe / webhook / cancel helper）、`enterpriseSubsidyOrders.test.ts`。**RC-35**: addToCart で `pay_enterprise_subsidy_amount` 計算、confirmOrder は `finalizeEnterpriseSubsidyZeroPaymentOrder` + replay / 月次上限、自己負担 > 0 は Stripe 必須（#2071 マージブロッカーではないが MVP 前倒しとして ✅）。
-  - **残（#2071 マージ後可）**: Callable 薄層化 — `memberOrders.ts` / `stripe.ts` / `stripeWebhook.ts` / `cancelOrders.ts` の orchestration 分岐を helper 委譲のみに縮小。`buildEnterpriseSubsidyCartOrders` 等への cart / confirm 一括委譲は未。
+- **A-1**: ✅ [#2119](https://github.com/nijuniinc/bokudeli-event-new/issues/2119)。`addEnterpriseSubsidyMenusToCart` 追加・`memberOrders.ts` `addToCart` 委譲。helper テスト追加。
 - **A-2**: ✅ `EventPaymentUiStrategy` / `EventDraftPreparer` / `CartMonthlyUsageLoader` 注入完了（`eventPaymentUiStrategy.ts`・`eventDraft.ts`・`cartMonthlyUsage.ts`、base 3 ファイル + enterprise 側 loader）。
 - **A-3**: ✅ PF `user` router guard（`enterpriseUserClaims` + `/` リダイレクト + 通知 i18n）。エンプラ `/admin` token とホスト照合（RC-96）も ✅。
-- **A-4**: [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090)（PA-05）で別イシュー起票済。**`dev/enterprise`（#2071）および WS-A 実装ブランチでは対象外**。ログイン / 新規登録入口の分離は別ブランチ・別 PR で実装する（[02_developmentマージ](./02_developmentマージ.md) §「#2071 に新規 WS を積み増さない」方針に合わせる）。
-- **A-5**: ✅ `pr-verify.yml` paths-filter・enterprise verify 追加。**未**: GitHub branch protection への `Test Firestore Rules / test` 必須化（[03_branch_protection.md](../../AIエージェント/03_branch_protection.md) §0-3-2b）。
+- **A-4**: [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090)（PA-05）で別イシュー。**WS-A（#2119）スコープ外**。ログイン / 新規登録入口の分離は別ブランチ・別 PR。
+- **A-5**: ✅ `pr-verify.yml` paths-filter・enterprise verify。#2119 で `development` branch protection に context `verify` / `test`（Rules CI）登録（[03_branch_protection.md](../../AIエージェント/03_branch_protection.md) §0-3-2b）。
 - **A-6**: ✅ `deploy_functions.yml` hybrid / pf / enterprise 3 job 並列 + `workflow_dispatch` 個別発火。
 
 ### WS-B: 認証モデル（IdP・Phase 1・本番投入前に前倒し）
@@ -306,3 +304,4 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-20 | RC-35 / RC-82 / RC-92 / RC-96 を ✅ に更新。A-1 メモを RC-35 済・リファクタ残に整理。M-12 は M-1 backfill 待ちが残 |
 | 2026-06-20 | RC-48 を ✅ に更新。RC-86 は `enterprise_id` 済・`is_guest` 未として文言を精密化 |
 | 2026-06-25 | M-1 / F-1 メモに 02 §2.3.1（member_orders 等 T1 対象外・将来 backfill 条件）へのリンクを追加 |
+| 2026-06-27 | #2119: A-1 ✅（addEnterpriseSubsidyMenusToCart）・A-5 ✅。WS-A 5/6 完了（A-4 は #2090） |

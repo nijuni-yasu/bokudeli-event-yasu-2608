@@ -196,9 +196,9 @@ AI 用の認証情報（PAT / トークン）を **push 不可・PR 作成のみ
 
 | ID | タスク | 詳細 | Owner | 状態 |
 |:---|:-------|:-----|:------|:-----|
-| 0-3-1 | 保護作成（development / B 版） | `development` に branch protection（または Ruleset）を新規作成。**PR 必須・bypass なし**。`main` / `production` には PR 必須を付けない | - | Todo |
-| 0-3-2 | 必須チェック登録 | UI 候補 `PR verify / verify`（job 名 `verify`）を required status checks に登録（0-1-10 で実際に走らせてから） | - | Todo |
-| 0-3-2b | Rules CI 必須チェック（WS-A / A-5） | `firestore.rules` または `tests/firestore-rules/**` を変更する PR では **`Test Firestore Rules / test`** も green 必須。branch protection の required checks に `test` を追加する。`test_firestore_rules.yml` は PR では path filter なしで常時起動し、job 単位 `if:` で Rules 非変更時は skip（Success 報告）とする（workflow レベル path filter だと status が Pending のまま merge 不可になる） | - | Todo |
+| 0-3-1 | 保護作成（development / B 版） | `development` に branch protection（または Ruleset）を新規作成。**PR 必須・bypass なし**。`main` / `production` には PR 必須を付けない | - | ✅ DONE（2026-06-27。#2119 実施時に `development` protection 作成） |
+| 0-3-2 | 必須チェック登録 | UI 候補 `PR verify / verify`（job 名 `verify`）を required status checks に登録（0-1-10 で実際に走らせてから） | - | ✅ DONE（2026-06-27。context `verify` 登録。#2119） |
+| 0-3-2b | Rules CI 必須チェック（WS-A / A-5） | `firestore.rules` または `tests/firestore-rules/**` を変更する PR では **`Test Firestore Rules / test`** も green 必須。branch protection の required checks に `test` を追加する。`test_firestore_rules.yml` は PR では path filter なしで常時起動し、job 単位 `if:` で Rules 非変更時は skip（Success 報告）とする（workflow レベル path filter だと status が Pending のまま merge 不可になる） | - | ✅ DONE（2026-06-27。`development` protection に context `test` 追加。#2119） |
 | 0-3-3 | main / production の push 制限 | `main` / `production` に **Restrict who can push**（リリース担当のみ）。`production` は force push を限定許可（ロールバック用） | - | Todo |
 | 0-3-3b | `production` トリガー方針 | §3「`production` トリガー」を確認し、`pr-verify.yml` を現状維持 or `development` のみに修正 | - | ✅ DONE（現状維持） |
 | 0-3-4 | リリース手順の B 版反映 | [`デプロイ手順.md`](../デプロイ手順/デプロイ手順.md) を B 版（release ブランチ + PR、タグ付け替え、hotfix の development 反映も PR）に改訂 | - | ✅ DONE |
