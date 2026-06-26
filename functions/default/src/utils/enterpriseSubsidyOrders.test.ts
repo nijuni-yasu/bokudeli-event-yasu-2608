@@ -63,7 +63,13 @@ describe('assertActiveEnterpriseMember', () => {
 
   it('is_active false は permission-denied', async () => {
     vi.mocked(getEnterpriseMember).mockResolvedValue(
-      new EnterpriseMember('u1', { user_id: 'u1', is_active: false, monthly_usage: {}, monthly_order_count: {} }),
+      new EnterpriseMember('u1', {
+        user_id: 'u1',
+        user_email: 'user@example.com',
+        is_active: false,
+        monthly_usage: {},
+        monthly_order_count: {},
+      }),
     )
     await expect(
       assertActiveEnterpriseMember('ent-a', { uid: 'u1', token: { enterprise_id: 'ent-a' } } as never),
@@ -73,6 +79,7 @@ describe('assertActiveEnterpriseMember', () => {
   it('自社アクティブメンバーは通過し member を返す', async () => {
     const member = new EnterpriseMember('u1', {
       user_id: 'u1',
+      user_email: 'user@example.com',
       is_active: true,
       monthly_usage: {},
       monthly_order_count: {},
@@ -160,6 +167,7 @@ describe('enterprise subsidy order replay', () => {
     })
     const member = new EnterpriseMember('u1', {
       user_id: 'u1',
+      user_email: 'user@example.com',
       monthly_usage: { '2026-06': 1000 },
       monthly_order_count: {},
     })
@@ -185,6 +193,7 @@ describe('enterprise subsidy order replay', () => {
     })
     const member = new EnterpriseMember('u1', {
       user_id: 'u1',
+      user_email: 'user@example.com',
       monthly_usage: {},
       monthly_order_count: {},
     })
@@ -303,6 +312,7 @@ describe('addEnterpriseSubsidyMenusToCart', () => {
   const makeEnterpriseMember = (monthlyUsage: Record<string, number> = { '2026-06': 1000 }) =>
     new EnterpriseMember('u1', {
       user_id: 'u1',
+      user_email: 'user@example.com',
       is_active: true,
       monthly_usage: monthlyUsage,
       monthly_order_count: {},

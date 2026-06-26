@@ -1,4 +1,3 @@
-import { getAuth } from 'firebase-admin/auth'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { DateTime } from 'luxon'
 import {
@@ -24,10 +23,11 @@ import {
   countActiveEnterpriseAdmins,
   getEnterpriseById,
   getEnterpriseMember,
+  getEnterpriseMemberUserIdByEmail,
   listEnterpriseMembers,
   saveEnterpriseMember,
 } from '../stores/enterprise.js'
-import { getUser, getUserIdFromEmail, getUserPersonalInformation, saveUser, ShokujiiUser } from '../stores/user.js'
+import { getUser, saveUser, ShokujiiUser } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import {
   assertEnterpriseAdmin,
@@ -36,6 +36,7 @@ import {
   normalizeEnterpriseEmail,
 } from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
+import { authForEnterprise } from '../utils/tenantAuth.js'
 
 const logger = createModuleLogger('enterpriseMembers')
 
@@ -92,13 +93,9 @@ async function validateCreateMemberRow(
   }
   seenEmails.add(email)
 
-  const existingUserId = await getUserIdFromEmail(email)
-  if (existingUserId != null) {
-    const existingMember = await getEnterpriseMember(enterpriseId, existingUserId)
-    if (existingMember != null) {
-      return 'このメールアドレスは既に登録済みです'
-    }
-    return 'このメールアドレスは既に別のアカウントで使用されています'
+  const existingMemberId = await getEnterpriseMemberUserIdByEmail(enterpriseId, email)
+  if (existingMemberId != null) {
+    return 'このメールアドレスは既に登録済みです'
   }
   return undefined
 }
@@ -114,41 +111,52 @@ async function createSingleEnterpriseMember(
 
   try {
     const now = Date.now()
-    const authUser = await getAuth().createUser({
+    const tenantAuth = await authForEnterprise(enterpriseId)
+    const authUser = await tenantAuth.createUser({
       email,
       emailVerified: true,
       displayName,
     })
 
-    await getAuth().setCustomUserClaims(authUser.uid, {
-      enterprise_id: enterpriseId,
-      enterprise_role: role,
-      user_type: 'enterprise',
-    })
-
-    const member = new EnterpriseMember(authUser.uid, {
-      role,
-      is_active: true,
-      last_activated_at: now,
-      last_deactivated_at: null,
-      display_name: displayName,
-      department,
-      monthly_usage: {},
-      monthly_order_count: {},
-      created_at: now,
-    })
-
-    await saveEnterpriseMember(member, enterpriseId)
-
-    await saveUser(
-      new ShokujiiUser(authUser.uid, {
-        user_name: displayName,
-        user_type: 'enterprise',
+    try {
+      await tenantAuth.setCustomUserClaims(authUser.uid, {
         enterprise_id: enterpriseId,
+        enterprise_role: role,
+        user_type: 'enterprise',
+      })
+
+      const member = new EnterpriseMember(authUser.uid, {
         user_email: email,
+        role,
+        is_active: true,
+        last_activated_at: now,
+        last_deactivated_at: null,
+        display_name: displayName,
+        department,
+        monthly_usage: {},
+        monthly_order_count: {},
         created_at: now,
-      }),
-    )
+      })
+
+      await saveEnterpriseMember(member, enterpriseId)
+
+      await saveUser(
+        new ShokujiiUser(authUser.uid, {
+          user_name: displayName,
+          user_type: 'enterprise',
+          enterprise_id: enterpriseId,
+          user_email: email,
+          created_at: now,
+        }),
+      )
+    } catch (innerError) {
+      try {
+        await tenantAuth.deleteUser(authUser.uid)
+      } catch (deleteError) {
+        logger.error('createEnterpriseMemberRollbackDeleteUserFailed', { enterpriseId, email, deleteError })
+      }
+      throw innerError
+    }
 
     return { row: row.row, email, status: 'success' }
   } catch (error) {
@@ -295,21 +303,16 @@ export const getEnterpriseMembers = onCall<GetEnterpriseMembersRequest, Promise<
     const { enterprise_id: enterpriseId } = request.data
 
     const members = await listEnterpriseMembers(enterpriseId)
-    const joined: EnterpriseMemberListItem[] = await Promise.all(
-      members.map(async (member) => {
-        const personalInfo = await getUserPersonalInformation(member.user_id)
-        return {
-          user_id: member.user_id,
-          display_name: member.display_name ?? '',
-          department: member.department,
-          role: member.role,
-          is_active: member.is_active,
-          email: personalInfo?.user_email ?? '',
-          monthly_usage: member.monthly_usage ?? {},
-          created_at: member.created_at,
-        }
-      }),
-    )
+    const joined: EnterpriseMemberListItem[] = members.map((member) => ({
+      user_id: member.user_id,
+      display_name: member.display_name ?? '',
+      department: member.department,
+      role: member.role,
+      is_active: member.is_active,
+      email: member.user_email,
+      monthly_usage: member.monthly_usage ?? {},
+      created_at: member.created_at,
+    }))
 
     const filtered = filterAndSortMembers(joined, request.data)
     const totalCount = filtered.length
@@ -347,8 +350,9 @@ export const disableEnterpriseMember = onCall<DisableEnterpriseMemberRequest, Pr
       }
     }
 
-    await getAuth().updateUser(userId, { disabled: true })
-    await getAuth().revokeRefreshTokens(userId)
+    const tenantAuth = await authForEnterprise(enterpriseId)
+    await tenantAuth.updateUser(userId, { disabled: true })
+    await tenantAuth.revokeRefreshTokens(userId)
 
     const now = Date.now()
     member.is_active = false
@@ -383,7 +387,8 @@ export const enableEnterpriseMember = onCall<EnableEnterpriseMemberRequest, Prom
       throw new HttpsError('not-found', 'member not found')
     }
 
-    await getAuth().updateUser(userId, { disabled: false })
+    const tenantAuth = await authForEnterprise(enterpriseId)
+    await tenantAuth.updateUser(userId, { disabled: false })
 
     const now = Date.now()
     member.is_active = true
@@ -434,7 +439,8 @@ export const updateEnterpriseMember = onCall<UpdateEnterpriseMemberRequest, Prom
       await saveUser(user)
     }
 
-    await getAuth().updateUser(userId, { displayName: trimmedName })
+    const tenantAuth = await authForEnterprise(enterpriseId)
+    await tenantAuth.updateUser(userId, { displayName: trimmedName })
 
     await writeAuditLog({
       enterpriseId,

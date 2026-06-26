@@ -1,10 +1,10 @@
-import { getAuth } from 'firebase-admin/auth'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { UpdateEnterpriseRoleRequest, UpdateEnterpriseRoleResponse } from '@shokujii/common/apis/enterprise.js'
 import { ENTERPRISE_MEMBER_ROLE_VALUES } from '@shokujii/common/schemas/Enterprise.js'
 import { countActiveEnterpriseAdmins, getEnterpriseMember, saveEnterpriseMember } from '../stores/enterprise.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { assertEnterpriseAdmin, getClientIp } from '../utils/enterpriseAuthHelpers.js'
+import { authForEnterprise } from '../utils/tenantAuth.js'
 
 export const updateEnterpriseRole = onCall<UpdateEnterpriseRoleRequest, Promise<UpdateEnterpriseRoleResponse>>(
   async (request) => {
@@ -32,14 +32,15 @@ export const updateEnterpriseRole = onCall<UpdateEnterpriseRoleRequest, Promise<
       }
     }
 
-    const userRecord = await getAuth().getUser(userId)
+    const tenantAuth = await authForEnterprise(enterpriseId)
+    const userRecord = await tenantAuth.getUser(userId)
     const existingClaims = userRecord.customClaims ?? {}
-    await getAuth().setCustomUserClaims(userId, {
+    await tenantAuth.setCustomUserClaims(userId, {
       ...existingClaims,
       enterprise_role: newRole,
     })
     if (oldRole === 'admin' && newRole !== 'admin') {
-      await getAuth().revokeRefreshTokens(userId)
+      await tenantAuth.revokeRefreshTokens(userId)
     }
 
     member.role = newRole

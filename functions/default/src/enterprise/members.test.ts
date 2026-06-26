@@ -21,6 +21,9 @@ vi.mock('firebase-functions/https', () => ({
 vi.mock('firebase-admin/auth', () => ({
   getAuth: () => ({
     updateUser: updateUserMock,
+    tenantManager: () => ({
+      authForTenant: () => ({ updateUser: updateUserMock }),
+    }),
   }),
 }))
 
@@ -54,6 +57,12 @@ vi.mock('../utils/auditLog.js', () => ({
 vi.mock('../utils/enterpriseAuthHelpers.js', () => ({
   assertEnterpriseAdmin: vi.fn(),
   getClientIp: vi.fn(),
+}))
+
+vi.mock('../utils/tenantAuth.js', () => ({
+  authForEnterprise: vi.fn().mockResolvedValue({
+    updateUser: updateUserMock,
+  }),
 }))
 
 vi.mock('../utils/logger.js', () => ({
