@@ -9,15 +9,25 @@ import ProfileEventCard from '@shokujii/base/components/ProfileEventCard.vue'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import FriendCard from '@shokujii/base/components/FriendCard.vue'
+import EnterpriseSubsidyUsagePanel from '@/components/profile/EnterpriseSubsidyUsagePanel.vue'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
 import { useUserOrderHistoryByUserId } from '@shokujii/base/stores/userOrderHistoryList.js'
 import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
-import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline, mdiReceiptText } from '@mdi/js'
+import {
+  mdiAccountCircle,
+  mdiAccountGroup,
+  mdiCalendarHeart,
+  mdiFood,
+  mdiHeartOutline,
+  mdiReceiptText,
+  mdiSale,
+} from '@mdi/js'
 import { getCommunityPath, getEventPath, getReceiptPath, getUserPath } from '@/router/utils'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
+import { fetchEnterpriseUsageTabEligible } from '@/composable/enterpriseMemberMonthlyUsage.js'
 import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -35,6 +45,7 @@ import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useDisplay } from 'vuetify'
 
 const TAB_PROFILE = 'profile'
+const TAB_USAGE = 'usage'
 const TAB_FRIENDS = 'friends'
 const TAB_EVENTS = 'events'
 const TAB_COMMUNITIES = 'communities'
@@ -55,6 +66,7 @@ const PROFILE_FRIENDS_PREVIEW_MAX_BY_BREAKPOINT = {
 const PROFILE_FRIENDS_PAGE_SIZE = 30
 type TabKey =
   | typeof TAB_PROFILE
+  | typeof TAB_USAGE
   | typeof TAB_FRIENDS
   | typeof TAB_EVENTS
   | typeof TAB_COMMUNITIES
@@ -95,6 +107,9 @@ const cancelLoadingEventId = ref<string | null>(null)
 const cancelDialogEventId = ref<string | null>(null)
 
 const isOwner = computed(() => loginUser.value?.user_id === profileUserId)
+/** 福利厚生上限設定あり（利用状況タブ表示可否）。未判定は null */
+const usageTabEligible = ref<boolean | null>(null)
+const showUsageTab = computed(() => isOwner.value && usageTabEligible.value === true)
 /** Firestore 上に users ドキュメントが無い、または退会済み */
 const isInvalidProfile = computed(() => exists.value === false || (user.value != null && user.value.is_deleted))
 const isProfileLoading = computed(() => profileUserId !== '' && exists.value === null)
@@ -109,6 +124,22 @@ const {
   hasMore: orderHistoryHasMore,
   initialLoaded: isOrderHistoryLoaded,
 } = storeToRefs(userOrderHistoryStore)
+
+watch(
+  () => [profileUserId, isOwner.value, exists.value, user.value?.is_deleted] as const,
+  ([pid, owner, ex, deleted]) => {
+    if (!owner || pid === '' || ex === false || deleted === true) {
+      usageTabEligible.value = false
+      return
+    }
+    if (ex === null) return
+    usageTabEligible.value = null
+    void fetchEnterpriseUsageTabEligible(pid).then((eligible) => {
+      usageTabEligible.value = eligible
+    })
+  },
+  { immediate: true },
+)
 
 watch(
   () => [profileUserId, isOwner.value, exists.value, user.value?.is_deleted] as const,
@@ -199,6 +230,8 @@ const resolveTabFromQuery = (rawTab: string): TabKey => {
     case TAB_COMMUNITIES:
     case TAB_FOODS:
       return rawTab
+    case TAB_USAGE:
+      return showUsageTab.value ? TAB_USAGE : TAB_PROFILE
     case TAB_ORDERS:
       return loginUser.value?.user_id === profileUserId ? TAB_ORDERS : TAB_PROFILE
     default:
@@ -211,11 +244,17 @@ const tabs = ref<TabKey>(resolveTabFromQuery(String(route.query.tab ?? '')))
 watch(
   () => isOwner.value,
   (owner) => {
-    if (!owner && tabs.value === TAB_ORDERS) {
+    if (!owner && (tabs.value === TAB_ORDERS || tabs.value === TAB_USAGE)) {
       tabs.value = TAB_PROFILE
     }
   },
 )
+
+watch(showUsageTab, (show) => {
+  if (!show && tabs.value === TAB_USAGE) {
+    tabs.value = TAB_PROFILE
+  }
+})
 
 const queryTabFor = (tab: TabKey): string | undefined => (tab === TAB_PROFILE ? undefined : tab)
 
@@ -232,9 +271,9 @@ const syncTabToUrl = (tab: TabKey) => {
   void router.replace({ query })
 }
 
-/** ブラウザ戻る/進む・loginUser 解決後の URL 反映（仕様 4.2.5） */
+/** ブラウザ戻る/進む・loginUser 解決後・利用状況タブ可否確定後の URL 反映 */
 watch(
-  () => [route.query.tab, loginUser.value?.user_id, profileUserId] as const,
+  () => [route.query.tab, loginUser.value?.user_id, profileUserId, usageTabEligible.value] as const,
   ([rawTab]) => {
     const resolved = resolveTabFromQuery(String(rawTab ?? ''))
     if (tabs.value !== resolved) {
@@ -560,6 +599,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
         <v-tab :value="TAB_PROFILE">
           <v-icon :icon="mdiAccountCircle" size="22" />
           <span class="profile-page-tabs__label">{{ $t('user_profile.tab_profile') }}</span>
+        </v-tab>
+        <v-tab v-if="showUsageTab" :value="TAB_USAGE">
+          <v-icon :icon="mdiSale" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_usage') }}</span>
         </v-tab>
         <v-tab :value="TAB_FRIENDS">
           <v-icon :icon="mdiHeartOutline" size="22" />
@@ -956,6 +999,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
               </v-card-text>
             </v-card>
           </template>
+        </v-window-item>
+
+        <v-window-item v-if="showUsageTab" :value="TAB_USAGE">
+          <EnterpriseSubsidyUsagePanel />
         </v-window-item>
 
         <v-window-item :value="TAB_FRIENDS">

@@ -843,6 +843,7 @@ export default {
     account_deleted: 'このユーザーは利用できません',
     user_not_found: '存在しないユーザーです',
     tab_profile: 'プロフィール',
+    tab_usage: '利用状況',
     tab_friends: 'ともだち',
     tab_events: 'イベント',
     tab_communities: 'コミュニティ',
@@ -880,6 +881,20 @@ export default {
     },
     failed_to_load: 'プロフィール情報の取得に失敗しました。',
     food_event_link_label: 'イベントを開く',
+    usage: {
+      title: '福利厚生割引の利用状況',
+      current_used: '今月の利用額',
+      current_limit: '月額上限',
+      current_remaining: '残り予算',
+      order_menu_count: '注文メニュー数',
+      event_month_note:
+        '利用額はイベント開催月ごとに集計されます。来月開催のイベントを今月注文した場合、来月分に計上されます。',
+      history_title: '過去の利用履歴',
+      history_empty: '利用履歴はありません',
+      history_year_month: '年月',
+      history_used: '利用額',
+      load_failed: '利用状況の読み込みに失敗しました',
+    },
   },
   auth: {
     action: {
