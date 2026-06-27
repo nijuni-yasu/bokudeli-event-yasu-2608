@@ -69,6 +69,8 @@ export const {
   onChatMessageCreated,
   onEventArchived,
   recallChatMessage,
+  getDashboardMonthlyData,
+  getDashboardMemberData,
   firestoreExportDaily, firestoreExportWeekly, firestoreExportMonthly,
   storageBackupDaily, storageBackupWeekly, storageBackupMonthly,
   backupRetentionCleanup,
@@ -118,5 +120,6 @@ export const {
   import('./onChatMessageCreated.js'),
   import('./onEventArchived.js'),
   import('./recallChatMessage.js'),
+  import('./enterprise/dashboard.js'),
   import('./backup/scheduled.js'),
 ])))
