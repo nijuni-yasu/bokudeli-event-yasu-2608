@@ -146,7 +146,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | - [ ] | D-4 | 課金スナップショット Scheduled Function（毎月 1 日） | 10_仕様/03_課金 | 必須 | — |
 | - [ ] | D-5 | マイページ・友人の認可レイヤ（enterprise_id フィルタ） | 10_仕様/04_マイページ | 必須 | — |
 
-**メモ**: D-3 の **writeAuditLog（書き込み）** は v0.1 実装済。`/admin/audit-logs`・`getEnterpriseAuditLogs` は未。**D-2** は MVP では `enterprise_id` ＋ **`is_public`** による一覧・集計で実装可。`publish_scope` クエリへの切替は Phase 2（G-6）後。
+**メモ**: D-3 の **writeAuditLog（書き込み）** は v0.1 実装済。`/admin/audit-logs`・`getEnterpriseAuditLogs` は未。**D-2** は MVP では `enterprise_id` ＋ **`is_public`** による一覧・集計で実装可。`publish_scope` クエリへの切替は Phase 2（G-6）後。正本: [`04_詳細_ダッシュボード.md`](../10_仕様/04_詳細_ダッシュボード.md)（#2126）。E-4 利用状況タブ（#2125）と役割分担 — §1.3。
 
 ### WS-E: 機能拡張・仕様変更（v0.3 MVP 前倒し）
 
