@@ -2,7 +2,7 @@
 import { mdiPartyPopper } from '@mdi/js'
 import { getAuth } from 'firebase/auth'
 import { hasManagedCommunityInEnterprise } from '@shokujii/base/stores/community.js'
-import { getAdminSettingsPath, getHomePath, getManageNewCommunityPath, getManagePath } from '@/router/utils'
+import { getAdminDashboardPath, getHomePath, getManageNewCommunityPath, getManagePath } from '@/router/utils'
 import { isEnterpriseAdmin } from '@/composable/useEnterpriseAdmin'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
@@ -40,7 +40,7 @@ const handleEventHostClick = async () => {
     <v-btn class="event-host-cta me-4" :append-icon="mdiPartyPopper" @click="handleEventHostClick">
       {{ $t('navigation.new_event') }}
     </v-btn>
-    <v-btn v-if="showAdminButton" class="me-4" :to="getAdminSettingsPath()">
+    <v-btn v-if="showAdminButton" class="me-4" :to="getAdminDashboardPath()">
       {{ $t('admin.navigation.portal') }}
     </v-btn>
   </template>
@@ -49,7 +49,7 @@ const handleEventHostClick = async () => {
     <v-btn class="me-4" :to="getHomePath()">
       {{ $t('navigation.home') }}
     </v-btn>
-    <v-btn v-if="showAdminButton" class="me-4" :to="getAdminSettingsPath()">
+    <v-btn v-if="showAdminButton" class="me-4" :to="getAdminDashboardPath()">
       {{ $t('admin.navigation.portal') }}
     </v-btn>
   </template>

@@ -38,6 +38,7 @@ export const getProfile = (isNewUser: boolean = false) => ({ path: '/profile', s
 export const getPassCode = (email: string) => ({ path: '/pass-code', state: { email } })
 export const getRegisterComplete = (isNewUser: boolean) => ({ path: '/register/complete', state: { isNewUser } })
 
+export const getAdminDashboardPath = () => '/admin'
 export const getAdminSettingsPath = () => '/admin/settings'
 export const getAdminMembersPath = () => '/admin/members'
 export const getAdminMembersImportPath = () => '/admin/members/import'

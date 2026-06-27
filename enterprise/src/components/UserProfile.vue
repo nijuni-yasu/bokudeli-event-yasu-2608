@@ -15,7 +15,7 @@ import {
 } from '@mdi/js'
 import { useRoute } from 'vue-router'
 import { useNotification } from '@shokujii/base/composable/notification'
-import { getLogin, getProfile, getUserPath, getAdminSettingsPath } from '@/router/utils'
+import { getLogin, getProfile, getUserPath, getAdminDashboardPath } from '@/router/utils'
 import { performEnterpriseLogout } from '@/utils/enterpriseLogout'
 import { isEnterpriseAdmin } from '@/composable/useEnterpriseAdmin'
 
@@ -113,7 +113,7 @@ const logout = async () => {
 
         <v-divider class="my-2" />
 
-        <v-list-item v-if="showAdminLink" :to="getAdminSettingsPath()">
+        <v-list-item v-if="showAdminLink" :to="getAdminDashboardPath()">
           <template #prepend>
             <v-icon class="me-2" :icon="mdiShieldAccount" size="22" />
           </template>
