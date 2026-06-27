@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
-export const ClientErrorAppSchema = z.enum(['user', 'partner'])
+export const ClientErrorAppSchema = z.enum(['user', 'partner', 'enterprise'])
+
+export type ClientErrorApp = z.infer<typeof ClientErrorAppSchema>
 
 export const ZodIssueSchema = z.object({
   path: z.array(z.union([z.string(), z.number()])),

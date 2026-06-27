@@ -1,20 +1,20 @@
 import { getAuth } from 'firebase/auth'
 import { ZodError } from 'zod'
-import type { ClientErrorReportRequest } from '@shokujii/common/apis/clientError.js'
+import type { ClientErrorApp, ClientErrorReportRequest } from '@shokujii/common/apis/clientError.js'
 import { reportClientErrorCallable } from '@shokujii/base/apis/clientError.js'
 
 export type ClientErrorContext = {
-  app?: 'user' | 'partner'
+  app?: ClientErrorApp
   route?: string
   componentInfo?: string
   documentPath?: string
   severity?: 'error' | 'warn'
 }
 
-let defaultApp: 'user' | 'partner' = 'user'
+let defaultApp: ClientErrorApp = 'user'
 
-/** user / partner 起動時に呼び出し、store 経由の reportClientError に app を反映する */
-export function configureClientErrorReporting(options: { app: 'user' | 'partner' }): void {
+/** 各アプリ起動時に呼び出し、store 経由の reportClientError に app を反映する */
+export function configureClientErrorReporting(options: { app: ClientErrorApp }): void {
   defaultApp = options.app
 }
 
