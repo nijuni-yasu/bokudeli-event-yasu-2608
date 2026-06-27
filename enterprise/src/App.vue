@@ -11,7 +11,8 @@ import { useEnterpriseStore } from '@/stores/enterprise'
 import { darken } from '@/utils/color'
 import EnterpriseErrorPage from '@/components/EnterpriseErrorPage.vue'
 
-const { global } = useTheme()
+const theme = useTheme()
+const { global } = theme
 
 initCore()
 initConfigStore()
@@ -21,7 +22,6 @@ const enterpriseStore = useEnterpriseStore()
 const { status, enterprise } = storeToRefs(enterpriseStore)
 
 function applyEnterpriseTheme(themeColor: string) {
-  const theme = useTheme()
   for (const name of ['light', 'dark'] as const) {
     theme.themes.value[name].colors.primary = themeColor
     theme.themes.value[name].colors['primary-darken-1'] = darken(themeColor, 0.2)
