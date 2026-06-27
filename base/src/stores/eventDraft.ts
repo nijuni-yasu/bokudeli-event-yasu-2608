@@ -30,6 +30,10 @@ export const prepareEnterpriseEventDraft: EventDraftPreparer = async (event, com
     event.event_payment = 'enterprise_subsidy'
     event.community_bill_settings = undefined
   }
+  if (event.event_payment !== 'enterprise_subsidy') {
+    event.enterprise_subsidy_settings = undefined
+    return
+  }
   if (event.enterprise_subsidy_settings == null) {
     const enterpriseRef = doc(db, 'enterprises', enterpriseId)
     const enterpriseSnap = await getDoc(enterpriseRef)
