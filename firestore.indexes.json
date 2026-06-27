@@ -1267,16 +1267,6 @@
       ]
     },
     {
-      "collectionGroup": "stripes",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "enterprise_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "pass_code",
       "queryScope": "COLLECTION",
       "fields": [
