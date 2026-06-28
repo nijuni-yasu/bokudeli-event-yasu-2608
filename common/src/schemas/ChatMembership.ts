@@ -1,12 +1,14 @@
 import { z } from 'zod'
 import { CHAT_ROOM_TYPES, CHAT_LAST_MESSAGE_PREVIEW_MAX_LENGTH, type ChatRoomType } from './ChatRoom.js'
-import { EpochMillisSchema, TimestampSchema } from './firebase/index.js'
+import { EpochMillisSchema, NonEmptyStringSchema, TimestampSchema } from './firebase/index.js'
 
 export const CHAT_UNREAD_COUNT_MAX = 99
 
 const ChatMembershipDbSchema = z.object({
   room_id: z.string().nonempty(),
   room_type: z.enum(CHAT_ROOM_TYPES),
+  community_id: NonEmptyStringSchema.optional(),
+  event_id: NonEmptyStringSchema.optional(),
   is_active: z.boolean().default(true),
   unread_count: z.number().int().min(0).max(CHAT_UNREAD_COUNT_MAX).default(0),
   last_read_at: TimestampSchema.optional(),
@@ -19,6 +21,8 @@ const ChatMembershipDbSchema = z.object({
 const ChatMembershipAppSchema = z.object({
   room_id: z.string().nonempty(),
   room_type: z.enum(CHAT_ROOM_TYPES),
+  community_id: z.string().optional(),
+  event_id: z.string().optional(),
   is_active: z.boolean().default(true),
   unread_count: z.number().int().min(0).max(CHAT_UNREAD_COUNT_MAX).default(0),
   last_read_at: EpochMillisSchema.optional(),
@@ -41,6 +45,8 @@ export class ChatMembership {
   readonly id: string
   room_id!: string
   room_type!: ChatRoomType
+  community_id?: string
+  event_id?: string
   is_active: boolean = true
   unread_count: number = 0
   last_read_at?: number
