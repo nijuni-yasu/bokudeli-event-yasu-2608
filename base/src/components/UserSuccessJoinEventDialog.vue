@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { mdiCloseCircle, mdiSend, mdiCalendar, mdiMessageTextOutline } from '@mdi/js'
-import { buildEventChatRoomId } from '@shokujii/common/schemas/ChatRoom.js'
-import type { NavigateToChatFn } from '@shokujii/base/types/profilePathResolvers.js'
+import type { NavigateToEventChatFn } from '@shokujii/base/types/profilePathResolvers.js'
 import { type BokudeliEvent } from '@shokujii/base/stores/event.js'
 import { useEventStore } from '@shokujii/base/stores/event'
 import { useCommunityStore } from '@shokujii/base/stores/community'
@@ -20,8 +19,8 @@ const props = defineProps<{
   sessionId?: string
   /** 自分の注文を抽出するためのユーザー ID。未指定の場合は処理中判定を行わない */
   userId?: string
-  /** チャットルームへ遷移するコールバック（membership 待機を含む）。user 側から注入する */
-  navigateToChat?: NavigateToChatFn
+  /** イベントチャットへ遷移するコールバック（membership 待機を含む）。user 側から注入する */
+  navigateToEventChat?: NavigateToEventChatFn
 }>()
 
 const model = defineModel<boolean>()
@@ -32,10 +31,10 @@ const isPosted = props.isPosted
 
 const event = computed(() => eventStore.event)
 
-const chatRoomId = computed(() => {
+const eventChatTarget = computed((): { communityId: string; eventId: string } | null => {
   const currentEvent = event.value
   if (currentEvent == null) return null
-  return buildEventChatRoomId(currentEvent.community_id, currentEvent.id)
+  return { communityId: currentEvent.community_id, eventId: currentEvent.id }
 })
 
 const canOpenChat = computed(() => {
@@ -53,14 +52,14 @@ const showShareLink = computed(() => {
 const isNavigatingToChat = ref(false)
 
 const onOpenChatClick = async () => {
-  const roomId = chatRoomId.value
-  if (roomId == null || !canOpenChat.value || props.navigateToChat == null) {
+  const target = eventChatTarget.value
+  if (target == null || !canOpenChat.value || props.navigateToEventChat == null) {
     return
   }
 
   isNavigatingToChat.value = true
   try {
-    await props.navigateToChat(roomId)
+    await props.navigateToEventChat(target)
     if (model.value) {
       model.value = false
     }
@@ -234,7 +233,7 @@ watch(
                 rounded="pill"
                 elevation="2"
                 :loading="isNavigatingToChat"
-                :disabled="isNavigatingToChat || navigateToChat == null"
+                :disabled="isNavigatingToChat || navigateToEventChat == null"
                 @click="onOpenChatClick"
               >
                 {{ $t('chat.open_chat') }}

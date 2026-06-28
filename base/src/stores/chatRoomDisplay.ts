@@ -1,5 +1,4 @@
 import { onSnapshot, type Unsubscribe } from 'firebase/firestore'
-import { parseEventChatRoomId } from '@shokujii/common/schemas/ChatRoom.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { getEventInCommunityRef } from './event.js'
@@ -99,10 +98,6 @@ export const subscribeEventRoomDisplay = (
       cache.delete(key)
     }
   }
-}
-
-export const resolveEventIdsFromRoomId = (roomId: string): { communityId: string; eventId: string } | null => {
-  return parseEventChatRoomId(roomId)
 }
 
 export const unsubscribeAllEventRoomDisplays = (): void => {

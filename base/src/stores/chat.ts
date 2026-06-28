@@ -13,6 +13,7 @@ import {
   setDoc,
   startAfter,
   updateDoc,
+  where,
   type DocumentData,
   type DocumentSnapshot,
   type FirestoreDataConverter,
@@ -46,12 +47,7 @@ export type ChatSendMessageErrorCode = (typeof CHAT_SEND_MESSAGE_ERROR)[keyof ty
 import { db, storage } from '@shokujii/base/firebase.js'
 import { isAllowedChatAttachmentMimeType, uploadChatAttachment } from '../utils/storage.js'
 import type { ChatActiveRoom, ChatMessageItem, ChatRoomListItem } from '../components/chat/types.js'
-import {
-  resolveEventIdsFromRoomId,
-  subscribeEventRoomDisplay,
-  unsubscribeAllEventRoomDisplays,
-  type RoomDisplayMeta,
-} from './chatRoomDisplay.js'
+import { subscribeEventRoomDisplay, unsubscribeAllEventRoomDisplays, type RoomDisplayMeta } from './chatRoomDisplay.js'
 
 const MESSAGES_PAGE_SIZE = 50
 
@@ -163,6 +159,49 @@ export const waitForMembership = (userId: string, roomId: string, timeoutMs = 10
     timeoutId = setTimeout(() => {
       cleanup()
       resolve(false)
+    }, timeoutMs)
+  })
+}
+
+export const waitForEventChatMembership = (
+  userId: string,
+  communityId: string,
+  eventId: string,
+  timeoutMs = 10_000,
+): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const membershipsQuery = query(
+      collection(db, 'users', userId, 'chat_memberships').withConverter(chatMembershipConverter),
+      where('room_type', '==', 'event'),
+      where('community_id', '==', communityId),
+      where('event_id', '==', eventId),
+      limit(1),
+    )
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let unsubscribe: Unsubscribe | null = null
+
+    const cleanup = (): void => {
+      if (timeoutId != null) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      if (unsubscribe != null) {
+        unsubscribe()
+        unsubscribe = null
+      }
+    }
+
+    unsubscribe = onSnapshot(membershipsQuery, (snapshot) => {
+      const docSnapshot = snapshot.docs[0]
+      if (docSnapshot != null) {
+        cleanup()
+        resolve(docSnapshot.data().room_id)
+      }
+    })
+
+    timeoutId = setTimeout(() => {
+      cleanup()
+      resolve(null)
     }, timeoutMs)
   })
 }
@@ -282,10 +321,11 @@ export const useChatStore = defineStore('chat', () => {
       lastMessagePreview: membership.last_message_preview,
     }
 
-    if (membership.room_type === 'event') {
-      const parsed = resolveEventIdsFromRoomId(membership.room_id)
-      if (parsed != null) {
-        return { ...base, communityId: parsed.communityId, eventId: parsed.eventId }
+    if (membership.room_type === 'event' && membership.community_id != null && membership.event_id != null) {
+      return {
+        ...base,
+        communityId: membership.community_id,
+        eventId: membership.event_id,
       }
     }
 
@@ -373,9 +413,8 @@ export const useChatStore = defineStore('chat', () => {
         return
       }
       const room = snapshot.data()
-      const parsed = room.room_type === 'event' ? resolveEventIdsFromRoomId(room.id) : null
-      const communityId = parsed?.communityId ?? room.community_id
-      const eventId = parsed?.eventId ?? room.event_id
+      const communityId = room.community_id
+      const eventId = room.event_id
 
       activeRoom.value = {
         roomId: room.id,
@@ -389,8 +428,8 @@ export const useChatStore = defineStore('chat', () => {
         eventId,
       }
 
-      if (parsed != null) {
-        subscribeActiveRoomDisplay(room.id, parsed.communityId, parsed.eventId)
+      if (room.room_type === 'event' && communityId != null && eventId != null) {
+        subscribeActiveRoomDisplay(room.id, communityId, eventId)
       }
     })
   }
