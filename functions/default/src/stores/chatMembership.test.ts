@@ -10,10 +10,14 @@ import {
 describe('chatMembership store', () => {
   it('createEventChatMembership does not require title', () => {
     const membership = createEventChatMembership({
-      roomId: 'event_comm_evt',
+      roomId: 'kR3mX9pL2nQ8',
+      communityId: 'comm',
+      eventId: 'evt',
       isActive: true,
     })
     expect(membership.room_type).toBe('event')
+    expect(membership.community_id).toBe('comm')
+    expect(membership.event_id).toBe('evt')
     expect(membership.is_active).toBe(true)
     expect('title' in membership).toBe(false)
     expect(membership.toFirestore()).not.toHaveProperty('title')
@@ -21,7 +25,9 @@ describe('chatMembership store', () => {
 
   it('createEventChatMembership inherits last message preview from existing room', () => {
     const membership = createEventChatMembership({
-      roomId: 'event_comm_evt',
+      roomId: 'kR3mX9pL2nQ8',
+      communityId: 'comm',
+      eventId: 'evt',
       isActive: true,
       lastMessageAt: 5000,
       lastMessagePreview: 'hello world',
@@ -33,7 +39,9 @@ describe('chatMembership store', () => {
   it('createEventChatMembership defaults last_message_at to now when omitted', () => {
     const before = Date.now()
     const membership = createEventChatMembership({
-      roomId: 'event_comm_evt',
+      roomId: 'kR3mX9pL2nQ8',
+      communityId: 'comm',
+      eventId: 'evt',
       isActive: false,
     })
     const after = Date.now()

@@ -1,6 +1,6 @@
 import { getFirestore } from 'firebase-admin/firestore'
 import { createModuleLogger } from './utils/logger.js'
-import { buildEventRoomId, getChatRoom, saveChatRoom, setChatRoomInactive } from './stores/chatRoom.js'
+import { findEventChatRoom, getChatRoom, saveChatRoom, setChatRoomInactive } from './stores/chatRoom.js'
 import { getChatMembership, getChatMembershipRef, setMembershipInactive } from './stores/chatMembership.js'
 
 const logger = createModuleLogger('archiveChatRoom')
@@ -46,6 +46,9 @@ export async function archiveChatRoom(roomId: string): Promise<void> {
 }
 
 export async function archiveEventChatRoom(communityId: string, eventId: string): Promise<void> {
-  const roomId = buildEventRoomId(communityId, eventId)
-  await archiveChatRoom(roomId)
+  const room = await findEventChatRoom(communityId, eventId)
+  if (room == null) {
+    return
+  }
+  await archiveChatRoom(room.id)
 }

@@ -5,7 +5,7 @@ import {
   QueryDocumentSnapshot,
   Transaction,
 } from 'firebase-admin/firestore'
-import { buildEventChatRoomId, ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
+import { ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
 
 class ChatRoomConverter implements FirestoreDataConverter<ChatRoom> {
   toFirestore(room: ChatRoom): DocumentData {
@@ -18,6 +18,14 @@ class ChatRoomConverter implements FirestoreDataConverter<ChatRoom> {
 
 const chatRoomsCollection = () => getFirestore().collection('chat_rooms')
 
+const eventChatRoomQuery = (communityId: string, eventId: string) => {
+  return chatRoomsCollection()
+    .where('room_type', '==', 'event')
+    .where('community_id', '==', communityId)
+    .where('event_id', '==', eventId)
+    .limit(1)
+}
+
 export const getChatRoomRef = (roomId: string) => {
   return chatRoomsCollection().doc(roomId).withConverter(new ChatRoomConverter())
 }
@@ -26,6 +34,21 @@ export const getChatRoom = async (roomId: string, transaction?: Transaction): Pr
   const ref = getChatRoomRef(roomId)
   const snapshot = await (transaction === undefined ? ref.get() : transaction.get(ref))
   return snapshot.exists ? snapshot.data() : undefined
+}
+
+export const findEventChatRoom = async (
+  communityId: string,
+  eventId: string,
+  transaction?: Transaction,
+): Promise<ChatRoom | undefined> => {
+  const query = eventChatRoomQuery(communityId, eventId).withConverter(new ChatRoomConverter())
+  const snapshot = await (transaction === undefined ? query.get() : transaction.get(query))
+  const doc = snapshot.docs[0]
+  return doc?.data()
+}
+
+export const generateChatRoomId = (): string => {
+  return chatRoomsCollection().doc().id
 }
 
 export const saveChatRoom = async (room: ChatRoom, transaction?: Transaction): Promise<void> => {
@@ -37,17 +60,14 @@ export const saveChatRoom = async (room: ChatRoom, transaction?: Transaction): P
   }
 }
 
-export const buildEventRoomId = (communityId: string, eventId: string): string => {
-  return buildEventChatRoomId(communityId, eventId)
-}
-
 export const createEventChatRoom = (params: {
   communityId: string
   eventId: string
   title: string
   memberUserIds: string[]
+  roomId?: string
 }): ChatRoom => {
-  const roomId = buildEventRoomId(params.communityId, params.eventId)
+  const roomId = params.roomId ?? generateChatRoomId()
   return new ChatRoom(roomId, {
     room_type: 'event',
     community_id: params.communityId,

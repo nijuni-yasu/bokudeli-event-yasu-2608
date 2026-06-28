@@ -62,6 +62,8 @@ export const deleteChatMembership = async (
 
 export const createEventChatMembership = (params: {
   roomId: string
+  communityId: string
+  eventId: string
   isActive: boolean
   lastMessageAt?: number
   lastMessagePreview?: string
@@ -71,6 +73,8 @@ export const createEventChatMembership = (params: {
   return new ChatMembership(params.roomId, {
     room_id: params.roomId,
     room_type: 'event',
+    community_id: params.communityId,
+    event_id: params.eventId,
     is_active: params.isActive,
     unread_count: 0,
     last_message_at: lastMessageAt,

@@ -23,13 +23,13 @@ vi.mock('./stores/user.js', () => ({
 }))
 
 vi.mock('./stores/chatRoom.js', () => ({
-  buildEventRoomId: vi.fn(() => 'event_comm1_evt1'),
-  createEventChatRoom: vi.fn((params: { memberUserIds: string[] }) => ({
-    id: 'event_comm1_evt1',
+  findEventChatRoom: vi.fn().mockResolvedValue(undefined),
+  generateChatRoomId: vi.fn(() => 'kR3mX9pL2nQ8'),
+  createEventChatRoom: vi.fn((params: { memberUserIds: string[]; roomId?: string }) => ({
+    id: params.roomId ?? 'kR3mX9pL2nQ8',
     member_user_ids: params.memberUserIds,
     is_active: true,
   })),
-  getChatRoom: vi.fn().mockResolvedValue(undefined),
   saveChatRoom: vi.fn(),
   updateChatRoomMembers: vi.fn(),
 }))
@@ -40,7 +40,7 @@ vi.mock('./stores/chatMessage.js', () => ({
 }))
 
 vi.mock('./stores/chatMembership.js', () => ({
-  createEventChatMembership: vi.fn(() => ({ room_id: 'event_comm1_evt1' })),
+  createEventChatMembership: vi.fn(() => ({ room_id: 'kR3mX9pL2nQ8' })),
   getChatMembership: vi.fn().mockResolvedValue(undefined),
   deleteChatMembership: vi.fn(),
   saveChatMembership: vi.fn(),
