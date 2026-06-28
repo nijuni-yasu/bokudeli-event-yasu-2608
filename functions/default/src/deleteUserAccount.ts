@@ -12,7 +12,7 @@ import { listFriendUserIds } from './stores/userFriend.js'
 import { anonymizeUser, anonymizeUserPersonalInformation, getUserPersonalInformation } from './stores/user.js'
 import { recountUserProfileCountsForUsers } from './utils/recountUserProfileCounts.js'
 import { listChatMembershipsForUser, getChatMembershipRef } from './stores/chatMembership.js'
-import { getChatRoom, getChatRoomRef } from './stores/chatRoom.js'
+import { getChatRoomRef } from './stores/chatRoom.js'
 
 const db = getFirestore()
 const logger = createModuleLogger('deleteUserAccount')
@@ -27,15 +27,20 @@ const cleanupUserChatData = async (uid: string): Promise<void> => {
   const roomIds = [...new Set(memberships.map((membership) => membership.room_id))]
 
   for (let i = 0; i < roomIds.length; i += FIRESTORE_BATCH_LIMIT) {
-    const batch = db.batch()
     const chunk = roomIds.slice(i, i + FIRESTORE_BATCH_LIMIT)
+    // room を並列取得して逐次 read を避ける
+    const roomRefs = chunk.map((roomId) => getChatRoomRef(roomId))
+    const snapshots = await Promise.all(roomRefs.map((ref) => ref.get()))
+    const batch = db.batch()
     let writeCount = 0
-    for (const roomId of chunk) {
-      const room = await getChatRoom(roomId)
+    for (let j = 0; j < chunk.length; j++) {
+      const snapshot = snapshots[j]
+      const room = snapshot.exists ? snapshot.data() : undefined
       if (room == null || !room.member_user_ids.includes(uid)) {
         continue
       }
-      batch.update(getChatRoomRef(roomId), {
+      // converter を通さない raw ref で FieldValue 系 partial update を行う
+      batch.update(db.collection('chat_rooms').doc(chunk[j]), {
         member_user_ids: FieldValue.arrayRemove(uid),
         updated_at: FieldValue.serverTimestamp(),
       })
@@ -125,7 +130,12 @@ export const deleteUserAccount = onCall<unknown, Promise<{ success: true }>>(asy
       logger.error('recountUserProfileCountsForUsers failed after deleteUserAccount', { userId: uid, error })
     }
 
-    await cleanupUserChatData(uid)
+    // チャットデータ cleanup の一時エラーでアカウント削除全体が失敗しないよう隔離する
+    try {
+      await cleanupUserChatData(uid)
+    } catch (error) {
+      logger.error('cleanupUserChatData failed after deleteUserAccount', { userId: uid, error })
+    }
 
     // Firebase Auth のアカウントを削除（auth/user-not-found は既に削除済みのため成功扱い）
     try {

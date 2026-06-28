@@ -1,7 +1,7 @@
 import { getFirestore } from 'firebase-admin/firestore'
 import { createModuleLogger } from './utils/logger.js'
 import { findEventChatRoom, getChatRoom, saveChatRoom, setChatRoomInactive } from './stores/chatRoom.js'
-import { getChatMembership, getChatMembershipRef, setMembershipInactive } from './stores/chatMembership.js'
+import { getChatMembershipRef, setMembershipInactive } from './stores/chatMembership.js'
 
 const logger = createModuleLogger('archiveChatRoom')
 
@@ -24,16 +24,18 @@ export async function archiveChatRoom(roomId: string): Promise<void> {
   const db = getFirestore()
   for (let i = 0; i < memberUserIds.length; i += MEMBERSHIP_BATCH_SIZE) {
     const chunk = memberUserIds.slice(i, i + MEMBERSHIP_BATCH_SIZE)
+    // membership を並列取得して逐次 read を避ける
+    const membershipRefs = chunk.map((userId) => getChatMembershipRef(userId, roomId))
+    const snapshots = await Promise.all(membershipRefs.map((ref) => ref.get()))
     const batch = db.batch()
     let writeCount = 0
 
-    for (const userId of chunk) {
-      const membership = await getChatMembership(userId, roomId)
+    for (let j = 0; j < chunk.length; j++) {
+      const membership = snapshots[j].exists ? snapshots[j].data() : undefined
       if (membership == null || !membership.is_active) {
         continue
       }
-      const ref = getChatMembershipRef(userId, roomId)
-      batch.set(ref, setMembershipInactive(membership), { merge: true })
+      batch.set(membershipRefs[j], setMembershipInactive(membership), { merge: true })
       writeCount++
     }
 

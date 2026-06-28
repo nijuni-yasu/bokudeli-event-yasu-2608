@@ -26,9 +26,19 @@ export async function applyOrderCanceledSideEffects(params: { event: ShokujiiEve
         memberCount: result.memberCount,
       })
     }
-    await syncEventChatMember({ event, userId })
   } catch (error) {
     logger.error('recalcEventMembers failed after cancel', {
+      error,
+      communityId,
+      eventId,
+      userId,
+    })
+  }
+
+  try {
+    await syncEventChatMember({ event, userId })
+  } catch (error) {
+    logger.error('syncEventChatMember failed after cancel', {
       error,
       communityId,
       eventId,

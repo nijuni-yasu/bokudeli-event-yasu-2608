@@ -9,7 +9,7 @@ import {
 import { getChatAttachmentMessagePrefix } from '@shokujii/common/utils/storagePaths.js'
 import { createModuleLogger } from './utils/logger.js'
 import { getChatRoom, saveChatRoom, updateChatRoomLastMessage } from './stores/chatRoom.js'
-import { getChatMembership, getChatMembershipRef, updateMembershipLastMessage } from './stores/chatMembership.js'
+import { getChatMembershipRef, updateMembershipLastMessage } from './stores/chatMembership.js'
 import {
   getChatMessage,
   listRecentChatMessages,
@@ -62,11 +62,14 @@ export const recalculateRoomLastMessage = async (roomId: string): Promise<void> 
   const db = getFirestore()
   for (let i = 0; i < room.member_user_ids.length; i += MEMBERSHIP_BATCH_SIZE) {
     const chunk = room.member_user_ids.slice(i, i + MEMBERSHIP_BATCH_SIZE)
+    // membership を並列取得して逐次 read を避ける
+    const membershipRefs = chunk.map((userId) => getChatMembershipRef(userId, roomId))
+    const snapshots = await Promise.all(membershipRefs.map((ref) => ref.get()))
     const batch = db.batch()
     let writeCount = 0
 
-    for (const memberUserId of chunk) {
-      const membership = await getChatMembership(memberUserId, roomId)
+    for (let j = 0; j < chunk.length; j++) {
+      const membership = snapshots[j].exists ? snapshots[j].data() : undefined
       if (membership == null) {
         continue
       }
@@ -75,8 +78,7 @@ export const recalculateRoomLastMessage = async (roomId: string): Promise<void> 
       if (updated == null) {
         continue
       }
-      const ref = getChatMembershipRef(memberUserId, roomId)
-      batch.set(ref, updated, { merge: true })
+      batch.set(membershipRefs[j], updated, { merge: true })
       writeCount++
     }
 

@@ -95,13 +95,20 @@ service cloud.firestore {
         // 添付の深い検証（MIME / byte_size / 寸法）は Web SDK setDoc と相性が悪いため Firestore では
         // storage_path の prefix のみ検証する。list.map は permission-denied になるため添字参照を使う。
         // MIME・サイズ・寸法は Storage Rules + クライアント（Zod）で担保する。
+        // roomId/messageId を正規表現に直接埋め込むと regex injection になるため、
+        // string slice 比較で prefix を検証する。
         function chatAttachmentStoragePathPrefix(roomId, messageId) {
             return 'chat_rooms/' + roomId + '/' + messageId + '/';
         }
         function isValidChatAttachmentAt(prefix, index) {
             let attachment = request.resource.data.attachments[index];
-            return attachment.storage_path is string
-                && attachment.storage_path.matches('^' + prefix + '[^/]+$');
+            let path = attachment.storage_path;
+            let pSize = prefix.size();
+            // prefix が一致し、かつ残りのファイル名部分が 1 文字以上でスラッシュを含まないことを確認
+            return path is string
+                && path.size() > pSize
+                && path[0:pSize] == prefix
+                && path[pSize:path.size()].matches('[^/]+');
         }
         function isValidChatAttachmentPath(roomId, messageId) {
             let prefix = chatAttachmentStoragePathPrefix(roomId, messageId);
