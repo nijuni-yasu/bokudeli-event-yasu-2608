@@ -17,7 +17,7 @@ import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePre
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
 import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline, mdiReceiptText } from '@mdi/js'
 import { getChatPath, getCommunityPath, getEventPath, getReceiptPath, getUserPath } from '@/router/utils'
-import { waitForMembership } from '@shokujii/base/stores/chat.js'
+import { waitForEventChatMembership } from '@shokujii/base/stores/chat.js'
 import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -382,12 +382,12 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const navigateToChatFromOrder = async (roomId: string): Promise<void> => {
+const navigateToEventChatFromOrder = async (params: { communityId: string; eventId: string }): Promise<void> => {
   if (profileUserId === '') {
     return
   }
-  const found = await waitForMembership(profileUserId, roomId)
-  if (!found) {
+  const roomId = await waitForEventChatMembership(profileUserId, params.communityId, params.eventId)
+  if (roomId == null) {
     notification.show($t('chat.error.preparing'), 'warning')
     return
   }
@@ -1455,7 +1455,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
     :is-posted="($route.query.isPosted === 'true')"
     :session-id="(($route.query.session_id ?? '') as string)"
     :user-id="profileUserId"
-    :navigate-to-chat="navigateToChatFromOrder"
+    :navigate-to-event-chat="navigateToEventChatFromOrder"
   />
 </template>
 
