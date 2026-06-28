@@ -44,60 +44,58 @@ const joinEventChatMember = async (event: ShokujiiEvent, userId: string): Promis
   const { community_id: communityId, id: eventId } = event
   const title = event.event_name
 
-  const { addedUserIds, roomId } = await getFirestore().runTransaction<JoinTransactionResult>(
-    async (transaction) => {
-      const existingRoom = await findEventChatRoom(communityId, eventId, transaction)
-      const roomIdForMembership = existingRoom?.id ?? generateChatRoomId()
-      const existingMembership = await getChatMembership(userId, roomIdForMembership, transaction)
-      const previousMemberIds = existingRoom?.member_user_ids ?? []
+  const { addedUserIds, roomId } = await getFirestore().runTransaction<JoinTransactionResult>(async (transaction) => {
+    const existingRoom = await findEventChatRoom(communityId, eventId, transaction)
+    const roomIdForMembership = existingRoom?.id ?? generateChatRoomId()
+    const existingMembership = await getChatMembership(userId, roomIdForMembership, transaction)
+    const previousMemberIds = existingRoom?.member_user_ids ?? []
 
-      let room = existingRoom
-      if (room == null) {
-        room = createEventChatRoom({
-          communityId,
-          eventId,
-          title,
-          memberUserIds: [userId],
-          roomId: roomIdForMembership,
-        })
-        await saveChatRoom(room, transaction)
-      } else if (!previousMemberIds.includes(userId)) {
-        room = updateChatRoomMembers(room, [...previousMemberIds, userId].sort())
-        await saveChatRoom(room, transaction)
-      }
+    let room = existingRoom
+    if (room == null) {
+      room = createEventChatRoom({
+        communityId,
+        eventId,
+        title,
+        memberUserIds: [userId],
+        roomId: roomIdForMembership,
+      })
+      await saveChatRoom(room, transaction)
+    } else if (!previousMemberIds.includes(userId)) {
+      room = updateChatRoomMembers(room, [...previousMemberIds, userId].sort())
+      await saveChatRoom(room, transaction)
+    }
 
-      if (existingMembership == null) {
-        const membershipData = createEventChatMembership({
-          roomId: room.id,
-          communityId,
-          eventId,
-          isActive: room.is_active,
-          ...(existingRoom != null && existingRoom.last_message_at != null
-            ? {
-                lastMessageAt: existingRoom.last_message_at,
-                lastMessagePreview: existingRoom.last_message_preview,
-              }
-            : {}),
-        })
-        await saveChatMembership(userId, membershipData, transaction)
-      } else {
-        await saveChatMembership(
-          userId,
-          syncMembershipFromRoom(existingMembership, {
-            isActive: room.is_active,
-            roomType: 'event',
-          }),
-          transaction,
-        )
-      }
-
-      const currentMemberIds = room.member_user_ids
-      return {
-        addedUserIds: currentMemberIds.filter((id) => !previousMemberIds.includes(id)),
+    if (existingMembership == null) {
+      const membershipData = createEventChatMembership({
         roomId: room.id,
-      }
-    },
-  )
+        communityId,
+        eventId,
+        isActive: room.is_active,
+        ...(existingRoom != null && existingRoom.last_message_at != null
+          ? {
+              lastMessageAt: existingRoom.last_message_at,
+              lastMessagePreview: existingRoom.last_message_preview,
+            }
+          : {}),
+      })
+      await saveChatMembership(userId, membershipData, transaction)
+    } else {
+      await saveChatMembership(
+        userId,
+        syncMembershipFromRoom(existingMembership, {
+          isActive: room.is_active,
+          roomType: 'event',
+        }),
+        transaction,
+      )
+    }
+
+    const currentMemberIds = room.member_user_ids
+    return {
+      addedUserIds: currentMemberIds.filter((id) => !previousMemberIds.includes(id)),
+      roomId: room.id,
+    }
+  })
 
   for (const addedUserId of addedUserIds) {
     try {
