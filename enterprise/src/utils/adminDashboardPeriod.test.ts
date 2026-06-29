@@ -19,7 +19,7 @@ describe('getDefaultDashboardPeriod', () => {
     vi.useRealTimers()
   })
 
-  it('returns previous month through next month', () => {
+  it('returns previous, current, and next month', () => {
     expect(getDefaultDashboardPeriod(JST_2026_06_15.getTime())).toEqual({
       start_year_month: '2026-05',
       end_year_month: '2026-07',
@@ -59,12 +59,12 @@ describe('filterEndYearMonthOptions', () => {
   const options = buildYearMonthOptions(DASHBOARD_YEAR_MONTH_OPTION_PAST_MONTHS, JST_2026_06_15.getTime())
 
   it('includes only months on or after start and within 12 months', () => {
-    const filtered = filterEndYearMonthOptions(options, '2026-01')
-    expect(filtered[0]?.value).toBe('2026-07')
-    expect(filtered[filtered.length - 1]?.value).toBe('2026-01')
-    expect(filtered).toHaveLength(7)
-    expect(filtered.every((opt) => opt.value >= '2026-01')).toBe(true)
-    expect(filtered.every((opt) => countInclusiveMonths('2026-01', opt.value) <= MAX_DASHBOARD_PERIOD_MONTHS)).toBe(
+    const filtered = filterEndYearMonthOptions(options, '2025-07')
+    expect(filtered[0]?.value).toBe('2026-06')
+    expect(filtered[filtered.length - 1]?.value).toBe('2025-07')
+    expect(filtered).toHaveLength(12)
+    expect(filtered.every((opt) => opt.value >= '2025-07')).toBe(true)
+    expect(filtered.every((opt) => countInclusiveMonths('2025-07', opt.value) <= MAX_DASHBOARD_PERIOD_MONTHS)).toBe(
       true,
     )
   })
@@ -76,7 +76,7 @@ describe('clampStartYearMonth', () => {
   })
 
   it('returns earliest valid start when range exceeds 12 months', () => {
-    expect(clampStartYearMonth('2025-01', '2026-07')).toBe('2025-08')
+    expect(clampStartYearMonth('2024-01', '2026-07')).toBe('2025-08')
   })
 })
 
@@ -86,7 +86,7 @@ describe('clampEndYearMonth', () => {
   })
 
   it('returns latest valid end when range exceeds 12 months', () => {
-    expect(clampEndYearMonth('2025-01', '2026-07')).toBe('2025-12')
+    expect(clampEndYearMonth('2024-01', '2026-07')).toBe('2024-12')
   })
 })
 
@@ -94,8 +94,8 @@ describe('validateDashboardPeriod', () => {
   it('returns undefined for valid 12-month range', () => {
     expect(
       validateDashboardPeriod({
-        start_year_month: '2025-01',
-        end_year_month: '2025-12',
+        start_year_month: '2025-07',
+        end_year_month: '2026-06',
       }),
     ).toBeUndefined()
   })
@@ -103,11 +103,11 @@ describe('validateDashboardPeriod', () => {
   it('returns undefined for exactly 12 months', () => {
     expect(
       validateDashboardPeriod({
-        start_year_month: '2025-07',
-        end_year_month: '2026-06',
+        start_year_month: '2025-08',
+        end_year_month: '2026-07',
       }),
     ).toBeUndefined()
-    expect(countInclusiveMonths('2025-07', '2026-06')).toBe(MAX_DASHBOARD_PERIOD_MONTHS)
+    expect(countInclusiveMonths('2025-08', '2026-07')).toBe(MAX_DASHBOARD_PERIOD_MONTHS)
   })
 
   it('returns invalid_order when start is after end', () => {

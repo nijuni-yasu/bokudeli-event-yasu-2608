@@ -1,10 +1,12 @@
 import { DateTime } from 'luxon'
 import { DEFAULT_TIME_ZONE } from '@shokujii/common/utils/datetime.js'
 import { parseYearMonth } from '@shokujii/common/utils/isEnterpriseMemberBillableInYearMonth.js'
+import { MAX_DASHBOARD_PERIOD_MONTHS } from '@shokujii/common/utils/dashboardAggregation.js'
 
-/** 選択肢に含める過去方向の月数（当月を含む）。MVP は12ヶ月、将来拡張予定 */
-export const DASHBOARD_YEAR_MONTH_OPTION_PAST_MONTHS = 12
-export const MAX_DASHBOARD_PERIOD_MONTHS = 12
+/** 選択肢に含める過去方向の月数（当月を含む）。D-12 最大12ヶ月幅に合わせる */
+export const DASHBOARD_YEAR_MONTH_OPTION_PAST_MONTHS = MAX_DASHBOARD_PERIOD_MONTHS
+
+export { MAX_DASHBOARD_PERIOD_MONTHS }
 
 export type DashboardPeriod = {
   start_year_month: string
@@ -78,7 +80,7 @@ export function filterEndYearMonthOptions(options: YearMonthOption[], startYearM
   )
 }
 
-/** デフォルト: 先月〜来月（先月・今月・来月の3ヶ月） */
+/** デフォルト: 先月・当月・来月（3ヶ月幅。D-7） */
 export function getDefaultDashboardPeriod(nowMillis = Date.now()): DashboardPeriod {
   const current = DateTime.fromMillis(nowMillis).setZone(DEFAULT_TIME_ZONE).startOf('month')
   return {
