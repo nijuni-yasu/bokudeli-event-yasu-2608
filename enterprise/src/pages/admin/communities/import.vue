@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import CsvImportPanel from '@/components/admin/CsvImportPanel.vue'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import { createEnterpriseCommunities } from '@/apis/enterprise'
 import { getEnterpriseIdFromToken } from '@/composable/useEnterpriseAdmin'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -58,8 +59,10 @@ const handleExecute = async (rows: string[][]) => {
 
 <template>
   <v-container>
-    <h1 class="text-h4 mb-2">{{ $t('admin.communities.import_title') }}</h1>
-    <p class="text-body-2 text-medium-emphasis mb-6">{{ $t('admin.communities.import_description') }}</p>
+    <AdminPageHeader
+      :title="$t('admin.communities.import_title')"
+      :description="$t('admin.communities.import_description')"
+    />
 
     <CsvImportPanel
       ref="panelRef"

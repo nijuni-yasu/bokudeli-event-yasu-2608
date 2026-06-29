@@ -77,4 +77,5 @@ onMounted(() => {
 
 <style lang="scss">
 @use '@layouts/styles/default-layout';
+@use '@/styles/adminTable';
 </style>

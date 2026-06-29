@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { EnterpriseMemberRoleType } from '@shokujii/common/schemas/Enterprise.js'
 import CsvImportPanel from '@/components/admin/CsvImportPanel.vue'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import { createEnterpriseMembers } from '@/apis/enterprise'
 import { getEnterpriseIdFromToken } from '@/composable/useEnterpriseAdmin'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -62,8 +63,7 @@ const handleExecute = async (rows: string[][]) => {
 
 <template>
   <v-container>
-    <h1 class="text-h4 mb-2">{{ $t('admin.members.import_title') }}</h1>
-    <p class="text-body-2 text-medium-emphasis mb-6">{{ $t('admin.members.import_description') }}</p>
+    <AdminPageHeader :title="$t('admin.members.import_title')" :description="$t('admin.members.import_description')" />
 
     <CsvImportPanel
       ref="panelRef"
