@@ -25,6 +25,8 @@ declare module 'vue-router/auto-routes' {
     '/admin/communities/': RouteRecordInfo<'/admin/communities/', '/admin/communities', Record<never, never>, Record<never, never>>,
     '/admin/communities/import': RouteRecordInfo<'/admin/communities/import', '/admin/communities/import', Record<never, never>, Record<never, never>>,
     '/admin/discount': RouteRecordInfo<'/admin/discount', '/admin/discount', Record<never, never>, Record<never, never>>,
+    '/admin/invoices': RouteRecordInfo<'/admin/invoices', '/admin/invoices', Record<never, never>, Record<never, never>>,
+    '/admin/invoices/[yearMonth]': RouteRecordInfo<'/admin/invoices/[yearMonth]', '/admin/invoices/:yearMonth', { yearMonth: ParamValue<true> }, { yearMonth: ParamValue<false> }>,
     '/admin/members/': RouteRecordInfo<'/admin/members/', '/admin/members', Record<never, never>, Record<never, never>>,
     '/admin/members/import': RouteRecordInfo<'/admin/members/import', '/admin/members/import', Record<never, never>, Record<never, never>>,
     '/admin/settings': RouteRecordInfo<'/admin/settings', '/admin/settings', Record<never, never>, Record<never, never>>,

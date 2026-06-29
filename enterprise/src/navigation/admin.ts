@@ -3,10 +3,18 @@ import {
   getAdminAuditLogsPath,
   getAdminCommunitiesPath,
   getAdminDashboardPath,
+  getAdminInvoicesPath,
   getAdminMembersPath,
   getAdminSettingsPath,
 } from '@/router/utils'
-import { mdiAccountGroup, mdiClipboardTextClock, mdiCog, mdiOfficeBuildingCog, mdiViewDashboard } from '@mdi/js'
+import {
+  mdiAccountGroup,
+  mdiClipboardTextClock,
+  mdiCog,
+  mdiOfficeBuildingCog,
+  mdiReceipt,
+  mdiViewDashboard,
+} from '@mdi/js'
 
 export const useAdminNavItems = (): NavLink[] => {
   const { t: $t } = useI18n()
@@ -15,6 +23,11 @@ export const useAdminNavItems = (): NavLink[] => {
       title: $t('admin.navigation.dashboard'),
       to: { path: getAdminDashboardPath() },
       icon: { icon: mdiViewDashboard },
+    },
+    {
+      title: $t('admin.navigation.invoices'),
+      to: { path: getAdminInvoicesPath() },
+      icon: { icon: mdiReceipt },
     },
     {
       title: $t('admin.navigation.settings'),
