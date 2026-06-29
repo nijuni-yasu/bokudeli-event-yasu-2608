@@ -16,8 +16,10 @@ export async function applyOrderCanceledSideEffects(params: { event: ShokujiiEve
   const { event, userId } = params
   const { community_id: communityId, id: eventId } = event
 
+  let recalcSucceeded = false
   try {
     const result = await recalcEventMembers(event)
+    recalcSucceeded = true
     if (result.updated) {
       logger.info('Event members 再集約（キャンセル後）', {
         communityId,
@@ -35,15 +37,17 @@ export async function applyOrderCanceledSideEffects(params: { event: ShokujiiEve
     })
   }
 
-  try {
-    await syncEventChatMember({ event, userId })
-  } catch (error) {
-    logger.error('syncEventChatMember failed after cancel', {
-      error,
-      communityId,
-      eventId,
-      userId,
-    })
+  if (recalcSucceeded) {
+    try {
+      await syncEventChatMember({ event, userId })
+    } catch (error) {
+      logger.error('syncEventChatMember failed after cancel', {
+        error,
+        communityId,
+        eventId,
+        userId,
+      })
+    }
   }
 
   // 友達グラフから当該イベントの履歴を取り除く（当該ユーザー×イベントで ordered が 0 件のときのみ。部分キャンセルは RC-45）

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ShokujiiEvent } from './stores/event.js'
 
 const recalcEventMembersMock = vi.fn()
+const syncEventChatMemberMock = vi.fn()
 const getOrdersMock = vi.fn()
 const getMemberIdsMock = vi.fn()
 const removeEventFromFriendHistoryMock = vi.fn()
@@ -9,6 +10,10 @@ const recountUserProfileCountsMock = vi.fn()
 
 vi.mock('./utils/recalcEventMembers.js', () => ({
   recalcEventMembers: (...args: unknown[]) => recalcEventMembersMock(...args),
+}))
+
+vi.mock('./syncEventChatMember.js', () => ({
+  syncEventChatMember: (...args: unknown[]) => syncEventChatMemberMock(...args),
 }))
 
 vi.mock('./stores/memberOrder.js', () => ({
@@ -41,12 +46,14 @@ const event = {
 
 beforeEach(() => {
   recalcEventMembersMock.mockReset()
+  syncEventChatMemberMock.mockReset()
   getOrdersMock.mockReset()
   getMemberIdsMock.mockReset()
   removeEventFromFriendHistoryMock.mockReset()
   recountUserProfileCountsMock.mockReset()
 
   recalcEventMembersMock.mockResolvedValue({ updated: false, memberCount: 0 })
+  syncEventChatMemberMock.mockResolvedValue(undefined)
   recountUserProfileCountsMock.mockResolvedValue(undefined)
 })
 
@@ -77,5 +84,22 @@ describe('applyOrderCanceledSideEffects', () => {
       counterpart_user_ids: ['user2', 'user3'],
     })
     expect(recountUserProfileCountsMock).toHaveBeenCalledWith('user1')
+  })
+
+  it('recalc 成功時は syncEventChatMember を呼ぶ（RC-134）', async () => {
+    getOrdersMock.mockResolvedValue([])
+
+    await applyOrderCanceledSideEffects({ event, userId: 'user1' })
+
+    expect(syncEventChatMemberMock).toHaveBeenCalledWith({ event, userId: 'user1' })
+  })
+
+  it('recalc 失敗時は syncEventChatMember を呼ばない（RC-134）', async () => {
+    recalcEventMembersMock.mockRejectedValue(new Error('recalc failed'))
+    getOrdersMock.mockResolvedValue([])
+
+    await applyOrderCanceledSideEffects({ event, userId: 'user1' })
+
+    expect(syncEventChatMemberMock).not.toHaveBeenCalled()
   })
 })
