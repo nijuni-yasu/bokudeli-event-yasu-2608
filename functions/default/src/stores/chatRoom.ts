@@ -1,9 +1,11 @@
 import {
   DocumentData,
+  FieldValue,
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
   Transaction,
+  WriteBatch,
 } from 'firebase-admin/firestore'
 import { ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
 
@@ -28,6 +30,19 @@ const eventChatRoomQuery = (communityId: string, eventId: string) => {
 
 export const getChatRoomRef = (roomId: string) => {
   return chatRoomsCollection().doc(roomId).withConverter(new ChatRoomConverter())
+}
+
+/** FieldValue 系の partial update 用（withConverter 非付与）。batch / update 専用。 */
+export const getChatRoomBatchUpdateRef = (roomId: string) => {
+  return chatRoomsCollection().doc(roomId)
+}
+
+/** member_user_ids から uid を arrayRemove する batch 更新（RC-136: store 経由に集約）。 */
+export const batchRemoveMemberFromChatRoom = (batch: WriteBatch, roomId: string, uid: string): void => {
+  batch.update(getChatRoomBatchUpdateRef(roomId), {
+    member_user_ids: FieldValue.arrayRemove(uid),
+    updated_at: FieldValue.serverTimestamp(),
+  })
 }
 
 export const getChatRoom = async (roomId: string, transaction?: Transaction): Promise<ChatRoom | undefined> => {

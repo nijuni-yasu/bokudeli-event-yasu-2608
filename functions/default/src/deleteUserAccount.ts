@@ -1,5 +1,5 @@
 import { getAuth } from 'firebase-admin/auth'
-import { getFirestore, FieldValue } from 'firebase-admin/firestore'
+import { getFirestore } from 'firebase-admin/firestore'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { createModuleLogger } from './utils/logger.js'
 import {
@@ -12,7 +12,7 @@ import { listFriendUserIds } from './stores/userFriend.js'
 import { anonymizeUser, anonymizeUserPersonalInformation, getUserPersonalInformation } from './stores/user.js'
 import { recountUserProfileCountsForUsers } from './utils/recountUserProfileCounts.js'
 import { listChatMembershipsForUser, getChatMembershipRef } from './stores/chatMembership.js'
-import { getChatRoomRef } from './stores/chatRoom.js'
+import { batchRemoveMemberFromChatRoom, getChatRoomRef } from './stores/chatRoom.js'
 
 const db = getFirestore()
 const logger = createModuleLogger('deleteUserAccount')
@@ -39,11 +39,7 @@ const cleanupUserChatData = async (uid: string): Promise<void> => {
       if (room == null || !room.member_user_ids.includes(uid)) {
         continue
       }
-      // converter を通さない raw ref で FieldValue 系 partial update を行う
-      batch.update(db.collection('chat_rooms').doc(chunk[j]), {
-        member_user_ids: FieldValue.arrayRemove(uid),
-        updated_at: FieldValue.serverTimestamp(),
-      })
+      batchRemoveMemberFromChatRoom(batch, chunk[j], uid)
       writeCount++
     }
     if (writeCount > 0) {

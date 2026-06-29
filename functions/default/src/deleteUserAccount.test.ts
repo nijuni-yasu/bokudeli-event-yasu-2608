@@ -108,6 +108,15 @@ vi.mock('./stores/chatMembership.js', () => ({
 
 vi.mock('./stores/chatRoom.js', () => ({
   getChatRoomRef: vi.fn((roomId: string) => createChatRoomDocRef(roomId)),
+  batchRemoveMemberFromChatRoom: vi.fn((batch: { update: typeof batchUpdateMock }, roomId: string, uid: string) => {
+    batch.update(
+      { path: `chat_rooms/${roomId}` },
+      {
+        member_user_ids: { type: 'arrayRemove', args: [uid] },
+        updated_at: { type: 'serverTimestamp' },
+      },
+    )
+  }),
   updateChatRoomMembers: vi.fn((room: { member_user_ids: string[] }, memberUserIds: string[]) => ({
     ...room,
     member_user_ids: memberUserIds,
