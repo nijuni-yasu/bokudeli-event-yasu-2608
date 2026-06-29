@@ -156,6 +156,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - **D-5**: コミュニティ一覧等に `enterprise_id` フィルタは部分実装。**未**: RC-44（`/u/:userId` の他社・停止メンバーゲート）。
 - **D-6 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`enterpriseBillInvoice` HTTP + docx テンプレ + GCS。`invoice_files` による冪等キャッシュ。
 - **D-7 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`/admin/invoices` 一覧 + PDF viewer。`billing_status: final` の月のみ DL 可。
+- **D-1**: 仕様確定（[04_詳細_メール配信](../10_仕様/04_詳細_メール配信.md)）。MVP は方式 A（早期 return）+ `isEnterpriseEvent` / `isEnterpriseUser`（`users.enterprise_id`）の**コード固定デフォルト**。文言・テンプレ変更はスコープ外。#23 / #24 PF only、週刊本文フィルタ、主催者 #7 抑制・#8 維持、誤記 #10 削除。**全社 ON/OFF は Phase 2**（§5.3）。
 
 ### WS-E: 機能拡張・仕様変更（v0.3 MVP 前倒し）
 
@@ -188,7 +189,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | - [ ] | G-8 | パスワード保護 `access_password`（アクセス付与基盤） | D-6a / D-6b / ADR-003 §4 | 旧 E-6 | G-6 |
 | - [ ] | G-2 | 企業別 SSO（テナント単位 SAML/OIDC）／オープン交流の扉 | ADR-002 §1.5 / §5.1 | — | — |
 | - [ ] | G-3 | functions の _base/_user/_enterprise 再編・マルチ codebase | PA-20b-c / PA-24c | — | — |
-| - [ ] | G-4 | 機能 ON/OFF（feature_flags）・トップバナー | D-12 | — | — |
+| - [ ] | G-4 | 機能 ON/OFF（feature_flags）・トップバナー・**全社メール通知設定**（`04_詳細_メール配信` §5.3） | D-12 | — | — |
 
 **メモ（G-5〜G-7 の推奨順）**: **MVP: C-1 PoC → G1** →（Phase 2）**G-7 本実装（C-4）** → G-5 → G-6 → G-1 / G-8。C-1 正本: [05_WS-C_C-1_PoC設計](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md)。
 
@@ -335,3 +336,4 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-27 | **C-1 PoC を MVP 前倒し**（05_WS-C_C-1_PoC設計.md。H1 採用案・G1 条件）。G-7 は C-4 本実装のみ |
 | 2026-06-29 | **月次請求書 PDF を MVP 前倒し** — WS-D に D-6（`enterpriseBillInvoice`）・D-7（`/admin/invoices`）追加。`04_詳細_請求` B-1 更新、`03_課金` MVP-C を PDF 化 |
 | 2026-06-29 | 実装照合: **D-2 / D-3 / D-4 / D-6 / D-7 / E-4** を ✅ に更新。WS-D 5/7・WS-E 1/4・WS-A〜F 17/26 |
+| 2026-06-30 | D-1 仕様: §4.1 代替方式・方式 A 採用、`users.enterprise_id` 宛先フィルタ、D-1 文言スコープ外 |
