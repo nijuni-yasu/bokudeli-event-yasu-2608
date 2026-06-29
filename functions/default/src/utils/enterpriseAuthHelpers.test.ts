@@ -9,13 +9,29 @@ import {
 
 vi.mock('../stores/enterprise.js', () => ({
   getEnterpriseMember: vi.fn(),
+  getEnterpriseById: vi.fn(),
 }))
 
-import { getEnterpriseMember } from '../stores/enterprise.js'
+import { getEnterpriseById, getEnterpriseMember } from '../stores/enterprise.js'
+
+const validAuthToken = {
+  user_type: 'enterprise',
+  enterprise_id: 'ent-a',
+  enterprise_role: 'admin',
+  firebase: { tenant: 'tenant-a' },
+}
+
+function mockEnterpriseTenant(tenantId = 'tenant-a') {
+  vi.mocked(getEnterpriseById).mockResolvedValue({
+    id: 'ent-a',
+    tenant_id: tenantId,
+  } as never)
+}
 
 describe('enterpriseAuthHelpers', () => {
   beforeEach(() => {
     vi.mocked(getEnterpriseMember).mockReset()
+    vi.mocked(getEnterpriseById).mockReset()
   })
   describe('normalizeEnterpriseEmail', () => {
     it('trim と lowercase する', () => {
@@ -55,12 +71,13 @@ describe('enterpriseAuthHelpers', () => {
         role: 'admin',
         is_active: true,
       } as never)
+      mockEnterpriseTenant()
 
       await expect(
         assertEnterpriseAdmin(
           {
             uid: 'user-a',
-            token: { enterprise_id: 'ent-a', enterprise_role: 'admin' },
+            token: validAuthToken,
           } as never,
           'ent-a',
         ),
@@ -74,12 +91,13 @@ describe('enterpriseAuthHelpers', () => {
         role: 'member',
         is_active: true,
       } as never)
+      mockEnterpriseTenant()
 
       await expect(
         assertEnterpriseAdmin(
           {
             uid: 'user-a',
-            token: { enterprise_id: 'ent-a', enterprise_role: 'admin' },
+            token: validAuthToken,
           } as never,
           'ent-a',
         ),
@@ -93,12 +111,93 @@ describe('enterpriseAuthHelpers', () => {
         role: 'admin',
         is_active: false,
       } as never)
+      mockEnterpriseTenant()
 
       await expect(
         assertEnterpriseAdmin(
           {
             uid: 'user-a',
-            token: { enterprise_id: 'ent-a', enterprise_role: 'admin' },
+            token: validAuthToken,
+          } as never,
+          'ent-a',
+        ),
+      ).rejects.toThrow(HttpsError)
+    })
+
+    it('firebase.tenant が無い場合は拒否する', async () => {
+      vi.mocked(getEnterpriseMember).mockResolvedValue({
+        id: 'user-a',
+        user_id: 'user-a',
+        role: 'admin',
+        is_active: true,
+      } as never)
+      mockEnterpriseTenant()
+
+      await expect(
+        assertEnterpriseAdmin(
+          {
+            uid: 'user-a',
+            token: { ...validAuthToken, firebase: {} },
+          } as never,
+          'ent-a',
+        ),
+      ).rejects.toThrow(HttpsError)
+    })
+
+    it('enterprise tenant_id と token tenant が不一致なら拒否する', async () => {
+      vi.mocked(getEnterpriseMember).mockResolvedValue({
+        id: 'user-a',
+        user_id: 'user-a',
+        role: 'admin',
+        is_active: true,
+      } as never)
+      mockEnterpriseTenant('tenant-b')
+
+      await expect(
+        assertEnterpriseAdmin(
+          {
+            uid: 'user-a',
+            token: validAuthToken,
+          } as never,
+          'ent-a',
+        ),
+      ).rejects.toThrow(HttpsError)
+    })
+
+    it('enterprise tenant_id が空なら拒否する', async () => {
+      vi.mocked(getEnterpriseMember).mockResolvedValue({
+        id: 'user-a',
+        user_id: 'user-a',
+        role: 'admin',
+        is_active: true,
+      } as never)
+      mockEnterpriseTenant('')
+
+      await expect(
+        assertEnterpriseAdmin(
+          {
+            uid: 'user-a',
+            token: validAuthToken,
+          } as never,
+          'ent-a',
+        ),
+      ).rejects.toThrow(HttpsError)
+    })
+
+    it('user_type が enterprise でない場合は拒否する', async () => {
+      vi.mocked(getEnterpriseMember).mockResolvedValue({
+        id: 'user-a',
+        user_id: 'user-a',
+        role: 'admin',
+        is_active: true,
+      } as never)
+      mockEnterpriseTenant()
+
+      await expect(
+        assertEnterpriseAdmin(
+          {
+            uid: 'user-a',
+            token: { ...validAuthToken, user_type: 'user' },
           } as never,
           'ent-a',
         ),
