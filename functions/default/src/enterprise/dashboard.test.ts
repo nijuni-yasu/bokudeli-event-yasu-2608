@@ -31,10 +31,6 @@ vi.mock('../stores/dashboard.js', () => ({
   listOrderCreateAuditLogs: vi.fn(),
 }))
 
-vi.mock('../stores/user.js', () => ({
-  getUserPersonalInformation: vi.fn(),
-}))
-
 vi.mock('../utils/enterpriseAuthHelpers.js', () => ({
   assertEnterpriseAdmin: vi.fn(),
 }))
@@ -52,7 +48,6 @@ import {
   listOrderedMemberOrdersByEnterprise,
   listStripesByEnterprise,
 } from '../stores/dashboard.js'
-import { getUserPersonalInformation } from '../stores/user.js'
 import { getDashboardMemberData, getDashboardMonthlyData } from './dashboard.js'
 import type { ShokujiiEvent } from '../stores/event.js'
 
@@ -79,7 +74,6 @@ describe('getDashboardMonthlyData', () => {
     vi.mocked(listStripesByEnterprise).mockReset()
     vi.mocked(listOrderCreateAuditLogs).mockReset()
     vi.mocked(getEventsInCommunities).mockReset()
-    vi.mocked(getUserPersonalInformation).mockReset()
     vi.mocked(listBillingSnapshots).mockReset()
     vi.mocked(listBillingSnapshots).mockResolvedValue([])
   })
@@ -121,7 +115,6 @@ describe('getDashboardMonthlyData', () => {
         last_activated_at: jst(2026, 1, 1),
       }),
     ])
-    vi.mocked(getUserPersonalInformation).mockResolvedValue({ user_email: 'a@example.com' } as never)
     vi.mocked(listOrderedMemberOrdersByEnterprise).mockResolvedValue([
       new EventMemberOrder('o1', {
         order_id: 'o1',
@@ -165,7 +158,6 @@ describe('getDashboardMemberData', () => {
     vi.mocked(listStripesByEnterprise).mockResolvedValue([])
     vi.mocked(listOrderCreateAuditLogs).mockResolvedValue([])
     vi.mocked(getEventsInCommunities).mockReset()
-    vi.mocked(getUserPersonalInformation).mockReset()
   })
 
   it('メンバー別集計を返す', async () => {
@@ -186,7 +178,6 @@ describe('getDashboardMemberData', () => {
         last_activated_at: jst(2026, 1, 1),
       }),
     ])
-    vi.mocked(getUserPersonalInformation).mockResolvedValue({ user_email: 'a@example.com' } as never)
     vi.mocked(listOrderedMemberOrdersByEnterprise).mockResolvedValue([
       new EventMemberOrder('o1', {
         order_id: 'o1',

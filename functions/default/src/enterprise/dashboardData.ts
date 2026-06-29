@@ -12,7 +12,6 @@ import {
   listOrderedMemberOrdersByEnterprise,
   listStripesByEnterprise,
 } from '../stores/dashboard.js'
-import { getUserPersonalInformation } from '../stores/user.js'
 
 export type DashboardFetchResult = {
   orders: DashboardOrderLine[]
@@ -68,18 +67,10 @@ export async function fetchDashboardData(enterpriseId: string): Promise<Dashboar
     })),
   )
 
-  const memberEmails = await Promise.all(
-    rawMembers.map(async (member) => {
-      const personal = await getUserPersonalInformation(member.user_id)
-      return [member.user_id, personal?.user_email ?? ''] as const
-    }),
-  )
-  const emailByUserId = new Map(memberEmails)
-
   const members: DashboardMemberMeta[] = rawMembers.map((member) => ({
     user_id: member.user_id,
     display_name: member.display_name ?? '',
-    email: emailByUserId.get(member.user_id) ?? '',
+    email: member.user_email,
     department: member.department ?? '',
     is_active: member.is_active,
     last_activated_at: member.last_activated_at ?? null,
