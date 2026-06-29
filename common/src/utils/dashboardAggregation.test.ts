@@ -8,6 +8,7 @@ import {
   countSessionsByMonth,
   DashboardPeriodError,
   enumerateYearMonths,
+  mergeMonthlyRowsWithSnapshots,
   validateDashboardPeriod,
 } from './dashboardAggregation.js'
 
@@ -155,6 +156,47 @@ describe('aggregateMonthlyRows', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0]?.total_amount).toBe(300)
     expect(rows[1]?.total_amount).toBe(0)
+  })
+})
+
+describe('mergeMonthlyRowsWithSnapshots', () => {
+  it('スナップショットあり月は確定値で上書き', () => {
+    const liveRows = aggregateMonthlyRows({
+      startYearMonth: '2026-05',
+      endYearMonth: '2026-06',
+      orders: [{ user_id: 'u1', event_id: 'e-june', menu_price: 1000, pay_enterprise_subsidy_amount: 500 }],
+      stripes: [],
+      auditSessions: [],
+      eventMonthMap,
+      members,
+      billingSettings,
+      currentCalendarYearMonth: '2026-12',
+      zone: ZONE,
+    })
+    const merged = mergeMonthlyRowsWithSnapshots(
+      liveRows,
+      [
+        {
+          year_month: '2026-05',
+          active_account_count: 10,
+          platform_fee_amount: 5000,
+          meal_billing_amount: 80000,
+          total_billing_amount: 85000,
+          billing_status: 'final',
+        },
+      ],
+      '2026-12',
+    )
+    const may = merged.find((r) => r.year_month === '2026-05')
+    const june = merged.find((r) => r.year_month === '2026-06')
+    expect(may).toMatchObject({
+      active_account_count: 10,
+      platform_fee_amount: 5000,
+      enterprise_billing_amount: 80000,
+      total_billing_amount: 85000,
+      billing_status: 'final',
+    })
+    expect(june?.billing_status).toBe('provisional')
   })
 })
 

@@ -276,3 +276,43 @@ export class EnterpriseBillingSnapshot {
     return EnterpriseBillingSnapshotDbSchema.parse(convertBillingSnapshotToDb(this))
   }
 }
+
+const EnterpriseInvoiceFileDbSchema = z.object({
+  year_month: z.string().regex(/^\d{4}-\d{2}$/),
+  gcs_id: NonEmptyStringSchema,
+  created_at: TimestampSchema,
+})
+
+const EnterpriseInvoiceFileAppSchema = z.object({
+  year_month: z.string().regex(/^\d{4}-\d{2}$/),
+  gcs_id: NonEmptyStringSchema,
+})
+
+const convertInvoiceFileToDb = (invoiceFile: EnterpriseInvoiceFile) => {
+  return {
+    ...invoiceFile,
+    created_at: EpochMillisSchema.default(Date.now()).parse(invoiceFile.created_at),
+  }
+}
+
+export class EnterpriseInvoiceFile {
+  readonly id: string
+  year_month!: string
+  gcs_id!: string
+  created_at: number
+
+  constructor(yearMonth: string, src: Pick<EnterpriseInvoiceFile, 'gcs_id'> & Partial<EnterpriseInvoiceFile>) {
+    Object.assign(this, EnterpriseInvoiceFileAppSchema.parse({ ...src, year_month: yearMonth }))
+    this.id = yearMonth
+    this.year_month = yearMonth
+    this.created_at = EpochMillisSchema.default(Date.now()).parse(src.created_at)
+  }
+
+  isValidForDatabase(): boolean {
+    return EnterpriseInvoiceFileDbSchema.safeParse(convertInvoiceFileToDb(this)).success
+  }
+
+  toFirestore(): z.infer<typeof EnterpriseInvoiceFileDbSchema> {
+    return EnterpriseInvoiceFileDbSchema.parse(convertInvoiceFileToDb(this))
+  }
+}

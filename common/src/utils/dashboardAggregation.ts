@@ -1,10 +1,6 @@
 import { formatYearMonth } from './datetime.js'
-import {
-  getYearMonthRangeMillis,
-  isEnterpriseMemberBillableInYearMonth,
-  parseYearMonth,
-  type BillableMemberTimestamps,
-} from './isEnterpriseMemberBillableInYearMonth.js'
+import { computePlatformFeeAmount } from './billingSnapshot.js'
+import { parseYearMonth, type BillableMemberTimestamps } from './isEnterpriseMemberBillableInYearMonth.js'
 import type { DashboardBillingStatus, DashboardMemberRow, DashboardMonthlyRow } from '../apis/dashboard.js'
 
 export const MAX_DASHBOARD_PERIOD_MONTHS = 12
@@ -42,6 +38,8 @@ export type DashboardMemberMeta = BillableMemberTimestamps & {
 export type DashboardBillingSettings = {
   unit_price: number
   billing_trial_ends_at: number
+  /** 未指定時は true（後方互換） */
+  enterprise_is_active?: boolean
 }
 
 export class DashboardPeriodError extends Error {
@@ -133,13 +131,57 @@ export function computePlatformFeeForMonth(
   billingSettings: DashboardBillingSettings,
   zone?: string,
 ): { active_account_count: number; platform_fee_amount: number } {
-  const { monthEnd } = getYearMonthRangeMillis(yearMonth, zone)
-  const active_account_count = members.filter((member) =>
-    isEnterpriseMemberBillableInYearMonth(member, yearMonth, zone),
-  ).length
-  const inTrial = monthEnd <= billingSettings.billing_trial_ends_at
-  const platform_fee_amount = inTrial ? 0 : active_account_count * billingSettings.unit_price
+  const { active_account_count, platform_fee_amount } = computePlatformFeeAmount({
+    yearMonth,
+    members,
+    unitPrice: billingSettings.unit_price,
+    billingTrialEndsAt: billingSettings.billing_trial_ends_at,
+    enterpriseIsActive: billingSettings.enterprise_is_active ?? true,
+    zone,
+  })
   return { active_account_count, platform_fee_amount }
+}
+
+export type BillingSnapshotMergeInput = {
+  year_month: string
+  active_account_count: number
+  platform_fee_amount: number
+  meal_billing_amount: number
+  total_billing_amount: number
+  billing_status: DashboardBillingStatus
+}
+
+export function mergeMonthlyRowsWithSnapshots(
+  liveRows: readonly DashboardMonthlyRow[],
+  snapshots: readonly BillingSnapshotMergeInput[],
+  currentCalendarYearMonth: string,
+): DashboardMonthlyRow[] {
+  const snapshotByMonth = new Map(snapshots.map((snapshot) => [snapshot.year_month, snapshot]))
+
+  return liveRows.map((row) => {
+    if (row.year_month === currentCalendarYearMonth) {
+      return {
+        ...row,
+        billing_status: 'provisional' as const,
+      }
+    }
+
+    const snapshot = snapshotByMonth.get(row.year_month)
+    if (snapshot == null) {
+      return {
+        ...row,
+        billing_status: 'provisional' as const,
+      }
+    }
+    return {
+      ...row,
+      active_account_count: snapshot.active_account_count,
+      platform_fee_amount: snapshot.platform_fee_amount,
+      enterprise_billing_amount: snapshot.meal_billing_amount,
+      total_billing_amount: snapshot.total_billing_amount,
+      billing_status: snapshot.billing_status,
+    }
+  })
 }
 
 export function countSessionsByMonth(params: {
