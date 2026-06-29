@@ -83,11 +83,11 @@ export const onChatMessageCreated = onDocumentCreated(
         }
         if (
           shouldIncrementMembershipUnread({
-            claimed,
             messageType: message.message_type,
             shouldApplyLastMessage,
             memberUserId,
             senderUserId,
+            membershipLastMessageAt: membership.last_message_at,
             lastReadAt: membership.last_read_at,
             lastMessageAt,
           })

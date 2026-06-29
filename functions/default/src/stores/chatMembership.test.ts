@@ -115,22 +115,22 @@ describe('chatMembership store', () => {
   it('shouldIncrementMembershipUnread skips when last_read_at is at or after message time', () => {
     expect(
       shouldIncrementMembershipUnread({
-        claimed: true,
         messageType: 'user',
         shouldApplyLastMessage: true,
         memberUserId: 'receiver1',
         senderUserId: 'sender1',
+        membershipLastMessageAt: 4000,
         lastReadAt: 5000,
         lastMessageAt: 5000,
       }),
     ).toBe(false)
     expect(
       shouldIncrementMembershipUnread({
-        claimed: true,
         messageType: 'user',
         shouldApplyLastMessage: true,
         memberUserId: 'receiver1',
         senderUserId: 'sender1',
+        membershipLastMessageAt: 4000,
         lastReadAt: 6000,
         lastMessageAt: 5000,
       }),
@@ -140,11 +140,11 @@ describe('chatMembership store', () => {
   it('shouldIncrementMembershipUnread increments when last_read_at is before message time', () => {
     expect(
       shouldIncrementMembershipUnread({
-        claimed: true,
         messageType: 'user',
         shouldApplyLastMessage: true,
         memberUserId: 'receiver1',
         senderUserId: 'sender1',
+        membershipLastMessageAt: 4000,
         lastReadAt: 4000,
         lastMessageAt: 5000,
       }),
@@ -154,25 +154,39 @@ describe('chatMembership store', () => {
   it('shouldIncrementMembershipUnread increments when last_read_at is unset', () => {
     expect(
       shouldIncrementMembershipUnread({
-        claimed: true,
         messageType: 'user',
         shouldApplyLastMessage: true,
         memberUserId: 'receiver1',
         senderUserId: 'sender1',
+        membershipLastMessageAt: undefined,
         lastReadAt: undefined,
         lastMessageAt: 5000,
       }),
     ).toBe(true)
   })
 
-  it('shouldIncrementMembershipUnread skips when claim failed (retry re-entry)', () => {
+  it('shouldIncrementMembershipUnread increments on retry when membership is not yet updated (RC-129)', () => {
     expect(
       shouldIncrementMembershipUnread({
-        claimed: false,
         messageType: 'user',
         shouldApplyLastMessage: true,
         memberUserId: 'receiver1',
         senderUserId: 'sender1',
+        membershipLastMessageAt: 4000,
+        lastReadAt: undefined,
+        lastMessageAt: 5000,
+      }),
+    ).toBe(true)
+  })
+
+  it('shouldIncrementMembershipUnread skips when membership already reflects message (retry after success)', () => {
+    expect(
+      shouldIncrementMembershipUnread({
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+        membershipLastMessageAt: 5000,
         lastReadAt: undefined,
         lastMessageAt: 5000,
       }),
