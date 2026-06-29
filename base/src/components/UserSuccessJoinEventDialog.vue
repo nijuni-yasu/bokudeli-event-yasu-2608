@@ -59,8 +59,8 @@ const onOpenChatClick = async () => {
 
   isNavigatingToChat.value = true
   try {
-    await props.navigateToEventChat(target)
-    if (model.value) {
+    const succeeded = await props.navigateToEventChat(target)
+    if (succeeded && model.value) {
       model.value = false
     }
   } finally {
@@ -197,7 +197,9 @@ watch(
                 <dt class="text-description">{{ $t('success_join_event_dialog.deadline') }}</dt>
                 <dd class="text-description">
                   {{
-                    $t('success_join_event_dialog.deadline_value', [convertToTimeString(event.event_deadline_datetime)])
+                    $t('success_join_event_dialog.deadline_value', [
+                      convertToDatetimeWeekdayShort(event.event_deadline_datetime),
+                    ])
                   }}
                 </dd>
                 <dt class="text-description">{{ $t('success_join_event_dialog.place') }}</dt>

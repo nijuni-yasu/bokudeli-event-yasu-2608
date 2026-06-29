@@ -382,16 +382,17 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
   isUserSuccessJoinEventDialogVisible.value = true
 }
 
-const navigateToEventChatFromOrder = async (params: { communityId: string; eventId: string }): Promise<void> => {
+const navigateToEventChatFromOrder = async (params: { communityId: string; eventId: string }): Promise<boolean> => {
   if (profileUserId === '') {
-    return
+    return false
   }
   const roomId = await waitForEventChatMembership(profileUserId, params.communityId, params.eventId)
   if (roomId == null) {
     notification.show($t('chat.error.preparing'), 'warning')
-    return
+    return false
   }
   await router.push(getChatPath(roomId))
+  return true
 }
 
 /** 注文完了で遷移したとき・既存 Pinia ストアが古い一覧のままになるのを防ぐ */
