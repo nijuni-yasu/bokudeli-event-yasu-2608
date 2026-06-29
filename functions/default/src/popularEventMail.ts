@@ -18,6 +18,7 @@ import { DEFAULT_FROM } from './utils/mail.js'
 import { convertStoragePathToURL, getEventUrl } from './utils/urls.js'
 import { convertToDateWeekdayShort, convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { parsePopularEventMailThreshold, isEligibleForPopularEventMailSend } from './utils/popularEventMailThreshold.js'
+import { isEnterpriseEvent, isEnterpriseUser } from './utils/enterpriseMail.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('popularEventMail')
@@ -76,6 +77,10 @@ export async function trySendPopularEventMailAfterMembersSync(params: {
       return null
     }
 
+    if (isEnterpriseEvent(transactionEvent)) {
+      return null
+    }
+
     transactionEvent.sent_popular_event_mail_at = Timestamp.now().toMillis()
     await saveEvent(triggerUserId, transactionEvent, transaction)
     return transactionEvent
@@ -97,6 +102,9 @@ export async function trySendPopularEventMailAfterMembersSync(params: {
     }
     const user = r.value
     if (!user?.user_email) {
+      continue
+    }
+    if (isEnterpriseUser(user)) {
       continue
     }
     recipients.push({

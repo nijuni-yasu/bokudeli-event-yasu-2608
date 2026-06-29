@@ -8,6 +8,7 @@ import { getAllAcceptingOrderEvents } from './stores/event.js'
 import { convertTruncateText } from '@shokujii/common/utils/converter.js'
 import { convertToJustDate, convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { createModuleLogger } from './utils/logger.js'
+import { isEnterpriseEvent, isEnterpriseUser } from './utils/enterpriseMail.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('eventInformationMail')
@@ -91,6 +92,9 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
   })
 
   for (const event of sortedEvents) {
+    if (isEnterpriseEvent(event)) {
+      continue
+    }
     const userIds = (await event.getOrders()).map((order) => order.user_id)
 
     // 最大参加者数に達していないイベントのみ追加
@@ -154,6 +158,10 @@ async function sendEventInformationMail(): Promise<void> {
     const user = r.value
 
     if (!user?.user_email) {
+      continue
+    }
+
+    if (isEnterpriseUser(user)) {
       continue
     }
 

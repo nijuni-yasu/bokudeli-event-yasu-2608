@@ -3,6 +3,7 @@ import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, convertStoragePathToURL } from './utils/urls.js'
 import { convertToDateWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { getAcceptingOrderEventsByEndTime } from './stores/event.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 // テンプレートID
@@ -25,6 +26,9 @@ export async function sendEventConcludedMailToMembers(start: number, end: number
 
   return Promise.all(
     events.map(async (event) => {
+      if (isEnterpriseEvent(event)) {
+        return
+      }
       const dynamic_template_data: EventConcludedTemplateData = {
         date: convertToDateWeekdayShort(event.event_start_datetime),
         event_name: event.event_name,

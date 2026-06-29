@@ -10,6 +10,7 @@ import { DEFAULT_FROM } from './utils/mail.js'
 import { getAcceptingOrderEventsByTime, getEventInCommunity, type ShokujiiEvent } from './stores/event.js'
 import { getInCartMemberOrdersByUpdatedTime, getOrdersInCart } from './stores/memberOrder.js'
 import { createModuleLogger } from './utils/logger.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('inCartNotification')
@@ -121,6 +122,7 @@ export async function sendInCartNotificationToMember(start: number, end: number)
     .filter((notificationData) => {
       return start < notificationData.event.event_deadline_datetime
     })
+    .filter((notificationData) => !isEnterpriseEvent(notificationData.event))
 
   const dedupedNotificationDataList = dedupeByUserIdKeepFirst(filteredNotificationDataList)
   if (dedupedNotificationDataList.length < filteredNotificationDataList.length) {
@@ -165,6 +167,9 @@ export async function sendInCartEventDeadlineNotificationToMember(start: number,
   const mailContentList: MailContent[] = []
   await Promise.all(
     events.map(async (event) => {
+      if (isEnterpriseEvent(event)) {
+        return
+      }
       const orders = await event.getOrders('in_cart')
       return await Promise.all(
         orders.map(async (order) => {

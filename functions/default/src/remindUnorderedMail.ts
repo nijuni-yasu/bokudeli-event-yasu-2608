@@ -4,6 +4,7 @@ import * as sgMail from './utils/sendgrid.js'
 import { convertStoragePathToURL, getEventUrl } from './utils/urls.js'
 import { getCommunity } from './stores/community.js'
 import { getAcceptingOrderEventsBeforeDeadline } from './stores/event.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import { getUser } from './stores/user.js'
 import { convertToDuration } from '@shokujii/common/utils/datetime.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
@@ -47,6 +48,9 @@ export async function sendUnorderedRemindMailToManagers(nowMillis: number, start
   const sendMailPromises = events.map((event) =>
     (async () => {
       try {
+        if (isEnterpriseEvent(event)) {
+          return
+        }
         const hasOrders = await event.hasOrderedOrders()
         if (hasOrders) {
           return

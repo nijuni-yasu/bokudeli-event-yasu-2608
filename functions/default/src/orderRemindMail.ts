@@ -2,6 +2,7 @@ import { DEFAULT_FROM, SUPPORT_MAIL, getCommunityEmailsForEvent } from './utils/
 import * as sgMail from './utils/sendgrid.js'
 import { getEventUrl, getPartnerOrderUrl, getManageEventMemberUrl } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import { ShokujiiEvent, getAcceptingOrderEventsByTime, getApplyingReservationEvents } from './stores/event.js'
 import { getUser } from './stores/user.js'
 import { getEventPartnerShop } from './stores/partner.js'
@@ -213,6 +214,9 @@ export async function sendOrderRemindMailToOrganizer(
   const sendMailPromises = events
     .map(async (event) => {
       try {
+        if (isEnterpriseEvent(event)) {
+          return
+        }
         const hasOrders = await event.hasOrderedOrders()
         if (!hasOrders) {
           return
