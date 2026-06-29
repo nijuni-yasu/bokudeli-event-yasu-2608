@@ -15,8 +15,8 @@ export function validateSubsidySettings(
   if (discountType === 'fixed' && discountValue < 0) {
     throw new HttpsError('invalid-argument', 'fixed discount_value must be non-negative')
   }
-  if (discountType === 'percentage' && (discountValue < 0 || discountValue > 100)) {
-    throw new HttpsError('invalid-argument', 'percentage discount_value must be between 0 and 100')
+  if (discountType === 'percentage' && (discountValue < 1 || discountValue > 100)) {
+    throw new HttpsError('invalid-argument', 'percentage discount_value must be between 1 and 100')
   }
   if (!Number.isInteger(monthlyLimitPerUser) || monthlyLimitPerUser < 0) {
     throw new HttpsError('invalid-argument', 'monthly_limit_per_user must be a non-negative integer')

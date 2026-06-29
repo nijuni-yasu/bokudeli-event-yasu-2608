@@ -202,7 +202,7 @@ export default {
       value_percentage: '割引率（%）',
       monthly_limit: '1人あたり月額上限（円）',
       value_invalid_fixed: '0以上の整数を入力してください',
-      value_invalid_percentage: '0〜100の整数を入力してください',
+      value_invalid_percentage: '1〜100の整数を入力してください',
       monthly_limit_invalid: '0以上の整数を入力してください',
       save_success: '割引設定を保存しました',
       save_failed: '割引設定の保存に失敗しました',

@@ -34,7 +34,7 @@ const validateForm = (): boolean => {
         : t('admin.discount.value_invalid_percentage')
   } else if (discountType.value === 'fixed' && value < 0) {
     discountValueError.value = t('admin.discount.value_invalid_fixed')
-  } else if (discountType.value === 'percentage' && (value < 0 || value > 100)) {
+  } else if (discountType.value === 'percentage' && (value < 1 || value > 100)) {
     discountValueError.value = t('admin.discount.value_invalid_percentage')
   }
 
@@ -45,8 +45,11 @@ const validateForm = (): boolean => {
   return discountValueError.value == null && monthlyLimitError.value == null
 }
 
-watch(discountType, () => {
+watch(discountType, (newType, oldType) => {
   discountValueError.value = undefined
+  if (newType === 'percentage' && oldType != null && oldType !== 'percentage') {
+    discountValue.value = 50
+  }
 })
 
 const saveSettings = async () => {
@@ -88,6 +91,8 @@ const saveSettings = async () => {
         <v-text-field
           v-model.number="discountValue"
           type="number"
+          :min="discountType === 'percentage' ? 1 : 0"
+          :max="discountType === 'percentage' ? 100 : undefined"
           :suffix="discountValueSuffix"
           :label="discountType === 'fixed' ? $t('admin.discount.value_fixed') : $t('admin.discount.value_percentage')"
           :error-messages="discountValueError"
