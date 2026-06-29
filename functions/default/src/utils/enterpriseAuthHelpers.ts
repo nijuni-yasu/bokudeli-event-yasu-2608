@@ -12,11 +12,11 @@ function getTokenTenantId(token: Record<string, unknown>): string | undefined {
   return typeof tenant === 'string' && tenant !== '' ? tenant : undefined
 }
 
-export async function assertEnterpriseAdmin(auth: CallableRequest['auth'], enterpriseId: string): Promise<void> {
-  if (auth?.uid == null) {
-    throw new HttpsError('unauthenticated', 'not logged in')
-  }
-  const token = auth.token as Record<string, unknown>
+export async function assertEnterpriseAdminFromUid(
+  uid: string,
+  token: Record<string, unknown>,
+  enterpriseId: string,
+): Promise<void> {
   if (token.user_type !== 'enterprise') {
     throw new HttpsError('permission-denied', 'enterprise admin only')
   }
@@ -30,7 +30,7 @@ export async function assertEnterpriseAdmin(auth: CallableRequest['auth'], enter
   }
 
   const [member, enterprise] = await Promise.all([
-    getEnterpriseMember(enterpriseId, auth.uid),
+    getEnterpriseMember(enterpriseId, uid),
     getEnterpriseById(enterpriseId),
   ])
 
@@ -43,6 +43,13 @@ export async function assertEnterpriseAdmin(auth: CallableRequest['auth'], enter
   if (member == null || member.role !== 'admin' || !member.is_active) {
     throw new HttpsError('permission-denied', 'enterprise admin only')
   }
+}
+
+export async function assertEnterpriseAdmin(auth: CallableRequest['auth'], enterpriseId: string): Promise<void> {
+  if (auth?.uid == null) {
+    throw new HttpsError('unauthenticated', 'not logged in')
+  }
+  await assertEnterpriseAdminFromUid(auth.uid, auth.token as Record<string, unknown>, enterpriseId)
 }
 
 export function normalizeEnterpriseEmail(email: string): string {
