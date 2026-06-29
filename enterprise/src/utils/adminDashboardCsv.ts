@@ -6,9 +6,6 @@ import { formatDashboardMembersPeriodLabel, formatDashboardTimestamp } from '@/u
 
 const formatAmount = (amount: number) => priceString(amount)
 
-const billingStatusLabel = (status: DashboardMonthlyRow['billing_status']) =>
-  status === 'provisional' ? '見込み' : '確定'
-
 export function buildMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[]): string {
   const headers = [
     '年月',
@@ -21,7 +18,6 @@ export function buildMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[]): 
     '有効アカウント数',
     'プラットフォーム利用料',
     '合計請求見込額',
-    '確定状態',
   ]
   const data = rows.map((row) => [
     row.year_month,
@@ -34,7 +30,6 @@ export function buildMonthlyDashboardCsv(rows: readonly DashboardMonthlyRow[]): 
     String(row.active_account_count),
     formatAmount(row.platform_fee_amount),
     formatAmount(row.total_billing_amount),
-    billingStatusLabel(row.billing_status),
   ])
   return buildCsvContent(headers, data)
 }

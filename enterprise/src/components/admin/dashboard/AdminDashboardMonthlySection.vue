@@ -2,9 +2,9 @@
 import type { DashboardMonthlyRow } from '@shokujii/common/apis/dashboard.js'
 import { priceString } from '@shokujii/base/schemes/converter'
 import VueApexCharts from 'vue3-apexcharts'
+import { useTheme } from 'vuetify'
 import { mdiDownload } from '@mdi/js'
 import { downloadMonthlyDashboardCsv } from '@/utils/adminDashboardCsv'
-import { isCurrentCalendarMonth } from '@/utils/adminDashboardPeriod'
 
 const props = defineProps<{
   rows: DashboardMonthlyRow[]
@@ -12,13 +12,13 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const theme = useTheme()
+
+const showDetailColumns = ref(false)
 
 const chartMetric = ref<'session_count' | 'total_amount'>('session_count')
 
 const formatYen = (amount: number) => `${priceString(amount)}円`
-
-const billingStatusLabel = (row: DashboardMonthlyRow) =>
-  row.billing_status === 'provisional' ? t('admin.dashboard.billing_provisional') : t('admin.dashboard.billing_final')
 
 const chartCategories = computed(() => props.rows.map((row) => row.year_month))
 
@@ -34,6 +34,7 @@ const chartSeries = computed(() => [
 
 const chartOptions = computed(() => ({
   chart: { type: 'bar' as const, toolbar: { show: false } },
+  colors: [theme.current.value.colors.primary],
   plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
   dataLabels: { enabled: false },
   xaxis: { categories: chartCategories.value },
@@ -71,20 +72,26 @@ const downloadCsv = () => {
       </v-btn>
     </v-card-title>
     <v-card-text>
-      <v-alert type="info" variant="tonal" class="mb-4" density="comfortable">
-        {{ $t('admin.dashboard.monthly_note') }}
-      </v-alert>
-
-      <v-btn-toggle v-model="chartMetric" mandatory divided color="primary" class="mb-4">
-        <v-btn value="session_count">{{ $t('admin.dashboard.chart_session_count') }}</v-btn>
-        <v-btn value="total_amount">{{ $t('admin.dashboard.chart_total_amount') }}</v-btn>
-      </v-btn-toggle>
+      <div class="chart-metric-toggle-wrap mb-4">
+        <v-btn-toggle
+          v-model="chartMetric"
+          mandatory
+          divided
+          color="primary"
+          density="comfortable"
+          class="chart-metric-toggle w-100"
+        >
+          <v-btn value="session_count">{{ $t('admin.dashboard.chart_session_count') }}</v-btn>
+          <v-btn value="total_amount">{{ $t('admin.dashboard.chart_total_amount') }}</v-btn>
+        </v-btn-toggle>
+      </div>
 
       <div v-if="loading" class="py-8">
         <v-progress-linear indeterminate color="primary" />
       </div>
       <VueApexCharts
         v-else-if="rows.length > 0"
+        :key="chartMetric"
         type="bar"
         height="320"
         :options="chartOptions"
@@ -94,49 +101,81 @@ const downloadCsv = () => {
         {{ $t('admin.dashboard.no_data') }}
       </div>
 
-      <v-table v-if="rows.length > 0" class="mt-6">
-        <thead>
-          <tr>
-            <th>{{ $t('admin.dashboard.col_year_month') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_session_count') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_unique_users') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_total_amount') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_enterprise_subsidy') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_user_paid') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_enterprise_billing') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_active_accounts') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_platform_fee') }}</th>
-            <th class="text-right">{{ $t('admin.dashboard.col_total_billing') }}</th>
-            <th>{{ $t('admin.dashboard.col_billing_status') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in rows" :key="row.year_month">
-            <td>
-              {{ row.year_month }}
-              <v-chip
-                v-if="isCurrentCalendarMonth(row.year_month)"
-                size="x-small"
-                color="warning"
-                variant="tonal"
-                class="ml-2"
-              >
-                {{ $t('admin.dashboard.provisional_chip') }}
-              </v-chip>
-            </td>
-            <td class="text-right">{{ row.session_count }}</td>
-            <td class="text-right">{{ row.unique_users }}</td>
-            <td class="text-right">{{ formatYen(row.total_amount) }}</td>
-            <td class="text-right">{{ formatYen(row.enterprise_subsidy_amount) }}</td>
-            <td class="text-right">{{ formatYen(row.user_paid_amount) }}</td>
-            <td class="text-right">{{ formatYen(row.enterprise_billing_amount) }}</td>
-            <td class="text-right">{{ row.active_account_count }}</td>
-            <td class="text-right">{{ formatYen(row.platform_fee_amount) }}</td>
-            <td class="text-right">{{ formatYen(row.total_billing_amount) }}</td>
-            <td>{{ billingStatusLabel(row) }}</td>
-          </tr>
-        </tbody>
-      </v-table>
+      <div v-if="rows.length > 0" class="d-flex align-center justify-end mb-2 mt-6">
+        <v-switch
+          v-model="showDetailColumns"
+          :label="$t('admin.dashboard.show_detail_columns')"
+          hide-details
+          density="compact"
+        />
+      </div>
+
+      <div v-if="rows.length > 0" class="overflow-x-auto">
+        <v-table class="mt-2">
+          <thead>
+            <tr>
+              <th>{{ $t('admin.dashboard.col_year_month') }}</th>
+              <th class="text-right">{{ $t('admin.dashboard.col_session_count') }}</th>
+              <th class="text-right">{{ $t('admin.dashboard.col_unique_users') }}</th>
+              <th class="text-right">{{ $t('admin.dashboard.col_total_amount') }}</th>
+              <th v-if="showDetailColumns" class="text-right">
+                {{ $t('admin.dashboard.col_enterprise_subsidy') }}
+              </th>
+              <th v-if="showDetailColumns" class="text-right">{{ $t('admin.dashboard.col_user_paid') }}</th>
+              <th v-if="showDetailColumns" class="text-right">
+                {{ $t('admin.dashboard.col_enterprise_billing') }}
+              </th>
+              <th v-if="showDetailColumns" class="text-right">
+                {{ $t('admin.dashboard.col_active_accounts') }}
+              </th>
+              <th v-if="showDetailColumns" class="text-right">{{ $t('admin.dashboard.col_platform_fee') }}</th>
+              <th class="text-right">{{ $t('admin.dashboard.col_total_billing') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in rows" :key="row.year_month">
+              <td>{{ row.year_month }}</td>
+              <td class="text-right admin-tabular-nums">{{ row.session_count }}</td>
+              <td class="text-right admin-tabular-nums">{{ row.unique_users }}</td>
+              <td class="text-right admin-tabular-nums">{{ formatYen(row.total_amount) }}</td>
+              <td v-if="showDetailColumns" class="text-right admin-tabular-nums">
+                {{ formatYen(row.enterprise_subsidy_amount) }}
+              </td>
+              <td v-if="showDetailColumns" class="text-right admin-tabular-nums">
+                {{ formatYen(row.user_paid_amount) }}
+              </td>
+              <td v-if="showDetailColumns" class="text-right admin-tabular-nums">
+                {{ formatYen(row.enterprise_billing_amount) }}
+              </td>
+              <td v-if="showDetailColumns" class="text-right admin-tabular-nums">{{ row.active_account_count }}</td>
+              <td v-if="showDetailColumns" class="text-right admin-tabular-nums">
+                {{ formatYen(row.platform_fee_amount) }}
+              </td>
+              <td class="text-right admin-tabular-nums">{{ formatYen(row.total_billing_amount) }}</td>
+            </tr>
+          </tbody>
+        </v-table>
+      </div>
     </v-card-text>
   </v-card>
 </template>
+
+<style scoped lang="scss">
+/* v-btn-group は inline-flex のため親幅を指定しないとボタンが潰れてラベルが重なる */
+.chart-metric-toggle-wrap {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.chart-metric-toggle {
+  display: flex;
+  width: 100%;
+
+  :deep(.v-btn) {
+    flex: 1 1 50%;
+    min-width: 0;
+    white-space: nowrap;
+    padding-inline: 12px;
+  }
+}
+</style>

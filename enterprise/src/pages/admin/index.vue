@@ -5,8 +5,9 @@ import { getDashboardMemberData, getDashboardMonthlyData } from '@/apis/dashboar
 import AdminDashboardMemberSection from '@/components/admin/dashboard/AdminDashboardMemberSection.vue'
 import AdminDashboardMonthlySection from '@/components/admin/dashboard/AdminDashboardMonthlySection.vue'
 import AdminDashboardPeriodPicker from '@/components/admin/dashboard/AdminDashboardPeriodPicker.vue'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import { getEnterpriseIdFromToken } from '@/composable/useEnterpriseAdmin'
-import { getDefaultDashboardPeriod, type DashboardPeriod } from '@/utils/adminDashboardPeriod'
+import { getDefaultDashboardPeriod, validateDashboardPeriod, type DashboardPeriod } from '@/utils/adminDashboardPeriod'
 
 const { t } = useI18n()
 const notification = useNotification()
@@ -14,11 +15,13 @@ const notification = useNotification()
 const loading = ref(false)
 const enterpriseId = ref<string>()
 const period = ref<DashboardPeriod>(getDefaultDashboardPeriod())
+const periodError = computed(() => validateDashboardPeriod(period.value))
 const monthlyRows = ref<DashboardMonthlyRow[]>([])
 const memberRows = ref<DashboardMemberRow[]>([])
 
 const loadDashboard = async () => {
   if (enterpriseId.value == null) return
+  if (periodError.value != null) return
   loading.value = true
   try {
     const request = {
@@ -54,8 +57,8 @@ watch(
 </script>
 
 <template>
-  <div>
-    <h1 class="text-h5 mb-4">{{ $t('admin.dashboard.title') }}</h1>
+  <v-container>
+    <AdminPageHeader :title="$t('admin.dashboard.title')" />
 
     <AdminDashboardPeriodPicker v-model="period" />
 
@@ -67,7 +70,7 @@ watch(
       :start-year-month="period.start_year_month"
       :end-year-month="period.end_year_month"
     />
-  </div>
+  </v-container>
 </template>
 
 <route lang="yaml">

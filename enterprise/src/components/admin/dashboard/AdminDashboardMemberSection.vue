@@ -56,10 +56,10 @@ const downloadCsv = () => {
             <td>{{ row.display_name }}</td>
             <td>{{ row.email }}</td>
             <td>{{ row.department || '—' }}</td>
-            <td class="text-right">{{ row.session_count }}</td>
-            <td class="text-right">{{ formatYen(row.total_amount) }}</td>
-            <td class="text-right">{{ formatYen(row.enterprise_subsidy_amount) }}</td>
-            <td class="text-right">{{ formatYen(row.user_paid_amount) }}</td>
+            <td class="text-right admin-tabular-nums">{{ row.session_count }}</td>
+            <td class="text-right admin-tabular-nums">{{ formatYen(row.total_amount) }}</td>
+            <td class="text-right admin-tabular-nums">{{ formatYen(row.enterprise_subsidy_amount) }}</td>
+            <td class="text-right admin-tabular-nums">{{ formatYen(row.user_paid_amount) }}</td>
           </tr>
         </tbody>
       </v-table>
