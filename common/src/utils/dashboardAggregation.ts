@@ -7,7 +7,8 @@ import {
 } from './isEnterpriseMemberBillableInYearMonth.js'
 import type { DashboardBillingStatus, DashboardMemberRow, DashboardMonthlyRow } from '../apis/dashboard.js'
 
-export const MAX_DASHBOARD_PERIOD_MONTHS = 24
+export const MAX_DASHBOARD_PERIOD_MONTHS = 12
+export const DEFAULT_DASHBOARD_PERIOD_MONTHS = 3
 
 export type DashboardOrderLine = {
   user_id: string

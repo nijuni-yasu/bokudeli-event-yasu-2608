@@ -49,13 +49,13 @@ const members = [
 ]
 
 describe('validateDashboardPeriod', () => {
-  it('24 ヶ月以内は OK', () => {
-    expect(() => validateDashboardPeriod('2024-01', '2025-12')).not.toThrow()
-    expect(countMonthsInRange('2024-01', '2025-12')).toBe(24)
+  it('12 ヶ月以内は OK', () => {
+    expect(() => validateDashboardPeriod('2025-07', '2026-06')).not.toThrow()
+    expect(countMonthsInRange('2025-07', '2026-06')).toBe(12)
   })
 
-  it('25 ヶ月超はエラー', () => {
-    expect(() => validateDashboardPeriod('2024-01', '2026-01')).toThrow(DashboardPeriodError)
+  it('13 ヶ月超はエラー', () => {
+    expect(() => validateDashboardPeriod('2025-01', '2026-01')).toThrow(DashboardPeriodError)
   })
 
   it('start > end はエラー', () => {
