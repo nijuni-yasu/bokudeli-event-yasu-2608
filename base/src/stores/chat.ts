@@ -443,7 +443,18 @@ export const useChatStore = defineStore('chat', () => {
     })
   }
 
-  const subscribeMessages = (roomId: string, userId: string) => {
+  const tryMarkLatestMessagesAsRead = (roomId: string, userId: string): void => {
+    if (activeRoomId.value !== roomId || messages.value.length === 0) {
+      return
+    }
+    const maxCreatedAt = messages.value.reduce((max, message) => Math.max(max, message.createdAt), 0)
+    if (maxCreatedAt > lastMarkedReadMaxCreatedAt) {
+      lastMarkedReadMaxCreatedAt = maxCreatedAt
+      void markAsRead(roomId, userId)
+    }
+  }
+
+  const subscribeMessages = (roomId: string) => {
     messagesUnsubscribe?.()
     messages.value = []
     oldestMessageSnapshot = null
@@ -462,12 +473,6 @@ export const useChatStore = defineStore('chat', () => {
       if (oldestMessageSnapshot == null) {
         oldestMessageSnapshot = snapshot.docs[snapshot.docs.length - 1] ?? null
         hasMoreMessages.value = snapshot.docs.length >= MESSAGES_PAGE_SIZE
-      }
-
-      const maxCreatedAt = incoming.reduce((max, message) => Math.max(max, message.createdAt), 0)
-      if (activeRoomId.value === roomId && maxCreatedAt > lastMarkedReadMaxCreatedAt) {
-        lastMarkedReadMaxCreatedAt = maxCreatedAt
-        void markAsRead(roomId, userId)
       }
     })
   }
@@ -497,9 +502,9 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  const openRoom = (roomId: string, userId: string) => {
+  const openRoom = (roomId: string) => {
     subscribeRoom(roomId)
-    subscribeMessages(roomId, userId)
+    subscribeMessages(roomId)
   }
 
   const getImageDimensions = async (file: File): Promise<{ width: number; height: number }> => {
@@ -638,6 +643,7 @@ export const useChatStore = defineStore('chat', () => {
     sendMessage,
     recallMessage,
     markAsRead,
+    tryMarkLatestMessagesAsRead,
     requestOpenChatList,
     unsubscribeAll,
     unsubscribeActiveRoom,

@@ -208,9 +208,18 @@ const scrollToBottomInChatLog = () => {
   })
 }
 
-const ensureRoomOpened = (roomId: string, userId: string): void => {
+const tryMarkActiveRoomAsRead = (): void => {
+  const userId = currentUserId.value
+  const roomId = store.activeRoomId
+  if (userId === '' || roomId == null) {
+    return
+  }
+  store.tryMarkLatestMessagesAsRead(roomId, userId)
+}
+
+const ensureRoomOpened = (roomId: string): void => {
   if (needsOpenRoom(roomId)) {
-    store.openRoom(roomId, userId)
+    store.openRoom(roomId)
     scrollToBottomInChatLog()
   }
 }
@@ -218,6 +227,9 @@ const ensureRoomOpened = (roomId: string, userId: string): void => {
 const onChatLogScroll = (event: Event) => {
   const target = event.target as HTMLElement
   updateIsNearBottom(target)
+  if (isNearBottom.value) {
+    tryMarkActiveRoomAsRead()
+  }
   if (target.scrollTop <= 48 && store.hasMoreMessages && !store.isLoadingOlderMessages) {
     void loadOlderMessages()
   }
@@ -244,12 +256,13 @@ const openRoom = async (roomId: string) => {
   if (props.roomId !== roomId) {
     navigateToChatPath(roomId)
   }
-  store.openRoom(roomId, userId)
+  store.openRoom(roomId)
   msg.value = ''
   if (vuetifyDisplays.smAndDown.value) {
     isLeftSidebarOpen.value = false
   }
   scrollToBottomInChatLog()
+  tryMarkActiveRoomAsRead()
 }
 
 const sendMessage = async () => {
@@ -345,7 +358,7 @@ watch(
         openMobileChatList()
         const lastRoomId = store.activeRoomId
         if (lastRoomId != null && rooms.some((room) => room.roomId === lastRoomId)) {
-          ensureRoomOpened(lastRoomId, userId)
+          ensureRoomOpened(lastRoomId)
         }
         return
       }
@@ -354,13 +367,13 @@ watch(
       if (props.roomId !== targetRoomId) {
         navigateToChatPath(targetRoomId, true)
       }
-      ensureRoomOpened(targetRoomId, userId)
+      ensureRoomOpened(targetRoomId)
       return
     }
 
     const roomInList = rooms.some((room) => room.roomId === roomId)
     if (roomInList) {
-      ensureRoomOpened(roomId, userId)
+      ensureRoomOpened(roomId)
       return
     }
 
@@ -389,7 +402,7 @@ watch(
     }
 
     clearPendingRoomTimeout()
-    ensureRoomOpened(roomId, userId)
+    ensureRoomOpened(roomId)
   },
 )
 
@@ -415,6 +428,7 @@ watch(
   () => {
     if (isNearBottom.value) {
       scrollToBottomInChatLog()
+      tryMarkActiveRoomAsRead()
     }
   },
 )
