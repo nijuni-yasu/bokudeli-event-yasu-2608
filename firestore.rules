@@ -329,6 +329,10 @@ service cloud.firestore {
                 allow read: if isEnterpriseAdminMember(enterpriseId);
                 allow write: if false;
             }
+            match /invoice_files/{yearMonth} {
+                allow read: if isEnterpriseAdminMember(enterpriseId);
+                allow write: if false;
+            }
         }
         // collection group query 用ルール（/{path=**} 配下にネスト。フラットな /{path=**}/member_orders は評価されない）
         match /{path=**} {

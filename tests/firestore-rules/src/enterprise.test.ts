@@ -595,4 +595,54 @@ describe('enterprise firestore rules', () => {
         .get(),
     )
   })
+
+  it('enterprise admin は invoice_files を read できる', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('enterprises').doc('ent-a').collection('members').doc('admin-a').set({
+        role: 'admin',
+        is_active: true,
+      })
+      await context
+        .firestore()
+        .collection('enterprises')
+        .doc('ent-a')
+        .collection('invoice_files')
+        .doc('2026-06')
+        .set({
+          year_month: '2026-06',
+          gcs_id: 'cached-invoice-id',
+          created_at: new Date(),
+        })
+    })
+
+    const admin = enterpriseAuth('admin-a', 'ent-a', TENANT_A, { enterprise_role: 'admin' })
+    await assertSucceeds(
+      admin.firestore().collection('enterprises').doc('ent-a').collection('invoice_files').doc('2026-06').get(),
+    )
+  })
+
+  it('一般 member は invoice_files を read できない', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('enterprises').doc('ent-a').collection('members').doc('user-a').set({
+        role: 'member',
+        is_active: true,
+      })
+      await context
+        .firestore()
+        .collection('enterprises')
+        .doc('ent-a')
+        .collection('invoice_files')
+        .doc('2026-06')
+        .set({
+          year_month: '2026-06',
+          gcs_id: 'cached-invoice-id',
+          created_at: new Date(),
+        })
+    })
+
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A)
+    await assertFails(
+      member.firestore().collection('enterprises').doc('ent-a').collection('invoice_files').doc('2026-06').get(),
+    )
+  })
 })
