@@ -3,7 +3,7 @@ import type { EnterpriseMemberListItem } from '@shokujii/common/apis/enterprise.
 import type { EnterpriseMemberRoleType } from '@shokujii/common/schemas/Enterprise.js'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { convertToDate } from '@shokujii/common/utils/datetime.js'
-import { mdiAccountPlus, mdiUpload } from '@mdi/js'
+import { mdiAccountPlus, mdiArrowDown, mdiArrowUp, mdiDotsVertical, mdiUpload } from '@mdi/js'
 import {
   createEnterpriseMembers,
   disableEnterpriseMember,
@@ -12,6 +12,8 @@ import {
   updateEnterpriseMember,
   updateEnterpriseRole,
 } from '@/apis/enterprise'
+import AdminEmptyState from '@/components/admin/AdminEmptyState.vue'
+import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
 import { getEnterpriseIdFromToken } from '@/composable/useEnterpriseAdmin'
 import { getAdminMembersImportPath } from '@/router/utils'
 
@@ -28,7 +30,7 @@ const pageSize = 50
 const search = ref('')
 const roleFilter = ref<EnterpriseMemberRoleType | 'all'>('all')
 const activeFilter = ref<boolean | 'all'>('all')
-const sortBy = ref<'display_name' | 'department' | 'role' | 'is_active' | 'created_at' | 'monthly_usage'>('created_at')
+const sortBy = ref<'display_name' | 'department' | 'role' | 'is_active' | 'created_at'>('created_at')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const showAddDialog = ref(false)
@@ -39,6 +41,27 @@ const confirmDialog = reactive({ open: false, title: '', message: '', action: as
 const submitting = ref(false)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
+
+const paginationRangeText = computed(() => {
+  if (totalCount.value === 0) {
+    return t('admin.common.pagination_empty')
+  }
+  const start = (page.value - 1) * pageSize + 1
+  const end = Math.min(page.value * pageSize, totalCount.value)
+  return t('admin.common.pagination_range', { total: totalCount.value, start, end })
+})
+
+const hasActiveFilters = computed(
+  () => search.value.trim() !== '' || roleFilter.value !== 'all' || activeFilter.value !== 'all',
+)
+
+const roleLabel = (role: EnterpriseMemberRoleType) =>
+  role === 'admin' ? t('admin.members.role_admin') : t('admin.members.role_member')
+
+const sortIcon = (column: typeof sortBy.value) => {
+  if (sortBy.value !== column) return undefined
+  return sortOrder.value === 'asc' ? mdiArrowUp : mdiArrowDown
+}
 
 const loadMembers = async () => {
   if (enterpriseId.value == null) return
@@ -175,35 +198,40 @@ const confirmEnable = (member: EnterpriseMemberListItem) => {
   confirmDialog.open = true
 }
 
-const changeRole = async (member: EnterpriseMemberListItem, role: EnterpriseMemberRoleType) => {
-  if (enterpriseId.value == null || member.role === role) return
-  try {
-    await updateEnterpriseRole({ enterprise_id: enterpriseId.value, user_id: member.user_id, role })
-    notification.show(t('admin.members.role_success'), 'success')
-    await loadMembers()
-  } catch (error: unknown) {
-    const message =
-      typeof error === 'object' && error != null && 'message' in error
-        ? String((error as { message: unknown }).message)
-        : t('admin.members.role_failed')
-    notification.show(message, 'error')
+const confirmRoleChange = (member: EnterpriseMemberListItem, role: EnterpriseMemberRoleType) => {
+  if (member.role === role) return
+  confirmDialog.title = t('admin.members.role_change_title')
+  confirmDialog.message = t('admin.members.role_change_message', { name: member.display_name, role: roleLabel(role) })
+  confirmDialog.action = async () => {
+    if (enterpriseId.value == null) return
+    try {
+      await updateEnterpriseRole({ enterprise_id: enterpriseId.value, user_id: member.user_id, role })
+      notification.show(t('admin.members.role_success'), 'success')
+      await loadMembers()
+    } catch (error: unknown) {
+      const message =
+        typeof error === 'object' && error != null && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : t('admin.members.role_failed')
+      notification.show(message, 'error')
+    }
   }
+  confirmDialog.open = true
 }
 </script>
 
 <template>
   <v-container>
-    <div class="d-flex flex-wrap align-center justify-space-between mb-6 ga-3">
-      <h1 class="text-h4">{{ $t('admin.members.title') }}</h1>
-      <div class="d-flex ga-2">
+    <AdminPageHeader :title="$t('admin.members.title')">
+      <template #actions>
         <v-btn variant="outlined" :prepend-icon="mdiUpload" @click="router.push(getAdminMembersImportPath())">
           {{ $t('admin.members.csv_import') }}
         </v-btn>
         <v-btn color="primary" :prepend-icon="mdiAccountPlus" @click="openAddDialog">
           {{ $t('admin.members.add') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </AdminPageHeader>
 
     <v-card>
       <v-card-text>
@@ -254,72 +282,112 @@ const changeRole = async (member: EnterpriseMemberListItem, role: EnterpriseMemb
 
       <v-progress-linear v-if="loading" indeterminate />
 
-      <div class="overflow-x-auto">
-        <v-table density="comfortable">
-          <thead>
-            <tr>
-              <th class="cursor-pointer" @click="toggleSort('display_name')">{{ $t('admin.members.col_name') }}</th>
-              <th>{{ $t('admin.members.col_email') }}</th>
-              <th class="cursor-pointer" @click="toggleSort('department')">{{ $t('admin.members.col_department') }}</th>
-              <th class="cursor-pointer" @click="toggleSort('role')">{{ $t('admin.members.col_role') }}</th>
-              <th class="cursor-pointer" @click="toggleSort('is_active')">{{ $t('admin.members.col_status') }}</th>
-              <th class="cursor-pointer" @click="toggleSort('created_at')">{{ $t('admin.members.col_created') }}</th>
-              <th>{{ $t('admin.members.col_actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="member in members" :key="member.user_id">
-              <td>{{ member.display_name }}</td>
-              <td>{{ member.email }}</td>
-              <td>{{ member.department ?? '' }}</td>
-              <td>
-                <v-select
-                  :model-value="member.role"
-                  :items="[
-                    { title: $t('admin.members.role_admin'), value: 'admin' },
-                    { title: $t('admin.members.role_member'), value: 'member' },
-                  ]"
-                  item-title="title"
-                  item-value="value"
-                  density="compact"
-                  hide-details
-                  variant="outlined"
-                  @update:model-value="(value) => changeRole(member, value as EnterpriseMemberRoleType)"
-                />
-              </td>
-              <td>
-                <v-chip :color="member.is_active ? 'success' : 'error'" size="small">
-                  {{ member.is_active ? $t('admin.members.status_active') : $t('admin.members.status_inactive') }}
-                </v-chip>
-              </td>
-              <td>{{ convertToDate(member.created_at) }}</td>
-              <td>
-                <v-btn size="small" variant="text" @click="openEditDialog(member)">{{
-                  $t('admin.members.edit')
-                }}</v-btn>
-                <v-btn
-                  v-if="member.is_active"
-                  size="small"
-                  variant="text"
-                  color="error"
-                  @click="confirmDisable(member)"
-                >
-                  {{ $t('admin.members.disable') }}
-                </v-btn>
-                <v-btn v-else size="small" variant="text" color="primary" @click="confirmEnable(member)">
-                  {{ $t('admin.members.enable') }}
-                </v-btn>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-      </div>
+      <AdminEmptyState
+        v-else-if="members.length === 0"
+        :message="hasActiveFilters ? $t('admin.members.empty_filtered') : $t('admin.members.empty')"
+      >
+        <template v-if="!hasActiveFilters" #actions>
+          <v-btn variant="outlined" :prepend-icon="mdiUpload" @click="router.push(getAdminMembersImportPath())">
+            {{ $t('admin.members.csv_import') }}
+          </v-btn>
+          <v-btn color="primary" :prepend-icon="mdiAccountPlus" @click="openAddDialog">
+            {{ $t('admin.members.add') }}
+          </v-btn>
+        </template>
+      </AdminEmptyState>
 
-      <v-card-actions class="justify-center py-2">
-        <v-btn :disabled="page <= 1" @click="page -= 1">{{ $t('admin.members.prev_page') }}</v-btn>
-        <span>{{ page }} / {{ totalPages }} ({{ totalCount }})</span>
-        <v-btn :disabled="page >= totalPages" @click="page += 1">{{ $t('admin.members.next_page') }}</v-btn>
-      </v-card-actions>
+      <template v-else>
+        <div class="overflow-x-auto">
+          <v-table density="comfortable">
+            <thead>
+              <tr>
+                <th class="admin-sortable-th" @click="toggleSort('display_name')">
+                  {{ $t('admin.members.col_name') }}
+                  <v-icon v-if="sortIcon('display_name') != null" :icon="sortIcon('display_name')" size="small" />
+                </th>
+                <th>{{ $t('admin.members.col_email') }}</th>
+                <th class="admin-sortable-th" @click="toggleSort('department')">
+                  {{ $t('admin.members.col_department') }}
+                  <v-icon v-if="sortIcon('department') != null" :icon="sortIcon('department')" size="small" />
+                </th>
+                <th class="admin-sortable-th" @click="toggleSort('role')">
+                  {{ $t('admin.members.col_role') }}
+                  <v-icon v-if="sortIcon('role') != null" :icon="sortIcon('role')" size="small" />
+                </th>
+                <th class="admin-sortable-th" @click="toggleSort('is_active')">
+                  {{ $t('admin.members.col_status') }}
+                  <v-icon v-if="sortIcon('is_active') != null" :icon="sortIcon('is_active')" size="small" />
+                </th>
+                <th class="admin-sortable-th" @click="toggleSort('created_at')">
+                  {{ $t('admin.members.col_created') }}
+                  <v-icon v-if="sortIcon('created_at') != null" :icon="sortIcon('created_at')" size="small" />
+                </th>
+                <th>{{ $t('admin.members.col_actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="member in members" :key="member.user_id">
+                <td>{{ member.display_name }}</td>
+                <td>{{ member.email }}</td>
+                <td>{{ member.department ?? '' }}</td>
+                <td>
+                  <v-chip size="small" :color="member.role === 'admin' ? 'primary' : undefined" variant="tonal">
+                    {{ roleLabel(member.role) }}
+                  </v-chip>
+                </td>
+                <td>
+                  <v-chip :color="member.is_active ? 'success' : 'error'" size="small">
+                    {{ member.is_active ? $t('admin.members.status_active') : $t('admin.members.status_inactive') }}
+                  </v-chip>
+                </td>
+                <td>{{ convertToDate(member.created_at) }}</td>
+                <td>
+                  <v-menu location="bottom end">
+                    <template #activator="{ props: menuProps }">
+                      <v-btn
+                        size="small"
+                        variant="text"
+                        icon
+                        v-bind="menuProps"
+                        :aria-label="$t('admin.members.col_actions')"
+                      >
+                        <v-icon :icon="mdiDotsVertical" />
+                      </v-btn>
+                    </template>
+                    <v-list density="compact" min-width="180">
+                      <v-list-item :title="$t('admin.members.edit')" @click="openEditDialog(member)" />
+                      <v-list-item
+                        v-if="member.role !== 'admin'"
+                        :title="$t('admin.members.role_admin')"
+                        @click="confirmRoleChange(member, 'admin')"
+                      />
+                      <v-list-item
+                        v-if="member.role !== 'member'"
+                        :title="$t('admin.members.role_member')"
+                        @click="confirmRoleChange(member, 'member')"
+                      />
+                      <v-divider />
+                      <v-list-item
+                        v-if="member.is_active"
+                        :title="$t('admin.members.disable')"
+                        base-color="error"
+                        @click="confirmDisable(member)"
+                      />
+                      <v-list-item v-else :title="$t('admin.members.enable')" @click="confirmEnable(member)" />
+                    </v-list>
+                  </v-menu>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+
+        <v-card-actions class="justify-center py-2 flex-wrap ga-2">
+          <v-btn :disabled="page <= 1" @click="page -= 1">{{ $t('admin.members.prev_page') }}</v-btn>
+          <span>{{ paginationRangeText }}</span>
+          <v-btn :disabled="page >= totalPages" @click="page += 1">{{ $t('admin.members.next_page') }}</v-btn>
+        </v-card-actions>
+      </template>
     </v-card>
 
     <v-dialog v-model="showAddDialog" max-width="520">
@@ -327,7 +395,7 @@ const changeRole = async (member: EnterpriseMemberListItem, role: EnterpriseMemb
         <v-card-title>{{ $t('admin.members.add_title') }}</v-card-title>
         <v-card-text>
           <div class="d-flex flex-column ga-4">
-            <v-text-field v-model="addForm.email" :label="$t('admin.members.col_email')" />
+            <v-text-field v-model="addForm.email" type="email" :label="$t('admin.members.col_email')" />
             <v-text-field v-model="addForm.display_name" :label="$t('admin.members.col_name')" />
             <v-text-field v-model="addForm.department" :label="$t('admin.members.col_department')" />
             <v-select
@@ -373,12 +441,6 @@ const changeRole = async (member: EnterpriseMemberListItem, role: EnterpriseMemb
     </confirm-dialog>
   </v-container>
 </template>
-
-<style scoped>
-.cursor-pointer {
-  cursor: pointer;
-}
-</style>
 
 <route lang="yaml">
 meta:
