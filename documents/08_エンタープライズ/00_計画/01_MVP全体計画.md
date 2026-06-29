@@ -22,19 +22,19 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-06-27**（WS-B B-1〜B-6 ✅、C-1 PoC + G1 通過。3 軸モデル・publish_scope 移行は Phase 2 継続）
+最終更新: **2026-06-29**（D-2 / D-3 / D-4 / D-6 / D-7・E-4 実装完了を反映）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
 | WS-A（Phase 0） | 5 | 1 | 6 |
 | WS-B（IdP・本番前） | 6 | 0 | 6 |
 | WS-C（スキーマ・MVP 最小） | 2 | 0 | 2 |
-| WS-D（v0.1 残） | 0 | 5 | 5 |
-| WS-E（前倒し） | 0 | 5 | 5 |
+| WS-D（v0.1 残） | 5 | 2 | 7 |
+| WS-E（前倒し） | 1 | 3 | 4 |
 | WS-F（PF 露出） | 0 | 2 | 2 |
 | **WS-M（development マージ）** | **7** | **5** | **12** |
 | WS-G（Phase 2・MVP 外） | 0 | 8 | 8 |
-| **WS-A〜F 全タスク** | **11** | **13** | **24** |
+| **WS-A〜F 全タスク** | **17** | **9** | **26** |
 | ゲート G1〜G3 | 3 | 0 | 3 |
 | 本番ブロッカー RC | 4 | 0 | 4 |
 
@@ -119,7 +119,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | ✅ | B-5 | クライアント tenantId 設定・ログイン UI・guard | PA-03a-c | 本番前 | B-1 |
 | ✅ | B-6 | 同一メール衝突方針の正式化 | PA-04 | 本番前 | B-2 |
 
-**メモ**: 現行コードは claims + OTP（project-level `getAuth()`）。IdP テナントは未導入。**仕様正本**: [05_認証・テナント](../10_仕様/05_認証・テナント.md) §0（`tenant_id` / `EnterpriseMember.user_email` / 同一メール共存確定。[#2121](https://github.com/nijuniinc/bokudeli-event-new/issues/2121)）。
+**メモ**: **B-1〜B-6 ✅** — Identity Platform テナント認証・onboarding・Rules tenant 照合・クライアント `auth.tenantId` 設定済（[#2121](https://github.com/nijuniinc/bokudeli-event-new/issues/2121)）。**仕様正本**: [05_認証・テナント](../10_仕様/05_認証・テナント.md) §0。
 
 ### WS-C: スキーマ基盤（MVP: C-1 PoC + C-5。本実装は Phase 2）
 
@@ -141,12 +141,21 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
 | - [ ] | D-1 | メール配信制御（エンプラのイベント/ユーザーに PF 不要メールを送らない） | 10_仕様/04_メール | 必須 | — |
-| - [ ] | D-2 | ダッシュボード＋ CSV（月別/メンバー別の回数・人数・金額） | 10_仕様/04_ダッシュボード | 必須 | — |
-| - [ ] | D-3 | 監査ログ閲覧 UI＋取得 Callable（書き込みは実装済み） | 10_仕様/04_監査 | 必須 | — |
-| - [ ] | D-4 | 課金スナップショット Scheduled Function（毎月 1 日） | 10_仕様/03_課金 | 必須 | — |
+| ✅ | D-2 | ダッシュボード＋ CSV（月別/メンバー別の回数・人数・金額） | 10_仕様/04_ダッシュボード | 必須 | — |
+| ✅ | D-3 | 監査ログ閲覧 UI＋取得 Callable（書き込みは実装済み） | 10_仕様/04_監査 | 必須 | — |
+| ✅ | D-4 | 課金スナップショット Scheduled Function（毎月 1 日） | 10_仕様/03_課金 | 必須 | — |
 | - [ ] | D-5 | マイページ・友人の認可レイヤ（enterprise_id フィルタ） | 10_仕様/04_マイページ | 必須 | — |
+| ✅ | D-6 | 月次請求書 PDF Function（`enterpriseBillInvoice` + docx テンプレート + GCS） | 10_仕様/04_請求 §3 | 必須 | D-4（推奨） |
+| ✅ | D-7 | 全社管理者 `/admin/invoices` 画面 + ナビ | 10_仕様/04_請求 §3 / 04_ダッシュボード D-17 | 必須 | D-6, D-2 |
 
-**メモ**: D-3 の **writeAuditLog（書き込み）** は v0.1 実装済。`/admin/audit-logs`・`getEnterpriseAuditLogs` は未。**D-2** は MVP では `enterprise_id` ＋ **`is_public`** による一覧・集計で実装可。`publish_scope` クエリへの切替は Phase 2（G-6）後。正本: [`04_詳細_ダッシュボード.md`](../10_仕様/04_詳細_ダッシュボード.md)（#2126）。E-4 利用状況タブ（#2125）と役割分担 — §1.3。
+**メモ**
+
+- **D-2 ✅** — [#2126](https://github.com/nijuniinc/bokudeli-event-new/issues/2126)。`/admin` ダッシュボード・期間ピッカー（初期 3 ヶ月・最大 12 ヶ月）・月別/メンバー別集計・CSV。`enterprise_id` ＋ `is_public` ベース。`billing_snapshots` merge（D-4 連携）含む。
+- **D-3 ✅** — [#2128](https://github.com/nijuniinc/bokudeli-event-new/issues/2128)。`/admin/audit-logs`・`getEnterpriseAuditLogs` Callable。writeAuditLog（v0.1）は従来どおり。
+- **D-4 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`captureEnterpriseBillingSnapshots` cron + recapture Callable。`invoice_files` 削除・recapture 年月ガード含む。
+- **D-5**: コミュニティ一覧等に `enterprise_id` フィルタは部分実装。**未**: RC-44（`/u/:userId` の他社・停止メンバーゲート）。
+- **D-6 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`enterpriseBillInvoice` HTTP + docx テンプレ + GCS。`invoice_files` による冪等キャッシュ。
+- **D-7 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`/admin/invoices` 一覧 + PDF viewer。`billing_status: final` の月のみ DL 可。
 
 ### WS-E: 機能拡張・仕様変更（v0.3 MVP 前倒し）
 
@@ -154,10 +163,10 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 |:--|:--|:--|:--|:--|:--|
 | - [ ] | E-2 | 全社管理者の全イベント編集権限【前倒し】 | D-8 | 必須 | — |
 | - [ ] | E-3 | セッションタイムアウト 1 週間【前倒し・v0.1 上書き】 | D-9 | 必須 | — |
-| - [ ] | E-4 | マイページ：福利厚生割の利用状況表示【前倒し】 | D-10 | 必須 | — |
+| ✅ | E-4 | マイページ：福利厚生割の利用状況表示【前倒し】 | D-10 | 必須 | — |
 | - [ ] | E-5 | コミュニティ一括作成のデフォルト画像ランダム付与 | D-11 | 必須 | — |
 
-**メモ**: **E-1**（参加方式 `join_type`）・**E-6**（`access_password`）は **WS-G G-5 / G-6** へ移行（Phase 2）。**E-3** は `useSessionTimeout` あり（現状 1 時間）。仕様の 1 週間には未対応。
+**メモ**: **E-4 ✅** — [#2125](https://github.com/nijuniinc/bokudeli-event-new/issues/2125)。マイページ `?tab=usage` 利用状況タブ（本人のみ・`monthly_limit_per_user` あり時）。**E-1**（参加方式 `join_type`）・**E-6**（`access_password`）は **WS-G G-5 / G-6** へ移行（Phase 2）。**E-3** は `useSessionTimeout` あり（現状 1 時間）。仕様の 1 週間には未対応。
 
 ### WS-F: PF 版データ露出フィルタ（v0.3 §3・MVP 必須・独立）
 
@@ -210,7 +219,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | **Merge** | **WS-M** | #2071 を PF 版影響ゼロで `development` へ取り込み |
 | Phase 0 | WS-A（A-4 を除く本ブランチ分 ＋ A-4 は #2090 別 PR）／ WS-F（独立着手可） | リリース独立・テスト独立・越境ログイン抑止・PF 露出防止 |
 | Phase 1 | WS-B（**B-1〜B-6 ✅**）／ WS-C（**C-1 ✅**、**G1 ✅**、C-5 ✅） | 本番投入の認証基盤 ＋ 型分岐方式確定 |
-| MVP 仕上げ | WS-D（v0.1 残 5 件）／ WS-E（E-2〜E-5）／ WS-F 仕上げ | MVP 機能の完成（`is_public`・即参加モデル） |
+| MVP 仕上げ | WS-D（v0.1 残 7 件）／ WS-E（E-2〜E-5）／ WS-F 仕上げ | MVP 機能の完成（`is_public`・即参加モデル・月次請求書） |
 | Phase 2 | WS-G（3 軸・publish_scope・ゲスト等） | PF/エンプラ横断の機能拡張 |
 
 **フェーズ完了チェック**
@@ -221,7 +230,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - [ ] **MVP 仕上げ完了** — WS-D・WS-E（E-2〜E-5）・WS-F 全項目 ✅
 - [ ] **本番ブロッカー RC 全解消** — 下記 §本番ブロッカー 全項目 ✅
 
-WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5 認可・D-2 ダッシュボード）は WS-B と**並行可**。D-2 は MVP では `is_public` ベースの一覧・集計で実装する。
+WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5 認可・D-2 ダッシュボード・D-6/D-7 請求書）は WS-B と**並行可**。D-2 は MVP では `is_public` ベースの一覧・集計で実装する。**D-6 / D-7** は D-4 完了後の DL 出荷を推奨（`04_詳細_請求` §3.5）。
 
 ---
 
@@ -233,7 +242,7 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
           A-2/A-5/A-6 ───────────────────────┼─→ Phase 0 完了
 [Phase 1] G3 → B-2 → B-3（onboarding テナント化・本丸）─→ 本番投入可
           C-1（PoC）→ G1 ─→ 方式 H1 確定（WS-B/D/F と並行可）
-[MVP]     D-1・D-2・D-3・D-4・D-5・E-2〜E-5・F-1（並行・独立）
+[MVP]     D-1・D-2・D-3・D-4・D-5・D-6・D-7（D-4 → D-6 → D-7）・E-2〜E-5・F-1（並行・独立）
 [Phase 2] G-7（C-4 本実装）→ G-5（3 軸）→ G-6（publish_scope Migrate）→ G-1 / G-8
 ```
 
@@ -324,3 +333,5 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-27 | **PR-C1b 完了** — `eventWrite.ts` + `eventDraft` strict |
 | 2026-06-27 | **C-1 PoC 実装 + G1 通過**（poc/eventSchemaPoC。H1 採用確定） |
 | 2026-06-27 | **C-1 PoC を MVP 前倒し**（05_WS-C_C-1_PoC設計.md。H1 採用案・G1 条件）。G-7 は C-4 本実装のみ |
+| 2026-06-29 | **月次請求書 PDF を MVP 前倒し** — WS-D に D-6（`enterpriseBillInvoice`）・D-7（`/admin/invoices`）追加。`04_詳細_請求` B-1 更新、`03_課金` MVP-C を PDF 化 |
+| 2026-06-29 | 実装照合: **D-2 / D-3 / D-4 / D-6 / D-7 / E-4** を ✅ に更新。WS-D 5/7・WS-E 1/4・WS-A〜F 17/26 |
