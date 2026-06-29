@@ -12,7 +12,8 @@ service cloud.firestore {
         }
         // エンタープライズ: 認証ユーザーの claims とドキュメントの enterprise_id が一致
         function tokenTenantId() {
-            return request.auth.token.firebase.tenant;
+            let firebaseClaims = request.auth.token.get('firebase', null);
+            return firebaseClaims != null ? firebaseClaims.get('tenant', null) : null;
         }
         function isEnterpriseEmployee() {
             return request.auth != null

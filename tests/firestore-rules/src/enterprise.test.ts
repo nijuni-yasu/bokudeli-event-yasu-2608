@@ -24,16 +24,21 @@ function enterpriseAuth(
   tenantId: string,
   overrides: Record<string, unknown> = {},
 ) {
-  return testEnv.authenticatedContext(
-    userId,
-    {
-      enterprise_id: enterpriseId,
-      enterprise_role: 'member',
-      user_type: 'enterprise',
-      ...overrides,
+  const { firebase: firebaseOverrides, ...restOverrides } = overrides as {
+    firebase?: Record<string, unknown>
+  }
+  return testEnv.authenticatedContext(userId, {
+    enterprise_id: enterpriseId,
+    enterprise_role: 'member',
+    user_type: 'enterprise',
+    firebase: {
+      sign_in_provider: 'custom',
+      identities: {},
+      tenant: tenantId,
+      ...firebaseOverrides,
     },
-    { tenantId },
-  )
+    ...restOverrides,
+  })
 }
 
 async function seedEnterpriseTenant(context: RulesTestContext, enterpriseId: string, tenantId: string): Promise<void> {
