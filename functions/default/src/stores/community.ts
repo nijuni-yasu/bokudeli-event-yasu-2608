@@ -164,6 +164,36 @@ export const getCommunity = async (
   return snapshot.exists ? (snapshot.data() ?? undefined) : undefined
 }
 
+/**
+ * `communities/{communityId}` を一括取得する。
+ * 大量参照時は Firestore の getAll の上限を考慮して 100 件単位でチャンクする。
+ */
+export const getCommunitiesByIds = async (communityIds: readonly string[]): Promise<Map<string, ShokujiiCommunity>> => {
+  const result = new Map<string, ShokujiiCommunity>()
+  const uniqueIds = Array.from(new Set(communityIds.filter((id) => id !== '')))
+  if (uniqueIds.length === 0) {
+    return result
+  }
+  const db = getFirestore()
+  const CHUNK_SIZE = 100
+  for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+    const chunk = uniqueIds.slice(i, i + CHUNK_SIZE)
+    const docRefs = chunk.map((id) => db.collection('communities').doc(id).withConverter(communityConverter))
+    const snapshots = await db.getAll(...docRefs)
+    snapshots.forEach((snapshot) => {
+      if (!snapshot.exists) {
+        return
+      }
+      const data = snapshot.data() as ShokujiiCommunity | undefined
+      if (data == null) {
+        return
+      }
+      result.set(data.id, data)
+    })
+  }
+  return result
+}
+
 export const getCommunityByAccount = async (
   communityAccount: string,
   transaction?: Transaction,
