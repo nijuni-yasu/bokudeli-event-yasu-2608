@@ -12,6 +12,10 @@ vi.mock('firebase-functions/https', () => ({
   onCall: <T>(handler: T) => handler,
 }))
 
+vi.mock('../stores/enterpriseBillingSnapshot.js', () => ({
+  listBillingSnapshots: vi.fn(),
+}))
+
 vi.mock('../stores/enterprise.js', () => ({
   getEnterpriseById: vi.fn(),
   listEnterpriseMembers: vi.fn(),
@@ -41,6 +45,7 @@ import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterpris
 import { DateTime } from 'luxon'
 import { assertEnterpriseAdmin } from '../utils/enterpriseAuthHelpers.js'
 import { getEnterpriseById, listEnterpriseMembers } from '../stores/enterprise.js'
+import { listBillingSnapshots } from '../stores/enterpriseBillingSnapshot.js'
 import { getEventsInCommunities } from '../stores/event.js'
 import {
   listOrderCreateAuditLogs,
@@ -75,6 +80,8 @@ describe('getDashboardMonthlyData', () => {
     vi.mocked(listOrderCreateAuditLogs).mockReset()
     vi.mocked(getEventsInCommunities).mockReset()
     vi.mocked(getUserPersonalInformation).mockReset()
+    vi.mocked(listBillingSnapshots).mockReset()
+    vi.mocked(listBillingSnapshots).mockResolvedValue([])
   })
 
   it('assertEnterpriseAdmin を通過しないと拒否', async () => {

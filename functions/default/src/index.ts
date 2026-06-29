@@ -72,6 +72,8 @@ export const {
   getDashboardMonthlyData,
   getDashboardMemberData,
   getEnterpriseAuditLogs,
+  captureEnterpriseBillingSnapshots,
+  recaptureEnterpriseBillingSnapshot,
   firestoreExportDaily, firestoreExportWeekly, firestoreExportMonthly,
   storageBackupDaily, storageBackupWeekly, storageBackupMonthly,
   backupRetentionCleanup,
@@ -123,5 +125,6 @@ export const {
   import('./recallChatMessage.js'),
   import('./enterprise/dashboard.js'),
   import('./enterprise/auditLogs.js'),
+  import('./enterprise/billingSnapshots.js'),
   import('./backup/scheduled.js'),
 ])))
