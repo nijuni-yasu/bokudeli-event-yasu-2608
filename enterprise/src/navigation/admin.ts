@@ -1,11 +1,12 @@
 import type { NavLink } from '@layouts/types'
 import {
+  getAdminAuditLogsPath,
   getAdminCommunitiesPath,
   getAdminDashboardPath,
   getAdminMembersPath,
   getAdminSettingsPath,
 } from '@/router/utils'
-import { mdiAccountGroup, mdiCog, mdiOfficeBuildingCog, mdiViewDashboard } from '@mdi/js'
+import { mdiAccountGroup, mdiClipboardTextClock, mdiCog, mdiOfficeBuildingCog, mdiViewDashboard } from '@mdi/js'
 
 export const useAdminNavItems = (): NavLink[] => {
   const { t: $t } = useI18n()
@@ -29,6 +30,11 @@ export const useAdminNavItems = (): NavLink[] => {
       title: $t('admin.navigation.communities'),
       to: { path: getAdminCommunitiesPath() },
       icon: { icon: mdiOfficeBuildingCog },
+    },
+    {
+      title: $t('admin.navigation.audit_logs'),
+      to: { path: getAdminAuditLogsPath() },
+      icon: { icon: mdiClipboardTextClock },
     },
   ]
 }
