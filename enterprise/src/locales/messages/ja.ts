@@ -112,7 +112,6 @@ export default {
       logo_size_error: 'ロゴは2MB以下にしてください',
       logo_type_error: 'PNG / JPG / SVG のみアップロードできます',
       theme_color: 'テーマカラー',
-      theme_color_readonly: '変更する場合はお問い合わせください',
       subdomain: 'サブドメイン',
       custom_domain: 'カスタムドメイン',
       allowed_domains: '許可メールドメイン',

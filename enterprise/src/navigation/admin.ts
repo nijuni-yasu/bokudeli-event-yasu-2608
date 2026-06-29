@@ -2,11 +2,10 @@ import type { NavLink } from '@layouts/types'
 import {
   getAdminCommunitiesPath,
   getAdminDashboardPath,
-  getAdminDiscountPath,
   getAdminMembersPath,
   getAdminSettingsPath,
 } from '@/router/utils'
-import { mdiAccountGroup, mdiCog, mdiOfficeBuildingCog, mdiSale, mdiViewDashboard } from '@mdi/js'
+import { mdiAccountGroup, mdiCog, mdiOfficeBuildingCog, mdiViewDashboard } from '@mdi/js'
 
 export const useAdminNavItems = (): NavLink[] => {
   const { t: $t } = useI18n()
@@ -30,11 +29,6 @@ export const useAdminNavItems = (): NavLink[] => {
       title: $t('admin.navigation.communities'),
       to: { path: getAdminCommunitiesPath() },
       icon: { icon: mdiOfficeBuildingCog },
-    },
-    {
-      title: $t('admin.navigation.discount'),
-      to: { path: getAdminDiscountPath() },
-      icon: { icon: mdiSale },
     },
   ]
 }

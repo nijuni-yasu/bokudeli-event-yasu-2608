@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import type { EnterpriseDiscountType } from '@shokujii/common/schemas/Enterprise.js'
 import { getEnterpriseLogoStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { uploadImage, convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { updateEnterpriseSettings } from '@/apis/enterprise'
-import AdminPageHeader from '@/components/admin/AdminPageHeader.vue'
+import AdminDiscountSettingsSection from '@/components/admin/AdminDiscountSettingsSection.vue'
 import AdminReadonlyItem from '@/components/admin/AdminReadonlyItem.vue'
 import AdminReadonlySection from '@/components/admin/AdminReadonlySection.vue'
 import { getEnterpriseIdFromToken, loadEnterpriseDocument } from '@/composable/useEnterpriseAdmin'
@@ -22,6 +23,9 @@ const themeColor = ref('#1976D2')
 const subdomain = ref('')
 const customDomain = ref<string | undefined>()
 const allowedEmailDomains = ref<string[]>([])
+const discountType = ref<EnterpriseDiscountType>('fixed')
+const discountValue = ref(0)
+const monthlyLimitPerUser = ref(0)
 const logoFile = ref<File | null>(null)
 const logoPreviewUrl = ref('')
 
@@ -34,6 +38,8 @@ const customDomainDisplay = computed(() =>
 const allowedDomainsDisplay = computed(() =>
   allowedEmailDomains.value.length > 0 ? allowedEmailDomains.value.join(', ') : t('admin.common.not_set'),
 )
+
+const themeColorDisplay = computed(() => (themeColor.value.startsWith('#') ? themeColor.value : `#${themeColor.value}`))
 
 const loadSettings = async () => {
   loading.value = true
@@ -49,6 +55,9 @@ const loadSettings = async () => {
     subdomain.value = doc.subdomain
     customDomain.value = doc.custom_domain
     allowedEmailDomains.value = doc.allowed_email_domains
+    discountType.value = doc.discount_type
+    discountValue.value = doc.discount_value
+    monthlyLimitPerUser.value = doc.monthly_limit_per_user
   } finally {
     loading.value = false
   }
@@ -107,94 +116,109 @@ const saveSettings = async () => {
 
 <template>
   <v-container>
-    <AdminPageHeader :title="$t('admin.settings.title')" :description="$t('admin.settings.page_description')" />
+    <v-row justify="center">
+      <v-col cols="12" md="9">
+        <v-progress-linear v-if="loading" indeterminate class="mb-4 mt-4" />
 
-    <v-progress-linear v-if="loading" indeterminate class="mb-4" />
+        <template v-else>
+          <v-card class="mb-8">
+            <v-card-text class="pa-8">
+              <h2 class="text-h4 mb-2">{{ $t('admin.settings.title') }}</h2>
+              <v-alert type="info" variant="tonal" class="mb-6" density="comfortable">
+                {{ $t('admin.settings.page_description') }}
+              </v-alert>
 
-    <v-card v-else>
-      <v-card-text>
-        <v-row>
-          <v-col cols="12" md="8">
-            <div class="d-flex flex-column ga-6">
-              <div>
-                <div class="text-subtitle-1 mb-3">{{ $t('admin.settings.section_basic') }}</div>
-                <div class="d-flex flex-column ga-4">
-                  <v-text-field
-                    v-model="companyName"
-                    :label="$t('admin.settings.company_name')"
-                    maxlength="100"
-                    counter="100"
-                  />
-
-                  <div>
-                    <div class="text-body-2 mb-2">{{ $t('admin.settings.logo') }}</div>
-                    <p class="text-caption text-medium-emphasis mb-2">{{ $t('admin.settings.logo_hint') }}</p>
-                    <v-img
-                      v-if="logoPreviewUrl"
-                      :src="logoPreviewUrl"
-                      :alt="$t('admin.settings.logo')"
-                      max-width="120"
-                      max-height="120"
-                      class="mb-3"
+              <div class="d-flex flex-column ga-6">
+                <div>
+                  <div class="text-subtitle-1 mb-3">{{ $t('admin.settings.section_basic') }}</div>
+                  <div class="d-flex flex-column ga-4">
+                    <v-text-field
+                      v-model="companyName"
+                      :label="$t('admin.settings.company_name')"
+                      maxlength="100"
+                      counter="100"
                     />
-                    <v-btn variant="outlined" @click="($refs.logoInput as HTMLInputElement)?.click()">
-                      {{ $t('admin.settings.logo_select') }}
-                    </v-btn>
-                    <input
-                      ref="logoInput"
-                      type="file"
-                      accept="image/png,image/jpeg,image/svg+xml"
-                      hidden
-                      @change="handleLogoSelect"
-                    />
+
+                    <div>
+                      <div class="text-body-2 mb-2">{{ $t('admin.settings.logo') }}</div>
+                      <p class="text-caption text-medium-emphasis mb-2">{{ $t('admin.settings.logo_hint') }}</p>
+                      <v-img
+                        v-if="logoPreviewUrl"
+                        :src="logoPreviewUrl"
+                        :alt="$t('admin.settings.logo')"
+                        max-width="120"
+                        max-height="120"
+                        class="mb-3"
+                      />
+                      <v-btn variant="outlined" @click="($refs.logoInput as HTMLInputElement)?.click()">
+                        {{ $t('admin.settings.logo_select') }}
+                      </v-btn>
+                      <input
+                        ref="logoInput"
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml"
+                        hidden
+                        @change="handleLogoSelect"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <v-divider />
+                <v-divider />
 
-              <AdminReadonlySection :title="$t('admin.settings.section_appearance')">
-                <div class="d-flex align-center ga-3 mb-2">
-                  <div
-                    :style="{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: themeColor }"
-                    :aria-label="$t('admin.settings.theme_color')"
+                <AdminReadonlySection :title="$t('admin.settings.section_appearance')">
+                  <div class="d-flex align-center ga-3 mb-2">
+                    <div
+                      :style="{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: themeColor }"
+                      :aria-label="$t('admin.settings.theme_color')"
+                    />
+                    <span :style="{ color: themeColor }">{{ themeColorDisplay }}</span>
+                  </div>
+                </AdminReadonlySection>
+
+                <v-divider />
+
+                <AdminReadonlySection :title="$t('admin.settings.section_domain')">
+                  <AdminReadonlyItem :label="$t('admin.settings.subdomain')" :value="`${subdomain}.${baseDomain}`" />
+                  <AdminReadonlyItem :label="$t('admin.settings.custom_domain')" :value="customDomainDisplay" />
+                </AdminReadonlySection>
+
+                <v-divider />
+
+                <AdminReadonlySection :title="$t('admin.settings.section_auth')">
+                  <AdminReadonlyItem :label="$t('admin.settings.allowed_domains')" :value="allowedDomainsDisplay" />
+                </AdminReadonlySection>
+
+                <v-divider />
+
+                <AdminReadonlySection :title="$t('admin.settings.section_payment')">
+                  <AdminReadonlyItem
+                    :label="$t('admin.settings.default_payment_label')"
+                    :value="$t('admin.settings.default_payment')"
                   />
-                  <span class="text-medium-emphasis">{{ $t('admin.settings.theme_color_readonly') }}</span>
-                </div>
-              </AdminReadonlySection>
+                  <p class="text-caption text-medium-emphasis mt-1 mb-0">
+                    {{ $t('admin.settings.default_payment_hint') }}
+                  </p>
+                </AdminReadonlySection>
+              </div>
+            </v-card-text>
+            <v-card-actions class="justify-end px-8 pb-8 pt-0">
+              <v-btn color="primary" variant="flat" :loading="saving" @click="saveSettings">
+                {{ $t('admin.settings.save') }}
+              </v-btn>
+            </v-card-actions>
+          </v-card>
 
-              <v-divider />
-
-              <AdminReadonlySection :title="$t('admin.settings.section_domain')">
-                <AdminReadonlyItem :label="$t('admin.settings.subdomain')" :value="`${subdomain}.${baseDomain}`" />
-                <AdminReadonlyItem :label="$t('admin.settings.custom_domain')" :value="customDomainDisplay" />
-              </AdminReadonlySection>
-
-              <v-divider />
-
-              <AdminReadonlySection :title="$t('admin.settings.section_auth')">
-                <AdminReadonlyItem :label="$t('admin.settings.allowed_domains')" :value="allowedDomainsDisplay" />
-              </AdminReadonlySection>
-
-              <v-divider />
-
-              <AdminReadonlySection :title="$t('admin.settings.section_payment')">
-                <AdminReadonlyItem
-                  :label="$t('admin.settings.default_payment_label')"
-                  :value="$t('admin.settings.default_payment')"
-                />
-                <p class="text-caption text-medium-emphasis mt-1 mb-0">
-                  {{ $t('admin.settings.default_payment_hint') }}
-                </p>
-              </AdminReadonlySection>
-            </div>
-          </v-col>
-        </v-row>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn color="primary" :loading="saving" @click="saveSettings">{{ $t('admin.settings.save') }}</v-btn>
-      </v-card-actions>
-    </v-card>
+          <AdminDiscountSettingsSection
+            v-if="enterpriseId != null"
+            v-model:discount-type="discountType"
+            v-model:discount-value="discountValue"
+            v-model:monthly-limit-per-user="monthlyLimitPerUser"
+            :enterprise-id="enterpriseId"
+          />
+        </template>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
