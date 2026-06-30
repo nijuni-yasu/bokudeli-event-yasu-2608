@@ -189,6 +189,16 @@ export const createEnterpriseBillInvoice = async (
         generatedInvoiceId,
         existingInvoiceId,
       })
+      try {
+        await getInvoiceFile(enterpriseId, yearMonth, generatedInvoiceId).delete({ ignoreNotFound: true })
+      } catch (deleteError) {
+        logger.warn('Concurrent invoice generation orphan cleanup failed', {
+          enterpriseId,
+          yearMonth,
+          generatedInvoiceId,
+          deleteError,
+        })
+      }
       return existingInvoiceId
     }
   }

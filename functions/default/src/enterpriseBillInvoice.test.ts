@@ -6,6 +6,7 @@ const mockGcsFile = {
   exists: vi.fn(),
   createReadStream: vi.fn(),
   createWriteStream: vi.fn(),
+  delete: vi.fn(),
 }
 
 vi.mock('@google-cloud/storage', () => ({
@@ -107,6 +108,7 @@ describe('createEnterpriseBillInvoice', () => {
     mockGcsFile.exists.mockReset()
     mockGcsFile.createReadStream.mockReset()
     mockGcsFile.createWriteStream.mockReset()
+    mockGcsFile.delete.mockReset()
     process.env.GCLOUD_PROJECT = 'test-project'
   })
 
@@ -176,6 +178,41 @@ describe('createEnterpriseBillInvoice', () => {
     const invoiceId = await createEnterpriseBillInvoice('ent1', '2026-06')
     expect(invoiceId).toHaveLength(43)
     expect(setInvoiceFileMeta).toHaveBeenCalledWith('ent1', '2026-06', invoiceId)
+  })
+
+  it('already_exists かつ別 ID の場合は generated ファイルを削除する', async () => {
+    vi.mocked(getBillingSnapshot).mockResolvedValue(finalSnapshot)
+    vi.mocked(getInvoiceFileMeta)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(new EnterpriseInvoiceFile('2026-06', { gcs_id: 'existing-id' }))
+    vi.mocked(getEnterpriseById).mockResolvedValue(new Enterprise('ent1', { company_name: 'Test Co', is_active: true }))
+    vi.mocked(setInvoiceFileMeta).mockResolvedValue('already_exists')
+    mockGcsFile.delete.mockResolvedValue(undefined)
+
+    const mockReadable = new Readable({
+      read() {
+        this.push('pdf-chunk')
+        this.push(null)
+      },
+    })
+
+    const mockWriteStream = new Writable({
+      write(_chunk, _encoding, callback) {
+        callback()
+      },
+    })
+    mockGcsFile.createWriteStream.mockReturnValue(mockWriteStream)
+
+    vi.mocked(PdfGenerator).mockImplementation(
+      () =>
+        ({
+          executeDocumentMergeForStream: vi.fn().mockResolvedValue(mockReadable),
+        }) as unknown as PdfGenerator,
+    )
+
+    const invoiceId = await createEnterpriseBillInvoice('ent1', '2026-06')
+    expect(invoiceId).toBe('existing-id')
+    expect(mockGcsFile.delete).toHaveBeenCalledWith({ ignoreNotFound: true })
   })
 })
 
