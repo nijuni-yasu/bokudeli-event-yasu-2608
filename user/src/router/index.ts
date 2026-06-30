@@ -89,7 +89,10 @@ export const setupRouter = (router: Router) => {
     // 遷移先(to.path)が、ログインページまたはアプリ内ログインページの場合かつ、
     // 遷移元(from.path)が、ログインページまたはアプリ内ログインページでない場合にのみ、リダイレクトのパスを保存する
     // sessionStorageには、招待URLを考慮し、クエリパラメータも含めてfrom.fullPathで保存
-    if (['/login', '/inapp-login'].includes(to.path) && !['/login', '/inapp-login'].includes(from.path)) {
+    if (
+      ['/login', '/register', '/inapp-login'].includes(to.path) &&
+      !['/login', '/register', '/inapp-login'].includes(from.path)
+    ) {
       setRedirectPath(history.state?.redirect ?? from.fullPath)
     }
   })
@@ -98,7 +101,7 @@ export const setupRouter = (router: Router) => {
   // 通常のブラウザでアプリ内ログインページにアクセスした場合は通常のログインページにリダイレクト
   const isInApp = isInAppBrowser(navigator.userAgent)
   router.beforeEach((to) => {
-    if (to.path === '/login' && isInApp) {
+    if ((to.path === '/login' || to.path === '/register') && isInApp) {
       return {
         path: '/inapp-login',
         query: to.query,
@@ -122,7 +125,7 @@ export const setupRouter = (router: Router) => {
 
     // リダイレクトで戻ってきた場合の処理
     // TODO リダイレクトの返りは一つのページにまとめた方がよいかもしれない
-    if (['/login', '/register/complete', '/profile'].includes(to.path)) {
+    if (['/login', '/register', '/register/complete', '/profile'].includes(to.path)) {
       let user = null
       let userCredential: UserCredential | null = null
       try {
@@ -139,7 +142,7 @@ export const setupRouter = (router: Router) => {
             // カスタムトークンログインを行い、メールアドレスが既に存在している場合
             return {
               path: '/pass-code',
-              state: { email },
+              state: { email, mode: 'login' },
             }
           } else {
             return {
@@ -270,7 +273,7 @@ export const setupRouter = (router: Router) => {
         return { path: '/login', state: { redirect: to.fullPath } }
       }
     } else {
-      if (['/login', '/inapp-login'].includes(to.path)) {
+      if (['/login', '/register', '/inapp-login'].includes(to.path)) {
         return (to.query?.redirect as string) ?? '/'
       }
     }

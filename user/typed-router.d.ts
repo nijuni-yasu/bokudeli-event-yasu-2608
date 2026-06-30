@@ -44,6 +44,7 @@ declare module 'vue-router/auto-routes' {
     '/pass-code': RouteRecordInfo<'/pass-code', '/pass-code', Record<never, never>, Record<never, never>>,
     '/profile': RouteRecordInfo<'/profile', '/profile', Record<never, never>, Record<never, never>>,
     '/receipt': RouteRecordInfo<'/receipt', '/receipt', Record<never, never>, Record<never, never>>,
+    '/register/': RouteRecordInfo<'/register/', '/register', Record<never, never>, Record<never, never>>,
     '/register/complete': RouteRecordInfo<'/register/complete', '/register/complete', Record<never, never>, Record<never, never>>,
     '/register/email': RouteRecordInfo<'/register/email', '/register/email', Record<never, never>, Record<never, never>>,
     '/u/[userId]': RouteRecordInfo<'/u/[userId]', '/u/:userId', { userId: ParamValue<true> }, { userId: ParamValue<false> }>,

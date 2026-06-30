@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { FirebaseError } from 'firebase/app'
-import { requestEmailLogin } from '@shokujii/base/apis/user'
+import { requestEmailRegistration } from '@shokujii/base/apis/user'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { useValidators } from '@shokujii/base/composable/validators.js'
@@ -21,40 +21,39 @@ const isLoading = ref<ProviderIdType | 'custom' | null>(null)
 const isValid = ref(false)
 const email = ref('')
 const linkRequestDialogParams = computed<{
-  tryLoginProviderId: ProviderIdType
+  tryRegisterProviderId: ProviderIdType
   linkProviderId: ProviderIdType
 } | null>(() => {
   return route.query.pid1 == null || route.query.pid2 == null
     ? null
     : {
-        tryLoginProviderId: route.query.pid1 as ProviderIdType,
+        tryRegisterProviderId: route.query.pid1 as ProviderIdType,
         linkProviderId: route.query.pid2 as ProviderIdType,
       }
 })
 
-const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: string) => {
+const handleRegister = async (providerId: ProviderIdType | 'custom', emailInput?: string) => {
   isLoading.value = providerId
   try {
     if (providerId === 'custom') {
       if (emailInput == null) {
         throw new Error('Email is required')
       }
-      await requestEmailLogin({
+      await requestEmailRegistration({
         email: emailInput,
       })
-      await router.push(getPassCode(emailInput, 'login'))
+      await router.push(getPassCode(emailInput, 'register'))
     } else {
       await signInByProviderService(providerId)
       // ここに来るのはポップアップ認証（デバッグ用）成功時のみ
-      // 再読みこみしてリダイレクト時と同様の処理をさせる
       window.location.href = '/register/complete'
     }
   } catch (error) {
     console.error(error)
-    if (providerId === 'custom' && error instanceof FirebaseError && error.code === 'functions/not-found') {
-      notification.show($t('login.not_registered'), 'warning')
+    if (providerId === 'custom' && error instanceof FirebaseError && error.code === 'functions/already-exists') {
+      notification.show($t('register.already_registered'), 'warning')
     } else {
-      notification.show($t('login.login_fail', { sns_name: $t(`sns_name['${providerId}']`) }), 'error')
+      notification.show($t('register.register_fail', { sns_name: $t(`sns_name['${providerId}']`) }), 'error')
     }
   } finally {
     isLoading.value = null
@@ -72,10 +71,10 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
               <v-img max-width="100" :src="logo"></v-img>
             </v-row>
             <v-row justify="center">
-              <div class="my-3 text-h3 font-weight-bold">{{ $t('login.welcome') }}</div>
+              <div class="my-3 text-h3 font-weight-bold">{{ $t('register.welcome') }}</div>
             </v-row>
             <v-row justify="center" class="py-5 text-subtitle-1">
-              <div>{{ $t('login.please_login_below') }}</div>
+              <div v-html="$t('register.please_register_below')" />
             </v-row>
           </v-container>
 
@@ -86,13 +85,13 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
             block
             :loading="isLoading === 'google.com'"
             :disabled="isLoading !== null && isLoading !== 'google.com'"
-            @click="handleLogin('google.com')"
+            @click="handleRegister('google.com')"
           >
             <template #prepend>
               <v-icon :icon="GoogleIcon" size="22" />
             </template>
             <div class="ml-2">
-              {{ $t('login.sns_login', { sns_name: 'Google' }) }}
+              {{ $t('register.sns_register', { sns_name: 'Google' }) }}
             </div>
           </v-btn>
           <v-btn
@@ -102,13 +101,13 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
             block
             :loading="isLoading === 'facebook.com'"
             :disabled="isLoading !== null && isLoading !== 'facebook.com'"
-            @click="handleLogin('facebook.com')"
+            @click="handleRegister('facebook.com')"
           >
             <template #prepend>
               <v-icon :icon="FacebookIcon" size="22" />
             </template>
             <div class="ml-2">
-              {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
+              {{ $t('register.sns_register', { sns_name: 'Facebook' }) }}
             </div>
           </v-btn>
           <v-btn
@@ -118,19 +117,19 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
             block
             :loading="isLoading === 'twitter.com'"
             :disabled="isLoading !== null && isLoading !== 'twitter.com'"
-            @click="handleLogin('twitter.com')"
+            @click="handleRegister('twitter.com')"
           >
             <template #prepend>
               <v-icon :icon="XIcon" size="22" />
             </template>
             <div class="ml-2">
-              {{ $t('login.sns_login', { sns_name: 'X' }) }}
+              {{ $t('register.sns_register', { sns_name: 'X' }) }}
             </div>
           </v-btn>
           <v-divider class="my-6" color="grey-lighten-3" />
-          <v-form v-model="isValid" @submit.prevent="handleLogin('custom', email)">
+          <v-form v-model="isValid" @submit.prevent="handleRegister('custom', email)">
             <v-container class="mb-4 pa-0">
-              <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('login.email') }}</label>
+              <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('register.email') }}</label>
               <v-text-field
                 placeholder="example@example.com"
                 v-model="email"
@@ -147,19 +146,13 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
               :disabled="!isValid || (isLoading !== null && isLoading !== 'custom')"
               type="submit"
             >
-              {{ $t('login.continue_email_login') }}
+              {{ $t('register.continue_email') }}
             </v-btn>
           </v-form>
           <v-divider class="my-6" color="grey-lighten-3" />
           <v-container>
             <v-row justify="center" class="py-2 text-subtitle-2">
-              <div v-html="$t('login.link_to_register')" />
-            </v-row>
-            <v-row justify="center" class="py-2 text-subtitle-2">
-              <div v-html="$t('login.link_to_partner_site')" />
-            </v-row>
-            <v-row justify="center" class="py-2 text-subtitle-2">
-              <div v-html="$t('login.link_to_forgot_account')" />
+              <div v-html="$t('register.link_to_login')" />
             </v-row>
           </v-container>
         </v-sheet>
@@ -171,13 +164,13 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
     :model-value="linkRequestDialogParams !== null"
     :is-confirm="false"
     :ok-text="$t('profile.linkage')"
-    :ok-click="() => handleLogin(linkRequestDialogParams!.linkProviderId, undefined)"
+    :ok-click="() => handleRegister(linkRequestDialogParams!.linkProviderId, undefined)"
   >
     <v-card-text class="text-center py-10 text-h4"> {{ $t('profile.account_linkage') }} </v-card-text>
     <v-card-text class="pb-0">
       {{
-        $t('login.link_dialog_body', {
-          try_login_provider_label: $t(`sns_name['${linkRequestDialogParams.tryLoginProviderId}']`),
+        $t('register.link_dialog_body', {
+          try_register_provider_label: $t(`sns_name['${linkRequestDialogParams.tryRegisterProviderId}']`),
           link_provider_label: $t(`sns_name['${linkRequestDialogParams.linkProviderId}']`),
         })
       }}

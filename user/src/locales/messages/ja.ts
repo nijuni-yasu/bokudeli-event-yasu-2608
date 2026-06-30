@@ -577,11 +577,12 @@ export default {
   login: {
     login_fail: '{sns_name}ログインできませんでした',
     welcome: 'shokujiiへようこそ',
-    please_login_or_register_below:
-      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。',
+    please_login_below: '下記のいずれかの方法でログインしてください。',
     email: 'メールアドレス',
-    continue_email: 'メールアドレスで続ける',
+    continue_email_login: 'メールアドレスでログイン',
     sns_login: '{sns_name}でログイン',
+    not_registered: 'このメールアドレスは登録されていません。新規登録からアカウントを作成してください。',
+    link_to_register: '<a href="/register">アカウントをお持ちでない方は新規登録</a>',
     link_dialog_body:
       '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
     link_to_partner_site: '<a href="https://partner.shokujii.jp/" target="_blank">飲食店管理画面のログインはこちら</a>',
@@ -597,6 +598,19 @@ export default {
       chrome: 'Chrome',
       safari: 'Safari',
     },
+  },
+  register: {
+    welcome: 'shokujiiへようこそ',
+    please_register_below:
+      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法で新規登録してください。',
+    email: 'メールアドレス',
+    continue_email: 'メールアドレスで新規登録',
+    sns_register: '{sns_name}で新規登録',
+    register_fail: '{sns_name}新規登録できませんでした',
+    already_registered: 'このメールアドレスはすでに登録されています。ログインしてください。',
+    link_to_login: '<a href="/login">すでにアカウントをお持ちの方はログイン</a>',
+    link_dialog_body:
+      '{try_register_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
   },
   email: {
     register_email: 'メールアドレス登録',
