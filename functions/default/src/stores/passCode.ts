@@ -88,7 +88,7 @@ export const getPassCodeRefsByUserId = async (uid: string, transaction: Transact
 
 /**
  * user_email が一致する pass_code の DocumentReference を取得する。
- * user_id が optional のため、requestEmailLogin の新規ユーザー分などは user_email のみで保存される。
+ * user_id が optional のため、requestEmailRegistration の新規ユーザー分などは user_email のみで保存される。
  * アカウント削除時に user_id 検索に加えて user_email でも検索し、個人情報の漏洩を防ぐ。
  */
 export const getPassCodeRefsByUserEmail = async (

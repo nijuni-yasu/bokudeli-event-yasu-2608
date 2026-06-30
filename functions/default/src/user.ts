@@ -7,9 +7,13 @@ import {
   ConfirmEmailChangeResponse,
   ConfirmEmailLoginRequest,
   ConfirmEmailLoginResponse,
+  ConfirmEmailRegistrationRequest,
+  ConfirmEmailRegistrationResponse,
   RequestEmailChangeRequest,
   RequestEmailLoginRequest,
   RequestEmailLoginResponse,
+  RequestEmailRegistrationRequest,
+  RequestEmailRegistrationResponse,
   UpdateProfileFromProvidersRequest,
   UpdateProfileFromProvidersResponse,
 } from '@shokujii/common/apis/user.js'
@@ -35,10 +39,10 @@ export const requestEmailLogin = onCall<RequestEmailLoginRequest, Promise<Reques
       throw new HttpsError('invalid-argument', 'email is null')
     }
     const userId = await getUserIdFromEmail(email)
-    const isNew = userId == null
-    const passCode = isNew
-      ? new ShokujiiPassCode(null, { user_email: email })
-      : new ShokujiiPassCode(null, { user_id: userId, user_email: email })
+    if (userId == null) {
+      throw new HttpsError('not-found', 'user not registered')
+    }
+    const passCode = new ShokujiiPassCode(null, { user_id: userId, user_email: email })
     await Promise.all([
       savePassCode(passCode),
       send({
@@ -50,9 +54,7 @@ export const requestEmailLogin = onCall<RequestEmailLoginRequest, Promise<Reques
         },
       }),
     ])
-    return {
-      isNew,
-    }
+    return { success: true }
   },
 )
 
@@ -66,28 +68,75 @@ export const confirmEmailLogin = onCall<ConfirmEmailLoginRequest, Promise<Confir
     if (passCodeDocument == null || passCodeDocument.pass_code !== passCode) {
       throw new HttpsError('invalid-argument', 'pass code is not valid')
     }
-    const promises = [deletePassCode(passCodeDocument.id)]
-    let isNew: boolean
-    let uid: string
     if (passCodeDocument.user_id == null) {
-      isNew = true
-      const user = await getAuth().createUser({ email, emailVerified: true })
-      uid = user.uid
-      promises.push(
-        saveUser(
-          new ShokujiiUser(uid, {
-            user_email: email,
-          }),
-        ),
-      )
-    } else {
-      isNew = false
-      uid = passCodeDocument.user_id
+      throw new HttpsError('invalid-argument', 'pass code is not valid')
     }
-    const [token] = await Promise.all([getAuth().createCustomToken(uid), ...promises])
-    return { token, isNew }
+    const uid = passCodeDocument.user_id
+    const [token] = await Promise.all([getAuth().createCustomToken(uid), deletePassCode(passCodeDocument.id)])
+    return { token }
   },
 )
+
+export const requestEmailRegistration = onCall<
+  RequestEmailRegistrationRequest,
+  Promise<RequestEmailRegistrationResponse>
+>(
+  {
+    secrets: ['SENDGRID_API_KEY'],
+  },
+  async (request) => {
+    const { email } = request.data
+    if (email == null) {
+      throw new HttpsError('invalid-argument', 'email is null')
+    }
+    const userId = await getUserIdFromEmail(email)
+    if (userId != null) {
+      throw new HttpsError('already-exists', 'The email address has been already used')
+    }
+    const passCode = new ShokujiiPassCode(null, { user_email: email })
+    await Promise.all([
+      savePassCode(passCode),
+      send({
+        to: email,
+        from: DEFAULT_FROM,
+        templateId: USER_PASS_CODE_TEMPLATE_ID,
+        dynamicTemplateData: {
+          user_pass_code: passCode.pass_code,
+        },
+      }),
+    ])
+    return { success: true }
+  },
+)
+
+export const confirmEmailRegistration = onCall<
+  ConfirmEmailRegistrationRequest,
+  Promise<ConfirmEmailRegistrationResponse>
+>(async (request) => {
+  const { email, passCode } = request.data
+  if (email == null || passCode == null) {
+    throw new HttpsError('invalid-argument', 'email or passCode is null')
+  }
+  const passCodeDocument = await getValidPassCodeFromEmail(email)
+  if (passCodeDocument == null || passCodeDocument.pass_code !== passCode) {
+    throw new HttpsError('invalid-argument', 'pass code is not valid')
+  }
+  if (passCodeDocument.user_id != null) {
+    throw new HttpsError('invalid-argument', 'pass code is not valid')
+  }
+  const user = await getAuth().createUser({ email, emailVerified: true })
+  const uid = user.uid
+  const [token] = await Promise.all([
+    getAuth().createCustomToken(uid),
+    deletePassCode(passCodeDocument.id),
+    saveUser(
+      new ShokujiiUser(uid, {
+        user_email: email,
+      }),
+    ),
+  ])
+  return { token }
+})
 
 export const requestEmailChange = onCall<RequestEmailChangeRequest>(
   {
