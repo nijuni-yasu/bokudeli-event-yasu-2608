@@ -1061,6 +1061,66 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_end_datetime",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "event_status.value",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_deleted",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "is_public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "enterprise_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "event_start_datetime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "event_end_datetime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
           "fieldPath": "enterprise_id",
           "order": "ASCENDING"
         },
