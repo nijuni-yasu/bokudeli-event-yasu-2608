@@ -8,6 +8,7 @@ export const DEFAULT_DASHBOARD_PERIOD_MONTHS = 3
 
 export type DashboardOrderLine = {
   user_id: string
+  community_id: string
   event_id: string
   menu_price: number
   pay_enterprise_subsidy_amount?: number
@@ -15,15 +16,18 @@ export type DashboardOrderLine = {
 
 export type DashboardStripeSession = {
   user_id: string
+  community_id: string
   event_id: string
 }
 
 export type DashboardAuditSession = {
   user_id: string
+  community_id: string
   event_id: string
 }
 
 export type DashboardEventMonthInput = {
+  community_id: string
   event_id: string
   event_start_datetime: number
 }
@@ -100,16 +104,24 @@ export function isYearMonthInRange(yearMonth: string, startYearMonth: string, en
   return compareYearMonth(yearMonth, startYearMonth) >= 0 && compareYearMonth(yearMonth, endYearMonth) <= 0
 }
 
+export function dashboardEventKey(communityId: string, eventId: string): string {
+  return `${communityId}\t${eventId}`
+}
+
 export function buildEventMonthMap(events: readonly DashboardEventMonthInput[]): Map<string, string> {
   const map = new Map<string, string>()
   for (const event of events) {
-    map.set(event.event_id, formatYearMonth(event.event_start_datetime))
+    map.set(dashboardEventKey(event.community_id, event.event_id), formatYearMonth(event.event_start_datetime))
   }
   return map
 }
 
-function resolveEventMonth(eventId: string, eventMonthMap: ReadonlyMap<string, string>): string | undefined {
-  return eventMonthMap.get(eventId)
+function resolveEventMonth(
+  communityId: string,
+  eventId: string,
+  eventMonthMap: ReadonlyMap<string, string>,
+): string | undefined {
+  return eventMonthMap.get(dashboardEventKey(communityId, eventId))
 }
 
 function subsidyAmount(order: DashboardOrderLine): number {
@@ -192,18 +204,18 @@ export function countSessionsByMonth(params: {
   eventMonthMap: ReadonlyMap<string, string>
 }): Map<string, number> {
   const counts = new Map<string, number>()
-  const add = (eventId: string) => {
-    const yearMonth = resolveEventMonth(eventId, params.eventMonthMap)
+  const add = (communityId: string, eventId: string) => {
+    const yearMonth = resolveEventMonth(communityId, eventId, params.eventMonthMap)
     if (yearMonth == null || !isYearMonthInRange(yearMonth, params.startYearMonth, params.endYearMonth)) {
       return
     }
     counts.set(yearMonth, (counts.get(yearMonth) ?? 0) + 1)
   }
   for (const stripe of params.stripes) {
-    add(stripe.event_id)
+    add(stripe.community_id, stripe.event_id)
   }
   for (const audit of params.auditSessions) {
-    add(audit.event_id)
+    add(audit.community_id, audit.event_id)
   }
   return counts
 }
@@ -227,7 +239,7 @@ export function sumOrderAmountsByMonth(params: {
   const uniqueUsersByMonth = new Map<string, Set<string>>()
 
   for (const order of params.orders) {
-    const yearMonth = resolveEventMonth(order.event_id, params.eventMonthMap)
+    const yearMonth = resolveEventMonth(order.community_id, order.event_id, params.eventMonthMap)
     if (yearMonth == null || !isYearMonthInRange(yearMonth, params.startYearMonth, params.endYearMonth)) {
       continue
     }
@@ -316,13 +328,13 @@ export function aggregateMemberRows(params: {
     return row
   }
 
-  const isInRangeEventMonth = (eventId: string): boolean => {
-    const yearMonth = resolveEventMonth(eventId, params.eventMonthMap)
+  const isInRangeEventMonth = (communityId: string, eventId: string): boolean => {
+    const yearMonth = resolveEventMonth(communityId, eventId, params.eventMonthMap)
     return yearMonth != null && isYearMonthInRange(yearMonth, params.startYearMonth, params.endYearMonth)
   }
 
   for (const order of params.orders) {
-    if (!isInRangeEventMonth(order.event_id)) continue
+    if (!isInRangeEventMonth(order.community_id, order.event_id)) continue
     const row = ensure(order.user_id)
     row.total_amount += order.menu_price
     row.enterprise_subsidy_amount += subsidyAmount(order)
@@ -330,12 +342,12 @@ export function aggregateMemberRows(params: {
   }
 
   for (const stripe of params.stripes) {
-    if (!isInRangeEventMonth(stripe.event_id)) continue
+    if (!isInRangeEventMonth(stripe.community_id, stripe.event_id)) continue
     ensure(stripe.user_id).session_count += 1
   }
 
   for (const audit of params.auditSessions) {
-    if (!isInRangeEventMonth(audit.event_id)) continue
+    if (!isInRangeEventMonth(audit.community_id, audit.event_id)) continue
     ensure(audit.user_id).session_count += 1
   }
 

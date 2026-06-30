@@ -13,14 +13,15 @@ import {
 } from './dashboardAggregation.js'
 
 const ZONE = 'Asia/Tokyo'
+const COMMUNITY_ID = 'c1'
 
 function jst(year: number, month: number, day: number): number {
   return DateTime.fromObject({ year, month, day, hour: 12 }, { zone: ZONE }).toMillis()
 }
 
 const eventMonthMap = buildEventMonthMap([
-  { event_id: 'e-june', event_start_datetime: jst(2026, 6, 15) },
-  { event_id: 'e-july', event_start_datetime: jst(2026, 7, 20) },
+  { community_id: COMMUNITY_ID, event_id: 'e-june', event_start_datetime: jst(2026, 6, 15) },
+  { community_id: COMMUNITY_ID, event_id: 'e-july', event_start_datetime: jst(2026, 7, 20) },
 ])
 
 const billingSettings = {
@@ -49,6 +50,24 @@ const members = [
   },
 ]
 
+function orderLine(userId: string, eventId: string, menuPrice: number, communityId = COMMUNITY_ID, subsidy?: number) {
+  return {
+    user_id: userId,
+    community_id: communityId,
+    event_id: eventId,
+    menu_price: menuPrice,
+    ...(subsidy != null ? { pay_enterprise_subsidy_amount: subsidy } : {}),
+  }
+}
+
+function stripeSession(userId: string, eventId: string, communityId = COMMUNITY_ID) {
+  return { user_id: userId, community_id: communityId, event_id: eventId }
+}
+
+function auditSession(userId: string, eventId: string, communityId = COMMUNITY_ID) {
+  return { user_id: userId, community_id: communityId, event_id: eventId }
+}
+
 describe('validateDashboardPeriod', () => {
   it('12 ヶ月以内は OK', () => {
     expect(() => validateDashboardPeriod('2025-07', '2026-06')).not.toThrow()
@@ -70,12 +89,39 @@ describe('enumerateYearMonths', () => {
   })
 })
 
+describe('buildEventMonthMap', () => {
+  it('同一 event_id でも community_id が異なれば別月に解決する', () => {
+    const map = buildEventMonthMap([
+      { community_id: 'c1', event_id: 'shared-id', event_start_datetime: jst(2026, 6, 15) },
+      { community_id: 'c2', event_id: 'shared-id', event_start_datetime: jst(2026, 7, 20) },
+    ])
+
+    const rows = aggregateMonthlyRows({
+      startYearMonth: '2026-06',
+      endYearMonth: '2026-07',
+      orders: [orderLine('u1', 'shared-id', 1000, 'c1'), orderLine('u2', 'shared-id', 2000, 'c2')],
+      stripes: [],
+      auditSessions: [],
+      eventMonthMap: map,
+      members,
+      billingSettings,
+      allProvisional: true,
+      zone: ZONE,
+    })
+
+    const june = rows.find((r) => r.year_month === '2026-06')
+    const july = rows.find((r) => r.year_month === '2026-07')
+    expect(june?.total_amount).toBe(1000)
+    expect(july?.total_amount).toBe(2000)
+  })
+})
+
 describe('aggregateMonthlyRows', () => {
   it('6 月決済・7 月イベントは 7 月行に帰属', () => {
     const rows = aggregateMonthlyRows({
       startYearMonth: '2026-06',
       endYearMonth: '2026-07',
-      orders: [{ user_id: 'u1', event_id: 'e-july', menu_price: 1000, pay_enterprise_subsidy_amount: 500 }],
+      orders: [orderLine('u1', 'e-july', 1000, COMMUNITY_ID, 500)],
       stripes: [],
       auditSessions: [],
       eventMonthMap,
@@ -97,7 +143,7 @@ describe('aggregateMonthlyRows', () => {
     const rows = aggregateMonthlyRows({
       startYearMonth: '2026-06',
       endYearMonth: '2026-06',
-      orders: [{ user_id: 'u1', event_id: 'e-june', menu_price: 800 }],
+      orders: [orderLine('u1', 'e-june', 800)],
       stripes: [],
       auditSessions: [],
       eventMonthMap,
@@ -115,8 +161,8 @@ describe('aggregateMonthlyRows', () => {
     const sessionCounts = countSessionsByMonth({
       startYearMonth: '2026-06',
       endYearMonth: '2026-06',
-      stripes: [{ user_id: 'u1', event_id: 'e-june' }],
-      auditSessions: [{ user_id: 'u2', event_id: 'e-june' }],
+      stripes: [stripeSession('u1', 'e-june')],
+      auditSessions: [auditSession('u2', 'e-june')],
       eventMonthMap,
     })
     expect(sessionCounts.get('2026-06')).toBe(2)
@@ -124,12 +170,9 @@ describe('aggregateMonthlyRows', () => {
     const rows = aggregateMonthlyRows({
       startYearMonth: '2026-06',
       endYearMonth: '2026-06',
-      orders: [
-        { user_id: 'u1', event_id: 'e-june', menu_price: 500 },
-        { user_id: 'u1', event_id: 'e-june', menu_price: 500 },
-      ],
-      stripes: [{ user_id: 'u1', event_id: 'e-june' }],
-      auditSessions: [{ user_id: 'u2', event_id: 'e-june' }],
+      orders: [orderLine('u1', 'e-june', 500), orderLine('u1', 'e-june', 500)],
+      stripes: [stripeSession('u1', 'e-june')],
+      auditSessions: [auditSession('u2', 'e-june')],
       eventMonthMap,
       members,
       billingSettings,
@@ -144,7 +187,7 @@ describe('aggregateMonthlyRows', () => {
     const rows = aggregateMonthlyRows({
       startYearMonth: '2026-06',
       endYearMonth: '2026-07',
-      orders: [{ user_id: 'u1', event_id: 'e-june', menu_price: 300 }],
+      orders: [orderLine('u1', 'e-june', 300)],
       stripes: [],
       auditSessions: [],
       eventMonthMap,
@@ -164,7 +207,7 @@ describe('mergeMonthlyRowsWithSnapshots', () => {
     const liveRows = aggregateMonthlyRows({
       startYearMonth: '2026-05',
       endYearMonth: '2026-06',
-      orders: [{ user_id: 'u1', event_id: 'e-june', menu_price: 1000, pay_enterprise_subsidy_amount: 500 }],
+      orders: [orderLine('u1', 'e-june', 1000, COMMUNITY_ID, 500)],
       stripes: [],
       auditSessions: [],
       eventMonthMap,
@@ -205,12 +248,9 @@ describe('aggregateMemberRows', () => {
     const rows = aggregateMemberRows({
       startYearMonth: '2026-06',
       endYearMonth: '2026-07',
-      orders: [
-        { user_id: 'u1', event_id: 'e-june', menu_price: 500, pay_enterprise_subsidy_amount: 200 },
-        { user_id: 'u2', event_id: 'e-july', menu_price: 1000 },
-      ],
-      stripes: [{ user_id: 'u1', event_id: 'e-june' }],
-      auditSessions: [{ user_id: 'u2', event_id: 'e-july' }],
+      orders: [orderLine('u1', 'e-june', 500, COMMUNITY_ID, 200), orderLine('u2', 'e-july', 1000)],
+      stripes: [stripeSession('u1', 'e-june')],
+      auditSessions: [auditSession('u2', 'e-july')],
       eventMonthMap,
       members,
     })
@@ -226,7 +266,7 @@ describe('aggregateMemberRows', () => {
       startYearMonth: '2026-06',
       endYearMonth: '2026-06',
       orders: [],
-      stripes: [{ user_id: 'u1', event_id: 'e-june' }],
+      stripes: [stripeSession('u1', 'e-june')],
       auditSessions: [],
       eventMonthMap,
       members,
