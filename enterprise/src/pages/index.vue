@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { getEventPath } from '@/router/utils'
 import { useEventListStore } from '@shokujii/base/stores/eventList.js'
-import { useBannersStore } from '@shokujii/base/stores/banner.js'
-import Banners from '@shokujii/base/components/Banners.vue'
 import { where, orderBy, Timestamp } from 'firebase/firestore'
 import EventCard from '@shokujii/base/components/EventCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
@@ -30,9 +28,6 @@ const numOfColumns = computed(() => {
 const numOfPopularColumns = 3
 
 const now = Timestamp.now()
-
-const topBannersStore = useBannersStore('top_banners')
-const centerBannersStore = useBannersStore('center_banners')
 
 const popularEventListStore = computed(() =>
   useEventListStore(
@@ -120,7 +115,6 @@ const next = () => {
 <template>
   <v-row class="justify-center align-center">
     <v-col md="10" cols="12">
-      <Banners :banners="topBannersStore.banners ?? []" />
       <v-row class="mb-2">
         <template v-if="popularEvents.length > 0">
           <v-col cols="12" class="text-h4 mt-8 ml-2">
@@ -161,14 +155,6 @@ const next = () => {
           <router-link :to="getEventPath(event.community_account, event.event_id)">
             <EventCard class="event-card" :event="event" :members="members" />
           </router-link>
-        </v-col>
-      </v-row>
-      <v-row
-        class="justify-center ma-0 mx-md-16 mt-md-10"
-        v-show="(upcomingEventListStore.eventStores?.length ?? 0) === (upcomingEventListStore.totalCount ?? Infinity)"
-      >
-        <v-col md="9" sm="12" cols="12" class="mt-0 pt-0 px-0">
-          <Banners :banners="centerBannersStore.banners ?? []" />
         </v-col>
       </v-row>
       <v-row class="mb-2">

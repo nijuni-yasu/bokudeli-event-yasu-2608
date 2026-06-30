@@ -19,8 +19,6 @@ import { useI18n } from 'vue-i18n'
 import { mdiEmail, mdiPencilOutline, mdiFoodForkDrink, mdiHome } from '@mdi/js'
 import EventDetailsCard from '@shokujii/base/components/EventDetailsCard.vue'
 import EventStatusChip from '@shokujii/base/components/EventStatusChip.vue'
-import Banners from '@shokujii/base/components/Banners.vue'
-import { useBannersStore } from '@shokujii/base/stores/banner.js'
 import { useCommunityMemberFlags } from '@shokujii/base/composable/useCommunityMemberFlags'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { getCommunityAlbumItemStoragePath } from '@shokujii/common/utils/storagePaths.js'
@@ -49,7 +47,6 @@ const isCommunityAccountMismatch = computed(() => {
   return loadedEvent != null && loadedEvent.community_account !== communityAccount
 })
 const isAccessDenied = computed(() => isTenantMismatch.value || isCommunityAccountMismatch.value)
-const bannersStore = useBannersStore('event_banners')
 const currentUserStore = useCurrentUserStore()
 const menuNavigation = ref(true)
 const menuListRef = ref()
@@ -313,9 +310,6 @@ onUnmounted(() => {
           :disabled="menuDisabled !== false"
           @select-menu="selectMenu"
         />
-      </v-col>
-      <v-col md="6" sm="8" cols="11" class="ma-0 mt-md-16">
-        <Banners :banners="bannersStore.banners ?? []" />
       </v-col>
     </v-row>
   </div>
