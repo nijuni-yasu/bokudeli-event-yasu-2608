@@ -21,13 +21,14 @@ import {
 } from '@shokujii/common/schemas/Enterprise.js'
 import {
   countActiveEnterpriseAdmins,
+  deleteEnterpriseMember,
   getEnterpriseById,
   getEnterpriseMember,
   getEnterpriseMemberUserIdByEmail,
   listEnterpriseMembers,
   saveEnterpriseMember,
 } from '../stores/enterprise.js'
-import { getUser, saveUser, ShokujiiUser } from '../stores/user.js'
+import { deleteUserDocuments, getUser, saveUser, ShokujiiUser } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import {
   assertEnterpriseAdmin,
@@ -37,8 +38,42 @@ import {
 } from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
 import { authForEnterprise } from '../utils/tenantAuth.js'
+import type { TenantAwareAuth } from 'firebase-admin/auth'
 
 const logger = createModuleLogger('enterpriseMembers')
+
+async function rollbackCreatedEnterpriseMember(
+  enterpriseId: string,
+  userId: string,
+  email: string,
+  tenantAuth: TenantAwareAuth,
+): Promise<void> {
+  try {
+    await deleteEnterpriseMember(enterpriseId, userId)
+  } catch (deleteMemberError) {
+    logger.error('createEnterpriseMemberRollbackDeleteMemberFailed', {
+      enterpriseId,
+      email,
+      userId,
+      deleteMemberError,
+    })
+  }
+  try {
+    await deleteUserDocuments(userId)
+  } catch (deleteUserDocsError) {
+    logger.error('createEnterpriseMemberRollbackDeleteUserDocumentsFailed', {
+      enterpriseId,
+      email,
+      userId,
+      deleteUserDocsError,
+    })
+  }
+  try {
+    await tenantAuth.deleteUser(userId)
+  } catch (deleteUserError) {
+    logger.error('createEnterpriseMemberRollbackDeleteUserFailed', { enterpriseId, email, deleteUserError })
+  }
+}
 
 const MAX_MEMBERS_PER_REQUEST = 500
 const BATCH_CONCURRENCY = 10
@@ -150,11 +185,7 @@ async function createSingleEnterpriseMember(
         }),
       )
     } catch (innerError) {
-      try {
-        await tenantAuth.deleteUser(authUser.uid)
-      } catch (deleteError) {
-        logger.error('createEnterpriseMemberRollbackDeleteUserFailed', { enterpriseId, email, deleteError })
-      }
+      await rollbackCreatedEnterpriseMember(enterpriseId, authUser.uid, email, tenantAuth)
       throw innerError
     }
 

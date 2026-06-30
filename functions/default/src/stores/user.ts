@@ -159,6 +159,15 @@ export const getUserIdFromEmail = async (user_email: string): Promise<string | u
   return personalInformationSnapshot.docs[0]?.id
 }
 
+export const deleteUserDocuments = async (userId: string): Promise<void> => {
+  const db = getFirestore()
+  const userPersonalInformationRef = db
+    .collection('users_personal_information')
+    .doc(userId)
+    .withConverter(userPersonalInformationConverter)
+  await Promise.allSettled([getUserRef(userId).delete(), userPersonalInformationRef.delete()])
+}
+
 export const saveUser = async (user: ShokujiiUser, transaction?: Transaction) => {
   const db = getFirestore()
   const userRef = db.collection('users').doc(user.id).withConverter(userConverter)

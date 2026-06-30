@@ -86,6 +86,10 @@ export const saveEnterpriseMember = async (member: EnterpriseMember, enterpriseI
   await getEnterpriseMemberRef(enterpriseId, member.id).set(member)
 }
 
+export const deleteEnterpriseMember = async (enterpriseId: string, userId: string): Promise<void> => {
+  await getEnterpriseMemberRef(enterpriseId, userId).delete()
+}
+
 export const getEnterpriseMember = async (
   enterpriseId: string,
   userId: string,
