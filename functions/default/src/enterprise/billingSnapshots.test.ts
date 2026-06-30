@@ -39,6 +39,7 @@ vi.mock('./dashboardData.js', () => ({
 }))
 
 import { Enterprise, EnterpriseBillingSnapshot } from '@shokujii/common/schemas/Enterprise.js'
+import { dashboardEventKey } from '@shokujii/common/utils/dashboardAggregation.js'
 import { getEnterpriseById } from '../stores/enterprise.js'
 import { upsertBillingSnapshot } from '../stores/enterpriseBillingSnapshot.js'
 import { deleteInvoiceFileMeta } from '../stores/enterpriseInvoiceFile.js'
@@ -78,10 +79,18 @@ describe('captureBillingSnapshotForEnterprise', () => {
     })
     vi.mocked(getEnterpriseById).mockResolvedValue(enterprise)
     vi.mocked(fetchDashboardData).mockResolvedValue({
-      orders: [{ user_id: 'u1', event_id: 'e1', menu_price: 1000, pay_enterprise_subsidy_amount: 400 }],
+      orders: [
+        {
+          user_id: 'u1',
+          community_id: 'c1',
+          event_id: 'e1',
+          menu_price: 1000,
+          pay_enterprise_subsidy_amount: 400,
+        },
+      ],
       stripes: [],
       auditSessions: [],
-      eventMonthMap: new Map([['e1', '2026-06']]),
+      eventMonthMap: new Map([[dashboardEventKey('c1', 'e1'), '2026-06']]),
       members: [
         {
           user_id: 'u1',
