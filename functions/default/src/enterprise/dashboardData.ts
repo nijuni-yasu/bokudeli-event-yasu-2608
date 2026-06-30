@@ -1,5 +1,6 @@
 import {
   buildEventMonthMap,
+  dashboardEventKey,
   type DashboardAuditSession,
   type DashboardMemberMeta,
   type DashboardOrderLine,
@@ -38,7 +39,7 @@ export async function fetchDashboardData(enterpriseId: string): Promise<Dashboar
   const orderById = new Map(rawOrders.map((order) => [order.order_id, order]))
   const eventRefs = new Map<string, { community_id: string; event_id: string }>()
   const addEventRef = (communityId: string, eventId: string) => {
-    eventRefs.set(`${communityId}\t${eventId}`, { community_id: communityId, event_id: eventId })
+    eventRefs.set(dashboardEventKey(communityId, eventId), { community_id: communityId, event_id: eventId })
   }
 
   for (const order of rawOrders) {
@@ -56,12 +57,13 @@ export async function fetchDashboardData(enterpriseId: string): Promise<Dashboar
     const order = orderById.get(firstOrderId)
     if (order == null) continue
     addEventRef(order.community_id, order.event_id)
-    auditSessions.push({ user_id: log.user_id, event_id: order.event_id })
+    auditSessions.push({ user_id: log.user_id, community_id: order.community_id, event_id: order.event_id })
   }
 
   const events = await getEventsInCommunities(Array.from(eventRefs.values()))
   const eventMonthMap = buildEventMonthMap(
     Array.from(events.values()).map((event) => ({
+      community_id: event.community_id,
       event_id: event.id,
       event_start_datetime: event.event_start_datetime,
     })),
@@ -80,12 +82,14 @@ export async function fetchDashboardData(enterpriseId: string): Promise<Dashboar
   return {
     orders: rawOrders.map((order) => ({
       user_id: order.user_id,
+      community_id: order.community_id,
       event_id: order.event_id,
       menu_price: order.menu_price,
       pay_enterprise_subsidy_amount: order.pay_enterprise_subsidy_amount,
     })),
     stripes: rawStripes.map((stripe) => ({
       user_id: stripe.user_id,
+      community_id: stripe.community_id,
       event_id: stripe.event_id,
     })),
     auditSessions,
