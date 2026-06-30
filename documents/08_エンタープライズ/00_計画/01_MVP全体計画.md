@@ -22,7 +22,7 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-06-29**（D-2 / D-3 / D-4 / D-6 / D-7・E-4 実装完了を反映）
+最終更新: **2026-06-30**（#2137/#2138/#2139 参加者画面 UI を反映）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
@@ -30,11 +30,11 @@
 | WS-B（IdP・本番前） | 6 | 0 | 6 |
 | WS-C（スキーマ・MVP 最小） | 2 | 0 | 2 |
 | WS-D（v0.1 残） | 5 | 2 | 7 |
-| WS-E（前倒し） | 1 | 3 | 4 |
+| WS-E（前倒し） | 4 | 3 | 7 |
 | WS-F（PF 露出） | 0 | 2 | 2 |
 | **WS-M（development マージ）** | **7** | **5** | **12** |
 | WS-G（Phase 2・MVP 外） | 0 | 8 | 8 |
-| **WS-A〜F 全タスク** | **17** | **9** | **26** |
+| **WS-A〜F 全タスク** | **20** | **9** | **29** |
 | ゲート G1〜G3 | 3 | 0 | 3 |
 | 本番ブロッカー RC | 4 | 0 | 4 |
 
@@ -46,6 +46,7 @@
 |:--|:--|:--|
 | [00_計画/02_developmentマージ.md](./02_developmentマージ.md) | **#2071 マージ実行**（PF 版影響ゼロ） | WS-M（T1〜T7・デプロイ順・着地条件） |
 | [10_仕様/](../10_仕様/) | MVP 機能仕様（現行正本） | WS-D 各タスクの詳細 |
+| [10_仕様/04_詳細_参加者画面](../10_仕様/04_詳細_参加者画面.md) | 参加者 UI（ナビ・トップ・バナー） | WS-E E-6〜E-8 |
 | [30_リファクタ計画/01・02・05](../30_リファクタ計画/01_Project分離なし_タスク.md) | コード衛生・認証モデル・**C-1 PoC** | PA-01〜31（Phase 0/1/2）、[05_WS-C_C-1_PoC設計](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md) |
 | [10_仕様/04_詳細_イベント管理](../10_仕様/04_詳細_イベント管理.md) + [ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md) | 機能拡張・スキーマ | 3 軸モデル / publish_scope / MVP 前倒し / PF 露出フィルタ |
 
@@ -166,8 +167,11 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | - [ ] | E-3 | セッションタイムアウト 1 週間【前倒し・v0.1 上書き】 | D-9 | 必須 | — |
 | ✅ | E-4 | マイページ：福利厚生割の利用状況表示【前倒し】 | D-10 | 必須 | — |
 | - [ ] | E-5 | コミュニティ一括作成のデフォルト画像ランダム付与 | D-11 | 必須 | — |
+| ✅ | E-6 | 参加者画面グローバルメニュー4項目構成（イベント開催・全社管理画面を統合） | [04_詳細_参加者画面](../10_仕様/04_詳細_参加者画面.md) §1 / [#2137](https://github.com/nijuniinc/bokudeli-event-new/issues/2137) | 必須 | — |
+| ✅ | E-7 | 参加者トップで注文0件（`event_num_members === 0`）の公開イベントも表示 | [04_詳細_参加者画面](../10_仕様/04_詳細_参加者画面.md) §2 / [#2138](https://github.com/nijuniinc/bokudeli-event-new/issues/2138) | 必須 | — |
+| ✅ | E-8 | 参加者画面の PF 共通 `assets` バナー非表示（企業専用バナーは G-4） | [04_詳細_参加者画面](../10_仕様/04_詳細_参加者画面.md) §3 / [#2139](https://github.com/nijuniinc/bokudeli-event-new/issues/2139) | 必須 | — |
 
-**メモ**: **E-4 ✅** — [#2125](https://github.com/nijuniinc/bokudeli-event-new/issues/2125)。マイページ `?tab=usage` 利用状況タブ（本人のみ・`monthly_limit_per_user` あり時）。**E-1**（参加方式 `join_type`）・**E-6**（`access_password`）は **WS-G G-5 / G-6** へ移行（Phase 2）。**E-3** は `useSessionTimeout` あり（現状 1 時間）。仕様の 1 週間には未対応。
+**メモ**: **E-4 ✅** — [#2125](https://github.com/nijuniinc/bokudeli-event-new/issues/2125)。マイページ `?tab=usage` 利用状況タブ（本人のみ・`monthly_limit_per_user` あり時）。**E-6 ✅** — [#2137](https://github.com/nijuniinc/bokudeli-event-new/issues/2137)。グローバルメニュー再編・ヘッダー重複導線削除。**E-7 ✅** — [#2138](https://github.com/nijuniinc/bokudeli-event-new/issues/2138)。エンプラトップ3クエリから `event_num_members >= 1` 削除（PF 版は維持）。**E-8 ✅** — [#2139](https://github.com/nijuniinc/bokudeli-event-new/issues/2139)。トップ・イベント詳細から `top_banners` / `center_banners` / `event_banners` 非表示。**E-1**（参加方式 `join_type`）・旧 v0.3 **E-6**（`access_password`）は **WS-G G-5 / G-8** へ移行（Phase 2）。**E-3** は `useSessionTimeout` あり（現状 1 時間）。仕様の 1 週間には未対応。
 
 ### WS-F: PF 版データ露出フィルタ（v0.3 §3・MVP 必須・独立）
 
@@ -189,7 +193,9 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | - [ ] | G-8 | パスワード保護 `access_password`（アクセス付与基盤） | D-6a / D-6b / ADR-003 §4 | 旧 E-6 | G-6 |
 | - [ ] | G-2 | 企業別 SSO（テナント単位 SAML/OIDC）／オープン交流の扉 | ADR-002 §1.5 / §5.1 | — | — |
 | - [ ] | G-3 | functions の _base/_user/_enterprise 再編・マルチ codebase | PA-20b-c / PA-24c | — | — |
-| - [ ] | G-4 | 機能 ON/OFF（feature_flags）・トップバナー・**全社メール通知設定**（`04_詳細_メール配信` §5.3） | D-12 | — | — |
+| - [ ] | G-4 | 機能 ON/OFF（feature_flags）・**企業専用トップバナー**（`enterprises.top_banner` 等）・**全社メール通知設定**（`04_詳細_メール配信` §5.3） | D-12 | — | — |
+
+**メモ（G-4 と MVP）**: MVP では PF 共通 `assets/*` バナーをエンプラ参加者画面から**非表示**に確定（**E-8 ✅** / [#2139](https://github.com/nijuniinc/bokudeli-event-new/issues/2139)）。G-4 は企業専用バナー・feature_flags の**追加表示**を Phase 2 で行う。
 
 **メモ（G-5〜G-7 の推奨順）**: **MVP: C-1 PoC → G1** →（Phase 2）**G-7 本実装（C-4）** → G-5 → G-6 → G-1 / G-8。C-1 正本: [05_WS-C_C-1_PoC設計](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md)。
 
