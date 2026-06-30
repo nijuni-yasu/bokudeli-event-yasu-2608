@@ -14,6 +14,10 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   isSubItem: false,
 })
+
+const handleClick = () => {
+  void props.item.onClick?.()
+}
 </script>
 
 <template>
@@ -28,9 +32,10 @@ const props = withDefaults(defineProps<Props>(), {
     ]"
   >
     <Component
-      :is="item.to ? 'RouterLink' : 'a'"
-      v-bind="getComputedNavLinkToProp(item)"
+      :is="item.onClick ? 'button' : item.to ? 'RouterLink' : 'a'"
+      v-bind="item.onClick ? { type: 'button' } : getComputedNavLinkToProp(item)"
       :class="{ 'router-link-active router-link-exact-active': isNavLinkActive(item, $router) }"
+      @click="item.onClick ? handleClick : undefined"
     >
       <Component
         :is="layoutConfig.app.iconRenderer || 'div'"
@@ -50,9 +55,20 @@ const props = withDefaults(defineProps<Props>(), {
 
 <style lang="scss">
 .layout-horizontal-nav {
-  .nav-link a {
+  .nav-link a,
+  .nav-link button {
     display: flex;
     align-items: center;
+  }
+
+  .nav-link button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    padding: 0;
+    text-align: inherit;
   }
 }
 </style>

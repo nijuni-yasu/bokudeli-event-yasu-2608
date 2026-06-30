@@ -82,6 +82,8 @@ export interface NavLink extends NavLinkProps, Partial<AclProperties> {
   badgeContent?: string
   badgeClass?: string
   disable?: boolean
+  /** RouterLink / anchor の代わりにクリックハンドラで遷移する（例: 条件分岐ナビ） */
+  onClick?: () => void | Promise<void>
 }
 
 // 👉 Vertical nav group

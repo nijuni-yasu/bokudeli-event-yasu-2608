@@ -1,51 +1,23 @@
 <script setup lang="ts">
 import { mdiPartyPopper } from '@mdi/js'
-import { getAuth } from 'firebase/auth'
-import { hasManagedCommunityInEnterprise } from '@shokujii/base/stores/community.js'
-import { getAdminDashboardPath, getHomePath, getManageNewCommunityPath, getManagePath } from '@/router/utils'
+import { getAdminDashboardPath, getHomePath, getManagePath } from '@/router/utils'
 import { isEnterpriseAdmin } from '@/composable/useEnterpriseAdmin'
-import { useEnterpriseId } from '@/composable/useEnterpriseId'
 
-type EnterpriseMode = 'default' | 'manage' | 'admin'
+type EnterpriseMode = 'manage' | 'admin'
 
 defineProps<{
   mode: EnterpriseMode
 }>()
 
-const router = useRouter()
 const showAdminButton = ref(false)
-const { enterpriseId } = useEnterpriseId()
 
 onMounted(async () => {
   showAdminButton.value = await isEnterpriseAdmin()
 })
-
-const handleEventHostClick = async () => {
-  const uid = getAuth().currentUser?.uid
-  if (uid == null) return
-
-  const resolvedEnterpriseId = enterpriseId.value
-  if (resolvedEnterpriseId == null) {
-    router.push(getManageNewCommunityPath())
-    return
-  }
-
-  const hasCommunity = await hasManagedCommunityInEnterprise(uid, resolvedEnterpriseId)
-  router.push(hasCommunity ? getManagePath() : getManageNewCommunityPath())
-}
 </script>
 
 <template>
-  <template v-if="mode === 'default'">
-    <v-btn class="event-host-cta me-4" :append-icon="mdiPartyPopper" @click="handleEventHostClick">
-      {{ $t('navigation.new_event') }}
-    </v-btn>
-    <v-btn v-if="showAdminButton" class="me-4" :to="getAdminDashboardPath()">
-      {{ $t('admin.navigation.portal') }}
-    </v-btn>
-  </template>
-
-  <template v-else-if="mode === 'manage'">
+  <template v-if="mode === 'manage'">
     <v-btn class="me-4" :to="getHomePath()">
       {{ $t('navigation.home') }}
     </v-btn>
@@ -58,7 +30,7 @@ const handleEventHostClick = async () => {
     <v-btn class="me-4" :to="getHomePath()">
       {{ $t('navigation.home') }}
     </v-btn>
-    <v-btn class="event-host-cta me-4" :append-icon="mdiPartyPopper" @click="handleEventHostClick">
+    <v-btn class="event-host-cta me-4" :append-icon="mdiPartyPopper" :to="getManagePath()">
       {{ $t('navigation.new_event') }}
     </v-btn>
   </template>

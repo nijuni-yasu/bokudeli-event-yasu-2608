@@ -5,20 +5,25 @@ import { useLayoutConfigStore } from '../stores/config'
 import type { NavLink } from '../types'
 import { getComputedNavLinkToProp, getDynamicI18nProps, isNavLinkActive } from '../utils'
 
-defineProps<{
+const props = defineProps<{
   item: NavLink
 }>()
 
 const configStore = useLayoutConfigStore()
 const hideTitleAndBadge = configStore.isVerticalNavMini()
+
+const handleClick = () => {
+  void props.item.onClick?.()
+}
 </script>
 
 <template>
   <li v-if="can(item.action, item.subject)" class="nav-link" :class="{ disabled: item.disable }">
     <Component
-      :is="item.to ? 'RouterLink' : 'a'"
-      v-bind="getComputedNavLinkToProp(item)"
+      :is="item.onClick ? 'button' : item.to ? 'RouterLink' : 'a'"
+      v-bind="item.onClick ? { type: 'button' } : getComputedNavLinkToProp(item)"
       :class="{ 'router-link-active router-link-exact-active': isNavLinkActive(item, $router) }"
+      @click="item.onClick ? handleClick : undefined"
     >
       <Component
         :is="layoutConfig.app.iconRenderer || 'div'"
@@ -56,9 +61,21 @@ const hideTitleAndBadge = configStore.isVerticalNavMini()
 
 <style lang="scss">
 .layout-vertical-nav {
-  .nav-link a {
+  .nav-link a,
+  .nav-link button {
     display: flex;
     align-items: center;
+  }
+
+  .nav-link button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    padding: 0;
+    text-align: inherit;
+    inline-size: 100%;
   }
 }
 </style>

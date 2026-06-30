@@ -40,7 +40,7 @@ export default {
   },
   admin: {
     navigation: {
-      portal: '管理画面',
+      portal: '全社管理画面',
       dashboard: 'ダッシュボード',
       invoices: '請求書',
       settings: '全社設定',
@@ -294,6 +294,7 @@ export default {
     magagine: 'マガジン',
     x: '#最新情報',
     manage_top: '管理画面TOP',
+    manage: '全社管理画面',
     manage_event: 'イベント管理',
     manage_community: 'コミュニティ管理',
     guide_top: 'コミュニティガイド',
