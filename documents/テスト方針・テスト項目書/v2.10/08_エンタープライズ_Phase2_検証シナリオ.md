@@ -26,7 +26,7 @@
 | 3 | 許可ドメイン外メールでログイン試行 | 即時バリデーション or API エラー |
 | 4 | 許可ドメインのメンバーで OTP ログイン | `signInWithCustomToken` 成功 |
 | 5 | Firebase Auth の custom claims 確認 | `enterprise_id` / `enterprise_role` / `user_type: enterprise` |
-| 6 | 60分無操作（または `localStorage` の `enterprise:last_activity_at` を過去に変更） | `session_timeout` 監査ログ + ログアウト |
+| 6 | 1週間無操作（または `localStorage` の `enterprise:last_activity_at` を 8 日以上前に変更） | `session_timeout` 監査ログ + ログアウト + ログイン画面でタイムアウト文言 |
 | 7 | Admin SDK でメンバー `is_active: false` + `revokeRefreshTokens` | 再ログイン不可 |
 | 8 | 復活後に再ログイン | 成功 |
 

@@ -30,11 +30,11 @@
 | WS-B（IdP・本番前） | 6 | 0 | 6 |
 | WS-C（スキーマ・MVP 最小） | 2 | 0 | 2 |
 | WS-D（v0.1 残） | 5 | 2 | 7 |
-| WS-E（前倒し） | 4 | 3 | 7 |
+| WS-E（前倒し） | 5 | 2 | 7 |
 | WS-F（PF 露出） | 0 | 2 | 2 |
 | **WS-M（development マージ）** | **7** | **5** | **12** |
 | WS-G（Phase 2・MVP 外） | 0 | 8 | 8 |
-| **WS-A〜F 全タスク** | **20** | **9** | **29** |
+| **WS-A〜F 全タスク** | **21** | **8** | **29** |
 | ゲート G1〜G3 | 3 | 0 | 3 |
 | 本番ブロッカー RC | 4 | 0 | 4 |
 
@@ -164,14 +164,14 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
 | - [ ] | E-2 | 全社管理者の全イベント編集権限【前倒し】 | D-8 | 必須 | — |
-| - [ ] | E-3 | セッションタイムアウト 1 週間【前倒し・v0.1 上書き】 | D-9 | 必須 | — |
+| ✅ | E-3 | セッションタイムアウト 1 週間【前倒し・v0.1 上書き】 | D-9 | 必須 | — |
 | ✅ | E-4 | マイページ：福利厚生割の利用状況表示【前倒し】 | D-10 | 必須 | — |
 | - [ ] | E-5 | コミュニティ一括作成のデフォルト画像ランダム付与 | D-11 | 必須 | — |
 | ✅ | E-6 | 参加者画面グローバルメニュー4項目構成（イベント開催・全社管理画面を統合） | [04_詳細_参加者画面](../10_仕様/04_詳細_参加者画面.md) §1 / [#2137](https://github.com/nijuniinc/bokudeli-event-new/issues/2137) | 必須 | — |
 | ✅ | E-7 | 参加者トップで注文0件（`event_num_members === 0`）の公開イベントも表示 | [04_詳細_参加者画面](../10_仕様/04_詳細_参加者画面.md) §2 / [#2138](https://github.com/nijuniinc/bokudeli-event-new/issues/2138) | 必須 | — |
 | ✅ | E-8 | 参加者画面の PF 共通 `assets` バナー非表示（企業専用バナーは G-4） | [04_詳細_参加者画面](../10_仕様/04_詳細_参加者画面.md) §3 / [#2139](https://github.com/nijuniinc/bokudeli-event-new/issues/2139) | 必須 | — |
 
-**メモ**: **E-4 ✅** — [#2125](https://github.com/nijuniinc/bokudeli-event-new/issues/2125)。マイページ `?tab=usage` 利用状況タブ（本人のみ・`monthly_limit_per_user` あり時）。**E-6 ✅** — [#2137](https://github.com/nijuniinc/bokudeli-event-new/issues/2137)。グローバルメニュー再編・ヘッダー重複導線削除。**E-7 ✅** — [#2138](https://github.com/nijuniinc/bokudeli-event-new/issues/2138)。エンプラトップ3クエリから `event_num_members >= 1` 削除（PF 版は維持）。**E-8 ✅** — [#2139](https://github.com/nijuniinc/bokudeli-event-new/issues/2139)。トップ・イベント詳細から `top_banners` / `center_banners` / `event_banners` 非表示。**E-1**（参加方式 `join_type`）・旧 v0.3 **E-6**（`access_password`）は **WS-G G-5 / G-8** へ移行（Phase 2）。**E-3** は `useSessionTimeout` あり（現状 1 時間）。仕様の 1 週間には未対応。
+**メモ**: **E-4 ✅** — [#2125](https://github.com/nijuniinc/bokudeli-event-new/issues/2125)。マイページ `?tab=usage` 利用状況タブ（本人のみ・`monthly_limit_per_user` あり時）。**E-6 ✅** — [#2137](https://github.com/nijuniinc/bokudeli-event-new/issues/2137)。グローバルメニュー再編・ヘッダー重複導線削除。**E-7 ✅** — [#2138](https://github.com/nijuniinc/bokudeli-event-new/issues/2138)。エンプラトップ3クエリから `event_num_members >= 1` 削除（PF 版は維持）。**E-8 ✅** — [#2139](https://github.com/nijuniinc/bokudeli-event-new/issues/2139)。トップ・イベント詳細から `top_banners` / `center_banners` / `event_banners` 非表示。**E-1**（参加方式 `join_type`）・旧 v0.3 **E-6**（`access_password`）は **WS-G G-5 / G-8** へ移行（Phase 2）。**E-3 ✅** — `useSessionTimeout` を無操作 1 週間に変更。タイムアウト文言はログイン画面で sessionStorage 経由表示（RC-23）。
 
 ### WS-F: PF 版データ露出フィルタ（v0.3 §3・MVP 必須・独立）
 
@@ -342,4 +342,4 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-27 | **C-1 PoC を MVP 前倒し**（05_WS-C_C-1_PoC設計.md。H1 採用案・G1 条件）。G-7 は C-4 本実装のみ |
 | 2026-06-29 | **月次請求書 PDF を MVP 前倒し** — WS-D に D-6（`enterpriseBillInvoice`）・D-7（`/admin/invoices`）追加。`04_詳細_請求` B-1 更新、`03_課金` MVP-C を PDF 化 |
 | 2026-06-29 | 実装照合: **D-2 / D-3 / D-4 / D-6 / D-7 / E-4** を ✅ に更新。WS-D 5/7・WS-E 1/4・WS-A〜F 17/26 |
-| 2026-06-30 | D-1 仕様: §4.1 代替方式・方式 A 採用、`users.enterprise_id` 宛先フィルタ、D-1 文言スコープ外 |
+| 2026-06-30 | **E-3 ✅** — セッションタイムアウトを無操作 1 週間に変更。RC-23（login 画面トースト）対応 |
