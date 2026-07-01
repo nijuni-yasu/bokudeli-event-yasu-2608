@@ -225,29 +225,44 @@ export const enterpriseBillInvoice = onRequest(
       return
     }
 
-    const invoiceId = req.query.id
-    if (typeof invoiceId === 'string') {
-      try {
-        res.status(200).setHeader('Content-Type', 'application/pdf')
-        await streamInvoicePdf(enterpriseId, yearMonth, invoiceId, res)
-      } catch {
-        if (!res.headersSent) {
-          res.status(404).send('Invoice not found')
-        }
-      }
-      return
-    }
-
     const authHeader = req.headers.authorization ?? ''
     if (!authHeader.startsWith('JWT ')) {
       res.status(401).send('JWT token is required')
       return
     }
 
+    let uid: string
+    let decodedToken: Record<string, unknown>
     try {
       const idToken = authHeader.split('JWT ')[1]
-      const decodedToken = await getAuth().verifyIdToken(idToken)
-      await assertEnterpriseAdminFromUid(decodedToken.uid, decodedToken as Record<string, unknown>, enterpriseId)
+      const decoded = await getAuth().verifyIdToken(idToken)
+      uid = decoded.uid
+      decodedToken = decoded as Record<string, unknown>
+    } catch {
+      res.status(401).send('Invalid JWT token')
+      return
+    }
+
+    const invoiceId = req.query.id
+    if (typeof invoiceId === 'string') {
+      try {
+        await assertEnterpriseAdminFromUid(uid, decodedToken, enterpriseId)
+        res.status(200).setHeader('Content-Type', 'application/pdf')
+        await streamInvoicePdf(enterpriseId, yearMonth, invoiceId, res)
+      } catch (error) {
+        if (!res.headersSent) {
+          if (error instanceof HttpsError && error.code === 'permission-denied') {
+            res.status(403).send(error.message)
+          } else {
+            res.status(404).send('Invoice not found')
+          }
+        }
+      }
+      return
+    }
+
+    try {
+      await assertEnterpriseAdminFromUid(uid, decodedToken, enterpriseId)
 
       res.status(200).setHeader('Content-Type', 'application/pdf')
       await createEnterpriseBillInvoice(enterpriseId, yearMonth, res)
