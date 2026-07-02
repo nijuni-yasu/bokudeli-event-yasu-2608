@@ -6,10 +6,10 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { signInByProviderService, type ProviderIdType } from '@shokujii/base/utils/providerService.js'
-import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
+import AuthEntryLayout from '@/components/auth/AuthEntryLayout.vue'
 import { getLogin, getPassCode } from '@/router/utils'
 
 const route = useRoute()
@@ -69,105 +69,79 @@ const handleRegister = async (providerId: ProviderIdType | 'custom', emailInput?
 </script>
 
 <template>
-  <v-container>
-    <v-row justify="center" class="mt-5 pa-0">
-      <v-col lg="5" md="6" sm="10" cols="12" class="pa-0">
-        <v-sheet class="rounded-lg py-14 px-sm-12 px-5">
-          <v-container class="mb-2">
-            <v-row justify="center">
-              <v-img max-width="100" :src="logo"></v-img>
-            </v-row>
-            <v-row justify="center">
-              <div class="my-3 text-h3 font-weight-bold">{{ $t('register.welcome') }}</div>
-            </v-row>
-            <v-row justify="center" class="py-5 text-subtitle-1">
-              <div v-html="$t('register.please_register_below')" />
-            </v-row>
-          </v-container>
+  <auth-entry-layout mode="register">
+    <template #description>
+      <div v-html="$t('register.please_register_below')" />
+    </template>
 
-          <v-btn
-            class="mb-4"
-            size="large"
-            color="grey-900"
-            block
-            :loading="isLoading === 'google.com'"
-            :disabled="isLoading !== null && isLoading !== 'google.com'"
-            @click="handleRegister('google.com')"
-          >
-            <template #prepend>
-              <v-icon :icon="GoogleIcon" size="22" />
-            </template>
-            <div class="ml-2">
-              {{ $t('register.sns_register', { sns_name: 'Google' }) }}
-            </div>
-          </v-btn>
-          <v-btn
-            class="mb-4"
-            size="large"
-            color="grey-900"
-            block
-            :loading="isLoading === 'facebook.com'"
-            :disabled="isLoading !== null && isLoading !== 'facebook.com'"
-            @click="handleRegister('facebook.com')"
-          >
-            <template #prepend>
-              <v-icon :icon="FacebookIcon" size="22" />
-            </template>
-            <div class="ml-2">
-              {{ $t('register.sns_register', { sns_name: 'Facebook' }) }}
-            </div>
-          </v-btn>
-          <v-btn
-            class="mb-4"
-            size="large"
-            color="grey-900"
-            block
-            :loading="isLoading === 'twitter.com'"
-            :disabled="isLoading !== null && isLoading !== 'twitter.com'"
-            @click="handleRegister('twitter.com')"
-          >
-            <template #prepend>
-              <v-icon :icon="XIcon" size="22" />
-            </template>
-            <div class="ml-2">
-              {{ $t('register.sns_register', { sns_name: 'X' }) }}
-            </div>
-          </v-btn>
-          <v-divider class="my-6" color="grey-lighten-3" />
-          <v-form v-model="isValid" @submit.prevent="handleRegister('custom', email)">
-            <v-container class="mb-4 pa-0">
-              <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('register.email') }}</label>
-              <v-text-field
-                placeholder="example@example.com"
-                v-model="email"
-                :rules="[requiredValidator, emailValidator]"
-              />
-            </v-container>
+    <v-btn
+      class="mb-4"
+      size="large"
+      color="grey-900"
+      block
+      :loading="isLoading === 'google.com'"
+      :disabled="isLoading !== null && isLoading !== 'google.com'"
+      @click="handleRegister('google.com')"
+    >
+      <template #prepend>
+        <v-icon :icon="GoogleIcon" size="22" />
+      </template>
+      <div class="ml-2">
+        {{ $t('register.sns_register', { sns_name: 'Google' }) }}
+      </div>
+    </v-btn>
+    <v-btn
+      class="mb-4"
+      size="large"
+      color="grey-900"
+      block
+      :loading="isLoading === 'facebook.com'"
+      :disabled="isLoading !== null && isLoading !== 'facebook.com'"
+      @click="handleRegister('facebook.com')"
+    >
+      <template #prepend>
+        <v-icon :icon="FacebookIcon" size="22" />
+      </template>
+      <div class="ml-2">
+        {{ $t('register.sns_register', { sns_name: 'Facebook' }) }}
+      </div>
+    </v-btn>
+    <v-btn
+      class="mb-4"
+      size="large"
+      color="grey-900"
+      block
+      :loading="isLoading === 'twitter.com'"
+      :disabled="isLoading !== null && isLoading !== 'twitter.com'"
+      @click="handleRegister('twitter.com')"
+    >
+      <template #prepend>
+        <v-icon :icon="XIcon" size="22" />
+      </template>
+      <div class="ml-2">
+        {{ $t('register.sns_register', { sns_name: 'X' }) }}
+      </div>
+    </v-btn>
+    <v-divider class="my-6" color="grey-lighten-3" />
+    <v-form v-model="isValid" @submit.prevent="handleRegister('custom', email)">
+      <v-container class="mb-4 pa-0">
+        <label class="field-label" style="font-size: 12px; font-weight: bold">{{ $t('register.email') }}</label>
+        <v-text-field placeholder="example@example.com" v-model="email" :rules="[requiredValidator, emailValidator]" />
+      </v-container>
 
-            <v-btn
-              class="mb-4"
-              size="large"
-              color="grey-900"
-              block
-              :loading="isLoading === 'custom'"
-              :disabled="!isValid || (isLoading !== null && isLoading !== 'custom')"
-              type="submit"
-            >
-              {{ $t('register.continue_email') }}
-            </v-btn>
-          </v-form>
-          <v-divider class="my-6" color="grey-lighten-3" />
-          <v-container>
-            <v-row justify="center" class="py-2 text-subtitle-2">
-              <RouterLink :to="getLogin()" class="text-grey-darken-3">
-                {{ $t('register.link_to_login') }}
-              </RouterLink>
-            </v-row>
-          </v-container>
-        </v-sheet>
-      </v-col>
-    </v-row>
-  </v-container>
+      <v-btn
+        class="mb-4"
+        size="large"
+        color="grey-900"
+        block
+        :loading="isLoading === 'custom'"
+        :disabled="!isValid || (isLoading !== null && isLoading !== 'custom')"
+        type="submit"
+      >
+        {{ $t('register.continue_email') }}
+      </v-btn>
+    </v-form>
+  </auth-entry-layout>
   <confirm-dialog
     v-if="linkRequestDialogParams !== null"
     :model-value="linkRequestDialogParams !== null"
