@@ -32,14 +32,14 @@ export async function signOutBestEffort(): Promise<void> {
 
 /**
  * OAuth 復帰時に updateProfileFromProviders が失敗した場合の cleanup とリダイレクト先を返す。
- * cleanup 失敗時は undefined を返し navigation を中断する。
+ * cleanup 失敗時は false を返し navigation をキャンセルする。
  */
 export async function handleProfileUpdateFailure(
   toPath: string,
   query: LocationQuery,
   userCredential: UserCredential | null,
   error?: unknown,
-): Promise<{ path: string; query: LocationQuery } | undefined> {
+): Promise<{ path: string; query: LocationQuery } | false> {
   try {
     if (toPath === '/register' && userCredential != null) {
       const aui = getAdditionalUserInfo(userCredential)
@@ -53,7 +53,8 @@ export async function handleProfileUpdateFailure(
     }
   } catch (err) {
     console.error(err)
-    return undefined
+    await signOutBestEffort()
+    return false
   }
 
   const i18n = getI18n()

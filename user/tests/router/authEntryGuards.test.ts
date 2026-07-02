@@ -124,5 +124,16 @@ describe('authEntryGuards', () => {
       expect(mockSignOut).toHaveBeenCalledOnce()
       expect(result).toEqual({ path: '/login', query: {} })
     })
+
+    it('cleanup 失敗時は signOut して false を返す', async () => {
+      mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: true })
+      mockDelete.mockRejectedValue(new Error('delete failed'))
+      const userCredential = createUserCredential()
+
+      const result = await handleProfileUpdateFailure('/register', {}, userCredential, new Error('failed'))
+
+      expect(mockSignOut).toHaveBeenCalledOnce()
+      expect(result).toBe(false)
+    })
   })
 })

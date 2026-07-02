@@ -16,7 +16,12 @@ import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/ba
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
-import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
+import {
+  clearPendingLinkRequest,
+  getRedirectPath,
+  handleRedirect,
+  setRedirectPath,
+} from '@shokujii/base/utils/redirect'
 import {
   rejectExistingUserOnRegister,
   rejectNewUserOnLogin,
@@ -145,6 +150,7 @@ export const setupRouter = (router: Router) => {
       } catch (err: unknown) {
         if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
           if (to.path === '/register') {
+            clearPendingLinkRequest()
             const i18n = getI18n()
             window.alert(
               // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
@@ -242,7 +248,7 @@ export const setupRouter = (router: Router) => {
           } catch (err) {
             console.error(err)
           }
-          return getRedirectPath() ?? { path: '/login', query: to.query }
+          return { path: '/login', query: to.query }
         }
       }
 
