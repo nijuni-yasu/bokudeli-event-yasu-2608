@@ -29,9 +29,9 @@
         "message": "Resource 'projects/bokudeli-event-dev/locations/asia-northeast1/functions/flyer' was not found"
       },
       "authenticationInfo": {
-        "principalEmail": "github-actions@bokudeli-event-dev.iam.gserviceaccount.com",
-        "serviceAccountKeyName": "//iam.googleapis.com/projects/bokudeli-event-dev/serviceAccounts/github-actions@bokudeli-event-dev.iam.gserviceaccount.com/keys/d40793b8b0a8d6eadf133ecdd26bceb2b0c0d071",
-        "principalSubject": "serviceAccount:github-actions@bokudeli-event-dev.iam.gserviceaccount.com",
+        "principalEmail": "github-actions@***.iam.gserviceaccount.com",
+        "serviceAccountKeyName": "//iam.googleapis.com/projects/bokudeli-event-dev/serviceAccounts/github-actions@***.iam.gserviceaccount.com/keys/***",
+        "principalSubject": "serviceAccount:github-actions@***.iam.gserviceaccount.com",
         "oauthInfo": {
           "oauthClientId": "110862176873612191339"
         }
@@ -154,9 +154,9 @@
         "message": "Resource 'projects/bokudeli-event-dev/locations/asia-northeast1/functions/slackbot' was not found"
       },
       "authenticationInfo": {
-        "principalEmail": "github-actions@bokudeli-event-dev.iam.gserviceaccount.com",
-        "serviceAccountKeyName": "//iam.googleapis.com/projects/bokudeli-event-dev/serviceAccounts/github-actions@bokudeli-event-dev.iam.gserviceaccount.com/keys/d40793b8b0a8d6eadf133ecdd26bceb2b0c0d071",
-        "principalSubject": "serviceAccount:github-actions@bokudeli-event-dev.iam.gserviceaccount.com",
+        "principalEmail": "github-actions@***.iam.gserviceaccount.com",
+        "serviceAccountKeyName": "//iam.googleapis.com/projects/bokudeli-event-dev/serviceAccounts/github-actions@***.iam.gserviceaccount.com/keys/***",
+        "principalSubject": "serviceAccount:github-actions@***.iam.gserviceaccount.com",
         "oauthInfo": {
           "oauthClientId": "110862176873612191339"
         }

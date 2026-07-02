@@ -121,10 +121,12 @@ Console URL から `project` / `query` / 期間を読み取ったら、**同条�
 
 | tier | 扱い |
 |------|------|
-| **P0** | 決済・注文確定など全社影響 |
+| **P0** | 決済・注文確定など全社影響（**将来拡張**。`parse_logs.py` では未実装。現状は P1 として扱う） |
 | **P1** | Rules / index / Webhook / データ異常 |
 | **noise** | reportClientError の SW / chunk / Rejected 等 |
 | **infra** | audit / scheduler NOT_FOUND |
+
+**P0 補足**: Stripe webhook（`stripeWebhook`）や Checkout（`createStripeCheckoutSession`）の ERROR は現状 P1 分類。エージェントは決済・注文確定系と判断したらレポートで P0 相当として強調する。
 
 **reportClientError**: レポート先頭で `client_error_summary` のノイズ / 要対応内訳を必ず書く。
 
@@ -157,6 +159,8 @@ Console URL から `project` / `query` / 期間を読み取ったら、**同条�
 - 期間: ... JST（クエリ UTC: ...）
 - 取得方法: gcloud logging read（filter: ...）
 - 取得件数: N ERROR（ユニークグループ: M）
+- ERROR 件数 tier 内訳: {...}（`entry_tier_counts`）
+- グループ tier 内訳: {...}（`group_tier_counts`）
 
 ## エグゼクティブサマリー
 （ノイズ X / 要対応 Y を必ず含める）

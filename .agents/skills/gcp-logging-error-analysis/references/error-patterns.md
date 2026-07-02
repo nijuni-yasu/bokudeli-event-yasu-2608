@@ -6,7 +6,7 @@
 
 | tier | 意味 | 例 |
 |------|------|-----|
-| **P0** | 全ユーザーまたは決済・注文確定に直結 | （本 fixture セット外。Stripe webhook 連鎖失敗等） |
+| **P0** | 全ユーザーまたは決済・注文確定に直結 | **未実装**（将来: `stripeWebhook` / `createStripeCheckoutSession` 等）。現状は P1 扱い |
 | **P1** | 要調査・運用対応 | Firestore index 不足、Storage Rules、Slack 404、ZodError、backfill データ異常 |
 | **noise** | クライアント側ノイズ | ServiceWorker 失敗、chunk load、Rejected、Connection failed |
 | **infra** | デプロイ・スケジューラ・監査 | Function NOT_FOUND（audit）、Scheduler topic NOT_FOUND |
@@ -35,6 +35,7 @@
 | `Slack webhook request failed` + status 404 | P1 | errorGroups.id | コミュニティ bot Webhook 設定確認 |
 | `Failed to send Slack message to some bots` | P1 | 直前 webhook エラーとペア | 同上 |
 | `Failed to backfill user profile counts` + userId が `http` 始まり | P1 | userId 値 | `users` ドキュメントの `user_id` 異常値 |
+| `resource.labels.service_name=stripewebhook` / `createstripecheckoutsession` + ERROR | P1（P0 相当としてレポート強調） | service_name + errorGroups.id | `functions/default/src/stripeWebhook.ts` / `stripe.ts` |
 | `logName` に `cloudaudit` + `was not found` | infra | status.message | 初回 deploy / 削除済み Function。単発なら低優先 |
 | `logName` に `cloudscheduler` + NOT_FOUND | infra | jobName | スケジュール / Pub/Sub topic 未デプロイ |
 

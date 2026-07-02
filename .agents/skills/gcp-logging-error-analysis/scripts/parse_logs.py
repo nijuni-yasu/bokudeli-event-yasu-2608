@@ -106,9 +106,6 @@ def classify_tier(entry: dict[str, Any], message: str) -> str:
         return "P1"
 
     if module == "userProfileBackfill":
-        user_id = str(json_payload.get("userId", ""))
-        if user_id.startswith("http"):
-            return "P1"
         return "P1"
 
     if "requires an index" in lower or "failed_precondition" in lower:
@@ -172,6 +169,64 @@ def group_key(entry: dict[str, Any], message: str) -> str:
     return f"{svc}:{normalized or log_type(entry)}"
 
 
+def is_http_shell(entry: dict[str, Any], message: str) -> bool:
+    return bool(entry.get("httpRequest")) and message.strip() == ""
+
+
+def group_key_priority(key: str) -> int:
+    if key.startswith("errorGroup:"):
+        return 0
+    if key.startswith("firestore_index:"):
+        return 1
+    if key.startswith("fingerprint:"):
+        return 2
+    if key.startswith("clientError:"):
+        return 3
+    if key.startswith("audit:"):
+        return 4
+    if key.startswith("slack:"):
+        return 5
+    if key.startswith("backfill:"):
+        return 6
+    return 9
+
+
+def build_trace_canonical_keys(entries: list[dict[str, Any]]) -> dict[str, str]:
+    by_trace: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    for entry in entries:
+        trace = entry.get("trace")
+        if not trace:
+            continue
+        message = extract_message(entry)
+        if is_http_shell(entry, message):
+            continue
+        raw_key = group_key(entry, message)
+        by_trace[str(trace)].append((raw_key, message))
+
+    canonical: dict[str, str] = {}
+    for trace, candidates in by_trace.items():
+        if not candidates:
+            continue
+        best_key = min(
+            candidates,
+            key=lambda item: (group_key_priority(item[0]), -len(item[1]), item[0]),
+        )[0]
+        canonical[trace] = best_key
+    return canonical
+
+
+def resolve_group_key(
+    entry: dict[str, Any],
+    message: str,
+    trace_canonical: dict[str, str],
+) -> str:
+    raw_key = group_key(entry, message)
+    trace = entry.get("trace")
+    if is_http_shell(entry, message) and trace and str(trace) in trace_canonical:
+        return trace_canonical[str(trace)]
+    return raw_key
+
+
 def mask_sensitive(value: str) -> str:
     if not value:
         return value
@@ -183,6 +238,21 @@ def mask_sensitive(value: str) -> str:
     masked = re.sub(
         r"(communities/)[A-Za-z0-9_-]{8,}",
         r"\1***",
+        masked,
+    )
+    masked = re.sub(
+        r"gs://[A-Za-z0-9._-]+/[^\s\"']+",
+        "gs://***/***",
+        masked,
+    )
+    masked = re.sub(
+        r"\b(?:\d{1,3}\.){3}\d{1,3}\b",
+        "***.***.***.***",
+        masked,
+    )
+    masked = re.sub(
+        r"\b(?:[0-9a-fA-F]{0,4}:){2,}[0-9a-fA-F:]{0,}\b",
+        "****:****:****:****",
         masked,
     )
     return masked
@@ -270,11 +340,14 @@ def summarize_client_errors(entries: list[dict[str, Any]]) -> dict[str, Any]:
 def parse_entries(entries: list[dict[str, Any]]) -> dict[str, Any]:
     timestamps = [entry.get("timestamp", "") for entry in entries if entry.get("timestamp")]
     groups: dict[str, dict[str, Any]] = {}
+    entry_tier_counts: Counter[str] = Counter()
+    trace_canonical = build_trace_canonical_keys(entries)
 
     for entry in entries:
         message = extract_message(entry)
-        key = group_key(entry, message)
+        key = resolve_group_key(entry, message, trace_canonical)
         tier = classify_tier(entry, message)
+        entry_tier_counts[tier] += 1
         if key not in groups:
             groups[key] = {
                 "group_key": key,
@@ -289,6 +362,8 @@ def parse_entries(entries: list[dict[str, Any]]) -> dict[str, Any]:
             }
         group = groups[key]
         group["count"] += 1
+        if not group["sample_message"] and message.strip():
+            group["sample_message"] = mask_sensitive(message.split("\n", 1)[0][:240])
         svc = service_name(entry)
         if svc:
             group["service_names"][svc] += 1
@@ -324,7 +399,7 @@ def parse_entries(entries: list[dict[str, Any]]) -> dict[str, Any]:
         )
     grouped_list.sort(key=lambda item: (tier_order.get(item["severity_tier"], 9), -item["count"], item["group_key"]))
 
-    tier_counts = Counter(item["severity_tier"] for item in grouped_list)
+    group_tier_counts = Counter(item["severity_tier"] for item in grouped_list)
     client_error_summary = summarize_client_errors(entries)
 
     return {
@@ -335,7 +410,9 @@ def parse_entries(entries: list[dict[str, Any]]) -> dict[str, Any]:
         },
         "total_errors": len(entries),
         "unique_groups": len(grouped_list),
-        "tier_counts": dict(tier_counts),
+        "entry_tier_counts": dict(entry_tier_counts),
+        "group_tier_counts": dict(group_tier_counts),
+        "tier_counts": dict(group_tier_counts),
         "groups": grouped_list,
         "client_error_summary": client_error_summary,
         "trace_links": build_trace_links(entries),
@@ -349,7 +426,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
         f"- Project: `{summary.get('project_id')}`",
         f"- 期間: {summary['time_range']['start']} .. {summary['time_range']['end']}",
         f"- ERROR 件数: {summary['total_errors']}（ユニークグループ: {summary['unique_groups']}）",
-        f"- tier 内訳: {summary.get('tier_counts')}",
+        f"- ERROR 件数 tier 内訳: {summary.get('entry_tier_counts')}",
+        f"- グループ tier 内訳: {summary.get('group_tier_counts')}",
         "",
     ]
 
