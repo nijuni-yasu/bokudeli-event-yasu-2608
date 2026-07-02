@@ -6,7 +6,6 @@ import {
   getAdditionalUserInfo,
   getAuth,
   onAuthStateChanged,
-  signOut,
 } from 'firebase/auth'
 import type { Router } from 'vue-router'
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
@@ -18,6 +17,7 @@ import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
+import { rejectNewUserOnLogin } from './authEntryGuards.js'
 import { getManageCommunityListPath } from './utils'
 import { isEnterpriseUserFromClaims } from '@shokujii/base/utils/enterpriseUserClaims.js'
 import { ZodError } from 'zod'
@@ -87,6 +87,10 @@ export const setupRouter = (router: Router) => {
   })
 
   router.afterEach((to, from) => {
+    // in-app ガードで setRedirectPath 済みの /inapp-login 遷移では上書きしない（RC-9）
+    if (to.path === '/inapp-login') {
+      return
+    }
     // 遷移先(to.path)が、ログインページまたはアプリ内ログインページの場合かつ、
     // 遷移元(from.path)が、ログインページまたはアプリ内ログインページでない場合にのみ、リダイレクトのパスを保存する
     // sessionStorageには、招待URLを考慮し、クエリパラメータも含めてfrom.fullPathで保存
@@ -188,13 +192,25 @@ export const setupRouter = (router: Router) => {
       if (to.path === '/login' && userCredential != null) {
         const aui = getAdditionalUserInfo(userCredential)
         if (aui?.isNewUser === true) {
-          await signOut(getAuth())
+          await rejectNewUserOnLogin(userCredential)
           const i18n = getI18n()
           window.alert(
             // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
             i18n.global.t('login.not_registered'),
           )
           return { path: '/register', query: to.query }
+        }
+      }
+
+      if (to.path === '/register' && userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        if (aui?.isNewUser === false) {
+          const i18n = getI18n()
+          window.alert(
+            // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+            i18n.global.t('register.already_registered'),
+          )
+          return getRedirectPath() ?? { path: '/login', query: to.query }
         }
       }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { FirebaseError } from 'firebase/app'
+import { getAdditionalUserInfo } from 'firebase/auth'
 import { requestEmailRegistration } from '@shokujii/base/apis/user'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -44,8 +45,14 @@ const handleRegister = async (providerId: ProviderIdType | 'custom', emailInput?
       })
       await router.push(getPassCode(emailInput, 'register'))
     } else {
-      await signInByProviderService(providerId)
+      const credential = await signInByProviderService(providerId)
       // ここに来るのはポップアップ認証（デバッグ用）成功時のみ
+      const aui = getAdditionalUserInfo(credential)
+      if (aui?.isNewUser === false) {
+        notification.show($t('register.already_registered'), 'warning')
+        await router.push(getLogin())
+        return
+      }
       window.location.href = '/register/complete'
     }
   } catch (error) {

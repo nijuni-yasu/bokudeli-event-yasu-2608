@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { FirebaseError } from 'firebase/app'
-import { getAdditionalUserInfo, getAuth, signOut } from 'firebase/auth'
+import { getAdditionalUserInfo } from 'firebase/auth'
 import { requestEmailLogin } from '@shokujii/base/apis/user'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -10,6 +10,7 @@ import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
+import { rejectNewUserOnLogin } from '@/router/authEntryGuards'
 import { getPassCode, getRegister } from '@/router/utils'
 
 const route = useRoute()
@@ -49,7 +50,7 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
       // ここに来るのはポップアップ認証（デバッグ用）成功時のみ
       const aui = getAdditionalUserInfo(credential)
       if (aui?.isNewUser === true) {
-        await signOut(getAuth())
+        await rejectNewUserOnLogin(credential)
         notification.show($t('login.not_registered'), 'warning')
         await router.push(getRegister())
         return
