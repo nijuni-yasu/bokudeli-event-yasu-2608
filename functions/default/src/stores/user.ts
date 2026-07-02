@@ -29,7 +29,12 @@ const userConverter: FirestoreDataConverter<ShokujiiUser> = {
     return user.toFirestore()
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ShokujiiUser {
-    return new ShokujiiUser(snapshot.id, snapshot.data())
+    try {
+      return new ShokujiiUser(snapshot.id, snapshot.data())
+    } catch (error: unknown) {
+      logger.warn('userConverter|Failed to parse user from Firestore', { userId: snapshot.id, error })
+      throw error
+    }
   },
 }
 
@@ -89,7 +94,13 @@ export const getUser = async (
   const db = getFirestore()
   const userRef = db.collection('users').doc(userId).withConverter(userConverter)
   const snapshot = transaction === undefined ? await userRef.get() : await transaction.get(userRef)
-  const user = snapshot.data()
+  let user: ShokujiiUser | undefined
+  try {
+    user = snapshot.data()
+  } catch (error: unknown) {
+    logger.warn('getUser|Failed to parse user', { userId, error })
+    throw error
+  }
   if (user == null) {
     return undefined
   }

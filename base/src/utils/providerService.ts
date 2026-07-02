@@ -105,8 +105,8 @@ export const updateProfileFromProviders = async (userCredential: UserCredential 
       case TwitterAuthProvider.PROVIDER_ID: {
         if (additionalUserInfo != null) {
           additionalInfo = {
-            user_description: additionalUserInfo.profile?.description as string,
-            user_sns_twitter: additionalUserInfo.username as string,
+            user_description: additionalUserInfo.profile?.description ?? '',
+            user_sns_twitter: additionalUserInfo.username ?? '',
           }
         }
         break

@@ -180,7 +180,13 @@ export const updateProfileFromProviders = onCall<
     throw new HttpsError('unauthenticated', 'not logged in')
   }
   const { additionalInfo } = request.data
-  let user = await getUser(uid, true)
+  let user: ShokujiiUser | undefined
+  try {
+    user = await getUser(uid, true)
+  } catch (error: unknown) {
+    logger.error('updateProfileFromProviders|getUser failed', { uid, error: String(error) })
+    throw error
+  }
   // 元のユーザー情報を保存
   // 新規ユーザーの場合は ShokujiiUser ではなく空オブジェクトにしておく
   const originalUser = user == null ? {} : _.cloneDeep(user)
@@ -190,11 +196,11 @@ export const updateProfileFromProviders = onCall<
   for (const provider of providerData) {
     user.user_email = user.user_email || provider.email
     user.user_name = user.user_name || provider.displayName
-    user.user_image_url = user.user_image_url || provider.photoURL
+    user.user_image_url = user.user_image_url || provider.photoURL || ''
   }
   for (const key of ADDITIONAL_KEYS) {
     const value = additionalInfo?.[key]
-    if (value !== undefined) {
+    if (value != null && value !== '') {
       user[key] = value
     }
   }
