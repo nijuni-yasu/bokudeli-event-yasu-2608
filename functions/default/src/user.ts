@@ -20,7 +20,7 @@ import {
 import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { fetchFacebookImage, fetchTwitterImage } from '@shokujii/common/utils/user.js'
 import { fetchGoogleProfileImage, isGoogleProfileImageUrl } from '@shokujii/common/utils/googleProfileImage.js'
-import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
+import { deleteNewUserDocuments, getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
 import { savePassCode, ShokujiiPassCode, getValidPassCodeFromEmail, deletePassCode } from './stores/passCode.js'
 import { send } from './utils/sendgrid.js'
 import { DEFAULT_FROM } from './utils/mail.js'
@@ -135,13 +135,32 @@ export const confirmEmailRegistration = onCall<
     throw error
   }
   const uid = user.uid
+  let saveUserSucceeded = false
+  try {
+    await saveUser(
+      new ShokujiiUser(uid, {
+        user_email: email,
+      }),
+    )
+    saveUserSucceeded = true
+    await deletePassCode(passCodeDocument.id)
+  } catch (error) {
+    try {
+      if (saveUserSucceeded) {
+        await deleteNewUserDocuments(uid)
+      }
+      await getAuth().deleteUser(uid)
+    } catch (rollbackError: unknown) {
+      const code = (rollbackError as { code?: string })?.code
+      if (code === 'auth/user-not-found') {
+        logger.warn('confirmEmailRegistration: auth user already deleted during rollback', { uid })
+      } else {
+        logger.error('confirmEmailRegistration: failed to rollback registration', { uid, error: rollbackError })
+      }
+    }
+    throw error
+  }
   const token = await getAuth().createCustomToken(uid)
-  await saveUser(
-    new ShokujiiUser(uid, {
-      user_email: email,
-    }),
-  )
-  await deletePassCode(passCodeDocument.id)
   return { token }
 })
 
@@ -237,6 +256,7 @@ export const updateProfileFromProviders = onCall<
   }
   const { additionalInfo } = request.data
   let user = await getUser(uid, true)
+  const isNewFirestoreUser = user == null
   // 元のユーザー情報を保存
   // 新規ユーザーの場合は ShokujiiUser ではなく空オブジェクトにしておく
   const originalUser = user == null ? {} : _.cloneDeep(user)
@@ -286,6 +306,13 @@ export const updateProfileFromProviders = onCall<
   }
   if (blob != null) {
     user.user_image_url = await uploadUserImage(uid, blob)
+  }
+
+  if (isNewFirestoreUser && user.user_email) {
+    const existingUid = await getUserIdFromEmail(user.user_email)
+    if (existingUid != null) {
+      throw new HttpsError('already-exists', 'The email address has been already used')
+    }
   }
 
   // 新規ユーザーの場合は空オブジェクトとの比較になるので必ず保存、

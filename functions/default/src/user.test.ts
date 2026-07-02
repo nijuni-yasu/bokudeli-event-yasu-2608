@@ -2,21 +2,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   getUserIdFromEmailMock,
+  getUserMock,
   savePassCodeMock,
   getValidPassCodeFromEmailMock,
   deletePassCodeMock,
   sendMock,
   createUserMock,
   createCustomTokenMock,
+  deleteUserMock,
+  deleteNewUserDocumentsMock,
+  getAuthUserMock,
   saveUserMock,
 } = vi.hoisted(() => ({
   getUserIdFromEmailMock: vi.fn(),
+  getUserMock: vi.fn(),
   savePassCodeMock: vi.fn(),
   getValidPassCodeFromEmailMock: vi.fn(),
   deletePassCodeMock: vi.fn(),
   sendMock: vi.fn(),
   createUserMock: vi.fn(),
   createCustomTokenMock: vi.fn(),
+  deleteUserMock: vi.fn(),
+  deleteNewUserDocumentsMock: vi.fn(),
+  getAuthUserMock: vi.fn(),
   saveUserMock: vi.fn(),
 }))
 
@@ -46,19 +54,27 @@ vi.mock('firebase-admin/auth', () => {
     getAuth: () => ({
       createUser: createUserMock,
       createCustomToken: createCustomTokenMock,
+      deleteUser: deleteUserMock,
+      getUser: getAuthUserMock,
     }),
   }
 })
 
 vi.mock('./stores/user.js', () => ({
   getUserIdFromEmail: (...args: unknown[]) => getUserIdFromEmailMock(...args),
+  getUser: (...args: unknown[]) => getUserMock(...args),
   saveUser: (...args: unknown[]) => saveUserMock(...args),
+  deleteNewUserDocuments: (...args: unknown[]) => deleteNewUserDocumentsMock(...args),
   ShokujiiUser: class ShokujiiUser {
     id: string
     user_email: string
-    constructor(id: string, src: { user_email: string }) {
+    user_name: string
+    user_image_url: string
+    constructor(id: string, src: { user_email?: string; user_name?: string; user_image_url?: string }) {
       this.id = id
-      this.user_email = src.user_email
+      this.user_email = src.user_email ?? ''
+      this.user_name = src.user_name ?? ''
+      this.user_image_url = src.user_image_url ?? ''
     }
   },
 }))
@@ -89,7 +105,13 @@ vi.mock('./utils/logger.js', () => ({
 }))
 
 import { FirebaseAuthError } from 'firebase-admin/auth'
-import { confirmEmailLogin, confirmEmailRegistration, requestEmailLogin, requestEmailRegistration } from './user.js'
+import {
+  confirmEmailLogin,
+  confirmEmailRegistration,
+  requestEmailLogin,
+  requestEmailRegistration,
+  updateProfileFromProviders,
+} from './user.js'
 
 type CallableHandler<T> = (req: { data: T }) => Promise<unknown>
 
@@ -107,6 +129,12 @@ const callConfirmEmailLogin = (email: string, passCode: string) =>
 const callConfirmEmailRegistration = (email: string, passCode: string) =>
   (confirmEmailRegistration as unknown as CallableHandler<{ email: string; passCode: string }>)({
     data: { email, passCode },
+  })
+
+const callUpdateProfileFromProviders = (uid: string, additionalInfo?: Record<string, string>) =>
+  (updateProfileFromProviders as unknown as CallableHandler<{ additionalInfo?: Record<string, string> }>)({
+    auth: { uid },
+    data: { additionalInfo },
   })
 
 describe('requestEmailLogin', () => {
@@ -201,6 +229,8 @@ describe('confirmEmailRegistration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     deletePassCodeMock.mockResolvedValue(undefined)
+    deleteUserMock.mockResolvedValue(undefined)
+    deleteNewUserDocumentsMock.mockResolvedValue(undefined)
     createUserMock.mockResolvedValue({ uid: 'uid-new' })
     createCustomTokenMock.mockResolvedValue('custom-token')
     saveUserMock.mockResolvedValue(undefined)
@@ -232,9 +262,10 @@ describe('confirmEmailRegistration', () => {
     expect(createUserMock).toHaveBeenCalledWith({ email: 'new@example.com', emailVerified: true })
     expect(saveUserMock).toHaveBeenCalledOnce()
     expect(deletePassCodeMock).toHaveBeenCalledWith('pc-1')
+    expect(createCustomTokenMock).toHaveBeenCalledWith('uid-new')
   })
 
-  it('saveUser 失敗時は pass code を削除しない', async () => {
+  it('saveUser 失敗時は pass code を削除せず Auth を rollback する', async () => {
     getValidPassCodeFromEmailMock.mockResolvedValue({
       id: 'pc-1',
       pass_code: '123456',
@@ -245,8 +276,27 @@ describe('confirmEmailRegistration', () => {
     await expect(callConfirmEmailRegistration('new@example.com', '123456')).rejects.toThrow('save failed')
 
     expect(createUserMock).toHaveBeenCalledOnce()
-    expect(createCustomTokenMock).toHaveBeenCalledOnce()
+    expect(deleteUserMock).toHaveBeenCalledWith('uid-new')
+    expect(deleteNewUserDocumentsMock).not.toHaveBeenCalled()
+    expect(createCustomTokenMock).not.toHaveBeenCalled()
     expect(deletePassCodeMock).not.toHaveBeenCalled()
+  })
+
+  it('deletePassCode 失敗時は Firestore と Auth を rollback する', async () => {
+    getValidPassCodeFromEmailMock.mockResolvedValue({
+      id: 'pc-1',
+      pass_code: '123456',
+      user_id: null,
+    })
+    deletePassCodeMock.mockRejectedValue(new Error('delete pass code failed'))
+
+    await expect(callConfirmEmailRegistration('new@example.com', '123456')).rejects.toThrow('delete pass code failed')
+
+    expect(saveUserMock).toHaveBeenCalledOnce()
+    expect(deleteNewUserDocumentsMock).toHaveBeenCalledWith('uid-new')
+    expect(deleteUserMock).toHaveBeenCalledWith('uid-new')
+    expect(createCustomTokenMock).not.toHaveBeenCalled()
+    expect(deletePassCodeMock).toHaveBeenCalledWith('pc-1')
   })
 
   it('Auth に既存メールがある場合は already-exists を返す', async () => {
@@ -262,5 +312,49 @@ describe('confirmEmailRegistration', () => {
     })
     expect(createCustomTokenMock).not.toHaveBeenCalled()
     expect(saveUserMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('updateProfileFromProviders', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    saveUserMock.mockResolvedValue(undefined)
+    getAuthUserMock.mockResolvedValue({
+      providerData: [{ email: 'new@example.com', displayName: 'New User', photoURL: '' }],
+    })
+  })
+
+  it('新規 Firestore ユーザーでメール未登録なら saveUser する', async () => {
+    getUserMock.mockResolvedValue(null)
+    getUserIdFromEmailMock.mockResolvedValue(undefined)
+
+    const result = await callUpdateProfileFromProviders('uid-new')
+
+    expect(getUserIdFromEmailMock).toHaveBeenCalledWith('new@example.com')
+    expect(saveUserMock).toHaveBeenCalledOnce()
+    expect(result).toMatchObject({ user: { user_email: 'new@example.com' } })
+  })
+
+  it('新規 Firestore ユーザーでメール登録済みなら already-exists を返す', async () => {
+    getUserMock.mockResolvedValue(null)
+    getUserIdFromEmailMock.mockResolvedValue('uid-existing')
+
+    await expect(callUpdateProfileFromProviders('uid-new')).rejects.toMatchObject({
+      code: 'already-exists',
+    })
+    expect(saveUserMock).not.toHaveBeenCalled()
+  })
+
+  it('既存 Firestore ユーザーではメール重複チェックをスキップする', async () => {
+    getUserMock.mockResolvedValue({
+      id: 'uid-existing',
+      user_email: 'existing@example.com',
+      user_name: 'Existing',
+      user_image_url: '',
+    })
+
+    await callUpdateProfileFromProviders('uid-existing')
+
+    expect(getUserIdFromEmailMock).not.toHaveBeenCalled()
   })
 })

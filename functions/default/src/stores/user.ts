@@ -178,6 +178,20 @@ export const saveUser = async (user: ShokujiiUser, transaction?: Transaction) =>
   }
 }
 
+/**
+ * 新規登録途中で作成した users / users_personal_information のみ削除する。
+ * 他サブコレクションは触らない。
+ */
+export const deleteNewUserDocuments = async (uid: string): Promise<void> => {
+  const db = getFirestore()
+  const userRef = getUserRef(uid)
+  const userPersonalInformationRef = db
+    .collection('users_personal_information')
+    .doc(uid)
+    .withConverter(userPersonalInformationConverter)
+  await Promise.all([userRef.delete(), userPersonalInformationRef.delete()])
+}
+
 const ANONYMIZED_USER_NAME = '-'
 
 /**
