@@ -32,12 +32,23 @@ vi.mock('firebase-functions/https', () => ({
   onCall: (...args: unknown[]) => (args.length === 2 ? args[1] : args[0]),
 }))
 
-vi.mock('firebase-admin/auth', () => ({
-  getAuth: () => ({
-    createUser: createUserMock,
-    createCustomToken: createCustomTokenMock,
-  }),
-}))
+vi.mock('firebase-admin/auth', () => {
+  class FirebaseAuthError extends Error {
+    constructor(
+      public code: string,
+      message: string,
+    ) {
+      super(message)
+    }
+  }
+  return {
+    FirebaseAuthError,
+    getAuth: () => ({
+      createUser: createUserMock,
+      createCustomToken: createCustomTokenMock,
+    }),
+  }
+})
 
 vi.mock('./stores/user.js', () => ({
   getUserIdFromEmail: (...args: unknown[]) => getUserIdFromEmailMock(...args),
@@ -77,6 +88,7 @@ vi.mock('./utils/logger.js', () => ({
   }),
 }))
 
+import { FirebaseAuthError } from 'firebase-admin/auth'
 import { confirmEmailLogin, confirmEmailRegistration, requestEmailLogin, requestEmailRegistration } from './user.js'
 
 type CallableHandler<T> = (req: { data: T }) => Promise<unknown>
@@ -219,5 +231,36 @@ describe('confirmEmailRegistration', () => {
     expect(result).toEqual({ token: 'custom-token' })
     expect(createUserMock).toHaveBeenCalledWith({ email: 'new@example.com', emailVerified: true })
     expect(saveUserMock).toHaveBeenCalledOnce()
+    expect(deletePassCodeMock).toHaveBeenCalledWith('pc-1')
+  })
+
+  it('saveUser 失敗時は pass code を削除しない', async () => {
+    getValidPassCodeFromEmailMock.mockResolvedValue({
+      id: 'pc-1',
+      pass_code: '123456',
+      user_id: null,
+    })
+    saveUserMock.mockRejectedValue(new Error('save failed'))
+
+    await expect(callConfirmEmailRegistration('new@example.com', '123456')).rejects.toThrow('save failed')
+
+    expect(createUserMock).toHaveBeenCalledOnce()
+    expect(createCustomTokenMock).toHaveBeenCalledOnce()
+    expect(deletePassCodeMock).not.toHaveBeenCalled()
+  })
+
+  it('Auth に既存メールがある場合は already-exists を返す', async () => {
+    getValidPassCodeFromEmailMock.mockResolvedValue({
+      id: 'pc-1',
+      pass_code: '123456',
+      user_id: null,
+    })
+    createUserMock.mockRejectedValue(new FirebaseAuthError('auth/email-already-exists', 'email already exists'))
+
+    await expect(callConfirmEmailRegistration('existing@example.com', '123456')).rejects.toMatchObject({
+      code: 'already-exists',
+    })
+    expect(createCustomTokenMock).not.toHaveBeenCalled()
+    expect(saveUserMock).not.toHaveBeenCalled()
   })
 })

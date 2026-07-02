@@ -1,4 +1,4 @@
-import { getAuth } from 'firebase-admin/auth'
+import { FirebaseAuthError, getAuth } from 'firebase-admin/auth'
 import { getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import _ from 'lodash'
@@ -124,17 +124,24 @@ export const confirmEmailRegistration = onCall<
   if (passCodeDocument.user_id != null) {
     throw new HttpsError('invalid-argument', 'pass code is not valid')
   }
-  const user = await getAuth().createUser({ email, emailVerified: true })
+  let user
+  try {
+    user = await getAuth().createUser({ email, emailVerified: true })
+  } catch (error) {
+    if (error instanceof FirebaseAuthError && error.code === 'auth/email-already-exists') {
+      logger.warn('confirmEmailRegistration: email already exists in Auth', { email })
+      throw new HttpsError('already-exists', 'The email address has been already used')
+    }
+    throw error
+  }
   const uid = user.uid
-  const [token] = await Promise.all([
-    getAuth().createCustomToken(uid),
-    deletePassCode(passCodeDocument.id),
-    saveUser(
-      new ShokujiiUser(uid, {
-        user_email: email,
-      }),
-    ),
-  ])
+  const token = await getAuth().createCustomToken(uid)
+  await saveUser(
+    new ShokujiiUser(uid, {
+      user_email: email,
+    }),
+  )
+  await deletePassCode(passCodeDocument.id)
   return { token }
 })
 
