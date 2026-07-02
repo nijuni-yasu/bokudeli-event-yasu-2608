@@ -156,7 +156,7 @@ const goBack = () => {
             :loading="isLoading"
             @click="goBack"
           >
-            {{ $t('passcode.back') }}
+            {{ $t(mode === 'register' ? 'passcode.back_register' : 'passcode.back') }}
           </v-btn>
         </v-sheet>
       </v-col>

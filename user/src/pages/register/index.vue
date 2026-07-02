@@ -65,6 +65,8 @@ const handleRegister = async (providerId: ProviderIdType | 'custom', emailInput?
     console.error(error)
     if (providerId === 'custom' && error instanceof FirebaseError && error.code === 'functions/already-exists') {
       notification.show($t('register.already_registered'), 'warning')
+      await router.push(getLogin())
+      return
     } else {
       notification.show($t('register.register_fail', { sns_name: $t(`sns_name['${providerId}']`) }), 'error')
     }

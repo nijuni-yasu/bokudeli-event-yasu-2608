@@ -622,6 +622,7 @@ export default {
     enter_passcode_description: '{email}に送信した6桁のコードを入力してください',
     resend: 'コードを再送信する',
     back: 'ログイン画面へ戻る',
+    back_register: '新規登録画面へ戻る',
     un_match_passcode: 'パスコードの値が間違っています',
     link_dialog_body:
       '{email}は既にメールアドレスログインで使用されています。{provider_label}と連携するため、ログインしてください。',
