@@ -582,7 +582,7 @@ export default {
     continue_email_login: 'メールアドレスでログイン',
     sns_login: '{sns_name}でログイン',
     not_registered: 'このメールアドレスは登録されていません。新規登録からアカウントを作成してください。',
-    link_to_register: '<a href="/register">アカウントをお持ちでない方は新規登録</a>',
+    link_to_register: 'アカウントをお持ちでない方は新規登録',
     link_dialog_body:
       '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
     link_to_partner_site: '<a href="https://partner.shokujii.jp/" target="_blank">飲食店管理画面のログインはこちら</a>',
@@ -608,7 +608,7 @@ export default {
     sns_register: '{sns_name}で新規登録',
     register_fail: '{sns_name}新規登録できませんでした',
     already_registered: 'このメールアドレスはすでに登録されています。ログインしてください。',
-    link_to_login: '<a href="/login">すでにアカウントをお持ちの方はログイン</a>',
+    link_to_login: 'すでにアカウントをお持ちの方はログイン',
     link_dialog_body:
       '{try_register_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
   },

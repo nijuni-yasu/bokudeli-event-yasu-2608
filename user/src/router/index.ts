@@ -6,6 +6,7 @@ import {
   getAdditionalUserInfo,
   getAuth,
   onAuthStateChanged,
+  signOut,
 } from 'firebase/auth'
 import type { Router } from 'vue-router'
 import * as ChannelService from '@channel.io/channel-web-sdk-loader'
@@ -102,6 +103,7 @@ export const setupRouter = (router: Router) => {
   const isInApp = isInAppBrowser(navigator.userAgent)
   router.beforeEach((to) => {
     if ((to.path === '/login' || to.path === '/register') && isInApp) {
+      setRedirectPath(to.fullPath)
       return {
         path: '/inapp-login',
         query: to.query,
@@ -109,7 +111,7 @@ export const setupRouter = (router: Router) => {
     }
     if (to.path === '/inapp-login' && !isInApp) {
       return {
-        path: '/login',
+        path: getRedirectPath(false) ?? '/login',
         query: to.query,
       }
     }
@@ -181,6 +183,19 @@ export const setupRouter = (router: Router) => {
       // userCredential は null でも意味がある（passcode の初回ログイン時など）
       if (user == null) {
         return getRedirectPath() ?? undefined
+      }
+
+      if (to.path === '/login' && userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        if (aui?.isNewUser === true) {
+          await signOut(getAuth())
+          const i18n = getI18n()
+          window.alert(
+            // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+            i18n.global.t('login.not_registered'),
+          )
+          return { path: '/register', query: to.query }
+        }
       }
 
       let shokujiiUser = null

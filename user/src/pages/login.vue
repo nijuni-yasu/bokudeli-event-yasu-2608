@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { FirebaseError } from 'firebase/app'
+import { getAdditionalUserInfo, getAuth, signOut } from 'firebase/auth'
 import { requestEmailLogin } from '@shokujii/base/apis/user'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
@@ -9,7 +10,7 @@ import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
-import { getPassCode } from '@/router/utils'
+import { getPassCode, getRegister } from '@/router/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,9 +45,15 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
       })
       await router.push(getPassCode(emailInput, 'login'))
     } else {
-      await signInByProviderService(providerId)
+      const credential = await signInByProviderService(providerId)
       // ここに来るのはポップアップ認証（デバッグ用）成功時のみ
-      // 再読みこみしてリダイレクト時と同様の処理をさせる
+      const aui = getAdditionalUserInfo(credential)
+      if (aui?.isNewUser === true) {
+        await signOut(getAuth())
+        notification.show($t('login.not_registered'), 'warning')
+        await router.push(getRegister())
+        return
+      }
       window.location.href = '/register/complete'
     }
   } catch (error) {
@@ -153,7 +160,9 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
           <v-divider class="my-6" color="grey-lighten-3" />
           <v-container>
             <v-row justify="center" class="py-2 text-subtitle-2">
-              <div v-html="$t('login.link_to_register')" />
+              <RouterLink :to="getRegister()" class="text-grey-darken-3">
+                {{ $t('login.link_to_register') }}
+              </RouterLink>
             </v-row>
             <v-row justify="center" class="py-2 text-subtitle-2">
               <div v-html="$t('login.link_to_partner_site')" />

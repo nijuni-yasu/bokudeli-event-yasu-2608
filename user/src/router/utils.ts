@@ -32,6 +32,10 @@ export const getEventBillInvoicePath = (eventId: string) => `/manage/event/${eve
 export const getFlyerPath = () => '/flyer'
 export type PassCodeMode = 'login' | 'register'
 
+export function parsePassCodeMode(raw: unknown): PassCodeMode {
+  return raw === 'register' ? 'register' : 'login'
+}
+
 export const getLogin = () => '/login'
 export const getRegister = () => '/register'
 // ここでデフォルト設定はあまり使うべきではないが、互換性のために

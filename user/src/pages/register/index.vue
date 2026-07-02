@@ -9,7 +9,7 @@ import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
-import { getPassCode } from '@/router/utils'
+import { getLogin, getPassCode } from '@/router/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -152,7 +152,9 @@ const handleRegister = async (providerId: ProviderIdType | 'custom', emailInput?
           <v-divider class="my-6" color="grey-lighten-3" />
           <v-container>
             <v-row justify="center" class="py-2 text-subtitle-2">
-              <div v-html="$t('register.link_to_login')" />
+              <RouterLink :to="getLogin()" class="text-grey-darken-3">
+                {{ $t('register.link_to_login') }}
+              </RouterLink>
             </v-row>
           </v-container>
         </v-sheet>
