@@ -17,7 +17,7 @@ import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
-import { rejectNewUserOnLogin } from './authEntryGuards.js'
+import { rejectExistingUserOnRegister, rejectNewUserOnLogin, signOutBestEffort } from './authEntryGuards.js'
 import { getManageCommunityListPath } from './utils'
 import { isEnterpriseUserFromClaims } from '@shokujii/base/utils/enterpriseUserClaims.js'
 import { ZodError } from 'zod'
@@ -107,7 +107,7 @@ export const setupRouter = (router: Router) => {
   const isInApp = isInAppBrowser(navigator.userAgent)
   router.beforeEach((to) => {
     if ((to.path === '/login' || to.path === '/register') && isInApp) {
-      setRedirectPath(to.fullPath)
+      setRedirectPath((history.state?.redirect as string | undefined) ?? to.fullPath)
       return {
         path: '/inapp-login',
         query: to.query,
@@ -139,6 +139,14 @@ export const setupRouter = (router: Router) => {
         userCredential = await handleRedirect(user)
       } catch (err: unknown) {
         if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
+          if (to.path === '/register') {
+            const i18n = getI18n()
+            window.alert(
+              // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+              i18n.global.t('register.already_registered'),
+            )
+            return { path: '/login', query: to.query }
+          }
           const pendingCred = credentialFromError(err)
           // email が同じ時に発生するエラーなので、email は必ず存在する
           const email = err.customData!.email as string
@@ -192,7 +200,21 @@ export const setupRouter = (router: Router) => {
       if (to.path === '/login' && userCredential != null) {
         const aui = getAdditionalUserInfo(userCredential)
         if (aui?.isNewUser === true) {
-          await rejectNewUserOnLogin(userCredential)
+          try {
+            await rejectNewUserOnLogin(userCredential)
+          } catch (err) {
+            console.error(err)
+            await signOutBestEffort()
+            const i18n = getI18n()
+            window.alert(
+              // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+              i18n.global.t('login.login_fail', {
+                // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+                sns_name: i18n.global.t(`sns_name['${userCredential.providerId}']`),
+              }),
+            )
+            return
+          }
           const i18n = getI18n()
           window.alert(
             // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
@@ -210,6 +232,11 @@ export const setupRouter = (router: Router) => {
             // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
             i18n.global.t('register.already_registered'),
           )
+          try {
+            await rejectExistingUserOnRegister()
+          } catch (err) {
+            console.error(err)
+          }
           return getRedirectPath() ?? { path: '/login', query: to.query }
         }
       }

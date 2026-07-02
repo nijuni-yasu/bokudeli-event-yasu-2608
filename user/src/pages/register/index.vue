@@ -10,6 +10,7 @@ import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
 import AuthEntryLayout from '@/components/auth/AuthEntryLayout.vue'
+import { rejectExistingUserOnRegister } from '@/router/authEntryGuards'
 import { getLogin, getPassCode } from '@/router/utils'
 
 const route = useRoute()
@@ -50,6 +51,11 @@ const handleRegister = async (providerId: ProviderIdType | 'custom', emailInput?
       const aui = getAdditionalUserInfo(credential)
       if (aui?.isNewUser === false) {
         notification.show($t('register.already_registered'), 'warning')
+        try {
+          await rejectExistingUserOnRegister()
+        } catch (error) {
+          console.error(error)
+        }
         await router.push(getLogin())
         return
       }

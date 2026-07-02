@@ -3,12 +3,26 @@ import { getAuth, signOut, type UserCredential } from 'firebase/auth'
 /**
  * /login 導線で OAuth により誤って作成された Auth ユーザーを削除してサインアウトする。
  * signOut のみだと Auth 孤児が残り、2 回目以降 isNewUser=false で暗黙登録をバイパスしうる。
+ * delete 失敗時は throw し、呼び出し側で拒否フローを中断する。
  */
 export async function rejectNewUserOnLogin(userCredential: UserCredential): Promise<void> {
-  try {
-    await userCredential.user.delete()
-  } catch (err) {
-    console.error('Failed to delete rejected Auth user:', err)
-  }
+  await userCredential.user.delete()
   await signOut(getAuth())
+}
+
+/**
+ * /register 導線で既存 SNS ユーザーを拒否したあと、Auth セッションを残さない。
+ * 正当な既存ユーザーのため delete は行わない。
+ */
+export async function rejectExistingUserOnRegister(): Promise<void> {
+  await signOut(getAuth())
+}
+
+/** delete 失敗など拒否フロー中断時に、ログイン済みガードへの誤遷移を防ぐ */
+export async function signOutBestEffort(): Promise<void> {
+  try {
+    await signOut(getAuth())
+  } catch (err) {
+    console.error('Failed to sign out after auth entry rejection:', err)
+  }
 }

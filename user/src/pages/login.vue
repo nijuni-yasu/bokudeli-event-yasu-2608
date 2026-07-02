@@ -10,7 +10,7 @@ import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
 import AuthEntryLayout from '@/components/auth/AuthEntryLayout.vue'
-import { rejectNewUserOnLogin } from '@/router/authEntryGuards'
+import { rejectNewUserOnLogin, signOutBestEffort } from '@/router/authEntryGuards'
 import { getPassCode, getRegister } from '@/router/utils'
 
 const route = useRoute()
@@ -50,7 +50,14 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
       // ここに来るのはポップアップ認証（デバッグ用）成功時のみ
       const aui = getAdditionalUserInfo(credential)
       if (aui?.isNewUser === true) {
-        await rejectNewUserOnLogin(credential)
+        try {
+          await rejectNewUserOnLogin(credential)
+        } catch (error) {
+          console.error(error)
+          await signOutBestEffort()
+          notification.show($t('login.login_fail', { sns_name: $t(`sns_name['${providerId}']`) }), 'error')
+          return
+        }
         notification.show($t('login.not_registered'), 'warning')
         await router.push(getRegister())
         return
