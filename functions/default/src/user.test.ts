@@ -299,6 +299,22 @@ describe('confirmEmailRegistration', () => {
     expect(deletePassCodeMock).toHaveBeenCalledWith('pc-1')
   })
 
+  it('deleteNewUserDocuments 失敗時も Auth を rollback する', async () => {
+    getValidPassCodeFromEmailMock.mockResolvedValue({
+      id: 'pc-1',
+      pass_code: '123456',
+      user_id: null,
+    })
+    deletePassCodeMock.mockRejectedValue(new Error('delete pass code failed'))
+    deleteNewUserDocumentsMock.mockRejectedValue(new Error('delete firestore failed'))
+
+    await expect(callConfirmEmailRegistration('new@example.com', '123456')).rejects.toThrow('delete pass code failed')
+
+    expect(deleteNewUserDocumentsMock).toHaveBeenCalledWith('uid-new')
+    expect(deleteUserMock).toHaveBeenCalledWith('uid-new')
+    expect(createCustomTokenMock).not.toHaveBeenCalled()
+  })
+
   it('Auth に既存メールがある場合は already-exists を返す', async () => {
     getValidPassCodeFromEmailMock.mockResolvedValue({
       id: 'pc-1',

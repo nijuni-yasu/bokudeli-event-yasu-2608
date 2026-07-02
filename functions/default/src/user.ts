@@ -145,17 +145,21 @@ export const confirmEmailRegistration = onCall<
     saveUserSucceeded = true
     await deletePassCode(passCodeDocument.id)
   } catch (error) {
-    try {
-      if (saveUserSucceeded) {
+    if (saveUserSucceeded) {
+      try {
         await deleteNewUserDocuments(uid)
+      } catch (rollbackError: unknown) {
+        logger.error('confirmEmailRegistration: failed to rollback Firestore documents', { uid, error: rollbackError })
       }
+    }
+    try {
       await getAuth().deleteUser(uid)
     } catch (rollbackError: unknown) {
       const code = (rollbackError as { code?: string })?.code
       if (code === 'auth/user-not-found') {
         logger.warn('confirmEmailRegistration: auth user already deleted during rollback', { uid })
       } else {
-        logger.error('confirmEmailRegistration: failed to rollback registration', { uid, error: rollbackError })
+        logger.error('confirmEmailRegistration: failed to rollback auth user', { uid, error: rollbackError })
       }
     }
     throw error
