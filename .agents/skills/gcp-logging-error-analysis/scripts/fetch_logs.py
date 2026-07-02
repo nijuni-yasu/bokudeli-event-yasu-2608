@@ -13,6 +13,8 @@ from zoneinfo import ZoneInfo
 
 JST = ZoneInfo("Asia/Tokyo")
 DEFAULT_LIMIT = 200
+GCLOUD_TIMEOUT_SEC = 120
+PARSE_TIMEOUT_SEC = 60
 
 
 def parse_jst_datetime(value: str) -> datetime:
@@ -61,7 +63,18 @@ def fetch_logs(
     if freshness is not None:
         cmd.insert(-2, f"--freshness={freshness}")
 
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=GCLOUD_TIMEOUT_SEC,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            f"gcloud logging read timed out after {GCLOUD_TIMEOUT_SEC}s",
+        ) from exc
     if result.returncode != 0:
         stderr = result.stderr.strip() or result.stdout.strip()
         raise RuntimeError(f"gcloud logging read failed: {stderr}")
@@ -150,6 +163,7 @@ def main() -> int:
         subprocess.run(
             [sys.executable, str(parse_script), parse_input, "--format", "md"],
             check=True,
+            timeout=PARSE_TIMEOUT_SEC,
         )
 
     return 0

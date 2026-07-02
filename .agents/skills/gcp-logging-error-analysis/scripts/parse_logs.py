@@ -95,7 +95,7 @@ def classify_tier(entry: dict[str, Any], message: str) -> str:
     if "cloudaudit" in log_name or "cloudscheduler" in log_name:
         return "infra"
 
-    if module == "clientError" or json_payload.get("module") == "clientError":
+    if module == "clientError":
         if any(pattern in lower for pattern in CLIENT_ERROR_ACTIONABLE_PATTERNS):
             return "P1"
         if any(pattern in lower for pattern in CLIENT_ERROR_NOISE_PATTERNS):
@@ -258,6 +258,15 @@ def mask_sensitive(value: str) -> str:
     return masked
 
 
+def is_stderr_entry(entry: dict[str, Any]) -> bool:
+    log_name = entry.get("logName", "")
+    if "stderr" in log_name:
+        return True
+    if entry.get("textPayload"):
+        return True
+    return False
+
+
 def build_trace_links(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_trace: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for entry in entries:
@@ -268,15 +277,10 @@ def build_trace_links(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
     links: list[dict[str, Any]] = []
     for trace, trace_entries in by_trace.items():
         http_entries = [e for e in trace_entries if e.get("httpRequest")]
-        stderr_entries = [
-            e
-            for e in trace_entries
-            if "stderr" in e.get("logName", "") or e.get("textPayload") or (
-                e.get("jsonPayload") and not e.get("httpRequest")
-            )
-        ]
+        stderr_entries = [e for e in trace_entries if is_stderr_entry(e)]
         if not http_entries or not stderr_entries:
             continue
+        stderr_entries.sort(key=lambda e: len(extract_message(e)), reverse=True)
         http_status = http_entries[0].get("httpRequest", {}).get("status")
         stderr_message = extract_message(stderr_entries[0])
         links.append(
