@@ -10,13 +10,42 @@ on:
     branches:
       - development
       - production
-    paths:
-      - 'firestore.rules'
-      - 'tests/firestore-rules/**'
-      - '.github/workflows/test_firestore_rules.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      rules: ${{ steps.filter.outputs.rules }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rules:
+              - 'firestore.rules'
+              - 'tests/firestore-rules/**'
+              - '.github/workflows/test_firestore_rules.yml'
+
   test:
+    needs: changes
+    if: >-
+      always() && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'push' ||
+        (github.event_name == 'pull_request' && needs.changes.outputs.rules == 'true')
+      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
