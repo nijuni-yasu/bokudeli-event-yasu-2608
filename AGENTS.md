@@ -27,6 +27,7 @@ AIエージェント向けプロジェクトガイド。
 | sandbox へ push + Actions デプロイ                                              | `/github-actions-deploy`     |
 | sandbox WIP デプロイ                                                            | `/github-sandbox-wip-deploy` |
 | コミット後の反映（PR + sandbox）                                                | `/git-reflect-after-commit`  |
+| GCP Cloud Logging ERROR 取得・解析（gcloud / JSON 添付）                        | `/gcp-logging-error-analysis` |
 
 ## 推奨スキル（技術スタック別）
 
