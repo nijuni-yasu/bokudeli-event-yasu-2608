@@ -29,10 +29,10 @@ CURSOR_TURN = {
     "loop_count": 0,
 }
 
-# followup_min_jpy (50) 以上になるよう fresh input を多めにした payload
+# followup_min_jpy (100) 以上になるよう fresh input を多めにした payload
 CURSOR_TURN_HIGH_COST = {
     **CURSOR_TURN,
-    "input_tokens": 500000,
+    "input_tokens": 600000,
     "cache_read_tokens": 380000,
     "cache_write_tokens": 0,
 }

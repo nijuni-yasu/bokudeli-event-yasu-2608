@@ -1,0 +1,286 @@
+[
+  {
+    "insertId": "6a3fb58b0009e35e435a0aa5",
+    "httpRequest": {
+      "requestMethod": "POST",
+      "requestUrl": "https://asia-northeast1-bokudeli-event-yasu-2510.cloudfunctions.net/getDashboardMonthlyData",
+      "requestSize": "2174",
+      "status": 500,
+      "responseSize": "269",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+      "remoteIp": "2001:db8::1",
+      "referer": "https://company-a.sandbox2510.tabete.co/",
+      "serverIp": "203.0.113.1",
+      "latency": "0.209747490s",
+      "protocol": "HTTP/1.1"
+    },
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "location": "asia-northeast1",
+        "service_name": "getdashboardmonthlydata",
+        "revision_name": "getdashboardmonthlydata-00001-faq",
+        "configuration_name": "getdashboardmonthlydata",
+        "project_id": "bokudeli-event-yasu-2510"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:39.436384Z",
+    "severity": "ERROR",
+    "labels": {
+      "goog-managed-by": "cloudfunctions",
+      "instanceId": "002f8ffd47732bbf013f54a105a145a40d5459dfc6e37a08369e27402d6d7ee941171995707a41023f984b443d849f922fb8c715d51e3ea2bd554e6593cec6e28b3b4d346c9a5fddd1453afde7c590c295a3",
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "deployment-callable": "true"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Frequests",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/a7aafad48772800d4c463e72f0c59814",
+    "receiveTimestamp": "2026-06-27T11:35:39.703094950Z",
+    "spanId": "cb8add66b8bca635"
+  },
+  {
+    "insertId": "6a3fb58b000852cb26dfea01",
+    "httpRequest": {
+      "requestMethod": "POST",
+      "requestUrl": "https://asia-northeast1-bokudeli-event-yasu-2510.cloudfunctions.net/getDashboardMemberData",
+      "requestSize": "2172",
+      "status": 500,
+      "responseSize": "269",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+      "remoteIp": "2001:db8::1",
+      "referer": "https://company-a.sandbox2510.tabete.co/",
+      "serverIp": "203.0.113.1",
+      "latency": "0.095040919s",
+      "protocol": "HTTP/1.1"
+    },
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "location": "asia-northeast1",
+        "service_name": "getdashboardmemberdata",
+        "revision_name": "getdashboardmemberdata-00001-sed",
+        "configuration_name": "getdashboardmemberdata",
+        "project_id": "bokudeli-event-yasu-2510"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:39.448896Z",
+    "severity": "ERROR",
+    "labels": {
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "goog-managed-by": "cloudfunctions",
+      "deployment-callable": "true",
+      "instanceId": "002f8ffd4751fb694697bac191c57ab6dd560325f3e610510558437db0495b8a2a0f06f65bf4401243d1c12d14522c191453b153119d0a62b5182be49d9c339137ca7cd2c51528ddaf92dda15f9c00f2abb57d"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Frequests",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/0b4a5b6b8e802b684c463e72f0c59069",
+    "receiveTimestamp": "2026-06-27T11:35:39.702727283Z",
+    "spanId": "c17b08f873e2ec51"
+  },
+  {
+    "textPayload": "Unhandled error Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE\n    at callErrorFromStatus (/workspace/node_modules/@grpc/grpc-js/build/src/call.js:32:19)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:359:73)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:327:181)\n    at /workspace/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78\n    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)\nfor call at\n    at ServiceClientImpl.makeServerStreamRequest (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:342:32)\n    at ServiceClientImpl.<anonymous> (/workspace/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:242:33\n    at /workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28\n    at /workspace/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16\n    at Object.request (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)\n    at makeRequest (/workspace/node_modules/retry-request/index.js:159:28)\n    at retryRequest (/workspace/node_modules/retry-request/index.js:119:5)\n    at StreamProxy.setStream (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)\n    at StreamingApiCaller.call (/workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)\nCaused by: Error\n    at QueryUtil._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)\n    at Query._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)\n    at Query._get (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43\n    at /workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30\n    at NoopContextManager.with (/workspace/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:14:19)\n    at ContextAPI.with (/workspace/node_modules/@opentelemetry/api/build/src/api/context.js:51:46)\n    at NoopTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:54:31)\n    at ProxyTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:27:24)\n    at EnabledTraceUtil.startActiveSpan (/workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28) {\n  code: 9,\n  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE',\n  metadata: Metadata {\n    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },\n    opaqueData: Map(0) {},\n    options: {}\n  }\n}",
+    "insertId": "6a3fb58b00084edd6b66a1d1",
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "location": "asia-northeast1",
+        "project_id": "bokudeli-event-yasu-2510",
+        "revision_name": "getdashboardmemberdata-00001-sed",
+        "service_name": "getdashboardmemberdata",
+        "configuration_name": "getdashboardmemberdata"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:39.544477Z",
+    "severity": "ERROR",
+    "labels": {
+      "execution_id": "waa6d92fh0li",
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "deployment-callable": "true",
+      "instanceId": "002f8ffd4751fb694697bac191c57ab6dd560325f3e610510558437db0495b8a2a0f06f65bf4401243d1c12d14522c191453b153119d0a62b5182be49d9c339137ca7cd2c51528ddaf92dda15f9c00f2abb57d",
+      "goog-managed-by": "cloudfunctions",
+      "run.googleapis.com/base_image_versions": "us-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/nodejs20:nodejs20_20260610_20_20_2_RC00"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Fstderr",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/0b4a5b6b8e802b684c463e72f0c59069",
+    "receiveTimestamp": "2026-06-27T11:35:39.551664707Z",
+    "spanId": "13941746934644665425",
+    "errorGroups": [
+      {
+        "id": "CPjI86GD2qez9wE"
+      }
+    ]
+  },
+  {
+    "textPayload": "Unhandled error Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE\n    at callErrorFromStatus (/workspace/node_modules/@grpc/grpc-js/build/src/call.js:32:19)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:359:73)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:327:181)\n    at /workspace/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78\n    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)\nfor call at\n    at ServiceClientImpl.makeServerStreamRequest (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:342:32)\n    at ServiceClientImpl.<anonymous> (/workspace/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:242:33\n    at /workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28\n    at /workspace/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16\n    at Object.request (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)\n    at makeRequest (/workspace/node_modules/retry-request/index.js:159:28)\n    at retryRequest (/workspace/node_modules/retry-request/index.js:119:5)\n    at StreamProxy.setStream (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)\n    at StreamingApiCaller.call (/workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)\nCaused by: Error\n    at QueryUtil._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)\n    at Query._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)\n    at Query._get (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43\n    at /workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30\n    at NoopContextManager.with (/workspace/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:14:19)\n    at ContextAPI.with (/workspace/node_modules/@opentelemetry/api/build/src/api/context.js:51:46)\n    at NoopTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:54:31)\n    at ProxyTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:27:24)\n    at EnabledTraceUtil.startActiveSpan (/workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28) {\n  code: 9,\n  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE',\n  metadata: Metadata {\n    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },\n    opaqueData: Map(0) {},\n    options: {}\n  }\n}",
+    "insertId": "6a3fb58b0009df4faf5c23a3",
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "location": "asia-northeast1",
+        "configuration_name": "getdashboardmonthlydata",
+        "service_name": "getdashboardmonthlydata",
+        "revision_name": "getdashboardmonthlydata-00001-faq",
+        "project_id": "bokudeli-event-yasu-2510"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:39.646991Z",
+    "severity": "ERROR",
+    "labels": {
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "instanceId": "002f8ffd47732bbf013f54a105a145a40d5459dfc6e37a08369e27402d6d7ee941171995707a41023f984b443d849f922fb8c715d51e3ea2bd554e6593cec6e28b3b4d346c9a5fddd1453afde7c590c295a3",
+      "deployment-callable": "true",
+      "execution_id": "waa6cxm2d6zv",
+      "run.googleapis.com/base_image_versions": "us-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/nodejs20:nodejs20_20260610_20_20_2_RC00",
+      "goog-managed-by": "cloudfunctions"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Fstderr",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/a7aafad48772800d4c463e72f0c59814",
+    "receiveTimestamp": "2026-06-27T11:35:39.652800896Z",
+    "spanId": "14666778569741215285",
+    "errorGroups": [
+      {
+        "id": "CPjI86GD2qez9wE"
+      }
+    ]
+  },
+  {
+    "insertId": "6a3fb5970007ad9527019adc",
+    "httpRequest": {
+      "requestMethod": "POST",
+      "requestUrl": "https://asia-northeast1-bokudeli-event-yasu-2510.cloudfunctions.net/getDashboardMonthlyData",
+      "requestSize": "2173",
+      "status": 500,
+      "responseSize": "269",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+      "remoteIp": "2001:db8::1",
+      "referer": "https://company-a.sandbox2510.tabete.co/",
+      "serverIp": "203.0.113.1",
+      "latency": "0.072786411s",
+      "protocol": "HTTP/1.1"
+    },
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "service_name": "getdashboardmonthlydata",
+        "revision_name": "getdashboardmonthlydata-00001-faq",
+        "configuration_name": "getdashboardmonthlydata",
+        "project_id": "bokudeli-event-yasu-2510",
+        "location": "asia-northeast1"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:51.426660Z",
+    "severity": "ERROR",
+    "labels": {
+      "instanceId": "002f8ffd47732bbf013f54a105a145a40d5459dfc6e37a08369e27402d6d7ee941171995707a41023f984b443d849f922fb8c715d51e3ea2bd554e6593cec6e28b3b4d346c9a5fddd1453afde7c590c295a3",
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "deployment-callable": "true",
+      "goog-managed-by": "cloudfunctions"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Frequests",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/e395fa0bb64d1e49021662aafb0948b5",
+    "receiveTimestamp": "2026-06-27T11:35:51.696535843Z",
+    "spanId": "b73c0e55a4988598"
+  },
+  {
+    "insertId": "6a3fb5970007a987cb5aa498",
+    "httpRequest": {
+      "requestMethod": "POST",
+      "requestUrl": "https://asia-northeast1-bokudeli-event-yasu-2510.cloudfunctions.net/getDashboardMemberData",
+      "requestSize": "2173",
+      "status": 500,
+      "responseSize": "269",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+      "remoteIp": "2001:db8::1",
+      "referer": "https://company-a.sandbox2510.tabete.co/",
+      "serverIp": "203.0.113.1",
+      "latency": "0.068921635s",
+      "protocol": "HTTP/1.1"
+    },
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "configuration_name": "getdashboardmemberdata",
+        "revision_name": "getdashboardmemberdata-00001-sed",
+        "service_name": "getdashboardmemberdata",
+        "project_id": "bokudeli-event-yasu-2510",
+        "location": "asia-northeast1"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:51.432312Z",
+    "severity": "ERROR",
+    "labels": {
+      "instanceId": "002f8ffd4751fb694697bac191c57ab6dd560325f3e610510558437db0495b8a2a0f06f65bf4401243d1c12d14522c191453b153119d0a62b5182be49d9c339137ca7cd2c51528ddaf92dda15f9c00f2abb57d",
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "goog-managed-by": "cloudfunctions",
+      "deployment-callable": "true"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Frequests",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/7373df5345319b5b021662aafb094a2c",
+    "receiveTimestamp": "2026-06-27T11:35:51.695484805Z",
+    "spanId": "5d2400ad9a3cc9d5"
+  },
+  {
+    "textPayload": "Unhandled error Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE\n    at callErrorFromStatus (/workspace/node_modules/@grpc/grpc-js/build/src/call.js:32:19)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:359:73)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:327:181)\n    at /workspace/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78\n    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)\nfor call at\n    at ServiceClientImpl.makeServerStreamRequest (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:342:32)\n    at ServiceClientImpl.<anonymous> (/workspace/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:242:33\n    at /workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28\n    at /workspace/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16\n    at Object.request (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)\n    at makeRequest (/workspace/node_modules/retry-request/index.js:159:28)\n    at retryRequest (/workspace/node_modules/retry-request/index.js:119:5)\n    at StreamProxy.setStream (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)\n    at StreamingApiCaller.call (/workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)\nCaused by: Error\n    at QueryUtil._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)\n    at Query._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)\n    at Query._get (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43\n    at /workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30\n    at NoopContextManager.with (/workspace/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:14:19)\n    at ContextAPI.with (/workspace/node_modules/@opentelemetry/api/build/src/api/context.js:51:46)\n    at NoopTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:54:31)\n    at ProxyTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:27:24)\n    at EnabledTraceUtil.startActiveSpan (/workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28) {\n  code: 9,\n  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE',\n  metadata: Metadata {\n    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },\n    opaqueData: Map(0) {},\n    options: {}\n  }\n}",
+    "insertId": "6a3fb5970007a6f0ccfa3d31",
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "location": "asia-northeast1",
+        "configuration_name": "getdashboardmemberdata",
+        "service_name": "getdashboardmemberdata",
+        "revision_name": "getdashboardmemberdata-00001-sed",
+        "project_id": "bokudeli-event-yasu-2510"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:51.501488Z",
+    "severity": "ERROR",
+    "labels": {
+      "deployment-callable": "true",
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "instanceId": "002f8ffd4751fb694697bac191c57ab6dd560325f3e610510558437db0495b8a2a0f06f65bf4401243d1c12d14522c191453b153119d0a62b5182be49d9c339137ca7cd2c51528ddaf92dda15f9c00f2abb57d",
+      "execution_id": "waafm3sshzis",
+      "run.googleapis.com/base_image_versions": "us-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/nodejs20:nodejs20_20260610_20_20_2_RC00",
+      "goog-managed-by": "cloudfunctions"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Fstderr",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/7373df5345319b5b021662aafb094a2c",
+    "receiveTimestamp": "2026-06-27T11:35:51.538277409Z",
+    "spanId": "6711490090305898965",
+    "errorGroups": [
+      {
+        "id": "CPjI86GD2qez9wE"
+      }
+    ]
+  },
+  {
+    "textPayload": "Unhandled error Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE\n    at callErrorFromStatus (/workspace/node_modules/@grpc/grpc-js/build/src/call.js:32:19)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:359:73)\n    at Object.onReceiveStatus (/workspace/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:327:181)\n    at /workspace/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78\n    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)\nfor call at\n    at ServiceClientImpl.makeServerStreamRequest (/workspace/node_modules/@grpc/grpc-js/build/src/client.js:342:32)\n    at ServiceClientImpl.<anonymous> (/workspace/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:242:33\n    at /workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28\n    at /workspace/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16\n    at Object.request (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)\n    at makeRequest (/workspace/node_modules/retry-request/index.js:159:28)\n    at retryRequest (/workspace/node_modules/retry-request/index.js:119:5)\n    at StreamProxy.setStream (/workspace/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)\n    at StreamingApiCaller.call (/workspace/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)\nCaused by: Error\n    at QueryUtil._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)\n    at Query._getResponse (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)\n    at Query._get (/workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)\n    at /workspace/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43\n    at /workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30\n    at NoopContextManager.with (/workspace/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:14:19)\n    at ContextAPI.with (/workspace/node_modules/@opentelemetry/api/build/src/api/context.js:51:46)\n    at NoopTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:54:31)\n    at ProxyTracer.startActiveSpan (/workspace/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:27:24)\n    at EnabledTraceUtil.startActiveSpan (/workspace/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28) {\n  code: 9,\n  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/bokudeli-event-yasu-2510/firestore/indexes?create_composite=Cl5wcm9qZWN0cy9ib2t1ZGVsaS1ldmVudC15YXN1LTI1MTAvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL21lbWJlcl9vcmRlcnMvaW5kZXhlcy9fEAIaEQoNZW50ZXJwcmlzZV9pZBABGgoKBnN0YXR1cxABGgwKCF9fbmFtZV9fEAE',\n  metadata: Metadata {\n    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },\n    opaqueData: Map(0) {},\n    options: {}\n  }\n}",
+    "insertId": "6a3fb5970007a947751b35be",
+    "resource": {
+      "type": "cloud_run_revision",
+      "labels": {
+        "location": "asia-northeast1",
+        "project_id": "bokudeli-event-yasu-2510",
+        "configuration_name": "getdashboardmonthlydata",
+        "revision_name": "getdashboardmonthlydata-00001-faq",
+        "service_name": "getdashboardmonthlydata"
+      }
+    },
+    "timestamp": "2026-06-27T11:35:51.502087Z",
+    "severity": "ERROR",
+    "labels": {
+      "deployment-callable": "true",
+      "firebase-functions-hash": "637c1363ee5cee5a5a1a117a8b78e4ddde63cb11",
+      "instanceId": "002f8ffd47732bbf013f54a105a145a40d5459dfc6e37a08369e27402d6d7ee941171995707a41023f984b443d849f922fb8c715d51e3ea2bd554e6593cec6e28b3b4d346c9a5fddd1453afde7c590c295a3",
+      "execution_id": "waafm1cl5zmn",
+      "run.googleapis.com/base_image_versions": "us-docker.pkg.dev/serverless-runtimes/google-22-full/runtimes/nodejs20:nodejs20_20260610_20_20_2_RC00",
+      "goog-managed-by": "cloudfunctions"
+    },
+    "logName": "projects/bokudeli-event-yasu-2510/logs/run.googleapis.com%2Fstderr",
+    "trace": "projects/bokudeli-event-yasu-2510/traces/e395fa0bb64d1e49021662aafb0948b5",
+    "receiveTimestamp": "2026-06-27T11:35:51.507365983Z",
+    "spanId": "13203443968539919768",
+    "errorGroups": [
+      {
+        "id": "CPjI86GD2qez9wE"
+      }
+    ]
+  }
+]

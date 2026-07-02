@@ -1,0 +1,23 @@
+{
+  "skill_name": "gcp-logging-error-analysis",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "本番 bokudeli-event-dev で 2026-07-02 JST 15:00〜16:00 の ERROR を gcloud で取得して解析して。",
+      "expected_output": "fetch_logs.py --jst-from/--jst-to で gcloud 実行。0 件でも gcloud 実行済みを明記。fixture のみで完結しない。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "sandbox2510 で直近1時間の ERROR を gcloud で取得して解析して。",
+      "expected_output": "bokudeli-event-yasu-2510、fetch_logs.py --freshness=1h、gcloud 実行後 parse_logs レポート。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "添付の sandbox-dashboard-index.json だけ見て。gcloud は不要と明示。",
+      "expected_output": "ユーザー明示時のみ JSON 直解析。Firestore index 不足を特定。",
+      "files": ["evals/fixtures/sandbox-dashboard-index.json"]
+    }
+  ]
+}
