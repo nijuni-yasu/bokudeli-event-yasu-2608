@@ -17,7 +17,12 @@ import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
-import { rejectExistingUserOnRegister, rejectNewUserOnLogin, signOutBestEffort } from './authEntryGuards.js'
+import {
+  rejectExistingUserOnRegister,
+  rejectNewUserOnLogin,
+  handleProfileUpdateFailure,
+  signOutBestEffort,
+} from './authEntryGuards.js'
 import { getManageCommunityListPath } from './utils'
 import { isEnterpriseUserFromClaims } from '@shokujii/base/utils/enterpriseUserClaims.js'
 import { ZodError } from 'zod'
@@ -243,16 +248,14 @@ export const setupRouter = (router: Router) => {
 
       let shokujiiUser = null
       try {
-        const response = await updateProfileFromProviders(userCredential).catch((error) => {
-          console.error('updateProfileFromProviders error:', error)
-        })
-        shokujiiUser = response?.data?.user
+        const response = await updateProfileFromProviders(userCredential)
+        shokujiiUser = response?.data?.user ?? null
       } catch (err) {
-        console.error(err)
+        return await handleProfileUpdateFailure(to.path, to.query, userCredential, err)
       }
 
       if (shokujiiUser == null) {
-        return getRedirectPath() ?? '/'
+        return await handleProfileUpdateFailure(to.path, to.query, userCredential)
       }
 
       // profile に戻ってきた場合はリンクなので画面はそのまま

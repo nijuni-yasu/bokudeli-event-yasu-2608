@@ -1,18 +1,35 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { FirebaseError } from 'firebase/app'
 import type { UserCredential } from 'firebase/auth'
 
-const { mockDelete, mockGetAuth, mockSignOut } = vi.hoisted(() => ({
+const { mockDelete, mockGetAuth, mockSignOut, mockGetAdditionalUserInfo, mockGetI18n } = vi.hoisted(() => ({
   mockDelete: vi.fn(),
   mockGetAuth: vi.fn(() => ({ uid: 'auth-instance' })),
   mockSignOut: vi.fn(),
+  mockGetAdditionalUserInfo: vi.fn(),
+  mockGetI18n: vi.fn(() => ({
+    global: {
+      t: (key: string) => key,
+    },
+  })),
 }))
 
 vi.mock('firebase/auth', () => ({
   getAuth: mockGetAuth,
   signOut: mockSignOut,
+  getAdditionalUserInfo: mockGetAdditionalUserInfo,
 }))
 
-import { rejectExistingUserOnRegister, rejectNewUserOnLogin, signOutBestEffort } from '@/router/authEntryGuards.js'
+vi.mock('@shokujii/base/plugins/i18n/index.js', () => ({
+  getI18n: mockGetI18n,
+}))
+
+import {
+  handleProfileUpdateFailure,
+  rejectExistingUserOnRegister,
+  rejectNewUserOnLogin,
+  signOutBestEffort,
+} from '@/router/authEntryGuards.js'
 
 const createUserCredential = (): UserCredential =>
   ({
@@ -68,6 +85,44 @@ describe('authEntryGuards', () => {
       mockSignOut.mockRejectedValue(new Error('signOut failed'))
 
       await expect(signOutBestEffort()).resolves.toBeUndefined()
+    })
+  })
+
+  describe('handleProfileUpdateFailure', () => {
+    beforeEach(() => {
+      vi.stubGlobal('window', { alert: vi.fn() })
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('/register かつ isNewUser なら delete して /register へ戻す', async () => {
+      mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: true })
+      const userCredential = createUserCredential()
+
+      const result = await handleProfileUpdateFailure('/register', {}, userCredential, new Error('failed'))
+
+      expect(mockDelete).toHaveBeenCalledOnce()
+      expect(result).toEqual({ path: '/register', query: {} })
+    })
+
+    it('already-exists なら /login へリダイレクトする', async () => {
+      mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: true })
+      const userCredential = createUserCredential()
+      const error = new FirebaseError('functions/already-exists', 'already exists')
+
+      const result = await handleProfileUpdateFailure('/register', { redirect: '1' }, userCredential, error)
+
+      expect(result).toEqual({ path: '/login', query: { redirect: '1' } })
+    })
+
+    it('/login 導線では signOut のみ行い /login へ戻す', async () => {
+      const result = await handleProfileUpdateFailure('/login', {}, null, new Error('failed'))
+
+      expect(mockDelete).not.toHaveBeenCalled()
+      expect(mockSignOut).toHaveBeenCalledOnce()
+      expect(result).toEqual({ path: '/login', query: {} })
     })
   })
 })

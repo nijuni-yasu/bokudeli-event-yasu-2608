@@ -1,4 +1,7 @@
-import { getAuth, signOut, type UserCredential } from 'firebase/auth'
+import { FirebaseError } from 'firebase/app'
+import { getAdditionalUserInfo, getAuth, signOut, type UserCredential } from 'firebase/auth'
+import type { LocationQuery } from 'vue-router'
+import { getI18n } from '@shokujii/base/plugins/i18n/index.js'
 
 /**
  * /login 導線で OAuth により誤って作成された Auth ユーザーを削除してサインアウトする。
@@ -25,4 +28,61 @@ export async function signOutBestEffort(): Promise<void> {
   } catch (err) {
     console.error('Failed to sign out after auth entry rejection:', err)
   }
+}
+
+/**
+ * OAuth 復帰時に updateProfileFromProviders が失敗した場合の cleanup とリダイレクト先を返す。
+ * cleanup 失敗時は undefined を返し navigation を中断する。
+ */
+export async function handleProfileUpdateFailure(
+  toPath: string,
+  query: LocationQuery,
+  userCredential: UserCredential | null,
+  error?: unknown,
+): Promise<{ path: string; query: LocationQuery } | undefined> {
+  try {
+    if (toPath === '/register' && userCredential != null) {
+      const aui = getAdditionalUserInfo(userCredential)
+      if (aui?.isNewUser === true) {
+        await rejectNewUserOnLogin(userCredential)
+      } else {
+        await signOutBestEffort()
+      }
+    } else {
+      await signOutBestEffort()
+    }
+  } catch (err) {
+    console.error(err)
+    return undefined
+  }
+
+  const i18n = getI18n()
+  if (error instanceof FirebaseError && error.code === 'functions/already-exists') {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('register.already_registered'),
+    )
+    return { path: '/login', query }
+  }
+
+  const providerId = userCredential?.providerId ?? 'google.com'
+  if (toPath === '/register') {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('register.register_fail', {
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+        sns_name: i18n.global.t(`sns_name['${providerId}']`),
+      }),
+    )
+    return { path: '/register', query }
+  }
+
+  window.alert(
+    // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+    i18n.global.t('login.login_fail', {
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+      sns_name: i18n.global.t(`sns_name['${providerId}']`),
+    }),
+  )
+  return { path: '/login', query }
 }
