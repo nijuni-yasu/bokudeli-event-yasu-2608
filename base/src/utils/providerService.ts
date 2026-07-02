@@ -104,9 +104,17 @@ export const updateProfileFromProviders = async (userCredential: UserCredential 
     switch (userCredential.providerId) {
       case TwitterAuthProvider.PROVIDER_ID: {
         if (additionalUserInfo != null) {
-          additionalInfo = {
-            user_description: additionalUserInfo.profile?.description as string,
-            user_sns_twitter: additionalUserInfo.username as string,
+          const info: Partial<ShokujiiUser> = {}
+          const description = additionalUserInfo.profile?.description
+          if (description != null) {
+            info.user_description = description
+          }
+          const username = additionalUserInfo.username
+          if (username != null) {
+            info.user_sns_twitter = username
+          }
+          if (Object.keys(info).length > 0) {
+            additionalInfo = info
           }
         }
         break

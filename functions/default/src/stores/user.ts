@@ -9,10 +9,12 @@ import {
   Transaction,
 } from 'firebase-admin/firestore'
 import { DateTime } from 'luxon'
-import { logger } from 'firebase-functions'
 import { User } from '@shokujii/common/schemas/User.js'
 import { UserPersonalInformation } from '@shokujii/common/schemas/UserPersonalInformation.js'
 import { Result, ok, err } from '@shokujii/common/utils/result.js'
+import { createModuleLogger } from '../utils/logger.js'
+
+const logger = createModuleLogger('userStore')
 
 export class ShokujiiUser extends User {
   // TODO Add other UserPersonalInformation fields
@@ -89,7 +91,13 @@ export const getUser = async (
   const db = getFirestore()
   const userRef = db.collection('users').doc(userId).withConverter(userConverter)
   const snapshot = transaction === undefined ? await userRef.get() : await transaction.get(userRef)
-  const user = snapshot.data()
+  let user: ShokujiiUser | undefined
+  try {
+    user = snapshot.data()
+  } catch (error: unknown) {
+    logger.warn('Failed to parse user from Firestore', { userId, error: String(error) })
+    throw error
+  }
   if (user == null) {
     return undefined
   }
@@ -136,7 +144,7 @@ export async function* getAllUsers(withPersonalInformation: boolean): AsyncGener
       }
       yield ok(user)
     } catch (error: unknown) {
-      logger.warn('getAllUsers|Failed to get user', { userId: userDoc.id, error })
+      logger.warn('Failed to get user', { userId: userDoc.id, error: String(error) })
       yield err(error instanceof Error ? error : new Error(String(error)))
     }
   }

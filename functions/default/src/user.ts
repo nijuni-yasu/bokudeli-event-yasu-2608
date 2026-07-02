@@ -190,11 +190,11 @@ export const updateProfileFromProviders = onCall<
   for (const provider of providerData) {
     user.user_email = user.user_email || provider.email
     user.user_name = user.user_name || provider.displayName
-    user.user_image_url = user.user_image_url || provider.photoURL
+    user.user_image_url = user.user_image_url || provider.photoURL || ''
   }
   for (const key of ADDITIONAL_KEYS) {
     const value = additionalInfo?.[key]
-    if (value !== undefined) {
+    if (value != null) {
       user[key] = value
     }
   }

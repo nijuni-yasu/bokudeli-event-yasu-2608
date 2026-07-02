@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { getDeleteFieldValue } from './firebase/index.js'
 import { User } from './User.js'
 
 describe('User', () => {
@@ -70,5 +71,55 @@ describe('User', () => {
           friend_count: -1,
         }),
     ).toThrow()
+  })
+
+  it('プロフィール文字列フィールドが null でも読み込める（Issue #2145）', () => {
+    const now = Date.now()
+    const u = new User('uid-null-profile', {
+      created_at: now,
+      user_description: null,
+      user_sns_facebook: null,
+      user_sns_facebook_name: null,
+      user_sns_twitter: null,
+      user_sns_instagram: null,
+      user_sns_website: null,
+    } as unknown as Partial<User>)
+    expect(u.user_description).toBe('')
+    expect(u.user_sns_facebook).toBe('')
+    expect(u.user_sns_facebook_name).toBe('')
+    expect(u.user_sns_twitter).toBe('')
+    expect(u.user_sns_instagram).toBe('')
+    expect(u.user_sns_website).toBe('')
+  })
+
+  it('user_image_url が null のとき空文字に正規化される', () => {
+    const u = new User('uid-null-image', {
+      created_at: Date.now(),
+      user_image_url: null,
+    } as unknown as Partial<User>)
+    expect(u.user_image_url).toBe('')
+  })
+
+  it('null 正規化後の toFirestore でプロフィール optional フィールドは deleteField になる', () => {
+    const u = new User('uid-null-roundtrip', {
+      created_at: Date.now(),
+      user_description: null,
+      user_sns_facebook: null,
+      user_sns_facebook_name: null,
+      user_sns_twitter: null,
+      user_sns_instagram: null,
+      user_sns_website: null,
+      user_image_url: null,
+    } as unknown as Partial<User>)
+    expect(u.isValidForDatabase()).toBe(true)
+    const out = u.toFirestore()
+    const deleteField = getDeleteFieldValue()
+    expect(out.user_description).toEqual(deleteField)
+    expect(out.user_sns_facebook).toEqual(deleteField)
+    expect(out.user_sns_facebook_name).toEqual(deleteField)
+    expect(out.user_sns_twitter).toEqual(deleteField)
+    expect(out.user_sns_instagram).toEqual(deleteField)
+    expect(out.user_sns_website).toEqual(deleteField)
+    expect(out.user_image_url).toEqual(deleteField)
   })
 })

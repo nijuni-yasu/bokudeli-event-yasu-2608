@@ -4,6 +4,14 @@ import { USER_TYPE_VALUES } from './Enterprise.js'
 
 const NonNegativeIntSchema = z.number().int().nonnegative()
 
+/** Firestore に null が残るレガシーデータ向け。read 時に空文字へ正規化する（Issue #2145） */
+const nullableStringDefaultEmpty = () =>
+  z
+    .string()
+    .nullable()
+    .transform((v) => v ?? '')
+    .default('')
+
 const UserDbSchema = z.object({
   // Mandatory
   user_id: z.string().nonempty(),
@@ -36,19 +44,15 @@ const UserDbSchema = z.object({
 
 const UserAppSchema = z.object({
   user_name: z.string().default(''),
-  user_description: z.string().default(''),
-  // NOTE: 画像登録フローの不具合により null が保存されているユーザーが存在するため、
-  // null を受け入れて空文字列に変換している。根本的には画像登録フローを修正する
-  user_image_url: z
-    .string()
-    .nullable()
-    .transform((v) => v ?? '')
-    .default(''),
-  user_sns_facebook: z.string().default(''),
-  user_sns_facebook_name: z.string().default(''),
-  user_sns_twitter: z.string().default(''),
-  user_sns_instagram: z.string().default(''),
-  user_sns_website: z.string().default(''),
+  // NOTE: プロフィール文字列フィールドに null が保存されているユーザーが存在するため、
+  // null を受け入れて空文字列に変換している（Issue #2145）
+  user_description: nullableStringDefaultEmpty(),
+  user_image_url: nullableStringDefaultEmpty(),
+  user_sns_facebook: nullableStringDefaultEmpty(),
+  user_sns_facebook_name: nullableStringDefaultEmpty(),
+  user_sns_twitter: nullableStringDefaultEmpty(),
+  user_sns_instagram: nullableStringDefaultEmpty(),
+  user_sns_website: nullableStringDefaultEmpty(),
   is_deleted: z.boolean().default(false),
   deleted_at: EpochMillisSchema.optional(),
   // マイページ用の冗長カウント。read 側は未設定を 0 として扱う
