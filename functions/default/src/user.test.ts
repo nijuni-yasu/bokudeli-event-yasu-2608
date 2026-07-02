@@ -277,7 +277,7 @@ describe('confirmEmailRegistration', () => {
 
     expect(createUserMock).toHaveBeenCalledOnce()
     expect(deleteUserMock).toHaveBeenCalledWith('uid-new')
-    expect(deleteNewUserDocumentsMock).not.toHaveBeenCalled()
+    expect(deleteNewUserDocumentsMock).toHaveBeenCalledWith('uid-new')
     expect(createCustomTokenMock).not.toHaveBeenCalled()
     expect(deletePassCodeMock).not.toHaveBeenCalled()
   })

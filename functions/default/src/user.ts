@@ -135,22 +135,18 @@ export const confirmEmailRegistration = onCall<
     throw error
   }
   const uid = user.uid
-  let saveUserSucceeded = false
   try {
     await saveUser(
       new ShokujiiUser(uid, {
         user_email: email,
       }),
     )
-    saveUserSucceeded = true
     await deletePassCode(passCodeDocument.id)
   } catch (error) {
-    if (saveUserSucceeded) {
-      try {
-        await deleteNewUserDocuments(uid)
-      } catch (rollbackError: unknown) {
-        logger.error('confirmEmailRegistration: failed to rollback Firestore documents', { uid, error: rollbackError })
-      }
+    try {
+      await deleteNewUserDocuments(uid)
+    } catch (rollbackError: unknown) {
+      logger.error('confirmEmailRegistration: failed to rollback Firestore documents', { uid, error: rollbackError })
     }
     try {
       await getAuth().deleteUser(uid)
