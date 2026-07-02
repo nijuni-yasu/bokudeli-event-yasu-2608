@@ -34,14 +34,14 @@ const isTwitterLinked = computed(() =>
 )
 
 const handleTwitterLink = async () => {
+  const snsName = $t(`sns_name['${TwitterAuthProvider.PROVIDER_ID}']`)
   try {
     isLoading.value = true
     await currentUserStore.linkProvider(TwitterAuthProvider.PROVIDER_ID)
     await router.push(getProfile(isNewUser))
   } catch (error) {
     console.error(error)
-    // TODO error message
-    notification.show('Error', 'error')
+    notification.show($t('profile.linkage_failed', { snsName }), 'error')
   } finally {
     isLoading.value = false
   }

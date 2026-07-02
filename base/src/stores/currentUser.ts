@@ -216,10 +216,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
       userCredential = await linkByProviderService(currentUser, providerId)
     }
 
-    // 早めに返すために、非同期で実行する
-    updateProfileFromProviders(userCredential).catch((error) => {
-      console.error('updateProfileFromProviders error:', error)
-    })
+    await updateProfileFromProviders(userCredential)
   }
 
   const unlinkProvider = async (providerId: ProviderIdType) => {
