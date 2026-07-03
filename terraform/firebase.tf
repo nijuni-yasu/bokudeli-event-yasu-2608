@@ -128,3 +128,14 @@ resource "google_firebase_hosting_site" "enterprise" {
     google_firebase_project.default
   ]
 }
+
+# Firebase Hosting Site - Terms
+resource "google_firebase_hosting_site" "terms" {
+  provider = google-beta
+  project  = var.project
+  site_id  = "${var.project}-terms"
+
+  depends_on = [
+    google_firebase_project.default
+  ]
+}
