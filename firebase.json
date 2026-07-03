@@ -123,6 +123,15 @@
           "type": 301
         }
       ],
+      "rewrites": [
+        { "source": "/user", "destination": "/user.html" },
+        { "source": "/privacy", "destination": "/privacy.html" },
+        {
+          "source": "/specified_commercial_transactions",
+          "destination": "/specified_commercial_transactions.html"
+        },
+        { "source": "/partner", "destination": "/partner.html" }
+      ],
       "headers": [
         {
           "source": "**/*.html",
