@@ -135,5 +135,24 @@ describe('authEntryGuards', () => {
       expect(mockSignOut).toHaveBeenCalledOnce()
       expect(result).toBe(false)
     })
+
+    it('/profile 失敗時は signOut せず undefined を返す', async () => {
+      const userCredential = createUserCredential()
+
+      const result = await handleProfileUpdateFailure('/profile', {}, userCredential, new Error('failed'))
+
+      expect(mockSignOut).not.toHaveBeenCalled()
+      expect(result).toBeUndefined()
+    })
+
+    it('/profile かつ already-exists でも /login へリダイレクトしない', async () => {
+      const userCredential = createUserCredential()
+      const error = new FirebaseError('functions/already-exists', 'already exists')
+
+      const result = await handleProfileUpdateFailure('/profile', { redirect: '1' }, userCredential, error)
+
+      expect(mockSignOut).not.toHaveBeenCalled()
+      expect(result).toBeUndefined()
+    })
   })
 })

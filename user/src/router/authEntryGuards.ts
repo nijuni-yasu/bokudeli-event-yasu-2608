@@ -30,18 +30,32 @@ export async function signOutBestEffort(): Promise<void> {
   }
 }
 
+const alertProfileLinkageFailed = (providerId: string) => {
+  const i18n = getI18n()
+  window.alert(
+    // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+    i18n.global.t('profile.linkage_failed', {
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+      snsName: i18n.global.t(`sns_name['${providerId}']`),
+    }),
+  )
+}
+
 /**
  * OAuth 復帰時に updateProfileFromProviders が失敗した場合の cleanup とリダイレクト先を返す。
  * cleanup 失敗時は false を返し navigation をキャンセルする。
+ * /profile では signOut せず undefined を返し、当該画面に留まる。
  */
 export async function handleProfileUpdateFailure(
   toPath: string,
   query: LocationQuery,
   userCredential: UserCredential | null,
   error?: unknown,
-): Promise<{ path: string; query: LocationQuery } | false> {
+): Promise<{ path: string; query: LocationQuery } | false | undefined> {
   try {
-    if (toPath === '/register' && userCredential != null) {
+    if (toPath === '/profile') {
+      // ログイン済みユーザーの連携操作。signOut しない
+    } else if (toPath === '/register' && userCredential != null) {
       const aui = getAdditionalUserInfo(userCredential)
       if (aui?.isNewUser === true) {
         await rejectNewUserOnLogin(userCredential)
@@ -57,6 +71,13 @@ export async function handleProfileUpdateFailure(
     return false
   }
 
+  const providerId = userCredential?.providerId ?? 'google.com'
+
+  if (toPath === '/profile') {
+    alertProfileLinkageFailed(providerId)
+    return undefined
+  }
+
   const i18n = getI18n()
   if (error instanceof FirebaseError && error.code === 'functions/already-exists') {
     window.alert(
@@ -66,7 +87,6 @@ export async function handleProfileUpdateFailure(
     return { path: '/login', query }
   }
 
-  const providerId = userCredential?.providerId ?? 'google.com'
   if (toPath === '/register') {
     window.alert(
       // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
