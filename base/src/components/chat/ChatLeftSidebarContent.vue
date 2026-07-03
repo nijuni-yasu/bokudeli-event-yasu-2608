@@ -50,7 +50,7 @@ const filteredRooms = computed(() => {
       v-for="room in filteredRooms"
       :key="room.roomId"
       :room="room"
-      @click="emit('openRoom', room.roomId)"
+      @open-room="emit('openRoom', $event)"
       @open-event="emit('openEvent', $event)"
     />
     <li v-if="filteredRooms.length === 0" class="no-chat-items-text text-disabled px-3 pb-4">

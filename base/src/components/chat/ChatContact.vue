@@ -10,8 +10,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  openRoom: [roomId: string]
   openEvent: [payload: { communityId: string; eventId: string }]
 }>()
+
+const onOpenRoom = () => {
+  emit('openRoom', props.room.roomId)
+}
 
 const store = useChatStore()
 const { t } = useI18n()
@@ -45,8 +50,14 @@ const onAvatarClick = (event: MouseEvent) => {
 
 <template>
   <li
+    role="button"
+    tabindex="0"
+    :aria-label="t('chat.open_room_aria', { name: room.displayTitle })"
     class="chat-contact cursor-pointer d-flex align-center"
     :class="{ 'chat-contact-active': isActive, 'chat-contact-inactive': !room.isActive }"
+    @click="onOpenRoom"
+    @keydown.enter.prevent="onOpenRoom"
+    @keydown.space.prevent="onOpenRoom"
   >
     <VAvatar
       size="40"

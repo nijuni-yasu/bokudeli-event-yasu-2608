@@ -1039,6 +1039,7 @@ export default {
     open_chat: 'グループチャットをひらく',
     header_tooltip: 'チャット',
     open_user_profile: '{name}のプロフィールを見る',
+    open_room_aria: '{name}のチャットを開く',
     recall_message: '送信を取り消す',
     recall_confirm_title: '送信を取り消す',
     recall_confirm_message: 'このメッセージを取り消しますか？取り消し後は元に戻せません。',
