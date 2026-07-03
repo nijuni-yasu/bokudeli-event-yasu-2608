@@ -290,6 +290,20 @@ const sendMessage = async () => {
   }
 }
 
+const onComposeKeydown = (event: KeyboardEvent): void => {
+  if (event.isComposing) {
+    return
+  }
+  if (event.key !== 'Enter') {
+    return
+  }
+  if (!(event.metaKey || event.ctrlKey)) {
+    return
+  }
+  event.preventDefault()
+  void sendMessage()
+}
+
 const loadOlderMessages = async () => {
   const roomId = store.activeRoomId
   if (roomId == null) return
@@ -592,6 +606,7 @@ onBeforeUnmount(() => {
                 rows="1"
                 max-rows="10"
                 hide-details
+                @keydown="onComposeKeydown"
               />
             </div>
             <VBtn
