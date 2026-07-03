@@ -67,7 +67,7 @@ onDocumentWritten 等の Firestore トリガーも createModuleLogger 等の共�
 - **pf**: PF 本体（上記以外の一般 Function）
 - **enterprise**: エンプラ Callable（`createEnterprise` 等）
 
-export しない内部ヘルパー（他 Function から import するだけの関数）は対象外。整合性は `python3 .agents/scripts/verify_functions_deploy_list.py`（PR verify でも実行）で検証する。
+export しない内部ヘルパー（他 Function から import するだけの関数）は対象外。整合性は `npm run verify:functions-deploy`（PR verify でも実行）で検証する。
 
 ## クイックチェックリスト
 

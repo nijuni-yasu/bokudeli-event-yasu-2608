@@ -147,7 +147,7 @@ npm -w <pkg> run format:check
 
 ### Functions 追加時の CI 連携
 
-`functions/default` で **Cloud Functions として export する**関数を新規追加・削除したら、同 PR で `.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も更新すること。更新漏れすると development / production では Trigger・Callable が未デプロイのままになる。詳細は `/shokujii-functions-implementation` を参照。PR verify は `python3 .agents/scripts/verify_functions_deploy_list.py` で export と deploy リストの一致を検証する。
+`functions/default` で **Cloud Functions として export する**関数を新規追加・削除したら、同 PR で `.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も更新すること。更新漏れすると development / production では Trigger・Callable が未デプロイのままになる。詳細は `/shokujii-functions-implementation` を参照。PR verify は `npm run verify:functions-deploy` で export と deploy リストの一致を検証する。
 
 ### Firestore 操作の必須ルール（厳守）
 
