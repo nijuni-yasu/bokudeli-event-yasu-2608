@@ -2,7 +2,7 @@ import { FirebaseError } from 'firebase/app'
 import { getAuth, getRedirectResult, type User, type UserCredential } from 'firebase/auth'
 import { credentialFromError, linkByProviderService, type ProviderIdType } from './providerService'
 
-const removePendingLinkRequest = () => {
+export const clearPendingLinkRequest = () => {
   sessionStorage.removeItem('pendingLinkRequestProviderId')
 }
 
@@ -17,7 +17,7 @@ const getPendingLinkRequest = (): string | null => {
 export const handleRedirect = async (user: User | null) => {
   // pendingLinkRequestProviderId はどのフローであっても消しておく
   const pendingLinkRequestProviderId = getPendingLinkRequest()
-  removePendingLinkRequest()
+  clearPendingLinkRequest()
 
   let userCredential: UserCredential | null = null
   try {

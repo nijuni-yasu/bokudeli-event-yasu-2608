@@ -30,8 +30,18 @@ export const getManageEventPath = (eventId: string) => `/manage/event/${eventId}
 export const getManageEventSettingsPath = (eventId: string) => `/manage/event/${eventId}/settings`
 export const getEventBillInvoicePath = (eventId: string) => `/manage/event/${eventId}/invoice`
 export const getFlyerPath = () => '/flyer'
+export type PassCodeMode = 'login' | 'register'
+
+export function parsePassCodeMode(raw: unknown): PassCodeMode {
+  return raw === 'register' ? 'register' : 'login'
+}
+
 export const getLogin = () => '/login'
+export const getRegister = () => '/register'
 // ここでデフォルト設定はあまり使うべきではないが、互換性のために
 export const getProfile = (isNewUser: boolean = false) => ({ path: '/profile', state: { isNewUser } })
-export const getPassCode = (email: string) => ({ path: '/pass-code', state: { email } })
+export const getPassCode = (email: string, mode: PassCodeMode = 'login') => ({
+  path: '/pass-code',
+  state: { email, mode },
+})
 export const getRegisterComplete = (isNewUser: boolean) => ({ path: '/register/complete', state: { isNewUser } })

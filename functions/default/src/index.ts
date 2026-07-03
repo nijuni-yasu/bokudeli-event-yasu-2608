@@ -25,7 +25,7 @@ export const {
   onEventChanged,
   onShopReservationChanged,
   pollingTask,
-  requestEmailLogin, confirmEmailLogin, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
+  requestEmailLogin, confirmEmailLogin, requestEmailRegistration, confirmEmailRegistration, requestEmailChange, confirmEmailChange, updateProfileFromProviders,
   deleteUserAccount,
   addToCart, removeFromCart, confirmOrder,
   getUserFriends, backfillUserFriends, getUserFriendMeetLog,

@@ -1,4 +1,4 @@
-import { getAuth } from 'firebase-admin/auth'
+import { FirebaseAuthError, getAuth } from 'firebase-admin/auth'
 import { getStorage } from 'firebase-admin/storage'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import _ from 'lodash'
@@ -7,16 +7,20 @@ import {
   ConfirmEmailChangeResponse,
   ConfirmEmailLoginRequest,
   ConfirmEmailLoginResponse,
+  ConfirmEmailRegistrationRequest,
+  ConfirmEmailRegistrationResponse,
   RequestEmailChangeRequest,
   RequestEmailLoginRequest,
   RequestEmailLoginResponse,
+  RequestEmailRegistrationRequest,
+  RequestEmailRegistrationResponse,
   UpdateProfileFromProvidersRequest,
   UpdateProfileFromProvidersResponse,
 } from '@shokujii/common/apis/user.js'
 import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { fetchFacebookImage, fetchTwitterImage } from '@shokujii/common/utils/user.js'
 import { fetchGoogleProfileImage, isGoogleProfileImageUrl } from '@shokujii/common/utils/googleProfileImage.js'
-import { getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
+import { deleteNewUserDocuments, getUser, getUserIdFromEmail, saveUser, ShokujiiUser } from './stores/user.js'
 import { savePassCode, ShokujiiPassCode, getValidPassCodeFromEmail, deletePassCode } from './stores/passCode.js'
 import { send } from './utils/sendgrid.js'
 import { DEFAULT_FROM } from './utils/mail.js'
@@ -35,10 +39,10 @@ export const requestEmailLogin = onCall<RequestEmailLoginRequest, Promise<Reques
       throw new HttpsError('invalid-argument', 'email is null')
     }
     const userId = await getUserIdFromEmail(email)
-    const isNew = userId == null
-    const passCode = isNew
-      ? new ShokujiiPassCode(null, { user_email: email })
-      : new ShokujiiPassCode(null, { user_id: userId, user_email: email })
+    if (userId == null) {
+      throw new HttpsError('not-found', 'user not registered')
+    }
+    const passCode = new ShokujiiPassCode(null, { user_id: userId, user_email: email })
     await Promise.all([
       savePassCode(passCode),
       send({
@@ -50,9 +54,7 @@ export const requestEmailLogin = onCall<RequestEmailLoginRequest, Promise<Reques
         },
       }),
     ])
-    return {
-      isNew,
-    }
+    return { success: true }
   },
 )
 
@@ -66,28 +68,101 @@ export const confirmEmailLogin = onCall<ConfirmEmailLoginRequest, Promise<Confir
     if (passCodeDocument == null || passCodeDocument.pass_code !== passCode) {
       throw new HttpsError('invalid-argument', 'pass code is not valid')
     }
-    const promises = [deletePassCode(passCodeDocument.id)]
-    let isNew: boolean
-    let uid: string
     if (passCodeDocument.user_id == null) {
-      isNew = true
-      const user = await getAuth().createUser({ email, emailVerified: true })
-      uid = user.uid
-      promises.push(
-        saveUser(
-          new ShokujiiUser(uid, {
-            user_email: email,
-          }),
-        ),
-      )
-    } else {
-      isNew = false
-      uid = passCodeDocument.user_id
+      throw new HttpsError('invalid-argument', 'pass code is not valid')
     }
-    const [token] = await Promise.all([getAuth().createCustomToken(uid), ...promises])
-    return { token, isNew }
+    const uid = passCodeDocument.user_id
+    const [token] = await Promise.all([getAuth().createCustomToken(uid), deletePassCode(passCodeDocument.id)])
+    return { token }
   },
 )
+
+export const requestEmailRegistration = onCall<
+  RequestEmailRegistrationRequest,
+  Promise<RequestEmailRegistrationResponse>
+>(
+  {
+    secrets: ['SENDGRID_API_KEY'],
+  },
+  async (request) => {
+    const { email } = request.data
+    if (email == null) {
+      throw new HttpsError('invalid-argument', 'email is null')
+    }
+    const userId = await getUserIdFromEmail(email)
+    if (userId != null) {
+      throw new HttpsError('already-exists', 'The email address has been already used')
+    }
+    const passCode = new ShokujiiPassCode(null, { user_email: email })
+    await Promise.all([
+      savePassCode(passCode),
+      send({
+        to: email,
+        from: DEFAULT_FROM,
+        templateId: USER_PASS_CODE_TEMPLATE_ID,
+        dynamicTemplateData: {
+          user_pass_code: passCode.pass_code,
+        },
+      }),
+    ])
+    return { success: true }
+  },
+)
+
+export const confirmEmailRegistration = onCall<
+  ConfirmEmailRegistrationRequest,
+  Promise<ConfirmEmailRegistrationResponse>
+>(async (request) => {
+  const { email, passCode } = request.data
+  if (email == null || passCode == null) {
+    throw new HttpsError('invalid-argument', 'email or passCode is null')
+  }
+  const passCodeDocument = await getValidPassCodeFromEmail(email)
+  if (passCodeDocument == null || passCodeDocument.pass_code !== passCode) {
+    throw new HttpsError('invalid-argument', 'pass code is not valid')
+  }
+  if (passCodeDocument.user_id != null) {
+    throw new HttpsError('invalid-argument', 'pass code is not valid')
+  }
+  let user
+  try {
+    user = await getAuth().createUser({ email, emailVerified: true })
+  } catch (error) {
+    if (error instanceof FirebaseAuthError && error.code === 'auth/email-already-exists') {
+      logger.warn('confirmEmailRegistration: email already exists in Auth', { email })
+      throw new HttpsError('already-exists', 'The email address has been already used')
+    }
+    throw error
+  }
+  const uid = user.uid
+  try {
+    await saveUser(
+      new ShokujiiUser(uid, {
+        user_email: email,
+      }),
+    )
+    await deletePassCode(passCodeDocument.id)
+  } catch (error) {
+    try {
+      await deleteNewUserDocuments(uid)
+    } catch (rollbackError: unknown) {
+      logger.error('confirmEmailRegistration: failed to rollback Firestore documents', { uid, error: rollbackError })
+    }
+    try {
+      await getAuth().deleteUser(uid)
+    } catch (rollbackError: unknown) {
+      const code = (rollbackError as { code?: string })?.code
+      if (code === 'auth/user-not-found') {
+        logger.warn('confirmEmailRegistration: auth user already deleted during rollback', { uid })
+      } else {
+        logger.error('confirmEmailRegistration: failed to rollback auth user', { uid, error: rollbackError })
+      }
+    }
+    throw error
+  }
+  const token = await getAuth().createCustomToken(uid)
+  return { token }
+})
 
 export const requestEmailChange = onCall<RequestEmailChangeRequest>(
   {
@@ -181,6 +256,7 @@ export const updateProfileFromProviders = onCall<
   }
   const { additionalInfo } = request.data
   let user = await getUser(uid, true)
+  const isNewFirestoreUser = user == null
   // 元のユーザー情報を保存
   // 新規ユーザーの場合は ShokujiiUser ではなく空オブジェクトにしておく
   const originalUser = user == null ? {} : _.cloneDeep(user)
@@ -230,6 +306,13 @@ export const updateProfileFromProviders = onCall<
   }
   if (blob != null) {
     user.user_image_url = await uploadUserImage(uid, blob)
+  }
+
+  if (isNewFirestoreUser && user.user_email) {
+    const existingUid = await getUserIdFromEmail(user.user_email)
+    if (existingUid != null) {
+      throw new HttpsError('already-exists', 'The email address has been already used')
+    }
   }
 
   // 新規ユーザーの場合は空オブジェクトとの比較になるので必ず保存、

@@ -1,16 +1,24 @@
 <script setup lang="ts">
+import { FirebaseError } from 'firebase/app'
 import { getAuth, signInWithCustomToken } from 'firebase/auth'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
+import { useNotification } from '@shokujii/base/composable/notification'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser'
-import { getHomePath, getLogin, getRegisterComplete } from '@/router/utils'
-import { confirmEmailLogin, requestEmailLogin } from '@shokujii/base/apis/user'
+import { getHomePath, getLogin, getRegister, getRegisterComplete, parsePassCodeMode } from '@/router/utils'
+import {
+  confirmEmailLogin,
+  confirmEmailRegistration,
+  requestEmailLogin,
+  requestEmailRegistration,
+} from '@shokujii/base/apis/user'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 
 const router = useRouter()
 const route = useRoute()
 
 const { t: $t } = useI18n()
+const notification = useNotification()
 
 const currentUserStore = useCurrentUserStore()
 
@@ -18,76 +26,98 @@ const isLoading = ref(false)
 const isValid = ref(false)
 
 const isLogin = getAuth().currentUser?.uid != null
-const _email = history.state?.email as string | undefined
-if (_email == null) {
+const rawEmail = history.state?.email as string | undefined
+const mode = parsePassCodeMode(history.state?.mode)
+const hasEmail = typeof rawEmail === 'string' && rawEmail.length > 0
+
+if (!hasEmail) {
   if (isLogin) {
-    await router.push(getHomePath())
+    await router.replace(getHomePath())
   } else {
-    await router.push(getLogin())
+    await router.replace(mode === 'register' ? getRegister() : getLogin())
   }
 }
-const email = _email as string
+
+const email = hasEmail ? rawEmail : ''
 
 const passCode = ref('')
 const isOpenUnMatchPassCodeDialog = ref(false)
 const isOpenLinkDialog = ref(route.query.pid != null)
 
-watch(passCode, async (newValue) => {
-  if (newValue.length === 6) {
-    await submit(newValue)
-  }
-})
+if (hasEmail) {
+  watch(passCode, async (newValue) => {
+    if (newValue.length === 6) {
+      await submit(newValue)
+    }
+  })
+}
 
 const reSendPassCode = async () => {
   isLoading.value = true
   try {
     if (isLogin) {
       await currentUserStore.requestEmailChange(email)
+    } else if (mode === 'register') {
+      await requestEmailRegistration({ email })
     } else {
       await requestEmailLogin({ email })
     }
   } catch (error) {
+    if (mode === 'register' && error instanceof FirebaseError && error.code === 'functions/already-exists') {
+      notification.show($t('register.already_registered'), 'warning')
+      await router.push(getLogin())
+      return
+    }
     console.warn('Error resending pass code:', error)
   } finally {
     isLoading.value = false
   }
 }
 
-const submit = async (passCode: string) => {
+const submit = async (passCodeInput: string) => {
   isValid.value = true
   try {
     if (isLogin) {
       // Email Change の場合
-      await currentUserStore.confirmEmailChange(email, passCode)
+      await currentUserStore.confirmEmailChange(email, passCodeInput)
       const redirectPath = getRedirectPath() ?? '/'
       await router.push(redirectPath)
-    } else {
-      // Email Login
-      const result = await confirmEmailLogin({ email, passCode })
-      const { token, isNew } = result.data
+    } else if (mode === 'register') {
+      const result = await confirmEmailRegistration({ email, passCode: passCodeInput })
+      const { token } = result.data
       await signInWithCustomToken(getAuth(), token)
-      // routing処理は routerで行いたいが、複雑性が増すためここで行う
-      // TODO: isNewか否かによって、遷移するページを変更し、pass-code.vueをコンポーネントにする
-      if (isNew) {
-        // 新規アカウントの場合、register/complete画面に遷移
-        await router.push(getRegisterComplete(isNew))
-      } else {
-        // 既存アカウントの場合、元のページに戻る
-        const redirectPath = getRedirectPath() ?? '/'
-        await router.push(redirectPath)
-      }
+      await router.push(getRegisterComplete(true))
+    } else {
+      const result = await confirmEmailLogin({ email, passCode: passCodeInput })
+      const { token } = result.data
+      await signInWithCustomToken(getAuth(), token)
+      const redirectPath = getRedirectPath() ?? '/'
+      await router.push(redirectPath)
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (mode === 'register' && error instanceof FirebaseError && error.code === 'functions/already-exists') {
+      notification.show($t('register.already_registered'), 'warning')
+      await router.push(getLogin())
+      return
+    }
     console.warn('Error sending pass code:', error)
     isOpenUnMatchPassCodeDialog.value = true
   } finally {
     isValid.value = false
   }
 }
+
+const goBack = () => {
+  if (mode === 'register') {
+    router.push(getRegister())
+  } else {
+    router.push(getLogin())
+  }
+}
 </script>
 
 <template>
-  <v-container>
+  <v-container v-if="hasEmail">
     <v-row justify="center" class="mt-16">
       <v-col lg="5" md="6" sm="10" cols="12" class="pa-0">
         <v-sheet class="rounded-lg py-14 px-md-10 px-5">
@@ -124,9 +154,9 @@ const submit = async (passCode: string) => {
             block
             :disabled="isValid"
             :loading="isLoading"
-            @click="router.push(getLogin())"
+            @click="goBack"
           >
-            {{ $t('passcode.back') }}
+            {{ $t(mode === 'register' ? 'passcode.back_register' : 'passcode.back') }}
           </v-btn>
         </v-sheet>
       </v-col>

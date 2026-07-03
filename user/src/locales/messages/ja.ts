@@ -576,17 +576,17 @@ export default {
   },
   login: {
     login_fail: '{sns_name}ログインできませんでした',
-    welcome: 'shokujiiへようこそ',
-    please_login_or_register_below:
-      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。',
+    title: 'ログイン',
+    brand_welcome: 'おかえりなさい👋',
+    please_login_below:
+      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインしてください。',
     email: 'メールアドレス',
-    continue_email: 'メールアドレスで続ける',
+    continue_email_login: 'メールアドレスでログイン',
     sns_login: '{sns_name}でログイン',
+    not_registered: 'このメールアドレスは登録されていません。新規登録からアカウントを作成してください。',
     link_dialog_body:
       '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
     link_to_partner_site: '<a href="https://partner.shokujii.jp/" target="_blank">飲食店管理画面のログインはこちら</a>',
-    link_to_forgot_account:
-      '<a href="https://forms.gle/bFc77yitRgnaKgxa7" target="_blank">アカウントがわからない場合はこちら</a>',
     inapp: {
       notice_title: 'ChromeやSafariを開いてログインしてください',
       notice_body:
@@ -597,6 +597,19 @@ export default {
       chrome: 'Chrome',
       safari: 'Safari',
     },
+  },
+  register: {
+    title: '新規登録',
+    brand_welcome: 'shokujiiへようこそ🎉',
+    please_register_below:
+      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法で新規登録してください。',
+    email: 'メールアドレス',
+    continue_email: 'メールアドレスで新規登録',
+    sns_register: '{sns_name}で新規登録',
+    register_fail: '{sns_name}新規登録できませんでした',
+    already_registered: 'このメールアドレスはすでに登録されています。ログインしてください。',
+    link_dialog_body:
+      '{try_register_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
   },
   email: {
     register_email: 'メールアドレス登録',
@@ -609,6 +622,7 @@ export default {
     enter_passcode_description: '{email}に送信した6桁のコードを入力してください',
     resend: 'コードを再送信する',
     back: 'ログイン画面へ戻る',
+    back_register: '新規登録画面へ戻る',
     un_match_passcode: 'パスコードの値が間違っています',
     link_dialog_body:
       '{email}は既にメールアドレスログインで使用されています。{provider_label}と連携するため、ログインしてください。',
@@ -679,7 +693,7 @@ export default {
   },
   user_profile: {
     my_page: 'マイページ',
-    profile_settings: 'プロフィール編集',
+    profile_settings: 'プロフィール設定',
     cart: 'カート',
     add_to_home_screen: 'ホーム画面に追加',
     contact: 'お問い合わせ',

@@ -6,6 +6,10 @@ import {
   RequestEmailLoginResponse,
   ConfirmEmailLoginRequest,
   ConfirmEmailLoginResponse,
+  RequestEmailRegistrationRequest,
+  RequestEmailRegistrationResponse,
+  ConfirmEmailRegistrationRequest,
+  ConfirmEmailRegistrationResponse,
   ConfirmEmailChangeRequest,
   ConfirmEmailChangeResponse,
   UpdateProfileFromProvidersRequest,
@@ -21,6 +25,24 @@ export const confirmEmailLogin = async (
   input: ConfirmEmailLoginRequest,
 ): Promise<HttpsCallableResult<ConfirmEmailLoginResponse>> => {
   const f = httpsCallable<ConfirmEmailLoginRequest, ConfirmEmailLoginResponse>(functions, 'confirmEmailLogin')
+  return f(input)
+}
+
+export const requestEmailRegistration = async (input: RequestEmailRegistrationRequest) => {
+  const f = httpsCallable<RequestEmailRegistrationRequest, RequestEmailRegistrationResponse>(
+    functions,
+    'requestEmailRegistration',
+  )
+  return f(input)
+}
+
+export const confirmEmailRegistration = async (
+  input: ConfirmEmailRegistrationRequest,
+): Promise<HttpsCallableResult<ConfirmEmailRegistrationResponse>> => {
+  const f = httpsCallable<ConfirmEmailRegistrationRequest, ConfirmEmailRegistrationResponse>(
+    functions,
+    'confirmEmailRegistration',
+  )
   return f(input)
 }
 

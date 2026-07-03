@@ -16,7 +16,18 @@ import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/ba
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
-import { getRedirectPath, handleRedirect, setRedirectPath } from '@shokujii/base/utils/redirect'
+import {
+  clearPendingLinkRequest,
+  getRedirectPath,
+  handleRedirect,
+  setRedirectPath,
+} from '@shokujii/base/utils/redirect'
+import {
+  rejectExistingUserOnRegister,
+  rejectNewUserOnLogin,
+  handleProfileUpdateFailure,
+  signOutBestEffort,
+} from './authEntryGuards.js'
 import { getManageCommunityListPath } from './utils'
 import { isEnterpriseUserFromClaims } from '@shokujii/base/utils/enterpriseUserClaims.js'
 import { ZodError } from 'zod'
@@ -86,10 +97,17 @@ export const setupRouter = (router: Router) => {
   })
 
   router.afterEach((to, from) => {
+    // in-app ガードで setRedirectPath 済みの /inapp-login 遷移では上書きしない（RC-9）
+    if (to.path === '/inapp-login') {
+      return
+    }
     // 遷移先(to.path)が、ログインページまたはアプリ内ログインページの場合かつ、
     // 遷移元(from.path)が、ログインページまたはアプリ内ログインページでない場合にのみ、リダイレクトのパスを保存する
     // sessionStorageには、招待URLを考慮し、クエリパラメータも含めてfrom.fullPathで保存
-    if (['/login', '/inapp-login'].includes(to.path) && !['/login', '/inapp-login'].includes(from.path)) {
+    if (
+      ['/login', '/register', '/inapp-login'].includes(to.path) &&
+      !['/login', '/register', '/inapp-login'].includes(from.path)
+    ) {
       setRedirectPath(history.state?.redirect ?? from.fullPath)
     }
   })
@@ -98,7 +116,8 @@ export const setupRouter = (router: Router) => {
   // 通常のブラウザでアプリ内ログインページにアクセスした場合は通常のログインページにリダイレクト
   const isInApp = isInAppBrowser(navigator.userAgent)
   router.beforeEach((to) => {
-    if (to.path === '/login' && isInApp) {
+    if ((to.path === '/login' || to.path === '/register') && isInApp) {
+      setRedirectPath((history.state?.redirect as string | undefined) ?? to.fullPath)
       return {
         path: '/inapp-login',
         query: to.query,
@@ -106,7 +125,7 @@ export const setupRouter = (router: Router) => {
     }
     if (to.path === '/inapp-login' && !isInApp) {
       return {
-        path: '/login',
+        path: getRedirectPath(false) ?? '/login',
         query: to.query,
       }
     }
@@ -122,7 +141,7 @@ export const setupRouter = (router: Router) => {
 
     // リダイレクトで戻ってきた場合の処理
     // TODO リダイレクトの返りは一つのページにまとめた方がよいかもしれない
-    if (['/login', '/register/complete', '/profile'].includes(to.path)) {
+    if (['/login', '/register', '/register/complete', '/profile'].includes(to.path)) {
       let user = null
       let userCredential: UserCredential | null = null
       try {
@@ -130,6 +149,15 @@ export const setupRouter = (router: Router) => {
         userCredential = await handleRedirect(user)
       } catch (err: unknown) {
         if (err instanceof FirebaseError && err.code === 'auth/account-exists-with-different-credential') {
+          if (to.path === '/register') {
+            clearPendingLinkRequest()
+            const i18n = getI18n()
+            window.alert(
+              // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+              i18n.global.t('register.already_registered'),
+            )
+            return { path: '/login', query: to.query }
+          }
           const pendingCred = credentialFromError(err)
           // email が同じ時に発生するエラーなので、email は必ず存在する
           const email = err.customData!.email as string
@@ -139,7 +167,7 @@ export const setupRouter = (router: Router) => {
             // カスタムトークンログインを行い、メールアドレスが既に存在している場合
             return {
               path: '/pass-code',
-              state: { email },
+              state: { email, mode: 'login' },
             }
           } else {
             return {
@@ -180,18 +208,60 @@ export const setupRouter = (router: Router) => {
         return getRedirectPath() ?? undefined
       }
 
+      if (to.path === '/login' && userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        if (aui?.isNewUser === true) {
+          try {
+            await rejectNewUserOnLogin(userCredential)
+          } catch (err) {
+            console.error(err)
+            await signOutBestEffort()
+            const i18n = getI18n()
+            window.alert(
+              // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+              i18n.global.t('login.login_fail', {
+                // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+                sns_name: i18n.global.t(`sns_name['${userCredential.providerId}']`),
+              }),
+            )
+            return
+          }
+          const i18n = getI18n()
+          window.alert(
+            // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+            i18n.global.t('login.not_registered'),
+          )
+          return { path: '/register', query: to.query }
+        }
+      }
+
+      if (to.path === '/register' && userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        if (aui?.isNewUser === false) {
+          const i18n = getI18n()
+          window.alert(
+            // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+            i18n.global.t('register.already_registered'),
+          )
+          try {
+            await rejectExistingUserOnRegister()
+          } catch (err) {
+            console.error(err)
+          }
+          return { path: '/login', query: to.query }
+        }
+      }
+
       let shokujiiUser = null
       try {
-        const response = await updateProfileFromProviders(userCredential).catch((error) => {
-          console.error('updateProfileFromProviders error:', error)
-        })
-        shokujiiUser = response?.data?.user
+        const response = await updateProfileFromProviders(userCredential)
+        shokujiiUser = response?.data?.user ?? null
       } catch (err) {
-        console.error(err)
+        return await handleProfileUpdateFailure(to.path, to.query, userCredential, err)
       }
 
       if (shokujiiUser == null) {
-        return getRedirectPath() ?? '/'
+        return await handleProfileUpdateFailure(to.path, to.query, userCredential)
       }
 
       // profile に戻ってきた場合はリンクなので画面はそのまま
@@ -270,7 +340,7 @@ export const setupRouter = (router: Router) => {
         return { path: '/login', state: { redirect: to.fullPath } }
       }
     } else {
-      if (['/login', '/inapp-login'].includes(to.path)) {
+      if (['/login', '/register', '/inapp-login'].includes(to.path)) {
         return (to.query?.redirect as string) ?? '/'
       }
     }
