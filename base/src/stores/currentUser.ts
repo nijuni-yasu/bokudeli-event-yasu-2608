@@ -209,14 +209,19 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     if (currentUser == null) {
       throw new Error('Not logged in')
     }
-    let userCredential
     if (currentUser.providerData.some((pd) => pd.providerId === providerId)) {
-      userCredential = await reauthenticateByProviderService(currentUser, providerId)
-    } else {
-      userCredential = await linkByProviderService(currentUser, providerId)
+      return
     }
-
+    const userCredential = await linkByProviderService(currentUser, providerId)
     await updateProfileFromProviders(userCredential)
+  }
+
+  const reauthenticateProvider = async (providerId: ProviderIdType) => {
+    const currentUser = getAuth().currentUser
+    if (currentUser == null) {
+      throw new Error('Not logged in')
+    }
+    return reauthenticateByProviderService(currentUser, providerId)
   }
 
   const unlinkProvider = async (providerId: ProviderIdType) => {
@@ -234,8 +239,13 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
         _user.user_sns_twitter = ''
         break
     }
-    await Promise.all([unlink(currentUser, providerId), updateUser(toRaw(_user))])
-    providerData.value = getAuth().currentUser!.providerData
+    await unlink(currentUser, providerId)
+    const refreshedUser = getAuth().currentUser
+    if (refreshedUser == null) {
+      throw new Error('Not logged in')
+    }
+    providerData.value = refreshedUser.providerData
+    await updateUser(toRaw(_user))
   }
 
   const signOut = async () => {
@@ -256,6 +266,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     requestEmailChange,
     confirmEmailChange,
     linkProvider,
+    reauthenticateProvider,
     unlinkProvider,
     signOut,
   }
