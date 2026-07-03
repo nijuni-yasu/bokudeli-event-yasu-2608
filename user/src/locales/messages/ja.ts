@@ -693,7 +693,7 @@ export default {
   },
   user_profile: {
     my_page: 'マイページ',
-    profile_settings: 'プロフィール編集',
+    profile_settings: 'プロフィール設定',
     cart: 'カート',
     add_to_home_screen: 'ホーム画面に追加',
     contact: 'お問い合わせ',

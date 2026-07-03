@@ -5,7 +5,7 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildFacebookUrl, buildInstagramUrl, buildTwitterUrl } from '@shokujii/base/utils/buildSnsLinks'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
-import { mdiAlphaXCircle, mdiFacebook, mdiInstagram, mdiPencil, mdiWeb } from '@mdi/js'
+import { mdiAlphaXCircle, mdiCogOutline, mdiFacebook, mdiInstagram, mdiWeb } from '@mdi/js'
 import { getProfile } from '@/router/utils'
 
 const { t: $t } = useI18n()
@@ -82,7 +82,7 @@ const websiteUrl = computed(() =>
           {{ userDescription }}
         </v-card-text>
         <v-card-actions v-if="isEditable" class="justify-center">
-          <v-btn color="primary" class="mb-3" :prepend-icon="mdiPencil" :to="getProfile()">
+          <v-btn color="primary" class="mb-3" :prepend-icon="mdiCogOutline" :to="getProfile()">
             {{ $t('user_profile.profile_settings') }}
           </v-btn>
         </v-card-actions>

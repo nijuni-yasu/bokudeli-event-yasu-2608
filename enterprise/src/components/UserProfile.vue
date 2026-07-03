@@ -9,7 +9,7 @@ import {
   mdiLogout,
   mdiEmailOutline,
   mdiCellphoneArrowDown,
-  mdiPencil,
+  mdiCogOutline,
   mdiReceiptText,
   mdiShieldAccount,
 } from '@mdi/js'
@@ -106,7 +106,7 @@ const logout = async () => {
         <!-- 👉 Profile edit -->
         <v-list-item :to="getProfile()">
           <template #prepend>
-            <v-icon class="me-2" :icon="mdiPencil" size="22" />
+            <v-icon class="me-2" :icon="mdiCogOutline" size="22" />
           </template>
           <v-list-item-title>{{ $t('user_profile.profile_settings') }}</v-list-item-title>
         </v-list-item>

@@ -4,7 +4,14 @@ import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useUserStore, type UserStore } from '@shokujii/base/stores/user.js'
 import UserAvatar from '@shokujii/base/components/UserAvatar.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
-import { mdiCartOutline, mdiLogout, mdiEmailOutline, mdiCellphoneArrowDown, mdiPencil, mdiReceiptText } from '@mdi/js'
+import {
+  mdiCartOutline,
+  mdiCogOutline,
+  mdiLogout,
+  mdiEmailOutline,
+  mdiCellphoneArrowDown,
+  mdiReceiptText,
+} from '@mdi/js'
 import { useRoute } from 'vue-router'
 import { getProfile, getUserPath } from '@/router/utils'
 
@@ -85,7 +92,7 @@ const logout = async () => {
         <!-- 👉 Profile edit -->
         <v-list-item :to="getProfile()">
           <template #prepend>
-            <v-icon class="me-2" :icon="mdiPencil" size="22" />
+            <v-icon class="me-2" :icon="mdiCogOutline" size="22" />
           </template>
           <v-list-item-title>{{ $t('user_profile.profile_settings') }}</v-list-item-title>
         </v-list-item>
