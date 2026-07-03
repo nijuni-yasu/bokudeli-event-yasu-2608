@@ -143,7 +143,11 @@ npm -w <pkg> run format:check
 
 ## 作業完了前の必須手順（コード変更）
 
-ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、PR verify（`pr-verify.yml`）と同じ build / lint / format / 型 / vitest のローカルチェック（format 失敗時は format 自動修正）を実行すること。
+ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、PR verify（`pr-verify.yml`）と同じ verify:functions-deploy / build / lint / format / 型 / vitest のローカルチェック（format 失敗時は format 自動修正）を実行すること。
+
+### Functions 追加時の CI 連携
+
+`functions/default` で **Cloud Functions として export する**関数を新規追加・削除したら、同 PR で `.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も更新すること。更新漏れすると development / production では Trigger・Callable が未デプロイのままになる。詳細は `/shokujii-functions-implementation` を参照。PR verify は `npm run verify:functions-deploy` で export と deploy リストの一致を検証する。
 
 ### Firestore 操作の必須ルール（厳守）
 

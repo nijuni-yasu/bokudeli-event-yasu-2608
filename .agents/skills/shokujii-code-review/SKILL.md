@@ -101,6 +101,12 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
 
+### CI / Functions デプロイ
+
+- [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、`.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も同 PR で更新されているか
+- [ ] 更新漏れは 🚨 必須修正（マージ後も Function が未デプロイでサイレント障害になる）
+- [ ] export しない内部ヘルパー（他 Function から import するだけの関数）は対象外
+
 ### 日付・時刻処理
 
 - [ ] `Date` オブジェクトを直接使っていないか（`luxon` を使う）

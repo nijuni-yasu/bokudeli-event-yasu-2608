@@ -8,7 +8,9 @@
   },
   "scripts": {
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "verify:functions-deploy": "python3 .agents/scripts/verify_functions_deploy_list.py",
+    "test:verify-functions-deploy": "python3 .agents/scripts/verify_functions_deploy_list_test.py"
   },
   "devDependencies": {
     "@eslint/js": "^9.5.0",
