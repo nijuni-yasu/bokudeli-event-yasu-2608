@@ -96,7 +96,7 @@ Notion URL がハードコードされている主なファイル:
 | 画面・文脈 | リンク先 | 定数 |
 | :-- | :-- | :-- |
 | コミュニティ主催設定（既存 `ja.ts`） | ユーザー利用規約 `/user` | `LEGAL_URLS.terms` |
-| 店舗オンボーディング・店舗向け同意（新規追加） | 店舗利用規約 `/partner` | `LEGAL_URLS.partnerTerms` |
+| 店舗オンボーディング（ホーム TODO STEP(3)） | 店舗利用規約 `/partner` | `LEGAL_URLS.partnerTerms` |
 | 店舗掲載申し込み（form.run） | 本仕様のスコープ外（外部フォーム） | — |
 
 ### 3.3 リポジトリ内の法務 Markdown
@@ -209,17 +209,18 @@ VitePress は `content/` 配下の Markdown ファイル名がそのまま URL �
 `base` に環境別ベース URL を集約する（`LoginDialog.vue` が `base` にあり、`base` は既に `import.meta.env` を利用しているため。`common` は `tsc` ビルドのみで env 注入の先例がない）。
 
 ```typescript
-// base/src/constants/legalUrls.ts（案）
+// base/src/constants/legalUrls.ts
 const TERMS_BASE = import.meta.env.VITE_TERMS_BASE_URL ?? 'https://terms.shokujii.jp'
 
 export const LEGAL_URLS = {
-  index: `${TERMS_BASE}/`,
   terms: `${TERMS_BASE}/user`,
   privacy: `${TERMS_BASE}/privacy`,
   commercial: `${TERMS_BASE}/specified_commercial_transactions`,
   partnerTerms: `${TERMS_BASE}/partner`,
 } as const
 ```
+
+`index`（`/`）は shokujii.jp へ 301 リダイレクトするため、`LEGAL_URLS` には含めない。
 
 各アプリの `.env` に `VITE_TERMS_BASE_URL` を設定する（`base` を import する全アプリでビルド時に注入される）。
 
@@ -337,11 +338,11 @@ npm -w terms run build
 
 ### Phase 2 — アプリリンク切替
 
-- [ ] `base/src/constants/legalUrls.ts` 追加
-- [ ] 各アプリ `.env` に `VITE_TERMS_BASE_URL`
-- [ ] Notion 直リンクを `LEGAL_URLS` 参照に置換（§3.2 の全ファイル）
-- [ ] `partner` のコミュニティ主催設定: ユーザー利用規約 → `LEGAL_URLS.terms`（`/user`）に置換
-- [ ] `partner` に店舗利用規約リンクを追加 → `LEGAL_URLS.partnerTerms`（`/partner`）。配置箇所は店舗オンボーディング・店舗向け同意文脈（§3.2 参照）
+- [x] `base/src/constants/legalUrls.ts` 追加
+- [x] 各アプリ `.env` に `VITE_TERMS_BASE_URL`（README 記載。GitHub Actions Variables はマージ前に人手で追記）
+- [x] Notion 直リンクを `LEGAL_URLS` 参照に置換（§3.2 の全ファイル）
+- [x] `partner` のコミュニティ主催設定: ユーザー利用規約 → `LEGAL_URLS.terms`（`/user`）に置換
+- [x] `partner` に店舗利用規約リンクを追加 → `LEGAL_URLS.partnerTerms`（`/partner`）。配置: ホーム TODO STEP(3)
 
 ### Phase 3 — 運用整備
 
