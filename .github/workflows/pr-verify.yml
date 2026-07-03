@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Verify Functions deploy list
-        run: python3 .agents/scripts/verify_functions_deploy_list.py
+        run: npm run verify:functions-deploy
       - name: Build common
         if: >-
           needs.changes.outputs.common == 'true' ||

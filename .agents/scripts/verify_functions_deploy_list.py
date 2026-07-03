@@ -3,9 +3,8 @@
 
 前提:
 - index.ts は `export const { ... } = Object.assign` 形式で export を列挙している
-- deploy_functions.yml は hybrid / pf / enterprise の case 内に
-  `echo "args=--force --only functions:..."` がある
-  （インデント変更には追従するが、echo 行の文言形式変更時は本スクリプトの更新が必要）
+- deploy_functions.yml の hybrid / pf / enterprise の case 内に
+  `echo ... --only functions:...` がある（case ラベルと echo の間に空行・コメント可）
 """
 
 from __future__ import annotations
@@ -23,11 +22,11 @@ EXPORT_BLOCK_RE = re.compile(
     re.MULTILINE,
 )
 DEPLOY_FUNCTION_RE = re.compile(r"functions:([a-zA-Z_][a-zA-Z0-9_]*)")
-# deploy_functions.yml の case ラベル直後の echo 行を抽出（行頭固定は使わない）
-GROUP_CASE_RE = re.compile(
-    r"(hybrid|pf|enterprise)\)\s*\n\s*echo \"args=--force --only ([^\"]+)\"",
-    re.MULTILINE,
+GROUP_LABEL_RE = re.compile(r"^\s*(hybrid|pf|enterprise)\)\s*$")
+ECHO_ONLY_RE = re.compile(
+    r"""echo\s+(?:"args=--force --only ([^"]+)"|'args=--force --only ([^']+)')""",
 )
+DEPLOY_GROUPS = ("hybrid", "pf", "enterprise")
 
 
 def parse_index_exports(index_path: Path) -> set[str]:
@@ -37,33 +36,66 @@ def parse_index_exports(index_path: Path) -> set[str]:
         raise ValueError(f"export const {{ ... }} ブロックが見つかりません: {index_path}")
 
     names: set[str] = set()
-    for part in match.group(1).split(","):
-        name = part.strip()
-        if not name or name.startswith("//"):
+    for line in match.group(1).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("//"):
             continue
-        if not re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*", name):
-            raise ValueError(f"export 名の解析に失敗しました: {name!r} ({index_path})")
-        names.add(name)
+        for part in stripped.split(","):
+            name = re.sub(r"//.*", "", part).strip()
+            if not name:
+                continue
+            if not re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]*", name):
+                raise ValueError(f"export 名の解析に失敗しました: {name!r} ({index_path})")
+            names.add(name)
     return names
 
 
+def _extract_only_arg_from_echo_line(line: str) -> str | None:
+    match = ECHO_ONLY_RE.search(line)
+    if match is None:
+        return None
+    return match.group(1) or match.group(2)
+
+
 def parse_deploy_targets(deploy_path: Path) -> tuple[set[str], dict[str, list[str]]]:
-    text = deploy_path.read_text(encoding="utf-8")
+    lines = deploy_path.read_text(encoding="utf-8").splitlines()
     all_names: set[str] = set()
     by_group: dict[str, list[str]] = {}
 
-    for group, only_arg in GROUP_CASE_RE.findall(text):
-        names = [m.group(1) for m in DEPLOY_FUNCTION_RE.finditer(only_arg)]
+    i = 0
+    while i < len(lines):
+        label_match = GROUP_LABEL_RE.match(lines[i])
+        if label_match is None:
+            i += 1
+            continue
+
+        group = label_match.group(1)
+        i += 1
+        only_args: list[str] = []
+        while i < len(lines) and lines[i].strip() != ";;":
+            only_arg = _extract_only_arg_from_echo_line(lines[i])
+            if only_arg is not None:
+                only_args.append(only_arg)
+            i += 1
+
+        if not only_args:
+            raise ValueError(
+                f"deploy グループ {group!r} に --only を含む echo 行が見つかりません: {deploy_path}"
+            )
+
+        names: list[str] = []
+        for only_arg in only_args:
+            names.extend(m.group(1) for m in DEPLOY_FUNCTION_RE.finditer(only_arg))
         by_group[group] = names
         all_names.update(names)
+        i += 1
 
     if not by_group:
         raise ValueError(
             f"deploy グループ (hybrid / pf / enterprise) が見つかりません: {deploy_path}"
         )
 
-    expected_groups = {"hybrid", "pf", "enterprise"}
-    missing_groups = expected_groups - set(by_group)
+    missing_groups = set(DEPLOY_GROUPS) - set(by_group)
     if missing_groups:
         raise ValueError(
             f"deploy グループが不足しています ({deploy_path}): "
