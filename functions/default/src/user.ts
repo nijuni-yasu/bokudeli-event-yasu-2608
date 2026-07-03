@@ -244,8 +244,6 @@ const uploadUserImage = async (uid: string, blob: Blob) => {
   return `gs://${bucket.name}/${path}`
 }
 
-const ADDITIONAL_KEYS = ['user_description', 'user_sns_twitter'] as const
-
 export const updateProfileFromProviders = onCall<
   UpdateProfileFromProvidersRequest,
   Promise<UpdateProfileFromProvidersResponse>
@@ -268,11 +266,14 @@ export const updateProfileFromProviders = onCall<
     user.user_name = user.user_name || provider.displayName
     user.user_image_url = user.user_image_url || provider.photoURL || ''
   }
-  for (const key of ADDITIONAL_KEYS) {
-    const value = additionalInfo?.[key]
-    if (value != null) {
-      user[key] = value
-    }
+  const description = additionalInfo?.user_description
+  if (description != null) {
+    // providerData の user_name / user_image_url と同様、既存の自己紹介は上書きしない
+    user.user_description = user.user_description || description
+  }
+  const twitterHandle = additionalInfo?.user_sns_twitter
+  if (twitterHandle != null) {
+    user.user_sns_twitter = twitterHandle
   }
   // Facebook, Twitter, Google の場合は、外部 URL の画像を Storage にアップロードする
   // gs:// 形式に移行済みの場合は対象外。外部 URL が残っている間はログインのたびに fetch + upload を試みる
