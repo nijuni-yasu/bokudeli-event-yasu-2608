@@ -40,6 +40,15 @@ export function getMenuImageStoragePath(partnerId: string, menuId: string): stri
   return `partners/${partnerId}/menus/${menuId}/image`
 }
 
+export function getChatAttachmentStoragePath(roomId: string, messageId: string, attachmentId: string): string {
+  return `chat_rooms/${roomId}/${messageId}/${attachmentId}`
+}
+
+/** チャット添付ファイル一括削除用 prefix（末尾スラッシュ付き）。recall / GC 用。 */
+export function getChatAttachmentMessagePrefix(roomId: string, messageId: string): string {
+  return `chat_rooms/${roomId}/${messageId}/`
+}
+
 export function getUserImageStoragePath(userId: string, thumbnailSize?: 'small' | 'medium' | 'large'): string {
   return thumbnailSize == null ? `users/${userId}/avatar` : `users/${userId}/avatar_thumb_${thumbnailSize}`
 }

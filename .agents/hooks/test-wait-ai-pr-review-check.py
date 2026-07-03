@@ -29,6 +29,8 @@ CASES: list[tuple[str, str, int, int | None]] = [
     ("codex_connect_copilot_ok.json", "waiting before terminal quiet", 1, 700),
     ("request_only.json", "waiting request ignored", 1, 300),
     ("request_only.json", "timeout no substantive", 2, 1300),
+    ("copilot_ack_only.json", "waiting ack ignored", 1, 300),
+    ("copilot_ack_only.json", "timeout no substantive ack", 2, 1300),
     ("codex_no_issues.json", "complete copilot + codex no issues", 0, 820),
 ]
 

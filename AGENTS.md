@@ -110,6 +110,13 @@ Slack / LINE bot および旧 legacy Functions は `functions/default` に統合
 - i18n 基盤（`vue-i18n`）は日本語用の `$t` 集約のために使う。`base/src/plugins/i18n/index.ts` は `locale` / `fallbackLocale` とも **`ja`**。各アプリの `themeConfig` の `langConfig` も日本語のみとする。
 - 日付・時刻の表示は `common/src/utils/datetime.ts` の `convertToXxx` を使う（`vue-i18n` の `datetimeFormats` / `$d` は新規追加しない）。
 
+### Materio テンプレート（`base/materio/`）
+
+- **`base/materio/`（`@core` / `@layouts` 含む）は原則変更禁止**。テンプレート更新時の diff 回避・マージ容易性のため。
+- レイアウト・スタイルの調整は **`user/src/styles/`**、**`base/src/styles/`**、各 Vue コンポーネントの `<style>` で override する。
+- `user/src/@core` / `@layouts` は materio へのシンボリックリンク。不足 util は **`base/src/`** 等のプロジェクト側に追加し、materio 直下に直接足さない。
+- 例外: Materio テンプレート本体のアップストリーム取り込み等、明示的なメンテナンス作業時のみ編集可。
+
 ### 開発コマンド
 
 `-m <env_file_postfix>` は環境変数ファイルの接尾辞（例: `-m development` → `.env.development`）。

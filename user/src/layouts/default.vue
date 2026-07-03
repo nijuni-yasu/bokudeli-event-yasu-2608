@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import { defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
-import { mdiCartOutline, mdiPartyPopper } from '@mdi/js'
+import { mdiCartOutline, mdiMessageTextOutline, mdiPartyPopper } from '@mdi/js'
 import { useConfigStore } from '@core/stores/config'
 import { useSkins } from '@core/composable/useSkins'
-import { AppContentLayoutNav } from '@layouts/enums'
+import { AppContentLayoutNav, FooterType } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
+import { useLayoutConfigStore } from '@layouts/stores/config'
+import { layoutConfig } from '@themeConfig'
 import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
 import { useNavItems } from '@/navigation'
@@ -13,10 +15,37 @@ import type { Notification } from '@shokujii/base/types/index.js'
 import { getManagePath, getManageNewCommunityPath, getLogin } from '@/router/utils'
 import { hasManagedCommunity } from '@shokujii/base/stores/community.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
+import { useChatStore } from '@shokujii/base/stores/chat.js'
 import { useRouter } from 'vue-router'
+import { useDisplay } from 'vuetify'
 import { getAuth, type User } from 'firebase/auth'
 
 const router = useRouter()
+const route = useRoute()
+const { smAndDown } = useDisplay()
+const layoutConfigStore = useLayoutConfigStore()
+const chatStore = useChatStore()
+
+/** チャット画面ではサイトフッターを隠し、ビューポートをチャット UI に専有する */
+const isChatRoute = (path: string) => {
+  const normalized = path.replace(/\/$/, '') || '/'
+  return normalized === '/chat' || normalized.startsWith('/chat/')
+}
+
+watch(
+  () => route.path,
+  (path, oldPath) => {
+    layoutConfigStore.footerType = isChatRoute(path) ? FooterType.Hidden : layoutConfig.footer.type
+    if (oldPath != null && isChatRoute(oldPath) && !isChatRoute(path)) {
+      chatStore.unsubscribeActiveRoom()
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  layoutConfigStore.footerType = layoutConfig.footer.type
+})
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
   () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
@@ -68,6 +97,36 @@ const handleEventHostClick = async () => {
 const { cart } = storeToRefs(useCurrentUserStore())
 const cartMenuCount = computed(() => cart.value?.reduce((sum, item) => sum + item.orders.length, 0) ?? 0)
 const cartBadgeContent = computed(() => (cartMenuCount.value > 0 ? String(cartMenuCount.value) : ''))
+const chatUnreadCount = computed(() => chatStore.totalUnreadCount)
+const chatBadgeContent = computed(() => {
+  if (chatUnreadCount.value <= 0) return ''
+  if (chatUnreadCount.value > 99) return '99+'
+  return String(chatUnreadCount.value)
+})
+
+watch(
+  currentUser,
+  (user) => {
+    if (user?.uid != null) {
+      chatStore.subscribeMemberships(user.uid)
+    } else {
+      chatStore.unsubscribeAll()
+    }
+  },
+  { immediate: true },
+)
+
+const handleChatHeaderClick = (): void => {
+  if (isChatRoute(route.path)) {
+    chatStore.requestOpenChatList()
+    return
+  }
+  if (smAndDown.value) {
+    void router.push({ path: '/chat', state: { openChatList: true } })
+    return
+  }
+  void router.push('/chat')
+}
 </script>
 
 <template>
@@ -92,6 +151,23 @@ const cartBadgeContent = computed(() => (cartMenuCount.value > 0 ? String(cartMe
       <v-btn v-else class="me-4" variant="outlined" :to="getLogin()">
         {{ $t('navigation.login') }}
       </v-btn>
+      <v-badge
+        v-if="currentUser != null"
+        :model-value="chatUnreadCount > 0"
+        :content="chatBadgeContent"
+        color="error"
+        location="top end"
+        offset-x="6"
+        offset-y="6"
+        class="me-3"
+      >
+        <v-btn
+          variant="text"
+          :aria-label="$t('chat.header_tooltip')"
+          :icon="mdiMessageTextOutline"
+          @click="handleChatHeaderClick"
+        />
+      </v-badge>
       <v-badge
         v-if="currentUser != null"
         :model-value="cartMenuCount > 0"

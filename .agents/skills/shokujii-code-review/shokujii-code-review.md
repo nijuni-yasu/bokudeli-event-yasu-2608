@@ -48,6 +48,11 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 英語用の UI 文字列だけを別ファイルに分けていないか（未使用の `en.ts` 残骸を作らない）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
 
+### Materio / UI テンプレート
+- [ ] `base/materio/`（`@core` / `@layouts`）を変更していないか
+- [ ] Materio のレイアウト・スタイル調整を `user/src/styles/` 等の override で行っているか
+- [ ] materio 配下にプロジェクト固有の util / コンポーネントを追加していないか（`base/src/` 等を使う）
+
 ### Firestore / Store パターン
 - [ ] DB への操作は必ず store 関数を経由しているか（直接 `update`、`setDoc` 等を呼ばない）
 - [ ] `withConverter` を付けた reference を使っているか（付けない ref の使用は NG）

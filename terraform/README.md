@@ -49,6 +49,24 @@ auth_authorized_domains_extra = [
 
 テスト・sandbox では未設定（空リスト）で問題ありません。既存プロジェクトで Console に独自ドメインがある場合、**apply 前に** [Firebase Console](https://console.firebase.google.com/) → Authentication → Settings → Authorized domains、または Identity Platform API で一覧を確認し、不足分を `auth_authorized_domains_extra` に含めること（含めないと apply で削除される可能性があります）。
 
+### Storage CORS（チャット画像添付等）
+
+ブラウザから Firebase Storage SDK（`uploadBytes` / `getBlob`）で直接アクセスする機能には **GCS バケット CORS** が必要です。`firebase deploy --only storage` では CORS は設定されません。**`terraform apply` で付与**されます（[storage.tf](storage.tf) の `google_storage_bucket.default`）。
+
+`auth_authorized_domains_extra` に登録したカスタムドメイン（例: `shokujii.jp`）は **CORS origin にも `https://` 付きで自動反映**されます。Auth に無い origin（Preview Channel URL 等）のみ `storage_cors_origins_extra` に追加してください。
+
+```hcl
+# auth_authorized_domains_extra に shokujii.jp 等があれば CORS にも https:// 付きで自動反映される。
+# Preview Channel 等 auth に無い origin のみ storage_cors_origins_extra へ:
+# storage_cors_origins_extra = ["https://bokudeli-event-dev--newevent-mtew8woa.web.app"]
+```
+
+**新規 sandbox（`init.sh` 直後）の初回 `terraform apply` について**: `google_app_engine_application` の作成時に GCP がデフォルト Storage バケットを自動作成するため、同一 apply で `google_storage_bucket.default` が **Error 409（Already Exists）** になることがあります。その場合は import 一覧の `google_storage_bucket.default` を実行してから **再 apply** してください（CORS 設定が初回 apply で未反映のときも同手順）。バケット名は `gcloud app describe --format='value(defaultBucket)'` または `gcloud storage buckets list` で確認する（`*.appspot.com` または `*.firebasestorage.app`）。
+
+**import 前の一時適用**: Terraform 未適用、または `google_storage_bucket.default` import 前に CORS だけ先に当てる場合は、[locals_storage_cors.tf](locals_storage_cors.tf) の origin 定義に合わせた JSON をローカルで用意し、`gcloud storage buckets update gs://<bucket> --cors-file=/path/to/cors.json` で適用する。正本は Terraform のためリポジトリに環境別 JSON は置かない。
+
+**確認**: `gsutil cors get gs://<bucket>`、またはブラウザ Network で画像 GET レスポンスに `access-control-allow-origin` が含まれること。
+
 ## 既存プロジェクトの初回セットアップ（本番・テスト）
 
 `bokudeli-event-dev`（本番）や `bokudeli-event-test`（development）のように **すでに Firebase を運用しているプロジェクト**へ初めて Terraform を適用する手順です。新規プロジェクト（`init.sh` 直後の sandbox）とは異なり、**既存リソースの import** が必要です。
@@ -92,6 +110,9 @@ terraform import google_storage_bucket.invoice PROJECT-invoice
 terraform import google_app_engine_application.default PROJECT
 terraform import google_firestore_database.default "projects/PROJECT/databases/(default)"
 terraform import google_firebase_storage_bucket.default "projects/PROJECT/buckets/PROJECT.appspot.com"
+# デフォルト Storage バケット CORS（バケット名は App Engine default または gcloud storage buckets list で確認）
+# 新形式: PROJECT.firebasestorage.app
+terraform import google_storage_bucket.default PROJECT.appspot.com
 
 # Secret（functions.tf の 12 キー。GCP に存在するもののみ import）
 PROJECT=PROJECT
@@ -142,10 +163,11 @@ import は **Terraform state のみ**更新する。本番サービスは停止�
 | Hosting / Web App | create のままなら import 漏れ（409 リスク）。user / admin / **enterprise**（`PROJECT-enterprise`）を確認 |
 | `firestore_backups` | `storage_class` 差分なし（[firestore_backup.tf](firestore_backup.tf) は `ARCHIVE` 固定。本番手動作成バケットと一致） |
 | `firebasestorage_firestore_cross_service_rules` | 未付与 env では **Add 1**。Console 手動付与済みなら **import 後 no-op**（[service_account.tf](service_account.tf)） |
+| `google_storage_bucket.default` | CORS が **Update in-place** のみ（Destroy なし）。既存手動 CORS（GET のみ等）→ フル method への更新は **意図した変更** |
 
 ### Storage ルール（`storage.rules`）と IAM の順序
 
-#772 以降の `storage.rules` は `firestore.get()` を使う。**`terraform apply` で Storage クロスサービス IAM を付与してから** `Deploy storage`（または `firebase deploy --only storage`）すること。新規 sandbox では Console の「問題を修正」は不要（Terraform が [Firebase Rules Firestore Service Agent](https://firebase.google.com/docs/rules/manage-deploy#manage_permissions_for_cross-service) を付与する）。
+#772 以降の `storage.rules` は `firestore.get()` を使う。**`terraform apply` で Storage クロスサービス IAM を付与してから** `Deploy storage`（または `firebase deploy --only storage`）すること。新規 sandbox では Console の「問題を修正」は不要（Terraform が [Firebase Rules Firestore Service Agent](https://firebase.google.com/docs/rules/manage-deploy#manage_permissions_for_cross-service) を付与する）。**Storage CORS も apply で付与**される（`firebase deploy --only storage` では設定されない）。
 
 既存プロジェクトで Console から手動付与済みの場合は import 一覧の `firebasestorage_firestore_cross_service_rules` を実行してから plan する。
 
@@ -178,6 +200,7 @@ terraform apply
 | Firebase Hosting サイト | `<PROJECT_ID>`（user）、`<PROJECT_ID>-admin`（partner）、`<PROJECT_ID>-enterprise`（enterprise）。初回 apply 時のみ。既存 site は [import](#import-一覧gcp-は変更しない) |
 | reCAPTCHA Enterprise キー | `enterprise-app-check`（[recaptcha_enterprise.tf](recaptcha_enterprise.tf)）。output `enterprise_recaptcha_site_key` が公開サイトキー |
 | App Check 設定 | Web アプリ ↔ reCAPTCHA キー紐付け（[firebase_app_check.tf](firebase_app_check.tf)）。Console 先行登録時は import |
+| デフォルト Storage バケット CORS | `gs://<default-bucket>` に Hosting / localhost origin と GET,HEAD,PUT,POST,DELETE（[storage.tf](storage.tf)） |
 
 バケットのロケーションは Firestore と同じ `asia-northeast1`（`var.region`）です。
 
@@ -191,6 +214,29 @@ terraform apply
 ```
 
 IAM リソース（Firestore SA・compute / appspot の `roles/datastore.importExportAdmin`、Firebasestorage の `roles/firebaserules.firestoreServiceAgent`）は未設定なら apply で追加されます。`roles/firebaserules.firestoreServiceAgent` を Console で手動付与済みの場合は import 一覧を参照。
+
+### 新規 sandbox で初回 apply 後に default bucket import が必要な場合
+
+`init.sh` 後の **新規個人 sandbox** でも、`google_app_engine_application` 作成と同時にデフォルトバケットが GCP 側で先に存在するため、`google_storage_bucket.default`（Storage CORS 用）だけ **409 Already Exists** で失敗することがあります。
+
+1. 初回 `terraform apply` を実行（他リソースは作成される場合あり）
+2. デフォルトバケット名を確認する
+
+```bash
+gcloud app describe --project=PROJECT --format='value(defaultBucket)'
+# または
+gcloud storage buckets list --project=PROJECT
+```
+
+3. state に取り込んで再 apply する（[import 一覧](#import-一覧gcp-は変更しない) の `google_storage_bucket.default`）
+
+```bash
+terraform import google_storage_bucket.default PROJECT.appspot.com
+# 新形式バケットの場合: PROJECT.firebasestorage.app
+terraform apply
+```
+
+CORS が未設定のままチャット画像が表示されない場合も、上記 import → apply で解消されることがあります（手動 `gcloud` 適用済みの sandbox は import 後 plan が no-op または origin 微差分のみのこともある）。
 
 ### 動作確認（backupFirestore）
 

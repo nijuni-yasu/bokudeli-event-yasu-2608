@@ -69,6 +69,73 @@ export function convertToTimeString(millis: number, zone = DEFAULT_TIME_ZONE, lo
   return DateTime.fromMillis(millis, { zone, locale }).toFormat('H:mm')
 }
 
+const chatNowDateTime = (nowMillis: number | undefined, zone = DEFAULT_TIME_ZONE, locale = DEFAULT_LOCALE): DateTime =>
+  nowMillis != null ? DateTime.fromMillis(nowMillis, { zone, locale }) : DateTime.now().setZone(zone)
+
+/** JST 暦日が「今日」か（チャット日付表示用） */
+export function isChatToday(
+  millis: number,
+  nowMillis?: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): boolean {
+  const dt = DateTime.fromMillis(millis, { zone, locale })
+  const now = chatNowDateTime(nowMillis, zone, locale)
+  return dt.hasSame(now, 'day')
+}
+
+/** JST 暦日が「昨日」か（チャット日付表示用） */
+export function isChatYesterday(
+  millis: number,
+  nowMillis?: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): boolean {
+  const dt = DateTime.fromMillis(millis, { zone, locale })
+  const now = chatNowDateTime(nowMillis, zone, locale)
+  return dt.hasSame(now.minus({ days: 1 }), 'day')
+}
+
+/** チャット日付ラベル。当年は MM/dd、当年以外は yyyy/MM/dd */
+export function formatChatCalendarDate(
+  millis: number,
+  nowMillis?: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): string {
+  const dt = DateTime.fromMillis(millis, { zone, locale })
+  const now = chatNowDateTime(nowMillis, zone, locale)
+  if (dt.year === now.year) {
+    return convertToJustDate(millis, zone, locale)
+  }
+  return dt.toFormat('yyyy/MM/dd')
+}
+
+/** チャット日付セパレータ挿入判定用 */
+export function isChatSameCalendarDay(
+  millisA: number,
+  millisB: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): boolean {
+  const a = DateTime.fromMillis(millisA, { zone, locale })
+  const b = DateTime.fromMillis(millisB, { zone, locale })
+  return a.hasSame(b, 'day')
+}
+
+/** チャット一覧の最終メッセージ日時。JST で当日は H:mm、それ以外は MM/dd または yyyy/MM/dd */
+export function formatChatListTimestamp(
+  millis: number,
+  nowMillis?: number,
+  zone = DEFAULT_TIME_ZONE,
+  locale = DEFAULT_LOCALE,
+): string {
+  if (isChatToday(millis, nowMillis, zone, locale)) {
+    return convertToTimeString(millis, zone, locale)
+  }
+  return formatChatCalendarDate(millis, nowMillis, zone, locale)
+}
+
 /**
  * 店舗締切時刻など、epoch millis から JST の時分だけを取り出して使う値を生成する。
  * ブラウザのローカル TZ に依存しない。

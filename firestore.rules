@@ -59,6 +59,73 @@ service cloud.firestore {
                 && request.resource.data.get('ordered_food_count', 0) == 0
                 && !('counts_updated_at' in request.resource.data);
         }
+        function chatRoomDoc(roomId) {
+            return get(/databases/$(database)/documents/chat_rooms/$(roomId)).data;
+        }
+        function isChatRoomMember(roomId) {
+            return request.auth != null
+                && request.auth.uid in chatRoomDoc(roomId).member_user_ids;
+        }
+        function isChatRoomWritable(roomId) {
+            let room = chatRoomDoc(roomId);
+            return request.auth != null
+                && request.auth.uid in room.member_user_ids
+                && room.is_active == true;
+        }
+        function chatMembershipUpdateAllowed() {
+            return request.resource.data.diff(resource.data).affectedKeys()
+                    .hasOnly(['last_read_at', 'unread_count', 'updated_at'])
+                && request.resource.data.last_read_at is timestamp
+                && request.resource.data.last_read_at == request.time
+                && request.resource.data.unread_count == 0
+                && request.resource.data.updated_at == request.time;
+        }
+        function hasValidChatMessageBody() {
+            return 'body' in request.resource.data
+                && request.resource.data.body is string
+                && request.resource.data.body.size() > 0
+                && request.resource.data.body.size() <= 2000;
+        }
+        function hasValidChatMessageAttachments() {
+            return 'attachments' in request.resource.data
+                && request.resource.data.attachments is list
+                && request.resource.data.attachments.size() >= 1
+                && request.resource.data.attachments.size() <= 12;
+        }
+        // 添付の深い検証（MIME / byte_size / 寸法）は Web SDK setDoc と相性が悪いため Firestore では
+        // storage_path の prefix のみ検証する。list.map は permission-denied になるため添字参照を使う。
+        // MIME・サイズ・寸法は Storage Rules + クライアント（Zod）で担保する。
+        // roomId/messageId を正規表現に直接埋め込むと regex injection になるため、
+        // string slice 比較で prefix を検証する。
+        function chatAttachmentStoragePathPrefix(roomId, messageId) {
+            return 'chat_rooms/' + roomId + '/' + messageId + '/';
+        }
+        function isValidChatAttachmentAt(prefix, index) {
+            let attachment = request.resource.data.attachments[index];
+            let path = attachment.storage_path;
+            let pSize = prefix.size();
+            // prefix が一致し、かつ残りのファイル名部分が 1 文字以上でスラッシュを含まないことを確認
+            return path is string
+                && path.size() > pSize
+                && path[0:pSize] == prefix
+                && path[pSize:path.size()].matches('[^/]+');
+        }
+        function isValidChatAttachmentPath(roomId, messageId) {
+            let prefix = chatAttachmentStoragePathPrefix(roomId, messageId);
+            let n = request.resource.data.attachments.size();
+            return n >= 1 && isValidChatAttachmentAt(prefix, 0)
+                && (n < 2 || isValidChatAttachmentAt(prefix, 1))
+                && (n < 3 || isValidChatAttachmentAt(prefix, 2))
+                && (n < 4 || isValidChatAttachmentAt(prefix, 3))
+                && (n < 5 || isValidChatAttachmentAt(prefix, 4))
+                && (n < 6 || isValidChatAttachmentAt(prefix, 5))
+                && (n < 7 || isValidChatAttachmentAt(prefix, 6))
+                && (n < 8 || isValidChatAttachmentAt(prefix, 7))
+                && (n < 9 || isValidChatAttachmentAt(prefix, 8))
+                && (n < 10 || isValidChatAttachmentAt(prefix, 9))
+                && (n < 11 || isValidChatAttachmentAt(prefix, 10))
+                && (n < 12 || isValidChatAttachmentAt(prefix, 11));
+        }
         match /assets/{asset} {
             allow read: if true
         }
@@ -185,8 +252,34 @@ service cloud.firestore {
             allow update: if request.auth != null
                 && request.auth.uid == user_id
                 && userProfileCountsUnchanged()
-            match /friends/{friend_user_id} {
-                allow read, write: if false
+            match /chat_memberships/{roomId} {
+                allow read: if request.auth != null && request.auth.uid == user_id;
+                allow create, delete: if false;
+                allow update: if request.auth != null
+                              && request.auth.uid == user_id
+                              && chatMembershipUpdateAllowed();
+            }
+            match /friends/{friendUserId} {
+                allow read: if request.auth != null && request.auth.uid == user_id;
+                allow write: if false;
+            }
+        }
+        match /chat_rooms/{roomId} {
+            allow read: if isChatRoomMember(roomId);
+            allow create, update, delete: if false;
+
+            match /messages/{messageId} {
+                allow read: if isChatRoomMember(roomId);
+                allow create: if isChatRoomWritable(roomId)
+                              && request.resource.data.keys().hasOnly([
+                                   'message_type', 'sender_user_id', 'body', 'attachments', 'created_at'
+                                 ])
+                              && request.resource.data.message_type == 'user'
+                              && request.resource.data.sender_user_id == request.auth.uid
+                              && request.resource.data.created_at == request.time
+                              && (hasValidChatMessageBody() || hasValidChatMessageAttachments())
+                              && (!('attachments' in request.resource.data) || isValidChatAttachmentPath(roomId, messageId));
+                allow update, delete: if false;
             }
         }
         match /users_personal_information/{user_id} {

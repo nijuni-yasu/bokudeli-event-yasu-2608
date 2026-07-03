@@ -4,6 +4,7 @@ import { getCommunity } from './stores/community.js'
 import { getOrders } from './stores/memberOrder.js'
 import { sendOrderCompletionMails } from './orderCompletionMail.js'
 import { trySendPopularEventMailAfterMembersSync } from './popularEventMail.js'
+import { syncEventChatMember } from './syncEventChatMember.js'
 import type { ShokujiiEvent } from './stores/event.js'
 import { addEventToFriendHistoryForAnchor } from './utils/friendsService.js'
 import { recountUserProfileCounts } from './utils/recountUserProfileCounts.js'
@@ -92,6 +93,17 @@ export async function applyOrderConfirmedSideEffects(params: { event: ShokujiiEv
   }
 
   if (recalcSucceeded) {
+    try {
+      await syncEventChatMember({ event, userId })
+    } catch (error) {
+      logger.error('syncEventChatMember failed after order confirm', {
+        error,
+        communityId,
+        eventId,
+        userId,
+      })
+    }
+
     // 閾値を満たすときのみ全ユーザー向け人気イベントメール（トランザクション内で冪等フラグ）
     try {
       logger.info('sideEffect:start', { step: 'trySendPopularEventMailAfterMembersSync', communityId, eventId, userId })

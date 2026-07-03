@@ -23,7 +23,29 @@ POLL_SEC = 60
 DEFAULT_OWNER = "nijuniinc"
 DEFAULT_REPO = "bokudeli-event-new"
 
-REQUEST_PREFIX = "@copilot @codex review"
+REQUEST_PREFIX_LEGACY = "@copilot @codex review"
+REQUEST_PREFIX_CODEX = "@codex この PR の Files changed をコードレビュー"
+REQUEST_PREFIX_COPILOT = "@copilot この PR の Files changed をコードレビュー"
+
+
+def is_request_comment(body: str) -> bool:
+    stripped = (body or "").strip()
+    return (
+        stripped.startswith(REQUEST_PREFIX_LEGACY)
+        or stripped.startswith(REQUEST_PREFIX_CODEX)
+        or stripped.startswith(REQUEST_PREFIX_COPILOT)
+    )
+
+
+def is_acknowledgment_comment(body: str) -> bool:
+    text = body or ""
+    patterns = (
+        r"コード変更依頼.*ではありません",
+        r"次回レビュー実行時",
+        r"現時点では.*コード修正.*テスト実行.*PRコメント返信はありません",
+        r"書き方.*に関する依頼",
+    )
+    return any(re.search(p, text) for p in patterns)
 
 
 @dataclass
@@ -32,7 +54,7 @@ class Event:
     created_at: datetime
     kind: str  # issue | inline | review
     body: str
-    category: str  # substantive | no_issues | limit | connect | request | boilerplate
+    category: str  # substantive | no_issues | limit | connect | request | acknowledgment | boilerplate
 
 
 def parse_ts(value: str) -> datetime:
@@ -55,9 +77,10 @@ def classify_reviewer(login: str) -> str | None:
 
 def classify_body(body: str) -> str:
     text = body or ""
-    stripped = text.strip()
-    if stripped.startswith(REQUEST_PREFIX):
+    if is_request_comment(text):
         return "request"
+    if is_acknowledgment_comment(text):
+        return "acknowledgment"
     if re.search(r"usage limits for code reviews", text, re.I):
         return "limit"
     if re.search(
@@ -199,7 +222,11 @@ def evaluate(
     if elapsed_override is not None:
         now = since + timedelta(seconds=elapsed_override)
 
-    filtered = [e for e in events if e.created_at >= since and e.category != "request"]
+    filtered = [
+        e
+        for e in events
+        if e.created_at >= since and e.category not in ("request", "acknowledgment")
+    ]
     filtered.sort(key=lambda e: e.created_at)
 
     elapsed_sec = (

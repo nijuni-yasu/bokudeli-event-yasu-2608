@@ -72,8 +72,9 @@ PR でレビュー依頼した Copilot、Codex、kokufu によるレビューを
    **現時点の除外リスト（狭く始める）** — 次のいずれかに該当すればスキップする:
 
    1. **Codex 問題なしのみ** — 具体指摘がなく、問題なし・称賛のみのサマリ（例: `Didn't find any major issues`）。接続案内の `<details>` ボイラープレートが付いていても同様。`wait-ai-pr-review` では `no_issues` としてレビュー完了扱いだが、本スキルでは RC 採番しない。
-   2. **レビュー依頼の定型文** — `@copilot @codex review` で始まる依頼コメント（`git-create-pull-request` 手順 12 の固定文など）。
-   3. **接続案内ボイラープレートのみ** — Codex / Copilot コネクタのセットアップ案内や `About Codex in GitHub` の `<details>` のみで、コード変更・設計・仕様への言及がないもの。
+   2. **レビュー依頼の定型文** — `@copilot @codex review` で始まる依頼コメント（旧手順 12）、または `@codex この PR の Files changed をコードレビュー` / `@copilot この PR の Files changed をコードレビュー` で始まる依頼コメント（手順 12 の 2 行固定文を含む）
+   3. **Copilot 承知返信** — コード変更・設計・仕様への言及がなく、レビューの書き方確認・次回厳守・承知のみのトップレベル返信
+   4. **接続案内ボイラープレートのみ** — Codex / Copilot コネクタのセットアップ案内や `About Codex in GitHub` の `<details>` のみで、コード変更・設計・仕様への言及がないもの
 
    **様子見（現時点ではスキップしない）**:
 

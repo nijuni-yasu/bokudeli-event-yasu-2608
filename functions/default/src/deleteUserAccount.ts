@@ -11,9 +11,51 @@ import { getPassCodeRefsByUserId, getPassCodeRefsByUserEmail } from './stores/pa
 import { listFriendUserIds } from './stores/userFriend.js'
 import { anonymizeUser, anonymizeUserPersonalInformation, getUserPersonalInformation } from './stores/user.js'
 import { recountUserProfileCountsForUsers } from './utils/recountUserProfileCounts.js'
+import { listChatMembershipsForUser, getChatMembershipRef } from './stores/chatMembership.js'
+import { batchRemoveMemberFromChatRoom, getChatRoomRef } from './stores/chatRoom.js'
 
 const db = getFirestore()
 const logger = createModuleLogger('deleteUserAccount')
+const FIRESTORE_BATCH_LIMIT = 500
+
+const cleanupUserChatData = async (uid: string): Promise<void> => {
+  const memberships = await listChatMembershipsForUser(uid)
+  if (memberships.length === 0) {
+    return
+  }
+
+  const roomIds = [...new Set(memberships.map((membership) => membership.room_id))]
+
+  for (let i = 0; i < roomIds.length; i += FIRESTORE_BATCH_LIMIT) {
+    const chunk = roomIds.slice(i, i + FIRESTORE_BATCH_LIMIT)
+    // room を並列取得して逐次 read を避ける
+    const roomRefs = chunk.map((roomId) => getChatRoomRef(roomId))
+    const snapshots = await Promise.all(roomRefs.map((ref) => ref.get()))
+    const batch = db.batch()
+    let writeCount = 0
+    for (let j = 0; j < chunk.length; j++) {
+      const snapshot = snapshots[j]
+      const room = snapshot.exists ? snapshot.data() : undefined
+      if (room == null || !room.member_user_ids.includes(uid)) {
+        continue
+      }
+      batchRemoveMemberFromChatRoom(batch, chunk[j], uid)
+      writeCount++
+    }
+    if (writeCount > 0) {
+      await batch.commit()
+    }
+  }
+
+  for (let i = 0; i < memberships.length; i += FIRESTORE_BATCH_LIMIT) {
+    const batch = db.batch()
+    const chunk = memberships.slice(i, i + FIRESTORE_BATCH_LIMIT)
+    for (const membership of chunk) {
+      batch.delete(getChatMembershipRef(uid, membership.room_id))
+    }
+    await batch.commit()
+  }
+}
 
 export const deleteUserAccount = onCall<unknown, Promise<{ success: true }>>(async (request) => {
   const uid = request.auth?.uid
@@ -82,6 +124,13 @@ export const deleteUserAccount = onCall<unknown, Promise<{ success: true }>>(asy
       await recountUserProfileCountsForUsers(friendUserIds)
     } catch (error) {
       logger.error('recountUserProfileCountsForUsers failed after deleteUserAccount', { userId: uid, error })
+    }
+
+    // チャットデータ cleanup の一時エラーでアカウント削除全体が失敗しないよう隔離する
+    try {
+      await cleanupUserChatData(uid)
+    } catch (error) {
+      logger.error('cleanupUserChatData failed after deleteUserAccount', { userId: uid, error })
     }
 
     // Firebase Auth のアカウントを削除（auth/user-not-found は既に削除済みのため成功扱い）

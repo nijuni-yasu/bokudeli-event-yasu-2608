@@ -1,6 +1,6 @@
 ---
 name: git-create-pull-request
-description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。gh pr create/edit の前に origin へ push（履歴書き換え確認時のみ force-with-lease、diverge 時はユーザー確認）。その後、**必ず**固定文の gh pr comment で @copilot @codex にレビュー依頼し、手順 13 で wait-ai-pr-review へ委譲する（デフォルト ON）。マージ前の整理、force push や squash 後の更新など PR 全般。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
+description: ブランチの変更差分を読み込み、pull_request_template.md の構造に沿って PR 本文を生成する。gh pr create/edit の前に origin へ push（履歴書き換え確認時のみ force-with-lease、diverge 時はユーザー確認）。その後、**必ず** gh pr edit で @copilot / Codex を reviewer 追加し、Copilot / Codex 向け 2 行固定文の gh pr comment を送り、手順 13 で wait-ai-pr-review へ委譲する（デフォルト ON）。マージ前の整理、force push や squash 後の更新など PR 全般。「PRつくって」「プルリクを作って」「PR本文を更新して」と依頼された時に使用する。
 ---
 
 # PR 本文生成
@@ -90,17 +90,9 @@ description: ブランチの変更差分を読み込み、pull_request_template.
     - **新規作成**: PR が紐づいていない場合 → 本文を出力し、gh pr create 実行時は --base development を指定する。ユーザーに確認を取る
     - **既存 PR の本文更新**: PR が紐づいている場合 → 本文を出力し、gh pr edit で本文を更新する場合はユーザーに確認を取る。本文をファイルに保存した場合は gh pr edit --body-file を使用する
 
-11.（任意）手順 10 の直後に **GitHub Copilot** と **Codex コネクタ**をレビュワーに追加する。ユーザーに確認を取り、`gh` で指定する
-    - `gh pr create` の `--reviewer @copilot` は PR 作成 API のタイミングで失敗することがある。必ず **手順 10 で PR を作成・更新した後に** `gh pr edit --add-reviewer @copilot --add-reviewer 'chatgpt-codex-connector[bot]'` で追加する
-    - `gh` は v2.88.0 以降が必要（`@copilot` 利用に必須）
-    - zsh では `chatgpt-codex-connector[bot]` の **シングルクォート**必須（`[ ]` のグロブ展開を防ぐ）
-    - 重複依頼にならないよう、既に付いていればスキップしてよい
-    - レビュワー指定だけでは観点が伝わらないことがある。PR 本文の「レビューしてほしい観点」に shokujii コードレビュー方針へのリンクを必ず入れる
-    - 依頼の到達性の核は**手順 12**の固定コメント。手順 11 は併用を推奨する任意
+11.（必須）手順 10 で `gh pr create` または `gh pr edit` が完了したら、ユーザーへの確認や同意を待たず、**即座に** **GitHub Copilot** と **Codex コネクタ**をレビュワーに追加する
 
-12.（必須）手順 10 で `gh pr create` または `gh pr edit` が完了したら、ユーザーへの確認や同意を待たず、**即座に**次の**固定文**のレビュー依頼コメントを `gh pr comment` で送る。手順 11 の有無に関わらず省略しない
-
-    **手順 12 直前**に基準時刻と PR 番号を記録する（手順 13 の wait 委譲で使う）:
+    **手順 11 直前**に基準時刻と PR 番号を記録する（手順 13 の wait 委譲で使う）:
 
     ```bash
     REVIEW_REQUEST_SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -109,11 +101,28 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 
     直前に PR を新規作成した場合で `gh pr view` が失敗するときは、手順 10 で得た PR 番号を `PR_NUM` に使う。
 
-    本文は `--body` に渡す（zsh では**シングルクォート**で全体を囲むと @ が安全）。**固定文は次の 1 行のみ**とする（インライン指摘を促すため。Copilot が常に従う保証は製品側次第）:
+    ```bash
+    gh pr edit --add-reviewer @copilot --add-reviewer 'chatgpt-codex-connector[bot]'
+    ```
+
+    - `gh pr create` の `--reviewer @copilot` は PR 作成 API のタイミングで失敗することがある。必ず **手順 10 の後**に上記 `gh pr edit` で追加する
+    - `gh` は v2.88.0 以降が必要（`@copilot` 利用に必須）
+    - zsh では `chatgpt-codex-connector[bot]` の **シングルクォート**必須（`[ ]` のグロブ展開を防ぐ）
+    - 重複依頼にならないよう、既に付いていればスキップしてよい（`gh pr view --json reviewRequests` で確認してもよい）
+    - PR 本文の「レビューしてほしい観点」に shokujii コードレビュー方針へのリンクを必ず入れる
+    - **Copilot レビュー起動の核は手順 11**（GitHub 公式の reviewer API）。書き方指示は PR コメントではなく [`.github/copilot-instructions.md`](../../.github/copilot-instructions.md) §コードレビューが正本
+
+12.（必須）手順 11 の直後、ユーザーへの確認や同意を待たず、**即座に** Copilot / Codex 向けの**固定文**レビュー依頼コメントを `gh pr comment` で送る。省略しない
+
+    本文は `--body` に渡す（zsh では**シングルクォート**で全体を囲むと @ が安全）。**固定文は次の 2 行**（空行 1 行挟む）とする:
 
 ```
-gh pr comment --body '@copilot @codex review 日本語でお願いします。Files changed で該当行にインラインの review comment を 1 指摘 1 コメントでお願いします。トップレベルに複数ファイル分をまとめないでください。'
+gh pr comment --body '@codex この PR の Files changed をコードレビューしてください。指摘は shokujii-code-review チェックリストに沿って日本語でお願いします。
+
+@copilot この PR の Files changed をコードレビューしてください。指摘は shokujii-code-review チェックリストに沿って日本語でお願いします。'
 ```
+
+    手順 11 の reviewer 追加に加え、@copilot 行で明示的な実行依頼も送る（二経路）。書き方指示は PR コメントに含めない。
 
     直前に PR を紐づいていないブランチの場合は `gh pr comment 番号` の形で番号を明示する。手順 10 を挟むたびに同文が積み上がるのは意図どおり。コメントを減らしたい運用に変える場合はスキル更新で別定義する
 
@@ -204,8 +213,9 @@ Issue 番号は PR タイトルには含めず、本文の関連 Issue や close
 次のレビュー基準ドキュメントを参照することを必ず1行目に記載する（URL はそのまま用いる）:
 
 - `https://github.com/nijuniinc/bokudeli-event-new/blob/development/.agents/skills/shokujii-code-review/shokujii-code-review.md`
+- Copilot / Codex: 承知返信ではなく、**Files changed の該当行へのインライン review comment** を投稿すること（書き方・形式の正本は `.github/copilot-instructions.md` §コードレビュー）
 
-上記に加え、設計上の判断・迷いどころ・特に確認してほしいファイル・リスクを差分から抽出して箇条書きで記述する。人間用の要約に加え、**手順 12** では **@copilot @codex** 付きの PR コメントでレビュー依頼を必ず送る（依頼の到達性を上げる目的。インライン指摘の依頼文は手順 12 の固定文に含める）。
+上記に加え、設計上の判断・迷いどころ・特に確認してほしいファイル・リスクを差分から抽出して箇条書きで記述する。人間用の要約に加え、**手順 11** で Copilot / Codex を reviewer 追加し、**手順 12** で Copilot / Codex 向け PR コメントを必ず送る。
 推定できない場合は「要確認」と記述して手動補完を促す。
 
 ### 確認済み事項
@@ -228,11 +238,11 @@ Firestore 変更時・Functions 変更時のチェック項目は該当する場
 - gh pr create および gh pr edit を実行する場合は、ユーザーに確認を取ってから実行する
 - 手順 10（gh pr create/edit）の前に手順 9 の origin push を省略しない（reflect から同期済みの場合を除く）
 - origin push の `--force-with-lease` は履歴書き換え確認またはユーザー明示承認時のみ。diverge 時の自動 force は禁止。保護 ref への push は禁止
-- 手順 10 を実行したときは**手順 12 を即座に実行する**（ユーザーへの確認不要。固定文の `gh pr comment` を省略しない）
+- 手順 10 を実行したときは**手順 11 と 12 を即座に実行する**（ユーザーへの確認不要。reviewer 追加と Codex 向け `gh pr comment` を省略しない）
 - 手順 12 完了後は**手順 13**で wait を起動する（オプトアウト時を除く）。evaluate 本体は wait スキルが sentinel 受信後に実行する
 
 ## 運用上の推奨
 
 - force push や squash でブランチ内容が変わった後は、既存 PR の本文を更新することを推奨する
 - PR 本文更新だけでなく **手順 9 で origin に push** してからレビュー依頼する（未 push のまま Copilot が古い Files changed を見るのを防ぐ）
-- PR 本文に shokujii のレビュー基準を書き、**手順 12**の固定 `gh pr comment` は必須。任意のうえで、`gh pr create` 後に `gh pr edit --add-reviewer @copilot --add-reviewer 'chatgpt-codex-connector[bot]'` で @copilot と Codex を足す、とすると本文・レビュワー欄・コメントの三経路で補完しやすい。`gh pr create` の `--reviewer @copilot` は失敗することがあるため使わない
+- PR 本文に shokujii のレビュー基準を書き、**手順 11**（reviewer 追加）と **手順 12**（Copilot / Codex 向け 2 行コメント）を必須とする。Copilot が承知返信のみのときは `gh pr edit --add-reviewer @copilot` で再依頼する
