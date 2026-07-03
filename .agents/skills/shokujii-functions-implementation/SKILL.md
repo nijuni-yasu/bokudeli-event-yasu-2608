@@ -59,11 +59,22 @@ Firebase Functions v2 の実装時に守るべきプロジェクト固有ルー�
 onDocumentWritten 等の Firestore トリガーも createModuleLogger 等の共通ルールに従う。
 新規 Function 追加時は `functions/default/src/index.ts` の Promise.all に import を追加し、export のオブジェクトに含めること。
 
+### CI デプロイ（必須）
+
+`functions/default/src/index.ts` で **Cloud Functions として export する**関数を追加・削除したら、同 PR で `.github/workflows/deploy_functions.yml` の `--only` リストも更新すること。更新漏れすると development / production では Trigger・Callable が未デプロイのままになる（コードはマージ済みでも GCP 上に存在しない）。
+
+- **hybrid**: 決済・注文系（`addToCart`, `stripeWebhook` 等）
+- **pf**: PF 本体（上記以外の一般 Function）
+- **enterprise**: エンプラ Callable（`createEnterprise` 等）
+
+export しない内部ヘルパー（他 Function から import するだけの関数）は対象外。整合性は `python3 .agents/scripts/verify_functions_deploy_list.py`（PR verify でも実行）で検証する。
+
 ## クイックチェックリスト
 
 新規 Function 作成時:
 
 - [ ] index.ts に import と export を追加したか
+- [ ] `.github/workflows/deploy_functions.yml` の hybrid / pf / enterprise のいずれか `--only` リストに関数名を追加したか（export した Function のみ）
 - [ ] createModuleLogger を使っているか（console.log / firebase-functions の logger 直接 import は NG）
 - [ ] ログメッセージに接頭辞をつけていないか
 - [ ] API キーを使う場合、defineSecret と secrets オプションを指定しているか
@@ -91,3 +102,6 @@ onDocumentWritten 等の Firestore トリガーも createModuleLogger 等の共�
 
 **NG**: 新規 Function を追加したが index.ts に export を登録していない  
 **OK**: index.ts の Promise.all に import を追加し、export のオブジェクトに含める
+
+**NG**: index.ts に export を追加したが deploy_functions.yml の `--only` リストを更新していない  
+**OK**: hybrid / pf / enterprise のいずれかに `functions:<関数名>` を追加する（PR verify の deploy list チェックが通ること）
