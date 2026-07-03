@@ -12,7 +12,8 @@ Shokujii エンタープライズ版の従業員・全社管理者向けアプ�
 
 2. `.env.development` / `.env.production` を `enterprise/` 配下に配置  
    GitHub Actions Variables の `ENTERPRISE_ENV` を参照するか、管理者に問い合わせてください。  
-   項目一覧・CI 設定は [09*エンタープライズ*デプロイ手順](../documents/08_エンタープライズ/09_エンタープライズ_デプロイ手順.md) を参照。
+   項目一覧・CI 設定は [09*エンタープライズ*デプロイ手順](../documents/08_エンタープライズ/09_エンタープライズ_デプロイ手順.md) を参照。  
+   法務文書リンク用: `VITE_TERMS_BASE_URL`（production: `https://terms.shokujii.jp`、development: `https://terms.test.tabete.co`）
 
 ## Development
 

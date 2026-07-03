@@ -1,4 +1,5 @@
 import { ja } from 'vuetify/lib/locale/index.mjs'
+import { LEGAL_URLS } from '@shokujii/base/constants/legalUrls.js'
 
 export default {
   $vuetify: ja,
@@ -731,8 +732,7 @@ export default {
   login: {
     login_fail: '{sns_name}ログインできませんでした',
     welcome: 'shokujiiへようこそ',
-    please_login_or_register_below:
-      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。',
+    please_login_or_register_below: `<a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="${LEGAL_URLS.privacy}" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインまたは新規登録してください。`,
     email: 'メールアドレス',
     continue_email: 'メールアドレスで続ける',
     sns_login: '{sns_name}でログイン',

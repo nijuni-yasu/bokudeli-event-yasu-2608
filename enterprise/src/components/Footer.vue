@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { LEGAL_URLS } from '@shokujii/base/constants/legalUrls.js'
 import facebook from '@/assets/images/sns/sns_facebook.png'
 import instagram from '@/assets/images/sns/sns_instagram.png'
 import line from '@/assets/images/sns/sns_line.png'
@@ -66,28 +67,11 @@ import X from '@/assets/images/sns/sns_x.png'
         コミュニティガイド
       </a>
       <br />
-      <a
-        href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="footer-text"
-      >
-        利用規約
-      </a>
-      <a
-        href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="footer-text"
-      >
+      <a :href="LEGAL_URLS.terms" target="_blank" rel="noopener noreferrer" class="footer-text"> 利用規約 </a>
+      <a :href="LEGAL_URLS.privacy" target="_blank" rel="noopener noreferrer" class="footer-text">
         プライバシーポリシー
       </a>
-      <a
-        href="https://nijuni.notion.site/a761c206d7704b5caa4058c6c3f8fff7"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="footer-text"
-      >
+      <a :href="LEGAL_URLS.commercial" target="_blank" rel="noopener noreferrer" class="footer-text">
         特定商取引法に基づく表記
       </a>
       <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank" rel="noopener noreferrer" class="footer-text">
