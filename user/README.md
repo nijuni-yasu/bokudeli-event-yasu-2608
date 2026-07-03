@@ -15,6 +15,11 @@ Shokujii の一般ユーザー向けメインアプリケーションです。
    [GitHub Actions Variables](https://github.com/nijuniinc/bokudeli-event-new/settings/variables/actions) にアクセスできる場合はここから適切な設定を取得し `.env.***` として保存してください。（トップレベルディレクトリではなく、各 workspace に）
    アクセス権がない場合は管理者に問い合わせてください。
 
+   法務文書リンク用の `VITE_TERMS_BASE_URL`（省略時は `https://terms.shokujii.jp`）:
+   - production: `https://terms.shokujii.jp`
+   - development: `https://terms.test.tabete.co`
+   - GitHub Actions では `USER_ENV` / `PARTNER_ENV` / `ENTERPRISE_ENV` に含める
+
 ## Development
 
 このアプリケーションは common と base という共有ライブラリに依存しています。[common/README.md](../common/README.md) と [base/README.md](../base/README.md) を読んで各ライブラリの依存関係をよく理解した上で開発に臨んでください。
