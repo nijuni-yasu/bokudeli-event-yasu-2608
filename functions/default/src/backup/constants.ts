@@ -1,0 +1,46 @@
+export type BackupTier = 'daily' | 'weekly' | 'monthly'
+
+export const BACKUP_TIMEZONE = 'Asia/Tokyo'
+
+export const FIRESTORE_RETENTION: Record<BackupTier, number> = {
+  daily: 14,
+  weekly: 12,
+  monthly: 24,
+}
+
+export const STORAGE_RETENTION: Record<BackupTier, number> = {
+  daily: 7,
+  weekly: 8,
+  monthly: 12,
+}
+
+export const FIRESTORE_EXPORT_METADATA_FILE = 'overall_export_metadata'
+
+export const getProjectId = (): string => {
+  const projectId = process.env.GCLOUD_PROJECT
+  if (projectId == null || projectId === '') {
+    throw new Error('GCLOUD_PROJECT is not set')
+  }
+  return projectId
+}
+
+export const getFirestoreBackupBucketName = (projectId: string): string => `${projectId}-firestore-backups`
+
+export const getStorageBackupBucketName = (projectId: string): string => `${projectId}-storage-backups`
+
+export const getFirestoreExportUriPrefix = (projectId: string, tier: BackupTier): string =>
+  `gs://${getFirestoreBackupBucketName(projectId)}/${tier}/`
+
+export const isRetentionDryRun = (): boolean => process.env.BACKUP_RETENTION_DRY_RUN === 'true'
+
+export const buildStorageBackupDestPrefix = (tier: BackupTier, dateLabel: string): string => `${tier}/${dateLabel}`
+
+export const formatBackupDateLabel = (tier: BackupTier, isoDate: string): string => {
+  switch (tier) {
+    case 'daily':
+    case 'weekly':
+      return isoDate.slice(0, 10)
+    case 'monthly':
+      return isoDate.slice(0, 7)
+  }
+}
