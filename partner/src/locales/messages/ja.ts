@@ -264,8 +264,8 @@ export default {
     create_confirm_dialog: {
       title: 'コミュニティを新規作成しますか？',
       message: `<ul><li>コミュニティ作成後、イベントページ作成などの機能が利用可能となります。</li>
-                      <li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および <a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">利用規約</a> をご確認ください。</li>
-                      <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。</li></ul>`,
+                      <li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank" rel="noopener noreferrer">コミュニティガイド</a> および <a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">利用規約</a> をご確認ください。</li>
+                      <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank" rel="noopener noreferrer">お問い合わせ</a> ください。</li></ul>`,
       submit: '申請する',
     },
     new_community_dialog: {

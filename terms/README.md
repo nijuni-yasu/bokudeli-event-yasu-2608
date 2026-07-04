@@ -2,7 +2,7 @@
 
 shokujii の法務文書を VitePress で静的公開するワークスペース。
 
-仕様: [documents/11*法務文書/terms*仕様.md](../documents/11_法務文書/terms_仕様.md)
+仕様: [documents/11\_法務文書/terms\_仕様.md](../documents/11_法務文書/terms_仕様.md)
 
 ## 開発
 

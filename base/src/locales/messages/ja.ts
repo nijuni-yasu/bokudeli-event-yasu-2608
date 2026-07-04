@@ -234,11 +234,11 @@ export default {
             ・また、反社会的勢力等であるか、反社会的勢力等との何らかの交流若しくは関与を行っていると当社が判断した場合もアカウント停止とさせていただきます。<br />
             ・健全なコミュニティ運営を目指し、ご理解とご協力をお願いいたします。<br />
             <br />
-            ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および
+            ・詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank" rel="noopener noreferrer">コミュニティガイド</a> および
             <a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">利用規約</a>
             をご確認ください。<br />
             ・ご不明点ありましたらサポートまで
-            <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。<br />`,
+            <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank" rel="noopener noreferrer">お問い合わせ</a> ください。<br />`,
     },
   },
   community_create_confirm: {
