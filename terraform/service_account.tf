@@ -97,6 +97,17 @@ resource "google_project_iam_member" "compute_service_account_token_creator" {
   ]
 }
 
+# Compute Engine デフォルト SA に Firestore export（Scheduled Function）権限を付与
+resource "google_project_iam_member" "compute_service_account_firestore_import_export_admin" {
+  project = var.project
+  role    = "roles/datastore.importExportAdmin"
+  member  = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+
+  depends_on = [
+    google_project_service.default,
+  ]
+}
+
 # Compute Engineのデフォルトサービスアカウントに「Storage オブジェクト閲覧者」権限を付与
 # Cloud Functions 2nd genがGCSから画像をダウンロードするために必要
 resource "google_project_iam_member" "compute_service_account_storage_viewer" {
