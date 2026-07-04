@@ -1,5 +1,6 @@
 import {
   DocumentData,
+  FieldValue,
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
@@ -22,6 +23,59 @@ const membershipsCollection = (userId: string) =>
 
 export const getChatMembershipRef = (userId: string, roomId: string) => {
   return membershipsCollection(userId).doc(roomId).withConverter(new ChatMembershipConverter())
+}
+
+/** FieldValue 系の partial update 用（withConverter 非付与）。batch / update 専用。 */
+export const getChatMembershipBatchUpdateRef = (userId: string, roomId: string) => {
+  return membershipsCollection(userId).doc(roomId)
+}
+
+export type MembershipLastMessageUpdatePatch = {
+  last_message_preview: string
+  last_message_at: number
+  updated_at: FieldValue
+  unread_count?: FieldValue
+}
+
+export const buildMembershipLastMessageUpdatePatch = (params: {
+  membership: ChatMembership
+  preview: string
+  lastMessageAt: number
+  messageType: 'user' | 'system'
+  shouldApplyLastMessage: boolean
+  memberUserId: string
+  senderUserId: string | undefined
+}): MembershipLastMessageUpdatePatch | null => {
+  const updated = updateMembershipLastMessage(params.membership, {
+    preview: params.preview,
+    lastMessageAt: params.lastMessageAt,
+  })
+  if (updated == null) {
+    return null
+  }
+
+  const patch: MembershipLastMessageUpdatePatch = {
+    last_message_preview: params.preview,
+    last_message_at: params.lastMessageAt,
+    updated_at: FieldValue.serverTimestamp(),
+  }
+
+  if (
+    shouldIncrementMembershipUnread({
+      messageType: params.messageType,
+      shouldApplyLastMessage: params.shouldApplyLastMessage,
+      memberUserId: params.memberUserId,
+      senderUserId: params.senderUserId,
+      membershipLastMessageAt: params.membership.last_message_at,
+      lastReadAt: params.membership.last_read_at,
+      lastMessageAt: params.lastMessageAt,
+    }) &&
+    params.membership.unread_count < CHAT_UNREAD_COUNT_MAX
+  ) {
+    patch.unread_count = FieldValue.increment(1)
+  }
+
+  return patch
 }
 
 export const getChatMembership = async (

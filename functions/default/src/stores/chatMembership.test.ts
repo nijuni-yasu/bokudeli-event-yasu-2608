@@ -1,6 +1,8 @@
+import { FieldValue } from 'firebase-admin/firestore'
 import { describe, expect, it } from 'vitest'
-import { ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
+import { CHAT_UNREAD_COUNT_MAX, ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import {
+  buildMembershipLastMessageUpdatePatch,
   createEventChatMembership,
   incrementMembershipUnread,
   shouldIncrementMembershipUnread,
@@ -205,5 +207,79 @@ describe('chatMembership store', () => {
     const updated = updateMembershipLastMessage(membership, { preview: 'recalc', lastMessageAt: 1000 }, { force: true })
     expect(updated?.last_message_preview).toBe('recalc')
     expect(updated?.last_message_at).toBe(1000)
+  })
+
+  describe('buildMembershipLastMessageUpdatePatch', () => {
+    const baseMembership = new ChatMembership('room1', {
+      room_id: 'room1',
+      room_type: 'event',
+      unread_count: 2,
+      last_message_at: 4000,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    })
+
+    it('includes FieldValue.increment when receiver should increment unread', () => {
+      const patch = buildMembershipLastMessageUpdatePatch({
+        membership: baseMembership,
+        preview: 'hello',
+        lastMessageAt: 5000,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+      })
+      expect(patch).not.toBeNull()
+      expect(patch?.last_message_preview).toBe('hello')
+      expect(patch?.last_message_at).toBe(5000)
+      expect(patch?.unread_count).toEqual(FieldValue.increment(1))
+    })
+
+    it('omits unread_count increment for sender', () => {
+      const patch = buildMembershipLastMessageUpdatePatch({
+        membership: baseMembership,
+        preview: 'hello',
+        lastMessageAt: 5000,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'sender1',
+        senderUserId: 'sender1',
+      })
+      expect(patch?.unread_count).toBeUndefined()
+    })
+
+    it('omits unread_count increment when unread_count is already at max', () => {
+      const membership = new ChatMembership('room1', {
+        room_id: 'room1',
+        room_type: 'event',
+        unread_count: CHAT_UNREAD_COUNT_MAX,
+        last_message_at: 4000,
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      })
+      const patch = buildMembershipLastMessageUpdatePatch({
+        membership,
+        preview: 'hello',
+        lastMessageAt: 5000,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+      })
+      expect(patch?.unread_count).toBeUndefined()
+    })
+
+    it('returns null when lastMessageAt is older than membership last_message_at', () => {
+      const patch = buildMembershipLastMessageUpdatePatch({
+        membership: baseMembership,
+        preview: 'old',
+        lastMessageAt: 1000,
+        messageType: 'user',
+        shouldApplyLastMessage: true,
+        memberUserId: 'receiver1',
+        senderUserId: 'sender1',
+      })
+      expect(patch).toBeNull()
+    })
   })
 })
