@@ -36,13 +36,6 @@ export const buildThumbnailsLinks = (
         '?alt=media'
       return result
     }, {} as ThumbnailLinks)
-  } else if (url.hostname === 'lh3.googleusercontent.com') {
-    return SIZE_LIST.reduce((result, size) => {
-      const sizedUrl = new URL(url.href)
-      sizedUrl.pathname = sizedUrl.pathname.split('=')[0] + '=' + `s${size.value}-c`
-      result[size.name] = sizedUrl.href
-      return result
-    }, {} as ThumbnailLinks)
   } else if (url.hostname === 'graph.facebook.com') {
     return null
   } else {
