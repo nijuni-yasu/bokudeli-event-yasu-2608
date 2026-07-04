@@ -24,12 +24,12 @@
 
 ### 1.2 対象文書（Phase 1）
 
-| 文書 | 公開パス | 移行元 |
-| :-- | :-- | :-- |
-| ユーザー利用規約 | `/user` | [ユーザー利用規約.md](./ユーザー利用規約.md) / Notion |
-| プライバシーポリシー | `/privacy` | [プライバシーポリシー.md](./プライバシーポリシー.md) / Notion |
-| 特定商取引法に基づく表記 | `/specified_commercial_transactions` | [特定商取引法に基づく表記.md](./特定商取引法に基づく表記.md) / Notion |
-| 店舗利用規約 | `/partner` | [飲食店利用規約.md](./飲食店利用規約.md) / Notion |
+| 文書 | 公開パス | 正本（`terms/content/`） | 移行元 |
+| :-- | :-- | :-- | :-- |
+| ユーザー利用規約 | `/user` | [user.md](../../terms/content/user.md) | Notion / 旧 `documents/11_法務文書/`（Git 履歴） |
+| プライバシーポリシー | `/privacy` | [privacy.md](../../terms/content/privacy.md) | 同上 |
+| 特定商取引法に基づく表記 | `/specified_commercial_transactions` | [specified_commercial_transactions.md](../../terms/content/specified_commercial_transactions.md) | 同上 |
+| 店舗利用規約 | `/partner` | [partner.md](../../terms/content/partner.md) | 同上 |
 
 URL 設計の方針:
 
@@ -40,12 +40,12 @@ URL 設計の方針:
 
 #### 表示名・ファイル名・パスの対応
 
-| 表示名（サイト上） | `documents/11_法務文書/` | `terms/content/` | 公開パス |
-| :-- | :-- | :-- | :-- |
-| 利用規約 | `ユーザー利用規約.md` | `user.md` | `/user` |
-| プライバシーポリシー | `プライバシーポリシー.md` | `privacy.md` | `/privacy` |
-| 特定商取引法に基づく表記 | `特定商取引法に基づく表記.md` | `specified_commercial_transactions.md` | `/specified_commercial_transactions` |
-| 店舗利用規約 | `飲食店利用規約.md`（ファイル名は歴史的経緯） | `partner.md` | `/partner` |
+| 表示名（サイト上） | `terms/content/` | 公開パス |
+| :-- | :-- | :-- |
+| 利用規約 | `user.md` | `/user` |
+| プライバシーポリシー | `privacy.md` | `/privacy` |
+| 特定商取引法に基づく表記 | `specified_commercial_transactions.md` | `/specified_commercial_transactions` |
+| 店舗利用規約 | `partner.md` | `/partner` |
 
 ### 1.3 対象外（別 Issue）
 
@@ -53,7 +53,7 @@ URL 設計の方針:
 | :-- | :-- |
 | FAQ（Notion） | 法務文書ではなくヘルプ系。`about.shokujii.jp` 等との整理が別途必要 |
 | コミュニティガイド（bit.ly） | ガイドラインであり本仕様のスコープ外 |
-| 独立 Cookie / 外部送信ポリシー | [プライバシーポリシー.md](./プライバシーポリシー.md) に Google Analytics（Cookie）を記載済み。電気通信事業届出で独立ページが必要になった場合は [03_電気通信事業届出準備.md](../05_コミュニケーションと通知/03_電気通信事業届出準備.md) を参照し別 Issue とする |
+| 独立 Cookie / 外部送信ポリシー | [privacy.md](../../terms/content/privacy.md) に Google Analytics（Cookie）を記載済み。電気通信事業届出で独立ページが必要になった場合は [03_電気通信事業届出準備.md](../05_コミュニケーションと通知/03_電気通信事業届出準備.md) を参照し別 Issue とする |
 | エンプラ版プライバシーポリシー | [08_エンタープライズ/10_仕様/06_セキュリティ.md](../08_エンタープライズ/10_仕様/06_セキュリティ.md) にドラフトあり。導入審査向けは Phase 3 以降で `/enterprise/privacy` 等を検討 |
 | エンプラ向けセキュリティポリシー・SLA | B2B 導入審査用ドラフト。一般向け terms サイトの Phase 1 外 |
 
@@ -89,28 +89,28 @@ Notion URL がハードコードされている主なファイル:
 | `base` | `src/components/LoginDialog.vue`, `src/locales/messages/ja.ts` | ユーザー利用規約・プライバシーポリシー → `/user`, `/privacy` |
 | `user` | `src/components/Footer.vue`, `src/locales/messages/ja.ts` | 同上 + 特商法 → `/specified_commercial_transactions` |
 | `enterprise` | `src/components/Footer.vue`, `src/locales/messages/ja.ts` | 同上（エンプラも PF 版規約に同意） |
-| `partner` | `src/locales/messages/ja.ts` | コミュニティ主催設定: **ユーザー利用規約** → `/user`（現状 Notion のユーザー規約 URL）。店舗利用規約は未リンク |
+| `partner` | `src/locales/messages/ja.ts` | コミュニティ主催設定: **ユーザー利用規約** → `/user`。ホーム TODO STEP(2): **店舗利用規約** → `/partner` |
 
 #### partner における規約リンクの使い分け（Phase 2）
 
 | 画面・文脈 | リンク先 | 定数 |
 | :-- | :-- | :-- |
 | コミュニティ主催設定（既存 `ja.ts`） | ユーザー利用規約 `/user` | `LEGAL_URLS.terms` |
-| 店舗オンボーディング（ホーム TODO STEP(3)） | 店舗利用規約 `/partner` | `LEGAL_URLS.partnerTerms` |
+| 店舗オンボーディング（ホーム TODO STEP(2)） | 店舗利用規約 `/partner` | `LEGAL_URLS.partnerTerms` |
 | 店舗掲載申し込み（form.run） | 本仕様のスコープ外（外部フォーム） | — |
 
 ### 3.3 リポジトリ内の法務 Markdown
 
-`documents/11_法務文書/` に各文書の Markdown が既に存在する。Phase 1 ではこれを **`terms/content/` へ取り込み**、公開用正本とする。
+法務文言の正本は **`terms/content/`** のみ。Phase 1 移行完了後、旧 `documents/11_法務文書/*.md`（4 文書）は二重管理回避のため削除済み。過去版は Git 履歴を参照する。
 
 ### 3.4 Phase 1 で公開すべき法務文書の網羅性
 
-現時点のアプリ・`documents/11_法務文書/` を照合した結果、**Phase 1 の 4 文書で足りる**（Issue #2150 のスコープとして妥当）。
+現時点のアプリ・`terms/content/` を照合した結果、**Phase 1 の 4 文書で足りる**（Issue #2150 のスコープとして妥当）。
 
 | 確認項目 | 結果 |
 | :-- | :-- |
 | Footer / ログイン同意文が参照する文書 | ユーザー利用規約・プライバシーポリシー・特商法 → カバー済み |
-| 店舗向け規約 | `飲食店利用規約.md` あり。`/partner` として公開し Phase 2 で partner からリンク |
+| 店舗向け規約 | `terms/content/partner.md` あり。`/partner` として公開し Phase 2 で partner からリンク |
 | Cookie ポリシー | プライバシーポリシー内に記載。独立ページは不要（§1.3） |
 | コミュニティガイド | 法務同意文書ではない（§1.3） |
 
@@ -150,7 +150,7 @@ revised_dates:
 ---
 ```
 
-移行時は Notion または現行公開ページから **制定日・改定日を法務確認の上** frontmatter に転記する（`documents/11_法務文書/*.md` には frontmatter がないため Phase 1 で新規付与）。
+移行時は Notion または現行公開ページから **制定日・改定日を法務確認の上** frontmatter に転記する（初回移行元の `documents/11_法務文書/*.md` には frontmatter がなかったため Phase 1 で新規付与）。
 
 ---
 
@@ -191,17 +191,17 @@ VitePress は `content/` 配下の Markdown ファイル名がそのまま URL �
 - `cleanUrls: true` で `/user.html` ではなく `/user` を生成
 - 詳細は [VitePress ルーティング](https://vitepress.dev/guide/routing) を参照
 
-### 5.3 文言の正本と `documents/11_法務文書/`
+### 5.3 文言の正本
 
 | パス | 役割 |
 | :-- | :-- |
 | `terms/content/*.md` | **公開・デプロイの正本**。改定はここを更新して PR |
-| `documents/11_法務文書/*.md` | **初回移行元**。移行完了後は更新しない（参照用アーカイブとして残す） |
+| `documents/11_法務文書/terms_仕様.md` | 本仕様の正本（継続更新） |
 
 二重管理を避ける方針:
 
-1. Phase 1 移行完了後、法務文言の改定は **`terms/content/` のみ**
-2. `documents/11_法務文書/*.md`（`terms_仕様.md` を除く）は削除せず残すが、ファイル先頭または `documents/11_法務文書/README.md` に「正本は `terms/content/`」と deprecated 旨を明記する（Phase 1 完了時タスク）
+1. 法務文言の改定は **`terms/content/` のみ**
+2. 初回移行元だった `documents/11_法務文書/*.md`（4 文書）は移行完了後 **削除済み**。過去版は Git 履歴を参照
 3. 自動同期・symlink は行わない
 
 ### 5.4 アプリ側 URL 定数（Phase 2）
@@ -210,7 +210,7 @@ VitePress は `content/` 配下の Markdown ファイル名がそのまま URL �
 
 ```typescript
 // base/src/constants/legalUrls.ts
-const TERMS_BASE = import.meta.env.VITE_TERMS_BASE_URL ?? 'https://terms.shokujii.jp'
+const TERMS_BASE = (import.meta.env.VITE_TERMS_BASE_URL ?? 'https://terms.shokujii.jp').replace(/\/+$/, '')
 
 export const LEGAL_URLS = {
   terms: `${TERMS_BASE}/user`,
@@ -270,7 +270,7 @@ enterprise の命名規則（[07_デプロイ・運用.md](../08_エンタープ
 
 #### 初回デプロイチェックリスト
 
-[07_デプロイ・運用.md §2](../08_エンタープライズ/10_仕様/07_デプロイ・運用.md)（enterprise マージ前チェックリスト）と同型。`development` へマージして CI を走らせる**前**に環境ごとに完了すること。
+[07_デプロイ・運用.md §2](../08_エンタープライズ/10_仕様/07_デプロイ・運用.md)（enterprise マージ前チェックリスト）と同型。`development` へマージして CI を走らせる**前**に環境ごとに完了すること。詳細手順は [§5.8](#58-デプロイ手順) を参照。
 
 **Firebase / GCP**
 
@@ -319,6 +319,221 @@ npm -w terms run dev
 npm -w terms run build
 ```
 
+### 5.8 デプロイ手順
+
+CI は [`.github/workflows/deploy_terms.yml`](../../.github/workflows/deploy_terms.yml) が `hosting:terms` をデプロイする。  
+Phase 2 以降、user / partner / enterprise の法務リンクは `VITE_TERMS_BASE_URL` に依存するため、**terms 単体のデプロイに加え各アプリの再デプロイ**が必要な場合がある（[§5.8.6](#586-phase-2-アプリ側の再デプロイ)）。
+
+**関連ドキュメント**
+
+- Terraform: [terraform/README.md](../../terraform/README.md)、[firebase.tf](../../terraform/firebase.tf)
+- enterprise Hosting 手順（同型）: [07_デプロイ・運用.md](../08_エンタープライズ/10_仕様/07_デプロイ・運用.md)
+- カスタムドメイン参考: [08_カスタムドメイン.md](../08_エンタープライズ/10_仕様/08_カスタムドメイン.md)
+- GitHub Actions 変数の全体像: [firebaseプロジェクト新規作成.md](../firebaseプロジェクト/firebaseプロジェクト新規作成.md) §7
+
+#### 5.8.1 命名規則・環境対応
+
+| GitHub Environment | GCP プロジェクト ID | Hosting サイト ID | カスタムドメイン（案） | `VITE_TERMS_BASE_URL` |
+| :-- | :-- | :-- | :-- | :-- |
+| sandbox（個人） | `bokudeli-event-yasu-2605` 等 | `<PROJECT_ID>-terms` | 任意（省略可） | `https://<PROJECT_ID>-terms.web.app` |
+| `development`（テスト） | `bokudeli-event-test` | `bokudeli-event-test-terms` | `terms.test.tabete.co` | `https://terms.test.tabete.co` |
+| `production`（本番） | `bokudeli-event-dev` | `bokudeli-event-dev-terms` | `terms.shokujii.jp` | `https://terms.shokujii.jp` |
+
+> Git ブランチ `development` ≠ GCP 本番 ID `bokudeli-event-dev`。環境対応の正本は上表。
+
+| 項目 | 値 |
+| :-- | :-- |
+| Firebase Hosting target 名 | `terms`（`firebase.json` / `--only hosting:terms` と一致） |
+| ビルド成果物 | `terms/dist` |
+| terms 専用 GitHub Variable | **不要**（`USER_ENV` 等と異なり、terms ビルドは env 注入なし） |
+| 共通 Variable / Secret | `FIREBASERC`（`hosting.terms` を含む）、`PROJECT_ID`、`GCLOUD_SERVICE_KEY` |
+
+#### 5.8.2 マージ前チェックリスト（必須）
+
+`development` / `production` へマージして CI を走らせる**前**に、対象 Firebase プロジェクトごとに完了すること（§5.5 の詳細版）。
+
+**Firebase / GCP**
+
+- [ ] Hosting サイト作成 — [§5.8.3](#583-hosting-サイト作成-terraform)
+- [ ] `firebase target:apply hosting terms <PROJECT_ID>-terms` — [§5.8.4](#584-firebase-target-の紐づけ)
+- [ ] `FIREBASERC` 更新 — [§5.8.5](#585-github-actions-変数)
+
+**GitHub Actions（Environment 単位: `development` / `production`）**
+
+- [ ] `FIREBASERC` — `hosting.terms` を追記済み
+- [ ] `PROJECT_ID` / `GCLOUD_SERVICE_KEY` — 既存設定と一致
+- [ ] `USER_ENV` / `PARTNER_ENV` / `ENTERPRISE_ENV` — `VITE_TERMS_BASE_URL` を追記（Phase 2）
+
+**ドメイン**
+
+- [ ] Firebase Console → terms サイトにカスタムドメイン追加
+- [ ] DNS（TXT / CNAME）設定
+
+**初回確認**
+
+- [ ] `Deploy terms` workflow_dispatch で成功
+- [ ] `/user`, `/privacy`, `/partner` 等が表示される
+- [ ] `/` が `https://shokujii.jp/` へ 301 リダイレクトされる（`firebase.json` の `redirects`）
+- [ ] Phase 2 済みなら各アプリから法務リンクが正しい URL を指す
+
+#### 5.8.3 Hosting サイト作成（Terraform）
+
+[terraform/firebase.tf](../../terraform/firebase.tf) の `google_firebase_hosting_site.terms`（`site_id = "${var.project}-terms"`）を使用する。
+
+**development（`bokudeli-event-test`）の例**
+
+`bokudeli-event-test` は Terraform 管理済み（[terraform/README.md](../../terraform/README.md)）。terms 追加は**差分 apply**が中心。
+
+```bash
+cd terraform
+gcloud config set project bokudeli-event-test
+gcloud auth application-default set-quota-project bokudeli-event-test
+
+# サイトの有無を確認
+gcloud firebase hosting sites list --project=bokudeli-event-test | grep terms
+
+terraform plan -out=tfplan-test
+# 合格: Destroy 0、Add は google_firebase_hosting_site.terms が 1 件（他に意図しない変更なし）
+
+terraform apply tfplan-test
+```
+
+| 状況 | 手順 |
+| :-- | :-- |
+| 新規プロジェクト（`init.sh` 後） | `terraform apply` でサイト作成 |
+| Terraform 管理済み・site 未作成 | plan で Add 1 件 → `apply` |
+| Console 等で **既に** `<PROJECT_ID>-terms` がある | import 後に `apply` |
+
+```bash
+terraform import google_firebase_hosting_site.terms \
+  "projects/<PROJECT_ID>/sites/<PROJECT_ID>-terms"
+```
+
+**方法B: Firebase Console（Terraform 未使用時）**
+
+1. [Firebase Console](https://console.firebase.google.com/) → 対象プロジェクト → **Hosting** → **サイトを追加**
+2. サイト ID = `<PROJECT_ID>-terms`
+
+#### 5.8.4 Firebase target の紐づけ
+
+Terraform は Hosting **サイト作成のみ**。target 紐づけは CLI で行う（enterprise / partner と同型）。
+
+```bash
+firebase use <PROJECT_ID>
+firebase target:apply hosting terms <PROJECT_ID>-terms
+```
+
+ローカル `.firebaserc` の `hosting.terms` エントリを、GitHub Environment Variable `FIREBASERC` に反映する（次節）。
+
+#### 5.8.5 GitHub Actions 変数
+
+**`FIREBASERC`**（JSON 全文）に `hosting.terms` を追記する。
+
+```json
+{
+  "projects": {
+    "default": "bokudeli-event-test"
+  },
+  "targets": {
+    "bokudeli-event-test": {
+      "hosting": {
+        "user": ["bokudeli-event-test"],
+        "admin": ["bokudeli-event-test-admin"],
+        "enterprise": ["bokudeli-event-test-enterprise"],
+        "terms": ["bokudeli-event-test-terms"]
+      }
+    }
+  }
+}
+```
+
+`production` 環境では `default` と targets キーを `bokudeli-event-dev` に読み替える。
+
+**Phase 2: 各アプリの `*_ENV`**
+
+`VITE_TERMS_BASE_URL` を `USER_ENV` / `PARTNER_ENV` / `ENTERPRISE_ENV` に 1 行追加する（既存行は変更しない）。
+
+```dotenv
+VITE_TERMS_BASE_URL=https://terms.test.tabete.co
+```
+
+| Environment | 値 |
+| :-- | :-- |
+| `development` | `https://terms.test.tabete.co` |
+| `production` | `https://terms.shokujii.jp` |
+
+#### 5.8.6 Phase 2 アプリ側の再デプロイ
+
+`LEGAL_URLS` はビルド時に `VITE_TERMS_BASE_URL` を埋め込む。terms サイト公開後、**初回または URL 変更時**に以下を再デプロイする。
+
+| workflow | 対象 |
+| :-- | :-- |
+| `deploy_user.yml` | user Footer / ログイン同意文 |
+| `deploy_partner.yml` | partner コミュニティ・ホーム TODO STEP(2) 等 |
+| `deploy_enterprise.yml` | enterprise Footer |
+
+terms 文言のみの改定で URL が変わらない場合は **terms の再デプロイのみ**で足りる（§7 運用ルール 5）。
+
+#### 5.8.7 カスタムドメイン
+
+| 環境 | ドメイン | 設定先 |
+| :-- | :-- | :-- |
+| development | `terms.test.tabete.co` | `bokudeli-event-test-terms` サイト |
+| production | `terms.shokujii.jp` | `bokudeli-event-dev-terms` サイト |
+
+1. Firebase Console → Hosting → **terms サイト**を選択 → **カスタムドメインを追加**
+2. Console 指示に従い DNS（TXT / CNAME）を設定
+3. 証明書プロビジョニング完了後、`https://terms.test.tabete.co/user` 等で確認
+
+sandbox は `<PROJECT_ID>-terms.web.app` のみで WIP 確認可（カスタムドメイン必須ではない）。
+
+#### 5.8.8 デプロイ実行
+
+**CI（マージ後）**
+
+| トリガー | 条件 |
+| :-- | :-- |
+| `push` to `development` | `terms/**` または `firebase.json` 変更時 |
+| `push` to `production` | 同上 |
+| `workflow_dispatch` | Environment = `development` / `production` |
+
+**手動（初回・確認用）**
+
+GitHub Actions → **Deploy terms** → Run workflow → Environment を選択。
+
+**ローカル（sandbox・緊急時）**
+
+```bash
+npm -w terms run build
+firebase use <PROJECT_ID>
+firebase deploy --only hosting:terms
+```
+
+#### 5.8.9 動作確認
+
+| # | 確認項目 | 期待結果 |
+| :-- | :-- | :-- |
+| 1 | `https://<terms-domain>/user` | 利用規約が表示される |
+| 2 | `https://<terms-domain>/privacy` | プライバシーポリシー |
+| 3 | `https://<terms-domain>/partner` | 店舗利用規約 |
+| 4 | `https://<terms-domain>/` | `https://shokujii.jp/` へ 301 |
+| 5 | フッター | 制定日・改定日・著作権表示 |
+| 6 | user / partner アプリ | Footer・同意文のリンクが terms URL を指す（Phase 2） |
+
+#### 5.8.10 環境別の推奨実施順（development 初回投入）
+
+Notion 廃止（§8）に向けた **テスト環境**への初回投入順:
+
+1. `development` ブランチへ terms 関連 PR をマージ（または feature ブランチで sandbox 検証済みであること）
+2. **Terraform apply**（`bokudeli-event-test-terms` 作成）
+3. `firebase target:apply` + GitHub `development` Environment の `FIREBASERC` 更新
+4. `USER_ENV` / `PARTNER_ENV` / `ENTERPRISE_ENV` に `VITE_TERMS_BASE_URL` 追記
+5. カスタムドメイン `terms.test.tabete.co` 設定
+6. `Deploy terms`（workflow_dispatch）
+7. `Deploy user` / `Deploy partner` / `Deploy enterprise`（法務リンク反映）
+8. §5.8.9 の動作確認
+9. 問題なければ本番（`production` / `bokudeli-event-dev`）へ同手順を繰り返す
+
 ---
 
 ## 6. 実装優先度
@@ -326,13 +541,14 @@ npm -w terms run build
 ### Phase 1（MVP）— Issue #2150 の核心
 
 - [ ] `terms/` ワークスペース作成（VitePress）
-- [ ] `documents/11_法務文書/` から 4 文書を `terms/content/` へ移行（`user.md` 等）
+- [x] `documents/11_法務文書/` から 4 文書を `terms/content/` へ移行（`user.md` 等）
+- [x] 移行完了後、旧 `documents/11_法務文書/*.md`（4 文書）を削除（二重管理回避）
 - [ ] 各文書の制定日・改定日を法務確認の上 frontmatter 化
 - [ ] `/` を `https://shokujii.jp/` へ 301 リダイレクト（`firebase.json`）
 - [ ] frontmatter（制定日・改定日）と共通レイアウト
 - [ ] `firebase.json` / Terraform / `deploy_terms.yml` / pr-verify 更新
 - [ ] §5.5 初回デプロイチェックリスト完走
-- [ ] `documents/11_法務文書/README.md` に正本の所在（`terms/content/`）を明記
+- [x] `documents/11_法務文書/README.md` に正本の所在（`terms/content/`）を明記
 - [ ] テスト環境（`terms.test.tabete.co`）デプロイ・動作確認
 - [ ] 本番（`terms.shokujii.jp`）デプロイ
 
@@ -342,7 +558,7 @@ npm -w terms run build
 - [x] 各アプリ `.env` に `VITE_TERMS_BASE_URL`（README 記載。GitHub Actions Variables はマージ前に人手で追記）
 - [x] Notion 直リンクを `LEGAL_URLS` 参照に置換（§3.2 の全ファイル）
 - [x] `partner` のコミュニティ主催設定: ユーザー利用規約 → `LEGAL_URLS.terms`（`/user`）に置換
-- [x] `partner` に店舗利用規約リンクを追加 → `LEGAL_URLS.partnerTerms`（`/partner`）。配置: ホーム TODO STEP(3)
+- [x] `partner` に店舗利用規約リンクを追加 → `LEGAL_URLS.partnerTerms`（`/partner`）。配置: ホーム TODO STEP(2)
 
 ### Phase 3 — 運用整備
 
@@ -397,7 +613,7 @@ Notion からの HTTP リダイレクトは設定できない可能性が高い�
 | ユーザー利用規約のパス | `/user` |
 | 店舗利用規約のパス | `/partner` |
 | URL 定数の配置 | `base/src/constants/legalUrls.ts` |
-| 文言の正本 | `terms/content/`（`documents/11_法務文書/*.md` は移行後アーカイブ） |
+| 文言の正本 | `terms/content/` のみ（旧 `documents/11_法務文書/*.md` は移行後削除済み） |
 | Phase 1 の法務文書網羅性 | 4 文書で足りる（§3.4） |
 
 #### 未決定（実装前に確定）
@@ -414,10 +630,11 @@ Notion からの HTTP リダイレクトは設定できない可能性が高い�
 
 | ドキュメント | 内容 |
 | :-- | :-- |
-| [ユーザー利用規約.md](./ユーザー利用規約.md) | 初回移行元テキスト |
-| [プライバシーポリシー.md](./プライバシーポリシー.md) | 初回移行元テキスト |
-| [特定商取引法に基づく表記.md](./特定商取引法に基づく表記.md) | 初回移行元テキスト |
-| [飲食店利用規約.md](./飲食店利用規約.md) | 店舗利用規約・**初回移行元**（移行後は `terms/content/partner.md` が正本） |
+| [user.md](../../terms/content/user.md) | ユーザー利用規約（正本） |
+| [privacy.md](../../terms/content/privacy.md) | プライバシーポリシー（正本） |
+| [specified_commercial_transactions.md](../../terms/content/specified_commercial_transactions.md) | 特定商取引法に基づく表記（正本） |
+| [partner.md](../../terms/content/partner.md) | 店舗利用規約（正本） |
 | [03_電気通信事業届出準備.md](../05_コミュニケーションと通知/03_電気通信事業届出準備.md) | 将来の Cookie / 外部送信ポリシー追加の参考 |
 | [08_エンタープライズ/10_仕様/07_デプロイ・運用.md](../08_エンタープライズ/10_仕様/07_デプロイ・運用.md) | Hosting target・CI の参考 |
+| [terraform/README.md](../../terraform/README.md) | 既存プロジェクトへの terms Hosting apply・import |
 | [08_エンタープライズ/10_仕様/08_カスタムドメイン.md](../08_エンタープライズ/10_仕様/08_カスタムドメイン.md) | サブドメイン・環境別ドメインの参考 |
