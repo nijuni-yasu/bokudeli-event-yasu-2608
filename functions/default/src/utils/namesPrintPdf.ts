@@ -1,15 +1,9 @@
 import fs from 'fs'
 import path from 'path'
-import { createHash } from 'crypto'
 import { getStorage } from 'firebase-admin/storage'
 import sharp from 'sharp'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import { sortEventMemberOrdersForPartnerDetail } from '@shokujii/common/utils/eventMemberOrderSort.js'
-import {
-  isGoogleProfileImageUrl,
-  isGoogleUnavailableAvatarHash,
-  normalizeGoogleProfileImageUrl,
-} from '@shokujii/common/utils/googleProfileImage.js'
 import { createModuleLogger } from './logger.js'
 import type { ShokujiiUser } from '../stores/user.js'
 
@@ -126,19 +120,12 @@ const resolvePhotoUrl = async (url: string | undefined): Promise<string> => {
   }
 
   try {
-    const fetchUrl = isGoogleProfileImageUrl(url) ? normalizeGoogleProfileImageUrl(url, 500) : url
-    const response = await fetch(fetchUrl)
+    const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
     const arrayBuffer = await response.arrayBuffer()
     const photoBuffer = Buffer.from(arrayBuffer)
-    if (isGoogleProfileImageUrl(url)) {
-      const hashHex = createHash('sha256').update(photoBuffer).digest('hex')
-      if (isGoogleUnavailableAvatarHash(hashHex)) {
-        return readDefaultProfileBase64()
-      }
-    }
     return resizeAndCropImage(photoBuffer, NAMES_PRINT_PHOTO_SIZE_PX, NAMES_PRINT_PHOTO_SIZE_PX)
   } catch (error) {
     logger.warn('Error fetching image', { error: String(error) })

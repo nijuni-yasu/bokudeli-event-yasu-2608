@@ -4,7 +4,6 @@ import { type VAvatar } from 'vuetify/lib/components/index.mjs'
 import { getDefaultAvatarUrl } from '@shokujii/base/utils/defaultAvatar.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildThumbnailsLinks, type Sizes } from '@shokujii/common/utils/buildThumbnailsLinks.js'
-import { isGoogleProfileImageUrl, isGoogleUnavailableAvatar } from '@shokujii/common/utils/googleProfileImage.js'
 import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase.js'
 
 const MAX_RETRIES = 2
@@ -45,26 +44,12 @@ const avatar = computed(() => {
 const useDefaultAvatar = ref(false)
 const reloadKey = ref(0)
 let retries = 0
-let cancelled = false
 
-watch(
-  avatar,
-  async (url) => {
-    useDefaultAvatar.value = false
-    retries = 0
-    reloadKey.value = 0
-
-    if (typeof url !== 'string' || !isGoogleProfileImageUrl(url)) {
-      return
-    }
-
-    const result = await isGoogleUnavailableAvatar(url)
-    if (!cancelled && avatar.value === url) {
-      useDefaultAvatar.value = result
-    }
-  },
-  { immediate: true },
-)
+watch(avatar, () => {
+  useDefaultAvatar.value = false
+  retries = 0
+  reloadKey.value = 0
+})
 
 const displayAvatar = computed(() => {
   if (useDefaultAvatar.value) {
@@ -119,7 +104,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  cancelled = true
   resizeObserver.disconnect()
 })
 </script>
