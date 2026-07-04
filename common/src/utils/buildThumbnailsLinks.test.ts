@@ -13,6 +13,12 @@ describe('buildThumbnailsLinks', () => {
     expect(result?.large).toContain('users%2Fuid1%2Favatar_thumb_large')
   })
 
+  it('gs:// URL に cacheBuster を付与できる', () => {
+    const url = new URL('gs://test-project.appspot.com/users/uid1/avatar')
+    const result = buildThumbnailsLinks('uid1', url, FIREBASE_STORAGE_BASE_URL, 1234567890)
+    expect(result?.large).toContain('?alt=media&t=1234567890')
+  })
+
   it('Google URL は汎用 https 分岐でサイズ付き URL を返す', () => {
     const googleUrl = new URL('https://lh3.googleusercontent.com/a/ACg8ocExample=s96-c')
     const result = buildThumbnailsLinks('uid1', googleUrl, FIREBASE_STORAGE_BASE_URL)
