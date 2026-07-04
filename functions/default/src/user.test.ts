@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const GOOGLE_PHOTO_URL = 'https://lh3.googleusercontent.com/a/Example=s96-c'
+const GS_PHOTO_URL = 'gs://test-project.appspot.com/users/uid-google/avatar'
+
 const {
   getUserIdFromEmailMock,
   getUserMock,
@@ -13,6 +16,9 @@ const {
   deleteNewUserDocumentsMock,
   getAuthUserMock,
   saveUserMock,
+  fileSaveMock,
+  isGoogleProfileImageUrlMock,
+  fetchGoogleProfileImageMock,
 } = vi.hoisted(() => ({
   getUserIdFromEmailMock: vi.fn(),
   getUserMock: vi.fn(),
@@ -26,6 +32,9 @@ const {
   deleteNewUserDocumentsMock: vi.fn(),
   getAuthUserMock: vi.fn(),
   saveUserMock: vi.fn(),
+  fileSaveMock: vi.fn(),
+  isGoogleProfileImageUrlMock: vi.fn(),
+  fetchGoogleProfileImageMock: vi.fn(),
 }))
 
 vi.mock('firebase-functions/https', () => ({
@@ -101,6 +110,22 @@ vi.mock('./utils/logger.js', () => ({
     error: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
+  }),
+}))
+
+vi.mock('@shokujii/common/utils/googleProfileImage.js', () => ({
+  isGoogleProfileImageUrl: (...args: unknown[]) => isGoogleProfileImageUrlMock(...args),
+  fetchGoogleProfileImage: (...args: unknown[]) => fetchGoogleProfileImageMock(...args),
+}))
+
+vi.mock('firebase-admin/storage', () => ({
+  getStorage: () => ({
+    bucket: () => ({
+      name: 'test-project.appspot.com',
+      file: () => ({
+        save: fileSaveMock,
+      }),
+    }),
   }),
 }))
 
@@ -372,5 +397,88 @@ describe('updateProfileFromProviders', () => {
     await callUpdateProfileFromProviders('uid-existing')
 
     expect(getUserIdFromEmailMock).not.toHaveBeenCalled()
+  })
+
+  it('有効な Google 画像を Storage に保存し gs:// URL をセットする', async () => {
+    getUserMock.mockResolvedValue(null)
+    getUserIdFromEmailMock.mockResolvedValue(undefined)
+    getAuthUserMock.mockResolvedValue({
+      providerData: [{ email: 'new@example.com', displayName: 'New User', photoURL: GOOGLE_PHOTO_URL }],
+    })
+    isGoogleProfileImageUrlMock.mockReturnValue(true)
+    fetchGoogleProfileImageMock.mockResolvedValue({
+      status: 'valid',
+      blob: new Blob([Uint8Array.from([1, 2, 3])], { type: 'image/png' }),
+    })
+    fileSaveMock.mockResolvedValue(undefined)
+
+    const result = await callUpdateProfileFromProviders('uid-google')
+
+    expect(fetchGoogleProfileImageMock).toHaveBeenCalledWith(GOOGLE_PHOTO_URL)
+    expect(fileSaveMock).toHaveBeenCalledOnce()
+    expect(saveUserMock).toHaveBeenCalledOnce()
+    expect(result).toMatchObject({
+      user: { user_image_url: 'gs://test-project.appspot.com/users/uid-google/avatar' },
+    })
+  })
+
+  it('Google プレースホルダー画像の場合は user_image_url を空にする', async () => {
+    getUserMock.mockResolvedValue({
+      id: 'uid-google',
+      user_email: 'user@example.com',
+      user_name: 'User',
+      user_image_url: GOOGLE_PHOTO_URL,
+    })
+    getAuthUserMock.mockResolvedValue({
+      providerData: [{ email: 'user@example.com', displayName: 'User', photoURL: GOOGLE_PHOTO_URL }],
+    })
+    isGoogleProfileImageUrlMock.mockReturnValue(true)
+    fetchGoogleProfileImageMock.mockResolvedValue({ status: 'placeholder' })
+
+    const result = await callUpdateProfileFromProviders('uid-google')
+
+    expect(saveUserMock).toHaveBeenCalledOnce()
+    expect(result).toMatchObject({ user: { user_image_url: '' } })
+    expect(fileSaveMock).not.toHaveBeenCalled()
+  })
+
+  it('Google 画像 fetch が indeterminate の場合は user_image_url を維持する', async () => {
+    getUserMock.mockResolvedValue({
+      id: 'uid-google',
+      user_email: 'user@example.com',
+      user_name: 'User',
+      user_image_url: GOOGLE_PHOTO_URL,
+    })
+    getAuthUserMock.mockResolvedValue({
+      providerData: [{ email: 'user@example.com', displayName: 'User', photoURL: GOOGLE_PHOTO_URL }],
+    })
+    isGoogleProfileImageUrlMock.mockReturnValue(true)
+    fetchGoogleProfileImageMock.mockResolvedValue({ status: 'indeterminate' })
+
+    const result = await callUpdateProfileFromProviders('uid-google')
+
+    expect(saveUserMock).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ user: { user_image_url: GOOGLE_PHOTO_URL } })
+    expect(fileSaveMock).not.toHaveBeenCalled()
+  })
+
+  it('既に gs:// の場合は Google fetch と Storage 保存をスキップする', async () => {
+    getUserMock.mockResolvedValue({
+      id: 'uid-google',
+      user_email: 'user@example.com',
+      user_name: 'User',
+      user_image_url: GS_PHOTO_URL,
+    })
+    getAuthUserMock.mockResolvedValue({
+      providerData: [{ email: 'user@example.com', displayName: 'User', photoURL: GOOGLE_PHOTO_URL }],
+    })
+    isGoogleProfileImageUrlMock.mockReturnValue(false)
+
+    const result = await callUpdateProfileFromProviders('uid-google')
+
+    expect(fetchGoogleProfileImageMock).not.toHaveBeenCalled()
+    expect(fileSaveMock).not.toHaveBeenCalled()
+    expect(saveUserMock).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ user: { user_image_url: GS_PHOTO_URL } })
   })
 })
