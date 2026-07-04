@@ -193,7 +193,8 @@ terraform apply
 
 | リソース | 内容 |
 | -------- | ---- |
-| GCS バケット | `gs://<PROJECT_ID>-firestore-backups`（`backupFirestore` の export 先。`storage_class = ARCHIVE`） |
+| GCS バケット | `gs://<PROJECT_ID>-firestore-backups`（`firestoreExportDaily` 等 Scheduled Functions の export 先。`storage_class = ARCHIVE`） |
+| GCS バケット | `gs://<PROJECT_ID>-storage-backups`（`storageBackupDaily` 等 Scheduled Functions の Storage フルコピー先） |
 | バケット IAM | Firestore サービスエージェントに `roles/storage.admin` |
 | プロジェクト IAM | Compute / App Engine デフォルト SA に `roles/datastore.importExportAdmin` |
 | プロジェクト IAM | Firebasestorage SA に `roles/firebaserules.firestoreServiceAgent`（Storage Rules の `firestore.get()` 用） |
@@ -238,13 +239,19 @@ terraform apply
 
 CORS が未設定のままチャット画像が表示されない場合も、上記 import → apply で解消されることがあります（手動 `gcloud` 適用済みの sandbox は import 後 plan が no-op または origin 微差分のみのこともある）。
 
-### 動作確認（backupFirestore）
+### 動作確認（バックアップ Scheduled Functions）
 
-1. Cloud Scheduler で `backupFirestore` を「今すぐ実行」
-2. ログに `Firestore export started` が出ること
-3. バケットにタイムスタンプ付き export フォルダが作成されること
+Functions デプロイ後、Cloud Scheduler から次のいずれかを「今すぐ実行」して疎通を確認する。
 
-詳細は [07_21_bot_legacy移行_実機テスト.md](../documents/テスト/07_21_bot_legacy移行_実機テスト.md) の BKP-01 を参照。
+| 関数 | 確認内容 |
+| ---- | -------- |
+| `firestoreExportDaily` | ログに `Starting Firestore export` → `Firestore export completed`。`gs://<PROJECT_ID>-firestore-backups/daily/` 配下に export フォルダが作成される |
+| `storageBackupDaily` | ログに `Storage backup copy completed`（`copiedCount` > 0）。`gs://<PROJECT_ID>-storage-backups/daily/YYYY-MM-DD/` 配下にオブジェクトがコピーされる |
+| `backupRetentionCleanup` | 初回は `BACKUP_RETENTION_DRY_RUN=true` 推奨。ログに `Retention dry-run: would delete prefix` または `Deleted backup prefix` |
+
+週次・月次は `firestoreExportWeekly` / `firestoreExportMonthly`、`storageBackupWeekly` / `storageBackupMonthly` も同様。旧関数名 `backupFirestore` は削除済み。
+
+詳細は [02_firestoreとstorageの自動バックアップ.md](../documents/09_運営向け機能/02_firestoreとstorageの自動バックアップ.md) 8.2 章および [02_firestoreとstorageの自動バックアップ_検証記録.md](../documents/09_運営向け機能/02_firestoreとstorageの自動バックアップ_検証記録.md) 5 章を参照。
 
 その後、各種変数は手動で登録する必要があります。
 
