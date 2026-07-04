@@ -1,0 +1,113 @@
+:root {
+  --vp-c-brand-1: #1ac662;
+  --vp-c-brand-2: #14994c;
+  --vp-c-brand-3: #1ac662;
+  --vp-nav-height: 0px;
+  --vp-layout-top-height: 0px;
+}
+
+/* グローバルナビ・ローカルナビ・サイドバー・右目次を非表示（各ページは独立） */
+.VPNav,
+.VPLocalNav,
+.VPSidebar,
+.VPDoc .aside,
+.VPDocAside {
+  display: none !important;
+}
+
+.VPContent {
+  padding-top: 0 !important;
+}
+
+/* 右カラム分の余白をなくし、本文を中央寄せ */
+.VPDoc .container {
+  display: block;
+}
+
+.VPDoc .content {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.legal-header {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 0;
+  text-align: center;
+}
+
+.legal-header__link {
+  display: inline-block;
+  line-height: 0;
+}
+
+.legal-header__link:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.legal-header__logo {
+  display: block;
+  width: 100px;
+  max-width: 100%;
+  height: auto;
+}
+
+.VPDoc .content-container {
+  max-width: 100%;
+}
+
+.vp-doc h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.vp-doc h1:first-of-type {
+  font-size: 2.25rem;
+  line-height: 1.3;
+  margin: 0 0 1.5rem;
+}
+
+.vp-doc h1:first-of-type .header-anchor {
+  display: none;
+}
+
+.legal-footer {
+  padding: 2rem 1.5rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.legal-footer__container {
+  max-width: 48rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.legal-footer__message {
+  margin: 0 0 0.5rem;
+  color: var(--vp-c-text-2);
+  font-size: 0.875rem;
+}
+
+.legal-footer__copyright {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  font-size: 1rem;
+}
+
+.legal-dates {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--vp-c-divider);
+  color: var(--vp-c-text-2);
+  font-size: 0.95rem;
+}
+
+.legal-dates__line {
+  margin: 0.25rem 0;
+}

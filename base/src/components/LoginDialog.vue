@@ -3,6 +3,7 @@
  * @deprecated
  * Use /pages/login.vue instead.
  */
+import { LEGAL_URLS } from '@shokujii/base/constants/legalUrls.js'
 import { FirebaseError } from 'firebase/app'
 import {
   getAuth,
@@ -139,11 +140,9 @@ const handleGoogleLogin = async () => {
         <div class="text-h3 ma-1">ログイン</div>
       </v-card-title>
       <v-card-text class="text-center py-5">
-        <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a>
+        <a :href="LEGAL_URLS.terms" target="_blank" rel="noopener noreferrer">利用規約</a>
         および
-        <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank"
-          >プライバシーポリシー</a
-        >
+        <a :href="LEGAL_URLS.privacy" target="_blank" rel="noopener noreferrer">プライバシーポリシー</a>
         に同意してログインしてください。
       </v-card-text>
       <v-card-text v-if="loginProvider === 'google'">

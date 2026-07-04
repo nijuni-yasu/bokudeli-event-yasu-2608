@@ -1,4 +1,5 @@
 import { ja } from 'vuetify/lib/locale/index.mjs'
+import { LEGAL_URLS } from '@shokujii/base/constants/legalUrls.js'
 
 export default {
   $vuetify: ja,
@@ -578,8 +579,7 @@ export default {
     login_fail: '{sns_name}ログインできませんでした',
     title: 'ログイン',
     brand_welcome: 'おかえりなさい👋',
-    please_login_below:
-      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインしてください。',
+    please_login_below: `<a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="${LEGAL_URLS.privacy}" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインしてください。`,
     email: 'メールアドレス',
     continue_email_login: 'メールアドレスでログイン',
     sns_login: '{sns_name}でログイン',
@@ -601,8 +601,7 @@ export default {
   register: {
     title: '新規登録',
     brand_welcome: 'shokujiiへようこそ🎉',
-    please_register_below:
-      '<a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="https://nijuni.notion.site/shokujii-26a5f4507e5343329d2b7c6bea51030b" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法で新規登録してください。',
+    please_register_below: `<a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="${LEGAL_URLS.privacy}" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法で新規登録してください。`,
     email: 'メールアドレス',
     continue_email: 'メールアドレスで新規登録',
     sns_register: '{sns_name}で新規登録',

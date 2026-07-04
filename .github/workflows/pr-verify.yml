@@ -24,6 +24,7 @@ jobs:
       user: ${{ steps.filter.outputs.user }}
       partner: ${{ steps.filter.outputs.partner }}
       enterprise: ${{ steps.filter.outputs.enterprise }}
+      terms: ${{ steps.filter.outputs.terms }}
       functions: ${{ steps.filter.outputs.functions }}
       root: ${{ steps.filter.outputs.root }}
     steps:
@@ -44,6 +45,8 @@ jobs:
               - 'partner/**'
             enterprise:
               - 'enterprise/**'
+            terms:
+              - 'terms/**'
             functions:
               - 'functions/**'
             root:
@@ -90,6 +93,7 @@ jobs:
           run_if "${{ needs.changes.outputs.user == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w user run lint
           run_if "${{ needs.changes.outputs.partner == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w partner run lint
           run_if "${{ needs.changes.outputs.enterprise == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w enterprise run lint
+          run_if "${{ needs.changes.outputs.terms == 'true' || needs.changes.outputs.root == 'true' }}" npm -w terms run lint
           run_if "${{ needs.changes.outputs.functions == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w functions/default run lint
       - name: Check Format
         run: |
@@ -100,6 +104,7 @@ jobs:
           run_if "${{ needs.changes.outputs.user == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w user run format:check
           run_if "${{ needs.changes.outputs.partner == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w partner run format:check
           run_if "${{ needs.changes.outputs.enterprise == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w enterprise run format:check
+          run_if "${{ needs.changes.outputs.terms == 'true' || needs.changes.outputs.root == 'true' }}" npm -w terms run format:check
           run_if "${{ needs.changes.outputs.functions == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w functions/default run format:check
       - name: Typecheck
         run: |
@@ -124,4 +129,5 @@ jobs:
           run_if "${{ needs.changes.outputs.user == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w user run test
           run_if "${{ needs.changes.outputs.partner == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w partner run test
           run_if "${{ needs.changes.outputs.enterprise == 'true' || needs.changes.outputs.base == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w enterprise run test
+          run_if "${{ needs.changes.outputs.terms == 'true' || needs.changes.outputs.root == 'true' }}" npm -w terms run build
           run_if "${{ needs.changes.outputs.functions == 'true' || needs.changes.outputs.common == 'true' || needs.changes.outputs.root == 'true' }}" npm -w functions/default run test

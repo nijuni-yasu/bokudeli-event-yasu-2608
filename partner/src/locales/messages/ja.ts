@@ -1,4 +1,5 @@
 import { ja } from 'vuetify/lib/locale/index.mjs'
+import { LEGAL_URLS } from '@shokujii/base/constants/legalUrls.js'
 
 export default {
   $vuetify: ja,
@@ -43,11 +44,12 @@ export default {
       ],
       [
         'STEP(2)',
-        '<a href="https://form.run/@shokujii-entry" target="blank">店舗掲載申し込みフォーム</a> にて「飲食店営業許可証」や「銀行口座」などを入力して送信💻',
+        `<a href="https://form.run/@shokujii-entry" target="blank">店舗掲載申し込みフォーム</a> にて「飲食店営業許可証」や「銀行口座」などを入力して送信。<br />
+        送信前に <a href="${LEGAL_URLS.partnerTerms}" target="_blank" rel="noopener noreferrer">店舗利用規約</a> をご確認ください ✅`,
       ],
       [
         'STEP(3)',
-        '<a href="/shop">店舗設定画面</a> で「店舗情報」「注文最小個数」「配送距離」「営業曜日・時間」「注文期限」「メールアドレス」などを入力して、店舗設定をしてください💻',
+        '<a href="/shop">店舗設定画面</a> で「店舗情報」「注文最小個数」「配送距離」「営業曜日・時間」「注文期限」「メールアドレス」などを入力して、店舗設定をしてください✍',
       ],
       [
         'STEP(4)',
@@ -263,8 +265,8 @@ export default {
     create_confirm_dialog: {
       title: 'コミュニティを新規作成しますか？',
       message: `<ul><li>コミュニティ作成後、イベントページ作成などの機能が利用可能となります。</li>
-                      <li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a> をご確認ください。</li>
-                      <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。</li></ul>`,
+                      <li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank" rel="noopener noreferrer">コミュニティガイド</a> および <a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">利用規約</a> をご確認ください。</li>
+                      <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank" rel="noopener noreferrer">お問い合わせ</a> ください。</li></ul>`,
       submit: '申請する',
     },
     new_community_dialog: {
@@ -278,7 +280,7 @@ export default {
                        <li>また、反社会的勢力等であるか、反社会的勢力等との何らかの交流若しくは関与を行っていると当社が判断した場合もアカウント停止とさせていただきます。</li>
                        <li>健全なコミュニティ運営を目指し、ご理解とご協力をお願いいたします。</li></ul>
                        <br />
-                    <ul><li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および <a href="https://nijuni.notion.site/shokujii-38ef325b1c5f446880bbe35bc4bbf41c" target="_blank">利用規約</a> をご確認ください。</li>
+                    <ul><li>詳しくは <a href="https://bit.ly/3S3L8Sv" target="_blank">コミュニティガイド</a> および <a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">利用規約</a> をご確認ください。</li>
                         <li>ご不明点ありましたらサポートまで <a href="https://forms.gle/z9L88Dq7vDKwbvxMA" target="_blank">お問い合わせ</a> ください。</li></ul>`,
     },
     created: 'コミュニティを作成しました',
