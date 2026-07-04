@@ -2,7 +2,7 @@
 title: shokujii 利用規約
 effective_date: 2024-01-01
 revised_dates:
-  - 2026-06-26
+  - 2026-07-01
 ---
 
 # shokujii 利用規約
