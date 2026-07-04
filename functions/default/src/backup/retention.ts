@@ -24,8 +24,8 @@ export type RetentionEntry = {
   sortKey: string
 }
 
-export const parseFirestoreExportFolderSortKey = (tierPrefix: string): string | null => {
-  const folderName = tierPrefix.replace(/\/$/, '').split('/').pop()
+export const parseFirestoreExportFolderSortKey = (exportPrefix: string): string | null => {
+  const folderName = exportPrefix.replace(/\/$/, '').split('/').pop()
   if (folderName == null || !LEGACY_EXPORT_FOLDER_PATTERN.test(folderName)) {
     return null
   }

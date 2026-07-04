@@ -28,7 +28,12 @@ resource "google_storage_bucket" "default" {
 resource "google_storage_bucket" "firestore_backups" {
   name                        = format("%s-firestore-backups", var.project)
   location                    = var.region
+  storage_class               = "ARCHIVE"
   uniform_bucket_level_access = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 
   lifecycle_rule {
     condition {
@@ -61,12 +66,21 @@ resource "google_storage_bucket" "firestore_backups" {
       storage_class = "COLDLINE"
     }
   }
+
+  depends_on = [
+    google_project_service.default,
+    google_firestore_database.default,
+  ]
 }
 
 resource "google_storage_bucket" "storage_backups" {
   name                        = format("%s-storage-backups", var.project)
   location                    = var.region
   uniform_bucket_level_access = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
 
   lifecycle_rule {
     condition {
@@ -101,7 +115,8 @@ resource "google_storage_bucket" "storage_backups" {
   }
 }
 
-resource "google_storage_bucket_iam_member" "firestore_backups_firestore_agent" {
+# Firestore サービスエージェントがエクスポート先バケットに書き込めるようにする
+resource "google_storage_bucket_iam_member" "firestore_backups_firestore_sa" {
   bucket = google_storage_bucket.firestore_backups.name
   role   = "roles/storage.admin"
   member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firestore.iam.gserviceaccount.com"
