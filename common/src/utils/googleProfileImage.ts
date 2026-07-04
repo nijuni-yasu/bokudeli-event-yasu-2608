@@ -25,47 +25,12 @@ export const normalizeGoogleProfileImageUrl = (url: string, size: number): strin
   return parsed.href
 }
 
-export const sha256Hex = async (data: Uint8Array): Promise<string> => {
+const sha256Hex = async (data: Uint8Array): Promise<string> => {
   const hash = await crypto.subtle.digest('SHA-256', data)
   return [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-export const isGoogleUnavailableAvatarHash = (hashHex: string): boolean => GOOGLE_UNAVAILABLE_AVATAR_HASHES.has(hashHex)
-
-/** クライアント fetch でハッシュ判定できる Google アバター URL（グレー斜線プレースホルダー等） */
-export const isGoogleAvatarHashCheckableUrl = (url: string): boolean => {
-  if (!isGoogleProfileImageUrl(url)) {
-    return false
-  }
-  const { pathname } = new URL(url)
-  // Google アバター URL の pathname プレフィックスで判定する。
-  // - /a/ … 停止・削除アカウント向けのグレー斜線プレースホルダー（旧形式）
-  // - /a-/ … 一般ユーザーの Google 写真も含むが、削除済みアカウントの斜線プレースホルダーもこの形式
-  //   注意: '/a-/foo'.startsWith('/a/') は false のため、/a-/ は明示的に OR する必要がある
-  // fetch + SHA-256 で GOOGLE_UNAVAILABLE_AVATAR_HASHES と照合し、一致時のみプレースホルダーとみなす。
-  // 一般ユーザーの /a-/ 写真はハッシュ不一致のため従来どおり表示される。
-  // CORS 非許可などで fetch できない URL は false（判定不能）とし、v-img 表示に任せる。
-  return pathname.startsWith('/a/') || pathname.startsWith('/a-/')
-}
-
-export const isGoogleUnavailableAvatar = async (url: string): Promise<boolean> => {
-  if (!isGoogleAvatarHashCheckableUrl(url)) {
-    return false
-  }
-  try {
-    const fetchUrl = normalizeGoogleProfileImageUrl(url, 500)
-    const response = await fetch(fetchUrl)
-    if (!response.ok) {
-      return false
-    }
-    const buffer = new Uint8Array(await response.arrayBuffer())
-    const hashHex = await sha256Hex(buffer)
-    return isGoogleUnavailableAvatarHash(hashHex)
-  } catch {
-    // CORS 等で fetch できない URL（青い Google デフォルト等）は v-img 表示に任せる
-    return false
-  }
-}
+const isGoogleUnavailableAvatarHash = (hashHex: string): boolean => GOOGLE_UNAVAILABLE_AVATAR_HASHES.has(hashHex)
 
 export const fetchGoogleProfileImage = async (photoURL: string): Promise<GoogleProfileImageResult> => {
   const url = normalizeGoogleProfileImageUrl(photoURL, 500)

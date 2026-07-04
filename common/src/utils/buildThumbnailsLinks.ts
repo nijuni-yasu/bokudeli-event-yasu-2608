@@ -23,8 +23,10 @@ export const buildThumbnailsLinks = (
   userId: string,
   url: URL,
   firebaseStorageBaseUrl: string,
+  cacheBuster?: number,
 ): ThumbnailLinks | null => {
   if (url.protocol === 'gs:') {
+    const cacheSuffix = cacheBuster != null && cacheBuster > 0 ? `&t=${cacheBuster}` : ''
     return SIZE_LIST.reduce((result, size) => {
       const hostname = url.href.match(/^gs:\/\/([^/]+)(\/.*)$/)?.[1]
       const base = url.pathname.split('/').pop()?.split('.')
@@ -33,14 +35,7 @@ export const buildThumbnailsLinks = (
       result[size.name] =
         `${firebaseStorageBaseUrl}b/${hostname}/o/` +
         encodeURIComponent(`users/${userId}/${imageName}_thumb_${size.name}${ext}`) +
-        '?alt=media'
-      return result
-    }, {} as ThumbnailLinks)
-  } else if (url.hostname === 'lh3.googleusercontent.com') {
-    return SIZE_LIST.reduce((result, size) => {
-      const sizedUrl = new URL(url.href)
-      sizedUrl.pathname = sizedUrl.pathname.split('=')[0] + '=' + `s${size.value}-c`
-      result[size.name] = sizedUrl.href
+        `?alt=media${cacheSuffix}`
       return result
     }, {} as ThumbnailLinks)
   } else if (url.hostname === 'graph.facebook.com') {

@@ -135,13 +135,11 @@ const profileSubmit = async () => {
     isProfileLoading.value = true
 
     const image = userImage.value
-    let uploadSucceeded = false
 
     await currentUserStore.updateUser(toRaw(currentUser.value!))
     if (image != undefined) {
       try {
         await currentUserStore.uploadUserImage(image)
-        uploadSucceeded = true
         userImage.value = undefined
         // プレビューをクリーンアップ
         if (userImagePreview.value) {
@@ -160,15 +158,6 @@ const profileSubmit = async () => {
     if (isNewUser) {
       const redirectPath = getRedirectPath() ?? '/'
       return await router.push(redirectPath)
-    }
-    // isNewUser ではない時は、リダイレクトせずにプロフィール設定画面に残る
-    // 画像変更が成功した場合のみ、Storage の同一パスを上書きしている都合で
-    // ブラウザキャッシュから古いサムネが表示されるため、リロードで強制 revalidate させる。
-    // アップロード失敗時はリロードせずユーザーが再試行できる状態を保つ。
-    if (uploadSucceeded) {
-      window.setTimeout(() => {
-        window.location.reload()
-      }, 1000)
     }
   } catch (error) {
     console.warn('Error profile submit:', error)

@@ -16,6 +16,7 @@ import { ref as storageRef, uploadBytes, getMetadata } from 'firebase/storage'
 import { User } from '@shokujii/common/schemas/User.js'
 import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { db, storage } from '@shokujii/base/firebase.js'
+import { useUserImageCacheStore } from '@shokujii/base/stores/userImageCache.js'
 const userConverter: FirestoreDataConverter<User> = {
   toFirestore(user: User): DocumentData {
     return user.toFirestore()
@@ -96,6 +97,7 @@ export const useUserStore = (userId: string) => {
       }
 
       await updateDoc(userRef, { user_image_url })
+      useUserImageCacheStore().bump(userId)
     }
 
     let unsubscribeUser: Unsubscribe | null = null
