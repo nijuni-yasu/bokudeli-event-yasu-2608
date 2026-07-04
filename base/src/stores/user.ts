@@ -73,6 +73,7 @@ export const useUserStore = (userId: string) => {
       const contentType = file.type != null && file.type !== '' ? file.type : 'image/*'
       const snapshot = await uploadBytes(imageRef, file, { contentType })
       const metadata = await getMetadata(snapshot.ref)
+      const uploadUpdated = metadata.updated
       const user_image_url = `gs://${metadata.bucket}/${metadata.fullPath}`
       // 画像のサイズ変換が終わるまで待つ
       // ポーリングはあまり良い方法ではないが、リサイズ完了を検知する方法がないため
@@ -81,13 +82,16 @@ export const useUserStore = (userId: string) => {
       for (; retry < MAX_RETRY; retry++) {
         await new Promise((resolve) => window.setTimeout(resolve, 100))
         try {
-          await Promise.all(
+          const thumbsReady = await Promise.all(
             (['small', 'medium', 'large'] as const).map(async (size) => {
               const resizedImageRef = storageRef(storage, getUserImageStoragePath(userId, size))
-              await getMetadata(resizedImageRef)
+              const thumbMetadata = await getMetadata(resizedImageRef)
+              return thumbMetadata.updated > uploadUpdated
             }),
           )
-          break
+          if (thumbsReady.every(Boolean)) {
+            break
+          }
         } catch {
           // Do nothing
         }

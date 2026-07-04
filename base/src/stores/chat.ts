@@ -1,7 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
-  addDoc,
   collection,
   doc,
   getDocs,
@@ -403,6 +402,7 @@ export const useChatStore = defineStore('chat', () => {
 
   const subscribeRoom = (roomId: string) => {
     activeRoomId.value = roomId
+    activeRoom.value = null
     roomUnsubscribe?.()
     activeRoomDisplayUnsubscribe?.()
     activeRoomDisplayUnsubscribe = null
@@ -554,12 +554,13 @@ export const useChatStore = defineStore('chat', () => {
       if (!hasBody) {
         return
       }
-      await addDoc(collection(db, 'chat_rooms', roomId, 'messages'), {
+      const messageRef = doc(getMessagesCollectionRef(roomId))
+      const message = new ChatMessage(messageRef.id, {
         message_type: 'user',
         sender_user_id: userId,
         body: trimmedBody,
-        created_at: serverTimestamp(),
       })
+      await setDoc(messageRef, message)
       return
     }
 
@@ -580,31 +581,26 @@ export const useChatStore = defineStore('chat', () => {
       throw new Error(CHAT_SEND_MESSAGE_ERROR.body_too_long)
     }
 
-    const messagesCol = collection(db, 'chat_rooms', roomId, 'messages')
-    const messageRef = doc(messagesCol)
+    const messageRef = doc(getMessagesCollectionRef(roomId))
     const messageId = messageRef.id
     const uploadedPaths: string[] = []
     const attachments: ChatAttachment[] = []
 
     try {
       for (const imageFile of imageFiles) {
-        const contentType = imageFile.type as ChatAttachmentImageMimeType
-        const attachment = await buildAttachment(roomId, messageId, imageFile, contentType)
+        const attachment = await buildAttachment(roomId, messageId, imageFile, imageFile.type)
         await uploadChatAttachment(imageFile, attachment.storage_path, attachment.content_type)
         uploadedPaths.push(attachment.storage_path)
         attachments.push(attachment)
       }
 
-      const payload: Record<string, unknown> = {
+      const message = new ChatMessage(messageId, {
         message_type: 'user',
         sender_user_id: userId,
         attachments,
-        created_at: serverTimestamp(),
-      }
-      if (hasBody) {
-        payload.body = trimmedBody
-      }
-      await setDoc(messageRef, payload)
+        ...(hasBody ? { body: trimmedBody } : {}),
+      })
+      await setDoc(messageRef, message)
     } catch (error) {
       for (const storagePath of uploadedPaths) {
         try {
