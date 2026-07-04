@@ -13,10 +13,10 @@ const { frontmatter } = useData()
     <template #doc-top>
       <LegalHeader />
     </template>
-    <template #doc-footer-before>
+    <template #doc-after>
       <LegalDates :effective-date="frontmatter.effective_date" :revised-dates="frontmatter.revised_dates" />
     </template>
-    <template #footer>
+    <template #layout-bottom>
       <LegalFooter />
     </template>
   </DefaultTheme.Layout>
