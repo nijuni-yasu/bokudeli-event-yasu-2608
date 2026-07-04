@@ -5,6 +5,7 @@ import { getDefaultAvatarUrl } from '@shokujii/base/utils/defaultAvatar.js'
 import { User } from '@shokujii/common/schemas/User.js'
 import { buildThumbnailsLinks, type Sizes } from '@shokujii/common/utils/buildThumbnailsLinks.js'
 import { FIREBASE_STORAGE_BASE_URL } from '@shokujii/base/firebase.js'
+import { useUserImageCacheStore } from '@shokujii/base/stores/userImageCache.js'
 
 const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
@@ -26,6 +27,7 @@ const elementSize = ref<number | undefined>(undefined)
 const size = computed(() => props.size ?? elementSize.value)
 
 const defaultAvatar = getDefaultAvatarUrl()
+const userImageCacheStore = useUserImageCacheStore()
 
 const avatar = computed(() => {
   if (typeof props.user === 'string') {
@@ -33,10 +35,14 @@ const avatar = computed(() => {
   } else if (props.user === null || props.user.user_image_url === '') {
     return defaultAvatar
   }
+  const cacheBuster = props.user.user_image_url.startsWith('gs://')
+    ? userImageCacheStore.getCacheBuster(props.user.user_id)
+    : 0
   const thumbnails = buildThumbnailsLinks(
     props.user.user_id,
     new URL(props.user.user_image_url),
     FIREBASE_STORAGE_BASE_URL,
+    cacheBuster,
   )
   return thumbnails?.[calcAvatarSize(size.value)] ?? props.user.user_image_url
 })
