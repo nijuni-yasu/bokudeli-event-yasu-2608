@@ -37,9 +37,9 @@ const copyFilesInParallel = async (
       chunk.map(async (file) => {
         const destPath = `${destPrefix}/${file.name}`
         await file.copy(destBucket.file(destPath))
-        copiedCount += 1
       }),
     )
+    copiedCount += chunk.length
   }
 
   return copiedCount
