@@ -1,10 +1,12 @@
-import { FieldValue, Timestamp } from 'firebase-admin/firestore'
+import { Timestamp } from 'firebase-admin/firestore'
 import { describe, expect, it } from 'vitest'
 import { CHAT_UNREAD_COUNT_MAX, ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import {
   buildMembershipLastMessageUpdatePatch,
+  computeClampedUnreadCount,
   createEventChatMembership,
   incrementMembershipUnread,
+  resolveMembershipUnreadCountForUpdate,
   shouldIncrementMembershipUnread,
   updateMembershipLastMessage,
 } from './chatMembership.js'
@@ -219,21 +221,26 @@ describe('chatMembership store', () => {
       updated_at: Date.now(),
     })
 
-    it('includes FieldValue.increment when receiver should increment unread', () => {
+    it('resolves unread increment for receiver', () => {
       const patch = buildMembershipLastMessageUpdatePatch({
         membership: baseMembership,
         preview: 'hello',
         lastMessageAt: 5000,
-        messageType: 'user',
-        shouldApplyLastMessage: true,
-        memberUserId: 'receiver1',
-        senderUserId: 'sender1',
       })
       expect(patch).not.toBeNull()
       expect(patch?.last_message_preview).toBe('hello')
       expect(patch?.last_message_at).toBeInstanceOf(Timestamp)
       expect(patch?.last_message_at.toMillis()).toBe(5000)
-      expect(patch?.unread_count).toEqual(FieldValue.increment(1))
+      expect(
+        resolveMembershipUnreadCountForUpdate({
+          membership: baseMembership,
+          messageType: 'user',
+          shouldApplyLastMessage: true,
+          memberUserId: 'receiver1',
+          senderUserId: 'sender1',
+          lastMessageAt: 5000,
+        }),
+      ).toBe(3)
     })
 
     it('omits unread_count increment for sender', () => {
@@ -241,12 +248,18 @@ describe('chatMembership store', () => {
         membership: baseMembership,
         preview: 'hello',
         lastMessageAt: 5000,
-        messageType: 'user',
-        shouldApplyLastMessage: true,
-        memberUserId: 'sender1',
-        senderUserId: 'sender1',
       })
-      expect(patch?.unread_count).toBeUndefined()
+      expect(patch?.last_message_preview).toBe('hello')
+      expect(
+        resolveMembershipUnreadCountForUpdate({
+          membership: baseMembership,
+          messageType: 'user',
+          shouldApplyLastMessage: true,
+          memberUserId: 'sender1',
+          senderUserId: 'sender1',
+          lastMessageAt: 5000,
+        }),
+      ).toBeUndefined()
     })
 
     it('omits unread_count increment when unread_count is already at max', () => {
@@ -262,12 +275,18 @@ describe('chatMembership store', () => {
         membership,
         preview: 'hello',
         lastMessageAt: 5000,
-        messageType: 'user',
-        shouldApplyLastMessage: true,
-        memberUserId: 'receiver1',
-        senderUserId: 'sender1',
       })
-      expect(patch?.unread_count).toBeUndefined()
+      expect(patch?.last_message_preview).toBe('hello')
+      expect(
+        resolveMembershipUnreadCountForUpdate({
+          membership,
+          messageType: 'user',
+          shouldApplyLastMessage: true,
+          memberUserId: 'receiver1',
+          senderUserId: 'sender1',
+          lastMessageAt: 5000,
+        }),
+      ).toBeUndefined()
     })
 
     it('returns null when lastMessageAt is older than membership last_message_at', () => {
@@ -275,12 +294,22 @@ describe('chatMembership store', () => {
         membership: baseMembership,
         preview: 'old',
         lastMessageAt: 1000,
-        messageType: 'user',
-        shouldApplyLastMessage: true,
-        memberUserId: 'receiver1',
-        senderUserId: 'sender1',
       })
       expect(patch).toBeNull()
+    })
+  })
+
+  describe('computeClampedUnreadCount', () => {
+    it('increments below max', () => {
+      expect(computeClampedUnreadCount(50)).toBe(51)
+    })
+
+    it('clamps at max from max minus one', () => {
+      expect(computeClampedUnreadCount(CHAT_UNREAD_COUNT_MAX - 1)).toBe(CHAT_UNREAD_COUNT_MAX)
+    })
+
+    it('returns undefined when already at max', () => {
+      expect(computeClampedUnreadCount(CHAT_UNREAD_COUNT_MAX)).toBeUndefined()
     })
   })
 })

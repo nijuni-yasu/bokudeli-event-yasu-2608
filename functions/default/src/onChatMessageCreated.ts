@@ -8,6 +8,7 @@ import {
   buildMembershipLastMessageUpdatePatch,
   getChatMembershipBatchUpdateRef,
   getChatMembershipRef,
+  resolveMembershipUnreadCountForUpdate,
 } from './stores/chatMembership.js'
 
 const logger = createModuleLogger('onChatMessageCreated')
@@ -74,42 +75,50 @@ export const onChatMessageCreated = onDocumentCreated(
       const chunkLastMessageAt = messageForChunk.created_at
 
       const chunk = room.member_user_ids.slice(i, i + MEMBERSHIP_BATCH_SIZE)
-      const membershipRefs = chunk.map((userId) => getChatMembershipRef(userId, roomId))
-      const snapshots = await Promise.all(membershipRefs.map((ref) => ref.get()))
-      const batch = db.batch()
-      let writeCount = 0
 
-      for (let j = 0; j < chunk.length; j++) {
-        const memberUserId = chunk[j]
-        const membership = snapshots[j].exists ? snapshots[j].data() : undefined
-        if (membership == null) {
-          continue
-        }
-
-        if (!shouldApplyLastMessage) {
-          continue
-        }
-
-        const patch = buildMembershipLastMessageUpdatePatch({
-          membership,
-          preview: chunkPreview,
-          lastMessageAt: chunkLastMessageAt,
-          messageType: messageForChunk.message_type,
-          shouldApplyLastMessage,
-          memberUserId,
-          senderUserId,
-        })
-        if (patch == null) {
-          continue
-        }
-
-        batch.update(getChatMembershipBatchUpdateRef(memberUserId, roomId), patch)
-        writeCount++
+      if (!shouldApplyLastMessage) {
+        continue
       }
 
-      if (writeCount > 0) {
-        await batch.commit()
-      }
+      await Promise.all(
+        chunk.map(async (memberUserId) => {
+          await db.runTransaction(async (transaction) => {
+            const membershipRef = getChatMembershipRef(memberUserId, roomId)
+            const membershipSnapshot = await transaction.get(membershipRef)
+            if (!membershipSnapshot.exists) {
+              return
+            }
+
+            const membership = membershipSnapshot.data()
+            if (membership == null) {
+              return
+            }
+
+            const patch = buildMembershipLastMessageUpdatePatch({
+              membership,
+              preview: chunkPreview,
+              lastMessageAt: chunkLastMessageAt,
+            })
+            if (patch == null) {
+              return
+            }
+
+            const nextUnreadCount = resolveMembershipUnreadCountForUpdate({
+              membership,
+              messageType: messageForChunk.message_type,
+              shouldApplyLastMessage,
+              memberUserId,
+              senderUserId,
+              lastMessageAt: chunkLastMessageAt,
+            })
+
+            transaction.update(getChatMembershipBatchUpdateRef(memberUserId, roomId), {
+              ...patch,
+              ...(nextUnreadCount != null ? { unread_count: nextUnreadCount } : {}),
+            })
+          })
+        }),
+      )
     }
 
     logger.info('Chat message processed', {
