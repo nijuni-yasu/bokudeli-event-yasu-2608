@@ -17,6 +17,15 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { db, storage } from '@shokujii/base/firebase.js'
 import { useUserImageCacheStore } from '@shokujii/base/stores/userImageCache.js'
+
+/** Storage metadata.updated の比較。nullish のときは getMetadata 成功（存在確認）を優先する。 */
+const isStorageUpdatedAfter = (objectUpdated: string | undefined, referenceUpdated: string | undefined): boolean => {
+  if (objectUpdated == null || referenceUpdated == null) {
+    return true
+  }
+  return objectUpdated > referenceUpdated
+}
+
 const userConverter: FirestoreDataConverter<User> = {
   toFirestore(user: User): DocumentData {
     return user.toFirestore()
@@ -73,6 +82,7 @@ export const useUserStore = (userId: string) => {
       const contentType = file.type != null && file.type !== '' ? file.type : 'image/*'
       const snapshot = await uploadBytes(imageRef, file, { contentType })
       const metadata = await getMetadata(snapshot.ref)
+      const uploadUpdated = metadata.updated
       const user_image_url = `gs://${metadata.bucket}/${metadata.fullPath}`
       // 画像のサイズ変換が終わるまで待つ
       // ポーリングはあまり良い方法ではないが、リサイズ完了を検知する方法がないため
@@ -81,13 +91,16 @@ export const useUserStore = (userId: string) => {
       for (; retry < MAX_RETRY; retry++) {
         await new Promise((resolve) => window.setTimeout(resolve, 100))
         try {
-          await Promise.all(
+          const thumbsReady = await Promise.all(
             (['small', 'medium', 'large'] as const).map(async (size) => {
               const resizedImageRef = storageRef(storage, getUserImageStoragePath(userId, size))
-              await getMetadata(resizedImageRef)
+              const thumbMetadata = await getMetadata(resizedImageRef)
+              return isStorageUpdatedAfter(thumbMetadata.updated, uploadUpdated)
             }),
           )
-          break
+          if (thumbsReady.every(Boolean)) {
+            break
+          }
         } catch {
           // Do nothing
         }

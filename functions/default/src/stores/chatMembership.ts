@@ -1,8 +1,10 @@
 import {
   DocumentData,
+  FieldValue,
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
+  Timestamp,
   Transaction,
 } from 'firebase-admin/firestore'
 import { CHAT_UNREAD_COUNT_MAX, ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
@@ -22,6 +24,71 @@ const membershipsCollection = (userId: string) =>
 
 export const getChatMembershipRef = (userId: string, roomId: string) => {
   return membershipsCollection(userId).doc(roomId).withConverter(new ChatMembershipConverter())
+}
+
+/** FieldValue 系の partial update 用（withConverter 非付与）。batch / update 専用。 */
+export const getChatMembershipBatchUpdateRef = (userId: string, roomId: string) => {
+  return membershipsCollection(userId).doc(roomId)
+}
+
+export type MembershipLastMessageUpdatePatch = {
+  last_message_preview: string
+  last_message_at: Timestamp
+  updated_at: FieldValue
+}
+
+/** unread_count 加算後の値。上限到達時は undefined（フィールド更新なし）。 */
+export const computeClampedUnreadCount = (currentUnreadCount: number): number | undefined => {
+  if (currentUnreadCount >= CHAT_UNREAD_COUNT_MAX) {
+    return undefined
+  }
+  return Math.min(CHAT_UNREAD_COUNT_MAX, currentUnreadCount + 1)
+}
+
+export const resolveMembershipUnreadCountForUpdate = (params: {
+  membership: ChatMembership
+  messageType: 'user' | 'system'
+  shouldApplyLastMessage: boolean
+  memberUserId: string
+  senderUserId: string | undefined
+  lastMessageAt: number
+}): number | undefined => {
+  if (
+    !shouldIncrementMembershipUnread({
+      messageType: params.messageType,
+      shouldApplyLastMessage: params.shouldApplyLastMessage,
+      memberUserId: params.memberUserId,
+      senderUserId: params.senderUserId,
+      membershipLastMessageAt: params.membership.last_message_at,
+      lastReadAt: params.membership.last_read_at,
+      lastMessageAt: params.lastMessageAt,
+    })
+  ) {
+    return undefined
+  }
+  return computeClampedUnreadCount(params.membership.unread_count)
+}
+
+export const buildMembershipLastMessageUpdatePatch = (params: {
+  membership: ChatMembership
+  preview: string
+  lastMessageAt: number
+}): MembershipLastMessageUpdatePatch | null => {
+  const updated = updateMembershipLastMessage(params.membership, {
+    preview: params.preview,
+    lastMessageAt: params.lastMessageAt,
+  })
+  if (updated == null) {
+    return null
+  }
+
+  const patch: MembershipLastMessageUpdatePatch = {
+    last_message_preview: params.preview,
+    last_message_at: Timestamp.fromMillis(params.lastMessageAt),
+    updated_at: FieldValue.serverTimestamp(),
+  }
+
+  return patch
 }
 
 export const getChatMembership = async (

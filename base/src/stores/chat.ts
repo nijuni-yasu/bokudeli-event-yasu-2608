@@ -1,7 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import {
-  addDoc,
   collection,
   doc,
   getDocs,
@@ -50,6 +49,9 @@ import type { ChatActiveRoom, ChatMessageItem, ChatRoomListItem } from '../compo
 import { subscribeEventRoomDisplay, unsubscribeAllEventRoomDisplays, type RoomDisplayMeta } from './chatRoomDisplay.js'
 
 const MESSAGES_PAGE_SIZE = 50
+
+const sortRoomsByLastMessageDesc = (rooms: ChatRoomListItem[]): ChatRoomListItem[] =>
+  [...rooms].sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0))
 
 /** serverTimestamp() 確定前のローカルスナップショットなど、パース不能な値は除外する */
 const parseOptionalEpochMillis = (value: unknown): number | undefined => {
@@ -106,13 +108,24 @@ const chatRoomConverter: FirestoreDataConverter<ChatRoom> = {
   },
 }
 
-const chatMessageConverter: FirestoreDataConverter<ChatMessage> = {
-  toFirestore(message: ChatMessage): DocumentData {
-    return message.toFirestore()
+/** sendMessage 用: Zod 検証後に created_at を serverTimestamp() で書き込む */
+type ChatMessageWrite = ChatMessage & { useServerCreatedAt?: true }
+
+const chatMessageConverter: FirestoreDataConverter<ChatMessageWrite> = {
+  toFirestore(message: ChatMessageWrite): DocumentData {
+    const data = message.toFirestore()
+    if (message.useServerCreatedAt === true) {
+      return { ...data, created_at: serverTimestamp() }
+    }
+    return data
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ChatMessage {
     return messageFromFirestore(snapshot)
   },
+}
+
+const createUserMessageForSend = (id: string, src: ConstructorParameters<typeof ChatMessage>[1]): ChatMessageWrite => {
+  return Object.assign(new ChatMessage(id, src), { useServerCreatedAt: true as const })
 }
 
 const chatMembershipConverter: FirestoreDataConverter<ChatMembership> = {
@@ -385,7 +398,9 @@ export const useChatStore = defineStore('chat', () => {
     )
 
     membershipsUnsubscribe = onSnapshot(membershipsQuery, (snapshot) => {
-      const nextRooms = snapshot.docs.map((docSnapshot) => membershipToListItem(docSnapshot.data()))
+      const nextRooms = sortRoomsByLastMessageDesc(
+        snapshot.docs.map((docSnapshot) => membershipToListItem(docSnapshot.data())),
+      )
       rooms.value = preserveRoomDisplayMeta(nextRooms, rooms.value)
       syncListRoomDisplays(rooms.value)
       membershipsLoaded.value = true
@@ -403,6 +418,7 @@ export const useChatStore = defineStore('chat', () => {
 
   const subscribeRoom = (roomId: string) => {
     activeRoomId.value = roomId
+    activeRoom.value = null
     roomUnsubscribe?.()
     activeRoomDisplayUnsubscribe?.()
     activeRoomDisplayUnsubscribe = null
@@ -554,12 +570,13 @@ export const useChatStore = defineStore('chat', () => {
       if (!hasBody) {
         return
       }
-      await addDoc(collection(db, 'chat_rooms', roomId, 'messages'), {
+      const messageRef = doc(getMessagesCollectionRef(roomId))
+      const message = createUserMessageForSend(messageRef.id, {
         message_type: 'user',
         sender_user_id: userId,
         body: trimmedBody,
-        created_at: serverTimestamp(),
       })
+      await setDoc(messageRef, message)
       return
     }
 
@@ -580,31 +597,26 @@ export const useChatStore = defineStore('chat', () => {
       throw new Error(CHAT_SEND_MESSAGE_ERROR.body_too_long)
     }
 
-    const messagesCol = collection(db, 'chat_rooms', roomId, 'messages')
-    const messageRef = doc(messagesCol)
+    const messageRef = doc(getMessagesCollectionRef(roomId))
     const messageId = messageRef.id
     const uploadedPaths: string[] = []
     const attachments: ChatAttachment[] = []
 
     try {
       for (const imageFile of imageFiles) {
-        const contentType = imageFile.type as ChatAttachmentImageMimeType
-        const attachment = await buildAttachment(roomId, messageId, imageFile, contentType)
+        const attachment = await buildAttachment(roomId, messageId, imageFile, imageFile.type)
         await uploadChatAttachment(imageFile, attachment.storage_path, attachment.content_type)
         uploadedPaths.push(attachment.storage_path)
         attachments.push(attachment)
       }
 
-      const payload: Record<string, unknown> = {
+      const message = createUserMessageForSend(messageId, {
         message_type: 'user',
         sender_user_id: userId,
         attachments,
-        created_at: serverTimestamp(),
-      }
-      if (hasBody) {
-        payload.body = trimmedBody
-      }
-      await setDoc(messageRef, payload)
+        ...(hasBody ? { body: trimmedBody } : {}),
+      })
+      await setDoc(messageRef, message)
     } catch (error) {
       for (const storagePath of uploadedPaths) {
         try {

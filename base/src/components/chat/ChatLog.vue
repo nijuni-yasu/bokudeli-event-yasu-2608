@@ -62,7 +62,18 @@ const onAttachmentLoaded = ({ storagePath, url }: { storagePath: string; url: st
 }
 
 const onAttachmentUnloaded = ({ storagePath }: { storagePath: string }): void => {
+  const url = attachmentObjectUrlByPath.value.get(storagePath)
+  if (url != null) {
+    URL.revokeObjectURL(url)
+  }
   attachmentObjectUrlByPath.value.delete(storagePath)
+}
+
+const revokeAllAttachmentObjectUrls = (): void => {
+  for (const url of attachmentObjectUrlByPath.value.values()) {
+    URL.revokeObjectURL(url)
+  }
+  attachmentObjectUrlByPath.value.clear()
 }
 
 const revokeLightboxOwnedUrls = (): void => {
@@ -275,6 +286,10 @@ const fetchSenderProfile = async (senderId: string) => {
 watch(
   () => store.activeRoomId,
   () => {
+    lightboxVisible.value = false
+    attachmentLightboxPinActive.value = false
+    revokeLightboxOwnedUrls()
+    revokeAllAttachmentObjectUrls()
     senderUsers.value = new Map()
     senderNames.value = new Map()
   },
