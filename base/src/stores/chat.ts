@@ -108,13 +108,24 @@ const chatRoomConverter: FirestoreDataConverter<ChatRoom> = {
   },
 }
 
-const chatMessageConverter: FirestoreDataConverter<ChatMessage> = {
-  toFirestore(message: ChatMessage): DocumentData {
-    return message.toFirestore()
+/** sendMessage 用: Zod 検証後に created_at を serverTimestamp() で書き込む */
+type ChatMessageWrite = ChatMessage & { useServerCreatedAt?: true }
+
+const chatMessageConverter: FirestoreDataConverter<ChatMessageWrite> = {
+  toFirestore(message: ChatMessageWrite): DocumentData {
+    const data = message.toFirestore()
+    if (message.useServerCreatedAt === true) {
+      return { ...data, created_at: serverTimestamp() }
+    }
+    return data
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): ChatMessage {
     return messageFromFirestore(snapshot)
   },
+}
+
+const createUserMessageForSend = (id: string, src: ConstructorParameters<typeof ChatMessage>[1]): ChatMessageWrite => {
+  return Object.assign(new ChatMessage(id, src), { useServerCreatedAt: true as const })
 }
 
 const chatMembershipConverter: FirestoreDataConverter<ChatMembership> = {
@@ -560,7 +571,7 @@ export const useChatStore = defineStore('chat', () => {
         return
       }
       const messageRef = doc(getMessagesCollectionRef(roomId))
-      const message = new ChatMessage(messageRef.id, {
+      const message = createUserMessageForSend(messageRef.id, {
         message_type: 'user',
         sender_user_id: userId,
         body: trimmedBody,
@@ -599,7 +610,7 @@ export const useChatStore = defineStore('chat', () => {
         attachments.push(attachment)
       }
 
-      const message = new ChatMessage(messageId, {
+      const message = createUserMessageForSend(messageId, {
         message_type: 'user',
         sender_user_id: userId,
         attachments,
