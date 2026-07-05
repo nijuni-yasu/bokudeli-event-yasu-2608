@@ -17,6 +17,15 @@ import { User } from '@shokujii/common/schemas/User.js'
 import { getUserImageStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { db, storage } from '@shokujii/base/firebase.js'
 import { useUserImageCacheStore } from '@shokujii/base/stores/userImageCache.js'
+
+/** Storage metadata.updated の比較。nullish のときは getMetadata 成功（存在確認）を優先する。 */
+const isStorageUpdatedAfter = (objectUpdated: string | undefined, referenceUpdated: string | undefined): boolean => {
+  if (objectUpdated == null || referenceUpdated == null) {
+    return true
+  }
+  return objectUpdated > referenceUpdated
+}
+
 const userConverter: FirestoreDataConverter<User> = {
   toFirestore(user: User): DocumentData {
     return user.toFirestore()
@@ -86,7 +95,7 @@ export const useUserStore = (userId: string) => {
             (['small', 'medium', 'large'] as const).map(async (size) => {
               const resizedImageRef = storageRef(storage, getUserImageStoragePath(userId, size))
               const thumbMetadata = await getMetadata(resizedImageRef)
-              return thumbMetadata.updated > uploadUpdated
+              return isStorageUpdatedAfter(thumbMetadata.updated, uploadUpdated)
             }),
           )
           if (thumbsReady.every(Boolean)) {
