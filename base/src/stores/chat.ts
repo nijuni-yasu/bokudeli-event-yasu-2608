@@ -50,6 +50,9 @@ import { subscribeEventRoomDisplay, unsubscribeAllEventRoomDisplays, type RoomDi
 
 const MESSAGES_PAGE_SIZE = 50
 
+const sortRoomsByLastMessageDesc = (rooms: ChatRoomListItem[]): ChatRoomListItem[] =>
+  [...rooms].sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0))
+
 /** serverTimestamp() 確定前のローカルスナップショットなど、パース不能な値は除外する */
 const parseOptionalEpochMillis = (value: unknown): number | undefined => {
   if (value === undefined || value === null) {
@@ -384,7 +387,9 @@ export const useChatStore = defineStore('chat', () => {
     )
 
     membershipsUnsubscribe = onSnapshot(membershipsQuery, (snapshot) => {
-      const nextRooms = snapshot.docs.map((docSnapshot) => membershipToListItem(docSnapshot.data()))
+      const nextRooms = sortRoomsByLastMessageDesc(
+        snapshot.docs.map((docSnapshot) => membershipToListItem(docSnapshot.data())),
+      )
       rooms.value = preserveRoomDisplayMeta(nextRooms, rooms.value)
       syncListRoomDisplays(rooms.value)
       membershipsLoaded.value = true
