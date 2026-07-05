@@ -1,5 +1,5 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore'
-import { FieldValue, getFirestore } from 'firebase-admin/firestore'
+import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore'
 import { createModuleLogger } from './utils/logger.js'
 import { buildMessagePreview, isDeletedUserMessage } from './utils/chatPreview.js'
 import { claimMessageProcessed, getChatMessage } from './stores/chatMessage.js'
@@ -56,7 +56,7 @@ export const onChatMessageCreated = onDocumentCreated(
       const roomBatch = db.batch()
       roomBatch.update(getChatRoomBatchUpdateRef(roomId), {
         last_message_preview: preview,
-        last_message_at: lastMessageAt,
+        last_message_at: Timestamp.fromMillis(lastMessageAt),
         updated_at: FieldValue.serverTimestamp(),
       })
       await roomBatch.commit()

@@ -1,4 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore'
+import { FieldValue, Timestamp } from 'firebase-admin/firestore'
 import { describe, expect, it } from 'vitest'
 import { CHAT_UNREAD_COUNT_MAX, ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import {
@@ -231,7 +231,8 @@ describe('chatMembership store', () => {
       })
       expect(patch).not.toBeNull()
       expect(patch?.last_message_preview).toBe('hello')
-      expect(patch?.last_message_at).toBe(5000)
+      expect(patch?.last_message_at).toBeInstanceOf(Timestamp)
+      expect(patch?.last_message_at.toMillis()).toBe(5000)
       expect(patch?.unread_count).toEqual(FieldValue.increment(1))
     })
 

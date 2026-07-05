@@ -4,6 +4,7 @@ import {
   FirestoreDataConverter,
   getFirestore,
   QueryDocumentSnapshot,
+  Timestamp,
   Transaction,
 } from 'firebase-admin/firestore'
 import { CHAT_UNREAD_COUNT_MAX, ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
@@ -32,7 +33,7 @@ export const getChatMembershipBatchUpdateRef = (userId: string, roomId: string) 
 
 export type MembershipLastMessageUpdatePatch = {
   last_message_preview: string
-  last_message_at: number
+  last_message_at: Timestamp
   updated_at: FieldValue
   unread_count?: FieldValue
 }
@@ -56,7 +57,7 @@ export const buildMembershipLastMessageUpdatePatch = (params: {
 
   const patch: MembershipLastMessageUpdatePatch = {
     last_message_preview: params.preview,
-    last_message_at: params.lastMessageAt,
+    last_message_at: Timestamp.fromMillis(params.lastMessageAt),
     updated_at: FieldValue.serverTimestamp(),
   }
 
