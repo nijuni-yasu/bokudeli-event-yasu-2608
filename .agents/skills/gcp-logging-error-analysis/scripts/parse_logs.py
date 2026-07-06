@@ -15,7 +15,6 @@ CLIENT_ERROR_NOISE_PATTERNS = (
     "serviceworker",
     "service worker",
     "failed to fetch dynamically imported module",
-    "rejected",
     "connection failed.",
     "load failed",
     "failed to register a serviceworker",
@@ -27,6 +26,11 @@ CLIENT_ERROR_ACTIONABLE_PATTERNS = (
     "zoderror",
     "invalid_enum_value",
 )
+
+
+def is_serviceworker_standalone_rejected(message: str) -> bool:
+    """ServiceWorker 登録失敗時の単体メッセージ。部分一致 rejected は正当 ERROR を誤除外するため使わない。"""
+    return message.strip().lower() == "rejected"
 
 
 def load_entries(source: str | None) -> list[dict[str, Any]]:
@@ -98,6 +102,8 @@ def classify_tier(entry: dict[str, Any], message: str) -> str:
     if module == "clientError":
         if any(pattern in lower for pattern in CLIENT_ERROR_ACTIONABLE_PATTERNS):
             return "P1"
+        if is_serviceworker_standalone_rejected(message):
+            return "noise"
         if any(pattern in lower for pattern in CLIENT_ERROR_NOISE_PATTERNS):
             return "noise"
         return "P1"
