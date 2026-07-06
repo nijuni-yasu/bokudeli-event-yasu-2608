@@ -266,13 +266,13 @@ export const setupRouter = (router: Router) => {
         return await handleProfileUpdateFailure(to.path, to.query, userCredential)
       }
 
-      if (userCredential != null) {
-        recordLastLoginFromCredential(userCredential)
-      }
-
       // profile に戻ってきた場合はリンクなので画面はそのまま
       if (to.path === '/profile') {
         return
+      }
+
+      if (userCredential != null) {
+        recordLastLoginFromCredential(userCredential)
       }
 
       // メールアドレスが無い場合はメールアドレス設定へ
