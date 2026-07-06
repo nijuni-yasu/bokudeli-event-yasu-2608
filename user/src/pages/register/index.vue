@@ -5,6 +5,7 @@ import { requestEmailRegistration } from '@shokujii/base/apis/user'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { useValidators } from '@shokujii/base/composable/validators.js'
+import { setLastLoginProvider } from '@shokujii/base/utils/lastLoginProvider.js'
 import { signInByProviderService, type ProviderIdType } from '@shokujii/base/utils/providerService.js'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
@@ -59,6 +60,7 @@ const handleRegister = async (providerId: ProviderIdType | 'custom', emailInput?
         await router.push(getLogin())
         return
       }
+      setLastLoginProvider(providerId)
       window.location.href = '/register/complete'
     }
   } catch (error) {

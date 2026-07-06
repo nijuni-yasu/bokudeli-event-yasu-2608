@@ -12,6 +12,7 @@ import {
   requestEmailLogin,
   requestEmailRegistration,
 } from '@shokujii/base/apis/user'
+import { setLastLoginProvider } from '@shokujii/base/utils/lastLoginProvider.js'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 
 const router = useRouter()
@@ -86,11 +87,13 @@ const submit = async (passCodeInput: string) => {
       const result = await confirmEmailRegistration({ email, passCode: passCodeInput })
       const { token } = result.data
       await signInWithCustomToken(getAuth(), token)
+      setLastLoginProvider('custom')
       await router.push(getRegisterComplete(true))
     } else {
       const result = await confirmEmailLogin({ email, passCode: passCodeInput })
       const { token } = result.data
       await signInWithCustomToken(getAuth(), token)
+      setLastLoginProvider('custom')
       const redirectPath = getRedirectPath() ?? '/'
       await router.push(redirectPath)
     }
