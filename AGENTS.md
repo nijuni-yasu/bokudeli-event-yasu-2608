@@ -15,7 +15,7 @@ AIエージェント向けプロジェクトガイド。
 | GitHub イシュー作成                                                             | `/git-create-issue`          |
 | PR 本文生成                                                                     | `/git-create-pull-request`   |
 | AI レビュー完了待ち → evaluate（watcher 起動時 Shell に notify_on_output 必須） | `/wait-ai-pr-review`         |
-| コードレビュー                                                                  | `/shokujii-code-review`      |
+| コードレビュー（実装完了時は 3 ファイル以上かつ UI 微修正以外で自動実行）     | `/shokujii-code-review`      |
 | lint・format・型・test チェック（PR verify 相当。format はローカル自動修正）    | `/lint-and-format`           |
 | fixup（追修正の統合・メッセージ維持。明示依頼時）                               | `/git-fixup`                 |
 | squash（統合＋メッセージ更新。明示依頼時）                                      | `/git-squash`                |
@@ -145,6 +145,30 @@ npm -w <pkg> run format:check
 ## 作業完了前の必須手順（コード変更）
 
 ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、PR verify（`pr-verify.yml`）と同じ verify:functions-deploy / build / lint / format / 型 / vitest のローカルチェック（format 失敗時は format 自動修正）を実行すること。
+
+### コードレビュー（条件付き必須）
+
+`/lint-and-format` 成功後、完了報告前に [`/shokujii-code-review`](.agents/skills/shokujii-code-review/SKILL.md) を実行するか判定する。
+
+**実行する条件**（すべて満たす）:
+
+- 変更ファイル数が **3 以上**（`git diff --name-only` で数える。format 等による自動生成のみの変更ファイルは除外）
+- **細かな UI 修正のみ**ではない（下記）
+
+**細かな UI 修正のみ（レビュー省略）**:
+
+- 変更が `**/locales/messages/ja.ts`、Vue の `<template>` / `<style>`、`**/styles/**` 配下に限定されている
+- `<script>`・store・schema・functions・router・テストに変更がない
+
+**🚨 必須修正が出た場合**（[`shokujii-code-review` 手順 3a](.agents/skills/shokujii-code-review/SKILL.md)）:
+
+- 仕様判断・スコープ外設計が必要な 🚨 を除き、残りを**ユーザー確認なしで修正**する
+- `/lint-and-format` を再実行する
+- `/shokujii-code-review` を再実行する（同一タスク内・最大 2 周）
+- 🟡 修正提案は完了報告に列挙する。**自動修正しない**
+- 2 周後も 🚨 が残る場合は一覧を報告して完了報告する
+
+ユーザーが「レビュー不要」と明示した場合、または上記の省略条件に該当する場合はスキップしてよい。
 
 ### Functions 追加時の CI 連携
 
