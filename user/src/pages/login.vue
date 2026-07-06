@@ -5,6 +5,7 @@ import { requestEmailLogin } from '@shokujii/base/apis/user'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { useValidators } from '@shokujii/base/composable/validators.js'
+import { getLastLoginProvider, setLastLoginProvider } from '@shokujii/base/utils/lastLoginProvider.js'
 import { signInByProviderService, type ProviderIdType } from '@shokujii/base/utils/providerService.js'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
@@ -22,6 +23,7 @@ const { requiredValidator, emailValidator } = useValidators()
 const isLoading = ref<ProviderIdType | 'custom' | null>(null)
 const isValid = ref(false)
 const email = ref('')
+const lastLoginProvider = getLastLoginProvider()
 const linkRequestDialogParams = computed<{
   tryLoginProviderId: ProviderIdType
   linkProviderId: ProviderIdType
@@ -62,6 +64,7 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
         await router.push(getRegister())
         return
       }
+      setLastLoginProvider(providerId)
       window.location.href = '/register/complete'
     }
   } catch (error) {
@@ -95,8 +98,17 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
       <template #prepend>
         <v-icon :icon="GoogleIcon" size="22" />
       </template>
-      <div class="ml-2">
-        {{ $t('login.sns_login', { sns_name: 'Google' }) }}
+      <div class="ml-2 login-btn-label">
+        <span>{{ $t('login.sns_login', { sns_name: 'Google' }) }}</span>
+        <v-chip
+          v-if="lastLoginProvider === 'google.com'"
+          size="x-small"
+          color="primary"
+          variant="tonal"
+          class="last-login-chip"
+        >
+          {{ $t('login.last_login') }}
+        </v-chip>
       </div>
     </v-btn>
     <v-btn
@@ -111,8 +123,17 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
       <template #prepend>
         <v-icon :icon="FacebookIcon" size="22" />
       </template>
-      <div class="ml-2">
-        {{ $t('login.sns_login', { sns_name: 'Facebook' }) }}
+      <div class="ml-2 login-btn-label">
+        <span>{{ $t('login.sns_login', { sns_name: 'Facebook' }) }}</span>
+        <v-chip
+          v-if="lastLoginProvider === 'facebook.com'"
+          size="x-small"
+          color="primary"
+          variant="tonal"
+          class="last-login-chip"
+        >
+          {{ $t('login.last_login') }}
+        </v-chip>
       </div>
     </v-btn>
     <v-btn
@@ -127,8 +148,17 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
       <template #prepend>
         <v-icon :icon="XIcon" size="22" />
       </template>
-      <div class="ml-2">
-        {{ $t('login.sns_login', { sns_name: 'X' }) }}
+      <div class="ml-2 login-btn-label">
+        <span>{{ $t('login.sns_login', { sns_name: 'X' }) }}</span>
+        <v-chip
+          v-if="lastLoginProvider === 'twitter.com'"
+          size="x-small"
+          color="primary"
+          variant="tonal"
+          class="last-login-chip"
+        >
+          {{ $t('login.last_login') }}
+        </v-chip>
       </div>
     </v-btn>
     <v-divider class="my-6" color="grey-lighten-3" />
@@ -147,7 +177,18 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
         :disabled="!isValid || (isLoading !== null && isLoading !== 'custom')"
         type="submit"
       >
-        {{ $t('login.continue_email_login') }}
+        <span class="login-btn-label">
+          <span>{{ $t('login.continue_email_login') }}</span>
+          <v-chip
+            v-if="lastLoginProvider === 'custom'"
+            size="x-small"
+            color="primary"
+            variant="tonal"
+            class="last-login-chip"
+          >
+            {{ $t('login.last_login') }}
+          </v-chip>
+        </span>
       </v-btn>
     </v-form>
 
@@ -175,3 +216,19 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
     </v-card-text>
   </confirm-dialog>
 </template>
+
+<style scoped>
+.login-btn-label {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  width: 100%;
+  gap: 12px;
+}
+
+.last-login-chip {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  font-size: 11px;
+}
+</style>

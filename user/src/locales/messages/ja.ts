@@ -583,6 +583,7 @@ export default {
     email: 'メールアドレス',
     continue_email_login: 'メールアドレスでログイン',
     sns_login: '{sns_name}でログイン',
+    last_login: '前回ログイン',
     not_registered: 'このメールアドレスは登録されていません。新規登録からアカウントを作成してください。',
     link_dialog_body:
       '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',

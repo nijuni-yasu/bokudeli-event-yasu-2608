@@ -16,6 +16,7 @@ import { useEventStore, type EventStore, type BokudeliEvent } from '@shokujii/ba
 import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
+import { recordLastLoginFromCredential } from '@shokujii/base/utils/lastLoginProvider.js'
 import {
   clearPendingLinkRequest,
   getRedirectPath,
@@ -263,6 +264,10 @@ export const setupRouter = (router: Router) => {
 
       if (shokujiiUser == null) {
         return await handleProfileUpdateFailure(to.path, to.query, userCredential)
+      }
+
+      if (userCredential != null) {
+        recordLastLoginFromCredential(userCredential)
       }
 
       // profile に戻ってきた場合はリンクなので画面はそのまま
