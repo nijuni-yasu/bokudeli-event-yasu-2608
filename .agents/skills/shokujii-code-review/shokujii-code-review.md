@@ -38,6 +38,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `v-if` と `v-show` を適切に使い分けているか（機能を殺す場合は `v-if`）
 - [ ] `defineEmits` を最新の型構文で書いているか（例: `defineEmits<{ save: [menu: BokudeliPartnerMenu] }>()`）
 - [ ] `props` と `model` を同時に定義していないか
+- [ ] イベントハンドラ・ライフサイクルフックから呼ぶ非同期処理に `try/catch` があるか（unhandled rejection や UI 不整合を防ぐ）
 
 ### Vue コンポーネント設計
 
@@ -59,6 +60,14 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `v-html` に DB・ユーザー入力由来の動的データ（TinyMCE 等のリッチテキスト含む）を渡す場合、サニタイズ（DOMPurify 等）しているか（`$t()` 等の静的文字列のみの場合は対象外）
 - [ ] `target="_blank"` を使う外部リンクに `rel="noopener noreferrer"` を付けているか（`window.open`・`v-html` 内リンク・`ja.ts` の文言内リンクも対象）
 - [ ] Auth ユーザー作成 → Firestore 保存のような複数ステップの作成処理で、後続ステップが失敗した場合に先行して作成済みのリソースをロールバック・補償削除しているか（残すと再登録不能や認可バイパスにつながる）
+- [ ] 外部 URL のホスト名検証を `startsWith` のみで行っていないか（`https://good.com.attacker.example` のようになりすませる。URL をパースしてホスト名を厳密比較する）
+- [ ] 運用ドキュメント・レビュー記録に実ユーザーの UID・メールアドレス等の PII や認証情報ファイルの中身を平文で残していないか（プレースホルダー化する）
+
+### アクセシビリティ
+
+- [ ] アイコンのみのボタンに `aria-label`、画像に `alt` を付けているか
+- [ ] フォーム入力に `label` / `autocomplete` を設定しているか
+- [ ] 削除等の破壊的操作に確認モーダルを挟んでいるか
 
 ### Materio / UI テンプレート
 
@@ -80,6 +89,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] communityId と eventId の両方が分かるのに `getEvent` を使っていないか（`getEventInCommunity` を使う。`getEvent` は eventId のみ分かる Tier C 向け）
 - [ ] ループ内で Firestore の read/write や外部 API 呼び出しを逐次 `await` していないか（`Promise.all`・バッチ処理・並列度を制限した実行を検討する）
 - [ ] カウンタや上限チェック等の不変条件を read-then-write で更新していないか（`FieldValue.increment` または Transaction で原子性を担保する）
+- [ ] 新規の複合クエリ（`where` 複数条件・`orderBy` 併用・`array-contains` 等）に対応する `firestore.indexes.json` の追加漏れ・重複がないか
+- [ ] store の zod パースエラー等、握りつぶすと調査不能になる catch 節で `reportClientError` を呼んでいるか（クライアント側 store）
 
 ### community_id / community_account の使い分け
 
@@ -117,6 +128,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、`.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も同 PR で更新されているか
 - [ ] 更新漏れは 🚨 必須修正（マージ後も Function が未デプロイでサイレント障害になる）
 - [ ] export しない内部ヘルパーは対象外
+- [ ] 後方非互換なスキーマ変更・新規 Callable を含む PR で、複数 CI ワークフロー（`deploy_functions` / `deploy_user` / `deploy_partner` 等）間のデプロイ順序を明記・保証しているか
 
 ### 日付・時刻処理
 
@@ -136,6 +148,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 親ドキュメントが既に持っている情報を子ドキュメントに重複させていないか
 - [ ] DbSchema の日付・時刻フィールドに `TimestampSchema` を使っているか
 - [ ] AppSchema の日付・時刻フィールドに `EpochMillisSchema` を使っているか
+- [ ] 既存データに影響する変更の場合、`bokudeli-event-batch` 側での migration / backfill 対応（または少なくとも言及）があるか
+- [ ] DbSchema で `nullable()` を安易に使っていないか（明示的に `null` が必要な特殊ケースを除き避ける方針。optional 文字列は `NonEmptyStringSchema` を検討する）
 
 ### Composable / Store の役割分担
 
@@ -667,3 +681,33 @@ export const registerUser = onCall(async (request) => {
   }
 })
 ```
+
+### NG: 外部 URL のホスト名検証を startsWith のみで行う
+
+```typescript
+// NG: startsWith は https://lh3.googleusercontent.com.attacker.example にもマッチする
+if (url.startsWith('https://lh3.googleusercontent.com')) {
+  // 信頼済みとして扱う
+}
+
+// OK: URL をパースしてホスト名を厳密比較する
+if (new URL(url).hostname === 'lh3.googleusercontent.com') {
+  // 信頼済みとして扱う
+}
+```
+
+### NG: DbSchema で nullable() を安易に使う
+
+```typescript
+// NG: 明示的に null を保存する特殊な理由がないのに nullable() にする
+const XxxDbSchema = z.object({
+  memo: z.string().nullable(),
+})
+
+// OK: optional 文字列は NonEmptyStringSchema で「フィールドなし」を表現する
+const XxxDbSchema = z.object({
+  memo: NonEmptyStringSchema.optional(),
+})
+```
+
+日付範囲の「開始日時のみ設定可能」等、明示的に `null` が必要な特殊ケースは `TimestampSchema.nullable()` のように使ってよい（例: `PartnerMenu.ts`）。
