@@ -86,6 +86,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 文字列に falsy チェックを使っていないか（`!= null` または `!== ''` を使う）
 - [ ] boolean 以外の値に `!` を使っていないか（`!= null` に変更する）
 - [ ] `null` と `undefined` を区別して比較しているか（`== null` で両方を捕捉する）
+- [ ] 権限チェック関数が `Promise<boolean>` 等を返す場合、呼び出し側で `await` しているか（await 漏れは常に truthy 判定になり認可バイパスに直結する）
 
 ### Vue リアクティビティ
 
@@ -112,6 +113,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ### セキュリティ
 
 - [ ] `v-html` に DB・ユーザー入力由来の動的データ（TinyMCE 等のリッチテキスト含む）を渡す場合、サニタイズ（DOMPurify 等）しているか（`$t()` 等の静的文字列のみの場合は対象外）
+- [ ] `target="_blank"` を使う外部リンクに `rel="noopener noreferrer"` を付けているか（`window.open`・`v-html` 内リンク・`ja.ts` の文言内リンクも対象）
+- [ ] Auth ユーザー作成 → Firestore 保存のような複数ステップの作成処理で、後続ステップが失敗した場合に先行して作成済みのリソースをロールバック・補償削除しているか（残すと再登録不能や認可バイパスにつながる）
 
 ### Firestore / Store パターン
 
@@ -143,6 +146,13 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
 - [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（冪等フラグの設定を副作用より先に行う）
+- [ ] トリガー / Function 内で catch した例外をログのみにせず再 throw し、Cloud Functions の自動リトライに乗せているか（意図的に握りつぶす場合は理由をコメントに明記する）
+
+### 決済 (Stripe)
+
+- [ ] Webhook は `req.body` ではなく `req.rawBody` を使い `stripe.webhooks.constructEvent` で署名検証しているか
+- [ ] Webhook・決済確定処理が再送・重複配信されても二重処理にならないか（処理済み判定によるべき等性）
+- [ ] Stripe の Charges API / Sources API / Card Element 等の非推奨 API を新規に使っていないか（Checkout Sessions・PaymentIntents・Setup Intents を使う）
 
 ### CI / Functions デプロイ
 
@@ -170,6 +180,11 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 計算ロジックは composable より store で行うようになっているか
 - [ ] Composable 内の Store は引数で受け取らず Composable 内で再取得しているか
 - [ ] Store に不要なビジネスロジックを持ち込んでいないか
+
+### テスト (Vitest)
+
+- [ ] `documents/テスト方針・テスト項目書/テスト方針.md` の基準（ビジネスロジック・純粋関数・バグ修正）に該当する新規・変更ロジックに vitest テストを追加しているか
+- [ ] Transaction・レースコンディションを含む store 関数を新規追加・変更した場合、優先してテストを追加しているか
 
 ### コード品質・可読性
 
