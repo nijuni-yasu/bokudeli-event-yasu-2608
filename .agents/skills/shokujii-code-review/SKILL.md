@@ -109,6 +109,10 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] ハードコードされた UI 文字列を `i18n` に移行しているか
 - [ ] `var` を使っていないか（`const` / `let` を使う）
 
+### セキュリティ
+
+- [ ] `v-html` に DB・ユーザー入力由来の動的データ（TinyMCE 等のリッチテキスト含む）を渡す場合、サニタイズ（DOMPurify 等）しているか（`$t()` 等の静的文字列のみの場合は対象外）
+
 ### Firestore / Store パターン
 
 - [ ] DB への操作は必ず store 関数を経由しているか（直接 `update`、`setDoc` 等を呼ばない）
@@ -120,6 +124,14 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Transaction 内で読み込む場合、Transaction 外で同じドキュメントを読んでいないか
 - [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
+- [ ] ループ内で Firestore の read/write や外部 API 呼び出しを逐次 `await` していないか（`Promise.all`・バッチ処理・並列度を制限した実行を検討する）
+- [ ] カウンタや上限チェック等の不変条件を read-then-write で更新していないか（`FieldValue.increment` または Transaction で原子性を担保する）
+
+### Firestore Security Rules
+
+- [ ] `firestore.rules` の create/update で、新規・機微フィールドの書き込み可能な値を制約しているか（`hasOnly`、他フィールドや `request.auth` との一致検証等）
+- [ ] 新規コレクション・クエリで `enterprise_id` / `community_id` のテナント分離が必要な場合、`isSameEnterprise` / `docEnterpriseId` 等の既存ヘルパーに揃えているか（`enterprise_id` が null のドキュメントの扱いも含む）
+- [ ] `firestore.rules` を変更した場合、`tests/firestore-rules` 側のテストも追加・更新しているか
 
 ### Firebase Functions
 
@@ -130,6 +142,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] メールの1件送信に `Promise.allSettled` や失敗集計ログを使っていないか（`try/catch` で十分）
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
+- [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（冪等フラグの設定を副作用より先に行う）
 
 ### CI / Functions デプロイ
 

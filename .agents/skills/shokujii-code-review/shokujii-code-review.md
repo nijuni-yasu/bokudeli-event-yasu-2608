@@ -13,6 +13,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ## チェックリスト
 
 ### TypeScript・型安全性
+
 - [ ] `any` を使用していないか
 - [ ] `as` によるキャストを使用していないか（型推論で解決できるはず）
 - [ ] `common` の schema・API 以外で新規 Zod スキーマを定義していないか（`ZodError` の捕捉のみ可）。`as` 回避は型ガードで行う
@@ -22,12 +23,14 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `tsconfig` の strict 設定を緩める変更をしていないか
 
 ### 比較・falsy チェック
+
 - [ ] 数値に falsy チェック (`!`, `||`, `if (num)`) を使っていないか（`0` に誤反応する）
 - [ ] 文字列に falsy チェックを使っていないか（`!= null` または `!== ''` を使う）
 - [ ] boolean 以外の値に `!` を使っていないか（`!= null` に変更する）
 - [ ] `null` と `undefined` を区別して比較しているか（`== null` で両方を捕捉する）
 
 ### Vue リアクティビティ
+
 - [ ] `watch` の多用をしていないか（`computed` で代替できる場合は `computed` を使う）
 - [ ] リアクティブ変数 (`.value`) を関数内で直接使っていないか
 - [ ] `isProcessing`、`isCompleted` 等の一時フラグを不必要にリアクティブにしていないか
@@ -36,6 +39,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `props` と `model` を同時に定義していないか
 
 ### Vue コンポーネント設計
+
 - [ ] `base` のコンポーネント内にルーティングパスをハードコードしていないか（`emit` を使ってコンポーネントを汎化する）
 - [ ] `base` のコンポーネント内にビジネスロジックを持ち込んでいないか
 - [ ] ローディング状態は「画面全体に影響するデータが読み込まれているか」で判断しているか
@@ -49,12 +53,18 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 英語用の UI 文字列だけを別ファイルに分けていないか（未使用の `en.ts` 残骸を作らない）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
 
+### セキュリティ
+
+- [ ] `v-html` に DB・ユーザー入力由来の動的データ（TinyMCE 等のリッチテキスト含む）を渡す場合、サニタイズ（DOMPurify 等）しているか（`$t()` 等の静的文字列のみの場合は対象外）
+
 ### Materio / UI テンプレート
+
 - [ ] `base/materio/`（`@core` / `@layouts`）を変更していないか
 - [ ] Materio のレイアウト・スタイル調整を `user/src/styles/` 等の override で行っているか
 - [ ] materio 配下にプロジェクト固有の util / コンポーネントを追加していないか（`base/src/` 等を使う）
 
 ### Firestore / Store パターン
+
 - [ ] DB への操作は必ず store 関数を経由しているか（直接 `update`、`setDoc` 等を呼ばない）
 - [ ] `withConverter` を付けた reference を使っているか（付けない ref の使用は NG）
 - [ ] `toFirestore` を store の `FirestoreDataConverter` 外で直接呼んでいないか
@@ -65,14 +75,24 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 - [ ] communityId と eventId の両方が分かるのに `getEvent` を使っていないか（`getEventInCommunity` を使う。`getEvent` は eventId のみ分かる Tier C 向け）
+- [ ] ループ内で Firestore の read/write や外部 API 呼び出しを逐次 `await` していないか（`Promise.all`・バッチ処理・並列度を制限した実行を検討する）
+- [ ] カウンタや上限チェック等の不変条件を read-then-write で更新していないか（`FieldValue.increment` または Transaction で原子性を担保する）
 
 ### community_id / community_account の使い分け
+
 - [ ] `useCommunityStore(string)` には `community_account`（URL スラッグ）を渡しているか
 - [ ] Callable / Firestore パス / Storage には `community_id`（Firestore ドキュメント ID）を渡しているか
 - [ ] URL 生成（`getCommunityPath`, `getEventPath` 等）には `community_account` を渡しているか
 - [ ] 同一コンポーネント内で prop 名 `communityId` と `communityAccount` を混在させていないか（用途が異なる場合は JSDoc で区別する）
 
+### Firestore Security Rules
+
+- [ ] `firestore.rules` の create/update で、新規・機微フィールドの書き込み可能な値を制約しているか（`hasOnly`、他フィールドや `request.auth` との一致検証等）
+- [ ] 新規コレクション・クエリで `enterprise_id` / `community_id` のテナント分離が必要な場合、`isSameEnterprise` / `docEnterpriseId` 等の既存ヘルパーに揃えているか（`enterprise_id` が null のドキュメントの扱いも含む）
+- [ ] `firestore.rules` を変更した場合、`tests/firestore-rules` 側のテストも追加・更新しているか
+
 ### Firebase Functions
+
 - [ ] `console.log` / `console.error` を使っていないか（`createModuleLogger` を使う）
 - [ ] `import { logger } from 'firebase-functions'` を直接使っていないか（`createModuleLogger` を使う）
 - [ ] ログメッセージに `letter |` 等の接頭辞をつけていないか（`createModuleLogger` 使用時は不要）
@@ -80,13 +100,16 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] メールの1件送信に `Promise.allSettled` や失敗集計ログを使っていないか（`try/catch` で十分）
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
+- [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（冪等フラグの設定を副作用より先に行う）
 
 ### CI / Functions デプロイ
+
 - [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、`.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も同 PR で更新されているか
 - [ ] 更新漏れは 🚨 必須修正（マージ後も Function が未デプロイでサイレント障害になる）
 - [ ] export しない内部ヘルパーは対象外
 
 ### 日付・時刻処理
+
 - [ ] `Date` オブジェクトを直接使っていないか（`luxon` を使う）
 - [ ] `new Date()` で UNIX タイムを生成していないか（実行環境によって値が変わる）
 - [ ] 日付の固定値は `CUTOFF_UNIX_TIME_XXXX` のように `common` に定数として定義しているか
@@ -96,6 +119,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 日付・時刻の表示フォーマットを call site で独自実装していないか（`convertToDate` / `convertToTimeString` / `convertToDatetime` / `convertToDatetimeWeekdayShort` 等を使う）
 
 ### スキーマ設計 (Zod / common)
+
 - [ ] 新規フィールドを `optional` にしていないか（新規追加フィールドは基本 `required`）
 - [ ] ソート用のフィールドを文字列型で定義していないか（数値型が正しい）
 - [ ] 独自の日付文字列変換を実装していないか（`luxon` または `zod` の `transform` を使う）
@@ -104,11 +128,13 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] AppSchema の日付・時刻フィールドに `EpochMillisSchema` を使っているか
 
 ### Composable / Store の役割分担
+
 - [ ] 計算ロジックは composable より store で行うようになっているか
 - [ ] Composable 内の Store は引数で受け取らず Composable 内で再取得しているか
 - [ ] Store に不要なビジネスロジックを持ち込んでいないか
 
 ### コード品質・可読性
+
 - [ ] 早期リターンをエラーハンドリング以外で多用していないか（並列処理は `else` で書く）
 - [ ] 「並列の処理（値の代入など）」を早期リターンで書いていないか
 - [ ] 不要な変数への代入を中継していないか
@@ -123,11 +149,13 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 将来流用できる部分を最初から汎用化しているか
 
 ### コミット・PR
+
 - [ ] 1つの PR に複数の責務を混在させていないか
 - [ ] 無関係な修正を同じコミットに含めていないか
 - [ ] 動作的に大きな変更を別 PR または別 Issue に分けているか
 
 ### アセット管理
+
 - [ ] 画像・バナー等のアセットをコード内にハードコードしていないか（Firestore / Storage で管理する）
 
 ---
@@ -282,7 +310,7 @@ await letterStore.update(ref, data)
 await updateEventMenus({ menus: menuObjects })
 
 // OK: ID リストを渡す
-await updateEventMenus({ menuIds: menuObjects.map(m => m.menu_id) })
+await updateEventMenus({ menuIds: menuObjects.map((m) => m.menu_id) })
 ```
 
 ### NG: Functions で console や logger を直接使う
@@ -401,7 +429,7 @@ friend_sort_last_met_at: '最後に会った順',
 
 vue-i18n の datetimeFormats は廃止済み。新規実装では `common` の Luxon ベース util を使う。
 
-```typescript
+```vue-html
 // NG: vue-i18n datetimeFormats に依存する
 {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}
 
@@ -451,4 +479,82 @@ const isLoadingDetail = ref(false)
 
 // OK: isLoading を一つにまとめる
 const isLoading = ref(false)
+```
+
+### NG: `v-html` にユーザー入力をそのまま渡す
+
+```vue
+<!-- NG: TinyMCE 等のリッチテキストをサニタイズせず v-html で描画 -->
+<div v-html="event.event_desc" />
+```
+
+```vue
+<!-- OK: サニタイズしてから描画する -->
+<div v-html="sanitizeHtml(event.event_desc)" />
+```
+
+`$t('...')` 等、開発者が管理する静的文字列のみを渡す場合はサニタイズ不要。
+
+### NG: 1 回の操作で複数ドキュメントが変化する前提を欠いたトリガー処理
+
+```typescript
+// NG: 一括更新で複数行が同時に ordered になり、onDocumentWritten が複数回発火して
+// 注文完了メールが重複送信される
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  if (event.data?.after.data()?.status === 'ordered') {
+    await sendOrderCompleteMail(...) // 発火のたびに送られる
+  }
+})
+
+// OK: 冪等フラグを副作用より先に設定し、送信済みなら早期リターンする
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  const order = event.data?.after.data()
+  if (order?.status !== 'ordered' || order.mail_sent_at != null) return
+  await markMailSent(orderRef) // 副作用より先に冪等フラグを立てる
+  await sendOrderCompleteMail(...)
+})
+```
+
+### NG: ループ内で Firestore read/write を逐次 await する
+
+```typescript
+// NG: メンバー数に比例して直列に await する（タイムアウト・コスト増）
+for (const memberId of memberIds) {
+  const membership = await getChatMembership(roomId, memberId)
+}
+
+// OK: 並列化する（必要なら並列度を制限する）
+const memberships = await Promise.all(memberIds.map((memberId) => getChatMembership(roomId, memberId)))
+```
+
+### NG: カウンタ・上限チェックを read-then-write で行う
+
+```typescript
+// NG: 同時実行で increment が失われたり、上限チェックが古い値のまま通過する
+const room = await getChatRoom(roomId)
+if (room.unread_count < 99) {
+  await saveChatRoom({ ...room, unread_count: room.unread_count + 1 })
+}
+
+// OK: FieldValue.increment で原子的に更新し、上限は Transaction 内で判定する
+await db.runTransaction(async (t) => {
+  const snapshot = await t.get(roomRef)
+  if ((snapshot.data()?.unread_count ?? 0) >= 99) return
+  t.update(roomRef, { unread_count: FieldValue.increment(1) })
+})
+```
+
+### NG: Firestore Rules で新規・機微フィールドの書き込みを制約しない
+
+```
+// NG: community 作成時に enterprise_id を任意の値で自由に設定できる
+match /communities/{communityId} {
+  allow create: if request.auth != null
+}
+
+// OK: 書き込み可能な値を明示的に制約する
+match /communities/{communityId} {
+  allow create: if request.auth != null
+    && request.resource.data.enterprise_id == null
+}
 ```
