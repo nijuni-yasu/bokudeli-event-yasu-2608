@@ -75,10 +75,11 @@ fi
 # git add — 機密ファイルの staging を拒否（protect-files.sh は Edit|Write のみ）
 # 引用符を考慮して ; / && で分割（commit -m 内の ; 誤分割を防止）。git commit 断片は検査対象外
 # git … add は断片内の任意位置（GIT_DIR= 前置・パイプ・global option 付き）を検出
-git_global_opt='(-C[[:space:]]+[^[:space:]]+|--git-dir=[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
+git_global_opt='(-C[[:space:]]+[^[:space:]]+|--git-dir=[^[:space:]]+|--git-dir[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
 git_add_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?git([[:space:]]+${git_global_opt})*[[:space:]]+add[[:space:]]"
 git_add_strip='.*(^|[[:space:]]|[|]|GIT_DIR=[^[:space:]]+[[:space:]]+)git([[:space:]]+('"${git_global_opt}"'))*[[:space:]]+add[[:space:]]+'
-sensitive_add_pattern='(\.env(\.|$)|\.secret(\.|$)|\.firebaserc($|[^/])|\.pem$|\.key$)'
+# 各引数トークン境界（空白）でも機密パスを検出（git add .secret otherfile 等）
+sensitive_add_pattern='(^|[[:space:]])([^[:space:]]+/)*\.env(\.|$|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*\.secret($|[[:space:]]|\.)|(^|[[:space:]])([^[:space:]]+/)*\.firebaserc($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.pem($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.key($|[[:space:]])'
 bulk_add_msg='git add の一括ステージ（. / -A / -u 等）は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。'
 
 split_shell_commands() {

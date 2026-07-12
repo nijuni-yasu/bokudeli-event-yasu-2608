@@ -69,6 +69,10 @@ CASES: list[tuple[str, str]] = [
     ("git add ../", "block"),
     ("git add -- ../", "block"),
     ('git commit -m \'fix || git add .env\'', "allow"),
+    ("git --git-dir /tmp/repo add .env.development", "block"),
+    ("git add partner/.secret user/src/foo.ts", "block"),
+    ("git add .env otherfile", "block"),
+    ("git add server.pem otherfile", "block"),
 ]
 
 
