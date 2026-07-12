@@ -209,6 +209,24 @@ PR・コードレビューのコメントは必ず日本語で行う。
 
 チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
 
+### レビューコメント対応記録（必須）
+
+`documents/レビューコメント/pr-<PR番号>.md` を RC 対応状況の正本とする。
+**RC-n の対応を依頼され実装を進めたタスク**では、コード変更と**同一作業内**（コミット前）に `pr-<番号>.md` を必ず更新する（[`lint-and-format`](.agents/skills/lint-and-format/SKILL.md) と同様、完了報告の前提）。
+
+| 状況 | 対応列 | 判断列 | PRスコープ |
+| ---- | ------ | ------ | ---------- |
+| コードで解消した | `[x]` | ✅ 対応済み | 📌 スコープ内（変更なし可） |
+| 対応不要と確定 | `[x]` | 👌 修正不要 | — または 📤 スコープ外 |
+| 本 PR では実装せず別 Issue へ切り出した | `[x]` | 📤 #NNNN 別Issue化 | 📤 スコープ外 |
+| 未着手 | `[ ]` | 🟡 修正提案 / 🚨 必須修正 | 評価時のまま |
+
+- **❌ 未対応は使わない**（[`review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) と共通）。未着手は `[ ]` + 🟡 / 🚨 で表す。
+- 「別 Issue で対応」「方針検討」等の**文言だけ**で Issue を作らない状態は禁止。切り出す場合は [`git-create-issue`](.agents/skills/git-create-issue/SKILL.md) で Issue を作成し、判断列に **`📤 #NNNN 別Issue化`**、要約列 2 行目に Issue URL または番号を明記する。
+- Issue 作成まで完了したら **対応列は `[x]`** とする（本 PR 側の運用対応は完了）。
+
+**更新箇所**（漏れ防止）: ファイル冒頭の通し `### RC 一覧（サマリ）` 表、直近評価セッション内サマリ表（あれば）、該当 RC 記録ブロックの判断結果・PRスコープ・判断理由・要約。詳細は `/review-comments-evaluate` を参照。
+
 ## エージェント用ファイルとシンボリックリンク
 
 実装・修正は **Cursor** と **Claude（Claude Code 等）** のどちらでも行う。どちらの環境でも同じプロジェクトガイドとスキルを参照できるよう、次のように整理している。
