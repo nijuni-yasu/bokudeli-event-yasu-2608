@@ -38,8 +38,16 @@ if echo "$command" | grep -qE '(^|[[:space:]])git[[:space:]]+push'; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
+  if echo "$command" | grep -qE "(^|[[:space:]])HEAD:refs/heads/(${protected_refs})([[:space:]]|$)"; then
+    block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
+  fi
+
   # 単独 ref 引数（git push origin main 等）。部分一致は使わない（sync/main-to-development は通す）
   if echo "$command" | grep -qE "(^|[[:space:]])(${protected_refs})([[:space:]]|$)"; then
+    block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
+  fi
+
+  if echo "$command" | grep -qE "(^|[[:space:]])refs/heads/(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
@@ -65,18 +73,38 @@ if echo "$command" | grep -qE '(^|[[:space:]])git[[:space:]]+push'; then
 fi
 
 # git add — 機密ファイルの staging を拒否（protect-files.sh は Edit|Write のみ）
-# コミットメッセージ等の文中 git add 文字列は対象外（シェル行頭または && / ; 直後の git add のみ）
-# オプション（-N, -f 等）やパス prefix（dir/.secret 等）が付いた場合も [^;&]* でセグメント全体をスキャン
-git_add_prefix='(^|[;&][[:space:]]*|&&[[:space:]]*)git[[:space:]]+add[[:space:]]'
+# コミットメッセージ等の文中 git add 文字列は対象外（; / && で分割した各シェル断片のみ）
+# git remote add 等は除外（git … add サブコマンドのみ。git -C / --git-dir 付きも対象）
+git_add_cmd='^git([[:space:]]+(-C([[:space:]]+[^[:space:]]+|[^[:space:]]+)|--git-dir=[^[:space:]]+))*[[:space:]]+add[[:space:]]'
+sensitive_add_pattern='(\.env(\.|$)|\.secret(\.|$)|\.firebaserc($|[^/])|\.pem($|\.)|\.key($|[^/]))'
+bulk_add_msg='git add の一括ステージ（. / -A / -u 等）は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。'
 
-if echo "$command" | grep -qE "${git_add_prefix}"; then
-  if echo "$command" | grep -qE "${git_add_prefix}[^;&]*(\.env(\.|[[:space:]]|$)|\.secret(\.|[[:space:]]|$)|\.firebaserc([[:space:]]|$))"; then
-    block "機密ファイル（.env / .secret / .firebaserc）の git add は禁止です。"
+while IFS= read -r part; do
+  part="${part#"${part%%[![:space:]]*}"}"
+  if ! echo "$part" | grep -qE "${git_add_cmd}"; then
+    continue
   fi
 
-  if echo "$command" | grep -qE "${git_add_prefix}(-A|--all|\.)($|[[:space:]])"; then
-    block "git add . / -A / --all は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。"
+  add_args=$(echo "$part" | sed -E 's/^git([[:space:]]+(-C([[:space:]]+[^[:space:]]+|[^[:space:]]+)|--git-dir=[^[:space:]]+))*[[:space:]]+add[[:space:]]+//')
+
+  # オプション（-f / -N 等）を挟んでも add 引数全体から機密パスを検出
+  if echo "$add_args" | grep -qE "${sensitive_add_pattern}"; then
+    block "機密ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
   fi
-fi
+
+  # 一括ステージ: -A / --all / -u / --update / . / ./ / .. / -- . / :/
+  if echo "$add_args" | grep -qE '(^|[[:space:]])(-A|--all|-u|--update)($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+  if echo "$add_args" | grep -qE '(^|[[:space:]])(\./|\.\.|:/)($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+  if echo "$add_args" | grep -qE '(^|[[:space:]])--[[:space:]]+\.?\.?($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+  if echo "$add_args" | grep -qE '(^|[[:space:]])\.($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+done < <(echo "$command" | sed 's/&&/\n/g; s/;/\n/g')
 
 exit 0
