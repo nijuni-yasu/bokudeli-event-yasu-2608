@@ -544,17 +544,33 @@ export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', a
   await sendOrderCompleteMail(...) // ここで失敗すると再送されない
 })
 
-// OK: Transaction で未送信を原子的に確保してから送信し、成功後に sent 記録する
+// NG: Transaction 内 return 後も外側送信が続く（mail_sending_at を入口ガードに含めない）
 export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
   const order = event.data?.after.data()
   if (order?.status !== 'ordered' || order.mail_sent_at != null) return
   await db.runTransaction(async (t) => {
     const snap = await t.get(orderRef)
-    if (snap.data()?.mail_sent_at != null) return
+    if (snap.data()?.mail_sent_at != null) return // Transaction 内 return では外側は止まらない
     t.update(orderRef, { mail_sending_at: FieldValue.serverTimestamp() })
   })
-  await sendOrderCompleteMail(...)
+  await sendOrderCompleteMail(...) // 上記 Transaction で return してもここは実行される
   await markMailSent(orderRef)
+})
+
+// OK: Transaction で送信枠を原子的に確保し、確保できた場合のみ送信（mail_sending_at も入口ガード対象）
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  const order = event.data?.after.data()
+  if (order?.status !== 'ordered' || order.mail_sent_at != null || order.mail_sending_at != null) return
+  const shouldSend = await db.runTransaction(async (t) => {
+    const snap = await t.get(orderRef)
+    const data = snap.data()
+    if (data?.mail_sent_at != null || data?.mail_sending_at != null) return false
+    t.update(orderRef, { mail_sending_at: FieldValue.serverTimestamp() })
+    return true
+  })
+  if (!shouldSend) return
+  await sendOrderCompleteMail(...)
+  await markMailSent(orderRef) // 送信成功後に sent 確定
 })
 
 // OK（本番パターン）: member_orders 単位の onDocumentWritten ではなく、確定処理の入口で 1 回だけ副作用
@@ -627,23 +643,39 @@ export const stripeWebhook = onRequest(async (req, res) => {
   res.sendStatus(200)
 })
 
-// OK: rawBody + constructEvent で署名検証し、Transaction 内で処理済みを原子的に確保する
+// NG: Transaction 内で処理済み確定後に外側で副作用（失敗時 Stripe 再送は already_processed で 200、副作用欠落）
 export const stripeWebhook = onRequest(async (req, res) => {
   const event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], webhookSecret)
   const txResult = await db.runTransaction(async (transaction) => {
     if (await getStripeByPaymentIntent(..., transaction) != null) return 'already_processed'
-    // saveStripe + saveOrder を同一 transaction 内で実行
+    saveStripe(...) // 処理済み確定
     return 'processed'
   })
   if (txResult === 'already_processed') {
     res.sendStatus(200)
     return
   }
-  await handlePaymentIntentSucceeded(event.data.object)
+  await handlePaymentIntentSucceeded(event.data.object) // ここ失敗すると再送不可
   res.sendStatus(200)
 })
 
-// 詳細: functions/default/src/stripeWebhook.ts の handleOrderConfirmation 参照
+// OK: Transaction 内は in-flight 確保（重複実行防止）のみ。注文確定等の永続化と副作用は成功後に整合
+export const stripeWebhook = onRequest(async (req, res) => {
+  const event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], webhookSecret)
+  const txResult = await db.runTransaction(async (transaction) => {
+    if (await getStripeByPaymentIntent(..., transaction) != null) return 'already_processed'
+    // 注文 ordered 化 + saveStripe を同一 transaction 内で原子的に実行（副作用は含めない）
+    return 'processed'
+  })
+  if (txResult === 'already_processed') {
+    res.sendStatus(200)
+    return
+  }
+  await applyOrderConfirmedSideEffects(...) // メール等。失敗時は Stripe 再送で再実行可能にする設計とセット
+  res.sendStatus(200)
+})
+
+// 本番: functions/default/src/stripeWebhook.ts（副作用完了後 200。長時間処理は #2075 Cloud Tasks 分離予定）
 ```
 
 ### NG: Promise を返す権限チェック関数の await 漏れ
