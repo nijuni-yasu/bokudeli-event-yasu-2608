@@ -51,6 +51,15 @@ if echo "$command" | grep -qE '(^|[[:space:]])git[[:space:]]+push'; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
+  # refspec <src>:<dst>（feature:main / feature:refs/heads/development 等）
+  if echo "$command" | grep -qE "(^|[[:space:]])([^[:space:]]+):(${protected_refs})([[:space:]]|$)"; then
+    block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
+  fi
+
+  if echo "$command" | grep -qE "(^|[[:space:]])([^[:space:]]+):refs/heads/(${protected_refs})([[:space:]]|$)"; then
+    block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
+  fi
+
   if echo "$command" | grep -qE '(^|[[:space:]])--tags([[:space:]]|$)'; then
     block "git push --tags は人間のリリース作業専用です。エージェントは実行できません。"
   fi
@@ -81,6 +90,7 @@ git_add_strip='.*(^|[[:space:]]|[|]|GIT_DIR=[^[:space:]]+[[:space:]]+)git([[:spa
 # 各引数トークン境界（空白）でも機密パスを検出（git add .secret otherfile 等）
 sensitive_add_pattern='(^|[[:space:]])([^[:space:]]+/)*\.env(\.|$|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*\.secret($|[[:space:]]|\.)|(^|[[:space:]])([^[:space:]]+/)*\.firebaserc($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.pem($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.key($|[[:space:]])'
 bulk_add_msg='git add の一括ステージ（. / -A / -u 等）は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。'
+patch_add_msg='git add -p / --patch は追跡済み機密の部分ステージリスクがあるため禁止です。'
 
 split_shell_commands() {
   SPLIT_SHELL_INPUT="$1" python3 <<'PY'
@@ -124,11 +134,22 @@ for part in split_commands(os.environ.get("SPLIT_SHELL_INPUT", "")):
 PY
 }
 
+split_rc=0
+split_output=$(split_shell_commands "$command") || split_rc=$?
+if (( split_rc != 0 )); then
+  block "git add 検査用のコマンド分割に失敗しました。機密ファイルの staging を拒否します。"
+fi
+
 while IFS= read -r part; do
   [[ -z "$part" ]] && continue
 
   # git commit 断片はメッセージ内 git add 文字列の誤検知防止のためスキップ
   if echo "$part" | grep -qE '(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?git[[:space:]]+commit([[:space:]]|$)'; then
+    continue
+  fi
+
+  # grep/awk 等の引数内 git add 文字列の誤検知防止（RC-38）
+  if echo "$part" | grep -qE '^[[:space:]]*(grep|awk|cat|sed|head|tail|sort|wc)[[:space:]]'; then
     continue
   fi
 
@@ -139,7 +160,11 @@ while IFS= read -r part; do
   add_args=$(echo "$part" | sed -E "s/${git_add_strip}//")
 
   if echo "$add_args" | grep -qE "${sensitive_add_pattern}"; then
-    block "機密ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
+    block "保護対象ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
+  fi
+
+  if echo "$add_args" | grep -qE '(^|[[:space:]])(-p|--patch)($|[[:space:]])'; then
+    block "${patch_add_msg}"
   fi
 
   if echo "$add_args" | grep -qE '(^|[[:space:]])(-A|--all|-u|--update)($|[[:space:]])'; then
@@ -154,6 +179,6 @@ while IFS= read -r part; do
   if echo "$add_args" | grep -qE '(^|[[:space:]])\.($|[[:space:]])'; then
     block "${bulk_add_msg}"
   fi
-done < <(split_shell_commands "$command")
+done <<< "$split_output"
 
 exit 0

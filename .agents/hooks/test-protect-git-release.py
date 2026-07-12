@@ -31,6 +31,10 @@ CASES: list[tuple[str, str]] = [
     ("git push origin HEAD:release/2.6.0", "allow"),
     ("git push origin HEAD:sync/main-to-development", "allow"),
     ("git push origin HEAD:hotfix/1910", "allow"),
+    ("git push origin feature:main", "block"),
+    ("git push origin feature:development", "block"),
+    ("git push origin feature:refs/heads/main", "block"),
+    ("git push origin feature:release/2170", "allow"),
     ("git branch -f production v2.5.3", "block"),
     ("git commit -m 'wip'", "allow"),
     ("git add .env.development", "block"),
@@ -73,6 +77,10 @@ CASES: list[tuple[str, str]] = [
     ("git add partner/.secret user/src/foo.ts", "block"),
     ("git add .env otherfile", "block"),
     ("git add server.pem otherfile", "block"),
+    ("git add -p", "block"),
+    ("git add --patch", "block"),
+    ("git add -p .env.development", "block"),
+    ("grep -r git add .env", "allow"),
 ]
 
 
