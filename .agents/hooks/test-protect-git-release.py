@@ -64,6 +64,11 @@ CASES: list[tuple[str, str]] = [
         'git commit -m "git add . のブロックを説明"',
         "allow",
     ),
+    ("false || git add .env.development", "block"),
+    ("true || git add .secret", "block"),
+    ("git add ../", "block"),
+    ("git add -- ../", "block"),
+    ('git commit -m \'fix || git add .env\'', "allow"),
 ]
 
 

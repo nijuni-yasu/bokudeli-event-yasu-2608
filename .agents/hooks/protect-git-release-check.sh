@@ -92,7 +92,7 @@ def split_commands(text: str) -> list[str]:
     i = 0
     n = len(text)
     while i < n:
-        if not in_sq and not in_dq and i + 1 < n and text[i : i + 2] == "&&":
+        if not in_sq and not in_dq and i + 1 < n and text[i : i + 2] in ("&&", "||"):
             p = "".join(cur).strip()
             if p:
                 parts.append(p)
@@ -109,7 +109,7 @@ def split_commands(text: str) -> list[str]:
         c = text[i]
         if c == "'" and not in_dq:
             in_sq = not in_sq
-        elif c == '"' and not in_dq:
+        elif c == '"' and not in_sq:
             in_dq = not in_dq
         cur.append(c)
         i += 1
@@ -144,7 +144,7 @@ while IFS= read -r part; do
   if echo "$add_args" | grep -qE '(^|[[:space:]])(-A|--all|-u|--update)($|[[:space:]])'; then
     block "${bulk_add_msg}"
   fi
-  if echo "$add_args" | grep -qE '(^|[[:space:]])(\./|\.\.|:/)($|[[:space:]])'; then
+  if echo "$add_args" | grep -qE '(^|[[:space:]])(\./|\.\./|\.\.|:/)($|[[:space:]])'; then
     block "${bulk_add_msg}"
   fi
   if echo "$add_args" | grep -qE '(^|[[:space:]])--[[:space:]]+\.?\.?($|[[:space:]])'; then
