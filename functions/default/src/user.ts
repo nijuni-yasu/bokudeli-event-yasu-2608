@@ -269,7 +269,7 @@ export const updateProfileFromProviders = onCall<
   const description = additionalInfo?.user_description
   if (description != null) {
     // providerData の user_name / user_image_url と同様、既存の自己紹介は上書きしない
-    user.user_description = user.user_description || description
+    user.user_description = user.user_description !== '' ? user.user_description : description
   }
   const twitterHandle = additionalInfo?.user_sns_twitter
   if (twitterHandle != null) {
