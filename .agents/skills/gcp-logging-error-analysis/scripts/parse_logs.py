@@ -103,6 +103,9 @@ def classify_tier(entry: dict[str, Any], message: str) -> str:
         return "infra"
 
     if module == "clientError":
+        # clientErrorNoise.ts と同期: ZodError は常に要対応（ERROR 維持）
+        if json_payload.get("error_type") == "ZodError":
+            return "P1"
         if any(pattern in lower for pattern in CLIENT_ERROR_ACTIONABLE_PATTERNS):
             return "P1"
         if is_serviceworker_standalone_rejected(message):

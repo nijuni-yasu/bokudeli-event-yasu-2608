@@ -79,7 +79,7 @@ python3 .agents/skills/gcp-logging-error-analysis/scripts/fetch_logs.py \
 # 新 filter（正本を --filter に1行で渡す）
 python3 .agents/skills/gcp-logging-error-analysis/scripts/fetch_logs.py \
   --project=bokudeli-event-dev --freshness=24h \
-  --filter='severity="ERROR" AND NOT (logName=~"cloudaudit.googleapis.com" OR logName=~"cloudscheduler.googleapis.com") AND NOT (jsonPayload.module="clientError" AND (jsonPayload.error_message=~"Failed to fetch dynamically imported module" OR jsonPayload.error_message=~"Failed to register a ServiceWorker" OR jsonPayload.error_message=~"Connection failed." OR jsonPayload.error_message="Rejected" OR jsonPayload.error_message="rejected" OR jsonPayload.error_message=~"Load failed" OR jsonPayload.error_message=~"ServiceWorker" OR jsonPayload.error_message=~"serviceworker"))' \
+  --filter='severity>=ERROR AND NOT (logName=~"cloudaudit.googleapis.com" OR logName=~"cloudscheduler.googleapis.com") AND NOT (jsonPayload.module="clientError" AND (jsonPayload.error_message=~"Failed to fetch dynamically imported module" OR jsonPayload.error_message=~"Failed to register a ServiceWorker" OR jsonPayload.error_message=~"Connection failed." OR jsonPayload.error_message="Rejected" OR jsonPayload.error_message="rejected" OR jsonPayload.error_message=~"Load failed" OR jsonPayload.error_message=~"ServiceWorker" OR jsonPayload.error_message=~"serviceworker"))' \
   -o /tmp/after.json --parse
 ```
 
