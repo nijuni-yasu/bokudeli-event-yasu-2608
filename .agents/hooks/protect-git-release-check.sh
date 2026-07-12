@@ -22,6 +22,9 @@ block() {
 
 # git 実行ファイル（/usr/bin/git 等のパス付きも含む）
 git_bin='([^[:space:]]+/)*git'
+# global option（git add / push / branch 共通。RC-49/52/53）
+git_global_opt='(-C[[:space:]]+[^[:space:]]+|-C[^[:space:]]+|--git-dir=[^[:space:]]+|--git-dir[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
+git_git_prefix="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}([[:space:]]+${git_global_opt})*"
 
 # npm version（リリース用バージョン bump — 任意引数を一律ブロック）
 if echo "$command" | grep -qE '(^|[[:space:]])npm[[:space:]]+version[[:space:]]+[^[:space:]]'; then
@@ -29,46 +32,47 @@ if echo "$command" | grep -qE '(^|[[:space:]])npm[[:space:]]+version[[:space:]]+
 fi
 
 # git branch -f main|production（ブランチ名完全一致）
-if echo "$command" | grep -qE "(^|[[:space:]]|[|])${git_bin}[[:space:]]+branch[[:space:]]+(-f|--force)[[:space:]]+(main|production)([[:space:]]|$)"; then
+if echo "$command" | grep -qE "${git_git_prefix}[[:space:]]+branch[[:space:]]+(-f|--force)[[:space:]]+(main|production)([[:space:]]|$)"; then
   block "git branch -f main|production は人間のリリース作業専用です。エージェントは実行できません。"
 fi
 
-# git push — 保護 ref / リリースタグ（ref 完全一致のみ）
-if echo "$command" | grep -qE "(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}[[:space:]]+push"; then
+# git push — 保護 ref / リリースタグ（ref 完全一致のみ。強制 refspec 接頭辞 + 対応 RC-57）
+if echo "$command" | grep -qE "${git_git_prefix}[[:space:]]+push"; then
   protected_refs='development|main|production'
+  ref_plus='(\+)?'
 
-  if echo "$command" | grep -qE "(^|[[:space:]])HEAD:(${protected_refs})([[:space:]]|$)"; then
+  if echo "$command" | grep -qE "(^|[[:space:]])HEAD:${ref_plus}(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
-  if echo "$command" | grep -qE "(^|[[:space:]])HEAD:refs/heads/(${protected_refs})([[:space:]]|$)"; then
+  if echo "$command" | grep -qE "(^|[[:space:]])HEAD:${ref_plus}refs/heads/(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
-  # 単独 ref 引数（git push origin main 等）。部分一致は使わない（sync/main-to-development は通す）
-  if echo "$command" | grep -qE "(^|[[:space:]])(${protected_refs})([[:space:]]|$)"; then
+  # 単独 ref 引数（git push origin main / +main 等）。部分一致は使わない（sync/main-to-development は通す）
+  if echo "$command" | grep -qE "(^|[[:space:]])${ref_plus}(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
-  if echo "$command" | grep -qE "(^|[[:space:]])refs/heads/(${protected_refs})([[:space:]]|$)"; then
+  if echo "$command" | grep -qE "(^|[[:space:]])${ref_plus}refs/heads/(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
-  # refspec <src>:<dst>（feature:main / feature:refs/heads/development 等）
-  if echo "$command" | grep -qE "(^|[[:space:]])([^[:space:]]+):(${protected_refs})([[:space:]]|$)"; then
+  # refspec <src>:<dst>（feature:main / feature:+main 等）
+  if echo "$command" | grep -qE "(^|[[:space:]])([^[:space:]]+):${ref_plus}(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
-  if echo "$command" | grep -qE "(^|[[:space:]])([^[:space:]]+):refs/heads/(${protected_refs})([[:space:]]|$)"; then
+  if echo "$command" | grep -qE "(^|[[:space:]])([^[:space:]]+):${ref_plus}refs/heads/(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
-  # delete refspec（:main / :refs/heads/development 等）
-  if echo "$command" | grep -qE "(^|[[:space:]]):(${protected_refs})([[:space:]]|$)"; then
+  # delete refspec（:main / :+main / :refs/heads/development 等）
+  if echo "$command" | grep -qE "(^|[[:space:]]):${ref_plus}(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
-  if echo "$command" | grep -qE "(^|[[:space:]]):refs/heads/(${protected_refs})([[:space:]]|$)"; then
+  if echo "$command" | grep -qE "(^|[[:space:]]):${ref_plus}refs/heads/(${protected_refs})([[:space:]]|$)"; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
@@ -84,7 +88,7 @@ if echo "$command" | grep -qE "(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space
     block "git push 先がリリースタグです。人間のリリース作業専用です。"
   fi
 
-  if echo "$command" | grep -qE '(^|[[:space:]])(v[0-9][^[:space:]]*)([[:space:]]|$)'; then
+  if echo "$command" | grep -qE "(^|[[:space:]])${ref_plus}(v[0-9][^[:space:]]*)([[:space:]]|$)"; then
     block "git push 先がリリースタグです。人間のリリース作業専用です。"
   fi
 
@@ -96,14 +100,55 @@ fi
 # git add — 機密ファイルの staging を拒否（protect-files.sh は Edit|Write のみ）
 # 引用符を考慮して ; / && で分割（commit -m 内の ; 誤分割を防止）。git commit 断片は検査対象外
 # git … add は断片内の任意位置（GIT_DIR= 前置・パイプ・global option 付き）を検出
-git_global_opt='(-C[[:space:]]+[^[:space:]]+|-C[^[:space:]]+|--git-dir=[^[:space:]]+|--git-dir[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
-git_add_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}([[:space:]]+${git_global_opt})*[[:space:]]+add[[:space:]]"
-# 各引数トークン境界（空白）でも機密パスを検出（git add .secret otherfile 等）
-sensitive_add_pattern='(^|[[:space:]])([^[:space:]]+/)*\.env(\.|$|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*\.secret($|[[:space:]]|\.)|(^|[[:space:]])([^[:space:]]+/)*\.firebaserc($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.pem($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.key($|[[:space:]])'
+# 限界: bash -c 'git add .env' 等は内側コマンドを検査しない（RC-55・既知限界）
+git_add_match="${git_git_prefix}[[:space:]]+add[[:space:]]"
+git_update_index_match="${git_git_prefix}[[:space:]]+update-index[[:space:]]"
+# 各引数トークン境界（空白）でも機密パスを検出（git add .secret otherfile / .secret/foo 等）
+sensitive_add_pattern='(^|[[:space:]])([^[:space:]]+/)*\.env(\.|$|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*\.secret($|[[:space:]]|/|\.)|(^|[[:space:]])([^[:space:]]+/)*\.firebaserc($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.pem($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.key($|[[:space:]])'
 bulk_add_msg='git add の一括ステージ（. / -A / -u 等）は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。'
 patch_add_msg='git add -p / --patch は追跡済み機密の部分ステージリスクがあるため禁止です。'
 commit_all_msg='git commit -a / --all による一括ステージは機密ファイル混入リスクがあるため禁止です。git add で対象を明示指定してください。'
-git_commit_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}[[:space:]]+commit([[:space:]]|$)"
+git_commit_match="${git_git_prefix}[[:space:]]+commit([[:space:]]|$)"
+
+strip_shell_quotes() {
+  STRIP_SHELL_QUOTES_INPUT="$1" python3 <<'PY'
+import os
+import re
+
+s = os.environ.get("STRIP_SHELL_QUOTES_INPUT", "")
+s = re.sub(r"'[^']*'", " ", s)
+s = re.sub(r'"([^"\\]|\\.)*"', " ", s)
+print(s)
+PY
+}
+
+check_sensitive_stage_args() {
+  local stage_args="$1"
+  local stage_args_for_sensitive
+  stage_args_for_sensitive=$(echo "$stage_args" | tr -d "\"'")
+  if echo "$stage_args_for_sensitive" | grep -qE "${sensitive_add_pattern}"; then
+    block "保護対象ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
+  fi
+}
+
+check_bulk_add_args() {
+  local add_args="$1"
+  if echo "$add_args" | grep -qE '(^|[[:space:]])(-p|--patch)($|[[:space:]])'; then
+    block "${patch_add_msg}"
+  fi
+  if echo "$add_args" | grep -qE '(^|[[:space:]])(-A|--all|-u|--update)($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+  if echo "$add_args" | grep -qE '(^|[[:space:]])(\./|\.\./|\.\.|:/)($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+  if echo "$add_args" | grep -qE '(^|[[:space:]])--[[:space:]]+\.?\.?($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+  if echo "$add_args" | grep -qE '(^|[[:space:]])\.($|[[:space:]])'; then
+    block "${bulk_add_msg}"
+  fi
+}
 
 split_shell_commands() {
   SPLIT_SHELL_INPUT="$1" python3 <<'PY'
@@ -158,10 +203,9 @@ while IFS= read -r part; do
 
   # git commit 断片はメッセージ内 git add 文字列の誤検知防止のためスキップ（-a/--all は block）
   if echo "$part" | grep -qE "${git_commit_match}"; then
-    commit_args=$(echo "$part" | sed -E 's/^([[:space:]]|[|])?(GIT_DIR=[^[:space:]]+[[:space:]]+)?([^[:space:]]+\/)*git[[:space:]]+commit[[:space:]]+//')
-    commit_flags=$(echo "$commit_args" | sed -E 's/^([^"'"'"']*)["'"'"'].*/\1/')
-    # -a / --all / -am のみ block（--amend は RC-48 回帰防止で除外）
-    if echo "$commit_flags" | grep -qE '(^|[[:space:]])(--all|-am([[:space:]]|$)|-a([[:space:]]|$))'; then
+    commit_args=$(echo "$part" | sed -E "s/^([[:space:]]|[|])?(GIT_DIR=[^[:space:]]+[[:space:]]+)?([^[:space:]]+\/)*git([[:space:]]+${git_global_opt})*[[:space:]]+commit[[:space:]]+//")
+    commit_outside_quotes=$(strip_shell_quotes "$commit_args")
+    if echo "$commit_outside_quotes" | grep -qE '(^|[[:space:]])(--all|-am([[:space:]]|$)|-a([[:space:]]|$))'; then
       block "${commit_all_msg}"
     fi
     continue
@@ -172,34 +216,19 @@ while IFS= read -r part; do
     continue
   fi
 
+  if echo "$part" | grep -qE "${git_update_index_match}"; then
+    index_args=$(echo "$part" | sed -E 's/^.*[[:space:]]+update-index[[:space:]]+//')
+    check_sensitive_stage_args "$index_args"
+    continue
+  fi
+
   if ! echo "$part" | grep -qE "${git_add_match}"; then
     continue
   fi
 
   add_args=$(echo "$part" | sed -E 's/^.*[[:space:]]+add[[:space:]]+//')
-  # 引用符付き pathspec（git add ".env" 等）も機密検出対象に（RC-51）
-  add_args_for_sensitive=$(echo "$add_args" | tr -d "\"'")
-
-  if echo "$add_args_for_sensitive" | grep -qE "${sensitive_add_pattern}"; then
-    block "保護対象ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
-  fi
-
-  if echo "$add_args" | grep -qE '(^|[[:space:]])(-p|--patch)($|[[:space:]])'; then
-    block "${patch_add_msg}"
-  fi
-
-  if echo "$add_args" | grep -qE '(^|[[:space:]])(-A|--all|-u|--update)($|[[:space:]])'; then
-    block "${bulk_add_msg}"
-  fi
-  if echo "$add_args" | grep -qE '(^|[[:space:]])(\./|\.\./|\.\.|:/)($|[[:space:]])'; then
-    block "${bulk_add_msg}"
-  fi
-  if echo "$add_args" | grep -qE '(^|[[:space:]])--[[:space:]]+\.?\.?($|[[:space:]])'; then
-    block "${bulk_add_msg}"
-  fi
-  if echo "$add_args" | grep -qE '(^|[[:space:]])\.($|[[:space:]])'; then
-    block "${bulk_add_msg}"
-  fi
+  check_sensitive_stage_args "$add_args"
+  check_bulk_add_args "$add_args"
 done <<< "$split_output"
 
 exit 0
