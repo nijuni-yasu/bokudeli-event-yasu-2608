@@ -71,12 +71,33 @@ gcloud logging read 'severity="ERROR"' \
 'severity="ERROR" AND (logName=~"cloudaudit" OR logName=~"cloudscheduler")'
 ```
 
-fetch_logs.py では `--filter` に上記を渡す:
+### Monitoring アラート `shokujii functions error` 相当（clientError ノイズ除外）
+
+正本: [`documents/09_運営向け機能/02_Monitoringアラート_shokujii_functions_error.md`](../../../../documents/09_運営向け機能/02_Monitoringアラート_shokujii_functions_error.md)
 
 ```bash
-python3 .../fetch_logs.py --project=... --freshness=1h \
+# 1 行 filter（fetch_logs.py --filter 用）
+'severity>=ERROR AND NOT (logName=~"cloudaudit.googleapis.com" OR logName=~"cloudscheduler.googleapis.com") AND NOT (jsonPayload.module="clientError" AND (jsonPayload.error_message=~"Failed to fetch dynamically imported module" OR jsonPayload.error_message=~"Failed to register a ServiceWorker" OR jsonPayload.error_message=~"Connection failed." OR jsonPayload.error_message="Rejected" OR jsonPayload.error_message="rejected" OR jsonPayload.error_message=~"Load failed" OR jsonPayload.error_message=~"ServiceWorker" OR jsonPayload.error_message=~"serviceworker"))'
+```
+
+ZodError は通常 `error_message` がノイズパターンに一致しないため Monitoring から除外されない。
+
+Monitoring 相当 filter を fetch する例:
+
+```bash
+python3 .agents/skills/gcp-logging-error-analysis/scripts/fetch_logs.py \
+  --project=bokudeli-event-dev --freshness=24h \
+  --filter='severity>=ERROR AND NOT (logName=~"cloudaudit.googleapis.com" OR logName=~"cloudscheduler.googleapis.com") AND NOT (jsonPayload.module="clientError" AND (jsonPayload.error_message=~"Failed to fetch dynamically imported module" OR jsonPayload.error_message=~"Failed to register a ServiceWorker" OR jsonPayload.error_message=~"Connection failed." OR jsonPayload.error_message="Rejected" OR jsonPayload.error_message="rejected" OR jsonPayload.error_message=~"Load failed" OR jsonPayload.error_message=~"ServiceWorker" OR jsonPayload.error_message=~"serviceworker"))' \
+  -o /tmp/monitoring-equivalent.json --parse
+```
+
+### clientError のみを調査する場合（Monitoring filter とは別）
+
+```bash
+python3 .agents/skills/gcp-logging-error-analysis/scripts/fetch_logs.py \
+  --project=bokudeli-event-dev --freshness=1h \
   --filter='severity="ERROR" AND jsonPayload.module="clientError"' \
-  -o /tmp/client-errors.json
+  -o /tmp/client-errors.json --parse
 ```
 
 ## trace 追跡

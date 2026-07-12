@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Parse GCP Cloud Logging ERROR entries for Shokujii triage."""
+"""Parse GCP Cloud Logging entries (severity ERROR 以上) for Shokujii triage."""
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ CLIENT_ERROR_NOISE_PATTERNS = (
     "serviceworker",
     "service worker",
     "failed to fetch dynamically imported module",
-    "rejected",
     "connection failed.",
     "load failed",
     "failed to register a serviceworker",
@@ -29,6 +28,14 @@ CLIENT_ERROR_ACTIONABLE_PATTERNS = (
 )
 
 
+def is_serviceworker_standalone_rejected(message: str) -> bool:
+    """ServiceWorker 登録失敗時の単体メッセージ。部分一致 rejected は正当 ERROR を誤除外するため使わない。"""
+    return message.strip().lower() == "rejected"
+
+
+_SEVERITY_ERROR_AND_ABOVE = frozenset({"ERROR", "CRITICAL", "ALERT", "EMERGENCY"})
+
+
 def load_entries(source: str | None) -> list[dict[str, Any]]:
     if source is None or source == "-":
         raw = sys.stdin.read()
@@ -38,7 +45,7 @@ def load_entries(source: str | None) -> list[dict[str, Any]]:
     data = json.loads(raw)
     if not isinstance(data, list):
         raise ValueError("Expected JSON array of log entries")
-    return [entry for entry in data if entry.get("severity") == "ERROR"]
+    return [entry for entry in data if entry.get("severity") in _SEVERITY_ERROR_AND_ABOVE]
 
 
 def log_type(entry: dict[str, Any]) -> str:
@@ -96,8 +103,13 @@ def classify_tier(entry: dict[str, Any], message: str) -> str:
         return "infra"
 
     if module == "clientError":
+        # clientErrorNoise.ts と同期: ZodError は常に要対応（ERROR 維持）
+        if json_payload.get("error_type") == "ZodError":
+            return "P1"
         if any(pattern in lower for pattern in CLIENT_ERROR_ACTIONABLE_PATTERNS):
             return "P1"
+        if is_serviceworker_standalone_rejected(message):
+            return "noise"
         if any(pattern in lower for pattern in CLIENT_ERROR_NOISE_PATTERNS):
             return "noise"
         return "P1"

@@ -8,7 +8,7 @@
 |------|------|-----|
 | **P0** | 全ユーザーまたは決済・注文確定に直結 | **未実装**（将来: `stripeWebhook` / `createStripeCheckoutSession` 等）。現状は P1 扱い |
 | **P1** | 要調査・運用対応 | Firestore index 不足、Storage Rules、Slack 404、ZodError、backfill データ異常 |
-| **noise** | クライアント側ノイズ | ServiceWorker 失敗、chunk load、Rejected、Connection failed |
+| **noise** | クライアント側ノイズ | ServiceWorker 失敗、chunk load、単体 Rejected、Connection failed |
 | **infra** | デプロイ・スケジューラ・監査 | Function NOT_FOUND（audit）、Scheduler topic NOT_FOUND |
 
 ## ログ形式別の読み方
@@ -28,7 +28,7 @@
 |-----------|------|-----------------|-------------|
 | `requires an index` / `FAILED_PRECONDITION` + index URL | P1 | errorGroups.id または index URL | `firestore.indexes.json` を Grep → `/shokujii-firestore` |
 | `httpRequest.status=500` + 上記 trace | P1 | trace | 同一 trace の stderr を読む |
-| `jsonPayload.module=clientError` + SW / chunk / Rejected / Connection failed | noise | fingerprint | 件数のみ報告。サーバー障害と混同しない |
+| `jsonPayload.module=clientError` + SW / chunk / 単体 Rejected / Connection failed | noise | fingerprint | 件数のみ報告。サーバー障害と混同しない。**`error_type=ZodError` は常に P1**（message がノイズ部分一致でも） |
 | `jsonPayload.module=clientError` + storage/unauthorized | P1 | fingerprint | `storage.rules` + 管理画面権限 |
 | `jsonPayload.module=clientError` + ZodError / invalid_enum | P1 | fingerprint + route | 該当 event データ or UI |
 | `jsonPayload.module=clientError` + Missing or insufficient permissions | P1 | fingerprint | `firestore.rules` |
@@ -49,6 +49,15 @@
 
 - **本番解析**: 必ず `scripts/fetch_logs.py` または `gcloud logging read` で live 取得
 - `evals/fixtures/` は skill-creator 用。ユーザー依頼の解析で fixture をデータ源にしない
+
+## Monitoring アラート（本番）
+
+Log-based Alert `shokujii functions error` は **clientError ノイズのみ除外**し、ZodError 等の要対応 ERROR は通知する。
+
+| 正本 | 内容 |
+|------|------|
+| [`documents/09_運営向け機能/02_Monitoringアラート_shokujii_functions_error.md`](../../../../documents/09_運営向け機能/02_Monitoringアラート_shokujii_functions_error.md) | GCP filter 正本・変更手順 |
+| [`functions/default/src/utils/clientErrorNoise.ts`](../../../../functions/default/src/utils/clientErrorNoise.ts) | server 側 WARN 格下げ（`CLIENT_*_PATTERNS` は本ファイルと `parse_logs.py` を同期） |
 
 ## 検証済み fixture パターン（eval 用）
 

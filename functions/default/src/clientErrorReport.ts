@@ -7,6 +7,7 @@ import {
 import { createModuleLogger } from './utils/logger.js'
 import { shouldReportClientError } from './utils/clientErrorDedup.js'
 import { computeServerFingerprint } from './utils/clientErrorFingerprint.js'
+import { isClientErrorNoise } from './utils/clientErrorNoise.js'
 
 const logger = createModuleLogger('clientError')
 
@@ -29,6 +30,9 @@ export const reportClientError = onCall<ClientErrorReportRequest, Promise<Client
 
     const authenticatedUserId = request.auth?.uid
 
+    const shouldLogAsError = !isClientErrorNoise(data.message, data.error_type)
+    const loggedSeverity = shouldLogAsError ? 'error' : 'warn'
+
     const logPayload = {
       app: data.app,
       error_type: data.error_type,
@@ -41,13 +45,14 @@ export const reportClientError = onCall<ClientErrorReportRequest, Promise<Client
       user_agent: data.user_agent,
       component_info: data.component_info,
       fingerprint,
-      severity: data.severity,
+      severity: loggedSeverity,
+      client_severity: data.severity,
     }
 
-    if (data.severity === 'warn') {
-      logger.warn('Client application error', logPayload)
-    } else {
+    if (shouldLogAsError) {
       logger.error('Client application error', logPayload)
+    } else {
+      logger.warn('Client application error', logPayload)
     }
 
     return { accepted: true }
