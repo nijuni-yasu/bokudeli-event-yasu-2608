@@ -12,15 +12,24 @@ describe('isClientErrorNoise', () => {
     )
   })
 
-  it('ServiceWorker 関連は true', () => {
+  it('Failed to register a ServiceWorker は true', () => {
     expect(
       isClientErrorNoise(
         // eslint-disable-next-line quotes -- Prettier が文字列内の ' により二重引用符を選択
         "Failed to register a ServiceWorker for scope ('https://shokujii.jp/') with script ('https://shokujii.jp/sw.js')",
       ),
     ).toBe(true)
+  })
+
+  it('Rejected（大文字・単体）は true', () => {
     expect(isClientErrorNoise('Rejected')).toBe(true)
+  })
+
+  it('rejected（小文字・単体）は true', () => {
     expect(isClientErrorNoise('rejected')).toBe(true)
+  })
+
+  it('Connection failed. は true', () => {
     expect(isClientErrorNoise('Connection failed.')).toBe(true)
   })
 

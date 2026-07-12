@@ -30,8 +30,7 @@ export const reportClientError = onCall<ClientErrorReportRequest, Promise<Client
 
     const authenticatedUserId = request.auth?.uid
 
-    const shouldLogAsError =
-      data.error_type === 'ZodError' || (data.severity !== 'warn' && !isClientErrorNoise(data.message, data.error_type))
+    const shouldLogAsError = !isClientErrorNoise(data.message, data.error_type)
     const loggedSeverity = shouldLogAsError ? 'error' : 'warn'
 
     const logPayload = {
