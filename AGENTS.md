@@ -44,7 +44,7 @@ AIエージェント向けプロジェクトガイド。
 | Firebase Functions 実装                | `/shokujii-functions-implementation` | Callable / Scheduled / メール送信の Function 追加・修正時、functions/default を触る場合              |
 | Stripe 決済実装                        | `/stripe-integration`                | 実装時                                                                                               |
 | UI の設計・実装                        | `/frontend-design`                   | 新規ページ・コンポーネント作成時、スタイリング・ビジュアル改善時                                     |
-| UI のレビュー・品質チェック            | `/web-design-guidelines`             | アクセシビリティ確認時、UX レビュー時、PR マージ前の品質チェック時                                   |
+| UI のレビュー・品質チェック            | `/web-design-guidelines`             | ユーザーが明示依頼したときのみ（通常の PR レビューでは使わない。a11y 監査も Phase 1 対象外）         |
 | スキル作成・改善                       | `/skill-creator`                     | 新規スキル作成時、既存スキルの編集・最適化時                                                         |
 | ユニットテスト (Vitest)                | `/vitest`                            | テスト作成時、common/functions のロジックテスト時                                                    |
 | 実装前の設計インタビュー（要件明確化） | `/grill-me`                          | 実装前の設計フェーズ、要件が固まっていない時、設計の壁打ち時                                         |

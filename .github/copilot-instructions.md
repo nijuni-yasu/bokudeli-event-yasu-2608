@@ -100,6 +100,11 @@ npm -w <pkg> run format:check
 
 チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
 
+### アクセシビリティ（Phase 1）
+
+通常の PR レビューでは、アクセシビリティ（`aria-label`、`alt`、キーボード操作、ARIA ロール等）を指摘しない。
+個別仕様書（`documents/`）に a11y 要件が明記されている PR のみ例外とする。
+
 ### Pull Request（GitHub）上でのレビュー形式
 
 - **インラインコメントを優先する**: `Files changed` タブで、指摘する**該当行**に review comment を付ける（1 指摘につき 1 コメントが望ましい）。
