@@ -204,19 +204,26 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     await signInWithCustomToken(getAuth(), response.data.token)
   }
 
-  const linkProvider = async (providerId: ProviderIdType) => {
+  const linkProvider = async (providerId: ProviderIdType): Promise<boolean> => {
     const currentUser = getAuth().currentUser
     if (currentUser == null) {
       throw new Error('Not logged in')
     }
-    let userCredential
     if (currentUser.providerData.some((pd) => pd.providerId === providerId)) {
-      userCredential = await reauthenticateByProviderService(currentUser, providerId)
-    } else {
-      userCredential = await linkByProviderService(currentUser, providerId)
+      return false
     }
-
+    const userCredential = await linkByProviderService(currentUser, providerId)
     await updateProfileFromProviders(userCredential)
+    return true
+  }
+
+  /** TODO #2151: `auth/requires-recent-login` 発生時に profile から呼ぶ予定 */
+  const reauthenticateProvider = async (providerId: ProviderIdType) => {
+    const currentUser = getAuth().currentUser
+    if (currentUser == null) {
+      throw new Error('Not logged in')
+    }
+    return reauthenticateByProviderService(currentUser, providerId)
   }
 
   const unlinkProvider = async (providerId: ProviderIdType) => {
@@ -234,8 +241,9 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
         _user.user_sns_twitter = ''
         break
     }
-    await Promise.all([unlink(currentUser, providerId), updateUser(toRaw(_user))])
-    providerData.value = getAuth().currentUser!.providerData
+    const updatedUser = await unlink(currentUser, providerId)
+    providerData.value = updatedUser.providerData
+    await updateUser(toRaw(_user))
   }
 
   const signOut = async () => {
@@ -256,6 +264,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     requestEmailChange,
     confirmEmailChange,
     linkProvider,
+    reauthenticateProvider,
     unlinkProvider,
     signOut,
   }

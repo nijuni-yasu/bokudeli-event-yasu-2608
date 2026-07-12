@@ -481,4 +481,57 @@ describe('updateProfileFromProviders', () => {
     expect(saveUserMock).not.toHaveBeenCalled()
     expect(result).toMatchObject({ user: { user_image_url: GS_PHOTO_URL } })
   })
+
+  it('既存ユーザーの user_description は X bio で上書きしない', async () => {
+    getUserMock.mockResolvedValue({
+      id: 'uid-existing',
+      user_description: 'shokujii で書いた自己紹介',
+      user_sns_twitter: '',
+    })
+
+    const result = await callUpdateProfileFromProviders('uid-existing', {
+      user_description: 'X のプロフィール文',
+      user_sns_twitter: 'my_x_handle',
+    })
+
+    expect(result).toMatchObject({
+      user: {
+        user_description: 'shokujii で書いた自己紹介',
+        user_sns_twitter: 'my_x_handle',
+      },
+    })
+    expect(saveUserMock).toHaveBeenCalledOnce()
+  })
+
+  it('既存ユーザーの user_description が空なら X bio で補完する', async () => {
+    getUserMock.mockResolvedValue({
+      id: 'uid-existing',
+      user_description: '',
+    })
+
+    const result = await callUpdateProfileFromProviders('uid-existing', {
+      user_description: 'X のプロフィール文',
+    })
+
+    expect(result).toMatchObject({
+      user: { user_description: 'X のプロフィール文' },
+    })
+    expect(saveUserMock).toHaveBeenCalledOnce()
+  })
+
+  it('既存ユーザーの user_sns_twitter は OAuth username で上書きする', async () => {
+    getUserMock.mockResolvedValue({
+      id: 'uid-existing',
+      user_sns_twitter: 'manual_handle',
+    })
+
+    const result = await callUpdateProfileFromProviders('uid-existing', {
+      user_sns_twitter: 'oauth_handle',
+    })
+
+    expect(result).toMatchObject({
+      user: { user_sns_twitter: 'oauth_handle' },
+    })
+    expect(saveUserMock).toHaveBeenCalledOnce()
+  })
 })

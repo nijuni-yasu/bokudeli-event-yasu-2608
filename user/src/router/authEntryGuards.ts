@@ -30,31 +30,79 @@ export async function signOutBestEffort(): Promise<void> {
   }
 }
 
+export const alertExistsCredential = (providerId: string | undefined) => {
+  const i18n = getI18n()
+  if (providerId != null) {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('user.exists_credential', {
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+        snsName: i18n.global.t(`sns_name['${providerId}']`),
+      }),
+    )
+    return
+  }
+  window.alert(
+    // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+    i18n.global.t('user.exists_credential_generic'),
+  )
+}
+
+export const alertProfileLinkageFailed = (providerId: string | undefined) => {
+  const i18n = getI18n()
+  if (providerId != null) {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('profile.linkage_failed', {
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+        snsName: i18n.global.t(`sns_name['${providerId}']`),
+      }),
+    )
+    return
+  }
+  window.alert(
+    // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+    i18n.global.t('profile.linkage_failed_generic'),
+  )
+}
+
 /**
  * OAuth 復帰時に updateProfileFromProviders が失敗した場合の cleanup とリダイレクト先を返す。
  * cleanup 失敗時は false を返し navigation をキャンセルする。
+ * /profile では signOut せず undefined を返し、当該画面に留まる。
  */
 export async function handleProfileUpdateFailure(
   toPath: string,
   query: LocationQuery,
   userCredential: UserCredential | null,
   error?: unknown,
-): Promise<{ path: string; query: LocationQuery } | false> {
+): Promise<{ path: string; query: LocationQuery } | false | undefined> {
   try {
-    if (toPath === '/register' && userCredential != null) {
-      const aui = getAdditionalUserInfo(userCredential)
-      if (aui?.isNewUser === true) {
-        await rejectNewUserOnLogin(userCredential)
+    if (toPath !== '/profile') {
+      if (toPath === '/register' && userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        if (aui?.isNewUser === true) {
+          await rejectNewUserOnLogin(userCredential)
+        } else {
+          await signOutBestEffort()
+        }
       } else {
         await signOutBestEffort()
       }
-    } else {
-      await signOutBestEffort()
     }
   } catch (err) {
     console.error(err)
     await signOutBestEffort()
     return false
+  }
+
+  const providerId = userCredential?.providerId
+
+  if (toPath === '/profile') {
+    if (userCredential != null) {
+      alertProfileLinkageFailed(providerId)
+    }
+    return undefined
   }
 
   const i18n = getI18n()
@@ -66,24 +114,37 @@ export async function handleProfileUpdateFailure(
     return { path: '/login', query }
   }
 
-  const providerId = userCredential?.providerId ?? 'google.com'
   if (toPath === '/register') {
+    if (providerId != null) {
+      window.alert(
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+        i18n.global.t('register.register_fail', {
+          // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+          sns_name: i18n.global.t(`sns_name['${providerId}']`),
+        }),
+      )
+    } else {
+      window.alert(
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+        i18n.global.t('register.register_fail_generic'),
+      )
+    }
+    return { path: '/register', query }
+  }
+
+  if (providerId != null) {
     window.alert(
       // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
-      i18n.global.t('register.register_fail', {
+      i18n.global.t('login.login_fail', {
         // @ts-expect-error i18n.global.t の型がユニオンになってしまう
         sns_name: i18n.global.t(`sns_name['${providerId}']`),
       }),
     )
-    return { path: '/register', query }
+  } else {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('login.login_fail_generic'),
+    )
   }
-
-  window.alert(
-    // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
-    i18n.global.t('login.login_fail', {
-      // @ts-expect-error i18n.global.t の型がユニオンになってしまう
-      sns_name: i18n.global.t(`sns_name['${providerId}']`),
-    }),
-  )
   return { path: '/login', query }
 }

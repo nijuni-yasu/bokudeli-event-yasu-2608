@@ -1,6 +1,6 @@
 ---
 name: shokujii-code-review
-description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み）の4区分で review-comments-evaluate と共通。PRレビュー時は pr-<番号>.md に RC 記録を追記。コード変更のレビュー依頼時に使用する。
+description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み、別Issue化は 📤#NNNN別Issue化）の共通区分で review-comments-evaluate と共通。PRレビュー時は pr-<番号>.md に RC 記録を追記。コード変更のレビュー依頼時に使用する。
 ---
 
 # Shokujii コードレビュー
@@ -15,6 +15,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ### TypeScript・型安全性
 - [ ] `any` を使用していないか
 - [ ] `as` によるキャストを使用していないか（型推論で解決できるはず）
+- [ ] `common` の schema・API 以外で新規 Zod スキーマを定義していないか（`ZodError` の捕捉のみ可）。`as` 回避は型ガードで行う
 - [ ] `@ts-ignore` を使用していないか
 - [ ] 関数の戻り値の型が明示されているか
 - [ ] `optional` と `nullable` を適切に使い分けているか
@@ -133,12 +134,13 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 ## フィードバック形式
 
-[/review-comments-evaluate](../../review-comments-evaluate/SKILL.md) と同一の **4区分**（**❌ 未対応は使わない**）。手順・`pr-<番号>.md` への記録は [SKILL.md](SKILL.md) を参照。
+[/review-comments-evaluate](../../review-comments-evaluate/SKILL.md) と同一の **共通区分**（**❌ 未対応は使わない**）。手順・`pr-<番号>.md` への記録は [SKILL.md](SKILL.md) を参照。
 
 - 🚨 **必須修正**: マージ前に対応が必要（セキュリティ・データ不整合・バグ等）
 - 🟡 **修正提案**: 改善を検討してほしい（設計・可読性等）。マージ必須ではない
 - 👌 **修正不要**: 指摘はあるが対応不要（誤解・仕様どおり・過剰指摘等）
 - ✅ **対応済み**: コード・PR で既に解消済み（ドキュメント追記時の **判断結果** に使用）
+- 📤 **#NNNN 別Issue化**: 本 PR では実装せず別 Issue に切り出し済み（ドキュメント追記時の **判断結果** に使用）
 
 ---
 

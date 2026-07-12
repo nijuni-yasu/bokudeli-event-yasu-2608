@@ -17,6 +17,7 @@ import { FIRESTORE_LOADING } from '@shokujii/base/utils/const.js'
 import { isInAppBrowser } from '@shokujii/base/utils/browser'
 import { credentialFromError, updateProfileFromProviders } from '@shokujii/base/utils/providerService'
 import { recordLastLoginFromCredential } from '@shokujii/base/utils/lastLoginProvider.js'
+import { setPendingToast } from '@shokujii/base/utils/pendingToast.js'
 import {
   clearPendingLinkRequest,
   getRedirectPath,
@@ -26,6 +27,8 @@ import {
 import {
   rejectExistingUserOnRegister,
   rejectNewUserOnLogin,
+  alertExistsCredential,
+  alertProfileLinkageFailed,
   handleProfileUpdateFailure,
   signOutBestEffort,
 } from './authEntryGuards.js'
@@ -160,6 +163,12 @@ export const setupRouter = (router: Router) => {
             )
             return { path: '/login', query: to.query }
           }
+          if (to.path === '/profile') {
+            clearPendingLinkRequest()
+            const pendingCred = credentialFromError(err)
+            alertExistsCredential(pendingCred?.providerId)
+            return
+          }
           const pendingCred = credentialFromError(err)
           // email が同じ時に発生するエラーなので、email は必ず存在する
           const email = err.customData!.email as string
@@ -179,6 +188,20 @@ export const setupRouter = (router: Router) => {
           }
         }
         console.error(err)
+        if (to.path === '/profile') {
+          clearPendingLinkRequest()
+          if (err instanceof FirebaseError) {
+            if (err.code === 'auth/credential-already-in-use') {
+              alertExistsCredential(credentialFromError(err)?.providerId)
+            } else {
+              const pendingCred = credentialFromError(err)
+              alertProfileLinkageFailed(pendingCred?.providerId ?? userCredential?.providerId)
+            }
+          } else {
+            alertProfileLinkageFailed(userCredential?.providerId)
+          }
+          return
+        }
         // 今のところ router からは notification を出せないので window.alert で代用
         // useI18n() は plugin の中からは使えないので、 getI18n で直接取得する
         const i18n = getI18n()
@@ -268,6 +291,18 @@ export const setupRouter = (router: Router) => {
 
       // profile に戻ってきた場合はリンクなので画面はそのまま
       if (to.path === '/profile') {
+        if (userCredential != null) {
+          const i18n = getI18n()
+          const providerId = userCredential.providerId
+          setPendingToast(
+            // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+            i18n.global.t('profile.linkage_completed', {
+              // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+              snsName: i18n.global.t(`sns_name['${providerId}']`),
+            }),
+            'success',
+          )
+        }
         return
       }
 
