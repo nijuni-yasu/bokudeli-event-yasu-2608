@@ -204,16 +204,17 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     await signInWithCustomToken(getAuth(), response.data.token)
   }
 
-  const linkProvider = async (providerId: ProviderIdType) => {
+  const linkProvider = async (providerId: ProviderIdType): Promise<boolean> => {
     const currentUser = getAuth().currentUser
     if (currentUser == null) {
       throw new Error('Not logged in')
     }
     if (currentUser.providerData.some((pd) => pd.providerId === providerId)) {
-      return
+      return false
     }
     const userCredential = await linkByProviderService(currentUser, providerId)
     await updateProfileFromProviders(userCredential)
+    return true
   }
 
   /** TODO #2151: `auth/requires-recent-login` 発生時に profile から呼ぶ予定 */
