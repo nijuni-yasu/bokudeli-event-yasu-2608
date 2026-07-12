@@ -96,7 +96,7 @@ fi
 # git add — 機密ファイルの staging を拒否（protect-files.sh は Edit|Write のみ）
 # 引用符を考慮して ; / && で分割（commit -m 内の ; 誤分割を防止）。git commit 断片は検査対象外
 # git … add は断片内の任意位置（GIT_DIR= 前置・パイプ・global option 付き）を検出
-git_global_opt='(-C[[:space:]]+[^[:space:]]+|--git-dir=[^[:space:]]+|--git-dir[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
+git_global_opt='(-C[[:space:]]+[^[:space:]]+|-C[^[:space:]]+|--git-dir=[^[:space:]]+|--git-dir[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
 git_add_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}([[:space:]]+${git_global_opt})*[[:space:]]+add[[:space:]]"
 # 各引数トークン境界（空白）でも機密パスを検出（git add .secret otherfile 等）
 sensitive_add_pattern='(^|[[:space:]])([^[:space:]]+/)*\.env(\.|$|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*\.secret($|[[:space:]]|\.)|(^|[[:space:]])([^[:space:]]+/)*\.firebaserc($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.pem($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.key($|[[:space:]])'
@@ -160,7 +160,8 @@ while IFS= read -r part; do
   if echo "$part" | grep -qE "${git_commit_match}"; then
     commit_args=$(echo "$part" | sed -E 's/^([[:space:]]|[|])?(GIT_DIR=[^[:space:]]+[[:space:]]+)?([^[:space:]]+\/)*git[[:space:]]+commit[[:space:]]+//')
     commit_flags=$(echo "$commit_args" | sed -E 's/^([^"'"'"']*)["'"'"'].*/\1/')
-    if echo "$commit_flags" | grep -qE '(^|[[:space:]])(--all|-a([[:space:]]|$)|-[^[:space:]]*a[^[:space:]]*)([[:space:]]|$)'; then
+    # -a / --all / -am のみ block（--amend は RC-48 回帰防止で除外）
+    if echo "$commit_flags" | grep -qE '(^|[[:space:]])(--all|-am([[:space:]]|$)|-a([[:space:]]|$))'; then
       block "${commit_all_msg}"
     fi
     continue
@@ -176,8 +177,10 @@ while IFS= read -r part; do
   fi
 
   add_args=$(echo "$part" | sed -E 's/^.*[[:space:]]+add[[:space:]]+//')
+  # 引用符付き pathspec（git add ".env" 等）も機密検出対象に（RC-51）
+  add_args_for_sensitive=$(echo "$add_args" | tr -d "\"'")
 
-  if echo "$add_args" | grep -qE "${sensitive_add_pattern}"; then
+  if echo "$add_args_for_sensitive" | grep -qE "${sensitive_add_pattern}"; then
     block "保護対象ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
   fi
 
