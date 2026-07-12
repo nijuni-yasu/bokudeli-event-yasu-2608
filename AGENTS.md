@@ -97,6 +97,7 @@ Slack / LINE bot および旧 legacy Functions は `functions/default` に統合
 
 - **パッケージマネージャ**: `npm`（`yarn` 禁止）
 - **言語**: TypeScript（`any` 禁止）
+- **Zod**: スキーマ定義は `common/src/schemas` と `common/src/apis` に置く。それ以外では新規に Zod スキーマを定義しない（`ZodError` の捕捉のみ可）。`as` 回避は型ガードで行う
 - **フォーマッタ**: Prettier (`.prettierrc`)
 - **Linter**: ESLint (`eslint.config.mjs`)
 

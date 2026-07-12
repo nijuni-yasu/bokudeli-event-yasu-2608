@@ -15,6 +15,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ### TypeScript・型安全性
 - [ ] `any` を使用していないか
 - [ ] `as` によるキャストを使用していないか（型推論で解決できるはず）
+- [ ] `common` の schema・API 以外で新規 Zod スキーマを定義していないか（`ZodError` の捕捉のみ可）。`as` 回避は型ガードで行う
 - [ ] `@ts-ignore` を使用していないか
 - [ ] 関数の戻り値の型が明示されているか
 - [ ] `optional` と `nullable` を適切に使い分けているか
