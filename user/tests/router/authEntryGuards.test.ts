@@ -143,6 +143,8 @@ describe('authEntryGuards', () => {
 
       expect(mockSignOut).not.toHaveBeenCalled()
       expect(result).toBeUndefined()
+      expect(window.alert).toHaveBeenCalledOnce()
+      expect(window.alert).toHaveBeenCalledWith('profile.linkage_failed')
     })
 
     it('/profile かつ already-exists でも /login へリダイレクトしない', async () => {
@@ -153,6 +155,8 @@ describe('authEntryGuards', () => {
 
       expect(mockSignOut).not.toHaveBeenCalled()
       expect(result).toBeUndefined()
+      expect(window.alert).toHaveBeenCalledOnce()
+      expect(window.alert).toHaveBeenCalledWith('profile.linkage_failed')
     })
   })
 })

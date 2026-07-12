@@ -27,6 +27,8 @@ import {
 import {
   rejectExistingUserOnRegister,
   rejectNewUserOnLogin,
+  alertExistsCredential,
+  alertProfileLinkageFailed,
   handleProfileUpdateFailure,
   signOutBestEffort,
 } from './authEntryGuards.js'
@@ -163,16 +165,8 @@ export const setupRouter = (router: Router) => {
           }
           if (to.path === '/profile') {
             clearPendingLinkRequest()
-            const i18n = getI18n()
             const pendingCred = credentialFromError(err)
-            const providerId = pendingCred?.providerId ?? 'google.com'
-            window.alert(
-              // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
-              i18n.global.t('user.exists_credential', {
-                // @ts-expect-error i18n.global.t の型がユニオンになってしまう
-                snsName: i18n.global.t(`sns_name['${providerId}']`),
-              }),
-            )
+            alertExistsCredential(pendingCred?.providerId)
             return
           }
           const pendingCred = credentialFromError(err)
@@ -194,6 +188,20 @@ export const setupRouter = (router: Router) => {
           }
         }
         console.error(err)
+        if (to.path === '/profile') {
+          clearPendingLinkRequest()
+          if (err instanceof FirebaseError) {
+            if (err.code === 'auth/credential-already-in-use') {
+              alertExistsCredential(credentialFromError(err)?.providerId)
+            } else {
+              const pendingCred = credentialFromError(err)
+              alertProfileLinkageFailed(pendingCred?.providerId ?? userCredential?.providerId)
+            }
+          } else {
+            alertProfileLinkageFailed(userCredential?.providerId)
+          }
+          return
+        }
         // 今のところ router からは notification を出せないので window.alert で代用
         // useI18n() は plugin の中からは使えないので、 getI18n で直接取得する
         const i18n = getI18n()

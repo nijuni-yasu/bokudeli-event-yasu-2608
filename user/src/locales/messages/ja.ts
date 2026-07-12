@@ -64,6 +64,8 @@ export default {
     update_email: 'メールアドレスを変更しました。',
     exists_credential:
       'この{snsName}アカウントは、すでに別のユーザーとして登録されています。\n他のアカウントでお試しください。',
+    exists_credential_generic:
+      'このアカウントは、すでに別のユーザーとして登録されています。\n他のアカウントでお試しください。',
   },
   community: {
     applying: '申請中',
@@ -676,6 +678,7 @@ export default {
     linkage_completed: '{snsName}と連携しました',
     unlink_completed: '{snsName}の連携を解除しました',
     linkage_failed: '{snsName}との連携に失敗しました',
+    linkage_failed_generic: 'アカウント連携に失敗しました。',
     unlink_failed: '{snsName}の連携解除に失敗しました',
     account_delete: 'アカウント削除',
     account_delete_description:

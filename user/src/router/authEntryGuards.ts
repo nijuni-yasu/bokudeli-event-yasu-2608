@@ -30,14 +30,39 @@ export async function signOutBestEffort(): Promise<void> {
   }
 }
 
-const alertProfileLinkageFailed = (providerId: string) => {
+export const alertExistsCredential = (providerId: string | undefined) => {
   const i18n = getI18n()
+  if (providerId != null) {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('user.exists_credential', {
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+        snsName: i18n.global.t(`sns_name['${providerId}']`),
+      }),
+    )
+    return
+  }
   window.alert(
     // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
-    i18n.global.t('profile.linkage_failed', {
-      // @ts-expect-error i18n.global.t の型がユニオンになってしまう
-      snsName: i18n.global.t(`sns_name['${providerId}']`),
-    }),
+    i18n.global.t('user.exists_credential_generic'),
+  )
+}
+
+export const alertProfileLinkageFailed = (providerId: string | undefined) => {
+  const i18n = getI18n()
+  if (providerId != null) {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('profile.linkage_failed', {
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+        snsName: i18n.global.t(`sns_name['${providerId}']`),
+      }),
+    )
+    return
+  }
+  window.alert(
+    // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+    i18n.global.t('profile.linkage_failed_generic'),
   )
 }
 
@@ -53,17 +78,17 @@ export async function handleProfileUpdateFailure(
   error?: unknown,
 ): Promise<{ path: string; query: LocationQuery } | false | undefined> {
   try {
-    if (toPath === '/profile') {
-      // ログイン済みユーザーの連携操作。signOut しない
-    } else if (toPath === '/register' && userCredential != null) {
-      const aui = getAdditionalUserInfo(userCredential)
-      if (aui?.isNewUser === true) {
-        await rejectNewUserOnLogin(userCredential)
+    if (toPath !== '/profile') {
+      if (toPath === '/register' && userCredential != null) {
+        const aui = getAdditionalUserInfo(userCredential)
+        if (aui?.isNewUser === true) {
+          await rejectNewUserOnLogin(userCredential)
+        } else {
+          await signOutBestEffort()
+        }
       } else {
         await signOutBestEffort()
       }
-    } else {
-      await signOutBestEffort()
     }
   } catch (err) {
     console.error(err)
@@ -71,7 +96,7 @@ export async function handleProfileUpdateFailure(
     return false
   }
 
-  const providerId = userCredential?.providerId ?? 'google.com'
+  const providerId = userCredential?.providerId
 
   if (toPath === '/profile') {
     alertProfileLinkageFailed(providerId)
