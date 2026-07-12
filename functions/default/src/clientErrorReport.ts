@@ -46,6 +46,7 @@ export const reportClientError = onCall<ClientErrorReportRequest, Promise<Client
       component_info: data.component_info,
       fingerprint,
       severity: loggedSeverity,
+      client_severity: data.severity,
     }
 
     if (shouldLogAsError) {
