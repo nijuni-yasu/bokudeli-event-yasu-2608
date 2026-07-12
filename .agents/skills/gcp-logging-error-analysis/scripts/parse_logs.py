@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Parse GCP Cloud Logging ERROR entries for Shokujii triage."""
+"""Parse GCP Cloud Logging entries (severity ERROR 以上) for Shokujii triage."""
 
 from __future__ import annotations
 
@@ -33,6 +33,9 @@ def is_serviceworker_standalone_rejected(message: str) -> bool:
     return message.strip().lower() == "rejected"
 
 
+_SEVERITY_ERROR_AND_ABOVE = frozenset({"ERROR", "CRITICAL", "ALERT", "EMERGENCY"})
+
+
 def load_entries(source: str | None) -> list[dict[str, Any]]:
     if source is None or source == "-":
         raw = sys.stdin.read()
@@ -42,7 +45,7 @@ def load_entries(source: str | None) -> list[dict[str, Any]]:
     data = json.loads(raw)
     if not isinstance(data, list):
         raise ValueError("Expected JSON array of log entries")
-    return [entry for entry in data if entry.get("severity") == "ERROR"]
+    return [entry for entry in data if entry.get("severity") in _SEVERITY_ERROR_AND_ABOVE]
 
 
 def log_type(entry: dict[str, Any]) -> str:
