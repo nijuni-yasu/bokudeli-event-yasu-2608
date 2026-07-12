@@ -20,18 +20,21 @@ block() {
   exit 2
 }
 
+# git 実行ファイル（/usr/bin/git 等のパス付きも含む）
+git_bin='([^[:space:]]+/)*git'
+
 # npm version（リリース用バージョン bump — 任意引数を一律ブロック）
 if echo "$command" | grep -qE '(^|[[:space:]])npm[[:space:]]+version[[:space:]]+[^[:space:]]'; then
   block "npm version は人間のリリース作業専用です。エージェントは実行できません。"
 fi
 
 # git branch -f main|production（ブランチ名完全一致）
-if echo "$command" | grep -qE 'git[[:space:]]+branch[[:space:]]+(-f|--force)[[:space:]]+(main|production)([[:space:]]|$)'; then
+if echo "$command" | grep -qE "(^|[[:space:]]|[|])${git_bin}[[:space:]]+branch[[:space:]]+(-f|--force)[[:space:]]+(main|production)([[:space:]]|$)"; then
   block "git branch -f main|production は人間のリリース作業専用です。エージェントは実行できません。"
 fi
 
 # git push — 保護 ref / リリースタグ（ref 完全一致のみ）
-if echo "$command" | grep -qE '(^|[[:space:]])git[[:space:]]+push'; then
+if echo "$command" | grep -qE "(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}[[:space:]]+push"; then
   protected_refs='development|main|production'
 
   if echo "$command" | grep -qE "(^|[[:space:]])HEAD:(${protected_refs})([[:space:]]|$)"; then
@@ -60,6 +63,15 @@ if echo "$command" | grep -qE '(^|[[:space:]])git[[:space:]]+push'; then
     block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
   fi
 
+  # delete refspec（:main / :refs/heads/development 等）
+  if echo "$command" | grep -qE "(^|[[:space:]]):(${protected_refs})([[:space:]]|$)"; then
+    block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
+  fi
+
+  if echo "$command" | grep -qE "(^|[[:space:]]):refs/heads/(${protected_refs})([[:space:]]|$)"; then
+    block "git push 先が保護ブランチです。feature / release / sync ブランチ + PR 経由で更新してください。"
+  fi
+
   if echo "$command" | grep -qE '(^|[[:space:]])--tags([[:space:]]|$)'; then
     block "git push --tags は人間のリリース作業専用です。エージェントは実行できません。"
   fi
@@ -85,12 +97,13 @@ fi
 # 引用符を考慮して ; / && で分割（commit -m 内の ; 誤分割を防止）。git commit 断片は検査対象外
 # git … add は断片内の任意位置（GIT_DIR= 前置・パイプ・global option 付き）を検出
 git_global_opt='(-C[[:space:]]+[^[:space:]]+|--git-dir=[^[:space:]]+|--git-dir[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
-git_add_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?git([[:space:]]+${git_global_opt})*[[:space:]]+add[[:space:]]"
-git_add_strip='.*(^|[[:space:]]|[|]|GIT_DIR=[^[:space:]]+[[:space:]]+)git([[:space:]]+('"${git_global_opt}"'))*[[:space:]]+add[[:space:]]+'
+git_add_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}([[:space:]]+${git_global_opt})*[[:space:]]+add[[:space:]]"
 # 各引数トークン境界（空白）でも機密パスを検出（git add .secret otherfile 等）
 sensitive_add_pattern='(^|[[:space:]])([^[:space:]]+/)*\.env(\.|$|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*\.secret($|[[:space:]]|\.)|(^|[[:space:]])([^[:space:]]+/)*\.firebaserc($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.pem($|[[:space:]])|(^|[[:space:]])([^[:space:]]+/)*[^/[:space:]]+\.key($|[[:space:]])'
 bulk_add_msg='git add の一括ステージ（. / -A / -u 等）は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。'
 patch_add_msg='git add -p / --patch は追跡済み機密の部分ステージリスクがあるため禁止です。'
+commit_all_msg='git commit -a / --all による一括ステージは機密ファイル混入リスクがあるため禁止です。git add で対象を明示指定してください。'
+git_commit_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?${git_bin}[[:space:]]+commit([[:space:]]|$)"
 
 split_shell_commands() {
   SPLIT_SHELL_INPUT="$1" python3 <<'PY'
@@ -143,8 +156,13 @@ fi
 while IFS= read -r part; do
   [[ -z "$part" ]] && continue
 
-  # git commit 断片はメッセージ内 git add 文字列の誤検知防止のためスキップ
-  if echo "$part" | grep -qE '(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?git[[:space:]]+commit([[:space:]]|$)'; then
+  # git commit 断片はメッセージ内 git add 文字列の誤検知防止のためスキップ（-a/--all は block）
+  if echo "$part" | grep -qE "${git_commit_match}"; then
+    commit_args=$(echo "$part" | sed -E 's/^([[:space:]]|[|])?(GIT_DIR=[^[:space:]]+[[:space:]]+)?([^[:space:]]+\/)*git[[:space:]]+commit[[:space:]]+//')
+    commit_flags=$(echo "$commit_args" | sed -E 's/^([^"'"'"']*)["'"'"'].*/\1/')
+    if echo "$commit_flags" | grep -qE '(^|[[:space:]])(--all|-a([[:space:]]|$)|-[^[:space:]]*a[^[:space:]]*)([[:space:]]|$)'; then
+      block "${commit_all_msg}"
+    fi
     continue
   fi
 
@@ -157,7 +175,7 @@ while IFS= read -r part; do
     continue
   fi
 
-  add_args=$(echo "$part" | sed -E "s/${git_add_strip}//")
+  add_args=$(echo "$part" | sed -E 's/^.*[[:space:]]+add[[:space:]]+//')
 
   if echo "$add_args" | grep -qE "${sensitive_add_pattern}"; then
     block "保護対象ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
