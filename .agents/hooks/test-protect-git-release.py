@@ -38,6 +38,8 @@ CASES: list[tuple[str, str]] = [
     ("git add -A", "block"),
     ("git add --all", "block"),
     ("git add user/src/foo.ts", "allow"),
+    ("git add -N .env.development", "block"),
+    ("git add -f partner/.secret", "block"),
     (
         'git commit -m "git add . のブロックを説明"',
         "allow",

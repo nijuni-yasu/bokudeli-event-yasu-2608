@@ -66,10 +66,11 @@ fi
 
 # git add — 機密ファイルの staging を拒否（protect-files.sh は Edit|Write のみ）
 # コミットメッセージ等の文中 git add 文字列は対象外（シェル行頭または && / ; 直後の git add のみ）
+# オプション（-N, -f 等）やパス prefix（dir/.secret 等）が付いた場合も [^;&]* でセグメント全体をスキャン
 git_add_prefix='(^|[;&][[:space:]]*|&&[[:space:]]*)git[[:space:]]+add[[:space:]]'
 
 if echo "$command" | grep -qE "${git_add_prefix}"; then
-  if echo "$command" | grep -qE "${git_add_prefix}[^[:space:]]*(\.env(\.|$)|\.secret(\.|$)|\.firebaserc($|[^/]))|${git_add_prefix}[^;&]*[[:space:]](\.env|\.secret|\.firebaserc)"; then
+  if echo "$command" | grep -qE "${git_add_prefix}[^;&]*(\.env(\.|[[:space:]]|$)|\.secret(\.|[[:space:]]|$)|\.firebaserc([[:space:]]|$))"; then
     block "機密ファイル（.env / .secret / .firebaserc）の git add は禁止です。"
   fi
 
