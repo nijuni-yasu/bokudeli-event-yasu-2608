@@ -73,26 +73,74 @@ if echo "$command" | grep -qE '(^|[[:space:]])git[[:space:]]+push'; then
 fi
 
 # git add — 機密ファイルの staging を拒否（protect-files.sh は Edit|Write のみ）
-# コミットメッセージ等の文中 git add 文字列は対象外（; / && で分割した各シェル断片のみ）
-# git remote add 等は除外（git … add サブコマンドのみ。git -C / --git-dir 付きも対象）
-git_add_cmd='^git([[:space:]]+(-C([[:space:]]+[^[:space:]]+|[^[:space:]]+)|--git-dir=[^[:space:]]+))*[[:space:]]+add[[:space:]]'
-sensitive_add_pattern='(\.env(\.|$)|\.secret(\.|$)|\.firebaserc($|[^/])|\.pem($|\.)|\.key($|[^/]))'
+# 引用符を考慮して ; / && で分割（commit -m 内の ; 誤分割を防止）。git commit 断片は検査対象外
+# git … add は断片内の任意位置（GIT_DIR= 前置・パイプ・global option 付き）を検出
+git_global_opt='(-C[[:space:]]+[^[:space:]]+|--git-dir=[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--work-tree=[^[:space:]]+|--work-tree[[:space:]]+[^[:space:]]+)'
+git_add_match="(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?git([[:space:]]+${git_global_opt})*[[:space:]]+add[[:space:]]"
+git_add_strip='.*(^|[[:space:]]|[|]|GIT_DIR=[^[:space:]]+[[:space:]]+)git([[:space:]]+('"${git_global_opt}"'))*[[:space:]]+add[[:space:]]+'
+sensitive_add_pattern='(\.env(\.|$)|\.secret(\.|$)|\.firebaserc($|[^/])|\.pem$|\.key$)'
 bulk_add_msg='git add の一括ステージ（. / -A / -u 等）は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。'
 
+split_shell_commands() {
+  SPLIT_SHELL_INPUT="$1" python3 <<'PY'
+import os
+
+def split_commands(text: str) -> list[str]:
+    parts: list[str] = []
+    cur: list[str] = []
+    in_sq = in_dq = False
+    i = 0
+    n = len(text)
+    while i < n:
+        if not in_sq and not in_dq and i + 1 < n and text[i : i + 2] == "&&":
+            p = "".join(cur).strip()
+            if p:
+                parts.append(p)
+            cur = []
+            i += 2
+            continue
+        if not in_sq and not in_dq and text[i] == ";":
+            p = "".join(cur).strip()
+            if p:
+                parts.append(p)
+            cur = []
+            i += 1
+            continue
+        c = text[i]
+        if c == "'" and not in_dq:
+            in_sq = not in_sq
+        elif c == '"' and not in_dq:
+            in_dq = not in_dq
+        cur.append(c)
+        i += 1
+    p = "".join(cur).strip()
+    if p:
+        parts.append(p)
+    return parts
+
+for part in split_commands(os.environ.get("SPLIT_SHELL_INPUT", "")):
+    print(part)
+PY
+}
+
 while IFS= read -r part; do
-  part="${part#"${part%%[![:space:]]*}"}"
-  if ! echo "$part" | grep -qE "${git_add_cmd}"; then
+  [[ -z "$part" ]] && continue
+
+  # git commit 断片はメッセージ内 git add 文字列の誤検知防止のためスキップ
+  if echo "$part" | grep -qE '(^|[[:space:]]|[|])(GIT_DIR=[^[:space:]]+[[:space:]]+)?git[[:space:]]+commit([[:space:]]|$)'; then
     continue
   fi
 
-  add_args=$(echo "$part" | sed -E 's/^git([[:space:]]+(-C([[:space:]]+[^[:space:]]+|[^[:space:]]+)|--git-dir=[^[:space:]]+))*[[:space:]]+add[[:space:]]+//')
+  if ! echo "$part" | grep -qE "${git_add_match}"; then
+    continue
+  fi
 
-  # オプション（-f / -N 等）を挟んでも add 引数全体から機密パスを検出
+  add_args=$(echo "$part" | sed -E "s/${git_add_strip}//")
+
   if echo "$add_args" | grep -qE "${sensitive_add_pattern}"; then
     block "機密ファイル（.env / .secret / .firebaserc / .pem / .key）の git add は禁止です。"
   fi
 
-  # 一括ステージ: -A / --all / -u / --update / . / ./ / .. / -- . / :/
   if echo "$add_args" | grep -qE '(^|[[:space:]])(-A|--all|-u|--update)($|[[:space:]])'; then
     block "${bulk_add_msg}"
   fi
@@ -105,6 +153,6 @@ while IFS= read -r part; do
   if echo "$add_args" | grep -qE '(^|[[:space:]])\.($|[[:space:]])'; then
     block "${bulk_add_msg}"
   fi
-done < <(echo "$command" | sed 's/&&/\n/g; s/;/\n/g')
+done < <(split_shell_commands "$command")
 
 exit 0

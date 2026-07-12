@@ -52,6 +52,14 @@ CASES: list[tuple[str, str]] = [
     ("git add user/src/foo.ts", "allow"),
     ("git add -N .env.development", "block"),
     ("git add -f partner/.secret", "block"),
+    ("git -c core.quotepath=false add .env.development", "block"),
+    ("GIT_DIR=/tmp/repo git add partner/.secret", "block"),
+    ("false | git add .env.development", "block"),
+    ("git add common/src/api.keys.ts", "allow"),
+    (
+        'git commit -m "explain; git add .env in docs"',
+        "allow",
+    ),
     (
         'git commit -m "git add . のブロックを説明"',
         "allow",
