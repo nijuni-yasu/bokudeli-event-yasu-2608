@@ -99,7 +99,9 @@ export async function handleProfileUpdateFailure(
   const providerId = userCredential?.providerId
 
   if (toPath === '/profile') {
-    alertProfileLinkageFailed(providerId)
+    if (userCredential != null) {
+      alertProfileLinkageFailed(providerId)
+    }
     return undefined
   }
 
@@ -113,22 +115,36 @@ export async function handleProfileUpdateFailure(
   }
 
   if (toPath === '/register') {
+    if (providerId != null) {
+      window.alert(
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+        i18n.global.t('register.register_fail', {
+          // @ts-expect-error i18n.global.t の型がユニオンになってしまう
+          sns_name: i18n.global.t(`sns_name['${providerId}']`),
+        }),
+      )
+    } else {
+      window.alert(
+        // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+        i18n.global.t('register.register_fail_generic'),
+      )
+    }
+    return { path: '/register', query }
+  }
+
+  if (providerId != null) {
     window.alert(
       // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
-      i18n.global.t('register.register_fail', {
+      i18n.global.t('login.login_fail', {
         // @ts-expect-error i18n.global.t の型がユニオンになってしまう
         sns_name: i18n.global.t(`sns_name['${providerId}']`),
       }),
     )
-    return { path: '/register', query }
+  } else {
+    window.alert(
+      // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
+      i18n.global.t('login.login_fail_generic'),
+    )
   }
-
-  window.alert(
-    // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
-    i18n.global.t('login.login_fail', {
-      // @ts-expect-error i18n.global.t の型がユニオンになってしまう
-      sns_name: i18n.global.t(`sns_name['${providerId}']`),
-    }),
-  )
   return { path: '/login', query }
 }

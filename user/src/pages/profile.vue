@@ -242,8 +242,10 @@ const handleProviderLink = async (providerId: ProviderIdType) => {
   const snsName = $t(`sns_name['${providerId}']`)
   try {
     isSnsLoading.value = providerId
-    await currentUserStore.linkProvider(providerId)
-    notification.show($t('profile.linkage_completed', { snsName }), 'success')
+    const linked = await currentUserStore.linkProvider(providerId)
+    if (linked) {
+      notification.show($t('profile.linkage_completed', { snsName }), 'success')
+    }
   } catch (error) {
     if (error instanceof FirebaseError) {
       if (error.code === 'auth/credential-already-in-use') {

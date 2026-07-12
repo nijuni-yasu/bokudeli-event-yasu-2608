@@ -123,6 +123,27 @@ describe('authEntryGuards', () => {
       expect(mockDelete).not.toHaveBeenCalled()
       expect(mockSignOut).toHaveBeenCalledOnce()
       expect(result).toEqual({ path: '/login', query: {} })
+      expect(window.alert).toHaveBeenCalledOnce()
+      expect(window.alert).toHaveBeenCalledWith('login.login_fail_generic')
+    })
+
+    it('/register かつ providerId ありでは provider 名付き文言で alert する', async () => {
+      mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: true })
+      const userCredential = createUserCredential()
+
+      const result = await handleProfileUpdateFailure('/register', {}, userCredential, new Error('failed'))
+
+      expect(result).toEqual({ path: '/register', query: {} })
+      expect(window.alert).toHaveBeenCalledOnce()
+      expect(window.alert).toHaveBeenCalledWith('register.register_fail')
+    })
+
+    it('/register かつ userCredential なしでは汎用文言で alert する', async () => {
+      const result = await handleProfileUpdateFailure('/register', {}, null, new Error('failed'))
+
+      expect(result).toEqual({ path: '/register', query: {} })
+      expect(window.alert).toHaveBeenCalledOnce()
+      expect(window.alert).toHaveBeenCalledWith('register.register_fail_generic')
     })
 
     it('cleanup 失敗時は signOut して false を返す', async () => {
@@ -134,6 +155,14 @@ describe('authEntryGuards', () => {
 
       expect(mockSignOut).toHaveBeenCalledOnce()
       expect(result).toBe(false)
+    })
+
+    it('/profile かつ userCredential なしでは alert しない', async () => {
+      const result = await handleProfileUpdateFailure('/profile', {}, null, new Error('failed'))
+
+      expect(mockSignOut).not.toHaveBeenCalled()
+      expect(result).toBeUndefined()
+      expect(window.alert).not.toHaveBeenCalled()
     })
 
     it('/profile 失敗時は signOut せず undefined を返す', async () => {

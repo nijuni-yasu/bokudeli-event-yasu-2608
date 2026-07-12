@@ -579,6 +579,7 @@ export default {
   },
   login: {
     login_fail: '{sns_name}ログインできませんでした',
+    login_fail_generic: 'ログインできませんでした。',
     title: 'ログイン',
     brand_welcome: 'おかえりなさい👋',
     please_login_below: `<a href="${LEGAL_URLS.terms}" target="_blank" rel="noopener noreferrer">「利用規約」</a> および <a href="${LEGAL_URLS.privacy}" target="_blank" rel="noopener noreferrer">「プライバシーポリシー」</a> に同意の上、下記のいずれかの方法でログインしてください。`,
@@ -609,6 +610,7 @@ export default {
     continue_email: 'メールアドレスで新規登録',
     sns_register: '{sns_name}で新規登録',
     register_fail: '{sns_name}新規登録できませんでした',
+    register_fail_generic: '新規登録できませんでした。',
     already_registered: 'このメールアドレスはすでに登録されています。ログインしてください。',
     link_dialog_body:
       '{try_register_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
