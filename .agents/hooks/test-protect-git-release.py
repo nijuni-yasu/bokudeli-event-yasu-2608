@@ -31,6 +31,17 @@ CASES: list[tuple[str, str]] = [
     ("git push origin HEAD:hotfix/1910", "allow"),
     ("git branch -f production v2.5.3", "block"),
     ("git commit -m 'wip'", "allow"),
+    ("git add .env.development", "block"),
+    ("git add partner/.secret", "block"),
+    ("git add .firebaserc", "block"),
+    ("git add .", "block"),
+    ("git add -A", "block"),
+    ("git add --all", "block"),
+    ("git add user/src/foo.ts", "allow"),
+    (
+        'git commit -m "git add . のブロックを説明"',
+        "allow",
+    ),
 ]
 
 

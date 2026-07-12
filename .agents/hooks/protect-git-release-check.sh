@@ -64,4 +64,18 @@ if echo "$command" | grep -qE '(^|[[:space:]])git[[:space:]]+push'; then
   fi
 fi
 
+# git add — 機密ファイルの staging を拒否（protect-files.sh は Edit|Write のみ）
+# コミットメッセージ等の文中 git add 文字列は対象外（シェル行頭または && / ; 直後の git add のみ）
+git_add_prefix='(^|[;&][[:space:]]*|&&[[:space:]]*)git[[:space:]]+add[[:space:]]'
+
+if echo "$command" | grep -qE "${git_add_prefix}"; then
+  if echo "$command" | grep -qE "${git_add_prefix}[^[:space:]]*(\.env(\.|$)|\.secret(\.|$)|\.firebaserc($|[^/]))|${git_add_prefix}[^;&]*[[:space:]](\.env|\.secret|\.firebaserc)"; then
+    block "機密ファイル（.env / .secret / .firebaserc）の git add は禁止です。"
+  fi
+
+  if echo "$command" | grep -qE "${git_add_prefix}(-A|--all|\.)($|[[:space:]])"; then
+    block "git add . / -A / --all は機密ファイル混入リスクがあるため禁止です。対象ファイルを明示指定してください。"
+  fi
+fi
+
 exit 0

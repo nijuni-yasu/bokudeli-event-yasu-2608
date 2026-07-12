@@ -100,7 +100,7 @@ npm -w <pkg> run format:check
 
 チェックリスト: `.agents/skills/shokujii-code-review/shokujii-code-review.md`
 
-### アクセシビリティ（Phase 1）
+### アクセシビリティ（Phase 1 対象外）
 
 通常の PR レビューでは、アクセシビリティ（`aria-label`、`alt`、キーボード操作、ARIA ロール等）を指摘しない。
 個別仕様書（`documents/`）に a11y 要件が明記されている PR のみ例外とする。

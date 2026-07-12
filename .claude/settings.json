@@ -56,6 +56,17 @@
       "Edit(/.claude/skills/shokujii-code-review/**)"
     ],
     "deny": [
+      "Bash(git push origin development*)",
+      "Bash(git push origin main*)",
+      "Bash(git push origin production*)",
+      "Bash(git push * development)",
+      "Bash(git push * main)",
+      "Bash(git push * production)",
+      "Bash(cat .env*)",
+      "Bash(cat .secret*)",
+      "Bash(cat .firebaserc*)",
+      "Bash(cat */.env*)",
+      "Bash(cat */.secret*)",
       "Bash(git push --force)",
       "Bash(git push --force *)",
       "Bash(git push -f)",

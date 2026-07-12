@@ -61,7 +61,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `v-html` に DB・ユーザー入力由来の動的データ（TinyMCE 等のリッチテキスト含む）を渡す場合、サニタイズ（DOMPurify 等）しているか（`$t()` 等の静的文字列のみの場合は対象外）
 - [ ] `target="_blank"` を使う外部リンクに `rel="noopener noreferrer"` を付けているか（`window.open`・`v-html` 内リンク・`ja.ts` の文言内リンクも対象）
 - [ ] Auth ユーザー作成 → Firestore 保存のような複数ステップの作成処理で、後続ステップが失敗した場合に先行して作成済みのリソースをロールバック・補償削除しているか（残すと再登録不能や認可バイパスにつながる）
-- [ ] 外部 URL のホスト名検証を `startsWith` のみで行っていないか（`https://good.com.attacker.example` のようになりすませる。URL をパースしてホスト名を厳密比較する）
+- [ ] 外部 URL のホスト名検証を `startsWith` のみで行っていないか（`https://good.com.attacker.example` のようになりすませる。URL をパースして `protocol === 'https:'` と hostname を厳密比較する）
 - [ ] 運用ドキュメント・レビュー記録に実ユーザーの UID・メールアドレス等の PII や認証情報ファイルの中身を平文で残していないか（プレースホルダー化する）
 
 ### アクセシビリティ（Phase 1 対象外）
@@ -115,7 +115,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] メールの1件送信に `Promise.allSettled` や失敗集計ログを使っていないか（`try/catch` で十分）
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
-- [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（冪等フラグの設定を副作用より先に行う）
+- [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（Transaction 等で未処理を原子的に確保する。送信成功前に sent 確定フラグだけ立てない）
 - [ ] トリガー / Function 内で catch した例外をログのみにせず再 throw し、Cloud Functions の自動リトライに乗せているか（意図的に握りつぶす場合は理由をコメントに明記する）
 
 ### 決済 (Stripe)
@@ -459,7 +459,7 @@ friend_sort_last_met_at: '最後に会った順',
 
 vue-i18n の datetimeFormats は廃止済み。新規実装では `common` の Luxon ベース util を使う。
 
-```vue-html
+```vue
 // NG: vue-i18n datetimeFormats に依存する
 {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}
 
@@ -536,13 +536,29 @@ export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', a
   }
 })
 
-// OK: 冪等フラグを副作用より先に設定し、送信済みなら早期リターンする
+// NG: 送信成功前に sent 確定フラグだけ立てる（送信 API 失敗時、次回は送信済み扱いで通知が永久欠落する）
 export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
   const order = event.data?.after.data()
   if (order?.status !== 'ordered' || order.mail_sent_at != null) return
-  await markMailSent(orderRef) // 副作用より先に冪等フラグを立てる
-  await sendOrderCompleteMail(...)
+  await markMailSent(orderRef) // 送信前に sent を立てる
+  await sendOrderCompleteMail(...) // ここで失敗すると再送されない
 })
+
+// OK: Transaction で未送信を原子的に確保してから送信し、成功後に sent 記録する
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  const order = event.data?.after.data()
+  if (order?.status !== 'ordered' || order.mail_sent_at != null) return
+  await db.runTransaction(async (t) => {
+    const snap = await t.get(orderRef)
+    if (snap.data()?.mail_sent_at != null) return
+    t.update(orderRef, { mail_sending_at: FieldValue.serverTimestamp() })
+  })
+  await sendOrderCompleteMail(...)
+  await markMailSent(orderRef)
+})
+
+// OK（本番パターン）: member_orders 単位の onDocumentWritten ではなく、確定処理の入口で 1 回だけ副作用
+// → functions/default/src/orderConfirmedSideEffects.ts 参照
 ```
 
 ### NG: ループ内で Firestore read/write を逐次 await する
@@ -611,16 +627,23 @@ export const stripeWebhook = onRequest(async (req, res) => {
   res.sendStatus(200)
 })
 
-// OK: rawBody + constructEvent で署名検証し、処理済みなら早期リターンする
+// OK: rawBody + constructEvent で署名検証し、Transaction 内で処理済みを原子的に確保する
 export const stripeWebhook = onRequest(async (req, res) => {
   const event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], webhookSecret)
-  if (await isAlreadyProcessed(event.id)) {
+  const txResult = await db.runTransaction(async (transaction) => {
+    if (await getStripeByPaymentIntent(..., transaction) != null) return 'already_processed'
+    // saveStripe + saveOrder を同一 transaction 内で実行
+    return 'processed'
+  })
+  if (txResult === 'already_processed') {
     res.sendStatus(200)
     return
   }
   await handlePaymentIntentSucceeded(event.data.object)
   res.sendStatus(200)
 })
+
+// 詳細: functions/default/src/stripeWebhook.ts の handleOrderConfirmation 参照
 ```
 
 ### NG: Promise を返す権限チェック関数の await 漏れ
@@ -691,8 +714,9 @@ if (url.startsWith('https://lh3.googleusercontent.com')) {
   // 信頼済みとして扱う
 }
 
-// OK: URL をパースしてホスト名を厳密比較する
-if (new URL(url).hostname === 'lh3.googleusercontent.com') {
+// OK: URL をパースして protocol と hostname を厳密比較する
+const parsed = new URL(url)
+if (parsed.protocol === 'https:' && parsed.hostname === 'lh3.googleusercontent.com') {
   // 信頼済みとして扱う
 }
 ```
