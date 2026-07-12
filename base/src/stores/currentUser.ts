@@ -216,6 +216,7 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     await updateProfileFromProviders(userCredential)
   }
 
+  /** TODO #2151: `auth/requires-recent-login` 発生時に profile から呼ぶ予定 */
   const reauthenticateProvider = async (providerId: ProviderIdType) => {
     const currentUser = getAuth().currentUser
     if (currentUser == null) {
@@ -239,12 +240,8 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
         _user.user_sns_twitter = ''
         break
     }
-    await unlink(currentUser, providerId)
-    const refreshedUser = getAuth().currentUser
-    if (refreshedUser == null) {
-      throw new Error('Not logged in')
-    }
-    providerData.value = refreshedUser.providerData
+    const updatedUser = await unlink(currentUser, providerId)
+    providerData.value = updatedUser.providerData
     await updateUser(toRaw(_user))
   }
 
