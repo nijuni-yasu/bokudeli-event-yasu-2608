@@ -13,6 +13,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ## チェックリスト
 
 ### TypeScript・型安全性
+
 - [ ] `any` を使用していないか
 - [ ] `as` によるキャストを使用していないか（型推論で解決できるはず）
 - [ ] `common` の schema・API 以外で新規 Zod スキーマを定義していないか（`ZodError` の捕捉のみ可）。`as` 回避は型ガードで行う
@@ -22,20 +23,25 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `tsconfig` の strict 設定を緩める変更をしていないか
 
 ### 比較・falsy チェック
+
 - [ ] 数値に falsy チェック (`!`, `||`, `if (num)`) を使っていないか（`0` に誤反応する）
 - [ ] 文字列に falsy チェックを使っていないか（`!= null` または `!== ''` を使う）
 - [ ] boolean 以外の値に `!` を使っていないか（`!= null` に変更する）
 - [ ] `null` と `undefined` を区別して比較しているか（`== null` で両方を捕捉する）
+- [ ] 権限チェック関数が `Promise<boolean>` 等を返す場合、呼び出し側で `await` しているか（await 漏れは常に truthy 判定になり認可バイパスに直結する）
 
 ### Vue リアクティビティ
+
 - [ ] `watch` の多用をしていないか（`computed` で代替できる場合は `computed` を使う）
 - [ ] リアクティブ変数 (`.value`) を関数内で直接使っていないか
 - [ ] `isProcessing`、`isCompleted` 等の一時フラグを不必要にリアクティブにしていないか
 - [ ] `v-if` と `v-show` を適切に使い分けているか（機能を殺す場合は `v-if`）
 - [ ] `defineEmits` を最新の型構文で書いているか（例: `defineEmits<{ save: [menu: BokudeliPartnerMenu] }>()`）
 - [ ] `props` と `model` を同時に定義していないか
+- [ ] イベントハンドラ・ライフサイクルフックから呼ぶ非同期処理に `try/catch` があるか（unhandled rejection や UI 不整合を防ぐ）
 
 ### Vue コンポーネント設計
+
 - [ ] `base` のコンポーネント内にルーティングパスをハードコードしていないか（`emit` を使ってコンポーネントを汎化する）
 - [ ] `base` のコンポーネント内にビジネスロジックを持ち込んでいないか
 - [ ] ローディング状態は「画面全体に影響するデータが読み込まれているか」で判断しているか
@@ -47,14 +53,31 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] ハードコードされた UI 文字列を `i18n` に移行しているか（**`ja.ts` のみ**。英語 locale は作らない）
 - [ ] `src/locales/messages/en.ts` 等の **英語 locale を新規追加していないか**（本プロジェクトは日本語のみ）
 - [ ] 英語用の UI 文字列だけを別ファイルに分けていないか（未使用の `en.ts` 残骸を作らない）
+- [ ] 削除等の破壊的操作に確認モーダルを挟んでいるか（誤操作防止の UX）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
 
+### セキュリティ
+
+- [ ] `v-html` に DB・ユーザー入力由来の動的データ（TinyMCE 等のリッチテキスト含む）を渡す場合、サニタイズ（DOMPurify 等）しているか（`$t()` 等の静的文字列のみの場合は対象外）
+- [ ] `target="_blank"` を使う外部リンクに `rel="noopener noreferrer"` を付けているか（`window.open`・`v-html` 内リンク・`ja.ts` の文言内リンクも対象）
+- [ ] Auth ユーザー作成 → Firestore 保存のような複数ステップの作成処理で、後続ステップが失敗した場合に先行して作成済みのリソースをロールバック・補償削除しているか（残すと再登録不能や認可バイパスにつながる）
+- [ ] 外部 URL のホスト名検証を `startsWith` のみで行っていないか（`https://good.com.attacker.example` のようになりすませる。URL をパースして `protocol === 'https:'` と hostname を厳密比較する）
+- [ ] 運用ドキュメント・レビュー記録に実ユーザーの UID・メールアドレス等の PII や認証情報ファイルの中身を平文で残していないか（プレースホルダー化する）
+
+### アクセシビリティ（Phase 1 対象外）
+
+> **現フェーズではコードレビューでの a11y 指摘は行わない**（ユーザー規模・優先度の都合）。
+> `aria-label` / `alt` / キーボード操作 / ARIA ロール等は通常 PR では確認しない。
+> **例外**: 個別仕様書（`documents/`）に a11y 要件が明記されている場合のみ、その PR スコープ内で確認する。
+
 ### Materio / UI テンプレート
+
 - [ ] `base/materio/`（`@core` / `@layouts`）を変更していないか
 - [ ] Materio のレイアウト・スタイル調整を `user/src/styles/` 等の override で行っているか
 - [ ] materio 配下にプロジェクト固有の util / コンポーネントを追加していないか（`base/src/` 等を使う）
 
 ### Firestore / Store パターン
+
 - [ ] DB への操作は必ず store 関数を経由しているか（直接 `update`、`setDoc` 等を呼ばない）
 - [ ] `withConverter` を付けた reference を使っているか（付けない ref の使用は NG）
 - [ ] `toFirestore` を store の `FirestoreDataConverter` 外で直接呼んでいないか
@@ -65,14 +88,26 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
 - [ ] communityId と eventId の両方が分かるのに `getEvent` を使っていないか（`getEventInCommunity` を使う。`getEvent` は eventId のみ分かる Tier C 向け）
+- [ ] ループ内で Firestore の read/write や外部 API 呼び出しを逐次 `await` していないか（`Promise.all`・バッチ処理・並列度を制限した実行を検討する）
+- [ ] カウンタや上限チェック等の不変条件を read-then-write で更新していないか（`FieldValue.increment` または Transaction で原子性を担保する）
+- [ ] 新規の複合クエリ（`where` 複数条件・`orderBy` 併用・`array-contains` 等）に対応する `firestore.indexes.json` の追加漏れ・重複がないか
+- [ ] store の zod パースエラー等、握りつぶすと調査不能になる catch 節で `reportClientError` を呼んでいるか（クライアント側 store）
 
 ### community_id / community_account の使い分け
+
 - [ ] `useCommunityStore(string)` には `community_account`（URL スラッグ）を渡しているか
 - [ ] Callable / Firestore パス / Storage には `community_id`（Firestore ドキュメント ID）を渡しているか
 - [ ] URL 生成（`getCommunityPath`, `getEventPath` 等）には `community_account` を渡しているか
 - [ ] 同一コンポーネント内で prop 名 `communityId` と `communityAccount` を混在させていないか（用途が異なる場合は JSDoc で区別する）
 
+### Firestore Security Rules
+
+- [ ] `firestore.rules` の create/update で、新規・機微フィールドの書き込み可能な値を制約しているか（`hasOnly`、他フィールドや `request.auth` との一致検証等）
+- [ ] 新規コレクション・クエリで `enterprise_id` / `community_id` のテナント分離が必要な場合、`isSameEnterprise` / `docEnterpriseId` 等の既存ヘルパーに揃えているか（`enterprise_id` が null のドキュメントの扱いも含む）
+- [ ] `firestore.rules` を変更した場合、`tests/firestore-rules` 側のテストも追加・更新しているか
+
 ### Firebase Functions
+
 - [ ] `console.log` / `console.error` を使っていないか（`createModuleLogger` を使う）
 - [ ] `import { logger } from 'firebase-functions'` を直接使っていないか（`createModuleLogger` を使う）
 - [ ] ログメッセージに `letter |` 等の接頭辞をつけていないか（`createModuleLogger` 使用時は不要）
@@ -80,13 +115,24 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] メールの1件送信に `Promise.allSettled` や失敗集計ログを使っていないか（`try/catch` で十分）
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
+- [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（Transaction 等で未処理を原子的に確保する。送信成功前に sent 確定フラグだけ立てない）
+- [ ] トリガー / Function 内で catch した例外をログのみにせず再 throw し、Cloud Functions の自動リトライに乗せているか（意図的に握りつぶす場合は理由をコメントに明記する）
+
+### 決済 (Stripe)
+
+- [ ] Webhook は `req.body` ではなく `req.rawBody` を使い `stripe.webhooks.constructEvent` で署名検証しているか
+- [ ] Webhook・決済確定処理が再送・重複配信されても二重処理にならないか（処理済み判定によるべき等性）
+- [ ] Stripe の Charges API / Sources API / Card Element 等の非推奨 API を新規に使っていないか（Checkout Sessions・PaymentIntents・Setup Intents を使う）
 
 ### CI / Functions デプロイ
+
 - [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、`.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も同 PR で更新されているか
 - [ ] 更新漏れは 🚨 必須修正（マージ後も Function が未デプロイでサイレント障害になる）
 - [ ] export しない内部ヘルパーは対象外
+- [ ] 後方非互換なスキーマ変更・新規 Callable を含む PR で、複数 CI ワークフロー（`deploy_functions` / `deploy_user` / `deploy_partner` 等）間のデプロイ順序を明記・保証しているか
 
 ### 日付・時刻処理
+
 - [ ] `Date` オブジェクトを直接使っていないか（`luxon` を使う）
 - [ ] `new Date()` で UNIX タイムを生成していないか（実行環境によって値が変わる）
 - [ ] 日付の固定値は `CUTOFF_UNIX_TIME_XXXX` のように `common` に定数として定義しているか
@@ -96,19 +142,29 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 日付・時刻の表示フォーマットを call site で独自実装していないか（`convertToDate` / `convertToTimeString` / `convertToDatetime` / `convertToDatetimeWeekdayShort` 等を使う）
 
 ### スキーマ設計 (Zod / common)
+
 - [ ] 新規フィールドを `optional` にしていないか（新規追加フィールドは基本 `required`）
 - [ ] ソート用のフィールドを文字列型で定義していないか（数値型が正しい）
 - [ ] 独自の日付文字列変換を実装していないか（`luxon` または `zod` の `transform` を使う）
 - [ ] 親ドキュメントが既に持っている情報を子ドキュメントに重複させていないか
 - [ ] DbSchema の日付・時刻フィールドに `TimestampSchema` を使っているか
 - [ ] AppSchema の日付・時刻フィールドに `EpochMillisSchema` を使っているか
+- [ ] 既存データに影響する変更の場合、`bokudeli-event-batch` 側での migration / backfill 対応（または少なくとも言及）があるか
+- [ ] DbSchema で `nullable()` を安易に使っていないか（明示的に `null` が必要な特殊ケースを除き避ける方針。optional 文字列は `NonEmptyStringSchema` を検討する）
 
 ### Composable / Store の役割分担
+
 - [ ] 計算ロジックは composable より store で行うようになっているか
 - [ ] Composable 内の Store は引数で受け取らず Composable 内で再取得しているか
 - [ ] Store に不要なビジネスロジックを持ち込んでいないか
 
+### テスト (Vitest)
+
+- [ ] `documents/テスト方針・テスト項目書/テスト方針.md` の基準（ビジネスロジック・純粋関数・バグ修正）に該当する新規・変更ロジックに vitest テストを追加しているか
+- [ ] Transaction・レースコンディションを含む store 関数を新規追加・変更した場合、優先してテストを追加しているか
+
 ### コード品質・可読性
+
 - [ ] 早期リターンをエラーハンドリング以外で多用していないか（並列処理は `else` で書く）
 - [ ] 「並列の処理（値の代入など）」を早期リターンで書いていないか
 - [ ] 不要な変数への代入を中継していないか
@@ -123,11 +179,13 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 将来流用できる部分を最初から汎用化しているか
 
 ### コミット・PR
+
 - [ ] 1つの PR に複数の責務を混在させていないか
 - [ ] 無関係な修正を同じコミットに含めていないか
 - [ ] 動作的に大きな変更を別 PR または別 Issue に分けているか
 
 ### アセット管理
+
 - [ ] 画像・バナー等のアセットをコード内にハードコードしていないか（Firestore / Storage で管理する）
 
 ---
@@ -282,7 +340,7 @@ await letterStore.update(ref, data)
 await updateEventMenus({ menus: menuObjects })
 
 // OK: ID リストを渡す
-await updateEventMenus({ menuIds: menuObjects.map(m => m.menu_id) })
+await updateEventMenus({ menuIds: menuObjects.map((m) => m.menu_id) })
 ```
 
 ### NG: Functions で console や logger を直接使う
@@ -401,7 +459,7 @@ friend_sort_last_met_at: '最後に会った順',
 
 vue-i18n の datetimeFormats は廃止済み。新規実装では `common` の Luxon ベース util を使う。
 
-```typescript
+```vue
 // NG: vue-i18n datetimeFormats に依存する
 {{ $d(event.event_start_datetime, 'datetime_weekday_short') }}
 
@@ -452,3 +510,261 @@ const isLoadingDetail = ref(false)
 // OK: isLoading を一つにまとめる
 const isLoading = ref(false)
 ```
+
+### NG: `v-html` にユーザー入力をそのまま渡す
+
+```vue
+<!-- NG: TinyMCE 等のリッチテキストをサニタイズせず v-html で描画 -->
+<div v-html="event.event_desc" />
+```
+
+```vue
+<!-- OK: サニタイズしてから描画する -->
+<div v-html="sanitizeHtml(event.event_desc)" />
+```
+
+`$t('...')` 等、開発者が管理する静的文字列のみを渡す場合はサニタイズ不要。
+
+### NG: 1 回の操作で複数ドキュメントが変化する前提を欠いたトリガー処理
+
+```typescript
+// NG: 一括更新で複数行が同時に ordered になり、onDocumentWritten が複数回発火して
+// 注文完了メールが重複送信される
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  if (event.data?.after.data()?.status === 'ordered') {
+    await sendOrderCompleteMail(...) // 発火のたびに送られる
+  }
+})
+
+// NG: 送信成功前に sent 確定フラグだけ立てる（送信 API 失敗時、次回は送信済み扱いで通知が永久欠落する）
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  const order = event.data?.after.data()
+  if (order?.status !== 'ordered' || order.mail_sent_at != null) return
+  await markMailSent(orderRef) // 送信前に sent を立てる
+  await sendOrderCompleteMail(...) // ここで失敗すると再送されない
+})
+
+// NG: Transaction 内 return 後も外側送信が続く（mail_sending_at を入口ガードに含めない）
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  const order = event.data?.after.data()
+  if (order?.status !== 'ordered' || order.mail_sent_at != null) return
+  await db.runTransaction(async (t) => {
+    const snap = await t.get(orderRef)
+    if (snap.data()?.mail_sent_at != null) return // Transaction 内 return では外側は止まらない
+    t.update(orderRef, { mail_sending_at: FieldValue.serverTimestamp() })
+  })
+  await sendOrderCompleteMail(...) // 上記 Transaction で return してもここは実行される
+  await markMailSent(orderRef)
+})
+
+// OK: Transaction で送信枠を原子的に確保し、確保できた場合のみ送信（mail_sending_at も入口ガード対象）
+export const onOrderWritten = onDocumentWritten('.../member_orders/{orderId}', async (event) => {
+  const order = event.data?.after.data()
+  if (order?.status !== 'ordered' || order.mail_sent_at != null || order.mail_sending_at != null) return
+  const shouldSend = await db.runTransaction(async (t) => {
+    const snap = await t.get(orderRef)
+    const data = snap.data()
+    if (data?.mail_sent_at != null || data?.mail_sending_at != null) return false
+    t.update(orderRef, { mail_sending_at: FieldValue.serverTimestamp() })
+    return true
+  })
+  if (!shouldSend) return
+  await sendOrderCompleteMail(...)
+  await markMailSent(orderRef) // 送信成功後に sent 確定
+})
+
+// OK（本番パターン）: member_orders 単位の onDocumentWritten ではなく、確定処理の入口で 1 回だけ副作用
+// → functions/default/src/orderConfirmedSideEffects.ts 参照
+```
+
+### NG: ループ内で Firestore read/write を逐次 await する
+
+```typescript
+// NG: メンバー数に比例して直列に await する（タイムアウト・コスト増）
+for (const memberId of memberIds) {
+  const membership = await getChatMembership(roomId, memberId)
+}
+
+// OK: 並列化する（必要なら並列度を制限する）
+const memberships = await Promise.all(memberIds.map((memberId) => getChatMembership(roomId, memberId)))
+```
+
+### NG: カウンタ・上限チェックを read-then-write で行う
+
+```typescript
+// NG: 同時実行で increment が失われたり、上限チェックが古い値のまま通過する
+const room = await getChatRoom(roomId)
+if (room.unread_count < 99) {
+  await saveChatRoom({ ...room, unread_count: room.unread_count + 1 })
+}
+
+// OK: FieldValue.increment で原子的に更新し、上限は Transaction 内で判定する
+await db.runTransaction(async (t) => {
+  const snapshot = await t.get(roomRef)
+  if ((snapshot.data()?.unread_count ?? 0) >= 99) return
+  t.update(roomRef, { unread_count: FieldValue.increment(1) })
+})
+```
+
+### NG: Firestore Rules で新規・機微フィールドの書き込みを制約しない
+
+```
+// NG: community 作成時に enterprise_id を任意の値で自由に設定できる
+match /communities/{communityId} {
+  allow create: if request.auth != null
+}
+
+// OK: 書き込み可能な値を明示的に制約する
+match /communities/{communityId} {
+  allow create: if request.auth != null
+    && request.resource.data.enterprise_id == null
+}
+```
+
+### NG: `target="_blank"` に `rel="noopener noreferrer"` がない
+
+```vue
+<!-- NG: 開いた先のページから window.opener 経由で元ページを操作できてしまう -->
+<a href="https://example.com" target="_blank">外部サイト</a>
+
+<!-- OK -->
+<a href="https://example.com" target="_blank" rel="noopener noreferrer">外部サイト</a>
+```
+
+`window.open(url, '_blank')` や `v-html` で描画するリンク、`ja.ts` の文言内リンクも対象。
+
+### NG: Stripe Webhook で署名検証・べき等性を省略する
+
+```typescript
+// NG: パース済み body を使う（署名検証が機能しない）＋ 冪等チェックなし
+export const stripeWebhook = onRequest(async (req, res) => {
+  const event = JSON.parse(req.body)
+  await handlePaymentIntentSucceeded(event.data.object)
+  res.sendStatus(200)
+})
+
+// NG: Transaction 内で処理済み確定後に外側で副作用（失敗時 Stripe 再送は already_processed で 200、副作用欠落）
+export const stripeWebhook = onRequest(async (req, res) => {
+  const event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], webhookSecret)
+  const txResult = await db.runTransaction(async (transaction) => {
+    if (await getStripeByPaymentIntent(..., transaction) != null) return 'already_processed'
+    saveStripe(...) // 処理済み確定
+    return 'processed'
+  })
+  if (txResult === 'already_processed') {
+    res.sendStatus(200)
+    return
+  }
+  await handlePaymentIntentSucceeded(event.data.object) // ここ失敗すると再送不可
+  res.sendStatus(200)
+})
+
+// OK: Transaction 内は in-flight 確保（重複実行防止）のみ。注文確定等の永続化と副作用は成功後に整合
+export const stripeWebhook = onRequest(async (req, res) => {
+  const event = stripe.webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], webhookSecret)
+  const txResult = await db.runTransaction(async (transaction) => {
+    if (await getStripeByPaymentIntent(..., transaction) != null) return 'already_processed'
+    // 注文 ordered 化 + saveStripe を同一 transaction 内で原子的に実行（副作用は含めない）
+    return 'processed'
+  })
+  if (txResult === 'already_processed') {
+    res.sendStatus(200)
+    return
+  }
+  await applyOrderConfirmedSideEffects(...) // メール等。失敗時は Stripe 再送で再実行可能にする設計とセット
+  res.sendStatus(200)
+})
+
+// 本番: functions/default/src/stripeWebhook.ts（副作用完了後 200。長時間処理は #2075 Cloud Tasks 分離予定）
+```
+
+### NG: Promise を返す権限チェック関数の await 漏れ
+
+```typescript
+// NG: hasRole() が Promise<boolean> を返すため、常に truthy と判定される
+if (hasRole(uid, 'manager')) {
+  await issueInviteUrl(communityId)
+}
+
+// OK
+if (await hasRole(uid, 'manager')) {
+  await issueInviteUrl(communityId)
+}
+```
+
+### NG: トリガー内の例外をログのみで握りつぶす
+
+```typescript
+// NG: 例外を再 throw しないため Cloud Functions の自動リトライが働かず、
+// Firestore とチャットの同期が取れないまま放置される
+export const syncEventChatMember = onDocumentWritten(path, async (event) => {
+  try {
+    await addChatMember(...)
+  } catch (e) {
+    logger.error('failed to sync chat member', { error: e })
+  }
+})
+
+// OK: 再 throw して自動リトライに乗せる
+export const syncEventChatMember = onDocumentWritten(path, async (event) => {
+  try {
+    await addChatMember(...)
+  } catch (e) {
+    logger.error('failed to sync chat member', { error: e })
+    throw e
+  }
+})
+```
+
+### NG: 複数ステップの作成処理でロールバックがない
+
+```typescript
+// NG: Firestore 保存に失敗すると Auth ユーザーだけが残り、
+// email-already-exists で再登録できなくなる
+export const registerUser = onCall(async (request) => {
+  const authUser = await admin.auth().createUser({ email })
+  await saveUser(new ShokujiiUser(authUser.uid, { ... })) // ここで失敗すると孤児化
+})
+
+// OK: 失敗時は作成済みリソースを補償削除する
+export const registerUser = onCall(async (request) => {
+  const authUser = await admin.auth().createUser({ email })
+  try {
+    await saveUser(new ShokujiiUser(authUser.uid, { ... }))
+  } catch (e) {
+    await admin.auth().deleteUser(authUser.uid)
+    throw e
+  }
+})
+```
+
+### NG: 外部 URL のホスト名検証を startsWith のみで行う
+
+```typescript
+// NG: startsWith は https://lh3.googleusercontent.com.attacker.example にもマッチする
+if (url.startsWith('https://lh3.googleusercontent.com')) {
+  // 信頼済みとして扱う
+}
+
+// OK: URL をパースして protocol と hostname を厳密比較する
+const parsed = new URL(url)
+if (parsed.protocol === 'https:' && parsed.hostname === 'lh3.googleusercontent.com') {
+  // 信頼済みとして扱う
+}
+```
+
+### NG: DbSchema で nullable() を安易に使う
+
+```typescript
+// NG: 明示的に null を保存する特殊な理由がないのに nullable() にする
+const XxxDbSchema = z.object({
+  memo: z.string().nullable(),
+})
+
+// OK: optional 文字列は NonEmptyStringSchema で「フィールドなし」を表現する
+const XxxDbSchema = z.object({
+  memo: NonEmptyStringSchema.optional(),
+})
+```
+
+日付範囲の「開始日時のみ設定可能」等、明示的に `null` が必要な特殊ケースは `TimestampSchema.nullable()` のように使ってよい（例: `PartnerMenu.ts`）。

@@ -86,6 +86,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 文字列に falsy チェックを使っていないか（`!= null` または `!== ''` を使う）
 - [ ] boolean 以外の値に `!` を使っていないか（`!= null` に変更する）
 - [ ] `null` と `undefined` を区別して比較しているか（`== null` で両方を捕捉する）
+- [ ] 権限チェック関数が `Promise<boolean>` 等を返す場合、呼び出し側で `await` しているか（await 漏れは常に truthy 判定になり認可バイパスに直結する）
 
 ### Vue リアクティビティ
 
@@ -95,6 +96,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] `v-if` と `v-show` を適切に使い分けているか（機能を殺す場合は `v-if`）
 - [ ] `defineEmits` を最新の型構文で書いているか（例: `defineEmits<{ save: [menu: BokudeliPartnerMenu] }>()`）
 - [ ] `props` と `model` を同時に定義していないか
+- [ ] イベントハンドラ・ライフサイクルフックから呼ぶ非同期処理に `try/catch` があるか（unhandled rejection や UI 不整合を防ぐ）
 
 ### Vue コンポーネント設計
 
@@ -107,7 +109,22 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] テーマカラーを直接指定していないか（Vuetify Theme を使う）
 - [ ] `base/src/components/pages/` は deprecated であることを認識しているか
 - [ ] ハードコードされた UI 文字列を `i18n` に移行しているか
+- [ ] 削除等の破壊的操作に確認モーダルを挟んでいるか（誤操作防止の UX）
 - [ ] `var` を使っていないか（`const` / `let` を使う）
+
+### セキュリティ
+
+- [ ] `v-html` に DB・ユーザー入力由来の動的データ（TinyMCE 等のリッチテキスト含む）を渡す場合、サニタイズ（DOMPurify 等）しているか（`$t()` 等の静的文字列のみの場合は対象外）
+- [ ] `target="_blank"` を使う外部リンクに `rel="noopener noreferrer"` を付けているか（`window.open`・`v-html` 内リンク・`ja.ts` の文言内リンクも対象）
+- [ ] Auth ユーザー作成 → Firestore 保存のような複数ステップの作成処理で、後続ステップが失敗した場合に先行して作成済みのリソースをロールバック・補償削除しているか（残すと再登録不能や認可バイパスにつながる）
+- [ ] 外部 URL のホスト名検証を `startsWith` のみで行っていないか（`https://good.com.attacker.example` のようになりすませる。URL をパースして `protocol === 'https:'` と hostname を厳密比較する）
+- [ ] 運用ドキュメント・レビュー記録に実ユーザーの UID・メールアドレス等の PII や認証情報ファイルの中身を平文で残していないか（プレースホルダー化する）
+
+### アクセシビリティ（Phase 1 対象外）
+
+> **現フェーズではコードレビューでの a11y 指摘は行わない**（ユーザー規模・優先度の都合）。
+> `aria-label` / `alt` / キーボード操作 / ARIA ロール等は通常 PR では確認しない。
+> **例外**: 個別仕様書（`documents/`）に a11y 要件が明記されている場合のみ、その PR スコープ内で確認する。
 
 ### Firestore / Store パターン
 
@@ -120,6 +137,16 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] Transaction 内で読み込む場合、Transaction 外で同じドキュメントを読んでいないか
 - [ ] Transaction 内で **すべての read が write より前** に実行されているか（Firestore は write 後の read を拒否する。`addMember` 等の read+write を内包するメソッドにも注意）
 - [ ] レースコンディションが発生しうる箇所に Transaction を使っているか
+- [ ] ループ内で Firestore の read/write や外部 API 呼び出しを逐次 `await` していないか（`Promise.all`・バッチ処理・並列度を制限した実行を検討する）
+- [ ] カウンタや上限チェック等の不変条件を read-then-write で更新していないか（`FieldValue.increment` または Transaction で原子性を担保する）
+- [ ] 新規の複合クエリ（`where` 複数条件・`orderBy` 併用・`array-contains` 等）に対応する `firestore.indexes.json` の追加漏れ・重複がないか
+- [ ] store の zod パースエラー等、握りつぶすと調査不能になる catch 節で `reportClientError` を呼んでいるか（クライアント側 store）
+
+### Firestore Security Rules
+
+- [ ] `firestore.rules` の create/update で、新規・機微フィールドの書き込み可能な値を制約しているか（`hasOnly`、他フィールドや `request.auth` との一致検証等）
+- [ ] 新規コレクション・クエリで `enterprise_id` / `community_id` のテナント分離が必要な場合、`isSameEnterprise` / `docEnterpriseId` 等の既存ヘルパーに揃えているか（`enterprise_id` が null のドキュメントの扱いも含む）
+- [ ] `firestore.rules` を変更した場合、`tests/firestore-rules` 側のテストも追加・更新しているか
 
 ### Firebase Functions
 
@@ -130,12 +157,21 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] メールの1件送信に `Promise.allSettled` や失敗集計ログを使っていないか（`try/catch` で十分）
 - [ ] Callable Functions の引数にオブジェクト（クラスインスタンス等）を渡していないか（ID のリストを渡す）
 - [ ] `secrets` の指定が必要な Function（SendGrid 等）に `{ secrets: ['SENDGRID_API_KEY'] }` が付いているか
+- [ ] Firestore トリガー（`onDocumentWritten` 等）は 1 回の操作で複数ドキュメントが変化すると複数回発火する前提で、メール送信等の副作用が重複しないか（Transaction 等で未処理を原子的に確保する。送信成功前に sent 確定フラグだけ立てない）
+- [ ] トリガー / Function 内で catch した例外をログのみにせず再 throw し、Cloud Functions の自動リトライに乗せているか（意図的に握りつぶす場合は理由をコメントに明記する）
+
+### 決済 (Stripe)
+
+- [ ] Webhook は `req.body` ではなく `req.rawBody` を使い `stripe.webhooks.constructEvent` で署名検証しているか
+- [ ] Webhook・決済確定処理が再送・重複配信されても二重処理にならないか（処理済み判定によるべき等性）
+- [ ] Stripe の Charges API / Sources API / Card Element 等の非推奨 API を新規に使っていないか（Checkout Sessions・PaymentIntents・Setup Intents を使う）
 
 ### CI / Functions デプロイ
 
 - [ ] `functions/default/src/index.ts` の export 追加・削除がある場合、`.github/workflows/deploy_functions.yml` の `--only` リスト（hybrid / pf / enterprise）も同 PR で更新されているか
 - [ ] 更新漏れは 🚨 必須修正（マージ後も Function が未デプロイでサイレント障害になる）
 - [ ] export しない内部ヘルパー（他 Function から import するだけの関数）は対象外
+- [ ] 後方非互換なスキーマ変更・新規 Callable を含む PR で、複数 CI ワークフロー（`deploy_functions` / `deploy_user` / `deploy_partner` 等）間のデプロイ順序を明記・保証しているか
 
 ### 日付・時刻処理
 
@@ -151,12 +187,19 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 - [ ] 親ドキュメントが既に持っている情報を子ドキュメントに重複させていないか
 - [ ] DbSchema の日付・時刻フィールドに `TimestampSchema` を使っているか
 - [ ] AppSchema の日付・時刻フィールドに `EpochMillisSchema` を使っているか
+- [ ] 既存データに影響する変更の場合、`bokudeli-event-batch` 側での migration / backfill 対応（または少なくとも言及）があるか
+- [ ] DbSchema で `nullable()` を安易に使っていないか（明示的に `null` が必要な特殊ケースを除き避ける方針。optional 文字列は `NonEmptyStringSchema` を検討する）
 
 ### Composable / Store の役割分担
 
 - [ ] 計算ロジックは composable より store で行うようになっているか
 - [ ] Composable 内の Store は引数で受け取らず Composable 内で再取得しているか
 - [ ] Store に不要なビジネスロジックを持ち込んでいないか
+
+### テスト (Vitest)
+
+- [ ] `documents/テスト方針・テスト項目書/テスト方針.md` の基準（ビジネスロジック・純粋関数・バグ修正）に該当する新規・変更ロジックに vitest テストを追加しているか
+- [ ] Transaction・レースコンディションを含む store 関数を新規追加・変更した場合、優先してテストを追加しているか
 
 ### コード品質・可読性
 
