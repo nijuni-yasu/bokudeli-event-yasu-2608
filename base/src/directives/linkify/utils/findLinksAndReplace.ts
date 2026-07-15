@@ -1,23 +1,9 @@
-import { createLinkTarget, findMatchedText, formatText } from './helpers'
+import { renderLinkifiedContent } from './renderLinkifiedContent.js'
 
-export default function findLinksAndReplace(el: Node) {
+export default function findLinksAndReplace(el: Node, plainText?: string): void {
   if (!(el instanceof HTMLElement)) {
     return
   }
-  el.innerHTML =
-    el.textContent
-      ?.split(' ')
-      ?.map((baseText) => {
-        const matchedTexts = findMatchedText(baseText) || []
-
-        if (matchedTexts.length) {
-          const options = createLinkTarget()
-
-          matchedTexts.forEach((matchedText) => {
-            baseText = formatText(baseText, matchedText, options)
-          })
-        }
-        return baseText
-      })
-      .join(' ') ?? ''
+  const text = plainText ?? el.textContent ?? ''
+  renderLinkifiedContent(el, text)
 }

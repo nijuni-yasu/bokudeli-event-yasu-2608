@@ -3,18 +3,22 @@
  * https://github.com/maorbarel/v-linkify
  */
 import type { DirectiveBinding, VNode } from 'vue'
-import findLinksAndReplace from './utils/findLinksAndReplace'
+import { extractPlainTextFromVNode } from './utils/extractPlainTextFromVNode.js'
+import findLinksAndReplace from './utils/findLinksAndReplace.js'
+
+const linkifyElement = (el: Node, vNode: VNode): void => {
+  if (!(el instanceof HTMLElement)) {
+    return
+  }
+  const plainText = extractPlainTextFromVNode(vNode)
+  findLinksAndReplace(el, plainText)
+}
 
 export default {
-  mounted(el: Node) {
-    findLinksAndReplace(el)
+  mounted(el: Node, _: DirectiveBinding, vNode: VNode) {
+    linkifyElement(el, vNode)
   },
-  updated(el: Node, _: DirectiveBinding, vNode: VNode<HTMLElement, Node>) {
-    if (!(vNode instanceof Element) || !(vNode?.children?.[0] instanceof HTMLElement)) {
-      return
-    }
-    const newEl = el
-    newEl.textContent = vNode?.children?.[0]?.innerText ?? ''
-    findLinksAndReplace(newEl)
+  updated(el: Node, _: DirectiveBinding, vNode: VNode) {
+    linkifyElement(el, vNode)
   },
 }
