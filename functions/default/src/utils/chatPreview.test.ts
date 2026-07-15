@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { CHAT_LAST_MESSAGE_PREVIEW_MAX_LENGTH } from '@shokujii/common/schemas/ChatRoom.js'
 import { ChatMessage } from '@shokujii/common/schemas/ChatMessage.js'
+import { truncateLastMessagePreview } from '@shokujii/common/utils/chatLastMessagePreview.js'
 import { buildMessagePreview, CHAT_LAST_MESSAGE_PREVIEW_IMAGE } from './chatPreview.js'
 
 describe('buildMessagePreview', () => {
@@ -53,5 +55,28 @@ describe('buildMessagePreview', () => {
     })
 
     expect(buildMessagePreview(message)).toBe('本文あり')
+  })
+
+  it('truncates emoji-heavy event announcement within Zod max length (issue #2179)', () => {
+    const body = `主催者請求書払いテスト
+
+📅日時：2027/05/03(月) 13:00~13:06
+⏳期限：2027/05/01(土) 23:59に注文締切
+📍場所：東京都千代田区神田練塀町 3322 
+👥主催：yasu
+👩‍🍳食事：季節の恵み かさね
+👉詳細：https://test.tabete.co/c/yasu/e/3fstfqB3BE0sSQxpJhnV
+
+#yasu #898 `
+    const message = new ChatMessage('msg1', {
+      message_type: 'user',
+      sender_user_id: 'user1',
+      body,
+      created_at: Date.now(),
+    })
+
+    const preview = buildMessagePreview(message)
+    expect(preview.length).toBeLessThanOrEqual(CHAT_LAST_MESSAGE_PREVIEW_MAX_LENGTH)
+    expect(truncateLastMessagePreview(body.trim()).length).toBeLessThanOrEqual(CHAT_LAST_MESSAGE_PREVIEW_MAX_LENGTH)
   })
 })
