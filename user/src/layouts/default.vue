@@ -155,7 +155,7 @@ const handleChatHeaderClick = (): void => {
         v-if="currentUser != null"
         :model-value="chatUnreadCount > 0"
         :content="chatBadgeContent"
-        color="error"
+        color="success"
         location="top end"
         offset-x="6"
         offset-y="6"
