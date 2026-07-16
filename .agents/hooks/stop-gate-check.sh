@@ -20,14 +20,14 @@ if [ "${status}" = "aborted" ] || [ "${status}" = "error" ]; then
   exit 0
 fi
 
-if [ "${loop_count}" -ge "${MAX_LOOP}" ]; then
-  echo "[self-review] Stop gate: loop_count=${loop_count} に達しました。セルフレビュー未完了の可能性があります。/shokujii-code-review を完走してください。" >&2
-  exit 2
-fi
-
 # review スコープ: lint 対象 + エージェント設定変更。該当なしなら gate 全体をスキップ
 if ! bash "${script_dir}/source-change-detect.sh" review; then
   exit 0
+fi
+
+if [ "${loop_count}" -ge "${MAX_LOOP}" ]; then
+  echo "[self-review] Stop gate: loop_count=${loop_count} に達しました。セルフレビュー未完了の可能性があります。/shokujii-code-review を完走してください。"
+  exit 2
 fi
 
 review_reason_file="$(mktemp)"

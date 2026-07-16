@@ -48,6 +48,9 @@ is_lint_relevant_path() {
     package.json | package-lock.json)
       return 0
       ;;
+    eslint.config.mjs | .prettierrc | tsconfig.base.json | tsconfig.json)
+      return 0
+      ;;
     *)
       return 1
       ;;
