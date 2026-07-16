@@ -84,7 +84,7 @@ const onAvatarClick = (event: MouseEvent) => {
       <span v-if="room.lastMessageAt != null" class="d-block text-disabled text-xs whitespace-no-wrap">
         {{ formatChatListTimestamp(room.lastMessageAt) }}
       </span>
-      <VBadge v-if="unreadLabel != null" color="error" inline :content="unreadLabel" class="ms-auto" />
+      <VBadge v-if="unreadLabel != null" color="success" inline :content="unreadLabel" class="ms-auto" />
     </div>
   </li>
 </template>

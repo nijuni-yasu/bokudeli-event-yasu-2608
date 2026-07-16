@@ -32,6 +32,7 @@ import {
 } from '@shokujii/common/schemas/ChatMessage.js'
 import { ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
 import { EpochMillisSchema } from '@shokujii/common/schemas/firebase/index.js'
+import { sanitizeLastMessagePreviewField } from '@shokujii/common/utils/chatLastMessagePreview.js'
 import { getChatAttachmentStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { recallChatMessage as callRecallChatMessage } from '@shokujii/base/apis/chat.js'
 
@@ -76,6 +77,7 @@ const membershipFromFirestore = (snapshot: QueryDocumentSnapshot): ChatMembershi
     updated_at: parseEpochMillisOrDefault(raw.updated_at, now),
     last_read_at: parseOptionalEpochMillis(raw.last_read_at),
     last_message_at: parseOptionalEpochMillis(raw.last_message_at),
+    last_message_preview: sanitizeLastMessagePreviewField(raw.last_message_preview),
   })
 }
 
@@ -96,6 +98,7 @@ const roomFromFirestore = (snapshot: QueryDocumentSnapshot): ChatRoom => {
     created_at: parseEpochMillisOrDefault(raw.created_at, now),
     updated_at: parseEpochMillisOrDefault(raw.updated_at, now),
     last_message_at: parseOptionalEpochMillis(raw.last_message_at),
+    last_message_preview: sanitizeLastMessagePreviewField(raw.last_message_preview),
   })
 }
 

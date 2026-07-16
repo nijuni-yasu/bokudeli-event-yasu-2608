@@ -9,13 +9,18 @@ import {
 } from 'firebase-admin/firestore'
 import { CHAT_UNREAD_COUNT_MAX, ChatMembership } from '@shokujii/common/schemas/ChatMembership.js'
 import type { ChatRoomType } from '@shokujii/common/schemas/ChatRoom.js'
+import { sanitizeLastMessagePreviewField } from '@shokujii/common/utils/chatLastMessagePreview.js'
 
 class ChatMembershipConverter implements FirestoreDataConverter<ChatMembership> {
   toFirestore(membership: ChatMembership): DocumentData {
     return membership.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): ChatMembership {
-    return new ChatMembership(snapshot.id, snapshot.data())
+    const raw = snapshot.data()
+    return new ChatMembership(snapshot.id, {
+      ...raw,
+      last_message_preview: sanitizeLastMessagePreviewField(raw.last_message_preview),
+    })
   }
 }
 

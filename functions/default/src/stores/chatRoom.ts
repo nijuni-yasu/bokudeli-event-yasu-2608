@@ -8,13 +8,18 @@ import {
   WriteBatch,
 } from 'firebase-admin/firestore'
 import { ChatRoom } from '@shokujii/common/schemas/ChatRoom.js'
+import { sanitizeLastMessagePreviewField } from '@shokujii/common/utils/chatLastMessagePreview.js'
 
 class ChatRoomConverter implements FirestoreDataConverter<ChatRoom> {
   toFirestore(room: ChatRoom): DocumentData {
     return room.toFirestore()
   }
   fromFirestore(snapshot: QueryDocumentSnapshot): ChatRoom {
-    return new ChatRoom(snapshot.id, snapshot.data())
+    const raw = snapshot.data()
+    return new ChatRoom(snapshot.id, {
+      ...raw,
+      last_message_preview: sanitizeLastMessagePreviewField(raw.last_message_preview),
+    })
   }
 }
 
