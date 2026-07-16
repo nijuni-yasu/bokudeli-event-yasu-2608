@@ -61,12 +61,14 @@ PR 番号はファイル名には使わない。評価セッションのメタ�
 
 ## テンプレート
 
-新規ファイル作成時は [review-xxxx_template.md](../../../../documents/レビューコメント/review-xxxx_template.md) の見出し・ブロック順に合わせる。
+**正本は [review-xxxx_template.md](../../../../documents/レビューコメント/review-xxxx_template.md) のみ。** 新規 `review-<slug>.md` 作成時はその見出し・ブロック順（13項目）に合わせる。
+
+`pr-xxxx_template.md` は廃止（リダイレクト stub のみ残置）。新規作業で参照しない。
 
 ## レガシー（既存 `pr-*.md`）
 
 - 既存の `documents/レビューコメント/pr-<PR番号>.md` は**そのまま残す**（リネーム・マイグレーションしない）
-- 既存 `pr-*.md` への追記・更新依頼があった場合は、そのファイルを正本として扱う
+- 既存 `pr-*.md` への追記・更新依頼があった場合は、そのファイルを正本として扱う（テンプレートは `review-xxxx_template.md` のフォーマットに揃えてよい）
 - **新規作業**（新ブランチ・PR 前のセルフレビュー含む）は上記 `review-<slug>.md` を使う
 
 ## ブランチ名変更時

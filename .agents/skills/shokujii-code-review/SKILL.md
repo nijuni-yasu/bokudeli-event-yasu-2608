@@ -1,6 +1,6 @@
 ---
 name: shokujii-code-review
-description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み、別Issue化は 📤#NNNN別Issue化）の共通区分で review-comments-evaluate と共通（❌未対応は使わない）。RC 記録は review-<ブランチslug>.md に追記（review-doc-path 参照）。AGENTS.md に従い、ソース変更タスクの実装完了時は必ずセルフレビューとして実行（lint は PR/reflect 前）。🚨 は確認なしで自動修正（最大2周）。コード変更のレビュー依頼時にも使用。
+description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（評価・不変）。対応後はステータスを ✅対応済み、別Issue化は 📤#NNNN別Issue化（review-comments-evaluate と共通。❌未対応は使わない）。RC 記録は review-<ブランチslug>.md に追記（review-doc-path 参照）。AGENTS.md に従い、ソース変更タスクの実装完了時は必ずセルフレビューとして実行（lint は PR/reflect 前）。🚨 は確認なしで自動修正（最大2周）。コード変更のレビュー依頼時にも使用。
 ---
 
 # Shokujii コードレビュー
@@ -58,7 +58,7 @@ python3 .agents/scripts/self_review_wake.py write \
 2. 上記以外の 🚨 を**確認なしで修正**する
 3. 手順 1 から**再レビュー**する（同一タスク内・**最大 2 周**）
 4. 2 周後も 🚨（自動修正対象外含む）が残る場合は一覧を報告して完了報告する
-5. レビュー記録ファイルがある場合、対応した RC の**判断結果**を **✅ 対応済み** に更新する
+5. レビュー記録ファイルがある場合、対応した RC の**ステータス**を **✅ 対応済み** に更新する（**評価**は変更しない）
 
 🟡 修正提案・👌 修正不要は**自動修正しない**。完了報告に列挙する。
 
@@ -72,7 +72,7 @@ python3 .agents/scripts/self_review_wake.py write \
 2. ファイル末尾に `## 評価セッション（<日時 JST>・shokujii-code-review）` を追記（見出しの日時は **JST ローカル**、`YYYY-MM-DD HH:mm` 形式。Stop gate の since 比較に使用）。メタデータに **評価日時**・**ブランチ名**・**PR**（未作成時は `未作成`）を含める。Outdated / レビュー非該当は「該当なし」でよい
 3. **RC 採番**: 既存 `review-<slug>.md` の最終 RC の次から。指摘ごとに 1 RC
 4. **並び順**: **`path` 昇順**、同一 `path` 内は**行番号昇順**
-5. 各 RC は **RC 記録ブロック（12項目）**（evaluate 参照）。**判断結果**は [共通区分](../review-comments-evaluate/SKILL.md#判断結果共通区分プロジェクト共通) のみ。**PRスコープ**・**ラベル**（複数可）・**変更種別**・**想定工数**も evaluate と同一語彙で記載する
+5. 各 RC は **RC 記録ブロック（13項目）**（evaluate 参照）。**評価**・**ステータス**は [共通区分](../review-comments-evaluate/SKILL.md#評価--ステータス共通区分プロジェクト共通) に従う。**PRスコープ**・**ラベル**（複数可）・**変更種別**・**想定工数**も evaluate と同一語彙で記載する
    - **レビュワー**: `Cursor Agent（shokujii-code-review）`
    - **識別子**: `RC-n（GitHub id: なし・エージェントレビュー）` 等
    - **指摘箇所**: `` `path:line` ``
@@ -88,7 +88,7 @@ python3 .agents/scripts/self_review_wake.py consume \
   --branch "$branch"
 ```
 
-**指摘 0 件の最小記録**（12 項目 RC ブロックは不要）:
+**指摘 0 件の最小記録**（13 項目 RC ブロックは不要）:
 
 ```markdown
 ## 評価セッション（<YYYY-MM-DD HH:mm>・shokujii-code-review）
@@ -274,7 +274,7 @@ python3 .agents/scripts/self_review_wake.py consume \
 
 ## フィードバック形式
 
-チャットでの指摘と、レビュー記録ファイル（`review-<slug>.md`）への RC 記録の **判断結果** は、[/review-comments-evaluate](../review-comments-evaluate/SKILL.md) と同じ **共通区分** を使う（**❌ 未対応は使わない**）。
+チャットでの指摘と、レビュー記録ファイル（`review-<slug>.md`）への RC 記録の **評価**・**ステータス** は、[/review-comments-evaluate](../review-comments-evaluate/SKILL.md) と同じ **共通区分** を使う（**❌ 未対応は使わない**）。
 
 ```
 🚨 **必須修正** [🔧微修正/S]: [問題の説明] → [修正方法]
@@ -290,9 +290,9 @@ python3 .agents/scripts/self_review_wake.py consume \
 
 **変更種別・工数タグ（任意）**: 行頭または末尾に `[🔧微修正/S]` `[📋仕様追加/M]` `[🆕新機能/L]` `[📐リファクタ/M]` `[📄ドキュメントのみ/S]` のように付けてよい。**省略形は使わない**。[review-comments-evaluate の変更種別・想定工数](../review-comments-evaluate/SKILL.md#変更種別) の**正式語彙**（微修正 / リファクタ / 新機能 / 仕様追加 / ドキュメントのみ / 確認のみ / 該当なし）をそのまま用いる。👀 確認のみ・➖ 該当なしは工数 `—` のみでよい。省略時は evaluate / 記録時に付与する。
 
-**対応完了後**のドキュメント記録では **判断結果** を **✅ 対応済み** に更新する。本 PR では実装せず別 Issue へ切り出した場合は **📤 #NNNN 別Issue化** に更新する（AGENTS.md「レビューコメント対応記録」参照）。
+**対応完了後**のドキュメント記録では **ステータス** を **✅ 対応済み** に更新する（**評価**は 🚨 / 🟡 のまま維持）。本 PR では実装せず別 Issue へ切り出した場合は **ステータス** を **📤 #NNNN 別Issue化** に更新する（AGENTS.md「レビューコメント対応記録」参照）。
 
-**優先度の補足**（任意）: 本文に `[must]` / `[P2]` / `[nits]` / `[fyi]` を付けてよい。**判断結果の共通区分は上記に統一**する。
+**優先度の補足**（任意）: 本文に `[must]` / `[P2]` / `[nits]` / `[fyi]` を付けてよい。**評価**の共通区分は上記に統一する。
 
 記録の詳細は [手順 4](#手順-4-ドキュメントへの記録) および [review-comments-evaluate](../review-comments-evaluate/SKILL.md) を参照。
 

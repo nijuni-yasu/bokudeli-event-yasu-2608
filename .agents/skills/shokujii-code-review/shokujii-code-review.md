@@ -1,6 +1,6 @@
 ---
 name: shokujii-code-review
-description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み、別Issue化は 📤#NNNN別Issue化）の共通区分で review-comments-evaluate と共通。RC 記録は review-<ブランチslug>.md（review-doc-path 参照）。コード変更のレビュー依頼時に使用する。
+description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（評価・不変）。対応後はステータスを ✅対応済み、別Issue化は 📤#NNNN別Issue化（review-comments-evaluate と共通）。RC 記録は review-<ブランチslug>.md（review-doc-path 参照）。コード変更のレビュー依頼時に使用する。
 ---
 
 # Shokujii コードレビュー
@@ -192,13 +192,20 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 ## フィードバック形式
 
-[/review-comments-evaluate](../../review-comments-evaluate/SKILL.md) と同一の **共通区分**（**❌ 未対応は使わない**）。手順・レビュー記録ファイルへの記録は [SKILL.md](SKILL.md) および [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) を参照。
+[/review-comments-evaluate](../../review-comments-evaluate/SKILL.md) と同一の **評価 + ステータス**（**❌ 未対応は使わない**）。手順・レビュー記録ファイルへの記録は [SKILL.md](SKILL.md) および [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) を参照。
+
+### 評価（重要度・不変）
 
 - 🚨 **必須修正**: マージ前に対応が必要（セキュリティ・データ不整合・バグ等）
 - 🟡 **修正提案**: 改善を検討してほしい（設計・可読性等）。マージ必須ではない
 - 👌 **修正不要**: 指摘はあるが対応不要（誤解・仕様どおり・過剰指摘等）
-- ✅ **対応済み**: コード・PR で既に解消済み（ドキュメント追記時の **判断結果** に使用）
-- 📤 **#NNNN 別Issue化**: 本 PR では実装せず別 Issue に切り出し済み（ドキュメント追記時の **判断結果** に使用）
+
+### ステータス（対応進捗・可変）
+
+- **未着手**: コード修正・確認が残る
+- ✅ **対応済み**: コード・PR で解消済み（**評価**は維持）
+- 📤 **#NNNN 別Issue化**: 本 PR では実装せず別 Issue に切り出し済み
+- **`—`**: **評価** が 👌 修正不要のとき
 
 ---
 
