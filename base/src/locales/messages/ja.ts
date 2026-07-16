@@ -1024,6 +1024,7 @@ export default {
       no_rooms_hint: 'イベントに参加するとチャットが利用できます。',
       select_room: 'ルームを選んでください',
       select_room_hint: '一覧からチャットを選ぶとメッセージが表示されます',
+      no_messages_hint: '最初のひとことを送ってみよう',
     },
     no_messages_yet: 'メッセージはまだありません',
     ended_label: '終了',
