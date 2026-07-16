@@ -19,13 +19,20 @@ DEFAULT_WAKE_FILE = wake.DEFAULT_WAKE_FILE
 
 
 def current_branch(repo_root: Path) -> str:
-    result = subprocess.run(
-        ["git", "branch", "--show-current"],
-        cwd=repo_root,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or "").strip()
+        msg = "git branch --show-current に失敗しました"
+        if detail:
+            msg = f"{msg}: {detail}"
+        raise RuntimeError(msg) from exc
     branch = result.stdout.strip()
     if not branch:
         raise RuntimeError("git branch --show-current が空です")
