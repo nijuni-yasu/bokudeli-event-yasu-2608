@@ -60,6 +60,7 @@
 | [x] | RC-52 | 3595955126 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | format 自動修正後の<br>未コミット差分で fail |
 | [ ] | RC-53 | 3595955130 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | RC-18 と同一<br>Claude usage followup |
 | [x] | RC-54 | 3595955134 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review-xxxx_template を<br>review スコープに含める |
+| [x] | RC-55 | 3596120440 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | tz-naive since を UTC 扱い<br>見出し日時のみ JST 前提を維持 |
 
 ---
 
@@ -822,6 +823,63 @@ hook 正本に terms が含まれる一方、スキル手順書に terms が欠�
 | [ ] | RC-51 | 3595955119 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | RC-47 と同一 |
 | [x] | RC-52 | 3595955126 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | format 自動修正後の未コミット fail |
 | [ ] | RC-53 | 3595955130 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | RC-18 と同一 |
-| [x] | RC-54 | 3595955134 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | テンプレートを review スコープに |
+| [x] | RC-54 | 3595955134 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review-xxxx_template を<br>review スコープに含める |
+
+---
+
+## 評価セッション（2026-07-16 23:07・review-comments-evaluate）
+
+- **評価日時**: 2026-07-16 23:07 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **since**: 2026-07-16T13:58:10Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼定型文・Copilot 承知返信・Codex 接続案内・Codex 問題なしサマリ）
+- **partial**: true（Codex substantive なし）
+- **手順 4a 自動修正**: RC-55（🚨 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-55 | 3596120440 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | tz-naive since を UTC 扱い |
+
+---
+
+**識別子**: RC-55（GitHub id: 3596120440）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `.agents/scripts/self_review_check_lib.py:47`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++def to_utc(dt: datetime) -> datetime:
++    if dt.tzinfo is None:
++        return dt.replace(tzinfo=SESSION_TZ).astimezone(timezone.utc)
++    return dt.astimezone(timezone.utc)
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `since` は手順書上「ISO8601 UTC」を前提にしていますが、`to_utc()` が tz-naive の日時を JST とみなして UTC 変換しているため、万一 `since` にタイムゾーン無しの文字列（例: `2026-07-16T07:00:00`）が入ると比較がズレます。tz-naive は UTC とみなす（もしくはエラーにする）方が安全です。
+
+**コメント要約**: `to_utc()` が tz-naive を一律 JST 扱いしており、`since`（UTC 前提）との比較がずれる。
+tz-naive since は UTC、見出し日時は JST 前提に分離する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `since` / ledger の tz-naive は UTC、`assume_jst_if_naive` で見出し日時のみ JST 扱いに分離。テスト `test_naive_since_treated_as_utc` を追加。
 
 ---

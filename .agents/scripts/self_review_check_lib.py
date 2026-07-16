@@ -41,9 +41,11 @@ def parse_iso8601(value: str) -> datetime | None:
         return None
 
 
-def to_utc(dt: datetime) -> datetime:
+def to_utc(dt: datetime, *, assume_jst_if_naive: bool = False) -> datetime:
+    """tz-aware は UTC に正規化。tz-naive は since/ledger 系は UTC、見出し日時は JST 前提。"""
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=SESSION_TZ).astimezone(timezone.utc)
+        tz = SESSION_TZ if assume_jst_if_naive else timezone.utc
+        return dt.replace(tzinfo=tz).astimezone(timezone.utc)
     return dt.astimezone(timezone.utc)
 
 
@@ -86,7 +88,7 @@ def has_review_doc_session_since(review_doc: Path, since: str) -> bool:
         session_dt = _session_timestamp_from_heading(match.group(0))
         if session_dt is None:
             continue
-        session_utc = to_utc(session_dt).replace(second=0, microsecond=0)
+        session_utc = to_utc(session_dt, assume_jst_if_naive=True).replace(second=0, microsecond=0)
         if session_utc >= since_utc:
             return True
     return False

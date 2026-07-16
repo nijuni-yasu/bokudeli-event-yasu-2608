@@ -98,6 +98,21 @@ def test_review_doc_session_jst_before_since_fails() -> None:
         assert not lib.has_review_doc_session_since(review_doc, since)
 
 
+def test_naive_since_treated_as_utc() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        review_dir = root / "documents" / "レビューコメント"
+        review_dir.mkdir(parents=True)
+        review_doc = review_dir / "review-feat-1.md"
+        # 16:30 JST = 07:30 UTC >= naive since 07:00 UTC
+        review_doc.write_text(
+            "## 評価セッション（2026-07-16 16:30・shokujii-code-review）\n",
+            encoding="utf-8",
+        )
+        since = "2026-07-16T07:00:00"
+        assert lib.has_review_doc_session_since(review_doc, since)
+
+
 def test_is_self_review_complete_via_ledger() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -459,6 +474,7 @@ def main() -> int:
     tests = [
         test_is_self_review_complete_via_review_doc,
         test_review_doc_session_jst_before_since_fails,
+        test_naive_since_treated_as_utc,
         test_review_doc_same_minute_passes,
         test_is_self_review_complete_via_ledger,
         test_normal_branch_ledger_alone_does_not_pass,
