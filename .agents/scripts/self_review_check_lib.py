@@ -210,12 +210,8 @@ def is_self_review_complete(
         if not is_recording_skipped_branch(branch):
             review_doc = root / review_doc_path_for_branch(branch)
             return has_review_doc_session_since(review_doc, wake_since)
-        ledger_path = root / ".agents/state/agent-usage/ledger.jsonl"
-        return has_ledger_self_review_since(
-            ledger_path,
-            conversation_id=conversation_id,
-            since=wake_since,
-        )
+        # 記録対象外ブランチ: consumed + fingerprint 一致で合格（ledger の task_skill 未記録でも可）
+        return True
 
     # 通常ブランチ: 未消費 wake では review doc のみで合格させない（追加修正後の gate 迂回防止）
     if not is_recording_skipped_branch(branch):

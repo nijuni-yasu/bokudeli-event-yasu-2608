@@ -28,8 +28,10 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 0b. **セルフレビュー pending 確認**（push 前・推奨）
 
 ```bash
+branch=$(git branch --show-current)
 python3 .agents/scripts/self_review_wake.py list \
-  --wake-file .agents/state/self-review-pending.json
+  --wake-file .agents/state/self-review-pending.json \
+  --branch "${branch}"
 ```
 
 `consumed: false` が残っている場合は、先に [`/shokujii-code-review`](../shokujii-code-review/SKILL.md) を完走してから PR 作成に進む。

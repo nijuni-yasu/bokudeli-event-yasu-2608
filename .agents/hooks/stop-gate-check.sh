@@ -21,8 +21,8 @@ if [ "${status}" = "aborted" ] || [ "${status}" = "error" ]; then
 fi
 
 if [ "${loop_count}" -ge "${MAX_LOOP}" ]; then
-  echo "Stop gate: loop_count=${loop_count} のため検証をスキップします。" >&2
-  exit 0
+  echo "[self-review] Stop gate: loop_count=${loop_count} に達しました。セルフレビュー未完了の可能性があります。/shokujii-code-review を完走してください。" >&2
+  exit 2
 fi
 
 # review スコープ: lint 対象 + エージェント設定変更。該当なしなら gate 全体をスキップ

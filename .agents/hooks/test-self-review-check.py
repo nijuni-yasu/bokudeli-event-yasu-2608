@@ -333,6 +333,25 @@ def test_tree_branch_skips_doc_but_ledger_ok() -> None:
         )
 
 
+def test_tree_branch_consumed_fingerprint_ok_without_ledger() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _setup_minimal_git_repo(root, "tree/4")
+        wake_path = root / ".agents" / "state" / "self-review-pending.json"
+        since = "2026-07-16T07:00:00+00:00"
+        wake.write_pending_wake(wake_path, branch="tree/4", since=since)
+        wake.consume_wake(wake_path, "tree/4", repo_root=root)
+        entry = wake.get_wake_for_branch(wake_path, "tree/4")
+        assert entry is not None
+        assert lib.is_self_review_complete(
+            branch="tree/4",
+            since=since,
+            conversation_id=None,
+            wake_entry=entry,
+            repo_root=root,
+        )
+
+
 def test_self_review_check_cli_fails_without_wake() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -451,6 +470,7 @@ def main() -> int:
         test_consumed_fingerprint_without_doc_fails,
         test_self_review_check_cli_consumed_same_fp_passes,
         test_tree_branch_skips_doc_but_ledger_ok,
+        test_tree_branch_consumed_fingerprint_ok_without_ledger,
         test_self_review_check_cli_fails_without_wake,
         test_self_review_check_cli_fails_without_since,
         test_self_review_check_cli_fails_without_completion,

@@ -67,8 +67,11 @@ def write_pending_wake(
     _save_wakes(wake_path, kept)
 
 
-def list_unconsumed_wakes(wake_path: Path) -> list[dict[str, Any]]:
-    return [w for w in _load_wakes(wake_path) if not w.get("consumed")]
+def list_unconsumed_wakes(wake_path: Path, *, branch: str | None = None) -> list[dict[str, Any]]:
+    wakes = [w for w in _load_wakes(wake_path) if not w.get("consumed")]
+    if branch is None:
+        return wakes
+    return [w for w in wakes if w.get("branch") == branch]
 
 
 def get_wake_for_branch(wake_path: Path, branch: str) -> dict[str, Any] | None:
@@ -87,9 +90,9 @@ def consume_wake(
     wakes = _load_wakes(wake_path)
     found = False
     root = (repo_root or Path.cwd()).resolve()
-    fingerprint = lib.compute_review_scope_fingerprint(root)
     for entry in wakes:
         if entry.get("branch") == branch and not entry.get("consumed"):
+            fingerprint = lib.compute_review_scope_fingerprint(root)
             entry["consumed"] = True
             entry["consumed_at"] = datetime.now(timezone.utc).isoformat()
             entry["reviewed_scope_fingerprint"] = fingerprint
@@ -111,6 +114,7 @@ def main() -> int:
 
     list_p = sub.add_parser("list", help="List unconsumed wakes as JSON")
     list_p.add_argument("--wake-file", type=Path, default=DEFAULT_WAKE_FILE)
+    list_p.add_argument("--branch", help="Filter by branch name")
 
     consume_p = sub.add_parser("consume", help="Mark wake consumed for a branch")
     consume_p.add_argument("--wake-file", type=Path, default=DEFAULT_WAKE_FILE)
@@ -132,7 +136,12 @@ def main() -> int:
             conversation_id=args.conversation_id,
         )
     elif args.command == "list":
-        print(json.dumps(list_unconsumed_wakes(args.wake_file), ensure_ascii=False))
+        print(
+            json.dumps(
+                list_unconsumed_wakes(args.wake_file, branch=args.branch),
+                ensure_ascii=False,
+            )
+        )
     elif args.command == "consume":
         if not consume_wake(
             args.wake_file,

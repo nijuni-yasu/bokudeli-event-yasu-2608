@@ -174,10 +174,10 @@ done
 
 if [ -n "${errors}" ]; then
   {
-    echo "[lint-and-format] PR verify 相当チェックが失敗しました。"
-    echo "失敗項目: ${errors}"
-    echo ""
-    echo -e "${report}"
+    printf '%s\n' "[lint-and-format] PR verify 相当チェックが失敗しました。"
+    printf '%s\n' "失敗項目: ${errors}"
+    printf '\n'
+    printf '%s' "${report}" >&2
   } >&2
   exit 2
 fi

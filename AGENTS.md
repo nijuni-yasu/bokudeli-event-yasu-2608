@@ -151,10 +151,10 @@ npm -w <pkg> run format:check
 - 正本: [`.agents/hooks/stop-gate-check.sh`](.agents/hooks/stop-gate-check.sh)（**セルフレビューのみ**。lint は含まない）
 - **Cursor**: [`.cursor/hooks/stop-gate.sh`](.cursor/hooks/stop-gate.sh) が `followup_message` で最大 3 回まで自動 retry（[`loop_limit`](.cursor/hooks.json)）
 - **Claude Code**: [`.claude/hooks/stop-gate.sh`](.claude/hooks/stop-gate.sh) が `decision:block` でターン終了を阻止
-- review スコープの変更が無いターンでは検証をスキップ（[`.agents/hooks/source-change-detect.sh`](.agents/hooks/source-change-detect.sh)）
+- review スコープの変更が無いターンでは検証をスキップ（[`.agents/hooks/source-change-detect.sh`](.agents/hooks/source-change-detect.sh)）。**未コミット差分（working tree / staged / untracked）のみ**を対象とするため、**コミット済みで作業ツリー clean** の場合も gate はスキップされる（RC-16 参照）
 - pending state: `.agents/state/self-review-pending.json`（[`self_review_wake.py`](.agents/scripts/self_review_wake.py)）
 - **fingerprint**: consume 時に review スコープ差分の `reviewed_scope_fingerprint` を記録。consumed 後も**同一未コミット差分**なら合格。差分が変わったら手順 0 から再レビュー
-- **記録対象外ブランチ**（`release/` `sync/` `hotfix/` `backup/` `tree/`）では review doc への追記はスキップ可。合格は **ledger**（`task_skill=shokujii-code-review` の `turn_end`）のみ。ledger 照合には Stop hook から **`conversation_id`（または `session_id`）** が渡る必要がある。旧 Cursor・CLI 等で ID が無い場合は gate がブロックされうる（[review-doc-path.md](.agents/skills/review-comments-evaluate/references/review-doc-path.md) 参照）
+- **記録対象外ブランチ**（`release/` `sync/` `hotfix/` `backup/` `tree/`）では review doc への追記はスキップ可。**consumed + fingerprint 一致**で合格（未消費時は ledger の `task_skill=shokujii-code-review` も可）。ledger 照合には Stop hook から **`conversation_id`（または `session_id`）** が渡る必要がある。旧 Cursor・CLI 等で ID が無い場合は gate がブロックされうる（[review-doc-path.md](.agents/skills/review-comments-evaluate/references/review-doc-path.md) 参照）
 
 ### PR verify 相当チェック（push 前）
 

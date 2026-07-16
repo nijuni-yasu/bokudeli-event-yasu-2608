@@ -13,8 +13,11 @@ mkdir -p "$(dirname "${hook_errors}")"
 
 usage_json="$(
   python3 "${repo_root}/.agents/scripts/agent_usage.py" stop \
-    --platform "${AGENT_USAGE_PLATFORM:-cursor}" <<<"${input}" 2>>"${hook_errors}" || echo '{}'
+    --platform "${AGENT_USAGE_PLATFORM:-cursor}" <<<"${input}" 2>>"${hook_errors}"
 )"
+if [ $? -ne 0 ] || [ -z "${usage_json}" ]; then
+  usage_json='{}'
+fi
 
 parse_hook_fields() {
   if command -v jq >/dev/null 2>&1; then
