@@ -28,6 +28,10 @@
 | [x] | RC-20 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | reveal.scss の :deep() がグローバル SCSS で無効<br>カバー・ホバー・CTA アニメが効かない |
 | [x] | RC-21 | 3594333551 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未消費 wake で古い review doc が合格<br>consume + fingerprint のみ合格に修正 |
 | [x] | RC-22 | 3594333556 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | terms 変更が lint 検知外<br>source-change-detect と lint に terms 追加 |
+| [x] | RC-23 | 3594752055 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | consume のみで gate 合格<br>fingerprint + review doc / ledger 必須化 |
+| [x] | RC-24 | 3594752087 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | staged のみで fingerprint 変化<br>git diff HEAD のみに簡素化 |
+| [x] | RC-25 | 3594752107 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq なし followup を argv 渡し<br>stdin 経由に変更 |
+| [x] | RC-26 | 3594752124 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq なし block reason も argv<br>stdin 経由に変更 |
 
 ---
 
@@ -580,5 +584,26 @@ RC-7〜10・19 を同一作業で対応。テンプレート／evaluate スキ�
 - **レビュー非該当スキップ件数**: 0
 
 指摘なし（RC-21/22 自動修正差分。未消費 wake の gate 迂回防止・terms lint 対象追加・テスト 15 件 PASS）
+
+---
+
+## 評価セッション（2026-07-16 19:50・review-comments-evaluate）
+
+- **評価日時**: 2026-07-16 19:50 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型文・Codex 接続案内・Copilot サマリ）
+- **partial**: Codex 未レビュー（connect 案内のみ）
+- **手順 4a 自動修正**: RC-23〜26（🚨 3件 / 🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-23 | 3594752055 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | consume のみで gate 合格<br>fingerprint + doc/ledger 必須に修正 |
+| [x] | RC-24 | 3594752087 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | staged のみで fingerprint 変化<br>git diff HEAD のみに簡素化 |
+| [x] | RC-25 | 3594752107 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq なし followup の argv 渡し<br>stdin 経由に変更 |
+| [x] | RC-26 | 3594752124 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq なし block reason の argv 渡し<br>stdin 経由に変更 |
 
 ---

@@ -48,7 +48,7 @@ if bash "${check}" "${status}" "${loop_count}" "${conversation_id}" >"${reason_f
   else
     followup="$(python3 "${json_helper}" extract-followup <<<"${usage_json}")"
     if [ -n "${followup}" ]; then
-      python3 "${json_helper}" followup "${followup}"
+      printf '%s' "${followup}" | python3 "${json_helper}" followup
     else
       echo '{}'
     fi
@@ -62,5 +62,5 @@ rm -f "${reason_file}"
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg msg "${reason}" '{followup_message: $msg}'
 else
-  python3 "${json_helper}" followup "${reason}"
+  printf '%s' "${reason}" | python3 "${json_helper}" followup
 fi

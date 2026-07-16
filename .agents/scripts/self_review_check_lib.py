@@ -123,14 +123,13 @@ def path_change_signature(repo_root: Path, path: str) -> str:
             return _sha256_hex(full.read_bytes())
         return _sha256_hex(b"deleted-or-missing")
 
-    diff_parts: list[str] = []
-    for args in (
+    diff_result = subprocess.run(
         ["git", "diff", "HEAD", "--", path],
-        ["git", "diff", "--cached", "HEAD", "--", path],
-    ):
-        result = subprocess.run(args, cwd=repo_root, capture_output=True, text=True)
-        diff_parts.append(result.stdout)
-    return _sha256_hex("".join(diff_parts).encode())
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    return _sha256_hex(diff_result.stdout.encode())
 
 
 def compute_review_scope_fingerprint(
@@ -203,7 +202,20 @@ def is_self_review_complete(
     root = repo_root or Path.cwd()
 
     if wake_entry is not None and wake_entry.get("consumed"):
-        return consumed_covers_current_review_scope(wake_entry, root)
+        if not consumed_covers_current_review_scope(wake_entry, root):
+            return False
+        wake_since = wake_entry.get("since")
+        if not isinstance(wake_since, str) or not wake_since:
+            return False
+        if not is_recording_skipped_branch(branch):
+            review_doc = root / review_doc_path_for_branch(branch)
+            return has_review_doc_session_since(review_doc, wake_since)
+        ledger_path = root / ".agents/state/agent-usage/ledger.jsonl"
+        return has_ledger_self_review_since(
+            ledger_path,
+            conversation_id=conversation_id,
+            since=wake_since,
+        )
 
     # 通常ブランチ: 未消費 wake では review doc のみで合格させない（追加修正後の gate 迂回防止）
     if not is_recording_skipped_branch(branch):

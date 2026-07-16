@@ -195,6 +195,16 @@ def test_list_paths_review_excludes_review_doc() -> None:
         assert not any(p.startswith("documents/レビューコメント/") for p in paths)
 
 
+def _write_review_doc_session(root: Path, branch: str, since: str) -> None:
+    review_dir = root / "documents" / "レビューコメント"
+    review_dir.mkdir(parents=True, exist_ok=True)
+    slug = branch.replace("/", "-")
+    (review_dir / f"review-{slug}.md").write_text(
+        "## 評価セッション（2026-07-16 16:30・shokujii-code-review）\n",
+        encoding="utf-8",
+    )
+
+
 def test_consumed_same_fingerprint_passes() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -206,6 +216,7 @@ def test_consumed_same_fingerprint_passes() -> None:
         wake_path = root / ".agents" / "state" / "self-review-pending.json"
         since = "2026-07-16T07:00:00+00:00"
         wake.write_pending_wake(wake_path, branch="ai/1", since=since)
+        _write_review_doc_session(root, "ai/1", since)
         assert wake.consume_wake(wake_path, "ai/1", repo_root=root)
 
         entry = wake.get_wake_for_branch(wake_path, "ai/1")
@@ -247,6 +258,25 @@ def test_consumed_changed_fingerprint_fails() -> None:
         )
 
 
+def test_consumed_fingerprint_without_doc_fails() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _setup_minimal_git_repo(root, "ai/1")
+        wake_path = root / ".agents" / "state" / "self-review-pending.json"
+        since = "2026-07-16T07:00:00+00:00"
+        wake.write_pending_wake(wake_path, branch="ai/1", since=since)
+        wake.consume_wake(wake_path, "ai/1", repo_root=root)
+        entry = wake.get_wake_for_branch(wake_path, "ai/1")
+        assert entry is not None
+        assert not lib.is_self_review_complete(
+            branch="ai/1",
+            since=since,
+            conversation_id=None,
+            wake_entry=entry,
+            repo_root=root,
+        )
+
+
 def test_self_review_check_cli_consumed_same_fp_passes() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -258,6 +288,7 @@ def test_self_review_check_cli_consumed_same_fp_passes() -> None:
         wake_path = root / ".agents" / "state" / "self-review-pending.json"
         since = "2026-07-16T07:00:00+00:00"
         wake.write_pending_wake(wake_path, branch="fix/9", since=since)
+        _write_review_doc_session(root, "fix/9", since)
         wake.consume_wake(wake_path, "fix/9", repo_root=root)
 
         result = subprocess.run(
@@ -417,6 +448,7 @@ def main() -> int:
         test_list_paths_review_excludes_review_doc,
         test_consumed_same_fingerprint_passes,
         test_consumed_changed_fingerprint_fails,
+        test_consumed_fingerprint_without_doc_fails,
         test_self_review_check_cli_consumed_same_fp_passes,
         test_tree_branch_skips_doc_but_ledger_ok,
         test_self_review_check_cli_fails_without_wake,
