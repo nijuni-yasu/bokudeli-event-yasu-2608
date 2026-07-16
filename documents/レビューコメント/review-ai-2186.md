@@ -26,6 +26,8 @@
 | [ ] | RC-18 | 3593998988 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | Claude stop-gate が usage followup を破棄<br>Cursor 同様 capture が必要 |
 | [x] | RC-19 | 3593999009 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | manual evaluate で PR URL 時 headRefName 未使用<br>checkout ブランチと保存先がずれる |
 | [x] | RC-20 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | reveal.scss の :deep() がグローバル SCSS で無効<br>カバー・ホバー・CTA アニメが効かない |
+| [x] | RC-21 | 3594333551 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未消費 wake で古い review doc が合格<br>consume + fingerprint のみ合格に修正 |
+| [x] | RC-22 | 3594333556 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | terms 変更が lint 検知外<br>source-change-detect と lint に terms 追加 |
 
 ---
 
@@ -466,5 +468,117 @@ RC-7〜10・19 を同一作業で対応。テンプレート／evaluate スキ�
 ### RC 一覧（サマリ）
 
 （本セッションで新規 RC なし）
+
+---
+
+## 評価セッション（2026-07-16 19:39・review-comments-evaluate）
+
+- **評価日時**: 2026-07-16 19:39 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型文・Codex 接続案内・Copilot サマリは既評価分）
+- **手順 4a 自動修正**: RC-21（🚨 1件）/ RC-22（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-21 | 3594333551 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 未消費 wake で古い review doc が合格<br>通常ブランチは consume + fingerprint のみ合格 |
+| [x] | RC-22 | 3594333556 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | terms 変更が lint 検知外<br>pr-verify と揃え terms を追加 |
+
+---
+
+**識別子**: RC-21（GitHub id: 3594333551）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `.agents/scripts/self_review_check_lib.py:211`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    if not is_recording_skipped_branch(branch):
++        review_doc = root / review_doc_path_for_branch(branch)
++        if has_review_doc_session_since(review_doc, since):
++            return True
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  未消費 wake で古いレビュー記録を再利用しないでください**
+
+レビュー doc 追記後に `consume` が失敗または漏れたまま同じブランチで追加修正した場合、wake は古い `since` のまま未消費なので、ここで過去の `shokujii-code-review` セッションだけを見て合格します。`reviewed_scope_fingerprint` の比較に進まないため、追加修正後に再レビューしていなくても Stop gate を通過できるので、未消費 wake でも現在の review スコープ差分を記録時点と照合するか、doc 合格後は consume 済みであることを必須にしてください。
+
+**コメント要約**:
+
+未消費 wake のまま過去の review doc セッションだけで Stop gate が合格する抜け道がある。
+追加修正後の再レビュー漏れを防ぐため、通常ブランチでは consume + fingerprint 一致のみ合格とする。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: gate 迂回はセルフレビュー必須化の目的に反する必須修正。`is_self_review_complete` から未消費時の review doc 合格経路を削除し、テスト `test_unconsumed_wake_old_review_doc_does_not_pass` を追加。
+
+---
+
+**識別子**: RC-22（GitHub id: 3594333556）
+
+**レビュワー**: chatgpt-codex-connector[bot]
+
+**指摘箇所**: `.agents/hooks/source-change-detect.sh:40`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    common/* | base/* | user/* | partner/* | enterprise/* | functions/*)
++      return 0
+```
+
+**レビュワーのコメント（原文）**:
+
+**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  terms 変更を PR verify 対象に含めてください**
+
+`terms/**` だけを変更した PR では、この lint スコープ判定が一致しないため `lint-and-format-check.sh` が変更なしとして即成功します。一方、確認した `.github/workflows/pr-verify.yml` では `terms` フィルタがあり、`terms` 変更時に `npm -w terms run lint` / `format:check` / `build` を実行するため、push 前のローカル verify を通過しても CI で初めて失敗します。`terms/*` を検知対象に追加し、lint-and-format 側でも `terms` の lint/format/build を実行してください。
+
+**コメント要約**:
+
+`terms/**` 単独変更がローカル lint 検知外となり CI とずれる。
+`source-change-detect.sh` に `terms/*` を追加し `lint-and-format-check.sh` で terms の lint/format/build を実行。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: pr-verify.yml とローカル hook の対象パッケージを揃える改善。条件付き自動修正（S・🔧・📌）に該当し対応済み。
+
+---
+
+## 評価セッション（2026-07-16 19:40・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 19:40 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+指摘なし（RC-21/22 自動修正差分。未消費 wake の gate 迂回防止・terms lint 対象追加・テスト 15 件 PASS）
 
 ---

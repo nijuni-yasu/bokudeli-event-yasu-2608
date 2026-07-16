@@ -15,7 +15,7 @@ if ! bash "${script_dir}/source-change-detect.sh"; then
   exit 0
 fi
 
-PACKAGES=("common" "base" "user" "partner" "enterprise" "functions/default")
+PACKAGES=("common" "base" "user" "partner" "enterprise" "terms" "functions/default")
 TYPE_PACKAGES=("base" "user" "partner" "enterprise")
 TEST_PACKAGES=("common" "base" "user" "partner" "enterprise" "functions/default")
 
@@ -54,6 +54,15 @@ if [ "${build_exit}" -ne 0 ]; then
   append_fail "common build" "${build_output}"
 else
   append_ok "common build"
+fi
+
+# 1b. terms build（pr-verify.yml の terms ジョブ相当）
+terms_build_output=$(npm -w terms run build 2>&1)
+terms_build_exit=$?
+if [ "${terms_build_exit}" -ne 0 ]; then
+  append_fail "terms build" "${terms_build_output}"
+else
+  append_ok "terms build"
 fi
 
 # 2. lint

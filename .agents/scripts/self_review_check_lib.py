@@ -205,10 +205,8 @@ def is_self_review_complete(
     if wake_entry is not None and wake_entry.get("consumed"):
         return consumed_covers_current_review_scope(wake_entry, root)
 
+    # 通常ブランチ: 未消費 wake では review doc のみで合格させない（追加修正後の gate 迂回防止）
     if not is_recording_skipped_branch(branch):
-        review_doc = root / review_doc_path_for_branch(branch)
-        if has_review_doc_session_since(review_doc, since):
-            return True
         return False
 
     ledger_path = root / ".agents/state/agent-usage/ledger.jsonl"

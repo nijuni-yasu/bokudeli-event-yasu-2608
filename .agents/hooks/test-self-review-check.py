@@ -38,6 +38,7 @@ def _setup_minimal_git_repo(root: Path, branch: str = "fix/1") -> None:
 def test_is_self_review_complete_via_review_doc() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
+        _setup_minimal_git_repo(root, "feat/1")
         review_dir = root / "documents" / "レビューコメント"
         review_dir.mkdir(parents=True)
         review_doc = review_dir / "review-feat-1.md"
@@ -46,11 +47,38 @@ def test_is_self_review_complete_via_review_doc() -> None:
             encoding="utf-8",
         )
         since = "2026-07-16T07:00:00+00:00"
+        wake_path = root / ".agents" / "state" / "self-review-pending.json"
+        wake.write_pending_wake(wake_path, branch="feat/1", since=since)
+        wake.consume_wake(wake_path, "feat/1", repo_root=root)
+        wake_entry = wake.get_wake_for_branch(wake_path, "feat/1")
+        assert wake_entry is not None
         assert lib.is_self_review_complete(
             branch="feat/1",
             since=since,
             conversation_id=None,
-            wake_entry=None,
+            wake_entry=wake_entry,
+            repo_root=root,
+        )
+
+
+def test_unconsumed_wake_old_review_doc_does_not_pass() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _setup_minimal_git_repo(root, "feat/1")
+        review_dir = root / "documents" / "レビューコメント"
+        review_dir.mkdir(parents=True)
+        review_doc = review_dir / "review-feat-1.md"
+        review_doc.write_text(
+            "## 評価セッション（2026-07-16 16:30・shokujii-code-review）\n",
+            encoding="utf-8",
+        )
+        since = "2026-07-16T07:00:00+00:00"
+        wake_entry = {"consumed": False, "since": since}
+        assert not lib.is_self_review_complete(
+            branch="feat/1",
+            since=since,
+            conversation_id=None,
+            wake_entry=wake_entry,
             repo_root=root,
         )
 
@@ -385,6 +413,7 @@ def main() -> int:
         test_is_self_review_complete_via_ledger,
         test_normal_branch_ledger_alone_does_not_pass,
         test_consume_alone_does_not_pass,
+        test_unconsumed_wake_old_review_doc_does_not_pass,
         test_list_paths_review_excludes_review_doc,
         test_consumed_same_fingerprint_passes,
         test_consumed_changed_fingerprint_fails,

@@ -36,7 +36,7 @@ is_lint_relevant_path() {
     */typed-router.d.ts | */auto-imports.d.ts | */components.d.ts)
       return 1
       ;;
-    common/* | base/* | user/* | partner/* | enterprise/* | functions/*)
+    common/* | base/* | user/* | partner/* | enterprise/* | functions/* | terms/*)
       return 0
       ;;
     firebase.json | .firebaserc | firestore.rules | storage.rules | firestore.indexes.json)
