@@ -12,7 +12,6 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification'
 import { type ProviderIdType } from '@shokujii/base/utils/providerService'
 import { User } from '@shokujii/common/schemas/User.js'
-import { consumePendingToast } from '@shokujii/base/utils/pendingToast.js'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 import { getPassCode } from '@/router/utils'
 import { checkSoleManagerCommunity } from '@shokujii/base/stores/community.js'
@@ -92,13 +91,6 @@ const imageError = ref('')
 
 const notification = useNotification()
 const { t: $t } = useI18n()
-
-onMounted(() => {
-  const toast = consumePendingToast()
-  if (toast != null) {
-    notification.show(toast.message, toast.color)
-  }
-})
 
 // バリデーション関連 ここから
 const { requiredValidator, emailValidator, urlValidator } = useValidators()

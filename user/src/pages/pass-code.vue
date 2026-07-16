@@ -13,7 +13,20 @@ import {
   requestEmailRegistration,
 } from '@shokujii/base/apis/user'
 import { setLastLoginProvider } from '@shokujii/base/utils/lastLoginProvider.js'
-import { getRedirectPath } from '@shokujii/base/utils/redirect'
+import { setPendingToast } from '@shokujii/base/utils/pendingToast.js'
+import {
+  clearLinkageCompletedToast,
+  clearPendingLinkRequest,
+  getRedirectPath,
+  peekPendingLinkRequest,
+  startPendingProviderLink,
+} from '@shokujii/base/utils/redirect'
+import { updateProfileFromProviders, type ProviderIdType } from '@shokujii/base/utils/providerService'
+import {
+  parsePassCodeLinkProviderId,
+  runPassCodeMountAutoLinkageSetup,
+  runPassCodePostOtpLinkPreCheck,
+} from '@/utils/passCodeAutoLinkage'
 
 const router = useRouter()
 const route = useRoute()
@@ -43,7 +56,38 @@ const email = hasEmail ? rawEmail : ''
 
 const passCode = ref('')
 const isOpenUnMatchPassCodeDialog = ref(false)
-const isOpenLinkDialog = ref(route.query.pid != null)
+const linkProviderId = computed((): ProviderIdType | null => parsePassCodeLinkProviderId(route.query.pid))
+const isOpenLinkDialog = ref(linkProviderId.value != null)
+
+const runAutoLinkageOnMount = async () => {
+  const { shouldAutoSendOtp } = runPassCodeMountAutoLinkageSetup({
+    mode,
+    isLogin,
+    passCodePid: linkProviderId.value,
+  })
+  if (!shouldAutoSendOtp) {
+    return
+  }
+  notification.show(
+    $t('passcode.auto_linkage_notice', {
+      sns_name: $t(`sns_name['${linkProviderId.value}']`),
+    }),
+    'info',
+  )
+  isLoading.value = true
+  try {
+    await requestEmailLogin({ email })
+  } catch (error) {
+    console.warn('Error sending pass code on auto-linkage mount:', error)
+    notification.show($t('passcode.send_code_failed'), 'error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void runAutoLinkageOnMount()
+})
 
 if (hasEmail) {
   watch(passCode, async (newValue) => {
@@ -70,8 +114,57 @@ const reSendPassCode = async () => {
       return
     }
     console.warn('Error resending pass code:', error)
+    notification.show($t('passcode.send_code_failed'), 'error')
   } finally {
     isLoading.value = false
+  }
+}
+
+const completePendingLinkAfterEmailLogin = async (): Promise<'linked' | 'skipped' | 'failed'> => {
+  const preCheck = runPassCodePostOtpLinkPreCheck(
+    linkProviderId.value,
+    peekPendingLinkRequest(),
+    getAuth().currentUser != null,
+  )
+  if (preCheck.outcome === 'skipped') {
+    return 'skipped'
+  }
+  const pendingId = preCheck.linkProviderId
+  const snsName = $t(`sns_name['${pendingId}']`)
+  const currentUser = getAuth().currentUser
+  if (currentUser == null) {
+    return 'skipped'
+  }
+  try {
+    const userCredential = await startPendingProviderLink(currentUser)
+    if (userCredential == null) {
+      return 'skipped'
+    }
+    // 本番は linkWithRedirect により /pass-code へ復帰し、router/index.ts が
+    // handleRedirect / updateProfileFromProviders / 完了トーストを処理する。
+    // DEV のみ linkWithPopup が同期的に UserCredential を返すため、ここで同期処理する。
+    if (import.meta.env.DEV) {
+      await updateProfileFromProviders(userCredential)
+      setPendingToast(
+        $t('profile.linkage_completed', {
+          snsName: $t(`sns_name['${userCredential.providerId}']`),
+        }),
+        'success',
+      )
+      const redirectPath = getRedirectPath() ?? '/'
+      await router.push(redirectPath)
+      return 'linked'
+    }
+    return 'linked'
+  } catch (error: unknown) {
+    clearPendingLinkRequest()
+    clearLinkageCompletedToast()
+    if (error instanceof FirebaseError) {
+      notification.show($t('profile.linkage_failed', { snsName }), 'error')
+    } else {
+      notification.show($t('profile.linkage_failed_generic'), 'error')
+    }
+    return 'failed'
   }
 }
 
@@ -94,6 +187,10 @@ const submit = async (passCodeInput: string) => {
       const { token } = result.data
       await signInWithCustomToken(getAuth(), token)
       setLastLoginProvider('custom')
+      const linkResult = await completePendingLinkAfterEmailLogin()
+      if (linkResult !== 'skipped') {
+        return
+      }
       const redirectPath = getRedirectPath() ?? '/'
       await router.push(redirectPath)
     }
@@ -173,17 +270,20 @@ const goBack = () => {
     <confirm-dialog
       :model-value="isOpenLinkDialog"
       :is-confirm="false"
-      :ok-text="$t('passcode.send_code')"
       :ok-click="
         () => {
-          reSendPassCode()
           isOpenLinkDialog = false
         }
       "
     >
       <v-card-text class="text-center py-10 text-h4"> {{ $t('profile.account_linkage') }} </v-card-text>
       <v-card-text class="pb-0">
-        {{ $t('passcode.link_dialog_body', { email, provider_label: $t(`sns_name['${route.query.pid}']`) }) }}
+        {{
+          $t('passcode.link_dialog_body', {
+            email,
+            provider_label: linkProviderId != null ? $t(`sns_name['${linkProviderId}']`) : '',
+          })
+        }}
       </v-card-text>
     </confirm-dialog>
   </v-container>
