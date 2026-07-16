@@ -169,12 +169,13 @@ PR verify（`pr-verify.yml`）と同じ verify:functions-deploy / build / lint /
 
 ソース変更タスクの完了報告前に **必ず** [`/shokujii-code-review`](.agents/skills/shokujii-code-review/SKILL.md) を実行する。
 
-**🚨 必須修正が出た場合**（[`shokujii-code-review` 手順 3a](.agents/skills/shokujii-code-review/SKILL.md)）:
+**自動修正**（[`shokujii-code-review` 手順 3a・3b](.agents/skills/shokujii-code-review/SKILL.md)、[auto-fix-policy.md](.agents/skills/review-comments-evaluate/references/auto-fix-policy.md)）:
 
-- 仕様判断・スコープ外設計が必要な 🚨 を除き、残りを**ユーザー確認なしで修正**する
-- 手順 1 から**再レビュー**する（同一タスク内・**最大 2 周**）
-- 🟡 修正提案は完了報告に列挙する。**自動修正しない**
-- 2 周後も 🚨 が残る場合は一覧を報告して完了報告する
+- **🚨 必須修正**: 仕様判断・スコープ外設計・セキュリティ影響確認が必要なものを除き、**ユーザー確認なしで修正**
+- **🟡 修正提案（条件付き）**: 📌 スコープ内 + 工数 **S** + 種別 **🔧 微修正** / **📄 ドキュメントのみ** + 除外ラベルなし + 修正方針が一意のものを**ユーザー確認なしで修正**
+- 手順 1 から**再レビュー**する（同一タスク内・**最大 2 周**・🚨 と 🟡 合算）
+- 条件を満たさない 🟡・対象外の指摘は完了報告に列挙する
+- 2 周後も自動修正できない指摘は一覧を報告して完了報告する
 
 ユーザーが「レビュー不要」と明示した場合のみスキップしてよい。
 
@@ -263,9 +264,9 @@ PR・コードレビューのコメントは必ず日本語で行う。
 
 ### review-comments-evaluate の自動修正
 
-[`/review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) **手順 4a** に従い、**評価** が 🚨 必須修正 かつ **PRスコープ** が 📌 スコープ内 の RC は**ユーザー確認なしで自動修正**する（[`shokujii-code-review` 手順 3a](.agents/skills/shokujii-code-review/SKILL.md) と同一の対象外ルール・最大 2 周）。ソース変更時は `/lint-and-format` を実行する。
+[`/review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) **手順 4a** および [auto-fix-policy.md](.agents/skills/review-comments-evaluate/references/auto-fix-policy.md) に従い、**🚨** および**条件付き 🟡**（📌 + S + 🔧/📄 等）の RC は**ユーザー確認なしで自動修正**する（[`shokujii-code-review` 手順 3a・3b](.agents/skills/shokujii-code-review/SKILL.md) と同一の対象外ルール・最大 2 周）。ソース変更時は `/lint-and-format` を実行する。
 
-- 🟡 修正提案は**自動修正しない**（未着手のまま記録し、完了報告に列挙）
+- 条件を満たさない 🟡 は**自動修正しない**（未着手のまま記録し、完了報告に列挙）
 - ユーザーが「修正しない」「自動修正しない」と明示した場合のみ手順 4a をスキップしてよい
 
 ## エージェント用ファイルとシンボリックリンク

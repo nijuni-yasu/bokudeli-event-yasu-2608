@@ -25,6 +25,7 @@
 | [x] | RC-17 | 3593998994 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Cursor jq 分岐が stop_reason/session_id 未対応<br>フォールバックと同キーに揃え済み |
 | [ ] | RC-18 | 3593998988 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | Claude stop-gate が usage followup を破棄<br>Cursor 同様 capture が必要 |
 | [x] | RC-19 | 3593999009 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | manual evaluate で PR URL 時 headRefName 未使用<br>checkout ブランチと保存先がずれる |
+| [x] | RC-20 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | reveal.scss の :deep() がグローバル SCSS で無効<br>カバー・ホバー・CTA アニメが効かない |
 
 ---
 
@@ -373,5 +374,97 @@ RC-7〜10・19 を同一作業で対応。テンプレート／evaluate スキ�
 - **レビュー非該当スキップ件数**: 0
 
 指摘なし（reviewed_scope_fingerprint 導入。consume 後の同一未コミット差分で Stop gate 合格）
+
+---
+
+## 評価セッション（2026-07-16 18:21・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 18:21 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+指摘なし（イベントページへの段階表示・カバーズーム・メニューカードホバー・注文 CTA シマーアニメーション追加）
+
+---
+
+## 評価セッション（2026-07-16 18:23・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 18:23 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-20 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | reveal.scss の :deep() がグローバル SCSS で無効<br>カバー・ホバー・CTA アニメが効かない |
+
+---
+
+**識別子**: RC-20（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/styles/motion/reveal.scss:85`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    :deep(.v-img__img),
++    :deep(.v-img__placeholder) {
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `reveal.scss` は `base.scss` 経由のグローバル SCSS として読み込まれるため、Vue SFC 専用の `:deep()` が効かずカバー画像のズームイン・メニュー画像ホバー・注文 CTA の z-index 調整が適用されない → 通常の子孫セレクタ（`.event-motion-cover .v-img__img` 等）に置き換える
+
+**コメント要約**:
+
+グローバル SCSS に `:deep()` を書いても Vue のスコープ変換が走らないためアニメーション用セレクタが無効になる。通常の子孫セレクタへ修正し、カバー・ホバー・CTA の視覚効果を有効化する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: アニメーション追加が本 PR の主目的であり、セレクタ無効はユーザー向け機能欠落に直結するため必須修正。`:deep()` 除去は挙動変更を伴わない機械的修正。
+
+---
+
+## 評価セッション（2026-07-16 18:29・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 18:29 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+指摘なし（🟡 条件付き自動修正ポリシーを 3b / 4a / AGENTS.md / auto-fix-policy.md に反映。ドキュメント・スキルのみ）
+
+---
+
+## 評価セッション（2026-07-16 18:29・review-comments-evaluate）
+
+- **評価日時**: 2026-07-16 18:29 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **新規 RC なし**（`since` 2026-07-16T09:00:23Z 以降のインラインコメント 0 件）
+- **手順 4a 自動修正**: 該当なし
+
+### RC 一覧（サマリ）
+
+（本セッションで新規 RC なし）
 
 ---

@@ -109,7 +109,7 @@ description: git-create-pull-request 手順 11〜12 のレビュー依頼後、C
   - Codex 無応答: 依頼から **最大 12 分**
 - **全体タイムアウト**: 20 分
 - Codex limits 時は **partial evaluate** があり得る旨
-- evaluate 自動起動時は **`documents/レビューコメント/review-<slug>.md` 追記および手順 4a（🚨 自動修正）まで**行う（チャット要約のみでは完了しない）。slug は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) に従う
+- evaluate 自動起動時は **`documents/レビューコメント/review-<slug>.md` 追記および手順 4a（自動修正）まで**行う（チャット要約のみでは完了しない）。slug は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) に従う
 
 ### 5. sentinel 受信時 → evaluate 委譲（auto 完走）
 
