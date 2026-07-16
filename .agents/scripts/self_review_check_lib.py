@@ -78,13 +78,14 @@ def has_review_doc_session_since(review_doc: Path, since: str) -> bool:
     if since_dt is None:
         return False
 
-    since_utc = to_utc(since_dt)
+    since_utc = to_utc(since_dt).replace(second=0, microsecond=0)
     text = review_doc.read_text(encoding="utf-8")
     for match in SESSION_HEADING_RE.finditer(text):
         session_dt = _session_timestamp_from_heading(match.group(0))
         if session_dt is None:
             continue
-        if to_utc(session_dt) >= since_utc:
+        session_utc = to_utc(session_dt).replace(second=0, microsecond=0)
+        if session_utc >= since_utc:
             return True
     return False
 
@@ -131,13 +132,16 @@ def is_self_review_complete(
     repo_root: Path | None = None,
 ) -> bool:
     """review doc セッションまたは ledger の shokujii-code-review 完走で合格。"""
-    _ = wake_entry  # consume 単体では合格しない（wake は since 解決用）
+    if wake_entry is not None and wake_entry.get("consumed"):
+        return False
+
     root = repo_root or Path.cwd()
 
     if not is_recording_skipped_branch(branch):
         review_doc = root / review_doc_path_for_branch(branch)
         if has_review_doc_session_since(review_doc, since):
             return True
+        return False
 
     ledger_path = root / ".agents/state/agent-usage/ledger.jsonl"
     if has_ledger_self_review_since(

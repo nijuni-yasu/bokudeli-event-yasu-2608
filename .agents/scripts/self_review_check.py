@@ -61,7 +61,10 @@ def resolve_since(entry: dict) -> str:
         value = entry.get(key)
         if isinstance(value, str) and value:
             return value
-    return datetime.now(timezone.utc).isoformat()
+    raise RuntimeError(
+        "pending wake に since / lint_passed_at がありません。"
+        "self_review_wake.py write で since を設定してください。"
+    )
 
 
 def main() -> int:
@@ -102,7 +105,11 @@ def main() -> int:
         )
         return 2
 
-    since = resolve_since(entry)
+    try:
+        since = resolve_since(entry)
+    except RuntimeError as exc:
+        print(f"[self-review] {exc}", file=sys.stderr)
+        return 2
 
     if lib.is_self_review_complete(
         branch=branch,

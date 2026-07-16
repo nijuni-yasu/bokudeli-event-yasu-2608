@@ -12,6 +12,19 @@
 | [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 評価セッション見出し日時を JST として since と比較 |
 | [x] | RC-5 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq 未インストール時 stop-hook-json.py で gate 継続 |
 | [x] | RC-6 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review スコープ・JST・consume 不合格のテスト追加 |
+| [x] | RC-7 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review-xxxx_template 見出しが Stop gate regex と不一致<br>日時・shokujii-code-review サフィックスを追記 |
+| [x] | RC-8 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | evaluate 手順4の見出し記述が shokujii と不一致<br>同一形式に揃える |
+| [x] | RC-9 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolve_since の now() フォールバック<br>フェイルファストまたは明示エラーに |
+| [x] | RC-10 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | tree/ 等で conversation_id 未提供時 ledger 不可<br>AGENTS.md に注釈追加を提案 |
+| [x] | RC-11 | 3593956660 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | stop-hook-json cmd_parse の JSONDecodeError<br>decode 失敗時は {} 扱いに修正済み |
+| [x] | RC-12 | 3593956696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | extract-followup の JSONDecodeError<br>followup なしで継続するよう修正済み |
+| [x] | RC-13 | 3593998972 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | consume 済み wake + 古い review doc で合格<br>consumed 時は即不合格に修正済み |
+| [x] | RC-14 | 3593998998 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 分単位見出しと秒付き since の比較ずれ<br>分単位に丸めて比較するよう修正済み |
+| [x] | RC-15 | 3593999005 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 通常ブランチで ledger のみ合格<br>記録対象外ブランチに ledger 限定 |
+| [ ] | RC-16 | 3593998981 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | コミット済み変更が review 検知外<br>clean 作業ツリーで gate スキップの懸念 |
+| [x] | RC-17 | 3593998994 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Cursor jq 分岐が stop_reason/session_id 未対応<br>フォールバックと同キーに揃え済み |
+| [ ] | RC-18 | 3593998988 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | Claude stop-gate が usage followup を破棄<br>Cursor 同様 capture が必要 |
+| [x] | RC-19 | 3593999009 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | manual evaluate で PR URL 時 headRefName 未使用<br>checkout ブランチと保存先がずれる |
 
 ---
 
@@ -289,5 +302,64 @@
 - **レビュー非該当スキップ件数**: 0
 
 指摘なし（`pr-xxxx_template.md` を stub 化し `review-xxxx_template.md` に統一、`review-doc-path.md` 更新）
+
+---
+
+## 評価セッション（2026-07-16 18:00・review-comments-evaluate）
+
+- **評価日時**: 2026-07-16 18:00 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼定型文×1、Codex 接続案内×1、Copilot overview サマリ×1）
+- **手順 4a 自動修正**: RC-11〜15（🚨 + 📌 5件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-7 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | template 見出しが gate regex 非一致<br>サフィックス形式へ揃える |
+| [x] | RC-8 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | evaluate 手順4見出し記述の不一致<br>shokujii-code-review と統一 |
+| [x] | RC-9 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | resolve_since の暗黙 now() フォールバック<br>診断可能なエラーへ |
+| [x] | RC-10 | 4989960182 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | conversation_id 未提供時の ledger 制限<br>記録スキップブランチ向け注釈 |
+| [x] | RC-11 | 3593956660 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | cmd_parse JSONDecodeError で hook 落ち<br>{} フォールバックで修正 |
+| [x] | RC-12 | 3593956696 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | extract-followup decode 失敗<br>followup なし継続に修正 |
+| [x] | RC-13 | 3593998972 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | consumed wake + 古い doc で合格<br>consumed 即不合格に修正 |
+| [x] | RC-14 | 3593998998 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 分見出しと秒付き since の誤ブロック<br>分単位比較に修正 |
+| [x] | RC-15 | 3593999005 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 通常ブランチの ledger のみ合格<br>記録対象外のみ ledger 許可 |
+| [ ] | RC-16 | 3593998981 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📏 規約 | 📋 仕様追加 | M | コミット後 clean で review 検知漏れ<br>base 差分検知の検討 |
+| [x] | RC-17 | 3593998994 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Cursor jq が stop_reason/session_id 未読<br>キー揃え済み |
+| [ ] | RC-18 | 3593998988 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 📏 規約 | 🔧 微修正 | S | Claude usage followup 未返却<br>Cursor 同様の capture が必要 |
+| [x] | RC-19 | 3593999009 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | PR URL 時 headRefName で slug 決定<br>manual でも PR 基準の保存先へ |
+
+---
+
+## 対応セッション（2026-07-16 18:05 JST）
+
+RC-7〜10・19 を同一作業で対応。テンプレート／evaluate スキル／review-doc-path の見出し・保存先ルール統一、`resolve_since` フェイルファスト、AGENTS.md に tree/ ledger 注釈。テスト 10 件 PASS。
+
+---
+
+## 評価セッション（2026-07-16 18:05・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 18:05 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+指摘なし（RC-7〜10・19 対応後の差分確認。ドキュメント・スキル・self_review_check.py・テスト）
+
+---
+
+## 評価セッション（2026-07-16 18:06・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 18:06 JST
+- **ブランチ名**: ai/2186
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2187
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+指摘なし（consume 済み wake 再発行後のセルフレビュー。ソース変更は RC-7〜19 対応分のみ）
 
 ---

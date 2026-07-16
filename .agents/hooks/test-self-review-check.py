@@ -69,6 +69,30 @@ def test_is_self_review_complete_via_ledger() -> None:
         ledger_path.write_text(json.dumps(entry) + "\n", encoding="utf-8")
 
         assert lib.is_self_review_complete(
+            branch="tree/4",
+            since="2020-01-01T00:00:00+00:00",
+            conversation_id="conv-abc",
+            wake_entry=None,
+            repo_root=root,
+        )
+
+
+def test_normal_branch_ledger_alone_does_not_pass() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        ledger_dir = root / ".agents" / "state" / "agent-usage"
+        ledger_dir.mkdir(parents=True)
+        ledger_path = ledger_dir / "ledger.jsonl"
+        since = datetime.now(timezone.utc).isoformat()
+        entry = {
+            "ts": since,
+            "event": "turn_end",
+            "conversation_id": "conv-abc",
+            "task_skill": "shokujii-code-review",
+        }
+        ledger_path.write_text(json.dumps(entry) + "\n", encoding="utf-8")
+
+        assert not lib.is_self_review_complete(
             branch="ai/1",
             since="2020-01-01T00:00:00+00:00",
             conversation_id="conv-abc",
@@ -77,19 +101,42 @@ def test_is_self_review_complete_via_ledger() -> None:
         )
 
 
+def test_review_doc_same_minute_passes() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        review_dir = root / "documents" / "レビューコメント"
+        review_dir.mkdir(parents=True)
+        review_doc = review_dir / "review-feat-1.md"
+        review_doc.write_text(
+            "## 評価セッション（2026-07-16 16:30・shokujii-code-review）\n",
+            encoding="utf-8",
+        )
+        since = "2026-07-16T07:30:45+00:00"
+        assert lib.has_review_doc_session_since(review_doc, since)
+
+
 def test_consume_alone_does_not_pass() -> None:
-    since = "2026-07-16T07:00:00+00:00"
-    wake_entry = {
-        "consumed": True,
-        "consumed_at": "2026-07-16T08:00:00+00:00",
-    }
-    assert not lib.is_self_review_complete(
-        branch="fix/1",
-        since=since,
-        conversation_id=None,
-        wake_entry=wake_entry,
-        repo_root=Path("/tmp"),
-    )
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        review_dir = root / "documents" / "レビューコメント"
+        review_dir.mkdir(parents=True)
+        review_doc = review_dir / "review-fix-1.md"
+        review_doc.write_text(
+            "## 評価セッション（2026-07-16 16:30・shokujii-code-review）\n",
+            encoding="utf-8",
+        )
+        since = "2026-07-16T07:00:00+00:00"
+        wake_entry = {
+            "consumed": True,
+            "consumed_at": "2026-07-16T08:00:00+00:00",
+        }
+        assert not lib.is_self_review_complete(
+            branch="fix/1",
+            since=since,
+            conversation_id=None,
+            wake_entry=wake_entry,
+            repo_root=root,
+        )
 
 
 def test_tree_branch_skips_doc_but_ledger_ok() -> None:
@@ -183,14 +230,53 @@ def test_self_review_check_cli_fails_without_completion() -> None:
         assert "[self-review]" in result.stderr
 
 
+def test_self_review_check_cli_fails_without_since() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+        subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=root, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=root, check=True)
+        (root / "README.md").write_text("x\n", encoding="utf-8")
+        subprocess.run(["git", "add", "README.md"], cwd=root, check=True)
+        subprocess.run(["git", "commit", "-qm", "init"], cwd=root, check=True)
+        subprocess.run(["git", "checkout", "-q", "-b", "fix/9"], cwd=root, check=True)
+
+        wake_path = root / ".agents" / "state" / "self-review-pending.json"
+        wake_path.parent.mkdir(parents=True, exist_ok=True)
+        wake_path.write_text(
+            json.dumps([{"branch": "fix/9", "consumed": False}], ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS / "self_review_check.py"),
+                "--repo-root",
+                str(root),
+                "--wake-file",
+                str(wake_path.relative_to(root)),
+                "--branch",
+                "fix/9",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 2
+        assert "since" in result.stderr
+
+
 def main() -> int:
     tests = [
         test_is_self_review_complete_via_review_doc,
         test_review_doc_session_jst_before_since_fails,
+        test_review_doc_same_minute_passes,
         test_is_self_review_complete_via_ledger,
+        test_normal_branch_ledger_alone_does_not_pass,
         test_consume_alone_does_not_pass,
         test_tree_branch_skips_doc_but_ledger_ok,
         test_self_review_check_cli_fails_without_wake,
+        test_self_review_check_cli_fails_without_since,
         test_self_review_check_cli_fails_without_completion,
     ]
     failed = 0

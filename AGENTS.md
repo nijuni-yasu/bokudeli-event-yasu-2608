@@ -138,7 +138,7 @@ npm -w <pkg> run format:check
 4. 仕様書・ドキュメントに基づく実装で、base/functions の store や Firestore の読み書きが含まれる場合は、shokujii-firestore を参照すること
 5. 仕様書・ドキュメントに基づく実装で、common のスキーマ（common/src/schemas、common/src/apis）を触る場合は、shokujii-common-schemas を参照すること
 6. functions/default で Function を追加・修正する場合は、shokujii-functions-implementation を参照すること
-7. セッション開始時、`.agents/state/pr-review-pending-wake.json` に未処理 wake があれば [`wait-ai-pr-review`](.agents/skills/wait-ai-pr-review/SKILL.md) 手順 6 に従い evaluate 未処理をユーザーへ報告する。対象のレビュー記録ファイル（`review-<slug>.md` またはレガシー `pr-<n>.md`）に当該 `since` 以降の評価セッションが無い場合は auto evaluate 未完了として [`review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) auto モード（手順 4 追記まで）の実行を提案する
+7. セッション開始時、`.agents/state/pr-review-pending-wake.json` に未処理 wake があれば [`wait-ai-pr-review`](.agents/skills/wait-ai-pr-review/SKILL.md) 手順 6 に従い evaluate 未処理をユーザーへ報告する。対象のレビュー記録ファイル（`review-<slug>.md` またはレガシー `pr-<n>.md`）に当該 `since` 以降の評価セッションが無い場合は auto evaluate 未完了として [`review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) auto モード（手順 4a・4 まで）の実行を提案する
 8. セッション開始時、`.agents/state/deploy-pending-wake.json` に未処理 wake（`consumed: false`）があれば **deploy 結果報告未処理**としてユーザーへ報告する。ユーザーが報告を依頼した場合は [`github-actions-deploy`](.agents/skills/github-actions-deploy/SKILL.md) を **mode=report** で完走する
 9. Agent 使用量の確認: Cursor 2.x 以降の stop hook は top-level の `input_tokens` 等を提供する環境では自動計上される。トークン未提供（`aborted`・旧版・CLI 等）の場合は ledger に `null` が記録され followup も出ない（Phase 1 制限）。payload にトークンが無い場合は `transcript_path` から Claude 互換 transcript の usage をフォールバック取得する。stop hook が推定 ¥100 以上のターンのみ `followup_message` で使用量を表示する（`[agent-usage-report]` プレフィックス。閾値は `.agents/config/agent-usage-pricing.json` の `followup_min_jpy`）。手動確認は `python3 .agents/scripts/agent_usage.py report --last-session` または `.agents/state/agent-usage/reports/` を参照（hook による推定値）
 
@@ -153,6 +153,7 @@ npm -w <pkg> run format:check
 - **Claude Code**: [`.claude/hooks/stop-gate.sh`](.claude/hooks/stop-gate.sh) が `decision:block` でターン終了を阻止
 - review スコープの変更が無いターンでは検証をスキップ（[`.agents/hooks/source-change-detect.sh`](.agents/hooks/source-change-detect.sh)）
 - pending state: `.agents/state/self-review-pending.json`（[`self_review_wake.py`](.agents/scripts/self_review_wake.py)）
+- **記録対象外ブランチ**（`release/` `sync/` `hotfix/` `backup/` `tree/`）では review doc への追記はスキップ可。合格は **ledger**（`task_skill=shokujii-code-review` の `turn_end`）のみ。ledger 照合には Stop hook から **`conversation_id`（または `session_id`）** が渡る必要がある。旧 Cursor・CLI 等で ID が無い場合は gate がブロックされうる（[review-doc-path.md](.agents/skills/review-comments-evaluate/references/review-doc-path.md) 参照）
 
 ### PR verify 相当チェック（push 前）
 
@@ -258,6 +259,13 @@ PR・コードレビューのコメントは必ず日本語で行う。
 - Issue 作成まで完了したら **対応列は `[x]`** とする（本 PR 側の運用対応は完了）。
 
 **更新箇所**（漏れ防止）: ファイル冒頭の通し `### RC 一覧（サマリ）` 表、直近評価セッション内サマリ表（あれば）、該当 RC 記録ブロックの**ステータス**・PRスコープ・判断理由・要約（**評価**は変更しない）。詳細は `/review-comments-evaluate` を参照。
+
+### review-comments-evaluate の自動修正
+
+[`/review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) **手順 4a** に従い、**評価** が 🚨 必須修正 かつ **PRスコープ** が 📌 スコープ内 の RC は**ユーザー確認なしで自動修正**する（[`shokujii-code-review` 手順 3a](.agents/skills/shokujii-code-review/SKILL.md) と同一の対象外ルール・最大 2 周）。ソース変更時は `/lint-and-format` を実行する。
+
+- 🟡 修正提案は**自動修正しない**（未着手のまま記録し、完了報告に列挙）
+- ユーザーが「修正しない」「自動修正しない」と明示した場合のみ手順 4a をスキップしてよい
 
 ## エージェント用ファイルとシンボリックリンク
 

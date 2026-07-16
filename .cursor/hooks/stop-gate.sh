@@ -18,9 +18,9 @@ usage_json="$(
 
 parse_hook_fields() {
   if command -v jq >/dev/null 2>&1; then
-    status="$(echo "${input}" | jq -r '.status // "completed"')"
+    status="$(echo "${input}" | jq -r '.status // .stop_reason // "completed"')"
     loop_count="$(echo "${input}" | jq -r '.loop_count // 0')"
-    conversation_id="$(echo "${input}" | jq -r '.conversation_id // empty')"
+    conversation_id="$(echo "${input}" | jq -r '.conversation_id // .session_id // empty')"
     return
   fi
   _fields=()

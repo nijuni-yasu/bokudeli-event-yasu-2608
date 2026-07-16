@@ -23,6 +23,16 @@
 
 ### パス解決（シェル）
 
+**PR URL / 番号が分かる場合**（manual evaluate で別 PR を対象にするときは checkout ブランチより優先）:
+
+```bash
+branch=$(gh pr view <URL_or_PR_NUM> --json headRefName -q .headRefName)
+slug=$(echo "$branch" | tr '/' '-')
+review_doc="documents/レビューコメント/review-${slug}.md"
+```
+
+**PR が不明なとき**（通常のセルフレビュー・同一ブランチ evaluate）:
+
 ```bash
 branch=$(git branch --show-current)
 slug=$(echo "$branch" | tr '/' '-')

@@ -10,7 +10,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 | スキル | 役割 |
 |--------|------|
 | **本スキル** | 差分に対する**能動的**レビュー（チェックリスト・共通区分の指摘） |
-| [/review-comments-evaluate](../review-comments-evaluate/SKILL.md) | **外部**レビュー（Copilot / Codex / kokufu）コメントの評価 |
+| [/review-comments-evaluate](../review-comments-evaluate/SKILL.md) | **外部**レビュー（Copilot / Codex / kokufu）コメントの評価 + **🚨 自動修正**（手順 4a） |
 
 同一ブランチの記録は **`documents/レビューコメント/review-<slug>.md` 1 ファイル**に集約し（slug = ブランチ名の `/` → `-`）、RC 番号は evaluate の続き番号ルールに従う。パス解決は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md)。既存 `pr-*.md` はレガシーとしてそのまま。詳細は evaluate の [他スキルとの役割分担](../review-comments-evaluate/SKILL.md#他スキルとの役割分担) を参照。
 

@@ -8,7 +8,10 @@ import sys
 
 
 def cmd_parse() -> None:
-    data = json.load(sys.stdin)
+    try:
+        data = json.load(sys.stdin)
+    except json.JSONDecodeError:
+        data = {}
     status = data.get("status") or data.get("stop_reason") or "completed"
     loop_count = data.get("loop_count", 0)
     conversation_id = data.get("conversation_id") or data.get("session_id") or ""
@@ -23,7 +26,10 @@ def cmd_followup() -> None:
 
 
 def cmd_extract_followup() -> None:
-    data = json.load(sys.stdin)
+    try:
+        data = json.load(sys.stdin)
+    except json.JSONDecodeError:
+        data = {}
     followup = data.get("followup_message") or ""
     if followup:
         print(followup)
