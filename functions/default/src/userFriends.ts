@@ -39,9 +39,10 @@ const BackfillUserFriendsRequestSchema = z.object({
 const CursorSchema = z.object({
   value: EpochMillisSchema.or(z.number().int().nonnegative()),
   friend_user_id: z.string().nonempty(),
+  sort_value_null: z.boolean().optional(),
 })
 
-const decodeCursor = (cursor: string | null | undefined): UserFriendsListCursor | undefined => {
+export const decodeUserFriendsListCursor = (cursor: string | null | undefined): UserFriendsListCursor | undefined => {
   if (cursor == null || cursor === '') {
     return undefined
   }
@@ -51,13 +52,14 @@ const decodeCursor = (cursor: string | null | undefined): UserFriendsListCursor 
     return {
       value: normalized.value,
       friend_user_id: normalized.friend_user_id,
+      ...(normalized.sort_value_null === true ? { sort_value_null: true } : {}),
     }
   } catch {
     throw new HttpsError('invalid-argument', 'Invalid cursor')
   }
 }
 
-const encodeCursor = (cursor: UserFriendsListCursor | null): string | null => {
+export const encodeUserFriendsListCursor = (cursor: UserFriendsListCursor | null): string | null => {
   if (cursor == null) {
     return null
   }
@@ -76,7 +78,7 @@ export const getUserFriends = onCall<GetUserFriendsRequest, Promise<GetUserFrien
 
     const limit = input.limit ?? 10
     const sortBy: UserFriendsSortBy = input.sort_by ?? 'meet_count'
-    const decodedCursor = decodeCursor(input.cursor)
+    const decodedCursor = decodeUserFriendsListCursor(input.cursor)
     const viewerUid = request.auth?.uid ?? null
 
     const { friends, hasMore, nextCursor } = await resolveUserFriendsList({
@@ -90,7 +92,7 @@ export const getUserFriends = onCall<GetUserFriendsRequest, Promise<GetUserFrien
     return {
       friends,
       has_more: hasMore,
-      next_cursor: encodeCursor(nextCursor),
+      next_cursor: encodeUserFriendsListCursor(nextCursor),
     }
   },
 )

@@ -60,12 +60,7 @@ describe('resolveUserFriendsList', () => {
           meet_count: 3,
           first_met_at: 1000,
           last_met_at: 3000,
-          event_history: [
-            { event_id: 'e1', community_id: 'c1', event_at: 1000 },
-            { event_id: 'e2', community_id: 'c1', event_at: 2000 },
-            { event_id: 'e3', community_id: 'c1', event_at: 3000 },
-          ],
-        } as never,
+        },
       ],
       hasMore: false,
       nextCursor: null,
@@ -110,8 +105,7 @@ describe('resolveUserFriendsList', () => {
           meet_count: 1,
           first_met_at: 1000,
           last_met_at: 1000,
-          event_history: [],
-        } as never,
+        },
       ],
       hasMore: false,
       nextCursor: null,
@@ -140,24 +134,24 @@ describe('resolveUserFriendsList', () => {
   })
 
   it('退会者のみのページを複数読み飛ばして有効な友人を返す（RC-52）', async () => {
-    const cursor1 = { meet_count: 10, friend_user_id: 'f10' } as never
-    const cursor2 = { meet_count: 9, friend_user_id: 'f9' } as never
+    const cursor1 = { value: 10, friend_user_id: 'f10' }
+    const cursor2 = { value: 9, friend_user_id: 'f9' }
 
     vi.mocked(listUserFriends)
       .mockResolvedValueOnce({
-        friends: [{ id: 'deleted1', meet_count: 10, first_met_at: 1, last_met_at: 1, event_history: [] } as never],
+        friends: [{ id: 'deleted1', meet_count: 10, first_met_at: 1, last_met_at: 1 }],
         hasMore: true,
         nextCursor: cursor1,
       })
       .mockResolvedValueOnce({
-        friends: [{ id: 'deleted2', meet_count: 9, first_met_at: 1, last_met_at: 1, event_history: [] } as never],
+        friends: [{ id: 'deleted2', meet_count: 9, first_met_at: 1, last_met_at: 1 }],
         hasMore: true,
         nextCursor: cursor2,
       })
       .mockResolvedValueOnce({
-        friends: [{ id: 'active', meet_count: 8, first_met_at: 100, last_met_at: 200, event_history: [] } as never],
+        friends: [{ id: 'active', meet_count: 8, first_met_at: 100, last_met_at: 200 }],
         hasMore: true,
-        nextCursor: { meet_count: 7, friend_user_id: 'f7' } as never,
+        nextCursor: { value: 7, friend_user_id: 'f7' },
       })
 
     vi.mocked(getUsersByUserIds)
@@ -181,6 +175,37 @@ describe('resolveUserFriendsList', () => {
     expect(friends).toHaveLength(1)
     expect(friends[0].user_id).toBe('active')
     expect(hasMore).toBe(true)
+  })
+
+  it('不正 doc のみのページを skip cursor で読み飛ばして有効な友人を返す（RC-7）', async () => {
+    const skipCursor = { value: 0, friend_user_id: 'invalid2', sort_value_null: true as const }
+
+    vi.mocked(listUserFriends)
+      .mockResolvedValueOnce({
+        friends: [],
+        hasMore: true,
+        nextCursor: skipCursor,
+      })
+      .mockResolvedValueOnce({
+        friends: [{ id: 'active', meet_count: 5, first_met_at: 100, last_met_at: 200 }],
+        hasMore: false,
+        nextCursor: null,
+      })
+
+    vi.mocked(getUsersByUserIds).mockResolvedValueOnce(
+      new Map([['active', { user_name: 'Active', user_image_url: 'https://x.png', is_deleted: false }]] as never),
+    )
+
+    const { friends } = await resolveUserFriendsList({
+      targetUserId: 'owner',
+      sortBy: 'meet_count',
+      limit: 1,
+    })
+
+    expect(listUserFriends).toHaveBeenCalledTimes(2)
+    expect(listUserFriends).toHaveBeenNthCalledWith(2, 'owner', 'meet_count', 1, skipCursor)
+    expect(friends).toHaveLength(1)
+    expect(friends[0].user_id).toBe('active')
   })
 })
 

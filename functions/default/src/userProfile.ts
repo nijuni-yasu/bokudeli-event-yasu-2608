@@ -31,6 +31,43 @@ import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('userProfile')
 
+/**
+ * Issue #2175 の 504 切り分け用の一時計測。
+ * 調査完了後は次のいずれかを行う（判断は #2175 クローズ時）:
+ * - segment ログと timed ラッパーを削除する
+ * - 閾値を見直す（例: 500ms 以上のみ、または totalDurationMs 超過時のみ segment 出力）
+ */
+const PROFILE_PREVIEW_SEGMENT_LOG_MIN_MS = 200
+
+type PreviewTimedContext = {
+  targetUserId: string
+  viewerUid: string | null
+  isOwner: boolean
+}
+
+const timed = async <T>(segment: string, context: PreviewTimedContext, fn: () => Promise<T>): Promise<T> => {
+  const startedAt = performance.now()
+  let success = true
+  try {
+    return await fn()
+  } catch (error: unknown) {
+    success = false
+    throw error
+  } finally {
+    const durationMs = Math.round(performance.now() - startedAt)
+    if (!success || durationMs >= PROFILE_PREVIEW_SEGMENT_LOG_MIN_MS) {
+      logger.info('getUserProfilePreview segment', {
+        segment,
+        targetUserId: context.targetUserId,
+        viewerUid: context.viewerUid,
+        isOwner: context.isOwner,
+        success,
+        durationMs,
+      })
+    }
+  }
+}
+
 const BackfillUserProfileCountsRequestSchema = z.object({
   dry_run: z.boolean().optional(),
   user_id_from: z.string().optional(),
@@ -67,18 +104,23 @@ const PREVIEW_LIMITS = {
   orders: 5,
 } as const
 
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
+
 /**
  * Firestore Timestamp / number / undefined を安全に millis に変換する。
  * 取得できないときは fallback を返す。
  */
 const toMillis = (value: unknown, fallback = 0): number => {
   if (value == null) return fallback
-  if (typeof value === 'number') return value
+  if (typeof value === 'number' && Number.isFinite(value)) return value
   if (value instanceof Timestamp) return value.toMillis()
-  if (typeof (value as { toMillis?: unknown }).toMillis === 'function') {
-    return (value as { toMillis: () => number }).toMillis()
-  }
-  return fallback
+  if (!isRecord(value)) return fallback
+
+  const toMillisFn = value['toMillis']
+  if (typeof toMillisFn !== 'function') return fallback
+
+  const result = toMillisFn.call(value)
+  return typeof result === 'number' && Number.isFinite(result) ? result : fallback
 }
 
 const buildPublicProfile = (user: {
@@ -290,6 +332,7 @@ const fetchOrderPreviews = async (targetUserId: string): Promise<UserProfileOrde
  * - `previews.orders` は本人のみ返し、それ以外は `null`
  * - 各プレビューには `is_visible_to_viewer`（常に true）と `is_linkable`（§4.2.0）を付与する
  * - App Check は Phase 1 では必須としない。Firebase Functions の Callable 既定どおり `enforceAppCheck` は付けず、未ログイン呼び出しや運用バッチを阻害しない。強制を有効化する場合は別イシューでクライアント対応と合わせて検討する（仕様書 5.2.1 F1）
+ * - #2175 調査用: segment / totalDurationMs の Cloud Logging 計測あり。寿命は Issue #2175 の follow-up を参照
  */
 export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promise<GetUserProfilePreviewResponse>>(
   { region: 'asia-northeast1', invoker: 'public' },
@@ -299,19 +342,29 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
     const viewerUid = request.auth?.uid ?? null
     const isOwner = viewerUid != null && viewerUid === targetUserId
 
+    const totalStartedAt = performance.now()
+
     const targetUser = await getUser(targetUserId, false)
     if (targetUser == null || targetUser.is_deleted) {
       throw new HttpsError('not-found', '存在しないユーザーです')
     }
 
+    const previewTimedContext: PreviewTimedContext = { targetUserId, viewerUid, isOwner }
+
     const [eventPreviews, friendPreviews, joinedCommunities, managedCommunities, foodPreviews, orderPreviews] =
       await Promise.all([
-        fetchEventPreviews(targetUserId, viewerUid),
-        fetchFriendPreviews(targetUserId, viewerUid),
-        fetchCommunityPreviews('members', targetUserId, viewerUid, PREVIEW_LIMITS.joinedCommunities),
-        fetchCommunityPreviews('managers', targetUserId, viewerUid, PREVIEW_LIMITS.managedCommunities),
-        fetchFoodPreviews(targetUserId, viewerUid),
-        isOwner ? fetchOrderPreviews(targetUserId) : Promise.resolve(null as UserProfileOrderPreviewItem[] | null),
+        timed('events', previewTimedContext, () => fetchEventPreviews(targetUserId, viewerUid)),
+        timed('friends', previewTimedContext, () => fetchFriendPreviews(targetUserId, viewerUid)),
+        timed('joined_communities', previewTimedContext, () =>
+          fetchCommunityPreviews('members', targetUserId, viewerUid, PREVIEW_LIMITS.joinedCommunities),
+        ),
+        timed('managed_communities', previewTimedContext, () =>
+          fetchCommunityPreviews('managers', targetUserId, viewerUid, PREVIEW_LIMITS.managedCommunities),
+        ),
+        timed('foods', previewTimedContext, () => fetchFoodPreviews(targetUserId, viewerUid)),
+        isOwner
+          ? timed('orders', previewTimedContext, () => fetchOrderPreviews(targetUserId))
+          : Promise.resolve(null as UserProfileOrderPreviewItem[] | null),
       ])
 
     const counts = {
@@ -323,10 +376,14 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
       counts_updated_at: targetUser.counts_updated_at ?? null,
     }
 
+    // #2175 調査用。totalDurationMs 含む returned ログの継続要否も Issue #2175 follow-up で判断
     logger.info('getUserProfilePreview returned', {
       targetUserId,
       viewerUid,
       isOwner,
+      totalDurationMs: Math.round(performance.now() - totalStartedAt),
+      friendCount: targetUser.friend_count ?? 0,
+      orderedFoodCount: targetUser.ordered_food_count ?? 0,
     })
 
     return {
