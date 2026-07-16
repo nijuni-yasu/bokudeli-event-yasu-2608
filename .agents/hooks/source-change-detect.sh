@@ -61,8 +61,28 @@ is_review_infra_path() {
   local path="$1"
 
   case "${path}" in
-    .agents/state/* | documents/レビューコメント/*)
+    .agents/state/*)
       return 1
+      ;;
+    documents/レビューコメント/review-*)
+      case "${path}" in
+        documents/レビューコメント/review-xxxx_template.md)
+          return 0
+          ;;
+        *)
+          return 1
+          ;;
+      esac
+      ;;
+    documents/レビューコメント/pr-*)
+      case "${path}" in
+        documents/レビューコメント/pr-xxxx_template.md)
+          return 0
+          ;;
+        *)
+          return 1
+          ;;
+      esac
       ;;
     .agents/hooks/* | .agents/scripts/* | .agents/skills/* | .agents/config/*)
       return 0

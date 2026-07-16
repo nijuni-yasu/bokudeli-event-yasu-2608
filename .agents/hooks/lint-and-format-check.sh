@@ -130,6 +130,9 @@ ${recheck_output}
     report+="
 format エラーは自動修正されました。
 "
+    if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+      append_fail "format:check" "format 自動修正でワーキングツリーに未コミット差分が残っています。コミットしてから push してください。"
+    fi
   fi
 fi
 

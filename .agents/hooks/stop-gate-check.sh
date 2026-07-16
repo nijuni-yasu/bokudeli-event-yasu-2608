@@ -22,6 +22,7 @@ case "${loop_count}" in
 esac
 
 if [ "${status}" = "aborted" ] || [ "${status}" = "error" ]; then
+  # Stop hook 自体が異常終了したターンは gate をかけない（二重ブロック回避）
   exit 0
 fi
 

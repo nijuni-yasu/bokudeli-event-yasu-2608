@@ -51,6 +51,10 @@ fi
 full_reason="$(cat "${reason_file}")"
 rm -f "${reason_file}"
 
+if [ -z "${full_reason}" ]; then
+  full_reason="[self-review] Stop gate がブロックしましたが理由を取得できませんでした。/shokujii-code-review を完走してください。"
+fi
+
 reason_json=$(printf '%s' "${full_reason}" | json_escape)
 printf '{"decision":"block","reason":%s}' "${reason_json}"
 exit 2
