@@ -31,6 +31,27 @@ import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('userProfile')
 
+type PreviewTimedContext = {
+  targetUserId: string
+  viewerUid: string | null
+  isOwner: boolean
+}
+
+const timed = async <T>(segment: string, context: PreviewTimedContext, fn: () => Promise<T>): Promise<T> => {
+  const startedAt = performance.now()
+  try {
+    return await fn()
+  } finally {
+    logger.info('getUserProfilePreview segment', {
+      segment,
+      targetUserId: context.targetUserId,
+      viewerUid: context.viewerUid,
+      isOwner: context.isOwner,
+      durationMs: Math.round(performance.now() - startedAt),
+    })
+  }
+}
+
 const BackfillUserProfileCountsRequestSchema = z.object({
   dry_run: z.boolean().optional(),
   user_id_from: z.string().optional(),
@@ -67,18 +88,23 @@ const PREVIEW_LIMITS = {
   orders: 5,
 } as const
 
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
+
 /**
  * Firestore Timestamp / number / undefined を安全に millis に変換する。
  * 取得できないときは fallback を返す。
  */
 const toMillis = (value: unknown, fallback = 0): number => {
   if (value == null) return fallback
-  if (typeof value === 'number') return value
+  if (typeof value === 'number' && Number.isFinite(value)) return value
   if (value instanceof Timestamp) return value.toMillis()
-  if (typeof (value as { toMillis?: unknown }).toMillis === 'function') {
-    return (value as { toMillis: () => number }).toMillis()
-  }
-  return fallback
+  if (!isRecord(value)) return fallback
+
+  const toMillisFn = value['toMillis']
+  if (typeof toMillisFn !== 'function') return fallback
+
+  const result = toMillisFn.call(value)
+  return typeof result === 'number' && Number.isFinite(result) ? result : fallback
 }
 
 const buildPublicProfile = (user: {
@@ -299,19 +325,29 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
     const viewerUid = request.auth?.uid ?? null
     const isOwner = viewerUid != null && viewerUid === targetUserId
 
+    const totalStartedAt = performance.now()
+
     const targetUser = await getUser(targetUserId, false)
     if (targetUser == null || targetUser.is_deleted) {
       throw new HttpsError('not-found', '存在しないユーザーです')
     }
 
+    const previewTimedContext: PreviewTimedContext = { targetUserId, viewerUid, isOwner }
+
     const [eventPreviews, friendPreviews, joinedCommunities, managedCommunities, foodPreviews, orderPreviews] =
       await Promise.all([
-        fetchEventPreviews(targetUserId, viewerUid),
-        fetchFriendPreviews(targetUserId, viewerUid),
-        fetchCommunityPreviews('members', targetUserId, viewerUid, PREVIEW_LIMITS.joinedCommunities),
-        fetchCommunityPreviews('managers', targetUserId, viewerUid, PREVIEW_LIMITS.managedCommunities),
-        fetchFoodPreviews(targetUserId, viewerUid),
-        isOwner ? fetchOrderPreviews(targetUserId) : Promise.resolve(null as UserProfileOrderPreviewItem[] | null),
+        timed('events', previewTimedContext, () => fetchEventPreviews(targetUserId, viewerUid)),
+        timed('friends', previewTimedContext, () => fetchFriendPreviews(targetUserId, viewerUid)),
+        timed('joined_communities', previewTimedContext, () =>
+          fetchCommunityPreviews('members', targetUserId, viewerUid, PREVIEW_LIMITS.joinedCommunities),
+        ),
+        timed('managed_communities', previewTimedContext, () =>
+          fetchCommunityPreviews('managers', targetUserId, viewerUid, PREVIEW_LIMITS.managedCommunities),
+        ),
+        timed('foods', previewTimedContext, () => fetchFoodPreviews(targetUserId, viewerUid)),
+        isOwner
+          ? timed('orders', previewTimedContext, () => fetchOrderPreviews(targetUserId))
+          : Promise.resolve(null as UserProfileOrderPreviewItem[] | null),
       ])
 
     const counts = {
@@ -327,6 +363,9 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
       targetUserId,
       viewerUid,
       isOwner,
+      totalDurationMs: Math.round(performance.now() - totalStartedAt),
+      friendCount: targetUser.friend_count ?? 0,
+      orderedFoodCount: targetUser.ordered_food_count ?? 0,
     })
 
     return {
