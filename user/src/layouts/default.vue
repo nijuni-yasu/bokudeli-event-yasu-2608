@@ -16,6 +16,7 @@ import { getManagePath, getManageNewCommunityPath, getLogin } from '@/router/uti
 import { hasManagedCommunity } from '@shokujii/base/stores/community.js'
 import { useCurrentUserStore } from '@shokujii/base/stores/currentUser.js'
 import { useChatStore } from '@shokujii/base/stores/chat.js'
+import { consumePendingToast } from '@shokujii/base/utils/pendingToast.js'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { getAuth, type User } from 'firebase/auth'
@@ -71,6 +72,14 @@ const notification = reactive<Notification>({
   color: undefined,
 })
 provide('notification', notification)
+
+onMounted(() => {
+  const toast = consumePendingToast()
+  if (toast != null) {
+    notification.message = toast.message
+    notification.color = toast.color
+  }
+})
 
 const isNotificationShown = computed({
   get: () => notification.message !== undefined,

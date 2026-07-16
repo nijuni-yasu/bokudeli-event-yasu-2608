@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Notification } from '@shokujii/base/types/index.js'
+import { consumePendingToast } from '@shokujii/base/utils/pendingToast.js'
 
 const notification = reactive<Notification>({
   message: undefined,
@@ -15,6 +16,14 @@ const isNotificationShown = computed({
       notification.color = undefined
     }
   },
+})
+
+onMounted(() => {
+  const toast = consumePendingToast()
+  if (toast != null) {
+    notification.message = toast.message
+    notification.color = toast.color
+  }
 })
 </script>
 

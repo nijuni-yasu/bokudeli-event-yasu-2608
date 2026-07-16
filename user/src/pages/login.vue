@@ -7,6 +7,7 @@ import { useNotification } from '@shokujii/base/composable/notification'
 import { useValidators } from '@shokujii/base/composable/validators.js'
 import { getLastLoginProvider, setLastLoginProvider } from '@shokujii/base/utils/lastLoginProvider.js'
 import { signInByProviderService, type ProviderIdType } from '@shokujii/base/utils/providerService.js'
+import { getLinkRequestDialogParams, parseLoginQueryPids, runLoginPageMountAutoLinkage } from '@/utils/loginAutoLinkage'
 import GoogleIcon from '@shokujii/base/icons/google.vue'
 import FacebookIcon from '@shokujii/base/icons/facebook.vue'
 import XIcon from '@shokujii/base/icons/x'
@@ -24,16 +25,20 @@ const isLoading = ref<ProviderIdType | 'custom' | null>(null)
 const isValid = ref(false)
 const email = ref('')
 const lastLoginProvider = getLastLoginProvider()
-const linkRequestDialogParams = computed<{
-  tryLoginProviderId: ProviderIdType
-  linkProviderId: ProviderIdType
-} | null>(() => {
-  return route.query.pid1 == null || route.query.pid2 == null
-    ? null
-    : {
-        tryLoginProviderId: route.query.pid1 as ProviderIdType,
-        linkProviderId: route.query.pid2 as ProviderIdType,
-      }
+const linkRequestDialogParams = computed(() =>
+  getLinkRequestDialogParams(parseLoginQueryPids(route.query.pid1, route.query.pid2)),
+)
+
+onMounted(() => {
+  const params = runLoginPageMountAutoLinkage(route.query.pid1, route.query.pid2)
+  if (params != null) {
+    notification.show(
+      $t('login.auto_linkage_notice', {
+        sns_name: $t(`sns_name['${params.tryLoginProviderId}']`),
+      }),
+      'info',
+    )
+  }
 })
 
 const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: string) => {
@@ -200,7 +205,7 @@ const handleLogin = async (providerId: ProviderIdType | 'custom', emailInput?: s
   </auth-entry-layout>
   <confirm-dialog
     v-if="linkRequestDialogParams !== null"
-    :model-value="linkRequestDialogParams !== null"
+    :model-value="true"
     :is-confirm="false"
     :ok-text="$t('profile.linkage')"
     :ok-click="() => handleLogin(linkRequestDialogParams!.linkProviderId, undefined)"

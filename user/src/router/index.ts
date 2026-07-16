@@ -22,6 +22,8 @@ import {
   clearPendingLinkRequest,
   getRedirectPath,
   handleRedirect,
+  isProviderIdType,
+  resolveLinkageCompletedProviderId,
   setRedirectPath,
 } from '@shokujii/base/utils/redirect'
 import {
@@ -55,7 +57,21 @@ const isLoginRequired = (path: string) => {
   )
 }
 
+type RouterTranslate = (key: string, values?: Record<string, string>) => string
+
+const routerTranslate = (): RouterTranslate => getI18n().global.t as RouterTranslate
+
 export const setupRouter = (router: Router) => {
+  const setLinkageCompletedPendingToast = (providerId: string): void => {
+    const t = routerTranslate()
+    setPendingToast(
+      t('profile.linkage_completed', {
+        snsName: t(`sns_name['${providerId}']`),
+      }),
+      'success',
+    )
+  }
+
   // 初期化時かログアウト時かを識別するため、前回のユーザー状態を保持
   let lastUser: User | null = null
 
@@ -146,7 +162,7 @@ export const setupRouter = (router: Router) => {
 
     // リダイレクトで戻ってきた場合の処理
     // TODO リダイレクトの返りは一つのページにまとめた方がよいかもしれない
-    if (['/login', '/register', '/register/complete', '/profile'].includes(to.path)) {
+    if (['/login', '/register', '/register/complete', '/profile', '/pass-code'].includes(to.path)) {
       let user = null
       let userCredential: UserCredential | null = null
       try {
@@ -176,9 +192,13 @@ export const setupRouter = (router: Router) => {
           const existingProviderId = methods[0]
           if (existingProviderId == null) {
             // カスタムトークンログインを行い、メールアドレスが既に存在している場合
+            const pendingProviderId = pendingCred?.providerId
             return {
               path: '/pass-code',
               state: { email, mode: 'login' },
+              ...(pendingProviderId != null && isProviderIdType(pendingProviderId)
+                ? { query: { pid: pendingProviderId } }
+                : {}),
             }
           } else {
             return {
@@ -230,7 +250,15 @@ export const setupRouter = (router: Router) => {
       // 未ログインのときは無駄な通信が発生するのでここで終了
       // userCredential は null でも意味がある（passcode の初回ログイン時など）
       if (user == null) {
+        if (to.path === '/pass-code') {
+          return undefined
+        }
         return getRedirectPath() ?? undefined
+      }
+
+      // OAuth 復帰でない /pass-code（メール変更 OTP 等）はガード処理をスキップする
+      if (to.path === '/pass-code' && userCredential == null) {
+        return undefined
       }
 
       if (to.path === '/login' && userCredential != null) {
@@ -289,20 +317,13 @@ export const setupRouter = (router: Router) => {
         return await handleProfileUpdateFailure(to.path, to.query, userCredential)
       }
 
+      const providerIdForToast = resolveLinkageCompletedProviderId(userCredential, to.path)
+      if (providerIdForToast != null) {
+        setLinkageCompletedPendingToast(providerIdForToast)
+      }
+
       // profile に戻ってきた場合はリンクなので画面はそのまま
       if (to.path === '/profile') {
-        if (userCredential != null) {
-          const i18n = getI18n()
-          const providerId = userCredential.providerId
-          setPendingToast(
-            // @ts-expect-error i18n.global.t の型がユニオンになってしまう TODO 直し方確認
-            i18n.global.t('profile.linkage_completed', {
-              // @ts-expect-error i18n.global.t の型がユニオンになってしまう
-              snsName: i18n.global.t(`sns_name['${providerId}']`),
-            }),
-            'success',
-          )
-        }
         return
       }
 

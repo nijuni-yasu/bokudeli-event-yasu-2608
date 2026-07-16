@@ -590,6 +590,8 @@ export default {
     not_registered: 'このメールアドレスは登録されていません。新規登録からアカウントを作成してください。',
     link_dialog_body:
       '{try_login_provider_label}に設定されているメールアドレスは、すでに{link_provider_label}アカウントと連携されています。 アカウントを連携するためにログインしてください',
+    auto_linkage_notice:
+      '同じメールアドレスのアカウントが見つかりました。{sns_name}と連携するため、本人確認をお願いします。',
     link_to_partner_site: '<a href="https://partner.shokujii.jp/" target="_blank">飲食店管理画面のログインはこちら</a>',
     inapp: {
       notice_title: 'ChromeやSafariを開いてログインしてください',
@@ -630,7 +632,10 @@ export default {
     un_match_passcode: 'パスコードの値が間違っています',
     link_dialog_body:
       '{email}は既にメールアドレスログインで使用されています。{provider_label}と連携するため、ログインしてください。',
+    auto_linkage_notice:
+      '同じメールアドレスで登録済みです。{sns_name}と連携するため、パスコードで本人確認してください。',
     send_code: 'パスコードを送信する',
+    send_code_failed: 'パスコードの送信に失敗しました。しばらくしてから「コードを再送信する」をお試しください。',
   },
   complete: {
     new_user_title: 'アカウント登録完了',

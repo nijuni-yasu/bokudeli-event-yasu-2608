@@ -8,6 +8,7 @@ import UserProfile from '@/components/UserProfile.vue'
 import Footer from '@/components/Footer.vue'
 import { useNavItems } from '@/navigation/manage'
 import type { Notification } from '@shokujii/base/types/index.js'
+import { consumePendingToast } from '@shokujii/base/utils/pendingToast.js'
 import { useLayoutConfigStore } from '@layouts/stores/config'
 import { FooterType } from '@layouts/enums'
 import { layoutConfig } from '@themeConfig'
@@ -37,6 +38,14 @@ const notification = reactive<Notification>({
   color: undefined,
 })
 provide('notification', notification)
+
+onMounted(() => {
+  const toast = consumePendingToast()
+  if (toast != null) {
+    notification.message = toast.message
+    notification.color = toast.color
+  }
+})
 
 const isNotificationShown = computed({
   get: () => notification.message !== undefined,
