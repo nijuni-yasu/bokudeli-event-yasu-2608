@@ -167,7 +167,7 @@ describe('listUserFriends', () => {
     expect(queryChain.startAfter).toHaveBeenCalledWith({ toMillis: expect.any(Function) }, 'friend-prev')
   })
 
-  it('page 末尾が不正でも sentinel doc から nextCursor を組み立てる（RC-1）', async () => {
+  it('page 末尾が不正でも sentinel doc を返却し nextCursor を組み立てる（RC-4）', async () => {
     friendsGetMock.mockResolvedValueOnce({
       docs: [
         makeDoc('invalid', {
@@ -184,11 +184,49 @@ describe('listUserFriends', () => {
 
     const result = await listUserFriends('owner', 'meet_count', 1)
 
-    expect(result.friends).toHaveLength(0)
+    expect(result.friends).toEqual([
+      {
+        id: 'friend2',
+        meet_count: 9,
+        first_met_at: 1100,
+        last_met_at: 2100,
+      },
+    ])
     expect(result.hasMore).toBe(true)
     expect(result.nextCursor).toEqual({
       value: 9,
       friend_user_id: 'friend2',
+    })
+  })
+
+  it('page に有効行があるとき sentinel は返却に含めない（RC-4）', async () => {
+    friendsGetMock.mockResolvedValueOnce({
+      docs: [
+        makeDoc('friend1', {
+          meet_count: 10,
+          first_met_at: { toMillis: () => 1000 },
+          last_met_at: { toMillis: () => 2000 },
+        }),
+        makeDoc('invalid', {
+          first_met_at: { toMillis: () => 900 },
+          last_met_at: { toMillis: () => 1900 },
+        }),
+        makeDoc('friend3', {
+          meet_count: 8,
+          first_met_at: { toMillis: () => 800 },
+          last_met_at: { toMillis: () => 1800 },
+        }),
+      ],
+    })
+
+    const result = await listUserFriends('owner', 'meet_count', 2)
+
+    expect(result.friends).toHaveLength(1)
+    expect(result.friends[0].id).toBe('friend1')
+    expect(result.hasMore).toBe(true)
+    expect(result.nextCursor).toEqual({
+      value: 10,
+      friend_user_id: 'friend1',
     })
   })
 

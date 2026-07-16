@@ -87,26 +87,33 @@ const cursorValueFromDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortB
   return toMillis(raw)
 }
 
-/** 次ページ用 cursor を組み立てられる doc を後方から探索する（RC-1） */
-const findPagingCursorDoc = (
+/** 一覧に返せる doc か（表示用マップと cursor 用ソートキーの両方が有効） */
+const canReturnFriendDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortBy): boolean =>
+  mapDocToUserFriendListRow(doc) != null && cursorValueFromDoc(doc, sortBy) != null
+
+const mapReturnedDocsToFriends = (returnedDocs: QueryDocumentSnapshot[]): UserFriendListRow[] =>
+  returnedDocs
+    .map((doc) => mapDocToUserFriendListRow(doc))
+    .filter((friend): friend is UserFriendListRow => friend != null)
+
+/** このページで返す doc を決める（RC-4: sentinel は返却に含めてから cursor に使う） */
+const collectReturnedDocs = (
   pageDocs: QueryDocumentSnapshot[],
   docs: QueryDocumentSnapshot[],
   limit: number,
   firestoreHasMore: boolean,
   sortBy: UserFriendsSortBy,
-): QueryDocumentSnapshot | null => {
-  for (let i = pageDocs.length - 1; i >= 0; i--) {
-    if (cursorValueFromDoc(pageDocs[i], sortBy) != null) {
-      return pageDocs[i]
-    }
-  }
-  if (firestoreHasMore && docs.length > limit) {
+): QueryDocumentSnapshot[] => {
+  const returned = pageDocs.filter((doc) => canReturnFriendDoc(doc, sortBy))
+
+  if (returned.length === 0 && firestoreHasMore && docs.length > limit) {
     const sentinelDoc = docs[limit]
-    if (cursorValueFromDoc(sentinelDoc, sortBy) != null) {
-      return sentinelDoc
+    if (canReturnFriendDoc(sentinelDoc, sortBy)) {
+      returned.push(sentinelDoc)
     }
   }
-  return null
+
+  return returned
 }
 
 export const userFriendRef = (uid: string, friendUid: string): DocumentReference<UserFriend> => {
@@ -175,23 +182,22 @@ export const listUserFriends = async (
 
   const snapshot = await query.get()
   const docs = snapshot.docs
-  const hasMore = docs.length > limit
-  const pageDocs = hasMore ? docs.slice(0, limit) : docs
-  const friends = pageDocs
-    .map((doc) => mapDocToUserFriendListRow(doc))
-    .filter((friend): friend is UserFriendListRow => friend != null)
+  const firestoreHasMore = docs.length > limit
+  const pageDocs = firestoreHasMore ? docs.slice(0, limit) : docs
+  const returnedDocs = collectReturnedDocs(pageDocs, docs, limit, firestoreHasMore, sortBy)
+  const friends = mapReturnedDocsToFriends(returnedDocs)
 
   if (pageDocs.length === 0) {
     return { friends, hasMore: false, nextCursor: null }
   }
 
-  const pagingDoc = findPagingCursorDoc(pageDocs, docs, limit, hasMore, sortBy)
-  const cursorValue = pagingDoc != null ? cursorValueFromDoc(pagingDoc, sortBy) : null
+  const lastReturnedDoc = returnedDocs[returnedDocs.length - 1]
+  const cursorValue = lastReturnedDoc != null ? cursorValueFromDoc(lastReturnedDoc, sortBy) : null
   const nextCursor =
-    hasMore && pagingDoc != null && cursorValue != null
+    firestoreHasMore && lastReturnedDoc != null && cursorValue != null
       ? {
           value: cursorValue,
-          friend_user_id: pagingDoc.id,
+          friend_user_id: lastReturnedDoc.id,
         }
       : null
 
