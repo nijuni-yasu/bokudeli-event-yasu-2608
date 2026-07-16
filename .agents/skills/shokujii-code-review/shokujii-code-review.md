@@ -1,6 +1,6 @@
 ---
 name: shokujii-code-review
-description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み、別Issue化は 📤#NNNN別Issue化）の共通区分で review-comments-evaluate と共通。PRレビュー時は pr-<番号>.md に RC 記録を追記。コード変更のレビュー依頼時に使用する。
+description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み、別Issue化は 📤#NNNN別Issue化）の共通区分で review-comments-evaluate と共通。RC 記録は review-<ブランチslug>.md（review-doc-path 参照）。コード変更のレビュー依頼時に使用する。
 ---
 
 # Shokujii コードレビュー
@@ -192,7 +192,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 ## フィードバック形式
 
-[/review-comments-evaluate](../../review-comments-evaluate/SKILL.md) と同一の **共通区分**（**❌ 未対応は使わない**）。手順・`pr-<番号>.md` への記録は [SKILL.md](SKILL.md) を参照。
+[/review-comments-evaluate](../../review-comments-evaluate/SKILL.md) と同一の **共通区分**（**❌ 未対応は使わない**）。手順・レビュー記録ファイルへの記録は [SKILL.md](SKILL.md) および [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) を参照。
 
 - 🚨 **必須修正**: マージ前に対応が必要（セキュリティ・データ不整合・バグ等）
 - 🟡 **修正提案**: 改善を検討してほしい（設計・可読性等）。マージ必須ではない

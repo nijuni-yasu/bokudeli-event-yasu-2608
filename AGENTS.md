@@ -15,8 +15,8 @@ AIエージェント向けプロジェクトガイド。
 | GitHub イシュー作成                                                             | `/git-create-issue`          |
 | PR 本文生成                                                                     | `/git-create-pull-request`   |
 | AI レビュー完了待ち → evaluate（watcher 起動時 Shell に notify_on_output 必須） | `/wait-ai-pr-review`         |
-| コードレビュー（実装完了時は 3 ファイル以上かつ UI 微修正以外で自動実行）     | `/shokujii-code-review`      |
-| lint・format・型・test チェック（PR verify 相当。format はローカル自動修正）    | `/lint-and-format`           |
+| コードレビュー（実装完了時は必ずセルフレビュー）                                 | `/shokujii-code-review`      |
+| lint・format・型・test チェック（PR / reflect 前。PR verify 相当）               | `/lint-and-format`           |
 | fixup（追修正の統合・メッセージ維持。明示依頼時）                               | `/git-fixup`                 |
 | squash（統合＋メッセージ更新。明示依頼時）                                      | `/git-squash`                |
 | レビューコメント検討                                                            | `/review-comments-evaluate`  |
@@ -138,37 +138,43 @@ npm -w <pkg> run format:check
 4. 仕様書・ドキュメントに基づく実装で、base/functions の store や Firestore の読み書きが含まれる場合は、shokujii-firestore を参照すること
 5. 仕様書・ドキュメントに基づく実装で、common のスキーマ（common/src/schemas、common/src/apis）を触る場合は、shokujii-common-schemas を参照すること
 6. functions/default で Function を追加・修正する場合は、shokujii-functions-implementation を参照すること
-7. セッション開始時、`.agents/state/pr-review-pending-wake.json` に未処理 wake があれば [`wait-ai-pr-review`](.agents/skills/wait-ai-pr-review/SKILL.md) 手順 6 に従い evaluate 未処理をユーザーへ報告する。`pr-<n>.md` に当該 `since` 以降の評価セッションが無い場合は auto evaluate 未完了として [`review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) auto モード（手順 4 追記まで）の実行を提案する
+7. セッション開始時、`.agents/state/pr-review-pending-wake.json` に未処理 wake があれば [`wait-ai-pr-review`](.agents/skills/wait-ai-pr-review/SKILL.md) 手順 6 に従い evaluate 未処理をユーザーへ報告する。対象のレビュー記録ファイル（`review-<slug>.md` またはレガシー `pr-<n>.md`）に当該 `since` 以降の評価セッションが無い場合は auto evaluate 未完了として [`review-comments-evaluate`](.agents/skills/review-comments-evaluate/SKILL.md) auto モード（手順 4 追記まで）の実行を提案する
 8. セッション開始時、`.agents/state/deploy-pending-wake.json` に未処理 wake（`consumed: false`）があれば **deploy 結果報告未処理**としてユーザーへ報告する。ユーザーが報告を依頼した場合は [`github-actions-deploy`](.agents/skills/github-actions-deploy/SKILL.md) を **mode=report** で完走する
 9. Agent 使用量の確認: Cursor 2.x 以降の stop hook は top-level の `input_tokens` 等を提供する環境では自動計上される。トークン未提供（`aborted`・旧版・CLI 等）の場合は ledger に `null` が記録され followup も出ない（Phase 1 制限）。payload にトークンが無い場合は `transcript_path` から Claude 互換 transcript の usage をフォールバック取得する。stop hook が推定 ¥100 以上のターンのみ `followup_message` で使用量を表示する（`[agent-usage-report]` プレフィックス。閾値は `.agents/config/agent-usage-pricing.json` の `followup_min_jpy`）。手動確認は `python3 .agents/scripts/agent_usage.py report --last-session` または `.agents/state/agent-usage/reports/` を参照（hook による推定値）
 
 ## 作業完了前の必須手順（コード変更）
 
-ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** `/lint-and-format` スキル（`.agents/skills/lint-and-format/SKILL.md` または `.claude/skills/lint-and-format/SKILL.md`）の手順に従い、PR verify（`pr-verify.yml`）と同じ verify:functions-deploy / build / lint / format / 型 / vitest のローカルチェック（format 失敗時は format 自動修正）を実行すること。
+ソースコードやビルド・lint 対象となる設定を変更したタスクでは、**完了報告の前に必ず** [`/shokujii-code-review`](.agents/skills/shokujii-code-review/SKILL.md) でセルフレビューを実行する（差分レビューと review doc 記録。lint / test は本段階では実行しない）。
 
-### コードレビュー（条件付き必須）
+**Stop hook による機械的検証**（Cursor / Claude 共通）:
 
-`/lint-and-format` 成功後、完了報告前に [`/shokujii-code-review`](.agents/skills/shokujii-code-review/SKILL.md) を実行するか判定する。
+- 正本: [`.agents/hooks/stop-gate-check.sh`](.agents/hooks/stop-gate-check.sh)（**セルフレビューのみ**。lint は含まない）
+- **Cursor**: [`.cursor/hooks/stop-gate.sh`](.cursor/hooks/stop-gate.sh) が `followup_message` で最大 3 回まで自動 retry（[`loop_limit`](.cursor/hooks.json)）
+- **Claude Code**: [`.claude/hooks/stop-gate.sh`](.claude/hooks/stop-gate.sh) が `decision:block` でターン終了を阻止
+- review スコープの変更が無いターンでは検証をスキップ（[`.agents/hooks/source-change-detect.sh`](.agents/hooks/source-change-detect.sh)）
+- pending state: `.agents/state/self-review-pending.json`（[`self_review_wake.py`](.agents/scripts/self_review_wake.py)）
 
-**実行する条件**（すべて満たす）:
+### PR verify 相当チェック（push 前）
 
-- 変更ファイル数が **3 以上**（`git diff --name-only` で数える。format 等による自動生成のみの変更ファイルは除外）
-- **細かな UI 修正のみ**ではない（下記）
+[`/lint-and-format`](.agents/skills/lint-and-format/SKILL.md) は **push / PR 作成 / sandbox デプロイの準備段階**で必ず実行する。
 
-**細かな UI 修正のみ（レビュー省略）**:
+- [`/git-create-pull-request`](.agents/skills/git-create-pull-request/SKILL.md) 手順 0（単体実行時）
+- [`/git-reflect-after-commit`](.agents/skills/git-reflect-after-commit/SKILL.md) 手順 3（push 前）
 
-- 変更が `**/locales/messages/ja.ts`、Vue の `<template>` / `<style>`、`**/styles/**` 配下に限定されている
-- `<script>`・store・schema・functions・router・テストに変更がない
+PR verify（`pr-verify.yml`）と同じ verify:functions-deploy / build / lint / format / 型 / vitest。format 失敗時はローカル自動修正。
+
+### コードレビュー（必須）
+
+ソース変更タスクの完了報告前に **必ず** [`/shokujii-code-review`](.agents/skills/shokujii-code-review/SKILL.md) を実行する。
 
 **🚨 必須修正が出た場合**（[`shokujii-code-review` 手順 3a](.agents/skills/shokujii-code-review/SKILL.md)）:
 
 - 仕様判断・スコープ外設計が必要な 🚨 を除き、残りを**ユーザー確認なしで修正**する
-- `/lint-and-format` を再実行する
-- `/shokujii-code-review` を再実行する（同一タスク内・最大 2 周）
+- 手順 1 から**再レビュー**する（同一タスク内・**最大 2 周**）
 - 🟡 修正提案は完了報告に列挙する。**自動修正しない**
 - 2 周後も 🚨 が残る場合は一覧を報告して完了報告する
 
-ユーザーが「レビュー不要」と明示した場合、または上記の省略条件に該当する場合はスキップしてよい。
+ユーザーが「レビュー不要」と明示した場合のみスキップしてよい。
 
 ### Functions 追加時の CI 連携
 
@@ -236,8 +242,9 @@ PR・コードレビューのコメントは必ず日本語で行う。
 
 ### レビューコメント対応記録（必須）
 
-`documents/レビューコメント/pr-<PR番号>.md` を RC 対応状況の正本とする。
-**RC-n の対応を依頼され実装を進めたタスク**では、コード変更と**同一作業内**（コミット前）に `pr-<番号>.md` を必ず更新する（[`lint-and-format`](.agents/skills/lint-and-format/SKILL.md) と同様、完了報告の前提）。
+**新規作業**の RC 記録正本は `documents/レビューコメント/review-<ブランチslug>.md` とする（1 ブランチ = 1 ファイル。slug はブランチ名の `/` を `-` に置換。例: `fix/2500` → `review-fix-2500.md`）。パス解決・記録対象外ブランチ・レガシー `pr-*.md` の扱いは [review-doc-path.md](.agents/skills/review-comments-evaluate/references/review-doc-path.md) を正本とする。
+
+**RC-n の対応を依頼され実装を進めたタスク**では、コード変更と**同一作業内**（コミット前）に当該レビュー記録ファイル（新規は `review-<slug>.md`、既存 `pr-*.md` への追記依頼時はそのファイル）を必ず更新する（[`lint-and-format`](.agents/skills/lint-and-format/SKILL.md) と同様、完了報告の前提）。
 
 | 状況 | 対応列 | 判断列 | PRスコープ |
 | ---- | ------ | ------ | ---------- |

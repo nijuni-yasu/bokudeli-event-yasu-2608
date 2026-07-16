@@ -282,14 +282,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/agent-usage-turn-record.sh\"",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/lint-and-format.sh\"",
-            "timeout": 120,
-            "statusMessage": "lint & format チェック中..."
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-gate.sh\"",
+            "timeout": 600,
+            "statusMessage": "セルフレビュー検証中..."
           }
         ]
       }

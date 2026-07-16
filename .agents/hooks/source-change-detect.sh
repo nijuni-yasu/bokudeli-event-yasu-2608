@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# ソース変更検知（Stop gate / lint-and-format-check 共用）
+# 用法: source-change-detect.sh [lint|review]
+#   lint   = PR verify 対象（アプリソース等）のみ — デフォルト
+#   review = lint 対象 + エージェント設定（Stop gate 用）
+# exit 0 = 対象スコープの変更あり / exit 1 = 変更なし
+set -uo pipefail
+
+scope="${1:-lint}"
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if git rev-parse --show-toplevel >/dev/null 2>&1; then
+  repo_root="$(git rev-parse --show-toplevel)"
+else
+  repo_root="$(cd "${script_dir}/../.." && pwd)"
+fi
+cd "${repo_root}" || exit 1
+
+is_lint_relevant_path() {
+  local path="$1"
+
+  case "${path}" in
+    .agents/state/* | documents/レビューコメント/*)
+      return 1
+      ;;
+    */typed-router.d.ts | */auto-imports.d.ts | */components.d.ts)
+      return 1
+      ;;
+    common/* | base/* | user/* | partner/* | enterprise/* | functions/*)
+      return 0
+      ;;
+    firebase.json | .firebaserc | firestore.rules | storage.rules | firestore.indexes.json)
+      return 0
+      ;;
+    .github/workflows/*)
+      return 0
+      ;;
+    package.json | package-lock.json)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_review_infra_path() {
+  local path="$1"
+
+  case "${path}" in
+    .agents/state/* | documents/レビューコメント/*)
+      return 1
+      ;;
+    .agents/hooks/* | .agents/scripts/* | .agents/skills/* | .agents/config/*)
+      return 0
+      ;;
+    AGENTS.md | CLAUDE.md | .github/copilot-instructions.md)
+      return 0
+      ;;
+    documents/AIエージェント/*)
+      return 0
+      ;;
+    .cursor/hooks/* | .cursor/hooks.json | .claude/hooks/* | .claude/settings.json)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_relevant_for_scope() {
+  local path="$1"
+
+  if is_lint_relevant_path "${path}"; then
+    return 0
+  fi
+  if [ "${scope}" = "review" ] && is_review_infra_path "${path}"; then
+    return 0
+  fi
+  return 1
+}
+
+found=0
+while IFS= read -r path; do
+  [ -z "${path}" ] && continue
+  if is_relevant_for_scope "${path}"; then
+    found=1
+    break
+  fi
+done < <(
+  {
+    git diff --name-only 2>/dev/null || true
+    git diff --cached --name-only 2>/dev/null || true
+    git ls-files --others --exclude-standard 2>/dev/null || true
+  } | sort -u
+)
+
+if [ "${found}" -eq 1 ]; then
+  exit 0
+fi
+
+exit 1

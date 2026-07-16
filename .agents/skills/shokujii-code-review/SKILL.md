@@ -1,6 +1,6 @@
 ---
 name: shokujii-code-review
-description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み、別Issue化は 📤#NNNN別Issue化）の共通区分で review-comments-evaluate と共通（❌未対応は使わない）。PR紐づき時は pr-<番号>.md に RC 記録を追記。AGENTS.md に従い、3ファイル以上かつ細かなUI修正以外の実装完了時は lint-and-format 後に自動実行。🚨 は確認なしで自動修正（最大2周）。コード変更のレビュー依頼時にも使用。
+description: Shokujiiプロジェクトのコーディング規約に従ってコードをレビューする。指摘は 🚨必須修正/🟡修正提案/👌修正不要（対応後は ✅対応済み、別Issue化は 📤#NNNN別Issue化）の共通区分で review-comments-evaluate と共通（❌未対応は使わない）。RC 記録は review-<ブランチslug>.md に追記（review-doc-path 参照）。AGENTS.md に従い、ソース変更タスクの実装完了時は必ずセルフレビューとして実行（lint は PR/reflect 前）。🚨 は確認なしで自動修正（最大2周）。コード変更のレビュー依頼時にも使用。
 ---
 
 # Shokujii コードレビュー
@@ -12,20 +12,33 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 | **本スキル** | 差分に対する**能動的**レビュー（チェックリスト・共通区分の指摘） |
 | [/review-comments-evaluate](../review-comments-evaluate/SKILL.md) | **外部**レビュー（Copilot / Codex / kokufu）コメントの評価 |
 
-同一 PR の記録は **`documents/レビューコメント/pr-<番号>.md` 1 ファイル**に集約し、RC 番号は evaluate の続き番号ルールに従う。詳細は evaluate の [他スキルとの役割分担](../review-comments-evaluate/SKILL.md#他スキルとの役割分担) を参照。
+同一ブランチの記録は **`documents/レビューコメント/review-<slug>.md` 1 ファイル**に集約し（slug = ブランチ名の `/` → `-`）、RC 番号は evaluate の続き番号ルールに従う。パス解決は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md)。既存 `pr-*.md` はレガシーとしてそのまま。詳細は evaluate の [他スキルとの役割分担](../review-comments-evaluate/SKILL.md#他スキルとの役割分担) を参照。
 
 ## 実装完了時の自動実行（AGENTS.md）
 
-ソース変更タスクの完了報告前、`/lint-and-format` 成功後に本スキルを実行するか判定する。判定基準は AGENTS.md「コードレビュー（条件付き必須）」に従う。
+ソース変更タスクの完了報告前、**必ず**本スキルでセルフレビューを実行する。lint / test は [`/lint-and-format`](../lint-and-format/SKILL.md) で **push / PR / reflect 前**に別途実行する。
 
 | 条件 | 動作 |
 |:-----|:-----|
-| 変更ファイル **3 未満** | スキップ |
-| **細かな UI 修正のみ**（`ja.ts` / template / style / styles のみ。script・store 等なし） | スキップ |
-| 上記以外 | **本スキルを実行** |
+| ソース変更タスクの完了報告前 | **本スキルを実行** |
 | ユーザーが「レビュー不要」と明示 | スキップ |
 
-変更ファイル数は `git diff --name-only`（未コミット含む）で数える。`typed-router.d.ts` / `auto-imports.d.ts` 等、format 由来のみの自動生成ファイルは除外してよい。
+## 手順 0: pending wake 記録（レビュー開始時・必須）
+
+未 consume の wake が無い場合、レビュー開始直後に write する（`since` は ISO8601 UTC。Stop gate の比較基準）。
+
+```bash
+branch=$(git branch --show-current)
+python3 .agents/scripts/self_review_wake.py list \
+  --wake-file .agents/state/self-review-pending.json
+# 未作成なら:
+python3 .agents/scripts/self_review_wake.py write \
+  --wake-file .agents/state/self-review-pending.json \
+  --branch "$branch" \
+  --since "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+```
+
+既に unconsumed の wake がある場合はその `since` を本セッションの評価日時基準として使う。
 
 ## レビュー手順
 
@@ -43,20 +56,21 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
    - スコープ外の設計変更（本 PR / Issue の範囲を超える改修）
    - セキュリティで影響範囲の確認が必要
 2. 上記以外の 🚨 を**確認なしで修正**する
-3. [`/lint-and-format`](../lint-and-format/SKILL.md) を実行する
-4. 手順 1 から**再レビュー**する（同一タスク内・**最大 2 周**）
-5. 2 周後も 🚨（自動修正対象外含む）が残る場合は一覧を報告して完了報告する
-6. `pr-<番号>.md` がある場合、対応した RC の**判断結果**を **✅ 対応済み** に更新する
+3. 手順 1 から**再レビュー**する（同一タスク内・**最大 2 周**）
+4. 2 周後も 🚨（自動修正対象外含む）が残る場合は一覧を報告して完了報告する
+5. レビュー記録ファイルがある場合、対応した RC の**判断結果**を **✅ 対応済み** に更新する
 
 🟡 修正提案・👌 修正不要は**自動修正しない**。完了報告に列挙する。
 
 ### 手順 4: ドキュメントへの記録
 
-**PR 番号が分かる場合は原則必須**（指摘が 0 件のときはセッション見出しと「指摘なし」のみでよい）。ユーザーが「記録不要」と明示した場合のみ省略。
+記録先の解決は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) に従う（`git branch --show-current` → `review-<slug>.md`）。記録対象外ブランチ（`release/` `sync/` 等）はスキップしてよい。
 
-1. [review-comments-evaluate](../review-comments-evaluate/SKILL.md) の **手順 4**（保存先・同一 PR の扱い・RC 記録ブロック）に従う
-2. ファイル末尾に `## 評価セッション（<日時>・shokujii-code-review）` を追記。メタデータに **評価日時**・**ブランチ名**・**PR** を含める。Outdated / レビュー非該当は「該当なし」でよい
-3. **RC 採番**: 既存 `pr-<番号>.md` の最終 RC の次から。指摘ごとに 1 RC
+**原則必須**（指摘が 0 件のときはセッション見出しと「指摘なし」のみでよい）。ユーザーが「記録不要」と明示した場合のみ省略。
+
+1. [review-comments-evaluate](../review-comments-evaluate/SKILL.md) の **手順 4**（保存先・同一ファイルの扱い・RC 記録ブロック）に従う
+2. ファイル末尾に `## 評価セッション（<日時 JST>・shokujii-code-review）` を追記（見出しの日時は **JST ローカル**、`YYYY-MM-DD HH:mm` 形式。Stop gate の since 比較に使用）。メタデータに **評価日時**・**ブランチ名**・**PR**（未作成時は `未作成`）を含める。Outdated / レビュー非該当は「該当なし」でよい
+3. **RC 採番**: 既存 `review-<slug>.md` の最終 RC の次から。指摘ごとに 1 RC
 4. **並び順**: **`path` 昇順**、同一 `path` 内は**行番号昇順**
 5. 各 RC は **RC 記録ブロック（12項目）**（evaluate 参照）。**判断結果**は [共通区分](../review-comments-evaluate/SKILL.md#判断結果共通区分プロジェクト共通) のみ。**PRスコープ**・**ラベル**（複数可）・**変更種別**・**想定工数**も evaluate と同一語彙で記載する
    - **レビュワー**: `Cursor Agent（shokujii-code-review）`
@@ -65,6 +79,25 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
    - **該当コード**: [該当コードの取得（共通）](../review-comments-evaluate/SKILL.md#該当コードの取得共通)（`git diff origin/development...HEAD -- <path>`）
    - **レビュワーのコメント（原文）**: 手順 3 のチャット指摘文をそのまま
 6. 冒頭の通し **`### RC 一覧（サマリ）`** 表にも本セッション分の**行**を追記（evaluate 手順 4 の項 5）。セッション内も同じ表形式（要約列含む）
+7. **pending wake を consume する**（記録完了後・必須）:
+
+```bash
+branch=$(git branch --show-current)
+python3 .agents/scripts/self_review_wake.py consume \
+  --wake-file .agents/state/self-review-pending.json \
+  --branch "$branch"
+```
+
+**指摘 0 件の最小記録**（12 項目 RC ブロックは不要）:
+
+```markdown
+## 評価セッション（<YYYY-MM-DD HH:mm>・shokujii-code-review）
+
+- 評価日時: ...
+- ブランチ名: ...
+- PR: 未作成
+- 指摘なし（チェックリスト照合のみ）
+```
 
 ---
 
@@ -241,7 +274,7 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 
 ## フィードバック形式
 
-チャットでの指摘と、`pr-<番号>.md` への RC 記録の **判断結果** は、[/review-comments-evaluate](../review-comments-evaluate/SKILL.md) と同じ **共通区分** を使う（**❌ 未対応は使わない**）。
+チャットでの指摘と、レビュー記録ファイル（`review-<slug>.md`）への RC 記録の **判断結果** は、[/review-comments-evaluate](../review-comments-evaluate/SKILL.md) と同じ **共通区分** を使う（**❌ 未対応は使わない**）。
 
 ```
 🚨 **必須修正** [🔧微修正/S]: [問題の説明] → [修正方法]

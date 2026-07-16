@@ -109,7 +109,7 @@ description: git-create-pull-request 手順 11〜12 のレビュー依頼後、C
   - Codex 無応答: 依頼から **最大 12 分**
 - **全体タイムアウト**: 20 分
 - Codex limits 時は **partial evaluate** があり得る旨
-- evaluate 自動起動時は **`documents/レビューコメント/pr-<番号>.md` 追記まで**行う（チャット要約のみでは完了しない）
+- evaluate 自動起動時は **`documents/レビューコメント/review-<slug>.md` 追記まで**行う（チャット要約のみでは完了しない）。slug は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) に従う
 
 ### 5. sentinel 受信時 → evaluate 委譲（auto 完走）
 
@@ -120,7 +120,7 @@ AGENT_LOOP_WAKE_pr_review {"prompt":"/review-comments-evaluate","pr":2099,"parti
 ```
 
 - [`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) を **auto モード**で実行する
-- **手順 4（`pr-<n>.md` 追記）まで完走**すること。チャット要約のみで終了しない
+- **手順 4（`review-<slug>.md` 追記）まで完走**すること。チャット要約のみで終了しない
 - 委譲引数:
   - `PR_NUM`: sentinel JSON の `pr`
   - `REVIEW_REQUEST_SINCE`: wake JSON の `since`（sentinel 直前の pending wake と一致）
@@ -136,7 +136,7 @@ watcher はバックグラウンドで動作する。エージェントセッシ
 **セッション開始時**（ユーザー依頼の最初のターン、または作業前確認）に次を確認する:
 
 1. [`.agents/state/pr-review-pending-wake.json`](../../state/pr-review-pending-wake.json) — `consumed: false` があれば **evaluate 未処理**としてユーザーへ報告する
-   - 対象 `pr-<n>.md` に当該 `since` 以降の評価セッションが無い場合は **auto evaluate 未完了**とみなし、[`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) **auto モード**（手順 4 追記まで）の実行を提案する
+   - 対象 `review-<slug>.md`（またはレガシー `pr-<n>.md`）に当該 `since` 以降の評価セッションが無い場合は **auto evaluate 未完了**とみなし、[`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) **auto モード**（手順 4 追記まで）の実行を提案する
    - ユーザーが evaluate 実行を依頼した場合は auto モードで完走する
 2. [`.agents/state/pr-review-watch.json`](../../state/pr-review-watch.json) — 同一 PR の `status: running` があれば watcher 実行中と報告する
 
