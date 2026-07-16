@@ -62,6 +62,10 @@ fi
 reason="$(cat "${reason_file}")"
 rm -f "${reason_file}"
 
+if [ -z "${reason}" ]; then
+  reason="[self-review] Stop gate がブロックしましたが理由を取得できませんでした。/shokujii-code-review を完走してください。"
+fi
+
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg msg "${reason}" '{followup_message: $msg}'
 else

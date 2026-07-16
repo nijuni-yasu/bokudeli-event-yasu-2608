@@ -8,7 +8,7 @@
 
 **変更種別・PRスコープ・ラベル・想定工数**: `/review-comments-evaluate` の各節と同一語彙（スキル内「変更種別」「PRスコープ」「ラベル」「想定工数」を参照）。**ラベルは複数可**（`💰 金銭, 🔒 セキュリティ`）。**推測ラベルは使わない**（該当なしは `—`）。
 
-**スキル**: 外部コメント評価 → `/review-comments-evaluate`（🚨 + 📌 スコープ内は手順 4a で自動修正。🟡 は自動修正しない）。能動レビュー → `/shokujii-code-review`（🚨 は手順 3a で自動修正）。同一ブランチ（= 同一ファイル）で RC 番号は通し。
+**スキル**: 外部コメント評価 → `/review-comments-evaluate`（🚨 と条件付き 🟡（S・🔧/📄・📌）は手順 4a で自動修正。詳細は `auto-fix-policy.md`）。能動レビュー → `/shokujii-code-review`（🚨 は手順 3a、条件付き 🟡 は手順 3b で自動修正）。同一ブランチ（= 同一ファイル）で RC 番号は通し。
 
 **評価セッション見出し（Stop gate 連携）**: セルフレビューは `## 評価セッション（YYYY-MM-DD HH:mm・shokujii-code-review）`（日時は **JST**）。外部 evaluate はサフィックスを `・review-comments-evaluate` にする。`## 評価セッション` のみ（日時・サフィックスなし）は Stop gate の review doc 判定にマッチしない。
 

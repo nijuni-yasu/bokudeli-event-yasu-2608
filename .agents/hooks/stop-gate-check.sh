@@ -16,6 +16,11 @@ conversation_id="${3:-}"
 
 MAX_LOOP=3
 
+# loop_count が非数値のときは 0 扱い（JSON 型ずれで gate 迂回しない）
+case "${loop_count}" in
+  '' | *[!0-9]*) loop_count=0 ;;
+esac
+
 if [ "${status}" = "aborted" ] || [ "${status}" = "error" ]; then
   exit 0
 fi

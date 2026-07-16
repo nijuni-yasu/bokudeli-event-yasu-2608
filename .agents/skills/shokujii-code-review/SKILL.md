@@ -30,7 +30,8 @@ description: Shokujiiプロジェクトのコーディング規約に従って�
 ```bash
 branch=$(git branch --show-current)
 python3 .agents/scripts/self_review_wake.py list \
-  --wake-file .agents/state/self-review-pending.json
+  --wake-file .agents/state/self-review-pending.json \
+  --branch "${branch}"
 # 未作成なら:
 python3 .agents/scripts/self_review_wake.py write \
   --wake-file .agents/state/self-review-pending.json \
