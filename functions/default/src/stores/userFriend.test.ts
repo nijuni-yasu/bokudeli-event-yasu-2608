@@ -230,7 +230,7 @@ describe('listUserFriends', () => {
     })
   })
 
-  it('cursor を組み立てられないとき hasMore は false（RC-1）', async () => {
+  it('page と sentinel がともに不正でも skip cursor でスキャンを進める（RC-7）', async () => {
     friendsGetMock.mockResolvedValueOnce({
       docs: [
         makeDoc('invalid1', {
@@ -247,7 +247,154 @@ describe('listUserFriends', () => {
     const result = await listUserFriends('owner', 'meet_count', 1)
 
     expect(result.friends).toHaveLength(0)
-    expect(result.hasMore).toBe(false)
-    expect(result.nextCursor).toBeNull()
+    expect(result.hasMore).toBe(true)
+    expect(result.nextCursor).toEqual({
+      value: 0,
+      friend_user_id: 'invalid2',
+      sort_value_null: true,
+    })
+  })
+
+  it('skip cursor で次ページの有効友人を取得する（RC-7）', async () => {
+    friendsGetMock
+      .mockResolvedValueOnce({
+        docs: [
+          makeDoc('invalid1', {
+            first_met_at: { toMillis: () => 1000 },
+            last_met_at: { toMillis: () => 2000 },
+          }),
+          makeDoc('invalid2', {
+            first_met_at: { toMillis: () => 900 },
+            last_met_at: { toMillis: () => 1900 },
+          }),
+        ],
+      })
+      .mockResolvedValueOnce({
+        docs: [
+          makeDoc('valid', {
+            meet_count: 5,
+            first_met_at: { toMillis: () => 800 },
+            last_met_at: { toMillis: () => 1800 },
+          }),
+        ],
+      })
+
+    const firstPage = await listUserFriends('owner', 'meet_count', 1)
+    expect(firstPage.nextCursor).toEqual({
+      value: 0,
+      friend_user_id: 'invalid2',
+      sort_value_null: true,
+    })
+
+    const secondPage = await listUserFriends('owner', 'meet_count', 1, firstPage.nextCursor ?? undefined)
+
+    expect(queryChain.startAfter).toHaveBeenCalledWith(null, 'invalid2')
+    expect(secondPage.friends).toEqual([
+      {
+        id: 'valid',
+        meet_count: 5,
+        first_met_at: 800,
+        last_met_at: 1800,
+      },
+    ])
+    expect(secondPage.hasMore).toBe(false)
+  })
+
+  it('last_met_at ソートで page+sentinel が不正のとき sort_value_null skip cursor（RC-7）', async () => {
+    friendsGetMock.mockResolvedValueOnce({
+      docs: [
+        makeDoc('invalid1', {
+          meet_count: 1,
+          first_met_at: { toMillis: () => 1000 },
+        }),
+        makeDoc('invalid2', {
+          meet_count: 2,
+          first_met_at: { toMillis: () => 900 },
+        }),
+      ],
+    })
+
+    const result = await listUserFriends('owner', 'last_met_at', 1)
+
+    expect(result.friends).toHaveLength(0)
+    expect(result.hasMore).toBe(true)
+    expect(result.nextCursor).toEqual({
+      value: 0,
+      friend_user_id: 'invalid2',
+      sort_value_null: true,
+    })
+    expect(queryChain.orderBy).toHaveBeenCalledWith('last_met_at', 'desc')
+  })
+
+  it('last_met_at ソートで skip cursor 適用時は startAfter(null, id) を使う（RC-7）', async () => {
+    friendsGetMock
+      .mockResolvedValueOnce({
+        docs: [
+          makeDoc('invalid1', {
+            meet_count: 1,
+            first_met_at: { toMillis: () => 1000 },
+          }),
+          makeDoc('invalid2', {
+            meet_count: 2,
+            first_met_at: { toMillis: () => 900 },
+          }),
+        ],
+      })
+      .mockResolvedValueOnce({
+        docs: [
+          makeDoc('valid', {
+            meet_count: 1,
+            first_met_at: { toMillis: () => 800 },
+            last_met_at: { toMillis: () => 5000 },
+          }),
+        ],
+      })
+
+    const firstPage = await listUserFriends('owner', 'last_met_at', 1)
+    const secondPage = await listUserFriends('owner', 'last_met_at', 1, firstPage.nextCursor ?? undefined)
+
+    expect(queryChain.startAfter).toHaveBeenLastCalledWith(null, 'invalid2')
+    expect(secondPage.friends).toEqual([
+      {
+        id: 'valid',
+        meet_count: 1,
+        first_met_at: 800,
+        last_met_at: 5000,
+      },
+    ])
+    expect(secondPage.hasMore).toBe(false)
+  })
+
+  it('page 全不正で sentinel を friends に含め継続 cursor を返す（RC-4 / RC-11 tradeoff）', async () => {
+    friendsGetMock.mockResolvedValueOnce({
+      docs: [
+        makeDoc('invalid', {
+          first_met_at: { toMillis: () => 1000 },
+          last_met_at: { toMillis: () => 2000 },
+        }),
+        makeDoc('validLast', {
+          meet_count: 3,
+          first_met_at: { toMillis: () => 900 },
+          last_met_at: { toMillis: () => 1900 },
+        }),
+      ],
+    })
+
+    const result = await listUserFriends('owner', 'meet_count', 1)
+
+    expect(result.friends).toEqual([
+      {
+        id: 'validLast',
+        meet_count: 3,
+        first_met_at: 900,
+        last_met_at: 1900,
+      },
+    ])
+    // limit+1 取得では sentinel 存在時 firestoreHasMore=true のため継続 cursor を返す（末尾空 fetch は許容）
+    expect(result.hasMore).toBe(true)
+    expect(result.nextCursor).toEqual({
+      value: 3,
+      friend_user_id: 'validLast',
+    })
   })
 })

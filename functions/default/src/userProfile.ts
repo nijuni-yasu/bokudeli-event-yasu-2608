@@ -31,6 +31,14 @@ import { createModuleLogger } from './utils/logger.js'
 
 const logger = createModuleLogger('userProfile')
 
+/**
+ * Issue #2175 の 504 切り分け用の一時計測。
+ * 調査完了後は次のいずれかを行う（判断は #2175 クローズ時）:
+ * - segment ログと timed ラッパーを削除する
+ * - 閾値を見直す（例: 500ms 以上のみ、または totalDurationMs 超過時のみ segment 出力）
+ */
+const PROFILE_PREVIEW_SEGMENT_LOG_MIN_MS = 200
+
 type PreviewTimedContext = {
   targetUserId: string
   viewerUid: string | null
@@ -39,16 +47,24 @@ type PreviewTimedContext = {
 
 const timed = async <T>(segment: string, context: PreviewTimedContext, fn: () => Promise<T>): Promise<T> => {
   const startedAt = performance.now()
+  let success = true
   try {
     return await fn()
+  } catch (error: unknown) {
+    success = false
+    throw error
   } finally {
-    logger.info('getUserProfilePreview segment', {
-      segment,
-      targetUserId: context.targetUserId,
-      viewerUid: context.viewerUid,
-      isOwner: context.isOwner,
-      durationMs: Math.round(performance.now() - startedAt),
-    })
+    const durationMs = Math.round(performance.now() - startedAt)
+    if (!success || durationMs >= PROFILE_PREVIEW_SEGMENT_LOG_MIN_MS) {
+      logger.info('getUserProfilePreview segment', {
+        segment,
+        targetUserId: context.targetUserId,
+        viewerUid: context.viewerUid,
+        isOwner: context.isOwner,
+        success,
+        durationMs,
+      })
+    }
   }
 }
 
@@ -316,6 +332,7 @@ const fetchOrderPreviews = async (targetUserId: string): Promise<UserProfileOrde
  * - `previews.orders` は本人のみ返し、それ以外は `null`
  * - 各プレビューには `is_visible_to_viewer`（常に true）と `is_linkable`（§4.2.0）を付与する
  * - App Check は Phase 1 では必須としない。Firebase Functions の Callable 既定どおり `enforceAppCheck` は付けず、未ログイン呼び出しや運用バッチを阻害しない。強制を有効化する場合は別イシューでクライアント対応と合わせて検討する（仕様書 5.2.1 F1）
+ * - #2175 調査用: segment / totalDurationMs の Cloud Logging 計測あり。寿命は Issue #2175 の follow-up を参照
  */
 export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promise<GetUserProfilePreviewResponse>>(
   { region: 'asia-northeast1', invoker: 'public' },
@@ -359,6 +376,7 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
       counts_updated_at: targetUser.counts_updated_at ?? null,
     }
 
+    // #2175 調査用。totalDurationMs 含む returned ログの継続要否も Issue #2175 follow-up で判断
     logger.info('getUserProfilePreview returned', {
       targetUserId,
       viewerUid,

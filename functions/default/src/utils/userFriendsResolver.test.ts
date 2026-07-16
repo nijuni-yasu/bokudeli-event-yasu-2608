@@ -176,6 +176,37 @@ describe('resolveUserFriendsList', () => {
     expect(friends[0].user_id).toBe('active')
     expect(hasMore).toBe(true)
   })
+
+  it('不正 doc のみのページを skip cursor で読み飛ばして有効な友人を返す（RC-7）', async () => {
+    const skipCursor = { value: 0, friend_user_id: 'invalid2', sort_value_null: true as const }
+
+    vi.mocked(listUserFriends)
+      .mockResolvedValueOnce({
+        friends: [],
+        hasMore: true,
+        nextCursor: skipCursor,
+      })
+      .mockResolvedValueOnce({
+        friends: [{ id: 'active', meet_count: 5, first_met_at: 100, last_met_at: 200 }],
+        hasMore: false,
+        nextCursor: null,
+      })
+
+    vi.mocked(getUsersByUserIds).mockResolvedValueOnce(
+      new Map([['active', { user_name: 'Active', user_image_url: 'https://x.png', is_deleted: false }]] as never),
+    )
+
+    const { friends } = await resolveUserFriendsList({
+      targetUserId: 'owner',
+      sortBy: 'meet_count',
+      limit: 1,
+    })
+
+    expect(listUserFriends).toHaveBeenCalledTimes(2)
+    expect(listUserFriends).toHaveBeenNthCalledWith(2, 'owner', 'meet_count', 1, skipCursor)
+    expect(friends).toHaveLength(1)
+    expect(friends[0].user_id).toBe('active')
+  })
 })
 
 describe('resolveUserFriendMeetLog', () => {

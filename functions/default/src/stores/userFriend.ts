@@ -62,24 +62,7 @@ const toNonNegativeInt = (value: unknown): number | null => {
   return value
 }
 
-const mapDocToUserFriendListRow = (doc: QueryDocumentSnapshot): UserFriendListRow | null => {
-  const data = doc.data()
-  const meetCount = toNonNegativeInt(data.meet_count)
-  const firstMetAt = toMillis(data.first_met_at)
-  const lastMetAt = toMillis(data.last_met_at)
-  if (meetCount == null || firstMetAt == null || lastMetAt == null) {
-    logger.warn('listUserFriends skipped invalid friend doc', { friendUserId: doc.id })
-    return null
-  }
-  return {
-    id: doc.id,
-    meet_count: meetCount,
-    first_met_at: firstMetAt,
-    last_met_at: lastMetAt,
-  }
-}
-
-const cursorValueFromDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortBy): number | null => {
+const sortValueFromDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortBy): number | null => {
   const raw = doc.data()[sortBy]
   if (sortBy === 'meet_count') {
     return toNonNegativeInt(raw)
@@ -87,33 +70,90 @@ const cursorValueFromDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortB
   return toMillis(raw)
 }
 
-/** 一覧に返せる doc か（表示用マップと cursor 用ソートキーの両方が有効） */
-const canReturnFriendDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortBy): boolean =>
-  mapDocToUserFriendListRow(doc) != null && cursorValueFromDoc(doc, sortBy) != null
+export type UserFriendsListCursor = {
+  value: number
+  friend_user_id: string
+  /** sortBy フィールド欠損時は `startAfter(null, friend_user_id)` でスキャンを進める */
+  sort_value_null?: boolean
+}
 
-const mapReturnedDocsToFriends = (returnedDocs: QueryDocumentSnapshot[]): UserFriendListRow[] =>
-  returnedDocs
-    .map((doc) => mapDocToUserFriendListRow(doc))
-    .filter((friend): friend is UserFriendListRow => friend != null)
+type ParsedFriendDoc = {
+  doc: QueryDocumentSnapshot
+  row: UserFriendListRow | null
+  pagingCursor: UserFriendsListCursor
+}
+
+const buildPagingCursorFromDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortBy): UserFriendsListCursor => {
+  const sortValue = sortValueFromDoc(doc, sortBy)
+  if (sortValue != null) {
+    return {
+      value: sortValue,
+      friend_user_id: doc.id,
+    }
+  }
+  return {
+    value: 0,
+    friend_user_id: doc.id,
+    sort_value_null: true,
+  }
+}
+
+const parseFriendDoc = (
+  doc: QueryDocumentSnapshot,
+  sortBy: UserFriendsSortBy,
+  ownerUserId: string,
+): ParsedFriendDoc => {
+  const data = doc.data()
+  const meetCount = toNonNegativeInt(data.meet_count)
+  const firstMetAt = toMillis(data.first_met_at)
+  const lastMetAt = toMillis(data.last_met_at)
+  const pagingCursor = buildPagingCursorFromDoc(doc, sortBy)
+
+  if (meetCount == null || firstMetAt == null || lastMetAt == null) {
+    logger.warn('listUserFriends skipped invalid friend doc', {
+      ownerUserId,
+      friendUserId: doc.id,
+    })
+    return { doc, row: null, pagingCursor }
+  }
+
+  return {
+    doc,
+    row: {
+      id: doc.id,
+      meet_count: meetCount,
+      first_met_at: firstMetAt,
+      last_met_at: lastMetAt,
+    },
+    pagingCursor,
+  }
+}
 
 /** このページで返す doc を決める（RC-4: sentinel は返却に含めてから cursor に使う） */
-const collectReturnedDocs = (
-  pageDocs: QueryDocumentSnapshot[],
-  docs: QueryDocumentSnapshot[],
-  limit: number,
+const collectReturnedParsed = (
+  pageParsed: ParsedFriendDoc[],
+  sentinelParsed: ParsedFriendDoc | undefined,
   firestoreHasMore: boolean,
-  sortBy: UserFriendsSortBy,
-): QueryDocumentSnapshot[] => {
-  const returned = pageDocs.filter((doc) => canReturnFriendDoc(doc, sortBy))
+): ParsedFriendDoc[] => {
+  const returned = pageParsed.filter((parsed) => parsed.row != null)
 
-  if (returned.length === 0 && firestoreHasMore && docs.length > limit) {
-    const sentinelDoc = docs[limit]
-    if (canReturnFriendDoc(sentinelDoc, sortBy)) {
-      returned.push(sentinelDoc)
-    }
+  if (returned.length === 0 && firestoreHasMore && sentinelParsed?.row != null) {
+    returned.push(sentinelParsed)
   }
 
   return returned
+}
+
+const applyStartAfter = (
+  query: ReturnType<ReturnType<typeof friendsCollection>['select']>,
+  cursor: UserFriendsListCursor,
+  sortBy: UserFriendsSortBy,
+) => {
+  if (cursor.sort_value_null === true) {
+    return query.startAfter(null, cursor.friend_user_id)
+  }
+  const cursorValue = sortBy === 'last_met_at' ? Timestamp.fromMillis(cursor.value) : cursor.value
+  return query.startAfter(cursorValue, cursor.friend_user_id)
 }
 
 export const userFriendRef = (uid: string, friendUid: string): DocumentReference<UserFriend> => {
@@ -157,11 +197,6 @@ export const deleteUserFriend = async (uid: string, friendUid: string, transacti
   }
 }
 
-export type UserFriendsListCursor = {
-  value: number
-  friend_user_id: string
-}
-
 export const listUserFriends = async (
   uid: string,
   sortBy: UserFriendsSortBy,
@@ -175,31 +210,38 @@ export const listUserFriends = async (
     .limit(limit + 1)
 
   if (cursor != null) {
-    // DB 上の last_met_at は Timestamp。number のまま startAfter するとページングが不安定になることがある
-    const cursorValue = sortBy === 'last_met_at' ? Timestamp.fromMillis(cursor.value) : cursor.value
-    query = query.startAfter(cursorValue, cursor.friend_user_id)
+    query = applyStartAfter(query, cursor, sortBy)
   }
 
   const snapshot = await query.get()
   const docs = snapshot.docs
   const firestoreHasMore = docs.length > limit
   const pageDocs = firestoreHasMore ? docs.slice(0, limit) : docs
-  const returnedDocs = collectReturnedDocs(pageDocs, docs, limit, firestoreHasMore, sortBy)
-  const friends = mapReturnedDocsToFriends(returnedDocs)
 
   if (pageDocs.length === 0) {
-    return { friends, hasMore: false, nextCursor: null }
+    return { friends: [], hasMore: false, nextCursor: null }
   }
 
-  const lastReturnedDoc = returnedDocs[returnedDocs.length - 1]
-  const cursorValue = lastReturnedDoc != null ? cursorValueFromDoc(lastReturnedDoc, sortBy) : null
-  const nextCursor =
-    firestoreHasMore && lastReturnedDoc != null && cursorValue != null
-      ? {
-          value: cursorValue,
-          friend_user_id: lastReturnedDoc.id,
-        }
-      : null
+  const pageParsed = pageDocs.map((doc) => parseFriendDoc(doc, sortBy, uid))
+  const sentinelParsed = firestoreHasMore ? parseFriendDoc(docs[limit], sortBy, uid) : undefined
+  const returnedParsed = collectReturnedParsed(pageParsed, sentinelParsed, firestoreHasMore)
+  const friends = returnedParsed.flatMap((parsed) => (parsed.row != null ? [parsed.row] : []))
+
+  if (returnedParsed.length === 0) {
+    if (!firestoreHasMore) {
+      return { friends: [], hasMore: false, nextCursor: null }
+    }
+    const lastScanned = sentinelParsed ?? pageParsed[pageParsed.length - 1]
+    const nextCursor = lastScanned.pagingCursor
+    return {
+      friends: [],
+      hasMore: true,
+      nextCursor,
+    }
+  }
+
+  const lastReturned = returnedParsed[returnedParsed.length - 1]
+  const nextCursor = firestoreHasMore ? lastReturned.pagingCursor : null
 
   return {
     friends,
