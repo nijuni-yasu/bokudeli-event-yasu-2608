@@ -46,6 +46,14 @@ common の型解決を先に行う。
 npm -w common run build
 ```
 
+### 1b. ビルド（terms）
+
+pr-verify.yml の terms ジョブ相当。
+
+```
+npm -w terms run build
+```
+
 ### 2. lint
 
 ```
@@ -54,6 +62,7 @@ npm -w base run lint
 npm -w user run lint
 npm -w partner run lint
 npm -w enterprise run lint
+npm -w terms run lint
 npm -w functions/default run lint
 ```
 
@@ -65,6 +74,7 @@ npm -w base run format:check
 npm -w user run format:check
 npm -w partner run format:check
 npm -w enterprise run format:check
+npm -w terms run format:check
 npm -w functions/default run format:check
 ```
 
@@ -78,6 +88,7 @@ npm -w base run format
 npm -w user run format
 npm -w partner run format
 npm -w enterprise run format
+npm -w terms run format
 npm -w functions/default run format
 ```
 
@@ -122,12 +133,16 @@ npm -w functions/default run test
 1. build（common）
 - common: ✅ 成功 / ❌ 失敗
 
+1b. build（terms）
+- terms: ✅ 成功 / ❌ 失敗
+
 2. lint
 - common: ✅ 成功 / ❌ 失敗
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
 - enterprise: ✅ 成功 / ❌ 失敗
+- terms: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 
 3. format:check
@@ -136,6 +151,7 @@ npm -w functions/default run test
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
 - enterprise: ✅ 成功 / ❌ 失敗
+- terms: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 
 4. build:types
@@ -164,7 +180,7 @@ npm -w functions/default run test
 
 ## 制約
 
-- **実行順**: verify:functions-deploy → build common → lint → format:check → build:types → build functions → vitest
+- **実行順**: verify:functions-deploy → build common → build terms → lint → format:check → build:types → build functions → vitest
 - **PR verify 相当**: 上記チェックは `pr-verify.yml` の verify ジョブと一致（ローカル再現用）
 - **format ローカル自動修正**: PR verify にはないローカル拡張。成功時は format:check が緑 = CI と同じ合格状態
 - **Stop hook では実行しない**: lint 検証は push / PR / reflect 前に本スキルで行う
