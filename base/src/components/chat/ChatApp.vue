@@ -845,6 +845,8 @@ onBeforeUnmount(() => {
     margin-block: 0;
     padding-block: 0;
     line-height: 1.5;
+    // iOS WebKit: 16px 未満の input/textarea フォーカス時にページ全体がオートズームする
+    font-size: 1rem;
   }
 }
 

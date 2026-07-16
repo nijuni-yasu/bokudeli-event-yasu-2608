@@ -338,6 +338,10 @@ const chatLogEntries = computed((): ChatLogEntry[] => {
   return entries
 })
 
+const showEmptyMessagesHint = computed(() => {
+  return store.messages.length === 0 && !store.isLoadingOlderMessages && !store.hasMoreMessages
+})
+
 onBeforeUnmount(() => {
   revokeLightboxOwnedUrls()
 })
@@ -347,6 +351,11 @@ onBeforeUnmount(() => {
   <div class="chat-log">
     <div v-if="store.isLoadingOlderMessages" class="text-center text-disabled text-sm mb-4">
       {{ t('chat.loading_older') }}
+    </div>
+
+    <div v-else-if="showEmptyMessagesHint" class="text-center text-disabled text-sm my-4">
+      <p class="mb-0">{{ t('chat.no_messages_yet') }}</p>
+      <p class="mb-0">{{ t('chat.empty.no_messages_hint') }}</p>
     </div>
 
     <template v-for="entry in chatLogEntries" :key="entry.key">
