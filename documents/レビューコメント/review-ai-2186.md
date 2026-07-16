@@ -4,14 +4,14 @@
 
 ### RC 一覧（サマリ）
 
-| 対応 | RC | GitHub id | 判断 | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|
-| [x] | RC-1 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | source-change-detect を lint/review スコープ分離<br>`.agents/` 変更でも self-review gate が走る |
-| [x] | RC-2 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | consume 単体では Hook 合格しない<br>review doc または ledger 必須 |
-| [x] | RC-3 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Hook から ensure_pending 自動 write 廃止<br>lint-and-format 手順 8 必須 |
-| [x] | RC-4 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 評価セッション見出し日時を JST として since と比較 |
-| [x] | RC-5 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq 未インストール時 stop-hook-json.py で gate 継続 |
-| [x] | RC-6 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review スコープ・JST・consume 不合格のテスト追加 |
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-1 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | source-change-detect を lint/review スコープ分離<br>`.agents/` 変更でも self-review gate が走る |
+| [x] | RC-2 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | consume 単体では Hook 合格しない<br>review doc または ledger 必須 |
+| [x] | RC-3 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Hook から ensure_pending 自動 write 廃止<br>lint-and-format 手順 8 必須 |
+| [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 評価セッション見出し日時を JST として since と比較 |
+| [x] | RC-5 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq 未インストール時 stop-hook-json.py で gate 継続 |
+| [x] | RC-6 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review スコープ・JST・consume 不合格のテスト追加 |
 
 ---
 
@@ -24,14 +24,14 @@
 - **Outdated 除外件数**: 該当なし
 - **レビュー非該当スキップ件数**: 0
 
-| 対応 | RC | GitHub id | 判断 | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|
-| [x] | RC-1 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | source-change-detect を lint/review スコープ分離<br>`.agents/` 変更でも self-review gate が走る |
-| [x] | RC-2 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | consume 単体では Hook 合格しない<br>review doc または ledger 必須 |
-| [x] | RC-3 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Hook から ensure_pending 自動 write 廃止<br>lint-and-format 手順 8 必須 |
-| [x] | RC-4 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 評価セッション見出し日時を JST として since と比較 |
-| [x] | RC-5 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq 未インストール時 stop-hook-json.py で gate 継続 |
-| [x] | RC-6 | なし | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review スコープ・JST・consume 不合格のテスト追加 |
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-1 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | M | source-change-detect を lint/review スコープ分離<br>`.agents/` 変更でも self-review gate が走る |
+| [x] | RC-2 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📐 リファクタ | S | consume 単体では Hook 合格しない<br>review doc または ledger 必須 |
+| [x] | RC-3 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | Hook から ensure_pending 自動 write 廃止<br>lint-and-format 手順 8 必須 |
+| [x] | RC-4 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 評価セッション見出し日時を JST として since と比較 |
+| [x] | RC-5 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | jq 未インストール時 stop-hook-json.py で gate 継続 |
+| [x] | RC-6 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | review スコープ・JST・consume 不合格のテスト追加 |
 
 ---
 
@@ -57,7 +57,9 @@
 1行目: `.agents/` のみの PR では Stop gate が完全スキップされていた。
 2行目: `lint` / `review` スコープ分離と stop-gate の条件分岐で解消。
 
-**判断結果**: ✅ 対応済み
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -94,7 +96,9 @@
 1行目: `self_review_wake.py consume` のみで bypass 可能だった。
 2行目: 合格条件を doc セッション / ledger の `task_skill=shokujii-code-review` に限定。
 
-**判断結果**: ✅ 対応済み
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -130,7 +134,9 @@
 1行目: Hook が wake を自動作成し since が lint 成功時刻とずれる問題。
 2行目: `/lint-and-format` 手順 8 の write を必須とするエラーメッセージに変更。
 
-**判断結果**: ✅ 対応済み
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -167,7 +173,9 @@
 1行目: naive 日時を UTC 扱いすると JST 見出しと 9 時間ずれる。
 2行目: `Asia/Tokyo` 固定と UTC 正規化で比較。SKILL に JST 明記。
 
-**判断結果**: ✅ 対応済み
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -203,7 +211,9 @@
 1行目: jq 不在時に lint/review gate をスキップしていた。
 2行目: Python で stdin パースと followup JSON 生成。Claude アダプタも同様。
 
-**判断結果**: ✅ 対応済み
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -240,7 +250,9 @@
 1行目: 実リポ dirty 依存のテストと parse stdin 欠落によるハングがあった。
 2行目: 9+7 件 PASS。`stop-hook-json.py parse` に stdin を渡すよう修正。
 
-**判断結果**: ✅ 対応済み
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -251,5 +263,31 @@
 **想定工数**: S
 
 **判断理由**: 回帰防止。`test-protect-git-release.py` 88/88 も継続 PASS。
+
+---
+
+## 評価セッション（2026-07-16 17:26・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 17:26 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: ai/2186
+- **PR**: 未作成
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+指摘なし（評価 + ステータス分離: `review-comments-evaluate` / `shokujii-code-review` / `AGENTS.md` / テンプレート / `review-ai-2186.md` 移行。ドキュメント・スキルのみ）
+
+---
+
+## 評価セッション（2026-07-16 17:45・shokujii-code-review）
+
+- **評価日時**: 2026-07-16 17:45 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: ai/2186
+- **PR**: 未作成
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+
+指摘なし（`pr-xxxx_template.md` を stub 化し `review-xxxx_template.md` に統一、`review-doc-path.md` 更新）
 
 ---
