@@ -66,7 +66,7 @@ B は `github-actions-deploy` に委譲し、同スキル内で本番ブロッ�
     1. git-commit-workflow / git-fixup / git-squash の直後など、当該会話内で履歴書き換えが完了している
     2. ユーザーが force push / `--force-with-lease` を明示指示した
 
-- [`git-create-pull-request`](../git-create-pull-request/SKILL.md) スキルの**全手順**を実行する（手順 11 reviewer 追加 + 手順 12 Copilot/Codex 依頼 + **手順 13 の wait 委譲**を含む）。
+- [`git-create-pull-request`](../git-create-pull-request/SKILL.md) スキルの**全手順**を実行する（手順 0 lint は本手順 3 済みのため create-pr 側でスキップ。**手順 11 reviewer 追加 + 手順 12 Copilot/Codex 依頼 + 手順 13 の wait 委譲**を含む）。
   **手順 9（origin push）は本手順 4 で push 済みのため create-pr 側でスキップ**される。
 - 手順 13 委譲時は **wait-ai-pr-review 手順 3** の Shell 要件（`block_until_ms: 0` + `notify_on_output: ^AGENT_LOOP_WAKE_pr_review`）を満たすこと（reflect 側で watcher を二重起動しないが、Shell 要件は省略しない）。
 

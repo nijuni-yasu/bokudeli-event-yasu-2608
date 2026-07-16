@@ -15,7 +15,16 @@ description: PR verify（pr-verify.yml）と同じ build・lint・format・型�
 | **チェック内容** | verify:functions-deploy / build / lint / format:check / build:types / vitest の項目・順序・対象パッケージは PR verify と一致 |
 | **format ローカル自動修正** | `format:check` 失敗時のみ `format` を実行し再チェック。PR verify は check のみ（リモートは修正不可） |
 | **合格状態** | スキル成功時 = PR verify が通る状態（format は自動修正後に check が緑） |
-| **含まないもの** | `npm ci`、Ubuntu 実行環境、Stop フック（`.claude/hooks/lint-and-format.sh` は別スコープ） |
+| **含まないもの** | `npm ci`、Ubuntu 実行環境、実装ターン完了時のセルフレビュー（Stop 検証は [`.agents/hooks/stop-gate-check.sh`](../../hooks/stop-gate-check.sh) が担当） |
+
+## いつ実行するか
+
+| タイミング | 必須 |
+|:-----------|:-----|
+| [`/git-create-pull-request`](../git-create-pull-request/SKILL.md) push 前（単体実行時） | ✅ |
+| [`/git-reflect-after-commit`](../git-reflect-after-commit/SKILL.md) push 前 | ✅ |
+| 実装ターン完了報告前 | ❌（[`/shokujii-code-review`](../shokujii-code-review/SKILL.md) のみ） |
+| Stop hook | ❌ |
 
 format 自動修正でワーキングツリーに変更が残る。push 前（`git-reflect-after-commit` 等）では追加コミット / amend をユーザーに確認する。
 
@@ -37,6 +46,14 @@ common の型解決を先に行う。
 npm -w common run build
 ```
 
+### 1b. ビルド（terms）
+
+pr-verify.yml の terms ジョブ相当。
+
+```
+npm -w terms run build
+```
+
 ### 2. lint
 
 ```
@@ -45,6 +62,7 @@ npm -w base run lint
 npm -w user run lint
 npm -w partner run lint
 npm -w enterprise run lint
+npm -w terms run lint
 npm -w functions/default run lint
 ```
 
@@ -56,6 +74,7 @@ npm -w base run format:check
 npm -w user run format:check
 npm -w partner run format:check
 npm -w enterprise run format:check
+npm -w terms run format:check
 npm -w functions/default run format:check
 ```
 
@@ -69,6 +88,7 @@ npm -w base run format
 npm -w user run format
 npm -w partner run format
 npm -w enterprise run format
+npm -w terms run format
 npm -w functions/default run format
 ```
 
@@ -113,12 +133,16 @@ npm -w functions/default run test
 1. build（common）
 - common: ✅ 成功 / ❌ 失敗
 
+1b. build（terms）
+- terms: ✅ 成功 / ❌ 失敗
+
 2. lint
 - common: ✅ 成功 / ❌ 失敗
 - base: ✅ 成功 / ❌ 失敗
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
 - enterprise: ✅ 成功 / ❌ 失敗
+- terms: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 
 3. format:check
@@ -127,6 +151,7 @@ npm -w functions/default run test
 - user: ✅ 成功 / ❌ 失敗
 - partner: ✅ 成功 / ❌ 失敗
 - enterprise: ✅ 成功 / ❌ 失敗
+- terms: ✅ 成功 / ❌ 失敗
 - functions/default: ✅ 成功 / ❌ 失敗
 
 4. build:types
@@ -155,7 +180,8 @@ npm -w functions/default run test
 
 ## 制約
 
-- **実行順**: verify:functions-deploy → build common → lint → format:check → build:types → build functions → vitest
+- **実行順**: verify:functions-deploy → build common → build terms → lint → format:check → build:types → build functions → vitest
 - **PR verify 相当**: 上記チェックは `pr-verify.yml` の verify ジョブと一致（ローカル再現用）
 - **format ローカル自動修正**: PR verify にはないローカル拡張。成功時は format:check が緑 = CI と同じ合格状態
+- **Stop hook では実行しない**: lint 検証は push / PR / reflect 前に本スキルで行う
 - lint・build:types・test エラーは自動修正しない。内容を報告して手動対応を促す

@@ -37,7 +37,7 @@ AI が完了まで反復する
 | 対象 | 単一エージェントの実行環境 | 複数エージェント＋スケジューラ |
 | 起動 | 人間がプロンプトで起動 | 時刻・イベント・条件で自律起動 |
 | 終了 | エージェントが完了を宣言 | **検証ゲート**が合格を判定 |
-| 本プロジェクトでの例 | Stop フック（lint/format）、`protect-files.sh` | （未整備）CI 赤信号の自動 triage 等 |
+| 本プロジェクトでの例 | Stop フック（セルフレビュー）、`protect-files.sh` | （未整備）CI 赤信号の自動 triage 等 |
 
 Harness は Loop の前提であり、置き換え関係ではない。
 
@@ -79,8 +79,9 @@ Loop の前提は **「検証可能なループ」** である。現状は以下
 
 | 検証手段 | ローカル | CI（PR） |
 |:---------|:---------|:---------|
-| lint / format:check | Stop フックで実行・ブロック | ❌ PR トリガー CI なし |
-| common build | Stop フック | デプロイ時のみ |
+| lint / format:check / 型 / vitest | git-create-pull-request / git-reflect-after-commit 前の lint-and-format | PR トリガー CI（`pr-verify.yml`） |
+| セルフレビュー | Stop フック（`.agents/hooks/stop-gate-check.sh`） | shokujii-code-review 記録 |
+| common build | lint-and-format 内 | デプロイ時のみ |
 | vitest（common / functions / base） | 手動 | ❌ CI 未実行 |
 | vue-tsc 型チェック | 手動 | ❌ CI 未実行 |
 
@@ -231,7 +232,7 @@ Loop の部品として、すでに整備済みの資産を再利用する。
 
 | Loop 部品 | 本プロジェクトの対応 |
 |:----------|:---------------------|
-| Harness（実行環境） | `.claude/settings.json`（permissions）、Stop フック `lint-and-format.sh` |
+| Harness（実行環境） | `.claude/settings.json` / `.cursor/hooks.json`（Stop フック `stop-gate.sh` → `stop-gate-check.sh`） |
 | Skills | `.agents/skills/`（git-*、review-*、lint-and-format、shokujii-* 等） |
 | Worktrees | `wt/tree-*` 並列作業 |
 | Verifier | `shokujii-code-review`、`review-comments-evaluate`、Cursor `bugbot` / `security-review` |
@@ -374,10 +375,10 @@ suwash / classmethod が「L3 で必須」とする denylist ゲートを、本�
 |:--------------|:-------------------------|
 | 機密ファイルの編集ブロック | `.claude/hooks/protect-files.sh`（`.env` / `.secret` / `.firebaserc` / `.pem` / `.key`） |
 | 危険操作のブロック | `.claude/settings.json` の `deny`（`firebase deploy*` / `gh pr merge*` / `git push --force` / `rm -rf*` 等） |
-| 検証ハーネス | `.claude/hooks/lint-and-format.sh`（Stop 時に lint/format/common build を実行・ブロック） |
+| 検証ハーネス | `.agents/hooks/stop-gate-check.sh`（Stop 時: セルフレビューのみ。lint は create-pr / reflect 前） |
 
 - **denylist は全ループで共有**する。`.claude/settings.json` と `protect-files.sh` を正本とし、ループごとに個別 denylist を持たない。
-- 現状の穴は Stop フックに **vitest が含まれていない**こと（段階 0 で PR CI に test を追加して補う）。
+- Stop フックは **セルフレビュー完了**まで検証する（正本 `.agents/hooks/stop-gate-check.sh`）。PR verify 相当は push 前の lint-and-format。
 - denylist の正本は第 13 章にまとめる。
 
 ---
@@ -498,11 +499,11 @@ npx @cobusgreyling/loop-audit . --md > audit.md
 ```
 Maker 自己チェック（ローカル）          Checker（独立検証）
 ─────────────────────────         ──────────────────────
-build → lint-and-format       →    PR CI: lint/format/test/型（段階 0）
-（Stop フック lint-and-format.sh）   shokujii-code-review（規約）
+build → shokujii-code-review（Stop フック）  →    PR CI: lint/format/test/型（段階 0）
+lint-and-format（create-pr / reflect 前）       shokujii-code-review（規約・review doc / ledger）
 ```
 
-- β / γ の停止条件に「**lint-and-format 緑**」を明記する（Stop フックが既に自動実行）。
+- β / γ の停止条件に「**lint-and-format 緑**」を明記する（push / PR 前の lint-and-format）。
 - ローカル緑は自己申告のため、必ずリモート CI（段階 0）と二重化する。
 
 ### 18.4 自律化の主戦場と第一歩
@@ -526,7 +527,7 @@ build → lint-and-format       →    PR CI: lint/format/test/型（段階 0）
 |:-----------|:----------|
 | 意図抽出ゲート | grill-me |
 | Checker | shokujii-code-review, review-comments-evaluate |
-| ローカル検証 | lint-and-format（Stop フック） |
+| ローカル検証 | lint-and-format（create-pr / reflect 前）、Stop フック（セルフレビュー） |
 | issue / branch / commit | git-create-issue, git-commit-workflow, git-commit-message, git-split-commit |
 | push / PR / deploy | git-reflect-after-commit（→ git-create-pull-request, github-actions-deploy） |
 | 修正統合 | git-commit-workflow（→ git-fixup, git-squash） |

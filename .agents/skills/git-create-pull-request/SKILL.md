@@ -17,6 +17,25 @@ description: ブランチの変更差分を読み込み、pull_request_template.
 
 ## 手順
 
+0. **lint-and-format**（push 前・必須）
+
+[`/lint-and-format`](../lint-and-format/SKILL.md) の手順 0〜7 を実行する。失敗時は **push も PR 作成も行わず中断**する。
+
+**スキップ条件**（いずれか）:
+
+- [`/git-reflect-after-commit`](../git-reflect-after-commit/SKILL.md) から委譲され、当該会話内で手順 3 の lint-and-format が成功済み
+
+0b. **セルフレビュー pending 確認**（push 前・推奨）
+
+```bash
+branch=$(git branch --show-current)
+python3 .agents/scripts/self_review_wake.py list \
+  --wake-file .agents/state/self-review-pending.json \
+  --branch "${branch}"
+```
+
+`consumed: false` が残っている場合は、先に [`/shokujii-code-review`](../shokujii-code-review/SKILL.md) を完走してから PR 作成に進む。
+
 1. gh pr view で現在のブランチに PR が紐づいているか確認する
    - PR あり → 既存 PR の本文更新を想定
    - PR なし → 新規作成を想定
@@ -132,7 +151,7 @@ gh pr comment --body '@codex この PR の Files changed をコードレビュ�
     - 会話に「評価待ちなし」「evaluate しない」「review wait しない」があれば手順 13 をスキップ
     - `git-reflect-after-commit` から委譲された場合も本手順 13 で wait を起動する（reflect 側で二重起動しない）
     - wait 委譲時は **wait-ai-pr-review 手順 3 の Shell 要件**（`block_until_ms: 0` + `notify_on_output: ^AGENT_LOOP_WAKE_pr_review`）を省略しない
-    - wait 委譲後、sentinel 受信時に [`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) **auto モード**が起動し、`documents/レビューコメント/pr-<番号>.md` 追記まで自動完走する
+    - wait 委譲後、sentinel 受信時に [`review-comments-evaluate`](../review-comments-evaluate/SKILL.md) **auto モード**が起動し、`documents/レビューコメント/review-<slug>.md` 追記まで自動完走する（slug は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md)）
 
 ---
 
