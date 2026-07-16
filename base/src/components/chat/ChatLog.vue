@@ -339,7 +339,7 @@ const chatLogEntries = computed((): ChatLogEntry[] => {
 })
 
 const showEmptyMessagesHint = computed(() => {
-  return store.messages.length === 0 && !store.isLoadingOlderMessages
+  return store.messages.length === 0 && !store.isLoadingOlderMessages && !store.hasMoreMessages
 })
 
 onBeforeUnmount(() => {
