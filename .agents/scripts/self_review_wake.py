@@ -10,6 +10,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR))
+
+import self_review_check_lib as lib  # noqa: E402
+
 DEFAULT_WAKE_FILE = Path(".agents/state/self-review-pending.json")
 
 
@@ -73,13 +78,21 @@ def get_wake_for_branch(wake_path: Path, branch: str) -> dict[str, Any] | None:
     return None
 
 
-def consume_wake(wake_path: Path, branch: str) -> bool:
+def consume_wake(
+    wake_path: Path,
+    branch: str,
+    *,
+    repo_root: Path | None = None,
+) -> bool:
     wakes = _load_wakes(wake_path)
     found = False
+    root = (repo_root or Path.cwd()).resolve()
+    fingerprint = lib.compute_review_scope_fingerprint(root)
     for entry in wakes:
         if entry.get("branch") == branch and not entry.get("consumed"):
             entry["consumed"] = True
             entry["consumed_at"] = datetime.now(timezone.utc).isoformat()
+            entry["reviewed_scope_fingerprint"] = fingerprint
             found = True
     if found:
         _save_wakes(wake_path, wakes)
@@ -102,6 +115,12 @@ def main() -> int:
     consume_p = sub.add_parser("consume", help="Mark wake consumed for a branch")
     consume_p.add_argument("--wake-file", type=Path, default=DEFAULT_WAKE_FILE)
     consume_p.add_argument("--branch", required=True)
+    consume_p.add_argument(
+        "--repo-root",
+        type=Path,
+        default=Path.cwd(),
+        help="fingerprint 計算用のリポジトリルート",
+    )
 
     args = parser.parse_args()
 
@@ -115,7 +134,11 @@ def main() -> int:
     elif args.command == "list":
         print(json.dumps(list_unconsumed_wakes(args.wake_file), ensure_ascii=False))
     elif args.command == "consume":
-        if not consume_wake(args.wake_file, args.branch):
+        if not consume_wake(
+            args.wake_file,
+            args.branch,
+            repo_root=args.repo_root,
+        ):
             return 1
 
     return 0

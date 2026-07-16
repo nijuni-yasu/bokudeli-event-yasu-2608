@@ -153,6 +153,7 @@ npm -w <pkg> run format:check
 - **Claude Code**: [`.claude/hooks/stop-gate.sh`](.claude/hooks/stop-gate.sh) が `decision:block` でターン終了を阻止
 - review スコープの変更が無いターンでは検証をスキップ（[`.agents/hooks/source-change-detect.sh`](.agents/hooks/source-change-detect.sh)）
 - pending state: `.agents/state/self-review-pending.json`（[`self_review_wake.py`](.agents/scripts/self_review_wake.py)）
+- **fingerprint**: consume 時に review スコープ差分の `reviewed_scope_fingerprint` を記録。consumed 後も**同一未コミット差分**なら合格。差分が変わったら手順 0 から再レビュー
 - **記録対象外ブランチ**（`release/` `sync/` `hotfix/` `backup/` `tree/`）では review doc への追記はスキップ可。合格は **ledger**（`task_skill=shokujii-code-review` の `turn_end`）のみ。ledger 照合には Stop hook から **`conversation_id`（または `session_id`）** が渡る必要がある。旧 Cursor・CLI 等で ID が無い場合は gate がブロックされうる（[review-doc-path.md](.agents/skills/review-comments-evaluate/references/review-doc-path.md) 参照）
 
 ### PR verify 相当チェック（push 前）

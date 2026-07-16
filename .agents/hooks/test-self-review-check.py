@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -16,6 +17,22 @@ sys.path.insert(0, str(SCRIPTS))
 
 import self_review_check_lib as lib  # noqa: E402
 import self_review_wake as wake  # noqa: E402
+
+
+def _setup_minimal_git_repo(root: Path, branch: str = "fix/1") -> None:
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=root, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=root, check=True)
+    hooks_dst = root / ".agents" / "hooks"
+    hooks_dst.mkdir(parents=True, exist_ok=True)
+    shutil.copy(
+        REPO_ROOT / ".agents/hooks/source-change-detect.sh",
+        hooks_dst / "source-change-detect.sh",
+    )
+    (root / "README.md").write_text("init\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "init"], cwd=root, check=True)
+    subprocess.run(["git", "checkout", "-q", "-b", branch], cwd=root, check=True)
 
 
 def test_is_self_review_complete_via_review_doc() -> None:
@@ -137,6 +154,100 @@ def test_consume_alone_does_not_pass() -> None:
             wake_entry=wake_entry,
             repo_root=root,
         )
+
+
+def test_list_paths_review_excludes_review_doc() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _setup_minimal_git_repo(root)
+        review_dir = root / "documents" / "レビューコメント"
+        review_dir.mkdir(parents=True)
+        (review_dir / "review-x.md").write_text("session\n", encoding="utf-8")
+        paths = lib.list_review_scope_paths(root, "review")
+        assert not any(p.startswith("documents/レビューコメント/") for p in paths)
+
+
+def test_consumed_same_fingerprint_passes() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _setup_minimal_git_repo(root, "ai/1")
+        scripts = root / ".agents" / "scripts"
+        scripts.mkdir(parents=True, exist_ok=True)
+        (scripts / "helper.py").write_text("x = 1\n", encoding="utf-8")
+
+        wake_path = root / ".agents" / "state" / "self-review-pending.json"
+        since = "2026-07-16T07:00:00+00:00"
+        wake.write_pending_wake(wake_path, branch="ai/1", since=since)
+        assert wake.consume_wake(wake_path, "ai/1", repo_root=root)
+
+        entry = wake.get_wake_for_branch(wake_path, "ai/1")
+        assert entry is not None
+        assert entry.get("reviewed_scope_fingerprint")
+
+        assert lib.is_self_review_complete(
+            branch="ai/1",
+            since=since,
+            conversation_id=None,
+            wake_entry=entry,
+            repo_root=root,
+        )
+
+
+def test_consumed_changed_fingerprint_fails() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _setup_minimal_git_repo(root, "ai/1")
+        scripts = root / ".agents" / "scripts"
+        scripts.mkdir(parents=True, exist_ok=True)
+        helper = scripts / "helper.py"
+        helper.write_text("x = 1\n", encoding="utf-8")
+
+        wake_path = root / ".agents" / "state" / "self-review-pending.json"
+        since = "2026-07-16T07:00:00+00:00"
+        wake.write_pending_wake(wake_path, branch="ai/1", since=since)
+        wake.consume_wake(wake_path, "ai/1", repo_root=root)
+        entry = wake.get_wake_for_branch(wake_path, "ai/1")
+        assert entry is not None
+
+        helper.write_text("x = 2\n", encoding="utf-8")
+        assert not lib.is_self_review_complete(
+            branch="ai/1",
+            since=since,
+            conversation_id=None,
+            wake_entry=entry,
+            repo_root=root,
+        )
+
+
+def test_self_review_check_cli_consumed_same_fp_passes() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _setup_minimal_git_repo(root, "fix/9")
+        scripts = root / ".agents" / "scripts"
+        scripts.mkdir(parents=True, exist_ok=True)
+        (scripts / "helper.py").write_text("y = 1\n", encoding="utf-8")
+
+        wake_path = root / ".agents" / "state" / "self-review-pending.json"
+        since = "2026-07-16T07:00:00+00:00"
+        wake.write_pending_wake(wake_path, branch="fix/9", since=since)
+        wake.consume_wake(wake_path, "fix/9", repo_root=root)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS / "self_review_check.py"),
+                "--repo-root",
+                str(root),
+                "--wake-file",
+                str(wake_path.relative_to(root)),
+                "--branch",
+                "fix/9",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
 
 
 def test_tree_branch_skips_doc_but_ledger_ok() -> None:
@@ -274,6 +385,10 @@ def main() -> int:
         test_is_self_review_complete_via_ledger,
         test_normal_branch_ledger_alone_does_not_pass,
         test_consume_alone_does_not_pass,
+        test_list_paths_review_excludes_review_doc,
+        test_consumed_same_fingerprint_passes,
+        test_consumed_changed_fingerprint_fails,
+        test_self_review_check_cli_consumed_same_fp_passes,
         test_tree_branch_skips_doc_but_ledger_ok,
         test_self_review_check_cli_fails_without_wake,
         test_self_review_check_cli_fails_without_since,

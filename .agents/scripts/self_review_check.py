@@ -121,11 +121,20 @@ def main() -> int:
         return 0
 
     if entry.get("consumed"):
-        print(
-            "[self-review] wake は consume 済みです。"
-            "ソース変更後は /shokujii-code-review 手順 0 から再実行してください。",
-            file=sys.stderr,
-        )
+        saved_fp = entry.get("reviewed_scope_fingerprint")
+        if isinstance(saved_fp, str) and saved_fp:
+            print(
+                "[self-review] wake は consume 済みです。"
+                "review スコープに新しい変更があります。"
+                "/shokujii-code-review 手順 0 から再実行してください。",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                "[self-review] wake は consume 済みです。"
+                "ソース変更後は /shokujii-code-review 手順 0 から再実行してください。",
+                file=sys.stderr,
+            )
         return 2
 
     slug = lib.branch_to_slug(branch)

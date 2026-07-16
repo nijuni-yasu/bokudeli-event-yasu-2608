@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -90,6 +92,72 @@ def has_review_doc_session_since(review_doc: Path, since: str) -> bool:
     return False
 
 
+def _sha256_hex(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def list_review_scope_paths(repo_root: Path, scope: str = "review") -> list[str]:
+    """source-change-detect.sh list-paths と同一のパス列挙。"""
+    script = repo_root / ".agents/hooks/source-change-detect.sh"
+    result = subprocess.run(
+        ["bash", str(script), "list-paths", scope],
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return sorted(line.strip() for line in result.stdout.splitlines() if line.strip())
+
+
+def path_change_signature(repo_root: Path, path: str) -> str:
+    """review スコープ内 1 パスの working tree 変更シグネチャ。"""
+    full = repo_root / path
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", path],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+    )
+    if tracked.returncode != 0:
+        if full.is_file():
+            return _sha256_hex(full.read_bytes())
+        return _sha256_hex(b"deleted-or-missing")
+
+    diff_parts: list[str] = []
+    for args in (
+        ["git", "diff", "HEAD", "--", path],
+        ["git", "diff", "--cached", "HEAD", "--", path],
+    ):
+        result = subprocess.run(args, cwd=repo_root, capture_output=True, text=True)
+        diff_parts.append(result.stdout)
+    return _sha256_hex("".join(diff_parts).encode())
+
+
+def compute_review_scope_fingerprint(
+    repo_root: Path,
+    scope: str = "review",
+) -> str:
+    """consume 時点の review スコープ差分 fingerprint（SHA-256 hex）。"""
+    parts: list[str] = []
+    for path in list_review_scope_paths(repo_root, scope):
+        signature = path_change_signature(repo_root, path)
+        parts.append(f"{path}\0{signature}")
+    return _sha256_hex("\n".join(parts).encode())
+
+
+def consumed_covers_current_review_scope(
+    wake_entry: dict[str, Any],
+    repo_root: Path,
+    scope: str = "review",
+) -> bool:
+    """consumed wake の fingerprint が現在の review スコープ差分と一致するか。"""
+    saved = wake_entry.get("reviewed_scope_fingerprint")
+    if not isinstance(saved, str) or not saved:
+        return False
+    current = compute_review_scope_fingerprint(repo_root, scope)
+    return current == saved
+
+
 def has_ledger_self_review_since(
     ledger_path: Path,
     *,
@@ -131,11 +199,11 @@ def is_self_review_complete(
     wake_entry: dict[str, Any] | None,
     repo_root: Path | None = None,
 ) -> bool:
-    """review doc セッションまたは ledger の shokujii-code-review 完走で合格。"""
-    if wake_entry is not None and wake_entry.get("consumed"):
-        return False
-
+    """review doc セッション、ledger、または consumed fingerprint 一致で合格。"""
     root = repo_root or Path.cwd()
+
+    if wake_entry is not None and wake_entry.get("consumed"):
+        return consumed_covers_current_review_scope(wake_entry, root)
 
     if not is_recording_skipped_branch(branch):
         review_doc = root / review_doc_path_for_branch(branch)
