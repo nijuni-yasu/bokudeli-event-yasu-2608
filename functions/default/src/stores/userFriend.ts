@@ -10,6 +10,19 @@ import {
 } from 'firebase-admin/firestore'
 import { UserFriend } from '@shokujii/common/schemas/UserFriend.js'
 import type { UserFriendsSortBy } from '@shokujii/common/apis/userFriends.js'
+import { createModuleLogger } from '../utils/logger.js'
+
+const logger = createModuleLogger('userFriend')
+
+/** 友人一覧・プレビュー用の最小フィールド（`event_history` は読まない） */
+export type UserFriendListRow = {
+  id: string
+  meet_count: number
+  first_met_at: number
+  last_met_at: number
+}
+
+const LIST_FIELDS = ['meet_count', 'first_met_at', 'last_met_at'] as const
 
 class UserFriendConverter implements FirestoreDataConverter<UserFriend> {
   toFirestore(friend: UserFriend): DocumentData {
@@ -26,6 +39,74 @@ const userFriendConverter = new UserFriendConverter()
 const friendsCollection = (uid: string) => {
   const db = getFirestore()
   return db.collection('users').doc(uid).collection('friends')
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
+
+const toMillis = (value: unknown): number | null => {
+  if (value == null) return null
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (!isRecord(value)) return null
+
+  const toMillisFn = value['toMillis']
+  if (typeof toMillisFn !== 'function') return null
+
+  const result = toMillisFn.call(value)
+  return typeof result === 'number' && Number.isFinite(result) ? result : null
+}
+
+const toNonNegativeInt = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+    return null
+  }
+  return value
+}
+
+const mapDocToUserFriendListRow = (doc: QueryDocumentSnapshot): UserFriendListRow | null => {
+  const data = doc.data()
+  const meetCount = toNonNegativeInt(data.meet_count)
+  const firstMetAt = toMillis(data.first_met_at)
+  const lastMetAt = toMillis(data.last_met_at)
+  if (meetCount == null || firstMetAt == null || lastMetAt == null) {
+    logger.warn('listUserFriends skipped invalid friend doc', { friendUserId: doc.id })
+    return null
+  }
+  return {
+    id: doc.id,
+    meet_count: meetCount,
+    first_met_at: firstMetAt,
+    last_met_at: lastMetAt,
+  }
+}
+
+const cursorValueFromDoc = (doc: QueryDocumentSnapshot, sortBy: UserFriendsSortBy): number | null => {
+  const raw = doc.data()[sortBy]
+  if (sortBy === 'meet_count') {
+    return toNonNegativeInt(raw)
+  }
+  return toMillis(raw)
+}
+
+/** 次ページ用 cursor を組み立てられる doc を後方から探索する（RC-1） */
+const findPagingCursorDoc = (
+  pageDocs: QueryDocumentSnapshot[],
+  docs: QueryDocumentSnapshot[],
+  limit: number,
+  firestoreHasMore: boolean,
+  sortBy: UserFriendsSortBy,
+): QueryDocumentSnapshot | null => {
+  for (let i = pageDocs.length - 1; i >= 0; i--) {
+    if (cursorValueFromDoc(pageDocs[i], sortBy) != null) {
+      return pageDocs[i]
+    }
+  }
+  if (firestoreHasMore && docs.length > limit) {
+    const sentinelDoc = docs[limit]
+    if (cursorValueFromDoc(sentinelDoc, sortBy) != null) {
+      return sentinelDoc
+    }
+  }
+  return null
 }
 
 export const userFriendRef = (uid: string, friendUid: string): DocumentReference<UserFriend> => {
@@ -79,9 +160,9 @@ export const listUserFriends = async (
   sortBy: UserFriendsSortBy,
   limit: number,
   cursor?: UserFriendsListCursor,
-): Promise<{ friends: UserFriend[]; hasMore: boolean; nextCursor: UserFriendsListCursor | null }> => {
+): Promise<{ friends: UserFriendListRow[]; hasMore: boolean; nextCursor: UserFriendsListCursor | null }> => {
   let query = friendsCollection(uid)
-    .withConverter(userFriendConverter)
+    .select(...LIST_FIELDS)
     .orderBy(sortBy, 'desc')
     .orderBy(FieldPath.documentId(), 'asc')
     .limit(limit + 1)
@@ -96,19 +177,27 @@ export const listUserFriends = async (
   const docs = snapshot.docs
   const hasMore = docs.length > limit
   const pageDocs = hasMore ? docs.slice(0, limit) : docs
-  const friends = pageDocs.map((doc) => doc.data())
+  const friends = pageDocs
+    .map((doc) => mapDocToUserFriendListRow(doc))
+    .filter((friend): friend is UserFriendListRow => friend != null)
 
   if (pageDocs.length === 0) {
     return { friends, hasMore: false, nextCursor: null }
   }
 
-  const lastDoc = pageDocs[pageDocs.length - 1]
-  const nextCursor = hasMore
-    ? {
-        value: lastDoc.data()[sortBy],
-        friend_user_id: lastDoc.id,
-      }
-    : null
+  const pagingDoc = findPagingCursorDoc(pageDocs, docs, limit, hasMore, sortBy)
+  const cursorValue = pagingDoc != null ? cursorValueFromDoc(pagingDoc, sortBy) : null
+  const nextCursor =
+    hasMore && pagingDoc != null && cursorValue != null
+      ? {
+          value: cursorValue,
+          friend_user_id: pagingDoc.id,
+        }
+      : null
 
-  return { friends, hasMore, nextCursor }
+  return {
+    friends,
+    hasMore: nextCursor != null,
+    nextCursor,
+  }
 }
