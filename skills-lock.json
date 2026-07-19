@@ -23,6 +23,18 @@
       "skillPath": "pm-product-strategy/skills/monetization-strategy/SKILL.md",
       "computedHash": "fe59fc0cde884e3e5ae7316b6bcbbdcf1936b7f74fec3cfe5e8a3523db0423b2"
     },
+    "programmatic-seo": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "skillPath": "skills/programmatic-seo/SKILL.md",
+      "computedHash": "0bbdcbacfbe46fd78d774041ee49afd313505bb435b775dc246f4b8e6981d797"
+    },
+    "seo-audit": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "skillPath": "skills/seo-audit/SKILL.md",
+      "computedHash": "f2dc52130189068981f21e1c0bdc4471ac7cd9b08d8a1320604411aa0f950385"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
