@@ -224,8 +224,8 @@ GSC: [URL 検査](https://search.google.com/search-console/inspect?resource_id=s
 | 工数 | タスク |
 |------|--------|
 | [S] | [x] **P1-1** `user/public/robots.txt` を追加<br>Allow: 公開ページ（`/`, `/c/**`, `/communitylist` 等）<br>Disallow: `/manage/**`, `/chat/**`, `/cart`, `/login`, `/register/**`, `/profile` 等<br>Sitemap: `https://shokujii.jp/sitemap.xml` を記載 |
-| [S] | [ ] **P1-2** partner / enterprise / manager に noindex を設定<br>方式: `firebase.json` の headers で `X-Robots-Tag: noindex`（推奨） |
-| [S] | [ ] **P1-3** `user/index.html` の静的メタ修正<br>`meta description` 追加、`twitter:site` 修正、トップの `og:type` を `website` に |
+| [S] | [x] **P1-2** partner / enterprise / manager に noindex を設定<br>方式: `firebase.json` の headers で `X-Robots-Tag: noindex`（推奨） |
+| [S] | [x] **P1-3** `user/index.html` の静的メタ修正<br>`meta description` 追加、`twitter:site` 修正、トップの `og:type` を `website` に |
 | [S] | [ ] **P1-4** Search Console 登録手順を本ドキュメントに追記 |
 
 **Phase 1 完了条件**
@@ -248,8 +248,8 @@ GSC: [URL 検査](https://search.google.com/search-console/inspect?resource_id=s
 | [S] | [x] **P2-5** データ不在時の HTTP ステータス改善<br>イベント / コミュニティ不在・非公開時: 404 を返す |
 | [S] | [ ] **P2-6** 旧パス `/community/**` から `/c/**` への 301 リダイレクト<br>Function 側または router 側で方針決定 |
 | [M] | [x] **P2-7** `sitemap.xml` の動的生成<br>対象: `is_public == true` のコミュニティ・イベント<br>方式: onRequest + rewrite（`handleSitemapRequest`） |
-| [S] | [ ] **P2-8** クライアント側 `document.title` 更新<br>router `afterEach` でページ遷移時に更新 |
-| [S] | [ ] **P2-9** 404 ページ（`[[...error]].vue`）に noindex を設定 |
+| [S] | [x] **P2-8** クライアント側 `document.title` 更新<br>router `afterEach` でページ遷移時に更新 |
+| [S] | [x] **P2-9** 404 ページ（`[[...error]].vue`）に noindex を設定 |
 
 **Phase 2 完了条件**
 

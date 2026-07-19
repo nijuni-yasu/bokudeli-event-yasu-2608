@@ -116,3 +116,19 @@ ShokujiiEvent / ShokujiiCommunity の constructor が `updated_at` を `Date.now
 
 **ステータス**: ✅ 対応済み
 
+## 評価セッション（2026-07-19 18:21・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 18:21 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/2195-seo
+- **PR**: 未作成
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+
+- 指摘なし（P1-2 noindex headers、P1-3 index.html メタ、P2-8 document.title、P2-9 404 noindex）
+
