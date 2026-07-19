@@ -2,10 +2,10 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Error from '@shokujii/base/components/Error.vue'
+import { parseErrorCodeFromRoute } from '@/router/documentTitleHelpers.js'
 
 const route = useRoute()
-const error = route.params.error as string
-const errorCode = /^\d{3}$/.test(error) ? error : '404'
+const errorCode = parseErrorCodeFromRoute(route.path, route.params.error) ?? '404'
 
 let robotsMetaEl: HTMLMetaElement | null = null
 
