@@ -161,7 +161,7 @@ import は **Terraform state のみ**更新する。本番サービスは停止�
 | `authorized_domains` | 本番カスタムドメイン（例: `shokujii.jp`）が **削除（`-`）されない** |
 | 新規 Secret | **5 件**の Add のみ（`SLACK_*` 4 + `LINE_CHANNEL_ACCESS_TOKEN` 1。既存 7 件が Add なら import 漏れ） |
 | Hosting / Web App | create のままなら import 漏れ（409 リスク）。user / admin / **enterprise**（`PROJECT-enterprise`）を確認 |
-| `firestore_backups` | `storage_class` 差分なし（[storage.tf](storage.tf) は `ARCHIVE` 固定。本番手動作成バケットと一致） |
+| `firestore_backups` | `storage_class` 差分なし（[storage.tf](storage.tf) は `STANDARD` 固定。monthly/ の lifecycle で COLDLINE 移行） |
 | `firebasestorage_firestore_cross_service_rules` | 未付与 env では **Add 1**。Console 手動付与済みなら **import 後 no-op**（[service_account.tf](service_account.tf)） |
 | `google_storage_bucket.default` | CORS が **Update in-place** のみ（Destroy なし）。既存手動 CORS（GET のみ等）→ フル method への更新は **意図した変更** |
 
@@ -193,7 +193,7 @@ terraform apply
 
 | リソース | 内容 |
 | -------- | ---- |
-| GCS バケット | `gs://<PROJECT_ID>-firestore-backups`（`firestoreExportDaily` 等 Scheduled Functions の export 先。`storage_class = ARCHIVE`） |
+| GCS バケット | `gs://<PROJECT_ID>-firestore-backups`（`firestoreExportDaily` 等 Scheduled Functions の export 先。`storage_class = STANDARD`、monthly/ は lifecycle で COLDLINE 移行） |
 | GCS バケット | `gs://<PROJECT_ID>-storage-backups`（`storageBackupDaily` 等 Scheduled Functions の Storage フルコピー先） |
 | バケット IAM | Firestore サービスエージェントに `roles/storage.admin` |
 | プロジェクト IAM | Compute / App Engine デフォルト SA に `roles/datastore.importExportAdmin` |

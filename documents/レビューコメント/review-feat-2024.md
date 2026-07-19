@@ -156,3 +156,143 @@ Scheduled Functions の `timeoutSeconds` を 3600 → 1800 に修正し、仕様
 **想定工数**: S
 
 **判断理由**: RC-12 と同型。保持 8 週は COLDLINE 最小保存期間を下回るため lifecycle 移行を削除。仕様 §3.2.3 を更新。
+
+---
+
+## 評価セッション（2026-07-19 13:20・review-comments-evaluate auto）
+
+- **評価日時**: 2026-07-19 13:20 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T04:12:39Z
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 0
+- **partial 評価**: false（Codex + Copilot とも substantive レビューあり）
+- **手順 4a 自動修正**: RC-15, RC-19, RC-21（🚨 3件・作業ツリー未コミット）。RC-14, RC-18, RC-20 は前コミットで対応済み
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-14 | 3609804639 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔧 運用 | 🔧 微修正 | S | Scheduled timeout 3600→1800（48181928f） |
+| [x] | RC-15 | 3609804641 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | export outputUriPrefix を実行ごとに一意 subfolder 化 |
+| [ ] | RC-16 | 3609804644 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔧 運用 | 📄 ドキュメントのみ | S | 旧 `backupFirestore` を `functions:delete` で明示削除 |
+| [ ] | RC-17 | 3609804647 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 データ | 🆕 新機能 | M | Storage 部分バックアップを完了マーカー付きまで retention 対象外 |
+| [x] | RC-18 | 3609804648 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | S | firestore_backups ARCHIVE→STANDARD（9a50ef281） |
+| [x] | RC-19 | 3609804652 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | legacy 直下 export を daily 保持本数で削除 |
+| [x] | RC-20 | 3609804654 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | S | storage weekly COLDLINE lifecycle 削除（9a50ef281） |
+| [x] | RC-21 | 3609813234, 3609813252 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメント | 📄 ドキュメントのみ | S | terraform/README.md の ARCHIVE 記載を STANDARD に修正 |
+| [ ] | RC-22 | 3609813260 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 📋 仕様追加 | M | export 1800秒 timeout + operation.promise 待ちのリスク（仕様 §5.6.3 要確認） |
+
+---
+
+**識別子**: RC-15（GitHub id: 3609804641）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/backup/firestoreExport.ts`
+
+**レビュワーのコメント（原文）**:
+
+Scheduled Function の `outputUriPrefix` が `gs://bucket/daily/` 固定だと、同一 tier 内で export フォルダ名が衝突しうる。実行ごとに一意 subfolder を付与すること。
+
+**コメント要約**: tier prefix のみだと Admin API の export 先が衝突する可能性がある。<br>`buildFirestoreExportOutputUriPrefix` で `yyyy-MM-dd'T'HH:mm:ss` サブフォルダを付与。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: リトライ・並行実行時に同一 prefix へ書き込むと export が破損しうる。JST タイムスタンプ subfolder で一意化。
+
+---
+
+**識別子**: RC-19（GitHub id: 3609804652）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/backup/retention.ts`（legacy 直下 export 削除）
+
+**レビュワーのコメント（原文）**:
+
+既存 development / production の旧 `backupFirestore` export がバケット直下に残っているため、無条件全削除は本番データ喪失リスク。保持本数管理に組み込むこと。
+
+**コメント要約**: legacy 直下 export をすべて削除せず、`FIRESTORE_RETENTION.daily` 本数で `selectPrefixesToDelete` 適用。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 移行期間中の legacy export は tier 外だが Firestore export メタデータを持つ。daily 保持上限（14 本）で削除対象を選別。
+
+---
+
+**識別子**: RC-17（GitHub id: 3609804647）
+
+**レビュワー**: Codex
+
+**指摘箇所**: `functions/default/src/backup/retention.ts`
+
+**レビュワーのコメント（原文）**:
+
+`storageBackup*` がタイムアウトや copy 失敗で途中終了した場合でも、既に作られた `daily/YYYY-MM-DD` プレフィックスが retention 対象になり、不完全バックアップが保持される。完了マーカー等で成功分のみカウントすべき。
+
+**コメント要約**: Storage 部分コピー完了前の prefix を retention から除外する完了マーカー設計が必要。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 データ
+
+**変更種別**: 🆕 新機能
+
+**想定工数**: M
+
+**判断理由**: copy 完了後に `_SUCCESS` 等のマーカー書き込み + retention 側フィルタが必要。仕様書への追記と storageCopy 改修がセット。手順 4a 対象外（設計判断）。
+
+---
+
+**識別子**: RC-22（GitHub id: 3609813260）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/firestoreExport.ts`
+
+**レビュワーのコメント（原文）**:
+
+[ask] `timeoutSeconds: 1800` の Scheduled Function で `await operation.promise()` まで待つ構成だと、DB サイズ次第で export が 30 分を超えた場合に Function 側が timeout → retry で export が重複起動するリスクがある。
+
+**コメント要約**: 大規模 DB では 1800 秒内に export 完了しない可能性。重複 export のコスト・競合リスク。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💰 金銭
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 仕様書 §5.6.3 で「Scheduled 1800 秒上限・大規模 DB は要確認」と既知。非同期起動 + 別途完了監視は別設計。reply で現状認識と監視方針を回答予定。

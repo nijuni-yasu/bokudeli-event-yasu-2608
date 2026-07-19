@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { formatBackupDateLabel, getFirestoreExportUriPrefix } from './constants.js'
+import { DateTime } from 'luxon'
+import { formatBackupDateLabel, buildFirestoreExportOutputUriPrefix, getFirestoreExportUriPrefix } from './constants.js'
 import {
   parseFirestoreExportFolderSortKey,
   parseStorageBackupFolderSortKey,
@@ -32,6 +33,13 @@ describe('backup retention', () => {
 describe('backup paths', () => {
   it('getFirestoreExportUriPrefix includes tier prefix', () => {
     expect(getFirestoreExportUriPrefix('my-project', 'daily')).toBe('gs://my-project-firestore-backups/daily/')
+  })
+
+  it('buildFirestoreExportOutputUriPrefix appends run folder under tier', () => {
+    const startedAt = DateTime.fromISO('2026-06-03T17:00:00', { zone: 'Asia/Tokyo' })
+    expect(buildFirestoreExportOutputUriPrefix('my-project', 'daily', startedAt)).toBe(
+      'gs://my-project-firestore-backups/daily/2026-06-03T17:00:00/',
+    )
   })
 
   it('formatBackupDateLabel formats monthly as YYYY-MM', () => {

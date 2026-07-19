@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon'
+
 export type BackupTier = 'daily' | 'weekly' | 'monthly'
 
 export const BACKUP_TIMEZONE = 'Asia/Tokyo'
@@ -30,6 +32,15 @@ export const getStorageBackupBucketName = (projectId: string): string => `${proj
 
 export const getFirestoreExportUriPrefix = (projectId: string, tier: BackupTier): string =>
   `gs://${getFirestoreBackupBucketName(projectId)}/${tier}/`
+
+export const buildFirestoreExportOutputUriPrefix = (
+  projectId: string,
+  tier: BackupTier,
+  startedAt: DateTime,
+): string => {
+  const runFolder = startedAt.setZone(BACKUP_TIMEZONE).toFormat("yyyy-MM-dd'T'HH:mm:ss")
+  return `${getFirestoreExportUriPrefix(projectId, tier)}${runFolder}/`
+}
 
 export const isRetentionDryRun = (): boolean => process.env.BACKUP_RETENTION_DRY_RUN === 'true'
 

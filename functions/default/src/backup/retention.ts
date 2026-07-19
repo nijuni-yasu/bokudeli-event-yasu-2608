@@ -122,10 +122,20 @@ const cleanupLegacyFirestoreRootExports = async (bucketName: string, dryRun: boo
     (prefix) => !TIER_PREFIXES.some((tier) => prefix === `${tier}/` || prefix.startsWith(`${tier}/`)),
   )
 
+  const entries: RetentionEntry[] = []
   for (const prefix of legacyPrefixes) {
     if (!(await hasFirestoreExportMetadata(bucketName, prefix))) {
       continue
     }
+    const sortKey = parseFirestoreExportFolderSortKey(prefix)
+    if (sortKey == null) {
+      continue
+    }
+    entries.push({ prefix, sortKey })
+  }
+
+  const toDelete = selectPrefixesToDelete(entries, FIRESTORE_RETENTION.daily)
+  for (const prefix of toDelete) {
     await deletePrefixRecursive(bucketName, prefix, dryRun)
   }
 }
