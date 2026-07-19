@@ -225,6 +225,20 @@ export const enterpriseBillInvoice = onRequest(
       return
     }
 
+    // invoiceId 付きアクセスは認証不要で既存 PDF を返却（04_請求 §3.3・PF eventBillInvoice 同趣旨）
+    const invoiceId = req.query.id
+    if (typeof invoiceId === 'string') {
+      try {
+        res.status(200).setHeader('Content-Type', 'application/pdf')
+        await streamInvoicePdf(enterpriseId, yearMonth, invoiceId, res)
+      } catch {
+        if (!res.headersSent) {
+          res.status(404).send('Invoice not found')
+        }
+      }
+      return
+    }
+
     const authHeader = req.headers.authorization ?? ''
     if (!authHeader.startsWith('JWT ')) {
       res.status(401).send('JWT token is required')
@@ -240,24 +254,6 @@ export const enterpriseBillInvoice = onRequest(
       decodedToken = decoded as Record<string, unknown>
     } catch {
       res.status(401).send('Invalid JWT token')
-      return
-    }
-
-    const invoiceId = req.query.id
-    if (typeof invoiceId === 'string') {
-      try {
-        await assertEnterpriseAdminFromUid(uid, decodedToken, enterpriseId)
-        res.status(200).setHeader('Content-Type', 'application/pdf')
-        await streamInvoicePdf(enterpriseId, yearMonth, invoiceId, res)
-      } catch (error) {
-        if (!res.headersSent) {
-          if (error instanceof HttpsError && error.code === 'permission-denied') {
-            res.status(403).send(error.message)
-          } else {
-            res.status(404).send('Invoice not found')
-          }
-        }
-      }
       return
     }
 
