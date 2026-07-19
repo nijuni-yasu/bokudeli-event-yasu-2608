@@ -828,3 +828,71 @@ Copilot コミット `5d29f6478` 後の CI ビルド失敗修正（`firestoreExp
 
 **想定工数**: —
 
+---
+
+## 評価セッション（2026-07-19 17:12・review-comments-evaluate auto）
+
+- **評価日時**: 2026-07-19 17:12 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T07:59:45Z
+- **partial**: true（Codex usage limits / 接続案内のみ）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼 5014950705、Codex limits 5014951081、接続案内 5014969485）
+- **手順 4a 自動修正**: RC-36〜37（🟡 2件）
+- **Copilot サマリ**: 新規 [must]/🚨 指摘なし（5014969185）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-36 | 3610161635 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔧 運用 | 🔧 微修正 | S | exportDocuments 失敗ログの err を<br>error: String(err) に |
+| [x] | RC-37 | 3610161647 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔧 運用 | 🔧 微修正 | S | operation.promise 失敗ログも同様 |
+
+**識別子**: RC-36（GitHub id: 3610161635）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/firestoreExport.ts:26`
+
+**レビュワーのコメント（原文）**:
+
+[nits] `createModuleLogger` は `data` をそのまま `jsonPayload` に載せるため、`err`（Error オブジェクト等）を直接入れるとメッセージ/スタックが欠落しやすいです。既存実装と同様に `error: String(err)` のように文字列化してログへ残すと調査しやすくなります。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔧 運用
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+**識別子**: RC-37（GitHub id: 3610161647）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/firestoreExport.ts:39`
+
+**レビュワーのコメント（原文）**:
+
+[nits] こちらも `err` をオブジェクトのまま渡すと Cloud Logging 側で中身が落ちることがあるため、`error: String(err)` 等で確実に残すのが安全です（他モジュールでも同パターンが多いです）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔧 運用
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+

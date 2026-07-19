@@ -23,7 +23,7 @@ export const exportFirestore = async (tier: BackupTier): Promise<void> => {
       collectionIds: [],
     })
   } catch (err) {
-    logger.error('Firestore exportDocuments failed', { tier, outputUriPrefix, err })
+    logger.error('Firestore exportDocuments failed', { tier, outputUriPrefix, error: String(err) })
     throw err
   }
 
@@ -36,7 +36,12 @@ export const exportFirestore = async (tier: BackupTier): Promise<void> => {
   try {
     await operation.promise()
   } catch (err) {
-    logger.error('Firestore export operation failed', { tier, operationName: operation.name, outputUriPrefix, err })
+    logger.error('Firestore export operation failed', {
+      tier,
+      operationName: operation.name,
+      outputUriPrefix,
+      error: String(err),
+    })
     throw err
   }
 
