@@ -132,3 +132,82 @@ ShokujiiEvent / ShokujiiCommunity の constructor が `updated_at` を `Date.now
 
 - 指摘なし（P1-2 noindex headers、P1-3 index.html メタ、P2-8 document.title、P2-9 404 noindex）
 
+## 評価セッション（2026-07-19 18:37・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-07-19 18:37 JST
+- **評価者**: Cursor Agent（review-comments-evaluate）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T09:24:00Z
+- **partial**: true（Codex usage limits のみ。Copilot レビューは取得）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼コメント、Codex limits/connect 案内）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-3 | 3610294674 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | JSON-LD 埋め込み時に script 終了タグをエスケープ |
+| [x] | RC-4 | 3610294682 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | catch-all error パラメータ配列を正しく解釈 |
+| [x] | RC-5 | 3610294691 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap の x-forwarded-host 未設定時 400 |
+| [x] | RC-6 | 5015208780 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | OGP title/description の二重 HTML エスケープ |
+| [x] | RC-7 | 5015208780 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | title 置換時の replace $ 特殊シーケンス |
+| [x] | RC-8 | 5015208780 | 👌 修正不要 | — | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap を withConverter 経由に |
+| [x] | RC-9 | 5015208780 | 🟡 修正提案 | 📤 #2197 別Issue化 | 📤 スコープ外 | — | 📋 仕様追加 | M | 公開イベント sitemap 取得のページング<br>#2197 |
+| [x] | RC-10 | 5015208780 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | robots.txt Disallow: /register の末尾スラッシュ削除 |
+
+## 評価セッション（2026-07-19 18:45・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 18:45 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+
+- 指摘なし（RC-10 robots.txt 末尾スラッシュ削除、RC-9 #2197 別Issue化記録）
+
+## 評価セッション（2026-07-19 18:50・review-comments-evaluate）
+
+- **評価日時**: 2026-07-19 18:50 JST
+- **評価者**: Cursor Agent（review-comments-evaluate）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-8 | 5015208780 | 👌 修正不要 | — | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap を withConverter 経由に |
+
+### RC-8
+
+**GitHub id**: 5015208780
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/seoSitemap.ts`
+
+**レビュワーのコメント（原文）**:
+
+seoSitemap を withConverter 経由にリファクタすべき（プロジェクト規約整合）。
+
+**判断結果**: 👌 修正不要
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**判断理由**: RC-1 で既に対応済み。`ShokujiiEvent` / `ShokujiiCommunity` の constructor は `updated_at` を `Date.now()` で上書きするため、既存 converter 経由にすると sitemap の `lastmod` が常に生成時刻になり RC-1 が再発する。現状の raw `updated_at` 読み取りは意図的な設計。withConverter 化する場合は sitemap 専用の軽量 converter が必要で、#2197（ページング）と合わせて別途検討が妥当。
+
