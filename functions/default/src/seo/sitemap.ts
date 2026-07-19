@@ -1,3 +1,5 @@
+import { convertToDateString } from '@shokujii/common/utils/datetime.js'
+
 export interface SitemapUrlEntry {
   loc: string
   lastmod?: string
@@ -11,11 +13,8 @@ const escapeXml = (input: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;')
 
-/** ISO 8601 date (YYYY-MM-DD) for sitemap lastmod */
-export const formatSitemapLastmod = (millis: number): string => {
-  const date = new Date(millis)
-  return date.toISOString().slice(0, 10)
-}
+/** ISO 8601 date (YYYY-MM-DD) for sitemap lastmod（JST 暦日） */
+export const formatSitemapLastmod = (millis: number): string => convertToDateString(millis)
 
 export const buildSitemapXml = (entries: SitemapUrlEntry[]): string => {
   const urlBlocks = entries

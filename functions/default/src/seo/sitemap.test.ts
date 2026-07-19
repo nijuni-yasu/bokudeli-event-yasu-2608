@@ -22,8 +22,13 @@ describe('buildSitemapXml', () => {
 })
 
 describe('formatSitemapLastmod', () => {
-  it('formats millis as YYYY-MM-DD', () => {
+  it('formats millis as YYYY-MM-DD in JST', () => {
     const millis = Date.parse('2026-07-19T15:30:00+09:00')
     expect(formatSitemapLastmod(millis)).toBe('2026-07-19')
+  })
+
+  it('uses JST calendar date at UTC day boundary', () => {
+    const millis = Date.parse('2026-07-19T15:30:00.000Z')
+    expect(formatSitemapLastmod(millis)).toBe('2026-07-20')
   })
 })

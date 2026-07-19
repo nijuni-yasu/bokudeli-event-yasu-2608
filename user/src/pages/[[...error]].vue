@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Error from '@shokujii/base/components/Error.vue'
 import { parseErrorCodeFromRoute } from '@/router/documentTitleHelpers.js'
 
 const route = useRoute()
-const errorCode = parseErrorCodeFromRoute(route.path, route.params.error) ?? '404'
+const errorCode = computed(() => parseErrorCodeFromRoute(route.path, route.params.error) ?? '404')
 
 let robotsMetaEl: HTMLMetaElement | null = null
 
