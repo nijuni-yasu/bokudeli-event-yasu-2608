@@ -266,7 +266,7 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 | [x] | RC-15 | 3610407935 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap イベント取得に enterprise_id == null 追加 |
 | [ ] | RC-16 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | Organization JSON-LD 住所を PostalAddress 型に統一（imo） |
 | [ ] | RC-17 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap が converter なし raw 読み取り（nits） |
-| [ ] | RC-18 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | sitemap lastmod を JST 日付に揃える（nits） |
+| [x] | RC-18 | 5015432068 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | sitemap lastmod を JST 日付に揃える（nits） |
 
 ### RC-14
 
@@ -388,7 +388,7 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 
 `lastmod` が UTC 日付のため JST 21 時以降は翌日付になる。JST ベースに揃えるなら luxon が候補。
 
-**判断結果**: 未着手
+**判断結果**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -398,7 +398,195 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 
 **評価**: 🟡 修正提案
 
+**ステータス**: ✅ 対応済み
+
+**判断理由**: `convertToDateString`（common / luxon / Asia/Tokyo）に委譲。UTC 日境界テスト追加。RC-23 と同時対応。
+
+## 評価セッション（2026-07-19 21:54・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-07-19 21:54 JST
+- **評価者**: Cursor Agent（review-comments-evaluate）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T12:42:52Z
+- **partial**: true（Codex usage limits / connect 案内）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼コメント、Codex limits/connect 案内）
+- **手順 4a 自動修正**: RC-20（🚨 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-19 | 3610576386 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | resolveRequestSite の host allowlist / SSRF 対策 |
+| [x] | RC-20 | 5015771623 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | error.vue の errorCode を computed 化 |
+| [ ] | RC-21 | 3610576392 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap コミュニティ取得を select 軽量化（imo） |
+| [ ] | RC-22 | 3610576408 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap イベント取得を select 軽量化（imo） |
+| [x] | RC-23 | 3610576415 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | formatSitemapLastmod を luxon 化（RC-18 と関連） |
+
+### RC-19
+
+**GitHub id**: 3610576386
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/resolveRequestSite.ts:37`
+
+**レビュワーのコメント（原文）**:
+
+[must] resolveRequestSite が x-forwarded-host / host をそのまま URL に組み立てていますが、Functions の直叩きでヘッダを偽装されると（例: ogpRequest の fetchIndexHtml が `${site}/index.html` を fetch しているため）任意ホストへの fetch = SSRF / オープンプロキシの踏み台になり得ます。Hosting 経由の正規ホストのみを許可する allowlist（shokujii.jp / *.web.app 等）か、少なくとも不正な host（IP リテラル・localhost 等）を reject するバリデーションを入れてください。
+
+**判断結果**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**判断理由**: `allowedPublicHost` で blocklist + allowlist（EVENT_HOST / shokujii.jp / *.firebaseapp.com / *.web.app）。`fetchIndexHtml` は `getEventSiteOrigin()`（EVENT_HOST 正本）固定。Vitest 12 件追加。
+
+### RC-20
+
+**GitHub id**: 5015771623（Copilot トップレベルレビュー）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `user/src/pages/[[...error]].vue:7-8`
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `user/src/pages/[[...error]].vue:7-8` `errorCode` を setup 時に 1 回だけ計算しているため、同じ catch-all ルート内で `/404` → `/520` のように遷移するとコンポーネントが再利用され、表示コードだけ前回値のまま残ります。`computed(() => parseErrorCodeFromRoute(route.path, route.params.error) ?? '404')` のように route 変更で再計算される形にしてください。
+
+**判断結果**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**判断理由**: `errorCode` を `computed` に変更。user lint / build:types PASS。
+
+### RC-21
+
+**GitHub id**: 3610576392
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/seoSitemap.ts:32`
+
+**レビュワーのコメント（原文）**:
+
+[imo] sitemap 用のクエリがドキュメント全体を取得しているため、イベント/コミュニティのドキュメントサイズが大きいとレスポンス生成時の転送量・メモリが無駄に増えます。sitemap 生成に必要なフィールド（community_account / updated_at）だけ select するのが安全です。
+
+**判断結果**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**評価**: 🟡 修正提案
+
 **ステータス**: 未着手
 
-**判断理由**: SEO 影響は軽微（nits）。luxon 依存追加の要否は別判断。
+**判断理由**: Firestore select 設計・converter 方針の判断が必要。工数 M のため自動修正対象外。
+
+### RC-22
+
+**GitHub id**: 3610576408
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/seoSitemap.ts:52`
+
+**レビュワーのコメント（原文）**:
+
+[imo] events の sitemap 生成クエリもドキュメント全体を取得しているため、転送量・メモリ観点で不要です。community_account / updated_at だけ select して軽量化してください。
+
+**判断結果**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**判断理由**: RC-21 と同系。自動修正対象外。
+
+### RC-23
+
+**GitHub id**: 3610576415
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/seo/sitemap.ts:18`
+
+**レビュワーのコメント（原文）**:
+
+[imo] 日付フォーマットに Date を直接使っていますが、このリポジトリでは日時処理は luxon に寄せるルールになっています（timezone/表現の統一）。formatSitemapLastmod も luxon で UTC の YYYY-MM-DD を返す形に寄せたいです。
+
+**判断結果**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**判断理由**: RC-18 と統合。`Date` 直書きを `convertToDateString`（luxon 経由）に置換。
+
+## 評価セッション（2026-07-19 22:07・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 22:07 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+
+- 指摘なし（RC-19 SSRF 対策: allowedPublicHost + fetchIndexHtml を EVENT_HOST 固定。RC-20 error.vue computed は同セッション含む）
+
+## 評価セッション（2026-07-19 22:09・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 22:09 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+
+- 指摘なし（RC-18/23: formatSitemapLastmod を convertToDateString / JST に統一）
 

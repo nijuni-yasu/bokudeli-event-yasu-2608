@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { resolveRequestSite } from './resolveRequestSite.js'
+
+vi.mock('./urls.js', () => ({
+  getEventHost: () => 'shokujii.jp',
+}))
 
 describe('resolveRequestSite', () => {
   it('uses first host when x-forwarded-host is comma-separated', () => {
@@ -36,5 +40,32 @@ describe('resolveRequestSite', () => {
       get: (name: string) => (name === 'host' ? 'shokujii.jp' : undefined),
     } as never)
     expect(site).toBe('https://shokujii.jp')
+  })
+
+  it('allows firebaseapp.com suffix for sandbox hosting', () => {
+    const site = resolveRequestSite({
+      protocol: 'https',
+      headers: { 'x-forwarded-host': 'bokudeli-event-yasu-2605.firebaseapp.com' },
+      get: () => undefined,
+    } as never)
+    expect(site).toBe('https://bokudeli-event-yasu-2605.firebaseapp.com')
+  })
+
+  it('rejects unknown host to prevent SSRF', () => {
+    const site = resolveRequestSite({
+      protocol: 'https',
+      headers: { 'x-forwarded-host': 'evil.com' },
+      get: () => undefined,
+    } as never)
+    expect(site).toBeUndefined()
+  })
+
+  it('rejects IP literal host', () => {
+    const site = resolveRequestSite({
+      protocol: 'https',
+      headers: { 'x-forwarded-host': '169.254.169.254' },
+      get: () => undefined,
+    } as never)
+    expect(site).toBeUndefined()
   })
 })

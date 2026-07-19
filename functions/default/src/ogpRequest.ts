@@ -3,7 +3,7 @@ import { getStorage } from 'firebase-admin/storage'
 import { https } from 'firebase-functions/v2'
 import { getEvent, type ShokujiiEvent } from './stores/event.js'
 import { getCommunityByAccount } from './stores/community.js'
-import { convertStoragePathToURL } from './utils/urls.js'
+import { convertStoragePathToURL, getEventSiteOrigin } from './utils/urls.js'
 import { getEventCoverStoragePath, getCommunityCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { createModuleLogger } from './utils/logger.js'
 import { resolveRequestSite } from './utils/resolveRequestSite.js'
@@ -71,8 +71,8 @@ const sendNotFound = (res: express.Response): void => {
     .send('<!doctype html><title>404 Not Found</title><h1>404 Not Found</h1>')
 }
 
-const fetchIndexHtml = async (site: string): Promise<{ html: string; response: Response } | undefined> => {
-  const response = await fetch(`${site}/index.html`)
+const fetchIndexHtml = async (): Promise<{ html: string; response: Response } | undefined> => {
+  const response = await fetch(`${getEventSiteOrigin()}/index.html`)
   if (!response.ok) {
     return undefined
   }
@@ -222,7 +222,7 @@ export const handleEventOgpRequest = https.onRequest(
     }
 
     try {
-      const indexResult = await fetchIndexHtml(site)
+      const indexResult = await fetchIndexHtml()
       if (indexResult === undefined) {
         res.status(500).send('Could not retrieve index.html')
         return
@@ -302,7 +302,7 @@ export const handleCommunityOgpRequest = https.onRequest(
     const communityAccount = paths[2]
 
     try {
-      const indexResult = await fetchIndexHtml(site)
+      const indexResult = await fetchIndexHtml()
       if (indexResult === undefined) {
         res.status(500).send('Could not retrieve index.html')
         return
