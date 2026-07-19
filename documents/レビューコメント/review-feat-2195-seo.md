@@ -246,3 +246,159 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 
 - 指摘なし（P3-S1〜3 構造化データ拡張、P3-3 Vue h1 整備）
 
+## 評価セッション（2026-07-19 20:00・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-07-19 20:00 JST
+- **評価者**: Cursor Agent（review-comments-evaluate）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T10:46:50Z
+- **partial**: true（Codex usage limits / 未接続）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼コメント、Codex limits/connect 案内）
+- **手順 4a 自動修正**: RC-14〜15（🚨 2件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-14 | 3610407930 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | resolveRequestSite で x-forwarded-proto を優先 |
+| [x] | RC-15 | 3610407935 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap イベント取得に enterprise_id == null 追加 |
+| [ ] | RC-16 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | Organization JSON-LD 住所を PostalAddress 型に統一（imo） |
+| [ ] | RC-17 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap が converter なし raw 読み取り（nits） |
+| [ ] | RC-18 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | sitemap lastmod を JST 日付に揃える（nits） |
+
+### RC-14
+
+**GitHub id**: 3610407930
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/resolveRequestSite.ts:24`
+
+**レビュワーのコメント（原文）**:
+
+`req.protocol` だけで site URL を組み立てると、プロキシ配下では `http` になり sitemap / canonical が `http://...` になる可能性があります（`x-forwarded-proto` を優先して解決したいです）。
+
+**判断結果**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**判断理由**: `resolveProtocol` を追加し `x-forwarded-proto`（カンマ区切り先頭）を優先。Vitest 2 件追加。
+
+### RC-15
+
+**GitHub id**: 3610407935
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/seoSitemap.ts:50`
+
+**レビュワーのコメント（原文）**:
+
+コミュニティは `enterprise_id == null` で PF のみを対象にしている一方、イベント側は `enterprise_id` フィルタが無く、enterprise イベントも sitemap に載る可能性があります（`firebase.json` では enterprise は noindex 付与済みなので、sitemap には混ぜない方が安全です）。
+
+**判断結果**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**判断理由**: `getPublicEventsForSitemap` に `.where('enterprise_id', '==', null)` を追加。`firestore.indexes.json` に複合インデックス（is_public + is_deleted + enterprise_id）を追加。
+
+### RC-16
+
+**GitHub id**: 5015432068（Copilot トップレベルレビュー）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/seo/jsonLd.ts:128-140`
+
+**レビュワーのコメント（原文）**:
+
+`buildOrganizationJsonLdNode` は `address: fullAddress` の平文文字列。統一するなら `buildEventJsonLdNode` と同じ構造化住所にすると一貫性が上がります。
+
+**判断結果**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**判断理由**: Rich Results への影響は軽微。imo レベルでマージブロック外。
+
+### RC-17
+
+**GitHub id**: 5015432068（Copilot トップレベルレビュー）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/seoSitemap.ts`
+
+**レビュワーのコメント（原文）**:
+
+他 store は withConverter + Zod だが seoSitemap は raw 読み取り。軽量ユースケースとして割り切り可だが統一観点では記録。
+
+**判断結果**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**判断理由**: RC-1 対応済みの意図的設計（updated_at 上書き回避）。withConverter 化は別途検討。
+
+### RC-18
+
+**GitHub id**: 5015432068（Copilot トップレベルレビュー）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/seo/sitemap.ts:15-18`
+
+**レビュワーのコメント（原文）**:
+
+`lastmod` が UTC 日付のため JST 21 時以降は翌日付になる。JST ベースに揃えるなら luxon が候補。
+
+**判断結果**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**判断理由**: SEO 影響は軽微（nits）。luxon 依存追加の要否は別判断。
+

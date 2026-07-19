@@ -47,6 +47,7 @@ export const getPublicEventsForSitemap = async (): Promise<SitemapEventEntry[]> 
     .collectionGroup('events')
     .where('is_public', '==', true)
     .where('is_deleted', '==', false)
+    .where('enterprise_id', '==', null)
     .get()
 
   return snapshot.docs.flatMap((doc) => {
