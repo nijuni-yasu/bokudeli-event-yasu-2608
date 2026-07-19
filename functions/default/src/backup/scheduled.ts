@@ -7,7 +7,7 @@ const BACKUP_SCHEDULE_OPTIONS = {
   region: 'asia-northeast1' as const,
   timeZone: 'Asia/Tokyo',
   memory: '2GiB' as const,
-  timeoutSeconds: 3600,
+  timeoutSeconds: 1800,
 }
 
 const RETENTION_SCHEDULE_OPTIONS = {
