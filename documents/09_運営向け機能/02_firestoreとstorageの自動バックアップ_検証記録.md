@@ -32,7 +32,7 @@ time gcloud storage cp -r "gs://<DEFAULT_BUCKET>/*" "gs://<TEST_BACKUP_BUCKET>/b
 | 項目 | 結果 |
 |:--|:--|
 | 所要時間（秒） | |
-| Functions 上限 3600 秒の 80%（2880 秒）以内 | はい / いいえ |
+| Functions 上限 1800 秒（Scheduled）の 80%（1440 秒）以内 | はい / いいえ |
 | 採用方式 | Functions / Cloud Run Job / Transfer Service |
 
 ---

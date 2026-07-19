@@ -352,9 +352,9 @@ time gcloud storage cp -r "gs://<DEFAULT_BUCKET>/*" "gs://<TEST_BACKUP_BUCKET>/b
 
 | 項目 | 目安 |
 |:--|:--|
-| Cloud Functions 第2世代 `timeoutSeconds` | 最大 **3600 秒（60 分）** |
+| Cloud Functions 第2世代 `timeoutSeconds`（**Scheduled / `onSchedule`**） | 最大 **1800 秒（30 分）**（HTTP は 3600 秒） |
 | 現行 `pollingTask` | 540 秒 — バックアップ用途には短い可能性 |
-| 判定 | 計測時間が **タイムアウトの 80% 未満** なら Functions 候補。超える場合は代替を検討 |
+| 判定 | 計測時間が **タイムアウトの 80% 未満（1440 秒）** なら Functions 候補。超える場合は代替を検討 |
 
 4. **代替案（Functions 不可の場合）**
 
