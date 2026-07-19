@@ -48,7 +48,8 @@ export const buildSeoHeadBlock = (params: {
   canonicalUrl: string
   jsonLd: Record<string, unknown>
 }): string => {
-  const jsonLdScript = `<script type="application/ld+json">${JSON.stringify(params.jsonLd)}</script>`
+  const safeJsonLd = JSON.stringify(params.jsonLd).replace(/<\//g, '<\\/')
+  const jsonLdScript = `<script type="application/ld+json">${safeJsonLd}</script>`
   return `${buildMetaDescriptionTag(params.metaDescription)}
 ${buildCanonicalLinkTag(params.canonicalUrl)}
 ${jsonLdScript}`

@@ -88,6 +88,23 @@ describe('injectSeoHtml', () => {
     })
     expect(result).toContain('<title>A &amp; B &lt;script&gt; | shokujii</title>')
   })
+
+  it('does not treat $ in title as replace special sequence', () => {
+    const result = injectSeoHtml(SAMPLE_HTML, {
+      ...baseContext,
+      pageTitle: 'Price $& sale',
+    })
+    expect(result).toContain('<title>Price $&amp; sale | shokujii</title>')
+  })
+
+  it('escapes closing script tag in JSON-LD', () => {
+    const result = injectSeoHtml(SAMPLE_HTML, {
+      ...baseContext,
+      jsonLd: { '@context': 'https://schema.org', '@type': 'Event', name: '</script><script>alert(1)' },
+    })
+    expect(result).toContain('"name":"<\\/script><script>alert(1)"')
+    expect(result).not.toMatch(/<script type="application\/ld\+json">[^<]*<\/script><script>/)
+  })
 })
 
 describe('SEO markers', () => {

@@ -20,6 +20,5 @@ export const toPlainTextExcerpt = (input: string, maxLength = META_DESCRIPTION_M
   return plain.substring(0, maxLength)
 }
 
-/** OGP / meta 用（既存 convertToOgpString 互換: 100 文字 + 属性エスケープ） */
-export const toOgpExcerpt = (input: string, maxLength = 100): string =>
-  escapeHtmlAttribute(toPlainTextExcerpt(input, maxLength))
+/** OGP / meta 用（100 文字切り出し。HTML 属性エスケープは buildOgpMetaTags 側で行う） */
+export const toOgpExcerpt = (input: string, maxLength = 100): string => toPlainTextExcerpt(input, maxLength)

@@ -30,8 +30,10 @@ const replaceSection = (html: string, beginMarker: string, endMarker: string, re
   return html.slice(0, afterBegin) + replacement + html.slice(endIndex)
 }
 
-const replaceTitle = (html: string, title: string): string =>
-  html.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtmlText(title)}</title>`)
+const replaceTitle = (html: string, title: string): string => {
+  const escaped = escapeHtmlText(title)
+  return html.replace(/<title>[^<]*<\/title>/, () => `<title>${escaped}</title>`)
+}
 
 export const injectSeoHtml = (html: string, context: SeoPageContext): string => {
   const documentTitle = buildDocumentTitle(context.pageTitle)

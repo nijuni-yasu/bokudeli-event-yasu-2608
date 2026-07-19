@@ -8,6 +8,20 @@ const logger = createModuleLogger('sitemapRequest')
 
 const SITEMAP_CACHE_CONTROL = 'public, max-age=3600, s-maxage=3600'
 
+const resolveRequestSite = (req: https.Request): string | undefined => {
+  const forwardedHost = req.headers['x-forwarded-host']
+  const host =
+    typeof forwardedHost === 'string'
+      ? forwardedHost
+      : Array.isArray(forwardedHost)
+        ? forwardedHost[0]
+        : req.get('host')
+  if (host == null || host === '') {
+    return undefined
+  }
+  return `${req.protocol}://${host}`
+}
+
 const buildSitemapEntries = (
   site: string,
   communities: Awaited<ReturnType<typeof getPublicCommunitiesForSitemap>>,
@@ -38,7 +52,11 @@ export const handleSitemapRequest = https.onRequest(
     memory: '512MiB',
   },
   async (req: https.Request, res: express.Response) => {
-    const site = `${req.protocol}://${req.headers['x-forwarded-host']}`
+    const site = resolveRequestSite(req)
+    if (site == null) {
+      res.status(400).send('Bad Request')
+      return
+    }
 
     try {
       const [communities, events] = await Promise.all([getPublicCommunitiesForSitemap(), getPublicEventsForSitemap()])
