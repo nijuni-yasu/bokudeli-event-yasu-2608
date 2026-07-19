@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /c/
+Allow: /communitylist
+Disallow: /manage/
+Disallow: /chat/
+Disallow: /cart
+Disallow: /login
+Disallow: /register/
+Disallow: /profile
+Disallow: /pass-code
+Disallow: /inbox
+Disallow: /mypage
+
+Sitemap: https://shokujii.jp/sitemap.xml
