@@ -22,19 +22,19 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-06-30**（#2137/#2138/#2139 参加者画面 UI を反映）
+最終更新: **2026-07-19**（WS-M 完了・**A-4 ✅** [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) / [#2147](https://github.com/nijuniinc/bokudeli-event-new/pull/2147)）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
-| WS-A（Phase 0） | 5 | 1 | 6 |
+| WS-A（Phase 0） | 6 | 0 | 6 |
 | WS-B（IdP・本番前） | 6 | 0 | 6 |
 | WS-C（スキーマ・MVP 最小） | 2 | 0 | 2 |
 | WS-D（v0.1 残） | 5 | 2 | 7 |
 | WS-E（前倒し） | 5 | 2 | 7 |
-| WS-F（PF 露出） | 0 | 2 | 2 |
-| **WS-M（development マージ）** | **7** | **5** | **12** |
+| WS-F（PF 露出） | 2 | 0 | 2 |
+| **WS-M（development マージ）** | **12** | **0** | **12** |
 | WS-G（Phase 2・MVP 外） | 0 | 8 | 8 |
-| **WS-A〜F 全タスク** | **21** | **8** | **29** |
+| **WS-A〜F 全タスク** | **24** | **5** | **29** |
 | ゲート G1〜G3 | 3 | 0 | 3 |
 | 本番ブロッカー RC | 4 | 0 | 4 |
 
@@ -63,7 +63,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ID | タスク | 02 | 紐付け | 重要度 | 依存 |
 |:--|:--|:--|:--|:--|:--|:--|
-| - [ ] | M-1 | `enterprise_id: null` の materialize（schema nullable 化 / converter）＋既存 PF `communities` / `events` バックフィル | T1 | F-1 | 🚨 前提 | — |
+| ✅ | M-1 | `enterprise_id: null` の materialize（schema nullable 化 / converter）＋既存 PF `communities` / `events` バックフィル | T1 | F-1 | 🚨 前提 | — |
 | ✅ | M-2 | PF 版の全一覧/検索クエリに `where('enterprise_id','==',null)` 露出フィルタ追加 | T2 | F-1 | 🚨 必須 | M-1 |
 | ✅ | M-3 | 複合インデックス追加（`enterprise_id` + `is_public` + 既存 orderBy）。**先行デプロイ**（Phase 2 G-6 後は `publish_scope` 版を追加） | T3 | — | 🚨 必須 | M-1 |
 | ✅ | M-4 | Rules 後方互換テスト（PF ユーザーが既存 PF doc を read 可・エンプラ doc を read 不可） | T4 | A-5 | 🟡 強推 | — |
@@ -73,19 +73,19 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 **メモ（責務分界）**
 
-- **M-1（本リポジトリ）**: ✅ `Event` / `Community` schema nullable 化・converter materialize・`Event.test.ts` / `Community.test.ts` 済。**未**: 本番バックフィル完了確認。`member_orders` 等は T1 batch 外 — [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)
-- **M-1（[`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch)）**: `tasks/0043_backfill_enterprise_id_null.js` あり。**本番実行・完了確認待ち**。M-2 切替はバックフィル完了後（02 §2.4）。
-- **M-2**: ✅ `user` の PF 一覧・検索・collectionGroup クエリに `enterprise_id == null` を追加済み（index・communitylist・profile・community 詳細・manage 系・`userEventList`）。**本番反映は T1 backfill 完了後**（§2.4）。
-- **M-2〜M-3**: F-1 のマージ必須サブセット。F-1 全体（他 collectionGroup 等）は WS-F で継続追跡。
-- **デプロイ順（戦略 B）**: M-3 → M-4 / M-5（Rules）→ M-2（アプリ）。02 §4 参照。
+- **M-1（本リポジトリ）**: ✅ schema nullable 化・converter materialize・`Event.test.ts` / `Community.test.ts` 済。`member_orders` 等は T1 batch 外 — [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)
+- **M-1（[`bokudeli-event-batch`](https://github.com/nijuniinc/bokudeli-event-batch)）**: ✅ `tasks/0043_backfill_enterprise_id_null.js` 本番実行・完了確認済
+- **M-2**: ✅ コード実装 + **本番反映済**（T1 backfill 完了後）
+- **M-2〜M-3**: F-1 のマージ必須サブセット ✅。F-1 全体（他 collectionGroup 等）は WS-F で継続追跡
+- **デプロイ順（戦略 B）**: ✅ M-3 → M-4 / M-5（Rules）→ M-2（アプリ）本番反映済（02 §4）
 
 **WS-M 完了条件**（02 §6・§5 着地条件）
 
-- [ ] **M-8** M-1〜M-5 がすべて ✅（戦略 B: WS-F 同梱マージ）。現状 M-2〜M-5 ✅、M-1（本番 backfill）未完
-- [ ] **M-9** PF 版トップ／コミュニティ一覧が、公開エンプラデータ存在下でも正常表示（permission-denied なし・エンプラ非表示）
+- ✅ **M-8** M-1〜M-5 すべて ✅
+- ✅ **M-9** PF 版トップ／コミュニティ一覧が、公開エンプラデータ存在下でも正常表示
 - ✅ **M-10** Rules 後方互換テストがグリーン（`tests/firestore-rules/src/enterprise.test.ts`）
-- [ ] **M-11** 本番反映順: インデックス（M-3）→ Rules（M-4 / M-5）→ アプリ（M-2）
-- [ ] **M-12** #2071 着地 — 本番ブロッカー RC-36 / RC-82 / RC-96 / RC-92 解消 ＋ `development` へマージ（RC 4 件 ✅。**残**: M-1 本番 backfill・M-8〜M-11）
+- ✅ **M-11** 本番反映順: インデックス（M-3）→ Rules（M-4 / M-5）→ アプリ（M-2）
+- ✅ **M-12** #2071 着地 — [PR #2071](https://github.com/nijuniinc/bokudeli-event-new/pull/2071) を `development` へマージ完了（merge commit `119681b65`、2026-06-26）
 
 > M-7: `users` に `enterprise_id` を載せる方針で判断完了（RC-70 受容）。M-6 はマージブロッカーではない（02 §3）。
 
@@ -96,7 +96,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | ✅ | A-1 | memberOrders / stripe の subsidy 分岐を純粋関数へ抽出＋ユニットテスト（本丸） | PA-21a〜f | 前提 | — |
 | ✅ | A-2 | `if==enterprise` の DI 化（base 3 ファイル） | PA-30a-b / PA-31a-b | 前提 | — |
 | ✅ | A-3 | PF 越境ログインのルートガード（暫定防御） | PA-03d | 必須 | — |
-| - [ ] | A-4 | PF 版アカウント作成 / ログイン入口の分離（誤作成是正） — **WS-A スコープ外**（[#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) で別途実装） | PA-05 | 必須 | — |
+| ✅ | A-4 | PF 版アカウント作成 / ログイン入口の分離（誤作成是正） | PA-05 / [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) | 必須 | — |
 | ✅ | A-5 | CI paths フィルタ＋ Rules CI 必須化 | PA-22a-b / PA-23 | 必須 | — |
 | ✅ | A-6 | functions 選択的デプロイ分割（デプロイ結合の解消） | PA-24a-b | 必須 | — |
 
@@ -105,7 +105,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - **A-1**: ✅ [#2119](https://github.com/nijuniinc/bokudeli-event-new/issues/2119)。`addEnterpriseSubsidyMenusToCart` 追加・`memberOrders.ts` `addToCart` 委譲。helper テスト追加。
 - **A-2**: ✅ `EventPaymentUiStrategy` / `EventDraftPreparer` / `CartMonthlyUsageLoader` 注入完了（`eventPaymentUiStrategy.ts`・`eventDraft.ts`・`cartMonthlyUsage.ts`、base 3 ファイル + enterprise 側 loader）。
 - **A-3**: ✅ PF `user` router guard（`enterpriseUserClaims` + `/` リダイレクト + 通知 i18n）。エンプラ `/admin` token とホスト照合（RC-96）も ✅。
-- **A-4**: [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090)（PA-05）で別イシュー。**WS-A（#2119）スコープ外**。ログイン / 新規登録入口の分離は別ブランチ・別 PR。
+- **A-4 ✅** — [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) / [#2147](https://github.com/nijuniinc/bokudeli-event-new/pull/2147)。`user/src/router/authEntryGuards.ts`（`rejectNewUserOnLogin` 等）で `/login` の暗黙作成拒否・`/register` と OAuth 復帰の入口分離。Vitest `authEntryGuards.test.ts` あり。
 - **A-5**: ✅ `pr-verify.yml` paths-filter・enterprise verify。#2119 で `development` branch protection に context `verify` / `test`（Rules CI）登録（[03_branch_protection.md](../../AIエージェント/03_branch_protection.md) §0-3-2b）。
 - **A-6**: ✅ `deploy_functions.yml` hybrid / pf / enterprise 3 job 並列 + `workflow_dispatch` 個別発火。
 
@@ -177,10 +177,10 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| - [ ] | F-1 | PF の全一覧・検索・collectionGroup に `where('enterprise_id', '==', null)` を必須化。T1 batch は `communities` / `events` のみ — `member_orders` 等は [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)。エンプラゲストの PF 掲載（`allow_guest && publish_scope === 'public'`）は **G-1 / MVP 外**（[04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1） | §3-1 | 必須 | — |
-| - [ ] | F-2 | 未ログイン時はエンプラ画面をログインへリダイレクト（ゲスト参加=allow_guest による未ログイン閲覧例外は MVP 外・将来対応） | §3-2 | 必須 | — |
+| ✅ | F-1 | PF の全一覧・検索・collectionGroup に `where('enterprise_id', '==', null)` を必須化。T1 batch は `communities` / `events` のみ — `member_orders` は [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill) の batch（`0044`）＋本 PR の schema / 書き込み / CG フィルタ。エンプラゲストの PF 掲載（`allow_guest && publish_scope === 'public'`）は **G-1 / MVP 外**（[04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1） | §3-1 | 必須 | — |
+| ✅ | F-2 | 未ログイン時はエンプラ画面をログインへリダイレクト（ゲスト参加=allow_guest による未ログイン閲覧例外は MVP 外・将来対応） | §3-2 | 必須 | — |
 
-**メモ（F-1 残）**: T2 一覧は ✅。共有 store の CG（`event.ts` `event_id` 横断、`currentUser` カート等）は §3 メモ・[02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill)。当該 CG に `== null` を載せる前に batch + PF 書き込み経路の materialize が必要。
+**メモ（F-1）**: T2 一覧 ✅。共有 store CG（`event.ts` `event_id` 横断、`currentUser` カート、`userOrderHistoryList`）に PF / enterprise 三値フィルタを追加。`member_orders` backfill（[`bokudeli-event-batch` `0044`](https://github.com/nijuniinc/bokudeli-event-batch)）は **CG フィルタ本番切替前**に実行。デプロイ順: Functions（null 明示書き込み）→ batch `0044` → index deploy → クライアント。
 
 ### WS-G: Phase 2（MVP 外・PF/エンプラ横断含む）
 
@@ -224,15 +224,15 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | フェーズ | 含むワークストリーム | 完了の意味 |
 |:--|:--|:--|
 | **Merge** | **WS-M** | #2071 を PF 版影響ゼロで `development` へ取り込み |
-| Phase 0 | WS-A（A-4 を除く本ブランチ分 ＋ A-4 は #2090 別 PR）／ WS-F（独立着手可） | リリース独立・テスト独立・越境ログイン抑止・PF 露出防止 |
+| Phase 0 | WS-A（**A-1〜A-6 ✅**）／ WS-F（独立着手可） | リリース独立・テスト独立・越境ログイン抑止・PF 露出防止 |
 | Phase 1 | WS-B（**B-1〜B-6 ✅**）／ WS-C（**C-1 ✅**、**G1 ✅**、C-5 ✅） | 本番投入の認証基盤 ＋ 型分岐方式確定 |
 | MVP 仕上げ | WS-D（v0.1 残 7 件）／ WS-E（E-2〜E-5）／ WS-F 仕上げ | MVP 機能の完成（`is_public`・即参加モデル・月次請求書） |
 | Phase 2 | WS-G（3 軸・publish_scope・ゲスト等） | PF/エンプラ横断の機能拡張 |
 
 **フェーズ完了チェック**
 
-- [ ] **WS-M 完了** — M-1〜M-12 全項目 ✅（最初の関門）
-- [ ] **Phase 0 完了** — WS-A 全項目 ✅（**A-4 は [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) 別 PR で可**）＋ WS-F の F-1・F-2 ✅
+- [x] **WS-M 完了** — M-1〜M-12 全項目 ✅（最初の関門）
+- [x] **Phase 0 完了** — WS-A 全項目 ✅ ＋ WS-F の F-1・F-2 ✅
 - [x] **Phase 1 完了** — WS-B 全項目 ✅ ＋ WS-C（**C-1** ✅、C-5 ✅）＋ **G1** ✅
 - [ ] **MVP 仕上げ完了** — WS-D・WS-E（E-2〜E-5）・WS-F 全項目 ✅
 - [ ] **本番ブロッカー RC 全解消** — 下記 §本番ブロッカー 全項目 ✅
@@ -254,7 +254,7 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 ```
 
 - 2 大山場: **A-1（Phase 0）** と **B-3（Phase 1）** は独立。人員 2 系統なら同時進行可。
-- MVP クリティカルパス: **M-1 backfill 完了 → #2071 着地** と **B-3（IdP onboarding）**。
+- **WS-M ✅（2026-07-19）** — #2071 着地済。MVP クリティカルパスは **D-1 / D-5 / E-2** へ移行（**F-1・F-2 ✅** で Phase 0 完了）。
 - Phase 2 結節点: **G-5（PF 合わせた参加モデル）→ G-6（PF 横断 publish_scope）**（[ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md)）。
 
 ---
@@ -310,7 +310,7 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 |:--|:--|:--|
 | ~~Q-1~~ | ~~E-6 パスワード保護を MVP に含めるか~~ | **Phase 2（G-8）へ確定**（ADR-003 §4） |
 | ~~Q-2~~ | ~~C-3 community 公開区分を PF 版へ展開するか~~ | **Phase 2（G-6）で PF/エンプラ横断 Migrate 時に判断** |
-| Q-3 | dev/enterprise を development へ取り込む段取り | **WS-M** + [02_developmentマージ.md](./02_developmentマージ.md)（PF 版影響ゼロ・戦略 B 推奨） |
+| ~~Q-3~~ | ~~dev/enterprise を development へ取り込む段取り~~ | **✅ 完了**（[#2071](https://github.com/nijuniinc/bokudeli-event-new/pull/2071) 着地・[02_developmentマージ.md](./02_developmentマージ.md)） |
 | Q-4 | Phase 2 で PF 版にも `join_type: approval`（参加申請）を入れるか | G-5 着手前に PF 版仕様（[10_コミュニティに参加・退会](../../03_参加者獲得/10_コミュニティに参加・退会.md)）と合わせて決定 |
 
 ---
@@ -343,3 +343,5 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-29 | **月次請求書 PDF を MVP 前倒し** — WS-D に D-6（`enterpriseBillInvoice`）・D-7（`/admin/invoices`）追加。`04_詳細_請求` B-1 更新、`03_課金` MVP-C を PDF 化 |
 | 2026-06-29 | 実装照合: **D-2 / D-3 / D-4 / D-6 / D-7 / E-4** を ✅ に更新。WS-D 5/7・WS-E 1/4・WS-A〜F 17/26 |
 | 2026-06-30 | **E-3 ✅** — セッションタイムアウトを無操作 1 週間に変更。RC-23（login 画面トースト）対応 |
+| 2026-07-19 | **WS-M ✅** — M-1 本番 backfill・M-9 確認・M-11 本番反映・M-12 [#2071](https://github.com/nijuniinc/bokudeli-event-new/pull/2071) 着地（`119681b65`）。進捗サマリ WS-M 12/12 |
+| 2026-07-19 | **A-4 ✅** — [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) / [#2147](https://github.com/nijuniinc/bokudeli-event-new/pull/2147)。WS-A 6/6 完了 |
