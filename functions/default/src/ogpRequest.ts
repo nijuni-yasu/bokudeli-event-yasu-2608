@@ -229,12 +229,7 @@ export const handleEventOgpRequest = https.onRequest(
       }
 
       const eventData = await getEvent(eventId)
-      if (
-        eventData === undefined ||
-        !eventData.is_public ||
-        eventData.is_deleted ||
-        eventData.enterprise_id != null
-      ) {
+      if (eventData === undefined || !eventData.is_public || eventData.is_deleted || eventData.enterprise_id != null) {
         sendNotFound(res)
         return
       }
