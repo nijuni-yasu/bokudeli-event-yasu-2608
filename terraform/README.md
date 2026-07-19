@@ -195,7 +195,7 @@ terraform apply
 | -------- | ---- |
 | GCS バケット | `gs://<PROJECT_ID>-firestore-backups`（`firestoreExportDaily` 等 Scheduled Functions の export 先。`storage_class = STANDARD`、monthly/ は lifecycle で COLDLINE 移行） |
 | GCS バケット | `gs://<PROJECT_ID>-storage-backups`（`storageBackupDaily` 等 Scheduled Functions の Storage フルコピー先） |
-| バケット IAM | Firestore サービスエージェントに `roles/storage.admin` |
+| バケット IAM | Firestore サービスエージェントに `roles/storage.objectAdmin` |
 | プロジェクト IAM | Compute / App Engine デフォルト SA に `roles/datastore.importExportAdmin` |
 | プロジェクト IAM | Firebasestorage SA に `roles/firebaserules.firestoreServiceAgent`（Storage Rules の `firestore.get()` 用） |
 | Firebase Hosting サイト | `<PROJECT_ID>`（user）、`<PROJECT_ID>-admin`（partner）、`<PROJECT_ID>-enterprise`（enterprise）。初回 apply 時のみ。既存 site は [import](#import-一覧gcp-は変更しない) |
