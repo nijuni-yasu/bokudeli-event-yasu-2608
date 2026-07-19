@@ -28,7 +28,7 @@ resource "google_storage_bucket" "default" {
 resource "google_storage_bucket" "firestore_backups" {
   name                        = format("%s-firestore-backups", var.project)
   location                    = var.region
-  storage_class               = "ARCHIVE"
+  storage_class               = "STANDARD"
   uniform_bucket_level_access = true
 
   lifecycle {
@@ -42,17 +42,6 @@ resource "google_storage_bucket" "firestore_backups" {
     }
     action {
       type = "Delete"
-    }
-  }
-
-  lifecycle_rule {
-    condition {
-      age            = 30
-      matches_prefix = ["weekly/"]
-    }
-    action {
-      type          = "SetStorageClass"
-      storage_class = "COLDLINE"
     }
   }
 
@@ -89,17 +78,6 @@ resource "google_storage_bucket" "storage_backups" {
     }
     action {
       type = "Delete"
-    }
-  }
-
-  lifecycle_rule {
-    condition {
-      age            = 30
-      matches_prefix = ["weekly/"]
-    }
-    action {
-      type          = "SetStorageClass"
-      storage_class = "COLDLINE"
     }
   }
 
