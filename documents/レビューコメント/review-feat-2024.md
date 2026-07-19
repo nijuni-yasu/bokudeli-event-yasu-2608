@@ -523,3 +523,216 @@ Ask モード self-review 無限ループ対策（案 A/B/C）: `composer_mode=c
 **想定工数**: S
 
 **判断理由**: スキル起動ターンでも Ask 判定を維持するため。3b で `start_task` にマージ処理を追加済み。
+
+---
+
+## 評価セッション（2026-07-19 15:57・review-comments-evaluate）
+
+- **評価日時**: 2026-07-19 15:57 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T06:44:43Z
+- **partial**: false
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 5014744961、Codex 接続案内なし）
+- **手順 4a 自動修正**: なし（Copilot コミット `5d29f6478` で対応済み・ローカル未 pull）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-27 | 5014779108 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | export prefix を秒→ミリ秒精度に<br>リトライ時の GCS 衝突回避 |
+| [x] | RC-28 | 5014779108 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | retention が当月 incomplete run を誤削除<br>currentPeriodSortKey でスキップ |
+| [x] | RC-29 | 5014779108 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | stop-gate.sh の loop_count 無条件バイパス削除<br>gate-skip 委譲に一本化 |
+| [x] | RC-30 | 5014779108 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔧 運用 | 🔧 微修正 | S | firestoreExport の export/promise 失敗を<br>logger.error で記録して rethrow |
+
+**識別子**: RC-27（GitHub id: 5014779108）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/constants.ts:45`
+
+**レビュワーのコメント（原文）**:
+
+🚨 **[must]** `buildFirestoreExportOutputUriPrefix` のフォルダ名を `yyyy-MM-dd'T'HH:mm:ss.SSS`（ミリ秒精度）に変更してリトライ時の prefix 衝突リスクを排除
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み（origin `5d29f6478`）
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+**識別子**: RC-28（GitHub id: 5014779108）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/retention.ts:192`
+
+**レビュワーのコメント（原文）**:
+
+🚨 **[must]** `cleanupStorageTier` に当日（当月）バックアップの誤削除ガードを追加。`sortKey === currentPeriodSortKey` の場合は削除をスキップ
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み（origin `5d29f6478`）
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+**識別子**: RC-29（GitHub id: 5014779108）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `.cursor/hooks/stop-gate.sh` / `.claude/hooks/stop-gate.sh`
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** `loop_count >= 1` での無条件 gate バイパス（「案 B」ブロック）を削除。ループ回避の判定は `stop-gate-check.sh` の `self-review-gate-skip` に委譲
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み（origin `5d29f6478`）
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: Ask / followup ターンの skip（案 A/C）でループは止まるため、Agent モードでの無条件バイパスは不要。Copilot 修正は妥当。
+
+---
+
+**識別子**: RC-30（GitHub id: 5014779108）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/firestoreExport.ts`
+
+**レビュワーのコメント（原文）**:
+
+[imo] `exportDocuments()` と `operation.promise()` を try/catch で囲み、失敗時に `logger.error` で `tier` / `outputUriPrefix` / `operationName` を記録してから rethrow
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み（origin `5d29f6478`）
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔧 運用
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+**スキップ（RC 採番なし）**
+
+- terraform README STANDARD / objectAdmin 記載 — 既に修正済みの再確認（Copilot コメント内）
+
+---
+
+## 評価セッション（2026-07-19 16:08・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 16:08 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3a 自動修正**: RC-31（firestoreExport 型注釈）、RC-32（backup.test 期待値）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-31 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | exportDocuments の `[0]` 型注釈が<br>TS2339 で CI ビルド失敗 |
+| [x] | RC-32 | なし・エージェントレビュー | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🧪 テスト | 🔧 微修正 | S | RC-27 ミリ秒 prefix 変更後<br>backup.test 期待値が未更新 |
+
+### レビュー対象
+
+Copilot コミット `5d29f6478` 後の CI ビルド失敗修正（`firestoreExport.ts`）および RC-27 による prefix 形式変更に伴うテスト期待値の整合。
+
+**識別子**: RC-31（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/backup/firestoreExport.ts:18`
+
+**該当コード**:
+
+```diff
+-  let operation: Awaited<ReturnType<typeof adminClient.exportDocuments>>[0]
++  let operation
+   try {
+     ;[operation] = await adminClient.exportDocuments({
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `Awaited<ReturnType<typeof adminClient.exportDocuments>>[0]` は `exportDocuments` のコールバック用オーバーロードにより `ReturnType` が `void` と推論され TS2339（Property '0' does not exist on type 'void'）で CI ビルド失敗 → 型注釈を削除し分割代入で推論させる
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+**識別子**: RC-32（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/backup/backup.test.ts:63`
+
+**該当コード**:
+
+```diff
+     expect(buildFirestoreExportOutputUriPrefix('my-project', 'daily', startedAt)).toBe(
+-      'gs://my-project-firestore-backups/daily/2026-06-03T17:00:00/',
++      'gs://my-project-firestore-backups/daily/2026-06-03T17:00:00.000/',
+     )
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: RC-27 で `buildFirestoreExportOutputUriPrefix` がミリ秒精度（`.SSS`）に変更されたが、`backup.test.ts` の期待値が秒精度のまま残り vitest が失敗 → 期待値を `.000` 付きに更新
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🧪 テスト
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+

@@ -60,7 +60,7 @@ describe('backup paths', () => {
   it('buildFirestoreExportOutputUriPrefix appends run folder under tier', () => {
     const startedAt = DateTime.fromISO('2026-06-03T17:00:00', { zone: 'Asia/Tokyo' })
     expect(buildFirestoreExportOutputUriPrefix('my-project', 'daily', startedAt)).toBe(
-      'gs://my-project-firestore-backups/daily/2026-06-03T17:00:00/',
+      'gs://my-project-firestore-backups/daily/2026-06-03T17:00:00.000/',
     )
   })
 

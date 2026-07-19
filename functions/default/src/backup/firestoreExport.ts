@@ -15,7 +15,7 @@ export const exportFirestore = async (tier: BackupTier): Promise<void> => {
 
   logger.info('Starting Firestore export', { tier, outputUriPrefix })
 
-  let operation: Awaited<ReturnType<typeof adminClient.exportDocuments>>[0]
+  let operation
   try {
     ;[operation] = await adminClient.exportDocuments({
       name: databaseName,
