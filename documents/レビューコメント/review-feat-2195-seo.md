@@ -590,3 +590,64 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 
 - 指摘なし（RC-18/23: formatSitemapLastmod を convertToDateString / JST に統一）
 
+## 評価セッション（2026-07-19 22:16・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 22:16 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3a 自動修正**: RC-24（🚨 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-24 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ogpRequest が enterprise コミュニティ・イベントも SEO 200 を返していた |
+
+### RC-24
+
+**GitHub id**: なし（エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/ogpRequest.ts:231-241`, `functions/default/src/ogpRequest.ts:311-320`
+
+**該当コード**:
+
+```diff
+-      if (eventData === undefined || !eventData.is_public || eventData.is_deleted) {
++      if (
++        eventData === undefined ||
++        !eventData.is_public ||
++        eventData.is_deleted ||
++        eventData.enterprise_id != null
++      ) {
+         sendNotFound(res)
+         return
+       }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: RC-15 で sitemap は `enterprise_id == null` に限定したが、`ogpRequest.ts` のイベント・コミュニティハンドラは `enterprise_id` を見ていない。エンプラ向けコンテンツが `shokujii.jp/c/...` に直接アクセスされた場合、canonical / JSON-LD / プリレンダー付き HTML が 200 で返り、PF サイト上でインデックス可能になる。`enterprise_id != null` の場合は `sendNotFound` とする。
+
+**判断結果**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**判断理由**: イベント・コミュニティ両ハンドラに `enterprise_id != null` ガードを追加。sitemap（RC-15）と方針を揃えた。
+
+- 再レビュー（自動修正後）: 新規指摘なし
+

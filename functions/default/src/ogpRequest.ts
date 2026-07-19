@@ -229,7 +229,12 @@ export const handleEventOgpRequest = https.onRequest(
       }
 
       const eventData = await getEvent(eventId)
-      if (eventData === undefined || !eventData.is_public || eventData.is_deleted) {
+      if (
+        eventData === undefined ||
+        !eventData.is_public ||
+        eventData.is_deleted ||
+        eventData.enterprise_id != null
+      ) {
         sendNotFound(res)
         return
       }
@@ -309,7 +314,12 @@ export const handleCommunityOgpRequest = https.onRequest(
       }
 
       const communityData = await getCommunityByAccount(communityAccount)
-      if (communityData === undefined || !communityData.is_public || !communityData.is_approved) {
+      if (
+        communityData === undefined ||
+        !communityData.is_public ||
+        !communityData.is_approved ||
+        communityData.enterprise_id != null
+      ) {
         sendNotFound(res)
         return
       }
