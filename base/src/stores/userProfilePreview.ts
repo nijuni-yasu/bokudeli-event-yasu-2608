@@ -17,17 +17,23 @@ export const useUserProfilePreviewStore = (targetUserId: string) => {
     const error = ref<unknown>(null)
     /** target ユーザー存在しない・退会済みのとき true（Callable が `not-found` を返した） */
     const notFound = ref(false)
+    /** エンプラ: 他社・権限なしのとき true（Callable が `permission-denied` を返した） */
+    const accessDenied = ref(false)
 
     const load = async () => {
       loading.value = true
       error.value = null
       notFound.value = false
+      accessDenied.value = false
       try {
         const response = await getUserProfilePreview({ target_user_id: targetUserId })
         data.value = response.data
       } catch (err: unknown) {
         if (err instanceof FirebaseError && err.code === 'functions/not-found') {
           notFound.value = true
+          data.value = null
+        } else if (err instanceof FirebaseError && err.code === 'functions/permission-denied') {
+          accessDenied.value = true
           data.value = null
         } else {
           error.value = err
@@ -49,6 +55,7 @@ export const useUserProfilePreviewStore = (targetUserId: string) => {
       loading,
       error,
       notFound,
+      accessDenied,
       load,
       reload,
     }

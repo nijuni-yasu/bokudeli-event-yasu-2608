@@ -965,6 +965,8 @@ export default {
     logout_modal_title: 'ログアウトしますか？',
     account_deleted: 'このユーザーは利用できません',
     user_not_found: '存在しないユーザーです',
+    access_denied: '閲覧権限がありません',
+    department_label: '部署: {department}',
     tab_profile: 'プロフィール',
     tab_usage: '利用状況',
     tab_friends: 'ともだち',

@@ -13,7 +13,6 @@ import EnterpriseSubsidyUsagePanel from '@/components/profile/EnterpriseSubsidyU
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
 import { useUserOrderHistoryByUserId } from '@shokujii/base/stores/userOrderHistoryList.js'
-import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
 import {
@@ -98,9 +97,27 @@ const notification = useNotification()
 
 const { t: $t } = useI18n()
 
-const { user, exists } = storeToRefs(useUserStore(profileUserId))
 const currentUserStore = useCurrentUserStore()
 const { user: loginUser } = storeToRefs(currentUserStore)
+
+const previewStore = useUserProfilePreviewStore(profileUserId)
+const {
+  data: previewData,
+  loading: previewLoading,
+  error: previewError,
+  notFound: previewNotFound,
+  accessDenied: previewAccessDenied,
+} = storeToRefs(previewStore)
+
+const profileDisplayUser = computed(() => {
+  const profile = previewData.value?.user_profile
+  if (profile == null) {
+    return null
+  }
+  return new User(profile.user_id, profile)
+})
+
+const profileDepartment = computed(() => previewData.value?.department ?? null)
 
 const cancelLoadingEventId = ref<string | null>(null)
 /** UserEventCard のキャンセルダイアログの開閉（開いているイベントの event_id、閉じているときは null） */
@@ -110,9 +127,18 @@ const isOwner = computed(() => loginUser.value?.user_id === profileUserId)
 /** 福利厚生上限設定あり（利用状況タブ表示可否）。未判定は null */
 const usageTabEligible = ref<boolean | null>(null)
 const showUsageTab = computed(() => isOwner.value && usageTabEligible.value === true)
-/** Firestore 上に users ドキュメントが無い、または退会済み */
-const isInvalidProfile = computed(() => exists.value === false || (user.value != null && user.value.is_deleted))
-const isProfileLoading = computed(() => profileUserId !== '' && exists.value === null)
+/** Callable 認可ゲート: プレビュー取得成功まで本体を出さない（RC-44） */
+const isProfileGateLoading = computed(
+  () =>
+    profileUserId !== '' &&
+    previewLoading.value &&
+    previewData.value == null &&
+    !previewNotFound.value &&
+    !previewAccessDenied.value,
+)
+const isProfileAccessDenied = computed(() => previewAccessDenied.value)
+const isInvalidProfile = computed(() => previewNotFound.value)
+const isProfileReady = computed(() => previewData.value != null && profileDisplayUser.value != null)
 
 const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
   profileFilter: { kind: 'enterprise', enterpriseId: enterpriseId.value },
@@ -130,13 +156,12 @@ const {
 } = storeToRefs(userOrderHistoryStore)
 
 watch(
-  () => [profileUserId, isOwner.value, exists.value, user.value?.is_deleted] as const,
-  ([pid, owner, ex, deleted]) => {
-    if (!owner || pid === '' || ex === false || deleted === true) {
+  () => [profileUserId, isOwner.value, previewNotFound.value, previewAccessDenied.value, previewData.value] as const,
+  ([pid, owner, notFound, denied, data]) => {
+    if (!owner || pid === '' || notFound || denied || data == null) {
       usageTabEligible.value = false
       return
     }
-    if (ex === null) return
     usageTabEligible.value = null
     void fetchEnterpriseUsageTabEligible(pid).then((eligible) => {
       usageTabEligible.value = eligible
@@ -146,11 +171,10 @@ watch(
 )
 
 watch(
-  () => [profileUserId, isOwner.value, exists.value, user.value?.is_deleted] as const,
-  ([pid, owner, ex, deleted]) => {
+  () => [profileUserId, isOwner.value, previewNotFound.value, previewAccessDenied.value, previewData.value] as const,
+  ([pid, owner, notFound, denied, data]) => {
     if (pid === '' || !owner) return
-    if (ex === null) return
-    if (ex === false || deleted === true) return
+    if (notFound || denied || data == null) return
     userOrderHistoryStore.reload()
   },
   { immediate: true },
@@ -161,13 +185,12 @@ const userFriendsByMeetCountStore = ref<UserFriendsStore | null>(null)
 const userFriendsByLastMetStore = ref<UserFriendsStore | null>(null)
 
 watch(
-  () => [profileUserId, exists.value, user.value?.is_deleted] as const,
-  ([pid, ex, deleted]) => {
+  () => [profileUserId, previewNotFound.value, previewAccessDenied.value, previewData.value] as const,
+  ([pid, notFound, denied, data]) => {
     userFriendsByMeetCountStore.value = null
     userFriendsByLastMetStore.value = null
     if (pid === '') return
-    if (ex === null) return
-    if (ex === false || deleted === true) return
+    if (notFound || denied || data == null) return
     userFriendsByMeetCountStore.value = useUserFriendsStore(pid, 'meet_count', PROFILE_FRIENDS_PAGE_SIZE)
     userFriendsByLastMetStore.value = useUserFriendsStore(pid, 'last_met_at', PROFILE_FRIENDS_PAGE_SIZE)
   },
@@ -286,8 +309,6 @@ watch(
   },
 )
 
-const previewStore = useUserProfilePreviewStore(profileUserId)
-const { data: previewData, loading: previewLoading, error: previewError } = storeToRefs(previewStore)
 const userFoodsStore = useUserFoodsStore(profileUserId, 12)
 const { foods: pagedFoods, hasMore: foodHasMore, loading: foodLoading, error: foodError } = storeToRefs(userFoodsStore)
 
@@ -588,15 +609,24 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 </script>
 
 <template>
-  <v-container v-if="isProfileLoading" class="d-flex align-center justify-center" style="min-height: 60vh">
+  <v-container v-if="isProfileGateLoading" class="d-flex align-center justify-center" style="min-height: 60vh">
     <v-progress-circular indeterminate color="primary" size="48" />
+  </v-container>
+  <v-container v-else-if="isProfileAccessDenied" class="d-flex align-center justify-center" style="min-height: 60vh">
+    <p class="text-body-1 text-medium-emphasis">{{ $t('user_profile.access_denied') }}</p>
   </v-container>
   <v-container v-else-if="isInvalidProfile" class="d-flex align-center justify-center" style="min-height: 60vh">
     <p class="text-body-1 text-medium-emphasis">{{ $t('user_profile.user_not_found') }}</p>
   </v-container>
-  <v-row v-else-if="user != null" justify="center">
+  <v-row v-else-if="isProfileReady && profileDisplayUser != null" justify="center">
     <v-col cols="12" sm="8" md="3">
-      <UserBioPanel :user-data="user" :is-editable="isOwner" />
+      <UserBioPanel :user-data="profileDisplayUser" :is-editable="isOwner" />
+      <p
+        v-if="profileDepartment != null && profileDepartment !== ''"
+        class="text-body-2 text-medium-emphasis mt-3 px-2"
+      >
+        {{ $t('user_profile.department_label', { department: profileDepartment }) }}
+      </p>
     </v-col>
     <v-col cols="12" sm="8" md="9">
       <v-tabs v-model="tabs" class="profile-page-tabs" grow stacked density="compact">
@@ -678,15 +708,23 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   v-if="profilePreviewFriends.length > 0"
                   class="profile-friends-preview d-flex flex-wrap ga-2 align-center"
                 >
-                  <router-link
-                    v-for="friend in profilePreviewFriends"
-                    :key="friend.user_id"
-                    class="profile-friends-preview-link text-decoration-none flex-shrink-0"
-                    :to="getUserPath(friend.user_id)"
-                    :aria-label="friend.user_name"
-                  >
-                    <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
-                  </router-link>
+                  <template v-for="friend in profilePreviewFriends" :key="friend.user_id">
+                    <router-link
+                      v-if="friend.is_linkable !== false"
+                      class="profile-friends-preview-link text-decoration-none flex-shrink-0"
+                      :to="getUserPath(friend.user_id)"
+                      :aria-label="friend.user_name"
+                    >
+                      <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
+                    </router-link>
+                    <span
+                      v-else
+                      class="profile-friends-preview-link flex-shrink-0 d-inline-flex"
+                      :aria-label="friend.user_name"
+                    >
+                      <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
+                    </span>
+                  </template>
                 </div>
                 <div
                   v-if="profilePreviewFriendsHasMore || profilePreviewFriends.length > 0"
@@ -1030,7 +1068,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
               <FriendCard
                 :friend="friend"
                 :target-user-id="profileUserId"
-                :target-user-name="user.user_name"
+                :target-user-name="profileDisplayUser.user_name"
                 :is-owner="isOwner"
                 :resolve-user-path="getUserPath"
                 :resolve-event-path="getEventPath"
@@ -1038,7 +1076,11 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
             </v-col>
           </v-row>
           <div v-else-if="!activeUserFriendsStore?.loading" class="text-body-1 text-medium-emphasis pa-4">
-            {{ isOwner ? $t('user.friend_empty_tab') : $t('user.friend_empty_other', { name: user.user_name }) }}
+            {{
+              isOwner
+                ? $t('user.friend_empty_tab')
+                : $t('user.friend_empty_other', { name: profileDisplayUser.user_name })
+            }}
           </div>
           <v-row class="justify-center">
             <v-col cols="auto">

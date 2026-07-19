@@ -27,6 +27,7 @@ const friendUser = computed(
 )
 
 const profilePath = computed(() => props.resolveUserPath(props.friend.user_id))
+const isProfileLinkable = computed(() => props.friend.is_linkable !== false)
 const hasMeetHistory = computed(() => props.friend.meet_count > 0)
 const meetLogDialogOpen = ref(false)
 
@@ -44,6 +45,7 @@ const openMeetLogDialog = () => {
     <v-card-item class="friend-card-item pb-2">
       <template #prepend>
         <router-link
+          v-if="isProfileLinkable"
           class="friend-card-profile-link rounded-circle align-self-start"
           :to="profilePath"
           tabindex="0"
@@ -51,17 +53,28 @@ const openMeetLogDialog = () => {
         >
           <UserAvatar :user="friendUser" :size="56" />
         </router-link>
+        <span
+          v-else
+          class="friend-card-profile-link rounded-circle align-self-start d-inline-flex"
+          :aria-label="friend.user_name"
+        >
+          <UserAvatar :user="friendUser" :size="56" />
+        </span>
       </template>
 
       <div class="friend-card-header ps-2 min-w-0">
         <v-card-title class="friend-card-title lh-normal pa-0">
           <router-link
+            v-if="isProfileLinkable"
             class="friend-card-profile-link-text text-reset text-decoration-none"
             :to="profilePath"
             :title="friend.user_name"
           >
             {{ friend.user_name }}
           </router-link>
+          <span v-else class="friend-card-profile-link-text" :title="friend.user_name">
+            {{ friend.user_name }}
+          </span>
         </v-card-title>
 
         <v-chip
