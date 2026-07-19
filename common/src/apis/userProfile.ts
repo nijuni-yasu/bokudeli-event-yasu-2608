@@ -61,6 +61,10 @@ export type UserProfileFriendPreviewItem = {
   meet_count: number
   first_met_at: number
   last_met_at: number
+  /** エンプラ: PF 版ゲスト友人のとき true */
+  is_guest_friend?: boolean
+  /** エンプラ: プロフィールへリンクしてよいとき true（未設定 = PF 版どおりリンク可） */
+  is_linkable?: boolean
 }
 
 /** コミュニティプレビュー 1 件分（§4.2.0） */
@@ -116,6 +120,8 @@ export type UserProfileOrderPreviewItem = {
 export type GetUserProfilePreviewResponse = {
   user_profile: UserProfilePublicProfile
   counts: UserProfileCounts
+  /** エンプラ: EnterpriseMember.department（未設定時は省略） */
+  department?: string | null
   previews: {
     events: UserProfileEventPreviewItem[]
     friends: UserProfileFriendPreviewItem[]
