@@ -177,8 +177,8 @@ Scheduled Functions の `timeoutSeconds` を 3600 → 1800 に修正し、仕様
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | [x] | RC-14 | 3609804639 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔧 運用 | 🔧 微修正 | S | Scheduled timeout 3600→1800（48181928f） |
 | [x] | RC-15 | 3609804641 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | export outputUriPrefix を実行ごとに一意 subfolder 化 |
-| [ ] | RC-16 | 3609804644 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔧 運用 | 📄 ドキュメントのみ | S | 旧 `backupFirestore` を `functions:delete` で明示削除 |
-| [ ] | RC-17 | 3609804647 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 🔒 データ | 🆕 新機能 | M | Storage 部分バックアップを完了マーカー付きまで retention 対象外 |
+| [ ] | RC-16 | 3609804644 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔧 運用 | 📄 ドキュメントのみ | S | 旧 `backupFirestore` を `functions:delete` で明示削除 |
+| [x] | RC-17 | 3609804647 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🆕 新機能 | M | Storage 部分バックアップを完了マーカー付きまで retention 対象外 |
 | [x] | RC-18 | 3609804648 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | S | firestore_backups ARCHIVE→STANDARD（9a50ef281） |
 | [x] | RC-19 | 3609804652 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | legacy 直下 export を daily 保持本数で削除 |
 | [x] | RC-20 | 3609804654 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | S | storage weekly COLDLINE lifecycle 削除（9a50ef281） |
@@ -269,6 +269,8 @@ Scheduled Function の `outputUriPrefix` が `gs://bucket/daily/` 固定だと�
 
 **判断理由**: copy 完了後に `_SUCCESS` 等のマーカー書き込み + retention 側フィルタが必要。仕様書への追記と storageCopy 改修がセット。手順 4a 対象外（設計判断）。
 
+**ステータス（追記 2026-07-19）**: ✅ 対応済み — `storageCopy.ts` で `_inprogress` コピー + `_SUCCESS` マーカー、`retention.ts` で完了 run のみカウント・ incomplete 削除。仕様 §5.6.6 追記。
+
 ---
 
 **識別子**: RC-22（GitHub id: 3609813260）
@@ -296,3 +298,33 @@ Scheduled Function の `outputUriPrefix` が `gs://bucket/daily/` 固定だと�
 **想定工数**: M
 
 **判断理由**: 仕様書 §5.6.3 で「Scheduled 1800 秒上限・大規模 DB は要確認」と既知。非同期起動 + 別途完了監視は別設計。reply で現状認識と監視方針を回答予定。
+
+---
+
+## 評価セッション（2026-07-19 14:10・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 14:10 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| — | — | — | — | — | — | — | — | — | 指摘なし |
+
+### レビュー対象
+
+RC-16（デプロイ手順 v2.12・`backupFirestore` 明示削除）と RC-17（Storage `_inprogress` / `_SUCCESS` 完了マーカー + retention フィルタ）の未コミット差分。
+
+### チェックリスト照合結果
+
+- `storageCopy.ts`: コピー先 `_inprogress`、成功時 `_SUCCESS` 書き込み、再実行時 run prefix クリア
+- `retention.ts`: `_SUCCESS` のみ保持カウント、incomplete run 削除、legacy（マーカー無し直下配置）互換
+- `createModuleLogger` 使用、`any` / store 直接操作なし
+- 仕様 §5.6.6・v2.12 手順書と実装の整合
+
+- 指摘なし（チェックリスト照合のみ）

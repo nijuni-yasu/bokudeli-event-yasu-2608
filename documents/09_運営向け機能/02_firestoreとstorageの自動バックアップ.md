@@ -132,7 +132,8 @@ Firebase Storage には Firestore と同等のマネージド export API がな�
 | 方式 | 本番バケット → バックアップバケットへ `cp --recursive` 相当 |
 | スケジュール | **毎日 2:15 JST**（Firestore 日次 export の後） |
 | 保持 | **7 日分**（8 日目以降の日次分は削除） |
-| 出力先 | `gs://{PROJECT}-storage-backups/daily/YYYY-MM-DD/` |
+| 出力先 | `gs://{PROJECT}-storage-backups/daily/YYYY-MM-DD/_inprogress/`（コピー中）→ 完了後 `.../YYYY-MM-DD/_SUCCESS` |
+| 完了条件 | 全オブジェクトコピー成功後、同階層に空ファイル `_SUCCESS` を作成。保持削除は `_SUCCESS` がある run のみカウント |
 | 対象 | **本番 Storage バケット全体**（Firebase 既定バケット。`{PROJECT}-invoice` は含めない） |
 
 #### 3.2.3 コールド: 週次フルコピー
@@ -141,7 +142,7 @@ Firebase Storage には Firestore と同等のマネージド export API がな�
 |:--|:--|
 | スケジュール | **毎週日曜 2:45 JST** |
 | 保持 | **8 本**（約 2 ヶ月） |
-| 出力先 | `gs://{PROJECT}-storage-backups/weekly/YYYY-MM-DD/` |
+| 出力先 | `gs://{PROJECT}-storage-backups/weekly/YYYY-MM-DD/`（`_inprogress` → `_SUCCESS`。§3.2.2 同様） |
 | 対象 | **本番 Storage 既定バケット全体**（`{PROJECT}-invoice` は含めない） |
 | ストレージクラス | **Standard**（保持 8 週＜Coldline 最小保存期間 90 日のため lifecycle 移行なし） |
 
@@ -151,7 +152,7 @@ Firebase Storage には Firestore と同等のマネージド export API がな�
 |:--|:--|
 | スケジュール | **毎月 1 日 3:15 JST** |
 | 保持 | **12 ヶ月**（13 ヶ月目以降の月次分は削除） |
-| 出力先 | `gs://{PROJECT}-storage-backups/monthly/YYYY-MM/` |
+| 出力先 | `gs://{PROJECT}-storage-backups/monthly/YYYY-MM/`（`_inprogress` → `_SUCCESS`。§3.2.2 同様） |
 | 対象 | **本番 Storage 既定バケット全体**（`{PROJECT}-invoice` は含めない） |
 | ストレージクラス | **Coldline** / **Archive** |
 
@@ -217,9 +218,10 @@ gs://{PROJECT}-firestore-backups/daily/2026-06-03T17:00:07_99530/
 gs://{PROJECT}-firestore-backups/weekly/2026-06-01T17:30:00_12345/
 gs://{PROJECT}-firestore-backups/monthly/2026-06-01T03:00:00_67890/
 
-gs://{PROJECT}-storage-backups/daily/2026-06-03/
-gs://{PROJECT}-storage-backups/weekly/2026-06-01/
-gs://{PROJECT}-storage-backups/monthly/2026-06/
+gs://{PROJECT}-storage-backups/daily/2026-06-03/_inprogress/…   （コピー中）
+gs://{PROJECT}-storage-backups/daily/2026-06-03/_SUCCESS         （完了マーカー）
+gs://{PROJECT}-storage-backups/weekly/2026-06-01/_inprogress/…
+gs://{PROJECT}-storage-backups/monthly/2026-06/_SUCCESS
 ```
 
 ### 4.3 タイムゾーン
@@ -324,7 +326,7 @@ GCS lifecycle だけでは「tier ごとに本数を固定」しにくいため�
 |:--|:--|
 | **legacy** | `functions/legacy/src/backup.js` の `scheduled_firestore_export` は **やめる**（ソース削除 + デプロイ） |
 | **新規実装** | **`functions/default`** に v2 `onSchedule` で実装（日次 / 週次 / 月次 + 保持削除） |
-| **切替時** | default デプロイと legacy 削除を **同一 PR / 同一デプロイ** で行い、日次 export が二重に走らないことを確認する |
+| **切替時** | default デプロイ後、**初回のみ**旧 `backupFirestore` を `firebase functions:delete` で明示削除する（[デプロイ手順_v2.12 §C-1](../デプロイ手順/デプロイ手順_v2.12_260719.md)）。legacy 削除と新 7 関数デプロイを同一リリースで行い、日次 export が二重に走らないことを確認する |
 | **既存 export データ** | legacy が出力したバケット直下のフォルダは、新 prefix（`daily/` 等）と混在する。`backupRetentionCleanup` が **legacy 直下**（`daily/` / `weekly/` / `monthly/` 以外）で `overall_export_metadata` あり prefix を削除する |
 | **初回クリーンアップ** | **必ず** `BACKUP_RETENTION_DRY_RUN=true` で 1 回実行し、GCS Console で削除対象 prefix（特に legacy 直下）を確認してから dry-run を OFF にする |
 
@@ -440,6 +442,18 @@ gcloud storage du -s gs://<DEFAULT_BUCKET>/**
 6. **記録**
 
 試算結果（GB、月額円、採用 / 見直し判断）を **本ドキュメントまたは運営メモ** に残す。
+
+#### 5.6.6 Storage 部分バックアップと完了マーカー — **対策実装済み**
+
+`storageBackup*` がタイムアウトや copy 失敗で途中終了した場合、不完全な prefix を保持対象に含めない。
+
+| 段階 | GCS パス |
+|:--|:--|
+| コピー中 | `{tier}/{dateLabel}/_inprogress/` 配下へオブジェクトをコピー |
+| 完了 | 同 `{tier}/{dateLabel}/` に空ファイル `_SUCCESS` を作成 |
+| 保持削除 | `_SUCCESS` がある run のみ本数カウント。`_inprogress` のみの run は削除 |
+
+**移行**: RC-17 適用前に作成された Storage バックアップ（マーカー無し・直下配置）は legacy として保持対象に含める（`_inprogress` サブフォルダが無い場合のみ）。
 
 ---
 
