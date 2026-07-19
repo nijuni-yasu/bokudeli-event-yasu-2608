@@ -91,6 +91,8 @@ resource "google_storage_bucket" "storage_backups" {
       storage_class = "COLDLINE"
     }
   }
+
+  depends_on = [google_project_service.default]
 }
 
 # Firestore サービスエージェントがエクスポート先バケットに書き込めるようにする

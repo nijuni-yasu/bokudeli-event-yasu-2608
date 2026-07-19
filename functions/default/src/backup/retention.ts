@@ -54,6 +54,40 @@ export const selectPrefixesToDelete = (entries: RetentionEntry[], keepCount: num
   return sorted.slice(0, sorted.length - keepCount).map((entry) => entry.prefix)
 }
 
+/** 仕様の「N 日分」保持: 同一日の複数 export は最新 1 件のみ代表として本数カウントし、古い同日分も削除対象に含める */
+export const selectFirestoreExportPrefixesToDelete = (entries: RetentionEntry[], keepCount: number): string[] => {
+  const bySortKey = new Map<string, RetentionEntry[]>()
+  for (const entry of entries) {
+    const group = bySortKey.get(entry.sortKey) ?? []
+    group.push(entry)
+    bySortKey.set(entry.sortKey, group)
+  }
+
+  const representativeEntries: RetentionEntry[] = []
+  const staleSamePeriodPrefixes: string[] = []
+
+  for (const group of bySortKey.values()) {
+    const sorted = [...group].sort((a, b) => a.prefix.localeCompare(b.prefix))
+    representativeEntries.push(sorted[sorted.length - 1])
+    staleSamePeriodPrefixes.push(...sorted.slice(0, -1).map((entry) => entry.prefix))
+  }
+
+  const deletedRepresentatives = selectPrefixesToDelete(representativeEntries, keepCount)
+  const deletedSortKeys = new Set(
+    representativeEntries
+      .filter((entry) => deletedRepresentatives.includes(entry.prefix))
+      .map((entry) => entry.sortKey),
+  )
+
+  const toDelete = new Set<string>(staleSamePeriodPrefixes)
+  for (const sortKey of deletedSortKeys) {
+    for (const entry of bySortKey.get(sortKey) ?? []) {
+      toDelete.add(entry.prefix)
+    }
+  }
+  return [...toDelete]
+}
+
 export const isStorageBackupEligibleForRetention = (
   hasSuccessMarker: boolean,
   hasInprogressSubfolder: boolean,
@@ -130,7 +164,7 @@ const cleanupFirestoreTier = async (bucketName: string, tier: BackupTier, dryRun
     entries.push({ prefix, sortKey })
   }
 
-  const toDelete = selectPrefixesToDelete(entries, FIRESTORE_RETENTION[tier])
+  const toDelete = selectFirestoreExportPrefixesToDelete(entries, FIRESTORE_RETENTION[tier])
   for (const prefix of toDelete) {
     await deletePrefixRecursive(bucketName, prefix, dryRun)
   }
@@ -154,7 +188,7 @@ const cleanupLegacyFirestoreRootExports = async (bucketName: string, dryRun: boo
     entries.push({ prefix, sortKey })
   }
 
-  const toDelete = selectPrefixesToDelete(entries, FIRESTORE_RETENTION.daily)
+  const toDelete = selectFirestoreExportPrefixesToDelete(entries, FIRESTORE_RETENTION.daily)
   for (const prefix of toDelete) {
     await deletePrefixRecursive(bucketName, prefix, dryRun)
   }

@@ -730,9 +730,101 @@ Copilot コミット `5d29f6478` 後の CI ビルド失敗修正（`firestoreExp
 
 **PRスコープ**: 📌 スコープ内
 
-**ラベル**: 🧪 テスト
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+## 評価セッション（2026-07-19 16:39・review-comments-evaluate auto）
+
+- **評価日時**: 2026-07-19 16:39 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T07:27:55Z
+- **partial**: true（Codex は接続案内のみ）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 5014863995、Codex 接続案内 5014876635）
+- **手順 4a 自動修正**: RC-33（🚨 1件）、RC-34（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-33 | 3610117979 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | 同一日複数 export で保持本数が<br>日付重複込みでカウントされる |
+| [x] | RC-34 | 5014876367 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔧 運用 | 🔧 微修正 | S | storage_backups に depends_on 追加 |
+| [ ] | RC-35 | 5014876367 | 👌 修正不要 | — | 📌 スコープ内 | 🧪 テスト | 確認のみ | — | legacy export 形式のテストは許容 |
+
+**識別子**: RC-33（GitHub id: 3610117979）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/retention.ts:36`
+
+**レビュワーのコメント（原文）**:
+
+[must] `parseFirestoreExportFolderSortKey` が日付（`YYYY-MM-DD`）のみを sortKey にしているため、同一日に複数 export が走った場合（リトライ/手動実行など）に、保持本数（例: daily 14）を超えた時の削除が「日付の重複込み」でカウントされ、結果として“14 日分”のカバレッジを維持できない可能性があります。日付単位で保持したいなら日付ごとに最新 1 件へ正規化してから本数カウント、実行単位で保持したいなら sortKey をフォルダ名（タイムスタンプ全体）にする、のどちらかに寄せたいです。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 データ
 
 **変更種別**: 🔧 微修正
 
 **想定工数**: S
+
+**判断理由**: 仕様書 §3.1.2「14 日分」は日付単位保持のため、`selectFirestoreExportPrefixesToDelete` で sortKey ごとに最新 1 件代表とし、古い同日 export も削除対象に含める。
+
+---
+
+**識別子**: RC-34（GitHub id: 5014876367）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `terraform/storage.tf:65-68`
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S] **対象**: `terraform/storage.tf:65-68`（`google_storage_bucket.storage_backups`） `google_storage_bucket.firestore_backups` には `depends_on = [google_project_service.default, google_firestore_database.default]` が付いていますが、`storage_backups` には `depends_on` がありません。初回 `terraform apply` 時に Cloud Storage API が有効化される前に apply が走った場合に失敗するリスクがあります。`depends_on = [google_project_service.default]` を追加することで `firestore_backups` との対称性が取れます。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔧 運用
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+**識別子**: RC-35（GitHub id: 5014876367）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/backup/backup.test.ts:36`
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要** **対象**: `functions/default/src/backup/backup.test.ts:36` `parseFirestoreExportFolderSortKey` のテストケース `'daily/2026-06-03T17:00:07_99530/'` はアンダースコア区切りで、実装で生成される `yyyy-MM-dd'T'HH:mm:ss.SSS`（例: `2026-06-03T17:00:07.000`）と形式が異なります。`LEGACY_EXPORT_FOLDER_PATTERN = /^\d{4}-\d{2}-\d{2}T/` は両形式にマッチするため動作に影響はなく、レガシーデータ用の正規表現テストとして現状のままでも許容範囲です。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🧪 テスト
+
+**変更種別**: 確認のみ
+
+**想定工数**: —
 

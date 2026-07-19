@@ -15,6 +15,7 @@ import {
   parseFirestoreExportFolderSortKey,
   parseStorageBackupFolderSortKey,
   selectPrefixesToDelete,
+  selectFirestoreExportPrefixesToDelete,
 } from './retention.js'
 import { buildStorageBackupDestinationPrefix } from './storageCopy.js'
 
@@ -30,6 +31,19 @@ describe('backup retention', () => {
       { prefix: 'daily/2026-06-03T02:00:00_3/', sortKey: '2026-06-03' },
     ]
     expect(selectPrefixesToDelete(entries, 2)).toEqual(['daily/2026-06-01T02:00:00_1/'])
+  })
+
+  it('selectFirestoreExportPrefixesToDelete dedupes same-day exports before keep count', () => {
+    const entries = [
+      { prefix: 'daily/2026-06-01T02:00:00.000/', sortKey: '2026-06-01' },
+      { prefix: 'daily/2026-06-01T03:00:00.000/', sortKey: '2026-06-01' },
+      { prefix: 'daily/2026-06-02T02:00:00.000/', sortKey: '2026-06-02' },
+      { prefix: 'daily/2026-06-03T02:00:00.000/', sortKey: '2026-06-03' },
+    ]
+    expect(selectFirestoreExportPrefixesToDelete(entries, 2)).toEqual([
+      'daily/2026-06-01T02:00:00.000/',
+      'daily/2026-06-01T03:00:00.000/',
+    ])
   })
 
   it('parseFirestoreExportFolderSortKey extracts date from export folder', () => {
