@@ -165,7 +165,11 @@ export const deleteUserDocuments = async (userId: string): Promise<void> => {
     .collection('users_personal_information')
     .doc(userId)
     .withConverter(userPersonalInformationConverter)
-  await Promise.allSettled([getUserRef(userId).delete(), userPersonalInformationRef.delete()])
+  const results = await Promise.allSettled([getUserRef(userId).delete(), userPersonalInformationRef.delete()])
+  const rejected = results.filter((result) => result.status === 'rejected')
+  if (rejected.length > 0) {
+    throw rejected[0].reason
+  }
 }
 
 export const saveUser = async (user: ShokujiiUser, transaction?: Transaction) => {
