@@ -114,10 +114,14 @@ const showUsageTab = computed(() => isOwner.value && usageTabEligible.value === 
 const isInvalidProfile = computed(() => exists.value === false || (user.value != null && user.value.is_deleted))
 const isProfileLoading = computed(() => profileUserId !== '' && exists.value === null)
 
-const userEventListStore = useUserEventListByUserId(profileUserId)
+const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
+  additionalFilters: [where('enterprise_id', '==', enterpriseId.value)],
+})
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
 
-const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId)
+const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId, 6, {
+  additionalFilters: [where('enterprise_id', '==', enterpriseId.value)],
+})
 const {
   events: orderHistoryEvents,
   orderStateByEventId: orderHistoryStateByEventId,

@@ -16,6 +16,7 @@ import { ZodError } from 'zod'
 import { setPendingToast } from '@/utils/pendingToast'
 import { useEnterpriseStore } from '@/stores/enterprise'
 import { isEnterpriseAuthTenantConsistent } from '@/utils/enterpriseAuth'
+import { isLoginRequired } from '@/router/authGuards.js'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -24,18 +25,6 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
       resolve(user)
     })
   })
-}
-
-const isLoginRequired = (path: string) => {
-  const paths = path.split('/')
-  return (
-    path === '/' ||
-    path === '/profile' ||
-    paths[1] === 'communitylist' ||
-    paths[1] === 'manage' ||
-    paths[1] === 'admin' ||
-    (paths[1] === 'c' && paths[3] === 'invites')
-  )
 }
 
 export const setupRouter = (router: Router) => {

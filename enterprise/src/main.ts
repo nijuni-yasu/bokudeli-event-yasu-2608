@@ -47,5 +47,8 @@ Promise.all([
     setEnterpriseAuthTenantId(enterpriseStore.enterprise.tenant_id)
   }
 
+  const { buildEventStoreOptions, setDefaultEventStoreOptions } = await import('@shokujii/base/stores/event.js')
+  setDefaultEventStoreOptions(buildEventStoreOptions(enterpriseStore.enterprise?.enterprise_id))
+
   app.mount('#app')
 })
