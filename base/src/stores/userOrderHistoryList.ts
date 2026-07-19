@@ -10,7 +10,6 @@ import {
   query,
   startAfter,
   where,
-  type QueryConstraint,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
@@ -23,12 +22,13 @@ import {
   sortEventsByStartDatetime,
   type UserEventListOrderEntry,
 } from './userEventOrdersShared.js'
+import { profileListFilterKey, profileListFilterToConstraints, type ProfileListFilter } from './profileListFilter.js'
 
 export type UserOrderHistoryListStore = ReturnType<typeof useUserOrderHistoryByUserId>
 
 export type UserOrderHistoryListStoreOptions = {
-  /** PF 露出フィルタ等。`collectionGroup('member_orders')` の base 条件（user_id）に追加する */
-  additionalFilters?: QueryConstraint[]
+  /** PF 露出 / エンプラテナント等。`collectionGroup('member_orders')` の base 条件に追加する */
+  profileFilter?: ProfileListFilter
 }
 
 const ORDERS_SCAN_BATCH = 24
@@ -44,9 +44,10 @@ export const useUserOrderHistoryByUserId = (
   pageSize: number = 6,
   options: UserOrderHistoryListStoreOptions = {},
 ) => {
-  const additionalFilters = options.additionalFilters ?? []
+  const profileFilter = options.profileFilter ?? { kind: 'none' }
+  const additionalFilters = profileListFilterToConstraints(profileFilter)
   const storeId = userId !== '' ? userId : '_empty'
-  const filtersKey = additionalFilters.length > 0 ? `/${JSON.stringify(additionalFilters)}` : ''
+  const filtersKey = `/${profileListFilterKey(profileFilter)}`
   const store = defineStore(`/userOrderHistory/${storeId}/${pageSize}${filtersKey}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const events = ref<BokudeliEvent[]>([])

@@ -10,18 +10,18 @@ import {
   query,
   startAfter,
   where,
-  type QueryConstraint,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
 import { TaskExecutor } from '@shokujii/base/utils/executors.js'
 import { eventConverter, type BokudeliEvent } from './event.js'
+import { profileListFilterKey, profileListFilterToConstraints, type ProfileListFilter } from './profileListFilter.js'
 
 export type UserEventListStore = ReturnType<typeof useUserEventListByUserId>
 
 export type UserEventListStoreOptions = {
-  /** PF 露出フィルタ等。`collectionGroup('events')` の base 条件（is_deleted / members）に追加する */
-  additionalFilters?: QueryConstraint[]
+  /** PF 露出 / エンプラテナント等。`collectionGroup('events')` の base 条件に追加する */
+  profileFilter?: ProfileListFilter
 }
 
 /**
@@ -32,9 +32,10 @@ export const useUserEventListByUserId = (
   pageSize: number = 6,
   options: UserEventListStoreOptions = {},
 ) => {
-  const additionalFilters = options.additionalFilters ?? []
+  const profileFilter = options.profileFilter ?? { kind: 'none' }
+  const additionalFilters = profileListFilterToConstraints(profileFilter)
   const storeId = userId !== '' ? userId : '_empty'
-  const filtersKey = additionalFilters.length > 0 ? `/${JSON.stringify(additionalFilters)}` : ''
+  const filtersKey = `/${profileListFilterKey(profileFilter)}`
   const store = defineStore(`/userEventList/${storeId}/${pageSize}${filtersKey}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const events = ref<BokudeliEvent[]>([])
