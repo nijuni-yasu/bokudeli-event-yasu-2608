@@ -7,6 +7,7 @@ import {
   buildStorageBackupSuccessMarkerPath,
   buildStorageBackupWorkPrefix,
   getFirestoreExportUriPrefix,
+  STORAGE_RETENTION,
 } from './constants.js'
 import {
   isIncompleteStorageBackupRun,
@@ -18,6 +19,10 @@ import {
 import { buildStorageBackupDestinationPrefix } from './storageCopy.js'
 
 describe('backup retention', () => {
+  it('STORAGE_RETENTION matches spec (daily 7, weekly 4, monthly 6)', () => {
+    expect(STORAGE_RETENTION).toEqual({ daily: 7, weekly: 4, monthly: 6 })
+  })
+
   it('selectPrefixesToDelete keeps newest entries by sortKey', () => {
     const entries = [
       { prefix: 'daily/2026-06-01T02:00:00_1/', sortKey: '2026-06-01' },

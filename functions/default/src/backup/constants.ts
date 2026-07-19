@@ -12,8 +12,8 @@ export const FIRESTORE_RETENTION: Record<BackupTier, number> = {
 
 export const STORAGE_RETENTION: Record<BackupTier, number> = {
   daily: 7,
-  weekly: 8,
-  monthly: 12,
+  weekly: 4,
+  monthly: 6,
 }
 
 export const FIRESTORE_EXPORT_METADATA_FILE = 'overall_export_metadata'
@@ -42,6 +42,7 @@ export const buildFirestoreExportOutputUriPrefix = (
   tier: BackupTier,
   startedAt: DateTime,
 ): string => {
+  // eslint-disable-next-line quotes -- luxon literal T in toFormat pattern
   const runFolder = startedAt.setZone(BACKUP_TIMEZONE).toFormat("yyyy-MM-dd'T'HH:mm:ss")
   return `${getFirestoreExportUriPrefix(projectId, tier)}${runFolder}/`
 }
