@@ -8,9 +8,14 @@ import { getEventCoverStoragePath, getCommunityCoverStoragePath } from '@shokuji
 import { createModuleLogger } from './utils/logger.js'
 import { resolveRequestSite } from './utils/resolveRequestSite.js'
 import { injectSeoHtml, type SeoPageContext } from './seo/htmlInjection.js'
-import { DEFAULT_OGP_IMAGE_TYPE, type OgpMetaContext } from './seo/metaTags.js'
+import { DEFAULT_OGP_IMAGE_TYPE, OGP_SITE_NAME, type OgpMetaContext } from './seo/metaTags.js'
 import { toOgpExcerpt, toPlainTextExcerpt } from './seo/escape.js'
-import { buildEventJsonLd, buildOrganizationJsonLd } from './seo/jsonLd.js'
+import {
+  buildBreadcrumbListJsonLd,
+  buildEventJsonLdNode,
+  buildJsonLdDocument,
+  buildOrganizationJsonLdNode,
+} from './seo/jsonLd.js'
 import { buildEventPrerenderHtml, buildCommunityPrerenderHtml } from './seo/prerenderBody.js'
 
 const logger = createModuleLogger('ogpRequest')
@@ -98,21 +103,31 @@ const buildEventSeoContext = (params: {
     pageTitle: eventData.event_name,
     metaDescription,
     canonicalUrl,
-    jsonLd: buildEventJsonLd({
-      eventName: eventData.event_name,
-      eventDesc: eventData.event_desc,
-      url: canonicalUrl,
-      imageUrl: ogp.image,
-      startDatetimeMillis: eventData.event_start_datetime,
-      endDatetimeMillis: eventData.event_end_datetime,
-      shopName: eventData.shop_name,
-      eventAddress: eventData.event_address,
-      eventAddressBase: eventData.event_address_base,
-      eventAddressDetail: eventData.event_address_detail,
-      communityName: eventData.community_name,
-      organizerUrl: `${ogp.site}/c/${eventData.community_account.toLowerCase()}`,
-      isCanceled: eventData.event_status.value === 'event_canceled',
-    }),
+    jsonLd: buildJsonLdDocument(
+      buildEventJsonLdNode({
+        eventName: eventData.event_name,
+        eventDesc: eventData.event_desc,
+        url: canonicalUrl,
+        imageUrl: ogp.image,
+        startDatetimeMillis: eventData.event_start_datetime,
+        endDatetimeMillis: eventData.event_end_datetime,
+        shopName: eventData.shop_name,
+        eventAddress: eventData.event_address,
+        eventAddressBase: eventData.event_address_base,
+        eventAddressDetail: eventData.event_address_detail,
+        communityName: eventData.community_name,
+        organizerUrl: `${ogp.site}/c/${eventData.community_account.toLowerCase()}`,
+        isCanceled: eventData.event_status.value === 'event_canceled',
+      }),
+      buildBreadcrumbListJsonLd([
+        { name: OGP_SITE_NAME, url: `${ogp.site}/` },
+        {
+          name: eventData.community_name,
+          url: `${ogp.site}/c/${eventData.community_account.toLowerCase()}`,
+        },
+        { name: eventData.event_name, url: canonicalUrl },
+      ]),
+    ),
     prerenderHtml: buildEventPrerenderHtml({
       eventName: eventData.event_name,
       eventDesc: eventData.event_desc,
@@ -142,13 +157,19 @@ const buildCommunitySeoContext = (params: {
     pageTitle: communityData.community_name,
     metaDescription,
     canonicalUrl,
-    jsonLd: buildOrganizationJsonLd({
-      name: communityData.community_name,
-      description: communityData.community_desc,
-      url: canonicalUrl,
-      addressBase: communityData.community_address_base,
-      addressDetail: communityData.community_address_detail,
-    }),
+    jsonLd: buildJsonLdDocument(
+      buildOrganizationJsonLdNode({
+        name: communityData.community_name,
+        description: communityData.community_desc,
+        url: canonicalUrl,
+        addressBase: communityData.community_address_base,
+        addressDetail: communityData.community_address_detail,
+      }),
+      buildBreadcrumbListJsonLd([
+        { name: OGP_SITE_NAME, url: `${ogp.site}/` },
+        { name: communityData.community_name, url: canonicalUrl },
+      ]),
+    ),
     prerenderHtml: buildCommunityPrerenderHtml({
       communityName: communityData.community_name,
       communityDesc: communityData.community_desc,

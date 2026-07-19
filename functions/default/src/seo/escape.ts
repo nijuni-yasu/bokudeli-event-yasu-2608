@@ -8,9 +8,11 @@ export const escapeHtmlAttribute = (input: string): string =>
 export const escapeHtmlText = (input: string): string =>
   input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+const decodeHtmlEntitiesForExcerpt = (input: string): string => input.replace(/&nbsp;|&#160;/gi, ' ')
+
 /** 改行・HTML タグを除去し、メタ description 用に先頭 N 文字を返す */
 export const toPlainTextExcerpt = (input: string, maxLength = META_DESCRIPTION_MAX_LENGTH): string => {
-  const plain = input
+  const plain = decodeHtmlEntitiesForExcerpt(input)
     .replace(/\n/g, '')
     .replace(/<[^>]*>/g, '')
     .trim()
