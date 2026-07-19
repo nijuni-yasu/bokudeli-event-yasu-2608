@@ -1,26 +1,57 @@
 import { countJoinedCommunitiesForUser, countManagedCommunitiesForUser } from '../stores/community.js'
 import { countOrderedFoodsForUser, countParticipatedEventsForUser } from '../stores/memberOrder.js'
 import { listFriendUserIds } from '../stores/userFriend.js'
-import { getUser, getUsersByUserIds, updateUserProfileCounts, type UserProfileCountsUpdate } from '../stores/user.js'
+import {
+  getUser,
+  getUsersByUserIds,
+  updateUserProfileCounts,
+  type ShokujiiUser,
+  type UserProfileCountsUpdate,
+} from '../stores/user.js'
 import { createModuleLogger } from './logger.js'
+import { classifyEnterpriseFriend } from './enterpriseFriendVisibility.js'
 
 const logger = createModuleLogger('recountUserProfileCounts')
 
 export type UserProfileCounts = UserProfileCountsUpdate
 
+export type ComputeUserProfileCountsOptions = {
+  enterpriseId?: string
+}
+
 /**
- * ユーザーの友人 ID 一覧から、退会済みユーザーを除いた件数を返す。
- * `getUserFriends` Callable と同じ「退会者除外」ルールに揃える。
+ * ユーザーの友人 ID 一覧から、表示可能な友人件数を返す。
+ * PF: 退会者除外。エンプラ: §5.3.2 と同じ除外ルール。
  */
-export const computeActiveFriendCount = async (friendUserIds: string[]): Promise<number> => {
+export const computeActiveFriendCount = async (
+  friendUserIds: string[],
+  options?: ComputeUserProfileCountsOptions,
+): Promise<number> => {
   if (friendUserIds.length === 0) {
     return 0
   }
   const userMap = await getUsersByUserIds(friendUserIds)
+  const enterpriseId = options?.enterpriseId
+
+  if (enterpriseId == null || enterpriseId === '') {
+    let active = 0
+    for (const id of friendUserIds) {
+      const user = userMap.get(id)
+      if (user != null && !user.is_deleted) {
+        active += 1
+      }
+    }
+    return active
+  }
+
   let active = 0
   for (const id of friendUserIds) {
     const user = userMap.get(id)
-    if (user != null && !user.is_deleted) {
+    if (user == null) {
+      continue
+    }
+    const visibility = await classifyEnterpriseFriend(user, enterpriseId)
+    if (visibility.include) {
       active += 1
     }
   }
@@ -36,15 +67,19 @@ export const computeActiveFriendCount = async (friendUserIds: string[]): Promise
  *   - joined_community_count: `communities.members` array-contains userRef（RC-55）
  *   - managed_community_count: `communities.managers` array-contains userRef（RC-55）
  */
-export const computeUserProfileCounts = async (userId: string): Promise<UserProfileCounts> => {
+export const computeUserProfileCounts = async (
+  userId: string,
+  options?: ComputeUserProfileCountsOptions,
+): Promise<UserProfileCounts> => {
+  const enterpriseId = options?.enterpriseId
   const friendUserIds = await listFriendUserIds(userId)
 
   const [participatedCount, orderedFoodCount, joinedCount, managedCount, activeFriendCount] = await Promise.all([
-    countParticipatedEventsForUser(userId),
-    countOrderedFoodsForUser(userId),
-    countJoinedCommunitiesForUser(userId),
-    countManagedCommunitiesForUser(userId),
-    computeActiveFriendCount(friendUserIds),
+    countParticipatedEventsForUser(userId, enterpriseId),
+    countOrderedFoodsForUser(userId, enterpriseId),
+    countJoinedCommunitiesForUser(userId, enterpriseId),
+    countManagedCommunitiesForUser(userId, enterpriseId),
+    computeActiveFriendCount(friendUserIds, options),
   ])
 
   return {
@@ -68,6 +103,14 @@ export const hasCountsChanged = (existing: UserProfileCountsUpdate, next: UserPr
     (existing.managed_community_count ?? 0) !== next.managed_community_count ||
     (existing.ordered_food_count ?? 0) !== next.ordered_food_count
   )
+}
+
+const resolveCountOptions = (user: ShokujiiUser): ComputeUserProfileCountsOptions | undefined => {
+  const enterpriseId = user.enterprise_id
+  if (enterpriseId == null || enterpriseId === '') {
+    return undefined
+  }
+  return { enterpriseId }
 }
 
 /**
@@ -96,7 +139,7 @@ export const recountUserProfileCounts = async (userId: string): Promise<void> =>
       return
     }
 
-    const next = await computeUserProfileCounts(userId)
+    const next = await computeUserProfileCounts(userId, resolveCountOptions(user))
 
     await updateUserProfileCounts(userId, next)
 

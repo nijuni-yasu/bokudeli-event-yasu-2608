@@ -6,6 +6,7 @@ const countManagedCommunitiesForUserMock = vi.fn()
 const countParticipatedEventsForUserMock = vi.fn()
 const countOrderedFoodsForUserMock = vi.fn()
 const listFriendUserIdsMock = vi.fn()
+const getEnterpriseMemberMock = vi.fn()
 
 vi.mock('../stores/community.js', () => ({
   countJoinedCommunitiesForUser: (...args: unknown[]) => countJoinedCommunitiesForUserMock(...args),
@@ -28,6 +29,10 @@ vi.mock('../stores/user.js', () => ({
   updateUserProfileCounts: vi.fn(),
 }))
 
+vi.mock('../stores/enterprise.js', () => ({
+  getEnterpriseMember: (...args: unknown[]) => getEnterpriseMemberMock(...args),
+}))
+
 import { computeActiveFriendCount, computeUserProfileCounts } from './recountUserProfileCounts.js'
 
 beforeEach(() => {
@@ -37,6 +42,7 @@ beforeEach(() => {
   countParticipatedEventsForUserMock.mockReset()
   countOrderedFoodsForUserMock.mockReset()
   listFriendUserIdsMock.mockReset()
+  getEnterpriseMemberMock.mockReset()
   countParticipatedEventsForUserMock.mockResolvedValue(5)
   countOrderedFoodsForUserMock.mockResolvedValue(4)
   listFriendUserIdsMock.mockResolvedValue([])
@@ -82,6 +88,20 @@ describe('computeActiveFriendCount', () => {
     const result = await computeActiveFriendCount(['u1', 'u2'])
     expect(result).toBe(0)
   })
+
+  it('enterpriseId 指定時は他社友人を除外しゲストを含める', async () => {
+    getUsersByUserIdsMock.mockResolvedValueOnce(
+      new Map([
+        ['other', { user_id: 'other', is_deleted: false, enterprise_id: 'other-eid' }],
+        ['guest', { user_id: 'guest', is_deleted: false, enterprise_id: null }],
+        ['colleague', { user_id: 'colleague', is_deleted: false, enterprise_id: 'my-eid' }],
+      ]),
+    )
+    getEnterpriseMemberMock.mockResolvedValue({ is_active: true })
+
+    const result = await computeActiveFriendCount(['other', 'guest', 'colleague'], { enterpriseId: 'my-eid' })
+    expect(result).toBe(2)
+  })
 })
 
 describe('computeUserProfileCounts', () => {
@@ -95,10 +115,30 @@ describe('computeUserProfileCounts', () => {
     expect(result.managed_community_count).toBe(2)
     expect(result.participated_event_count).toBe(5)
     expect(result.ordered_food_count).toBe(4)
-    expect(countParticipatedEventsForUserMock).toHaveBeenCalledWith('uid-x')
-    expect(countOrderedFoodsForUserMock).toHaveBeenCalledWith('uid-x')
+    expect(countParticipatedEventsForUserMock).toHaveBeenCalledWith('uid-x', undefined)
+    expect(countOrderedFoodsForUserMock).toHaveBeenCalledWith('uid-x', undefined)
     expect(listFriendUserIdsMock).toHaveBeenCalledWith('uid-x')
-    expect(countJoinedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x')
-    expect(countManagedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x')
+    expect(countJoinedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x', undefined)
+    expect(countManagedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x', undefined)
+  })
+
+  it('enterpriseId を各 store 集計に渡す', async () => {
+    countJoinedCommunitiesForUserMock.mockResolvedValue(1)
+    countManagedCommunitiesForUserMock.mockResolvedValue(0)
+    countParticipatedEventsForUserMock.mockResolvedValue(2)
+    countOrderedFoodsForUserMock.mockResolvedValue(3)
+    listFriendUserIdsMock.mockResolvedValue(['f1'])
+    getUsersByUserIdsMock.mockResolvedValue(
+      new Map([['f1', { user_id: 'f1', is_deleted: false, enterprise_id: 'my-eid' }]]),
+    )
+    getEnterpriseMemberMock.mockResolvedValue({ is_active: true })
+
+    const result = await computeUserProfileCounts('uid-x', { enterpriseId: 'my-eid' })
+
+    expect(result.friend_count).toBe(1)
+    expect(countParticipatedEventsForUserMock).toHaveBeenCalledWith('uid-x', 'my-eid')
+    expect(countOrderedFoodsForUserMock).toHaveBeenCalledWith('uid-x', 'my-eid')
+    expect(countJoinedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x', 'my-eid')
+    expect(countManagedCommunitiesForUserMock).toHaveBeenCalledWith('uid-x', 'my-eid')
   })
 })

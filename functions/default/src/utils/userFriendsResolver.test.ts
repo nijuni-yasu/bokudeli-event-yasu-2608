@@ -15,9 +15,14 @@ vi.mock('../stores/event.js', () => ({
   getEventsInCommunities: vi.fn(),
 }))
 
+vi.mock('../stores/enterprise.js', () => ({
+  getEnterpriseMember: vi.fn(),
+}))
+
 import { listUserFriends, getUserFriend } from '../stores/userFriend.js'
 import { getUser, getUsersByUserIds } from '../stores/user.js'
 import { getEventsInCommunities } from '../stores/event.js'
+import { getEnterpriseMember } from '../stores/enterprise.js'
 import { resolveUserFriendsList, resolveUserFriendMeetLog } from './userFriendsResolver.js'
 
 type MockEvent = {
@@ -27,6 +32,7 @@ type MockEvent = {
   community_account: string
   is_public: boolean
   is_deleted: boolean
+  enterprise_id?: string | null
 }
 
 const makeEvent = (params: {
@@ -36,6 +42,7 @@ const makeEvent = (params: {
   communityAccount: string
   isPublic: boolean
   isDeleted?: boolean
+  enterpriseId?: string | null
 }): MockEvent => ({
   community_id: params.communityId,
   id: params.eventId,
@@ -43,6 +50,7 @@ const makeEvent = (params: {
   community_account: params.communityAccount,
   is_public: params.isPublic,
   is_deleted: params.isDeleted ?? false,
+  enterprise_id: params.enterpriseId,
 })
 
 describe('resolveUserFriendsList', () => {
@@ -206,6 +214,40 @@ describe('resolveUserFriendsList', () => {
     expect(listUserFriends).toHaveBeenNthCalledWith(2, 'owner', 'meet_count', 1, skipCursor)
     expect(friends).toHaveLength(1)
     expect(friends[0].user_id).toBe('active')
+  })
+
+  it('enterpriseScope: 他社友人を除外しゲスト友人に is_linkable false を付与', async () => {
+    vi.mocked(listUserFriends).mockResolvedValue({
+      friends: [
+        { id: 'other-corp', meet_count: 5, first_met_at: 1, last_met_at: 1 },
+        { id: 'guest', meet_count: 3, first_met_at: 2, last_met_at: 2 },
+        { id: 'colleague', meet_count: 2, first_met_at: 3, last_met_at: 3 },
+      ],
+      hasMore: false,
+      nextCursor: null,
+    })
+    vi.mocked(getUsersByUserIds).mockResolvedValue(
+      new Map([
+        ['other-corp', { user_name: 'Other', user_image_url: '', is_deleted: false, enterprise_id: 'other-eid' }],
+        ['guest', { user_name: 'Guest', user_image_url: '', is_deleted: false, enterprise_id: null }],
+        ['colleague', { user_name: 'Colleague', user_image_url: '', is_deleted: false, enterprise_id: 'my-eid' }],
+      ] as never),
+    )
+    vi.mocked(getEnterpriseMember).mockResolvedValue({ is_active: true } as never)
+
+    const { friends } = await resolveUserFriendsList({
+      targetUserId: 'owner',
+      sortBy: 'meet_count',
+      limit: 10,
+      enterpriseScope: { enterpriseId: 'my-eid' },
+    })
+
+    expect(friends).toHaveLength(2)
+    expect(friends[0].user_id).toBe('guest')
+    expect(friends[0].is_guest_friend).toBe(true)
+    expect(friends[0].is_linkable).toBe(false)
+    expect(friends[1].user_id).toBe('colleague')
+    expect(friends[1].is_linkable).toBe(true)
   })
 })
 
@@ -394,5 +436,60 @@ describe('resolveUserFriendMeetLog', () => {
     expect(result?.meet_log[0].event_name).toBeNull()
     expect(result?.meet_log[0].community_account).toBeNull()
     expect(result?.meet_log[0].is_linkable).toBe(false)
+  })
+
+  it('enterpriseScope: 他社 enterprise のイベント履歴を除外する', async () => {
+    vi.mocked(getUserFriend).mockResolvedValue({
+      meet_count: 2,
+      event_history: [
+        { event_id: 'e1', community_id: 'c1', event_at: 1000 },
+        { event_id: 'e2', community_id: 'c1', event_at: 2000 },
+      ],
+    } as never)
+    vi.mocked(getUser).mockResolvedValue({
+      user_id: 'friend1',
+      user_name: 'Friend',
+      user_image_url: '',
+      is_deleted: false,
+      enterprise_id: 'my-eid',
+    } as never)
+    vi.mocked(getEnterpriseMember).mockResolvedValue({ is_active: true } as never)
+    vi.mocked(getEventsInCommunities).mockResolvedValue(
+      new Map([
+        [
+          'c1\te1',
+          makeEvent({
+            communityId: 'c1',
+            eventId: 'e1',
+            eventName: 'My Event',
+            communityAccount: 'comm',
+            isPublic: true,
+            enterpriseId: 'my-eid',
+          }),
+        ],
+        [
+          'c1\te2',
+          makeEvent({
+            communityId: 'c1',
+            eventId: 'e2',
+            eventName: 'Other Event',
+            communityAccount: 'comm',
+            isPublic: true,
+            enterpriseId: 'other-eid',
+          }),
+        ],
+      ]) as never,
+    )
+
+    const result = await resolveUserFriendMeetLog({
+      targetUserId: 'owner',
+      friendUserId: 'friend1',
+      viewerUid: 'viewer',
+      enterpriseScope: { enterpriseId: 'my-eid' },
+    })
+
+    expect(result?.meet_log).toHaveLength(1)
+    expect(result?.meet_log[0].event_id).toBe('e1')
+    expect(result?.meet_count).toBe(1)
   })
 })

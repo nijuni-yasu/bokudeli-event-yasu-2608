@@ -321,14 +321,14 @@ const fetchOneOrderedFoodsRawPage = async (
   targetUserId: string,
   limit: number,
   cursor?: ProfileFoodsPageCursor,
+  enterpriseId?: string,
 ): Promise<{ orders: EventMemberOrder[]; hasMore: boolean; nextCursor: ProfileFoodsPageCursor | null }> => {
   const db = getFirestore()
-  let q = db
-    .collectionGroup('member_orders')
-    .where('user_id', '==', targetUserId)
-    .where('status', '==', 'ordered')
-    .orderBy('updated_at', 'desc')
-    .orderBy('order_id', 'desc')
+  let q = db.collectionGroup('member_orders').where('user_id', '==', targetUserId).where('status', '==', 'ordered')
+  if (enterpriseId != null && enterpriseId !== '') {
+    q = q.where('enterprise_id', '==', enterpriseId)
+  }
+  q = q.orderBy('updated_at', 'desc').orderBy('order_id', 'desc')
 
   if (cursor != null) {
     q = q.startAfter(Timestamp.fromMillis(cursor.updated_at), cursor.order_id)
@@ -385,8 +385,9 @@ export const listOrderedFoodsPageForProfile = async (params: {
   targetUserId: string
   limit: number
   cursor?: ProfileFoodsPageCursor
+  enterpriseId?: string
 }): Promise<ProfileFoodsPageResult> => {
-  const { targetUserId, limit, cursor: startCursor } = params
+  const { targetUserId, limit, cursor: startCursor, enterpriseId } = params
   const collected: EventMemberOrder[] = []
   const eventsByKey = new Map<string, ShokujiiEvent>()
   let cursor = startCursor
@@ -399,7 +400,7 @@ export const listOrderedFoodsPageForProfile = async (params: {
       break
     }
 
-    const raw = await fetchOneOrderedFoodsRawPage(targetUserId, remaining, cursor)
+    const raw = await fetchOneOrderedFoodsRawPage(targetUserId, remaining, cursor, enterpriseId)
     const { visibleOrders, eventsByKey: pageEvents } = await filterOrdersForProfile(raw.orders)
     collected.push(...visibleOrders)
     for (const [key, event] of pageEvents) {
@@ -430,10 +431,12 @@ export const listOrderedFoodsPageForProfile = async (params: {
 export const listOrderedFoodsPreviewForProfile = async (
   targetUserId: string,
   limit: number,
+  enterpriseId?: string,
 ): Promise<{ orders: EventMemberOrder[]; eventsByKey: Map<string, ShokujiiEvent> }> => {
   const page = await listOrderedFoodsPageForProfile({
     targetUserId,
     limit,
+    enterpriseId,
   })
   return { orders: page.orders, eventsByKey: page.eventsByKey }
 }
@@ -443,18 +446,17 @@ export const listOrderedFoodsPreviewForProfile = async (
  * `status === 'ordered'` の member_orders から (community_id, event_id) をユニーク化し、
  * `is_deleted == false` かつ `event_status.value !== 'event_canceled'` のイベントのみ数える。
  */
-export const countParticipatedEventsForUser = async (userId: string): Promise<number> => {
+export const countParticipatedEventsForUser = async (userId: string, enterpriseId?: string): Promise<number> => {
   if (userId === '') {
     return 0
   }
   const { getCommunityEventKey, getEventsInCommunities } = await import('./event.js')
   const db = getFirestore()
-  const snapshot = await db
-    .collectionGroup('member_orders')
-    .where('user_id', '==', userId)
-    .where('status', '==', 'ordered')
-    .withConverter(new EventMemberOrderConverter())
-    .get()
+  let q = db.collectionGroup('member_orders').where('user_id', '==', userId).where('status', '==', 'ordered')
+  if (enterpriseId != null && enterpriseId !== '') {
+    q = q.where('enterprise_id', '==', enterpriseId)
+  }
+  const snapshot = await q.withConverter(new EventMemberOrderConverter()).get()
 
   const eventRefs = new Map<string, { community_id: string; event_id: string }>()
   for (const doc of snapshot.docs) {
@@ -483,17 +485,16 @@ export const countParticipatedEventsForUser = async (userId: string): Promise<nu
 /**
  * 注文済みフード数（`member_orders` collection group で `user_id == uid + status == 'ordered'`）。
  */
-export const countOrderedFoodsForUser = async (userId: string): Promise<number> => {
+export const countOrderedFoodsForUser = async (userId: string, enterpriseId?: string): Promise<number> => {
   if (userId === '') {
     return 0
   }
   const db = getFirestore()
-  const snapshot = await db
-    .collectionGroup('member_orders')
-    .where('user_id', '==', userId)
-    .where('status', '==', 'ordered')
-    .count()
-    .get()
+  let q = db.collectionGroup('member_orders').where('user_id', '==', userId).where('status', '==', 'ordered')
+  if (enterpriseId != null && enterpriseId !== '') {
+    q = q.where('enterprise_id', '==', enterpriseId)
+  }
+  const snapshot = await q.count().get()
   return snapshot.data().count
 }
 

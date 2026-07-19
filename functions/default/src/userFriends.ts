@@ -15,6 +15,7 @@ import { type UserFriendsListCursor } from './stores/userFriend.js'
 import { getUser } from './stores/user.js'
 import { runBackfill } from './utils/friendsService.js'
 import { resolveUserFriendsList, resolveUserFriendMeetLog } from './utils/userFriendsResolver.js'
+import { assertEnterpriseProfileAccess, isEnterpriseViewer } from './utils/enterpriseProfileAccess.js'
 
 const GetUserFriendsRequestSchema = z.object({
   target_user_id: z.string().min(1),
@@ -70,9 +71,15 @@ export const getUserFriends = onCall<GetUserFriendsRequest, Promise<GetUserFrien
   { region: 'asia-northeast1', invoker: 'public' },
   async (request) => {
     const input = GetUserFriendsRequestSchema.parse(request.data)
-    const targetUser = await getUser(input.target_user_id, false)
-    if (targetUser == null || targetUser.is_deleted) {
-      throw new HttpsError('not-found', '存在しないユーザーです')
+    const isEnterprise = isEnterpriseViewer(request.auth)
+
+    if (isEnterprise) {
+      await assertEnterpriseProfileAccess(request.auth, input.target_user_id)
+    } else {
+      const targetUser = await getUser(input.target_user_id, false)
+      if (targetUser == null || targetUser.is_deleted) {
+        throw new HttpsError('not-found', '存在しないユーザーです')
+      }
     }
     // TODO Phase 2: 公開範囲設定（オプトアウト）を参照し、不可なら permission-denied
 
@@ -80,6 +87,11 @@ export const getUserFriends = onCall<GetUserFriendsRequest, Promise<GetUserFrien
     const sortBy: UserFriendsSortBy = input.sort_by ?? 'meet_count'
     const decodedCursor = decodeUserFriendsListCursor(input.cursor)
     const viewerUid = request.auth?.uid ?? null
+    const enterpriseId =
+      isEnterprise && request.auth?.token != null
+        ? (request.auth.token as Record<string, unknown>).enterprise_id
+        : undefined
+    const enterpriseScope = typeof enterpriseId === 'string' && enterpriseId !== '' ? { enterpriseId } : undefined
 
     const { friends, hasMore, nextCursor } = await resolveUserFriendsList({
       targetUserId: input.target_user_id,
@@ -87,6 +99,7 @@ export const getUserFriends = onCall<GetUserFriendsRequest, Promise<GetUserFrien
       limit,
       cursor: decodedCursor,
       viewerUid,
+      ...(enterpriseScope != null ? { enterpriseScope } : {}),
     })
 
     return {
@@ -101,9 +114,17 @@ export const getUserFriendMeetLog = onCall<GetUserFriendMeetLogRequest, Promise<
   { region: 'asia-northeast1', invoker: 'public' },
   async (request) => {
     const input = GetUserFriendMeetLogRequestSchema.parse(request.data)
-    const targetUser = await getUser(input.target_user_id, false)
-    if (targetUser == null || targetUser.is_deleted) {
-      throw new HttpsError('not-found', '存在しないユーザーです')
+    const isEnterprise = isEnterpriseViewer(request.auth)
+
+    let enterpriseScope: { enterpriseId: string } | undefined
+    if (isEnterprise) {
+      const access = await assertEnterpriseProfileAccess(request.auth, input.target_user_id)
+      enterpriseScope = { enterpriseId: access.viewerEnterpriseId }
+    } else {
+      const targetUser = await getUser(input.target_user_id, false)
+      if (targetUser == null || targetUser.is_deleted) {
+        throw new HttpsError('not-found', '存在しないユーザーです')
+      }
     }
 
     const viewerUid = request.auth?.uid ?? null
@@ -111,6 +132,7 @@ export const getUserFriendMeetLog = onCall<GetUserFriendMeetLogRequest, Promise<
       targetUserId: input.target_user_id,
       friendUserId: input.friend_user_id,
       viewerUid,
+      ...(enterpriseScope != null ? { enterpriseScope } : {}),
     })
 
     if (result == null) {

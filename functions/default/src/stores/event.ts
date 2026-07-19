@@ -271,14 +271,18 @@ export const getCommunityEventKey = buildCommunityEventKey
 export const listEventsForProfilePreview = async (params: {
   targetUserId: string
   limit: number
+  enterpriseId?: string
 }): Promise<ShokujiiEvent[]> => {
-  const { targetUserId, limit } = params
+  const { targetUserId, limit, enterpriseId } = params
   const db = getFirestore()
   const userRef = getUserRef(targetUserId)
-  const eventsQuery = db
+  let eventsQuery = db
     .collectionGroup('events')
     .where('members', 'array-contains', userRef)
     .where('is_deleted', '==', false)
+  if (enterpriseId != null && enterpriseId !== '') {
+    eventsQuery = eventsQuery.where('enterprise_id', '==', enterpriseId)
+  }
   const snapshot = await eventsQuery
     .orderBy('event_start_datetime', 'desc')
     .limit(limit)

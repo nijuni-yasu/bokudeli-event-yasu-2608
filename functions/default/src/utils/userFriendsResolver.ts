@@ -4,6 +4,7 @@ import { listUserFriends, getUserFriend, type UserFriendsListCursor } from '../s
 import { getUser, getUsersByUserIds } from '../stores/user.js'
 import { getCommunityEventKey, getEventsInCommunities, type ShokujiiEvent } from '../stores/event.js'
 import { computeProfileItemLinkableToViewer, MAX_PROFILE_PREVIEW_SKIP_PAGES } from './profileItemVisibility.js'
+import { classifyEnterpriseFriend } from './enterpriseFriendVisibility.js'
 
 type MeetLogHistoryEntry = { event_id: string; community_id: string; event_at: number }
 
@@ -13,6 +14,7 @@ type ResolveInput = {
   limit: number
   cursor?: UserFriendsListCursor
   viewerUid?: string | null
+  enterpriseScope?: { enterpriseId: string }
 }
 
 type ResolveOutput = {
@@ -73,8 +75,21 @@ const buildMeetLogItems = (
   return items
 }
 
+const filterHistoryByEnterprise = (
+  history: MeetLogHistoryEntry[],
+  eventMap: Map<string, ShokujiiEvent>,
+  enterpriseId: string,
+): MeetLogHistoryEntry[] =>
+  history.filter((entry) => {
+    const event = eventMap.get(getCommunityEventKey(entry.community_id, entry.event_id))
+    if (event == null || event.is_deleted) {
+      return false
+    }
+    return event.enterprise_id === enterpriseId
+  })
+
 const resolveUserFriendsListOnce = async (input: ResolveInput): Promise<ResolveOutput> => {
-  const { targetUserId, sortBy, limit, cursor } = input
+  const { targetUserId, sortBy, limit, cursor, enterpriseScope } = input
 
   const page = await listUserFriends(targetUserId, sortBy, limit, cursor)
   if (page.friends.length === 0) {
@@ -86,7 +101,29 @@ const resolveUserFriendsListOnce = async (input: ResolveInput): Promise<ResolveO
   const friends: UserFriendListItem[] = []
   for (const friend of page.friends) {
     const user = userMap.get(friend.id)
-    if (user == null || user.is_deleted) {
+    if (user == null) {
+      continue
+    }
+
+    if (enterpriseScope != null) {
+      const visibility = await classifyEnterpriseFriend(user, enterpriseScope.enterpriseId)
+      if (!visibility.include) {
+        continue
+      }
+      friends.push({
+        user_id: friend.id,
+        user_name: user.user_name,
+        user_image_url: user.user_image_url,
+        meet_count: friend.meet_count,
+        first_met_at: friend.first_met_at,
+        last_met_at: friend.last_met_at,
+        is_guest_friend: visibility.is_guest_friend,
+        is_linkable: visibility.is_linkable,
+      })
+      continue
+    }
+
+    if (user.is_deleted) {
       continue
     }
     friends.push({
@@ -157,26 +194,42 @@ export const resolveUserFriendMeetLog = async (params: {
   targetUserId: string
   friendUserId: string
   viewerUid: string | null
+  enterpriseScope?: { enterpriseId: string }
 }): Promise<{ meet_log: UserFriendMeetLogItem[]; meet_count: number } | null> => {
-  const { targetUserId, friendUserId, viewerUid } = params
+  const { targetUserId, friendUserId, viewerUid, enterpriseScope } = params
   const friend = await getUserFriend(targetUserId, friendUserId)
   if (friend == null) {
     return null
   }
 
   const friendUser = await getUser(friendUserId, false)
-  if (friendUser == null || friendUser.is_deleted) {
+  if (friendUser == null) {
     return null
   }
 
-  const history = normalizeHistory(friend.event_history)
+  if (enterpriseScope != null) {
+    const visibility = await classifyEnterpriseFriend(friendUser, enterpriseScope.enterpriseId)
+    if (!visibility.include) {
+      return null
+    }
+  } else if (friendUser.is_deleted) {
+    return null
+  }
+
+  let history = normalizeHistory(friend.event_history)
   if (history.length === 0) {
     return { meet_log: [], meet_count: friend.meet_count }
   }
 
   const eventRefs = history.map((entry) => ({ community_id: entry.community_id, event_id: entry.event_id }))
   const eventMap = await getEventsInCommunities(eventRefs)
-  const meetLog = buildMeetLogItems(history, eventMap, viewerUid, targetUserId, true)
 
-  return { meet_log: meetLog, meet_count: friend.meet_count }
+  if (enterpriseScope != null) {
+    history = filterHistoryByEnterprise(history, eventMap, enterpriseScope.enterpriseId)
+  }
+
+  const meetLog = buildMeetLogItems(history, eventMap, viewerUid, targetUserId, true)
+  const meetCount = new Set(history.map((entry) => entry.event_id)).size
+
+  return { meet_log: meetLog, meet_count: meetCount }
 }
