@@ -59,6 +59,7 @@ describe('partner base形 parse 互換（PA-11e / C-5）', () => {
   it('PF / Enterprise 形 EventMemberOrder を parse できる', () => {
     const pf = new EventMemberOrder('order-pf', minimalMemberOrderFields)
     expect(pf.isValidForDatabase()).toBe(true)
+    expect(pf.toFirestore().enterprise_id).toBeNull()
     expect(pf.toFirestore().pay_enterprise_subsidy_amount).toBeUndefined()
 
     const ent = new EventMemberOrder('order-ent', enterpriseMemberOrderFields)
