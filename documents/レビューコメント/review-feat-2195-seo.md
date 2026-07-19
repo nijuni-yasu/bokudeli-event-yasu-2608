@@ -211,3 +211,22 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 
 **判断理由**: RC-1 で既に対応済み。`ShokujiiEvent` / `ShokujiiCommunity` の constructor は `updated_at` を `Date.now()` で上書きするため、既存 converter 経由にすると sitemap の `lastmod` が常に生成時刻になり RC-1 が再発する。現状の raw `updated_at` 読み取りは意図的な設計。withConverter 化する場合は sitemap 専用の軽量 converter が必要で、#2197（ページング）と合わせて別途検討が妥当。
 
+## 評価セッション（2026-07-19 19:00・review-comments-evaluate・auto）
+
+- **評価日時**: 2026-07-19 19:00 JST
+- **評価者**: Cursor Agent（review-comments-evaluate）
+- **ブランチ名**: feat/2195-seo
+- **PR**: #2196
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T09:50:06Z
+- **partial**: true（Codex usage limits）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼コメント、Codex limits/connect 案内）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-11 | 3610329752 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap の x-forwarded-host カンマ区切り時に先頭 host のみ使用 |
+| [x] | RC-12 | 3610329756 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | afterEach の document.title 更新を try/catch で保護 |
+| [x] | RC-13 | 5015271247 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ogpRequest でも resolveRequestSite を使用（host 未設定/配列対応） |
+
