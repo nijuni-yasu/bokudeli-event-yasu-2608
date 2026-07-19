@@ -183,7 +183,7 @@ Scheduled Functions の `timeoutSeconds` を 3600 → 1800 に修正し、仕様
 | [x] | RC-19 | 3609804652 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 データ | 🔧 微修正 | S | legacy 直下 export を daily 保持本数で削除 |
 | [x] | RC-20 | 3609804654 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | S | storage weekly COLDLINE lifecycle 削除（9a50ef281） |
 | [x] | RC-21 | 3609813234, 3609813252 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📄 ドキュメント | 📄 ドキュメントのみ | S | terraform/README.md の ARCHIVE 記載を STANDARD に修正 |
-| [ ] | RC-22 | 3609813260 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 📋 仕様追加 | M | export 1800秒 timeout + operation.promise 待ちのリスク（仕様 §5.6.3 要確認） |
+| [x] | RC-22 | 3609813260 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💰 金銭 | 📋 仕様追加 | M | export 1800秒 timeout + operation.promise 待ちのリスク（仕様 §5.6.3 要確認） |
 
 ---
 
@@ -287,7 +287,7 @@ Scheduled Function の `outputUriPrefix` が `gs://bucket/daily/` 固定だと�
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -298,6 +298,8 @@ Scheduled Function の `outputUriPrefix` が `gs://bucket/daily/` 固定だと�
 **想定工数**: M
 
 **判断理由**: 仕様書 §5.6.3 で「Scheduled 1800 秒上限・大規模 DB は要確認」と既知。非同期起動 + 別途完了監視は別設計。reply で現状認識と監視方針を回答予定。
+
+**ステータス（追記 2026-07-19）**: ✅ 対応済み — 本番 `bokudeli-event-dev` の Operations API 計測（直近 30 日次 export）。所要時間 55〜73 秒（上限 1800 秒・安全圏 1440 秒以内）。`operation.promise()` 待ち構成を維持。検証記録 §4.1 記入済み。
 
 ---
 
