@@ -1,52 +1,35 @@
 # ブランチ feat/2195-seo レビュー記録
 
-## 評価セッション（2026-07-19 17:46・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 17:46 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: 未作成
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 該当なし
-
 ### RC 一覧（サマリ）
 
 | 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
 |:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-1 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap `lastmod` が ShokujiiEvent/Community 生成時に常に現在時刻になる |
+| [x] | RC-2 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | イベント URL の communityAccount 不一致時も 200 + 誤 canonical を返していた |
+| [x] | RC-3 | 3610294674 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | JSON-LD 埋め込み時に script 終了タグをエスケープ |
+| [x] | RC-4 | 3610294682 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | catch-all error パラメータ配列を正しく解釈 |
+| [x] | RC-5 | 3610294691 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap の x-forwarded-host 未設定時 400 |
+| [x] | RC-6 | 5015208780 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | OGP title/description の二重 HTML エスケープ |
+| [x] | RC-7 | 5015208780 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | title 置換時の replace $ 特殊シーケンス |
+| [x] | RC-8 | 5015208780 | 👌 修正不要 | — | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap を withConverter 経由に |
+| [x] | RC-9 | 5015208780 | 🟡 修正提案 | 📤 #2197 別Issue化 | 📤 スコープ外 | — | 📋 仕様追加 | M | 公開イベント sitemap 取得のページング<br>#2197 |
+| [x] | RC-10 | 5015208780 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | robots.txt Disallow: /register の末尾スラッシュ削除 |
+| [x] | RC-11 | 3610329752 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap の x-forwarded-host カンマ区切り時に先頭 host のみ使用 |
+| [x] | RC-12 | 3610329756 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | afterEach の document.title 更新を try/catch で保護 |
+| [x] | RC-13 | 5015271247 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ogpRequest でも resolveRequestSite を使用（host 未設定/配列対応） |
+| [x] | RC-14 | 3610407930 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | resolveRequestSite で x-forwarded-proto を優先 |
+| [x] | RC-15 | 3610407935 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap イベント取得に enterprise_id == null 追加 |
+| [ ] | RC-16 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | Organization JSON-LD 住所を PostalAddress 型に統一（imo） |
+| [ ] | RC-17 | 5015432068 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap が converter なし raw 読み取り（nits） |
+| [x] | RC-18 | 5015432068 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | sitemap lastmod を JST 日付に揃える（nits） |
+| [x] | RC-19 | 3610576386 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | resolveRequestSite の host allowlist / SSRF 対策 |
+| [x] | RC-20 | 5015771623 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | error.vue の errorCode を computed 化 |
+| [ ] | RC-21 | 3610576392 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap コミュニティ取得を select 軽量化（imo） |
+| [ ] | RC-22 | 3610576408 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap イベント取得を select 軽量化（imo） |
+| [x] | RC-23 | 3610576415 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | formatSitemapLastmod を luxon 化（RC-18 と関連） |
+| [x] | RC-24 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ogpRequest が enterprise コミュニティ・イベントも SEO 200 を返していた |
 
-- 指摘なし（documents/12_SEO対策/SEO対策.md 新規作成。チェックリスト照合のみ）
-
-## 評価セッション（2026-07-19 17:50・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 17:50 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: 未作成
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 該当なし
-
-### RC 一覧（サマリ）
-
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-
-- 指摘なし（SEO対策.md に Phase 4・工数見積もり追加。ドキュメントのみ）
-
-## 評価セッション（2026-07-19 18:10・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 18:10 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: 未作成
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 該当なし
-
-### RC 一覧（サマリ）
-
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-
-- 指摘なし（Phase 2 SEO 実装: ogpRequest 拡張、sitemap、robots.txt、seo モジュール、Vitest 17 件追加）
+---
 
 ## 評価セッション（2026-07-19 18:10・shokujii-code-review・再実行）
 
@@ -116,22 +99,6 @@ ShokujiiEvent / ShokujiiCommunity の constructor が `updated_at` を `Date.now
 
 **ステータス**: ✅ 対応済み
 
-## 評価セッション（2026-07-19 18:21・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 18:21 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: 未作成
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 該当なし
-
-### RC 一覧（サマリ）
-
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-
-- 指摘なし（P1-2 noindex headers、P1-3 index.html メタ、P2-8 document.title、P2-9 404 noindex）
-
 ## 評価セッション（2026-07-19 18:37・review-comments-evaluate・auto）
 
 - **評価日時**: 2026-07-19 18:37 JST
@@ -155,20 +122,6 @@ ShokujiiEvent / ShokujiiCommunity の constructor が `updated_at` を `Date.now
 | [x] | RC-8 | 5015208780 | 👌 修正不要 | — | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap を withConverter 経由に |
 | [x] | RC-9 | 5015208780 | 🟡 修正提案 | 📤 #2197 別Issue化 | 📤 スコープ外 | — | 📋 仕様追加 | M | 公開イベント sitemap 取得のページング<br>#2197 |
 | [x] | RC-10 | 5015208780 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | robots.txt Disallow: /register の末尾スラッシュ削除 |
-
-## 評価セッション（2026-07-19 18:45・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 18:45 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: #2196
-
-### RC 一覧（サマリ）
-
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-
-- 指摘なし（RC-10 robots.txt 末尾スラッシュ削除、RC-9 #2197 別Issue化記録）
 
 ## 評価セッション（2026-07-19 18:50・review-comments-evaluate）
 
@@ -229,22 +182,6 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 | [x] | RC-11 | 3610329752 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | sitemap の x-forwarded-host カンマ区切り時に先頭 host のみ使用 |
 | [x] | RC-12 | 3610329756 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | afterEach の document.title 更新を try/catch で保護 |
 | [x] | RC-13 | 5015271247 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ogpRequest でも resolveRequestSite を使用（host 未設定/配列対応） |
-
-## 評価セッション（2026-07-19 19:42・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 19:42 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: #2196
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 該当なし
-
-### RC 一覧（サマリ）
-
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-
-- 指摘なし（P3-S1〜3 構造化データ拡張、P3-3 Vue h1 整備）
 
 ## 評価セッション（2026-07-19 20:00・review-comments-evaluate・auto）
 
@@ -557,38 +494,6 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 **ステータス**: ✅ 対応済み
 
 **判断理由**: RC-18 と統合。`Date` 直書きを `convertToDateString`（luxon 経由）に置換。
-
-## 評価セッション（2026-07-19 22:07・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 22:07 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: #2196
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 該当なし
-
-### RC 一覧（サマリ）
-
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-
-- 指摘なし（RC-19 SSRF 対策: allowedPublicHost + fetchIndexHtml を EVENT_HOST 固定。RC-20 error.vue computed は同セッション含む）
-
-## 評価セッション（2026-07-19 22:09・shokujii-code-review）
-
-- **評価日時**: 2026-07-19 22:09 JST
-- **評価者**: Cursor Agent（shokujii-code-review）
-- **ブランチ名**: feat/2195-seo
-- **PR**: #2196
-- **Outdated 除外件数**: 該当なし
-- **レビュー非該当スキップ件数**: 該当なし
-
-### RC 一覧（サマリ）
-
-| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
-|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-
-- 指摘なし（RC-18/23: formatSitemapLastmod を convertToDateString / JST に統一）
 
 ## 評価セッション（2026-07-19 22:16・shokujii-code-review）
 

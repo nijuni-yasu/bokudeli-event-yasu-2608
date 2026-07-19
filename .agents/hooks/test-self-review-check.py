@@ -273,18 +273,19 @@ def test_consumed_changed_fingerprint_fails() -> None:
         )
 
 
-def test_consumed_fingerprint_without_doc_fails() -> None:
+def test_consumed_fingerprint_without_doc_passes() -> None:
+    """指摘 0 件: review doc 未作成でも consumed + fingerprint で合格。"""
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        _setup_minimal_git_repo(root, "ai/1")
+        _setup_minimal_git_repo(root, "feat/1")
         wake_path = root / ".agents" / "state" / "self-review-pending.json"
         since = "2026-07-16T07:00:00+00:00"
-        wake.write_pending_wake(wake_path, branch="ai/1", since=since)
-        wake.consume_wake(wake_path, "ai/1", repo_root=root)
-        entry = wake.get_wake_for_branch(wake_path, "ai/1")
+        wake.write_pending_wake(wake_path, branch="feat/1", since=since)
+        wake.consume_wake(wake_path, "feat/1", repo_root=root)
+        entry = wake.get_wake_for_branch(wake_path, "feat/1")
         assert entry is not None
-        assert not lib.is_self_review_complete(
-            branch="ai/1",
+        assert lib.is_self_review_complete(
+            branch="feat/1",
             since=since,
             conversation_id=None,
             wake_entry=entry,
@@ -483,7 +484,7 @@ def main() -> int:
         test_list_paths_review_excludes_review_doc,
         test_consumed_same_fingerprint_passes,
         test_consumed_changed_fingerprint_fails,
-        test_consumed_fingerprint_without_doc_fails,
+        test_consumed_fingerprint_without_doc_passes,
         test_self_review_check_cli_consumed_same_fp_passes,
         test_tree_branch_skips_doc_but_ledger_ok,
         test_tree_branch_consumed_fingerprint_ok_without_ledger,
