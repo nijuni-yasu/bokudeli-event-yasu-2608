@@ -43,7 +43,6 @@ export const {
   onCommunityMemberWritten,
   getUserProfilePreview, getUserFoods, backfillUserProfileCounts,
   log_event_status,
-  backupFirestore,
   flyer,
   slackbot,
   slackEventNotification,
@@ -70,6 +69,9 @@ export const {
   onChatMessageCreated,
   onEventArchived,
   recallChatMessage,
+  firestoreExportDaily, firestoreExportWeekly, firestoreExportMonthly,
+  storageBackupDaily, storageBackupWeekly, storageBackupMonthly,
+  backupRetentionCleanup,
 } = Object.assign({}, ...(await Promise.all([
   import('./communityManager.js'),
   import('./letter.js'),
@@ -98,7 +100,6 @@ export const {
   import('./communityMemberCountsTrigger.js'),
   import('./userProfile.js'),
   import('./eventLog.js'),
-  import('./backupFirestore.js'),
   import('./flyer.js'),
   import('./slackbot.js'),
   import('./slackEventNotification.js'),
@@ -116,4 +117,5 @@ export const {
   import('./onChatMessageCreated.js'),
   import('./onEventArchived.js'),
   import('./recallChatMessage.js'),
+  import('./backup/scheduled.js'),
 ])))

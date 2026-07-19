@@ -160,7 +160,7 @@ resource "google_project_iam_member" "compute_service_account_eventarc_event_rec
   ]
 }
 
-# backupFirestore（Cloud Functions Gen2）が exportDocuments を呼べるようにする
+# バックアップ Scheduled Functions（Cloud Functions Gen2）が exportDocuments を呼べるようにする
 resource "google_project_iam_member" "compute_service_account_firestore_import_export" {
   project = var.project
   role    = "roles/datastore.importExportAdmin"

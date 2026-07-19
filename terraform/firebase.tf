@@ -60,6 +60,8 @@ resource "google_firestore_database" "default" {
   # Database type (FIRESTORE_NATIVE or DATASTORE_MODE)
   type = "FIRESTORE_NATIVE"
 
+  point_in_time_recovery_enablement = "POINT_IN_TIME_RECOVERY_ENABLED"
+
   depends_on = [
     google_firebase_project.default,
     google_app_engine_application.default
