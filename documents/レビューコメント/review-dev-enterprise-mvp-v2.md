@@ -1,5 +1,23 @@
 # ブランチ dev/enterprise-mvp-v2 レビュー記録
 
+## 評価セッション（2026-07-19 18:05・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 18:05 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: 未作成
+- **指摘なし**（チェックリスト照合のみ。stripes 0047 本リポ差分）
+
+**確認要点（👌）**:
+
+- `EventStripe`: `enterprise_id` nullable + `convertToDb` で `?? null` materialize（`EventMemberOrder` 同型）
+- `EventStripe.test.ts`: 未設定/null/string の 3 ケース
+- `stripeWebhook`: PF 決済で `enterprise_id: enterpriseId ?? null` 明示保存
+- doc: 02 §2.3.1 に 0047 節、01 F-1 メモに 0046/0047 整理
+- batch 0047 実装は `bokudeli-event-batch` 別リポ（本 diff 外）
+
+---
+
 ## 評価セッション（2026-07-19 15:40・shokujii-code-review）
 
 - **評価日時**: 2026-07-19 15:40 JST
@@ -67,4 +85,4 @@ F-1 で `setDefaultEventStoreOptions` を導入したため、ドキュメント
 
 - F-1: `EventMemberOrder` nullable materialize、`buildEventStoreOptions` 三値、partner 無フィルタ分離、CG index 追加
 - F-2: `authGuards.ts` 公開ルート除外型、`/pass-code` 含む
-- デプロイゲート: batch `0044` 未実行である旨はドキュメントに明記済み
+- デプロイゲート: batch **`0046`**（member_orders backfill）task 追加済み・**実行は CG 本番切替前**（[`bokudeli-event-batch` docs/0046](https://github.com/nijuniinc/bokudeli-event-batch/blob/main/docs/0046_member_orders_enterprise_id_backfill.md)）

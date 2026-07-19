@@ -20,7 +20,7 @@
 
 | 領域 | 根拠 |
 |:--|:--|
-| 共有スキーマ | **T1 ✅**: schema nullable 化・converter materialize・Vitest 済。**本番 backfill（`0043`）実行・完了確認済**。batch 対象は `communities` / `events` のみ（§2.3.1）。**F-1 ✅**: `EventMember` / `EventMemberOrder` nullable 化・Functions PF 書き込み null 明示・CG フィルタ（§2.3.1 `0044` batch は CG 本番切替前ゲート） |
+| 共有スキーマ | **T1 ✅**: schema nullable 化・converter materialize・Vitest 済。**本番 backfill（`0043`）実行・完了確認済**。batch 対象は `communities` / `events` のみ（§2.3.1）。**F-1 ✅**: `EventMember` / `EventMemberOrder` nullable 化・Functions PF 書き込み null 明示・CG フィルタ（§2.3.1 **`0046`** batch は CG 本番切替前ゲート。※`0044` は chat rooms 移行） |
 | Firestore Rules | events / communities の read は `docEnterpriseId(data) == null \|\| isSameEnterprise(data)`。**communities create は `canCreateCommunity()` で claims と `enterprise_id` を照合**（RC-82/124 対応済み） |
 | 共有カート | `user` / `enterprise` は `main.ts` で `setDefaultEventStoreOptions(buildEventStoreOptions(...))` を注入。`cart.vue` は token から `buildEventStoreOptions` を解決。partner は default `{}`（CG 無フィルタ） |
 
@@ -94,7 +94,11 @@ PF / Enterprise の判別を **`enterprise_id` に一本化**し、PF doc には
 2. **以降の新規 doc** — batch だけでは足りない。PF 書き込み経路が Enterprise 時のみ `enterprise_id` を spread していた箇所は、`null` **明示保存**＋ schema nullable 化がセット（**F-1 ✅** で `EventMember` / `EventMemberOrder` 対応済）。
 3. **複合 index** — 新クエリ形状に応じて `firestore.indexes.json` を先行デプロイ（T3 と同順序）。**F-1 ✅** で cart / 注文履歴 / events CG 用 index 追加済。
 
-**F-1 `member_orders` backfill（`0044`）**: T1 `0043` と同型。collectionGroup 全 `member_orders` のうち `enterprise_id` フィールド欠落 doc のみ `null` 付与。Enterprise string doc は不変更。dry-run / 件数確認 / 冪等性必須。**クライアント CG フィルタ本番切替前**に development / production で実行すること。
+**F-1 `member_orders` backfill（`0046`）**: T1 `0043` と同型の materialize。`collectionGroup('member_orders')` 全件のうち `enterprise_id` **フィールド欠落** doc のみ更新（既存 null / string は不変更）。付与値は **親 event の `enterprise_id` を継承**（Enterprise string → 同 string、PF / null / 欠落 → `null`）。実装: [`bokudeli-event-batch` `tasks/0046_backfill_member_orders_enterprise_id.js`](https://github.com/nijuniinc/bokudeli-event-batch/blob/main/tasks/0046_backfill_member_orders_enterprise_id.js) / [`docs/0046_member_orders_enterprise_id_backfill.md`](https://github.com/nijuniinc/bokudeli-event-batch/blob/main/docs/0046_member_orders_enterprise_id_backfill.md)。dry-run / 件数確認 / 冪等性必須。**クライアント CG フィルタ本番切替前**に development / production で実行すること。
+
+**`stripes` backfill（`0047`）**: 0046 と同型（親 event 継承・案 B）。`collectionGroup('stripes')` の `enterprise_id` **フィールド欠落** doc のみ materialize。本リポ側は **`EventStripe` nullable 化** + **`stripeWebhook` の PF null 明示**がセット。実装: [`tasks/0047_backfill_stripes_enterprise_id.js`](https://github.com/nijuniinc/bokudeli-event-batch/blob/main/tasks/0047_backfill_stripes_enterprise_id.js) / [`docs/0047_stripes_enterprise_id_backfill.md`](https://github.com/nijuniinc/bokudeli-event-batch/blob/main/docs/0047_stripes_enterprise_id_backfill.md)。**F-1 ゲート外**（PF client CG 未使用）。エンプラダッシュボード（`listStripesByEnterprise`）go-live 前の推奨。デプロイ順: Functions deploy → batch **0047**（0046 とは独立）。
+
+> **番号混同防止**: batch `0044` は event chat rooms 移行（`0044_migrate_event_chat_rooms.js`）。member_orders backfill は **`0046`**、stripes backfill は **`0047`**。
 
 **優先度の目安**: `member_orders`（F-1 で CG フィルタ予定）＞ `members`（client の collectionGroup 未使用・direct path read が主）＞ `stripes`（client CG 未使用）。
 
@@ -253,3 +257,4 @@ PF クエリ切替（T2）は、`bokudeli-event-batch` による本番バック�
 | 2026-06-19 | RC-82/92/96/124/137/146/152 およびドキュメント RC-119〜122 対応。communities create Rules・admin guard・tenant-aware EventStore/Cart・Rules テスト追加 |
 | 2026-06-25 | §2.3.1 追加（member_orders / members / stripes の T1 対象外・将来 backfill 条件・F-1 残との関係）。§1 スキーマ行を T1 範囲に整合 |
 | 2026-07-19 | T1 本番 backfill 完了・T2 本番反映・§5/§6 着地条件すべて ✅（[#2071](https://github.com/nijuniinc/bokudeli-event-new/pull/2071) 着地 `119681b65`） |
+| 2026-07-19 | F-1 member_orders backfill 番号を `0044` → **`0046`** に修正（`0044` は chat rooms）。付与ロジックを親 event 継承に明記 |

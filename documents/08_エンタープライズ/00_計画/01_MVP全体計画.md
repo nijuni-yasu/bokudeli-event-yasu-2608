@@ -177,10 +177,10 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| ✅ | F-1 | PF の全一覧・検索・collectionGroup に `where('enterprise_id', '==', null)` を必須化。T1 batch は `communities` / `events` のみ — `member_orders` は [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill) の batch（`0044`）＋本 PR の schema / 書き込み / CG フィルタ。エンプラゲストの PF 掲載（`allow_guest && publish_scope === 'public'`）は **G-1 / MVP 外**（[04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1） | §3-1 | 必須 | — |
+| ✅ | F-1 | PF の全一覧・検索・collectionGroup に `where('enterprise_id', '==', null)` を必須化。T1 batch は `communities` / `events` のみ — `member_orders` は [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill) の batch（**`0046`**）＋本 PR の schema / 書き込み / CG フィルタ。エンプラゲストの PF 掲載（`allow_guest && publish_scope === 'public'`）は **G-1 / MVP 外**（[04_詳細_ゲスト参加](../10_仕様/04_詳細_ゲスト参加.md) §2.1） | §3-1 | 必須 | — |
 | ✅ | F-2 | 未ログイン時はエンプラ画面をログインへリダイレクト（ゲスト参加=allow_guest による未ログイン閲覧例外は MVP 外・将来対応） | §3-2 | 必須 | — |
 
-**メモ（F-1）**: T2 一覧 ✅。共有 store CG（`event.ts` `event_id` 横断、`currentUser` カート、`userOrderHistoryList`）に PF / enterprise 三値フィルタを追加。`member_orders` backfill（[`bokudeli-event-batch` `0044`](https://github.com/nijuniinc/bokudeli-event-batch)）は **CG フィルタ本番切替前**に実行。デプロイ順: Functions（null 明示書き込み）→ batch `0044` → index deploy → クライアント。
+**メモ（F-1）**: T2 一覧 ✅。共有 store CG（`event.ts` `event_id` 横断、`currentUser` カート、`userOrderHistoryList`）に PF / enterprise 三値フィルタを追加。`member_orders` backfill（[`bokudeli-event-batch` **`0046`**](https://github.com/nijuniinc/bokudeli-event-batch)）は **CG フィルタ本番切替前**に実行。`stripes` backfill（**`0047`**）は F-1 ゲート外 — [02 §2.3.1](./02_developmentマージ.md#231-member_orders--members--stripes-t1-対象外と将来-backfill) 参照。デプロイ順: Functions（null 明示書き込み）→ batch **`0046`** → index deploy → クライアント。
 
 ### WS-G: Phase 2（MVP 外・PF/エンプラ横断含む）
 
