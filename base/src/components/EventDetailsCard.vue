@@ -136,9 +136,9 @@ const isShowMember = computed(() =>
     <v-row>
       <v-col>
         <!-- イベント情報 -->
-        <v-card-title class="event-details-card__event-name pt-6 pb-0 font-weight-black text-wrap">
+        <h1 class="event-details-card__event-name pt-6 pb-0 font-weight-black text-wrap">
           {{ event.event_name }}
-        </v-card-title>
+        </h1>
         <v-card-text class="event-item text-right px-0 py-0 ma-1">
           <v-btn
             class="ml-3"
