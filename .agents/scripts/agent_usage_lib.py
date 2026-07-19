@@ -33,7 +33,11 @@ SHELL_PHASE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 USAGE_REPORT_PREFIX = "[agent-usage-report]"
+SELF_REVIEW_FOLLOWUP_PREFIX = "[self-review]"
 SKIP_NEXT_FOLLOWUP_KEY = "skip_next_followup"
+SKIP_NEXT_SELF_REVIEW_GATE_KEY = "skip_next_self_review_gate"
+# Cursor beforeSubmitPrompt の composer_mode。Ask = chat
+READONLY_COMPOSER_MODES = frozenset({"chat"})
 
 
 def utc_now_iso() -> str:
@@ -153,6 +157,82 @@ def prompt_from_payload(payload: dict[str, Any]) -> str:
 
 def is_usage_report_prompt(prompt: str) -> bool:
     return prompt.strip().startswith(USAGE_REPORT_PREFIX)
+
+
+def is_self_review_followup_prompt(prompt: str) -> bool:
+    return prompt.strip().startswith(SELF_REVIEW_FOLLOWUP_PREFIX)
+
+
+def composer_mode_from_payload(payload: dict[str, Any]) -> str | None:
+    mode = payload.get("composer_mode")
+    if mode is None:
+        return None
+    text = str(mode).strip()
+    return text or None
+
+
+def is_readonly_composer_mode(mode: str | None) -> bool:
+    return mode in READONLY_COMPOSER_MODES
+
+
+def persist_session_hook_meta(payload: dict[str, Any], *, path: Path | None = None) -> None:
+    """beforeSubmitPrompt: composer_mode と self-review followup フラグを active task に保存。"""
+    key = session_key(payload)
+    prompt = prompt_from_payload(payload)
+    composer_mode = composer_mode_from_payload(payload)
+
+    def mutator(tasks: dict[str, dict[str, Any]]) -> None:
+        task = tasks.get(key)
+        if not isinstance(task, dict):
+            task = {}
+        if composer_mode is not None:
+            task["composer_mode"] = composer_mode
+        if is_self_review_followup_prompt(prompt):
+            task[SKIP_NEXT_SELF_REVIEW_GATE_KEY] = True
+        tasks[key] = task
+        return None
+
+    update_active_tasks(mutator, path=path)
+
+
+def clear_skip_next_self_review_gate(
+    conversation_id: str,
+    *,
+    path: Path | None = None,
+) -> None:
+    def mutator(tasks: dict[str, dict[str, Any]]) -> None:
+        task = tasks.get(conversation_id)
+        if not task or SKIP_NEXT_SELF_REVIEW_GATE_KEY not in task:
+            return None
+        del task[SKIP_NEXT_SELF_REVIEW_GATE_KEY]
+        tasks[conversation_id] = task
+        return None
+
+    update_active_tasks(mutator, path=path)
+
+
+def should_skip_self_review_gate(
+    conversation_id: str | None,
+    *,
+    path: Path | None = None,
+) -> tuple[bool, str | None]:
+    """Stop gate 用。True なら self-review 検査をスキップする。"""
+    if not conversation_id:
+        return False, None
+
+    task = load_active_tasks(path=path).get(conversation_id, {})
+    if not isinstance(task, dict):
+        return False, None
+
+    mode = task.get("composer_mode")
+    if isinstance(mode, str) and is_readonly_composer_mode(mode):
+        return True, "composer_mode=chat"
+
+    if task.get(SKIP_NEXT_SELF_REVIEW_GATE_KEY):
+        clear_skip_next_self_review_gate(conversation_id, path=path)
+        return True, "self_review_followup_turn"
+
+    return False, None
 
 
 def is_usage_report_ack_turn(payload: dict[str, Any], *, path: Path | None = None) -> bool:
@@ -430,8 +510,17 @@ def start_task(
     skill, phase, wake_mode = detect_task_from_prompt(prompt)
 
     if skill:
+        existing = load_active_tasks(path=path).get(key, {})
+        if not isinstance(existing, dict):
+            existing = {}
+
+        composer_mode = composer_mode_from_payload(payload)
+        if composer_mode is None:
+            raw_mode = existing.get("composer_mode")
+            composer_mode = raw_mode if isinstance(raw_mode, str) else None
+
         task_id = str(uuid.uuid4())
-        task = {
+        task: dict[str, Any] = {
             "task_id": task_id,
             "task_skill": skill,
             "phase": phase,
@@ -439,6 +528,10 @@ def start_task(
             "started_at": utc_now_iso(),
             "platform": platform,
         }
+        if composer_mode is not None:
+            task["composer_mode"] = composer_mode
+        if existing.get(SKIP_NEXT_SELF_REVIEW_GATE_KEY):
+            task[SKIP_NEXT_SELF_REVIEW_GATE_KEY] = True
 
         def mutator(tasks: dict[str, dict[str, Any]]) -> dict[str, Any]:
             tasks[key] = task
@@ -478,6 +571,7 @@ def clear_skip_next_followup(payload: dict[str, Any], *, path: Path | None = Non
 
 def record_task_start(payload: dict[str, Any], *, platform: str) -> None:
     prompt = prompt_from_payload(payload)
+    persist_session_hook_meta(payload)
 
     if is_usage_report_prompt(prompt):
         key = session_key(payload)

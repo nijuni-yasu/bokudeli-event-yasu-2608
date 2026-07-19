@@ -408,3 +408,118 @@ RC-16（デプロイ手順 v2.12・`backupFirestore` 明示削除）と RC-17（
 **変更種別**: 📄 ドキュメントのみ
 
 **想定工数**: S
+
+---
+
+## 評価セッション（2026-07-19 15:35・review-comments-evaluate）
+
+- **評価日時**: 2026-07-19 15:35 JST
+- **評価者**: Cursor Agent（`/review-comments-evaluate` auto）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T06:20:09Z
+- **partial**: false（Codex substantive なし・接続案内のみ）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 2（レビュー依頼定型文 5014683946、Codex 接続案内 5014705508）
+- **手順 4a 自動修正**: なし（RC-25 は Copilot 側コミット 001903a89 で対応済み）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-25 | 5014705243 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 📄 ドキュメントのみ | S | README の IAM 表記が storage.admin のまま<br>objectAdmin に修正（Copilot コミット済み） |
+
+**識別子**: RC-25（GitHub id: 5014705243）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `terraform/README.md:198`
+
+**レビュワーのコメント（原文）**:
+
+🚨 **[must]** `terraform/README.md:198` にて `roles/storage.admin` の記載が残っており、実装（`storage.tf` で `roles/storage.objectAdmin` 付与）と不一致でした。`roles/storage.objectAdmin` に修正しました（コミット: [terraform] #2024 README の Firestore SA IAM ロール表記を objectAdmin に修正）。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み（origin/feat/2024 の 001903a89）
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: 実装と README の IAM 表記不一致は最小権限方針と整合。Copilot がリモートに直接修正済み。
+
+---
+
+**スキップ（RC 採番なし）**
+
+- Copilot コメント内の「確認済み・対応済み」各項 — 既存 RC で対応済みの再確認
+- **[ask] `firestoreExport.ts` timeout** — RC-22 と同一論点。検証記録 §4.1 実測記載済みのため 👌 修正不要
+
+---
+
+## 評価セッション（2026-07-19 15:41・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 15:41 JST
+- **評価者**: Cursor Agent（`/shokujii-code-review`）
+- **ブランチ名**: feat/2024
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2157
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 該当なし
+- **手順 3b 自動修正**: RC-26（🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-26 | なし・エージェントレビュー | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | start_task が composer_mode を上書き消去<br>同一ターンの Ask 判定が失われる |
+
+### レビュー対象
+
+Ask モード self-review 無限ループ対策（案 A/B/C）: `composer_mode=chat` スキップ、`loop_count>=1` followup 停止、`[self-review]` followup ターン除外。`review-feat-2024.md` への evaluate 追記（RC-25）含む。
+
+### チェックリスト照合結果
+
+- `agent_usage_lib.py`: `persist_session_hook_meta` / `should_skip_self_review_gate` は usage report ack と同型で一貫
+- `stop-gate-check.sh`: review スコープ判定後に skip 呼び出し（順序妥当）
+- `test-agent-usage.py`: Ask / followup の 2 ケース追加済み
+- 案 B（`loop_count>=1` で gate 通過）は Agent でも 2 ターン目以降レビュー強制を止める意図どおり（👌）
+- Plan モードは今回スコープ外（Ask=`chat` のみ。👌）
+
+**識別子**: RC-26（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `.agents/scripts/agent_usage_lib.py:502`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        task = {
++            "task_id": task_id,
++            "task_skill": skill,
++            ...
++        }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `record_task_start` で `persist_session_hook_meta` の直後に `start_task` が active task を丸ごと置換し、`composer_mode` が消える → 既存 task / payload から `composer_mode` と `skip_next_self_review_gate` をマージして引き継ぐ
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: スキル起動ターンでも Ask 判定を維持するため。3b で `start_task` にマージ処理を追加済み。

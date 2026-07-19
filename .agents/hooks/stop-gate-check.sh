@@ -31,6 +31,14 @@ if ! bash "${script_dir}/source-change-detect.sh" review; then
   exit 0
 fi
 
+# 案 A/C: Ask（composer_mode=chat）または self-review followup 注入ターンは gate しない
+if [ -n "${conversation_id}" ]; then
+  if python3 "${repo_root}/.agents/scripts/agent_usage.py" self-review-gate-skip \
+    --conversation-id "${conversation_id}" >/dev/null 2>&1; then
+    exit 0
+  fi
+fi
+
 if [ "${loop_count}" -ge "${MAX_LOOP}" ]; then
   echo "[self-review] Stop gate: loop_count=${loop_count} に達しました。セルフレビュー未完了の可能性があります。/shokujii-code-review を完走してください。"
   exit 2

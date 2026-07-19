@@ -85,6 +85,11 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_self_review_gate_skip(args: argparse.Namespace) -> int:
+    skip, _reason = lib.should_skip_self_review_gate(args.conversation_id)
+    return 0 if skip else 1
+
+
 def cmd_summary(args: argparse.Namespace) -> int:
     payload = {"session_id": args.session_id, "conversation_id": args.session_id}
     if args.duration_ms is not None:
@@ -124,12 +129,20 @@ def main() -> int:
     stop_p = sub.add_parser("stop", help="Process stop hook: record turn + optional followup_message")
     stop_p.add_argument("--platform", required=True, choices=("cursor", "claude"))
 
+    gate_skip_p = sub.add_parser(
+        "self-review-gate-skip",
+        help="Exit 0 if self-review stop gate should be skipped (Ask mode / followup turn)",
+    )
+    gate_skip_p.add_argument("--conversation-id", required=True)
+
     args = parser.parse_args()
 
     if args.command == "record":
         return cmd_record(args)
     if args.command == "stop":
         return cmd_stop(args)
+    if args.command == "self-review-gate-skip":
+        return cmd_self_review_gate_skip(args)
     if args.command == "report":
         return cmd_report(args)
     if args.command == "summary":

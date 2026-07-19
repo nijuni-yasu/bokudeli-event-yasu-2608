@@ -66,6 +66,15 @@ if [ -z "${reason}" ]; then
   reason="[self-review] Stop gate がブロックしましたが理由を取得できませんでした。/shokujii-code-review を完走してください。"
 fi
 
+# 案 B: followup 注入後の再 stop では followup を返さずループを止める
+case "${loop_count}" in
+  '' | *[!0-9]*) loop_count=0 ;;
+esac
+if [ "${loop_count}" -ge 1 ]; then
+  echo '{}'
+  exit 0
+fi
+
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg msg "${reason}" '{followup_message: $msg}'
 else

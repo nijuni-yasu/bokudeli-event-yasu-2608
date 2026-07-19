@@ -332,6 +332,36 @@ def test_record_task_start_skips_non_skill() -> None:
             )
 
 
+def test_should_skip_self_review_gate_ask_mode() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        active = Path(tmp) / "active.json"
+        with patch.object(lib, "ACTIVE_TASKS_PATH", active):
+            lib.persist_session_hook_meta(
+                {"conversation_id": "c-ask", "composer_mode": "chat", "prompt": "質問"}
+            )
+            skip, reason = lib.should_skip_self_review_gate("c-ask")
+            assert skip is True
+            assert reason == "composer_mode=chat"
+
+
+def test_should_skip_self_review_gate_followup_turn() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        active = Path(tmp) / "active.json"
+        with patch.object(lib, "ACTIVE_TASKS_PATH", active):
+            lib.persist_session_hook_meta(
+                {
+                    "conversation_id": "c-follow",
+                    "composer_mode": "agent",
+                    "prompt": "[self-review] wake は consume 済みです。",
+                }
+            )
+            skip, reason = lib.should_skip_self_review_gate("c-follow")
+            assert skip is True
+            assert reason == "self_review_followup_turn"
+            skip2, _ = lib.should_skip_self_review_gate("c-follow")
+            assert skip2 is False
+
+
 def test_cmd_report_invalid_since() -> None:
     proc = subprocess.run(
         [
@@ -419,6 +449,8 @@ def main() -> int:
         test_parse_since_iso8601_naive_utc,
         test_filter_entries_with_naive_since,
         test_record_task_start_skips_non_skill,
+        test_should_skip_self_review_gate_ask_mode,
+        test_should_skip_self_review_gate_followup_turn,
         test_cmd_report_invalid_since,
         test_ledger_round_trip,
         test_classify_shell,

@@ -149,7 +149,7 @@ npm -w <pkg> run format:check
 **Stop hook による機械的検証**（Cursor / Claude 共通）:
 
 - 正本: [`.agents/hooks/stop-gate-check.sh`](.agents/hooks/stop-gate-check.sh)（**セルフレビューのみ**。lint は含まない）
-- **Cursor**: [`.cursor/hooks/stop-gate.sh`](.cursor/hooks/stop-gate.sh) が `followup_message` で最大 3 回まで自動 retry（[`loop_limit`](.cursor/hooks.json)）
+- **Cursor**: [`.cursor/hooks/stop-gate.sh`](.cursor/hooks/stop-gate.sh) が `followup_message` で最大 3 回まで自動 retry（[`loop_limit`](.cursor/hooks.json)）。**Ask モード**（`composer_mode=chat`）および Stop hook 自身が注入した `[self-review]` followup ターンでは gate をスキップ。`loop_count >= 1` の再 stop では followup を返さずループを止める
 - **Claude Code**: [`.claude/hooks/stop-gate.sh`](.claude/hooks/stop-gate.sh) が `decision:block` でターン終了を阻止
 - review スコープの変更が無いターンでは検証をスキップ（[`.agents/hooks/source-change-detect.sh`](.agents/hooks/source-change-detect.sh)）。**未コミット差分（working tree / staged / untracked）のみ**を対象とするため、**コミット済みで作業ツリー clean** の場合も gate はスキップされる（RC-16 参照）
 - pending state: `.agents/state/self-review-pending.json`（[`self_review_wake.py`](.agents/scripts/self_review_wake.py)）
