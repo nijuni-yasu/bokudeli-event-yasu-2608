@@ -86,6 +86,11 @@
       ],
       "rewrites": [
         {
+          "source": "/sitemap.xml",
+          "function": "handleSitemapRequest",
+          "region": "asia-northeast1"
+        },
+        {
           "source": "/c/**/e/**",
           "function": "handleEventOgpRequest",
           "region": "asia-northeast1"
