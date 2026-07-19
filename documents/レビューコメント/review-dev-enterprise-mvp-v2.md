@@ -86,3 +86,72 @@ F-1 で `setDefaultEventStoreOptions` を導入したため、ドキュメント
 - F-1: `EventMemberOrder` nullable materialize、`buildEventStoreOptions` 三値、partner 無フィルタ分離、CG index 追加
 - F-2: `authGuards.ts` 公開ルート除外型、`/pass-code` 含む
 - デプロイゲート: batch **`0046`**（member_orders backfill）task 追加済み・**実行は CG 本番切替前**（[`bokudeli-event-batch` docs/0046](https://github.com/nijuniinc/bokudeli-event-batch/blob/main/docs/0046_member_orders_enterprise_id_backfill.md)）
+
+---
+
+## 評価セッション（2026-07-19 18:45・review-comments-evaluate）
+
+- **評価日時**: 2026-07-19 18:45 JST
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T09:32:07Z
+- **partial**: true（Codex limits / connect のみ）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 4（レビュー依頼 5015214142、Codex limits 5015214668、Codex connect 5015235106、Copilot overview のみ 5015234853 冒頭）
+- **手順 4a 自動修正**: RC-3 / RC-4 / RC-10（🚨 2件 / 🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-3 | 3610307757 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | deleteUserDocuments の allSettled 失敗を reject |
+| [x] | RC-4 | 3610307766 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | enterpriseBillInvoicePdf の currentUser 明示チェック |
+| [x] | RC-10 | 5015234853 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | useSessionTimeout の unhandled rejection 防止 |
+| [x] | RC-2 | 3610307742 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | M | userOrderHistoryList storeId の JSON.stringify |
+| [x] | RC-5 | 3610307771 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | M | admin ダッシュボード loadDashboard 競合ガード |
+| [x] | RC-6 | 3610307781 | 🟡 修正提案 | 📤 #2198 別Issue化 | 📤 スコープ外 | 📑 仕様書 | 📋 仕様追加 | M | PF プロフィール null フィルタと backfill ゲート<br>https://github.com/nijuniinc/bokudeli-event-new/issues/2198 |
+| [x] | RC-7 | 3610307784 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | M | materio NavLink onClick 追加の規約違反 |
+| [x] | RC-8 | 5015234853 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | M | VerticalNavLink materio 直修正 |
+| [x] | RC-9 | 5015234853 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | M | HorizontalNavLink materio 直修正 |
+| [x] | RC-11 | 5015234853 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | invoices console.error → reportClientError |
+
+---
+
+## 評価セッション（2026-07-19 18:54・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 18:54 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **対象**: RC-3 / RC-4 / RC-10 自動修正の未コミット差分（review スコープ更新分）
+
+**指摘なし**（チェックリスト照合 + Copilot 自動修正の実装確認）
+
+**確認要点（👌）**:
+
+- RC-3 `deleteUserDocuments`: `Promise.allSettled` の `rejected` を検出し先頭 `reason` を throw。`rollbackCreatedEnterpriseMember` 経由で失敗が握りつぶされなくなる
+- RC-4 `getEnterpriseBillInvoicePdf`: `currentUser!` を廃止し `user == null` で `Not authenticated` を throw。呼び出し側で catch 可能
+- RC-10 `useSessionTimeout`: `runCheckTimeout` で `void checkTimeout().catch(...)` により interval / visibilitychange からの unhandled rejection を防止
+- evaluate セッション追記（review doc）のみの変更は記録用でコード影響なし
+
+---
+
+## 評価セッション（2026-07-19 18:58・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 18:58 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **指摘なし**（RC-2/5/7-9/11 実装 + RC-3/4/10 含む全差分のチェックリスト照合）
+
+**確認要点（👌）**:
+
+- RC-2: `profileListFilter` 型で storeId キー安定化、`user` / `enterprise` ProfilePage から `profileFilter` 指定
+- RC-5: `admin/index.vue` に `loadSeq` ガード（`invoices.vue` 同型）
+- RC-6: Issue #2198 起票、review doc を別 Issue 化
+- RC-7〜9: materio 3 ファイルを `origin/development` へ revert
+- RC-11: `invoices/[yearMonth].vue` で `reportClientError` 使用
+
+---
