@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { DateTime } from 'luxon'
-import { formatBackupDateLabel, buildFirestoreExportOutputUriPrefix, getFirestoreExportUriPrefix } from './constants.js'
 import {
+  formatBackupDateLabel,
+  buildFirestoreExportOutputUriPrefix,
+  buildStorageBackupRunPrefix,
+  buildStorageBackupSuccessMarkerPath,
+  buildStorageBackupWorkPrefix,
+  getFirestoreExportUriPrefix,
+} from './constants.js'
+import {
+  isIncompleteStorageBackupRun,
+  isStorageBackupEligibleForRetention,
   parseFirestoreExportFolderSortKey,
   parseStorageBackupFolderSortKey,
   selectPrefixesToDelete,
@@ -28,6 +37,14 @@ describe('backup retention', () => {
     expect(parseStorageBackupFolderSortKey('monthly', 'monthly/2026-06/')).toBe('2026-06')
     expect(parseStorageBackupFolderSortKey('monthly', 'monthly/2026-06-03/')).toBeNull()
   })
+
+  it('isStorageBackupEligibleForRetention requires _SUCCESS for in-progress runs', () => {
+    expect(isStorageBackupEligibleForRetention(true, true, false)).toBe(true)
+    expect(isStorageBackupEligibleForRetention(false, true, false)).toBe(false)
+    expect(isStorageBackupEligibleForRetention(false, false, true)).toBe(true)
+    expect(isIncompleteStorageBackupRun(false, true)).toBe(true)
+    expect(isIncompleteStorageBackupRun(true, true)).toBe(false)
+  })
 })
 
 describe('backup paths', () => {
@@ -50,5 +67,11 @@ describe('backup paths', () => {
   it('buildStorageBackupDestinationPrefix uses JST schedule time', () => {
     expect(buildStorageBackupDestinationPrefix('daily', '2026-06-02T17:15:00.000Z')).toBe('daily/2026-06-03')
     expect(buildStorageBackupDestinationPrefix('monthly', '2026-05-31T18:15:00.000Z')).toBe('monthly/2026-06')
+  })
+
+  it('buildStorageBackupWorkPrefix and success marker paths', () => {
+    expect(buildStorageBackupRunPrefix('daily', '2026-07-19')).toBe('daily/2026-07-19')
+    expect(buildStorageBackupWorkPrefix('daily', '2026-07-19')).toBe('daily/2026-07-19/_inprogress')
+    expect(buildStorageBackupSuccessMarkerPath('daily', '2026-07-19')).toBe('daily/2026-07-19/_SUCCESS')
   })
 })

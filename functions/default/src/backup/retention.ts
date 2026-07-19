@@ -5,6 +5,8 @@ import {
   BACKUP_TIMEZONE,
   FIRESTORE_EXPORT_METADATA_FILE,
   FIRESTORE_RETENTION,
+  STORAGE_BACKUP_INPROGRESS_DIR,
+  STORAGE_BACKUP_SUCCESS_MARKER,
   STORAGE_RETENTION,
   getFirestoreBackupBucketName,
   getProjectId,
@@ -50,6 +52,23 @@ export const selectPrefixesToDelete = (entries: RetentionEntry[], keepCount: num
   const sorted = [...entries].sort((a, b) => a.sortKey.localeCompare(b.sortKey))
   return sorted.slice(0, sorted.length - keepCount).map((entry) => entry.prefix)
 }
+
+export const isStorageBackupEligibleForRetention = (
+  hasSuccessMarker: boolean,
+  hasInprogressSubfolder: boolean,
+  hasLegacyContent: boolean,
+): boolean => {
+  if (hasSuccessMarker) {
+    return true
+  }
+  if (hasInprogressSubfolder) {
+    return false
+  }
+  return hasLegacyContent
+}
+
+export const isIncompleteStorageBackupRun = (hasSuccessMarker: boolean, hasInprogressSubfolder: boolean): boolean =>
+  !hasSuccessMarker && hasInprogressSubfolder
 
 const getPrefixesFromApiResponse = (apiResponse: unknown): string[] => {
   if (typeof apiResponse !== 'object' || apiResponse == null || !('prefixes' in apiResponse)) {
@@ -140,6 +159,22 @@ const cleanupLegacyFirestoreRootExports = async (bucketName: string, dryRun: boo
   }
 }
 
+const hasStorageBackupSuccessMarker = async (bucketName: string, runPrefix: string): Promise<boolean> => {
+  const markerPath = `${runPrefix}${STORAGE_BACKUP_SUCCESS_MARKER}`
+  const [exists] = await new Storage().bucket(bucketName).file(markerPath).exists()
+  return exists
+}
+
+const hasStorageBackupInprogressSubfolder = async (bucketName: string, runPrefix: string): Promise<boolean> => {
+  const subPrefixes = await listFolderPrefixes(bucketName, runPrefix)
+  return subPrefixes.some((prefix) => prefix === `${runPrefix}${STORAGE_BACKUP_INPROGRESS_DIR}/`)
+}
+
+const hasLegacyStorageBackupContent = async (bucketName: string, runPrefix: string): Promise<boolean> => {
+  const [files] = await new Storage().bucket(bucketName).getFiles({ prefix: runPrefix, maxResults: 1 })
+  return files.length > 0
+}
+
 const cleanupStorageTier = async (bucketName: string, tier: BackupTier, dryRun: boolean): Promise<void> => {
   const tierPrefix = `${tier}/`
   const prefixes = await listFolderPrefixes(bucketName, tierPrefix)
@@ -150,6 +185,22 @@ const cleanupStorageTier = async (bucketName: string, tier: BackupTier, dryRun: 
     if (sortKey == null) {
       continue
     }
+
+    const hasSuccessMarker = await hasStorageBackupSuccessMarker(bucketName, prefix)
+    const hasInprogressSubfolder = await hasStorageBackupInprogressSubfolder(bucketName, prefix)
+
+    if (isIncompleteStorageBackupRun(hasSuccessMarker, hasInprogressSubfolder)) {
+      logger.warn('Deleting incomplete Storage backup run', { prefix })
+      await deletePrefixRecursive(bucketName, prefix, dryRun)
+      continue
+    }
+
+    const hasLegacyContent = hasSuccessMarker ? false : await hasLegacyStorageBackupContent(bucketName, prefix)
+
+    if (!isStorageBackupEligibleForRetention(hasSuccessMarker, hasInprogressSubfolder, hasLegacyContent)) {
+      continue
+    }
+
     entries.push({ prefix, sortKey })
   }
 

@@ -18,6 +18,10 @@ export const STORAGE_RETENTION: Record<BackupTier, number> = {
 
 export const FIRESTORE_EXPORT_METADATA_FILE = 'overall_export_metadata'
 
+export const STORAGE_BACKUP_INPROGRESS_DIR = '_inprogress'
+
+export const STORAGE_BACKUP_SUCCESS_MARKER = '_SUCCESS'
+
 export const getProjectId = (): string => {
   const projectId = process.env.GCLOUD_PROJECT
   if (projectId == null || projectId === '') {
@@ -44,7 +48,13 @@ export const buildFirestoreExportOutputUriPrefix = (
 
 export const isRetentionDryRun = (): boolean => process.env.BACKUP_RETENTION_DRY_RUN === 'true'
 
-export const buildStorageBackupDestPrefix = (tier: BackupTier, dateLabel: string): string => `${tier}/${dateLabel}`
+export const buildStorageBackupRunPrefix = (tier: BackupTier, dateLabel: string): string => `${tier}/${dateLabel}`
+
+export const buildStorageBackupWorkPrefix = (tier: BackupTier, dateLabel: string): string =>
+  `${buildStorageBackupRunPrefix(tier, dateLabel)}/${STORAGE_BACKUP_INPROGRESS_DIR}`
+
+export const buildStorageBackupSuccessMarkerPath = (tier: BackupTier, dateLabel: string): string =>
+  `${buildStorageBackupRunPrefix(tier, dateLabel)}/${STORAGE_BACKUP_SUCCESS_MARKER}`
 
 export const formatBackupDateLabel = (tier: BackupTier, isoDate: string): string => {
   switch (tier) {

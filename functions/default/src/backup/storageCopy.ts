@@ -4,7 +4,9 @@ import { DateTime } from 'luxon'
 import { createModuleLogger } from '../utils/logger.js'
 import {
   BACKUP_TIMEZONE,
-  buildStorageBackupDestPrefix,
+  buildStorageBackupRunPrefix,
+  buildStorageBackupSuccessMarkerPath,
+  buildStorageBackupWorkPrefix,
   formatBackupDateLabel,
   getProjectId,
   getStorageBackupBucketName,
@@ -53,24 +55,36 @@ export const copyDefaultStorageBucket = async (tier: BackupTier, scheduleTimeIso
     tier,
     DateTime.fromISO(scheduleTimeIso, { zone: BACKUP_TIMEZONE }).toISODate() ?? scheduleTimeIso,
   )
-  const destPrefix = buildStorageBackupDestPrefix(tier, dateLabel)
+  const runPrefix = buildStorageBackupRunPrefix(tier, dateLabel)
+  const workPrefix = buildStorageBackupWorkPrefix(tier, dateLabel)
+  const successMarkerPath = buildStorageBackupSuccessMarkerPath(tier, dateLabel)
 
-  logger.info('Starting Storage backup copy', { tier, sourceBucketName, destBucketName, destPrefix })
+  logger.info('Starting Storage backup copy', {
+    tier,
+    sourceBucketName,
+    destBucketName,
+    runPrefix,
+    workPrefix,
+  })
 
   const storage = new Storage()
   const sourceBucket = storage.bucket(sourceBucketName)
   const destBucket = storage.bucket(destBucketName)
+
+  await destBucket.deleteFiles({ prefix: `${runPrefix}/`, force: true })
 
   let copiedCount = 0
   let query: GetFilesOptions = { autoPaginate: false, maxResults: PAGE_SIZE }
 
   do {
     const [files, nextQuery] = await sourceBucket.getFiles(query)
-    copiedCount += await copyFilesInParallel(files, destBucket, destPrefix)
+    copiedCount += await copyFilesInParallel(files, destBucket, workPrefix)
     query = nextQuery ?? { autoPaginate: false, maxResults: PAGE_SIZE }
   } while (query.pageToken != null)
 
-  logger.info('Storage backup copy completed', { tier, destPrefix, copiedCount })
+  await destBucket.file(successMarkerPath).save('', { contentType: 'application/octet-stream' })
+
+  logger.info('Storage backup copy completed', { tier, runPrefix, workPrefix, copiedCount })
   return copiedCount
 }
 
@@ -79,5 +93,5 @@ export const buildStorageBackupDestinationPrefix = (tier: BackupTier, scheduleTi
     tier,
     DateTime.fromISO(scheduleTimeIso, { zone: BACKUP_TIMEZONE }).toISODate() ?? scheduleTimeIso,
   )
-  return buildStorageBackupDestPrefix(tier, dateLabel)
+  return buildStorageBackupRunPrefix(tier, dateLabel)
 }
