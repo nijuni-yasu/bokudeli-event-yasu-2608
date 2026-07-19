@@ -102,7 +102,9 @@ const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
 })
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
 
-const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId)
+const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId, 6, {
+  additionalFilters: [where('enterprise_id', '==', null)],
+})
 const {
   events: orderHistoryEvents,
   orderStateByEventId: orderHistoryStateByEventId,

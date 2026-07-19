@@ -28,8 +28,10 @@ Promise.all([
   import('@shokujii/base/plugins/vuetify/index.js'),
   import('@shokujii/base/plugins/i18n/index.js'),
   import('@shokujii/base/plugins/layouts.js'),
-]).then(([routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) => {
+]).then(async ([routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) => {
   configureClientErrorReporting({ app: 'user' })
+  const { buildEventStoreOptions, setDefaultEventStoreOptions } = await import('@shokujii/base/stores/event.js')
+  setDefaultEventStoreOptions(buildEventStoreOptions(undefined))
   for (const plugin of [routerMod, piniaMod, vuetifyMod, i18nMod, layoutsMod]) {
     plugin.default(app, { themes })
   }
