@@ -96,7 +96,7 @@ resource "google_storage_bucket" "storage_backups" {
 # Firestore サービスエージェントがエクスポート先バケットに書き込めるようにする
 resource "google_storage_bucket_iam_member" "firestore_backups_firestore_sa" {
   bucket = google_storage_bucket.firestore_backups.name
-  role   = "roles/storage.admin"
+  role   = "roles/storage.objectAdmin"
   member = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-firestore.iam.gserviceaccount.com"
 }
 
