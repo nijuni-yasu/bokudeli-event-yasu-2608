@@ -110,6 +110,7 @@ const buildEventSeoContext = (params: {
       eventAddressBase: eventData.event_address_base,
       eventAddressDetail: eventData.event_address_detail,
       communityName: eventData.community_name,
+      organizerUrl: `${ogp.site}/c/${eventData.community_account.toLowerCase()}`,
       isCanceled: eventData.event_status.value === 'event_canceled',
     }),
     prerenderHtml: buildEventPrerenderHtml({

@@ -14,6 +14,7 @@ describe('buildEventJsonLd', () => {
     eventAddressBase: '東京都千代田区',
     eventAddressDetail: '1-1',
     communityName: 'テストコミュニティ',
+    organizerUrl: 'https://shokujii.jp/c/test',
     isCanceled: false,
   }
 
@@ -39,6 +40,7 @@ describe('buildEventJsonLd', () => {
     expect(location.name).toBe('テスト食堂')
     const organizer = jsonLd.organizer as Record<string, unknown>
     expect(organizer.name).toBe('テストコミュニティ')
+    expect(organizer.url).toBe('https://shokujii.jp/c/test')
   })
 })
 

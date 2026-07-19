@@ -16,6 +16,7 @@ export interface EventJsonLdInput {
   eventAddressBase: string
   eventAddressDetail: string
   communityName: string
+  organizerUrl: string
   isCanceled: boolean
 }
 
@@ -55,6 +56,7 @@ export const buildEventJsonLd = (input: EventJsonLdInput): Record<string, unknow
     organizer: {
       '@type': 'Organization',
       name: input.communityName,
+      url: input.organizerUrl,
     },
   }
 
