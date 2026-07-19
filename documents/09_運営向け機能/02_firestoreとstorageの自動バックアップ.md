@@ -99,7 +99,7 @@ Firestore と Storage で **保持 tier を分ける段階保持（GFS 的）** 
 | スケジュール | **毎週日曜 2:30 JST**（日次と重ならない時刻） |
 | 保持 | **12 本**（約 3 ヶ月） |
 | 出力先 | `gs://{PROJECT}-firestore-backups/weekly/` |
-| ストレージクラス | 作成から **30 日経過後 Coldline** へ移行（コスト削減） |
+| ストレージクラス | **Standard**（日次は短期保持のため Archive 不可。Coldline 移行は monthly のみ lifecycle で実施） |
 
 #### 3.1.4 アーカイブ: 月次 export
 
@@ -143,7 +143,7 @@ Firebase Storage には Firestore と同等のマネージド export API がな�
 | 保持 | **8 本**（約 2 ヶ月） |
 | 出力先 | `gs://{PROJECT}-storage-backups/weekly/YYYY-MM-DD/` |
 | 対象 | **本番 Storage 既定バケット全体**（`{PROJECT}-invoice` は含めない） |
-| ストレージクラス | 30 日経過後 **Coldline** |
+| ストレージクラス | **Standard**（保持 8 週＜Coldline 最小保存期間 90 日のため lifecycle 移行なし） |
 
 #### 3.2.4 アーカイブ: 月次フルコピー
 
