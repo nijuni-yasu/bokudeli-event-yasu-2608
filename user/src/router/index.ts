@@ -135,9 +135,13 @@ export const setupRouter = (router: Router) => {
     }
 
     const seq = ++documentTitleUpdateSeq
-    const title = await resolveDocumentTitle(to)
-    if (seq === documentTitleUpdateSeq) {
-      document.title = title
+    try {
+      const title = await resolveDocumentTitle(to)
+      if (seq === documentTitleUpdateSeq) {
+        document.title = title
+      }
+    } catch {
+      // title 更新失敗はナビゲーションを妨げない
     }
   })
 
