@@ -82,7 +82,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
         user_id: uid,
         event_id,
         community_id,
-        ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
+        enterprise_id: enterpriseId ?? null,
       })
       await saveMember(community_id, event_id, member, transaction)
     } else if (enterpriseId != null && existingMember.enterprise_id == null) {
@@ -131,7 +131,7 @@ export const addToCart = onCall<AddToCartRequest, Promise<void>>(async (request)
             menu_id: masterMenu.id,
             menu_name: masterMenu.menu_name,
             menu_price: masterMenu.menu_price,
-            ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
+            enterprise_id: enterpriseId ?? null,
             ...(discount !== undefined ? { pay_community_bill_off_amount: discount } : {}),
           },
           transaction,
