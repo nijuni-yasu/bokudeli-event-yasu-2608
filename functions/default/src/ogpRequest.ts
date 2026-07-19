@@ -6,6 +6,7 @@ import { getCommunityByAccount } from './stores/community.js'
 import { convertStoragePathToURL } from './utils/urls.js'
 import { getEventCoverStoragePath, getCommunityCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 import { createModuleLogger } from './utils/logger.js'
+import { resolveRequestSite } from './utils/resolveRequestSite.js'
 import { injectSeoHtml, type SeoPageContext } from './seo/htmlInjection.js'
 import { DEFAULT_OGP_IMAGE_TYPE, type OgpMetaContext } from './seo/metaTags.js'
 import { toOgpExcerpt, toPlainTextExcerpt } from './seo/escape.js'
@@ -179,7 +180,11 @@ export const handleEventOgpRequest = https.onRequest(
     memory: '1GiB',
   },
   async (req: https.Request, res: express.Response) => {
-    const site = `${req.protocol}://${req.headers['x-forwarded-host']}`
+    const site = resolveRequestSite(req)
+    if (site == null) {
+      res.status(400).send('Bad Request')
+      return
+    }
     const paths = normalizeEventPaths(req.path)
     const path = paths.join('/')
 
@@ -259,7 +264,11 @@ export const handleCommunityOgpRequest = https.onRequest(
     memory: '1GiB',
   },
   async (req: https.Request, res: express.Response) => {
-    const site = `${req.protocol}://${req.headers['x-forwarded-host']}`
+    const site = resolveRequestSite(req)
+    if (site == null) {
+      res.status(400).send('Bad Request')
+      return
+    }
     const paths = normalizeCommunityPaths(req.path)
     const path = paths.join('/')
 

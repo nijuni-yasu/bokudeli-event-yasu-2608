@@ -1,26 +1,13 @@
 import express from 'express'
 import { https } from 'firebase-functions/v2'
 import { createModuleLogger } from './utils/logger.js'
+import { resolveRequestSite } from './utils/resolveRequestSite.js'
 import { getPublicCommunitiesForSitemap, getPublicEventsForSitemap } from './stores/seoSitemap.js'
 import { buildSitemapXml, formatSitemapLastmod, type SitemapUrlEntry } from './seo/sitemap.js'
 
 const logger = createModuleLogger('sitemapRequest')
 
 const SITEMAP_CACHE_CONTROL = 'public, max-age=3600, s-maxage=3600'
-
-const resolveRequestSite = (req: https.Request): string | undefined => {
-  const forwardedHost = req.headers['x-forwarded-host']
-  const host =
-    typeof forwardedHost === 'string'
-      ? forwardedHost
-      : Array.isArray(forwardedHost)
-        ? forwardedHost[0]
-        : req.get('host')
-  if (host == null || host === '') {
-    return undefined
-  }
-  return `${req.protocol}://${host}`
-}
 
 const buildSitemapEntries = (
   site: string,
