@@ -10,6 +10,7 @@ import {
   query,
   startAfter,
   where,
+  type QueryConstraint,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
@@ -25,6 +26,11 @@ import {
 
 export type UserOrderHistoryListStore = ReturnType<typeof useUserOrderHistoryByUserId>
 
+export type UserOrderHistoryListStoreOptions = {
+  /** PF 露出フィルタ等。`collectionGroup('member_orders')` の base 条件（user_id）に追加する */
+  additionalFilters?: QueryConstraint[]
+}
+
 const ORDERS_SCAN_BATCH = 24
 const MAX_SCAN_BATCHES_PER_NEXT = 50
 
@@ -33,9 +39,15 @@ const MAX_SCAN_BATCHES_PER_NEXT = 50
  * `member_orders` collectionGroup 起点でイベントを列挙する（全キャンセル後も表示）。
  * 初回取得は呼び出し元が `reload()` を実行すること（本人閲覧時のみ）。
  */
-export const useUserOrderHistoryByUserId = (userId: string, pageSize: number = 6) => {
+export const useUserOrderHistoryByUserId = (
+  userId: string,
+  pageSize: number = 6,
+  options: UserOrderHistoryListStoreOptions = {},
+) => {
+  const additionalFilters = options.additionalFilters ?? []
   const storeId = userId !== '' ? userId : '_empty'
-  const store = defineStore(`/userOrderHistory/${storeId}/${pageSize}`, () => {
+  const filtersKey = additionalFilters.length > 0 ? `/${JSON.stringify(additionalFilters)}` : ''
+  const store = defineStore(`/userOrderHistory/${storeId}/${pageSize}${filtersKey}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const events = ref<BokudeliEvent[]>([])
     const hasMore = ref(true)
@@ -101,6 +113,7 @@ export const useUserOrderHistoryByUserId = (userId: string, pageSize: number = 6
       const q = query(
         collectionGroup(db, 'member_orders'),
         where('user_id', '==', userId),
+        ...additionalFilters,
         orderBy('updated_at', 'desc'),
         ...(lastOrderSnapshot == null ? [] : [startAfter(lastOrderSnapshot)]),
         limit(ORDERS_SCAN_BATCH),

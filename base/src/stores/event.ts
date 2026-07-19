@@ -164,22 +164,70 @@ export const updateEventMenus = async (
 export type EventStore = ReturnType<typeof useEventStore>
 
 export type EventStoreOptions = {
-  /** enterprise 向け: member_orders の collectionGroup クエリに enterprise_id フィルタを追加 */
+  /** PF / enterprise 向け: member_orders の collectionGroup クエリに enterprise_id フィルタを追加。未指定キー = フィルタなし（partner） */
   ordersEnterpriseId?: string | null
-  /** enterprise 向け: events の collectionGroup クエリに enterprise_id フィルタを追加 */
+  /** PF / enterprise 向け: events の collectionGroup クエリに enterprise_id フィルタを追加。未指定キー = フィルタなし（partner） */
   eventsEnterpriseId?: string | null
   /** 下書き保存前の event 補正（enterprise subsidy スナップショット等） */
   draftPreparer?: EventDraftPreparer
 }
 
+let defaultEventStoreOptions: EventStoreOptions = {}
+
+export const setDefaultEventStoreOptions = (options: EventStoreOptions): void => {
+  defaultEventStoreOptions = options
+}
+
+export const getDefaultEventStoreOptions = (): EventStoreOptions => defaultEventStoreOptions
+
+/** PF / enterprise の cart CG 等で使用。partner（default 空）は `'none'` */
+export type OrdersEnterpriseIdQueryFilter = string | null | 'none'
+
+export const resolveOrdersEnterpriseIdForQuery = (): OrdersEnterpriseIdQueryFilter => {
+  const defaults = getDefaultEventStoreOptions()
+  if ('ordersEnterpriseId' in defaults) {
+    return defaults.ordersEnterpriseId ?? null
+  }
+  return 'none'
+}
+
+const mergeEventStoreOptions = (options: EventStoreOptions): EventStoreOptions => ({
+  ...getDefaultEventStoreOptions(),
+  ...options,
+})
+
+const resolveEventStorePiniaId = (eventId: string, options: EventStoreOptions): string => {
+  const hasOrdersFilter = 'ordersEnterpriseId' in options
+  const hasEventsFilter = 'eventsEnterpriseId' in options
+  const ordersId = hasOrdersFilter ? options.ordersEnterpriseId : undefined
+  const eventsId = hasEventsFilter ? options.eventsEnterpriseId : undefined
+  const enterpriseId =
+    typeof ordersId === 'string' && ordersId !== ''
+      ? ordersId
+      : typeof eventsId === 'string' && eventsId !== ''
+        ? eventsId
+        : null
+  if (enterpriseId != null && enterpriseId !== '') {
+    return `/events/${eventId}/e/${enterpriseId}`
+  }
+  if (hasOrdersFilter || hasEventsFilter) {
+    return `/events/${eventId}/pf`
+  }
+  return `/events/${eventId}`
+}
+
 export const buildEventStoreOptions = (enterpriseId: string | null | undefined): EventStoreOptions => {
-  if (enterpriseId == null || enterpriseId === '') {
-    return {}
+  if (enterpriseId != null && enterpriseId !== '') {
+    return {
+      ordersEnterpriseId: enterpriseId,
+      eventsEnterpriseId: enterpriseId,
+      draftPreparer: prepareEnterpriseEventDraft,
+    }
   }
   return {
-    ordersEnterpriseId: enterpriseId,
-    eventsEnterpriseId: enterpriseId,
-    draftPreparer: prepareEnterpriseEventDraft,
+    ordersEnterpriseId: null,
+    eventsEnterpriseId: null,
+    draftPreparer: preparePfEventDraft,
   }
 }
 
@@ -190,12 +238,9 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
   } else {
     eventId = target
   }
-  const scopedEnterpriseId = options.eventsEnterpriseId ?? options.ordersEnterpriseId ?? null
-  const draftPreparer = options.draftPreparer ?? preparePfEventDraft
-  const piniaStoreId =
-    scopedEnterpriseId != null && scopedEnterpriseId !== ''
-      ? `/events/${eventId}/e/${scopedEnterpriseId}`
-      : `/events/${eventId}`
+  const mergedOptions = mergeEventStoreOptions(options)
+  const draftPreparer = mergedOptions.draftPreparer ?? preparePfEventDraft
+  const piniaStoreId = resolveEventStorePiniaId(eventId, mergedOptions)
   const store = defineStore(piniaStoreId, () => {
     const EVENT_TYPE_EVENT_REF_UPDATED = `onEventRefUpdated_${eventId}`
     const exists = ref<boolean | null>(null)
@@ -374,8 +419,8 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     const subscribeOrders = () => {
       if (unsubscribeOrders == null) {
         const orderConstraints = [where('event_id', '==', eventId)]
-        if (scopedEnterpriseId != null && scopedEnterpriseId !== '') {
-          orderConstraints.push(where('enterprise_id', '==', scopedEnterpriseId))
+        if ('ordersEnterpriseId' in mergedOptions) {
+          orderConstraints.push(where('enterprise_id', '==', mergedOptions.ordersEnterpriseId))
         }
         const ordersQuery = query(collectionGroup(db, 'member_orders'), ...orderConstraints).withConverter(
           memberOrderConverter,
@@ -511,8 +556,8 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     let retry = 0
     const subscribe = () => {
       const eventConstraints = [where('event_id', '==', eventId)]
-      if (scopedEnterpriseId != null && scopedEnterpriseId !== '') {
-        eventConstraints.push(where('enterprise_id', '==', scopedEnterpriseId))
+      if ('eventsEnterpriseId' in mergedOptions) {
+        eventConstraints.push(where('enterprise_id', '==', mergedOptions.eventsEnterpriseId))
       }
       getDocs(query(collectionGroup(db, 'events'), ...eventConstraints).withConverter(eventConverter)).then(
         (querySnapshot) => {
