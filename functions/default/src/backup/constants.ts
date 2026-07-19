@@ -43,7 +43,7 @@ export const buildFirestoreExportOutputUriPrefix = (
   startedAt: DateTime,
 ): string => {
   // eslint-disable-next-line quotes -- luxon literal T in toFormat pattern
-  const runFolder = startedAt.setZone(BACKUP_TIMEZONE).toFormat("yyyy-MM-dd'T'HH:mm:ss")
+  const runFolder = startedAt.setZone(BACKUP_TIMEZONE).toFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
   return `${getFirestoreExportUriPrefix(projectId, tier)}${runFolder}/`
 }
 

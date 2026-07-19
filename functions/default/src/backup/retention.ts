@@ -8,6 +8,7 @@ import {
   STORAGE_BACKUP_INPROGRESS_DIR,
   STORAGE_BACKUP_SUCCESS_MARKER,
   STORAGE_RETENTION,
+  formatBackupDateLabel,
   getFirestoreBackupBucketName,
   getProjectId,
   getStorageBackupBucketName,
@@ -180,6 +181,9 @@ const cleanupStorageTier = async (bucketName: string, tier: BackupTier, dryRun: 
   const prefixes = await listFolderPrefixes(bucketName, tierPrefix)
   const entries: RetentionEntry[] = []
 
+  const nowIso = DateTime.now().setZone(BACKUP_TIMEZONE).toISO() ?? ''
+  const currentPeriodSortKey = formatBackupDateLabel(tier, nowIso)
+
   for (const prefix of prefixes) {
     const sortKey = parseStorageBackupFolderSortKey(tier, prefix)
     if (sortKey == null) {
@@ -190,6 +194,10 @@ const cleanupStorageTier = async (bucketName: string, tier: BackupTier, dryRun: 
     const hasInprogressSubfolder = await hasStorageBackupInprogressSubfolder(bucketName, prefix)
 
     if (isIncompleteStorageBackupRun(hasSuccessMarker, hasInprogressSubfolder)) {
+      if (sortKey === currentPeriodSortKey) {
+        logger.info('Skipping in-progress Storage backup run (current period)', { prefix, sortKey })
+        continue
+      }
       logger.warn('Deleting incomplete Storage backup run', { prefix })
       await deletePrefixRecursive(bucketName, prefix, dryRun)
       continue

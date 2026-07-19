@@ -15,11 +15,17 @@ export const exportFirestore = async (tier: BackupTier): Promise<void> => {
 
   logger.info('Starting Firestore export', { tier, outputUriPrefix })
 
-  const [operation] = await adminClient.exportDocuments({
-    name: databaseName,
-    outputUriPrefix,
-    collectionIds: [],
-  })
+  let operation: Awaited<ReturnType<typeof adminClient.exportDocuments>>[0]
+  try {
+    ;[operation] = await adminClient.exportDocuments({
+      name: databaseName,
+      outputUriPrefix,
+      collectionIds: [],
+    })
+  } catch (err) {
+    logger.error('Firestore exportDocuments failed', { tier, outputUriPrefix, err })
+    throw err
+  }
 
   if (operation.name == null) {
     throw new Error('Firestore export operation name is missing')
@@ -27,7 +33,12 @@ export const exportFirestore = async (tier: BackupTier): Promise<void> => {
 
   logger.info('Firestore export operation started', { tier, operationName: operation.name })
 
-  await operation.promise()
+  try {
+    await operation.promise()
+  } catch (err) {
+    logger.error('Firestore export operation failed', { tier, operationName: operation.name, outputUriPrefix, err })
+    throw err
+  }
 
   logger.info('Firestore export completed', { tier, operationName: operation.name })
 }

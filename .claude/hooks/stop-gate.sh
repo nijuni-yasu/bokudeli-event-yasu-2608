@@ -55,14 +55,6 @@ if [ -z "${full_reason}" ]; then
   full_reason="[self-review] Stop gate がブロックしましたが理由を取得できませんでした。/shokujii-code-review を完走してください。"
 fi
 
-# 案 B: followup / block ループの 2 ターン目以降は阻止しない
-case "${loop_count}" in
-  '' | *[!0-9]*) loop_count=0 ;;
-esac
-if [ "${loop_count}" -ge 1 ]; then
-  exit 0
-fi
-
 reason_json=$(printf '%s' "${full_reason}" | json_escape)
 printf '{"decision":"block","reason":%s}' "${reason_json}"
 exit 2
