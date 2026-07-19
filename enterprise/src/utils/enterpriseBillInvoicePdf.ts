@@ -5,7 +5,11 @@ export const getEnterpriseBillInvoicePdf = async (
   yearMonth: string,
   invoiceId?: string,
 ): Promise<Response> => {
-  const token = await getAuth().currentUser!.getIdToken()
+  const user = getAuth().currentUser
+  if (user == null) {
+    throw new Error('Not authenticated')
+  }
+  const token = await user.getIdToken()
   const params = new URLSearchParams({ year_month: yearMonth })
   if (invoiceId != null) {
     params.set('id', invoiceId)

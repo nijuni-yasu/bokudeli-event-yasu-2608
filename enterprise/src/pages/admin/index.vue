@@ -18,10 +18,12 @@ const period = ref<DashboardPeriod>(getDefaultDashboardPeriod())
 const periodError = computed(() => validateDashboardPeriod(period.value))
 const monthlyRows = ref<DashboardMonthlyRow[]>([])
 const memberRows = ref<DashboardMemberRow[]>([])
+let loadSeq = 0
 
 const loadDashboard = async () => {
   if (enterpriseId.value == null) return
   if (periodError.value != null) return
+  const seq = ++loadSeq
   loading.value = true
   try {
     const request = {
@@ -33,12 +35,16 @@ const loadDashboard = async () => {
       getDashboardMonthlyData(request),
       getDashboardMemberData(request),
     ])
+    if (seq !== loadSeq) return
     monthlyRows.value = monthlyResult.data.rows
     memberRows.value = memberResult.data.rows
   } catch {
+    if (seq !== loadSeq) return
     notification.show(t('admin.dashboard.load_failed'), 'error')
   } finally {
-    loading.value = false
+    if (seq === loadSeq) {
+      loading.value = false
+    }
   }
 }
 

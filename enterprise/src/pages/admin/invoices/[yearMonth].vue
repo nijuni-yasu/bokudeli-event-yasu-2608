@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useNotification } from '@shokujii/base/composable/notification.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { getEnterpriseBillInvoicePdf } from '@/utils/enterpriseBillInvoicePdf'
 import { getEnterpriseIdFromToken } from '@/composable/useEnterpriseAdmin'
 
@@ -39,7 +40,7 @@ onMounted(async () => {
     url.value = window.URL.createObjectURL(await response.blob())
     loadState.value = 'ready'
   } catch (e) {
-    console.error(e)
+    reportClientError(e, { componentInfo: 'admin/invoices/[yearMonth]' })
     notification.show($t('admin.invoices.error'), 'error')
     loadState.value = 'error'
   }

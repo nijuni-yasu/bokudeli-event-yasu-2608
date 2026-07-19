@@ -41,9 +41,15 @@ export function useSessionTimeout() {
     await handleSessionTimeout()
   }
 
+  const runCheckTimeout = () => {
+    void checkTimeout().catch((err: unknown) => {
+      console.error('session timeout check failed', err)
+    })
+  }
+
   const onVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
-      checkTimeout()
+      runCheckTimeout()
     }
   }
 
@@ -58,7 +64,7 @@ export function useSessionTimeout() {
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
     intervalId = setInterval(() => {
-      checkTimeout()
+      runCheckTimeout()
     }, CHECK_INTERVAL_MS)
   }
 
