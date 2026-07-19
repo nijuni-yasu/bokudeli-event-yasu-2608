@@ -155,3 +155,122 @@ F-1 で `setDefaultEventStoreOptions` を導入したため、ドキュメント
 - RC-11: `invoices/[yearMonth].vue` で `reportClientError` 使用
 
 ---
+
+## 評価セッション（2026-07-19 22:16・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 22:16 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **指摘なし**（D-5 認可レイヤ実装差分のチェックリスト照合）
+
+**確認要点（👌）**:
+
+- `assertEnterpriseProfileAccess` が仕様 §5.2.1 の 6 パターンを HttpsError で返却
+- PF 版は `isEnterpriseViewer` 分岐で既存ロジック維持、エンプラのみ store / resolver フィルタ
+- `UserProfilePage` が Callable 成功前に bio を表示しない RC-44 ゲート
+- Vitest（enterpriseProfileAccess / enterpriseFriendVisibility / userFriendsResolver / recountUserProfileCounts）追加済み
+
+---
+
+## 評価セッション（2026-07-19 22:26・shokujii-code-review）
+
+- **評価日時**: 2026-07-19 22:26 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **手順 3a/3b 自動修正**: RC-12 / RC-13
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-12 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | assertEnterpriseProfileAccess のテナント不一致判定が member 取得より後で EP-4 違反 |
+| [x] | RC-13 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | profileDisplayUser が Firestore user にフォールバックし RC-44 を弱める |
+
+---
+
+**識別子**: RC-12（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/enterpriseProfileAccess.ts:51`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const targetMember = await getEnterpriseMember(viewerEnterpriseId, targetUserId)
++  if (targetMember == null || !targetMember.is_active) {
++    throw new HttpsError('not-found', '存在しないユーザーです')
++  }
++
++  if (viewerEnterpriseId !== targetEnterpriseId) {
++    throw new HttpsError('permission-denied', '閲覧権限がありません')
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `getEnterpriseMember` が null の他社 uid に `not-found` を返し、仕様 §5.2.1 手順 5（EP-4）の `permission-denied` にならない → テナント不一致を member 取得前に判定する
+
+**判断理由**: EP-4 は他社閲覧を `permission-denied` と明記。member 不在を先に `not-found` にすると UI が「存在しないユーザー」になり誤表示。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+---
+
+**識別子**: RC-13（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/components/profile/UserProfilePage.vue:113`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const profileDisplayUser = computed(() => {
++  const profile = previewData.value?.user_profile
++  if (profile != null) {
++    return new User(profile.user_id, profile)
++  }
++  return user.value
++})
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `profileDisplayUser` が Callable 失敗前の Firestore `user` にフォールバックし、RC-44 の情報漏洩防御が弱くなる → Callable の `user_profile` のみを正本にし、未使用の `useUserStore` を削除
+
+**判断理由**: ゲート通過後も computed 経由で Firestore 読み取り結果が表示に使える経路が残る。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**未着手の 🟡（本セッション）**:
+
+- Callable 結合テスト（`getUserProfilePreview` / `getUserFriends` の enterprise 分岐）が計画 §8 にあるが未追加
+- `previewError` 時の UI 分岐がなく、ネットワークエラー等で空白画面になりうる
+- `classifyEnterpriseFriend` の友人ループ内 `getEnterpriseMember` が N+1（大量友人時のレイテンシ）
+
+---
