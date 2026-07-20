@@ -8,8 +8,10 @@ const route = useRoute()
 const { t: $t } = useI18n()
 const notification = useNotification()
 
-const yearMonth = route.params.yearMonth as string
-const invoiceId = route.query.id as string | undefined
+const rawYearMonth = route.params.yearMonth
+const yearMonth = typeof rawYearMonth === 'string' ? rawYearMonth : ''
+const rawInvoiceId = route.query.id
+const invoiceId = typeof rawInvoiceId === 'string' ? rawInvoiceId : undefined
 
 const url = ref<string | null>(null)
 const loadState = ref<'loading' | 'ready' | 'error'>('loading')
