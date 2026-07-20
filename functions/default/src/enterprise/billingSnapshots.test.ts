@@ -41,6 +41,7 @@ vi.mock('./dashboardData.js', () => ({
 import { Enterprise, EnterpriseBillingSnapshot } from '@shokujii/common/schemas/Enterprise.js'
 import { dashboardEventKey } from '@shokujii/common/utils/dashboardAggregation.js'
 import { getEnterpriseById } from '../stores/enterprise.js'
+import { getConfigGlobal } from '../stores/config.js'
 import { upsertBillingSnapshot } from '../stores/enterpriseBillingSnapshot.js'
 import { deleteInvoiceFileMeta } from '../stores/enterpriseInvoiceFile.js'
 import { fetchDashboardData } from './dashboardData.js'
@@ -167,5 +168,23 @@ describe('recaptureEnterpriseBillingSnapshot', () => {
         data: { enterprise_id: 'ent1', year_month: '202606' },
       }),
     ).rejects.toMatchObject({ code: 'invalid-argument' })
+  })
+
+  it('enterprise 不在は not-found', async () => {
+    vi.mocked(getConfigGlobal).mockResolvedValue({
+      isSupport: (uid: string) => uid === 'support',
+    } as Awaited<ReturnType<typeof getConfigGlobal>>)
+    vi.mocked(getEnterpriseById).mockResolvedValue(null)
+    vi.useFakeTimers()
+    vi.setSystemTime(DateTime.fromObject({ year: 2026, month: 7, day: 15 }, { zone: ZONE }).toMillis())
+    await expect(
+      recaptureHandler({
+        auth: { uid: 'support', token: { user_type: 'enterprise', enterprise_id: 'ent-missing' } },
+        data: { enterprise_id: 'ent-missing', year_month: '2026-05' },
+      }),
+    ).rejects.toMatchObject({ code: 'not-found' })
+    expect(fetchDashboardData).not.toHaveBeenCalled()
+    expect(upsertBillingSnapshot).not.toHaveBeenCalled()
+    vi.useRealTimers()
   })
 })

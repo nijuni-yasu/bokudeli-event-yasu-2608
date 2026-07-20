@@ -127,6 +127,11 @@ export const recaptureEnterpriseBillingSnapshot = onCall<RecaptureRequest, Promi
       await assertEnterpriseAdmin(request.auth, enterpriseId)
     }
 
+    const enterprise = await getEnterpriseById(enterpriseId)
+    if (enterprise == null) {
+      throw new HttpsError('not-found', 'Enterprise not found')
+    }
+
     await captureBillingSnapshotForEnterprise(enterpriseId, yearMonth)
     return { success: true }
   },
