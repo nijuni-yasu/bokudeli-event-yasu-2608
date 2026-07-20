@@ -33,6 +33,7 @@ export type EventMemberCsvRowInput = {
 
 export type BuildEventMemberCsvHeadersOptions = {
   includeCommunityBill: boolean
+  includeSnsColumns?: boolean
   statusLabel: string
   nameLabel: string
   orderLabel: string
@@ -42,15 +43,12 @@ export type BuildEventMemberCsvHeadersOptions = {
 }
 
 export const buildEventMemberCsvHeaders = (options: BuildEventMemberCsvHeadersOptions): string[] => {
-  const headers = [
-    options.statusLabel,
-    options.nameLabel,
-    'X',
-    'Facebook',
-    'Instagram',
-    options.orderLabel,
-    options.menuPriceLabel,
-  ]
+  const includeSnsColumns = options.includeSnsColumns !== false
+  const headers = [options.statusLabel, options.nameLabel]
+  if (includeSnsColumns) {
+    headers.push('X', 'Facebook', 'Instagram')
+  }
+  headers.push(options.orderLabel, options.menuPriceLabel)
   if (options.includeCommunityBill) {
     headers.push(options.communityBillOffLabel)
   }
@@ -58,18 +56,22 @@ export const buildEventMemberCsvHeaders = (options: BuildEventMemberCsvHeadersOp
   return headers
 }
 
-export const buildEventMemberCsvRows = (rows: EventMemberCsvRowInput[], includeCommunityBill: boolean): string[][] =>
+export const buildEventMemberCsvRows = (
+  rows: EventMemberCsvRowInput[],
+  options: Pick<BuildEventMemberCsvHeadersOptions, 'includeCommunityBill' | 'includeSnsColumns'>,
+): string[][] =>
   rows.map(({ order, member, statusLabel, dateLabel }) => {
-    const row = [
-      statusLabel,
-      member.user_name,
-      member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter) : '',
-      member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook) : '',
-      member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram) : '',
-      order.menu_name,
-      String(order.menu_price),
-    ]
-    if (includeCommunityBill) {
+    const includeSnsColumns = options.includeSnsColumns !== false
+    const row = [statusLabel, member.user_name]
+    if (includeSnsColumns) {
+      row.push(
+        member.user_sns_twitter !== '' ? buildTwitterUrl(member.user_sns_twitter) : '',
+        member.user_sns_facebook !== '' ? buildFacebookUrl(member.user_sns_facebook) : '',
+        member.user_sns_instagram !== '' ? buildInstagramUrl(member.user_sns_instagram) : '',
+      )
+    }
+    row.push(order.menu_name, String(order.menu_price))
+    if (options.includeCommunityBill) {
       row.push(String(order.pay_community_bill_off_amount ?? 0))
     }
     row.push(dateLabel)
@@ -82,7 +84,10 @@ export const buildEventMemberCsv = (
 ): string =>
   buildCsvContent(
     buildEventMemberCsvHeaders(headerOptions),
-    buildEventMemberCsvRows(rows, headerOptions.includeCommunityBill),
+    buildEventMemberCsvRows(rows, {
+      includeCommunityBill: headerOptions.includeCommunityBill,
+      includeSnsColumns: headerOptions.includeSnsColumns,
+    }),
   )
 
 export const downloadMemberCsv = (filename: string, content: string): void => {

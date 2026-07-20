@@ -10,10 +10,16 @@ import { getProfile } from '@/router/utils'
 
 const { t: $t } = useI18n()
 
-const props = defineProps<{
-  userData: User
-  isEditable: boolean | undefined
-}>()
+const props = withDefaults(
+  defineProps<{
+    userData: User
+    isEditable: boolean | undefined
+    hideSns?: boolean
+  }>(),
+  {
+    hideSns: false,
+  },
+)
 
 const currentUserStore = useCurrentUserStore()
 
@@ -57,7 +63,7 @@ const websiteUrl = computed(() =>
         <v-card-text>
           <div class="text-h4 text-center">{{ userName }}</div>
         </v-card-text>
-        <v-row class="justify-center">
+        <v-row v-if="!hideSns" class="justify-center">
           <v-col cols="auto">
             <a v-if="twitterUrl" :href="twitterUrl" target="_blank">
               <v-btn :icon="mdiAlphaXCircle" class="ma-2"></v-btn>

@@ -75,6 +75,38 @@ describe('buildEventMemberCsv', () => {
     expect(csv).toContain('"200"')
     expect(csv).toContain('"ランチ"')
   })
+
+  it('includeSnsColumns: false のとき SNS 列を省略する', () => {
+    const order = {
+      order_id: 'o1',
+      menu_name: 'ランチ',
+      menu_price: 1000,
+      status: 'ordered',
+    } as EventMemberOrder
+    const headers = buildEventMemberCsvHeaders({
+      includeCommunityBill: false,
+      includeSnsColumns: false,
+      statusLabel: '確定',
+      nameLabel: '名前',
+      orderLabel: '注文',
+      menuPriceLabel: '単価',
+      communityBillOffLabel: '割引',
+      dateOrderedLabel: '日時',
+    })
+    expect(headers).toEqual(['確定', '名前', '注文', '単価', '日時'])
+    const csv = buildEventMemberCsv([{ order, member: sampleUser(), statusLabel: '確定', dateLabel: '2026-01-01' }], {
+      includeCommunityBill: false,
+      includeSnsColumns: false,
+      statusLabel: '確定',
+      nameLabel: '名前',
+      orderLabel: '注文',
+      menuPriceLabel: '単価',
+      communityBillOffLabel: '割引',
+      dateOrderedLabel: '日時',
+    })
+    expect(csv).not.toContain('twitter.com')
+    expect(csv).toContain('"ランチ"')
+  })
 })
 
 describe('buildCsvContent', () => {

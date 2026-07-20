@@ -42,12 +42,18 @@ const router = useRouter()
 
 const qrcodeSize = 300
 
-const props = defineProps<{
-  event: BokudeliEvent
-  community: BokudeliCommunity
-  /** イベントページでアルバムを横並び表示するときに渡す（Phase 2 想定） */
-  albumImageUrls?: { id: string; url: string; caption: string }[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    event: BokudeliEvent
+    community: BokudeliCommunity
+    /** イベントページでアルバムを横並び表示するときに渡す（Phase 2 想定） */
+    albumImageUrls?: { id: string; url: string; caption: string }[]
+    hideShareSns?: boolean
+  }>(),
+  {
+    hideShareSns: false,
+  },
+)
 
 const galleryAlbums = computed(() => (props.albumImageUrls ?? []).map((i) => ({ src: i.url, title: i.caption })))
 
@@ -140,36 +146,38 @@ const isShowMember = computed(() =>
           {{ event.event_name }}
         </h1>
         <v-card-text class="event-item text-right px-0 py-0 ma-1">
-          <v-btn
-            class="ml-3"
-            :icon="XIcon"
-            elevation="2"
-            color="grey-900"
-            size="large"
-            density="compact"
-            variant="text"
-            @click="onShareSnsButtonClicked('twitter')"
-          ></v-btn>
-          <v-btn
-            class="ml-3"
-            :icon="mdiFacebook"
-            elevation="2"
-            color="#1877F2"
-            size="large"
-            density="compact"
-            variant="text"
-            @click="onShareSnsButtonClicked('facebook')"
-          ></v-btn>
-          <v-btn
-            class="ml-3"
-            :icon="LineIcon"
-            elevation="2"
-            color="#06c755"
-            size="large"
-            density="compact"
-            variant="text"
-            @click="onShareSnsButtonClicked('line')"
-          ></v-btn>
+          <template v-if="!hideShareSns">
+            <v-btn
+              class="ml-3"
+              :icon="XIcon"
+              elevation="2"
+              color="grey-900"
+              size="large"
+              density="compact"
+              variant="text"
+              @click="onShareSnsButtonClicked('twitter')"
+            ></v-btn>
+            <v-btn
+              class="ml-3"
+              :icon="mdiFacebook"
+              elevation="2"
+              color="#1877F2"
+              size="large"
+              density="compact"
+              variant="text"
+              @click="onShareSnsButtonClicked('facebook')"
+            ></v-btn>
+            <v-btn
+              class="ml-3"
+              :icon="LineIcon"
+              elevation="2"
+              color="#06c755"
+              size="large"
+              density="compact"
+              variant="text"
+              @click="onShareSnsButtonClicked('line')"
+            ></v-btn>
+          </template>
           <v-btn
             class="ml-3"
             :icon="mdiQrcode"
@@ -280,7 +288,7 @@ const isShowMember = computed(() =>
                 </span>
               </td>
             </tr>
-            <tr>
+            <tr v-if="!hideShareSns">
               <td class="text-small">
                 {{ $t('event_details.sns_hash_tag') }}
               </td>
