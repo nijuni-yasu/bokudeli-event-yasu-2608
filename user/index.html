@@ -5,6 +5,10 @@
     <link rel="icon" href="/favicon.png" type="image/png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>食事でつながる「shokujii」</title>
+    <meta
+      name="description"
+      content="ランチ会・食事会の幹事向けプラットフォーム。イベント・会議・セミナー・社内交流会・異業種交流会。飲食店からお弁当やケータリングを配達・デリバリー"
+    />
     <link rel="stylesheet" type="text/css" href="/loader.css" />
     <!-- OGP_XXX_TAG は削除してはならない -->
     <!-- OGP_BEGIN_TAG -->
@@ -14,24 +18,49 @@
     <meta property="og:image:height" content="630" />
     <meta
       property="og:description"
-      content="毎日の食事を出会いの場に。「いただきます」と「ごちそうさま」を言い合える仲間を見つけよう。"
+      content="ランチ会・食事会の幹事向けプラットフォーム。イベント・会議・セミナー・社内交流会・異業種交流会。飲食店からお弁当やケータリングを配達・デリバリー"
     />
     <meta property="og:url" content="https://shokujii.jp" />
-    <meta property="og:type" content="article" />
+    <meta property="og:type" content="website" />
     <meta property="og:site_name" content="食事でつながる「shokujii」" />
-    <meta name="twitter:site" content="http://shokujii.jp" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="食事でつながる「shokujii」" />
     <meta name="twitter:image" content="https://shokujii.jp/shokujii_ogp.png" />
     <meta
       name="twitter:description"
-      content="毎日の食事を出会いの場に。「いただきます」と「ごちそうさま」を言い合える仲間を見つけよう。"
+      content="ランチ会・食事会の幹事向けプラットフォーム。イベント・会議・セミナー・社内交流会・異業種交流会。飲食店からお弁当やケータリングを配達・デリバリー"
     />
     <!-- OGP_END_TAG -->
+    <!-- SEO_HEAD_BEGIN -->
+    <!-- JSON-LD 正本: functions/default/src/seo/jsonLd.ts buildHomePageJsonLd -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://shokujii.jp/#organization",
+            "name": "食事でつながる「shokujii」",
+            "url": "https://shokujii.jp",
+            "logo": "https://shokujii.jp/shokujii_ogp.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://shokujii.jp/#website",
+            "url": "https://shokujii.jp",
+            "name": "食事でつながる「shokujii」",
+            "publisher": { "@id": "https://shokujii.jp/#organization" }
+          }
+        ]
+      }
+    </script>
+    <!-- SEO_HEAD_END -->
   </head>
 
   <body>
     <div id="app">
+      <!-- SEO_BODY_BEGIN -->
+      <!-- SEO_BODY_END -->
       <div class="loading">
         <div class="effect-1 effects"></div>
         <div class="effect-2 effects"></div>

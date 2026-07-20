@@ -48,9 +48,9 @@ const displayMembers = computed(() => props.members?.filter((m) => !m?.roles?.in
   <v-card elevation="2" class="pa-5 text-center">
     <!-- community title and links -->
     <v-img style="border-radius: 10%" aspect-ratio="1" cover :src="communityStore.iconImageUrl" />
-    <v-card-title class="justify-center text-h4 px-1 py-4 text-wrap">
+    <div class="justify-center text-h4 px-1 py-4 text-wrap">
       {{ community.community_name }}
-    </v-card-title>
+    </div>
     <v-row class="justify-center pb-3">
       <v-col cols="auto">
         <a v-if="twitterUrl" :href="twitterUrl" target="_blank">

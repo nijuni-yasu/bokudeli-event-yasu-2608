@@ -37,6 +37,7 @@ import {
 import { getManageCommunityListPath } from './utils'
 import { isEnterpriseUserFromClaims } from '@shokujii/base/utils/enterpriseUserClaims.js'
 import { ZodError } from 'zod'
+import { resolveDocumentTitle } from './documentTitle.js'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -117,19 +118,30 @@ export const setupRouter = (router: Router) => {
     lastUser = user
   })
 
-  router.afterEach((to, from) => {
+  let documentTitleUpdateSeq = 0
+
+  router.afterEach(async (to, from) => {
     // in-app ガードで setRedirectPath 済みの /inapp-login 遷移では上書きしない（RC-9）
-    if (to.path === '/inapp-login') {
-      return
+    if (to.path !== '/inapp-login') {
+      // 遷移先(to.path)が、ログインページまたはアプリ内ログインページの場合かつ、
+      // 遷移元(from.path)が、ログインページまたはアプリ内ログインページでない場合にのみ、リダイレクトのパスを保存する
+      // sessionStorageには、招待URLを考慮し、クエリパラメータも含めてfrom.fullPathで保存
+      if (
+        ['/login', '/register', '/inapp-login'].includes(to.path) &&
+        !['/login', '/register', '/inapp-login'].includes(from.path)
+      ) {
+        setRedirectPath(history.state?.redirect ?? from.fullPath)
+      }
     }
-    // 遷移先(to.path)が、ログインページまたはアプリ内ログインページの場合かつ、
-    // 遷移元(from.path)が、ログインページまたはアプリ内ログインページでない場合にのみ、リダイレクトのパスを保存する
-    // sessionStorageには、招待URLを考慮し、クエリパラメータも含めてfrom.fullPathで保存
-    if (
-      ['/login', '/register', '/inapp-login'].includes(to.path) &&
-      !['/login', '/register', '/inapp-login'].includes(from.path)
-    ) {
-      setRedirectPath(history.state?.redirect ?? from.fullPath)
+
+    const seq = ++documentTitleUpdateSeq
+    try {
+      const title = await resolveDocumentTitle(to)
+      if (seq === documentTitleUpdateSeq) {
+        document.title = title
+      }
+    } catch {
+      // title 更新失敗はナビゲーションを妨げない
     }
   })
 

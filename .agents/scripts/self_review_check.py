@@ -158,7 +158,10 @@ def main() -> int:
         )
     else:
         lines.append(
-            f"review doc: {review_doc} に「## 評価セッション（…・shokujii-code-review）」を追記してください。"
+            "/shokujii-code-review を完走し、手順 5（self_review_wake.py consume）を実行してください。"
+        )
+        lines.append(
+            f"RC がある場合は review doc: {review_doc} に記録してください（指摘 0 件は記録不要）。"
         )
     lines.append(f"branch: {branch} (slug: {slug})")
 

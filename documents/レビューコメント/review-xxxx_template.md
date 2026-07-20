@@ -10,7 +10,18 @@
 
 **スキル**: 外部コメント評価 → `/review-comments-evaluate`（🚨 と条件付き 🟡（S・🔧/📄・📌）は手順 4a で自動修正。詳細は `auto-fix-policy.md`）。能動レビュー → `/shokujii-code-review`（🚨 は手順 3a、条件付き 🟡 は手順 3b で自動修正）。同一ブランチ（= 同一ファイル）で RC 番号は通し。
 
-**評価セッション見出し（Stop gate 連携）**: セルフレビューは `## 評価セッション（YYYY-MM-DD HH:mm・shokujii-code-review）`（日時は **JST**）。外部 evaluate はサフィックスを `・review-comments-evaluate` にする。`## 評価セッション` のみ（日時・サフィックスなし）は Stop gate の review doc 判定にマッチしない。
+**Stop gate 連携**: セルフレビュー合格の主判定は **pending wake の consume + `reviewed_scope_fingerprint` 一致**（指摘 0 件で review doc 未作成も可）。RC 記録時の評価セッション見出しは `## 評価セッション（YYYY-MM-DD HH:mm・shokujii-code-review）`（日時 **JST**）。外部 evaluate はサフィックス `・review-comments-evaluate`。見出しは記録フォーマット用であり、gate 必須条件ではない。
+
+### RC 一覧（サマリ）
+
+**ブランチ全体の RC 通し表**（ファイル最上部に必ず置く。RC 追加のたびに末尾へ行追記。セッション内サマリ表と `[x]` / `[ ]` を一致させる）。
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-1 | 数値またはなし | 👌 修正不要 | — | — | — | 👀 確認のみ | — | （1行目: 指摘の要点）<br>（2行目: 参照・影響・方向性） |
+| [ ] | RC-2 | 数値 | 🚨 必須修正 | 未着手 | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | （1行目）<br>（2行目） |
+
+---
 
 ## 評価セッション（YYYY-MM-DD HH:mm・shokujii-code-review）
 

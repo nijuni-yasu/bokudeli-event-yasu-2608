@@ -200,7 +200,7 @@ def is_self_review_complete(
     wake_entry: dict[str, Any] | None,
     repo_root: Path | None = None,
 ) -> bool:
-    """review doc セッション、ledger、または consumed fingerprint 一致で合格。"""
+    """consumed fingerprint 一致、または記録対象外ブランチの ledger で合格。"""
     root = repo_root or Path.cwd()
 
     if wake_entry is not None and wake_entry.get("consumed"):
@@ -209,10 +209,9 @@ def is_self_review_complete(
         wake_since = wake_entry.get("since")
         if not isinstance(wake_since, str) or not wake_since:
             return False
-        if not is_recording_skipped_branch(branch):
-            review_doc = root / review_doc_path_for_branch(branch)
-            return has_review_doc_session_since(review_doc, wake_since)
-        # 記録対象外ブランチ: consumed + fingerprint 一致で合格（ledger の task_skill 未記録でも可）
+        # consumed + fingerprint 一致で合格。
+        # 指摘 0 件のセルフレビューは review doc 未作成でも可（shokujii-code-review 手順 4 スキップ）。
+        # RC ありの場合は review doc にセッションが残るが、gate の主判定は fingerprint とする。
         return True
 
     # 通常ブランチ: 未消費 wake では review doc のみで合格させない（追加修正後の gate 迂回防止）

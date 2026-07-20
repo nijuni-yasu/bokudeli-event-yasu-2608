@@ -79,20 +79,26 @@ python3 .agents/scripts/self_review_wake.py write \
 
 記録先の解決は [review-doc-path.md](../review-comments-evaluate/references/review-doc-path.md) に従う（`git branch --show-current` → `review-<slug>.md`）。記録対象外ブランチ（`release/` `sync/` 等）はスキップしてよい。
 
-**原則必須**（指摘が 0 件のときはセッション見出しと「指摘なし」のみでよい）。ユーザーが「記録不要」と明示した場合のみ省略。
+**RC が 1 件以上ある場合のみ**記録する（🚨 / 🟡 / 👌 で RC 採番した指摘）。**指摘 0 件**（RC 採番なし）のときは手順 4 をスキップし、[手順 5](#手順-5-pending-wake-の-consume必須) の consume のみ実行する。review doc への「指摘なし」セッションは**書かない**。
+
+RC がある場合:
 
 1. [review-comments-evaluate](../review-comments-evaluate/SKILL.md) の **手順 4**（保存先・同一ファイルの扱い・RC 記録ブロック）に従う
-2. ファイル末尾に `## 評価セッション（<日時 JST>・shokujii-code-review）` を追記（見出しの日時は **JST ローカル**、`YYYY-MM-DD HH:mm` 形式。Stop gate の since 比較に使用）。メタデータに **評価日時**・**ブランチ名**・**PR**（未作成時は `未作成`）を含める。Outdated / レビュー非該当は「該当なし」でよい
-3. **RC 採番**: 既存 `review-<slug>.md` の最終 RC の次から。指摘ごとに 1 RC
-4. **並び順**: **`path` 昇順**、同一 `path` 内は**行番号昇順**
-5. 各 RC は **RC 記録ブロック（13項目）**（evaluate 参照）。**評価**・**ステータス**は [共通区分](../review-comments-evaluate/SKILL.md#評価--ステータス共通区分プロジェクト共通) に従う。**PRスコープ**・**ラベル**（複数可）・**変更種別**・**想定工数**も evaluate と同一語彙で記載する
+2. ファイルが無ければ `# ブランチ <name> レビュー記録` + **冒頭** `### RC 一覧（サマリ）` + 表ヘッダで新規作成する（[review-xxxx_template.md](../../../documents/レビューコメント/review-xxxx_template.md) 参照）
+3. ファイル末尾に `## 評価セッション（<日時 JST>・shokujii-code-review）` を追記（見出しの日時は **JST ローカル**、`YYYY-MM-DD HH:mm` 形式）。メタデータに **評価日時**・**ブランチ名**・**PR**（未作成時は `未作成`）を含める。Outdated / レビュー非該当は「該当なし」でよい
+4. **RC 採番**: 既存 `review-<slug>.md` の最終 RC の次から。指摘ごとに 1 RC
+5. **並び順**: **`path` 昇順**、同一 `path` 内は**行番号昇順**
+6. 各 RC は **RC 記録ブロック（13項目）**（evaluate 参照）。**評価**・**ステータス**は [共通区分](../review-comments-evaluate/SKILL.md#評価--ステータス共通区分プロジェクト共通) に従う。**PRスコープ**・**ラベル**（複数可）・**変更種別**・**想定工数**も evaluate と同一語彙で記載する
    - **レビュワー**: `Cursor Agent（shokujii-code-review）`
    - **識別子**: `RC-n（GitHub id: なし・エージェントレビュー）` 等
    - **指摘箇所**: `` `path:line` ``
    - **該当コード**: [該当コードの取得（共通）](../review-comments-evaluate/SKILL.md#該当コードの取得共通)（`git diff origin/development...HEAD -- <path>`）
    - **レビュワーのコメント（原文）**: 手順 3 のチャット指摘文をそのまま
-6. 冒頭の通し **`### RC 一覧（サマリ）`** 表にも本セッション分の**行**を追記（evaluate 手順 4 の項 5）。セッション内も同じ表形式（要約列含む）
-7. **pending wake を consume する**（記録完了後・必須）:
+7. **冒頭の通し `### RC 一覧（サマリ）` 表**（ファイル最上部）に本セッション分の RC **行**を追記する（**必須**。セッション内サマリ表と `[x]` / `[ ]` を一致させる）
+
+### 手順 5: pending wake の consume（必須）
+
+指摘 0 件（手順 4 スキップ）でも **必ず**実行する:
 
 ```bash
 branch=$(git branch --show-current)
@@ -101,18 +107,7 @@ python3 .agents/scripts/self_review_wake.py consume \
   --branch "$branch"
 ```
 
-consume はその時点の **review スコープ差分の fingerprint**（`reviewed_scope_fingerprint`）を wake に記録する。同一の未コミット差分が残る場合、Stop gate は再レビューなしで合格する。**review スコープに新しい変更**が入ったら手順 0 から再実行する。
-
-**指摘 0 件の最小記録**（13 項目 RC ブロックは不要）:
-
-```markdown
-## 評価セッション（<YYYY-MM-DD HH:mm>・shokujii-code-review）
-
-- 評価日時: ...
-- ブランチ名: ...
-- PR: 未作成
-- 指摘なし（チェックリスト照合のみ）
-```
+consume はその時点の **review スコープ差分の fingerprint**（`reviewed_scope_fingerprint`）を wake に記録する。同一の未コミット差分が残る場合、Stop gate は再レビューなしで合格する（指摘 0 件で review doc 未作成の場合も **consumed + fingerprint 一致**で合格）。**review スコープに新しい変更**が入ったら手順 0 から再実行する。
 
 ---
 

@@ -5,6 +5,11 @@ import { getStorage } from 'firebase-admin/storage'
 const EVENT_HOST = defineString('EVENT_HOST')
 const PARTNER_HOST = defineString('PARTNER_HOST')
 
+export const getEventHost = (): string => EVENT_HOST.value()
+
+/** SEO fetch 等で使う user サイト origin（末尾スラッシュなし）。EVENT_HOST 正本。 */
+export const getEventSiteOrigin = (): string => `https://${EVENT_HOST.value()}`
+
 /*
  * Firebase Storage Base URL
  */
