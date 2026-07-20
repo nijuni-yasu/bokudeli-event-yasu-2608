@@ -30,7 +30,7 @@
 | [x] | RC-43 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | createEnterpriseMembers の authForEnterprise N+1 |
 | [x] | RC-44 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | createEnterprise ロールバックが member / user doc を残す |
 | [x] | RC-45 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | listAuditLogsGuest の hasNext / nextCursor がページ取り漏らし |
-| [ ] | RC-46 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | enterpriseScope 時の friends 一覧 meet_count が全イベント数のまま |
+| [x] | RC-46 | なし | 👌 修正不要 | — | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | meet_count は denormalized 値のまま表示と仕様確定（EP-27） |
 | [x] | RC-47 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | invoices/index onMounted に try/catch なし・初回ロード不能 |
 | [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventDraft の catch が reportClientError 未呼び出し |
 
@@ -699,7 +699,7 @@ RC-6 で別 Issue #2198 化済み。本 PR スコープ外として対応不要�
 - **対象**: `origin/development...HEAD` ブランチ全体（ユーザー明示依頼）
 - **Outdated 除外件数**: 該当なし
 - **レビュー非該当スキップ件数**: 0
-- **手順 3a/3b 自動修正**: RC-22〜24 / RC-26〜45（🚨 10件 / 🟡 14件）。RC-46 のみ仕様判断待ちで未着手
+- **手順 3a/3b 自動修正**: RC-22〜24 / RC-26〜45（🚨 10件 / 🟡 14件）。RC-46 は仕様確定（👌 修正不要・EP-27 追記）
 
 ### RC 一覧（サマリ）
 
@@ -729,7 +729,7 @@ RC-6 で別 Issue #2198 化済み。本 PR スコープ外として対応不要�
 | [x] | RC-43 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | createEnterpriseMembers の authForEnterprise N+1 |
 | [x] | RC-44 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | createEnterprise ロールバックが member / user doc を残す |
 | [x] | RC-45 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | listAuditLogsGuest の hasNext / nextCursor がページ取り漏らし |
-| [ ] | RC-46 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | enterpriseScope 時の friends 一覧 meet_count が全イベント数のまま |
+| [x] | RC-46 | なし | 👌 修正不要 | — | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | meet_count は denormalized 値のまま表示と仕様確定（EP-27） |
 | [x] | RC-47 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | invoices/index onMounted に try/catch なし・初回ロード不能 |
 | [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventDraft の catch が reportClientError 未呼び出し |
 
@@ -1695,9 +1695,9 @@ member_orders CG に 5 フィールド複合インデックスを追加した。
 
 一覧の meet_count 再計算は友人ごとの event_history 参照（N+1）が必要で性能影響があり、表示仕様の判断が必要。自動修正対象外として未着手。
 
-**評価**: 🟡 修正提案
+**評価**: 👌 修正不要
 
-**ステータス**: 未着手
+**ステータス**: —
 
 **PRスコープ**: 📌 スコープ内
 
@@ -1707,7 +1707,7 @@ member_orders CG に 5 フィールド複合インデックスを追加した。
 
 **想定工数**: M
 
-**判断理由**: 仕様書に一覧 meet_count のスコープ規定がなく、性能とのトレードオフ判断が必要なため人間判断待ち。
+**判断理由**: 一覧の enterprise フィルタ再計算は Callable 性能コストが大きい。テナント分離によりエンプラ従業員の PF イベント混在はない。友人一覧は `friend.meet_count`（denormalized）のまま、ゲスト同席を含む当該 enterprise イベント上の同席回数として表示する旨を `04_詳細_マイページ・友人` EP-27 / §4.2.6 および `04_詳細_ゲスト参加` §2.2 に追記して確定。
 
 ---
 
