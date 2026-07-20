@@ -51,7 +51,8 @@ export async function fetchDashboardData(enterpriseId: string): Promise<Dashboar
 
   const auditSessions: DashboardAuditSession[] = []
   for (const log of rawAuditLogs) {
-    const orderIds = (log.details?.order_ids as string[] | undefined) ?? []
+    const rawOrderIds = log.details?.order_ids
+    const orderIds = Array.isArray(rawOrderIds) ? rawOrderIds.filter((id): id is string => typeof id === 'string') : []
     const firstOrderId = orderIds[0]
     if (firstOrderId == null) continue
     const order = orderById.get(firstOrderId)
