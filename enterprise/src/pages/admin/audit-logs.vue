@@ -186,16 +186,21 @@ const openDetail = (log: AuditLogListItem) => {
 }
 
 onMounted(async () => {
-  enterpriseId.value = await getEnterpriseIdFromToken()
-  if (enterpriseId.value != null) {
-    const membersResult = await getEnterpriseMembers({
-      enterprise_id: enterpriseId.value,
-      page: 1,
-      page_size: 500,
-      sort_by: 'display_name',
-      sort_order: 'asc',
-    })
-    memberOptions.value = membersResult.data.members
+  try {
+    enterpriseId.value = await getEnterpriseIdFromToken()
+    if (enterpriseId.value != null) {
+      const membersResult = await getEnterpriseMembers({
+        enterprise_id: enterpriseId.value,
+        page: 1,
+        page_size: 500,
+        sort_by: 'display_name',
+        sort_order: 'asc',
+      })
+      memberOptions.value = membersResult.data.members
+    }
+  } catch {
+    // メンバー一覧はフィルタ選択肢のみに使うため、失敗してもログ一覧の取得は続行する
+    notification.show(t('admin.audit_logs.load_failed'), 'error')
   }
   await loadAuditLogs()
 })
