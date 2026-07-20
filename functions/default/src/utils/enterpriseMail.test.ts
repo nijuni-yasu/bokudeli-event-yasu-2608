@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isEnterpriseEvent, isEnterpriseUser } from './enterpriseMail.js'
+import { isEnterpriseCommunity, isEnterpriseEvent, isEnterpriseUser } from './enterpriseMail.js'
 
 describe('isEnterpriseEvent', () => {
   it('enterprise_id が文字列なら true', () => {
@@ -17,6 +17,20 @@ describe('isEnterpriseEvent', () => {
 
   it('enterprise_id が空文字なら false', () => {
     expect(isEnterpriseEvent({ enterprise_id: '' })).toBe(false)
+  })
+})
+
+describe('isEnterpriseCommunity', () => {
+  it('enterprise_id が文字列なら true', () => {
+    expect(isEnterpriseCommunity({ enterprise_id: 'ent-a' })).toBe(true)
+  })
+
+  it('null / undefined / 空文字 / 欠落なら false', () => {
+    expect(isEnterpriseCommunity(null)).toBe(false)
+    expect(isEnterpriseCommunity(undefined)).toBe(false)
+    expect(isEnterpriseCommunity({ enterprise_id: null })).toBe(false)
+    expect(isEnterpriseCommunity({ enterprise_id: '' })).toBe(false)
+    expect(isEnterpriseCommunity({})).toBe(false)
   })
 })
 

@@ -153,4 +153,15 @@ describe('sendOrderCompletionMails', () => {
     )
     expect(saveEventMock).toHaveBeenCalled()
   })
+
+  it('エンプライベント内の PF uid でも #6 はイベント単位でスキップする', async () => {
+    const event = createMockEvent({ enterprise_id: 'ent-a' })
+    getEventInCommunityMock.mockImplementation(async () => createMockEvent({ enterprise_id: 'ent-a' }))
+
+    await sendOrderCompletionMails(event, 'pf-user-without-enterprise-id')
+
+    expect(sgMailSendMock).toHaveBeenCalledTimes(1)
+    expect(sendDynamicTemplateWithPersonalizationsMock).not.toHaveBeenCalled()
+    expect(saveEventMock).not.toHaveBeenCalled()
+  })
 })

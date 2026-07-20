@@ -6,6 +6,7 @@ const getConfigGlobalMock = vi.fn()
 const getEventInCommunityMock = vi.fn()
 const saveEventMock = vi.fn()
 const runTransactionMock = vi.fn()
+const mockUsers = vi.fn<() => AsyncGenerator<{ ok: true; value: Record<string, unknown> }>>()
 
 vi.mock('./utils/sendgridBulk.js', () => ({
   sendDynamicTemplateWithPersonalizations: (...args: unknown[]) => sendDynamicTemplateWithPersonalizationsMock(...args),
@@ -21,24 +22,7 @@ vi.mock('./stores/event.js', () => ({
 }))
 
 vi.mock('./stores/user.js', () => ({
-  getAllUsers: async function* () {
-    yield {
-      ok: true as const,
-      value: {
-        user_email: 'pf@example.com',
-        user_name: 'PF User',
-        enterprise_id: undefined,
-      },
-    }
-    yield {
-      ok: true as const,
-      value: {
-        user_email: 'ent@example.com',
-        user_name: 'Enterprise User',
-        enterprise_id: 'ent-a',
-      },
-    }
-  },
+  getAllUsers: () => mockUsers(),
 }))
 
 vi.mock('firebase-admin/firestore', () => ({
@@ -95,8 +79,20 @@ function createEligibleEvent(overrides: Partial<ShokujiiEvent> = {}): ShokujiiEv
   } as unknown as ShokujiiEvent
 }
 
+async function* yieldUsers(users: Array<{ user_email: string; user_name: string; enterprise_id?: string }>) {
+  for (const user of users) {
+    yield { ok: true as const, value: user }
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
+  mockUsers.mockReturnValue(
+    yieldUsers([
+      { user_email: 'pf@example.com', user_name: 'PF User', enterprise_id: undefined },
+      { user_email: 'ent@example.com', user_name: 'Enterprise User', enterprise_id: 'ent-a' },
+    ]),
+  )
   getConfigGlobalMock.mockResolvedValue({ popular_event_mail_threshold: 10 })
   getEventInCommunityMock.mockImplementation(async () => createEligibleEvent())
   runTransactionMock.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => fn({}))
@@ -136,5 +132,24 @@ describe('trySendPopularEventMailAfterMembersSync', () => {
     const recipients = sendDynamicTemplateWithPersonalizationsMock.mock.calls[0]?.[1] as { to: string }[]
     expect(recipients).toHaveLength(1)
     expect(recipients[0]?.to).toBe('pf@example.com')
+  })
+
+  it('同一メールでも PF uid のみ宛先に含める', async () => {
+    mockUsers.mockReturnValue(
+      yieldUsers([
+        { user_email: 'shared@example.com', user_name: 'PF', enterprise_id: undefined },
+        { user_email: 'shared@example.com', user_name: 'Enterprise', enterprise_id: 'ent-a' },
+      ]),
+    )
+
+    await trySendPopularEventMailAfterMembersSync({
+      communityId: 'comm1',
+      eventId: 'evt1',
+      triggerUserId: 'user1',
+    })
+
+    const recipients = sendDynamicTemplateWithPersonalizationsMock.mock.calls[0]?.[1] as { to: string }[]
+    expect(recipients).toHaveLength(1)
+    expect(recipients[0]?.to).toBe('shared@example.com')
   })
 })

@@ -74,7 +74,7 @@ export const eventInformationPreview = onSchedule(
 /**
  * イベント情報メール用のテンプレートデータを作成
  */
-async function createTemplateDataForEventInformation(targetDateTimeMillis: number): Promise<TemplateData> {
+export async function createTemplateDataForEventInformation(targetDateTimeMillis: number): Promise<TemplateData> {
   const date = convertToJustDate(targetDateTimeMillis)
   const templateData: TemplateData = {
     date,
@@ -137,7 +137,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
  * 2. sendDynamicTemplateWithPersonalizations で一括送信（バッチ単位）
  * 3. 処理結果（取得エラー・バッチ成否・受付件数）をログに出力
  */
-async function sendEventInformationMail(): Promise<void> {
+export async function sendEventInformationMail(): Promise<void> {
   const nowDateTimeMillis = Date.now()
   const templateData = await createTemplateDataForEventInformation(nowDateTimeMillis)
 
