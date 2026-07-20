@@ -145,7 +145,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 | ✅ | D-2 | ダッシュボード＋ CSV（月別/メンバー別の回数・人数・金額） | 10_仕様/04_ダッシュボード | 必須 | — |
 | ✅ | D-3 | 監査ログ閲覧 UI＋取得 Callable（書き込みは実装済み） | 10_仕様/04_監査 | 必須 | — |
 | ✅ | D-4 | 課金スナップショット Scheduled Function（毎月 1 日） | 10_仕様/03_課金 | 必須 | — |
-| - [ ] | D-5 | マイページ・友人の認可レイヤ（enterprise_id フィルタ） | 10_仕様/04_マイページ | 必須 | — |
+| ✅ | D-5 | マイページ・友人の認可レイヤ（enterprise_id フィルタ） | 10_仕様/04_マイページ | 必須 | — |
 | ✅ | D-6 | 月次請求書 PDF Function（`enterpriseBillInvoice` + docx テンプレート + GCS） | 10_仕様/04_請求 §3 | 必須 | D-4（推奨） |
 | ✅ | D-7 | 全社管理者 `/admin/invoices` 画面 + ナビ | 10_仕様/04_請求 §3 / 04_ダッシュボード D-17 | 必須 | D-6, D-2 |
 
@@ -154,7 +154,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - **D-2 ✅** — [#2126](https://github.com/nijuniinc/bokudeli-event-new/issues/2126)。`/admin` ダッシュボード・期間ピッカー（初期 3 ヶ月・最大 12 ヶ月）・月別/メンバー別集計・CSV。`enterprise_id` ＋ `is_public` ベース。`billing_snapshots` merge（D-4 連携）含む。
 - **D-3 ✅** — [#2128](https://github.com/nijuniinc/bokudeli-event-new/issues/2128)。`/admin/audit-logs`・`getEnterpriseAuditLogs` Callable。writeAuditLog（v0.1）は従来どおり。
 - **D-4 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`captureEnterpriseBillingSnapshots` cron + recapture Callable。`invoice_files` 削除・recapture 年月ガード含む。
-- **D-5**: コミュニティ一覧等に `enterprise_id` フィルタは部分実装。**未**: RC-44（`/u/:userId` の他社・停止メンバーゲート）。**EP-9 SNS 非表示**（#2173 含む）は本 PR で対応予定。
+- **D-5 ✅** — RC-44（`/u/:userId` preview ゲート + イベント/フード `autoLoad: false`）、Callable 認可・enterprise_id フィルタ、EP-9 SNS 非表示（#2173）。**残（別 PR）**: `disableEnterpriseMember` 後の `friend_count` 再集計（§5.7）。
 - **D-6 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`enterpriseBillInvoice` HTTP + docx テンプレ + GCS。`invoice_files` による冪等キャッシュ。
 - **D-7 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`/admin/invoices` 一覧 + PDF viewer。`billing_status: final` の月のみ DL 可。
 - **D-1**: 仕様確定（[04_詳細_メール配信](../10_仕様/04_詳細_メール配信.md)）。MVP は方式 A（早期 return）+ `isEnterpriseEvent` / `isEnterpriseUser`（`users.enterprise_id`）の**コード固定デフォルト**。文言・テンプレ変更はスコープ外。#23 / #24 PF only、週刊本文フィルタ、主催者 #7 抑制・#8 維持、誤記 #10 削除。**全社 ON/OFF は Phase 2**（§5.3）。
@@ -277,7 +277,7 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 状態 | RC | 要約 | 紐付け WS | PF 影響 |
 |:--|:--|:--|:--|:--|
 | ✅ | RC-35 | enterprise_subsidy が決済なしで確定可能（confirmOrder 側拒否または補助計算まで受付停止） | A-1 / D-4 | ◯ 共有 functions |
-| - [ ] | RC-44 | `/u/:userId` が他社・停止メンバーをゲートなし | D-5 | △ |
+| ✅ | RC-44 | `/u/:userId` が他社・停止メンバーをゲートなし | D-5 | △ |
 | ✅ | RC-48 | カートが PF/他テナント注文を混在表示（enterprise_id 一致のみ） | F-1 | ◯ base 共有 cart |
 | - [ ] | RC-86 | 注文 doc の `enterprise_id` は保存済み。`is_guest` は未導入（ゲスト参加 / G-1 → D-2 で追跡） | G-1 → D-2 | ◯ 注文スキーマ |
 | - [ ] | RC-28 / RC-87 | enterprises / admin 判定の withConverter なし直読み | A-2 / G-7 | ◯ base store 共有 |
