@@ -1361,6 +1361,10 @@
         {
           "fieldPath": "timestamp",
           "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ]
     },
@@ -1375,15 +1379,19 @@
         {
           "fieldPath": "timestamp",
           "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "member_orders",
-      "queryScope": "COLLECTION_GROUP",
+      "collectionGroup": "audit_logs",
+      "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "enterprise_id",
+          "fieldPath": "action",
           "order": "ASCENDING"
         },
         {
@@ -1391,7 +1399,11 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "updated_at",
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
       ]
@@ -1427,26 +1439,38 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "enterprise_id",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "updated_at",
           "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "order_id",
+          "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "events",
+      "collectionGroup": "member_orders",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
-          "fieldPath": "event_id",
+          "fieldPath": "user_id",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "enterprise_id",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updated_at",
+          "order": "DESCENDING"
         }
       ]
     },
