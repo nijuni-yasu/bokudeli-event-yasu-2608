@@ -15,7 +15,7 @@ const EventMemberDbSchema = z.object({
   community_id: z.string().nonempty(),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
-  enterprise_id: z.string().nullable().optional(),
+  enterprise_id: z.string().nonempty().nullable().optional(),
 })
 
 const EventMemberAppSchema = z.object({
@@ -24,7 +24,7 @@ const EventMemberAppSchema = z.object({
   community_id: z.string().nonempty(),
   created_at: EpochMillisSchema.optional(),
   updated_at: EpochMillisSchema.optional(),
-  enterprise_id: z.string().nullable().optional(),
+  enterprise_id: z.string().nonempty().nullable().optional(),
 })
 
 const convertMemberToDb = (member: EventMember) => {
@@ -86,7 +86,7 @@ const EventMemberOrderDbSchema = z.object({
   // 再度 processing に上がるのを防ぐため記録する。新しい遅延決済（別 PI）開始時・ordered 確定時に削除する。
   failed_async_payment_intent: optionalDeleteField(z.string().nonempty()),
   pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
-  enterprise_id: z.string().nullable().optional(),
+  enterprise_id: z.string().nonempty().nullable().optional(),
   pay_enterprise_subsidy_amount: z.number().int().nonnegative().optional(),
 })
 
@@ -107,7 +107,7 @@ const EventMemberOrderAppSchema = z.object({
   processing_payment_intent: z.string().nonempty().optional(),
   failed_async_payment_intent: z.string().nonempty().optional(),
   pay_community_bill_off_amount: z.number().int().nonnegative().optional(),
-  enterprise_id: z.string().nullable().optional(),
+  enterprise_id: z.string().nonempty().nullable().optional(),
   pay_enterprise_subsidy_amount: z.number().int().nonnegative().optional(),
 })
 

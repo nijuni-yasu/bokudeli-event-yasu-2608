@@ -16,16 +16,11 @@ export function encodeAuditLogCursor(cursor: AuditLogCursor): string {
 export function decodeAuditLogCursor(encoded: string): AuditLogCursor | undefined {
   try {
     const parsed: unknown = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'))
-    if (
-      typeof parsed === 'object' &&
-      parsed != null &&
-      'timestamp' in parsed &&
-      'log_id' in parsed &&
-      typeof (parsed as AuditLogCursor).timestamp === 'number' &&
-      typeof (parsed as AuditLogCursor).log_id === 'string' &&
-      (parsed as AuditLogCursor).log_id !== ''
-    ) {
-      return parsed as AuditLogCursor
+    if (typeof parsed === 'object' && parsed != null && 'timestamp' in parsed && 'log_id' in parsed) {
+      const { timestamp, log_id: logId } = parsed
+      if (typeof timestamp === 'number' && typeof logId === 'string' && logId !== '') {
+        return { timestamp, log_id: logId }
+      }
     }
   } catch {
     // invalid cursor

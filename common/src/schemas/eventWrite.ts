@@ -102,7 +102,7 @@ export type EnterpriseEvent = Event & {
 }
 
 export function isEnterpriseEvent(e: Event): e is EnterpriseEvent {
-  return e.event_payment === 'enterprise_subsidy' && e.enterprise_id != null
+  return e.event_payment === 'enterprise_subsidy' && e.enterprise_id != null && e.enterprise_subsidy_settings != null
 }
 
 export function parseEventWrite(input: unknown): EventWriteApp {
