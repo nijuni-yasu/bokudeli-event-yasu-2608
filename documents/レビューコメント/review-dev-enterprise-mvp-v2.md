@@ -520,3 +520,138 @@ RC-17 修正の回帰テストとして空文字 `''` が false になる it を
 - `enterpriseMail.ts`: `!== ''` が `eventDraft.ts` と整合
 
 ---
+
+## 評価セッション（2026-07-20 15:32・review-comments-evaluate auto）
+
+- **評価日時**: 2026-07-20 15:32 JST
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **REVIEW_REQUEST_SINCE**: 2026-07-20T06:17:11Z
+- **partial**: true（Codex usage limits / connect のみ。Copilot 実質レビューあり）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 3（レビュー依頼 5019377264 内 @ 行、Codex limits 5015906178、Codex connect 5015941083）
+- **手順 4a 自動修正**: RC-19 / RC-20
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-19 | 5019377264 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | admin ダッシュボードが不正期間・load 失敗後も旧行を表示<br>periodError / catch で rows をクリア |
+| [x] | RC-20 | 5019377264 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | enterpriseProfileCallables に成功系 3 ケース追加<br>getUserFriends / getUserFriendMeetLog / getUserFoods |
+| [x] | RC-21 | 5019377264 | 👌 修正不要 | — | 📤 スコープ外 | 📑 仕様書 | 📋 仕様追加 | M | user ProfilePage の null フィルタ指摘は RC-6 と重複<br>別 Issue #2198 で追跡済み |
+
+---
+
+**識別子**: RC-19（GitHub id: 5019377264・Copilot トップレベル内指摘）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `enterprise/src/pages/admin/index.vue:25`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+   if (enterpriseId.value == null) return
+-  if (periodError.value != null) return
++  if (periodError.value != null) {
++    monthlyRows.value = []
++    memberRows.value = []
++    return
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `periodError.value != null` の早期 return と `catch` ブロックは `monthlyRows` / `memberRows` をクリアしないため、無効期間を選んだあとも直前の期間の行が表示されたままになります（既存スレッドで指摘済み）。エラー・不正期間時に行を空配列に戻してください。
+
+**コメント要約**:
+
+無効期間選択時および load 失敗時に `monthlyRows` / `memberRows` を空配列にクリアし、古い集計行が残らないようにした。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 表示と期間バリデーションが不整合だと誤った数値を見せる UX バグ。修正方針は Copilot 提示どおりで一意。
+
+---
+
+**識別子**: RC-20（GitHub id: 5019377264・Copilot トップレベル内指摘）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/enterpriseProfileCallables.test.ts:228`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    it('同社 active メンバーは友人一覧を返す', async () => { ... })
++    it('同社 active メンバーは meet log を返す', async () => { ... })
++    it('同社 active メンバーはフード一覧を返す', async () => { ... })
+```
+
+**レビュワーのコメント（原文）**:
+
+[nits] `getUserFriends` / `getUserFriendMeetLog` / `getUserFoods` の 3 Callable に成功ケースのテストがなく、認可が通った後の返却値（`department` の有無、`omitSns` の動作等）が検証されていません。`getUserProfilePreview` と同様に、同社 active メンバーで正常応答になることを 1 ケース追加すると、store や resolver の mock が正しく機能していることを保証できます。
+
+**コメント要約**:
+
+3 Callable それぞれに同社 active メンバー成功系 1 ケースを追加。resolver / store mock 呼び出しと返却値を検証。計 21 テスト pass。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: テスト網羅の改善。getUserProfilePreview と対称で追加方針が一意。
+
+---
+
+**識別子**: RC-21（GitHub id: 5019377264・Copilot トップレベル内指摘）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `user/src/components/profile/UserProfilePage.vue:311`
+
+**該当コード（レビュー時点の diff）**:
+
+該当なし（本セッション diff 外。前サイクルからの継続指摘）
+
+**レビュワーのコメント（原文）**:
+
+[imo] `where('enterprise_id', '==', null)` は `enterprise_id` フィールドが存在しない既存コミュニティドキュメントをヒットしません（前サイクルから継続）。backfill 完了前にデプロイすると PF ユーザーのコミュニティ一覧が空になります。`bokudeli-event-batch` 側の backfill 完了を確認してからデプロイするか、UI 側フィルタに切り替えることを推奨します。
+
+**コメント要約**:
+
+RC-6 で別 Issue #2198 化済み。本 PR スコープ外として対応不要。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: 📤 スコープ外
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: RC-6 / #2198 と同一論点。重複 RC として新規実装は行わない。
+
+---
