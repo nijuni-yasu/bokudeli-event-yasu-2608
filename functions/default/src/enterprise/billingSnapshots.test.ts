@@ -39,6 +39,7 @@ vi.mock('./dashboardData.js', () => ({
 }))
 
 import { Enterprise, EnterpriseBillingSnapshot } from '@shokujii/common/schemas/Enterprise.js'
+import { ConfigGlobal } from '@shokujii/common/schemas/Config.js'
 import { dashboardEventKey } from '@shokujii/common/utils/dashboardAggregation.js'
 import { getEnterpriseById } from '../stores/enterprise.js'
 import { getConfigGlobal } from '../stores/config.js'
@@ -120,6 +121,49 @@ describe('captureBillingSnapshotForEnterprise', () => {
     expect(snapshot.billing_status).toBe('final')
     expect(deleteInvoiceFileMeta).toHaveBeenCalledWith('ent1', '2026-06')
   })
+
+  it('preloaded enterprise 指定時は getEnterpriseById を呼ばない', async () => {
+    const enterprise = new Enterprise('ent1', {
+      company_name: 'Test',
+      is_active: true,
+      billing_settings: { unit_price: 500, billing_trial_ends_at: jst(2026, 1, 1) },
+    })
+    vi.mocked(fetchDashboardData).mockResolvedValue({
+      orders: [
+        {
+          user_id: 'u1',
+          community_id: 'c1',
+          event_id: 'e1',
+          menu_price: 1000,
+          pay_enterprise_subsidy_amount: 400,
+        },
+      ],
+      stripes: [],
+      auditSessions: [],
+      eventMonthMap: new Map([[dashboardEventKey('c1', 'e1'), '2026-06']]),
+      members: [
+        {
+          user_id: 'u1',
+          display_name: 'Alice',
+          email: 'a@example.com',
+          department: '',
+          is_active: true,
+          last_activated_at: jst(2026, 1, 1),
+          last_deactivated_at: null,
+        },
+      ],
+      billingSettings: {
+        unit_price: 500,
+        billing_trial_ends_at: jst(2026, 1, 1),
+        enterprise_is_active: true,
+      },
+    })
+
+    await captureBillingSnapshotForEnterprise('ent1', '2026-06', enterprise)
+
+    expect(getEnterpriseById).not.toHaveBeenCalled()
+    expect(upsertBillingSnapshot).toHaveBeenCalledTimes(1)
+  })
 })
 
 type RecaptureHandler = (req: {
@@ -171,9 +215,13 @@ describe('recaptureEnterpriseBillingSnapshot', () => {
   })
 
   it('enterprise 不在は not-found', async () => {
-    vi.mocked(getConfigGlobal).mockResolvedValue({
-      isSupport: (uid: string) => uid === 'support',
-    } as Awaited<ReturnType<typeof getConfigGlobal>>)
+    vi.mocked(getConfigGlobal).mockResolvedValue(
+      new ConfigGlobal('global', {
+        support_user_ids: ['support'],
+        system_id: 'system',
+        maintenance_mode: false,
+      }),
+    )
     vi.mocked(getEnterpriseById).mockResolvedValue(null)
     vi.useFakeTimers()
     vi.setSystemTime(DateTime.fromObject({ year: 2026, month: 7, day: 15 }, { zone: ZONE }).toMillis())

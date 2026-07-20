@@ -8,7 +8,7 @@ import { DEFAULT_TIME_ZONE, formatYearMonth } from '@shokujii/common/utils/datet
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import { DateTime } from 'luxon'
-import { EnterpriseBillingSnapshot } from '@shokujii/common/schemas/Enterprise.js'
+import { Enterprise, EnterpriseBillingSnapshot } from '@shokujii/common/schemas/Enterprise.js'
 import { getConfigGlobal } from '../stores/config.js'
 import { getEnterpriseById } from '../stores/enterprise.js'
 import { listAllEnterpriseIds, upsertBillingSnapshot } from '../stores/enterpriseBillingSnapshot.js'
@@ -31,8 +31,12 @@ function handleRecapturePeriodError(error: unknown): never {
   throw error
 }
 
-export async function captureBillingSnapshotForEnterprise(enterpriseId: string, yearMonth: string): Promise<void> {
-  const enterprise = await getEnterpriseById(enterpriseId)
+export async function captureBillingSnapshotForEnterprise(
+  enterpriseId: string,
+  yearMonth: string,
+  preloadedEnterprise?: Enterprise,
+): Promise<void> {
+  const enterprise = preloadedEnterprise ?? (await getEnterpriseById(enterpriseId))
   if (enterprise == null) {
     logger.warn('Enterprise not found for billing snapshot', { enterpriseId, yearMonth })
     return
@@ -132,7 +136,7 @@ export const recaptureEnterpriseBillingSnapshot = onCall<RecaptureRequest, Promi
       throw new HttpsError('not-found', 'Enterprise not found')
     }
 
-    await captureBillingSnapshotForEnterprise(enterpriseId, yearMonth)
+    await captureBillingSnapshotForEnterprise(enterpriseId, yearMonth, enterprise)
     return { success: true }
   },
 )
