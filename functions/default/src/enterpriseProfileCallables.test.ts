@@ -269,6 +269,22 @@ describe('enterprise profile callables (§6.1)', () => {
         'not-found',
       )
     })
+
+    it('同社 active メンバーは友人一覧を返す', async () => {
+      setupActiveMember()
+      const result = (await handler({ auth: enterpriseAuth, data })) as {
+        friends: unknown[]
+        has_more: boolean
+      }
+      expect(result.friends).toEqual([])
+      expect(result.has_more).toBe(false)
+      expect(resolveUserFriendsList).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetUserId: TARGET_USER_ID,
+          enterpriseScope: { enterpriseId: 'ent-a' },
+        }),
+      )
+    })
   })
 
   describe('getUserFriendMeetLog', () => {
@@ -315,6 +331,23 @@ describe('enterprise profile callables (§6.1)', () => {
         'not-found',
       )
     })
+
+    it('同社 active メンバーは meet log を返す', async () => {
+      setupActiveMember()
+      const result = (await handler({ auth: enterpriseAuth, data })) as {
+        friend_user_id: string
+        meet_count: number
+      }
+      expect(result.friend_user_id).toBe(FRIEND_USER_ID)
+      expect(result.meet_count).toBe(1)
+      expect(resolveUserFriendMeetLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetUserId: TARGET_USER_ID,
+          friendUserId: FRIEND_USER_ID,
+          enterpriseScope: { enterpriseId: 'ent-a' },
+        }),
+      )
+    })
   })
 
   describe('getUserFoods', () => {
@@ -359,6 +392,22 @@ describe('enterprise profile callables (§6.1)', () => {
           vi.mocked(getUser).mockResolvedValue(makeUser({ enterprise_id: undefined }) as never)
         },
         'not-found',
+      )
+    })
+
+    it('同社 active メンバーはフード一覧を返す', async () => {
+      setupActiveMember()
+      const result = (await handler({ auth: enterpriseAuth, data })) as {
+        foods: unknown[]
+        has_more: boolean
+      }
+      expect(result.foods).toEqual([])
+      expect(result.has_more).toBe(false)
+      expect(listOrderedFoodsPageForProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetUserId: TARGET_USER_ID,
+          enterpriseId: 'ent-a',
+        }),
       )
     })
   })
