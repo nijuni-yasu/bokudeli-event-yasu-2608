@@ -139,9 +139,14 @@ const isProfileGateLoading = computed(
 const isProfileAccessDenied = computed(() => previewAccessDenied.value)
 const isInvalidProfile = computed(() => previewNotFound.value)
 const isProfileReady = computed(() => previewData.value != null && profileDisplayUser.value != null)
+/** getUserProfilePreview 認可成功（RC-44: タブ store の load 条件） */
+const isPreviewAccessGranted = computed(
+  () => profileUserId !== '' && !previewNotFound.value && !previewAccessDenied.value && previewData.value != null,
+)
 
 const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
   profileFilter: { kind: 'enterprise', enterpriseId: enterpriseId.value },
+  autoLoad: false,
 })
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
 
@@ -156,9 +161,9 @@ const {
 } = storeToRefs(userOrderHistoryStore)
 
 watch(
-  () => [profileUserId, isOwner.value, previewNotFound.value, previewAccessDenied.value, previewData.value] as const,
-  ([pid, owner, notFound, denied, data]) => {
-    if (!owner || pid === '' || notFound || denied || data == null) {
+  () => [profileUserId, isOwner.value, isPreviewAccessGranted.value] as const,
+  ([pid, owner, granted]) => {
+    if (!owner || !granted) {
       usageTabEligible.value = false
       return
     }
@@ -171,10 +176,9 @@ watch(
 )
 
 watch(
-  () => [profileUserId, isOwner.value, previewNotFound.value, previewAccessDenied.value, previewData.value] as const,
-  ([pid, owner, notFound, denied, data]) => {
-    if (pid === '' || !owner) return
-    if (notFound || denied || data == null) return
+  () => [isOwner.value, isPreviewAccessGranted.value] as const,
+  ([owner, granted]) => {
+    if (!owner || !granted) return
     userOrderHistoryStore.reload()
   },
   { immediate: true },
@@ -185,14 +189,13 @@ const userFriendsByMeetCountStore = ref<UserFriendsStore | null>(null)
 const userFriendsByLastMetStore = ref<UserFriendsStore | null>(null)
 
 watch(
-  () => [profileUserId, previewNotFound.value, previewAccessDenied.value, previewData.value] as const,
-  ([pid, notFound, denied, data]) => {
+  isPreviewAccessGranted,
+  (granted) => {
     userFriendsByMeetCountStore.value = null
     userFriendsByLastMetStore.value = null
-    if (pid === '') return
-    if (notFound || denied || data == null) return
-    userFriendsByMeetCountStore.value = useUserFriendsStore(pid, 'meet_count', PROFILE_FRIENDS_PAGE_SIZE)
-    userFriendsByLastMetStore.value = useUserFriendsStore(pid, 'last_met_at', PROFILE_FRIENDS_PAGE_SIZE)
+    if (!granted) return
+    userFriendsByMeetCountStore.value = useUserFriendsStore(profileUserId, 'meet_count', PROFILE_FRIENDS_PAGE_SIZE)
+    userFriendsByLastMetStore.value = useUserFriendsStore(profileUserId, 'last_met_at', PROFILE_FRIENDS_PAGE_SIZE)
   },
   { immediate: true },
 )
@@ -309,8 +312,19 @@ watch(
   },
 )
 
-const userFoodsStore = useUserFoodsStore(profileUserId, 12)
+const userFoodsStore = useUserFoodsStore(profileUserId, 12, { autoLoad: false })
 const { foods: pagedFoods, hasMore: foodHasMore, loading: foodLoading, error: foodError } = storeToRefs(userFoodsStore)
+
+/** RC-44: preview Callable 成功後のみイベント/フードタブ store を load */
+watch(
+  isPreviewAccessGranted,
+  (granted) => {
+    if (!granted) return
+    userEventListStore.reload()
+    userFoodsStore.reload()
+  },
+  { immediate: true },
+)
 
 /** ともだち追読みのためのフック（タブ表示・ソート切替時に next を試す） */
 const isFriendTab = (tab: TabKey | null) => tab === TAB_FRIENDS
@@ -427,9 +441,9 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
 
 /** 注文完了で遷移したとき・既存 Pinia ストアが古い一覧のままになるのを防ぐ */
 watch(
-  () => [route.query.eventId, route.query.communityAccount] as const,
-  ([eventId, communityAccount]) => {
-    if (profileUserId === '') return
+  () => [route.query.eventId, route.query.communityAccount, isPreviewAccessGranted.value] as const,
+  ([eventId, communityAccount, granted]) => {
+    if (!granted) return
     if (eventId != null && communityAccount != null) {
       userEventListStore.reload()
     }
@@ -500,7 +514,6 @@ watch(
   (uid, prevUid) => {
     if (uid === prevUid) return
     previewStore.reload()
-    userFoodsStore.reload()
   },
 )
 
