@@ -177,14 +177,13 @@ service cloud.firestore {
                        exists(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)) &&
                        "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles
             }
-            // PF: enterprise_id 欠落/null のみ create 可。Enterprise: claims と一致する enterprise_id のみ create 可
+            // PF: enterprise_id 欠落/null のみ create 可。Enterprise: isSameEnterprise（tenant 含む）
             function canCreateCommunity() {
                 return request.auth != null
                     && (
                         (request.auth.token.get('enterprise_id', null) == null
                          && docEnterpriseId(request.resource.data) == null)
-                        || (request.auth.token.get('enterprise_id', null) != null
-                            && docEnterpriseId(request.resource.data) == request.auth.token.enterprise_id)
+                        || isSameEnterprise(request.resource.data)
                     );
             }
             function communityEnterpriseIdUnchanged() {

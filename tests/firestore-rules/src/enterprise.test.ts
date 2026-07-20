@@ -208,6 +208,30 @@ describe('enterprise firestore rules', () => {
     )
   })
 
+  it('Enterprise ユーザーは tenant 不一致で communities create できない', async () => {
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_B)
+    await assertFails(
+      member
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-wrong-tenant')
+        .set({ community_name: 'Wrong tenant', enterprise_id: 'ent-a' }),
+    )
+  })
+
+  it('Enterprise ユーザーは tenant 未設定で communities create できない', async () => {
+    const member = enterpriseAuth('user-a', 'ent-a', TENANT_A, {
+      firebase: { sign_in_provider: 'custom', identities: {}, tenant: null },
+    })
+    await assertFails(
+      member
+        .firestore()
+        .collection('communities')
+        .doc('community-ent-no-tenant')
+        .set({ community_name: 'No tenant', enterprise_id: 'ent-a' }),
+    )
+  })
+
   it('未認証ユーザーは enterprise_id string の member_orders read を拒否される', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await context
