@@ -893,11 +893,11 @@ export default {
   },
   complete: {
     new_user_title: 'アカウント登録完了',
-    new_user_description: 'アカウント登録が完了しました🎉\nSNSアカウントと連携してプロフィールを登録しよう！',
+    new_user_description: 'アカウント登録が完了しました🎉\n表示名・プロフィール画像・自己紹介を登録しよう！',
     new_user_selfButton: '自分でプロフィールを登録する',
     exists_user_title: 'プロフィール登録',
     exists_user_description:
-      'プロフィールが登録されていません。\nSNSアカウントと連携して、プロフィール登録を完了させよう👍',
+      'プロフィールが登録されていません。\n表示名・プロフィール画像・自己紹介を入力して、プロフィール登録を完了させよう👍',
     exists_user_selfButton: '自分でプロフィールを入力する',
     profile_registration_X: 'X と連携してプロフィール登録',
     exists_email: '登録済みのメールアドレスです。\n登録済みメールアドレスのアカウントでログインしてください。',

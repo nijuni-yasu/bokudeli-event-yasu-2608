@@ -620,7 +620,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
   </v-container>
   <v-row v-else-if="isProfileReady && profileDisplayUser != null" justify="center">
     <v-col cols="12" sm="8" md="3">
-      <UserBioPanel :user-data="profileDisplayUser" :is-editable="isOwner" />
+      <UserBioPanel :user-data="profileDisplayUser" :is-editable="isOwner" hide-sns />
       <p
         v-if="profileDepartment != null && profileDepartment !== ''"
         class="text-body-2 text-medium-emphasis mt-3 px-2"
@@ -1333,6 +1333,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
     :is-posted="($route.query.isPosted === 'true')"
     :session-id="(($route.query.session_id ?? '') as string)"
     :user-id="profileUserId"
+    hide-share-sns
   />
 </template>
 

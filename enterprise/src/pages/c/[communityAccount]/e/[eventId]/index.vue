@@ -302,7 +302,12 @@ onUnmounted(() => {
     </v-row>
     <v-row class="justify-center">
       <v-col md="8" sm="9" cols="12" class="mt-0 pt-0 px-0">
-        <EventDetailsCard :event="event" :community="communityStore.community" :album-image-urls="albumImageUrls" />
+        <EventDetailsCard
+          :event="event"
+          :community="communityStore.community"
+          :album-image-urls="albumImageUrls"
+          hide-share-sns
+        />
         <!-- メニュ -->
         <event-menu-list
           ref="menuListRef"
