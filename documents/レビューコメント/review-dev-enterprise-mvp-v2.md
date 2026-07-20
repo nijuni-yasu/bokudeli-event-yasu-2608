@@ -1,5 +1,39 @@
 # ブランチ dev/enterprise-mvp-v2 レビュー記録
 
+### RC 一覧（サマリ）
+
+> RC-1〜RC-21 は各評価セッション内のサマリ表を参照。本表は 2026-07-20 16:56 セッション以降の通し表。
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-22 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | currentUser subscribeOrders の不要 async IIFE と reportClientError 欠落 |
+| [x] | RC-23 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | event store の where(enterprise_id, undefined) 実行時エラー防御 |
+| [x] | RC-24 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventDraft が enterprises を withConverter なし直読み |
+| [x] | RC-25 | なし | 👌 修正不要 | — | — | — | ➖ 該当なし | — | EnterpriseMember user_email / tenant_id 必須化の backfill 言及なし<br>新規コレクションのため既存データなし |
+| [x] | RC-26 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | EventMemberOrder / EventStripe の enterprise_id が空文字を許容 |
+| [x] | RC-27 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | isEnterpriseEvent 型ガードが enterprise_subsidy_settings 未検証 |
+| [x] | RC-28 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | auditLogCursor decode の as キャスト 4 箇所 |
+| [x] | RC-29 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 01_MVP全体計画の進捗サマリ表が実タスク数と不一致 |
+| [x] | RC-30 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 04_詳細_割引・決済の 30_リファクタ計画リンク切れ |
+| [x] | RC-31 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 07_デプロイ・運用の相対リンク切れ 28 箇所 |
+| [x] | RC-32 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | 割引種別切替時の初期値 50 がマジックナンバー |
+| [x] | RC-33 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | claims.enterprise_id の as キャストと reportClientError 欠落 |
+| [x] | RC-34 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | refreshAdminMenu の unhandled rejection 防止 |
+| [x] | RC-35 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | audit-logs onMounted に try/catch なし・初回ロード不能 |
+| [x] | RC-36 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | invoices.vue とフォルダ共存で [yearMonth] が描画不能 |
+| [x] | RC-37 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | route.params / query の as キャスト |
+| [x] | RC-38 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | audit_logs cursor クエリの __name__ ASC インデックス欠落 |
+| [x] | RC-39 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | member_orders foods クエリの 5 フィールドインデックス欠落 |
+| [x] | RC-40 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | events / member_orders の等価重複インデックス削除 |
+| [x] | RC-41 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 請求スナップショット cron が失敗を握りつぶしリトライ不能 |
+| [x] | RC-42 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | dashboardData の details.order_ids as string[] キャスト |
+| [x] | RC-43 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | createEnterpriseMembers の authForEnterprise N+1 |
+| [x] | RC-44 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | createEnterprise ロールバックが member / user doc を残す |
+| [x] | RC-45 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | listAuditLogsGuest の hasNext / nextCursor がページ取り漏らし |
+| [ ] | RC-46 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | enterpriseScope 時の friends 一覧 meet_count が全イベント数のまま |
+| [x] | RC-47 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | invoices/index onMounted に try/catch なし・初回ロード不能 |
+| [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventDraft の catch が reportClientError 未呼び出し |
+
 ## 評価セッション（2026-07-19 18:05・shokujii-code-review）
 
 - **評価日時**: 2026-07-19 18:05 JST
@@ -653,5 +687,1124 @@ RC-6 で別 Issue #2198 化済み。本 PR スコープ外として対応不要�
 **想定工数**: M
 
 **判断理由**: RC-6 / #2198 と同一論点。重複 RC として新規実装は行わない。
+
+---
+
+## 評価セッション（2026-07-20 16:56・shokujii-code-review）
+
+- **評価日時**: 2026-07-20 16:56 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **対象**: `origin/development...HEAD` ブランチ全体（ユーザー明示依頼）
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **手順 3a/3b 自動修正**: RC-22〜24 / RC-26〜45（🚨 10件 / 🟡 14件）。RC-46 のみ仕様判断待ちで未着手
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-22 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | currentUser subscribeOrders の不要 async IIFE と reportClientError 欠落 |
+| [x] | RC-23 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | event store の where(enterprise_id, undefined) 実行時エラー防御 |
+| [x] | RC-24 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventDraft が enterprises を withConverter なし直読み |
+| [x] | RC-25 | なし | 👌 修正不要 | — | — | — | ➖ 該当なし | — | EnterpriseMember user_email / tenant_id 必須化の backfill 言及なし |
+| [x] | RC-26 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | EventMemberOrder / EventStripe の enterprise_id が空文字を許容 |
+| [x] | RC-27 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | isEnterpriseEvent 型ガードが enterprise_subsidy_settings 未検証 |
+| [x] | RC-28 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | auditLogCursor decode の as キャスト 4 箇所 |
+| [x] | RC-29 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 01_MVP全体計画の進捗サマリ表が実タスク数と不一致 |
+| [x] | RC-30 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 04_詳細_割引・決済の 30_リファクタ計画リンク切れ |
+| [x] | RC-31 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 07_デプロイ・運用の相対リンク切れ 28 箇所 |
+| [x] | RC-32 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | 割引種別切替時の初期値 50 がマジックナンバー |
+| [x] | RC-33 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | claims.enterprise_id の as キャストと reportClientError 欠落 |
+| [x] | RC-34 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | refreshAdminMenu の unhandled rejection 防止 |
+| [x] | RC-35 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | audit-logs onMounted に try/catch なし・初回ロード不能 |
+| [x] | RC-36 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | invoices.vue とフォルダ共存で [yearMonth] が描画不能 |
+| [x] | RC-37 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | route.params / query の as キャスト |
+| [x] | RC-38 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | audit_logs cursor クエリの __name__ ASC インデックス欠落 |
+| [x] | RC-39 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | member_orders foods クエリの 5 フィールドインデックス欠落 |
+| [x] | RC-40 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | events / member_orders の等価重複インデックス削除 |
+| [x] | RC-41 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | 請求スナップショット cron が失敗を握りつぶしリトライ不能 |
+| [x] | RC-42 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | dashboardData の details.order_ids as string[] キャスト |
+| [x] | RC-43 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 💾 データ | 🔧 微修正 | S | createEnterpriseMembers の authForEnterprise N+1 |
+| [x] | RC-44 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | M | createEnterprise ロールバックが member / user doc を残す |
+| [x] | RC-45 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | M | listAuditLogsGuest の hasNext / nextCursor がページ取り漏らし |
+| [ ] | RC-46 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 📑 仕様書 | 📋 仕様追加 | M | enterpriseScope 時の friends 一覧 meet_count が全イベント数のまま |
+| [x] | RC-47 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | invoices/index onMounted に try/catch なし・初回ロード不能 |
+| [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventDraft の catch が reportClientError 未呼び出し |
+
+---
+
+**識別子**: RC-22（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/currentUser.ts:104`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    subscribeOrdersStarted = true
++    void (async () => {
++      try {
++        // ... 本体に await なし（onSnapshot 登録は同期）
++      } catch (err) {
++        console.error(err)
++        subscribeOrdersStarted = false
++      }
++    })()
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📐リファクタ/S]: `subscribeOrders` の async IIFE は本体に await がなく（`onSnapshot` 登録は同期）、`subscribeOrdersStarted` フラグも不要。内側 onSnapshot コールバックの catch が `console.error` のみで `reportClientError` を呼んでいない → `event.ts` の `subscribeOrders` と同型の同期実装に簡素化し、catch に `reportClientError` を追加する。
+
+**コメント要約**:
+
+async IIFE と `subscribeOrdersStarted` フラグを削除して同期実装に簡素化。catch に `reportClientError(err, { severity: 'warn' })` を追加した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「握りつぶすと調査不能になる catch 節で reportClientError」違反 + 不要な複雑さ。既存 `event.ts` と同型化で方針一意。
+
+---
+
+**識別子**: RC-23（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/event.ts:422` `base/src/stores/event.ts:559`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        if ('ordersEnterpriseId' in mergedOptions) {
++          orderConstraints.push(where('enterprise_id', '==', mergedOptions.ordersEnterpriseId))
++        }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `'ordersEnterpriseId' in mergedOptions` はキーが存在して値が `undefined` の場合も true になり、`where('enterprise_id', '==', undefined)` は Firestore SDK の実行時エラーになる → `?? null` で正規化する。
+
+**コメント要約**:
+
+`where()` に渡す値を `?? null` で正規化し、明示的に `undefined` を渡された場合の実行時エラーを防止（orders / events 両方）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 型上 `ordersEnterpriseId?: string | null` のため `undefined` 明示渡しが可能。防御は 1 行で一意。
+
+---
+
+**識別子**: RC-24（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/eventDraft.ts:31`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    const enterpriseRef = doc(db, 'enterprises', enterpriseId)
++    const enterpriseSnap = await getDoc(enterpriseRef)
++    ...
++    const enterprise = new Enterprise(enterpriseId, raw)
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `prepareEnterpriseEventDraft` が `doc(db, 'enterprises', ...)` を withConverter なしで直接 `getDoc` している。RC-14 で `enterpriseMemberMonthlyUsage` を store 経由に修正したのと同じ規約違反 → `base/src/stores/enterprise.ts` の `getEnterpriseById` を使う。
+
+**コメント要約**:
+
+`getEnterpriseById`（withConverter 付き）経由に変更し、`Enterprise` の手動 new と snap 判定を削除した。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: AGENTS.md「DB 操作は必ず store 経由・xxxRef は必ず withConverter 付き」違反。RC-14 と同型で修正方針一意。
+
+---
+
+**識別子**: RC-25（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/Enterprise.ts:150`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const EnterpriseMemberDbSchema = z.object({
++  user_id: z.string().nonempty(),
++  user_email: z.string().email(),
+```
+
+**レビュワーのコメント（原文）**:
+
+👌 **修正不要**: `EnterpriseMember` の `user_email` / `Enterprise` の `tenant_id` が必須（required）だが既存データへの backfill 言及がない → `enterprises` / `members` は本ブランチで新設されるコレクションであり、production に既存データが存在しないため backfill 不要。
+
+**コメント要約**:
+
+新規コレクションのため migration / backfill は不要と確認。対応なし。
+
+**評価**: 👌 修正不要
+
+**ステータス**: —
+
+**PRスコープ**: —
+
+**ラベル**: —
+
+**変更種別**: ➖ 該当なし
+
+**想定工数**: —
+
+**判断理由**: チェックリスト「既存データに影響する変更」に該当しない。
+
+---
+
+**識別子**: RC-26（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/EventMemberOrder.ts:18` `common/src/schemas/EventStripe.ts:46`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  enterprise_id: z.string().nullable().optional(),
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `enterprise_id` が空文字 `''` を許容する。RC-17 で空文字 enterprise_id の誤判定が実害になったとおり、空文字はスキーマ入口で弾くべき → `z.string().nonempty().nullable().optional()` にする。
+
+**コメント要約**:
+
+`EventMemberOrder`（member / order の Db・App）と `EventStripe`（Db・App）の計 6 箇所に `.nonempty()` を追加した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-17（enterpriseMail 空文字誤判定）の根本原因を入口で防ぐ。既存データは null materialize 済みで空文字は書き込まれていない。
+
+---
+
+**識別子**: RC-27（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/schemas/eventWrite.ts:104`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export function isEnterpriseEvent(e: Event): e is EnterpriseEvent {
++  return e.event_payment === 'enterprise_subsidy' && e.enterprise_id != null
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `isEnterpriseEvent` は `EnterpriseEvent`（`enterprise_subsidy_settings: EnterpriseSubsidySettingsType` 必須）へ narrowing するのに `enterprise_subsidy_settings` を検証していない。スナップショット未設定の draft を通すと下流で `undefined` 参照になる → `e.enterprise_subsidy_settings != null` を追加する。
+
+**コメント要約**:
+
+型ガードに `enterprise_subsidy_settings != null` を追加し、narrowing 結果と実行時値を一致させた。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 型が保証すると宣言したフィールドを検証しない型ガードは `as` キャストと同等の型安全性違反。
+
+---
+
+**識別子**: RC-28（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `common/src/utils/auditLogCursor.ts:30`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      typeof (parsed as AuditLogCursor).timestamp === 'number' &&
++      typeof (parsed as AuditLogCursor).log_id === 'string' &&
++      (parsed as AuditLogCursor).log_id !== ''
++    ) {
++      return parsed as AuditLogCursor
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `decodeAuditLogCursor` が `as AuditLogCursor` を 4 回使用。プロジェクト規約（`as` 禁止・型ガードで回避）違反 → `in` 演算子で narrowing した後に分割代入し、検証済みの値からオブジェクトを再構築して返す。
+
+**コメント要約**:
+
+`in` narrowing + 分割代入に書き換え、`as` キャストを全廃した。既存テストは全件 pass。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: AGENTS.md「`as` 回避は型ガードで行う」違反。余分なプロパティの混入も防げる。
+
+---
+
+**識別子**: RC-29（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `documents/08_エンタープライズ/00_計画/01_MVP全体計画.md:32`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-| WS-D（v0.1 残） | 6 | 1 | 7 |
+-| **WS-A〜F 全タスク** | **25** | **4** | **29** |
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄ドキュメントのみ/S]: 進捗サマリ表が本文タスク表と不一致。最終更新行は「D-1 ✅」なのに WS-D 行は 6/1/7 のまま。WS-A〜F 合計も per-WS 行の合算（30）と合わない → 本文タスク表を集計して WS-D 7/0/7、WS-A〜F 28/2/30 に更新する。
+
+**コメント要約**:
+
+本文タスク表をスクリプト集計し、WS-D と WS-A〜F 全タスク行を実数（7/0/7、28/2/30）へ更新した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: 進捗サマリはリリース判断の参照元。集計値の同期のみで一意。
+
+---
+
+**識別子**: RC-30（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `documents/08_エンタープライズ/10_仕様/04_詳細_割引・決済.md:98`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-（[05_WS-C_C-1_PoC設計](../../30_リファクタ計画/05_WS-C_C-1_PoC設計.md) を参照）
++（[05_WS-C_C-1_PoC設計](../30_リファクタ計画/05_WS-C_C-1_PoC設計.md) を参照）
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄ドキュメントのみ/S]: `../../30_リファクタ計画/...` は `documents/30_リファクタ計画/`（存在しない）を指すリンク切れ → `../30_リファクタ計画/...` に修正する。
+
+**コメント要約**:
+
+相対パスを 1 階層修正しリンク切れを解消した（機械検証で broken 0 件）。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: リンク切れは仕様参照を阻害。パス解決は機械的に一意。
+
+---
+
+**識別子**: RC-31（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `documents/08_エンタープライズ/10_仕様/07_デプロイ・運用.md:6`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-[`.github/workflows/deploy_enterprise.yml`](../../../../.github/workflows/deploy_enterprise.yml)
+-[terraform/README.md](../../terraform/README.md)
+-[03_デプロイ手順.md](../00_計画/03_デプロイ手順.md)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📄ドキュメントのみ/S]: 相対リンク切れが 28 箇所（`../../terraform/`→`../../../terraform/`、`../../../../tools/`→`../../../tools/`、`../00_計画/03_デプロイ手順.md`→`03_developmentデプロイ手順.md`、`../テスト/`→`../../テスト方針・テスト項目書/v2.10/`、`../07_リファクタリング/`→`../../07_リファクタリング/` 等）→ 実在パスへ一括修正する。
+
+**コメント要約**:
+
+スクリプトで 28 箇所の相対リンクを実在パスへ一括修正し、再検証で broken 0 件を確認した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📄 ドキュメントのみ
+
+**想定工数**: S
+
+**判断理由**: 07 はデプロイ手順の正本でリンク切れの実害が大きい。パス解決は機械的に一意。
+
+---
+
+**識別子**: RC-32（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/components/admin/AdminDiscountSettingsSection.vue:51`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  if (newType === 'percentage' && oldType != null && oldType !== 'percentage') {
++    discountValue.value = 50
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: 割引種別を percentage に切り替えた際の初期値 `50` がマジックナンバー → `DEFAULT_PERCENTAGE_DISCOUNT` 定数に切り出し意図をコメントで明示する。
+
+**コメント要約**:
+
+`DEFAULT_PERCENTAGE_DISCOUNT = 50` 定数に切り出し、リセット意図のコメントを追加した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「マジックナンバーは定数に切り出す」。定数化のみで一意。
+
+---
+
+**識別子**: RC-33（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/composable/useEnterpriseAdmin.ts:21` `enterprise/src/composable/enterpriseMemberMonthlyUsage.ts:32`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  return token.claims.enterprise_id as string | undefined
+...
++    const enterpriseId = token.claims.enterprise_id as string | undefined
+...
++    console.warn('Failed to load enterprise member monthly usage', error)
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `token.claims.enterprise_id` の `as string | undefined` キャスト 2 箇所（規約違反）と、`fetchEnterpriseMemberMonthlyUsage` の catch が `console.warn` のみで `reportClientError` を呼んでいない → `typeof === 'string' && !== ''` の型ガードに置き換え、catch に `reportClientError` を追加する。
+
+**コメント要約**:
+
+claims を `typeof` 型ガードで narrowing（空文字も除外）し、catch に `reportClientError(..., { severity: 'warn' })` を追加した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `as` 禁止規約 + 調査不能 catch。claims は実行時に unknown のため型ガードが正道。
+
+---
+
+**識別子**: RC-34（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/navigation/index.ts:13`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const refreshAdminMenu = async () => {
++    showAdminMenu.value = await isEnterpriseAdmin()
++  }
++
++  onMounted(() => {
++    void refreshAdminMenu()
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `refreshAdminMenu`（`getIdTokenResult` はオフライン時等に reject しうる）が `void` 呼びで try/catch がなく unhandled rejection になる → 関数内で try/catch し、失敗時は `showAdminMenu = false` に倒す。
+
+**コメント要約**:
+
+`refreshAdminMenu` 内に try/catch を追加。失敗時は管理メニュー非表示に倒し、ナビ全体の描画は継続する。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「ライフサイクルフックから呼ぶ非同期処理に try/catch」。フォールバック（非表示）が安全側で一意。
+
+---
+
+**識別子**: RC-35（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/admin/audit-logs.vue:188`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++onMounted(async () => {
++  enterpriseId.value = await getEnterpriseIdFromToken()
++  if (enterpriseId.value != null) {
++    const membersResult = await getEnterpriseMembers({ ... })
++    memberOptions.value = membersResult.data.members
++  }
++  await loadAuditLogs()
++})
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `onMounted` 内の `getEnterpriseIdFromToken()` と `getEnterpriseMembers()`（Callable）が try/catch で保護されていない。throw すると unhandled rejection になるうえ後続の `await loadAuditLogs()` が実行されず、「表示するログがありません」と誤表示される → onMounted を try/catch で囲み、メンバー取得失敗時も `loadAuditLogs()` は実行する。
+
+**コメント要約**:
+
+メンバー一覧取得を try/catch で保護し、失敗時は通知を出しつつ `loadAuditLogs()` を継続実行する形に修正した。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: フィルタ選択肢の取得失敗でログ一覧まで見えなくなるのは監査ログ画面として実害。
+
+---
+
+**識別子**: RC-36（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/admin/invoices.vue:1`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++enterprise/src/pages/admin/invoices.vue          （<RouterView> なし）
++enterprise/src/pages/admin/invoices/[yearMonth].vue
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `invoices.vue`（ファイル）と `invoices/`（フォルダ）の共存により unplugin-vue-router が `[yearMonth]` を `invoices.vue` の子ルートとして生成するが、`invoices.vue` に `<RouterView>` がないため `/admin/invoices/:yearMonth` が描画されない → `invoices.vue` を `invoices/index.vue` にリネームして兄弟ルート化する。
+
+**コメント要約**:
+
+`invoices/index.vue` へリネームし、`[yearMonth]` と兄弟ルート化。パス（`/admin/invoices`）は不変で参照側の修正は不要。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 請求書 PDF 画面（D-7）が開けない機能バグ。リネームで一意に解消。
+
+---
+
+**識別子**: RC-37（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/admin/invoices/[yearMonth].vue:11`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++const yearMonth = route.params.yearMonth as string
++const invoiceId = route.query.id as string | undefined
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `route.params` / `route.query` の `as` キャスト（`query.id` は `string[]` にもなりうる）→ `typeof === 'string'` の型ガードで解決する。
+
+**コメント要約**:
+
+`typeof` 判定で narrowing し `as` を全廃。`yearMonth` 非 string 時は空文字で API 側の invalid-argument に倒す。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `as` 禁止規約。`query.id` の配列ケースの誤動作も防げる。
+
+---
+
+**識別子**: RC-38（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `firestore.indexes.json:1355`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        { "fieldPath": "timestamp", "order": "DESCENDING" },
++        { "fieldPath": "__name__", "order": "ASCENDING" }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `listAuditLogs` は `orderBy('timestamp', 'desc')` + `startAfter(doc)` の cursor ページングだが、`audit_logs` の (action, timestamp DESC)・(user_id, timestamp DESC) インデックスに `__name__ ASC` の明示がない。デフォルトは末尾フィールドと同方向（DESC）になり、store のタイブレーク前提と食い違う → `__name__ ASC` を明示し、action + user_id 複合も追加する。
+
+**コメント要約**:
+
+既存 2 インデックスに `__name__ ASC` を明示し、(action, user_id, timestamp DESC, __name__ ASC) を追加した。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: cursor ページングの順序保証に直結。インデックス定義のみで解消。
+
+---
+
+**識別子**: RC-39（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `firestore.indexes.json:1438`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++        { "fieldPath": "user_id", "order": "ASCENDING" },
++        { "fieldPath": "status", "order": "ASCENDING" },
++        { "fieldPath": "enterprise_id", "order": "ASCENDING" },
++        { "fieldPath": "updated_at", "order": "DESCENDING" },
++        { "fieldPath": "order_id", "order": "DESCENDING" }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `userFoods` / 注文履歴の enterprise フィルタ付きクエリ（user_id ==, status ==, enterprise_id ==, orderBy updated_at desc, order_id desc）に対応する 5 フィールド複合インデックスが未定義。デプロイ後にクエリが failed-precondition になる → インデックスを追加する。
+
+**コメント要約**:
+
+member_orders CG に 5 フィールド複合インデックスを追加した。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: インデックス欠落は本番でクエリ即死。チェックリスト「複合クエリのインデックス追加漏れ」。
+
+---
+
+**識別子**: RC-40（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `firestore.indexes.json:1401`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+-      { "collectionGroup": "events", ... (event_id ASC, enterprise_id ASC) }
+-      { "collectionGroup": "member_orders", ... (enterprise_id ASC, user_id ASC, updated_at ASC) }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `events` の (event_id, enterprise_id) は既存 (enterprise_id, event_id) と等価（等価フィルタのみの複合はフィールド順不問）、`member_orders` の (enterprise_id, user_id, updated_at ASC) も (user_id, enterprise_id, updated_at DESC) で代替可能（単一 orderBy は逆順走査可）→ 重複を削除しインデックス数を節約する。
+
+**コメント要約**:
+
+等価な重複インデックス 2 件を削除。差分検証スクリプトで消失インデックスが既存の等価インデックスでカバーされることを確認した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「インデックスの重複がないか」。Firestore の複合インデックス上限（200）節約。
+
+---
+
+**識別子**: RC-41（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/enterprise/billingSnapshots.ts:81`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    for (const enterpriseId of enterpriseIds) {
++      try {
++        await captureBillingSnapshotForEnterprise(enterpriseId, yearMonth)
++      } catch (error) {
++        logger.error('Failed to capture billing snapshot', { enterpriseId, yearMonth, error })
++      }
++    }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: 月次請求スナップショット cron が enterprise 単位の失敗をログのみで握りつぶし、Scheduled Function は成功終了するため Cloud Functions の自動リトライに乗らない（請求データ欠落がサイレント化）。また企業数増加時のタイムアウト設定もない → 失敗 enterprise を集計してループ後に throw（upsert なのでべき等）し、`timeoutSeconds: 540` を設定する。
+
+**コメント要約**:
+
+失敗 enterprise を集計しループ後に throw して自動リトライに乗せた（upsert のため再実行はべき等）。`timeoutSeconds: 540` を追加。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「catch した例外をログのみにせず再 throw し自動リトライに乗せる」。請求データ欠落は実害大。
+
+---
+
+**識別子**: RC-42（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/enterprise/dashboardData.ts:54`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    const orderIds = (log.details?.order_ids as string[] | undefined) ?? []
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `details` は `Record<string, unknown>` なのに `as string[]` でキャストしており、非配列・非 string 混入時に下流が壊れる → `Array.isArray` + `typeof === 'string'` フィルタの型ガードに置き換える。
+
+**コメント要約**:
+
+`Array.isArray` + string フィルタで narrowing し `as` を排除した。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: `as` 禁止規約 + `details` は自由形式でスキーマ保証がない。
+
+---
+
+**識別子**: RC-43（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/enterprise/members.ts:149`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  try {
++    const now = Date.now()
++    const tenantAuth = await authForEnterprise(enterpriseId)
++    const authUser = await tenantAuth.createUser({
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `createSingleEnterpriseMember` が行ごとに `authForEnterprise`（enterprise doc の Firestore read を内包）を呼ぶ N+1。最大 500 行の CSV 一括作成で不要な read が 500 回発生する → Callable 側で 1 回解決して引数で渡す。
+
+**コメント要約**:
+
+`createEnterpriseMembers` 側で `tenantAuth` を 1 回解決し、`createSingleEnterpriseMember` に引数で渡す形に変更した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 💾 データ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「ループ内で Firestore read を逐次実行しない」。引数化のみで一意。
+
+---
+
+**識別子**: RC-44（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/enterprise/onboarding.ts:211`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    if (authUserId != null && tenantId != null) {
++      try {
++        await authForEnterpriseTenant(tenantId).deleteUser(authUserId)
++      } catch ...
++    }
++    try {
++      await deleteEnterprise(enterpriseId)
++    } catch ...
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/M]: `createEnterprise` のロールバックが Auth ユーザー・enterprise doc・tenant のみ削除し、`saveEnterpriseMember`（サブコレクションは親 delete で消えない）と `saveUser` で作成した doc を残す。`writeAuditLog` 失敗時等に孤児 member / user doc が残り、メール一意判定や再登録に影響する → `deleteEnterpriseMember` / `deleteNewUserDocuments` をロールバックに追加する（`createEnterpriseMembers` の `rollbackCreatedEnterpriseMember` と同型）。
+
+**コメント要約**:
+
+ロールバックに `deleteEnterpriseMember` + `deleteNewUserDocuments` を追加し、member / user doc の孤児化を防止した。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: チェックリスト「複数ステップ作成処理の補償削除」。既存 `rollbackCreatedEnterpriseMember` と同型で方針一意。
+
+---
+
+**識別子**: RC-45（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/stores/auditLog.ts:110`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++  const logs = matched.slice(0, pageSize)
++  const hasNext = logs.length === pageSize && !exhausted
++  return {
++    logs,
++    hasNext,
++    nextCursor: logs.length > 0 ? toNextCursorFromLogs(logs) : null,
++  }
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/M]: `listAuditLogsGuest` の hasNext / nextCursor に取り漏らしが 2 系統ある。(1) スキャン上限（`maxScan`）到達で `matched < pageSize` のとき `hasNext = false` になり、以降の guest ログへ到達不能。(2) 最終バッチ途中で pageSize が埋まると `exhausted = true` により `hasNext = false` になり、同バッチ残りの guest ログが欠落する → cursor を「最後に判定済みの doc」基準に変えて再開可能にし、`hasNext = 未判定残あり || !exhausted` にする。
+
+**コメント要約**:
+
+スキャン cursor を doc 単位で更新する形にループを書き換え、`hasNext = hasUnscannedInBatch || !exhausted`、`nextCursor = scanCursor` とした。auditLogs.test.ts は全件 pass。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: 監査ログの一部がページングで永久に到達不能になるのは監査要件上の実害。
+
+---
+
+**識別子**: RC-46（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/userFriendsResolver.ts:117`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++      friends.push({
++        user_id: friend.id,
++        ...
++        meet_count: friend.meet_count,
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [📋仕様追加/M]: `enterpriseScope` 指定時、`resolveUserFriendMeetLog` は enterprise イベントでフィルタした後の `meet_count` を返すのに、friends 一覧の `meet_count` は全イベント込みの `friend.meet_count` のまま。一覧とダイアログで回数が食い違う → 一覧側も enterprise イベントのみで再計算するか、仕様書（04_詳細_マイページ・友人）に「一覧は全体回数」の旨を明記する。
+
+**コメント要約**:
+
+一覧の meet_count 再計算は友人ごとの event_history 参照（N+1）が必要で性能影響があり、表示仕様の判断が必要。自動修正対象外として未着手。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📑 仕様書
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: M
+
+**判断理由**: 仕様書に一覧 meet_count のスコープ規定がなく、性能とのトレードオフ判断が必要なため人間判断待ち。
+
+---
+
+## 評価セッション（2026-07-20 17:36・shokujii-code-review）
+
+- **評価日時**: 2026-07-20 17:36 JST
+- **評価者**: Cursor Agent（shokujii-code-review）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **対象**: ステージング済み差分（24 ファイル）
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **手順 3a/3b 自動修正**: RC-47 / RC-48
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-47 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | invoices/index onMounted に try/catch なし・初回ロード不能 |
+| [x] | RC-48 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | eventDraft の catch が reportClientError 未呼び出し |
+
+---
+
+**識別子**: RC-47（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `enterprise/src/pages/admin/invoices/index.vue:44`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+ onMounted(async () => {
+   enterpriseId.value = await getEnterpriseIdFromToken()
+   await loadInvoices()
+ })
+```
+
+**レビュワーのコメント（原文）**:
+
+🚨 **必須修正** [🔧微修正/S]: `invoices/index.vue` の `onMounted` が `getEnterpriseIdFromToken()` を try/catch なしで await している。トークン取得失敗時は unhandled rejection となり `loadInvoices()` も実行されず一覧が空のままになる（RC-35 audit-logs と同型）。同ページの `[yearMonth].vue` は try/catch 済み → `getEnterpriseIdFromToken` を try/catch で囲み、失敗時は通知を出したうえで `loadInvoices()` を続行する。
+
+**コメント要約**:
+
+RC-35 と同型の try/catch を追加。トークン取得失敗時も `loadInvoices()` は呼び出し、エラー通知を表示する。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 👤 UX
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 初回ロード不能 + unhandled rejection。修正方針は audit-logs / `[yearMonth].vue` と一意。
+
+---
+
+**識別子**: RC-48（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `base/src/stores/eventDraft.ts:42`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+     } catch (err) {
+       console.warn('Failed to snapshot enterprise_subsidy_settings', err)
+       return
+     }
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: `prepareEnterpriseEventDraft` の catch が `console.warn` のみで `reportClientError` を呼んでいない。RC-22 / RC-33 で store 系 catch に `reportClientError` を追加したのと同型 → `reportClientError(err, { componentInfo: 'eventDraft.prepareEnterpriseEventDraft', severity: 'warn' })` を追加する。
+
+**コメント要約**:
+
+`reportClientError` を追加し、スナップショット取得失敗を調査可能にした。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: チェックリスト「store の zod パースエラー等、握りつぶすと調査不能になる catch 節で reportClientError」違反。修正方針一意。
 
 ---
