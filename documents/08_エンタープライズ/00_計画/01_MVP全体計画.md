@@ -22,19 +22,19 @@
 
 ## 進捗サマリ
 
-最終更新: **2026-07-19**（WS-M 完了・**A-4 ✅** [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) / [#2147](https://github.com/nijuniinc/bokudeli-event-new/pull/2147)）
+最終更新: **2026-07-20**（**D-1 ✅** [#2135](https://github.com/nijuniinc/bokudeli-event-new/issues/2135) PF only メール skip + unit test 補完）
 
 | 区分 | 完了 | 未完了 | 計 |
 |:--|--:|--:|--:|
 | WS-A（Phase 0） | 6 | 0 | 6 |
 | WS-B（IdP・本番前） | 6 | 0 | 6 |
 | WS-C（スキーマ・MVP 最小） | 2 | 0 | 2 |
-| WS-D（v0.1 残） | 5 | 2 | 7 |
+| WS-D（v0.1 残） | 6 | 1 | 7 |
 | WS-E（前倒し） | 5 | 2 | 7 |
 | WS-F（PF 露出） | 2 | 0 | 2 |
 | **WS-M（development マージ）** | **12** | **0** | **12** |
 | WS-G（Phase 2・MVP 外） | 0 | 8 | 8 |
-| **WS-A〜F 全タスク** | **24** | **5** | **29** |
+| **WS-A〜F 全タスク** | **25** | **4** | **29** |
 | ゲート G1〜G3 | 3 | 0 | 3 |
 | 本番ブロッカー RC | 4 | 0 | 4 |
 
@@ -141,7 +141,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 
 | 状態 | ID | タスク | 出所 | MVP | 依存 |
 |:--|:--|:--|:--|:--|:--|
-| - [ ] | D-1 | メール配信制御（エンプラのイベント/ユーザーに PF 不要メールを送らない） | 10_仕様/04_メール | 必須 | — |
+| ✅ | D-1 | メール配信制御（エンプラのイベント/ユーザーに PF 不要メールを送らない） | 10_仕様/04_メール | 必須 | — |
 | ✅ | D-2 | ダッシュボード＋ CSV（月別/メンバー別の回数・人数・金額） | 10_仕様/04_ダッシュボード | 必須 | — |
 | ✅ | D-3 | 監査ログ閲覧 UI＋取得 Callable（書き込みは実装済み） | 10_仕様/04_監査 | 必須 | — |
 | ✅ | D-4 | 課金スナップショット Scheduled Function（毎月 1 日） | 10_仕様/03_課金 | 必須 | — |
@@ -157,7 +157,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - **D-5 ✅** — RC-44（`/u/:userId` preview ゲート + イベント/フード `autoLoad: false`）、Callable 認可・enterprise_id フィルタ、EP-9 SNS 非表示（#2173）。**残（別 PR）**: `disableEnterpriseMember` 後の `friend_count` 再集計（§5.7）。
 - **D-6 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`enterpriseBillInvoice` HTTP + docx テンプレ + GCS。`invoice_files` による冪等キャッシュ。
 - **D-7 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`/admin/invoices` 一覧 + PDF viewer。`billing_status: final` の月のみ DL 可。
-- **D-1**: 仕様確定（[04_詳細_メール配信](../10_仕様/04_詳細_メール配信.md)）。MVP は方式 A（早期 return）+ `isEnterpriseEvent` / `isEnterpriseUser`（`users.enterprise_id`）の**コード固定デフォルト**。文言・テンプレ変更はスコープ外。#23 / #24 PF only、週刊本文フィルタ、主催者 #7 抑制・#8 維持、誤記 #10 削除。**全社 ON/OFF は Phase 2**（§5.3）。
+- **D-1 ✅** — [#2135](https://github.com/nijuniinc/bokudeli-event-new/issues/2135)。`isEnterpriseEvent` / `isEnterpriseUser` / `isEnterpriseCommunity` + PF only early return（#3〜7,#9,#20,#23,#24）。#22 manager 変更抑制。unit test 追加（eventInformation / orderDeadline / inCart / conclusion / remind / communityMemberCountsTrigger 等）。
 
 ### WS-E: 機能拡張・仕様変更（v0.3 MVP 前倒し）
 
@@ -254,7 +254,7 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 ```
 
 - 2 大山場: **A-1（Phase 0）** と **B-3（Phase 1）** は独立。人員 2 系統なら同時進行可。
-- **WS-M ✅（2026-07-19）** — #2071 着地済。MVP クリティカルパスは **D-1 / D-5 / E-2** へ移行（**F-1・F-2 ✅** で Phase 0 完了）。
+- **WS-M ✅（2026-07-19）** — #2071 着地済。MVP クリティカルパスは **E-2 / E-5** へ移行（**D-1 ✅**・**F-1・F-2 ✅** で Phase 0 完了）。
 - Phase 2 結節点: **G-5（PF 合わせた参加モデル）→ G-6（PF 横断 publish_scope）**（[ADR-003](../20_設計判断_ADR/ADR-003_publish_scope移行.md)）。
 
 ---
@@ -345,3 +345,4 @@ WS-D の大半（D-1 メール・D-3 監査ログ UI・D-4 課金 snapshot・D-5
 | 2026-06-30 | **E-3 ✅** — セッションタイムアウトを無操作 1 週間に変更。RC-23（login 画面トースト）対応 |
 | 2026-07-19 | **WS-M ✅** — M-1 本番 backfill・M-9 確認・M-11 本番反映・M-12 [#2071](https://github.com/nijuniinc/bokudeli-event-new/pull/2071) 着地（`119681b65`）。進捗サマリ WS-M 12/12 |
 | 2026-07-19 | **A-4 ✅** — [#2090](https://github.com/nijuniinc/bokudeli-event-new/issues/2090) / [#2147](https://github.com/nijuniinc/bokudeli-event-new/pull/2147)。WS-A 6/6 完了 |
+| 2026-07-20 | **D-1 ✅** — [#2135](https://github.com/nijuniinc/bokudeli-event-new/issues/2135) PF only メール skip + unit test 補完。WS-D 6/7 |
