@@ -10,13 +10,14 @@ import { computeBillingTrialEndsAtMillis } from '@shokujii/common/utils/isEnterp
 import { getConfigGlobal } from '../stores/config.js'
 import {
   deleteEnterprise,
+  deleteEnterpriseMember,
   getEnterpriseByCustomDomain,
   getEnterpriseById,
   getEnterpriseBySubdomain,
   saveEnterprise,
   saveEnterpriseMember,
 } from '../stores/enterprise.js'
-import { saveUser, ShokujiiUser } from '../stores/user.js'
+import { deleteNewUserDocuments, saveUser, ShokujiiUser } from '../stores/user.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { resolveEnterpriseByHostname } from '../utils/enterpriseBaseDomain.js'
 import {
@@ -213,6 +214,23 @@ export const createEnterprise = onCall<CreateEnterpriseRequest, Promise<CreateEn
         await authForEnterpriseTenant(tenantId).deleteUser(authUserId)
       } catch (deleteUserError) {
         logger.error('enterprise_create_rollback_delete_user_failed', { enterpriseId, authUserId, deleteUserError })
+      }
+    }
+
+    if (authUserId != null) {
+      try {
+        await deleteEnterpriseMember(enterpriseId, authUserId)
+      } catch (deleteMemberError) {
+        logger.error('enterprise_create_rollback_delete_member_failed', { enterpriseId, authUserId, deleteMemberError })
+      }
+      try {
+        await deleteNewUserDocuments(authUserId)
+      } catch (deleteUserDocsError) {
+        logger.error('enterprise_create_rollback_delete_user_docs_failed', {
+          enterpriseId,
+          authUserId,
+          deleteUserDocsError,
+        })
       }
     }
 

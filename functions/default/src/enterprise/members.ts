@@ -138,6 +138,7 @@ async function validateCreateMemberRow(
 async function createSingleEnterpriseMember(
   enterpriseId: string,
   row: CreateMemberInput,
+  tenantAuth: TenantAwareAuth,
 ): Promise<CreateEnterpriseMembersResultItem> {
   const email = normalizeEnterpriseEmail(row.email)
   const role: EnterpriseMemberRoleType = row.role ?? 'member'
@@ -146,7 +147,6 @@ async function createSingleEnterpriseMember(
 
   try {
     const now = Date.now()
-    const tenantAuth = await authForEnterprise(enterpriseId)
     const authUser = await tenantAuth.createUser({
       email,
       emailVerified: true,
@@ -244,9 +244,10 @@ export const createEnterpriseMembers = onCall<CreateEnterpriseMembersRequest, Pr
       }
     }
 
+    const tenantAuth = await authForEnterprise(enterpriseId)
     const createResults: CreateEnterpriseMembersResultItem[] = []
     await runWithConcurrency(validRows, BATCH_CONCURRENCY, async (row) => {
-      const result = await createSingleEnterpriseMember(enterpriseId, row)
+      const result = await createSingleEnterpriseMember(enterpriseId, row, tenantAuth)
       createResults.push(result)
       if (result.status === 'success') {
         await writeAuditLog({
