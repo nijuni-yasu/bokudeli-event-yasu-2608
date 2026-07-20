@@ -37,9 +37,9 @@
 | [x] | RC-50 | なし | 👌 修正不要 | — | 📌 スコープ内 | — | ➖ 該当なし | — | OrdersEnterpriseIdQueryFilter の 'none' センチネルが enterprise_id 値域と重なる |
 | [x] | RC-51 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | event store updateEvent が削除済み scopedEnterpriseId を参照（型・実行時エラー） |
 | [x] | RC-52 | なし | 👌 修正不要 | — | 📌 スコープ内 | — | ➖ 該当なし | — | eventDraft の enterprise 取得失敗時に strict 検証をスキップして下書き保存 |
-| [ ] | RC-53 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | S | eventWrite の pfEnterpriseFieldGuard superRefine が到達不能（デッドコード） |
+| [x] | RC-53 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | eventWrite の pfEnterpriseFieldGuard superRefine が到達不能（デッドコード） |
 | [x] | RC-54 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 却下方式 B スキーマが本番 eventWrite.ts に同居（poc/ へ移動） |
-| [ ] | RC-55 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | auditLogCursor が共有パッケージ common で Node 専用 Buffer を使用 |
+| [x] | RC-55 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | auditLogCursor が共有パッケージ common で Node 専用 Buffer を使用 |
 | [x] | RC-56 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 07_デプロイ・運用の Identity Platform 節が §9 重複・順序逆転 |
 | [x] | RC-57 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | AdminInvoicesTable の window.open に noopener なし |
 | [x] | RC-58 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | audit-logs flattenDetails の as Record キャスト |
@@ -47,10 +47,10 @@
 | [x] | RC-60 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | invoices 一覧が読込失敗時に旧 rows を残す（ダッシュボードと不整合） |
 | [x] | RC-61 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | router テナントガードの claims.enterprise_id as キャスト（2 箇所） |
 | [x] | RC-62 | なし | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | ➖ 該当なし | — | member_orders enterprise_id+status+updated_at インデックスに対応クエリなし |
-| [ ] | RC-63 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | canCreateCommunity が read 側の tenant 検証強化に未追随 |
+| [x] | RC-63 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | canCreateCommunity が read 側の tenant 検証強化に未追随 |
 | [ ] | RC-64 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | 月次スナップショット cron が全 enterprise を逐次 await |
-| [ ] | RC-65 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | recapture callable が enterprise 不在時に success: true を返す |
-| [ ] | RC-66 | なし | 🟡 修正提案 | 未着手 | ❓ 要確認 | — | 👀 確認のみ | — | enterpriseBillInvoice の CORS 静的リストがテナント動的オリジンに未対応の懸念 |
+| [x] | RC-65 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | recapture callable が enterprise 不在時に success: true を返す |
+| [ ] | RC-66 | なし | 🟡 修正提案 | 未着手（確認手順追記済み） | ❓ 要確認 | — | 👀 確認のみ | — | enterpriseBillInvoice の CORS 静的リストがテナント動的オリジンに未対応の懸念 |
 | [ ] | RC-67 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | M | recapture 後も旧請求書 PDF が旧 ?id= URL で取得可能なまま残る |
 | [x] | RC-68 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterpriseInvoiceFile converter の as Pick キャスト |
 | [x] | RC-69 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getUserFriends が認可戻り値を使わず token を as で再抽出 |
@@ -1853,9 +1853,9 @@ RC-35 と同型の try/catch を追加。トークン取得失敗時も `loadInv
 | [x] | RC-50 | なし | 👌 修正不要 | — | 📌 スコープ内 | — | ➖ 該当なし | — | OrdersEnterpriseIdQueryFilter の 'none' センチネルが enterprise_id 値域と重なる |
 | [x] | RC-51 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | event store updateEvent が削除済み scopedEnterpriseId を参照（型・実行時エラー） |
 | [x] | RC-52 | なし | 👌 修正不要 | — | 📌 スコープ内 | — | ➖ 該当なし | — | eventDraft の enterprise 取得失敗時に strict 検証をスキップして下書き保存 |
-| [ ] | RC-53 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | S | eventWrite の pfEnterpriseFieldGuard superRefine が到達不能（デッドコード） |
+| [x] | RC-53 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | eventWrite の pfEnterpriseFieldGuard superRefine が到達不能（デッドコード） |
 | [x] | RC-54 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | 却下方式 B スキーマが本番 eventWrite.ts に同居（poc/ へ移動） |
-| [ ] | RC-55 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 🔧 微修正 | S | auditLogCursor が共有パッケージ common で Node 専用 Buffer を使用 |
+| [x] | RC-55 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | auditLogCursor が共有パッケージ common で Node 専用 Buffer を使用 |
 | [x] | RC-56 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📑 仕様書 | 📄 ドキュメントのみ | S | 07_デプロイ・運用の Identity Platform 節が §9 重複・順序逆転 |
 | [x] | RC-57 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | AdminInvoicesTable の window.open に noopener なし |
 | [x] | RC-58 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | audit-logs flattenDetails の as Record キャスト |
@@ -1863,10 +1863,10 @@ RC-35 と同型の try/catch を追加。トークン取得失敗時も `loadInv
 | [x] | RC-60 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | invoices 一覧が読込失敗時に旧 rows を残す（ダッシュボードと不整合） |
 | [x] | RC-61 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | router テナントガードの claims.enterprise_id as キャスト（2 箇所） |
 | [x] | RC-62 | なし | 👌 修正不要 | — | 📌 スコープ内 | 💾 データ | ➖ 該当なし | — | member_orders enterprise_id+status+updated_at インデックスに対応クエリなし |
-| [ ] | RC-63 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | canCreateCommunity が read 側の tenant 検証強化に未追随 |
+| [x] | RC-63 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | canCreateCommunity が read 側の tenant 検証強化に未追随 |
 | [ ] | RC-64 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💾 データ | 📐 リファクタ | M | 月次スナップショット cron が全 enterprise を逐次 await |
-| [ ] | RC-65 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | recapture callable が enterprise 不在時に success: true を返す |
-| [ ] | RC-66 | なし | 🟡 修正提案 | 未着手 | ❓ 要確認 | — | 👀 確認のみ | — | enterpriseBillInvoice の CORS 静的リストがテナント動的オリジンに未対応の懸念 |
+| [x] | RC-65 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | recapture callable が enterprise 不在時に success: true を返す |
+| [ ] | RC-66 | なし | 🟡 修正提案 | 未着手（確認手順追記済み） | ❓ 要確認 | — | 👀 確認のみ | — | enterpriseBillInvoice の CORS 静的リストがテナント動的オリジンに未対応の懸念 |
 | [ ] | RC-67 | なし | 🟡 修正提案 | 未着手 | 📌 スコープ内 | 💰 金銭 | 🔧 微修正 | M | recapture 後も旧請求書 PDF が旧 ?id= URL で取得可能なまま残る |
 | [x] | RC-68 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | enterpriseInvoiceFile converter の as Pick キャスト |
 | [x] | RC-69 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | S | getUserFriends が認可戻り値を使わず token を as で再抽出 |
@@ -2058,11 +2058,11 @@ RC-35 と同型の try/catch を追加。トークン取得失敗時も `loadInv
 
 **コメント要約**:
 
-H1 write strict 設計の意図（将来ベーススキーマが緩んだ場合の防波堤の可能性）に関わるため自動修正対象外。削除 or コメント明記を人間判断待ち。
+H1 write strict の正本はベーススキーマのため、`pfEnterpriseFieldGuard` と union 外 `superRefine` を削除。`PfEventWriteAppSchema` は `PfEventWriteBaseSchema` のエイリアスに変更。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -2072,7 +2072,7 @@ H1 write strict 設計の意図（将来ベーススキーマが緩んだ場合�
 
 **想定工数**: S
 
-**判断理由**: 変更種別リファクタ（自動修正対象外）。設計意図（多層防御として残すか）の確認が必要。
+**判断理由**: 到達不能デッドコードの除去。既存 eventWrite テストで PF write strict はベーススキーマが担保することを確認。
 
 ---
 
@@ -2135,11 +2135,11 @@ H1 write strict 設計の意図（将来ベーススキーマが緩んだ場合�
 
 **コメント要約**:
 
-修正方針が複数（移動 / 明記 / 置換）のため自動修正対象外。未着手。
+案 (c) Web 互換 base64url（`TextEncoder` / `btoa` / `atob`）へ置換。既知 cursor 文字列の decode 互換テストを追加。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -2149,7 +2149,7 @@ H1 write strict 設計の意図（将来ベーススキーマが緩んだ場合�
 
 **想定工数**: S
 
-**判断理由**: 現状実害なし。配置方針（common に残すか functions へ移すか）の判断が必要で方針が一意でない。
+**判断理由**: common をブラウザから import しても `Buffer` 未定義にならない。encode/decode API は維持。
 
 ---
 
@@ -2448,11 +2448,11 @@ catch 内で `rows.value = []` を追加し、ダッシュボード（RC 対応�
 
 **コメント要約**:
 
-Security Rules の権限変更 + rules テスト追加を伴うため自動修正対象外（セキュリティ影響確認が必要）。未着手。
+`canCreateCommunity` の enterprise 分岐を `isSameEnterprise(request.resource.data)` に置換。`tests/firestore-rules` に tenant 不一致・tenant 未設定 create 拒否テストを追加。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -2462,7 +2462,7 @@ Security Rules の権限変更 + rules テスト追加を伴うため自動修�
 
 **想定工数**: S
 
-**判断理由**: claims はシステム発行のため即時の昇格経路ではないが、tenant 検証の非対称は本差分起因。Rules 変更はセキュリティ影響確認（自動修正対象外）。
+**判断理由**: read/create の tenant 検証を統一。MVP は tenant 必須発行前提でレガシートークン create 拒否は意図通り。
 
 ---
 
@@ -2528,11 +2528,11 @@ Security Rules の権限変更 + rules テスト追加を伴うため自動修�
 
 **コメント要約**:
 
-修正方針が複数（事前チェック / 戻り値判定）のため自動修正対象外。未着手。
+callable 側で `getEnterpriseById` 事前確認を追加。不在時は `HttpsError('not-found')`。scheduled 用 `captureBillingSnapshotForEnterprise` の warn+skip は維持。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: ✅ 対応済み
 
 **PRスコープ**: 📌 スコープ内
 
@@ -2542,7 +2542,7 @@ Security Rules の権限変更 + rules テスト追加を伴うため自動修�
 
 **想定工数**: S
 
-**判断理由**: サポート運用時の誤操作が silent success になる。実装方針 2 案あり自動修正対象外。
+**判断理由**: サポート recapture の typo を silent success から not-found に変更。`billingSnapshots.test.ts` に not-found ケース追加。
 
 ---
 
@@ -2564,11 +2564,11 @@ Security Rules の権限変更 + rules テスト追加を伴うため自動修�
 
 **コメント要約**:
 
-デプロイ設定・ドメイン運用の確認事項。実装変更の要否は運用方針（サブドメイン集約か custom_domain 拡大か）に依存するため未着手。
+デプロイ設定・ドメイン運用の確認事項。コード変更は行わず sandbox 確認チェックリストを追記（ユーザー確認待ち）。
 
 **評価**: 🟡 修正提案
 
-**ステータス**: 未着手
+**ステータス**: 未着手（確認手順追記済み・ユーザー確認待ち）
 
 **PRスコープ**: ❓ 要確認
 
@@ -2579,6 +2579,15 @@ Security Rules の権限変更 + rules テスト追加を伴うため自動修�
 **想定工数**: —
 
 **判断理由**: 現行 env の設定値と運用方針の確認が先。コード変更が必要かは確認結果次第。
+
+**sandbox 確認チェックリスト（RC-66）**:
+
+1. sandbox2510 の enterprise 管理画面 → 請求書 PDF をブラウザで開く
+2. DevTools Network で `enterpriseBillInvoice`（PDF 取得 URL）のレスポンスを確認
+3. Console / Network に CORS エラーが無いこと
+4. 問題時: Functions 環境変数 `CORS`（JSON 配列）に当該 Origin（`https://...` フル URL）が含まれるか確認 → 不足なら追加 + `deploy_functions` 再実行
+
+参照: `functions/default/src/enterpriseBillInvoice.ts`（`CORS_ORIGINS` / `cors` オプション）
 
 ---
 
@@ -2853,5 +2862,25 @@ typeof ガード化し、`enterpriseAuthHelpers.ts` / `enterpriseProfileAccess.t
 **想定工数**: S
 
 **判断理由**: 運用手順書のリンク切れは実行時の迷いに直結。アンカー修正のみで方針一意。
+
+---
+
+## 評価セッション（2026-07-20 20:54・RC 推奨案実装）
+
+- **評価日時**: 2026-07-20 20:54 JST
+- **評価者**: Cursor Agent（計画実装）
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **対象**: RC-53 / RC-55 / RC-63 / RC-65 コード対応、RC-66 sandbox 確認チェックリスト追記
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-53 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 📐 リファクタ | S | eventWrite デッドコード superRefine 削除 |
+| [x] | RC-55 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | auditLogCursor Web 互換 base64url |
+| [x] | RC-63 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | canCreateCommunity を isSameEnterprise に統一 |
+| [x] | RC-65 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | 👤 UX | 🔧 微修正 | S | recapture enterprise 不在を not-found に |
+| [ ] | RC-66 | なし | 🟡 修正提案 | 未着手（確認手順追記済み） | ❓ 要確認 | — | 👀 確認のみ | — | CORS env sandbox 目視確認（ユーザー待ち） |
 
 ---
