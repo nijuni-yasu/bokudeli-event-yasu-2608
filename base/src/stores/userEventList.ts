@@ -22,6 +22,8 @@ export type UserEventListStore = ReturnType<typeof useUserEventListByUserId>
 export type UserEventListStoreOptions = {
   /** PF 露出 / エンプラテナント等。`collectionGroup('events')` の base 条件に追加する */
   profileFilter?: ProfileListFilter
+  /** false のとき store 生成時は fetch しない（呼び出し元が reload/next する）。`userOrderHistoryList` と同様 */
+  autoLoad?: boolean
 }
 
 /**
@@ -33,6 +35,7 @@ export const useUserEventListByUserId = (
   options: UserEventListStoreOptions = {},
 ) => {
   const profileFilter = options.profileFilter ?? { kind: 'none' }
+  const autoLoad = options.autoLoad ?? true
   const additionalFilters = profileListFilterToConstraints(profileFilter)
   const storeId = userId !== '' ? userId : '_empty'
   const filtersKey = `/${profileListFilterKey(profileFilter)}`
@@ -92,7 +95,7 @@ export const useUserEventListByUserId = (
       }
     }
 
-    if (storeId !== '_empty') {
+    if (storeId !== '_empty' && autoLoad) {
       reload()
     }
 
