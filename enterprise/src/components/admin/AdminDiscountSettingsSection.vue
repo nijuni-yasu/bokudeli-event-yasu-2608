@@ -14,6 +14,9 @@ const monthlyLimitPerUser = defineModel<number>('monthlyLimitPerUser', { require
 const { t } = useI18n()
 const notification = useNotification()
 
+/** 割引種別を割合に切り替えた際の初期値（%）。固定額の値をそのまま % に流用しないためのリセット値 */
+const DEFAULT_PERCENTAGE_DISCOUNT = 50
+
 const saving = ref(false)
 const discountValueError = ref<string>()
 const monthlyLimitError = ref<string>()
@@ -48,7 +51,7 @@ const validateForm = (): boolean => {
 watch(discountType, (newType, oldType) => {
   discountValueError.value = undefined
   if (newType === 'percentage' && oldType != null && oldType !== 'percentage') {
-    discountValue.value = 50
+    discountValue.value = DEFAULT_PERCENTAGE_DISCOUNT
   }
 })
 
