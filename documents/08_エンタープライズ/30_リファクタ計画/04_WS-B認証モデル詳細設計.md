@@ -50,7 +50,7 @@ WS-B 実装前に次を確定する。
 |:--|:--|
 | ロールバック境界 | sandbox は tenant / tenant user を作り直し可。本番は tenant 化後の Auth user 移行が重いため、tenant onboarding を本番投入前に完了させる |
 | 方式併存 | 実装ブランチ内では既存 claims 方式と tenant 方式を段階併存。リリース境界では Enterprise 従業員ログインは tenant 方式へ寄せる |
-| MAU 課金 | **確定（2026-06-27）**: MVP は月 50k MAU 無料枠内。超過見込み時は Shokujii 全体の利用・課金規模に見合い IdP 従量課金を許容（[07_デプロイ・運用](../10_仕様/07_デプロイ・運用.md) §9.1）。sandbox: B-1 PoC で有効化 / production: 本番 Enterprise 投入前 |
+| MAU 課金 | **確定（2026-06-27）**: MVP は月 50k MAU 無料枠内。超過見込み時は Shokujii 全体の利用・課金規模に見合い IdP 従量課金を許容（[07_デプロイ・運用](../10_仕様/07_デプロイ・運用.md) §12.1）。sandbox: B-1 PoC で有効化 / production: 本番 Enterprise 投入前 |
 | PF / partner 影響 | PF / partner はデフォルトプール前提のまま。Enterprise lookup は `EnterpriseMember.user_email` に分離（05 §0.2） |
 | Rules CI | ✅ `Test Firestore Rules / test` を branch protection の required check に登録済み（A-5） |
 
