@@ -3,7 +3,7 @@
 運営（support）が `createEnterprise` Callable を実行し、テスト企業と初代 admin を作成する。
 
 - API 仕様: [04_詳細_オンボーディング.md](../../../documents/08_エンタープライズ/10_仕様/04_詳細_オンボーディング.md) §3
-- 手順・確認項目: [07_デプロイ・運用.md §11](../../../documents/08_エンタープライズ/10_仕様/07_デプロイ・運用.md#11-テスト企業の作成-createenterprise)
+- 手順・確認項目: [07_デプロイ・運用.md §11](../../../documents/08_エンタープライズ/10_仕様/07_デプロイ・運用.md#11-テスト企業の作成createenterprise)
 
 ## 前提
 
@@ -49,7 +49,7 @@ node ../../tools/enterprise/create-enterprise/create-enterprise.mjs \
 
 本 CLI は **Admin SDK で support ユーザー向け custom token を発行 → Callable 実行**する。
 
-手動で行う場合は [07 §11.3](../../../documents/08_エンタープライズ/10_仕様/07_デプロイ・運用.md#113-実行方法client-sdk) の Client SDK + support ログインでも可。
+手動で行う場合は [07 §11.3b](../../../documents/08_エンタープライズ/10_仕様/07_デプロイ・運用.md#113b-実行方法client-sdk手動) の Client SDK + support ログインでも可。
 
 ## 成功後
 

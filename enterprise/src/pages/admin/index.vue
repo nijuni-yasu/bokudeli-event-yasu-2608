@@ -55,7 +55,11 @@ const loadDashboard = async () => {
 }
 
 onMounted(async () => {
-  enterpriseId.value = await getEnterpriseIdFromToken()
+  try {
+    enterpriseId.value = await getEnterpriseIdFromToken()
+  } catch {
+    notification.show(t('admin.dashboard.load_failed'), 'error')
+  }
   await loadDashboard()
 })
 

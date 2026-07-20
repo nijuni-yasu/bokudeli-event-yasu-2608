@@ -92,7 +92,7 @@ const flattenDetails = (details: Record<string, unknown> | null | undefined): { 
       continue
     }
     if (typeof value === 'object' && !Array.isArray(value)) {
-      for (const [nestedKey, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
         rows.push({
           key: `${key}.${nestedKey}`,
           value: nestedValue == null ? '—' : String(nestedValue),

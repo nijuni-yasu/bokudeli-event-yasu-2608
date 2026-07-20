@@ -15,7 +15,7 @@ const canDownload = (row: DashboardMonthlyRow): boolean =>
   row.billing_status === 'final' && row.total_billing_amount > 0
 
 const openPdf = (yearMonth: string) => {
-  window.open(getAdminInvoicePdfPath(yearMonth), '_blank')
+  window.open(getAdminInvoicePdfPath(yearMonth), '_blank', 'noopener,noreferrer')
 }
 </script>
 

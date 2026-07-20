@@ -93,7 +93,8 @@ export const setupRouter = (router: Router) => {
       }
       const tokenResult = await user.getIdTokenResult()
       if (tokenResult.claims.user_type === 'enterprise') {
-        const tokenEnterpriseId = tokenResult.claims.enterprise_id as string | undefined
+        const rawEnterpriseId = tokenResult.claims.enterprise_id
+        const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
         const tenantOk = isEnterpriseAuthTenantConsistent(
           enterpriseStore.enterprise?.tenant_id,
           enterpriseStore.enterprise?.enterprise_id,
@@ -243,7 +244,8 @@ export const setupRouter = (router: Router) => {
         await enterpriseStore.resolveEnterprise()
       }
       const resolvedEnterpriseId = enterpriseStore.enterprise?.enterprise_id
-      const tokenEnterpriseId = tokenResult.claims.enterprise_id as string | undefined
+      const rawEnterpriseId = tokenResult.claims.enterprise_id
+      const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
       const tenantOk = isEnterpriseAuthTenantConsistent(
         enterpriseStore.enterprise?.tenant_id,
         resolvedEnterpriseId,

@@ -33,6 +33,7 @@ const loadInvoices = async () => {
     rows.value = [...result.data.rows].sort((a, b) => b.year_month.localeCompare(a.year_month))
   } catch {
     if (seq !== loadSeq) return
+    rows.value = []
     notification.show(t('admin.invoices.load_failed'), 'error')
   } finally {
     if (seq === loadSeq) {
