@@ -125,27 +125,30 @@ const toMillis = (value: unknown, fallback = 0): number => {
   return typeof result === 'number' && Number.isFinite(result) ? result : fallback
 }
 
-const buildPublicProfile = (user: {
-  user_id: string
-  user_name: string
-  user_description: string
-  user_image_url: string
-  user_sns_facebook: string
-  user_sns_facebook_name: string
-  user_sns_twitter: string
-  user_sns_instagram: string
-  user_sns_website: string
-  is_deleted: boolean
-}): UserProfilePublicProfile => ({
+export const buildPublicProfile = (
+  user: {
+    user_id: string
+    user_name: string
+    user_description: string
+    user_image_url: string
+    user_sns_facebook: string
+    user_sns_facebook_name: string
+    user_sns_twitter: string
+    user_sns_instagram: string
+    user_sns_website: string
+    is_deleted: boolean
+  },
+  options?: { omitSns?: boolean },
+): UserProfilePublicProfile => ({
   user_id: user.user_id,
   user_name: user.user_name,
   user_description: user.user_description,
   user_image_url: user.user_image_url,
-  user_sns_facebook: user.user_sns_facebook,
-  user_sns_facebook_name: user.user_sns_facebook_name,
-  user_sns_twitter: user.user_sns_twitter,
-  user_sns_instagram: user.user_sns_instagram,
-  user_sns_website: user.user_sns_website,
+  user_sns_facebook: options?.omitSns === true ? '' : user.user_sns_facebook,
+  user_sns_facebook_name: options?.omitSns === true ? '' : user.user_sns_facebook_name,
+  user_sns_twitter: options?.omitSns === true ? '' : user.user_sns_twitter,
+  user_sns_instagram: options?.omitSns === true ? '' : user.user_sns_instagram,
+  user_sns_website: options?.omitSns === true ? '' : user.user_sns_website,
   is_deleted: user.is_deleted,
 })
 
@@ -430,7 +433,7 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
     })
 
     return {
-      user_profile: buildPublicProfile(targetUser),
+      user_profile: buildPublicProfile(targetUser, isEnterprise ? { omitSns: true } : undefined),
       counts,
       ...(department !== undefined ? { department } : {}),
       previews: {
