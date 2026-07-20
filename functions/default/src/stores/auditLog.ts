@@ -111,11 +111,13 @@ async function listAuditLogsGuest(enterpriseId: string, params: ListAuditLogsPar
   const { query: baseQuery, pageSize } = applyCommonFilters(enterpriseId, params)
   const maxScan = pageSize * GUEST_FILTER_SCAN_MULTIPLIER
   const matched: AuditLog[] = []
+  // scanCursor は「最後に消費した（判定済みの）doc」を指す。next ページはここから再開する
   let scanCursor: QueryCursor = params.cursor ?? null
   let totalScanned = 0
   let exhausted = false
+  let hasUnscannedInBatch = false
 
-  while (matched.length < pageSize && totalScanned < maxScan) {
+  while (matched.length < pageSize && totalScanned < maxScan && !exhausted) {
     const remaining = maxScan - totalScanned
     const fetchLimit = Math.min(pageSize * 2, remaining)
     let query = baseQuery
@@ -123,49 +125,31 @@ async function listAuditLogsGuest(enterpriseId: string, params: ListAuditLogsPar
       query = await applyStartAfter(query, enterpriseId, scanCursor)
     }
     const snapshot = await query.limit(fetchLimit).get()
-    if (snapshot.empty) {
-      exhausted = true
-      break
-    }
-
-    totalScanned += snapshot.docs.length
     if (snapshot.docs.length < fetchLimit) {
       exhausted = true
     }
 
-    const lastDoc = snapshot.docs[snapshot.docs.length - 1]
-    scanCursor = {
-      timestamp: lastDoc.data().timestamp,
-      log_id: lastDoc.id,
-    }
-
     for (const doc of snapshot.docs) {
-      const log = doc.data()
-      if (!isAuditLogGuest(log.details)) {
-        continue
-      }
-      matched.push(log)
       if (matched.length >= pageSize) {
+        // ページが埋まった時点で未判定の doc が残っている（次ページはここから再開）
+        hasUnscannedInBatch = true
         break
       }
+      totalScanned += 1
+      const log = doc.data()
+      scanCursor = { timestamp: log.timestamp, log_id: doc.id }
+      if (isAuditLogGuest(log.details)) {
+        matched.push(log)
+      }
     }
   }
 
-  const logs = matched.slice(0, pageSize)
-  const hasNext = logs.length === pageSize && !exhausted
+  const hasNext = hasUnscannedInBatch || !exhausted
   return {
-    logs,
+    logs: matched,
     hasNext,
-    nextCursor: logs.length > 0 ? toNextCursorFromLogs(logs) : null,
+    nextCursor: hasNext ? scanCursor : null,
   }
-}
-
-function toNextCursorFromLogs(logs: AuditLog[]): AuditLogCursor | null {
-  const last = logs[logs.length - 1]
-  if (last == null) {
-    return null
-  }
-  return { timestamp: last.timestamp, log_id: last.id }
 }
 
 export const listAuditLogs = async (params: ListAuditLogsParams): Promise<ListAuditLogsResult> => {
