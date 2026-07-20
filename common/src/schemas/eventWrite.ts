@@ -4,7 +4,7 @@
  * @see documents/08_エンタープライズ/30_リファクタ計画/05_WS-C_C-1_PoC設計.md
  */
 import { z } from 'zod'
-import { Event, EVENT_PAYMENT_VALUES } from './Event.js'
+import { Event } from './Event.js'
 import { EpochMillisSchema } from './firebase/index.js'
 import { EnterpriseSubsidySettingsAppSchema, type EnterpriseSubsidySettingsType } from './EnterpriseSubsidySettings.js'
 
@@ -121,10 +121,3 @@ export function assertEnterpriseEventDraftStrict(event: Event): void {
     enterprise_subsidy_settings: event.enterprise_subsidy_settings,
   })
 }
-
-/** PoC 方式 B 比較用（optional 汚染が残る extend のみ） */
-export const EventWriteExtendOnlySchemaB = EventWriteCoreAppSchema.extend({
-  event_payment: z.enum(EVENT_PAYMENT_VALUES),
-  enterprise_id: z.string().optional(),
-  enterprise_subsidy_settings: EnterpriseSubsidySettingsAppSchema.optional(),
-})

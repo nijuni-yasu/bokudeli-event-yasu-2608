@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { Event, EventDbSchema, convertEventToDb } from '../Event.js'
 import { TimestampSchema } from '../firebase/index.js'
-import { EventWriteExtendOnlySchemaB } from '../eventWrite.js'
 import {
   EventDbSchemaVariantA,
   EventNestedWriteSchemaC,
+  EventWriteExtendOnlySchemaB,
   flattenNestedWriteToFlat,
   h1WriteToEvent,
 } from './eventSchemaPoC.js'

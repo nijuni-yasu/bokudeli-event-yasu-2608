@@ -301,7 +301,8 @@ export class EnterpriseInvoiceFile {
   gcs_id!: string
   created_at: number
 
-  constructor(yearMonth: string, src: Pick<EnterpriseInvoiceFile, 'gcs_id'> & Partial<EnterpriseInvoiceFile>) {
+  /** gcs_id は AppSchema（NonEmptyStringSchema・default なし）が実行時に必須を担保する */
+  constructor(yearMonth: string, src: Partial<EnterpriseInvoiceFile>) {
     Object.assign(this, EnterpriseInvoiceFileAppSchema.parse({ ...src, year_month: yearMonth }))
     this.id = yearMonth
     this.year_month = yearMonth

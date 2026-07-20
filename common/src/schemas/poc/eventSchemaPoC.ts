@@ -4,7 +4,7 @@
  * @see documents/08_エンタープライズ/30_リファクタ計画/05_WS-C_C-1_PoC設計.md
  */
 import { z } from 'zod'
-import { EventDbSchema } from '../Event.js'
+import { EventDbSchema, EVENT_PAYMENT_VALUES } from '../Event.js'
 import { EnterpriseSubsidySettingsAppSchema, EnterpriseSubsidySettingsDbSchema } from '../EnterpriseSubsidySettings.js'
 import {
   type EventWriteApp,
@@ -92,3 +92,11 @@ export const EventDbSchemaVariantA = z.discriminatedUnion('event_payment', [
   EventDbPfBranchSchemaA,
   EventDbEnterpriseBranchSchemaA,
 ])
+
+// --- 却下方式 B: extend のみ（optional 汚染の比較用） ---
+
+export const EventWriteExtendOnlySchemaB = EventWriteCoreAppSchema.extend({
+  event_payment: z.enum(EVENT_PAYMENT_VALUES),
+  enterprise_id: z.string().optional(),
+  enterprise_subsidy_settings: EnterpriseSubsidySettingsAppSchema.optional(),
+})
