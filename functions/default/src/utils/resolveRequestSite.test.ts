@@ -24,19 +24,19 @@ describe('resolveRequestSite', () => {
     expect(site).toBeUndefined()
   })
 
-  it('prefers x-forwarded-proto over req.protocol', () => {
+  it('always uses https even when x-forwarded-proto is http', () => {
     const site = resolveRequestSite({
       protocol: 'http',
-      headers: { 'x-forwarded-proto': 'https', host: 'shokujii.jp' },
+      headers: { 'x-forwarded-proto': 'http', host: 'shokujii.jp' },
       get: (name: string) => (name === 'host' ? 'shokujii.jp' : undefined),
     } as never)
     expect(site).toBe('https://shokujii.jp')
   })
 
-  it('uses first proto when x-forwarded-proto is comma-separated', () => {
+  it('ignores comma-separated x-forwarded-proto and always uses https', () => {
     const site = resolveRequestSite({
       protocol: 'http',
-      headers: { 'x-forwarded-proto': 'https, http', host: 'shokujii.jp' },
+      headers: { 'x-forwarded-proto': 'http, https', host: 'shokujii.jp' },
       get: (name: string) => (name === 'host' ? 'shokujii.jp' : undefined),
     } as never)
     expect(site).toBe('https://shokujii.jp')

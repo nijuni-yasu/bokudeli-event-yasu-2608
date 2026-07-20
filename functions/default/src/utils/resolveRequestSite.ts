@@ -10,19 +10,7 @@ const normalizeHeaderValue = (value: string | undefined): string | undefined => 
   return first === '' ? undefined : first
 }
 
-const resolveProtocol = (req: https.Request): string => {
-  const forwardedProto = req.headers['x-forwarded-proto']
-  const raw =
-    typeof forwardedProto === 'string'
-      ? normalizeHeaderValue(forwardedProto)
-      : Array.isArray(forwardedProto)
-        ? normalizeHeaderValue(forwardedProto[0])
-        : undefined
-  if (raw === 'http' || raw === 'https') {
-    return raw
-  }
-  return req.protocol
-}
+const PUBLIC_SITE_PROTOCOL = 'https'
 
 const resolveRequestHostname = (req: https.Request): string | undefined => {
   const forwardedHost = req.headers['x-forwarded-host']
@@ -54,5 +42,5 @@ export const resolveRequestSite = (req: https.Request): string | undefined => {
   if (hostname == null) {
     return undefined
   }
-  return `${resolveProtocol(req)}://${hostname}`
+  return `${PUBLIC_SITE_PROTOCOL}://${hostname}`
 }

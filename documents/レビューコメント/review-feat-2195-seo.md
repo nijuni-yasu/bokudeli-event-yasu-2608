@@ -28,6 +28,8 @@
 | [ ] | RC-22 | 3610576408 | 🟡 修正提案 | 未着手 | 📌 スコープ内 | — | 📐 リファクタ | M | seoSitemap イベント取得を select 軽量化（imo） |
 | [x] | RC-23 | 3610576415 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | formatSitemapLastmod を luxon 化（RC-18 と関連） |
 | [x] | RC-24 | なし | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | ogpRequest が enterprise コミュニティ・イベントも SEO 200 を返していた |
+| [x] | RC-25 | 3610648892 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 公開 site URL の proto を https 固定<br>x-forwarded-proto 改ざん対策 |
+| [x] | RC-27 | 3610648922 | 🟡 修正提案 | 📤 #2197 別Issue化 | 📤 スコープ外 | — | 📋 仕様追加 | L | sitemap URL 上限（50,000）超過時の分割/ガード<br>#2197 でスケーラビリティ対応 |
 
 ---
 
@@ -556,3 +558,136 @@ seoSitemap を withConverter 経由にリファクタすべき（プロジェク
 
 - 再レビュー（自動修正後）: 新規指摘なし
 
+---
+
+## 評価セッション（2026-07-20 13:03・review-comments-evaluate）
+
+- **評価日時**: 2026-07-20 13:03 JST
+- **ブランチ名**: feat/2195-seo
+- **PR**: https://github.com/nijuniinc/bokudeli-event-new/pull/2196
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 18（Codex limits/connect 案内 10件、レビュー依頼定型文 6件、Copilot 再確認サマリ 5015922045 1件、3610648902 は RC-17 と同一指摘のため RC 採番せず 1件）
+- **手順 4a 自動修正**: RC-25（🚨 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-25 | 3610648892 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🔒 セキュリティ | 🔧 微修正 | S | 公開 site URL の proto を https 固定<br>x-forwarded-proto 改ざん対策 |
+| [x] | RC-27 | 3610648922 | 🟡 修正提案 | 📤 #2197 別Issue化 | 📤 スコープ外 | — | 📋 仕様追加 | L | sitemap URL 上限（50,000）超過時の分割/ガード<br>#2197 でスケーラビリティ対応 |
+
+### RC-25（GitHub id: 3610648892）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/resolveRequestSite.ts:25`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -0,0 +1,58 @@
++import { https } from 'firebase-functions/v2'
++import { isAllowedRequestHostname, parseRequestHostname } from './allowedPublicHost.js'
++import { getEventHost } from './urls.js'
++
++const normalizeHeaderValue = (value: string | undefined): string | undefined => {
++  if (value == null || value === '') {
++    return undefined
++  }
++  const first = value.split(',')[0]?.trim()
++  return first === '' ? undefined : first
++}
++
++const resolveProtocol = (req: https.Request): string => {
++  const forwardedProto = req.headers['x-forwarded-proto']
++  const raw =
++    typeof forwardedProto === 'string'
++      ? normalizeHeaderValue(forwardedProto)
++      : Array.isArray(forwardedProto)
++        ? normalizeHeaderValue(forwardedProto[0])
++        : undefined
++  if (raw === 'http' || raw === 'https') {
++    return raw
++  }
++  return req.protocol
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] sitemap/OGP の site URL が `x-forwarded-proto` を信頼しており、Hosting 側のキャッシュキー次第では header 改ざんで `http://...` の sitemap/canonical を返してキャッシュ汚染できる可能性があります（SEO 的にも https 正規化が崩れます）。公開 URL の生成は proto を固定（基本 https）にして、`x-forwarded-proto` は参照しない実装に寄せたいです。
+
+**コメント要約**: `x-forwarded-proto` を信頼すると改ざんで `http://` の canonical/sitemap が返りうる。
+RC-14 で proto 優先を入れたが、公開 URL は https 固定が安全。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🔒 セキュリティ
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: RC-19 の host allowlist と併せ、公開 site URL は `PUBLIC_SITE_PROTOCOL = 'https'` 固定に変更。`x-forwarded-proto` / `req.protocol` は参照しない。テストを http ヘッダ改ざんケースに更新。
+
+---
+
+### RC-27（GitHub id: 3610648922）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/sitemapRequest.ts:21`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+@@ -0,0 +1,65 @@
++import express from 'express'
++import { https } from 'firebase-functions/v2'
++import { createModuleLogger } from './utils/logger.js'
++import { resolveRequestSite } from './utils/resolveRequestSite.js'
++import { getPublicCommunitiesForSitemap, getPublicEventsForSitemap } from './stores/seoSitemap.js'
++import { buildSitemapXml, formatSitemapLastmod, type SitemapUrlEntry } from './seo/sitemap.js'
++
++const logger = createModuleLogger('sitemapRequest')
++
++const SITEMAP_CACHE_CONTROL = 'public, max-age=3600, s-maxage=3600'
++
++const buildSitemapEntries = (
++  site: string,
++  communities: Awaited<ReturnType<typeof getPublicCommunitiesForSitemap>>,
++  events: Awaited<ReturnType<typeof getPublicEventsForSitemap>>,
++): SitemapUrlEntry[] => {
++  const entries: SitemapUrlEntry[] = [{ loc: `${site}/` }, { loc: `${site}/communitylist` }]
++
++  for (const community of communities) {
++    entries.push({
++      loc: `${site}/c/${community.communityAccount.toLowerCase()}`,
+```
+
+**レビュワーのコメント（原文）**:
+
+[imo] sitemap は仕様上 1 ファイルあたり URL 上限（一般に 50,000）とサイズ上限があるため、`communities/events` が増えたときにこの実装だと無効な sitemap を返す可能性があります。将来的に件数が増える想定なら、sitemap index + 分割（例: `/sitemap-1.xml` 等）や、少なくとも上限超過時のログ/ガードを入れておくのが安全です。
+
+**コメント要約**: 単一 sitemap.xml は URL 50,000 件上限があり、件数増加で無効 XML になりうる。
+sitemap index 分割または上限ガードが必要。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 📤 #2197 別Issue化
+
+**PRスコープ**: 📤 スコープ外
+
+**ラベル**: —
+
+**変更種別**: 📋 仕様追加
+
+**想定工数**: L
+
+**判断理由**: Phase 1 SEO では単一 sitemap で十分。RC-9（イベント取得ページング）と同系のスケーラビリティは #2197（https://github.com/nijuniinc/bokudeli-event-new/issues/2197）で対応。本 PR では sitemap index 分割はスコープ外。
+
+---
