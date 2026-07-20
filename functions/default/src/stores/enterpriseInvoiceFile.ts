@@ -9,7 +9,7 @@ const invoiceFileConverter: FirestoreDataConverter<EnterpriseInvoiceFile> = {
     return invoiceFile.toFirestore()
   },
   fromFirestore(doc: QueryDocumentSnapshot): EnterpriseInvoiceFile {
-    return new EnterpriseInvoiceFile(doc.id, doc.data() as Pick<EnterpriseInvoiceFile, 'gcs_id'>)
+    return new EnterpriseInvoiceFile(doc.id, doc.data())
   },
 }
 

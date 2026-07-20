@@ -73,8 +73,10 @@ export const getUserFriends = onCall<GetUserFriendsRequest, Promise<GetUserFrien
     const input = GetUserFriendsRequestSchema.parse(request.data)
     const isEnterprise = isEnterpriseViewer(request.auth)
 
+    let enterpriseScope: { enterpriseId: string } | undefined
     if (isEnterprise) {
-      await assertEnterpriseProfileAccess(request.auth, input.target_user_id)
+      const access = await assertEnterpriseProfileAccess(request.auth, input.target_user_id)
+      enterpriseScope = { enterpriseId: access.viewerEnterpriseId }
     } else {
       const targetUser = await getUser(input.target_user_id, false)
       if (targetUser == null || targetUser.is_deleted) {
@@ -87,11 +89,6 @@ export const getUserFriends = onCall<GetUserFriendsRequest, Promise<GetUserFrien
     const sortBy: UserFriendsSortBy = input.sort_by ?? 'meet_count'
     const decodedCursor = decodeUserFriendsListCursor(input.cursor)
     const viewerUid = request.auth?.uid ?? null
-    const enterpriseId =
-      isEnterprise && request.auth?.token != null
-        ? (request.auth.token as Record<string, unknown>).enterprise_id
-        : undefined
-    const enterpriseScope = typeof enterpriseId === 'string' && enterpriseId !== '' ? { enterpriseId } : undefined
 
     const { friends, hasMore, nextCursor } = await resolveUserFriendsList({
       targetUserId: input.target_user_id,

@@ -20,7 +20,8 @@ export async function assertEnterpriseAdminFromUid(
   if (token.user_type !== 'enterprise') {
     throw new HttpsError('permission-denied', 'enterprise admin only')
   }
-  const tokenEnterpriseId = token.enterprise_id as string | undefined
+  const rawEnterpriseId = token.enterprise_id
+  const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
   if (tokenEnterpriseId !== enterpriseId) {
     throw new HttpsError('permission-denied', 'enterprise admin only')
   }
@@ -49,7 +50,7 @@ export async function assertEnterpriseAdmin(auth: CallableRequest['auth'], enter
   if (auth?.uid == null) {
     throw new HttpsError('unauthenticated', 'not logged in')
   }
-  await assertEnterpriseAdminFromUid(auth.uid, auth.token as Record<string, unknown>, enterpriseId)
+  await assertEnterpriseAdminFromUid(auth.uid, auth.token, enterpriseId)
 }
 
 export function normalizeEnterpriseEmail(email: string): string {

@@ -18,7 +18,7 @@ export const isEnterpriseViewer = (auth: CallableRequest['auth']): boolean => {
   if (auth?.token == null) {
     return false
   }
-  return getTokenEnterpriseId(auth.token as Record<string, unknown>) != null
+  return getTokenEnterpriseId(auth.token) != null
 }
 
 /**
@@ -33,7 +33,7 @@ export const assertEnterpriseProfileAccess = async (
     throw new HttpsError('unauthenticated', '認証が必要です')
   }
 
-  const viewerEnterpriseId = getTokenEnterpriseId(auth.token as Record<string, unknown>)
+  const viewerEnterpriseId = getTokenEnterpriseId(auth.token)
   if (viewerEnterpriseId == null) {
     throw new HttpsError('permission-denied', '閲覧権限がありません')
   }
