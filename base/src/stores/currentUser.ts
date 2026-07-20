@@ -32,6 +32,7 @@ import {
   updateProfileFromProviders,
 } from '@shokujii/base/utils/providerService'
 import { ZodError } from 'zod'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 
 const converterUserPersonalInformation: FirestoreDataConverter<UserPersonalInformation> = {
   toFirestore(userPersonalInformation: UserPersonalInformation): DocumentData {
@@ -100,67 +101,54 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     return _cart.value.filter((item) => isWithinOrderDeadline(item.event.event_deadline_datetime))
   })
   let unsubscribeOrders: Unsubscribe | null = null
-  let subscribeOrdersStarted = false
   const subscribeOrders = () => {
     const uid = getAuth().currentUser?.uid
-    if (uid == null) {
+    if (uid == null || unsubscribeOrders != null) {
       return
     }
-    if (unsubscribeOrders != null || subscribeOrdersStarted) {
-      return
+    const constraints = [where('user_id', '==', uid), where('status', '==', 'in_cart')]
+    const ordersEnterpriseFilter = resolveOrdersEnterpriseIdForQuery()
+    if (ordersEnterpriseFilter !== 'none') {
+      constraints.push(where('enterprise_id', '==', ordersEnterpriseFilter))
     }
-    subscribeOrdersStarted = true
-    void (async () => {
-      try {
-        const constraints = [where('user_id', '==', uid), where('status', '==', 'in_cart')]
-        const ordersEnterpriseFilter = resolveOrdersEnterpriseIdForQuery()
-        if (ordersEnterpriseFilter !== 'none') {
-          constraints.push(where('enterprise_id', '==', ordersEnterpriseFilter))
+    const q = query(collectionGroup(db, 'member_orders'), ...constraints, orderBy('updated_at', 'desc')).withConverter(
+      memberOrderConverter,
+    )
+    unsubscribeOrders = onSnapshot(q, async (snapshots) => {
+      const cartOrders = snapshots.docs.map((doc) => doc.data())
+
+      const grouped = new Map<string, EventMemberOrder[]>()
+      for (const order of cartOrders) {
+        const key = order.event_id
+        const existing = grouped.get(key)
+        if (existing) {
+          existing.push(order)
+        } else {
+          grouped.set(key, [order])
         }
-        const q = query(
-          collectionGroup(db, 'member_orders'),
-          ...constraints,
-          orderBy('updated_at', 'desc'),
-        ).withConverter(memberOrderConverter)
-        unsubscribeOrders = onSnapshot(q, async (snapshots) => {
-          const cartOrders = snapshots.docs.map((doc) => doc.data())
+      }
 
-          const grouped = new Map<string, EventMemberOrder[]>()
-          for (const order of cartOrders) {
-            const key = order.event_id
-            const existing = grouped.get(key)
-            if (existing) {
-              existing.push(order)
-            } else {
-              grouped.set(key, [order])
+      try {
+        const cartItems = await Promise.all(
+          Array.from(grouped.entries()).map(async ([eventId, orders]): Promise<CartItem | null> => {
+            try {
+              const eventStore = useEventStore(eventId)
+              const event = await eventStore.getLoadedEvent()
+              return { orders, event }
+            } catch (err) {
+              if (err instanceof ZodError) {
+                return null
+              }
+              throw err
             }
-          }
-
-          try {
-            const cartItems = await Promise.all(
-              Array.from(grouped.entries()).map(async ([eventId, orders]): Promise<CartItem | null> => {
-                try {
-                  const eventStore = useEventStore(eventId)
-                  const event = await eventStore.getLoadedEvent()
-                  return { orders, event }
-                } catch (err) {
-                  if (err instanceof ZodError) {
-                    return null
-                  }
-                  throw err
-                }
-              }),
-            )
-            _cart.value = cartItems.filter((item): item is CartItem => item != null)
-          } catch (err) {
-            console.error(err)
-          }
-        })
+          }),
+        )
+        _cart.value = cartItems.filter((item): item is CartItem => item != null)
       } catch (err) {
         console.error(err)
-        subscribeOrdersStarted = false
+        reportClientError(err, { severity: 'warn' })
       }
-    })()
+    })
   }
 
   const reset = () => {
@@ -169,7 +157,6 @@ export const useCurrentUserStore = defineStore('currentUser', () => {
     personalInformation.value = null
     unsubscribeOrders?.()
     unsubscribeOrders = null
-    subscribeOrdersStarted = false
     _cart.value = null
   }
 

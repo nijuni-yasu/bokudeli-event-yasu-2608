@@ -420,7 +420,8 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
       if (unsubscribeOrders == null) {
         const orderConstraints = [where('event_id', '==', eventId)]
         if ('ordersEnterpriseId' in mergedOptions) {
-          orderConstraints.push(where('enterprise_id', '==', mergedOptions.ordersEnterpriseId))
+          // undefined を渡すと where() が実行時エラーになるため null に正規化する
+          orderConstraints.push(where('enterprise_id', '==', mergedOptions.ordersEnterpriseId ?? null))
         }
         const ordersQuery = query(collectionGroup(db, 'member_orders'), ...orderConstraints).withConverter(
           memberOrderConverter,
@@ -557,7 +558,8 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     const subscribe = () => {
       const eventConstraints = [where('event_id', '==', eventId)]
       if ('eventsEnterpriseId' in mergedOptions) {
-        eventConstraints.push(where('enterprise_id', '==', mergedOptions.eventsEnterpriseId))
+        // undefined を渡すと where() が実行時エラーになるため null に正規化する
+        eventConstraints.push(where('enterprise_id', '==', mergedOptions.eventsEnterpriseId ?? null))
       }
       getDocs(query(collectionGroup(db, 'events'), ...eventConstraints).withConverter(eventConverter)).then(
         (querySnapshot) => {
