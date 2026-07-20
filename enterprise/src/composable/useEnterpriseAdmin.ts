@@ -18,7 +18,8 @@ export async function getEnterpriseIdFromToken(): Promise<string | undefined> {
   const user = getAuth().currentUser
   if (user == null) return undefined
   const token = await user.getIdTokenResult()
-  return token.claims.enterprise_id as string | undefined
+  const enterpriseId = token.claims.enterprise_id
+  return typeof enterpriseId === 'string' && enterpriseId !== '' ? enterpriseId : undefined
 }
 
 export async function isEnterpriseAdmin(): Promise<boolean> {

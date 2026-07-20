@@ -1,5 +1,6 @@
 import { getAuth } from 'firebase/auth'
 import { getEnterpriseById, getEnterpriseMemberById } from '@shokujii/base/stores/enterprise.js'
+import { reportClientError } from '@shokujii/base/utils/reportClientError.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import {
   toEnterpriseMemberMonthlyUsageView,
@@ -29,8 +30,8 @@ export async function fetchEnterpriseMemberMonthlyUsage(
   }
   try {
     const token = await user.getIdTokenResult()
-    const enterpriseId = token.claims.enterprise_id as string | undefined
-    if (enterpriseId == null || enterpriseId === '') {
+    const enterpriseId = token.claims.enterprise_id
+    if (typeof enterpriseId !== 'string' || enterpriseId === '') {
       return null
     }
     const [member, enterprise] = await Promise.all([
@@ -48,6 +49,7 @@ export async function fetchEnterpriseMemberMonthlyUsage(
     return toEnterpriseMemberMonthlyUsageView(member, limit, currentMonth)
   } catch (error) {
     console.warn('Failed to load enterprise member monthly usage', error)
+    reportClientError(error, { componentInfo: 'enterpriseMemberMonthlyUsage', severity: 'warn' })
     return null
   }
 }

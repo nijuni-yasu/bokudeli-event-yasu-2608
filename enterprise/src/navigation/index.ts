@@ -11,7 +11,12 @@ export const useNavItems = () => {
   let unsubscribeAuth: (() => void) | undefined
 
   const refreshAdminMenu = async () => {
-    showAdminMenu.value = await isEnterpriseAdmin()
+    try {
+      showAdminMenu.value = await isEnterpriseAdmin()
+    } catch {
+      // トークン取得失敗時は管理メニューを出さない（ナビ全体の描画は継続する）
+      showAdminMenu.value = false
+    }
   }
 
   onMounted(() => {
