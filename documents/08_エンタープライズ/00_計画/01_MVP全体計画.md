@@ -154,7 +154,7 @@ ID は本書の通し番号。`出所` で正本の元 ID（PA-xx / D-xx / T-xx 
 - **D-2 ✅** — [#2126](https://github.com/nijuniinc/bokudeli-event-new/issues/2126)。`/admin` ダッシュボード・期間ピッカー（初期 3 ヶ月・最大 12 ヶ月）・月別/メンバー別集計・CSV。`enterprise_id` ＋ `is_public` ベース。`billing_snapshots` merge（D-4 連携）含む。
 - **D-3 ✅** — [#2128](https://github.com/nijuniinc/bokudeli-event-new/issues/2128)。`/admin/audit-logs`・`getEnterpriseAuditLogs` Callable。writeAuditLog（v0.1）は従来どおり。
 - **D-4 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`captureEnterpriseBillingSnapshots` cron + recapture Callable。`invoice_files` 削除・recapture 年月ガード含む。
-- **D-5**: コミュニティ一覧等に `enterprise_id` フィルタは部分実装。**未**: RC-44（`/u/:userId` の他社・停止メンバーゲート）。
+- **D-5**: コミュニティ一覧等に `enterprise_id` フィルタは部分実装。**未**: RC-44（`/u/:userId` の他社・停止メンバーゲート）。**EP-9 SNS 非表示**（#2173 含む）は本 PR で対応予定。
 - **D-6 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`enterpriseBillInvoice` HTTP + docx テンプレ + GCS。`invoice_files` による冪等キャッシュ。
 - **D-7 ✅** — [#2134](https://github.com/nijuniinc/bokudeli-event-new/issues/2134)。`/admin/invoices` 一覧 + PDF viewer。`billing_status: final` の月のみ DL 可。
 - **D-1**: 仕様確定（[04_詳細_メール配信](../10_仕様/04_詳細_メール配信.md)）。MVP は方式 A（早期 return）+ `isEnterpriseEvent` / `isEnterpriseUser`（`users.enterprise_id`）の**コード固定デフォルト**。文言・テンプレ変更はスコープ外。#23 / #24 PF only、週刊本文フィルタ、主催者 #7 抑制・#8 維持、誤記 #10 削除。**全社 ON/OFF は Phase 2**（§5.3）。
