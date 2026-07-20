@@ -72,18 +72,28 @@ export const captureEnterpriseBillingSnapshots = onSchedule(
   {
     schedule: '5 0 1 * *',
     timeZone: DEFAULT_TIME_ZONE,
+    timeoutSeconds: 540,
   },
   async () => {
     const yearMonth = getPreviousCalendarYearMonth()
     const enterpriseIds = await listAllEnterpriseIds()
     logger.info('Capturing billing snapshots', { yearMonth, count: enterpriseIds.length })
 
+    const failedEnterpriseIds: string[] = []
     for (const enterpriseId of enterpriseIds) {
       try {
         await captureBillingSnapshotForEnterprise(enterpriseId, yearMonth)
       } catch (error) {
         logger.error('Failed to capture billing snapshot', { enterpriseId, yearMonth, error })
+        failedEnterpriseIds.push(enterpriseId)
       }
+    }
+
+    // 失敗があれば throw して自動リトライに乗せる（upsert なので成功済み enterprise の再実行はべき等）
+    if (failedEnterpriseIds.length > 0) {
+      throw new Error(
+        `billing snapshot capture failed for ${failedEnterpriseIds.length} enterprise(s): ${failedEnterpriseIds.join(', ')}`,
+      )
     }
   },
 )
