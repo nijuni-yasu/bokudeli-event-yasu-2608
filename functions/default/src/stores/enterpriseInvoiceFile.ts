@@ -1,6 +1,9 @@
 import { DocumentData, FirestoreDataConverter, getFirestore, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import { EnterpriseInvoiceFile } from '@shokujii/common/schemas/Enterprise.js'
 
+/** Firestore gRPC status: ALREADY_EXISTS */
+const FIRESTORE_ALREADY_EXISTS_CODE = 6
+
 const invoiceFileConverter: FirestoreDataConverter<EnterpriseInvoiceFile> = {
   toFirestore(invoiceFile: EnterpriseInvoiceFile): DocumentData {
     return invoiceFile.toFirestore()
@@ -38,7 +41,7 @@ export const setInvoiceFileMeta = async (
     return 'created'
   } catch (error) {
     const code = (error as { code?: number }).code
-    if (code === 6) {
+    if (code === FIRESTORE_ALREADY_EXISTS_CODE) {
       return 'already_exists'
     }
     throw error

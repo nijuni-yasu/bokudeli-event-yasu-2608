@@ -7,7 +7,7 @@ import {
   type SnapshotOptions,
 } from 'firebase/firestore'
 import { db } from '@shokujii/base/firebase.js'
-import { Enterprise } from '@shokujii/common/schemas/Enterprise.js'
+import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
 
 const enterpriseConverter: FirestoreDataConverter<Enterprise> = {
   toFirestore(enterprise: Enterprise): DocumentData {
@@ -23,5 +23,25 @@ export const getEnterpriseRef = (enterpriseId: string) =>
 
 export const getEnterpriseById = async (enterpriseId: string): Promise<Enterprise | undefined> => {
   const snapshot = await getDoc(getEnterpriseRef(enterpriseId))
+  return snapshot.exists() ? snapshot.data() : undefined
+}
+
+const enterpriseMemberConverter: FirestoreDataConverter<EnterpriseMember> = {
+  toFirestore(member: EnterpriseMember): DocumentData {
+    return member.toFirestore()
+  },
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): EnterpriseMember {
+    return new EnterpriseMember(snapshot.id, snapshot.data(options))
+  },
+}
+
+export const getEnterpriseMemberRef = (enterpriseId: string, userId: string) =>
+  doc(db, 'enterprises', enterpriseId, 'members', userId).withConverter(enterpriseMemberConverter)
+
+export const getEnterpriseMemberById = async (
+  enterpriseId: string,
+  userId: string,
+): Promise<EnterpriseMember | undefined> => {
+  const snapshot = await getDoc(getEnterpriseMemberRef(enterpriseId, userId))
   return snapshot.exists() ? snapshot.data() : undefined
 }

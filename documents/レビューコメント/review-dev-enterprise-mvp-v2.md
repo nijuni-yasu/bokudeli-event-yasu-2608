@@ -274,3 +274,249 @@ F-1 で `setDefaultEventStoreOptions` を導入したため、ドキュメント
 - `classifyEnterpriseFriend` の友人ループ内 `getEnterpriseMember` が N+1（大量友人時のレイテンシ）
 
 ---
+
+## 評価セッション（2026-07-20 13:05・review-comments-evaluate）
+
+- **評価日時**: 2026-07-20 13:05 JST
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **REVIEW_REQUEST_SINCE**: 2026-07-19T13:32:10Z（手動 evaluate・当該時刻以降の新規コメント）
+- **partial**: true（Codex limits / connect のみ。新規 substantive インラインなし）
+- **Outdated 除外件数**: 0
+- **レビュー非該当スキップ件数**: 5（レビュー依頼 5015908916、Codex limits 5015906178 / 5015909346、Codex connect 5015941083、5015940812 内 user ProfilePage null フィルタ指摘は RC-6 と重複）
+- **手順 4a 自動修正**: RC-14 / RC-16 / RC-17（🚨 2件 / 🟡 1件）
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-14 | 5015940812 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 📏 規約 | 🔧 微修正 | M | enterpriseMemberMonthlyUsage が getDoc 直呼び出し<br>base store 経由 + withConverter に修正済み |
+| [ ] | RC-15 | 5015940812 | 🟡 修正提案 | 未着手 | 📤 スコープ外 | 💾 データ | 📐 リファクタ | M | dashboard store の CG 全件スキャン<br>期間フィルタ移行は別 PR / Issue 推奨 |
+| [x] | RC-16 | 3610651349 | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | invoice_files create 失敗 code 6 がマジックナンバー<br>`FIRESTORE_ALREADY_EXISTS_CODE` 定数化 |
+| [x] | RC-17 | 3610651329 | 🚨 必須修正 | ✅ 対応済み | 📌 スコープ内 | 🐛 実害 | 🔧 微修正 | S | enterpriseMail の空文字 enterprise_id を true 扱い<br>`!== ''` 条件を追加 |
+
+---
+
+**識別子**: RC-14（GitHub id: 5015940812・Copilot トップレベル内指摘）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `enterprise/src/composable/enterpriseMemberMonthlyUsage.ts:38`
+
+**該当コード（レビュー時点の diff）**:
+
+（インライン指摘なし・トップレベル #5015940812 より）
+
+```diff
++    const [memberSnap, enterpriseSnap] = await Promise.all([
++      getDoc(doc(db, 'enterprises', enterpriseId, 'members', userId)),
++      getDoc(doc(db, 'enterprises', enterpriseId)),
++    ])
+```
+
+**レビュワーのコメント（原文）**:
+
+**`enterprise/src/composable/enterpriseMemberMonthlyUsage.ts`** [must]
+
+`getDoc(doc(db, 'enterprises', ...))` を withConverter なしで直接呼んでおり、shokujii-firestore の「DB 操作は必ず store 経由、xxxRef は必ず withConverter 付き」ルールに違反しています。隣の `useEnterpriseAdmin.ts` が `getEnterpriseById()`（base store）を使うのと不整合です。
+
+**コメント要約**:
+
+月次 usage composable が Firestore を withConverter なしで直接読んでいた。
+base store に `getEnterpriseMemberById` を追加し、`getEnterpriseById` と併用する形に揃えた。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 📏 規約
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: M
+
+**判断理由**: AGENTS.md / shokujii-firestore の store 経由・withConverter 必須に反する。Zod バリデーションをバイパスしうる。base に member ref を追加して composable を store 経由に変更するのが一意。
+
+---
+
+**識別子**: RC-15（GitHub id: 5015940812・Copilot トップレベル内指摘）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/dashboard.ts:38`
+
+**該当コード（レビュー時点の diff）**:
+
+（インライン指摘なし・トップレベル #5015940812 より）
+
+**レビュワーのコメント（原文）**:
+
+- **`functions/default/src/stores/dashboard.ts`**: `listOrderedMemberOrdersByEnterprise` / `listStripesByEnterprise` / `listOrderCreateAuditLogs` が期間フィルタなしの collectionGroup 全件スキャンです。データが増えると読み取りコストが線形増加するため、既存インデックス（`enterprise_id` + `updated_at`）を使った `updated_at` 範囲フィルタへの移行を将来的に推奨します。
+
+**コメント要約**:
+
+ダッシュボード集計 store が期間条件なし CG 全件取得のため、データ増加時に読み取りコストが線形増加する。
+`updated_at` 範囲フィルタへの移行は本 PR（D-5 認可）のスコープ外。別 PR / Issue で対応推奨。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: 未着手
+
+**PRスコープ**: 📤 スコープ外
+
+**ラベル**: 💾 データ
+
+**変更種別**: 📐 リファクタ
+
+**想定工数**: M
+
+**判断理由**: 指摘は妥当だがパフォーマンス改善であり、本 PR の D-5 認可レイヤとは独立。インデックス・集計仕様の確認が必要なため別 Issue 化が自然。
+
+---
+
+**識別子**: RC-16（GitHub id: 3610651349）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/stores/enterpriseInvoiceFile.ts:45`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++    const code = (error as { code?: number }).code
++    if (code === 6) {
++      return 'already_exists'
++    }
+```
+
+**レビュワーのコメント（原文）**:
+
+[nits] Firestore の `ref.create()` 失敗時の `code === 6` は意図（ALREADY_EXISTS）が読み取りづらいので、マジックナンバーにならないようコメントか定数化をお願いします。
+
+**コメント要約**:
+
+請求書メタ create の ALREADY_EXISTS 判定が gRPC code `6` のマジックナンバーだった。
+`FIRESTORE_ALREADY_EXISTS_CODE` 定数とコメントで意図を明示した。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 可読性改善。定数化で一意に解消可能。
+
+---
+
+**識別子**: RC-17（GitHub id: 3610651329）
+
+**レビュワー**: Copilot
+
+**指摘箇所**: `functions/default/src/utils/enterpriseMail.ts:9`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
++export function isEnterpriseUser(user: { enterprise_id?: string | null }): boolean {
++  return user.enterprise_id != null
++}
+```
+
+**レビュワーのコメント（原文）**:
+
+[must] `enterprise_id` が空文字（""）のケースでも true になってしまい、PF 扱いしたいデータまでエンプラ判定される可能性があります（他箇所では `enterprise_id != null && enterprise_id !== ''` としているため整合しません）。空文字は未設定として扱う条件に揃えてください。
+
+**コメント要約**:
+
+D-1 メール制御の `isEnterpriseEvent` / `isEnterpriseUser` が空文字 `""` をエンプラ扱いしていた。
+`eventDraft.ts` 等と同様 `!== ''` を追加し PF メール skip 誤判定を防止。
+
+**評価**: 🚨 必須修正
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: 🐛 実害
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: 空文字 enterprise_id は materialize 過渡期に存在しうる。エンプラ判定が true だと PF 向けメールが skip され実害になりうる。
+
+---
+
+## 評価セッション（2026-07-20 13:05・shokujii-code-review）
+
+- **評価日時**: 2026-07-20 13:05 JST
+- **ブランチ名**: dev/enterprise-mvp-v2
+- **PR**: #2120
+- **Outdated 除外件数**: 該当なし
+- **レビュー非該当スキップ件数**: 0
+- **対象**: RC-14〜17 自動修正差分（evaluate 手順 4a）+ `enterpriseMail.test.ts` 追補
+- **手順 3b 自動修正**: RC-18
+
+### RC 一覧（サマリ）
+
+| 対応 | RC | GitHub id | 評価 | ステータス | PRスコープ | ラベル | 種別 | 工数 | 要約 |
+|:----:|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| [x] | RC-18 | なし | 🟡 修正提案 | ✅ 対応済み | 📌 スコープ内 | — | 🔧 微修正 | S | RC-17 の空文字判定に空文字 false テストが未追加<br>両関数に it を追加済み |
+
+---
+
+**識別子**: RC-18（GitHub id: なし・エージェントレビュー）
+
+**レビュワー**: Cursor Agent（shokujii-code-review）
+
+**指摘箇所**: `functions/default/src/utils/enterpriseMail.test.ts:17`
+
+**該当コード（レビュー時点の diff）**:
+
+```diff
+   it('enterprise_id が undefined なら false', () => {
+     expect(isEnterpriseEvent({})).toBe(false)
+     expect(isEnterpriseEvent({ enterprise_id: undefined })).toBe(false)
+   })
+ })
+```
+
+**レビュワーのコメント（原文）**:
+
+🟡 **修正提案** [🔧微修正/S]: RC-17 で `isEnterpriseEvent` / `isEnterpriseUser` に空文字除外を追加したが、回帰防止の vitest が null/undefined のみで `''` ケースが無い → 空文字 false の it を両 describe に追加する。
+
+**コメント要約**:
+
+RC-17 修正の回帰テストとして空文字 `''` が false になる it を追加した。
+`enterpriseMail.test.ts` 8 件すべて pass。
+
+**評価**: 🟡 修正提案
+
+**ステータス**: ✅ 対応済み
+
+**PRスコープ**: 📌 スコープ内
+
+**ラベル**: —
+
+**変更種別**: 🔧 微修正
+
+**想定工数**: S
+
+**判断理由**: テスト方針上、バグ修正に対応する境界値テストは S 工数で追加が妥当。修正方針は一意。
+
+**確認要点（👌）**:
+
+- `base/src/stores/enterprise.ts`: `enterpriseMemberConverter` + `getEnterpriseMemberById` が withConverter 付き ref 経由
+- `enterpriseMemberMonthlyUsage.ts`: Firestore 直呼び出し削除、`getEnterpriseById` / `getEnterpriseMemberById` 利用
+- `enterpriseInvoiceFile.ts`: `FIRESTORE_ALREADY_EXISTS_CODE` 定数化
+- `enterpriseMail.ts`: `!== ''` が `eventDraft.ts` と整合
+
+---

@@ -1,7 +1,5 @@
-import { doc, getDoc } from 'firebase/firestore'
 import { getAuth } from 'firebase/auth'
-import { db } from '@shokujii/base/firebase.js'
-import { Enterprise, EnterpriseMember } from '@shokujii/common/schemas/Enterprise.js'
+import { getEnterpriseById, getEnterpriseMemberById } from '@shokujii/base/stores/enterprise.js'
 import { formatYearMonth } from '@shokujii/common/utils/datetime.js'
 import {
   toEnterpriseMemberMonthlyUsageView,
@@ -35,15 +33,13 @@ export async function fetchEnterpriseMemberMonthlyUsage(
     if (enterpriseId == null || enterpriseId === '') {
       return null
     }
-    const [memberSnap, enterpriseSnap] = await Promise.all([
-      getDoc(doc(db, 'enterprises', enterpriseId, 'members', userId)),
-      getDoc(doc(db, 'enterprises', enterpriseId)),
+    const [member, enterprise] = await Promise.all([
+      getEnterpriseMemberById(enterpriseId, userId),
+      getEnterpriseById(enterpriseId),
     ])
-    if (!memberSnap.exists() || !enterpriseSnap.exists()) {
+    if (member == null || enterprise == null) {
       return null
     }
-    const member = new EnterpriseMember(userId, memberSnap.data())
-    const enterprise = new Enterprise(enterpriseId, enterpriseSnap.data())
     const limit = enterprise.monthly_limit_per_user
     if (typeof limit !== 'number') {
       return null
