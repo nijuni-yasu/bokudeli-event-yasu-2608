@@ -218,10 +218,20 @@ watch(
                 <dd class="text-description">{{ event.community_name }}</dd>
                 <dt class="text-description">{{ $t('success_join_event_dialog.food') }}</dt>
                 <dd class="text-description">{{ event.shop_name }}</dd>
-                <template v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''">
+                <template
+                  v-if="
+                    !hideShareSns &&
+                    typeof event.event_sns_hash_tag === 'string' &&
+                    event.event_sns_hash_tag.trim() !== ''
+                  "
+                >
                   <dt class="text-description">{{ $t('success_join_event_dialog.hashtag') }}</dt>
                   <dd class="text-description">
-                    <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
+                    <a
+                      :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       #{{ event.event_sns_hash_tag }}
                     </a>
                   </dd>

@@ -336,7 +336,7 @@ export const useEventStore = (target: string | BokudeliEvent, options: EventStor
     })
 
     const updateEvent = async (data: BokudeliEvent) => {
-      await draftPreparer(data, scopedEnterpriseId)
+      await draftPreparer(data, mergedOptions.eventsEnterpriseId ?? mergedOptions.ordersEnterpriseId ?? null)
       const eventRef = await getEventRef()
       await setDoc(eventRef, data, { merge: true })
     }
