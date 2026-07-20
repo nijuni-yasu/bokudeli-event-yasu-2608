@@ -9,13 +9,33 @@ export class AuditLogQueryError extends Error {
   }
 }
 
+function encodeBase64Url(text: string): string {
+  const bytes = new TextEncoder().encode(text)
+  let binary = ''
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte)
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function decodeBase64Url(encoded: string): string {
+  const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+  const binary = atob(padded)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new TextDecoder().decode(bytes)
+}
+
 export function encodeAuditLogCursor(cursor: AuditLogCursor): string {
-  return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url')
+  return encodeBase64Url(JSON.stringify(cursor))
 }
 
 export function decodeAuditLogCursor(encoded: string): AuditLogCursor | undefined {
   try {
-    const parsed: unknown = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'))
+    const parsed: unknown = JSON.parse(decodeBase64Url(encoded))
     if (typeof parsed === 'object' && parsed != null && 'timestamp' in parsed && 'log_id' in parsed) {
       const { timestamp, log_id: logId } = parsed
       if (typeof timestamp === 'number' && typeof logId === 'string' && logId !== '') {

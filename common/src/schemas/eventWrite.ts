@@ -39,26 +39,6 @@ export type EventWriteCoreApp = z.infer<typeof EventWriteCoreAppSchema>
 
 export const PfEventPaymentSchema = z.enum(['user_advance', 'user_on_day', 'community_bill'])
 
-const pfEnterpriseFieldGuard = (
-  data: { enterprise_id?: string | null; enterprise_subsidy_settings?: unknown },
-  ctx: z.RefinementCtx,
-) => {
-  if (data.enterprise_id != null) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'PF write must not set enterprise_id to a string',
-      path: ['enterprise_id'],
-    })
-  }
-  if (data.enterprise_subsidy_settings !== undefined) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'PF write must not include enterprise_subsidy_settings',
-      path: ['enterprise_subsidy_settings'],
-    })
-  }
-}
-
 /** Enterprise 書き込み分支 */
 export const EnterpriseEventWriteAppSchema = EventWriteCoreAppSchema.extend({
   event_payment: z.literal('enterprise_subsidy'),
@@ -79,17 +59,14 @@ const PfEventWriteBaseSchema = EventWriteCoreAppSchema.extend({
   enterprise_subsidy_settings: z.undefined().optional(),
 })
 
-/** PF 書き込み分支（superRefine は union 外で適用） */
-export const PfEventWriteAppSchema = PfEventWriteBaseSchema.superRefine(pfEnterpriseFieldGuard)
+/** PF 書き込み分支 */
+export const PfEventWriteAppSchema = PfEventWriteBaseSchema
 
 /** write 用 discriminatedUnion（分支は ZodObject のみ） */
-export const EventWriteAppSchema = z
-  .discriminatedUnion('event_payment', [PfEventWriteBaseSchema, EnterpriseEventWriteAppSchema])
-  .superRefine((data, ctx) => {
-    if (data.event_payment !== 'enterprise_subsidy') {
-      pfEnterpriseFieldGuard(data, ctx)
-    }
-  })
+export const EventWriteAppSchema = z.discriminatedUnion('event_payment', [
+  PfEventWriteBaseSchema,
+  EnterpriseEventWriteAppSchema,
+])
 
 export type PfEventWriteApp = z.infer<typeof PfEventWriteAppSchema>
 export type EnterpriseEventWriteApp = z.infer<typeof EnterpriseEventWriteAppSchema>
