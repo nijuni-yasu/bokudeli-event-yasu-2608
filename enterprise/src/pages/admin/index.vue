@@ -22,7 +22,11 @@ let loadSeq = 0
 
 const loadDashboard = async () => {
   if (enterpriseId.value == null) return
-  if (periodError.value != null) return
+  if (periodError.value != null) {
+    monthlyRows.value = []
+    memberRows.value = []
+    return
+  }
   const seq = ++loadSeq
   loading.value = true
   try {
@@ -40,6 +44,8 @@ const loadDashboard = async () => {
     memberRows.value = memberResult.data.rows
   } catch {
     if (seq !== loadSeq) return
+    monthlyRows.value = []
+    memberRows.value = []
     notification.show(t('admin.dashboard.load_failed'), 'error')
   } finally {
     if (seq === loadSeq) {
