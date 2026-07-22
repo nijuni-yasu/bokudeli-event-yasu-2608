@@ -22,14 +22,16 @@
     "@shokujii/base": "file:../base",
     "@shokujii/common": "file:../common",
     "@tinymce/tinymce-vue": "^6",
+    "apexcharts": "^5.15.2",
     "vue-draggable-next": "^2.3.0",
-    "vue-easy-lightbox": "^1.19.0"
+    "vue-easy-lightbox": "^1.19.0",
+    "vue3-apexcharts": "^1.11.1"
   },
   "devDependencies": {
-    "vitest": "^3.0.5",
     "unplugin-auto-import": "^0.17.8",
     "unplugin-vue-router": "^0.10.0",
     "vite-plugin-pwa": "^1.0.0",
-    "vite-plugin-vue-layouts": "^0.11.0"
+    "vite-plugin-vue-layouts": "^0.11.0",
+    "vitest": "^3.0.5"
   }
 }

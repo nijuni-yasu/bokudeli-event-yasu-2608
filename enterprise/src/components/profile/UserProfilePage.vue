@@ -9,15 +9,24 @@ import ProfileEventCard from '@shokujii/base/components/ProfileEventCard.vue'
 import CommunityCard from '@shokujii/base/components/CommunityCard.vue'
 import IncrementalLoader from '@shokujii/base/components/IncrementalLoader.vue'
 import FriendCard from '@shokujii/base/components/FriendCard.vue'
+import EnterpriseSubsidyUsagePanel from '@/components/profile/EnterpriseSubsidyUsagePanel.vue'
 import { useCommunityListStore } from '@shokujii/base/stores/communityList.js'
 import { useUserEventListByUserId } from '@shokujii/base/stores/userEventList.js'
 import { useUserOrderHistoryByUserId } from '@shokujii/base/stores/userOrderHistoryList.js'
-import { useUserStore } from '@shokujii/base/stores/user.js'
 import { useUserProfilePreviewStore } from '@shokujii/base/stores/userProfilePreview.js'
 import { useUserFoodsStore } from '@shokujii/base/stores/userFoods.js'
-import { mdiAccountCircle, mdiAccountGroup, mdiCalendarHeart, mdiFood, mdiHeartOutline, mdiReceiptText } from '@mdi/js'
+import {
+  mdiAccountCircle,
+  mdiAccountGroup,
+  mdiCalendarHeart,
+  mdiFood,
+  mdiHeartOutline,
+  mdiReceiptText,
+  mdiSale,
+} from '@mdi/js'
 import { getCommunityPath, getEventPath, getReceiptPath, getUserPath } from '@/router/utils'
 import { useEnterpriseId } from '@/composable/useEnterpriseId'
+import { fetchEnterpriseUsageTabEligible } from '@/composable/enterpriseMemberMonthlyUsage.js'
 import { cancelOrders as callCancelOrders } from '@shokujii/base/apis/stripe.js'
 import UserSuccessJoinEventDialog from '@shokujii/base/components/UserSuccessJoinEventDialog.vue'
 import { useNotification } from '@shokujii/base/composable/notification.js'
@@ -35,6 +44,7 @@ import { convertStoragePathToURL } from '@shokujii/base/utils/storage.js'
 import { useDisplay } from 'vuetify'
 
 const TAB_PROFILE = 'profile'
+const TAB_USAGE = 'usage'
 const TAB_FRIENDS = 'friends'
 const TAB_EVENTS = 'events'
 const TAB_COMMUNITIES = 'communities'
@@ -55,6 +65,7 @@ const PROFILE_FRIENDS_PREVIEW_MAX_BY_BREAKPOINT = {
 const PROFILE_FRIENDS_PAGE_SIZE = 30
 type TabKey =
   | typeof TAB_PROFILE
+  | typeof TAB_USAGE
   | typeof TAB_FRIENDS
   | typeof TAB_EVENTS
   | typeof TAB_COMMUNITIES
@@ -86,23 +97,62 @@ const notification = useNotification()
 
 const { t: $t } = useI18n()
 
-const { user, exists } = storeToRefs(useUserStore(profileUserId))
 const currentUserStore = useCurrentUserStore()
 const { user: loginUser } = storeToRefs(currentUserStore)
+
+const previewStore = useUserProfilePreviewStore(profileUserId)
+const {
+  data: previewData,
+  loading: previewLoading,
+  error: previewError,
+  notFound: previewNotFound,
+  accessDenied: previewAccessDenied,
+} = storeToRefs(previewStore)
+
+const profileDisplayUser = computed(() => {
+  const profile = previewData.value?.user_profile
+  if (profile == null) {
+    return null
+  }
+  return new User(profile.user_id, profile)
+})
+
+const profileDepartment = computed(() => previewData.value?.department ?? null)
 
 const cancelLoadingEventId = ref<string | null>(null)
 /** UserEventCard のキャンセルダイアログの開閉（開いているイベントの event_id、閉じているときは null） */
 const cancelDialogEventId = ref<string | null>(null)
 
 const isOwner = computed(() => loginUser.value?.user_id === profileUserId)
-/** Firestore 上に users ドキュメントが無い、または退会済み */
-const isInvalidProfile = computed(() => exists.value === false || (user.value != null && user.value.is_deleted))
-const isProfileLoading = computed(() => profileUserId !== '' && exists.value === null)
+/** 福利厚生上限設定あり（利用状況タブ表示可否）。未判定は null */
+const usageTabEligible = ref<boolean | null>(null)
+const showUsageTab = computed(() => isOwner.value && usageTabEligible.value === true)
+/** Callable 認可ゲート: プレビュー取得成功まで本体を出さない（RC-44） */
+const isProfileGateLoading = computed(
+  () =>
+    profileUserId !== '' &&
+    previewLoading.value &&
+    previewData.value == null &&
+    !previewNotFound.value &&
+    !previewAccessDenied.value,
+)
+const isProfileAccessDenied = computed(() => previewAccessDenied.value)
+const isInvalidProfile = computed(() => previewNotFound.value)
+const isProfileReady = computed(() => previewData.value != null && profileDisplayUser.value != null)
+/** getUserProfilePreview 認可成功（RC-44: タブ store の load 条件） */
+const isPreviewAccessGranted = computed(
+  () => profileUserId !== '' && !previewNotFound.value && !previewAccessDenied.value && previewData.value != null,
+)
 
-const userEventListStore = useUserEventListByUserId(profileUserId)
+const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
+  profileFilter: { kind: 'enterprise', enterpriseId: enterpriseId.value },
+  autoLoad: false,
+})
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
 
-const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId)
+const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId, 6, {
+  profileFilter: { kind: 'enterprise', enterpriseId: enterpriseId.value },
+})
 const {
   events: orderHistoryEvents,
   orderStateByEventId: orderHistoryStateByEventId,
@@ -111,11 +161,24 @@ const {
 } = storeToRefs(userOrderHistoryStore)
 
 watch(
-  () => [profileUserId, isOwner.value, exists.value, user.value?.is_deleted] as const,
-  ([pid, owner, ex, deleted]) => {
-    if (pid === '' || !owner) return
-    if (ex === null) return
-    if (ex === false || deleted === true) return
+  () => [profileUserId, isOwner.value, isPreviewAccessGranted.value] as const,
+  ([pid, owner, granted]) => {
+    if (!owner || !granted) {
+      usageTabEligible.value = false
+      return
+    }
+    usageTabEligible.value = null
+    void fetchEnterpriseUsageTabEligible(pid).then((eligible) => {
+      usageTabEligible.value = eligible
+    })
+  },
+  { immediate: true },
+)
+
+watch(
+  () => [isOwner.value, isPreviewAccessGranted.value] as const,
+  ([owner, granted]) => {
+    if (!owner || !granted) return
     userOrderHistoryStore.reload()
   },
   { immediate: true },
@@ -126,15 +189,13 @@ const userFriendsByMeetCountStore = ref<UserFriendsStore | null>(null)
 const userFriendsByLastMetStore = ref<UserFriendsStore | null>(null)
 
 watch(
-  () => [profileUserId, exists.value, user.value?.is_deleted] as const,
-  ([pid, ex, deleted]) => {
+  isPreviewAccessGranted,
+  (granted) => {
     userFriendsByMeetCountStore.value = null
     userFriendsByLastMetStore.value = null
-    if (pid === '') return
-    if (ex === null) return
-    if (ex === false || deleted === true) return
-    userFriendsByMeetCountStore.value = useUserFriendsStore(pid, 'meet_count', PROFILE_FRIENDS_PAGE_SIZE)
-    userFriendsByLastMetStore.value = useUserFriendsStore(pid, 'last_met_at', PROFILE_FRIENDS_PAGE_SIZE)
+    if (!granted) return
+    userFriendsByMeetCountStore.value = useUserFriendsStore(profileUserId, 'meet_count', PROFILE_FRIENDS_PAGE_SIZE)
+    userFriendsByLastMetStore.value = useUserFriendsStore(profileUserId, 'last_met_at', PROFILE_FRIENDS_PAGE_SIZE)
   },
   { immediate: true },
 )
@@ -199,6 +260,8 @@ const resolveTabFromQuery = (rawTab: string): TabKey => {
     case TAB_COMMUNITIES:
     case TAB_FOODS:
       return rawTab
+    case TAB_USAGE:
+      return showUsageTab.value ? TAB_USAGE : TAB_PROFILE
     case TAB_ORDERS:
       return loginUser.value?.user_id === profileUserId ? TAB_ORDERS : TAB_PROFILE
     default:
@@ -211,11 +274,17 @@ const tabs = ref<TabKey>(resolveTabFromQuery(String(route.query.tab ?? '')))
 watch(
   () => isOwner.value,
   (owner) => {
-    if (!owner && tabs.value === TAB_ORDERS) {
+    if (!owner && (tabs.value === TAB_ORDERS || tabs.value === TAB_USAGE)) {
       tabs.value = TAB_PROFILE
     }
   },
 )
+
+watch(showUsageTab, (show) => {
+  if (!show && tabs.value === TAB_USAGE) {
+    tabs.value = TAB_PROFILE
+  }
+})
 
 const queryTabFor = (tab: TabKey): string | undefined => (tab === TAB_PROFILE ? undefined : tab)
 
@@ -232,9 +301,9 @@ const syncTabToUrl = (tab: TabKey) => {
   void router.replace({ query })
 }
 
-/** ブラウザ戻る/進む・loginUser 解決後の URL 反映（仕様 4.2.5） */
+/** ブラウザ戻る/進む・loginUser 解決後・利用状況タブ可否確定後の URL 反映 */
 watch(
-  () => [route.query.tab, loginUser.value?.user_id, profileUserId] as const,
+  () => [route.query.tab, loginUser.value?.user_id, profileUserId, usageTabEligible.value] as const,
   ([rawTab]) => {
     const resolved = resolveTabFromQuery(String(rawTab ?? ''))
     if (tabs.value !== resolved) {
@@ -243,10 +312,19 @@ watch(
   },
 )
 
-const previewStore = useUserProfilePreviewStore(profileUserId)
-const { data: previewData, loading: previewLoading, error: previewError } = storeToRefs(previewStore)
-const userFoodsStore = useUserFoodsStore(profileUserId, 12)
+const userFoodsStore = useUserFoodsStore(profileUserId, 12, { autoLoad: false })
 const { foods: pagedFoods, hasMore: foodHasMore, loading: foodLoading, error: foodError } = storeToRefs(userFoodsStore)
+
+/** RC-44: preview Callable 成功後のみイベント/フードタブ store を load */
+watch(
+  isPreviewAccessGranted,
+  (granted) => {
+    if (!granted) return
+    userEventListStore.reload()
+    userFoodsStore.reload()
+  },
+  { immediate: true },
+)
 
 /** ともだち追読みのためのフック（タブ表示・ソート切替時に next を試す） */
 const isFriendTab = (tab: TabKey | null) => tab === TAB_FRIENDS
@@ -363,9 +441,9 @@ if (route.query.eventId != null && route.query.communityAccount != null) {
 
 /** 注文完了で遷移したとき・既存 Pinia ストアが古い一覧のままになるのを防ぐ */
 watch(
-  () => [route.query.eventId, route.query.communityAccount] as const,
-  ([eventId, communityAccount]) => {
-    if (profileUserId === '') return
+  () => [route.query.eventId, route.query.communityAccount, isPreviewAccessGranted.value] as const,
+  ([eventId, communityAccount, granted]) => {
+    if (!granted) return
     if (eventId != null && communityAccount != null) {
       userEventListStore.reload()
     }
@@ -436,7 +514,6 @@ watch(
   (uid, prevUid) => {
     if (uid === prevUid) return
     previewStore.reload()
-    userFoodsStore.reload()
   },
 )
 
@@ -545,21 +622,34 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
 </script>
 
 <template>
-  <v-container v-if="isProfileLoading" class="d-flex align-center justify-center" style="min-height: 60vh">
+  <v-container v-if="isProfileGateLoading" class="d-flex align-center justify-center" style="min-height: 60vh">
     <v-progress-circular indeterminate color="primary" size="48" />
+  </v-container>
+  <v-container v-else-if="isProfileAccessDenied" class="d-flex align-center justify-center" style="min-height: 60vh">
+    <p class="text-body-1 text-medium-emphasis">{{ $t('user_profile.access_denied') }}</p>
   </v-container>
   <v-container v-else-if="isInvalidProfile" class="d-flex align-center justify-center" style="min-height: 60vh">
     <p class="text-body-1 text-medium-emphasis">{{ $t('user_profile.user_not_found') }}</p>
   </v-container>
-  <v-row v-else-if="user != null" justify="center">
+  <v-row v-else-if="isProfileReady && profileDisplayUser != null" justify="center">
     <v-col cols="12" sm="8" md="3">
-      <UserBioPanel :user-data="user" :is-editable="isOwner" />
+      <UserBioPanel :user-data="profileDisplayUser" :is-editable="isOwner" hide-sns />
+      <p
+        v-if="profileDepartment != null && profileDepartment !== ''"
+        class="text-body-2 text-medium-emphasis mt-3 px-2"
+      >
+        {{ $t('user_profile.department_label', { department: profileDepartment }) }}
+      </p>
     </v-col>
     <v-col cols="12" sm="8" md="9">
       <v-tabs v-model="tabs" class="profile-page-tabs" grow stacked density="compact">
         <v-tab :value="TAB_PROFILE">
           <v-icon :icon="mdiAccountCircle" size="22" />
           <span class="profile-page-tabs__label">{{ $t('user_profile.tab_profile') }}</span>
+        </v-tab>
+        <v-tab v-if="showUsageTab" :value="TAB_USAGE">
+          <v-icon :icon="mdiSale" size="22" />
+          <span class="profile-page-tabs__label">{{ $t('user_profile.tab_usage') }}</span>
         </v-tab>
         <v-tab :value="TAB_FRIENDS">
           <v-icon :icon="mdiHeartOutline" size="22" />
@@ -631,15 +721,23 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
                   v-if="profilePreviewFriends.length > 0"
                   class="profile-friends-preview d-flex flex-wrap ga-2 align-center"
                 >
-                  <router-link
-                    v-for="friend in profilePreviewFriends"
-                    :key="friend.user_id"
-                    class="profile-friends-preview-link text-decoration-none flex-shrink-0"
-                    :to="getUserPath(friend.user_id)"
-                    :aria-label="friend.user_name"
-                  >
-                    <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
-                  </router-link>
+                  <template v-for="friend in profilePreviewFriends" :key="friend.user_id">
+                    <router-link
+                      v-if="friend.is_linkable !== false"
+                      class="profile-friends-preview-link text-decoration-none flex-shrink-0"
+                      :to="getUserPath(friend.user_id)"
+                      :aria-label="friend.user_name"
+                    >
+                      <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
+                    </router-link>
+                    <span
+                      v-else
+                      class="profile-friends-preview-link flex-shrink-0 d-inline-flex"
+                      :aria-label="friend.user_name"
+                    >
+                      <UserAvatar :user="friendUserOf(friend)" :size="PROFILE_FRIEND_PREVIEW_AVATAR_SIZE" />
+                    </span>
+                  </template>
                 </div>
                 <div
                   v-if="profilePreviewFriendsHasMore || profilePreviewFriends.length > 0"
@@ -958,6 +1056,10 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
           </template>
         </v-window-item>
 
+        <v-window-item v-if="showUsageTab" :value="TAB_USAGE">
+          <EnterpriseSubsidyUsagePanel />
+        </v-window-item>
+
         <v-window-item :value="TAB_FRIENDS">
           <v-row v-if="activeFriends.length > 0" class="align-center mb-2">
             <v-col cols="12" sm="4">
@@ -979,7 +1081,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
               <FriendCard
                 :friend="friend"
                 :target-user-id="profileUserId"
-                :target-user-name="user.user_name"
+                :target-user-name="profileDisplayUser.user_name"
                 :is-owner="isOwner"
                 :resolve-user-path="getUserPath"
                 :resolve-event-path="getEventPath"
@@ -987,7 +1089,11 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
             </v-col>
           </v-row>
           <div v-else-if="!activeUserFriendsStore?.loading" class="text-body-1 text-medium-emphasis pa-4">
-            {{ isOwner ? $t('user.friend_empty_tab') : $t('user.friend_empty_other', { name: user.user_name }) }}
+            {{
+              isOwner
+                ? $t('user.friend_empty_tab')
+                : $t('user.friend_empty_other', { name: profileDisplayUser.user_name })
+            }}
           </div>
           <v-row class="justify-center">
             <v-col cols="auto">
@@ -1240,6 +1346,7 @@ const formatProfileDate = (epochMillis: number, kind: 'withWeekday' | 'date' = '
     :is-posted="($route.query.isPosted === 'true')"
     :session-id="(($route.query.session_id ?? '') as string)"
     :user-id="profileUserId"
+    hide-share-sns
   />
 </template>
 

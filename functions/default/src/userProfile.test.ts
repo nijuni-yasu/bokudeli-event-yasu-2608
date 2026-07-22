@@ -36,6 +36,41 @@ import {
   isProfileViewerOwner,
   MAX_PROFILE_PREVIEW_SKIP_PAGES,
 } from './utils/profileItemVisibility.js'
+import { buildPublicProfile } from './userProfile.js'
+
+describe('buildPublicProfile', () => {
+  const sampleUser = {
+    user_id: 'u1',
+    user_name: 'Alice',
+    user_description: 'bio',
+    user_image_url: 'https://example.com/a.png',
+    user_sns_facebook: 'alice-fb',
+    user_sns_facebook_name: 'Alice FB',
+    user_sns_twitter: 'alice-x',
+    user_sns_instagram: 'alice-ig',
+    user_sns_website: 'https://alice.example',
+    is_deleted: false,
+  }
+
+  it('omitSns 未指定時は SNS フィールドをそのまま返す', () => {
+    expect(buildPublicProfile(sampleUser)).toMatchObject({
+      user_sns_facebook: 'alice-fb',
+      user_sns_twitter: 'alice-x',
+      user_sns_instagram: 'alice-ig',
+      user_sns_website: 'https://alice.example',
+    })
+  })
+
+  it('omitSns: true のとき SNS フィールドを空文字で返す', () => {
+    expect(buildPublicProfile(sampleUser, { omitSns: true })).toMatchObject({
+      user_sns_facebook: '',
+      user_sns_facebook_name: '',
+      user_sns_twitter: '',
+      user_sns_instagram: '',
+      user_sns_website: '',
+    })
+  })
+})
 
 describe('profileItemVisibility helpers', () => {
   it('MAX_PROFILE_PREVIEW_SKIP_PAGES は 20', () => {

@@ -14,8 +14,11 @@ import {
   setCommunityMemberWithRoles,
   ShokujiiCommunity,
 } from '../stores/community.js'
-import { getEnterpriseMember, getEnterpriseMembersCollectionRef } from '../stores/enterprise.js'
-import { getUserIdFromEmail } from '../stores/user.js'
+import {
+  getEnterpriseMember,
+  getEnterpriseMemberUserIdByEmail,
+  getEnterpriseMembersCollectionRef,
+} from '../stores/enterprise.js'
 import { writeAuditLog } from '../utils/auditLog.js'
 import { assertEnterpriseAdmin, getClientIp, normalizeEnterpriseEmail } from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
@@ -53,7 +56,7 @@ async function validateCreateCommunityRow(
   }
 
   const managerEmail = normalizeEnterpriseEmail(row.manager_email)
-  const managerUserId = await getUserIdFromEmail(managerEmail)
+  const managerUserId = await getEnterpriseMemberUserIdByEmail(enterpriseId, managerEmail)
   if (managerUserId == null) {
     return '指定された管理者メールアドレスは登録されていません'
   }
@@ -78,7 +81,7 @@ async function createSingleEnterpriseCommunity(
 
   try {
     const managerEmail = normalizeEnterpriseEmail(row.manager_email)
-    const managerUserId = await getUserIdFromEmail(managerEmail)
+    const managerUserId = await getEnterpriseMemberUserIdByEmail(enterpriseId, managerEmail)
     if (managerUserId == null) {
       return {
         row: row.row,

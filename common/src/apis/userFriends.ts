@@ -32,6 +32,10 @@ export type UserFriendListItem = {
   meet_count: number
   first_met_at: number
   last_met_at: number
+  /** エンプラ: PF 版ゲスト友人のとき true */
+  is_guest_friend?: boolean
+  /** エンプラ: プロフィールへリンクしてよいとき true（未設定 = PF 版どおりリンク可） */
+  is_linkable?: boolean
 }
 
 export type GetUserFriendMeetLogRequest = {

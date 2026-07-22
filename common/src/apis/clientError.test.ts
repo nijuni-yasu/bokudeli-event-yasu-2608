@@ -77,6 +77,11 @@ describe('ClientErrorReportRequestSchema', () => {
     expect(result.app).toBe('partner')
   })
 
+  it('app: enterprise で parse できる', () => {
+    const result = ClientErrorReportRequestSchema.parse({ ...validPayload, app: 'enterprise' })
+    expect(result.app).toBe('enterprise')
+  })
+
   it('app: admin は拒否される', () => {
     expect(() => ClientErrorReportRequestSchema.parse({ ...validPayload, app: 'admin' })).toThrow()
   })

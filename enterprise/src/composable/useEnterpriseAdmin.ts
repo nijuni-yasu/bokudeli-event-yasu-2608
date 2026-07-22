@@ -1,7 +1,6 @@
 import { getAuth } from 'firebase/auth'
 import type { EnterpriseDiscountType } from '@shokujii/common/schemas/Enterprise.js'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@shokujii/base/firebase.js'
+import { getEnterpriseById } from '@shokujii/base/stores/enterprise.js'
 
 export type EnterpriseDocumentData = {
   company_name: string
@@ -19,7 +18,8 @@ export async function getEnterpriseIdFromToken(): Promise<string | undefined> {
   const user = getAuth().currentUser
   if (user == null) return undefined
   const token = await user.getIdTokenResult()
-  return token.claims.enterprise_id as string | undefined
+  const enterpriseId = token.claims.enterprise_id
+  return typeof enterpriseId === 'string' && enterpriseId !== '' ? enterpriseId : undefined
 }
 
 export async function isEnterpriseAdmin(): Promise<boolean> {
@@ -30,20 +30,19 @@ export async function isEnterpriseAdmin(): Promise<boolean> {
 }
 
 export async function loadEnterpriseDocument(enterpriseId: string): Promise<EnterpriseDocumentData | null> {
-  const snapshot = await getDoc(doc(db, 'enterprises', enterpriseId))
-  if (!snapshot.exists()) return null
-  const data = snapshot.data()
+  const enterprise = await getEnterpriseById(enterpriseId)
+  if (enterprise == null) {
+    return null
+  }
   return {
-    company_name: typeof data.company_name === 'string' ? data.company_name : '',
-    company_logo_url: typeof data.company_logo_url === 'string' ? data.company_logo_url : '',
-    theme_color: typeof data.theme_color === 'string' ? data.theme_color : '#1976D2',
-    subdomain: typeof data.subdomain === 'string' ? data.subdomain : '',
-    custom_domain: typeof data.custom_domain === 'string' ? data.custom_domain : undefined,
-    allowed_email_domains: Array.isArray(data.allowed_email_domains)
-      ? data.allowed_email_domains.filter((d): d is string => typeof d === 'string')
-      : [],
-    discount_type: data.discount_type === 'percentage' ? 'percentage' : 'fixed',
-    discount_value: typeof data.discount_value === 'number' ? data.discount_value : 0,
-    monthly_limit_per_user: typeof data.monthly_limit_per_user === 'number' ? data.monthly_limit_per_user : 0,
+    company_name: enterprise.company_name,
+    company_logo_url: enterprise.company_logo_url,
+    theme_color: enterprise.theme_color,
+    subdomain: enterprise.subdomain,
+    custom_domain: enterprise.custom_domain,
+    allowed_email_domains: enterprise.allowed_email_domains,
+    discount_type: enterprise.discount_type,
+    discount_value: enterprise.discount_value,
+    monthly_limit_per_user: enterprise.monthly_limit_per_user,
   }
 }

@@ -1,0 +1,105 @@
+import {
+  buildEventMonthMap,
+  dashboardEventKey,
+  type DashboardAuditSession,
+  type DashboardMemberMeta,
+  type DashboardOrderLine,
+  type DashboardStripeSession,
+} from '@shokujii/common/utils/dashboardAggregation.js'
+import { getEnterpriseById, listEnterpriseMembers } from '../stores/enterprise.js'
+import { getEventsInCommunities } from '../stores/event.js'
+import {
+  listOrderCreateAuditLogs,
+  listOrderedMemberOrdersByEnterprise,
+  listStripesByEnterprise,
+} from '../stores/dashboard.js'
+
+export type DashboardFetchResult = {
+  orders: DashboardOrderLine[]
+  stripes: DashboardStripeSession[]
+  auditSessions: DashboardAuditSession[]
+  eventMonthMap: Map<string, string>
+  members: DashboardMemberMeta[]
+  billingSettings: { unit_price: number; billing_trial_ends_at: number; enterprise_is_active: boolean }
+}
+
+export async function fetchDashboardData(enterpriseId: string): Promise<DashboardFetchResult> {
+  const [enterprise, rawOrders, rawStripes, rawAuditLogs, rawMembers] = await Promise.all([
+    getEnterpriseById(enterpriseId),
+    listOrderedMemberOrdersByEnterprise(enterpriseId),
+    listStripesByEnterprise(enterpriseId),
+    listOrderCreateAuditLogs(enterpriseId),
+    listEnterpriseMembers(enterpriseId),
+  ])
+
+  if (enterprise == null) {
+    throw new Error(`enterprise not found: ${enterpriseId}`)
+  }
+
+  const orderById = new Map(rawOrders.map((order) => [order.order_id, order]))
+  const eventRefs = new Map<string, { community_id: string; event_id: string }>()
+  const addEventRef = (communityId: string, eventId: string) => {
+    eventRefs.set(dashboardEventKey(communityId, eventId), { community_id: communityId, event_id: eventId })
+  }
+
+  for (const order of rawOrders) {
+    addEventRef(order.community_id, order.event_id)
+  }
+  for (const stripe of rawStripes) {
+    addEventRef(stripe.community_id, stripe.event_id)
+  }
+
+  const auditSessions: DashboardAuditSession[] = []
+  for (const log of rawAuditLogs) {
+    const rawOrderIds = log.details?.order_ids
+    const orderIds = Array.isArray(rawOrderIds) ? rawOrderIds.filter((id): id is string => typeof id === 'string') : []
+    const firstOrderId = orderIds[0]
+    if (firstOrderId == null) continue
+    const order = orderById.get(firstOrderId)
+    if (order == null) continue
+    addEventRef(order.community_id, order.event_id)
+    auditSessions.push({ user_id: log.user_id, community_id: order.community_id, event_id: order.event_id })
+  }
+
+  const events = await getEventsInCommunities(Array.from(eventRefs.values()))
+  const eventMonthMap = buildEventMonthMap(
+    Array.from(events.values()).map((event) => ({
+      community_id: event.community_id,
+      event_id: event.id,
+      event_start_datetime: event.event_start_datetime,
+    })),
+  )
+
+  const members: DashboardMemberMeta[] = rawMembers.map((member) => ({
+    user_id: member.user_id,
+    display_name: member.display_name ?? '',
+    email: member.user_email,
+    department: member.department ?? '',
+    is_active: member.is_active,
+    last_activated_at: member.last_activated_at ?? null,
+    last_deactivated_at: member.last_deactivated_at ?? null,
+  }))
+
+  return {
+    orders: rawOrders.map((order) => ({
+      user_id: order.user_id,
+      community_id: order.community_id,
+      event_id: order.event_id,
+      menu_price: order.menu_price,
+      pay_enterprise_subsidy_amount: order.pay_enterprise_subsidy_amount,
+    })),
+    stripes: rawStripes.map((stripe) => ({
+      user_id: stripe.user_id,
+      community_id: stripe.community_id,
+      event_id: stripe.event_id,
+    })),
+    auditSessions,
+    eventMonthMap,
+    members,
+    billingSettings: {
+      unit_price: enterprise.billing_settings.unit_price,
+      billing_trial_ends_at: enterprise.billing_settings.billing_trial_ends_at,
+      enterprise_is_active: enterprise.is_active,
+    },
+  }
+}

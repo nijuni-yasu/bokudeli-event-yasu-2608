@@ -8,6 +8,7 @@ import { getAllAcceptingOrderEvents } from './stores/event.js'
 import { convertTruncateText } from '@shokujii/common/utils/converter.js'
 import { convertToJustDate, convertToDuration, convertToDatetimeWeekdayShort } from '@shokujii/common/utils/datetime.js'
 import { createModuleLogger } from './utils/logger.js'
+import { isEnterpriseEvent, isEnterpriseUser } from './utils/enterpriseMail.js'
 import { getEventCoverStoragePath } from '@shokujii/common/utils/storagePaths.js'
 
 const logger = createModuleLogger('eventInformationMail')
@@ -73,7 +74,7 @@ export const eventInformationPreview = onSchedule(
 /**
  * イベント情報メール用のテンプレートデータを作成
  */
-async function createTemplateDataForEventInformation(targetDateTimeMillis: number): Promise<TemplateData> {
+export async function createTemplateDataForEventInformation(targetDateTimeMillis: number): Promise<TemplateData> {
   const date = convertToJustDate(targetDateTimeMillis)
   const templateData: TemplateData = {
     date,
@@ -91,6 +92,9 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
   })
 
   for (const event of sortedEvents) {
+    if (isEnterpriseEvent(event)) {
+      continue
+    }
     const userIds = (await event.getOrders()).map((order) => order.user_id)
 
     // 最大参加者数に達していないイベントのみ追加
@@ -133,7 +137,7 @@ async function createTemplateDataForEventInformation(targetDateTimeMillis: numbe
  * 2. sendDynamicTemplateWithPersonalizations で一括送信（バッチ単位）
  * 3. 処理結果（取得エラー・バッチ成否・受付件数）をログに出力
  */
-async function sendEventInformationMail(): Promise<void> {
+export async function sendEventInformationMail(): Promise<void> {
   const nowDateTimeMillis = Date.now()
   const templateData = await createTemplateDataForEventInformation(nowDateTimeMillis)
 
@@ -154,6 +158,10 @@ async function sendEventInformationMail(): Promise<void> {
     const user = r.value
 
     if (!user?.user_email) {
+      continue
+    }
+
+    if (isEnterpriseUser(user)) {
       continue
     }
 

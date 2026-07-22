@@ -98,11 +98,13 @@ const isInvalidProfile = computed(() => exists.value === false || (user.value !=
 const isProfileLoading = computed(() => profileUserId !== '' && exists.value === null)
 
 const userEventListStore = useUserEventListByUserId(profileUserId, 6, {
-  additionalFilters: [where('enterprise_id', '==', null)],
+  profileFilter: { kind: 'pf-null' },
 })
 const { events: userEvents, totalCount: userEventsTotalCount } = storeToRefs(userEventListStore)
 
-const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId)
+const userOrderHistoryStore = useUserOrderHistoryByUserId(profileUserId, 6, {
+  profileFilter: { kind: 'pf-null' },
+})
 const {
   events: orderHistoryEvents,
   orderStateByEventId: orderHistoryStateByEventId,

@@ -11,17 +11,23 @@ import CalendarAddDialog from '@shokujii/base/components/CalendarAddDialog.vue'
 import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { convertToDatetimeWeekdayShort, convertToTimeString } from '@shokujii/common/utils/datetime.js'
 
-const props = defineProps<{
-  eventId: string
-  communityAccount: string
-  isPosted: boolean
-  /** Stripe Checkout からのリダイレクト時に付与される session_id。PayPay 等の遅延決済の判定に使う */
-  sessionId?: string
-  /** 自分の注文を抽出するためのユーザー ID。未指定の場合は処理中判定を行わない */
-  userId?: string
-  /** イベントチャットへ遷移するコールバック（membership 待機を含む）。user 側から注入する */
-  navigateToEventChat?: NavigateToEventChatFn
-}>()
+const props = withDefaults(
+  defineProps<{
+    eventId: string
+    communityAccount: string
+    isPosted: boolean
+    /** Stripe Checkout からのリダイレクト時に付与される session_id。PayPay 等の遅延決済の判定に使う */
+    sessionId?: string
+    /** 自分の注文を抽出するためのユーザー ID。未指定の場合は処理中判定を行わない */
+    userId?: string
+    /** イベントチャットへ遷移するコールバック（membership 待機を含む）。user 側から注入する */
+    navigateToEventChat?: NavigateToEventChatFn
+    hideShareSns?: boolean
+  }>(),
+  {
+    hideShareSns: false,
+  },
+)
 
 const model = defineModel<boolean>()
 
@@ -44,6 +50,7 @@ const canOpenChat = computed(() => {
 })
 
 const showShareLink = computed(() => {
+  if (props.hideShareSns) return false
   const currentEvent = event.value
   if (currentEvent == null) return false
   return currentEvent.is_public && !isPosted && !isProcessing.value
@@ -111,6 +118,9 @@ let hasShownSharePrompt = false
 watch(
   [model, event, isProcessing, isLoadingOrder],
   async ([newModel, newEvent, , newIsLoadingOrder]) => {
+    if (props.hideShareSns) {
+      return
+    }
     if (!newModel || newIsLoadingOrder || !newEvent?.is_public || isPosted || hasShownSharePrompt) {
       return
     }
@@ -208,10 +218,20 @@ watch(
                 <dd class="text-description">{{ event.community_name }}</dd>
                 <dt class="text-description">{{ $t('success_join_event_dialog.food') }}</dt>
                 <dd class="text-description">{{ event.shop_name }}</dd>
-                <template v-if="typeof event.event_sns_hash_tag === 'string' && event.event_sns_hash_tag.trim() !== ''">
+                <template
+                  v-if="
+                    !hideShareSns &&
+                    typeof event.event_sns_hash_tag === 'string' &&
+                    event.event_sns_hash_tag.trim() !== ''
+                  "
+                >
                   <dt class="text-description">{{ $t('success_join_event_dialog.hashtag') }}</dt>
                   <dd class="text-description">
-                    <a :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`" target="_blank">
+                    <a
+                      :href="`https://x.com/search?q=%23${event.event_sns_hash_tag}`"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       #{{ event.event_sns_hash_tag }}
                     </a>
                   </dd>
@@ -286,6 +306,7 @@ watch(
   <calendar-add-dialog v-model="isOpenCalendarAddDialog" :event="event!" />
 
   <ConfirmDialog
+    v-if="!hideShareSns"
     v-model="isSharePromptDialogVisible"
     :is-confirm="false"
     :persistent="false"

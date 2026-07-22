@@ -1,13 +1,24 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useNotification } from '@shokujii/base/composable/notification'
 import logo from '@/assets/images/shokujii/shokujii_logo.png'
+import { SESSION_TIMEOUT_FLAG_KEY } from '@/constants/sessionTimeout'
 import { useEnterpriseStore } from '@/stores/enterprise'
 import EmployeeLoginForm from '@/components/login/EmployeeLoginForm.vue'
 
 const enterpriseStore = useEnterpriseStore()
+const notification = useNotification()
 const { t } = useI18n()
 
 const logoUrl = computed(() => enterpriseStore.enterprise?.company_logo_url || logo)
 const companyName = computed(() => enterpriseStore.enterprise?.company_name ?? '')
+
+onMounted(() => {
+  if (sessionStorage.getItem(SESSION_TIMEOUT_FLAG_KEY) === '1') {
+    sessionStorage.removeItem(SESSION_TIMEOUT_FLAG_KEY)
+    notification.show(t('enterprise.session.timeout'), 'warning')
+  }
+})
 </script>
 
 <template>

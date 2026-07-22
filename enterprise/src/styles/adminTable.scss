@@ -1,0 +1,9 @@
+.admin-tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-sortable-th {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}

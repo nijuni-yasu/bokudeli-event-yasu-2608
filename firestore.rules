@@ -11,10 +11,26 @@ service cloud.firestore {
             return data.get('enterprise_id', null);
         }
         // エンタープライズ: 認証ユーザーの claims とドキュメントの enterprise_id が一致
-        function isSameEnterprise(data) {
+        function tokenTenantId() {
+            let firebaseClaims = request.auth.token.get('firebase', null);
+            return firebaseClaims != null ? firebaseClaims.get('tenant', null) : null;
+        }
+        function isEnterpriseEmployee() {
             return request.auth != null
                 && request.auth.token.get('enterprise_id', null) != null
-                && docEnterpriseId(data) == request.auth.token.enterprise_id;
+                && request.auth.token.user_type == 'enterprise'
+                && tokenTenantId() != null;
+        }
+        function isEnterpriseTenantFor(enterpriseId) {
+            return isEnterpriseEmployee()
+                && request.auth.token.enterprise_id == enterpriseId
+                && tokenTenantId() == get(/databases/$(database)/documents/enterprises/$(enterpriseId)).data.tenant_id;
+        }
+        function isSameEnterprise(data) {
+            return isEnterpriseEmployee()
+                && docEnterpriseId(data) != null
+                && docEnterpriseId(data) == request.auth.token.enterprise_id
+                && tokenTenantId() == get(/databases/$(database)/documents/enterprises/$(request.auth.token.enterprise_id)).data.tenant_id;
         }
         // マイページ用冗長カウント（Functions の recount のみ更新。RC-56）
         function userProfileCountFields() {
@@ -161,14 +177,13 @@ service cloud.firestore {
                        exists(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)) &&
                        "manager" in get(/databases/$(database)/documents/communities/$(community)/members/$(request.auth.uid)).data.roles
             }
-            // PF: enterprise_id 欠落/null のみ create 可。Enterprise: claims と一致する enterprise_id のみ create 可
+            // PF: enterprise_id 欠落/null のみ create 可。Enterprise: isSameEnterprise（tenant 含む）
             function canCreateCommunity() {
                 return request.auth != null
                     && (
                         (request.auth.token.get('enterprise_id', null) == null
                          && docEnterpriseId(request.resource.data) == null)
-                        || (request.auth.token.get('enterprise_id', null) != null
-                            && docEnterpriseId(request.resource.data) == request.auth.token.enterprise_id)
+                        || isSameEnterprise(request.resource.data)
                     );
             }
             function communityEnterpriseIdUnchanged() {
@@ -293,19 +308,16 @@ service cloud.firestore {
             allow read, write: if false
         }
         function isEnterpriseAdminMember(enterpriseId) {
-            return request.auth != null
-                && request.auth.token.enterprise_id == enterpriseId
+            return isEnterpriseTenantFor(enterpriseId)
                 && exists(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid))
                 && get(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid)).data.role == 'admin'
                 && get(/databases/$(database)/documents/enterprises/$(enterpriseId)/members/$(request.auth.uid)).data.is_active == true;
         }
         match /enterprises/{enterpriseId} {
-            allow read: if request.auth != null
-                        && request.auth.token.enterprise_id == enterpriseId;
+            allow read: if isEnterpriseTenantFor(enterpriseId);
             allow write: if false;
             match /members/{userId} {
-                allow read: if request.auth != null
-                            && request.auth.token.enterprise_id == enterpriseId;
+                allow read: if isEnterpriseTenantFor(enterpriseId);
                 allow write: if false;
             }
             match /audit_logs/{logId} {
@@ -313,6 +325,10 @@ service cloud.firestore {
                 allow write: if false;
             }
             match /billing_snapshots/{yearMonth} {
+                allow read: if isEnterpriseAdminMember(enterpriseId);
+                allow write: if false;
+            }
+            match /invoice_files/{yearMonth} {
                 allow read: if isEnterpriseAdminMember(enterpriseId);
                 allow write: if false;
             }

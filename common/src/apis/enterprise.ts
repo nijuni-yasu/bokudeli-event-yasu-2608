@@ -30,6 +30,7 @@ export type GetEnterpriseByDomainRequest = {
 
 export type GetEnterpriseByDomainResponse = {
   enterprise_id: string
+  tenant_id: string
   company_name: string
   company_logo_url: string
   theme_color: string

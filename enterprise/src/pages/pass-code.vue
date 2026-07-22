@@ -6,6 +6,7 @@ import { useNotification } from '@shokujii/base/composable/notification'
 import { getRedirectPath } from '@shokujii/base/utils/redirect'
 import { confirmEnterpriseEmailLogin, requestEnterpriseEmailLogin } from '@/apis/enterprise'
 import { useEnterpriseStore } from '@/stores/enterprise'
+import { setEnterpriseAuthTenantId } from '@/utils/enterpriseAuth'
 import { getHomePath, getLogin } from '@/router/utils'
 
 const router = useRouter()
@@ -65,6 +66,9 @@ const submit = async (code: string) => {
       email,
       pass_code: code,
     })
+    if (enterprise.tenant_id != null && enterprise.tenant_id !== '') {
+      setEnterpriseAuthTenantId(enterprise.tenant_id)
+    }
     await signInWithCustomToken(getAuth(), result.data.token)
     const redirectPath = getRedirectPath() ?? getHomePath()
     await router.push(redirectPath)

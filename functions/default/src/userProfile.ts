@@ -28,6 +28,8 @@ import { runUserProfileBackfill } from './utils/userProfileBackfill.js'
 import { resolveUserFriendsList } from './utils/userFriendsResolver.js'
 import { computeProfileItemLinkableToViewer } from './utils/profileItemVisibility.js'
 import { createModuleLogger } from './utils/logger.js'
+import { assertEnterpriseProfileAccess, isEnterpriseViewer } from './utils/enterpriseProfileAccess.js'
+import { computeUserProfileCounts } from './utils/recountUserProfileCounts.js'
 
 const logger = createModuleLogger('userProfile')
 
@@ -123,37 +125,42 @@ const toMillis = (value: unknown, fallback = 0): number => {
   return typeof result === 'number' && Number.isFinite(result) ? result : fallback
 }
 
-const buildPublicProfile = (user: {
-  user_id: string
-  user_name: string
-  user_description: string
-  user_image_url: string
-  user_sns_facebook: string
-  user_sns_facebook_name: string
-  user_sns_twitter: string
-  user_sns_instagram: string
-  user_sns_website: string
-  is_deleted: boolean
-}): UserProfilePublicProfile => ({
+export const buildPublicProfile = (
+  user: {
+    user_id: string
+    user_name: string
+    user_description: string
+    user_image_url: string
+    user_sns_facebook: string
+    user_sns_facebook_name: string
+    user_sns_twitter: string
+    user_sns_instagram: string
+    user_sns_website: string
+    is_deleted: boolean
+  },
+  options?: { omitSns?: boolean },
+): UserProfilePublicProfile => ({
   user_id: user.user_id,
   user_name: user.user_name,
   user_description: user.user_description,
   user_image_url: user.user_image_url,
-  user_sns_facebook: user.user_sns_facebook,
-  user_sns_facebook_name: user.user_sns_facebook_name,
-  user_sns_twitter: user.user_sns_twitter,
-  user_sns_instagram: user.user_sns_instagram,
-  user_sns_website: user.user_sns_website,
+  user_sns_facebook: options?.omitSns === true ? '' : user.user_sns_facebook,
+  user_sns_facebook_name: options?.omitSns === true ? '' : user.user_sns_facebook_name,
+  user_sns_twitter: options?.omitSns === true ? '' : user.user_sns_twitter,
+  user_sns_instagram: options?.omitSns === true ? '' : user.user_sns_instagram,
+  user_sns_website: options?.omitSns === true ? '' : user.user_sns_website,
   is_deleted: user.is_deleted,
 })
 
 const fetchEventPreviews = async (
   targetUserId: string,
   viewerUid: string | null,
+  enterpriseId?: string,
 ): Promise<UserProfileEventPreviewItem[]> => {
   const events = await listEventsForProfilePreview({
     targetUserId,
     limit: PREVIEW_LIMITS.events,
+    enterpriseId,
   })
   return events.map((event) => {
     const isPublic = event.is_public === true
@@ -176,11 +183,13 @@ const fetchCommunityPreviews = async (
   targetUserId: string,
   viewerUid: string | null,
   limit: number,
+  enterpriseId?: string,
 ): Promise<UserProfileCommunityPreviewItem[]> => {
   const communities = await listCommunitiesForProfilePreview({
     targetUserId,
     arrayField,
     limit,
+    enterpriseId,
   })
   return communities.map((community) => {
     const isPublic = community.is_public === true
@@ -199,6 +208,7 @@ const fetchCommunityPreviews = async (
 const fetchFriendPreviews = async (
   targetUserId: string,
   viewerUid: string | null,
+  enterpriseId?: string,
 ): Promise<UserProfileFriendPreviewItem[]> => {
   const { friends } = await resolveUserFriendsList({
     targetUserId,
@@ -206,6 +216,7 @@ const fetchFriendPreviews = async (
     limit: PREVIEW_LIMITS.friends,
     cursor: undefined,
     viewerUid,
+    ...(enterpriseId != null && enterpriseId !== '' ? { enterpriseScope: { enterpriseId } } : {}),
   })
   return friends.map((friend) => ({
     user_id: friend.user_id,
@@ -214,6 +225,12 @@ const fetchFriendPreviews = async (
     meet_count: friend.meet_count,
     first_met_at: friend.first_met_at,
     last_met_at: friend.last_met_at,
+    ...(friend.is_guest_friend === true ? { is_guest_friend: true } : {}),
+    ...(friend.is_linkable === false
+      ? { is_linkable: false }
+      : friend.is_linkable === true
+        ? { is_linkable: true }
+        : {}),
   }))
 }
 
@@ -271,12 +288,14 @@ const fetchFoodsPage = async (params: {
   viewerUid: string | null
   limit: number
   cursor?: UserFoodsCursor
+  enterpriseId?: string
 }): Promise<{ foods: UserProfileFoodPreviewItem[]; nextCursor: UserFoodsCursor | null; hasMore: boolean }> => {
-  const { targetUserId, viewerUid, limit, cursor } = params
+  const { targetUserId, viewerUid, limit, cursor, enterpriseId } = params
   const page = await listOrderedFoodsPageForProfile({
     targetUserId,
     limit,
     cursor,
+    enterpriseId,
   })
 
   const foods: UserProfileFoodPreviewItem[] = []
@@ -297,17 +316,26 @@ const fetchFoodsPage = async (params: {
 const fetchFoodPreviews = async (
   targetUserId: string,
   viewerUid: string | null,
+  enterpriseId?: string,
 ): Promise<UserProfileFoodPreviewItem[]> => {
   const { foods } = await fetchFoodsPage({
     targetUserId,
     viewerUid,
     limit: PREVIEW_LIMITS.foods,
+    enterpriseId,
   })
   return foods
 }
 
-const fetchOrderPreviews = async (targetUserId: string): Promise<UserProfileOrderPreviewItem[]> => {
-  const { orders, eventsByKey } = await listOrderedFoodsPreviewForProfile(targetUserId, PREVIEW_LIMITS.orders)
+const fetchOrderPreviews = async (
+  targetUserId: string,
+  enterpriseId?: string,
+): Promise<UserProfileOrderPreviewItem[]> => {
+  const { orders, eventsByKey } = await listOrderedFoodsPreviewForProfile(
+    targetUserId,
+    PREVIEW_LIMITS.orders,
+    enterpriseId,
+  )
   const items: UserProfileOrderPreviewItem[] = []
   for (const order of orders) {
     const event = eventsByKey.get(getCommunityEventKey(order.community_id, order.event_id))
@@ -341,40 +369,58 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
     const targetUserId = input.target_user_id
     const viewerUid = request.auth?.uid ?? null
     const isOwner = viewerUid != null && viewerUid === targetUserId
+    const isEnterprise = isEnterpriseViewer(request.auth)
 
     const totalStartedAt = performance.now()
 
-    const targetUser = await getUser(targetUserId, false)
-    if (targetUser == null || targetUser.is_deleted) {
-      throw new HttpsError('not-found', '存在しないユーザーです')
+    let targetUser
+    let enterpriseId: string | undefined
+    let department: string | null | undefined
+
+    if (isEnterprise) {
+      const access = await assertEnterpriseProfileAccess(request.auth, targetUserId)
+      targetUser = access.targetUser
+      enterpriseId = access.viewerEnterpriseId
+      department = access.department
+    } else {
+      targetUser = await getUser(targetUserId, false)
+      if (targetUser == null || targetUser.is_deleted) {
+        throw new HttpsError('not-found', '存在しないユーザーです')
+      }
     }
 
     const previewTimedContext: PreviewTimedContext = { targetUserId, viewerUid, isOwner }
 
     const [eventPreviews, friendPreviews, joinedCommunities, managedCommunities, foodPreviews, orderPreviews] =
       await Promise.all([
-        timed('events', previewTimedContext, () => fetchEventPreviews(targetUserId, viewerUid)),
-        timed('friends', previewTimedContext, () => fetchFriendPreviews(targetUserId, viewerUid)),
+        timed('events', previewTimedContext, () => fetchEventPreviews(targetUserId, viewerUid, enterpriseId)),
+        timed('friends', previewTimedContext, () => fetchFriendPreviews(targetUserId, viewerUid, enterpriseId)),
         timed('joined_communities', previewTimedContext, () =>
-          fetchCommunityPreviews('members', targetUserId, viewerUid, PREVIEW_LIMITS.joinedCommunities),
+          fetchCommunityPreviews('members', targetUserId, viewerUid, PREVIEW_LIMITS.joinedCommunities, enterpriseId),
         ),
         timed('managed_communities', previewTimedContext, () =>
-          fetchCommunityPreviews('managers', targetUserId, viewerUid, PREVIEW_LIMITS.managedCommunities),
+          fetchCommunityPreviews('managers', targetUserId, viewerUid, PREVIEW_LIMITS.managedCommunities, enterpriseId),
         ),
-        timed('foods', previewTimedContext, () => fetchFoodPreviews(targetUserId, viewerUid)),
+        timed('foods', previewTimedContext, () => fetchFoodPreviews(targetUserId, viewerUid, enterpriseId)),
         isOwner
-          ? timed('orders', previewTimedContext, () => fetchOrderPreviews(targetUserId))
+          ? timed('orders', previewTimedContext, () => fetchOrderPreviews(targetUserId, enterpriseId))
           : Promise.resolve(null as UserProfileOrderPreviewItem[] | null),
       ])
 
-    const counts = {
-      participated_event_count: targetUser.participated_event_count ?? 0,
-      friend_count: targetUser.friend_count ?? 0,
-      joined_community_count: targetUser.joined_community_count ?? 0,
-      managed_community_count: targetUser.managed_community_count ?? 0,
-      ordered_food_count: targetUser.ordered_food_count ?? 0,
-      counts_updated_at: targetUser.counts_updated_at ?? null,
-    }
+    const counts =
+      isEnterprise && enterpriseId != null
+        ? {
+            ...(await computeUserProfileCounts(targetUserId, { enterpriseId })),
+            counts_updated_at: targetUser.counts_updated_at ?? null,
+          }
+        : {
+            participated_event_count: targetUser.participated_event_count ?? 0,
+            friend_count: targetUser.friend_count ?? 0,
+            joined_community_count: targetUser.joined_community_count ?? 0,
+            managed_community_count: targetUser.managed_community_count ?? 0,
+            ordered_food_count: targetUser.ordered_food_count ?? 0,
+            counts_updated_at: targetUser.counts_updated_at ?? null,
+          }
 
     // #2175 調査用。totalDurationMs 含む returned ログの継続要否も Issue #2175 follow-up で判断
     logger.info('getUserProfilePreview returned', {
@@ -387,8 +433,9 @@ export const getUserProfilePreview = onCall<GetUserProfilePreviewRequest, Promis
     })
 
     return {
-      user_profile: buildPublicProfile(targetUser),
+      user_profile: buildPublicProfile(targetUser, isEnterprise ? { omitSns: true } : undefined),
       counts,
+      ...(department !== undefined ? { department } : {}),
       previews: {
         events: eventPreviews,
         friends: friendPreviews,
@@ -406,9 +453,17 @@ export const getUserFoods = onCall<GetUserFoodsRequest, Promise<GetUserFoodsResp
   { region: 'asia-northeast1', invoker: 'public' },
   async (request) => {
     const input = GetUserFoodsRequestSchema.parse(request.data)
-    const targetUser = await getUser(input.target_user_id, false)
-    if (targetUser == null || targetUser.is_deleted) {
-      throw new HttpsError('not-found', '存在しないユーザーです')
+    const isEnterprise = isEnterpriseViewer(request.auth)
+
+    let enterpriseId: string | undefined
+    if (isEnterprise) {
+      const access = await assertEnterpriseProfileAccess(request.auth, input.target_user_id)
+      enterpriseId = access.viewerEnterpriseId
+    } else {
+      const targetUser = await getUser(input.target_user_id, false)
+      if (targetUser == null || targetUser.is_deleted) {
+        throw new HttpsError('not-found', '存在しないユーザーです')
+      }
     }
 
     const pageSize = input.limit ?? PREVIEW_LIMITS.foods
@@ -418,6 +473,7 @@ export const getUserFoods = onCall<GetUserFoodsRequest, Promise<GetUserFoodsResp
       viewerUid,
       limit: pageSize,
       cursor: decodeFoodCursor(input.cursor),
+      enterpriseId,
     })
 
     return {

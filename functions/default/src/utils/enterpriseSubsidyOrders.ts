@@ -15,7 +15,8 @@ import {
   getEnterpriseMember,
   getEnterpriseMemberInTransaction,
 } from '../stores/enterprise.js'
-import { saveOrder } from '../stores/memberOrder.js'
+import type { EventMenu } from '@shokujii/common/schemas/EventMenu.js'
+import { createOrder, saveOrder } from '../stores/memberOrder.js'
 import type { ShokujiiEvent } from '../stores/event.js'
 import { writeAuditLog } from './auditLog.js'
 
@@ -50,8 +51,8 @@ export async function assertActiveEnterpriseMember(
   enterpriseId: string | undefined,
   auth: CallableRequest['auth'],
   transaction?: Transaction,
-): Promise<void> {
-  if (enterpriseId == null) return
+): Promise<EnterpriseMember | undefined> {
+  if (enterpriseId == null) return undefined
   if (auth?.uid == null) {
     throw new HttpsError('unauthenticated', '認証が必要です')
   }
@@ -63,6 +64,7 @@ export async function assertActiveEnterpriseMember(
   if (member == null || !member.is_active) {
     throw new HttpsError('permission-denied', 'この企業イベントに注文する権限がありません')
   }
+  return member
 }
 
 export async function assertEnterpriseSubsidyOrdersConsistent(params: {
@@ -211,6 +213,74 @@ export function buildEnterpriseSubsidyUsageExceededDetails(params: {
     grantedTotal: tracker.grantedTotal,
     unfilledCount: tracker.unfilledCount,
   }
+}
+
+export type AddToCartMenuInput = { menu_id: string; count: number }
+
+/** addToCart: enterprise_subsidy のメニュー追加と usage exceeded 判定 */
+export async function addEnterpriseSubsidyMenusToCart(params: {
+  communityId: string
+  eventId: string
+  userId: string
+  enterpriseId: string
+  event: ShokujiiEvent
+  menus: AddToCartMenuInput[]
+  eventMenus: EventMenu[]
+  transaction: Transaction
+  /** assertActiveEnterpriseMember 等で取得済みの場合は渡し、Transaction 内 read を省略 */
+  enterpriseMember?: EnterpriseMember
+}): Promise<EnterpriseSubsidyUsageExceededDetails | null> {
+  const { communityId, eventId, userId, enterpriseId, event, menus, eventMenus, transaction, enterpriseMember } = params
+
+  if (event.enterprise_subsidy_settings == null) {
+    throw new HttpsError('failed-precondition', 'enterprise_subsidy_settings is required')
+  }
+
+  const eventMonth = formatYearMonth(event.event_start_datetime)
+  const entMember = enterpriseMember ?? (await loadEnterpriseMemberForSubsidy(enterpriseId, userId, transaction))
+  if (entMember == null) {
+    throw new HttpsError('failed-precondition', '企業メンバー情報が見つかりません')
+  }
+
+  const tracker = createEnterpriseSubsidyAddToCartTracker(entMember.monthly_usage[eventMonth] ?? 0)
+
+  for (const menu of menus) {
+    const masterMenu = eventMenus.find((m) => m.id === menu.menu_id)
+    if (masterMenu == null) {
+      throw new HttpsError('failed-precondition', `メニューが見つかりません: ${menu.menu_id}`)
+    }
+
+    for (let i = 0; i < menu.count; i++) {
+      const payField = applyEnterpriseSubsidyPayFieldToCartTracker({
+        event,
+        menuPrice: masterMenu.menu_price,
+        tracker,
+      })
+      await createOrder(
+        communityId,
+        eventId,
+        userId,
+        {
+          user_id: userId,
+          event_id: eventId,
+          community_id: communityId,
+          status: 'in_cart',
+          menu_id: masterMenu.id,
+          menu_name: masterMenu.menu_name,
+          menu_price: masterMenu.menu_price,
+          enterprise_id: enterpriseId,
+          ...(payField !== undefined ? { pay_enterprise_subsidy_amount: payField } : {}),
+        },
+        transaction,
+      )
+    }
+  }
+
+  return buildEnterpriseSubsidyUsageExceededDetails({
+    enterpriseId,
+    eventMonth,
+    tracker,
+  })
 }
 
 /** confirmOrder: 自己負担 0 円の enterprise_subsidy 注文を確定し usage を加算 */

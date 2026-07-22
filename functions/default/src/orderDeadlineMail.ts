@@ -9,6 +9,7 @@ import * as sgMail from './utils/sendgrid.js'
 import { sendDynamicTemplateWithPersonalizations } from './utils/sendgridBulk.js'
 import { getEventUrl, getPartnerOrderUrl, convertStoragePathToURL } from './utils/urls.js'
 import { createOrdersForOrderDeadline, type OrderData } from './utils/order.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 import { getAcceptingOrderEventsByTime, ShokujiiEvent } from './stores/event.js'
 import {
   convertToDateWeekdayShort,
@@ -304,6 +305,9 @@ export async function sendOrderDeadlineReminderToCommunityMembers(start: number,
   await Promise.allSettled(
     events.map(async (event) => {
       try {
+        if (isEnterpriseEvent(event)) {
+          return
+        }
         // is_publicがtrueのイベントのみ
         if (!event.is_public) {
           return

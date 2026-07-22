@@ -1,4 +1,3 @@
-import { getAuth } from 'firebase-admin/auth'
 import { onCall, HttpsError } from 'firebase-functions/https'
 import {
   ConfirmEnterpriseEmailLoginRequest,
@@ -6,8 +5,7 @@ import {
   RequestEnterpriseEmailLoginRequest,
   RequestEnterpriseEmailLoginResponse,
 } from '@shokujii/common/apis/enterprise.js'
-import { getEnterpriseById, getEnterpriseMember } from '../stores/enterprise.js'
-import { getUserIdFromEmail } from '../stores/user.js'
+import { getEnterpriseById, getEnterpriseMember, getEnterpriseMemberUserIdByEmail } from '../stores/enterprise.js'
 import {
   deletePassCode,
   getValidEnterprisePassCodeFromEmail,
@@ -20,6 +18,7 @@ import { writeAuditLog } from '../utils/auditLog.js'
 import { emailDomainMatches, getClientIp, normalizeEnterpriseEmail } from '../utils/enterpriseAuthHelpers.js'
 import { createModuleLogger } from '../utils/logger.js'
 import { isEnterpriseAppCheckEnforced } from '../utils/enterpriseAppCheck.js'
+import { authForEnterprise } from '../utils/tenantAuth.js'
 
 const logger = createModuleLogger('enterprise-auth')
 
@@ -33,8 +32,8 @@ type EnterpriseCustomClaims = {
 }
 
 async function syncEnterpriseCustomClaims(uid: string, enterpriseId: string, role: 'admin' | 'member'): Promise<void> {
-  const auth = getAuth()
-  const user = await auth.getUser(uid)
+  const tenantAuth = await authForEnterprise(enterpriseId)
+  const user = await tenantAuth.getUser(uid)
   const current = user.customClaims ?? {}
   const expected: EnterpriseCustomClaims = {
     enterprise_id: enterpriseId,
@@ -46,7 +45,7 @@ async function syncEnterpriseCustomClaims(uid: string, enterpriseId: string, rol
     current.enterprise_role !== expected.enterprise_role ||
     current.user_type !== expected.user_type
   ) {
-    await auth.setCustomUserClaims(uid, { ...current, ...expected })
+    await tenantAuth.setCustomUserClaims(uid, { ...current, ...expected })
   }
 }
 
@@ -73,7 +72,7 @@ export const requestEnterpriseEmailLogin = onCall<
       throw new HttpsError('permission-denied', 'email domain not allowed')
     }
 
-    const userId = await getUserIdFromEmail(email)
+    const userId = await getEnterpriseMemberUserIdByEmail(enterpriseId, email)
     if (userId == null) {
       throw new HttpsError('not-found', 'member not registered')
     }
@@ -132,7 +131,7 @@ export const confirmEnterpriseEmailLogin = onCall<
       throw new HttpsError('permission-denied', 'email domain not allowed')
     }
 
-    const userId = await getUserIdFromEmail(email)
+    const userId = await getEnterpriseMemberUserIdByEmail(enterpriseId, email)
     if (userId == null) {
       throw new HttpsError('not-found', 'member not found')
     }
@@ -148,7 +147,8 @@ export const confirmEnterpriseEmailLogin = onCall<
     await deletePassCode(passCodeDocument.id)
     await syncEnterpriseCustomClaims(userId, enterpriseId, member.role)
 
-    const token = await getAuth().createCustomToken(userId)
+    const tenantAuth = await authForEnterprise(enterpriseId)
+    const token = await tenantAuth.createCustomToken(userId)
 
     await writeAuditLog({
       enterpriseId,

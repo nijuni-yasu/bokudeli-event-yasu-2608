@@ -1,38 +1,61 @@
 import type { NavLink, NavGroup } from '@layouts/types'
-import { getHomePath, getCommunityListPath } from '@/router/utils'
-import { mdiCalendarHeart, mdiAccountGroup, mdiNote, mdiHeart } from '@mdi/js'
-import XIcon from '@shokujii/base/icons/x.js'
+import { getHomePath, getCommunityListPath, getManagePath, getAdminDashboardPath } from '@/router/utils'
+import { mdiSilverwareForkKnife, mdiAccountGroup, mdiPartyPopper, mdiViewDashboard } from '@mdi/js'
+import { getAuth } from 'firebase/auth'
+import { isEnterpriseAdmin } from '@/composable/useEnterpriseAdmin'
 
-export const useNavItems = (): (NavLink | NavGroup)[] => {
+export const useNavItems = () => {
   const { t: $t } = useI18n()
-  return [
-    {
-      title: $t('navigation.home'),
-      to: { path: getHomePath() },
-      icon: { icon: mdiCalendarHeart },
-    },
-    {
-      title: $t('navigation.community'),
-      to: { path: getCommunityListPath() },
-      icon: { icon: mdiAccountGroup },
-    },
-    {
-      title: $t('navigation.magagine'),
-      href: 'https://note.com/shokujii/m/mc65c92109f2b',
-      target: '_blank',
-      icon: { icon: mdiNote },
-    },
-    {
-      title: $t('navigation.x'),
-      href: 'https://x.com/search?q=%23shokujii&src=typed_query&f=live',
-      target: '_blank',
-      icon: { icon: XIcon },
-    },
-    {
-      title: $t('navigation.about'),
-      href: 'https://about.shokujii.jp/',
-      target: '_blank',
-      icon: { icon: mdiHeart },
-    },
-  ]
+  const showAdminMenu = ref(false)
+
+  let unsubscribeAuth: (() => void) | undefined
+
+  const refreshAdminMenu = async () => {
+    try {
+      showAdminMenu.value = await isEnterpriseAdmin()
+    } catch {
+      // トークン取得失敗時は管理メニューを出さない（ナビ全体の描画は継続する）
+      showAdminMenu.value = false
+    }
+  }
+
+  onMounted(() => {
+    void refreshAdminMenu()
+    unsubscribeAuth = getAuth().onAuthStateChanged(() => {
+      void refreshAdminMenu()
+    })
+  })
+  onUnmounted(() => {
+    unsubscribeAuth?.()
+  })
+
+  return computed((): (NavLink | NavGroup)[] => {
+    const items: (NavLink | NavGroup)[] = [
+      {
+        title: $t('navigation.home'),
+        to: { path: getHomePath() },
+        icon: { icon: mdiSilverwareForkKnife },
+      },
+      {
+        title: $t('navigation.community'),
+        to: { path: getCommunityListPath() },
+        icon: { icon: mdiAccountGroup },
+      },
+      {
+        title: $t('navigation.new_event'),
+        to: { path: getManagePath() },
+        icon: { icon: mdiPartyPopper },
+      },
+    ]
+
+    if (showAdminMenu.value) {
+      items.push({
+        title: $t('navigation.manage'),
+        to: { path: getAdminDashboardPath() },
+        icon: { icon: mdiViewDashboard },
+      })
+    }
+
+    return items
+  })
 }

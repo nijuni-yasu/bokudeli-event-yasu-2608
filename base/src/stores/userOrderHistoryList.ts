@@ -22,8 +22,14 @@ import {
   sortEventsByStartDatetime,
   type UserEventListOrderEntry,
 } from './userEventOrdersShared.js'
+import { profileListFilterKey, profileListFilterToConstraints, type ProfileListFilter } from './profileListFilter.js'
 
 export type UserOrderHistoryListStore = ReturnType<typeof useUserOrderHistoryByUserId>
+
+export type UserOrderHistoryListStoreOptions = {
+  /** PF 露出 / エンプラテナント等。`collectionGroup('member_orders')` の base 条件に追加する */
+  profileFilter?: ProfileListFilter
+}
 
 const ORDERS_SCAN_BATCH = 24
 const MAX_SCAN_BATCHES_PER_NEXT = 50
@@ -33,9 +39,16 @@ const MAX_SCAN_BATCHES_PER_NEXT = 50
  * `member_orders` collectionGroup 起点でイベントを列挙する（全キャンセル後も表示）。
  * 初回取得は呼び出し元が `reload()` を実行すること（本人閲覧時のみ）。
  */
-export const useUserOrderHistoryByUserId = (userId: string, pageSize: number = 6) => {
+export const useUserOrderHistoryByUserId = (
+  userId: string,
+  pageSize: number = 6,
+  options: UserOrderHistoryListStoreOptions = {},
+) => {
+  const profileFilter = options.profileFilter ?? { kind: 'none' }
+  const additionalFilters = profileListFilterToConstraints(profileFilter)
   const storeId = userId !== '' ? userId : '_empty'
-  const store = defineStore(`/userOrderHistory/${storeId}/${pageSize}`, () => {
+  const filtersKey = `/${profileListFilterKey(profileFilter)}`
+  const store = defineStore(`/userOrderHistory/${storeId}/${pageSize}${filtersKey}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const events = ref<BokudeliEvent[]>([])
     const hasMore = ref(true)
@@ -101,6 +114,7 @@ export const useUserOrderHistoryByUserId = (userId: string, pageSize: number = 6
       const q = query(
         collectionGroup(db, 'member_orders'),
         where('user_id', '==', userId),
+        ...additionalFilters,
         orderBy('updated_at', 'desc'),
         ...(lastOrderSnapshot == null ? [] : [startAfter(lastOrderSnapshot)]),
         limit(ORDERS_SCAN_BATCH),

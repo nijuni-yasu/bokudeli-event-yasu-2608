@@ -15,6 +15,8 @@ import { getManageCommunityListPath } from './utils'
 import { ZodError } from 'zod'
 import { setPendingToast } from '@/utils/pendingToast'
 import { useEnterpriseStore } from '@/stores/enterprise'
+import { isEnterpriseAuthTenantConsistent } from '@/utils/enterpriseAuth'
+import { isLoginRequired } from '@/router/authGuards.js'
 
 const waitAdminAuthentication = async (): Promise<User | null> => {
   return new Promise<User | null>((resolve) => {
@@ -23,18 +25,6 @@ const waitAdminAuthentication = async (): Promise<User | null> => {
       resolve(user)
     })
   })
-}
-
-const isLoginRequired = (path: string) => {
-  const paths = path.split('/')
-  return (
-    path === '/' ||
-    path === '/profile' ||
-    paths[1] === 'communitylist' ||
-    paths[1] === 'manage' ||
-    paths[1] === 'admin' ||
-    (paths[1] === 'c' && paths[3] === 'invites')
-  )
 }
 
 export const setupRouter = (router: Router) => {
@@ -96,6 +86,25 @@ export const setupRouter = (router: Router) => {
       }
     } else if (to.path === '/login') {
       return (to.query?.redirect as string) ?? '/'
+    } else if (isLoginRequired(to.path)) {
+      const enterpriseStore = useEnterpriseStore()
+      if (enterpriseStore.status !== 'ready') {
+        await enterpriseStore.resolveEnterprise()
+      }
+      const tokenResult = await user.getIdTokenResult()
+      if (tokenResult.claims.user_type === 'enterprise') {
+        const rawEnterpriseId = tokenResult.claims.enterprise_id
+        const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
+        const tenantOk = isEnterpriseAuthTenantConsistent(
+          enterpriseStore.enterprise?.tenant_id,
+          enterpriseStore.enterprise?.enterprise_id,
+          tokenEnterpriseId,
+          user.tenantId,
+        )
+        if (!tenantOk) {
+          return { path: '/404' }
+        }
+      }
     }
   })
 
@@ -235,8 +244,15 @@ export const setupRouter = (router: Router) => {
         await enterpriseStore.resolveEnterprise()
       }
       const resolvedEnterpriseId = enterpriseStore.enterprise?.enterprise_id
-      const tokenEnterpriseId = tokenResult.claims.enterprise_id as string | undefined
-      if (resolvedEnterpriseId == null || tokenEnterpriseId == null || tokenEnterpriseId !== resolvedEnterpriseId) {
+      const rawEnterpriseId = tokenResult.claims.enterprise_id
+      const tokenEnterpriseId = typeof rawEnterpriseId === 'string' ? rawEnterpriseId : undefined
+      const tenantOk = isEnterpriseAuthTenantConsistent(
+        enterpriseStore.enterprise?.tenant_id,
+        resolvedEnterpriseId,
+        tokenEnterpriseId,
+        user.tenantId,
+      )
+      if (resolvedEnterpriseId == null || tokenEnterpriseId == null || !tenantOk) {
         setPendingToast('管理者権限が必要です', 'error')
         return { path: '/' }
       }

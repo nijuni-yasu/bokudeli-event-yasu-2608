@@ -4,6 +4,7 @@ import { Enterprise, EnterpriseMember } from './Enterprise.js'
 describe('Enterprise', () => {
   it('custom_domain 省略時は toFirestore に custom_domain キーを含めない', () => {
     const enterprise = new Enterprise('ent-1', {
+      tenant_id: 'tenant-ent-1',
       company_name: 'Test Corp',
       subdomain: 'testcorp',
       allowed_email_domains: ['example.com'],
@@ -25,6 +26,7 @@ describe('Enterprise', () => {
 describe('EnterpriseMember', () => {
   it('department 省略時は toFirestore に department キーを含めない', () => {
     const member = new EnterpriseMember('user-1', {
+      user_email: 'admin@example.com',
       role: 'admin',
       display_name: 'Admin User',
     })

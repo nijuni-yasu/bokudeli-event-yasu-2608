@@ -31,11 +31,11 @@
 ### 完了条件
 
 - `enterprise_subsidy` の replay / 上限 / usage 加減算が `enterpriseSubsidyOrders.test.ts` でカバー — **✅**
-- Callable 本体に 20 行超の `enterprise_subsidy` インラインブロックが残らない — **未**（orchestration 分岐は Callable に残存）
+- Callable 本体に 20 行超の `enterprise_subsidy` インラインブロックが残らない — **✅**（`addEnterpriseSubsidyMenusToCart` 委譲。#2119）
 - PF の `user_advance` / `community_bill` 回帰テストが通る — **✅**
 - **RC-35**（補助計算なし確定の拒否）— **✅**（`finalizeEnterpriseSubsidyZeroPaymentOrder` / Stripe 差額路径。01_MVP §WS-A メモ参照）
 
-> **2026-06-20 進捗**: 機能・金銭リスクは解消済。残は Callable 薄層化リファクタのみ（#2071 マージブロッカー外）。
+> **2026-06-27 進捗**: Callable 薄層化完了（#2119）。`addToCart` は `addEnterpriseSubsidyMenusToCart` へ委譲。
 
 ---
 
@@ -146,4 +146,5 @@
 |:--|:--|
 | 2026-06-20 | 初版（WS-A 実装設計・A-1〜A-6 の責務境界と完了条件） |
 | 2026-06-20 | A-1 進捗: RC-35 ✅・テスト ✅。Callable 薄層化のみ残 |
+| 2026-06-27 | A-1 Callable 薄層化完了（#2119）。`addEnterpriseSubsidyMenusToCart` 追加 |
 | 2026-06-30 | A-4 実装完了（#2090）: login / registration Callable 分離、`/login` と `/register` UI 分離 |

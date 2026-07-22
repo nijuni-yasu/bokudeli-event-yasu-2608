@@ -9,16 +9,13 @@ import ConfirmDialog from '@shokujii/base/components/ConfirmDialog.vue'
 import { useRouter } from 'vue-router'
 import { mdiEmailOutline } from '@mdi/js'
 import { getUserPath, getManageCommunitySettingsPath } from '@/router/utils'
-import { mdiFacebook, mdiDownload } from '@mdi/js'
-import XIcon from '@shokujii/base/icons/x.js'
-import instagramIcon from '@/assets/images/sns/sns_instagram.png'
+import { mdiDownload } from '@mdi/js'
 import type { EventMemberOrder } from '@shokujii/common/schemas/EventMemberOrder.js'
 import {
   buildEventMemberCsv,
   downloadMemberCsv,
   type EventMemberCsvRowInput,
 } from '@shokujii/base/composable/memberCsvExport.js'
-import { buildFacebookUrl, buildTwitterUrl, buildInstagramUrl } from '@shokujii/base/utils/buildSnsLinks.js'
 import { priceString } from '@shokujii/base/schemes/converter'
 import type { User } from '@shokujii/common/schemas/User'
 import { convertToDatetime } from '@shokujii/common/utils/datetime.js'
@@ -99,9 +96,6 @@ const onEmailSent = () => {
 const onEmailFailed = () => {
   // エラー通知は EmailDialog 内で表示
 }
-const openNewLink = (url: string) => {
-  window.open(url, '_blank')
-}
 const getDateString = (order: EventMemberOrder) => {
   switch (order.status) {
     case 'ordered':
@@ -128,6 +122,7 @@ const allOrderRows = computed((): EventMemberCsvRowInput[] =>
 const downloadCsvFile = () => {
   const csv = buildEventMemberCsv(allOrderRows.value, {
     includeCommunityBill: isCommunityBill.value,
+    includeSnsColumns: false,
     statusLabel: $t('manage.member.status'),
     nameLabel: $t('manage.member.name'),
     orderLabel: $t('manage.member.order'),
@@ -168,7 +163,6 @@ const downloadCsvFile = () => {
                     <tr>
                       <th>#</th>
                       <th colspan="2">{{ $t('manage.member.name') }}</th>
-                      <th colspan="3"></th>
                       <th>
                         <v-spacer />
                       </th>
@@ -193,37 +187,6 @@ const downloadCsvFile = () => {
                         <router-link :to="getUserPath(member.user_id)" style="color: rgba(var(--v-theme-on-surface))">
                           {{ member.user_name }}
                         </router-link>
-                      </td>
-                      <td class="minimum-cell">
-                        <v-btn
-                          v-if="member.user_sns_facebook !== ''"
-                          :icon="mdiFacebook"
-                          color="#1877F2"
-                          density="compact"
-                          variant="text"
-                          @click="openNewLink(buildFacebookUrl(member.user_sns_facebook!))"
-                        />
-                      </td>
-                      <td class="minimum-cell">
-                        <v-btn
-                          v-if="member.user_sns_twitter !== ''"
-                          :icon="XIcon"
-                          color="grey-900"
-                          density="compact"
-                          variant="text"
-                          @click="openNewLink(buildTwitterUrl(member.user_sns_twitter!))"
-                        />
-                      </td>
-                      <td class="minimum-cell">
-                        <v-btn
-                          v-if="member.user_sns_instagram !== ''"
-                          density="compact"
-                          variant="text"
-                          icon=""
-                          @click="openNewLink(buildInstagramUrl(member.user_sns_instagram!))"
-                        >
-                          <img :src="instagramIcon" alt="Instagram" style="height: 24px; border-radius: 20%" />
-                        </v-btn>
                       </td>
                       <td>
                         <v-spacer />

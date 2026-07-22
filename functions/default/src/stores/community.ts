@@ -164,6 +164,36 @@ export const getCommunity = async (
   return snapshot.exists ? (snapshot.data() ?? undefined) : undefined
 }
 
+/**
+ * `communities/{communityId}` を一括取得する。
+ * 大量参照時は Firestore の getAll の上限を考慮して 100 件単位でチャンクする。
+ */
+export const getCommunitiesByIds = async (communityIds: readonly string[]): Promise<Map<string, ShokujiiCommunity>> => {
+  const result = new Map<string, ShokujiiCommunity>()
+  const uniqueIds = Array.from(new Set(communityIds.filter((id) => id !== '')))
+  if (uniqueIds.length === 0) {
+    return result
+  }
+  const db = getFirestore()
+  const CHUNK_SIZE = 100
+  for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+    const chunk = uniqueIds.slice(i, i + CHUNK_SIZE)
+    const docRefs = chunk.map((id) => db.collection('communities').doc(id).withConverter(communityConverter))
+    const snapshots = await db.getAll(...docRefs)
+    snapshots.forEach((snapshot) => {
+      if (!snapshot.exists) {
+        return
+      }
+      const data = snapshot.data() as ShokujiiCommunity | undefined
+      if (data == null) {
+        return
+      }
+      result.set(data.id, data)
+    })
+  }
+  return result
+}
+
 export const getCommunityByAccount = async (
   communityAccount: string,
   transaction?: Transaction,
@@ -246,13 +276,17 @@ export const removeMemberFromCommunity = async (
  * members サブコレは書き込み正本。集計 read は UI（UserProfilePage）と同じ親配列を使う（RC-55）。
  * collection group + documentId は Admin SDK エラーおよび events/members 混入のため非採用。
  */
-export const countJoinedCommunitiesForUser = async (userId: string): Promise<number> => {
+export const countJoinedCommunitiesForUser = async (userId: string, enterpriseId?: string): Promise<number> => {
   if (userId === '') {
     return 0
   }
   const db = getFirestore()
   const userRef = getUserRef(userId)
-  const snapshot = await db.collection('communities').where('members', 'array-contains', userRef).count().get()
+  let q = db.collection('communities').where('members', 'array-contains', userRef)
+  if (enterpriseId != null && enterpriseId !== '') {
+    q = q.where('enterprise_id', '==', enterpriseId)
+  }
+  const snapshot = await q.count().get()
   return snapshot.data().count
 }
 
@@ -264,11 +298,15 @@ export const listCommunitiesForProfilePreview = async (params: {
   targetUserId: string
   arrayField: 'members' | 'managers'
   limit: number
+  enterpriseId?: string
 }): Promise<ShokujiiCommunity[]> => {
-  const { targetUserId, arrayField, limit } = params
+  const { targetUserId, arrayField, limit, enterpriseId } = params
   const db = getFirestore()
   const userRef = getUserRef(targetUserId)
-  const communitiesQuery = db.collection('communities').where(arrayField, 'array-contains', userRef)
+  let communitiesQuery = db.collection('communities').where(arrayField, 'array-contains', userRef)
+  if (enterpriseId != null && enterpriseId !== '') {
+    communitiesQuery = communitiesQuery.where('enterprise_id', '==', enterpriseId)
+  }
   const snapshot = await communitiesQuery.limit(limit).withConverter(communityConverter).get()
   return snapshot.docs.map((doc) => doc.data())
 }
@@ -276,13 +314,17 @@ export const listCommunitiesForProfilePreview = async (params: {
 /**
  * 管理コミュニティ数（親 `communities.managers` 配列に userRef が含まれる件数）。RC-55 同上。
  */
-export const countManagedCommunitiesForUser = async (userId: string): Promise<number> => {
+export const countManagedCommunitiesForUser = async (userId: string, enterpriseId?: string): Promise<number> => {
   if (userId === '') {
     return 0
   }
   const db = getFirestore()
   const userRef = getUserRef(userId)
-  const snapshot = await db.collection('communities').where('managers', 'array-contains', userRef).count().get()
+  let q = db.collection('communities').where('managers', 'array-contains', userRef)
+  if (enterpriseId != null && enterpriseId !== '') {
+    q = q.where('enterprise_id', '==', enterpriseId)
+  }
+  const snapshot = await q.count().get()
   return snapshot.data().count
 }
 

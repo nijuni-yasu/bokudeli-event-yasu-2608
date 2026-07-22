@@ -437,7 +437,7 @@ async function handleOrderConfirmation(args: HandlerArgs & { event: Stripe.Event
       community_id: communityId,
       payment_intent: paymentIntent,
       pay_amount: payAmount,
-      ...(enterpriseId != null ? { enterprise_id: enterpriseId } : {}),
+      enterprise_id: enterpriseId ?? null,
       ...(subsidyTotal > 0 ? { pay_enterprise_subsidy_amount: subsidyTotal } : {}),
       ...(sessionPayCommunityBillOffAmount > 0
         ? { pay_community_bill_off_amount: sessionPayCommunityBillOffAmount }

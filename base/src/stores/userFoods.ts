@@ -6,7 +6,13 @@ import { TaskExecutor } from '@shokujii/base/utils/executors.js'
 
 export type UserFoodsStore = ReturnType<typeof useUserFoodsStore>
 
-export const useUserFoodsStore = (targetUserId: string, pageSize: number = 12) => {
+export type UserFoodsStoreOptions = {
+  /** false のとき store 生成時は fetch しない（呼び出し元が reload/next する）。`userOrderHistoryList` と同様 */
+  autoLoad?: boolean
+}
+
+export const useUserFoodsStore = (targetUserId: string, pageSize: number = 12, options: UserFoodsStoreOptions = {}) => {
+  const autoLoad = options.autoLoad ?? true
   const store = defineStore(`userFoods/${targetUserId}/${pageSize}`, () => {
     const paginationExecutor = new TaskExecutor(1)
     const foods = ref<UserProfileFoodPreviewItem[]>([])
@@ -57,7 +63,9 @@ export const useUserFoodsStore = (targetUserId: string, pageSize: number = 12) =
       next()
     }
 
-    reload()
+    if (targetUserId !== '' && autoLoad) {
+      reload()
+    }
 
     return {
       foods,

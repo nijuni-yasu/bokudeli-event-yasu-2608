@@ -11,6 +11,7 @@ import { makeIcs } from './makeIcs.js'
 import { getCommunity } from './stores/community.js'
 import { getUserImageUrl } from '@shokujii/common/utils/buildThumbnailsLinks.js'
 import { createModuleLogger } from './utils/logger.js'
+import { isEnterpriseEvent } from './utils/enterpriseMail.js'
 
 const logger = createModuleLogger('orderCompletionMail')
 
@@ -64,6 +65,9 @@ async function sendOrderCompletionMailToMember(event: ShokujiiEvent, userId: str
 }
 
 async function sendOrderCompletionMailToOrganizers(event: ShokujiiEvent, userId: string): Promise<void> {
+  if (isEnterpriseEvent(event)) {
+    return
+  }
   const userData = await getUser(userId, true)
 
   if (!userData) {
@@ -155,6 +159,9 @@ async function sendNewEventNotificationToMembers(eventId: string, userId: string
     const transactionEvent = await getEventInCommunity(communityId, eventId, transaction)
     // is_publicがfalseまたは既に送信済みの場合はスキップ
     if (transactionEvent == null || !transactionEvent.is_public || transactionEvent.sent_new_event_mail_at) {
+      return null
+    }
+    if (isEnterpriseEvent(transactionEvent)) {
       return null
     }
     // メール送信前にフラグを立てる

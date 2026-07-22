@@ -18,6 +18,7 @@ describe('EnterpriseMember', () => {
   it('Firestore Timestamp 風の last_activated_at を number に正規化する', () => {
     const activatedAt = jst(2026, 6, 1)
     const member = new EnterpriseMember('user-1', {
+      user_email: 'user@example.com',
       last_activated_at: firestoreTimestampLike(activatedAt) as unknown as number,
       last_deactivated_at: null,
     })
@@ -30,6 +31,7 @@ describe('EnterpriseMember', () => {
   it('正規化された日付で billable_in 判定ができる', () => {
     const activatedAt = jst(2026, 1, 1)
     const member = new EnterpriseMember('user-1', {
+      user_email: 'user@example.com',
       is_active: true,
       last_activated_at: firestoreTimestampLike(activatedAt) as unknown as number,
       last_deactivated_at: null,
