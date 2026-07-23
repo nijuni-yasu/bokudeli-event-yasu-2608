@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { ChatReactionSummarySchema } from './ChatReaction.js'
+
 import { EpochMillisSchema, TimestampSchema } from './firebase/index.js'
 
 export const CHAT_MESSAGE_TYPES = ['user', 'system'] as const
@@ -60,6 +62,7 @@ const ChatUserMessageDbSchema = z.object({
   deleted_at: TimestampSchema.optional(),
   deleted_by_user_id: z.string().nonempty().optional(),
   deleted_display_name: z.string().nonempty().optional(),
+  reaction_summary: ChatReactionSummarySchema.optional(),
   processed: z.boolean().optional(),
 })
 
@@ -69,6 +72,7 @@ const ChatSystemMessageDbSchema = z.object({
   system_params: z.record(z.string()),
   body: z.string().max(CHAT_MESSAGE_BODY_MAX_LENGTH).optional(),
   created_at: TimestampSchema,
+  reaction_summary: ChatReactionSummarySchema.optional(),
   processed: z.boolean().optional(),
 })
 
@@ -84,6 +88,7 @@ const ChatUserMessageAppSchema = z.object({
   deleted_at: EpochMillisSchema.optional(),
   deleted_by_user_id: z.string().nonempty().optional(),
   deleted_display_name: z.string().nonempty().optional(),
+  reaction_summary: ChatReactionSummarySchema.optional(),
 })
 
 const ChatSystemMessageAppSchema = z.object({
@@ -91,6 +96,7 @@ const ChatSystemMessageAppSchema = z.object({
   system_event: z.string().nonempty(),
   system_params: z.record(z.string()),
   body: z.string().max(CHAT_MESSAGE_BODY_MAX_LENGTH).optional(),
+  reaction_summary: ChatReactionSummarySchema.optional(),
 })
 
 export const ChatMessageAppSchema = z
@@ -122,6 +128,7 @@ export class ChatMessage {
   deleted_by_user_id?: string
   deleted_display_name?: string
   attachments?: ChatAttachment[]
+  reaction_summary?: Record<string, number>
 
   constructor(id: string, src: Partial<ChatMessage>) {
     this.id = id
