@@ -16,10 +16,10 @@ import { getAuth, type User } from 'firebase/auth'
 import { consumePendingToast } from '@/utils/pendingToast'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
-  () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
+  () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
 )
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(
-  () => import('@shokujii/base/components/layouts/DefaultLayoutWithVerticalNav.vue'),
+  () => import('@/components/layouts/DefaultLayoutWithVerticalNav.vue'),
 )
 
 const navItems = useNavItems()

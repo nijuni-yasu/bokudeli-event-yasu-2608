@@ -175,7 +175,7 @@ export default {
       section_payment: '支払い設定',
       company_name: '会社名',
       logo: '企業ロゴ',
-      logo_hint: '2MB以下、PNG / JPG / SVG。推奨 200×200px',
+      logo_hint: '2MB以下、PNG / JPG / SVG。横長推奨（目安 360×120px 前後。ヘッダー表示は最大 180×60px）',
       logo_select: 'ロゴを選択',
       default_payment: '福利厚生割引',
       default_payment_label: 'デフォルト支払い方式',

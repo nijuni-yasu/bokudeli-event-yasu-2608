@@ -9,6 +9,7 @@ import { hexToRgb } from '@layouts/utils'
 import { storeToRefs } from 'pinia'
 import { useEnterpriseStore } from '@/stores/enterprise'
 import { darken } from '@/utils/color'
+import { useEnterpriseBranding } from '@/composable/useEnterpriseBranding'
 import EnterpriseErrorPage from '@/components/EnterpriseErrorPage.vue'
 
 const theme = useTheme()
@@ -20,6 +21,7 @@ initConfigStore()
 const configStore = useConfigStore()
 const enterpriseStore = useEnterpriseStore()
 const { status, enterprise } = storeToRefs(enterpriseStore)
+const { syncHeaderLogo } = useEnterpriseBranding()
 
 function applyEnterpriseTheme(themeColor: string) {
   for (const name of ['light', 'dark'] as const) {
@@ -31,6 +33,7 @@ function applyEnterpriseTheme(themeColor: string) {
 watch(
   enterprise,
   (value) => {
+    syncHeaderLogo(value)
     if (value?.theme_color != null) {
       applyEnterpriseTheme(value.theme_color)
     }

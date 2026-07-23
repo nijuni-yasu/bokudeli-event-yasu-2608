@@ -9,6 +9,7 @@ export type EnterpriseResolveStatus = 'loading' | 'ready' | 'not_found' | 'error
 export const useEnterpriseStore = defineStore('enterprise', () => {
   const enterprise = ref<GetEnterpriseByDomainResponse | null>(null)
   const status = ref<EnterpriseResolveStatus>('loading')
+  const logoRenderGeneration = ref(0)
 
   function resolveHostname(): string {
     return resolveTenantHost()
@@ -20,6 +21,7 @@ export const useEnterpriseStore = defineStore('enterprise', () => {
       const hostname = resolveHostname()
       const result = await getEnterpriseByDomain({ hostname })
       enterprise.value = result.data
+      logoRenderGeneration.value += 1
       status.value = 'ready'
     } catch (error: unknown) {
       enterprise.value = null
@@ -37,6 +39,7 @@ export const useEnterpriseStore = defineStore('enterprise', () => {
   return {
     enterprise,
     status,
+    logoRenderGeneration,
     resolveEnterprise,
     resolveHostname,
   }

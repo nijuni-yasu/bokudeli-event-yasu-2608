@@ -12,10 +12,10 @@ import type { Notification } from '@shokujii/base/types/index.js'
 import { consumePendingToast } from '@/utils/pendingToast'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(
-  () => import('@shokujii/base/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
+  () => import('@/components/layouts/DefaultLayoutWithHorizontalNav.vue'),
 )
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(
-  () => import('@shokujii/base/components/layouts/DefaultLayoutWithVerticalNav.vue'),
+  () => import('@/components/layouts/DefaultLayoutWithVerticalNav.vue'),
 )
 
 const navItems = useAdminNavItems()
