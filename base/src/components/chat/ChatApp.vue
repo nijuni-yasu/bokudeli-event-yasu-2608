@@ -512,9 +512,7 @@ onBeforeUnmount(() => {
                 :role="canOpenActiveEvent ? 'link' : undefined"
                 :tabindex="canOpenActiveEvent ? 0 : undefined"
                 :aria-label="
-                  canOpenActiveEvent
-                    ? t('chat.open_event_page', { name: store.activeRoom.displayTitle })
-                    : undefined
+                  canOpenActiveEvent ? t('chat.open_event_page', { name: store.activeRoom.displayTitle }) : undefined
                 "
                 @click="onActiveRoomAvatarClick"
                 @keydown.enter.prevent="onActiveRoomAvatarClick"

@@ -66,9 +66,7 @@ const createReactionForUpdate = (userId: string, emoji: ChatReactionEmoji): Chat
 }
 
 export const getChatReactionRef = (roomId: string, messageId: string, userId: string) => {
-  return doc(db, 'chat_rooms', roomId, 'messages', messageId, 'reactions', userId).withConverter(
-    chatReactionConverter,
-  )
+  return doc(db, 'chat_rooms', roomId, 'messages', messageId, 'reactions', userId).withConverter(chatReactionConverter)
 }
 
 export const toggleReaction = async (
